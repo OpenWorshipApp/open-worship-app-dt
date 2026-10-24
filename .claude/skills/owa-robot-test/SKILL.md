@@ -1,7 +1,7 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~761 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..99, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the "Key is missing" guessing-key dialog, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch the packaged build defaults to OFF, strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
-argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "prod [focus]" to build the release and test the PACKAGED app under release/ — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) and a DRAG-AND-DROP pass (an internal drag, a drop on a hidden screen and a real file dropped from the disk through owa_drop_files — DD-08/12/15, §6h; the argument "dnd" runs all DD-01..19) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~970 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..65 and a context-menu-item matrix CM-01..101, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the inline Review Bible import panel, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch — ON by default, and only an explicit `ai-enabled: "false"` turns it off — strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
+argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "dnd" for every drag-and-drop pairing (DD-01..19) — or "full" for a tracked full-coverage run — or "prod [focus]" to build the release and test the PACKAGED app under release/ — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
 # OWA Robot Test — QA e2e via the `owa-devtools` MCP
@@ -30,8 +30,8 @@ unit or Playwright tests.
 - To collect console errors, failed network requests, and accessibility gaps from the
   real renderer.
 - **"import a bible XML" / "add a bible from a link"** → **§6g** (`ST-41..ST-50`, model in
-  KB §15, tutorial voice in W-34): the URL import, the **Key is missing** guessing-key
-  dialog, and the three Info-editor actions that make a non-English translation actually
+  KB §15, tutorial voice in W-34): the URL import, the **Review Bible import**
+  panel, and the three Info-editor actions that make a non-English translation actually
   read in its own language.
 - "Write a tutorial / help page / user guide for the app" → **tutorial mode** (§9).
 - "Check this manual / tutorial / learning doc against the app" → **doc-verify mode**
@@ -44,7 +44,8 @@ unit or Playwright tests.
 - `npm run dev` runs two things via `concurrently`:
   - `vite:dev` → dev server at `https://localhost:3000` (self-signed cert).
   - `electron:build && electron` → launches Electron with `NODE_ENV=development`.
-- In dev, Electron's main window loads `https://localhost:3000/presenter.html`.
+- In dev, Electron's main window loads `https://localhost:3000/<page>.html` for the main page it
+  last held (`mainHtmlPath` in `setting.json`; `reader.html` on a fresh profile).
 - The CDP port is **not fixed**: Chromium binds a free one and the app publishes
   it to `<temp>/open-worship-app-cdp/<pid>.json` (with the URL of its own MCP
   server). Nothing hardcodes it: the project's `./.mcp.json` registers
@@ -71,8 +72,9 @@ npm run dev ──► Vite (localhost:3000, https)
 - `chrome-devtools-mcp` present (the npm dependency `owa-devtools` is built on)
   and the **`owa-devtools`** MCP registered (`./.mcp.json`, see above; its path
   is repo-relative, so start the client from the repo root). AI features must be
-  ON in Settings → Others — with them off the app opens no CDP endpoint at all.
-- Only ONE Open Worship App instance can run (single-instance lock). If one is already
+  ON in Settings → AI Providers — with them off the app opens no CDP endpoint at all.
+- Only ONE Open Worship App instance per userData can run (single-instance lock; dev keeps its
+  own `<userData>-dev`, so it runs beside a packaged app). If one is already
   running with the debugger, reuse it instead of starting another.
 
 ## Procedure
@@ -109,6 +111,7 @@ through a snapshot:
 | `owa_list_screens`                      | The presentation screens showing right now + the displays available — use it in the mandatory screen block (§6a) instead of inferring from target enumeration.                            |
 | `owa_hide_screens`                      | Hide one screen by id, or all of them. **Destructive** — it takes content off a projector; never call it on a display the user says is in live use.                                       |
 | `owa_help_search` / `owa_help_page`     | Search/read the bundled knowledge (`manual` = the W-xx recipes in references/user-workflows.md, `internal` = these notes) by id.                                                          |
+| `owa_drag` / `owa_drop_files`          | Drag one control onto another by their words (sealed like the browser's), and drop real fixture files or folders from the disk onto a control — the mandatory drag-and-drop block (§6h). `owa_drop_files` exists on the stdio door only. |
 | `owa_guide_start` / `_step` / `_status` | Draw the numbered walkthrough card in the app window. Not needed for QA; it is what the in-app chatbot uses.                                                                              |
 
 ### 1. Is the app already running?
@@ -131,7 +134,8 @@ the terminal id for cleanup:
 npm run dev
 ```
 
-Then block until the Electron CDP endpoint exposes the presenter page. The first run
+Then block until the Electron CDP endpoint exposes the presenter page (a profile last left on
+the Reader reopens there: match `reader.html`, then `owa_goto_page`). The first run
 also compiles `electron-build`, so allow a generous timeout:
 
 ```bash
@@ -192,17 +196,17 @@ touch any process it did not start.
    must stay up, run with `--user-data=<scratch dir>`: that is a **fresh install** (no
    bibles, no documents, no settings, its own lock), so say so in the report and
    expect the Bible-dependent rows to be BLOCKED until a bible is imported (§6g).
-3. **AI features must be ON in that userData** or the packaged app opens no CDP
-   endpoint at all (`checkIsAiEnabled`: unset means OFF when packaged, ON in dev).
-   `prod-app.mjs ai-status` (exit 2 when off) → `prod-app.mjs enable-ai` with the app
-   closed writes `clientSetting["ai-enabled"] = "true"` and keeps every other key.
-   **Record the `before` value it prints and restore it in cleanup** — switching a
-   user's installed app onto the CDP door without telling them is not a test artefact
-   to leave behind.
+3. **AI features are ON by default now, packaged build included** (`checkIsAiEnabled`:
+   unset means ON; only an explicit `"false"` closes the doors). Run
+   `prod-app.mjs ai-status` anyway — exit 2 means that userData was switched OFF, and
+   `prod-app.mjs enable-ai` with the app closed writes `clientSetting["ai-enabled"] =
+   "true"` and keeps every other key. **Record the `before` value it prints and restore
+   it in cleanup** — switching a user's installed app onto the CDP door without telling
+   them is not a test artefact to leave behind.
 4. **Default to a scratch profile INSIDE `release/`** —
    `--user-data=release/robot-userdata-<runid>` on `enable-ai` and `launch` — unless the
    user asked for their own data to be tested. On a fresh profile
-   `selected-parent-dir` is unset, so `appLocalStorage.defaultStorage` falls back to
+   `selected-parent-dir` is unset, so `appLocalStorage.defaultStorageDirPath` falls back to
    `app.getPath('userData')` (which `OWA_USER_DATA_PATH` moves), and **every** write the
    run causes — settings, `bibles-data`, documents, downloaded media, the ~62 MB Extra
    Binaries pack, the single-instance lock — lands under `release/`. That is what makes
@@ -219,10 +223,10 @@ touch any process it did not start.
    Extra Binaries pack from the real CDN (MD-05); and a scratch document comes from
    `owa_slide_file create` (see §6a) rather than from the user's library.
    ⚠️ **Do not type the Parent Directory path with a per-character fill.** That box
-   commits on EVERY keystroke (`PathEditorComp` → `dirSource.dirPath = event.target.value`),
-   so a typed absolute path makes the app adopt the first prefix that exists — `C:\` —
-   and immediately create `bibles-data/` and `local-storage/` in the drive ROOT, before
-   the confirm is answered (observed 2026-09-11; those two folders then cannot be cleaned
+   committed on EVERY keystroke until 2026-09-12 (`PathEditorComp` now keeps typing in local
+   state; Enter, blur and the folder picker commit), so a typed absolute path made the app adopt
+   the first prefix that exists — `C:\` — and immediately create `bibles-data/` and
+   `local-storage/` in the drive ROOT, before the confirm was answered (observed 2026-09-11; those two folders then cannot be cleaned
    up under the no-delete rule). Write `clientSetting["selected-parent-dir"]` into the
    scratch `setting.json` with the app closed instead, then launch.
 
@@ -302,7 +306,9 @@ survivable:
 The packaged app's in-app host is **pinned to its own instance** (`pinCdpPort`), and
 `prod-app.mjs status --json` prints its `mcpUrl` (e.g. `http://127.0.0.1:56131/mcp`).
 Call tools over it with a throwaway streamable-HTTP session — `initialize` →
-`notifications/initialized` → `tools/call` → `DELETE` — which is ~20 lines of `fetch`
+`notifications/initialized` → `tools/call` → `DELETE`, every request carrying
+`Authorization: Bearer <mcpToken>` read from that instance's published file (`MC-01`; never
+print it) — which is ~20 lines of `fetch`
 and needs no client restart. That also exercises the packaged host itself (it must
 serve `tools/list` from `app.asar.unpacked`, with `evaluate_script` withheld by the
 firewall), so it doubles as a prod row rather than costing one.
@@ -311,7 +317,7 @@ firewall), so it doubles as a prod row rather than costing one.
 
 | Area                                               | Dev                                             | Packaged — what to do instead                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | -------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page URLs (step 5)                                 | `https://localhost:3000/<page>.html`            | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs:244`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well.            |
+| Page URLs (step 5)                                 | `https://localhost:3000/<page>.html`            | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs:297`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well.            |
 | userData / `setting.json` (KB §3, §10)             | `%APPDATA%\open-worship-app-dev`                | `%APPDATA%\open-worship-app` (or the `--user-data` dir). User content follows `selected-parent-dir` in THAT file — read the real dirs off the UI (`PathSelectorComp`) before the MD-04 sweep; never assume `open-worship-data-dev`.                                                                                                                                                                                                                                                                                                                                               |
 | Missing Khmer key (§6d)                            | `tran()` **throws**, subtree blanks — Critical  | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a Khmer screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only.                                                                                                                                                                                                                                                                                                      |
 | Toast stack check (§6, GL-10)                      | lock, `F6`, hover the toast, `F6`               | The same recipe — it needs no dev helper (`window.testSimpleToasts()` is dev-only AND reachable only through the refused `evaluate_script`).                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -384,7 +390,7 @@ origin driven is not a prod report.
 
 ### 5. Change to the page / route under test
 
-The window opens on `presenter.html`. To test another page, **navigate the currently
+The window opens on the main page it last held (usually `presenter.html`). To test another page, **navigate the currently
 selected page directly to its dev URL** with `mcp__owa-devtools__navigate_page` (reuse the
 same window — do NOT open a brand-new tab):
 
@@ -401,7 +407,7 @@ same window — do NOT open a brand-new tab):
 > NOT be loaded in the main window.** They open via `window.open` as separate windows. If you
 > `navigate_page` the main window to one, it **loads but then can't navigate back**
 > (`net::ERR_ABORTED` on every destination, even `about:blank`) and it **persists**
-> `mainHtmlPath` so the app reopens that page on the next restart. Instead: click the page's
+> `mainHtmlPath` (the next start falls back to `reader.html` — `toAllowedMainHtmlPath`). Instead: click the page's
 > button (e.g. the gear for Settings), then `list_pages` → `select_page` the **new popup
 > target**. Full trap details + recovery: [knowledge-base.md](./references/knowledge-base.md)
 > §2–§3.
@@ -488,7 +494,7 @@ Minimum pass (≈5 minutes, self-restoring):
    second click on the same card only **re-applies** it, it does NOT clear — KB §5) or
    double-click a bible verse. Verify `.app-on-screen` appears and the mini-screen
    preview renders it (`PR-04`). Un-present with `F8`, never with a second click.
-2. **Check the clear-control states** — the matching `BG`/`SL`/`BB`/`FG` button in the
+2. **Check the clear-control states** — the matching `BG`/`SL`/`LT`/`FG` button in the
    previewer header flips from outline (disabled-look) to solid (`SP-02`).
 3. **Show the screen** — click `ShowHideScreen` (or ⌨️ `F5`). A
    `screen.html?screenId=N` target MUST appear in `list_pages`; `select_page` it,
@@ -513,9 +519,9 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~761 rows with stable
-IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
-the context-menu-item matrix (`CM-01..99`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~970 rows with stable
+IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..65`) and
+the context-menu-item matrix (`CM-01..101`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
 counts as exercised only with evidence (screenshot, an asserted snapshot or `owa_*` result, or
 console/network diff) — see the matrix's "Evidence rule".
@@ -556,7 +562,10 @@ restarting from zero. This is how a full-coverage pass can span several sessions
    start them before the settings churn rather than after. **Trash both files as soon as
    their evidence is captured** — while the Background panel is still the open one — so
    the run cannot end with ~100 MB of debris in the user's data dir.
-5. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
+5. **Mandatory drag-and-drop block §6h (`DD-08, DD-12, DD-15`)** — while the run sheet,
+   the Background panel and the Mini Screen are still the open ones; its teardown before
+   anything reloads the windows.
+6. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
    the `LT-03..05` theme spot-checks, which ride on `ST-04/05`. Restore everything. Each
    `Apply Settings` (`ST-08`) reloads every window, so these go **very last** — and the
    locale block needs two of them (switch, then switch back).
@@ -622,7 +631,7 @@ CDP-drivable-edit techniques are in **KB §12** — read it first):
    - write `<scratch>.owl.histories/1-head` with a third marker → same assertion, because that
      is what the Lyric Editor writes before you ever press Save (`XW-09` sidecar mapping);
    - copy a second scratch file in, then delete both → the list must add and drop the rows on
-     its own (`XW-10` — **known FAIL on refactor28**, see the matrix row before filing it new).
+     its own (`XW-10` — it FAILED on refactor28 and was fixed; see the matrix row before filing it new).
 
    Read the markers out of the panes' **shadow roots** (`el.shadowRoot.textContent`), not the
    light DOM. Then delete the scratch files and its `.histories` dir, and re-select whatever was
@@ -640,7 +649,8 @@ reconnected" — re-`list_pages`/`select_page` after each, and read screen visib
 ([src/lang/langHelpers.ts](../../../src/lang/langHelpers.ts)) returns early when the
 locale is `en-US` (`DEFAULT_LOCALE`) — no dictionary lookup happens at all. Switch to
 Khmer and the same call **throws** `Translation for text "…" not found in locale km-KH`
-in dev, and since there is no error boundary the whole subtree renders **blank**. A real
+in dev, and since the app's one error boundary wraps only the slide editor's ground
+(`AppErrorBoundaryComp`) the whole subtree renders **blank**. A real
 example: `PositionSizeFieldComp` called `tran(name)` with `name="X:"`, which blanked the
 entire slide-editor tools panel — invisible in English, fatal in Khmer.
 
@@ -650,7 +660,7 @@ So this block is **not optional and not skippable by focus area**, exactly like 
 Minimum pass (≈3 minutes, self-restoring):
 
 1. **Record the starting locale** — open Settings (gear → popup target) → Language and
-   see which of `Khmer` / `English` is the active button. You MUST restore it at the end.
+   see which of `Khmer` / `English` / `French` is the active button. You MUST restore it at the end.
    Do **not** read `localStorage['language-locale']`; it is a stale key (KB §1).
 2. **Switch to the other locale** and click `Apply Settings` — this calls
    `forceReloadAppWindows()`, so **every window reloads**: re-`list_pages`,
@@ -680,10 +690,10 @@ Notes:
 
 ### 6e. MANDATORY: media download, video AND audio (every run, every focus)
 
-**No other product flow runs the external binaries.** `downloadVideoOrAudio`
+**No other product flow runs the media binaries.** `downloadVideoOrAudio`
 ([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only product
 caller of `extra-bin/<platform>/yt/yt-dlp` — `resolveMediaStreamUrl` in the same file
-(appHelpers.ts:336) also runs it, but only from the dev-only experiments page
+(appHelpers.ts:352) also runs it, but only from the dev-only experiments page
 (`src/experiments/html-in-canvas/youtubeDemo.tsx`), and `checkIsExtraBinInstalled` only
 checks file existence, never executes — and `downloadVideoOrAudio` is what points yt-dlp
 at `extra-bin/<platform>/ffmpeg/bin` and `extra-bin/<platform>/qjs/qjs` — so a wrong/missing/stale binary
@@ -740,9 +750,9 @@ Worship … - YouTube.mp4`). Say in the report how many you found: leftovers mea
 1. **Video (MD-01)** — Background → **Videos** tab → right-click the empty area of the
    list → **Download From URL** → put the link in → **Ok**. yt-dlp fetches separate video
    and audio streams and **merges them with ffmpeg**.
-   ⚠️ **Driving this with the tools:** there is no right-click tool — press the list
-   header's ⋮ (`owa_click "Background > More Options"`, `ListMenuButtonComp`) and the same
-   menu opens. Then the URL box is an app **input popup**, which `owa_type` refuses on
+   ⚠️ **Driving this with the tools:** `owa_click` right-clicks with `button: "right"`; the list
+   header's ⋮ (`owa_click "Background > More Options"`, `ListMenuButtonComp`) opens the same
+   menu. Then the URL box is an app **input popup**, which `owa_type` refuses on
    purpose (_"part of a question the app is asking the user"_); use chrome-devtools
    `fill` + `click` on the uids from `take_snapshot` instead (verified 2026-09-15).
 2. **Audio (MD-02)** — Background → **♫Audios♫** split → same menu (the popup label must
@@ -877,13 +887,10 @@ than the position (PL-53).
 #### P3 — Actions, both families (PL-71..PL-74, PL-95, PL-96, PL-97)
 
 The **Add Action** menu is four levels now: every clear folds behind **Clear Screen**, and
-the eight per-widget foreground clears behind **Other Clear FG Items** inside it (PL-71).
+the twelve per-widget foreground clears behind **Other Clear FG Items** inside it (PL-71).
 Two families, and the difference is the whole point:
 
-- **Screen actions** (14) — `apply(screenManager, presentingFlowItem)`. **Fire every one of
-  them at least once against a real, showing screen** (PL-72, PL-74). They are the only
-  presenting flow rows that write to a screen while carrying no content; a mis-wired clear is
-  invisible in the tree. The fourteenth, `Slide: Media Control` (PL-102), is the odd one:
+- **Screen actions** (20: the 19 in **Add Action** — five clears, twelve per-widget foreground clears, **Screen: Show** / **Screen: Hide** — plus one more) — `apply(screenManager, presentingFlowItem)`. **Fire every one of them at least once against a real, showing screen** (PL-72, PL-74). They are the only presenting flow rows that write to a screen while carrying no content; a mis-wired clear is invisible in the tree. **Clear All** cannot be added by an agent at all — the MCP firewall refuses its label even in this menu — so say so rather than counting it, and a per-widget clear with nothing of its kind up proves only that it does no harm. The twentieth, `Slide: Media Control` (PL-102), is the odd one:
   it is NOT in the `Add Action` menu at all — it is attached to a slide from that slide's
   own menu (**Add Media Control**), its settings live on the attachment, and its pin
   NARROWS the host's screens rather than replacing them.
@@ -973,7 +980,7 @@ name.
 ### 6g. Bible XML import from a URL `[ST-41..ST-50]` — run it when the focus touches Settings / Bible, and in every full-coverage run
 
 Adding a translation from a link is how a real congregation gets its own bible in, and it is
-the **only** path that exercises `readFromUrl` → `guessingBibleKey` → the Info editor's three
+the **only** path that exercises `readFromUrl` → the **Review Bible import** panel (`BibleImportReviewComp`) → the Info editor's three
 Monaco actions. It needs network. Model + CDP traps:
 [knowledge-base.md](./references/knowledge-base.md) §15. Tutorial voice: **W-34**.
 
@@ -985,22 +992,25 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
 ```
 
 1. **Scratch key.** Settings (gear → popup, never `navigate_page`) → **Bible**. Never reuse an
-   installed key — pick `ZZ<runid>`. Note the installed keys first: the **Guessing keys**
+   installed key — pick `ZZ<runid>`. Note the installed keys first: the suggested-key
    buttons in step 3 hide any key you already have, so `ពគប` will NOT be offered on a machine
    that has it. That absence is correct, not a bug.
 2. **`[ST-41]`** Paste the link into `input[name=url]` (native-setter + `input` event), check
    the file group dims and **Import** enables, submit. Watch `LoadingComp` walk
    `Downloading file… → Reading file… → Deleting file…`; ~14 MB, allow a minute.
-3. **`[ST-42]`** The **Key is missing** popup: record the guessing-key buttons (they are every
-   root attribute split on `[.,\s]` minus taken keys), type the scratch key, and check a taken
-   key marks `is-invalid` / "Key is already taken".
-4. **`[ST-43]`** **Ok** → **Confirm Key for Bible** → **Yes**. Confirm on disk — and resolve
-   `bibles-data` first, it hangs off `appLocalStorage.defaultStorage` and is **not**
-   necessarily the `-dev` dir (KB §15.2). `saveJsonDataToXMLfile` reports success without
-   checking the write, so the toast is not evidence.
-5. **`[ST-44]`** Read the new `<key>.xml` head: it must show `locale="en-US"`, ASCII
-   `number-map` and English `book-map`. **This is the finding the block exists for** — if a
-   future build guesses the locale, that is a behaviour change to write up, not a pass.
+3. **`[ST-42]`** The inline **Review Bible import** panel (`BibleImportReviewComp`; this import no
+   longer raises the **Key is missing** popup): record the suggested-key buttons (the locale's
+   language code, alone and with the title's year, then every root attribute split on `[.,\s]`,
+   minus taken keys), type the scratch key into **Bible key**, and check a taken key shows
+   "Key is already taken" and leaves **Import** disabled.
+4. **`[ST-43]`** **Import** writes the key, locale and maps chosen in the panel. Confirm on disk —
+   and resolve `bibles-data` first, it hangs off `appLocalStorage.defaultStorageDirPath` and is
+   **not** necessarily the `-dev` dir (KB §15.2).
+5. **`[ST-44]`** The panel recommends where the import used to leave English defaults: **Locale**
+   comes from the XML or, failing that, the file name (`guessBibleLocale`), **Number mapping** puts
+   that locale's digits first (**Recommended**), and **Book name mapping** lists name sets beside
+   **Keep existing book names**. Read the new `<key>.xml` head: it must show what the panel had
+   chosen.
 6. **`[ST-45..ST-48]`** Pencil → **Info** → fix it up **in this order**:
    **🌎 Choose Locale** (`km-KH`) → **#️⃣ Edit Numbers Map** (**Use ១ ២ ៣**) → **📚 Edit Books
    Map** (**📖 Guessing Names** → the set naming your locale's bibles). Steps 2 and 3 read the
@@ -1009,8 +1019,9 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
    `contextmenu` does not open Monaco's menu — and **match the palette row by label**, because
    it re-sorts the last-used command to the top.
 7. **`[ST-49]`** **Save** (windows reload — expected), then open the reader's bible-key
-   selector: the bible must have moved out of the **English** group into its own locale
-   heading and render `(<key>) កិច្ចការ ២៨:១៥`. Screenshot that; it is the block's evidence.
+   selector: the bible must sit under its own locale heading (it was imported as
+   `km-KH` already — the review panel guessed that from the file name — so it was never
+   in the **English** group) and render `(<key>) កិច្ចការ ២៨:១៥`. Screenshot that; it is the block's evidence.
 8. **`[ST-50]` Teardown, always.** 🗑 → **Yes** trashes `<key>.xml` and deletes the
    sibling `<key>.xml.cache` folder. Confirm both are gone. Then restore anything the run
    moved: the reader's bible key, and any lookup-history entry the key switch added
@@ -1019,6 +1030,74 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
 **Report line** (required whenever this block runs): the scratch key used, ST-41..ST-50
 statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` and
 `<key>.xml.cache` are gone.
+
+### 6h. MANDATORY: drag and drop `[DD-08, DD-12, DD-15]` (every run, every focus; `dnd` runs all DD-01..19)
+
+Drag and drop is the one gesture no click, key or data tool exercises, and the bug it
+hides passes every unit test: a handler that `await`s before writing its drag data, or
+before reading a drop's, works on a plain object and does nothing under a real mouse —
+Chromium lets `dragstart` write and `drop` read only while the handler is running. That
+is how a Bible history row's drag shipped broken (2026-10-22). Three tools, each for
+what it can see:
+
+| Tool | What it is | Use it for |
+| ---- | ---------- | ---------- |
+| `owa_drag` `{from, to, place}` | Synthetic page events, both ends by their words; pointer over + press first, and its `DataTransfer` **sealed** as Chromium seals one (a copy taken when `dragstart` returns, emptied after `drop`) | Every app-internal drag: rows, slides, swatches, foreground widgets, tabs, reorders (`place: before/after`) |
+| chrome-devtools `drag` `{from_uid, to_uid}` | The browser's own drag (CDP drag interception), by snapshot uid | A second opinion on a drop that looks wrong, and labels with a twin. It reports the drag's END in page coordinates, so a tab strip reads a drop inside the window as torn off — use `owa_drag` for tabs |
+| `owa_drop_files` `{paths, to}` | Real files or folders from the disk, dropped on a control found by its words through CDP's `Input.dispatchDragEvent` (enter → over → pause → over → drop). **Stdio door only** (never the chatbot's); paths absolute and under `test-results/` or the temp folder | Everything a person drags in from Explorer: file lists, the slide canvas and previewer, Resources folders, Settings → Bible archives, the 🤖 ask box |
+
+Every drop is **read back**, never trusted: `accepted` / `dropped` only say the target
+agreed and the drop reached its handler, not that the handler did anything. Read the
+list it went into (`owa_presenting_flow info`, `owa_bible_item list`,
+`owa_media_file list`, `owa_list_screens`, `owa_slide_file slides`, the folder on disk).
+
+**Fixtures** go in `test-results/robot-test/run-<runid>/fixtures/` (gitignored, inside the
+allowed root): a tiny PNG, a WAV, an HTML page, a copied `.ows` / `.owb` / `.owpf`, a
+folder holding one text file — written by the run, never a user's real file. Names start
+`zz-dnd-` so the teardown can find every copy.
+
+The block (mandatory, ~2 minutes):
+
+1. **`[DD-08]`** Create a scratch run sheet (`owa_presenting_flow create zz-dnd-<runid>`),
+   open the Presenting Flows panel, `owa_drag` a Documents row onto the sheet's name row.
+   Pass: `owa_presenting_flow info` lists one `appDocument` line.
+2. **`[DD-12]`** With the screens **hidden** (never on a screen in live use — EX-02), note
+   what screen 0 holds (`owa_list_screens`), `owa_drag` a colour swatch from Background →
+   **Colors** onto its Mini Screen card, read it back, then put the old background back the
+   same way. A camera tile with no camera running raises **Camera Error** — the person's
+   Ok, so do not use cameras in this block.
+3. **`[DD-15]`** `owa_drop_files` the fixture PNG onto Background → **Images** (aim at the
+   panel's folder header). Pass: the file is in the images folder and its tile shows.
+4. **Teardown, always:** `owa_presenting_flow delete` the sheet, `owa_media_file delete`
+   the picture (both go to the trash with an `undoId`). Confirm nothing named `zz-dnd-`
+   is left in either folder.
+
+**`dnd` focus** runs every DD row (coverage-matrix.md §DD) in the same way. Three rows
+leave something only the person can take away and are run only when they agree: DD-16
+(a Resources folder — **Remove Folder** is refused to the tools), DD-17 (Settings → Bible
+opens an import dialog — **Cancel** is theirs), DD-18 (the 🤖 and ✨ windows ask the AI
+caution first — the dev **Open** only with their explicit word in this conversation).
+
+**Traps, all met on 2026-10-22:**
+
+- **A drop sent too soon is lost.** Chromium discards a drop the page has not yet
+  accepted on `dragover`, and a busy panel (Resources) answers late — `owa_drop_files`
+  sends a second `dragover` after a pause for exactly that. A hand-rolled CDP drop
+  without it reports `drop ok` and does nothing.
+- **Coordinates are CSS pixels of the page**, not of a screenshot: on a 150% display a
+  screenshot is 1.5× the page. `owa_drop_files` aims by label, so this only bites a
+  hand-rolled drop.
+- **A label with a twin is refused** (`isPressSafe`): two colour palettes both say
+  `white`, a run sheet's name row grows with its lines. Scope it (`Background > red`) or
+  use the chrome `drag` by uid.
+- **A drop on a run-sheet LINE is a CC, on its NAME row an append** — and a passage on a
+  line does both, which is the design (PL-89..93), not a double add.
+- **A torn-off ✨ tab is a new window** that closes with the next app restart; it is not
+  lost data.
+
+**Report line** (required): DD-08 / DD-12 / DD-15 statuses with the read-back evidence,
+what screen 0 held before and after DD-12, and the teardown listing showing no `zz-dnd-`
+leftovers.
 
 ### 7. Report
 
@@ -1038,11 +1117,13 @@ statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` an
   no other row touches the extra-bin yt-dlp/ffmpeg/qjs, **plus `MD-04`** — how many
   leftovers the pre-download sweep found and the post-run listing showing both dirs clean.
   BLOCKED is acceptable only with no network, and must say so; `MD-04` is never BLOCKED.
+- **Every report** MUST also contain the **mandatory drag-and-drop block** (§6h): the
+  `DD-08/DD-12/DD-15` statuses, each with what was read back after the drop, and the
+  teardown listing with no `zz-dnd-` file left.
 - In **presenting flow deep mode** (§6f) the report MUST additionally carry: the per-phase table
   (P0..P10 → status), the coverage summary over the 69-row scope set, the fixture's name
   and **what was torn down vs. left behind**, and — because they are the rows most easily
-  faked — an explicit line each for the **13 screen actions fired against a showing
-  screen** (PL-72/74), the **folded-sheet walk** (PL-99) and the **performance
+  faked — an explicit line each for the **screen actions fired against a showing screen** (PL-72/74: each one named, and every one of the 19 in **Add Action** not fired named with its reason), the **folded-sheet walk** (PL-99) and the **performance
   measurements** (PL-63/70) with their numbers.
 - In **prod mode** (§2b) the report MUST open with the **Build under test** block
   (version, commit + dirty flag, exe path and `builtAt`, the pack artefacts written to
@@ -1066,8 +1147,9 @@ statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` an
   media block's teardown actually happened (`MD-04`, §6e step 5): the videos and audios
   dirs hold no copy of the canonical title and no `temp-*.part`. This is the one block that writes
   ~100 MB per run, and the app suffixes duplicates instead of overwriting, so a missed
-  teardown compounds silently. The presenting flow fixture (`zz-robot-<runid>`, §6f) and any
-  scratch document/web item go the same way.
+  teardown compounds silently. The presenting flow fixture (`zz-robot-<runid>`, §6f), the
+  drag-and-drop block's `zz-dnd-` sheet and picture (§6h) and any scratch document/web item
+  go the same way.
 - If YOU started `npm run dev` in step 2, **kill that terminal** to stop Vite + Electron
   (`concurrently -k` tears down both children).
 - In **prod mode**, `prod-app.mjs stop` the packaged app you launched, restore the
@@ -1151,7 +1233,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - **MCP "connection refused"**: the MCP attaches to a running Electron; if it errors, the
   app isn't up yet — re-run the wait script (step 2) before retrying MCP tools. Check
   `<temp>/open-worship-app-cdp/` for a published instance; an empty dir means either no
-  app is running or AI features are switched off in Settings → Others.
+  app is running or AI features are switched off in Settings → AI Providers.
 - **Wrong target selected**: there is normally ONE main window target — keep using it and
   switch pages with `navigate_page` (step 5), not by opening new tabs. A separate
   `screen.html?screenId=N` target exists **only while that screen is showing** — select
@@ -1160,7 +1242,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - **Stuck on Settings / can't navigate away (`ERR_ABORTED`)**: you loaded a **popup-only**
   page (`setting.html`, `about.html`, …) in the main window (see step 5 warning). That state
   can't navigate out and persists `mainHtmlPath`. Recover: stop the app, set `mainHtmlPath`
-  back to `"presenter.html"` in `%APPDATA%/open-worship-app/setting.json` (keep the other
+  back to `"presenter.html"` in `<userData>/setting.json` (`%APPDATA%/open-worship-app-dev` for a dev run; keep the other
   keys), relaunch. Details: [references/knowledge-base.md](./references/knowledge-base.md) §3.
 - **Stale instance / single-instance lock**: a stale OWA instance holds the lock —
   reuse it (step 1) or close it before starting a fresh run. Ports no longer collide
@@ -1202,11 +1284,11 @@ port>` and restart the MCP client. Nothing observed before that fix counts as pr
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
-  **coverage contract**: ~761 stable-ID rows over the whole UI surface — every interactive
+  **coverage contract**: ~970 stable-ID rows over the whole UI surface — every interactive
   path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
-  citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
+  citation, including a complete keyboard-shortcut matrix (`KB-01..65`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and
-  a context-menu-item matrix (`CM-01..99`). Screen controlling & presenting rows
+  a context-menu-item matrix (`CM-01..101`). Screen controlling & presenting rows
   (`SP`/`SC`) and the locale-switch rows (`LT-01..02`) are mandatory in every run; the
   file also carries the policy-exclusion table, statuses, evidence rule, and the coverage
   formula for full-coverage runs. **Note:** this file lives under `docs/test-paths/`, not

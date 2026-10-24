@@ -152,13 +152,15 @@ export default function BibleFindRenderDataComp({
     if (data === undefined) {
         return <ShowFindingComp />;
     }
-    if (data === null) {
+    if (data === null || data.pagingData.pages.length === 0) {
         return (
             <div
                 className="w-100 my-2"
                 style={{ margin: 'auto', textAlign: 'center' }}
             >
-                {tran('No data available')}
+                {data === null
+                    ? tran('No data available')
+                    : tran('No verses found')}
             </div>
         );
     }

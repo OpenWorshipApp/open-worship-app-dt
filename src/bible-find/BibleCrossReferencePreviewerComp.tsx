@@ -25,6 +25,9 @@ export default function BibleCrossReferencePreviewerComp() {
                     chapter: extracted.chapter,
                     verseStart: extracted.verseStart,
                     verseEnd: extracted.verseEnd,
+                    // `JHN 1:2-3:4`: without it, a verse range of chapter 1.
+                    // The item writes it only when it is a later chapter.
+                    chapterEnd: extracted.chapterEnd,
                 },
                 metadata: {},
             });

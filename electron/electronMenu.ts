@@ -132,6 +132,15 @@ export function sendMenuClicked(menuData: any, win?: BrowserWindow | null) {
     return true;
 }
 
+// Every window hears it, and each listener acts only on its own `clickData`
+// (every handler already ignores keys it does not own), so a window with
+// nothing to do with the item -- a screen, the chatbot -- does nothing.
+export function sendMenuClickedToAllWindows(menuData: any) {
+    for (const win of BrowserWindow.getAllWindows()) {
+        sendMenuClicked(menuData, win);
+    }
+}
+
 function getCustomMenuItems(key: string) {
     const items = Object.entries(customMenusData)
         .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
@@ -328,18 +337,6 @@ export function initMenu(appController: ElectronAppController) {
             label: 'Tools',
             submenu: [
                 {
-                    label: 'Copy Debug Info',
-                    click: () => {
-                        copyDebugInfoToClipboard();
-                    },
-                },
-                {
-                    label: 'Copy Full Debug Info',
-                    click: () => {
-                        copyDebugInfoToClipboard(true);
-                    },
-                },
-                {
                     label: 'Local Web Share',
                     click: () => {
                         appController.lwShareController.open(
@@ -385,6 +382,19 @@ export function initMenu(appController: ElectronAppController) {
             submenu: [
                 ...helpMenuItems,
                 ...(helpMenuItems.length === 0 ? [] : [{ type: 'separator' }]),
+                {
+                    label: 'Copy Debug Info',
+                    click: () => {
+                        copyDebugInfoToClipboard();
+                    },
+                },
+                {
+                    label: 'Copy Full Debug Info',
+                    click: () => {
+                        copyDebugInfoToClipboard(true);
+                    },
+                },
+                { type: 'separator' },
                 // Hidden outright when AI is switched off in Settings ->
                 // Others: the window it opens would have nothing to talk to.
                 ...(checkIsAiEnabled()
@@ -393,6 +403,16 @@ export function initMenu(appController: ElectronAppController) {
                               label: 'App Help (Chatbot)',
                               click: () => {
                                   appController.openChatbotPage();
+                              },
+                          },
+                          // The same window, opened to report a problem
+                          // (2026-10-13, the user's ask with this menu in
+                          // a picture: _add the item to menubar Help as
+                          // well_). The assistant asks what went wrong.
+                          {
+                              label: 'Report a Problem',
+                              click: () => {
+                                  appController.openChatbotReportPage();
                               },
                           },
                           { type: 'separator' },

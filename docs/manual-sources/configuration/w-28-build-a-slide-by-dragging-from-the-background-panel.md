@@ -5,19 +5,19 @@ section: "Configuration"
 verify: [ED-40, ED-41, ED-42, ED-43, ED-44, ED-21, ED-37, PM-06]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-28 — Build a slide by dragging from the Background panel
 
 **Goal:** put a picture, video, song, web page, camera or colour onto a slide without
 walking the Insert menu — just drag it out of the panel you are already browsing.
 
-**Preconditions:** a slide document open in the **Slide Editor**, and the bottom
-**Background** panel visible.
+**Preconditions:** a slide document open in the **[en:tran:Slide Editor]**, and the bottom
+**[en:tran:Background]** panel visible.
 
-1. Pick a tab in the bottom **Background** panel — **[en:tran:Colors]**, **[en:tran:Images]**,
-   **[en:tran:Videos]**, **[en:tran:Cameras]** or **[en:tran:Webs]**. The presenter also has an
-   **Audios** pane. 📸
+1. Pick a tab in the bottom **[en:tran:Background]** panel — **[en:tran:Colors]**, **[en:tran:Images]**,
+   **[en:tran:Videos]**, **[en:tran:Cameras]** or **[en:tran:Webs]**. At the right end of the same row,
+   **[en:tran:Audios]** opens the audio list beside them. 📸
 2. Drag one item out of the panel and hold it over the canvas. The canvas **dims** to show
    it will take the drop. (It stays bright for things it cannot use — a Bible verse, for
    example.) 📸
@@ -40,7 +40,7 @@ walking the Insert menu — just drag it out of the panel you are already browsi
    new coloured rectangle instead. That rectangle is an ordinary text box underneath, so
    you can double-click it and type into it later. A **locked** box (🔒) keeps its colour:
    the app says _This item is locked_ and adds nothing — unlock it first. 📸
-5. Anything you drop in is an ordinary box: move it, resize it, reorder it, and **Undo**
+5. Anything you drop in is an ordinary box: move it, resize it, reorder it, and **[en:tran:Undo]**
    (Ctrl+Z) takes it straight back out. Save with **Ctrl+S**.
 
 Tips:
@@ -57,5 +57,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ED-40` · `ED-41` · `ED-42` · `ED-43` · `ED-44` · `ED-21` · `ED-37` · `PM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

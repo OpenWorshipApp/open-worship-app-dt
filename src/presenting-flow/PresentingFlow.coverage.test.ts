@@ -167,8 +167,18 @@ describe('PresentingFlow mutations', () => {
             { json: { type: 'slide', uuid: 'one' }, isError: false },
             { json: { type: 'bad' }, isError: true },
         ]);
-        expect(mocks.appError).toHaveBeenCalledWith(expect.any(Error));
-        expect(mocks.showSimpleToast).toHaveBeenCalled();
+        // Logged with the file and the entry as TEXT, and announced once.
+        expect(mocks.appError).toHaveBeenCalledWith(
+            expect.any(Error),
+            'in /flow.owapf:',
+            JSON.stringify({ type: 'bad' }),
+        );
+        expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
+        // Read again -- after a write, or by the run player -- it says nothing
+        // more: the error row is still there to see.
+        await flow.getItems();
+        expect(mocks.appError).toHaveBeenCalledOnce();
+        expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
 
         state.documents.set('/not-array', { metadata: {}, items: 'bad' });
         await expect(

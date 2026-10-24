@@ -1,8 +1,11 @@
 ---
 name: presenting-flow-preview-run-player
-description: The presenting flow floating preview is a run-sheet PLAYER — forward-only keys, focus-gated, and a document element is walked slide by slide before the run leaves it
+description: "The presenting flow floating preview is a run-sheet PLAYER — forward-only keys, focus-gated, and a document element is walked slide by slide before the run leaves it"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-13T03:45:36.240Z
 ---
 
 `PresentingFlowPreviewFloatingComp` + `presentingFlowPreviewFloatingHelpers.ts` are not just a bigger
@@ -13,7 +16,9 @@ keep getting "fixed" by mistake:
   1 mid-service would put the wrong thing on a live screen.
 - **Gated on focus being inside the widget** (`container.contains(document.activeElement)`,
   and the body is `tabIndex={0}`), because the presenter's slide list answers the very same
-  keys — without the gate, opening the preview steals them.
+  keys — without the gate, opening the preview steals them. Focus lost to a
+  click elsewhere comes back on three quick presses, once the run has a cursor
+  ([[remote-key-take-over]]).
 - **A document element is walked slide by slide first** (`stepPresentingFlowPreviewChild`); the
   run only moves on once the cursor is on its last slide, and crossing INTO a document
   always starts at its FIRST slide even if a middle slide of it is still live.
@@ -92,5 +97,6 @@ keep getting "fixed" by mistake:
 
 Covered by matrix rows PL-38, PL-42, PL-46..PL-48, PL-58..PL-61; its unit test
 (`presentingFlowPreviewFloatingHelpers.test.ts`) was deleted 2026-08-24
-(47053c9d) — the matrix rows are the only coverage now.
+(47053c9d) and rebuilt as `presentingFlowPreviewFloatingHelpers.coverage.test.ts`
+(`c24d3a43`, 2026-09-26).
 See [[presenting-flow-references-vs-presets]].

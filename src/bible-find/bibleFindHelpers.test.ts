@@ -14,6 +14,8 @@ const {
     genContextMenuItemIconMock,
     toVerseFullKeyFormatMock,
     setSettingMock,
+    openDetailPanelMock,
+    genOpenInChatbotMenuMock,
 } = vi.hoisted(() => ({
     showSimpleToastMock: vi.fn(),
     handleErrorMock: vi.fn(),
@@ -40,6 +42,10 @@ const {
     genContextMenuItemIconMock: vi.fn(() => null),
     toVerseFullKeyFormatMock: vi.fn(() => 'KJV-KEY'),
     setSettingMock: vi.fn(),
+    openDetailPanelMock: vi.fn(async (_bibleItem: unknown) => {}),
+    genOpenInChatbotMenuMock: vi.fn((_bibleItem: unknown) => [
+        { menuElement: 'Open in Chatbot' },
+    ]),
 }));
 
 vi.mock('../toast/toastHelpers', () => ({
@@ -72,6 +78,12 @@ vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
     toVerseFullKeyFormat: toVerseFullKeyFormatMock,
 }));
 vi.mock('../helper/settingHelpers', () => ({ setSetting: setSettingMock }));
+vi.mock('../location-name-lookup/detailPanelHelpers', () => ({
+    openBibleItemDetailPanel: openDetailPanelMock,
+}));
+vi.mock('../helper/ai/bibleItemChatbotMenuHelpers', () => ({
+    genOpenInChatbotContextMenu: genOpenInChatbotMenuMock,
+}));
 
 import {
     BIBLE_SEARCH_SETTING_NAME,
@@ -85,6 +97,7 @@ import {
     rankSuggestionWords,
     findPageNumber,
     openContextMenu,
+    openFoundBibleItem,
     openInBibleLookup,
     pageNumberToReqData,
     setBibleSearchingTabType,
@@ -424,11 +437,34 @@ describe('bible-find bibleFindHelpers', () => {
         openContextMenu({ shiftKey: false }, { viewController, bibleItem });
         expect(showAppContextMenuMock).toHaveBeenCalled();
         const items = showAppContextMenuMock.mock.calls[0][1];
-        // exercise the Open + Save onSelect handlers
+        expect(items.map((item: any) => item.menuElement)).toEqual([
+            'Open',
+            'Open in Chatbot',
+            'Open beside the current verse',
+            'copy',
+            'Save bible item',
+        ]);
+        expect(genOpenInChatbotMenuMock).toHaveBeenCalledWith(bibleItem);
+        // Open reads the verse in the floating panel and leaves the passage.
         items[0].onSelect();
-        expect(viewController.appendBibleItem).toHaveBeenCalled();
+        expect(openDetailPanelMock).toHaveBeenCalledWith(bibleItem);
+        expect(viewController.appendBibleItem).not.toHaveBeenCalled();
+        items[2].onSelect();
+        expect(viewController.appendBibleItem).toHaveBeenCalledWith(bibleItem);
         items.at(-1).onSelect();
         expect(saveBibleItemMock).toHaveBeenCalledWith(bibleItem);
+    });
+
+    test('openFoundBibleItem opens the verse panel and reports a failure', async () => {
+        const bibleItem = {} as any;
+        openFoundBibleItem(bibleItem);
+        expect(openDetailPanelMock).toHaveBeenCalledWith(bibleItem);
+        const error = new Error('no bible');
+        openDetailPanelMock.mockRejectedValueOnce(error);
+        openFoundBibleItem(bibleItem);
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(handleErrorMock).toHaveBeenCalledWith(error);
     });
 
     test('doFinding returns early when data is null', async () => {

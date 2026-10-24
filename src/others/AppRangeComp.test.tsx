@@ -9,6 +9,7 @@ vi.mock('./AppRangeComp.scss', () => ({}));
 vi.mock('../server/appProvider', () => ({
     default: { systemUtils: { isDev: false } },
 }));
+vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
 
 import AppRangeComp, {
     handleCtrlWheel,
@@ -218,6 +219,83 @@ describe('others AppRangeComp', () => {
         });
         expect(setValue).toHaveBeenLastCalledWith(8);
         expect(container.querySelector('label')?.textContent).toContain('8');
+    });
+
+    test('AppRangeComp zoom icons are named buttons the keyboard can press', async () => {
+        const setValue = vi.fn();
+        await render(
+            <AppRangeComp
+                value={5}
+                title="Zoom"
+                setValue={setValue}
+                defaultSize={defaultSize}
+            />,
+        );
+        // Were bare clickable divs: no role, no name, no Tab stop.
+        const zoomIn = container.querySelector<HTMLElement>(
+            '[aria-label="Zoom In"]',
+        )!;
+        const zoomOut = container.querySelector<HTMLElement>(
+            '[aria-label="Zoom Out"]',
+        )!;
+        expect(zoomIn.getAttribute('role')).toBe('button');
+        expect(zoomOut.getAttribute('role')).toBe('button');
+        expect(zoomIn.tabIndex).toBe(0);
+        await act(async () => {
+            zoomIn.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            );
+        });
+        expect(setValue).toHaveBeenLastCalledWith(6);
+    });
+
+    test('AppRangeComp lets a fraction be TYPED, and clamps only when the typing is done', async () => {
+        const setValue = vi.fn();
+        await render(
+            <AppRangeComp
+                value={2}
+                title="Scale"
+                setValue={setValue}
+                defaultSize={{ size: 2, min: 0.1, max: 3, step: 0.1 }}
+                isShowValue
+                isCompact
+            />,
+        );
+        const box = container.querySelector(
+            'input[type="number"]',
+        ) as HTMLInputElement;
+        const nativeSetter = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            'value',
+        )!.set!;
+        const typeKeys = async (value: string) => {
+            nativeSetter.call(box, value);
+            await act(async () => {
+                box.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        };
+        // What Chromium reports for `0`, `0.` (an incomplete number reads
+        // empty) and `0.8`. The `0` is below the minimum and used to be
+        // clamped to 0.1 at once; the next keys built on that and stored 0.2.
+        await typeKeys('0');
+        expect(box.value).toBe('0');
+        await typeKeys('');
+        await typeKeys('0.8');
+        expect(setValue).toHaveBeenLastCalledWith(0.8);
+        expect(setValue).not.toHaveBeenCalledWith(0.1);
+        expect(setValue).not.toHaveBeenCalledWith(0.2);
+        expect(box.value).toBe('0.8');
+
+        // Out of range is held as typed, then clamped on Enter.
+        await typeKeys('5');
+        expect(setValue).toHaveBeenLastCalledWith(0.8);
+        await act(async () => {
+            box.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            );
+        });
+        expect(setValue).toHaveBeenLastCalledWith(3);
+        expect(box.value).toBe('3');
     });
 
     test('AppRangeComp throws when max is not greater than min', async () => {

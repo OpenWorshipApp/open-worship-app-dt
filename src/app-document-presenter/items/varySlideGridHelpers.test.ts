@@ -108,4 +108,16 @@ describe('genSlideHeightGetter', () => {
 
         expect(getHeight(genPptxSlide(1, 0))).toBe(180);
     });
+
+    // A pane narrower than the zoom squeezes the card, and the body follows
+    // the card: the row height has to as well, or an empty band opens under
+    // every card (2026-10-06, a Stage Previewer pane at half width).
+    test('follows a cell narrower than the thumbnail, less the card chrome', () => {
+        const getHeight = genSlideHeightGetter(320);
+        const slide = genPptxSlide(1, 0);
+        expect(getHeight(slide, 326)).toBe(180);
+        expect(getHeight(slide, 1000)).toBe(180);
+        expect(getHeight(slide, 166)).toBe(90);
+        expect(getHeight(slide, 4)).toBe(0);
+    });
 });

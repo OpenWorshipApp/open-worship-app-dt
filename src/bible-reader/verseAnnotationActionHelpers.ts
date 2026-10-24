@@ -184,8 +184,8 @@ export function openVerseBibleItem(
         viewController.addBibleItem(null, bibleItem, false, false, false);
         return;
     }
-    // `isNoColorNote`: a new view inherits its neighbour's colour note, and a
-    // colour-note group is SYNCED to the lookup's target — so without this the
-    // marked verse was dragged to whatever passage the lookup showed.
+    // `isNewColorGroup`: a new view inherits its neighbour's colour note, and
+    // a colour-note group is SYNCED to the lookup's target — so without this
+    // the marked verse was dragged to whatever passage the lookup showed.
     viewController.addBibleItemRight(lastBibleItem, bibleItem, true);
 }

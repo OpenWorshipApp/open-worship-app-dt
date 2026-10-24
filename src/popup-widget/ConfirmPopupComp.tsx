@@ -25,6 +25,12 @@ export default function ConfirmPopupComp({
         confirmDataRef.current.onConfirm(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleExtraClicking = useCallback(() => {
+        popupWidgetManager.openConfirm?.(null);
+        confirmDataRef.current.onExtraButtonClick?.();
+        confirmDataRef.current.onConfirm(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleOkClicking = useCallback(() => {
         popupWidgetManager.openConfirm?.(null);
         confirmDataRef.current.onConfirm(true);
@@ -93,6 +99,16 @@ export default function ConfirmPopupComp({
                     </div>
                 )}
                 <div className="app-popup-footer">
+                    {confirmData.extraButtonLabel === undefined ? null : (
+                        <button
+                            className="btn me-auto"
+                            type="button"
+                            onClick={handleExtraClicking}
+                        >
+                            <i className="bi bi-eye-slash" />
+                            {tran(confirmData.extraButtonLabel)}
+                        </button>
+                    )}
                     <button
                         className="btn"
                         type="button"

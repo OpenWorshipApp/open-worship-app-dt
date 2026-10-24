@@ -65,6 +65,7 @@ vi.mock('./electronHelpers', () => ({
     messageChannels: {
         openAiChatPage: 'main:app:open-aichat-page',
         openChatbotPage: 'main:app:open-chatbot-page',
+        openChatbotFromTaskbar: 'main:app:open-chatbot-from-taskbar',
     },
 }));
 
@@ -94,9 +95,14 @@ describe('ElectronAppController', () => {
             'main:app:open-about-page',
         );
         controller.openChatbotPage();
+        controller.openChatbotFromTaskbar();
         controller.openAiChatPage();
         expect(mainController.sendMessage).toHaveBeenCalledWith(
             'main:app:open-chatbot-page',
+        );
+        // The taskbar's own message: the window opens it with no caution.
+        expect(mainController.sendMessage).toHaveBeenCalledWith(
+            'main:app:open-chatbot-from-taskbar',
         );
         expect(mainController.sendMessage).toHaveBeenCalledWith(
             'main:app:open-aichat-page',

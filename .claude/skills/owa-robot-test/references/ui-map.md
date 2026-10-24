@@ -1,6 +1,6 @@
 # OWA UI Map (for robot testing)
 
-docVersion: 2026-09-12
+docVersion: 2026-10-06
 
 The app uses **Bootstrap semantic classes + accessibility roles + button text**, with
 very few `data-testid`s in production code. So target elements by **visible text /
@@ -19,7 +19,7 @@ Main window in dev loads `presenter.html`. Other windows open on demand.
 | Bible Reader | `https://localhost:3000/reader.html` | |
 | Slide/Doc Editor | `https://localhost:3000/appDocumentEditor.html` | Opens when editing a doc |
 | Settings | `https://localhost:3000/setting.html` | Gear button |
-| Presentation output | `https://localhost:3000/screen.html?screenId=N` | **CDP target while showing** (toggle via `ShowHideScreen`/`F5`); target vanishes when hidden — hidden logs forward via `all:app:log` to the dev terminal |
+| Presentation output | `http://127.0.0.1:<port>/screen.html?screenId=N` (Screen Mirror server) | **CDP target while showing** (toggle via `ShowHideScreen`/`F5`); target vanishes when hidden — hidden logs forward via `all:app:log` to the dev terminal |
 | Find bar | `https://localhost:3000/finder.html` | a `WebContentsView` pinned inside the searched window, NOT a popup window — opened only by `Ctrl/Cmd+F` / Edit → Find |
 | Lyric Editor | `https://localhost:3000/lyricEditor.html` | |
 | Bible Note | `https://localhost:3000/bibleNote.html` | |
@@ -64,21 +64,25 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
     tabs and the `Bible Lookup` button are visible.
   - `reader.html`: renders `BibleReaderComp` directly — NO `#app-header`; wait for the
     bible reader content, not the header.
-  - `setting.html`: title matches `/Settings/`; `General` + `Apply Settings` buttons.
+  - `setting.html`: title matches `/Setting/`; `General` + `Apply Settings` buttons.
   - popups (`bibleNote` / `webEditor`): generic check only. ⚠️ `lyricEditor.html` has
-    **NO `#root`** (the only page without one) — the generic probe returns false
+    **NO `#root`** (the only page in the table above without one) — the generic probe returns false
     forever; ready = `#appLoading` gone/settled AND `[data-ol-ref="app"]` populated.
 
 ## Top app header (`#app-header`)
 
 - **Main navigation tabs** (`.nav.nav-tabs` of `button.nav-link`): `Presenter`,
-  `Bible Reader`, `Slide Editor` (conditional — needs a selected document),
-  `(dev)Experiment` (dev only). Selected tab has `.active`.
+  `Bible Reader`, `Slide Editor` (needs a selected document), `Screen Mirror`,
+  `(dev)Experiment` (dev only; opens a popup window). The page you are on has no tab of its
+  own (the Presenter shows `Slide Editor`, the editor shows `Presenter`), so none carries `.active`.
 - **Bible Lookup** button (center): text `Bible Lookup`, icon `bi bi-book`. Shortcut
   **Ctrl+B** (Cmd+B on mac). Opens the lookup modal.
 - **Settings** button (top-right): icon `bi bi-gear-wide-connected`, title `Setting`.
   Opens `setting.html`.
-- **Help** button (top-right): icon `bi bi-question-circle` (opens external help).
+- **Help** button (top-right): icon `bi bi-question-circle`. Opens a two-row
+  menu under itself — `Open Online Help` (external help, EX-04) and
+  `Open Chatbot` (the 🤖's own press). The first is also Help → `Open Online
+  Help` in the menu bar.
 
 ## Presenter window layout (3 resizable columns)
 
@@ -90,7 +94,7 @@ Two widgets only, top to bottom: **Documents**, then **Presenting Flows**. The s
 - **Documents** list: header text `Documents`; items are `li.list-group-item`
   (selected item has `.active`); icons `bi bi-file-earmark-slides` / `-pdf` /
   `-music-note` (lyric) etc.
-- **Presenting Flows** list: header text `PresentingFlows` ([en:tran:Presenting Flows]); present in **every**
+- **Presenting Flows** list: header text `Presenting Flows` ([en:tran:Presenting Flows]); present in **every**
   build — no longer dev-gated. Cards are `li.list-group-item`; inside an opened card the
   elements are `.app-presenting-flow-row` (`.app-presenting-flow-row-error` for a damaged entry,
   `.app-on-screen` on the label while live). Header icon `bi-window-stack` opens the
@@ -104,9 +108,9 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 | selector | means |
 |---|---|
 | `.app-presenting-flow-row` | one element row in the tree |
-| `.app-presenting-flow-row-index` / `.app-presenting-flow-row-id` | its position number / its badge (`#3`, or an action's glyph — **tinted with the icon's colour for an action**) |
+| `.app-presenting-flow-gutter` / `.app-presenting-flow-row-id` | its position number / its badge (`#3`, or an action's glyph — **tinted with the icon's colour for an action**) |
 | `.app-presenting-flow-row-icon` | the kind icon; its inline `color` is the action's colour |
-| `.app-presenting-flow-row-chevron` | the expand/collapse affordance (absent = nothing to expand) |
+| `.app-presenting-flow-row-chevron` | the expand/collapse affordance (a bare `span` with no `bi-chevron-*` = nothing to expand) |
 | `.app-presenting-flow-row-disabled` + `.app-presenting-flow-row-disabled-icon` | **parked**; `…-icon-presenting-flow` + `…-label-parked` + `bi-slash-circle` = parked by the RUN SHEET, plain `bi-eye-slash` = hidden by the document |
 | `.app-presenting-flow-row-disabled-presenting-flow` | the whole presenting flow card is parked |
 | `.app-presenting-flow-row-screen-pin` | a **Set Specific Screen** pin is on this row (PL-81..85) |
@@ -117,7 +121,7 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 | `.app-presenting-flow-preview` | a floating widget, portaled to `body` — **several may be open at once, one per presenting flow file** |
 | `.bi-window-stack.app-presenting-flow-preview-showing` | on a presenting flow card's header icon: this presenting flow has a preview open. One per file, so several icons can wear it together |
 | `.app-presenting-flow-preview-item` (`…-body`, `…-chevron`, `…-label`) | one element inside the widget; **the chevron's state is the fold memory** (PL-58) |
-| `.app-presenting-flow-preview-item-selected` | **the run's cursor** — cyan `--bs-info` outline, on the label AND the slide card. Distinct from the magenta blinking `.app-highlight-selected`, which means "live on a screen" and can be on several cards at once |
+| `.app-presenting-flow-preview-item-selected` | **the run's cursor** — an `--app-accent` outline, on the label AND the slide card. Distinct from `.app-highlight-selected` (a border that pulses three times, then stays), which means "live on a screen" and can be on several cards at once |
 | `.app-presenting-flow-preview-item-disabled` / `.app-presenting-flow-preview-slide-disabled` (+ `…-icon`) | parked element / parked slide inside the widget |
 | `.app-presenting-flow-preview-auto-next` (`…-interval`, `…-paused`, `…-button`) | the clock pill at the widget's top-right (PL-95) |
 | `.app-presenting-flow-preview-cc-rows` | the CC rows under a slide card |
@@ -135,29 +139,29 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
     `.nav-link`, and diff the baseline screenshot when restoring state.
   - Documents tab: slide thumbnails container; footer has a size range slider
     (`.app-range`) and the current document path.
-  - Foreground **floating widget** (`ForegroundFloatingComp`,
-    `persistKey="floating-widget-rect-foreground"`): countdowns, marquee top/bottom,
-    clocks/timers, web overlays, cameras, image slideshows.
-- **Fullscreen toggle** (presenter header, top-right): icon `bi bi-fullscreen` /
+  - Foreground **launcher** (`ForegroundFloatingComp`, a `Foreground` tab beside these two): a
+    menu of the 13 components, each opening in its own floating panel (`persistKey`
+    `floating-widget-rect-foreground-<key>`).
+- **Fullscreen toggle** (presenter header, top-right): icon `bi bi-arrows-fullscreen` /
   `bi bi-fullscreen-exit`.
 - **Background tabs** (`.nav.nav-tabs`): `Colors`, `Images`, `Videos`, `Cameras`,
   `Webs`. `Audios` is a separate toggle (`RenderAudiosTabComp`), not a tab-bar
   member; it shows `.app-on-screen` while audio plays.
 
 ### Right column — bible + mini screen
-- **Bibles / Notes** sub-tabs: headers `Bibles` and `Notes`; lists are
+- **Bibles / Notes** sub-tabs: headers `Bibles` and `Bible Notes`; lists are
   `li.list-group-item`.
 - **Mini screen preview**: `div.card.app-zero-border-radius` — one previewer card
   **per screen** (`.mini-screen.card`, `data-screen-key`); footer zoom range slider.
   Each card is the **screen-controlling surface** (testing it is mandatory — SKILL §6a):
   - Header: show/hide screen toggle (`F5`, `.showing` when on) · clear buttons
-    eraser/`BG`/`SL`/`BB`/`FG` (`F6`–`F10`; outline = layer empty, solid = live) ·
+    eraser/`BG`/`SL`/`LT`/`FG` (`F6`–`F10`; outline = layer empty, solid = live) ·
     screen-id badge (`data-screen-id`) · color-note dot · lock icon
     (`bi-unlock` green / `bi-lock-fill` red).
   - Footer: display button `label(screenId):displayId` (menu of OS displays) ·
-    `Tr:` transition buttons `Slide:`/`Background:` (menu: none/fade/move/zoom) ·
+    `Tr:` transition buttons `Slide:`/`Background:`/`Foreground:` (menu: none/fade/move/zoom) ·
     `bi-soundwave` audio-handlers toggle (only with a live video background; expands
-    per-video `<audio controls>` players + repeat toggles) · stage `St: N` (menu 0–4).
+    per-video `<audio controls>` players + repeat toggles) · stage `St: N` (menu 0–5).
   - Body: right-click a card → Solo/Select/Delete/Line-Sync/Refresh menu; right-click
     empty space → `Add New Screen`; cards accept drag-drop (slide/bg/foreground).
 
@@ -170,8 +174,8 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 
 ## Toasts (`ToastComp`)
 
-- Container: `.app-toast-stack` (fixed top-right, flex column). It only exists while at
-  least one toast is alive — it unmounts when the last one goes.
+- Container: `.app-toast-stack` (fixed top-right, flex column). It is always
+  mounted (it also hosts the Tip of the Day card), empty while no toast is alive.
 - Each toast: `.toast.show.fade` (`role=alert`) with `.toast-header strong` (title),
   `.toast-body` (message), and `button.btn-close`.
 - Toasts **stack** — newest is appended at the bottom, oldest is on top, capped at
@@ -180,7 +184,7 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
   (`mouseover`) clears only that toast's timer, `mouseout` restarts it at 2000 ms, and
   `.btn-close` removes only that one.
 - **Trigger**: a refusal on a locked screen (**Lock**, then `F6`). One press is ONE toast —
-  all four layers refuse, but the refusal is said once a second per screen — so for a stack,
+  all four layers refuse, but the refusal is said once a second for all screens together — so for a stack,
   `hover` the first `alert` and press again ≥1 s later (SKILL §6).
   `window.testSimpleToasts()` ([toastHelpers.ts](../../../../src/toast/toastHelpers.ts),
   dev-only) still exists but is reachable only through `evaluate_script`, which is refused.
@@ -191,28 +195,39 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 
 ## Settings window (`setting.html`)
 
-Title matches `/Settings/`. **Three** tabs — `General` / `Bible` / `Others` — in a
+Title matches `/Setting/`. **Three** tabs — `General` / `Bible` / `Others` — in a
 vertical left sidebar (`TabRenderComp` nav-links, not a top tab bar), plus a fixed
 `Apply Settings` button (bottom-left). The General tab holds: directory paths,
-`Khmer`/`English` language toggle, theme, font family, and the destructive resets
+`English`/`Khmer`/`French` language buttons (each in its own script: `ខ្មែរ`, `Français`), theme, font family, and the destructive resets
 (`Reset All Child Directories` / `Clear All Settings` — the old `Set Default Data` button
 is gone, and since 2026-08-09 so is `Reset Widgets Size`: it is a native **View** menu
 entry now, see below).
 
+**Every part of the `Others` tab FOLDS** (2026-10-10, `useSettingSectionFold`): the
+three cards, and inside AI Providers each provider's box, **Custom servers** and each
+server. The title is the button (`aria-expanded`, hover **Collapse** / **Expand**),
+and a folded part's contents are **not in the DOM** — a key box or **Add server** that
+`owa_find_ui` cannot see is behind a fold, so `owa_click` its title first (`ST-71..74`).
+The folds persist (`setting-section-collapsed-<name>`), so a run can start on a tab
+somebody left folded; put back what you fold.
+
 The **`Others`** tab now holds **three cards**, in order
-(`src/setting/SettingOthersComp.tsx`): *Set AI API Key* (`SettingOthersAIComp`),
+(`src/setting/SettingOthersComp.tsx`): *AI Providers* (`SettingOthersAIComp`),
 *SongSelect* (`SettingOthersSongSelectComp`, from `src/plugins/song-select/` — CCLI
 sign-in; dev builds add a `(dev) Use Mock Data` toggle), and **Extra Binaries**
 (`SettingOthersExtraBinComp` — the target of the mandatory `MD-05`/`MD-06` block).
 `SettingOthersSecureStorageWarningComp` renders on the credential cards when OS
 secure storage is unavailable; credentials live in a separate `-secret` store via
 `safeStorage` (memory `secure-storage-safestorage`). On the AI card: each key input
-has a 💡 hint icon, a `bi-check-circle-fill` tick once a key is stored, and an
-`API Key ↗` button opening the provider's key page externally (EX-04 — do not
+has a `bi-info-circle` hint icon, a `bi-check-circle-fill` tick once a key is stored, and a
+**Get key** button (`bi-box-arrow-up-right`) opening the provider's key page externally (EX-04 — do not
 follow). Keys are saved **on blur**, not per keystroke, and then flag
-`pendingApply`. The AI card's two labels are hardcoded English so they do **not**
-translate in Khmer — untranslated UI, not the `tran()` throw. The ST section now
-runs to **ST-51** and covers this tab's contents — route from the matrix.
+`pendingApply`. Once an OpenAI key is saved, its provider group also shows the
+translated **Auto Play Audio AI when available** switch; it writes immediately and
+used to be a megaphone in the Reader's Bible Reference toolbar. The AI card's key
+labels are hardcoded English so they do **not** translate in Khmer — untranslated
+UI, not the `tran()` throw. The ST section now runs to **ST-78** and covers this
+tab's contents — route from the matrix.
 
 ## Native View menu (main window only)
 
@@ -228,8 +243,9 @@ separator, registered by `initWidgetAppMenu` from `run()`:
 
 Popup windows hide their menu bar (`createPopupWindow`), so only the main window
 contributes — which is also what keeps the click routed back to the right renderer.
-The OS menu is invisible to CDP: use the dev-only `globalThis.getViewWidgetMenuItems()`,
-`globalThis.tryToggleWidget(id)` and `globalThis.tryResetWidgetsSize()`.
+The OS menu is invisible to CDP: drive it with `owa_menu` (`list` names every item's path,
+`click` presses one). The dev-only `globalThis.getViewWidgetMenuItems()`,
+`globalThis.tryToggleWidget(id)` and `globalThis.tryResetWidgetsSize()` need `evaluate_script`, which is refused.
 
 ## Keyboard shortcuts worth testing
 
@@ -239,18 +255,18 @@ The OS menu is invisible to CDP: use the dev-only `globalThis.getViewWidgetMenuI
 | Ctrl+Q | Close current modal |
 | F5 | Toggle show/hide the presentation screen |
 | F6 / F7 / F8 / F9 / F10 | Clear All / Background / Slide / Bible / Foreground |
-| Arrow keys / Enter | Navigate slide thumbnails (when the slide container is focused) |
+| Arrow keys / PageUp / PageDown / Space | Navigate slide thumbnails (when the slide container is focused) |
 | Ctrl/Alt+ArrowLeft/Right | Prev/next bible verse (on the screen output window) |
 
 > This is the short list. The **complete** shortcut set — every registered in-app shortcut
 > plus electron application-menu accelerators — is enumerated as unit tests in
-> [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) §KB (`KB-01..60`); right-click menu items are
-> §CM (`CM-01..99`).
+> [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) §KB (`KB-01..65`); right-click menu items are
+> §CM (`CM-01..101`).
 
 ## Stable ids present in production
 
 `#root`, `#app-header`, `#app-body`, `#modal-container`, `#app-custom-style`
-(+ `#presenting-control` — the Presenting Control overlay, mounted on five pages).
+(+ `#presenting-control` — the Presenting Control overlay, only while it is on, in any window that mounts `AppWindowToolsComp`).
 
 ## Newer areas — selectors
 
@@ -283,7 +299,5 @@ The OS menu is invisible to CDP: use the dev-only `globalThis.getViewWidgetMenuI
 
 - `take_snapshot` returns nodes with `uid`s + accessible names — click/fill by matching
   the visible label (e.g. `Documents`, `Bible Lookup`, `General`).
-- For state assertions use `evaluate_script`, e.g. check the active presenter tab:
-  `() => document.querySelector('.nav-tabs .nav-link.active')?.textContent?.trim()`
-- To detect "on screen" content:
-  `() => [...document.querySelectorAll('.app-on-screen')].map(el => el.textContent.trim())`
+- `evaluate_script` is refused (top of this file), so read state off the snapshot: an open
+  presenter tab is a `pressed` button, and `owa_list_screens` says what is on each screen.

@@ -1,0 +1,19 @@
+{
+    /*
+     * Editor-only. VS Code reads only files named tsconfig.json, so without
+     * this every electron/*.ts was checked with no config (strict, no Node
+     * types) and a file that never reaches an `electron` import showed
+     * "Cannot find name 'node:fs'". The build and `npm run lint` use
+     * ../electron.tsconfig.json, which excludes this file. Vitest also reads
+     * it when transforming electron/*.test.ts (the nearest tsconfig.json).
+     */
+    "extends": "../electron.tsconfig.json",
+    "compilerOptions": {
+        "types": ["node"],
+        "noEmit": true,
+        // Tests import from ../src; TS 6+ defaults rootDir to this folder.
+        "rootDir": ".."
+    },
+    "include": ["./**/*.ts"],
+    "exclude": []
+}

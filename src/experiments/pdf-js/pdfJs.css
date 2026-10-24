@@ -1,0 +1,202 @@
+.pdf-js-experiment {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font:
+    13px system-ui,
+    sans-serif;
+}
+
+.pdf-js-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #212425;
+  border-bottom: 1px solid #3a3f41;
+}
+
+.pdf-js-toolbar button,
+.pdf-js-toolbar select {
+  padding: 6px 10px;
+  border: 1px solid #4b5357;
+  border-radius: 6px;
+  color: #e2e5e6;
+  background: #2a2e30;
+}
+
+.pdf-js-toolbar button[aria-pressed='true'] {
+  border-color: #4aa3ff;
+  background: #193a59;
+}
+
+.pdf-js-toolbar span {
+  color: #a7b0b5;
+}
+
+.pdf-js-experiment iframe {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  min-height: 0;
+}
+
+.pdf-js-scroll {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  padding: 24px;
+  background: #303538;
+}
+
+.pdf-js-page {
+  position: relative;
+  margin: 0 auto;
+  box-shadow: 0 8px 30px #0005;
+}
+
+.pdf-js-page canvas {
+  display: block;
+}
+
+/* Align PDF.js text runs with the canvas, including rotation and scaling.
+   These custom properties are supplied by PDF.js TextLayer. */
+.pdf-js-text-layer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-size-adjust: none;
+  transform-origin: 0 0;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.pdf-js-text-layer span,
+.pdf-js-text-layer br {
+  position: absolute;
+  white-space: pre;
+  color: transparent;
+  transform-origin: 0 0;
+  user-select: text;
+}
+
+.pdf-js-text-layer > :not(.markedContent),
+.pdf-js-text-layer .markedContent span:not(.markedContent) {
+  --font-height: 0;
+  --scale-x: 1;
+  --rotate: 0deg;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x))
+    scale(var(--min-font-size-inv));
+}
+
+.pdf-js-text-layer [data-pdf-text] {
+  cursor: pointer;
+}
+
+.pdf-js-text-layer [data-pdf-text-range] {
+  background: #339cff18;
+  outline: 1px dashed #2789cc80;
+}
+
+.pdf-js-text-layer [data-pdf-text]:hover,
+.pdf-js-text-layer [data-pdf-text]:focus-visible,
+.pdf-js-text-layer [data-pdf-text-range]:hover,
+.pdf-js-text-layer [data-pdf-text-range]:focus-visible {
+  background: #ffc04b55;
+  outline: 2px solid #db8a08;
+}
+
+.pdf-js-text-layer ::selection {
+  background: #4aa3ff55;
+}
+
+.pdf-js-text-layer [data-pdf-text] > span {
+  position: static;
+  font: inherit;
+  transform: none;
+  cursor: pointer;
+}
+
+.pdf-js-callback {
+  flex-shrink: 0;
+  max-height: 80px;
+  overflow: auto;
+  padding: 10px 16px;
+  border-top: 1px solid #4b5357;
+  background: #193a59;
+  color: #e2e5e6;
+  font:
+    13px/1.5 system-ui,
+    sans-serif;
+}
+
+.pdf-js-extracted {
+  flex-shrink: 0;
+  max-height: 180px;
+  overflow: auto;
+  padding: 8px 14px;
+  background: #192226;
+}
+
+.pdf-js-extracted pre {
+  white-space: pre-wrap;
+  color: #cedce4;
+  font-size: 12px;
+}
+
+.pdf-js-file-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-js-file-picker input {
+  width: 190px;
+}
+
+.pdf-js-popup {
+  width: min(420px, calc(100vw - 64px));
+  padding: 26px;
+  border: 1px solid #517695;
+  border-radius: 14px;
+  background: #1e292f;
+  color: #f0f4f6;
+  box-shadow: 0 18px 60px #0009;
+  font:
+    16px/1.6 system-ui,
+    sans-serif;
+}
+
+.pdf-js-popup::backdrop {
+  background: #10192099;
+}
+
+.pdf-js-popup form {
+  float: right;
+}
+
+.pdf-js-popup button {
+  border: 0;
+  background: transparent;
+  color: #d5e4ee;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+.pdf-js-popup h3 {
+  margin: 0 30px 4px 0;
+  color: #7dc0ff;
+}
+
+.pdf-js-version,
+.pdf-js-popup small {
+  color: #a6bac6;
+  font-size: 12px;
+}

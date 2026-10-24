@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import electron, {
     BrowserWindow,
     clipboard,
@@ -13,7 +14,15 @@ import electron, {
 
 import type ElectronAppController from './ElectronAppController';
 import { writeClipboardText } from './clipboardHelpers';
-import { getMcpToken, getMcpUrl, getRemoteDebuggingPort } from './aiHelpers';
+import {
+    getMcpToken,
+    getMcpUrl,
+    getRemoteDebuggingPort,
+    importEsm,
+    toMcpPackagePath,
+} from './aiHelpers';
+import { getRecentConsoleLines } from './consoleLogHelpers';
+import { listAppWindows } from './appWindowListHelpers';
 import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
     answerAiChatMicrophoneAsk,
@@ -41,6 +50,7 @@ import {
 import {
     attemptClosing,
     captureWebScreenShot,
+    captureMiniScreenImage,
     captureWindowImage,
     findScreenWindow,
     getUpdatePageUrl,
@@ -63,12 +73,25 @@ import {
     closeFindOverlay,
     getFindOverlayHostWebContents,
     getFindOverlayWebContents,
+    setFindOverlayMounted,
     startFindOverlayDragging,
     stopFindOverlayDragging,
 } from './finderOverlayHelpers';
 import ElectronScreenController from './ElectronScreenController';
+import { getScreenMirror } from './screenMirrorService';
+import { getVirtualDisplays } from './virtualDisplayService';
+import {
+    getScreenOutput,
+    getVirtualScreenOutput,
+    getVirtualScreenOutputIds,
+} from './screenOutputRegistry';
+import { isVirtualDisplayId } from './virtualDisplayProtocol';
 import { officeFileToPdf } from './electronOfficeHelpers';
-import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
+import {
+    getPagesCount,
+    pdfToChatPages,
+    pdfToImages,
+} from './pdfToImagesHelpers';
 import {
     docxToHtmls,
     getDocxToHtmlsVersion,
@@ -78,10 +101,38 @@ import {
     type DocxToHtmlsParamsType,
     type PptxToHtmlsParamsType,
 } from './msHelpers';
-import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
+import {
+    initMenu,
+    sendMenuClicked,
+    sendMenuClickedToAllWindows,
+    setCustomMenusData,
+} from './electronMenu';
+import {
+    AGENT_MENU_CLICK_CHANNEL,
+    AGENT_MENU_LIST_CHANNEL,
+    clickAgentMenuItem,
+    listAgentMenuItems,
+} from './appMenuAgentHelpers';
 import { captureOAuthRedirectUrl } from './oauthHelpers';
 import { relaunchApp } from './taskbarHelpers';
 import { readWebPage } from './webPageHelpers';
+import {
+    cancelCustomLlmFetch,
+    handleCustomLlmFetch,
+} from './customLlmRelayHelpers';
+import {
+    CUSTOM_LLM_CANCEL_CHANNEL,
+    CUSTOM_LLM_FETCH_CHANNEL,
+    LLM_REGISTRY_GET_CHANNEL,
+    LLM_REGISTRY_RELOAD_CHANNEL,
+    LLM_REPORT_CANCEL_CHANNEL,
+    LLM_REPORT_POST_CHANNEL,
+    type CustomLlmFetchRequestType,
+    type LlmReportPostRequestType,
+} from './customLlmProtocol';
+import { getLlmRegistryStatus, refreshLlmRegistry } from './llmRegistryHelpers';
+import { cancelLlmReportPost, handleLlmReportPost } from './llmReportHelpers';
+import { STAY_AWAKE_SETTING_NAME } from './stayAwakeProtocol';
 import { type FontListMapType, getSystemFontListMap } from './fontListHelpers';
 
 const { dialog, ipcMain, app } = electron;
@@ -91,6 +142,7 @@ export type AnyObjectType = {
 };
 
 export type ScreenMessageType = {
+    stage?: number;
     screenId: number;
     type: string;
     data: AnyObjectType;
@@ -172,6 +224,37 @@ export function initEventListenerApp(appController: ElectronAppController) {
         event.returnValue = app.getPath('temp');
     });
 
+    // `owa_menu` (2026-10-10): the native menu bar, which no renderer can see.
+    // Synchronous like the other agent reads here; the press is handed the
+    // window that asked, so a role acts on it. A `sendSync` with no
+    // `returnValue` leaves the renderer hanging, so a throw becomes an answer.
+    const answerAgentMenu = (
+        event: Electron.IpcMainEvent,
+        read: () => unknown,
+    ) => {
+        try {
+            event.returnValue = read();
+        } catch (error) {
+            event.returnValue = {
+                isError: true,
+                reason: error instanceof Error ? error.message : String(error),
+            };
+        }
+    };
+    ipcMain.on(AGENT_MENU_LIST_CHANNEL, (event) => {
+        answerAgentMenu(event, () => {
+            return listAgentMenuItems();
+        });
+    });
+    ipcMain.on(AGENT_MENU_CLICK_CHANNEL, (event, item: unknown) => {
+        answerAgentMenu(event, () => {
+            return clickAgentMenuItem(
+                String(item ?? ''),
+                BrowserWindow.fromWebContents(event.sender),
+            );
+        });
+    });
+
     // What the in-app chatbot connects to. Both doors are on ports this
     // process picked at launch, so nothing in the renderer can hardcode them.
     // The MCP capability stays off the URL and crosses only this IPC seam.
@@ -181,6 +264,13 @@ export function initEventListenerApp(appController: ElectronAppController) {
             mcpToken: getMcpToken(),
             cdpPort: getRemoteDebuggingPort(),
         };
+    });
+
+    // The help window's window picker: the app's open windows by the id its
+    // tools aim with. Asked when that window gains focus or the picker is
+    // opened; one loopback request each time.
+    onAsync(ipcMain, 'main:app:list-app-windows', async () => {
+        return await listAppWindows(getRemoteDebuggingPort());
     });
 
     // The AI Chat window's "Sign out of every site". It is the only way in
@@ -216,7 +306,9 @@ export function initEventListenerApp(appController: ElectronAppController) {
 
     onAsync(ipcMain, 'main:app:select-dirs', async () => {
         const result = await dialog.showOpenDialog(appController.mainWin, {
-            properties: ['openDirectory'],
+            // The default data folder is `~/.owa/open-worship-data`, hidden
+            // on macOS and Linux: without this it cannot be picked again.
+            properties: ['openDirectory', 'showHiddenFiles'],
         });
         return result.filePaths;
     });
@@ -233,15 +325,69 @@ export function initEventListenerApp(appController: ElectronAppController) {
         },
     );
 
+    // The main window's recent console errors and warnings, for a problem
+    // report (`consoleLogHelpers.ts`). Through the tool firewall's own
+    // scrub before they leave main: a provider key logged in an error is
+    // exactly what that scrub exists for, and a report is sent to a stranger.
+    // With no scrub to be had, no lines: a report says less before it says
+    // too much.
+    onAsync(ipcMain, 'main:app:recent-console', async () => {
+        const lines = getRecentConsoleLines(appController.mainWin?.webContents);
+        if (lines.length === 0) {
+            return [];
+        }
+        try {
+            const { redactSecrets } = await importEsm(
+                pathToFileURL(toMcpPackagePath('firewall.mjs')).toString(),
+            );
+            return lines.map((line) => {
+                return String(redactSecrets(line));
+            });
+        } catch (_error) {
+            return [];
+        }
+    });
+
     // A photograph of what the operator is actually looking at. Three callers,
     // one path: the Presenting Control's snapshot button, the chatbot's own
     // "attach a screenshot", and `owa_screenshot` for an agent driving the app
     // from outside. Everything here is a data URL, and the renderer that asked
     // is the one that decides what to do with it.
+    // `isOwnWindow` is `owa_screenshot` aimed at a window by name: a Slide
+    // Editor or Settings of its own, chosen in the help window's window
+    // picker, is photographed itself, not the main window behind it.
     onAsync(
         ipcMain,
         'main:app:capture-window',
-        async ({ screenId }: { screenId?: number }) => {
+        async (
+            {
+                screenId,
+                isOwnWindow,
+            }: { screenId?: number; isOwnWindow?: true },
+            event,
+        ) => {
+            if (screenId === undefined && isOwnWindow === true) {
+                return await captureWindowImage(
+                    BrowserWindow.fromWebContents(event.sender),
+                );
+            }
+            // A screen on a virtual display is a page, not a window.
+            const virtualCapture =
+                screenId === undefined
+                    ? undefined
+                    : getVirtualDisplays()?.captureScreen(screenId);
+            if (virtualCapture !== undefined) {
+                const image = await virtualCapture;
+                if (image === null) {
+                    // Drawn here only while an MP4 is watched: else its
+                    // Mini Screen is the picture.
+                    return await captureMiniScreenImage(
+                        appController.mainWin,
+                        screenId!,
+                    );
+                }
+                return image.toDataURL();
+            }
             return await captureWindowImage(
                 screenId === undefined
                     ? appController.mainWin
@@ -261,11 +407,13 @@ export function initEventListenerApp(appController: ElectronAppController) {
         ipcMain,
         'main:app:read-display-wallpaper',
         async ({
+            displayId,
             displayIndex,
             width,
             sizes,
             isForced,
         }: {
+            displayId?: number;
             displayIndex: number;
             width?: number;
             sizes?: DisplaySizeType[];
@@ -273,6 +421,15 @@ export function initEventListenerApp(appController: ElectronAppController) {
         }) => {
             if (isForced) {
                 forgetDisplayWallpapers();
+            }
+            // A virtual display's wallpaper is its own setting, not the OS's.
+            if (isVirtualDisplayId(displayId)) {
+                return (
+                    (await getVirtualDisplays()?.readWallpaper(
+                        displayId,
+                        width,
+                    )) ?? null
+                );
             }
             return await readDisplayWallpaper({ displayIndex, width, sizes });
         },
@@ -309,49 +466,144 @@ function onAsync<T1, T2>(
 }
 
 export function initEventScreen(appController: ElectronAppController) {
+    const mirror = getScreenMirror();
+    const virtualDisplays = getVirtualDisplays();
+    mirror?.configure(appController.mainWin.webContents);
     ipcMain.on('main:app:get-displays', (event) => {
         event.returnValue = {
             primaryDisplay: appController.settingManager.primaryDisplay,
-            displays: appController.settingManager.allDisplays,
+            // Virtual displays last: the wallpaper readers count the real
+            // monitors by their place in this list.
+            displays: [
+                ...appController.settingManager.allDisplays,
+                ...(mirror?.displays() ?? []),
+                ...(virtualDisplays?.displays() ?? []),
+            ],
         };
     });
 
     ipcMain.on('main:app:get-screens', (event) => {
-        event.returnValue = ElectronScreenController.getAllIds();
+        event.returnValue = [
+            ...new Set([
+                ...ElectronScreenController.getAllIds(),
+                ...(mirror?.showingIds() ?? []),
+                ...getVirtualScreenOutputIds(),
+            ]),
+        ];
     });
+
+    const notifyHidden = (screenId: number) => {
+        mirror?.hide(screenId);
+        appController.mainController.sendNotifyInvisibility(screenId);
+    };
+
+    // A screen window on a monitor. Closing it hides the screen, unless it is
+    // only being handed to a virtual display.
+    const openScreenWindow = async (screenId: number, displayId: number) => {
+        const isNewInstance =
+            ElectronScreenController.getInstance(screenId) === null;
+        const screenController =
+            ElectronScreenController.createInstance(screenId);
+        // Attach only once — createInstance returns a cached controller,
+        // and stacking a listener per show call duplicates the notify.
+        if (isNewInstance) {
+            screenController.win.on('close', () => {
+                screenController.destroyInstance();
+                if (!screenController.isMoving) {
+                    notifyHidden(screenId);
+                }
+            });
+        }
+        const display = appController.settingManager.getDisplayById(displayId);
+        if (display !== undefined) {
+            await screenController.listenLoading();
+            screenController.setDisplay(display);
+            appController.mainWin.focus();
+        }
+    };
+
+    // A screen on a virtual display: no window of its own, a page in the
+    // display's compositor while somebody watches.
+    const attachVirtualScreen = (screenId: number, displayId: number) => {
+        if (virtualDisplays === undefined) {
+            throw new Error('Virtual display is unavailable');
+        }
+        const controller = virtualDisplays.attachScreen(screenId, displayId);
+        controller.onClosed(() => {
+            if (!controller.isMoving) {
+                notifyHidden(screenId);
+            }
+        });
+    };
+
+    // Hands a showing screen from a monitor to a virtual display or back, or
+    // between two virtual displays. The presenter is never told it hid,
+    // because it did not.
+    const moveScreenHere = async (screenId: number, displayId: number) => {
+        mirror?.retargetOutput(screenId, displayId);
+        const virtualOutput = getVirtualScreenOutput(screenId);
+        if (isVirtualDisplayId(displayId)) {
+            if (virtualOutput !== null) {
+                virtualDisplays?.moveScreen(screenId, displayId);
+                return;
+            }
+            const screenController =
+                ElectronScreenController.getInstance(screenId);
+            if (screenController !== null) {
+                screenController.isMoving = true;
+                screenController.destroyInstance();
+                screenController.close();
+            }
+            attachVirtualScreen(screenId, displayId);
+            return;
+        }
+        if (virtualOutput !== null) {
+            virtualOutput.isMoving = true;
+            virtualOutput.close();
+        }
+        await openScreenWindow(screenId, displayId);
+    };
 
     // TODO: use shareProps.mainWin.on or shareProps.screenWin.on
     onAsync(
         ipcMain,
         'main:app:show-screen',
         async (data: ShowScreenDataType) => {
-            const isNewInstance =
-                ElectronScreenController.getInstance(data.screenId) === null;
-            const screenController = ElectronScreenController.createInstance(
-                data.screenId,
-            );
-            const display = appController.settingManager.getDisplayById(
-                data.displayId,
-            );
-            if (display !== undefined) {
-                await screenController.listenLoading();
-                screenController.setDisplay(display);
-                appController.mainWin.focus();
-            }
-            // Attach only once — createInstance returns a cached controller,
-            // and stacking a listener per show call duplicates the notify.
-            if (isNewInstance) {
-                screenController.win.on('close', () => {
+            if (
+                mirror &&
+                (await mirror.prepareOutput(data.screenId, data.displayId))
+            )
+                return;
+            if (isVirtualDisplayId(data.displayId)) {
+                if (getVirtualScreenOutput(data.screenId) !== null) {
+                    return;
+                }
+                const screenController = ElectronScreenController.getInstance(
+                    data.screenId,
+                );
+                if (screenController !== null) {
+                    screenController.isMoving = true;
                     screenController.destroyInstance();
-                    appController.mainController.sendNotifyInvisibility(
-                        data.screenId,
-                    );
-                });
+                    screenController.close();
+                }
+                attachVirtualScreen(data.screenId, data.displayId);
+                return;
             }
+            const virtualOutput = getVirtualScreenOutput(data.screenId);
+            if (virtualOutput !== null) {
+                virtualOutput.isMoving = true;
+                virtualOutput.close();
+            }
+            await openScreenWindow(data.screenId, data.displayId);
         },
     );
 
-    ipcMain.on('app:hide-screen', (_, screenId: number) => {
+    ipcMain.on('app:hide-screen', (event, screenId: number) => {
+        // A Screen Mirror host's screen shown here closes itself, not this
+        // computer's own screen that happens to share its id.
+        if (mirror?.closeIncomingOf(event.sender)) return;
+        mirror?.hide(screenId);
+        getVirtualScreenOutput(screenId)?.close();
         const screenController = ElectronScreenController.getInstance(screenId);
         if (screenController === null) {
             return;
@@ -360,6 +612,8 @@ export function initEventScreen(appController: ElectronAppController) {
         screenController.destroyInstance();
     });
     ipcMain.on('app:hide-all-screens', () => {
+        for (const id of mirror?.showingIds() ?? []) mirror?.hide(id);
+        virtualDisplays?.closeAllScreens();
         ElectronScreenController.closeAll();
     });
 
@@ -375,6 +629,58 @@ export function initEventScreen(appController: ElectronAppController) {
                 displayId: number;
             },
         ) => {
+            const virtualOutput = getVirtualScreenOutput(screenId);
+            const isToRemote = !!mirror?.isRemoteDisplay(displayId);
+            const isFromRemote = !!mirror?.isRemoteOutput(screenId);
+            // To, from or between virtual displays, all on this computer.
+            if (
+                (virtualOutput !== null || isVirtualDisplayId(displayId)) &&
+                !isToRemote &&
+                !isFromRemote
+            ) {
+                const isShowing =
+                    virtualOutput !== null ||
+                    ElectronScreenController.getInstance(screenId) !== null;
+                if (isShowing) {
+                    moveScreenHere(screenId, displayId).catch((error) => {
+                        console.error(error);
+                    });
+                }
+                return;
+            }
+            if (virtualOutput !== null && isToRemote) {
+                virtualOutput.isMoving = true;
+                virtualOutput.close();
+            }
+            if (
+                mirror?.showingIds().includes(screenId) &&
+                (isToRemote ||
+                    isFromRemote ||
+                    ElectronScreenController.getInstance(screenId) === null)
+            ) {
+                ElectronScreenController.getInstance(screenId)?.close();
+                void mirror
+                    .prepareOutput(screenId, displayId)
+                    .then((isRemote) => {
+                        if (isRemote) {
+                            return;
+                        }
+                        if (isVirtualDisplayId(displayId)) {
+                            attachVirtualScreen(screenId, displayId);
+                            return;
+                        }
+                        const targetDisplay =
+                            appController.settingManager.getDisplayById(
+                                displayId,
+                            );
+                        if (targetDisplay)
+                            ElectronScreenController.createInstance(
+                                screenId,
+                            ).setDisplay(targetDisplay);
+                    })
+                    .catch((error) => console.error(error.message));
+                return;
+            }
             const display =
                 appController.settingManager.getDisplayById(displayId);
             const screenController =
@@ -394,19 +700,31 @@ export function initEventScreen(appController: ElectronAppController) {
                 screenId,
                 isScreen,
                 data,
+                stage,
             }: ScreenMessageType & { isScreen: boolean },
         ) => {
             if (isScreen) {
+                if (
+                    mirror?.sendFeedback({ screenId, type, data }, event.sender)
+                )
+                    return;
                 appController.mainController.sendScreenMessage({
                     screenId,
                     type,
                     data,
                 });
             } else {
-                const screenController =
-                    ElectronScreenController.getInstance(screenId);
-                if (screenController !== null) {
-                    screenController.sendMessage(type, data);
+                if (mirror?.sendScreenMessage({ screenId, type, data, stage }))
+                    return;
+                const screenOutput = getScreenOutput(screenId);
+                if (screenOutput !== null) {
+                    const message = mirror?.localMessage({
+                        screenId,
+                        type,
+                        data,
+                        stage,
+                    });
+                    screenOutput.sendMessage(type, message?.data ?? data);
                 }
             }
             event.returnValue = true;
@@ -415,7 +733,8 @@ export function initEventScreen(appController: ElectronAppController) {
 
     ipcMain.on(
         'screen:app:change-bible',
-        (_, data: { screenId: number; isNext: boolean }) => {
+        (event, data: { screenId: number; isNext: boolean }) => {
+            if (mirror?.stepBible(data, event.sender)) return;
             appController.mainController.changeBible(data);
         },
     );
@@ -476,6 +795,9 @@ export function initFinderEvent() {
     );
     ipcMain.on('finder:app:close', (event) => {
         closeFindOverlay(event.sender);
+    });
+    ipcMain.on('finder:app:mounted', (event, isMounted: boolean) => {
+        setFindOverlayMounted(event.sender, isMounted === true);
     });
     ipcMain.on('finder:app:drag-start', (event, grabOffsetX: number) => {
         startFindOverlayDragging(event.sender, grabOffsetX);
@@ -687,6 +1009,35 @@ export function initEventOther(appController: ElectronAppController) {
         },
     );
 
+    // A PDF's pages as pictures for the help window to put in front of its
+    // assistant. Only a `.pdf` by name: this opens whatever path it is given
+    // in a child process, and that is all it is for.
+    onAsync(
+        ipcMain,
+        'main:app:pdf-to-chat-pages',
+        (data: {
+            filePath: string;
+            startPage?: number;
+            maxPages?: number;
+            longEdge?: number;
+            allPages?: boolean;
+        }) => {
+            if (
+                typeof data?.filePath !== 'string' ||
+                !/\.pdf$/i.test(data.filePath)
+            ) {
+                return { isSuccessful: false, message: 'Not a PDF file' };
+            }
+            return pdfToChatPages(
+                data.filePath,
+                data.startPage,
+                data.maxPages,
+                data.longEdge,
+                data.allPages,
+            );
+        },
+    );
+
     onAsync(
         ipcMain,
         'main:app:pdf-pages-count',
@@ -749,16 +1100,48 @@ export function initEventOther(appController: ElectronAppController) {
         appController.reloadAll();
     });
 
-    // The media download found the pack missing (or just installed it) in one
-    // renderer; the Settings window it is about to raise has to re-read.
+    // The media download found the pack missing, or Settings just installed
+    // it, in one renderer; the Settings window it is about to raise has to
+    // re-read, and a Screen Mirror tunnel waiting for the pack's cloudflared
+    // starts.
     ipcMain.on('all:app:extra-bin-changed', () => {
         appController.sendMessageToAll('main:app:extra-bin-changed');
+        getScreenMirror()?.retryTunnel();
     });
 
     // A bible was created, imported, reset or removed in one renderer; a
     // window still answering "not available" for its key asks again.
     ipcMain.on('all:app:bible-list-changed', () => {
         appController.sendMessageToAll('main:app:bible-list-changed');
+    });
+
+    // The help window working on an answer, for the 🤖 in every other window
+    // (`src/helper/ai/chatbotBusyHelpers.ts`). Remembered so a window opened
+    // mid-answer can ask, and cleared when the help window closes mid-answer
+    // -- a dot left on for a window that no longer exists would never go out.
+    let isChatbotBusy = false;
+    const watchedChatbotSet = new WeakSet<WebContents>();
+    const setChatbotBusy = (isBusy: boolean) => {
+        if (isBusy === isChatbotBusy) {
+            return;
+        }
+        isChatbotBusy = isBusy;
+        appController.sendMessageToAll('main:app:chatbot-busy', { isBusy });
+    };
+    ipcMain.on('all:app:chatbot-busy', (event, data: any) => {
+        if (!watchedChatbotSet.has(event.sender)) {
+            watchedChatbotSet.add(event.sender);
+            event.sender.once('destroyed', () => {
+                setChatbotBusy(false);
+            });
+        }
+        setChatbotBusy(data?.isBusy === true);
+    });
+    // Answered on the relay's own channel, to the asking window alone --
+    // never as a synchronous `returnValue`, which blocks that window until
+    // this replies.
+    ipcMain.on('all:app:get-chatbot-busy', (event) => {
+        event.sender.send('main:app:chatbot-busy', { isBusy: isChatbotBusy });
     });
 
     ipcMain.on('all:app:print', (event, htmlText?: string) => {
@@ -814,6 +1197,7 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:read-web-page',
         (data: {
             url: string;
+            bibleCatalog?: boolean;
             wantsScreenshot?: boolean;
             maxChars?: number;
             width?: number;
@@ -822,6 +1206,44 @@ export function initEventOther(appController: ElectronAppController) {
             return readWebPage(data.url, data);
         },
     );
+
+    // The chatbot's door to a custom model server (LM Studio and the like):
+    // forwarded only to an address saved in Settings, only the two calls the
+    // chatbot makes, with the key read here -- `customLlmRelayHelpers.ts`.
+    onAsync(
+        ipcMain,
+        CUSTOM_LLM_FETCH_CHANNEL,
+        (data: CustomLlmFetchRequestType, event) => {
+            return handleCustomLlmFetch(data, event.sender);
+        },
+    );
+    // Stop, sent with no reply wanted: the request's own reply settles it.
+    ipcMain.on(CUSTOM_LLM_CANCEL_CHANNEL, (_event, data) => {
+        cancelCustomLlmFetch(data?.requestId);
+    });
+    // The shared LLM registry (`llmRegistryHelpers.ts`): what main holds,
+    // keys left out, and a fresh read for the chatbot's Reload button. Both
+    // asynchronous -- the chatbot asks on mount, and a synchronous ask there
+    // once froze every window (memory `chatbot-tabs-work-independently`).
+    onAsync(ipcMain, LLM_REGISTRY_GET_CHANNEL, () => {
+        return getLlmRegistryStatus();
+    });
+    onAsync(ipcMain, LLM_REGISTRY_RELOAD_CHANNEL, async () => {
+        return await refreshLlmRegistry();
+    });
+    // A prepared problem report, posted as plain text to a registry entry
+    // that takes reports -- `llmReportHelpers.ts`. A window hands over the
+    // words and is told only whether they were taken.
+    onAsync(
+        ipcMain,
+        LLM_REPORT_POST_CHANNEL,
+        (data: LlmReportPostRequestType) => {
+            return handleLlmReportPost(data);
+        },
+    );
+    ipcMain.on(LLM_REPORT_CANCEL_CHANNEL, (_event, data) => {
+        cancelLlmReportPost(data?.requestId);
+    });
 
     ipcMain.on('all:app:check-is-window-on-top', (event) => {
         const win = BrowserWindow.fromWebContents(event.sender);
@@ -878,7 +1300,10 @@ export function initEventOther(appController: ElectronAppController) {
             }: {
                 key: string;
                 menusData: CustomMenusDataType | null;
-                options?: { isRoutedToFocusedWindow?: boolean };
+                options?: {
+                    isRoutedToFocusedWindow?: boolean;
+                    isSentToAllWindows?: boolean;
+                };
             },
         ) => {
             // Route clicks back to the renderer that contributed the items, not
@@ -894,6 +1319,9 @@ export function initEventOther(appController: ElectronAppController) {
             // window in front is the one that meant to press it.
             const isRoutedToFocusedWindow =
                 options?.isRoutedToFocusedWindow === true;
+            // ...or to every window at once, when each has its own answer to
+            // the same press (Help → Tips of the Day: every page's own tip).
+            const isSentToAllWindows = options?.isSentToAllWindows === true;
             setCustomMenusData(
                 key,
                 menusData === null
@@ -901,6 +1329,10 @@ export function initEventOther(appController: ElectronAppController) {
                     : {
                           menusData,
                           clickMenu: (menuData: any) => {
+                              if (isSentToAllWindows) {
+                                  sendMenuClickedToAllWindows(menuData);
+                                  return;
+                              }
                               sendMenuClicked(
                                   menuData,
                                   isRoutedToFocusedWindow
@@ -944,6 +1376,16 @@ export function initEventOther(appController: ElectronAppController) {
             } else if (type === 'clear') {
                 appController.settingManager.clearClientSettings();
                 returnValue = true;
+            }
+            // The one client setting this process acts on while it runs.
+            // Read here rather than on a channel of its own, so the OS request
+            // follows whoever wrote it -- the header's icon or a Clear.
+            if (
+                type === 'clear' ||
+                (key === STAY_AWAKE_SETTING_NAME &&
+                    (type === 'set' || type === 'delete'))
+            ) {
+                appController.mainController.syncStayAwake();
             }
             event.returnValue = returnValue;
         },

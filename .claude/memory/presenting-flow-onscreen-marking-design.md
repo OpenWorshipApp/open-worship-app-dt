@@ -1,8 +1,11 @@
 ---
 name: presenting-flow-onscreen-marking-design
-description: The presenting flow tree marks live rows through ONE shared screen subscription with a shared debounce — per-row useScreenUpdateEvents blew up with "Maximum update depth exceeded"
+description: "The presenting flow tree marks live rows through ONE shared screen subscription with a shared debounce — per-row useScreenUpdateEvents blew up with \"Maximum update depth exceeded\""
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 829e5085-b5de-4acc-939c-409012ccdd19
+  modified: 2026-10-02T20:17:53.115Z
 ---
 
 `src/presenting-flow/presentingFlowOnScreenHelpers.ts` deliberately does NOT use
@@ -24,9 +27,15 @@ re-renders only when ITS OWN answer flips. Three rules that look wrong out of co
   presenting no presenting flow file is opened at all. It is checked once by the two callers,
   never per file.
 
-Preset matching is inherently imprecise and that is accepted: marquee rows match on TEXT,
-`time`/`camera` on id, `web` on filePath, but **countdown / stopwatch / quick-text can
-only match "that slot is occupied"**, so all rows of that kind mark while any one is live.
+Preset matching: marquee and message rows match on TEXT (every message up, not the
+first of the same length), `time`/`camera` on id, `web`/`video`/`image` on filePath.
+**Countdown / stopwatch / quick-text match on a ROW KEY** (2026-10-02): the screen keeps
+nothing of the row (a countdown's time is worked out at show time, a quick text holds
+rendered html), so `applyForegroundDragData` stamps `rowKey = toForegroundRowKey(data)` on
+what it puts up and the matcher compares it. They used to match "that slot is occupied",
+which lit every countdown row while ANY countdown was up, the panel's own included — the
+same "status for something that is not on the screen" defect as a session's Hide row
+listing another session's overlay. A panel-started one carries no key and lights no row.
 `foregroundOnScreenMatcherMap` is keyed by `ForegroundDragTargetType` on purpose — a new
 foreground widget becomes a compile error rather than a row that silently never marks.
 

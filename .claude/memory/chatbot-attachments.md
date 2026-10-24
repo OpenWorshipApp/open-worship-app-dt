@@ -8,6 +8,26 @@ metadata:
   modified: 2026-09-12T18:01:22.495Z
 ---
 
+**A fourth kind since 2026-10-13: `file`, a PDF that is carried and never
+read** (the user, of problem reports: _and accept files like markdown pdf_).
+`genFileAttachment` keeps the name, the size and the path — NO bytes, not
+even in the live map — and a sentence for the model saying the file is there
+and cannot be opened, so an answer never pretends to have read it. A problem
+report reads it off the disk at the press that sends it
+([[chatbot-report-button]]). It needs a path (a drop or the paperclip) and is
+refused over 5 MB, the size a report carries in one file.
+
+**Every attachment has a number since 2026-10-13** (the user, over four
+chips all called _my screen_: _attachment should have id like `1` `2` `3`
+... so user can mention in the text_). `numberAttachments` gives the tab's
+next when it is attached; it is stable — removing chip 2 leaves 1 · 3 and the
+next is 4 — because the words beside it may already say _in 3_. Drawn on the
+chip, kept with the message, told to the model by `toAttachmentLegend` (a
+picture by its ORDER among those sent: a model gets pictures with no names),
+and carried into a report's file list as _(attachment 2)_. My first badge
+drew its digit in `--chat-panel`, which on a glassy window is a 7% wash — a
+blank disc in the screenshot; `--chat-solid` is the opaque one.
+
 A chatbot question can carry a picture, a text file or a control the user
 POINTED at — paperclip, paste, drop, **📷** (a picture of the app window) or
 **🎯** (an outline follows the mouse and the next click chooses). Added
@@ -51,20 +71,21 @@ backlog is a bill for guessing instead.
   400, and `describeLlmError` reads that as an unreachable service — it would
   tell a volunteer their internet is down. `checkCanSeeImages` is an allowlist
   per PROVIDER, because a model chosen through *More models…* has no entry to
-  carry a per-model flag.
+  carry a per-model flag (a custom server's row is the exception: its own
+  `canSeeImages` tick decides).
 - **`owa_screenshot` and `owa_pick_element` are on the server and NOT in the
   model's list** (`modelTools.mjs`, see [[mcp-model-hidden-tools]]). The window
   calls them on a button press; an outside agent still gets the full set. That
-  filter is also the choke point [[agent-access-mcp-chatbot]] wants for pruning
-  the 29 chrome-devtools tools.
+  filter is also the choke point [[agent-access-mcp-chatbot]] wanted, and since
+  2026-09-09 it withholds every chrome-devtools tool from the model.
 - **The picker swallows the choosing click in the CAPTURE phase**, mousedown as
   well as click — a Bootstrap dropdown opens on mousedown — so pointing at
-  *Clear Bible* to ask what it does never clears the bible.
+  *Clear Long Text* to ask what it does never clears the bible.
 
 - **Every chip is pressable** and shows what it stands for: a control is rung
   by its STORED SELECTOR (`owa_highlight_selector`, the third client-only tool)
   rather than by its words, a picture opens full-window, and anything with a
-  `filePath` opens its folder. The path is persisted where the bytes are not.
+  `filePath` opens the preview (below), its folder one press on. The path is persisted where the bytes are not.
 - **The chip's name comes from `labelPartsOf`, not `describe`'s `label`.** The
   matcher JOINS every way an element is named, which is right for matching and
   unreadable on a chip: the settings button comes back "Setting Setting".

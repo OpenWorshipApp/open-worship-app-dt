@@ -1,8 +1,11 @@
 ---
 name: appprovider-mock-node-env
-description: There is NO appProvider mock any more — a test that reaches it must `vi.mock` it in its own file, and it still touches `document` at module scope
+description: "There is NO appProvider mock any more — a test that reaches it must `vi.mock` it in its own file, and it still touches `document` at module scope"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:05:56.040Z
 ---
 
 `src/server/appProvider.ts` reads the Electron preload bridge off `globalThis.provider` and
@@ -29,7 +32,8 @@ zero tests remain there), server 4, bible-list/note 4, app-document-list 4,
 slide-editor/canvas 4, setting/bible-setting 3, app-modal 3, helper 3, plus
 `src/lang/data/{en,km}/index.test.ts` and `src/lang/langHelpers.test.ts` — so the
 km-translation completeness tests are gone, which matters given `tran()` throws on a
-missing key. What survived: tests that mock appProvider in-file, and every
+missing key. (Since rebuilt: `c24d3a43`, 2026-09-26, put a presenting-flow suite
+back, and `src/lang/tranKeyCoverage.test.ts` now gates km keys.) What survived: tests that mock appProvider in-file, and every
 `electron/*.test.ts` (separate config, never used the fake). Even a freshly written
 test isn't safe from it: `src/app-modal/floatingWidgetModalLayer.test.tsx` was added
 2026-08-16 (`3f7253ac`) and the prune deleted it a week later — the modal-layer
@@ -37,18 +41,19 @@ invariants are unit-untested today. The same commit added
 `server.deps.inline: ['open-lyric', /monaco-editor/]` to `vitest.config.ts`;
 `package.json` test scripts were unchanged.
 
-**Why it matters:** with nothing on `globalThis.provider`, the module throws
-`TypeError: Cannot read properties of undefined (reading 'isPageReader')` at line 239 while
-the test file is still being IMPORTED. Every test in that file dies at once and the stack
-points at `appProvider`, not at the import that reached it. A node-env test hits the same
-wall one step earlier with `ReferenceError: document is not defined`.
+**Why it matters:** with nothing on `globalThis.provider`, every preload field on it is `undefined`
+(the module itself stopped throwing on `isPageReader` on 2026-09-27: `providerSource?.`), so
+the first module to read one at load throws — e.g. `pathSeparator = appProvider.pathUtils.sep`
+in `storageFileHelpers.ts` — while the test file is still being IMPORTED. Every test in that
+file dies at once and the stack points at that reader, not at the import that reached it. A
+node-env test hits a wall one step earlier, in `appProvider` itself, with
+`ReferenceError: document is not defined`.
 
 **How to apply:**
 
 - A new test whose import graph reaches `appProvider` must stub it in its own file:
   `vi.mock('../server/appProvider', () => ({ default: { …only what it calls… } }))`.
-  100 of the current 183 src test files do exactly this (12 test files added since the
-  prune; the suite grew back past its pre-prune 171) — copy the nearest one rather than
+  176 of the 440 src test files did exactly this on 2026-10-11 — copy the nearest one rather than
   inventing a shape. `src/others/CacheManager.test.ts` (hoisted, mutable flags) and
   `src/bible-list/Bible.test.ts` are good models.
 - `src/server/appProvider.test.ts` is the exception that must NOT mock it: it sets

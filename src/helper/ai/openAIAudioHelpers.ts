@@ -37,9 +37,25 @@ export type SpeakableTextDataType = {
     filePath: string;
 };
 
-export async function textToSpeech(
+/**
+ * One generation in flight per audio file, joined by every later caller.
+ *
+ * `unlocking` below serializes the WRITE, but a caller that arrives while the
+ * file is being generated waits for the lock, gives up when `unlocking`'s
+ * escape hatch opens, and then runs its own paid request CONCURRENTLY with the
+ * first. A double-click on a verse fires several of these calls at once, which
+ * is how one verse was billed three times while two callers sat under a 60 s
+ * spinner and the console logged `still locked after 600 attempts`.
+ *
+ * Short-lived by construction: an entry exists only while the request is on the
+ * wire and is dropped in the `finally`, so nothing accumulates as verses are
+ * played.
+ */
+const inFlightMap = new Map<string, Promise<string | null>>();
+
+async function generateSpeech(
     { text, locale, filePath }: SpeakableTextDataType,
-    isForce = false,
+    isForce: boolean,
 ) {
     return unlocking('tts-' + filePath, async () => {
         try {
@@ -79,6 +95,35 @@ export async function textToSpeech(
         }
         return null;
     });
+}
+
+export async function textToSpeech(
+    data: SpeakableTextDataType,
+    isForce = false,
+) {
+    const key = 'tts-' + data.filePath;
+    while (true) {
+        const inFlight = inFlightMap.get(key);
+        if (inFlight === undefined) {
+            break;
+        }
+        if (!isForce) {
+            // The same file is already being written, which is all this caller
+            // wants; its own request would only race the running one.
+            return inFlight;
+        }
+        // A regeneration waits for the run it would otherwise race and then
+        // does its own -- two concurrent writes to one file is what the lock
+        // could not prevent once it gave up waiting.
+        await inFlight;
+    }
+    const promise = generateSpeech(data, isForce);
+    inFlightMap.set(key, promise);
+    try {
+        return await promise;
+    } finally {
+        inFlightMap.delete(key);
+    }
 }
 
 export async function bibleTextToSpeech(

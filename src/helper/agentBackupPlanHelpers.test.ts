@@ -60,6 +60,16 @@ describe('a backup id', () => {
             expect(checkIsAgentBackupId(id)).toBe(false);
         }
         expect(readAgentBackupFileName('settings.json')).toBeNull();
+        // The copy of a binary file a change keeps (MC-52).
+        expect(
+            readAgentBackupFileName('20260914-151623456-k3x9.blob-0.bin'),
+        ).toEqual({ id: '20260914-151623456-k3x9', part: 'blob' });
+        expect(
+            readAgentBackupFileName('20260914-151623456-k3x9.blob-0.json'),
+        ).toEqual({ id: '20260914-151623456-k3x9', part: 'blob' });
+        expect(
+            readAgentBackupFileName('20260914-151623456-k3x9.blob.bin'),
+        ).toBeNull();
     });
 });
 

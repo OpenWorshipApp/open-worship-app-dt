@@ -1,6 +1,19 @@
 import ShowingScreenIconComp from '../_screen/preview/ShowingScreenIcon';
 import { tran } from '../lang/langHelpers';
 
+const ITEM_NAME_LIMIT = 40;
+
+/** An item's own words, short enough for a control's name. */
+function toShortItemName(itemTitle: string | undefined) {
+    const text = (itemTitle ?? '').replace(/\s+/g, ' ').trim();
+    if (text === '') {
+        return null;
+    }
+    return text.length > ITEM_NAME_LIMIT
+        ? `${text.slice(0, ITEM_NAME_LIMIT).trimEnd()}…`
+        : text;
+}
+
 /**
  * What this component has on a screen right now, and the way to take it off.
  *
@@ -35,10 +48,29 @@ export default function ScreensRendererComp<T>({
     if (showingScreenIdDataList.length === 0) {
         return null;
     }
+    const countOnScreenMap = new Map<number, number>();
+    for (const [screenId] of showingScreenIdDataList) {
+        countOnScreenMap.set(
+            screenId,
+            (countOnScreenMap.get(screenId) ?? 0) + 1,
+        );
+    }
+    const shownOnScreenMap = new Map<number, number>();
     return (
         <div className="fg-onscreen" title={title}>
             {showingScreenIdDataList.map(([screenId, data], i) => {
                 const itemTitle = genTitle ? genTitle(data) : undefined;
+                const nth = (shownOnScreenMap.get(screenId) ?? 0) + 1;
+                shownOnScreenMap.set(screenId, nth);
+                // Two messages (or clocks) on one screen were two chips both
+                // NAMED `Hide Messages 0`, told apart only by a tooltip: a
+                // screen reader read the same words twice, and an assistant
+                // aiming by name could not pick one. The second name says
+                // which thing comes off.
+                const itemName =
+                    (countOnScreenMap.get(screenId) ?? 0) > 1
+                        ? `: ${toShortItemName(itemTitle) ?? nth}`
+                        : '';
                 const onClick = handleForegroundHiding.bind(
                     null,
                     screenId,
@@ -64,7 +96,7 @@ export default function ScreensRendererComp<T>({
                         // times -- the doubled-label shape that once had a
                         // model pressing a badge instead of the toggle.
                         title={itemTitle}
-                        aria-label={`${buttonText} ${screenId}`}
+                        aria-label={`${buttonText} ${screenId}${itemName}`}
                         key={screenId + '-' + i}
                         onClick={onClick}
                     >

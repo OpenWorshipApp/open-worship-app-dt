@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { toKeystroke } from './guide.mjs';
 import {
   getReaderDemo,
   READER_DEMO_IDS,
@@ -7,7 +8,7 @@ import {
 } from './readerDemos.mjs';
 
 describe('Reader demos', () => {
-  it('keeps the existing ids while expanding to 99 Reader lessons', () => {
+  it('keeps the existing ids while expanding to 106 Reader lessons', () => {
     expect(READER_DEMO_IDS).toEqual(
       expect.arrayContaining([
         'reader-font-larger',
@@ -71,10 +72,12 @@ describe('Reader demos', () => {
         'reader-view-fullscreen',
         'reader-view-widgets',
         'reader-view-reset-widgets',
+        'reader-switch-split-pane',
+        'reader-find-verse-assistant',
       ]),
     );
     expect(new Set(READER_DEMO_IDS).size).toBe(READER_DEMO_LIST.length);
-    expect(READER_DEMO_LIST).toHaveLength(99);
+    expect(READER_DEMO_LIST).toHaveLength(106);
     expect(READER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(true);
     expect(
       READER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),
@@ -131,10 +134,42 @@ describe('Reader demos', () => {
       'reader-notes-new-file',
       (value) => labels[value] ?? value,
     );
+    // The panel's own name stays English on the page (data-widget-name), so
+    // the variant that can land in a translated window keeps it English, and
+    // comes last because the renderer's inline fallback takes the last find.
     expect(demo.steps[0].finds).toEqual([
       'Bible Notes > More Options',
       'NOTES > OPTIONS',
+      'Bible Notes > OPTIONS',
     ]);
+  });
+
+  it('aims list tips at their own panel, since Bibles and Bible Notes share the words', () => {
+    expect(getReaderDemo('reader-filter-notes').steps[0].finds).toEqual([
+      'Bible Notes > Filter by name',
+    ]);
+    expect(getReaderDemo('reader-sort-notes').steps[0].finds).toEqual([
+      'Bible Notes > Sort',
+    ]);
+    expect(
+      getReaderDemo('reader-bibles-find-list').steps.map((step) => step.find),
+    ).toEqual(['Bibles > Filter by name', 'Bibles > Sort', undefined]);
+    expect(getReaderDemo('reader-copy-passage').steps[0].find).toBe(
+      'Lookup > Copy',
+    );
+  });
+
+  it('leaves the untranslated path editor title untranslated (TP-01)', () => {
+    const translate = (value) => {
+      if (value === 'Show path editor') {
+        throw new Error('no km key');
+      }
+      return value;
+    };
+    for (const id of ['reader-bibles-folder', 'reader-notes-folder']) {
+      const demo = getReaderDemo(id, translate);
+      expect(demo.steps[0].finds[0]).toMatch(/ > Show path editor$/);
+    }
   });
 
   it('keeps mixed Reader lessons actionable only where a control is named', () => {
@@ -205,6 +240,16 @@ describe('Reader demos', () => {
     ]);
   });
 
+  it('routes the Bible Audio auto-play lesson through Settings', () => {
+    const demo = getReaderDemo('reader-ai-audio');
+    expect(demo.steps[0]).toMatchObject({
+      find: 'Setting',
+      action: 'click',
+    });
+    expect(demo.steps[0].text).toContain('Others');
+    expect(demo.steps[0].text).toContain('Auto Play Audio AI when available');
+  });
+
   it('keeps native-menu lessons self-guided instead of auto-running them', () => {
     const demo = getReaderDemo('reader-view-relaunch');
     expect(demo.steps).toEqual([
@@ -212,5 +257,37 @@ describe('Reader demos', () => {
         text: 'View > Relaunch restarts the whole Open Worship app, not just the Reader. A confirmation protects against an accidental click.',
       },
     ]);
+  });
+
+  it('presses the real keys that split and move between passages', () => {
+    const demo = getReaderDemo('reader-switch-split-pane');
+    expect(demo.category).toBe('Reader shortcuts');
+    // A click on "Split horizontal" can split a passage that is not the
+    // selected one; the key always splits the selected one and keeps it
+    // selected on the right, so Left must come next.
+    expect(demo.steps.map((step) => step.press ?? step.kind)).toEqual([
+      'Ctrl+Shift+S',
+      'Ctrl+Shift+Left',
+      'Ctrl+Shift+Right',
+      'look',
+    ]);
+    expect(demo.steps.some((step) => step.find !== undefined)).toBe(false);
+    const keys = demo.steps
+      .filter((step) => step.press)
+      .map((step) => toKeystroke(step.press));
+    expect(keys.map(({ key }) => key)).toEqual([
+      'S',
+      'ArrowLeft',
+      'ArrowRight',
+    ]);
+    for (const keystroke of keys) {
+      expect(keystroke).toMatchObject({
+        ctrlKey: true,
+        shiftKey: true,
+        altKey: false,
+        metaKey: false,
+      });
+    }
+    expect(demo.steps.at(-1).text).toContain('Command+Shift');
   });
 });

@@ -2,6 +2,7 @@ import type { DOMAttributes, CSSProperties } from 'react';
 
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import type { BibleItemRenderingType } from './bibleScreenComps';
+import type { LongTextColumnType } from './screenLongTextTypeHelpers';
 import { type TransitionEffectType } from './transitionEffectHelpers';
 
 export type CustomEvents<K extends string> = {
@@ -26,20 +27,44 @@ export type StyleAnimType = {
 
 export type PTFEventType = 'update';
 
-export const bibleDataTypeList = ['bible-item', 'lyric'] as const;
+// What `ScreenLongTextManager` holds for a screen: a Bible passage, or a long
+// text in several languages. One layer, so one of them at a time. The Bible's
+// own shape is the one it has always been persisted and sent in.
+export const bibleDataTypeList = ['bible-item', 'long-text'] as const;
 export type BibleDataType = (typeof bibleDataTypeList)[number];
 export type BibleItemDataType = {
     locale: string;
-    type: BibleDataType;
+    type: 'bible-item';
     bibleItemData?: {
         renderedList: BibleItemRenderingType[];
         bibleItem: BibleItemType;
     };
     scroll: number;
+    // The selected row's key: a KJV verse key for a Bible, a section key for a
+    // long text. The name is the wire's, and stays.
+    selectedKJVVerseKey: string | null;
+    // How many chapters of a passage crossing chapters are on the screen:
+    // `BIBLE_SHOWN_CHAPTER_COUNT` at first, one more per press of the
+    // operator's `...`. Absent for a one-chapter passage. Beside
+    // `bibleItemData` rather than in it: that object's values are read as
+    // the passage itself.
+    shownChapterCount?: number;
+};
+export type LongTextItemDataType = {
+    locale: string;
+    type: 'long-text';
+    longTextData: {
+        renderedList: LongTextColumnType[];
+        // Who put it up -- the panel session -- so that one, and nothing else,
+        // marks it on screen, restyles it and takes it down.
+        sourceId: string;
+    };
+    scroll: number;
     selectedKJVVerseKey: string | null;
 };
+export type LongTextDataType = BibleItemDataType | LongTextItemDataType;
 export type BibleListType = {
-    [key: string]: BibleItemDataType;
+    [key: string]: LongTextDataType;
 };
 
 export const scaleTypeList = [
@@ -73,12 +98,67 @@ export type BackgroundSrcType = {
     height?: number;
     scaleType?: ImageScaleType;
     extraStyle?: CSSProperties;
+    /**
+     * This background's own transition, else its Background tab's, stamped
+     * on the presenter by the `backgroundSrc` setter from
+     * `backgroundTransitionHelpers`. Absent (never `undefined`) means the
+     * screen's `Background:` effect.
+     */
+    transitionEffect?: TransitionEffectType;
 };
 export type BackgroundSrcListType = {
     [key: string]: BackgroundSrcType;
 };
 
-export type ForegroundCountdownDataType = {
+/**
+ * Which of the two foreground layers ONE overlay is drawn in.
+ *
+ * Every foreground widget can sit BEHIND the slide and the Bible text -- over
+ * the background, under the words -- which is what a logo, a falling-snow clip
+ * or a clock on a lyric slide wants: the words stay readable on top of it. The
+ * screen mounts a second `#foreground-behind` root for those, between the
+ * background and the slide (`ScreenForegroundManager.createDivContainer` picks
+ * the root by this flag).
+ *
+ * It is per OVERLAY, not per screen: the Properties panel of each widget
+ * session carries its own checkbox, and a behind logo and an in-front alert
+ * are on the same screen at once. Written only when true -- see
+ * `withForegroundLayer`.
+ */
+export type ForegroundLayerDataType = {
+    isBehind?: boolean;
+    /**
+     * How this overlay comes in and goes out when its session, or its whole
+     * component, overrides the screen's `Foreground:` effect
+     * (`foregroundTransitionHelpers`). Absent -- the key itself, never
+     * `undefined` -- means the screen's.
+     */
+    transitionEffect?: TransitionEffectType;
+};
+
+/**
+ * The datum with its layer set, and with NO `isBehind` key at all when it is in
+ * front. An overlay restored from disk has no such key, and
+ * `checkAreObjectsEqual` counts keys -- writing `isBehind: false` would tear
+ * every one of them down and rebuild it on the first update after a restore.
+ *
+ * `T extends object`, not `T extends ForegroundLayerDataType`: that type is all
+ * optional (a "weak" type), so a datum literal with no `isBehind` of its own
+ * fails it and TypeScript falls back to the bare constraint.
+ */
+export function withForegroundLayer<T extends object>(
+    data: T,
+    isBehind: boolean,
+): T & ForegroundLayerDataType {
+    const newData = { ...data } as T & ForegroundLayerDataType;
+    delete newData.isBehind;
+    if (isBehind) {
+        newData.isBehind = true;
+    }
+    return newData;
+}
+
+export type ForegroundCountdownDataType = ForegroundLayerDataType & {
     /**
      * Which SESSION of the widget put this up. A session is one saved set-up of
      * the panel -- its own words or numbers and its own Properties -- and it is
@@ -87,16 +167,43 @@ export type ForegroundCountdownDataType = {
      * whichever session owned it; an entry with no id is the Default session's.
      */
     id?: string;
+    /**
+     * The stored run-sheet row that put this up, as `toForegroundRowKey`. Only
+     * a row sets it, and the run sheet marks a row live by it.
+     */
+    rowKey?: string;
+    /** While running, the moment it reaches zero (and starts counting over). */
     dateTime: Date;
+    /**
+     * A DURATION countdown's full length, which Reset winds back to. Only a
+     * duration countdown can be started, paused and reset; one counting to a
+     * date & time has no length of its own and always runs.
+     */
+    durationMillisecond?: number;
+    /**
+     * Set while the countdown is STOPPED -- shown but not started yet, or
+     * paused: the time it reads, in milliseconds, negative once over. Absent
+     * while it runs, which is when `dateTime` counts. See
+     * `timerStateHelpers`.
+     */
+    pausedMillisecond?: number;
     extraStyle?: CSSProperties;
 };
-export type ForegroundStopwatchDataType = {
+export type ForegroundStopwatchDataType = ForegroundLayerDataType & {
     /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
     id?: string;
+    /** The run-sheet row that put this up -- see `ForegroundCountdownDataType`. */
+    rowKey?: string;
+    /** While running, the moment it counts from. */
     dateTime: Date;
+    /**
+     * Set while the stopwatch is STOPPED -- shown but not started yet (0), or
+     * paused: the time it reads, in milliseconds. See `timerStateHelpers`.
+     */
+    pausedMillisecond?: number;
     extraStyle?: CSSProperties;
 };
-export type ForegroundTimeDataType = {
+export type ForegroundTimeDataType = ForegroundLayerDataType & {
     id: string;
     timezoneMinuteOffset: number;
     title: string | null;
@@ -109,7 +216,7 @@ export type MarqueePositionType = (typeof marqueePositionList)[number];
 export const DEFAULT_MARQUEE_SPEED_PERCENTAGE = 100;
 export const MIN_MARQUEE_SPEED_PERCENTAGE = 10;
 export const MAX_MARQUEE_SPEED_PERCENTAGE = 1000;
-export type ForegroundMarqueeDataType = {
+export type ForegroundMarqueeDataType = ForegroundLayerDataType & {
     /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
     id?: string;
     text: string;
@@ -128,8 +235,7 @@ export type ForegroundMarqueeDataType = {
  *
  * The text is PLAIN, and that is a safety property as much as a speed one:
  * it is rendered as a React text child, so the markup is escaped by the
- * renderer and never passes through `sanitizeHtml`, which is still a no-op
- * placeholder in a renderer that has node integration.
+ * renderer without parsing HTML.
  */
 /**
  * Words put over whatever else is live, and left there until somebody takes
@@ -143,11 +249,10 @@ export type ForegroundMarqueeDataType = {
  * operator must never be racing a countdown they cannot see.
  *
  * The text is PLAIN, and that is a safety property as much as a speed one: it
- * is rendered as a React text child, so the renderer escapes it and it never
- * passes through `sanitizeHtml`, which is still a no-op placeholder in a
- * renderer that has node integration.
+ * is rendered as a React text child, so the renderer escapes it without
+ * parsing HTML.
  */
-export type ForegroundMessageDataType = {
+export type ForegroundMessageDataType = ForegroundLayerDataType & {
     /**
      * Which EDITOR in the panel put this up. A session holds several message
      * editors, each with its own Show button, so several messages can be on a
@@ -176,17 +281,27 @@ export type ForegroundMessageDataType = {
      */
     intervalSecond: number | null;
     extraStyle?: CSSProperties;
+    /**
+     * The messages ONE session put up one under another share this key, and
+     * the screen lays them out by their measured heights
+     * (`layOutMessageStack`). The `marginTop` the presenter stamps is only
+     * the first frame's estimate: it counts typed lines, and a line the
+     * screen WRAPS is one it cannot count.
+     */
+    stackKey?: string;
 };
 
-export type ForegroundQuickTextDataType = {
+export type ForegroundQuickTextDataType = ForegroundLayerDataType & {
     /** The widget SESSION that put this up -- see `ForegroundCountdownDataType`. */
     id?: string;
+    /** The run-sheet row that put this up -- see `ForegroundCountdownDataType`. */
+    rowKey?: string;
     htmlText: string;
     timeSecondDelay: number;
     timeSecondToLive: number;
     extraStyle?: CSSProperties;
 };
-export type ForegroundCameraDataType = {
+export type ForegroundCameraDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
      * widget's own Properties, not on the screen's Tr: row -- that one
@@ -207,7 +322,19 @@ export type ForegroundCameraDataType = {
     label?: string;
     extraStyle?: CSSProperties;
 };
-export type ForegroundWebDataType = {
+/**
+ * Another screen's live picture shown over this one -- the Foreground panel's
+ * Screen Show. `id` is the SOURCE screen's id: the screen whose window is
+ * captured, never the screen this datum sits on. A screen never shows itself,
+ * and two screens never show each other (`screenShowGraphHelpers`).
+ */
+export type ForegroundScreenDataType = ForegroundLayerDataType & {
+    /** See `ForegroundCameraDataType`. */
+    transitionEffect?: TransitionEffectType;
+    id: number;
+    extraStyle?: CSSProperties;
+};
+export type ForegroundWebDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
      * widget's own Properties, not on the screen's Tr: row -- that one
@@ -229,7 +356,7 @@ export type ForegroundWebDataType = {
  * blend mode rides, so there is no `scaleType` here: a background fills the
  * screen, an overlay is aimed by hand.
  */
-export type ForegroundVideoDataType = {
+export type ForegroundVideoDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
      * widget's own Properties, not on the screen's Tr: row -- that one
@@ -256,7 +383,7 @@ export type ForegroundVideoDataType = {
     /** 0-100, the clip's own level. Only meaningful with `isSoundOn`. */
     soundVolume?: number;
 };
-export type ForegroundImageDataType = {
+export type ForegroundImageDataType = ForegroundLayerDataType & {
     /**
      * How this overlay comes in and goes out. Chosen per SESSION in the
      * widget's own Properties, not on the screen's Tr: row -- that one
@@ -277,6 +404,7 @@ export type ForegroundDataType = {
     marqueeBottomData: ForegroundMarqueeDataType | null;
     quickTextData: ForegroundQuickTextDataType | null;
     cameraDataList: ForegroundCameraDataType[];
+    screenDataList: ForegroundScreenDataType[];
     webDataList: ForegroundWebDataType[];
     videoDataList: ForegroundVideoDataType[];
     imageDataList: ForegroundImageDataType[];
@@ -337,36 +465,6 @@ export type FocusDataType = {
     isContrast: boolean;
 };
 
-/**
- * The BLANKING shape for a room -- solid bars that cover the edges of the
- * projector's picture so it stops short of an organ pipe, a window frame, or
- * the bottom of a screen that only comes half way down.
- *
- * Two things it is NOT, both deliberate:
- *
- * - It is not the Focus spotlight. That one is a live pointer, re-aimed by
- *   hand, and it is gone the moment it is switched off. This is ROOM GEOMETRY:
- *   measured once, right for as long as the projector sits where it sits.
- * - It is therefore not content, so `ScreenManager.clear()` does NOT touch it.
- *   `Clear All` mid-service must not hand the congregation a picture spilling
- *   onto the wall above the screen, and an operator who pressed the panic key
- *   is the last person who should have to re-measure a mask.
- *
- * Each inset is a percentage of the screen's own width or height, so one mask
- * is right whatever resolution the display reports and survives the projector
- * being swapped. Cost at rest is zero: four static divs, no timer, no
- * animation, nothing that repaints once painted.
- */
-export type MaskDataType = {
-    topPercentage: number;
-    rightPercentage: number;
-    bottomPercentage: number;
-    leftPercentage: number;
-    // `#rrggbb`. Black for a dark room; a projector with poor black level
-    // sometimes reads better masked in the wall's own colour.
-    color: string;
-};
-
 export type BoundsType = {
     x: number;
     y: number;
@@ -394,11 +492,14 @@ export const screenTypeList = [
     'init',
     'effect',
     'background-video-time',
+    // A background video's sound, for a screen on a virtual display only.
+    'background-video-sound',
     'vary-app-document-video-time',
     'sync-scroll-percentage',
     'draw',
     'focus',
-    'mask',
+    // Another screen's state, carried to a screen that shows it (Screen Show).
+    'screen-show',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {
@@ -407,6 +508,22 @@ export type BasicScreenMessageType = {
 };
 export type ScreenMessageType = BasicScreenMessageType & {
     screenId: number;
+};
+
+/**
+ * Screen N's state on its way to a screen that shows it -- the payload of a
+ * `screen-show` message. A snapshot is N's WHOLE state and replaces what the
+ * receiver held; anything else is one change as it happens. N's size rides
+ * along because the receiver draws N at N's own size and scales it into its
+ * box.
+ */
+export type ScreenShowPayloadType = {
+    sourceScreenId: number;
+    width: number;
+    height: number;
+    stage: number;
+    isSnapshot: boolean;
+    messages: ScreenMessageType[];
 };
 
 export type SetDisplayType = {

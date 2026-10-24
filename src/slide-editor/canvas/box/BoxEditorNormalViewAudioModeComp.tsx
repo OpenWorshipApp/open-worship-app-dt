@@ -8,7 +8,7 @@ import { PREVIEW_ONLY_ATTR } from '../../../helper/constants';
 import { checkIsUrlMediaSource } from '../../../helper/mediaSourceHelpers';
 import { calcAudioControlScale } from '../canvasHelpers';
 
-export function BoxEditorNormalAudioRender() {
+export function BoxEditorNormalAudioRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemAudioPropsType>();
     try {
         CanvasItemAudio.validate(props);

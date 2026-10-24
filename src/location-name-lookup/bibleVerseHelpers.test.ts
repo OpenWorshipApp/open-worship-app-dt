@@ -7,6 +7,8 @@ const h = vi.hoisted(() => ({
     appliedList: [] as { bibleKey: string; target: any }[],
     // Which bible key each `BibleItem` factory was asked for.
     askedBibleKeys: [] as string[],
+    // The chapter windows the sections were read in.
+    sectionRangeList: [] as ({ start: number; count: number } | null)[],
 }));
 
 vi.mock('../bible-list/BibleItem', () => ({
@@ -15,6 +17,19 @@ vi.mock('../bible-list/BibleItem', () => ({
             h.askedBibleKeys.push(bibleKey);
             if (verseKey === 'BAD') {
                 return null;
+            }
+            if (verseKey === 'JHN 18:33-23:2') {
+                return {
+                    bibleKey,
+                    target: {
+                        bookKey: 'JHN',
+                        chapter: 18,
+                        verseStart: 33,
+                        verseEnd: 2,
+                        chapterEnd: 23,
+                    },
+                    toTitle: async () => 'John 18:33-23:2',
+                };
             }
             return {
                 bibleKey,
@@ -31,6 +46,27 @@ vi.mock('../bible-list/BibleItem', () => ({
 }));
 vi.mock('../bible-list/bibleRenderHelpers', () => ({
     bibleRenderHelper: {
+        // One section per chapter asked for, from the 18th.
+        toTextSectionList: async (
+            _bibleKey: string,
+            target: any,
+            _isSkipExtra: boolean,
+            range?: { start: number; count: number },
+        ) => {
+            h.sectionRangeList.push(range ?? null);
+            const start = range?.start ?? 0;
+            const count =
+                range?.count ?? target.chapterEnd - target.chapter + 1;
+            return Array.from({ length: count }, (_, i) => {
+                const chapter = target.chapter + start + i;
+                return {
+                    chapter,
+                    localeChapter: `${chapter}`,
+                    title: `John ${chapter}`,
+                    text: `text ${chapter}`,
+                };
+            });
+        },
         toLocaleBook: async (bibleKey: string, bookKey: string) => {
             h.askedBibleKeys.push(bibleKey);
             if (bookKey === 'ZZZ') {
@@ -64,12 +100,15 @@ vi.mock('../helper/helpers', () => ({ cloneJson: (value: any) => value }));
 vi.mock('../lang/langHelpers', () => ({ DEFAULT_LANG_CODE: 'en' }));
 vi.mock('./lookupLangHelpers', () => ({
     getSelectedLookupLangCode: () => h.langCode,
-    useSelectedLookupLangCode: () => h.langCode,
+    useLookupLangCode: () => h.langCode,
 }));
 
 import {
     openVerseInBibleLookup,
     shortToReferenceTitle,
+    shortToVerseCopyData,
+    shortToVerseData,
+    shortToVerseSectionList,
     shortToVerseTitle,
     toLookupVerseBibleKey,
 } from './bibleVerseHelpers';
@@ -88,6 +127,42 @@ beforeEach(() => {
     h.currentBibleKey = null;
     h.appliedList = [];
     h.askedBibleKeys = [];
+    h.sectionRangeList = [];
+});
+
+// JHN 18:33-23:2, six chapters: the panel reads three, then one per press,
+// and only Copy reads them all.
+describe('a passage across chapters in a verse panel', () => {
+    test('is read three chapters deep, a section per chapter', async () => {
+        const verseData = await shortToVerseData('KJV', 'JHN 18:33-23:2');
+        expect(verseData).toMatchObject({
+            title: 'John 18:33-23:2',
+            chapterCount: 6,
+            shownChapterCount: 3,
+            text: 'John 18\ntext 18\nJohn 19\ntext 19\nJohn 20\ntext 20',
+        });
+        expect(verseData?.sectionList?.map(({ chapter }) => chapter)).toEqual([
+            18, 19, 20,
+        ]);
+        expect(h.sectionRangeList).toEqual([{ start: 0, count: 3 }]);
+    });
+
+    test('reads one more chapter at a time', async () => {
+        const sectionList = await shortToVerseSectionList(
+            'KJV',
+            'JHN 18:33-23:2',
+            3,
+        );
+        expect(sectionList?.map(({ chapter }) => chapter)).toEqual([21]);
+        expect(h.sectionRangeList).toEqual([{ start: 3, count: 1 }]);
+    });
+
+    test('is copied whole, every chapter under its title', async () => {
+        const copyData = await shortToVerseCopyData('KJV', 'JHN 18:33-23:2');
+        expect(copyData?.sectionList).toHaveLength(6);
+        expect(copyData?.text.split('\n')[0]).toBe('John 18');
+        expect(h.sectionRangeList).toEqual([null]);
+    });
 });
 
 describe('which bible a stored reference is read back in', () => {
@@ -148,6 +223,19 @@ describe('opening a citation in the reader', () => {
         await openVerseInBibleLookup(genViewController('KHOV'), 'EZK 27:11');
 
         expect(h.appliedList[0].bibleKey).toBe('KHOV');
+    });
+
+    // A panel opened in a bible of its own -- a cross reference, a found
+    // verse -- opens the verse in the reader in exactly that bible.
+    test('opens in the panel own bible whatever the lookup setting', async () => {
+        await openVerseInBibleLookup(
+            genViewController('NIV'),
+            'EZK 27:11',
+            'KHOV',
+        );
+
+        expect(h.appliedList[0].bibleKey).toBe('KHOV');
+        expect(h.askedBibleKeys).toContain('KHOV');
     });
 
     test('reports a reference it cannot resolve instead of applying it', async () => {

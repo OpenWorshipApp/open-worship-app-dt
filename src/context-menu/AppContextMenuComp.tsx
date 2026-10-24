@@ -13,6 +13,7 @@ import {
     APP_CONTEXT_MENU_ID,
 } from './appContextMenuHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import FullscreenPortalComp from '../others/FullscreenPortalComp';
 
 export const elementDivider = (
     <hr className="w-100" style={{ padding: 0, margin: 0 }} />
@@ -25,7 +26,11 @@ function ContextMenuItemComp({
     item: ContextMenuItemType;
     onClose: () => void;
 }>) {
-    const isDisabled = (item.disabled ?? false) || item.onSelect === undefined;
+    const isSectionHeader = item.isSectionHeader ?? false;
+    const isDisabled =
+        isSectionHeader ||
+        (item.disabled ?? false) ||
+        item.onSelect === undefined;
     const itemRef = useAppCurrentRef(item);
     const isDisabledRef = useAppCurrentRef(isDisabled);
     const onCloseRef = useAppCurrentRef(onClose);
@@ -64,7 +69,11 @@ function ContextMenuItemComp({
         <div
             className={
                 `${APP_CONTEXT_MENU_ITEM_CLASS} d-flex w-100 app-overflow-hidden` +
-                `${isDisabled ? ' disabled' : ''}`
+                (isSectionHeader
+                    ? ' app-context-menu-section-header'
+                    : isDisabled
+                      ? ' disabled'
+                      : '')
             }
             style={item.style ?? {}}
             role="menuitem"
@@ -78,15 +87,20 @@ function ContextMenuItemComp({
             onKeyDown={handleKeyDown}
         >
             {item.childBefore || null}
-            {/* Wraps rather than ellipsises. The menu is capped at 210px, so
-                a single nowrap line silently cut any label longer than that --
-                and the one place it bit was the display chooser, where the
-                resolution is exactly what tells two screens apart and exactly
-                what fell off the end ("*(1921141341): 1494x934 (pri..."). The
-                row carries the full text as its `title` either way, but a
-                projector control should be readable without hovering it. */}
+            {/* One line, ellipsised; a label that does not fit gets a muted
+                second line scrolling its whole text (`data-marquee-text`,
+                set by `markOverflowingMenuLabels`). The menu is capped at
+                210px, and a nowrap line alone cut the end off the display
+                chooser's labels -- the resolution, exactly what tells two
+                screens apart ("*(1921141341): 1494x934 (pri..."). Wrapping
+                instead turned a Bible's copyright title into a six-line block.
+                The scrolling line is a pseudo-element, not a second copy of
+                the label: an agent and the menu's own typeahead read a row by
+                its `textContent`, which must stay the label once. */}
             <div className="app-context-menu-item-label flex-fill">
-                {item.menuElement}
+                <div className="app-context-menu-item-text">
+                    {item.menuElement}
+                </div>
             </div>
             {item.keyboardShortcut !== undefined
                 ? genContextMenuItemShortcutKey(item.keyboardShortcut)
@@ -107,36 +121,47 @@ export default function AppContextMenuComp() {
         return null;
     }
     return (
-        <div
-            id={APP_CONTEXT_MENU_ID}
-            onClick={handleClose}
-            onContextMenu={handleClose}
-        >
+        <FullscreenPortalComp>
             <div
-                tabIndex={0}
-                ref={(div) => {
-                    if (div === null) {
-                        return;
-                    }
-                    setPositionMenu(div, data.event, data.options);
-                    if (data.options?.shouldAutoFocusContainer) {
-                        div.focus();
-                    }
-                }}
-                className="app-context-menu app-focusable"
-                role="menu"
+                id={APP_CONTEXT_MENU_ID}
+                onClick={handleClose}
+                onContextMenu={handleClose}
             >
-                {data.items.map((item, i) => {
-                    return (
-                        <ContextMenuItemComp
-                            key={i}
-                            item={item}
-                            onClose={data.onClose}
-                        />
-                    );
-                })}
+                <div
+                    tabIndex={0}
+                    ref={(div) => {
+                        if (div === null) {
+                            return;
+                        }
+                        setPositionMenu(div, data.event, data.options);
+                        // Once more a frame later: a label's own font
+                        // (`data-locale-ff`) lands after mount, through the
+                        // async `applyFontFamily` observer, and can change
+                        // which labels overflow and so the menu's height.
+                        requestAnimationFrame(() => {
+                            if (div.isConnected) {
+                                setPositionMenu(div, data.event, data.options);
+                            }
+                        });
+                        if (data.options?.shouldAutoFocusContainer) {
+                            div.focus();
+                        }
+                    }}
+                    className="app-context-menu app-focusable"
+                    role="menu"
+                >
+                    {data.items.map((item, i) => {
+                        return (
+                            <ContextMenuItemComp
+                                key={i}
+                                item={item}
+                                onClose={data.onClose}
+                            />
+                        );
+                    })}
+                </div>
             </div>
-        </div>
+        </FullscreenPortalComp>
     );
 }
 

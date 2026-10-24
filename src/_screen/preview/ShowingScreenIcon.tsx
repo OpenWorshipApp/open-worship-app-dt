@@ -1,3 +1,4 @@
+import { tran } from '../../lang/langHelpers';
 import { genColorFromScreenId } from './screenIdColorHelpers';
 
 // Re-exported from where it has always been imported: the colour itself had to
@@ -20,7 +21,7 @@ export default function ShowingScreenIconComp({
                 'd-flex align-items-center px-1' +
                 ` ${onClick ? 'app-caught-hover-pointer' : ''}`
             }
-            title={title ?? `Screen: ${screenId}`}
+            title={title ?? `${tran('Screen')}: ${screenId}`}
             data-screen-id={screenId}
             onClick={
                 onClick

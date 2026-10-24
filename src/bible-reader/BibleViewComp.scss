@@ -58,6 +58,11 @@ $bible-view-actions-fade: 20px;
     // passage's own type size, so the row follows it.
     height: auto;
     min-height: var(--app-action-rail-line);
+    // Never shrunk by the card's column. An explicit `min-height` replaces a
+    // flex item's automatic content floor, so a chapter longer than the pane
+    // squeezed this row down to that 34px and the title, at any larger type
+    // size, was cut off top and bottom.
+    flex: none;
     // What the header paints over the card: Bootstrap's cap wash on the
     // reader's `.card-header`, nothing on the lookup's. The actions' ground
     // re-composes the same two layers, because the wash is translucent -- a
@@ -79,6 +84,47 @@ $bible-view-actions-fade: 20px;
       flex: none;
     }
 
+    .bible-view-group-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+
+      .color-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 14px;
+        font-size: 12px;
+      }
+    }
+
+    .bible-view-sync-scroll {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 14px;
+      padding: 0;
+      border: 0;
+      border-radius: 3px;
+      background: transparent;
+      color: var(--app-ink-dim);
+      font-size: 11px;
+
+      &[aria-pressed='true'] {
+        color: var(--app-accent);
+        background: var(--bs-tertiary-bg);
+      }
+
+      &:hover,
+      &:focus-visible {
+        color: var(--app-ink);
+        outline: 1px solid currentColor;
+      }
+    }
+
     // The title's parts keep their size and the reference gives way: a long
     // passage ellipsizes rather than scrolling sideways out of sight.
     .bible-view-title-material {
@@ -91,6 +137,12 @@ $bible-view-actions-fade: 20px;
 
       > .bible-view-title-lead {
         flex: none;
+        opacity: 0.35;
+
+        &:hover,
+        &:has(:focus-visible) {
+          opacity: 1;
+        }
       }
     }
 

@@ -4,13 +4,21 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { BOT_FOCUS_KEYS } from './botFocus.mjs';
+import { toManualPageBody } from './manualPage.mjs';
+import { toPassageKey } from './passageMatch.mjs';
 import {
-    flattenQuestions,
-    listQuestionPageIds,
-    loadQuestionPages,
-    matchQuestions,
-    outlineQuestions,
+  flattenQuestions,
+  listQuestionPageIds,
+  loadQuestionOverlays,
+  loadQuestionPages,
+  matchQuestions,
+  outlineQuestions,
 } from './questions.mjs';
+import {
+  applyQuestionOverlay,
+  findTemplateSample,
+  toEnglishTemplateAsk,
+} from './questionMatch.mjs';
 
 // Unlike `help.test.mjs`, this runs against the REAL corpus on purpose. The
 // files are the deliverable -- a question with no recipe, a duplicate id or a
@@ -23,367 +31,683 @@ const ROWS = flattenQuestions(PAGES);
 // from `electron-build/knowledge` -- that bundle is a build output, and a test
 // that needs one built cannot fail on a machine that has not built it.
 function listManualIds() {
-    const root = join(import.meta.dirname, '..', '..', 'docs', 'manual-sources');
-    const ids = [];
-    const walk = (dir) => {
-        for (const entry of readdirSync(dir, { withFileTypes: true })) {
-            const path = join(dir, entry.name);
-            if (entry.isDirectory()) {
-                walk(path);
-                continue;
-            }
-            if (!entry.name.endsWith('.md')) {
-                continue;
-            }
-            const found = readFileSync(path, 'utf8').match(/^id:\s*(\S+)\s*$/m);
-            if (found !== null) {
-                ids.push(found[1]);
-            }
-        }
-    };
-    walk(root);
-    return ids;
+  const root = join(import.meta.dirname, '..', '..', 'docs', 'manual-sources');
+  const ids = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(path);
+        continue;
+      }
+      if (!entry.name.endsWith('.md')) {
+        continue;
+      }
+      const found = readFileSync(path, 'utf8').match(/^id:\s*(\S+)\s*$/m);
+      if (found !== null) {
+        ids.push(found[1]);
+      }
+    }
+  };
+  walk(root);
+  return ids;
+}
+
+/** Every manual page on disk by its id, as the words a passage is matched on. */
+function readManualPageKeys() {
+  const root = join(import.meta.dirname, '..', '..', 'docs', 'manual-sources');
+  const pages = new Map();
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(path);
+        continue;
+      }
+      if (!entry.name.endsWith('.md')) {
+        continue;
+      }
+      const content = readFileSync(path, 'utf8');
+      const found = content.match(/^id:\s*(\S+)\s*$/m);
+      if (found !== null) {
+        pages.set(found[1], toPassageKey(toManualPageBody(content)));
+      }
+    }
+  };
+  walk(root);
+  return pages;
 }
 
 describe('the question corpus', () => {
-    // Not a hardcoded list: adding a page file used to mean editing this
-    // assertion, the renderer's imports and the tool's enum before the file
-    // counted for anything. What the assertion is really for is that every
-    // file on disk actually LOADED -- `loadQuestionPages` swallows a parse
-    // error per file, so a corrupt one silently leaves the corpus and nothing
-    // else would notice.
-    it('loads every page file on disk', () => {
-        expect(PAGES.map((page) => page.page).sort()).toEqual(
-            [...listQuestionPageIds()].sort(),
+  // Not a hardcoded list: adding a page file used to mean editing this
+  // assertion, the renderer's imports and the tool's enum before the file
+  // counted for anything. What the assertion is really for is that every
+  // file on disk actually LOADED -- `loadQuestionPages` swallows a parse
+  // error per file, so a corrupt one silently leaves the corpus and nothing
+  // else would notice.
+  it('loads every page file on disk', () => {
+    expect(PAGES.map((page) => page.page).sort()).toEqual(
+      [...listQuestionPageIds()].sort(),
+    );
+  });
+
+  // The invariant the tool's `page` enum is built on: it names pages from
+  // the file names without parsing them.
+  it('names each file after the page inside it', () => {
+    expect(listQuestionPageIds().sort()).toEqual(
+      PAGES.map((page) => page.page).sort(),
+    );
+  });
+
+  it('gives every question a unique id', () => {
+    const ids = ROWS.map((row) => row.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('writes every question as a question a volunteer would type', () => {
+    for (const row of ROWS) {
+      expect(row.text.length).toBeGreaterThan(8);
+      if (row.isTemplate) {
+        // A template is the start of a sentence the user finishes, so
+        // it is an instruction rather than a question -- and it has to
+        // carry a blank for them to fill, or there was nothing to
+        // finish and it should have been asked outright. An example
+        // address, an example verse reference or a quoted example title
+        // is such a blank: the user overtypes the example with their own.
+        expect(row.text, row.id).toMatch(
+          /example\.com|https:\/\/\S+\.xml\b|\.\.\.|<[^>]+>|\b[A-Z][a-z]+ \d+:\d+\b|"[^"]{2,}"/,
         );
-    });
+        continue;
+      }
+      expect(row.text.endsWith('?'), row.id).toBe(true);
+    }
+  });
 
-    // The invariant the tool's `page` enum is built on: it names pages from
-    // the file names without parsing them.
-    it('names each file after the page inside it', () => {
-        expect(listQuestionPageIds().sort()).toEqual(
-            PAGES.map((page) => page.page).sort(),
-        );
-    });
+  it('backs every question with a recipe or a live tool', () => {
+    // The whole point of the corpus: a suggested question the assistant
+    // cannot answer is worse than no suggestion at all.
+    for (const row of ROWS) {
+      const { recipe, tools } = row.resources;
+      expect(
+        Boolean(recipe) || (tools ?? []).length > 0,
+        `${row.id} has no recipe and no tool`,
+      ).toBe(true);
+    }
+  });
 
-    it('gives every question a unique id', () => {
-        const ids = ROWS.map((row) => row.id);
-        expect(new Set(ids).size).toBe(ids.length);
-    });
+  it('gives a how-to with no page a tool that does it, not one that only looks', () => {
+    // 2026-10-12: "How do I keep an external agent connected to the
+    // development copy…" was filed with no page and two tools that read
+    // (the search, the app's state). The search answers its words with the
+    // Screen Mirror pages, the note that does answer is a developer's and is
+    // never quoted to a volunteer, and a local model asked it twice wrote no
+    // usable answer -- the one row of 407. A how-to is answered from a page
+    // or by a tool that does the thing; "go and search" is what a row is
+    // there to replace.
+    const READING_TOOLS = new Set([
+      'owa_help_search',
+      'owa_help_page',
+      'owa_app_state',
+      'owa_list_screens',
+      'owa_list_ui',
+      'owa_find_ui',
+      'owa_list_questions',
+      'owa_guide_status',
+      'owa_tran',
+      'owa_screenshot',
+    ]);
+    for (const row of ROWS) {
+      const { recipe, tools } = row.resources;
+      if (recipe || row.kind !== 'howto') {
+        continue;
+      }
+      expect(
+        (tools ?? []).some((name) => {
+          return !READING_TOOLS.has(name);
+        }),
+        `${row.id} is a how-to with no page and only tools that look`,
+      ).toBe(true);
+    }
+  });
 
-    it('writes every question as a question a volunteer would type', () => {
-        for (const row of ROWS) {
-            expect(row.text.length).toBeGreaterThan(8);
-            if (row.isTemplate) {
-                // A template is the start of a sentence the user finishes, so
-                // it is an instruction rather than a question -- and it has to
-                // carry a blank for them to fill, or there was nothing to
-                // finish and it should have been asked outright. An example
-                // address or an example verse reference is such a blank: the
-                // user overtypes the example with their own.
-                expect(row.text, row.id).toMatch(
-                    /example\.com|\.\.\.|<[^>]+>|\b[A-Z][a-z]+ \d+:\d+\b/,
-                );
-                continue;
-            }
-            expect(row.text.endsWith('?'), row.id).toBe(true);
+  it('points every recipe at a real manual id', () => {
+    for (const row of ROWS) {
+      const ids = [
+        row.resources.recipe,
+        ...(row.resources.related ?? []),
+      ].filter(Boolean);
+      for (const id of ids) {
+        expect(id, `${row.id} -> ${id}`).toMatch(/^W-\d{2}[a-z]?$/);
+      }
+    }
+  });
+
+  // The same "shape is not existence" hole, one field along. A `tools` entry
+  // was checked for being non-empty and never for naming a tool that exists,
+  // so a typo would have handed the model a resource it cannot call -- the
+  // corpus promising an answer again.
+  //
+  // Read out of the source rather than off a live server: `owaTools.mjs`
+  // imports chrome-devtools-mcp, and a test that needs the app running is a
+  // test that gets skipped.
+  it('points every named tool at one this package registers', () => {
+    const mainSource = readFileSync(
+      join(import.meta.dirname, 'owaTools.mjs'),
+      'utf8',
+    );
+    // ...and every module it hands the server to (`registerBibleXmlTool`):
+    // a tool grown big enough for a file of its own is still this package's.
+    const source = [
+      mainSource,
+      ...[
+        ...mainSource.matchAll(
+          /import \{ register[A-Za-z]+ \} from '\.\/([A-Za-z]+\.mjs)'/g,
+        ),
+      ].map((one) => {
+        return readFileSync(join(import.meta.dirname, one[1]), 'utf8');
+      }),
+    ].join('\n');
+    // Both spellings: most tools name themselves at `registerTool`, but
+    // `owa_lyric_file` and `owa_slide_file` are one registration in a loop
+    // over two descriptors, so their names appear only as a `name:` field.
+    // Reading just the first spelling made two real tools invisible here,
+    // and this test would have called a corpus entry citing them a typo.
+    const registered = new Set([
+      ...[...source.matchAll(/registerTool\(\s*'([a-z_]+)'/g)].map((one) => {
+        return one[1];
+      }),
+      ...[...source.matchAll(/name:\s*'(owa_[a-z_]+)'/g)].map((one) => {
+        return one[1];
+      }),
+    ]);
+    expect(registered.size, 'no tools found in owaTools.mjs').toBeGreaterThan(
+      10,
+    );
+    for (const row of ROWS) {
+      for (const name of row.resources.tools ?? []) {
+        // Only this package's own tools can be checked here;
+        // chrome-devtools' are registered in another package.
+        if (!name.startsWith('owa_')) {
+          continue;
         }
-    });
+        expect(registered.has(name), `${row.id} -> ${name}`).toBe(true);
+      }
+    }
+  });
 
-    it('backs every question with a recipe or a live tool', () => {
-        // The whole point of the corpus: a suggested question the assistant
-        // cannot answer is worse than no suggestion at all.
-        for (const row of ROWS) {
-            const { recipe, tools } = row.resources;
-            expect(
-                Boolean(recipe) || (tools ?? []).length > 0,
-                `${row.id} has no recipe and no tool`,
-            ).toBe(true);
-        }
-    });
-
-    it('points every recipe at a real manual id', () => {
-        for (const row of ROWS) {
-            const ids = [
-                row.resources.recipe,
-                ...(row.resources.related ?? []),
-            ].filter(Boolean);
-            for (const id of ids) {
-                expect(id, `${row.id} -> ${id}`).toMatch(/^W-\d{2}[a-z]?$/);
-            }
-        }
-    });
-
-    // The same "shape is not existence" hole, one field along. A `tools` entry
-    // was checked for being non-empty and never for naming a tool that exists,
-    // so a typo would have handed the model a resource it cannot call -- the
-    // corpus promising an answer again.
-    //
-    // Read out of the source rather than off a live server: `owaTools.mjs`
-    // imports chrome-devtools-mcp, and a test that needs the app running is a
-    // test that gets skipped.
-    it('points every named tool at one this package registers', () => {
-        const source = readFileSync(
-            join(import.meta.dirname, 'owaTools.mjs'),
-            'utf8',
-        );
-        // Both spellings: most tools name themselves at `registerTool`, but
-        // `owa_lyric_file` and `owa_slide_file` are one registration in a loop
-        // over two descriptors, so their names appear only as a `name:` field.
-        // Reading just the first spelling made two real tools invisible here,
-        // and this test would have called a corpus entry citing them a typo.
-        const registered = new Set([
-            ...[...source.matchAll(/registerTool\(\s*'([a-z_]+)'/g)].map(
-                (one) => {
-                    return one[1];
-                },
-            ),
-            ...[...source.matchAll(/name:\s*'(owa_[a-z_]+)'/g)].map((one) => {
-                return one[1];
-            }),
-        ]);
-        expect(registered.size, 'no tools found in owaTools.mjs').toBeGreaterThan(
-            10,
-        );
-        for (const row of ROWS) {
-            for (const name of row.resources.tools ?? []) {
-                // Only this package's own tools can be checked here;
-                // chrome-devtools' are registered in another package.
-                if (!name.startsWith('owa_')) {
-                    continue;
-                }
-                expect(registered.has(name), `${row.id} -> ${name}`).toBe(true);
-            }
-        }
-    });
-
-    // Shape is not existence, and reading it as if it were cost four questions
-    // their answer: `W-01b` matched the pattern above for months while the
-    // manual generator's own heading regex accepted digits only, so the recipe
-    // was silently folded into W-01's page and no `W-01b` document was ever
-    // written. `owa_help_page` could not open it and a walkthrough started on
-    // it could not run -- the corpus promised an answer that did not exist.
-    it('points every recipe at a manual page that IS on disk', () => {
-        const onDisk = new Set(listManualIds());
-        expect(onDisk.size, 'no manual pages found').toBeGreaterThan(0);
-        for (const row of ROWS) {
-            const ids = [
-                row.resources.recipe,
-                ...(row.resources.related ?? []),
-            ].filter(Boolean);
-            for (const id of ids) {
-                expect(
-                    onDisk.has(id),
-                    `${row.id} -> ${id} has no page under docs/manual-sources`,
-                ).toBe(true);
-            }
-        }
-    });
-
-    it('gives every question keywords a user might type instead', () => {
-        for (const row of ROWS) {
-            expect(row.keywords.length, `${row.id}`).toBeGreaterThan(0);
-        }
-    });
-
-    it('leads each window with its own curated four', () => {
-        // The ratchet: these are the four the window has always opened on, and
-        // a corpus edit that quietly demotes them is a regression in the first
-        // thing a volunteer ever sees.
+  // Shape is not existence, and reading it as if it were cost four questions
+  // their answer: `W-01b` matched the pattern above for months while the
+  // manual generator's own heading regex accepted digits only, so the recipe
+  // was silently folded into W-01's page and no `W-01b` document was ever
+  // written. `owa_help_page` could not open it and a walkthrough started on
+  // it could not run -- the corpus promised an answer that did not exist.
+  it('points every recipe at a manual page that IS on disk', () => {
+    const onDisk = new Set(listManualIds());
+    expect(onDisk.size, 'no manual pages found').toBeGreaterThan(0);
+    for (const row of ROWS) {
+      const ids = [
+        row.resources.recipe,
+        ...(row.resources.related ?? []),
+      ].filter(Boolean);
+      for (const id of ids) {
         expect(
-            matchQuestions('', { focus: 'presenter', limit: 4 }).map((row) => {
-                return row.text;
-            }),
-        ).toEqual([
-            'How do I present a Bible verse?',
-            'How do I add a background?',
-            // Took the clear button's place deliberately, 2026-09-03: the
-            // clear buttons are large and labelled in the header, and nothing
-            // else in the window says the assistant can write a song for you.
-            'Can you make a song from words I paste in?',
-            // And this took the screen check's place, 2026-09-04. It is the
-            // only chip that is a TEMPLATE: it fills the box rather than
-            // asking, because the address in it is the user's to supply.
-            // "Is any screen showing right now?" is still one press away in
-            // the suggestion list, and the projector question a volunteer
-            // actually asks mid-service -- "nothing is showing" -- is the
-            // troubleshooting starter, which every window carries.
-            'Create a lyric file from https://example.com/lyric/amazing_grace',
-        ]);
+          onDisk.has(id),
+          `${row.id} -> ${id} has no page under docs/manual-sources`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('names a passage only in words its page really carries', () => {
+    // `passage` is the row's own word on which part of a long page answers
+    // it. A lead reworded in the manual would leave it matching nothing, in
+    // silence, and the question back on a guess among sixty passages.
+    const pages = readManualPageKeys();
+    let named = 0;
+    for (const row of ROWS) {
+      const passage = row.resources?.passage;
+      if (passage === undefined) {
+        continue;
+      }
+      named++;
+      const page = pages.get(row.resources.recipe);
+      expect(
+        page !== undefined,
+        `${row.id} names a passage and no recipe with a page`,
+      ).toBe(true);
+      expect(
+        ` ${page} `.includes(` ${toPassageKey(passage)} `),
+        `${row.id}: "${passage}" is not on ${row.resources.recipe}`,
+      ).toBe(true);
+    }
+    expect(named).toBeGreaterThan(0);
+  });
+
+  it('gives every question keywords a user might type instead', () => {
+    for (const row of ROWS) {
+      expect(row.keywords.length, `${row.id}`).toBeGreaterThan(0);
+    }
+  });
+
+  it('writes every resource in the shape its readers expect', () => {
+    // The files are JSON nobody type-checks, and the schema beside them is
+    // documentation. `find`, `menu` and `shortcut` are read as TEXT -- by
+    // the window, cutting a long page to what rides on the question and
+    // starting a walkthrough at the control, and by the search, choosing the
+    // passage to quote. Four rows carried `find` as a LIST (2026-10-12): on
+    // the help window's own page, 41 000 characters, picking one of them
+    // answered "trim is not a function". And three rows had a `kind` the
+    // schema does not name.
+    const KINDS = ['howto', 'where', 'what', 'state', 'fix'];
+    for (const row of ROWS) {
+      for (const field of ['recipe', 'find', 'passage', 'menu', 'shortcut']) {
+        const value = row.resources?.[field];
         expect(
-            matchQuestions('', { focus: 'reader', limit: 4 }).map((row) => {
-                return row.text;
-            }),
-        ).toEqual([
-            'Where do I type John 3:16?',
-            'The words are too small. Can you help me?',
-            'I lost the passage I was reading. How do I get it back?',
-            'How do I put two Bible versions side by side?',
-        ]);
-    });
+          value === undefined ||
+            (typeof value === 'string' && value.trim().length > 0),
+          `${row.id} ${field}`,
+        ).toBe(true);
+      }
+      for (const field of ['related', 'tools']) {
+        const value = row.resources?.[field];
+        expect(
+          value === undefined ||
+            (Array.isArray(value) &&
+              value.every((one) => {
+                return typeof one === 'string' && one.length > 0;
+              })),
+          `${row.id} ${field}`,
+        ).toBe(true);
+      }
+      expect(KINDS, row.id).toContain(row.kind);
+    }
+  });
 
-    it('offers starters in every window', () => {
-        const starters = ROWS.filter((row) => {
-            return row.starter;
-        });
-        expect(starters.length).toBeGreaterThan(8);
-        // Every window, not just the two the app used to be. A focus with no
-        // page file of its own still has to open on four chips -- `common` and
-        // `troubleshooting` are `focus: null` and reach all of them, which is
-        // what makes a window viable before its own questions are written.
-        for (const focus of BOT_FOCUS_KEYS) {
-            expect(matchQuestions('', { focus, limit: 4 }).length, focus).toBe(
-                4,
-            );
-        }
-    });
+  it('leads each window with its own curated four', () => {
+    // The ratchet: these are the four the window has always opened on, and
+    // a corpus edit that quietly demotes them is a regression in the first
+    // thing a volunteer ever sees.
+    expect(
+      matchQuestions('', { focus: 'presenter', limit: 4 }).map((row) => {
+        return row.text;
+      }),
+    ).toEqual([
+      'How do I present a Bible verse?',
+      'How do I add a background?',
+      // Took the clear button's place deliberately, 2026-09-03: the
+      // clear buttons are large and labelled in the header, and nothing
+      // else in the window says the assistant can write a song for you.
+      'Can you make a song from words I paste in?',
+      // And this took the screen check's place, 2026-09-04. It is the
+      // only chip that is a TEMPLATE: it fills the box rather than
+      // asking, because the address in it is the user's to supply.
+      // "Is any screen showing right now?" is still one press away in
+      // the suggestion list, and the projector question a volunteer
+      // actually asks mid-service -- "nothing is showing" -- is the
+      // troubleshooting starter, which every window carries.
+      // And this took the link template's place, 2026-10-03, at the
+      // user's ask: a song by its NAME is what a volunteer types
+      // first, and it runs as it stands -- the app's own public-domain
+      // collection holds Amazing Grace, so the press is a real song
+      // under a Create button, no address to supply. The link chip is
+      // still in More….
+      'Create a lyric file for song "Amazing Grace"',
+    ]);
+    expect(
+      matchQuestions('', { focus: 'reader', limit: 4 }).map((row) => {
+        return row.text;
+      }),
+    ).toEqual([
+      'Where do I type John 3:16?',
+      'The words are too small. Can you help me?',
+      'I lost the passage I was reading. How do I get it back?',
+      'How do I put two Bible versions side by side?',
+    ]);
+  });
 
-    // Every page file names a window that actually exists. The key is spliced
-    // into `page: "<key>.html"` by the tools, so a typo here is not a wrong
-    // label -- it is a tool call that can never match an open page.
-    it('names only windows that are declared', () => {
-        for (const page of PAGES) {
-            const declared =
-                page.focus === null || page.focus === undefined
-                    ? []
-                    : [page.focus].flat();
-            for (const focus of declared) {
-                expect(BOT_FOCUS_KEYS, page.page).toContain(focus);
-            }
-        }
+  it('offers starters in every window', () => {
+    const starters = ROWS.filter((row) => {
+      return row.starter;
     });
+    expect(starters.length).toBeGreaterThan(8);
+    // Every window, not just the two the app used to be. A focus with no
+    // page file of its own still has to open on four chips -- `common` and
+    // `troubleshooting` are `focus: null` and reach all of them, which is
+    // what makes a window viable before its own questions are written.
+    for (const focus of BOT_FOCUS_KEYS) {
+      expect(matchQuestions('', { focus, limit: 4 }).length, focus).toBe(4);
+    }
+  });
 
-    // The rule the schema states and nothing used to enforce. Ranks are
-    // compared across every file a focus can see, so two files sharing a focus
-    // and a rank leave the order to sort stability -- which is how
-    // `troubleshooting`'s rank 5 quietly tied with the reader's fifth chip.
-    it('keeps every starter rank unique within a window', () => {
-        for (const focus of BOT_FOCUS_KEYS) {
-            const seen = new Map();
-            for (const row of ROWS) {
-                const declared =
-                    row.focus === null || row.focus === undefined
-                        ? null
-                        : [row.focus].flat();
-                if (
-                    !row.starter ||
-                    row.starterRank === null ||
-                    (declared !== null && !declared.includes(focus))
-                ) {
-                    continue;
-                }
-                const clash = seen.get(row.starterRank);
-                expect(
-                    clash,
-                    `${focus}: rank ${row.starterRank} on both ` +
-                        `${clash} and ${row.id}`,
-                ).toBe(undefined);
-                seen.set(row.starterRank, row.id);
-            }
+  // Every page file names a window that actually exists. The key is spliced
+  // into `page: "<key>.html"` by the tools, so a typo here is not a wrong
+  // label -- it is a tool call that can never match an open page.
+  it('names only windows that are declared', () => {
+    for (const page of PAGES) {
+      const declared =
+        page.focus === null || page.focus === undefined
+          ? []
+          : [page.focus].flat();
+      for (const focus of declared) {
+        expect(BOT_FOCUS_KEYS, page.page).toContain(focus);
+      }
+    }
+  });
+
+  // The rule the schema states and nothing used to enforce. Ranks are
+  // compared across every file a focus can see, so two files sharing a focus
+  // and a rank leave the order to sort stability -- which is how
+  // `troubleshooting`'s rank 5 quietly tied with the reader's fifth chip.
+  it('keeps every starter rank unique within a window', () => {
+    for (const focus of BOT_FOCUS_KEYS) {
+      const seen = new Map();
+      for (const row of ROWS) {
+        const declared =
+          row.focus === null || row.focus === undefined
+            ? null
+            : [row.focus].flat();
+        if (
+          !row.starter ||
+          row.starterRank === null ||
+          (declared !== null && !declared.includes(focus))
+        ) {
+          continue;
         }
-    });
+        const clash = seen.get(row.starterRank);
+        expect(
+          clash,
+          `${focus}: rank ${row.starterRank} on both ` +
+            `${clash} and ${row.id}`,
+        ).toBe(undefined);
+        seen.set(row.starterRank, row.id);
+      }
+    }
+  });
 });
 
 describe('matchQuestions', () => {
-    it('answers an empty query with starters, which is what the box shows', () => {
-        const results = matchQuestions('', { limit: 5 });
-        expect(results).toHaveLength(5);
-        for (const row of results) {
-            expect(row.starter).toBe(true);
-        }
-    });
+  it('answers an empty query with starters, which is what the box shows', () => {
+    const results = matchQuestions('', { limit: 5 });
+    expect(results).toHaveLength(5);
+    for (const row of results) {
+      expect(row.starter).toBe(true);
+    }
+  });
 
-    it('finds the question the user is typing the words of', () => {
-        const [top] = matchQuestions('how do I present a bible verse');
-        expect(top.text).toBe('How do I present a Bible verse?');
-    });
+  it('finds the question the user is typing the words of', () => {
+    const [top] = matchQuestions('how do I present a bible verse');
+    expect(top.text).toBe('How do I present a Bible verse?');
+  });
 
-    it('completes a half-typed word', () => {
-        const [top] = matchQuestions('backg');
-        expect(top.text).toBe('How do I add a background?');
-    });
+  it('completes a half-typed word', () => {
+    const [top] = matchQuestions('backg');
+    expect(top.text).toBe('How do I add a background?');
+  });
 
-    it('prefers a whole word to a longer word that starts the same', () => {
-        // "song" is a prefix of "SongSelect will not connect", which a plain
-        // startsWith/includes ranks above every question about songs.
-        const [top] = matchQuestions('song');
-        expect(top.text).toBe("How do I put a song's lyrics on the screen?");
-    });
+  it('prefers a whole word to a longer word that starts the same', () => {
+    // "song" is a prefix of "SongSelect will not connect", which a plain
+    // startsWith/includes ranks above every question about songs.
+    const [top] = matchQuestions('song');
+    expect(top.text).toBe("How do I put a song's lyrics on the screen?");
+  });
 
-    it('understands what a volunteer calls things', () => {
-        const texts = matchQuestions('projector', { limit: 5 }).map((row) => {
-            return row.text;
-        });
-        expect(texts.join(' ')).toMatch(/screen|display/i);
+  it('understands what a volunteer calls things', () => {
+    const texts = matchQuestions('projector', { limit: 5 }).map((row) => {
+      return row.text;
     });
+    expect(texts.join(' ')).toMatch(/screen|display/i);
+  });
 
-    it('routes the panic question to the screens it can look at', () => {
-        const [top] = matchQuestions('nothing is showing');
-        expect(top.resources.tools).toContain('owa_list_screens');
-    });
+  it('routes the panic question to the screens it can look at', () => {
+    const [top] = matchQuestions('nothing is showing');
+    expect(top.resources.tools).toContain('owa_list_screens');
+  });
 
-    it('keeps the other window out of the way', () => {
-        const pages = new Set(
-            matchQuestions('bible', { focus: 'reader', limit: 20 }).map(
-                (row) => {
-                    return row.page;
-                },
-            ),
-        );
-        expect(pages.has('presenter')).toBe(false);
-        expect(pages.has('editor')).toBe(false);
-    });
+  it('keeps the other window out of the way', () => {
+    const pages = new Set(
+      matchQuestions('bible', { focus: 'reader', limit: 20 }).map((row) => {
+        return row.page;
+      }),
+    );
+    expect(pages.has('presenter')).toBe(false);
+    expect(pages.has('editor')).toBe(false);
+  });
 
-    it('keeps what is true everywhere in every window', () => {
-        for (const focus of BOT_FOCUS_KEYS) {
-            const [top] = matchQuestions('back everything up', { focus });
-            expect(top.page, focus).toBe('common');
-        }
-    });
+  it('keeps what is true everywhere in every window', () => {
+    for (const focus of BOT_FOCUS_KEYS) {
+      const [top] = matchQuestions('back everything up', { focus });
+      expect(top.page, focus).toBe('common');
+    }
+  });
 
-    it('narrows to one section when asked', () => {
-        const results = matchQuestions('clear', {
-            page: 'screen',
-            section: 'screens',
-            limit: 10,
-        });
-        expect(results.length).toBeGreaterThan(0);
-        for (const row of results) {
-            expect(row.section).toBe('screens');
-        }
+  it('narrows to one section when asked', () => {
+    const results = matchQuestions('clear', {
+      page: 'screen',
+      section: 'screens',
+      limit: 10,
     });
+    expect(results.length).toBeGreaterThan(0);
+    for (const row of results) {
+      expect(row.section).toBe('screens');
+    }
+  });
 
-    it('returns nothing rather than a guess', () => {
-        expect(matchQuestions('zzzzqqq')).toEqual([]);
-    });
+  it('returns nothing rather than a guess', () => {
+    expect(matchQuestions('zzzzqqq')).toEqual([]);
+  });
 
-    it('halves a score when only some of the typed words land', () => {
-        // Both words present beats one word present, so a two-word query is
-        // not answered by whichever question repeats the commoner word.
-        const [top] = matchQuestions('clear background');
-        expect(top.text).toBe('How do I remove the background from the screen?');
-    });
+  it('halves a score when only some of the typed words land', () => {
+    // Both words present beats one word present, so a two-word query is
+    // not answered by whichever question repeats the commoner word.
+    const [top] = matchQuestions('clear background');
+    expect(top.text).toBe('How do I remove the background from the screen?');
+  });
 });
 
 describe('outlineQuestions', () => {
-    it('summarises the corpus without listing every question', () => {
-        const outline = outlineQuestions();
-        const presenter = outline.find((page) => {
-            return page.page === 'presenter';
-        });
-        expect(presenter.sections.length).toBeGreaterThan(5);
-        for (const section of presenter.sections) {
-            expect(section.count).toBeGreaterThan(0);
-            expect(section).not.toHaveProperty('questions');
-        }
+  it('summarises the corpus without listing every question', () => {
+    const outline = outlineQuestions();
+    const presenter = outline.find((page) => {
+      return page.page === 'presenter';
     });
+    expect(presenter.sections.length).toBeGreaterThan(5);
+    for (const section of presenter.sections) {
+      expect(section.count).toBeGreaterThan(0);
+      expect(section).not.toHaveProperty('questions');
+    }
+  });
 
-    it('drops the other window', () => {
-        const pages = outlineQuestions({ focus: 'reader' }).map((page) => {
-            return page.page;
-        });
-        expect(pages).toContain('reader');
-        expect(pages).toContain('common');
-        expect(pages).not.toContain('presenter');
+  it('drops the other window', () => {
+    const pages = outlineQuestions({ focus: 'reader' }).map((page) => {
+      return page.page;
     });
+    expect(pages).toContain('reader');
+    expect(pages).toContain('common');
+    expect(pages).not.toContain('presenter');
+  });
+});
+
+// The corpus in the app's other languages (`questions/i18n/<code>.json`): a
+// translation is a row's words in that language, kept beside the English it
+// was made from. A volunteer reading Khmer is offered Khmer chips, and a
+// reworded row shows its new English until its translation is redone.
+describe('the corpus in other languages', () => {
+  const overlayDir = join(import.meta.dirname, 'questions', 'i18n');
+  const overlayList = loadQuestionOverlays();
+  const rowById = new Map(
+    ROWS.map((row) => {
+      return [row.id, row];
+    }),
+  );
+  const sectionLabelById = new Map(
+    PAGES.flatMap((page) => {
+      return page.sections.map((section) => {
+        return [`${page.page}.${section.id}`, section.label];
+      });
+    }),
+  );
+
+  it('one file per language the app has, named for it', () => {
+    const langDir = join(import.meta.dirname, '..', '..', 'src', 'lang', 'data');
+    const langCodeSet = new Set(readdirSync(langDir));
+    expect(overlayList.length).toBeGreaterThan(0);
+    for (const name of readdirSync(overlayDir)) {
+      expect(name).toMatch(/\.json$/);
+      const code = name.slice(0, -'.json'.length);
+      expect(langCodeSet.has(code), name).toBe(true);
+      const overlay = JSON.parse(readFileSync(join(overlayDir, name), 'utf8'));
+      expect(overlay.lang).toBe(code);
+    }
+  });
+
+  it('names only rows and sections that exist, with the English they say now', () => {
+    for (const overlay of overlayList) {
+      for (const [id, words] of Object.entries(overlay.questions ?? {})) {
+        const row = rowById.get(id);
+        expect(row, `${overlay.lang} ${id}`).toBeDefined();
+        expect(words.en, `${overlay.lang} ${id} is stale`).toBe(row.text);
+        // A fill-in row keeps an example of the same kind as the English
+        // one: the window tells the person's part from the row's words
+        // around it (`toEnglishTemplateAsk`).
+        if (row.isTemplate) {
+          expect(
+            findTemplateSample(words.text)?.kind,
+            `${overlay.lang} ${id} keeps its kind of example`,
+          ).toBe(findTemplateSample(row.text)?.kind);
+          expect(findTemplateSample(row.text)).not.toBeNull();
+        }
+        expect(words.text.trim().length).toBeGreaterThan(0);
+        expect(words.text, `${overlay.lang} ${id} is the English`).not.toBe(
+          words.en,
+        );
+      }
+      for (const [id, words] of Object.entries(overlay.sections ?? {})) {
+        expect(words.en, `${overlay.lang} section ${id}`).toBe(
+          sectionLabelById.get(id),
+        );
+      }
+    }
+  });
+
+  // The chips are what the empty window shows: every one of them reads in the
+  // app's language once that language has a file.
+  it('carries every starter that can be asked as it stands', () => {
+    const starterIdList = ROWS.filter((row) => {
+      return row.starter && !row.isTemplate;
+    }).map((row) => {
+      return row.id;
+    });
+    for (const overlay of overlayList) {
+      expect(
+        starterIdList.filter((id) => {
+          return overlay.questions?.[id] === undefined;
+        }),
+        overlay.lang,
+      ).toEqual([]);
+    }
+  });
+
+  // A ratchet, at nothing missing: a question added to the corpus is added
+  // with its words in every language that has a file, the way a label is
+  // added with its Khmer and French (`tranKeyCoverage.test.ts`). Fill-in
+  // rows too, since 2026-10-17: they were the last English in a Khmer
+  // window's question list, and are asked in English once finished.
+  const MAX_UNTRANSLATED_ROWS = 0;
+  it('carries every row, fill-in rows too', () => {
+    for (const overlay of overlayList) {
+      const untranslated = ROWS.filter((row) => {
+        return overlay.questions?.[row.id] === undefined;
+      }).map((row) => {
+        return row.id;
+      });
+      expect(untranslated.length, `${overlay.lang}: ${untranslated}`).toBe(
+        Math.min(untranslated.length, MAX_UNTRANSLATED_ROWS),
+      );
+    }
+  });
+
+  it('a Khmer row is written in Khmer', () => {
+    const khmer = overlayList.find((overlay) => {
+      return overlay.lang === 'km';
+    });
+    for (const [id, words] of Object.entries(khmer.questions)) {
+      expect(/[\u1780-\u17FF]/u.test(words.text), id).toBe(true);
+    }
+  });
+
+  it('a chip shows its language and is found by it, and by its English', () => {
+    const khmer = overlayList.find((overlay) => {
+      return overlay.lang === 'km';
+    });
+    const pages = applyQuestionOverlay(PAGES, khmer);
+    const verseRow = flattenQuestions(pages).find((row) => {
+      return row.id === 'presenter.bible.present-verse';
+    });
+    expect(verseRow.text).toBe(khmer.questions[verseRow.id].text);
+    expect(verseRow.textEn).toBe('How do I present a Bible verse?');
+    // Typed in Khmer, the row it is.
+    const [byKhmer] = matchQuestions(verseRow.text, { pages });
+    expect(byKhmer.id).toBe(verseRow.id);
+    // Half typed, still that row first among the presenter's.
+    const [byStart] = matchQuestions([...verseRow.text].slice(0, 12).join(''), {
+      pages,
+      focus: 'presenter',
+    });
+    expect(byStart.id).toBe(verseRow.id);
+    // Typed in English in a Khmer window, found by its English words.
+    const [byEnglish] = matchQuestions('how do I present a bible verse', {
+      pages,
+    });
+    expect(byEnglish.id).toBe(verseRow.id);
+  });
+
+  it('a translation of words the row no longer says is not shown', () => {
+    const pages = applyQuestionOverlay(PAGES, {
+      lang: 'km',
+      questions: {
+        'presenter.bible.present-verse': { en: 'Old words', text: 'ពាក្យចាស់' },
+      },
+    });
+    const row = flattenQuestions(pages).find((one) => {
+      return one.id === 'presenter.bible.present-verse';
+    });
+    expect(row.text).toBe('How do I present a Bible verse?');
+  });
+
+  // A fill-in row finished in Khmer is asked as its English, the part the
+  // person wrote kept as they wrote it -- in the middle of the row too.
+  it('reads a finished fill-in row back into its English', () => {
+    const pages = applyQuestionOverlay(PAGES, loadQuestionOverlays().find((one) => {
+      return one.lang === 'km';
+    }));
+    const rows = flattenQuestions(pages);
+    expect(
+      toEnglishTemplateAsk('តើប៊ូតុងសម្រាប់ សម្អាតទាំងអស់ នៅឯណា?', rows),
+    ).toBe('Where is the button for សម្អាតទាំងអស់');
+    expect(
+      toEnglishTemplateAsk(
+        'បង្កើតឯកសារទំនុកច្រៀងសម្រាប់ចម្រៀង "ព្រះគុណដ៏អស្ចារ្យ"',
+        rows,
+      ),
+    ).toBe('Create a lyric file for song "ព្រះគុណដ៏អស្ចារ្យ"');
+    expect(toEnglishTemplateAsk('តើប៊ូតុងសម្រាប់ នៅឯណា?', rows)).toBeNull();
+    // An example of the reader's own: "French" in the French row.
+    const frenchRows = flattenQuestions(
+      applyQuestionOverlay(
+        PAGES,
+        loadQuestionOverlays().find((one) => {
+          return one.lang === 'fr';
+        }),
+      ),
+    );
+    expect(
+      frenchRows.find((row) => {
+        return row.id === 'settings.bible-settings.import-bible-language';
+      })?.text,
+    ).toBe('Importer une Bible en "French"');
+    expect(
+      toEnglishTemplateAsk('Importer une Bible en "Spanish"', frenchRows),
+    ).toBe('Import a Bible in "Spanish"');
+    expect(toEnglishTemplateAsk('សួស្ដី', rows)).toBeNull();
+  });
 });

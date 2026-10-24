@@ -81,6 +81,34 @@ export function loadQuestionPages() {
     return pages;
 }
 
+/**
+ * Every translation of the corpus (`questions/i18n/<code>.json`), read per
+ * call like the pages: only a question in another script asks for them.
+ */
+export function loadQuestionOverlays() {
+    const dirPath = path.join(QUESTIONS_DIR, 'i18n');
+    if (!existsSync(dirPath)) {
+        return [];
+    }
+    const overlays = [];
+    for (const name of readdirSync(dirPath).sort()) {
+        if (!name.endsWith('.json') || name === 'schema.json') {
+            continue;
+        }
+        try {
+            const overlay = JSON.parse(
+                readFileSync(path.join(dirPath, name), 'utf8'),
+            );
+            if (overlay?.questions !== undefined) {
+                overlays.push(overlay);
+            }
+        } catch (_error) {
+            continue;
+        }
+    }
+    return overlays;
+}
+
 /** `questionMatch.matchQuestions`, over the corpus on disk. */
 export function matchQuestions(query = '', options = {}) {
     return matchQuestionsIn(query, {

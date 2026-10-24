@@ -36,6 +36,11 @@ const appProviderMock = {
     },
 };
 
+// A slide's own transition is read from a sidecar beside its document on
+// the presenter; none here, so every slide follows the screen's effect.
+vi.mock('./screenSlideTransitionHelpers', () => ({
+    resolveSlideTransitionEffect: async () => undefined,
+}));
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,
@@ -292,7 +297,7 @@ describe('non-Bible screen managers', () => {
             screenManagerBase,
             effectManager,
         );
-        manager.div = document.createElement('div');
+        manager.rootContainer = document.createElement('div');
 
         const timeData = {
             id: 'tokyo',
@@ -339,6 +344,270 @@ describe('non-Bible screen managers', () => {
         expect(manager.isShowing).toBe(false);
         expect(setSettingMock).toHaveBeenCalled();
         expect(screenManagerBase.sendScreenMessage).toHaveBeenCalled();
+    });
+
+    test('mounts a behind overlay under the slide and moves it when its layer changes', async () => {
+        const { default: ScreenForegroundManager } =
+            await import('./ScreenForegroundManager');
+        const { withForegroundLayer } = await import('../screenTypeHelpers');
+
+        const screenManagerBase = {
+            screenId: 23,
+            width: 1280,
+            height: 720,
+            noSyncGroupMap: new Map<string, boolean>(),
+            checkIsLockedWithMessage: vi.fn(() => false),
+            sendScreenMessage: vi.fn(),
+            createScreenManagerBaseGhost: vi.fn(),
+        } as any;
+        const effectManager = {
+            styleAnimList: {
+                fade: {},
+            },
+        } as any;
+        const manager = new ScreenForegroundManager(
+            screenManagerBase,
+            effectManager,
+        );
+        const behindRoot = document.createElement('div');
+        const frontRoot = document.createElement('div');
+        manager.rootContainerBehind = behindRoot;
+        manager.rootContainer = frontRoot;
+
+        // In front, the datum carries NO layer key: an overlay restored from
+        // disk has none, and a `false` would make the two compare unequal.
+        const frontData = withForegroundLayer(
+            { id: 'front', textList: ['Car lights on'], intervalSecond: null },
+            false,
+        );
+        expect(frontData).not.toHaveProperty('isBehind');
+        const behindData = withForegroundLayer(
+            { id: 'logo', textList: ['Logo'], intervalSecond: null },
+            true,
+        );
+        expect(behindData.isBehind).toBe(true);
+
+        manager.setMessageDataList([frontData, behindData]);
+        expect(frontRoot.children).toHaveLength(1);
+        expect(behindRoot.children).toHaveLength(1);
+
+        // Re-mounting ONE root re-renders that root's overlays only.
+        renderForegroundHelperMock.mockClear();
+        manager.render(true);
+        expect(renderForegroundHelperMock).toHaveBeenCalledOnce();
+        expect(renderForegroundHelperMock).toHaveBeenCalledWith(
+            behindData,
+            expect.anything(),
+        );
+        // The replaced container leaves after its exit, one tick later.
+        await vi.waitFor(() => {
+            expect(behindRoot.children).toHaveLength(1);
+        });
+        expect(frontRoot.children).toHaveLength(1);
+
+        // Unticking Behind Slide sends the overlay back over the slide.
+        manager.setMessageDataList([
+            frontData,
+            withForegroundLayer(behindData, false),
+        ]);
+        await vi.waitFor(() => {
+            expect(behindRoot.children).toHaveLength(0);
+        });
+        expect(frontRoot.children).toHaveLength(2);
+    });
+
+    test('a message the presenter re-sends as an equal copy still leaves when it is hidden or cleared', async () => {
+        const { default: ScreenForegroundManager } =
+            await import('./ScreenForegroundManager');
+        const { withForegroundLayer } = await import('../screenTypeHelpers');
+
+        const manager = new ScreenForegroundManager(
+            {
+                screenId: 27,
+                width: 1280,
+                height: 720,
+                noSyncGroupMap: new Map<string, boolean>(),
+                checkIsLockedWithMessage: vi.fn(() => false),
+                sendScreenMessage: vi.fn(),
+                createScreenManagerBaseGhost: vi.fn(),
+            } as any,
+            { styleAnimList: { fade: {} } } as any,
+        );
+        const root = document.createElement('div');
+        manager.rootContainer = root;
+        // The presenter rebuilds the whole list on every press, so each list
+        // holds NEW objects -- equal to the ones on the screen, never the same.
+        const genFirst = () => {
+            return withForegroundLayer(
+                { id: 'first', textList: ['QA first'], intervalSecond: null },
+                false,
+            );
+        };
+        const second = withForegroundLayer(
+            { id: 'second', textList: ['QA second'], intervalSecond: null },
+            false,
+        );
+
+        manager.setMessageDataList([genFirst()]);
+        manager.setMessageDataList([genFirst(), second]);
+        expect(root.children).toHaveLength(2);
+
+        // Hide the first: it must come off the screen, not stay behind.
+        manager.setMessageDataList([second]);
+        await vi.waitFor(() => {
+            expect(root.children).toHaveLength(1);
+        });
+
+        // Shown again it is ONE box, not a second copy beside a stale one.
+        manager.setMessageDataList([genFirst(), second]);
+        manager.setMessageDataList([genFirst(), second]);
+        expect(root.children).toHaveLength(2);
+
+        // And Clear Foreground takes everything off.
+        manager.clear();
+        await vi.waitFor(() => {
+            expect(root.children).toHaveLength(0);
+        });
+    });
+
+    test('a released foreground root stops its overlays, draws nothing while away, and the next root draws them all', async () => {
+        const { default: ScreenForegroundManager } =
+            await import('./ScreenForegroundManager');
+        const { withForegroundLayer } = await import('../screenTypeHelpers');
+
+        const screenManagerBase = {
+            screenId: 26,
+            width: 1280,
+            height: 720,
+            noSyncGroupMap: new Map<string, boolean>(),
+            checkIsLockedWithMessage: vi.fn(() => false),
+            sendScreenMessage: vi.fn(),
+            createScreenManagerBaseGhost: vi.fn(),
+        } as any;
+        const manager = new ScreenForegroundManager(screenManagerBase, {
+            styleAnimList: { fade: {} },
+        } as any);
+        const behindRoot = document.createElement('div');
+        const frontRoot = document.createElement('div');
+        manager.rootContainerBehind = behindRoot;
+        manager.rootContainer = frontRoot;
+        const frontData = withForegroundLayer(
+            { id: 'front', textList: ['Welcome'], intervalSecond: null },
+            false,
+        );
+        const behindData = withForegroundLayer(
+            { id: 'logo', textList: ['Logo'], intervalSecond: null },
+            true,
+        );
+        manager.setMessageDataList([frontData, behindData]);
+        expect(frontRoot.children).toHaveLength(1);
+
+        // The projected screen never lets go: its layers are the window.
+        appProviderMock.isPageScreen = true;
+        manager.releaseRootContainer(frontRoot, false);
+        appProviderMock.isPageScreen = false;
+        expect(manager.rootContainer).toBe(frontRoot);
+
+        // A root that is no longer the manager's (a remounted card attached its
+        // new one first) is left alone.
+        manager.releaseRootContainer(document.createElement('div'), false);
+        expect(manager.rootContainer).toBe(frontRoot);
+
+        const removingHandler = vi.fn(async () => {});
+        renderForegroundHelperMock.mockImplementationOnce(() => ({
+            handleAdding: vi.fn((parent: HTMLElement) => {
+                parent.appendChild(document.createElement('div'));
+            }),
+            handleRemoving: removingHandler,
+        }));
+        const countdownData = { dateTime: new Date(), extraStyle: {} };
+        manager.setCountdownData(countdownData as any);
+        expect(frontRoot.children).toHaveLength(2);
+
+        manager.releaseRootContainer(frontRoot, false);
+        // Each overlay's own remove handler is what stops it (a countdown's
+        // frames, a camera's tracks); the behind root keeps its own.
+        expect(removingHandler).toHaveBeenCalledOnce();
+        await vi.waitFor(() => {
+            expect(frontRoot.children).toHaveLength(0);
+        });
+        expect(behindRoot.children).toHaveLength(1);
+        expect(manager.foregroundData.countdownData).toEqual(countdownData);
+
+        // With no root, a new overlay is kept but not drawn anywhere.
+        renderForegroundHelperMock.mockClear();
+        const laterData = withForegroundLayer(
+            { id: 'later', textList: ['Later'], intervalSecond: null },
+            false,
+        );
+        manager.setMessageDataList([frontData, behindData, laterData]);
+        expect(renderForegroundHelperMock).not.toHaveBeenCalled();
+        expect(manager.foregroundData.messageDataList).toHaveLength(3);
+
+        // The next root draws everything that belongs in it.
+        const nextFrontRoot = document.createElement('div');
+        manager.rootContainer = nextFrontRoot;
+        expect(nextFrontRoot.children).toHaveLength(3);
+        expect(behindRoot.children).toHaveLength(1);
+    });
+
+    test('a released background root lets go of what it holds and the next root draws it again', async () => {
+        const { default: ScreenBackgroundManager } =
+            await import('./ScreenBackgroundManager');
+
+        const screenManagerBase = {
+            screenId: 27,
+            width: 1280,
+            height: 720,
+            noSyncGroupMap: new Map<string, boolean>(),
+            checkIsLockedWithMessage: vi.fn(() => false),
+            sendScreenMessage: vi.fn(),
+            createScreenManagerBaseGhost: vi.fn(),
+        } as any;
+        const animIn = vi.fn((element: HTMLElement, parent: HTMLElement) => {
+            parent.appendChild(element);
+        });
+        const manager = new ScreenBackgroundManager(screenManagerBase, {
+            styleAnim: { animIn, animOut: vi.fn(async () => {}) },
+            styleAnimList: { fade: { animIn, animOut: vi.fn() } },
+        } as any);
+        const root = document.createElement('div');
+        manager.rootContainer = root;
+        manager.backgroundSrc = { type: 'color', src: '#ffffff' } as any;
+        await vi.waitFor(() => {
+            expect(root.children).toHaveLength(1);
+        });
+        const video = document.createElement('video');
+        video.src = 'file:///background.mp4';
+        const pause = vi.spyOn(video, 'pause').mockImplementation(() => {});
+        vi.spyOn(video, 'load').mockImplementation(() => {});
+        root.firstElementChild!.appendChild(video);
+        const clearTracks = vi.fn();
+        manager.clearTracks = clearTracks;
+
+        appProviderMock.isPageScreen = true;
+        manager.releaseRootContainer(root);
+        appProviderMock.isPageScreen = false;
+        expect(root.children).toHaveLength(1);
+        expect(manager.rootContainer).toBe(root);
+
+        manager.releaseRootContainer(root);
+        // A detached clip keeps decoding until its player is handed back.
+        expect(pause).toHaveBeenCalled();
+        expect(video.getAttribute('src')).toBeNull();
+        expect(root.children).toHaveLength(0);
+        expect(clearTracks).toHaveBeenCalledOnce();
+        expect(manager.rootContainer).toBeNull();
+        expect(manager.backgroundSrc).toEqual({
+            type: 'color',
+            src: '#ffffff',
+        });
+
+        const nextRoot = document.createElement('div');
+        manager.rootContainer = nextRoot;
+        await vi.waitFor(() => {
+            expect(nextRoot.children).toHaveLength(1);
+        });
     });
 
     test('deduplicates and removes camera overlays', async () => {

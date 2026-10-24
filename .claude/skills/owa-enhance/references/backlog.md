@@ -9,8 +9,8 @@ there, not here.
 **Nothing is written here while researching.** Entries arrive only after the
 user decides: an applied finding as `done`, with what shipped, the number
 before → after and the proof; every other finding of that report as `open`;
-and all of them on `file`. Filing is an edit under `.claude/`, so it brings the
-Codex mirror copy and `node extra-work/build-knowledge.mjs` with it.
+and all of them on `file`. Filing is an edit under `.claude/`, so it brings
+`node extra-work/build-knowledge.mjs` with it.
 
 This file ships in plaintext inside the installer: a security finding that is
 still open is filed by its class and its location, never as a working exploit.
@@ -29,6 +29,124 @@ because `scripts/triage.mjs` reads it from there:
 ```
 
 ---
+
+## EN-49 · A slide rendered from inside the sanitizer crashed the one in flight — `done` · S1 · reliability
+
+**Evidence.** Reported with a screenshot: `TypeError: Cannot set properties of null (setting 'memoizedState')` in `BoxEditorNormalHtmlRenderComp`, then "Reload is needed". React runs off Node's `setImmediate` in every window here, and on such a stack Chromium's parser runs waiting promise callbacks before `DOMParser.parseFromString` returns; EN-39 had put `sanitizeHtml` inside a hook of `genSlideHtml`'s static render, so a second slide's render landed inside the first one's `useMemo`. **Shipped.** The raw policy runs before the static render and is handed down through `CanvasItemSafeHtmlContext`; memory `static-render-must-not-parse-html`. **Proof.** `basicItems.coverage.test.tsx` throws the same TypeError on the old shape; an offscreen Electron renderer does too (old shape from `setImmediate`: throws; new: both slides render); both render paths read back correct on a scratch instance.
+
+## EN-50 · Fifteen function components were not named `*Comp` — `done` · S4 · code-health
+
+**Evidence.** CLAUDE.md: every React function component ends in `Comp`. Read against the code on 2026-10-11: `BiblePreview`, `NotePreview`, `MenuIsModifying`, `RenderApp`, `SelectDefaultDirButton`, `RenderFileItemsWithColorNote`, `RenderItem`, `RenderScreenBackground` and seven `BoxEditorNormal*Render` do not, so the dev server stamps none of them with `data-react-comp-name`. **Shipped** (the same run, `20261011-2330`): all fifteen renamed with their imports, mocks and the one coverage row that named one — 92 whole-word replacements in 23 files. **Proof.** Typecheck and the full gate; on a scratch instance the text box of a presented slide now carries `data-react-comp-name="BoxEditorNormalTextRenderComp"`, where it had no stamp.
+
+## EN-51 · A text box being edited animated `outline-color` without end — `done` · S4 · performance
+
+**Evidence.** `.app-box-editor.editable` in `src/slide-editor/canvas/box/boxEditorHelpers.tsx` runs an `infinite` animation of a paint property, which CLAUDE.md forbids on anything mounted at rest (EN-09, EN-10, EN-19). It ran for as long as a box was left open for typing. **Shipped** (the same run, `20261011-2330`): three blinks, then the steady outline and glow — the remedy EN-09, EN-10 and EN-19 used. **Proof.** The rule read back from a scratch instance's Slide Editor carries `animation-iteration-count: 3`; no trace was taken.
+
+## EN-52 · `cameraHelpers` reached `tran` and the toast helpers through a broad import — `done` · S3 · performance
+
+**Evidence.** Memory `foreground-camera-deviceid-rotates`: the module loads in the screen window and must stay a leaf. It took `electronSendAsync` from `server/appHelpers`, which imports `showSimpleToast`, `tran` and so `SettingManager`. **Shipped.** The import is the leaf `server/electronSendHelpers`, which holds the same function. **Proof.** Typecheck; `cameraHelpers.test.tsx` (its mock moved with the import).
+
+## EN-40 · Refused virtual-display sockets need error handling — `done` · S2 · security
+
+**Shipped (2026-10-07).** The blocked-viewer upgrade installs an error handler
+before sending its refusal; receiver errors terminate that socket rather than
+escaping into main. **Proof.** The new refusal-error regression failed before
+the change and passes afterward. Live: an operator-disconnected browser reloads
+to its refusal message, the other browser keeps its slide, and Allow again
+restores the first. Part of 52 passing focused tests. Audit `20261007-2116`.
+
+## EN-41 · Viewer revocation waited for the remote close handshake — `done` · S2 · security
+
+**Shipped (2026-10-07).** Disconnect, network revocation, display removal,
+close-all and replacement synchronously remove viewer/screen registrations,
+interaction authority and camera routes. Message and asynchronous context
+callbacks check current ownership. Transport closure remains bounded by ws.
+**Proof.** Five held-open-parent regressions: feedback accepted after revocation
+changed from one extra delivery to zero; child broadcast/listener registrations
+are immediately zero, cameras are released, and late context sends nothing.
+Live two-browser disconnect, blocked reload and Allow again passed, preserving
+the other viewer. Audit `20261007-2116`.
+
+## EN-42 · Discovery confirmations were not fully validated — `done` · S2 · security
+
+**Shipped (2026-10-07).** UDP and HTTP discovery share a bounded field decoder;
+HTTP identity, version and port must match, and only the receiver supplies the
+reached address. Sorting drops malformed records. **Proof.** Regression fixtures
+reject malformed announcements/confirmations and strip extra fields; valid
+results still sort. Live guest page discovered a well-formed loopback fixture,
+selected it and filled its address/port. Audit `20261007-2116`.
+
+## EN-43 · Peer handshakes were absent from the connection cap — `done` · S2 · security
+
+**Shipped (2026-10-07).** The 32-connection limit reserves a slot before upgrade,
+including unnamed handshakes and closing transports, and releases it on actual
+transport closure. Hello rechecks the registered-peer limit and ignores input
+on closing sockets. Existing tighter internet-only pending limits remain;
+LAN guests may still use all 32 slots. **Proof.** The 33rd pre-hello connection
+was accepted before and is refused now; closing one permits a replacement and
+all 32 LAN guests may await approval. Live approval/inventory/disconnect passed.
+Audit `20261007-2116`.
+
+## EN-44 · Virtual-display bootstrap can reuse stale state — `open` · S2 · reliability
+
+**Evidence.** Completed context promises in `virtualDisplayService.ts` retain
+old size/content briefly across mutations. **Proposed change.** In-flight-only
+deduplication or mutation-aware invalidation. **Proof on apply.** Immediate
+resize/reassignment/reconnect gets current size and slide. Audit `20261007-2116`.
+
+## EN-45 · Sound blanks a LAN development viewer — `open` · S3 · reliability
+
+**Evidence.** The viewer's sound parameter fails the development route allowlist
+and returns 404. **Proposed change.** Permit only the expected sound value.
+**Proof on apply.** Sound opt-in preserves the picture and plays known audio
+through a non-loopback viewer; also verify packaged routing. Audit `20261007-2116`.
+
+## EN-46 · Simultaneous display previews share one viewer identity — `open` · S3 · ui
+
+**Evidence.** The second card preview waits while the first renders because both
+use the same session-storage viewer ID. **Proposed change.** Scope stable IDs by
+display/frame, retaining reload semantics. **Proof on apply.** Two previews
+render together and survive reload without duplicate entries. Audit `20261007-2116`.
+
+## EN-47 · Iframe input does not reveal idle viewer controls — `open` · S3 · ui
+
+**Evidence.** Mouse movement in a full-surface screen frame does not reach parent
+wake/fullscreen listeners. **Proposed change.** Cleanly register frame input or
+a constrained event bridge. **Proof on apply.** Mouse and touch reveal controls
+after idle/reload and fullscreen works over content. Audit `20261007-2116`.
+
+## EN-48 · Camera background can be clipped below a blank video — `open` · S2 · reliability
+
+**Evidence.** Presenter shows a synthetic camera while a fresh browser has a
+blank video at y=0 and the live video below its viewport. **Proposed change.**
+Isolate the asynchronous bootstrap race, constrain wrapper geometry and discard
+stale results. **Proof on apply.** Fresh joins show the moving camera and repeated
+transitions release old streams; verify foreground and packaged cases separately.
+Audit `20261007-2116`.
+
+## EN-39 · Document HTML reached Node-integrated windows without sanitization — `done` · S1 · security
+
+**Evidence.** `sanitizeHtml` returned its input, and the direct HTML/Bible canvas
+renderers bypassed it. **Shipped.** Lazy DOMPurify policies at the item boundary
+and shared slide serialization boundary; plain Text is escaped. Raw document
+HTML cannot carry scripts, event handlers, embedded documents or website/camera
+hydration markers. Composed slides preserve typed media markers and sandboxed
+HTTPS YouTube embeds. Local media sources, styles, SVG, Bible attributes and
+legacy `htmlText` remain supported. Sanitization is memoized per mounted item
+by content, with no document history cache.
+
+**Before → after.** 14 executable-content/direct-renderer regression cases
+failed before the fix; the four focused suites now pass 78 tests. Live scratch
+Presenter and Slide Editor: execution marker unset, zero unsafe attributes,
+rich Khmer/French text and loaded local image preserved. The real Print flow
+produced four PDF pages with rich/legacy HTML, literal Text and local media.
+An Open Lyric fixture generated seven stage slides and rendered its verse in
+the Presenter and Mini Screen with no console error.
+The shared screen/print serializer uses the real sanitizer in its regression
+test. Physical projector output and packaged execution were not tested.
+**Proof.** `sanitizeHelpers.test.ts`, `BoxEditorNormalViews.coverage.test.tsx`,
+`basicItems.coverage.test.tsx`; screenshots and final gate log under
+`test-results/owa-enhance/`. Found in run `20261005-1320`, applied 2026-10-05.
 
 ## EN-09 · A noted verse number kept the Reader repainting the whole chapter at 60 fps — `done` · S2 · performance
 

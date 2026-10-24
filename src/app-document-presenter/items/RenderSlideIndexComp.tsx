@@ -3,6 +3,7 @@ import { notifyElementHighlight } from '../../helper/domHelpers';
 import { bringDomToCenterView } from '../../helper/helpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentConstants';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { tran } from '../../lang/langHelpers';
 
 export default function RenderSlideIndexComp({
     viewIndex,
@@ -47,7 +48,10 @@ export default function RenderSlideIndexComp({
                 'd-flex badge rounded-pill text-bg-info align-items-center' +
                 (isInSlide ? '' : ' app-caught-hover-pointer')
             }
-            title={title ?? `Index: ${viewIndex}`}
+            // Not "Slide N": that is the card's own name
+            // (`toSlideAccessibleName`), and a badge answering to it exactly
+            // would be what a press by those words found.
+            title={title ?? `${tran('Index')}: ${viewIndex}`}
             data-slide-badge-key={`${isInSlide ? 'slide-' : ''}${dataKey}`}
         >
             {viewIndex}

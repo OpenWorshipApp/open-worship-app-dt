@@ -57,7 +57,12 @@ attach:
 
 `webviewTag: true` itself is handed out by `genPopupWebPreferences` to ONE
 page — the AI Chat window, by its bounds key — never by a feature an opener
-could request in `window.open`'s features string.
+could request in `window.open`'s features string. The only other holder
+(2026-10-07) is a virtual display's compositor, a hidden window MAIN creates
+for the app's own screen pages; it is registered by WebContents
+(`virtualDisplayHostRegistry.ts`) before it loads, the guard above steps
+aside for that host and its guests alone, and its own `will-attach-webview`
+admits only an attached screen's URL. No page can open it or ask for it.
 
 Measured: `typeof require`, `typeof process`, `typeof module` are all
 `'undefined'` in the guest.
@@ -120,7 +125,7 @@ with a frozen decoy holding an empty `env`. The page draws a tab strip, a
 chooser and a head row; it opens links with a plain `window.open`, which
 the popup handler sends to the system browser. Its production CSP
 (`html/aichat.html`, prod-only markers) allows `frame-src https:` so the
-guest element can exist and `connect-src 'self'` only — the host talks to
+guest element can exist and `connect-src 'self' data: blob:` only — the host talks to
 nobody; the guest does its own talking on its own session.
 
 Measured on the host: `typeof require === 'undefined'`; at most three

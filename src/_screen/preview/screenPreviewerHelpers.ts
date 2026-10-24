@@ -31,9 +31,12 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
         selectedScreenIds.length === 1 &&
         selectedScreenIds.includes(screenManager.screenId);
     const isOne = screenManagers.length === 1;
-    const { screenBibleManager } = screenManager;
-    const isShowingBible = !!screenBibleManager.screenViewData;
-    const isLineSync = screenBibleManager.isLineSync;
+    const { screenLongTextManager } = screenManager;
+    // Not for a long text: it is row by row whatever this says.
+    const isShowingBible =
+        !!screenLongTextManager.screenViewData &&
+        !screenLongTextManager.isShowingLongText;
+    const isLineSync = screenLongTextManager.isLineSync;
     const extraMenuItems: ContextMenuItemType[] = isShowingBible
         ? [
               {
@@ -42,7 +45,7 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
                       `${isLineSync ? 'Unset' : 'Set'} Line Sync`,
                   ),
                   onSelect() {
-                      screenBibleManager.isLineSync = !isLineSync;
+                      screenLongTextManager.isLineSync = !isLineSync;
                   },
               },
           ]

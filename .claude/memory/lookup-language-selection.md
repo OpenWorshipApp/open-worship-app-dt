@@ -1,6 +1,6 @@
 ---
 name: lookup-language-selection
-description: The names/locations lookup has its own language setting, which the IN-VERSE underlines never follow - those follow the bible each verse is in; only ONE language's dataset is ever loaded, and a translated record shows and is searchable by its English name
+description: The names/locations lookup has its own language setting, which the IN-VERSE underlines never follow - those follow the bible each verse is in; datasets load only for languages currently requested by lookup surfaces or fixed-language detail panels, and a translated record shows and is searchable by its English name
 metadata:
   type: project
 ---
@@ -29,12 +29,19 @@ Four things about it are easy to get wrong:
   ([[in-verse-names-follow-the-bible]]). The labels file follows the SETTING and
   the needles file follows the BIBLE on screen, which is why they are built
   separately even though both read the same package.
-- **Invalidation is driven by the CHANGE, not by the next read.**
-  `lookupDataHelpers` subscribes to `subscribeLookupLangCode` at module load and
-  drops the held managers plus the `globalCacheManager10Seconds` entries; between
-  the change and the next `acquireLookupData` there may be no consumer left to
-  ask. Both it and `genLookupFileStore` carry a generation counter so a load
-  already in flight cannot install itself afterwards.
+- **Detail panels have a fixed language (2026-10-05).** Their identity is
+  `kind:target:langCode`; the header language menu opens or raises a sibling
+  for that record and language, without changing the global lookup setting.
+  `LookupLangContext` supplies the language to fonts, labels, bible references
+  and linked person/location details. Verse panels retain their existing identity
+  and follow the global setting.
+- **Managers are reference-counted per requested language.**
+  `acquireLookupData(langCode)` shares one normalized dataset among mounted
+  consumers of that language; `releaseLookupData(langCode)` deletes its holder
+  when the last consumer leaves. A late load only resolves into its own holder.
+  The global selection change evicts the short reopen cache, preserving managers
+  needed by fixed-language details. Derived file stores still use their own
+  generation counters.
 - **Derived files are dataset-version-stamped without draining the dataset**
   (`610445fe`, 2026-08-29). `readJsonFileVersion` in
   `src/lang/lookupDataVersionHelpers.ts` fetches the ~34MB dataset JSON but

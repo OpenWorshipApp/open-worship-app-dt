@@ -1,11 +1,11 @@
 ---
 name: dev-hmr-stale-state-qa
-description: A dev-server HMR reload silently kills keyboard layers and unmounts open overlays — re-verify after a full reload before calling it a regression
+description: A dev-server HMR reload silently kills keyboard layers and unmounts open overlays, can blank the page on an import cycle, and Vite can serve the save before the last one — re-verify after a full reload (and curl the served module) before calling it a regression
 metadata:
   node_type: memory
   type: feedback
   originSessionId: 78a2ea9b-7bf1-4112-a236-0d3119ccf1c3
-  modified: 2026-10-01T21:52:45.370Z
+  modified: 2026-10-23T02:19:41.720Z
 ---
 
 When verifying a change against the running dev app via the `owa-devtools` MCP,
@@ -33,8 +33,46 @@ needed_ path and a page reload — a context module replaced mid-render. Before
 filing a "must be used within" error, compare its time with `date -r` on the
 files written around it (the app's `error-datetime-setting` holds the epoch).
 
+**Two more shapes of the same thing** (2026-10-11, adding a Bible Properties
+font row):
+
+- **A blank presenter with nothing in the console.** Edits to modules under
+  `src/_screen/` left the page black; `owa_app_state` answered _Cannot access
+  'SCREEN_BIBLE_SETTING_PREFIX' before initialization_ and `owa_list_ui` zero
+  controls. `ScreenLongTextManager` and `screenBibleHelpers` import each other, and
+  a hot re-evaluation enters that cycle from the other side. A `navigate_page`
+  reload loaded clean — it was never the edit.
+- **Vite serving the save BEFORE the last one.** Two edits to one file a few
+  milliseconds apart (two `Edit` calls in one batch): the dev server kept the
+  transform of the first, so half of a change was live and half was not (a
+  verse took the new inline style, its heading the old one), through a page
+  reload. Compare what is served with what is on disk —
+  `curl -sk https://localhost:3000/src/<path> | grep <new name>` — and `touch`
+  the file when they differ. Do this before reasoning about why half a change
+  "does not work". **Curl it with NO query** (2026-10-16, two `Edit`s to
+  `helpBotHelpers.ts` in one batch again): `?t=<now>` is a fresh URL and Vite
+  transforms it anew, so it showed the new code while the plain path and the
+  window both had the old one — two `navigate_page` reloads later the help
+  window still answered from the earlier save, until a `touch`. `?direct`
+  is a fresh transform too (2026-10-17, the PDF-chat work): the `.scss`
+  read that way had the `@container` rule while the page's own module did
+  not, and a `chatbotHandoffHelpers.ts` served without either of its two
+  batched edits made a Resources 🤖 throw `openChatbotWithFile is not a
+  function` -- twice, a _Reload is needed_ and then a _Something Went
+  Wrong_ dialog. Cheapest prevention: while the dev app is up, never send
+  two `Edit`s to ONE file in the same batch.
+- **The served module new, the PAGE still on the old one** (2026-10-22,
+  `owa_find_verse`'s passage join). A worker the page imports LAZILY
+  (`agentBibleFindHelpers` through the `owa-agent-data` relay) kept the
+  pure module it had pulled in before the edit: `curl` of the plain path
+  had the new function, a node replay of it on the real database gave the
+  new answer, and the tool still answered the old one -- until **View >
+  Reload** of that window (`owa_menu`). A tool whose code lives in the
+  renderer is checked live only after a reload of the window it runs in.
+
 **How to apply:** before diagnosing a "shortcut is dead" symptom, check
 `performance.getEntriesByType('navigation')` / `performance.now()` for a recent
 reload. If one happened, `navigate_page` reload and re-run the whole
-open-then-drive sequence in ONE `evaluate_script` call. Related:
+open-then-drive sequence in ONE `evaluate_script` call (that tool is refused
+unless the MCP server was started with `OWA_MCP_FIREWALL=off`). Related:
 [[screen-draw-feature]].

@@ -242,4 +242,55 @@ describe('bibleInfoHelpers', () => {
         mocks.getVersesCountMock.mockResolvedValueOnce(null);
         expect(await module.fromVerseKey('KJV', 'JHN 18:33-')).toBeNull();
     });
+
+    // `JHN 18:33-19:16`, as a heading in a bible's own data cites a passage.
+    test('parses verse keys across chapters', async () => {
+        const module = await loadModule();
+
+        expect(await module.fromVerseKey('KJV', 'JHN 18:33-19:16')).toEqual({
+            bookKey: 'JHN',
+            chapter: 18,
+            verseStart: 33,
+            verseEnd: 16,
+            chapterEnd: 19,
+        });
+        // To the end of the chapter it names.
+        mocks.getVersesCountMock.mockResolvedValueOnce(42);
+        expect(await module.fromVerseKey('KJV', 'JHN 18:33-19:')).toEqual({
+            bookKey: 'JHN',
+            chapter: 18,
+            verseStart: 33,
+            verseEnd: 42,
+            chapterEnd: 19,
+        });
+        expect(mocks.getVersesCountMock).toHaveBeenLastCalledWith(
+            'KJV',
+            'JHN',
+            19,
+        );
+        // The same chapter twice is one chapter.
+        expect(await module.fromVerseKey('KJV', 'JHN 18:33-18:35')).toEqual({
+            bookKey: 'JHN',
+            chapter: 18,
+            verseStart: 33,
+            verseEnd: 35,
+        });
+        // Past the book: to the end of its last chapter (REV has 22 here).
+        mocks.getVersesCountMock.mockResolvedValueOnce(21);
+        expect(await module.fromVerseKey('KJV', 'REV 21:1-30:3')).toEqual({
+            bookKey: 'REV',
+            chapter: 21,
+            verseStart: 1,
+            verseEnd: 21,
+            chapterEnd: 22,
+        });
+        // An end chapter before the start one is no second chapter.
+        mocks.getVersesCountMock.mockResolvedValueOnce(40);
+        expect(await module.fromVerseKey('KJV', 'JHN 18:33-17:3')).toEqual({
+            bookKey: 'JHN',
+            chapter: 18,
+            verseStart: 33,
+            verseEnd: 40,
+        });
+    });
 });

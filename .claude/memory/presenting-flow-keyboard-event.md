@@ -1,8 +1,11 @@
 ---
 name: presenting-flow-keyboard-event
-description: The Keyboard Event run action is a hotkey line — Ctrl/Shift only, unique per sheet, and the ONE run action that resolves screens because its CC elements are its whole payload
+description: "The Keyboard Event run action is a hotkey line — Ctrl/Shift only, unique per sheet, and the ONE run action that resolves screens because its CC elements are its whole payload"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:05:48.334Z
 ---
 
 `Keyboard Event` (added 2026-08-06, branch refactor24) is the run sheet's HOTKEY: arm a line
@@ -64,6 +67,7 @@ line names). This is the one thing the operator aims themselves, mid-service, wi
   eight per-widget FG clears behind `Other Clear FG Items` inside it.
   `presentingFlowActionMenuList` (shape, nestable) is separate from `presentingFlowActionList`
   (flat registry, what an id resolves against) — only the component reads the former.
-- **No unit tests.** `presentingFlowActionKey.test.ts` was deleted with the whole
-  src/presenting-flow suite on 2026-08-24 (47053c9d); the only live coverage is
-  matrix rows PL-97/PL-98.
+- **Unit tests:** `presentingFlowActionKey.test.ts` was deleted with the whole
+  src/presenting-flow suite on 2026-08-24 (47053c9d);
+  `presentingFlowPureHelpers.coverage.test.ts` (`c24d3a43`, 2026-09-26) covers the
+  key canonicalising again. Live coverage: matrix rows PL-97/PL-98.

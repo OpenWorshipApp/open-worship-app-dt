@@ -6,12 +6,29 @@ const { fake } = vi.hoisted(() => ({
     fake: {
         anthropic: null as any,
         toolCallList: [] as string[],
+        // Each call's arguments as the loop sent them, beside its name.
+        toolArgsList: [] as { name: string; args: any }[],
         toolList: [] as { name: string }[],
         // What `callTool` answers, by tool name; unset means an empty string.
         toolResultMap: null as Record<string, string> | null,
+        // The pictures `callToolWithPictures` answers with, by tool name.
+        toolPicturesMap: null as Record<string, any[]> | null,
         // A fake OpenAI-shaped client, for the stand-in tests; null means the
         // provider is not set up, which is what the module answers then.
         openai: null as any,
+        // The same for Amazon Bedrock, which rides the same loop -- and its
+        // Claude client, which rides the Anthropic one.
+        bedrock: null as any,
+        bedrockClaude: null as any,
+        // The AWS region Settings names; us-west-2 is the app's default.
+        bedrockRegion: 'us-west-2',
+        // The user's own servers (usable ones) and the fake client asked for
+        // any of them; none by default, the state the app ships in.
+        customServers: [] as any[],
+        custom: null as any,
+        // What LM Studio's own list says about the models, by model id; null
+        // is a server that is not LM Studio (or did not answer in time).
+        lmStudioInfoMap: null as Map<string, any> | null,
         // The keys `getAISetting` answers with; null means none at all, the
         // state the app ships in and the one most of this file assumes.
         aiSetting: null as Record<string, string> | null,
@@ -31,6 +48,7 @@ vi.mock('../helper/ai/aiHelpers', () => ({
             }
         );
     },
+    getBedrockRegion: () => fake.bedrockRegion,
 }));
 vi.mock('../helper/ai/anthropicHelpers', () => ({
     getAnthropicInstance: () => fake.anthropic,
@@ -40,6 +58,56 @@ vi.mock('../helper/ai/openAIHelpers', () => ({
 }));
 vi.mock('../helper/ai/kimiHelpers', () => ({
     getKimiInstance: () => null,
+}));
+vi.mock('../helper/ai/bedrockHelpers', () => ({
+    getBedrockInstance: () => fake.bedrock,
+}));
+vi.mock('../helper/ai/bedrockClaudeHelpers', () => ({
+    getBedrockClaudeInstance: () => fake.bedrockClaude,
+}));
+// The user's own servers. The real modules reach the setting store and the
+// relay's IPC, neither of which a node-env suite has.
+vi.mock('../helper/ai/customServerHelpers', () => ({
+    getCustomServers: () => fake.customServers,
+    getAllCustomServers: () => fake.customServers,
+    getUsableCustomServers: () => fake.customServers,
+    readCustomServerModelInfo: async () => {
+        return fake.lmStudioInfoMap === null
+            ? null
+            : {
+                  kind: 'lm-studio',
+                  infoMap: fake.lmStudioInfoMap,
+                  commonInfo: null,
+              };
+    },
+    findCustomModelInfo: (info: any, modelId: string) => {
+        return info === null
+            ? null
+            : (info.infoMap.get(modelId) ?? info.commonInfo ?? null);
+    },
+}));
+vi.mock('../helper/ai/customServerClientHelpers', () => ({
+    genContextTooSmallText: (loadedContext: number | null) => {
+        return `context ${loadedContext} is too small`;
+    },
+    genContextCutText: (loadedContext: number) => {
+        return `answered from a question cut to ${loadedContext}`;
+    },
+    getCustomServerInstance: () => fake.custom,
+    // The real one's patterns, in short: what the loop reads a tools
+    // refusal by (GPT4All's server, llama-server without --jinja, a model
+    // Ollama did not mark for tools).
+    checkIsToolsRefused: (error: any) => {
+        return /not supported|--jinja|does not support tools/i.test(
+            String(error?.message ?? ''),
+        );
+    },
+    toCustomServerFailure: (error: any) => {
+        if (error?.name === 'CustomServerError') {
+            return error;
+        }
+        return error?.cause?.name === 'CustomServerError' ? error.cause : null;
+    },
 }));
 // The fourth of them. Without it the module graph reaches `langHelpers` and
 // `toastHelpers`, and this whole file dies at import on `document` -- these
@@ -64,9 +132,18 @@ vi.mock('../helper/loggerHelpers', () => ({
     appError: vi.fn(),
 }));
 vi.mock('./mcpClient', () => ({
-    callTool: async (name: string) => {
+    callTool: async (name: string, args?: any) => {
         fake.toolCallList.push(name);
+        fake.toolArgsList.push({ name, args });
         return fake.toolResultMap?.[name] ?? '';
+    },
+    callToolWithPictures: async (name: string, args?: any) => {
+        fake.toolCallList.push(name);
+        fake.toolArgsList.push({ name, args });
+        return {
+            text: fake.toolResultMap?.[name] ?? '',
+            pictures: fake.toolPicturesMap?.[name] ?? [],
+        };
     },
     listTools: async () => {
         return fake.toolList ?? [];
@@ -74,6 +151,7 @@ vi.mock('./mcpClient', () => ({
 }));
 
 import { AskCancelledError } from './cancelHelpers';
+import { CustomServerError } from '../../electron/customLlmProtocol';
 import {
     SpendLimitError,
     allowMoreSpending,
@@ -83,29 +161,69 @@ import {
 } from './spendGuardHelpers';
 import { MODEL_HIDDEN_TOOL_MAP } from '../../tools/owa-devtools-mcp/modelTools.mjs';
 import {
+    AUTO_ASSISTANT_WARNING,
     applyToolWatch,
     askLlmBot,
+    checkCanSeeImages,
+    checkIsNoCostCustomServer,
+    getIsLlmAuto,
+    toIsLlmAuto,
+    checkHasMoreModels,
+    checkIsCustomProvider,
     checkIsFreeProvider,
+    getLlmProviderLabel,
+    findBedrockRegionProblem,
+    listAllLlmModels,
     checkIsProviderFault,
     checkIsStepsWithoutPage,
+    checkIsDoneWithoutTool,
+    pickCheckedAnswer,
+    genCompletenessNudge,
+    genDoToolNudge,
+    checkIsReasoningOffRemembered,
+    cutRunawayAnswer,
+    dropModelTokens,
+    findAnswerShapeNudge,
+    findUnreadVerseNudge,
+    findMisquoteNudge,
+    findNotStatedNudge,
+    checkReadsInRecordBible,
+    withRecordTurn,
+    RECORD_TURN_ACK,
+    addQuoteSource,
+    toQuoteKey,
+    rememberReasoningOff,
+    resetReasoningOffMemoryForTests,
+    RUNAWAY_ANSWER_NUDGE,
+    WORDLESS_ANSWER_NUDGE,
     getStandInLlmProvider,
     filterVerifiedAnswerShows,
     genOpenPageNudge,
     describeLlmError,
     getAvailableLlmProviders,
+    getFirstImageCapableModel,
     getLlmModel,
     getLlmModelList,
     getLlmProviderKeyField,
+    getRankedLlmModelList,
     getLlmProviderWarning,
     getLlmProviderWarningLinks,
     toCleanToolName,
     toUsableLlmModel,
     genGuideRescueQuestion,
     genGuideRescueSummary,
+    genReplyLanguageLine,
     genToolWatch,
     toGuideRescueAnswer,
+    checkIsToolLeftOut,
+    filterLocalToolList,
+    toGeneralQuestionAsk,
     toHistoryTurns,
     toWatchedManualId,
+    genGeneralAskAction,
+    GENERAL_ASK_TOOL_NAME,
+    checkIsModelRemoval,
+    MAX_MODEL_REMOVALS_PER_ASK,
 } from './llmBotHelpers';
 
 // What the window shows when a call fails. The person reading it is a
@@ -114,10 +232,10 @@ import {
 describe('describeLlmError', () => {
     test('a refused key sends them to the panel that holds it', () => {
         expect(describeLlmError({ status: 401 })).toContain(
-            'Settings → Others',
+            'Settings → AI Providers',
         );
         expect(describeLlmError({ status: 403 })).toContain(
-            'Settings → Others',
+            'Settings → AI Providers',
         );
     });
 
@@ -134,7 +252,7 @@ describe('describeLlmError', () => {
         };
 
         expect(describeLlmError(error)).toContain('workspace id');
-        expect(describeLlmError(error)).toContain('Settings → Others');
+        expect(describeLlmError(error)).toContain('Settings → AI Providers');
     });
 
     test('a rate limit is said in money terms, not in HTTP', () => {
@@ -236,6 +354,32 @@ describe('describeLlmError', () => {
 // reported from a real window: the assistant offered to help show a screen,
 // the user said "yes", and the reply was "It sounds like you might need help
 // or have a question" -- every question was being asked on its own.
+// A window of its own chosen in the window picker: the state read is of THAT
+// window, never the Presenter, and says nothing of where the main window is.
+describe('applyToolWatch with a window of its own chosen', () => {
+    const NEEDS_PRESENTER = '{"mainWindow":{"needsPage":"presenter"}}';
+
+    test('a state read of the chosen window does not offer the Presenter', () => {
+        const watch = genToolWatch();
+        watch.windowAim = {
+            windowId: 'READER-2',
+            focus: 'reader',
+            isSeparateWindow: true,
+        };
+        applyToolWatch(watch, 'owa_app_state', {}, NEEDS_PRESENTER);
+        expect(watch.needsPage).toBeNull();
+        // What is on the projector is still the Presenter's to say.
+        applyToolWatch(watch, 'owa_list_screens', {}, NEEDS_PRESENTER);
+        expect(watch.needsPage).toBe('presenter');
+    });
+
+    test('with the main window, the same read still offers it', () => {
+        const watch = genToolWatch();
+        applyToolWatch(watch, 'owa_app_state', {}, NEEDS_PRESENTER);
+        expect(watch.needsPage).toBe('presenter');
+    });
+});
+
 describe('toHistoryTurns', () => {
     test('a short exchange goes back whole', () => {
         const turns = toHistoryTurns([
@@ -343,7 +487,7 @@ describe('genGuideRescueQuestion', () => {
             ' to present.',
         reason: 'nothing on screen to act on',
         looked: [],
-        nearMisses: ['Bible Lookup', 'Clear Bible'],
+        nearMisses: ['Bible Lookup', 'Clear Long Text'],
     };
 
     test('carries the step, the failure and what is really on screen', () => {
@@ -358,7 +502,7 @@ describe('genGuideRescueQuestion', () => {
         expect(asked).not.toContain('nothing on screen to act on');
         expect(asked).toContain('is not anywhere in the window');
         expect(asked).toContain('not about the projector');
-        expect(asked).toContain('Bible Lookup, Clear Bible');
+        expect(asked).toContain('Bible Lookup, Clear Long Text');
         // A step that named nothing says so, rather than leaving the model to
         // wonder what the card was aiming at.
         expect(asked).toContain('named no control');
@@ -491,6 +635,25 @@ describe('toGuideRescueAnswer', () => {
 
     test('survives the marker arriving in markup', () => {
         expect(toGuideRescueAnswer('**DO:** Press Next.')).toBe('Press Next.');
+    });
+
+    // Khmer ends a sentence with ។ and needs no space after it; a line with
+    // no space at all is cut where a letter ends, never inside a syllable.
+    test('cuts a Khmer answer at its own full stop', () => {
+        const sentence = 'ចុចពីរដងលើខគម្ពីរនៅក្នុងផ្ទាំងមើលជាមុន។';
+        const cut = toGuideRescueAnswer(sentence.repeat(10));
+        expect(cut.length).toBeLessThanOrEqual(240);
+        expect(cut.endsWith('។')).toBe(true);
+    });
+
+    test('never cuts a Khmer word in the middle of a syllable', () => {
+        const cut = toGuideRescueAnswer('ព្រះគម្ពីរ'.repeat(40));
+        expect(cut.endsWith('…')).toBe(true);
+        const kept = cut.slice(0, -1);
+        expect(kept.endsWith('\u17D2')).toBe(false);
+        expect('ព្រះគម្ពីរ'.repeat(40).slice(kept.length)).not.toMatch(
+            /^\p{M}/u,
+        );
     });
 
     test('keeps the whole answer when the frame was ignored', () => {
@@ -1017,6 +1180,170 @@ describe('askLlmBot, carrying more than words', () => {
         expect(assistant.content.length).toBeGreaterThan(0);
     });
 
+    // 2026-10-17: a Resources PDF the model reads comes back as pictures of
+    // its pages, and they are put in front of it after the tool results.
+    test('a Resources read puts its pages after the tool results', async () => {
+        const sent: any[] = [];
+        let round = 0;
+        fake.toolList = [
+            { name: 'owa_resource_file' },
+            { name: 'owa_help_search' },
+        ];
+        fake.toolPicturesMap = {
+            owa_resource_file: [{ mediaType: 'image/png', data: 'UEFHRQ==' }],
+        };
+        useFakeAnthropic(async (request: any) => {
+            sent.push(structuredClone(request));
+            round += 1;
+            return round === 1
+                ? {
+                      content: [
+                          {
+                              type: 'tool_use',
+                              id: 'tool-r',
+                              name: 'owa_resource_file',
+                              input: { action: 'read', file: 'pdf/LUK.7.pdf' },
+                          },
+                      ],
+                  }
+                : answerRound;
+        });
+        try {
+            await askLlmBot(
+                'and chapter 7?',
+                'reader',
+                'anthropic',
+                'm',
+                [],
+                null,
+                { resources: { canSeePictures: true } },
+            );
+            // The Resources tool and nothing of the app's own, under a
+            // prompt of its own.
+            expect(
+                sent[0].tools.map((tool: any) => {
+                    return tool.name;
+                }),
+            ).toEqual(['owa_resource_file']);
+            expect(JSON.stringify(sent[0].system)).toContain('Resources');
+            const last = sent[1].messages[sent[1].messages.length - 1];
+            expect(
+                last.content.map((block: any) => {
+                    return block.type;
+                }),
+            ).toEqual(['tool_result', 'image']);
+            expect(last.content[1].source).toMatchObject({
+                media_type: 'image/png',
+                data: 'UEFHRQ==',
+            });
+        } finally {
+            fake.toolPicturesMap = null;
+            fake.toolList = [];
+        }
+    });
+
+    // 2026-10-17, the user: _let user to interact with other chapter file_.
+    test('a Resources answer offers to ask about another file it read', async () => {
+        const askChapterSeven = async (openFiles: string[]) => {
+            let round = 0;
+            useFakeAnthropic(async () => {
+                round += 1;
+                return round === 1
+                    ? {
+                          content: [
+                              {
+                                  type: 'tool_use',
+                                  id: 'tool-r',
+                                  name: 'owa_resource_file',
+                                  input: {
+                                      action: 'read',
+                                      file: 'pdf/LUK.7.pdf',
+                                  },
+                              },
+                          ],
+                      }
+                    : answerRound;
+            });
+            return await askLlmBot(
+                'and chapter 7?',
+                'reader',
+                'anthropic',
+                'm',
+                [],
+                null,
+                { resources: { canSeePictures: true, openFiles } },
+            );
+        };
+        fake.toolList = [{ name: 'owa_resource_file' }];
+        fake.toolResultMap = {
+            owa_resource_file: '{"file":"pdf/LUK.7.pdf","kind":"pdf"}',
+        };
+        try {
+            expect((await askChapterSeven(['pdf/LUK.6.pdf'])).actions).toEqual([
+                {
+                    label: 'Ask about LUK.7.pdf',
+                    toolName: 'resource-ask',
+                    args: { file: 'pdf/LUK.7.pdf' },
+                },
+            ]);
+            // The file the tab already asks about gets no button of its own.
+            expect(
+                (await askChapterSeven(['pdf/LUK.7.pdf'])).actions ?? [],
+            ).toEqual([]);
+        } finally {
+            fake.toolResultMap = null;
+            fake.toolList = [];
+        }
+    });
+
+    test('a model that cannot see is told the pages were left out', async () => {
+        const sent: any[] = [];
+        let round = 0;
+        fake.toolList = [{ name: 'owa_resource_file' }];
+        fake.toolResultMap = { owa_resource_file: '{"kind":"pdf"}' };
+        fake.toolPicturesMap = {
+            owa_resource_file: [{ mediaType: 'image/png', data: 'UEFHRQ==' }],
+        };
+        useFakeAnthropic(async (request: any) => {
+            sent.push(structuredClone(request));
+            round += 1;
+            return round === 1
+                ? {
+                      content: [
+                          {
+                              type: 'tool_use',
+                              id: 'tool-r',
+                              name: 'owa_resource_file',
+                              input: { action: 'read', file: 'pdf/LUK.7.pdf' },
+                          },
+                      ],
+                  }
+                : answerRound;
+        });
+        try {
+            await askLlmBot(
+                'and chapter 7?',
+                'reader',
+                'anthropic',
+                'm',
+                [],
+                null,
+                { resources: { canSeePictures: false } },
+            );
+            const last = sent[1].messages[sent[1].messages.length - 1];
+            expect(
+                last.content.map((block: any) => {
+                    return block.type;
+                }),
+            ).toEqual(['tool_result']);
+            expect(last.content[0].content).toContain('pictures were left out');
+        } finally {
+            fake.toolPicturesMap = null;
+            fake.toolResultMap = null;
+            fake.toolList = [];
+        }
+    });
+
     test('a question with no picture stays a plain string', async () => {
         const sent: any[] = [];
         useFakeAnthropic(async ({ messages }: any) => {
@@ -1108,6 +1435,7 @@ describe('getLlmProviderKeyField', () => {
         expect(getLlmProviderKeyField('anthropic')).toBe('anthropicAPIKey');
         expect(getLlmProviderKeyField('openai')).toBe('openAIAPIKey');
         expect(getLlmProviderKeyField('kimi')).toBe('kimiAPIKey');
+        expect(getLlmProviderKeyField('bedrock')).toBe('bedrockAPIKey');
     });
 
     test('is null for the keyless one and for what is not a provider', () => {
@@ -1119,10 +1447,77 @@ describe('getLlmProviderKeyField', () => {
     });
 });
 
+// What a thumb down may call "the next model up" (`answerRatingHelpers`):
+// only a list written best first, or the button names a model that is not
+// the smarter one.
+describe('getRankedLlmModelList', () => {
+    test('is the whole list for the three families written best first', () => {
+        for (const provider of ['anthropic', 'openai', 'kimi'] as const) {
+            expect(getRankedLlmModelList(provider), provider).toEqual(
+                getLlmModelList(provider),
+            );
+            expect(getRankedLlmModelList(provider).length).toBeGreaterThan(1);
+        }
+    });
+
+    test('is nothing for a list in another order, a server of the user’s own, or no assistant', () => {
+        // Bedrock is in the order a volunteer should reach for them, and
+        // the keyless three are three different makers' models.
+        expect(getRankedLlmModelList('bedrock')).toEqual([]);
+        expect(getRankedLlmModelList('free')).toEqual([]);
+        expect(getRankedLlmModelList('custom')).toEqual([]);
+        expect(getRankedLlmModelList(null)).toEqual([]);
+    });
+});
+
 // THE KEYLESS PROVIDER. It is what a volunteer gets before anybody has typed an
 // API key, so every one of these is about the state the app ships in, not an
 // edge case. The mocked `getAISetting` above returns three empty keys, which is
 // exactly that state.
+describe('what Auto may ask', () => {
+    test('a server on this computer or the church network costs nothing', () => {
+        expect(
+            checkIsNoCostCustomServer({ baseUrl: 'http://localhost:1234/v1' }),
+        ).toBe(true);
+        expect(
+            checkIsNoCostCustomServer({
+                baseUrl: 'http://super-computer:1237/v1',
+            }),
+        ).toBe(true);
+    });
+
+    test('a server on the internet costs nothing only when it says so', () => {
+        const baseUrl = 'https://abc.trycloudflare.com/v1';
+        expect(checkIsNoCostCustomServer({ baseUrl })).toBe(false);
+        expect(checkIsNoCostCustomServer({ baseUrl, isFree: false })).toBe(
+            false,
+        );
+        expect(checkIsNoCostCustomServer({ baseUrl, isFree: true })).toBe(true);
+    });
+
+    test('a new tab is on Auto until an assistant is picked by name', () => {
+        // Nothing stored at all -- a first run: Auto (the mocked settings
+        // hold nothing).
+        expect(getIsLlmAuto()).toBe(true);
+        expect(toIsLlmAuto(null, null)).toBe(true);
+        expect(toIsLlmAuto('', '')).toBe(true);
+        // A pick is a pick, either way, whatever the other setting holds.
+        expect(toIsLlmAuto('false', null)).toBe(false);
+        expect(toIsLlmAuto('false', 'openai')).toBe(false);
+        expect(toIsLlmAuto('true', 'openai')).toBe(true);
+        // An assistant picked by name before Auto existed wrote the
+        // provider and nothing else: an update leaves that tab's owner on it.
+        expect(toIsLlmAuto(null, 'anthropic')).toBe(false);
+    });
+
+    test('the Auto notice names the public service in its FIRST sentence', () => {
+        // The first sentence is all a folded notice shows, and it is the
+        // one thing that must still be on screen at question ten.
+        expect(AUTO_ASSISTANT_WARNING.split('. ')[0]).toContain('Kilo');
+        expect(AUTO_ASSISTANT_WARNING).toMatch(/leave this computer/);
+    });
+});
+
 describe('the free provider', () => {
     test('answers when no key at all is set', () => {
         // The whole point. Before this existed the list came back empty, the
@@ -1146,6 +1541,7 @@ describe('the free provider', () => {
         expect(getLlmProviderWarning('anthropic')).toBeNull();
         expect(getLlmProviderWarning('openai')).toBeNull();
         expect(getLlmProviderWarning('kimi')).toBeNull();
+        expect(getLlmProviderWarning('bedrock')).toBeNull();
         const warning = getLlmProviderWarning('free');
         expect(warning).not.toBeNull();
         // The three facts it exists to state.
@@ -1378,6 +1774,31 @@ describe('the request is cache-shaped', () => {
         expect(body.tool_choice).toBeUndefined();
     });
 
+    // Reported with two pictures: asked to change the Bible text colour the
+    // assistant named a card that is not there, and told so it named it again
+    // and ringed a button shut behind a panel's three dots.
+    test('told an answer was wrong, it looks before it says it again', async () => {
+        const createMock = vi.fn(async (_body: any) => {
+            return { content: [{ type: 'text', text: 'ok' }] };
+        });
+        useFakeAnthropic(createMock);
+
+        await askLlmBot('I do not see Appearance', 'presenter', 'anthropic');
+
+        const prompt = createMock.mock.calls[0][0].system[0].text;
+        expect(prompt).toContain('never\n  say it again');
+        // What is shut behind another control is opened by pressing that one.
+        expect(prompt).toContain('`revealBy`');
+        expect(prompt).toContain('say to press THAT first');
+        // Then a picture of the window, which is the person's to send...
+        expect(prompt).toContain('Ask for a picture of their window');
+        // ...and the page's newest copy, the one web read about this app.
+        expect(prompt).toContain('read the copy at the address');
+        // ...which is the newer one only when its day is later.
+        expect(prompt).toContain('when its day is later');
+        expect(prompt).toContain('The one exception is the');
+    });
+
     test('gives Reader users short, mouse-first help without talking down to them', async () => {
         const createMock = vi.fn(async (_body: any) => {
             return {
@@ -1405,6 +1826,60 @@ describe('the request is cache-shaped', () => {
         expect(prompt).toContain('relevant recovery choice');
         expect(prompt).toContain('Never offer generic "No thanks"');
         expect(prompt).toContain('Renumber the steps you actually give from 1');
+    });
+
+    // A supported question goes out with its guide page under it, and the
+    // Reader's pages say "non-English" beside a reference of their own. The
+    // book-button answer read the whole ask: seventeen of the Reader's
+    // supported questions were answered with how to open John 3:16, by no
+    // model, whichever assistant the tab was on (2026-10-12).
+    test('the book-button answer is read off what was typed, not the page under it', async () => {
+        const createMock = vi.fn(async (_body: any) => {
+            return {
+                content: [{ type: 'text', text: 'Use the A+ button.' }],
+            };
+        });
+        useFakeAnthropic(createMock);
+        const typed = 'The words are too small. Can you help me?';
+        const asked =
+            `${typed}\n\n(This is one of the app's supported questions.)\n` +
+            'A non-English Bible lists its books under their own names: ' +
+            'type John 3:16 or press the book buttons.';
+
+        const answer = await askLlmBot(
+            asked,
+            'reader',
+            'anthropic',
+            null,
+            [],
+            null,
+            { askedText: typed },
+        );
+
+        expect(createMock).toHaveBeenCalledTimes(1);
+        expect(answer.text).toBe('Use the A+ button.');
+    });
+
+    test('the book-button answer still takes a question that asks for it', async () => {
+        const createMock = vi.fn(async (_body: any) => {
+            return { content: [{ type: 'text', text: 'Type it.' }] };
+        });
+        useFakeAnthropic(createMock);
+        const typed =
+            'My Khmer Bible will not take John 3:16. Use the book buttons.';
+
+        const answer = await askLlmBot(
+            `${typed}\n\n(This is one of the app's supported questions.)`,
+            'reader',
+            'anthropic',
+            null,
+            [],
+            null,
+            { askedText: typed },
+        );
+
+        expect(createMock).not.toHaveBeenCalled();
+        expect(answer.text).toContain('do not need to type');
     });
 
     test('does not impose the Reader-specific answer shape on the Presenter', async () => {
@@ -1610,6 +2085,32 @@ describe('steps written without opening the page', () => {
     const STEPS =
         'Not from here.\n\n1. In the **Documents** list, pick it.\n2. Click **Slide Editor**.';
 
+    // The whole list asked in Khmer (EC-325): told to call owa_foreground
+    // for "Can you start a 5 minute countdown?", gemma4:cloud wrote that it
+    // had started one having called nothing.
+    test('an ask to do something that ends without its tool goes back once', () => {
+        const watch = genToolWatch();
+        expect(checkIsDoneWithoutTool(watch)).toBe(false);
+        watch.doTool = 'owa_foreground';
+        applyToolWatch(watch, 'owa_help_page', { id: 'W-09' }, '# page');
+        expect(checkIsDoneWithoutTool(watch)).toBe(true);
+        expect(genDoToolNudge(watch)).toContain(
+            'you have not called owa_foreground',
+        );
+        watch.isDoNudged = true;
+        expect(checkIsDoneWithoutTool(watch)).toBe(false);
+        // Called -- refused or not -- it is not handed back.
+        const called = genToolWatch();
+        called.doTool = 'owa_foreground';
+        applyToolWatch(
+            called,
+            'owa_foreground',
+            { widget: 'countdown', minutes: 5 },
+            '{"did":"refused"}',
+        );
+        expect(checkIsDoneWithoutTool(called)).toBe(false);
+    });
+
     test('a numbered list after a search with no page opened is caught', () => {
         const watch = genToolWatch();
         applyToolWatch(
@@ -1655,6 +2156,25 @@ describe('steps written without opening the page', () => {
         applyToolWatch(watch, 'owa_help_search', {}, SEARCH_HITS);
         watch.isPageNudged = true;
         expect(checkIsStepsWithoutPage(STEPS, watch)).toBe(false);
+    });
+
+    // The Khmer stress run on gemma4:cloud (2026-10-17): under a pasted
+    // story and down a ten-turn chat it wrote every list with no tool called.
+    test('steps written with nothing looked up at all are caught too', () => {
+        const memory = genToolWatch();
+        memory.canSearchGuide = true;
+        expect(checkIsStepsWithoutPage(STEPS, memory)).toBe(true);
+        expect(genOpenPageNudge(memory)).toContain('written from memory');
+        expect(genOpenPageNudge(memory)).toContain('owa_help_search');
+        // A state answer read the app first, and keeps its steps.
+        const state = genToolWatch();
+        state.canSearchGuide = true;
+        applyToolWatch(state, 'owa_list_screens', {}, '{"screens":[]}');
+        expect(state.toolCallCount).toBe(1);
+        expect(checkIsStepsWithoutPage(STEPS, state)).toBe(false);
+        // An ask that cannot search the guide -- a verse search, a general
+        // question, a translation -- is never told to.
+        expect(checkIsStepsWithoutPage(STEPS, genToolWatch())).toBe(false);
     });
 
     test('the Anthropic loop hands the steps back once and returns the rewrite', async () => {
@@ -1861,6 +2381,1601 @@ describe('getStandInLlmProvider', () => {
     });
 });
 
+// Amazon Bedrock. Each model's AWS card is the spec these hold the loop to:
+// three vendors behind one OpenAI-shaped route, each with its own rules, and
+// each served in its own regions.
+describe('the Bedrock provider', () => {
+    function genToolCallResponse() {
+        return {
+            choices: [
+                {
+                    message: {
+                        role: 'assistant',
+                        content: null,
+                        tool_calls: [
+                            {
+                                id: 'call-1',
+                                type: 'function',
+                                function: {
+                                    name: 'owa_help_search',
+                                    arguments: '{"query":"screen"}',
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        };
+    }
+    function genTextResponse() {
+        return {
+            choices: [{ message: { role: 'assistant', content: 'Press F5.' } }],
+        };
+    }
+
+    beforeEach(() => {
+        fake.toolCallList = [];
+        fake.toolList = [{ name: 'owa_help_search' }];
+        fake.aiSetting = {
+            openAIAPIKey: '',
+            anthropicAPIKey: '',
+            kimiAPIKey: '',
+            bedrockAPIKey: 'ABSKlive',
+        };
+        resetSpendGuardForTests();
+    });
+    afterEach(() => {
+        fake.aiSetting = null;
+        fake.bedrock = null;
+        fake.bedrockClaude = null;
+        fake.bedrockRegion = 'us-west-2';
+    });
+
+    // A tool's pictures cannot ride a `tool` message in this protocol: they
+    // come in a user turn of their own, after the tool legs.
+    test('a Resources read puts its pages in a user turn after the tool legs', async () => {
+        fake.toolList = [{ name: 'owa_resource_file' }];
+        fake.toolPicturesMap = {
+            owa_resource_file: [{ mediaType: 'image/jpeg', data: 'UEFHRQ==' }],
+        };
+        const sent: any[] = [];
+        let round = 0;
+        const create = vi.fn(async (request: any) => {
+            sent.push(structuredClone(request));
+            round += 1;
+            return round === 1
+                ? {
+                      choices: [
+                          {
+                              message: {
+                                  role: 'assistant',
+                                  content: null,
+                                  tool_calls: [
+                                      {
+                                          id: 'call-r',
+                                          type: 'function',
+                                          function: {
+                                              name: 'owa_resource_file',
+                                              arguments:
+                                                  '{"action":"read","file":"pdf/LUK.7.pdf"}',
+                                          },
+                                      },
+                                  ],
+                              },
+                          },
+                      ],
+                  }
+                : genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create } } };
+        try {
+            await askLlmBot(
+                'and chapter 7?',
+                'reader',
+                'bedrock',
+                'google.gemma-4-31b',
+                [],
+                null,
+                { resources: { canSeePictures: true } },
+            );
+            const messages = sent[1].messages;
+            const last = messages[messages.length - 1];
+            expect(messages[messages.length - 2].role).toBe('tool');
+            expect(last.role).toBe('user');
+            expect(last.content[0]).toEqual({
+                type: 'text',
+                text: 'The pictures the tool just returned, in order.',
+            });
+            expect(last.content[1].image_url.url).toBe(
+                'data:image/jpeg;base64,UEFHRQ==',
+            );
+        } finally {
+            fake.toolPicturesMap = null;
+        }
+    });
+
+    // Asks once and hands back the first request the model was sent.
+    async function askFirstRequest(model: string) {
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create } } };
+        await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'bedrock',
+            model,
+        );
+        return (create.mock.calls[0] as any[])[0];
+    }
+
+    test('is offered once its key is set, ahead of the keyless one', () => {
+        expect(getAvailableLlmProviders()).toEqual(['bedrock', 'free']);
+    });
+
+    // Its route has no catalogue (`/openai/v1/models` answers 404), so the
+    // row would only ever say the listing failed.
+    test('offers no More models, like the keyless one', async () => {
+        expect(checkHasMoreModels('bedrock')).toBe(false);
+        expect(checkHasMoreModels('free')).toBe(false);
+        expect(checkHasMoreModels('openai')).toBe(true);
+        expect(checkHasMoreModels(null)).toBe(false);
+        const listed = await listAllLlmModels('bedrock');
+        expect(listed).toEqual(getLlmModelList('bedrock'));
+    });
+
+    test('offers every usable model of the catalogue, recommended first', () => {
+        const modelList = getLlmModelList('bedrock');
+        expect(
+            modelList.map((model) => {
+                return model.id;
+            }),
+        ).toEqual([
+            'global.anthropic.claude-haiku-5-5',
+            'openai.gpt-5.6-terra',
+            'openai.gpt-5.6-luna',
+            'xai.grok-4.3',
+            'xai.grok-4.6',
+            'google.gemma-4-31b',
+            'openai.gpt-6-astra',
+            'openai.gpt-5.4',
+            'google.gemma-4-26b-a4b',
+            'google.gemma-4-e2b',
+        ]);
+        // The first is what a fresh install asks with, so it is the pick --
+        // Claude Haiku 5.5, the best fit at the lowest cost (2026-10-11,
+        // `extra-work/local-llm/aws-bedrock-info.md`), and its label says so
+        // because the picker shows the label and nothing else.
+        expect(getLlmModel('bedrock')).toBe(
+            'global.anthropic.claude-haiku-5-5',
+        );
+        expect(modelList[0].label).toBe('Claude Haiku 5.5 (best recommended)');
+        for (const model of modelList) {
+            // A list price on every one, so the cost line never goes quiet,
+            // and the regions it is served in, so a wrong one is caught.
+            expect(model.price).not.toBe('');
+            expect(model.regions?.length).toBeGreaterThan(0);
+            // Each card says it takes a picture.
+            expect(checkCanSeeImages('bedrock', model.id)).toBe(true);
+        }
+        // A name off the account's own list is blind until known otherwise.
+        expect(checkCanSeeImages('bedrock', 'openai.gpt-oss-120b')).toBe(false);
+    });
+
+    // Claude on Bedrock is served on the Anthropic Messages API and never on
+    // the OpenAI-shaped route (AWS's Haiku 5.5 card, 2026-10-11), so its row
+    // rides the Anthropic loop -- the runtime host's client, the same key,
+    // the prompt cached -- while the rest of the list is untouched.
+    test('a Claude row rides the Anthropic loop, prompt cached, never the OpenAI one', async () => {
+        const openAiCreate = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create: openAiCreate } } };
+        const create = vi.fn(async () => {
+            return {
+                content: [{ type: 'text', text: 'Press F5.' }],
+                stop_reason: 'end_turn',
+                usage: {
+                    input_tokens: 10,
+                    output_tokens: 5,
+                    cache_creation_input_tokens: 0,
+                    cache_read_input_tokens: 0,
+                },
+            };
+        });
+        fake.bedrockClaude = { messages: { create } };
+
+        const answer = await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'bedrock',
+            'global.anthropic.claude-haiku-5-5',
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        expect(openAiCreate).not.toHaveBeenCalled();
+        const request: any = (create.mock.calls[0] as any[])[0];
+        expect(request.model).toBe('global.anthropic.claude-haiku-5-5');
+        // The Anthropic loop's two cache markers and its own tool shape.
+        expect(request.cache_control).toEqual({ type: 'ephemeral' });
+        expect(request.system[0].cache_control).toEqual({ type: 'ephemeral' });
+        expect(request.max_tokens).toBe(6000);
+        expect(request.tools[0]).toMatchObject({ name: 'owa_help_search' });
+        expect(request.tools[0].input_schema).toBeDefined();
+        // Not OpenAI's shape.
+        expect(request).not.toHaveProperty('max_completion_tokens');
+        expect(request.tools[0]).not.toHaveProperty('function');
+    });
+
+    // No Claude client is an error with no status, which `askLlmBot` words
+    // as the service being out of reach (memory `bedrock-llm-provider`); what
+    // matters here is that the OpenAI-shaped client was never tried for it.
+    test('a Claude row with no client fails without touching the OpenAI route', async () => {
+        const openAiCreate = vi.fn();
+        fake.bedrock = { chat: { completions: { create: openAiCreate } } };
+        fake.bedrockClaude = null;
+        await expect(
+            askLlmBot(
+                'Hello?',
+                'presenter',
+                'bedrock',
+                'global.anthropic.claude-haiku-5-5',
+            ),
+        ).rejects.toThrow();
+        expect(openAiCreate).not.toHaveBeenCalled();
+    });
+
+    // The Global cross-region id is served from every region the picker
+    // offers, so no region refuses it before the round -- Frankfurt included.
+    test('the Claude row is asked from any region in the list', () => {
+        for (const region of [
+            'us-west-2',
+            'us-east-1',
+            'us-east-2',
+            'eu-central-1',
+        ]) {
+            expect(
+                findBedrockRegionProblem(
+                    'global.anthropic.claude-haiku-5-5',
+                    region,
+                ),
+            ).toBeNull();
+        }
+    });
+
+    test('a GPT gets OpenAI budget and a little thinking, and may call several tools', async () => {
+        const request = await askFirstRequest('openai.gpt-5.6-terra');
+        expect(request).toMatchObject({
+            model: 'openai.gpt-5.6-terra',
+            max_completion_tokens: 6000,
+            reasoning_effort: 'low',
+        });
+        // OpenAI's reasoning models refuse `max_tokens`.
+        expect(request).not.toHaveProperty('max_tokens');
+        expect(request).not.toHaveProperty('parallel_tool_calls');
+    });
+
+    test("a Grok gets its card's budget name and its own default thinking", async () => {
+        const request = await askFirstRequest('xai.grok-4.3');
+        expect(request).toMatchObject({ max_completion_tokens: 6000 });
+        expect(request).not.toHaveProperty('max_tokens');
+        expect(request).not.toHaveProperty('reasoning_effort');
+        expect(request).not.toHaveProperty('parallel_tool_calls');
+    });
+
+    test('Gemma 4 E2B thinks hard, as AWS advises, so it does not think aloud', async () => {
+        const request = await askFirstRequest('google.gemma-4-e2b');
+        expect(request).toMatchObject({
+            max_tokens: 6000,
+            reasoning_effort: 'high',
+            parallel_tool_calls: false,
+        });
+    });
+
+    test('a model the region does not serve is refused before a round is paid for', async () => {
+        fake.bedrockRegion = 'us-east-1';
+        // A live ChatGPT key too, to show it is NOT handed the question:
+        // the fix is a setting, and another key would only hide it.
+        fake.aiSetting = { ...fake.aiSetting, openAIAPIKey: 'sk-live' };
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create } } };
+        const openAiCreate = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.openai = { chat: { completions: { create: openAiCreate } } };
+
+        try {
+            await expect(
+                askLlmBot('Hello?', 'presenter', 'bedrock', 'xai.grok-4.6'),
+            ).rejects.toThrow(
+                'Grok 4.6 is not offered in us-east-1 — choose us-west-2 ' +
+                    'under Settings → AI Providers → AWS Region',
+            );
+            expect(create).not.toHaveBeenCalled();
+            expect(openAiCreate).not.toHaveBeenCalled();
+        } finally {
+            fake.openai = null;
+        }
+    });
+
+    test('names every region that does serve the model', () => {
+        expect(
+            findBedrockRegionProblem('openai.gpt-5.6-luna', 'eu-central-1'),
+        ).toBe(
+            'GPT-5.6 Luna is not offered in eu-central-1 — choose ' +
+                'us-east-1, us-east-2 or us-west-2 under Settings → AI ' +
+                'Providers → AWS Region',
+        );
+        expect(
+            findBedrockRegionProblem('google.gemma-4-31b', 'eu-central-1'),
+        ).toBeNull();
+        // A model off the account's own list is the service's to answer for.
+        expect(
+            findBedrockRegionProblem('openai.gpt-oss-120b', 'eu-central-1'),
+        ).toBeNull();
+    });
+
+    test('asks for one tool call a turn, with the plain budget', async () => {
+        const create = vi
+            .fn()
+            .mockImplementationOnce(async () => {
+                return genToolCallResponse();
+            })
+            .mockImplementationOnce(async () => {
+                return genTextResponse();
+            });
+        fake.bedrock = { chat: { completions: { create } } };
+
+        const answer = await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'bedrock',
+            'google.gemma-4-31b',
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        expect(fake.toolCallList).toEqual(['owa_help_search']);
+        const request = create.mock.calls[0][0];
+        expect(request).toMatchObject({
+            model: 'google.gemma-4-31b',
+            max_tokens: 6000,
+            parallel_tool_calls: false,
+        });
+        expect(request.tools.length).toBeGreaterThan(0);
+        // Not OpenAI: neither OpenAI's budget name nor a thinking setting.
+        expect(request).not.toHaveProperty('max_completion_tokens');
+        expect(request).not.toHaveProperty('reasoning_effort');
+    });
+
+    test('the last round carries neither tools nor the one-call rule', async () => {
+        // OpenAI refuses `parallel_tool_calls` on a request with no tools,
+        // and the last round of every question is one.
+        const create = vi.fn(async (request: any) => {
+            return request.tools ? genToolCallResponse() : genTextResponse();
+        });
+        fake.bedrock = { chat: { completions: { create } } };
+
+        const answer = await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'bedrock',
+            'google.gemma-4-31b',
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        const lastRequest: any = create.mock.calls.at(-1)?.[0];
+        expect(lastRequest).not.toHaveProperty('tools');
+        expect(lastRequest).not.toHaveProperty('parallel_tool_calls');
+        for (const [request] of create.mock.calls.slice(0, -1)) {
+            expect(request).toMatchObject({ parallel_tool_calls: false });
+        }
+    });
+});
+
+// The user's own servers (LM Studio and the like): ONE provider key standing
+// for all of them, each model `<serverId>/<rowId>`, asked by the server's
+// own model id through the main-process relay.
+describe('the custom servers', () => {
+    const SERVER_ID = '11111111-2222-3333-4444-555555555555';
+    const PHI_MODEL = `${SERVER_ID}/row-phi`;
+    function genServer(value: Record<string, any> = {}) {
+        return {
+            id: SERVER_ID,
+            name: 'LM Studio',
+            baseUrl: 'http://localhost:1234/v1',
+            models: [
+                {
+                    id: 'row-phi',
+                    model: 'phi-3.1-mini-128k-instruct',
+                    name: 'Phi 3.1 Mini 128k Instruct',
+                },
+                { id: 'row-llama', model: 'llama-3.2-3b-instruct', name: '' },
+            ],
+            ...value,
+        };
+    }
+    function genTextResponse() {
+        return {
+            choices: [{ message: { role: 'assistant', content: 'Press F5.' } }],
+            usage: { prompt_tokens: 900, completion_tokens: 30 },
+        };
+    }
+
+    beforeEach(() => {
+        fake.toolCallList = [];
+        fake.toolList = [{ name: 'owa_help_search' }];
+        fake.customServers = [genServer()];
+        resetSpendGuardForTests();
+        resetReasoningOffMemoryForTests();
+    });
+    afterEach(() => {
+        fake.customServers = [];
+        fake.custom = null;
+        fake.aiSetting = null;
+        fake.lmStudioInfoMap = null;
+    });
+
+    test('is offered only with a usable server, before the keyless one', () => {
+        expect(getAvailableLlmProviders()).toEqual(['custom', 'free']);
+        fake.customServers = [];
+        expect(getAvailableLlmProviders()).toEqual(['free']);
+    });
+
+    test('is neither the keyless provider nor one with a key or a catalogue', () => {
+        expect(checkIsCustomProvider('custom')).toBe(true);
+        expect(checkIsFreeProvider('custom')).toBe(false);
+        expect(getLlmProviderKeyField('custom')).toBeNull();
+        expect(getLlmProviderWarning('custom')).toBeNull();
+        expect(checkHasMoreModels('custom')).toBe(false);
+        expect(checkCanSeeImages('custom', PHI_MODEL)).toBe(false);
+    });
+
+    test('lists every row by the name given, the server id behind it', () => {
+        const [phi, llama] = getLlmModelList('custom');
+        expect(phi).toMatchObject({
+            id: PHI_MODEL,
+            label: 'Phi 3.1 Mini 128k Instruct',
+            wireId: 'phi-3.1-mini-128k-instruct',
+            serverId: SERVER_ID,
+            note: 'LM Studio, on this computer',
+        });
+        // No name given: the model id it is asked by.
+        expect(llama.label).toBe('llama-3.2-3b-instruct');
+        expect(getLlmProviderLabel('custom', PHI_MODEL)).toBe('LM Studio');
+        expect(getLlmProviderLabel('openai')).toBe('ChatGPT');
+    });
+
+    test('moves a tab off a deleted row, onto the same server first', () => {
+        expect(toUsableLlmModel('custom', PHI_MODEL)).toBe(PHI_MODEL);
+        expect(toUsableLlmModel('custom', `${SERVER_ID}/row-gone`)).toBe(
+            PHI_MODEL,
+        );
+        expect(toUsableLlmModel('custom', 'other-server/row-x')).toBe(
+            PHI_MODEL,
+        );
+    });
+
+    test('never stands in for a paid key, nor is stood in for', () => {
+        fake.aiSetting = {
+            openAIAPIKey: 'sk-live',
+            anthropicAPIKey: '',
+            kimiAPIKey: '',
+        };
+        expect(getAvailableLlmProviders()).toEqual([
+            'openai',
+            'custom',
+            'free',
+        ]);
+        expect(getStandInLlmProvider('openai')).toBeNull();
+        expect(getStandInLlmProvider('custom')).toBeNull();
+    });
+
+    test('asks by the server’s own model id, with the plain budget, at no cost', async () => {
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const rounds: any[] = [];
+
+        const answer = await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            {
+                onUsage: (round) => {
+                    rounds.push(round);
+                },
+            },
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(request).toMatchObject({
+            model: 'phi-3.1-mini-128k-instruct',
+            max_tokens: 2000,
+        });
+        // A server that did not say which program it is keeps its own
+        // sampling: it may be a gateway that refuses the field.
+        expect(request).not.toHaveProperty('temperature');
+        // The window's own id stays on the usage, for the price and the log;
+        // a server on this computer costs nothing.
+        expect(rounds[0]).toMatchObject({
+            provider: 'custom',
+            model: PHI_MODEL,
+            isPricedAtZero: true,
+        });
+    });
+
+    // EC-211, measured 2026-10-10 on the user's LM Studio: gemma-4-12b spent
+    // 697 of 700 completion tokens thinking about a 5.7k-token ask and said
+    // nothing; the same ask with reasoning_effort none answered in 14 s.
+    test('an answer that was all thinking is asked for once more with thinking off', async () => {
+        fake.lmStudioInfoMap = new Map();
+        const create = vi.fn(async (request: any) => {
+            if (request.reasoning_effort === 'none') {
+                return genTextResponse();
+            }
+            return {
+                choices: [
+                    {
+                        finish_reason: 'length',
+                        message: {
+                            role: 'assistant',
+                            content: '',
+                            reasoning_content: 'The user wants to know…',
+                        },
+                    },
+                ],
+                usage: {
+                    prompt_tokens: 5670,
+                    completion_tokens: 700,
+                    completion_tokens_details: { reasoning_tokens: 697 },
+                },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+
+        const answer = await askLlmBot(
+            'How do I cast the virtual display to a TV?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+        );
+
+        expect(answer.text).toBe('Press F5.');
+        expect(create).toHaveBeenCalledTimes(2);
+        const [first, second] = create.mock.calls.map((call: any[]) => {
+            return call[0];
+        });
+        // The tool loop keeps its thinking on; only the retry turns it off.
+        expect(first.reasoning_effort).toBeUndefined();
+        expect(second).toMatchObject({ reasoning_effort: 'none' });
+    });
+
+    // EC-258: asked more than once, a 4B model got about one answer in
+    // seven wrong on the dense pages and not the same ones twice -- the
+    // program's own default temperature at work.
+    test('a local program is asked for the likeliest word every time', async () => {
+        fake.lmStudioInfoMap = new Map();
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+
+        await askLlmBot(
+            'How do I show the screen?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+        );
+
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(request).toMatchObject({ temperature: 0 });
+    });
+
+    test('prices a server elsewhere as not known', async () => {
+        fake.customServers = [
+            genServer({ baseUrl: 'https://llm.example.org/v1' }),
+        ];
+        fake.custom = {
+            chat: {
+                completions: {
+                    create: vi.fn(async () => {
+                        return genTextResponse();
+                    }),
+                },
+            },
+        };
+        const rounds: any[] = [];
+        await askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL, [], null, {
+            onUsage: (round) => {
+                rounds.push(round);
+            },
+        });
+        expect(rounds[0].isPricedAtZero).toBeUndefined();
+    });
+
+    test('says what the server said about itself, in its own sentence', async () => {
+        fake.custom = {
+            chat: {
+                completions: {
+                    create: vi.fn(async () => {
+                        const error: any = new Error('Connection error.');
+                        error.cause = new CustomServerError(
+                            'nothing answered at http://localhost:1234/v1 — ' +
+                                'check that its server is running',
+                        );
+                        throw error;
+                    }),
+                },
+            },
+        };
+        await expect(
+            askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL),
+        ).rejects.toThrow(
+            'nothing answered at http://localhost:1234/v1 — check that its ' +
+                'server is running',
+        );
+    });
+
+    test('asks a deleted row’s server by its first model instead', async () => {
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        await askLlmBot(
+            'Hello?',
+            'presenter',
+            'custom',
+            `${SERVER_ID}/row-gone`,
+        );
+        expect((create.mock.calls[0] as any[])[0].model).toBe(
+            'phi-3.1-mini-128k-instruct',
+        );
+    });
+
+    test('a machine on the same network costs nothing too', async () => {
+        fake.customServers = [
+            genServer({
+                name: 'LM Studio super-computer',
+                baseUrl: 'http://super-computer:1237/v1',
+            }),
+        ];
+        fake.custom = {
+            chat: {
+                completions: {
+                    create: vi.fn(async () => {
+                        return genTextResponse();
+                    }),
+                },
+            },
+        };
+        expect(getLlmModelList('custom')[0].note).toBe(
+            'LM Studio super-computer, on your network',
+        );
+        const rounds: any[] = [];
+        await askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL, [], null, {
+            onUsage: (round) => {
+                rounds.push(round);
+            },
+        });
+        expect(rounds[0].isPricedAtZero).toBe(true);
+    });
+
+    test('sees a picture only with a row that says it can', () => {
+        fake.customServers = [
+            genServer({
+                models: [
+                    { id: 'row-phi', model: 'phi', name: '' },
+                    {
+                        id: 'row-qwen',
+                        model: 'qwen/qwen3.5-9b',
+                        name: '',
+                        canSeeImages: true,
+                    },
+                ],
+            }),
+        ];
+        expect(checkCanSeeImages('custom', PHI_MODEL)).toBe(false);
+        expect(checkCanSeeImages('custom', `${SERVER_ID}/row-qwen`)).toBe(true);
+        // Said on the model picker's hover, as the Free one says it.
+        expect(getLlmModelList('custom')[1].note).toBe(
+            'LM Studio, on this computer · can see pictures',
+        );
+        expect(getFirstImageCapableModel('custom')?.id).toBe(
+            `${SERVER_ID}/row-qwen`,
+        );
+    });
+
+    test('says the server is still loading the model, on the first round only', async () => {
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: false,
+                    loadedContext: null,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        let round = 0;
+        fake.custom = {
+            chat: {
+                completions: {
+                    create: vi.fn(async () => {
+                        round += 1;
+                        return round === 1
+                            ? {
+                                  choices: [
+                                      {
+                                          message: {
+                                              role: 'assistant',
+                                              content: null,
+                                              tool_calls: [
+                                                  {
+                                                      id: 'c1',
+                                                      type: 'function',
+                                                      function: {
+                                                          name: 'owa_help_search',
+                                                          arguments: '{}',
+                                                      },
+                                                  },
+                                              ],
+                                          },
+                                      },
+                                  ],
+                              }
+                            : genTextResponse();
+                    }),
+                },
+            },
+        };
+        const steps: string[] = [];
+        await askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL, [], null, {
+            onProgress: (step) => {
+                if (!step.isDone) {
+                    steps.push(step.text);
+                }
+            },
+        });
+        expect(steps).toContain(
+            'Waiting for LM Studio to load Phi 3.1 Mini 128k Instruct — ' +
+                'the first answer takes longer',
+        );
+        expect(steps).toContain('Thinking it over (2)');
+    });
+
+    test('refuses a model loaded too small, before a round is posted', async () => {
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: true,
+                    loadedContext: 4096,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        const create = vi.fn();
+        fake.custom = { chat: { completions: { create } } };
+        await expect(
+            askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL),
+        ).rejects.toThrow('context 4096 is too small');
+        expect(create).not.toHaveBeenCalled();
+    });
+
+    // Ollama loads a model on the question at its own default context and
+    // cuts a longer question down to fit, without a word: gemma4:e4b at
+    // 4 096 answered from 2 051 tokens of ~13 000 (2026-10-16).
+    test('says so when the question loaded the model too small and was cut', async () => {
+        const genInfo = (isLoaded: boolean, loadedContext: number | null) => {
+            return new Map([
+                [
+                    'phi-3.1-mini-128k-instruct',
+                    {
+                        isLoaded,
+                        loadedContext,
+                        maxContext: 131072,
+                        canSeeImages: false,
+                    },
+                ],
+            ]);
+        };
+        for (const [loadedAfter, isRefused] of [
+            [4096, true],
+            [32768, false],
+        ] as const) {
+            fake.lmStudioInfoMap = genInfo(false, null);
+            const create = vi.fn(async () => {
+                // The question is what loads it.
+                fake.lmStudioInfoMap = genInfo(true, loadedAfter);
+                return {
+                    choices: [
+                        {
+                            message: {
+                                role: 'assistant',
+                                content: 'An answer.',
+                            },
+                        },
+                    ],
+                    usage: { prompt_tokens: 2051, completion_tokens: 30 },
+                };
+            });
+            fake.custom = { chat: { completions: { create } } };
+            const asking = askLlmBot(
+                'Hello?',
+                'presenter',
+                'custom',
+                PHI_MODEL,
+            );
+            if (isRefused) {
+                await expect(asking).rejects.toThrow(
+                    'answered from a question cut to 4096',
+                );
+            } else {
+                await expect(asking).resolves.toBeTruthy();
+            }
+            expect(create).toHaveBeenCalledTimes(1);
+        }
+    });
+
+    test('waiting input uses one tool-free JSON round and keeps literal reply text intact', async () => {
+        const raw = '{"kind":"help","reply":"OPTIONS: Which language?"}';
+        const create = vi.fn(async () => ({
+            choices: [
+                {
+                    finish_reason: 'stop',
+                    message: { role: 'assistant', content: raw },
+                },
+            ],
+        }));
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Interpret Thai?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { isWaitingInput: true },
+        );
+        expect(answer.text).toBe(raw);
+        expect(create).toHaveBeenCalledTimes(1);
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(request).not.toHaveProperty('tools');
+        expect(request.messages[0].content).toContain('waiting question');
+        expect(request.messages[0].content).toContain('JSON');
+    });
+
+    test('a general question goes out framed, with no tools and in one round', async () => {
+        const create = vi.fn(async () => {
+            return {
+                choices: [
+                    {
+                        message: {
+                            role: 'assistant',
+                            content: 'The Bible is a collection of books.',
+                        },
+                    },
+                ],
+                usage: { prompt_tokens: 900, completion_tokens: 30 },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const steps: string[] = [];
+        const answer = await askLlmBot(
+            toGeneralQuestionAsk('what is holy bible'),
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            {
+                isGeneral: true,
+                onProgress: (step) => {
+                    if (!step.isDone) {
+                        steps.push(step.text);
+                    }
+                },
+            },
+        );
+        expect(answer.text).toBe('The Bible is a collection of books.');
+        expect(create).toHaveBeenCalledTimes(1);
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(request).not.toHaveProperty('tools');
+        expect(request).not.toHaveProperty('tool_choice');
+        // The short system prompt, not the app's: a 4k local model has to
+        // hold the question.
+        expect(request.messages[0].role).toBe('system');
+        expect(request.messages[0].content).toMatch(
+            /general question that is NOT about the app/,
+        );
+        expect(request.messages[0].content.length).toBeLessThan(600);
+        const lastMessage = request.messages[request.messages.length - 1];
+        expect(lastMessage.role).toBe('user');
+        expect(lastMessage.content).toMatch(
+            /^what is holy bible\n\n\(This is a general question, not about the Open Worship app\./,
+        );
+        // The app is never connected to for it.
+        expect(steps).not.toContain('Connecting to the app');
+    });
+
+    test('a known question keeps its walkthrough buttons when the model opens no page', async () => {
+        // The page rode with the ask, so a small model wrote the answer
+        // from it and called no tool; the recipe still stands under it.
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Where do I type John 3:16?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { knownRecipeId: 'W-11' },
+        );
+        expect(answer.text).toBe('Press F5.');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Show me step by step',
+            'Do it for me',
+        ]);
+        expect(answer.actions?.[0].args).toMatchObject({ manualId: 'W-11' });
+        // Without it, as before: no page opened, nothing to walk.
+        const bare = await askLlmBot(
+            'Where do I type John 3:16?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+        );
+        expect(bare.actions).toBeUndefined();
+    });
+
+    // Passes 6-8 of the whole list asked in Khmer of gemma4:cloud (EC-330):
+    // ~30 answers stopped before the job's last step with that step quoted.
+    test('an answer to a named part is checked once for the steps that finish the job', async () => {
+        const first = '1. Open **View**.';
+        const replies = [first, 'KEEP'];
+        const create = vi.fn(async () => {
+            return {
+                choices: [
+                    {
+                        message: {
+                            role: 'assistant',
+                            content: replies.shift() ?? '',
+                        },
+                    },
+                ],
+                usage: { prompt_tokens: 900, completion_tokens: 10 },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const extra = {
+            knownRecipeId: 'W-31',
+            isKnownPageQuoted: true,
+            isKnownPartNamed: true,
+        };
+        const kept = await askLlmBot(
+            'How do I put the layout back?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            extra,
+        );
+        expect(kept.text).toBe(first);
+        expect(create).toHaveBeenCalledTimes(2);
+        const checked = (create.mock.calls[1] as any[])[0];
+        expect(checked.messages[checked.messages.length - 1].content).toContain(
+            'reply with only the word KEEP',
+        );
+        // Written again with the missing step: the new one stands.
+        const whole = '1. Open **View**.\n2. Click **Reset Widgets Size**.';
+        replies.push(first, whole);
+        create.mockClear();
+        const rewritten = await askLlmBot(
+            'How do I put the layout back?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            extra,
+        );
+        expect(rewritten.text).toBe(whole);
+        // No part named: one round, as before.
+        replies.push(first);
+        create.mockClear();
+        await askLlmBot(
+            'How do I put the layout back?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { knownRecipeId: 'W-31', isKnownPageQuoted: true },
+        );
+        expect(create).toHaveBeenCalledTimes(1);
+    });
+
+    test('the check names the controls of the part it holds the answer against', () => {
+        expect(genCompletenessNudge(['ចន្លោះខាងក្នុង', 'ស៊ុម'])).toContain(
+            'That part names these controls: **ចន្លោះខាងក្នុង**, **ស៊ុម**',
+        );
+        expect(genCompletenessNudge()).not.toContain('names these controls');
+    });
+
+    test('a reply to the check that says nothing new keeps the first answer', () => {
+        const answer = '1. Open View.\n2. Click Reset Widgets Size.';
+        expect(pickCheckedAnswer(answer, 'KEEP')).toBe(answer);
+        expect(pickCheckedAnswer(answer, '**KEEP**')).toBe(answer);
+        expect(pickCheckedAnswer(answer, 'ចម្លើយគឺពេញលេញ។')).toBe(answer);
+        const longer = `${answer}\n3. Answer Yes.`;
+        expect(pickCheckedAnswer(answer, longer)).toBe(longer);
+        expect(pickCheckedAnswer(answer, `${longer}\nKEEP`)).toBe(longer);
+    });
+
+    // Pass 17 (2026-10-18): asked whether a step was missing, a why-question
+    // came back padded with procedures nobody asked for.
+    test('a what-or-why answer is checked for its answer, and may come back shorter', () => {
+        const whatNudge = genCompletenessNudge(['ស៊ុម'], true);
+        expect(whatNudge).toContain('WHAT something is or WHY it happens');
+        expect(whatNudge).toContain('never a procedure it did not ask for');
+        expect(whatNudge).not.toContain('names these controls');
+        expect(genCompletenessNudge()).not.toContain('WHY it happens');
+        const padded =
+            '1. Open the ⋮ menu at the right end of the row.\n' +
+            '2. It is the same menu a right-click on the row opens.\n' +
+            '3. Scroll inside it with the mouse wheel to reach the rest.\n' +
+            '4. Press an entry to choose it, or Escape to close the menu.\n' +
+            '5. The menu uses the whole window height and scrolls only when ' +
+            'it is taller than the window.';
+        const focused =
+            'A long menu scrolls only when it is taller than the whole window, ' +
+            'never before that.';
+        // The steps taken out make the rewrite the shorter one: kept.
+        expect(pickCheckedAnswer(padded, focused, true)).toBe(focused);
+        expect(pickCheckedAnswer(padded, focused)).toBe(padded);
+        expect(pickCheckedAnswer(padded, 'KEEP', true)).toBe(padded);
+        expect(pickCheckedAnswer(padded, 'ល្អហើយ។', true)).toBe(padded);
+    });
+
+    // 2026-10-12, the corpus's first forty-five questions asked of
+    // gemma-4-e4b: thirty-six took three rounds or more, because steps
+    // written from the page the app had quoted in the ask were handed back
+    // as "written from a search excerpt", and the model opened the same
+    // page again and wrote the answer a second time.
+    test('steps written from a page quoted whole are not handed back', async () => {
+        const steps = '1. Open **View**.\n2. Click **Reset Widgets Size**.';
+        const create = vi.fn(async () => {
+            return {
+                choices: [{ message: { role: 'assistant', content: steps } }],
+                usage: { prompt_tokens: 900, completion_tokens: 30 },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'How do I put the layout back the way it started?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { knownRecipeId: 'W-31', isKnownPageQuoted: true },
+        );
+        expect(answer.text).toContain('Reset Widgets Size');
+        expect(create).toHaveBeenCalledTimes(1);
+        // The walkthrough still stands under it, on that page.
+        expect(answer.actions?.[0].args).toMatchObject({ manualId: 'W-31' });
+        // A page that was cut to fit is only a hit: the step that answers
+        // may be in the part that did not ride, so those steps go back once.
+        create.mockClear();
+        await askLlmBot(
+            'How do I put the layout back the way it started?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { knownRecipeId: 'W-31' },
+        );
+        expect(create).toHaveBeenCalledTimes(2);
+        const nudged = (create.mock.calls[1] as any[])[0];
+        expect(nudged.messages[nudged.messages.length - 1].content).toMatch(
+            /Open the page that fits/,
+        );
+    });
+
+    test('a general question on LM Studio goes out with its thinking off; an app question keeps it', async () => {
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: true,
+                    loadedContext: 32768,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        await askLlmBot(
+            toGeneralQuestionAsk('what is holy bible'),
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { isGeneral: true },
+        );
+        expect((create.mock.calls[0] as any[])[0]).toMatchObject({
+            reasoning_effort: 'none',
+        });
+        // An app question keeps its reasoning: the tool calls may need it.
+        create.mockClear();
+        await askLlmBot('Is the screen on?', 'presenter', 'custom', PHI_MODEL);
+        expect((create.mock.calls[0] as any[])[0]).not.toHaveProperty(
+            'reasoning_effort',
+        );
+        // A server of a kind not measured to take the field is sent nothing
+        // it may refuse. ANOTHER server: this one has said what it is.
+        const OTHER_ID = '99999999-2222-3333-4444-555555555555';
+        fake.customServers = [genServer({ id: OTHER_ID })];
+        fake.lmStudioInfoMap = null;
+        create.mockClear();
+        await askLlmBot(
+            toGeneralQuestionAsk('what is holy bible'),
+            'presenter',
+            'custom',
+            `${OTHER_ID}/row-phi`,
+            [],
+            null,
+            { isGeneral: true },
+        );
+        const unknownRequest = (create.mock.calls[0] as any[])[0];
+        expect(unknownRequest).not.toHaveProperty('reasoning_effort');
+        expect(unknownRequest).not.toHaveProperty('temperature');
+    });
+
+    // The look at the server is given five seconds in front of every
+    // question; the one that runs out must not send that question out
+    // sampled. Seen as the one answer in twenty-seven that differed between
+    // two askings (2026-10-13).
+    test('a server slow to say which program it is this once is still that program', async () => {
+        const SLOW_ID = '77777777-2222-3333-4444-555555555555';
+        fake.customServers = [genServer({ id: SLOW_ID })];
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        fake.lmStudioInfoMap = new Map();
+        await askLlmBot('Hello?', 'presenter', 'custom', `${SLOW_ID}/row-phi`);
+        expect((create.mock.calls[0] as any[])[0]).toMatchObject({
+            temperature: 0,
+        });
+        // No answer to the look this time.
+        fake.lmStudioInfoMap = null;
+        create.mockClear();
+        await askLlmBot('Hello?', 'presenter', 'custom', `${SLOW_ID}/row-phi`);
+        expect((create.mock.calls[0] as any[])[0]).toMatchObject({
+            temperature: 0,
+        });
+    });
+
+    function genCallResponse(name: string, args: Record<string, any> = {}) {
+        return {
+            choices: [
+                {
+                    message: {
+                        role: 'assistant',
+                        content: null,
+                        tool_calls: [
+                            {
+                                id: `c-${name}`,
+                                type: 'function',
+                                function: {
+                                    name,
+                                    arguments: JSON.stringify(args),
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+            usage: { prompt_tokens: 900, completion_tokens: 30 },
+        };
+    }
+
+    test('reads a tool call the model wrote as words, runs it, and answers on', async () => {
+        fake.toolList = [
+            {
+                name: 'owa_help_search',
+                inputSchema: {
+                    type: 'object',
+                    properties: { query: { type: 'string' } },
+                },
+            } as any,
+            { name: 'owa_list_screens' },
+        ];
+        fake.toolResultMap = { owa_list_screens: '{"isAnyShowing": false}' };
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            return round === 1
+                ? {
+                      choices: [
+                          {
+                              message: {
+                                  role: 'assistant',
+                                  content:
+                                      'Let me look.\n<tool_call>\n' +
+                                      '<function=owa_list_screens>\n' +
+                                      '</function>\n</tool_call>',
+                              },
+                          },
+                      ],
+                      usage: { prompt_tokens: 900, completion_tokens: 30 },
+                  }
+                : genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Is the screen on?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+        );
+        expect(answer.text).toBe('Press F5.');
+        expect(fake.toolCallList).toEqual(['owa_list_screens']);
+        // Into the conversation as a real tool call with its words kept,
+        // answered by a tool message under the call's own id.
+        const second = (create.mock.calls[1] as any[])[0];
+        const assistantTurn = second.messages.find((message: any) => {
+            return message.role === 'assistant' && message.tool_calls;
+        });
+        expect(assistantTurn.content).toBe('Let me look.');
+        expect(assistantTurn.tool_calls[0].function.name).toBe(
+            'owa_list_screens',
+        );
+        const toolTurn = second.messages.find((message: any) => {
+            return message.role === 'tool';
+        });
+        expect(toolTurn.tool_call_id).toBe('text_call_1');
+        expect(toolTurn.content).toContain('isAnyShowing');
+        fake.toolResultMap = null;
+    });
+
+    test('a tool call written as words on the last step is no answer', async () => {
+        fake.toolList = [{ name: 'owa_list_screens' }];
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            // Five real calls, then words where the answer should be.
+            return round < 6
+                ? genCallResponse('owa_list_screens')
+                : {
+                      choices: [
+                          {
+                              message: {
+                                  role: 'assistant',
+                                  content:
+                                      '<tool_call>{"name": "owa_list_screens", "arguments": {}}</tool_call>',
+                              },
+                          },
+                      ],
+                      usage: { prompt_tokens: 900, completion_tokens: 30 },
+                  };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        // Said as what it is, not as the network: a plain error with no
+        // status used to read "it could not be reached".
+        await expect(
+            askLlmBot('Is the screen on?', 'presenter', 'custom', PHI_MODEL),
+        ).rejects.toThrow('it wrote no answer this time');
+        expect(create).toHaveBeenCalledTimes(6);
+    });
+
+    test('an answer written off the Presenter says so and offers the way there', async () => {
+        fake.toolList = [{ name: 'owa_list_screens' }];
+        fake.toolResultMap = {
+            owa_list_screens:
+                '{"isAnyShowing":false,"showingScreenIds":[],' +
+                '"needsPage":"presenter","note":"What each screen holds …"}',
+        };
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            return round === 1
+                ? genCallResponse('owa_list_screens')
+                : genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Is anything showing on the projector?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+        );
+        expect(answer.text).toBe(
+            'Press F5.\n\nTo see what is on the projector or what is ' +
+                'selected, the main window needs to be on the Presenter ' +
+                'page — switch to it and ask again.',
+        );
+        expect(answer.actions).toEqual([
+            {
+                label: 'Go to the Presenter',
+                toolName: 'builtin-command',
+                args: { command: '/goto presenter' },
+            },
+        ]);
+        fake.toolResultMap = null;
+    });
+
+    // A Bible a model downloads waits for the person to agree to where it
+    // came from: the notice goes under the model's words, and a model that
+    // tries to install it itself is refused before the tool is called.
+    test('a Bible the model downloaded is agreed to by the person, never installed by it', async () => {
+        const link =
+            'https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml';
+        fake.toolList = [{ name: 'owa_bible_xml' }];
+        fake.toolResultMap = {
+            owa_bible_xml: JSON.stringify({
+                kind: 'xml',
+                draftId: 'he10paxbbz64',
+                title: 'Khmer Standard Version 1954',
+                source: link,
+                books: 66,
+                chapters: 1189,
+                verses: 31102,
+                keys: ['KSV'],
+                takenKeys: [],
+                locales: [],
+                nameLists: [],
+            }),
+        };
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            if (round === 1) {
+                return genCallResponse('owa_bible_xml', {
+                    action: 'check',
+                    url: link,
+                });
+            }
+            if (round === 2) {
+                return genCallResponse('owa_bible_xml', {
+                    action: 'import',
+                    draftId: 'he10paxbbz64',
+                    key: 'KSV',
+                });
+            }
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Install the Khmer Bible from ' + link,
+            'presenter',
+            'custom',
+            PHI_MODEL,
+        );
+        // The check ran; the install never reached the tool.
+        expect(fake.toolCallList).toEqual(['owa_bible_xml']);
+        const third = (create.mock.calls[2] as any[])[0];
+        const refusal = third.messages.filter((message: any) => {
+            return message.role === 'tool';
+        })[1];
+        expect(refusal.content).toContain('Tool refused: A Bible is installed');
+        expect(answer.text).toContain('Press F5.\n\n**Before you install it');
+        expect(answer.text).toContain('**It is not from Open Worship.**');
+        // The notice's two addresses open; the model's own words carry none.
+        expect(answer.links).toEqual([
+            'https://github.com/Beblia/Holy-Bible-XML-Format',
+            link,
+        ]);
+        expect(answer.actions?.map((action) => action.label)).toEqual([
+            'I agree',
+            'Open the website',
+            'Cancel',
+        ]);
+        fake.toolResultMap = null;
+    });
+
+    // A state read is also how a model checks where it is, and off the
+    // Presenter it always says so: three Reader answers on the free model
+    // lost their walkthrough to "Go to the Presenter" (EC-280).
+    test('a state read under another question offers no Presenter', async () => {
+        fake.toolList = [{ name: 'owa_app_state' }];
+        fake.toolResultMap = {
+            owa_app_state:
+                '{"mainWindow":{"page":"reader.html","needsPage":"presenter"}}',
+        };
+        for (const [asked, isOffered] of [
+            ['How do I share a Bible list with another machine?', false],
+            ['Which song is selected?', true],
+            ['What is next in my running order?', true],
+        ] as const) {
+            let round = 0;
+            const create = vi.fn(async () => {
+                round += 1;
+                return round === 1
+                    ? genCallResponse('owa_app_state')
+                    : genTextResponse();
+            });
+            fake.custom = { chat: { completions: { create } } };
+            const answer = await askLlmBot(
+                asked,
+                'reader',
+                'custom',
+                PHI_MODEL,
+            );
+            expect(answer.text.includes('Presenter page'), asked).toBe(
+                isOffered,
+            );
+            expect(answer.actions?.[0]?.label === 'Go to the Presenter').toBe(
+                isOffered,
+            );
+        }
+        fake.toolResultMap = null;
+    });
+
+    test('…but not when the model took the window there itself', async () => {
+        fake.toolList = [
+            { name: 'owa_list_screens' },
+            { name: 'owa_goto_page' },
+        ];
+        fake.toolResultMap = {
+            owa_list_screens: '{"isAnyShowing":false,"needsPage":"presenter"}',
+            owa_goto_page: '{"page":"presenter.html","isMainWindow":true}',
+        };
+        let round = 0;
+        const create = vi.fn(async () => {
+            round += 1;
+            if (round === 1) {
+                return genCallResponse('owa_list_screens');
+            }
+            if (round === 2) {
+                // The value the tool's own list of pages holds.
+                return genCallResponse('owa_goto_page', {
+                    page: 'presenter.html',
+                });
+            }
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            'Is anything showing on the projector?',
+            'reader',
+            'custom',
+            PHI_MODEL,
+        );
+        expect(answer.text).toBe('Press F5.');
+        expect(answer.actions).toBeUndefined();
+        fake.toolResultMap = null;
+    });
+
+    test('sends a local server the essential tools only, and says it is reading them', async () => {
+        fake.toolList = [
+            { name: 'owa_slide_file' },
+            { name: 'owa_help_search' },
+            { name: 'owa_bible_xml' },
+            { name: 'owa_click' },
+            { name: 'owa_read_website' },
+            { name: 'owa_list_screens' },
+        ];
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: true,
+                    loadedContext: 32768,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        const create = vi.fn(async () => {
+            return genTextResponse();
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const steps: string[] = [];
+        await askLlmBot(
+            'Is the screen on?',
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            {
+                onProgress: (step) => {
+                    if (!step.isDone) {
+                        steps.push(step.text);
+                    }
+                },
+            },
+        );
+        const request = (create.mock.calls[0] as any[])[0];
+        expect(
+            request.tools.map((tool: any) => {
+                return tool.function.name;
+            }),
+        ).toEqual(['owa_help_search', 'owa_click', 'owa_list_screens']);
+        expect(steps).toContain(
+            'LM Studio is reading the instructions first — the first answer ' +
+                'takes longer on a local model',
+        );
+        expect(filterLocalToolList([{ name: 'owa_undo' }])).toEqual([]);
+        // And the window can ask which of a question's tools that leaves out.
+        expect(checkIsToolLeftOut('custom', 'owa_undo')).toBe(true);
+        expect(checkIsToolLeftOut('custom', 'owa_help_page')).toBe(false);
+        // Not a local server: the whole model list goes.
+        expect(checkIsToolLeftOut('anthropic', 'owa_undo')).toBe(false);
+        expect(checkIsToolLeftOut(null, 'owa_undo')).toBe(false);
+        // Withheld from EVERY model is another matter, with its own message.
+        expect(checkIsToolLeftOut('custom', 'owa_pick_element')).toBe(false);
+    });
+
+    test('a general question is not refused by a context too small for the app', async () => {
+        // Ollama's default: the model loaded at 4k (2026-10-10, the user's
+        // qwen3.5:4b under `ollama run`). An app question is refused before
+        // a round; a general one is small and goes out.
+        fake.lmStudioInfoMap = new Map([
+            [
+                'phi-3.1-mini-128k-instruct',
+                {
+                    isLoaded: true,
+                    loadedContext: 4096,
+                    maxContext: 131072,
+                    canSeeImages: false,
+                },
+            ],
+        ]);
+        const create = vi.fn(async () => {
+            return {
+                choices: [
+                    { message: { role: 'assistant', content: 'A library.' } },
+                ],
+                usage: { prompt_tokens: 120, completion_tokens: 5 },
+            };
+        });
+        fake.custom = { chat: { completions: { create } } };
+        const answer = await askLlmBot(
+            toGeneralQuestionAsk('what is the Bible?'),
+            'presenter',
+            'custom',
+            PHI_MODEL,
+            [],
+            null,
+            { isGeneral: true },
+        );
+        expect(answer.text).toBe('A library.');
+        expect(create).toHaveBeenCalledTimes(1);
+    });
+
+    test('says the model is gone, without asking anyone, when no server is left', async () => {
+        const create = vi.fn();
+        fake.custom = { chat: { completions: { create } } };
+        fake.customServers = [];
+        await expect(
+            askLlmBot('Hello?', 'presenter', 'custom', PHI_MODEL),
+        ).rejects.toThrow('this model is no longer in Settings');
+        expect(create).not.toHaveBeenCalled();
+    });
+});
+
 describe('askLlmBot, standing in for a dead key', () => {
     // An OpenAI-shaped client that answers every request the way the dead
     // account did, `insufficient_quota` and all.
@@ -1935,6 +4050,70 @@ describe('askLlmBot, standing in for a dead key', () => {
         expect(steps).toContain(
             'ChatGPT could not answer — asking Claude instead',
         );
+    });
+
+    test('a server that takes no tools is asked once more without them', async () => {
+        // GPT4All's API server (2026-10-10): 400 "'tools' is not supported"
+        // to the first round. The same model answers the same question with
+        // no tools, from the guide text the ask carries, and the answer
+        // says what it could not check.
+        const create = vi.fn(async (request: any) => {
+            if (request.tools !== undefined) {
+                const error: any = new Error(
+                    '400 {"error":{"message":"\'tools\' is not supported","type":"invalid_request_error"}}',
+                );
+                error.status = 400;
+                throw error;
+            }
+            return {
+                choices: [
+                    {
+                        finish_reason: 'stop',
+                        message: {
+                            role: 'assistant',
+                            content:
+                                'Click **Cast to a TV** on the display card.',
+                        },
+                    },
+                ],
+            };
+        });
+        fake.openai = { chat: { completions: { create } } };
+        fake.aiSetting = {
+            openAIAPIKey: 'sk-x',
+            anthropicAPIKey: '',
+            kimiAPIKey: '',
+        };
+
+        const answer = await askLlmBot(
+            'How do I cast the virtual display to a TV?',
+            'presenter',
+            'openai',
+            'gpt-5',
+            [],
+            null,
+        );
+
+        expect(create).toHaveBeenCalledTimes(2);
+        expect(create.mock.calls[0][0].tools).toBeDefined();
+        // The second post carries no tools and tells the model so, on the
+        // ask itself.
+        const retry = create.mock.calls[1][0];
+        expect(retry.tools).toBeUndefined();
+        const lastUser = [...retry.messages]
+            .reverse()
+            .find((one: any) => one.role === 'user');
+        expect(lastUser.content).toContain(
+            'The app’s tools are not available on this server',
+        );
+        expect(answer.text).toBe(
+            'This assistant’s server cannot use the app’s tools, so this comes ' +
+                'from the guide text alone and nothing was checked in the ' +
+                'window — for presses and live answers, use LM Studio, Ollama ' +
+                'or llama.cpp.\n\nClick **Cast to a TV** on the display card.',
+        );
+        // Not a provider fault, so no other key was asked.
+        expect(answer.standIn).toBeUndefined();
     });
 
     test('a bad REQUEST is not stood in for', async () => {
@@ -2348,5 +4527,562 @@ describe('askLlmBot, guarding the bill', () => {
             askLlmBot('how?', 'presenter', 'openai', 'gpt-5', []),
         ).rejects.toBeInstanceOf(SpendLimitError);
         expect(anthropicCreate).not.toHaveBeenCalled();
+    });
+});
+
+// The app is shown in Khmer for many of the people this window is for, and
+// they read only that. The prompt is built per APP language (a cached prefix:
+// the language changes only when the window reloads), and the language of a
+// QUESTION rides at the end of the ask.
+describe('the answer is in their language', () => {
+    function useFakeAnthropic() {
+        const createMock = vi.fn(async (_body: any) => {
+            return { content: [{ type: 'text', text: 'ok' }] };
+        });
+        fake.toolCallList = [];
+        fake.anthropic = { messages: { create: createMock } };
+        return createMock;
+    }
+
+    function readLastUserText(body: any) {
+        const content = body.messages[body.messages.length - 1].content;
+        return typeof content === 'string'
+            ? content
+            : content
+                  .filter((block: any) => block.type === 'text')
+                  .map((block: any) => block.text)
+                  .join('\n');
+    }
+
+    test('an English app keeps one English line and no language block', async () => {
+        const createMock = useFakeAnthropic();
+        await askLlmBot('how do I show a screen?', 'presenter', 'anthropic');
+        const body = createMock.mock.calls[0][0];
+        const prompt = body.system[0].text;
+        expect(prompt).toContain('Answer in English unless the end of their');
+        expect(prompt).not.toContain('LANGUAGE. This app is shown in');
+        expect(prompt).not.toContain('ALWAYS answer in English');
+        expect(prompt).toContain('steps yourself in plain English');
+        // Nothing typed is known, so the ask is exactly what was asked.
+        expect(readLastUserText(body)).toBe('how do I show a screen?');
+    });
+
+    test('a Khmer app is told so, and to search the guide in English', async () => {
+        const createMock = useFakeAnthropic();
+        await askLlmBot(
+            'តើខ្ញុំបង្ហាញខគម្ពីរដោយរបៀបណា?',
+            'presenter',
+            'anthropic',
+            null,
+            [],
+            null,
+            { appLang: 'km', askedText: 'តើខ្ញុំបង្ហាញខគម្ពីរដោយរបៀបណា?' },
+        );
+        const body = createMock.mock.calls[0][0];
+        const prompt = body.system[0].text;
+        expect(prompt).toContain('This app is shown in Khmer (ខ្មែរ)');
+        expect(prompt).toContain('THE GUIDE IS WRITTEN IN ENGLISH');
+        expect(prompt).toContain('ITS PAGES COME TO YOU IN Khmer');
+        // The menu bar is English in every language: "Help" written as
+        // "ជំនួយ" sent the person to the ? button, which has no tips.
+        expect(prompt).toContain(
+            'reads File, Edit, View, Tools, Window and Help',
+        );
+        // `ol:Verse 1` written as `ol:ខគម្ពីរ 1` was a song the editor refused.
+        expect(prompt).toContain('is typed as it stands');
+        expect(prompt).toContain('never ១. ២. ៣.');
+        expect(prompt).toContain('OPTIONS:, SHOWS:, NEEDS:');
+        expect(prompt).toContain('steps yourself in plain words, in their');
+        expect(prompt).not.toContain('Answer in English unless');
+        expect(readLastUserText(body)).toMatch(/\(Answer in Khmer\.\)$/);
+    });
+
+    test('one prefix for the window, whatever language a question is in', async () => {
+        const createMock = useFakeAnthropic();
+        await askLlmBot(
+            'How do I show a song on the screen?',
+            'presenter',
+            'anthropic',
+            null,
+            [],
+            null,
+            { appLang: 'km', askedText: 'How do I show a song on the screen?' },
+        );
+        await askLlmBot('បាទ', 'presenter', 'anthropic', null, [], null, {
+            appLang: 'km',
+            askedText: 'បាទ',
+        });
+        const [first, second] = createMock.mock.calls.map((call) => call[0]);
+        expect(second.system).toEqual(first.system);
+        expect(readLastUserText(first)).toContain(
+            'They wrote in English: answer this one in English',
+        );
+        expect(readLastUserText(second)).toMatch(/\(Answer in Khmer\.\)$/);
+    });
+
+    // 2026-10-17, the whole corpus asked in Khmer of gemma4:cloud: handed the
+    // English page, it wrote _បើក View on the top menu bar again and click_.
+    // A page it opens comes in the language it is answering in; an English
+    // ask, and one worked in English behind the scenes, keep the English.
+    test('a page the model opens comes in the language it answers in', async () => {
+        const askWith = async (question: string, extra: any) => {
+            const createMock = vi.fn(async (_body: any) => {
+                return createMock.mock.calls.length === 1
+                    ? {
+                          content: [
+                              {
+                                  type: 'tool_use',
+                                  id: 'tool-1',
+                                  name: 'owa_help_page',
+                                  input: { id: 'W-31' },
+                              },
+                          ],
+                      }
+                    : { content: [{ type: 'text', text: 'ok' }] };
+            });
+            fake.toolArgsList = [];
+            fake.anthropic = { messages: { create: createMock } };
+            await askLlmBot(
+                question,
+                'presenter',
+                'anthropic',
+                null,
+                [],
+                null,
+                extra,
+            );
+            return fake.toolArgsList.find((call) => {
+                return call.name === 'owa_help_page';
+            })?.args;
+        };
+        const khmer = 'តើខ្ញុំដាក់ការរៀបចំផ្ទាំងឲ្យដូចដើមវិញដោយរបៀបណា?';
+        expect(
+            await askWith(khmer, { appLang: 'km', askedText: khmer }),
+        ).toEqual({ id: 'W-31@km' });
+        expect(
+            await askWith('How do I reset the layout?', {
+                appLang: 'en',
+                askedText: 'How do I reset the layout?',
+            }),
+        ).toEqual({ id: 'W-31' });
+        // Their Khmer put into English for the model: the English page.
+        expect(
+            await askWith('How do I reset the layout?', {
+                appLang: 'en',
+                replyLang: 'en',
+            }),
+        ).toEqual({ id: 'W-31' });
+    });
+
+    // The same run: _Can you start a 5 minute countdown on the screen?_
+    // started one on two screens that were off, and the answer was two chips
+    // and no words at all.
+    test('a reply of only its options goes back once for the words', async () => {
+        const sent: any[] = [];
+        const replies = [
+            'OPTIONS: បង្ហាញវាលើអេក្រង់ | ឈប់រាប់ថយក្រោយ',
+            'ខ្ញុំបានចាប់ផ្តើមរាប់ថយក្រោយ ៥ នាទីហើយ។\n\nOPTIONS: បង្ហាញវាលើអេក្រង់ | ឈប់រាប់ថយក្រោយ',
+        ];
+        const createMock = vi.fn(async (body: any) => {
+            sent.push(structuredClone(body.messages));
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: replies[createMock.mock.calls.length - 1],
+                    },
+                ],
+            };
+        });
+        fake.anthropic = { messages: { create: createMock } };
+        const khmer = 'តើអ្នកអាចចាប់ផ្តើមរាប់ថយក្រោយ ៥ នាទីលើអេក្រង់បានទេ?';
+        const answer = await askLlmBot(
+            khmer,
+            'presenter',
+            'anthropic',
+            null,
+            [],
+            null,
+            { appLang: 'km', askedText: khmer },
+        );
+        expect(createMock).toHaveBeenCalledTimes(2);
+        expect(answer.text).toBe('ខ្ញុំបានចាប់ផ្តើមរាប់ថយក្រោយ ៥ នាទីហើយ។');
+        expect(answer.replies).toEqual(['បង្ហាញវាលើអេក្រង់', 'ឈប់រាប់ថយក្រោយ']);
+        const handedBack = sent[1][sent[1].length - 1];
+        expect(handedBack.role).toBe('user');
+        expect(JSON.stringify(handedBack.content)).toContain(
+            'that reply has no words for the person',
+        );
+        // Once: a second wordless reply is what is shown.
+        const watch = genToolWatch();
+        expect(findAnswerShapeNudge('OPTIONS: a | b', watch)?.nudge).toBe(
+            WORDLESS_ANSWER_NUDGE,
+        );
+        expect(
+            findAnswerShapeNudge('Done.\n\nOPTIONS: a | b', watch),
+        ).toBeNull();
+        watch.isShapeNudged = true;
+        expect(findAnswerShapeNudge('OPTIONS: a | b', watch)).toBeNull();
+    });
+
+    // EC-391, 2026-10-22: Bible Find's 🤖 with `shepherd` over the Khmer
+    // Bible, and the answer quoted John 10:11 in words of its own, one round,
+    // nothing read.
+    test('a verse search quoting a verse nothing returned goes back once', () => {
+        const watch = genToolWatch();
+        // Not a verse search: nothing to check.
+        expect(findUnreadVerseNudge('**John 10:11** — I am', watch)).toBeNull();
+        watch.verseFindBible = 'ពគប';
+        watch.foundVerses = [
+            {
+                key: 'GEN 49:24',
+                ref: 'Genesis 49:24',
+                bible: 'ពគប',
+                title: 'លោកុប្បត្តិ ៤៩:២៤',
+            },
+        ];
+        const answer =
+            '**យ៉ូហាន ១០:១១** — ខ្ញុំ​ជា​អ្នក​គង្វាល​ដ៏​ល្អ\n\n' +
+            '**លោកុប្បត្តិ ៤៩:២៤** — ឯ​អ្នក​គង្វាល';
+        const nudge = findUnreadVerseNudge(answer, watch);
+        expect(nudge).toContain('no search or read returned យ៉ូហាន 10:11');
+        expect(nudge).toContain('refs "យ៉ូហាន 10:11"');
+        expect(nudge).not.toContain('លោកុប្បត្តិ');
+        // Every verse it names was found: nothing to say.
+        expect(
+            findUnreadVerseNudge(
+                '**Genesis 49:24** and លោកុប្បត្តិ ៤៩:២៤',
+                watch,
+            ),
+        ).toBeNull();
+        // Once.
+        watch.isVerseNudged = true;
+        expect(findUnreadVerseNudge(answer, watch)).toBeNull();
+    });
+
+    // 2026-10-22: under Noah's card, _where did the ark come to rest?_ was
+    // answered with Genesis 8:4 in Khmer words of the model's own and the
+    // wrong month; the record held neither the verse nor its words.
+    test('a lookup answer quoting words nothing gave goes back once', () => {
+        const watch = genToolWatch();
+        const madeUp =
+            'លោកុប្បត្តិ ៨:៤ ថា «ហើយទូកនោះក៏ចតនៅលើភ្នំអារ៉ារ៉ាត ក្នុងខែទីប្រាំបី»';
+        // Not a lookup conversation: nothing to check.
+        expect(findMisquoteNudge(madeUp, watch)).toBeNull();
+        watch.quoteSources = [
+            toQuoteKey(
+                'Record: {"bible":"ពគប","quoted":[{"text":"(២៩): ដែល​គាត់​ឲ្យ​ឈ្មោះ​ថា ណូអេ ដោយ​និយាយ​ថា កូន​នេះ​នឹង​កំសាន្ត​ចិត្ត​យើង"}]}',
+            ),
+        ];
+        watch.quoteBible = 'ពគប';
+        const nudge = findMisquoteNudge(madeUp, watch);
+        expect(nudge).toContain('ហើយទូកនោះក៏ចតនៅលើភ្នំ');
+        expect(nudge).toContain('kind "verse", ref, bible "ពគប"');
+        // Quoted as it was given -- spaces, verse number and zero-width
+        // spaces dropped, a piece cut with an ellipsis -- stands.
+        expect(
+            findMisquoteNudge(
+                'លោកុប្បត្តិ ៥:២៩ ថា «ដែលគាត់ឲ្យឈ្មោះថា ណូអេ … កូននេះនឹងកំសាន្តចិត្តយើង»',
+                watch,
+            ),
+        ).toBeNull();
+        // A name or a button in quotes is not a verse.
+        expect(findMisquoteNudge('ចុច «ខគម្ពីររបស់វា»', watch)).toBeNull();
+        // What a read returned later may be quoted too.
+        addQuoteSource(
+            watch,
+            '{"passages":[{"text":"(៤): ដល់​ថ្ងៃ​១៧ ខែ​ទី​៧ នោះ​ទូក​ធំ​បាន​កឿង​នៅ​លើ​ភ្នំ​អារ៉ារ៉ាត"}]}',
+        );
+        expect(
+            findMisquoteNudge(
+                '«ដល់ថ្ងៃ១៧ ខែទី៧ នោះទូកធំបានកឿងនៅលើភ្នំអារ៉ារ៉ាត»',
+                watch,
+            ),
+        ).toBeNull();
+        // Once.
+        watch.isQuoteNudged = true;
+        expect(findMisquoteNudge(madeUp, watch)).toBeNull();
+    });
+
+    // 2026-10-23 (EC-418): the record heads the conversation, where a
+    // server of the person's own keeps it between questions.
+    test('a record heads the history, and the turns still alternate', () => {
+        const history = [
+            { author: 'you' as const, text: 'q1' },
+            { author: 'bot' as const, text: 'a1' },
+        ];
+        const withRecord = withRecordTurn(history, 'Record: {"bible":"ពគប"}');
+        expect(withRecord).toEqual([
+            { author: 'you', text: 'Record: {"bible":"ពគប"}' },
+            { author: 'bot', text: RECORD_TURN_ACK },
+            ...history,
+        ]);
+        // The same record gives the same head, question after question.
+        expect(withRecordTurn([], 'R')[0]).toEqual(
+            withRecordTurn(history, 'R')[0],
+        );
+        expect(withRecordTurn(history, undefined)).toBe(history);
+        expect(withRecordTurn(history, '  ')).toBe(history);
+    });
+
+    // 2026-10-23: _how long was Noah in the ark?_ under Genesis 8 was
+    // answered "the passage does not state it" in one round, nothing read.
+    test('"the Bible does not say", with nothing read, goes back once', () => {
+        const watch = genToolWatch();
+        const khmer =
+            'យោងតាមអត្ថបទគម្ពីរ មិនបានបញ្ជាក់ពីចំនួនថ្ងៃសរុបដែលណូអេនៅក្នុងទូកទេ';
+        // Not a lookup conversation.
+        expect(findNotStatedNudge(khmer, watch)).toBeNull();
+        watch.quoteSources = [toQuoteKey('Record: {"bible":"ពគប"}')];
+        watch.quoteBible = 'ពគប';
+        const nudge = findNotStatedNudge(khmer, watch);
+        expect(nudge).toContain('kind "verse", ref, bible "ពគប"');
+        // In English and French too, whatever the reader's language.
+        expect(
+            findNotStatedNudge('The passage does not say how long.', watch),
+        ).not.toBeNull();
+        expect(
+            findNotStatedNudge('Le texte ne précise pas la durée.', watch),
+        ).not.toBeNull();
+        // An answer that says it.
+        expect(
+            findNotStatedNudge('He was in the ark about a year.', watch),
+        ).toBeNull();
+        // Said after a read, it stands; and once.
+        watch.toolCallCount = 1;
+        expect(findNotStatedNudge(khmer, watch)).toBeNull();
+        watch.toolCallCount = 0;
+        watch.isNotStatedNudged = true;
+        expect(findNotStatedNudge(khmer, watch)).toBeNull();
+    });
+
+    // 2026-10-23: under a ពគប passage card, _what did Jesus teach after
+    // this?_ read `MAT 18:18-35` with no Bible and quoted the KJV in English.
+    test('a passage read in a record conversation goes to the record’s Bible', () => {
+        const watch = genToolWatch();
+        const read = { kind: 'verse', ref: 'MAT 18:18-35' };
+        // Not a lookup conversation.
+        expect(checkReadsInRecordBible(watch, 'owa_lookup_record', read)).toBe(
+            false,
+        );
+        watch.quoteSources = [toQuoteKey('Record: {"bible":"ពគប"}')];
+        watch.quoteBible = 'ពគប';
+        expect(checkReadsInRecordBible(watch, 'owa_lookup_record', read)).toBe(
+            true,
+        );
+        expect(
+            checkReadsInRecordBible(watch, 'owa_find_verse', {
+                words: 'ណូអេ',
+            }),
+        ).toBe(true);
+        // A Bible asked for on purpose, a person's record and another tool
+        // are left alone.
+        expect(
+            checkReadsInRecordBible(watch, 'owa_lookup_record', {
+                ...read,
+                bible: 'KJV',
+            }),
+        ).toBe(false);
+        expect(
+            checkReadsInRecordBible(watch, 'owa_lookup_record', {
+                kind: 'name',
+                id: 'x',
+            }),
+        ).toBe(false);
+        expect(checkReadsInRecordBible(watch, 'owa_read_website', {})).toBe(
+            false,
+        );
+    });
+
+    // The same run: _Does the help still work with no internet?_ became
+    // _សេវាកម្ម_ and then _ម_ nineteen hundred times, to the round's cap.
+    test('a reply that runs away into one letter goes back once, cut', async () => {
+        const runaway = `បាទ នៅតែដំណើរការ។ សេវាកម្ម${'ម'.repeat(1900)}`;
+        const sent: any[] = [];
+        const replies = [runaway, 'បាទ នៅតែដំណើរការ ដោយប្រើសៀវភៅណែនាំ។'];
+        const createMock = vi.fn(async (body: any) => {
+            sent.push(structuredClone(body.messages));
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: replies[createMock.mock.calls.length - 1],
+                    },
+                ],
+            };
+        });
+        fake.anthropic = { messages: { create: createMock } };
+        const khmer = 'តើជំនួយនៅតែដំណើរការទេ ពេលគ្មានអ៊ីនធឺណិត?';
+        const answer = await askLlmBot(
+            khmer,
+            'presenter',
+            'anthropic',
+            null,
+            [],
+            null,
+            { appLang: 'km', askedText: khmer },
+        );
+        expect(answer.text).toBe('បាទ នៅតែដំណើរការ ដោយប្រើសៀវភៅណែនាំ។');
+        // What the model reads back is the part before the run.
+        const keptTurn = sent[1][sent[1].length - 2];
+        expect(keptTurn.role).toBe('assistant');
+        expect(keptTurn.content[0].text).toBe('បាទ នៅតែដំណើរការ។ សេវាកម្');
+        expect(sent[1][sent[1].length - 1].content).toBe(RUNAWAY_ANSWER_NUDGE);
+        // Ordinary words, a few repeats of a sign, and Khmer's own ៗ are not a
+        // runaway; a word said twelve times over is.
+        expect(cutRunawayAnswer('ជាធម្មតា ម្ដងៗ — ១២៣ ...... !!!!')).toBe(
+            'ជាធម្មតា ម្ដងៗ — ១២៣ ...... !!!!',
+        );
+        expect(cutRunawayAnswer(`ok ${'ha'.repeat(12)}`)).toBe('ok');
+    });
+
+    test('a question the window wrote itself is left as it is', async () => {
+        const createMock = useFakeAnthropic();
+        await askLlmBot(
+            'Put these words into English: ព្រះ',
+            'presenter',
+            'anthropic',
+            null,
+            [],
+            null,
+            { appLang: 'km', isGeneral: true },
+        );
+        expect(readLastUserText(createMock.mock.calls[0][0])).toBe(
+            'Put these words into English: ព្រះ',
+        );
+    });
+});
+
+// The whole corpus asked in Khmer of gemma-4-12b on the user's LM Studio
+// (2026-10-17): every question thought its budget away and was asked again
+// with thinking off, and one step read _ច<audio|> View_.
+describe('a local Gemma 4, round by round', () => {
+    test('a model that thought its budget away starts with thinking off, for a while', () => {
+        const now = 1_000_000;
+        expect(
+            checkIsReasoningOffRemembered('Server A', 'gemma-4-12b', now),
+        ).toBe(false);
+        rememberReasoningOff('Server A', 'gemma-4-12b', now);
+        expect(
+            checkIsReasoningOffRemembered('Server A', 'gemma-4-12b', now + 1),
+        ).toBe(true);
+        // Another model, or the same name on another server, is not it.
+        expect(
+            checkIsReasoningOffRemembered('Server A', 'gemma-4-e4b', now + 1),
+        ).toBe(false);
+        expect(
+            checkIsReasoningOffRemembered('Server B', 'gemma-4-12b', now + 1),
+        ).toBe(false);
+        // Half an hour on, it is trusted to think again.
+        expect(
+            checkIsReasoningOffRemembered(
+                'Server A',
+                'gemma-4-12b',
+                now + 30 * 60 * 1000,
+            ),
+        ).toBe(false);
+    });
+
+    test('a printed control token is no part of the answer', () => {
+        expect(dropModelTokens('១. ច<audio|> View នៅលើរបារ')).toBe(
+            '១. ច View នៅលើរបារ',
+        );
+        expect(
+            dropModelTokens('a<|image|>b<|turn>c<turn|>d<end_of_turn>'),
+        ).toBe('abcd');
+        // A LaTeX arrow in a menu path is the arrow it meant.
+        expect(
+            dropModelTokens('View $\\rightarrow$ Widgets, a \\rightarrow b'),
+        ).toBe('View → Widgets, a → b');
+        // Markdown, an arrow and a comparison are words.
+        expect(dropModelTokens('a <b> c -> d | e < f > g')).toBe(
+            'a <b> c -> d | e < f > g',
+        );
+    });
+});
+
+describe('genReplyLanguageLine', () => {
+    test('English asked in an English app adds nothing', () => {
+        expect(genReplyLanguageLine('en', 'en')).toBe('');
+    });
+
+    test('the app language is said plainly', () => {
+        expect(genReplyLanguageLine('km', 'km')).toBe('(Answer in Khmer.)');
+    });
+
+    test('a question in another language than the app’s', () => {
+        expect(genReplyLanguageLine('en', 'km')).toContain(
+            'They wrote in English',
+        );
+        const khmerInEnglishApp = genReplyLanguageLine('km', 'en');
+        expect(khmerInEnglishApp).toContain('answer in Khmer');
+        expect(khmerInEnglishApp).toContain('search it with English words');
+        expect(khmerInEnglishApp).toContain('Keep OPTIONS:');
+    });
+
+    test('a script nobody here knows is answered in itself', () => {
+        expect(genReplyLanguageLine('other', 'km')).toContain(
+            'Answer in the language they wrote in',
+        );
+    });
+});
+
+// One removal an answer (2026-10-17, EC-299): the free model moved ten of
+// the person's things to the trash under one "yes, really, delete!".
+describe('checkIsModelRemoval', () => {
+    test('every removing action of the data tools counts', () => {
+        for (const action of [
+            'delete',
+            'delete-file',
+            'delete-list',
+            'delete-slide',
+            'remove',
+        ]) {
+            expect(checkIsModelRemoval({ action }), action).toBe(true);
+        }
+        expect(MAX_MODEL_REMOVALS_PER_ASK).toBe(1);
+    });
+
+    test('reading, adding and putting back do not', () => {
+        for (const action of ['list', 'info', 'create', 'update', 'undo']) {
+            expect(checkIsModelRemoval({ action }), action).toBe(false);
+        }
+        expect(checkIsModelRemoval({})).toBe(false);
+        expect(checkIsModelRemoval(null)).toBe(false);
+    });
+});
+
+// An answer that tells them to type /btw carries the button that does it
+// (2026-10-17, the elder-persona run).
+describe('genGeneralAskAction', () => {
+    const answer = (text: string) => {
+        return { text } as Parameters<typeof genGeneralAskAction>[0];
+    };
+
+    test('a /btw answer gets the question asked as a general one', () => {
+        expect(
+            genGeneralAskAction(
+                answer(
+                    'សូមវាយ /btw នៅពីមុខសំណួររបស់អ្នក (ឧទាហរណ៍៖ `/btw តើចេកថ្លៃប៉ុន្មាន?)',
+                ),
+                { askedText: 'ចេកមួយគីឡូថ្លៃប៉ុន្មាន?' },
+            ),
+        ).toEqual({
+            label: 'Ask it as a general question',
+            toolName: GENERAL_ASK_TOOL_NAME,
+            args: { question: 'ចេកមួយគីឡូថ្លៃប៉ុន្មាន?' },
+        });
+    });
+
+    test('nothing when it is already general, a command, or no /btw', () => {
+        const btw = answer('Type /btw before your question.');
+        expect(
+            genGeneralAskAction(btw, { askedText: 'hi', isGeneral: true }),
+        ).toBeNull();
+        expect(genGeneralAskAction(btw, { askedText: '/screen' })).toBeNull();
+        expect(genGeneralAskAction(btw, {})).toBeNull();
+        expect(
+            genGeneralAskAction(answer('Press F5.'), { askedText: 'how?' }),
+        ).toBeNull();
     });
 });

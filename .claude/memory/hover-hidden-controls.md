@@ -1,8 +1,11 @@
 ---
 name: hover-hidden-controls
-description: "Much of the OWA UI is laid out and clickable but painted only while the mouse is over it; the MCP matcher classifies three ways and forces :hover rather than moving the mouse"
+description: Much of the OWA UI is laid out and clickable but painted only while the mouse is over it; the MCP matcher classifies three ways and forces :hover rather than moving the mouse
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 7815dc2a-eec2-4e5d-b7a6-cf0bfb4ab792
+  modified: 2026-10-12T02:43:51.032Z
 ---
 
 A large slice of this app's controls are **invisible without being absent**:
@@ -36,6 +39,13 @@ Consequences that keep catching things out:
 - `tools/owa-devtools-mcp/domMatch.mjs` classifies `shown` / `hidden` / `gone`
   (`visibilityOf`), marks a match `showsOnHover`, and prefers a visible twin —
   ranked BELOW `isControl`, so a hidden button still beats a visible container.
+- **Not every `hidden` control is a hover** (2026-10-11, `autoHideOf`). One
+  inside a footer shut behind its three dots (`.app-auto-hide`, under the Mini
+  Screen, the Bibles previewer, the Background panel) has no `:hover` rule at
+  all: it answers `revealBy` — the words on the control to press FIRST —
+  instead of `showsOnHover`. `owa_find_ui`'s ring holds that footer open
+  (`revealHidden(element, ms, true)`); a click, a typed value and the
+  walkthrough card do not, so press the dots first.
 - To show one, it **forces the `:hover` state** (`revealHidden`) rather than
   moving the mouse: the page's own `:hover` rules re-emitted with `:hover`
   rewritten to `[data-owa-hover]`, stamped on the control and every ancestor.

@@ -16,10 +16,6 @@ import {
 } from '../helper/settingHelpers';
 import ForegroundPositionPadComp from './ForegroundPositionPadComp';
 import AppRangeComp from '../others/AppRangeComp';
-import {
-    transitionEffect,
-    type TransitionEffectType,
-} from '../_screen/transitionEffectHelpers';
 import CommonStyleControlsComp, {
     DEFAULT_BACKDROP_FILTER,
     DEFAULT_BACKGROUND_COLOR,
@@ -40,6 +36,11 @@ import {
     genForegroundDecorationStyle,
     getForegroundDecoration,
 } from './foregroundDecorationHelpers';
+import {
+    genForegroundSessionTransitionSettingName,
+    resolveForegroundTransition,
+} from './foregroundTransitionHelpers';
+import { ForegroundTransitionPropComp } from './ForegroundTransitionControlsComp';
 
 const DEFAULT_FONT_SIZE = 100;
 const DEFAULT_WIDGET_WIDTH_PERCENTAGE = 50;
@@ -67,40 +68,12 @@ const DEFAULT_WIDGET_OFFSET_X = 0;
 const DEFAULT_WIDGET_OFFSET_Y = 0;
 const DEFAULT_Z_INDEX = 1;
 
-export const DEFAULT_TRANSITION_EFFECT = 'fade';
-
-/**
- * The screen's own transition menu shows these as bare identifiers because it
- * is a developer-facing row; a volunteer's panel says what each one DOES.
- * Written as literals so `tranKeyCoverage.test.ts` can read them.
- */
-const TRANSITION_LABEL_MAP: Record<string, string> = {
-    none: 'No Transition',
-    fade: 'Fade',
-    move: 'Slide In',
-    zoom: 'Zoom',
-};
-
 /**
  * The Width (%) a prefix is on, read straight from the setting so a slide show
  * running for a session nobody is looking at can still size its item.
  */
 export function getForegroundWidthScale(prefix: string) {
     return getWidgetWidthScale(genPropsSettingNames(prefix).widthPercentage);
-}
-
-/**
- * Which transition this session's overlay uses. Read the same way the style
- * is -- straight from the setting, so a caller that is not rendering the
- * panel (the tile click, the slide show's next step) gets the current answer.
- */
-export function getForegroundTransition(prefix: string) {
-    const stored = getSetting(genPropsSettingNames(prefix).transitionEffect);
-    return (
-        stored !== null && stored in transitionEffect
-            ? stored
-            : DEFAULT_TRANSITION_EFFECT
-    ) as TransitionEffectType;
 }
 
 export function genPropsSettingNames(prefix: string) {
@@ -117,8 +90,19 @@ export function genPropsSettingNames(prefix: string) {
         blendMode: `${prefix}-setting-show-widget-blend-mode`,
         isAlwaysOnTop: `${prefix}-setting-show-widget-always-on-top`,
         zIndex: `${prefix}-setting-show-widget-z-index`,
-        transitionEffect: `${prefix}-setting-show-widget-transition`,
+        transitionEffect: genForegroundSessionTransitionSettingName(prefix),
+        isBehind: `${prefix}-setting-show-widget-is-behind`,
     };
+}
+
+/**
+ * Whether this session's overlay goes BEHIND the slide and the Bible text.
+ * Read straight from the setting like the transition, so a caller that is not
+ * rendering the panel gets the current answer. It travels on the DATUM, not in
+ * `extraStyle` -- see `ForegroundLayerDataType`.
+ */
+export function getForegroundIsBehind(prefix: string) {
+    return getSetting(genPropsSettingNames(prefix).isBehind) === 'true';
 }
 
 /**
@@ -379,11 +363,17 @@ export function genForegroundExtraStyle(
     if (isFontSize) {
         Object.assign(style, getFontSizeStyle(names.fontSize));
     }
-    // Every foreground widget can be pinned on top, geometry or not.
-    Object.assign(
-        style,
-        genZIndexExtraStyle(names.isAlwaysOnTop, names.zIndex),
-    );
+    // Every foreground widget can be pinned on top, geometry or not -- except
+    // one BEHIND the slide. Its root makes no stacking context (that is what
+    // lets it blend with the background), so a `z-index` there competes with
+    // the slide and the Bible view in the ROOT stacking context and wins: the
+    // overlay would leap back over the words it was put behind.
+    if (!getForegroundIsBehind(prefix)) {
+        Object.assign(
+            style,
+            genZIndexExtraStyle(names.isAlwaysOnTop, names.zIndex),
+        );
+    }
     if (isBlending) {
         // Blends with whatever is painted UNDER `#foreground` -- the
         // background, the slide and the bible view -- because nothing between
@@ -521,61 +511,6 @@ function RoundPropComp({
     );
 }
 
-/**
- * How this session's overlay comes in and goes out.
- *
- * The screen's own `Tr:` row carries one for the whole Slide layer and one for
- * the whole Background, which is right where a layer holds one thing at a
- * time. The foreground routinely holds several at once -- a logo that should
- * never move and a snow clip that should fade -- so the choice belongs to the
- * session, beside the blend it is already choosing.
- */
-function TransitionPropComp({
-    transitionEffect: chosen,
-    setTransitionEffect,
-}: Readonly<{
-    transitionEffect: string;
-    setTransitionEffect: (value: string) => void;
-}>) {
-    const setTransitionEffectRef = useAppCurrentRef(setTransitionEffect);
-    const handleChange = useCallback(
-        (event: ChangeEvent<HTMLSelectElement>) => {
-            setTransitionEffectRef.current(event.target.value);
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [],
-    );
-    const label = tran('Transition');
-    return (
-        <PropRowComp
-            iconClassName={
-                'bi ' +
-                (
-                    transitionEffect[chosen as TransitionEffectType]?.[0] ??
-                    transitionEffect[DEFAULT_TRANSITION_EFFECT][0]
-                ).replace('bi ', '')
-            }
-            label={label}
-            isEngaged={chosen !== DEFAULT_TRANSITION_EFFECT}
-        >
-            <select
-                className="fg-select"
-                aria-label={label}
-                value={chosen}
-                onChange={handleChange}
-            >
-                {Object.keys(transitionEffect).map((effect) => {
-                    return (
-                        <option key={effect} value={effect}>
-                            {tran(TRANSITION_LABEL_MAP[effect])}
-                        </option>
-                    );
-                })}
-            </select>
-        </PropRowComp>
-    );
-}
-
 function BlendModePropComp({
     blendMode,
     setBlendMode,
@@ -598,16 +533,65 @@ function BlendModePropComp({
     );
 }
 
+/**
+ * Put this session's overlay BEHIND the slide and the Bible text -- over the
+ * background, under the words. See `ForegroundLayerDataType`.
+ */
+function BehindPropComp({
+    isBehind,
+    setIsBehind,
+}: Readonly<{
+    isBehind: boolean;
+    setIsBehind: (value: boolean) => void;
+}>) {
+    const setIsBehindRef = useAppCurrentRef(setIsBehind);
+    const handleToggle = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setIsBehindRef.current(event.target.checked);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const label = tran('Behind Slide');
+    const title = tran(
+        'Show behind the slide and the Bible text, over the background',
+    );
+    return (
+        <PropRowComp
+            iconClassName="bi bi-layer-backward"
+            label={label}
+            title={title}
+            isEngaged={isBehind}
+        >
+            <input
+                className="form-check-input mt-0"
+                type="checkbox"
+                checked={isBehind}
+                title={title}
+                aria-label={label}
+                onChange={handleToggle}
+            />
+        </PropRowComp>
+    );
+}
+
 function AlwaysOnTopPropComp({
     isAlwaysOnTop,
     setIsAlwaysOnTop,
     zIndex,
     setZIndex,
+    isBehind,
 }: Readonly<{
     isAlwaysOnTop: boolean;
     setIsAlwaysOnTop: (value: boolean) => void;
     zIndex: number;
     setZIndex: (value: number) => void;
+    /**
+     * Behind the slide, Always on Top is not applied at all -- see
+     * `genForegroundExtraStyle` -- so its controls say so rather than taking
+     * a number that does nothing.
+     */
+    isBehind: boolean;
 }>) {
     const setIsAlwaysOnTopRef = useAppCurrentRef(setIsAlwaysOnTop);
     const handleToggle = useCallback(
@@ -627,18 +611,23 @@ function AlwaysOnTopPropComp({
     );
     const label = tran('Always on Top');
     const zIndexLabel = tran('Z-Index');
+    const disabledTitle = isBehind
+        ? tran('Always on Top does not apply while it is behind the slide')
+        : undefined;
     return (
         <PropRowComp
             iconClassName="bi bi-layers"
             label={label}
-            isEngaged={isAlwaysOnTop}
+            title={disabledTitle}
+            isEngaged={isAlwaysOnTop && !isBehind}
         >
             <input
                 className="form-check-input mt-0"
                 type="checkbox"
                 checked={isAlwaysOnTop}
-                title={label}
+                title={disabledTitle ?? label}
                 aria-label={label}
+                disabled={isBehind}
                 onChange={handleToggle}
             />
             <input
@@ -652,7 +641,7 @@ function AlwaysOnTopPropComp({
                 title={zIndexLabel}
                 aria-label={zIndexLabel}
                 value={zIndex}
-                disabled={!isAlwaysOnTop}
+                disabled={!isAlwaysOnTop || isBehind}
                 onChange={handleZIndexChange}
             />
         </PropRowComp>
@@ -666,7 +655,11 @@ type PropertiesSettingBodyPropsType = Readonly<{
     isGeometry: boolean;
     isCommonStyle: boolean;
     isBlendMode: boolean;
-    isTransition: boolean;
+    /**
+     * Which component this is (`countdown`, `marquee-top`): a session's own
+     * transition falls back to its component's.
+     */
+    widgetKey: string;
     extraControls?: ReactNode;
     fontFamily: string;
     setFontFamily: (value: string) => void;
@@ -687,7 +680,7 @@ function PropertiesSettingBodyComp({
     isGeometry,
     isCommonStyle,
     isBlendMode,
-    isTransition,
+    widgetKey,
     extraControls,
     fontFamily,
     setFontFamily,
@@ -736,11 +729,6 @@ function PropertiesSettingBodyComp({
         names.roundSizePixel,
         genDefaultRoundSizePixel(isGeometry),
     );
-    const [transitionEffectValue, setTransitionEffectValue] =
-        useStateSettingString(
-            names.transitionEffect,
-            DEFAULT_TRANSITION_EFFECT,
-        );
     const [blendMode, setBlendMode] = useStateSettingString(
         names.blendMode,
         DEFAULT_BLEND_MODE,
@@ -752,6 +740,10 @@ function PropertiesSettingBodyComp({
     const [zIndex, setZIndex] = useStateSettingNumber(
         names.zIndex,
         DEFAULT_Z_INDEX,
+    );
+    const [isBehind, setIsBehind] = useStateSettingBoolean(
+        names.isBehind,
+        false,
     );
     const [textColor, setTextColor] = useStateSettingString(
         commonNames.color,
@@ -882,11 +874,16 @@ function PropertiesSettingBodyComp({
                  * rows, four scroll-lengths down a panel that opens closed.
                  */}
                 {extraControls}
+                <BehindPropComp
+                    isBehind={isBehind}
+                    setIsBehind={wrapSetter(setIsBehind, onChange)}
+                />
                 <AlwaysOnTopPropComp
                     isAlwaysOnTop={isAlwaysOnTop}
                     setIsAlwaysOnTop={wrapSetter(setIsAlwaysOnTop, onChange)}
                     zIndex={zIndex}
                     setZIndex={wrapSetter(setZIndex, onChange)}
+                    isBehind={isBehind}
                 />
                 {isBlendMode ? (
                     <BlendModePropComp
@@ -894,15 +891,14 @@ function PropertiesSettingBodyComp({
                         setBlendMode={wrapSetter(setBlendMode, onChange)}
                     />
                 ) : null}
-                {isTransition ? (
-                    <TransitionPropComp
-                        transitionEffect={transitionEffectValue}
-                        setTransitionEffect={wrapSetter(
-                            setTransitionEffectValue,
-                            onChange,
-                        )}
-                    />
-                ) : null}
+                {/* Every widget, text and timers included: the session's
+                    own transition, over its component's and the screen's.
+                    Not wired to `onChange` -- an overlay already up keeps
+                    the way it came in; this is how the NEXT one comes in. */}
+                <ForegroundTransitionPropComp
+                    prefix={prefix}
+                    widgetKey={widgetKey}
+                />
                 {isFontSize ? (
                     <PropRowComp
                         iconClassName="bi bi-fonts"
@@ -1025,11 +1021,21 @@ export function useForegroundPropsSetting({
     isGeometry = true,
     isCommonStyle = true,
     isBlendMode = false,
-    isTransition = false,
+    widgetKey,
     extraControls,
 }: Readonly<{
     prefix: string;
-    onChange: (style: CSSProperties) => void;
+    /**
+     * The widget's key -- `countdown`, `marquee-top`, `video` -- which names
+     * the component a session's transition falls back to.
+     */
+    widgetKey: string;
+    /**
+     * A control changed. `isBehind` comes beside the style rather than inside
+     * it: it picks the overlay's LAYER, so a refresh writes it onto the datum
+     * (`withForegroundLayer`) and the screen moves the overlay to that root.
+     */
+    onChange: (style: CSSProperties, isBehind: boolean) => void;
     isFontSize?: boolean;
     isGeometry?: boolean;
     isCommonStyle?: boolean;
@@ -1040,8 +1046,6 @@ export function useForegroundPropsSetting({
      * their own colours.
      */
     isBlendMode?: boolean;
-    /** Offer a per-session transition, the way `isBlendMode` offers a blend. */
-    isTransition?: boolean;
     extraControls?: ReactNode;
 }>) {
     const commonNames = genCommonStyleSettingNames(prefix);
@@ -1054,12 +1058,16 @@ export function useForegroundPropsSetting({
         });
     };
     const getTransition = () => {
-        // Only where the widget offers the control -- a text widget that
-        // never shows one must not start carrying a choice on its datum.
-        return isTransition ? getForegroundTransition(prefix) : undefined;
+        // The session's own, else the component's, else `undefined`: the
+        // datum then carries no key at all and the screen uses its own
+        // `Foreground:` effect.
+        return resolveForegroundTransition(widgetKey, prefix);
+    };
+    const getIsBehind = () => {
+        return getForegroundIsBehind(prefix);
     };
     const onChange1 = () => {
-        onChange(genStyle());
+        onChange(genStyle(), getIsBehind());
     };
     // These two alone stay OUT of the panel body: the marquee and the quick
     // text draw their own preview with them, so a change has to re-render the
@@ -1076,6 +1084,7 @@ export function useForegroundPropsSetting({
     return {
         genStyle,
         getTransition,
+        getIsBehind,
         fontFamily,
         fontWeight,
         getWidthScale: () => {
@@ -1098,7 +1107,7 @@ export function useForegroundPropsSetting({
                 isGeometry={isGeometry}
                 isCommonStyle={isCommonStyle}
                 isBlendMode={isBlendMode}
-                isTransition={isTransition}
+                widgetKey={widgetKey}
                 extraControls={extraControls}
                 fontFamily={fontFamily}
                 setFontFamily={setFontFamily}

@@ -45,7 +45,7 @@
 // that cannot be undone by pressing the thing again.
 //
 // Deliberately NOT here: bare "reset" (the View menu's *Reset Widgets Size* is
-// harmless) and bare "clear" (*Clear Bible* is an ordinary presenting move a
+// harmless) and bare "clear" (*Clear Long Text* is an ordinary presenting move a
 // user asks for out loud). Both would have fired on controls a volunteer
 // legitimately wants pressed.
 //
@@ -159,14 +159,22 @@ export function checkIsDestructiveLabelText(text, rule) {
  * Shipped into the page: self-contained apart from
  * `checkIsDestructiveLabelText`.
  */
+/**
+ * Where the app asks the user a question: a confirm, an alert, an input
+ * popup, a blocking modal. Nothing inside one is pressed, typed into or sent
+ * a key for anyone -- read here, in the page half of the interlock, and by
+ * `genPressKeyExpression`, which refuses every key while one is up.
+ */
+export const QUESTION_SELECTOR =
+    '#app-confirm-popup, #app-alert-popup, #app-input-popup, ' +
+    '.modal-container--blocking';
+
 export function findPressRefusal(element, rule) {
     if (element === null || typeof element !== 'object' ||
         typeof element.closest !== 'function') {
         return null;
     }
-    const questionSelector = '#app-confirm-popup, #app-alert-popup, ' +
-        '#app-input-popup, .modal-container--blocking';
-    if (element.closest(questionSelector) !== null) {
+    if (element.closest(QUESTION_SELECTOR) !== null) {
         return { refused: 'question' };
     }
     // A box and a picker are named by their attributes, never by their text:
@@ -204,7 +212,7 @@ export function findPressRefusal(element, rule) {
  * A key carries no label, so it is judged by the control that NAMES it: this
  * app writes a control's shortcut into its title (`Clear All [F6]`), which
  * makes F6 exactly as destructive as Clear All and F9 exactly as ordinary as
- * Clear Bible -- in whatever language the title is in -- with no list of keys
+ * Clear Long Text -- in whatever language the title is in -- with no list of keys
  * to keep in step with the app. A key whose own name is destructive (`Delete`)
  * is refused on its name.
  *
@@ -249,6 +257,7 @@ export function findKeyRefusal(keys, rule, root) {
  * the letter s in a page expression).
  */
 export const PRESS_GUARD_SOURCE = `(() => {
+    const QUESTION_SELECTOR = ${JSON.stringify(QUESTION_SELECTOR)};
     const toComparableLabel = ${toComparableLabel.toString()};
     const checkIsDestructiveLabelText = ${checkIsDestructiveLabelText.toString()};
     const findPressRefusal = ${findPressRefusal.toString()};
@@ -274,10 +283,12 @@ function checkIsEnglishDestructive(text) {
  *
  *  - **A translation the dictionary ALSO uses for an allowed control is not a
  *    phrase at all.** The window cannot tell the two apart, so neither can
- *    this. On the Khmer dictionary (2026-09-14) there are three: `លុប` is both
- *    Delete and Clear, `លុបព្រះគម្ពីរ` both Delete Bible and Clear Bible,
- *    `លុបផ្ទៃខាងក្រោយ` both Remove Background and Clear Background. The
- *    allowed reading wins -- Clear Bible is an ordinary presenting move, the
+ *    this. On the Khmer dictionary there are two: `លុប` is both Delete and
+ *    Clear, `លុបផ្ទៃខាងក្រោយ` both Remove Background and Clear Background.
+ *    (Three until 2026-10-13: `លុបព្រះគម្ពីរ` was Delete Bible and Clear
+ *    Bible. That button is Clear Long Text now, with words of its own, so
+ *    the phrase is Delete Bible's alone and is refused.) The allowed
+ *    reading wins -- Clear Background is an ordinary presenting move, the
  *    same call that keeps bare "clear" off the English list -- and what stands
  *    behind the destructive reading is the app's own confirm, which
  *    `findPressRefusal` never lets anyone answer.

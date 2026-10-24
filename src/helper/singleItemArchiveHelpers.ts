@@ -13,6 +13,7 @@ import {
     genNextArchiveFilePath,
     importArchiveFiles,
     importBackgroundMetas,
+    importTransitionMetas,
     readArchiveManifest,
     resolveKindDirPaths,
     safeDeleteDir,
@@ -40,6 +41,7 @@ import { getAppFilePathFromFile } from './localFileHelpers';
 import { initHttpRequest } from './bible-helpers/downloadHelpers';
 import {
     askForURL,
+    describeDownloadError,
     messageCallback,
     streamDownloadFile,
 } from '../background/downloadHelper';
@@ -152,6 +154,9 @@ type ArchiveManifestType = {
     item: string;
     files: ArchiveFileEntryType[];
     backgroundMetas: ArchiveBackgroundMetaType[];
+    // A document's own transitions; absent from a bundle written before they
+    // existed, or one with none.
+    transitionMetas?: ArchiveBackgroundMetaType[];
     colorNotes: { [key: string]: string };
     // The exporting machine's data folder (`writeArchiveManifest`); absent
     // from a bundle written before it was recorded.
@@ -208,6 +213,9 @@ export async function createSingleItemArchive(
             item: filePath,
             files: archiveFiles,
             backgroundMetas: collector.backgroundMetas,
+            ...(collector.transitionMetas.length > 0
+                ? { transitionMetas: collector.transitionMetas }
+                : {}),
             // A non-app file (PDF/PPTX/DOCX) keeps its own color note in the
             // settings rather than inside the file, and EVERY document keeps
             // its per-slide notes there — none of that travels with the file
@@ -343,6 +351,9 @@ function validateManifest(
         backgroundMetas: validateArchiveBackgroundMetas(
             manifest.backgroundMetas,
         ),
+        transitionMetas: validateArchiveBackgroundMetas(
+            manifest.transitionMetas,
+        ),
         // Every value is re-checked by `setColorNoteFilePathSettings`, so a
         // hand-edited manifest cannot push a non-color into the settings.
         colorNotes:
@@ -430,6 +441,11 @@ export async function importSingleItemArchive(
         await importBackgroundMetas(
             extractDir,
             manifest.backgroundMetas,
+            localFilePathByOriginalPath,
+        );
+        await importTransitionMetas(
+            extractDir,
+            manifest.transitionMetas ?? [],
             localFilePathByOriginalPath,
         );
         // Only onto an item this import WROTE. A reused one is the operator's
@@ -522,20 +538,26 @@ export async function askAndImportSingleItemArchiveFromUrl(
             ),
         );
         const response = await initHttpRequest(new URL(url));
-        await streamDownloadFile(
-            archiveFilePath,
-            response,
-            messageCallback,
-            true,
-        );
+        try {
+            await streamDownloadFile(
+                archiveFilePath,
+                response,
+                messageCallback,
+                true,
+            );
+        } catch (error) {
+            // `streamDownloadFile` has already said why, in words: a second
+            // toast here repeated it as the raw message.
+            handleError(error);
+            return null;
+        }
         return await runSingleItemArchiveImport(archiveFilePath, config);
     } catch (error: any) {
-        return reportArchiveFailure(
-            config.importTitle,
-            'import',
-            config,
-            error,
-        );
+        // The request itself failed -- the address was never reached -- or
+        // the import did, whose own message `describeDownloadError` keeps.
+        handleError(error);
+        showSimpleToast(tran(config.importTitle), describeDownloadError(error));
+        return null;
     } finally {
         await safeDeleteDir(workDirPath);
     }

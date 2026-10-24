@@ -1,5 +1,6 @@
 import { provider } from './fullProvider';
 import { initProvider } from './providerHelpers';
+import { withScreenProvider } from './screenProvider';
 import {
     checkShouldLockdownRenderer,
     lockdownRenderer,
@@ -14,4 +15,4 @@ if (checkShouldLockdownRenderer(globalThis.location?.pathname ?? '')) {
     lockdownRenderer();
 }
 
-initProvider(provider);
+initProvider(withScreenProvider(provider));

@@ -4,7 +4,7 @@ import { appLog } from '../../helper/loggerHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
-import ScreenBibleManager from './ScreenBibleManager';
+import ScreenLongTextManager from './ScreenLongTextManager';
 import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
 import ScreenEffectManager from './ScreenEffectManager';
 import {
@@ -13,16 +13,26 @@ import {
     getScreenManagerBase,
     saveScreenManagersSetting,
 } from './screenManagerBaseHelpers';
-import { deleteScreenPersistedData } from './screenManagerDeleteHelpers';
+import {
+    deleteScreenPersistedData,
+    removeRetiredScreenSettings,
+} from './screenManagerDeleteHelpers';
 import ScreenManagerBase, { ScreenManagerBaseGhost } from './ScreenManagerBase';
 import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
-import type { ScreenMessageType } from '../screenTypeHelpers';
+import type {
+    ScreenMessageType,
+    ScreenShowPayloadType,
+    ScreenType,
+} from '../screenTypeHelpers';
+import {
+    checkHasScreenShowFrame,
+    receiveScreenShowPayload,
+} from '../screenShowFrameHelpers';
 import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenEventHandler from './ScreenEventHandler';
 import ScreenDrawManager from './ScreenDrawManager';
 import ScreenFocusManager from './ScreenFocusManager';
-import ScreenMaskManager from './ScreenMaskManager';
 import { initScreenBibleStepping } from '../screenBibleSteppingHelpers';
 import { applyForegroundDragData } from '../../presenter-foreground/foregroundDragHelpers';
 
@@ -60,14 +70,23 @@ function setGroupMembershipInf(
     };
 }
 
+// What a Screen Show of a screen does not follow: what concerns that screen's
+// own window (shown, hidden, moved, its sound) and Screen Show itself.
+const SCREEN_SHOW_UNRELAYED_TYPES = new Set<ScreenType>([
+    'screen-show',
+    'init',
+    'visible',
+    'display-change',
+    'background-video-sound',
+]);
+
 export default class ScreenManager extends ScreenManagerBase {
     readonly screenBackgroundManager: ScreenBackgroundManager;
     readonly screenVaryAppDocumentManager: ScreenVaryAppDocumentManager;
-    readonly screenBibleManager: ScreenBibleManager;
+    readonly screenLongTextManager: ScreenLongTextManager;
     readonly screenForegroundManager: ScreenForegroundManager;
     readonly screenDrawManager: ScreenDrawManager;
     readonly screenFocusManager: ScreenFocusManager;
-    readonly screenMaskManager: ScreenMaskManager;
     readonly backgroundEffectManager: ScreenEffectManager;
     readonly varyAppDocumentEffectManager: ScreenEffectManager;
     readonly foregroundEffectManager: ScreenEffectManager;
@@ -75,6 +94,10 @@ export default class ScreenManager extends ScreenManagerBase {
 
     constructor(screenId: number) {
         super(screenId);
+        // The Presenter only, like every other per-screen key removal.
+        if (appProvider.isPagePresenter) {
+            removeRetiredScreenSettings(screenId);
+        }
         this.backgroundEffectManager = new ScreenEffectManager(
             this,
             'background',
@@ -115,7 +138,7 @@ export default class ScreenManager extends ScreenManagerBase {
                     .screenVaryAppDocumentManager;
             },
         );
-        this.screenBibleManager = new ScreenBibleManager(this);
+        this.screenLongTextManager = new ScreenLongTextManager(this);
         this.screenForegroundManager = new ScreenForegroundManager(
             this,
             this.foregroundEffectManager,
@@ -138,40 +161,41 @@ export default class ScreenManager extends ScreenManagerBase {
                 return (screenManagerBase as ScreenManager).screenFocusManager;
             },
         );
-        this.screenMaskManager = new ScreenMaskManager(this);
-        setGroupMembershipInf(
-            this,
-            this.screenMaskManager,
-            this.screenId,
-            (screenManagerBase) => {
-                return (screenManagerBase as ScreenManager).screenMaskManager;
-            },
-        );
         this.registeredEventListeners = [];
         this.registeredEventListeners.push(
             ...this.screenVaryAppDocumentManager.registerEventListener(
                 ['update'],
                 () => {
                     if (this.screenVaryAppDocumentManager.isShowing) {
-                        this.screenBibleManager.clear();
+                        this.screenLongTextManager.clear();
                     }
                 },
             ),
-            ...this.screenBibleManager.registerEventListener(['update'], () => {
-                if (this.screenBibleManager.isShowing) {
-                    this.screenVaryAppDocumentManager.clear();
-                }
-            }),
+            ...this.screenLongTextManager.registerEventListener(
+                ['update'],
+                () => {
+                    if (this.screenLongTextManager.isShowing) {
+                        this.screenVaryAppDocumentManager.clear();
+                    }
+                },
+            ),
         );
 
         this.initEvent();
     }
 
     initEvent() {
+        // The Bible text style is the presenter's to change: it syncs the
+        // contrast fix to every screen. A screen page answering the same
+        // colour with its own copy sent that copy back -- the colour it was
+        // opened with -- and undid the fix on the presenter and every screen.
+        if (appProvider.isPageScreen) {
+            return;
+        }
         this.screenBackgroundManager.registerEventListener(
             ['color-set'],
             (color: string) => {
-                this.screenBibleManager.reflectBackgroundColor(color);
+                this.screenLongTextManager.reflectBackgroundColor(color);
             },
         );
     }
@@ -208,6 +232,16 @@ export default class ScreenManager extends ScreenManagerBase {
         const isChanged = super.stage !== stageNumber;
         super.stage = stageNumber;
         if (isChanged) {
+            // Moving a screen to any stage above 0 sets its Slide transition
+            // to `none` (asked for 2026-10-11). Before the re-apply, so the
+            // stage's own redraw is already a cut. Stage 0 leaves the choice
+            // alone, and another effect can still be picked afterwards.
+            if (
+                stageNumber > 0 &&
+                this.varyAppDocumentEffectManager.effectType !== 'none'
+            ) {
+                this.varyAppDocumentEffectManager.effectType = 'none';
+            }
             this.screenVaryAppDocumentManager.reapplyForStage();
         }
         saveScreenManagersSetting()
@@ -269,31 +303,131 @@ export default class ScreenManager extends ScreenManagerBase {
                 return;
             }
         }
-        ScreenBibleManager.sendSynTextStyle();
+        ScreenLongTextManager.sendSynTextStyle();
         this.backgroundEffectManager.sendSyncScreen();
         this.screenBackgroundManager.sendSyncScreen();
+        // Before the foreground itself: an overlay with no transition of its
+        // own comes in with this one.
+        this.foregroundEffectManager.sendSyncScreen();
         this.screenForegroundManager.sendSyncScreen();
         this.screenVaryAppDocumentManager.sendSyncScreen();
         this.varyAppDocumentEffectManager.sendSyncScreen();
-        this.screenBibleManager.sendSyncScreen();
+        this.screenLongTextManager.sendSyncScreen();
         this.screenDrawManager.sendSyncScreen();
         this.screenFocusManager.sendSyncScreen();
+        // And the whole state of every screen this one shows: its window may
+        // have just loaded.
+        this.sendScreenShowSnapshots(
+            this.screenForegroundManager.foregroundData.screenDataList.map(
+                (item) => {
+                    return item.id;
+                },
+            ),
+        );
+    }
+
+    /**
+     * Everything this screen holds, as the messages that put it there: what a
+     * window drawing it from nothing needs (a Screen Mirror guest, a virtual
+     * display's page, a Screen Show of it).
+     */
+    genSyncSnapshotMessages(): ScreenMessageType[] {
+        const handlers = [
+            this.screenBackgroundManager,
+            this.screenForegroundManager,
+            this.screenVaryAppDocumentManager,
+            this.screenLongTextManager,
+            this.screenDrawManager,
+            this.screenFocusManager,
+        ];
+        const messages: ScreenMessageType[] = [
+            ...[
+                this.backgroundEffectManager,
+                this.foregroundEffectManager,
+                this.varyAppDocumentEffectManager,
+            ].map((effectManager) => {
+                return {
+                    screenId: this.screenId,
+                    type: 'effect' as const,
+                    data: {
+                        target: effectManager.target,
+                        effect: effectManager.effectType,
+                    },
+                };
+            }),
+            {
+                screenId: this.screenId,
+                type: 'bible-screen-view-text-style',
+                data: { textStyle: ScreenLongTextManager.textStyle },
+            },
+        ];
+        for (const handler of handlers) {
+            messages.push({
+                ...handler.toSyncMessage(),
+                screenId: this.screenId,
+            });
+        }
+        return messages;
+    }
+
+    override genScreenShowPayload(): ScreenShowPayloadType {
+        return {
+            sourceScreenId: this.screenId,
+            width: this.width,
+            height: this.height,
+            stage: this.stage,
+            isSnapshot: true,
+            messages: this.genSyncSnapshotMessages(),
+        };
+    }
+
+    override sendScreenShowSnapshots(sourceScreenIds: number[]) {
+        // No window, nothing to send: one that opens asks with `init`.
+        if (appProvider.isPageScreen || !this.isShowing) {
+            return;
+        }
+        for (const sourceScreenId of sourceScreenIds) {
+            if (sourceScreenId === this.screenId) {
+                continue;
+            }
+            const payload =
+                getScreenManagerBase(sourceScreenId)?.genScreenShowPayload();
+            if (payload) {
+                ScreenManager.postScreenMessage({
+                    screenId: this.screenId,
+                    type: 'screen-show',
+                    data: payload,
+                });
+            }
+        }
+    }
+
+    // A long text is put up from a Foreground panel (Long Text Show) and
+    // drawn in the long-text layer, so it answers to both names: to an
+    // operator it is one of the foreground extras, and Clear Foreground
+    // that left it on the wall would be the one extra it did not clear.
+    // A Bible passage in that layer is not the foreground's to touch.
+    get isShowingForeground() {
+        return (
+            this.screenForegroundManager.isShowing ||
+            this.screenLongTextManager.isShowingLongText
+        );
+    }
+
+    clearForeground() {
+        this.screenForegroundManager.clear();
+        if (this.screenLongTextManager.isShowingLongText) {
+            this.screenLongTextManager.clear();
+        }
     }
 
     clear() {
-        this.screenBibleManager.clear();
+        this.screenLongTextManager.clear();
         this.screenVaryAppDocumentManager.clear();
         this.screenForegroundManager.clear();
         this.screenBackgroundManager.clear();
         this.screenDrawManager.clear();
         this.screenFocusManager.clear();
-        // `screenMaskManager` is deliberately NOT cleared here. A mask is the
-        // shape of the ROOM -- measured once so the picture stops short of an
-        // organ pipe or the bottom of a half-lowered screen -- not something
-        // being presented. Clearing it with the content would hand an operator
-        // who just pressed the panic key a picture spilling onto the wall, and
-        // leave them re-measuring a mask mid-service. It comes off from its own
-        // panel and nowhere else.
         this.fireUpdateEvent();
     }
 
@@ -325,11 +459,13 @@ export default class ScreenManager extends ScreenManagerBase {
         this.foregroundEffectManager.delete();
         this.screenBackgroundManager.delete();
         this.screenVaryAppDocumentManager.delete();
-        this.screenBibleManager.delete();
+        this.screenLongTextManager.delete();
         this.screenForegroundManager.delete();
+        // Its id goes to the next screen added: no other screen may keep
+        // showing "screen N" and quietly pick up that one instead.
+        ScreenForegroundManager.removeScreenShowSource(this.screenId);
         this.screenDrawManager.delete();
         this.screenFocusManager.delete();
-        this.screenMaskManager.delete();
         this.divRef = null;
         this.getElementsByDomSelector = () => [];
         this.noSyncGroupMap.clear();
@@ -348,7 +484,7 @@ export default class ScreenManager extends ScreenManagerBase {
         // badges keep advertising a screen that no longer exists.
         ScreenBackgroundManager.fireUpdateEvent();
         ScreenVaryAppDocumentManager.fireUpdateEvent();
-        ScreenBibleManager.fireUpdateEvent();
+        ScreenLongTextManager.fireUpdateEvent();
         ScreenForegroundManager.fireUpdateEvent();
         // Instance for the previewer list, update for anything showing
         // "is this on screen?" state for the content this screen was holding.
@@ -390,7 +526,7 @@ export default class ScreenManager extends ScreenManagerBase {
                 droppedData.type,
             )
         ) {
-            return this.screenBibleManager.receiveScreenDropped(droppedData);
+            return this.screenLongTextManager.receiveScreenDropped(droppedData);
         } else if (droppedData.type === DragTypeEnum.FOREGROUND) {
             return applyForegroundDragData(
                 this.screenForegroundManager,
@@ -408,20 +544,21 @@ export default class ScreenManager extends ScreenManagerBase {
         } else if (type === 'vary-app-document') {
             return ScreenVaryAppDocumentManager;
         } else if (type === 'bible-screen-view') {
-            return ScreenBibleManager;
+            return ScreenLongTextManager;
         } else if (type === 'foreground') {
             return ScreenForegroundManager;
         } else if (type === 'draw') {
             return ScreenDrawManager;
         } else if (type === 'focus') {
             return ScreenFocusManager;
-        } else if (type === 'mask') {
-            return ScreenMaskManager;
         }
         return null;
     }
 
     static applyScreenManagerSyncScreen(message: ScreenMessageType) {
+        const context = appProvider.screenUtils?.getContext();
+        const manager = getScreenManagerBase(message.screenId);
+        if (context && manager) manager._stage = context.stage;
         const ScreenHandler = this.getSyncGroupScreenEventHandler(message);
         if (ScreenHandler !== null) {
             ScreenHandler.receiveSyncScreen(message);
@@ -444,15 +581,32 @@ export default class ScreenManager extends ScreenManagerBase {
         } else if (type === 'effect') {
             ScreenEffectManager.receiveSyncScreen(message);
         } else if (type === 'bible-screen-view-selected-index') {
-            ScreenBibleManager.receiveSyncSelectedIndex(message);
+            ScreenLongTextManager.receiveSyncSelectedIndex(message);
+            // Marked on the projector itself: the presenter carries it on to
+            // the members, as it does a scroll.
+            if (appProvider.isPagePresenter) {
+                this.syncScreenManagerGroup(message);
+            }
         } else if (type === 'bible-screen-view-text-style') {
-            ScreenBibleManager.receiveSyncTextStyle(message);
+            ScreenLongTextManager.receiveSyncTextStyle(message);
         } else if (type === 'background-video-time') {
             ScreenBackgroundManager.receiveSyncVideoTime(message);
+        } else if (type === 'background-video-sound') {
+            ScreenBackgroundManager.receiveSyncVideoSound(message);
         } else if (type === 'vary-app-document-video-time') {
             ScreenVaryAppDocumentManager.receiveSyncVideoTime(message);
+        } else if (type === 'screen-show') {
+            // Another screen's state, for a Screen Show drawn here.
+            if (appProvider.isPageScreen) {
+                receiveScreenShowPayload(data);
+            }
         } else if (type === 'sync-scroll-percentage') {
             screenManagerBase.syncScrollPercentage(data);
+            // Scrolled on the projector itself. Only the presenter knows the
+            // colour-note group, so it carries the scroll on to the members.
+            if (appProvider.isPagePresenter) {
+                this.syncScreenManagerGroup(message);
+            }
         } else {
             appLog(message);
         }
@@ -465,6 +619,30 @@ export default class ScreenManager extends ScreenManagerBase {
             this.applyScreenManagerSyncScreen(message);
         });
         initScreenBibleStepping();
+        if (!appProvider.isPageScreen) {
+            messageUtils.listenForData(
+                'mirror:bootstrap-request',
+                async (_, { requestId, screenId }) => {
+                    const manager = getScreenManagerBase(screenId);
+                    if (manager instanceof ScreenManager) {
+                        const { getMirrorBootstrap } =
+                            await import('../../screen-mirror/screenBootstrapHelpers');
+                        const bootstrap = await getMirrorBootstrap(manager);
+                        messageUtils.sendData('mirror:bootstrap', {
+                            ...bootstrap,
+                            requestId,
+                        });
+                    }
+                },
+            );
+            messageUtils.listenForData('mirror:devices-changed', () => {
+                for (const manager of getAllScreenManagerBases()) {
+                    manager.updateDim();
+                    manager.fireRefreshEvent();
+                    manager.addPropEvent('display-id');
+                }
+            });
+        }
     }
 
     static async getGroupScreenManagers(
@@ -502,6 +680,18 @@ export default class ScreenManager extends ScreenManagerBase {
                 ...message,
                 screenId: screenManagerBase.screenId,
             };
+            if (newMessage.type === 'sync-scroll-percentage') {
+                this.relayScrollToMember(screenManagerBase, newMessage);
+                continue;
+            }
+            if (newMessage.type === 'bible-screen-view-selected-index') {
+                this.relaySelectedIndexToMember(
+                    message.screenId,
+                    screenManagerBase,
+                    newMessage,
+                );
+                continue;
+            }
             const ScreenHandler =
                 this.getSyncGroupScreenEventHandler(newMessage);
             if (ScreenHandler !== null) {
@@ -519,18 +709,119 @@ export default class ScreenManager extends ScreenManagerBase {
         }
     }
 
-    sendScreenMessage(message: ScreenMessageType, isForce: boolean) {
-        if (appProvider.isPageScreen && !isForce) {
-            return;
+    // A scroll position belongs to no layer, so no handler above takes it and
+    // the group never followed: scrolling one mini screen moved its own
+    // projector and left every member where it was. Applied here to the
+    // member's mini screen and posted to the member's own window. NOT gated by
+    // `noSyncGroupMap` -- that guard is sticky and would leave the group
+    // one-way after the first scroll; `syncScrollPercentage` marks the
+    // member's container remote-scrolled, and that is what stops the scroll
+    // events it fires -- in this window and in the member's own -- from
+    // broadcasting it back (`registerScrollingSyncEvent`).
+    private static relayScrollToMember(
+        screenManagerBase: ScreenManagerBase,
+        message: ScreenMessageType,
+    ) {
+        screenManagerBase.syncScrollPercentage(message.data);
+        // A scroll fires every frame; a hidden member has no window to tell.
+        if (screenManagerBase.isShowing) {
+            this.postScreenMessage(message);
         }
+    }
+
+    // A selected verse or row belongs to no layer either, and only the scroll
+    // it set off used to reach the group -- which fought each member's own
+    // glide to it. Each member brings the selection into view itself, in its
+    // mini screen and in its own window; not gated by `noSyncGroupMap`, for
+    // the same reason as a scroll.
+    private static relaySelectedIndexToMember(
+        fromScreenId: number,
+        screenManagerBase: ScreenManagerBase,
+        message: ScreenMessageType,
+    ) {
+        if (
+            ScreenLongTextManager.receiveGroupSelectedIndex(
+                fromScreenId,
+                message,
+            ) &&
+            screenManagerBase.isShowing
+        ) {
+            this.postScreenMessage(message);
+        }
+    }
+
+    // To the window projecting `message.screenId` (from a screen window, to
+    // the presenter) and nowhere else: no group relay.
+    private static postScreenMessage(message: ScreenMessageType) {
         const { messageUtils } = appProvider;
         const channel = messageUtils.messageChannels.screenMessage;
         // async send — sendDataSync blocks the renderer on a main-process
         // round-trip for every message (paid every 60ms mid draw-stroke)
         messageUtils.sendData(channel, {
             ...message,
+            stage: getScreenManagerBase(message.screenId)?.stage,
             isScreen: appProvider.isPageScreen,
         });
+        if (!appProvider.isPageScreen) {
+            ScreenManager.relayToScreenShows(message);
+        }
+    }
+
+    /**
+     * A change of screen N, carried on to every screen showing it (Screen
+     * Show) -- whether or not N itself is showing, which is the point: the
+     * presenter is the one place that always holds N's state. Also to the
+     * copies of N drawn in this window's own Mini Screens.
+     */
+    private static relayToScreenShows(message: ScreenMessageType) {
+        if (SCREEN_SHOW_UNRELAYED_TYPES.has(message.type)) {
+            return;
+        }
+        const sourceScreenId = message.screenId;
+        const isDrawnHere = checkHasScreenShowFrame(sourceScreenId);
+        const targetIds = ScreenForegroundManager.getScreenShowTargetIds(
+            sourceScreenId,
+        ).filter((screenId) => {
+            return getScreenManagerBase(screenId)?.isShowing === true;
+        });
+        if (!isDrawnHere && targetIds.length === 0) {
+            return;
+        }
+        const source = getScreenManagerBase(sourceScreenId);
+        if (source === null) {
+            return;
+        }
+        const payload: ScreenShowPayloadType = {
+            sourceScreenId,
+            width: source.width,
+            height: source.height,
+            stage: source.stage,
+            isSnapshot: false,
+            messages: [
+                {
+                    screenId: sourceScreenId,
+                    type: message.type,
+                    data: message.data,
+                },
+            ],
+        };
+        if (isDrawnHere) {
+            receiveScreenShowPayload(payload);
+        }
+        for (const screenId of targetIds) {
+            ScreenManager.postScreenMessage({
+                screenId,
+                type: 'screen-show',
+                data: payload,
+            });
+        }
+    }
+
+    sendScreenMessage(message: ScreenMessageType, isForce: boolean) {
+        if (appProvider.isPageScreen && !isForce) {
+            return;
+        }
+        ScreenManager.postScreenMessage(message);
         ScreenManager.syncScreenManagerGroup(message);
     }
 

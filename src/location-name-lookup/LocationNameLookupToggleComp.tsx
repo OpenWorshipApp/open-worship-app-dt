@@ -5,6 +5,9 @@ import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import { useThemeSource } from '../others/themeHelpers';
 import { tran } from '../lang/langHelpers';
+import { useBibleKeyContext } from '../bible-list/bibleHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 import LookupLangCodeButtonComp from './LookupLangCodeButtonComp';
 
 // Lazy so neither the panel nor — through it — the `bible-note` chunk and the
@@ -24,6 +27,12 @@ const LazyLocationNameLookupPanelComp = lazy(() => {
 export default function LocationNameLookupToggleComp() {
     const [isShowing, setIsShowing] = useState(false);
     const { theme } = useThemeSource();
+    const bibleKey = useBibleKeyContext();
+    // A cache hit: the reference box beside this reads the same info for its
+    // font.
+    const [bibleLocale] = useAppStateAsync(() => {
+        return getBibleLocale(bibleKey);
+    }, [bibleKey]);
     const label = tran('Names and locations lookup');
     return (
         <>
@@ -47,7 +56,9 @@ export default function LocationNameLookupToggleComp() {
                     <i className="bi bi-person-fill" />
                     <i className="bi bi-geo-alt-fill ms-1" />
                 </button>
-                <LookupLangCodeButtonComp />
+                <LookupLangCodeButtonComp
+                    bibleLocale={bibleLocale ?? undefined}
+                />
             </div>
             {!isShowing
                 ? null

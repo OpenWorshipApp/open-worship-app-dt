@@ -10,12 +10,36 @@ vi.mock('../helper/settingHelpers', () => ({
 }));
 
 import {
+    checkIsChatTipHidden,
     genChatTip,
+    hideChatTip,
     pickChatTip,
     stepChatTip,
     takeChatTip,
+    CHAT_TIP_HIDE_MS,
     CHAT_TIP_LIST,
 } from './tipHelpers';
+
+// The user's ask, with the row circled: _add option to hide it for 30 day_.
+describe('hiding the line for 30 days', () => {
+    test('hides it until the day comes, then it is back by itself', () => {
+        const now = 1_000_000;
+        expect(checkIsChatTipHidden(now)).toBe(false);
+        hideChatTip(now);
+        expect(CHAT_TIP_HIDE_MS).toBe(30 * 24 * 60 * 60 * 1000);
+        expect(checkIsChatTipHidden(now + 1)).toBe(true);
+        expect(checkIsChatTipHidden(now + CHAT_TIP_HIDE_MS - 1)).toBe(true);
+        expect(checkIsChatTipHidden(now + CHAT_TIP_HIDE_MS)).toBe(false);
+    });
+
+    // Pressed while the clock ran ahead, it must not hide the line for years.
+    test('does not believe a day further off than twice the hide', () => {
+        hideChatTip(10 * CHAT_TIP_HIDE_MS);
+        expect(checkIsChatTipHidden(0)).toBe(false);
+        settingMap.set('chatbot-tip-hidden-until', 'not a time');
+        expect(checkIsChatTipHidden(0)).toBe(false);
+    });
+});
 
 beforeEach(() => {
     settingMap.clear();

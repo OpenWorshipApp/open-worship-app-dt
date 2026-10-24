@@ -8,8 +8,61 @@ import type { StyleAnimType, PTFEventType } from './screenTypeHelpers';
 const ZOOM_CONTAINER_CLASS = 'zoom-container';
 export const ANIM_END_DELAY_MILLISECOND = 500;
 
+/**
+ * `data-owa-transition` on the node an `animIn` actually appended -- the
+ * element itself, or the `.zoom-container` zoom wrapped it in -- naming the
+ * effect it came in with.
+ *
+ * A layer can now hold items that came in with DIFFERENT effects (a slide, a
+ * document, a background tab or one tile can each override the screen), and
+ * the effects do not mix: `zoom` wraps its element and every other effect
+ * leaves a wrapper alone, so animating the outgoing node with the INCOMING
+ * effect cut it instantly whenever one side was a zoom. Each item therefore
+ * leaves the way it came in (`getStyleAnimForNode`).
+ */
+export const TRANSITION_DATASET_KEY = 'owaTransition';
+
+function tagTransitionNode(node: HTMLElement, effect: string) {
+    node.dataset[TRANSITION_DATASET_KEY] = effect;
+}
+
+/**
+ * The animation a node on its way out should use: the one it came in with,
+ * or `fallback` (the layer's own effect) for a node rendered before any node
+ * was tagged.
+ */
+export function getStyleAnimForNode(
+    node: Element,
+    styleAnimList: Record<string, StyleAnimType>,
+    fallback: StyleAnimType,
+): StyleAnimType {
+    const effect =
+        node instanceof HTMLElement
+            ? node.dataset[TRANSITION_DATASET_KEY]
+            : undefined;
+    return (
+        (effect === undefined ? undefined : styleAnimList[effect]) ?? fallback
+    );
+}
+
 function checkIsZoomContainer(targetElement: HTMLElement): boolean {
     return targetElement.classList.contains(ZOOM_CONTAINER_CLASS);
+}
+
+/**
+ * The node `zoom` animates for `targetElement`: its `.zoom-container`. A
+ * caller hands over whatever it appended, which for a foreground overlay is
+ * the inner element, never the wrapper zoom put around it.
+ */
+function toZoomTarget(targetElement: HTMLElement): HTMLElement {
+    if (checkIsZoomContainer(targetElement)) {
+        return targetElement;
+    }
+    const parentElement = targetElement.parentElement;
+    if (parentElement !== null && checkIsZoomContainer(parentElement)) {
+        return parentElement;
+    }
+    return targetElement;
 }
 
 const easingFunctions = {
@@ -44,45 +97,21 @@ function genCssProps(duration: number) {
     return cssProps;
 }
 
-// TODO: make none effect work without animation to prevent flash when
-// changing screen during animation
-function none(prefix: string): StyleAnimType {
-    const uniqueId = crypto.randomUUID();
-    const animationNameOut = `${prefix}-animation-fade-${uniqueId}-out`;
-    const styleText = `
-        @keyframes ${animationNameOut} {
-            from {
-                opacity: 1;
-            }
-            to {
-                opacity: 0;
-            }
-        }
-    `;
+/**
+ * A cut, both ways. It used to fade the outgoing item for a second, so "No
+ * Transition" still left the old slide showing through the new one.
+ */
+function none(_prefix: string): StyleAnimType {
     const anim: StyleAnimType = {
-        duration: 500,
-        styleText,
+        duration: 0,
+        styleText: '',
         animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
             parentElement.appendChild(targetElement);
+            tagTransitionNode(targetElement, 'none');
             return Promise.resolve();
         },
-        animOut: (targetElement: HTMLElement) => {
-            return new Promise((resolve) => {
-                if (checkIsZoomContainer(targetElement)) {
-                    return resolve();
-                }
-                Object.assign(targetElement.style, {
-                    ...genCssProps(anim.duration),
-                    animationName: animationNameOut,
-                    opacity: 1,
-                });
-                setTimeout(() => {
-                    Object.assign(targetElement.style, {
-                        opacity: '0',
-                    });
-                    resolve();
-                }, anim.duration + ANIM_END_DELAY_MILLISECOND);
-            });
+        animOut: (_targetElement: HTMLElement) => {
+            return Promise.resolve();
         },
     };
     return anim;
@@ -123,20 +152,24 @@ function fade(prefix: string) {
                 // opaque one second after it appeared.
                 const authoredOpacity = targetElement.style.opacity || '1';
                 parentElement.appendChild(targetElement);
+                tagTransitionNode(targetElement, 'fade');
                 Object.assign(targetElement.style, {
                     ...genCssProps(anim.duration),
                     animationName: animationNameIn,
                     opacity: 0,
                 });
-                parentElement.appendChild(targetElement);
                 setTimeout(() => {
                     if (
                         targetElement.style.animationName === animationNameOut
                     ) {
+                        // Already on its way out: nothing to settle, but an
+                        // awaiting caller (Quick Text waits out its entrance)
+                        // must not be left hanging.
+                        resolve();
                         return;
                     }
                     Object.assign(targetElement.style, {
-                        animationName: undefined,
+                        animationName: '',
                         opacity: authoredOpacity,
                     });
                     resolve();
@@ -145,9 +178,6 @@ function fade(prefix: string) {
         },
         animOut: (targetElement: HTMLElement) => {
             return new Promise((resolve) => {
-                if (checkIsZoomContainer(targetElement)) {
-                    return resolve();
-                }
                 Object.assign(targetElement.style, {
                     ...genCssProps(anim.duration),
                     animationName: animationNameOut,
@@ -196,48 +226,52 @@ function move() {
         };
         globalThis.requestAnimationFrame(step);
     };
+    // The individual `translate` property, never `left`: a foreground overlay
+    // is positioned with its own `left` (`50%` plus an offset), and writing
+    // `left` here left it at the screen's left edge. `translate` also applies
+    // on top of an element's `transform` (a slide's scale), so it shifts in the
+    // parent's own layout pixels -- the width is read as `offsetWidth` for the
+    // same reason, which stays right inside the scaled mini screen where a
+    // `getBoundingClientRect` width does not.
+    //
+    // The outgoing item is not pushed from here any more: it runs its own
+    // `animOut`, the way it came in, so two "Slide In" items still look like
+    // one pushing the other.
     const anim: StyleAnimType = {
         duration: 500,
         styleText: '',
         animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
             return new Promise<void>((resolve) => {
                 parentElement.appendChild(targetElement);
-                const rect = parentElement.getBoundingClientRect();
-                const from = -rect.width;
-                const siblingStyle = (
-                    targetElement.previousSibling as HTMLElement
-                )?.style ?? {
-                    left: '0px',
-                };
+                tagTransitionNode(targetElement, 'move');
+                const from = -parentElement.offsetWidth;
                 const targetStyle = targetElement.style;
-                targetStyle.left = `${from}px`;
+                targetStyle.translate = `${from}px 0px`;
                 movingMaker({
                     from,
                     to: 0,
                     durationMil: anim.duration,
                     callback: (n, isDone) => {
-                        siblingStyle.left = `${n + rect.width}px`;
-                        targetStyle.left = `${n}px`;
                         if (isDone) {
+                            // Nothing left at rest.
+                            targetStyle.translate = '';
                             resolve();
+                            return;
                         }
+                        targetStyle.translate = `${n}px 0px`;
                     },
                 });
             });
         },
         animOut: (targetElement: HTMLElement) => {
             return new Promise<void>((resolve) => {
-                if (checkIsZoomContainer(targetElement)) {
-                    return resolve();
-                }
-                const rect =
-                    targetElement.parentElement!.getBoundingClientRect();
+                const width = targetElement.parentElement?.offsetWidth ?? 0;
                 movingMaker({
                     from: 0,
-                    to: rect.width,
+                    to: width,
                     durationMil: anim.duration,
                     callback: (n, isDone) => {
-                        targetElement.style.left = `${n}px`;
+                        targetElement.style.translate = `${n}px 0px`;
                         if (isDone) {
                             resolve();
                         }
@@ -295,6 +329,7 @@ function zoom(prefix: string): StyleAnimType {
         animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
             return new Promise((resolve) => {
                 const div = createDiv(targetElement);
+                tagTransitionNode(div, 'zoom');
                 Object.assign(div.style, {
                     ...genCssProps(anim.duration),
                     animationName: animationNameIn,
@@ -304,12 +339,18 @@ function zoom(prefix: string): StyleAnimType {
                 parentElement.appendChild(div);
                 setTimeout(() => {
                     if (div.style.animationName === animationNameOut) {
+                        resolve();
                         return;
                     }
+                    // Cleared rather than left at `scale(1)`/`1`: ANY transform
+                    // makes the wrapper a stacking context, and a foreground
+                    // overlay inside one blends with nothing but its own
+                    // wrapper -- every blend mode a silent no-op for as long as
+                    // it stayed up (memory `foreground-blend-mode-stacking`).
                     Object.assign(div.style, {
-                        animationName: undefined,
-                        opacity: 1,
-                        transform: 'scale(1)',
+                        animationName: '',
+                        opacity: '',
+                        transform: '',
                     });
                     resolve();
                 }, anim.duration + ANIM_END_DELAY_MILLISECOND);
@@ -317,17 +358,20 @@ function zoom(prefix: string): StyleAnimType {
         },
         animOut: (targetElement: HTMLElement) => {
             return new Promise((resolve) => {
-                if (!checkIsZoomContainer(targetElement)) {
+                const zoomTarget = toZoomTarget(targetElement);
+                if (!checkIsZoomContainer(zoomTarget)) {
+                    // Never zoomed in, so it has no wrapper to scale -- and its
+                    // own `transform` (a slide's scale) is not ours to replace.
                     return resolve();
                 }
-                Object.assign(targetElement.style, {
+                Object.assign(zoomTarget.style, {
                     ...genCssProps(anim.duration),
                     animationName: animationNameOut,
                     opacity: 1,
                     transform: 'scale(1)',
                 });
                 setTimeout(() => {
-                    Object.assign(targetElement.style, {
+                    Object.assign(zoomTarget.style, {
                         opacity: 0,
                         transform: 'scale(0.1)',
                     });

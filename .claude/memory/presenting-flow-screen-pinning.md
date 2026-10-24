@@ -38,7 +38,8 @@ Things that will bite whoever touches this next:
   breaks `managerHelpers.extra.test.tsx` on `appProvider.pathUtils`). The translated
   picker lives in `PresentingFlowScreenPinComp.tsx` instead — the same place `chooseColorNote`
   lives relative to `ItemColorNoteComp`.
-- **`isScreenPinnable` is wider than `isScreenReachable` by exactly one kind: a document.**
+- **`isScreenPinnable` is wider than `isScreenReachable` by exactly two kinds: a document and a
+  `Keyboard Event`** (`hostsCcFollowers`: its CC elements are what its shortcut puts up).
   A document is never shown as a unit (no `Show on Screens`), but its slides are what the
   run walks, so it must be pinnable. Audio and error rows stay out.
 - **Per-slide pins are `slideScreenIds`, keyed by slide ID, not position**, and an empty
@@ -53,7 +54,8 @@ Things that will bite whoever touches this next:
   nowhere — never a silent fallback to the selected screens.
 
 Covered by matrix rows PL-81..PL-85 and W-22. Its unit test was deleted
-2026-08-24; the only test still guarding this area is
-`src/_screen/managers/managerHelpers.extra.test.tsx`, which is what breaks if
+2026-08-24; since 2026-09-26 the picker and the pin getters are covered again
+(`PresentingFlowScreenPinComp.coverage.test.tsx`, `PresentingFlowItem.coverage.test.ts`);
+`src/_screen/managers/managerHelpers.extra.test.tsx` is what breaks if
 `screenChoosingHelpers.ts` stops being a leaf. See [[presenting-flow-references-vs-presets]],
 [[presenting-flow-preview-run-player]], [[presenting-flow-screen-actions]].

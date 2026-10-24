@@ -1,10 +1,9 @@
 import { tran } from '../lang/langHelpers';
-import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import {
     exportToWordDocument,
     saveBibleItem,
 } from '../bible-list/bibleHelpers';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import type BibleItem from '../bible-list/BibleItem';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -14,15 +13,13 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
-export const ctrlShiftEnterEventMapper: KeyboardEventMapper = {
-    allControlKey: ['Ctrl', 'Shift'],
-    key: 'Enter',
-};
+import {
+    ctrlEnterEventMapper,
+    ctrlShiftEnterEventMapper,
+} from '../keyboard-shortcut/appShortcutMappers';
 
-export const ctrlEnterEventMapper: KeyboardEventMapper = {
-    allControlKey: ['Ctrl'],
-    key: 'Enter',
-};
+// Declared with every other shortcut so Help -> Keyboard Shortcuts lists them.
+export { ctrlEnterEventMapper, ctrlShiftEnterEventMapper };
 
 export function showAddingBibleItemFail() {
     showSimpleToast(tran('Adding Bible Item'), tran('Fail to add bible item'));
@@ -37,8 +34,59 @@ export async function addBibleItemAndPresent(
     if (addedBibleItem === null) {
         showAddingBibleItemFail();
     } else {
-        ScreenBibleManager.handleBibleItemSelecting(event, addedBibleItem);
+        ScreenLongTextManager.handleBibleItemSelecting(event, addedBibleItem);
     }
+}
+
+const VERSE_KEY_SELECTOR = '[data-verse-key]';
+
+function toElement(node: unknown): Element | null {
+    if (node instanceof Element) {
+        return node;
+    }
+    // A text node: a dispatched event, or a selection anchored in verse text.
+    return node instanceof Node ? node.parentElement : null;
+}
+
+function toVerseElement(element: Element | null): HTMLElement | null {
+    return element?.closest<HTMLElement>(VERSE_KEY_SELECTOR) ?? null;
+}
+
+/**
+ * The verse a bible view's context menu was opened on, or null.
+ *
+ * `closest`, not the target and its parent: a verse holds more than its own
+ * text node. A decorated name ("Aaron" in Exodus 4:14), a word of the
+ * extra-verses layout or of a custom-HTML verse sits two or more levels down,
+ * and the menu used to drop "Open in Cross Reference" on all of them.
+ *
+ * A menu opened away from any verse — from the keyboard, which targets the
+ * focused control — lets the text selection name the verse instead, but only
+ * one inside the view the menu belongs to: a selection left behind in another
+ * pane is not this menu's verse.
+ */
+function findContextMenuVerseKey(event: any): string | null {
+    const targetElement = toElement(event?.target);
+    const targetVerseElement = toVerseElement(targetElement);
+    if (targetVerseElement !== null) {
+        return targetVerseElement.dataset.verseKey ?? null;
+    }
+    // `currentTarget` is the view while React dispatches (this runs before
+    // the menu's first await); the target is inside that view anyway.
+    const viewElement = toElement(event?.currentTarget) ?? targetElement;
+    if (viewElement === null) {
+        return null;
+    }
+    const selectedVerseElement = toVerseElement(
+        toElement(globalThis.getSelection?.()?.anchorNode),
+    );
+    if (
+        selectedVerseElement === null ||
+        !viewElement.contains(selectedVerseElement)
+    ) {
+        return null;
+    }
+    return selectedVerseElement.dataset.verseKey ?? null;
 }
 
 export function genFoundBibleItemContextMenu(
@@ -47,13 +95,7 @@ export function genFoundBibleItemContextMenu(
     bibleItem: BibleItem,
     isKeyboardShortcut?: boolean,
 ): ContextMenuItemType[] {
-    let verseKey: string | null = null;
-    if (event.target instanceof HTMLElement) {
-        verseKey =
-            event.target.dataset.verseKey ??
-            event.target.parentElement?.dataset.verseKey ??
-            null;
-    }
+    const verseKey = findContextMenuVerseKey(event);
     const onDone = () => {
         viewController.onLookupSaveBibleItem();
     };
@@ -106,7 +148,7 @@ export function genFoundBibleItemContextMenu(
                       childBefore: genContextMenuItemIcon('display'),
                       menuElement: tran('Show bible item'),
                       onSelect: (event: any) => {
-                          ScreenBibleManager.handleBibleItemSelecting(
+                          ScreenLongTextManager.handleBibleItemSelecting(
                               event,
                               bibleItem,
                           );

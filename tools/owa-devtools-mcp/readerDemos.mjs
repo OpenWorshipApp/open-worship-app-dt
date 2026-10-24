@@ -9,7 +9,7 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-font-larger',
     label: 'Make the words larger',
-    detail: 'Open the hidden footer and raise Font Size.',
+    detail: 'Press Reveal Hidden Controls under the passage, then raise Font Size.',
     title: 'Make the words larger',
     steps: [
       {
@@ -24,7 +24,7 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-font-smaller',
     label: 'Make the words smaller',
-    detail: 'Open the hidden footer and lower Font Size.',
+    detail: 'Press Reveal Hidden Controls under the passage, then lower Font Size.',
     title: 'Make the words smaller',
     steps: [
       {
@@ -130,7 +130,7 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-clear-reference',
     label: 'Clear the reference box',
-    detail: "Show this Bible's book buttons and start a fresh lookup.",
+    detail: "Press Clear input (Shift+Escape) to show this Bible's book buttons and start a fresh lookup.",
     title: 'Clear the reference box',
     steps: [
       {
@@ -145,7 +145,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-clear-reference-part',
     label: 'Remove the last part of a reference',
     detail:
-      'Keep the earlier book or chapter and correct only the last choice.',
+      'Press Clear input chunk (Escape) to keep the book or chapter and correct only the last choice.',
     title: 'Remove the last part of a reference',
     steps: [
       {
@@ -173,7 +173,7 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-names-language',
     label: 'Change names and places language',
-    detail: 'Open the language picker used by the people and places tools.',
+    detail: 'Open Names and locations language to choose the language of people and places data.',
     title: 'Change names and places language',
     steps: [
       {
@@ -221,7 +221,7 @@ export const READER_DEMO_LIST = [
     steps: [
       {
         text: 'Open Copy above the passage and choose the format you want.',
-        find: 'Copy',
+        find: 'Lookup > Copy',
         translateFind: true,
         action: 'click',
       },
@@ -271,17 +271,19 @@ export const READER_DEMO_LIST = [
   },
   {
     id: 'reader-present-passage',
-    label: 'Present a passage from the Reader',
+    label: 'Put a passage on the audience screens',
     detail:
-      'Double-click a verse to send it to selected screens; use F9 to clear it.',
-    title: 'Present a passage from the Reader',
+      'The Bible Reader only reads: present a passage from the Presenter, and use F9 there to clear it.',
+    title: 'Put a passage on the audience screens',
     isFeatured: false,
     steps: [
       {
-        text: 'Double-click a verse, or Alt+click it, to send that passage to the selected audience screens. This lesson will not press it for you.',
+        // Every route to a screen is the Presenter page's: a double-click on
+        // a verse here selects it and nothing more.
+        text: 'The Bible Reader shows a passage to you alone: a double-click on a verse here only selects it, and nothing goes to the audience screens. To present, press Go Back to Presenter at the top and open Bible Lookup there. This lesson will not press it for you.',
       },
       {
-        text: 'Use F9 when you are ready to clear the Bible layer from the audience screens.',
+        text: 'In the Bible Lookup of the Presenter, point at the title of the passage and press Save bible item and show on screen, the cast icon. Use F9 when you are ready to clear the Bible layer from the audience screens.',
       },
     ],
   },
@@ -345,7 +347,7 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-cross-references',
     label: 'Open cross references',
-    detail: 'See other verses connected to the passage you are reading.',
+    detail: 'See AI Cross References for your passage, or right-click a verse you are editing and choose Open in Cross Reference.',
     title: 'Open cross references',
     steps: [
       {
@@ -414,7 +416,7 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-filter-books',
     label: 'Search only selected Bible books',
-    detail: 'Open the book filter used by Bible Find.',
+    detail: 'Open All Books in Bible Find to search only some books; its menu offers Reset Selected Books and Reset Search Data.',
     title: 'Search only selected Bible books',
     steps: [
       {
@@ -437,6 +439,47 @@ export const READER_DEMO_LIST = [
         find: 'All Books',
         translateFind: true,
         action: 'click',
+      },
+      {
+        text: 'More Options beside All Books offers Reset Selected Books to search every book again, and Reset Search Data, which rebuilds the search data after asking.',
+      },
+    ],
+  },
+  // The 🤖 at the end of the All Books row (2026-10-16, the user's ask with
+  // the place circled: _put icon here, make sure add tip to help user
+  // know_). Do it opens the assistant, which asks AI's own two questions --
+  // whether it is on, then the caution -- and those are the person's.
+  {
+    id: 'reader-find-verse-assistant',
+    label: 'Find a verse you half-remember',
+    detail: 'In Bible Find, press Find a Verse with the Assistant at the end of the All Books row, pick the Bible, then type the words you remember or what the verse is about.',
+    title: 'Find a verse you half-remember',
+    // Not on the chatbot's practice shelf: it opens the chatbot.
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open the study panel with Advance Bible Lookup.',
+        find: 'Advance Bible Lookup',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Bible Online Lookup',
+      },
+      {
+        text: 'Choose Find in the Bible Online Lookup picker.',
+        find: 'Bible Online Lookup',
+        translateFind: true,
+        action: 'type',
+        value: 'Find',
+        translateValue: true,
+      },
+      {
+        text: 'Press Find a Verse with the Assistant, the robot at the end of the All Books row. The assistant asks which Bible to search, then what you remember: a few words in any order, or what the verse is about.',
+        find: 'Find a Verse with the Assistant',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Each verse it finds has a button under the answer that opens it here in the Bible Lookup.',
       },
     ],
   },
@@ -483,8 +526,8 @@ export const READER_DEMO_LIST = [
     title: 'Filter Bible Notes by name',
     steps: [
       {
-        text: 'Click Filter by name, then type part of a note or note-file name.',
-        find: 'Filter by name',
+        text: 'Click Filter by name in Bible Notes, then type part of a note or note-file name.',
+        find: 'Bible Notes > Filter by name',
         translateFind: true,
         action: 'click',
       },
@@ -497,8 +540,8 @@ export const READER_DEMO_LIST = [
     title: 'Choose how Bible Notes are sorted',
     steps: [
       {
-        text: 'Open the available list orders with Sort.',
-        find: 'Sort',
+        text: 'Open the available list orders with Sort in Bible Notes.',
+        find: 'Bible Notes > Sort',
         translateFind: true,
         action: 'click',
       },
@@ -523,7 +566,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-reference-shortcuts',
     label: 'Use the reference box shortcuts',
     detail:
-      'Tab completes a choice, Escape removes one part, and Ctrl+Escape clears all.',
+      'Tab to complete (Tab) finishes a choice, Clear input chunk (Escape) removes one part, Clear input (Shift+Escape) clears all.',
     title: 'Use the reference box shortcuts',
     isFeatured: false,
     steps: [
@@ -531,7 +574,7 @@ export const READER_DEMO_LIST = [
         text: 'In Bible Reference, press Tab to complete the current book, chapter, or verse choice.',
       },
       {
-        text: 'Press Escape to remove the last part of the reference, or Ctrl+Escape to clear the whole reference.',
+        text: 'Press Escape to remove the last part of the reference, or Shift+Escape to clear the whole reference.',
       },
     ],
   },
@@ -539,12 +582,12 @@ export const READER_DEMO_LIST = [
     id: 'reader-history-chips',
     label: 'Reuse and arrange passage history',
     detail:
-      'Open, split, drag, save, or remove references from the history row.',
+      'Click a history chip to read it, or use its More Options: Open beside the current verse, Set to current editing, Save bible item, Remove.',
     title: 'Reuse and arrange passage history',
     isFeatured: false,
     steps: [
       {
-        text: 'Double-click a passage in the history row to reopen it; Shift+double-click opens it in a split pane.',
+        text: 'Click a passage in the history row to read it in a small floating panel. Its More Options menu sets it back into the passage you are editing, or opens it beside the current verse.',
       },
       {
         text: 'Drag a history passage into a reading pane, use its More Options menu to open or save it, or use Remove to clear that chip.',
@@ -555,12 +598,12 @@ export const READER_DEMO_LIST = [
     id: 'reader-version-info',
     label: 'Change version and read Bible information',
     detail:
-      'Choose a translation, then open its publisher, language, and copyright details.',
+      'Choose a translation with the version button or Add New Bible, then open Bible Information for its publisher and copyright.',
     title: 'Change version and read Bible information',
     isFeatured: false,
     steps: [
       {
-        text: 'Use the Bible abbreviation beside Bible Reference to choose another installed translation.',
+        text: 'Use the Bible abbreviation (such as KJV) beside Bible Reference to choose another installed translation; Add New Bible at the end of that list opens the Bible settings.',
       },
       {
         text: 'Use Bible Information beside a passage to read its title, publisher, language, copyright, and available links.',
@@ -571,7 +614,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-verse-ranges',
     label: 'Choose one verse or a verse range',
     detail:
-      'Use verse numbers to select a start, an end, or all verses in the chapter.',
+      'Pick a verse for the start and another for the end, Show all verses for the chapter, or Introduction where a book has one.',
     title: 'Choose one verse or a verse range',
     isFeatured: false,
     steps: [
@@ -579,7 +622,7 @@ export const READER_DEMO_LIST = [
         text: 'Choose a verse number once for the start; choose another number to make a range.',
       },
       {
-        text: 'Use the all-verses choice when you want to read the complete chapter.',
+        text: 'Use Show all verses when you want to read the complete chapter. A book with an introduction shows Introduction among its chapters.',
       },
     ],
   },
@@ -606,17 +649,17 @@ export const READER_DEMO_LIST = [
     id: 'reader-ai-audio',
     label: 'Use Bible audio and AI reading controls',
     detail:
-      'Enable automatic AI audio, play verse audio, repeat it, or refresh the source.',
+      'Turn on Auto Play Audio AI in Settings; where a Bible has audio, Toggle Bible Audio in its passage header turns the player on or off.',
     title: 'Use Bible audio and AI reading controls',
     steps: [
       {
-        text: 'Use Auto Play Audio AI when available to control automatic reading for supported passages.',
-        find: 'Auto Play Audio AI when available',
+        text: 'Open Settings, choose Others, then use Auto Play Audio AI when available under the OpenAI key to control automatic reading for supported passages.',
+        find: 'Setting',
         translateFind: true,
         action: 'click',
       },
       {
-        text: 'When audio is available, use the passage audio player to play, repeat, or refresh it.',
+        text: 'When audio is available, Toggle Bible Audio in the passage header shows the audio player; use it to play, repeat, or refresh.',
       },
     ],
   },
@@ -624,12 +667,12 @@ export const READER_DEMO_LIST = [
     id: 'reader-edit-arrange-passages',
     label: 'Edit and arrange reading panes',
     detail:
-      'Rename, recolor, drag, split, replace, or close the passages in your workspace.',
+      "Edit a pane's reference with Click to edit this section or its Book, Chapter and Verse Start buttons, change its version, or close it.",
     title: 'Edit and arrange reading panes',
     isFeatured: false,
     steps: [
       {
-        text: 'Use a passage header or its More Options menu to edit its title, choose a color note, split it, or close it.',
+        text: 'In a passage header, the pencil (Click to edit this section) or the Book, Chapter, Verse Start and Verse End buttons change the reference, Change Bible Key changes its Bible, and More Options splits or closes it.',
       },
       {
         text: 'Drag a passage header onto another pane to replace or split that pane; matching color notes keep panes aligned while scrolling.',
@@ -640,7 +683,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-find-results',
     label: 'Master Bible Find results',
     detail:
-      'Change version, use suggestions and book filters, page through hits, then open or save one.',
+      'Pick the version, page through hits, then Open, Open beside the current verse or Save bible item; Refresh runs the search again.',
     title: 'Master Bible Find results',
     isFeatured: false,
     steps: [
@@ -656,7 +699,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-name-details',
     label: 'Explore people and place details',
     detail:
-      'Filter records, follow references, open verses or maps, copy details, and change data language.',
+      'Select a record, then use Parents, Children and other sections, Open in bible lookup, Open in another Bible, Copy or Open in Google Maps.',
     title: 'Explore people and place details',
     isFeatured: false,
     steps: [
@@ -688,7 +731,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-graph-manage',
     label: 'Organize and share a connection graph',
     detail:
-      'Re-layout, undo, set a centre or root, then copy, save, print, or open the drawn view.',
+      'Re-layout, Undo, Set as centre or Use as root, then copy, save, print, or open the drawn view.',
     title: 'Organize and share a connection graph',
     isFeatured: false,
     steps: [
@@ -720,7 +763,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-resource-file-actions',
     label: 'Build and use your Resources library',
     detail:
-      'Add or drop folders, search and reload them, open files, add files, or copy them into app data.',
+      'Add or drop folders, search and reload them, open files or links, add files, or copy them into app data.',
     title: 'Build and use your Resources library',
     isFeatured: false,
     steps: [
@@ -731,7 +774,7 @@ export const READER_DEMO_LIST = [
         text: 'Search filenames, open or reveal a file, add files to a folder, or use Copy to Data Directory when the library should travel with the app.',
       },
       {
-        text: 'JSON link lists open their links, Markdown opens in Preview, and Bible note files open read-only.',
+        text: 'JSON link lists show their links (right-click one for Open Link in Browser or Copy URL to Clipboard), Markdown opens in Preview, and Bible note files open read-only.',
       },
     ],
   },
@@ -739,7 +782,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-verse-marks',
     label: 'Highlight and comment on Bible text',
     detail:
-      'Select words in one verse to highlight, recolor, remove marks, or attach a comment.',
+      'Select words in one verse, then use Highlight, Add Comment or Remove Marks; Delete Comment takes a comment off.',
     title: 'Highlight and comment on Bible text',
     isFeatured: false,
     steps: [
@@ -755,7 +798,7 @@ export const READER_DEMO_LIST = [
     id: 'reader-note-actions',
     label: 'Work with marked verses in Bible Notes',
     detail:
-      'Open, recolor, edit, move, drag, add to Bibles, or delete a marked verse.',
+      'Open, recolor, edit or move a marked verse, drag it into Bibles, or use Add to Bible List.',
     title: 'Work with marked verses in Bible Notes',
     isFeatured: false,
     steps: [
@@ -771,12 +814,12 @@ export const READER_DEMO_LIST = [
     id: 'reader-header-tools',
     label: 'Use the Reader header tools',
     detail:
-      'Return to Presenter or open Settings, App Assistant, AI Chat, and Help.',
+      'Use Go Back to Presenter, Setting, App Assistant, AI Chat, and Help: Open Online Help, Open Chatbot or Report a Problem.',
     title: 'Use the Reader header tools',
     isFeatured: false,
     steps: [
       {
-        text: 'At the right of Bible Reference, use Go Back to Presenter, Settings, App Assistant, AI Chat, or Help.',
+        text: 'At the right of Bible Reference, use Go Back to Presenter, Setting, App Assistant, AI Chat, or Help; Help offers Open Online Help, Open Chatbot and Report a Problem.',
       },
     ],
   },
@@ -798,7 +841,7 @@ export const READER_DEMO_LIST = [
   {
     id: 'reader-open-help',
     label: 'Open Reader Help',
-    detail: 'Open Help for tips, updates, and information about the app.',
+    detail: 'Open Help in the Reader header for Open Online Help, Open Chatbot and Report a Problem.',
     title: 'Open Reader Help',
     steps: [
       {
@@ -806,6 +849,9 @@ export const READER_DEMO_LIST = [
         find: 'Help',
         translateFind: true,
         action: 'click',
+      },
+      {
+        text: 'Choose Open Online Help for the manual, Open Chatbot to ask the App Assistant, or Report a Problem. Tips of the Day and All tips are under Help in the menu bar.',
       },
     ],
   },
@@ -938,6 +984,20 @@ export function getReaderDemo(id, translate = (value) => value) {
       .split(' > ')
       .map((part) => translate(part))
       .join(' > ');
+  // A panel is matched by its `data-widget-name`, which stays English in
+  // every language, while the control inside shows translated words: in a
+  // Khmer window only "Bibles > <Khmer Filter by name>" can land. It goes
+  // last: the renderer's inline fallback (`getDailyTipGuide`) takes the last.
+  const translateControlOnly = (label) => {
+    const parts = label.split(' > ');
+    return parts.length < 2
+      ? translate(label)
+      : [...parts.slice(0, -1), translate(parts.at(-1))].join(' > ');
+  };
+  const toTranslatedFinds = (label) => [
+    translateLabel(label),
+    translateControlOnly(label),
+  ];
   return {
     ...source,
     label: translate(source.label),
@@ -956,16 +1016,18 @@ export function getReaderDemo(id, translate = (value) => value) {
       ];
       if (translateFind) {
         const key = translateFind === true ? step.find : translateFind;
-        const translated = translateLabel(key);
-        if (translated !== key) {
-          finds.push(`${translated}${translateSuffix}`);
+        for (const translated of toTranslatedFinds(key)) {
+          if (translated !== key) {
+            finds.push(`${translated}${translateSuffix}`);
+          }
         }
       }
       if (translateFinds === true) {
         for (const find of [...finds]) {
-          const translated = translateLabel(find);
-          if (translated !== find) {
-            finds.push(translated);
+          for (const translated of toTranslatedFinds(find)) {
+            if (translated !== find) {
+              finds.push(translated);
+            }
           }
         }
       }

@@ -193,11 +193,7 @@ install keeps the download-page updater unchanged.
 ### macOS
 
 ```bash
-# Standard build
 npm run pack:mac
-
-# Universal build (Intel + Apple Silicon)
-npm run pack:mac:uni
 ```
 
 ### Linux

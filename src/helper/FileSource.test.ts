@@ -672,6 +672,22 @@ describe('FileSource', () => {
         ]);
     });
 
+    test('a delete by path tells listeners and forgets the instance, as trash does', async () => {
+        const { default: FileSource } = await loadFileSourceModule();
+        const genericListener = vi.fn();
+        const fileSource = FileSource.getInstance('/docs/gone.txt');
+        FileSource.registerFileSourceEventListener(['delete'], genericListener);
+
+        FileSource.fireDeleteEventByPath('/docs/gone.txt');
+        await flushEvents();
+
+        expect(genericListener.mock.calls).toEqual([
+            ['/docs/gone.txt', expect.any(Number)],
+        ]);
+        // Forgotten: a file of that name made later is a new instance.
+        expect(FileSource.getInstance('/docs/gone.txt')).not.toBe(fileSource);
+    });
+
     test('tells an unscoped listener WHICH file moved, alongside the payload', async () => {
         // The plain unscoped event carries the firing code's `data` and nothing
         // else, so a listener that filters by path (the bible-note short-verse

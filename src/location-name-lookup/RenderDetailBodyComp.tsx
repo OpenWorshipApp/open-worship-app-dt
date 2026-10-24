@@ -1,3 +1,5 @@
+import { Fragment, useState } from 'react';
+
 import {
     useAppCurrentRef,
     useAppEffect,
@@ -7,7 +9,15 @@ import { WEBSITE_IFRAME_REFERRER_POLICY } from '../helper/constants';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
 import type { VerseDataType } from './bibleVerseHelpers';
-import { shortToVerseData, useLookupVerseBibleKey } from './bibleVerseHelpers';
+import {
+    shortToVerseData,
+    shortToVerseSectionList,
+    useLookupVerseBibleKey,
+} from './bibleVerseHelpers';
+import type { BibleTextSectionType } from '../bible-list/bibleRenderHelpers';
+import RenderBibleChapterDividerComp from '../bible-reader/view-extra/RenderBibleChapterDividerComp';
+import RenderShowNextChapterButtonComp from '../bible-reader/view-extra/RenderShowNextChapterButtonComp';
+import { handleError } from '../helper/errorHelpers';
 import {
     BasicInfoComp,
     DetailsSectionComp,
@@ -301,12 +311,17 @@ export function RenderLocationDetailComp({
 
 export function RenderVerseDetailComp({
     shortVerse,
+    bibleKey,
     onResolved,
 }: Readonly<{
     shortVerse: string;
+    // The panel's own bible, when it was opened in one; otherwise the verse
+    // follows the lookup setting.
+    bibleKey?: string;
     onResolved: (verseData: VerseDataType) => void;
 }>) {
-    const verseBibleKey = useLookupVerseBibleKey();
+    const lookupBibleKey = useLookupVerseBibleKey();
+    const verseBibleKey = bibleKey ?? lookupBibleKey;
     const [verseData] = useAppStateAsync(async () => {
         try {
             return await shortToVerseData(verseBibleKey, shortVerse);
@@ -320,6 +335,15 @@ export function RenderVerseDetailComp({
             onResolvedRef.current(verseData);
         }
     }, [verseData]);
+    // The chapters the `...` appended, kept for the passage they belong to:
+    // another verse in this panel starts again from its first chapters.
+    const passageKey = `${verseBibleKey}|${shortVerse}`;
+    const [moreSections, setMoreSections] = useState<{
+        key: string;
+        sectionList: BibleTextSectionType[];
+        isEnded: boolean;
+    }>({ key: passageKey, sectionList: [], isEnded: false });
+    const [isLoadingChapter, setIsLoadingChapter] = useState(false);
     if (verseData === undefined) {
         return <LoadingComp />;
     }
@@ -328,9 +352,65 @@ export function RenderVerseDetailComp({
     }
     // No title of its own: the widget's title bar names the reference — bible
     // key included — and a panel this small cannot spare two lines repeating it.
+    if (verseData.sectionList === null) {
+        return (
+            <div
+                className="location-name-lookup__detail"
+                style={verseData.style}
+            >
+                <p className="location-name-lookup__verse-text">
+                    {verseData.text}
+                </p>
+            </div>
+        );
+    }
+    const currentMore =
+        moreSections.key === passageKey
+            ? moreSections
+            : { key: passageKey, sectionList: [], isEnded: false };
+    const sectionList = [...verseData.sectionList, ...currentMore.sectionList];
+    const shownChapterCount =
+        verseData.shownChapterCount + currentMore.sectionList.length;
+    const isMore =
+        !currentMore.isEnded && shownChapterCount < verseData.chapterCount;
+    const handleShowNextChapter = () => {
+        setIsLoadingChapter(true);
+        shortToVerseSectionList(verseBibleKey, shortVerse, shownChapterCount)
+            .then((newSectionList) => {
+                setMoreSections({
+                    key: passageKey,
+                    sectionList: [
+                        ...currentMore.sectionList,
+                        ...(newSectionList ?? []),
+                    ],
+                    isEnded: !newSectionList?.length,
+                });
+            })
+            .catch(handleError)
+            .finally(() => {
+                setIsLoadingChapter(false);
+            });
+    };
     return (
         <div className="location-name-lookup__detail" style={verseData.style}>
-            <p className="location-name-lookup__verse-text">{verseData.text}</p>
+            {sectionList.map((section) => {
+                return (
+                    <Fragment key={section.chapter}>
+                        <RenderBibleChapterDividerComp
+                            localeChapter={section.localeChapter}
+                        />
+                        <p className="location-name-lookup__verse-text">
+                            {section.text}
+                        </p>
+                    </Fragment>
+                );
+            })}
+            {isMore ? (
+                <RenderShowNextChapterButtonComp
+                    onClick={handleShowNextChapter}
+                    isLoading={isLoadingChapter}
+                />
+            ) : null}
         </div>
     );
 }

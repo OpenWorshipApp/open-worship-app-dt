@@ -15,13 +15,17 @@ import type {
     MarqueePositionType,
     StyleAnimType,
 } from './screenTypeHelpers';
+import type { TransitionEffectType } from './transitionEffectHelpers';
 import {
     DEFAULT_MARQUEE_SPEED_PERCENTAGE,
     MAX_MARQUEE_SPEED_PERCENTAGE,
     MIN_MARQUEE_SPEED_PERCENTAGE,
 } from './screenTypeHelpers';
-import TimingController from './managers/TimingController';
+import TimingController, {
+    type ClockPeriodType,
+} from './managers/TimingController';
 import StopwatchController from './managers/StopwatchController';
+import { checkIsSameTimerExceptTiming } from './managers/timerStateHelpers';
 import FileSource from '../helper/FileSource';
 import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
@@ -29,14 +33,64 @@ import { playMediaElement, releaseMediaElement } from '../helper/mediaHelpers';
 import appProvider from '../server/appProvider';
 import { genWebScreenShotElement } from './managers/screenWebsiteHelpers';
 import { genMarqueeFontSize } from './marqueeBandHelpers';
+import { FOREGROUND_MESSAGE_CLASS } from './foregroundMessageStackHelpers';
 
 const MARQUEE_SLIDE_MILLISECOND = 500;
+const MARQUEE_FADE_MILLISECOND = 1000;
+
+/**
+ * How a marquee band comes in and goes out. A band is anchored to an edge, so
+ * with no transition of its own it slides in from that edge -- deliberately
+ * NOT the screen's `Foreground:` effect, which is what every other overlay
+ * falls back to. Its session or its component can still choose one: "Slide
+ * In" is that same edge slide, the others are the usual fade, zoom and cut.
+ * Pure CSS on the band itself, like the slide always was.
+ */
+export function genMarqueeTransitionCss(
+    transitionEffect: TransitionEffectType | undefined,
+    hiddenTranslateY: string,
+) {
+    if (transitionEffect === 'none') {
+        return { base: '', inFrames: '', outFrames: '', millisecond: 0 };
+    }
+    if (transitionEffect === 'fade') {
+        return {
+            base: 'opacity: 0;',
+            inFrames: '0% { opacity: 0; } 100% { opacity: 1; }',
+            outFrames: '0% { opacity: 1; } 100% { opacity: 0; }',
+            millisecond: MARQUEE_FADE_MILLISECOND,
+        };
+    }
+    if (transitionEffect === 'zoom') {
+        return {
+            base: 'opacity: 0; transform: scale(0.1);',
+            inFrames:
+                '0% { opacity: 0; transform: scale(0.1); }' +
+                ' 100% { opacity: 1; transform: scale(1); }',
+            outFrames:
+                '0% { opacity: 1; transform: scale(1); }' +
+                ' 100% { opacity: 0; transform: scale(0.1); }',
+            millisecond: MARQUEE_SLIDE_MILLISECOND,
+        };
+    }
+    return {
+        base: `transform: translateY(${hiddenTranslateY});`,
+        inFrames:
+            `0% { transform: translateY(${hiddenTranslateY}); }` +
+            ' 100% { transform: translateY(0); }',
+        outFrames:
+            '0% { transform: translateY(0); }' +
+            ` 100% { transform: translateY(${hiddenTranslateY}); }`,
+        millisecond: MARQUEE_SLIDE_MILLISECOND,
+    };
+}
 
 export function genHtmlForegroundMarquee(
     {
         text,
         speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         extraStyle = {},
+        transitionEffect,
     }: ForegroundMarqueeDataType,
     screenManagerBase: ScreenManagerBase,
     position: MarqueePositionType,
@@ -56,6 +110,18 @@ export function genHtmlForegroundMarquee(
     const inKeyframe = `anim-${uniqueClassname}-in`;
     const outKeyframe = `anim-${uniqueClassname}-out`;
     const hiddenTranslateY = position === 'top' ? '-100%' : '100%';
+    const transitionCss = genMarqueeTransitionCss(
+        transitionEffect,
+        hiddenTranslateY,
+    );
+    const inAnimation =
+        transitionCss.millisecond > 0
+            ? `animation: ${inKeyframe} ${transitionCss.millisecond}ms ease-in forwards;`
+            : '';
+    const outAnimation =
+        transitionCss.millisecond > 0
+            ? `animation: ${outKeyframe} ${transitionCss.millisecond}ms ease-out forwards;`
+            : '';
     const htmlString = renderToStaticMarkup(
         <div
             style={{
@@ -75,12 +141,12 @@ export function genHtmlForegroundMarquee(
                     font-size: ${fontSize}px;
                     box-shadow: inset 0 0 10px lightblue;
                     will-change: transform;
-                    transform: translateY(${hiddenTranslateY});
-                    animation: ${inKeyframe} ${MARQUEE_SLIDE_MILLISECOND}ms ease-in forwards;
+                    ${transitionCss.base}
+                    ${inAnimation}
                     white-space: nowrap;
                 }
                 .${uniqueClassname}.out {
-                    animation: ${outKeyframe} ${MARQUEE_SLIDE_MILLISECOND}ms ease-out forwards;
+                    ${outAnimation}
                 }
                 .${uniqueClassname} span {
                     display: inline-block;
@@ -106,12 +172,10 @@ export function genHtmlForegroundMarquee(
                     100% { transform: translateX(-100%); }
                 }
                 @keyframes ${inKeyframe} {
-                    0% { transform: translateY(${hiddenTranslateY}); }
-                    100% { transform: translateY(0); }
+                    ${transitionCss.inFrames}
                 }
                 @keyframes ${outKeyframe} {
-                    0% { transform: translateY(0); }
-                    100% { transform: translateY(${hiddenTranslateY}); }
+                    ${transitionCss.outFrames}
                 }
             `}</style>
             <p className={uniqueClassname} style={extraStyle}>
@@ -142,10 +206,10 @@ export function genHtmlForegroundMarquee(
                 )) {
                     (element as any).classList.add('out');
                 }
-                // Only the slide-out has to finish before the node is dropped;
+                // Only the way out has to finish before the node is dropped;
                 // tying this to `duration` would keep a hidden marquee around
                 // for minutes at the slowest scroll speeds.
-                setTimeout(resolve, MARQUEE_SLIDE_MILLISECOND);
+                setTimeout(resolve, transitionCss.millisecond);
             });
         },
     };
@@ -206,10 +270,8 @@ const MESSAGE_FADE_MILLISECOND = 400;
  * several that rotate. Nothing but a person takes them down.
  *
  * The text goes in as a React CHILD, never through `dangerouslySetInnerHTML`:
- * `sanitizeHtml` is still a no-op placeholder and every renderer here has node
- * integration, so the one safe way to put a user's words on a screen is to let
- * the renderer escape them. That is also why this takes plain text rather than
- * Quick Text's markdown.
+ * the renderer escapes the user's words without parsing markup. That is also
+ * why this takes plain text rather than Quick Text's markdown.
  *
  * NO timer is started unless there is something to rotate TO -- a rotation
  * that fires forever to rewrite the same string is the paint-at-rest mistake
@@ -226,6 +288,7 @@ export function genHtmlForegroundMessage(
     const isRotating = intervalSecond !== null && validTextList.length > 1;
     const htmlString = renderToStaticMarkup(
         <div
+            className={FOREGROUND_MESSAGE_CLASS}
             style={{
                 whiteSpace: 'pre-wrap',
                 ...(isRotating
@@ -288,9 +351,17 @@ export function genHtmlForegroundMessage(
 }
 
 export function genHtmlForegroundCountdown(
-    { dateTime, extraStyle }: ForegroundCountdownDataType,
+    data: ForegroundCountdownDataType,
     animData: StyleAnimType,
 ) {
+    const { extraStyle } = data;
+    // The "time is up" flash runs five times and then RESTS red (`forwards`),
+    // never `infinite`: a finished countdown can stay up for the rest of the
+    // service, and a looping colour animation repaints it every frame for as
+    // long as it does (memory `infinite-paint-animation-at-rest`). Resting red,
+    // it counts the time OVER behind a `+` (`CountdownController`). The sign is
+    // a SPAN so the digit rule's `min-width` leaves no gap while it is empty.
+    // `nowrap` keeps the digits on one line in any font the widget is given.
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
@@ -306,6 +377,7 @@ export function genHtmlForegroundCountdown(
                 .${uniqueClassname} {
                     display: flex;
                     justify-content: center;
+                    white-space: nowrap;
                 }
                 .${uniqueClassname} div {
                     text-align: center;
@@ -316,7 +388,8 @@ export function genHtmlForegroundCountdown(
                     text-align: left;
                 }
                 .${uniqueClassname}[data-time-diff="0"] {
-                    animation: anim-${uniqueClassname}-alerting 2s ease-in infinite;
+                    animation: anim-${uniqueClassname}-alerting 2s ease-in 5
+                        forwards;
                 }
                 @keyframes anim-${uniqueClassname}-alerting {
                     0% { color: red; }
@@ -326,6 +399,7 @@ export function genHtmlForegroundCountdown(
             `}</style>
             <div className={uniqueClassname}>
                 <span style={{ marginRight: '25px' }}>⏳</span>
+                <span id="sign" />
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
             </div>
@@ -334,23 +408,35 @@ export function genHtmlForegroundCountdown(
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
-    const countDownHandler = CountdownController.init(element, dateTime);
+    const countDownHandler = CountdownController.init(element, data);
+    let currentData = data;
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
             countDownHandler.start();
             await animData.animIn(element, parentContainer);
         },
         handleRemoving: async () => {
-            countDownHandler.pause();
+            countDownHandler.dispose();
             await animData.animOut(element);
+        },
+        // A start, pause, resume or reset moves only the timing, and is
+        // applied to the clock already up -- no fade out and back in.
+        handleUpdating: (newData: ForegroundCountdownDataType) => {
+            if (!checkIsSameTimerExceptTiming(currentData, newData)) {
+                return false;
+            }
+            currentData = newData;
+            countDownHandler.update(newData);
+            return true;
         },
     };
 }
 
 export function genHtmlForegroundStopwatch(
-    { dateTime, extraStyle }: ForegroundStopwatchDataType,
+    data: ForegroundStopwatchDataType,
     animData: StyleAnimType,
 ) {
+    const { extraStyle } = data;
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
         <div
@@ -366,6 +452,7 @@ export function genHtmlForegroundStopwatch(
                 .${uniqueClassname} {
                     display: flex;
                     justify-content: center;
+                    white-space: nowrap;
                 }
                 .${uniqueClassname} div {
                     text-align: center;
@@ -386,15 +473,26 @@ export function genHtmlForegroundStopwatch(
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
-    const stopwatchHandler = StopwatchController.init(element, dateTime);
+    const stopwatchHandler = StopwatchController.init(element, data);
+    let currentData = data;
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
             stopwatchHandler.start();
             await animData.animIn(element, parentContainer);
         },
         handleRemoving: async () => {
-            stopwatchHandler.pause();
+            stopwatchHandler.dispose();
             await animData.animOut(element);
+        },
+        // See the countdown's: a start, pause, resume or reset is applied to
+        // the stopwatch already up.
+        handleUpdating: (newData: ForegroundStopwatchDataType) => {
+            if (!checkIsSameTimerExceptTiming(currentData, newData)) {
+                return false;
+            }
+            currentData = newData;
+            stopwatchHandler.update(newData);
+            return true;
         },
     };
 }
@@ -402,6 +500,7 @@ export function genHtmlForegroundStopwatch(
 export function genHtmlForegroundTime(
     timeData: ForegroundTimeDataType,
     animData: StyleAnimType,
+    toPeriodText?: (period: ClockPeriodType) => string,
 ) {
     const { timezoneMinuteOffset, title } = timeData;
     const is24HourFormat = timeData.is24HourFormat ?? false;
@@ -421,6 +520,7 @@ export function genHtmlForegroundTime(
                 .${uniqueClassname} {
                     display: flex;
                     justify-content: center;
+                    white-space: nowrap;
                 }
                 .${uniqueClassname} div {
                     text-align: center;
@@ -436,6 +536,10 @@ export function genHtmlForegroundTime(
                     textAlign: 'center',
                     padding: '2px',
                     overflow: 'hidden',
+                    // A caption is one long word as often as not -- a city
+                    // picked from the list read `Phnom_Penh (Asia/Phnom_Penh)`
+                    // -- and `overflow: hidden` cut it off mid-word. It wraps.
+                    overflowWrap: 'anywhere',
                 }}
             >
                 <small>{title}</small>
@@ -445,7 +549,9 @@ export function genHtmlForegroundTime(
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
                 {is24HourFormat ? null : (
-                    <div id="ampm" style={{ marginLeft: '8px' }}>
+                    // In `em`, so the gap grows with the clock: a fixed 8px
+                    // under a 60px+ clock read "07:10:00AM".
+                    <div id="ampm" style={{ marginLeft: '0.3em' }}>
                         AM
                     </div>
                 )}
@@ -459,6 +565,7 @@ export function genHtmlForegroundTime(
         element,
         timezoneMinuteOffset,
         is24HourFormat,
+        toPeriodText,
     );
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
@@ -562,6 +669,7 @@ export function genHtmlForegroundVideo(
         soundVolume = 100,
     }: ForegroundVideoDataType,
     animData: StyleAnimType,
+    isSilenced = false,
 ) {
     const fileSource = FileSource.getInstance(filePath);
     const element = document.createElement('video');
@@ -570,7 +678,7 @@ export function genHtmlForegroundVideo(
     // than an attribute for the reason in the note above, and the volume is
     // set whether or not the sound is on so that unmuting mid-clip lands at
     // the level the operator chose rather than at full.
-    element.muted = !isSoundOn;
+    element.muted = !isSoundOn || isSilenced;
     element.volume = Math.min(1, Math.max(0, soundVolume / 100));
     element.loop = true;
     element.autoplay = true;

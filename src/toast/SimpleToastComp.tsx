@@ -3,11 +3,13 @@ import { type JSX, useCallback, useRef } from 'react';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { tran } from '../lang/langHelpers';
+import { ToastCloseContext } from './toastCloseContext';
 
 export type SimpleToastType = {
     title: string;
     message: string | JSX.Element;
     timeout?: number;
+    replacementKey?: symbol;
 };
 
 export const DEFAULT_TOAST_TIMEOUT = 4e3;
@@ -80,7 +82,11 @@ export default function SimpleToastComp({
                     }}
                 />
             ) : (
-                <div className="toast-body app-selectable-text">{message}</div>
+                <div className="toast-body app-selectable-text">
+                    <ToastCloseContext value={onClose}>
+                        {message}
+                    </ToastCloseContext>
+                </div>
             )}
         </div>
     );

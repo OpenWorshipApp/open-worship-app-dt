@@ -8,7 +8,7 @@ import {
     fsCheckFileExist,
     toDataDirRelativePath,
 } from '../server/fileHelpers';
-import { useAppEffectAsync } from './appHooks';
+import { useAppEffect, useAppEffectAsync } from './appHooks';
 import { useAppCurrentRef } from './appHooks';
 
 export function setSetting(key: string, value: string | null) {
@@ -173,6 +173,64 @@ export function useStateSettingBoolean(
     );
     return [data, setDataSetting];
 }
+// The mounted instances of each SYNCED boolean setting in this window. An entry
+// leaves when its component unmounts, so this holds only what is on screen --
+// never every key ever read.
+const syncedBooleanSetterMap = new Map<string, Set<(value: boolean) => void>>();
+
+/**
+ * `useStateSettingBoolean` for a setting that more than one mounted component
+ * can hold at once. Each instance of the plain hook keeps its own copy of the
+ * value, so a change made through one left every other drawing the old value
+ * until something re-read it: two entries of one document in a run sheet share
+ * their expansion key, and folding one left the other open. A change here is
+ * written once and drawn by every instance of the key in this window.
+ */
+export function useStateSettingBooleanSynced(
+    settingName: string,
+    defaultValue?: boolean,
+): [boolean, Dispatch<SetStateAction<boolean>>] {
+    const [data, setData] = useState(() => {
+        const value = getSetting(settingName);
+        return value === null ? !!defaultValue : value === 'true';
+    });
+    const dataRef = useAppCurrentRef(data);
+    const settingNameRef = useAppCurrentRef(settingName);
+    useAppEffect(() => {
+        let setterSet = syncedBooleanSetterMap.get(settingName);
+        if (setterSet === undefined) {
+            setterSet = new Set();
+            syncedBooleanSetterMap.set(settingName, setterSet);
+        }
+        const currentSetterSet = setterSet;
+        currentSetterSet.add(setData);
+        return () => {
+            currentSetterSet.delete(setData);
+            if (currentSetterSet.size === 0) {
+                syncedBooleanSetterMap.delete(settingName);
+            }
+        };
+    }, [settingName]);
+    const setDataSetting = useCallback(
+        (b: boolean | ((prev: boolean) => boolean)) => {
+            const newValue = typeof b === 'function' ? b(dataRef.current) : b;
+            const name = settingNameRef.current;
+            setSetting(name, `${newValue}`);
+            const setterSet = syncedBooleanSetterMap.get(name);
+            if (setterSet === undefined) {
+                setData(newValue);
+                return;
+            }
+            for (const setter of setterSet) {
+                setter(newValue);
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    return [data, setDataSetting];
+}
+
 export function useStateSettingString<T extends string>(
     settingName: string,
     defaultString: T = '' as T,

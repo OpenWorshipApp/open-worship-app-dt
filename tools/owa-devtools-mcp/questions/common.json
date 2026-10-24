@@ -4,13 +4,23 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-09-30",
+    "updated": "2026-10-23",
     "sections": [
         {
             "id": "panels",
             "label": "Panels & layout",
             "recipes": ["W-31"],
             "questions": [
+                {
+                    "id": "context-menu-height",
+                    "text": "Why do I still need to scroll inside a long right-click menu?",
+                    "kind": "what",
+                    "keywords": ["context menu", "menu height", "scroll menu"],
+                    "resources": {
+                        "recipe": "W-01b",
+                        "passage": "A long menu scrolls only when it is taller than the whole window"
+                    }
+                },
                 {
                     "id": "hide-panel",
                     "text": "How do I hide a panel I do not use?",
@@ -48,6 +58,7 @@
                     ],
                     "resources": {
                         "recipe": "W-31",
+                        "passage": "Open View on the top menu bar again and click",
                         "menu": "View → Reset Widgets Size",
                         "guide": true
                     }
@@ -69,6 +80,26 @@
                         "recipe": "W-31",
                         "find": "divider between Document List and Presenting Flow List",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "divider-keyboard",
+                    "text": "Can I resize or close a panel with the keyboard?",
+                    "kind": "howto",
+                    "keywords": [
+                        "keyboard",
+                        "no mouse",
+                        "tab to the divider",
+                        "arrow keys",
+                        "menu key",
+                        "shift f10",
+                        "resize panel",
+                        "accessibility"
+                    ],
+                    "resources": {
+                        "recipe": "W-31",
+                        "passage": "With the keyboard: press Tab until a divider shows a blue outline",
+                        "find": "divider between Document List and Presenting Flow List"
                     }
                 }
             ]
@@ -112,6 +143,22 @@
                         "recipe": "W-17",
                         "shortcut": "Enter / Shift+Enter",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "find-in-ai-windows",
+                    "text": "Can I search the words in the help window or in AI Chat?",
+                    "kind": "howto",
+                    "keywords": [
+                        "search chat",
+                        "find in answer",
+                        "find in ai chat",
+                        "search website",
+                        "ctrl f chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-17",
+                        "shortcut": "Ctrl+F"
                     }
                 },
                 {
@@ -281,12 +328,12 @@
                         "throw away"
                     ],
                     "resources": {
+                        "recipe": "W-43",
                         "tools": [
                             "owa_lyric_file",
                             "owa_slide_file",
                             "owa_undo"
-                        ],
-                        "related": ["W-43"]
+                        ]
                     }
                 },
                 {
@@ -319,6 +366,8 @@
                         "move the text box"
                     ],
                     "resources": {
+                        "recipe": "W-15",
+                        "passage": "Apply a font setting to several items",
                         "tools": ["owa_slide_file"]
                     }
                 },
@@ -415,8 +464,9 @@
                 },
                 {
                     "id": "find-a-control",
-                    "text": "Where is the button that does this?",
+                    "text": "Where is the button for ...",
                     "kind": "where",
+                    "template": true,
                     "keywords": [
                         "where is",
                         "which button",
@@ -434,7 +484,7 @@
         {
             "id": "help",
             "label": "This help window",
-            "recipes": ["W-42", "W-46"],
+            "recipes": ["W-42", "W-46", "W-49"],
             "questions": [
                 {
                     "id": "tips-of-the-day",
@@ -469,7 +519,9 @@
                         "window menu",
                         "menu commands",
                         "print without preview",
-                        "debug info"
+                        "debug info",
+                        "help copy debug info",
+                        "help copy full debug info"
                     ],
                     "resources": {
                         "recipe": "W-46",
@@ -479,7 +531,7 @@
                 {
                     "id": "tip-of-the-day-disappeared",
                     "text": "Why did the Tip of the Day disappear on its own?",
-                    "kind": "why",
+                    "kind": "what",
                     "keywords": [
                         "tip disappeared",
                         "tip closed by itself",
@@ -505,6 +557,8 @@
                         "restore tips",
                         "enable tips",
                         "show tips again",
+                        "hide for 30 days",
+                        "tips hidden",
                         "don't show again",
                         "automatic tips",
                         "tip not showing",
@@ -516,6 +570,29 @@
                     "resources": {
                         "recipe": "W-46",
                         "find": "Show Tips of the Day automatically"
+                    }
+                },
+                {
+                    "id": "tips-in-other-windows",
+                    "text": "How do I see the tips for Settings or another open window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "settings tips",
+                        "tips in settings",
+                        "tips for this window",
+                        "tips in every window",
+                        "tips in all windows",
+                        "popup tips",
+                        "no help menu",
+                        "no menu bar",
+                        "bible note tips",
+                        "lyric editor tips",
+                        "web editor tips"
+                    ],
+                    "resources": {
+                        "recipe": "W-46",
+                        "find": "Tips of the Day",
+                        "menu": "Help → Tips of the Day"
                     }
                 },
                 {
@@ -537,8 +614,85 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "The four suggestions are not all it can answer",
                         "tools": ["owa_list_questions"],
                         "find": "More… — everything it can answer"
+                    }
+                },
+                {
+                    "id": "open-help-from-taskbar",
+                    "text": "How do I open the help from the taskbar?",
+                    "kind": "howto",
+                    "keywords": [
+                        "taskbar",
+                        "jump list",
+                        "right-click the icon",
+                        "open the help",
+                        "open the chatbot",
+                        "app help",
+                        "minimised",
+                        "minimized"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "On Windows the taskbar has it too"
+                    }
+                },
+                {
+                    "id": "help-other-window",
+                    "text": "How do I get help with another open window, like a Bible Reader window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "other window",
+                        "child window",
+                        "separate window",
+                        "which window",
+                        "bible reader window",
+                        "lyric editor window",
+                        "slide editor window",
+                        "settings window",
+                        "working in",
+                        "window list"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "More than one window of the app open? Choose it on the WORKING IN line above the box",
+                        "find": "Which window"
+                    }
+                },
+                {
+                    "id": "hide-tip-line",
+                    "text": "How do I hide the tip line above the box?",
+                    "kind": "howto",
+                    "keywords": [
+                        "hide tips",
+                        "tip line",
+                        "lightbulb",
+                        "stop showing tips",
+                        "30 days",
+                        "annoying tip"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "at the very end of the tip line puts it away for 30 days",
+                        "find": "Hide tips for 30 days"
+                    }
+                },
+                {
+                    "id": "show-tip-line-again",
+                    "text": "How do I get the tips back after I hid them?",
+                    "kind": "howto",
+                    "keywords": [
+                        "tips back",
+                        "show tips again",
+                        "/tips",
+                        "hidden tips",
+                        "bring back the tip line",
+                        "lightbulb"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Want the tips back sooner? Type /tips"
                     }
                 },
                 {
@@ -561,6 +715,30 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Some things need no assistant at all",
+                        "find": "Ask how to do something in the app"
+                    }
+                },
+                {
+                    "id": "suggestion-keyboard",
+                    "text": "How do I pick a suggestion with the keyboard?",
+                    "kind": "howto",
+                    "keywords": [
+                        "tab",
+                        "arrow",
+                        "arrows",
+                        "up",
+                        "down",
+                        "suggestion",
+                        "suggestions",
+                        "autocomplete",
+                        "complete",
+                        "list above the box",
+                        "keyboard"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "The list above the box is worked from the keyboard",
                         "find": "Ask how to do something in the app"
                     }
                 },
@@ -579,6 +757,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Every answer offers Show me step by step",
                         "tools": ["owa_guide_start", "owa_guide_step"]
                     }
                 },
@@ -594,7 +773,24 @@
                         "fresh"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "A strip of tabs runs along the very top"
+                    }
+                },
+                {
+                    "id": "chat-full",
+                    "text": "Why can't I start another chat?",
+                    "kind": "what",
+                    "keywords": [
+                        "too many chats",
+                        "chat limit",
+                        "full",
+                        "no room",
+                        "cannot add"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "window holds at most 12 chats"
                     }
                 },
                 {
@@ -609,7 +805,8 @@
                         "do not close"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "Lock this chat is how you keep one"
                     }
                 },
                 {
@@ -624,7 +821,32 @@
                         "share"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "Under every answer is Copy"
+                    }
+                },
+                {
+                    "id": "answer-was-wrong",
+                    "text": "What can I do when an answer is wrong?",
+                    "kind": "howto",
+                    "keywords": [
+                        "wrong answer",
+                        "bad answer",
+                        "not helpful",
+                        "did not help",
+                        "thumbs down",
+                        "thumbs up",
+                        "dislike",
+                        "like",
+                        "rate",
+                        "smarter model",
+                        "better model",
+                        "ask again with"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "And every answer has two thumbs beside Copy",
+                        "find": "Bad answer"
                     }
                 },
                 {
@@ -648,6 +870,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "And every answer says what it cost",
                         "find": "Credit used"
                     }
                 },
@@ -672,7 +895,30 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "And it cannot run up the bill on its own",
                         "find": "Limit per hour"
+                    }
+                },
+                {
+                    "id": "chat-fold-head",
+                    "text": "How do I get more room for the answers in the help window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "fold",
+                        "unfold",
+                        "collapse the top",
+                        "collapsible",
+                        "hide the pickers",
+                        "one line",
+                        "more space",
+                        "small window",
+                        "top of the help window",
+                        "pickers gone",
+                        "bring the pickers back"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Short of room? Fold those lists to one line"
                     }
                 },
                 {
@@ -691,7 +937,8 @@
                         "recall"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "A question you asked before comes back"
                     }
                 },
                 {
@@ -708,7 +955,8 @@
                         "suggestions"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "And you rarely have to type the next thing"
                     }
                 },
                 {
@@ -723,11 +971,13 @@
                         "escape",
                         "wrong question",
                         "asked by mistake",
+                        "send became stop",
                         "taking too long",
                         "still waiting"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "Changed your mind? Press Stop"
                     }
                 },
                 {
@@ -748,7 +998,8 @@
                         "what is happening"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "It tells you what it is doing while you wait"
                     }
                 },
                 {
@@ -766,7 +1017,8 @@
                         "features"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "The two small arrows at the end of that line walk them in order"
                     }
                 },
                 {
@@ -803,11 +1055,76 @@
                         "faster",
                         "cheaper",
                         "kimi",
-                        "moonshot"
+                        "moonshot",
+                        "bedrock",
+                        "gemma",
+                        "grok",
+                        "lm studio",
+                        "ollama",
+                        "local model",
+                        "custom server"
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "The rest of the top line belongs to the tab in front",
                         "related": ["W-16"]
+                    }
+                },
+                {
+                    "id": "general-question",
+                    "text": "Can I ask the assistant something that is not about this app?",
+                    "kind": "howto",
+                    "keywords": [
+                        "btw",
+                        "by the way",
+                        "general question",
+                        "not about the app",
+                        "anything",
+                        "bible question",
+                        "what is the bible",
+                        "ask anything"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "is the one command that DOES ask the assistant"
+                    }
+                },
+                {
+                    "id": "shared-assistant",
+                    "text": "Can the assistant use a server shared by openworship.app?",
+                    "kind": "what",
+                    "keywords": [
+                        "shared server",
+                        "registry",
+                        "llm info.json",
+                        "church computer",
+                        "reload assistants",
+                        "shared by openworship.app",
+                        "tunnel"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "A server shared by the project's own site needs no typing at all"
+                    }
+                },
+                {
+                    "id": "auto-assistant",
+                    "text": "What does the Auto assistant do?",
+                    "kind": "what",
+                    "keywords": [
+                        "auto",
+                        "auto assistant",
+                        "auto pick",
+                        "choose for me",
+                        "pick for me",
+                        "best free assistant",
+                        "no cost",
+                        "not busy",
+                        "which assistant answers"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Auto, the last row of that list, chooses for you"
                     }
                 },
                 {
@@ -822,7 +1139,8 @@
                         "works anyway"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "The help window still answers from the manual by itself"
                     }
                 },
                 {
@@ -838,8 +1156,25 @@
                         "faster"
                     ],
                     "resources": {
-                        "recipe": "W-42",
+                        "recipe": "W-49",
+                        "menu": "Help → Keyboard Shortcuts",
                         "related": ["W-10", "W-06"]
+                    }
+                },
+                {
+                    "id": "shortcuts-search",
+                    "text": "Where can I see the keyboard shortcuts for this page?",
+                    "kind": "where",
+                    "keywords": [
+                        "keyboard shortcuts",
+                        "shortcut list",
+                        "which key",
+                        "hotkey",
+                        "search shortcuts"
+                    ],
+                    "resources": {
+                        "recipe": "W-49",
+                        "menu": "Help → Keyboard Shortcuts"
                     }
                 },
                 {
@@ -860,6 +1195,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Show it, instead of describing it",
                         "find": "Attach a picture of the app"
                     }
                 },
@@ -873,12 +1209,49 @@
                         "paperclip",
                         "upload",
                         "send file",
+                        "read pdf",
+                        "full bible verse",
+                        "related pdf",
                         "drag",
                         "drop"
                     ],
                     "resources": {
                         "recipe": "W-42",
                         "find": "Attach a file"
+                    }
+                },
+                {
+                    "id": "back-to-reading-the-bible",
+                    "text": "I only want to read the Bible — how do I get back to the Bible Reader?",
+                    "kind": "howto",
+                    "keywords": [
+                        "wrong page",
+                        "back to the bible reader",
+                        "just read the bible",
+                        "left the reader",
+                        "go to the bible reader",
+                        "pressed something by mistake"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Asked about reading the Bible from the wrong page?"
+                    }
+                },
+                {
+                    "id": "attachment-numbers",
+                    "text": "How do I say which of the pictures I attached I mean?",
+                    "kind": "howto",
+                    "keywords": [
+                        "which picture",
+                        "number on the chip",
+                        "attachment number",
+                        "refer to an attachment",
+                        "mention a picture",
+                        "several screenshots"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Show it, instead of describing it"
                     }
                 },
                 {
@@ -896,6 +1269,7 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "Show it, instead of describing it",
                         "find": "Point at a control in the app",
                         "tools": ["owa_pick_element"]
                     }
@@ -913,7 +1287,8 @@
                         "still thinking"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "And you can keep talking while it works"
                     }
                 }
             ]
@@ -964,7 +1339,8 @@
                         "lost"
                     ],
                     "resources": {
-                        "recipe": "W-44"
+                        "recipe": "W-44",
+                        "passage": "Only three tabs keep their site loaded at once"
                     }
                 },
                 {
@@ -1041,6 +1417,7 @@
                     ],
                     "resources": {
                         "recipe": "W-44",
+                        "passage": "Sharing this computer?",
                         "find": "Sign out of every site"
                     }
                 },
@@ -1060,6 +1437,7 @@
                     ],
                     "resources": {
                         "recipe": "W-44",
+                        "passage": "opens a company's own AI chat website",
                         "related": ["W-42"],
                         "find": "AI Chat"
                     }

@@ -2,8 +2,12 @@
 /* eslint-disable */
 /**
  * Builds the "extra-bin" pack: the media helpers (yt-dlp, its ffmpeg, and the
- * QuickJS runtime yt-dlp needs to solve YouTube's nsig challenges) as a single
- * `bin-<version>.tar.gz` the app downloads on demand.
+ * QuickJS runtime yt-dlp needs to solve YouTube's nsig challenges) plus
+ * cloudflared, which the main process runs for Screen Mirror's internet tunnel
+ * (`electron/screenMirrorTunnel.ts`), as a single `bin-<version>.tar.gz` the
+ * app downloads on demand. Every one of them is built from a pinned source tag
+ * by `extra-work/experiment-building/*-build-<name>.*` and committed into the
+ * platform dir.
  *
  * They used to be copied into every package by `copy-build.mjs`, which put ~36 MB
  * into every installer for a flow most users never touch. Now the release
@@ -17,6 +21,7 @@
  *     yt/yt-dlp[.exe]
  *     ffmpeg/bin/ffmpeg[.exe]      <- a DIRECTORY: yt-dlp's --ffmpeg-location
  *     qjs/qjs[.exe]
+ *     cloudflared/cloudflared[.exe] <- also resolved by electron/extraBinPaths.ts
  *
  * Hooked to the `install` npm lifecycle (package.json), so it must never throw on
  * a platform we have no committed binaries for -- that would break plain
@@ -58,6 +63,7 @@ const BINARIES = [
   ['yt-dlp', 'yt'],
   ['ffmpeg', join('ffmpeg', 'bin')],
   ['qjs', 'qjs'],
+  ['cloudflared', 'cloudflared'],
 ];
 
 /**
@@ -206,7 +212,7 @@ async function main() {
       // extracted binaries executable on macOS/Linux.
       portable: true,
     },
-    ['info.json', 'yt', 'ffmpeg', 'qjs'],
+    ['info.json', 'yt', 'ffmpeg', 'qjs', 'cloudflared'],
   );
   rmSync(outFilePath, { force: true });
   renameSync(tempOutFilePath, outFilePath);

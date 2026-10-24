@@ -1,6 +1,12 @@
 import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleKeyFormatHelpers';
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import {
+    type BibleChapterSliceType,
+    checkIsCrossChapterTarget,
+    toSingleChapterTarget,
+    toTargetChapterSliceList,
+} from '../helper/bible-helpers/bibleTargetHelpers';
+import {
     genLookupFileStore,
     loadLookupRecordLabelsFile,
 } from './lookupIndexFileHelpers';
@@ -154,6 +160,25 @@ function collectVerseCandidates(
     return candidateList;
 }
 
+/**
+ * One chapter of a passage as a passage of its own: what
+ * `collectVerseRecords` reads, since it scans one chapter's wording at a time.
+ * A chapter a passage crossing chapters runs on through ends where `verseMap`
+ * — that chapter as `getVerses` returns it — ends.
+ */
+export function toVerseRecordChapterTarget(
+    bookKey: string,
+    slice: BibleChapterSliceType,
+    verseMap: { [verse: string]: string } | null,
+): BibleTargetType {
+    return toSingleChapterTarget(
+        bookKey,
+        slice.chapter,
+        slice.verseStart,
+        slice.verseEnd ?? Object.keys(verseMap ?? {}).length,
+    );
+}
+
 export function collectVerseRecords(
     index: LookupTextIndexType,
     recordLabels: LookupRecordLabelsType,
@@ -163,7 +188,18 @@ export function collectVerseRecords(
     // answers, just less completely.
     kjvVerseMap: { [verse: string]: string } | null,
 ): VerseRecordGroupType {
-    const { bookKey, chapter, verseStart, verseEnd } = target;
+    // One chapter: a passage crossing chapters is its FIRST chapter here, the
+    // one `kjvVerseMap` is. Its `verseEnd` is a verse of another chapter, and
+    // read as this one's it named the wrong verses or none at all.
+    // `toVerseRecordChapterTarget` gives the others one at a time.
+    const chapterTarget = checkIsCrossChapterTarget(target)
+        ? toVerseRecordChapterTarget(
+              target.bookKey,
+              toTargetChapterSliceList(target, 0, 1)[0],
+              kjvVerseMap,
+          )
+        : target;
+    const { bookKey, chapter, verseStart, verseEnd } = chapterTarget;
     if (
         verseEnd < verseStart ||
         !checkIsRecordLabelsMatching(index, recordLabels)

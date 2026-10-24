@@ -13,53 +13,27 @@ import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import type LookupBibleItemController from '../../bible-reader/LookupBibleItemController';
 import type BibleItemsViewController from '../../bible-reader/BibleItemsViewController';
 import { copyToClipboard } from '../../server/appHelpers';
-import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 import { elementDivider } from '../../context-menu/AppContextMenuComp';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { getBibleLocale, getLangDataFromBibleKey } from './bibleStyleHelpers';
+import { BIBLE_SHOWN_CHAPTER_COUNT } from './bibleTargetHelpers';
+import { handleError } from '../errorHelpers';
 
-async function getBibleItemsFromTitleVerseKey(
-    bibleKey: string,
-    verseKey: string,
-) {
-    let verseKey2: string | null = null;
-    if (/(\s.+:.+)-(.+:.+)/.exec(verseKey)) {
-        const arr = verseKey.split('-');
-        const verseKey1 = arr[0].trim() + '-';
-        const key2Arr = arr[1].trim().split(':');
-        const key2 = `${key2Arr[0]}:1-${key2Arr[1]}`;
-        verseKey2 = `${verseKey1.split(' ')[0]} ${key2}`;
-        verseKey = verseKey1;
-    }
-    const bibleItem = await BibleItem.fromVerseKey(bibleKey, verseKey);
-    if (bibleItem === null) {
-        return {
-            title: null,
-            bibleItem1: null,
-            bibleItem2: null,
-        };
-    }
-    let title = await bibleRenderHelper.toTitle(bibleKey, bibleItem.target);
-    if (verseKey2 === null) {
-        return {
-            title,
-            bibleItem1: bibleItem,
-            bibleItem2: null,
-        };
-    }
-    const bibleItem2 = await BibleItem.fromVerseKey(bibleKey, verseKey2);
-    title = await bibleRenderHelper.toTitle(
-        bibleKey,
-        bibleItem.target,
-        bibleItem2?.target,
-    );
-    return {
-        title,
-        bibleItem1: bibleItem,
-        bibleItem2,
-    };
+// `JHN 18:33-19:16`, `JHN 18:33-`, `JHN 18:33`: the canonical key a heading
+// cites its passage by, as ONE item, crossing chapters when it does.
+function getBibleItemFromTitleVerseKey(bibleKey: string, verseKey: string) {
+    return BibleItem.fromVerseKey(bibleKey, verseKey.trim());
 }
 
+// How much of a cited passage its hover hint reads: enough to recognise it,
+// never a whole book because a heading cites one.
+const TITLE_VERSE_HINT_MAX_LENGTH = 1000;
+
+/**
+ * Names each cited passage in the Bible's own words. Only the TITLE is read
+ * here, for every heading of every chapter shown; the text a hover shows is
+ * read when the span is first hovered (`reformCustomTitle`).
+ */
 async function compileVerseTitle(bibleKey: string, content: string) {
     const divElement = document.createElement('div');
     divElement.innerHTML = content;
@@ -74,33 +48,26 @@ async function compileVerseTitle(bibleKey: string, content: string) {
         spanElement.classList.add('app-caught-hover-pointer');
         spanElement.title = verseKey;
         spanElement.dataset.bibleKey = bibleKey;
-        const { bibleItem1, bibleItem2 } = await getBibleItemsFromTitleVerseKey(
+        const bibleItem = await getBibleItemFromTitleVerseKey(
             bibleKey,
             verseKey,
         );
-        if (bibleItem1 === null) {
+        if (bibleItem === null) {
             continue;
         }
-        const text1 = await bibleItem1.toText();
-        const title1 = await bibleItem1.toTitle();
-        let title = `${title1}  ${text1}`;
-        if (bibleItem2 !== null) {
-            const text2 = await bibleItem2.toText();
-            const title2 = await bibleItem2.toTitle();
-            title += `\n${title2}  ${text2}`;
-        }
-        spanElement.title = title;
+        spanElement.title = await bibleItem.toTitle();
     }
     return divElement.innerHTML;
 }
 
 function genContextMenuItems(
-    bibleItemViewController: BibleItemsViewController,
+    bibleItemViewController:
+        BibleItemsViewController | LookupBibleItemController,
     bibleKey: string,
     bibleItem: BibleItem,
     targetBibleItem: BibleItem,
     title: string,
-    onSelect?: () => void,
+    openInChatbotMenuItems: ContextMenuItemType[],
 ) {
     return [
         {
@@ -111,18 +78,17 @@ function genContextMenuItems(
             childBefore: genContextMenuItemIcon('eye'),
             menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
             title: `Open "${title}"`,
-            onSelect:
-                onSelect ??
-                (() => {
-                    // Its own passage: kept out of the neighbour's colour-note
-                    // sync group, which would re-target it to the lookup's.
-                    bibleItemViewController.addBibleItemRight(
-                        bibleItem,
-                        targetBibleItem,
-                        true,
-                    );
-                }),
+            onSelect: () => {
+                // Its own passage in a colour group of its own: the
+                // neighbour's would re-target it to the lookup's.
+                bibleItemViewController.addBibleItemRight(
+                    bibleItem,
+                    targetBibleItem,
+                    true,
+                );
+            },
         },
+        ...openInChatbotMenuItems,
         {
             childBefore: genContextMenuItemIcon('copy'),
             menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
@@ -133,92 +99,134 @@ function genContextMenuItems(
         },
     ];
 }
-async function handleCustomTitleVerseClicking(
+
+function getTitleVerseSpanData(span: HTMLSpanElement) {
+    const verseKey = span.dataset.titleVerseKey;
+    const bibleKey = span.dataset.bibleKey;
+    if (!verseKey || !bibleKey) {
+        return null;
+    }
+    return { verseKey, bibleKey };
+}
+
+/**
+ * A cited passage, clicked: read whole in a floating verse panel, across
+ * chapters as written (`John 18:33-19:16`), without leaving the passage the
+ * heading belongs to.
+ */
+async function handleCustomTitleVerseClicking(span: HTMLSpanElement) {
+    const spanData = getTitleVerseSpanData(span);
+    if (spanData === null) {
+        return;
+    }
+    const targetBibleItem = await getBibleItemFromTitleVerseKey(
+        spanData.bibleKey,
+        spanData.verseKey,
+    );
+    if (targetBibleItem === null) {
+        return;
+    }
+    // Loaded on demand: this module is in the screen window's graph, which
+    // has no detail panel and no lookup language to load for one.
+    const { openBibleItemDetailPanel } =
+        await import('../../location-name-lookup/detailPanelHelpers');
+    await openBibleItemDetailPanel(targetBibleItem);
+}
+
+// Right-click: open it beside the passage instead, or copy its reference.
+async function handleCustomTitleVerseContextMenu(
     bibleItemViewController:
         BibleItemsViewController | LookupBibleItemController,
     bibleItem: BibleItem,
     event: MouseEvent,
 ) {
     const span = event.currentTarget as HTMLSpanElement;
-    const verseKey = span.dataset.titleVerseKey;
-    const bibleKey = span.dataset.bibleKey;
-    if (!verseKey || !bibleKey) {
+    const spanData = getTitleVerseSpanData(span);
+    if (spanData === null) {
         return;
     }
-    // TODO: open context menu for copy, save and open verse
-    const { title, bibleItem1, bibleItem2 } =
-        await getBibleItemsFromTitleVerseKey(bibleKey, verseKey);
-    if (bibleItem1 === null) {
-        return;
-    }
-    let contextMenuItems: ContextMenuItemType[] = [];
-    const title1 = await bibleItem1.toTitle();
-    contextMenuItems.push(
-        ...genContextMenuItems(
-            bibleItemViewController,
-            bibleKey,
-            bibleItem,
-            bibleItem1,
-            title1,
-        ),
+    const targetBibleItem = await getBibleItemFromTitleVerseKey(
+        spanData.bibleKey,
+        spanData.verseKey,
     );
-    if (bibleItem2 !== null) {
-        const title2 = await bibleItem2.toTitle();
-        contextMenuItems = [
-            ...(bibleItemViewController.isLookup
-                ? genContextMenuItems(
-                      bibleItemViewController,
-                      bibleKey,
-                      bibleItem,
-                      bibleItem,
-                      title,
-                      () => {
-                          bibleItemViewController.addBibleItemRight(
-                              bibleItem,
-                              bibleItem,
-                              true,
-                          );
-                          setTimeout(() => {
-                              (
-                                  bibleItemViewController as LookupBibleItemController
-                              ).inputText = title;
-                          }, 100);
-                      },
-                  )
-                : []),
-            ...contextMenuItems,
-            ...genContextMenuItems(
-                bibleItemViewController,
-                bibleKey,
-                bibleItem,
-                bibleItem2,
-                title2,
-            ),
-        ];
+    if (targetBibleItem === null) {
+        return;
     }
+    const title = await targetBibleItem.toTitle();
+    // Loaded on demand, like the detail panel: the screen window's graph
+    // holds this module and has no assistant to open.
+    const { genOpenInChatbotContextMenu } =
+        await import('../ai/bibleItemChatbotMenuHelpers');
+    const contextMenuItems: ContextMenuItemType[] = genContextMenuItems(
+        bibleItemViewController,
+        spanData.bibleKey,
+        bibleItem,
+        targetBibleItem,
+        title,
+        genOpenInChatbotContextMenu(targetBibleItem),
+    );
     showAppContextMenu(event, contextMenuItems);
 }
 
+// The text a cited passage's hover shows, read once, on the first hover.
+async function loadTitleVerseHint(span: HTMLSpanElement) {
+    const spanData = getTitleVerseSpanData(span);
+    if (spanData === null || span.dataset.isHintLoaded === 'true') {
+        return;
+    }
+    span.dataset.isHintLoaded = 'true';
+    const targetBibleItem = await getBibleItemFromTitleVerseKey(
+        spanData.bibleKey,
+        spanData.verseKey,
+    );
+    if (targetBibleItem === null) {
+        return;
+    }
+    const title = await targetBibleItem.toTitle();
+    const text = await targetBibleItem.toText(BIBLE_SHOWN_CHAPTER_COUNT);
+    const hint = `${title}  ${text}`;
+    span.title =
+        hint.length > TITLE_VERSE_HINT_MAX_LENGTH
+            ? `${hint.slice(0, TITLE_VERSE_HINT_MAX_LENGTH)}…`
+            : hint;
+}
+
+// The `ref` a heading's HTML is reformed through runs on EVERY render of the
+// verse it heads; a span already wired must not gain another set of
+// listeners, or one click would open the passage once per render.
+const reformedTitleSpans = new WeakSet<HTMLSpanElement>();
+
 export async function reformCustomTitle(
-    bibleItemViewController: BibleItemsViewController,
+    bibleItemViewController:
+        BibleItemsViewController | LookupBibleItemController,
     bibleItem: BibleItem,
     span: HTMLSpanElement,
 ) {
     const targetSpans = span.querySelectorAll<HTMLSpanElement>(
         'span[data-title-verse-key]',
     );
-    for (const span of targetSpans) {
-        const verseKey = span.dataset.titleVerseKey;
-        if (!verseKey) {
+    for (const targetSpan of targetSpans) {
+        const verseKey = targetSpan.dataset.titleVerseKey;
+        if (!verseKey || reformedTitleSpans.has(targetSpan)) {
             continue;
         }
-        span.addEventListener('click', (event) =>
-            handleCustomTitleVerseClicking(
+        reformedTitleSpans.add(targetSpan);
+        targetSpan.addEventListener('click', (event) => {
+            event.stopPropagation();
+            handleCustomTitleVerseClicking(targetSpan).catch(handleError);
+        });
+        targetSpan.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            handleCustomTitleVerseContextMenu(
                 bibleItemViewController,
                 bibleItem,
                 event,
-            ),
-        );
+            ).catch(handleError);
+        });
+        targetSpan.addEventListener('mouseenter', () => {
+            loadTitleVerseHint(targetSpan).catch(handleError);
+        });
     }
 }
 

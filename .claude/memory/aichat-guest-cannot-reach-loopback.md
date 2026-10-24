@@ -22,9 +22,9 @@ the wall existed:
 three rows is somebody else's code, two of them Chromium's, and all three
 only stop the page READING an answer. A blind request needs no permission and
 reads nothing, which is all a state-changing call needs — the classic attack
-on anything listening on loopback. This app serves two unauthenticated doors
-there (CDP is a WebSocket into renderers that all have `nodeIntegration:
-true`; MCP can click, present and write files), and the same request reaches
+on anything listening on loopback. This app serves two doors there (CDP, unauthenticated, is a WebSocket into
+renderers that all have `nodeIntegration: true`; MCP can click, present and
+write files, and asks a per-launch bearer token since 2026-09-23), and the same request reaches
 the church's router, NAS and printers.
 
 **How to apply:** `guardGuestSessionRequests` in

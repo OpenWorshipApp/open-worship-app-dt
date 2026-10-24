@@ -51,8 +51,12 @@ const LazyLyricSlidesPreviewerComp = lazy(() => {
  */
 export default function LyricHandlerComp({
     filePath,
+    flexSizeNamePrefix = '',
 }: Readonly<{
     filePath: string;
+    // Same reason as the slide previewer's: a floating preview of a song would
+    // otherwise share, and overwrite, the main panel's pane sizes.
+    flexSizeNamePrefix?: string;
 }>) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const selectedLyric = useMemo(() => {
@@ -126,7 +130,7 @@ export default function LyricHandlerComp({
         <div className="w-100 h-100 app-overflow-hidden" ref={containerRef}>
             <LyricManagerContext value={lyricManager}>
                 <ResizeActorComp
-                    flexSizeName={'lyric-previewer'}
+                    flexSizeName={`${flexSizeNamePrefix}lyric-previewer`}
                     isHorizontal={false}
                     flexSizeDefault={{
                         v1: ['1'],

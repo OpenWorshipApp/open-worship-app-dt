@@ -50,8 +50,8 @@ vi.mock('./ScreenVaryAppDocumentManager', () => ({
     },
 }));
 
-vi.mock('./ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static registerEventListener = screenBibleRegisterMock;
         static unregisterEventListener = screenBibleUnregisterMock;
     },
@@ -73,16 +73,6 @@ vi.mock('./ScreenDrawManager', () => ({
 
 vi.mock('./ScreenFocusManager', () => ({
     default: class ScreenFocusManager {
-        static registerEventListener = vi.fn(() => []);
-        static unregisterEventListener = vi.fn();
-    },
-}));
-
-// Mocked for the same reason as every sibling above: the real module reaches
-// `toastHelpers`, which reads `appProvider.systemUtils.isDev` AT MODULE LOAD,
-// and this file's `appProvider` mock has no `systemUtils`.
-vi.mock('./ScreenMaskManager', () => ({
-    default: class ScreenMaskManager {
         static registerEventListener = vi.fn(() => []);
         static unregisterEventListener = vi.fn();
     },
@@ -249,7 +239,7 @@ describe('screenEventHelpers', () => {
             useScreenEvents,
             useScreenBackgroundManagerEvents,
             useScreenVaryAppDocumentManagerEvents,
-            useScreenBibleManagerEvents,
+            useScreenLongTextManagerEvents,
             useScreenForegroundManagerEvents,
             useScreenDrawManagerEvents,
         } = await import('./screenEventHelpers');
@@ -273,7 +263,7 @@ describe('screenEventHelpers', () => {
             useScreenEvents(['sync'], staticHandler as any);
             useScreenBackgroundManagerEvents(['update']);
             useScreenVaryAppDocumentManagerEvents(['update']);
-            useScreenBibleManagerEvents(['update']);
+            useScreenLongTextManagerEvents(['update']);
             useScreenForegroundManagerEvents(['update']);
             useScreenDrawManagerEvents(['update']);
             return null;
@@ -337,7 +327,7 @@ describe('screenEventHelpers', () => {
         root = createRoot(container);
     });
 
-    test('blocks inactive wheel scrolling and reports normalized scroll positions', async () => {
+    test('never cancels a wheel and says which scrolls followed one', async () => {
         const { registerScrollingSyncEvent } =
             await import('./screenEventHelpers');
 
@@ -359,55 +349,54 @@ describe('screenEventHelpers', () => {
             clientHeight: { configurable: true, value: 25 },
         });
         const onScroll = vi.fn();
+        const nowSpy = vi.spyOn(performance, 'now');
+        try {
+            registerScrollingSyncEvent(target, onScroll);
 
-        registerScrollingSyncEvent(target, onScroll);
+            // a scroll no wheel drove: a scrollbar drag, a key, a program
+            nowSpy.mockReturnValue(1000);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenLastCalledWith(
+                { x: 0.5, y: 0.25 },
+                false,
+            );
 
-        appProviderMock.getIsMouseOverApp.mockReturnValue(false);
-        appProviderMock.getIsWindowFocused.mockReturnValue(true);
-        const inactiveWheel = new Event('wheel', {
-            bubbles: true,
-            cancelable: true,
-        });
-        const inactivePreventDefault = vi.fn();
-        Object.defineProperty(inactiveWheel, 'preventDefault', {
-            configurable: true,
-            value: inactivePreventDefault,
-        });
-        target.dispatchEvent(inactiveWheel);
-        expect(inactivePreventDefault).toHaveBeenCalledOnce();
+            // Right after a reload, with the pointer resting on the mini screen
+            // and the window not focused, both window-level flags are false.
+            // The wheel is still the operator's and must scroll.
+            appProviderMock.getIsMouseOverApp.mockReturnValue(false);
+            appProviderMock.getIsWindowFocused.mockReturnValue(false);
+            const wheel = new Event('wheel', {
+                bubbles: true,
+                cancelable: true,
+            });
+            target.dispatchEvent(wheel);
+            expect(wheel.defaultPrevented).toBe(false);
 
-        appProviderMock.getIsMouseOverApp.mockReturnValue(true);
-        appProviderMock.getIsWindowFocused.mockReturnValue(true);
-        const activeWheel = new Event('wheel', {
-            bubbles: true,
-            cancelable: true,
-        });
-        const activePreventDefault = vi.fn();
-        Object.defineProperty(activeWheel, 'preventDefault', {
-            configurable: true,
-            value: activePreventDefault,
-        });
-        target.dispatchEvent(activeWheel);
-        expect(activePreventDefault).not.toHaveBeenCalled();
+            nowSpy.mockReturnValue(1500);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenLastCalledWith(
+                { x: 0.5, y: 0.25 },
+                true,
+            );
 
-        const scrollEvent = new Event('scroll', {
-            bubbles: true,
-            cancelable: true,
-        });
-        const scrollPreventDefault = vi.fn();
-        Object.defineProperty(scrollEvent, 'preventDefault', {
-            configurable: true,
-            value: scrollPreventDefault,
-        });
-        target.dispatchEvent(scrollEvent);
-
-        expect(scrollPreventDefault).toHaveBeenCalledOnce();
-        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
+            // long after the wheel, a scroll is no longer the wheel's
+            nowSpy.mockReturnValue(2500);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenLastCalledWith(
+                { x: 0.5, y: 0.25 },
+                false,
+            );
+        } finally {
+            nowSpy.mockRestore();
+        }
     });
 
-    test('swallows the one scroll event a remote sync applied', async () => {
+    test('never sends back the scrolls a remote sync set off', async () => {
         const { registerScrollingSyncEvent } =
             await import('./screenEventHelpers');
+        const { applyRemoteScrollPercentage } =
+            await import('./screenScrollSyncHelpers');
 
         const target = document.createElement('div');
         Object.defineProperties(target, {
@@ -418,30 +407,185 @@ describe('screenEventHelpers', () => {
             scrollHeight: { configurable: true, value: 125 },
             clientHeight: { configurable: true, value: 25 },
         });
+        target.scrollTo = vi.fn() as any;
         const onScroll = vi.fn();
-        registerScrollingSyncEvent(target, onScroll);
+        const nowSpy = vi.spyOn(performance, 'now');
+        try {
+            registerScrollingSyncEvent(target, onScroll);
+
+            nowSpy.mockReturnValue(1000);
+            applyRemoteScrollPercentage(target, { x: 0.5, y: 0.25 });
+            expect(target.scrollTo).toHaveBeenCalledWith({
+                left: 50,
+                top: 25,
+            });
+
+            // The scrollTo's own event, then the reflow's follow-ups, at
+            // positions that need not match: none of them is the operator's,
+            // and sending any of them out echoes it between windows forever.
+            nowSpy.mockReturnValue(1016);
+            target.dispatchEvent(new Event('scroll'));
+            (target as any).scrollTop = 40;
+            nowSpy.mockReturnValue(1100);
+            target.dispatchEvent(new Event('scroll'));
+            nowSpy.mockReturnValue(1900);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).not.toHaveBeenCalled();
+
+            // A wheel on this container after the remote scroll landed is
+            // the operator taking it back: through at once, as a wheel's.
+            nowSpy.mockReturnValue(1950);
+            target.dispatchEvent(new Event('wheel'));
+            nowSpy.mockReturnValue(1966);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenLastCalledWith({ x: 0.5, y: 0.4 }, true);
+
+            // A press counts too (a scrollbar grab, the to-the-top button),
+            // but only a wheel lets it past the window-level check.
+            onScroll.mockClear();
+            nowSpy.mockReturnValue(3000);
+            applyRemoteScrollPercentage(target, { x: 0, y: 0 });
+            nowSpy.mockReturnValue(3100);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).not.toHaveBeenCalled();
+            target.dispatchEvent(new Event('pointerdown'));
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenLastCalledWith(
+                { x: 0.5, y: 0.4 },
+                false,
+            );
+
+            // Once the quiet window is over, other scrolls flow as before.
+            onScroll.mockClear();
+            nowSpy.mockReturnValue(5000);
+            applyRemoteScrollPercentage(target, { x: 0, y: 0 });
+            nowSpy.mockReturnValue(6001);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.4 }, false);
+        } finally {
+            nowSpy.mockRestore();
+        }
+    });
+
+    test('never sends the glide a selection brought into view set off', async () => {
+        const { registerScrollingSyncEvent } =
+            await import('./screenEventHelpers');
+        const { markProgrammaticScroll } =
+            await import('./screenScrollSyncHelpers');
+
+        const target = document.createElement('div');
+        Object.defineProperties(target, {
+            scrollLeft: { configurable: true, writable: true, value: 0 },
+            scrollTop: { configurable: true, writable: true, value: 30 },
+            scrollWidth: { configurable: true, value: 200 },
+            clientWidth: { configurable: true, value: 100 },
+            scrollHeight: { configurable: true, value: 160 },
+            clientHeight: { configurable: true, value: 60 },
+        });
+        const onScroll = vi.fn();
+        const nowSpy = vi.spyOn(performance, 'now');
+        try {
+            registerScrollingSyncEvent(target, onScroll);
+
+            // The verse is clicked ON this container, then brought into
+            // view: the press came first, so the glide is still not the
+            // operator's. Sent, it stopped a grouped mini screen's own glide
+            // to the same verse.
+            nowSpy.mockReturnValue(1000);
+            target.dispatchEvent(new Event('pointerdown'));
+            nowSpy.mockReturnValue(1001);
+            markProgrammaticScroll(target);
+            for (const now of [1016, 1200, 1700]) {
+                nowSpy.mockReturnValue(now);
+                target.dispatchEvent(new Event('scroll'));
+            }
+            expect(onScroll).not.toHaveBeenCalled();
+
+            // A wheel mid-glide takes it back at once.
+            nowSpy.mockReturnValue(1800);
+            target.dispatchEvent(new Event('wheel'));
+            nowSpy.mockReturnValue(1816);
+            target.dispatchEvent(new Event('scroll'));
+            expect(onScroll).toHaveBeenCalledWith({ x: 0, y: 0.3 }, true);
+        } finally {
+            nowSpy.mockRestore();
+        }
+    });
+
+    test('registers one set of listeners per container', async () => {
+        const { registerScrollingSyncEvent } =
+            await import('./screenEventHelpers');
+
+        const target = document.createElement('div');
+        Object.defineProperties(target, {
+            scrollLeft: { configurable: true, writable: true, value: 0 },
+            scrollTop: { configurable: true, writable: true, value: 50 },
+            scrollWidth: { configurable: true, value: 200 },
+            clientWidth: { configurable: true, value: 100 },
+            scrollHeight: { configurable: true, value: 200 },
+            clientHeight: { configurable: true, value: 100 },
+        });
+        const addEventListenerSpy = vi.spyOn(target, 'addEventListener');
+        const first = vi.fn();
+        const second = vi.fn();
+        registerScrollingSyncEvent(target, first);
+        const listenerCount = addEventListenerSpy.mock.calls.length;
+        // The bible view is handed the same div on every effect re-run.
+        registerScrollingSyncEvent(target, second);
+        expect(addEventListenerSpy).toHaveBeenCalledTimes(listenerCount);
+
+        target.dispatchEvent(new Event('scroll'));
+        expect(first).not.toHaveBeenCalled();
+        expect(second).toHaveBeenCalledOnce();
+        expect(second).toHaveBeenCalledWith({ x: 0, y: 0.5 }, false);
+    });
+
+    test('never echoes a scroll an auto-scroll is driving, however many listen', async () => {
+        const { registerScrollingSyncEvent } =
+            await import('./screenEventHelpers');
+        const { writeSubPixelScrollTop, releaseSubPixelScroll } =
+            await import('../../scrolling/subPixelScrollHelpers');
+
+        const target = document.createElement('div');
+        Object.defineProperties(target, {
+            scrollLeft: { configurable: true, writable: true, value: 50 },
+            scrollTop: { configurable: true, writable: true, value: 25 },
+            scrollWidth: { configurable: true, value: 200 },
+            clientWidth: { configurable: true, value: 100 },
+            scrollHeight: { configurable: true, value: 125 },
+            clientHeight: { configurable: true, value: 25 },
+        });
+        // Registered twice, as a StrictMode remount of the projector's
+        // bible view does. A rounded offset sent back to the mini preview
+        // driving it knocked the preview off its slide, which shook.
+        const first = vi.fn();
+        const second = vi.fn();
+        registerScrollingSyncEvent(target, first);
+        registerScrollingSyncEvent(target, second);
+        // The projector's own window focused, the pointer over it.
         appProviderMock.getIsMouseOverApp.mockReturnValue(true);
         appProviderMock.getIsWindowFocused.mockReturnValue(true);
 
-        // The event fired by `syncScrollPercentage`'s own scrollTo (the
-        // element is stamped, position matches) must NOT re-broadcast — it is
-        // the remote scroll coming back around, and forwarding it echoes
-        // between windows forever.
-        (target as any)._remoteAppliedScroll = { left: 50, top: 25 };
-        target.dispatchEvent(new Event('scroll', { bubbles: true }));
-        expect(onScroll).not.toHaveBeenCalled();
-        expect((target as any)._remoteAppliedScroll).toBeUndefined();
+        // One auto-scroll frame, with no sync message marking it: sliding by
+        // a fraction of a pixel alone keeps it quiet.
+        writeSubPixelScrollTop(target, 25.4);
+        target.dispatchEvent(new Event('scroll'));
+        target.dispatchEvent(new Event('scroll'));
+        expect(first).not.toHaveBeenCalled();
+        expect(second).not.toHaveBeenCalled();
 
-        // A stale stamp must not eat a genuine user scroll: the position
-        // differs, so the event goes through (and the stamp is consumed).
-        (target as any)._remoteAppliedScroll = { left: 0, top: 100 };
-        target.dispatchEvent(new Event('scroll', { bubbles: true }));
-        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
-        expect((target as any)._remoteAppliedScroll).toBeUndefined();
+        // A wheel while it plays is still the operator's.
+        target.dispatchEvent(new Event('wheel'));
+        target.scrollTop = 75;
+        target.dispatchEvent(new Event('scroll'));
+        expect(first).not.toHaveBeenCalled();
+        expect(second).toHaveBeenCalledWith({ x: 0.5, y: 0.75 }, true);
 
-        // With no stamp at all, scrolls flow as before.
-        onScroll.mockClear();
-        target.dispatchEvent(new Event('scroll', { bubbles: true }));
-        expect(onScroll).toHaveBeenCalledWith({ x: 0.5, y: 0.25 });
+        // Stopped: a plain scroll speaks again.
+        releaseSubPixelScroll(target);
+        vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 5000);
+        second.mockClear();
+        target.dispatchEvent(new Event('scroll'));
+        expect(second).toHaveBeenCalledWith({ x: 0.5, y: 0.75 }, false);
     });
 });

@@ -31,7 +31,7 @@
  * than answering a stale "nothing selected".
  */
 export function genPresenterStateExpression() {
-    return `(() => {
+  return `(() => {
     return new Promise((resolve) => {
         const request = { token: Math.random().toString(36).slice(2) };
         let isDone = false;
@@ -61,8 +61,9 @@ export function genPresenterStateExpression() {
 }
 
 const NOTE_NOT_PRESENTER =
-    'What is selected is known only while the Presenter page is open, and ' +
-    'it is not. owa_goto_page can switch the main window to it.';
+  'What is selected is known only while the Presenter page is open, and ' +
+  'it is not. Switch the main window to the Presenter page first ' +
+  '(owa_goto_page) and ask again, or tell the user to.';
 
 /**
  * Folds the relay's answer into an `owa_app_state` result: `selectedDocument`
@@ -70,54 +71,57 @@ const NOTE_NOT_PRESENTER =
  * silent absence, which a model reads as "nothing is selected".
  */
 export function foldPresenterState(answer, relayResult) {
-    const folded = Object.assign({}, answer);
-    if (
-        relayResult === null ||
-        typeof relayResult !== 'object' ||
-        relayResult.isError === true
-    ) {
-        folded.note =
-            'What is selected could not be read from this window' +
-            (relayResult && relayResult.reason
-                ? `: ${relayResult.reason}`
-                : '') +
-            '.';
-        return folded;
-    }
-    if (relayResult.isAuthoritative === false) {
-        folded.note = NOTE_NOT_PRESENTER;
-        return folded;
-    }
-    folded.selectedDocument = relayResult.selectedDocument ?? null;
-    // The run sheet rides beside it (EC-132): a service driven from a run
-    // sheet may have nothing selected in the Documents list at all, and
-    // "what's next" is a question about the sheet, not the selection. Null
-    // when the window could not read it -- never absent, which reads as
-    // "there is no such thing".
-    folded.runSheet = relayResult.runSheet ?? null;
+  const folded = Object.assign({}, answer);
+  if (
+    relayResult === null ||
+    typeof relayResult !== 'object' ||
+    relayResult.isError === true
+  ) {
+    folded.note =
+      'What is selected could not be read from this window' +
+      (relayResult && relayResult.reason ? `: ${relayResult.reason}` : '') +
+      '.';
     return folded;
+  }
+  if (relayResult.isAuthoritative === false) {
+    // The field the chatbot reads (`needsPage` -- it offers the way
+    // there under the answer); the note is for a model.
+    folded.needsPage = 'presenter';
+    folded.note = NOTE_NOT_PRESENTER;
+    return folded;
+  }
+  folded.selectedDocument = relayResult.selectedDocument ?? null;
+  // The run sheet rides beside it (EC-132): a service driven from a run
+  // sheet may have nothing selected in the Documents list at all, and
+  // "what's next" is a question about the sheet, not the selection. Null
+  // when the window could not read it -- never absent, which reads as
+  // "there is no such thing".
+  folded.runSheet = relayResult.runSheet ?? null;
+  return folded;
 }
 
 // How much of a slide's words a SENTENCE quotes -- a line, for a person.
 const QUOTED_WORDS_LIMIT = 50;
 
 function quoteWords(text) {
-    if (typeof text !== 'string' || text.length === 0) {
-        return '';
-    }
-    const cut =
-        text.length > QUOTED_WORDS_LIMIT
-            ? `${text.slice(0, QUOTED_WORDS_LIMIT).trimEnd()}…`
-            : text;
-    return ` -- "${cut}"`;
+  if (typeof text !== 'string' || text.length === 0) {
+    return '';
+  }
+  const cut =
+    text.length > QUOTED_WORDS_LIMIT
+      ? `${text.slice(0, QUOTED_WORDS_LIMIT).trimEnd()}…`
+      : text;
+  return ` -- "${cut}"`;
 }
 
 function nameSlide(slide) {
-    if (slide === null || typeof slide !== 'object') {
-        return '';
-    }
-    const label = slide.name ? `slide ${slide.n} "${slide.name}"` : `slide ${slide.n}`;
-    return `${label}${quoteWords(slide.text)}`;
+  if (slide === null || typeof slide !== 'object') {
+    return '';
+  }
+  const label = slide.name
+    ? `slide ${slide.n} "${slide.name}"`
+    : `slide ${slide.n}`;
+  return `${label}${quoteWords(slide.text)}`;
 }
 
 /**
@@ -130,40 +134,36 @@ function nameSlide(slide) {
  * exactly as `agentScreens.mjs` is.
  */
 export function describeSelectedDocument(selectedDocument) {
-    if (selectedDocument === null || typeof selectedDocument !== 'object') {
-        return 'Nothing is selected in the Documents list.';
-    }
-    const { name, kind, slideCount, onScreen, next } = selectedDocument;
-    const what = kind === 'song' ? 'The song' : `The ${kind}`;
-    const count = `${slideCount} slide${slideCount === 1 ? '' : 's'}`;
-    const parts = [`${what} "${name}" is selected (${count}).`];
-    if (onScreen) {
-        const screens = Array.isArray(onScreen.onScreens)
-            ? onScreen.onScreens
-            : [];
-        const where =
-            screens.length === 0
-                ? ''
-                : ` on screen ${screens.join(' and ')}`;
-        parts.push(`Its ${nameSlide(onScreen)} is${where}.`);
-    } else {
-        parts.push('None of its slides is on a screen yet.');
-    }
-    if (next) {
-        parts.push(`Next is ${nameSlide(next)}.`);
-    }
-    return parts.join(' ');
+  if (selectedDocument === null || typeof selectedDocument !== 'object') {
+    return 'Nothing is selected in the Documents list.';
+  }
+  const { name, kind, slideCount, onScreen, next } = selectedDocument;
+  const what = kind === 'song' ? 'The song' : `The ${kind}`;
+  const count = `${slideCount} slide${slideCount === 1 ? '' : 's'}`;
+  const parts = [`${what} "${name}" is selected (${count}).`];
+  if (onScreen) {
+    const screens = Array.isArray(onScreen.onScreens) ? onScreen.onScreens : [];
+    const where =
+      screens.length === 0 ? '' : ` on screen ${screens.join(' and ')}`;
+    parts.push(`Its ${nameSlide(onScreen)} is${where}.`);
+  } else {
+    parts.push('None of its slides is on a screen yet.');
+  }
+  if (next) {
+    parts.push(`Next is ${nameSlide(next)}.`);
+  }
+  return parts.join(' ');
 }
 
 function nameRunLine(line) {
-    if (line === null || typeof line !== 'object') {
-        return '';
-    }
-    const kind = line.kind ? ` (${line.kind})` : '';
-    const slide = line.slide
-        ? `, ${line.slide.name ? `slide ${line.slide.n} "${line.slide.name}"` : `slide ${line.slide.n}`}`
-        : '';
-    return `line ${line.n} "${line.title}"${kind}${slide}`;
+  if (line === null || typeof line !== 'object') {
+    return '';
+  }
+  const kind = line.kind ? ` (${line.kind})` : '';
+  const slide = line.slide
+    ? `, ${line.slide.name ? `slide ${line.slide.n} "${line.slide.name}"` : `slide ${line.slide.n}`}`
+    : '';
+  return `line ${line.n} "${line.title}"${kind}${slide}`;
 }
 
 /**
@@ -172,49 +172,52 @@ function nameRunLine(line) {
  * up -- or, with no run player open, which sheets there are to open.
  */
 export function describeRunSheet(runSheet) {
-    if (runSheet === null || typeof runSheet !== 'object') {
-        return 'The run sheet could not be read from this window.';
+  if (runSheet === null || typeof runSheet !== 'object') {
+    return 'The run sheet could not be read from this window.';
+  }
+  const openSheets = Array.isArray(runSheet.openSheets)
+    ? runSheet.openSheets
+    : [];
+  if (openSheets.length === 0) {
+    const names = Array.isArray(runSheet.availableSheets)
+      ? runSheet.availableSheets
+      : [];
+    if (names.length === 0) {
+      return (
+        'No run sheet (presenting flow) is open, and the Presenting ' +
+        'Flows panel lists none.'
+      );
     }
-    const openSheets = Array.isArray(runSheet.openSheets)
-        ? runSheet.openSheets
-        : [];
-    if (openSheets.length === 0) {
-        const names = Array.isArray(runSheet.availableSheets)
-            ? runSheet.availableSheets
-            : [];
-        if (names.length === 0) {
-            return (
-                'No run sheet (presenting flow) is open, and the Presenting ' +
-                'Flows panel lists none.'
-            );
-        }
-        const listed = names.slice(0, 6).map((name) => `"${name}"`).join(', ');
-        const more = names.length > 6 ? ` and ${names.length - 6} more` : '';
-        return (
-            'No run sheet is open in its run player, so there is no "next" ' +
-            `yet. The Presenting Flows panel lists ${listed}${more}; the ` +
-            'Preview Presenting Flow button on one opens its run player.'
-        );
-    }
-    return openSheets
-        .map((sheet) => {
-            const count = `${sheet.lineCount} line${sheet.lineCount === 1 ? '' : 's'}`;
-            const parts = [`The run sheet "${sheet.name}" is open (${count}).`];
-            if (sheet.cursor) {
-                const last =
-                    sheet.cursor.slide && sheet.cursor.slide.isLast
-                        ? ' -- its last slide'
-                        : '';
-                parts.push(`The run is on ${nameRunLine(sheet.cursor)}${last}.`);
-            } else {
-                parts.push('Nothing in it has been put up yet.');
-            }
-            if (sheet.next) {
-                parts.push(`Next is ${nameRunLine(sheet.next)}.`);
-            } else if (sheet.isAtEnd) {
-                parts.push('That is the end of the sheet.');
-            }
-            return parts.join(' ');
-        })
-        .join(' ');
+    const listed = names
+      .slice(0, 6)
+      .map((name) => `"${name}"`)
+      .join(', ');
+    const more = names.length > 6 ? ` and ${names.length - 6} more` : '';
+    return (
+      'No run sheet is open in its run player, so there is no "next" ' +
+      `yet. The Presenting Flows panel lists ${listed}${more}; the ` +
+      'Preview Presenting Flow button on one opens its run player.'
+    );
+  }
+  return openSheets
+    .map((sheet) => {
+      const count = `${sheet.lineCount} line${sheet.lineCount === 1 ? '' : 's'}`;
+      const parts = [`The run sheet "${sheet.name}" is open (${count}).`];
+      if (sheet.cursor) {
+        const last =
+          sheet.cursor.slide && sheet.cursor.slide.isLast
+            ? ' -- its last slide'
+            : '';
+        parts.push(`The run is on ${nameRunLine(sheet.cursor)}${last}.`);
+      } else {
+        parts.push('Nothing in it has been put up yet.');
+      }
+      if (sheet.next) {
+        parts.push(`Next is ${nameRunLine(sheet.next)}.`);
+      } else if (sheet.isAtEnd) {
+        parts.push('That is the end of the sheet.');
+      }
+      return parts.join(' ');
+    })
+    .join(' ');
 }

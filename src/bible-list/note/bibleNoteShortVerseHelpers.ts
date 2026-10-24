@@ -336,6 +336,25 @@ function getVerseAnnotationsMapSnapshot() {
     return verseAnnotationsMap;
 }
 
+/**
+ * Both indexes for ONE read -- the assistant asking what the person noted on
+ * a passage (`agentLookupHelpers.ts`, 2026-10-23). The live ones when verses
+ * are on screen, so nothing is read again; else one scan that nobody keeps.
+ */
+export async function readBibleNoteIndexes() {
+    if (
+        listeners.size > 0 &&
+        shortVerseNoteRefs !== EMPTY_SHORT_VERSE_NOTE_REFS
+    ) {
+        return { shortVerseNoteRefs, verseAnnotationsMap };
+    }
+    const scanMap = await scanNoteFiles();
+    return {
+        shortVerseNoteRefs: toShortVerseNoteRefs(scanMap),
+        verseAnnotationsMap: toVerseAnnotationsMap(scanMap),
+    };
+}
+
 /** `"GEN 3:3": ["<note file path>@<note item id>", ...]` for every verse. */
 export function useShortBibleNoteVerses() {
     return useSyncExternalStore(

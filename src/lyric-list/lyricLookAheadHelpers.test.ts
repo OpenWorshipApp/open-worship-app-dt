@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+    checkIsLookAheadItems,
     genLookAheadBoxHtml,
     genLookAheadFrameHtml,
     genLookAheadItemsList,
@@ -9,6 +10,7 @@ import {
     genRowArrangement,
     getLookAheadNextOpacity,
     PREVIOUS_NEXT_ARRANGEMENT,
+    readLookAheadBoxHtml,
 } from './lyricLookAheadHelpers';
 
 // A 1920x1080 display with the default 1% padding.
@@ -37,9 +39,8 @@ describe('genLookAheadLayout', () => {
         expect(layout.sideList).toHaveLength(1);
         const [next] = layout.sideList;
         expect(next.x).toBe(BOUNDS.x);
-        expect(next.y).toBeGreaterThan(
-            layout.current.y + layout.current.height,
-        );
+        // Touching, no gap: the slides get every pixel of the screen.
+        expect(next.y).toBe(layout.current.y + layout.current.height);
         expect(next.width).toBeLessThan(layout.current.width);
         expect(checkIsInside(layout.current, BOUNDS)).toBe(true);
         expect(checkIsInside(next, BOUNDS)).toBe(true);
@@ -50,7 +51,7 @@ describe('genLookAheadLayout', () => {
         expect(layout.sideList).toHaveLength(2);
         const [first, second] = layout.sideList;
         expect(second.y).toBe(first.y);
-        expect(second.x).toBeGreaterThan(first.x + first.width);
+        expect(second.x).toBe(first.x + first.width);
         layout.sideList.forEach((box) => {
             expect(checkIsInside(box, BOUNDS)).toBe(true);
         });
@@ -97,6 +98,51 @@ describe('genLookAheadBoxHtml', () => {
         expect(getLookAheadNextOpacity(1)).toBeLessThan(
             getLookAheadNextOpacity(0),
         );
+    });
+});
+
+// A stage screen moves a verse from the coming box to the current one by
+// reading back what the box was made from.
+describe('readLookAheadBoxHtml', () => {
+    const html = '<p style="color: red">Amazing "grace"</p><div></div>';
+
+    test('gives back the html and the scale a box was made with', () => {
+        const scale = 0.6134969325153374;
+        expect(
+            readLookAheadBoxHtml(genLookAheadBoxHtml(html, scale, 1882, 1042)),
+        ).toEqual({ html, scale, opacity: 1 });
+        expect(
+            readLookAheadBoxHtml(
+                genLookAheadBoxHtml(html, 0.38, 1882, 1042, 0.35),
+            ),
+        ).toEqual({ html, scale: 0.38, opacity: 0.35 });
+        expect(
+            readLookAheadBoxHtml(genLookAheadBoxHtml('', 1, 10, 10)),
+        ).toEqual({ html: '', scale: 1, opacity: 1 });
+    });
+
+    // The same verse in two boxes is the same html, whatever the boxes.
+    test('one verse reads the same out of the current and the coming box', () => {
+        const layout = genLookAheadLayout(BOUNDS, 1);
+        const current = readLookAheadBoxHtml(
+            genLookAheadBoxHtml(html, layout.currentScale, 1882, 1042),
+        );
+        const coming = readLookAheadBoxHtml(
+            genLookAheadBoxHtml(html, layout.sideScale, 1882, 1042),
+        );
+        expect(current?.html).toBe(coming?.html);
+        expect(current?.scale).toBe(layout.currentScale);
+        expect(coming?.scale).toBe(layout.sideScale);
+    });
+
+    test('anything else is not a box', () => {
+        expect(readLookAheadBoxHtml(html)).toBeNull();
+        expect(readLookAheadBoxHtml(genLookAheadFrameHtml(BOUNDS))).toBeNull();
+        expect(
+            readLookAheadBoxHtml(
+                genLookAheadBoxHtml(html, 0.5, 10, 10).slice(0, -3),
+            ),
+        ).toBeNull();
     });
 });
 
@@ -171,7 +217,8 @@ describe('genLookAheadItemsList', () => {
         // None: nothing of its own, Verse 1 coming.
         expect(itemsList[2]).toHaveLength(1);
         expect(itemsList[2][0].html).toContain('<p>Verse 1</p>');
-        expect(itemsList[2][0].html).toContain('opacity');
+        // At full opacity: a row arrangement does not fade what is coming.
+        expect(itemsList[2][0].html).not.toContain('opacity');
         // The last slide looks ahead to nothing.
         expect(itemsList[4]).toHaveLength(1);
         expect(itemsList[4][0].html).not.toContain('opacity');
@@ -273,6 +320,23 @@ describe('look-ahead frames', () => {
         expect(toFrames(itemsList[1])).toHaveLength(2);
     });
 
+    // What tells a look-ahead slide from any other: its frames.
+    test('a look-ahead slide is known by its frames', () => {
+        const itemsList = genLookAheadItemsList(
+            deck,
+            BOUNDS,
+            genRowArrangement([1]),
+            genFrame,
+        );
+        itemsList.forEach((items) => {
+            expect(checkIsLookAheadItems(items)).toBe(true);
+        });
+        deck.forEach((items) => {
+            expect(checkIsLookAheadItems(items)).toBe(false);
+        });
+        expect(checkIsLookAheadItems([{ type: 'image' }])).toBe(false);
+    });
+
     test('an upcoming frame is dimmed like its slide', () => {
         expect(genLookAheadFrameHtml(BOUNDS)).not.toContain('opacity');
         expect(
@@ -301,11 +365,11 @@ describe('previous and next (stage 5)', () => {
     test('previous top left, current beside it, next bottom right', () => {
         expect(previousBox.x).toBe(BOUNDS.x);
         expect(previousBox.y).toBe(BOUNDS.y);
-        expect(layout.current.x).toBeGreaterThan(
+        expect(layout.current.x).toBeGreaterThanOrEqual(
             previousBox.x + previousBox.width,
         );
         expect(layout.current.y).toBe(BOUNDS.y);
-        expect(nextBox.y).toBeGreaterThan(
+        expect(nextBox.y).toBeGreaterThanOrEqual(
             layout.current.y + layout.current.height,
         );
         expect(nextBox.x + nextBox.width).toBe(BOUNDS.x + BOUNDS.width);

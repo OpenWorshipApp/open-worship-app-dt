@@ -17,6 +17,7 @@ const {
     getSlideIndexMock,
     moveSlideToIndexMock,
     getColorNoteFilePathSettingMock,
+    subscribeColorNoteFilePathSettingMock,
     genAttachBackgroundComponentMock,
     genChooseColorNoteOptionMock,
     getSlideItemShadowingStyleMock,
@@ -25,6 +26,7 @@ const {
     useThemeSourceMock,
     screenVaryAppDocumentManagerGetInstanceMock,
     screenVaryAppDocumentManagerClearMock,
+    genSlideTransitionMenuItemsMock,
 } = vi.hoisted(() => ({
     useVarySlideOnScreenListMock: vi.fn(),
     genRemovingAttachedBackgroundMenuMock: vi.fn(),
@@ -52,6 +54,7 @@ const {
     getSlideIndexMock: vi.fn(),
     moveSlideToIndexMock: vi.fn(),
     getColorNoteFilePathSettingMock: vi.fn(),
+    subscribeColorNoteFilePathSettingMock: vi.fn(() => vi.fn()),
     genAttachBackgroundComponentMock: vi.fn(),
     genChooseColorNoteOptionMock: vi.fn(),
     getSlideItemShadowingStyleMock: vi.fn(),
@@ -60,6 +63,17 @@ const {
     useThemeSourceMock: vi.fn(),
     screenVaryAppDocumentManagerGetInstanceMock: vi.fn(),
     screenVaryAppDocumentManagerClearMock: vi.fn(),
+    genSlideTransitionMenuItemsMock: vi.fn(() => {
+        return [{ menuElement: 'Transition' }];
+    }),
+}));
+
+// A slide's own transition lives in a sidecar beside its document; the card
+// reads it for its badge and adds its row to the slide's menu.
+vi.mock('../../others/slideTransitionMenuHelpers', () => ({
+    useSlideTransition: () => ({ own: undefined, documentOwn: undefined }),
+    genSlideTransitionMenuItems: genSlideTransitionMenuItemsMock,
+    SlideTransitionIconComp: () => null,
 }));
 
 // The slide's ONE screen subscription. It replaces the old blanket
@@ -140,6 +154,7 @@ vi.mock('../../app-document-list/appDocumentHelpers', () => ({
 
 vi.mock('../../helper/FileSourceMetaManager', () => ({
     getColorNoteFilePathSetting: getColorNoteFilePathSettingMock,
+    subscribeColorNoteFilePathSetting: subscribeColorNoteFilePathSettingMock,
 }));
 
 vi.mock('./slideItemRenderHelpers', () => ({
@@ -248,6 +263,106 @@ describe('VarySlideRenderComp', () => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
     });
 
+    test('refreshes a mounted header when its color changes without rerendering the thumbnail', async () => {
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
+        const renderCard = (filePath: string, id: number) => (
+            <VarySlideRenderComp
+                varySlide={{ filePath, id, width: 400, height: 200 } as any}
+                width={320}
+                index={0}
+                onContextMenu={vi.fn()}
+            >
+                content
+            </VarySlideRenderComp>
+        );
+        await act(async () => {
+            root.render(renderCard('/docs/main.ows', 7));
+        });
+        const header = container.querySelector('.card-header') as HTMLElement;
+        expect(header.style.borderColor).toBe('rgb(171, 205, 239)');
+        const [filePath, id, onColor] = subscribeColorNoteFilePathSettingMock
+            .mock.calls[0] as unknown as [
+            string,
+            number,
+            (color: string | null) => void,
+        ];
+        expect([filePath, id]).toEqual(['/docs/main.ows', 7]);
+        const unsubscribe =
+            subscribeColorNoteFilePathSettingMock.mock.results[0].value;
+        useVarySlideOnScreenListMock.mockClear();
+        useThemeSourceMock.mockClear();
+        getColorNoteFilePathSettingMock.mockClear();
+        await act(async () => onColor('red'));
+        expect(header.style.borderColor).toBe('red');
+        await act(async () => onColor(null));
+        expect(header.style.borderColor).toBe('');
+        expect(useVarySlideOnScreenListMock).not.toHaveBeenCalled();
+        expect(useThemeSourceMock).not.toHaveBeenCalled();
+        expect(getColorNoteFilePathSettingMock).not.toHaveBeenCalled();
+
+        getColorNoteFilePathSettingMock.mockReturnValue('blue');
+        await act(async () => {
+            root.render(renderCard('/docs/other.ows', 8));
+        });
+        expect(unsubscribe).toHaveBeenCalledOnce();
+        expect(subscribeColorNoteFilePathSettingMock).toHaveBeenLastCalledWith(
+            '/docs/other.ows',
+            8,
+            expect.any(Function),
+        );
+        expect(header.style.borderColor).toBe('blue');
+    });
+
+    test('keeps a file slide menu from reaching its document during an async read', async () => {
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
+        const onDocumentMenu = vi.fn();
+        const onSlideMenu = vi.fn(async () => {
+            await Promise.resolve();
+        });
+        await act(async () => {
+            root.render(
+                <div onContextMenu={onDocumentMenu}>
+                    <VarySlideRenderComp
+                        varySlide={
+                            {
+                                filePath: '/docs/slides.pptx',
+                                id: 7,
+                                width: 400,
+                                height: 200,
+                            } as any
+                        }
+                        width={320}
+                        index={0}
+                        onContextMenu={onSlideMenu}
+                    >
+                        content
+                    </VarySlideRenderComp>
+                </div>,
+            );
+        });
+        const target = container.querySelector('.data-vary-app-document-item')!;
+        const event = new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => {
+            target.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(true);
+            expect(onDocumentMenu).not.toHaveBeenCalled();
+        });
+        expect(onSlideMenu).toHaveBeenCalledExactlyOnceWith(
+            expect.any(Object),
+            [
+                { menuElement: 'Remove Background' },
+                { menuElement: 'Choose Color' },
+                { menuElement: 'Transition' },
+            ],
+        );
+        expect(onDocumentMenu).not.toHaveBeenCalled();
+    });
+
     test('renders slide header and body details and forwards interaction events', async () => {
         const { default: VarySlideRenderComp } =
             await import('./VarySlideRenderComp');
@@ -310,7 +425,7 @@ describe('VarySlideRenderComp', () => {
             container
                 .querySelector('.bi-aspect-ratio-fill')
                 ?.getAttribute('title'),
-        ).toBe('width:400, height:200');
+        ).toBe('Width: 400, Height: 200');
         expect(container.textContent).toContain('*');
         const screenIcons = Array.from(
             container.querySelectorAll('[data-testid="screen-icon"]'),
@@ -370,7 +485,13 @@ describe('VarySlideRenderComp', () => {
         expect(onContextMenu).toHaveBeenCalledWith(expect.any(Object), [
             { menuElement: 'Remove Background' },
             { menuElement: 'Choose Color' },
+            { menuElement: 'Transition' },
         ]);
+        expect(genSlideTransitionMenuItemsMock).toHaveBeenCalledWith(
+            varySlide.filePath,
+            varySlide.id,
+            { own: undefined, documentOwn: undefined },
+        );
         expect(handleDragStartMock).toHaveBeenCalledWith(
             expect.anything(),
             varySlide,
@@ -540,6 +661,7 @@ describe('VarySlideRenderComp', () => {
 
         expect(onContextMenu).toHaveBeenCalledWith(expect.any(Object), [
             { menuElement: 'Choose Color' },
+            { menuElement: 'Transition' },
         ]);
     });
 

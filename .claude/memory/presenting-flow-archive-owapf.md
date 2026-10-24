@@ -25,19 +25,19 @@ Non-obvious contract, all of it load-bearing:
 - **`resolveKindDirPaths` runs BEFORE any file is copied.** `getKindDirPath` throws when a
   list has no folder chosen yet, and discovering that halfway would leave media imported
   and no presenting flow to show for it. Same for the presenting flows folder itself.
-  Both now live in `src/helper/appArchiveHelpers.ts:454,485`, shared with
+  Both now live in `src/helper/appArchiveHelpers.ts`, shared with
   `singleItemArchiveHelpers.ts` too.
 - Archive paths are validated in the shared module (`..` or a backslash →
-  `Invalid archive file path`, `src/helper/appArchiveHelpers.ts:449`).
-- **Reuse is decided by MD5, not by name.** A same-named file in the destination folder is
-  reused only when `getFileMD5` matches; a different one is left alone and the archive's
+  `Invalid archive file path`, `toExtractedArchivePath` in `src/helper/appArchiveHelpers.ts`).
+- **Reuse is decided by MD5, not by name — for MEDIA.** A same-named media file in the destination folder is
+  reused only when `getFileMD5` matches (a document is `always-new` in `collisionPolicyBySettingName`: even an identical one lands as `name (1).ows`); a different one is left alone and the archive's
   copy lands beside it (`fsCopyFilePathToPath` → `genNextFilePath` → `a (1).mp4`), because
   two machines can each hold a different `a.mp4`. An unreadable file on either side counts
   as different. An existing `.bg.json` is never clobbered; the presenting flow file itself
   de-duplicates the same way, so importing twice is safe but does add a presenting flow.
-- **A document's own canvas media is bundled too.** A slide's VIDEO box stores
+- **A document's own canvas media is bundled too.** A slide's VIDEO or AUDIO box stores
   `props.filePath` (an IMAGE box inlines base64), so `addCanvasDocumentMedia` walks the
-  `.ows`/`.preview` JSON and adds those files as `kind: 'video'`; import re-points them via
+  `.ows`/`.preview` JSON and adds those files as `kind: 'video'` / `'audio'` (the box's own type); import re-points them via
   `applyImportedCanvasMedia`. Only documents this import WROTE are rewritten — a reused one
   is the operator's own file. The regenerable `<doc>.pdf-images/`, `<doc>.pptx-htmls/` and
   `<doc>.histories/` are deliberately NOT bundled.

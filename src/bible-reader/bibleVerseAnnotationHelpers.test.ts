@@ -123,6 +123,35 @@ describe('verse annotation offsets', () => {
         range.collapse(true);
         expect(getOffsetsFromRange(anchorElement, range)).toBeNull();
     });
+
+    test('whitespace at the edges of the selection is trimmed', () => {
+        // A drag that ends past the last word picks up the space after it.
+        const anchorElement = mount(VERSE_TEXT);
+        const selectionStart = VERSE_TEXT.indexOf(' pass after');
+        const range = document.createRange();
+        range.setStart(anchorElement.firstChild as Text, selectionStart);
+        range.setEnd(
+            anchorElement.firstChild as Text,
+            selectionStart + ' pass after '.length,
+        );
+        expect(getOffsetsFromRange(anchorElement, range)).toEqual({
+            start: selectionStart + 1,
+            end: selectionStart + 1 + 'pass after'.length,
+            text: 'pass after',
+        });
+    });
+
+    test('a selection of nothing but whitespace yields no offsets', () => {
+        // A double-click in the gap between two words selects that gap; a mark
+        // on it paints nothing on screen and is not worth making.
+        const anchorElement = mount(VERSE_TEXT);
+        const spaceIndex = VERSE_TEXT.indexOf(' pass');
+        const range = document.createRange();
+        range.setStart(anchorElement.firstChild as Text, spaceIndex);
+        range.setEnd(anchorElement.firstChild as Text, spaceIndex + 1);
+        expect(range.toString()).toBe(' ');
+        expect(getOffsetsFromRange(anchorElement, range)).toBeNull();
+    });
 });
 
 describe('offset predicates', () => {

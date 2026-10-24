@@ -1,0 +1,48 @@
+{
+    "version": 1,
+    "updated": "2026-10-10",
+    "servers": [
+        {
+            "id": "church-lmstudio",
+            "name": "Church LM Studio",
+            "baseUrl": "https://quiet-river-1234.trycloudflare.com/v1",
+            "apiKey": "",
+            "isFree": true,
+            "note": {
+                "en": "The church's own computer: free for us, and the words stay in the building.",
+                "km": "កុំព្យូទ័ររបស់ព្រះវិហារផ្ទាល់៖ ឥតគិតថ្លៃសម្រាប់យើង ហើយពាក្យរបស់អ្នកនៅតែក្នុងអគារ។"
+            },
+            "models": [
+                {
+                    "model": "qwen/qwen3.5-9b",
+                    "name": "Qwen 3.5 9B",
+                    "canSeeImages": true,
+                    "note": "Slow, but it saves us the cost of usage."
+                },
+                {
+                    "model": "google/gemma-4-e4b",
+                    "name": "Gemma 4 E4B",
+                    "canSeeImages": true
+                }
+            ]
+        },
+        {
+            "id": "church-ollama",
+            "name": "Church Ollama",
+            "baseUrl": "https://ollama.example.church/v1",
+            "apiKey": "ollama-key-that-reaches-only-this-server",
+            "isFree": true,
+            "models": [
+                { "model": "qwen3-16k:8b", "name": "Qwen 3 8B (16k)" }
+            ]
+        },
+        {
+            "id": "reporting",
+            "name": "Report inbox",
+            "baseUrl": "https://reports.example.church/report",
+            "apiKey": "report-key-that-reaches-only-this-address",
+            "isAcceptingReport": true,
+            "note": "Takes the help window's problem reports: a POST of JSON, the report under prompt and its files under attachments. Not an assistant, so it names no model"
+        }
+    ]
+}

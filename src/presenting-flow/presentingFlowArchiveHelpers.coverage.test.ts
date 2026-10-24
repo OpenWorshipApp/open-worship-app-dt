@@ -10,6 +10,7 @@ const { state, mocks } = vi.hoisted(() => ({
         selected: [] as string[],
         password: '' as string | null,
         url: null as string | null,
+        requestError: null as Error | null,
         appFilePath: null as string | null,
         copyPath: '/copied/archive' as string | null,
         bibleItem: null as any,
@@ -81,10 +82,16 @@ vi.mock('../helper/localFileHelpers', () => ({
     getAppFilePathFromFile: () => state.appFilePath,
 }));
 vi.mock('../helper/bible-helpers/downloadHelpers', () => ({
-    initHttpRequest: async () => ({ body: true }),
+    initHttpRequest: async () => {
+        if (state.requestError !== null) {
+            throw state.requestError;
+        }
+        return { body: true };
+    },
 }));
 vi.mock('../background/downloadHelper', () => ({
     askForURL: async () => state.url,
+    describeDownloadError: (error: any) => `described: ${error?.message}`,
     messageCallback: vi.fn(),
     streamDownloadFile: mocks.stream,
 }));
@@ -115,6 +122,7 @@ vi.mock('../helper/appArchiveHelpers', () => ({
     ARCHIVE_VERSION: 3,
     ArchiveFileCollector: class {
         backgroundMetas = [{ filePath: '/bg' }];
+        transitionMetas = [];
         async addDocument(path: string | null) {
             state.collectorAdds.push(['document', path]);
         }
@@ -136,6 +144,7 @@ vi.mock('../helper/appArchiveHelpers', () => ({
         `${dir}/${name}`,
     importArchiveFiles: (...args: any[]) => mocks.importFiles(...args),
     importBackgroundMetas: mocks.backgrounds,
+    importTransitionMetas: vi.fn(),
     readArchiveManifest: async () => state.manifest,
     resolveKindDirPaths: () => new Map(),
     safeDeleteDir: mocks.safeDelete,
@@ -297,14 +306,25 @@ describe('presenting-flow archives', () => {
             backgroundMetas: [],
             dataDirPath: '/old',
         };
+        // The same passage with its keys in another order is still the same.
         const existing = {
             id: 9,
             bibleKey: 'KJV',
-            toJson: () => ({ target: { book: 1 } }),
+            target: {
+                bookKey: 'JHN',
+                chapter: 3,
+                verseStart: 16,
+                verseEnd: 18,
+            },
         };
         state.bibleItem = {
             bibleKey: 'KJV',
-            toJson: () => ({ target: { book: 1 } }),
+            target: {
+                verseEnd: 18,
+                verseStart: 16,
+                chapter: 3,
+                bookKey: 'JHN',
+            },
         };
         state.defaultBible = {
             items: [existing],
@@ -391,7 +411,7 @@ describe('presenting-flow archives', () => {
         };
         state.bibleItem = {
             bibleKey: 'KJV',
-            toJson: () => ({ target: { verse: 1 } }),
+            target: { bookKey: 'JHN', chapter: 1, verseStart: 1, verseEnd: 2 },
         };
         state.defaultBible = null;
         await expect(importPresentingFlowArchive('/x')).rejects.toThrow(
@@ -411,6 +431,50 @@ describe('presenting-flow archives', () => {
         await expect(importPresentingFlowArchive('/x')).resolves.toBeTruthy();
         expect(state.defaultBible.addBibleItem).toHaveBeenCalled();
         expect(state.readJson.items[0].data.id).toBe(4);
+    });
+
+    test('reuses only the same cross-chapter passage in the Default list', async () => {
+        const cross = {
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+            chapterEnd: 3,
+        };
+        state.readJson = {
+            items: [{ type: DragTypeEnum.BIBLE_ITEM, data: {} }],
+        };
+        state.bibleItem = { bibleKey: 'KJV', target: { ...cross } };
+        state.defaultBible = {
+            items: [
+                // JHN 1:2-4 and JHN 1:2-2:4 are other passages.
+                {
+                    id: 1,
+                    bibleKey: 'KJV',
+                    target: { ...cross, chapterEnd: undefined },
+                },
+                { id: 2, bibleKey: 'KJV', target: { ...cross, chapterEnd: 2 } },
+                { id: 3, bibleKey: 'LSG', target: { ...cross } },
+                { id: 4, bibleKey: 'KJV', target: { ...cross } },
+            ],
+            filePath: '/default',
+            addBibleItem: vi.fn(),
+            save: vi.fn(async () => true),
+            maxItemId: 9,
+        };
+        await expect(importPresentingFlowArchive('/x')).resolves.toBeTruthy();
+        expect(state.readJson.items[0].data.id).toBe(4);
+        expect(state.defaultBible.addBibleItem).not.toHaveBeenCalled();
+
+        state.readJson = {
+            items: [{ type: DragTypeEnum.BIBLE_ITEM, data: {} }],
+        };
+        state.defaultBible.items = state.defaultBible.items.slice(0, 3);
+        await expect(importPresentingFlowArchive('/x')).resolves.toBeTruthy();
+        expect(state.defaultBible.addBibleItem).toHaveBeenCalledWith(
+            state.bibleItem,
+        );
+        expect(state.readJson.items[0].data.id).toBe(9);
     });
 
     test('selects, recognizes, downloads, and drops archives through the shared importer', async () => {
@@ -435,14 +499,28 @@ describe('presenting-flow archives', () => {
             askAndImportPresentingFlowArchiveFromUrl(),
         ).resolves.toBeTruthy();
         expect(mocks.stream).toHaveBeenCalled();
+        // A failed download was already toasted by `streamDownloadFile`, in
+        // words: the import must not say it a second time.
+        mocks.toast.mockClear();
         mocks.stream.mockRejectedValueOnce(new Error('download failed'));
+        await expect(
+            askAndImportPresentingFlowArchiveFromUrl(),
+        ).resolves.toBeNull();
+        expect(mocks.toast).not.toHaveBeenCalled();
+        // An address never reached has no download toast, so it gets one --
+        // described, never the raw socket error.
+        state.requestError = Object.assign(
+            new Error('connect ECONNREFUSED 127.0.0.1:1'),
+            { code: 'ECONNREFUSED' },
+        );
         await expect(
             askAndImportPresentingFlowArchiveFromUrl(),
         ).resolves.toBeNull();
         expect(mocks.toast).toHaveBeenCalledWith(
             'Import Presenting Flow',
-            'download failed',
+            'described: connect ECONNREFUSED 127.0.0.1:1',
         );
+        state.requestError = null;
 
         await expect(
             importDroppedPresentingFlowArchive('/local/archive'),

@@ -5,6 +5,17 @@ import electron, { type BrowserWindow, nativeTheme } from 'electron';
 import { htmlFiles } from './fsServe';
 import { genTimeoutAttempt } from './electronHelpers';
 import {
+    checkIsDataDirSettingName,
+    SELECTED_PARENT_DIR_SETTING_NAME,
+} from './dataDirSettingProtocol';
+import {
+    deleteDataDirSettingFile,
+    listDataDirSettingNames,
+    readDataDirSettingFile,
+    toDataDirSettingPath,
+    writeDataDirSettingFile,
+} from './dataDirSettingHelpers';
+import {
     checkIsSafeStorageAvailable,
     decryptFromBase64,
     encryptToBase64,
@@ -314,7 +325,33 @@ export default class ElectronSettingManager {
         this.save();
     }
 
+    /**
+     * The data folder in use, where `checkIsDataDirSettingName` settings are
+     * kept: the chosen one while it is there, else this profile's own -- where
+     * the renderer's `appLocalStorage` keeps its settings too.
+     */
+    get dataDirPath() {
+        const chosen =
+            this.settingObject.clientSetting[SELECTED_PARENT_DIR_SETTING_NAME];
+        try {
+            if (typeof chosen === 'string' && chosen && fs.existsSync(chosen)) {
+                return chosen;
+            }
+        } catch (_error) {}
+        return electron.app.getPath('userData');
+    }
+
     getClientSetting(key: string) {
+        if (checkIsDataDirSettingName(key)) {
+            const value = readDataDirSettingFile(
+                toDataDirSettingPath(this.dataDirPath, key),
+            );
+            if (value !== null) {
+                return value;
+            }
+            // Not moved yet: kept here while no data folder was in use as the
+            // app started (`moveSettingsToDataDir`).
+        }
         const value = this.settingObject.clientSetting[key];
         if (typeof value !== 'string') {
             return null;
@@ -322,18 +359,99 @@ export default class ElectronSettingManager {
         return value;
     }
     setClientSetting(key: string, value: any) {
+        if (checkIsDataDirSettingName(key)) {
+            const filePath = toDataDirSettingPath(this.dataDirPath, key);
+            if (typeof value === 'string') {
+                writeDataDirSettingFile(filePath, value);
+            } else {
+                deleteDataDirSettingFile(filePath);
+            }
+            this.dropOldClientSetting(key);
+            return;
+        }
         if (typeof value !== 'string') {
             value = null;
         }
         this.settingObject.clientSetting[key] = value;
         this.save();
+        // A folder chosen now takes what was kept here for one at once, not
+        // at the next start: until then a setting changed in it would have
+        // left the old global copy of the others behind.
+        if (key === SELECTED_PARENT_DIR_SETTING_NAME) {
+            this.moveSettingsToDataDir();
+        }
     }
     deleteClientSetting(key: string) {
+        if (checkIsDataDirSettingName(key)) {
+            deleteDataDirSettingFile(
+                toDataDirSettingPath(this.dataDirPath, key),
+            );
+            this.dropOldClientSetting(key);
+            return;
+        }
         delete this.settingObject.clientSetting[key];
         this.save();
     }
+    /**
+     * Every key, the data folder's included: Export / Import Settings lists
+     * the computer's store this way, and finds them where they always were.
+     */
     getAllClientSettingKeys() {
-        return Object.keys(this.settingObject.clientSetting);
+        const keyList = Object.keys(this.settingObject.clientSetting);
+        for (const name of listDataDirSettingNames(this.dataDirPath)) {
+            if (!keyList.includes(name)) {
+                keyList.push(name);
+            }
+        }
+        return keyList;
+    }
+    // A copy from before the setting went to the data folder: the folder's is
+    // the one now, and the old one would read back wherever the folder is not.
+    private dropOldClientSetting(key: string) {
+        if (key in this.settingObject.clientSetting) {
+            delete this.settingObject.clientSetting[key];
+            this.save();
+        }
+    }
+    /**
+     * Once, at the start: what was kept here before these settings went to
+     * the data folder goes INTO the folder in use. Only into one that was
+     * chosen and is there -- a stick that is not plugged in keeps them here
+     * until it is -- and never over the folder's own.
+     */
+    moveSettingsToDataDir() {
+        const chosen =
+            this.settingObject.clientSetting[SELECTED_PARENT_DIR_SETTING_NAME];
+        try {
+            if (
+                typeof chosen !== 'string' ||
+                !chosen ||
+                !fs.existsSync(chosen)
+            ) {
+                return;
+            }
+        } catch (_error) {
+            return;
+        }
+        let isChanged = false;
+        for (const key of Object.keys(this.settingObject.clientSetting)) {
+            if (!checkIsDataDirSettingName(key)) {
+                continue;
+            }
+            const value = this.settingObject.clientSetting[key];
+            const filePath = toDataDirSettingPath(chosen, key);
+            const isKept =
+                typeof value !== 'string' ||
+                readDataDirSettingFile(filePath) !== null ||
+                writeDataDirSettingFile(filePath, value);
+            if (isKept) {
+                delete this.settingObject.clientSetting[key];
+                isChanged = true;
+            }
+        }
+        if (isChanged) {
+            this.save(true);
+        }
     }
     clearClientSettings() {
         this.settingObject.clientSetting = {};
@@ -418,7 +536,17 @@ export default class ElectronSettingManager {
     // One writer per process: two managers would each hold a full copy of
     // `settingObject` and overwrite each other's `setting.json`.
     static getInstance() {
-        instance ??= new this();
+        if (instance === null) {
+            const manager = new this();
+            instance = manager;
+            manager.moveSettingsToDataDir();
+            // `save()` waits a second for more changes, and a quit inside
+            // that second (a Restart pressed right after Import Settings)
+            // dropped every write still waiting.
+            electron.app.on('will-quit', () => {
+                manager.save(true);
+            });
+        }
         return instance;
     }
 }

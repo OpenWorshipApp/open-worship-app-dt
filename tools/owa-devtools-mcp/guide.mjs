@@ -20,10 +20,108 @@
 
 import { BOT_FOCUS_LIST, detectBotFocus, getBotFocus } from './botFocus.mjs';
 import { PRESS_GUARD_SOURCE } from './destructiveLabel.mjs';
-import { DOM_MATCH_RUNTIME } from './domMatch.mjs';
+import { DOM_MATCH_RUNTIME, PRESS_AT_CENTRE_SOURCE } from './domMatch.mjs';
 import { toEnglishOnly } from './help.mjs';
 
 const MAX_STEPS = 20;
+
+// The card's own words, as `tran()` keys. English is what the runtime starts
+// with (`labels` in its state); another language's words are handed in at
+// `start` (`owaTools.mjs`), because the card sits in the app window and
+// speaks the window's language. `step` has a key of its own: the
+// dictionary's `Step` is a slider's.
+export const GUIDE_CARD_LABEL_KEY_MAP = {
+  next: 'Next',
+  back: 'Back',
+  done: 'Done',
+  step: 'Walkthrough step',
+  act: 'Do it',
+  skip: 'Skip',
+};
+export const GUIDE_CARD_TITLE_KEY = 'Step by step';
+
+// The card's sentences, each one whole with its `{gaps}` (`say` in the
+// runtime): the English IS the key, and a window shown in another language is
+// handed that language's words for them at `start` (`owaTools.mjs`).
+// `guide.test.mjs` holds this list to the runtime's own source.
+export const GUIDE_CARD_HINT_TEMPLATE_LIST = [
+  'Nothing to press for this one — it is something to notice in the window ' +
+    'behind me. Press {next} when you have.',
+  '{key} does something that cannot be undone, so I will not press it for ' +
+    'you. Press it yourself if you want it — I will notice when you do.',
+  'Press {act} and I will press {key} for you.',
+  'Press {key} — I will notice when you do.',
+  'Press {act} and I will right-click the list for you, then press it again ' +
+    'to choose "{name}".',
+  'Press {act} and I will right-click the list for you, then press it again ' +
+    'to choose.',
+  'Look for "{name}" in the window behind me.',
+  'Do this step in the window behind me.',
+  'Look for "{name}" in the window behind me. The closest thing I can see is ' +
+    '"{seen}", which may not be it.',
+  'Press {act} and I will open the hidden controls first. Then press it ' +
+    'again and I will change "{name}".',
+  'Press {act} and I will open the hidden controls first. Then press it ' +
+    'again and I will use "{name}".',
+  'First press the ringed three dots to open the hidden controls. I will ' +
+    'keep this step here for you.',
+  '"{name}" is not on screen right now — open the panel or tab it belongs ' +
+    'to first.',
+  '"{name}" is behind {layer} — answer that first, and I will carry on.',
+  '"{name}" is behind {layer}.',
+  'Press {act} and I will close the menu first, then press it again for ' +
+    'this step.',
+  'Press Escape (or click anywhere outside the menu) and I will carry on.',
+  'Press {act} and I will close {short} first, then press it again for this ' +
+    'step.',
+  'Close it with the ringed ✕ and I will carry on.',
+  'Press {act} and I will change it for you.',
+  'Press {act} and I will right-click it for you.',
+  'Press {act} and I will move the pointer over it for you.',
+  'Press {act} and I will click it for you.',
+  'This is the app asking you a question, so I will not answer it for you.',
+  'This one cannot be undone, so I will not press it for you — press it ' +
+    'yourself if you want it.',
+  'Move the pointer over the ringed area.',
+  'This one only shows while the mouse is over it, so I am holding it up ' +
+    'for you.',
+  'The ringed control is at the {where} of this window.',
+  'The ringed control is in the {panel} panel, at the {where} of this window.',
+  'Something is in front of it right now — close that first.',
+  '{count} controls are called "{name}" (in {panels}), so the ring may be ' +
+    'on the wrong one — the step says which.',
+  '{count} controls are called "{name}", so the ring may be on the wrong ' +
+    'one — the step says which.',
+  'I cannot press these steps for you — they are things to do in the page ' +
+    'itself, not buttons. I will walk you through them instead.',
+  'I opened the hidden controls. "{more}" is visible now. Press {act} again ' +
+    'and I will finish this step.',
+  'Done - and it brought up "{more}". Press {act} again to finish this step.',
+  'I closed {closed}, which was in the way. Press {act} again and I will do ' +
+    'this step.',
+  'That did not work — I am asking the assistant to look at your window…',
+  'I could not do that one for you ({reason}) - do it yourself, then press ' +
+    '{skip}.',
+  // Where on the window the ring is: `{where}` above.
+  'top left',
+  'top center',
+  'top right',
+  'middle left',
+  'middle center',
+  'middle right',
+  'bottom left',
+  'bottom center',
+  'bottom right',
+];
+
+/** Every `tran()` key the card can ask the dictionary for. */
+export function listGuideCardTranKeys() {
+  return [
+    ...Object.values(GUIDE_CARD_LABEL_KEY_MAP),
+    GUIDE_CARD_TITLE_KEY,
+    ...GUIDE_CARD_HINT_TEMPLATE_LIST,
+  ];
+}
 
 // A manual page is often a shelf of independent jobs, not one long task.
 // W-11, for example, covers reference lookup, font size, history, versions,
@@ -99,12 +197,23 @@ function topicTokens(text) {
 }
 
 export function selectGuideStepsForTopic(steps, topic = '') {
+  const index = selectGuideStepIndexForTopic(steps, topic);
+  return index === null ? steps : [steps[index]];
+}
+
+/**
+ * The index of the one step a topic names, or null when the topic is too
+ * vague to choose safely. The caller that keeps the WAY to a deep step
+ * (`owa_guide_start`: the steps before it, when its control is not on
+ * screen yet) needs the index, not the step.
+ */
+export function selectGuideStepIndexForTopic(steps, topic = '') {
   if (!Array.isArray(steps) || steps.length < 2) {
-    return steps;
+    return null;
   }
   const wanted = [...new Set(topicTokens(topic))];
   if (wanted.length === 0) {
-    return steps;
+    return null;
   }
   const ranked = steps
     .map((step, index) => {
@@ -121,7 +230,7 @@ export function selectGuideStepsForTopic(steps, topic = '') {
     .sort((one, other) => {
       return other.score - one.score || one.index - other.index;
     });
-  return ranked[0].score >= 2 ? [steps[ranked[0].index]] : steps;
+  return ranked[0].score >= 2 ? ranked[0].index : null;
 }
 
 // The system prompt tells the model never to show a volunteer an id like
@@ -140,13 +249,29 @@ const ID_PATTERN = /\b[A-Z]{1,3}-\d{1,3}[a-z]?\b/g;
 const ID_ASIDE_PATTERN =
   /\s*[([][^)\]]*\b[A-Z]{1,3}-\d{1,3}[a-z]?\b[^)\]]*[)\]]/g;
 
+// Bumped whenever the card's runtime changes, as the banner's is
+// (`NOTICE_RUNTIME_VERSION` in `notify.mjs`): the page keeps the first
+// runtime it is given, and a window first given an older one -- by a server
+// started before the change -- kept its English hints and its OS fallback
+// face in a Khmer window until it was reloaded (2026-10-17).
+const GUIDE_RUNTIME_VERSION = 2;
+
 // Installed once per page; re-sent on every call because a reload wipes it.
 // Kept in a shadow root so the app's stylesheets cannot reach in and the
 // guide cannot leak out.
 const GUIDE_RUNTIME = `
 (() => {
-    if (window.__owaGuide !== undefined) {
-        return window.__owaGuide;
+    const VERSION = ${GUIDE_RUNTIME_VERSION};
+    const existing = window.__owaGuide;
+    if (existing !== undefined && existing.version === VERSION) {
+        return existing;
+    }
+    // An older runtime is stopped (its watchers let go) and replaced; its
+    // card goes with the host sweep below.
+    try {
+        existing?.stop?.('replaced');
+    } catch (_error) {
+        // Whatever it was, it is being replaced.
     }
     const state = {
         steps: [],
@@ -171,6 +296,19 @@ const GUIDE_RUNTIME = `
         // still answers to the FIRST of them, which by then is usually
         // some other control that shares the word.
         pendingFind: null,
+        // The other controls carrying the ringed control's exact words,
+        // read once per ringed element: the walk reads every control on
+        // the window, and the card redraws on a timer.
+        twinsFor: null,
+        // Every control on the window before the walkthrough's LAST press
+        // (at the start, before any), so a control that press brought into
+        // being can be told from the ones already there. Before the last
+        // press, not before the start: step 1 opens the panel, and then
+        // every card's icon is new at once (a WeakSet: holds nothing alive,
+        // dropped on stop).
+        knownAtStart: null,
+        // The one twin resolution per ringed element, for the redraw timer.
+        twinResolveFor: null,
         // A step the card could not do. The chat window this walkthrough was
         // asked from is one relay away, it can look at the real window, and
         // it wrote these steps in the first place -- so a stuck step goes and
@@ -188,11 +326,31 @@ const GUIDE_RUNTIME = `
             next: 'Next', back: 'Back', done: 'Done', step: 'Step',
             act: 'Do it', skip: 'Skip',
         },
+        // The card's sentences in the window's language, by their English
+        // words (GUIDE_CARD_HINT_TEMPLATE_LIST); a sentence it lacks is said
+        // in English.
+        words: {},
+    };
+    // One of the card's sentences, gaps filled: '{name}' and the like.
+    const say = (template, values) => {
+        let text = state.words[template] ?? template;
+        for (const name of Object.keys(values ?? {})) {
+            text = text.split('{' + name + '}').join(String(values[name]));
+        }
+        return text;
     };
     const host = document.createElement('div');
     host.id = 'owa-guide-host';
     host.style.cssText = 'position:fixed;inset:0;z-index:2147483646;' +
         'pointer-events:none';
+    // The app's own lettering for any script the system face lacks: the
+    // face the page's body is set in (Battambang in a Khmer window, which
+    // the app ships) after the card's own, so Latin keeps the system face
+    // and Khmer is not left to whatever the OS falls back to.
+    const pageFont = getComputedStyle(document.body).fontFamily;
+    if (pageFont) {
+        host.style.setProperty('--owa-guide-page-font', pageFont);
+    }
     const root = host.attachShadow({ mode: 'open' });
     root.innerHTML = \`
         <style>
@@ -265,8 +423,15 @@ const GUIDE_RUNTIME = `
                 border-radius: 10px;
                 box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45),
                     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                font: 14px/1.45 system-ui, -apple-system, sans-serif;
+                font: 14px/1.45 system-ui, -apple-system,
+                    var(--owa-guide-page-font, sans-serif), sans-serif;
                 pointer-events: auto; display: none; overflow: hidden;
+                /* Never taller than the window: a recipe step that is a whole
+                   paragraph (W-51's casting step) pushed the title off the
+                   top and the buttons off the bottom (the user's picture,
+                   2026-10-10, "assistant guiding is overflow and cut"). The
+                   body scrolls; the head and the buttons stay in reach. */
+                max-height: calc(100vh - 32px);
             }
             @supports not (backdrop-filter: blur(1px)) {
                 .card { background: #10151c; }
@@ -280,7 +445,10 @@ const GUIDE_RUNTIME = `
             }
             .title { font-weight: 600; font-size: 13px; }
             .count { font-size: 12px; opacity: 0.7; white-space: nowrap; }
-            .body { padding: 12px; }
+            .body {
+                padding: 12px; overflow: auto;
+                max-height: min(45vh, calc(100vh - 150px));
+            }
             .text { margin: 0 0 4px; }
             .hint { margin: 6px 0 0; font-size: 12px; opacity: 0.65; }
             /* Except when it carries an answer the assistant went and got:
@@ -727,6 +895,73 @@ const GUIDE_RUNTIME = `
     // Every candidate the step offered, in order, until one is actually on
     // screen: a step reads "Press Ctrl+B (or click Bible Lookup in the
     // header)", and only the second half of that is a thing to point at.
+    // One name on forty controls is no aim at all: every file row's dots
+    // and each screen card's are "More Options", the first in the page is
+    // the Documents list's, and a step about the Mini Screen's opened the
+    // Documents menu (2026-10-10). The ring says so, the status says so,
+    // and a press is refused with where the twins are, so the step -- or
+    // the user -- can say which. A pendingFind is the one thing the last
+    // press brought up and is never counted. Cached per element for the
+    // redraw timer; a press reads it fresh.
+    const twinsAt = (match, isFresh) => {
+        if (match === null || match.element === null) {
+            return null;
+        }
+        if (match.isTwinResolved === true) {
+            return { count: 1, panels: [] };
+        }
+        if (isFresh === true || state.twinsFor === null ||
+            state.twinsFor.element !== match.element) {
+            state.twinsFor = {
+                element: match.element,
+                twins: state.pendingFind !== null
+                    ? { count: 1, panels: [] }
+                    : dm.twinsOf(match.element, match.needle),
+            };
+        }
+        return state.twinsFor.twins;
+    };
+    const toTwinWords = (twins, named) => {
+        return twins.count + ' controls are called "' + named + '"' +
+            (twins.panels.length > 0
+                ? ' (in ' + twins.panels.slice(0, 4).join(', ') + ')'
+                : '');
+    };
+
+    // Among controls carrying the same words, the one this walkthrough's
+    // LAST press MADE: a step that adds a display opens its card, and the
+    // next step's "Cast to a TV" is on that card, not on the ones that were
+    // there before (2026-10-10, two display cards on the user's window and
+    // the press refused). Nothing else can tell twins apart, and nothing
+    // else should: one that was already there is a guess either way. Cached
+    // per element for the redraw timer; a press drops the cache, because a
+    // press is what makes things.
+    const resolveTwins = (match) => {
+        if (match === null || match.element === null ||
+            state.knownAtStart === null || state.pendingFind !== null) {
+            return match;
+        }
+        if (state.twinResolveFor !== null &&
+            state.twinResolveFor.element === match.element) {
+            return state.twinResolveFor.result;
+        }
+        let result = match;
+        const twins = dm.twinElementsOf(match.element, match.needle);
+        if (twins.length > 1) {
+            const fresh = twins.filter((one) => {
+                return !state.knownAtStart.has(one);
+            });
+            if (fresh.length === 1) {
+                result = Object.assign({}, match, {
+                    element: fresh[0],
+                    isTwinResolved: true,
+                });
+            }
+        }
+        state.twinResolveFor = { element: match.element, result };
+        return result;
+    };
+
     const findMatch = (step) => {
         if (state.pendingFind !== null) {
             const pending = dm.findBest([state.pendingFind]);
@@ -738,14 +973,14 @@ const GUIDE_RUNTIME = `
         if (wanted.length === 0) {
             return null;
         }
-        return dm.findBest(wanted, {
+        return resolveTwins(dm.findBest(wanted, {
             preferPressSafe: true,
             // A value is only ever written into a value-bearing control. A
             // nearby label can be the best visual match and still cannot
             // accept the value (Font Size's visible words sit beside its
             // range input), so do not let the guide press the label instead.
             onlyBoxes: step.action === 'type',
-        });
+        }));
     };
     const findElement = (step) => {
         const match = findMatch(step);
@@ -927,10 +1162,12 @@ const GUIDE_RUNTIME = `
             // that names a keystroke has something to offer even so -- and in
             // demo mode that is a button that works, not an apology.
             if (step.kind === 'look') {
-                parts.hint.textContent = 'Nothing to press for this one — ' +
-                    'it is something to notice in the window behind me. ' +
-                    'Press ' + (isLast ? state.labels.done : state.labels.next) +
-                    ' when you have.';
+                parts.hint.textContent = say(
+                    'Nothing to press for this one — it is something to ' +
+                        'notice in the window behind me. Press {next} when ' +
+                        'you have.',
+                    { next: isLast ? state.labels.done : state.labels.next },
+                );
                 return;
             }
             if (step.keys != null) {
@@ -940,25 +1177,41 @@ const GUIDE_RUNTIME = `
                 // looks the key up on every titled control in the window.
                 const keyRefusal = state.isDemo ? refusalOf(step, null) : null;
                 parts.hint.textContent = keyRefusal !== null
-                    ? step.keys.label + ' does something that cannot be ' +
-                        'undone, so I will not press it for you. Press it ' +
-                        'yourself if you want it — I will notice when you do.'
+                    ? say(
+                        '{key} does something that cannot be undone, so I ' +
+                            'will not press it for you. Press it yourself if ' +
+                            'you want it — I will notice when you do.',
+                        { key: step.keys.label },
+                    )
                     : (state.isDemo
-                        ? 'Press ' + state.labels.act + ' and I will press ' +
-                            step.keys.label + ' for you.'
-                        : 'Press ' + step.keys.label + ' — I will notice ' +
-                            'when you do.');
+                        ? say('Press {act} and I will press {key} for you.', {
+                            act: state.labels.act,
+                            key: step.keys.label,
+                        })
+                        : say('Press {key} — I will notice when you do.', {
+                            key: step.keys.label,
+                        }));
                 return;
             }
             if (state.isDemo && step.action === 'rightClick') {
-                parts.hint.textContent = 'Press ' + state.labels.act +
-                    ' and I will right-click the list for you, then press it ' +
-                    'again to choose' + (named ? ' "' + named + '"' : '') + '.';
+                parts.hint.textContent = named
+                    ? say(
+                        'Press {act} and I will right-click the list for ' +
+                            'you, then press it again to choose "{name}".',
+                        { act: state.labels.act, name: named },
+                    )
+                    : say(
+                        'Press {act} and I will right-click the list for ' +
+                            'you, then press it again to choose.',
+                        { act: state.labels.act },
+                    );
                 return;
             }
             parts.hint.textContent = named
-                ? 'Look for "' + named + '" in the window behind me.'
-                : 'Do this step in the window behind me.';
+                ? say('Look for "{name}" in the window behind me.', {
+                    name: named,
+                })
+                : say('Do this step in the window behind me.');
             return;
         }
         // Some of what this window can do is only painted while
@@ -973,9 +1226,11 @@ const GUIDE_RUNTIME = `
         if (match !== null && match.isPressSafe !== true) {
             ring.style.display = 'none';
             const seen = (dm.labelPartsOf(target)[0] ?? '').slice(0, 40);
-            parts.hint.textContent = 'Look for "' + named + '" in the window ' +
-                'behind me. The closest thing I can see is "' + seen +
-                '", which may not be it.';
+            parts.hint.textContent = say(
+                'Look for "{name}" in the window behind me. The closest ' +
+                    'thing I can see is "{seen}", which may not be it.',
+                { name: named, seen },
+            );
             return;
         }
         const autoHideReveal = autoHideRevealOf(target);
@@ -989,12 +1244,23 @@ const GUIDE_RUNTIME = `
             ring.style.height = revealRect.height + 'px';
             avoidRing(revealRect);
             parts.hint.textContent = state.isDemo
-                ? 'Press ' + state.labels.act + ' and I will open the hidden ' +
-                    'controls first. Then press it again and I will ' +
-                    (step.action === 'type' ? 'change "' + named + '".' :
-                        'use "' + named + '".')
-                : 'First press the ringed three dots to open the hidden ' +
-                    'controls. I will keep this step here for you.';
+                ? (step.action === 'type'
+                    ? say(
+                        'Press {act} and I will open the hidden controls ' +
+                            'first. Then press it again and I will change ' +
+                            '"{name}".',
+                        { act: state.labels.act, name: named },
+                    )
+                    : say(
+                        'Press {act} and I will open the hidden controls ' +
+                            'first. Then press it again and I will use ' +
+                            '"{name}".',
+                        { act: state.labels.act, name: named },
+                    ))
+                : say(
+                    'First press the ringed three dots to open the hidden ' +
+                        'controls. I will keep this step here for you.',
+                );
             // Reposition the ring while the footer is closed. Do not attach
             // the normal click watcher: opening the footer is a prerequisite,
             // not completion of the step. The tracker redraws against the
@@ -1006,8 +1272,11 @@ const GUIDE_RUNTIME = `
         const rect = target.getBoundingClientRect();
         if (dm.visibilityOf(target) === 'gone') {
             ring.style.display = 'none';
-            parts.hint.textContent = '"' + named + '" is not on screen right ' +
-                'now — open the panel or tab it belongs to first.';
+            parts.hint.textContent = say(
+                '"{name}" is not on screen right now — open the panel or ' +
+                    'tab it belongs to first.',
+                { name: named },
+            );
             return;
         }
         // Behind a popup: ring the way OUT of the popup, not the control
@@ -1020,18 +1289,28 @@ const GUIDE_RUNTIME = `
         const layer = cover === null ? null : layerOf(cover, target);
         if (layer !== null && layer.kind === 'question') {
             ring.style.display = 'none';
-            parts.hint.textContent = '"' + named + '" is behind ' +
-                layer.name + ' — answer that first, and I will carry on.';
+            parts.hint.textContent = say(
+                '"{name}" is behind {layer} — answer that first, and I will ' +
+                    'carry on.',
+                { name: named, layer: layer.name },
+            );
             return;
         }
         if (layer !== null && layer.kind === 'menu') {
             ring.style.display = 'none';
-            parts.hint.textContent = '"' + named + '" is behind ' +
-                layer.name + '. ' + (state.isDemo
-                    ? 'Press ' + state.labels.act + ' and I will close ' +
-                        'the menu first, then press it again for this step.'
-                    : 'Press Escape (or click anywhere outside the menu) ' +
-                        'and I will carry on.');
+            parts.hint.textContent = say('"{name}" is behind {layer}.', {
+                name: named,
+                layer: layer.name,
+            }) + ' ' + (state.isDemo
+                ? say(
+                    'Press {act} and I will close the menu first, then ' +
+                        'press it again for this step.',
+                    { act: state.labels.act },
+                )
+                : say(
+                    'Press Escape (or click anywhere outside the menu) and ' +
+                        'I will carry on.',
+                ));
             watchedElement = layer.closer;
             return;
         }
@@ -1044,12 +1323,16 @@ const GUIDE_RUNTIME = `
             ring.style.width = closerRect.width + 'px';
             ring.style.height = closerRect.height + 'px';
             avoidRing(closerRect);
-            parts.hint.textContent = '"' + named + '" is behind ' +
-                layer.name + '. ' + (state.isDemo
-                    ? 'Press ' + state.labels.act + ' and I will close ' +
-                        layer.short + ' first, then press it again for ' +
-                        'this step.'
-                    : 'Close it with the ringed ✕ and I will carry on.');
+            parts.hint.textContent = say('"{name}" is behind {layer}.', {
+                name: named,
+                layer: layer.name,
+            }) + ' ' + (state.isDemo
+                ? say(
+                    'Press {act} and I will close {short} first, then press ' +
+                        'it again for this step.',
+                    { act: state.labels.act, short: layer.short },
+                )
+                : say('Close it with the ringed ✕ and I will carry on.'));
             // Held for repositioning only: closing the popup is not doing
             // the step, so this click must not advance the guide.
             watchedElement = layer.closer;
@@ -1088,30 +1371,61 @@ const GUIDE_RUNTIME = `
         const isRightClick = step.action === 'rightClick' &&
             target.getAttribute('role') === 'separator';
         const isHover = step.action === 'hover';
-        parts.hint.textContent = (refusal !== null
+        // Whole sentences, each one of the card's words in the window's
+        // language: a phrase stitched from pieces cannot be translated.
+        const pressTemplate = step.action === 'type'
+            ? 'Press {act} and I will change it for you.'
+            : (isRightClick
+                ? 'Press {act} and I will right-click it for you.'
+                : (isHover
+                    ? 'Press {act} and I will move the pointer over it for ' +
+                        'you.'
+                    : 'Press {act} and I will click it for you.'));
+        const doWords = refusal !== null
             ? (refusal.refused === 'question'
-                ? 'This is the app asking you a question, so I will not ' +
-                    'answer it for you. '
-                : 'This one cannot be undone, so I will not press it for ' +
-                    'you — press it yourself if you want it. ')
+                ? say('This is the app asking you a question, so I will not ' +
+                    'answer it for you.') + ' '
+                : say('This one cannot be undone, so I will not press it ' +
+                    'for you — press it yourself if you want it.') + ' ')
             : (state.isDemo
-                ? 'Press ' + state.labels.act + ' and I will ' +
-                    (step.action === 'type' ? 'change it' :
-                        (isRightClick ? 'right-click it' :
-                            (isHover ? 'move the pointer over it' : 'click it'))) +
-                    ' for you. '
-                : (isHover ? 'Move the pointer over the ringed area. ' : ''))) + (isHeldVisible
-            ? 'This one only shows while the mouse is over it, so I ' +
-                'am holding it up for you. '
-            : '') + 'The ringed control is ' +
-            (inPanel === null ? '' : 'in the ' + inPanel + ' panel, ') +
-            'at the ' +
+                ? say(pressTemplate, { act: state.labels.act }) + ' '
+                : (isHover
+                    ? say('Move the pointer over the ringed area.') + ' '
+                    : ''));
+        const heldWords = isHeldVisible
+            ? say('This one only shows while the mouse is over it, so I am ' +
+                'holding it up for you.') + ' '
+            : '';
+        const place = say(
             (shown.y < innerHeight / 3 ? 'top' :
                 (shown.y > innerHeight * 2 / 3 ? 'bottom' : 'middle')) + ' ' +
             (shown.x < innerWidth / 3 ? 'left' :
-                (shown.x > innerWidth * 2 / 3 ? 'right' : 'center')) +
-            ' of this window.' + (layer === null ? '' :
-                ' Something is in front of it right now — close that first.');
+                (shown.x > innerWidth * 2 / 3 ? 'right' : 'center')),
+        );
+        const whereWords = inPanel === null
+            ? say('The ringed control is at the {where} of this window.', {
+                where: place,
+            })
+            : say('The ringed control is in the {panel} panel, at the ' +
+                '{where} of this window.', { panel: inPanel, where: place });
+        const layerWords = layer === null
+            ? ''
+            : ' ' + say('Something is in front of it right now — close ' +
+                'that first.');
+        const twins = twinsAt(match);
+        const twinWords = twins === null || twins.count <= 1
+            ? ''
+            : ' ' + say(twins.panels.length > 0
+                ? '{count} controls are called "{name}" (in {panels}), so ' +
+                    'the ring may be on the wrong one — the step says which.'
+                : '{count} controls are called "{name}", so the ring may be ' +
+                    'on the wrong one — the step says which.', {
+                count: twins.count,
+                name: named,
+                panels: twins.panels.slice(0, 4).join(', '),
+            });
+        parts.hint.textContent =
+            doWords + heldWords + whereWords + layerWords + twinWords;
         watchedElement = target;
         target.addEventListener(
             isHover ? 'mouseover' : 'click',
@@ -1206,20 +1520,26 @@ const GUIDE_RUNTIME = `
 
         if (state.lastAction === 'started' && state.wasDemoAsked &&
             !state.canDemo) {
-            parts.hint.textContent = 'I cannot press these steps for you — ' +
-                'they are things to do in the page itself, not buttons. I ' +
-                'will walk you through them instead.';
+            parts.hint.textContent = say(
+                'I cannot press these steps for you — they are things to do ' +
+                    'in the page itself, not buttons. I will walk you ' +
+                    'through them instead.',
+            );
             return;
         }
         if (state.lastAction === 'demo-did-it' && state.lastResult !== null &&
             state.lastResult.more !== undefined) {
             parts.hint.textContent = state.lastResult.did === 'revealed'
-                ? 'I opened the hidden controls. "' + state.lastResult.more +
-                    '" is visible now. Press ' + state.labels.act +
-                    ' again and I will finish this step.'
-                : 'Done - and it brought up "' + state.lastResult.more +
-                    '". Press ' + state.labels.act +
-                    ' again to finish this step.';
+                ? say(
+                    'I opened the hidden controls. "{more}" is visible now. ' +
+                        'Press {act} again and I will finish this step.',
+                    { more: state.lastResult.more, act: state.labels.act },
+                )
+                : say(
+                    'Done - and it brought up "{more}". Press {act} again ' +
+                        'to finish this step.',
+                    { more: state.lastResult.more, act: state.labels.act },
+                );
             return;
         }
         if (state.lastAction === 'demo-did-it' && state.lastResult !== null &&
@@ -1227,9 +1547,11 @@ const GUIDE_RUNTIME = `
             // The popup closes on the app's own event loop: the control may
             // still be covered on this draw and free on the next one, which
             // the tracker makes for itself. The words do not depend on it.
-            parts.hint.textContent = 'I closed ' + state.lastResult.closed +
-                ', which was in the way. Press ' + state.labels.act +
-                ' again and I will do this step.';
+            parts.hint.textContent = say(
+                'I closed {closed}, which was in the way. Press {act} again ' +
+                    'and I will do this step.',
+                { closed: state.lastResult.closed, act: state.labels.act },
+            );
             return;
         }
         if (state.lastAction === 'demo-could-not' && state.lastResult !== null) {
@@ -1237,8 +1559,10 @@ const GUIDE_RUNTIME = `
             // window and knows more about this step than the card does, so
             // whatever it says outranks the card's own apology.
             if (state.help !== null && state.help.status === 'asking') {
-                parts.hint.textContent = 'That did not work — I am asking ' +
-                    'the assistant to look at your window…';
+                parts.hint.textContent = say(
+                    'That did not work — I am asking the assistant to look ' +
+                        'at your window…',
+                );
                 return;
             }
             if (state.help !== null && state.help.status === 'answered') {
@@ -1246,9 +1570,11 @@ const GUIDE_RUNTIME = `
                 parts.hint.dataset.help = 'answered';
                 return;
             }
-            parts.hint.textContent = 'I could not do that one for you (' +
-                state.lastResult.reason + ') - do it yourself, then press ' +
-                state.labels.skip + '.';
+            parts.hint.textContent = say(
+                'I could not do that one for you ({reason}) - do it ' +
+                    'yourself, then press {skip}.',
+                { reason: state.lastResult.reason, skip: state.labels.skip },
+            );
         }
     };
 
@@ -1312,6 +1638,11 @@ const GUIDE_RUNTIME = `
         };
         let match = findMatch(step);
         let target = match === null ? null : match.element;
+        // Matched against the window as the LAST press left it; now, before
+        // this press, the window as it is becomes what the next step's twins
+        // are judged against, and the cache goes with it.
+        state.knownAtStart = new WeakSet(dm.collect());
+        state.twinResolveFor = null;
         // A step reading "right-click the list and choose X" is two actions.
         // While X is not on screen the press opens the menu; once it is, the
         // very same press chooses it. One press, one action, either way --
@@ -1395,6 +1726,17 @@ const GUIDE_RUNTIME = `
                     (step.finds ?? [step.find]).filter(Boolean),
                 ),
             };
+        }
+        if (match !== null) {
+            const twins = twinsAt(match, true);
+            if (twins !== null && twins.count > 1) {
+                return {
+                    done: false,
+                    reason: toTwinWords(twins, nameOf(step, match)) +
+                        ' and the step does not say which',
+                    twins,
+                };
+            }
         }
         // Judged before anything is closed out of its way: a control that is
         // not the card's to press must not cost the user a popup first.
@@ -1587,7 +1929,10 @@ const GUIDE_RUNTIME = `
                 const at = dm.openContextMenu(target);
                 return await withMore({ done: true, did: 'right-clicked', at });
             }
-            target.click();
+            // At the control's centre, as owa_click presses: the app opens
+            // its menus from the event's coordinates, and the Foreground
+            // lessons' first press opens the launcher menu.
+            (${PRESS_AT_CENTRE_SOURCE})(target);
             return await withMore({ done: true, did: 'clicked',
                 label: (target.textContent ||
                     target.getAttribute('title') || '').trim().slice(0, 40) });
@@ -1597,10 +1942,12 @@ const GUIDE_RUNTIME = `
     };
 
     const api = {
+        version: VERSION,
         start(payload) {
             state.steps = (payload.steps ?? []).slice(0, ${MAX_STEPS});
             state.title = payload.title ?? 'Step by step';
             state.labels = Object.assign(state.labels, payload.labels ?? {});
+            state.words = Object.assign(state.words, payload.words ?? {});
             state.guard = payload.guard ?? null;
             // A recipe whose steps name no control at all can be walked
             // through but never performed: EVERY press of "Do it" would
@@ -1619,6 +1966,8 @@ const GUIDE_RUNTIME = `
             state.isDemo = state.wasDemoAsked && state.canDemo;
             state.index = 0;
             state.pendingFind = null;
+            state.knownAtStart = new WeakSet(dm.collect());
+            state.twinResolveFor = null;
             // A restart is usually the assistant's OWN answer to a stuck step
             // -- the fix landing, not a leftover to carry over. Dropping the
             // token here is also what stops a late answer writing on the card
@@ -1663,6 +2012,9 @@ const GUIDE_RUNTIME = `
         stop(reason) {
             state.isRunning = false;
             state.isActing = false;
+            state.twinsFor = null;
+            state.knownAtStart = null;
+            state.twinResolveFor = null;
             state.lastAction = reason ?? 'stopped';
             unwatch();
             // Not left to lapse: a guide that is stopped should
@@ -1728,12 +2080,17 @@ const GUIDE_RUNTIME = `
             const found = match === null || isLoose ? null : match.element;
             const named = step === undefined ? null : nameOf(step, match);
             const foundCover = found === null ? null : coverOf(found);
+            const twins = found === null ? null : twinsAt(match);
             return {
                 isRunning: state.isRunning,
                 isDemo: state.isDemo,
                 canDemo: state.canDemo,
                 find: named,
                 isTargetFound: found !== null,
+                // Found, and so are others with the same words: the ring
+                // and a press may be on the wrong one. Said with the panels
+                // they sit in, for whoever writes the next step.
+                ...(twins !== null && twins.count > 1 ? { twins } : {}),
                 nearest: isLoose
                     ? (dm.labelPartsOf(match.element)[0] ?? '').slice(0, 60)
                     : null,
@@ -1874,7 +2231,8 @@ const MODIFIER_MAP = {
 // forces every key back to that layout THROUGH the code before matching it
 // (`toEnUsKey`), so a `key` sent with no `code` matches nothing on a German
 // or Khmer layout -- the exact users this app is for.
-function toKeyCode(key) {
+/** The `code` a key's `key` value implies: `a` is `KeyA`, `5` is `Digit5`. */
+export function toKeyCode(key) {
   if (/^[a-z]$/i.test(key)) {
     return 'Key' + key.toUpperCase();
   }
@@ -1959,7 +2317,7 @@ export function toKeystroke(phrase) {
 }
 
 // ...nor is the verb in front of it, nor a word the manual merely stressed.
-// A real label is Capitalised on screen ("Bible Reader", "Clear Bible"); bold
+// A real label is Capitalised on screen ("Bible Reader", "Clear Long Text"); bold
 // prose is not ("**not**", "**version**") -- and "not" would have found the
 // Notes button and drawn a red ring around the wrong thing entirely.
 const ACTION_PATTERN =
@@ -2160,7 +2518,10 @@ function genHereNames(pathname) {
 // the 44 manual documents: 5 recipes name exactly one window and all 5 are
 // right, 5 name more than one, 29 name none.
 export function detectRecipeWindow(steps) {
-  const first = steps?.[0]?.text ?? '';
+  // The FIRST sentence, as `dropStepsAlreadyDone` reads it: the AI Chat
+  // recipe opens "Click the AI Chat button ... It works whether or not AI
+  // features is switched on in Settings", and its card was aimed at Settings.
+  const first = toFirstSentence(steps?.[0]?.text ?? '');
   const goingPattern = /^(click|open|go to|switch to|choose|select|press)\b/i;
   if (!goingPattern.test(first)) {
     return null;
@@ -2196,11 +2557,40 @@ export function dropStepsAlreadyDone(steps, pathname = '') {
       return lowered.includes(name);
     });
   };
+  // ...and the words alone cannot say WHAT is opened there. "Open Bible
+  // Lookup at the top of the Presenter." names this window and goes nowhere:
+  // it presses Bible Lookup IN it, and dropping it started two Presenter tips
+  // on a step inside a popup nobody had opened. So a step that names a control
+  // is a trip to this window only when every control it names IS this window
+  // ("Bible Reader", "Setting", "Slide Editor"); a step naming none is still
+  // read by its words alone, as before.
+  const checkIsWindowName = (control) => {
+    const lowered = control.trim().toLowerCase();
+    return (
+      lowered.length > 0 &&
+      hereNames.some((name) => {
+        return name.includes(lowered) || lowered.includes(name);
+      })
+    );
+  };
+  const checkPressesSomethingHere = (step) => {
+    const controls = [
+      ...(step.finds ?? []),
+      ...(typeof step.find === 'string' ? [step.find] : []),
+    ];
+    return (
+      controls.length > 0 &&
+      !controls.every((control) => {
+        return checkIsWindowName(String(control));
+      })
+    );
+  };
   const goingPattern = /^(click|open|go to|switch to|choose|select)\b/i;
   while (
     kept.length > 1 &&
     goingPattern.test(kept[0].text) &&
-    checkIsHere(kept[0].text)
+    checkIsHere(kept[0].text) &&
+    !checkPressesSomethingHere(kept[0])
   ) {
     kept.shift();
   }
@@ -2268,12 +2658,69 @@ const NUMBERED_STEP_PATTERN = /^\s*\d+\.\s+(.*)$/;
 // step of it.
 const BOLD_LED_STEP_PATTERN =
   /^(?:[-*]\s+)?(\*\*(?!(?:Goal|Where|Verify|Note|Tip|Why|Screenshots?)\b)[^*\n]{1,120}\*\*.*)$/;
+// Every bold-led line, the page's own front matter included: what a
+// TRANSLATED page is read by, its `**Goal:**` written in its own words, and
+// then lined up with the English page's lines by place (`isFront`).
+const BOLD_LED_ANY_PATTERN = /^(?:[-*]\s+)?(\*\*[^*\n]{1,120}\*\*.*)$/;
 
-export function toGuideSteps(markdown, limit = MAX_STEPS) {
+/**
+ * The walkthrough steps of a recipe page. `isTextKept` keeps each step's
+ * words as written: a page's own translation (`W-11@km`) is all words
+ * `toEnglishOnly` would take out, and only its text is read
+ * (`withLocalStepText` in `owaTools.mjs`) -- the controls come from the
+ * English page.
+ */
+/**
+ * A page's TRANSLATION read as the English page's steps, in its own words,
+ * or null when the two do not line up: step for step as they stand, else --
+ * on a bullet page, whose front matter (`**Goal:**`) a translation writes
+ * in its own words -- every bold-led line of each, the translation's dropped
+ * where the English one is front matter.
+ */
+export function lineUpTranslatedSteps(englishMarkdown, localMarkdown, count) {
+  const asIs = toGuideSteps(localMarkdown, undefined, { isTextKept: true });
+  if (asIs.length === count) {
+    return asIs;
+  }
+  const englishAll = toGuideSteps(englishMarkdown, undefined, {
+    isFrontKept: true,
+  });
+  const localAll = toGuideSteps(localMarkdown, undefined, {
+    isTextKept: true,
+    isFrontKept: true,
+  });
+  if (englishAll.length !== localAll.length) {
+    return null;
+  }
+  const lined = localAll.filter((_step, index) => {
+    return englishAll[index].isFront !== true;
+  });
+  return lined.length === count ? lined : null;
+}
+
+export function toGuideSteps(
+  markdown,
+  limit = MAX_STEPS,
+  // `isFrontKept`: a bullet page's front matter (`**Goal:**`, `**Where:**`)
+  // read as lines too, each marked `isFront`, so a translation -- whose
+  // front matter is in its own words -- lines up with the English by place.
+  { isTextKept = false, isFrontKept = false } = {},
+) {
+  const toShownText = isTextKept
+    ? (text) => {
+        return text;
+      }
+    : toEnglishOnly;
   const lines = markdown.split(/\r?\n/);
   let steps = readStepLines(lines, NUMBERED_STEP_PATTERN);
+  let isBulletPage = false;
   if (steps.length === 0) {
-    steps = readStepLines(lines, BOLD_LED_STEP_PATTERN, true);
+    isBulletPage = true;
+    steps = readStepLines(
+      lines,
+      isFrontKept ? BOLD_LED_ANY_PATTERN : BOLD_LED_STEP_PATTERN,
+      true,
+    );
   }
   return steps
     .slice(0, limit)
@@ -2328,7 +2775,7 @@ export function toGuideSteps(markdown, limit = MAX_STEPS) {
       const action = RIGHT_CLICK_PATTERN.test(step.raw)
         ? 'rightClick'
         : undefined;
-      const text = toEnglishOnly(
+      const text = toShownText(
         step.raw
           // The screenshot markers and links mean nothing on a card.
           .replace(/📸/g, '')
@@ -2345,6 +2792,11 @@ export function toGuideSteps(markdown, limit = MAX_STEPS) {
         text,
         finds,
         ...(checkIsLookStep(text, finds, keys, action) ? { kind: 'look' } : {}),
+        ...(isFrontKept &&
+        isBulletPage &&
+        !BOLD_LED_STEP_PATTERN.test(step.raw)
+          ? { isFront: true }
+          : {}),
       };
     })
     .filter((step) => {

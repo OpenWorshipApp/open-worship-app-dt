@@ -428,6 +428,28 @@ if (chatbotPage === null) {
     process.exit(1);
 }
 
+// The head may have been folded to one line by hand (the arrow at its left
+// edge), and a folded head draws no picker to read or to set. Opened the way
+// the user opens it, and in an evaluation of its own: the pickers are only
+// there once React has rendered the press. The window remembers the fold, so
+// a run that found it folded leaves it open.
+const headFold = await evaluateInTarget(
+    chatbotPage,
+    `(() => {
+        const fold = document.querySelector(
+            '.chat-head-fold[aria-expanded="false"]',
+        );
+        if (fold === null) {
+            return { wasFolded: false };
+        }
+        fold.click();
+        return { wasFolded: true };
+    })()`,
+);
+if (headFold?.wasFolded) {
+    note('the head was folded to one line; opened it to reach the pickers');
+}
+
 const initial = await getChatbotState(chatbotPage);
 // A provider with no key is a PICKABLE row -- picking it opens Settings at its
 // key box -- so `data-needs-key` is what says it cannot answer, not

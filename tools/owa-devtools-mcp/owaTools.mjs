@@ -13,15 +13,25 @@ import {
   evaluateInTarget,
   listTargets,
   requireLivePort,
+  runInTarget,
+  waitForNewAppPage,
 } from './cdp.mjs';
+import { checkDropFilePaths } from './dropFilePaths.mjs';
 import {
+  addOpenedWindow,
   genClickExpression,
+  genDragExpression,
+  genDropAimExpression,
+  genDropReadExpression,
   genFindUiExpression,
   genHighlightSelectorExpression,
   genListUiExpression,
+  genPressKeyExpression,
+  genScrollExpression,
   genTypeExpression,
 } from './domMatch.mjs';
 import { readLiveInstances } from './discovery.mjs';
+import { FRESH_PAGE_NOTE_LEAD } from './manualPage.mjs';
 import {
   genPressGuard,
   genPressRefusalReason,
@@ -32,12 +42,17 @@ import {
   genPresenterStateExpression,
 } from './agentPresenter.mjs';
 import {
+  GUIDE_CARD_HINT_TEMPLATE_LIST,
+  GUIDE_CARD_LABEL_KEY_MAP,
+  GUIDE_CARD_TITLE_KEY,
   detectRecipeWindow,
   dropStepsAlreadyDone,
   genGuideExpression,
-  selectGuideStepsForTopic,
+  selectGuideStepIndexForTopic,
   stripInternalIds,
+  lineUpTranslatedSteps,
   toGuideSteps,
+  toKeyCode,
   toKeystroke,
 } from './guide.mjs';
 import {
@@ -45,13 +60,20 @@ import {
   BOT_FOCUS_LIST,
   BOT_MAIN_WINDOW_PAGES,
 } from './botFocus.mjs';
-import { readHelpPage, scrubRecipeIds, searchHelp } from './help.mjs';
+import {
+  genFreshPageUrl,
+  readHelpPage,
+  scrubRecipeIds,
+  searchHelp,
+} from './help.mjs';
 import { checkOpenLyricText, validateOpenLyric } from './openLyric.mjs';
 import { draftOpenLyricText } from './openLyricDraft.mjs';
+import { formatSongLookup } from './songLookup.mjs';
 import {
   genPickerReadExpression,
   genPickerStartExpression,
   genPickerStopExpression,
+  PICKER_HINT_TEMPLATE,
 } from './picker.mjs';
 import {
   listQuestionPageIds,
@@ -69,22 +91,38 @@ import {
   genAgentFileExpression,
 } from './agentFile.mjs';
 import {
+  AGENT_MENU_ACTIONS,
+  formatMenuResult,
+  genMenuClickExpression,
+  genMenuListExpression,
+} from './agentMenu.mjs';
+import {
   AGENT_BIBLE_ITEM_ACTIONS,
+  AGENT_MEDIA_FILE_ACTIONS,
+  AGENT_MEDIA_KINDS,
   AGENT_NOTE_ACTIONS,
+  AGENT_PRESENTING_FLOW_ACTIONS,
   AGENT_UNDO_ACTIONS,
   AGENT_UNDO_TEXT,
   formatAgentDataResult,
   genAgentDataExpression,
 } from './agentData.mjs';
 import {
+  WEBSITE_READ_EVALUATE_TIMEOUT,
   WEBSITE_TEXT_DEFAULT_CHARS,
   WEBSITE_TEXT_MAX_CHARS,
   formatWebPageRead,
   genReadWebPageExpression,
   toReadableCharCount,
 } from './website.mjs';
-import { listTranLanguages, tranText } from './tran.mjs';
+import {
+  listTranLanguages,
+  loadTranBundle,
+  resolveTranTemplates,
+  tranText,
+} from './tran.mjs';
 import { genListScreensExpression } from './agentScreens.mjs';
+import { registerBibleXmlTool } from './agentBibleXml.mjs';
 import {
   AGENT_BIBLE_ACTIONS,
   formatPresentBibleResult,
@@ -114,6 +152,18 @@ const WINDOW_LIST_TEXT =
 // what leaving it out means.
 const PAGE_TEXT =
   'Part of the window URL, e.g. "reader.html"; default the main window.';
+
+// `owa_find_verse`: the first search of a Bible builds Bible Find's index of
+// it, every verse read once -- seconds on a fast machine, longer on the ones
+// this app is for. Every later search is a few table scans.
+const BIBLE_FIND_TIMEOUT = 120 * 1000;
+
+// `owa_lookup_record`: a person or place not held by an open panel loads the
+// names-and-places dataset (~34MB of JSON) for the read -- seconds on the
+// machines this app is for -- and then quotes a few verses.
+const LOOKUP_RECORD_TIMEOUT = 60 * 1000;
+// A Resources PDF is drawn page by page in a child process of main.
+const RESOURCE_FILE_TIMEOUT = 60 * 1000;
 
 // What language the app's own interface is in RIGHT NOW.
 //
@@ -169,15 +219,143 @@ function withTranslations(labels, langCode) {
   if (!langCode || langCode === 'en') {
     return labels;
   }
+  const bundle = loadTranBundle();
   const out = [];
   for (const label of labels) {
     out.push(label);
-    const translated = tranText(label, langCode);
+    const translated = tranLabel(label, langCode, bundle);
     if (translated !== label) {
       out.push(translated);
     }
   }
   return out;
+}
+
+// "Panel > Control" is two labels, and each is translated on its own: the
+// whole string is no dictionary key, so a scope written in English was handed
+// to a Khmer window untranslated in both halves -- and a scope now matches the
+// name the window SHOWS for a panel (its header, in that language) as well as
+// its stamped English one (`scopePathOf`, 2026-10-16, T2).
+const SCOPE_SEPARATOR_PATTERN = /\s*(?:>|»)\s*/;
+function tranLabel(label, langCode, bundle) {
+  const whole = tranText(label, langCode, bundle);
+  if (whole !== label || typeof label !== 'string') {
+    return whole;
+  }
+  const parts = label.split(SCOPE_SEPARATOR_PATTERN);
+  if (parts.length < 2) {
+    return label;
+  }
+  const translatedParts = parts.map((part) => {
+    return tranText(part, langCode, bundle);
+  });
+  const isChanged = translatedParts.some((part, index) => {
+    return part !== parts[index];
+  });
+  return isChanged ? translatedParts.join(' > ') : label;
+}
+
+// The walkthrough card's own words in the window's language: Next, Back,
+// Done... and its default title. Only the words the dictionary has -- a
+// missing one stays English, never blank.
+function genGuideCardWords(langCode) {
+  if (!langCode || langCode === 'en') {
+    return { labels: {}, words: {}, title: GUIDE_CARD_TITLE_KEY };
+  }
+  const bundle = loadTranBundle();
+  const labels = {};
+  for (const [slot, key] of Object.entries(GUIDE_CARD_LABEL_KEY_MAP)) {
+    const word = tranText(key, langCode, bundle);
+    if (word !== key) {
+      labels[slot] = word;
+    }
+  }
+  // Its sentences too, the ones the dictionary has (`say` in the runtime).
+  const words = {};
+  for (const template of GUIDE_CARD_HINT_TEMPLATE_LIST) {
+    const translated = tranText(template, langCode, bundle);
+    if (translated !== template) {
+      words[template] = translated;
+    }
+  }
+  return {
+    labels,
+    words,
+    title: tranText(GUIDE_CARD_TITLE_KEY, langCode, bundle),
+  };
+}
+
+// A step's controls, the window's words FIRST: in a Khmer window the English
+// label rings nothing, and the matcher takes the first candidate on screen.
+// A scoped label also keeps its panel's English name beside the translated
+// control, because a panel answers to its `data-widget-name` in every
+// language. The English ones stay last.
+function localizeFinds(finds, langCode, bundle) {
+  if (!langCode || langCode === 'en') {
+    return finds;
+  }
+  const out = [];
+  for (const find of finds) {
+    const local = tranLabel(find, langCode, bundle);
+    if (local !== find) {
+      out.push(local);
+      const parts = String(find).split(SCOPE_SEPARATOR_PATTERN);
+      if (parts.length === 2) {
+        out.push(`${parts[0]} > ${tranText(parts[1], langCode, bundle)}`);
+      }
+    }
+    out.push(find);
+  }
+  return out.filter((one, at, all) => {
+    return all.indexOf(one) === at;
+  });
+}
+
+// Each step of a recipe card, as the window will read it: the same page read
+// with its `[en:tran:…]` templates intact, so a control's name is the one ON
+// the button. The steps are built from the English page (every rule that
+// picks, drops and orders them reads the recipe's own words) and the two are
+// the same steps in the same order, read off the same lines; when they are
+// not, the English text stands.
+// The page's own translation is read first when it is current (`W-11@km`,
+// `docs/manual-i18n/`): the whole step in the window's language, not the
+// English step with its button names translated -- which is what a Khmer
+// window had shown, an English sentence round a Khmer word (2026-10-17).
+function readLocalStepPage(manualId, langCode) {
+  const translated = readHelpPage(`${manualId}@${langCode}`, null, 'whole', {
+    keepTemplates: true,
+  });
+  return translated?.lang === langCode ? translated : null;
+}
+
+function withLocalStepText(steps, manualId, langCode) {
+  if (!langCode || langCode === 'en') {
+    return steps;
+  }
+  const englishPage = readHelpPage(manualId, null, 'whole', {
+    keepTemplates: true,
+  });
+  const localPage = readLocalStepPage(manualId, langCode);
+  // The translation's own words when it lines up with the English steps
+  // (`lineUpTranslatedSteps`), else the English page's, button names to
+  // be put into the language below.
+  let rawSteps =
+    localPage === null || englishPage === null
+      ? null
+      : lineUpTranslatedSteps(englishPage.body, localPage.body, steps.length);
+  if (rawSteps === null) {
+    rawSteps = englishPage === null ? [] : toGuideSteps(englishPage.body);
+  }
+  if (rawSteps.length !== steps.length) {
+    return steps;
+  }
+  const bundle = loadTranBundle();
+  return steps.map((step, index) => {
+    return {
+      ...step,
+      localText: resolveTranTemplates(rawSteps[index].text, langCode, bundle),
+    };
+  });
 }
 
 // Compact, never indented. A result is not read once: it stays in front of
@@ -257,6 +435,33 @@ function toImageResult(dataUrl) {
 }
 
 /**
+ * `owa_resource_file`'s answer: its words as text, and the pictures it
+ * carries -- a PDF's pages -- as image blocks after them, in order, where
+ * a model that sees pictures sees them. Never a megabyte of base64 inside
+ * the text.
+ */
+function toResourceFileResult(value) {
+  const formatted = formatAgentDataResult(value);
+  if (formatted.isError) {
+    return toErrorResult(new Error(formatted.text));
+  }
+  const { images, ...rest } = value;
+  const pictures = (Array.isArray(images) ? images : [])
+    .map((dataUrl) => {
+      return /^data:(image\/[a-z+]+);base64,(.+)$/is.exec(String(dataUrl));
+    })
+    .filter((matched) => {
+      return matched !== null;
+    })
+    .map((matched) => {
+      return { type: 'image', mimeType: matched[1], data: matched[2] };
+    });
+  return {
+    content: [{ type: 'text', text: JSON.stringify(rest) }, ...pictures],
+  };
+}
+
+/**
  * The app's own capture IPC, driven from the page.
  *
  * `capturePage` lives in the main process and this package must never import
@@ -265,9 +470,16 @@ function toImageResult(dataUrl) {
  * the way the app's own code does, and `awaitPromise` on the CDP side lets the
  * promise be the answer.
  */
-function genCaptureExpression(screenId) {
+function genCaptureExpression(screenId, isOwnWindow) {
+  // Aimed at a window by name, the picture is of THAT window (main answers
+  // `isOwnWindow` with the asking page's own); with no page named it stays
+  // the main window, as it always was.
   const args =
-    screenId === undefined ? '{}' : `{ screenId: ${JSON.stringify(screenId)} }`;
+    screenId !== undefined
+      ? `{ screenId: ${JSON.stringify(screenId)} }`
+      : isOwnWindow
+        ? '{ isOwnWindow: true }'
+        : '{}';
   return `(() => {
         if (typeof require !== 'function') {
             throw new Error(
@@ -311,7 +523,13 @@ function genCaptureExpression(screenId) {
  */
 async function runElementPicker(timeoutSeconds, page) {
   const deadline = Date.now() + (timeoutSeconds ?? 45) * 1000;
-  await evaluateInApp(genPickerStartExpression(), { match: page });
+  // Its line in the window's own language, like the walkthrough card's.
+  const langCode = await readAppLanguage(page);
+  const hintText =
+    langCode === 'en'
+      ? PICKER_HINT_TEMPLATE
+      : tranText(PICKER_HINT_TEMPLATE, langCode, loadTranBundle());
+  await evaluateInApp(genPickerStartExpression(hintText), { match: page });
   try {
     for (;;) {
       const { value } = await evaluateInApp(genPickerReadExpression(), {
@@ -321,9 +539,11 @@ async function runElementPicker(timeoutSeconds, page) {
         return { picked: true, element: value.result };
       }
       if (value?.phase === 'cancelled' || value?.phase === 'idle') {
+        // Read out in the help window, under the ◎ the person pressed:
+        // worded for them, not about them.
         return {
           picked: false,
-          reason: 'The user did not point at anything.',
+          reason: 'Nothing was pointed at.',
         };
       }
       if (Date.now() > deadline) {
@@ -410,7 +630,9 @@ function genOpenLyricRefusal(report) {
   ].join('\n');
 }
 
-export function registerOwaTools(server) {
+export function registerOwaTools(server, { door = 'stdio' } = {}) {
+  // Bibles from an XML link, and the installed ones: its own module.
+  registerBibleXmlTool(server, { door });
   server.registerTool(
     'owa_help_search',
     {
@@ -580,7 +802,7 @@ export function registerOwaTools(server) {
           .union([z.string(), z.array(z.string()).max(20)])
           .describe(
             'The English label, exactly as the manual writes it ' +
-              '(e.g. "Clear Bible"). A list translates several ' +
+              '(e.g. "Clear Slide"). A list translates several ' +
               'at once.',
           ),
         lang: z
@@ -621,14 +843,17 @@ export function registerOwaTools(server) {
     'owa_help_page',
     {
       description:
-        'Read one knowledge document in full by the id an ' +
+        'Read one knowledge document by the id an ' +
         'owa_help_search hit carries (e.g. "W-11", or ' +
         '"internal:memory/....md") -- the steps behind the excerpt.',
-      inputSchema: { id: z.string() },
+      // `part`: a page too long for one read ends by saying so, and how to
+      // read the next. Said there and not in the description, which every
+      // round of every question pays for.
+      inputSchema: { id: z.string(), part: z.number().optional() },
     },
-    async ({ id }) => {
+    async ({ id, part }) => {
       return await attempt(async () => {
-        const page = readHelpPage(id, await readAppLanguage());
+        const page = readHelpPage(id, await readAppLanguage(), part ?? 1);
         if (page === null) {
           throw new Error(`No knowledge document "${id}"`);
         }
@@ -655,7 +880,33 @@ export function registerOwaTools(server) {
         // through, since 2026-09-08: the excerpt was NOT scrubbed,
         // and a two-round answer is written from the excerpt.
         const body = scrubRecipeIds(page.body.replace(/^#\s+.*(\r?\n)+/, ''));
-        return `# ${page.title}${kindNote}\n\n${body}`;
+        // The way out when the person says the page is WRONG for what is
+        // on their window: the copy on this computer is as old as its
+        // release. Said at the foot of the page it belongs to, so the model
+        // is handed the one address it may read for how this app works and
+        // never has to make one up. With this copy's own day, because the
+        // repository's is the newer one only when ITS day is later: a build
+        // from a branch ahead of `main` carries pages `main` does not have
+        // yet, and read as "newest" the older page took a corrected answer
+        // back to the wrong one (measured 2026-10-11, the first time the
+        // read was run against the real address).
+        const freshUrl = genFreshPageUrl(page);
+        const dateNote = page.date
+          ? `-- this copy is dated ${page.date}; the other names its own ` +
+            'day on its workflowsVersion line, and is the newer one only ' +
+            'when that day is later '
+          : '';
+        const freshNote =
+          freshUrl === null
+            ? ''
+            : `\n\n${FRESH_PAGE_NOTE_LEAD}` +
+              'read its newest copy with owa_read_website: ' +
+              `${freshUrl} ${dateNote})_`;
+        // A later part says which it is on its heading: the model asked for
+        // it by number, and the window drops the heading when it joins them.
+        const partNote =
+          page.part > 1 ? ` (part ${page.part} of ${page.partCount})` : '';
+        return `# ${page.title}${partNote}${kindNote}\n\n${body}${freshNote}`;
       });
     },
   );
@@ -732,8 +983,10 @@ export function registerOwaTools(server) {
             const { pid, port, isDev, version, startedAt } = instance;
             return { pid, port, isDev, version, startedAt };
           }),
+          // `id` is what `page` takes to aim at ONE window when two
+          // share an address (two Bible Reader windows).
           windows: targets.map((target) => {
-            return { title: target.title, url: target.url };
+            return { id: target.id, title: target.title, url: target.url };
           }),
           mainWindow,
         };
@@ -755,9 +1008,11 @@ export function registerOwaTools(server) {
         'needs only its show button. `controls` carries the exact ' +
         "words on that screen's show/hide toggle and Clear buttons " +
         '(and whether each Clear has anything to clear), so press ' +
-        'them with `owa_click` by those words instead of searching; ' +
-        '`previewCard` says where the Mini Screen panel sits in the ' +
-        'window. Call it again after a press to CHECK what changed.',
+        'them with `owa_click` by those words, no search; ' +
+        '`previewCard` says where the Mini Screen panel sits. Call ' +
+        'again after a press to CHECK what changed. Off the Presenter ' +
+        'page it answers `needsPage: "presenter"` and `isAnyShowing` ' +
+        'only -- `owa_goto_page` there first.',
       inputSchema: {},
     },
     async () => {
@@ -953,9 +1208,10 @@ export function registerOwaTools(server) {
     },
     async ({ screenId, page }) => {
       try {
-        const { value } = await evaluateInApp(genCaptureExpression(screenId), {
-          match: page,
-        });
+        const { value } = await evaluateInApp(
+          genCaptureExpression(screenId, Boolean(page)),
+          { match: page },
+        );
         return toImageResult(value);
       } catch (error) {
         return toErrorResult(error);
@@ -1019,7 +1275,7 @@ export function registerOwaTools(server) {
             wantsScreenshot: screenshot === true,
             maxChars: toReadableCharCount(maxChars),
           }),
-          { match: page },
+          { match: page, timeout: WEBSITE_READ_EVALUATE_TIMEOUT },
         );
         const text = formatWebPageRead(value, {
           wantsLinks: links === true,
@@ -1041,10 +1297,12 @@ export function registerOwaTools(server) {
     },
   );
 
-  // The one tool here that asks the app nothing. A song is text, the rules
-  // it has to follow are known, and the answer to "why won't it save?" is a
-  // line number -- so this needs no window, no CDP and no live app, and
-  // answers while the user is still typing.
+  // Checking a song asks the app nothing. A song is text, the rules it has
+  // to follow are known, and the answer to "why won't it save?" is a line
+  // number -- so a check or a draft from pasted words needs no window, no CDP
+  // and no live app, and answers while the user is still typing. Only a
+  // `url` (the page is read through the app) and `mode: "find"` (their own
+  // songs are the app's to list) ask it something.
   server.registerTool(
     'owa_lyric_validate',
     {
@@ -1063,8 +1321,9 @@ export function registerOwaTools(server) {
         'notation yourself. For a song on a web page pass its `url` ' +
         'and no `text`: the page is read here, whole, with every ' +
         'chord written in where it lands (a copy you type has none), ' +
-        'and the answer says which part of the page it used. Needs ' +
-        'nothing open.',
+        'and the answer says which part of the page it used. A song ' +
+        'by NAME only: `mode: "find"` + `title` -- looked up in their ' +
+        'songs and the app’s public-domain hymns.',
       inputSchema: {
         text: z
           .string()
@@ -1078,13 +1337,13 @@ export function registerOwaTools(server) {
           .optional()
           .describe('draft: the https address of a song page.'),
         mode: z
-          .enum(['check', 'draft'])
+          .enum(['check', 'draft', 'find'])
           .optional()
           .describe(
             'Left out, notation (```ol: fences) is checked and ' +
               'anything else is drafted.',
           ),
-        title: z.string().optional().describe('draft: its title'),
+        title: z.string().optional().describe('draft, find: its title'),
         artist: z.string().optional().describe('draft: who it is by'),
         copyright: z
           .string()
@@ -1106,6 +1365,28 @@ export function registerOwaTools(server) {
     },
     async ({ text, mode, title, artist, copyright, from, to, url }) => {
       return await attempt(async () => {
+        if (mode === 'find') {
+          // The words come from the APP: the user's own songs and the
+          // public-domain collection live in the renderer bundle, which
+          // this package may not import -- so it is asked over the same
+          // relay `owa_lyric_file` uses (`songLookup.mjs`).
+          const asked = typeof title === 'string' ? title.trim() : '';
+          if (asked === '') {
+            throw new Error('Give the song’s `title` to find it.');
+          }
+          const { value } = await evaluateInApp(
+            genAgentFileExpression({
+              kind: 'lyric',
+              action: 'find',
+              name: asked,
+            }),
+          );
+          const formatted = formatAgentFileResult(value);
+          if (formatted.isError) {
+            throw new Error(formatted.text);
+          }
+          return formatSongLookup(value);
+        }
         const known = { title, artist, copyright, from, to };
         const address = typeof url === 'string' ? url.trim() : '';
         if (address !== '') {
@@ -1127,6 +1408,7 @@ export function registerOwaTools(server) {
               url: address,
               maxChars: WEBSITE_TEXT_MAX_CHARS,
             }),
+            { timeout: WEBSITE_READ_EVALUATE_TIMEOUT },
           );
           // Handed over exactly as `owa_read_website` would have
           // handed it, header line and fence included: the header
@@ -1215,8 +1497,9 @@ export function registerOwaTools(server) {
       contentText:
         'For `create` and `update`, `content` is the Open Lyric ' +
         'document itself: Markdown with an ```ol:Config fence ' +
-        'carrying Title, Artist, Copyright, Key, Tempo (120bpm), ' +
-        'Time (4/4) and Structure, then one fence per section ' +
+        'carrying Title and Structure (required); Artist, ' +
+        'Copyright, Key, Tempo (120bpm) and Time (4/4) only when ' +
+        'known, never a placeholder. Then one fence per section ' +
         '(```ol:Verse 1, ```ol:Chorus). It is checked by Open ' +
         'Lyric before anything is written and refused with the ' +
         'reason if it does not parse.',
@@ -1395,6 +1678,252 @@ export function registerOwaTools(server) {
     },
   );
 
+  // A verse somebody half-remembers, found in an installed Bible
+  // (`src/helper/agentBibleFindHelpers.ts`). The chatbot offers it to its
+  // model only inside a verse-finding conversation, under a prompt of its
+  // own (`modelTools.mjs`, `MODEL_ON_ASK_TOOL_MAP`), so no other question
+  // pays for the schema. The first search of a Bible builds its index --
+  // Bible Find's own first wait -- hence the long timeout.
+  server.registerTool(
+    'owa_find_verse',
+    {
+      description:
+        'Find in a Bible installed here a verse the user half-remembers, ' +
+        'a story, or every verse with a word. `words`: what they remember, ' +
+        'any order -- verses holding the most of them come first, rarer ' +
+        'words breaking ties; a book named in them ("in Psalms") is the ' +
+        'book searched; `notInBible` names words this Bible never uses. ' +
+        'For a verse remembered by what it MEANS, search the words such a ' +
+        'verse would use, then other forms and synonyms. A result also ' +
+        'says where its words gather: `passages` (where a story is told; ' +
+        'its key opens the chapter) and `byBook`; `next` is the `from` of ' +
+        'the next page. `refs`: verses or chapters you think fit ("Matthew ' +
+        '6:34; Psalm 23"), quoted from this Bible -- never quote a verse it ' +
+        'did not return. `open`: a result’s `key`, shown in the Bible ' +
+        'Lookup (never on a screen), only when asked. No arguments: the ' +
+        'installed Bibles.',
+      inputSchema: {
+        bible: z
+          .string()
+          .optional()
+          .describe("An installed Bible's short name; default the lookup's"),
+        words: z.string().optional(),
+        refs: z.string().optional(),
+        book: z
+          .string()
+          .optional()
+          .describe('Search only these books: "Psalms", "Matthew, Mark"'),
+        from: z.number().int().min(0).optional(),
+        open: z
+          .string()
+          .optional()
+          .describe('A key from a result, e.g. "JHN 3:16" or "GEN 7"'),
+        page: z.string().optional(),
+      },
+    },
+    async ({ bible, words, refs, book, from, open, page }) => {
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression(
+            'bible-find',
+            { bible, words, refs, book, from, open },
+            BIBLE_FIND_TIMEOUT,
+          ),
+          { match: page, timeout: BIBLE_FIND_TIMEOUT + 5000 },
+        );
+        const formatted = formatAgentDataResult(value);
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // What a Lookup Detail panel shows -- a person or a place of the names
+  // lookup, or a Bible passage -- read whole (`src/helper/agentLookupHelpers.ts`,
+  // 2026-10-18). The chatbot reads the panel's own record with it when the
+  // panel's 🤖 opens a conversation, and offers it to its model inside that
+  // conversation only (`MODEL_ON_ASK_TOOL_MAP`). A record not held by an
+  // open panel loads the dataset for the read, hence the long timeout.
+  server.registerTool(
+    'owa_lookup_record',
+    {
+      description:
+        'Read a Bible person or place from the names lookup (drawn from ' +
+        'the KJV), or a Bible passage. `kind` name|location by `id` (from ' +
+        "a result's lists) or `name`: who or what it is, family, places, " +
+        'links, every verse key and the first verses quoted. Give `search` ' +
+        'with kind name|location to FIND people or places by words (a ' +
+        'partial or differently spelled name) -- the matches come back ' +
+        'with their ids for a read. `kind` verse ' +
+        'by `ref` ("GEN 2:19-21; John 3:16"): the passage in `bible` ' +
+        "(default the lookup's); `near` the chapter (or verse) before or " +
+        'after it instead; `names` also the people and places in it; ' +
+        '`related` also the verses its cross references lead to, by theme ' +
+        '(one verse: all its themes). Reads only.',
+      inputSchema: {
+        kind: z.enum(['name', 'location', 'verse']),
+        id: z.string().optional(),
+        name: z.string().optional(),
+        search: z
+          .string()
+          .optional()
+          .describe('Words to find a person (name) or place (location) by'),
+        ref: z.string().optional(),
+        bible: z.string().optional(),
+        lang: z
+          .string()
+          .optional()
+          .describe("The lookup's language code; default the one shown"),
+        near: z.enum(['previous', 'next']).optional(),
+        names: z.boolean().optional(),
+        related: z.boolean().optional(),
+        page: z.string().optional(),
+      },
+    },
+    async ({
+      kind,
+      id,
+      name,
+      search,
+      ref,
+      bible,
+      lang,
+      near,
+      names,
+      related,
+      page,
+    }) => {
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression(
+            'lookup',
+            { kind, id, name, search, ref, bible, lang, near, names, related },
+            LOOKUP_RECORD_TIMEOUT,
+          ),
+          { match: page, timeout: LOOKUP_RECORD_TIMEOUT + 5000 },
+        );
+        const formatted = formatAgentDataResult(value);
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // The Resources panel's files -- listed by book, chapter or words, and
+  // read: a PDF as pictures of its pages, a note as its words
+  // (`src/helper/agentResourcesHelpers.ts`, 2026-10-17). Reads only,
+  // inside the folders the panel lists. Offered to the chatbot's model only
+  // in a conversation about a Resources file (`MODEL_ON_ASK_TOOL_MAP`).
+  server.registerTool(
+    'owa_resource_file',
+    {
+      description:
+        "The user's Resources files: study PDFs, notes, links and " +
+        'pictures named by book and chapter (LUK.6.pdf is Luke 6, LUK.0 ' +
+        'its introduction). `list` by `book` (+ `chapter`) or `search`, or ' +
+        'by `ref` (a book and chapter together: "John 3", "យ៉ូហាន 3") -- a ' +
+        "book may be named in any installed Bible's own language, its " +
+        'English name or its code; `read` a `file` as listed, or its bare ' +
+        'file name when only one file in the folders has it -- a PDF ' +
+        'returns up to eight pages as complete pictures, starting at ' +
+        '`page` (default 1); `nextPage` says where to read on. An embedded ' +
+        'text layer is excluded because legacy ' +
+        'fonts can decode to unrelated characters. Omit `pages` for the whole PDF; ' +
+        'set it only to deliberately narrow a read. Use `detail` high for dense ' +
+        'or unclear print. ' +
+        'Reads only.',
+      inputSchema: {
+        action: z.enum(['list', 'read']),
+        book: z.string().optional(),
+        chapter: z.number().int().optional(),
+        ref: z
+          .string()
+          .optional()
+          .describe('A book and chapter together, e.g. "John 3"'),
+        search: z.string().optional(),
+        file: z.string().optional(),
+        page: z.number().int().optional(),
+        pages: z.number().int().min(1).max(8).optional(),
+        detail: z.enum(['normal', 'high']).optional(),
+      },
+    },
+    async ({
+      action,
+      book,
+      chapter,
+      ref,
+      search,
+      file,
+      page,
+      pages,
+      detail,
+    }) => {
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression(
+            'resources',
+            { action, book, chapter, ref, search, file, page, pages, detail },
+            RESOURCE_FILE_TIMEOUT,
+          ),
+          { timeout: RESOURCE_FILE_TIMEOUT + 5000 },
+        );
+        return toResourceFileResult(value);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // The chat box's input aid, asked by the WINDOW as a person types -- never
+  // by the model (`MODEL_HIDDEN_TOOL_MAP`). `reference` completes the books,
+  // chapters and verses of the Bible being read; `name` suggests the people
+  // and places a who/where question is naming. The names dataset is 34MB, so
+  // a NAME loads only when the person is clearly naming one (`allowLoad`) or
+  // a lookup panel already holds it (`getHeldLookupData`).
+  server.registerTool(
+    'owa_bible_suggest',
+    {
+      description:
+        "The chat box's input aid, read by the WINDOW as a person types -- " +
+        'not by you. `kind` "reference" completes a book, chapter and verse ' +
+        'in the Bible being read (`prefix`, and `book` when only digits were ' +
+        'typed); "name" suggests people and places of the names lookup. ' +
+        'Reads only; answer with owa_find_verse or owa_lookup_record.',
+      inputSchema: {
+        kind: z.enum(['reference', 'name']),
+        prefix: z.string(),
+        book: z.string().optional(),
+        allowLoad: z.boolean().optional(),
+        limit: z.number().int().optional(),
+        page: z.string().optional(),
+      },
+    },
+    async ({ kind, prefix, book, allowLoad, limit, page }) => {
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression(
+            'bible-suggest',
+            { kind, prefix, book, allowLoad, limit },
+            LOOKUP_RECORD_TIMEOUT,
+          ),
+          { match: page, timeout: LOOKUP_RECORD_TIMEOUT + 5000 },
+        );
+        const formatted = formatAgentDataResult(value);
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
   // A note open in its own window saves its WHOLE file back from the copy it
   // loaded -- every note save rewrites the file, and the lock that orders
   // writes lives in one window -- so a change made underneath it is put back
@@ -1480,13 +2009,111 @@ export function registerOwaTools(server) {
     },
   );
 
+  // The run sheets. The one editable document with no Save button -- every
+  // change the panel makes is the file -- so the backup behind each action is
+  // its whole undo, and the one place a volunteer's "add this to Sunday" had
+  // no tool at all: the panel is built by dragging (2026-10-10).
+  server.registerTool(
+    'owa_presenting_flow',
+    {
+      description:
+        "The user's run sheets (presenting flows): the order of a " +
+        "service. `list` names them; `info` reads one's lines (number, " +
+        'title, kind, isParked); `create`, `rename` (to `newName`) and ' +
+        '`delete` (to the trash) work on whole sheets. `add` puts a line ' +
+        'into sheet `name`: a `document` (a song or slide document by its ' +
+        'Documents-list name), a Bible `reference` ("John 3:16", in ' +
+        '`version`), or an `actionId` ("clear-all", "next-timeout" with ' +
+        '`seconds`, "screen-show" with `screenIds`; a wrong id answers with ' +
+        'them all) -- at line `at`, else last. `remove`, `duplicate`, ' +
+        '`park` (keep it listed, out of the run) and `unpark` take `line`; ' +
+        '`move` takes `line` and `to`. Nothing reaches a screen: the ' +
+        'operator runs the sheet. ' +
+        AGENT_UNDO_TEXT,
+      inputSchema: {
+        action: z.enum(AGENT_PRESENTING_FLOW_ACTIONS),
+        name: z
+          .string()
+          .optional()
+          .describe('The sheet as the Presenting Flows panel shows it'),
+        newName: z.string().optional(),
+        document: z.string().optional(),
+        reference: z.string().optional(),
+        version: z.string().optional(),
+        actionId: z.string().optional(),
+        seconds: z.number().int().optional(),
+        screenIds: z.array(z.number().int()).optional(),
+        line: z.number().int().optional().describe('A line number from info'),
+        to: z.number().int().optional(),
+        at: z.number().int().optional(),
+        page: z.string().optional(),
+      },
+    },
+    async ({ page, ...request }) => {
+      try {
+        const nameReason = findDataNameReason(request.name, request.newName);
+        if (nameReason !== null) {
+          return toErrorResult(new Error(nameReason));
+        }
+        return await runDataRequest('presenting-flow', request, page);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // The Background tabs' files. Three kinds are binary, which the backup
+  // store could not hold until the `blob` restore (2026-10-10): a clip is
+  // copied beside its backup before it goes to the trash, and an undo copies
+  // it back. An import copies a file from the disk in; a web page is written.
+  server.registerTool(
+    'owa_media_file',
+    {
+      description:
+        "The user's Background files by `kind`: pictures, clips, tracks " +
+        '(the Images / Videos / Audios tabs), web pages (Webs), and the ' +
+        "Documents folder's files (`document`: import a PDF, PowerPoint, " +
+        'Word, song or slide file from the disk; list them). `list` ' +
+        'names them (full names, "bg.mp4"); `info` reads one (a web ' +
+        "page's text); `rename` (to `newName`, extension kept); `delete` " +
+        '(to the trash, a copy kept so owa_undo puts it back); `import` ' +
+        'copies the file at `path` on the disk into the folder, never over ' +
+        'an existing one; `create` / `update` write a web page from ' +
+        '`content`. Nothing reaches a screen. ' +
+        AGENT_UNDO_TEXT,
+      inputSchema: {
+        action: z.enum(AGENT_MEDIA_FILE_ACTIONS),
+        kind: z.enum(AGENT_MEDIA_KINDS),
+        name: z.string().optional().describe('The full file name shown'),
+        newName: z.string().optional(),
+        content: z
+          .string()
+          .optional()
+          .describe('A web page, for create/update'),
+        path: z.string().optional().describe('A file on the disk, for import'),
+        page: z.string().optional(),
+      },
+    },
+    async ({ page, ...request }) => {
+      try {
+        const nameReason = findDataNameReason(request.name, request.newName);
+        if (nameReason !== null) {
+          return toErrorResult(new Error(nameReason));
+        }
+        return await runDataRequest('media', request, page);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
   server.registerTool(
     'owa_undo',
     {
       description:
         'Put back a change made through these tools -- a song, slide ' +
-        'document, slide, note or saved passage that was deleted, ' +
-        'changed, renamed or created. `list` shows the recent ' +
+        'document, slide, note, saved passage, run sheet or media file that was ' +
+        'deleted, changed, renamed or created. `list` shows the recent ' +
         'changes, newest first, each with an `id`; `undo` puts back ' +
         'change `id`, or with no `id` the newest one not yet undone. ' +
         'An undo is itself a change in the list, so it can be undone ' +
@@ -1686,7 +2313,10 @@ export function registerOwaTools(server) {
           // is a different word, so the ordinary case pays nothing.
           if ((value?.matches ?? []).length === 0) {
             const langCode = await readAppLanguage(page);
-            const translated = tranText(text, langCode);
+            const translated =
+              !langCode || langCode === 'en'
+                ? text
+                : tranLabel(text, langCode, loadTranBundle());
             if (translated !== text) {
               const retry = await evaluateInApp(
                 genFindUiExpression(translated, highlight === true),
@@ -1790,16 +2420,19 @@ export function registerOwaTools(server) {
         'with the closest labels it did find, so retry with one of ' +
         'those instead of giving up. Write "Panel > Control" to mean ' +
         'the one inside that panel ("Background > Videos"), which is ' +
-        'how a word that several panels share picks out the right ' +
-        'one. The answer says what was pressed AND what the press ' +
-        'did: `didChange`, `isOnNow` for a control with an on/off ' +
-        'state, and `unverified` when the control came out of it ' +
-        'unchanged. Pressing something is not the same as the thing ' +
-        'happening -- when the answer says `unverified`, check ' +
-        '(`owa_list_screens`, `owa_app_state`, `owa_find_ui`) before ' +
-        'telling the user it worked. Anything that changes what the ' +
+        'how a word several panels share picks the right one. The ' +
+        'answer says what was pressed AND what the press did: ' +
+        '`didChange`, `isOnNow` for a control with an on/off state, ' +
+        '`opened` / `closed` (menu, dialog, panel or window) for what it ' +
+        'brought up or put away, and `unverified` when nothing changed. Pressing ' +
+        'something is not the thing happening -- on `unverified`, ' +
+        'check (`owa_list_screens`, `owa_app_state`, `owa_find_ui`) ' +
+        'before telling the user it worked. Anything that changes what the ' +
         'congregation sees -- presenting, clearing, hiding a screen ' +
-        '-- must be offered to the user first, never done unasked.',
+        '-- must be offered to the user first, never done unasked. ' +
+        '`button: "right"` opens the control\'s own menu (a list row\'s ' +
+        'Rename, Move to Trash…); `clicks: 2` double-clicks (opens a ' +
+        'document, plays a clip).',
       inputSchema: {
         find: z
           .union([z.string(), z.array(z.string())])
@@ -1807,31 +2440,34 @@ export function registerOwaTools(server) {
             'The label written on the control, or a list of ' +
               'candidate labels to try in order.',
           ),
+        button: z.enum(['left', 'right']).optional(),
+        clicks: z.number().int().min(1).max(2).optional(),
         page: z.string().optional().describe(PAGE_TEXT),
       },
     },
-    async ({ find, page }) => {
+    async ({ find, button, clicks, page }) => {
       return await attempt(async () => {
         const finds = (Array.isArray(find) ? find : [find]).filter(Boolean);
         if (finds.length === 0) {
           throw new Error('Pass the label of the control to click.');
         }
-        const { value } = await evaluateInApp(
+        const evaluated = await evaluateInApp(
           genClickExpression(
             withTranslations(finds, await readAppLanguage(page)),
             undefined,
             undefined,
-            { guard: genPressGuard() },
+            { guard: genPressGuard(), button, clicks },
           ),
           { match: page },
         );
+        const { value } = evaluated;
         // Refused in the page, off the control itself: said the way
         // the firewall says it, and logged beside its refusals.
         if (typeof value?.refused === 'string') {
           recordPressRefusal('owa_click', value);
           throw new Error(genPressRefusalReason(value));
         }
-        return value;
+        return await addOpenedWindow(value, evaluated, waitForNewAppPage);
       });
     },
   );
@@ -1890,6 +2526,324 @@ export function registerOwaTools(server) {
     },
   );
 
+  // A keystroke, JUDGED. chrome-devtools' `press_key` drives the real
+  // keyboard and reads nothing (`MC-13`: Enter on a focused Move to Trash
+  // names no label at any point), and in this app the function keys ARE the
+  // projector. This one sends the same keydown/keyup the walkthrough card
+  // sends and carries the card's guard: a key is as destructive as the
+  // control whose title names it, a question on screen is the user's, and
+  // Enter or Space on a destructively named focus is the press it would be.
+  // A lone character counts here ("1", "a") where the card's parser refuses
+  // one -- there it is bold prose nine times in ten; here it was typed on
+  // purpose.
+  server.registerTool(
+    'owa_press_key',
+    {
+      description:
+        'Press a keyboard shortcut in the app window: "F5", "Ctrl+S", ' +
+        '"Escape", "ArrowRight", "Space", "Shift+Enter". With `find`, ' +
+        'that control is focused first -- arrow keys and Space belong to ' +
+        'the panel that has focus (a slide list, a run player). Refuses ' +
+        'a key whose control cannot be undone (F6 is Clear All), any key ' +
+        'while the app is asking the user a question, and Enter or Space ' +
+        'on such a control. F5 shows the projector and F10 clears every ' +
+        'foreground extra: only when asked. The answer says what it ' +
+        'brought up or moved; `unverified` means check before saying so.',
+      inputSchema: {
+        keys: z
+          .string()
+          .describe('The shortcut as written on a tooltip, "Ctrl+Shift+A"'),
+        find: z
+          .union([z.string(), z.array(z.string())])
+          .optional()
+          .describe('A control to focus first, by its label'),
+        page: z.string().optional().describe(PAGE_TEXT),
+      },
+    },
+    async ({ keys, find, page }) => {
+      return await attempt(async () => {
+        const phrase = typeof keys === 'string' ? keys.trim() : '';
+        let keystroke = toKeystroke(phrase);
+        if (keystroke === null && /^\S$/u.test(phrase)) {
+          keystroke = {
+            key: phrase,
+            code: toKeyCode(phrase),
+            ctrlKey: false,
+            altKey: false,
+            shiftKey: false,
+            metaKey: false,
+            label: phrase,
+          };
+        }
+        if (keystroke === null) {
+          throw new Error(
+            `"${phrase}" is not a keystroke. Write it as a tooltip does: ` +
+              '"F5", "Ctrl+S", "Escape", "ArrowRight", "Space".',
+          );
+        }
+        const finds =
+          find === undefined
+            ? null
+            : (Array.isArray(find) ? find : [find]).filter(Boolean);
+        const { value } = await evaluateInApp(
+          genPressKeyExpression(keystroke, {
+            finds:
+              finds === null || finds.length === 0
+                ? null
+                : withTranslations(finds, await readAppLanguage(page)),
+            guard: genPressGuard(),
+          }),
+          { match: page },
+        );
+        if (typeof value?.refused === 'string') {
+          recordPressRefusal('owa_press_key', value);
+          throw new Error(genPressRefusalReason(value));
+        }
+        return value;
+      });
+    },
+  );
+
+  // Drag and drop by the words on both ends. The mouse's move this app is
+  // built around -- a song into a run sheet, a slide to another place, a
+  // background onto a slide card -- and chrome-devtools' `drag` aims by uid
+  // and drives the pointer, which this app's HTML5 drop handlers never read.
+  server.registerTool(
+    'owa_drag',
+    {
+      description:
+        'Drag one control onto another, both found by their labels -- ' +
+        'a Documents row into a presenting flow, a slide onto another ' +
+        'slide, a background onto a slide card. `place` is where on the ' +
+        'target: `on` (default) is what dropping on it means in the app ' +
+        '(attach, replace, play); `before` / `after` put it at that ' +
+        'position in a list. The answer says whether anything took the ' +
+        'drop (`accepted`); on `unverified` check the list before saying ' +
+        'it worked. Same refusals as owa_click.',
+      inputSchema: {
+        from: z
+          .union([z.string(), z.array(z.string())])
+          .describe('The label on the thing to drag'),
+        to: z
+          .union([z.string(), z.array(z.string())])
+          .describe('The label on the thing to drop it on'),
+        place: z
+          .enum(['on', 'before', 'after'])
+          .optional()
+          .describe(
+            'on (default) drops onto the control; before / after are a ' +
+              "row's reorder bands, Ctrl held -- after lands on the next " +
+              "row's top band, which is how this app's rows read it.",
+          ),
+        page: z.string().optional().describe(PAGE_TEXT),
+      },
+    },
+    async ({ from, to, place, page }) => {
+      return await attempt(async () => {
+        const fromFinds = (Array.isArray(from) ? from : [from]).filter(Boolean);
+        const toFinds = (Array.isArray(to) ? to : [to]).filter(Boolean);
+        if (fromFinds.length === 0 || toFinds.length === 0) {
+          throw new Error('Pass the label to drag and the label to drop on.');
+        }
+        const langCode = await readAppLanguage(page);
+        const { value } = await evaluateInApp(
+          genDragExpression(
+            withTranslations(fromFinds, langCode),
+            withTranslations(toFinds, langCode),
+            { place, guard: genPressGuard() },
+          ),
+          { match: page },
+        );
+        if (typeof value?.refused === 'string') {
+          recordPressRefusal('owa_drag', value);
+          throw new Error(genPressRefusalReason(value));
+        }
+        return value;
+      });
+    },
+  );
+
+  // Real files off the disk dropped on a control, by its words (2026-10-22).
+  // A file a script builds in the page has no path, and every list here
+  // copies a dropped file FROM its path, so the drop is the browser's own:
+  // CDP's `Input.dispatchDragEvent` carrying the files, at the point the
+  // page answers. The STDIO door only -- the developer's and the robot
+  // test's; the chatbot's door never has it -- and fixtures only
+  // (`dropFilePaths.mjs`), because a drop copies what it carries into the
+  // user's folders.
+  if (door === 'stdio') {
+    server.registerTool(
+      'owa_drop_files',
+      {
+        description:
+          'Drop real files or folders from the disk onto a control found ' +
+          'by its label -- a picture onto the slide canvas, a song file ' +
+          'onto the Documents list, a folder onto Resources. Paths must ' +
+          "be absolute and under the repository's test-results folder or " +
+          'the temp folder. The answer says whether the control took the ' +
+          'drop (`accepted`, `dropped`); check the list it went into ' +
+          'before saying it worked.',
+        inputSchema: {
+          paths: z
+            .array(z.string())
+            .describe('Absolute paths of the files or folders to drop'),
+          to: z
+            .union([z.string(), z.array(z.string())])
+            .describe('The label on the control to drop them on'),
+          page: z.string().optional().describe(PAGE_TEXT),
+        },
+      },
+      async ({ paths, to, page }) => {
+        return await attempt(async () => {
+          const checked = checkDropFilePaths(paths);
+          if (checked.refusal !== undefined) {
+            throw new Error(checked.refusal);
+          }
+          const toFinds = (Array.isArray(to) ? to : [to]).filter(Boolean);
+          if (toFinds.length === 0) {
+            throw new Error('Pass the label of the control to drop on.');
+          }
+          const langCode = await readAppLanguage(page);
+          const { target, value: aim } = await evaluateInApp(
+            genDropAimExpression(withTranslations(toFinds, langCode), {
+              guard: genPressGuard(),
+            }),
+            { match: page },
+          );
+          if (typeof aim?.refused === 'string') {
+            recordPressRefusal('owa_drop_files', aim);
+            throw new Error(genPressRefusalReason(aim));
+          }
+          if (aim?.point === undefined) {
+            return aim;
+          }
+          const data = {
+            items: [],
+            files: checked.pathList,
+            dragOperationsMask: 1,
+          };
+          const at = { x: aim.point.x, y: aim.point.y, data };
+          // A busy panel answers dragover late, and Chromium silently drops
+          // a drop that comes before the page has accepted the drag -- a
+          // folder dropped on Resources was lost that way. A second
+          // dragover after a pause is what a hand's own movement gives it.
+          await runInTarget(target, [
+            { method: 'Input.dispatchDragEvent', params: { type: 'dragEnter', ...at } },
+            { method: 'Input.dispatchDragEvent', params: { type: 'dragOver', ...at } },
+            { waitMs: 500 },
+            { method: 'Input.dispatchDragEvent', params: { type: 'dragOver', ...at } },
+            { waitMs: 300 },
+            { method: 'Input.dispatchDragEvent', params: { type: 'drop', ...at } },
+          ]);
+          const read = await evaluateInTarget(target, genDropReadExpression());
+          return {
+            files: checked.pathList.map((filePath) => {
+              return filePath.split(/[\\/]/).pop();
+            }),
+            onto: aim.onto,
+            accepted: read.accepted,
+            dropped: read.dropped,
+            landedOn: read.landedOn,
+            unverified: read.dropped
+              ? undefined
+              : 'Nothing there took the drop. Check the list the files ' +
+                'were meant for before saying it worked.',
+          };
+        });
+      },
+    );
+  }
+
+  // A list scrolled. This app's long lists are windowed, so a row past the
+  // fold is not in the DOM: `owa_list_ui` cannot list it and `owa_click`
+  // cannot press it until the list has been scrolled -- which a user does
+  // without thinking (2026-10-10, MC-54).
+  server.registerTool(
+    'owa_scroll',
+    {
+      description:
+        'Scroll a list in the app to reach rows that are not on screen -- ' +
+        'the long lists are windowed, so a row past the fold matches ' +
+        'nothing until the list is scrolled. `find` names the list, its ' +
+        'panel or a row in it (default: the biggest list on screen); `to` ' +
+        'is `down` (default), `up`, `top` or `bottom`. Answers where the ' +
+        'list is now, `isAtBottom`, and `inView`: the labels that can be ' +
+        'pressed after the scroll.',
+      inputSchema: {
+        find: z
+          .union([z.string(), z.array(z.string())])
+          .optional()
+          .describe('The list, panel or a row in it, by label'),
+        to: z.enum(['down', 'up', 'top', 'bottom']).optional(),
+        page: z.string().optional().describe(PAGE_TEXT),
+      },
+    },
+    async ({ find, to, page }) => {
+      return await attempt(async () => {
+        const finds =
+          find === undefined
+            ? []
+            : (Array.isArray(find) ? find : [find]).filter(Boolean);
+        const { value } = await evaluateInApp(
+          genScrollExpression(
+            finds.length === 0
+              ? []
+              : withTranslations(finds, await readAppLanguage(page)),
+            { to },
+          ),
+          { match: page },
+        );
+        return value;
+      });
+    },
+  );
+
+  // The native menu bar -- the one surface of the window no page expression
+  // can see or press, so Reload, the View menu's widget toggles, Export Data
+  // and the Help items were a user's alone (2026-10-10). The main process
+  // lists and presses it (`electron/appMenuAgentHelpers.ts`) and refuses by
+  // itself what takes the app down or opens Developer Tools.
+  server.registerTool(
+    'owa_menu',
+    {
+      description:
+        "The app's menu bar (File, Edit, View, Tools, Window, Help). " +
+        '`list` names every item with its path and `isEnabled` / ' +
+        '`isChecked`, and marks `refused` the ones nobody may press for ' +
+        'the user (Quit, Relaunch, Developer Tools). `click` presses ' +
+        '`item` by its path ("View > Reload") or its bare label when ' +
+        'that is unique. Reload re-reads the window the user is in.',
+      inputSchema: {
+        action: z.enum(AGENT_MENU_ACTIONS),
+        item: z.string().optional().describe('"Menu > Item", for click'),
+        page: z.string().optional().describe(PAGE_TEXT),
+      },
+    },
+    async ({ action, item, page }) => {
+      try {
+        if (action === 'click' && (typeof item !== 'string' || !item.trim())) {
+          return toErrorResult(
+            new Error('Name the menu item to press, as "View > Reload".'),
+          );
+        }
+        const { value } = await evaluateInApp(
+          action === 'list'
+            ? genMenuListExpression()
+            : genMenuClickExpression(item.trim()),
+          { match: page },
+        );
+        const formatted = formatMenuResult(
+          action === 'list' ? { items: value } : value,
+        );
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
   // The walkthrough. `owa_find_ui` points at ONE control and lets go; this
   // stays on screen for a whole task, one step at a time, and the user drives
   // it -- which is what somebody who has never opened the app needs.
@@ -1909,7 +2863,7 @@ export function registerOwaTools(server) {
         "card in the corner, each step's control ringed in red; the " +
         'user presses Next or just does the step. The default ' +
         '`show` presses NOTHING, so start it when they ask to be ' +
-        'walked through, whatever the task. Pass `manualId` ' +
+        'walked through. Pass `manualId` ' +
         '(a recipe id from owa_help_search), a built-in page ' +
         '`demoId`, or your own `steps`: ' +
         'each ONE plain instruction for a volunteer, its `find` the ' +
@@ -1919,12 +2873,10 @@ export function registerOwaTools(server) {
         '**Do it**, which performs one step per press: a click, ' +
         'a `type`/slider change with its `value`, a `hover` that ' +
         'reveals another control, a `rightClick` menu item, or a ' +
-        '`press` shortcut. Hover-hidden controls are held visible ' +
-        'automatically. A user who asked you to do it FOR them ' +
+        '`press` shortcut. A user who asked you to do it FOR them ' +
         'has said yes to the demo already. Never demo a step that ' +
         'changes what the congregation sees without asking first. ' +
-        "The answer is owa_guide_status's: whether step 1's control " +
-        'was found, with `nearMisses` when it was not.',
+        'Answers as owa_guide_status does.',
       inputSchema: {
         title: z.string().optional(),
         demoId: z
@@ -1940,7 +2892,14 @@ export function registerOwaTools(server) {
           .optional()
           .describe(
             "The user's task in their own words; with a manualId, " +
-              'start only the matching recipe step.',
+              'start at the matching recipe step.',
+          ),
+        find: z
+          .string()
+          .optional()
+          .describe(
+            'The exact words on the control the task is about: with a ' +
+              'manualId the step naming it starts, that control first.',
           ),
         steps: z
           .array(
@@ -1973,7 +2932,7 @@ export function registerOwaTools(server) {
         page: z.string().optional().describe(PAGE_TEXT),
       },
     },
-    async ({ title, demoId, manualId, topic, steps, page, mode }) => {
+    async ({ title, demoId, manualId, topic, find, steps, page, mode }) => {
       return await attempt(async () => {
         if (
           demoId !== undefined &&
@@ -2057,15 +3016,34 @@ export function registerOwaTools(server) {
           );
         }
         if (guideSteps === null && manualId !== undefined) {
-          const manualPage = readHelpPage(
-            manualId,
-            await readAppLanguage(page),
-          );
+          // Every step of it: the card is built from the page, and none
+          // of it is sent to a model. Read in parts, a recipe longer than
+          // one read lost its last steps here too.
+          //
+          // Read in ENGLISH, the language every rule below reads a recipe
+          // in (the window a step goes to, the step a topic names, the
+          // known question's own control). Read in the window's language,
+          // a Khmer page lost its button names to `toEnglishOnly` and the
+          // capital-letter test before a ring was ever drawn; the window's
+          // words go in at the very end, in `prepareSteps`.
+          const manualPage = readHelpPage(manualId, 'en', 'whole');
           if (manualPage === null) {
             throw new Error(`No knowledge document "${manualId}"`);
           }
-          guideSteps = toGuideSteps(manualPage.body);
-          guideTitle = guideTitle ?? manualPage.title;
+          const stepLang = await readAppLanguage(page);
+          guideSteps = withLocalStepText(
+            toGuideSteps(manualPage.body),
+            manualId,
+            stepLang,
+          );
+          // Its title in the window's language too, from the page's own
+          // translation when that is current.
+          guideTitle =
+            guideTitle ??
+            (stepLang === 'en'
+              ? null
+              : readLocalStepPage(manualId, stepLang)?.title) ??
+            manualPage.title;
           // A recipe about the Settings window cannot be walked in
           // the Presenter: every control its steps name is in the
           // other window, so the ring falls through the candidate
@@ -2095,43 +3073,137 @@ export function registerOwaTools(server) {
           guideSteps,
           typeof pathname === 'string' ? pathname : '',
         );
+        // The WAY to a deep step, kept aside. A step deep in a recipe
+        // names a control that is on screen only once the earlier
+        // steps have opened the panel it lives in -- W-51's Cast to a
+        // TV sits in the Virtual Screens Manager, on a display row a
+        // volunteer may not have added yet. Started alone first: when
+        // its control is already on screen, the one step is the card
+        // they wanted. When it is not, the card starts again from step
+        // 1 of that recipe, up to the step asked for (the user's ask,
+        // 2026-10-10: "my goal is even small model can help user through
+        // complex tasks … from opening the panel, create vd and click
+        // casting icon").
+        let topicPathSteps = null;
+        const allSteps = guideSteps;
         if (manualId !== undefined && topic !== undefined) {
-          guideSteps = selectGuideStepsForTopic(guideSteps, topic);
+          const matchedIndex = selectGuideStepIndexForTopic(guideSteps, topic);
+          if (matchedIndex !== null) {
+            topicPathSteps = guideSteps.slice(0, matchedIndex + 1);
+            guideSteps = [guideSteps[matchedIndex]];
+          }
+        }
+        // The control the task is about, named outright -- a known
+        // question's own `find`, or the words the model settled on. The
+        // step naming it is the one started, and it goes FIRST among that
+        // step's controls: W-01's header paragraph bolds eight controls,
+        // and for a question about the eighth, the Stay Awake cup, the
+        // card ringed the panel the first one answered to (2026-10-10,
+        // the user's picture, EC-215).
+        const wantedFind =
+          manualId !== undefined && typeof find === 'string' ? find.trim() : '';
+        if (wantedFind.length > 0) {
+          const lowered = wantedFind.toLowerCase();
+          const namesIt = (step) => {
+            return (
+              (step.finds ?? []).some((one) => {
+                return String(one).toLowerCase() === lowered;
+              }) ||
+              String(step.text ?? '')
+                .toLowerCase()
+                .includes(lowered)
+            );
+          };
+          const at = allSteps.findIndex(namesIt);
+          if (at !== -1) {
+            topicPathSteps = allSteps.slice(0, at + 1);
+            guideSteps = [allSteps[at]];
+          }
+          const putFirst = (step) => {
+            return {
+              ...step,
+              finds: [
+                wantedFind,
+                ...(step.finds ?? []).filter((one) => {
+                  return String(one).toLowerCase() !== lowered;
+                }),
+              ],
+            };
+          };
+          guideSteps = guideSteps.map(putFirst);
+          if (topicPathSteps !== null) {
+            const lastAt = topicPathSteps.length - 1;
+            topicPathSteps = topicPathSteps.map((step, index) => {
+              return index === lastAt ? putFirst(step) : step;
+            });
+          }
         }
         // One choke point for both sources of steps: the model
         // writes an id into a step it invented as readily as a
         // recipe cites a sibling recipe, and neither belongs in
         // front of the volunteer reading the card.
-        guideSteps = guideSteps.map((step) => {
-          return {
-            ...step,
-            text: stripInternalIds(step.text),
-            // The same id, harvested as a control to RING. A
-            // recipe cites a sibling in bold ("see **W-31**") and
-            // every bold becomes a candidate, so three steps
-            // offered the card an id to look for -- which matches
-            // nothing, costs the real candidates their turn, and
-            // would be shown to the user in the "closest labels"
-            // line if anything came near it.
-            ...(step.finds === undefined
-              ? {}
-              : { finds: step.finds.filter(checkIsNotRecipeId) }),
-          };
-        });
+        //
+        // ...and the one place a step is put into the window's language: a
+        // recipe step's text with its controls named as the buttons are
+        // (`localText`), and every step's controls tried in the window's
+        // words first. A built-in demo carries its own translations.
+        const cardLang = await readAppLanguage(wantedPage);
+        const findLang = builtInDemo === null ? cardLang : 'en';
+        const cardBundle = findLang === 'en' ? null : loadTranBundle();
+        const prepareSteps = (list) => {
+          return list.map(({ localText, ...step }) => {
+            return {
+              ...step,
+              text: stripInternalIds(localText ?? step.text),
+              // The same id, harvested as a control to RING. A
+              // recipe cites a sibling in bold ("see **W-31**") and
+              // every bold becomes a candidate, so three steps
+              // offered the card an id to look for -- which matches
+              // nothing, costs the real candidates their turn, and
+              // would be shown to the user in the "closest labels"
+              // line if anything came near it.
+              ...(step.finds === undefined
+                ? {}
+                : {
+                    finds: localizeFinds(
+                      step.finds.filter(checkIsNotRecipeId),
+                      findLang,
+                      cardBundle,
+                    ),
+                  }),
+            };
+          });
+        };
+        const cardWords = genGuideCardWords(cardLang);
         guideTitle = guideTitle === null ? null : stripInternalIds(guideTitle);
-        const { value } = await evaluateInApp(
-          genGuideExpression(
-            `start(${JSON.stringify({
-              title: guideTitle ?? 'Step by step',
-              steps: guideSteps,
-              mode: wantedMode ?? 'show',
-              // What its Do it is judged by -- the card's own
-              // press as much as a tool's "do".
-              guard: genPressGuard(),
-            })})`,
-          ),
-          { match: wantedPage },
-        );
+        const startCard = async (list) => {
+          const { value } = await evaluateInApp(
+            genGuideExpression(
+              `start(${JSON.stringify({
+                title: guideTitle ?? cardWords.title,
+                steps: prepareSteps(list),
+                // Next, Back, Done and its sentences, in the window's
+                // language.
+                labels: cardWords.labels,
+                words: cardWords.words,
+                mode: wantedMode ?? 'show',
+                // What its Do it is judged by -- the card's own
+                // press as much as a tool's "do".
+                guard: genPressGuard(),
+              })})`,
+            ),
+            { match: wantedPage },
+          );
+          return value;
+        };
+        let value = await startCard(guideSteps);
+        if (
+          topicPathSteps !== null &&
+          topicPathSteps.length > 1 &&
+          value?.isTargetFound === false
+        ) {
+          value = await startCard(topicPathSteps);
+        }
         return value;
       });
     },

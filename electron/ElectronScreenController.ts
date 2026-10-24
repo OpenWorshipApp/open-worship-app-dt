@@ -1,8 +1,10 @@
 import { BrowserWindow } from 'electron';
 
 import { type AnyObjectType } from './electronEventListener';
+import { genKeepAwake } from './keepAwakeHelpers';
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
+import { screenMirrorRuntime } from './screenMirrorRuntime';
 import {
     applyRendererRecovery,
     attemptClosing,
@@ -16,6 +18,9 @@ const cache = new Map<string, ElectronScreenController>();
 export default class ElectronScreenController {
     win: BrowserWindow;
     screenId: number;
+    // Set while the screen is being handed to a virtual display: its window
+    // closes, but the screen is still showing and nobody may be told otherwise.
+    isMoving = false;
 
     constructor(screenId: number) {
         this.screenId = screenId;
@@ -34,11 +39,23 @@ export default class ElectronScreenController {
             webPreferences,
         });
         guardBrowsing(win, webPreferences);
-        const query = `?screenId=${this.screenId}`;
-        applyRendererRecovery(win, () => {
-            routeProps.loadURL(win, query);
+        // A screen window lives only while its screen is showing, so it keeps
+        // the display awake for exactly that long.
+        const setIsAwake = genKeepAwake();
+        setIsAwake(true);
+        win.once('closed', () => {
+            setIsAwake(false);
         });
-        routeProps.loadURL(win, query);
+        const query = `?screenId=${this.screenId}`;
+        const loadScreen = () => {
+            const httpUrl = screenMirrorRuntime.screenUrl?.(this.screenId);
+            if (httpUrl) void win.loadURL(httpUrl);
+            else routeProps.loadURL(win, query);
+        };
+        applyRendererRecovery(win, () => {
+            loadScreen();
+        });
+        loadScreen();
         if (isScreenCanFullScreen) {
             win.setFullScreen(true);
         }
@@ -49,6 +66,8 @@ export default class ElectronScreenController {
     }
 
     listenLoading() {
+        if (this.win.webContents.isLoading?.() === false)
+            return Promise.resolve();
         return new Promise<void>((resolve) => {
             this.win.webContents.once('did-finish-load', () => {
                 resolve();
@@ -57,7 +76,10 @@ export default class ElectronScreenController {
     }
 
     destroyInstance() {
-        cache.delete(this.screenId.toString());
+        // A detached window shares its id with a cached one; closing it must
+        // not drop the other from the cache.
+        const key = this.screenId.toString();
+        if (cache.get(key) === this) cache.delete(key);
     }
 
     close() {
@@ -110,6 +132,13 @@ export default class ElectronScreenController {
             cache.set(key, screenController);
         }
         return cache.get(key) as ElectronScreenController;
+    }
+
+    // A screen window kept outside the cache: Screen Mirror shows each host's
+    // screen in one, under the host's own screen id, so two hosts' screen 0
+    // and this computer's own screen 0 can all be up at once.
+    static createDetached(screenId: number) {
+        return new this(screenId);
     }
 
     static getInstance(screenId: number) {

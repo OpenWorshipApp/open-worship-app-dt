@@ -12,18 +12,6 @@ import { getBibleModelInfo } from './bibleModelHelpers';
 
 export type BibleStatusType = [string, boolean, string];
 
-export const toLocaleNumQuick = (n: number, numList: string[]) => {
-    if (!numList) {
-        return n;
-    }
-    return `${n}`
-        .split('')
-        .map((n1) => {
-            return numList[Number.parseInt(n1)];
-        })
-        .join('');
-};
-
 export type ChapterMatchType = {
     chapter: number;
     chapterLocaleString: string;
@@ -89,9 +77,15 @@ export function useChapterMatch(
     const [matchedChapters, setMatchedChapters] = useState<
         ChapterMatchType[] | null
     >(null);
+    // `bibleKey` is a dep like the other two: the book's availability, its
+    // chapter numerals and its chapter-0 introduction all belong to the Bible.
+    // Without it, switching KJV to a Bible with an introduction kept KJV's
+    // list, and no intro toggle, until the chapter text changed.
     useAppEffectAsync(
         async (methodContext) => {
             if (!(await checkIsBookAvailable(bibleKey, bookKey))) {
+                // Not the previous Bible's list for a book this one lacks.
+                methodContext.setMatchedChapters(null);
                 return;
             }
             const chapterLocaleStringList = await genChapterMatches(
@@ -109,7 +103,7 @@ export function useChapterMatch(
             });
             methodContext.setMatchedChapters(chapterLocaleStringList);
         },
-        [bookKey, guessingChapter],
+        [bibleKey, bookKey, guessingChapter],
         { setMatchedChapters },
     );
     return matchedChapters;
@@ -252,11 +246,7 @@ async function toChapter(
         return null;
     }
     const book = bibleInfo.keyBookMap[bookKey];
-    return `${book} ${
-        bibleInfo.numList === undefined
-            ? chapterNum
-            : toLocaleNumQuick(chapterNum, bibleInfo.numList)
-    }`;
+    return `${book} ${await toLocaleNumBible(bibleKey, chapterNum)}`;
 }
 
 export function getModelChapterCount(bookKey: string) {

@@ -37,6 +37,7 @@ const {
     fsCopyFilePathToPathMock,
     appDocumentSetCopiedSlidesMock,
     tranMock,
+    getDirPathBySettingNameMock,
     appProviderMock,
 } = vi.hoisted(() => ({
     showAppAlertMock: vi.fn(),
@@ -72,6 +73,7 @@ const {
     fsCopyFilePathToPathMock: vi.fn(),
     appDocumentSetCopiedSlidesMock: vi.fn(),
     tranMock: vi.fn(),
+    getDirPathBySettingNameMock: vi.fn(() => '/docs'),
     appProviderMock: {
         isPagePresenter: false,
         isPageAppDocumentEditor: false,
@@ -115,7 +117,7 @@ vi.mock('../event/VaryAppDocumentEventListener', () => ({
 vi.mock('../helper/DirSource', () => ({
     default: {
         getInstance: dirSourceGetInstanceMock,
-        getDirPathBySettingName: () => '/docs',
+        getDirPathBySettingName: getDirPathBySettingNameMock,
     },
 }));
 
@@ -424,6 +426,32 @@ function createSlide(
 }
 
 describe('appDocumentHelpers', () => {
+    test('the editor resolves its injected file after boot, not at module load', async () => {
+        // A packaged build keeps the documents folder as `$DATA_DIR_PATH\...`,
+        // which only expands once `init()` has named the data folder. Read at
+        // module load, the folder looked missing and the shared selection
+        // was blanked for every window.
+        const oldUrl = location.href;
+        history.replaceState({}, '', '/appDocumentEditor.html?file=song.ows');
+        appProviderMock.isPageAppDocumentEditor = true;
+        getDirPathBySettingNameMock.mockClear();
+        vi.resetModules();
+        try {
+            const helpers = await import('./appDocumentHelpers');
+            expect(helpers.isInjectedAppDocumentFilePath).toBe(true);
+            expect(getDirPathBySettingNameMock).not.toHaveBeenCalled();
+            const selected = await helpers.getSelectedVaryAppDocument();
+            expect(selected?.filePath).toBe('/docs/song.ows');
+            expect(
+                getSelectedVaryAppDocumentFilePathWithEnsureMock,
+            ).not.toHaveBeenCalled();
+        } finally {
+            appProviderMock.isPageAppDocumentEditor = false;
+            history.replaceState({}, '', oldUrl);
+            vi.resetModules();
+        }
+    });
+
     test.each(['owl', 'pdf'])(
         'injected .%s keeps its real type and never loads editable slides',
         async (extension) => {

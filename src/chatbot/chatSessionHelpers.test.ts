@@ -127,6 +127,101 @@ describe('loadChatSessions', () => {
         ]);
     });
 
+    // The marker keeps a Bible-Reader conversation going after a reopen;
+    // a question that carries it is not one.
+    test('a Bible-Reader answer keeps its conversation marker', () => {
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                sessions: [
+                    {
+                        id: 'one',
+                        messages: [
+                            {
+                                id: 1,
+                                author: 'bot',
+                                text: 'answered',
+                                isBibleReaderAnswer: true,
+                            },
+                            {
+                                id: 2,
+                                author: 'you',
+                                text: 'asked',
+                                isBibleReaderAnswer: true,
+                            },
+                        ],
+                    },
+                ],
+            }),
+        );
+
+        const state = loadChatSessions('presenter', null, '');
+
+        expect(state.sessions[0].messages).toEqual([
+            {
+                id: 1,
+                author: 'bot',
+                text: 'answered',
+                isBibleReaderAnswer: true,
+            },
+            { id: 2, author: 'you', text: 'asked' },
+        ]);
+    });
+
+    // A stored link opens a page at a press: only web addresses survive a
+    // load, only on an answer, and only a few.
+    test('a link is kept only as a web address on an answer', () => {
+        const page = 'https://github.com/Beblia/Holy-Bible-XML-Format';
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                sessions: [
+                    {
+                        id: 'one',
+                        messages: [
+                            {
+                                id: 1,
+                                author: 'you',
+                                text: 'asked',
+                                links: [page],
+                            },
+                            {
+                                id: 2,
+                                author: 'bot',
+                                text: 'answered',
+                                links: [
+                                    page,
+                                    page,
+                                    'file:///C:/Windows/win.ini',
+                                    'javascript:alert(1)',
+                                    'https://user:pw@example.org/x',
+                                    42,
+                                    'http://example.org/a',
+                                    'https://example.org/b',
+                                    'https://example.org/c',
+                                    'https://example.org/d',
+                                ],
+                            },
+                            { id: 3, author: 'bot', text: 'x', links: 'nope' },
+                        ],
+                    },
+                ],
+            }),
+        );
+
+        const [asked, answered, other] = loadChatSessions('presenter', null, '')
+            .sessions[0].messages;
+
+        expect(asked.links).toBeUndefined();
+        expect(answered.links).toEqual([
+            page,
+            'http://example.org/a',
+            'https://example.org/b',
+            'https://example.org/c',
+        ]);
+        expect(other.links).toBeUndefined();
+    });
+
     // A provider whose key was removed in Settings must not leave a tab
     // pointing at something that can only fail.
     test('an unknown provider becomes null rather than being trusted', () => {
@@ -334,6 +429,63 @@ describe('titles', () => {
         const title = genChatSessionTitle(session);
         expect(title).toHaveLength(26);
         expect(title.endsWith('…')).toBe(true);
+    });
+
+    // "I don't see title start with `Report:`": among a dozen tabs, the
+    // one a problem is being reported in has to say so.
+    test('a tab a problem is being reported in is called Report', () => {
+        const offer = {
+            id: 1,
+            author: 'bot' as const,
+            text: 'Tell me what went wrong',
+            actions: [
+                { label: 'Report', toolName: 'owa-report-start', args: {} },
+            ],
+        };
+        // Opened to report, nothing said yet.
+        expect(genChatSessionTitle(genSession({ messages: [offer] }))).toBe(
+            'Report: new',
+        );
+        // What they said for it, whichever button sent it.
+        expect(
+            genChatSessionTitle(
+                genSession({
+                    messages: [
+                        offer,
+                        { id: 2, author: 'you', text: 'the screen went black' },
+                    ],
+                }),
+            ),
+        ).toBe('Report: the screen went b…');
+        // Report pressed under an ordinary question: named after the
+        // report's own words, not the question before it.
+        const later = genChatSessionTitle(
+            genSession({
+                messages: [
+                    { id: 1, author: 'you', text: 'How do I add a song?' },
+                    { id: 2, author: 'bot', text: 'Like this.' },
+                    {
+                        id: 3,
+                        author: 'you',
+                        text: 'it crashed',
+                        note: 'Reporting a problem.',
+                    },
+                ],
+            }),
+        );
+        expect(later).toBe('Report: it crashed');
+        // Still a report once it is written up and sent; a typed name wins.
+        expect(
+            genChatSessionTitle(
+                genSession({
+                    title: 'Sunday',
+                    messages: [offer],
+                }),
+            ),
+        ).toBe('Sunday');
+        expect(
+            genChatSessionTitle(genSession({ messages: [offer] })).length,
+        ).toBeLessThanOrEqual(26);
     });
 
     test('a tab with nothing asked in it yet has a name anyway', () => {
@@ -647,6 +799,40 @@ describe('attachments on a message', () => {
         );
     });
 
+    // Which window a picture or a pointed-at control came from survives a
+    // reopen -- whole, or not at all.
+    test('the window an attachment came from survives, and only a whole one', () => {
+        const window = {
+            id: 'SETTING-ID',
+            page: 'setting.html?uuid=setting',
+            label: 'Settings',
+            isMain: false,
+        };
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'this one',
+            attachments: [
+                { id: 'a1', kind: 'element', name: 'Apply', window },
+                {
+                    id: 'a2',
+                    kind: 'image',
+                    name: 'my screen',
+                    window: { ...window, isMain: 'no' },
+                },
+                {
+                    id: 'a3',
+                    kind: 'image',
+                    name: 'my screen',
+                    window: { ...window, extra: 'dropped' },
+                },
+            ],
+        });
+        expect(message.attachments?.[0].window).toEqual(window);
+        expect(message.attachments?.[1]).not.toHaveProperty('window');
+        expect(message.attachments?.[2].window).toEqual(window);
+    });
+
     test('junk in the list is dropped rather than drawn', () => {
         const message = loadOneMessage({
             id: 1,
@@ -657,6 +843,32 @@ describe('attachments on a message', () => {
         expect(message.attachments).toBeUndefined();
     });
 
+    // "In 2 the button is missing" must still mean something after a
+    // reopen.
+    test('the number on a chip survives, and only a real one', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'in 2 the button is missing',
+            attachments: [
+                { id: 'a1', kind: 'image', name: 'my screen', number: 1 },
+                { id: 'a2', kind: 'file', name: 'order.pdf', number: 2 },
+                { id: 'a3', kind: 'image', name: 'x', number: 'three' },
+                { id: 'a4', kind: 'image', name: 'y', number: -1 },
+            ],
+        });
+        expect(
+            message.attachments?.map((one) => {
+                return [one.kind, one.number];
+            }),
+        ).toEqual([
+            ['image', 1],
+            ['file', 2],
+            ['image', undefined],
+            ['image', undefined],
+        ]);
+    });
+
     test('only the three real attach requests come back', () => {
         const message = loadOneMessage({
             id: 1,
@@ -665,6 +877,78 @@ describe('attachments on a message', () => {
             attachRequests: ['screenshot', 'delete-everything', 'file'],
         });
         expect(message.attachRequests).toEqual(['screenshot', 'file']);
+    });
+
+    test('a question’s general flag survives a reopen, on a question only', () => {
+        // The follow-up chain under `/btw` is read off it after a restart.
+        expect(
+            loadOneMessage({
+                id: 1,
+                author: 'you',
+                text: 'in khmer please',
+                isGeneral: true,
+            }).isGeneral,
+        ).toBe(true);
+        expect(
+            loadOneMessage({
+                id: 1,
+                author: 'you',
+                text: 'hello',
+                isGeneral: 'yes',
+            }).isGeneral,
+        ).toBeUndefined();
+        expect(
+            loadOneMessage({
+                id: 2,
+                author: 'bot',
+                text: 'hi',
+                isGeneral: true,
+            }).isGeneral,
+        ).toBeUndefined();
+    });
+
+    test('a thumb and its follow-up survive a reopen, on an answer only', () => {
+        // The filled thumb is drawn off `rating`; `isFollowedUp` is what
+        // stops a second follow-up to the same answer; `isFollowUp` keeps
+        // the window's own line out of the history and the dispute read.
+        const answer = loadOneMessage({
+            id: 2,
+            author: 'bot',
+            text: 'Right-click the list.',
+            rating: 'dislike',
+            isFollowedUp: true,
+        });
+        expect(answer.rating).toBe('dislike');
+        expect(answer.isFollowedUp).toBe(true);
+        expect(
+            loadOneMessage({
+                id: 3,
+                author: 'bot',
+                text: 'Sorry...',
+                isFollowUp: true,
+            }).isFollowUp,
+        ).toBe(true);
+        // A hand-edited file: no third kind of thumb, and none on a question.
+        const junk = loadOneMessage({
+            id: 2,
+            author: 'bot',
+            text: 'hi',
+            rating: 'love',
+            isFollowedUp: 'yes',
+            isFollowUp: 1,
+        });
+        expect(junk.rating).toBeUndefined();
+        expect(junk.isFollowedUp).toBeUndefined();
+        expect(junk.isFollowUp).toBeUndefined();
+        const asked = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'hello',
+            rating: 'like',
+            isFollowUp: true,
+        });
+        expect(asked.rating).toBeUndefined();
+        expect(asked.isFollowUp).toBeUndefined();
     });
 
     test('old assistant machinery and dead show chips are cleaned on load', () => {
@@ -779,5 +1063,70 @@ describe('what a tab has spent', () => {
         });
         expect(edited).not.toHaveProperty('usage');
         expect(edited.messages[0]).not.toHaveProperty('usage');
+    });
+});
+
+describe('a tab on Auto', () => {
+    beforeEach(() => {
+        settingMap.clear();
+    });
+
+    test('stays on Auto across a save and a load, with who it asked last', () => {
+        const auto = genSession({
+            isAuto: true,
+            autoPick: 'LM Studio super-computer · Gemma 4 12B',
+            provider: 'custom',
+            model: 'server-1/row-1',
+        });
+        saveChatSessions({
+            sessions: [auto, genSession()],
+            activeId: auto.id,
+        });
+
+        const state = loadChatSessions('presenter', 'anthropic', 'claude-x');
+
+        expect(state.sessions[0].isAuto).toBe(true);
+        expect(state.sessions[0].autoPick).toBe(
+            'LM Studio super-computer · Gemma 4 12B',
+        );
+        expect(state.sessions[0].provider).toBe('custom');
+        expect(state.sessions[1].isAuto).toBeUndefined();
+    });
+
+    test('a first run can start on Auto', () => {
+        const state = loadChatSessions('presenter', 'free', 'x:free', true);
+        expect(state.sessions[0].isAuto).toBe(true);
+        expect(state.sessions[0].autoPick).toBeUndefined();
+        expect(
+            genNewChatSession('presenter', 'free', 'x:free').isAuto,
+        ).toBeUndefined();
+    });
+
+    test('a pick with no Auto beside it is dropped, and an absurd one is cut', () => {
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                sessions: [
+                    { id: 'named', messages: [], autoPick: 'Free · First' },
+                    {
+                        id: 'long',
+                        messages: [],
+                        isAuto: true,
+                        autoPick: 'x'.repeat(5000),
+                    },
+                    { id: 'junk', messages: [], isAuto: 'yes', autoPick: 7 },
+                ],
+                activeId: 'named',
+            }),
+        );
+
+        const state = loadChatSessions('presenter', null, '');
+
+        expect(state.sessions[0].isAuto).toBeUndefined();
+        expect(state.sessions[0].autoPick).toBeUndefined();
+        expect(state.sessions[1].isAuto).toBe(true);
+        expect(state.sessions[1].autoPick?.length).toBeLessThanOrEqual(160);
+        expect(state.sessions[2].isAuto).toBeUndefined();
+        expect(state.sessions[2].autoPick).toBeUndefined();
     });
 });

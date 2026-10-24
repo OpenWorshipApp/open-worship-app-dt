@@ -4,13 +4,16 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-09-28",
+    "updated": "2026-10-23",
     "sections": [
         {
             "id": "reading",
             "label": "Reading a passage",
             "panel": "Bible Lookup",
-            "recipes": ["W-11", "W-39"],
+            "recipes": [
+                "W-11",
+                "W-39"
+            ],
             "questions": [
                 {
                     "id": "look-up-verse",
@@ -26,7 +29,9 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-12"],
+                        "related": [
+                            "W-12"
+                        ],
                         "find": "Bible Lookup",
                         "guide": true
                     }
@@ -44,11 +49,78 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "shortcut": "Tab to complete, Escape to clear",
+                        "shortcut": "Tab completes, Escape removes the last part, Shift+Escape clears",
                         "guide": true
                     },
                     "starter": true,
                     "starterRank": 1
+                },
+                {
+                    "id": "cross-chapter-passage",
+                    "text": "How do I read a passage that runs into the next chapter, like John 1:2-3:4?",
+                    "kind": "howto",
+                    "keywords": [
+                        "across chapters",
+                        "two chapters",
+                        "chapter range",
+                        "John 1-3",
+                        "several chapters",
+                        "ends in another chapter"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "find": "Bible Reference",
+                        "passage": "A passage that runs on into later chapters of the same book."
+                    }
+                },
+                {
+                    "id": "copy-formats",
+                    "text": "How do I copy a passage without verse numbers, or with the version after the reference?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy format",
+                        "without verse numbers",
+                        "version after",
+                        "more copy options",
+                        "copy without numbers"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "In a verse window the same"
+                    }
+                },
+                {
+                    "id": "more-chapters",
+                    "text": "Why does a long passage show only three chapters?",
+                    "kind": "what",
+                    "keywords": [
+                        "only 3 chapters",
+                        "rest of the passage",
+                        "three dots",
+                        "show the next chapter",
+                        "more chapters",
+                        "cut off"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "A passage that runs on into later chapters of the same book."
+                    }
+                },
+                {
+                    "id": "heading-reference",
+                    "text": "How do I open a passage named in a section heading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "heading reference",
+                        "parallel passage",
+                        "reference in the title",
+                        "section title",
+                        "click a reference"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "Open a reference in a section heading"
+                    }
                 },
                 {
                     "id": "reader-versions",
@@ -65,10 +137,85 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-32", "W-34"],
+                        "related": [
+                            "W-32",
+                            "W-34"
+                        ],
                         "guide": true
                     },
                     "starterRank": 4
+                },
+                {
+                    "id": "dim-header-icons",
+                    "text": "Why are the color, sync-scroll and audio icons dimmed above my Bible passage?",
+                    "kind": "howto",
+                    "keywords": [
+                        "faint icons",
+                        "opacity",
+                        "hover",
+                        "keyboard focus"
+                    ],
+                    "resources": {
+                        "recipe": "W-11"
+                    }
+                },
+                {
+                    "id": "sync-group-scrolling",
+                    "text": "How do I make the other Bible translations follow the verse I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "sync scrolling",
+                        "color group",
+                        "same verse",
+                        "parallel translations",
+                        "smooth scrolling"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "Panes that share a color scroll together",
+                        "related": [
+                            "W-39"
+                        ],
+                        "find": "Sync group scrolling"
+                    }
+                },
+                {
+                    "id": "split-other-version",
+                    "text": "Why does the split button ask which Bible version to open?",
+                    "kind": "what",
+                    "keywords": [
+                        "split horizontal to",
+                        "split vertical to",
+                        "color group",
+                        "grouped pane",
+                        "split view",
+                        "another translation",
+                        "version list"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "Every pane has a color — lime until you pick another",
+                        "related": [
+                            "W-32"
+                        ]
+                    }
+                },
+                {
+                    "id": "dropped-pane-own-color",
+                    "text": "Why did the passage I dragged in get a different color?",
+                    "kind": "what",
+                    "keywords": [
+                        "drag passage",
+                        "dropped pane",
+                        "new pane",
+                        "different color",
+                        "open beside"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "A pane that was NOT",
+                        "find": "Color Note"
+                    }
                 },
                 {
                     "id": "add-version",
@@ -82,8 +229,30 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-34"],
+                        "related": [
+                            "W-34"
+                        ],
                         "guide": true
+                    }
+                },
+                {
+                    "id": "leave-empty-view",
+                    "text": "What happens to a view with no passage yet when I edit another one?",
+                    "kind": "what",
+                    "keywords": [
+                        "empty view",
+                        "book grid",
+                        "split",
+                        "switch view",
+                        "edit another",
+                        "closed"
+                    ],
+                    "resources": {
+                        "recipe": "W-32",
+                        "related": [
+                            "W-11"
+                        ],
+                        "shortcut": "Ctrl+Shift+arrow moves the editing to the next view"
                     }
                 },
                 {
@@ -105,6 +274,22 @@
                     "starterRank": 3
                 },
                 {
+                    "id": "reader-history-put-back",
+                    "text": "How do I put a passage from the history back into the passage I am editing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "put back",
+                        "set to current editing",
+                        "history row",
+                        "recent reference",
+                        "reopen passage"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "the recent reference rows near the top keep it"
+                    }
+                },
+                {
                     "id": "reader-clear-input",
                     "text": "How do I clear the reference box?",
                     "kind": "howto",
@@ -117,7 +302,7 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "shortcut": "Escape / Ctrl+Escape",
+                        "shortcut": "Escape removes the last part; Shift+Escape clears the whole reference",
                         "guide": true
                     }
                 },
@@ -134,7 +319,9 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-16"],
+                        "related": [
+                            "W-16"
+                        ],
                         "guide": true
                     },
                     "starter": true,
@@ -149,7 +336,10 @@
                         "hands free",
                         "scroll speed",
                         "teleprompter",
-                        "moving"
+                        "moving",
+                        "font size",
+                        "floating panel",
+                        "verse panel"
                     ],
                     "resources": {
                         "recipe": "W-39",
@@ -185,7 +375,9 @@
                     ],
                     "resources": {
                         "recipe": "W-11",
-                        "related": ["W-31"],
+                        "related": [
+                            "W-31"
+                        ],
                         "guide": true
                     }
                 },
@@ -202,9 +394,29 @@
                     ],
                     "resources": {
                         "recipe": "W-31",
-                        "related": ["W-12"],
-                        "find": ["Advance Bible Lookup", "Advance Lookup"],
+                        "related": [
+                            "W-12"
+                        ],
+                        "find": "Advance Bible Lookup",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "bible-not-available",
+                    "text": "It says a Bible key is not available. How do I get that Bible?",
+                    "kind": "howto",
+                    "keywords": [
+                        "not available",
+                        "missing bible",
+                        "no kjv",
+                        "kjv missing",
+                        "get that bible",
+                        "import this bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "find": "Let the assistant import a Bible for me",
+                        "passage": "The Bible Reader or the Bible Lookup opens on"
                     }
                 }
             ]
@@ -212,7 +424,10 @@
         {
             "id": "guided-demos",
             "label": "Guided demos without AI",
-            "recipes": ["W-42", "W-46"],
+            "recipes": [
+                "W-42",
+                "W-46"
+            ],
             "questions": [
                 {
                     "id": "reader-built-in-demos",
@@ -227,7 +442,8 @@
                         "no account"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "The Bible Reader also has 30 guided demos"
                     }
                 },
                 {
@@ -240,7 +456,7 @@
                         "do it",
                         "next",
                         "practice",
-                        "99 lessons"
+                        "Reader lessons"
                     ],
                     "resources": {
                         "recipe": "W-46"
@@ -257,7 +473,8 @@
                         "clipboard"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "In the Reader, search for"
                     }
                 },
                 {
@@ -273,7 +490,8 @@
                         "export"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "Saved Bibles lists and Bible Notes have separate folder"
                     }
                 },
                 {
@@ -289,7 +507,8 @@
                         "move"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "Saved Bibles lists and Bible Notes have separate"
                     }
                 },
                 {
@@ -305,7 +524,8 @@
                         "copy to data directory"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "lessons are found by searching"
                     }
                 },
                 {
@@ -322,7 +542,8 @@
                         "copy"
                     ],
                     "resources": {
-                        "recipe": "W-46"
+                        "recipe": "W-46",
+                        "passage": "found by searching the word"
                     }
                 }
             ]
@@ -330,7 +551,9 @@
         {
             "id": "find",
             "label": "Searching the whole Bible",
-            "recipes": ["W-12"],
+            "recipes": [
+                "W-12"
+            ],
             "questions": [
                 {
                     "id": "search-words",
@@ -351,6 +574,40 @@
                         "guide": true
                     },
                     "starterRank": 6
+                },
+                {
+                    "id": "find-forgotten-verse",
+                    "text": "Can you help me find a Bible verse I forgot?",
+                    "kind": "howto",
+                    "keywords": [
+                        "forgot",
+                        "remember",
+                        "half remember",
+                        "which verse",
+                        "words in any order",
+                        "assistant"
+                    ],
+                    "resources": {
+                        "recipe": "W-12",
+                        "find": "Find a Verse with the Assistant",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-in-another-bible",
+                    "text": "Can I see the verse it found in another Bible?",
+                    "kind": "howto",
+                    "keywords": [
+                        "another bible",
+                        "other bible",
+                        "change bible",
+                        "english",
+                        "khmer",
+                        "show in another bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-12"
+                    }
                 },
                 {
                     "id": "search-button",
@@ -383,6 +640,7 @@
                     ],
                     "resources": {
                         "recipe": "W-12",
+                        "passage": "To search part of the Bible only",
                         "guide": true
                     }
                 },
@@ -403,6 +661,21 @@
                     }
                 },
                 {
+                    "id": "search-no-verses",
+                    "text": "Why does Bible Find say no verses found?",
+                    "kind": "howto",
+                    "keywords": [
+                        "no matches",
+                        "zero results",
+                        "empty search",
+                        "different words",
+                        "book filter"
+                    ],
+                    "resources": {
+                        "recipe": "W-12"
+                    }
+                },
+                {
                     "id": "search-reset",
                     "text": "How do I clear the search and start again?",
                     "kind": "howto",
@@ -415,6 +688,7 @@
                     ],
                     "resources": {
                         "recipe": "W-12",
+                        "passage": "To clear the search and start again, empty the words in the search box",
                         "guide": true
                     }
                 },
@@ -430,7 +704,10 @@
                     ],
                     "resources": {
                         "recipe": "W-12",
-                        "related": ["W-06"],
+                        "passage": "To put a result on the screen",
+                        "related": [
+                            "W-06"
+                        ],
                         "guide": true
                     }
                 }
@@ -439,7 +716,9 @@
         {
             "id": "cross-reference",
             "label": "Cross references",
-            "recipes": ["W-13"],
+            "recipes": [
+                "W-13"
+            ],
             "questions": [
                 {
                     "id": "cross-ref-what",
@@ -475,6 +754,22 @@
                     }
                 },
                 {
+                    "id": "cross-ref-other-bible",
+                    "text": "How do I read a cross reference in another Bible version?",
+                    "kind": "howto",
+                    "keywords": [
+                        "another version",
+                        "other bible",
+                        "compare versions",
+                        "verse panel",
+                        "translation"
+                    ],
+                    "resources": {
+                        "recipe": "W-13",
+                        "passage": "The version at the start of the panel's title"
+                    }
+                },
+                {
                     "id": "cross-ref-ai",
                     "text": "What are AI cross references and do I need a key?",
                     "kind": "what",
@@ -488,7 +783,9 @@
                     ],
                     "resources": {
                         "recipe": "W-13",
-                        "related": ["W-42"],
+                        "related": [
+                            "W-42"
+                        ],
                         "guide": true
                     }
                 },
@@ -505,6 +802,7 @@
                     ],
                     "resources": {
                         "recipe": "W-13",
+                        "passage": "right-click the title",
                         "guide": true
                     }
                 }
@@ -514,7 +812,11 @@
             "id": "notes",
             "label": "Notes & marks",
             "panel": "Bibles / Notes",
-            "recipes": ["W-14", "W-40", "W-41"],
+            "recipes": [
+                "W-14",
+                "W-40",
+                "W-41"
+            ],
             "questions": [
                 {
                     "id": "verse-marks",
@@ -530,7 +832,9 @@
                     ],
                     "resources": {
                         "recipe": "W-40",
-                        "related": ["W-14"]
+                        "related": [
+                            "W-14"
+                        ]
                     }
                 },
                 {
@@ -596,7 +900,7 @@
                     ],
                     "resources": {
                         "recipe": "W-14",
-                        "find": "Notes",
+                        "find": "Bible Notes",
                         "shortcut": "Ctrl+S to save",
                         "guide": true
                     }
@@ -632,7 +936,9 @@
                     ],
                     "resources": {
                         "recipe": "W-41",
-                        "related": ["W-25"],
+                        "related": [
+                            "W-25"
+                        ],
                         "guide": true
                     }
                 },
@@ -648,8 +954,11 @@
                         "prepare"
                     ],
                     "resources": {
-                        "recipe": "W-40",
-                        "related": ["W-24"],
+                        "recipe": "W-11",
+                        "passage": "To keep a verse for later",
+                        "related": [
+                            "W-06"
+                        ],
                         "guide": true
                     }
                 }
@@ -658,7 +967,10 @@
         {
             "id": "lookup",
             "label": "People & places",
-            "recipes": ["W-29", "W-30"],
+            "recipes": [
+                "W-29",
+                "W-30"
+            ],
             "questions": [
                 {
                     "id": "who-is",
@@ -674,6 +986,7 @@
                     ],
                     "resources": {
                         "recipe": "W-29",
+                        "passage": "tabs to choose what you are looking for, and type in the search box",
                         "guide": true
                     }
                 },
@@ -695,6 +1008,39 @@
                     }
                 },
                 {
+                    "id": "lookup-language-color",
+                    "text": "Why is the language code beside the names button red?",
+                    "kind": "what",
+                    "keywords": [
+                        "red",
+                        "green",
+                        "language code",
+                        "names language",
+                        "bible language"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "It is green while that is the language of the Bible you are reading",
+                        "find": "Names and locations language"
+                    }
+                },
+                {
+                    "id": "detail-language",
+                    "text": "How do I open the same person or place in two languages?",
+                    "kind": "howto",
+                    "keywords": [
+                        "detail language",
+                        "compare languages",
+                        "English and Khmer",
+                        "person panel",
+                        "location panel"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "guide": true
+                    }
+                },
+                {
                     "id": "names-in-passage",
                     "text": "Who and where is named in the passage I am reading?",
                     "kind": "howto",
@@ -707,8 +1053,76 @@
                     ],
                     "resources": {
                         "recipe": "W-30",
-                        "related": ["W-29"],
+                        "related": [
+                            "W-29"
+                        ],
                         "guide": true
+                    }
+                },
+                {
+                    "id": "ask-assistant-about",
+                    "text": "Can the assistant tell me more about a person or place I opened?",
+                    "kind": "howto",
+                    "keywords": [
+                        "ask the assistant",
+                        "robot",
+                        "tell me more",
+                        "explain this person",
+                        "chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Ask the assistant about it",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "ask-assistant-related-verses",
+                    "text": "Can the assistant find the verses related to a passage I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "related verses",
+                        "cross references",
+                        "everything related",
+                        "study files",
+                        "ask about this passage"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Everything related to it",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "lookup-row-menu",
+                    "text": "Can I copy a person or place without opening it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy name",
+                        "copy place",
+                        "row menu",
+                        "names in your reading",
+                        "open in chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "The menu does what the person's or place's own window does"
+                    }
+                },
+                {
+                    "id": "open-passage-in-chatbot",
+                    "text": "How do I open a passage from my Bibles list in the chatbot?",
+                    "kind": "howto",
+                    "keywords": [
+                        "open in chatbot",
+                        "bibles list",
+                        "history",
+                        "cross reference",
+                        "which bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Or open it from the menu of a passage"
                     }
                 },
                 {
@@ -726,13 +1140,72 @@
                         "recipe": "W-29",
                         "guide": true
                     }
+                },
+                {
+                    "id": "passage-save-or-copy",
+                    "text": "How do I save or copy the passage I am asking about?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save passage",
+                        "copy passage",
+                        "bibles list",
+                        "keep this verse",
+                        "passage card"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Ask for one of them and it tells you which button",
+                        "find": "Save to my Bibles list",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "passage-other-language",
+                    "text": "How do I read the passage I am asking about in another language?",
+                    "kind": "howto",
+                    "keywords": [
+                        "another bible",
+                        "other language",
+                        "read in khmer",
+                        "read in english",
+                        "passage card"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Ask for one of them and it tells you which button",
+                        "find": "Read it in another Bible",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "passage-study-words",
+                    "text": "How do I study the words of a verse one by one?",
+                    "kind": "howto",
+                    "keywords": [
+                        "vocabulary",
+                        "each word",
+                        "word by word",
+                        "study the words",
+                        "learn the words",
+                        "meaning of a word",
+                        "greek word",
+                        "hebrew word"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Study its words.",
+                        "find": "Study the words",
+                        "guide": true
+                    }
                 }
             ]
         },
         {
             "id": "graph",
             "label": "Connection graph",
-            "recipes": ["W-38"],
+            "recipes": [
+                "W-38"
+            ],
             "questions": [
                 {
                     "id": "graph-what",
@@ -747,7 +1220,9 @@
                     ],
                     "resources": {
                         "recipe": "W-38",
-                        "related": ["W-29"],
+                        "related": [
+                            "W-29"
+                        ],
                         "guide": true
                     }
                 },
@@ -803,7 +1278,8 @@
                     ],
                     "resources": {
                         "recipe": "W-38",
-                        "guide": true
+                        "guide": true,
+                        "passage": "Copy a graph into your notes."
                     }
                 },
                 {
@@ -848,7 +1324,9 @@
         {
             "id": "resources",
             "label": "Your own files beside the verse",
-            "recipes": ["W-37"],
+            "recipes": [
+                "W-37"
+            ],
             "questions": [
                 {
                     "id": "resources-what",
@@ -879,6 +1357,22 @@
                         "book key",
                         "pattern",
                         "not showing"
+                    ],
+                    "resources": {
+                        "recipe": "W-37"
+                    }
+                },
+                {
+                    "id": "resources-book-code",
+                    "text": "What does the three-letter book code in Resources mean?",
+                    "kind": "what",
+                    "keywords": [
+                        "full book name",
+                        "abbreviation",
+                        "chapter",
+                        "group heading",
+                        "title",
+                        "introduction"
                     ],
                     "resources": {
                         "recipe": "W-37"
@@ -935,6 +1429,23 @@
                     }
                 },
                 {
+                    "id": "resources-ask-assistant",
+                    "text": "How do I ask the assistant about a study file for the verses I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "ask the assistant",
+                        "robot",
+                        "study pdf",
+                        "verses i am reading",
+                        "explain this file"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Read a study PDF one verse or range at a time",
+                        "find": "Ask the Assistant About This File"
+                    }
+                },
+                {
                     "id": "resources-links",
                     "text": "Can I keep web links for a chapter in Resources?",
                     "kind": "howto",
@@ -949,7 +1460,8 @@
                         "open in browser"
                     ],
                     "resources": {
-                        "recipe": "W-37"
+                        "recipe": "W-37",
+                        "passage": "can hold a list of links"
                     }
                 },
                 {
@@ -985,6 +1497,7 @@
                     ],
                     "resources": {
                         "recipe": "W-37",
+                        "passage": "Right-click a header for",
                         "find": "Copy to Data Directory"
                     }
                 },
@@ -1070,7 +1583,8 @@
                         "comments"
                     ],
                     "resources": {
-                        "recipe": "W-37"
+                        "recipe": "W-37",
+                        "passage": "A bible note file"
                     }
                 }
             ]
@@ -1078,7 +1592,11 @@
         {
             "id": "versions",
             "label": "Bible translations",
-            "recipes": ["W-32", "W-33", "W-34"],
+            "recipes": [
+                "W-32",
+                "W-33",
+                "W-34"
+            ],
             "questions": [
                 {
                     "id": "version-info",
@@ -1110,6 +1628,7 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
+                        "passage": "Import from the internet with the assistant.",
                         "guide": true
                     }
                 },
@@ -1127,6 +1646,7 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
+                        "passage": "Later changes remain available through the pencil",
                         "guide": true
                     }
                 },
@@ -1144,7 +1664,9 @@
                     ],
                     "resources": {
                         "recipe": "W-33",
-                        "related": ["W-25"],
+                        "related": [
+                            "W-25"
+                        ],
                         "guide": true
                     }
                 },
@@ -1162,7 +1684,9 @@
                     ],
                     "resources": {
                         "recipe": "W-24",
-                        "related": ["W-25"],
+                        "related": [
+                            "W-25"
+                        ],
                         "guide": true
                     }
                 }

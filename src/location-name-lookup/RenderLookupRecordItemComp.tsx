@@ -3,10 +3,12 @@ import './LocationNameLookupPanelComp.scss';
 import type { MouseEvent } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
-import { showGraphPreviewContextMenu } from '../graph-view/graphContextMenuHelpers';
-import type { DetailPanelKindType } from './detailPanelHelpers';
-import { openDetailPanel } from './detailPanelHelpers';
 import { getRecordDisplayName } from './lookupPresentationHelpers';
+import type { LookupRecordKindType } from './lookupRecordMenuHelpers';
+import {
+    openLookupRecordDetailPanel,
+    showLookupRecordContextMenu,
+} from './lookupRecordMenuHelpers';
 
 /**
  * One record row — icon, name, one-line description — shared by the floating
@@ -33,17 +35,16 @@ export default function RenderLookupRecordItemComp({
     record,
     extraLabel,
 }: Readonly<{
-    kind: DetailPanelKindType;
+    kind: LookupRecordKindType;
     record: LookupRecordItemType;
     // Where the record was found, e.g. the verses of the passage attesting it.
     extraLabel?: string;
 }>) {
+    const menuTarget = { kind, recordId: record.id, name: record.name };
+    // Open, Copy, Open in Chatbot and the graph -- what the detail panel
+    // offers, without opening it first (`lookupRecordMenuHelpers`).
     const showContextMenu = (event: MouseEvent) => {
-        showGraphPreviewContextMenu(event.nativeEvent, {
-            kind,
-            recordId: record.id,
-            name: record.name,
-        });
+        showLookupRecordContextMenu(event.nativeEvent, menuTarget);
     };
     return (
         // The row is a flex ROW of two siblings rather than one button with the
@@ -65,11 +66,7 @@ export default function RenderLookupRecordItemComp({
                 type="button"
                 title={record.title || getRecordDisplayName(record)}
                 onClick={() => {
-                    openDetailPanel({
-                        kind,
-                        target: record.id,
-                        name: record.name,
-                    });
+                    openLookupRecordDetailPanel(menuTarget);
                 }}
                 onContextMenu={showContextMenu}
             >

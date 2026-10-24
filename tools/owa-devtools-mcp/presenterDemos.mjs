@@ -184,7 +184,7 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Choose "Count down for a duration" and set the hours and minutes, or "Count down to a specific date & time" and pick the moment. Tick the screens it should reach, then press Start Countdown. This lesson will not start it for you.',
+        text: 'Choose "Count down for a duration" and set the hours, minutes and seconds, or "Count down to a specific date & time" and pick the moment. Tick the screens it should reach, then press Show Countdown: a duration countdown goes up stopped on its full length, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown). Once the time is up it counts the time over. This lesson will not start it for you.',
       },
     ],
   },
@@ -208,7 +208,7 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Start Stopwatch counts up from zero; Hide Stopwatch takes it off again. It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
+        text: 'Show Stopwatch puts it up on zero, with Start, Pause, Resume and Reset under it (Auto-start makes it count the moment it is shown); Hide Stopwatch takes it off again. It is the one to reach for when the question is how long a section has run, not how long is left. This lesson will not start it for you.',
       },
     ],
   },
@@ -382,6 +382,31 @@ export const PRESENTER_DEMO_LIST = [
       },
       {
         text: 'Choose the camera, then size and place it with Properties. This is the overlay for a speaker inset; a camera as the whole background belongs in Background > Cameras instead. This lesson will not put it on a screen.',
+      },
+    ],
+  },
+  {
+    id: 'presenter-foreground-screen',
+    label: 'Show one screen inside another',
+    detail:
+      'Screen Show puts the live picture of another screen above the slide.',
+    title: 'Show one screen inside another',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Foreground above the slide previews.',
+        find: 'Foreground',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Choose Screen Show. It opens in a panel of its own that you can move and resize; choosing it again puts it away.',
+        find: 'Screen Show',
+        translateFind: true,
+        action: 'click',
+      },
+      {
+        text: 'Each card is one screen, in its own colour with its number. Press the three dots on a card to choose which screen shows it, then size and place it with Properties. It shows what that screen holds even while that screen is hidden. A screen cannot show itself, and two screens cannot show each other. This lesson will not put it on a screen.',
       },
     ],
   },
@@ -915,7 +940,7 @@ export const PRESENTER_DEMO_LIST = [
         action: 'click',
       },
       {
-        text: 'Eleven components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
+        text: 'Twelve components share that list: Messages, Marquee Top and Marquee Bottom, Quick Text, Countdown, Stopwatch, Time, and Video, Image, Camera, Screen and Web Show. Each opens in a panel of its own, and each has a lesson of its own. This lesson will not start one for you.',
       },
     ],
   },
@@ -1219,7 +1244,7 @@ export const PRESENTER_DEMO_LIST = [
         skipIfVisible: 'Bible Reference',
       },
       {
-        text: 'Double-click a history chip to put that passage back into the lookup. The version travels with the reference, so check both before presenting it again.',
+        text: 'Click a history chip to read that passage in a small floating panel. To put it back into the lookup, open More Options on the chip and choose Set to current editing. The version travels with the reference, so check both before presenting it again.',
       },
       {
         text: 'If the history is empty, look up a passage first. A history chip can also be dragged into the saved Bibles list when you want to keep it for another service.',
@@ -1246,6 +1271,44 @@ export const PRESENTER_DEMO_LIST = [
       },
       {
         text: 'Choose Resources to browse your own study files for the current book and chapter. Book-level resources also appear in each chapter; Others includes files without a book-and-chapter name.',
+      },
+    ],
+  },
+  // Ctrl+Shift+Arrow appears on no button and in no tooltip, so this lesson is
+  // the only place to learn it. The split is PRESSED, not clicked: every
+  // passage's hover toolbar has a "Split horizontal" button and an exact label
+  // outranks the selected one's, so a click can split another passage. The key
+  // always splits the selected one, opens the copy on its LEFT and keeps it
+  // selected -- so Left is next.
+  {
+    id: 'presenter-lookup-switch-split',
+    label: 'Move between split passages in Bible Lookup',
+    detail:
+      'Split a passage, then press Ctrl+Shift with an arrow key to work in the passage on that side.',
+    title: 'Move between split passages in Bible Lookup',
+    isFeatured: false,
+    steps: [
+      {
+        text: 'Open Bible Lookup at the top of the Presenter.',
+        find: 'Bible Lookup',
+        translateFind: true,
+        action: 'click',
+        skipIfVisible: 'Bible Reference',
+      },
+      {
+        text: 'With a passage open, press Ctrl+Shift+S to split it. The copy opens on the left, and you keep working in the passage on the right.',
+        press: 'Ctrl+Shift+S',
+      },
+      {
+        text: 'Press Ctrl+Shift+Left to work in the passage on the left. Its outline lights up, and the reference box now changes that passage.',
+        press: 'Ctrl+Shift+Left',
+      },
+      {
+        text: 'Press Ctrl+Shift+Right to go back. Ctrl+Shift+Up and Ctrl+Shift+Down move to a passage above or below.',
+        press: 'Ctrl+Shift+Right',
+      },
+      {
+        text: 'On a Mac, hold Command+Shift with the arrow keys instead. A passage with no reference typed in closes when you move away from it. Nothing reaches a screen until you choose Show Bible Item.',
       },
     ],
   },

@@ -24,7 +24,7 @@ const enableSyncGroupMocks = {
 const useScreenEventsSpy = vi.fn();
 const useScreenBackgroundManagerEventsSpy = vi.fn();
 const useScreenVaryAppDocumentManagerEventsSpy = vi.fn();
-const useScreenBibleManagerEventsSpy = vi.fn();
+const useScreenLongTextManagerEventsSpy = vi.fn();
 const useScreenForegroundManagerEventsSpy = vi.fn();
 
 const appProviderMock = {
@@ -91,11 +91,6 @@ vi.mock('../server/appHelpers', () => ({
     electronSendAsync: electronSendAsyncMock,
 }));
 
-vi.mock('../helper/debuggerHelpers', () => ({
-    useAppEffect: vi.fn(),
-    useAppStateAsync: vi.fn(() => [false, vi.fn()]),
-}));
-
 vi.mock('../bible-list/BibleItem', () => ({
     default: class BibleItem {
         static readonly validate = vi.fn();
@@ -128,8 +123,8 @@ vi.mock('./managers/ScreenForegroundManager', () => ({
     },
 }));
 
-vi.mock('./managers/ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./managers/ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static readonly eventNamePrefix = 'screen-bible';
         static readonly enableSyncGroup = enableSyncGroupMocks.bible;
     },
@@ -206,7 +201,7 @@ vi.mock('./managers/screenEventHelpers', () => ({
     useScreenBackgroundManagerEvents: useScreenBackgroundManagerEventsSpy,
     useScreenVaryAppDocumentManagerEvents:
         useScreenVaryAppDocumentManagerEventsSpy,
-    useScreenBibleManagerEvents: useScreenBibleManagerEventsSpy,
+    useScreenLongTextManagerEvents: useScreenLongTextManagerEventsSpy,
     useScreenForegroundManagerEvents: useScreenForegroundManagerEventsSpy,
     useScreenDrawManagerEvents: vi.fn(),
     useScreenFocusManagerEvents: vi.fn(),
@@ -433,51 +428,88 @@ describe('screen infrastructure', () => {
             bottomContainer.querySelector('img.play-to-bottom'),
         ).not.toBeNull();
 
+        // Keyed on the file's name, so the presenter's `file:` address and a
+        // screen's served one name the same video.
         expect(screenHelpers.genVideoIDFromSrc('/video.mp4')).toBe(
-            'video-md5-/video.mp4',
+            'video-md5-video.mp4',
         );
     });
 
-    test('clears invalid stored Bible screen data', async () => {
+    test('drops only the invalid entries of the stored long-text layer', async () => {
         const { screenManagerSettingNames } =
             await import('../helper/constants');
         const screenHelpers = await import('./screenHelpers');
 
+        const genBible = (verseNum: unknown) => {
+            return {
+                type: 'bible-item',
+                locale: 'en-US',
+                bibleItemData: {
+                    renderedList: [
+                        {
+                            locale: 'en-US',
+                            bibleKey: 'KJV',
+                            title: 'Genesis 1:1',
+                            verses: [{ num: verseNum, text: 'A verse' }],
+                        },
+                    ],
+                    bibleItem: { id: 1 },
+                },
+                scroll: 0,
+                selectedKJVVerseKey: null,
+            };
+        };
+        const genLongText = (sectionNum: unknown) => {
+            return {
+                type: 'long-text',
+                locale: 'en-US',
+                longTextData: {
+                    sourceId: 'long-text',
+                    renderedList: [
+                        {
+                            locale: 'en-US',
+                            code: 'EN',
+                            title: 'Song',
+                            sections: [
+                                { num: sectionNum, text: 'Line', key: 'lt-1' },
+                            ],
+                        },
+                    ],
+                },
+                scroll: 0,
+                selectedKJVVerseKey: null,
+            };
+        };
         getSettingMock.mockImplementation((key: string) => {
             if (key === screenManagerSettingNames.MANAGERS) {
-                return JSON.stringify([{ screenId: 1 }]);
+                return JSON.stringify(
+                    [1, 2, 3, 4, 5].map((screenId) => {
+                        return { screenId };
+                    }),
+                );
             }
             if (key === screenManagerSettingNames.FULL_TEXT) {
                 return JSON.stringify({
-                    1: {
-                        type: 'bible-item',
-                        locale: 'en-US',
-                        bibleItemData: {
-                            renderedList: [
-                                {
-                                    locale: 'en-US',
-                                    bibleKey: 'KJV',
-                                    title: 'Genesis 1:1',
-                                    verses: [
-                                        {
-                                            num: 1,
-                                            text: 'Invalid verse number',
-                                        },
-                                    ],
-                                },
-                            ],
-                            bibleItem: { id: 1 },
-                        },
-                        scroll: 0,
-                        selectedKJVVerseKey: null,
-                    },
+                    // A verse number that is not a string.
+                    1: genBible(1),
+                    2: genBible('1'),
+                    3: genLongText('1'),
+                    // A section number that is not a string.
+                    4: genLongText(1),
+                    // A kind this build does not draw.
+                    5: { type: 'lyric', scroll: 0, selectedKJVVerseKey: null },
                 });
             }
             return undefined;
         });
 
-        expect(screenHelpers.getBibleListOnScreenSetting()).toEqual({});
-        expect(setSettingMock).toHaveBeenCalledWith(
+        // One bad entry used to blank the whole setting, and with it every
+        // OTHER screen's passage on the next write.
+        expect(screenHelpers.getBibleListOnScreenSetting()).toEqual({
+            2: genBible('1'),
+            3: genLongText('1'),
+        });
+        expect(setSettingMock).not.toHaveBeenCalledWith(
             screenManagerSettingNames.FULL_TEXT,
             '',
         );
@@ -652,6 +684,65 @@ describe('screen infrastructure', () => {
         );
     });
 
+    // A laptop and a virtual display: songs and new slides were sized for the
+    // laptop (1494x934) and letterboxed on the 1920x1080 display. Content
+    // follows the virtual display a screen is set to; a screen with no
+    // display of its own still never lands on one.
+    test('content is sized for a virtual display when there is no second monitor', async () => {
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
+        const managerScreenHelpers = await import('./managers/screenHelpers');
+        const laptop = {
+            id: 1,
+            bounds: { x: 0, y: 0, width: 1494, height: 934 },
+        };
+        const virtual = {
+            id: -500001,
+            bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+            label: 'Virtual Display 1',
+        };
+        sendDataSyncMock.mockImplementation((channel: string) => {
+            if (channel === 'main:app:get-displays') {
+                return { primaryDisplay: laptop, displays: [laptop, virtual] };
+            }
+            return null;
+        });
+        const settings: Record<string, string> = {
+            [screenManagerSettingNames.MANAGERS]: JSON.stringify([
+                { screenId: 0 },
+                { screenId: 1 },
+            ]),
+        };
+        getSettingMock.mockImplementation((key: string) => settings[key]);
+
+        // No screen on it yet: the laptop, as before.
+        expect(managerScreenHelpers.getDefaultScreenDisplay().id).toBe(1);
+
+        settings['screen-display--pid-1'] = String(virtual.id);
+        expect(managerScreenHelpers.getDefaultScreenDisplay().bounds).toEqual(
+            virtual.bounds,
+        );
+        // Placement is unchanged: screen 0 has no display of its own.
+        expect(managerScreenHelpers.getDisplayIdByScreenId(0)).toBe(1);
+        expect(managerScreenHelpers.getDisplayIdByScreenId(1)).toBe(virtual.id);
+
+        // A real second monitor still wins over a virtual display.
+        const side = {
+            id: 2,
+            bounds: { x: 1494, y: 0, width: 1280, height: 720 },
+        };
+        sendDataSyncMock.mockImplementation((channel: string) => {
+            if (channel === 'main:app:get-displays') {
+                return {
+                    primaryDisplay: laptop,
+                    displays: [laptop, virtual, side],
+                };
+            }
+            return null;
+        });
+        expect(managerScreenHelpers.getDefaultScreenDisplay().id).toBe(2);
+    });
+
     test('sends sync messages from event handlers and applies base manager behaviors', async () => {
         const { default: ScreenEventHandler } =
             await import('./managers/ScreenEventHandler');
@@ -720,6 +811,41 @@ describe('screen infrastructure', () => {
             },
             true,
         );
+
+        // Pointer not seen entering yet (just reloaded), window not focused:
+        // a scroll no wheel drove stays local, a wheel's goes out regardless.
+        appProviderMock.getIsMouseOverApp = () => false;
+        appProviderMock.getIsWindowFocused = () => false;
+        try {
+            base.sendScreenMessage.mockClear();
+            handler.sendSyncScrollPercentage('.scroll-target', {
+                x: 0,
+                y: 0.75,
+            });
+            await vi.runAllTimersAsync();
+            expect(base.sendScreenMessage).not.toHaveBeenCalled();
+
+            handler.sendSyncScrollPercentage(
+                '.scroll-target',
+                { x: 0, y: 0.75 },
+                true,
+            );
+            await vi.runAllTimersAsync();
+            expect(base.sendScreenMessage).toHaveBeenCalledWith(
+                {
+                    screenId: 3,
+                    type: 'sync-scroll-percentage',
+                    data: {
+                        domSelector: '.scroll-target',
+                        scroll: { x: 0, y: 0.75 },
+                    },
+                },
+                true,
+            );
+        } finally {
+            appProviderMock.getIsMouseOverApp = () => true;
+            appProviderMock.getIsWindowFocused = () => true;
+        }
 
         const scroller = document.createElement('div');
         Object.defineProperties(scroller, {
@@ -813,11 +939,11 @@ describe('screen infrastructure', () => {
                 <ManagerHost />
             </screenManagerHooks.ScreenManagerBaseContext>,
         );
-        expect(managerHtml).toContain('video-md5-/video.mp4');
+        expect(managerHtml).toContain('video-md5-video.mp4');
         expect(useScreenEventsSpy).toHaveBeenCalled();
         expect(useScreenBackgroundManagerEventsSpy).toHaveBeenCalled();
         expect(useScreenVaryAppDocumentManagerEventsSpy).toHaveBeenCalled();
-        expect(useScreenBibleManagerEventsSpy).toHaveBeenCalled();
+        expect(useScreenLongTextManagerEventsSpy).toHaveBeenCalled();
         expect(useScreenForegroundManagerEventsSpy).toHaveBeenCalled();
     });
 });

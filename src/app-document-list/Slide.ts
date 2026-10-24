@@ -13,6 +13,7 @@ import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import { getFontFamilies } from '../server/fontHelpers';
 import FileSource from '../helper/FileSource';
+import { ensureCanvasItemUuids } from '../slide-editor/canvas/canvasItemIdentityHelpers';
 
 import slideSchemaJson from './SlideSchema.json';
 const slideSchema: SchemaNode = compileSchema(slideSchemaJson);
@@ -43,6 +44,9 @@ export default class Slide
         super();
         this._originalJson = cloneJson(json);
         this._originalJson.type = 'slide';
+        this._originalJson.canvasItems = ensureCanvasItemUuids(
+            this._originalJson.canvasItems,
+        );
         this.filePath = filePath;
     }
 
@@ -90,7 +94,10 @@ export default class Slide
 
     set originalJson(json: SlidePropsType) {
         this.isChanged = true;
-        this._originalJson = json;
+        this._originalJson = {
+            ...json,
+            canvasItems: ensureCanvasItemUuids(json.canvasItems),
+        };
     }
 
     get metadata() {
@@ -237,13 +244,14 @@ export default class Slide
     // a document written before that field existed carries it on the loaded
     // side and not in the saved file. Comparing the two raw shapes marked
     // EVERY slide of such a document unsaved, for ever. Normalise the saved
-    // side the same way before comparing. The argument is returned untouched
-    // in the common case, so a 200-slide document allocates nothing.
+    // side the same way before comparing, including legacy item identities.
+    // Already-normal slides keep their original slide and item records.
     static toComparableJson(json: SlidePropsType): SlidePropsType {
-        if (json.type === 'slide') {
+        const canvasItems = ensureCanvasItemUuids(json.canvasItems);
+        if (json.type === 'slide' && canvasItems === json.canvasItems) {
             return json;
         }
-        return { ...json, type: 'slide' };
+        return { ...json, type: 'slide', canvasItems };
     }
 
     checkIsWrongDimension(dim: { width: number; height: number }) {

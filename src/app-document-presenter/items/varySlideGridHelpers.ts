@@ -28,13 +28,28 @@ export function toVarySlideKey(varySlide: VarySlideType) {
  * How tall a card's body is, from the slide itself: a document may hold pages
  * of more than one shape (a PDF with a landscape page in it), and a grid that
  * assumed one height would lay those out on top of each other.
+ *
+ * `cellWidth` is the width the grid's cell really gives the card
+ * (`toCellWidth`). A pane narrower than the zoom asks for squeezes the card,
+ * and its body (`ShadowingFillParentWidthComp`) follows the card's width, not
+ * the zoom's -- so the body is measured off whichever is narrower.
  */
 export function genSlideHeightGetter(thumbnailWidth: number) {
-    return (varySlide: VarySlideType) => {
+    return (varySlide: VarySlideType, cellWidth?: number) => {
         if (varySlide.width <= 0) {
             return 0;
         }
-        return (thumbnailWidth * varySlide.height) / varySlide.width;
+        const bodyWidth =
+            cellWidth === undefined
+                ? thumbnailWidth
+                : Math.max(
+                      0,
+                      Math.min(
+                          thumbnailWidth,
+                          cellWidth - THUMBNAIL_EXTRA_WIDTH,
+                      ),
+                  );
+        return (bodyWidth * varySlide.height) / varySlide.width;
     };
 }
 

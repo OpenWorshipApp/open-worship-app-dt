@@ -1,6 +1,12 @@
 import './BibleViewComp.scss';
 
-import { use, useCallback, type DragEvent as ReactDragEvent } from 'react';
+import {
+    useCallback,
+    useLayoutEffect,
+    useRef,
+    useState,
+    type DragEvent as ReactDragEvent,
+} from 'react';
 
 import { tran } from '../lang/langHelpers';
 import type BibleItemsViewController from './BibleItemsViewController';
@@ -12,10 +18,10 @@ import {
 } from './readBibleHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
-import RenderBibleEditingHeaderComp from '../bible-lookup/RenderBibleEditingHeaderComp';
 import RenderBibleLookupBodyComp from '../bible-lookup/RenderBibleLookupBodyComp';
-import type LookupBibleItemController from './LookupBibleItemController';
-import { EditingResultContext } from './LookupBibleItemController';
+import LookupBibleItemController, {
+    useEditingResult,
+} from './LookupBibleItemController';
 import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
@@ -25,12 +31,18 @@ import {
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import {
+    createMouseEvent,
+    getMenuItemAnchor,
+} from '../context-menu/contextMenuEventHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import BibleViewTextComp from './view-extra/BibleViewTextComp';
-import BibleViewRenderHeaderComp from './view-extra/BibleViewRenderHeaderComp';
+import BibleViewHeaderComp from './view-extra/BibleViewHeaderComp';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
+import { handleError } from '../helper/errorHelpers';
 
 function checkIsParentPlayToBottom(verseElement: HTMLElement) {
     const containerElements = Array.from(
@@ -55,6 +67,13 @@ function handMovedChecking(
     container: HTMLElement,
     threshold: number,
 ) {
+    if (
+        viewController.getIsGroupScrollSynced(
+            viewController.getColorNote(bibleItem),
+        )
+    ) {
+        return;
+    }
     let kjvVerseKey: string | null = null;
     const currentElements = Array.from(
         viewController.getVerseElements<HTMLElement>(bibleItem.id),
@@ -90,6 +109,105 @@ function handMovedChecking(
     }
 }
 
+/**
+ * The assistant, on the verse right-clicked and on the whole passage
+ * (2026-10-18, the user: _add contextmenu to verse preview content. to open
+ * the verse in chatbot like open from floating verse detail panel_): each
+ * opened the way a verse panel's 🤖 opens it (`bibleItemAskHelpers.ts`).
+ * While AI is on, like the 🤖s; none for a verse when the passage IS it.
+ */
+function genAskAssistantContextMenu(
+    event: any,
+    foundBibleItem: ReadIdOnlyBibleItem,
+): ContextMenuItemType[] {
+    if (!getIsAIEnabled()) {
+        return [];
+    }
+    const verseElement =
+        event?.target instanceof Element
+            ? event.target.closest('[data-verse-key]')
+            : null;
+    const verseKey =
+        verseElement instanceof HTMLElement
+            ? (verseElement.dataset.verseKey ?? '')
+            : '';
+    const target = foundBibleItem.target;
+    const isOneVerse =
+        target?.verseStart === target?.verseEnd &&
+        (target?.chapterEnd ?? target?.chapter) === target?.chapter;
+    const items: ContextMenuItemType[] = [];
+    if (verseKey.length > 0 && !isOneVerse) {
+        items.push({
+            childBefore: genContextMenuItemIcon('robot'),
+            menuElement: tran('Ask the Assistant About This Verse'),
+            onSelect: () => {
+                import('../helper/ai/bibleItemAskHelpers')
+                    .then(({ openChatbotWithVerseKey }) => {
+                        return openChatbotWithVerseKey(verseKey);
+                    })
+                    .catch(handleError);
+            },
+        });
+    }
+    items.push({
+        childBefore: genContextMenuItemIcon('robot'),
+        menuElement: tran('Ask the Assistant About This Passage'),
+        onSelect: () => {
+            import('../helper/ai/bibleItemAskHelpers')
+                .then(({ openChatbotWithBibleItem }) => {
+                    return openChatbotWithBibleItem(foundBibleItem);
+                })
+                .catch(handleError);
+        },
+    });
+    return items;
+}
+
+/**
+ * One `Copy` in place of every way to copy (2026-10-22, the user: _remove all
+ * copy buttons, add `Copy` and when click it then just trigger the copy
+ * content menu_): it opens the menu the view's copy button opens, where the
+ * item was chosen.
+ */
+function genCopyContextMenuItem(
+    foundBibleItem: ReadIdOnlyBibleItem,
+): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('copy'),
+        menuElement: tran('Copy'),
+        onSelect: (event) => {
+            const anchor = getMenuItemAnchor(event);
+            showAppContextMenu(
+                createMouseEvent(
+                    anchor?.x ?? window.innerWidth / 2,
+                    anchor?.y ?? window.innerHeight / 4,
+                ),
+                genBibleItemCopyingContextMenu(foundBibleItem),
+            );
+        },
+    };
+}
+
+/**
+ * The passage in a floating verse panel, the one a cited passage or a cross
+ * reference opens, so it can be read over another pane.
+ */
+function genFloatingContextMenuItem(
+    foundBibleItem: ReadIdOnlyBibleItem,
+): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('window-stack'),
+        menuElement: tran('Floating'),
+        onSelect: () => {
+            import('../location-name-lookup/detailPanelHelpers')
+                .then(({ openBibleItemDetailPanel }) => {
+                    return openBibleItemDetailPanel(foundBibleItem);
+                })
+                .catch(handleError);
+        },
+    };
+}
+
 async function openContextMenu(
     event: any,
     {
@@ -123,7 +241,9 @@ async function openContextMenu(
     showAppContextMenu(
         event,
         [
-            ...genBibleItemCopyingContextMenu(foundBibleItem),
+            genCopyContextMenuItem(foundBibleItem),
+            genFloatingContextMenuItem(foundBibleItem),
+            ...genAskAssistantContextMenu(event, foundBibleItem),
             ...(await viewController.genContextMenu(
                 event,
                 foundBibleItem,
@@ -144,10 +264,28 @@ export default function BibleViewComp({
     bibleItem: ReadIdOnlyBibleItem;
     isEditing?: boolean;
 }>) {
-    const uuid = crypto.randomUUID();
+    // Once per view, not per render: a fresh one each render rewrote the
+    // card's `id` and scroll attribute on every re-render of every pane.
+    const [uuid] = useState(() => {
+        return crypto.randomUUID();
+    });
     const id = `uuid-${uuid}`;
     const viewController = useBibleItemsViewControllerContext();
-    const editingResult = use(EditingResultContext);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const colorGroup = viewController.getColorNote(bibleItem);
+    const isSyncScrolling = viewController.getIsGroupScrollSynced(colorGroup);
+    // Register before the next frame so enabling from a header can align
+    // every member immediately, without waiting for another scroll event.
+    useLayoutEffect(() => {
+        const container = scrollContainerRef.current;
+        if (container && colorGroup && isSyncScrolling) {
+            return viewController.groupScrollSync.register(
+                container,
+                colorGroup,
+            );
+        }
+    }, [viewController, colorGroup, isSyncScrolling]);
+    const editingResult = useEditingResult();
     const textViewFontSize = useBibleViewFontSizeContext();
     const foundBibleItem = isEditing
         ? (editingResult?.result.bibleItem ?? null)
@@ -173,6 +311,15 @@ export default function BibleViewComp({
         [],
     );
     const viewControllerRef = useAppCurrentRef(viewController);
+    // Auto-scroll slides its own pane by fractions of a pixel and moves no
+    // whole pixel for several frames at a time, so it says when to follow.
+    const handleAutoScrollFrame = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+            viewControllerRef.current.groupScrollSync.followFrame(container);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const bibleItemRef = useAppCurrentRef(bibleItem);
     const handleDropping = useCallback(
         async (event: ReactDragEvent<HTMLDivElement>) => {
@@ -187,8 +334,26 @@ export default function BibleViewComp({
     );
     const foundBibleItemRef = useAppCurrentRef(foundBibleItem);
     const uuidRef = useAppCurrentRef(uuid);
+    const isEditingRef = useAppCurrentRef(isEditing);
+    const bookKeyRef = useAppCurrentRef(editingResult?.result.bookKey ?? null);
     const handleContextMenu = useCallback((event: any) => {
         if (foundBibleItemRef.current === null) {
+            // The view being edited on its book or chapter grid: nothing to
+            // copy or save yet, but it can still be split, shown full or
+            // closed -- and its ⋮ must not be a dead button.
+            const viewController = viewControllerRef.current;
+            if (
+                isEditingRef.current &&
+                viewController instanceof LookupBibleItemController
+            ) {
+                showAppContextMenu(
+                    event,
+                    viewController.genNoPassageContextMenu(
+                        bookKeyRef.current,
+                        uuidRef.current,
+                    ),
+                );
+            }
             return;
         }
         openContextMenu(event, {
@@ -211,12 +376,9 @@ export default function BibleViewComp({
             onDrop={handleDropping}
             onContextMenu={handleContextMenu}
         >
-            {isEditing ? (
-                <RenderBibleEditingHeaderComp />
-            ) : (
-                <BibleViewRenderHeaderComp bibleItem={bibleItem} />
-            )}
+            <BibleViewHeaderComp bibleItem={bibleItem} isEditing={isEditing} />
             <div
+                ref={scrollContainerRef}
                 className="card-body app-top-hover-motion-1"
                 data-scroll-on-next-chapter={isEditing ? '1' : '0'}
                 data-scroll-verses-container={id}
@@ -227,10 +389,15 @@ export default function BibleViewComp({
                             : '60px',
                 }}
             >
-                {isEditing ? (
-                    <RenderBibleLookupBodyComp />
-                ) : (
-                    <BibleViewTextComp bibleItem={bibleItem} />
+                {/* The lookup's own rows -- the verse picker above a found
+                    passage, the book and chapter lists before one is -- in
+                    a slot of their own, so the passage below keeps its
+                    position whether this view is the one being edited or
+                    not. It used to be drawn inside the lookup body, one
+                    level down, and every switch rebuilt the verses. */}
+                {isEditing ? <RenderBibleLookupBodyComp /> : null}
+                {foundBibleItem === null ? null : (
+                    <BibleViewTextComp bibleItem={foundBibleItem} />
                 )}
                 <ScrollingHandlerComp
                     // Both buttons stack in the bottom-right corner, 30px
@@ -239,6 +406,7 @@ export default function BibleViewComp({
                     style={{ bottom: '30px' }}
                     playToBottomStyle={{ bottom: 0 }}
                     shouldShowPlayToBottom
+                    onAutoScrollFrame={handleAutoScrollFrame}
                     movedCheck={{
                         check: (container: HTMLElement) => {
                             handMovedChecking(

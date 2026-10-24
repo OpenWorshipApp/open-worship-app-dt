@@ -8,9 +8,14 @@ import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
 import {
+    checkIsVaryAppDocumentPresenting,
     getContainerDiv,
     SLIDE_ITEMS_CONTAINER_CLASS_NAME,
 } from './varyAppDocumentHelpers';
+import {
+    KEYING_AREA_PRIORITY,
+    registerKeyingArea,
+} from '../../keyboard-shortcut/keyingAreaHelpers';
 import { checkIsTypingTarget } from '../../presenting-control/presentingControlShortcutHelpers';
 import {
     SelectedEditingSlideContext,
@@ -41,6 +46,11 @@ import {
     SlidesPreviewerScopeContext,
     useThumbnailScaleSettingOptions,
 } from './slidesPreviewerScopeHelpers';
+import {
+    DocumentTransitionIconComp,
+    genDocumentTransitionMenuItems,
+} from '../../others/slideTransitionMenuHelpers';
+import { useSlideStage } from '../stage/documentStageContexts';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     const files: File[] = [];
@@ -59,6 +69,15 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
 
 // The document menu button's height (`--app-action-rail`, 22px) plus a gap.
 const DOCUMENT_MENU_BUTTON_ROOM = 26;
+// The width the sticky row's transition icon and `⋮` take at the right edge
+// (measured 62px), kept clear by the editing menu beside them.
+const DOCUMENT_MENU_ROW_WIDTH = 64;
+// The strip left free above the slides for that button where no editing menu
+// fills it. What leads the list -- a document's missing fonts -- takes it.
+const DOCUMENT_MENU_ROOM = {
+    height: DOCUMENT_MENU_BUTTON_ROOM,
+    width: DOCUMENT_MENU_ROW_WIDTH,
+};
 
 export default function VarySlidesPreviewerComp() {
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -127,8 +146,13 @@ export default function VarySlidesPreviewerComp() {
     const thumbnailScaleSettingOptions = useThumbnailScaleSettingOptions();
     const [thumbSizeScale, setThumbnailSizeScale] =
         useVarySlideThumbnailSizeScale(thumbnailScaleSettingOptions);
+    // A Stage Previewer pane of stage 1 or up shows the same document again;
+    // its Save, Discard and Undo belong to the stage 0 pane beside it only.
+    const slideStage = useSlideStage();
     const isDisplayingEditingMenu =
-        appProvider.isPagePresenter && varyAppDocument.isEditable;
+        appProvider.isPagePresenter &&
+        varyAppDocument.isEditable &&
+        slideStage === 0;
     const onSlideItemsKeyboardEventRef = useAppCurrentRef(
         onSlideItemsKeyboardEvent,
     );
@@ -144,8 +168,39 @@ export default function VarySlidesPreviewerComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const varyAppDocumentRef = useAppCurrentRef(varyAppDocument);
-    const handleContextMenu = useCallback((event: any) => {
-        varyAppDocumentRef.current.showContextMenu(event);
+    // Named to the remote's take-over (`keyingAreaHelpers`), so the arrows can
+    // be handed back here without a click — while a slide of this document is
+    // live, which is the only time a press in here moves anything. A floating
+    // preview ranks below the panel it floats over. The Presenter only: no
+    // other page steps a screen from here, and none listens for the hand-over.
+    useAppEffect(() => {
+        const element = containerRef.current;
+        if (element === null || !appProvider.isPagePresenter) {
+            return;
+        }
+        return registerKeyingArea({
+            priority:
+                element.closest('.floating-widget') === null
+                    ? KEYING_AREA_PRIORITY.slides
+                    : KEYING_AREA_PRIORITY.slidesPopup,
+            getElement: () => {
+                return containerRef.current;
+            },
+            checkHasSelected: () => {
+                return checkIsVaryAppDocumentPresenting(
+                    varyAppDocumentRef.current.filePath,
+                );
+            },
+        });
+    }, []);
+    const handleContextMenu = useCallback(async (event: any) => {
+        const varyAppDocument = varyAppDocumentRef.current;
+        // The slides preview's own transition, for every kind of document --
+        // read through the short-lived cache so the row can say what it does.
+        const extraMenuItems = await genDocumentTransitionMenuItems(
+            varyAppDocument.filePath,
+        );
+        varyAppDocument.showContextMenu(event, extraMenuItems);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleDragOver = useCallback((event: any) => {
@@ -202,9 +257,13 @@ export default function VarySlidesPreviewerComp() {
                         height: 0,
                         zIndex: 3,
                         display: 'flex',
+                        alignItems: 'flex-start',
                         justifyContent: 'flex-end',
                     }}
                 >
+                    <DocumentTransitionIconComp
+                        filePath={varyAppDocument.filePath}
+                    />
                     <ContextMenuDotsButtonComp
                         className="me-2"
                         onOpening={handleContextMenu}
@@ -219,7 +278,7 @@ export default function VarySlidesPreviewerComp() {
                         // it scrolls away with the list.
                         paddingTop: isDisplayingEditingMenu
                             ? undefined
-                            : DOCUMENT_MENU_BUTTON_ROOM,
+                            : DOCUMENT_MENU_ROOM.height,
                     }}
                 >
                     {isDisplayingEditingMenu ? (
@@ -230,20 +289,35 @@ export default function VarySlidesPreviewerComp() {
                             }}
                         >
                             <div
-                                className="w-100 app-outer-shadow"
+                                className="app-outer-shadow"
                                 style={{
                                     overflowX: 'auto',
                                     overflowY: 'hidden',
                                     position: 'absolute',
                                     top: 0,
                                     left: 0,
+                                    // Ends where the sticky row's transition
+                                    // icon and `⋮` begin: full width, a narrow
+                                    // pane put that icon on top of Save.
+                                    right: DOCUMENT_MENU_ROW_WIDTH,
+                                    // Pinned while the cards scroll under it.
+                                    // With no stacking of its own the cards
+                                    // (positioned, later in the page) painted
+                                    // OVER it: one scroll and Save, Discard
+                                    // and Redo were hidden under slide 1.
+                                    zIndex: 2,
+                                    backgroundColor: 'var(--app-surface)',
                                 }}
                             >
                                 <SlidesMenuComp />
                             </div>
                         </div>
                     ) : null}
-                    <VarySlidesComp />
+                    <VarySlidesComp
+                        menuRoom={
+                            isDisplayingEditingMenu ? null : DOCUMENT_MENU_ROOM
+                        }
+                    />
                 </div>
                 <ScrollingHandlerComp />
             </SlidesPreviewerScopeContext>

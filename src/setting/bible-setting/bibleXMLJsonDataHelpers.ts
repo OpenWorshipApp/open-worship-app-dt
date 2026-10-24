@@ -32,11 +32,15 @@ import {
 import { appLog } from '../../helper/loggerHelpers';
 import appProvider from '../../server/appProvider';
 import { checkIsBibleKeyTaken } from './bibleKeyHelpers';
+import { checkAgentFileName } from '../../../tools/owa-devtools-mcp/agentFileName.mjs';
+import { guessBibleLocale } from '../../../tools/owa-devtools-mcp/bibleBookNames.mjs';
 
 // The root element's open tag (which carries the bible key attribute) lives
 // within the first few KB of the file, so reading the whole multi-MB XML file
-// just to extract the key is wasteful.
-const BIBLE_KEY_HEAD_READ_BYTES = 4096;
+// just to extract the key is wasteful. 8 KB, not 4: an imported Bible's
+// `note` (up to `BIBLE_NOTE_MAX_CHARS`) rides on that tag too, and a tag cut
+// by the head falls back to reading the whole file on every scan.
+const BIBLE_KEY_HEAD_READ_BYTES = 8192;
 function readFileHeadText(filePath: string, maxBytes: number) {
     const fileUtils = appProvider.fileUtils;
     let fileDescriptor: number | null = null;
@@ -121,6 +125,12 @@ export async function getBibleHeadInfoFromFile(filePath: string) {
         xmlElementBible === null
             ? null
             : guessValue(xmlElementBible, attributesMap.title);
+    // Same head, same parse: the assistant's list of installed Bibles says
+    // which language each is in without reading a whole file per row.
+    const locale =
+        xmlElementBible === null
+            ? null
+            : guessValue(xmlElementBible, attributesMap.locale);
     // Only the KEY is worth a full-file fallback, for a root open tag that did
     // not fit in the head chunk. `getBibleKeyFromFile` owns that path and its
     // cache, so it is asked only when the cheap read came up empty.
@@ -128,7 +138,7 @@ export async function getBibleHeadInfoFromFile(filePath: string) {
     if (bibleKey === null) {
         return null;
     }
-    return { bibleKey, title };
+    return { bibleKey, title, locale };
 }
 
 export async function getAllXMLFileKeys() {
@@ -166,6 +176,7 @@ export async function getAllXMLFileKeys() {
  *         "legalNote": "Legal note of bible. e.g: Public Domain",
  *         "publisher": "Publisher of bible. e.g: Bible Society",
  *         "copyRights": "Copy rights of bible. e.g: Public Domain",
+ *         "note": "Free text. e.g: where it was imported from",
  *         "books": {
  *             "GEN": "GENESIS",
  *         },
@@ -213,6 +224,7 @@ const attributesMap = {
     legalNote: ['legalNote', 'status'],
     publisher: ['publisher'],
     copyRights: ['copyRights'],
+    note: ['note'],
     bookKey: ['key'],
     index: ['number', 'index', 'id'],
     mapKey: ['key'],
@@ -236,6 +248,9 @@ export type BibleJsonInfoType = {
     legalNote: string;
     publisher: string;
     copyRights: string;
+    // Free text, empty when the file has none. An import writes where the
+    // Bible came from into it (`bibleImportNoteHelpers.ts`).
+    note?: string;
     keyBookMap: { [bookKey: string]: string };
     booksAvailable: string[];
     numbersMap: { [key: string]: string };
@@ -400,7 +415,10 @@ async function guessingBibleKey(xmlElementOrText: Element | string) {
                 getGuessingBibleKeys(xmlElementOrText),
             ),
             {
-                canConfirm: () => !checkIsBibleKeyTaken(newKey, takenBibleKeys),
+                canConfirm: () =>
+                    newKey.trim().length > 0 &&
+                    checkAgentFileName(newKey.trim()) === null &&
+                    !checkIsBibleKeyTaken(newKey, takenBibleKeys),
                 extraStyles: { maxWidth: '700px' },
             },
         );
@@ -588,6 +606,7 @@ function parseBibleVersion(versionText: string | null) {
 
 export async function getBibleInfoJson(
     xmlElementOrText: Element | string,
+    importOptions: BibleXMLImportOptionsType = {},
 ): Promise<BibleJsonInfoType | null> {
     const xmlElementMaps = guessElement(xmlElementOrText, tagNamesMap.map);
     const xmlElementMap = xmlElementMaps[0] ?? null;
@@ -599,6 +618,9 @@ export async function getBibleInfoJson(
         ),
     );
     const locale = (guessValue(xmlElementOrText, attributesMap.locale) ??
+        (importOptions.sourceName
+            ? guessBibleLocale(importOptions.sourceName)
+            : null) ??
         DEFAULT_LOCALE) as LocaleType;
     const keyBookMap = getBibleMap(
         xmlElementMap,
@@ -611,7 +633,11 @@ export async function getBibleInfoJson(
             keyBookMap[key] = langData.sanitizeText(value);
         }
     }
-    const bibleKey = await guessingBibleKey(xmlElementOrText);
+    if (importOptions.isImportPreview)
+        importOptions.onKeyChoices?.(getGuessingBibleKeys(xmlElementOrText));
+    const bibleKey = importOptions.isImportPreview
+        ? guessValue(xmlElementOrText, attributesMap.bibleKey, '')
+        : await guessingBibleKey(xmlElementOrText);
     if (bibleKey === null) {
         return null;
     }
@@ -639,6 +665,8 @@ export async function getBibleInfoJson(
     const copyRights =
         guessValue(xmlElementOrText, attributesMap.copyRights) ??
         'Unknown Copy Rights';
+    // Always present, empty when absent, so the Info editor offers the field.
+    const note = guessValue(xmlElementOrText, attributesMap.note) ?? '';
     const bibleInfo = {
         title,
         description,
@@ -648,6 +676,7 @@ export async function getBibleInfoJson(
         legalNote,
         publisher,
         copyRights,
+        note,
         numbersMap,
         keyBookMap,
         booksAvailable,
@@ -665,6 +694,10 @@ function setBibleInfo(
     });
     for (const key of bibleInfoKey) {
         const value = restInfo[key as keyof typeof restInfo];
+        // An empty note is no note: not written onto every Bible saved.
+        if (value === undefined || (key === 'note' && value === '')) {
+            continue;
+        }
         xmlElementBible.setAttribute(key, value.toString());
     }
     const xmlElementMap = xmlDoc.createElement(tagNamesMap.map[0]);
@@ -808,8 +841,15 @@ export function xmlTextToBibleElement<T extends Element>(
     return xmlElementBible;
 }
 
+type BibleXMLImportOptionsType = {
+    isImportPreview?: boolean;
+    sourceName?: string;
+    onKeyChoices?: (keys: string[]) => void;
+};
+
 export async function xmlTextToJson(
     xmlText: string,
+    importOptions: BibleXMLImportOptionsType = {},
 ): Promise<BibleXMLJsonType | null> {
     // Parse the multi-MB XML text to an element tree ONCE and share it across
     // the sub-extractors; each of them used to re-run the flipping-key
@@ -817,13 +857,17 @@ export async function xmlTextToJson(
     // parse yields no bible root, pass the raw text through so each extractor
     // behaves exactly as before.
     const xmlElementBible = xmlTextToBibleElement(xmlText);
+    if (importOptions.isImportPreview && xmlElementBible === null) return null;
     const xmlSource: Element | string = xmlElementBible ?? xmlText;
-    const bibleInfo = await getBibleInfoJson(xmlSource);
+    const bibleInfo = await getBibleInfoJson(xmlSource, importOptions);
     if (bibleInfo === null) {
         return null;
     }
     const bibleBooks = getBibleBooksJson(xmlSource);
-    if (bibleBooks === null) {
+    if (
+        bibleBooks === null ||
+        (importOptions.isImportPreview && Object.keys(bibleBooks).length === 0)
+    ) {
         return null;
     }
     const newLines = getNewLines(xmlSource) ?? [];

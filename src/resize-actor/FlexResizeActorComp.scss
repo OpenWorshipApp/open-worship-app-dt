@@ -43,6 +43,16 @@
     opacity: 1;
   }
 
+  // Reached with Tab (it is a window splitter for the keyboard too): say so
+  // the way every other focused control does. A press with the mouse takes no
+  // focus at all -- the drag cancels its mousedown -- so this never shows for
+  // a pointer.
+  &:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--bs-info);
+    outline-offset: -1px;
+  }
+
   &.v {
     background-size: 10px;
 

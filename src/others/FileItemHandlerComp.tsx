@@ -272,10 +272,24 @@ export default function FileItemHandlerComp({
         <li
             className={
                 `list-group-item ${moreClassName} app-overflow-hidden` +
-                ' app-has-action-rail' +
+                // As wide as the rail really is: the ⋮ AND the colour note.
+                // Reserving one button's width let the rail's second half sit
+                // over the row's own content -- on a presenting flow card that
+                // was the ⋮ of its FIRST line, which took no click at all.
+                // None while renaming: the rail is not drawn then, and its
+                // reservation left the name box ~60px in a narrow sidebar.
+                (isRenaming
+                    ? ''
+                    : isDisabledColorNote
+                      ? ' app-has-action-rail'
+                      : ' app-has-action-rail-2') +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             onClick={handleClicking}
+            // The selected row, said where a screen reader and the app's own
+            // tools can read it: the `active` class alone left a press that
+            // opened a document reporting it had changed nothing.
+            aria-current={isSelected ? 'true' : 'false'}
             data-index={index + 1}
             data-file-item-file-src={fileSource.src}
             title={fileSource.fullName}

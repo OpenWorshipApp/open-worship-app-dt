@@ -97,11 +97,13 @@ let screenIdCount = 0;
 function genFakeManager(
     mediaElements: FakeMediaType[],
     youTubePlayers: any[] = [],
+    isOnVirtualDisplay = false,
 ) {
     screenIdCount += 1;
     const syncCalls: any[] = [];
     return {
         screenId: screenIdCount,
+        screenManagerBase: { isOnVirtualDisplay },
         div: {} as any,
         getAllMediaElements: () => {
             return mediaElements as any;
@@ -170,6 +172,22 @@ describe('driving the media of a slide from a run sheet', () => {
         // and nothing about it is broadcast — the RATE has to be, or the follower
         // is re-seeked forward on every tick to keep up with a 2x master.
         expect(manager.syncCalls).toEqual([['video-abc', 0, false, 2]]);
+    });
+
+    test('a YouTube volume never un-mutes the presenter copy of a virtual display', () => {
+        const player = genFakePlayer();
+        const onMonitor = genFakeManager([], [player]);
+        applyScreenSlideMediaControl(onMonitor, { mode: 'pause', volume: 50 });
+        expect(player.calls).toContainEqual(['setVolume', 50]);
+
+        // `setVolume` un-mutes: on a virtual display the page plays the
+        // sound, so the presenter's player must not be asked.
+        const silentPlayer = genFakePlayer();
+        const onVirtual = genFakeManager([], [silentPlayer], true);
+        applyScreenSlideMediaControl(onVirtual, { mode: 'pause', volume: 50 });
+        expect(silentPlayer.calls.some(([name]) => name === 'setVolume')).toBe(
+            false,
+        );
     });
 
     test('an unset volume leaves what the operator set by hand alone', () => {

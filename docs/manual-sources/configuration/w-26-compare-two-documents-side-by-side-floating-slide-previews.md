@@ -5,14 +5,14 @@ section: "Configuration"
 verify: [PM-118, PM-119, PM-120, PM-126, PL-01, CM-06]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-26 — Compare two documents side by side (floating slide previews)
 
 **Goal:** look at the slides of more than one document at the same time, without losing
 the one you already had open.
 
-**Preconditions:** at least two documents in the **Documents** list.
+**Preconditions:** at least two documents in the **[en:tran:Documents]** list.
 
 The middle panel previews the **one** document you have selected. To look at another one
 as well, give it a window of its own.
@@ -24,7 +24,7 @@ as well, give it a window of its own.
    thing, no menu — and holding Ctrl again on that row closes the window. The menu
    entry's tooltip reminds you of the shortcut.
 2. It is the full previewer, not a thumbnail strip: the undo / redo / discard / save
-   strip at the top, the slides, the **Note** boxes, and a zoom slider with the document
+   strip at the top, the slides, the green **[en:tran:Note]** strip (the note boxes start closed — click it to open them), and a zoom slider with the document
    name at the bottom. Everything you can do in the middle panel you can do here —
    click a slide to put it on the screen, drag a slide to reorder it, drop an image or a
    video onto it, right-click a slide for its menu.
@@ -44,8 +44,7 @@ as well, give it a window of its own.
 Tips:
 
 - **A document is previewed in one place at a time.** On the document you currently have
-  selected, **Open Slides Preview** is greyed out ("Already showing in the main
-  previewer" / កំពុងបង្ហាញក្នុងកម្មវិធីមើលមេ) — it is already in the middle panel;
+  selected, **[en:tran:Open Slides Preview]** is greyed out ("[en:tran:Already showing in the main previewer]") — it is already in the middle panel;
   Ctrl-clicking that row does nothing at all, and in particular does not re-select it. And if
   you click a document that has a window open, the window closes and the document moves
   into the middle panel instead.
@@ -59,5 +58,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-118` · `PM-119` · `PM-120` · `PM-126` · `PL-01` · `CM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

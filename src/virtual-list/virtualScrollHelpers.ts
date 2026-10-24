@@ -231,12 +231,14 @@ export function scrollBandIntoView({
     toBandTop,
     height,
     align = 'nearest',
+    behavior = 'auto',
 }: {
     clippingAncestorList: HTMLElement[];
     // Given the scroller, since only it knows where its content starts.
     toBandTop: (scroller: HTMLElement) => number;
     height: number;
     align?: 'nearest' | 'center';
+    behavior?: ScrollBehavior;
 }) {
     const scroller = clippingAncestorList.find((ancestor) => {
         return ancestor.scrollHeight > ancestor.clientHeight;
@@ -250,9 +252,14 @@ export function scrollBandIntoView({
     if (align === 'nearest' && top >= viewTop && top + height <= viewBottom) {
         return true;
     }
-    scroller.scrollTop = Math.max(
+    const scrollTop = Math.max(
         0,
         align === 'center' ? top - (scroller.clientHeight - height) / 2 : top,
     );
+    if (behavior === 'smooth') {
+        scroller.scrollTo({ top: scrollTop, behavior });
+    } else {
+        scroller.scrollTop = scrollTop;
+    }
     return true;
 }

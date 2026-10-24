@@ -22,7 +22,7 @@ import {
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -44,6 +44,7 @@ import FileSource from '../helper/FileSource';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import AppSuspenseComp from '../others/AppSuspenseComp';
+import { genOpenInChatbotContextMenu } from '../helper/ai/bibleItemChatbotMenuHelpers';
 
 const BibleSlidesPopupComp = lazy(() => import('./BibleSlidesPopupComp'));
 
@@ -59,7 +60,7 @@ function handleOpening(
     bibleItem: BibleItem,
 ) {
     if (appProvider.isPagePresenter) {
-        ScreenBibleManager.handleBibleItemSelecting(event, bibleItem);
+        ScreenLongTextManager.handleBibleItemSelecting(event, bibleItem);
     } else if (appProvider.isPageReader) {
         if (!viewController.isLookup) {
             const lastBibleItem = viewController.straightBibleItems.pop();
@@ -72,7 +73,7 @@ function handleOpening(
                     false,
                 );
             } else {
-                // No colour note: joining the neighbour's sync group would
+                // A colour group of its own: joining the neighbour's would
                 // re-target this passage to the lookup's.
                 viewController.addBibleItemRight(
                     lastBibleItem,
@@ -142,6 +143,7 @@ export default function BibleItemRenderComp({
                         );
                     },
                 },
+                ...genOpenInChatbotContextMenu(bibleItemRef.current),
             ];
             if (appProvider.isPagePresenter) {
                 menuItems.push({
@@ -180,21 +182,24 @@ export default function BibleItemRenderComp({
         changeDragEventStyle(event, 'opacity', '1');
         const droppedData = extractDropData(event);
         if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
+            const droppedBibleItem = droppedData.item as BibleItem;
+            // A reorder inside this file is this row's; anything else goes on
+            // to the file row. Decided BEFORE the await -- after it, stopping
+            // the event no longer keeps it from the file row.
+            if (
+                droppedBibleItem.filePath === undefined ||
+                droppedBibleItem.filePath !== bibleItemRef.current.filePath
+            ) {
+                return;
+            }
+            stopDraggingState(event);
             const bible = await Bible.fromFilePath(filePathRef.current);
             if (bible === null) {
                 return;
             }
-            const droppedBibleItem = droppedData.item as BibleItem;
-            if (droppedBibleItem.filePath !== undefined) {
-                if (
-                    droppedBibleItem.filePath === bibleItemRef.current.filePath
-                ) {
-                    const toIndex = bible.getItemIndex(bibleItemRef.current);
-                    bible.moveItemToIndex(droppedBibleItem, toIndex);
-                    stopDraggingState(event);
-                    bible.save();
-                }
-            }
+            const toIndex = bible.getItemIndex(bibleItemRef.current);
+            bible.moveItemToIndex(droppedBibleItem, toIndex);
+            bible.save();
         } else {
             handleAttachBackgroundDrop(event, {
                 filePath: filePathRef.current,

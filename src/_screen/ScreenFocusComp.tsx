@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { useAppCurrentRef } from '../helper/appHooks';
 
 import {
@@ -12,14 +14,19 @@ export default function ScreenFocusComp() {
     useScreenManagerEvents(['refresh'], screenManager, () => {
         screenFocusManagerRef.current.render();
     });
-    return (
-        <div
-            id="focus"
-            ref={(div) => {
-                if (div !== null) {
-                    screenFocusManager.div = div;
-                }
-            }}
-        />
+    // Stable, so a re-render (each refresh event) does not detach and
+    // re-attach the spotlight; the cleanup runs only on unmount.
+    const assignDiv = useCallback(
+        (div: HTMLDivElement | null) => {
+            if (div === null) {
+                return;
+            }
+            screenFocusManager.div = div;
+            return () => {
+                screenFocusManager.releaseDiv(div);
+            };
+        },
+        [screenFocusManager],
     );
+    return <div id="focus" ref={assignDiv} />;
 }

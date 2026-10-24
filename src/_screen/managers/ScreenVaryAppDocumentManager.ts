@@ -4,6 +4,7 @@ import type { DroppedDataType } from '../../helper/DragInf';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { tran } from '../../lang/langHelpers';
 import type { SlidePropsType } from '../../app-document-list/Slide';
+import type { CanvasItemPropsType } from '../../slide-editor/canvas/CanvasItem';
 import type { CanvasItemBiblePropsType } from '../../slide-editor/canvas/CanvasItemBibleItem';
 import { genPdfSlide } from '../../app-document-presenter/items/PdfSlideRenderComp';
 import { genPptxSlide } from '../../app-document-presenter/items/PptxSlideRenderComp';
@@ -22,6 +23,7 @@ import {
     handleMediaStopped,
 } from '../../helper/mediaControlHelpers';
 import { genVideoIDFromSrc } from '../screenHelpers';
+import { checkIsSoundHere } from '../screenSoundHelpers';
 import {
     checkIsYouTubeSyncIframe,
     genYouTubeSyncId,
@@ -61,7 +63,10 @@ import type {
     BasicScreenMessageType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
-import type { VarySlideScreenDataType } from '../screenAppDocumentTypeHelpers';
+import type {
+    StageLookAheadDataType,
+    VarySlideScreenDataType,
+} from '../screenAppDocumentTypeHelpers';
 import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../screenAppDocumentTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
 import {
@@ -75,6 +80,28 @@ import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers
 import { cloneJson } from '../../helper/helpers';
 import { handleError } from '../../helper/errorHelpers';
 import { getTargetLyricSlideItemData } from '../../lyric-list/lyricSlideScreenHelpers';
+import {
+    checkStageLookAheadData,
+    genStageLookAheadData,
+} from './screenStageLookAheadHelpers';
+import {
+    moveStageLookAhead,
+    wrapWithStageLookAhead,
+} from '../stageLookAheadDomHelpers';
+import {
+    moveLyricLookAhead,
+    registerLyricLookAhead,
+} from '../lyricLookAheadDomHelpers';
+import { resolveSlideTransitionEffect } from './screenSlideTransitionHelpers';
+import {
+    toValidTransitionEffect,
+    withTransitionEffect,
+} from '../transitionOverrideHelpers';
+import { CanvasItemTransitions } from './canvasItemTransitionHelpers';
+import {
+    getStyleAnimForNode,
+    type TransitionEffectType,
+} from '../transitionEffectHelpers';
 
 function queryAllDeep(root: ParentNode, selector: string): Element[] {
     const results = Array.from(root.querySelectorAll(selector));
@@ -121,6 +148,12 @@ type SlideVideoTimeDataType = {
     timestamp: number;
     isPlaying: boolean;
     /**
+     * The master's volume (0-1), when it is not the default 1. Only a screen
+     * on a virtual display plays its own sound, and this is how the level the
+     * operator set on the presenter's (silent) copy reaches it.
+     */
+    volume?: number;
+    /**
      * The master's playback rate, when it is not the default 1.
      *
      * Rides the time message rather than getting one of its own because the two
@@ -148,6 +181,19 @@ class ScreenVaryAppDocumentManager
     static readonly eventNamePrefix: string = 'screen-vary-app-document-m';
     private _varySlideData: VarySlideScreenDataType | null = null;
     private _div: HTMLDivElement | null = null;
+    private readonly canvasItemTransitions = new CanvasItemTransitions();
+    // The stage layout this screen is showing (`St:` 1 and up), kept so the
+    // next slide of the same document can move the slides already drawn
+    // rather than draw them again (`genStageMove`). `root` is a document's
+    // layout, or a song's stage slide, which is one already.
+    private stageScene: {
+        container: HTMLDivElement;
+        root: HTMLElement;
+        filePath: string;
+        width: number;
+        height: number;
+    } | null = null;
+    private renderRevision = 0;
     private readonly syncAdjustedMediaElements =
         new WeakSet<HTMLMediaElement>();
     // Live YouTube embeds in the currently-rendered slide. Rebuilt on every
@@ -180,6 +226,10 @@ class ScreenVaryAppDocumentManager
     }
 
     set div(div: HTMLDivElement | null) {
+        if (div !== this._div) {
+            this.canvasItemTransitions.dispose();
+            this.stageScene = null;
+        }
         this._div = div;
         this.render();
     }
@@ -297,19 +347,60 @@ class ScreenVaryAppDocumentManager
             await this.set_varySlideData(targetVarySlideData);
             return;
         }
-        const targetItemJson = await getTargetLyricSlideItemData(
-            targetVarySlideData.filePath,
-            targetVarySlideData.itemJson as any,
-            this.screenManagerBase.stage,
-        );
+        const [targetItemJson, transitionEffect, stageLookAhead] =
+            await Promise.all([
+                getTargetLyricSlideItemData(
+                    targetVarySlideData.filePath,
+                    targetVarySlideData.itemJson as any,
+                    this.screenManagerBase.stage,
+                ),
+                // The one place every way of putting a slide up meets -- a
+                // click, the arrow keys, a run sheet row, a drop, a stage
+                // re-apply, a sync group -- so the slide's own transition
+                // (else its slides preview's) is read here, on the presenter.
+                // The screen window is handed it in the sync and keeps what it
+                // was given.
+                appProvider.isPageScreen
+                    ? Promise.resolve(targetVarySlideData.transitionEffect)
+                    : resolveSlideTransitionEffect(
+                          targetVarySlideData.filePath,
+                          targetVarySlideData.itemJson.id,
+                      ),
+                // Same place, same split, for what a stage screen draws around
+                // a document's slide: the presenter has the document open, the
+                // screen window keeps what it was handed. Worked out again for
+                // THIS screen's stage, so a sync group member on another stage
+                // never draws the layout of the screen it followed. Settles to
+                // nothing on stage 0 without reading anything.
+                appProvider.isPageScreen
+                    ? Promise.resolve(targetVarySlideData.stageLookAhead)
+                    : genStageLookAheadData(
+                          targetVarySlideData.filePath,
+                          targetVarySlideData.itemJson,
+                          this.screenManagerBase.stage,
+                      ).catch((error) => {
+                          // A stage screen with no look-ahead still shows
+                          // the slide; failing here must not keep it off.
+                          handleError(error);
+                          return undefined;
+                      }),
+            ]);
         // A new object rather than writing `itemJson` back onto the argument:
         // the argument can be an entry of the memoized on-screen map (the
         // constructor seeds `_varySlideData` from it), and mutating it would
         // change what every later reader of that map sees.
-        await this.set_varySlideData({
-            ...targetVarySlideData,
-            itemJson: targetItemJson,
-        });
+        const { stageLookAhead: _previousStageLookAhead, ...restData } =
+            targetVarySlideData;
+        await this.set_varySlideData(
+            withTransitionEffect(
+                {
+                    ...restData,
+                    itemJson: targetItemJson,
+                    ...(stageLookAhead === undefined ? {} : { stageLookAhead }),
+                },
+                transitionEffect,
+            ),
+        );
     }
 
     set varySlideData(targetVarySlideData: VarySlideScreenDataType | null) {
@@ -361,6 +452,7 @@ class ScreenVaryAppDocumentManager
         videoTime: number,
         isPlaying: boolean,
         playbackRate?: number,
+        volume?: number,
     ) {
         setTimeout(() => {
             this.screenManagerBase.sendScreenMessage(
@@ -376,6 +468,9 @@ class ScreenVaryAppDocumentManager
                         // unchanged — see `SlideVideoTimeDataType.playbackRate`.
                         ...(playbackRate !== undefined && playbackRate !== 1
                             ? { playbackRate }
+                            : {}),
+                        ...(volume !== undefined && volume !== 1
+                            ? { volume }
                             : {}),
                     },
                 },
@@ -437,6 +532,12 @@ class ScreenVaryAppDocumentManager
         }
         const { videoId, videoTime, timestamp, isPlaying, playbackRate } = data;
         const mediaElements = this.getMediaElements(videoId);
+        // A page that plays its own sound (a virtual display's) follows the
+        // master more loosely: every correcting seek is a click in the audio.
+        const isSoundHere =
+            appProvider.isPageScreen &&
+            checkIsSoundHere(this.screenManagerBase);
+        const seekThreshold = isSoundHere ? 0.4 : 0.15;
         // Absent means the default, not "leave it alone": a master that has gone
         // back to 1x stops sending the field, and a follower left at 2x would then
         // be corrected by a seek on every tick for ever.
@@ -447,7 +548,12 @@ class ScreenVaryAppDocumentManager
             }
             if (appProvider.isPageScreen) {
                 // The screen follows the mini screen's play state; sound
-                // stays on the presenter side, the screen keeps muted.
+                // stays on the presenter side, the screen keeps muted --
+                // unless it is on a virtual display, at the master's level.
+                const targetVolume = data.volume ?? 1;
+                if (isSoundHere && mediaElement.volume !== targetVolume) {
+                    mediaElement.volume = targetVolume;
+                }
                 if (isPlaying && mediaElement.paused) {
                     playMediaElement(mediaElement);
                 } else if (!isPlaying && !mediaElement.paused) {
@@ -458,7 +564,10 @@ class ScreenVaryAppDocumentManager
             const exactVideoTime = videoTime + latency;
             // 24 fps, 1000/24 = 0.04166..., for 0.15 second threshold, it can
             // be 3 frames, which is good enough for syncing video.
-            if (Math.abs(mediaElement.currentTime - exactVideoTime) > 0.15) {
+            if (
+                Math.abs(mediaElement.currentTime - exactVideoTime) >
+                seekThreshold
+            ) {
                 // Prevent the timeupdate emitted by this sync correction from
                 // being broadcast back to the group.
                 this.syncAdjustedMediaElements.add(mediaElement);
@@ -487,10 +596,15 @@ class ScreenVaryAppDocumentManager
         if (appProvider.isPageScreen) {
             if (isPlaying && !player.isPlaying) {
                 // Only the master (the first-clicked mini) keeps sound; the
-                // projected screen is always silent. Re-mute right before it
-                // starts in case the setup-time mute landed before the player
-                // was ready.
-                player.mute();
+                // projected screen is silent -- unless it is on a virtual
+                // display, whose page is what is heard. Re-set right before
+                // it starts in case the setup-time mute landed before the
+                // player was ready.
+                if (checkIsSoundHere(this.screenManagerBase)) {
+                    player.unMute();
+                } else {
+                    player.mute();
+                }
                 player.play();
             } else if (!isPlaying && player.isPlaying) {
                 player.pause();
@@ -528,8 +642,15 @@ class ScreenVaryAppDocumentManager
         videoTime: number,
         isPlaying: boolean,
         playbackRate?: number,
+        volume?: number,
     ) {
-        this.sendSyncVideoTime(videoId, videoTime, isPlaying, playbackRate);
+        this.sendSyncVideoTime(
+            videoId,
+            videoTime,
+            isPlaying,
+            playbackRate,
+            volume,
+        );
         const managers = await this.getMemberInstances();
         for (const manager of managers) {
             manager.setVideoCurrentTimeForce(
@@ -552,6 +673,9 @@ class ScreenVaryAppDocumentManager
             typeof videoTime !== 'number' ||
             typeof timestamp !== 'number' ||
             typeof isPlaying !== 'boolean' ||
+            (data.volume !== undefined &&
+                (typeof data.volume !== 'number' ||
+                    !(data.volume >= 0 && data.volume <= 1))) ||
             // Optional, so only a PRESENT value has to be usable — a garbage rate
             // must not drop the time message it rode in on.
             (playbackRate !== undefined &&
@@ -646,11 +770,23 @@ class ScreenVaryAppDocumentManager
         return data;
     }
 
-    handleSlideSelecting(filePath: string, itemJson: VarySlideDataType) {
+    /**
+     * Resolves to whether this screen holds the slide afterwards: a locked
+     * screen, or media playing on the one it would replace, refuses it, and
+     * the caller must not count that as shown.
+     */
+    async handleSlideSelecting(filePath: string, itemJson: VarySlideDataType) {
         const newSlideData = this.toSlideData(filePath, itemJson);
-        this.applySlideSrcWithSyncGroup(newSlideData);
+        await this.applySlideSrcWithSyncGroup(newSlideData);
+        const data = this.varySlideData;
+        return (
+            data !== null &&
+            data.filePath === filePath &&
+            data.itemJson.id === itemJson.id
+        );
     }
 
+    /** Resolves to whether ANY chosen screen took the slide. */
     static async handleSlideSelecting(
         event: MouseEvent,
         filePath: string,
@@ -663,6 +799,7 @@ class ScreenVaryAppDocumentManager
             isForceChoosing,
             presetScreenIds,
         );
+        const shownPromises: Promise<boolean>[] = [];
         for (const screenId of screenIds) {
             const screenVaryAppDocumentManager = this.getInstance(screenId);
             if (screenVaryAppDocumentManager === null) {
@@ -674,11 +811,17 @@ class ScreenVaryAppDocumentManager
                 );
                 continue;
             }
-            screenVaryAppDocumentManager.handleSlideSelecting(
-                filePath,
-                itemJson,
+            shownPromises.push(
+                screenVaryAppDocumentManager
+                    .handleSlideSelecting(filePath, itemJson)
+                    .catch((error) => {
+                        handleError(error);
+                        return false;
+                    }),
             );
         }
+        const shownList = await Promise.all(shownPromises);
+        return shownList.includes(true);
     }
 
     renderPdf(
@@ -873,6 +1016,7 @@ class ScreenVaryAppDocumentManager
             mediaElement.currentTime,
             true,
             mediaElement.playbackRate,
+            mediaElement.volume,
         );
     };
 
@@ -975,7 +1119,7 @@ class ScreenVaryAppDocumentManager
                           );
                       },
                   },
-            { muteOnReady: isScreen },
+            { muteOnReady: !checkIsSoundHere(this.screenManagerBase) },
         );
         this.youTubePlayers.push(player);
     }
@@ -995,6 +1139,29 @@ class ScreenVaryAppDocumentManager
             mediaElement.currentTime,
             false,
             mediaElement.playbackRate,
+            mediaElement.volume,
+        );
+    };
+
+    // A screen on a virtual display sounds on its own page: the presenter's
+    // copy stays silent and passes the operator's level on.
+    private readonly handleSlideMediaVolumeChange = (event: Event) => {
+        const mediaElement = event.currentTarget as HTMLMediaElement;
+        if (checkIsSoundHere(this.screenManagerBase)) {
+            return;
+        }
+        if (!mediaElement.muted) {
+            mediaElement.muted = true;
+        }
+        if (!mediaElement.id) {
+            return;
+        }
+        void this.setSlideVideoCurrentTimeForce(
+            mediaElement.id,
+            mediaElement.currentTime,
+            !mediaElement.paused,
+            mediaElement.playbackRate,
+            mediaElement.volume,
         );
     };
 
@@ -1014,6 +1181,7 @@ class ScreenVaryAppDocumentManager
             mediaElement.currentTime,
             !mediaElement.paused,
             mediaElement.playbackRate,
+            mediaElement.volume,
         );
     };
 
@@ -1069,12 +1237,17 @@ class ScreenVaryAppDocumentManager
             media.id = genVideoIDFromSrc(getMediaSyncSrc(media));
             if (appProvider.isPageScreen) {
                 // No auto-play: hold the first frame, muted. Playback is
-                // driven from a mini screen and the sound stays there.
-                media.muted = true;
+                // driven from a mini screen and the sound stays there --
+                // except on a virtual display, which streams the sound.
+                media.muted = !checkIsSoundHere(this.screenManagerBase);
                 media.preload = 'auto';
             } else {
-                media.muted = false;
+                media.muted = !checkIsSoundHere(this.screenManagerBase);
                 media.controls = true;
+                media.addEventListener(
+                    'volumechange',
+                    this.handleSlideMediaVolumeChange,
+                );
                 // The canvas/pptx render disables pointer events on its
                 // wrapper; re-enable them for the native controls.
                 media.style.pointerEvents = 'auto';
@@ -1160,7 +1333,7 @@ class ScreenVaryAppDocumentManager
                 bibleKeys.add(bibleKey);
             }
         }
-        if (bibleKeys.size > 0) {
+        if (bibleKeys.size > 0 && !appProvider.screenUtils) {
             await Promise.all(
                 Array.from(bibleKeys).map((bibleKey) => {
                     return getBibleFontFamily(bibleKey);
@@ -1168,7 +1341,6 @@ class ScreenVaryAppDocumentManager
             );
         }
         const content = genSlideHtml(itemJson.canvasItems);
-        this.cleanupSlideContent(content);
         const { width, height } = itemJson.metadata;
         Object.assign(divHaftScale.style, {
             width: `${width}px`,
@@ -1183,16 +1355,166 @@ class ScreenVaryAppDocumentManager
         return { content, scale };
     }
 
+    // Every kind of slide carries its size in `metadata`. Not decided by
+    // `tryValidate`: the Word schema accepts a PowerPoint slide too, which
+    // once made every PowerPoint slide on a stage screen draw plain.
+    private genStageContent(
+        content: HTMLDivElement,
+        itemJson: VarySlideDataType,
+        stageLookAhead: StageLookAheadDataType,
+    ): HTMLDivElement | null {
+        const { width, height } = (itemJson as SlidePropsType).metadata;
+        return wrapWithStageLookAhead(
+            content,
+            width,
+            height,
+            stageLookAhead,
+            this.screenManagerBase.width,
+            this.screenManagerBase.height,
+            itemJson,
+        );
+    }
+
+    // A slide's items as the screen draws them, wired up like the slide's.
+    private genSlideContent(canvasItems: CanvasItemPropsType[]) {
+        const content = genSlideHtml(canvasItems);
+        this.cleanupSlideContent(content);
+        return content;
+    }
+
+    private checkIsNoTransition(slideData: VarySlideScreenDataType) {
+        return (
+            (slideData.transitionEffect ?? this.effectManager.effectType) ===
+            'none'
+        );
+    }
+
+    /**
+     * On "No Transition" a stage screen does not cut to the next slide of the
+     * document it is showing: the slides both layouts hold stay where they
+     * are in the DOM and only their style changes, so the coming slide is
+     * seen growing into the presented one's place (asked for by the user,
+     * with `transition: all` and no element changed -- `moveStageLookAhead`
+     * for a document, `moveLyricLookAhead` for a song).
+     *
+     * The move to make, or `null` when the layout is drawn anew as on every
+     * other screen: another effect, another document, another screen size, or
+     * a slide whose items come in with transitions of their own. It is tried
+     * with `null` before the slide is built and, for a document, once more
+     * with the slide built.
+     */
+    private genStageMove(
+        div: HTMLDivElement,
+        slideData: VarySlideScreenDataType,
+        stageLookAhead: StageLookAheadDataType | null,
+        backgroundColor: string | null,
+    ) {
+        const scene = this.stageScene;
+        const { itemJson } = slideData;
+        const { width, height } = this.screenManagerBase;
+        const canvasItems = (itemJson as SlidePropsType).canvasItems;
+        if (
+            scene === null ||
+            !this.checkIsNoTransition(slideData) ||
+            scene.filePath !== slideData.filePath ||
+            scene.width !== width ||
+            scene.height !== height ||
+            // Not the slide on top any more, or zoomed in inside a wrapper.
+            div.lastElementChild !== scene.container ||
+            this.canvasItemTransitions.has(scene.container) ||
+            (Array.isArray(canvasItems) &&
+                canvasItems.some((canvasItem) => {
+                    return (
+                        toValidTransitionEffect(canvasItem.transitionEffect) !==
+                        undefined
+                    );
+                }))
+        ) {
+            return null;
+        }
+        const size = (itemJson as SlidePropsType).metadata;
+        if (stageLookAhead === null) {
+            if (!Array.isArray(canvasItems)) {
+                return null;
+            }
+            // A song's stage slide: only the verses not on screen are built.
+            return (content: HTMLElement | null) => {
+                return (
+                    content === null &&
+                    moveLyricLookAhead(
+                        scene.root,
+                        canvasItems,
+                        size.width,
+                        size.height,
+                        (comingItems) => this.genSlideContent(comingItems),
+                    )
+                );
+            };
+        }
+        return (content: HTMLElement | null) => {
+            // Unbuilt, the slide is counted on as the coming one on screen
+            // draws it -- which is never with the preview colour a PDF or
+            // Word page is painted with when presented.
+            if (content === null && backgroundColor !== null) {
+                return false;
+            }
+            return moveStageLookAhead(
+                scene.root,
+                content,
+                size.width,
+                size.height,
+                stageLookAhead,
+                width,
+                height,
+                itemJson,
+            );
+        };
+    }
+
+    /**
+     * A song's stage slide is its own layout, coming verses included, so the
+     * slide just drawn is what the next one is moved from. Taken in only
+     * where a move can follow: each of its items is then given the md5 of
+     * what it draws, which is not free.
+     */
+    private genLyricSceneRoot(
+        slideData: VarySlideScreenDataType,
+        content: HTMLElement,
+    ) {
+        const { canvasItems, metadata } = slideData.itemJson as SlidePropsType;
+        if (
+            !this.checkIsNoTransition(slideData) ||
+            !Array.isArray(canvasItems) ||
+            !registerLyricLookAhead(
+                content,
+                canvasItems,
+                metadata.width,
+                metadata.height,
+            )
+        ) {
+            return null;
+        }
+        return content;
+    }
+
     async clearJunk(div: HTMLDivElement) {
         if (div.lastChild === null) {
             return;
         }
         const targetDiv = div.lastChild as HTMLDivElement;
-        await this.effectManager.styleAnim.animOut(targetDiv);
+        // It leaves the way it came in (`TRANSITION_DATASET_KEY`).
+        await this.animateSlideOut(targetDiv);
         targetDiv.remove();
     }
 
+    private animateSlideOut(node: HTMLDivElement) {
+        return this.canvasItemTransitions.has(node)
+            ? this.canvasItemTransitions.exit(node)
+            : this.genStyleAnimForNode(node).animOut(node);
+    }
+
     async render() {
+        const revision = ++this.renderRevision;
         // ABOVE the null guard, unlike `destroyYouTubePlayers` below: `set div`
         // calls `render()`, so a mini-screen host unmounting comes through here
         // with `div` already null and takes that early return. A camera left
@@ -1206,28 +1528,53 @@ class ScreenVaryAppDocumentManager
         // registers fresh ones in `cleanupSlideContent`.
         this.destroyYouTubePlayers();
         const div = this.div;
-        if (this.varySlideData === null) {
+        const slideData = this.varySlideData;
+        if (slideData === null) {
+            this.stageScene = null;
             this.clearJunk(div);
+            return;
+        }
+        const { itemJson, isRenderFullWidth, virtualBackgroundColor } =
+            slideData;
+        const backgroundColor = virtualBackgroundColor ?? null;
+        // A stage screen (St: 1 and up) shares the screen between the page
+        // and what comes after it, so a PDF or Word page is fitted there even
+        // when pages are shown full width: a page that fills the width and
+        // scrolls has no room for the next one, and seeing the next one is
+        // what the stage screen is for.
+        const stageLookAhead = checkStageLookAheadData(
+            slideData.stageLookAhead,
+        );
+        const isFullWidth = isRenderFullWidth && stageLookAhead === null;
+        const moveStage = this.genStageMove(
+            div,
+            slideData,
+            stageLookAhead,
+            backgroundColor,
+        );
+        // First without building the slide at all: when it is already on
+        // screen as the coming one, moving it is the whole change.
+        if (moveStage?.(null)) {
             return;
         }
         const divContainer = document.createElement('div');
         const divHaftScale = document.createElement('div');
         divHaftScale.classList.add('half-scale-container');
         divContainer.appendChild(divHaftScale);
-        registerScrollingSyncEvent(divHaftScale, (scroll) => {
-            this.sendSyncScrollPercentage('.half-scale-container', scroll);
+        registerScrollingSyncEvent(divHaftScale, (scroll, isFromWheel) => {
+            this.sendSyncScrollPercentage(
+                '.half-scale-container',
+                scroll,
+                isFromWheel,
+            );
         });
-
-        const { itemJson, isRenderFullWidth, virtualBackgroundColor } =
-            this.varySlideData;
-        const backgroundColor = virtualBackgroundColor ?? null;
 
         let target;
         if (PdfSlide.tryValidate(itemJson)) {
             target = this.renderPdf(
                 divHaftScale,
                 itemJson as PdfSlidePropsType,
-                isRenderFullWidth,
+                isFullWidth,
                 backgroundColor,
             );
         } else if (PptxSlide.tryValidate(itemJson)) {
@@ -1239,7 +1586,7 @@ class ScreenVaryAppDocumentManager
             target = this.renderDocx(
                 divHaftScale,
                 itemJson as DocxSlidePropsType,
-                isRenderFullWidth,
+                isFullWidth,
                 backgroundColor,
             );
         } else {
@@ -1248,24 +1595,111 @@ class ScreenVaryAppDocumentManager
                 itemJson as SlidePropsType,
             );
         }
-        if (target === null) {
+        if (
+            target === null ||
+            revision !== this.renderRevision ||
+            div !== this.div
+        ) {
             return;
         }
-        for (const child of Array.from(div.children)) {
-            this.effectManager.styleAnim
-                .animOut(child as HTMLDivElement)
-                .then(() => {
-                    child.remove();
-                });
+        if (Array.isArray((itemJson as SlidePropsType).canvasItems)) {
+            // Native slides can await Bible fonts. Attach media only after the
+            // revision check, so an older slide cannot reopen a camera/player.
+            this.cleanupSlideContent(target.content);
         }
-        divHaftScale.appendChild(target.content);
+        // Built, because it was not on screen as it is drawn when presented
+        // (it holds something that plays, or was not there at all): the
+        // layout on screen is still moved, and takes this for the slide.
+        if (moveStage?.(target.content)) {
+            return;
+        }
+        // A stage screen sets the slide into its stage's layout -- the slide
+        // smaller with the next one under it, the corner count. The slide's
+        // own content is wired up above first, so its media, camera and item
+        // transitions behave as on any screen.
+        const stageContent =
+            stageLookAhead === null
+                ? null
+                : this.genStageContent(
+                      target.content,
+                      itemJson,
+                      stageLookAhead,
+                  );
+        let slideContent = target.content;
+        let scale = target.scale;
+        if (stageContent !== null) {
+            // The stage layout is laid over the whole screen, not over the
+            // slide's own box fitted into it: a slide of another shape than
+            // the screen left a band above it and one under the next slide.
+            slideContent = stageContent;
+            scale = 1;
+            Object.assign(divHaftScale.style, {
+                width: `${this.screenManagerBase.width}px`,
+                height: `${this.screenManagerBase.height}px`,
+                overflow: 'hidden',
+                transform: 'translate(-50%, -50%)',
+            });
+        }
+        for (const child of Array.from(div.children)) {
+            // Each slide leaves the way it came in, whatever the next one
+            // comes in with: a slide that zoomed in zooms out under a slide
+            // that fades in (`TRANSITION_DATASET_KEY`).
+            this.animateSlideOut(child as HTMLDivElement).then(() => {
+                child.remove();
+            });
+        }
+        divHaftScale.appendChild(slideContent);
         Object.assign(divContainer.style, {
             position: 'absolute',
             width: `${this.screenManagerBase.width}px`,
             height: `${this.screenManagerBase.height}px`,
-            transform: `scale(${target.scale},${target.scale}) translate(50%, 50%)`,
+            transform: `scale(${scale},${scale}) translate(50%, 50%)`,
         });
-        this.effectManager.styleAnim.animIn(divContainer, div);
+        div.appendChild(divContainer);
+        const sceneRoot =
+            stageContent ?? this.genLyricSceneRoot(slideData, target.content);
+        this.stageScene =
+            sceneRoot === null
+                ? null
+                : {
+                      container: divContainer,
+                      root: sceneRoot,
+                      filePath: slideData.filePath,
+                      width: this.screenManagerBase.width,
+                      height: this.screenManagerBase.height,
+                  };
+        const hasItemTransitions =
+            Array.isArray((itemJson as SlidePropsType).canvasItems) &&
+            this.canvasItemTransitions.enter(
+                divContainer,
+                target.content,
+                slideData.transitionEffect ?? this.effectManager.effectType,
+                (effect) => this.genStyleAnimFor(effect).duration,
+            );
+        this.genStyleAnimFor(
+            hasItemTransitions ? 'none' : slideData.transitionEffect,
+        ).animIn(divContainer, div);
+    }
+
+    /**
+     * The slide's own transition when it carries one (it or its slides
+     * preview overrides the screen), else the screen's `Slide:` effect.
+     */
+    genStyleAnimFor(transitionEffect?: TransitionEffectType) {
+        return (
+            (transitionEffect === undefined
+                ? undefined
+                : this.effectManager.styleAnimList[transitionEffect]) ??
+            this.effectManager.styleAnim
+        );
+    }
+
+    genStyleAnimForNode(node: Element) {
+        return getStyleAnimForNode(
+            node,
+            this.effectManager.styleAnimList,
+            this.effectManager.styleAnim,
+        );
     }
 
     get containerStyle(): CSSProperties {
@@ -1310,6 +1744,8 @@ class ScreenVaryAppDocumentManager
     }
 
     delete() {
+        ++this.renderRevision;
+        this.canvasItemTransitions.dispose();
         // Local teardown only — deliberately NOT clear(). clear() goes through
         // the varySlideData setter, which broadcasts to every screen sharing
         // this one's color note (deleting one screen blanked the group's slide)
@@ -1318,6 +1754,7 @@ class ScreenVaryAppDocumentManager
         // deleteScreenPersistedData.
         this.destroyYouTubePlayers();
         this.cameraAttachment.releaseAll();
+        this.stageScene = null;
         if (this._div !== null) {
             this._div.replaceChildren();
             this._div = null;

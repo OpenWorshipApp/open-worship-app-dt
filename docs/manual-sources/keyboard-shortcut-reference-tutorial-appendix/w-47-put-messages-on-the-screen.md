@@ -1,0 +1,66 @@
+---
+id: W-47
+title: "Put messages on the screen"
+section: "Keyboard shortcut reference (tutorial appendix)"
+verify: [PM-134, PM-135]
+screenshots: 1
+generatedFrom: user-workflows.md
+workflowsVersion: "2026-10-24"
+---
+# W-47 — Put messages on the screen
+
+**Goal:** put up the words everyone needs to read around a service that are not
+slides — a parking notice, an offering notice, a call for the next speaker.
+
+1. Open the **[en:tran:Foreground]** tab. The launcher that opens is a menu of
+   components, and the first row in it is **[en:tran:Messages]** — it is first
+   because it is the one you open in a hurry.
+2. **Write your messages.** Press **[en:tran:Add Message]** for each one. Every
+   message gets its own box and can be **as many lines as you like** — a line
+   break in the box is a line break on the screen. After typing in the second
+   box, the first message still has the words you gave it. The arrows beside a
+   box move that message up or down the list — and on the screen too, if it is
+   up there; the ✕ removes it.
+3. **Put one up.** Press the screen button on a message's own row. It appears
+   over whatever is already on the screen — the slide, the verse, the background
+   — and it **stays there until you take it down**. There is no delay and no
+   countdown: nothing removes it but you. Press the same button again to take it
+   off; it now reads _hide_.
+4. **Several at once.** Show a second message and it sits **underneath** the
+   first rather than on top of it, however many lines each one has — a long line
+   the screen wraps onto two counts as two. Hide the one above and the one below
+   moves up to close the gap. If they would run off the bottom of the screen,
+   they are made smaller together until they fit. This is how you put a parking
+   notice and an offering notice up together.
+5. **The whole set.** **[en:tran:Show All Messages]** puts every message up at
+   once as one block — made smaller, too, if it would not fit on the screen. It
+   takes the place of any of them you showed one by one, and showing one again
+   takes the block down, so the same words are never on the wall twice. Tick **[en:tran:Rotate]** first and a seconds box appears:
+   now the same button shows them **one at a time**, cycling until you hide it.
+   That is the notice board before a service.
+6. **Make it look like a notice.** Open **[en:tran:Properties]**, then the
+   **[en:tran:Effects]** fold under it. **[en:tran:Padding]** is the room between
+   your words and the edge of the coloured box behind them — it starts at a
+   quarter of a text size, and because it is measured in text sizes the box keeps
+   its shape when you change **[en:tran:Font Size]**. Add a
+   **[en:tran:Border]** to frame it, a **[en:tran:Shadow]** to lift it off the
+   picture, **[en:tran:Text Align]** to centre it, and a
+   **[en:tran:Text Shadow]** of **[en:tran:Outline]** when the message has to be
+   read over a busy photograph or a moving video. Changing any of them while
+   messages are showing restyles them where they stand and keeps them stacked. 📸
+7. **F4** is the shortcut while the **[en:tran:Messages]** panel is open: with a
+   screen ticked it puts the session up, and
+   pressing it again takes everything down. If no screen is ticked it tells you
+   so rather than guessing.
+8. The text is plain. Typing `<b>loud</b>` puts those angle brackets on the
+   screen exactly as you typed them; a message is never treated as formatting.
+   Use the save buttons at the top to keep a whole session — every message in it
+   — and pick it back next week.
+
+::: details 🤖 Robot-verified — coverage traceability
+This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
+
+`PM-134` · `PM-135`
+
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+:::

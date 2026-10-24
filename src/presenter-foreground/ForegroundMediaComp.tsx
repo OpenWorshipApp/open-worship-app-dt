@@ -13,6 +13,7 @@ import type {
     ForegroundVideoDataType,
     ForegroundWebDataType,
 } from '../_screen/screenTypeHelpers';
+import { withForegroundLayer } from '../_screen/screenTypeHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -35,6 +36,11 @@ import VideoTilePreviewComp, {
     HOVER_PLAY_DELAY,
 } from '../background/VideoTilePreviewComp';
 import { RenderWebChildComp } from '../background/BackgroundWebChildComp';
+import {
+    genBackgroundWebContextMenuItems,
+    genBackgroundWebExtraItemContextMenuItems,
+} from '../background/backgroundWebHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import SlideAutoPlayComp, {
     type NextDataType,
 } from '../slide-auto-play/SlideAutoPlayComp';
@@ -71,7 +77,10 @@ import MediaSessionsComp, {
     useMediaSessionAutoPlayRefresh,
     useMediaSessions,
 } from '../media-sessions/MediaSessionsComp';
-import { genForegroundPropsSettingNames } from './foregroundSessionHelpers';
+import {
+    checkIsSessionData,
+    genForegroundPropsSettingNames,
+} from './foregroundSessionHelpers';
 import {
     applyAutoPlayRunners,
     getRunningAutoPlayKeys,
@@ -81,9 +90,11 @@ import DirSource from '../helper/DirSource';
 import { useAppEffect } from '../helper/appHooks';
 import {
     genForegroundExtraStyle,
-    getForegroundTransition,
+    getForegroundIsBehind,
     getForegroundWidthScale,
 } from './propertiesSettingHelpers';
+import { resolveForegroundTransition } from './foregroundTransitionHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 
 /**
  * Video Show and Image Show put a FILE on the foreground layer, above the
@@ -150,6 +161,10 @@ type ForegroundMediaConfigType = {
         manager: ScreenForegroundManager,
         data: ForegroundMediaDataType,
     ) => void;
+    /** The kind's own rows in the list's menu (a web page's New File). */
+    genContextMenuItems?: (dirSource: DirSource) => ContextMenuItemType[];
+    /** The kind's own rows in one file's menu (a web page's Edit). */
+    genExtraItemContextMenuItems?: (filePath: string) => ContextMenuItemType[];
 };
 
 function toPresentedList(
@@ -317,6 +332,15 @@ const FOREGROUND_MEDIA_CONFIG_MAP: Record<
         remove: (manager, data) => {
             manager.removeWebData(data as ForegroundWebDataType);
         },
+        // The same folder the Webs tab lists, so the same way to write a page
+        // into it and to edit one: the shared panel had dropped both, and a
+        // page could only be made or changed from the Background tab.
+        genContextMenuItems: (dirSource) => {
+            return genBackgroundWebContextMenuItems(dirSource);
+        },
+        genExtraItemContextMenuItems: (filePath) => {
+            return genBackgroundWebExtraItemContextMenuItems(filePath);
+        },
     },
     video: {
         kind: 'video',
@@ -425,15 +449,16 @@ function refreshAllMedia(
     config: ForegroundMediaConfigType,
     showingScreenIdDataList: [number, ForegroundMediaDataType][],
     extraStyle: CSSProperties,
+    isBehind: boolean,
 ) {
     for (const [screenId, data] of showingScreenIdDataList) {
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
-                config.present(screenForegroundManager, {
-                    ...data,
-                    extraStyle,
-                });
+                config.present(
+                    screenForegroundManager,
+                    withForegroundLayer({ ...data, extraStyle }, isBehind),
+                );
             },
         );
     }
@@ -489,23 +514,28 @@ function genMediaData(
     getWidthScale: () => number,
     filePath: string,
 ): ForegroundMediaDataType {
-    return {
-        filePath,
-        id: sessionId,
-        extraStyle: genStyle(),
-        // Read here rather than threaded down from the panel: this runs when
-        // an item is PRESENTED, never while the grid draws, so it is one
-        // cached setting read per press instead of one per tile -- and it is
-        // the current answer even when the panel is not mounted, which is how
-        // a slide show running behind a closed panel gets it too.
-        transitionEffect: getForegroundTransition(
-            toSessionPrefix(config.kind, sessionId),
-        ),
-        ...(config.kind === 'video'
-            ? getForegroundSoundData(toSessionPrefix(config.kind, sessionId))
-            : {}),
-        ...(config.genExtraData?.(getWidthScale) ?? {}),
-    };
+    const prefix = toSessionPrefix(config.kind, sessionId);
+    return withForegroundLayer(
+        {
+            filePath,
+            id: sessionId,
+            extraStyle: genStyle(),
+            // Read here rather than threaded down from the panel: this runs
+            // when an item is PRESENTED, never while the grid draws, so it is
+            // one cached setting read per press instead of one per tile -- and
+            // it is the current answer even when the panel is not mounted,
+            // which is how a slide show running behind a closed panel gets it
+            // too. The layer is read the same way, for the same reason.
+            // The session's own transition, else the component's -- and no
+            // key at all when it follows the screen's `Foreground:` effect.
+            ...toTransitionPart(
+                resolveForegroundTransition(config.kind, prefix),
+            ),
+            ...(config.kind === 'video' ? getForegroundSoundData(prefix) : {}),
+            ...(config.genExtraData?.(getWidthScale) ?? {}),
+        },
+        getForegroundIsBehind(prefix),
+    );
 }
 
 /** What ONE session of this widget has up, across every screen. */
@@ -515,6 +545,24 @@ function getSessionShowingList(
 ) {
     return getAllShowingScreenIdDataList(config).filter(([, data]) => {
         return (data.id ?? '') === sessionId;
+    });
+}
+
+/**
+ * What a session's strip button and Hide row answer for: its own items plus,
+ * on the FIRST session, any whose session is gone -- a run-sheet row dragged
+ * from a session removed since, or a no-session item after Default was
+ * removed. See `toOwnerSessionId`. The slide show deliberately keeps to
+ * `getSessionShowingList`: it replaces only its own session's item, so
+ * advancing an adopted one would put a second picture up beside it.
+ */
+function getSessionOwnedList(
+    config: ForegroundMediaConfigType,
+    sessionId: string,
+    sessionIds: string[],
+) {
+    return getAllShowingScreenIdDataList(config).filter(([, data]) => {
+        return checkIsSessionData(data, sessionId, sessionIds);
     });
 }
 
@@ -786,8 +834,22 @@ function syncAutoPlayRunners() {
             const autoPlayPrefix = toAutoPlayPrefix(kind, session.id);
             const options = readSlideAutoPlayOptions(autoPlayPrefix);
             const isUntilMediaEnd = kind === 'video' && options.isUntilMediaEnd;
+            const isPlaying = checkIsSlideAutoPlaying(autoPlayPrefix);
             if (
-                !checkIsSlideAutoPlaying(autoPlayPrefix) ||
+                isPlaying &&
+                getSessionShowingList(config, session.id).length === 0
+            ) {
+                // Its last item came off -- Clear Foreground, a Hide -- so the
+                // show is OVER, as it is when its own tick finds nothing left
+                // (`onEnded`). With the panel open this sync dropped the timer
+                // before that tick, the flag stayed on, and the next single
+                // picture put up started the whole show again by itself.
+                setIsSlideAutoPlaying(autoPlayPrefix, false);
+                notifySlideAutoPlayStateChanged();
+                continue;
+            }
+            if (
+                !isPlaying ||
                 // Waiting for the clip to finish needs no seconds at all, so
                 // an empty seconds box must not stop that show from running.
                 !(
@@ -852,9 +914,19 @@ export default function ForegroundMediaComp({
         removeSession,
     } = useMediaSessions(toSessionTarget(kind));
     const suffix = toSessionSuffix(activeId);
+    const sessionIds = sessions.map((session) => {
+        return session.id;
+    });
+    const sessionIdsRef = useAppCurrentRef(sessionIds);
     // One session owns one item, so what THIS session has up is what its
     // Properties and its slide show act on.
     const showingScreenIdDataList = getSessionShowingList(config, activeId);
+    // ...and what its Hide row offers, adopted items included.
+    const ownedScreenIdDataList = getSessionOwnedList(
+        config,
+        activeId,
+        sessionIds,
+    );
     // Per-instance: one timer per widget -- a shared module timer would drop
     // Video Show's refresh when Image Show is adjusted within 500ms.
     const attemptTimeout = useMemo(() => {
@@ -903,7 +975,7 @@ export default function ForegroundMediaComp({
         // would only be in the way; the blend mode is the point of the widget.
         isCommonStyle: false,
         isBlendMode: true,
-        isTransition: true,
+        widgetKey: kind,
         extraControls:
             kind === 'video' ? (
                 <ForegroundSoundControlComp
@@ -911,9 +983,14 @@ export default function ForegroundMediaComp({
                     onChange={handleSoundChange}
                 />
             ) : undefined,
-        onChange: (extraStyle) => {
+        onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
-                refreshAllMedia(config, showingRef.current, extraStyle);
+                refreshAllMedia(
+                    config,
+                    showingRef.current,
+                    extraStyle,
+                    isBehind,
+                );
             });
         },
     });
@@ -928,9 +1005,12 @@ export default function ForegroundMediaComp({
     useMediaSessionAutoPlayRefresh();
     const runningAutoPlayKeys = getRunningAutoPlayKeys();
     const genSessionState = (sessionId: string) => {
+        // Its OWN items: what the show advances. The dot also counts the
+        // ones it adopted, which only its Hide row acts on.
         const isOnScreen = getSessionShowingList(config, sessionId).length > 0;
         return {
-            isOnScreen,
+            isOnScreen:
+                getSessionOwnedList(config, sessionId, sessionIds).length > 0,
             // ANDed with what is on screen, and that is not belt and braces.
             // A show stops itself INSIDE the timer -- the tick answers false
             // once its session has nothing left to advance -- and a module
@@ -951,9 +1031,10 @@ export default function ForegroundMediaComp({
         // the widget's own Hide button follows the ACTIVE session, and the
         // only way back was Clear Foreground, which takes everything else
         // down with it.
-        for (const [screenId, data] of getSessionShowingList(
+        for (const [screenId, data] of getSessionOwnedList(
             config,
             sessionId,
+            sessionIdsRef.current,
         )) {
             handleMediaHiding(config, screenId, data);
         }
@@ -1011,36 +1092,36 @@ export default function ForegroundMediaComp({
                     genSessionState={genSessionState}
                 />
                 {propsSetting}
+                {/*
+                 * Up here with the rest of the sticky row, not at the bottom
+                 * of the list: what is ON A SCREEN, how to take it off and
+                 * whether a show is advancing are the controls an operator
+                 * reaches for fastest, and down there the slide-show bar
+                 * floated over the last row of files.
+                 */}
                 {showingScreenIdDataList.length > 0 ? (
-                    // Up here with the rest of the sticky row, not at the
-                    // bottom of the list: what is ON A SCREEN, how to take it
-                    // off and whether a show is advancing are the controls an
-                    // operator reaches for fastest, and down there the
-                    // slide-show bar floated over the last row of files.
-                    <>
-                        <SlideAutoPlayComp
-                            // Same reason as the Properties panel: its play
-                            // state and interval are read once per mount.
-                            key={activeId}
-                            prefix={toAutoPlayPrefix(kind, activeId)}
-                            onNext={handleNext}
-                            isTimerExternal
-                            isInline
-                            canUntilMediaEnd={kind === 'video'}
-                            onStateChange={syncAutoPlayRunners}
-                        />
-                        <ScreensRendererComp
-                            showingScreenIdDataList={showingScreenIdDataList}
-                            buttonText={tran(config.hideLabelKey)}
-                            genTitle={genMediaTitle}
-                            handleForegroundHiding={handleMediaHiding.bind(
-                                null,
-                                config,
-                            )}
-                            isMini
-                        />
-                    </>
+                    <SlideAutoPlayComp
+                        // Same reason as the Properties panel: its play
+                        // state and interval are read once per mount.
+                        key={activeId}
+                        prefix={toAutoPlayPrefix(kind, activeId)}
+                        onNext={handleNext}
+                        isTimerExternal
+                        isInline
+                        canUntilMediaEnd={kind === 'video'}
+                        onStateChange={syncAutoPlayRunners}
+                    />
                 ) : null}
+                <ScreensRendererComp
+                    showingScreenIdDataList={ownedScreenIdDataList}
+                    buttonText={tran(config.hideLabelKey)}
+                    genTitle={genMediaTitle}
+                    handleForegroundHiding={handleMediaHiding.bind(
+                        null,
+                        config,
+                    )}
+                    isMini
+                />
             </div>
             <div className="foreground-media-list d-flex flex-column">
                 <FilePathLoadedContext
@@ -1062,6 +1143,10 @@ export default function ForegroundMediaComp({
                         // minutes before a service: the way to a folder is
                         // the picker in the row above, not another window.
                         isDirSettingRouteHidden
+                        genContextMenuItems={config.genContextMenuItems}
+                        genExtraItemContextMenuItems={
+                            config.genExtraItemContextMenuItems
+                        }
                         genItemData={genForegroundItemData.bind(
                             null,
                             config,

@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { checkIsActingTool, checkToolCall } from './firewall.mjs';
 import {
     MODEL_HIDDEN_TOOL_MAP,
+    MODEL_ON_ASK_TOOL_MAP,
     checkIsModelHiddenTool,
+    checkIsModelOnAskTool,
     filterModelToolList,
     findModelHiddenReason,
+    pickAskToolList,
 } from './modelTools.mjs';
 
 describe('what the model is offered', () => {
@@ -108,5 +111,112 @@ describe('what the model is offered', () => {
             'destructive-label',
         );
         expect(checkIsModelHiddenTool('owa_click')).toBe(false);
+    });
+
+    // The developer's two label-aimed hands of 2026-10-10 stay the
+    // developer's: a key is how a QA run walks a slide list, and the prompt
+    // tells the model no tool advances a run; a drag's result cannot be read
+    // back where `owa_presenting_flow add` says what it added and can be
+    // undone. The run-sheet tool itself IS offered, for exactly that ask.
+    it('withholds the key, drag and menu tools, and offers the run-sheet tool', () => {
+        for (const name of [
+            'owa_press_key',
+            'owa_drag',
+            'owa_menu',
+            'owa_scroll',
+            'owa_media_file',
+            'owa_drop_files',
+        ]) {
+            expect(checkIsModelHiddenTool(name), name).toBe(true);
+            expect(checkIsActingTool(name), name).toBe(true);
+        }
+        expect(checkIsModelHiddenTool('owa_presenting_flow')).toBe(false);
+    });
+
+    // A tool for one conversation is no tax on every other question: the
+    // verse finder goes to a verse-finding ask, and that ask gets it ALONE
+    // -- its own short prompt, its own one schema (2026-10-16).
+    it('offers an ask-kind tool to its own ask only', () => {
+        const toolList = [
+            { name: 'owa_find_ui' },
+            { name: 'owa_find_verse' },
+            { name: 'owa_read_website' },
+            { name: 'click' },
+        ];
+        expect(
+            filterModelToolList(toolList).map((one) => {
+                return one.name;
+            }),
+        ).toEqual(['owa_find_ui', 'owa_read_website']);
+        // ...plus the web, for a verse the Bible here cannot place.
+        expect(
+            pickAskToolList(toolList, 'verse-find').map((one) => {
+                return one.name;
+            }),
+        ).toEqual(['owa_find_verse', 'owa_read_website']);
+        expect(
+            pickAskToolList(
+                [
+                    { name: 'owa_find_verse' },
+                    { name: 'owa_lookup_record' },
+                    { name: 'owa_read_website' },
+                    { name: 'owa_click' },
+                ],
+                'lookup',
+            ).map((tool) => tool.name),
+        ).toEqual([
+            'owa_find_verse',
+            'owa_lookup_record',
+            'owa_read_website',
+        ]);
+        expect(checkIsModelOnAskTool('owa_lookup_record')).toBe(true);
+        // A conversation about a Resources file reads the rest of them.
+        expect(
+            pickAskToolList(
+                [
+                    { name: 'owa_lookup_record' },
+                    { name: 'owa_resource_file' },
+                    { name: 'owa_read_website' },
+                    { name: 'owa_click' },
+                ],
+                'resources',
+            ).map((tool) => tool.name),
+        ).toEqual([
+            'owa_lookup_record',
+            'owa_resource_file',
+            'owa_read_website',
+        ]);
+        expect(checkIsModelOnAskTool('owa_resource_file')).toBe(true);
+        // A typed Bible-Reader question gets all three, whichever it wants.
+        expect(
+            pickAskToolList(
+                [
+                    { name: 'owa_lookup_record' },
+                    { name: 'owa_resource_file' },
+                    { name: 'owa_find_verse' },
+                    { name: 'owa_read_website' },
+                    { name: 'owa_click' },
+                ],
+                'bible-reader',
+            ).map((tool) => tool.name),
+        ).toEqual([
+            'owa_lookup_record',
+            'owa_resource_file',
+            'owa_find_verse',
+            'owa_read_website',
+        ]);
+        expect(
+            filterModelToolList([{ name: 'owa_resource_file' }]),
+        ).toEqual([]);
+        expect(pickAskToolList(toolList, 'other')).toEqual([]);
+        expect(checkIsModelOnAskTool('owa_find_verse')).toBe(true);
+        expect(checkIsModelHiddenTool('owa_find_verse')).toBe(false);
+        // Hidden and on-ask are two different decisions: a tool in both
+        // would be offered to its ask and refused when it called it.
+        for (const name of Object.keys(MODEL_ON_ASK_TOOL_MAP)) {
+            expect(Object.hasOwn(MODEL_HIDDEN_TOOL_MAP, name), name).toBe(
+                false,
+            );
+        }
     });
 });

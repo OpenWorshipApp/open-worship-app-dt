@@ -8,6 +8,7 @@ import { subscribeSlideAutoPlayState } from '../slide-auto-play/slideAutoPlayRul
 import {
     getSetting,
     removeSetting,
+    setSetting,
     useStateSettingString,
 } from '../helper/settingHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -72,8 +73,24 @@ export function toSessionSuffix(sessionId: string) {
     return sessionId === DEFAULT_SESSION_ID ? '' : `-${sessionId}`;
 }
 
+// Stored as data, in English, the day the list is first written.
+const DEFAULT_SESSION_NAME = 'Default';
+
 function toDefaultList(): MediaSessionType[] {
-    return [{ id: DEFAULT_SESSION_ID, name: 'Default' }];
+    return [{ id: DEFAULT_SESSION_ID, name: DEFAULT_SESSION_NAME }];
+}
+
+// What a session is called on screen. The built-in one is read through
+// `tran()` while it still carries the name the app gave it, so a Khmer window
+// does not show "Default"; a name the user typed is shown as typed.
+export function toSessionLabel(session: MediaSessionType) {
+    if (
+        session.id === DEFAULT_SESSION_ID &&
+        session.name === DEFAULT_SESSION_NAME
+    ) {
+        return tran('Default');
+    }
+    return session.name;
 }
 
 export function readSessions(target: string): MediaSessionType[] {
@@ -101,6 +118,37 @@ export function readSessions(target: string): MediaSessionType[] {
     }
 }
 
+// The mounted strips of each target in this window, so a session added from
+// outside one -- a lyric's `Long Text Show` -- is drawn by the strip already
+// up. An entry leaves when its strip unmounts, so this holds only what is on
+// screen.
+const sessionRefresherMap = new Map<string, Set<() => void>>();
+
+/**
+ * A new session's id. Ids are never reused: every setting a removed session
+ * wrote is keyed by its id, and a recycled one would inherit them.
+ */
+export function genMediaSessionId() {
+    return `s${Date.now().toString(36)}`;
+}
+
+/**
+ * Adds a session to a strip and makes it the active one, whether the strip is
+ * mounted or not: a mounted one is told, any other reads it when it mounts.
+ * Whatever the session's own settings are to hold is written BEFORE this: the
+ * panel switching to it reads them on the spot.
+ */
+export function addMediaSession(target: string, session: MediaSessionType) {
+    setSetting(
+        toListSettingName(target),
+        JSON.stringify([...readSessions(target), session]),
+    );
+    setSetting(toActiveSettingName(target), session.id);
+    for (const refresh of sessionRefresherMap.get(target) ?? []) {
+        refresh();
+    }
+}
+
 export function useMediaSessions(target: string) {
     const [rawList, setRawList] = useStateSettingString(
         toListSettingName(target),
@@ -110,6 +158,29 @@ export function useMediaSessions(target: string) {
         toActiveSettingName(target),
         DEFAULT_SESSION_ID,
     );
+    useAppEffect(() => {
+        // Read back, not written: `addMediaSession` already wrote both.
+        const refresh = () => {
+            setRawList(getSetting(toListSettingName(target)) ?? '', true);
+            setActiveId(
+                getSetting(toActiveSettingName(target)) ?? DEFAULT_SESSION_ID,
+                true,
+            );
+        };
+        let refresherSet = sessionRefresherMap.get(target);
+        if (refresherSet === undefined) {
+            refresherSet = new Set();
+            sessionRefresherMap.set(target, refresherSet);
+        }
+        const currentRefresherSet = refresherSet;
+        currentRefresherSet.add(refresh);
+        return () => {
+            currentRefresherSet.delete(refresh);
+            if (currentRefresherSet.size === 0) {
+                sessionRefresherMap.delete(target);
+            }
+        };
+    }, [target]);
     const sessions = readSessions(target);
     const activeSession =
         sessions.find((session) => {
@@ -125,14 +196,10 @@ export function useMediaSessions(target: string) {
         setActiveId,
         rawList,
         addSession: () => {
-            // Ids are never reused: every setting a removed session wrote is
-            // keyed by its id, and a recycled one would inherit them.
-            const id = `s${Date.now().toString(36)}`;
-            writeList([
-                ...sessions,
-                { id, name: `${tran('Session')} ${sessions.length + 1}` },
-            ]);
-            setActiveId(id);
+            addMediaSession(target, {
+                id: genMediaSessionId(),
+                name: `${tran('Session')} ${sessions.length + 1}`,
+            });
         },
         renameSession: (sessionId: string, name: string) => {
             writeList(
@@ -234,7 +301,7 @@ export default function MediaSessionsComp({
                     childBefore: genContextMenuItemIcon('pencil-square'),
                     menuElement: tran('Rename Session'),
                     onSelect: async () => {
-                        let name = session.name;
+                        let name = toSessionLabel(session);
                         const isOk = await showAppInput(
                             tran('Rename Session'),
                             genSessionNameInput(name, (newName) => {
@@ -256,7 +323,7 @@ export default function MediaSessionsComp({
                               onSelect: async () => {
                                   const isOk = await showAppConfirm(
                                       tran('Remove Session'),
-                                      `${tran('Remove')} "${session.name}"?`,
+                                      `${tran('Remove')} "${toSessionLabel(session)}"?`,
                                   );
                                   if (!isOk) {
                                       return;
@@ -293,7 +360,7 @@ export default function MediaSessionsComp({
                     session.id,
                 );
                 const stateWords = [
-                    session.name,
+                    toSessionLabel(session),
                     isOnScreen ? tran('On Screen') : null,
                     isAutoPlaying ? tran('Slide show is running') : null,
                 ]
@@ -320,7 +387,7 @@ export default function MediaSessionsComp({
                         }}
                     >
                         <span className={isOnScreen ? 'app-on-screen' : ''}>
-                            {session.name}
+                            {toSessionLabel(session)}
                         </span>
                         {isAutoPlaying ? (
                             <i className="bi bi-play-fill text-info" />

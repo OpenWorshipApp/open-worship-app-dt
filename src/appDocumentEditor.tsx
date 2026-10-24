@@ -3,6 +3,7 @@ import { init } from './boot';
 import { run } from './others/main';
 import AppLayoutComp from './router/AppLayoutComp';
 import AppWindowToolsComp from './others/AppWindowToolsComp';
+import LangAppMenuComp from './lang/LangAppMenuComp';
 
 init(async () => {
     const AppDocumentEditorComp = (
@@ -12,6 +13,7 @@ init(async () => {
         <AppLayoutComp>
             <AppDocumentEditorComp />
             <AppWindowToolsComp />
+            <LangAppMenuComp />
         </AppLayoutComp>,
     );
 });

@@ -38,7 +38,7 @@ function genCameraIcon(width: number) {
     );
 }
 
-export function BoxEditorNormalCameraRender() {
+export function BoxEditorNormalCameraRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemCameraPropsType>();
     try {
         CanvasItemCamera.validate(props);

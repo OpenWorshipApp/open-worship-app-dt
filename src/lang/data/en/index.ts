@@ -8,6 +8,7 @@ import { getFontFamilies } from '../../../server/fontHelpers';
 import { handleError } from '../../../helper/errorHelpers';
 
 import bibleBooks from './bibleBooks.json';
+import bibleKeyMap from './bibleKeyMap.json';
 import bbCR from './bb-cr.gz.bundle';
 import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
 import namesMapUrl from './location-name-map-data/namesMap.json?url';
@@ -18,6 +19,9 @@ const lang: LanguageDataType = {
     locale: DEFAULT_LOCALE,
     langCode: DEFAULT_LANG_CODE,
     bibleBooks,
+    getBibleKeyNameMap: () => {
+        return bibleKeyMap;
+    },
     checkIsThisLang: () => {
         return true;
     },
@@ -49,6 +53,30 @@ const lang: LanguageDataType = {
             .replaceAll(/\s+/g, ' ')
             .trim();
     },
+    bookMarkerWords: ['in', 'inside', 'from', 'book'],
+    findFrameWords: [
+        'find',
+        'search',
+        'look',
+        'show',
+        'me',
+        'help',
+        'please',
+        'verse',
+        'verses',
+        'scripture',
+        'bible',
+        'story',
+        'stories',
+        'about',
+        'where',
+        'which',
+        'what',
+        'tell',
+        'tells',
+        'says',
+        'say',
+    ],
     stopWords: [
         'a',
         'an',

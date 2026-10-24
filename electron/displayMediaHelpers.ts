@@ -1,6 +1,10 @@
-import { session } from 'electron';
+import { session, webContents } from 'electron';
 
 import { getRootUrl } from './protocolHelpers';
+import {
+    checkIsVirtualDisplayHost,
+    takeVirtualDisplayAudioTarget,
+} from './virtualDisplayHostRegistry';
 
 /**
  * Chromium refuses `navigator.mediaDevices.getDisplayMedia()` in Electron until
@@ -17,6 +21,12 @@ import { getRootUrl } from './protocolHelpers';
  * `audio: frame` captures that frame's own audio rather than the whole system,
  * and `enableLocalEcho` keeps it playing out of the speakers while captured.
  *
+ * A virtual display's compositor records itself the same way, but its sound
+ * is never echoed: what its screens play belongs to the stream. Its own tab
+ * capture does not carry its `<webview>` guests' audio, so it asks for each
+ * screen's audio on its own, naming the screen first
+ * (`setVirtualDisplayAudioTarget`).
+ *
  * Only the app's own pages are answered. A cross-origin child frame cannot
  * normally reach this handler at all (it would need `allow="display-capture"`
  * delegated to it, which no window here does), but a capture of the operator's
@@ -31,6 +41,20 @@ export function initDisplayMediaHandler() {
                 // An empty answer is how this API says "denied"; the renderer sees
                 // the promise reject.
                 callback({});
+                return;
+            }
+            const host = webContents.fromFrame(frame);
+            if (checkIsVirtualDisplayHost(host)) {
+                // Only an audio request takes the screen it was asked for: the
+                // compositor's own picture is asked for without audio.
+                const audioFrame = request.audioRequested
+                    ? takeVirtualDisplayAudioTarget(host!)
+                    : null;
+                callback({
+                    video: frame,
+                    audio: audioFrame ?? undefined,
+                    enableLocalEcho: false,
+                });
                 return;
             }
             callback({

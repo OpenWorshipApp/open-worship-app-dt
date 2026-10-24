@@ -1,15 +1,19 @@
 ---
 name: app-window-tools-everywhere
-description: AppWindowToolsComp mounts the presenting control and the assistant on all nine app pages; the theme-token wrapper and focused-window menu routing are both load-bearing
+description: AppWindowToolsComp mounts the presenting control and the assistant on all ten app pages; the theme-token wrapper and focused-window menu routing are both load-bearing
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-24T01:59:31.105Z
 ---
 
 `src/others/AppWindowToolsComp.tsx` is the one declaration of **what every
-window of the app carries**: `PresentingControlComp` (the annotation overlay)
-and `AppAssistantComp` (the way into the chatbot). It is mounted on all nine
-renderer entries — presenter, reader, appDocumentEditor, bibleNote, setting,
-webEditor, lwShare, lyricEditor, experiment — and deliberately NOT on `about`,
+window of the app carries**: `PresentingControlComp` (the annotation overlay),
+`AppAssistantComp` (the way into the chatbot) and `KeyboardShortcutsComp`
+(Help → Keyboard Shortcuts). It is mounted on all ten renderer entries —
+presenter, reader, appDocumentEditor, bibleNote, setting, webEditor, lwShare,
+lyricEditor, experiment, screen-mirror — and deliberately NOT on `about`,
 `chatbot`, `finder` or `screen`. Inclusion is decided by which entry file
 imports it; there is no page gate anywhere.
 
@@ -45,7 +49,10 @@ whichever five entries happened to import it.
   `{ isRoutedToFocusedWindow: true }` (`src/lang/langHelpers.ts` →
   `electron/electronEventListener.ts`), which sends it to the window in front
   instead. `lang`, `file`, `insert` and `view` keep owner routing on purpose:
-  only the registrant has a handler for their `clickData`.
+  only the registrant has a handler for their `clickData`. A third mode,
+  `{ isSentToAllWindows: true }` (2026-10-23, Help → Tips of the Day / All
+  tips), sends the click to EVERY window, and each acts by its own page — for
+  a press every open page has its own answer to.
 - `AppAssistantComp` calls `openChatbotPage()` in its OWN window rather than
   asking the main process, so the help window is aligned to the window the
   question is about and `detectOpenerFocus` starts on the right one. Opening it

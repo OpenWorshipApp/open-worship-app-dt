@@ -478,7 +478,7 @@ export async function saveJsonDataToXMLfile(
         );
         return false;
     }
-    await saveXMLText(bibleKey, xmlText);
+    if (!(await saveXMLText(bibleKey, xmlText))) return false;
     await clearBibleXMLCache(bibleKey);
     return true;
 }

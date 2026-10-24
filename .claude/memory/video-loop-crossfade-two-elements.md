@@ -40,6 +40,19 @@ composite cover `1.0` at all 424 samples (never a dark frame), layer count
 never left 2, both elements steady at `readyState: 4`, and **zero media
 requests over ~5 laps** on the CDP network log.
 
+**Only the latest `render()` puts a background up** (2026-10-08). `render`
+reads the root's children NOW and appends the new copy when
+`genHtmlBackground`'s promise resolves -- a microtask later for a video, much
+later for a camera. Two renders in one tick (a screen page attaching its root
+and setting its background together on load) each saw an empty root, so BOTH
+copies went in and played on top of each other; at the end of a lap each took
+the other for its twin and parked it, and by the third lap every copy sat at
+opacity 0 -- the wallpaper through most of every lap on the projected screen,
+a virtual display's browser page and its MP4, never on the Mini Screen.
+`renderGeneration` drops a render that was overtaken (its copy's media player
+released), which also stops a cleared background coming back. The symptom to
+look for: more than TWO children in `#background`.
+
 Consequences elsewhere:
 
 - Two elements share one `id` (`genVideoIDFromSrc`). That is fine and was

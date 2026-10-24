@@ -1,5 +1,5 @@
 import type { ChangeEvent, ReactNode } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 
 import { useAppEffect } from '../helper/appHooks';
 import { takeAIKeyFocusRequest } from '../helper/ai/aiKeyFocusHelpers';
@@ -9,6 +9,7 @@ import type {
     AISettingType,
 } from '../helper/ai/aiHelpers';
 import {
+    BEDROCK_REGION_LIST,
     getAISetting,
     getIsAIEnabled,
     setAISetting,
@@ -24,8 +25,14 @@ import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { applyStore } from './SettingApplyComp';
 import { relaunchApp } from './settingHelpers';
 import SettingOthersFieldComp from './SettingOthersFieldComp';
+import SettingOthersCustomServersComp from './SettingOthersCustomServersComp';
+import SettingOthersSharedServersComp from './SettingOthersSharedServersComp';
+import { useCustomServers } from '../helper/ai/customServerHelpers';
+import { checkIsUsableCustomServer } from '../../electron/customLlmProtocol';
 import SettingOthersSecureStorageWarningComp from './SettingOthersSecureStorageWarningComp';
 import SettingOthersSectionComp from './SettingOthersSectionComp';
+import SettingOthersGroupComp from './SettingOthersGroupComp';
+import type { SettingSectionFoldNameType } from './settingSectionFoldHelpers';
 
 /**
  * What a key actually buys, named where the operator is typing it in. It used
@@ -68,24 +75,61 @@ function RenderOpenPageButtonComp({
     );
 }
 
+// A null `keyName` asks for the panel itself, no box in particular.
+type AIKeyFocusType = {
+    keyName: AISecretKeyNameType | null;
+    token: number;
+};
+
 /**
  * One provider's fields fenced off as a unit. The Anthropic key and the
  * workspace it acts in are a PAIR; laid out as loose siblings of OpenAI's key
  * they wrapped onto the next row, so the workspace id read as if it belonged
  * to whichever field happened to sit above it.
+ *
+ * It folds to its name, with a tick beside it when its key is saved -- which
+ * providers are set up is the one thing worth reading off a folded row -- and
+ * opens by itself when another window asks for the cursor in its key box.
  */
 function RenderProviderGroupComp({
+    foldName,
     title,
     usedForList,
+    keyName,
+    isKeySet,
+    keyFocus,
+    onCollapse,
     children,
 }: Readonly<{
+    foldName: SettingSectionFoldNameType;
     title: string;
     usedForList: string[];
+    keyName: AISecretKeyNameType;
+    isKeySet: boolean;
+    keyFocus: AIKeyFocusType | null;
+    onCollapse: () => void;
     children: ReactNode;
 }>) {
     return (
-        <div className="app-setting-others-group">
-            <span className="app-setting-others-group-title">{title}</span>
+        <SettingOthersGroupComp
+            foldName={foldName}
+            title={title}
+            foldedMark={
+                isKeySet ? (
+                    <i
+                        className={
+                            'bi bi-check-circle-fill' +
+                            ' app-setting-others-field-set'
+                        }
+                        title={tran('Saved')}
+                    />
+                ) : null
+            }
+            openToken={
+                keyFocus?.keyName === keyName ? keyFocus.token : undefined
+            }
+            onCollapse={onCollapse}
+        >
             <div
                 className="app-setting-others-group-uses"
                 // One label for the row, so a screen reader does not read
@@ -107,11 +151,9 @@ function RenderProviderGroupComp({
                 })}
             </div>
             <div className="app-setting-others-group-fields">{children}</div>
-        </div>
+        </SettingOthersGroupComp>
     );
 }
-
-type AIKeyFocusType = { keyName: AISecretKeyNameType; token: number };
 
 /**
  * The key box another window asked the cursor to be put in (see
@@ -120,18 +162,26 @@ type AIKeyFocusType = { keyName: AISecretKeyNameType; token: number };
  * and whenever the window comes to the front with the panel already showing,
  * because the help window RAISES a Settings window that is already open rather
  * than opening a second, and a raise is a focus. A request for the panel
- * itself needs nothing more once the panel is showing.
+ * itself names no box, and is kept all the same: the panel may be FOLDED, and
+ * being sent to a folded header is being sent nowhere.
+ *
+ * Forgotten when the panel is folded by hand. The boxes are mounted afresh
+ * when it opens again, and a request still held here would take the cursor
+ * back into its box on every opening.
  */
 function useAIKeyFocus() {
     const [keyFocus, setKeyFocus] = useState<AIKeyFocusType | null>(null);
     useAppEffect(() => {
         const handleTaking = () => {
-            const keyName = takeAIKeyFocusRequest()?.keyName ?? null;
-            if (keyName === null) {
+            const request = takeAIKeyFocusRequest();
+            if (request === null) {
                 return;
             }
             setKeyFocus((oldKeyFocus) => {
-                return { keyName, token: (oldKeyFocus?.token ?? 0) + 1 };
+                return {
+                    keyName: request.keyName,
+                    token: (oldKeyFocus?.token ?? 0) + 1,
+                };
             });
         };
         handleTaking();
@@ -140,7 +190,10 @@ function useAIKeyFocus() {
             window.removeEventListener('focus', handleTaking);
         };
     }, []);
-    return keyFocus;
+    const forgetKeyFocus = useCallback(() => {
+        setKeyFocus(null);
+    }, []);
+    return [keyFocus, forgetKeyFocus] as const;
 }
 
 function RenderAPIKeyComp({
@@ -226,6 +279,100 @@ function RenderWorkspaceIdComp() {
 }
 
 /**
+ * Which AWS region Bedrock is asked in. One Bedrock key reaches every region
+ * of its account, so the key alone does not say where to go -- and a model is
+ * only served in some of them. A closed list rather than a text box: each
+ * region is a host the chatbot window's CSP has to name, so a region typed in
+ * by hand would be refused there and read back as the internet being down.
+ * The codes are shown as they are, untranslated, because they are AWS's
+ * identifiers and the console the operator copies the key from shows them so.
+ */
+function RenderBedrockRegionComp() {
+    const aiSetting = useAISetting();
+    const selectId = useId();
+    const handleChanging = useCallback(
+        (event: ChangeEvent<HTMLSelectElement>) => {
+            const setting: AISettingType = getAISetting();
+            const value = event.currentTarget.value;
+            if (setting.bedrockRegion === value) {
+                return;
+            }
+            setAISetting({ ...setting, bedrockRegion: value });
+            applyStore.pendingApply();
+        },
+        [],
+    );
+    return (
+        <div className="app-setting-others-field">
+            <label className="app-setting-others-label" htmlFor={selectId}>
+                {tran('AWS Region')}
+                <i
+                    className="bi bi-info-circle app-setting-others-hint ps-1"
+                    title={tran(
+                        'The region your Bedrock models are enabled in',
+                    )}
+                />
+            </label>
+            <select
+                id={selectId}
+                className="form-select form-select-sm"
+                value={aiSetting.bedrockRegion}
+                onChange={handleChanging}
+            >
+                {BEDROCK_REGION_LIST.map((region) => {
+                    return (
+                        <option key={region} value={region}>
+                            {region}
+                        </option>
+                    );
+                })}
+            </select>
+        </div>
+    );
+}
+
+/**
+ * Bible Audio is the only AI feature that can start by itself. Keep that
+ * choice beside the OpenAI key that powers it instead of spending permanent
+ * space in every Bible lookup header.
+ */
+function RenderAudioAutoPlayComp() {
+    const aiSetting = useAISetting();
+    const handleToggling = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setAISetting({
+                ...getAISetting(),
+                isAutoPlay: event.currentTarget.checked,
+            });
+        },
+        [],
+    );
+    if (!aiSetting.openAIAPIKey) {
+        return null;
+    }
+    return (
+        <div className="app-setting-others-field">
+            <div className="form-check form-switch m-0">
+                <input
+                    className="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="app-ai-audio-auto-play"
+                    checked={aiSetting.isAutoPlay}
+                    onChange={handleToggling}
+                />
+                <label
+                    className="form-check-label"
+                    htmlFor="app-ai-audio-auto-play"
+                >
+                    {tran('Auto Play Audio AI when available')}
+                </label>
+            </div>
+        </div>
+    );
+}
+
+/**
  * The master switch. Everything AI-shaped is decided at LAUNCH -- the main
  * process reads this before `ready` to know whether to open the debugging
  * endpoint and serve `owa-devtools-mcp` at all -- so turning it off can only
@@ -275,7 +422,7 @@ function RenderAIEnabledComp() {
                 <label className="form-check-label" htmlFor="app-ai-enabled">
                     {tran('Enable AI features')}
                     <i
-                        className="bi bi-info-circle app-setting-others-hint"
+                        className="bi bi-info-circle app-setting-others-hint ps-1"
                         title={tran(
                             'Turns off the chatbot, the assistant tools and ' +
                                 'the debugging endpoint they use.',
@@ -401,15 +548,22 @@ function RenderFreeFallbackComp() {
 export default function SettingOthersAIComp() {
     const aiSetting = useAISetting();
     const isEnabled = getIsAIEnabled();
-    const keyFocus = useAIKeyFocus();
+    const [keyFocus, forgetKeyFocus] = useAIKeyFocus();
+    const customServers = useCustomServers();
     // Either provider on its own is enough to make the features work, so one
-    // key is a working row.
+    // key is a working row -- and so is one usable server of the user's own,
+    // which the chatbot answers with and no key at all.
     const isAnyKeySet =
         !!aiSetting.openAIAPIKey ||
         !!aiSetting.anthropicAPIKey ||
-        !!aiSetting.kimiAPIKey;
+        !!aiSetting.kimiAPIKey ||
+        !!aiSetting.bedrockAPIKey ||
+        customServers.some(checkIsUsableCustomServer);
     return (
         <SettingOthersSectionComp
+            foldName="ai"
+            openToken={keyFocus?.token}
+            onCollapse={forgetKeyFocus}
             iconClassName="bi-robot"
             title="AI Providers"
             description={
@@ -431,8 +585,13 @@ export default function SettingOthersAIComp() {
             </div>
             <div className="app-setting-others-groups">
                 <RenderProviderGroupComp
+                    foldName="ai-openai"
                     title="OpenAI"
                     usedForList={[USE_CHATBOT, USE_CROSS_REF, USE_AUDIO]}
+                    keyName="openAIAPIKey"
+                    isKeySet={!!aiSetting.openAIAPIKey}
+                    keyFocus={keyFocus}
+                    onCollapse={forgetKeyFocus}
                 >
                     <RenderAPIKeyComp
                         keyName="openAIAPIKey"
@@ -442,10 +601,16 @@ export default function SettingOthersAIComp() {
                         createKeyURL={PAID_PROVIDER_PAGE_MAP.openai.keys}
                         keyFocus={keyFocus}
                     />
+                    <RenderAudioAutoPlayComp />
                 </RenderProviderGroupComp>
                 <RenderProviderGroupComp
+                    foldName="ai-anthropic"
                     title="Anthropic"
                     usedForList={[USE_CHATBOT, USE_CROSS_REF]}
+                    keyName="anthropicAPIKey"
+                    isKeySet={!!aiSetting.anthropicAPIKey}
+                    keyFocus={keyFocus}
+                    onCollapse={forgetKeyFocus}
                 >
                     <RenderAPIKeyComp
                         keyName="anthropicAPIKey"
@@ -458,8 +623,13 @@ export default function SettingOthersAIComp() {
                     <RenderWorkspaceIdComp />
                 </RenderProviderGroupComp>
                 <RenderProviderGroupComp
+                    foldName="ai-kimi"
                     title="Kimi"
                     usedForList={[USE_CHATBOT]}
+                    keyName="kimiAPIKey"
+                    isKeySet={!!aiSetting.kimiAPIKey}
+                    keyFocus={keyFocus}
+                    onCollapse={forgetKeyFocus}
                 >
                     <RenderAPIKeyComp
                         keyName="kimiAPIKey"
@@ -470,6 +640,27 @@ export default function SettingOthersAIComp() {
                         keyFocus={keyFocus}
                     />
                 </RenderProviderGroupComp>
+                <RenderProviderGroupComp
+                    foldName="ai-bedrock"
+                    title="Amazon Bedrock"
+                    usedForList={[USE_CHATBOT]}
+                    keyName="bedrockAPIKey"
+                    isKeySet={!!aiSetting.bedrockAPIKey}
+                    keyFocus={keyFocus}
+                    onCollapse={forgetKeyFocus}
+                >
+                    <RenderAPIKeyComp
+                        keyName="bedrockAPIKey"
+                        label="Amazon Bedrock API Key"
+                        hintKey="Answers in the chatbot only"
+                        createKeyTitleKey="Create Amazon Bedrock api key"
+                        createKeyURL={PAID_PROVIDER_PAGE_MAP.bedrock.keys}
+                        keyFocus={keyFocus}
+                    />
+                    <RenderBedrockRegionComp />
+                </RenderProviderGroupComp>
+                <SettingOthersCustomServersComp />
+                <SettingOthersSharedServersComp />
             </div>
             {isEnabled && !isAnyKeySet ? <RenderFreeFallbackComp /> : null}
         </SettingOthersSectionComp>

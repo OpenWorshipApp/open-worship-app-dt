@@ -1,0 +1,95 @@
+// Help -> Keyboard Shortcuts. The search row stays put and the list scrolls
+// under it, so a long Presenter list never takes the box out of reach. No
+// animation and no hover repaint: the panel can sit open beside a live service
+// while its keys are tried out.
+.app-keyboard-shortcuts-title {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+
+  .bi {
+    color: var(--app-accent);
+  }
+}
+
+.app-keyboard-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  padding: 6px 0 0;
+  font-size: var(--app-text-md);
+
+  .input-group {
+    flex: 0 0 auto;
+  }
+}
+
+.app-keyboard-shortcuts-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.app-keyboard-shortcuts-group {
+  margin-bottom: 8px;
+
+  > ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.app-keyboard-shortcuts-group-title {
+  margin: 4px 0 2px;
+  color: var(--app-accent);
+  font-size: var(--app-text-sm);
+  font-weight: 600;
+  text-transform: none;
+}
+
+// Never below `--app-text-sm`: the floor Khmer stays legible at.
+.app-keyboard-shortcut-note {
+  color: var(--app-muted);
+  font-size: var(--app-text-sm);
+  line-height: 1.3;
+}
+
+.app-keyboard-shortcut-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--app-line);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.app-keyboard-shortcut-label {
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.app-keyboard-shortcut-keys {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 3px;
+  justify-content: flex-end;
+  max-width: 55%;
+}
+
+.app-keyboard-shortcut-key {
+  padding: 0 5px;
+  color: var(--app-ink);
+  font-size: var(--app-text-sm);
+  white-space: nowrap;
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-line);
+  border-radius: 4px;
+}

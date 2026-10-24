@@ -3,6 +3,7 @@ import { useCallback, useRef, useState, type ReactNode } from 'react';
 import BibleViewSettingComp, { defaultRangeSize } from './BibleViewSettingComp';
 import { useBibleItemViewControllerUpdateEvent } from './BibleItemsViewController';
 import BibleViewRendererComp from './BibleViewRendererComp';
+import BibleViewPaneHostComp from './BibleViewPaneHostComp';
 import {
     BibleViewFontSizeContext,
     setBibleViewFontSize,
@@ -20,7 +21,11 @@ import BibleSelectionToolbarComp from './BibleSelectionToolbarComp';
 
 function RenderComp() {
     const nestedBibleItems = useBibleItemViewControllerUpdateEvent();
-    return <BibleViewRendererComp nestedBibleItems={nestedBibleItems} />;
+    return (
+        <BibleViewPaneHostComp nestedBibleItems={nestedBibleItems}>
+            <BibleViewRendererComp nestedBibleItems={nestedBibleItems} />
+        </BibleViewPaneHostComp>
+    );
 }
 
 export default function BiblePreviewerRenderComp({

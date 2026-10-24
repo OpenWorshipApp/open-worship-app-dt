@@ -20,6 +20,11 @@
       text-align: left;
       border-radius: var(--bs-border-radius);
       margin-bottom: 4px;
+      // Five tabs in a 132px sidebar: at 1rem the Khmer labels wrapped to two
+      // lines each and the strip stopped reading as tabs.
+      font-size: 0.85rem;
+      padding-left: 6px;
+      padding-right: 2px;
 
       &.active {
         background-color: rgba(var(--bs-info-rgb), 0.15);
@@ -28,12 +33,17 @@
   }
 
   .app-setting-apply {
+    display: grid;
+    gap: 4px;
     border-top: 1px solid var(--bs-border-color);
 
     .btn {
       width: 100%;
       margin-left: 0 !important;
       margin-right: 0 !important;
+      // Khmer labels are wider than the 132px sidebar.
+      white-space: normal;
+      line-height: 1.2;
     }
   }
 
@@ -117,6 +127,12 @@
     &.app-setting-others-attention {
       --app-setting-others-state: var(--bs-warning-text-emphasis);
     }
+
+    // Folded to its header: the row sits level in its box, where an open
+    // section leaves the extra under its last field.
+    &.app-setting-others-collapsed {
+      padding-bottom: 10px;
+    }
   }
 
   .app-setting-others-header {
@@ -124,6 +140,39 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  // A title is the button that folds what it heads -- a section, a box inside
+  // one, a server inside that. It keeps the title's own type and takes none of
+  // a button's chrome: a fold is a quiet thing to be able to do, not one more
+  // control competing with the row's real ones.
+  .app-setting-others-fold {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--bs-border-radius-sm);
+    background-color: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:hover .app-setting-others-chevron {
+      color: var(--app-ink);
+    }
+
+    &:focus-visible {
+      outline-offset: 3px;
+    }
+  }
+
+  .app-setting-others-chevron {
+    font-size: var(--app-text-xs);
+    line-height: 1;
+    color: var(--app-muted);
   }
 
   .app-setting-others-icon {
@@ -227,15 +276,35 @@
     padding: 6px 10px 10px;
   }
 
+  // Folded to its title: the row sits level in its box, as a folded section
+  // does.
+  .app-setting-others-group,
+  .app-setting-others-server {
+    &.app-setting-others-collapsed {
+      padding-bottom: 6px;
+    }
+  }
+
   // The account's name, not a field name: it sits ABOVE the labels in the
   // hierarchy but stays quiet, because it is a landmark and not an
-  // instruction. Brand casing is kept as the provider writes it.
+  // instruction. Brand casing is kept as the provider writes it. A row, for
+  // the tick a folded box carries beside its name.
   .app-setting-others-group-title {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin-bottom: 6px;
     font-size: var(--app-text-xs);
     font-weight: 600;
     color: var(--app-muted);
+
+    .app-setting-others-fold {
+      gap: 5px;
+    }
+  }
+
+  .app-setting-others-collapsed > .app-setting-others-group-title {
+    margin-bottom: 0;
   }
 
   // What the key in this box is actually for, said on the box rather than in
@@ -278,6 +347,44 @@
   .app-setting-others-details {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 6px 18px;
+  }
+
+  // The user's own servers: a list of cards, each with its own fields and a
+  // list of models, so the group takes the whole row rather than a third.
+  .app-setting-others-group-wide {
+    flex-basis: 100%;
+  }
+
+  .app-setting-others-server {
+    border: 1px solid var(--app-line);
+    border-radius: var(--bs-border-radius);
+    padding: 6px 10px 10px;
+  }
+
+  .app-setting-others-models {
+    display: grid;
+    gap: 6px;
+    max-width: 760px;
+  }
+
+  // Model id, the name shown for it, whether it sees pictures, and the
+  // button that takes it out -- then, after a Test, what the server said
+  // about it, across the whole row.
+  .app-setting-others-model-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .app-setting-others-model-sees {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .app-setting-others-model-note {
+    grid-column: 1 / -1;
+    margin-top: -2px;
   }
 
   // Field names sit BELOW the row title in the hierarchy; they shipped at the

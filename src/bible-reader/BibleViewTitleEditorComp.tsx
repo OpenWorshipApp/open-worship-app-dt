@@ -1,7 +1,7 @@
 import type { CSSProperties, KeyboardEvent } from 'react';
-import { useMemo } from 'react';
 
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import { useAppStateAsync } from '../helper/appHooks';
 import {
     getBibleInfo,
@@ -20,6 +20,10 @@ import type { OptionalPromise } from '../helper/typeHelpers';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { tran } from '../lang/langHelpers';
+import {
+    checkIsCrossChapterTarget,
+    getTargetChapterEnd,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 
 function chose<T>(
     event: any,
@@ -35,7 +39,9 @@ function chose<T>(
                 return {
                     menuElement: value1,
                     title: value2,
-                    disabled: i === 0 || (!isAllowAll && key === currentKey),
+                    // The first row names the list ("Book", "Verse Start").
+                    isSectionHeader: i === 0,
+                    disabled: !isAllowAll && key === currentKey,
                     onSelect: () => {
                         resolve(key);
                     },
@@ -86,14 +92,17 @@ async function choseChapter(
     bookKey: string,
     chapter: number,
     fontFamily: string | null,
+    // The first chapter offered: an END chapter is never before the start.
+    minChapter = 1,
+    title = tran('Chapter'),
 ) {
     const chapterCount = getModelChapterCount(bookKey);
     const chapterList = await Promise.all(
         Array.from({ length: chapterCount }, (_, i) => {
             return getNumItem(bibleKey, i + 1);
-        }),
+        }).slice(Math.max(0, minChapter - 1)),
     );
-    chapterList.unshift([0, tran('Chapter'), tran('Chapter')]);
+    chapterList.unshift([0, title, title]);
     return await chose(event, isAllowAll, chapter, chapterList, {
         fontFamily: fontFamily ?? '',
     });
@@ -105,6 +114,8 @@ type ParamType = {
         chapter: number,
         verseStart: number,
         verseEnd: number,
+        // Only for a passage crossing chapters: `verseEnd` is then its verse.
+        chapterEnd?: number,
     ) => void;
     bibleKey: string;
     target: BibleTargetType;
@@ -215,6 +226,85 @@ async function handleContextMenu(
     applyTarget(newBook, newChapter, newVerseStart, newVerseEnd);
 }
 
+// A passage crossing chapters, its start verse picked: the end stays.
+async function handleCrossVerseStartMenu(
+    event: any,
+    { applyTarget, bibleKey, target, fontFamily }: ParamType,
+) {
+    const newVerseStart = await choseVerse(
+        event,
+        bibleKey,
+        target.bookKey,
+        target.chapter,
+        target.verseStart,
+        tran('Verse Start'),
+        fontFamily,
+    );
+    if (newVerseStart === null) {
+        return;
+    }
+    applyTarget(
+        target.bookKey,
+        target.chapter,
+        newVerseStart,
+        target.verseEnd,
+        getTargetChapterEnd(target),
+    );
+}
+
+/**
+ * The chapter a passage ends in, then the verse in it. Picking the chapter
+ * it starts in makes it a one-chapter passage again.
+ */
+async function handleChapterEndMenu(
+    event: any,
+    { applyTarget, bibleKey, target, fontFamily }: ParamType,
+    isPickingChapter: boolean,
+) {
+    const { bookKey, chapter, verseStart } = target;
+    let chapterEnd = getTargetChapterEnd(target);
+    if (isPickingChapter) {
+        const newChapterEnd = await choseChapter(
+            event,
+            bibleKey,
+            true,
+            bookKey,
+            chapterEnd,
+            fontFamily,
+            chapter,
+            tran('End Chapter'),
+        );
+        if (newChapterEnd === null) {
+            return;
+        }
+        chapterEnd = newChapterEnd;
+        const verseCount = await getVersesCount(bibleKey, bookKey, chapterEnd);
+        applyTarget(
+            bookKey,
+            chapter,
+            verseStart,
+            Math.max(verseStart, verseCount ?? verseStart),
+            chapterEnd,
+        );
+    }
+    const newVerseEnd = await choseVerse(
+        event,
+        bibleKey,
+        bookKey,
+        chapterEnd,
+        target.verseEnd,
+        tran('Verse End'),
+        fontFamily,
+        (verse: [number]) => {
+            return chapterEnd > chapter || verse[0] >= verseStart;
+        },
+    );
+    if (newVerseEnd === null) {
+        return;
+    }
+    applyTarget(bookKey, chapter, verseStart, newVerseEnd, chapterEnd);
+}
+
 async function getBookList(bibleKey: string) {
     const bibleInfo = await getBibleInfo(bibleKey);
     if (bibleInfo === null) {
@@ -243,26 +333,16 @@ async function getNumItem(
     return [n, localeNum, nString];
 }
 
-function breakTitle(
-    target: BibleTargetType,
-    title: string | null | undefined,
-): [string, string, string, string | undefined] {
-    if (!title) {
-        return [
-            target.bookKey,
-            target.chapter.toString(),
-            target.verseStart.toString(),
-            target.verseStart === target.verseEnd
-                ? undefined
-                : target.verseEnd.toString(),
-        ];
-    }
-    let arr = title.split(':');
-    const verses = arr.pop()?.split('-');
-    arr = arr[0].split(' ');
-    const chapter = arr.pop();
-    const book = arr.join(' ');
-    return [book, chapter!, verses![0], verses?.[1]];
+// Until the Bible has named them, the parts read as the target's own.
+function genFallbackTitleParts(target: BibleTargetType) {
+    const isCrossChapter = checkIsCrossChapterTarget(target);
+    return {
+        book: target.bookKey,
+        chapter: `${target.chapter}`,
+        verseStart: `${target.verseStart}`,
+        verseEnd: `${target.verseEnd}`,
+        chapterEnd: isCrossChapter ? `${getTargetChapterEnd(target)}` : null,
+    };
 }
 
 export default function BibleViewTitleEditorComp({
@@ -285,10 +365,21 @@ export default function BibleViewTitleEditorComp({
     const [fontFamily] = useAppStateAsync(() => {
         return getBibleFontFamily(bibleKey);
     }, [bibleKey]);
-    const [book, localeChapter, localeVerseStart, localeVerseEnd] =
-        useMemo(() => {
-            return breakTitle(target, title);
-        }, [target, title]);
+    // Each part as the Bible writes it, read from the target rather than cut
+    // out of the title: `John 1:2-3:4` has two colons and a dash between.
+    const [titleParts] = useAppStateAsync(() => {
+        return bibleRenderHelper.toTitleParts(bibleKey, target);
+    }, [bibleKey, target]);
+    const {
+        book,
+        chapter: localeChapter,
+        verseStart: localeVerseStart,
+        verseEnd: localeVerseEnd,
+        chapterEnd: localeChapterEnd,
+    } = titleParts ?? genFallbackTitleParts(target);
+    const isCrossChapter = localeChapterEnd !== null;
+    const isOneVerseShown =
+        !isCrossChapter && target.verseStart === target.verseEnd;
     if (onTargetChange === undefined) {
         return <span>{title}</span>;
     }
@@ -357,12 +448,16 @@ export default function BibleViewTitleEditorComp({
         chapter: number,
         verseStart: number,
         verseEnd: number,
+        chapterEnd?: number,
     ) => {
         onTargetChange({
             bookKey,
             chapter,
             verseStart,
             verseEnd,
+            ...(chapterEnd !== undefined && chapterEnd > chapter
+                ? { chapterEnd }
+                : {}),
         });
     };
     const params = {
@@ -386,14 +481,34 @@ export default function BibleViewTitleEditorComp({
             })}
             {':'}
             {genEditor(localeVerseStart, tran('Verse Start'), (event) => {
+                if (isCrossChapter) {
+                    handleCrossVerseStartMenu(event, params);
+                    return;
+                }
                 handleContextMenu(event, {
                     ...params,
                     book: target.bookKey,
                     chapter: target.chapter,
                 });
             })}
-            {!isOneVerse && localeVerseEnd ? '-' : ''}
-            {!isOneVerse && localeVerseEnd
+            {!isOneVerse && isCrossChapter ? (
+                <>
+                    {'-'}
+                    {genEditor(
+                        localeChapterEnd,
+                        tran('End Chapter'),
+                        (event) => {
+                            handleChapterEndMenu(event, params, true);
+                        },
+                    )}
+                    {':'}
+                    {genEditor(localeVerseEnd, tran('Verse End'), (event) => {
+                        handleChapterEndMenu(event, params, false);
+                    })}
+                </>
+            ) : null}
+            {!isOneVerse && !isCrossChapter && !isOneVerseShown ? '-' : ''}
+            {!isOneVerse && !isCrossChapter && !isOneVerseShown
                 ? genEditor(
                       localeVerseEnd,
                       tran('Verse End'),

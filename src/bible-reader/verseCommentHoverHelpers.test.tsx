@@ -40,6 +40,7 @@ vi.mock('./bibleVerseAnnotationHelpers', async (importOriginal) => {
 
 import { VERSE_ANNOTATION_ANCHOR_ATTR } from './bibleVerseAnnotationHelpers';
 import {
+    cancelHoveredCommentClearing,
     checkIsCommentInMap,
     clearHoveredComment,
     scheduleHoveredCommentClearing,
@@ -153,6 +154,19 @@ async function leaveView() {
     });
 }
 
+// What the tooltip's own `onMouseEnter` / `onMouseLeave` call.
+async function enterTooltip() {
+    await act(async () => {
+        cancelHoveredCommentClearing();
+    });
+}
+
+async function leaveTooltip() {
+    await act(async () => {
+        scheduleHoveredCommentClearing();
+    });
+}
+
 async function advance(milliseconds: number) {
     await act(async () => {
         vi.advanceTimersByTime(milliseconds);
@@ -212,6 +226,60 @@ describe('useVerseCommentHover', () => {
         await moveOverWords();
         await leaveView();
         await advance(2000);
+        expect(getHovered()).toBeNull();
+    });
+
+    // RD-110, in the order a browser sends it: React builds the tooltip's
+    // `mouseenter` from the words' `mouseout`, which comes BEFORE the view's
+    // own `mouseleave`. The leave scheduled the clearing behind the cancel,
+    // and the tooltip went away under a pointer resting on its Edit button.
+    test('the pointer resting on the tooltip keeps it', async () => {
+        await mount();
+        await moveOverWords();
+        await enterTooltip();
+        await leaveView();
+        await advance(5000);
+        expect(getHovered()?.commentId).toBe(COMMENT_ID);
+
+        await leaveTooltip();
+        await advance(1199);
+        expect(getHovered()?.commentId).toBe(COMMENT_ID);
+        await advance(1);
+        expect(getHovered()).toBeNull();
+    });
+
+    test('back from the tooltip to the words keeps it', async () => {
+        await mount();
+        await moveOverWords();
+        await enterTooltip();
+        await leaveView();
+        await leaveTooltip();
+        await moveOverWords();
+        // Past the hit test's debounce and the grace together.
+        await advance(2000);
+        expect(getHovered()?.commentId).toBe(COMMENT_ID);
+
+        await leaveView();
+        await advance(1200);
+        expect(getHovered()).toBeNull();
+    });
+
+    // Its Edit, Delete and Close take the tooltip away from under the
+    // pointer, and an element that is gone sends no `mouseleave`.
+    test('a tooltip closed under the pointer does not keep the next one', async () => {
+        await mount();
+        await moveOverWords();
+        await enterTooltip();
+        await act(async () => {
+            clearHoveredComment();
+        });
+        expect(getHovered()).toBeNull();
+
+        await advance(200);
+        await moveOverWords();
+        expect(getHovered()?.commentId).toBe(COMMENT_ID);
+        await leaveView();
+        await advance(1200);
         expect(getHovered()).toBeNull();
     });
 

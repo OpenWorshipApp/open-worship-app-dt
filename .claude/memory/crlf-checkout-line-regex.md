@@ -1,6 +1,6 @@
 ---
 name: crlf-checkout-line-regex
-description: "This Windows checkout's text files are CRLF (core.autocrlf=true) — split repo text on /\\r?\\n/, or an anchored (.*)$ silently matches nothing; Git Bash sed hides the \\r; and the lint gate's prettier stage then fails on the WHOLE tree, blocking lint:es and lint:build"
+description: "This Windows checkout's text files are CRLF (core.autocrlf=true) — split repo text on /\\r?\\n/, or an anchored (.*)$ silently matches nothing; Git Bash sed hides the \\r; and npm run format would rewrite the WHOLE tree to LF (lint:pre passes --end-of-line auto since 2026-09-30)"
 metadata: 
   node_type: memory
   type: project
@@ -28,16 +28,15 @@ endings on `git add`, so mixed endings from an edit are cosmetic, never a diff.
 Related: [[bash-heredoc-halves-backslashes]], another Git Bash rewrite that
 hides what a file really holds.
 
-**It also breaks the lint gate, repo-wide** (2026-09-26). `lint:pre` is
-`prettier --check`, which expects LF, so in this checkout it reports **1299
+**It also broke the lint gate, repo-wide** (2026-09-26; fixed 2026-09-30, when
+`lint:pre` gained `--end-of-line auto`). `lint:pre` was plain
+`prettier --check`, which expects LF, so in this checkout it reported **1299
 files** with "code style issues" — every tracked file, including ones the
-session never touched (`electron/index.ts` fails identically). Because `lint`
-is `&&`-chained, that stage stops `lint:es` and `lint:build` from running at
-all, so the gate LOOKS failed by your change when nothing of yours is wrong.
+session never touched (`electron/index.ts` failed identically). Because `lint`
+is `&&`-chained, that stage stopped `lint:es` and `lint:build` from running at
+all, so the gate LOOKED failed by your change when nothing of yours was wrong.
 
-**Never answer it with `npm run format`** — that rewrites all 1299 files to LF
-and buries a real diff. Instead: check your own files with
+**Still never run `npm run format`** — it passes no `--end-of-line`, so it rewrites all 1299 files to LF
+and buries a real diff. Check your own files with
 `npx prettier --end-of-line crlf --check <files>` (and `--write` the ones that
-need it, which keeps the tree's CRLF), then run the blocked stages directly —
-`npm run lint:es` and `npm run lint:build`. Confirm the failure is
-environmental first by `--check`ing a file you did not touch.
+need it, which keeps the tree's CRLF).

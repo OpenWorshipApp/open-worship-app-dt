@@ -3,8 +3,9 @@ import CanvasItemText from '../CanvasItemText';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
+import { escapeHtmlText } from '../../../helper/sanitizeHelpers';
 
-export function BoxEditorNormalTextRender() {
+export function BoxEditorNormalTextRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemTextPropsType>();
     try {
         CanvasItemText.validate(props);
@@ -12,7 +13,7 @@ export function BoxEditorNormalTextRender() {
         handleError(error);
         return <BoxEditorNormalViewErrorRenderComp />;
     }
-    const text = props.text.replaceAll('\n', '<br />');
+    const text = escapeHtmlText(props.text).replaceAll('\n', '<br />');
     return (
         <div
             title={props.id.toString()}

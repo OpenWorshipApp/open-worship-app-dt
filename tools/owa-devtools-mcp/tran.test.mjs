@@ -19,12 +19,12 @@ const REPO_ROOT = path.join(HERE, '..', '..');
 
 describe('resolveTranTemplates', () => {
     it('fills a label in with what the button says in that language', () => {
-        const source = 'Press **F9** ([en:tran:Clear Bible]) to clear it.';
+        const source = 'Press **F9** ([en:tran:Clear Long Text]) to clear it.';
         expect(resolveTranTemplates(source, 'en')).toBe(
-            'Press **F9** (Clear Bible) to clear it.',
+            'Press **F9** (Clear Long Text) to clear it.',
         );
         expect(resolveTranTemplates(source, 'km')).toBe(
-            'Press **F9** (លុបព្រះគម្ពីរ) to clear it.',
+            'Press **F9** (លុបអត្ថបទវែង) to clear it.',
         );
     });
 
@@ -39,11 +39,11 @@ describe('resolveTranTemplates', () => {
         // dictionary does not carry. The app's own `tran` throws on the last
         // of these in dev; a document must not, or one mistyped label costs
         // the reader the whole answer.
-        expect(resolveTranTemplates('[en:tran:Clear Bible]', 'de')).toBe(
-            'Clear Bible',
+        expect(resolveTranTemplates('[en:tran:Clear Long Text]', 'de')).toBe(
+            'Clear Long Text',
         );
-        expect(resolveTranTemplates('[en:tran:Clear Bible]', null)).toBe(
-            'Clear Bible',
+        expect(resolveTranTemplates('[en:tran:Clear Long Text]', null)).toBe(
+            'Clear Long Text',
         );
         expect(resolveTranTemplates('[en:tran:Not A Real Label]', 'km')).toBe(
             'Not A Real Label',
@@ -74,7 +74,7 @@ describe('tranText', () => {
     it('answers what one label reads as on screen', () => {
         expect(tranText('Bible Lookup', 'km')).toBe('ស្វែងរកព្រះគម្ពីរ');
         // Matched the way `tran()` matches: trimmed and case-insensitive.
-        expect(tranText('  clear bible ', 'km')).toBe('លុបព្រះគម្ពីរ');
+        expect(tranText('  clear long text ', 'km')).toBe('លុបអត្ថបទវែង');
         expect(tranText('Bible Lookup', 'en')).toBe('Bible Lookup');
     });
 });
@@ -89,8 +89,8 @@ describe('the language packs', () => {
         );
         expect(Object.keys(dictionary).length).toBeGreaterThan(1000);
         // Sanitized to `tran()`'s own key shape.
-        expect(dictionary['clear bible']).toBe('លុបព្រះគម្ពីរ');
-        expect(dictionary['Clear Bible']).toBeUndefined();
+        expect(dictionary['clear long text']).toBe('លុបអត្ថបទវែង');
+        expect(dictionary['Clear Long Text']).toBeUndefined();
     });
 
     it('reads each language its own name', () => {
@@ -120,10 +120,14 @@ describe('the language packs', () => {
 // page shows it up, so it is caught here instead: every key written in the
 // corpus has to be a key the app can actually translate.
 describe('the knowledge corpus', () => {
+    // Everything the knowledge bundle ships: the rules and the project
+    // instructions name controls as templates too, and were walked by nothing
+    // until the notes were read against the code (2026-10-11).
     const SOURCES = [
         path.join(REPO_ROOT, 'docs', 'manual-sources'),
         path.join(REPO_ROOT, '.claude', 'memory'),
         path.join(REPO_ROOT, '.claude', 'skills'),
+        path.join(REPO_ROOT, '.claude', 'rules'),
     ];
     const listMarkdown = (dirPath) => {
         const filePaths = [];
@@ -140,7 +144,10 @@ describe('the knowledge corpus', () => {
         walk(dirPath);
         return filePaths;
     };
-    const filePaths = SOURCES.flatMap(listMarkdown);
+    const filePaths = [
+        ...SOURCES.flatMap(listMarkdown),
+        path.join(REPO_ROOT, '.claude', 'CLAUDE.md'),
+    ];
 
     it('writes label templates that the app can actually translate', () => {
         const bundle = loadTranBundle();
@@ -158,6 +165,11 @@ describe('the knowledge corpus', () => {
         for (const filePath of filePaths) {
             const content = readFileSync(filePath, 'utf-8');
             for (const token of listTranTemplateKeys(content)) {
+                // `[en:tran:…]` is how a note writes "any template": the
+                // shape, with no key in it to translate.
+                if (token.key.trim() === '…') {
+                    continue;
+                }
                 total += 1;
                 if (token.sourceLang !== 'en' || token.kind !== 'tran') {
                     broken.push(

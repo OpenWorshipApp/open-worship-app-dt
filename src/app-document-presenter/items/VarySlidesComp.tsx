@@ -1,27 +1,15 @@
-import type {
-    EventMapperType,
-    KeyboardType,
-} from '../../event/KeyboardEventListener';
-import {
-    allArrows,
-    useKeyboardRegistering,
-} from '../../event/KeyboardEventListener';
+import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
+import { slideMovingEventMappers } from '../../keyboard-shortcut/appShortcutMappers';
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import {
     handleSlideMoving,
     handleNextItemSelecting,
 } from './varyAppDocumentHelpers';
 import VarySlideRenderWrapperComp from './VarySlideRenderWrapperComp';
-import {
-    useAppEffect,
-    useAppStateAsync,
-    useAppCurrentRef,
-} from '../../helper/appHooks';
+import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import {
-    checkIsVarySlideOnScreen,
-    toKeyByFilePath,
     useAnyItemSelected,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
@@ -29,10 +17,7 @@ import SlideAutoPlayComp, {
     type NextDataType,
 } from '../../slide-auto-play/SlideAutoPlayComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
-import {
-    DEFAULT_THUMBNAIL_SIZE_FACTOR,
-    MIN_THUMBNAIL_SCALE,
-} from '../../app-document-list/appDocumentTypeHelpers';
+import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../../app-document-list/appDocumentTypeHelpers';
 import { useCallback, useMemo } from 'react';
 import VirtualGridComp from '../../virtual-list/VirtualGridComp';
 import {
@@ -43,7 +28,6 @@ import {
     toVarySlideGridItems,
     type VarySlideGridItemType,
 } from './varySlideGridHelpers';
-import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { tran } from '../../lang/langHelpers';
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
@@ -51,24 +35,26 @@ import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { removePdfImagesPreview } from '../../helper/pdfHelpers';
 import { removePptxHtmlsPreview } from '../../server/pptxHelpers';
 import { removeDocxHtmlsPreview } from '../../server/docxHelpers';
-import { notifyElementHighlight } from '../../helper/domHelpers';
-import MissingFontFamilyBannerComp from './MissingFontFamilyBannerComp';
+import MissingFontFamilyBannerComp, {
+    type DocumentMenuRoomType,
+} from './MissingFontFamilyBannerComp';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
-import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
+import { useFollowPresentedSlide } from './useFollowPresentedSlide';
 import {
     useSlidesPreviewerScope,
     useThumbnailScaleSettingOptions,
 } from './slidesPreviewerScopeHelpers';
 import PdfConversionProgressComp from './PdfConversionProgressComp';
+import {
+    SlideStageDeckContext,
+    useSlideStage,
+} from '../stage/documentStageContexts';
+import {
+    getDocumentStageDefinition,
+    toStageDeck,
+} from '../stage/documentStageHelpers';
 
-const movingKeys: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
-const eventMaps: EventMapperType[] = movingKeys.map((key) => {
-    return { key };
-});
-eventMaps.push({
-    allControlKey: ['Shift'],
-    key: ' ',
-});
+const eventMaps = slideMovingEventMappers;
 function useVarySlidesData() {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
     // MUST be per-instance: the Lyric Stage Previewer mounts one
@@ -253,14 +239,16 @@ function LoadingSlidesComp({
     );
 }
 
-export default function VarySlidesComp() {
+export default function VarySlidesComp({
+    menuRoom = null,
+}: Readonly<{
+    // The strip the previewer left free above these slides for the document's
+    // menu button, when it did: what leads the list can go in it.
+    menuRoom?: DocumentMenuRoomType | null;
+}>) {
     const [thumbSizeScale] = useVarySlideThumbnailSizeScale(
-        useThumbnailScaleSettingOptions({
-            defaultSize: MIN_THUMBNAIL_SCALE + 10,
-        }),
+        useThumbnailScaleSettingOptions(),
     );
-    const scope = useSlidesPreviewerScope();
-    const scopeRef = useAppCurrentRef(scope);
     const {
         varySlides,
         filePath,
@@ -297,42 +285,27 @@ export default function VarySlidesComp() {
         return genSlideHeightGetter(varySlideThumbnailSize);
     }, [varySlideThumbnailSize]);
     const getGridItemHeight = useMemo(() => {
-        return (gridItem: VarySlideGridItemType) => {
-            return getSlideHeight(gridItem.varySlide);
+        return (gridItem: VarySlideGridItemType, cellWidth?: number) => {
+            return getSlideHeight(gridItem.varySlide, cellWidth);
         };
     }, [getSlideHeight]);
     // A card per cell: a PPTX slide's sub-slides are cells of their own.
     const gridItems = useMemo(() => {
         return toVarySlideGridItems(varySlides ?? []);
     }, [varySlides]);
-
-    useAppEffect(() => {
-        if (!varySlides?.length) {
-            return;
+    useFollowPresentedSlide(filePath, gridItems);
+    // In a document's Stage Previewer pane of stage 1 or up, every card draws
+    // the slides around it, so the walk of the document is built here once
+    // per load rather than once per card. `null` -- nothing at all -- on
+    // stage 0 and everywhere else.
+    const slideStage = useSlideStage();
+    const stageDeck = useMemo(() => {
+        const definition = getDocumentStageDefinition(slideStage);
+        if (definition === null || !varySlides) {
+            return null;
         }
-        // The card of the slide on a screen may be scrolled out of the window,
-        // and a windowed row that is scrolled away has no DOM at all -- so the
-        // key of what to look for travels with the query.
-        const onScreenVarySlide = varySlides.find(checkIsVarySlideOnScreen);
-        notifyElementHighlight(
-            () => {
-                const root = scopeRef.current?.containerRef.current ?? document;
-                return root.querySelector(
-                    `.${APP_DOCUMENT_ITEM_CLASS}` +
-                        `.${HIGHLIGHT_SELECTED_CLASSNAME}.animation`,
-                );
-            },
-            {
-                revealKey:
-                    onScreenVarySlide === undefined
-                        ? undefined
-                        : toKeyByFilePath(
-                              onScreenVarySlide.filePath,
-                              onScreenVarySlide.id,
-                          ),
-            },
-        );
-    }, [varySlides]);
+        return { definition, deck: toStageDeck(varySlides) };
+    }, [slideStage, varySlides]);
 
     if (varySlides === undefined) {
         return (
@@ -396,36 +369,39 @@ export default function VarySlidesComp() {
         <div className="w-100 slide-auto-play-host">
             <MissingFontFamilyBannerComp
                 missingFontFamilyList={missingFontFamilyList ?? []}
+                menuRoom={menuRoom}
                 {...fontRefreshProps}
             />
             {/* Only the rows on screen are mounted. Every slide card carries a
                 shadow root with a React root of its own, so a document of a
                 thousand slides used to build a thousand of them before the
                 first one could be looked at. */}
-            <VirtualGridComp
-                items={gridItems}
-                getItemKey={toVarySlideGridItemKey}
-                renderItem={(gridItem) => {
-                    return (
-                        <VarySlideRenderWrapperComp
-                            key={toVarySlideGridItemKey(gridItem)}
-                            thumbSize={varySlideThumbnailSize}
-                            varySlide={gridItem.varySlide}
-                            ownerSlide={gridItem.ownerSlide}
-                            index={gridItem.index}
-                        />
-                    );
-                }}
-                itemWidth={varySlideThumbnailSize + THUMBNAIL_EXTRA_WIDTH}
-                getItemHeight={getGridItemHeight}
-                estimateRowHeight={
-                    (gridItems.length === 0
-                        ? 0
-                        : getGridItemHeight(gridItems[0])) +
-                    THUMBNAIL_EXTRA_HEIGHT
-                }
-                rowClassName="d-flex"
-            />
+            <SlideStageDeckContext value={stageDeck}>
+                <VirtualGridComp
+                    items={gridItems}
+                    getItemKey={toVarySlideGridItemKey}
+                    renderItem={(gridItem) => {
+                        return (
+                            <VarySlideRenderWrapperComp
+                                key={toVarySlideGridItemKey(gridItem)}
+                                thumbSize={varySlideThumbnailSize}
+                                varySlide={gridItem.varySlide}
+                                ownerSlide={gridItem.ownerSlide}
+                                index={gridItem.index}
+                            />
+                        );
+                    }}
+                    itemWidth={varySlideThumbnailSize + THUMBNAIL_EXTRA_WIDTH}
+                    getItemHeight={getGridItemHeight}
+                    estimateRowHeight={
+                        (gridItems.length === 0
+                            ? 0
+                            : getGridItemHeight(gridItems[0])) +
+                        THUMBNAIL_EXTRA_HEIGHT
+                    }
+                    rowClassName="d-flex"
+                />
+            </SlideStageDeckContext>
             {isAnyItemSelected ? (
                 <SlideAutoPlayComp
                     prefix="vary-app-document"

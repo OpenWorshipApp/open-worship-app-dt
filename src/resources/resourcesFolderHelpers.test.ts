@@ -54,7 +54,6 @@ vi.mock('../helper/settingHelpers', async (importOriginal) => {
 import {
     addResourcesFolders,
     addResourcesFoldersToList,
-    carryResourcesFolderSettings,
     filterUnlistedResourcesFolders,
     getResourcesFolderList,
     promptAddResourcesFolders,
@@ -62,7 +61,6 @@ import {
     replaceResourcesFolder,
     sanitizeResourcesFolderList,
     setResourcesFolderList,
-    toResourcesFolderExpandedSettingName,
 } from './resourcesFolderHelpers';
 
 describe('sanitizeResourcesFolderList', () => {
@@ -313,31 +311,6 @@ describe('replaceResourcesFolder', () => {
     });
 });
 
-describe('carryResourcesFolderSettings', () => {
-    beforeEach(() => {
-        getItemMock.mockReset();
-        setItemMock.mockReset();
-    });
-
-    test("hands a collapsed folder's state to its copy", () => {
-        getItemMock.mockReturnValue('false');
-        carryResourcesFolderSettings('/b/youtube', '/d/yt');
-        expect(getItemMock).toHaveBeenCalledWith(
-            toResourcesFolderExpandedSettingName('/b/youtube'),
-        );
-        expect(setItemMock).toHaveBeenCalledWith(
-            toResourcesFolderExpandedSettingName('/d/yt'),
-            'false',
-        );
-    });
-
-    test('writes nothing for a folder that never stored a state', () => {
-        getItemMock.mockReturnValue(null);
-        carryResourcesFolderSettings('/b/youtube', '/d/yt');
-        expect(setItemMock).not.toHaveBeenCalled();
-    });
-});
-
 describe('promptAddResourcesFolders', () => {
     test('returns null when the picker is cancelled', async () => {
         selectDirsMock.mockResolvedValue([]);
@@ -360,18 +333,22 @@ describe('promptAddResourcesFolders', () => {
 });
 
 describe('removeResourcesFolderSettings', () => {
-    test('drops every per-folder setting the feature writes', async () => {
+    test('clears the expanded-state file an older version saved', async () => {
+        // Nothing writes it any more -- a folder box opens every time -- but
+        // a data folder from before still holds one per folder pressed.
         removeByPrefixMock.mockResolvedValue([]);
         await removeResourcesFolderSettings('/a/songs');
         expect(removeByPrefixMock).toHaveBeenCalledWith(
-            toResourcesFolderExpandedSettingName('/a/songs'),
+            'resources-folder-expanded-_a_songs',
         );
     });
 
-    test('sanitizes the path into the setting key', () => {
+    test('sanitizes the path into the setting key', async () => {
         // Separators and dots would otherwise become directories in a file
         // name -- every setting key is one file on disk.
-        expect(toResourcesFolderExpandedSettingName('/a/song.s')).toBe(
+        removeByPrefixMock.mockResolvedValue([]);
+        await removeResourcesFolderSettings('/a/song.s');
+        expect(removeByPrefixMock).toHaveBeenCalledWith(
             'resources-folder-expanded-_a_song_s',
         );
     });

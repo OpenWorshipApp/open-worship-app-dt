@@ -289,9 +289,10 @@ describe('presenting-flow pure helper contracts', () => {
         const screenManager: any = {
             isShowing: false,
             clear: vi.fn(),
+            clearForeground: vi.fn(),
             screenBackgroundManager: { clear: vi.fn() },
             screenVaryAppDocumentManager: { clear: vi.fn() },
-            screenBibleManager: { clear: vi.fn() },
+            screenLongTextManager: { clear: vi.fn() },
             screenForegroundManager: foreground,
         };
         const item: any = {
@@ -306,6 +307,9 @@ describe('presenting-flow pure helper contracts', () => {
             if (action.target === 'screen') action.apply(screenManager, item);
             else action.start(item);
         }
+        // Clear Foreground is the screen's own, so it also takes down a
+        // long text put up from the Foreground's Long Text Show panel.
+        expect(screenManager.clearForeground).toHaveBeenCalledTimes(1);
         const show: any = findPresentingFlowAction('screen-show');
         show.apply(screenManager, item);
         const hide: any = findPresentingFlowAction('screen-hide');

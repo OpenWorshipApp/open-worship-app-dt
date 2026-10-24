@@ -1,9 +1,10 @@
 import { tran } from '../lang/langHelpers';
 import type DirSource from '../helper/DirSource';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
-import { openGeneralSetting } from '../setting/settingHelpers';
+import { openPathSetting } from '../setting/settingHelpers';
 
-export function SelectDefaultDirButton({
+export function SelectDefaultDirButtonComp({
     dirSource,
     defaultFolderName,
 }: Readonly<{
@@ -12,7 +13,9 @@ export function SelectDefaultDirButton({
 }>) {
     return (
         <button
-            className="btn btn-sm btn-info"
+            // Wraps: the app's `.btn` is `nowrap`, and in a ~230px sidebar the
+            // label ran out of the card on both sides.
+            className="btn btn-sm btn-info text-wrap text-break mw-100"
             onClick={() => {
                 selectDefaultDataDirName(dirSource, defaultFolderName);
             }}
@@ -26,9 +29,9 @@ export function GotoSettingDirectoryPathComp() {
     return (
         <div className="m-2">
             <button
-                className="btn btn-sm btn-warning"
+                className="btn btn-sm btn-warning text-wrap text-break mw-100"
                 onClick={() => {
-                    openGeneralSetting();
+                    openPathSetting();
                 }}
             >
                 <span>{tran('Go to Settings ')}</span>
@@ -57,27 +60,41 @@ export default function NoDirSelectedComp({
      */
     isDirSettingRouteHidden?: boolean;
 }>) {
+    // No data folder at all: a default folder inside it cannot be made, and
+    // the only way on is the page where one is chosen.
+    if (appLocalStorage.isOnOwnFolder) {
+        return (
+            <div className="card p-1 w-100 app-overflow-hidden">
+                <div className="card-body w-100">
+                    <div className="ms-2 text-warning-emphasis">
+                        <i className="bi bi-info-circle me-1" />
+                        <span>{tran('No Parent Directory Selected')}</span>
+                    </div>
+                    <div className="w-100 d-flex flex-column align-items-center justify-content-center">
+                        <GotoSettingDirectoryPathComp />
+                    </div>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="card p-1 w-100 app-overflow-hidden">
             <div className="card-body w-100">
-                <div
-                    className="ms-2"
-                    style={{
-                        color: 'purple',
-                    }}
-                >
+                {/* A theme colour: purple on the dark theme's card could
+                    barely be read. */}
+                <div className="ms-2 text-warning-emphasis">
                     <i className="bi bi-info-circle me-1" />
                     <span>{tran('No directory selected')}</span>
                 </div>
                 <div className="w-100 d-flex flex-column align-items-center justify-content-center">
-                    <div className="m-1">
-                        <SelectDefaultDirButton
+                    <div className="m-1 mw-100">
+                        <SelectDefaultDirButtonComp
                             dirSource={dirSource}
                             defaultFolderName={defaultFolderName}
                         />
                     </div>
                     {isDirSettingRouteHidden ? null : (
-                        <div>
+                        <div className="mw-100">
                             <GotoSettingDirectoryPathComp />
                         </div>
                     )}

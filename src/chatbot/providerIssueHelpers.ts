@@ -1,3 +1,4 @@
+import { fillWords, tran } from './chatTranHelpers';
 import type { BotActionType } from './helpBotHelpers';
 import type { LlmProviderType } from './llmBotHelpers';
 
@@ -39,6 +40,10 @@ export type LlmIssueKindType =
     | 'serverTrouble'
     // 404: the model asked for is not one this account can run.
     | 'modelMissing'
+    // A server of the user's own could not LOAD the model (LM Studio: "Model
+    // loading was stopped due to insufficient system resources"). Read
+    // before the money words, which its "insufficient" matched.
+    | 'modelLoad'
     // An identity-linked Anthropic key sent without its workspace id.
     | 'workspace'
     // No status at all: the request never got an answer.
@@ -111,6 +116,10 @@ const MODEL_MISSING_CODE_SET = new Set([
 // 400 `invalid_request_error`, and so does an organisation's own spend limit.
 const NO_CREDIT_WORDS_PATTERN =
     /credit|balance|quota|billing|spend(?:ing)? (?:limit|cap)|usage limit|insufficient|prepaid|top up/i;
+// A model the server could not load: LM Studio's guardrail, and the memory
+// words llama.cpp and Ollama use for the same thing.
+const MODEL_LOAD_FAILURE_PATTERN =
+    /failed to load (?:the )?model|model loading was stopped|insufficient system resources|not enough (?:memory|ram|vram)|out of memory/i;
 
 function toStatus(error: any): number | null {
     const raw = error?.status ?? error?.response?.status ?? null;
@@ -191,6 +200,12 @@ function toKind(
 ): LlmIssueKindType {
     if (/workspace/i.test(message)) {
         return 'workspace';
+    }
+    // 2026-10-17: LM Studio's 400 for a model that did not fit beside the
+    // one already loaded told the person, in Khmer, that the account had run
+    // out of money -- a server on their own computer has no account.
+    if (MODEL_LOAD_FAILURE_PATTERN.test(message)) {
+        return 'modelLoad';
     }
     const has = (set: Set<string>) => {
         return codes.some((code) => {
@@ -311,8 +326,13 @@ type ProviderPagesType = {
     workspaces?: string;
 };
 
+// The providers with an account and a console to send the user to. Not the
+// keyless service, and not the user's own servers: a server's address is
+// theirs, and the one door that helps there is the Settings panel it is in.
+type PaidProviderType = Exclude<LlmProviderType, 'free' | 'custom'>;
+
 export const PAID_PROVIDER_PAGE_MAP: Record<
-    Exclude<LlmProviderType, 'free'>,
+    PaidProviderType,
     ProviderPagesType
 > = {
     anthropic: {
@@ -332,6 +352,16 @@ export const PAID_PROVIDER_PAGE_MAP: Record<
         billing: 'https://platform.kimi.ai/console',
         keys: 'https://platform.kimi.ai/console/api-keys',
         limits: 'https://platform.kimi.ai/console',
+    },
+    // The AWS console's own front doors, region-free on purpose: the console
+    // sends a signed-in user on to their last region, and a deep link built
+    // with the wrong one opens an empty page. The keys page is the one the
+    // Gemma 4 model card links to create a long-term Bedrock API key.
+    bedrock: {
+        billing: 'https://console.aws.amazon.com/billing/home',
+        keys: 'https://console.aws.amazon.com/bedrock/home#/api-keys',
+        limits: 'https://console.aws.amazon.com/servicequotas/home/services/bedrock/quotas',
+        status: 'https://health.aws.amazon.com/health/status',
     },
 };
 
@@ -361,8 +391,7 @@ export function getLlmProviderPageUrl(
     ) {
         return null;
     }
-    const pages =
-        PAID_PROVIDER_PAGE_MAP[provider as Exclude<LlmProviderType, 'free'>];
+    const pages = PAID_PROVIDER_PAGE_MAP[provider as PaidProviderType];
     return pages[page as LlmProviderPageType] ?? null;
 }
 
@@ -426,27 +455,38 @@ export function genProviderIssueActions(
 ): BotActionType[] {
     let wanted: { page: LlmProviderPageType; label: string }[];
     let isSettingWanted = false;
+    // Pressed by tool name, never matched by their words: written in the
+    // app's language here.
+    const providerWords = { provider: providerLabel };
+    const billingLabel = () => {
+        return fillWords(tran('Open {provider} billing'), providerWords);
+    };
+    const limitsLabel = () => {
+        return fillWords(tran('Open {provider} usage limits'), providerWords);
+    };
     switch (kind) {
         case 'noCredit':
-            wanted = [
-                { page: 'billing', label: `Open ${providerLabel} billing` },
-            ];
+            wanted = [{ page: 'billing', label: billingLabel() }];
             break;
         case 'quotaOrRate':
             wanted = [
-                { page: 'billing', label: `Open ${providerLabel} billing` },
-                { page: 'limits', label: `Open ${providerLabel} usage limits` },
+                { page: 'billing', label: billingLabel() },
+                { page: 'limits', label: limitsLabel() },
             ];
             break;
         case 'rateLimited':
-            wanted = [
-                { page: 'limits', label: `Open ${providerLabel} usage limits` },
-            ];
+            wanted = [{ page: 'limits', label: limitsLabel() }];
             break;
         case 'badKey':
             isSettingWanted = true;
             wanted = [
-                { page: 'keys', label: `Open ${providerLabel} API keys` },
+                {
+                    page: 'keys',
+                    label: fillWords(
+                        tran('Open {provider} API keys'),
+                        providerWords,
+                    ),
+                },
             ];
             break;
         case 'workspace':
@@ -454,14 +494,23 @@ export function genProviderIssueActions(
             wanted = [
                 {
                     page: 'workspaces',
-                    label: `Open ${providerLabel} workspaces`,
+                    label: fillWords(
+                        tran('Open {provider} workspaces'),
+                        providerWords,
+                    ),
                 },
             ];
             break;
         case 'overloaded':
         case 'serverTrouble':
             wanted = [
-                { page: 'status', label: `${providerLabel} status page` },
+                {
+                    page: 'status',
+                    label: fillWords(
+                        tran('{provider} status page'),
+                        providerWords,
+                    ),
+                },
             ];
             break;
         default:

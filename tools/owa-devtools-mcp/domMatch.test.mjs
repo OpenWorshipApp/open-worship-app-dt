@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { genDestructiveLabelRule } from './destructiveLabel.mjs';
 import {
   DOM_MATCH_RUNTIME,
+  OPENED_WINDOW_WAIT_MS,
+  addOpenedWindow,
   genClickExpression,
   genFindUiExpression,
   genListUiExpression,
@@ -84,6 +86,67 @@ describe('the shared DOM matcher', () => {
     const dm = install();
     expect(dm.findBest(['Background > Videos'])?.element?.id).toBe('right');
     expect(dm.findBest(['Bible > Videos'])?.element?.id).toBe('wrong');
+  });
+
+  // T2 (robot run 2026-10-16): the Documents list is a pane stamped
+  // "Document List" whose header reads "Documents", and a scope written the
+  // way the window reads found nothing at all.
+  it('scopes by the name a panel SHOWS as well as the one it is stamped with', () => {
+    document.body.innerHTML = [
+      '<div data-widget-name="Document List">',
+      '<div tabindex="0" aria-labelledby="list-header">',
+      '<div class="card-header"><strong id="list-header">Documents</strong>',
+      '<button id="list" title="More Options"></button></div></div></div>',
+      // A twin of the same name in another pane.
+      '<div data-widget-name="Mini Screen">',
+      '<button id="screen" title="More Options"></button></div>',
+    ].join('');
+    const dm = install();
+    expect(dm.findBest(['Documents > More Options'])?.element?.id).toBe('list');
+    expect(dm.findBest(['Document List > More Options'])?.element?.id).toBe(
+      'list',
+    );
+    expect(dm.findBest(['Mini Screen > More Options'])?.element?.id).toBe(
+      'screen',
+    );
+    // The panel a match is reported in is still the stamped, English one.
+    expect(dm.describe(document.getElementById('list')).inPanel).toBe(
+      'Document List',
+    );
+    const found = run(genFindUiExpression('Documents > More Options', false));
+    expect(found.count).toBe(1);
+    expect(found.matches[0].inPanel).toBe('Document List');
+  });
+
+  it('does not take a control, or a sentence, for the name of a container', () => {
+    document.body.innerHTML = [
+      '<button aria-label="Documents"><span id="inner" title="Go">Go</span>',
+      '</button>',
+      '<div aria-label="' + 'a long sentence about the panel '.repeat(4) + '">',
+      '<button id="deep" title="Open"></button></div>',
+    ].join('');
+    const dm = install();
+    expect(dm.findBest(['Documents > Go'])).toBeNull();
+    expect(dm.scopePathOf(document.getElementById('deep'))).toEqual([]);
+  });
+
+  // T4: textContent reads the source of a <style> mounted inside a pane, and
+  // owa_press_key named a slide list ".play-to-bottom { padding: 0; ...".
+  it('reads no style sheet or script as words on a control', () => {
+    document.body.innerHTML = [
+      '<div id="list" tabindex="0" role="button">',
+      '<style>.play-to-bottom { padding: 0; }</style>',
+      '<script type="text/x-template">if (a) { b(); }</script>',
+      'Slide 1</div>',
+    ].join('');
+    const dm = install();
+    const list = document.getElementById('list');
+    expect(dm.labelOf(list)).toBe('Slide 1');
+    expect(dm.describe(list).label).toBe('Slide 1');
+    expect(dm.findBest(['padding'])).toBeNull();
+    // A label that merely holds a brace is read as it is.
+    document.body.innerHTML = '<button id="brace">{Verse}</button>';
+    expect(install().labelOf(document.getElementById('brace'))).toBe('{Verse}');
   });
 
   it('tells a foreground tile from the background tile it is a copy of', () => {
@@ -281,6 +344,28 @@ describe('the shared DOM matcher', () => {
     ]);
   });
 
+  // An unticked Behind Slide was listed as "Behind Slide on": a checkbox's
+  // value is "on" by default, a form field's and shown nowhere, and it read
+  // as the box's state. A text box is still named by what it holds.
+  it('names a checkbox by its label, never by its form value', () => {
+    document.body.innerHTML =
+      '<input id="behind" type="checkbox" aria-label="Behind Slide">' +
+      '<input id="pick" type="radio" value="fade" aria-label="Fade">' +
+      '<input id="ref" type="text" aria-label="Reference">';
+    document.getElementById('ref').value = 'John 3:16';
+    const dm = install();
+    expect(dm.labelPartsOf(document.getElementById('behind'))).toEqual([
+      'Behind Slide',
+    ]);
+    expect(dm.labelPartsOf(document.getElementById('pick'))).toEqual([
+      'Fade',
+    ]);
+    expect(dm.labelPartsOf(document.getElementById('ref'))).toEqual([
+      'Reference',
+      'John 3:16',
+    ]);
+  });
+
   // The Mini Screen's Clear All and the editor's Save: a title WITH the
   // shortcut, an aria-label without. Listed as "Clear All [F6] Clear All"
   // by find and list while owa_list_screens said "Clear All [F6]" (2026-09-18).
@@ -468,6 +553,22 @@ describe('the packaged expressions', () => {
     expect(closed.unverified).toBe(undefined);
     const opened = await run(genClickExpression(['Foreground']));
     expect(opened.isOnNow).toBe(true);
+  });
+
+  // A list row says which one is open with aria-current. Written after
+  // opening a document by its row came back 'unverified' (2026-10-06).
+  it('reads a list row that became the current one as a change', async () => {
+    document.body.innerHTML =
+      '<ul><li class="list-group-item" aria-current="false"' +
+      ' title="Holy Holy Holy.ows">Holy Holy Holy</li></ul>';
+    const row = document.querySelector('li');
+    row.addEventListener('click', () => {
+      row.setAttribute('aria-current', 'true');
+    });
+    const result = await run(genClickExpression(['Holy Holy Holy']));
+    expect(result.didChange).toBe(true);
+    expect(result.isOnNow).toBe(true);
+    expect(result.unverified).toBe(undefined);
   });
 
   // The guide card's bar, on the tool the model presses with. Written after
@@ -729,28 +830,87 @@ describe('a control named with a kind noun', () => {
 });
 
 // The words a tool hands back carry the shortcut -- `owa_list_screens` says
-// "Clear Bible [F9]", the button's own title -- and a press by exactly those
+// "Clear Long Text [F9]", the button's own title -- and a press by exactly those
 // words was refused: the label part had its bracket taken off for the
 // comparison and the needle had not (EC-135).
 describe('a needle carrying the shortcut a title carries', () => {
   it('is press-safe on a control whose title is those words', () => {
     document.body.innerHTML =
-      '<button title="Clear Bible [F9]" aria-label="Clear Bible">BB' +
+      '<button title="Clear Long Text [F9]" aria-label="Clear Long Text">LT' +
       '</button>' +
       '<button title="Close [Ctrl+Q]" aria-label="Close"><i></i>' +
       '</button>';
     const dm = install();
-    const clear = dm.findBest(['Clear Bible [F9]']);
-    expect(clear.element.getAttribute('aria-label')).toBe('Clear Bible');
+    const clear = dm.findBest(['Clear Long Text [F9]']);
+    expect(clear.element.getAttribute('aria-label')).toBe('Clear Long Text');
     expect(clear.isPressSafe).toBe(true);
-    expect(dm.findBest(['Clear Bible']).isPressSafe).toBe(true);
+    expect(dm.findBest(['Clear Long Text']).isPressSafe).toBe(true);
     expect(dm.findBest(['Close [Ctrl+Q]']).isPressSafe).toBe(true);
     expect(dm.findBest(['Close']).isPressSafe).toBe(true);
   });
 
+  // A row with unsaved changes draws a `*` right after its name, and the row
+  // that had work in it was the one that could not be opened by name
+  // (2026-10-06: "Amazing Grace" against "Amazing Grace*").
+  it('presses a row by its name with the unsaved mark after it', () => {
+    document.body.innerHTML =
+      '<ul><li title="Amazing Grace.ows"><div>Amazing Grace<span>*</span>' +
+      '</div></li><li title="Holy Holy Holy.ows"><div>Holy Holy Holy</div>' +
+      '</li></ul>';
+    const dm = install();
+    const starred = dm.findBest(['Amazing Grace']);
+    expect(starred.element.getAttribute('title')).toBe('Amazing Grace.ows');
+    expect(starred.isPressSafe).toBe(true);
+    expect(dm.findBest(['Amazing Grace*']).isPressSafe).toBe(true);
+    const plain = dm.findBest(['Holy Holy Holy']);
+    expect(plain.element.getAttribute('title')).toBe('Holy Holy Holy.ows');
+    // A bare mark is decoration and nothing else, so it names nothing.
+    const mark = dm.findBest(['*']);
+    expect(mark === null || mark.isPressSafe !== true).toBe(true);
+  });
+
+  // The label a refusal tells the caller to retry with is the parts joined,
+  // and that retry was refused too (2026-10-22: "FG Clear Foreground [F10]").
+  it('is press-safe by the joined label a tool hands out', () => {
+    document.body.innerHTML =
+      '<button title="Clear Foreground [F10]" aria-label="Clear Foreground">' +
+      'FG</button>' +
+      '<button title="Clear Slide [F7]" aria-label="Clear Slide">SL</button>';
+    const dm = install();
+    const shown = dm.describe(dm.findBest(['Clear Foreground']).element).label;
+    const found = dm.findBest([shown]);
+    expect(found.element.getAttribute('aria-label')).toBe('Clear Foreground');
+    expect(found.isPressSafe).toBe(true);
+    // Every word of the joined label, not the start of it.
+    const cut = dm.findBest(['FG Clear']);
+    expect(cut === null || cut.isPressSafe !== true).toBe(true);
+  });
+
+  // A long label is handed out cut (80 characters in describe, 60 in
+  // nearMisses), and a drag by those words was refused (2026-10-22, DD-05).
+  it('is press-safe by the cut label a long control is handed out as', () => {
+    const verse =
+      'Philemon 1:10I beseech thee for my son Onesimus, whom I have begotten' +
+      ' in my bonds:';
+    document.body.innerHTML =
+      '<div draggable="true" title="Click to open">' + verse + '</div>' +
+      '<div draggable="true">Philemon 1:11Which in time past was to thee' +
+      ' unprofitable, but now profitable to thee and to me:</div>';
+    const dm = install();
+    const shown = dm.describe(dm.findBest(['Philemon 1:10']).element).label;
+    expect(shown.length).toBe(80);
+    const found = dm.findBest([shown]);
+    expect(found.element.textContent).toBe(verse);
+    expect(found.isPressSafe).toBe(true);
+    expect(dm.findBest([shown.slice(0, 60)]).isPressSafe).toBe(true);
+    // A short start of it is still a guess.
+    const start = dm.findBest(['Philemon 1:10I beseech thee']);
+    expect(start === null || start.isPressSafe !== true).toBe(true);
+  });
+
   it('never lets bare decoration stand for the words', () => {
     document.body.innerHTML =
-      '<button title="Clear Bible [F9]" aria-label="Clear Bible">BB' +
+      '<button title="Clear Long Text [F9]" aria-label="Clear Long Text">LT' +
       '</button>';
     const dm = install();
     const found = dm.findBest(['[F9]']);
@@ -949,6 +1109,76 @@ describe('controls the app hides until the mouse is over them', () => {
     expect(document.querySelectorAll('[data-owa-hover-style]').length).toBe(0);
   });
 
+  // A footer shut behind its three dots (handleAutoHide) is NOT a hover:
+  // nothing but a press on the dots opens it. Reported as showsOnHover,
+  // the assistant told a user to look for a button no mouse would bring
+  // up and ringed an empty corner of the panel.
+  const AUTO_HIDE_MARKUP = [
+    '<style>',
+    '.app-auto-hide > div { visibility: hidden; }',
+    '.app-auto-hide.auto-hide-show > div { visibility: visible; }',
+    '</style>',
+    '<div id="preview">',
+    '<div id="footer" class="app-auto-hide"><div>',
+    '<button id="props" title="Bible Properties">B</button>',
+    '</div></div>',
+    '<i id="dots" class="auto-hide-button" title="Reveal Hidden Controls"></i>',
+    '</div>',
+  ].join('');
+
+  it('says what to press first for a control shut behind three dots', () => {
+    document.body.innerHTML = AUTO_HIDE_MARKUP;
+    const dm = install();
+    const described = dm.describe(document.getElementById('props'));
+    expect(described.isVisible).toBe(false);
+    expect(described.revealBy).toBe('Reveal Hidden Controls');
+    // Not a hover: moving the mouse there brings up nothing.
+    expect(described.showsOnHover).toBeUndefined();
+    const row = dm
+      .listControls('Bible Properties', 50)
+      .find((one) => one.label === 'B Bible Properties');
+    expect(row.revealBy).toBe('Reveal Hidden Controls');
+    expect(row.showsOnHover).toBeUndefined();
+  });
+
+  it('says nothing of the dots once the footer is open', () => {
+    document.body.innerHTML = AUTO_HIDE_MARKUP;
+    document.getElementById('footer').classList.add('auto-hide-show');
+    const dm = install();
+    const described = dm.describe(document.getElementById('props'));
+    expect(described.isVisible).toBe(true);
+    expect(described.revealBy).toBeUndefined();
+  });
+
+  it('holds that footer open while pointing, and shuts it again', () => {
+    document.body.innerHTML = AUTO_HIDE_MARKUP;
+    const dm = install();
+    const target = document.getElementById('props');
+    const footer = document.getElementById('footer');
+    // The walkthrough card's own call: the dots stay a press of their own.
+    expect(dm.revealHidden(target, 5000)).toBe(false);
+    expect(footer.classList.contains('auto-hide-show')).toBe(false);
+    // Pointing: the ring has to land on something a person can see.
+    expect(dm.revealHidden(target, 5000, true)).toBe(true);
+    expect(dm.visibilityOf(target)).toBe('shown');
+    dm.releaseHidden();
+    expect(footer.classList.contains('auto-hide-show')).toBe(false);
+    expect(dm.visibilityOf(target)).toBe('hidden');
+  });
+
+  it('leaves a footer the person opened meanwhile to them', () => {
+    document.body.innerHTML = AUTO_HIDE_MARKUP;
+    const dm = install();
+    const target = document.getElementById('props');
+    expect(dm.revealHidden(target, 5000, true)).toBe(true);
+    // The app hides its dots while its own press holds the footer up.
+    document.getElementById('dots').style.display = 'none';
+    dm.releaseHidden();
+    expect(
+      document.getElementById('footer').classList.contains('auto-hide-show'),
+    ).toBe(true);
+  });
+
   // What owa_list_ui answers with. Leaving these off the list is what
   // stopped the assistant ever mentioning them; a control with no box
   // at all stays off it.
@@ -994,6 +1224,124 @@ describe('controls the app hides until the mouse is over them', () => {
 // control and cannot describe it, so what comes back has to be re-findable.
 // The rule the tests hold it to is that it is TESTED before it is returned --
 // a selector matching two things is worse than none, because it looks right.
+describe('a control whose title restates its name with a state', () => {
+  // The Stay Awake cup: an icon-only button, aria-label "Stay Awake", title
+  // "Stay Awake — <state>". A walkthrough step read the sentence cut at 80
+  // characters as the control's name, and no press could land (2026-10-10).
+  function install2() {
+    document.body.innerHTML = [
+      '<button id="cup" aria-label="Stay Awake" aria-pressed="false" ',
+      'title="Stay Awake — turned off, this computer may sleep when no ',
+      'screen is showing"><i aria-hidden="true"></i></button>',
+      '<button id="gear" title="Setting">⚙</button>',
+    ].join('');
+    return install();
+  }
+
+  it('calls the control by its name, first and alone', () => {
+    const dm = install2();
+    const cup = document.getElementById('cup');
+    expect(dm.labelPartsOf(cup)[0]).toBe('Stay Awake');
+    expect(dm.shownLabelOf(cup)).toBe('Stay Awake');
+    expect(dm.describe(cup).label).toBe('Stay Awake');
+  });
+
+  it('is pressed by its name, with a kind noun, or by the sentence quoted back', () => {
+    const dm = install2();
+    const cup = document.getElementById('cup');
+    for (const needle of [
+      'Stay Awake',
+      'Stay Awake cup',
+      'Stay Awake icon',
+      'Stay Awake — turned off, this computer may sleep when no screen is showing Stay',
+      'Stay Awake — turned off, this computer may sleep when no screen is showing',
+    ]) {
+      const found = dm.findBest([needle], { preferPressSafe: true });
+      expect(found?.element, needle).toBe(cup);
+      expect(found?.isPressSafe, needle).toBe(true);
+    }
+    // A hyphen is a name's own: nothing is cut off it, so these words are
+    // not the control's name and no press lands by them.
+    expect(
+      dm.findBest(['Stay - Awake'], { preferPressSafe: true })?.isPressSafe,
+    ).not.toBe(true);
+  });
+});
+
+describe('the twins of a control', () => {
+  it('counts the shown controls carrying the same exact words, by panel', () => {
+    document.body.innerHTML = [
+      '<div data-widget-name="Document List">',
+      '<button title="More Options">1</button>',
+      '<button title="More Options" style="display:none">2</button>',
+      '</div>',
+      '<div data-widget-name="Mini Screen">',
+      '<button title="More Options">3</button>',
+      '<button title="Mini Screen Options">4</button>',
+      '</div>',
+    ].join('');
+    const dm = install();
+    const first = document.querySelector(
+      '[data-widget-name="Document List"] button',
+    );
+    expect(dm.twinsOf(first, 'More Options')).toEqual({
+      count: 2,
+      panels: ['Document List', 'Mini Screen'],
+    });
+    // A scope narrows the count the way it narrows the match.
+    expect(dm.twinsOf(first, 'Document List > More Options')).toEqual({
+      count: 1,
+      panels: ['Document List'],
+    });
+    const own = document.querySelector('[title="Mini Screen Options"]');
+    expect(dm.twinsOf(own, 'Mini Screen Options')).toEqual({
+      count: 1,
+      panels: ['Mini Screen'],
+    });
+  });
+
+  // The Reader's Font Size (`AppRangeComp`): the range carries the name as
+  // its aria-label and its own wrapper carries it as a title. The tip that
+  // raises it was refused for "2 controls" with only this one on screen.
+  const RANGE =
+    '<div class="app-range" title="Font Size">' +
+    '<input type="range" aria-label="Font Size" title="17"></div>';
+
+  it('is not twinned with the box it sits in, whichever of the two is aimed at', () => {
+    document.body.innerHTML = `<div data-widget-name="Bible Reader">${RANGE}</div>`;
+    const dm = install();
+    const input = document.querySelector('input');
+    expect(dm.twinElementsOf(input, 'Font Size')).toEqual([input]);
+    expect(dm.twinsOf(input, 'Font Size')).toEqual({
+      count: 1,
+      panels: ['Bible Reader'],
+    });
+    const box = document.querySelector('.app-range');
+    expect(dm.twinsOf(box, 'Font Size').count).toBe(1);
+  });
+
+  it('still counts two separate controls of one name, each with its box once', () => {
+    document.body.innerHTML = [
+      `<div data-widget-name="Bible Reader">${RANGE}</div>`,
+      `<div data-widget-name="Bible Lookup">${RANGE}</div>`,
+    ].join('');
+    const dm = install();
+    const [first, second] = document.querySelectorAll('input');
+    // The other range's box is the other range, not a third control.
+    expect(dm.twinElementsOf(first, 'Font Size')).toEqual([first, second]);
+    expect(dm.twinsOf(first, 'Font Size')).toEqual({
+      count: 2,
+      panels: ['Bible Reader', 'Bible Lookup'],
+    });
+    // Two plain controls side by side are twins too: nothing nests.
+    document.body.innerHTML =
+      '<button title="Font Size">A</button><button title="Font Size">B</button>';
+    expect(
+      dm.twinsOf(document.querySelector('button'), 'Font Size').count,
+    ).toBe(2);
+  });
+});
+
 describe('selectorOf', () => {
   it('prefers the words the app chose over the position', () => {
     document.body.innerHTML = `
@@ -1176,5 +1524,164 @@ describe('a list row is trimmed to what a reader needs', () => {
     expect(dm.labelOf(document.querySelector('button'))).toBe(
       'Drive Open C: drive',
     );
+  });
+});
+
+// Reported by a robot QA run on 2026-10-06: `owa_click "Foreground"` opened
+// the launcher menu pinned to the window's top-left corner, because the press
+// was `element.click()` -- coordinates 0,0 -- and the app places its context
+// menus at the event's coordinates. And it answered `unverified` for that
+// press, and for every other one that opened a menu, a popup or a window:
+// the control itself stays as it was, and the control was all it read.
+describe('a press lands where the control is, and says what it opened', () => {
+  it('presses at the centre of the control, the way the app positions a menu', async () => {
+    document.body.innerHTML = '<button id="go">Foreground</button>';
+    const seen = [];
+    document.getElementById('go').addEventListener('click', (event) => {
+      seen.push([event.clientX, event.clientY, event.bubbles]);
+    });
+    await run(genClickExpression(['Foreground'], 100, 0));
+    // The stubbed box is x 10, y 10, 40 wide, 20 high.
+    expect(seen).toEqual([[30, 20, true]]);
+  });
+
+  it('still presses nothing that is disabled', async () => {
+    document.body.innerHTML = '<button id="go" disabled>Save</button>';
+    let clicks = 0;
+    document.getElementById('go').addEventListener('click', () => {
+      clicks += 1;
+    });
+    const result = await run(genClickExpression(['Save'], 100, 0));
+    expect(clicks).toBe(0);
+    expect(result.didChange).toBe(false);
+  });
+
+  it('reports a menu the press brought up as the change it made', async () => {
+    document.body.innerHTML =
+      '<ul><li class="nav-item"><button class="btn nav-link">' +
+      'Foreground</button></li></ul>';
+    document.querySelector('.nav-link').addEventListener('click', () => {
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        '<div id="app-context-menu-container"><div role="menu">' +
+          '<div role="menuitem">Countdown</div></div></div>',
+      );
+    });
+    const result = await run(genClickExpression(['Foreground'], 100, 0));
+    expect(result.opened).toBe('menu');
+    expect(result.didChange).toBe(true);
+    expect(result.unverified).toBe(undefined);
+    // The tab says what it says about itself, unchanged.
+    expect(result.isOnNow).toBe(false);
+  });
+
+  it('reports a popup as a dialog, ahead of anything else it opened', async () => {
+    document.body.innerHTML = '<button title="Bible Lookup">B</button>';
+    document.querySelector('button').addEventListener('click', () => {
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        '<div id="modal-container"><div role="menu"></div></div>',
+      );
+    });
+    const result = await run(genClickExpression(['Bible Lookup'], 100, 0));
+    expect(result.opened).toBe('dialog');
+    expect(result.didChange).toBe(true);
+  });
+
+  it('reports a floating panel as a panel', async () => {
+    document.body.innerHTML = '<button>Countdown</button>';
+    document.querySelector('button').addEventListener('click', () => {
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        '<div class="floating-widget"></div>',
+      );
+    });
+    const result = await run(genClickExpression(['Countdown'], 100, 0));
+    expect(result.opened).toBe('panel');
+  });
+
+  it('does not credit a press with a layer that was open before it', async () => {
+    document.body.innerHTML =
+      '<div role="menu"></div><div role="dialog" style="display:none">' +
+      '</div><button>Copy</button>';
+    const result = await run(genClickExpression(['Copy'], 100, 0));
+    expect(result.opened).toBe(undefined);
+    expect(result.didChange).toBe(false);
+    expect(result.unverified).toContain('nothing is proven');
+  });
+
+  it('counts a layer that was there but hidden, once it shows', async () => {
+    document.body.innerHTML =
+      '<div role="dialog" style="display:none"></div><button>Open</button>';
+    document.querySelector('button').addEventListener('click', () => {
+      document.querySelector('[role="dialog"]').style.display = 'block';
+    });
+    const result = await run(genClickExpression(['Open'], 100, 0));
+    expect(result.opened).toBe('dialog');
+  });
+});
+
+// A WINDOW is the one thing a page cannot see open, so the tool reads it off
+// the debugging targets beside the press (`addOpenedWindow` + cdp.mjs's
+// `waitForNewAppPage`). Pressing the Settings gear opened Settings and still
+// answered `unverified` (2026-10-06).
+describe('addOpenedWindow', () => {
+  const unproven = {
+    clicked: { label: 'Setting' },
+    didChange: false,
+    unverified: 'The press left this control exactly as it was...',
+  };
+  const evaluated = { port: 1234, targets: [{ id: 'main' }] };
+
+  it('names the window a press opened and drops the unverified sentence', async () => {
+    const asked = [];
+    const result = await addOpenedWindow(
+      unproven,
+      evaluated,
+      async (port, targets, waitMs) => {
+        asked.push([port, targets, waitMs]);
+        return 'setting.html';
+      },
+    );
+    expect(result).toEqual({
+      clicked: { label: 'Setting' },
+      didChange: true,
+      opened: 'window',
+      page: 'setting.html',
+    });
+    // Nothing else changed, so it was worth waiting for one to appear.
+    expect(asked).toEqual([[1234, evaluated.targets, OPENED_WINDOW_WAIT_MS]]);
+  });
+
+  it('looks once, without waiting, when the page already saw a change', async () => {
+    let waited = null;
+    const result = await addOpenedWindow(
+      { clicked: {}, didChange: true },
+      evaluated,
+      async (_port, _targets, waitMs) => {
+        waited = waitMs;
+        return null;
+      },
+    );
+    expect(waited).toBe(0);
+    expect(result).toEqual({ clicked: {}, didChange: true });
+  });
+
+  it('leaves alone a miss, a refusal and a press that opened a layer', async () => {
+    const never = async () => {
+      throw new Error('should not look');
+    };
+    const miss = { clicked: null, reason: 'nothing on screen to act on' };
+    expect(await addOpenedWindow(miss, evaluated, never)).toBe(miss);
+    const menu = { clicked: {}, didChange: true, opened: 'menu' };
+    expect(await addOpenedWindow(menu, evaluated, never)).toBe(menu);
+    expect(
+      await addOpenedWindow(unproven, { port: 1, targets: undefined }, never),
+    ).toBe(unproven);
+  });
+
+  it('keeps the unverified answer when no window opened', async () => {
+    const result = await addOpenedWindow(unproven, evaluated, async () => null);
+    expect(result).toBe(unproven);
   });
 });

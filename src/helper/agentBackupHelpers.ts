@@ -39,15 +39,19 @@ import type { MimetypeNameType } from '../server/fileHelpers';
 import {
     fsCheckDirExist,
     fsCheckFileExist,
+    fsCloneFile,
     fsCreateDir,
     fsDeleteFile,
+    fsGetFileStamp,
     fsListFiles,
     fsListFilesWithMimetype,
     fsReadFile,
     fsWriteFile,
+    getFileFullName,
     pathJoin,
 } from '../server/fileHelpers';
 import {
+    AGENT_BACKUP_MAX_BLOB_BYTES,
     AGENT_BACKUP_MAX_CHARS,
     type AgentBackupMetaType,
     type AgentEditableKindType,
@@ -60,6 +64,7 @@ import {
     pickUndoTarget,
     readAgentBackupFileName,
     sortRestoresForUndo,
+    toAgentBackupBlobName,
     toAgentBackupFileNames,
 } from './agentBackupPlanHelpers';
 
@@ -83,9 +88,15 @@ export function genNoBackupReason(error: unknown) {
     );
 }
 
-// The files every document drags along: its attached background and the
-// preview of it. Trashed with it, renamed with it, and backed up with it.
-export const AGENT_SIDECAR_EXTENSIONS = ['.bg.json', '.preview.bg.json'];
+// The files every document drags along: its attached background, the
+// preview of it and its slides' own transitions. Trashed with it, renamed with
+// it, and backed up with it. (Literal rather than imported: this module is
+// reached from the agent relay and keeps its imports lazy.)
+export const AGENT_SIDECAR_EXTENSIONS = [
+    '.bg.json',
+    '.preview.bg.json',
+    '.transition.json',
+];
 
 async function getFileSourceClass() {
     const { default: FileSourceClass } = await import('./FileSource');
@@ -147,9 +158,45 @@ async function getNoteEditableClass() {
     };
 }
 
+/**
+ * A run sheet in the same shape. It is an `AppEditableDocumentSourceAbs`,
+ * but one with no Save button: the panel writes every change to the file at
+ * once (`PresentingFlow.setItems` is `setJsonData` then `save`), so a state put
+ * back goes the same way, or the panel would read the restored head while the
+ * file on disk still held the undone change. Its settings go with a delete the
+ * way the panel's own Move to Trash takes them.
+ */
+async function getPresentingFlowEditableClass() {
+    const { default: PresentingFlow } =
+        await import('../presenting-flow/PresentingFlow');
+    return {
+        getInstance(filePath: string) {
+            const flow = PresentingFlow.getInstance(filePath);
+            return {
+                getJsonData() {
+                    return flow.getJsonData();
+                },
+                async setJsonData(jsonData: any) {
+                    await flow.setJsonData(jsonData);
+                    await flow.save();
+                },
+                async preDelete() {
+                    await flow.preDelete();
+                    const { removePresentingFlowSettings } =
+                        await import('../presenting-flow/presentingFlowHelpers');
+                    await removePresentingFlowSettings(filePath);
+                },
+            };
+        },
+    };
+}
+
 async function getEditableClass(kind: AgentEditableKindType) {
     if (kind === 'note') {
         return await getNoteEditableClass();
+    }
+    if (kind === 'presentingFlow') {
+        return await getPresentingFlowEditableClass();
     }
     if (kind === 'lyric') {
         const { default: Lyric } = await import('../lyric-list/Lyric');
@@ -266,7 +313,8 @@ async function readJsonFile<T>(filePath: string): Promise<T | null> {
 }
 
 async function pruneAgentBackups(dirPath: string) {
-    const idList = (await fsListFiles(dirPath))
+    const fileNameList = await fsListFiles(dirPath);
+    const idList = fileNameList
         .map((fileName) => {
             return readAgentBackupFileName(fileName)?.id ?? null;
         })
@@ -279,6 +327,75 @@ async function pruneAgentBackups(dirPath: string) {
         // a meta pointing at missing data would offer an undo that fails.
         await fsDeleteFile(pathJoin(dirPath, meta));
         await fsDeleteFile(pathJoin(dirPath, data));
+        // ...then the binary copies the change kept, which are the bulk.
+        for (const fileName of fileNameList) {
+            const read = readAgentBackupFileName(fileName);
+            if (read?.id === id && read.part === 'blob') {
+                await fsDeleteFile(pathJoin(dirPath, fileName));
+            }
+        }
+    }
+}
+
+/**
+ * Copy the binary files a change is about to remove beside its backup, and
+ * point the restores at the copies. Done before the data file is written, so
+ * a backup never names a blob that is not there.
+ */
+/** The sentence for a file too big to keep a copy of. */
+export function genBlobTooBigReason(fileName: string, size: number) {
+    return (
+        `"${fileName}" is ${Math.round(size / 1048576)} MB, too big for ` +
+        'the copy an undo needs'
+    );
+}
+
+async function keepBlobs(
+    dirPath: string,
+    id: string,
+    restores: AgentRestoreType[],
+) {
+    let index = 0;
+    const kept: AgentRestoreType[] = [];
+    const blobPaths: string[] = [];
+    try {
+        for (const restore of restores) {
+            if (restore.type !== 'blob' || restore.sourcePath === undefined) {
+                kept.push(restore);
+                continue;
+            }
+            // The cap holds for an undo's own snapshot too: the file put
+            // back over may be a far bigger one the user dropped in since.
+            const stamp = await fsGetFileStamp(restore.sourcePath);
+            if (stamp === null) {
+                throw new Error(`there is no file at "${restore.sourcePath}"`);
+            }
+            if (stamp.size > AGENT_BACKUP_MAX_BLOB_BYTES) {
+                throw new Error(
+                    genBlobTooBigReason(
+                        getFileFullName(restore.sourcePath) ?? '',
+                        stamp.size,
+                    ),
+                );
+            }
+            const blobName = toAgentBackupBlobName(id, index);
+            index += 1;
+            const blobPath = pathJoin(dirPath, blobName);
+            await fsCloneFile(restore.sourcePath, blobPath);
+            blobPaths.push(blobPath);
+            kept.push({ type: 'blob', filePath: restore.filePath, blobName });
+        }
+    } catch (error) {
+        await dropBlobs(blobPaths);
+        throw error;
+    }
+    return { kept, blobPaths };
+}
+
+/** The copies of a backup that will not be written: nothing may orphan them. */
+async function dropBlobs(blobPaths: string[]) {
+    for (const blobPath of blobPaths) {
+        await fsDeleteFile(blobPath).catch(handleError);
     }
 }
 
@@ -293,25 +410,39 @@ export async function saveAgentBackup(
 ): Promise<AgentBackupMetaType> {
     const now = new Date();
     const id = genAgentBackupId(now);
-    const dataText = JSON.stringify({ id, restores });
-    if (dataText.length > AGENT_BACKUP_MAX_CHARS) {
-        throw new Error('what it would change is too large to back up');
-    }
-    const meta: AgentBackupMetaType = {
-        id,
-        at: now.toISOString(),
-        summary,
-        filePaths: listRestoreFilePaths(restores),
-        ...extra,
-    };
     const dirPath = await getAgentBackupDirPath();
     if (!(await fsCheckDirExist(dirPath))) {
         await fsCreateDir(dirPath);
     }
+    // Judged before any copy is made: a blob entry is a few characters
+    // either way, and a copy made for a backup that is then refused -- or
+    // whose data file cannot be written -- would sit in the folder until
+    // the prune reached it.
+    if (JSON.stringify(restores).length > AGENT_BACKUP_MAX_CHARS) {
+        throw new Error('what it would change is too large to back up');
+    }
+    const { kept: keptRestores, blobPaths } = await keepBlobs(
+        dirPath,
+        id,
+        restores,
+    );
+    const dataText = JSON.stringify({ id, restores: keptRestores });
+    const meta: AgentBackupMetaType = {
+        id,
+        at: now.toISOString(),
+        summary,
+        filePaths: listRestoreFilePaths(keptRestores),
+        ...extra,
+    };
     const { meta: metaName, data: dataName } = toAgentBackupFileNames(id);
-    // Data before meta: a meta must never point at data that is not there.
-    await fsWriteFile(pathJoin(dirPath, dataName), dataText);
-    await writeJsonFile(pathJoin(dirPath, metaName), meta);
+    try {
+        // Data before meta: a meta must never point at data that is not there.
+        await fsWriteFile(pathJoin(dirPath, dataName), dataText);
+        await writeJsonFile(pathJoin(dirPath, metaName), meta);
+    } catch (error) {
+        await dropBlobs(blobPaths);
+        throw error;
+    }
     try {
         await pruneAgentBackups(dirPath);
     } catch (error) {
@@ -406,6 +537,9 @@ export async function trashAgentFile(
         const { attachBackgroundManager } =
             await import('../others/AttachBackgroundManager');
         await attachBackgroundManager.deleteMetaDataFile(filePath);
+        const { slideTransitionManager } =
+            await import('../others/SlideTransitionManager');
+        await slideTransitionManager.deleteMetaDataFile(filePath);
     }
 }
 
@@ -444,6 +578,18 @@ export async function renameAgentFile(
 // --- naming the files a worker works on ------------------------------------
 
 /**
+ * Every kind of file the Documents list shows -- what a run sheet takes as a
+ * document line, and what `owa_media_file` lists and imports as a document.
+ */
+export const AGENT_DOCUMENT_MIMETYPE_NAMES: MimetypeNameType[] = [
+    'appDocument',
+    'lyric',
+    'pdf',
+    'pptx',
+    'docx',
+];
+
+/**
  * A named file's full path in a folder, or null when the name would not stay
  * inside it. Checked on the JOINED path rather than trusted to the name rules
  * (`agentFileName.mjs`): two checks that agree cost nothing, and this is the
@@ -452,9 +598,12 @@ export async function renameAgentFile(
 export function toAgentFilePath(
     dirPath: string,
     name: string,
-    extension: string,
+    extension?: string,
 ) {
-    const filePath = pathJoin(dirPath, `${name}.${extension}`);
+    const filePath = pathJoin(
+        dirPath,
+        extension === undefined ? name : `${name}.${extension}`,
+    );
     const toPosix = (one: string) => {
         return one.split('\\').join('/');
     };
@@ -495,9 +644,11 @@ export async function listAgentFiles(
     const FileSourceClass = await getFileSourceClass();
     return filePathList
         .map((filePath) => {
+            const fileSource = FileSourceClass.getInstance(filePath);
             return {
                 filePath,
-                name: FileSourceClass.getInstance(filePath).name,
+                name: fileSource.name,
+                fullName: fileSource.fullName,
             };
         })
         .sort((one, other) => {
@@ -567,16 +718,44 @@ async function applyRestore(restore: AgentRestoreType) {
         );
         return;
     }
+    if (restore.type === 'blob') {
+        if (restore.blobName === undefined) {
+            throw new Error(
+                `"${FileSourceClass.getInstance(restore.filePath).name}" has ` +
+                    'no copy kept beside its backup, so it cannot be put back.',
+            );
+        }
+        const blobPath = pathJoin(
+            await getAgentBackupDirPath(),
+            restore.blobName,
+        );
+        if (!(await fsCheckFileExist(blobPath))) {
+            throw new Error(
+                `The copy of "${FileSourceClass.getInstance(restore.filePath).name}" ` +
+                    'kept beside its backup is gone, so it cannot be put back.',
+            );
+        }
+        await fsCloneFile(blobPath, restore.filePath);
+        FileSourceClass.getInstance(restore.filePath).fireUpdateEvent();
+        return;
+    }
     if (restore.type === 'file') {
         if (restore.text === null) {
             if (await fsCheckFileExist(restore.filePath)) {
                 await trashAgentFile(restore.filePath, restore.kind);
             }
-            return;
+        } else {
+            const fileSource = FileSourceClass.getInstance(restore.filePath);
+            if (!(await fileSource.writeFileData(restore.text))) {
+                throw new Error(
+                    `"${fileSource.name}" could not be written back.`,
+                );
+            }
         }
-        const fileSource = FileSourceClass.getInstance(restore.filePath);
-        if (!(await fileSource.writeFileData(restore.text))) {
-            throw new Error(`"${fileSource.name}" could not be written back.`);
+        if (restore.bibleKey !== undefined) {
+            const { clearBibleXMLCache } =
+                await import('../setting/bible-setting/bibleXMLHelpers');
+            await clearBibleXMLCache(restore.bibleKey);
         }
         return;
     }
@@ -626,8 +805,32 @@ async function snapshotBeforeRestore(restore: AgentRestoreType) {
         );
         return editing === null ? [] : [editing];
     }
-    const restoreList = [
-        await snapshotAgentFile(restore.filePath, restore.kind),
+    if (restore.type === 'blob') {
+        // Putting a clip back over one that is there keeps that one too;
+        // over nothing, undoing the undo trashes it again.
+        return (await fsCheckFileExist(restore.filePath))
+            ? [
+                  {
+                      type: 'blob' as const,
+                      filePath: restore.filePath,
+                      sourcePath: restore.filePath,
+                  },
+              ]
+            : [
+                  {
+                      type: 'file' as const,
+                      filePath: restore.filePath,
+                      text: null,
+                  },
+              ];
+    }
+    const restoreList: AgentRestoreType[] = [
+        {
+            ...(await snapshotAgentFile(restore.filePath, restore.kind)),
+            ...(restore.bibleKey === undefined
+                ? {}
+                : { bibleKey: restore.bibleKey }),
+        } as AgentRestoreType,
     ];
     if (restore.kind !== undefined) {
         const editing = await snapshotAgentEditing(

@@ -23,7 +23,6 @@ import {
     getStageAccentColor,
     STAGE_NUMBER_CHOICE_COUNT,
 } from '../screenHelpers';
-import { useScreenMaskManagerEvents } from '../managers/screenEventHelpers';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
     return import('./MiniScreenAudioHandlersComp');
@@ -36,57 +35,6 @@ const LazyMiniScreenDrawHandlersComp = lazy(() => {
 const LazyMiniScreenFocusHandlersComp = lazy(() => {
     return import('./MiniScreenFocusHandlersComp');
 });
-
-const LazyMiniScreenMaskHandlersComp = lazy(() => {
-    return import('./MiniScreenMaskHandlersComp');
-});
-
-/**
- * The blanking switch, deliberately a button of its OWN rather than a third
- * entry in the Drawing/Focusing picker beside it.
- *
- * Those two are alternatives -- one pointer, one overlay, the picker choosing
- * which the button drives. A mask is not an alternative to either: it is room
- * geometry that stays up while an operator draws and spotlights over it, so
- * folding it into that picker would have made setting a mask turn drawing off.
- *
- * Its dot stays lit while a mask is set, because a mask is invisible in a
- * closed panel and an operator needs to be able to see that the black bar at
- * the top of the picture is deliberate.
- */
-function MaskSwitchComp({
-    isMaskHandlersVisible,
-    setIsMaskHandlersVisible,
-}: Readonly<{
-    isMaskHandlersVisible: boolean;
-    setIsMaskHandlersVisible: (isVisible: boolean) => void;
-}>) {
-    const { screenMaskManager } = useScreenManagerContext();
-    useScreenMaskManagerEvents(['update']);
-    const isMasking = screenMaskManager?.isShowing ?? false;
-    const title = `${tran(isMaskHandlersVisible ? 'Disable' : 'Enable')} ${tran(
-        'Mask',
-    )}`;
-    return (
-        <button
-            className={
-                'btn btn-sm btn-' +
-                (isMaskHandlersVisible || isMasking
-                    ? 'primary'
-                    : 'outline-secondary')
-            }
-            style={{ width: 25 }}
-            onClick={() => {
-                setIsMaskHandlersVisible(!isMaskHandlersVisible);
-            }}
-            title={title}
-            aria-label={title}
-            aria-pressed={isMaskHandlersVisible}
-        >
-            <i className="bi bi-square-half" />
-        </button>
-    );
-}
 
 function getNewStageNumber(
     event: any,
@@ -314,7 +262,6 @@ function DrawSwitchComp({
 
 export default function ScreenPreviewerFooterComp() {
     const [isAudioHandlersVisible, setIsAudioHandlersVisible] = useState(false);
-    const [isMaskHandlersVisible, setIsMaskHandlersVisible] = useState(false);
     const screenManager = useScreenManagerContext();
     // Restore the draw panel's on/off state persisted for this screen.
     // Which overlay control the panel shows. Persisted per screen so the
@@ -335,10 +282,29 @@ export default function ScreenPreviewerFooterComp() {
     const screenManagerBase = useScreenManagerBaseContext();
     const [stageNumber, setStageNumber] = useState(screenManagerBase.stage);
     const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
+    const screenManagerRef = useAppCurrentRef(screenManager);
     const setStageNumber1 = useCallback(
         (newStageNumber: number) => {
+            const effectManager =
+                screenManagerRef.current.varyAppDocumentEffectManager;
+            const oldEffectType = effectManager?.effectType;
             screenManagerBaseRef.current.stage = newStageNumber;
             setStageNumber(newStageNumber);
+            // A stage above 0 sets the Slide transition to None (the stage
+            // setter, by request). Said out loud: the operator's own choice
+            // used to vanish with nothing on screen to say why.
+            if (
+                oldEffectType !== undefined &&
+                oldEffectType !== 'none' &&
+                effectManager?.effectType === 'none'
+            ) {
+                showSimpleToast(
+                    tran('Slide transition'),
+                    tran(
+                        'A stage above 0 cuts between slides, so the Slide transition was set to None.',
+                    ),
+                );
+            }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -394,12 +360,6 @@ export default function ScreenPreviewerFooterComp() {
                             setDrawMode={setDrawMode}
                         />
                     </div>
-                    <div className="ms-1">
-                        <MaskSwitchComp
-                            isMaskHandlersVisible={isMaskHandlersVisible}
-                            setIsMaskHandlersVisible={setIsMaskHandlersVisible}
-                        />
-                    </div>
                 </div>
                 <div className="flex-grow-1 d-flex justify-content-end">
                     {/* Role, focus and the key press belong on the one element
@@ -412,7 +372,7 @@ export default function ScreenPreviewerFooterComp() {
                         wrapper, so anything reading a control by its words got
                         it twice ("St:0 Stage 0: Click to change Stage Number").
                         `St:` itself stays an untranslated mnemonic, like the
-                        BG/SL/BB/FG codes above it and `Tr:` beside it -- the
+                        BG/SL/LT/FG codes above it and `Tr:` beside it -- the
                         row is one line tall, and translating abbreviations is
                         what blanked the slide editor's tools panel once. It is
                         aria-hidden so the translated name is announced instead
@@ -463,11 +423,6 @@ export default function ScreenPreviewerFooterComp() {
                     ) : (
                         <LazyMiniScreenDrawHandlersComp />
                     )}
-                </AppSuspenseComp>
-            ) : null}
-            {isMaskHandlersVisible ? (
-                <AppSuspenseComp>
-                    <LazyMiniScreenMaskHandlersComp />
                 </AppSuspenseComp>
             ) : null}
         </div>

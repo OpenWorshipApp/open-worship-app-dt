@@ -9,7 +9,7 @@ import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import EditingHistoryManager, {
     sanitizeForUpdatingComparison,
 } from './EditingHistoryManager';
-import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
+import { savingEventMapper } from '../keyboard-shortcut/appShortcutMappers';
 import {
     toShortcutKey,
     useKeyboardRegistering,
@@ -60,10 +60,8 @@ export function useEditingHistoryStatus(filePath: string) {
     return status;
 }
 
-export const savingEventMapper: KeyboardEventMapper = {
-    allControlKey: ['Ctrl'],
-    key: 's',
-};
+// Declared with every other shortcut so Help -> Keyboard Shortcuts lists it.
+export { savingEventMapper };
 
 /**
  * What this menu actually presses.
@@ -91,7 +89,7 @@ function genDisabledStyle(isDisabled: boolean) {
     };
 }
 
-function MenuIsModifying({
+function MenuIsModifyingComp({
     editableDocument,
     caDiscard,
     canSave,
@@ -225,7 +223,7 @@ export function FileEditingMenuComp({
             >
                 <i className="bi bi-arrow-90deg-right" />
             </button>
-            <MenuIsModifying
+            <MenuIsModifyingComp
                 editableDocument={editableDocument}
                 caDiscard={isShowingTools}
                 canSave={canSave}

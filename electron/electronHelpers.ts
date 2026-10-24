@@ -160,6 +160,8 @@ export const messageChannels = {
     screenMessage: 'app:screen:message',
     openAboutPage: 'main:app:open-about-page',
     openChatbotPage: 'main:app:open-chatbot-page',
+    openChatbotReport: 'main:app:open-chatbot-report',
+    openChatbotFromTaskbar: 'main:app:open-chatbot-from-taskbar',
     openAiChatPage: 'main:app:open-aichat-page',
     guideHelp: 'main:app:guide-help',
     guideHelpAnswer: 'main:app:guide-help-answer',
@@ -543,7 +545,20 @@ export function genWebPreferences(preloadPath: string) {
     return webPreferences;
 }
 
+/**
+ * `url` with its query in one fixed order, or `null` when it is not a URL.
+ *
+ * A popup `window.open` created a moment ago is in `getAllWindows()` before it
+ * has navigated, and its `getURL()` is then `''`. With two note windows opened
+ * in quick succession, the second open groups against the first while it is
+ * still `''`, and a `new URL('')` thrown there is an uncaught exception in the
+ * main process: Electron's blocking error dialog, the whole app frozen behind
+ * it until OK is pressed.
+ */
 function toUrlWithSortedParams(url: string, isRemovingUuid = false) {
+    if (!URL.canParse(url)) {
+        return null;
+    }
     const urlObj = new URL(url);
     if (isRemovingUuid) {
         urlObj.searchParams.delete('uuid');
@@ -781,6 +796,9 @@ function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
 
     const allWindows = BrowserWindow.getAllWindows();
 
+    // A window whose URL is not one yet -- a popup still on `''` because it
+    // was opened a moment ago -- belongs to no group: `null` never equals the
+    // asked-for URL, which `handlePopupWindowOpen` has already made sure parses.
     const sortedUrl = toUrlWithSortedParams(url, true);
     const groupWindows = allWindows.filter((win) => {
         const { webContents } = win;
@@ -788,14 +806,16 @@ function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
             webContents.getURL(),
             true,
         );
-        return currentSortedUrl === sortedUrl;
+        return currentSortedUrl !== null && currentSortedUrl === sortedUrl;
     });
 
     const originalSortedUrl = toUrlWithSortedParams(url);
     const selfWindows = groupWindows.filter((win) => {
         const { webContents } = win;
         const currentSortedUrl = toUrlWithSortedParams(webContents.getURL());
-        return currentSortedUrl === originalSortedUrl;
+        return (
+            currentSortedUrl !== null && currentSortedUrl === originalSortedUrl
+        );
     });
 
     const subDisplay = genBoundsData(
@@ -1015,30 +1035,37 @@ function checkIsOverlapping(one: BrowserWindow, other: BrowserWindow) {
 }
 
 /**
- * macOS only: take the window out of its parent's group for as long as it is
- * minimised.
+ * Take the window out of its parent's group for as long as it is minimised.
  *
  * The chatbot is opened as a CHILD of the window that asked for it
- * (`appTopToMain`), and on macOS that is an AppKit child window, which cannot
- * be miniaturised on its own (electron/electron#26031 and #39578, both open).
- * `minimize()` on it sent the PRESENTER into the Dock, and every other popup
- * riding on it, while the chatbot stayed up and never counted as minimised --
- * so the `restore()` at the end of the walkthrough did nothing and the app
- * stayed down. Measured live 2026-09-12: presenter and Settings off screen,
- * chatbot on.
+ * (`appTopToMain`), which on macOS is an AppKit child window and on Windows an
+ * OWNED window -- and each OS has its own wrong answer for minimising one:
+ *
+ * - **macOS**: a child window cannot be miniaturised on its own
+ *   (electron/electron#26031 and #39578, both open). `minimize()` on it sent
+ *   the PRESENTER into the Dock, and every other popup riding on it, while the
+ *   chatbot stayed up and never counted as minimised -- so the `restore()` at
+ *   the end of the walkthrough did nothing and the app stayed down. Measured
+ *   live 2026-09-12: presenter and Settings off screen, chatbot on.
+ * - **Windows** (2026-10-20, the user with a picture): it DOES minimise by
+ *   itself, but not to the taskbar -- an owned window's caption strip (icon,
+ *   restore, maximise, close) is drawn at the bottom-left of the OWNER's
+ *   client area, over the app's content, for the length of the walkthrough.
+ *   Detached first, it minimises to the taskbar like any other window, which
+ *   is also the way back by hand the note above promises.
  *
  * It rejoins on `restore`, whoever restores it -- this code when the card
  * closes, or the user from the Dock or the robot button -- and NOT straight
- * after our own `restore()` call: the window is still miniaturised then, and
- * Electron only attaches a VISIBLE window to its parent, so a parent set too
- * early is remembered and the window floats free of it.
+ * after our own `restore()` call: on macOS the window is still miniaturised
+ * then, and Electron only attaches a VISIBLE window to its parent, so a
+ * parent set too early is remembered and the window floats free of it.
  *
- * Windows and Linux minimise an owned window by itself, so nothing is detached
- * there. The platform is read at call time so a test can pick one.
+ * Linux minimises an owned window cleanly with no artifact, so nothing is
+ * detached there. The platform is read at call time so a test can pick one.
  */
 function detachFromParentWhileMinimised(win: BrowserWindow) {
     const parentWin = win.getParentWindow();
-    if (process.platform !== 'darwin' || parentWin === null) {
+    if (process.platform === 'linux' || parentWin === null) {
         return;
     }
     win.setParentWindow(null);
@@ -1245,6 +1272,13 @@ function handlePopupWindowOpen(
     webPreferences: WebPreferences | undefined,
     options: HandlerDetails,
 ): WindowOpenHandlerResponse {
+    // Anything thrown in here is an uncaught exception in the main process,
+    // which freezes the app behind Electron's error dialog. A URL that does
+    // not parse names no page of this app nor a site to hand the browser, so
+    // it opens nothing -- the same answer an unknown window gets below.
+    if (!URL.canParse(options.url)) {
+        return { action: 'deny' };
+    }
     if (
         !options.frameName.startsWith(POPUP_FRAME_NAME_PREFIX) ||
         webPreferences === undefined
@@ -1281,6 +1315,15 @@ function handlePopupWindowOpen(
                 if (win.isMinimized()) {
                     win.restore();
                 }
+                // A window can be down WITHOUT being minimised: an owned
+                // window the OS hid when its owner minimised (and today a
+                // detach/reattach that left it so). `focus()` on such a
+                // window shows nothing -- the press that reopens it then
+                // looks dead (found live 2026-10-20, the chatbot window
+                // hidden with its rect still on screen).
+                if (!win.isVisible()) {
+                    win.show();
+                }
                 win.focus();
             }
         }, 0);
@@ -1297,6 +1340,11 @@ function handlePopupWindowOpen(
             editorWin.webContents.loadURL(options.url);
             if (editorWin.isMinimized()) {
                 editorWin.restore();
+            }
+            // Same as the group loop above: a hidden window needs show(),
+            // a focus alone never brings it back.
+            if (!editorWin.isVisible()) {
+                editorWin.show();
             }
             editorWin.focus();
             return { action: 'deny' };
@@ -1697,7 +1745,81 @@ export async function captureWindowImage(win: BrowserWindow | null) {
     if (win === null || win.isDestroyed()) {
         throw new Error('That window is not open');
     }
-    const image = await win.webContents.capturePage();
+    for (const wait of CAPTURE_WAIT_LIST_MILLISECONDS) {
+        if (wait > 0) {
+            await new Promise((resolve) => {
+                setTimeout(resolve, wait);
+            });
+            if (win.isDestroyed()) {
+                break;
+            }
+            // Ask for a frame: the page may be asleep behind another window.
+            win.webContents.invalidate();
+        }
+        try {
+            const image = await win.webContents.capturePage();
+            if (!image.isEmpty()) {
+                return image.toDataURL();
+            }
+        } catch (_error) {
+            // No frame to hand over yet -- asked again below.
+        }
+    }
+    throw new Error('That window could not be photographed just now');
+}
+
+// A window that has only just loaded -- or reloaded, which is what a window
+// does after the error somebody is about to report -- or that sits hidden
+// behind another has no frame to hand over yet: `capturePage` then rejects
+// (`UnknownVizError`) or answers an empty image. Measured 2026-10-13 on a
+// main window reloaded while covered: the first ask failed and the one
+// 100 ms later had the picture, because the first ask is what wakes the
+// page. So it is asked a few times before a report goes without its picture.
+const CAPTURE_WAIT_LIST_MILLISECONDS = [0, 150, 350, 700];
+
+/**
+ * The picture of a screen that has no window: one on a virtual display is
+ * drawn by whoever watches it, and here only while a player watches its MP4.
+ * The rest of the time the one copy of it drawn on this computer is its Mini
+ * Screen in the presenter, so that card is photographed out of the window
+ * (`capturePage` takes the area, nothing is drawn again). Without it -- the
+ * main window on another page, the card off the window, its rendering
+ * switched off -- the answer says why, in words a person can act on.
+ */
+export async function captureMiniScreenImage(
+    win: BrowserWindow | null,
+    screenId: number,
+) {
+    const failure = new Error(
+        `Screen ${screenId} is on a virtual display: no window draws it on ` +
+            'this computer, and its Mini Screen in the Presenter is not ' +
+            'showing to take it from.',
+    );
+    if (win === null || win.isDestroyed() || !Number.isInteger(screenId)) {
+        throw failure;
+    }
+    const rect = await win.webContents.executeJavaScript(
+        `(() => {
+            const card = document.querySelector(
+                '.mini-screen[data-screen-key="${screenId}"]',
+            );
+            if (card === null || card.querySelector('.mini-screen-no-rendering')) {
+                return null;
+            }
+            const box = (
+                card.querySelector('.mini-screen-preview-fit') ?? card
+            ).getBoundingClientRect();
+            const x = Math.max(0, Math.round(box.left));
+            const y = Math.max(0, Math.round(box.top));
+            const width = Math.min(innerWidth, Math.round(box.right)) - x;
+            const height = Math.min(innerHeight, Math.round(box.bottom)) - y;
+            return width > 1 && height > 1 ? { x, y, width, height } : null;
+        })()`,
+    );
+    if (rect === null || typeof rect !== 'object') {
+        throw failure;
+    }
+    const image = await win.webContents.capturePage(rect);
     return image.toDataURL();
 }
 

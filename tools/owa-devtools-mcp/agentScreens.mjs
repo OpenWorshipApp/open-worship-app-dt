@@ -41,7 +41,7 @@
  * labels are from the same moment as the content.
  */
 export function genListScreensExpression() {
-    return `(() => {
+  return `(() => {
     const electron = typeof require === 'function' ? require('electron') : null;
     if (electron === null) {
         return { error: 'This page has no node integration' };
@@ -143,10 +143,15 @@ export function genListScreensExpression() {
             const answer = Object.assign({}, basics);
             if (result && result.isError !== true && Array.isArray(result.screens)) {
                 if (result.isAuthoritative === false) {
+                    // A field as well as a sentence: the chatbot reads the
+                    // field (and puts a "Go to the Presenter" button under
+                    // the answer), a model reads the sentence.
+                    answer.needsPage = 'presenter';
                     answer.note = 'What each screen holds is known only while ' +
                         'the Presenter page is open, and it is not: this ' +
                         'says whether a screen is on and nothing more. ' +
-                        'owa_goto_page can switch the main window to it.';
+                        'Switch the main window to the Presenter page first ' +
+                        '(owa_goto_page) and ask again, or tell the user to.';
                 } else {
                     const controls = readControls();
                     answer.screens = result.screens.map((screen) => {
@@ -201,41 +206,43 @@ export function genListScreensExpression() {
 const QUOTED_TEXT_LIMIT = 70;
 
 export function describeScreenContent(screen) {
-    if (screen === null || typeof screen !== 'object') {
-        return '';
+  if (screen === null || typeof screen !== 'object') {
+    return '';
+  }
+  const parts = [];
+  if (screen.slide) {
+    const { document, kind, name, text } = screen.slide;
+    let said = `${kind === 'song' ? 'the song' : `the ${kind}`} "${document}"`;
+    if (name) {
+      said += ` (${name})`;
     }
-    const parts = [];
-    if (screen.slide) {
-        const { document, kind, name, text } = screen.slide;
-        let said = `${kind === 'song' ? 'the song' : `the ${kind}`} "${document}"`;
-        if (name) {
-            said += ` (${name})`;
-        }
-        if (text) {
-            const quoted = text.length > QUOTED_TEXT_LIMIT
-                ? `${text.slice(0, QUOTED_TEXT_LIMIT).trimEnd()}…`
-                : text;
-            said += ` -- "${quoted}"`;
-        }
-        parts.push(said);
+    if (text) {
+      const quoted =
+        text.length > QUOTED_TEXT_LIMIT
+          ? `${text.slice(0, QUOTED_TEXT_LIMIT).trimEnd()}…`
+          : text;
+      said += ` -- "${quoted}"`;
     }
-    if (screen.bible) {
-        const { reference, version, versions } = screen.bible;
-        const said = versions && versions.length > 1
-            ? `${reference} in ${versions.join(', ')}`
-            : `${reference} (${version})`;
-        parts.push(said);
-    }
-    if (screen.background) {
-        const { kind, name } = screen.background;
-        const article = /^[aeiou]/i.test(kind) ? 'an' : 'a';
-        parts.push(`${article} ${kind} background${name ? ` (${name})` : ''}`);
-    }
-    if (Array.isArray(screen.foreground) && screen.foreground.length > 0) {
-        parts.push(`foreground: ${screen.foreground.join(', ')}`);
-    }
-    if (parts.length === 0) {
-        return 'nothing on any layer';
-    }
-    return parts.join('; ');
+    parts.push(said);
+  }
+  if (screen.bible) {
+    const { reference, version, versions } = screen.bible;
+    const said =
+      versions && versions.length > 1
+        ? `${reference} in ${versions.join(', ')}`
+        : `${reference} (${version})`;
+    parts.push(said);
+  }
+  if (screen.background) {
+    const { kind, name } = screen.background;
+    const article = /^[aeiou]/i.test(kind) ? 'an' : 'a';
+    parts.push(`${article} ${kind} background${name ? ` (${name})` : ''}`);
+  }
+  if (Array.isArray(screen.foreground) && screen.foreground.length > 0) {
+    parts.push(`foreground: ${screen.foreground.join(', ')}`);
+  }
+  if (parts.length === 0) {
+    return 'nothing on any layer';
+  }
+  return parts.join('; ');
 }

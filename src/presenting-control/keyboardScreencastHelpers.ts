@@ -2,6 +2,7 @@ import KeyboardEventListener, {
     checkIsControlKeys,
 } from '../event/KeyboardEventListener';
 import appProvider from '../server/appProvider';
+import { KEY_LABEL_MAP } from '../event/keyboardKeyLabelHelpers';
 
 // The live keyboard screencast: an on-screen echo of what the operator PRESSES,
 // so an audience watching the app on a projector — or a screen recording, or a
@@ -24,21 +25,6 @@ export type KeystrokeType = {
     // Repeats collapse into one pill: six presses of Down read as `↓ ×6` rather
     // than pushing every other key off the strip.
     count: number;
-};
-
-// Keys whose `event.key` is not presentable as-is. Arrows are drawn as glyphs
-// because they have to be legible from the back of a room; everything else stays
-// a word, which survives a projector better than a symbol nobody knows.
-const KEY_LABEL_MAP: { [key: string]: string } = {
-    ' ': 'Space',
-    ArrowUp: '↑',
-    ArrowDown: '↓',
-    ArrowLeft: '←',
-    ArrowRight: '→',
-    Escape: 'Esc',
-    Delete: 'Del',
-    PageUp: 'Page Up',
-    PageDown: 'Page Down',
 };
 
 // An IME mid-composition reports the physical key as `Process`, and a key the

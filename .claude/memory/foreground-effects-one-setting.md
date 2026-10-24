@@ -18,7 +18,7 @@ widget shows words (`isCommonStyle`) — text align, line height, letter spacing
 a text shadow (None / Soft / Glow / Outline + colour) and italic / underline /
 uppercase.
 
-**Thirteen values, ONE setting key.** `appLocalStorage.getItem` reads a FILE per
+**Fourteen values, ONE setting key.** `appLocalStorage.getItem` reads a FILE per
 key and `genForegroundExtraStyle` re-reads every key each time a widget works
 out its style, so a key per property would have been thirteen more disk reads
 per widget — on a machine where a media widget already pays one card's worth per

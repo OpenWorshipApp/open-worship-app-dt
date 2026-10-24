@@ -10,6 +10,7 @@ import {
     type LookAheadArrangementType,
 } from './lyricLookAheadHelpers';
 import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
+import { type LyricStepRefType } from './lyricStructureHelpers';
 
 const EXTRA_SLIDE_KEYS = [
     OPEN_LYRIC_FIRST_KEY,
@@ -39,18 +40,20 @@ function applyLookAhead(
         firstAttachmentIndex < 0
             ? slides
             : slides.slice(0, firstAttachmentIndex);
+    // Laid out over the WHOLE slide, not inside the stage's padding: each box
+    // is the whole slide shrunk -- its own padding included -- so the current
+    // one sits flush in the top left corner and the next one flush left, with
+    // no margin around them (asked for: "save space + full opacity").
+    const { width, height } = lyricAppDocument.displayDim;
     const itemsList = genLookAheadItemsList(
         lyricSlides.map((slide) => slide.canvasItemsJson),
-        lyricAppDocument.canvasItemBounds,
+        { x: 0, y: 0, width, height },
         arrangement,
         (box, html): CanvasItemPropsType => {
-            return {
-                ...lyricAppDocument.genCanvasItemHtmlProps(-1, html),
-                left: box.x,
-                top: box.y,
-                width: box.width,
-                height: box.height,
-            };
+            // The box IS the item's bounds. Passed in rather than left to the
+            // default, which reads the stage's own bounds through a blocking
+            // display lookup for every box of every slide only to be replaced.
+            return lyricAppDocument.genCanvasItemHtmlProps(-1, html, box);
         },
     );
     lyricSlides.forEach((slide, i) => {
@@ -80,8 +83,8 @@ export function withLyricLookAhead<TBase extends StageClassType>(
     arrangement: LookAheadArrangementType,
 ) {
     abstract class LyricAppDocumentStageLookAhead extends Base {
-        async getStageSlides(key?: string) {
-            const slides = await super.getStageSlides(key);
+        async getStageSlides(key?: string, step?: LyricStepRefType) {
+            const slides = await super.getStageSlides(key, step);
             if (key === undefined) {
                 applyLookAhead(this, slides, arrangement);
             }
@@ -91,8 +94,13 @@ export function withLyricLookAhead<TBase extends StageClassType>(
         // What comes next depends on the slide's place in the deck, which the
         // single-key path cannot know (a Chorus sung twice is one part with
         // two different successors). So a single slide is read off the whole
-        // deck — whose element map is the cached whole-song one.
+        // deck: the one built ahead of the click while the song is held, else
+        // a fresh build — which is then kept for the next click.
         async getSlideById(id: number) {
+            const warmSlide = this.getWarmSlide(id);
+            if (warmSlide !== null) {
+                return warmSlide;
+            }
             const slides = await this.getSlides();
             return slides.find((slide) => slide.id === id) ?? null;
         }

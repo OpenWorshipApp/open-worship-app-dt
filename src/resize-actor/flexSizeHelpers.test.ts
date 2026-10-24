@@ -21,6 +21,7 @@ vi.mock('../helper/helpers', () => ({
 vi.mock('../helper/errorHelpers', () => ({ handleError: mocks.error }));
 
 import {
+    checkIsThereNotHiddenWidget,
     clearWidgetSizeSetting,
     getFlexSizeSetting,
     keyToDataFlexSizeKey,
@@ -74,5 +75,27 @@ describe('flex size settings', () => {
         );
         await clearWidgetSizeSetting();
         expect(mocks.remove).toHaveBeenCalledWith('widget-size');
+    });
+});
+
+describe('checkIsThereNotHiddenWidget', () => {
+    const dataInput = [{ key: 'a' }, { key: 'b' }, { key: 'c' }] as any;
+
+    test('a hidden pane does not count as showing', () => {
+        const flexSize = { a: ['1', ['first', 1]], b: ['1'], c: ['1'] } as any;
+        expect(checkIsThereNotHiddenWidget(dataInput, flexSize, 0, 1)).toBe(
+            false,
+        );
+        expect(checkIsThereNotHiddenWidget(dataInput, flexSize, 1)).toBe(true);
+    });
+
+    // Keyed by item, a split renames a pane in place while its actor stays
+    // mounted, and the actor's size state meets the new key one render
+    // late. Reading it threw and blanked the whole Reader.
+    test('a pane the size state has not met yet is showing', () => {
+        const flexSize = { b: ['1'], c: ['1'] } as any;
+        expect(checkIsThereNotHiddenWidget(dataInput, flexSize, 0, 1)).toBe(
+            true,
+        );
     });
 });

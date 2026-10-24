@@ -5,12 +5,12 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-34, ST-35, ST-36, ST-37, ST-38, ST-39, ST-40, LT-01]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-33 — Share your Bible translations (XML) with another machine
 
-W-24 shares a **bible list** — the verses you lined up. This shares the **translations
-themselves**: the XML bibles you added or edited under **Settings → Bible**, which
+Sharing a **bible list** moves only the verses you lined up. This shares the **translations
+themselves**: the XML bibles you added or edited under **Settings → [en:tran:Bible]**, which
 until now could only be moved by digging the files out by hand.
 
 1. Open **[en:tran:Bible]**. Under the **[en:tran:Import XML File]** box on the left there is a card headed **[en:tran:Bible Data]**. 📸
@@ -20,17 +20,17 @@ until now could only be moved by digging the files out by hand.
    **[en:tran:Deselect All]** and pick just a few. 📸
 3. Below the list, the same **[en:tran:Password]** / **[en:tran:Confirm Password]** pair as every other export: leave both empty for the ordinary
    bundle, or type the same password in both to lock it. Type them differently and the
-   app tells you **Passwords do not match** in the panel itself and brings it straight
+   app tells you **[en:tran:Passwords do not match]** in the panel itself and brings it straight
    back — still holding the bibles you ticked and the password you typed — so a mistyped
    password can never quietly produce an unprotected file, and you never have to pick your
    translations a second time.
-4. Click **Ok**. You get one `Bible Data.owabdata.tar.gz` in your **Downloads** folder
+4. Click **[en:tran:Ok]**. You get one `Bible Data.owabdata.tar.gz` in your **Downloads** folder
    (or `Bible Data.owabdata.enc` if you set a password), and the folder opens on it.
    Bibles are big files — a couple of translations can run to tens of MB.
-5. On the other machine, open **Settings → Bible** and **drag the file anywhere onto
+5. On the other machine, open **Settings → [en:tran:Bible]** and **drag the file anywhere onto
    that page** — the whole Bible settings area accepts it, not just the small card. Or
    click **[en:tran:Import Bible Data]** and pick it. A protected
-   bundle asks for its password first, and says **Wrong password, try again** rather
+   bundle asks for its password first, and says **[en:tran:Wrong password, try again]** rather
    than failing outright. 📸
 6. A panel lists what is inside. Anything that can come in is ticked. Anything that
    **cannot** is shown as a **red row** you are not allowed to tick, with the reason on
@@ -43,7 +43,7 @@ until now could only be moved by digging the files out by hand.
    - **[en:tran:Unable to read this bible file]** — the app
      could not read a bible key out of that file, so it cannot check it and will not
      touch it. 📸
-7. Click **Ok**. The ticked translations are added and the list on the right refreshes
+7. Click **[en:tran:Ok]**. The ticked translations are added and the list on the right refreshes
    to show them. A message tells you how many came in and how many were skipped.
 
 > Notes: an import **never replaces** a translation you already have, and never leaves
@@ -53,7 +53,7 @@ until now could only be moved by digging the files out by hand.
 > genuinely want the incoming version, delete yours first (the 🗑 next to it) and import
 > again.
 >
-> Only the **XML** translations are in the bundle — the ones listed under **Bibles XML**.
+> Only the **XML** translations are in the bundle — the ones listed under **[en:tran:Bibles XML]**.
 > Bible versions you downloaded inside the app are not: they are hundreds of MB and can
 > simply be downloaded again on the other machine.
 >
@@ -65,5 +65,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-34` · `ST-35` · `ST-36` · `ST-37` · `ST-38` · `ST-39` · `ST-40` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

@@ -142,6 +142,55 @@ function passage(bibleKey = 'KJV', start = 3, end = 5): BibleItem {
     } as BibleItem;
 }
 
+// GEN 1:3-3:1 over chapters of 3, 2 and 2 verses: the end of chapter 1, all
+// of chapter 2 and the start of chapter 3.
+const CROSS_CHAPTER_VERSES: Record<number, Record<string, string>> = {
+    1: { 1: 'c1 v1', 2: 'c1 v2', 3: 'c1 v3' },
+    2: { 1: 'c2 v1', 2: 'c2 v2' },
+    3: { 1: 'c3 v1', 2: 'c3 v2' },
+};
+
+function crossPassage(bibleKey = 'KJV'): BibleItem {
+    return {
+        bibleKey,
+        target: {
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 3,
+            verseEnd: 1,
+            chapterEnd: 3,
+        },
+        clone() {
+            const item = crossPassage(this.bibleKey);
+            item.target = { ...this.target };
+            return item;
+        },
+        async toTitle() {
+            const { chapter, verseStart, verseEnd, chapterEnd } = this.target;
+            const end =
+                chapterEnd !== undefined
+                    ? `-${chapterEnd}:${verseEnd}`
+                    : verseStart === verseEnd
+                      ? ''
+                      : `-${verseEnd}`;
+            return `Genesis ${chapter}:${verseStart}${end}`;
+        },
+        async toTitleWithBibleKey() {
+            return `(${this.bibleKey}) ${await this.toTitle()}`;
+        },
+        async toVerseTextList() {
+            const { chapter, verseStart } = this.target;
+            return [
+                {
+                    localeChapter: String(chapter),
+                    localeVerse: String(verseStart),
+                    text: `${this.bibleKey} ${chapter}:${verseStart}`,
+                },
+            ];
+        },
+    } as BibleItem;
+}
+
 beforeEach(() => {
     vi.clearAllMocks();
     h.directory.isDirPathValid = true;
@@ -337,6 +386,111 @@ describe('Bible slide generation', () => {
             'Generate Slides',
             'Bible passage is unavailable in: ពគប',
         );
+    });
+
+    test('makes one slide per verse across chapters, each read once per translation', async () => {
+        h.getVerses.mockImplementation(
+            async (_bibleKey: string, _bookKey: string, chapter: number) => {
+                return CROSS_CHAPTER_VERSES[chapter];
+            },
+        );
+        const source = crossPassage();
+        await generateBibleItemSlides(source, ['KJV', 'ពគប']);
+        expect(h.getVerses.mock.calls).toEqual([
+            ['KJV', 'GEN', 1],
+            ['KJV', 'GEN', 2],
+            ['KJV', 'GEN', 3],
+            ['ពគប', 'GEN', 1],
+            ['ពគប', 'GEN', 2],
+            ['ពគប', 'GEN', 3],
+        ]);
+        const slides = h.create.mock.calls[0][2];
+        expect(slides.map((slide: any) => slide.name)).toEqual([
+            'Genesis 1:3-3:1',
+            'Genesis 1:3',
+            'Genesis 2:1',
+            'Genesis 2:2',
+            'Genesis 3:1',
+        ]);
+        // Every verse slide is a one-verse passage of its own chapter.
+        expect(
+            slides.slice(1).map((slide: any) => slide.canvasItems[1]),
+        ).toMatchObject(
+            [
+                [1, 3],
+                [2, 1],
+                [2, 2],
+                [3, 1],
+            ].map(([chapter, verse]) => ({
+                bibleItemTarget: {
+                    bookKey: 'GEN',
+                    chapter,
+                    verseStart: verse,
+                    verseEnd: verse,
+                },
+            })),
+        );
+        for (const slide of slides.slice(1)) {
+            for (const item of slide.canvasItems.slice(1, 3)) {
+                expect(item.bibleItemTarget).not.toHaveProperty('chapterEnd');
+            }
+        }
+        // The next verse crosses into the next chapter and says which.
+        const previewTexts = slides
+            .slice(1)
+            .map((slide: any) => slide.canvasItems[3]?.text ?? null);
+        expect(previewTexts).toEqual([
+            '→ (2:1)  KJV 2:1 (KJV) ',
+            '→ (2)  KJV 2:2 (KJV) ',
+            '→ (3:1)  KJV 3:1 (KJV) ',
+            null,
+        ]);
+        expect(source.target).toEqual({
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 3,
+            verseEnd: 1,
+            chapterEnd: 3,
+        });
+    });
+
+    test('refuses a cross-chapter passage missing a verse in a chapter it runs through', async () => {
+        h.getVerses.mockImplementation(
+            async (bibleKey: string, _bookKey: string, chapter: number) => {
+                if (bibleKey === 'ពគប' && chapter === 2) {
+                    return { 1: 'c2 v1', 2: ' ' };
+                }
+                return CROSS_CHAPTER_VERSES[chapter];
+            },
+        );
+        expect(
+            await generateBibleItemSlides(crossPassage(), ['ពគប']),
+        ).toBeNull();
+        expect(h.create).not.toHaveBeenCalled();
+        expect(h.toast).toHaveBeenCalledWith(
+            'Generate Slides',
+            'Bible passage is unavailable in: ពគប',
+        );
+        // A chapter the passage's own version cannot read is no passage.
+        h.getVerses.mockImplementation(
+            async (_bibleKey: string, _bookKey: string, chapter: number) => {
+                return chapter === 2 ? null : CROSS_CHAPTER_VERSES[chapter];
+            },
+        );
+        expect(await generateBibleItemSlides(crossPassage())).toBeNull();
+        expect(h.toast).toHaveBeenLastCalledWith(
+            'Generate Slides',
+            'Bible passage is unavailable in: KJV',
+        );
+        expect(h.create).not.toHaveBeenCalled();
+    });
+
+    test('still refuses a one-chapter passage that ends before it starts', async () => {
+        expect(await generateBibleItemSlides(passage('KJV', 5, 3))).toBeNull();
+        expect(h.error).toHaveBeenCalledWith(
+            new Error('Bible passage is unavailable'),
+        );
+        expect(h.getVerses).not.toHaveBeenCalled();
     });
 
     test('reports unavailable storage or a failed save and does not refresh the list', async () => {

@@ -2,51 +2,88 @@
 id: W-10
 title: "Control what the audience sees (mini screen + clears)"
 section: "Presenting content"
-verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
-screenshots: 3
+verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, SP-24, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
+screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-10 — Control what the audience sees (mini screen + clears)
 
 **Goal:** manage the live output from the screen preview card.
 
-- The **mini screen** (right column, bottom) always mirrors the audience view; the
+- The **mini screen** (right column, bottom) mirrors the audience view; the
   zoom slider under it only rescales your preview, not the output. 📸
 - Behind everything the card draws sits **that monitor's own desktop wallpaper**.
   The audience screen is a transparent window, so wherever you have put nothing
   up this is genuinely what the room would see. Right-click an empty part of the
   mini-screen panel (or press the **⋮** at its bottom-right) → **[en:tran:Show Monitor Wallpaper]**
-  turns it off and puts the plain checkered pattern back; **Refresh Preview** in
-  the same menu re-reads it after you change your desktop background. A machine
+  turns it off and puts the plain checkered pattern back — that is all it takes.
+  **[en:tran:Refresh Preview]** in the same menu is for something else: it re-reads the
+  wallpaper after you change your desktop background. A machine
   that will not say what its background is keeps the pattern.
 - Each screen has its own preview card with a **header** and **footer** of controls:
 - **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
-  output display on or off. The icon fills in and brightens while showing. It is
+  output display on or off. The toggle acts on its own screen; **F5** acts on the
+  **selected** screens (every screen when none is selected) and turns them all the
+  same way: on only when all of them are off, otherwise all off.
+  An unselected screen stays as it is when another screen is selected. The icon fills in and brightens while showing. It is
   the control named **[en:tran:Toggle showing screen]** — say those words when
   telling someone which one to press, because several other things in this window
   are also called "Show". 📸
+- **Hide every screen.** In the Presenter's mini-screen panel (bottom right), check
+  every screen card, including unselected ones. On each card whose leftmost header
+  button **[en:tran:Toggle showing screen]** is filled and bright, click it once to
+  hide that screen; leave an unlit button alone. When every such button is unlit,
+  all screens are hidden and their content is kept. **F5** is a toggle for the
+  selected screens, so use these individual buttons to hide every screen safely.
 - **Clear buttons** (header — each also has a function key):
-  **Clear All `F6` / BG `F7` / SL `F8` / BB `F9` / FG `F10`**
-  ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Bible] / [en:tran:Clear Foreground]).
-  A button is only lit while its layer has something to clear.
-- **Lock** (header, the padlock): when locked (red), the screen refuses slide changes —
-  handy during a live moment; click again (green) to unlock.
+  **Clear All `F6` / BG `F7` / SL `F8` / LT `F9` / FG `F10`**
+  ([en:tran:Clear All] / [en:tran:Clear Background] / [en:tran:Clear Slide] / [en:tran:Clear Long Text] / [en:tran:Clear Foreground]).
+  A button is only lit while its layer has something to clear. **LT** is the
+  long text layer: a Bible passage, or the text of a
+  **[en:tran:Long Text Show]**.
+- **Stop drawing the preview** (header, the eye right after **FG** —
+  **[en:tran:Stop rendering preview]**): for a slow computer. Click it and that card
+  stops drawing: its body turns into a striped pattern that says
+  **[en:tran:No rendering]**, while the audience screen goes on showing everything.
+  Every other button on the card still works, the clear buttons still light up, and
+  whatever you present from the lists still goes to the screen — only the picture
+  of it here is gone, and with it the work of drawing it twice. A slide's video or
+  audio still plays its sound as before, but its play button is part of the picture:
+  click the slashed eye (**[en:tran:Resume rendering preview]**) to bring the
+  picture back and start one by hand — the card picks up exactly what is on the
+  screen, and a clip that was playing carries on. The card remembers the choice for
+  that screen, even after a restart. 📸
+- **[en:tran:Lock]** (header, the padlock): when locked (red), the screen refuses slide changes —
+  handy during a live moment; click again (green) to unlock. A change it refuses says
+  _[en:tran:Screen Manager is locked]_ in a message with its own **[en:tran:Unlock]**: pressing it
+  unlocks the screens and closes the message.
 - **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
   screen projects to — the menu lists every display with its resolution, and marks the
   current one with `*` and the primary one with `(primary)`.
-- **Transitions** (footer, `Tr:`): the **Slide:** and **Background:** buttons choose the
-  change animation — **none / fade / move / zoom**. 📸
+- **Nothing on the projector?** Check its card from the top: it is showing
+  (**[en:tran:Toggle showing screen]**, or **F5**); its footer's **Display** names the
+  projector, not this computer's own screen — pick it there; and something is on it — a
+  lit clear button says which layer holds something.
+- **Transitions** (footer, `Tr:`): the **[en:tran:Slide]:**, **[en:tran:Background]:** and
+  **[en:tran:Foreground]:** buttons choose the change animation for that screen —
+  **none / fade / move / zoom**. They are the fallback: a document, a slide, a
+  Background tab, one background, a foreground panel or one of its sessions can
+  carry its own transition instead (W-48). 📸
 - **Background audio** (footer, the soundwave icon — appears while a video background
   is live): opens a small player per video to play/pause its audio in sync; the
   repeat icon loops it. The app refuses to close the player while audio is playing.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
-  (0–4, or increment/decrement) for stage-view setups.
+  (0–5, or increment/decrement) for stage-view setups. Moving a screen to any stage
+  above 0 also sets its **[en:tran:Slide]:** transition to **none**, and a note in the
+  corner says so; you can pick another one
+  afterwards, and going back to stage 0 leaves the transition as it is. A document's
+  or a slide's own transition (W-48) still wins over it.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
+`PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `SP-24` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

@@ -1,0 +1,48 @@
+{
+  "about": "Questions a Khmer reader asks the assistant about a person or a place opened from the Reader's Names and Places panel (row menu → Open in Chatbot). Each scenario is one conversation, asked in order in one tab. `expect` is the grader's key, never sent: what a right answer says, and why. Run with scripts/lookup-run.mjs; first measured 2026-10-22.",
+  "scenarios": [
+    {
+      "id": "noah",
+      "record": { "kind": "name", "name": "Noah", "lang": "km" },
+      "asks": [
+        { "id": "N1", "text": "តើណូអេមានអាយុប៉ុន្មាននៅពេលគាត់ស្លាប់?", "expect": "950 years (Genesis 9:29; the record's age)" },
+        { "id": "N2", "text": "តើណូអេមានអាយុប៉ុន្មាន ពេលទឹកជំនន់មកដល់?", "expect": "600 years (Genesis 7:6)" },
+        { "id": "N3", "text": "តើណូអេមានកូនប៉ុន្មាននាក់?", "expect": "three sons: Shem, Ham, Japheth (Genesis 5:32; 6:10). Sem is Luke 3:36's Greek spelling of Shem, not a fourth son" },
+        { "id": "N4", "text": "តើជីតារបស់ណូអេជានរណា?", "expect": "Methuselah, father of Lamech (Genesis 5:25-29)" },
+        { "id": "N5", "text": "តើប្រពន្ធរបស់ណូអេឈ្មោះអ្វី?", "expect": "the Bible does not give her name (Genesis 7:7 says only 'his wife')" },
+        { "id": "N6", "text": "តើព្រះយេស៊ូវបាននិយាយអំពីណូអេដែរឬទេ?", "expect": "yes: Matthew 24:37-39 and Luke 17:26-27 (KJV spells him Noe there)" },
+        { "id": "N7", "text": "តើគម្ពីរសញ្ញាថ្មីនិយាយអំពីណូអេនៅកន្លែងណាខ្លះ?", "expect": "Matthew 24:37-38, Luke 3:36, Luke 17:26-27, Hebrews 11:7, 1 Peter 3:20, 2 Peter 2:5" },
+        { "id": "N8", "text": "តើឈ្មោះណូអេមានន័យដូចម្តេច?", "expect": "rest / comfort: Genesis 5:29, 'this same shall comfort us'" },
+        { "id": "N9", "text": "តើមានមនុស្សប៉ុន្មាននាក់នៅក្នុងទូកធំ?", "expect": "eight (Genesis 7:13; 1 Peter 3:20)" },
+        { "id": "N10", "text": "តើទូកធំបានចតនៅទីណា?", "expect": "on the mountains of Ararat (Genesis 8:4)" },
+        { "id": "N11", "text": "តើមានអ្នកណាផ្សេងទៀតក្នុងព្រះគម្ពីរដែលមានឈ្មោះណូអេ?", "expect": "a daughter of Zelophehad (Numbers 26:33; 27:1; 36:11; Joshua 17:3)" },
+        { "id": "N12", "text": "តើមធូសាឡាមានអាយុច្រើនជាងណូអេទេ?", "expect": "yes: Methuselah 969 (Genesis 5:27), Noah 950 (Genesis 9:29)" },
+        { "id": "N13", "text": "តើណូអេរស់នៅប៉ុន្មានឆ្នាំក្រោយទឹកជំនន់?", "expect": "350 years (Genesis 9:28)" },
+        { "id": "N14", "text": "តើណូអេរស់នៅឆ្នាំណា?", "expect": "the Bible gives no calendar year; it dates him by ages in the genealogy (Genesis 5, 7:6, 9:28-29)" }
+      ]
+    },
+    {
+      "id": "ararat",
+      "record": { "kind": "location", "name": "Ararat", "lang": "km" },
+      "asks": [
+        { "id": "A1", "text": "តើអារ៉ារ៉ាតនៅឯណា?", "expect": "the Armenian highlands, the ancient kingdom of Urartu" },
+        { "id": "A2", "text": "តើអារ៉ារ៉ាតសព្វថ្ងៃនៅប្រទេសណា?", "expect": "eastern Turkey, Armenia and north-west Iran; Mount Ararat itself is in eastern Turkey" },
+        { "id": "A3", "text": "តើអារ៉ារ៉ាតនៅឆ្ងាយពីក្រុងយេរូសាឡិមប៉ុន្មាន?", "expect": "roughly 1,000-1,200 km to the north-east (an estimate, said as one)" },
+        { "id": "A4", "text": "តើខគម្ពីរណាខ្លះនិយាយអំពីអារ៉ារ៉ាត?", "expect": "Genesis 8:4, 2 Kings 19:37, Isaiah 37:38, Jeremiah 51:27 (the KJV says 'Armenia' in 2 Kings and Isaiah)" },
+        { "id": "A5", "text": "តើអ្នកណាបានរត់ទៅស្រុកអារ៉ារ៉ាត?", "expect": "Adrammelech and Sharezer, sons of Sennacherib, after killing their father (2 Kings 19:37; Isaiah 37:38)" },
+        { "id": "A6", "text": "តើមានទីកន្លែងណាខ្លះនៅជិតអារ៉ារ៉ាត?", "expect": "Minni and Ashchenaz with it in Jeremiah 51:27; Assyria to the south" },
+        { "id": "A7", "text": "បង្ហាញអារ៉ារ៉ាតនៅលើផែនទី", "expect": "a map the person can open, or an honest 'the record has no exact point' with where it is" }
+      ]
+    },
+    {
+      "id": "bethlehem",
+      "record": { "kind": "location", "name": "Bethlehem", "lang": "km" },
+      "asks": [
+        { "id": "B1", "text": "តើបេថ្លេហិមនៅឆ្ងាយពីក្រុងយេរូសាឡិមប៉ុន្មាន?", "expect": "about 9 km (6 miles) south of Jerusalem" },
+        { "id": "B2", "text": "តើនរណាខ្លះកើត ឬរស់នៅបេថ្លេហិម?", "expect": "Jesus born there (Matthew 2:1); David's town (1 Samuel 16-17; Luke 2:4); Boaz, Naomi and Ruth (Ruth 1-4); Rachel buried on its way (Genesis 35:19)" },
+        { "id": "B3", "text": "តើបេថ្លេហិមសព្វថ្ងៃនៅប្រទេសណា?", "expect": "Bethlehem in the West Bank (Palestine), south of Jerusalem" },
+        { "id": "B4", "text": "តើព្យាការីណាបានទាយថាព្រះមេស្ស៊ីនឹងកើតនៅបេថ្លេហិម?", "expect": "Micah 5:2 (quoted in Matthew 2:5-6)" }
+      ]
+    }
+  ]
+}

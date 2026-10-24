@@ -59,12 +59,31 @@ function genProps(
 }
 
 class TestCanvasItem extends CanvasItem<CanvasItemPropsType> {
+    static fromJson(props: CanvasItemPropsType) {
+        return new TestCanvasItem(props);
+    }
     getStyle() {
         return {};
     }
 }
 
 describe('canvas item blend mode', () => {
+    test('preserves item identity through edits and renews it for clones; transition removal leaves no key', () => {
+        const item = new TestCanvasItem(genProps({ transitionEffect: 'zoom' }));
+        const uuid = item.uuid;
+        item.applyProps({ rotate: 20, uuid: crypto.randomUUID() });
+        expect(item.uuid).toBe(uuid);
+        expect(item.props.transitionEffect).toBe('zoom');
+        const clone = item.clone();
+        expect(clone.uuid).not.toBe(uuid);
+        expect(clone.props.transitionEffect).toBe('zoom');
+        expect(clone.id).toBe(-1);
+        item.applyProps({ transitionEffect: null });
+        expect(item.toJson()).not.toHaveProperty('transitionEffect');
+        expect(item.uuid).toBe(uuid);
+        item.applyProps({ transitionEffect: 'bad' });
+        expect(item.toJson()).not.toHaveProperty('transitionEffect');
+    });
     test('offers every mode the screen can paint, and no duplicates', () => {
         const values = BLEND_MODE_GROUP_LIST.flatMap((group) => {
             return group.modes.map((mode) => {

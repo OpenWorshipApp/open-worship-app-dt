@@ -4,13 +4,15 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-09-19",
+    "updated": "2026-10-24",
     "sections": [
         {
             "id": "general",
             "label": "Language, theme & fonts",
             "recipes": [
-                "W-16"
+                "W-16",
+                "W-52",
+                "W-54"
             ],
             "questions": [
                 {
@@ -30,7 +32,7 @@
                         "guide": true
                     },
                     "starter": true,
-                    "starterRank": 13
+                    "starterRank": 17
                 },
                 {
                     "id": "change-language",
@@ -48,7 +50,23 @@
                         "recipe": "W-16",
                         "guide": true
                     },
-                    "starterRank": 10
+                    "starterRank": 11
+                },
+                {
+                    "id": "language-across-data-folders",
+                    "text": "Will the app keep my language when I switch to another data folder?",
+                    "kind": "what",
+                    "keywords": [
+                        "language changed",
+                        "back to english",
+                        "language reset",
+                        "parent directory",
+                        "recent folders"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "find": "Language"
+                    }
                 },
                 {
                     "id": "change-theme",
@@ -69,7 +87,7 @@
                 },
                 {
                     "id": "change-font",
-                    "text": "How do I change the font used on screen?",
+                    "text": "How do I change the font the app's own windows use?",
                     "kind": "howto",
                     "keywords": [
                         "font family",
@@ -84,6 +102,70 @@
                     }
                 },
                 {
+                    "id": "reset-settings",
+                    "text": "What do the reset buttons in Settings do?",
+                    "kind": "what",
+                    "keywords": [
+                        "reset",
+                        "clear all settings",
+                        "erase",
+                        "start over",
+                        "dangerous",
+                        "default"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-31"
+                        ]
+                    }
+                },
+                {
+                    "id": "export-settings",
+                    "text": "How do I move my settings to another computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "backup settings",
+                        "export settings",
+                        "save settings",
+                        "copy settings",
+                        "new computer",
+                        "transfer"
+                    ],
+                    "resources": {
+                        "recipe": "W-52",
+                        "find": "Export Settings",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "import-settings",
+                    "text": "How do I bring in settings exported from another computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "import settings",
+                        "restore settings",
+                        "load settings",
+                        "owasetting",
+                        "replace settings"
+                    ],
+                    "resources": {
+                        "recipe": "W-52",
+                        "find": "Import Settings",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "paths",
+            "label": "Folders on disk",
+            "recipes": [
+                "W-16",
+                "W-54"
+            ],
+            "questions": [
+                {
                     "id": "change-folders",
                     "text": "How do I change where my documents and songs are stored?",
                     "kind": "howto",
@@ -97,6 +179,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
+                        "passage": "To keep everything somewhere else",
                         "related": [
                             "W-25"
                         ],
@@ -127,21 +210,194 @@
                     }
                 },
                 {
-                    "id": "reset-settings",
-                    "text": "What do the reset buttons in Settings do?",
+                    "id": "switch-data-folder",
+                    "text": "How do I switch back to a data folder I used before?",
+                    "kind": "howto",
+                    "keywords": [
+                        "recent folders",
+                        "switch folder",
+                        "previous folder",
+                        "other data folder",
+                        "parent directory",
+                        "history"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "To switch back to a previous data folder",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Recent Folders"
+                    }
+                },
+                {
+                    "id": "no-data-folder",
+                    "text": "Why does the app show nothing but \"No Parent Directory Selected\"?",
                     "kind": "what",
                     "keywords": [
-                        "reset",
-                        "clear all settings",
-                        "erase",
-                        "start over",
-                        "dangerous",
-                        "default"
+                        "no parent directory selected",
+                        "app shows nothing",
+                        "choose a data folder",
+                        "data folder required",
+                        "found data folders",
+                        "use this folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "A data folder is required",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Found Data Folders"
+                    }
+                },
+                {
+                    "id": "why-data-folder",
+                    "text": "Why do I need to choose a data folder?",
+                    "kind": "what",
+                    "keywords": [
+                        "why data folder",
+                        "data folder required",
+                        "parent directory",
+                        "where everything is kept",
+                        "no parent directory selected"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "A data folder is required",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Path Settings"
+                    },
+                    "starter": true,
+                    "starterRank": 10
+                },
+                {
+                    "id": "use-default-data-folder",
+                    "text": "How do I use the suggested data folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "default data folder",
+                        "suggested folder",
+                        "use this folder",
+                        ".owa",
+                        "create data folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "Suggested offers",
+                        "find": "Use This Folder"
+                    }
+                },
+                {
+                    "id": "data-folder-on-drive",
+                    "text": "How do I use a data folder on a USB stick or another drive?",
+                    "kind": "howto",
+                    "keywords": [
+                        "usb stick",
+                        "another drive",
+                        "found data folders",
+                        "flash drive",
+                        "external drive"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "Found Data Folders lists",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Found Data Folders"
+                    }
+                },
+                {
+                    "id": "copy-data-folder",
+                    "text": "How do I copy my data folder to a USB stick or another drive?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy data folder",
+                        "backup to usb",
+                        "copy to drive",
+                        "copy to folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "Copy Data Folder",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Copy Data Folder"
+                    }
+                },
+                {
+                    "id": "data-folder-stick-missing",
+                    "text": "My data folder is on a USB stick that is not plugged in. What do I do?",
+                    "kind": "fix",
+                    "keywords": [
+                        "stick not plugged in",
+                        "data folder missing",
+                        "usb missing",
+                        "folder not there"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "A chosen folder that is not there",
+                        "find": "Apply Settings"
+                    }
+                },
+                {
+                    "id": "data-folder-on-desktop",
+                    "text": "How do I move my data folder off the Desktop from Settings?",
+                    "kind": "howto",
+                    "keywords": [
+                        "desktop",
+                        "move now",
+                        "onedrive",
+                        "move data folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "A data folder on the Desktop is never suggested",
+                        "related": [
+                            "W-54"
+                        ],
+                        "find": "Move Now"
+                    }
+                },
+                {
+                    "id": "assistant-from-settings",
+                    "text": "How do I ask the assistant for help from Settings?",
+                    "kind": "howto",
+                    "keywords": [
+                        "assistant",
+                        "help",
+                        "chatbot",
+                        "app assistant"
                     ],
                     "resources": {
                         "recipe": "W-16",
                         "related": [
-                            "W-31"
+                            "W-42"
+                        ],
+                        "find": "App Assistant"
+                    }
+                },
+                {
+                    "id": "move-data-folder-off-desktop",
+                    "text": "Why does the app ask me to move my data folder off the Desktop?",
+                    "kind": "what",
+                    "keywords": [
+                        "onedrive",
+                        "desktop",
+                        "move now",
+                        "files disappeared",
+                        "songs missing",
+                        "icloud"
+                    ],
+                    "resources": {
+                        "recipe": "W-54",
+                        "related": [
+                            "W-16"
                         ]
                     }
                 }
@@ -170,13 +426,14 @@
                     ],
                     "starter": true,
                     "resources": {
-                        "recipe": "W-16",
+                        "recipe": "W-34",
+                        "passage": "and press the blue",
                         "related": [
-                            "W-34"
+                            "W-16"
                         ],
                         "guide": true
                     },
-                    "starterRank": 11
+                    "starterRank": 13
                 },
                 {
                     "id": "enable-bible",
@@ -191,6 +448,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
+                        "passage": "An installed Bible has no on/off switch",
                         "guide": true
                     }
                 },
@@ -207,11 +465,157 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
+                        "passage": "Import a Bible XML file with the form",
                         "related": [
                             "W-33"
                         ],
                         "find": "Import XML File",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "import-xml-url",
+                    "text": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
+                    "kind": "howto",
+                    "keywords": [
+                        "import",
+                        "xml",
+                        "url",
+                        "Khmer",
+                        "locale",
+                        "number mapping",
+                        "book names",
+                        "book name list from a website",
+                        "selected language",
+                        "Bible.com chapter link"
+                    ],
+                    "template": true,
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": [
+                            "owa_bible_xml"
+                        ],
+                        "find": "Import XML File"
+                    }
+                },
+                {
+                    "id": "import-bible-language",
+                    "text": "Import a Bible in \"Khmer\"",
+                    "kind": "howto",
+                    "template": true,
+                    "keywords": [
+                        "install",
+                        "download",
+                        "language",
+                        "country",
+                        "khmer",
+                        "cambodia",
+                        "translation",
+                        "add bible",
+                        "want a bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": [
+                            "owa_bible_xml"
+                        ]
+                    }
+                },
+                {
+                    "id": "import-bible-ask-language",
+                    "text": "Can you install a Bible for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "install",
+                        "new bible",
+                        "add translation",
+                        "get a bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": [
+                            "owa_bible_xml"
+                        ]
+                    }
+                },
+                {
+                    "id": "import-bible-kjv",
+                    "text": "Do I need the KJV Bible before importing another one?",
+                    "kind": "howto",
+                    "keywords": [
+                        "kjv",
+                        "king james",
+                        "provided",
+                        "first",
+                        "before import",
+                        "create kjv",
+                        "recommended"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "passage": "offered the one Open Worship provides",
+                        "tools": [
+                            "owa_bible_xml"
+                        ]
+                    }
+                },
+                {
+                    "id": "import-bible-source",
+                    "text": "Where do the Bibles the assistant installs come from?",
+                    "kind": "what",
+                    "keywords": [
+                        "copyright",
+                        "publisher",
+                        "permission",
+                        "license",
+                        "legal",
+                        "who made",
+                        "I agree",
+                        "allowed to use"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "passage": "Before it asks you anything, it says"
+                    }
+                },
+                {
+                    "id": "remove-bible-xml",
+                    "text": "How do I remove a Bible translation I installed?",
+                    "kind": "howto",
+                    "keywords": [
+                        "delete",
+                        "remove",
+                        "uninstall",
+                        "bible",
+                        "translation",
+                        "trash"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": [
+                            "owa_bible_xml"
+                        ]
+                    }
+                },
+                {
+                    "id": "bible-xml-source",
+                    "text": "Where did a Bible I imported come from?",
+                    "kind": "where",
+                    "keywords": [
+                        "source",
+                        "link",
+                        "url",
+                        "note",
+                        "downloaded from",
+                        "imported from",
+                        "origin"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "tools": [
+                            "owa_bible_xml"
+                        ],
+                        "passage": "Where an imported Bible came from"
                     }
                 },
                 {
@@ -234,12 +638,10 @@
             ]
         },
         {
-            "id": "others",
-            "label": "Accounts, AI and extras",
+            "id": "ai",
+            "label": "AI assistants",
             "recipes": [
-                "W-35",
-                "W-42",
-                "W-21"
+                "W-42"
             ],
             "questions": [
                 {
@@ -255,12 +657,49 @@
                         "ai providers",
                         "kimi",
                         "moonshot",
+                        "bedrock",
+                        "aws",
+                        "amazon",
+                        "region",
                         "what is the key for"
                     ],
                     "resources": {
                         "recipe": "W-42",
                         "find": "AI Providers",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "custom-ai-server",
+                    "text": "How do I use my own LM Studio or Ollama with the assistant?",
+                    "kind": "howto",
+                    "keywords": [
+                        "lm studio",
+                        "ollama",
+                        "llama.cpp",
+                        "llamafile",
+                        "localai",
+                        "jan",
+                        "gpt4all",
+                        "vllm",
+                        "sglang",
+                        "litellm",
+                        "local model",
+                        "local llm",
+                        "own server",
+                        "custom server",
+                        "context length",
+                        "sees pictures",
+                        "base url",
+                        "address corrected",
+                        "wrong address",
+                        "11434",
+                        "on my network"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Your own AI server answers too",
+                        "find": "Add server"
                     }
                 },
                 {
@@ -277,10 +716,60 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
+                        "passage": "turns all of this on or off",
                         "find": "Enable AI features",
                         "guide": true
                     }
                 },
+                {
+                    "id": "auto-play-bible-audio",
+                    "text": "Where do I turn automatic Bible audio on?",
+                    "kind": "howto",
+                    "keywords": [
+                        "auto play audio",
+                        "automatic bible audio",
+                        "audio ai",
+                        "reader sound",
+                        "openai voice"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Play Bible audio automatically.",
+                        "find": "Auto Play Audio AI when available",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "fold-settings-section",
+                    "text": "How do I fold or open a section in Settings?",
+                    "kind": "howto",
+                    "keywords": [
+                        "collapse",
+                        "expand",
+                        "fold",
+                        "unfold",
+                        "hide section",
+                        "arrow beside the title",
+                        "key box is gone",
+                        "add server is missing",
+                        "section is closed"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Every part of the AI Providers and Others pages of Settings folds",
+                        "find": "AI Providers"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "others",
+            "label": "Accounts & extras",
+            "recipes": [
+                "W-35",
+                "W-21"
+            ],
+            "questions": [
                 {
                     "id": "songselect-signin",
                     "text": "How do I sign in to CCLI SongSelect?",
@@ -308,13 +797,15 @@
                         "download tools",
                         "yt-dlp",
                         "ffmpeg",
+                        "cloudflared",
+                        "tunnel",
                         "install pack",
                         "missing"
                     ],
                     "resources": {
-                        "recipe": "W-35",
+                        "recipe": "W-21",
                         "related": [
-                            "W-21"
+                            "W-35"
                         ],
                         "find": "Extra Binaries"
                     }

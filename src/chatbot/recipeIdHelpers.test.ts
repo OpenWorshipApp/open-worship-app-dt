@@ -16,6 +16,24 @@ describe('scrubAnswerRecipeIds', () => {
         const text = 'Click the **Background** bar at the bottom.';
         expect(scrubAnswerRecipeIds(text, TITLES)).toBe(text);
     });
+    it('reads an id written with a non-breaking hyphen, as a model types it', () => {
+        // Verbatim, qwen3.5-9b, 2026-10-10: "W‑42" with U+2011, which walked
+        // past a plain-hyphen pattern and reached the user.
+        expect(
+            scrubAnswerRecipeIds(
+                'What you shared is text from the app’s help guide ' +
+                    '(W‑42), not a screenshot.',
+                TITLES,
+            ),
+        ).toBe(
+            'What you shared is text from the app’s help guide, not a ' +
+                'screenshot.',
+        );
+        expect(scrubAnswerRecipeIds('See W–08 for the steps.', TITLES)).toBe(
+            'See the guide page “Set the background (color / image / video ' +
+                '/ web)” for the steps.',
+        );
+    });
     it('turns the id that opened a real answer into the page title', () => {
         // Verbatim, Claude Sonnet 5, 2026-09-08, "Where is the button to
         // change the background?" -- two rounds, one search, no page opened.

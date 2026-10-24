@@ -61,7 +61,7 @@ function PptxSlideIframeContentComp({
     );
 }
 
-function PptxSlideRenderContentComp({
+export function PptxSlideRenderContentComp({
     html,
     htmlFilePath,
     width,

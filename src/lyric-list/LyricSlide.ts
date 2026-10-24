@@ -4,6 +4,10 @@ import { DragTypeEnum } from '../helper/DragInf';
 import { bringDomToCenterView, cloneJson } from '../helper/helpers';
 import { type AnyObjectType } from '../helper/typeHelpers';
 import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
+import {
+    genLyricRepeatSuffix,
+    type LyricRepeatType,
+} from './lyricStructureHelpers';
 
 // Kept here, not in `./lyricHelpers`, so this leaf data class stays free of the
 // lyric helper graph (`OpenLyric`, `Lyric`, the stage classes). Importing the
@@ -30,26 +34,32 @@ export default class LyricSlide extends Slide {
     // Position in the song's own structure, which is what the lyric previewer
     // counts in. `-1` for a slide that has no verse of its own to point back at
     // — the three extra slides (First/Info/None) and the attachment slides.
+    // Every copy of a repeated step (`Cx3`) shares its step's index.
     openLyricIndex: number;
+    // Which play of a repeated step (`Cx3`) this slide is; `null` otherwise.
+    openLyricRepeat: LyricRepeatType | null;
 
     constructor(
         filePath: string,
         json: LyricPropsType,
         openLyricKey: string,
         openLyricIndex = -1,
+        openLyricRepeat: LyricRepeatType | null = null,
     ) {
         super(filePath, json as any);
         this.openLyricKey = openLyricKey;
         this.openLyricIndex = openLyricIndex;
+        this.openLyricRepeat = openLyricRepeat;
         // Written straight into the json `super()` has just cloned: the `type`
         // and `name` setters would each deep-clone it again, and a whole song
         // builds one of these per verse per stage pane.
         const originalJson = this._originalJson as any;
         originalJson.type = LYRIC_SLIDE_TYPE_KEY;
+        const repeatSuffix = genLyricRepeatSuffix(openLyricRepeat);
         originalJson.name =
             openLyricIndex < 0
                 ? openLyricKey
-                : `(${openLyricIndex + 1})-${openLyricKey}`;
+                : `(${openLyricIndex + 1})-${openLyricKey}${repeatSuffix}`;
     }
 
     get extraClassnames() {

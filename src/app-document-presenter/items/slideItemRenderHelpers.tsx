@@ -1,6 +1,5 @@
 import { useCallback, type CSSProperties } from 'react';
 
-import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import type { OnScreenListType } from '../../_screen/managers/varySlideOnScreenHelpers';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderBackgroundWebIframeComp from '../../background/RenderBackgroundWebIframeComp';
@@ -211,7 +210,6 @@ export function genChooseColorNoteOption(
                     colorCode,
                     (newColorCode) => {
                         setColorNoteFilePathSetting(filePath, id, newColorCode);
-                        ScreenVaryAppDocumentManager.fireUpdateEvent();
                     },
                     event,
                 );

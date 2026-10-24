@@ -12,10 +12,12 @@ import {
     fsListDirents,
     fsReadFile,
     fsWriteFile,
-    getDesktopPath,
+    getDefaultDataDirPath,
     getFileDotExtension,
     pathJoin,
+    pathResolve,
     repairDataDirLinksInText,
+    toPathCompareKey,
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
@@ -36,9 +38,7 @@ import FileSource from '../../helper/FileSource';
 import { escapeHtmlText } from '../../helper/sanitizeHelpers';
 
 export function getDefaultDataDir() {
-    const desktopDirPath = getDesktopPath();
-    const dirPath = pathJoin(desktopDirPath, 'open-worship-data');
-    return dirPath;
+    return getDefaultDataDirPath();
 }
 
 export async function removePathForChildDir() {
@@ -58,7 +58,18 @@ export function checkIsUsedDataDir(dirPath: string) {
     return fsCheckDirExist(pathJoin(dirPath, LOCAL_STORAGE_FOLDER_NAME));
 }
 
+// The parent folders this window has asked about already. Choosing a new
+// folder asks, and the Path Settings page that renders on it next checks
+// again and found no child folder either -- so a No had to be given twice
+// (React's second mount in development made it three).
+const childDirAskedKeySet = new Set<string>();
+
+function toChildDirAskedKey(parentDirPath: string) {
+    return toPathCompareKey(pathResolve(parentDirPath));
+}
+
 export async function selectPathForChildDir(parentDirPath: string) {
+    childDirAskedKeySet.add(toChildDirAskedKey(parentDirPath));
     const isOk = await showAppConfirm(
         tran('Set according paths'),
         `${tran('Create and use the standard folders (Documents, Videos, Images and the rest) inside')} ` +
@@ -109,6 +120,23 @@ export async function checkShouldSelectChildDir() {
         return isValid;
     });
     return !isSomeValid;
+}
+
+/**
+ * The question about the standard folders, when the data folder has none of
+ * them set -- once per folder in this window, whatever the answer was. The
+ * key is taken before anything is awaited, so two calls racing (a choice and
+ * the page it reloads into) ask one question.
+ */
+export async function selectPathForChildDirIfNeeded(parentDirPath: string) {
+    const key = toChildDirAskedKey(parentDirPath);
+    if (childDirAskedKeySet.has(key)) {
+        return;
+    }
+    childDirAskedKeySet.add(key);
+    if (await checkShouldSelectChildDir()) {
+        await selectPathForChildDir(parentDirPath);
+    }
 }
 
 export async function selectDefaultDataDirName(
@@ -234,6 +262,58 @@ function checkIsLinkRepairFile(fileFullName: string, isSettingsDir: boolean) {
 }
 
 /**
+ * Every one of the app's own text files in a data folder -- documents, songs,
+ * run sheets, notes, settings and editing histories -- handed to `handler`
+ * with its path, one at a time. Folders the app downloads or rebuilds by
+ * itself, hidden names and files over 5 MB are left out. An unreadable folder
+ * or a failing handler skips that one, not the walk.
+ */
+export async function forEachDataDirTextFile(
+    dataDirPath: string,
+    handler: (filePath: string) => Promise<void>,
+) {
+    const settingsDirPath = pathJoin(dataDirPath, LOCAL_STORAGE_FOLDER_NAME);
+    const skippedDirNames = genLinkRepairSkippedDirNames();
+    const queue = [dataDirPath];
+    while (queue.length > 0) {
+        const dirPath = queue.shift() as string;
+        const direntList = await fsListDirents(dirPath).catch((error) => {
+            handleError(error);
+            return [];
+        });
+        for (const { name, isFile, isDirectory } of direntList) {
+            const entryPath = pathJoin(dirPath, name);
+            if (checkIsHiddenName(name)) {
+                continue;
+            }
+            if (isDirectory) {
+                if (dirPath !== dataDirPath || !skippedDirNames.has(name)) {
+                    queue.push(entryPath);
+                }
+                continue;
+            }
+            if (
+                !isFile ||
+                !checkIsLinkRepairFile(name, dirPath === settingsDirPath)
+            ) {
+                continue;
+            }
+            try {
+                if (
+                    (await fsGetFileSize(entryPath)) >
+                    LINK_REPAIR_MAX_FILE_BYTES
+                ) {
+                    continue;
+                }
+                await handler(entryPath);
+            } catch (error) {
+                handleError(error);
+            }
+        }
+    }
+}
+
+/**
  * Point every link in the data folder that names an OLD location of it --
  * saved before `$DATA_DIR_PATH` existed, or while the folder lived on another
  * computer -- at the folder where it is now (`repairDataDirLinksInText`). A
@@ -266,59 +346,22 @@ export async function repairDataDirLinks() {
         }
         return isThere;
     };
-    const settingsDirPath = pathJoin(dataDirPath, LOCAL_STORAGE_FOLDER_NAME);
-    const skippedDirNames = genLinkRepairSkippedDirNames();
     const result = { linkCount: 0, fileCount: 0 };
-    const queue = [dataDirPath];
-    while (queue.length > 0) {
-        const dirPath = queue.shift() as string;
-        // An unreadable folder is skipped, not the whole repair.
-        const direntList = await fsListDirents(dirPath).catch((error) => {
-            handleError(error);
-            return [];
-        });
-        for (const { name, isFile, isDirectory } of direntList) {
-            const entryPath = pathJoin(dirPath, name);
-            if (checkIsHiddenName(name)) {
-                continue;
-            }
-            if (isDirectory) {
-                if (dirPath !== dataDirPath || !skippedDirNames.has(name)) {
-                    queue.push(entryPath);
-                }
-                continue;
-            }
-            if (
-                !isFile ||
-                !checkIsLinkRepairFile(name, dirPath === settingsDirPath)
-            ) {
-                continue;
-            }
-            try {
-                if (
-                    (await fsGetFileSize(entryPath)) >
-                    LINK_REPAIR_MAX_FILE_BYTES
-                ) {
-                    continue;
-                }
-                const repaired = await repairDataDirLinksInText(
-                    await fsReadFile(entryPath),
-                    dataDirPath,
-                    childNames,
-                    checkIsThere,
-                );
-                if (repaired.count === 0) {
-                    continue;
-                }
-                await fsWriteFile(entryPath, repaired.text);
-                FileSource.forgetCachedData(entryPath);
-                result.linkCount += repaired.count;
-                result.fileCount += 1;
-            } catch (error) {
-                handleError(error);
-            }
+    await forEachDataDirTextFile(dataDirPath, async (filePath) => {
+        const repaired = await repairDataDirLinksInText(
+            await fsReadFile(filePath),
+            dataDirPath,
+            childNames,
+            checkIsThere,
+        );
+        if (repaired.count === 0) {
+            return;
         }
-    }
+        await fsWriteFile(filePath, repaired.text);
+        FileSource.forgetCachedData(filePath);
+        result.linkCount += repaired.count;
+        result.fileCount += 1;
+    });
     return result;
 }
 

@@ -30,7 +30,7 @@ async function loadModule(isDev: boolean) {
     return await import('./appHooks');
 }
 
-describe('debuggerHelpers', () => {
+describe('appHooks', () => {
     let container: HTMLDivElement | null = null;
     let root: Root | null = null;
 

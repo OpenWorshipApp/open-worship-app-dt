@@ -1,3 +1,13 @@
+---
+name: renderer-entry-static-closure
+description: "One broad import from a renderer entry or boot.ts put document, screen and React-server code in every window's static closure; startup imports leaf helpers only (EN-37, fixed 2026-09-23)"
+metadata:
+  node_type: memory
+  type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:01:18.974Z
+---
+
 # Renderer entry static closure — fixed by leaf startup helpers
 
 Date: 2026-09-23. EN-37.

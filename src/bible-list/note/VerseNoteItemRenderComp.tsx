@@ -165,7 +165,28 @@ export default function VerseNoteItemRenderComp({
                     className={
                         'app-verse-note-item__head app-caught-hover-pointer'
                     }
+                    role="button"
+                    tabIndex={0}
+                    // The only way to fold a verse's marks open, and it was a
+                    // bare div: Tab never reached it and a screen reader could
+                    // not tell it opened anything. Same contract as the Notes
+                    // file header (`NoteFileComp`).
+                    aria-expanded={isOpened}
+                    aria-label={noteItem.title}
                     onClick={handleToggling}
+                    onKeyDown={(event) => {
+                        // Only a key pressed ON the header, so anything
+                        // focusable inside it keeps its own keys.
+                        if (event.target !== event.currentTarget) {
+                            return;
+                        }
+                        if (event.key !== 'Enter' && event.key !== ' ') {
+                            return;
+                        }
+                        // Otherwise Space scrolls the panel out from under it.
+                        event.preventDefault();
+                        handleToggling();
+                    }}
                 >
                     <i
                         className={

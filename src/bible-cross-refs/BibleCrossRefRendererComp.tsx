@@ -22,6 +22,7 @@ import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicAva
 import { tran } from '../lang/langHelpers';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';
+import { toSingleChapterTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 
 // Says a model wrote the text below, and opens the page that explains what that
 // means for accuracy. `bi-cpu` rather than the lightbulb it shared with the
@@ -78,8 +79,15 @@ export default function BibleCrossRefRendererComp({
         <BibleKeyContext.Provider value={bibleKey}>
             {verses.map((verse, i) => {
                 const cloneBibleItem = bibleItem.clone();
-                cloneBibleItem.target.verseStart = verse;
-                cloneBibleItem.target.verseEnd = verse;
+                // A whole new target, not its verses rewritten in place: a
+                // cross-chapter passage would keep its `chapterEnd` and turn
+                // `John 1:2-3:4` into `John 1:2-3:2`.
+                cloneBibleItem.target = toSingleChapterTarget(
+                    book,
+                    chapter,
+                    verse,
+                    verse,
+                );
                 return (
                     <Fragment key={verse}>
                         <SelectedBibleVerseHeaderComp

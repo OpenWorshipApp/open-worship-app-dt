@@ -27,8 +27,11 @@ export type LookAheadLayoutType = {
     sideScale: number;
 };
 
-// The gap between boxes, as a share of the slide's content height.
-const GAP_RATIO = 0.02;
+// The gap between boxes, as a share of the slide's content height. None: the
+// boxes touch, so the slides get every pixel of the stage screen (asked for by
+// the user, 2026-10-06: "I still don't [want] space there, remove it"). Each
+// box's frame still marks where one slide ends and the next begins.
+const GAP_RATIO = 0;
 // An upcoming box is this much of the current one — small enough that the
 // current section stays the thing the eye goes to. It puts the current slide
 // at ~60% of the full slide and an upcoming one at ~38%, as sketched.
@@ -154,12 +157,16 @@ export type LookAheadArrangementType = {
     isDimmed: boolean;
 };
 
-// The current slide on top, the slides at `offsets` in a row under it.
+// The current slide on top, the slides at `offsets` in a row under it, at
+// full opacity: faded, a coming slide was hard to read from the stage, and
+// the user asked for it at full opacity, songs and documents alike
+// (2026-10-06: "make the next coming slide to be full opacity, no need
+// transparency").
 export function genRowArrangement(offsets: number[]): LookAheadArrangementType {
     return {
         offsets,
         genLayout: (bounds) => genLookAheadLayout(bounds, offsets.length),
-        isDimmed: true,
+        isDimmed: false,
     };
 }
 
@@ -169,6 +176,17 @@ export const PREVIOUS_NEXT_ARRANGEMENT: LookAheadArrangementType = {
     // Full contrast: faded, the previous and next slides were hard to read.
     isDimmed: false,
 };
+
+export const LOOK_AHEAD_BOX_CLASSNAME = 'lyric-look-ahead-box';
+const LOOK_AHEAD_BOX_END = '</div></div>';
+// The two tags `genLookAheadBoxHtml` opens. Anchored, so a slide's markup --
+// hundreds of kilobytes of it -- is never searched.
+const LOOK_AHEAD_BOX_PATTERN = new RegExp(
+    `^<div class="${LOOK_AHEAD_BOX_CLASSNAME}" style="[^"]*?` +
+        String.raw`(?: opacity: ([\d.e+-]+);)?"><div style="[^"]*?` +
+        String.raw`transform: scale\(([\d.e+-]+)\);[^"]*">`,
+);
+const LOOK_AHEAD_FRAME_START = '<div class="lyric-look-ahead-frame"';
 
 /**
  * A slide's html shown in a smaller box, drawn EXACTLY as it was laid out at
@@ -193,13 +211,39 @@ export function genLookAheadBoxHtml(
 ) {
     const opacityStyle = opacity < 1 ? ` opacity: ${opacity};` : '';
     return (
-        `<div class="lyric-look-ahead-box" style="position: relative; ` +
+        `<div class="${LOOK_AHEAD_BOX_CLASSNAME}" style="position: relative; ` +
         `width: 100%; height: 100%; overflow: hidden;${opacityStyle}">` +
         `<div style="position: absolute; left: 0; top: 0; ` +
         `width: ${width}px; height: ${height}px; ` +
         `transform: scale(${scale}); transform-origin: 0 0;">` +
-        `${html}</div></div>`
+        `${html}${LOOK_AHEAD_BOX_END}`
     );
+}
+
+/**
+ * `genLookAheadBoxHtml` read back: the slide's own html, and the `scale` and
+ * `opacity` its box shows it at. `null` for markup that is not such a box.
+ *
+ * What a stage screen moves a verse by: the same verse in the coming box and
+ * in the current one is the same html in two boxes, so it is told to be the
+ * same by its html alone and taken from one to the other by its scale
+ * (`lyricLookAheadDomHelpers`).
+ */
+export function readLookAheadBoxHtml(boxHtml: string) {
+    const match = LOOK_AHEAD_BOX_PATTERN.exec(boxHtml);
+    if (match === null || !boxHtml.endsWith(LOOK_AHEAD_BOX_END)) {
+        return null;
+    }
+    const scale = Number(match[2]);
+    const opacity = match[1] === undefined ? 1 : Number(match[1]);
+    if (!Number.isFinite(scale) || !Number.isFinite(opacity)) {
+        return null;
+    }
+    return {
+        html: boxHtml.slice(match[0].length, -LOOK_AHEAD_BOX_END.length),
+        scale,
+        opacity,
+    };
 }
 
 // The frame's line, as a share of the slide's content height: ~4px on a
@@ -211,6 +255,19 @@ const FRAME_RADIUS_RATIO = 0.012;
 const FRAME_COLOR = 'rgba(128, 128, 128, 0.7)';
 
 /**
+ * The frame's line width, corner radius and colour for a slide `height` px
+ * tall. Shared with the document stages (`documentStageHelpers`), which draw
+ * the same frame around the same boxes without going through html.
+ */
+export function getLookAheadFrameMetrics(height: number) {
+    return {
+        width: Math.max(1, Math.round(height * FRAME_WIDTH_RATIO)),
+        radius: Math.round(height * FRAME_RADIUS_RATIO),
+        color: FRAME_COLOR,
+    };
+}
+
+/**
  * The outline drawn around a box, so the box is THERE even when the slide in
  * it is blank (None) — a singer seeing an empty dim rectangle knows a blank
  * slide comes next, where no rectangle at all reads as "nothing more".
@@ -219,15 +276,28 @@ export function genLookAheadFrameHtml(
     bounds: LookAheadBoundsType,
     opacity = 1,
 ) {
-    const width = Math.max(1, Math.round(bounds.height * FRAME_WIDTH_RATIO));
-    const radius = Math.round(bounds.height * FRAME_RADIUS_RATIO);
+    const { width, radius } = getLookAheadFrameMetrics(bounds.height);
     const opacityStyle = opacity < 1 ? ` opacity: ${opacity};` : '';
     return (
-        `<div class="lyric-look-ahead-frame" style="width: 100%; ` +
+        `${LOOK_AHEAD_FRAME_START} style="width: 100%; ` +
         `height: 100%; box-sizing: border-box; ` +
         `border: ${width}px solid ${FRAME_COLOR}; ` +
         `border-radius: ${radius}px;${opacityStyle}"></div>`
     );
+}
+
+/**
+ * Whether `items` are a look-ahead slide's -- one `genLookAheadItemsList`
+ * laid out. Told by its frames: every such slide has the current box's, and
+ * no other slide has one.
+ */
+export function checkIsLookAheadItems(items: object[]) {
+    return items.some((item) => {
+        const { html } = item as { html?: unknown };
+        return (
+            typeof html === 'string' && html.startsWith(LOOK_AHEAD_FRAME_START)
+        );
+    });
 }
 
 // The few fields of a canvas item this layout moves; everything else rides

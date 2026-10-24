@@ -9,7 +9,7 @@ const {
     fsCheckDirExistMock,
     fsCreateDirMock,
     fsExistSyncMock,
-    getDesktopPathMock,
+    getDefaultDataDirPathMock,
     getSelectedParentDirectoryMock,
     getSettingMock,
     handleErrorMock,
@@ -17,7 +17,10 @@ const {
     setSettingMock,
     showAppConfirmMock,
     showSimpleToastMock,
+    tree,
 } = vi.hoisted(() => ({
+    // dirPath -> [name, size | 'dir'][]
+    tree: new Map<string, [string, number | 'dir'][]>(),
     appProviderMock: {
         pathUtils: {
             join: vi.fn((...parts: string[]) => parts.join('/')),
@@ -31,7 +34,7 @@ const {
     fsCheckDirExistMock: vi.fn(),
     fsCreateDirMock: vi.fn(),
     fsExistSyncMock: vi.fn(),
-    getDesktopPathMock: vi.fn(() => '/desktop'),
+    getDefaultDataDirPathMock: vi.fn(() => '/home/.owa/open-worship-data'),
     getSelectedParentDirectoryMock: vi.fn(),
     getSettingMock: vi.fn(),
     handleErrorMock: vi.fn(),
@@ -54,8 +57,28 @@ vi.mock('../../server/fileHelpers', () => ({
     fsCheckDirExist: fsCheckDirExistMock,
     fsCreateDir: fsCreateDirMock,
     fsExistSync: fsExistSyncMock,
-    getDesktopPath: getDesktopPathMock,
+    getDefaultDataDirPath: getDefaultDataDirPathMock,
     pathJoin: pathJoinMock,
+    pathResolve: (dirPath: string) => dirPath,
+    toPathCompareKey: (dirPath: string) => dirPath.toLowerCase(),
+    checkIsHiddenName: (name: string) => name.startsWith('.'),
+    getFileDotExtension: (name: string) => name.slice(name.lastIndexOf('.')),
+    fsListDirents: async (dirPath: string) => {
+        return (tree.get(dirPath) ?? []).map(([name, size]) => {
+            return {
+                name,
+                isFile: size !== 'dir',
+                isDirectory: size === 'dir',
+            };
+        });
+    },
+    fsGetFileSize: async (filePath: string) => {
+        const slashIndex = filePath.lastIndexOf('/');
+        const entry = tree
+            .get(filePath.slice(0, slashIndex))
+            ?.find(([name]) => name === filePath.slice(slashIndex + 1));
+        return entry?.[1];
+    },
 }));
 
 vi.mock('../../toast/toastHelpers', () => ({
@@ -67,6 +90,12 @@ vi.mock('../../lang/langHelpers', () => ({
 }));
 
 vi.mock('../../helper/constants', () => ({
+    appManagedDataDirNames: {
+        EXTRA_BIN: 'extra-bin',
+        BIBLE_DATA: 'bibles-data',
+        LOOKUP_DATA: 'lookup-data',
+        AGENT_BACKUP: 'agent-backups',
+    },
     defaultDataDirNames: {
         APP_DOCUMENT: 'documents',
         LYRIC: 'lyrics',
@@ -96,6 +125,8 @@ vi.mock('../../helper/settingHelpers', () => ({
 }));
 
 vi.mock('./appLocalStorage', () => ({
+    LOCAL_STORAGE_FOLDER_NAME: 'local-storage',
+    TMP_FILES_FOLDER_NAME: 'tmp-files',
     appLocalStorage: {
         getSelectedParentDirectory: getSelectedParentDirectoryMock,
     },
@@ -111,9 +142,11 @@ import {
     BaseDirFileSource,
     checkShouldSelectChildDir,
     ensureDataDirectory,
+    forEachDataDirTextFile,
     getDefaultDataDir,
     selectDefaultDataDirName,
     selectPathForChildDir,
+    selectPathForChildDirIfNeeded,
 } from './directoryHelpers';
 
 describe('directoryHelpers', () => {
@@ -127,12 +160,48 @@ describe('directoryHelpers', () => {
         dirSourceCheckIsSameDirPathMock.mockReturnValue(true);
     });
 
-    test('builds the default data directory path', () => {
-        expect(getDefaultDataDir()).toBe('/desktop/open-worship-data');
-        expect(pathJoinMock).toHaveBeenCalledWith(
-            '/desktop',
-            'open-worship-data',
-        );
+    test('walks the text files of the app and nothing it rebuilds by itself', async () => {
+        tree.clear();
+        tree.set('/data', [
+            ['.owa-data-folder.json', 10],
+            ['notes.txt', 10],
+            ['big.json', 6 * 1024 * 1024],
+            ['local-storage', 'dir'],
+            ['documents', 'dir'],
+            ['extra-bin', 'dir'],
+            ['.hidden', 'dir'],
+        ]);
+        tree.set('/data/local-storage', [['select-dir-app-document', 10]]);
+        tree.set('/data/documents', [
+            ['song.ows', 10],
+            ['picture.png', 10],
+            ['song.ows.histories', 'dir'],
+            ['extra-bin', 'dir'],
+        ]);
+        tree.set('/data/documents/song.ows.histories', [['1', 10]]);
+        tree.set('/data/documents/extra-bin', [['kept.json', 10]]);
+        tree.set('/data/extra-bin', [['skipped.json', 10]]);
+        tree.set('/data/.hidden', [['skipped.json', 10]]);
+        const seen: string[] = [];
+        await forEachDataDirTextFile('/data', async (filePath) => {
+            seen.push(filePath);
+            if (filePath.endsWith('song.ows')) {
+                throw new Error('unreadable');
+            }
+        });
+        expect(seen.sort()).toEqual([
+            '/data/documents/extra-bin/kept.json',
+            '/data/documents/song.ows',
+            '/data/documents/song.ows.histories/1',
+            '/data/local-storage/select-dir-app-document',
+        ]);
+        // One failing file is reported, not the end of the walk.
+        expect(handleErrorMock).toHaveBeenCalledOnce();
+    });
+
+    test('builds the default data directory path off the Desktop', () => {
+        expect(getDefaultDataDir()).toBe('/home/.owa/open-worship-data');
+        expect(getDefaultDataDirPathMock).toHaveBeenCalledOnce();
     });
 
     test('returns early when selecting child directories is cancelled', async () => {
@@ -193,6 +262,27 @@ describe('directoryHelpers', () => {
             'translated:Creating Default Folder',
             'translated:Fail to create folder "/parent"',
         );
+    });
+
+    test('asks about the standard folders once per data folder, whatever the answer', async () => {
+        // None of the child folders is there.
+        fsCheckDirExistMock.mockResolvedValue(false);
+        showAppConfirmMock.mockResolvedValue(false);
+        // Choosing the folder asks; the page that renders on it next, and
+        // React's second mount in development, must not ask again.
+        await selectPathForChildDir('/Fresh-A');
+        await selectPathForChildDirIfNeeded('/fresh-a');
+        await Promise.all([
+            selectPathForChildDirIfNeeded('/fresh-b'),
+            selectPathForChildDirIfNeeded('/fresh-b'),
+        ]);
+        expect(showAppConfirmMock).toHaveBeenCalledTimes(2);
+        expect(showAppConfirmMock.mock.calls[0][1]).toContain('/Fresh-A');
+        expect(showAppConfirmMock.mock.calls[1][1]).toContain('/fresh-b');
+        // A folder that already has its child folders is not asked about.
+        fsCheckDirExistMock.mockResolvedValue(true);
+        await selectPathForChildDirIfNeeded('/fresh-c');
+        expect(showAppConfirmMock).toHaveBeenCalledTimes(2);
     });
 
     test('checks whether any child directory has already been selected', async () => {

@@ -1,46 +1,49 @@
-export default class CountdownController {
-    readonly divContainer: HTMLDivElement;
-    readonly targetDateTime: Date;
-    isRunning = true;
+import { setClockDataset, setClockText } from './clockTextHelpers';
+import TimerClockController, {
+    type TimerClockTimingType,
+} from './TimerClockController';
+import {
+    toCountdownMillisecondToNextChange,
+    toCountdownRemainingMillisecond,
+    toCountdownShownSecond,
+} from './timerStateHelpers';
 
-    constructor(divContainer: HTMLDivElement, targetDateTime: Date) {
-        this.divContainer = divContainer;
-        this.targetDateTime = targetDateTime;
-        this.setHtml(false);
+type CountdownTimingType = TimerClockTimingType & {
+    durationMillisecond?: number;
+};
+
+/**
+ * Counts down, and once the time is up counts UP: the digits then read how
+ * far over it is, behind a `+`, so a speaker can see by how much they ran on.
+ * The box's `data-time-diff` stays at "0" for the whole overtime, which is
+ * what lets the "time is up" flash run its five times once and then rest red
+ * rather than restart.
+ */
+export default class CountdownController extends TimerClockController<CountdownTimingType> {
+    /** What it reads now, in milliseconds; negative once it is over. */
+    get remainingMillisecond() {
+        return toCountdownRemainingMillisecond(this.timing);
     }
 
+    /** What is left, never below zero. */
     get timeDiff() {
-        return Math.max(0, this.targetDateTime.getTime() - Date.now());
+        return Math.max(0, this.remainingMillisecond);
     }
 
-    get hours() {
-        return Math.floor(
-            (this.timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-        );
+    get isOver() {
+        return this.remainingMillisecond <= 0;
     }
 
-    get minutes() {
-        return Math.floor((this.timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+    get shownSecond() {
+        return toCountdownShownSecond(this.remainingMillisecond).second;
     }
 
-    get seconds() {
-        return Math.floor((this.timeDiff % (1000 * 60)) / 1000);
+    get millisecondToNextChange() {
+        return toCountdownMillisecondToNextChange(this.remainingMillisecond);
     }
 
-    getDivChild(divId: string) {
-        return this.divContainer.querySelector(`#${divId}`) as HTMLDivElement;
-    }
-
-    get divHour() {
-        return this.getDivChild('hour');
-    }
-
-    get divMinute() {
-        return this.getDivChild('minute');
-    }
-
-    get divSecond() {
-        return this.getDivChild('second');
+    get divSign() {
+        return this.divContainer.querySelector('#sign') as HTMLElement | null;
     }
 
     get divBox() {
@@ -49,54 +52,25 @@ export default class CountdownController {
         ) as HTMLDivElement;
     }
 
-    toTimeString(n: number) {
-        return ('0' + n.toString()).slice(-2);
+    protected setExtraHtml(isReset: boolean) {
+        // Whole seconds, not milliseconds: the only reader is the CSS rule for
+        // "0" (the alert), and a millisecond value rewrote the attribute -- and
+        // re-ran that selector -- on every tick.
+        setClockDataset(
+            this.divBox,
+            'timeDiff',
+            isReset ? '' : Math.ceil(this.timeDiff / 1000).toString(),
+        );
+        setClockText(
+            this.divSign,
+            !isReset && this.isOver && this.shownSecond > 0 ? '+' : '',
+        );
     }
 
-    get hourStr() {
-        return this.toTimeString(this.hours);
-    }
-
-    get minuteStr() {
-        return this.toTimeString(this.minutes);
-    }
-
-    get secondStr() {
-        return this.toTimeString(this.seconds);
-    }
-
-    start() {
-        const update = () => {
-            if (!this.isRunning) {
-                return;
-            }
-            if (this.timeDiff > 0) {
-                this.setHtml(false);
-                requestAnimationFrame(update);
-            } else {
-                this.stop();
-            }
-        };
-        requestAnimationFrame(update);
-    }
-
-    setHtml(isReset: boolean) {
-        this.divBox.dataset.timeDiff = Math.max(0, this.timeDiff).toString();
-        this.divHour.innerHTML = isReset ? '00' : this.hourStr;
-        this.divMinute.innerHTML = isReset ? '00' : this.minuteStr;
-        this.divSecond.innerHTML = isReset ? '00' : this.secondStr;
-    }
-
-    pause() {
-        this.isRunning = false;
-    }
-
-    stop() {
-        this.pause();
-        this.setHtml(true);
-    }
-
-    static init(divContainer: HTMLDivElement, targetDate: Date) {
-        return new this(divContainer, targetDate);
+    static init(
+        divContainer: HTMLDivElement,
+        timing: CountdownTimingType | Date,
+    ) {
+        return new this(divContainer, timing);
     }
 }

@@ -93,6 +93,11 @@ export abstract class AppDocumentSourceAbs {
 
     async preDelete() {
         await attachBackgroundManager.deleteMetaDataFile(this.filePath);
+        // Lazily: the slides preview's transitions are a presenter concern,
+        // and this base class is loaded by every document window.
+        const { slideTransitionManager } =
+            await import('../others/SlideTransitionManager');
+        await slideTransitionManager.deleteMetaDataFile(this.filePath);
     }
 
     // Fonts the document references that aren't installed on this system.

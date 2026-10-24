@@ -1,8 +1,11 @@
 ---
 name: screen-draw-feature
-description: Screen Draw overlay feature — scope, architecture, and how to extend to more FreeShow modes
+description: "Screen Draw overlay feature — scope, architecture, and how to extend to more FreeShow modes"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:10:48.665Z
 ---
 
 FreeShow-style "Draw" overlay on the screen output, driven from the presenter
@@ -43,7 +46,7 @@ legacy inline `history` form). Loaded in the constructor (`loadPersisted`);
 enable/disable + `receiveSyncScreen` sync/commit/clear) — NEVER per pointer-move
 — and is **trailing-debounced 500ms** (`saveAttempt = genTimeoutAttempt(500)`)
 so a burst collapses into one `fsWriteFileSync` off the pointer-up critical path;
-`delete()` flushes it immediately (`saveAttempt(fn, true)`). Writes gated to
+`delete()` cancels a pending write without running it (`saveAttempt(() => {}, true)`) and removes both setting keys — screen ids are reused. Writes gated to
 `appProvider.isPagePresenter` (settings are a shared file — output windows
 restore via the presenter's init re-sync, avoiding write races). The footer's
 `isDrawHandlersVisible` initializes from `screenDrawManager?.isDrawEnabled` (the
@@ -74,8 +77,10 @@ idempotent.
 
 **Keyboard:** the paint `<canvas>` is `tabIndex=0` (focused on pointer-down).
 Its `keydown` handler (presenter side only, while armed) does Ctrl+Z=undo,
-Ctrl+Shift+Z / Ctrl+Y=redo, and `stopPropagation()`s ALL keys so the app's
-`document.onkeydown` global shortcuts don't fire while the canvas is focused.
+Ctrl+Shift+Z / Ctrl+Y=redo, lets the draw panel's own shortcut keys through, and
+`stopPropagation()`s every other key only while a stroke is in progress
+(`currentStroke !== null`) — deliberately never on mere focus, which killed F5,
+the F6–F10 clear keys and slide navigation after a click-to-select.
 
 **Palette shortcuts (added 2026-07-21).** `src/_screen/managers/
 screenDrawShortcutHelpers.ts` is the single source of truth: `drawShortcutMap`
@@ -106,7 +111,7 @@ combos. Design points that matter:
   them so the buttons can show the keys, but a binding would be unreachable: the
   canvas keydown handler consumes Ctrl+Z / Ctrl+Y and `stopPropagation`s before
   `document.onkeydown` runs, and the hook only acts while that canvas is focused.
-- Panel buttons carry `onMouseDown={handleKeepCanvasFocus}` (preventDefault).
+- Panel buttons carry `onMouseDown={handleKeepOverlayFocus}` (preventDefault).
   Without it, clicking ANY palette button moved focus off the canvas, which both
   killed every shortcut and turned the user's next drag into a silent no-op
   re-select. The range/color inputs still take focus — they need the default
@@ -148,7 +153,7 @@ combos. Design points that matter:
 history (`history`/`historyIndex`, cap 50; shallow copies sharing immutable
 stroke refs). It's kept in LOCKSTEP across sync-group members: a finished stroke
 broadcasts a lightweight `{action:'commit'}` (no data — receivers snapshot their
-already-synced drawData), `clear` records an empty snapshot on receivers too,
+already-synced drawData), `clear` collapses the stack to before/after on BOTH sides (`collapseHistoryForClear`: one Undo restores what it wiped, nothing older),
 and `undo`/`redo` + `toSyncMessage` send the FULL history on the `'sync'` action
 (`history`+`historyIndex`). So undo/redo on any member affects all members, and a
 screen enabling later ADOPTS the full undo stack (answered "can history be shared
@@ -156,8 +161,8 @@ to newly enabled drawing" — yes). Buttons: undo/redo icons + icon-only eraser.
 
 **Group→output-window gotcha (fixed):** the `screenMessage` IPC is TARGETED —
 `electron/electronEventListener.ts` routes a presenter message only to
-`ElectronScreenController.getInstance(screenId)` (the ORIGIN screen's output
-window). So group-syncing to another member updates its presenter mini-screen
+`getScreenOutput(screenId)` (the ORIGIN screen's own output: its window, or its
+page on a virtual display). So group-syncing to another member updates its presenter mini-screen
 (in-process `syncScreenManagerGroup`) but NOT its output window. Fix: draw's
 `receiveSyncScreen` calls `forwardToOwnScreenOutput(data)` — presenter-only, a
 RAW `sendScreenMessage` (no `enableSyncGroup`, so the echo-guard flag stays set
@@ -175,7 +180,7 @@ quadratic-curve smoothing through sampled midpoints + `imageSmoothingQuality:
 'high'`. Backing-store resolution is per-canvas so quality is manager-level (NOT
 per-stroke like straight/3d/dots). Persisted per screen under shared key
 `draw-paint-quality-<screenId>` (read by BOTH presenter + output managers on load
-via `DRAW_QUALITY_PREFIX`, and by the panel's `useStateSettingBoolean`). Live
+via `DRAW_QUALITY_PREFIX`; the panel seeds from the manager — see Quality single-writer below). Live
 toggle: panel calls `setRenderQuality(bool)` → persists, `scheduleRender`
 (setupContainer resizes the backing store), and broadcasts a full `buildSyncAction`
 carrying `isHighQuality` so the output window + group members switch fidelity in
@@ -190,7 +195,7 @@ to ERASE instead of paint, so a drag rubs out any chunk of the drawn lines.
 Implemented as **just another stroke**, which is why it needed no new plumbing:
 `DrawPaintStrokeType.isEraser?` + `PaintToolType.isEraser?` (both OPTIONAL, so
 old persisted blobs and existing `setPaintTool` callers/tests still typecheck),
-and `drawStroke` sets `ctx.globalCompositeOperation = 'destination-out'` with an
+and `paintStroke` (`screenOverlayHelpers.ts`) sets `ctx.globalCompositeOperation = 'destination-out'` with an
 opaque style (only source ALPHA matters for destination-out; the stored color is
 irrelevant). The existing per-stroke `ctx.save()/restore()` resets the composite
 op, so no leakage into later strokes. It therefore rides the existing
@@ -211,7 +216,7 @@ begin/points/commit sync, undo/redo history, and v2 persistence for free.
   being replayed each frame — erasing raises render cost while lowering visible
   content. Only `Clear` actually reclaims. A fix means stroke-list compaction
   (dropping fully-covered strokes), which the current model has no geometry for.
-- The Opacity control is silently INERT while the eraser is armed: `drawStroke`
+- The Opacity control is silently INERT while the eraser is armed: `paintStroke`
   paints eraser paths fully opaque because only source alpha matters for
   `destination-out`. Honouring the stored alpha would give a soft/partial eraser
   (the stroke already carries the colour, unused) — deliberately not done, since
@@ -248,7 +253,7 @@ review flagged eager allocation vs the low-spec mandate. All keep behavior;
 - **Straight strokes keep 2 points.** `handlePointerMove` rubber-bands
   `stroke.points = [first, current]` for `isStraight && !isDots` (Dots needs
   every point — it draws a dot at each, and the `isDots` branch precedes
-  `isStraight` in `drawStroke`). Stops unbounded point accumulation + O(n²) IPC
+  `isStraight` in `paintStroke`). Stops unbounded point accumulation + O(n²) IPC
   on a slow straight drag.
 - **Cached stroke rect.** `strokeRect` captured at pointer-down, reused by
   `clientToNative` for the gesture (canvas can't move under pointer capture),

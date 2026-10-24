@@ -3,10 +3,16 @@ import { useState } from 'react';
 import { tran } from '../../lang/langHelpers';
 import { searchMissingFontFamily } from '../../server/fontHelpers';
 
+// The strip a slides previewer keeps free at its top for the document's menu
+// button (`VarySlidesPreviewerComp`): how tall it is, and how wide the button
+// and the transition icon beside it are at its right end.
+export type DocumentMenuRoomType = { height: number; width: number };
+
 export default function MissingFontFamilyBannerComp({
     missingFontFamilyList,
     refreshLabel,
     onRefresh,
+    menuRoom = null,
 }: Readonly<{
     missingFontFamilyList: string[];
     // For a converted document (PPTX/DOCX) the list was recorded when the
@@ -14,6 +20,11 @@ export default function MissingFontFamilyBannerComp({
     // The label is `tran()`'d at the call site so the key stays greppable.
     refreshLabel?: string;
     onRefresh?: () => void;
+    // Given where the previewer left that strip above its content: the banner
+    // then goes IN it, beside the menu button, instead of under an empty row
+    // holding the button alone (asked for by the user: "merge to inline to
+    // save space").
+    menuRoom?: DocumentMenuRoomType | null;
 }>) {
     // Collapsed by default so the preview keeps its vertical space when the
     // user can't (or won't) install the missing fonts.
@@ -31,11 +42,23 @@ export default function MissingFontFamilyBannerComp({
     if (missingFontFamilyList.length === 0) {
         return null;
     }
+    // In the menu button's strip the first line keeps the button's height, so
+    // the two read as one row; the strip is exactly a collapsed banner tall.
+    let layoutClassName = `w-100 ${isExpanded ? 'py-2' : 'py-1'}`;
+    if (menuRoom !== null) {
+        layoutClassName = isExpanded ? 'pt-0 pb-2' : 'py-0';
+    }
     return (
         <div
-            className={
-                'w-100 alert alert-warning px-3 mb-2 ' +
-                (isExpanded ? 'py-2' : 'py-1')
+            className={`alert alert-warning px-3 mb-2 ${layoutClassName}`}
+            style={
+                menuRoom === null
+                    ? undefined
+                    : {
+                          // Up into the strip, and short of the button.
+                          marginTop: -menuRoom.height,
+                          marginRight: menuRoom.width,
+                      }
             }
             role="alert"
             title={missingFontFamilyList.join(', ')}

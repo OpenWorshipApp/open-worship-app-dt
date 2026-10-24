@@ -1,9 +1,4 @@
-import {
-    toInputText,
-    toTrailingReference,
-} from '../helper/bible-helpers/bibleLogicHelpers2';
 import RenderLookupSuggestionComp from './RenderLookupSuggestionComp';
-import { keyToBook } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import {
     EditingResultContext,
@@ -12,11 +7,16 @@ import {
 import { use, useCallback } from 'react';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { lookupEnterEventMapper } from '../keyboard-shortcut/appShortcutMappers';
 import {
     checkIsBibleLookupInputFocused,
     getBibleLookupInputText,
 } from './selectionHelpers';
-import { genLookupEnterPick } from './lookupEnterHelpers';
+import {
+    genBookPickInputText,
+    genChapterPickInputText,
+    genLookupEnterPick,
+} from './lookupEnterHelpers';
 
 export default function RenderBibleLookupBodyComp() {
     const viewController = useLookupBibleItemControllerContext();
@@ -30,14 +30,11 @@ export default function RenderBibleLookupBodyComp() {
     // the box holds, which the one on screen may not be yet.
     const applyBook = useCallback(
         async (newBook: string, guessingBook: string | null) => {
-            const newText = await toInputText(bibleKeyRef.current, newBook);
-            // "Psalms 23:1" matched no book: picking the one it meant keeps
-            // the "23:1" that was already typed instead of dropping it.
-            const trailingReference = toTrailingReference(guessingBook);
-            viewControllerRef.current.inputText =
-                trailingReference !== null && newText.endsWith(' ')
-                    ? `${newText}${trailingReference}`
-                    : newText;
+            viewControllerRef.current.inputText = await genBookPickInputText(
+                bibleKeyRef.current,
+                newBook,
+                guessingBook,
+            );
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -47,13 +44,11 @@ export default function RenderBibleLookupBodyComp() {
             if (bibleKeyRef.current === null || bookKey === null) {
                 return;
             }
-            const book = await keyToBook(bibleKeyRef.current, bookKey);
-            const newText = await toInputText(
+            viewControllerRef.current.inputText = await genChapterPickInputText(
                 bibleKeyRef.current,
-                book,
+                bookKey,
                 newChapter,
             );
-            viewControllerRef.current.inputText = `${newText}:`;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -109,7 +104,7 @@ export default function RenderBibleLookupBodyComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
-    useKeyboardRegistering([{ key: 'Enter' }], handleInputEntering, []);
+    useKeyboardRegistering([lookupEnterEventMapper], handleInputEntering, []);
     return (
         <RenderLookupSuggestionComp
             applyChapterSelection={handleChapterSelecting}

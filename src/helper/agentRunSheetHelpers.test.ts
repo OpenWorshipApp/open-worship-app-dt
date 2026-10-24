@@ -1,7 +1,17 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const runSheetMocks = vi.hoisted(() => ({
+    itemsByPath: new Map<string, any[] | null>(),
+    slidesByPath: new Map<string, any[] | null>(),
+    cursorByPath: new Map<string, number>(),
+    childByPath: new Map<string, number | null>(),
+    openPaths: [] as string[],
+    availablePaths: [] as string[] | null,
+    failingPaths: new Set<string>(),
+}));
 
 // `fileHelpers` reaches `appProvider` on load (memory
 // `appprovider-mock-node-env`); stubbed down to what loading needs. Nothing
@@ -23,13 +33,65 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('../lang/langHelpers', () => ({
     tran: (text: string) => text,
 }));
+vi.mock('../presenting-flow/PresentingFlow', () => ({
+    default: {
+        getInstance: (filePath: string) => ({
+            getItems: async () => {
+                if (runSheetMocks.failingPaths.has(filePath)) {
+                    throw new Error('Cannot read run sheet');
+                }
+                return runSheetMocks.itemsByPath.get(filePath) ?? null;
+            },
+        }),
+    },
+}));
+vi.mock('../presenting-flow/presentingFlowPreviewFloatingHelpers', () => ({
+    getPresentingFlowPreviewFilePaths: () => runSheetMocks.openPaths,
+    resolvePresentingFlowPreviewSelectedIndex: (filePath: string) =>
+        runSheetMocks.cursorByPath.get(filePath) ?? -1,
+    getPresentingFlowPreviewSelectedChildId: (filePath: string) =>
+        runSheetMocks.childByPath.get(filePath) ?? null,
+    toPresentingFlowPreviewItemKey: (item: any) => item.title,
+}));
+vi.mock('../presenting-flow/presentingFlowDocumentHelpers', () => ({
+    loadVaryAppDocumentSlides: async (filePath: string) =>
+        runSheetMocks.slidesByPath.get(filePath) ?? null,
+}));
+vi.mock('./DirSource', () => ({
+    default: {
+        getInstance: async () => ({
+            getFilePaths: async () => runSheetMocks.availablePaths,
+        }),
+    },
+}));
 
 import {
     findNextRunIndex,
     pickRunNext,
     toRunLineKind,
+    describeRunSheetForAgent,
+    describeRunSheetsForAgent,
+    RUN_LINE_LIST_LIMIT,
     type AgentRunLineType,
 } from './agentRunSheetHelpers';
+
+function genItem(title: string, extra: Record<string, any> = {}) {
+    return {
+        title,
+        type: 'slide',
+        isAction: false,
+        isError: false,
+        isBibleItem: false,
+        isBackground: false,
+        isForeground: false,
+        isAudio: false,
+        isAppDocument: false,
+        isDisabled: false,
+        itemFilePath: null,
+        checkIsVarySlideDisabled: () => false,
+        ...extra,
+    };
+}
 
 function genLines(...flags: boolean[]): AgentRunLineType[] {
     return flags.map((isParked, i) => {
@@ -166,5 +228,128 @@ describe('toRunLineKind', () => {
         expect(toRunLineKind({ ...base, isBibleItem: true })).toBe(
             'Bible passage',
         );
+    });
+});
+
+describe('assistant run-sheet state', () => {
+    beforeEach(() => {
+        runSheetMocks.itemsByPath.clear();
+        runSheetMocks.slidesByPath.clear();
+        runSheetMocks.cursorByPath.clear();
+        runSheetMocks.childByPath.clear();
+        runSheetMocks.openPaths = [];
+        runSheetMocks.availablePaths = [];
+        runSheetMocks.failingPaths.clear();
+    });
+
+    it('reports a document cursor, skips parked slides and truncates only the line list', async () => {
+        const filePath = '/runs/Sunday.flow';
+        const documentPath = '/songs/Welcome.owl';
+        const items = [
+            genItem('  Welcome  song  ', {
+                isAppDocument: true,
+                itemFilePath: documentPath,
+                checkIsVarySlideDisabled: (slide: { id: number }) =>
+                    slide.id === 12,
+            }),
+            ...Array.from({ length: RUN_LINE_LIST_LIMIT }, (_, index) =>
+                genItem(`Line ${index + 2}`),
+            ),
+        ];
+        runSheetMocks.itemsByPath.set(filePath, items);
+        runSheetMocks.slidesByPath.set(documentPath, [
+            { id: 11, name: ' Verse  1 ' },
+            { id: 12, name: 'Chorus' },
+            { id: 13, name: ' Verse  2 ' },
+        ]);
+        runSheetMocks.cursorByPath.set(filePath, 0);
+        runSheetMocks.childByPath.set(filePath, 11);
+
+        const sheet = await describeRunSheetForAgent(filePath);
+        expect(sheet?.name).toContain('Sunday');
+        expect(sheet?.lineCount).toBe(RUN_LINE_LIST_LIMIT + 1);
+        expect(sheet?.lines).toHaveLength(RUN_LINE_LIST_LIMIT);
+        expect(sheet?.moreCount).toBe(1);
+        expect(sheet?.lines[0]).toMatchObject({
+            n: 1,
+            title: 'Welcome song',
+            kind: 'song',
+        });
+        expect(sheet?.cursor?.slide).toEqual({
+            n: 1,
+            name: 'Verse 1',
+            isLast: false,
+        });
+        expect(sheet?.next?.slide).toEqual({ n: 3, name: 'Verse 2' });
+        expect(sheet?.isAtEnd).toBeUndefined();
+    });
+
+    it('moves past a document at its last playable slide and stops at the end', async () => {
+        const filePath = '/runs/Evening.flow';
+        const documentPath = '/songs/Closing.owl';
+        runSheetMocks.itemsByPath.set(filePath, [
+            genItem('Song', {
+                isAppDocument: true,
+                itemFilePath: documentPath,
+            }),
+            genItem('Parked announcement', { isDisabled: true }),
+            genItem('Dismissal', { isAction: true }),
+        ]);
+        runSheetMocks.slidesByPath.set(documentPath, [
+            { id: 4, name: 'Last verse' },
+        ]);
+        runSheetMocks.cursorByPath.set(filePath, 0);
+        runSheetMocks.childByPath.set(filePath, 4);
+        const sheet = await describeRunSheetForAgent(filePath);
+        expect(sheet?.cursor?.slide?.isLast).toBe(true);
+        expect(sheet?.lines[1].isParked).toBe(true);
+        expect(sheet?.next).toMatchObject({ n: 3, kind: 'action' });
+
+        runSheetMocks.cursorByPath.set(filePath, 2);
+        const last = await describeRunSheetForAgent(filePath);
+        expect(last?.next).toBeNull();
+        expect(last?.isAtEnd).toBe(true);
+    });
+
+    it('lists available sheets when no run player is open', async () => {
+        runSheetMocks.availablePaths = [
+            '/runs/Morning.flow',
+            '/runs/Evening.flow',
+        ];
+        const state = await describeRunSheetsForAgent();
+        expect(state.openSheets).toEqual([]);
+        expect(state.availableSheets).toHaveLength(2);
+        expect(state.availableSheets?.[0]).toContain('Morning');
+        expect(state.note).toContain('no "next" yet');
+
+        runSheetMocks.availablePaths = [];
+        const empty = await describeRunSheetsForAgent();
+        expect(empty.availableSheets).toEqual([]);
+        expect(empty.note).toContain('lists none');
+    });
+
+    it('keeps readable open sheets when another player fails to load', async () => {
+        const goodPath = '/runs/Good.flow';
+        const badPath = '/runs/Broken.flow';
+        runSheetMocks.openPaths = [badPath, goodPath];
+        runSheetMocks.failingPaths.add(badPath);
+        runSheetMocks.itemsByPath.set(goodPath, [
+            genItem('Parked', { isDisabled: true }),
+            genItem('Reading', { isBibleItem: true }),
+        ]);
+        const state = await describeRunSheetsForAgent();
+        expect(state.openSheets).toHaveLength(1);
+        expect(state.openSheets[0].name).toContain('Good');
+        expect(state.openSheets[0].cursor).toBeNull();
+        expect(state.openSheets[0].next).toMatchObject({
+            n: 2,
+            kind: 'Bible passage',
+        });
+        expect(state.availableSheets).toBeUndefined();
+    });
+
+    it('returns null for a run player whose sheet disappeared', async () => {
+        runSheetMocks.itemsByPath.set('/runs/Gone.flow', null);
+        expect(await describeRunSheetForAgent('/runs/Gone.flow')).toBeNull();
     });
 });

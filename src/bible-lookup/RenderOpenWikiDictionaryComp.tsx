@@ -14,6 +14,18 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
+/**
+ * The codes ISO 639 retired in 1989 for Indonesian and Hebrew. The locale map
+ * keeps `in-ID` and `iw-IL` beside `id-ID` and `he-IL` for locales written
+ * the old way, so each language was listed twice here; Wiktionary's editions
+ * are under the current codes.
+ */
+const RETIRED_LANG_CODE_MAP: { [key: string]: string } = { in: 'id', iw: 'he' };
+
+function toWiktionaryLangCode(langCode: string) {
+    return RETIRED_LANG_CODE_MAP[langCode] ?? langCode;
+}
+
 function genContextMenuItem(langCode: string): ContextMenuItemType {
     const url = `https://${langCode}.wiktionary.org`;
     let menuElement = getLanguageTitle({ langCode });
@@ -39,7 +51,9 @@ function genContextMenuItem(langCode: string): ContextMenuItemType {
 
 async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
     const targetLocale = await getBibleLocale(bibleKey);
-    let targetLangCode = getLangCode(targetLocale);
+    const foundLangCode = getLangCode(targetLocale);
+    let targetLangCode =
+        foundLangCode === null ? null : toWiktionaryLangCode(foundLangCode);
     if (targetLangCode === DEFAULT_LANG_CODE) {
         targetLangCode = null;
     }
@@ -47,14 +61,16 @@ async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
     if (targetLangCode !== null && !excludeLangCodes.includes(targetLangCode)) {
         excludeLangCodes.push(targetLangCode);
     }
-    const langCodes = Object.keys(reversedLocalesMap).filter((langCode) => {
+    const langCodes = [
+        ...new Set(Object.keys(reversedLocalesMap).map(toWiktionaryLangCode)),
+    ].filter((langCode) => {
         return !excludeLangCodes.includes(langCode);
     });
     showAppContextMenu(event, [
         {
             childBefore: genContextMenuItemIcon('journal-text'),
             menuElement: tran('Open Wiki Dictionary'),
-            disabled: true,
+            isSectionHeader: true,
         },
         { menuElement: elementDivider },
         {

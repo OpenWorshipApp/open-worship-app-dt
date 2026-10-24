@@ -21,7 +21,6 @@ import {
 import type { LookupManagersType } from './lookupDataHelpers';
 import { useLookupLangPresentation } from './lookupLangHelpers';
 import { useLookupManagers } from './lookupManagersContext';
-import type { DetailPanelKindType } from './detailPanelHelpers';
 import type { LookupRecordItemType } from './RenderLookupRecordItemComp';
 import RenderLookupRecordItemComp from './RenderLookupRecordItemComp';
 
@@ -47,7 +46,7 @@ function RenderResultListComp({
     query,
     search,
 }: Readonly<{
-    kind: DetailPanelKindType;
+    kind: LookupTabType;
     query: string;
     // Asks the tab's lookup manager for one page of results. Filtering, ranking
     // and clamping all happen in there.

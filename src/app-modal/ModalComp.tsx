@@ -2,7 +2,6 @@ import './ModalComp.scss';
 
 import type { PropsWithChildren, ReactNode } from 'react';
 
-import type { EventMapperType } from '../event/KeyboardEventListener';
 import {
     KeyboardLayerContext,
     toShortcutKey,
@@ -12,6 +11,7 @@ import { useKeyboardLayerClaim } from '../event/keyboardLayerHelpers';
 import type { AppWidgetType } from '../event/WindowEventListener';
 import { tran } from '../lang/langHelpers';
 import { ModalLayerContext } from './modalLayerContext';
+import { closeBibleLookupEventMapper } from '../keyboard-shortcut/appShortcutMappers';
 
 // A modal covers the window, so the app underneath must stop answering the
 // keyboard while it is open. Until 2026-09-28 this layer was declared and
@@ -25,10 +25,7 @@ interface MyProps {
     children?: ReactNode;
 }
 
-const quittingEventMap: EventMapperType = {
-    allControlKey: ['Ctrl'],
-    key: 'q',
-};
+const quittingEventMap = closeBibleLookupEventMapper;
 
 export function ModalCloseButtonComp({
     close,

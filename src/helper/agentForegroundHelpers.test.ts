@@ -86,7 +86,7 @@ function genForegroundManager() {
 }
 
 function genManager(screenId: number, extra: any = {}) {
-    return {
+    const screenManager: any = {
         screenId,
         isShowing: false,
         isLocked: false,
@@ -95,6 +95,12 @@ function genManager(screenId: number, extra: any = {}) {
         screenForegroundManager: genForegroundManager(),
         ...extra,
     };
+    // Clear Foreground (F10): the foreground, and a Long Text Show with it.
+    screenManager.clearForeground = () => {
+        screenManager.screenForegroundManager.calls.push('clearForeground');
+        screenManager.screenForegroundManager.clear();
+    };
+    return screenManager;
 }
 
 // A fixed "now": 10:00 in the morning, local time.
@@ -163,10 +169,17 @@ describe('handleAgentForegroundRequest', () => {
         );
         const manager = h.managers[0].screenForegroundManager;
         expect(manager.calls).toEqual(['countdownData']);
-        // The widget's own arithmetic: five minutes and one second on.
+        // Asked to START: running at once, five minutes on, with its length
+        // kept so the panel can still pause and reset it.
         expect(manager.foregroundData.countdownData.dateTime.getTime()).toBe(
-            NOW.getTime() + (5 * 60 + 1) * 1000,
+            NOW.getTime() + 5 * 60 * 1000,
         );
+        expect(manager.foregroundData.countdownData.durationMillisecond).toBe(
+            5 * 60 * 1000,
+        );
+        expect(
+            manager.foregroundData.countdownData.pausedMillisecond,
+        ).toBeUndefined();
         expect((result as any).screens[0].foreground[0]).toMatch(
             /^countdown to /,
         );
@@ -349,7 +362,42 @@ describe('handleAgentForegroundRequest', () => {
             did: 'stopped',
             detail: 'Every foreground extra is off the screen now.',
         });
-        expect(manager.calls).toContain('clear');
+        expect(manager.calls).toContain('clearForeground');
+    });
+
+    it('stops every extra on EVERY screen, ticked or not, as F10 does', async () => {
+        // Screen 1 sits in screen 0's colour group and holds the same clip; a
+        // clear on the ticked screen alone left it there, and the session's
+        // running slide show put new clips back on both.
+        const ticked = genManager(0);
+        const beside = genManager(1, { isSelected: false });
+        const locked = genManager(2, { isSelected: false, isLocked: true });
+        for (const screenManager of [ticked, beside, locked]) {
+            screenManager.screenForegroundManager.foregroundData.webDataList = [
+                { filePath: 'clock.html' },
+            ];
+        }
+        h.managers = [ticked, beside, locked];
+        const all = await handleAgentForegroundRequest({
+            action: 'stop',
+            widget: 'all',
+        });
+        expect(ticked.screenForegroundManager.calls).toEqual([
+            'clearForeground',
+            'clear',
+        ]);
+        expect(beside.screenForegroundManager.calls).toEqual([
+            'clearForeground',
+            'clear',
+        ]);
+        // A locked screen refuses a change, and the answer says so.
+        expect(locked.screenForegroundManager.calls).toEqual([]);
+        expect((all as any).note).toContain('Screen 2 is locked');
+        expect(
+            (all as any).screens.map((screen: any) => {
+                return screen.screenId;
+            }),
+        ).toEqual([0, 1, 2]);
     });
 
     it('refuses to START all, and names the extras for an unknown one', async () => {

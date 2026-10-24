@@ -25,6 +25,7 @@ import type { ExtraBinPathsType } from '../helper/extra-bin/extraBinHelpers';
 import { EXTRA_BIN_MISSING_ERROR_MESSAGE } from '../helper/extra-bin/extraBinErrors';
 import { electronSendAsync } from './electronSendHelpers';
 import { writeTextToClipboard } from './clipboardHelpers';
+import { getHelpPageUrl } from './onlineHelpHelpers';
 
 export { readTextFromClipboard } from './clipboardHelpers';
 
@@ -32,6 +33,7 @@ export {
     electronSendAsync,
     genReturningEventName,
 } from './electronSendHelpers';
+import { TRANSITION_META_DOT_EXTENSION } from '../_screen/transitionOverrideHelpers';
 
 export function showFileOrDirExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);
@@ -195,7 +197,13 @@ export function pasteTextToInput(inputElement: HTMLInputElement, text: string) {
     );
 }
 
-const FILE_EXTENSIONS = ['.bg.json', '.preview.bg.json'];
+// A document's side files: its attached backgrounds, the preview's, and its
+// slides' own transitions -- renamed and trashed with it.
+const FILE_EXTENSIONS = [
+    '.bg.json',
+    '.preview.bg.json',
+    TRANSITION_META_DOT_EXTENSION,
+];
 export async function renameAllMaterialFiles(
     oldFileSource: FileSource,
     newBaseFileName: string,
@@ -371,10 +379,17 @@ export async function resolveMediaStreamUrl(targetUrl: string) {
     return streamUrl;
 }
 
+/**
+ * `onStarting` runs once the media tools are known to be there, which is when
+ * a download really begins. A caller that announced "Downloading…, please
+ * wait" before calling this left that toast up behind the Media Tools Required
+ * question -- and up for its full time after a No, with nothing downloading.
+ */
 export function downloadVideoOrAudio(
     targetUrl: string,
     outputDir: string,
     isVideo: boolean,
+    onStarting?: () => void,
 ) {
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
@@ -387,6 +402,7 @@ export function downloadVideoOrAudio(
                     reject(new Error(EXTRA_BIN_MISSING_ERROR_MESSAGE));
                     return;
                 }
+                onStarting?.();
                 const videoOrAudioUrl = targetUrl.trim();
                 const title = await getPageTitle(videoOrAudioUrl);
                 const resolvedSuccess = (resolvedFilePath: string) => {
@@ -577,17 +593,11 @@ export function useIsOnTop() {
     return [isOnTop, setIsOnTop1] as const;
 }
 
-export function checkIsMainWindow() {
-    return (
-        appProvider.messageUtils.sendDataSync(
-            'all:app:check-is-main-window',
-        ) === true
-    );
-}
+export { checkIsMainWindow } from './mainWindowHelpers';
 
-export function getHelpPageUrl() {
-    return `${appProvider.appInfo.homepage}/help`;
-}
+// Lives in a leaf module so a window can open the website's help without this
+// file; re-exported for the existing callers.
+export { getHelpPageUrl };
 
 /**
  * The maintainers' address, read out of the package's `author` field -- the

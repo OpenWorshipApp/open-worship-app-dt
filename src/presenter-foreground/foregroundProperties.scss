@@ -204,11 +204,24 @@
   }
 }
 
+// The Transition row's "Own transition" checkbox: the strip's own small type,
+// not Bootstrap's body size, which made it the loudest words in the panel.
+.fg-prop-control .form-check-label {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
 .fg-select {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 11rem;
   padding: 1px 4px;
+
+  // Unticked, the Transition picker shows what the session FOLLOWS; it has to
+  // read as not-chosen.
+  &:disabled {
+    opacity: 0.55;
+  }
 
   // Border only. A background change here would follow the control into its
   // open list, which is the whole reason that list was unreadable.
@@ -469,10 +482,12 @@
 }
 
 // The nudge lives with the pad because an offset IS the position, measured
-// from the cell that is lit.
+// from the cell that is lit. One axis per row: side by side under the 84px
+// pad each box was ~30px, and an offset of "40" read "4|".
 .fg-pad-offset {
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 2px;
   width: 84px;
 }
 

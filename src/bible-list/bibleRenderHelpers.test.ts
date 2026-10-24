@@ -38,11 +38,6 @@ const mocks = vi.hoisted(() => {
             cacheStores.length = 0;
         },
         toLocaleNumBibleMock: vi.fn(),
-        toVerseFullKeyFormatMock: vi.fn(
-            (bookKey: string, chapter: string | number, verse: string) => {
-                return `${bookKey} ${chapter}:${verse}`;
-            },
-        ),
         unlockingMock: vi.fn(
             async (_key: string, callback: () => Promise<unknown>) => {
                 return callback();
@@ -51,13 +46,20 @@ const mocks = vi.hoisted(() => {
     };
 });
 
-vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
-    getBibleInfo: mocks.getBibleInfoMock,
-    getBibleInfoIsRtl: mocks.getBibleInfoIsRtlMock,
-    getVerses: mocks.getVersesMock,
-    keyToBook: mocks.keyToBookMock,
-    toVerseFullKeyFormat: mocks.toVerseFullKeyFormatMock,
-}));
+// The key spelling is the real one: it is a pure leaf, and every key and
+// title this module writes is spelled by it.
+vi.mock('../helper/bible-helpers/bibleInfoHelpers', async () => {
+    const keyFormatHelpers = await vi.importActual<
+        typeof import('../helper/bible-helpers/bibleKeyFormatHelpers')
+    >('../helper/bible-helpers/bibleKeyFormatHelpers');
+    return {
+        getBibleInfo: mocks.getBibleInfoMock,
+        getBibleInfoIsRtl: mocks.getBibleInfoIsRtlMock,
+        getVerses: mocks.getVersesMock,
+        keyToBook: mocks.keyToBookMock,
+        toVerseFullKeyFormat: keyFormatHelpers.toVerseFullKeyFormat,
+    };
+});
 
 vi.mock('../helper/bible-helpers/bibleLogicHelpers1', () => ({
     getModelChapterCount: mocks.getModelChapterCountMock,
@@ -189,13 +191,21 @@ describe('bibleRenderHelper', () => {
 
         expect(bibleRenderHelper.toKJVBibleVersesKey(target)).toBe('GEN 1:1-3');
         expect(
-            bibleRenderHelper.toKJVBibleVersesKey(target, {
-                bookKey: 'GEN',
-                chapter: 2,
-                verseStart: 1,
+            bibleRenderHelper.toKJVBibleVersesKey({
+                ...target,
                 verseEnd: 5,
+                chapterEnd: 2,
             }),
         ).toBe('GEN 1:1-2:5');
+        expect(
+            bibleRenderHelper.toKJVBibleVersesKey({ ...target, chapterEnd: 1 }),
+        ).toBe('GEN 1:1-3');
+        expect(
+            bibleRenderHelper.toKJVBibleVersesKey({
+                ...target,
+                verseEnd: 1,
+            }),
+        ).toBe('GEN 1:1');
         expect(bibleRenderHelper.toBibleVersesKey('WEB', target)).toBe(
             '(WEB) GEN 1:1-3',
         );
@@ -204,6 +214,30 @@ describe('bibleRenderHelper', () => {
             chapter: 22,
             verseEnd: 21,
             verseStart: 21,
+        });
+        // Across chapters, and a second chapter that is the same one.
+        expect(bibleRenderHelper.fromKJVBibleVersesKey('JHN 1:2-3:4')).toEqual({
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+            chapterEnd: 3,
+        });
+        expect(bibleRenderHelper.fromKJVBibleVersesKey('JHN 1:2-1:4')).toEqual({
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+        });
+        expect(
+            bibleRenderHelper.fromBibleVerseKey('(KJV) JHN 18:33-19:16'),
+        ).toEqual({
+            bibleKey: 'KJV',
+            bookKey: 'JHN',
+            chapter: 18,
+            verseStart: 33,
+            verseEnd: 16,
+            chapterEnd: 19,
         });
         expect(bibleRenderHelper.fromBibleVerseKey('(KJV) GEN 1:1-3')).toEqual({
             bibleKey: 'KJV',
@@ -220,6 +254,71 @@ describe('bibleRenderHelper', () => {
         ).toBe('text > (KJV) GEN 1:1-3');
     });
 
+    // RD-51: the cross-reference data spells some targets in ways no passage
+    // has. Read leniently, `PSA 56:title` was verse NaN: a row titled
+    // `Psalm 56:` whose press opened "Record not found".
+    test('parses a key from data strictly, or not at all', async () => {
+        const bibleRenderHelper = await loadHelper();
+        const parse = (key: string) => {
+            return bibleRenderHelper.parseKJVBibleVersesKey(key);
+        };
+
+        expect(parse('JHN 3:16')).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 16,
+            verseEnd: 16,
+        });
+        expect(parse(' JHN 3:16-18 ')).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 16,
+            verseEnd: 18,
+        });
+        // Across chapters, and a second chapter that is the same one.
+        expect(parse('GEN 29:31-30:24')).toEqual({
+            bookKey: 'GEN',
+            chapter: 29,
+            verseStart: 31,
+            verseEnd: 24,
+            chapterEnd: 30,
+        });
+        expect(parse('JHN 1:2-1:4')).toEqual({
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 4,
+        });
+        // A psalm's heading is printed just before its verse 1.
+        expect(parse('PSA 56:title')).toEqual({
+            bookKey: 'PSA',
+            chapter: 56,
+            verseStart: 1,
+            verseEnd: 1,
+        });
+        // The garbage the shipped bundles actually hold, and its neighbours.
+        for (const key of [
+            'PSA 119:ступ-106',
+            'PSA 119:ведения',
+            'PSA 119:ющ',
+            'GEN 1:title',
+            'PSA title:1',
+            'PSA 0:title',
+            'GEN 1',
+            'GEN',
+            '',
+            'GEN 0:1',
+            'GEN 1:0',
+            `GEN ${'9'.repeat(400)}:1`,
+        ]) {
+            expect(parse(key)).toBeNull();
+        }
+        // Ranges that run backwards name no passage.
+        expect(parse('JHN 3:18-16')).toBeNull();
+        expect(parse('JHN 3:2-3:1')).toBeNull();
+        expect(parse('JHN 3:1-2:4')).toBeNull();
+    });
+
     test('renders localized titles, falls back to model book names, and reuses cached titles', async () => {
         const bibleRenderHelper = await loadHelper();
         const target = {
@@ -228,21 +327,32 @@ describe('bibleRenderHelper', () => {
             verseStart: 1,
             verseEnd: 3,
         };
-        const endTarget = {
-            bookKey: 'GEN',
-            chapter: 2,
-            verseStart: 1,
-            verseEnd: 5,
-        };
+        const crossTarget = { ...target, verseEnd: 5, chapterEnd: 2 };
 
-        expect(await bibleRenderHelper.toTitle('KJV', target, endTarget)).toBe(
+        expect(await bibleRenderHelper.toTitle('KJV', target)).toBe(
+            'Genesis 1:1-3',
+        );
+        mocks.toLocaleNumBibleMock.mockClear();
+        expect(await bibleRenderHelper.toTitle('KJV', crossTarget)).toBe(
             'Genesis 1:1-2:5',
         );
-        expect(mocks.toLocaleNumBibleMock).toHaveBeenCalledTimes(5);
-        expect(await bibleRenderHelper.toTitle('KJV', target, endTarget)).toBe(
+        expect(mocks.toLocaleNumBibleMock).toHaveBeenCalledTimes(4);
+        expect(await bibleRenderHelper.toTitle('KJV', crossTarget)).toBe(
             'Genesis 1:1-2:5',
         );
-        expect(mocks.toLocaleNumBibleMock).toHaveBeenCalledTimes(5);
+        expect(mocks.toLocaleNumBibleMock).toHaveBeenCalledTimes(4);
+        expect(
+            await bibleRenderHelper.toTitleParts('KJV', crossTarget),
+        ).toEqual({
+            book: 'Genesis',
+            chapter: '1',
+            verseStart: '1',
+            verseEnd: '5',
+            chapterEnd: '2',
+        });
+        expect(
+            (await bibleRenderHelper.toTitleParts('KJV', target)).chapterEnd,
+        ).toBeNull();
 
         mocks.keyToBookMock.mockResolvedValueOnce(null);
         expect(await bibleRenderHelper.toLocaleBook('KJV', 'GEN')).toBe(
@@ -281,6 +391,8 @@ describe('bibleRenderHelper', () => {
                 customText: null,
                 isFirst: true,
                 isLast: false,
+                isChapterStart: false,
+                localeChapter: '1',
                 isModelNewLine: false,
                 isNewLine: true,
                 isRtl: false,
@@ -300,6 +412,8 @@ describe('bibleRenderHelper', () => {
                 customText: 'Custom verse',
                 isFirst: false,
                 isLast: false,
+                isChapterStart: false,
+                localeChapter: '1',
                 isModelNewLine: false,
                 isNewLine: true,
                 isRtl: false,
@@ -319,6 +433,8 @@ describe('bibleRenderHelper', () => {
                 customText: null,
                 isFirst: false,
                 isLast: true,
+                isChapterStart: false,
+                localeChapter: '1',
                 isModelNewLine: true,
                 isNewLine: false,
                 isRtl: false,
@@ -336,6 +452,170 @@ describe('bibleRenderHelper', () => {
         expect(
             await bibleRenderHelper.toVerseTextList('KJV', target, true),
         ).toBeNull();
+    });
+
+    test('walks a passage across chapters, or only the chapters asked for', async () => {
+        const bibleRenderHelper = await loadHelper();
+        const crossTarget = {
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 3,
+            chapterEnd: 2,
+        };
+        const toSummary = (list: any[] | null) => {
+            return list?.map((verseInfo) => {
+                return [
+                    verseInfo.kjvBibleVersesKey,
+                    verseInfo.isFirst,
+                    verseInfo.isLast,
+                    verseInfo.isChapterStart,
+                    verseInfo.localeChapter,
+                ].join(' ');
+            });
+        };
+        expect(
+            toSummary(
+                await bibleRenderHelper.toVerseTextList(
+                    'KJV',
+                    crossTarget,
+                    true,
+                ),
+            ),
+        ).toEqual([
+            'GEN 1:2 true false true 1',
+            'GEN 1:3 false false false 1',
+            'GEN 2:1 false false true 2',
+            'GEN 2:2 false false false 2',
+            'GEN 2:3 false true false 2',
+        ]);
+        expect(
+            toSummary(
+                await bibleRenderHelper.toVerseTextList(
+                    'KJV',
+                    crossTarget,
+                    true,
+                    {
+                        start: 0,
+                        count: 1,
+                    },
+                ),
+            ),
+        ).toEqual(['GEN 1:2 true false true 1', 'GEN 1:3 false false false 1']);
+        // A later window reads its own chapter only.
+        mocks.getVersesMock.mockClear();
+        expect(
+            toSummary(
+                await bibleRenderHelper.toVerseTextList(
+                    'KJV',
+                    crossTarget,
+                    true,
+                    {
+                        start: 1,
+                        count: 1,
+                    },
+                ),
+            ),
+        ).toEqual([
+            'GEN 2:1 false false true 2',
+            'GEN 2:2 false false false 2',
+            'GEN 2:3 false true false 2',
+        ]);
+        expect(mocks.getVersesMock).toHaveBeenCalledTimes(1);
+        expect(mocks.getVersesMock).toHaveBeenCalledWith('KJV', 'GEN', 2);
+        // A chapter the bible lacks ends the passage there: chapter 2 is a
+        // middle one now, read whole, and chapter 3 does not exist.
+        expect(
+            toSummary(
+                await bibleRenderHelper.toVerseTextList(
+                    'KJV',
+                    { ...crossTarget, chapterEnd: 3 },
+                    true,
+                ),
+            ),
+        ).toHaveLength(7);
+    });
+
+    test('copies a passage across chapters under a title per chapter', async () => {
+        const bibleRenderHelper = await loadHelper();
+        const crossTarget = {
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 3,
+            chapterEnd: 2,
+        };
+        expect(await bibleRenderHelper.toText('KJV', crossTarget, true)).toBe(
+            'Genesis 1:2-3\n(2): The earth (3): Light\n' +
+                'Genesis 2:1-3\n(1): Alpha (2): Beta (3): Gamma',
+        );
+        expect(
+            await bibleRenderHelper.toText('KJV', crossTarget, true, 1),
+        ).toBe('Genesis 1:2-3\n(2): The earth (3): Light');
+        expect(
+            await bibleRenderHelper.toTextSectionList('KJV', crossTarget, true),
+        ).toEqual([
+            {
+                chapter: 1,
+                localeChapter: '1',
+                title: 'Genesis 1:2-3',
+                text: '(2): The earth (3): Light',
+            },
+            {
+                chapter: 2,
+                localeChapter: '2',
+                title: 'Genesis 2:1-3',
+                text: '(1): Alpha (2): Beta (3): Gamma',
+            },
+        ]);
+        // The copy menu's More…: `16: …`, or no numbers at all, per chapter
+        // too.
+        expect(
+            await bibleRenderHelper.toText(
+                'KJV',
+                crossTarget,
+                true,
+                undefined,
+                'colon',
+            ),
+        ).toBe(
+            'Genesis 1:2-3\n2: The earth 3: Light\n' +
+                'Genesis 2:1-3\n1: Alpha 2: Beta 3: Gamma',
+        );
+        expect(
+            await bibleRenderHelper.toText('KJV', crossTarget, true, 1, 'none'),
+        ).toBe('Genesis 1:2-3\nThe earth Light');
+    });
+
+    test('jumps to the chapter after where a passage ENDS', async () => {
+        const bibleRenderHelper = await loadHelper();
+        mocks.getModelChapterCountMock.mockReturnValue(50);
+        expect(
+            await bibleRenderHelper.getJumpingChapter(
+                'KJV',
+                {
+                    bookKey: 'GEN',
+                    chapter: 1,
+                    verseStart: 2,
+                    verseEnd: 3,
+                    chapterEnd: 2,
+                },
+                true,
+            ),
+        ).toEqual({ bookKey: 'GEN', chapter: 3, verseStart: 1, verseEnd: 1 });
+        expect(
+            await bibleRenderHelper.getJumpingChapter(
+                'KJV',
+                {
+                    bookKey: 'GEN',
+                    chapter: 2,
+                    verseStart: 2,
+                    verseEnd: 3,
+                    chapterEnd: 3,
+                },
+                false,
+            ),
+        ).toEqual({ bookKey: 'GEN', chapter: 1, verseStart: 1, verseEnd: 3 });
     });
 
     test('computes jumping chapters and renders text fallbacks', async () => {
@@ -394,5 +674,19 @@ describe('bibleRenderHelper', () => {
         expect(await bibleRenderHelper.toText('KJV', target)).toBe(
             '(1): In the beginning (2): The earth',
         );
+
+        toVerseTextListSpy.mockResolvedValueOnce([
+            { localeVerse: '1', text: 'In the beginning' },
+            { localeVerse: '2', text: 'The earth' },
+        ] as any);
+        expect(
+            await bibleRenderHelper.toText(
+                'KJV',
+                target,
+                true,
+                undefined,
+                'colon',
+            ),
+        ).toBe('1: In the beginning 2: The earth');
     });
 });

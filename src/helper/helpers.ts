@@ -1,5 +1,3 @@
-import type { DragEvent } from 'react';
-
 import type { OptionalPromise } from './typeHelpers';
 import { handleError } from './errorHelpers';
 import { appTrace } from './loggerHelpers';
@@ -334,7 +332,8 @@ export function cumulativeOffset(element: HTMLElement | null) {
 }
 
 export function changeDragEventStyle(
-    event: DragEvent,
+    // Only the target is read, so a React drag event and a DOM one both fit.
+    event: { target: EventTarget | null },
     key: string,
     value: string,
 ) {

@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PR-30, PR-31, CM-69, CM-98, CM-99]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-41 — Share a whole page of Bible Notes with another machine
 
@@ -13,8 +13,8 @@ Until now a note could only leave the app **one item at a time**. A whole note f
 every note in it, the pictures and clips inside them, and the background you attached
 to it — travels as one bundle.
 
-1. In the **Bible Notes** panel, click the `⋮` on the note file you want (or right-click
-   its name) and choose **[en:tran:Export]**. It sits just under **Import**. 📸
+1. In the **[en:tran:Bible Notes]** panel, click the `⋮` on the note file you want (or right-click
+   its name) and choose **[en:tran:Export]**. It sits just under **[en:tran:Import]**. 📸
 2. A small panel asks for a **[en:tran:Password]** and a **[en:tran:Confirm Password]**. Leave both empty for an ordinary bundle, or type the same
    password in both to lock it. Press **[en:tran:Ok]**.
 3. You get one `<name>.owanote.tar.gz` file in your **Downloads** folder —
@@ -29,7 +29,7 @@ to it — travels as one bundle.
    > is written from the note as that window has it — so nothing you have typed
    > is left behind, whether or not you remembered to save it first.
 
-4. On the other machine, click the `⋮` at the top of the **Bible Notes** panel → **[en:tran:Import]** and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
+4. On the other machine, click the `⋮` at the top of the **[en:tran:Bible Notes]** panel → **[en:tran:Import]** and pick the file — or **drag the `.owanote.tar.gz` (or `.owanote.enc`) onto
    the Bible Notes panel**. A protected one asks for its password first.
    **[en:tran:Import From URL]** works here too if the bundle is on the web. 📸
 5. The note file appears in that machine's notes folder with all its notes, your
@@ -39,7 +39,7 @@ to it — travels as one bundle.
    > imported one arrives beside it as `name (1)`. Rename whichever you prefer.
 
 6. To move a **single note** instead of the whole page, use the `⋮` on that note →
-   **Export**, and **Import** on the note file you want it to land in — any note file,
+   **[en:tran:Export]**, and **[en:tran:Import]** on the note file you want it to land in — any note file,
    not only **Default**. That one carries your unsaved typing too.
 
 ::: details 🤖 Robot-verified — coverage traceability
@@ -47,5 +47,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-30` · `PR-31` · `CM-69` · `CM-98` · `CM-99`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

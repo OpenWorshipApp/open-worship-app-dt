@@ -18,12 +18,274 @@
 // The generators below package one call to it as an expression for
 // `evaluateInApp`; keep them free of backticks and `${` so they embed clean.
 
-import { PRESS_GUARD_SOURCE } from './destructiveLabel.mjs';
+import { PRESS_GUARD_SOURCE, QUESTION_SELECTOR } from './destructiveLabel.mjs';
 
 // How many matches `owa_find_ui` answers with -- and, when asked to
 // highlight, how many rings are drawn. They are the same number on purpose:
 // the user must be able to count what the answer says on their screen.
 const MAX_FIND_UI_MATCHES = 20;
+
+// A press made the way the app's own keyboard helper makes one
+// (`pressElementLikeButton`, src/helper/helpers.ts): a click AT the control's
+// centre. The app opens its context menus from the event's coordinates
+// (`setPositionMenu`), and `element.click()` carries none -- 0,0 -- so on
+// 2026-10-06 `owa_click "Foreground"` brought the launcher menu up pinned to
+// the window's top-left corner, nowhere near the tab that opened it, while a
+// real mouse click opened it under the pointer. Kept OUT of the memoised
+// runtime on purpose: a page first driven by an older server keeps that
+// server's runtime (memory `dom-match-memoised-in-page`), and a press must not
+// depend on a function that runtime never had. Returns where it pressed, or
+// null for a disabled form control, which takes no click by the method or by
+// a dispatched event alike -- `click()` is kept there for its own early return.
+//
+// `how` says WHICH press (2026-10-10): `button: 'right'` is the control's own
+// menu -- a `contextmenu` at its centre, the event the app's lists open their
+// row menus on; `clicks: 2` is a double-click -- two clicks and the `dblclick`
+// React's onDoubleClick listens for, in the order a mouse sends them, because
+// a row that opens on a double-click still selects itself on the first. A
+// user does both all day and no tool could do either (every list row's menu,
+// opening a document, playing a clip -- W-08's step nobody could demo).
+export const PRESS_AT_CENTRE_SOURCE = `((element, how) => {
+    const button = how && how.button === 'right' ? 'right' : 'left';
+    const clicks = how && how.clicks === 2 ? 2 : 1;
+    if (typeof element.matches === 'function' && element.matches(':disabled')) {
+        element.click();
+        return null;
+    }
+    const rect = element.getBoundingClientRect();
+    const x = Math.round(rect.left + rect.width / 2);
+    const y = Math.round(rect.top + rect.height / 2);
+    // No 'view' member, as pressElementLikeButton passes none: a realm
+    // other than the element's own can refuse it, and nothing reads it.
+    const view = element.ownerDocument.defaultView ?? window;
+    const send = (type, detail, buttonCode) => {
+        element.dispatchEvent(new MouseEvent(type, {
+            bubbles: true, cancelable: true, composed: true,
+            detail: detail, button: buttonCode,
+            clientX: x, clientY: y,
+            screenX: (view.screenX || 0) + x, screenY: (view.screenY || 0) + y,
+        }));
+    };
+    if (button === 'right') {
+        send('contextmenu', 0, 2);
+        return { x, y, button };
+    }
+    send('click', 1, 0);
+    if (clicks === 2) {
+        send('click', 2, 0);
+        send('dblclick', 2, 0);
+    }
+    return clicks === 2 ? { x, y, clicks } : { x, y };
+})`;
+
+// Which layers a press can bring up, most telling first: a dialog (the modal
+// container the Bible Lookup and the app's own questions are drawn in), a
+// floating panel, a menu. `snapshot()` before the press, `findOpened()` after
+// it: a layer counts when it is on screen now and was not before. A new
+// WINDOW is read by the tool, off the debugging targets -- no page can see
+// another one open. Shared by every acting expression here (click, key, drag)
+// so the three cannot disagree about what "it opened a menu" means.
+const LAYER_WATCH_SOURCE = `(() => {
+    const OPENED_LAYERS = [
+        ['dialog', '[role="dialog"], [role="alertdialog"], #modal-container'],
+        ['panel', '.floating-widget'],
+        ['menu', '[role="menu"]'],
+    ];
+    const listShownLayers = (selector) => {
+        return [...document.querySelectorAll(selector)].filter((one) => {
+            return typeof one.checkVisibility !== 'function' ||
+                one.checkVisibility();
+        });
+    };
+    return {
+        snapshot() {
+            return new Set(OPENED_LAYERS.flatMap((layer) => {
+                return listShownLayers(layer[1]);
+            }));
+        },
+        findOpened(before) {
+            const opened = OPENED_LAYERS.find((layer) => {
+                return listShownLayers(layer[1]).some((one) => {
+                    return !before.has(one);
+                });
+            });
+            return opened === undefined ? undefined : opened[0];
+        },
+        // The other direction: Escape on a menu, a click on its backdrop.
+        findClosed(before) {
+            const closed = OPENED_LAYERS.find((layer) => {
+                const shown = new Set(listShownLayers(layer[1]));
+                return [...before].some((one) => {
+                    return one.matches(layer[1]) && !shown.has(one);
+                });
+            });
+            return closed === undefined ? undefined : closed[0];
+        },
+    };
+})()`;
+
+// The VALUE a press or a key moved: a range, a number box, a slider, a panel
+// divider (`role="separator"` stamps `aria-valuenow`). None carries an on/off
+// state, so Zoom In growing the thumbnails beside it and ArrowDown dragging a
+// divider from 50 to 83 both answered `unverified` (2026-10-16, T2 of run
+// 20261016-1920). Read on the control itself when it carries a value, else on
+// the few beside it in its own row -- never a whole panel's worth.
+const VALUE_WATCH_SOURCE = `(() => {
+    const SELECTOR = 'input[type="range"], input[type="number"], ' +
+        '[role="slider"], [role="spinbutton"], [role="separator"][aria-valuenow]';
+    const valueOf = (one) => {
+        const now = one.getAttribute('aria-valuenow');
+        if (now !== null) {
+            return now;
+        }
+        return typeof one.value === 'string' ? one.value : null;
+    };
+    const watchedOf = (element) => {
+        if (element === null || typeof element.matches !== 'function') {
+            return [];
+        }
+        if (element.matches(SELECTOR)) {
+            return [element];
+        }
+        let node = element.parentElement;
+        for (
+            let hops = 0;
+            node !== null && node !== document.body && hops < 3;
+            hops += 1
+        ) {
+            const found = node.querySelectorAll(SELECTOR);
+            if (found.length > 4) {
+                break;
+            }
+            if (found.length > 0) {
+                return [...found];
+            }
+            node = node.parentElement;
+        }
+        return [];
+    };
+    // Its own name, never the label the matcher reads: an input's label
+    // carries its value, which would then be said twice.
+    const describe = (one) => {
+        const name = (one.getAttribute('aria-label') ||
+            one.getAttribute('title') || '').slice(0, 40);
+        return name.length > 0 ? name + ': ' + valueOf(one) : valueOf(one);
+    };
+    return {
+        describe,
+        snapshot(element) {
+            return new Map(watchedOf(element).map((one) => {
+                return [one, valueOf(one)];
+            }));
+        },
+        findMoved(before) {
+            return [...before].filter(([one, value]) => {
+                return one.isConnected && valueOf(one) !== value;
+            }).map(([one]) => { return one; });
+        },
+    };
+})()`;
+
+// The QUESTION a press made the app ask -- a confirm, an alert, a name box --
+// read off the popup itself. A question is the person's to answer (the
+// firewall refuses every press inside one), so all a tool can do is SAY it is
+// there, and it used not to: **Select Default "documents"** raised its confirm
+// a beat after the settle (it reads the data folder first), and the press came
+// back `unverified` with a window blocked on a question (2026-10-16, T3). And
+// a question raised in a window that is HIDDEN is one nobody can see or answer
+// -- a scratch instance's Presenter was hidden outright while its popups still
+// opened on the user's desktop (T5) -- so that is said in words of its own.
+// Kept out of the memoised runtime for the reason the press is.
+const QUESTION_WATCH_SOURCE = `(() => {
+    const POPUP_SELECTOR =
+        '#app-confirm-popup, #app-alert-popup, #app-input-popup';
+    const flatTextOf = (node, limit) => {
+        const text = node === null
+            ? ''
+            : String(node.textContent ?? '').replace(/\\s+/g, ' ').trim();
+        return text.length > limit
+            ? text.slice(0, limit).trimEnd() + '\\u2026'
+            : text;
+    };
+    const findShown = () => {
+        return [...document.querySelectorAll(POPUP_SELECTOR)].find((one) => {
+            return typeof one.checkVisibility !== 'function' ||
+                one.checkVisibility();
+        }) ?? null;
+    };
+    return {
+        snapshot() {
+            return findShown();
+        },
+        findAsked(before) {
+            const popup = findShown();
+            if (popup === null || popup === before) {
+                return undefined;
+            }
+            const title = flatTextOf(
+                popup.querySelector('.app-popup-header-title'), 80,
+            );
+            const isWindowHidden = document.visibilityState === 'hidden';
+            return {
+                title,
+                text: flatTextOf(popup.querySelector('.app-popup-body'), 200),
+                isWindowHidden: isWindowHidden ? true : undefined,
+                note: isWindowHidden
+                    ? 'The app is asking a question in a window that is ' +
+                        'HIDDEN, so nobody can see it to answer it, and ' +
+                        'that window takes no other input until it is ' +
+                        'answered. Tell the person: the window "' +
+                        document.title + '" has to be brought up on the ' +
+                        'screen before the question can be answered. Do ' +
+                        'not answer it for them.'
+                    : 'The app is now asking the person a question. It is ' +
+                        'theirs to answer -- tell them it is waiting on ' +
+                        'their screen, and do not answer it for them.',
+            };
+        },
+    };
+})()`;
+
+// An effect that lands LATER than the settle: the Save button greys out once
+// the editing status has re-read the history (that status trails a save by up
+// to half a second -- `useEditingHistoryStatus`), and a confirm opens once
+// the code behind it has read the disk. Waited for by watching the DOM rather
+// than by polling a timer: a hidden window throttles a chain of timers hard,
+// and a hidden window is exactly where a missed question costs the most.
+// Paid only by a press that showed nothing within the settle.
+const EFFECT_WAIT_SOURCE = `((check, ms) => {
+    return new Promise((resolve) => {
+        if (check()) {
+            resolve(true);
+            return;
+        }
+        let timer = null;
+        let isDone = false;
+        const observer = new MutationObserver(() => {
+            if (!isDone && check()) {
+                finish(true);
+            }
+        });
+        const finish = (isFound) => {
+            if (isDone) {
+                return;
+            }
+            isDone = true;
+            observer.disconnect();
+            clearTimeout(timer);
+            resolve(isFound);
+        };
+        observer.observe(document.documentElement, {
+            subtree: true, childList: true, attributes: true,
+            attributeFilter: ['disabled', 'aria-disabled', 'class', 'style'],
+        });
+        timer = setTimeout(() => { finish(false); }, ms);
+    });
+})`;
+
+// How long a press that showed nothing within the settle is watched for a
+// late effect. The Save button's status was measured trailing by up to 500 ms.
+export const LATE_EFFECT_WAIT_MS = 750;
 
 export const DOM_MATCH_RUNTIME = `
 (() => {
@@ -44,6 +306,42 @@ export const DOM_MATCH_RUNTIME = `
         '[data-widget-name]', '[role="region"]', '[role="tabpanel"]',
     ].join(', ');
     const collect = () => [...document.querySelectorAll(SELECTOR)];
+
+    // The words an element SHOWS. textContent also reads the source of every
+    // style sheet and script under it, and a pane that mounts its own <style>
+    // was named by it: owa_press_key focused a slide list and reported it as
+    // ".play-to-bottom { padding: 0; ..." (2026-10-16, T4). Only text that
+    // could hold a rule is walked a second time, so the common case stays
+    // one native textContent read on a window where this runs per element.
+    const NON_TEXT_SELECTOR = 'style, script, template, noscript';
+    const shownTextOf = (element) => {
+        const text = element.textContent ?? '';
+        if (
+            !text.includes('{') ||
+            element.querySelector(NON_TEXT_SELECTOR) === null
+        ) {
+            return text;
+        }
+        const pieces = [];
+        const walker = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: (node) => {
+                    if (node.nodeType === 3) {
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                    return node.matches(NON_TEXT_SELECTOR)
+                        ? NodeFilter.FILTER_REJECT
+                        : NodeFilter.FILTER_SKIP;
+                },
+            },
+        );
+        while (walker.nextNode() !== null) {
+            pieces.push(walker.currentNode.nodeValue);
+        }
+        return pieces.join('');
+    };
 
     // Every way the element is named, kept APART as well as joined. An
     // element whose own text is exactly the words asked for is a better
@@ -72,7 +370,7 @@ export const DOM_MATCH_RUNTIME = `
         const ownText =
             tag === 'SELECT'
                 ? (element.selectedOptions[0] ?? {}).text
-                : element.textContent;
+                : (widget === null ? shownTextOf(element) : null);
         const parts = [
             widget === null ? ownText : widget,
             element.getAttribute('title'),
@@ -81,7 +379,15 @@ export const DOM_MATCH_RUNTIME = `
         ];
         // A box that already holds text is named by it as much as by any
         // label beside it ("(KJV) John 3:16" IS how the reference box reads).
-        if (tag === 'INPUT' || tag === 'TEXTAREA') {
+        // Not a checkbox or a radio: their value is a form field's, "on" by
+        // default and shown nowhere, and it read as the box's STATE -- an
+        // unticked Behind Slide was listed as "Behind Slide on".
+        if (
+            (tag === 'INPUT' &&
+                element.type !== 'checkbox' &&
+                element.type !== 'radio') ||
+            tag === 'TEXTAREA'
+        ) {
             parts.push(element.value);
         }
         // Said once. A control that carries the same words as its title
@@ -109,7 +415,37 @@ export const DOM_MATCH_RUNTIME = `
                 }
                 seen.add(part);
                 return true;
+            })
+            // A title that restates a name with its STATE after a dash --
+            // "Stay Awake — turned off, this computer may sleep when no
+            // screen is showing" beside an aria-label of "Stay Awake" -- is
+            // a sentence about the control, not its name. The name goes
+            // first, so a card and a chip call the control what it is called
+            // (2026-10-10: a walkthrough step read "Click the Stay Awake —
+            // turned off, this computer may sleep when no screen is showing
+            // Stay", the sentence cut at 80 characters, and no press by
+            // those words could ever land).
+            .sort((one, other) => {
+                return (
+                    Number(checkIsStatusOf(one, parts)) -
+                    Number(checkIsStatusOf(other, parts))
+                );
             });
+    };
+    // Whether the part is a sentence that restates another of the parts with
+    // a state after an em or en dash. A hyphen is left alone: "Stage 0 -
+    // Verse" is a name.
+    const STATUS_DASH_PATTERN = /^\\s[\\u2014\\u2013]\\s/;
+    const checkIsStatusOf = (part, parts) => {
+        return parts.some((name) => {
+            return (
+                typeof name === 'string' &&
+                name.length > 0 &&
+                part.length > name.length &&
+                part.startsWith(name) &&
+                STATUS_DASH_PATTERN.test(part.slice(name.length))
+            );
+        });
     };
     // A Windows drive, a UNC share, or the usual roots of a Unix home. Written
     // for the runtime's template literal, so every backslash is doubled here.
@@ -144,30 +480,83 @@ export const DOM_MATCH_RUNTIME = `
     // formatting" for "Follow", "Add Bible Item" for "Add", and opened the
     // help window for "ASSISTANT" -- every one a tier-1 or looser match
     // taken as the thing itself.
+    // A trailing \`*\` is decoration too: it is the unsaved-changes mark a
+    // document, song or run sheet row draws right after its name, and with
+    // it glued on, "Amazing Grace" pressed nothing while its row read
+    // "Amazing Grace*" -- the one row with work in it was the one an assistant
+    // could not open by name (2026-10-06).
     const normaliseLabelPart = (part) => {
         return String(part)
             .toLowerCase()
             .replace(/\\[[^\\]]*\\]/g, ' ')
             .replace(/^[^\\p{L}\\p{N}]+/u, '')
             .replace(/\\s+/g, ' ')
-            .trim();
+            .trim()
+            .replace(/\\s*\\*+$/, '');
     };
     // The NEEDLE loses the same decoration: the words a tool hands back
-    // carry the shortcut -- owa_list_screens says "Clear Bible [F9]", the
+    // carry the shortcut -- owa_list_screens says "Clear Long Text [F9]", the
     // title of that button -- and a press by those exact words was refused
     // because the part had lost its bracket and the needle had not
-    // (EC-135: "Close [Ctrl+Q]" on the Bible Lookup, "Clear Bible [F9]" on
+    // (EC-135: "Close [Ctrl+Q]" on the Bible Lookup, "Clear Long Text [F9]" on
     // the Mini Screen, both the control's own title). A needle that is
     // nothing but decoration matches nothing.
+    // A file row's title is the file name WITH its extension ("Amazing
+    // Grace.owl", "Sunday.owpf"), and its own text is the bare name -- until
+    // the row is EXPANDED (a run sheet open in its panel), when its text is
+    // every line of the sheet run together and the title is the one part
+    // left that still names it. So a part that is the needle plus a file
+    // extension counts as the name (2026-10-10, MC-51: the sheet a drop had
+    // just opened could not be right-clicked by its own name). Both sides go
+    // through the same strip, so a needle written with the extension still
+    // matches too.
+    // A letter first: "John 3.16" is a verse, not a file called "John 3".
+    const withoutExtension = (bare) => {
+        return bare.replace(/\\.[a-z][a-z0-9]{0,4}$/, '');
+    };
+    // The state a title carries after an em or en dash is not part of the
+    // name ("Stay Awake — turned off, …"), on the control AND on the needle:
+    // a model quotes a label back, cut at 80 characters, and that is still
+    // the control it means.
+    const withoutStatus = (bare) => {
+        return bare.replace(/\\s[\\u2014\\u2013]\\s.*$/, '');
+    };
     const checkIsNamedNearly = (element, needle) => {
         const bare = normaliseLabelPart(needle);
         if (bare.length === 0) {
             return false;
         }
-        return labelPartsOf(element).some((part) => {
-            return normaliseLabelPart(part) === bare;
+        const stem = withoutExtension(bare);
+        const name = withoutStatus(bare);
+        const parts = labelPartsOf(element);
+        const isPartNamed = parts.some((part) => {
+            const barePart = normaliseLabelPart(part);
+            return barePart === bare ||
+                (stem.length > 0 && withoutExtension(barePart) === stem) ||
+                (name.length > 0 && withoutStatus(barePart) === name);
         });
+        if (isPartNamed) {
+            return true;
+        }
+        // The label every tool HANDS OUT is the parts joined, and the press
+        // was refused by exactly those words: the Mini Screen's clear
+        // buttons draw "FG" beside the title "Clear Foreground [F10]", the
+        // refusal said to retry with "FG Clear Foreground [F10]", and the
+        // retry was refused the same way (2026-10-22, DD-12).
+        const shown = shownLabelOf(element);
+        if (parts.length > 1 && normaliseLabelPart(shown) === bare) {
+            return true;
+        }
+        // And a long one is handed out CUT -- 80 characters in describe, 60
+        // in nearMisses -- so a Bible Find result could not be dragged by
+        // the very words its refusal named (2026-10-22, DD-05). That many
+        // characters from the start of the label is its name, not a guess.
+        const asked = String(needle).replace(/\\s+/g, ' ').trim().toLowerCase();
+        return asked.length >= HANDED_OUT_CUT_MIN &&
+            shown.length > asked.length &&
+            shown.toLowerCase().startsWith(asked);
     };
+    const HANDED_OUT_CUT_MIN = 58;
 
     // What a caller is SHOWN, as against what is matched on. A title that
     // carries its shortcut beside an aria-label that does not -- "Clear All
@@ -181,6 +570,13 @@ export const DOM_MATCH_RUNTIME = `
         const parts = labelPartsOf(element);
         return parts.filter((part) => {
             const bare = normaliseLabelPart(part);
+            // Nor the sentence that restates a name with its state: handed
+            // out, it was cut at 80 characters and quoted back as words no
+            // press could land on. The name stays; the state is read off
+            // the control (aria-pressed) by the tools that report it.
+            if (checkIsStatusOf(part, parts)) {
+                return false;
+            }
             return !parts.some((other) => {
                 return other.length > part.length &&
                     normaliseLabelPart(other) === bare;
@@ -239,6 +635,58 @@ export const DOM_MATCH_RUNTIME = `
         return names;
     };
 
+    // The name a person READS for a part of the window, which is not always
+    // the one the app stamps on the pane: the Documents list is a pane
+    // stamped "Document List" whose own header says "Documents" -- the card
+    // names itself by that header (aria-labelledby) -- so a scope written the
+    // way the window reads, "Documents > New App Document", found nothing
+    // (2026-10-16, T2). Said in the window's own language, because it is the
+    // text on screen. A control is not a container a step sends anyone into,
+    // and a name past 80 characters is a sentence, not a name.
+    const MAX_SHOWN_NAME_LENGTH = 80;
+    const shownNameOf = (node) => {
+        if (checkIsControl(node)) {
+            return null;
+        }
+        const ids = node.getAttribute('aria-labelledby');
+        if (ids !== null) {
+            const text = ids.split(' ').map((id) => {
+                const labelling = id.length > 0
+                    ? document.getElementById(id)
+                    : null;
+                return labelling === null ? '' : shownTextOf(labelling);
+            }).join(' ').replace(/\\s+/g, ' ').trim();
+            if (text.length > 0 && text.length <= MAX_SHOWN_NAME_LENGTH) {
+                return text;
+            }
+        }
+        const aria = (node.getAttribute('aria-label') ?? '').trim();
+        return aria.length > 0 && aria.length <= MAX_SHOWN_NAME_LENGTH
+            ? aria
+            : null;
+    };
+
+    // Every name a scope may be written as for the containers a control
+    // sits in: the stamped pane names containerPathOf reads AND the shown
+    // names above, nearest first. Read only for a control that already
+    // matched and only when a scope was written, so the walk is paid by a
+    // handful of elements, never by the whole window.
+    const scopePathOf = (element) => {
+        const names = [];
+        let node = element.parentElement;
+        let hops = 0;
+        while (node !== null && node !== document.body && hops < 24) {
+            hops += 1;
+            for (const name of [regionNameOf(node), shownNameOf(node)]) {
+                if (name !== null && !names.includes(name)) {
+                    names.push(name);
+                }
+            }
+            node = node.parentElement;
+        }
+        return names;
+    };
+
     const checkIsControl = (element) => {
         if (element.isContentEditable === true) {
             return true;
@@ -272,6 +720,16 @@ export const DOM_MATCH_RUNTIME = `
         }
         if (candidate.isControl !== best.isControl) {
             return candidate.isControl;
+        }
+        // A row of an OPEN menu beats a control of the page beneath it that
+        // carries the same words: the menu is what the person just opened,
+        // and it holds the keyboard. With a screen card's colour-note menu
+        // up, "red" pressed the Background Colors swatch behind it and put a
+        // red background on that screen (2026-10-16, T1 of run
+        // 20261016-1920). A page first driven by an older server builds no
+        // such flag, hence the Boolean.
+        if (Boolean(candidate.isInMenu) !== Boolean(best.isInMenu)) {
+            return Boolean(candidate.isInMenu);
         }
         // Of two controls that fit equally, the one already on show.
         // Ranked BELOW isControl on purpose: a hover-revealed button
@@ -410,6 +868,11 @@ export const DOM_MATCH_RUNTIME = `
     const KIND_NOUNS = [
         'panel', 'pane', 'section', 'area', 'widget', 'sidebar',
         'tab', 'button', 'box', 'field', 'list', 'menu',
+        // What the manual and a model call an icon-only control: "the Stay
+        // Awake cup", "the Settings gear", "the help icon" (2026-10-10, a
+        // walkthrough step written as "Click the Stay Awake cup" could not
+        // be pressed).
+        'icon', 'cup', 'gear',
     ];
     const REGION_NOUNS = [
         'panel', 'pane', 'section', 'area', 'widget', 'sidebar',
@@ -546,6 +1009,28 @@ export const DOM_MATCH_RUNTIME = `
         return element.checkVisibility() ? 'hidden' : 'gone';
     };
 
+    // A footer the app keeps SHUT behind a three-dot control
+    // (handleAutoHide): no :hover rule opens it, only a press on that
+    // control, which adds auto-hide-show. Painted away like a hover-hidden
+    // control, and a different answer -- "move the mouse there" brings up
+    // nothing. Reported as showsOnHover it sent the assistant's ring onto
+    // an empty corner of the Bible panel and its steps past the three dots
+    // (the user's picture, 2026-10-11: "it should tell user to click the
+    // 3 dots first").
+    const autoHideOf = (element) => {
+        const panel = element.closest('.app-auto-hide');
+        if (panel === null || panel.classList.contains('auto-hide-show')) {
+            return null;
+        }
+        const parent = panel.parentElement;
+        const opener = parent === null
+            ? null
+            : [...parent.children].find((one) => {
+                return one.classList.contains('auto-hide-button');
+            }) ?? null;
+        return { panel, opener };
+    };
+
     const HOVER_ATTR = 'data-owa-hover';
     // Far past any real nesting; a guard against a cycle, not a budget.
     const MAX_HOVER_CHAIN = 40;
@@ -610,7 +1095,19 @@ export const DOM_MATCH_RUNTIME = `
         for (const node of held.chain) {
             node.removeAttribute(HOVER_ATTR);
         }
-        held.style.remove();
+        if (held.style !== null) {
+            held.style.remove();
+        }
+        // Shut again -- unless the person pressed the three dots meanwhile:
+        // the app hides that control while ITS press holds the footer open,
+        // and that footer is theirs now, not ours to close under the mouse.
+        if (
+            held.autoHide !== null &&
+            (held.autoHide.opener === null ||
+                held.autoHide.opener.style.display !== 'none')
+        ) {
+            held.autoHide.panel.classList.remove('auto-hide-show');
+        }
         held = null;
     };
 
@@ -636,7 +1133,15 @@ export const DOM_MATCH_RUNTIME = `
     // levels up (the icons over a bible view are revealed by the bible
     // view itself). Only rules that match something on that chain are
     // injected, so a reveal is five rules, not the page's 162.
-    const revealHidden = (element, holdMs = 4000) => {
+    //
+    // canOpenAutoHide is for POINTING (owa_find_ui's ring): a footer shut
+    // behind its three dots is held open the way a press on them leaves it,
+    // so the ring lands on a control somebody can see. The walkthrough card
+    // does not pass it -- there the three dots are a press of their own, the
+    // step before the one asked for.
+    const revealHidden = (
+        element, holdMs = 4000, canOpenAutoHide = false,
+    ) => {
         if (held !== null && held.element === element) {
             clearTimeout(held.timeoutId);
             held.timeoutId = setTimeout(releaseHidden, holdMs);
@@ -645,6 +1150,19 @@ export const DOM_MATCH_RUNTIME = `
         releaseHidden();
         if (visibilityOf(element) !== 'hidden') {
             return false;
+        }
+        const autoHide = canOpenAutoHide ? autoHideOf(element) : null;
+        if (autoHide !== null) {
+            autoHide.panel.classList.add('auto-hide-show');
+            if (!element.checkVisibility({ checkVisibilityCSS: true })) {
+                autoHide.panel.classList.remove('auto-hide-show');
+                return false;
+            }
+            held = {
+                element, chain: [], style: null, autoHide,
+                timeoutId: setTimeout(releaseHidden, holdMs),
+            };
+            return true;
         }
         const chain = [];
         let node = element;
@@ -698,7 +1216,7 @@ export const DOM_MATCH_RUNTIME = `
             return false;
         }
         held = {
-            element, chain, style,
+            element, chain, style, autoHide: null,
             timeoutId: setTimeout(releaseHidden, holdMs),
         };
         return true;
@@ -751,8 +1269,7 @@ export const DOM_MATCH_RUNTIME = `
                 }
                 let isInScope = false;
                 if (scope !== null) {
-                    path = path ?? containerPathOf(element);
-                    isInScope = checkIsInScope(path, scope);
+                    isInScope = checkIsInScope(scopePathOf(element), scope);
                     // A scope the caller wrote down is a requirement, not a
                     // hint: "Background > Videos" must never answer with the
                     // Videos of another panel, which is the whole reason the
@@ -780,6 +1297,7 @@ export const DOM_MATCH_RUNTIME = `
                     element, tier, needle: one, isInScope,
                     isShown: seen === 'shown',
                     isControl: checkIsControl(element),
+                    isInMenu: element.closest('[role="menu"]') !== null,
                     isRegion,
                     isNamed: checkIsNamedExactly(element, needle),
                     // Safe to PRESS: the control is called what the step
@@ -988,9 +1506,78 @@ export const DOM_MATCH_RUNTIME = `
         return null;
     };
 
+    // Every SHOWN control called exactly what this one is called, with the
+    // panels they sit in -- the one thing a label cannot settle. "More
+    // Options" is on forty controls of the Presenter (every file row's
+    // dots, each screen card's, two lists' own); the first in the page is
+    // the Documents list's, and a walkthrough step about the Mini Screen's
+    // opened the Documents menu (2026-10-10). A scope in the needle ("Mini
+    // Screen > More Options") narrows the count the way it narrows the
+    // match. Walked on demand, for the one element about to be pressed or
+    // ringed -- never for every candidate of a draw.
+    // Two elements one inside the other are ONE control, not twins: the
+    // Reader's Font Size is an \`input[aria-label="Font Size"]\` inside its
+    // own \`div.app-range[title="Font Size"]\`, and the moment the footer
+    // was opened the tip that raises it refused its own press -- "2
+    // controls are called Font Size" -- with nothing else of that name on
+    // the window (GL-25). Only nesting is folded: two separate controls
+    // with one name are still two, whatever their kind.
+    // The twins themselves, the element among them, in page order.
+    const twinElementsOf = (element, needle) => {
+        const parsed = parseNeedle(String(needle ?? ''));
+        const wanted = parsed.text.toLowerCase();
+        if (wanted.length === 0) {
+            return [element];
+        }
+        const twins = [];
+        for (const other of collect()) {
+            if (other !== element) {
+                if (!checkIsNamedExactly(other, wanted)) {
+                    continue;
+                }
+                if (visibilityOf(other) !== 'shown') {
+                    continue;
+                }
+                if (other.contains(element) || element.contains(other)) {
+                    continue;
+                }
+            }
+            if (
+                parsed.scope !== null &&
+                !checkIsInScope(scopePathOf(other), parsed.scope)
+            ) {
+                continue;
+            }
+            twins.push(other);
+        }
+        // The same goes for a twin and its own wrapper: the innermost of
+        // them stands for both, as the element itself does above -- so two
+        // ranges count as two, and the one a walkthrough's last press made
+        // is still ONE fresh twin for \`resolveTwins\`, not an input and its
+        // box. The element contains no other twin, so it always stays.
+        return twins.filter((one) => {
+            return !twins.some((inner) => {
+                return inner !== one && one.contains(inner);
+            });
+        });
+    };
+    const twinsOf = (element, needle) => {
+        const twins = twinElementsOf(element, needle);
+        const panels = [];
+        for (const one of twins) {
+            const panel = containerPathOf(one)[0] ?? null;
+            if (panel !== null && !panels.includes(panel)) {
+                panels.push(panel);
+            }
+        }
+        return { count: twins.length, panels };
+    };
+
     const describe = (element) => {
         const rect = element.getBoundingClientRect();
         const seen = visibilityOf(element);
+        const autoHide = seen === 'hidden' ? autoHideOf(element) : null;
+        const opener = autoHide === null ? null : autoHide.opener;
         const owner = element.closest('[data-react-comp-fp]');
         // Said in words, because the person being pointed at the control is
         // looking at a window, not at a coordinate system.
@@ -1020,7 +1607,14 @@ export const DOM_MATCH_RUNTIME = `
             // Said only when it is true, so an ordinary control costs
             // the reader nothing: this one appears when the mouse is
             // over the part of the window it lives in.
-            showsOnHover: seen === 'hidden' ? true : undefined,
+            showsOnHover: seen === 'hidden' && opener === null
+                ? true
+                : undefined,
+            // Shut behind another control, and no mouse brings it up: the
+            // words on the one to press FIRST.
+            revealBy: opener === null
+                ? undefined
+                : shownLabelOf(opener).slice(0, 80),
             isEnabled: element.disabled !== true &&
                 element.getAttribute('aria-disabled') !== 'true',
             position: {
@@ -1229,6 +1823,9 @@ export const DOM_MATCH_RUNTIME = `
         if (full.showsOnHover === true) {
             row.showsOnHover = true;
         }
+        if (full.revealBy !== undefined) {
+            row.revealBy = full.revealBy;
+        }
         if (full.isEnabled === false) {
             row.isDisabled = true;
         }
@@ -1242,7 +1839,8 @@ export const DOM_MATCH_RUNTIME = `
         checkIsNamedExactly, checkIsTextBox, findBest, findListRegion,
         openContextMenu, waitForBest, nearMisses, describe, flash,
         listControls, parseNeedle, containerPathOf, checkIsRegion,
-        checkIsInScope, pathTier, checkIsBetter, selectorOf,
+        checkIsInScope, pathTier, checkIsBetter, selectorOf, twinsOf,
+        twinElementsOf, scopePathOf, shownTextOf,
     };
     return window.__owaDomMatch;
 })()`;
@@ -1277,11 +1875,16 @@ export function genClickExpression(
   finds,
   timeoutMs = 1500,
   settleMs = 250,
-  { guard = null } = {},
+  { guard = null, button = 'left', clicks = 1 } = {},
 ) {
+  const how = {
+    button: button === 'right' ? 'right' : 'left',
+    clicks: clicks === 2 ? 2 : 1,
+  };
   return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
         const guard = ${JSON.stringify(guard)};
+        const how = ${JSON.stringify(how)};
         const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
         // The on/off a control carries about ITSELF, or null when it carries
         // none. Read off the accessibility tree first because that is what
@@ -1294,6 +1897,14 @@ export function genClickExpression(
                 if (value === 'true' || value === 'false') {
                     return value === 'true';
                 }
+            }
+            // The row a list has open: a document, a song, a run sheet. Any
+            // value but 'false' means current ('page', 'step' and the rest
+            // are kinds of current). Without it, the press that opened a
+            // document reported it had changed nothing (2026-10-06).
+            const current = element.getAttribute('aria-current');
+            if (current !== null) {
+                return current !== 'false';
             }
             // This app's panel tabs (Documents / Bibles / Foreground, the
             // Background tabs) are Bootstrap nav-links whose state is the
@@ -1309,6 +1920,49 @@ export function genClickExpression(
             return typeof element.checked === 'boolean'
                 ? element.checked
                 : null;
+        };
+        // What a press BROUGHT UP, which the control itself cannot say: the
+        // Foreground tab that opens its launcher menu, a More Options that
+        // opens one, the Bible Lookup that opens its popup all stay exactly
+        // as they were, and every one answered 'unverified' to a QA run
+        // that could see the menu sitting right there (2026-10-06).
+        const layers = ${LAYER_WATCH_SOURCE};
+        const questions = ${QUESTION_WATCH_SOURCE};
+        const values = ${VALUE_WATCH_SOURCE};
+        const waitForEffect = ${EFFECT_WAIT_SOURCE};
+        const pressAtCentre = ${PRESS_AT_CENTRE_SOURCE};
+        const isEnabledOf = (one) => {
+            return one.disabled !== true &&
+                one.getAttribute('aria-disabled') !== 'true';
+        };
+        // The controls a press can switch on or off besides itself: the
+        // ones in its own toolbar. Save greys itself out, Undo lights Redo
+        // up, and none of them carries a state of its own, so every one of
+        // those presses read 'unverified' with the document plainly changed
+        // (2026-10-16, T3). A container holding more than a toolbar's worth
+        // is a panel, not a toolbar, and is not read.
+        const neighboursOf = (element) => {
+            let node = element.parentElement;
+            for (
+                let hops = 0;
+                node !== null && node !== document.body && hops < 3;
+                hops += 1
+            ) {
+                const controls = node.querySelectorAll('button, [role="button"]');
+                if (controls.length > 12) {
+                    break;
+                }
+                if (controls.length >= 2) {
+                    return [...controls];
+                }
+                node = node.parentElement;
+            }
+            return [element];
+        };
+        const nameOf = (one) => {
+            return (typeof dm.shownLabelOf === 'function'
+                ? dm.shownLabelOf(one)
+                : dm.labelOf(one)).slice(0, 40);
         };
         const found = await dm.waitForBest(
             ${JSON.stringify(finds)}, ${timeoutMs}, { preferPressSafe: true },
@@ -1372,29 +2026,81 @@ export function genClickExpression(
         target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         const describedBefore = dm.describe(target);
         const stateBefore = stateOf(target);
-        target.click();
+        const layersBefore = layers.snapshot();
+        const questionBefore = questions.snapshot();
+        const valuesBefore = values.snapshot(target);
+        const enabledBefore = new Map(neighboursOf(target).map((one) => {
+            return [one, isEnabledOf(one)];
+        }));
+        const findSwitched = () => {
+            return [...enabledBefore].filter(([one, wasEnabled]) => {
+                return one.isConnected && isEnabledOf(one) !== wasEnabled;
+            }).map(([one]) => { return one; });
+        };
+        pressAtCentre(target, how);
         // This app re-renders on an event, not on the press, so reading the
         // control straight back reports what it looked like BEFORE it was
         // pressed -- which would have made every toggle report 'no change'.
         await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
-        // Three kinds of evidence, weakest last. A control that is GONE did
-        // something (a menu item, a row that closed its own panel); a toggle
-        // that flipped is the state itself; a label that turned Show into
-        // Hide is the same fact written in words. Anything else is a press
-        // with nothing to show for it.
-        const isStillHere = target.isConnected;
-        const stateAfter = isStillHere ? stateOf(target) : null;
-        // Read the way describedBefore was, or a label merely re-joined
-        // would read as a change.
-        const labelAfter = isStillHere ? dm.describe(target).label : null;
-        const didChange = !isStillHere
-            ? true
-            : (stateBefore !== null || stateAfter !== null
-                ? stateAfter !== stateBefore
-                : labelAfter !== describedBefore.label);
+        // Six kinds of evidence, weakest last. A question the press made the
+        // app ask, or a layer it brought up, is the effect itself; a control
+        // that is GONE did something (a menu item, a row that closed its own
+        // panel); a toggle that flipped is the state itself; a label that
+        // turned Show into Hide is the same fact written in words; and a
+        // control of its own toolbar switched on or off (Save greyed out,
+        // Redo lit up) is the press's effect read one step away. Anything
+        // else is a press with nothing to show for it.
+        const readEffect = () => {
+            const opened = layers.findOpened(layersBefore);
+            const closed = layers.findClosed(layersBefore);
+            const asked = questions.findAsked(questionBefore);
+            const isStillHere = target.isConnected;
+            const stateAfter = isStillHere ? stateOf(target) : null;
+            // Read the way describedBefore was, or a label merely re-joined
+            // would read as a change.
+            const labelAfter = isStillHere ? dm.describe(target).label : null;
+            const switched = findSwitched();
+            const moved = values.findMoved(valuesBefore);
+            const didChange = opened !== undefined || closed !== undefined ||
+                asked !== undefined || !isStillHere || switched.length > 0 ||
+                moved.length > 0
+                ? true
+                : (stateBefore !== null || stateAfter !== null
+                    ? stateAfter !== stateBefore
+                    : labelAfter !== describedBefore.label);
+            return {
+                opened, closed, asked, stateAfter, switched, moved, didChange,
+            };
+        };
+        let effect = readEffect();
+        if (!effect.didChange) {
+            await waitForEffect(() => {
+                return questions.findAsked(questionBefore) !== undefined ||
+                    layers.findOpened(layersBefore) !== undefined ||
+                    findSwitched().length > 0 ||
+                    values.findMoved(valuesBefore).length > 0;
+            }, ${LATE_EFFECT_WAIT_MS});
+            effect = readEffect();
+        }
+        const {
+            opened, closed, asked, stateAfter, switched, moved, didChange,
+        } = effect;
+        const namesOf = (isEnabled) => {
+            const names = switched.filter((one) => {
+                return isEnabledOf(one) === isEnabled;
+            }).map(nameOf).filter((name) => {
+                return name.length > 0;
+            }).slice(0, 4);
+            return names.length > 0 ? names : undefined;
+        };
         return {
             clicked: describedBefore,
             matched: found.needle,
+            // Only when it was not an ordinary click: the result rides
+            // every later round, and 'left, once' is the default a reader
+            // assumes.
+            button: how.button === 'right' ? 'right' : undefined,
+            clicks: how.clicks === 2 ? 2 : undefined,
             // Only when it happened, and said in the words the
             // answer needs: this control is not on their screen
             // until they put the mouse over that part of it.
@@ -1403,9 +2109,28 @@ export function genClickExpression(
             // says anything at all -- a plain button says nothing, and
             // inventing an 'on' for it would be the same lie in a new place.
             isOnNow: stateAfter === null ? undefined : stateAfter,
-            // Whether anything about the control itself changed. false is
-            // the interesting one: a press that did nothing at all.
+            // Whether the press changed anything it can see: the control, or
+            // a layer it brought up. false is the interesting one: a press
+            // that did nothing at all.
             didChange,
+            // What it brought up, when it brought anything up: one word,
+            // because a result rides every later round of the question.
+            opened,
+            // ...or took down: a press on a menu's backdrop, a row that
+            // closed the floating panel it sat in.
+            closed,
+            // The controls beside it the press switched on or off -- the
+            // Save it greyed out, the Redo it lit up -- only when any did.
+            nowEnabled: namesOf(true),
+            nowDisabled: namesOf(false),
+            // A value the press moved -- the slider beside Zoom In -- by its
+            // name and where it is now, only when one moved.
+            nowValue: moved.length > 0
+                ? moved.slice(0, 3).map(values.describe)
+                : undefined,
+            // A question the press made the app ask, with what to tell the
+            // person: it is theirs, and it may be in a window nobody sees.
+            question: asked,
             // The one field written for the model rather than about the DOM.
             // Absent evidence must not read as success, so it is spelled out
             // rather than left to be inferred from a missing key.
@@ -1418,6 +2143,751 @@ export function genClickExpression(
                     'user what you pressed rather than what happened.',
         };
     })()`;
+}
+
+/**
+ * Press a keystroke the way the walkthrough card presses one (`pressKeys` in
+ * guide.mjs): keydown then keyup, `key` AND `code` because the app forces the
+ * key back through an en-US layout before matching it. `owa_press_key`'s
+ * expression, written for the thing the raw `press_key` cannot do -- be
+ * JUDGED (`MC-13`): a key carries no label, so this reads the control whose
+ * title names it (F6 is *Clear All [F6]*), refuses every key while the app
+ * is asking the user a question (Enter and Escape are both answers to one),
+ * and refuses Enter and Space when the focused control is named for what
+ * cannot be undone -- the "Enter on a focused Move to Trash" the raw tool was
+ * filed for. With `finds`, that control is focused first, because this app's
+ * arrow keys belong to the panel that has focus (a slide list, the run
+ * player) and a key sent to the body reaches none of them.
+ *
+ * Dispatched at the focused element rather than the document so a panel's
+ * own handler sees it; it bubbles to `document.onkeydown` all the same.
+ */
+export function genPressKeyExpression(
+  keys,
+  { finds = null, timeoutMs = 1500, settleMs = 250, guard = null } = {},
+) {
+  return `(async () => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        const guard = ${JSON.stringify(guard)};
+        const keys = ${JSON.stringify(keys)};
+        const finds = ${JSON.stringify(finds)};
+        const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
+        const layers = ${LAYER_WATCH_SOURCE};
+        // Enter on a focused button asks what a press of it asks.
+        const questions = ${QUESTION_WATCH_SOURCE};
+        // An arrow on a focused divider or slider moves its value.
+        const values = ${VALUE_WATCH_SOURCE};
+        let focused = null;
+        if (Array.isArray(finds) && finds.length > 0) {
+            const found = await dm.waitForBest(
+                finds, ${timeoutMs}, { preferPressSafe: true },
+            );
+            if (found.element === null) {
+                return {
+                    pressed: null,
+                    reason: 'nothing on screen to focus first',
+                    nearMisses: found.nearMisses,
+                };
+            }
+            if (found.isPressSafe !== true) {
+                return {
+                    pressed: null,
+                    reason:
+                        'the closest control on screen is not called that -- ' +
+                        'retry with the label under nearest.',
+                    nearest: dm.describe(found.element),
+                    nearMisses: dm.nearMisses(finds),
+                };
+            }
+            focused = found.element;
+            // Focusing a control named for what cannot be undone and then
+            // sending it Enter is pressing it; refused as the press would be.
+            if (pressGuard !== null) {
+                const refusal = pressGuard.findPressRefusal(focused, guard.rule);
+                if (refusal !== null) {
+                    return Object.assign(
+                        { pressed: null, match: dm.describe(focused) },
+                        refusal,
+                    );
+                }
+            }
+            focused.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+            focused.focus();
+            if (document.activeElement !== focused) {
+                // A pane or a row's words take no focus; the keyboard
+                // surface is the focusable thing INSIDE (a slide list's own
+                // tabIndex box), else the one the words sit in. Never a
+                // button or link: Enter on one of those is a press.
+                const inner = focused.querySelector(
+                    '[tabindex]:not([tabindex="-1"]):not(button):not(a), ' +
+                    'input, textarea, [contenteditable="true"]',
+                ) ?? focused.closest('[tabindex]:not([tabindex="-1"])');
+                if (inner !== null) {
+                    inner.focus();
+                }
+                if (inner !== null && document.activeElement === inner) {
+                    if (pressGuard !== null) {
+                        const refusal = pressGuard.findPressRefusal(inner, guard.rule);
+                        if (refusal !== null) {
+                            return Object.assign(
+                                { pressed: null, match: dm.describe(inner) },
+                                refusal,
+                            );
+                        }
+                    }
+                    focused = inner;
+                } else {
+                    focused = null;
+                }
+            }
+        }
+        if (pressGuard !== null) {
+            // A question on screen is the user's whatever key is sent: Enter
+            // says yes, Escape says no, Tab walks its buttons.
+            const question = document.querySelector(${JSON.stringify(QUESTION_SELECTOR)});
+            if (question !== null && (typeof question.checkVisibility !== 'function' ||
+                question.checkVisibility())) {
+                return { pressed: null, refused: 'question' };
+            }
+            const keyRefusal = pressGuard.findKeyRefusal(keys, guard.rule, document);
+            if (keyRefusal !== null) {
+                return Object.assign({ pressed: null }, keyRefusal);
+            }
+            // Enter and Space press whatever has focus.
+            const active = document.activeElement;
+            if ((keys.key === 'Enter' || keys.key === ' ') && active !== null &&
+                active !== document.body) {
+                const refusal = pressGuard.findPressRefusal(active, guard.rule);
+                if (refusal !== null) {
+                    return Object.assign(
+                        { pressed: null, match: dm.describe(active) },
+                        refusal,
+                    );
+                }
+            }
+        }
+        const init = {
+            key: keys.key,
+            code: keys.code,
+            ctrlKey: !!keys.ctrlKey,
+            altKey: !!keys.altKey,
+            shiftKey: !!keys.shiftKey,
+            metaKey: !!keys.metaKey,
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+        };
+        const at = document.activeElement ?? document;
+        // Named only when the focus is on a control: a focused list is its
+        // every row's words run together, which is no name at all.
+        const atLabel = at === document || at === document.body ||
+            !dm.checkIsControl(at)
+            ? undefined
+            : dm.describe(at).label;
+        const layersBefore = layers.snapshot();
+        const questionBefore = questions.snapshot();
+        const valuesBefore = values.snapshot(at === document ? null : at);
+        const titleBefore = document.title;
+        at.dispatchEvent(new KeyboardEvent('keydown', init));
+        at.dispatchEvent(new KeyboardEvent('keyup', init));
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        const opened = layers.findOpened(layersBefore);
+        const closed = layers.findClosed(layersBefore);
+        const asked = questions.findAsked(questionBefore);
+        const after = document.activeElement;
+        const focusMoved = after !== at;
+        const moved = values.findMoved(valuesBefore);
+        const didChange = opened !== undefined || closed !== undefined ||
+            asked !== undefined || focusMoved || moved.length > 0 ||
+            document.title !== titleBefore;
+        return {
+            pressed: keys.label,
+            at: atLabel,
+            focusedFirst: focused === null ? undefined : dm.describe(focused).label,
+            focusNote: finds !== null && focused === null
+                ? 'That cannot take the keyboard focus, so the key went ' +
+                    'to the window.'
+                : undefined,
+            opened,
+            closed,
+            question: asked,
+            focusMoved: focusMoved ? true : undefined,
+            nowValue: moved.length > 0
+                ? moved.slice(0, 3).map(values.describe)
+                : undefined,
+            didChange,
+            unverified: didChange
+                ? undefined
+                : 'The key was sent, and nothing this expression can see ' +
+                    'changed -- a key often changes a screen or a selection ' +
+                    'it cannot read. Check with owa_list_screens or ' +
+                    'owa_app_state before saying it worked.',
+        };
+    })()`;
+}
+
+/**
+ * Drag one control onto another, the way the mouse does it -- HTML5 drag
+ * and drop with ONE DataTransfer carried through dragstart, dragenter,
+ * dragover, drop and dragend, so what the source put on the drag
+ * (`handleDragStart` writes the payload and its kind's mime type) is what
+ * the target reads off it. `owa_drag`'s expression (2026-10-10): reordering
+ * slides, dropping a song into a run sheet, attaching a background to a
+ * slide card are all a user's everyday moves, and no tool could do one --
+ * chrome-devtools' `drag` aims by uid and drives the pointer, which this
+ * app's drop handlers do not read.
+ *
+ * `place` is WHERE on the target: `on` is its centre, what dropping on a
+ * thing means in the app (attach, replace, play); `before` / `after` are the
+ * target's top and bottom edges -- the reorder bands a list row carries --
+ * sent with Ctrl held, which this app's rows read as "put it at this
+ * position" rather than "attach it here" (`toPresentingFlowRowDropKind`).
+ *
+ * A drop lands on what is painted at the point, found by `elementFromPoint`,
+ * so a row's own handler gets it; everything bubbles. `accepted` is whether
+ * any target cancelled the dragover, which is the one thing a drop target
+ * says about itself before the drop -- and, as in the browser, the drop is
+ * sent only then (a `dragleave` otherwise), so `dropped` says it reached a
+ * handler. It used to be the drop's own `defaultPrevented`, which says
+ * nothing of whether the handler acted: the Mini Screen's applies a colour
+ * and never cancels the drop, and a drop that coloured both screens read
+ * `dropped: false` (robot run 20261024-1008, DD-12).
+ */
+export function genDragExpression(
+  fromFinds,
+  toFinds,
+  { place = 'on', timeoutMs = 1500, settleMs = 300, guard = null } = {},
+) {
+  const wanted = ['on', 'before', 'after'].includes(place) ? place : 'on';
+  return `(async () => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        const guard = ${JSON.stringify(guard)};
+        const place = ${JSON.stringify(wanted)};
+        const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
+        const layers = ${LAYER_WATCH_SOURCE};
+        const fromFinds = ${JSON.stringify(fromFinds)};
+        const toFinds = ${JSON.stringify(toFinds)};
+        const find = async (finds, what) => {
+            const found = await dm.waitForBest(
+                finds, ${timeoutMs}, { preferPressSafe: true },
+            );
+            if (found.element === null) {
+                return {
+                    refusal: {
+                        dragged: null,
+                        reason: 'nothing on screen to ' + what,
+                        nearMisses: found.nearMisses,
+                    },
+                };
+            }
+            if (found.isPressSafe !== true) {
+                return {
+                    refusal: {
+                        dragged: null,
+                        reason:
+                            'the closest control on screen is not called ' +
+                            'that -- retry with the label under nearest.',
+                        nearest: dm.describe(found.element),
+                        nearMisses: dm.nearMisses(finds),
+                    },
+                };
+            }
+            if (pressGuard !== null) {
+                const refusal = pressGuard.findPressRefusal(
+                    found.element, guard.rule,
+                );
+                if (refusal !== null) {
+                    return {
+                        refusal: Object.assign(
+                            { dragged: null, match: dm.describe(found.element) },
+                            refusal,
+                        ),
+                    };
+                }
+            }
+            return { element: found.element };
+        };
+        const source = await find(fromFinds, 'drag');
+        if (source.refusal !== undefined) {
+            return source.refusal;
+        }
+        const target = await find(toFinds, 'drop on');
+        if (target.refusal !== undefined) {
+            return target.refusal;
+        }
+        // The row is what is draggable; the words may be on a child of it.
+        const dragged = source.element.closest('[draggable="true"]') ??
+            source.element;
+        if (dragged.getAttribute('draggable') !== 'true') {
+            return {
+                dragged: null,
+                reason: 'that control cannot be dragged',
+                match: dm.describe(source.element),
+            };
+        }
+        dragged.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        target.element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const centreOf = (element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+                x: Math.round(rect.left + rect.width / 2),
+                y: Math.round(rect.top + rect.height / 2),
+            };
+        };
+        // \`after\` is the top band of the NEXT row: this app's rows read a
+        // Ctrl drop as "put it at my position" top edge or bottom alike, so
+        // the row's own bottom band would land the thing BEFORE it. With no
+        // next row the bottom band is all there is.
+        const targetRow = target.element.closest('[draggable="true"]') ??
+            target.element;
+        const nextRow = place === 'after' ? targetRow.nextElementSibling : null;
+        const landing = nextRow ?? target.element;
+        const aimAt = () => {
+            const rect = landing.getBoundingClientRect();
+            const centre = centreOf(landing);
+            return {
+                x: centre.x,
+                y: place === 'on'
+                    ? centre.y
+                    : nextRow !== null || place === 'before'
+                        ? Math.round(rect.top + 2)
+                        : Math.round(rect.bottom - 2),
+            };
+        };
+        // The drop lands on what the window PAINTS there. Scrolled only to
+        // the nearest edge, a list's first row can sit under its own sticky
+        // header, and a drop "on" it went to the list container instead and
+        // still read \`dropped\` (a Bibles list row, 2026-10-22). Centred, it
+        // is in view; still covered, the answer says so.
+        const checkIsOnLanding = (point) => {
+            const hit = document.elementFromPoint(point.x, point.y);
+            return hit === null || hit === landing || landing.contains(hit);
+        };
+        let to = aimAt();
+        if (!checkIsOnLanding(to)) {
+            landing.scrollIntoView({ block: 'center', inline: 'nearest' });
+            to = aimAt();
+        }
+        if (!checkIsOnLanding(to)) {
+            return {
+                dragged: null,
+                reason:
+                    'something else is drawn over that control where the ' +
+                    'drop would land -- open or scroll to it first',
+                match: dm.describe(target.element),
+                coveredBy: dm.describe(document.elementFromPoint(to.x, to.y)),
+            };
+        }
+        const from = centreOf(dragged);
+        // What dragstart writes into. Chromium seals a drag's data the
+        // moment dragstart RETURNS and empties it again once the drop's
+        // handlers have run, so a source that awaits before \`setData\`
+        // sends nothing and a target that awaits before \`getData\` reads
+        // nothing. An unsealed synthetic transfer let both pass here while
+        // the real mouse failed (a Bible history row, 2026-10-22), so the
+        // drop gets a COPY taken at dragstart's return, cleared after.
+        const dataTransfer = new DataTransfer();
+        let dropTransfer = dataTransfer;
+        const send = (element, type, point) => {
+            const event = new DragEvent(type, {
+                bubbles: true, cancelable: true, composed: true,
+                clientX: point.x, clientY: point.y,
+                ctrlKey: place !== 'on',
+                dataTransfer: type === 'dragstart' ? dataTransfer : dropTransfer,
+            });
+            element.dispatchEvent(event);
+            return event.defaultPrevented;
+        };
+        // A mouse comes onto the thing and presses it before the browser
+        // starts a drag, and a source may get ready on either: a Bible
+        // history entry resolves its passage then, because what dragstart
+        // writes has to be ready the moment it fires. The browser cancels
+        // the pointer once the drag takes it over.
+        const pressedAt = document.elementFromPoint(from.x, from.y);
+        const pressTarget = pressedAt !== null && dragged.contains(pressedAt)
+            ? pressedAt
+            : dragged;
+        const point = (type, init) => {
+            const isPointer = type.startsWith('pointer') &&
+                typeof PointerEvent === 'function';
+            const Event = isPointer ? PointerEvent : MouseEvent;
+            pressTarget.dispatchEvent(new Event(type, Object.assign({
+                bubbles: true, cancelable: true, composed: true,
+                clientX: from.x, clientY: from.y,
+                pointerId: 1, pointerType: 'mouse', isPrimary: true,
+                button: 0, buttons: 1,
+            }, init)));
+        };
+        const layersBefore = layers.snapshot();
+        point('pointerover', { buttons: 0 });
+        point('pointerenter', { bubbles: false, buttons: 0 });
+        point('pointerdown', {});
+        point('mousedown', {});
+        await new Promise((resolve) => {
+            setTimeout(resolve, Math.min(${settleMs}, 150));
+        });
+        send(dragged, 'dragstart', from);
+        dropTransfer = new DataTransfer();
+        for (const type of [...dataTransfer.types]) {
+            if (type !== 'Files') {
+                dropTransfer.setData(type, dataTransfer.getData(type));
+            }
+        }
+        dropTransfer.effectAllowed = dataTransfer.effectAllowed;
+        point('pointercancel', { buttons: 0 });
+        if (dropTransfer.types.length === 0) {
+            send(dragged, 'dragend', from);
+            return {
+                dragged: null,
+                reason:
+                    'that control starts no drag the app can read -- it ' +
+                    'is moved with the pointer, not dropped',
+                match: dm.describe(dragged),
+            };
+        }
+        const carried = [...dropTransfer.types];
+        // A slide's canvas draws inside a SHADOW root, and the document's
+        // hit test stops at its host: a drop sent there never reached the
+        // handlers inside, where the browser's own drop goes (2026-10-22,
+        // DD-13 -- a colour dragged onto the Slide Editor read nothing).
+        let at = document.elementFromPoint(to.x, to.y);
+        while (at !== null && at.shadowRoot) {
+            const inner =
+                at.shadowRoot.elementFromPoint?.(to.x, to.y) ?? null;
+            if (inner === null || inner === at) {
+                break;
+            }
+            at = inner;
+        }
+        at = at ?? landing;
+        send(at, 'dragenter', to);
+        const accepted = send(at, 'dragover', to);
+        // Chromium drops only on a control that took the dragover; with
+        // none the drag leaves. A handler acting on a drop it never accepted
+        // would work here and never under a mouse.
+        const dropped = accepted;
+        send(at, accepted ? 'drop' : 'dragleave', to);
+        dropTransfer.clearData?.();
+        send(dragged, 'dragend', from);
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        const opened = layers.findOpened(layersBefore);
+        return {
+            dragged: dm.describe(dragged),
+            onto: dm.describe(target.element),
+            place,
+            carried: [...new Set(carried)],
+            accepted,
+            dropped,
+            opened,
+            unverified: dropped
+                ? undefined
+                : 'Nothing under that point took the drop. Check the thing ' +
+                    'you meant to change -- owa_app_state, owa_list_ui, a ' +
+                    'data tool\\'s list -- before saying it worked.',
+        };
+    })()`;
+}
+
+/**
+ * Where to drop files on a control found by its words, and a watch on what
+ * the app does with them -- the page half of `owa_drop_files` (2026-10-22).
+ *
+ * The drop itself cannot be made in the page: a `File` built by a script has
+ * no path, and every list here copies a dropped file FROM its path. The
+ * server sends it through CDP's `Input.dispatchDragEvent`, the browser's own
+ * drop with real files on disk, at the point this answers. So this finds the
+ * control, brings it into view, and arms one listener per kind on the window
+ * in the CAPTURE phase -- ahead of every handler, including ones that stop
+ * the event before it bubbles up. `accepted` is the dragover's
+ * `defaultPrevented`, read a task later, after those handlers; `dropped` is a
+ * drop arriving once the drag was accepted -- one the browser delivered to a
+ * handler. Not the drop's own `defaultPrevented`: a handler can act and never
+ * cancel it (the Mini Screen's, robot run 20261024-1008, DD-12).
+ */
+export function genDropAimExpression(
+  finds,
+  { timeoutMs = 1500, guard = null } = {},
+) {
+  return `(async () => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        const guard = ${JSON.stringify(guard)};
+        const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
+        const finds = ${JSON.stringify(finds)};
+        const found = await dm.waitForBest(
+            finds, ${timeoutMs}, { preferPressSafe: true },
+        );
+        if (found.element === null) {
+            return {
+                dropped: null,
+                reason: 'nothing on screen to drop on',
+                nearMisses: found.nearMisses,
+            };
+        }
+        if (found.isPressSafe !== true) {
+            return {
+                dropped: null,
+                reason:
+                    'the closest control on screen is not called that -- ' +
+                    'retry with the label under nearest.',
+                nearest: dm.describe(found.element),
+                nearMisses: dm.nearMisses(finds),
+            };
+        }
+        if (pressGuard !== null) {
+            const refusal = pressGuard.findPressRefusal(
+                found.element, guard.rule,
+            );
+            if (refusal !== null) {
+                return Object.assign(
+                    { dropped: null, match: dm.describe(found.element) },
+                    refusal,
+                );
+            }
+        }
+        const aimAt = () => {
+            const rect = found.element.getBoundingClientRect();
+            return {
+                x: Math.round(rect.left + rect.width / 2),
+                y: Math.round(rect.top + rect.height / 2),
+            };
+        };
+        // The browser drops on what it PAINTS at the point: a control under
+        // a sticky header or a popup is not where the files would go.
+        const checkIsOnTarget = (at) => {
+            const hit = document.elementFromPoint(at.x, at.y);
+            return hit === null || hit === found.element ||
+                found.element.contains(hit);
+        };
+        found.element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        let point = aimAt();
+        if (!checkIsOnTarget(point)) {
+            found.element.scrollIntoView({ block: 'center', inline: 'nearest' });
+            point = aimAt();
+        }
+        if (!checkIsOnTarget(point)) {
+            return {
+                dropped: null,
+                reason:
+                    'something else is drawn over that control where the ' +
+                    'files would land -- open or scroll to it first',
+                match: dm.describe(found.element),
+                coveredBy: dm.describe(document.elementFromPoint(point.x, point.y)),
+            };
+        }
+        const old = window.__owaDropWatch;
+        if (old !== undefined) {
+            old.stop();
+        }
+        const watch = { accepted: false, dropped: false, landedOn: null };
+        const onOver = (event) => {
+            setTimeout(() => {
+                watch.accepted = watch.accepted || event.defaultPrevented;
+            }, 0);
+        };
+        const onDrop = (event) => {
+            const landed = event.target instanceof Element
+                ? event.target
+                : null;
+            // After the dragover's own read, queued before this one.
+            setTimeout(() => {
+                watch.dropped = watch.accepted;
+                watch.landedOn = landed === null ? null : dm.describe(landed);
+            }, 0);
+        };
+        window.addEventListener('dragover', onOver, true);
+        window.addEventListener('drop', onDrop, true);
+        const timeoutId = setTimeout(() => { watch.stop(); }, 20000);
+        watch.stop = () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener('dragover', onOver, true);
+            window.removeEventListener('drop', onDrop, true);
+            if (window.__owaDropWatch === watch) {
+                delete window.__owaDropWatch;
+            }
+        };
+        window.__owaDropWatch = watch;
+        return { point, onto: dm.describe(found.element) };
+    })()`;
+}
+
+/** The watch `genDropAimExpression` armed, read once and taken down. */
+export function genDropReadExpression({ settleMs = 600 } = {}) {
+  return `(async () => {
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        const watch = window.__owaDropWatch;
+        if (watch === undefined) {
+            return { accepted: false, dropped: false, landedOn: null };
+        }
+        watch.stop();
+        return {
+            accepted: watch.accepted,
+            dropped: watch.dropped,
+            landedOn: watch.landedOn,
+        };
+    })()`;
+}
+
+/**
+ * Scroll a list, the way a user does to reach a row that is not on screen.
+ * `owa_scroll`'s expression (2026-10-10, MC-54): this app's long lists are
+ * windowed, so a row past the fold is not in the DOM and matches nothing
+ * until the list is scrolled. The region is the nearest scroller of the
+ * control `finds` names (or inside it, for a panel), else the list nearest
+ * where it is -- `findListRegion`, the guide's own rule -- and the answer
+ * says what came into view, so the next call aims at words that exist.
+ */
+export function genScrollExpression(
+  finds,
+  { to = 'down', timeoutMs = 1500, settleMs = 300 } = {},
+) {
+  const wanted = ['down', 'up', 'top', 'bottom'].includes(to) ? to : 'down';
+  return `(async () => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        const to = ${JSON.stringify(wanted)};
+        const finds = ${JSON.stringify(finds)};
+        // The runtime's own rule (\`checkIsScroller\`), with its size floor:
+        // a 30 px box that happens to overflow is not the list.
+        const isScroller = (element) => {
+            if (element === null || element === undefined ||
+                element.getBoundingClientRect === undefined) {
+                return false;
+            }
+            const rect = element.getBoundingClientRect();
+            return rect.width >= 200 && rect.height >= 100 &&
+                element.scrollHeight > element.clientHeight + 4;
+        };
+        let anchor = null;
+        if (Array.isArray(finds) && finds.length > 0) {
+            const found = await dm.waitForBest(finds, ${timeoutMs}, {});
+            if (found.element === null) {
+                return {
+                    scrolled: null,
+                    reason: 'nothing on screen called that to scroll',
+                    nearMisses: found.nearMisses,
+                };
+            }
+            anchor = found.element;
+        }
+        let region = null;
+        if (anchor !== null) {
+            let node = anchor;
+            while (node !== null && node !== document.body) {
+                if (isScroller(node)) {
+                    region = node;
+                    break;
+                }
+                node = node.parentElement;
+            }
+            if (region === null) {
+                // A panel named: the list is INSIDE it. Containers only --
+                // every node of a Bible pane is thousands of layout reads.
+                region = [...anchor.querySelectorAll('div, ul, section')]
+                    .find(isScroller) ?? null;
+            }
+        }
+        if (region === null) {
+            const rect = anchor === null ? null : anchor.getBoundingClientRect();
+            region = dm.findListRegion(
+                rect === null
+                    ? null
+                    : { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 },
+            );
+        }
+        if (region === null) {
+            return { scrolled: null, reason: 'nothing here scrolls' };
+        }
+        const before = region.scrollTop;
+        const page = Math.max(40, Math.round(region.clientHeight * 0.9));
+        const max = Math.max(0, region.scrollHeight - region.clientHeight);
+        const target = to === 'top' ? 0
+            : to === 'bottom' ? max
+            : to === 'up' ? before - page
+            : before + page;
+        region.scrollTop = Math.max(0, Math.min(target, max));
+        // The browser fires its own scroll event for a moved scrollTop on
+        // the next frame; a windowed list renders its new rows on it. A
+        // synthetic one here made every such list render twice.
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        const after = region.scrollTop;
+        const regionRect = region.getBoundingClientRect();
+        const checkIsInView = (element) => {
+            const rect = element.getBoundingClientRect();
+            return rect.height > 0 && rect.bottom > regionRect.top &&
+                rect.top < regionRect.bottom;
+        };
+        const seen = new Set();
+        const inView = [];
+        for (const element of dm.collect()) {
+            if (!region.contains(element) || !checkIsInView(element)) {
+                continue;
+            }
+            const label = dm.shownLabelOf(element);
+            if (label.length === 0 || label.length > 120 || seen.has(label)) {
+                continue;
+            }
+            seen.add(label);
+            inView.push(label);
+            if (inView.length >= 40) {
+                break;
+            }
+        }
+        const panel = region.closest('[data-widget-name]');
+        return {
+            scrolled: panel === null ? region.tagName.toLowerCase()
+                : panel.getAttribute('data-widget-name'),
+            to,
+            from: before,
+            now: after,
+            max,
+            isAtTop: after <= 0,
+            isAtBottom: after >= max - 1,
+            didChange: after !== before,
+            inView,
+        };
+    })()`;
+}
+
+// How long `owa_click` keeps looking for a window its press opened when the
+// page itself saw nothing change. The Settings gear opens Settings as a window
+// of its own, which becomes a debugging target a few hundred milliseconds
+// after the press -- and no page can see another one open, so the press read
+// `unverified` with Settings in front of the user (2026-10-06). Measured
+// live, Settings was a target by the first look after the 250 ms settle; the
+// rest is margin for a slow machine, paid only by a press that showed nothing
+// (the /clear commands' plain Clear buttons among them).
+export const OPENED_WINDOW_WAIT_MS = 1000;
+
+/**
+ * Adds a window the press opened to a `genClickExpression` result, read off
+ * the debugging targets the press was evaluated beside (`evaluateInApp`'s
+ * `port` and `targets`). One look when the page already saw the press do
+ * something, a short poll when it saw nothing: an honest "nothing changed" is
+ * the only answer that pays for the wait. `waitForNewAppPage` is `cdp.mjs`'s,
+ * passed in so this file stays free of the network.
+ */
+export async function addOpenedWindow(
+  value,
+  { port, targets },
+  waitForNewAppPage,
+) {
+  if (value === null || typeof value !== 'object' || !value.clicked) {
+    return value;
+  }
+  if (value.opened !== undefined || !Array.isArray(targets)) {
+    return value;
+  }
+  const page = await waitForNewAppPage(
+    port,
+    targets,
+    value.didChange ? 0 : OPENED_WINDOW_WAIT_MS,
+  );
+  if (page === null) {
+    return value;
+  }
+  const { unverified: _unverified, ...rest } = value;
+  // `page` is the word every tool's `page` argument takes, so the next call
+  // can be aimed straight at the window that opened.
+  return { ...rest, didChange: true, opened: 'window', page };
 }
 
 /**
@@ -1593,7 +3063,7 @@ export function genHighlightSelectorExpression(selector, isHighlighting) {
         }
         let isRevealed = false;
         if (${isHighlighting ? 'true' : 'false'}) {
-            isRevealed = dm.revealHidden(element, 4000);
+            isRevealed = dm.revealHidden(element, 4000, true);
             dm.flash(element);
         }
         return {
@@ -1631,8 +3101,13 @@ export function genFindUiExpression(text, isHighlighting) {
             }
             let isInScope = false;
             if (asked.scope !== null) {
-                path = path === null ? dm.containerPathOf(element) : path;
-                isInScope = dm.checkIsInScope(path, asked.scope);
+                // A page first driven by an older server keeps that server's
+                // runtime (memory dom-match-memoised-in-page), and it has no
+                // scopePathOf: the stamped names alone, as before.
+                const scopePath = typeof dm.scopePathOf === 'function'
+                    ? dm.scopePathOf(element)
+                    : dm.containerPathOf(element);
+                isInScope = dm.checkIsInScope(scopePath, asked.scope);
                 if (!isInScope) {
                     continue;
                 }
@@ -1640,6 +3115,7 @@ export function genFindUiExpression(text, isHighlighting) {
             found.push({
                 element, tier, isInScope,
                 isControl: dm.checkIsControl(element),
+                isInMenu: element.closest('[role="menu"]') !== null,
                 isRegion: dm.checkIsRegion(element),
                 isNamed: dm.checkIsNamedExactly(element, needle),
                 length: label.length,
@@ -1667,7 +3143,7 @@ export function genFindUiExpression(text, isHighlighting) {
         // anybody could recognise.
         let isRevealed = false;
         if (${isHighlighting ? 'true' : 'false'} && shown.length > 0) {
-            isRevealed = dm.revealHidden(shown[0].element, 4000);
+            isRevealed = dm.revealHidden(shown[0].element, 4000, true);
         }
         if (${isHighlighting ? 'true' : 'false'}) {
             for (const one of shown) {

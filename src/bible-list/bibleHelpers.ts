@@ -29,12 +29,13 @@ import type { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
+import { getBibleItemData } from '../_screen/screenLongTextTypeHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
 import { useAppCurrentRef, useAppEffectAsync } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -45,6 +46,10 @@ import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
+import {
+    checkIsCrossChapterTarget,
+    getTargetChapterEnd,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 
 export const SelectedBibleKeyContext = createContext<string>(BIBLE_KJV_KEY);
 export function useBibleKeyContext() {
@@ -71,6 +76,10 @@ export async function genInputText(
             chapter,
             target?.verseStart,
             target?.verseEnd,
+            // `John 1:2-3:4` keeps its end chapter in the other version.
+            target !== undefined && checkIsCrossChapterTarget(target)
+                ? getTargetChapterEnd(target)
+                : undefined,
         );
     }
     return inputText;
@@ -242,7 +251,11 @@ export async function openBibleItemContextMenu(
                   },
               ]),
         ...genShowOnScreensContextMenu((event) => {
-            ScreenBibleManager.handleBibleItemSelecting(event, bibleItem, true);
+            ScreenLongTextManager.handleBibleItemSelecting(
+                event,
+                bibleItem,
+                true,
+            );
         }),
         ...(bible === null
             ? []
@@ -296,37 +309,58 @@ export async function openBibleItemContextMenu(
     showAppContextMenu(event, [...extraMenuItems, ...menuItem]);
 }
 
+/**
+ * A passage AND the version it is in. The title alone ("John 3:16") is the
+ * same in every version of one language, so matching on it lit a saved KJV
+ * row while NIV was on the screen.
+ */
+function toOnScreenBibleKey(bibleKey: string, title: string) {
+    return `${bibleKey}|${title}`;
+}
+
+/** `toOnScreenBibleKey` of every version of every passage on a screen. */
 export async function getOnScreenBibleItems() {
     const allScreenManager = getAllScreenManagers();
-    let titleList: string[] = [];
+    const keySet = new Set<string>();
     for (const screenManager of allScreenManager) {
-        for (const bibleItemDataList of Object.values(
-            screenManager.screenBibleManager.screenViewData?.bibleItemData ??
-                {},
-        )) {
-            if (Array.isArray(bibleItemDataList)) {
-                for (const bibleItemData of bibleItemDataList) {
-                    titleList.push(bibleItemData.title);
-                }
-            } else {
-                titleList.push(
+        // Nothing while the screen holds a long text: it is no passage.
+        const bibleItemData = getBibleItemData(
+            screenManager.screenLongTextManager.screenViewData,
+        );
+        if (bibleItemData === undefined) {
+            continue;
+        }
+        // Read by NAME: looping over the object's values read every value
+        // that was not an array as the passage, so any field added beside
+        // these two would have been titled as one.
+        const { renderedList, bibleItem } = bibleItemData;
+        // Every version on the screen, titled when it was rendered.
+        for (const rendered of renderedList ?? []) {
+            keySet.add(toOnScreenBibleKey(rendered.bibleKey, rendered.title));
+        }
+        if (bibleItem?.target) {
+            keySet.add(
+                toOnScreenBibleKey(
+                    bibleItem.bibleKey,
                     await bibleRenderHelper.toTitle(
-                        bibleItemDataList.bibleKey,
-                        bibleItemDataList.target,
+                        bibleItem.bibleKey,
+                        bibleItem.target,
                     ),
-                );
-            }
+                ),
+            );
         }
     }
-    titleList = Array.from(new Set(titleList));
-    return titleList;
+    return Array.from(keySet);
 }
 
 export async function checkIsBibleItemOnScreen(items: BibleItem[]) {
-    const titleList = await getOnScreenBibleItems();
+    const keyList = await getOnScreenBibleItems();
+    if (keyList.length === 0) {
+        return false;
+    }
     for (const bibleItem of items) {
         const title = await bibleItem.toTitle();
-        if (titleList.includes(title)) {
+        if (keyList.includes(toOnScreenBibleKey(bibleItem.bibleKey, title))) {
             return true;
         }
     }
@@ -463,7 +497,9 @@ export function improveBibleItemTitleOnHover<T extends HTMLElement>(
         if (bibleItem === null) {
             return;
         }
-        let text = await bibleItem.toText();
+        // A tooltip cut at 1000 characters: a passage running over chapters
+        // reads its first one, never the rest.
+        let text = await bibleItem.toText(1);
         text = text.substring(0, 1000);
         element.title = text;
     });

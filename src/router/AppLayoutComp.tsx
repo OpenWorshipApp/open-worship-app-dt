@@ -9,6 +9,8 @@ import {
     HelpButtonComp,
     SettingButtonComp,
 } from '../others/commonButtons';
+import StayAwakeButtonComp from '../others/StayAwakeButtonComp';
+import appProvider from '../server/appProvider';
 import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import AppPopupBibleLookupComp from '../app-modal/AppPopupBibleLookupComp';
 import AppContextMenuComp from '../context-menu/AppContextMenuComp';
@@ -93,6 +95,11 @@ export default function AppLayoutComp({
                     }
                 >
                     <div className="btn-group" role="group">
+                        {/* The editor shares this layout and never keeps the
+                            computer awake, so it gets no switch for it. */}
+                        {appProvider.isPagePresenter ? (
+                            <StayAwakeButtonComp />
+                        ) : null}
                         {isInjectedAppDocumentFilePath ? null : (
                             <SettingButtonComp />
                         )}

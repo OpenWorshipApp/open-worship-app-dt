@@ -18,5 +18,5 @@
         "outDir": "electron-build/"
     },
     "include": ["electron/**/*.ts", "electron/**/*.json"],
-    "exclude": ["electron/**/*.test.ts"]
+    "exclude": ["electron/**/*.test.ts", "electron/tsconfig.json"]
 }

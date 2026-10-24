@@ -29,6 +29,18 @@ import {
 
 import { appError } from '../helper/loggerHelpers';
 import {
+    BIBLE_FIND_CONTROL,
+    BIBLE_FIND_MANUAL_ID,
+    BIBLE_FIND_QUERY,
+    genBibleFindLead,
+    genBibleKnowledgeText,
+    readBibleContentAsk,
+} from './bibleContentAskHelpers';
+import {
+    BIBLE_IMPORT_MANUAL_ID,
+    genBibleImportOfferAction,
+} from './bibleImportChatHelpers';
+import {
     checkIsBrowserCheckRefusal,
     checkIsLyricPaste,
     keepDraftedLyric,
@@ -37,10 +49,26 @@ import {
     readDraftedLyric,
     readDraftReport,
     readSongLinkAsk,
+    readSongLookupYours,
+    readSongTitleAsk,
 } from './lyricDraftHelpers';
+import { translateDraftReport } from './lyricDraftReportHelpers';
+import { toShownPage } from '../../tools/owa-devtools-mcp/manualPage.mjs';
 import { callTool, parseToolJson } from './mcpClient';
+import {
+    DEFAULT_CHAT_LANG_CODE,
+    checkIsLanguageWord,
+    getAppLangCode,
+} from './chatLangHelpers';
+import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import { describeVerseOpened } from './verseFindChatHelpers';
 import { toSiteName } from './progressHelpers';
+import { checkIsOwnWindowQuestion, readWholePage } from './questionHelpers';
 import type { AttachRequestType, ShowRefType } from './quickReplyHelpers';
+import {
+    OPEN_AI_SETTING_LABEL,
+    OPEN_AI_SETTING_TOOL_NAME,
+} from './providerIssueHelpers';
 import { describeScreenContent } from '../../tools/owa-devtools-mcp/agentScreens.mjs';
 import {
     describeRunSheet,
@@ -65,6 +93,17 @@ export { BOT_FOCUS_LIST, DEFAULT_BOT_FOCUS, getBotFocus, toBotFocus };
 
 export type BotActionType = {
     label: string;
+    // What the button's words mean, for a hover tooltip -- the full name
+    // behind a short Bible key (`KJV` -> `King James Version`). Kept with
+    // the action, so a reopened conversation still explains it; never
+    // translated at press time, since it is already in the language it was
+    // written in.
+    title?: string;
+    // Words that are DATA -- a verse's or a word's own, as its Bible spells
+    // them -- drawn exactly as written: never through the app's dictionary,
+    // never in capitals, which turned the Greek _τῇ_ into _ΤΗΙ_ on a word
+    // to study (2026-10-23).
+    isData?: true;
     // An action either calls a tool directly, or -- when only a model can work
     // out what to press -- asks the model a follow-up question in the user's
     // place. `ask` wins when both are set.
@@ -89,6 +128,9 @@ export type BotAnswerType = {
     // open. Drawn as the same chips a question carries, pressed the same
     // way. See `parseAnswerShows`.
     shows?: ShowRefType[];
+    // Web addresses in the text that open in the browser when pressed --
+    // written by the APP, never by a model (`chatLinkHelpers`).
+    links?: string[];
 };
 
 /**
@@ -106,6 +148,10 @@ type HelpHitType = {
     title: string;
     section: string;
     excerpt: string;
+    // The page's title and the same passage in the window's language, when
+    // its translation is current (`docs/manual-i18n/`, `owa_help_search`).
+    titleInLanguage?: string;
+    excerptInLanguage?: string;
 };
 
 // The walkthrough is offered on every manual answer: reading four steps and
@@ -119,14 +165,33 @@ export function genGuideActions(
     // model is handed "do it for me" with no subject and can only ask back
     // what it should demo -- which is the button doing nothing, again.
     topic = '',
+    // The control the question is about, when the corpus knows it (the
+    // row's `find`): the card starts at the step naming it, that control
+    // first -- a page's header paragraph names eight (EC-215).
+    find: string | null = null,
 ): BotActionType[] {
+    const findArgs = find !== null && find.length > 0 ? { find } : {};
     const isReaderTextTooSmall =
         hit.id === 'W-11' &&
         focus === 'reader' &&
         /(?:(?:small|tiny).*(?:words?|text|font)|(?:words?|text|font).*(?:small|tiny|larger|bigger))/i.test(
             topic,
         );
-    return [
+    // A model asked to build this card from the page wrote "click Use This
+    // Folder" with a folder already chosen -- that button shows only while
+    // none is -- and then "Parent Directory:", a heading no press can land
+    // on (2026-10-23, live in the user's Settings). The lesson's one press
+    // is the Path Settings tab, there in both states.
+    const isDataFolderAsk =
+        hit.id === 'W-16' &&
+        focus === 'setting' &&
+        /data\s*(?:folder|dir)|parent\s+dir/i.test(topic);
+    const demoId = isReaderTextTooSmall
+        ? 'reader-font-larger'
+        : isDataFolderAsk
+          ? 'setting-path'
+          : null;
+    const guideActions = [
         {
             // A recipe can only mark a control by bolding it, and the words
             // it bolds are as often a keystroke or a stressed word. Worse,
@@ -151,6 +216,7 @@ export function genGuideActions(
                 page: `${focus}.html`,
                 mode: 'show',
                 ...(topic.length > 0 ? { topic } : {}),
+                ...findArgs,
             },
         },
         {
@@ -170,26 +236,27 @@ export function genGuideActions(
             // Written as a person would say it: it is shown in the chat as
             // the user's own message, so no tool name and no underscores
             // for the markdown renderer to eat.
-            ask: isReaderTextTooSmall
-                ? undefined
-                : canAsk
-                  ? 'Do it for me in the app window' +
-                    (topic.length > 0 ? `: ${topic}` : '') +
-                    ' — use the controls that are on screen, put the demo ' +
-                    'card up now, and do NOT press a step yet. The person will ' +
-                    'press Do it for one visible step at a time.'
-                  : undefined,
+            ask:
+                demoId !== null
+                    ? undefined
+                    : canAsk
+                      ? 'Do it for me in the app window' +
+                        (topic.length > 0 ? `: ${topic}` : '') +
+                        ' — use the controls that are on screen, put the demo ' +
+                        'card up now, and do NOT press a step yet. The person will ' +
+                        'press Do it for one visible step at a time.'
+                      : undefined,
             toolName: 'owa_guide_start',
-            args: isReaderTextTooSmall
-                ? {
-                      demoId: 'reader-font-larger',
-                  }
-                : {
-                      manualId: hit.id,
-                      page: `${focus}.html`,
-                      mode: 'demo',
-                      ...(topic.length > 0 ? { topic } : {}),
-                  },
+            args:
+                demoId !== null
+                    ? { demoId }
+                    : {
+                          manualId: hit.id,
+                          page: `${focus}.html`,
+                          mode: 'demo',
+                          ...(topic.length > 0 ? { topic } : {}),
+                          ...findArgs,
+                      },
         },
     ].filter((_action, index) => {
         // A recipe can point, but its prose cannot safely operate live
@@ -197,6 +264,14 @@ export function genGuideActions(
         // button promises more than the app can deliver.
         return canAsk || index === 0;
     });
+    // The page about adding a Bible says the easy way is this conversation:
+    // the button that starts it goes first, ahead of a walk through the
+    // Settings form. Measured 2026-10-10 on a local model: "How do I import
+    // a Bible XML file?" took 31 s to list the form's eight steps and
+    // offered no way to have it done.
+    return hit.id === BIBLE_IMPORT_MANUAL_ID
+        ? [genBibleImportOfferAction(), ...guideActions]
+        : guideActions;
 }
 
 type ReaderButtonReferenceType = {
@@ -280,13 +355,34 @@ export function genReaderButtonReferenceAnswer(
     const title = `Open ${book} ${chapter}:${verse}`;
     return {
         text:
-            `You do not need to type the English book name.\n\n` +
-            `1. Press **Clear input** to show the Bible's own book buttons.\n` +
-            `2. Press the book button for **${book}** in your Bible's own ` +
-            `language, then press **Chapter ${chapter}**.\n` +
-            `3. Press **Verse ${verse}** to open the passage.\n\n` +
-            'If the names use unfamiliar letters, press **Do it for me** ' +
-            'below. It will handle one visible button at a time.',
+            tran('You do not need to type the English book name.') +
+            '\n\n' +
+            fillWords(
+                tran(
+                    "1. Press **{clear}** to show the Bible's own book buttons.",
+                ),
+                { clear: tranLabel('Clear input') },
+            ) +
+            '\n' +
+            fillWords(
+                tran(
+                    '2. Press the book button for **{book}** in your ' +
+                        "Bible's own language, then press **Chapter {chapter}**.",
+                ),
+                { book, chapter },
+            ) +
+            '\n' +
+            fillWords(tran('3. Press **Verse {verse}** to open the passage.'), {
+                verse,
+            }) +
+            '\n\n' +
+            fillWords(
+                tran(
+                    'If the names use unfamiliar letters, press **{button}** ' +
+                        'below. It will handle one visible button at a time.',
+                ),
+                { button: tran('Do it for me') },
+            ),
         actions: [
             {
                 label: 'Show me step by step',
@@ -313,6 +409,17 @@ const FOLLOW_UP_YES_PATTERN =
 const FOLLOW_UP_NO_PATTERN =
     /^(?:n|no|nope|nah|no\s+thanks?|not\s+now|never\s?mind|cancel|stop)[\s.!?]*$/i;
 
+// ...and the same in the app's other languages, whose words for yes and no
+// are data (`assistant.json`): the yes and no buttons under a Khmer answer
+// are pressed with no assistant at all.
+function checkIsFollowUpYes(text: string) {
+    return FOLLOW_UP_YES_PATTERN.test(text) || checkIsLanguageWord(text, 'yes');
+}
+
+function checkIsFollowUpNo(text: string) {
+    return FOLLOW_UP_NO_PATTERN.test(text) || checkIsLanguageWord(text, 'no');
+}
+
 const WHERE_IS_PATTERN =
     /^(?:where\s+is|where\s+are|find|show\s+me|point\s+(?:me\s+)?to)\s+(?:the\s+)?(.+?)\s*\??$/i;
 const SCREEN_QUESTION_PATTERN =
@@ -337,6 +444,20 @@ const HOW_DO_I_PATTERN = /^(?:how|can\s+i|could\s+i)\b/i;
 // a state question naming the sheet is answered from that field.
 const RUN_SHEET_PATTERN =
     /\b(?:running\s+order|presenting\s+flow|run\s+sheet|playlist|order\s+of\s+service|service\s+plan)\b/i;
+
+/**
+ * Whether the words ask what the projector holds, what is selected or what
+ * the running order does next -- what the Presenter page alone can say. The
+ * note that the main window has to be on it belongs under the answer to such
+ * a question and no other (`llmBotHelpers`, EC-280).
+ */
+export function checkIsPresenterStateAsk(asked: string) {
+    return (
+        SCREEN_QUESTION_PATTERN.test(asked) ||
+        SELECTION_QUESTION_PATTERN.test(asked) ||
+        RUN_SHEET_PATTERN.test(asked)
+    );
+}
 // "Put John 3:16 on the screen": a passage to PRESENT, named by a reference
 // with a chapter in it. Only a concrete reference fires it -- "how do I put a
 // Bible verse on the screen" has no chapter and goes to the manual, and a
@@ -346,8 +467,12 @@ const RUN_SHEET_PATTERN =
 // decides what it means, not this pattern.
 // A word-and-number that is not a book -- "slide 3", "verse 2" -- is a slide
 // ask and goes on to the selection answer, not to the passage parser.
+// A range may cross chapters -- "John 1:2-3:4", "John 1-3" -- and be spelled
+// with any dash the parser reads (`DASH_VARIANTS` in
+// `bibleReferenceTokenizer.ts`) or a word: "John 1:2 to 3:4". The word needs
+// a number after it, so "to the screen" stays the tail.
 const VERSE_ASK_PATTERN =
-    /^(?:please\s+)?(?:put|show|present|display|open|bring)\s+(?:up\s+)?(?:the\s+)?(?!(?:slide|song|page|item|number|line|verse|chorus|stage|screen)s?\s)((?:[1-3]\s*)?[a-z][a-z .]*?\s+\d+(?:\s*[:.]\s*\d+(?:\s*-\s*\d+)?)?)(?:\s+(?:up\s+)?(?:on|onto|to)\s+(?:the\s+)?(?:big\s+)?(?:screen|projector|wall|display))?\s*[.!]?\s*$/i;
+    /^(?:please\s+)?(?:put|show|present|display|open|bring)\s+(?:up\s+)?(?:the\s+)?(?!(?:slide|song|page|item|number|line|verse|chorus|stage|screen)s?\s)((?:[1-3]\s*)?[a-z][a-z .]*?\s+\d+(?:\s*[:.]\s*\d+)?(?:(?:\s*[-‐-―−﹘﹣－]\s*|\s+(?:to|through|thru)\s+)\d+(?:\s*[:.]\s*\d+)?)?)(?:\s+(?:up\s+)?(?:on|onto|to)\s+(?:the\s+)?(?:big\s+)?(?:screen|projector|wall|display))?\s*[.!]?\s*$/i;
 
 /**
  * The pseudo tool name a button carries when pressing it should run one of
@@ -379,9 +504,20 @@ function withPrefix(answer: BotAnswerType, prefix: string): BotAnswerType {
 
 function genHitText(hit: HelpHitType) {
     // The id ("W-06") and the section path are how the manual is filed, not
-    // something the person asking has any use for.
+    // something the person asking has any use for. The page in the window's
+    // language when it is translated: the same passage, chosen on the English.
+    if (hit.excerptInLanguage !== undefined) {
+        return `**${hit.titleInLanguage ?? hit.title}**\n\n${hit.excerptInLanguage}`;
+    }
     return `**${hit.title}**\n\n${hit.excerpt}`;
 }
+
+// English for the model's prompt; the offline bot says them in the app's
+// language (`genBackToPresenterLead`).
+const PRESENTER_ROUTE_FROM_READER =
+    'click the 🖥️ **Go Back to Presenter** button at the top right';
+const PRESENTER_ROUTE_FROM_EDITOR =
+    'click the **Presenter** tab at the top of the window';
 
 /**
  * The words that take the user from a page of the main window back to the
@@ -394,12 +530,69 @@ function genHitText(hit: HelpHitType) {
  */
 export function genBackToPresenterRoute(focus: BotFocusType): string | null {
     if (focus === 'reader') {
-        return 'click the 🖥️ **Go Back to Presenter** button at the top right';
+        return PRESENTER_ROUTE_FROM_READER;
     }
     if (focus === 'appDocumentEditor') {
-        return 'click the **Presenter** tab at the top of the window';
+        return PRESENTER_ROUTE_FROM_EDITOR;
     }
     return null;
+}
+
+/**
+ * A focus's window in the words the app is shown in, and in English its key
+ * as these answers always named it ("in the presenter").
+ */
+function toFocusWords(focus: BotFocusType): string {
+    const label = getBotFocus(focus)?.label;
+    if (label === undefined) {
+        return focus;
+    }
+    const shown = tranLabel(label);
+    return shown === label ? focus : shown;
+}
+
+/**
+ * Where on the window a control is, as the find tool says it ("at the top
+ * right of the window" -- nine fixed phrases), in the app's language.
+ */
+function toWhereWords(where: string | null | undefined): string {
+    return where === null || where === undefined
+        ? tran('in this window')
+        : tranLabel(where);
+}
+
+/**
+ * What a window of its OWN lacks, said once in the model's prompt for that
+ * window: the Lyric Editor, a Bible Note, the Web Editor, Settings and Local
+ * Web Share open OVER the main window and have none of its panels. Measured
+ * 2026-10-13 on a local model, _How do I see what a song will look like on
+ * screen?_ asked from the Lyric Editor: the Presenter's steps came back as
+ * steps "while you are in the Lyric Editor" -- click a verse to send it to
+ * the screen, in a window that has no verse to click. The Bible Reader and
+ * the Slide Editor are told theirs through `genBackToPresenterRoute`; a
+ * window of its own has no tab or button back, because the main window never
+ * went away. Empty for a page of the main window.
+ */
+export function genOwnWindowFact(
+    focus: BotFocusType,
+    // A page of the main window open in a window of its own -- a Bible
+    // Reader opened beside the main one, chosen in the window picker
+    // (`windowAimHelpers.ts`). It is just as far from the Presenter's panels.
+    isSeparateWindow = false,
+): string {
+    const descriptor = getBotFocus(focus);
+    if (descriptor === null || (descriptor.isMainWindow && !isSeparateWindow)) {
+        return '';
+    }
+    return (
+        ` The **${descriptor.label}** is a window of its own, opened over` +
+        " the main window, and has NONE of the Presenter's panels -- no" +
+        ' Documents list, no previewer, no Presenting Flows, no Background' +
+        ' or Foreground panel, no Mini Screen. When the steps you found use' +
+        ' one of them, say in step 1 that this part is done in the main' +
+        ' window, the Presenter, which is still open behind this one, and' +
+        ' the rest follow from there.'
+    );
 }
 
 // The Presenter's panels, as the manual names them. A recipe that uses one
@@ -425,22 +618,108 @@ export function genBackToPresenterLead(focus: BotFocusType, text: string) {
     }
     const pageLabel = getBotFocus(focus)?.label ?? focus;
     return (
-        `This is done in the Presenter — the ${pageLabel} page has none of ` +
-        `these panels. First ${route}, then:\n\n`
+        fillWords(
+            tran(
+                'This is done in the Presenter — the {page} page has none ' +
+                    'of these panels. First {route}, then:',
+            ),
+            {
+                page: tranLabel(pageLabel),
+                route:
+                    route === PRESENTER_ROUTE_FROM_READER
+                        ? tran(PRESENTER_ROUTE_FROM_READER)
+                        : tran(PRESENTER_ROUTE_FROM_EDITOR),
+            },
+        ) + '\n\n'
     );
+}
+
+/**
+ * "Where is …?" asked about a window that is not up. Nothing in a window
+ * nobody opened can be pointed at, and the tool says so in its own words --
+ * measured 2026-10-12 with no assistant, the whole corpus asked as each of
+ * the five windows of their own: _Where are the settings?_ was answered _I
+ * could not answer that: The app has no open page matching "setting.html".
+ * The open pages are: chatbot.html?uuid=chatbot, presenter.html._, ten times
+ * in 540. The answer is the way INTO that window, outlined where one control
+ * is the way and never pressed: a question is not a request to change what
+ * the main window shows (a walkthrough is -- `genPageOpenAnswer`).
+ */
+async function genWindowNotOpenAnswer(
+    error: any,
+    target: string,
+): Promise<BotAnswerType | null> {
+    const wantedPage = NO_OPEN_PAGE_PATTERN.exec(error?.message ?? '')?.[1];
+    if (wantedPage === undefined) {
+        return null;
+    }
+    const descriptor = getBotFocus(detectBotFocus(wantedPage) ?? '');
+    if (descriptor === null) {
+        return null;
+    }
+    let isOutlined = false;
+    if (descriptor.openFind !== null) {
+        try {
+            const opener = parseToolJson(
+                await callTool('owa_find_ui', {
+                    text: descriptor.openFind,
+                    highlight: true,
+                    anyPage: true,
+                }),
+            );
+            isOutlined = (opener?.matches ?? []).some((match: any) => {
+                return match.isVisible;
+            });
+        } catch (_error) {
+            // The words alone still say where to press.
+        }
+    }
+    const values = {
+        window: tranLabel(descriptor.label),
+        target,
+        how: tranLabel(descriptor.howToOpen),
+    };
+    return {
+        text: isOutlined
+            ? fillWords(
+                  tran(
+                      '**{window} is not open**, so I cannot point at ' +
+                          '"{target}" in it. To get there: {how} — I have ' +
+                          'outlined it in red. Then ask me again.',
+                  ),
+                  values,
+              )
+            : fillWords(
+                  tran(
+                      '**{window} is not open**, so I cannot point at ' +
+                          '"{target}" in it. To get there: {how}. Then ask ' +
+                          'me again.',
+                  ),
+                  values,
+              ),
+    };
 }
 
 export async function answerWhereIs(
     target: string,
     focus: BotFocusType,
 ): Promise<BotAnswerType | null> {
-    const found = parseToolJson(
-        await callTool('owa_find_ui', {
-            text: target,
-            highlight: true,
-            page: `${focus}.html`,
-        }),
-    );
+    let found: any;
+    try {
+        found = parseToolJson(
+            await callTool('owa_find_ui', {
+                text: target,
+                highlight: true,
+                page: `${focus}.html`,
+            }),
+        );
+    } catch (error: any) {
+        const answer = await genWindowNotOpenAnswer(error, target);
+        if (answer === null) {
+            throw error;
+        }
+        return answer;
+    }
     if (found === null || found.count === 0) {
         // The matcher says which labels came closest -- "reference box"
         // finds nothing, but the "Bible Reference" box is right there.
@@ -448,13 +727,23 @@ export async function answerWhereIs(
         const [closest] = found?.nearMisses ?? [];
         if (found !== null && closest !== undefined) {
             return {
-                text:
-                    `I could not find "${target}", but there is ` +
-                    `**${closest}** on screen — is that the one? ` +
-                    'Ask again with those words and I will point it out.',
+                text: fillWords(
+                    tran(
+                        'I could not find "{target}", but there is ' +
+                            '**{closest}** on screen — is that the one? ' +
+                            'Ask again with those words and I will point ' +
+                            'it out.',
+                    ),
+                    { target, closest },
+                ),
                 actions: [
                     {
-                        label: `Highlight "${closest}"`,
+                        // No code reads this label back: it is written in
+                        // the app's language here, as nothing can look its
+                        // words up once the name is in them.
+                        label: fillWords(tran('Highlight "{name}"'), {
+                            name: closest,
+                        }),
                         toolName: 'owa_find_ui',
                         args: {
                             text: closest,
@@ -472,25 +761,47 @@ export async function answerWhereIs(
     });
     if (visible.length === 0) {
         return {
-            text:
-                `I found "${target}" in the ${focus}, but it is not visible ` +
-                'right now. Try opening the panel or tab it belongs to first.',
+            text: fillWords(
+                tran(
+                    'I found "{target}" in the {window}, but it is not ' +
+                        'visible right now. Try opening the panel or tab it ' +
+                        'belongs to first.',
+                ),
+                { target, window: toFocusWords(focus) },
+            ),
         };
     }
     const [first] = visible;
     return {
         text:
-            `**${first.label}** is on screen now — I have outlined it in red ` +
-            `for a few seconds, ${first.where ?? 'in this window'}.` +
+            fillWords(
+                tran(
+                    '**{control}** is on screen now — I have outlined it in ' +
+                        'red for a few seconds, {where}.',
+                ),
+                { control: first.label, where: toWhereWords(first.where) },
+            ) +
             // Only what was actually ringed: the tool outlines the matches it
             // answers with, and says separately how many it found in total.
             (visible.length > 1
-                ? `\n\nThere are ${visible.length} things matching ` +
-                  `"${target}"; I outlined them all.` +
+                ? '\n\n' +
+                  fillWords(
+                      tran(
+                          'There are {count} things matching "{target}"; I ' +
+                              'outlined them all.',
+                      ),
+                      { count: visible.length, target },
+                  ) +
                   (typeof found.count === 'number' &&
                   found.count > found.matches.length
-                      ? ` (${found.count} in all — ask with more of the ` +
-                        'words on the control to narrow it down.)'
+                      ? ' ' +
+                        fillWords(
+                            tran(
+                                '({count} in all — ask with more of the ' +
+                                    'words on the control to narrow it down.)',
+                            ),
+                            { count: found.count },
+                        )
                       : '')
                 : ''),
         actions: [
@@ -528,18 +839,28 @@ async function answerScreens(): Promise<BotAnswerType | null> {
         const heldWhileOff = screens
             .filter((screen) => screen.isBlank !== true)
             .map((screen) => {
-                return (
-                    `Screen ${screen.screenId} is off but already holds ` +
-                    `${describeScreenContent(screen)}, so turning it on ` +
-                    'shows that.'
+                return fillWords(
+                    tran(
+                        'Screen {id} is off but already holds {held}, so ' +
+                            'turning it on shows that.',
+                    ),
+                    {
+                        id: screen.screenId,
+                        held: describeScreenContent(screen),
+                    },
                 );
             })
             .join(' ');
         return {
             text:
-                'No presentation screen is showing right now. This machine ' +
-                `has ${displayCount} display(s) available to present on.` +
-                (heldWhileOff ? ` ${heldWhileOff}` : ''),
+                fillWords(
+                    tran(
+                        'No presentation screen is showing right now. This ' +
+                            'machine has {count} display(s) available to ' +
+                            'present on.',
+                    ),
+                    { count: displayCount },
+                ) + (heldWhileOff ? ` ${heldWhileOff}` : ''),
             // The one thing the person asking this wants next, and the one
             // thing this bot could not offer until the window could do it
             // without a model: a press that turns the screen on and reads it
@@ -553,13 +874,28 @@ async function answerScreens(): Promise<BotAnswerType | null> {
             ],
         };
     }
+    const showingValues = {
+        ids: showingIds.join(', '),
+        count: displayCount,
+        held: showingIds.map(describeHeld).join(''),
+    };
     return {
         text:
-            `Screen ${showingIds.join(', ')} ` +
-            `${showingIds.length === 1 ? 'is' : 'are'} showing right now, on ` +
-            `a machine with ${displayCount} display(s)` +
-            showingIds.map(describeHeld).join('') +
-            '.',
+            showingIds.length === 1
+                ? fillWords(
+                      tran(
+                          'Screen {ids} is showing right now, on a machine ' +
+                              'with {count} display(s){held}.',
+                      ),
+                      showingValues,
+                  )
+                : fillWords(
+                      tran(
+                          'Screen {ids} are showing right now, on a machine ' +
+                              'with {count} display(s){held}.',
+                      ),
+                      showingValues,
+                  ),
         actions: [
             {
                 label: 'Hide every screen',
@@ -601,18 +937,37 @@ async function answerVerseAsk(
     if (result === null || typeof result.reference !== 'string') {
         return null;
     }
-    const words = result.text ? ` -- "${result.text}"` : '';
+    const passage = {
+        reference: result.reference,
+        version: result.version,
+        words: result.text,
+    };
     return {
         text:
-            `**${result.reference} (${result.version})** reads${words}. ` +
-            'I can put it on the screen for you' +
+            (result.text
+                ? fillWords(
+                      tran('**{reference} ({version})** reads -- "{words}".'),
+                      passage,
+                  )
+                : fillWords(
+                      tran('**{reference} ({version})** reads.'),
+                      passage,
+                  )) +
+            ' ' +
             (result.isAnyShowing === true
-                ? '.'
-                : ' -- the screen is off just now, so it will be loaded ' +
-                  'and ready for when it is turned on.'),
+                ? tran('I can put it on the screen for you.')
+                : tran(
+                      'I can put it on the screen for you -- the screen is ' +
+                          'off just now, so it will be loaded and ready for ' +
+                          'when it is turned on.',
+                  )),
         actions: [
             {
-                label: `Put ${result.reference} on the screen`,
+                // Nothing reads this label back (the press runs its
+                // command), so it is written in the app's language.
+                label: fillWords(tran('Put {what} on the screen'), {
+                    what: result.reference,
+                }),
                 toolName: BUILTIN_TOOL_NAME,
                 args: { command: `/verse ${result.reference}` },
             },
@@ -690,22 +1045,33 @@ async function answerCountdownAsk(
         return null;
     }
     const isMinutes = 'minutes' in ask;
-    const label = isMinutes
-        ? `a ${ask.minutes} minute countdown`
-        : `a countdown to ${ask.at}`;
+    const what = isMinutes
+        ? fillWords(tran('a {minutes} minute countdown'), {
+              minutes: ask.minutes,
+          })
+        : fillWords(tran('a countdown to {time}'), { time: ask.at });
     const command = isMinutes
         ? `/countdown ${ask.minutes}`
         : `/countdown ${ask.at}`;
     return {
         text:
-            `**I can start ${label} on the screen for you**` +
-            (result.isAnyShowing === true
-                ? '.'
-                : ' -- the screen is off just now, so it will be loaded ' +
-                  'and ready for when it is turned on.'),
+            result.isAnyShowing === true
+                ? fillWords(
+                      tran('**I can start {what} on the screen for you**.'),
+                      { what },
+                  )
+                : fillWords(
+                      tran(
+                          '**I can start {what} on the screen for you** -- ' +
+                              'the screen is off just now, so it will be ' +
+                              'loaded and ready for when it is turned on.',
+                      ),
+                      { what },
+                  ),
         actions: [
             {
-                label: `Start ${label}`,
+                // Read back by nothing: in the app's language.
+                label: fillWords(tran('Start {what}'), { what }),
                 toolName: BUILTIN_TOOL_NAME,
                 args: { command },
             },
@@ -730,9 +1096,10 @@ async function answerSelection(): Promise<BotAnswerType | null> {
     }
     if (main.page !== 'presenter.html') {
         return {
-            text:
+            text: tran(
                 'The selected song lives in the Presenter, and the main ' +
-                'window is not on it right now.',
+                    'window is not on it right now.',
+            ),
             actions: [
                 {
                     label: 'Go to the Presenter',
@@ -774,9 +1141,10 @@ async function answerRunSheet(): Promise<BotAnswerType | null> {
     }
     if (main.page !== 'presenter.html') {
         return {
-            text:
+            text: tran(
                 'The run sheet lives in the Presenter, and the main window ' +
-                'is not on it right now.',
+                    'is not on it right now.',
+            ),
             actions: [
                 {
                     label: 'Go to the Presenter',
@@ -815,7 +1183,7 @@ export async function answerLyricPaste(
     });
     return genLyricDraftAnswer(
         raw,
-        'I wrote those words out as a song for the Lyric Editor.',
+        tran('I wrote those words out as a song for the Lyric Editor.'),
     );
 }
 
@@ -834,22 +1202,32 @@ export async function answerLyricPaste(
  * no page about. And never the tool's own words -- the reason goes to the log.
  */
 export async function answerLyricLink(url: string): Promise<BotAnswerType> {
-    const site = toSiteName(url) ?? 'that page';
+    const site = toSiteName(url) ?? tran('that page');
     let raw: string;
     try {
         raw = await callTool('owa_lyric_validate', { url, mode: 'draft' });
     } catch (error) {
         appError(error, 'offline song link');
         return {
-            text:
-                `I could not read ${site} just now. Check the address, or ` +
-                'copy the words off the page and paste them here and I ' +
-                'will write them out.',
+            text: fillWords(
+                tran(
+                    'I could not read {site} just now. Check the address, or ' +
+                        'copy the words off the page and paste them here and ' +
+                        'I will write them out.',
+                ),
+                { site },
+            ),
         };
     }
     const answer = genLyricDraftAnswer(
         raw,
-        `I read ${site} and wrote the song on it out for the Lyric Editor.`,
+        fillWords(
+            tran(
+                'I read {site} and wrote the song on it out for the Lyric ' +
+                    'Editor.',
+            ),
+            { site },
+        ),
     );
     if (answer !== null) {
         return answer;
@@ -859,18 +1237,125 @@ export async function answerLyricLink(url: string): Promise<BotAnswerType> {
         // 2026-09-10 on a hymnal's third read in a row). Said as what it is:
         // "no song on it" would send them to paste words the page has.
         return {
-            text:
-                `${site} answered with a "checking your browser" page ` +
-                'instead of the song. Open the page in your own browser ' +
-                'once and try again, or copy the words off it and paste ' +
-                'them here.',
+            text: fillWords(
+                tran(
+                    '{site} answered with a "checking your browser" page ' +
+                        'instead of the song. Open the page in your own ' +
+                        'browser once and try again, or copy the words off ' +
+                        'it and paste them here.',
+                ),
+                { site },
+            ),
         };
     }
     return {
-        text:
-            `I read ${site} but could not find a song on it. If the words ` +
-            'are in front of you, paste them here and I will write them out.',
+        text: fillWords(
+            tran(
+                'I read {site} but could not find a song on it. If the ' +
+                    'words are in front of you, paste them here and I will ' +
+                    'write them out.',
+            ),
+            { site },
+        ),
     };
+}
+
+/**
+ * A song asked for by its NAME, with no model: the app looks in the user's
+ * own songs and its public-domain hymn collection (`owa_lyric_validate` with
+ * `mode: "find"`). A find is drafted under the same two buttons as a page or
+ * a paste; anything else says plainly what to bring instead, because the one
+ * thing the offline bot must never do is make a song up.
+ */
+export async function answerLyricTitle(title: string): Promise<BotAnswerType> {
+    let raw: string;
+    try {
+        raw = await callTool('owa_lyric_validate', { mode: 'find', title });
+    } catch (error) {
+        appError(error, 'offline song title');
+        return {
+            text: fillWords(
+                tran(
+                    'I could not look up "{title}" just now. Paste its words ' +
+                        'here, or send me the address of a page with the ' +
+                        'song on it, and I will write it out.',
+                ),
+                { title },
+            ),
+        };
+    }
+    const yours = readSongLookupYours(raw);
+    const yoursLine =
+        yours.length > 0
+            ? fillWords(
+                  tran('You already have {names} in your Documents list.'),
+                  {
+                      names: yours
+                          .map((name) => {
+                              return `**${name}**`;
+                          })
+                          .join(', '),
+                  },
+              )
+            : null;
+    const answer = genLyricDraftAnswer(
+        raw,
+        [
+            fillWords(
+                tran(
+                    'I found "{title}" in the app\'s collection of ' +
+                        'public-domain hymns and wrote it out for the Lyric ' +
+                        'Editor, with a link back to where the words came ' +
+                        'from.',
+                ),
+                { title },
+            ),
+            yoursLine,
+        ]
+            .filter(Boolean)
+            .join(' '),
+    );
+    if (answer !== null) {
+        return answer;
+    }
+    const nearest = Array.from(
+        (/^Nearest in the collection: (.*)$/m.exec(raw)?.[1] ?? '').matchAll(
+            /"([^"]+)"/g,
+        ),
+        (match) => {
+            return match[1];
+        },
+    );
+    const lines = [
+        yoursLine ??
+            fillWords(
+                tran(
+                    'I could not find "{title}" in your songs or in the ' +
+                        "app's collection of public-domain hymns.",
+                ),
+                { title },
+            ),
+    ];
+    if (yoursLine === null && nearest.length > 0) {
+        lines.push(
+            fillWords(tran('Did you mean {names}? Ask again with that name.'), {
+                names: nearest
+                    .map((name) => {
+                        return `**${name}**`;
+                    })
+                    .join(', '),
+            }),
+        );
+    }
+    lines.push(
+        tran(
+            'For any other song, paste its words here, or send me the ' +
+                'address of a page with the song on it, and I will write it ' +
+                'out. I do not write songs out from memory -- a remembered ' +
+                'song is often wrong.',
+        ),
+    );
+    return { text: lines.join('\n\n') };
 }
 
 /**
@@ -889,7 +1374,7 @@ function genLyricDraftAnswer(
         return null;
     }
     const drafted = keepDraftedLyric(content);
-    const report = readDraftReport(raw);
+    const report = translateDraftReport(readDraftReport(raw));
     const lines = [
         opening,
         ...[report.song, report.sections, report.playOrder].filter(
@@ -900,7 +1385,8 @@ function genLyricDraftAnswer(
     ];
     if (report.guessed.length > 0) {
         lines.push(
-            'The words did not say everything, so I guessed:\n' +
+            tran('The words did not say everything, so I guessed:') +
+                '\n' +
                 report.guessed
                     .map((one) => {
                         return `- ${one}`;
@@ -909,13 +1395,19 @@ function genLyricDraftAnswer(
         );
     }
     lines.push(
-        `Press Create "${drafted.name}" to add it to your songs, or Copy ` +
-            'song text to paste it into the Lyric Editor yourself.',
+        fillWords(
+            tran(
+                'Press Create "{name}" to add it to your songs, or Copy ' +
+                    'song text to paste it into the Lyric Editor yourself.',
+            ),
+            { name: drafted.name },
+        ),
     );
     return {
         text: lines.join('\n\n'),
         actions: [
             {
+                // English: `DRAFT_ACTION_PATTERN` (quickReplyHelpers) reads it.
                 label: `Create "${drafted.name}"`,
                 toolName: LYRIC_CREATE_TOOL_NAME,
                 args: { reference: drafted.reference },
@@ -929,10 +1421,11 @@ function genLyricDraftAnswer(
     };
 }
 
-export async function answerFromManual(
+// The manual's hits for a question, the ones under the floor left out.
+async function searchManual(
     question: string,
     focus: BotFocusType,
-): Promise<BotAnswerType> {
+): Promise<HelpHitType[]> {
     // The focus is a FILTER, not a query term: a recipe belonging to the
     // other half of the app is not a weaker answer, it is a wrong one -- the
     // reader has no Ctrl+B lookup popup, so being told to press it is being
@@ -952,24 +1445,125 @@ export async function answerFromManual(
     });
     const allHits = parseToolJson(raw) as
         (HelpHitType & { score?: number })[] | null;
-    const hits = (Array.isArray(allHits) ? allHits : []).filter((hit) => {
+    return (Array.isArray(allHits) ? allHits : []).filter((hit) => {
         return typeof hit.score !== 'number' || hit.score >= MIN_HELP_HIT_SCORE;
     });
-    if (hits.length === 0) {
+}
+
+/**
+ * A question about what the Bible SAYS (`readBibleContentAsk`, EC-199): a
+ * verse asked for by its words gets Bible Find's own steps, with the words to
+ * search for; knowledge about the Bible gets the way to an assistant. Null
+ * when Bible Find's page did not come back, and the manual answers as it
+ * always did.
+ */
+async function answerBibleContentAsk(
+    question: string,
+    focus: BotFocusType,
+): Promise<BotAnswerType | null> {
+    const ask = readBibleContentAsk(question);
+    if (ask === null) {
+        return null;
+    }
+    if (ask.kind === 'knowledge') {
         return {
-            text:
-                'I could not find that in the app guide. Try naming the ' +
-                'button or the thing you want to put on the screen — for ' +
-                'example "how do I show a song?" or "where is the clear ' +
-                'button?".',
+            text: genBibleKnowledgeText(question),
+            actions: [
+                {
+                    label: OPEN_AI_SETTING_LABEL,
+                    toolName: OPEN_AI_SETTING_TOOL_NAME,
+                    args: {},
+                },
+            ],
         };
     }
-    const [first, ...rest] = hits;
-    const hitText = genHitText(first);
+    const hit = (await searchManual(BIBLE_FIND_QUERY, focus)).find((one) => {
+        return one.id === BIBLE_FIND_MANUAL_ID;
+    });
+    if (hit === undefined) {
+        return null;
+    }
+    // No topic: the person's words would pick a step of Bible Find's page by
+    // the words they share, and the walk is wanted from its opening step --
+    // which is the one naming Find. And no way across to the Presenter: Bible
+    // Find is on the Reader as well, but its page names the Reader's own
+    // Bible Lookup section, which the lead takes for the Presenter's popup
+    // (seen live: "This is done in the Presenter … First click Go Back to
+    // Presenter" over Bible Find, asked from the Reader).
+    const answer = await genManualAnswer([hit], question, focus, '', {
+        find: BIBLE_FIND_CONTROL,
+        isOnEveryPage: true,
+    });
     return {
-        text: genBackToPresenterLead(focus, hitText) + hitText,
+        ...answer,
+        text: `${genBibleFindLead(ask.words)}\n\n${answer.text}`,
+    };
+}
+
+export async function answerFromManual(
+    question: string,
+    focus: BotFocusType,
+): Promise<BotAnswerType> {
+    // Before the search, which would hand any Bible question the page that
+    // shares its nouns -- far above the floor, so the floor cannot catch it.
+    const contentAnswer = await answerBibleContentAsk(question, focus);
+    if (contentAnswer !== null) {
+        return contentAnswer;
+    }
+    const hits = await searchManual(question, focus);
+    if (hits.length === 0) {
+        return {
+            text: tran(
+                'I could not find that in the app guide. Try naming the ' +
+                    'button or the thing you want to put on the screen — ' +
+                    'for example "how do I show a song?" or "where is the ' +
+                    'clear button?".',
+            ),
+        };
+    }
+    return await genManualAnswer(hits, question, focus);
+}
+
+// The guide is English prose with the buttons named as the app shows them,
+// so a window in another language says so once above a quote of it. Nothing
+// in English, where the line would only repeat the obvious.
+const GUIDE_QUOTE_LEAD = '(From the app guide, which is written in English.)';
+
+function genGuideQuoteLead() {
+    const lead = tran(GUIDE_QUOTE_LEAD);
+    return lead === GUIDE_QUOTE_LEAD ? '' : `${lead}\n\n`;
+}
+
+async function genManualAnswer(
+    [first, ...rest]: HelpHitType[],
+    question: string,
+    focus: BotFocusType,
+    // What the walkthrough is FOR (`genGuideActions`): the question, unless
+    // the answer says otherwise.
+    topic = question,
+    {
+        find = null,
+        // The page's steps are on every page of the main window.
+        isOnEveryPage = false,
+    }: { find?: string | null; isOnEveryPage?: boolean } = {},
+): Promise<BotAnswerType> {
+    const hitText = genHitText(first);
+    // The way across is for a Presenter recipe read from another page -- not
+    // for a question that page's own list offers (`checkIsOwnWindowQuestion`).
+    const lead =
+        isOnEveryPage ||
+        genBackToPresenterRoute(focus) === null ||
+        (await checkIsOwnWindowQuestion(question, focus))
+            ? ''
+            : genBackToPresenterLead(focus, hitText);
+    return {
+        // A quote in their own language needs no word about the guide's.
+        text:
+            lead +
+            (first.excerptInLanguage === undefined ? genGuideQuoteLead() : '') +
+            hitText,
         actions: [
-            ...genGuideActions(first, focus, false, question),
+            ...genGuideActions(first, focus, false, topic, find),
             {
                 label: 'Read the whole thing',
                 toolName: 'owa_help_page',
@@ -982,7 +1576,10 @@ export async function answerFromManual(
             // paragraph -- which is the same dead end as no buttons at all.
             ...rest.slice(0, 1).map((hit) => {
                 return {
-                    label: hit.title,
+                    // In the window's language when the page has a current
+                    // translation; the press opens that translation
+                    // (`runBotAction`'s `@` page id).
+                    label: hit.titleInLanguage ?? hit.title,
                     toolName: 'owa_help_page',
                     args: { id: hit.id },
                 };
@@ -1022,7 +1619,7 @@ export async function askHelpBot(
 ): Promise<BotAnswerType> {
     let trimmedQuestion = question.trim();
     if (trimmedQuestion.length === 0) {
-        return { text: 'Ask me how to do something in the app.' };
+        return { text: tran('Ask me how to do something in the app.') };
     }
     const readerButtonAnswer = genReaderButtonReferenceAnswer(
         trimmedQuestion,
@@ -1041,6 +1638,12 @@ export async function askHelpBot(
     if (songLink !== null) {
         return await answerLyricLink(songLink);
     }
+    // A song named by its TITLE -- *Create a lyric file for song "Amazing
+    // Grace"*, the starter beside the link one. Same reason, same place.
+    const songTitle = readSongTitleAsk(trimmedQuestion);
+    if (songTitle !== null) {
+        return await answerLyricTitle(songTitle);
+    }
     // Several short lines and no question in them are the words of a song,
     // and a song is a thing to write out, not a thing to look up. First,
     // because nothing below could make anything of it: the manual has no page
@@ -1052,12 +1655,12 @@ export async function askHelpBot(
         }
     }
     let prefix = '';
-    if (FOLLOW_UP_NO_PATTERN.test(trimmedQuestion)) {
+    if (checkIsFollowUpNo(trimmedQuestion)) {
         return {
-            text: 'Alright. Ask me again whenever you need something.',
+            text: tran('Alright. Ask me again whenever you need something.'),
         };
     }
-    if (FOLLOW_UP_YES_PATTERN.test(trimmedQuestion)) {
+    if (checkIsFollowUpYes(trimmedQuestion)) {
         // The LAST thing they named themselves. Their own words beat the
         // offer they are agreeing to: measured against this exact
         // conversation, searching "Is any screen showing right now?" finds
@@ -1069,22 +1672,37 @@ export async function askHelpBot(
                 return (
                     turn.author === 'you' &&
                     turn.text.trim().length > 0 &&
-                    !FOLLOW_UP_YES_PATTERN.test(turn.text.trim()) &&
-                    !FOLLOW_UP_NO_PATTERN.test(turn.text.trim())
+                    !checkIsFollowUpYes(turn.text.trim()) &&
+                    !checkIsFollowUpNo(turn.text.trim())
                 );
             })
             .pop();
         if (lastAsked === undefined) {
             return {
-                text:
+                text: tran(
                     'Tell me in a few words what you would like to do and I ' +
-                    'will look it up — for example "how do I show a screen".',
+                        'will look it up — for example "how do I show a ' +
+                        'screen".',
+                ),
             };
         }
         // Said out loud, because this is a guess at their meaning and a
         // volunteer must be able to see it was one.
         trimmedQuestion = lastAsked.text.trim();
-        prefix = `Going back to "${trimmedQuestion}" —\n\n`;
+        prefix =
+            fillWords(tran('Going back to "{question}" —'), {
+                question: trimmedQuestion,
+            }) + '\n\n';
+    }
+    // A question about what the Bible SAYS goes to the manual's answer for
+    // it (`answerFromManual`) ahead of the readers below: "find me a verse
+    // about patience" is not a control called "me a verse about patience"
+    // to point at (EC-199).
+    if (readBibleContentAsk(trimmedQuestion) !== null) {
+        return withPrefix(
+            await answerFromManual(trimmedQuestion, focus),
+            prefix,
+        );
     }
     // "Where is the clear button?" is answered by pointing at the real one,
     // not by quoting a manual page about it.
@@ -1171,6 +1789,8 @@ const NO_OPEN_PAGE_PATTERN = /no open page matching "([^"]+)"/;
 const PAGE_OPEN_TIMEOUT_MS = 8000;
 const PAGE_OPEN_POLL_MS = 300;
 
+const START_IT_LABEL = "I'm there — start it";
+
 /** Whether a window showing this page is up, asked of the app itself. */
 async function checkIsPageOpen(page: string): Promise<boolean> {
     try {
@@ -1247,7 +1867,12 @@ async function genPageOpenAnswer(
         const result = await runBotAction(action, false);
         return {
             ...result,
-            text: `**Opening ${descriptor.label} for you.**\n\n` + result.text,
+            text:
+                fillWords(tran('**Opening {window} for you.**'), {
+                    window: tranLabel(descriptor.label),
+                }) +
+                '\n\n' +
+                result.text,
         };
     }
     // Point at the control wherever it is; purely best-effort.
@@ -1262,18 +1887,33 @@ async function genPageOpenAnswer(
             // The words alone still tell them where to press.
         }
     }
+    const values = {
+        window: tranLabel(descriptor.label),
+        how: tranLabel(descriptor.howToOpen),
+        start: tran(START_IT_LABEL),
+    };
     return {
         text:
-            `**Open ${descriptor.label} first.** It is ${descriptor.howToOpen}` +
-            (descriptor.openFind === null
-                ? ''
-                : ' — I have outlined it in red') +
-            '. When it is showing, come back here and press ' +
-            "**I'm there — start it**.",
+            descriptor.openFind === null
+                ? fillWords(
+                      tran(
+                          '**Open {window} first.** It is {how}. When it is ' +
+                              'showing, come back here and press **{start}**.',
+                      ),
+                      values,
+                  )
+                : fillWords(
+                      tran(
+                          '**Open {window} first.** It is {how} — I have ' +
+                              'outlined it in red. When it is showing, come ' +
+                              'back here and press **{start}**.',
+                      ),
+                      values,
+                  ),
         isNeedingModel: false,
         actions: [
             {
-                label: "I'm there — start it",
+                label: START_IT_LABEL,
                 toolName: action.toolName,
                 args: action.args,
             },
@@ -1289,7 +1929,10 @@ export async function runBotAction(
     canOpenPage = true,
 ): Promise<BotActionResultType> {
     if (action.toolName === undefined) {
-        return { text: 'Done.', isNeedingModel: action.ask !== undefined };
+        return {
+            text: tran('Done.'),
+            isNeedingModel: action.ask !== undefined,
+        };
     }
     if (action.toolName === 'owa_guide_start') {
         const isDemoAsked =
@@ -1321,18 +1964,32 @@ export async function runBotAction(
         }
         if (status === null || status.isRunning !== true) {
             return {
-                text:
+                text: tran(
                     'I could not start the walkthrough for that one. The ' +
-                    'written steps above still work.',
+                        'written steps above still work.',
+                ),
                 isNeedingModel: action.ask !== undefined,
             };
         }
+        // The card's own buttons, named as the card draws them
+        // (`GUIDE_CARD_LABEL_KEY_MAP` in guide.mjs).
+        const cardWords = {
+            act: tran('Do it'),
+            next: tran('Next'),
+            skip: tran('Skip'),
+            count: status.stepCount,
+        };
         if (isPreparingDemo) {
             return {
-                text:
-                    '**Look at the app window.** I am pointing to the right ' +
-                    'place now. Give me a moment to prepare the safe **Do ' +
-                    'it** step for the controls on your screen.',
+                text: fillWords(
+                    tran(
+                        '**Look at the app window.** I am pointing to the ' +
+                            'right place now. Give me a moment to prepare ' +
+                            'the safe **{act}** step for the controls on ' +
+                            'your screen.',
+                    ),
+                    cardWords,
+                ),
                 isNeedingModel: true,
             };
         }
@@ -1343,43 +2000,130 @@ export async function runBotAction(
             : status.isTargetFound !== false;
         if (!isGoodEnough && action.ask !== undefined) {
             return {
-                text:
+                text: tran(
                     '**Look at the app window.** A card is up. Some of its ' +
-                    'steps are not buttons I can point at, so give me a ' +
-                    'moment and I will work out the real ones.',
+                        'steps are not buttons I can point at, so give me a ' +
+                        'moment and I will work out the real ones.',
+                ),
                 isNeedingModel: true,
             };
         }
         if (isDemoAsked && status.canDemo === false) {
             return {
-                text:
-                    '**Look at the app window.** I cannot press this one for ' +
-                    'you — its steps are things to do in the page itself, ' +
-                    `not buttons. A card is showing step 1 of ${status.stepCount}; press **Next** on it as you go.`,
+                text: fillWords(
+                    tran(
+                        '**Look at the app window.** I cannot press this one ' +
+                            'for you — its steps are things to do in the page ' +
+                            'itself, not buttons. A card is showing step 1 of ' +
+                            '{count}; press **{next}** on it as you go.',
+                    ),
+                    cardWords,
+                ),
                 isNeedingModel: false,
             };
         }
         if (status.isDemo === true) {
             return {
-                text:
-                    '**Look at the app window.** A card is showing step 1 of ' +
-                    `${status.stepCount}. Press **Do it** and I will do that ` +
-                    'step for you, one step per press — or **Skip** to do it ' +
-                    'yourself. **✕** stops.',
+                text: fillWords(
+                    tran(
+                        '**Look at the app window.** A card is showing step 1 ' +
+                            'of {count}. Press **{act}** and I will do that ' +
+                            'step for you, one step per press — or **{skip}** ' +
+                            'to do it yourself. **✕** stops.',
+                    ),
+                    cardWords,
+                ),
                 isNeedingModel: false,
             };
         }
         return {
+            text: fillWords(
+                tran(
+                    '**Look at the app window.** A card is showing step 1 of ' +
+                        '{count}, and the button that step is about is ' +
+                        'circled in red. Press **{next}** on the card when ' +
+                        'you have done it — or just do it, and the card ' +
+                        'moves on by itself.',
+                ),
+                cardWords,
+            ),
+            isNeedingModel: false,
+        };
+    }
+    // A guide page a PERSON asked to read (**Read the whole thing**): every
+    // part of it, and nothing of what the page tool writes at its foot for a
+    // model -- the address of the page's newest copy "to read with
+    // owa_read_website", and that a long page goes on. Shown as the tool
+    // returned it, both were printed under the page.
+    const pageId = action.args?.id;
+    if (action.toolName === 'owa_help_page' && typeof pageId === 'string') {
+        // In the window's language: `W-06@km` is the page's current
+        // translation when there is one and the English page when not.
+        const appLangCode = getAppLangCode();
+        const shownPageId =
+            appLangCode === DEFAULT_CHAT_LANG_CODE || pageId.includes('@')
+                ? pageId
+                : `${pageId}@${appLangCode}`;
+        const page = toShownPage(
+            await readWholePage(shownPageId, (id, part) => {
+                return callTool(
+                    'owa_help_page',
+                    part === undefined ? { id } : { id, part },
+                );
+            }),
+        );
+        return {
+            text: page.length > 0 ? page : tran('Done.'),
+            isNeedingModel: false,
+        };
+    }
+    // **Highlight again** and **Highlight "…"**: the ring is the answer, and
+    // the line under it says whether there was one. Printed as it came back,
+    // the tool's JSON -- the component and the source file among it -- was
+    // the whole reply in a volunteer's chat (seen live 2026-10-15).
+    if (action.toolName === 'owa_find_ui') {
+        const found = parseToolJson(
+            await callTool(action.toolName, action.args ?? {}),
+        );
+        const shown = (found?.matches ?? []).find((match: any) => {
+            return match?.isVisible;
+        });
+        return {
             text:
-                '**Look at the app window.** A card is showing step 1 of ' +
-                `${status.stepCount}, and the button that step is about is ` +
-                'circled in red. Press **Next** on the card when you have ' +
-                'done it — or just do it, and the card moves on by itself.',
+                shown === undefined
+                    ? fillWords(
+                          tran(
+                              'I could not find "{text}" on screen just now. ' +
+                                  'Open the panel or tab it belongs to, then ' +
+                                  'ask again.',
+                          ),
+                          { text: String(action.args?.text) },
+                      )
+                    : fillWords(
+                          tran('I have outlined **{control}** again, {where}.'),
+                          {
+                              control: shown.label,
+                              where: toWhereWords(shown.where),
+                          },
+                      ),
+            isNeedingModel: false,
+        };
+    }
+    // **Open … in Bible Lookup** under a found verse: what it opened, in
+    // words, never the tool's JSON.
+    if (action.toolName === 'owa_find_verse') {
+        return {
+            text: describeVerseOpened(
+                await callTool(action.toolName, action.args ?? {}),
+            ),
             isNeedingModel: false,
         };
     }
     const text = await callTool(action.toolName, action.args ?? {});
-    return { text: text.length > 0 ? text : 'Done.', isNeedingModel: false };
+    return {
+        text: text.length > 0 ? text : tran('Done.'),
+        isNeedingModel: false,
+    };
 }
 
 /**
@@ -1394,8 +2138,8 @@ export async function runBotAction(
  */
 export function describeActionError(error: any, action: BotActionType): string {
     appError(error, `chatbot action ${action.toolName ?? 'unknown'}`);
-    return (
+    return tran(
         'I could not do that just now. Ask me again, or tell me what you are ' +
-        'trying to do and I will find another way.'
+            'trying to do and I will find another way.',
     );
 }

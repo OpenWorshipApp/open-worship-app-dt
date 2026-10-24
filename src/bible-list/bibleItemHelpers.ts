@@ -1,9 +1,14 @@
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
 import type BibleItem from './BibleItem';
-import type { BibleTargetType } from './bibleRenderHelpers';
+import {
+    checkIsSameBibleTarget,
+    type BibleTargetType,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { getMenuItemAnchor } from '../context-menu/contextMenuEventHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
+import { handleError } from '../helper/errorHelpers';
 
 export type BibleItemType = {
     id: number;
@@ -63,6 +68,23 @@ export function genBibleItemCopyingContextMenu(
                 bibleItem.copyChapterFullKeyToClipboard();
             },
         },
+        {
+            childBefore: genContextMenuItemIcon('three-dots', {
+                color: 'var(--bs-secondary-text-emphasis)',
+            }),
+            menuElement: tran('More…'),
+            title: tran('Every way to copy the title and text'),
+            onSelect: (event) => {
+                // Read now: this menu is gone once the module has loaded.
+                const anchor = getMenuItemAnchor(event);
+                // Loaded at the press: every format and its preview.
+                import('./bibleItemCopyFormatHelpers')
+                    .then(({ showBibleItemCopyFormatMenu }) => {
+                        return showBibleItemCopyFormatMenu(bibleItem, anchor);
+                    })
+                    .catch(handleError);
+            },
+        },
     ];
 }
 
@@ -82,10 +104,7 @@ export function genDuplicatedMessage(
         ({ target: target1, bibleKey: bibleKey1 }, i1) => {
             return (
                 bibleKey === bibleKey1 &&
-                target.bookKey === target1.bookKey &&
-                target.chapter === target1.chapter &&
-                target.verseStart === target1.verseStart &&
-                target.verseEnd === target1.verseEnd &&
+                checkIsSameBibleTarget(target, target1) &&
                 i !== i1
             );
         },

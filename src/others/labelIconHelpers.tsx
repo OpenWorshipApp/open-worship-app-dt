@@ -62,7 +62,9 @@ export const LABEL_ICON_NAME_MAP: Record<string, string> = {
     Properties: 'sliders',
     'Canvas Items': 'stack',
     General: 'gear',
+    'Path Settings': 'folder2-open',
     Others: 'three-dots',
+    'AI Providers': 'robot',
     '(dev)Experiment': 'beaker',
     // -- layout panes
     'App Presenter Left': 'layout-sidebar',

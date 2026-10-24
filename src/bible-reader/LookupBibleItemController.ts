@@ -1,9 +1,8 @@
-import { createContext, type ReactNode } from 'react';
+import { createContext, use, type ReactNode } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { closeCurrentEditingBibleItem } from './readBibleHelpers';
-import type { EventMapperType } from '../event/KeyboardEventListener';
 import {
     elementDivider,
     genContextMenuItemShortcutKey,
@@ -19,9 +18,13 @@ import BibleItemsViewController, {
 import { setBibleLookupInputFocus } from '../bible-lookup/selectionHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
-import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    extractBibleTitle,
+    getVersesCount,
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
+import { checkIsSameBibleTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 import CacheManager from '../others/CacheManager';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { unlocking } from '../server/unlockingHelpers';
@@ -31,18 +34,27 @@ import { setBibleSearchingTabType } from '../bible-find/bibleFindHelpers';
 import { tran } from '../lang/langHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 
-export const closeEventMapper: EventMapperType = {
-    wControlKey: ['Ctrl'],
-    lControlKey: ['Ctrl'],
-    mControlKey: ['Meta'],
-    key: 'w',
+import {
+    closeEventMapper,
+    ctrlShiftMetaKeys,
+    splitHorizontalEventMapper,
+    splitVerticalEventMapper,
+} from '../keyboard-shortcut/appShortcutMappers';
+
+// Declared beside every other shortcut so Help -> Keyboard Shortcuts lists the
+// keys this controller binds; re-exported for the existing callers.
+export {
+    closeEventMapper,
+    ctrlShiftMetaKeys,
+    splitHorizontalEventMapper,
+    splitVerticalEventMapper,
 };
 
-export const ctrlShiftMetaKeys: any = {
-    wControlKey: ['Ctrl', 'Shift'],
-    lControlKey: ['Ctrl', 'Shift'],
-    mControlKey: ['Meta', 'Shift'],
-};
+// One array for the registrations, so its identity never re-registers them.
+export const splitEventMappers = [
+    splitHorizontalEventMapper,
+    splitVerticalEventMapper,
+];
 
 class EditingBibleItem extends ReadIdOnlyBibleItem {
     get metadata() {
@@ -89,6 +101,14 @@ class LookupBibleItemController extends BibleItemsViewController {
     onLookupSaveBibleItem = () => {};
     setIsAdvanceLookupOpened = (_isLookupOnline: boolean) => {};
     openBibleSearch = setBibleSearchingTabType;
+    // What the box held when another view was selected. Until a result for
+    // some other text is applied, a result that still answers it belongs to
+    // the view selected BEFORE: it is looked up again for the new id the
+    // moment the selection changes, while the box still holds the old text,
+    // and `syncFoundBibleItem` stamps it with the new view's id. Shown as it
+    // was, the newly selected view painted the previous one's passage until
+    // its own title had been worked out and looked up (`toCurrentEditingResult`).
+    private inputTextBeforeSelecting: string | null = null;
 
     constructor(settingNameSuffix = '') {
         super('lookup' + settingNameSuffix);
@@ -129,6 +149,9 @@ class LookupBibleItemController extends BibleItemsViewController {
     }
 
     setSelectedBibleItem(bibleItemId: number) {
+        if (bibleItemId !== this.getSavedBibleId()) {
+            this.inputTextBeforeSelecting = this.inputText;
+        }
         setSetting(
             this.toSettingName('-selected-bible-item'),
             bibleItemId.toString(),
@@ -195,7 +218,71 @@ class LookupBibleItemController extends BibleItemsViewController {
         this.fireUpdateEvent();
     }
 
+    // Called with every result the lookup is about to show.
+    settleEditingResult(editingResult: EditingResultType) {
+        if (
+            this.inputTextBeforeSelecting !== null &&
+            editingResult.oldInputText !== this.inputTextBeforeSelecting
+        ) {
+            this.inputTextBeforeSelecting = null;
+        }
+    }
+
+    /**
+     * The result the selected view should show: the one given, unless it
+     * still answers the text the box held for the view selected before --
+     * then the selected view's own passage, which is what the box is about
+     * to be set to.
+     */
+    toCurrentEditingResult(
+        editingResult: EditingResultType | null,
+    ): EditingResultType | null {
+        if (
+            editingResult === null ||
+            this.inputTextBeforeSelecting === null ||
+            editingResult.oldInputText !== this.inputTextBeforeSelecting
+        ) {
+            return editingResult;
+        }
+        // `toJson`, not `target`: the selected item is an
+        // `EditingBibleItem`, whose `target` throws.
+        const selectedJson = this.selectedBibleItem.toJson();
+        const foundBibleItem = editingResult.result.bibleItem;
+        // Two views titled alike: the result already is this view's passage,
+        // so it stands as it is.
+        if (
+            foundBibleItem !== null &&
+            foundBibleItem.bibleKey === selectedJson.bibleKey &&
+            checkIsSameBibleTarget(foundBibleItem.target, selectedJson.target)
+        ) {
+            return editingResult;
+        }
+        return {
+            ...editingResult,
+            bibleKey: selectedJson.bibleKey,
+            result: {
+                ...editingResult.result,
+                bookKey: selectedJson.target.bookKey,
+                chapter: selectedJson.target.chapter,
+                bibleItem: FoundBibleItem.fromJson(selectedJson),
+            },
+        };
+    }
+
     checkIsBibleItemSelected(bibleItem: ReadIdOnlyBibleItem) {
+        // Asked once per view on every render of the views: the saved id
+        // answers it, without building the selected item each time. Only a
+        // saved id no view carries goes through the getter, which selects
+        // the first view.
+        const savedId = this.getSavedBibleId();
+        if (
+            savedId !== -1 &&
+            this.straightBibleItems.some((item) => {
+                return item.id === savedId;
+            })
+        ) {
+            return bibleItem.id === savedId;
+        }
         return bibleItem.id === this.selectedBibleItem.id;
     }
 
@@ -234,6 +321,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         } else {
             this.syncTargetByColorNote(bibleItem);
         }
+        this.fireUpdateEvent();
     }
 
     get inputText() {
@@ -287,6 +375,33 @@ class LookupBibleItemController extends BibleItemsViewController {
         return { ...editingResult };
     }
 
+    /**
+     * Ask for the passage the box holds to become the history entry. The
+     * entry is the LAST passage asked for when `attemptAddingHistory`'s wait
+     * ends, so every answer asks -- a cached one too. Asked by a fresh lookup
+     * alone, a reference corrected inside the cache's 3 s (`John 3:16-21`,
+     * `John 3:16`, back to `John 3:16-21`) left the half-typed one as the
+     * last asked for, and it became the entry.
+     */
+    private attemptAddingHistoryOf(
+        inputText: string,
+        bibleItem: ReadIdOnlyBibleItem | null,
+    ) {
+        if (bibleItem === null) {
+            return;
+        }
+        bibleItem.toTitle().then((title) => {
+            // Only a passage the box still holds. Every keystroke is looked
+            // up, and the lookups finish in any order, so the half-typed
+            // `Genesis 1:1-3` of a fast `Genesis 1:1-31` could be the last to
+            // land and became the history entry.
+            if (inputText !== this.inputText) {
+                return;
+            }
+            attemptAddingHistory(bibleItem.bibleKey, title);
+        });
+    }
+
     async getEditingResult(inputText?: string) {
         inputText = inputText ?? this.inputText;
         const cachedKey = `${this.selectedBibleItem.bibleKey}-${inputText}`;
@@ -294,6 +409,10 @@ class LookupBibleItemController extends BibleItemsViewController {
             const cachedEditingResult =
                 await editingResultCacher.get(cachedKey);
             if (cachedEditingResult !== null) {
+                this.attemptAddingHistoryOf(
+                    inputText,
+                    cachedEditingResult.result.bibleItem,
+                );
                 return this.syncFoundBibleItem(cachedEditingResult);
             }
             const editingResult = await extractBibleTitle(
@@ -301,23 +420,16 @@ class LookupBibleItemController extends BibleItemsViewController {
                 inputText,
             );
             if (editingResult.result.bibleItem !== null) {
-                const newFoundBibleItem = (editingResult.result.bibleItem =
-                    FoundBibleItem.fromJson({
-                        ...editingResult.result.bibleItem.toJson(),
-                        extraBibleKeys: this.selectedBibleItem.extraBibleKeys,
-                        isAudioEnabled: this.selectedBibleItem.isAudioEnabled,
-                    }));
-                newFoundBibleItem.toTitle().then((title) => {
-                    // Only a passage the box still holds. Every keystroke is
-                    // looked up, and the lookups finish in any order, so the
-                    // half-typed `Genesis 1:1-3` of a fast `Genesis 1:1-31`
-                    // could be the last to land and became the history entry.
-                    if (inputText !== this.inputText) {
-                        return;
-                    }
-                    attemptAddingHistory(newFoundBibleItem.bibleKey, title);
+                editingResult.result.bibleItem = FoundBibleItem.fromJson({
+                    ...editingResult.result.bibleItem.toJson(),
+                    extraBibleKeys: this.selectedBibleItem.extraBibleKeys,
+                    isAudioEnabled: this.selectedBibleItem.isAudioEnabled,
                 });
             }
+            this.attemptAddingHistoryOf(
+                inputText,
+                editingResult.result.bibleItem,
+            );
             await editingResultCacher.set(cachedKey, editingResult);
             return this.syncFoundBibleItem(editingResult);
         });
@@ -403,19 +515,167 @@ class LookupBibleItemController extends BibleItemsViewController {
         if (this.checkIsBibleItemSelected(bibleItem)) {
             return;
         }
-        const foundBibleItem = (await this.getEditingResult()).result.bibleItem;
+        const { result } = await this.getEditingResult();
+        // Worked out BEFORE the selection moves: awaited between the move and
+        // writing the passage into the view left behind, it let that view
+        // render once with the passage it had when it was selected -- its
+        // title flicked back to it for a moment.
+        const foundTitle =
+            result.bibleItem === null ? null : await result.bibleItem.toTitle();
+        // A view left on its book or chapter grid has no passage to keep. It
+        // used to be closed; it stays, on the picked book's chapter 1, or
+        // Genesis 1 before a book is picked -- what a split from the grid
+        // opens. Not a lookup, so no history entry.
+        const passageBibleItem =
+            result.bibleItem ??
+            (await this.genFirstChapterBibleItem(result.bookKey));
         const oldSelectedBibleItem = this.selectedBibleItem;
         this.selectedBibleItem = bibleItem;
-        if (foundBibleItem === null) {
-            this.deleteBibleItem(oldSelectedBibleItem);
-        } else {
-            attemptAddingHistory(
-                foundBibleItem.bibleKey,
-                await foundBibleItem.toTitle(),
-                true,
-            );
-            this.applyTargetOrBibleKey(oldSelectedBibleItem, foundBibleItem);
+        this.applyTargetOrBibleKey(oldSelectedBibleItem, passageBibleItem);
+        if (foundTitle !== null) {
+            attemptAddingHistory(passageBibleItem.bibleKey, foundTitle, true);
         }
+    }
+
+    /**
+     * A passage for the selected view while it shows the book or chapter
+     * grid, where there is no passage to copy -- for a split made from it,
+     * and for the view itself when the editing moves away from it: the
+     * picked book's chapter 1, or Genesis 1 before a book is picked. The
+     * whole chapter, as typing `Genesis 1:` shows it.
+     */
+    async genFirstChapterBibleItem(bookKey: string | null, bibleKey?: string) {
+        // `toJson`, not `target`: the selected item is an `EditingBibleItem`,
+        // whose `target` throws. The version, extra versions and audio come
+        // with it.
+        const json = this.selectedBibleItem.toJson();
+        const targetBibleKey = bibleKey ?? json.bibleKey;
+        const targetBookKey = bookKey ?? 'GEN';
+        const verseCount = await getVersesCount(
+            targetBibleKey,
+            targetBookKey,
+            1,
+        );
+        return ReadIdOnlyBibleItem.fromJson({
+            ...json,
+            bibleKey: targetBibleKey,
+            target: {
+                bookKey: targetBookKey,
+                chapter: 1,
+                verseStart: 1,
+                verseEnd: verseCount ?? 1,
+            },
+        });
+    }
+
+    /**
+     * Split the selected view while it has no passage yet. The new view takes
+     * `genFirstChapterBibleItem`; the selected one stays selected, still on
+     * its grid -- the same source a Shift+click on a history entry splits.
+     */
+    async splitWithoutPassage(
+        bookKey: string | null,
+        isHorizontal: boolean,
+        bibleKey?: string,
+    ) {
+        const newBibleItem = await this.genFirstChapterBibleItem(
+            bookKey,
+            bibleKey,
+        );
+        const selectedBibleItem = this.selectedBibleItem;
+        if (isHorizontal) {
+            this.addBibleItemLeft(selectedBibleItem, newBibleItem);
+        } else {
+            this.addBibleItemBottom(selectedBibleItem, newBibleItem);
+        }
+    }
+
+    /**
+     * The grid view's split button and its key: `splitWithoutPassage`, asking
+     * which version first while the view is in a colour group
+     * (`splitBibleItemOnPress`).
+     */
+    splitWithoutPassageOnPress(
+        event: any,
+        bookKey: string | null,
+        isHorizontal: boolean,
+    ) {
+        if (!this.checkIsSplitAskingBibleKey(this.selectedBibleItem)) {
+            this.splitWithoutPassage(bookKey, isHorizontal);
+            return;
+        }
+        this.askSplitBibleKey(event, isHorizontal, (newBibleKey) => {
+            this.splitWithoutPassage(bookKey, isHorizontal, newBibleKey);
+        });
+    }
+
+    private applySplitShortcutKeys(menuItems: ContextMenuItemType[]) {
+        for (const menuItem of menuItems) {
+            if (menuItem.id === splitHorizontalId) {
+                menuItem.childAfter = genContextMenuItemShortcutKey(
+                    splitHorizontalEventMapper,
+                );
+            } else if (menuItem.id === splitVerticalId) {
+                menuItem.childAfter = genContextMenuItemShortcutKey(
+                    splitVerticalEventMapper,
+                );
+            }
+        }
+    }
+
+    private genCloseContextMenu(
+        bibleItem: ReadIdOnlyBibleItem,
+        isBibleItemSelected: boolean,
+    ): ContextMenuItemType[] {
+        if (this.isAlone) {
+            return [];
+        }
+        return [
+            {
+                menuElement: elementDivider,
+            },
+            {
+                childBefore: genContextMenuItemIcon('x-lg', {
+                    color: 'var(--bs-danger-text-emphasis)',
+                }),
+                menuElement: tran('Close'),
+                keyboardShortcut: isBibleItemSelected
+                    ? closeEventMapper
+                    : undefined,
+                onSelect: () => {
+                    if (this.checkIsBibleItemSelected(bibleItem)) {
+                        closeCurrentEditingBibleItem(this);
+                    } else {
+                        this.deleteBibleItem(bibleItem);
+                    }
+                },
+            },
+        ];
+    }
+
+    /**
+     * The menu of the selected view while it shows the book or chapter grid:
+     * only what needs no passage -- the splits, full view and close.
+     */
+    genNoPassageContextMenu(
+        bookKey: string | null,
+        uuid: string,
+    ): ContextMenuItemType[] {
+        const splitMenuItems = this.genSplitContextMenu(
+            (isHorizontal, newBibleKey) => {
+                this.splitWithoutPassage(
+                    bookKey,
+                    isHorizontal,
+                    newBibleKey ?? undefined,
+                );
+            },
+        );
+        this.applySplitShortcutKeys(splitMenuItems);
+        return [
+            ...splitMenuItems,
+            this.genFullViewContextMenuItem(uuid),
+            ...this.genCloseContextMenu(this.selectedBibleItem, true),
+        ];
     }
 
     async genContextMenu(
@@ -432,24 +692,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         );
         const menus2 = await super.genContextMenu(event, bibleItem, uuid);
         if (isBibleItemSelected) {
-            const menu2IdMap: { [key: string]: ContextMenuItemType } =
-                Object.fromEntries(
-                    menus2.map((menuItem) => [menuItem.id, menuItem]),
-                );
-            if (menu2IdMap[splitHorizontalId]) {
-                menu2IdMap[splitHorizontalId].childAfter =
-                    genContextMenuItemShortcutKey({
-                        ...ctrlShiftMetaKeys,
-                        key: 's',
-                    });
-            }
-            if (menu2IdMap[splitVerticalId]) {
-                menu2IdMap[splitVerticalId].childAfter =
-                    genContextMenuItemShortcutKey({
-                        ...ctrlShiftMetaKeys,
-                        key: 'v',
-                    });
-            }
+            this.applySplitShortcutKeys(menus2);
         } else {
             menus2.push({
                 childBefore: genContextMenuItemIcon('pencil-square'),
@@ -460,29 +703,7 @@ class LookupBibleItemController extends BibleItemsViewController {
                 },
             });
         }
-        const menu3: ContextMenuItemType[] = this.isAlone
-            ? []
-            : [
-                  {
-                      menuElement: elementDivider,
-                  },
-                  {
-                      childBefore: genContextMenuItemIcon('x-lg', {
-                          color: 'var(--bs-danger-text-emphasis)',
-                      }),
-                      menuElement: tran('Close'),
-                      keyboardShortcut: isBibleItemSelected
-                          ? closeEventMapper
-                          : undefined,
-                      onSelect: () => {
-                          if (this.checkIsBibleItemSelected(bibleItem)) {
-                              closeCurrentEditingBibleItem(this);
-                          } else {
-                              this.deleteBibleItem(bibleItem);
-                          }
-                      },
-                  },
-              ];
+        const menu3 = this.genCloseContextMenu(bibleItem, isBibleItemSelected);
         return [...menu1, ...menus2, ...menu3];
     }
 
@@ -568,3 +789,17 @@ export function getCurrentLookupBibleItemController() {
 export const EditingResultContext = createContext<EditingResultType | null>(
     null,
 );
+
+/**
+ * The lookup result as the bible views should show it. The provider does not
+ * re-render when another view is selected; the views do, so the check that a
+ * result belongs to the view selected before runs here.
+ */
+export function useEditingResult() {
+    const editingResult = use(EditingResultContext);
+    const viewController = useBibleItemsViewControllerContext();
+    if (!(viewController instanceof LookupBibleItemController)) {
+        return editingResult;
+    }
+    return viewController.toCurrentEditingResult(editingResult);
+}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import appProvider from '../server/appProvider';
+import { tran } from '../chatbot/chatTranHelpers';
 import {
     AI_CHAT_POPUP_REFUSED_CHANNEL,
     checkIsPopupRefusedInFront,
@@ -79,7 +80,7 @@ export default function RenderAiChatPopupNoticeComp({
         <div
             className="chat-clear-confirm"
             role="status"
-            aria-label="Page not opened"
+            aria-label={tran('Page not opened')}
         >
             <span className="chat-clear-ask">
                 {genPopupRefusedText(notice.hostname)}
@@ -91,7 +92,7 @@ export default function RenderAiChatPopupNoticeComp({
                     setNotice(null);
                 }}
             >
-                Close
+                {tran('Close')}
             </button>
         </div>
     );

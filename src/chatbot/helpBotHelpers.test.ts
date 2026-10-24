@@ -23,6 +23,7 @@ import {
     describeActionError,
     genBackToPresenterLead,
     genBackToPresenterRoute,
+    genOwnWindowFact,
     genGuideActions,
     genReaderButtonReferenceAnswer,
     readCountdownAsk,
@@ -56,6 +57,99 @@ describe('walkthrough actions', () => {
             },
         ]);
         expect(actions[1].ask).toBeUndefined();
+    });
+
+    // 2026-10-23, live in the user's Settings: a model asked to build the
+    // card wrote "click Use This Folder" with a folder already chosen, then
+    // "Parent Directory:", a heading -- neither could be pressed.
+    test('a data-folder question in Settings does it with the Path Settings lesson', () => {
+        const actions = genGuideActions(
+            { id: 'W-16' },
+            'setting',
+            true,
+            'Why do I need to choose a data folder?',
+            'Path Settings',
+        );
+        expect(actions[1].args).toEqual({ demoId: 'setting-path' });
+        expect(actions[1].ask).toBeUndefined();
+        // Show me step by step still walks the page, from the same control.
+        expect(actions[0].args).toMatchObject({
+            manualId: 'W-16',
+            find: 'Path Settings',
+        });
+        // Another W-16 question is still worked out by the model.
+        const languageActions = genGuideActions(
+            { id: 'W-16' },
+            'setting',
+            true,
+            "How do I change the app's language?",
+        );
+        expect(languageActions[1].args).toMatchObject({ manualId: 'W-16' });
+        expect(languageActions[1].ask).toContain('Do it for me');
+    });
+
+    // 2026-10-10, EC-215: for "make computer stay awake" the card opened
+    // W-01 at its header paragraph and ringed the first bold's panel, not
+    // the cup eight bolds later, and re-asked with the whole hint as the
+    // user's words.
+    test('carry the control the question is about, in the user’s own words', () => {
+        const actions = genGuideActions(
+            { id: 'W-01' },
+            'presenter',
+            true,
+            'make computer stay awake',
+            'Stay Awake',
+        );
+        expect(actions[0].args).toEqual({
+            manualId: 'W-01',
+            page: 'presenter.html',
+            mode: 'show',
+            topic: 'make computer stay awake',
+            find: 'Stay Awake',
+        });
+        expect(actions[1].args).toMatchObject({
+            mode: 'demo',
+            find: 'Stay Awake',
+        });
+        expect(actions[1].ask).toContain('make computer stay awake');
+        // No control known: nothing is passed on.
+        expect(
+            genGuideActions({ id: 'W-01' }, 'presenter', true, 'x')[0].args,
+        ).not.toHaveProperty('find');
+    });
+
+    // 2026-10-10: "How do I import a Bible XML file?" was answered with the
+    // Settings form's eight steps and no way to have it done, on the page
+    // whose own first section is "let the assistant do it".
+    test('the page about adding a Bible leads with the button that does it', () => {
+        const withModel = genGuideActions(
+            { id: 'W-34' },
+            'presenter',
+            true,
+            'How do I import a Bible XML file?',
+        );
+        expect(withModel.map((action) => action.label)).toEqual([
+            'Import a Bible for me',
+            'Show me step by step',
+            'Do it for me',
+        ]);
+        expect(withModel[0]).toMatchObject({
+            toolName: 'owa-bible-import-step',
+            args: { step: 'language' },
+        });
+        // No model asks it: the press starts the import in the window.
+        expect(withModel[0].ask).toBeUndefined();
+        expect(
+            genGuideActions({ id: 'W-34' }, 'setting', false).map((action) => {
+                return action.label;
+            }),
+        ).toEqual(['Import a Bible for me', 'Show me step by step']);
+        // Any other page is as it was.
+        expect(
+            genGuideActions({ id: 'W-33' }, 'setting', false).map((action) => {
+                return action.label;
+            }),
+        ).toEqual(['Show me step by step']);
     });
 
     test('offline help offers a walkthrough but never a recipe-built demo', () => {
@@ -114,6 +208,48 @@ describe('walkthrough actions', () => {
         });
         expect(result.isNeedingModel).toBe(true);
         expect(result.text).toContain('prepare the safe **Do it** step');
+    });
+});
+
+// Seen live 2026-10-15: **Highlight again** printed the find tool's JSON,
+// component and source file included, as the whole reply.
+describe('pressing Highlight again', () => {
+    const action = {
+        label: 'Highlight again',
+        toolName: 'owa_find_ui',
+        args: { text: 'Insert YouTube', highlight: true },
+    };
+
+    test('says what it outlined, in words', async () => {
+        parseToolJson.mockReturnValue({
+            count: 1,
+            shownCount: 1,
+            matches: [
+                {
+                    label: 'Insert YouTube',
+                    where: 'at the top center of the window',
+                    isVisible: true,
+                    component: 'SlideEditorInsertToolbarComp',
+                    sourceFile: 'src/slide-editor/x.tsx',
+                },
+            ],
+        });
+        const result = await runBotAction(action);
+        expect(callTool).toHaveBeenCalledWith('owa_find_ui', action.args);
+        expect(result.text).toBe(
+            'I have outlined **Insert YouTube** again, at the top center ' +
+                'of the window.',
+        );
+        expect(result.text).not.toContain('{');
+        expect(result.text).not.toContain('src/');
+    });
+
+    test('says so when it is no longer on screen', async () => {
+        parseToolJson.mockReturnValue({ count: 0, matches: [] });
+        const result = await runBotAction(action);
+        expect(result.text).toContain(
+            'I could not find "Insert YouTube" on screen',
+        );
     });
 });
 
@@ -413,6 +549,90 @@ describe('a walkthrough of a window that is not open', () => {
     });
 });
 
+// 2026-10-12, the every-window questions asked with no assistant as each of
+// the five windows of their own, none of them open: _Where are the
+// settings?_ and _Where is the button that does this?_ were answered "I could
+// not answer that: The app has no open page matching "setting.html". The open
+// pages are: chatbot.html?uuid=chatbot, presenter.html." -- ten of 540.
+describe('a "where is" about a window that is not open', () => {
+    const genNoPageError = (page: string) => {
+        return new Error(
+            `The app has no open page matching "${page}". The open pages ` +
+                'are: chatbot.html?uuid=chatbot, presenter.html.',
+        );
+    };
+
+    beforeEach(() => {
+        parseToolJson.mockImplementation((text: any) => {
+            return typeof text === 'string' && text.length > 0
+                ? JSON.parse(text)
+                : null;
+        });
+    });
+
+    test('names the way into it and outlines the control, pressing nothing', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name, toolArgs] = args as [string, any];
+            if (name === 'owa_find_ui' && toolArgs.page === 'setting.html') {
+                throw genNoPageError('setting.html');
+            }
+            if (name === 'owa_find_ui' && toolArgs.anyPage === true) {
+                return JSON.stringify({
+                    count: 1,
+                    matches: [{ label: 'Setting', isVisible: true }],
+                });
+            }
+            return '';
+        });
+        const answer = await askHelpBot('Where are the settings?', 'setting');
+        expect(answer.text).toContain('**Settings is not open**');
+        expect(answer.text).toContain(
+            'the ⚙️ button at the top right of the window — I have outlined it in red',
+        );
+        expect(answer.text).not.toContain('no open page');
+        expect(answer.text).not.toContain('.html');
+        expect(callTool).toHaveBeenCalledWith('owa_find_ui', {
+            text: 'Setting',
+            highlight: true,
+            anyPage: true,
+        });
+        // A question is not a request to change what the window shows.
+        const pressed = callTool.mock.calls.filter((call: any[]) => {
+            return call[0] === 'owa_click' || call[0] === 'owa_goto_page';
+        });
+        expect(pressed).toHaveLength(0);
+    });
+
+    test('says the way in words where no one control opens it', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string, any];
+            if (name === 'owa_find_ui') {
+                throw genNoPageError('lyricEditor.html');
+            }
+            return '';
+        });
+        const answer = await askHelpBot(
+            'Where is the button that does this?',
+            'lyricEditor',
+        );
+        expect(answer.text).toContain('**Lyric Editor is not open**');
+        expect(answer.text).toContain(
+            'open a song from the Documents panel and press Edit. Then ask me again',
+        );
+        expect(answer.text).not.toContain('outlined');
+        expect(answer.text).not.toContain('.html');
+        // One call: the refused one. Nothing to outline, nothing pressed.
+        expect(callTool).toHaveBeenCalledTimes(1);
+    });
+
+    test('any other failure is still a failure', async () => {
+        callTool.mockRejectedValue(new Error('The assistant service is down'));
+        await expect(
+            askHelpBot('Where is the clear button?', 'presenter'),
+        ).rejects.toThrow('The assistant service is down');
+    });
+});
+
 describe('what a failed button press says', () => {
     test('never the tool words, whatever went wrong', () => {
         const text = describeActionError(
@@ -425,6 +645,87 @@ describe('what a failed button press says', () => {
         expect(text).not.toContain('.html');
         expect(text).not.toContain('owa_');
         expect(text).toContain('Ask me again');
+    });
+});
+
+// With no assistant answering, "what bible verse talk about lover your
+// enemy?" was answered with the page about keeping files beside a verse, and
+// "what are names of 7 churches mentioned in the book of revelation" with the
+// one about adding a Bible from the internet (EC-199).
+describe('the offline bot reads a question about what the Bible says', () => {
+    const BIBLE_FIND_HIT = {
+        id: 'W-12',
+        title: 'Search the whole Bible (Bible Find)',
+        section: 's',
+        // The real page's words: "Bible Lookup" is the Reader's own section
+        // here, and the lead used to read it as the Presenter's popup.
+        excerpt:
+            '1. Open Advance Lookup, beside Bible and Notes and Bible ' +
+            'Lookup, and choose Find.',
+    };
+
+    test('a verse asked for by its words is answered with Bible Find', async () => {
+        callTool.mockResolvedValue(JSON.stringify([BIBLE_FIND_HIT]));
+        parseToolJson.mockImplementation((text: string) => JSON.parse(text));
+        // "find me ..." first: the where-is reader takes that word too.
+        const answer = await askHelpBot(
+            'Find me a verse about patience',
+            'reader',
+        );
+        expect(callTool).toHaveBeenCalledTimes(1);
+        expect(callTool).toHaveBeenCalledWith('owa_help_search', {
+            query: 'find verses by words, not reference',
+            focus: 'reader',
+            kind: 'manual',
+        });
+        expect(answer.text).toContain('Search for “patience”');
+        expect(answer.text).toContain('Search the whole Bible (Bible Find)');
+        // Bible Find is on the Reader: no way across to the Presenter.
+        expect(answer.text).not.toContain('Go Back to Presenter');
+        // From the walkthrough's start, ringing Find.
+        expect(answer.actions?.[0].args).toEqual({
+            manualId: 'W-12',
+            page: 'reader.html',
+            mode: 'show',
+            find: 'Find',
+        });
+    });
+
+    test('knowledge about the Bible says how to ask an assistant, and searches nothing', async () => {
+        const answer = await askHelpBot(
+            'what are names of 7 churches mentioned in the book of revelation in holy bible',
+            'reader',
+        );
+        expect(callTool).not.toHaveBeenCalled();
+        expect(answer.text).toContain(
+            '/btw what are names of 7 churches mentioned in the book of ' +
+                'revelation in holy bible',
+        );
+        expect(answer.actions).toEqual([
+            {
+                label: 'Open AI settings',
+                toolName: 'owa-open-ai-setting',
+                args: {},
+            },
+        ]);
+    });
+
+    test('with Bible Find’s page not found, the manual answers as before', async () => {
+        callTool.mockImplementation(async (_name: string, args: any) => {
+            return JSON.stringify(
+                args?.query === 'find verses by words, not reference'
+                    ? []
+                    : [{ ...BIBLE_FIND_HIT, id: 'W-37', title: 'Resources' }],
+            );
+        });
+        parseToolJson.mockImplementation((text: string) => JSON.parse(text));
+        const answer = await askHelpBot('verses about hope', 'reader');
+        expect(callTool).toHaveBeenLastCalledWith('owa_help_search', {
+            query: 'verses about hope',
+            focus: 'reader',
+            kind: 'manual',
+        });
+        expect(answer.text).toContain('Resources');
     });
 });
 
@@ -600,12 +901,12 @@ describe('the offline bot writes a pasted song out itself', () => {
         '',
         'Valid Open Lyric. No problems found.',
         '',
-        'Song: "Amazing Grace" by Unknown Artist — key C, 120bpm, 4/4',
+        'Song: "Amazing Grace"',
         'Sections (1): Verse 1 (4 lines)',
         'Play order: Verse 1',
         '',
         'Guessed, and worth telling them:',
-        '- the text gave no key, tempo, time -- used C, 120bpm, 4/4',
+        '- the text gave no key, tempo, time, so the song has none set -- worth adding by hand if the band needs it',
         '',
         'The song itself is below. Do NOT paste it into your answer.',
         '# Amazing Grace',
@@ -628,7 +929,8 @@ describe('the offline bot writes a pasted song out itself', () => {
             mode: 'draft',
         });
         expect(answer.text).toContain('Song: "Amazing Grace"');
-        expect(answer.text).toContain('used C, 120bpm, 4/4');
+        expect(answer.text).toContain('The text did not specify');
+        expect(answer.text).toContain('Musical key, Tempo, Time signature');
         // Never the notation itself: that is what the preview box is for.
         expect(answer.text).not.toContain('```ol:');
         expect(answer.actions?.map((one) => one.label)).toEqual([
@@ -691,6 +993,48 @@ describe('the offline bot writes a pasted song out itself', () => {
             'Create "Amazing Grace"',
             'Copy song text',
         ]);
+    });
+
+    // Reported 2026-10-03 with a picture: a song asked for by its NAME. The
+    // app's own starter is the first ask below.
+    test('a song title is looked up by the app, never searched for', async () => {
+        callTool.mockResolvedValue(
+            DRAFT.replace(
+                'from the text.',
+                "from the app's own public-domain hymn collection.",
+            ),
+        );
+        const answer = await askHelpBot(
+            'Create a lyric file for song "Amazing Grace"',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledTimes(1);
+        expect(callTool).toHaveBeenCalledWith('owa_lyric_validate', {
+            mode: 'find',
+            title: 'Amazing Grace',
+        });
+        expect(answer.text).toContain('public-domain hymns');
+        expect(answer.actions?.map((one) => one.label)).toEqual([
+            'Create "Amazing Grace"',
+            'Copy song text',
+        ]);
+    });
+
+    test('a title nothing holds is said so, and never made up', async () => {
+        callTool.mockResolvedValue(
+            'No song called "Way Maker" is in the app’s public-domain hymn ' +
+                'collection (36 classic hymns, offline).\n' +
+                'Already in their songs: "Way Maker". Tell them it is ' +
+                'already in their Documents list and ask before making a ' +
+                'second copy.',
+        );
+        const answer = await askHelpBot(
+            'Create a lyric file for song "Way Maker"',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledTimes(1);
+        expect(answer.text).toContain('You already have **Way Maker**');
+        expect(answer.actions ?? []).toEqual([]);
     });
 
     test('a page with no song on it is said so, not searched for', async () => {
@@ -916,6 +1260,27 @@ describe('the offline bot names the way back to the Presenter', () => {
         expect(genBackToPresenterRoute('setting')).toBeNull();
     });
 
+    // "How do I see what a song will look like on screen?" asked from the
+    // Lyric Editor came back as steps "while you are in the Lyric Editor"
+    // (a local model, 2026-10-13): no prompt said that window has no panels.
+    test('a window of its own is told it has none of the panels, a page of the main window is not', () => {
+        const fact = genOwnWindowFact('lyricEditor');
+        expect(fact).toContain('**Lyric Editor** is a window of its own');
+        expect(fact).toContain("NONE of the Presenter's panels");
+        expect(fact).toContain('still open behind this one');
+        for (const focus of ['bibleNote', 'webEditor', 'setting'] as const) {
+            expect(genOwnWindowFact(focus)).toContain('window of its own');
+        }
+        // These three are told their own way across, or need none.
+        for (const focus of [
+            'presenter',
+            'reader',
+            'appDocumentEditor',
+        ] as const) {
+            expect(genOwnWindowFact(focus)).toBe('');
+        }
+    });
+
     test('a Presenter recipe read from the Reader leads with the way across', () => {
         const lead = genBackToPresenterLead('reader', SLIDES_EXCERPT);
         expect(lead).toContain('Bible Reader page has none of these panels');
@@ -952,6 +1317,55 @@ describe('the offline bot names the way back to the Presenter', () => {
         );
         expect(answer.text).toContain('Go Back to Presenter');
         expect(answer.text).toContain(SLIDES_EXCERPT);
+    });
+
+    // 2026-10-12, every supported question asked with no assistant: 22 of
+    // the Reader's 70 and 16 of the Slide Editor's 21 were sent to the
+    // Presenter, because the Reader has a **Bible Lookup** of its own and
+    // every Slide Editor page says **Slide Editor**.
+    test('a question the window itself offers is not sent to the Presenter', async () => {
+        parseToolJson.mockImplementation((text: string) => JSON.parse(text));
+        callTool.mockResolvedValue(
+            JSON.stringify([
+                {
+                    id: 'W-12',
+                    title: 'Search the whole Bible (Bible Find)',
+                    section: 's',
+                    excerpt:
+                        'Open **Bible Lookup** and pick **Find**, then type a word.',
+                    score: 40,
+                },
+            ]),
+        );
+        const own = await askHelpBot(
+            'How do I search the Bible for a word?',
+            'reader',
+        );
+        expect(own.text).not.toContain('This is done in the Presenter');
+        expect(own.text).toContain('pick **Find**');
+        // The same page under a question the Reader does NOT offer keeps it.
+        const other = await askHelpBot('How do I find a word?', 'reader');
+        expect(other.text.startsWith('This is done in the Presenter')).toBe(
+            true,
+        );
+        // And a Slide Editor question asked in the Slide Editor.
+        callTool.mockResolvedValue(
+            JSON.stringify([
+                {
+                    id: 'W-15',
+                    title: 'Create and edit slides / lyrics / web backgrounds',
+                    section: 's',
+                    excerpt:
+                        'Select a slide document, then click the **Slide Editor** header tab.',
+                    score: 40,
+                },
+            ]),
+        );
+        const editor = await askHelpBot(
+            'How do I add a slide?',
+            'appDocumentEditor',
+        );
+        expect(editor.text).not.toContain('This is done in the Presenter');
     });
 });
 
@@ -1004,6 +1418,28 @@ describe('the offline bot offers to put a passage on the screen', () => {
             ['show Psalm 23 on the projector', 'Psalm 23'],
             ['please put up 1 John 1:1-4', '1 John 1:1-4'],
             ['Present Romans 8.28 to the big screen.', 'Romans 8.28'],
+        ]) {
+            callTool.mockClear();
+            await askHelpBot(ask, 'presenter');
+            expect(callTool, ask).toHaveBeenCalledWith('owa_present_bible', {
+                reference,
+                action: 'check',
+            });
+        }
+    });
+
+    test('a range running over chapters is read as one reference', async () => {
+        parseToolJson.mockReturnValue(checked);
+        for (const [ask, reference] of [
+            ['Put John 1:2-3:4 on the screen', 'John 1:2-3:4'],
+            ['show John 1-3', 'John 1-3'],
+            ['present John 1:2–3:4 on the projector', 'John 1:2–3:4'],
+            ['Put John 1:2 to 3:4 on the screen', 'John 1:2 to 3:4'],
+            ['show 1 John 1:5 through 2:2', '1 John 1:5 through 2:2'],
+            ['please put up Psalm 23 — 24.', 'Psalm 23 — 24'],
+            // "to the screen" is the tail, not a range: no number after it.
+            ['Put John 3:16 to the screen', 'John 3:16'],
+            ['Present Romans 8.28-30 to the big screen.', 'Romans 8.28-30'],
         ]) {
             callTool.mockClear();
             await askHelpBot(ask, 'presenter');
@@ -1142,5 +1578,51 @@ describe('the offline bot offers to start a countdown', () => {
         );
         expect(answer.text).toContain('started from the Presenter page');
         expect(answer.actions).toBeUndefined();
+    });
+});
+
+describe('a guide page a person asked to read', () => {
+    // "Read the whole thing" printed the page as the page tool returns it:
+    // with the address of its newest copy "to read with owa_read_website",
+    // and, on a long page, a note that it had been shortened -- both written
+    // for a model.
+    test('is shown whole, with nothing of what the page tool says to a model', async () => {
+        const foot =
+            '\n\n_(If they say this page does not match their window, read ' +
+            'its newest copy with owa_read_website: ' +
+            'https://example.com/w-42.md )_';
+        callTool
+            .mockImplementationOnce(async () => {
+                return (
+                    '# Ask the app for help\n\n1. Click the robot button.' +
+                    '\n\n[This page goes on: this is part 1 of 2. When what ' +
+                    'is asked is not in this part, read the next with ' +
+                    'owa_help_page and "part": 2. Do not tell the user ' +
+                    `anything was shortened.]${foot}`
+                );
+            })
+            .mockImplementationOnce(async () => {
+                return (
+                    '# Ask the app for help (part 2 of 2)\n\n' +
+                    `14. Press **Show me step by step**.${foot}`
+                );
+            });
+        const result = await runBotAction({
+            label: 'Read the whole thing',
+            toolName: 'owa_help_page',
+            args: { id: 'W-42' },
+        });
+        expect(result.text).toBe(
+            '# Ask the app for help\n\n1. Click the robot button.\n' +
+                '14. Press **Show me step by step**.',
+        );
+        expect(result.isNeedingModel).toBe(false);
+        expect(callTool).toHaveBeenNthCalledWith(1, 'owa_help_page', {
+            id: 'W-42',
+        });
+        expect(callTool).toHaveBeenNthCalledWith(2, 'owa_help_page', {
+            id: 'W-42',
+            part: 2,
+        });
     });
 });

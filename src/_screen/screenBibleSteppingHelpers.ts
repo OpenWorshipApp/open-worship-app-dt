@@ -1,7 +1,13 @@
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import {
+    checkIsCrossChapterTarget,
+    getTargetChapterEnd,
+    toSingleChapterTarget,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 import { handleError } from '../helper/errorHelpers';
 import appProvider from '../server/appProvider';
-import ScreenBibleManager from './managers/ScreenBibleManager';
+import ScreenLongTextManager from './managers/ScreenLongTextManager';
+import { getBibleItemData } from './screenLongTextTypeHelpers';
 
 // The bible data modules are pulled in only when the shortcut actually fires:
 // this module is loaded by every window through `ScreenManager`, and nothing
@@ -30,6 +36,19 @@ export async function toSteppedBibleTarget(
     isNext: boolean,
 ): Promise<BibleTargetType | null> {
     const { bookKey, chapter, verseStart, verseEnd } = target;
+    if (checkIsCrossChapterTarget(target)) {
+        // A passage across chapters has no size to keep: step to the one
+        // verse just past it, from its last verse forward or its first back.
+        const edgeTarget = isNext
+            ? toSingleChapterTarget(
+                  bookKey,
+                  getTargetChapterEnd(target),
+                  verseEnd,
+                  verseEnd,
+              )
+            : toSingleChapterTarget(bookKey, chapter, verseStart, verseStart);
+        return await toSteppedBibleTarget(bibleKey, edgeTarget, isNext);
+    }
     const span = Math.max(0, verseEnd - verseStart);
     const verseCount = await countChapterVerses(bibleKey, bookKey, chapter);
     if (verseCount === 0) {
@@ -71,12 +90,14 @@ export async function toSteppedBibleTarget(
 }
 
 export async function stepScreenBibleItem(screenId: number, isNext: boolean) {
-    const screenBibleManager = ScreenBibleManager.getInstance(screenId);
-    if (screenBibleManager === null) {
+    const screenLongTextManager = ScreenLongTextManager.getInstance(screenId);
+    if (screenLongTextManager === null) {
         return;
     }
-    const bibleItemJson =
-        screenBibleManager.screenViewData?.bibleItemData?.bibleItem;
+    // A long text on that screen has no passage to step: nothing happens.
+    const bibleItemJson = getBibleItemData(
+        screenLongTextManager.screenViewData,
+    )?.bibleItem;
     if (bibleItemJson === undefined) {
         return;
     }
@@ -90,7 +111,7 @@ export async function stepScreenBibleItem(screenId: number, isNext: boolean) {
     }
     // No `filePath`: re-running `applyAttachBackground` on every step would
     // overwrite whatever background the operator has on that screen.
-    await screenBibleManager.applyNewBibleItemJson(
+    await screenLongTextManager.applyNewBibleItemJson(
         { ...bibleItemJson, target: newTarget },
         undefined,
     );

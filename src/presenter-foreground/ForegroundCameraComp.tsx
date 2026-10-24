@@ -1,5 +1,5 @@
 import { useCallback, useMemo, type CSSProperties } from 'react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
@@ -14,10 +14,15 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import {
-    getForegroundTransition,
+    getForegroundIsBehind,
     useForegroundPropsSetting,
 } from './propertiesSettingHelpers';
-import type { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
+import { resolveForegroundTransition } from './foregroundTransitionHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
+import {
+    type ForegroundCameraDataType,
+    withForegroundLayer,
+} from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
@@ -38,6 +43,10 @@ function RenderCameraInfoComp({
     genStyle: () => CSSProperties;
 }>) {
     const containerRef = useRef<HTMLDivElement>(null);
+    // A camera that cannot be opened -- held by another app, a virtual camera
+    // whose program is not running -- used to leave its tile spinning for
+    // good, with the reason in the console only.
+    const [isUnavailable, setIsUnavailable] = useState(false);
     // deps are the stable inputs — `containerRef.current` in the deps array
     // re-ran the effect on the second render, visibly stopping and
     // re-acquiring the camera stream
@@ -45,25 +54,35 @@ function RenderCameraInfoComp({
         if (containerRef.current === null) {
             return;
         }
+        setIsUnavailable(false);
         return await getCameraAndShowMedia({
             id: cameraInfo.deviceId,
             label: cameraInfo.label,
             parentContainer: containerRef.current,
             width,
+            onUnavailable: () => {
+                setIsUnavailable(true);
+            },
         });
     }, [cameraInfo.deviceId, cameraInfo.label, width]);
     const handleShowing = useCallback(
         (event: any, isForceChoosing = false) => {
             ScreenForegroundManager.addCameraData(
                 event,
-                {
-                    id: cameraInfo.deviceId,
-                    label: cameraInfo.label,
-                    extraStyle: genStyle(),
-                    transitionEffect: getForegroundTransition(
-                        `camera-${cameraInfo.deviceId}`,
-                    ),
-                },
+                withForegroundLayer(
+                    {
+                        id: cameraInfo.deviceId,
+                        label: cameraInfo.label,
+                        extraStyle: genStyle(),
+                        ...toTransitionPart(
+                            resolveForegroundTransition(
+                                'camera',
+                                `camera-${cameraInfo.deviceId}`,
+                            ),
+                        ),
+                    },
+                    getForegroundIsBehind(`camera-${cameraInfo.deviceId}`),
+                ),
                 isForceChoosing,
             );
         },
@@ -81,14 +100,22 @@ function RenderCameraInfoComp({
             if (screenForegroundManager === null) {
                 return;
             }
-            screenForegroundManager.addCameraData({
-                id: cameraInfo.deviceId,
-                label: cameraInfo.label,
-                extraStyle: genStyle(),
-                transitionEffect: getForegroundTransition(
-                    `camera-${cameraInfo.deviceId}`,
+            screenForegroundManager.addCameraData(
+                withForegroundLayer(
+                    {
+                        id: cameraInfo.deviceId,
+                        label: cameraInfo.label,
+                        extraStyle: genStyle(),
+                        ...toTransitionPart(
+                            resolveForegroundTransition(
+                                'camera',
+                                `camera-${cameraInfo.deviceId}`,
+                            ),
+                        ),
+                    },
+                    getForegroundIsBehind(`camera-${cameraInfo.deviceId}`),
                 ),
-            });
+            );
         },
         [cameraInfo, genStyle],
     );
@@ -100,14 +127,18 @@ function RenderCameraInfoComp({
         handleDragStart(
             event,
             genForegroundDragInf('camera', () => {
-                return {
-                    id: cameraInfoRef.current.deviceId,
-                    label: cameraInfoRef.current.label,
-                    extraStyle: genStyleRef.current(),
-                    transitionEffect: getForegroundTransition(
-                        `camera-${cameraInfoRef.current.deviceId}`,
-                    ),
-                };
+                const prefix = `camera-${cameraInfoRef.current.deviceId}`;
+                return withForegroundLayer(
+                    {
+                        id: cameraInfoRef.current.deviceId,
+                        label: cameraInfoRef.current.label,
+                        extraStyle: genStyleRef.current(),
+                        ...toTransitionPart(
+                            resolveForegroundTransition('camera', prefix),
+                        ),
+                    },
+                    getForegroundIsBehind(prefix),
+                );
             }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -138,7 +169,16 @@ function RenderCameraInfoComp({
                 draggable
                 onDragStart={handleDraggingStart}
             >
-                <LoadingComp />
+                {isUnavailable ? (
+                    <div className="p-2 text-center text-warning small">
+                        <i className="bi bi-camera-video-off" />{' '}
+                        {tran(
+                            'This camera could not be started. Another app may be using it.',
+                        )}
+                    </div>
+                ) : (
+                    <LoadingComp />
+                )}
             </div>
         </div>
     );
@@ -165,16 +205,16 @@ function getAllShowingScreenIdDataList() {
 function refreshAllCameras(
     showingScreenIdDataList: [number, ForegroundCameraDataType][],
     extraStyle: CSSProperties,
+    isBehind: boolean,
 ) {
     for (const [screenId, data] of showingScreenIdDataList) {
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
                 screenForegroundManager.removeCameraData(data);
-                screenForegroundManager.addCameraData({
-                    ...data,
-                    extraStyle,
-                });
+                screenForegroundManager.addCameraData(
+                    withForegroundLayer({ ...data, extraStyle }, isBehind),
+                );
             },
         );
     }
@@ -202,10 +242,16 @@ function ForegroundCameraItemComp({
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix,
         isBlendMode: true,
-        isTransition: true,
-        onChange: (extraStyle) => {
+        // A camera's Properties are the device's own, so its transition row
+        // is the device's.
+        widgetKey: 'camera',
+        onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
-                refreshAllCameras(showingScreenIdDataList, extraStyle);
+                refreshAllCameras(
+                    showingScreenIdDataList,
+                    extraStyle,
+                    isBehind,
+                );
             });
         },
     });
@@ -232,7 +278,9 @@ function ForegroundCameraItemComp({
                             showingScreenIdDataList={showingScreenIdDataList}
                             buttonText={tran('Hide Camera')}
                             genTitle={(data) => {
-                                return `Camera: ${data.id}`;
+                                // The camera's NAME: its id is a hash no
+                                // operator would recognise.
+                                return data.label || data.id;
                             }}
                             handleForegroundHiding={handleCameraHiding}
                             isMini={false}

@@ -96,8 +96,8 @@ export async function getBibleCrossRef(
                     const time = cachedData._cachingTime ?? 0;
                     // expire in 7 days
                     if (
-                        Date.now() - time < 7 * 24 * 60 * 60 * 1000 ||
-                        cachedData._bibleModel !== bibleModel
+                        Date.now() - time < 7 * 24 * 60 * 60 * 1000 &&
+                        cachedData._bibleModel === bibleModel
                     ) {
                         const dataValue =
                             cachedData.value as CrossReferenceType[];
@@ -126,6 +126,7 @@ export async function getBibleCrossRef(
             JSON.stringify(
                 {
                     _cachingTime: Date.now(),
+                    _bibleModel: getBibleModelInfoSetting(),
                     value: data,
                 },
                 null,

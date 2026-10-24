@@ -1,0 +1,228 @@
+{
+  "about": "Word lessons a Khmer reader asks of a passage's chat (the card's Study the words, EC-428), in the languages the Bible is read in: Hebrew (HebrewTD, the Masoretic text with its vowels and accents), Greek (GREEKGNT, the 1904 text), Khmer (ពគប) and English (KJV). Each scenario is one conversation opened as a Bible view's robot opens it, then BUTTONS pressed in order (`press`: the newest answer's button whose words are that, else start with it, else hold it) -- a word is learned by its button. `expect` is the grader's key, never sent: the dictionary form, the kind and form of the word in this verse, and what it means, from the standard lexicons (BDB / HALOT for Hebrew, BDAG for Greek). `words` on a press that lists a verse's words is the list a right split gives. Graded per word: lemma, form, meaning, the verse's word kept as written, no romanisation of a Khmer word in a Khmer window. Run with scripts/lookup-run.mjs --scenarios=<this file>; first measured 2026-10-23 (EC-433).",
+  "scenarios": [
+    {
+      "id": "heb-gen1",
+      "record": {
+        "kind": "verse",
+        "target": "GEN 1:1",
+        "title": "Genesis 1:1",
+        "bibleKey": "HebrewTD"
+      },
+      "asks": [
+        {
+          "id": "H0",
+          "press": "សិក្សាពាក្យនីមួយៗ",
+          "expect": "the verse's words as buttons, each once",
+          "words": ["בְּרֵאשִׁ֖ית", "בָּרָ֣א", "אֱלֹהִ֑ים", "אֵ֥ת", "הַשָּׁמַ֖יִם", "וְאֵ֥ת", "הָאָֽרֶץ"]
+        },
+        {
+          "id": "H1",
+          "press": "בְּרֵאשִׁ֖ית",
+          "expect": "the preposition בְּ 'in' + the noun רֵאשִׁית (feminine singular, 'beginning, first'), no article written; 'in the beginning'; said b'reshit"
+        },
+        {
+          "id": "H2",
+          "press": "בָּרָ֣א",
+          "expect": "the verb בָּרָא (root ב-ר-א), Qal perfect 3rd person masculine singular, 'he created'; in the Bible only God is its subject; said bara"
+        },
+        {
+          "id": "H3",
+          "press": "אֱלֹהִ֑ים",
+          "expect": "the noun אֱלֹהִים, plural in form, masculine, 'God' when it takes a singular verb as here (בָּרָא); said Elohim"
+        },
+        {
+          "id": "H4",
+          "press": "אֵ֥ת",
+          "expect": "the particle אֵת, marking the definite direct object; not translated; said et"
+        },
+        {
+          "id": "H5",
+          "press": "הַשָּׁמַ֖יִם",
+          "expect": "the article הַ 'the' + the noun שָׁמַיִם (masculine, plural/dual in form), 'the heavens, the sky'; said hashamayim"
+        },
+        {
+          "id": "H6",
+          "press": "וְאֵ֥ת",
+          "expect": "the conjunction וְ 'and' + the object marker אֵת; said ve'et"
+        },
+        {
+          "id": "H7",
+          "press": "הָאָֽרֶץ",
+          "expect": "the article הָ 'the' + the noun אֶרֶץ (feminine singular, 'earth, land'); said ha'arets"
+        },
+        {
+          "id": "H8",
+          "press": "ជ្រើសរើសពាក្យ",
+          "expect": "the verse's words again"
+        },
+        {
+          "id": "H9",
+          "press": "ពាក្យទាំងអស់",
+          "expect": "one line a word for all 7, each in Hebrew as written, its dictionary form and meaning; ב+רֵאשִׁית, ברא Qal perfect 3ms, אֱלֹהִים, אֵת, הַ+שָׁמַיִם, וְ+אֵת, הָ+אֶרֶץ"
+        }
+      ]
+    },
+    {
+      "id": "heb-gen1-7",
+      "record": {
+        "kind": "verse",
+        "target": "GEN 1:7",
+        "title": "Genesis 1:7",
+        "bibleKey": "HebrewTD"
+      },
+      "asks": [
+        {
+          "id": "J0",
+          "press": "សិក្សាពាក្យនីមួយៗ",
+          "expect": "the words split at the maqaf (־) too, each once (אֱלֹהִים֮ / הַמַּ֨יִם֙ / לָרָקִ֔יעַ / אֲשֶׁר written twice with other accents are one word each)",
+          "words": ["וַיַּ֣עַשׂ", "אֱלֹהִים֮", "אֶת", "הָרָקִיעַ֒", "וַיַּבְדֵּ֗ל", "בֵּ֤ין", "הַמַּ֨יִם֙", "אֲשֶׁר֙", "מִתַּ֣חַת", "לָרָקִ֔יעַ", "וּבֵ֣ין", "מֵעַ֣ל", "וַֽיְהִי", "כֵֽן"]
+        },
+        {
+          "id": "J1",
+          "press": "וַיַּ֣עַשׂ",
+          "expect": "the verb עָשָׂה 'make, do' with the consecutive וַ: Qal wayyiqtol (imperfect with waw-consecutive) 3rd person masculine singular, 'and he made'"
+        },
+        {
+          "id": "J2",
+          "press": "הָרָקִיעַ",
+          "expect": "the article הָ + the noun רָקִיעַ (masculine singular), 'the expanse, the firmament'"
+        }
+      ]
+    },
+    {
+      "id": "grc-jhn3",
+      "record": {
+        "kind": "verse",
+        "target": "JHN 3:16",
+        "title": "John 3:16",
+        "bibleKey": "GREEKGNT"
+      },
+      "asks": [
+        {
+          "id": "G0",
+          "press": "សិក្សាពាក្យនីមួយៗ",
+          "expect": "the verse's words, ἀλλ’ kept with its elision mark",
+          "words": ["Οὕτως", "γὰρ", "ἠγάπησεν", "ὁ", "θεὸς", "τὸν", "κόσμον", "ὥστε", "υἱὸν", "μονογενῆ", "ἔδωκεν", "ἵνα", "πᾶς", "πιστεύων", "εἰς", "αὐτὸν", "μὴ", "ἀπόληται", "ἀλλ’", "ἔχῃ", "ζωὴν", "αἰώνιον"]
+        },
+        {
+          "id": "G1",
+          "press": "ἠγάπησεν",
+          "expect": "ἀγαπάω, aorist active indicative 3rd person singular, 'he loved'"
+        },
+        {
+          "id": "G2",
+          "press": "ជ្រើសរើសពាក្យ",
+          "expect": "the words again"
+        },
+        {
+          "id": "G3",
+          "press": "τὸν",
+          "expect": "the article ὁ, accusative singular masculine, 'the' (with κόσμον) -- not a preposition"
+        },
+        {
+          "id": "G4",
+          "press": "ជ្រើសរើសពាក្យ",
+          "expect": "the words again"
+        },
+        {
+          "id": "G5",
+          "press": "μονογενῆ",
+          "expect": "μονογενής, adjective, accusative singular masculine (with υἱόν), 'only, one and only, unique' (KJV 'only begotten')"
+        },
+        {
+          "id": "G6",
+          "press": "ជ្រើសរើសពាក្យ",
+          "expect": "the words again"
+        },
+        {
+          "id": "G7",
+          "press": "πιστεύων",
+          "expect": "πιστεύω, present active participle, nominative singular masculine, 'believing' -- with ὁ, 'the one who believes'"
+        },
+        {
+          "id": "G8",
+          "press": "ជ្រើសរើសពាក្យ",
+          "expect": "the words again"
+        },
+        {
+          "id": "G9",
+          "press": "ἀπόληται",
+          "expect": "ἀπόλλυμι, aorist middle subjunctive 3rd person singular (after ἵνα μή), 'perish, be lost'"
+        },
+        {
+          "id": "G10",
+          "press": "ជ្រើសរើសពាក្យ",
+          "expect": "the words again"
+        },
+        {
+          "id": "G11",
+          "press": "αἰώνιον",
+          "expect": "αἰώνιος, adjective, accusative singular feminine (with ζωήν), 'eternal, everlasting'"
+        }
+      ]
+    },
+    {
+      "id": "khm-jhn3",
+      "record": {
+        "kind": "verse",
+        "target": "JHN 3:16",
+        "title": "យ៉ូហាន ៣:១៦",
+        "bibleKey": "ពគប"
+      },
+      "asks": [
+        {
+          "id": "K0",
+          "press": "សិក្សាពាក្យនីមួយៗ",
+          "expect": "the verse's words, split at the Bible's zero-width spaces"
+        },
+        {
+          "id": "K1",
+          "press": "ស្រឡាញ់",
+          "expect": "a verb, 'love'; here God loved the people of the world; no pronunciation and no romanisation (the answer is in Khmer)"
+        },
+        {
+          "id": "K2",
+          "press": "ជ្រើសរើសពាក្យ",
+          "expect": "the words again"
+        },
+        {
+          "id": "K3",
+          "press": "ព្រះ‌រាជ‌បុត្រា",
+          "expect": "a noun of the royal register: ព្រះ (sacred/royal) + រាជ (royal) + បុត្រា (son), 'the (royal) Son' -- here God's only Son; no romanisation"
+        }
+      ]
+    },
+    {
+      "id": "kjv-jhn3",
+      "record": {
+        "kind": "verse",
+        "target": "JHN 3:16",
+        "title": "John 3:16",
+        "bibleKey": "KJV"
+      },
+      "asks": [
+        {
+          "id": "E0",
+          "press": "សិក្សាពាក្យនីមួយៗ",
+          "expect": "the verse's words"
+        },
+        {
+          "id": "E1",
+          "press": "begotten",
+          "expect": "the past participle of 'beget' (to father), an old English word; 'only begotten' = the one and only (Greek μονογενής); the English word kept"
+        },
+        {
+          "id": "E2",
+          "press": "ជ្រើសរើសពាក្យ",
+          "expect": "the words again"
+        },
+        {
+          "id": "E3",
+          "press": "believeth",
+          "expect": "'believe' in its old 3rd person singular present (-eth = -s, 'believes'); 'whosoever believeth' = whoever believes"
+        }
+      ]
+    }
+  ]
+}

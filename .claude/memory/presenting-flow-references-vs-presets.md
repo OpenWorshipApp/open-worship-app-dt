@@ -28,7 +28,8 @@ Two consequences worth knowing before touching this:
 
 Two more consequences of the same split, both easy to mistake for bugs:
 
-- An entry's `title` is a label **captured when it was added** — purely cosmetic. Renaming
+- An entry's `title` is a label **captured when it was added** — purely cosmetic (an action,
+  an error row and a foreground build theirs on read: `PresentingFlowItem.title`). Renaming
   the underlying file does not change the row's text; resolving real names would mean
   reading every referenced file just to draw a list.
 - `colorNote` lives on the ENTRY, not in the shared colour-note settings, so the same slide

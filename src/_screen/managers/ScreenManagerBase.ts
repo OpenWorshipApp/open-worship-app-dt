@@ -1,10 +1,12 @@
+import { createElement } from 'react';
+
 import EventHandler from '../../event/EventHandler';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { getWindowDim } from '../../helper/helpers';
-import { setSetting } from '../../helper/settingHelpers';
+import { getSetting, setSetting } from '../../helper/settingHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
-import ScreenBibleManager from './ScreenBibleManager';
+import ScreenLongTextManager from './ScreenLongTextManager';
 import {
     getAllShowingScreenIds,
     hideScreen,
@@ -21,9 +23,34 @@ import {
 } from './screenHelpers';
 import appProvider from '../../server/appProvider';
 import { showSimpleToast } from '../../toast/toastHelpers';
-import type { ScreenMessageType } from '../screenTypeHelpers';
+import type {
+    ScreenMessageType,
+    ScreenShowPayloadType,
+} from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
+import { applyRemoteScrollPercentage } from './screenScrollSyncHelpers';
+import { MIRROR_REMOTE_DISPLAY_FIRST } from '../../../electron/screenMirrorProtocol';
+import { isVirtualDisplayId } from '../../../electron/virtualDisplayProtocol';
+import ScreenLockedToastMessageComp from '../preview/ScreenLockedToastMessageComp';
+import { getAllScreenManagerBases } from './screenManagerBaseHelpers';
+import { rememberVirtualScreensShowing } from './virtualScreenShowingHelpers';
+
+// Which screens are up on a virtual display, kept for the next start.
+function rememberVirtualDisplayScreens() {
+    rememberVirtualScreensShowing(
+        getAllScreenManagerBases()
+            .filter((screenManagerBase) => {
+                return !screenManagerBase.isDeleted;
+            })
+            .map((screenManagerBase) => {
+                return {
+                    screenId: screenManagerBase.screenId,
+                    isShowing: screenManagerBase.isShowing,
+                };
+            }),
+    );
+}
 
 export type ScreenManagerEventType =
     | 'instance'
@@ -43,6 +70,7 @@ export default class ScreenManagerBase
     isDeleted: boolean;
     width = 1;
     height = 1;
+    private isDimMeasured = false;
     _isSelected: boolean = false;
     _isLocked: boolean = false;
     _stage: number = 0;
@@ -87,6 +115,22 @@ export default class ScreenManagerBase
         return getDisplayByScreenId(this.screenId);
     }
 
+    // On a virtual display, the screen page plays the sound (it is what the
+    // display streams). The screen page knows it from its context; the
+    // presenter reads the stored choice first, so a screen on a real monitor
+    // never pays for the display list.
+    get isOnVirtualDisplay() {
+        if (appProvider.isPageScreen) {
+            return appProvider.screenUtils?.getContext()?.isSoundOwner === true;
+        }
+        const stored = Number.parseInt(
+            getSetting(`${SCREEN_MANAGER_SETTING_NAME}-pid-${this.screenId}`) ??
+                '',
+        );
+        // A deleted virtual display falls back to a real one.
+        return isVirtualDisplayId(stored) && this.displayId === stored;
+    }
+
     get isSelected() {
         return this._isSelected;
     }
@@ -125,29 +169,18 @@ export default class ScreenManagerBase
     syncScrollPercentage(data: {
         domSelector: string;
         scroll: { x: number; y: number };
+        isSubPixel?: boolean;
     }) {
-        const { domSelector, scroll } = data;
+        const { domSelector, scroll, isSubPixel } = data;
         const htmlElements = this.getElementsByDomSelector(domSelector);
         for (const element of htmlElements) {
-            const scrollLeft =
-                scroll.x * (element.scrollWidth - element.clientWidth);
-            const scrollTop =
-                scroll.y * (element.scrollHeight - element.clientHeight);
-            // Stamped so the scroll event this scrollTo fires is recognized
-            // as remote-applied and NOT re-broadcast
-            // (`registerScrollingSyncEvent`). The focused/mouse-over guard on
-            // the send side is not enough: `document.hasFocus()` reports true
-            // under an attached DevTools/CDP session, at which point a
-            // re-broadcast echoes between windows forever and floods the IPC
-            // channel until the renderer starves.
-            (element as any)._remoteAppliedScroll = {
-                left: scrollLeft,
-                top: scrollTop,
-            };
-            element.scrollTo({
-                left: scrollLeft,
-                top: scrollTop,
-            });
+            // Marked as remote-applied so the scroll events it sets off are
+            // NOT re-broadcast (`registerScrollingSyncEvent`). The
+            // focused/mouse-over guard on the send side is not enough: it is
+            // true in the presenter whenever the operator is at it, and under
+            // an attached DevTools/CDP session, and a re-broadcast echoes
+            // between windows -- or between grouped mini screens -- forever.
+            applyRemoteScrollPercentage(element, scroll, isSubPixel);
         }
     }
 
@@ -169,28 +202,44 @@ export default class ScreenManagerBase
     // When the refusal was last SAID. One press reaches the check below from
     // every layer at once -- Clear All asks the background, slide, bible and
     // foreground managers in turn -- and each used to raise its own copy of
-    // the same toast: four identical warnings stacked for one key. Every call
-    // is still refused; the message is said once per burst.
-    private lockedMessageShownAt = 0;
+    // the same toast: four identical warnings stacked for one key. Shared by
+    // every screen, because the same press is refused by each locked screen
+    // too (a locked colour group refuses on all of them), and that stacked one
+    // identical toast per screen. Every call is still refused; the message is
+    // said once per burst.
+    private static lockedMessageShownAt = 0;
     private static readonly lockedMessageGapMs = 1000;
+    // The screens the current burst was refused by -- what its Unlock frees.
+    // Replaced, not grown, by the next burst.
+    private static lockedRefusedScreens = new Set<ScreenManagerBase>();
 
     checkIsLockedWithMessage() {
         if (!this.isLocked) {
             return false;
         }
         const now = Date.now();
-        if (
-            now - this.lockedMessageShownAt >=
-            ScreenManagerBase.lockedMessageGapMs
-        ) {
-            this.lockedMessageShownAt = now;
-            // Not "change the app document": a locked screen refuses a
-            // background, a verse or a countdown just the same.
-            showSimpleToast(
-                tran('Screen Manager is locked'),
-                tran('Unlock the screen to change what it shows'),
-            );
+        const elapsed = now - ScreenManagerBase.lockedMessageShownAt;
+        // `elapsed >= 0`: a clock set back must not silence it until the
+        // clock catches up again.
+        if (elapsed >= 0 && elapsed < ScreenManagerBase.lockedMessageGapMs) {
+            ScreenManagerBase.lockedRefusedScreens.add(this);
+            return true;
         }
+        ScreenManagerBase.lockedMessageShownAt = now;
+        const refusedScreens = new Set<ScreenManagerBase>([this]);
+        ScreenManagerBase.lockedRefusedScreens = refusedScreens;
+        // Not "change the app document": a locked screen refuses a
+        // background, a verse or a countdown just the same.
+        showSimpleToast(
+            tran('Screen Manager is locked'),
+            createElement(ScreenLockedToastMessageComp, {
+                onUnlock: () => {
+                    for (const screenManagerBase of refusedScreens) {
+                        void screenManagerBase.setIsLockedWithSyncGroup(false);
+                    }
+                },
+            }),
+        );
         return true;
     }
 
@@ -198,8 +247,22 @@ export default class ScreenManagerBase
         const dim = appProvider.isPageScreen
             ? getWindowDim()
             : this.display.bounds;
+        const isResized =
+            this.isDimMeasured &&
+            (dim.width !== this.width || dim.height !== this.height);
+        this.isDimMeasured = true;
         this.width = dim.width;
         this.height = dim.height;
+        // A display of the same shape but another size -- a guest's monitor
+        // coming back in place of the 1920x1080 stand-in, or one 16:9 monitor
+        // for another -- leaves the preview card's box as it was, so nothing
+        // asks the previewer to rescale and it keeps the old pixel size around
+        // content drawn at the new one. Never on the first measurement: the
+        // static event handler is itself a `new ScreenManagerBase`, so firing
+        // from the constructor recursed until the stack ran out.
+        if (isResized) {
+            this.fireScaleEvent();
+        }
     }
 
     async getColorNote() {
@@ -210,7 +273,7 @@ export default class ScreenManagerBase
         this.colorNote = color;
         ScreenBackgroundManager.enableSyncGroup(this.screenId);
         ScreenVaryAppDocumentManager.enableSyncGroup(this.screenId);
-        ScreenBibleManager.enableSyncGroup(this.screenId);
+        ScreenLongTextManager.enableSyncGroup(this.screenId);
         ScreenForegroundManager.enableSyncGroup(this.screenId);
         this.sendSyncScreen(true);
     }
@@ -239,12 +302,14 @@ export default class ScreenManagerBase
         this.addPropEvent('display-id', data);
         ScreenManagerBase.addPropEvent('display-id', data);
         this.fireRefreshEvent();
+        // A showing screen moved onto or off a virtual display.
+        rememberVirtualDisplayScreens();
     }
 
     set isShowing(isShowing: boolean) {
         this._isShowing = isShowing;
         if (isShowing) {
-            this.show();
+            this.showOrUndo();
         } else {
             this.hide();
         }
@@ -255,6 +320,45 @@ export default class ScreenManagerBase
         return showScreen({
             screenId: this.screenId,
             displayId: this.displayId,
+        });
+    }
+
+    // Counts show requests, so a refusal that comes back after a later show
+    // (or a hide and a show) cannot switch that later one off.
+    private showRequestCount = 0;
+
+    // `show()` rejects when main cannot put the screen up at all -- above all a
+    // Screen Mirror guest display that is not connected (`prepareOutput`
+    // throws "Guest display is disconnected"). Left unhandled, that rejection
+    // raised the app's "Reload is needed" dialog and left the toggle on with no
+    // window behind it. Switch it back off and say why instead.
+    private showOrUndo() {
+        const requestCount = ++this.showRequestCount;
+        const isRemoteDisplay = this.displayId <= MIRROR_REMOTE_DISPLAY_FIRST;
+        const isVirtualDisplay = isVirtualDisplayId(this.displayId);
+        Promise.resolve(this.show()).catch((error: unknown) => {
+            if (requestCount !== this.showRequestCount || !this._isShowing) {
+                return;
+            }
+            this._isShowing = false;
+            // Drops anything main had started for it (a half-made mirror
+            // output); a no-op when nothing was made.
+            this.hide();
+            this.fireVisibleEvent();
+            showSimpleToast(
+                tran('Screen not shown'),
+                isRemoteDisplay
+                    ? tran(
+                          'Its Screen Mirror display is not connected. Connect that computer, or choose another display for this screen.',
+                      )
+                    : isVirtualDisplay
+                      ? tran(
+                            'Its virtual display is not available. Choose another display for this screen.',
+                        )
+                      : error instanceof Error
+                        ? error.message
+                        : String(error),
+            );
         });
     }
 
@@ -280,6 +384,7 @@ export default class ScreenManagerBase
     fireVisibleEvent() {
         this.addPropEvent('visible');
         ScreenManagerBase.fireVisibleEvent();
+        rememberVirtualDisplayScreens();
     }
 
     fireRefreshEvent() {
@@ -319,6 +424,16 @@ export default class ScreenManagerBase
     sendSyncScreen(_shouldFromOtherGroupMember = false) {
         throw new Error('sendSyncScreen is not implemented.');
     }
+
+    // Screen Show: this screen's whole state, for a screen that shows it.
+    // Only a full screen manager on the presenter has one to give.
+    genScreenShowPayload(): ScreenShowPayloadType | null {
+        return null;
+    }
+
+    // Screen Show: send this screen's window the whole state of each screen
+    // it shows. Only the presenter sends.
+    sendScreenShowSnapshots(_sourceScreenIds: number[]) {}
 
     clear() {
         throw new Error('clear is not implemented.');

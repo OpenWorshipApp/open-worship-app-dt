@@ -1,6 +1,7 @@
 import './BackgroundComp.scss';
 
-import { lazy, useCallback, useMemo, useState } from 'react';
+import type { MouseEvent } from 'react';
+import { lazy, useCallback, useMemo, useRef, useState } from 'react';
 
 import {
     useStateSettingBoolean,
@@ -10,7 +11,8 @@ import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { getBackgroundSrcListOnScreenSetting } from '../_screen/screenHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { toIconedLabel, toWidgetLabel } from '../others/labelIconHelpers';
+import { genLabelIcon, toWidgetLabel } from '../others/labelIconHelpers';
+import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
     AUDIO_PLAYING_CHANGE_EVENT,
@@ -24,6 +26,73 @@ import type {
 } from '../_screen/screenTypeHelpers';
 import EventHandler from '../event/EventHandler';
 import { OPEN_BACKGROUND_AUDIO_TAB_EVENT } from './backgroundAudioTabHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import {
+    BackgroundTransitionBadgeComp,
+    genBackgroundTabTransitionMenuItems,
+} from './backgroundTransitionMenuHelpers';
+
+// A tab's icon and its words, the words in a span the header can fold away
+// when the row is too narrow for all of them (`useIsTabRowCompact`). The
+// title keeps the name on the icon for a pointer, and the folded words stay
+// in the page, so the tab is still named for a screen reader and the app's
+// own tools.
+function RenderTabLabelComp({ labelKey }: Readonly<{ labelKey: string }>) {
+    const label = tran(labelKey);
+    return (
+        <span title={label}>
+            {genLabelIcon(labelKey)}
+            <span className="background-tab-text">{label}</span>
+        </span>
+    );
+}
+
+// True while the tabs' full words do not fit beside the Audios tab. The row
+// used to scroll sideways instead, which cut the last tab mid-word ("W" for
+// Webs) at the default width in English. Measured, not guessed from a width:
+// the same panel fits every Khmer label and not every English one.
+function useIsTabRowCompact() {
+    const headerRef = useRef<HTMLDivElement | null>(null);
+    const [isCompact, setIsCompact] = useState(false);
+    const isCompactRef = useAppCurrentRef(isCompact);
+    // The header width the full words need, measured while they were shown.
+    const fullWidthRef = useRef(0);
+    const check = useCallback(() => {
+        const header = headerRef.current;
+        const tabList = header?.firstElementChild;
+        if (!header || !(tabList instanceof HTMLElement)) {
+            return;
+        }
+        if (isCompactRef.current) {
+            if (header.clientWidth >= fullWidthRef.current) {
+                setIsCompact(false);
+            }
+            return;
+        }
+        const overflow = tabList.scrollWidth - tabList.clientWidth;
+        if (overflow > 1) {
+            fullWidthRef.current = header.clientWidth + overflow;
+            setIsCompact(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    useAppEffect(() => {
+        const header = headerRef.current;
+        if (header === null) {
+            return;
+        }
+        const observer = new ResizeObserver(check);
+        observer.observe(header);
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+    // Once more after each switch: unfolding on a remembered width is a guess.
+    useAppEffect(() => {
+        check();
+    }, [isCompact]);
+    return { headerRef, isCompact };
+}
 
 const LazyBackgroundColorsComp = lazy(() => {
     return import('./BackgroundColorsComp');
@@ -86,7 +155,7 @@ function RenderAudiosTabComp({
                     }
                     onClick={handleToggleActive}
                 >
-                    {toIconedLabel('Audios')}
+                    <RenderTabLabelComp labelKey="Audios" />
                 </button>
             </li>
         </ul>
@@ -103,12 +172,14 @@ const genIsSelected = (
     return isSelected;
 };
 
+// Label KEYS, translated where they render: `tran()` at module scope reads
+// the language before the app has loaded it.
 const tabTypeList = [
-    ['color', toIconedLabel('Colors'), LazyBackgroundColorsComp],
-    ['image', toIconedLabel('Images'), LazyBackgroundImagesComp],
-    ['video', toIconedLabel('Videos'), LazyBackgroundVideosComp],
-    ['camera', toIconedLabel('Cameras'), LazyBackgroundCamerasComp],
-    ['web', toIconedLabel('Webs'), LazyBackgroundWebComp],
+    ['color', 'Colors', LazyBackgroundColorsComp],
+    ['image', 'Images', LazyBackgroundImagesComp],
+    ['video', 'Videos', LazyBackgroundVideosComp],
+    ['camera', 'Cameras', LazyBackgroundCamerasComp],
+    ['web', 'Webs', LazyBackgroundWebComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {
@@ -151,21 +222,46 @@ export default function BackgroundComp() {
         });
     }, [tabKey]);
     const tabs = useMemo(() => {
-        return tabTypeList.map(([key, name]) => {
+        return tabTypeList.map(([key, labelKey]) => {
             return {
                 key,
-                title: name,
+                title: (
+                    <>
+                        <RenderTabLabelComp labelKey={labelKey} />
+                        {/* While the tab has its OWN transition. */}
+                        <BackgroundTransitionBadgeComp backgroundType={key} />
+                    </>
+                ),
                 checkIsOnScreen: (targeKey: TabKeyType) => {
                     const backgroundSrcList =
                         getBackgroundSrcListOnScreenSetting();
                     return genIsSelected(backgroundSrcList, targeKey);
                 },
+                // Every background from this tab can come in with the tab's
+                // own transition instead of the screen's.
+                onContextMenu: (
+                    targetKey: TabKeyType,
+                    event: MouseEvent<HTMLButtonElement>,
+                ) => {
+                    if (targetKey === 'audio') {
+                        return;
+                    }
+                    const menuItems =
+                        genBackgroundTabTransitionMenuItems(targetKey);
+                    if (menuItems.length > 0) {
+                        showAppContextMenu(event as any, menuItems);
+                    }
+                },
             };
         });
     }, []);
+    const { headerRef, isCompact } = useIsTabRowCompact();
     return (
         <div className="background w-100 h-100 d-flex flex-column">
-            <div className="header d-flex">
+            <div
+                ref={headerRef}
+                className={'header d-flex' + (isCompact ? ' is-compact' : '')}
+            >
                 <TabRenderComp<TabKeyType>
                     tabs={tabs}
                     activeTabs={[tabKey]}

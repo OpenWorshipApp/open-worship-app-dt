@@ -157,7 +157,9 @@ describe('Khmer translation coverage', () => {
         // Add each key to `src/lang/data/km/index.ts`, checking first for a
         // case or whitespace variant (the module throws on a duplicate).
         expect(missing).toEqual([]);
-    });
+        // Reads every source file: past the 10 s default while the full
+        // suite holds every core (2026-10-24).
+    }, 60000);
 
     test('still finds the calls, so a green run means something', () => {
         // A pattern that broke would match nothing and pass; ~1 600 keys were
@@ -165,11 +167,11 @@ describe('Khmer translation coverage', () => {
         expect(readAppTranCalls().length).toBeGreaterThan(1000);
         const { kmSource, keySet } = readKhmerKeys();
         expect(keySet.size).toBeGreaterThan(1000);
-        expect(keySet.has(sanitizeTranKey('Clear Bible'))).toBe(true);
+        expect(keySet.has(sanitizeTranKey('Clear Long Text'))).toBe(true);
         // Unquoted identifier keys are keys too.
         expect(keySet.has(sanitizeTranKey('Sort'))).toBe(true);
         expect(kmSource).toContain('return key.trim().toLowerCase();');
-    });
+    }, 60000);
 
     // `toForegroundDragLabel` translates through a LOOKUP
     // (`tran(targetLabelMap[target])`), so the sweep above cannot see those
@@ -201,6 +203,46 @@ describe('Khmer translation coverage', () => {
         // A regex that stopped matching would pass an empty list.
         expect(labels).toContain('Countdown');
         expect(labels.length).toBeGreaterThanOrEqual(10);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
+    // The Foreground launcher has the same hole: its rows, each panel's
+    // title and the panel's name are `tran(widget.labelKey)` over a list.
+    // A component added without its Khmer name passed every check and
+    // threw in a Khmer window the moment the Foreground tab was pressed.
+    test('every foreground launcher label has a Khmer string', () => {
+        const { keySet } = readKhmerKeys();
+        const source = readFileSync(
+            path.join(
+                SRC_DIR,
+                'presenter-foreground',
+                'foregroundWidgetHelpers.tsx',
+            ),
+            'utf-8',
+        );
+        const start = source.indexOf('export const FOREGROUND_WIDGET_LIST');
+        const end = source.indexOf('\n];', start);
+        if (start === -1 || end === -1) {
+            throw new Error(
+                '`FOREGROUND_WIDGET_LIST` is no longer shaped as expected',
+            );
+        }
+        const list = source.slice(start, end);
+        const labels = [
+            ...list.matchAll(/\blabelKey:\s*('(?:[^'\\\n]|\\.)*')\s*,/g),
+        ].map((match) => {
+            return evaluateLiteral(match[1]) as string;
+        });
+        // One per component, every one of them a literal: a `labelKey`
+        // written any other way would be a label this cannot read.
+        expect(labels.length).toBe([...list.matchAll(/\blabelKey:/g)].length);
+        expect(labels).toContain('Messages');
+        expect(labels).toContain('Long Text Show');
+        expect(labels.length).toBeGreaterThanOrEqual(13);
         expect(
             labels.filter((label) => {
                 return !keySet.has(sanitizeTranKey(label));
@@ -281,18 +323,14 @@ describe('Khmer translation coverage', () => {
         ).toEqual([]);
     });
 
-    // The transition picker names its effects through a dynamic
+    // The transition override names its effects through a dynamic
     // `tran(TRANSITION_LABEL_MAP[effect])`, for the same reason the pad does:
     // the screen's own menu shows bare identifiers, and a volunteer's panel
     // must not.
     test('every transition label has a Khmer string', () => {
         const { keySet } = readKhmerKeys();
         const source = readFileSync(
-            path.join(
-                SRC_DIR,
-                'presenter-foreground',
-                'propertiesSettingHelpers.tsx',
-            ),
+            path.join(SRC_DIR, 'others', 'TransitionOverrideComp.tsx'),
             'utf-8',
         );
         const start = source.indexOf('const TRANSITION_LABEL_MAP');
@@ -309,6 +347,41 @@ describe('Khmer translation coverage', () => {
         });
         expect(labels).toContain('No Transition');
         expect(labels.length).toBeGreaterThanOrEqual(4);
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
+    // Export / Import Settings draws its section tree with
+    // `tran(leaf.titleKey)` over the catalog, and its dialogs hand their
+    // messages to the tree as props -- all dynamic, all out of the sweep's
+    // reach, and all on screen the moment either button is pressed.
+    test('every Export / Import Settings label has a Khmer string', async () => {
+        const { keySet } = readKhmerKeys();
+        const { SETTING_SECTION_LIST } =
+            await import('../setting/setting-archive/settingArchiveCatalog');
+        const labels = [
+            ...SETTING_SECTION_LIST.flatMap((section) => {
+                return [
+                    section.titleKey,
+                    ...section.leaves.flatMap((leaf) => {
+                        return [
+                            leaf.titleKey,
+                            ...(leaf.noteKey ? [leaf.noteKey] : []),
+                        ];
+                    }),
+                ];
+            }),
+            // Props and options that reach `tran()` inside the tree.
+            'Choose the settings to export',
+            'Choose the settings to import',
+            'Type a password below to include these',
+            'This computer cannot keep them safely',
+        ];
+        expect(labels).toContain('Other Settings');
+        expect(labels.length).toBeGreaterThanOrEqual(50);
         expect(
             labels.filter((label) => {
                 return !keySet.has(sanitizeTranKey(label));
@@ -337,7 +410,7 @@ describe('Khmer translation coverage', () => {
     // check above cannot see this: the key exists; the bug is the second call.
     test('nothing hands a self-translating helper a translation', () => {
         const selfTranslatingCallPattern =
-            /(?:askForNewArchivePassword|askForArchivePassword)\(\s*tran\(|(?:confirmButtonLabel|cancelButtonLabel)\s*:\s*tran\(/g;
+            /(?:askForNewArchivePassword|askForArchivePassword)\(\s*tran\(|(?:confirmButtonLabel|cancelButtonLabel|extraButtonLabel)\s*:\s*tran\(/g;
         const offenders: string[] = [];
         for (const filePath of listSourceFiles(SRC_DIR)) {
             const text = readFileSync(filePath, 'utf-8');

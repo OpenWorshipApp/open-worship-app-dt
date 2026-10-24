@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { ensureDocumentCanvasItemUuids } from '../slide-editor/canvas/canvasItemIdentityHelpers';
+
 const mocks = vi.hoisted(() => {
     const files = new Map<string, string>();
     const dirs = new Set<string>();
@@ -659,6 +661,113 @@ describe('EditingHistoryManager', () => {
 
         expect(await manager.save()).toBe(true);
         expect(mocks.files.get(filePath)).toBe('version 2');
+    });
+
+    // Reported 2026-10-10 with a screenshot: Save pressed on a slide document,
+    // its `*` and the Save button still on, press after press. The head was
+    // written before canvas items had a `uuid`; Save fills them in on the way
+    // to the file and leaves the head as it was, so the two never matched.
+    test('a Save that fills in legacy canvas item ids leaves nothing unsaved', async () => {
+        const filePath = '/docs/legacy.ows';
+        mocks.dirs.add('/docs');
+        const legacy = {
+            metadata: { lastEditDate: '2026-03-08T01:29:37.059Z' },
+            items: [
+                { id: 1, canvasItems: [] },
+                {
+                    id: 2,
+                    canvasItems: [
+                        { id: 1, text: 'first' },
+                        { id: 2, text: 'second' },
+                    ],
+                },
+                { id: 3, canvasItems: [{ id: 1, text: 'third' }] },
+            ],
+        };
+        mocks.files.set(filePath, JSON.stringify(legacy, null, 2));
+
+        const {
+            default: EditingHistoryManager,
+            sanitizeForUpdatingComparison,
+        } = await loadEditingHistoryModule();
+        const manager = EditingHistoryManager.getInstance(filePath);
+        await manager.fileLineHandler.ensureHistoriesDir();
+        // What `AppDocument` hands a save: the stamp, and every missing id.
+        const isSaved = await manager.save((dataText) => {
+            const jsonData = JSON.parse(dataText);
+            jsonData.metadata.lastEditDate = '2026-10-11T02:04:28.758Z';
+            jsonData.items = ensureDocumentCanvasItemUuids(jsonData.items);
+            return JSON.stringify(jsonData, null, 2);
+        });
+        expect(isSaved).toBe(true);
+
+        const savedText = mocks.files.get(filePath) as string;
+        const headText = (await manager.getCurrentHistory()) as string;
+        // The save did change the file, and never the head it came from.
+        expect(JSON.parse(savedText).items[1].canvasItems[0].uuid).toBe(
+            '00000000-0000-4000-8000-000000000001',
+        );
+        expect(JSON.parse(headText).items[1].canvasItems[0]).not.toHaveProperty(
+            'uuid',
+        );
+        expect(sanitizeForUpdatingComparison(headText)).toBe(
+            sanitizeForUpdatingComparison(savedText),
+        );
+        expect(await manager.checkCanDiscard()).toBe(false);
+    });
+
+    test('the comparison sets aside only what a Save changes by itself', async () => {
+        const { sanitizeForUpdatingComparison } =
+            await loadEditingHistoryModule();
+        const toText = (items: unknown[], lastEditDate = 'then') => {
+            return JSON.stringify({ metadata: { lastEditDate }, items });
+        };
+        const firstUuid = '11111111-1111-4111-8111-111111111111';
+        const secondUuid = '22222222-2222-4222-8222-222222222222';
+
+        // A real edit is still one, with or without the ids ...
+        expect(
+            sanitizeForUpdatingComparison(
+                toText([{ id: 1, canvasItems: [{ id: 1, text: 'before' }] }]),
+            ),
+        ).not.toBe(
+            sanitizeForUpdatingComparison(
+                toText(
+                    [{ id: 1, canvasItems: [{ id: 1, text: 'after' }] }],
+                    'now',
+                ),
+            ),
+        );
+        // ... and so is an item that is not the same item any more.
+        expect(
+            sanitizeForUpdatingComparison(
+                toText([{ id: 1, canvasItems: [{ id: 1, uuid: firstUuid }] }]),
+            ),
+        ).not.toBe(
+            sanitizeForUpdatingComparison(
+                toText([{ id: 1, canvasItems: [{ id: 1, uuid: secondUuid }] }]),
+            ),
+        );
+        // A file numbered slide by slide repeats an id across slides; the app
+        // reads it repaired, which is what the head then holds.
+        const repeated = [
+            { id: 1, canvasItems: [{ id: 1, uuid: firstUuid }] },
+            { id: 2, canvasItems: [{ id: 1, uuid: firstUuid }] },
+        ];
+        expect(sanitizeForUpdatingComparison(toText(repeated))).toBe(
+            sanitizeForUpdatingComparison(
+                toText(ensureDocumentCanvasItemUuids(repeated), 'now'),
+            ),
+        );
+        // A note file and a run sheet have `items` of their own kind: left as
+        // they are, the stamp still blanked.
+        expect(
+            sanitizeForUpdatingComparison(
+                toText([{ id: 1, content: 'a note' }, null]),
+            ),
+        ).toBe(toText([{ id: 1, content: 'a note' }, null], ''));
+        expect(sanitizeForUpdatingComparison('not json')).toBe('not json');
+        expect(sanitizeForUpdatingComparison(null)).toBeNull();
     });
 
     // Measured 2026-09-14: the history renames `N` onto `N-head` and reuses its

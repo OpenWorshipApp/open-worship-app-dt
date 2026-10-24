@@ -7,6 +7,7 @@ import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import appProvider from '../server/appProvider';
 import RenderSessionTabsComp from '../chatbot/RenderSessionTabsComp';
+import { fillWords, tran } from '../chatbot/chatTranHelpers';
 import {
     checkCanAddChatSession,
     toChatSessionTitle,
@@ -60,6 +61,7 @@ import {
     openAiChatPage,
 } from '../helper/popupWindowHelpers';
 import RenderAiChatClosedTabsComp from './RenderAiChatClosedTabsComp';
+import { applyGuestLanguageFont } from './aiChatGuestFontHelpers';
 
 // Where a press of "Sign out of every site" has got to. `asking` is the whole
 // safety of it: the sign-ins are not this window's to spend on one press.
@@ -121,21 +123,29 @@ function RenderChooserComp({
     onReopen: (id: string) => void;
     onForgetClosedTabs: () => void;
 }>) {
+    // One sentence with the button in it, so a translation may put the
+    // button wherever its own grammar wants it.
+    const [signOutBefore, signOutAfter = ''] = tran(
+        'You stay signed in on this computer until you say otherwise. ' +
+            '{button} when several people use it.',
+    ).split('{button}');
     return (
         <div
             className="aichat-chooser"
             role="region"
-            aria-label="Choose an AI chat"
+            aria-label={tran('Choose an AI chat')}
         >
             <div className="aichat-chooser-card">
-                <p className="aichat-eyebrow">AI chat</p>
+                <p className="aichat-eyebrow">{tran('AI chat')}</p>
                 <h1 className="aichat-title">
-                    Choose an AI chat to use in this window
+                    {tran('Choose an AI chat to use in this window')}
                 </h1>
                 <p className="aichat-lead">
-                    Switch anytime from the list above the page. You sign in on
-                    the site itself, with your own account, and your
-                    conversations stay there.
+                    {tran(
+                        'Switch anytime from the list above the page. You ' +
+                            'sign in on the site itself, with your own ' +
+                            'account, and your conversations stay there.',
+                    )}
                 </p>
                 <div className="aichat-choices">
                     {AI_CHAT_PROVIDER_LIST.map((provider) => {
@@ -165,7 +175,7 @@ function RenderChooserComp({
                     // clock in the bar. Pressed, it opens in THIS tab.
                     <>
                         <p className="aichat-eyebrow aichat-closed-heading">
-                            Recently closed
+                            {tran('Recently closed')}
                         </p>
                         <RenderAiChatClosedTabsComp
                             closedTabs={closedTabs}
@@ -176,9 +186,11 @@ function RenderChooserComp({
                     </>
                 )}
                 <p className="aichat-note">
-                    These are other companies&rsquo; websites. What you type
-                    there leaves this computer under their terms; this app keeps
-                    nothing of it but the tab.
+                    {tran(
+                        'These are other companies’ websites. What you type ' +
+                            'there leaves this computer under their terms; ' +
+                            'this app keeps nothing of it but the tab.',
+                    )}
                 </p>
                 {/*
                  * Said here in words because this is where there is room for
@@ -186,15 +198,15 @@ function RenderChooserComp({
                  * for when every tab is on a site and this card is not.
                  */}
                 <p className="aichat-note">
-                    You stay signed in on this computer until you say otherwise.{' '}
+                    {signOutBefore}
                     <button
                         type="button"
                         className="aichat-link-button"
                         onClick={onSignOut}
                     >
-                        Sign out of every site
-                    </button>{' '}
-                    when several people use it.
+                        {tran('Sign out of every site')}
+                    </button>
+                    {signOutAfter}
                 </p>
             </div>
         </div>
@@ -347,6 +359,14 @@ function RenderGuestComp({
         };
         const handleStopping = () => {
             setIsLoading(false);
+            // Again once the page has loaded its own fonts: a name it draws
+            // its text in may not have been loaded at dom-ready.
+            void applyGuestLanguageFont(guest);
+        };
+        // The app language's letters in its own face inside the site
+        // (`aiChatGuestFontHelpers`): bytes handed over, nothing fetched.
+        const handleDomReady = () => {
+            void applyGuestLanguageFont(guest);
         };
         const handleFailing = (event: AiChatGuestEventType) => {
             if (
@@ -366,6 +386,7 @@ function RenderGuestComp({
         guest.addEventListener('did-start-loading', handleStarting);
         guest.addEventListener('did-stop-loading', handleStopping);
         guest.addEventListener('did-fail-load', handleFailing);
+        guest.addEventListener('dom-ready', handleDomReady);
         return () => {
             guest.removeEventListener('page-title-updated', handleTitle);
             guest.removeEventListener('did-navigate', handleNavigation);
@@ -373,6 +394,7 @@ function RenderGuestComp({
             guest.removeEventListener('did-start-loading', handleStarting);
             guest.removeEventListener('did-stop-loading', handleStopping);
             guest.removeEventListener('did-fail-load', handleFailing);
+            guest.removeEventListener('dom-ready', handleDomReady);
             onRegisterRef.current(sessionId, null);
         };
     }, []);
@@ -382,14 +404,24 @@ function RenderGuestComp({
                 <div
                     className="aichat-loading"
                     role="progressbar"
-                    aria-label={`Loading ${provider.name}`}
+                    aria-label={fillWords(tran('Loading {site}'), {
+                        site: provider.name,
+                    })}
                 />
             ) : null}
             {failure !== null && isOn ? (
                 <div className="aichat-failure" role="alert">
                     <span className="aichat-failure-text">
-                        {provider.name} could not be loaded —{' '}
-                        {failure.description}. Check the internet connection.
+                        {fillWords(
+                            tran(
+                                '{site} could not be loaded — {reason}. ' +
+                                    'Check the internet connection.',
+                            ),
+                            {
+                                site: provider.name,
+                                reason: failure.description,
+                            },
+                        )}
                     </span>
                     <button
                         type="button"
@@ -398,7 +430,7 @@ function RenderGuestComp({
                             guestRef.current?.reload();
                         }}
                     >
-                        Try again
+                        {tran('Try again')}
                     </button>
                 </div>
             ) : null}
@@ -995,12 +1027,12 @@ export default function AiChatAppComp() {
             {activeProvider === null ? null : (
                 <header className="aichat-head">
                     <label className="aichat-caption" htmlFor="aichat-provider">
-                        Chat with
+                        {tran('Chat with')}
                     </label>
                     <select
                         id="aichat-provider"
                         className="aichat-pick"
-                        aria-label="Which AI chat"
+                        aria-label={tran('Which AI chat')}
                         value={activeProvider.key}
                         onChange={(event) => {
                             handleChoosingProvider(event.target.value);
@@ -1017,8 +1049,8 @@ export default function AiChatAppComp() {
                     <button
                         type="button"
                         className="aichat-tool"
-                        title="Back"
-                        aria-label="Back"
+                        title={tran('Back')}
+                        aria-label={tran('Back')}
                         onClick={handleGoingBack}
                     >
                         <i className="bi bi-arrow-left" />
@@ -1026,8 +1058,8 @@ export default function AiChatAppComp() {
                     <button
                         type="button"
                         className="aichat-tool"
-                        title="Reload"
-                        aria-label="Reload"
+                        title={tran('Reload')}
+                        aria-label={tran('Reload')}
                         onClick={handleReloading}
                     >
                         <i className="bi bi-arrow-clockwise" />
@@ -1035,8 +1067,8 @@ export default function AiChatAppComp() {
                     <button
                         type="button"
                         className="aichat-tool"
-                        title="Open in your browser"
-                        aria-label="Open in your browser"
+                        title={tran('Open in your browser')}
+                        aria-label={tran('Open in your browser')}
                         onClick={handleOpeningOutside}
                     >
                         <i className="bi bi-box-arrow-up-right" />
@@ -1046,8 +1078,10 @@ export default function AiChatAppComp() {
                         className={
                             'aichat-tool' + (isClosedTabsOpen ? ' is-on' : '')
                         }
-                        title="Recently closed tabs (Ctrl+Shift+T opens the last)"
-                        aria-label="Recently closed tabs"
+                        title={tran(
+                            'Recently closed tabs (Ctrl+Shift+T opens the last)',
+                        )}
+                        aria-label={tran('Recently closed tabs')}
                         aria-expanded={isClosedTabsOpen}
                         onClick={() => {
                             refreshClosedTabs();
@@ -1066,8 +1100,8 @@ export default function AiChatAppComp() {
                     <button
                         type="button"
                         className="aichat-tool"
-                        title="Sign out of every site"
-                        aria-label="Sign out of every site"
+                        title={tran('Sign out of every site')}
+                        aria-label={tran('Sign out of every site')}
                         onClick={() => {
                             setSignOutState('asking');
                         }}
@@ -1083,7 +1117,7 @@ export default function AiChatAppComp() {
                 <div
                     className="aichat-closed-panel"
                     role="region"
-                    aria-label="Recently closed tabs"
+                    aria-label={tran('Recently closed tabs')}
                     onKeyDown={(event) => {
                         if (event.key === 'Escape') {
                             setIsClosedTabsOpen(false);
@@ -1106,7 +1140,7 @@ export default function AiChatAppComp() {
                 <div
                     className="chat-clear-confirm"
                     role="alertdialog"
-                    aria-label="Sign out of every site"
+                    aria-label={tran('Sign out of every site')}
                     onKeyDown={(event) => {
                         if (event.key === 'Escape') {
                             setSignOutState('idle');
@@ -1115,13 +1149,18 @@ export default function AiChatAppComp() {
                 >
                     <span className="chat-clear-ask">
                         {signOutState === 'failed'
-                            ? 'Signing out did not finish, so nothing was ' +
-                              'changed. Try again.'
-                            : 'Sign out of every site, in every AI Chat ' +
-                              'window? The tabs stay, but the pages they ' +
-                              'were on and the recently closed list are ' +
-                              'forgotten, and every site will ask you to ' +
-                              'sign in again. This cannot be undone.'}
+                            ? tran(
+                                  'Signing out did not finish, so nothing ' +
+                                      'was changed. Try again.',
+                              )
+                            : tran(
+                                  'Sign out of every site, in every AI Chat ' +
+                                      'window? The tabs stay, but the pages ' +
+                                      'they were on and the recently closed ' +
+                                      'list are forgotten, and every site ' +
+                                      'will ask you to sign in again. This ' +
+                                      'cannot be undone.',
+                              )}
                     </span>
                     <button
                         type="button"
@@ -1132,8 +1171,8 @@ export default function AiChatAppComp() {
                         }}
                     >
                         {signOutState === 'failed'
-                            ? 'Close'
-                            : 'Keep me signed in'}
+                            ? tran('Close')
+                            : tran('Keep me signed in')}
                     </button>
                     {signOutState === 'failed' ? null : (
                         <button
@@ -1143,8 +1182,8 @@ export default function AiChatAppComp() {
                             onClick={handleSigningOut}
                         >
                             {signOutState === 'working'
-                                ? 'Signing out…'
-                                : 'Sign out'}
+                                ? tran('Signing out…')
+                                : tran('Sign out')}
                         </button>
                     )}
                 </div>
@@ -1156,7 +1195,7 @@ export default function AiChatAppComp() {
                 <div
                     className="chat-clear-confirm"
                     role="alertdialog"
-                    aria-label="Microphone"
+                    aria-label={tran('Microphone')}
                     onKeyDown={(event) => {
                         if (event.key === 'Escape') {
                             handleAnsweringMicrophone(false);
@@ -1164,10 +1203,15 @@ export default function AiChatAppComp() {
                     }}
                 >
                     <span className="chat-clear-ask">
-                        {`${microphoneAsk.hostname} wants to use your ` +
-                            'microphone. Allow it until the app closes? Only ' +
-                            'this site hears it, and the camera stays off. ' +
-                            'Sign out of every site takes it back.'}
+                        {fillWords(
+                            tran(
+                                '{site} wants to use your microphone. Allow ' +
+                                    'it until the app closes? Only this site ' +
+                                    'hears it, and the camera stays off. Sign ' +
+                                    'out of every site takes it back.',
+                            ),
+                            { site: microphoneAsk.hostname },
+                        )}
                     </span>
                     <button
                         type="button"
@@ -1177,7 +1221,7 @@ export default function AiChatAppComp() {
                             handleAnsweringMicrophone(false);
                         }}
                     >
-                        Don&rsquo;t allow
+                        {tran('Don’t allow')}
                     </button>
                     <button
                         type="button"
@@ -1186,7 +1230,7 @@ export default function AiChatAppComp() {
                             handleAnsweringMicrophone(true);
                         }}
                     >
-                        Allow
+                        {tran('Allow')}
                     </button>
                 </div>
             )}

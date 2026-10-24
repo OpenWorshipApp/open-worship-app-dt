@@ -16,7 +16,7 @@ import { showAppInput } from './popupWidgetHelpers';
  * Kept apart from `src/helper/archivePasswordHelpers.ts`, which is what the
  * archive code imports: this file reaches React and `tran` (and through `tran`,
  * the whole loaded language pack), and none of that should ride along in the
- * five archive modules that merely need to be ABLE to ask. They load it on
+ * archive modules that merely need to be ABLE to ask. They load it on
  * demand instead — a password dialog is only ever needed after a click.
  */
 
@@ -25,10 +25,11 @@ import { showAppInput } from './popupWidgetHelpers';
  * container's key check makes each rejection cost one derivation and no file
  * I/O, so retrying is cheap even against a multi-gigabyte archive.
  *
- * Exported because the two flows that render `ArchivePasswordComp` INSIDE their
- * own picker (Export Data, Export Bible Data) run the same retry loop rather
- * than calling `askForNewArchivePassword`, and three flows disagreeing about how
- * many tries an operator gets would be the kind of difference nobody notices.
+ * Exported because the flows that render `ArchivePasswordComp` INSIDE their
+ * own picker (Export Data, Export Bible Data, Export Settings) run the same
+ * retry loop rather than calling `askForNewArchivePassword`, and flows
+ * disagreeing about how many tries an operator gets would be the kind of
+ * difference nobody notices.
  */
 export const MAX_PASSWORD_ATTEMPTS = 3;
 

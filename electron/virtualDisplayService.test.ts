@@ -1,0 +1,1892 @@
+import { EventEmitter } from 'node:events';
+import type http from 'node:http';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+const fixture = vi.hoisted(() => ({
+    client: new Map<string, string>(),
+    secure: new Map<string, string>(),
+}));
+vi.mock('electron', async () => {
+    const mod = await import('./testElectronModule');
+    return mod.createElectronModuleMock();
+});
+vi.mock('./ElectronSettingManager', () => ({
+    default: {
+        getInstance: () => ({
+            getClientSetting: (key: string) => fixture.client.get(key) ?? null,
+            setClientSetting: (key: string, value: string) => {
+                fixture.client.set(key, value);
+            },
+            getSecureSetting: (key: string) => fixture.secure.get(key) ?? null,
+            setSecureSetting: (key: string, value: string) => {
+                fixture.secure.set(key, value);
+            },
+        }),
+    },
+}));
+vi.mock('./electronHelpers', () => ({
+    isDev: false,
+    genWebPreferences: () => ({}),
+    messageChannels: { screenMessage: 'screen-message' },
+}));
+vi.mock('./protocolHelpers', () => ({
+    genRouteUrl: () => 'owa://screen.html',
+    genRoutProps: () => ({ preloadFilePath: '/preload.js', loadURL: () => {} }),
+}));
+vi.mock('./fsServe', () => ({
+    htmlFiles: { virtualDisplay: 'virtual-display', screen: 'screen' },
+}));
+vi.mock('./displayWallpaperHelpers', () => ({
+    readVirtualDisplayWallpaper: async () => null,
+}));
+vi.mock('./VirtualScreenController', () => ({
+    default: class {
+        guest = null;
+        sockets = new Set<{ close: (code: number, reason: string) => void }>();
+        order = 0;
+        capture = vi.fn(() => 'screen image');
+        constructor(
+            readonly screenId: number,
+            public displayNumber: number,
+            private readonly onDetach: (controller: any) => void,
+        ) {}
+        close() {
+            this.onDetach(this);
+        }
+    },
+}));
+// No network here: the TVs a search finds and the sessions cast to them are
+// stand-ins (`castTargets.test.ts` tests the real ones).
+const castMocks = vi.hoisted(() => ({
+    discover: vi.fn(async (): Promise<any[]> => []),
+    start: vi.fn(),
+}));
+vi.mock('./castTargets', () => ({
+    discoverCastTargets: castMocks.discover,
+    startCastSession: castMocks.start,
+}));
+
+import {
+    VIDEO_TIMESCALE,
+    VIDEO_TRACK_ID,
+    buildFragment,
+    buildInitSegment,
+    toAudioSpecificConfig,
+} from '../src/virtual-display/fmp4Muxer';
+import { createMockBrowserWindow } from './testUtils';
+import { electronMockState } from './testElectronModule';
+import type { ScreenMirrorService } from './screenMirrorService';
+import {
+    MAX_VIRTUAL_DISPLAYS,
+    VIRTUAL_DISPLAY_ACCESS_KEY,
+    VIRTUAL_DISPLAY_CODE_KEY,
+    VIRTUAL_DISPLAY_SETTING_KEY,
+    clampResolution,
+    type VirtualDisplayNetwork,
+} from './virtualDisplayProtocol';
+import { VirtualDisplayService } from './virtualDisplayService';
+
+// A stand-in Screen Mirror: the service only reads these. Its port is a
+// number, nothing is bound.
+function createMirror() {
+    const lockedOut = new Set<string>();
+    return {
+        port: 40000,
+        error: null as string | null,
+        isVirtualDisplayShareEnabled: false,
+        isInternetEnabled: false,
+        routerState: { state: 'off' },
+        addressList: vi.fn(() => []),
+        content: {
+            createScope: vi.fn(() => 'scope-1'),
+            publish: vi.fn(() => '/content/scope-1/wallpaper.png'),
+            revoke: vi.fn(),
+        },
+        refreshContext: vi.fn(async () => {}),
+        getOutputContext: vi.fn(() => null),
+        sendDevicesChanged: vi.fn(),
+        broadcast: vi.fn(),
+        serveAppFile: vi.fn(async () => {}),
+        trusted: vi.fn(() => true),
+        setVirtualDisplayShareEnabled: vi.fn(async () => {}),
+        id: '00000000-0000-4000-8000-000000000000',
+        setViewerCameraSink: vi.fn(),
+        routeViewerCamera: vi.fn(),
+        closeViewerCameras: vi.fn(),
+        hide: vi.fn(),
+        forwardViewerFeedback: vi.fn(),
+        publicPort: null,
+        isTunnelEnabled: false,
+        publicAddress: '',
+        customPort: null as number | null,
+        isTunnelWanted: false,
+        tunnelState: { status: 'off', url: '', error: '' },
+        setTunnelEnabled: vi.fn(),
+        registerIntercomPeers: vi.fn(),
+        registerCameraSource: vi.fn(),
+        intercomStateOf: vi.fn(() => ({
+            mic: false,
+            speaker: false,
+            volume: 1,
+            remoteMic: false,
+        })),
+        receiveIntercom: vi.fn(),
+        forgetIntercom: vi.fn(),
+        // The real one keeps a lockout per sender; here a code is right or
+        // wrong, and `lockedOut` stands for five wrong ones.
+        lockedOut,
+        checkSenderCode: vi.fn(
+            (address: string, code: string | null, supplied: string) => {
+                if (lockedOut.has(address)) {
+                    return 'locked';
+                }
+                return code && supplied === code ? 'ok' : 'wrong';
+            },
+        ),
+        checkIsSenderLockedOut: vi.fn((address: string) => {
+            return lockedOut.has(address);
+        }),
+    };
+}
+
+class FakeResponse extends EventEmitter {
+    headersSent = false;
+    statusCode = 0;
+    headers: Record<string, string> = {};
+    setHeaders: Record<string, string> = {};
+    setHeader(name: string, value: string) {
+        this.setHeaders[name] = value;
+        return this;
+    }
+    writableLength = 0;
+    isEnded = false;
+    writeHead(statusCode: number, headers: Record<string, string> = {}) {
+        this.statusCode = statusCode;
+        this.headers = headers;
+        this.headersSent = true;
+        return this;
+    }
+    write() {
+        return true;
+    }
+    body: unknown = undefined;
+    end(body?: unknown) {
+        this.body = body;
+        this.isEnded = true;
+        return this;
+    }
+    destroy() {
+        this.emit('close');
+        return this;
+    }
+}
+
+let mirror: ReturnType<typeof createMirror>;
+let services: VirtualDisplayService[];
+
+function createService() {
+    const service = new VirtualDisplayService(
+        mirror as unknown as ScreenMirrorService,
+    );
+    services.push(service);
+    return service;
+}
+
+function ipcListener(channel: string) {
+    return electronMockState.ipcMain.on.mock.calls.find(
+        ([name]) => name === channel,
+    )?.[1] as (...args: any[]) => void;
+}
+
+function eventListener(listeners: ReturnType<typeof vi.fn>, eventName: string) {
+    return listeners.mock.calls.find(([name]) => name === eventName)?.[1] as
+        ((...args: any[]) => void) | undefined;
+}
+
+function readStored() {
+    return JSON.parse(fixture.client.get(VIRTUAL_DISPLAY_SETTING_KEY) ?? '');
+}
+
+async function request(
+    service: VirtualDisplayService,
+    path: string,
+    {
+        network = 'this-computer' as VirtualDisplayNetwork,
+        address = '127.0.0.1',
+        method = 'GET',
+        authorization = undefined as string | undefined,
+        headers = {} as Record<string, string>,
+    } = {},
+) {
+    const res = new FakeResponse();
+    await service.route(
+        {
+            method,
+            headers: { 'user-agent': 'Player/1.0', authorization, ...headers },
+            socket: { remoteAddress: address },
+        } as unknown as http.IncomingMessage,
+        res as unknown as http.ServerResponse,
+        new URL(path, 'http://127.0.0.1:40000'),
+        network,
+    );
+    return res;
+}
+
+beforeEach(() => {
+    vi.useFakeTimers();
+    fixture.client.clear();
+    fixture.secure.clear();
+    electronMockState.reset();
+    // A compositor window the service sizes after creating it.
+    electronMockState.setBrowserWindowFactory(() => ({
+        ...createMockBrowserWindow(),
+        setContentSize: vi.fn(),
+        destroy: vi.fn(),
+    }));
+    mirror = createMirror();
+    services = [];
+});
+
+afterEach(() => {
+    for (const service of services) {
+        service.stop();
+    }
+    vi.clearAllTimers();
+    vi.useRealTimers();
+});
+
+describe('virtual display records', () => {
+    test('create stores the record and the next number', () => {
+        const service = createService();
+        expect(
+            service.create({ name: 'Lobby', width: 1280, height: 720 }),
+        ).toBe(1);
+        expect(readStored()).toEqual({
+            nextNumber: 2,
+            list: [
+                {
+                    number: 1,
+                    name: 'Lobby 1',
+                    width: 1280,
+                    height: 720,
+                    wallpaper: { kind: 'none' },
+                },
+            ],
+        });
+        // No name: the fallback; a bad size: clamped; a bad wallpaper: none.
+        expect(
+            service.create({
+                width: 10,
+                height: 99999,
+                wallpaper: { kind: 'image', filePath: 'relative.png' },
+            }),
+        ).toBe(2);
+        expect(service.getRecord(2)).toEqual({
+            number: 2,
+            name: 'Virtual Display 2',
+            ...clampResolution(10, 99999),
+            wallpaper: { kind: 'none' },
+        });
+    });
+
+    test('a service started later reads what was stored', () => {
+        const first = createService();
+        first.create({ name: 'A', width: 1280, height: 720 });
+        first.create({ name: 'B' });
+        const second = createService();
+        expect(second.displays().map((item) => item.label)).toEqual([
+            'A 1',
+            'B 2',
+        ]);
+        expect(second.displays()[0]).toMatchObject({
+            id: -500001,
+            bounds: { x: 0, y: 0, width: 1280, height: 720 },
+            size: { width: 1280, height: 720 },
+            scaleFactor: 1,
+            isPrimary: false,
+            virtualNumber: 1,
+        });
+    });
+
+    test('a number is never handed out twice, even after a restart', () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        service.create({ name: 'B' });
+        service.delete(2);
+        expect(service.getRecord(2)).toBeNull();
+        expect(readStored()).toMatchObject({
+            nextNumber: 3,
+            list: [{ number: 1 }],
+        });
+        expect(service.create({ name: 'C' })).toBe(3);
+        service.delete(3);
+        // The highest one deleted, then the app restarted.
+        const restarted = createService();
+        expect(restarted.create({ name: 'D' })).toBe(4);
+        // Deleting what is not there changes nothing.
+        const before = fixture.client.get(VIRTUAL_DISPLAY_SETTING_KEY);
+        restarted.delete(99);
+        expect(fixture.client.get(VIRTUAL_DISPLAY_SETTING_KEY)).toBe(before);
+    });
+
+    test(`at most ${MAX_VIRTUAL_DISPLAYS} displays`, () => {
+        const service = createService();
+        for (let index = 0; index < MAX_VIRTUAL_DISPLAYS; index++) {
+            service.create({ name: 'D' });
+        }
+        expect(() => service.create({ name: 'D' })).toThrow(
+            'Too many virtual displays',
+        );
+        expect(readStored().list).toHaveLength(MAX_VIRTUAL_DISPLAYS);
+        expect(readStored().nextNumber).toBe(MAX_VIRTUAL_DISPLAYS + 1);
+        service.delete(3);
+        expect(service.create({ name: 'D' })).toBe(MAX_VIRTUAL_DISPLAYS + 1);
+    });
+
+    test('update clamps the size, keeps the side not given, and stores it', () => {
+        const service = createService();
+        service.create({ name: 'A', width: 1920, height: 1080 });
+        service.update({ number: 1, width: 99999 });
+        expect(service.getRecord(1)).toMatchObject(
+            clampResolution(99999, 1080),
+        );
+        service.update({ number: 1, width: 3841, height: 3000 });
+        // Scaled down under 4K pixels (see the clampResolution test.fails in
+        // virtualDisplayProtocol.test.ts for the few pixels it can overshoot).
+        const clamped = clampResolution(3841, 3000);
+        expect(clamped.width).toBeLessThan(3840);
+        expect(service.getRecord(1)).toMatchObject(clamped);
+        service.update({ number: '1', height: 721 });
+        expect(service.getRecord(1)).toMatchObject({ height: 722 });
+        expect(readStored().list[0]).toMatchObject({
+            width: clamped.width,
+            height: 722,
+        });
+    });
+
+    test('update sanitizes the name and the wallpaper', () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        service.update({ number: 1, name: '  Side   wall  ' });
+        expect(service.getRecord(1)?.name).toBe('Side wall');
+        service.update({ number: 1, name: '' });
+        expect(service.getRecord(1)?.name).toBe('Virtual Display 1');
+        service.update({
+            number: 1,
+            wallpaper: { kind: 'color', color: '#ABCDEF' },
+        });
+        expect(service.getRecord(1)?.wallpaper).toEqual({
+            kind: 'color',
+            color: '#abcdef',
+        });
+        service.update({
+            number: 1,
+            wallpaper: { kind: 'video', filePath: '/a/page.html' },
+        });
+        expect(readStored().list[0].wallpaper).toEqual({ kind: 'none' });
+    });
+
+    test('update of a display that does not exist throws', () => {
+        const service = createService();
+        expect(() => service.update({ number: 1, name: 'x' })).toThrow(
+            'Virtual display not found',
+        );
+    });
+
+    test('a wallpaper file is published once and revoked when it changes', () => {
+        const service = createService();
+        service.create({
+            name: 'A',
+            wallpaper: { kind: 'image', filePath: '/pictures/a.png' },
+        });
+        expect(service.getLayout(1)?.wallpaper).toEqual({
+            kind: 'image',
+            url: '/content/scope-1/wallpaper.png',
+        });
+        service.getLayout(1);
+        expect(mirror.content.createScope).toHaveBeenCalledTimes(1);
+        expect(mirror.content.publish).toHaveBeenCalledWith(
+            'scope-1',
+            '/pictures/a.png',
+        );
+        service.update({
+            number: 1,
+            wallpaper: { kind: 'color', color: '#000000' },
+        });
+        expect(mirror.content.revoke).toHaveBeenCalledWith('scope-1');
+        expect(service.getLayout(1)?.wallpaper).toEqual({
+            kind: 'color',
+            color: '#000000',
+        });
+        expect(service.getLayout(2)).toBeNull();
+    });
+
+    test('the device list is told once per burst, and only on a change', () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        service.create({ name: 'B' });
+        vi.advanceTimersByTime(299);
+        expect(mirror.sendDevicesChanged).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(1);
+        expect(mirror.sendDevicesChanged).toHaveBeenCalledTimes(1);
+        // The same values again: nothing changed for the device list.
+        const record = service.getRecord(1)!;
+        service.update({
+            number: 1,
+            name: record.name,
+            width: record.width,
+            height: record.height,
+            wallpaper: record.wallpaper,
+        });
+        vi.advanceTimersByTime(1000);
+        expect(mirror.sendDevicesChanged).toHaveBeenCalledTimes(1);
+        service.delete(2);
+        vi.advanceTimersByTime(300);
+        expect(mirror.sendDevicesChanged).toHaveBeenCalledTimes(2);
+    });
+
+    // One server, one set of connection settings: the tunnel, the public
+    // address and the port are Screen Mirror's, shown in both tabs.
+    test('the state carries the shared connection settings', () => {
+        const service = createService();
+        mirror.publicAddress = 'church.example';
+        mirror.customPort = 40500;
+        mirror.isTunnelEnabled = true;
+        mirror.tunnelState = {
+            status: 'up',
+            url: 'https://quiet-river.trycloudflare.com',
+            progress: 100,
+            error: '',
+        };
+        expect(service.state()).toMatchObject({
+            publicAddress: 'church.example',
+            customPort: 40500,
+            tunnelEnabled: true,
+            tunnel: { status: 'up' },
+        });
+    });
+
+    test('the state is broadcast once per burst', () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        service.update({ number: 1, name: 'Renamed' });
+        vi.advanceTimersByTime(50);
+        expect(mirror.broadcast).toHaveBeenCalledTimes(1);
+        const [channel, state] = mirror.broadcast.mock.calls[0] as any[];
+        expect(channel).toBe('vd:state');
+        expect(state).toMatchObject({
+            available: true,
+            port: 40000,
+            shareEnabled: false,
+            addresses: [
+                { host: '127.0.0.1', port: 40000, kind: 'this-computer' },
+            ],
+            displays: [
+                {
+                    number: 1,
+                    name: 'Renamed',
+                    displayId: -500001,
+                    screenIds: [],
+                    stream: 'idle',
+                    isWallpaperMissing: false,
+                    clients: [],
+                },
+            ],
+        });
+    });
+
+    test('a wallpaper file that is gone is flagged in the state', () => {
+        const service = createService();
+        service.create({
+            name: 'A',
+            wallpaper: {
+                kind: 'video',
+                filePath: '/no/such/dir/owa-test-missing.mp4',
+            },
+        });
+        expect(service.state().displays[0].isWallpaperMissing).toBe(true);
+    });
+});
+
+describe('virtual display screens and commands', () => {
+    test('screens move between displays and keep their order for viewers', async () => {
+        const service = createService();
+        service.create({ name: 'Front' });
+        service.create({ name: 'Side' });
+        expect(() => service.attachScreen(7, -500099)).toThrow(
+            'Virtual display not found',
+        );
+
+        const first = service.attachScreen(7, -500001);
+        service.attachScreen(8, -500001);
+        expect(service.getLayout(1)?.screenIds).toEqual([7, 8]);
+        expect(service.showingScreenIds()).toEqual([7, 8]);
+        expect(await service.captureScreen(7)).toBe('screen image');
+        expect(service.captureScreen(99)).toBeUndefined();
+
+        const socket = { close: vi.fn() };
+        first.sockets.add(socket as any);
+        expect(service.moveScreen(99, -500002)).toBe(false);
+        expect(service.moveScreen(7, -500099)).toBe(false);
+        expect(service.moveScreen(7, -500002)).toBe(true);
+        expect(socket.close).toHaveBeenCalledWith(1000, 'Screen moved');
+        expect(first.sockets.size).toBe(0);
+        expect(service.getLayout(1)?.screenIds).toEqual([8]);
+        expect(service.getLayout(2)?.screenIds).toEqual([7]);
+        expect(service.state().displays.map((item) => item.screenIds)).toEqual([
+            [8],
+            [7],
+        ]);
+
+        service.closeAllScreens();
+        expect(service.showingScreenIds()).toEqual([]);
+        expect(service.getLayout(1)?.screenIds).toEqual([]);
+        expect(service.getLayout(2)?.screenIds).toEqual([]);
+    });
+
+    test('commands change display settings and return the resulting state', async () => {
+        const service = createService();
+        const created = await service['runCommand']({
+            action: 'create',
+            name: 'Hall',
+        });
+        expect(created.displays[0].name).toBe('Hall 1');
+        const updated = await service['runCommand']({
+            action: 'update',
+            number: 1,
+            name: 'Sanctuary',
+        });
+        expect(updated.displays[0].name).toBe('Sanctuary');
+        await service['runCommand']({ action: 'code', code: 'secret' });
+        expect(
+            (await service['runCommand']({ action: 'access', mode: 'code' }))
+                .hasCode,
+        ).toBe(true);
+        expect(
+            (await service['runCommand']({ action: 'access', mode: 'code' }))
+                .access,
+        ).toBe('code');
+        const shared = await service['runCommand']({
+            action: 'share',
+            enabled: true,
+        });
+        expect(mirror.setVirtualDisplayShareEnabled).toHaveBeenCalledWith(true);
+        expect(shared.displays[0].name).toBe('Sanctuary');
+        await service['runCommand']({ action: 'delete', number: 1 });
+        expect(service.state().displays).toEqual([]);
+    });
+
+    test('IPC rejects untrusted callers and replies with the command result', async () => {
+        const service = createService();
+        service.initIpc();
+        const on = (channel: string) =>
+            electronMockState.ipcMain.on.mock.calls.find(
+                ([name]) => name === channel,
+            )?.[1] as (...args: any[]) => void;
+        const sender = { isDestroyed: () => false, send: vi.fn() };
+        const event = { sender, returnValue: undefined as unknown };
+        mirror.trusted.mockReturnValue(false);
+        on('vd:state')(event);
+        expect(event.returnValue).toBeNull();
+        on('vd:command')(event, {
+            action: 'create',
+            name: 'Ignored',
+            replyEventName: 'reply',
+        });
+        expect(service.state().displays).toEqual([]);
+
+        mirror.trusted.mockReturnValue(true);
+        on('vd:command')(event, {
+            action: 'create',
+            name: 'Hall',
+            replyEventName: 'reply',
+        });
+        await vi.waitFor(() => expect(sender.send).toHaveBeenCalledTimes(1));
+        expect(sender.send).toHaveBeenCalledWith(
+            'reply',
+            expect.objectContaining({
+                displays: [expect.objectContaining({ name: 'Hall 1' })],
+            }),
+        );
+        on('vd:state')(event);
+        expect(event.returnValue).toMatchObject({
+            displays: [expect.objectContaining({ name: 'Hall 1' })],
+        });
+    });
+});
+
+describe('virtual display browser service', () => {
+    test('serves the viewer page and redirects its slashless address', async () => {
+        const service = createService();
+        service.create({ name: 'Lobby' });
+
+        const redirect = await request(service, '/vd/1');
+        expect(redirect.statusCode).toBe(301);
+        expect(redirect.headers.Location).toBe('/vd/1/');
+
+        const page = await request(service, '/vd/1/');
+        expect(mirror.serveAppFile).toHaveBeenCalledWith(
+            expect.anything(),
+            page,
+            new URL(
+                '/virtual-display-viewer.html',
+                'http://127.0.0.1:40000/vd/1/',
+            ),
+        );
+    });
+
+    test('loads saved labels defensively and stores sanitized label updates', async () => {
+        fixture.client.set(
+            'virtual-display-viewer-labels',
+            JSON.stringify({ fullScreen: 'F'.repeat(100), waiting: '' }),
+        );
+        const service = createService();
+        service.create({ name: 'Lobby' });
+        expect(service.getLayout(1)?.labels).toMatchObject({
+            fullScreen: 'F'.repeat(80),
+            waiting: 'Waiting for the display',
+        });
+
+        await service['runCommand']({
+            action: 'labels',
+            labels: {
+                fullScreen: `  ${'X'.repeat(220)}  `,
+                waiting: ' Ready ',
+            },
+        });
+        expect(service.getLayout(1)?.labels).toMatchObject({
+            fullScreen: 'X'.repeat(200),
+            waiting: 'Ready',
+        });
+        expect(
+            JSON.parse(fixture.client.get('virtual-display-viewer-labels')!),
+        ).toMatchObject({ fullScreen: 'X'.repeat(200), waiting: 'Ready' });
+
+        fixture.client.set('virtual-display-viewer-labels', '{bad json');
+        const restarted = createService();
+        expect(restarted.getLayout(1)?.labels).toMatchObject({
+            fullScreen: 'Full screen',
+            waiting: 'Waiting for the display',
+        });
+    });
+
+    test('wires viewer access, screen, cast, camera, and intercom actions to the host', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        mirror.isInternetEnabled = true;
+        fixture.client.set(VIRTUAL_DISPLAY_ACCESS_KEY, 'code');
+        fixture.secure.set(VIRTUAL_DISPLAY_CODE_KEY, 'church-1234');
+        const service = createService();
+        service.create({ name: 'Lobby' });
+        const controller = service.attachScreen(7, -500001);
+        const webViewers = (service as any).webViewers;
+        const host = webViewers.host;
+
+        expect(host.checkIsAdmitted('this-computer')).toBe(true);
+        expect(host.checkIsAdmitted('internet')).toBe(true);
+        expect(host.getAccess('internet')).toBe('code');
+        expect(host.checkCode('198.51.100.3', 'church-1234')).toBe('ok');
+        expect(host.checkIsLockedOut('198.51.100.3')).toBe(false);
+        (service as any).block(1, 'web', 'viewer-1', '198.51.100.3');
+        expect(host.checkIsBlocked(1, 'viewer-1')).toBe(true);
+
+        expect(host.getLayout(1)?.screenIds).toEqual([7]);
+        expect(host.getScreen(1, 7)).toBe(controller);
+        expect(host.getScreen(2, 7)).toBeNull();
+        await expect(host.loadContext(1, 7)).resolves.toBeNull();
+
+        castMocks.discover.mockResolvedValue([
+            {
+                id: 'tv-1',
+                name: 'Hall TV',
+                kind: 'dlna',
+                host: '192.168.1.50',
+                port: 7676,
+            },
+        ] as any);
+        const castHooks: { current?: any } = {};
+        const stopCast = vi.fn();
+        castMocks.start.mockImplementation(
+            async (_target, _url, _name, hooks) => {
+                castHooks.current = hooks;
+                return { stop: stopCast } as any;
+            },
+        );
+        vi.advanceTimersByTime(5001);
+        host.onCastSearch(1);
+        await vi.waitFor(() => expect(castMocks.discover).toHaveBeenCalled());
+        expect(host.getCastState(1)).toMatchObject({
+            isSharing: true,
+            targets: [{ id: 'tv-1', name: 'Hall TV', status: null }],
+        });
+        await host.onCastStart(1, 'tv-1');
+        castHooks.current!.onCasting();
+        castHooks.current!.onBehind(1.24, 1.2);
+        expect(host.getCastState(1).targets[0]).toMatchObject({
+            status: 'casting',
+            behind: 1.2,
+        });
+        expect(host.issueCastToken(1, 'viewer-1')).toMatch(/^[0-9a-f]{36}$/);
+        host.onCastStop(1, 'tv-1');
+        expect(stopCast).toHaveBeenCalledOnce();
+        const feedback = {
+            screenId: 7,
+            type: 'sync-scroll-percentage',
+            percentage: 0.5,
+        };
+        host.onFeedback(feedback);
+        expect(mirror.forwardViewerFeedback).toHaveBeenCalledWith(feedback);
+        host.onHideScreen(2, 7);
+        expect(mirror.hide).not.toHaveBeenCalled();
+        host.onHideScreen(1, 7);
+        expect(mirror.hide).toHaveBeenCalledWith(7);
+        expect(service.showingScreenIds()).toEqual([]);
+
+        const packet = { type: 'offer', sdp: 'offer-data' };
+        host.onCamera('vd:viewer-1:7', packet);
+        host.onCameraGone('vd:viewer-1:7');
+        expect(mirror.routeViewerCamera).toHaveBeenCalledWith(
+            'vd:viewer-1:7',
+            packet,
+        );
+        expect(mirror.closeViewerCameras).toHaveBeenCalledWith('vd:viewer-1:7');
+        expect(host.hostId()).toBe(mirror.id);
+        host.onIntercom('viewer-1', { type: 'audio', data: 'packet' });
+        expect(mirror.receiveIntercom).toHaveBeenCalledWith('viewer:viewer-1', {
+            type: 'audio',
+            data: 'packet',
+        });
+        host.onViewerGone('viewer-1');
+        expect(mirror.forgetIntercom).toHaveBeenCalledWith('viewer:viewer-1');
+
+        const cameraReceive = vi.spyOn(
+            (service as any).viewerCameras,
+            'receive',
+        );
+        const cameraPacket = { type: 'camera-state', shared: true };
+        host.onViewerCamera('viewer-2', '192.0.2.2', cameraPacket);
+        expect(cameraReceive).toHaveBeenCalledWith(
+            'viewer-2',
+            '192.0.2.2',
+            cameraPacket,
+        );
+        const cameras = (service as any).viewerCameras;
+        const watch = vi.spyOn(cameras, 'watch');
+        const forgetWatcher = vi.spyOn(cameras, 'forgetWatcher');
+        host.onScreenCamera(
+            'vd:viewer-2:7',
+            'vd-camera:viewer-2',
+            true,
+            'Phone',
+        );
+        host.onScreenCamera('vd:viewer-2:7', null, false);
+        expect(watch).toHaveBeenCalledWith(
+            'vd:viewer-2:7',
+            'vd-camera:viewer-2',
+            true,
+            'Phone',
+        );
+        expect(forgetWatcher).toHaveBeenCalledWith('vd:viewer-2:7');
+
+        const sendCamera = vi.spyOn(webViewers, 'sendCamera');
+        const [sink] = mirror.setViewerCameraSink.mock.calls[0] as [
+            (consumer: string, value: unknown) => void,
+        ];
+        sink('vd:viewer-2:7', packet);
+        expect(sendCamera).toHaveBeenCalledWith('vd:viewer-2:7', packet);
+        const [cameraSource] = mirror.registerCameraSource.mock.calls[0] as [
+            () => unknown[],
+        ];
+        expect(cameraSource()).toEqual([
+            {
+                deviceId: 'vd-camera:viewer-2',
+                groupId: '',
+                label: 'Browser 192.0.2.2: Camera',
+            },
+        ]);
+        const [, peers] = mirror.registerIntercomPeers.mock.calls[0] as [
+            string,
+            {
+                has: (id: string) => boolean;
+                send: (...args: any[]) => void;
+                onChanged: () => void;
+            },
+        ];
+        expect(peers.has('viewer-1')).toBe(false);
+        const sendIntercom = vi.spyOn(webViewers, 'sendIntercom');
+        peers.send('viewer-1', 'audio', packet);
+        expect(sendIntercom).toHaveBeenCalledWith('viewer-1', 'audio', packet);
+        peers.onChanged();
+        vi.advanceTimersByTime(50);
+        expect(mirror.broadcast).toHaveBeenCalledWith(
+            'vd:state',
+            expect.objectContaining({ displays: expect.any(Array) }),
+        );
+    });
+
+    test('the compositor accepts only its screen guests and reports stream failures', async () => {
+        const service = createService();
+        service.create({ name: 'Lobby', width: 1280, height: 720 });
+        const controller = service.attachScreen(7, -500001);
+        await service.setMp4Mic(1, true);
+        service.initIpc();
+        await request(service, '/vd/1/video');
+        const session = (service as any).sessions.get(1);
+        const [window] = electronMockState.browserWindows;
+        const contents = window.webContents;
+
+        const attach = eventListener(contents.on, 'will-attach-webview')!;
+        const refused = { preventDefault: vi.fn() };
+        attach(refused, {}, { src: 'https://outside.example/' });
+        expect(refused.preventDefault).toHaveBeenCalledOnce();
+
+        const preferences: Record<string, unknown> = {
+            preloadURL: '/untrusted-preload.js',
+            nodeIntegration: true,
+        };
+        const params: Record<string, string> = {
+            src: 'owa://screen.html',
+            partition: 'persist:untrusted',
+        };
+        const allowed = { preventDefault: vi.fn() };
+        attach(allowed, preferences, params);
+        expect(allowed.preventDefault).not.toHaveBeenCalled();
+        expect(preferences).toMatchObject({
+            webviewTag: false,
+            nodeIntegrationInSubFrames: false,
+            backgroundThrottling: false,
+            autoplayPolicy: 'no-user-gesture-required',
+        });
+        expect(preferences).not.toHaveProperty('preloadURL');
+        expect(params).not.toHaveProperty('partition');
+
+        const navigate = eventListener(contents.on, 'will-navigate')!;
+        const navigation = { preventDefault: vi.fn() };
+        navigate(navigation, 'https://outside.example/');
+        expect(navigation.preventDefault).toHaveBeenCalledOnce();
+
+        const guest = {
+            hostWebContents: contents,
+            mainFrame: {},
+            setAudioMuted: vi.fn(),
+            setWindowOpenHandler: vi.fn(),
+            on: vi.fn(),
+            once: vi.fn(),
+        };
+        electronMockState.webContentsModule.fromId.mockReturnValue(guest);
+        const guestEvent = {
+            sender: contents,
+            returnValue: undefined as unknown,
+        };
+        ipcListener('vd:guest')(guestEvent, {
+            screenId: 7,
+            webContentsId: 44,
+        });
+        expect(guestEvent.returnValue).toBe(true);
+        expect(guest.setAudioMuted).toHaveBeenCalledWith(true);
+        expect(guest.setWindowOpenHandler).toHaveBeenCalledWith(
+            expect.any(Function),
+        );
+        expect(controller.guest).toBe(guest);
+        const guestDestroyed = eventListener(guest.once, 'destroyed')!;
+        const replacementGuest = {};
+        controller.guest = replacementGuest as any;
+        guestDestroyed();
+        expect(controller.guest).toBe(replacementGuest);
+        controller.guest = guest as any;
+
+        const ready = ipcListener('vd:compositor-ready');
+        ready({ sender: contents });
+        expect(session.isReady).toBe(true);
+        expect(contents.send).toHaveBeenCalledWith('vd:compositor', {
+            type: 'mic',
+            isOn: true,
+        });
+        expect(contents.send).toHaveBeenCalledWith('vd:compositor', {
+            type: 'config',
+            config: expect.objectContaining({
+                number: 1,
+                width: 1280,
+                height: 720,
+                screens: [{ screenId: 7, src: 'owa://screen.html' }],
+            }),
+        });
+        expect(contents.send).toHaveBeenCalledWith('vd:compositor', {
+            type: 'encode',
+            options: expect.objectContaining({
+                generation: session.generation,
+                width: 1280,
+                height: 720,
+                frameRate: 30,
+            }),
+        });
+
+        const invalidAudioTarget = {
+            sender: contents,
+            returnValue: undefined as unknown,
+        };
+        ipcListener('vd:audio-target')(invalidAudioTarget, 7);
+        expect(invalidAudioTarget.returnValue).toBe(false);
+        (controller as any).isLive = true;
+        const audioTarget = {
+            sender: contents,
+            returnValue: undefined as unknown,
+        };
+        ipcListener('vd:audio-target')(audioTarget, 7);
+        expect(audioTarget.returnValue).toBe(true);
+        const wrongGuest = { ...guest, hostWebContents: {} };
+        electronMockState.webContentsModule.fromId.mockReturnValue(wrongGuest);
+        const rejectedGuest = {
+            sender: contents,
+            returnValue: undefined as unknown,
+        };
+        ipcListener('vd:guest')(rejectedGuest, {
+            screenId: 7,
+            webContentsId: 45,
+        });
+        expect(rejectedGuest.returnValue).toBe(false);
+
+        const encoder = ipcListener('vd:encoder');
+        encoder(
+            { sender: contents },
+            {
+                generation: session.generation,
+                state: 'live',
+                mimeType: 'video/mp4',
+            },
+        );
+        expect(service.state().displays[0]).toMatchObject({
+            stream: 'live',
+            mimeType: 'video/mp4',
+        });
+        const error = 'encoder failed '.repeat(30);
+        encoder(
+            { sender: contents },
+            {
+                generation: session.generation,
+                state: 'error',
+                error,
+            },
+        );
+        expect(service.state().displays[0]).toMatchObject({
+            stream: 'error',
+            error: error.slice(0, 300),
+        });
+        expect(window.destroy).toHaveBeenCalledOnce();
+    });
+
+    test('a malformed compositor chunk fails only its display stream', async () => {
+        const service = createService();
+        service.create({ name: 'Lobby' });
+        service.initIpc();
+        await request(service, '/vd/1/video');
+        const session = (service as any).sessions.get(1);
+        const [window] = electronMockState.browserWindows;
+        vi.spyOn(session.fanout, 'push').mockImplementation(() => {
+            throw new Error('invalid MP4 chunk');
+        });
+
+        ipcListener('vd:chunk')(
+            { sender: window.webContents },
+            {
+                generation: session.generation,
+                data: Uint8Array.of(1, 2, 3),
+            },
+        );
+        expect(service.state().displays[0]).toMatchObject({
+            stream: 'error',
+            error: 'The virtual display stopped',
+        });
+        expect(window.destroy).toHaveBeenCalledOnce();
+    });
+});
+
+describe('virtual display MP4 route', () => {
+    test('404 for an unknown display, a socket path, or a network not let in', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        expect((await request(service, '/vd/2/video')).statusCode).toBe(404);
+        expect((await request(service, '/vd/1/ws')).statusCode).toBe(404);
+        expect((await request(service, '/vd/x/video')).statusCode).toBe(404);
+        // Sharing is off: only this computer.
+        expect(
+            (await request(service, '/vd/1/video', { network: 'local' }))
+                .statusCode,
+        ).toBe(404);
+        mirror.isVirtualDisplayShareEnabled = true;
+        expect(
+            (await request(service, '/vd/1/video', { network: 'internet' }))
+                .statusCode,
+        ).toBe(404);
+    });
+
+    test('HEAD answers the type without taking a seat', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const res = await request(service, '/vd/1/video', { method: 'HEAD' });
+        expect(res.statusCode).toBe(200);
+        expect(res.headers).toEqual({
+            'Content-Type': 'video/mp4',
+            'Cache-Control': 'no-store',
+        });
+        expect(res.isEnded).toBe(true);
+        expect(service.state().displays[0].clients).toEqual([]);
+        expect(electronMockState.BrowserWindowMock).not.toHaveBeenCalled();
+    });
+
+    test('three players per address from the network, eight in all', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        const service = createService();
+        service.create({ name: 'A' });
+        for (let index = 0; index < 3; index++) {
+            const res = await request(service, '/vd/1/video', {
+                network: 'local',
+                address: '192.168.1.5',
+            });
+            expect(res.statusCode).toBe(0);
+        }
+        const fourth = await request(service, '/vd/1/video', {
+            network: 'local',
+            address: '::ffff:192.168.1.5',
+        });
+        expect(fourth.statusCode).toBe(503);
+        // One compositor for the display, however many watch.
+        expect(electronMockState.BrowserWindowMock).toHaveBeenCalledTimes(1);
+        for (let index = 0; index < 5; index++) {
+            await request(service, '/vd/1/video');
+        }
+        expect(
+            (await request(service, '/vd/1/video', { address: '127.0.0.2' }))
+                .statusCode,
+        ).toBe(503);
+        // A preview on this computer is never counted.
+        expect(
+            (await request(service, '/vd/1/video?preview=1')).statusCode,
+        ).toBe(0);
+        const clients = service.state().displays[0].clients;
+        expect(clients).toHaveLength(9);
+        expect(clients.filter((client) => client.isPreview)).toHaveLength(1);
+        expect(clients[0]).toMatchObject({
+            kind: 'video',
+            address: '192.168.1.5',
+            network: 'local',
+            userAgent: 'Player/1.0',
+        });
+    });
+
+    test('a disconnected player is kept out; a preview is not', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        const service = createService();
+        service.create({ name: 'A' });
+        const res = await request(service, '/vd/1/video', {
+            network: 'local',
+            address: '192.168.1.5',
+        });
+        const [client] = service.state().displays[0].clients;
+        service.disconnect(1, client.id);
+        expect(res.statusCode).toBe(503);
+        expect(res.isEnded).toBe(true);
+        expect(service.state().displays[0].clients).toEqual([]);
+        expect(
+            (
+                await request(service, '/vd/1/video', {
+                    network: 'local',
+                    address: '192.168.1.5',
+                })
+            ).statusCode,
+        ).toBe(403);
+        expect(
+            (
+                await request(service, '/vd/1/video', {
+                    network: 'local',
+                    address: '192.168.1.6',
+                })
+            ).statusCode,
+        ).toBe(0);
+        // Ten minutes later the address may come back.
+        vi.advanceTimersByTime(10 * 60 * 1000 + 1);
+        expect(
+            (
+                await request(service, '/vd/1/video', {
+                    network: 'local',
+                    address: '192.168.1.5',
+                    method: 'HEAD',
+                })
+            ).statusCode,
+        ).toBe(200);
+    });
+
+    // Listed under Disconnected, and Allow again lets it straight back in
+    // rather than after ten minutes.
+    test('a disconnected player is listed, and Allow again lets it back', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        const service = createService();
+        service.create({ name: 'A' });
+        await request(service, '/vd/1/video', {
+            network: 'local',
+            address: '192.168.1.5',
+        });
+        const [client] = service.state().displays[0].clients;
+        service.disconnect(1, client.id);
+        const [entry] = service.state().displays[0].blocked;
+        expect(entry).toMatchObject({ kind: 'video', address: '192.168.1.5' });
+        // Another display's key does nothing.
+        service.unblock(2, entry.key);
+        expect(service.state().displays[0].blocked).toHaveLength(1);
+        service.unblock(1, entry.key);
+        expect(service.state().displays[0].blocked).toEqual([]);
+        expect(
+            (
+                await request(service, '/vd/1/video', {
+                    network: 'local',
+                    address: '192.168.1.5',
+                    method: 'HEAD',
+                })
+            ).statusCode,
+        ).toBe(200);
+    });
+
+    // From the internet a player is held, sent nothing, until the operator's
+    // Allow; an address allowed is not asked again.
+    test('from the internet a player waits for Allow', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        mirror.isInternetEnabled = true;
+        const service = createService();
+        service.create({ name: 'A' });
+        const internet = { network: 'internet' as const };
+        const res = await request(service, '/vd/1/video', {
+            ...internet,
+            address: '198.51.100.9',
+        });
+        expect(res.statusCode).toBe(0);
+        expect(res.isEnded).toBe(false);
+        const [client] = service.state().displays[0].clients;
+        expect(client).toMatchObject({
+            kind: 'video',
+            network: 'internet',
+            waiting: 'approval',
+        });
+        // Nothing is drawn for a player still waiting.
+        expect(electronMockState.BrowserWindowMock).not.toHaveBeenCalled();
+        await service.allow(2, client.id);
+        expect(service.state().displays[0].clients[0].waiting).toBe('approval');
+        await service.allow(1, client.id);
+        expect(service.state().displays[0].clients[0].waiting).toBeNull();
+        expect(electronMockState.BrowserWindowMock).toHaveBeenCalledTimes(1);
+        await request(service, '/vd/1/video', {
+            ...internet,
+            address: '198.51.100.9',
+        });
+        expect(
+            service
+                .state()
+                .displays[0].clients.filter((item) => item.waiting !== null),
+        ).toEqual([]);
+        // Rejected: 403, and that address is kept out.
+        const rejected = await request(service, '/vd/1/video', {
+            ...internet,
+            address: '198.51.100.10',
+        });
+        const waiting = service
+            .state()
+            .displays[0].clients.find((item) => item.waiting !== null)!;
+        service.disconnect(1, waiting.id);
+        expect(rejected.statusCode).toBe(403);
+        expect(rejected.isEnded).toBe(true);
+        // Never allowed: 403 after five minutes.
+        const ignored = await request(service, '/vd/1/video', {
+            ...internet,
+            address: '198.51.100.11',
+        });
+        vi.advanceTimersByTime(5 * 60 * 1000 + 1);
+        expect(ignored.statusCode).toBe(403);
+        expect(
+            service
+                .state()
+                .displays[0].clients.filter((item) => item.waiting !== null),
+        ).toEqual([]);
+        // This network is never asked.
+        expect(
+            (
+                await request(service, '/vd/1/video', {
+                    network: 'local',
+                    address: '192.168.1.5',
+                })
+            ).isEnded,
+        ).toBe(false);
+    });
+
+    // A player gives the code as its password: answered 401, it asks.
+    test('with a code, a player from the internet gives it as its password', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        mirror.isInternetEnabled = true;
+        fixture.client.set(VIRTUAL_DISPLAY_ACCESS_KEY, 'code');
+        fixture.secure.set(VIRTUAL_DISPLAY_CODE_KEY, 'church-1234');
+        const service = createService();
+        service.create({ name: 'A' });
+        expect(service.state()).toMatchObject({
+            access: 'code',
+            hasCode: true,
+        });
+        const from = (address: string, authorization?: string) => {
+            return request(service, '/vd/1/video', {
+                network: 'internet',
+                address,
+                authorization,
+            });
+        };
+        const none = await from('198.51.100.9');
+        expect(none.statusCode).toBe(401);
+        expect(none.headers['WWW-Authenticate']).toMatch(/^Basic /);
+        expect(mirror.checkSenderCode).not.toHaveBeenCalled();
+        expect(
+            (await from('198.51.100.9', `Basic ${btoa('vlc:nope')}`))
+                .statusCode,
+        ).toBe(401);
+        const right = await from(
+            '198.51.100.9',
+            `Basic ${btoa('vlc:church-1234')}`,
+        );
+        expect(right.statusCode).toBe(0);
+        expect(service.state().displays[0].clients[0].waiting).toBeNull();
+        // Every connection gives it: one right code does not let in the
+        // whole address (a site behind one router).
+        expect((await from('198.51.100.9')).statusCode).toBe(401);
+        mirror.lockedOut.add('198.51.100.20');
+        expect(
+            (await from('198.51.100.20', `Basic ${btoa('vlc:church-1234')}`))
+                .statusCode,
+        ).toBe(429);
+        // The option changing ends every player from the internet, and the
+        // next one is asked again.
+        await service['runCommand']({ action: 'access', mode: 'approve' });
+        expect(right.isEnded).toBe(true);
+        expect(service.state().access).toBe('approve');
+        const asked = await from('198.51.100.9');
+        expect(service.state().displays[0].clients.at(-1)?.waiting).toBe(
+            'approval',
+        );
+        expect(asked.isEnded).toBe(false);
+    });
+
+    // A browser let in casts its display to a TV on ITS OWN network (asked
+    // for: _"this is for casting to a tv with same network of the browser
+    // not app"_). The TV comes from that network -- the internet, to this
+    // computer -- with the browser's token, so it is neither held for Allow
+    // nor asked a code it cannot type. The token ends with internet access.
+    test('a TV a browser cast to comes in with its token', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        mirror.isInternetEnabled = true;
+        const service = createService();
+        service.create({ name: 'A' });
+        service.create({ name: 'B' });
+        await service['runCommand']({ action: 'access', mode: 'code' });
+        const token = service.issueCastToken(1, 'browser-1');
+        expect(token).toMatch(/^[0-9a-f]{36}$/);
+        expect(service.issueCastToken(1, 'browser-1')).toBe(token);
+        expect(service.issueCastToken(1, 'browser-2')).not.toBe(token);
+        const tv = (path: string) => {
+            return request(service, path, {
+                network: 'internet',
+                address: '203.0.113.7',
+            });
+        };
+        const played = await tv(`/vd/1/video?cast=${token}`);
+        expect(played.statusCode).toBe(0);
+        expect(service.state().displays[0].clients).toEqual([
+            expect.objectContaining({ kind: 'video', waiting: null }),
+        ]);
+        // A made-up token, or another display's, is no key: the code is.
+        expect((await tv('/vd/1/video?cast=deadbeef')).statusCode).toBe(401);
+        expect((await tv(`/vd/2/video?cast=${token}`)).statusCode).toBe(401);
+        // The access option changing ends the TV and its token.
+        await service['runCommand']({ action: 'access', mode: 'approve' });
+        expect(played.isEnded).toBe(true);
+        await tv(`/vd/1/video?cast=${token}`);
+        expect(service.state().displays[0].clients.at(-1)?.waiting).toBe(
+            'approval',
+        );
+    });
+
+    // A media player cannot answer, so the one thing for it is this
+    // computer's microphone in the display's MP4 sound: one switch for every
+    // player of that display, off until turned on, taken up again by a
+    // compositor that starts later.
+    test('the microphone goes into the MP4 sound of one display', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        service.create({ name: 'B' });
+        expect(service.state().displays.map((item) => item.isMp4MicOn)).toEqual(
+            [false, false],
+        );
+        await service.setMp4Mic(1, true);
+        expect(service.state().displays.map((item) => item.isMp4MicOn)).toEqual(
+            [true, false],
+        );
+        // A compositor running and ready is told at once.
+        await request(service, '/vd/1/video');
+        const session = (service as any).sessions.get(1);
+        session.isReady = true;
+        const send = session.window.webContents.send;
+        await service.setMp4Mic(1, false);
+        expect(send).toHaveBeenLastCalledWith('vd:compositor', {
+            type: 'mic',
+            isOn: false,
+        });
+        await service['runCommand']({
+            action: 'mp4-mic',
+            number: 1,
+            enabled: true,
+        });
+        expect(send).toHaveBeenLastCalledWith('vd:compositor', {
+            type: 'mic',
+            isOn: true,
+        });
+        // Deleting the display forgets it; an unknown display does nothing.
+        service.delete(1);
+        await service.setMp4Mic(9, true);
+        expect(service.state().displays.map((item) => item.isMp4MicOn)).toEqual(
+            [false],
+        );
+    });
+
+    test("a viewer's camera reaches a window as bytes and a browser's screen as base64, key frames kept", () => {
+        const service = createService();
+        const cameras = (service as any).viewerCameras;
+        const toScreen = vi
+            .spyOn((service as any).webViewers, 'sendScreenCamera')
+            .mockImplementation(() => {});
+        const contents = { isDestroyed: () => false, send: vi.fn() };
+        electronMockState.webContentsModule.fromId.mockImplementation(
+            (id: number) => (id === 7 ? contents : undefined),
+        );
+        cameras.receive('viewer-1', '127.0.0.1', {
+            type: 'camera-state',
+            shared: true,
+            label: 'Phone',
+        });
+        cameras.watch('window:7', 'vd-camera:viewer-1', true);
+        cameras.watch('screen:viewer-2:0', 'vd-camera:viewer-1', true);
+        cameras.receive('viewer-1', '127.0.0.1', {
+            type: 'video',
+            key: true,
+            timestamp: 40,
+            data: Buffer.from([1, 2, 255]).toString('base64'),
+        });
+        expect(contents.send).toHaveBeenCalledWith('vd:camera-frame', {
+            cameraId: 'vd-camera:viewer-1',
+            type: 'key',
+            timestamp: 40,
+            data: new Uint8Array([1, 2, 255]),
+        });
+        // The packet's `type` names the packet: the frame's goes as
+        // `frameType`, or no frame there is ever a key one.
+        expect(toScreen).toHaveBeenCalledWith(
+            'viewer-2',
+            0,
+            'vd-camera-frame',
+            {
+                cameraId: 'vd-camera:viewer-1',
+                frameType: 'key',
+                timestamp: 40,
+                data: 'AQL/',
+            },
+        );
+        cameras.drop('viewer-1');
+        expect(contents.send).toHaveBeenLastCalledWith('vd:camera-end', {
+            cameraId: 'vd-camera:viewer-1',
+        });
+        expect(toScreen).toHaveBeenLastCalledWith(
+            'viewer-2',
+            0,
+            'vd-camera-end',
+            { cameraId: 'vd-camera:viewer-1' },
+        );
+    });
+
+    test('a DLNA TV is told the stream is a live stream', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const res = await request(service, '/vd/1/video', {
+            method: 'HEAD',
+            headers: {
+                'getcontentfeatures.dlna.org': '1',
+                'transfermode.dlna.org': 'Streaming',
+            },
+        });
+        expect(res.statusCode).toBe(200);
+        expect(res.setHeaders['contentFeatures.dlna.org']).toMatch(
+            /^DLNA\.ORG_OP=00;/,
+        );
+        expect(res.setHeaders['transferMode.dlna.org']).toBe('Streaming');
+        // A player that did not ask is told nothing of it.
+        const plain = await request(service, '/vd/1/video', { method: 'HEAD' });
+        expect(plain.setHeaders).toEqual({});
+    });
+
+    test('deleting a display ends its players', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const res = await request(service, '/vd/1/video');
+        const [win] = electronMockState.browserWindows;
+        service.delete(1);
+        expect(res.isEnded).toBe(true);
+        expect(win.destroy).toHaveBeenCalled();
+        expect((await request(service, '/vd/1/video')).statusCode).toBe(404);
+    });
+});
+
+// Casting to a TV: looked for on request, cast over this network only, its
+// state shown on the display, and stopped with the display.
+describe('casting to a TV', () => {
+    const TV = {
+        id: 'dlna:1',
+        kind: 'dlna',
+        name: 'Samsung',
+        host: '192.168.1.50',
+        port: 7676,
+        controlUrl: 'http://192.168.1.50:7676/avt',
+        serviceType: 'urn:schemas-upnp-org:service:AVTransport:1',
+    };
+
+    beforeEach(() => {
+        castMocks.discover.mockReset();
+        castMocks.start.mockReset();
+        castMocks.discover.mockResolvedValue([TV]);
+    });
+
+    function startWith() {
+        const sessions: { hooks: any; stop: ReturnType<typeof vi.fn> }[] = [];
+        const urls: string[] = [];
+        castMocks.start.mockImplementation(
+            async (_target: unknown, toUrl: any, title: string, hooks: any) => {
+                urls.push(`${toUrl('192.168.1.5')} ${title}`);
+                const session = { hooks, stop: vi.fn() };
+                sessions.push(session);
+                return { stop: session.stop };
+            },
+        );
+        return { sessions, urls };
+    }
+
+    const casts = (service: VirtualDisplayService) => {
+        return service.state().displays[0].casts;
+    };
+
+    test('a search lists TVs; a cast connects, plays, and ends', async () => {
+        const service = createService();
+        service.create({ name: 'Lobby' });
+        expect(service.state().castTargets).toEqual([]);
+        await service['runCommand']({ action: 'cast-search' });
+        expect(service.state().castTargets).toEqual([
+            { id: 'dlna:1', name: 'Samsung', kind: 'dlna' },
+        ]);
+        expect(service.state().isCastSearching).toBe(false);
+
+        // The TV pulls the stream over this network: only while it may.
+        await expect(
+            service['runCommand']({
+                action: 'cast-start',
+                number: 1,
+                targetId: 'dlna:1',
+            }),
+        ).rejects.toThrow('Let other devices watch is off');
+        mirror.isVirtualDisplayShareEnabled = true;
+        await expect(
+            service['runCommand']({
+                action: 'cast-start',
+                number: 1,
+                targetId: 'nobody',
+            }),
+        ).rejects.toThrow('TV not found');
+
+        const { sessions, urls } = startWith();
+        await service['runCommand']({
+            action: 'cast-start',
+            number: 1,
+            targetId: 'dlna:1',
+        });
+        // Its address on the network facing the TV, and the display's name.
+        expect(urls).toEqual(['http://192.168.1.5:40000/vd/1/video Lobby 1']);
+        expect(casts(service)).toEqual([
+            {
+                id: 'dlna:1',
+                name: 'Samsung',
+                kind: 'dlna',
+                status: 'connecting',
+                failure: null,
+                behind: null,
+                playbackRate: 1,
+            },
+        ]);
+        // Asked twice while it connects: one session.
+        await service['runCommand']({
+            action: 'cast-start',
+            number: 1,
+            targetId: 'dlna:1',
+        });
+        expect(sessions).toHaveLength(1);
+        sessions[0].hooks.onCasting();
+        expect(casts(service)[0].status).toBe('casting');
+        // Stopped on the TV: gone from the list, not a failure.
+        sessions[0].hooks.onEnded(null);
+        expect(casts(service)).toEqual([]);
+    });
+
+    test('a failure stays to be read, may be tried again, and Stop stops', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        const service = createService();
+        service.create({ name: 'Lobby' });
+        await service['runCommand']({ action: 'cast-search' });
+        const { sessions } = startWith();
+        const start = () => {
+            return service['runCommand']({
+                action: 'cast-start',
+                number: 1,
+                targetId: 'dlna:1',
+            });
+        };
+        await start();
+        sessions[0].hooks.onEnded('refused');
+        expect(casts(service)[0]).toMatchObject({
+            status: 'failed',
+            failure: 'refused',
+        });
+        await start();
+        expect(sessions).toHaveLength(2);
+        expect(casts(service)[0].status).toBe('connecting');
+        // The first one's late word changes nothing.
+        sessions[0].hooks.onCasting();
+        expect(casts(service)[0].status).toBe('connecting');
+        await service['runCommand']({
+            action: 'cast-stop',
+            number: 1,
+            targetId: 'dlna:1',
+        });
+        expect(sessions[1].stop).toHaveBeenCalledTimes(1);
+        expect(casts(service)).toEqual([]);
+    });
+
+    test('coalesces TV searches and restores the searching state after failure', async () => {
+        const service = createService();
+        service.create({ name: 'Lobby' });
+        let finishSearch!: (targets: (typeof TV)[]) => void;
+        castMocks.discover.mockReturnValueOnce(
+            new Promise((resolve) => {
+                finishSearch = resolve;
+            }),
+        );
+        const search = service.searchCastTargets();
+        await vi.waitFor(() =>
+            expect(castMocks.discover).toHaveBeenCalledOnce(),
+        );
+        await service.searchCastTargets();
+        expect(castMocks.discover).toHaveBeenCalledOnce();
+        finishSearch([TV]);
+        await search;
+        expect(service.state().castTargets).toEqual([
+            { id: TV.id, name: TV.name, kind: TV.kind },
+        ]);
+
+        castMocks.discover.mockRejectedValueOnce(new Error('discovery failed'));
+        await expect(service.searchCastTargets()).rejects.toThrow(
+            'discovery failed',
+        );
+        expect(service.state().isCastSearching).toBe(false);
+    });
+
+    test('publishes rounded cast progress and stops a session that finished late', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        const service = createService();
+        service.create({ name: 'Lobby' });
+        await service.searchCastTargets();
+        const { sessions } = startWith();
+        await service.startCast(1, TV.id);
+        const hooks = sessions[0].hooks;
+        const compositor = (service as any).ensureSession(1);
+        Object.defineProperty(compositor.fanout, 'liveTime', {
+            configurable: true,
+            value: 12.5,
+        });
+        expect(hooks.getLiveTime()).toBe(12.5);
+
+        const scheduleState = vi.spyOn(service as any, 'scheduleState');
+        scheduleState.mockClear();
+        hooks.onBehind(1.24, 1.2);
+        hooks.onBehind(1.23, 1.2);
+        expect(casts(service)[0]).toMatchObject({
+            behind: 1.2,
+            playbackRate: 1.2,
+        });
+        expect(scheduleState).toHaveBeenCalledOnce();
+        hooks.onBehind(1.26, 1.2);
+        expect(casts(service)[0].behind).toBe(1.3);
+        expect(scheduleState).toHaveBeenCalledTimes(2);
+
+        service.stopCast(1, TV.id);
+        scheduleState.mockClear();
+        hooks.onBehind(3, 1.4);
+        hooks.onEnded('late failure');
+        service.stopCast(1, TV.id);
+        expect(sessions[0].stop).toHaveBeenCalledOnce();
+        expect(casts(service)).toEqual([]);
+        expect(scheduleState).not.toHaveBeenCalled();
+
+        let finishCast!: (session: { stop: () => void }) => void;
+        const lateStop = vi.fn();
+        castMocks.start.mockReturnValueOnce(
+            new Promise((resolve) => {
+                finishCast = resolve;
+            }),
+        );
+        const pendingStart = service.startCast(1, TV.id);
+        await vi.waitFor(() => expect(finishCast).toBeDefined());
+        service.stopCast(1, TV.id);
+        finishCast({ stop: lateStop });
+        await pendingStart;
+        expect(lateStop).toHaveBeenCalledOnce();
+    });
+
+    test('a display deleted, sharing turned off, or the app closing stops its casts', async () => {
+        mirror.isVirtualDisplayShareEnabled = true;
+        const service = createService();
+        service.create({ name: 'A' });
+        service.create({ name: 'B' });
+        await service['runCommand']({ action: 'cast-search' });
+        const { sessions } = startWith();
+        for (const number of [1, 2]) {
+            await service['runCommand']({
+                action: 'cast-start',
+                number,
+                targetId: 'dlna:1',
+            });
+        }
+        service.delete(1);
+        expect(sessions[0].stop).toHaveBeenCalledTimes(1);
+        expect(sessions[1].stop).not.toHaveBeenCalled();
+        mirror.isVirtualDisplayShareEnabled = false;
+        service.onNetworkChanged();
+        expect(sessions[1].stop).toHaveBeenCalledTimes(1);
+        expect(service.state().displays[0].casts).toEqual([]);
+
+        mirror.isVirtualDisplayShareEnabled = true;
+        await service['runCommand']({
+            action: 'cast-start',
+            number: 2,
+            targetId: 'dlna:1',
+        });
+        service.stop();
+        expect(sessions[2].stop).toHaveBeenCalledTimes(1);
+    });
+
+    test('a browser on this computer casts the address on this network', () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        expect(service.getLayout(1)?.castUrl).toBeNull();
+        mirror.isVirtualDisplayShareEnabled = true;
+        mirror.addressList.mockReturnValue([
+            { host: '192.168.1.5', port: 40000, kind: 'lan' },
+        ] as any);
+        expect(service.getLayout(1)?.castUrl).toBe(
+            'http://192.168.1.5:40000/vd/1/video',
+        );
+    });
+});
+
+describe('virtual display HLS for an iPhone or iPad', () => {
+    const IPHONE =
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) ' +
+        'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 ' +
+        'Mobile/15E148 Safari/604.1';
+    const PHONE = { network: 'local' as const, address: '192.168.1.5' };
+
+    function toBuffer(data: Uint8Array) {
+        return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
+    }
+    const INIT = toBuffer(
+        buildInitSegment(
+            {
+                width: 1920,
+                height: 1080,
+                avcC: Uint8Array.of(1, 0x64, 0, 0x28, 0xff, 0xe1, 0, 0),
+            },
+            {
+                sampleRate: 48000,
+                channelCount: 2,
+                audioSpecificConfig: toAudioSpecificConfig(48000, 2),
+            },
+        ),
+    );
+    let sequence = 0;
+    function videoAt(second: number, isKey: boolean) {
+        sequence += 1;
+        return toBuffer(
+            buildFragment({
+                sequence,
+                trackId: VIDEO_TRACK_ID,
+                baseDecodeTime: Math.round(second * VIDEO_TIMESCALE),
+                samples: [
+                    {
+                        data: new Uint8Array(16).fill(sequence & 0xff),
+                        duration: 3000,
+                        isKey,
+                    },
+                ],
+            }),
+        );
+    }
+
+    // An iPhone opening the display's MP4 address.
+    async function startPhone(service: VirtualDisplayService) {
+        mirror.isVirtualDisplayShareEnabled = true;
+        const master = await request(service, '/vd/1/video', {
+            ...PHONE,
+            headers: { 'user-agent': IPHONE },
+        });
+        const session = (service as any).sessions.get(1);
+        return { master, session };
+    }
+
+    function tokenOf(master: FakeResponse) {
+        return /^hls\/([a-f0-9]{32})\/index\.m3u8$/m.exec(
+            String(master.body),
+        )![1];
+    }
+
+    test('/video answers an iPhone with HLS once the stream names its codecs', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const { master, session } = await startPhone(service);
+        // Held: nothing to name yet.
+        expect(master.statusCode).toBe(0);
+        expect(service.state().displays[0].clients).toMatchObject([
+            {
+                kind: 'video',
+                address: '192.168.1.5',
+                userAgent: IPHONE.slice(0, 120),
+            },
+        ]);
+        session.fanout.push(INIT);
+        expect(master.statusCode).toBe(200);
+        expect(master.headers['Content-Type']).toBe(
+            'application/vnd.apple.mpegurl',
+        );
+        const text = String(master.body);
+        expect(text).toContain('#EXT-X-STREAM-INF:');
+        expect(text).toContain('CODECS="avc1.640028,mp4a.40.2"');
+        expect(text).toMatch(/RESOLUTION=\d+x\d+/);
+        expect(tokenOf(master)).toMatch(/^[a-f0-9]{32}$/);
+        // Every other player still gets the MP4 itself.
+        expect(
+            (await request(service, '/vd/1/video', { method: 'HEAD' })).headers[
+                'Content-Type'
+            ],
+        ).toBe('video/mp4');
+    });
+
+    test('its playlist waits for two segments; its files answer only it', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const { master, session } = await startPhone(service);
+        session.fanout.push(INIT);
+        const token = tokenOf(master);
+        const playlist = await request(
+            service,
+            `/vd/1/hls/${token}/index.m3u8`,
+            PHONE,
+        );
+        expect(playlist.statusCode).toBe(0);
+        session.fanout.push(videoAt(0, true));
+        session.fanout.push(videoAt(1, false));
+        session.fanout.push(videoAt(2, true));
+        session.fanout.push(videoAt(3, false));
+        // One segment is too close to the live end to start on.
+        expect(playlist.statusCode).toBe(0);
+        session.fanout.push(videoAt(4, true));
+        expect(playlist.statusCode).toBe(200);
+        expect(playlist.headers['Cache-Control']).toBe('no-store');
+        const text = String(playlist.body);
+        expect(text).toContain('#EXT-X-MAP:URI="init-0.mp4"');
+        expect(text).toContain('#EXTINF:2.000,\nseg-0.m4s');
+        expect(text).toContain('#EXTINF:2.000,\nseg-1.m4s');
+
+        const segment = await request(
+            service,
+            `/vd/1/hls/${token}/seg-0.m4s`,
+            PHONE,
+        );
+        expect(segment.statusCode).toBe(200);
+        expect(segment.headers['Content-Type']).toBe('video/mp4');
+        expect((segment.body as Buffer).toString('latin1', 4, 8)).toBe('moof');
+        const init = await request(
+            service,
+            `/vd/1/hls/${token}/init-0.mp4`,
+            PHONE,
+        );
+        expect(init.body).toEqual(INIT);
+
+        // Its token from another address, a token never given, a segment
+        // not held: nothing.
+        for (const [path, address] of [
+            [`/vd/1/hls/${token}/seg-0.m4s`, '192.168.1.6'],
+            [`/vd/1/hls/${'0'.repeat(32)}/seg-0.m4s`, '192.168.1.5'],
+            [`/vd/1/hls/${token}/seg-9.m4s`, '192.168.1.5'],
+        ]) {
+            expect(
+                (await request(service, path, { network: 'local', address }))
+                    .statusCode,
+            ).toBe(404);
+        }
+    });
+
+    test('silent for 30 s it is let go, and the segments with it', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const { master, session } = await startPhone(service);
+        session.fanout.push(INIT);
+        const token = tokenOf(master);
+        vi.advanceTimersByTime(20000);
+        // Still asking: still watching.
+        await request(service, `/vd/1/hls/${token}/init-0.mp4`, PHONE);
+        vi.advanceTimersByTime(20000);
+        expect(session.hls).not.toBeNull();
+        vi.advanceTimersByTime(20000);
+        expect(session.hls).toBeNull();
+        expect(service.state().displays[0].clients).toEqual([]);
+        expect(
+            (await request(service, `/vd/1/hls/${token}/init-0.mp4`, PHONE))
+                .statusCode,
+        ).toBe(404);
+    });
+
+    test('a disconnected iPhone is ended and kept out', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const { master, session } = await startPhone(service);
+        session.fanout.push(INIT);
+        const token = tokenOf(master);
+        const [client] = service.state().displays[0].clients;
+        service.disconnect(1, client.id);
+        expect(service.state().displays[0].clients).toEqual([]);
+        expect(session.hls).toBeNull();
+        expect(
+            (await request(service, `/vd/1/hls/${token}/init-0.mp4`, PHONE))
+                .statusCode,
+        ).toBe(404);
+        expect((await startPhone(service)).master.statusCode).toBe(403);
+    });
+
+    test('/video.m3u8 is HLS for any player; no stream in 20 s is a 503', async () => {
+        const service = createService();
+        service.create({ name: 'A' });
+        const head = await request(service, '/vd/1/video.m3u8', {
+            method: 'HEAD',
+        });
+        expect(head.headers['Content-Type']).toBe(
+            'application/vnd.apple.mpegurl',
+        );
+        const master = await request(service, '/vd/1/video.m3u8');
+        expect(master.statusCode).toBe(0);
+        vi.advanceTimersByTime(20001);
+        expect(master.statusCode).toBe(503);
+    });
+});

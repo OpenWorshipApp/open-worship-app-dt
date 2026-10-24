@@ -82,10 +82,39 @@
   opacity: 0.75;
 }
 
+// A verse panel's `KJV` is a button that opens the verse in another bible:
+// it keeps the dimmed look of the bible key it always was, and says it can be
+// pressed only under the pointer or the keyboard. Bare and a size down, to
+// leave the title bar's room to the reference.
+.location-name-lookup__bible-key-button {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8em;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    text-decoration: underline dotted;
+  }
+}
+
 // A record's detail panel. It lives in its own floating widget, so only the
 // body is styled here — the chrome comes from `FloatingWidgetComp`.
+// The to-the-top button is pinned over the body's bottom-right corner -- with
+// the auto-scroll chevron under it in a verse panel -- so the last line can
+// always be scrolled up clear of them. On the body, not the zoomed text inside
+// it, so the reserve is the buttons' own fixed size at every text zoom.
 .location-name-lookup-detail-widget .floating-widget__content {
   overflow-y: auto;
+  padding-bottom: 50px;
+}
+
+.location-name-lookup-detail-widget--verse .floating-widget__content {
+  padding-bottom: 80px;
 }
 
 .location-name-lookup__detail {

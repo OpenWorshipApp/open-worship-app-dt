@@ -6,7 +6,282 @@ evidence, so a future run can weigh it without re-deriving it.
 
 Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
+### MC-62 — `owa_find_verse` finds stories, a book named in the words and every verse · done 2026-10-22
+
+The chatbot skill's `EC-387`..`EC-391` (the user: _make the chatbot super
+smart that can find everything in the bible_). The search itself now reads a
+book named in its `words` (a marker word, or a name no verse uses, one letter
+off allowed), drops the asking words in front, answers `passages` (where a
+story is told, by its rare words) and `byBook`, ranks ties by those chapters,
+pages with `from` / `next`, and `open` takes a whole chapter. **Cost:** the
+description and one field, ~280 → ~356 tokens a round, paid by the three asks
+that are offered the tool (verse-find, lookup, Bible-Reader) and nothing else;
+the ordinary list stays 8,347 under the 8,350 ratchet. **Database cost:** one
+grouped scan replaces the old count scan, and every language takes up to 300
+candidates (Khmer took the page only), so a search is about as fast (~60-600
+ms measured). Verified live through the in-app host after its relaunch.
+
+### MC-63 — every Bible search counts in the 25 acting calls a minute · open 2026-10-22
+
+`owa_find_verse`, `owa_lookup_record` and `owa_resource_file` are in
+`ACTING_TOOL_SET` though only `open` acts, for the cost of a read (a whole
+Bible scanned, 34 MB loaded, a PDF drawn). A thorough verse search is the
+window's 1-2 plus up to five model rounds of two or three calls, so two
+questions inside a minute can spend the budget, and the model then answers
+_the system encountered a temporary error_ (seen twice in the chatbot skill's
+baseline run of `bible-find-asks.json`, `EC-392`). Proposal: a read budget of
+its own for those reads (say 60 a minute), `open` staying in the acting 25.
+A firewall policy change: the user's decision, not made.
+
+### MC-61 — Resources PDF reads expose complete, verifiable page coverage · done 2026-10-18
+
+Asked for directly after the verse-range reader: _make sure the mcp tool can
+extract 100% content and allow user read and ask and interact_. A literal 100%
+OCR promise would be false: this Khmer study PDF's embedded text is legacy-font
+Latin gibberish, while a scan has no embedded text at all. The reliable unit
+is therefore the page picture, with completeness measured by page number.
+
+`owa_resource_file read` now returns every remaining PDF page in one result by
+default, as image blocks, plus `firstPage`, `lastPage`, `nextPage`, `pageCount`,
+and `isComplete` for verifiable coverage. `pages` selects a deliberately partial
+one-to-eight-page read; `detail: "high"` renders the whole default read at
+2048px. The Resources verse prompt requests the complete PDF once, treats its
+pictures as authoritative, and keeps pagination out of the user conversation.
+It discovers the installed chapter boundary first, then injects only one exact
+verse into each isolated model request. For `JHN.3.pdf`, **Full chapter** walks
+1 through 36 as separate cards instead of sending all 36 verses in one context.
+Successful picture extraction is kept in a bounded, source-aware
+OS-temp disk cache, so those sequential cards do not rerender the PDF. Existing
+related-file reads still produce the user-facing **Ask about {name}** action,
+so a read can continue into another Resources PDF without exposing a disk path.
+
+**Live proof:** a fresh stdio server listed the `pages` and `detail` schema;
+`pdf/JHN.3.pdf` at high detail returned all pages 1–4 in one result, four image
+blocks, and `isComplete: true`. A regression check then proved the PDF's four
+embedded text layers are legacy-font Latin gibberish (4.1–4.3k false characters
+per page). They are now withheld from the model result instead of merely marked
+untrusted, preventing them from overriding the page pictures.
+Unit proof checks 1024/2048 rendering, page-number alignment, full pagination,
+and real text extraction from the Unicode fixture. Trade: the host and
+Resources-only schema grow slightly; the ordinary chatbot tool list is
+unchanged, and no new tool or permission exists. Audit: 64 host / 38 OWA / 26
+model tools, no warnings; ordinary model schemas remain 8,348 tokens per
+round, while the Resources-only tool grows 229 → 296 tokens. The before/after
+policy probe is unchanged at 15/17: both misses are explicit skips because the
+user's main window is on the Reader, not a policy failure.
+
+### MC-60 — book-name lists from the user's URL · done 2026-10-18
+
+The user pasted a Bible.com chapter link during import's name selection; the
+assistant treated it as a whole-Bible download and offered to project a verse.
+`names` now accepts the existing `url` field: recognized chapter links resolve
+to the edition index, other pages are read for stable book IDs. Four sequential
+public reads at most; complete distinct 66-book lists only, source provenance,
+selected-language checks, no fabricated names or silent catalog substitution.
+One server implementation serves both doors; no additional tool or schema field.
+The banner names the supplied site and each read retains the network policy.
+
+Fresh stdio against the original dev instance: the exact edition 4783 link
+returned all 66 Khmer names in one read. Unit checks cover unsafe addresses,
+lookalike hosts, partial/conflicting/duplicate lists, language mismatch, bounded
+reads and offline failure. Baseline policy probe 15/17: two layout-dependent
+checks skipped on Reader, not passed. No firewall rule changed. A Wordproject
+Khmer chapter also resolves to its complete edition list. After restarting the
+original app (PID 19104, CDP 58955), both the bare link and a Khmer sentence
+around it returned the supplied edition first, with Khmer retained and a
+clickable source link. A rate-limited read retained the prior choices; retry
+after the window cleared succeeded. No Bible installed. The tool surface stays
+64 host / 26 model; 8,350 → 8,348 schema tokens. Evidence and final gate:
+`test-results/bible-import-input/report.md`, `url-restarted-final.png`,
+`restarted-final-gate.log`.
+
 ---
+
+### `MC-50` — everything a user does on the page, by its words · done 2026-10-10
+
+Asked for in so many words: _except security risk, I want the mcp can do
+everything that user can do on the page. all modification file have to
+provide option to revert_, then _Goal set: mcp tool can user automate
+everything_. Inventoried against the live app: a user could right-click a
+row, double-click one, press a key with the right panel focused, drag a thing
+onto another, use the menu bar, and build a run sheet — and no tool could do
+any of them. Shipped, each proven through a FRESH stdio server against the
+running dev app (the menu against a scratch second instance, since it needed
+the freshly compiled main process):
+
+- `owa_click` `button: "right"` (a `contextmenu` at the control's centre;
+  `opened: "menu"`) and `clicks: 2` (click, click, `dblclick`); every
+  acting expression now also reports a layer it `closed`.
+- `owa_press_key` — the card's keydown/keyup with `key` and `code`, judged:
+  the control whose title names the key, every key while a question popup is
+  up, Enter/Space on a destructively named focus, F6 BY NAME (measured: with
+  the Mini Screen panel collapsed nothing titles F6 and it went through).
+  `find` focuses a control first. Ctrl+B opened the Bible Lookup live
+  (`opened: "dialog"`), Escape closed it, Delete and F6 refused.
+- `owa_drag` — one `DataTransfer` through the five drag events; `place`
+  `before`/`after` with Ctrl held. Live: a Documents row onto a run sheet's
+  row added the line through the app's own drop handler.
+- `owa_menu` — `electron/appMenuAgentHelpers.ts` lists and presses the native
+  bar over IPC; refuses DevTools, Quit/Exit, Close, Relaunch, submenus and
+  greyed-out items itself. Live: 40 items listed with refusals marked, Zoom
+  In / Actual Size / Reload pressed, the refusals refused in sentences.
+- `owa_presenting_flow` — list/info/create/rename/delete/add (document by
+  Documents-list name, Bible reference, action id)/remove/move/duplicate/
+  park/unpark, every change backed up first through a new `presentingFlow`
+  editable kind whose restore saves at once (a sheet has no Save button).
+  Live: 12 changes and an undo that put a removed line back; the firewall's
+  25-a-minute acting budget tripped on the 26th call, as designed.
+
+Cost: host 54 → 60 tools (~13 399 → ~15 243 a round, `owa_scroll` of `MC-54`
+and `owa_media_file` of `MC-52` / `MC-53` / `MC-55` included), model 25 → 26 and
+**7 789 → 8 316 tokens a round** (`owa_presenting_flow` ~419, the `owa_click`
+fields ~62); the ratchet raised to 8 350 in the same change. `owa_press_key`,
+`owa_drag` and `owa_menu` are withheld from the model (`MC-56` weighs
+offering them). Policy: the same words-half reads every new tool's words; the
+page half reads the control; the menu's refusals are the main process's.
+Tradeoff stated: ~1 840 tokens a round more on the developer's door, +527 on
+the volunteer's, for five things nobody could automate before. Gate: both
+typechecks, the src suite (5 086/5 086), the electron suite (787/787),
+prettier, eslint and the build check all pass.
+`src/setting/bible-setting/BibleImportReviewComp.test.tsx` had failed under
+the full run's load (it passed 4/4 alone, imports nothing this change
+touched, last changed 2026-10-06): its three timing-sensitive cases now wait
+for the book-name picker to fill instead of assuming 30 ms is enough. The policy
+probe held 25/25 before and 25/25 after -- its uid check now puts its own
+destructively worded button on the page for the snapshot to carry, so it no
+longer depends on the user's layout having a Clear All on screen. **Cleaned
+up the same day** after a three-way review of the staged work (app workers,
+page actions, policy): a trashed clip's size is read with `fsGetFileStamp`
+rather than a raw `stat`; the blob cap is enforced where the copy is made
+(`keepBlobs`, so an undo's own snapshot of a file the user has since
+replaced with a 2 GB one is refused too) and a backup refused or unwritable
+after its copies were made deletes them instead of orphaning up to 200 MB
+until the prune; `toAgentFilePath` took an optional extension so the media
+tool stopped carrying its own copy of the containment check, and the
+Documents-list mimetype set is one exported constant; finding a media file
+is one `fsCheckFileExist` and the folder is listed only on a miss; a run
+sheet's `remove` / `duplicate` answer their count by arithmetic instead of
+re-instantiating every line a fourth time; `revert` reads the document
+once; `DESTRUCTIVE_KEY_MAP` is a Map (a key spelt `constructor` had been
+refused with `function Object() { [native code] }` as its label); both menu
+IPC answers go through one try/catch (a `sendSync` with no `returnValue`
+hangs the renderer) and are tested; the menu walk is one generator; `after`
+on `owa_drag` lands on the NEXT row's top band, because this app's rows
+read a Ctrl drop at either edge as the row's own position (proven against
+`toPresentingFlowRowDropKind`); `owa_press_key` focuses the keyboard surface
+INSIDE a named pane (never a button) and says when nothing there takes
+focus; `owa_scroll` walks containers only with the runtime's size floor and
+no longer fires a synthetic `scroll` on top of the browser's own; the
+question-popup selector is one exported `QUESTION_SELECTOR`; a trailing
+extension must start with a letter (`John 3.16` is a verse). Not done, on
+record: the find-target → refusal preamble is still inlined in four
+expression builders (~40 lines each) — worth one runtime function when the
+next tool joins them. Tests: `domMatchActions.test.mjs`,
+`agentMenu.test.mjs`, `electron/appMenuAgentHelpers.test.ts`,
+`src/helper/agentPresentingFlowHelpers.test.ts`, plus the firewall, notify,
+modelTools and agentData suites.
+
+**Still the user's alone, on purpose**, and said so because the ask was
+"everything": a confirm the app is asking (every tool refuses it — the data
+tools are the revertible route to deleting, and an automation that genuinely
+needs to answer one runs with `OWA_MCP_FIREWALL=off` in its own environment,
+never by default), a control named for what cannot be undone (the same
+route — and every destructive OUTCOME now has one: `delete` on every file
+kind, and `revert` on `owa_lyric_file` / `owa_slide_file` for the editor's
+Discard, which puts the saved content back into the history behind a backup
+where the button wipes the history for good), a native file dialog
+(`upload_file` is denied for handing a file off the disk to a page;
+`owa_media_file` `import` is the app's own copy IN from a named path instead,
+for pictures, clips, tracks, web pages and documents), typing into Monaco
+(the editing model needs OS focus; `owa_lyric_file` / `owa_slide_file` /
+`owa_media_file` write the content instead, and an open editor re-reads it).
+
+**Written and reverted the same day**, for the record: an
+`OWA_MCP_FIREWALL=automation` mode (every security rule kept, only the
+point-don't-press interlock lifted, for the operator's own scripted runs)
+and, in `strict`, answering a confirm whose own words are NOT destructive
+(reading the popup's text through the dictionary rule). Both worked in
+tests; the auto-mode classifier refused the test run as a security weakening,
+and this skill's own rule is never to widen the policy for convenience — so
+the policy stands exactly as it was, and the two ideas are filed here for the
+user to ask for by name if they want them.
+
+### `MC-51` — an expanded run-sheet row is not pressable by its bare name · done 2026-10-10
+
+Found by `MC-50`'s live run. Collapsed, the Presenting Flow List row for
+`zz-mcp-…` matched `Presenting Flow List > zz-mcp-…` at tier 1 and the drag
+landed on it; once the drop had OPENED the sheet, the same `li` read as every
+line of the sheet run together, no label part equalled the name, and
+`owa_click … button: "right"` refused it as not press-safe with the whole
+sheet as `nearest`. The row's `title` is the file name WITH its extension
+(`zz-mcp-….owpf`), which `isPressSafe` did not count as the bare name.
+
+Closed in `checkIsNamedNearly` (`domMatch.mjs`): a part that is the needle
+plus a file extension (`\.[a-z0-9]{1,5}$`, both sides stripped the same way)
+counts as the name. Only the press-safe test reads it — `shownLabelOf` still
+hands out "Amazing Grace Amazing Grace.owl", so nothing a caller is shown
+changed. "Sunday" still does not press "Sunday Evening.owpf" (a test holds
+both). Proven live on a scratch instance: a sheet opened by a click, then
+right-clicked by its bare name, opened its menu.
+
+### `MC-52` — media files have no revertible tool · done 2026-10-10
+
+A user renames and trashes images, videos and audios in the Background tabs;
+no tool did, because the backup store kept TEXT (25 MB an entry) and a
+binary cannot be put back from it. Closed with a `blob` restore
+(`agentBackupPlanHelpers.ts`): `saveAgentBackup` copies the file beside its
+backup as `<id>.blob-<n>.bin` before the data file is written, an undo copies
+it back (and keeps the one it overwrites), and the prune deletes the blobs
+with their change. A clip over `AGENT_BACKUP_MAX_BLOB_BYTES` (200 MB) is
+refused with the app's own Move to Trash and the Recycle Bin named.
+`owa_media_file` (`src/helper/agentMediaFileHelpers.ts`, domain `media`)
+lists, renames (extension kept) and trashes a kind's files, withheld from
+the model (`MC-56`). `MC-27`'s byte cap is still open for the store as a whole.
+
+### `MC-53` — the Webs panel's `.html` files have no tool · done 2026-10-10
+
+**New File** writes an `.html` into `<data folder>/webs` and the web editor
+edits it with `FileSource.writeFileData` -- no editing history -- so
+`owa_media_file` `kind: "web"` writes the file the same way: `create` (a
+default page when no `content` is given), `update`, `info` (the text),
+`rename`, `delete`, each backed up as text.
+
+### `MC-54` — a windowed list cannot be scrolled · done 2026-10-10
+
+`owa_list_ui` and `owa_find_ui` see what the DOM holds, and a virtualised
+list renders only the rows in view, so a row past the fold matches nothing. A
+user scrolls. Shipped as `owa_scroll` (`genScrollExpression` in
+`domMatch.mjs`): the nearest scroller of the control `find` names, or the
+list inside the panel named, else `findListRegion`'s nearest list; `to`
+`down` / `up` by nine tenths of a page, `top`, `bottom`; a `scroll` event so
+the windowed rows render; the answer carries `now` / `max` / `isAtBottom` and
+`inView`, the labels pressable afterwards. Acting (it moves the window under
+the user), banner _scrolled a list_ (km/fr), withheld from the model — the
+file tools find a file by name whether or not its row is on screen. Proven
+live on the user's Document List: down, to the bottom, back to the top.
+
+### `MC-55` — a file on disk cannot be imported · done 2026-10-10
+
+A user drags a song file or a picture in from the OS, or picks one in a file
+dialog. `upload_file` is denied (it hands a file OFF the disk to a page); the
+inverse — the app copying a file at a path the caller names INTO one of its
+own folders — is `owa_media_file` `import`: the extension must be one the
+kind holds, the copy never lands over an existing file (the app's own next
+free name, as a drop takes it), the original is untouched, and undoing it
+trashes the copy. Withheld from the model: a path is nothing a volunteer
+says to an assistant, and the developer's door is where a library is seeded.
+A document (`.owl`, `.ows`, pdf/pptx/docx) is imported the same way with
+`kind: "document"`; a song or slide document is then renamed and trashed by
+its own tool, which takes the editing history with it.
+
+### `MC-56` — should the model see `owa_press_key`, `owa_drag`, `owa_menu`? · open
+
+Withheld by `modelTools.mjs` on the chatbot skill's standing rules: the prompt
+says no tool advances a run (Space), every shortcut a volunteer needs has a
+button `owa_click` can name, a drop cannot be read back where
+`owa_presenting_flow add` can, and every menu item a volunteer needs has a
+button. ~780 tokens a round if all three were offered. The chatbot skill's to
+decide, with corpus evidence.
 
 ### `MC-46` — Presenter and Reader demos and tips · done 2026-09-28
 
@@ -34,6 +309,7 @@ Khmer tip titles/descriptions were checked live. MCP before/after:
 53 host tools / 24 model tools / ~7,397 model schema tokens per round; no schema
 change. Policy probe: 25/25. No safety, schema cost or developer-interface
 tradeoff; the small lesson catalog grows only with text.
+
 #### Reader feature demos and practical tips
 
 Reader-only inventory found saved Bible lists and note-file management absent
@@ -69,7 +345,6 @@ executed.
 Tradeoff: more static lesson text in the local catalog, no per-question schema
 growth, provider calls or new retained state. Benefits both developer and
 volunteer callers through the same guide; security policy stays intact.
-
 
 ### `MC-44` — the redaction net missed OpenAI's own key format · done 2026-09-26
 
@@ -599,21 +874,55 @@ Proven both ways against the live app: the shipped HEAD version answers
 one answers `[9999]` and refuses by name, while an unpinned call still
 resolves 62807.
 
-The second way, `OWA_CDP_TARGET=dev`, is still worth having and is now the
-whole of what is left here: it survives a nodemon restart, which a port does
-not, and it is what a verification script actually means. Filed as `MC-31`.
+The second way, `OWA_CDP_TARGET=dev`, survives a nodemon restart, which a port
+does not. Shipped as `MC-31` below.
 
-### `MC-31` — pin by KIND, not by port (`OWA_CDP_TARGET=dev`) · open
+### `MC-31` — pin by KIND, not by port (`OWA_CDP_TARGET=dev`) · done 2026-10-07
 
 Split out of `MC-30` when its first half closed. A pinned PORT is exact and
 dies with the instance: `npm run electron:dev` restarts the app on a new port
 whenever `electron-build/` or `tools/owa-devtools-mcp` is touched, so a script
 that pinned dev correctly a minute ago now refuses (which is the fix) but
 still cannot get itself back to dev without re-reading the discovery file.
-`OWA_CDP_TARGET=dev|prod` would filter `readLiveInstances()` on the published
-`isDev` and survive the restart. Cheap — the field is already in the file and
-`listCandidatePorts` is now the single place that decides — and unwritten only
-because nothing has needed it since the refusal started naming the live port.
+Before: setting `OWA_CDP_TARGET=prod` still resolved the running dev app and
+included legacy port 9223. Now both discovery paths and the bridge filter on
+the exact published `isDev` boolean. Missing kinds and invalid nonempty values
+fail explicitly; neither unknown instances nor legacy ports satisfy a kind
+pin. Explicit port pins retain priority. Discovery is re-read per call, with
+no cache. Multiple instances of the same kind still use newest-first order.
+
+Live: one long-lived stdio server followed an isolated dev app across a real
+restart and port change, through both `owa_app_state` and `list_pages`.
+`prod` refused while only dev was available. The bridge connection reached
+the dev CDP endpoint and refused absent prod too. A fresh HTTP host with two
+sessions stayed on its pinned dev app despite a contrary `prod` environment;
+both sessions were removed by the idle sweep under a controlled clock.
+Screenshot captured and inspected. Focused discovery/HTTP checks: 23 passed.
+Policy baseline: 16 checks passed on the original Reader, Presenter checks
+unavailable; scratch Presenter then passed 24/25, missing a visible destructive
+uid target during startup. After the restart the full probe passed 25/25.
+These availability differences are not claimed as policy improvements.
+
+Before/after: **54 host tools / 25 model tools / ~7,789 model schema tokens per
+round**, unchanged and within the 7,800 ratchet. No new tool, cache or policy
+exception. Tradeoff: selecting a kind deliberately gives up automatic fallback
+to other kinds in exchange for safer developer targeting; the in-app host
+retains its own explicit port pin.
+
+Gate: both typechecks passed. Source suite: 4,813 passed, two unrelated screen
+tests timed out at 10 seconds; their two files passed all 13 tests on a focused
+rerun with two workers. The skipped stages were run separately: 618 Electron
+tests, Prettier, ESLint and the production build check all passed. No test
+timeouts or repository-wide formatting settings were changed.
+
+### `MC-49` — a host pin not known yet still falls through · open
+
+`pinCdpPort(() => null)` still falls through to environment/discovery while
+Chromium is starting; `discovery.test.mjs` explicitly preserves this older
+behavior. Once the port is known, the host is exclusive. A future change should
+decide whether an installed but unresolved host pin must fail closed during
+startup and verify early HTTP sessions. Kept separate from `MC-31`, whose kind
+filter does not change the existing explicit-pin startup contract.
 
 ### `MC-20` — the app's own `PART_DEFINITIONS` has no drift guard · open
 
@@ -650,18 +959,38 @@ start, the way help pages are. It needs dictionary keys first — `km` has
 `Next` and `Back`, not `Done`, `Step`, `Do it` or `Skip` — and a missing key
 THROWS in dev, so it is a change to `src/lang` as much as to this package.
 
-### `MC-37` — `checkAgentFileName` passes a Windows device name with an extension · open
+### `MC-37` — `checkAgentFileName` passes a Windows device name with an extension · done 2026-10-05
 
-`RESERVED_NAME_PATTERN` in `agentFileName.mjs` matches the WHOLE name, so
-`nul.old` and `CON.backup` pass — and Windows reserves them whatever follows
-the first dot, so such a file cannot be created or opened there. The app's own
-rule for names a person types has had this since `EN-35` (2026-09-19,
-`getPortableFileNameProblem` in `src/server/fileHelpers.ts`), and
-`createNewFileDetail` now refuses such a name at the disk boundary, so an
-agent's `create` fails there rather than making the file — but it fails with
-the app's toast, not with this module's sentence for the model. Fix: match
-`/^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\.|$)/i`, and add `nul.old` to
-`agentFileName.test.mjs`.
+The old pattern matched the whole name, so `nul.old`, `CON.backup`,
+`COM¹.old` and `LPT³.backup` passed. Live baseline calls through a fresh
+server returned missing-file or malformed-content errors, hiding the actual
+name problem. The shared validator now matches the device stem before the
+first dot, including superscript digits, and preserves the app's conservative
+COM0/LPT0 refusal. Tests check exact refusal text for bare names and single
+and multiple extensions, plus nearby valid names that must remain usable.
+
+Both document tools now refuse invalid source names and rename destinations
+before content validation or disk access, using the same rule at the renderer
+boundary. No tool, schema, retained state or firewall relaxation is added.
+The tradeoff is intentionally refusing these nonportable names on every OS;
+both developer and volunteer callers get the reason directly.
+
+Live verification: sixteen filename checks and two ordinary file lists passed
+through each of fresh stdio and restarted HTTP servers, including Bible-list
+and note-file names. The renderer boundary also refused `nul.old` for both
+document kinds. Baseline policy probe: 25/25; before and after, 53 host tools /
+24 model tools and ~13,043 host / ~7,433 model schema tokens per round, within
+the 7,450 ratchet. Full lint gate passed, including 4,905 tests. Transcripts
+are in `test-results/mcp-filename-*-before.json` and `*-after.json`.
+Chatbot-window verification is pending the user's explicit authorization to
+accept the development AI caution; the server checks do not stand in for it.
+
+### `MC-47` — corpus tests do not enforce the question-kind enum · open
+
+While adding the MC-37 question, `questions.test.mjs` passed with
+`kind: "troubleshoot"`, although `questions/schema.json` permits only
+`howto`, `where`, `what`, `state` and `fix`. The new entry was corrected to
+`fix`; adding enum validation to the corpus regression checks is deferred.
 
 ### `MC-38` — a broad recipe's demo started at the wrong task and could not hover or move a slider · done 2026-09-22
 
@@ -724,7 +1053,6 @@ live Reader answers `Bible Notes > More Options` with 15 matches all in
 **Bible Notes**, `Bibles > More Options` with 15 all in **Bibles**. (The
 running server and the page both cache the matcher, so a live re-check needs
 a new server and a page reload — `dom-match-memoised-in-page`.)
-
 
 ### `MC-32` — a string evaluated at load killed every strict-CSP window's preload · done 2026-09-18
 
@@ -991,3 +1319,141 @@ The one renderer whose content comes from outside the machine had `require`,
 `electron/client/rendererLockdown.ts` (called from the preload, after
 `fullProvider` has finished requiring) and a `chatbot.html`-only CSP whose
 `connect-src` names the assistants it may speak to and nothing else.
+
+### `MC-48` — sourced Bible book-name lists by locale · done 2026-10-06
+
+Requested capability: raw XML imports had only bundled book-name suggestions in
+an editor action. Added `owa_bible_book_names` with complete 66-name arrays,
+provenance, deduplication and edition pagination. It uses the existing sandbox
+and charges each page to its network quota. Live Khmer lookup returned four
+sets; bad/incomplete sources remained warnings. No files are changed by lookup.
+Baseline 53 host / 24 model, ~7,433 tokens per round; after 54 / 25, ~7,578.
+The explicit new tool costs ~145 tokens; ratchet ceiling deliberately raised to
+7,600 with 22 tokens headroom, not a general tool-budget expansion.
+
+### `MC-57` — what the default policy still leaves to the person · open
+
+Measured 2026-10-10 against every destructively worded `tran()` label in
+`src` (grep over `delete | trash | discard | erase | remove | uninstall |
+overwrite | clear all | reset all | factory | sign out`, 52 distinct labels)
+after `MC-50`..`MC-55`. Every outcome a service needs has a backed-up tool
+route the strict firewall allows: a file to the trash (`owa_lyric_file`,
+`owa_slide_file`, `owa_media_file`, `owa_presenting_flow`, `owa_bible_item`,
+`owa_bible_note`, `owa_bible_xml` `delete`), unsaved edits dropped (`revert`),
+a slide, a box, a note item or a verse's marks removed (`delete-slide`,
+`update-slide`, `owa_bible_note remove`), a run-sheet line removed
+(`owa_presenting_flow remove`), a layer or everything off the projector (the
+F7--F10 Clear buttons, `owa_foreground stop`, `owa_hide_screens`). What has
+NO tool route and whose button the firewall refuses by its words: **Clear All
+Settings**, **Reset All Child Directories**, **Remove Folder / Remove from
+Recent Folders / Remove URL** (directory and link settings), **Delete this
+server / Remove this model** (LLM settings), **Sign Out** (SongSelect),
+**Remove Session / Delete this saved session** (foreground sessions),
+**Delete Virtual Display**, **Delete Comment**, **Remove Time / Remove
+Message**, **Delete preset**, **Remove CC Element**, and the confirm each
+asks. None is part of running a service; each is housekeeping a person does
+once. Two labels are refused on their WORDS and destroy nothing on disk --
+**Manual eraser** / **Erase parts of the drawing** are a drawing mode
+(`erase` matches) -- a false positive worth an allow-list entry read on the
+control's role. The route to automating the rest is either a backed-up tool
+per setting (the pattern the data tools set) or the person's own
+`OWA_MCP_FIREWALL=off` run; relaxing the default policy to press them was
+written and reverted three times under the auto-mode safety check and is
+the user's call, not a session's.
+
+### `MC-58` — `owa_read_website` could not read a page that forbids scripts, and gave up before its own loader · done 2026-10-11
+
+Found by running the help window's read of a guide page's newest copy against
+the real address (chatbot backlog `EC-222`). A `Content-Security-Policy` of
+`sandbox` — every `raw.githubusercontent.com` file, and any host that serves
+user files that way — refuses `executeJavaScript` in the page's main world:
+the tool answered Electron's _Script failed to execute, this normally means an
+error was thrown_, which says nothing a model can act on. `readWebPage` tries
+the page's own world first and an isolated one second
+(`runReadExpression`); both refusing is a sentence. And the tool evaluated its
+expression with `evaluateInApp`'s default 15 s while the asking window waits
+30 s and the loader gives a page 20 s, so a slow site was reported as _Timed
+out evaluating in_ the app's own page; `WEBSITE_READ_EVALUATE_TIMEOUT` (35 s)
+is passed by all three callers, held by `website.test.mjs`. No schema
+changed: the model's bill is the same. **Proof:** the raw page read before —
+`isError: true`; after — 1 070 characters in 1.6 s; `example.com` reads the
+same 133 words both before and after.
+
+### `MC-59` — a verse somebody half-remembers: `owa_find_verse`, offered to one kind of ask · done 2026-10-16
+
+Asked for by the user with Bible Find circled: _as a user I want to consult
+with assistant in chatbot to find verses I forgot. add robot icon somewhere in
+`Find` when I click it open tab in chatbot by ask for bible key (list to
+choose) then follow up with what ever that user can rember about the verse_,
+then, the same evening: _when found verse then it should allow user to click to
+open in bible lookup_, _if something over what assistant can answer then try
+lookup on internet_, _try all tricks, if user input local text (non-english)
+then try translate to english … then lookup in KJV, plus try in the input
+language as well_ and _build a google link for user_.
+
+**Why a tool.** No tool searched a Bible by its words: `owa_list_ui` +
+`owa_type` could fill the user's own Find box (clobbering it) and read one page
+of results, as one phrase in the order typed -- "enemies love pray" finds
+nothing where Matthew 5:44 says "Love your enemies … pray". Bible Find's own
+query is `%love%%enemies%` over the words run together.
+
+**Why offered to one ask.** The model's ordinary list stood at its ratchet,
+8 350 of 8 350. A tool that matters to one conversation and rides every round
+of every question was the expensive answer, so `modelTools.mjs` grew
+`MODEL_ON_ASK_TOOL_MAP` (a tool → the one ask kind it goes to) and
+`MODEL_ASK_SHARED_TOOL_MAP` (ordinary tools that ask shares:
+`owa_read_website`); the verse-finding ask goes out under its own ~420-token
+prompt with those two tools alone. Trade: the host lists 61 tools (+~280 a
+round to the developer's door); the ordinary model bill is unchanged; a verse
+answer cost 5k tokens live on the free model, where an ordinary question pays
+~8 350 of schemas a round. Safe: it reads; `open` changes only the lookup's
+passage, is in `ACTING_TOOLS` (the banner names the verse) and in the
+firewall's acting budget, like every search.
+
+**What it found on the way.** Bible Find's table holds the words run together,
+so "lover" matched "I wil(l over)take" (Exodus 15:9): candidates are re-read
+word by word for languages written with spaces. English forms ("enemy" /
+"enemies") are a cut-back start. The user's own Khmer tab showed three more:
+English words under the Khmer Bible spent 38.8k tokens on a free model that
+never translated, and the offline fallback blamed the main window (now: the
+words are searched in another installed Bible, KJV first, and quoted from the
+chosen one; the result names `englishBible`); Khmer typed with no space was one
+"word" (now cut into the Bible's own words, from Bible Find's `spell` table);
+and "ឥន្ទ្រី" (eagle) matched "ឥន្ទ្រីយ" (senses) in Hebrews 5:14 -- letters,
+not words, in a script with no spaces, which the result now says.
+
+**Proof:** `enemies love pray persecute` → Matthew 5:44 first (4 of 4), ~100 ms;
+`book: "Psalms"` (KJV calls it "Psalm") → Psalm 23:1; English words under ពគប
+→ John 21:17 quoted in Khmer, `searchedIn: KJV`; `open: "MAT 5:44"` → the
+Reader on it, the split view following, the banner naming it; through the 🤖
+in Find on **Auto** (Free · Nemotron Super VL): KJV picked, _jesus asked peter
+three times if he loved him_ → John 21:15 and 21:17 with two **Open … in Bible
+Lookup** buttons, 5k tokens; the walkthrough tip `reader-find-verse-assistant`
+ringing the robot. `probe-mcp.mjs` 15/17, the two others SKIPPED because the
+main window was on the Reader (the user was testing there).
+
+**Left open:** a verse asked for by what it says in an ORDINARY tab
+(`readBibleContentAsk`, EC-199) still gets the guide's Bible Find advice, not
+the tool -- routing it into a verse-finding ask is one small change in
+`handleAsking`; a custom server's lean list gets `owa_find_verse` but not
+`owa_read_website`; and Khmer words are matched as letters, so a word inside a
+longer one still counts.
+
+**The user's own Khmer question, end to end** (the same evening, on the
+free model through Auto): _ព្រះយេស៊ូសួរពេត្រុសច្រើនដង_ (Jesus asked Peter
+many times) under ពគប -- the model searched ពគប in Khmer, then KJV with
+"Jesus asked Peter lovest thou me", read `JHN 21:15; JHN 21:17` back in
+ពគប, and answered in Khmer with both verses quoted from it (41.4k tokens,
+free). Every **Open …** button came twice -- the verse found in the KJV
+and read in ពគប were two -- so `genVerseOpenActions` keeps one per key and
+opens it in the conversation's Bible.
+
+**The goal the user then set** (_chatbot be smart enough to help user find
+verses he/she forgot_, with _for any translation attempt please prefer Gemma
+4 models_): the window now searches FIRST (`genVerseHeadStart`) -- their
+words, and for another script their English from a Gemma 4 model -- and the
+assistant starts from the results; Auto asks Gemma 4 first for such a verse;
+`Help me find a Bible verse in "KJV": <words>` is one line; and a verse
+asked for by what it says in any chat goes to the same search. The user's
+Khmer phrase: 41.4k tokens and five rounds before, 3.6k on the local
+gemma-4-e4b after. Measured through the real window with `corpus-run.mjs --asks` and the standing set `references/verse-find-asks.json` (scored by `scripts/score-verse-find.mjs`): **20 of 20** -- KJV 10/10 (exact, misremembered, modern paraphrase, described), ពគប 5/5 (Khmer with no spaces and described, through the local gemma-4-e4b in 7-13 s, 2.4-2.9k tokens; English words under it), and 5/5 typed in an ordinary chat, which before the routing took 17.6-37.1k tokens and opened no verse and after it 2.1-6.8k, 4-17 s.

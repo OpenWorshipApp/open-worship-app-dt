@@ -50,6 +50,14 @@ export function useKeyboardLayerClaim(layer: AppWidgetType) {
     }, [layer]);
 }
 
+/**
+ * Whether anything is holding `layer` right now -- e.g. whether the Bible
+ * Lookup popup is open, which is what decides the keys that work at all.
+ */
+export function checkIsKeyboardLayerClaimed(layer: AppWidgetType) {
+    return (claimCountMap.get(layer) ?? 0) > 0;
+}
+
 /** Test seam: what is being held right now. */
 export function getKeyboardLayerClaims() {
     return Object.fromEntries(claimCountMap.entries());

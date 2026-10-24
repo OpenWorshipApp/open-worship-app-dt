@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-20 — Show the keys you press (Keyboard Screencast)
 
@@ -13,7 +13,7 @@ workflowsVersion: "2026-10-01"
 a training session, a screen share, a recorded tutorial. It is the keyboard counterpart to
 the drawing in W-19, and it lives in the same panel.
 
-1. Open the **Presenting Control** panel (W-19 step 1: **Tools → Start Controlling**,
+1. Open the **[en:tran:Presenting Control]** panel (W-19 step 1: **Tools → [en:tran:Start Controlling]**,
    **Ctrl+Shift+P**).
 2. In the panel's title bar, click the **keyboard** button (`K`) — it sits between the
    four tools and Undo / Redo / Clear, and lights up while it is on. Nothing appears on

@@ -24,7 +24,7 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { downloadVideoOrAudio, timeToTimeString } from '../server/appHelpers';
 import { fsMove, getTempPath } from '../server/fileHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
+import { createSimpleToastUpdater } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
@@ -37,6 +37,10 @@ import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 import { useBackgroundSessions } from './backgroundSessionHelpers';
 import { checkIsExtraBinMissingError } from '../helper/extra-bin/extraBinErrors';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import {
+    BackgroundTransitionTileBadgeComp,
+    genBackgroundItemTransitionMenuItems,
+} from './backgroundTransitionMenuHelpers';
 
 function RendBodyComp({
     filePath,
@@ -130,6 +134,10 @@ function RendBodyComp({
                     />
                 ) : null}
             </div>
+            <BackgroundTransitionTileBadgeComp
+                backgroundType="video"
+                src={fileSource.src}
+            />
             {extraChild}
         </div>
     );
@@ -155,12 +163,11 @@ function rendChild(
 async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
     const download = async (videoUrl: string) => {
+        // One toast from "downloading" to the outcome (the audios' way): two,
+        // and the first, held open by the pointer on it, still said
+        // "please wait" beside "downloaded successfully".
+        const updateDownloadToast = createSimpleToastUpdater();
         try {
-            showSimpleToast(
-                title,
-                `Downloading video from "${videoUrl}", please wait...`,
-            );
-            showProgressBar(videoUrl);
             // Stage in the OS temp dir, not `getDefaultDataDir()`: that one is
             // hardcoded to Desktop/open-worship-data, so it ignored both the
             // dev data-dir override and any relocated media dir — spuriously
@@ -169,6 +176,14 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 videoUrl,
                 getTempPath(),
                 true,
+                // Only once the media tools are there -- see the function.
+                () => {
+                    updateDownloadToast(
+                        title,
+                        `Downloading video from "${videoUrl}", please wait...`,
+                    );
+                    showProgressBar(videoUrl);
+                },
             );
             const destFileSource = FileSource.getInstance(
                 dirSource.dirPath,
@@ -176,7 +191,7 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
             );
             const downloadedFilePath = await destFileSource.genNextFilePath();
             await fsMove(filePath, downloadedFilePath);
-            showSimpleToast(
+            updateDownloadToast(
                 title,
                 `Video downloaded successfully, file path: "${downloadedFilePath}"`,
             );
@@ -188,7 +203,7 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 return;
             }
             handleError(error);
-            showSimpleToast(
+            updateDownloadToast(
                 title,
                 toDownloadFailureMessage(
                     tran('Error occurred during downloading video'),
@@ -211,20 +226,29 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
 }
 
 function genExtraItemContextMenuItems(filePath: string) {
+    const src = FileSource.getInstance(filePath).src;
     return [
         {
             childBefore: genContextMenuItemIcon('magic'),
             menuElement: tran('Toggle Fading at End'),
-            title: tran('Toggle is video should fade at the end'),
+            // The menu is built as it opens, so it can say which way the
+            // switch is set. The row read the same either way, and the
+            // default (on) is not something an operator could guess.
+            childAfter: genContextMenuItemIcon(
+                getIsFadingAtTheEndSetting(src) ? 'check2-square' : 'square',
+            ),
+            title: tran('Whether this video fades out as it ends'),
             onSelect: () => {
-                const fileSource = FileSource.getInstance(filePath);
-                let isFadingAtTheEnd = getIsFadingAtTheEndSetting(
-                    fileSource.src,
+                setIsFadingAtTheEndSetting(
+                    src,
+                    !getIsFadingAtTheEndSetting(src),
                 );
-                isFadingAtTheEnd = !isFadingAtTheEnd;
-                setIsFadingAtTheEndSetting(fileSource.src, isFadingAtTheEnd);
             },
         },
+        ...genBackgroundItemTransitionMenuItems(
+            'video',
+            FileSource.getInstance(filePath).src,
+        ),
     ];
 }
 

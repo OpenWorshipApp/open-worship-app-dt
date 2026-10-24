@@ -56,13 +56,21 @@ export default abstract class ScreenEventHandler<
         );
     }
 
+    // `isFromWheel`: the scroll followed a wheel on that very element, which
+    // proves the operator made it (`registerScrollingSyncEvent`). Any other
+    // scroll -- a scrollbar drag, a key -- has only the window-level flags to
+    // tell it from a programmatic one.
     sendSyncScrollPercentage(
         domSelector: string,
         scroll: { x: number; y: number },
+        isFromWheel = false,
+        // An auto-scroll frame, to be drawn to the sub-pixel.
+        isSubPixel = false,
     ) {
         if (
-            !appProvider.getIsMouseOverApp() ||
-            !appProvider.getIsWindowFocused()
+            !isFromWheel &&
+            (!appProvider.getIsMouseOverApp() ||
+                !appProvider.getIsWindowFocused())
         ) {
             return;
         }
@@ -74,6 +82,7 @@ export default abstract class ScreenEventHandler<
                     data: {
                         domSelector,
                         scroll,
+                        ...(isSubPixel ? { isSubPixel: true } : {}),
                     },
                 },
                 true,

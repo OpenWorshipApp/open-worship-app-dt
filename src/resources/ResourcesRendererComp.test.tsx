@@ -6,16 +6,38 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
     checkDirExistMock,
+    contextMenuMock,
+    copyFolderMock,
+    copyRefusalKeyMock,
     getFolderListMock,
+    getResourcesDataDirPathMock,
+    handleErrorMock,
+    hideProgressBarMock,
+    invalidateScanCacheMock,
     listDirentsMock,
+    promptAddFoldersMock,
+    removeFolderSettingsMock,
     scanResourceFilesMock,
+    showAppConfirmMock,
+    showProgressBarMock,
     setFolderListMock,
     showSimpleToastMock,
 } = vi.hoisted(() => ({
     checkDirExistMock: vi.fn(),
+    contextMenuMock: vi.fn(),
+    copyFolderMock: vi.fn(),
+    copyRefusalKeyMock: vi.fn(),
     getFolderListMock: vi.fn(),
+    getResourcesDataDirPathMock: vi.fn(),
+    handleErrorMock: vi.fn(),
+    hideProgressBarMock: vi.fn(),
+    invalidateScanCacheMock: vi.fn(),
     listDirentsMock: vi.fn(),
+    promptAddFoldersMock: vi.fn(),
+    removeFolderSettingsMock: vi.fn(),
     scanResourceFilesMock: vi.fn(),
+    showAppConfirmMock: vi.fn(),
+    showProgressBarMock: vi.fn(),
     setFolderListMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
 }));
@@ -36,6 +58,8 @@ vi.mock('./resourcesFolderHelpers', async (importOriginal) => {
     return {
         ...original,
         getResourcesFolderList: getFolderListMock,
+        promptAddResourcesFolders: promptAddFoldersMock,
+        removeResourcesFolderSettings: removeFolderSettingsMock,
         setResourcesFolderList: setFolderListMock,
     };
 });
@@ -43,6 +67,40 @@ vi.mock('./resourcesFolderHelpers', async (importOriginal) => {
 vi.mock('../toast/toastHelpers', () => ({
     showSimpleToast: showSimpleToastMock,
 }));
+
+vi.mock('../context-menu/appContextMenuHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<
+            typeof import('../context-menu/appContextMenuHelpers')
+        >();
+    return { ...original, showAppContextMenu: contextMenuMock };
+});
+
+vi.mock('../popup-widget/popupWidgetHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<
+            typeof import('../popup-widget/popupWidgetHelpers')
+        >();
+    return { ...original, showAppConfirm: showAppConfirmMock };
+});
+
+vi.mock('../progress-bar/progressBarHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<
+            typeof import('../progress-bar/progressBarHelpers')
+        >();
+    return {
+        ...original,
+        hideProgressBar: hideProgressBarMock,
+        showProgressBar: showProgressBarMock,
+    };
+});
+
+vi.mock('../helper/errorHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('../helper/errorHelpers')>();
+    return { ...original, handleError: handleErrorMock };
+});
 
 vi.mock('../server/fileHelpers', async (importOriginal) => {
     const original =
@@ -64,7 +122,18 @@ vi.mock('./resourcesScanHelpers', async (importOriginal) => {
     return {
         ...original,
         scanResourceFiles: scanResourceFilesMock,
-        invalidateResourcesScanCache: vi.fn(),
+        invalidateResourcesScanCache: invalidateScanCacheMock,
+    };
+});
+
+vi.mock('./resourcesCopyHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('./resourcesCopyHelpers')>();
+    return {
+        ...original,
+        copyResourcesFolderToDataDir: copyFolderMock,
+        getResourcesDataDirPath: getResourcesDataDirPathMock,
+        getResourcesFolderCopyRefusalKey: copyRefusalKeyMock,
     };
 });
 
@@ -273,6 +342,16 @@ describe('ResourcesRendererComp folder dropping', () => {
         expect(getPanel().className).not.toContain('is-dropping');
     });
 
+    test('an empty drop is accepted and makes no folder or toast', async () => {
+        await renderPanel();
+        const event = genDragEvent('drop');
+        await dispatch(event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(setFolderListMock).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+    });
+
     test('crossing onto a child is not leaving the panel', async () => {
         getFolderListMock.mockReturnValue(['/a/songs']);
         await renderPanel();
@@ -291,6 +370,396 @@ describe('ResourcesRendererComp folder dropping', () => {
         // Leaving the window entirely arrives with no related target at all.
         await dispatch(genDragEvent('dragleave'));
         expect(getPanel().className).not.toContain('is-dropping');
+    });
+});
+
+describe('ResourcesRendererComp folder actions', () => {
+    let container: HTMLDivElement | null = null;
+    let root: Root | null = null;
+
+    beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        getFolderListMock.mockReset().mockReturnValue([]);
+        setFolderListMock.mockReset();
+        promptAddFoldersMock.mockReset().mockResolvedValue(null);
+        removeFolderSettingsMock.mockReset().mockResolvedValue(undefined);
+        copyFolderMock.mockReset();
+        copyRefusalKeyMock.mockReset().mockReturnValue(null);
+        getResourcesDataDirPathMock
+            .mockReset()
+            .mockReturnValue('/data/resources');
+        contextMenuMock.mockReset().mockImplementation((event: Event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        showAppConfirmMock.mockReset().mockResolvedValue(true);
+        showProgressBarMock.mockReset();
+        hideProgressBarMock.mockReset();
+        handleErrorMock.mockReset();
+        invalidateScanCacheMock.mockReset();
+        showSimpleToastMock.mockReset();
+        checkDirExistMock.mockReset().mockResolvedValue(true);
+        listDirentsMock.mockReset().mockResolvedValue([]);
+        scanResourceFilesMock.mockReset().mockResolvedValue({
+            filePaths: [],
+            searchedFilePaths: [],
+            isTruncated: false,
+            isSearchTruncated: false,
+            otherFilePaths: [],
+            isOthersTruncated: false,
+        });
+        container = document.createElement('div');
+        document.body.appendChild(container);
+    });
+
+    afterEach(async () => {
+        vi.useRealTimers();
+        if (root) {
+            await act(async () => {
+                root?.unmount();
+            });
+            root = null;
+        }
+        container?.remove();
+        container = null;
+    });
+
+    async function renderPanel() {
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<ResourcesRendererComp targets={PSA_1} />);
+        });
+        await act(async () => {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+    }
+
+    function getPanel() {
+        const panel = container?.querySelector('.app-resources');
+        if (!panel) {
+            throw new Error('Missing panel');
+        }
+        return panel as HTMLElement;
+    }
+
+    function openMenu(target: Element) {
+        contextMenuMock.mockClear();
+        act(() => {
+            target.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            );
+        });
+        const call = contextMenuMock.mock.calls.at(-1);
+        if (!call) {
+            throw new Error('Context menu was not opened');
+        }
+        return call[1] as Array<{
+            menuElement: string;
+            onSelect: () => unknown;
+        }>;
+    }
+
+    async function selectMenuItem(
+        items: Array<{ menuElement: string; onSelect: () => unknown }>,
+        label: string,
+    ) {
+        const item = items.find((candidate) => candidate.menuElement === label);
+        if (!item) {
+            throw new Error(
+                `Missing menu item: ${label}; got ${items.map((candidate) => String(candidate.menuElement)).join(', ')}`,
+            );
+        }
+        await act(async () => {
+            item.onSelect();
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+    }
+
+    test('the visible Add Folder button saves the picker result', async () => {
+        promptAddFoldersMock.mockResolvedValue(['/a/songs']);
+        await renderPanel();
+        const addButton =
+            container?.querySelector<HTMLButtonElement>('.btn-outline-info');
+        if (!addButton) {
+            throw new Error('Missing Add Folder button');
+        }
+
+        await act(async () => {
+            addButton.click();
+            await Promise.resolve();
+        });
+
+        expect(promptAddFoldersMock).toHaveBeenCalledWith([]);
+        expect(setFolderListMock).toHaveBeenCalledWith(['/a/songs']);
+        expect(
+            getPanel().querySelector('.app-resources-group-header'),
+        ).not.toBeNull();
+    });
+
+    test('cancelling Add Folder leaves the saved and drawn list alone', async () => {
+        promptAddFoldersMock.mockResolvedValue(null);
+        await renderPanel();
+        container
+            ?.querySelector<HTMLButtonElement>('.btn-outline-info')
+            ?.click();
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        expect(setFolderListMock).not.toHaveBeenCalled();
+        expect(
+            getPanel().querySelector('.app-resources-group-header'),
+        ).toBeNull();
+    });
+
+    test('the folder menu removes only after confirmation and clears its scan state', async () => {
+        getFolderListMock.mockReturnValue(['/a/<songs>']);
+        await renderPanel();
+        const header = getPanel().querySelector('.app-resources-group-header');
+        if (!header) {
+            throw new Error('Missing folder header');
+        }
+
+        const items = openMenu(header);
+        await selectMenuItem(items, 'Remove Folder');
+
+        expect(showAppConfirmMock).toHaveBeenCalledWith(
+            'Remove Folder',
+            'Remove "/a/&lt;songs&gt;"?',
+            { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
+        );
+        expect(setFolderListMock).toHaveBeenCalledWith([]);
+        expect(invalidateScanCacheMock).toHaveBeenCalledWith('/a/<songs>');
+        expect(removeFolderSettingsMock).toHaveBeenCalledWith('/a/<songs>');
+        expect(
+            getPanel().querySelector('.app-resources-group-header'),
+        ).toBeNull();
+    });
+
+    test('declining Remove Folder preserves the shelf', async () => {
+        getFolderListMock.mockReturnValue(['/a/songs']);
+        showAppConfirmMock.mockResolvedValue(false);
+        await renderPanel();
+        const header = getPanel().querySelector('.app-resources-group-header');
+        if (!header) {
+            throw new Error('Missing folder header');
+        }
+
+        await selectMenuItem(openMenu(header), 'Remove Folder');
+
+        expect(setFolderListMock).not.toHaveBeenCalled();
+        expect(invalidateScanCacheMock).not.toHaveBeenCalled();
+        expect(removeFolderSettingsMock).not.toHaveBeenCalled();
+        expect(
+            getPanel().querySelector('.app-resources-group-header'),
+        ).not.toBeNull();
+    });
+
+    test('copying a folder confirms, swaps it in place, then clears the old cache', async () => {
+        getFolderListMock.mockReturnValue(['/a/first', '/a/songs', '/a/last']);
+        copyFolderMock.mockResolvedValue({
+            destinationDirPath: '/data/resources/songs',
+        });
+        await renderPanel();
+        const header = Array.from(
+            getPanel().querySelectorAll('.app-resources-group-header'),
+        ).find((element) => element.getAttribute('title') === '/a/songs');
+        if (!header) {
+            throw new Error('Missing songs folder header');
+        }
+
+        await selectMenuItem(openMenu(header), 'Copy to Data Directory');
+
+        expect(showAppConfirmMock).toHaveBeenCalledWith(
+            'Copy to Data Directory',
+            expect.stringContaining('/a/songs'),
+            { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
+        );
+        expect(copyFolderMock).toHaveBeenCalledWith('/a/songs');
+        expect(setFolderListMock).toHaveBeenCalledWith([
+            '/a/first',
+            '/data/resources/songs',
+            '/a/last',
+        ]);
+        expect(invalidateScanCacheMock).toHaveBeenCalledWith('/a/songs');
+        expect(removeFolderSettingsMock).toHaveBeenCalledWith('/a/songs');
+        expect(showProgressBarMock).toHaveBeenCalledWith(
+            'Copy to Data Directory: /a/songs',
+        );
+        expect(hideProgressBarMock).toHaveBeenCalledWith(
+            'Copy to Data Directory: /a/songs',
+        );
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Copy to Data Directory',
+            '/data/resources/songs',
+        );
+    });
+
+    test('a copy refused by its path is explained before asking for confirmation', async () => {
+        getFolderListMock.mockReturnValue(['/a/songs']);
+        copyRefusalKeyMock.mockReturnValue(
+            'Folder is already in the data directory',
+        );
+        await renderPanel();
+        const header = getPanel().querySelector('.app-resources-group-header');
+        if (!header) {
+            throw new Error('Missing folder header');
+        }
+
+        await selectMenuItem(openMenu(header), 'Copy to Data Directory');
+
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Copy to Data Directory',
+            'Folder is already in the data directory',
+        );
+        expect(showAppConfirmMock).not.toHaveBeenCalled();
+        expect(copyFolderMock).not.toHaveBeenCalled();
+    });
+
+    test('copy refusal errors are shown and progress is always hidden', async () => {
+        const { ResourcesCopyError } = await import('./resourcesCopyHelpers');
+        getFolderListMock.mockReturnValue(['/a/songs']);
+        copyFolderMock.mockRejectedValue(
+            new ResourcesCopyError('Folder not found'),
+        );
+        await renderPanel();
+        const header = getPanel().querySelector('.app-resources-group-header');
+        if (!header) {
+            throw new Error('Missing folder header');
+        }
+
+        await selectMenuItem(openMenu(header), 'Copy to Data Directory');
+
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Copy to Data Directory',
+            'Folder not found',
+        );
+        expect(hideProgressBarMock).toHaveBeenCalledWith(
+            'Copy to Data Directory: /a/songs',
+        );
+    });
+
+    test('unexpected copy errors are logged and shown to the user', async () => {
+        getFolderListMock.mockReturnValue(['/a/songs']);
+        copyFolderMock.mockRejectedValue(new Error('disk failed'));
+        await renderPanel();
+        const header = getPanel().querySelector('.app-resources-group-header');
+        if (!header) {
+            throw new Error('Missing folder header');
+        }
+
+        await selectMenuItem(openMenu(header), 'Copy to Data Directory');
+
+        expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Copy to Data Directory',
+            'Cannot copy folder: disk failed',
+        );
+        expect(hideProgressBarMock).toHaveBeenCalledWith(
+            'Copy to Data Directory: /a/songs',
+        );
+    });
+
+    test('Reload refreshes the folder list and invalidates every scan', async () => {
+        getFolderListMock
+            .mockReturnValueOnce([])
+            .mockReturnValueOnce(['/another/library']);
+        await renderPanel();
+        const moreButton = getPanel().querySelector<HTMLButtonElement>(
+            'button[aria-label="More Options"]',
+        );
+        if (!moreButton) {
+            throw new Error('Missing More Options button');
+        }
+        act(() => {
+            moreButton.click();
+        });
+        const items = contextMenuMock.mock.calls.at(-1)?.[1] as Array<{
+            menuElement: string;
+            onSelect: () => unknown;
+        }>;
+        await selectMenuItem(items, 'Reload');
+
+        expect(getFolderListMock).toHaveBeenCalledTimes(2);
+        expect(invalidateScanCacheMock).toHaveBeenCalledWith();
+        expect(
+            getPanel()
+                .querySelector('.app-resources-group-header')
+                ?.getAttribute('title'),
+        ).toBe('/another/library');
+    });
+
+    test('search waits for typing to pause, then clearing its toggle removes search hits', async () => {
+        getFolderListMock.mockReturnValue(['/a/songs']);
+        vi.useFakeTimers();
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<ResourcesRendererComp targets={PSA_1} />);
+        });
+
+        const searchButton = getPanel().querySelector<HTMLButtonElement>(
+            'button[aria-label="Search file name"]',
+        );
+        if (!searchButton) {
+            throw new Error('Missing search button');
+        }
+        await act(async () => {
+            searchButton.click();
+        });
+        const searchInput = getPanel().querySelector<HTMLInputElement>(
+            '.app-resources-search input',
+        );
+        if (!searchInput) {
+            throw new Error('Missing search input');
+        }
+        await act(async () => {
+            const setValue = Object.getOwnPropertyDescriptor(
+                HTMLInputElement.prototype,
+                'value',
+            )?.set;
+            setValue?.call(searchInput, 'family');
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        expect(scanResourceFilesMock).toHaveBeenLastCalledWith(
+            '/a/songs',
+            PSA_1,
+            '',
+            false,
+            expect.any(Function),
+        );
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(500);
+        });
+        expect(scanResourceFilesMock).toHaveBeenLastCalledWith(
+            '/a/songs',
+            PSA_1,
+            'family',
+            false,
+            expect.any(Function),
+        );
+
+        await act(async () => {
+            searchButton.click();
+        });
+        expect(getPanel().querySelector('.app-resources-search')).toBeNull();
+        expect(scanResourceFilesMock).toHaveBeenLastCalledWith(
+            '/a/songs',
+            PSA_1,
+            '',
+            false,
+            expect.any(Function),
+        );
     });
 });
 

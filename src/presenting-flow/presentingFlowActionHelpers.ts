@@ -229,7 +229,7 @@ export type PresentingFlowActionArmingType = {
 };
 
 /**
- * Clearing ONE foreground widget instead of the whole layer, for the eight
+ * Clearing ONE foreground widget instead of the whole layer, for the twelve
  * widgets a screen can actually hold.
  *
  * Keyed by `ForegroundDragTargetType` rather than by `string`, exactly as
@@ -322,6 +322,13 @@ const foregroundClearMap: Record<
         badge: 'CM',
         clear: (manager) => {
             manager.setCameraDataList([]);
+        },
+    },
+    screen: {
+        label: 'Clear FG Screen Show',
+        badge: 'SS',
+        clear: (manager) => {
+            manager.setScreenDataList([]);
         },
     },
     web: {
@@ -705,7 +712,7 @@ const nextActionList: PresentingFlowRunActionType[] = [
 /**
  * The clearing family proper: the five that mirror a button of the mini screen's
  * clear bar — same label (so the shipped translations are reused rather than
- * duplicated), same `BG`/`SL`/`BB`/`FG` text as its badge, and kept in the bar's
+ * duplicated), same `BG`/`SL`/`LT`/`FG` text as its badge, and kept in the bar's
  * own left-to-right order so the menu reads like the control it mirrors.
  *
  * The bar's two `secondary` buttons are the one thing not copied literally: the
@@ -756,9 +763,12 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         },
     },
     {
+        // The id is what a saved run sheet holds, so it keeps the name the
+        // layer had while a Bible passage was all it drew; the label and
+        // the badge are the mini screen's own `LT` button's.
         id: 'clear-bible',
-        label: 'Clear Bible',
-        badge: 'BB',
+        label: 'Clear Long Text',
+        badge: 'LT',
         iconName: 'eraser',
         color: 'var(--bs-primary)',
         ccItemCount: Infinity,
@@ -766,7 +776,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
-            screenManager.screenBibleManager.clear();
+            screenManager.screenLongTextManager.clear();
         },
     },
     {
@@ -780,7 +790,7 @@ const clearActionList: PresentingFlowScreenActionType[] = [
         filtersHostScreenIds: false,
         target: 'screen',
         apply: (screenManager) => {
-            screenManager.screenForegroundManager.clear();
+            screenManager.clearForeground();
         },
     },
 ];
@@ -819,13 +829,13 @@ export function checkIsPresentingFlowActionGroup(
  * The `Add Action` menu, as it is READ.
  *
  * Everything that ERASES is folded behind one `Clear Screen` row, and nothing
- * else is: thirteen of the menu's twenty entries clear something, so left
+ * else is: seventeen of the menu's twenty-four entries clear something, so left
  * inline they were the menu, and the two questions an operator opens it with —
  * "clear something" or "do something" — could not be told apart at a glance.
  * Inside it, the five whole-layer clears first, in the mini screen bar's own
- * order, then the eight per-widget foreground ones folded again behind
+ * order, then the twelve per-widget foreground ones folded again behind
  * `Other Clear FG Items`: they are a finer version of the `Clear Foreground`
- * right above them, and they are eight of the thirteen.
+ * right above them, and they are twelve of the seventeen.
  *
  * Then the screen itself, up and down — still a screen action, but about the
  * window rather than about what is on it, so it reads after the clearing. The

@@ -5,6 +5,7 @@ import type { AppColorType } from '../../others/color/colorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import type { UrlMediaSourceType } from '../../helper/mediaSourceHelpers';
 import { isSupportedExt, isSupportedMimetype } from '../../server/fileHelpers';
+import { SCREEN_FONT_FAMILY } from '../../_screen/screenFontFamily';
 
 export type CanvasControllerEventType = 'update' | 'scale' | 'reload';
 
@@ -320,7 +321,12 @@ export function genTextStyle(props: TextStylePropsType): CSSProperties {
         fontSize: `${props.fontSize}px`,
         // Keep ascenders/combining marks visible for complex scripts (Khmer, etc.).
         lineHeight: SCRIPT_SAFE_LINE_HEIGHT,
-        fontFamily: props.fontFamily ?? '',
+        // A box with no font of its own reads in the screen window's font,
+        // not in whatever surrounds it: in the presenter and the editor that
+        // is the app font (Settings -> Font Family), so the thumbnails and the
+        // mini preview drew it in, e.g., Battambang while the projector drew
+        // Segoe UI.
+        fontFamily: props.fontFamily || SCREEN_FONT_FAMILY,
         fontWeight: props.fontWeight ?? '',
         color: props.color,
         alignItems: props.textVerticalAlignment,

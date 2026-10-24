@@ -189,6 +189,30 @@
   }
 }
 
+// A long text's part that is MARKED on a screen, lit on its own button: the
+// one just pressed to bring it to the middle, or one clicked on the text
+// itself. A tint and a line, not Bootstrap's `active` fill -- as a text card
+// the button holds a verse, and its words are still what is read; they come
+// up from the outline button's grey to the body's own ink instead.
+//
+// Declared, not configured: the theme writes `.btn { border: … }` outright,
+// so `--bs-btn-border-color` is dead here, and `.app .btn` points the hover
+// variables back at the resting ones. The selector is this long to outrank
+// both -- the theme's is `.app[data-bs-theme] .btn`, three classes deep --
+// and `.btn:hover` with them.
+.app .fg-body .btn.fg-part-on {
+  color: var(--bs-body-color);
+  background-color: rgba(var(--bs-info-rgb), 0.2);
+  border-color: rgba(var(--bs-info-rgb), 0.75);
+
+  // The part's own pill follows: muted grey on the tint is the one thing
+  // in a lit card that would be harder to read than before.
+  > .badge {
+    color: var(--bs-info) !important;
+    border-color: rgba(var(--bs-info-rgb), 0.55) !important;
+  }
+}
+
 // The strip's row grid, borrowed by a widget body for its own numbers. The
 // body already carries a separator, so this one drops the strip's.
 .fg-props-tail-plain {
@@ -218,6 +242,56 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+// The stopwatch's saved times: a short list, newest first, that scrolls
+// rather than pushing the panel taller once it holds more than a few.
+.fg-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.fg-history {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 180px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  font-size: 0.82rem;
+  list-style: none;
+
+  > li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  > li:nth-child(odd) {
+    background: rgba(var(--bs-info-rgb), 0.05);
+  }
+}
+
+.fg-history-number {
+  min-width: 2ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.5;
+}
+
+.fg-history-time {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.fg-history-when {
+  margin-left: auto;
+  opacity: 0.6;
 }
 
 // One value with its icon and its unit, as a single box.

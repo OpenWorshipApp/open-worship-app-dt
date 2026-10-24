@@ -75,7 +75,7 @@ function genManager(overrides: Record<string, any> = {}) {
         displayId: 42,
         screenBackgroundManager: { backgroundSrc: null },
         screenVaryAppDocumentManager: { varySlideData: null },
-        screenBibleManager: { screenViewData: null },
+        screenLongTextManager: { screenViewData: null },
         screenForegroundManager: {
             foregroundData: {
                 countdownData: null,
@@ -211,6 +211,38 @@ describe('toBibleSummary', () => {
             versions: ['KJV', 'KHSV'],
         });
     });
+    it('spells the reference from the target before anything is rendered', () => {
+        const toReference = (target: any) =>
+            toBibleSummary({
+                type: 'bible-item',
+                locale: 'en',
+                scroll: 0,
+                selectedKJVVerseKey: null,
+                bibleItemData: {
+                    renderedList: [],
+                    bibleItem: {
+                        id: 1,
+                        bibleKey: 'KJV',
+                        target: { bookKey: 'JHN', ...target },
+                        metadata: {},
+                    },
+                },
+            })?.reference;
+        expect(toReference({ chapter: 3, verseStart: 16, verseEnd: 16 })).toBe(
+            'JHN 3:16',
+        );
+        expect(toReference({ chapter: 3, verseStart: 16, verseEnd: 18 })).toBe(
+            'JHN 3:16-18',
+        );
+        expect(
+            toReference({
+                chapter: 1,
+                verseStart: 2,
+                verseEnd: 4,
+                chapterEnd: 3,
+            }),
+        ).toBe('JHN 1:2-3:4');
+    });
 });
 
 describe('toForegroundSummary', () => {
@@ -218,7 +250,7 @@ describe('toForegroundSummary', () => {
         const items = toForegroundSummary({
             messageDataList: [],
             countdownData: null,
-            stopwatchData: { dateTime: new Date() },
+            stopwatchData: { dateTime: new Date(Date.now() - 65_000) },
             timeDataList: [
                 {
                     id: 'a',
@@ -230,16 +262,113 @@ describe('toForegroundSummary', () => {
             marqueeBottomData: null,
             quickTextData: null,
             cameraDataList: [],
+            screenDataList: [{ id: 2 }],
             webDataList: [],
             videoDataList: [{ filePath: 'C:\\media\\snow.mp4' }],
             imageDataList: [{ filePath: '/media/logo.png' }],
         });
         expect(items).toEqual([
-            'stopwatch',
+            'stopwatch at 00:01:05, running',
             'clock "Phnom Penh"',
             'marquee at the top: "Welcome <b>everyone</b>"',
+            'picture of screen 2',
             'video snow.mp4',
             'picture logo.png',
+        ]);
+    });
+
+    // Show All Messages with Rotate off puts every message in ONE box, and
+    // only the first used to be named -- the agent was told one message was
+    // up when two were.
+    it('names every message a box shows at once, and the count of a rotating set', () => {
+        const genData = (messageDataList: any[]) => {
+            return {
+                messageDataList,
+                countdownData: null,
+                stopwatchData: null,
+                timeDataList: [],
+                marqueeTopData: null,
+                marqueeBottomData: null,
+                quickTextData: null,
+                cameraDataList: [],
+                screenDataList: [],
+                webDataList: [],
+                videoDataList: [],
+                imageDataList: [],
+            } as any;
+        };
+        expect(
+            toForegroundSummary(
+                genData([
+                    {
+                        id: 'message-all',
+                        textList: [
+                            'Car lights on\nBlue Toyota',
+                            'Offering next',
+                        ],
+                        intervalSecond: null,
+                    },
+                ]),
+            ),
+        ).toEqual(['message: "Car lights on Blue Toyota / Offering next"']);
+        expect(
+            toForegroundSummary(
+                genData([
+                    {
+                        id: 'message-all',
+                        textList: ['One', 'Two', 'Three'],
+                        intervalSecond: 3,
+                    },
+                ]),
+            ),
+        ).toEqual(['messages in turn (3), first: "One"']);
+    });
+
+    // A quick text is markup from its editor; it reached the model as
+    // `quick text: "<p>zz robot test</p>"` (2026-10-06).
+    it('reads a quick text for its words, not its markup', () => {
+        const items = toForegroundSummary({
+            messageDataList: [],
+            countdownData: null,
+            stopwatchData: null,
+            timeDataList: [],
+            marqueeTopData: null,
+            marqueeBottomData: null,
+            quickTextData: {
+                htmlText: '<p>zz robot <b>test</b></p><p>second line</p>',
+            },
+            cameraDataList: [],
+            webDataList: [],
+            videoDataList: [],
+            imageDataList: [],
+        } as any);
+        expect(items).toEqual(['quick text: "zz robot test second line"']);
+    });
+
+    it('says a countdown past its target is counting the time over', () => {
+        const genCountdownData = (dateTime: Date) => {
+            return {
+                messageDataList: [],
+                countdownData: { dateTime },
+                stopwatchData: null,
+                timeDataList: [],
+                marqueeTopData: null,
+                marqueeBottomData: null,
+                quickTextData: null,
+                cameraDataList: [],
+                webDataList: [],
+                videoDataList: [],
+                imageDataList: [],
+            } as any;
+        };
+        const future = new Date(Date.now() + 60_000);
+        const past = new Date(Date.now() - 60_000);
+        expect(toForegroundSummary(genCountdownData(future))).toEqual([
+            `countdown to ${future.toLocaleTimeString()}`,
+        ]);
+        expect(toForegroundSummary(genCountdownData(past))).toEqual([
+            `countdown to ${past.toLocaleTimeString()} ` +
+                '(time is up, now counting the time over)',
         ]);
     });
 });
@@ -251,7 +380,7 @@ describe('describeScreensForAgent', () => {
             genManager({ screenId: 1, isShowing: true }),
             genManager({
                 screenId: 0,
-                screenBibleManager: {
+                screenLongTextManager: {
                     screenViewData: {
                         type: 'bible-item',
                         locale: 'en',
@@ -282,6 +411,44 @@ describe('describeScreensForAgent', () => {
         expect(result.screens[0].isBlank).toBe(false);
         expect(result.screens[1].isBlank).toBe(true);
         expect(result.screens[1].isShowing).toBe(true);
+    });
+    it('says a long text among the foreground extras, never as a passage', () => {
+        h.isPagePresenter = true;
+        const screenViewData: any = {
+            type: 'long-text',
+            locale: 'km-KH',
+            scroll: 0,
+            selectedKJVVerseKey: null,
+            longTextData: {
+                sourceId: 'long-text',
+                renderedList: [
+                    {
+                        locale: 'km-KH',
+                        code: 'KM',
+                        title: 'ព្រះគុណ',
+                        sections: [],
+                    },
+                    {
+                        locale: 'en-US',
+                        code: 'EN',
+                        title: 'Amazing Grace',
+                        sections: [],
+                    },
+                ],
+            },
+        };
+        h.managers = [
+            genManager({
+                screenId: 0,
+                screenLongTextManager: { screenViewData },
+            }),
+        ];
+        // `KM` is a language here, not a Bible version to report.
+        expect(toBibleSummary(screenViewData)).toBeNull();
+        const [screen] = describeScreensForAgent().screens;
+        expect(screen.bible).toBeNull();
+        expect(screen.foreground).toEqual(['long text "ព្រះគុណ" in KM, EN']);
+        expect(screen.isBlank).toBe(false);
     });
     it('says when it is not the presenter answering', () => {
         h.isPagePresenter = false;

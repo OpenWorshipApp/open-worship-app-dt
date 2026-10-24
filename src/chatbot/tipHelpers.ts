@@ -18,8 +18,16 @@
 // back to the one I was half way through" only by a walk.
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
+import { tran } from './chatTranHelpers';
 
 const TIP_SETTING_NAME = 'chatbot-tip-shown';
+// The line can be put away for a while (2026-10-15, the user's ask with the
+// row circled: _add option to hide it for 30 day_) -- the same 30 days the
+// AI caution and the daily tips give, and like theirs it comes back by itself.
+const TIP_HIDDEN_UNTIL_SETTING_NAME = 'chatbot-tip-hidden-until';
+// The button says the number ("Hide tips for 30 days"), so the two change
+// together.
+export const CHAT_TIP_HIDE_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type ChatTipType = {
     id: string;
@@ -42,13 +50,13 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
     {
         id: 'send',
         text:
-            'Ctrl+Enter asks. Plain Enter starts a new line, so a long ' +
+            'Ctrl+Enter sends. Plain Enter starts a new line, so a long ' +
             'question can run across several.',
     },
     {
         id: 'stop',
         text:
-            'While an answer is on its way, Ask becomes Stop — and it really ' +
+            'While an answer is on its way, Send becomes Stop — and it really ' +
             'does call the question off.',
     },
     {
@@ -68,6 +76,18 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
         text:
             'Type / for commands that need no assistant: /screen-show turns ' +
             'the projector on, /screen-hide turns it off.',
+    },
+    {
+        id: 'btw',
+        text:
+            'Not about the app? Put /btw in front — /btw what is the ' +
+            'Bible? — and that tab’s next question stays general.',
+    },
+    {
+        id: 'clear',
+        text:
+            '/clear empties this chat. The projector’s clears are ' +
+            '/screen-clear-all, /screen-clear-slide and friends.',
     },
     {
         id: 'lock',
@@ -121,7 +141,7 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
         id: 'suggest',
         text:
             'Type a few words and a list of questions it can already answer ' +
-            'drops up; the arrows walk it.',
+            'drops up; ↑ and ↓ walk it, Tab takes one.',
     },
     {
         id: 'credit',
@@ -134,6 +154,12 @@ export const CHAT_TIP_LIST: ChatTipType[] = [
         text:
             'It cannot run up the bill: “Limit per hour” at the top pauses ' +
             'it at $1 an hour until you press Allow more.',
+    },
+    {
+        id: 'fold-head',
+        text:
+            'Short of room? The arrow at the top left folds the pickers to ' +
+            'one line; press the line to open them.',
     },
 ];
 
@@ -174,15 +200,19 @@ export function stepChatTip(currentId: string | null, delta: number) {
     const from = index === -1 ? 0 : index;
     // `+ count` before the modulo: JavaScript's `%` keeps the sign, so a step
     // back from the first tip would index at -1 and hand back nothing.
-    const tip = CHAT_TIP_LIST[(from + delta + count) % count];
-    rememberChatTip(tip);
-    return tip;
+    return rememberChatTip(CHAT_TIP_LIST[(from + delta + count) % count]);
 }
 
-/** One tiny setting; it is written once per press, never per keystroke. */
-function rememberChatTip(tip: ChatTipType) {
+/**
+ * One tiny setting; it is written once per press, never per keystroke. What
+ * comes back is the tip as the window shows it: the list stays English, so
+ * each one is translated here, as it is handed over -- `tran` with no
+ * literal the key gate can read, which is why `chatTranLabels.test.ts` holds
+ * every tip to its Khmer and French itself.
+ */
+function rememberChatTip(tip: ChatTipType): ChatTipType {
     setSetting(TIP_SETTING_NAME, tip.id);
-    return tip;
+    return { ...tip, text: tran(tip.text) };
 }
 
 /**
@@ -195,6 +225,47 @@ function rememberChatTip(tip: ChatTipType) {
  */
 export function pickChatTip(currentId: string | null) {
     return rememberChatTip(genChatTip(currentId));
+}
+
+/**
+ * Whether the line is put away. A day further off than twice what the button
+ * sets is not believed, as with the daily tips: pressed while the clock ran
+ * ahead, it would hide the line for years once the clock is right.
+ */
+export function checkIsChatTipHidden(now = Date.now()) {
+    const remaining = Number(getSetting(TIP_HIDDEN_UNTIL_SETTING_NAME)) - now;
+    return remaining > 0 && remaining <= 2 * CHAT_TIP_HIDE_MS;
+}
+
+/**
+ * The day the line comes back, for the Settings → General list of what was
+ * put away (2026-10-20: _to be able to restore_), the same not-believed rule
+ * as `checkIsChatTipHidden`.
+ */
+export function readChatTipsHiddenAt(now = Date.now()): number | null {
+    const until = Number(getSetting(TIP_HIDDEN_UNTIL_SETTING_NAME));
+    const remaining = until - now;
+    return remaining > 0 && remaining <= 2 * CHAT_TIP_HIDE_MS ? until : null;
+}
+
+export function hideChatTip(now = Date.now()) {
+    setSetting(TIP_HIDDEN_UNTIL_SETTING_NAME, `${now + CHAT_TIP_HIDE_MS}`);
+}
+
+// Told to the line when `/tips` brings it back: it read the setting once,
+// when it was drawn.
+export const CHAT_TIPS_SHOWN_EVENT = 'owa-chat-tips-shown';
+
+/**
+ * The line back before its 30 days are up (`/tips`, 2026-10-17, the user's
+ * ask: _add `/tips` to open tips again_): the hide is forgotten, and the
+ * line drawn again at once.
+ */
+export function showChatTips() {
+    setSetting(TIP_HIDDEN_UNTIL_SETTING_NAME, '');
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event(CHAT_TIPS_SHOWN_EVENT));
+    }
 }
 
 /**

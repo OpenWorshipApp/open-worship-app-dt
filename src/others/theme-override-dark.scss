@@ -111,14 +111,9 @@ $resizer-color: rgb(73, 103, 123);
       background-color: var(--bs-gray-600);
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
 
-      .app-context-menu-item {
-        &:hover:not(.disabled) {
-          background-color: var(--bs-gray-700);
-        }
-
-        &:hover {
-          background: var(--bs-gray-700);
-        }
+      // Not a section's header: that keeps its own strip.
+      .app-context-menu-item:not(.app-context-menu-section-header):hover {
+        background: var(--bs-gray-700);
       }
     }
   }

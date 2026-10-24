@@ -18,8 +18,12 @@ const mocks = vi.hoisted(() => {
                 chapter: number;
                 verseStart: number;
                 verseEnd: number;
+                chapterEnd?: number;
             };
         }[],
+        verseReadList: [] as unknown[][],
+        collectedTargetList: [] as unknown[],
+        isKjvMissing: false,
     };
 });
 
@@ -46,7 +50,14 @@ vi.mock('../bible-reader/LookupBibleItemController', () => ({
 }));
 vi.mock('../helper/appHooks', () => ({ useAppEffect: useEffect }));
 vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
-    getVerses: async () => ({}),
+    // Every chapter three verses long.
+    getVerses: async (...args: unknown[]) => {
+        mocks.verseReadList.push(args);
+        if (mocks.isKjvMissing && args[0] === 'KJV') {
+            return null;
+        }
+        return { 1: 'a', 2: 'b', 3: 'c' };
+    },
 }));
 vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
     BIBLE_KJV_KEY: 'KJV',
@@ -75,8 +86,28 @@ vi.mock('../location-name-lookup/RenderLookupRecordItemComp', () => ({
     default: () => null,
 }));
 vi.mock('../location-name-lookup/verseRecordListHelpers', () => ({
-    collectVerseRecords: () => ({ names: [], locations: [] }),
+    collectVerseRecords: (
+        _index: unknown,
+        _labels: unknown,
+        target: unknown,
+    ) => {
+        mocks.collectedTargetList.push(target);
+        return { names: [], locations: [] };
+    },
     toVerseListLabel: () => '',
+    // The real rule: an open end is where the chapter read ends.
+    toVerseRecordChapterTarget: (
+        bookKey: string,
+        slice: any,
+        verseMap: any,
+    ) => {
+        return {
+            bookKey,
+            chapter: slice.chapter,
+            verseStart: slice.verseStart,
+            verseEnd: slice.verseEnd ?? Object.keys(verseMap ?? {}).length,
+        };
+    },
     useLookupRecordLabels: () => mocks.recordLabels,
 }));
 vi.mock('../location-name-lookup/verseTextIndexHelpers', () => ({
@@ -110,6 +141,9 @@ beforeEach(() => {
             target: { bookKey: 'GEN', chapter: 4, verseStart: 1, verseEnd: 1 },
         },
     ];
+    mocks.verseReadList = [];
+    mocks.collectedTargetList = [];
+    mocks.isKjvMissing = false;
 });
 
 afterEach(() => {
@@ -161,5 +195,106 @@ describe('BibleLocationNamePreviewerComp headings', () => {
             '(KJV) Genesis 4:1',
         ]);
         expect(header).toContain('(KJV)');
+        // One chapter read per passage, each passage scanned as it is.
+        expect(mocks.verseReadList).toEqual([
+            ['KJV', 'GEN', 3],
+            ['KJV', 'GEN', 4],
+        ]);
+        expect(mocks.collectedTargetList).toEqual(
+            mocks.paneList.map(({ target }) => target),
+        );
+    });
+});
+
+describe('BibleLocationNamePreviewerComp for a passage crossing chapters', () => {
+    test('lists one section per chapter, the first three chapters only', async () => {
+        mocks.langCode = 'en';
+        // GEN 1:2-5:1: five chapters, of which three are read.
+        mocks.paneList = [
+            {
+                bibleKey: 'KJV',
+                target: {
+                    bookKey: 'GEN',
+                    chapter: 1,
+                    verseStart: 2,
+                    verseEnd: 1,
+                    chapterEnd: 5,
+                },
+            },
+        ];
+
+        const { headingList } = await renderPreviewer();
+
+        expect(headingList).toEqual([
+            '(KJV) Genesis 1:2',
+            '(KJV) Genesis 2:1',
+            '(KJV) Genesis 3:1',
+        ]);
+        expect(mocks.verseReadList).toEqual([
+            ['KJV', 'GEN', 1],
+            ['KJV', 'GEN', 2],
+            ['KJV', 'GEN', 3],
+        ]);
+        // Each chapter scanned on its own, to the end of the chapter: the
+        // whole passage handed over at once read nothing (`verseEnd` 1 is
+        // before `verseStart` 2).
+        expect(mocks.collectedTargetList).toEqual([
+            { bookKey: 'GEN', chapter: 1, verseStart: 2, verseEnd: 3 },
+            { bookKey: 'GEN', chapter: 2, verseStart: 1, verseEnd: 3 },
+            { bookKey: 'GEN', chapter: 3, verseStart: 1, verseEnd: 3 },
+        ]);
+    });
+
+    test('ends the last chapter where the passage does', async () => {
+        mocks.langCode = 'en';
+        mocks.paneList = [
+            {
+                bibleKey: 'KJV',
+                target: {
+                    bookKey: 'GEN',
+                    chapter: 1,
+                    verseStart: 3,
+                    verseEnd: 2,
+                    chapterEnd: 2,
+                },
+            },
+        ];
+
+        await renderPreviewer();
+
+        expect(mocks.collectedTargetList).toEqual([
+            { bookKey: 'GEN', chapter: 1, verseStart: 3, verseEnd: 3 },
+            { bookKey: 'GEN', chapter: 2, verseStart: 1, verseEnd: 2 },
+        ]);
+    });
+
+    test('counts an open chapter in the pane bible when the KJV is missing', async () => {
+        mocks.langCode = 'km';
+        mocks.isKjvMissing = true;
+        mocks.paneList = [
+            {
+                bibleKey: 'ពគប',
+                target: {
+                    bookKey: 'GEN',
+                    chapter: 1,
+                    verseStart: 2,
+                    verseEnd: 1,
+                    chapterEnd: 2,
+                },
+            },
+        ];
+
+        await renderPreviewer();
+
+        // Only the chapter with an open end needs counting.
+        expect(mocks.verseReadList).toEqual([
+            ['KJV', 'GEN', 1],
+            ['ពគប', 'GEN', 1],
+            ['KJV', 'GEN', 2],
+        ]);
+        expect(mocks.collectedTargetList).toEqual([
+            { bookKey: 'GEN', chapter: 1, verseStart: 2, verseEnd: 3 },
+            { bookKey: 'GEN', chapter: 2, verseStart: 1, verseEnd: 1 },
+        ]);
     });
 });

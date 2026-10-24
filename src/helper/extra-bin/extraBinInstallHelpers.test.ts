@@ -14,6 +14,7 @@ const {
     getDownloadTargetUrlMock,
     checkIsExtraBinInstalledMock,
     getInstalledExtraBinVersionMock,
+    notifyExtraBinChangedMock,
     showSimpleToastMock,
 } = vi.hoisted(() => ({
     appProviderMock: {
@@ -33,6 +34,7 @@ const {
     getDownloadTargetUrlMock: vi.fn(),
     checkIsExtraBinInstalledMock: vi.fn(),
     getInstalledExtraBinVersionMock: vi.fn(),
+    notifyExtraBinChangedMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
 }));
 
@@ -100,6 +102,7 @@ vi.mock('./extraBinHelpers', () => ({
     getExtraBinDirPath: () => '/data/extra-bin',
     getInstalledExtraBinVersion: getInstalledExtraBinVersionMock,
     moveLegacyExtraBinPack: vi.fn(async () => {}),
+    notifyExtraBinChanged: notifyExtraBinChangedMock,
 }));
 
 function stubExtraBinInfo(extraBin: any) {
@@ -250,6 +253,8 @@ describe('extraBinInstallHelpers', () => {
         fsListFilesMock.mockResolvedValue(['info.json', 'bin-0.0.1.tar.gz']);
 
         expect(await module.installExtraBin()).toBe(true);
+        // Main hears it too: a tunnel waiting for cloudflared starts.
+        expect(notifyExtraBinChangedMock).toHaveBeenCalledTimes(1);
 
         expect(streamDownloadFileMock).not.toHaveBeenCalled();
         expect(tarExtractMock).toHaveBeenCalledWith(
@@ -295,5 +300,6 @@ describe('extraBinInstallHelpers', () => {
             'Extra Binaries',
             expect.stringContaining('qjs'),
         );
+        expect(notifyExtraBinChangedMock).not.toHaveBeenCalled();
     });
 });

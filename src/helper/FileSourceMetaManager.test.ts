@@ -86,6 +86,8 @@ vi.mock('./SettingManager', () => ({
 import FileSourceMetaManager, {
     getColorNoteFilePathSetting,
     setColorNoteFilePathSetting,
+    setColorNoteFilePathSettings,
+    subscribeColorNoteFilePathSetting,
 } from './FileSourceMetaManager';
 
 function createFileSource(
@@ -129,6 +131,46 @@ describe('FileSourceMetaManager', () => {
         expect(settingState.value['/docs/file.txt']).toBeUndefined();
     });
 
+    test('notifies only matching color-note readers and releases subscriptions', () => {
+        const firstStage = vi.fn();
+        const secondStage = vi.fn();
+        const otherSlide = vi.fn();
+        const otherFile = vi.fn();
+        const unsubscribe = [
+            subscribeColorNoteFilePathSetting('/docs/main.ows', 7, firstStage),
+            subscribeColorNoteFilePathSetting('/docs/main.ows', 7, secondStage),
+            subscribeColorNoteFilePathSetting('/docs/main.ows', 8, otherSlide),
+            subscribeColorNoteFilePathSetting('/docs/other.ows', 7, otherFile),
+        ];
+        try {
+            setColorNoteFilePathSetting('/docs/main.ows', 7, 'red');
+            expect(firstStage).toHaveBeenLastCalledWith('red');
+            expect(secondStage).toHaveBeenLastCalledWith('red');
+            expect(otherSlide).not.toHaveBeenCalled();
+            expect(otherFile).not.toHaveBeenCalled();
+
+            setColorNoteFilePathSetting('/docs/main.ows', 7, 'invalid');
+            expect(firstStage).toHaveBeenCalledTimes(1);
+            setColorNoteFilePathSetting('/docs/main.ows', 7, null);
+            expect(firstStage).toHaveBeenLastCalledWith(null);
+            expect(getColorNoteFilePathSetting('/docs/main.ows', 7)).toBeNull();
+
+            unsubscribe[0]();
+            setColorNoteFilePathSettings('/docs/main.ows', { 7: 'blue' });
+            expect(firstStage).toHaveBeenCalledTimes(2);
+            expect(secondStage).toHaveBeenLastCalledWith('blue');
+            expect(getColorNoteFilePathSetting('/docs/main.ows', 7)).toBe(
+                'blue',
+            );
+            expect(otherSlide).not.toHaveBeenCalled();
+            expect(otherFile).not.toHaveBeenCalled();
+        } finally {
+            unsubscribe.forEach((release) => release());
+        }
+        setColorNoteFilePathSetting('/docs/main.ows', 7, 'green');
+        expect(secondStage).toHaveBeenCalledTimes(3);
+    });
+
     test('returns null when the file does not exist', async () => {
         fsCheckFileExistMock.mockResolvedValue(false);
 
@@ -143,7 +185,7 @@ describe('FileSourceMetaManager', () => {
         ).toBeNull();
     });
 
-    test('reads color notes from app documents and reports unreadable files', async () => {
+    test('reads color notes from app documents, silent on unreadable files', async () => {
         checkIsAppFileMock.mockReturnValue(true);
 
         const goodFileSource = createFileSource('slide.owa', {
@@ -161,6 +203,20 @@ describe('FileSourceMetaManager', () => {
         expect(
             await FileSourceMetaManager.getColorNote('/docs/broken.owa'),
         ).toBeUndefined();
+        // The list reads the note per row and again to group the rows: one
+        // broken file arrived as three "Color Note" toasts.
+        expect(appHandleErrorMock).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+    });
+
+    test('setting a color note on an unreadable file reports it', async () => {
+        checkIsAppFileMock.mockReturnValue(true);
+        fileSourceGetInstanceMock.mockReturnValue(
+            createFileSource('broken.owa', null),
+        );
+
+        await FileSourceMetaManager.setColorNote('/docs/broken.owa', 'red');
+
         expect(appHandleErrorMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 message: 'Unable to read data from /docs/broken.owa}',

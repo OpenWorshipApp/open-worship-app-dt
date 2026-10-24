@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useState } from 'react';
+import { lazy, Suspense, use, useCallback, useState } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import {
@@ -6,7 +6,9 @@ import {
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { checkCanAttachFileName } from '../chatbot/attachmentHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { tran } from '../lang/langHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 import appProvider from '../server/appProvider';
@@ -20,6 +22,10 @@ import {
     readResourceLinks,
 } from './resourceLinksHelpers';
 import { toResourcePreviewKind } from './resourcePreviewHelpers';
+import {
+    ResourcesReadingContext,
+    toResourceReading,
+} from './resourceReadingHelpers';
 import {
     checkIsBookLevelName,
     toResourceIcon,
@@ -89,6 +95,12 @@ export default function ResourcesFileRowComp({
     const previewKindRef = useAppCurrentRef(previewKind);
     const isNotesShowingRef = useAppCurrentRef(isNotesShowing);
     const isPdfRef = useAppCurrentRef(isPdf);
+    // The 🤖: a file the assistant can be HANDED -- a PDF's pages, a
+    // picture, a note's words, a text file -- and only while AI is on, as
+    // the toolbar's own 🤖 goes with the switch. Never on a file the help
+    // window would then refuse (a `.docx`, a video).
+    const canAskAbout =
+        getIsAIEnabled() && checkCanAttachFileName(fileFullName);
     useAppEffect(() => {
         if (!isLinksCandidate || !canAutoExpandLinks) {
             // Nothing is read here for a row that is not a candidate, and
@@ -174,8 +186,39 @@ export default function ResourcesFileRowComp({
         void handleClicking();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const getReadingPaneListRef = useAppCurrentRef(
+        use(ResourcesReadingContext),
+    );
+    const handleAskingAbout = useCallback(async () => {
+        // The passage the Reader is on for this file goes with it, so the
+        // tab starts at the verses being read (2026-10-22). Read at the
+        // press, never on render.
+        const reading =
+            getReadingPaneListRef.current === null
+                ? null
+                : await toResourceReading(
+                      pathBasename(filePathRef.current),
+                      getReadingPaneListRef.current(),
+                  );
+        // Loaded at the press: the dialogs the assistant asks first and the
+        // window opener are nothing a shelf of rows needs until then.
+        const { openChatbotWithFile } =
+            await import('../helper/ai/chatbotHandoffHelpers');
+        await openChatbotWithFile(filePathRef.current, reading);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const canAskAboutRef = useAppCurrentRef(canAskAbout);
     const handleContextMenuOpening = useCallback((event: any) => {
         const menuItems: ContextMenuItemType[] = [];
+        if (canAskAboutRef.current) {
+            menuItems.push({
+                childBefore: genContextMenuItemIcon('robot'),
+                menuElement: tran('Ask the Assistant About This File'),
+                onSelect: () => {
+                    void handleAskingAbout();
+                },
+            });
+        }
         if (previewKindRef.current === 'markdown') {
             menuItems.push({
                 childBefore: genContextMenuItemIcon('eye'),
@@ -312,6 +355,19 @@ export default function ResourcesFileRowComp({
                         </span>
                     ) : null}
                 </button>
+                {canAskAbout ? (
+                    <button
+                        type="button"
+                        className="app-resources-file-ask"
+                        title={tran('Ask the Assistant About This File')}
+                        aria-label={tran('Ask the Assistant About This File')}
+                        onClick={() => {
+                            void handleAskingAbout();
+                        }}
+                    >
+                        <i className="bi bi-robot" />
+                    </button>
+                ) : null}
                 <ContextMenuDotsButtonComp
                     onOpening={handleContextMenuOpening}
                 />

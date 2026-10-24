@@ -6,7 +6,7 @@ import { tran } from '../lang/langHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import {
     openContextMenu,
-    openInBibleLookup,
+    openFoundBibleItem,
 } from '../bible-find/bibleFindHelpers';
 import { handleDragStart as handleDragStartHelper } from '../helper/dragHelpers';
 import { breakItem } from './bibleCrossRefsHelpers';
@@ -58,13 +58,10 @@ export default function BibleCrossRefAIRenderFoundItemComp({
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleClicking = useCallback((event: any) => {
-        openInBibleLookup(
-            event,
-            viewControllerRef.current,
-            dataRef.current!.bibleItem,
-            true,
-        );
+    // A press reads the verse in a floating panel and leaves the passage
+    // being read alone; putting it beside that passage is in the row's menu.
+    const handleClicking = useCallback(() => {
+        openFoundBibleItem(dataRef.current!.bibleItem);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // The row is the target, so it has to take focus too -- the reference is
@@ -75,23 +72,17 @@ export default function BibleCrossRefAIRenderFoundItemComp({
             return;
         }
         event.preventDefault();
-        openInBibleLookup(
-            event,
-            viewControllerRef.current,
-            dataRef.current!.bibleItem,
-            true,
-        );
+        openFoundBibleItem(dataRef.current!.bibleItem);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     if (data === undefined) {
         return <div className="app-xref-status">{tran('Loading')}...</div>;
     }
+    // A reference that names no passage (see `breakItem`) gets no row. A
+    // volunteer can do nothing with "Fail to get data for `PSA 119:ющ`" but
+    // read past it, and a row there invites a press that leads nowhere.
     if (data === null) {
-        return (
-            <div className="app-xref-status is-error">
-                {tran('Fail to get data for')} "{bibleVersesKey}"
-            </div>
-        );
+        return null;
     }
     const { htmlText, bibleItem, bibleText } = data;
     return (
@@ -99,10 +90,8 @@ export default function BibleCrossRefAIRenderFoundItemComp({
             className="app-xref-item app-caught-hover-pointer"
             role="button"
             tabIndex={0}
-            // What a click actually does. The old "shift + click to append"
-            // described a modifier this row has never read: it appends either
-            // way.
-            title={tran('Open beside the current verse')}
+            // What a click actually does: the verse opens in a floating panel.
+            title={tran('Click to open the verse')}
             draggable
             onDragStart={handleDragStart}
             onContextMenu={handleContextMenuOpening}

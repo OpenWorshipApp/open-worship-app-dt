@@ -12,6 +12,7 @@ import AppWindowToolsComp from './others/AppWindowToolsComp';
 import GraphViewPanelsHostComp from './graph-view/GraphViewPanelsHostComp';
 import LocationNameDetailPanelsHostComp from './location-name-lookup/LocationNameDetailPanelsHostComp';
 import DataArchiveAppMenuComp from './setting/data-archive/DataArchiveAppMenuComp';
+import LangAppMenuComp from './lang/LangAppMenuComp';
 import { checkIsMainWindow } from './server/appHelpers';
 
 await init();
@@ -26,6 +27,7 @@ run(
         <LocationNameDetailPanelsHostComp />
         <GraphViewPanelsHostComp />
         <DataArchiveAppMenuComp />
+        <LangAppMenuComp />
     </>,
 );
 

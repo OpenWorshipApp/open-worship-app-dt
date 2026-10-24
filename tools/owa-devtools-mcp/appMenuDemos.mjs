@@ -44,11 +44,8 @@ const APP_MENU_DEMO_LIST = [
     suffix: 'menu-tools',
     label: 'Learn the Tools menu',
     detail:
-      'Learn Copy Debug Info, Copy Full Debug Info, Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools, and Start Controlling.',
+      'Learn Local Web Share, Google Fonts, App Assistant, AI Chat, Khmer Tools, and Start Controlling.',
     steps: [
-      {
-        text: 'Copy Debug Info copies the app, runtime, operating-system, and commit versions for a support report. Copy Full Debug Info also includes the complete build metadata.',
-      },
       {
         text: 'Local Web Share opens the sharing window. Google Fonts opens the font catalog in your browser.',
       },
@@ -81,10 +78,13 @@ const APP_MENU_DEMO_LIST = [
     suffix: 'menu-help',
     label: 'Learn the Help menu',
     detail:
-      'Learn Tips of the Day, All tips, App Help (Chatbot), AI Chat, Learn More, both update checks, and About.',
+      'Learn Tips of the Day, All tips, Keyboard Shortcuts, Copy Debug Info, App Help (Chatbot), Learn More, Check for Updates, and About Open Worship app.',
     steps: [
       {
-        text: 'Tips of the Day opens one learning suggestion for this page. All tips opens its complete searchable lesson list.',
+        text: 'Tips of the Day opens one learning suggestion for this page. All tips opens its complete searchable lesson list, and Keyboard Shortcuts lists every shortcut.',
+      },
+      {
+        text: 'Help > Copy Debug Info copies the app, runtime, operating-system, and commit versions for a support report. Help > Copy Full Debug Info also includes the complete build metadata.',
       },
       {
         text: 'App Help (Chatbot) opens the app-aware assistant when AI features are enabled. AI Chat opens supported chat websites, which do not know what is happening inside this app.',

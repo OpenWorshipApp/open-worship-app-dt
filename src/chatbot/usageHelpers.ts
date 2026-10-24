@@ -16,6 +16,7 @@
 // the account's own catalogue has no price here, and a count with "price not
 // known" beside it is worth more than a blank.
 
+import { fillWords, tran } from './chatTranHelpers';
 import type { LlmProviderType } from './llmBotHelpers';
 
 /**
@@ -66,6 +67,79 @@ const MODEL_PRICE_MAP: Record<string, LlmModelPriceType> = {
         output: 0.4,
     },
     'kimi-k3': { input: 3, cacheRead: 0.3, cacheWrite: 3, output: 15 },
+    // Amazon Bedrock, the Standard-tier In-Region rate in its US regions off
+    // each model's own AWS card and the pricing page, checked 2026-10-09; the
+    // OpenAI rows are the short-context (272K or fewer input tokens) rate,
+    // which every question here is. Frankfurt is ~20% more for the Gemmas and
+    // is not told apart, because the table is keyed on the model. Where AWS
+    // publishes no cached rate (the Gemmas, every cache write but OpenAI's) a
+    // cached token is priced as a full one: the estimate can only come out
+    // HIGH, never under the bill.
+    // Claude on Bedrock rides the `bedrock-runtime` host as a cross-region
+    // id, at the Global rate (the `us.` geo id is a cent more): cache read a
+    // tenth of input and cache write 1.25x, like Anthropic's own, for prompts
+    // of 100K tokens or fewer, which every question here is. AWS's Haiku 5.5
+    // card and its launch-day price list, 2026-10-11.
+    'global.anthropic.claude-haiku-5-5': {
+        input: 0.1,
+        cacheRead: 0.01,
+        cacheWrite: 0.125,
+        output: 0.5,
+    },
+    'openai.gpt-6-astra': {
+        input: 11,
+        cacheRead: 1.1,
+        cacheWrite: 13.75,
+        output: 55,
+    },
+    'openai.gpt-5.6-terra': {
+        input: 2.2,
+        cacheRead: 0.22,
+        cacheWrite: 2.75,
+        output: 13.2,
+    },
+    'openai.gpt-5.6-luna': {
+        input: 0.22,
+        cacheRead: 0.022,
+        cacheWrite: 0.275,
+        output: 1.32,
+    },
+    'openai.gpt-5.4': {
+        input: 2.75,
+        cacheRead: 0.275,
+        cacheWrite: 2.75,
+        output: 16.5,
+    },
+    'xai.grok-4.6': {
+        input: 2.2,
+        cacheRead: 0.55,
+        cacheWrite: 2.2,
+        output: 6.6,
+    },
+    'xai.grok-4.3': {
+        input: 1.25,
+        cacheRead: 0.2,
+        cacheWrite: 1.25,
+        output: 2.5,
+    },
+    'google.gemma-4-31b': {
+        input: 0.14,
+        cacheRead: 0.14,
+        cacheWrite: 0.14,
+        output: 0.4,
+    },
+    'google.gemma-4-26b-a4b': {
+        input: 0.13,
+        cacheRead: 0.13,
+        cacheWrite: 0.13,
+        output: 0.4,
+    },
+    'google.gemma-4-e2b': {
+        input: 0.04,
+        cacheRead: 0.04,
+        cacheWrite: 0.04,
+        output: 0.08,
+    },
 };
 
 // The keyless services charge nobody. Priced at zero rather than left
@@ -123,6 +197,11 @@ export type LlmRoundUsageType = {
     cacheRead: number;
     cacheWrite: number;
     output: number;
+    // A round answered by a model on THIS computer (a custom server on a
+    // loopback address): it costs nothing, whatever the model is called.
+    // Decided by the loop, which knows the server; this module never reads
+    // the settings store.
+    isPricedAtZero?: boolean;
 };
 
 /**
@@ -187,7 +266,8 @@ export function toAnthropicRoundUsage(
 }
 
 /**
- * The OpenAI shape, which ChatGPT, Kimi and both free services all speak.
+ * The OpenAI shape, which ChatGPT, Kimi, Bedrock and the free service all
+ * speak.
  * `prompt_tokens` is the WHOLE prompt and `cached_tokens` the part of it that
  * was served from the cache, so the full-rate part is the difference; a host
  * that reports no details at all is read as having cached nothing. Reasoning
@@ -223,6 +303,9 @@ export function toOpenAiRoundUsage(
 
 /** What one round costs at list price, or null for a model with no price. */
 export function toRoundCostUsd(round: LlmRoundUsageType): number | null {
+    if (round.isPricedAtZero) {
+        return 0;
+    }
     const price = getLlmModelPrice(round.provider, round.model);
     if (price === null) {
         return null;
@@ -319,7 +402,7 @@ export function toUsdLabel(usd: number) {
     if (usd >= 0.001) {
         return `$${usd.toFixed(3)}`;
     }
-    return 'under $0.001';
+    return tran('under $0.001');
 }
 
 /**
@@ -329,13 +412,23 @@ export function toUsdLabel(usd: number) {
 export function toCostLabel(usage: ChatUsageType) {
     const pricedRounds = usage.rounds - usage.unpricedRounds;
     if (pricedRounds === 0) {
-        return usage.rounds === 0 ? '' : 'price not known';
+        return usage.rounds === 0 ? '' : tran('price not known');
     }
-    const dollars =
-        usage.costUsd > 0 ? `≈ ${toUsdLabel(usage.costUsd)}` : 'free';
-    return usage.unpricedRounds > 0
-        ? `${dollars} + some at an unknown price`
-        : dollars;
+    const isMixed = usage.unpricedRounds > 0;
+    if (usage.costUsd > 0) {
+        const dollars = toUsdLabel(usage.costUsd);
+        return isMixed
+            ? fillWords(tran('≈ {dollars} + some at an unknown price'), {
+                  dollars,
+              })
+            : `≈ ${dollars}`;
+    }
+    return isMixed ? tran('free + some at an unknown price') : tran('free');
+}
+
+// A count as the figures here print it: "1,234".
+function toCountText(count: number) {
+    return count.toLocaleString('en-US');
 }
 
 /**
@@ -347,11 +440,95 @@ export function describeUsageBriefly(usage: ChatUsageType | undefined) {
     if (usage === undefined || usage.rounds === 0) {
         return '';
     }
-    return `${toCostLabel(usage)} · ${toCompactCount(toTotalTokens(usage))} tokens`;
+    const tokens = fillWords(tran('{count} tokens'), {
+        count: toCompactCount(toTotalTokens(usage)),
+    });
+    return `${toCostLabel(usage)} · ${tokens}`;
 }
 
-function toPlural(count: number, noun: string) {
-    return `${count.toLocaleString('en-US')} ${noun}${count === 1 ? '' : 's'}`;
+/**
+ * Which assistant and model an answer's rounds went to, for the hover over
+ * its label and its cost line: "Model: Free · Nemotron Super". Neutral on
+ * purpose -- under a note saying the assistant failed and the guide answered,
+ * the rounds were still that model's.
+ */
+export function toAnsweredByText(answeredBy: {
+    assistant: string;
+    model: string;
+}) {
+    return fillWords(tran('Model: {assistant} · {model}'), answeredBy);
+}
+
+// Where the tokens went, in whole phrases: a count and its plural are each
+// language's own order.
+function genTokenParts(usage: ChatUsageType) {
+    const toFilled = (sentence: string, count: number) => {
+        return fillWords(sentence, { count: toCountText(count) });
+    };
+    const rounds = toFilled(
+        usage.rounds === 1
+            ? tran('{count} model round')
+            : tran('{count} model rounds'),
+        usage.rounds,
+    );
+    const inputParts = [
+        toFilled(
+            usage.input === 1
+                ? tran('{count} token in at the full rate')
+                : tran('{count} tokens in at the full rate'),
+            usage.input,
+        ),
+    ];
+    if (usage.cacheRead > 0) {
+        inputParts.push(
+            toFilled(tran('{count} read from the cache'), usage.cacheRead),
+        );
+    }
+    if (usage.cacheWrite > 0) {
+        inputParts.push(
+            toFilled(tran('{count} written to it'), usage.cacheWrite),
+        );
+    }
+    const output = toFilled(
+        usage.output === 1
+            ? tran('{count} token out')
+            : tran('{count} tokens out'),
+        usage.output,
+    );
+    return `${rounds}: ${inputParts.join(', ')}; ${output}.`;
+}
+
+// What the dollars are worth, with the caveat.
+function genCostSentence(usage: ChatUsageType) {
+    const values = {
+        dollars: toUsdLabel(usage.costUsd),
+        count: toCountText(usage.unpricedRounds),
+    };
+    if (usage.unpricedRounds === 0) {
+        return fillWords(
+            tran(
+                'About {dollars} at the list price. An estimate: the bill ' +
+                    'from your provider is the real figure.',
+            ),
+            values,
+        );
+    }
+    return fillWords(
+        usage.unpricedRounds === 1
+            ? tran(
+                  'About {dollars} at the list price, not counting {count} ' +
+                      'round on a model this app has no price for. An ' +
+                      'estimate: the bill from your provider is the real ' +
+                      'figure.',
+              )
+            : tran(
+                  'About {dollars} at the list price, not counting {count} ' +
+                      'rounds on a model this app has no price for. An ' +
+                      'estimate: the bill from your provider is the real ' +
+                      'figure.',
+              ),
+        values,
+    );
 }
 
 /**
@@ -364,40 +541,19 @@ export function describeUsageInFull(usage: ChatUsageType | undefined) {
     if (usage === undefined || usage.rounds === 0) {
         return '';
     }
-    const inputParts = [
-        `${toPlural(usage.input, 'token')} in at the full rate`,
-    ];
-    if (usage.cacheRead > 0) {
-        inputParts.push(
-            `${usage.cacheRead.toLocaleString('en-US')} read from the cache`,
-        );
-    }
-    if (usage.cacheWrite > 0) {
-        inputParts.push(
-            `${usage.cacheWrite.toLocaleString('en-US')} written to it`,
-        );
-    }
-    const lines = [
-        `${toPlural(usage.rounds, 'model round')}: ${inputParts.join(', ')}; ` +
-            `${toPlural(usage.output, 'token')} out.`,
-    ];
+    const lines = [genTokenParts(usage)];
     const pricedRounds = usage.rounds - usage.unpricedRounds;
     if (pricedRounds === 0) {
         lines.push(
-            'This app has no list price for the model that answered, so it ' +
-                'cannot put a figure on the cost.',
+            tran(
+                'This app has no list price for the model that answered, ' +
+                    'so it cannot put a figure on the cost.',
+            ),
         );
     } else if (usage.costUsd === 0) {
-        lines.push('Answered by a free service, so nothing was charged.');
+        lines.push(tran('Answered by a free service, so nothing was charged.'));
     } else {
-        lines.push(
-            `About ${toUsdLabel(usage.costUsd)} at the list price` +
-                (usage.unpricedRounds > 0
-                    ? `, not counting ${toPlural(usage.unpricedRounds, 'round')} ` +
-                      'on a model this app has no price for'
-                    : '') +
-                '. An estimate: the bill from your provider is the real figure.',
-        );
+        lines.push(genCostSentence(usage));
     }
     return lines.join('\n');
 }

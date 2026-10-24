@@ -14,7 +14,7 @@ polyfill**. Anything a test needs, that test builds.
 
 | | `vitest.config.ts` | `vitest.electron.config.ts` |
 | --- | --- | --- |
-| Runs | `src/**/*.test.ts(x)`, `tools/**/*.test.mjs` | `electron/**/*.test.ts` |
+| Runs | `src/**/*.test.ts(x)`, `tools/**/*.test.mjs`, `extra-work/local-llm/**/*.test.mjs` | `electron/**/*.test.ts` |
 | Environment | `node`, jsdom **per file** via pragma | `node` |
 | Setup | `src/test-setup/localStoragePolyfill.ts` | none |
 | Inlined deps | `open-lyric`, `monaco-editor` | none |
@@ -157,12 +157,12 @@ test('presses the button', async () => {
 });
 ```
 
-48 test files use this shape. Everything goes through `act`, including the
+Some 110 test files use this shape. Everything goes through `act`, including the
 initial render and the unmount.
 
 ### The batched harness — the pattern for breadth
 
-`src/_screen/components.smoke.test.tsx` (664 lines) builds **one** mock surface
+`src/_screen/components.smoke.test.tsx` (~700 lines) builds **one** mock surface
 — a fake screen manager, a fake settings store, a fake display list — and then
 renders many components against it. That is the shape that pays for 417
 components: one expensive mock surface amortised over a folder, instead of 40
@@ -191,7 +191,7 @@ parameterised test on any module of the same shape.
 | **A settings write race** clobbering a map (memory `settings-write-race-corrupts-onscreen-map`) | Two concurrent writers; assert both entries survive |
 | **A parse that drops the whole map on one bad entry** (memory `screen-onscreen-setting-all-or-nothing`) | Feed one invalid entry among valid ones; assert only the invalid one is dropped |
 | **A missing `tran()` key** — throws in dev and blanks the page | Render with the key; a throw is a real bug, not a test to mock away |
-| **`%` keeps the sign**, so stepping back off index 0 lands at -1 (CLAUDE.md, the chat tips) | Step backwards from the first element; assert it wraps to the last |
+| **`%` keeps the sign**, so stepping back off index 0 lands at -1 (rule `chatbot-window.md`, the chat tips) | Step backwards from the first element; assert it wraps to the last |
 | **A regex over repo text on a CRLF checkout** (memory `crlf-checkout-line-regex`) | Feed the function `\r\n` text; assert it still matches |
 
 ## 6. Special imports
@@ -201,7 +201,7 @@ parameterised test on any module of the same shape.
   `document.execCommand ??= () => false` (monaco's clipboard contrib probes
   both at module-eval time), then **dynamic-import** the module under test
   AFTER the patch — static imports hoist above it. Copy
-  `src/plugins/public-domain-songs/publicDomainSongsHelpers.test.ts:17-24`.
+  `src/plugins/public-domain-songs/publicDomainSongsHelpers.test.ts:39-44`.
   A node-env test must never import it at all. Memory
   `monaco-css-test-failure-local-open-lyric`.
 - **`tools/owa-devtools-mcp/*.mjs`** — plain ESM, no app imports, no `node:fs`
@@ -213,18 +213,23 @@ parameterised test on any module of the same shape.
   `mockReturnValue` set in one test leaks into the next when the instance is
   pinned.
 
-## 7. Dead mocks to clean up as you pass
+## 7. Stubbing `useAppEffect`, and the dead mocks that were here
 
-Four test files still `vi.mock('.../debuggerHelpers')` — a module that became
-`appHooks`. Inert, but it silently fails to stub `useAppEffect`:
+`useAppEffect` is plain `useEffect` unless the `appProvider` mock says
+`systemUtils.isDev: true` — `appHooks` reads that at module load, so the mock
+needs `systemUtils` at all. To stub it, mock `appHooks` partially
+(`importOriginal`) so sibling exports like `useAppCurrentRef` survive. A
+`vi.mock('.../debuggerHelpers')` is a dead path: that module became
+`appHooks`, and the mock stubs nothing.
+
+Four test files carried one until 2026-10-11 (`AD-17`):
 `src/_screen/screenInfrastructure.test.tsx`,
 `src/app-document-editor/AppDocumentEditorComp.test.tsx`,
-`src/server/appHelpers.test.tsx`, `src/event/KeyboardEventListener.test.tsx`
-(plus a stale `describe('debuggerHelpers')` label in
-`src/helper/appHooks.test.tsx`). Repoint to `appHooks` via a partial mock
-(`importOriginal`) so `useAppEffect` becomes plain `useEffect` while sibling
-exports like `useAppCurrentRef` survive. `appProvider` mocks need
-`systemUtils.isDev`, because `appHooks` reads it at module load.
+`src/server/appHelpers.test.tsx`, `src/event/KeyboardEventListener.test.tsx`.
+They were DELETED, not repointed: every one of those suites has `isDev` false
+or unset, so the hook was already plain `useEffect` there and a repointed stub
+would have been one no test could fail on. The five suites ran 43 tests
+before and after.
 
 ## 8. Event timing
 
@@ -242,3 +247,30 @@ await act(async () => {
 
 Prefer `vi.useFakeTimers()` + `vi.advanceTimersByTimeAsync(500)` for anything
 debounced — it is deterministic, and the 500ms debounces are everywhere.
+
+## 9. Instrumentation and generated fixtures (2026-10-14)
+
+Full instrumentation also delays imports inside `beforeAll`: the measurement
+script raises **both** `testTimeout` and `hookTimeout` to 60 seconds. The
+ordinary suite keeps its committed timeouts. A screen-manager import exceeded
+the default hook timeout during measurement while its focused suite passed.
+
+`tran.mjs` prefers `electron-build/knowledge/tran.json` over source dictionaries.
+An old local bundle made four translation/interlock tests fail despite both
+source packs having the keys. `node extra-work/build-knowledge.mjs` restored
+those real-data tests without changing their expectations.
+
+Use fake timers in **every** test of a debounce-heavy component harness, then
+clear them after unmount before restoring real timers. Instrumentation slowed
+the foreground harness enough for an earlier test's real marquee timer to
+arrive in the independent-timers test; focused runs had not exposed it.
+
+The foreground harness extracts both real dictionaries, returns English labels
+for queries, and throws on missing dynamic keys. Its Node fixture reads use
+repo-relative paths: Vite's asset transform rewrote a dynamic
+`new URL(..., import.meta.url)` into a nonexistent drive-root path on Windows.
+
+The measurement runner checks child-process failure before reading any summary.
+Finding a summary alone can accept a stale report. The regression tests in
+`src/test-setup/coverageGapRunner.test.ts` simulate failed launches with an
+existing summary and verify that only success writes the worklist.

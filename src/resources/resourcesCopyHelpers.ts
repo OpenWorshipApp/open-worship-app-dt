@@ -294,22 +294,30 @@ export function toResourcesFilesCopiedMessage(
  * hold N file handles and N disk queues open at once on a weak machine, and
  * `copyFile` streams inside libuv, so no file ever lands in the renderer's
  * memory. `fsListDirents` does not follow links, so a link pointing back up
- * the tree is skipped rather than walked for ever.
+ * the tree is skipped rather than walked for ever. Also the data folder's move
+ * off the Desktop (`dataDirMoveHelpers.ts`), which counts along.
  */
-async function copyDirTree(
+export async function copyDirTree(
     sourceDirPath: string,
     destinationDirPath: string,
     counts: { fileCount: number; skippedCount: number },
+    onFileCopied?: () => void,
 ) {
     await fsCreateDir(destinationDirPath);
     for (const entry of await fsListDirents(sourceDirPath)) {
         const sourcePath = pathJoin(sourceDirPath, entry.name);
         const destinationPath = pathJoin(destinationDirPath, entry.name);
         if (entry.isDirectory) {
-            await copyDirTree(sourcePath, destinationPath, counts);
+            await copyDirTree(
+                sourcePath,
+                destinationPath,
+                counts,
+                onFileCopied,
+            );
         } else if (entry.isFile) {
             await fsCloneFile(sourcePath, destinationPath);
             counts.fileCount++;
+            onFileCopied?.();
         } else {
             counts.skippedCount++;
         }

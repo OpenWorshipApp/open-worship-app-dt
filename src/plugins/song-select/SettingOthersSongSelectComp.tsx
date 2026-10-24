@@ -160,6 +160,7 @@ export default function SettingOthersSongSelectComp() {
     }, []);
     return (
         <SettingOthersSectionComp
+            foldName="song-select"
             iconClassName="bi-music-note-list"
             title="SongSelect Integration"
             description="Import song lyrics from CCLI SongSelect"

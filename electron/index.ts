@@ -1,7 +1,10 @@
 import { app, protocol } from 'electron';
 
 import { initAiChatGuestGuard } from './aiChatGuestHelpers';
-import { enableRemoteDebugging, initAi } from './aiHelpers';
+import { checkIsAiEnabled, enableRemoteDebugging, initAi } from './aiHelpers';
+import { initAppWindowListWatch } from './appWindowListHelpers';
+import { initConsoleLog } from './consoleLogHelpers';
+import { initLlmReportQueue } from './llmReportHelpers';
 import { isDev, sweepStalePrintPreviewFiles } from './electronHelpers';
 import {
     customScheme,
@@ -25,9 +28,12 @@ import {
 import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
 import { initDisplayMediaHandler } from './displayMediaHelpers';
+import { getScreenMirror, initScreenMirror } from './screenMirrorService';
+import { initVirtualDisplays } from './virtualDisplayService';
 import {
     findUserDataPathArg,
     initAppUserModelId,
+    initLaunchTask,
     initSecondInstance,
     initUserTasks,
 } from './taskbarHelpers';
@@ -35,6 +41,7 @@ import {
 function applyLaunchOverrides() {
     // The single-instance lock lives in `userData`, so dev must use its own
     // directory to be able to run alongside the installed app.
+    const defaultUserDataPath = app.getPath('userData');
     const userDataPath =
         process.env.OWA_USER_DATA_PATH ??
         // a taskbar jump list task relaunches the exe with no environment, so it
@@ -45,7 +52,7 @@ function applyLaunchOverrides() {
         app.setPath('userData', userDataPath);
         app.setPath('sessionData', userDataPath);
     }
-    initAppUserModelId();
+    initAppUserModelId(defaultUserDataPath);
 }
 
 async function main() {
@@ -83,14 +90,28 @@ async function main() {
     // Same: serve `owa-devtools-mcp` and publish both agent doors. Only
     // `node:http` loads until something actually connects.
     initAi();
+    // What each window logs as an error, kept for a problem report to
+    // quote -- which only the assistant writes, so only with it on. Before
+    // the first window is made: a window is heard from the moment it exists.
+    if (checkIsAiEnabled()) {
+        initConsoleLog();
+        // A problem report kept while its server was away goes by itself.
+        initLlmReportQueue();
+        // The help window's window picker follows windows as they come and
+        // go -- watched from the first one made.
+        initAppWindowListWatch();
+    }
     initCustomSchemeHandler();
     initDisplayMediaHandler();
     // The AI Chat window's guest session, locked down before any guest
     // can exist: the window is opened by a renderer, not by code here.
     initAiChatGuestGuard();
+    await initScreenMirror();
+    initVirtualDisplays(getScreenMirror());
     const appController = ElectronAppController.getInstance();
-    initSecondInstance(appController);
-    initUserTasks();
+    initSecondInstance(appController, checkIsAiEnabled());
+    initLaunchTask(appController, process.argv, checkIsAiEnabled());
+    initUserTasks(checkIsAiEnabled());
     initEventListenerApp(appController);
     initEventScreen(appController);
     initFinderEvent();

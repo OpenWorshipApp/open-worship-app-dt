@@ -35,6 +35,9 @@ function RenderLanguageButtonComp({
                 applyStore.pendingApply();
             }}
             className={`item btn ${btnType}`}
+            // The chosen language, in words a screen reader (and the app's
+            // tools) can read; the solid button style was its only sign.
+            aria-pressed={locale === currentLocale}
             title={langData.name}
         >
             {/*

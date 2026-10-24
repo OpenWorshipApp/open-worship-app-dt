@@ -11,6 +11,7 @@ import { useBibleViewTitleMaterialContext } from './viewExtraHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { pressElementLikeButton } from '../../helper/helpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { DEFAULT_BIBLE_COLOR_NOTE } from '../../helper/colorNoteDefaults';
 
 function RenderBibleKeyComp({
     bibleKey,
@@ -77,6 +78,11 @@ export function RenderTitleMaterialComp({
 }>) {
     const viewController = useBibleItemsViewControllerContext();
     const materialContext = useBibleViewTitleMaterialContext();
+    const colorGroup = viewController.getColorNote(bibleItem);
+    const isGrouped =
+        !!colorGroup &&
+        viewController.getBibleItemsByColorNote(colorGroup).length > 1;
+    const isSyncScrolling = viewController.getIsGroupScrollSynced(colorGroup);
     const colorNoteHandler: ColorNoteInf = {
         getColorNote: async () => {
             return viewController.getColorNote(bibleItem);
@@ -88,8 +94,47 @@ export function RenderTitleMaterialComp({
     return (
         <div className="bible-view-title-material d-flex align-items-center text-nowrap">
             <div className="bible-view-title-lead d-flex">
-                <div className="ms-1">
-                    <ItemColorNoteComp item={colorNoteHandler} />
+                <div className="ms-1 bible-view-group-controls">
+                    <ItemColorNoteComp
+                        item={colorNoteHandler}
+                        defaultColorNote={DEFAULT_BIBLE_COLOR_NOTE}
+                    />
+                    {isGrouped ? (
+                        <button
+                            type="button"
+                            className="bible-view-sync-scroll"
+                            title={
+                                isSyncScrolling
+                                    ? tran('Disable group sync scrolling')
+                                    : tran('Enable group sync scrolling')
+                            }
+                            aria-label={tran('Sync group scrolling')}
+                            aria-pressed={isSyncScrolling}
+                            onClick={(event) => {
+                                viewController.setIsGroupScrollSynced(
+                                    colorGroup,
+                                    !isSyncScrolling,
+                                );
+                                if (!isSyncScrolling) {
+                                    const container = event.currentTarget
+                                        .closest('.bible-view')
+                                        ?.querySelector<HTMLElement>(
+                                            '[data-scroll-verses-container]',
+                                        );
+                                    if (container) {
+                                        viewController.groupScrollSync.syncFrom(
+                                            container,
+                                        );
+                                    }
+                                }
+                            }}
+                        >
+                            <i
+                                className="bi bi-arrow-down-up"
+                                aria-hidden="true"
+                            />
+                        </button>
+                    ) : null}
                 </div>
                 <div className="mx-1">
                     <AudioAIEnablingComp bibleItem={bibleItem} />

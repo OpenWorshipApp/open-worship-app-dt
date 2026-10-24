@@ -1,52 +1,40 @@
-import { useMemo } from 'react';
-
 import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
-import { useAppStateAsync } from '../../helper/appHooks';
-import { toLocaleNumBible } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 import { tran } from '../../lang/langHelpers';
 
+export type RestVerseType = {
+    verse: number;
+    // The number as the bible writes it (Khmer digits for a Khmer bible).
+    label: string | number | null;
+};
+
+/**
+ * The verse numbers outside the passage. Handed in already written out --
+ * the passage view reads them with its verses -- because worked out here,
+ * one load behind, a move to another passage drew the new numbers' slots
+ * with the OLD passage's labels until that load landed.
+ */
 export default function RenderRestVerseNumListComp({
-    to,
-    from,
     bibleItem,
-    verseCount,
+    restVerseList,
     onSelect,
     toTitle,
 }: Readonly<{
-    to?: number;
-    from?: number;
     bibleItem: ReadIdOnlyBibleItem;
-    verseCount: number;
+    restVerseList: RestVerseType[];
     onSelect: (verse: number) => void;
     toTitle: (verse: number) => string;
 }>) {
     const fontFamily = useBibleFontFamily(bibleItem.bibleKey);
     const fontSize = useBibleViewFontSizeContext();
-    const actualFrom = from ?? 1;
-    const actualTo = to ?? verseCount;
-    const numList = useMemo(() => {
-        const list = [];
-        for (let i = actualFrom; i <= actualTo; i++) {
-            list.push(i);
-        }
-        return list;
-    }, [actualFrom, actualTo]);
-    const [localeVerseList] = useAppStateAsync(() => {
-        return Promise.all(
-            numList.map((verse) => {
-                return toLocaleNumBible(bibleItem.bibleKey, verse);
-            }),
-        );
-    }, [bibleItem.bibleKey, numList]);
-    if (!localeVerseList || localeVerseList.length === 0) {
+    if (restVerseList.length === 0) {
         return null;
     }
     return (
         <div className="app-not-selectable-text">
-            {numList.map((verse, i) => {
+            {restVerseList.map(({ verse, label }) => {
                 return (
                     <div
                         key={verse}
@@ -67,7 +55,7 @@ export default function RenderRestVerseNumListComp({
                                 fontFamily,
                             }}
                         >
-                            {localeVerseList[i]}
+                            {label}
                         </div>
                     </div>
                 );

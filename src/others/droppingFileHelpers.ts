@@ -46,26 +46,25 @@ export type DroppedFileType = File | string;
 export async function* readDroppedFiles(
     event: DragEvent,
 ): AsyncGenerator<File> {
-    async function* readDirectory(
-        item: DataTransferItem,
-    ): AsyncGenerator<File> {
-        const handle = item.webkitGetAsEntry?.() as FileSystemDirectoryEntry;
-        if (!handle) {
-            return;
+    // Every file is taken out of `dataTransfer` before the first one is
+    // handed over: a caller awaits between files, and once the drop handler
+    // has yielded the browser empties the list -- of several pictures dropped
+    // on the slide canvas only the first was inserted.
+    const fileList: File[] = [];
+    for (const item of event.dataTransfer.items) {
+        if (item.kind !== 'file') {
+            continue;
         }
-        if (handle.isFile) {
+        const handle = item.webkitGetAsEntry?.() as FileSystemDirectoryEntry;
+        // TODO: Handle directory reading
+        if (handle?.isFile) {
             const file = item.getAsFile();
             if (file) {
-                yield file;
+                fileList.push(file);
             }
         }
-        // TODO: Handle directory reading
     }
-    for (const item of event.dataTransfer.items) {
-        if (item.kind === 'file') {
-            yield* readDirectory(item);
-        }
-    }
+    yield* fileList;
 }
 
 function checkAndCopyFiles(
@@ -106,7 +105,10 @@ export function genOnDrop({
     return async (event: DragEvent) => {
         changeDragEventStyle(event, 'opacity', '1');
         event.preventDefault();
-        if (dirSource.dirPath === null) {
+        // The getter answers '' for a list with no folder, never null: with
+        // `=== null` here a dropped document was copied by its bare name into
+        // the app's working directory (the repo in dev), with no word said.
+        if (!dirSource.dirPath) {
             showSimpleToast(
                 tran('Open Folder'),
                 tran('Please open a folder first'),

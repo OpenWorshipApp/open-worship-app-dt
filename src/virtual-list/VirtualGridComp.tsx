@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
-import { useVirtualRows } from './useVirtualRows';
+import { useVirtualRows, type ScrollToRowType } from './useVirtualRows';
 import {
     useMeasuredRowHeights,
     VIRTUAL_ROW_KEY,
@@ -10,6 +10,7 @@ import {
 import { useKeepPinnedRowInView, useRevealPin } from './useRevealPin';
 import type { RowHeightType } from './virtualRowsHelpers';
 import {
+    toCellWidth,
     toColumnCount,
     toRowCount,
     toRowIndexOfItem,
@@ -19,14 +20,15 @@ import {
 function toRowContentHeight<T>(
     items: T[],
     columns: number,
-    getItemHeight: (item: T) => number,
+    getItemHeight: (item: T, cellWidth: number) => number,
     rowIndex: number,
+    cellWidth: number,
 ) {
     const start = rowIndex * columns;
     const end = Math.min(start + columns, items.length);
     let tallest = 0;
     for (let index = start; index < end; index++) {
-        tallest = Math.max(tallest, getItemHeight(items[index]));
+        tallest = Math.max(tallest, getItemHeight(items[index], cellWidth));
     }
     return tallest;
 }
@@ -77,11 +79,13 @@ export default function VirtualGridComp<T>({
     /** A first guess at a WHOLE row; the grid measures real ones and corrects. */
     estimateRowHeight: number;
     /**
-     * An item's own height, where the data knows it (a slide's aspect ratio).
-     * MUST be stable across renders -- it is what every row offset is built
-     * from. Leaving it out measures each row instead.
+     * An item's own height, where the data knows it (a slide's aspect ratio),
+     * given the width its cell really gets (`toCellWidth`: `itemWidth`, or
+     * less once a narrow pane squeezes it). MUST be stable across renders --
+     * it is what every row offset is built from. Leaving it out measures each
+     * row instead.
      */
-    getItemHeight?: (item: T) => number;
+    getItemHeight?: (item: T, cellWidth: number) => number;
     className?: string;
     rowClassName?: string;
     rowStyle?: CSSProperties;
@@ -120,6 +124,7 @@ export default function VirtualGridComp<T>({
 
     const columns =
         columnCount ?? toColumnCount(containerWidth, itemWidth, itemGap);
+    const cellWidth = toCellWidth(itemWidth, containerWidth, columns);
 
     const rowCount = toRowCount(items.length, columns);
     const toKey = getItemKey ?? String;
@@ -155,17 +160,29 @@ export default function VirtualGridComp<T>({
             Math.max(
                 0,
                 estimateRowHeight -
-                    toRowContentHeight(items, columns, getItemHeight, 0),
+                    toRowContentHeight(
+                        items,
+                        columns,
+                        getItemHeight,
+                        0,
+                        cellWidth,
+                    ),
             );
         return (rowIndex: number) => {
             return (
-                toRowContentHeight(items, columns, getItemHeight, rowIndex) +
-                extraHeight
+                toRowContentHeight(
+                    items,
+                    columns,
+                    getItemHeight,
+                    rowIndex,
+                    cellWidth,
+                ) + extraHeight
             );
         };
     }, [
         items,
         columns,
+        cellWidth,
         getItemHeight,
         measuredExtraHeight,
         estimateRowHeight,
@@ -178,7 +195,13 @@ export default function VirtualGridComp<T>({
     const toContentHeightRef = useAppCurrentRef((rowIndex: number) => {
         return getItemHeight === undefined
             ? 0
-            : toRowContentHeight(items, columns, getItemHeight, rowIndex);
+            : toRowContentHeight(
+                  items,
+                  columns,
+                  getItemHeight,
+                  rowIndex,
+                  cellWidth,
+              );
     });
 
     const findIndex = useCallback((key: string) => {
@@ -189,12 +212,13 @@ export default function VirtualGridComp<T>({
         return index === -1 ? -1 : toRowIndexOfItem(index, columnsRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const scrollToRowRef = useRef<
-        (index: number, align?: 'nearest' | 'center') => boolean
-    >(() => {
+    const scrollToRowRef = useRef<ScrollToRowType>(() => {
         return false;
     });
-    const pinnedIndexes = useRevealPin({ findIndex, scrollToRowRef });
+    const { pinnedIndexes, behaviorRef } = useRevealPin({
+        findIndex,
+        scrollToRowRef,
+    });
 
     const { rows, totalHeight, scrollToRow } = useVirtualRows({
         containerRef,
@@ -205,7 +229,12 @@ export default function VirtualGridComp<T>({
         isEnabled,
     });
     scrollToRowRef.current = scrollToRow;
-    useKeepPinnedRowInView({ pinnedIndexes, totalHeight, scrollToRow });
+    useKeepPinnedRowInView({
+        pinnedIndexes,
+        totalHeight,
+        scrollToRow,
+        behaviorRef,
+    });
 
     const handleMeasuringChromeRow = useCallback(
         (element: HTMLDivElement | null) => {

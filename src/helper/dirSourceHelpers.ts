@@ -69,6 +69,20 @@ export function useFilePaths(
                 return dirSource.getFilePaths(mimetypeName);
             }),
         );
+        // Not one type could be listed (the folder is gone, or unreadable):
+        // `null`, so the list says it failed instead of calling it empty.
+        if (
+            newFilePathsList.length > 0 &&
+            newFilePathsList.every((filePaths) => {
+                return filePaths === null;
+            })
+        ) {
+            if (filePathsRef.current !== null) {
+                colorNotesKeyRef.current = null;
+                setFilePaths(null);
+            }
+            return;
+        }
         let newFilePaths = newFilePathsList
             .filter((filePaths) => {
                 return filePaths !== null;

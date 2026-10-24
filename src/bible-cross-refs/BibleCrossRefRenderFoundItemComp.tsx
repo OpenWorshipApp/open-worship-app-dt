@@ -53,15 +53,10 @@ export default function BibleCrossRefRenderFoundItemComp({
     if (data === undefined) {
         return <div>{tran('Loading')}...</div>;
     }
+    // A reference that names no passage (see `breakItem`) gets no row: this
+    // one wore the pointer cursor of a row that opens something, and did not.
     if (data === null) {
-        return (
-            <div
-                className="w-100 app-border-white-round my-1 p-1 app-caught-hover-pointer"
-                style={{ color: 'red' }}
-            >
-                {tran('Fail to get data for')} "{bibleVersesKey}"
-            </div>
-        );
+        return null;
     }
     const { htmlText, bibleItem, bibleText } = data;
     return (

@@ -11,6 +11,7 @@ import ShowingScreenIconComp from './ShowingScreenIcon';
 import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { pressElementLikeButton } from '../../helper/helpers';
+import { useIsMiniScreenNoRendering } from './miniScreenRenderingHelpers';
 
 export default function ScreenPreviewerHeaderComp({
     isFullView,
@@ -40,6 +41,17 @@ export default function ScreenPreviewerHeaderComp({
         setIsFullViewRef.current(!isFullViewRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const [isNoRendering, setIsNoRendering] = useIsMiniScreenNoRendering(
+        screenManagerBase.screenId,
+    );
+    const handleToggleRendering = useCallback(() => {
+        setIsNoRendering((isPreviousNoRendering) => {
+            return !isPreviousNoRendering;
+        });
+    }, [setIsNoRendering]);
+    const renderingLabel = isNoRendering
+        ? tran('Resume rendering preview')
+        : tran('Stop rendering preview');
     const fullViewLabel = isFullView
         ? tran('Exit full view')
         : tran('Full view');
@@ -58,6 +70,29 @@ export default function ScreenPreviewerHeaderComp({
                 <div className="d-flex justify-content-start">
                     <ShowHideScreen />
                     <MiniScreenClearControlComp />
+                    {/* Beside the clear buttons rather than with the card's
+                        own controls on the right: it is about what this card
+                        DRAWS, and the screen itself is unaffected. */}
+                    <div className="ms-2 d-flex align-items-center">
+                        <i
+                            className={
+                                `bi bi-${isNoRendering ? 'eye-slash' : 'eye'}` +
+                                ' app-caught-hover-pointer'
+                            }
+                            style={
+                                isNoRendering
+                                    ? { color: 'var(--bs-warning)' }
+                                    : undefined
+                            }
+                            role="button"
+                            tabIndex={0}
+                            title={renderingLabel}
+                            aria-label={renderingLabel}
+                            aria-pressed={isNoRendering}
+                            onClick={handleToggleRendering}
+                            onKeyDown={pressElementLikeButton}
+                        />
+                    </div>
                 </div>
                 <div className="flex-fill d-flex justify-content-end align-items-center ms-2">
                     <ShowingScreenIconComp

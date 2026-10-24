@@ -82,6 +82,11 @@ export async function getVersion(port) {
 export function pickTarget(targets, match) {
     if (match) {
         return (
+            // A window by its id first (2026-10-15, the chatbot's window
+            // picker): two Bible Reader windows have the same address, so
+            // only the id tells one from the other. An address is never a
+            // target id, so nothing that matched before matches otherwise.
+            targets.find((target) => target.id === match) ??
             targets.find((target) => target.url === match) ??
             targets.find((target) => {
                 return target.url.includes(match);
@@ -118,6 +123,23 @@ function sendCommand(socket, id, method, params) {
  * Runs `expression` in a page and returns its value. Promises are awaited, so
  * a tool can hand over an `async` expression and read the settled value.
  */
+/**
+ * What a page's thrown error SAYS, without where it was thrown. CDP describes
+ * an exception as its stack, so every tool failing in the page answered with
+ * `Error: That window is not open` and four lines of `at IpcRenderer...` --
+ * frames of a script made up for the call, which tell a caller nothing and
+ * ride along in a model's context for the rest of the question.
+ */
+export function toPageErrorMessage(description) {
+    const text = String(description ?? '');
+    const lines = text.split(/\r?\n/);
+    const firstFrame = lines.findIndex((line) => /^\s+at\s/.test(line));
+    const message = (firstFrame === -1 ? lines : lines.slice(0, firstFrame))
+        .join('\n')
+        .trim();
+    return message.replace(/^Error:\s*/, '') || text;
+}
+
 export function evaluateInTarget(target, expression, timeout = 15000) {
     return new Promise((resolve, reject) => {
         const socket = new WebSocket(target.webSocketDebuggerUrl);
@@ -167,8 +189,10 @@ export function evaluateInTarget(target, expression, timeout = 15000) {
             if (exceptionDetails) {
                 finish(
                     new Error(
-                        exceptionDetails.exception?.description ??
-                            exceptionDetails.text,
+                        toPageErrorMessage(
+                            exceptionDetails.exception?.description ??
+                                exceptionDetails.text,
+                        ),
                     ),
                 );
                 return;
@@ -178,8 +202,91 @@ export function evaluateInTarget(target, expression, timeout = 15000) {
     });
 }
 
+/**
+ * Runs CDP commands on one page over one socket, in order, a step being
+ * `{ method, params }` or `{ waitMs }`, and answers each command's result.
+ * For what an expression cannot do from inside the page -- the browser's own
+ * drop of real files (`owa_drop_files`) -- where the steps belong to one
+ * gesture and a socket per step would let the page see them apart.
+ */
+export function runInTarget(target, stepList, timeout = 15000) {
+    return new Promise((resolve, reject) => {
+        const socket = new WebSocket(target.webSocketDebuggerUrl);
+        const resultList = [];
+        const waiterMap = new Map();
+        let isDone = false;
+        const timeoutId = setTimeout(() => {
+            finish(new Error(`Timed out acting in ${target.url}`));
+        }, timeout);
+        function finish(error, value) {
+            if (isDone) {
+                return;
+            }
+            isDone = true;
+            clearTimeout(timeoutId);
+            try {
+                socket.close();
+            } catch {
+                // Already closing.
+            }
+            if (error) {
+                reject(error);
+            } else {
+                resolve(value);
+            }
+        }
+        socket.addEventListener('error', () => {
+            finish(new Error(`Could not attach to ${target.url}`));
+        });
+        socket.addEventListener('message', (event) => {
+            let message;
+            try {
+                message = JSON.parse(event.data);
+            } catch {
+                return;
+            }
+            const waiter = waiterMap.get(message.id);
+            if (waiter !== undefined) {
+                waiterMap.delete(message.id);
+                waiter(message);
+            }
+        });
+        socket.addEventListener('open', async () => {
+            let lastId = 0;
+            for (const step of stepList) {
+                if (isDone) {
+                    return;
+                }
+                if (step.waitMs !== undefined) {
+                    await new Promise((done) => {
+                        setTimeout(done, step.waitMs);
+                    });
+                    continue;
+                }
+                lastId += 1;
+                const id = lastId;
+                const message = await new Promise((done) => {
+                    waiterMap.set(id, done);
+                    sendCommand(socket, id, step.method, step.params ?? {});
+                });
+                if (message.error) {
+                    finish(
+                        new Error(`${step.method}: ${message.error.message}`),
+                    );
+                    return;
+                }
+                resultList.push(message.result ?? {});
+            }
+            finish(null, resultList);
+        });
+    });
+}
+
 /** `evaluateInTarget`, resolving the live app and the page for the caller. */
-export async function evaluateInApp(expression, { port, match } = {}) {
+export async function evaluateInApp(
+    expression,
+    { port, match, timeout } = {},
+) {
     const livePort = await requireLivePort(port);
     const targets = await listTargets(livePort);
     const target = pickTarget(targets, match);
@@ -202,6 +309,72 @@ export async function evaluateInApp(expression, { port, match } = {}) {
     return {
         port: livePort,
         target,
-        value: await evaluateInTarget(target, expression),
+        // The windows as they were BEFORE the expression ran, so a caller
+        // can tell what it opened (`waitForNewAppPage`) without a second
+        // listing up front.
+        targets,
+        value: await evaluateInTarget(target, expression, timeout),
     };
+}
+
+/** `presenter.html` out of `https://localhost:3000/presenter.html?x=1`. */
+export function toPageName(url) {
+    return String(url)
+        .replace(/[?#].*$/, '')
+        .replace(/^.*\//, '');
+}
+
+/**
+ * The app windows in `after` that are not in `before` -- what a press opened.
+ *
+ * Only the app's own pages count. The hidden window that photographs a
+ * slide's website and the one that reads a page for `owa_read_website` are
+ * page targets too, and either can come and go in the middle of a press that
+ * opened nothing; reporting one as "opened a window" would be the made-up
+ * effect a press result exists to rule out.
+ */
+export function listNewAppPages(before, after) {
+    const seenIds = new Set(
+        before.map((target) => {
+            return target.id;
+        }),
+    );
+    return after
+        .filter((target) => {
+            return (
+                !seenIds.has(target.id) &&
+                getPageRank(target.url) < APP_PAGE_RANK.length
+            );
+        })
+        .map((target) => {
+            return toPageName(target.url);
+        });
+}
+
+/**
+ * The first app window that opened since `before`, polled for up to `waitMs`
+ * (one look when 0), or null. A window takes a few hundred milliseconds to
+ * become a target after the press that asked for it, so a single look right
+ * after the press misses most of them.
+ */
+export async function waitForNewAppPage(port, before, waitMs, pollMs = 200) {
+    const deadline = Date.now() + waitMs;
+    for (;;) {
+        let found = [];
+        try {
+            found = listNewAppPages(before, await listTargets(port));
+        } catch (_error) {
+            // The app went away mid-question; nothing can be said either way.
+            return null;
+        }
+        if (found.length > 0) {
+            return found[0];
+        }
+        if (Date.now() >= deadline) {
+            return null;
+        }
+        await new Promise((resolve) => {
+            setTimeout(resolve, pollMs);
+        });
+    }
 }

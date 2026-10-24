@@ -14,6 +14,10 @@ import { genVerseList } from '../bible-list/bibleHelpers';
 import { getVersesCount } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type BibleItem from '../bible-list/BibleItem';
 import { type BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import {
+    checkIsCrossChapterTarget,
+    toSingleChapterTarget,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 function useTouchDrag(
@@ -128,12 +132,18 @@ export default function RenderVerseOptionsComp({
         verseStart: 1,
         verseEnd: 1,
     });
+    // A passage running on into later chapters shows its start chapter here,
+    // selected from its first verse to the chapter's end.
+    const isCrossChapter = checkIsCrossChapterTarget(target);
+    const shownVerseEnd = isCrossChapter
+        ? (verseList?.length ?? target.verseStart)
+        : target.verseEnd;
     useAppEffect(() => {
         setSelectedTarget({
             verseStart: target.verseStart,
-            verseEnd: target.verseEnd,
+            verseEnd: shownVerseEnd,
         });
-    }, [target.verseStart, target.verseEnd]);
+    }, [target.verseStart, shownVerseEnd]);
     const { verseStart, verseEnd } = selectedTarget;
     const viewController = useBibleItemsViewControllerContext();
     const [verseCount] = useAppStateAsync(() => {
@@ -166,10 +176,15 @@ export default function RenderVerseOptionsComp({
                 verseEnd: newVerseEnd ?? newVerseStart,
             };
             setSelectedTarget(newSelectedTarget);
-            const newTarget: BibleTargetType = {
-                ...targetRef.current,
-                ...newSelectedTarget,
-            };
+            // Picked here, the verses are this chapter's: a passage that ran
+            // on into later chapters ends in this one now.
+            const { bookKey, chapter } = targetRef.current;
+            const newTarget: BibleTargetType = toSingleChapterTarget(
+                bookKey,
+                chapter,
+                newSelectedTarget.verseStart,
+                newSelectedTarget.verseEnd,
+            );
             viewControllerRef.current.applyTargetOrBibleKey(
                 bibleItemRef.current,
                 {
@@ -185,12 +200,14 @@ export default function RenderVerseOptionsComp({
         if (!verseListRef.current) {
             return;
         }
+        const { bookKey, chapter } = targetRef.current;
         viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
-            target: {
-                ...targetRef.current,
-                verseStart: 1,
-                verseEnd: verseListRef.current.length,
-            },
+            target: toSingleChapterTarget(
+                bookKey,
+                chapter,
+                1,
+                verseListRef.current.length,
+            ),
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

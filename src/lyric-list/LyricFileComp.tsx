@@ -21,6 +21,7 @@ import { tran } from '../lang/langHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { handleAppDocumentDragStart } from '../helper/dragHelpers';
 import { exportAppDocument } from '../app-document-list/appDocumentArchiveHelpers';
+import { handleError } from '../helper/errorHelpers';
 import {
     checkHandleOpenSlidesPreviewClicking,
     closeAppDocumentPreviewFloating,
@@ -37,11 +38,31 @@ function genContextMenuItems(
     return [
         genOpenSlidesPreviewContextMenu(lyric.filePath, isSelected),
         {
+            // The song in a new Long Text Show session, as its English card,
+            // ready to show. Its code is fetched when this is pressed: the
+            // panel's helpers are nothing a list of files needs to hold.
+            childBefore: genContextMenuItemIcon('body-text'),
+            menuElement: tran('Long Text Show'),
+            onSelect: async () => {
+                try {
+                    const { openLyricInLongTextShow } =
+                        await import('../presenter-foreground/foregroundLongTextOpenHelpers');
+                    openLyricInLongTextShow(lyric.filePath);
+                } catch (error) {
+                    handleError(error);
+                }
+            },
+        },
+        {
             childBefore: genContextMenuItemIcon('pencil-square'),
+            // A fragment, as the document's own Edit: the menu gives every
+            // `span` in an item a 10px margin, which pushed this label right
+            // of all the others.
             menuElement: (
-                <span>
-                    {tran('Edit')} <i className="bi bi-box-arrow-up-right" />
-                </span>
+                <>
+                    {tran('Edit')}
+                    <i className="bi bi-box-arrow-up-right ms-1" />
+                </>
             ),
             onSelect: () => {
                 openPopupLyricEditorWindow(lyric);
@@ -60,15 +81,24 @@ function genContextMenuItems(
 function LyricFilePreviewComp({ lyric }: Readonly<{ lyric: Lyric }>) {
     const fileSource = FileSource.getInstance(lyric.filePath);
     const { canSave } = useEditingHistoryStatus(lyric.filePath);
+    // The name gives way, the unsaved `*` never does (see the same row in
+    // `VaryAppDocumentFileComp`).
     return (
-        <div className="w-100 h-100 app-ellipsis">
+        <div
+            className="w-100 h-100 d-flex align-items-center app-overflow-hidden"
+            style={{ minWidth: 0 }}
+        >
             <i
-                className="bi bi-music-note"
+                className="bi bi-music-note flex-shrink-0"
                 title={tran('Lyric')}
                 style={{ color: 'var(--bs-info)' }}
             />
-            {fileSource.name}
-            {canSave && <span style={{ color: 'red' }}>*</span>}
+            <span className="app-ellipsis">{fileSource.name}</span>
+            {canSave && (
+                <span className="flex-shrink-0" style={{ color: 'red' }}>
+                    *
+                </span>
+            )}
         </div>
     );
 }

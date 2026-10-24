@@ -13,9 +13,17 @@ import MiniScreenBodyComp, {
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { pressElementLikeButton } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
+import ScreenMirrorFloatingComp from '../../screen-mirror/ScreenMirrorFloatingComp';
+import {
+    useMirrorState,
+    setMirrorPanelShowing,
+} from '../../screen-mirror/mirrorConnectionHelpers';
+import { useToggleScreensShowingKey } from './ShowHideScreen';
 
 ScreenManager.initReceiveScreenMessage();
 export default function MiniScreenComp() {
+    useToggleScreensShowingKey();
+    const mirror = useMirrorState();
     const [previewScale, setPreviewScale] = useStateSettingNumber(
         'mini-screen-previewer',
         defaultRangeSize.size,
@@ -41,14 +49,61 @@ export default function MiniScreenComp() {
             className="card w-100 h-100 app-zero-border-radius"
             ref={containerRef}
         >
+            {!!mirror?.guests.length && (
+                <div
+                    className="card-header d-flex flex-wrap align-items-center gap-2 py-1"
+                    aria-label={tran('Connected guests')}
+                >
+                    <span className="small">{tran('Connected guests')}</span>
+                    {mirror.guests.map((guest) => {
+                        // A guest from outside this network wears the globe
+                        // and the warning colour, so the room is never unsure
+                        // who is watching from elsewhere.
+                        const isInternet = guest.network === 'internet';
+                        return (
+                            <button
+                                key={guest.id}
+                                className={
+                                    'btn btn-sm py-0 ' +
+                                    (isInternet
+                                        ? 'btn-outline-warning'
+                                        : 'btn-outline-info')
+                                }
+                                title={
+                                    isInternet
+                                        ? tran('Connected from the internet')
+                                        : tran('Connected from this network')
+                                }
+                                onClick={() => setMirrorPanelShowing(true)}
+                            >
+                                <i
+                                    className={
+                                        'bi me-1 ' +
+                                        (isInternet
+                                            ? 'bi-globe2'
+                                            : 'bi-pc-display')
+                                    }
+                                />
+                                {guest.prefix}: {guest.name}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
             <MiniScreenBodyComp previewScale={previewScale} />
+            <ScreenMirrorFloatingComp />
             {/* This is the only route to `Add New Screen` that is not a
                 right-click, so it has to be operable without a mouse: as a
                 bare <i> it was out of the accessibility tree, unreachable by
                 keyboard, and had no uid for anything driving the app.
                 `pressElementLikeButton` dispatches the click at the icon's own
                 centre, which is what gives the context menu coordinates to
-                position against -- a plain `.click()` opens it at 0,0. */}
+                position against -- a plain `.click()` opens it at 0,0.
+                Its own name, not `More Options`: that title is on every
+                file row's dots and on each screen card's, and a walkthrough
+                or an agent aiming by the words pressed the first of forty
+                (the Documents list's menu opened for a step about THIS one,
+                2026-10-10). A name with a twin cannot be pressed on purpose. */}
             <i
                 className={
                     'bi bi-three-dots-vertical' +
@@ -56,8 +111,8 @@ export default function MiniScreenComp() {
                 }
                 role="button"
                 tabIndex={0}
-                title={tran('More Options')}
-                aria-label={tran('More Options')}
+                title={tran('Mini Screen Options')}
+                aria-label={tran('Mini Screen Options')}
                 aria-haspopup="menu"
                 onClick={openMiniScreenContextMenu}
                 onKeyDown={pressElementLikeButton}

@@ -73,11 +73,112 @@
 // Always there. It was a band that tucked away while the conversation
 // scrolled for one day (2026-09-10); the user wanted every control of this
 // window where it always is, and it came out whole.
+//
+// What it does do, since 2026-10-09 (asked for with a picture of this head
+// circled: _make the area collapsible_), is fold to one line when the arrow
+// at its left is pressed -- and ONLY then. Folded, it still says what every
+// picker is set to and what the hour has cost; it never folds or opens by
+// itself, and it stays the way it was left.
 .chat-head {
   flex: 0 0 auto;
-  padding: 10px 12px 9px;
+  display: flex;
+  align-items: stretch;
   border-bottom: 1px solid var(--chat-line);
   background-color: var(--chat-panel-soft);
+}
+
+// The pickers and the bill under them. The padding the head used to carry
+// sits here, less its left side: that gutter is the fold's rail now. Two
+// pixels come off the right as well, so rail and padding together take the
+// 24px the head's two 12px sides took -- measured at the 412px this window
+// opens at, a rail that cost the row ten pixels pushed the model picker off
+// the first line and onto the limit's.
+.chat-head-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 10px 9px 0;
+}
+
+// The fold. Open, a slim rail down the head's left edge -- no wider than a
+// scrollbar, and the full height of the head, so it is a target nobody has
+// to aim at and it costs the picker row nothing. No transition on the fold
+// itself, for the reason the notice below has none: a re-layout of the whole
+// log is felt on the machines this window opens on.
+.chat-head-fold {
+  flex: 0 0 14px;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  color: var(--chat-muted);
+  font-size: 10px;
+  line-height: 1;
+
+  &:hover {
+    color: var(--chat-text);
+    background-color: var(--chat-line);
+  }
+
+  // Inside the head's own edge, or the ring is clipped by the window.
+  &:focus-visible {
+    outline-offset: -2px;
+  }
+}
+
+// Folded, the button IS the head: the arrow where it was, then what the
+// pickers are set to, and the whole line opens it again.
+.chat-head.is-collapsed .chat-head-fold {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  // Two pixels on the left: where the arrow stood in the rail, so it does
+  // not move under the pointer that just pressed it.
+  padding: 6px 12px 6px 2px;
+}
+
+.chat-head-folded {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  // The pickers' own voice, so the line reads as the same choices at rest.
+  font-family: var(--chat-font-data);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+// The one that gives ground: a long model name ellipsises here, as it does
+// in its picker.
+.chat-head-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// The spend guard's corner, kept whole at the end of the line. The same two
+// colours as the figure beside the picker: amber past the warning line, and
+// bold while paused -- the Allow button is behind the fold then.
+.chat-head-spend {
+  flex: 0 0 auto;
+  white-space: nowrap;
+
+  &.is-near {
+    color: var(--chat-warn);
+  }
+
+  &.is-paused {
+    color: var(--chat-warn);
+    font-weight: 600;
+  }
 }
 
 .chat-head-row {
@@ -250,9 +351,21 @@ select.chat-pick {
 .chat-credit {
   // Tighter than the 8px the selects need: this row holds text alone.
   & + &,
-  .chat-head-row + & {
+  .chat-head-row + &,
+  .chat-model-notice + & {
     margin-top: 5px;
   }
+}
+
+// The shared registry's word on the model the tab asks: a quiet line under
+// the pickers, wrapped rather than cut -- it is read before the wait it
+// explains.
+.chat-model-notice {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--chat-muted);
+  overflow-wrap: anywhere;
 }
 
 .chat-credit-field {
@@ -303,6 +416,33 @@ select.chat-pick {
   }
 }
 
+// The gear to Settings holds the right end of the row's LAST line, the one
+// the limit wraps to at the width this window opens at. Out of the flow: a
+// second auto margin would split the slack with the model's and float the
+// model mid-row again whenever the row fits on one line. The limit, always
+// last, keeps the room clear for it, and that costs the model's line nothing.
+.chat-head-picks {
+  position: relative;
+
+  > .chat-spend {
+    margin-inline-end: 24px;
+  }
+}
+
+.chat-head-setting {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  // A link-blue icon like the reload beside the Assistant picker.
+  font-size: 13px;
+  line-height: 1;
+}
+
 // The one button in the head. Drawn like Ask, because pressing it is the
 // same kind of decision -- spend some money -- and unlike a link, because a
 // paused window is one the user has to notice.
@@ -339,6 +479,15 @@ button.chat-engine {
   }
 }
 
+// On Auto there is nothing to pick here: who answered last, as plain words in
+// the model picker's place and with its padding, so the row does not shift
+// when a tab goes on or off Auto.
+.chat-auto-pick {
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  cursor: default;
+}
+
 .chatbot-app[data-bs-theme='light'] select.chat-pick {
   color-scheme: light;
 }
@@ -354,6 +503,59 @@ button.chat-engine {
 
   scrollbar-width: thin;
   scrollbar-color: var(--chat-line) transparent;
+}
+
+// Scrolled up from the newest message: a round ↓ held in the bottom-right
+// corner of the scroller. Sticky in a box of no height, so it covers the
+// corner and never adds to the list's length. Nothing animates.
+.chat-log-jump {
+  position: sticky;
+  bottom: 6px;
+  height: 0;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+// Glass (the user's ask: _should have background transparency glassier_): a
+// film over the words it sits on, which it blurs. The one `backdrop-filter`
+// in this window, and a 32px one: the window's own ground is the OS's glass
+// (see `--- glass` below), and a blur this size repaints a corner, not a
+// window, while the list scrolls under it.
+.chat-log-jump-button {
+  pointer-events: auto;
+  transform: translateY(-100%);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 50%;
+  background-color: rgb(22 30 42 / 42%);
+  backdrop-filter: blur(6px);
+  color: var(--chat-signal);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 14%),
+    0 2px 8px rgb(0 0 0 / 25%);
+  cursor: pointer;
+  &:hover,
+  &:focus-visible {
+    border-color: var(--chat-signal);
+    background-color: rgb(22 30 42 / 58%);
+  }
+  [data-bs-theme='light'] & {
+    border-color: rgb(0 0 0 / 12%);
+    background-color: rgb(255 255 255 / 50%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 60%),
+      0 2px 8px rgb(0 0 0 / 12%);
+    &:hover,
+    &:focus-visible {
+      border-color: var(--chat-signal);
+      background-color: rgb(255 255 255 / 70%);
+    }
+  }
 }
 
 // The rail: from the first cue to the last, and no further.
@@ -382,6 +584,45 @@ button.chat-engine {
 
   &:last-child {
     margin-bottom: 4px;
+  }
+
+  // A card that was clicked stays marked, and so does the button pressed in
+  // it (2026-10-12, the user's ask: _make the card and buttons focusable so
+  // when I clicked I still see which one got clicked_). FOCUS is the mark --
+  // `:focus`, not `:focus-visible`, which a mouse press on a button never
+  // sets -- so it is on one thing at a time and moves with the next click or
+  // Tab. The card's ring is drawn round its body (the article is wider than
+  // what it shows) in the colour of the cue marks, and its mark is lit; the
+  // button pressed inside it wears the ring every keyboard focus in this
+  // window already has. Steady: nothing here animates.
+  &:focus {
+    outline: none;
+  }
+
+  &:focus > .cue-body,
+  &:focus-within > .cue-body {
+    outline: 1px solid var(--chat-brass);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  &:focus > .cue-mark,
+  &:focus-within > .cue-mark {
+    background-color: var(--chat-brass);
+    border-color: var(--chat-brass);
+  }
+
+  button:focus,
+  [role='button']:focus {
+    outline: 2px solid var(--chat-signal);
+    outline-offset: 1px;
+  }
+
+  // The quiet row -- Copy, Ask again, the thumbs -- at full strength while
+  // it is the one pressed. Its colour is left alone: a thumb that is on
+  // keeps the colour that says so.
+  .cue-tool:focus {
+    opacity: 1;
   }
 }
 
@@ -445,6 +686,42 @@ button.chat-engine {
     background-color: var(--chat-panel-soft);
     border: 1px solid var(--chat-line);
     color: var(--chat-text);
+  }
+}
+
+// An address the app wrote into an answer, pressed open in the browser
+// (`RenderChatLinkComp`). Inline in its sentence, wrapping like the words
+// round it, and marked as a link: the signal colour, an underline, the arrow
+// the buttons that leave the app wear.
+.chatbot-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: inherit;
+  color: var(--chat-signal);
+  cursor: pointer;
+
+  code {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .bi {
+    margin-left: 4px;
+    font-size: 0.8em;
+  }
+
+  &:hover code,
+  &:focus-visible code {
+    border-color: var(--chat-signal);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--chat-signal);
+    outline-offset: 2px;
   }
 }
 
@@ -662,6 +939,21 @@ button.chat-engine {
   }
 }
 
+// The two thumbs beside Copy: icons, a little larger than the lettering they
+// stand next to so the hand reads at a glance. The one pressed stays filled
+// and at full strength -- the only colour change in the row, and a steady
+// one (nothing here animates).
+.cue-rate {
+  font-size: 12.5px;
+  letter-spacing: 0;
+  line-height: 1;
+
+  &.cue-rate-on {
+    opacity: 1;
+    color: var(--chat-signal);
+  }
+}
+
 // What the answer above it cost, at the end of the same quiet row as Copy.
 // The figure is in the data face and the muted colour, and it lightens
 // under the mouse the way the button does -- the hover is where the sums
@@ -763,7 +1055,7 @@ button.chat-engine {
 
   &:hover:not(:disabled),
   &:focus-visible {
-    border-color: var(--chat-cyan);
+    border-color: var(--chat-signal);
     background-color: var(--chat-panel-soft);
   }
 
@@ -782,7 +1074,10 @@ button.chat-engine {
   font-size: 12.5px;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--chat-cyan);
+  // Was `--chat-cyan`, a token this sheet never declares: the declaration was
+  // dropped and the label silently fell back to the body colour, taking the
+  // block's only accent with it.
+  color: var(--chat-signal);
 }
 
 .chat-demo-detail {
@@ -1175,6 +1470,30 @@ button.chat-engine {
   padding: 4px 2px 0;
 }
 
+// The file a tab is still asking about, above the box: one quiet line, its
+// chip the same as any other, so it reads as "this is still attached" and
+// its × as the way to stop it.
+.chat-open-files {
+  flex: 0 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px 0;
+
+  > .chat-clips {
+    flex: 0 1 auto;
+    padding: 0;
+  }
+}
+
+.chat-open-files-label {
+  font-family: var(--chat-font-body);
+  font-size: 11.5px;
+  color: var(--chat-clip-ink);
+  opacity: 0.8;
+}
+
 .chat-clip {
   display: inline-flex;
   align-items: center;
@@ -1194,6 +1513,26 @@ button.chat-engine {
     object-fit: cover;
     border-radius: 3px;
   }
+}
+
+// The number a chip is called by in the words typed beside it ("in 2 the
+// button is missing"). Inked the other way round from the chip so it reads
+// as a label on it, not as part of the name.
+.chat-clip-number {
+  flex: none;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background-color: var(--chat-clip-ink);
+  // The SOLID ground, not the panel: on a glassy window the panel is a 7%
+  // wash, and a digit drawn in it is a blank disc.
+  color: var(--chat-solid);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 // The copy icon every picture chip carries: the picture onto the clipboard
@@ -1501,6 +1840,50 @@ button.chat-engine {
   }
 }
 
+// Which window the tab works in, on the full-width line right above the box
+// (only while the app has a second window open). Quiet like the tip line
+// while it is the main window; the brass rule says, once another window is
+// chosen, that the help is NOT looking at the main window any more.
+.chat-window-row {
+  flex: 0 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 1px 4px 1px 6px;
+  border-left: 2px solid transparent;
+  font-family: var(--chat-font-body);
+  font-size: 11px;
+  color: var(--chat-muted);
+  cursor: pointer;
+
+  > .bi {
+    flex: 0 0 auto;
+  }
+
+  > .chat-window-caption {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  > select.chat-pick {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &.is-aimed {
+    border-left-color: var(--chat-brass);
+    color: var(--chat-text);
+
+    > .bi {
+      color: var(--chat-brass);
+    }
+  }
+}
+
 .chat-attach-row {
   flex: 0 0 auto;
   display: flex;
@@ -1763,4 +2146,16 @@ button.chat-engine {
   .chat-status-dot {
     animation: none;
   }
+}
+
+// Words that are DATA (2026-10-23): a verse's or a word's own, as its Bible
+// spells them. Equipment lettering capitalises, and a capital Greek word
+// loses what a learner reads it by -- _τῇ_ drew as _ΤΗΙ_, _ἐνεθυμήθη_ as
+// _ΈΝΕΘΥΜΉΘΗ_ -- so these keep their case and the reading face.
+.cue-act-data {
+  font-family: var(--chat-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }

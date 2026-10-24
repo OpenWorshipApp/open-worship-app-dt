@@ -1,6 +1,6 @@
 ---
 name: owa-enhance-chatbot
-description: 'Raise the Open Worship App in-app help chatbot toward being genuinely great — it is NOT there yet, and this skill is the repeatable climb that keeps making it better, run after run, against a stated ladder (it answers → it answers correctly → it acts reliably → it is trustworthy under pressure → it is situational → it is the fastest way to use the app) and a scoreboard that carries the score across runs so a regression is visible. Covers everything belonging to that chatbot and the MCP tool surface it runs on — `src/chatbot/*` (the window, the LLM loop, the offline fallback, the session tabs, the MCP client), `tools/owa-devtools-mcp/*` (the `owa_*` tools, the guide cards, the knowledge search, the HTTP host, the "something is driving your app" banner), `electron/aiHelpers.ts` (the CDP + MCP doors, the master switch, endpoint discovery) and `extra-work/build-knowledge.mjs` (the manual + internal corpora the answers come from). Use when asked to enhance / improve / extend / fix / speed up / harden the chatbot, the assistant, the help bot, the 🤖 button, `chatbot.html`, the AI answers, the walkthrough guide cards, or the app help; and ESPECIALLY when asked to enhance the MCP tools — add a new `owa_*` tool, sharpen a tool description or schema, cut the tool-schema token cost the model pays on every round, fix a tool that misfires or returns unusable output, or make the tool set safer for a volunteer running a live service. Every `tools/list` schema is sent to the model on EVERY round of EVERY question (measure it with `scripts/audit-mcp-tools.mjs` — 42 tools, ~8.5k tokens per round today), so tool surface IS chatbot performance. Also use it for the open-ended ask — "make the chatbot smarter / easier to use / more impressive", "what could the assistant do better", "research how to improve the help bot" — because EVERY run RESEARCHES BEFORE IT BUILDS (references/research.md): it interrogates the live assistant with a standing corpus of real volunteer questions and grades each answer (correct? actionable? internals leaked? how many tool rounds? did the walkthrough ring land on the real control?), mines the app for capability gaps the assistant cannot see or do, looks outside via WebSearch/WebFetch and the claude-api skill when the problem is a known one, and files every evidenced opportunity as a stable EC-xx backlog id — then builds the top-ranked one. The workflow baselines the live tool surface, picks work off that research plus the tracked backlog (references/backlog.md, EC-xx ids), implements against the project rules that bind this subsystem (low-spec-first performance, `Comp` naming, no app-module imports from injected page scripts, English-only chatbot window), verifies LIVE against the running app through the app own owa-devtools MCP — a chatbot change that only typechecks is not done — then runs the `npm run lint` gate and updates the paper trail: the CB rows in docs/test-paths/coverage-matrix.md, the W-42 manual recipe, the MCP package README, CLAUDE.md and the Codex mirror.'
+description: 'Raise the Open Worship App in-app help chatbot toward being genuinely great — it is NOT there yet, and this skill is the repeatable climb that keeps making it better, run after run, against a stated ladder (it answers → it answers correctly → it acts reliably → it is trustworthy under pressure → it is situational → it is the fastest way to use the app) and a scoreboard that carries the score across runs so a regression is visible. Covers everything belonging to that chatbot and the MCP tool surface it runs on — `src/chatbot/*` (the window, the LLM loop, the offline fallback, the session tabs, the MCP client), `tools/owa-devtools-mcp/*` (the `owa_*` tools, the guide cards, the knowledge search, the HTTP host, the "something is driving your app" banner), `electron/aiHelpers.ts` (the CDP + MCP doors, the master switch, endpoint discovery) and `extra-work/build-knowledge.mjs` (the manual + internal corpora the answers come from). Use when asked to enhance / improve / extend / fix / speed up / harden the chatbot, the assistant, the help bot, the 🤖 button, `chatbot.html`, the AI answers, the walkthrough guide cards, or the app help; and ESPECIALLY when asked to enhance the MCP tools — add a new `owa_*` tool, sharpen a tool description or schema, cut the tool-schema token cost the model pays on every round, fix a tool that misfires or returns unusable output, or make the tool set safer for a volunteer running a live service. Every tool schema the model is offered is sent on EVERY round of EVERY question (measure it with `scripts/audit-mcp-tools.mjs` — 26 tools under an 8 350-token ceiling today), so tool surface IS chatbot performance. Also use it for the open-ended ask — "make the chatbot smarter / easier to use / more impressive", "what could the assistant do better", "research how to improve the help bot" — because EVERY run RESEARCHES BEFORE IT BUILDS (references/research.md): it interrogates the live assistant with a standing corpus of real volunteer questions and grades each answer (correct? actionable? internals leaked? how many tool rounds? did the walkthrough ring land on the real control?), mines the app for capability gaps the assistant cannot see or do, looks outside via WebSearch/WebFetch and the claude-api skill when the problem is a known one, and files every evidenced opportunity as a stable EC-xx backlog id — then builds the top-ranked one. The workflow baselines the live tool surface, picks work off that research plus the tracked backlog (references/backlog.md, EC-xx ids), implements against the project rules that bind this subsystem (low-spec-first performance, `Comp` naming, no app-module imports from injected page scripts, English-only chatbot window), verifies LIVE against the running app through the app own owa-devtools MCP — a chatbot change that only typechecks is not done — then runs the `npm run lint` gate and updates the paper trail: the CB rows in docs/test-paths/coverage-matrix.md, the W-42 manual recipe, the MCP package README and CLAUDE.md.'
 argument-hint: '[research (research only, ship nothing) | tools | prompt | knowledge | ui | perf | reliability | audit | full — or a plain description of the improvement]'
 ---
 
@@ -8,8 +8,7 @@ argument-hint: '[research (research only, ship nothing) | tools | prompt | knowl
 
 **The chatbot is not good enough yet.** It answers, it can point at a control, it
 can walk someone through a task — and it still hands a volunteer the wrong
-window's steps, burns rounds looking things up, ships 42 tool schemas per round,
-and can pour 52 000 tokens of developer notes into one answer. This skill exists
+window's steps, burns rounds looking things up and ships 26 tool schemas per round. This skill exists
 to close that gap, run after run, until asking the app is genuinely the fastest
 way to operate it.
 
@@ -36,12 +35,12 @@ more than ten good ones earn.
 
 | Rung | It is true when | Status |
 | --- | --- | --- |
-| **1 · It answers** | A question gets a relevant manual answer, offline and online, and never a stack trace. | reached |
-| **2 · It answers *correctly and usably*** | Right for the window they are in, numbered steps, no path/id/component name ever, English, honest when the app cannot do the thing. | **partly — the current front line** |
+| **1 · It answers** | A question gets a relevant manual answer, offline and online, and never a stack trace. | reached — and held to the WHOLE corpus for the first time 2026-10-12: asked one by one with no assistant, three of the app's own supported questions answered _I could not answer that: (find ?? "").trim is not a function_ (`EC-226`), fixed the same day; the twelve standing shapes had never touched them |
+| **2 · It answers *correctly and usably*** | Right for the window they are in, numbered steps, no path/id/component name ever, English, honest when the app cannot do the thing. | **partly — the current front line**; measured over the corpus's first 47 questions on a small local model (2026-10-12, gemma-4-e4b, graded against the guide): 24 pass, 9 wrong, 2 empty — and every one of the eleven failures is a question whose page is longer than what rides on it (8), whose only resource is a tool the local list lacks (2), or one sent to `/btw` (1); where the page rode whole, 0 wrong of 18. `EC-225` and `EC-227` aim at the first ten and are NOT yet re-measured on a model; `EC-229` is open. **Measured over the WHOLE list, one asking each, same model at temperature 0 (2026-10-13, `EC-262`): 411 of 411 asked and graded — 318 right, 93 partly, 0 wrong standing; fourteen were wrong at some asking on the way and each was ended and asked again. Still "partly": 93 answers are short of a detail, and that is one small model on its own server**. **On the window's own default (Auto → Free) for the first time, 2026-10-16: the 15 questions added since and 8 standing shapes — 17 right, 5 partly, 0 wrong of 23 after that run's fixes (one wrong and one timed out of the first 7 before them); and the Bible Reader's whole file of 77 the same afternoon, one asking each: 65 right, 12 partly, 0 wrong — none of the twelve a wrong step, most a sentence or a button the window added under a right answer (EC-280, EC-281)**. **In Khmer, as an elderly volunteer talks, for the first time 2026-10-17** (`elder-run.mjs`): before, 37 of 48 answers showed English to a reader of none and no Khmer verse ask reached the Bible search; after EC-288..EC-301, gemma4:cloud 19 right, 4 partly, 0 wrong of 23, 3 showing English, 5 of 5 verses — the other six assistants worse, Free worst. **Bible stories measured for the first time 2026-10-22** (`references/bible-find-asks.json`, 22 rows, gemma4:cloud in Khmer): 3 → 15 of 16 stories open the chapter they are told in, 22 of 22 a verse in the right place, 2 wrong → 0 — and a verse quoted from memory is sent back to be read. **Everything related to a selected passage measured for the first time 2026-10-23** (`references/passage-khmer-asks.json`, gemma4:cloud in Khmer): 4 / 4 / 7 → 15 / 0 / 0 right / partly / wrong on its first 15 questions in two runs, English shown 3 → 0, and 14 of 14 on the five passages added after (John 3:16, Psalm 23, Luke 15, Isaiah 53, Romans 8:28 in the KJV in English), then the whole set of 31 asked again, the person's own notes included, 29 / 2 / 0, and its 29 without them after EC-426, 29 / 0 / 0, and all 31 after EC-427, 31 / 0 / 0 — the app's own cross references (the chapters around it too) and the chapter's study files ride a passage's chat, a verse asked about by number or the verses before and after are read before the model is asked, "the Bible does not say" with nothing read goes back once, and the person's own notes and marks on the passage ride it too. **A passage's words taught for the first time 2026-10-23** (EC-428..EC-430, the user studying the Greek Bible in Khmer): asked to explain verse 1 word by word, 0 of 22 Greek words were shown (the cleaner took a third script out) → 22 of 22, one line a word with its dictionary form, a Khmer-letter pronunciation and its meaning, one round; the card's **Study the words** lists the verses, then a verse's words as buttons drawn as written, and a word is taught in 2.5 s; grammar slips remain on a small model (EC-433). **Word lessons measured for the first time 2026-10-23** (`references/word-study-asks.json`, 22 lessons pressed in Hebrew, Greek, Khmer and the KJV, gemma4:cloud in Khmer): 4 / 10 / 2 → 12 / 4 / 0 right / partly / wrong on the same 16, English shown in 7 of 14 non-English lessons → 1, every lesson one round; two Greek forms still wrong (EC-433) |
 | **3 · It acts, reliably** | The ring lands on the real control, the walkthrough survives a wrong guess, demo mode does the step, and every acting call is announced and safe near a live service. | partly — measured for the first time 2026-09-08 (`demo-failure-rate.mjs`): Do it now presses only the control the step names and closes a popup in its way, but still refuses ~59% of recipe steps (most name nothing to press; `EC-108`, `EC-109`). Same day, the standing corpus caught the model pressing F5 UNASKED through `press_key` (`EC-111`); the model now has the app's own tools only and `owa_click` presses only an exactly-named control |
-| **4 · It is trustworthy under pressure** | Recovers from its own wrong turns without the user noticing, answers in 1–2 rounds, costs little enough to use freely, and degrades honestly when the network or the key dies. | partly — cost is taken (2026-09-08, `EC-57`: the corpus's input bill went from $1.63 to $0.18 on Anthropic, every round after the first a cache read) and the corpus answers in 2–3 rounds; one wrong turn of its own is recovered in code (2026-09-09, `EC-139`); honest degradation was measured for the first time 2026-09-09 on the window's OWN default — a dead ChatGPT key, every question three retries and the manual — and now degrades to the next key of the user's own before the manual (`EC-144`); the offline bot is 10/12 (`EC-84`); and since 2026-09-10 the cost is ON SCREEN -- every answer carries what it cost and a **Credit used** row keeps the tab's total, honest about being a list-price estimate, with `/credit` saying it with no model (`EC-152`, the user's own ask) -- because "cheap enough to use freely" was a figure only the research driver could read; and since 2026-09-10 (later the same day, the user's own ask again) it has a CEILING: a rolling-hour spending limit the user sets and a fixed pace cap, checked before every model round on the one seam every call goes through, that PAUSES the assistant at the cap and stays paused until a person presses **Allow more** -- a fault that keeps asking cannot press a button, and a restart does not lift it (`EC-155`); and since 2026-09-10 (the user's ask, a third time that day) an unusual answer from a provider comes with the DOOR to it: the failure is read off the body and not only the status (`insufficient_quota` is an empty account, not "or being rate-limited"; an Anthropic empty account is a 402 or a 400 the stand-in used to miss altogether), and the note carries a button to the provider's own billing, keys, limits or status page, or to the app's AI settings (`EC-158`) |
-| **5 · It is situational** | Knows what is on screen and what the user is in the middle of; handles "nothing is showing on the projector" end to end; suggests the next step before being asked. | partly — measured for the first time 2026-09-09 by following the panic shapes THROUGH: with the projector showing a verse the assistant had answered *"turning the screen on just gives you a blank canvas"* (9 rounds), and its "yes" took 8 rounds and a wrong press. `owa_list_screens` now says what each screen holds and names its controls; the same asks answer with the verse on the wall, and the "yes" is 3 rounds (`EC-124`). What the user is in the MIDDLE of was measured and shipped 2026-09-09 (`EC-128`, `EC-132`); the unasked next step was seen for the first time 2026-09-10 — *How do I put a Bible verse on the screen?* now ends with *Put John 3:16 up now* as an option, because the assistant has a tool that can |
-| **6 · It is the fastest way to use the app** | A volunteer would rather ask than click. | the point of the climb — reached for ONE ask on 2026-09-10: *Put John 3:16 on the screen* is one sentence, one call and a verified verse on the wall (3 rounds, 9 s; `/verse` 1.5 s with no assistant; offline one button), where the app's own way is a five-step picker. Songs by name work the same way through `selectedDocument` (two asks). Everything else is still a walkthrough |
+| **4 · It is trustworthy under pressure** | Recovers from its own wrong turns without the user noticing, answers in 1–2 rounds, costs little enough to use freely, and degrades honestly when the network or the key dies. | partly — cost is taken (2026-09-08, `EC-57`: the corpus's input bill went from $1.63 to $0.18 on Anthropic, every round after the first a cache read) and the corpus answers in 2–3 rounds; one wrong turn of its own is recovered in code (2026-09-09, `EC-139`); honest degradation was measured for the first time 2026-09-09 on the window's OWN default — a dead ChatGPT key, every question three retries and the manual — and now degrades to the next key of the user's own before the manual (`EC-144`); the offline bot is 10/12 (`EC-84`); and since 2026-09-10 the cost is ON SCREEN -- every answer carries what it cost and a **Credit used** row keeps the tab's total, honest about being a list-price estimate, with `/credit` saying it with no model (`EC-152`, the user's own ask) -- because "cheap enough to use freely" was a figure only the research driver could read; and since 2026-09-10 (later the same day, the user's own ask again) it has a CEILING: a rolling-hour spending limit the user sets and a fixed pace cap, checked before every model round on the one seam every call goes through, that PAUSES the assistant at the cap and stays paused until a person presses **Allow more** -- a fault that keeps asking cannot press a button, and a restart does not lift it (`EC-155`); and since 2026-09-10 (the user's ask, a third time that day) an unusual answer from a provider comes with the DOOR to it: the failure is read off the body and not only the status (`insufficient_quota` is an empty account, not "or being rate-limited"; an Anthropic empty account is a 402 or a 400 the stand-in used to miss altogether), and the note carries a button to the provider's own billing, keys, limits or status page, or to the app's AI settings (`EC-158`); and since 2026-10-12 a question picked from the list is answered in ONE round — the loop had been handing the model's steps back as "written from a search excerpt" when they were written from the page the app itself had quoted, and it opened the page again and wrote the answer twice (`EC-223`: the same 23 questions, 61 rounds → 37, input tokens −41%, on every provider); and on 2026-10-16 two holes in the honest degradation closed: the free default had lost two of its three models to the gateway (every question on them failed; no free model saw a picture — re-qualified, `EC-267`), and Ollama answered from a question it had cut to 4k in silence, now said in the note with the setting to change (`EC-271`) |
+| **5 · It is situational** | Knows what is on screen and what the user is in the middle of; handles "nothing is showing on the projector" end to end; suggests the next step before being asked. | partly — measured for the first time 2026-09-09 by following the panic shapes THROUGH: with the projector showing a verse the assistant had answered *"turning the screen on just gives you a blank canvas"* (9 rounds), and its "yes" took 8 rounds and a wrong press. `owa_list_screens` now says what each screen holds and names its controls; the same asks answer with the verse on the wall, and the "yes" is 3 rounds (`EC-124`). What the user is in the MIDDLE of was measured and shipped 2026-09-09 (`EC-128`, `EC-132`); the unasked next step was seen for the first time 2026-09-10 — *How do I put a Bible verse on the screen?* now ends with *Put John 3:16 up now* as an option, because the assistant has a tool that can; and since 2026-10-22 a Resources file handed over from the Reader comes with the passage being read — the card names Matthew 18:15-17 and its first button reads those verses, quoted from the reader's own Bible (`EC-380`) |
+| **6 · It is the fastest way to use the app** | A volunteer would rather ask than click. | the point of the climb — reached for ONE ask on 2026-09-10: *Put John 3:16 on the screen* is one sentence, one call and a verified verse on the wall (3 rounds, 9 s; `/verse` 1.5 s with no assistant; offline one button), where the app's own way is a five-step picker. Songs by name work the same way through `selectedDocument` (two asks). Everything else is still a walkthrough; since 2026-10-22 a word's every verse in the Bible is one press (**Every verse with these words**, eight a page, with where it gathers), and a word typed in Find is searched by the 🤖 at once |
 
 Update the Status column when the evidence changes — up **or** down. A rung is
 "reached" only when the whole question corpus holds it, not when one answer does.
@@ -59,7 +58,7 @@ Update the Status column when the evidence changes — up **or** down. A rung is
 - The tool loop burns rounds, tokens, or money → §D.
 - Something in the chatbot window itself: tabs, model picker, copy, layout → §E.
 
-Not this skill: pure QA of the chatbot (that is `/owa-robot-test`, rows `CB-01..CB-14`),
+Not this skill: pure QA of the chatbot (that is `/owa-robot-test`, rows `CB-01..CB-144`),
 and app features that merely happen to be *described* by the manual.
 
 ## The subsystem, in one list
@@ -68,10 +67,10 @@ and app features that merely happen to be *described* by the manual.
 | --------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | The window                        | `html/chatbot.html` → `src/chatbot/ChatbotAppComp.tsx` (+ `.scss`)                                       |
 | Conversation tabs                 | `src/chatbot/chatSessionHelpers.ts` — `local-storage/chatbot-sessions`, 12 tabs × 60 messages             |
-| Offline bot (no key / fallback)   | `src/chatbot/helpBotHelpers.ts` — manual search only, plus `genGuideActions` / `runBotAction`             |
-| LLM loop, providers, models       | `src/chatbot/llmBotHelpers.ts` — the system prompt, `MAX_TOOL_ROUNDS`, `LLM_PROVIDER_MAP` (Anthropic + OpenAI + Kimi) |
+| Offline bot (no key / fallback)   | `src/chatbot/helpBotHelpers.ts` — no model: manual search and state answers read off the app's tools, plus `genGuideActions` / `runBotAction`             |
+| LLM loop, providers, models       | `src/chatbot/llmBotHelpers.ts` — the system prompt, `MAX_TOOL_ROUNDS`, `LLM_PROVIDER_MAP` (Anthropic, OpenAI, Kimi, Bedrock, custom servers, Free) |
 | MCP client                        | `src/chatbot/mcpClient.ts` — one session, re-opened on a 404 sweep                                       |
-| App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 23 `owa_*` tools (20 of them sent to the model)                |
+| App-level tools                   | `tools/owa-devtools-mcp/owaTools.mjs` — the 34 `owa_*` tools (26 of them sent to the model)                |
 | DOM matching for `find/click/type`| `tools/owa-devtools-mcp/domMatch.mjs` (+ test)                                                          |
 | Walkthrough cards                 | `tools/owa-devtools-mcp/guide.mjs` (+ test) — shadow-root card, `demo` mode                              |
 | Knowledge search                  | `tools/owa-devtools-mcp/help.mjs` — reads `electron-build/knowledge/index.json`                          |
@@ -97,12 +96,12 @@ feature works.
    the other. Never fork behaviour on the caller without saying so in the code.
 2. **A tool that acts must announce itself.** Add it to `ACTING_TOOLS` in
    `notify.mjs` or it changes the operator's window with no banner. The audit
-   script fails you on this.
+   script warns on this.
 3. **Never `import()` an app module from an injected page expression.** It re-runs
    module top-level code and kills every keyboard shortcut in the app (memory:
    `cdp-dynamic-import-hijack`). Page expressions stay dependency-free strings.
 4. **The chatbot window is English-only, on purpose.** No `tran()` in
-   `src/chatbot/*`. The 🤖 button and the Help menu item live OUTSIDE it and do
+   `src/chatbot/*`. The 🤖 button and the Tools menu item live OUTSIDE it and do
    go through `tran()` — a missing Khmer key there throws and blanks the page.
 5. **Performance outranks elegance** (CLAUDE.md). Nothing is cached between
    questions; the knowledge corpus is read one file at a time. Do not introduce a
@@ -133,13 +132,14 @@ harness needs `env -u ELECTRON_RUN_AS_NODE npm run dev`) and re-run. Load the
 `owa-devtools` MCP tools too (`mcp__owa-devtools__*`); `list_pages` should show
 `presenter.html` or `reader.html`.
 
-**Check the master switch FIRST — Settings → Others → *Enable AI features*.**
+**Check the master switch FIRST — Settings → AI Providers → *Enable AI features*.**
 It decides whether this subsystem exists at all: off, the main process opens
 neither the CDP endpoint nor the MCP host, the Help menu drops the chatbot item,
 `AppAssistantComp` withdraws its Tools entry, and the 🤖 button answers with a
 dialog offering to turn it back on instead of opening the window. Unset means ON
-in dev and OFF in a packaged build, and it is easy to arrive OFF — a `prod` pass
-flips it deliberately, and so does any run that was measuring the off state. The
+in every build, a packaged one included; only an explicit `"false"` is off, and
+it is easy to arrive OFF — a `prod` pass
+may flip it deliberately, and so does any run that was measuring the off state. The
 symptom is `No running Open Worship App was found` from every `owa_*` call, which
 reads exactly like the app being down and is really the app running with no door.
 Read it rather than guessing (dev writes its own `-dev` data dir):
@@ -156,8 +156,8 @@ With the app down, editing that key on disk is safe and is the fastest way in.
 **Order matters:** `npm run build` / `electron:build` deletes `electron-build/`,
 which is the running app's own main entry — it kills the app (memory:
 `build-kills-running-dev-app`). So **verify live FIRST, build last**. The one
-exception is knowledge work (§C), which needs a rebuild to take effect; there,
-plan for the restart.
+exception is knowledge work (§C), which needs a rebuild to take effect — of
+`knowledge/` alone, which leaves the app up.
 
 ### 1. RESEARCH — mandatory, every run
 
@@ -183,7 +183,7 @@ short form, all four tracks, in a run:
   provider behaviour, retrieval ranking — with `WebSearch`/`WebFetch` and the
   `claude-api` skill (never answer model/pricing questions from memory). Bring
   back a specific applicable change, not a summary.
-- **D · Read the seams** when chasing a defect: the dev terminal's tool log, the
+- **D · Read the seams** when chasing a defect: the dev terminal (MCP sessions, firewall refusals), the
   comments in these files (they record why the obvious alternative was wrong), and
   the offline bot, which sometimes answers better than the model does.
 
@@ -263,10 +263,10 @@ minimum for any change:
 `extra-work/verify-chatbot-e2e.mjs` (drives the real window, spends real API
 credit — ask the user first) are the ready-made harnesses.
 
-> `mcp__owa-devtools__evaluate_script` currently fails with "DisposableStack is
-> not defined" under Node 22 (memory: `evaluate-script-disposablestack`). Drive
-> pages over raw CDP `Runtime.evaluate` instead — `cdp.mjs` and both verify
-> scripts already do.
+> `evaluate_script` is refused by the MCP firewall and dropped from `tools/list`
+> (memory: `evaluate-script-disposablestack`). Drive pages over raw CDP
+> `Runtime.evaluate` instead — `cdp.mjs` and `extra-work/verify-chatbot-e2e.mjs`
+> already do.
 
 ### 5. Run the gate
 
@@ -290,17 +290,14 @@ In the SAME change, whatever is true of the work:
   `docs/manual-sources/.../w-42-*.md` — only for user-visible behaviour, and only
   steps you watched work.
 - `tools/owa-devtools-mcp/README.md` — the tool table, for any tool change.
-- `.claude/CLAUDE.md` §*Agent access* — for anything structural (a door, the
-  master switch, the knowledge bundle, the tool list).
+- `.claude/rules/` (`agent-*.md`, `chatbot-*.md`) — for anything structural
+  (a door, the master switch, the knowledge bundle, the tool list); and
+  `.claude/CLAUDE.md` §*Agent access* when it changes a rule that holds
+  everywhere.
 - `references/backlog.md` here — status of what you did, plus anything you found
   and did not do.
-- **The Codex mirror.** `.agents/skills/owa-enhance-chatbot/`,
-  `.codex/memory/` and `.codex/project-instructions.md` mirror `.claude/`.
-  `.claude/` is the source of truth: edit here, then COPY across in the same
-  change. A mirror that disagrees is stale by definition — re-copy, do not
-  reconcile by hand.
 - A memory file under `.claude/memory/` when you learned something that is not
-  derivable from the code (plus its `MEMORY.md` line, plus the mirror).
+  derivable from the code (plus its `MEMORY.md` line).
 
 ### 7. Report
 
@@ -354,8 +351,9 @@ long because every paragraph in it was earned by a bad answer. Rules:
 - The prompt is built ONCE per question, not per round — keep it that way.
 - Do not grow it without cutting: it is sent on every round, and it competes for
   the same budget as the tool schemas.
-- `MAX_TOOL_ROUNDS` (10) with tools dropped on the last round is what stops a
-  runaway loop. If a change makes the model need more rounds, the change is
+- `MAX_TOOL_ROUNDS` (10) with no tool call allowed on the last round (the tools
+  dropped, or for Anthropic kept under `tool_choice: none` so the prompt cache
+  holds) is what stops a runaway loop. If a change makes the model need more rounds, the change is
   wrong — make the tools answer better instead.
 
 ### C. Knowledge — what the assistant is allowed to know
@@ -363,13 +361,16 @@ long because every paragraph in it was earned by a bad answer. Rules:
 Answers come from `electron-build/knowledge/`, built by
 `extra-work/build-knowledge.mjs` from two corpora: `manual`
 (`docs/manual-sources/**`, weight 1.5) and `internal` (`.claude/CLAUDE.md`,
-`memory/`, `skills/`, weight 1.0).
+`rules/`, `memory/`, `skills/`, weight 1.0).
 
-- The manual is generated from `user-workflows.md`. Fix the workflow recipe, run
-  `npm run docs:gen`, then rebuild the knowledge bundle — do not hand-edit the
-  generated page.
-- A knowledge change needs `npm run electron:build` (or the `dev` script's build
-  step) before the app can see it, and that restarts the app.
+- The manual is generated from `user-workflows.md`. Fix the workflow recipe and
+  run `npm run docs:gen`, which rebuilds the knowledge bundle too when a built
+  app is there (`EC-279`: it did not, and a fix was "done" for an afternoon
+  the app never saw) — do not hand-edit the generated page. Read the served
+  index, not the source, before calling a manual fix live.
+- A knowledge change needs `node extra-work/build-knowledge.mjs` before the app can
+  see it — run alone it leaves the app up (the index is re-read per search), where
+  `npm run electron:build` deletes `electron-build/` and kills it.
 - The `internal` allowlist is an allowlist for a reason: it lands in plaintext in
   the installer. Adding a directory to it is a distribution decision, not a
   convenience — raise it with the user.
@@ -383,9 +384,9 @@ user's own API credit.
 
 - Tool schema is the biggest line item: measure with the audit script, and treat
   tokens/round as a budget, not a curiosity.
-- `MAX_TOKENS` 2000 (Anthropic) / `OPENAI_MAX_TOKENS` 6000 with
-  `reasoning_effort: 'low'`, and no `reasoning_effort` at all for a non-reasoning
-  OpenAI model — those splits exist; do not flatten them.
+- `ANTHROPIC_MAX_TOKENS` 6000 / `OPENAI_MAX_TOKENS` 6000 with
+  `reasoning_effort: 'low'`, and `MAX_TOKENS` 2000 with no `reasoning_effort` at
+  all for a non-reasoning OpenAI model — those splits exist; do not flatten them.
 - Nothing is cached between questions on purpose. If you add a cache, it must be
   short-lived and bounded, and you must say why in a comment.
 - The session tab store is capped (12 × 60) with a debounced save and a
@@ -393,16 +394,18 @@ user's own API credit.
 
 ### E. The window
 
-`ChatbotAppComp.tsx` is one file with the tab strip, head row (three `<select>`s
-— Presenter/Reader, provider, model picker), message list and ask form.
+`ChatbotAppComp.tsx` holds the head row (four `<select>`s — the window asked
+about, assistant, model, and the window-wide limit per hour), message list and
+ask form; the tab strip is `RenderSessionTabsComp.tsx`.
 
 - The ENTIRE head row belongs to the tab in front, not to the window. The stored
   provider/model settings are only what a NEW tab starts on. Do not "fix" this
   into a window-level setting.
 - Every answer has **Copy**, every question **Ask again**. Keep both when
   reshaping a message row.
-- With no key at all the window says so and offers a button into
-  Settings → Others. That empty state is the first thing a new user sees — test it
+- With no key at all the window opens on the Free assistant, under a notice
+  that names the free service and offers a button into
+  Settings → AI Providers. That empty state is the first thing a new user sees — test it
   by clearing the keys, not by imagining it.
 - Screenshot before and after. A layout change with no screenshot is not verified.
 
@@ -439,10 +442,10 @@ knows the app's internals.
 - **Building kills the app.** Verify first, build last (except knowledge work).
 - **The knowledge bundle is stale until a build.** A manual edit that "did
   nothing" usually just is not built yet.
-- **`evaluate_script` is dead under Node 22** — use raw CDP `Runtime.evaluate`.
+- **`evaluate_script` is refused by the MCP firewall** — use raw CDP `Runtime.evaluate`.
 - **The MCP port is a default, not a promise.** 39223 is where it usually lands;
   read `mcpUrl` from the published instance file. (Both `extra-work/verify-*`
-  scripts still hardcode it — see `EC-05`.)
+  scripts read it from there, with `mcpToken`.)
 - **Two `list_pages` targets can look alike.** The chatbot window is
   `chatbot.html?uuid=chatbot`; a showing projector screen appears as
   `screen.html?screenId=N` and vanishes when hidden.
@@ -485,5 +488,82 @@ knows the app's internals.
   accuracy of the manual search over every corpus row that names a recipe,
   with the exact-label route defeated. **The ranking's ratchet**: run it
   against the built index before and after touching `help.mjs`,
-  `build-knowledge.mjs` or the manual (2026-09-10: 267 rows, 54% / 78%).
-- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-14`.
+  `build-knowledge.mjs` or the manual (2026-09-10: 267 rows, 54% / 78%;
+  2026-10-12: 398 rows, 63% / 81%).
+- [scripts/corpus-run.mjs](./scripts/corpus-run.mjs) — **every** supported
+  question through the real window on the assistant named
+  (`--server`, `--model`), pressed in its own **More…** list, one JSON line
+  an answer: words, buttons, rounds, tokens, seconds, every tool the window
+  called. `--offline` reads the guide's own answers with no model;
+  `--pace=135` keeps a model run under the spend guard; `--asks=<file>`
+  types a short list of questions the corpus does not have (each joins the
+  window's Alt+↑ history), and `/help <question>` in one asks the guide
+  with no model when no assistant can be made to fail. Resumable. Read its
+  header before running it: the rules there are the ones its first run
+  broke, in a dev app another session was using. **`--lang=km` asks every
+  row in the app's own language** (2026-10-17): the row's words from
+  `questions/i18n/<code>.json`, pressed in the list as that window draws it,
+  the pickers found by what they hold (their labels are translated), and a
+  window default put back by VALUE. `--allow-more` presses the spend
+  guard's Allow more and asks the paused row again — the user's word only.
+  An assistant's name may carry a zero-width space as the picker shows it
+  (`LM Studio super​-mac`): pass it exactly.
+- [scripts/lang-check.mjs](./scripts/lang-check.mjs) — model-free, over a
+  `--lang` run: per answer, every Latin run its words and chips SHOW that is
+  not a real label of that language's app (its dictionary's values, its
+  manual, the native menu bar, key names, products), plus no answer, an
+  error, a timeout, a leak. Over-eager on purpose; the grade is a person's.
+- [scripts/grade-bundle.mjs](./scripts/grade-bundle.mjs) — cuts a run into
+  bundles for graders: each answer beside its English twin, the manual files
+  in both languages, the row's passage, control, menu and tools, and what
+  `lang-check.mjs` flagged. The 2026-10-17 Khmer grades are under
+  `test-results/chatbot-quality/grade-km-*`.
+- [scripts/stress-tabs.mjs](./scripts/stress-tabs.mjs) — the STRESS test's
+  load half: K tabs of its own asking supported Presenter questions at the
+  same moment, wave after wave, each read until it answered — every tab
+  answered, by a model, to ITS own question, and how the wait grows with K.
+  Its abuse half is `elder-run.mjs` with
+  [references/stress-khmer-asks.json](./references/stress-khmer-asks.json):
+  a 2 500-character paste, emoji, one letter, typos, an injection that says
+  to delete everything, markup, Stop then Ask again, words added mid-answer,
+  ten turns, the same question three times, another script, a rant. Give a
+  scenario `"focus": "presenter"`: `elder-run.mjs` asks about the Reader
+  unless told, and the first stress run graded Reader answers against the
+  Presenter.
+- [scripts/attach-run.mjs](./scripts/attach-run.mjs) — the three buttons
+  beside the box, pressed for real in a tab of its own: 📷 as a person
+  presses it, ◎ with a real mouse click in the main window once the picker
+  is up (`#owa-picker-host` — before that the click PRESSES the control), 📎
+  by setting files on that same input over CDP (`DOM.setFileInputFiles`,
+  what choosing them does; the OS dialog cannot be driven): a Khmer text
+  file, a picture of the main window asked about by its NUMBER, a PDF.
+- [scripts/excerpt-measure.mjs](./scripts/excerpt-measure.mjs) — model-free:
+  for every corpus row that names a page, whether the search's excerpt
+  carries the control, key or menu item the row says answers it
+  (2026-10-12: 37/166 → 160/166 controls). **The excerpt's ratchet**: run it
+  before and after touching `passageMatch.mjs`, `help.mjs` or the manual.
+- [scripts/elder-run.mjs](./scripts/elder-run.mjs) — CONVERSATIONS in the
+  app's own language as an elderly volunteer has them
+  ([references/elder-khmer-asks.json](./references/elder-khmer-asks.json):
+  verses half-remembered, panic, nonsense, "delete everything", interrupt,
+  Stop, Ask again, a thumb down), several assistants interleaved, every
+  answer, button, tool and page error recorded; `elder-digest.mjs` prints
+  them side by side with every English word an answer SHOWS. **The
+  non-English ratchet and the model shootout** (2026-10-17: Khmer, seven
+  assistants). Read its header: `--allow-more` needs the user's word.
+- [scripts/lookup-run.mjs](./scripts/lookup-run.mjs) — the names-lookup
+  conversation as a person opens it: the Reader's Names and Places row
+  **Open in Chatbot** (the same handoff), then a scenario's questions typed
+  in that tab ([references/lookup-khmer-asks.json](./references/lookup-khmer-asks.json):
+  Noah, Ararat, Bethlehem, each question with its right answer), one JSON
+  line an answer. Aimed at ONE instance by `--pid`; it writes into that
+  instance's data folder, so run it on a scratch profile
+  (2026-10-22: 11 / 5 / 9 → 22 / 3 / 0 right / partly / wrong). A scenario
+  may be a PASSAGE too — `record: {kind: "verse", target, title, bibleKey}`,
+  handed over as a Bible view's 🤖 does
+  ([references/passage-khmer-asks.json](./references/passage-khmer-asks.json),
+  2026-10-23: 4 / 4 / 7 → 15 / 0 / 0, then 14 / 0 / 0 on 14 more). An ask may be PRESSED (`press`: the newest
+  answer's button by its words) -- the word lessons
+  ([references/word-study-asks.json](./references/word-study-asks.json),
+  2026-10-23: 4 / 10 / 2 → 12 / 4 / 0 on 16 lessons).
+- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-160`.

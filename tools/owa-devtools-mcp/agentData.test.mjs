@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
     AGENT_BIBLE_ITEM_ACTIONS,
+    AGENT_MEDIA_FILE_ACTIONS,
     AGENT_NOTE_ACTIONS,
+    AGENT_PRESENTING_FLOW_ACTIONS,
     AGENT_REMOVING_ACTIONS,
     AGENT_UNDO_ACTIONS,
     AGENT_UNDO_TEXT,
@@ -85,14 +87,21 @@ describe('the removal vocabulary', () => {
         ...AGENT_SLIDE_ACTIONS,
         ...AGENT_BIBLE_ITEM_ACTIONS,
         ...AGENT_NOTE_ACTIONS,
+        ...AGENT_PRESENTING_FLOW_ACTIONS,
+        ...AGENT_MEDIA_FILE_ACTIONS,
         ...AGENT_UNDO_ACTIONS,
     ]);
 
     // The firewall's removal budget reads this list. An action that deletes
-    // and is missing from it is a removal nobody counts.
+    // and is missing from it is a removal nobody counts -- a run sheet's
+    // `remove` takes a line away as `delete-slide` takes a slide.
     it('names every action that takes something away', () => {
         for (const action of everyActionSet) {
-            if (/^delete/.test(action) || action === 'undo') {
+            if (
+                /^delete/.test(action) ||
+                action === 'remove' ||
+                action === 'undo'
+            ) {
                 expect(AGENT_REMOVING_ACTIONS, action).toContain(action);
             }
         }

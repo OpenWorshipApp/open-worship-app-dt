@@ -6,7 +6,7 @@ import {
 import { fsDeleteFile, pathJoin } from '../server/fileHelpers';
 
 /**
- * The password half of exporting and importing an archive — everything the five
+ * The password half of exporting and importing an archive — everything the
  * archive modules import.
  *
  * The DIALOG lives in `src/popup-widget/ArchivePasswordComp.tsx` and is loaded
@@ -62,6 +62,12 @@ export type ReadableArchiveType = {
     filePath: string;
     /** Removes anything this wrote. A no-op for an unprotected archive. */
     dispose: () => Promise<void>;
+    /**
+     * Whether a password had to be given to read it. Export Settings trusts
+     * credentials only out of a protected file, which is the only kind it
+     * ever writes them into.
+     */
+    isProtected: boolean;
 };
 
 /**
@@ -90,7 +96,7 @@ export async function openArchiveForReading(
     if (!(await checkIsEncryptedFile(filePath))) {
         // Not one of ours: handed straight back, so an unprotected import costs
         // nothing beyond the one header read.
-        return { filePath, dispose: async () => {} };
+        return { filePath, dispose: async () => {}, isProtected: false };
     }
     // Alongside whatever the import is already unpacking, so the caller's
     // existing `safeDeleteDir(workDir)` carries it away too.
@@ -110,7 +116,7 @@ export async function openArchiveForReading(
         }
         const result = await decryptFile(filePath, plainFilePath, password);
         if (result.isOk) {
-            return { filePath: plainFilePath, dispose };
+            return { filePath: plainFilePath, dispose, isProtected: true };
         }
         if (result.reason !== 'wrong-password') {
             await dispose();

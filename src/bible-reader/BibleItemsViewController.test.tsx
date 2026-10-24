@@ -143,6 +143,7 @@ import BibleItemsViewController, {
     useBibleItemViewControllerUpdateEvent,
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
+import { DEFAULT_BIBLE_COLOR_NOTE } from '../helper/colorNoteDefaults';
 
 const { FakeItem } = h;
 
@@ -194,6 +195,17 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(sanitizeNestedItems([[], a])).toEqual([a]);
         });
 
+        // Each one-child level flips the orientation of the one under it, so
+        // two of them cancel; one alone does not and must stay.
+        test('sanitizeNestedItems drops one-child splits in pairs only', () => {
+            const a = genItem(1);
+            const b = genItem(2);
+            const c = genItem(3);
+            expect(sanitizeNestedItems([[[a, b, c]]])).toEqual([a, b, c]);
+            expect(sanitizeNestedItems([[a, b]])).toEqual([[a, b]]);
+            expect(sanitizeNestedItems([a, [[[b, c]]]])).toEqual([a, [b, c]]);
+        });
+
         test('stringifyNestedBibleItem serializes recursively', () => {
             const a = genItem(1);
             const result = stringifyNestedBibleItem([a, [genItem(2)]]);
@@ -203,6 +215,24 @@ describe('bible-reader BibleItemsViewController', () => {
     });
 
     describe('settings-backed getters/setters', () => {
+        test('scroll sync defaults on and is remembered per color and preview controller', () => {
+            const ctl = genController();
+            expect(ctl.getIsGroupScrollSynced('magenta')).toBe(true);
+            expect(ctl.getIsGroupScrollSynced('')).toBe(false);
+            ctl.setIsGroupScrollSynced('magenta', false);
+            expect(ctl.getIsGroupScrollSynced('magenta')).toBe(false);
+            expect(ctl.getIsGroupScrollSynced('blue')).toBe(true);
+            expect(genController().getIsGroupScrollSynced('magenta')).toBe(
+                false,
+            );
+            expect(
+                genController('other').getIsGroupScrollSynced('magenta'),
+            ).toBe(true);
+            expect(ctl.addPropEvent).toHaveBeenCalledWith('update');
+            ctl.setIsGroupScrollSynced('magenta', true);
+            expect(ctl.getIsGroupScrollSynced('magenta')).toBe(true);
+        });
+
         test('colorNoteMap round-trips and recovers from bad json', () => {
             const ctl = genController();
             expect(ctl.colorNoteMap).toEqual({});
@@ -332,6 +362,22 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(ctl.colorNoteMap[1]).toBeUndefined();
         });
 
+        // The user: _all bible preview section should have color_, lime when
+        // no colour note was ever set. A lime picked from the menu is written
+        // in the other case, so both spellings must be ONE group.
+        test('a default lime section groups with an explicitly lime one', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1), genItem(2)];
+            const [a, b] = ctl.straightBibleItems;
+            ctl.setColorNote(a, '#00ff00');
+
+            expect(ctl.getColorNote(a)).toBe('#00ff00');
+            expect(ctl.getColorNote(b)).toBe('#00ff00');
+            expect(
+                ctl.getBibleItemsByColorNote('#00FF00').map((i) => i.id),
+            ).toEqual([1, 2]);
+        });
+
         test('isAlone reflects the item count', () => {
             const ctl = genController();
             expect(ctl.isAlone).toBe(true);
@@ -366,6 +412,8 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(neighbors.right?.id).toBe(3);
         });
 
+        // The root lies side by side and each level the other way, so a
+        // nested pair under the root is a COLUMN: 1 sits above 2, 3 beside 1.
         test('getNeighborBibleItems handles nested orientation', () => {
             const ctl = genController();
             ctl.nestedBibleItems = [
@@ -379,7 +427,11 @@ describe('bible-reader BibleItemsViewController', () => {
                 'top',
                 'bottom',
             ]);
-            expect(neighbors).toHaveProperty('bottom');
+            expect(neighbors.bottom?.id).toBe(2);
+            expect(neighbors.right?.id).toBe(3);
+            // Wrapping round a two-wide, two-high grid lands on the same two.
+            expect(neighbors.top?.id).toBe(2);
+            expect(neighbors.left?.id).toBe(3);
         });
 
         test('getNeighborBibleItems restricts to requested positions and wraps', () => {
@@ -393,6 +445,120 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(neighbors.bottom).toBeNull();
             // going left from the first wraps to the last item
             expect(neighbors.left?.id).toBe(3);
+        });
+
+        describe('getNeighborBibleItems picks by where the panes sit (KB-27)', () => {
+            const DIRECTIONS = ['left', 'right', 'top', 'bottom'] as const;
+            // Top-left, top-right, bottom-left, bottom-right.
+            const [TL, TR, BL, BR] = [1, 2, 3, 4];
+
+            function readNeighborIds(nestedBibleItems: any) {
+                const ctl = genController();
+                ctl.nestedBibleItems = nestedBibleItems;
+                const table: Record<number, Record<string, number | null>> = {};
+                for (const item of ctl.straightBibleItems) {
+                    const neighbors = ctl.getNeighborBibleItems(item, [
+                        ...DIRECTIONS,
+                    ]);
+                    table[item.id] = Object.fromEntries(
+                        DIRECTIONS.map((direction) => {
+                            return [
+                                direction,
+                                neighbors[direction]?.id ?? null,
+                            ];
+                        }),
+                    );
+                }
+                return table;
+            }
+
+            // Every move in a 2x2 lands in the same row or column it left.
+            // In a grid two wide and two high the wrap round the outer edge
+            // and the step inward reach the same pane.
+            const GRID_2X2 = {
+                [TL]: { left: TR, right: TR, top: BL, bottom: BL },
+                [TR]: { left: TL, right: TL, top: BR, bottom: BR },
+                [BL]: { left: BR, right: BR, top: TL, bottom: TL },
+                [BR]: { left: BL, right: BL, top: TR, bottom: TR },
+            };
+
+            // Built column by column -- split side by side, then split each
+            // half top to bottom -- which is the grid the bug was reported
+            // on: Ctrl+Shift+Left from BR went to TL, Right from BL to TR.
+            test('a 2x2 built column first', () => {
+                expect(
+                    readNeighborIds([
+                        [genItem(TL), genItem(BL)],
+                        [genItem(TR), genItem(BR)],
+                    ]),
+                ).toEqual(GRID_2X2);
+            });
+
+            // The root always lies side by side, so ROWS need a one-child
+            // root: its child stacks the rows, and each row lies side by
+            // side again. `[[TL, TR], [BL, BR]]` is two columns.
+            test('a 2x2 built row first', () => {
+                const rows = [
+                    [
+                        [genItem(TL), genItem(TR)],
+                        [genItem(BL), genItem(BR)],
+                    ],
+                ];
+                const ctl = genController();
+                ctl.nestedBibleItems = rows;
+                // Not flattened away: a lone child flips the axis under it.
+                expect(ctl.nestedBibleItems).toHaveLength(1);
+                expect(readNeighborIds(rows)).toEqual(GRID_2X2);
+            });
+
+            // One tall pane beside two stacked ones. Rightward from the tall
+            // one, its middle falls on the line between B and C; the first,
+            // the top one, wins.
+            test('an uneven grid', () => {
+                const [A, B, C] = [1, 2, 3];
+                expect(
+                    readNeighborIds([genItem(A), [genItem(B), genItem(C)]]),
+                ).toEqual({
+                    [A]: { left: B, right: B, top: null, bottom: null },
+                    [B]: { left: A, right: A, top: C, bottom: C },
+                    [C]: { left: A, right: A, top: B, bottom: B },
+                });
+            });
+
+            test('a wrap keeps the row it left', () => {
+                const ids = readNeighborIds([
+                    [genItem(1), genItem(4)],
+                    [genItem(2), genItem(5)],
+                    [genItem(3), genItem(6)],
+                ]);
+                // Top row 1 2 3, bottom row 4 5 6.
+                expect(ids[1]).toEqual({
+                    left: 3,
+                    right: 2,
+                    top: 4,
+                    bottom: 4,
+                });
+                expect(ids[6]).toEqual({
+                    left: 5,
+                    right: 4,
+                    top: 3,
+                    bottom: 3,
+                });
+            });
+
+            test('a lone pane has nowhere to go', () => {
+                expect(readNeighborIds([genItem(1)])).toEqual({
+                    1: { left: null, right: null, top: null, bottom: null },
+                });
+            });
+
+            test('an item not in the grid has no neighbours', () => {
+                const ctl = genController();
+                ctl.nestedBibleItems = [genItem(1), genItem(2)];
+                expect(
+                    ctl.getNeighborBibleItems(genItem(99), [...DIRECTIONS]),
+                ).toEqual({ left: null, right: null, top: null, bottom: null });
+            });
         });
 
         test('applyTargetOrBibleKey updates target, key and flags', () => {
@@ -465,6 +631,48 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(h.handleErrorMock).toHaveBeenCalled();
         });
 
+        // The user: _new section that is not from splitting have to assign
+        // with different color (color not used in any section)_ -- a drop
+        // used to land colourless, i.e. in the default lime group.
+        test('a view that is not a split gets a colour no view shows', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1), genItem(2)];
+            const [a, b] = ctl.straightBibleItems;
+            ctl.setColorNote(b, '#FF00FF');
+            ctl.addBibleItemRight(a, genItem(3), true);
+            const added = ctl.straightBibleItems[1];
+            // lime (the default a) and fuchsia (b) are taken.
+            expect(ctl.getColorNote(added)).toBe('#ffff00');
+            ctl.addBibleItemBottom(added, genItem(4), true);
+            const colors = ctl.straightBibleItems.map((item: any) => {
+                return ctl.getColorNote(item);
+            });
+            expect(new Set(colors).size).toBe(4);
+        });
+
+        test('a split view joins the colour of the view it came from', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1)];
+            const a = ctl.straightBibleItems[0];
+            ctl.setColorNote(a, 'red');
+            ctl.addBibleItemLeft(a, genItem(2));
+            expect(
+                ctl.straightBibleItems.map((item: any) => {
+                    return ctl.getColorNote(item);
+                }),
+            ).toEqual(['red', 'red']);
+        });
+
+        test('appendBibleItem gives the new view a colour of its own', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1)];
+            const added = ctl.appendBibleItem(ctl.straightBibleItems[0]);
+            expect(ctl.getColorNote(ctl.straightBibleItems[0])).toBe(
+                DEFAULT_BIBLE_COLOR_NOTE.toLowerCase(),
+            );
+            expect(ctl.getColorNote(added)).toBe('#ff00ff');
+        });
+
         test('appendBibleItem appends to array and wraps singletons', () => {
             const ctl = genController();
             ctl.nestedBibleItems = [genItem(1)];
@@ -505,6 +713,85 @@ describe('bible-reader BibleItemsViewController', () => {
             )!;
             splitVerticalTo.onSelect!({} as any);
             expect(h.showBibleKeyOptionMock).toHaveBeenCalledTimes(2);
+        });
+
+        // Asked for by the user: a view in a colour group hands its colour
+        // to the view split off it, so its split button asks which version.
+        test('a split button splits a view with no colour at once, in the same version', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1)];
+            const item = ctl.straightBibleItems[0];
+            // Every section now has a colour (the default lime note), so the
+            // no-colour path only answers here for a controller that reports
+            // none at all.
+            vi.spyOn(ctl, 'getColorNote').mockReturnValue('');
+            const addLeft = vi.spyOn(ctl, 'addBibleItemLeft');
+            const addBottom = vi.spyOn(ctl, 'addBibleItemBottom');
+
+            expect(ctl.checkIsSplitAskingBibleKey(item)).toBe(false);
+            ctl.splitBibleItemOnPress({}, item, true);
+            expect(addLeft).toHaveBeenCalledExactlyOnceWith(item, item);
+            ctl.splitBibleItemOnPress({}, item, false);
+            expect(addBottom).toHaveBeenCalledExactlyOnceWith(item, item);
+            expect(h.showBibleKeyOptionMock).not.toHaveBeenCalled();
+        });
+
+        // The user: _all bible preview section should have color_, lime when
+        // no colour note was ever set -- so an untouched view is already
+        // grouped and its split asks which version.
+        test('a view without a colour note is in the default lime group', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1), genItem(2)];
+            const item = ctl.straightBibleItems[0];
+            const addLeft = vi.spyOn(ctl, 'addBibleItemLeft');
+            const event = { clientX: 5, clientY: 6 };
+
+            expect(ctl.getColorNote(item)).toBe(
+                DEFAULT_BIBLE_COLOR_NOTE.toLowerCase(),
+            );
+            expect(
+                ctl
+                    .getBibleItemsByColorNote(DEFAULT_BIBLE_COLOR_NOTE)
+                    .map((bibleItem) => bibleItem.id),
+            ).toEqual([1, 2]);
+            expect(ctl.checkIsSplitAskingBibleKey(item)).toBe(true);
+            ctl.splitBibleItemOnPress(event, item, true);
+            expect(addLeft).not.toHaveBeenCalled();
+            expect(h.showBibleKeyOptionMock).toHaveBeenCalledTimes(1);
+        });
+
+        test('a split button of a grouped view asks which version first', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1)];
+            const item = ctl.straightBibleItems[0];
+            ctl.setColorNote(item, 'red');
+            const addLeft = vi.spyOn(ctl, 'addBibleItemLeft');
+            const addBottom = vi.spyOn(ctl, 'addBibleItemBottom');
+            const event = { clientX: 5, clientY: 6 };
+
+            expect(ctl.checkIsSplitAskingBibleKey(item)).toBe(true);
+            ctl.splitBibleItemOnPress(event, item, true);
+            // Nothing is split until a version is chosen.
+            expect(addLeft).not.toHaveBeenCalled();
+            const [openedAt, onBibleKey, excluded, title] =
+                h.showBibleKeyOptionMock.mock.calls[0];
+            expect(openedAt).toBe(event);
+            expect(excluded).toEqual([]);
+            expect(title).toBe('Split Horizontal to');
+            onBibleKey('ESV');
+            expect(addLeft).toHaveBeenCalledTimes(1);
+            const [source, added] = addLeft.mock.calls[0];
+            expect(source).toBe(item);
+            expect(added).not.toBe(item);
+            expect(added.bibleKey).toBe('ESV');
+
+            ctl.splitBibleItemOnPress(event, item, false);
+            expect(h.showBibleKeyOptionMock.mock.calls[1][3]).toBe(
+                'Split Vertical to',
+            );
+            h.showBibleKeyOptionMock.mock.calls[1][1]('NIV');
+            expect(addBottom.mock.calls[0][1].bibleKey).toBe('NIV');
+            expect(addLeft).toHaveBeenCalledTimes(1);
         });
 
         test('genContextMenu toggle full view targets the uuid element', async () => {
@@ -754,6 +1041,35 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(
                 compareBibleItemsInBibleOrder(item('XYZ'), item('EXO'), order),
             ).toBeGreaterThan(0);
+        });
+
+        test('an earlier end chapter sorts first before the end verse', () => {
+            const order = ['JHN'];
+            const item = (verseEnd: number, chapterEnd?: number) => ({
+                bibleKey: 'KJV',
+                target: {
+                    bookKey: 'JHN',
+                    chapter: 1,
+                    verseStart: 2,
+                    verseEnd,
+                    chapterEnd,
+                },
+            });
+            // JHN 1:2-3:1, JHN 1:2-9, JHN 1:2-2:7, JHN 1:2-2:3
+            const list = [item(1, 3), item(9), item(7, 2), item(3, 2)];
+            list.sort((a, b) => compareBibleItemsInBibleOrder(a, b, order));
+            expect(
+                list.map(({ target }) => [target.chapterEnd, target.verseEnd]),
+            ).toEqual([
+                [undefined, 9],
+                [2, 3],
+                [2, 7],
+                [3, 1],
+            ]);
+            // A same-chapter `chapterEnd` is no end chapter at all.
+            expect(
+                compareBibleItemsInBibleOrder(item(9, 1), item(9), order),
+            ).toBe(0);
         });
 
         test('finalRenderer throws when not implemented', () => {

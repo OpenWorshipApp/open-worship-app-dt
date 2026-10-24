@@ -9,6 +9,13 @@ const createScreenManagerMock = vi.fn();
 const genStyleRenderingMock = vi.fn();
 const getScreenManagerBaseMock = vi.fn((screenId: number) => ({ screenId }));
 const getCameraStreamMock = vi.fn();
+const stopCameraStreamMock = vi.fn((stream: any) => {
+    for (const track of stream.getTracks()) {
+        track.stop();
+    }
+});
+const viewerCameraLiveListeners: ((isLive: boolean) => void)[] = [];
+const stopViewerCameraLiveMock = vi.fn();
 const handleErrorMock = vi.fn();
 const showAppAlertMock = vi.fn();
 const useScreenManagerEventsMock = vi.fn(
@@ -16,7 +23,7 @@ const useScreenManagerEventsMock = vi.fn(
         callback?.();
     },
 );
-const useScreenBibleManagerEventsMock = vi.fn();
+const useScreenLongTextManagerEventsMock = vi.fn();
 
 const appProviderMock = {
     isPageScreen: false,
@@ -46,8 +53,8 @@ vi.mock('./managers/ScreenManager', () => ({
     },
 }));
 
-vi.mock('./managers/ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./managers/ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static readonly textStyleTextColor = '#ffffff';
         static readonly textStyleText = 'font-size: 64px;';
     },
@@ -72,9 +79,8 @@ vi.mock('./managers/screenManagerHooks', () => ({
 }));
 
 vi.mock('./managers/screenEventHelpers', () => ({
-    useScreenBibleManagerEvents: useScreenBibleManagerEventsMock,
+    useScreenLongTextManagerEvents: useScreenLongTextManagerEventsMock,
     useScreenForegroundManagerEvents: vi.fn(),
-    useScreenMaskManagerEvents: vi.fn(),
 }));
 
 vi.mock('./managers/screenManagerBaseHelpers', () => ({
@@ -93,7 +99,26 @@ vi.mock('./managers/screenHelpers', () => ({
 }));
 
 vi.mock('../helper/cameraHelpers', () => ({
+    // Safari and Firefox show a camera in a canvas view.
+    createCameraCanvasView: (stream: any) => stream.canvasView ?? null,
     getCameraStream: getCameraStreamMock,
+    stopCameraStream: stopCameraStreamMock,
+}));
+
+// A browser viewer's camera stream says whether pictures come; any other
+// stream says nothing, as the real one does.
+vi.mock('../virtual-display/viewerCameraTransport', () => ({
+    checkIsViewerCameraId: (id: string) => id.startsWith('vd-camera:'),
+    listenViewerCameraLive: (
+        stream: any,
+        listener: (isLive: boolean) => void,
+    ) => {
+        if (stream.isViewer) {
+            viewerCameraLiveListeners.push(listener);
+            listener(false);
+        }
+        return stopViewerCameraLiveMock;
+    },
 }));
 
 vi.mock('../helper/errorHelpers', () => ({
@@ -152,6 +177,7 @@ function createScreenManagerStub() {
         screenBackgroundManager: {
             render: vi.fn(),
             rootContainer: null,
+            releaseRootContainer: vi.fn(),
             containerStyle: {
                 position: 'absolute',
                 width: '100%',
@@ -160,7 +186,9 @@ function createScreenManagerStub() {
         },
         screenForegroundManager: {
             render: vi.fn(),
-            div: null,
+            rootContainer: null,
+            rootContainerBehind: null,
+            releaseRootContainer: vi.fn(),
             containerStyle: {
                 position: 'absolute',
                 width: '100%',
@@ -180,6 +208,7 @@ function createScreenManagerStub() {
         screenFocusManager: {
             render: vi.fn(),
             div: null,
+            releaseDiv: vi.fn(),
         },
         screenVaryAppDocumentManager: {
             render: vi.fn(),
@@ -191,9 +220,10 @@ function createScreenManagerStub() {
                 height: '100%',
             },
         },
-        screenBibleManager: {
+        screenLongTextManager: {
             render: vi.fn(),
             div: null,
+            releaseDiv: vi.fn(),
             containerStyle: {
                 position: 'absolute',
                 width: '100%',
@@ -243,8 +273,11 @@ describe('screen component runtime behavior', () => {
             );
         });
         useScreenManagerEventsMock.mockClear();
-        useScreenBibleManagerEventsMock.mockClear();
+        useScreenLongTextManagerEventsMock.mockClear();
         getCameraStreamMock.mockReset();
+        stopCameraStreamMock.mockClear();
+        stopViewerCameraLiveMock.mockClear();
+        viewerCameraLiveListeners.length = 0;
         handleErrorMock.mockReset();
         showAppAlertMock.mockReset();
         appProviderMock.isPageScreen = false;
@@ -293,10 +326,19 @@ describe('screen component runtime behavior', () => {
         expect(
             screenManager.screenVaryAppDocumentManager.render,
         ).toHaveBeenCalledOnce();
-        expect(screenManager.screenBibleManager.render).toHaveBeenCalledOnce();
+        expect(
+            screenManager.screenLongTextManager.render,
+        ).toHaveBeenCalledOnce();
+        // Two foreground roots, each re-rendering only its OWN overlays.
         expect(
             screenManager.screenForegroundManager.render,
-        ).toHaveBeenCalledOnce();
+        ).toHaveBeenCalledTimes(2);
+        expect(
+            screenManager.screenForegroundManager.render,
+        ).toHaveBeenCalledWith(true);
+        expect(
+            screenManager.screenForegroundManager.render,
+        ).toHaveBeenCalledWith(false);
         expect(screenManager.screenDrawManager.render).toHaveBeenCalledOnce();
         expect(screenManager.screenBackgroundManager.rootContainer).toBe(
             container.querySelector('#background'),
@@ -304,12 +346,32 @@ describe('screen component runtime behavior', () => {
         expect(screenManager.screenVaryAppDocumentManager.div).toBe(
             container.querySelector('#slide'),
         );
-        expect(screenManager.screenBibleManager.div).toBe(
+        expect(screenManager.screenLongTextManager.div).toBe(
             container.querySelector('#bible-screen-view'),
         );
-        expect(screenManager.screenForegroundManager.div).toBe(
+        expect(screenManager.screenForegroundManager.rootContainer).toBe(
             container.querySelector('#foreground'),
         );
+        expect(screenManager.screenForegroundManager.rootContainerBehind).toBe(
+            container.querySelector('#foreground-behind'),
+        );
+        // The behind root is what puts an overlay UNDER the words: it has to
+        // sit after the background and before the slide and the Bible view.
+        const layerIdList = Array.from(
+            container.querySelectorAll(
+                '#background, #foreground-behind, #slide, ' +
+                    '#bible-screen-view, #foreground',
+            ),
+        ).map((element) => {
+            return element.id;
+        });
+        expect(layerIdList).toEqual([
+            'background',
+            'foreground-behind',
+            'slide',
+            'bible-screen-view',
+            'foreground',
+        ]);
         expect(screenManager.screenDrawManager.div).toBe(
             container.querySelector('#draw'),
         );
@@ -343,6 +405,52 @@ describe('screen component runtime behavior', () => {
         );
 
         tracked.remove();
+        root = createRoot(container);
+    });
+
+    test('each drawing layer hands its own element back when it unmounts, and not on a re-render', async () => {
+        const { default: ScreenAppComp } = await import('./ScreenAppComp');
+
+        await act(async () => {
+            root.render(<ScreenAppComp />);
+        });
+        const background = container.querySelector('#background');
+        const bible = container.querySelector('#bible-screen-view');
+        const foreground = container.querySelector('#foreground');
+        const foregroundBehind = container.querySelector('#foreground-behind');
+        const focus = container.querySelector('#focus');
+        const {
+            screenBackgroundManager,
+            screenLongTextManager,
+            screenForegroundManager,
+            screenFocusManager,
+        } = screenManager;
+
+        // A re-render must not let go: these layers re-render on every refresh
+        // event, and a release there would tear every overlay down and rebuild
+        // it each time.
+        await act(async () => {
+            root.render(<ScreenAppComp />);
+        });
+        expect(screenForegroundManager.releaseRootContainer).not.toBeCalled();
+        expect(screenFocusManager.releaseDiv).not.toBeCalled();
+
+        await act(async () => {
+            root.unmount();
+        });
+        expect(screenBackgroundManager.releaseRootContainer).toBeCalledWith(
+            background,
+        );
+        expect(screenLongTextManager.releaseDiv).toBeCalledWith(bible);
+        expect(screenForegroundManager.releaseRootContainer).toBeCalledWith(
+            foreground,
+            false,
+        );
+        expect(screenForegroundManager.releaseRootContainer).toBeCalledWith(
+            foregroundBehind,
+            true,
+        );
+        expect(screenFocusManager.releaseDiv).toBeCalledWith(focus);
         root = createRoot(container);
     });
 
@@ -466,6 +574,74 @@ describe('screen component runtime behavior', () => {
         clearTracks();
         expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce();
         expect(stopTrack).toHaveBeenCalledOnce();
+    });
+
+    test("a browser viewer's camera background goes up at once, hidden until it sends pictures", async () => {
+        const { genHtmlBackground } = await import('./ScreenBackgroundComp');
+        const stopTrack = vi.fn();
+        getCameraStreamMock.mockResolvedValue({
+            isViewer: true,
+            getTracks: () => [{ stop: stopTrack }],
+        });
+        const background = genHtmlBackground(5, {
+            type: 'camera',
+            src: 'vd-camera:viewer-1',
+        } as any);
+        // Not shared yet there is no picture, so nothing to wait for.
+        const clearTracks = await background.promise;
+        const video = background.newDiv.querySelector('video');
+        expect(video?.style.visibility).toBe('hidden');
+        viewerCameraLiveListeners.at(-1)?.(true);
+        expect(video?.style.visibility).toBe('');
+        viewerCameraLiveListeners.at(-1)?.(false);
+        expect(video?.style.visibility).toBe('hidden');
+        clearTracks();
+        expect(stopViewerCameraLiveMock).toHaveBeenCalledOnce();
+        expect(stopCameraStreamMock).toHaveBeenCalledOnce();
+        expect(stopTrack).toHaveBeenCalledOnce();
+    });
+
+    test("Safari shows a camera background in a canvas in the video's place, put up at once", async () => {
+        const { genHtmlBackground } = await import('./ScreenBackgroundComp');
+        const canvas = document.createElement('canvas');
+        const releaseView = vi.fn();
+        // This computer's camera, as a browser viewer has it: no metadata
+        // will ever come to the hidden video, so nothing waits for it.
+        getCameraStreamMock.mockResolvedValue({
+            canvasView: { element: canvas, release: releaseView },
+            getTracks: () => [],
+        });
+        const background = genHtmlBackground(5, {
+            type: 'camera',
+            src: 'mirror-camera:host-1:camera-1',
+        } as any);
+        const clearTracks = await background.promise;
+        // The video an iPad never paints is gone; the canvas has its look.
+        expect(background.newDiv.querySelector('video')).toBeNull();
+        expect(background.newDiv.firstElementChild).toBe(canvas);
+        expect(canvas.style.objectFit).toBe('cover');
+        expect(canvas.style.visibility).toBe('');
+        clearTracks();
+        expect(releaseView).toHaveBeenCalledOnce();
+        expect(stopCameraStreamMock).toHaveBeenCalledOnce();
+    });
+
+    test("Safari: a browser viewer's camera background in a canvas hides while it sends nothing", async () => {
+        const { genHtmlBackground } = await import('./ScreenBackgroundComp');
+        const canvas = document.createElement('canvas');
+        getCameraStreamMock.mockResolvedValue({
+            isViewer: true,
+            canvasView: { element: canvas, release: vi.fn() },
+            getTracks: () => [],
+        });
+        const background = genHtmlBackground(5, {
+            type: 'camera',
+            src: 'vd-camera:viewer-1',
+        } as any);
+        await background.promise;
+        expect(canvas.style.visibility).toBe('hidden');
+        viewerCameraLiveListeners.at(-1)?.(true);
+        expect(canvas.style.visibility).toBe('');
     });
 
     test('handles camera background failures with a user-facing alert', async () => {

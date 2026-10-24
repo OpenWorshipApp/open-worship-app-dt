@@ -20,6 +20,7 @@ export default defineConfig({
             'src/**/*.test.ts',
             'src/**/*.test.tsx',
             'tools/**/*.test.mjs',
+            'extra-work/local-llm/**/*.test.mjs',
         ],
         clearMocks: true,
         restoreMocks: true,

@@ -14,6 +14,7 @@ import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 import { handleDragStart } from '../helper/dragHelpers';
 import RenderCameraVideoComp from './RenderCameraVideoComp';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { genBackgroundItemTransitionMenuItems } from './backgroundTransitionMenuHelpers';
 
 const TITLE_HEIGHT = 30;
 
@@ -52,6 +53,10 @@ export default function BackgroundCameraItemComp({
             ...genShowOnScreensContextMenu((event) => {
                 handleSelectingRef.current(event, true);
             }),
+            ...genBackgroundItemTransitionMenuItems(
+                'camera',
+                cameraInfoRef.current.deviceId,
+            ),
         ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

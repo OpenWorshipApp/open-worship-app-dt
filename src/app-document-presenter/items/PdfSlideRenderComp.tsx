@@ -12,7 +12,7 @@ import { sanitizeHtml } from '../../helper/sanitizeHelpers';
 import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 
-function PdfSlideRenderContentComp({
+export function PdfSlideRenderContentComp({
     pdfImageSrc,
     isFullWidth = false,
 }: Readonly<{

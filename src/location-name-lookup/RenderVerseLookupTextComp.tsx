@@ -129,6 +129,12 @@ export default function RenderVerseLookupTextComp({
                     handleMatchClicking(event, match);
                 }}
                 onContextMenu={(event) => {
+                    // The SYNTHETIC event: stopping the native one does not
+                    // halt React's own bubbling, and the bible view around the
+                    // verse builds its generic menu after an await and then
+                    // closes this one to show it (RD-92).
+                    event.preventDefault();
+                    event.stopPropagation();
                     showGraphPreviewContextMenu(event.nativeEvent, {
                         kind: match.kind,
                         recordId: match.recordId,

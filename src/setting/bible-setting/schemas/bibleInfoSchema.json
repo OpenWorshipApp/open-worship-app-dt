@@ -269,6 +269,10 @@
             "type": "string",
             "description": "Copyright information for the Bible translation"
         },
+        "note": {
+            "type": "string",
+            "description": "Free text about this Bible. An import writes when and where it came from, e.g. the link it was downloaded from"
+        },
         "numbersMap": {
             "type": "object",
             "description": "Mapping of digits to their localized representations",

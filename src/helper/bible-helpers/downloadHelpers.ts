@@ -80,6 +80,23 @@ export function initHttpRequest(url: URL, redirectCount = 0) {
     });
 }
 
+/**
+ * The server answered, but not with the file. Carries the status so the words
+ * an operator reads can say WHICH failure it was (`describeDownloadError`) --
+ * "Error during download" told nobody that the link was simply wrong.
+ */
+export class DownloadHttpError extends Error {
+    readonly statusCode: number;
+    constructor(statusCode: number, statusMessage?: string) {
+        super(
+            `The server answered ${statusCode}` +
+                (statusMessage ? ` ${statusMessage}` : ''),
+        );
+        this.name = 'DownloadHttpError';
+        this.statusCode = statusCode;
+    }
+}
+
 export type DownloadOptionsType = {
     onStart: (fileSize: number) => OptionalPromise<void>;
     onProgress: (percentage: number) => OptionalPromise<void>;
@@ -91,7 +108,9 @@ export async function writeStreamToFile(
     response: any,
 ) {
     if (response.statusCode !== 200) {
-        return options.onDone(new Error('Error during download'));
+        return options.onDone(
+            new DownloadHttpError(response.statusCode, response.statusMessage),
+        );
     }
     if (await fsCheckFileExist(filePath)) {
         await fsDeleteFile(filePath);

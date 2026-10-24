@@ -27,6 +27,11 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import type BibleItem from './BibleItem';
 import { escapeHtmlText } from '../helper/sanitizeHelpers';
 import { type AppColorType } from '../others/color/colorValueHelpers';
+import {
+    checkIsCrossChapterTarget,
+    toSingleChapterTarget,
+    toTargetChapterSliceList,
+} from '../helper/bible-helpers/bibleTargetHelpers';
 
 const SLIDE_BACKGROUND = '#101b29db' as AppColorType;
 const READING_COLOR = '#f4f3ef' as AppColorType;
@@ -253,21 +258,44 @@ export async function generateBibleItemSlides(
             throw new Error('Documents directory is unavailable');
         }
         const dirPath = dirSource.dirPath;
-        const { bookKey, chapter, verseStart, verseEnd } = bibleItem.target;
+        const { bookKey, verseStart, verseEnd } = bibleItem.target;
         if (
             bibleItem.isError ||
             !Number.isInteger(verseStart) ||
             !Number.isInteger(verseEnd) ||
-            verseStart > verseEnd
+            // `John 1:20-2:3` ends on a smaller verse in a later chapter.
+            (!checkIsCrossChapterTarget(bibleItem.target) &&
+                verseStart > verseEnd)
         ) {
             throw new Error('Bible passage is unavailable');
         }
+        // One slice per chapter the passage covers; one, itself, when it
+        // stays in its chapter.
+        const sliceList = toTargetChapterSliceList(bibleItem.target);
+        // A chapter the passage runs on through ends where the first version
+        // read -- the passage's own -- ends it, as the Reader counts it.
+        const sliceVerseEndList = sliceList.map((slice) => slice.verseEnd);
         // Check the whole range before creating anything: never save a partial
-        // passage or the Bible renderer's "??" missing-verse placeholder.
+        // passage or the Bible renderer's "??" missing-verse placeholder. Each
+        // chapter is read once per version.
         for (const bibleKey of bibleKeys) {
-            const verses = await getVerses(bibleKey, bookKey, chapter);
-            for (let verse = verseStart; verse <= verseEnd; verse++) {
-                if (!verses?.[String(verse)]?.trim()) {
+            for (const [sliceIndex, slice] of sliceList.entries()) {
+                const verses = await getVerses(
+                    bibleKey,
+                    bookKey,
+                    slice.chapter,
+                );
+                const sliceVerseEnd = (sliceVerseEndList[sliceIndex] ??=
+                    Object.keys(verses ?? {}).length);
+                let isAvailable = !!verses && slice.verseStart <= sliceVerseEnd;
+                for (
+                    let verse = slice.verseStart;
+                    isAvailable && verse <= sliceVerseEnd;
+                    verse++
+                ) {
+                    isAvailable = !!verses?.[String(verse)]?.trim();
+                }
+                if (!isAvailable) {
                     showSimpleToast(
                         tran('Generate Slides'),
                         `${tran('Bible passage is unavailable in')}: ${bibleKey}`,
@@ -276,6 +304,19 @@ export async function generateBibleItemSlides(
                 }
             }
         }
+        // Every verse a slide is made of, in order, across its chapters.
+        const slideVerseList = sliceList.flatMap((slice, sliceIndex) => {
+            const verseList: { chapter: number; verse: number }[] = [];
+            const sliceVerseEnd = sliceVerseEndList[sliceIndex] ?? 0;
+            for (
+                let verse = slice.verseStart;
+                verse <= sliceVerseEnd;
+                verse++
+            ) {
+                verseList.push({ chapter: slice.chapter, verse });
+            }
+            return verseList;
+        });
         const kjvItem = bibleItem.clone();
         kjvItem.bibleKey = BIBLE_KJV_KEY;
         const title = await kjvItem.toTitle();
@@ -343,13 +384,14 @@ export async function generateBibleItemSlides(
             titleSlide.canvasItems.push(titleItem.toJson());
         }
         const slides = [titleSlide];
-        for (let verse = verseStart; verse <= verseEnd; verse++) {
+        for (const [verseIndex, slideVerse] of slideVerseList.entries()) {
             const verseItem = bibleItem.clone();
-            verseItem.target = {
-                ...bibleItem.target,
-                verseStart: verse,
-                verseEnd: verse,
-            };
+            verseItem.target = toSingleChapterTarget(
+                bookKey,
+                slideVerse.chapter,
+                slideVerse.verse,
+                slideVerse.verse,
+            );
             const slide = Slide.defaultSlideData(slides.length);
             slide.metadata = { width, height };
             slide.canvasItems = [genBackground(boxParams)];
@@ -381,13 +423,20 @@ export async function generateBibleItemSlides(
                 });
                 slide.canvasItems.push(canvasItem.toJson());
             }
-            if (verse < verseEnd) {
+            // The next verse is the next one of the passage, over a chapter
+            // boundary too: after John 1:51 comes John 2:1.
+            const nextSlideVerse = slideVerseList[verseIndex + 1];
+            if (nextSlideVerse !== undefined) {
                 const nextItem = bibleItem.clone();
-                nextItem.target = {
-                    ...bibleItem.target,
-                    verseStart: verse + 1,
-                    verseEnd: verse + 1,
-                };
+                nextItem.target = toSingleChapterTarget(
+                    bookKey,
+                    nextSlideVerse.chapter,
+                    nextSlideVerse.verse,
+                    nextSlideVerse.verse,
+                );
+                // Its number alone would read as a verse of this chapter.
+                const isNextChapter =
+                    nextSlideVerse.chapter !== slideVerse.chapter;
                 const isOneKey = bibleKeys.length < 2;
                 for (const [index, bibleKey] of bibleKeys.entries()) {
                     nextItem.bibleKey = bibleKey;
@@ -397,10 +446,13 @@ export async function generateBibleItemSlides(
                     if (!nextVerse) {
                         throw new Error('Unable to read the next verse');
                     }
+                    const nextVerseNumber = isNextChapter
+                        ? `${nextVerse.localeChapter}:${nextVerse.localeVerse}`
+                        : nextVerse.localeVerse;
                     preview.applyProps({
                         id: bibleKeys.length + index + 1,
                         text: escapeHtmlText(
-                            `→ (${nextVerse.localeVerse})  ${nextVerse.text}` +
+                            `→ (${nextVerseNumber})  ${nextVerse.text}` +
                                 (isOneKey ? '' : ` (${bibleKey}) `),
                         ),
                         fontFamily: fontFamilies[index],

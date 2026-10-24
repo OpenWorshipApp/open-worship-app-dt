@@ -116,7 +116,7 @@ function genContextMenu(
     ];
 }
 
-function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
+function BiblePreviewComp({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
     const isOnScreen = useIsOnScreen(bible.items);
     const bibleRef = useAppCurrentRef(bible);
@@ -132,7 +132,30 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
                     ' app-cue-group' +
                     ` ${isOnScreen ? 'app-on-screen' : ''}`
                 }
+                role="button"
+                tabIndex={0}
+                // The only way to open or close a Bible file, and it was a bare
+                // div: Tab never reached it, a screen reader read the folder
+                // out as one unnamed thing, and `owa_click` had nothing to aim
+                // at. Same contract as the Notes file header (`NoteFileComp`).
+                aria-expanded={bible.isOpened}
+                aria-label={fileSource.name}
                 onClick={handleToggleOpened}
+                onKeyDown={(event) => {
+                    // Only a key pressed ON the header: the background button
+                    // inside it is a control of its own, and its Enter must
+                    // not fold the file shut -- nor have its own press
+                    // cancelled by the `preventDefault` below.
+                    if (event.target !== event.currentTarget) {
+                        return;
+                    }
+                    if (event.key !== 'Enter' && event.key !== ' ') {
+                        return;
+                    }
+                    // Otherwise Space scrolls the panel out from under it.
+                    event.preventDefault();
+                    handleToggleOpened();
+                }}
             >
                 <div className="flex-fill">
                     <i
@@ -195,7 +218,7 @@ export default function BibleFileComp({
         { setData: setBible },
     );
     const handlerChildRendering = useCallback((bible: AppDocumentSourceAbs) => {
-        return <BiblePreview bible={bible as Bible} />;
+        return <BiblePreviewComp bible={bible as Bible} />;
     }, []);
     const handleReloading = useCallback(() => {
         setBible(undefined);

@@ -16,7 +16,29 @@ export {
 export const SETTING_SETTING_NAME = 'setting-tabs';
 const SETTING_TAB_REQUEST_SETTING_NAME = 'setting-tab-request';
 const SETTING_TAB_REQUEST_MAX_AGE_MILLISECONDS = 30_000;
-export type SettingTabKeyType = 'g' | 'b' | 'o';
+// g: General, p: Path Settings, b: Bible, o: Others, a: AI Providers.
+export type SettingTabKeyType = 'g' | 'p' | 'b' | 'o' | 'a';
+const SETTING_TAB_KEY_LIST: SettingTabKeyType[] = ['g', 'p', 'b', 'o', 'a'];
+
+// The tab listener of THIS renderer, when it is the Settings window. A module
+// of its own would be cleaner, but `requestSettingTab` must reach it without
+// the asking window importing the settings page: the two are the same module
+// instance only when the asker IS Settings (`openOthersSetting` from the
+// assistant's "Enable AI features" prompt, answered inside Settings itself).
+// There the raise that carries a request to a window open in the background
+// fires no `focus` event -- the window is already in front -- so the tab
+// request was never taken and Yes did nothing.
+const settingTabListenerSet = new Set<(tabKey: SettingTabKeyType) => void>();
+
+/** Told when THIS window asks itself to show a tab, at once. */
+export function listenForSettingTabRequest(
+    callback: (tabKey: SettingTabKeyType) => void,
+) {
+    settingTabListenerSet.add(callback);
+    return () => {
+        settingTabListenerSet.delete(callback);
+    };
+}
 
 function requestSettingTab(tabKey: SettingTabKeyType) {
     setSetting(SETTING_SETTING_NAME, tabKey);
@@ -24,6 +46,9 @@ function requestSettingTab(tabKey: SettingTabKeyType) {
         SETTING_TAB_REQUEST_SETTING_NAME,
         JSON.stringify({ tabKey, requestedAt: Date.now() }),
     );
+    for (const callback of settingTabListenerSet) {
+        callback(tabKey);
+    }
 }
 
 /**
@@ -48,7 +73,7 @@ export function takeSettingTabRequest(): SettingTabKeyType | null {
         typeof data?.requestedAt !== 'number' ||
         Math.abs(Date.now() - data.requestedAt) >
             SETTING_TAB_REQUEST_MAX_AGE_MILLISECONDS ||
-        !['g', 'b', 'o'].includes(data.tabKey)
+        !SETTING_TAB_KEY_LIST.includes(data.tabKey)
     ) {
         return null;
     }
@@ -66,8 +91,19 @@ export function openSettingPage() {
     );
 }
 
-export function openGeneralSetting() {
-    requestSettingTab('g');
+/**
+ * Path Settings grew out of the General tab into one of its own. Every route
+ * that still said "open General" for a folder choice -- the empty-state button,
+ * the startup dialog, the context menu's Edit Parent Path -- comes here.
+ */
+export function openPathSetting() {
+    requestSettingTab('p');
+    openSettingPage();
+}
+
+/** The tab holding the AI master switch, provider keys and custom servers. */
+export function openAISetting() {
+    requestSettingTab('a');
     openSettingPage();
 }
 

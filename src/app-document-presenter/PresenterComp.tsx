@@ -19,15 +19,20 @@ import {
     useBibleItemsViewControllerContext,
     useBibleItemViewControllerUpdateEvent,
 } from '../bible-reader/BibleItemsViewController';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
-import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { getForegroundShowingScreenIdDataList } from '../presenter-foreground/foregroundHelpers';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
+import {
+    useScreenForegroundManagerEvents,
+    useScreenLongTextManagerEvents,
+} from '../_screen/managers/screenEventHelpers';
 import type { ForegroundWidgetType } from '../presenter-foreground/foregroundWidgetHelpers';
 import {
     FOREGROUND_OPEN_PANELS_SETTING_NAME,
     FOREGROUND_WIDGET_LIST,
     genForegroundPanelMenuItems,
+    getForegroundWidgetShowingScreenIds,
+    registerForegroundPanelOpener,
     toForegroundPanelPersistKey,
+    toOpenedPanelKeys,
     toOpenPanelKeys,
     toToggledPanelKeys,
 } from '../presenter-foreground/foregroundWidgetHelpers';
@@ -42,6 +47,7 @@ import type {
 } from '../resize-actor/flexSizeHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import VaryAppDocumentPinComp from './VaryAppDocumentPinComp';
+import { ForegroundComponentTransitionButtonComp } from '../presenter-foreground/ForegroundTransitionControlsComp';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
@@ -57,11 +63,18 @@ const LazyPresenterBiblePreviewerRenderComp = lazy(() => {
  */
 function ForegroundWidgetPanelComp({
     widget,
+    raiseToken,
     onClose,
-}: Readonly<{ widget: ForegroundWidgetType; onClose: () => void }>) {
+}: Readonly<{
+    widget: ForegroundWidgetType;
+    raiseToken: number;
+    onClose: () => void;
+}>) {
     useScreenForegroundManagerEvents(['update']);
-    const isOnScreen =
-        getForegroundShowingScreenIdDataList(widget.checkIsOnScreen).length > 0;
+    // Long Text Show is drawn by the long-text layer, so its mark follows
+    // that layer's changes, which the foreground manager never hears of.
+    useScreenLongTextManagerEvents(['update']);
+    const isOnScreen = getForegroundWidgetShowingScreenIds(widget).length > 0;
     const { Comp } = widget;
     return (
         <FloatingWidgetComp
@@ -76,7 +89,18 @@ function ForegroundWidgetPanelComp({
             // Background panel. Naming the panel is what lets a find be aimed
             // at one of them: `Video Show > snow.mp4` rather than both.
             widgetName={widget.labelKey}
+            raiseToken={raiseToken}
             onClose={onClose}
+            // The transition of the WHOLE component -- every session at once;
+            // a session's own row in its Properties still wins over it.
+            extraActionButtons={
+                widget.isNoTransition ? null : (
+                    <ForegroundComponentTransitionButtonComp
+                        widgetKey={widget.key}
+                        widgetLabel={widget.labelKey}
+                    />
+                )
+            }
             options={{
                 width: 460,
                 height: 520,
@@ -191,6 +215,21 @@ function ForegroundFloatingComp() {
             return toToggledPanelKeys(prev, key);
         });
     };
+    // Bumped per panel when it is opened from outside the launcher, so one
+    // that is open already comes up from behind the others.
+    const [raiseTokenMap, setRaiseTokenMap] = useState<{
+        [key: string]: number;
+    }>({});
+    useAppEffect(() => {
+        return registerForegroundPanelOpener((key) => {
+            setOpenKeysRaw((prev) => {
+                return toOpenedPanelKeys(prev, key);
+            });
+            setRaiseTokenMap((prev) => {
+                return { ...prev, [key]: (prev[key] ?? 0) + 1 };
+            });
+        });
+    }, []);
     return (
         <>
             <TabRenderComp<'f'>
@@ -216,6 +255,7 @@ function ForegroundFloatingComp() {
                     <ForegroundWidgetPanelComp
                         key={widget.key}
                         widget={widget}
+                        raiseToken={raiseTokenMap[widget.key] ?? 0}
                         onClose={() => {
                             handleToggling(widget.key);
                         }}
@@ -295,7 +335,7 @@ export default function PresenterComp() {
     const viewController = useBibleItemsViewControllerContext();
 
     const handleBibleUpdate = useCallback(() => {
-        ScreenBibleManager.fireUpdateEvent();
+        ScreenLongTextManager.fireUpdateEvent();
     }, []);
 
     useBibleItemViewControllerUpdateEvent(handleBibleUpdate);

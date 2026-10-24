@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Symptoms rather than tasks. Somebody standing at the back of a room describes what they can see going wrong, not the name of the feature that would fix it.",
-    "updated": "2026-09-12",
+    "updated": "2026-10-22",
     "sections": [
         {
             "id": "screen",
@@ -28,6 +28,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-10",
+                        "passage": "Nothing on the projector?",
                         "related": ["W-18"],
                         "tools": ["owa_list_screens", "owa_app_state"],
                         "shortcut": "F5"
@@ -46,6 +47,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
+                        "passage": "A screen that is not selected keeps what it last showed",
                         "related": ["W-10"],
                         "tools": ["owa_list_screens"]
                     }
@@ -62,6 +64,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
+                        "passage": "The next verses, from the projector window",
                         "related": ["W-11"]
                     }
                 }
@@ -87,6 +90,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
+                        "passage": "Each language is listed under its",
                         "guide": true
                     }
                 },
@@ -163,6 +167,7 @@
                     ],
                     "resources": {
                         "recipe": "W-34",
+                        "passage": "Deleted it by mistake?",
                         "guide": true
                     }
                 },
@@ -201,6 +206,8 @@
                     ],
                     "resources": {
                         "recipe": "W-35",
+                        "passage": "If SongSelect will not connect, check these",
+                        "find": "Sign In",
                         "related": ["W-36"]
                     }
                 }
@@ -226,6 +233,7 @@
                     ],
                     "resources": {
                         "recipe": "W-21",
+                        "passage": "The download tools are not built into the app",
                         "related": ["W-35"],
                         "find": "Extra Binaries",
                         "guide": true
@@ -234,7 +242,7 @@
                 {
                     "id": "download-left-part-file",
                     "text": "A download failed and left a temp file behind — what do I do with it?",
-                    "kind": "fix",
+                    "kind": "what",
                     "keywords": [
                         "part file",
                         "temp",
@@ -242,7 +250,8 @@
                         "failed download"
                     ],
                     "resources": {
-                        "recipe": "W-21"
+                        "recipe": "W-21",
+                        "passage": "A download that fails leaves nothing in your folders"
                     }
                 }
             ]
@@ -266,6 +275,7 @@
                     ],
                     "resources": {
                         "recipe": "W-25",
+                        "passage": "A password typed wrong is asked for again",
                         "related": ["W-23"]
                     }
                 }
@@ -333,8 +343,9 @@
                         "16:9"
                     ],
                     "resources": {
-                        "recipe": "W-15",
-                        "related": ["W-10"]
+                        "recipe": "W-03",
+                        "passage": "A slide that is the wrong shape for the screen",
+                        "related": ["W-15", "W-10"]
                     }
                 },
                 {
@@ -357,7 +368,7 @@
                 {
                     "id": "unsaved-edit-on-screen",
                     "text": "The projector is showing an edit I never saved — how is that possible?",
-                    "kind": "fix",
+                    "kind": "what",
                     "keywords": [
                         "unsaved",
                         "not saved yet",
@@ -365,7 +376,8 @@
                         "editing history"
                     ],
                     "resources": {
-                        "recipe": "W-15",
+                        "recipe": "W-03",
+                        "passage": "What the projector shows is what the editor holds",
                         "related": ["W-22"]
                     }
                 },
@@ -380,7 +392,8 @@
                         "first page"
                     ],
                     "resources": {
-                        "recipe": "W-03"
+                        "recipe": "W-03",
+                        "passage": "is blank, on purpose"
                     }
                 }
             ]
@@ -389,7 +402,7 @@
             "id": "running-order",
             "label": "The running order is not behaving",
             "panel": "Presenting Flows",
-            "recipes": ["W-22"],
+            "recipes": ["W-22", "W-22d"],
             "questions": [
                 {
                     "id": "flow-drag-between",
@@ -417,7 +430,8 @@
                         "clicked"
                     ],
                     "resources": {
-                        "recipe": "W-22"
+                        "recipe": "W-22d",
+                        "passage": "If the run stopped moving on by itself"
                     }
                 }
             ]
@@ -442,24 +456,82 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "find": ["Report"],
+                        "passage": "Something wrong with the app itself? Press Report",
+                        "find": "Report",
                         "tools": ["owa_app_state", "list_console_messages"]
+                    }
+                },
+                {
+                    "id": "report-how-can-i",
+                    "text": "How can I report a problem?",
+                    "kind": "howto",
+                    "keywords": [
+                        "report a problem",
+                        "report problem",
+                        "report an error",
+                        "suggest an improvement",
+                        "send feedback",
+                        "help menu",
+                        "something went wrong"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Something wrong with the app itself? Press Report",
+                        "find": "Report"
+                    }
+                },
+                {
+                    "id": "report-attach-file",
+                    "text": "Can I send a picture or a PDF with a problem report?",
+                    "kind": "howto",
+                    "keywords": [
+                        "attach a file to a report",
+                        "attach a pdf",
+                        "send a screenshot with the report",
+                        "add a picture to the report",
+                        "report with a file",
+                        "markdown file"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Attach a picture or PDF to a problem report"
+                    }
+                },
+                {
+                    "id": "report-kept-for-later",
+                    "text": "My report says the server is not answering — is it lost?",
+                    "kind": "fix",
+                    "keywords": [
+                        "report not sent",
+                        "server not answering",
+                        "send it later",
+                        "report kept",
+                        "try again later",
+                        "offline report",
+                        "did my report go"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "When the report server is not answering, the report is kept for later"
                     }
                 },
                 {
                     "id": "report-where-saved",
                     "text": "Where does the report go when I press Send report?",
-                    "kind": "fact",
+                    "kind": "what",
                     "keywords": [
                         "send report",
                         "downloads",
                         "who sees it",
                         "issue tracker",
+                        "report server",
+                        "is it sent",
                         "who do I send it to",
                         "email address"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "Press Send report and it goes to the people who make the app"
                     }
                 },
                 {
@@ -480,7 +552,8 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "find": ["Report"]
+                        "passage": "When nothing was sent, email it",
+                        "find": "Report"
                     }
                 },
                 {
@@ -499,7 +572,26 @@
                         "console"
                     ],
                     "resources": {
-                        "recipe": "W-42"
+                        "recipe": "W-42",
+                        "passage": "The note says what is wrong, and carries the door to it"
+                    }
+                },
+                {
+                    "id": "assistant-server-down",
+                    "text": "My own AI server is switched off — will the assistant still answer?",
+                    "kind": "fix",
+                    "keywords": [
+                        "server is off",
+                        "not running",
+                        "nothing answered",
+                        "try the next",
+                        "another assistant",
+                        "Ollama",
+                        "LM Studio"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "A server or a free model that cannot answer hands the question on too"
                     }
                 },
                 {
@@ -516,7 +608,8 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "find": ["Open AI settings"]
+                        "passage": "The note says what is wrong, and carries the door to it",
+                        "find": "Open AI settings"
                     }
                 }
             ]

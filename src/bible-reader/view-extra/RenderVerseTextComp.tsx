@@ -6,12 +6,14 @@ import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 import RenderVerseTextDetailComp from './RenderVerseTextDetailComp';
+import RenderBibleChapterDividerComp from './RenderBibleChapterDividerComp';
 import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 import {
     revealBibleNoteRefs,
     useShortBibleNoteVerses,
 } from '../../bible-list/note/bibleNoteShortVerseHelpers';
 import { tran } from '../../lang/langHelpers';
+import { toSingleChapterTarget } from '../../helper/bible-helpers/bibleTargetHelpers';
 
 // The verse number carries BOTH gestures — one click reveals the verse's bible
 // notes, two selects the verse — so the reveal has to wait out the double-click
@@ -61,12 +63,11 @@ export default function RenderVerseTextComp({
         // The first half of this gesture already scheduled a reveal; selecting
         // the verse is what the user actually asked for.
         cancelPendingRevealRef.current();
+        // The verse's OWN chapter: in a passage crossing chapters it is not
+        // necessarily the one the passage starts in.
+        const { bookKey, chapter, verse } = verseInfoRef.current;
         viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
-            target: {
-                ...bibleItemRef.current.target,
-                verseStart: verseInfoRef.current.verse,
-                verseEnd: verseInfoRef.current.verse,
-            },
+            target: toSingleChapterTarget(bookKey, chapter, verse, verse),
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -95,11 +96,20 @@ export default function RenderVerseTextComp({
         viewController.shouldNewLine &&
         (verseInfo.isNewLine ||
             (viewController.shouldModelNewLine && verseInfo.isModelNewLine));
+    // The divider already starts a new line; a line break above it as well
+    // would leave a blank one.
+    const isChapterStart = verseInfo.isChapterStart;
     return (
         <>
+            {isChapterStart ? (
+                <RenderBibleChapterDividerComp
+                    localeChapter={verseInfo.localeChapter}
+                    style={verseInfo.style}
+                />
+            ) : null}
             {!isNewLine || verseInfo.newLineTitlesHtmlText === null ? null : (
                 <>
-                    {index > 0 ? <br /> : null}
+                    {index > 0 && !isChapterStart ? <br /> : null}
                     <div className="mt-2">
                         <RenderCustomVerseComp
                             bibleItem={bibleItem}
@@ -108,7 +118,9 @@ export default function RenderVerseTextComp({
                     </div>
                 </>
             )}
-            {isNewLine && verseInfo.newLineTitlesHtmlText === null ? (
+            {isNewLine &&
+            !isChapterStart &&
+            verseInfo.newLineTitlesHtmlText === null ? (
                 <br />
             ) : null}
             <div

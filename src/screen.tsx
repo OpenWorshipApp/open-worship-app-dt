@@ -14,6 +14,12 @@ import { initAllLangCss } from './lang/langHelpers';
 import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
 
 function main() {
+    const context = appProvider.screenUtils?.getContext();
+    if (context?.fontCss) {
+        const style = document.createElement('style');
+        style.textContent = context.fontCss;
+        document.head.appendChild(style);
+    }
     // The screen never runs `init()` (boot.ts), and its managers read settings
     // while rendering.
     appProvider.sessionData.defaultStorageDirPath =

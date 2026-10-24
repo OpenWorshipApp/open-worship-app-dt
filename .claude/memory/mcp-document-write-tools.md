@@ -44,9 +44,10 @@ for the rest of the tool surface.
     renderer bundles what the server runs). First because the content
     validator used to answer before it and told a caller its song was
     malformed when the real complaint was the path in the name — a true
-    sentence about the wrong thing. Twice because `createNewFileDetail` still
-    carries a `// TODO: verify file name before create`, so nothing downstream
-    is looking.
+    sentence about the wrong thing. Twice because `createNewFileDetail` carried
+    a `// TODO: verify file name before create` then, so nothing downstream
+    was looking (it refuses an unportable name itself now, through
+    `getPortableFileNameProblem`).
   - The CONTENT, by `validateOpenLyric` in the tool (line numbers and what to
     write instead, no round trip — see [[open-lyric-validator-in-mcp]]) and by
     the app's own `checkMarkdown` / `AppDocument.validate` at the disk

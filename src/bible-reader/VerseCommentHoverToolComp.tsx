@@ -117,7 +117,10 @@ function RenderHoverToolComp({
             data-bs-theme={theme}
             style={{ left, top: rect.bottom + TOOLTIP_GAP_PIXEL }}
             // The pointer leaving the words schedules this away; entering it
-            // cancels that, which is the only reason its buttons are reachable.
+            // cancels that -- the only reason its buttons are reachable -- and
+            // keeps it up for as long as the pointer stays, even against the
+            // bible view's `mouseleave`, which arrives AFTER this enter.
+            // Leaving it starts the grace again.
             onMouseEnter={cancelHoveredCommentClearing}
             onMouseLeave={scheduleHoveredCommentClearing}
         >

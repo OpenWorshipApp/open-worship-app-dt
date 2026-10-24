@@ -49,7 +49,7 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('../_screen/managers/screenManagerHelpers', () => ({
     getAllScreenManagers: () => h.managers,
 }));
-vi.mock('../_screen/managers/ScreenBibleManager', () => ({
+vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
     default: {
         getInstance: (screenId: number) => ({
             screenViewData: h.viewData[screenId] ?? null,
@@ -211,6 +211,32 @@ describe('handleAgentBibleRequest', () => {
         expect((result as any).note).toContain('Nothing was put on a screen');
     });
 
+    it('quotes a cross-chapter passage from its first chapter only', async () => {
+        const toText = vi.fn(async (maxChapterCount?: number) => {
+            return maxChapterCount === 1
+                ? 'John 1:2-51\n(2): The same was in the beginning with God.'
+                : 'every chapter of it';
+        });
+        h.parseMap = {
+            KJV: {
+                'John 1:2-3:4': {
+                    ...genItem('KJV', 'John 1:2-3:4', ''),
+                    toText,
+                },
+            },
+        };
+        const result = await handleAgentBibleRequest({
+            reference: 'John 1:2-3:4',
+            action: 'check',
+        });
+        expect(toText).toHaveBeenCalledTimes(1);
+        expect(toText).toHaveBeenCalledWith(1);
+        expect(result).toMatchObject({
+            reference: 'John 1:2-3:4',
+            text: 'John 1:2-51 (2): The same was in the beginning with God.',
+        });
+    });
+
     it('reads the reference under the lookup version first', async () => {
         h.lookupKey = 'KHM';
         h.parseMap = {
@@ -293,6 +319,23 @@ describe('handleAgentBibleRequest', () => {
                 action: 'x',
             }),
         ).toMatchObject({ isError: true });
+    });
+
+    // EC-294: a check only reads, so the Reader asks it too.
+    it('checks off the Presenter page, saying nothing of the screens', async () => {
+        h.isPagePresenter = false;
+        const result = await handleAgentBibleRequest({
+            reference: 'John 3:16',
+            action: 'check',
+        });
+        expect(result).toMatchObject({
+            isPresented: false,
+            reference: 'John 3:16',
+            version: 'KJV',
+        });
+        expect((result as any).screens).toBeUndefined();
+        expect((result as any).note).toContain('Presenter page');
+        expect(h.presentCalls).toHaveLength(0);
     });
 
     it('refuses off the Presenter page in words for a person', async () => {

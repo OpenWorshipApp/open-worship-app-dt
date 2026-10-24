@@ -50,6 +50,10 @@
         "link": "/presenting-content/w-09-play-audio-and-foreground-extras-countdown-clock-marquee-bottom"
       },
       {
+        "text": "W-53 — Show a song in several languages for everyone to sing (Long Text Show)",
+        "link": "/presenting-content/w-53-show-a-song-in-several-languages-for-everyone-to-sing-long-text-show"
+      },
+      {
         "text": "W-10 — Control what the audience sees (mini screen + clears)",
         "link": "/presenting-content/w-10-control-what-the-audience-sees-mini-screen-clears"
       }
@@ -120,8 +124,44 @@
         "link": "/configuration/w-21-add-a-background-video-or-song-from-a-link"
       },
       {
-        "text": "W-22 — Build a service presenting flow (and share it)",
-        "link": "/configuration/w-22-build-a-service-presenting-flow-and-share-it"
+        "text": "W-22 — Build a service presenting flow (a running order)",
+        "link": "/configuration/w-22-build-a-service-presenting-flow-a-running-order"
+      },
+      {
+        "text": "W-22b — Run the service from the presenting flow's preview panel",
+        "link": "/configuration/w-22b-run-the-service-from-the-presenting-flow-s-preview-panel"
+      },
+      {
+        "text": "W-22c — Clear the screen, or show and hide it, from a running order",
+        "link": "/configuration/w-22c-clear-the-screen-or-show-and-hide-it-from-a-running-order"
+      },
+      {
+        "text": "W-22d — Make a running order wait, then move on by itself (Next: Timeout)",
+        "link": "/configuration/w-22d-make-a-running-order-wait-then-move-on-by-itself-next-timeout"
+      },
+      {
+        "text": "W-22e — Loop a set of slides, stop the loop, and jump back (Next: Interval, Jump to)",
+        "link": "/configuration/w-22e-loop-a-set-of-slides-stop-the-loop-and-jump-back-next-interval-jump-to"
+      },
+      {
+        "text": "W-22f — Reach a line with a key of your own (Keyboard Event)",
+        "link": "/configuration/w-22f-reach-a-line-with-a-key-of-your-own-keyboard-event"
+      },
+      {
+        "text": "W-22g — Make one line bring others with it (CC elements)",
+        "link": "/configuration/w-22g-make-one-line-bring-others-with-it-cc-elements"
+      },
+      {
+        "text": "W-22h — Play the video or song inside a slide by itself (Media Control)",
+        "link": "/configuration/w-22h-play-the-video-or-song-inside-a-slide-by-itself-media-control"
+      },
+      {
+        "text": "W-22i — Send a line to one particular screen, or park a line",
+        "link": "/configuration/w-22i-send-a-line-to-one-particular-screen-or-park-a-line"
+      },
+      {
+        "text": "W-22j — Share a presenting flow with another machine",
+        "link": "/configuration/w-22j-share-a-presenting-flow-with-another-machine"
       },
       {
         "text": "W-23 — Share one document (song, sermon slides, PDF) with another machine",
@@ -166,6 +206,10 @@
       {
         "text": "W-46 — Learn the page with Tips of the Day",
         "link": "/configuration/w-46-learn-the-page-with-tips-of-the-day"
+      },
+      {
+        "text": "W-54 — Move your data folder off the Desktop (OneDrive)",
+        "link": "/configuration/w-54-move-your-data-folder-off-the-desktop-onedrive"
       }
     ]
   },
@@ -222,8 +266,38 @@
         "link": "/keyboard-shortcut-reference-tutorial-appendix/w-42-ask-the-app-for-help-the-chatbot"
       },
       {
-        "text": "W-47 — Put messages on the screen, and blank the edges of the picture",
-        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-47-put-messages-on-the-screen-and-blank-the-edges-of-the-picture"
+        "text": "W-47 — Put messages on the screen",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-47-put-messages-on-the-screen"
+      },
+      {
+        "text": "W-48 — Give a slide, a song, a background or an overlay its own transition",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-48-give-a-slide-a-song-a-background-or-an-overlay-its-own-transition"
+      },
+      {
+        "text": "W-49 — See every keyboard shortcut for this page (Help → Keyboard Shortcuts)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-49-see-every-keyboard-shortcut-for-this-page-help-keyboard-shortcuts"
+      },
+      {
+        "text": "W-49b — Run the slides from a presenter remote (get the keys back without a click)",
+        "link": "/keyboard-shortcut-reference-tutorial-appendix/w-49b-run-the-slides-from-a-presenter-remote-get-the-keys-back-without-a-click"
+      }
+    ]
+  },
+  {
+    "text": "Screen Mirror",
+    "collapsed": false,
+    "items": [
+      {
+        "text": "W-50 — Present on another computer with Screen Mirror",
+        "link": "/screen-mirror/w-50-present-on-another-computer-with-screen-mirror"
+      },
+      {
+        "text": "W-51 — Show screens on a virtual display and watch it from another device",
+        "link": "/screen-mirror/w-51-show-screens-on-a-virtual-display-and-watch-it-from-another-device"
+      },
+      {
+        "text": "W-52 — Move your settings to another computer (Export / Import Settings)",
+        "link": "/screen-mirror/w-52-move-your-settings-to-another-computer-export-import-settings"
       }
     ]
   }

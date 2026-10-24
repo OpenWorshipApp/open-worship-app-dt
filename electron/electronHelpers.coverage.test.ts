@@ -45,6 +45,7 @@ vi.mock('./ElectronSettingManager', () => ({
 }));
 
 import {
+    captureMiniScreenImage,
     captureWindowImage,
     captureWebScreenShot,
     copyDebugInfoToClipboard,
@@ -300,6 +301,40 @@ describe('electronHelpers coverage', () => {
         vi.runAllTimers();
         // already on screen, so it is only raised
         expect(selfWin.restore).not.toHaveBeenCalled();
+        expect(selfWin.show).not.toHaveBeenCalled();
+        expect(selfWin.focus).toHaveBeenCalledTimes(1);
+    });
+
+    test('an already-open popup that is HIDDEN is shown, not just focused', () => {
+        vi.useFakeTimers();
+        // The bug found live 2026-10-20: a popup hidden without being
+        // minimised (an owned window the OS hid) ignored every press of its
+        // opener, because restore() was a no-op and focus() shows nothing.
+        const url = 'https://localhost:3000/chatbot.html?uuid=chatbot';
+        const selfWin = createWindowAt(
+            url,
+            { x: 0, y: 0 },
+            {
+                isVisible: vi.fn(() => false),
+            },
+        );
+        const parentWin = createMockBrowserWindow();
+        electronMockState.browserWindows.push(selfWin, parentWin);
+
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        const response = windowOpenHandler({
+            url,
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_chatbot`,
+            features: 'popup',
+        } as any);
+
+        expect(response).toEqual({ action: 'deny' });
+        vi.runAllTimers();
+        expect(selfWin.restore).not.toHaveBeenCalled();
+        expect(selfWin.show).toHaveBeenCalledTimes(1);
         expect(selfWin.focus).toHaveBeenCalledTimes(1);
     });
 
@@ -1031,6 +1066,7 @@ describe('electronHelpers coverage', () => {
             { x: 0, y: 0 },
         );
         screenWin.webContents.capturePage.mockResolvedValue({
+            isEmpty: () => false,
             toDataURL: () => 'data:image/png;base64,SCREEN',
         });
         electronMockState.browserWindows.push(destroyedWin, screenWin);
@@ -1046,6 +1082,119 @@ describe('electronHelpers coverage', () => {
         await expect(captureWindowImage(screenWin as any)).resolves.toBe(
             'data:image/png;base64,SCREEN',
         );
+        // It had a frame: asked once, and not asked to draw again.
+        expect(screenWin.webContents.capturePage).toHaveBeenCalledTimes(1);
+        expect(screenWin.webContents.invalidate).not.toHaveBeenCalled();
+    });
+
+    // A window that has just reloaded -- what it does after the error
+    // somebody is about to report -- has no frame to hand over yet.
+    test('a window with no frame yet is asked again before the picture is given up', async () => {
+        vi.useFakeTimers();
+        try {
+            const win = createWindowAt('https://localhost:3000/reader.html', {
+                x: 0,
+                y: 0,
+            });
+            win.webContents.capturePage
+                .mockRejectedValueOnce(new Error('UnknownVizError'))
+                .mockResolvedValueOnce({
+                    isEmpty: () => true,
+                    toDataURL: () => 'data:image/png;base64,',
+                })
+                .mockResolvedValue({
+                    isEmpty: () => false,
+                    toDataURL: () => 'data:image/png;base64,READER',
+                });
+            const taking = captureWindowImage(win as any);
+            await vi.advanceTimersByTimeAsync(1000);
+            await expect(taking).resolves.toBe('data:image/png;base64,READER');
+            expect(win.webContents.capturePage).toHaveBeenCalledTimes(3);
+            // Asked to draw before each second look.
+            expect(win.webContents.invalidate).toHaveBeenCalledTimes(2);
+
+            // Never a frame: said in words a person can read, not the
+            // engine's own, and not for ever.
+            const blank = createWindowAt('https://localhost:3000/reader.html', {
+                x: 0,
+                y: 0,
+            });
+            blank.webContents.capturePage.mockRejectedValue(
+                new Error('UnknownVizError'),
+            );
+            const failing = captureWindowImage(blank as any);
+            const refused = expect(failing).rejects.toThrow(
+                'That window could not be photographed just now',
+            );
+            await vi.advanceTimersByTimeAsync(2000);
+            await refused;
+            expect(blank.webContents.capturePage).toHaveBeenCalledTimes(4);
+
+            // Closed while it was being waited on.
+            const closing = createWindowAt(
+                'https://localhost:3000/reader.html',
+                {
+                    x: 0,
+                    y: 0,
+                },
+            );
+            closing.webContents.capturePage.mockRejectedValue(
+                new Error('UnknownVizError'),
+            );
+            const gone = captureWindowImage(closing as any);
+            const stopped = expect(gone).rejects.toThrow(
+                'That window could not be photographed just now',
+            );
+            closing.isDestroyed.mockReturnValue(true);
+            await vi.advanceTimersByTimeAsync(2000);
+            await stopped;
+            expect(closing.webContents.capturePage).toHaveBeenCalledTimes(1);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a screen with no window is photographed off its Mini Screen', async () => {
+        const mainWin = createWindowAt(
+            'https://localhost:3000/presenter.html',
+            { x: 0, y: 0 },
+        );
+        mainWin.webContents.capturePage.mockResolvedValue({
+            toDataURL: () => 'data:image/png;base64,MINI',
+        });
+        mainWin.webContents.executeJavaScript.mockResolvedValue({
+            x: 840,
+            y: 480,
+            width: 480,
+            height: 270,
+        });
+
+        await expect(captureMiniScreenImage(mainWin as any, 1)).resolves.toBe(
+            'data:image/png;base64,MINI',
+        );
+        expect(mainWin.webContents.capturePage).toHaveBeenCalledWith({
+            x: 840,
+            y: 480,
+            width: 480,
+            height: 270,
+        });
+        expect(
+            mainWin.webContents.executeJavaScript.mock.calls[0][0],
+        ).toContain('.mini-screen[data-screen-key="1"]');
+
+        // No card (another page, rendering off): said in words, no picture.
+        mainWin.webContents.executeJavaScript.mockResolvedValue(null);
+        await expect(captureMiniScreenImage(mainWin as any, 1)).rejects.toThrow(
+            'Screen 1 is on a virtual display',
+        );
+        await expect(captureMiniScreenImage(null, 1)).rejects.toThrow(
+            'Mini Screen',
+        );
+        // Only a whole number reaches the page's script.
+        await expect(
+            captureMiniScreenImage(mainWin as any, '1"]' as any),
+        ).rejects.toThrow('virtual display');
+        expect(mainWin.webContents.capturePage).toHaveBeenCalledTimes(1);
     });
 
     test('can run a throttled attempt immediately and debounce the next one', () => {

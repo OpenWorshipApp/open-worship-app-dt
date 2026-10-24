@@ -1,6 +1,16 @@
 {
     "cSpell.words": [
         "Htmls",
-        "PBGM"
+        "PBGM",
+        "trycloudflare"
+    ],
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/extra-work/local-llm/llm-info.json",
+                "/extra-work/local-llm/run/llm-info-*.json"
+            ],
+            "url": "./extra-work/local-llm/llm-info.schema.json"
+        }
     ]
 }

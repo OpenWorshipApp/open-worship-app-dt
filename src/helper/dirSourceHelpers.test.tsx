@@ -210,6 +210,43 @@ describe('dirSourceHelpers', () => {
         ]);
     });
 
+    test('a list no type of which could be read is null, not empty', async () => {
+        const observedValues: Array<string[] | null | undefined> = [];
+        const dirSource = {
+            registerEventListener: vi.fn(() => ['listener']),
+            unregisterEventListener: vi.fn(),
+            // The folder is gone: every type answers `null`.
+            getFilePaths: vi.fn().mockResolvedValue(null),
+        };
+
+        function Probe() {
+            const value = useFilePaths(
+                dirSource as any,
+                ['appDocument', 'lyric'] as any,
+            );
+            useEffect(() => {
+                observedValues.push(value);
+            }, [value]);
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe />);
+        });
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        // `[]` drew "This folder is empty" over a folder that is not there.
+        expect(observedValues.at(-1)).toBeNull();
+        expect(fileSourceGetInstanceMock).not.toHaveBeenCalled();
+    });
+
     // Mapping a change inside `<doc>.histories` back to the document is no
     // longer done here: `useFilePaths` used to subscribe to `file-update` and
     // walk its own list to find the owner, which meant every listing of every

@@ -40,3 +40,15 @@ screen, suspect an ambiguous name before suspecting the depth budget or a
 re-render. See [[dom-match-exact-label-beats-everything]] and
 [[panel-name-in-dom]]; the page memoises the runtime, so an edit needs
 [[dom-match-memoised-in-page]]'s workaround to test live.
+
+**A twin is no aim for a PRESS either** (2026-10-10). The walkthrough card
+found "More Options" for a W-51 step about the Mini Screen's ⋮ and pressed
+the FIRST of forty — the Documents list's — then moved on with that menu
+open. `twinsOf` in `domMatch.mjs` counts the shown controls carrying the
+exact words (per panel); the card's **Do it** refuses with them (`2 controls
+are called "More Options" (in Document List, Mini Screen) and the step does
+not say which`), its status carries `twins`, and the ring's hint says it may
+be on the wrong one. A scoped find ("Mini Screen > More Options") or a
+`pendingFind` is never counted. The Mini Screen's own ⋮ is
+`[en:tran:Mini Screen Options]` now; every file row's and screen card's dots
+stay `More Options`. See [[hover-hidden-controls]], [[panel-name-in-dom]].

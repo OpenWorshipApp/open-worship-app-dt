@@ -13,6 +13,7 @@ import { unlocking } from '../server/unlockingHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { getSetting, setSetting } from './settingHelpers';
 import { type OptionalPromise } from './typeHelpers';
 
@@ -50,6 +51,12 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     static getDirPathBySettingName(settingName: string) {
+        // No data folder, no folders in it. The app's own folder may still
+        // name those of a data folder used long ago, and a panel then listed
+        // that folder's files with nothing chosen.
+        if (appLocalStorage.isOnOwnFolder) {
+            return null;
+        }
         const dirPath = getSetting(settingName) ?? '';
         if (!dirPath) {
             return null;
@@ -172,8 +179,15 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     async getFilePaths(mimetypeName: MimetypeNameType, isForce = false) {
-        if (!this.dirPath || (await fsCheckDirExist(this.dirPath)) === false) {
+        if (!this.dirPath) {
             return [];
+        }
+        // A folder that is not there is a failure, not an empty list: `[]`
+        // drew "This folder is empty" and offered to make documents in it,
+        // and the first one came back as a raw ENOENT.
+        this._isDirPathValid = await fsCheckDirExist(this.dirPath);
+        if (!this._isDirPathValid) {
+            return null;
         }
         const getFilePaths = async () => {
             const filePathsInMap = this.filePathsMap[mimetypeName];
@@ -207,6 +221,19 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         const cacheKey = this.toCacheKey(settingName);
         let dirSource = cache.get(cacheKey);
         if (dirSource === undefined) {
+            // The setting moved on (Select Default, the path box), so an
+            // instance cached under its OLD value is stale -- yet its
+            // `dirPath` reads the setting live, so it answers for the new
+            // folder too, and being older it is the one
+            // `getInstanceByDirPath` finds first. The watch then sent every
+            // change in a folder picked during the session to a list nobody
+            // shows any more, and the folder read "This folder is empty"
+            // until a reload. Whoever still holds one was told `reload`.
+            for (const [key, cachedDirSource] of cache) {
+                if (cachedDirSource.settingName === settingName) {
+                    cache.delete(key);
+                }
+            }
             // cache before awaiting init — the old check-then-set spanned the
             // await, so concurrent callers each built their own instance and
             // the losers' event listeners never received any events

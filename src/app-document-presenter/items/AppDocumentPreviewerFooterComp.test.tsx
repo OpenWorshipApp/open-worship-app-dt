@@ -39,6 +39,24 @@ const {
     checkIsVaryAppDocumentSwitchRefusedMock: vi.fn(() => false),
 }));
 
+const { fileSourceDeleteListener } = vi.hoisted(() => ({
+    fileSourceDeleteListener: {
+        current: null as ((data: unknown) => void) | null,
+    },
+}));
+
+// The real hook registers on `FileSource`, which reaches the file system.
+vi.mock('../../helper/dirSourceHelpers', () => ({
+    useFileSourceEvents: (
+        events: string[],
+        callback: (data: unknown) => void,
+    ) => {
+        if (events.includes('delete')) {
+            fileSourceDeleteListener.current = callback;
+        }
+    },
+}));
+
 // Mocked, not merely imported: the real module reaches `settingHelpers` ->
 // `appLocalStorage` -> the file system.
 vi.mock('../../app-document-list/varyAppDocumentLockHelpers', () => ({
@@ -311,6 +329,11 @@ describe('AppDocumentPreviewerFooterComp', () => {
                 filePath: '/docs/main.ows',
                 id: 4,
             } as any);
+            // The slide already up, pressed again: not a step of its own.
+            slidePreviewerMethods.handleSlideItemSelected(4, {
+                filePath: '/docs/main.ows',
+                id: 4,
+            } as any);
             await flushAsyncEvents();
         });
 
@@ -338,5 +361,42 @@ describe('AppDocumentPreviewerFooterComp', () => {
         });
 
         expect(renderSlideIndexMock.mock.calls).toHaveLength(renderCount);
+    });
+
+    test('drops the history badges of a file that was deleted', async () => {
+        const {
+            default: AppDocumentPreviewerFooterComp,
+            slidePreviewerMethods,
+        } = await import('./AppDocumentPreviewerFooterComp');
+
+        appProviderMock.isPagePresenter = true;
+
+        await act(async () => {
+            root.render(<AppDocumentPreviewerFooterComp />);
+            await flushAsyncEvents();
+        });
+        await act(async () => {
+            slidePreviewerMethods.handleSlideItemSelected(1, {
+                filePath: '/docs/gone.ows',
+                id: 1,
+            } as any);
+            slidePreviewerMethods.handleSlideItemSelected(2, {
+                filePath: '/docs/kept.ows',
+                id: 2,
+            } as any);
+            await flushAsyncEvents();
+        });
+        await act(async () => {
+            fileSourceDeleteListener.current?.('/docs/gone.ows');
+            await flushAsyncEvents();
+        });
+
+        // A badge of a deleted song kept pointing at it.
+        const historyItems = Array.from(
+            container.querySelectorAll('[data-testid="history-index"]'),
+        );
+        expect(historyItems.map((item) => item.textContent)).toEqual([
+            '2:/docs/kept.ows<id>2',
+        ]);
     });
 });

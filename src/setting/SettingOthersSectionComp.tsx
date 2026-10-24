@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 
 import { tran } from '../lang/langHelpers';
+import type { SettingSectionFoldNameType } from './settingSectionFoldHelpers';
+import { useSettingSectionFold } from './settingSectionFoldHooks';
+import SettingOthersFoldButtonComp from './SettingOthersFoldButtonComp';
 
 /**
  * The three rows of the Others tab are three OUTSIDE services, each of which is
@@ -11,34 +14,55 @@ import { tran } from '../lang/langHelpers';
 export type SettingOthersStateType = 'ready' | 'idle' | 'attention';
 
 export default function SettingOthersSectionComp({
+    foldName,
     iconClassName,
     title,
     description,
     state,
     stateLabel,
     headerActions,
+    openToken,
+    onCollapse,
     children,
 }: Readonly<{
+    foldName: SettingSectionFoldNameType;
     iconClassName: string;
     title: string;
     description: string;
     state: SettingOthersStateType;
     stateLabel: string;
     headerActions?: ReactNode;
+    // Both as `useSettingSectionFold` takes them.
+    openToken?: number;
+    onCollapse?: () => void;
     children: ReactNode;
 }>) {
+    const [isCollapsed, handleToggling] = useSettingSectionFold(
+        foldName,
+        openToken,
+        onCollapse,
+    );
     return (
         <section
             className={
-                'app-setting-others-section ' + `app-setting-others-${state}`
+                'app-setting-others-section ' +
+                `app-setting-others-${state}` +
+                (isCollapsed ? ' app-setting-others-collapsed' : '')
             }
         >
             <div className="app-setting-others-header">
-                <i
-                    className={`bi ${iconClassName} app-setting-others-icon`}
-                    aria-hidden="true"
-                />
-                <h2 className="app-setting-others-title">{tran(title)}</h2>
+                <h2 className="app-setting-others-title">
+                    <SettingOthersFoldButtonComp
+                        isCollapsed={isCollapsed}
+                        onToggle={handleToggling}
+                    >
+                        <i
+                            className={`bi ${iconClassName} app-setting-others-icon`}
+                            aria-hidden="true"
+                        />
+                        {tran(title)}
+                    </SettingOthersFoldButtonComp>
+                </h2>
                 <span className="app-setting-others-state">
                     <i className="bi bi-circle-fill" aria-hidden="true" />
                     {tran(stateLabel)}
@@ -49,10 +73,17 @@ export default function SettingOthersSectionComp({
                     </span>
                 ) : null}
             </div>
-            <p className="app-setting-others-description">
-                {tran(description)}
-            </p>
-            {children}
+            {/* Folded, what is in the section is not mounted at all: AI
+                Providers alone is four provider boxes and every server and
+                model the user has added. */}
+            {isCollapsed ? null : (
+                <>
+                    <p className="app-setting-others-description">
+                        {tran(description)}
+                    </p>
+                    {children}
+                </>
+            )}
         </section>
     );
 }

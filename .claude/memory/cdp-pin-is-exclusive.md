@@ -29,11 +29,13 @@ real data, had one been up (seen 2026-09-14 with three sessions on one dev app).
   old text said "start the app" with the app right there on another port, which
   is what made this take three sessions to notice.
 - `resolveAppBrowserUrl` and `listCandidatePorts` must agree about which app is
-  being driven. If you add a third way to choose one, add it to
-  `readExplicitCdpPort` so both read it.
-- A pinned PORT still dies with the instance. Pinning by KIND
-  (`OWA_CDP_TARGET=dev`, filtering `readLiveInstances()` on the published
-  `isDev`) survives a nodemon restart and is what a verification script
-  actually means — filed as `MC-31`, not written. Until then a script that
-  drives the app should check `owa_app_state` `isDev` first, as
-  [[chatbot-cdp-driver-gotchas]] says.
+  being driven. Both share `readExplicitCdpPort` for port pins and
+  `readCdpTarget` / `filterTargetInstances` for kind selection; keep their
+  precedence the same when adding another selector.
+- A pinned PORT still dies with the instance. `MC-31` now supplies
+  `OWA_CDP_TARGET=dev|prod` (2026-10-07): both discovery paths and the bridge
+  filter on the published boolean `isDev`, without legacy fallback. A live
+  stdio session followed a scratch dev restart onto its new port in BOTH tool
+  groups; `prod` refused while only dev was running. Explicit port pins win.
+  A kind is not a profile: check `owa_app_state` before acting when multiple
+  instances of that kind are open. The HTTP host still pins its own port.

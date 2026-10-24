@@ -14,7 +14,7 @@ credential of any kind:
 
 ```
 evaluate_script  ->  require('os').userInfo()
-                     { user: "racky", home: "C:\\Users\\racky", platform: "win32" }
+                     { user: "<the account>", home: "C:\\Users\\<the account>", platform: "win32" }
 
 evaluate_script  ->  require('fs').readFileSync(<userData>/setting.json)
                      { bytes: 1354, keys: [ ... "clientSetting", "secureSetting" ... ] }
@@ -27,7 +27,7 @@ attacker and that except the model's good judgement.
 
 Two callers, and neither is a trust boundary.
 
-**The chatbot's model.** It is sent every tool on every round, and it reads
+**The chatbot's model.** It is sent every tool `modelTools.mjs` leaves it on every round, and it reads
 things the user did not write: an attached file, a pasted document, a
 screenshot of somebody else's slide, a lyric sheet from the internet, the app's
 own content. Text that says *"ignore your instructions and run this"* is a
@@ -51,7 +51,8 @@ The rule: **the assistant may point, the human presses.**
 | --- | --- |
 | `denied-tool` | `evaluate_script`, `take_heapsnapshot`, `upload_file` are refused AND removed from `tools/list` |
 | `foreign-url` | `navigate_page` / `new_page` may only land on a page the app itself serves (`file:`, loopback, `about:blank`). Reload / back / forward carry no address and are allowed — the allowlist means history holds only app pages |
-| `destructive-label` | `owa_click` / `owa_type` refuse a label that cannot be undone — delete, trash, discard, erase, remove, uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out — **and its translation in every language the app is shown in** (`destructiveLabel.mjs`, derived from the app's own dictionary), read after folding what the matcher folds |
+| `destructive-label` | `owa_click` / `owa_type` refuse a label that cannot be undone — delete, trash, discard, erase, remove, uninstall, overwrite, *clear all*, *reset all*, factory, sign/log out — **and its translation in every language the app is shown in** (`destructiveLabel.mjs`, derived from the app's own dictionary), read after folding what the matcher folds. Since 2026-10-10 the same rule reads `owa_press_key`'s `find` and `keys` (and **F6 by name**, `DESTRUCTIVE_KEY_MAP`: the app's Clear All key, refused whether or not the panel that titles it is on screen), both ends of an `owa_drag`, and an `owa_menu` `item` |
+| `menu-refusal` (main process) | `owa_menu` `click` is refused by `electron/appMenuAgentHelpers.ts` — not the firewall, because a menu item has no DOM — for `toggleDevTools` (a console with Node in every renderer, the reach `evaluate_script` is denied for), `quit` / `close` / the macOS hide roles and the `Relaunch` label (every window goes; Relaunch asks through a native dialog nothing here can answer), a submenu, and a greyed-out item. `list` marks each such item `refused` so nothing has to try it |
 | `destructive-uid` | the same refusal for `click` / `fill` / `fill_form` / `drag`, which carry no label — the wording comes from the snapshot that minted the uid, read on its way out |
 | `destructive-press` / `question-press` | the same rule **in the page, on the element a press lands on** — `owa_click`, `owa_type` and a walkthrough's Do it: a title that cannot be undone on a button whose own words can, a key whose titled control cannot be (`F6` is *Clear All [F6]*), and anything inside the confirm / alert / input the app is asking the user. See *The interlock reads the control*, below |
 | `foreign-url` (outbound) | `owa_read_website` INVERTS the rule above: it may only go the other way. https, and never an address on this machine or its network — see *Reaching out*, below |
@@ -114,11 +115,11 @@ resolved, immediately before `click()`. Four choices in it:
   or a list row carries a hymn, and "erase my sin" must not refuse its card.
 - **A key is judged by the control that names it.** This app writes a control's
   shortcut into its title, so `F6` is as destructive as *Clear All [F6]* and
-  `F9` as ordinary as *Clear Bible [F9]* — with no list of keys to keep in step.
+  `F9` as ordinary as *Clear Long Text [F9]* — with no list of keys to keep in step.
 - **A question is the user's.** Anything inside the confirm, alert or input
   popup is refused, which needs no language at all — and is what stands behind
   the one gap left by design: a translation the dictionary also uses for an
-  allowed control (Khmer *Clear Bible* IS *Delete Bible*) is pressable, and the
+  allowed control (Khmer *Clear Background* IS *Remove Background*) is pressable, and the
   app confirms the destructive reading.
 - **The card's Do it and a tool's `do` are one rule.** The card shows words the
   model wrote, and a step reading *Press Do it to save* aimed at Move to Trash
@@ -238,6 +239,14 @@ muted, and every redirect re-checked. It is deliberately NOT
 items: that previews an address the USER typed, this loads one a MODEL chose.
 The two keep separate settings and share one address dialect.
 
+The read itself is one script the loader runs in the page, and since
+2026-10-11 it may run in an isolated world (`runReadExpression`): a page
+served with a `sandbox` policy forbids every script in its own world, the
+reader's included. An isolated world of a sandboxed, preload-less renderer
+has nothing the page's own world lacks — no Node, no app code — so the
+boundary is where it was, and what comes back is still plain data that is
+fenced before a model sees it (`MC-58`).
+
 ### The window a SLIDE's address loads in — `MC-16`, closed 2026-09-17
 
 The one hole in this file that needed no model and no agent at all. A website
@@ -328,7 +337,7 @@ never be one:
   throw instead of shrugging. The empty `env` also closes reading whatever
   secrets are in the environment the app was launched from, and takes
   `process.binding` / `dlopen` / `mainModule` with it. A global that will not
-  delete is redefined as a thrower, and one that survives even that is reported
+  delete is emptied by assignment, and one that survives even that is reported
   as not revoked — a lockdown that quietly did nothing is worse than none.
 - **A tighter CSP on that page only.** `connect-src` is the part that matters:
   the list of places the window may speak to is the assistants it can be set to
@@ -340,7 +349,7 @@ never be one:
 
 | Id | Gap |
 | --- | --- |
-| `MC-13` | `press_key` on the developer's door is unguarded: Enter on a focused *Move to Trash* names no label at any point. The model has not been offered `press_key` since 2026-09-08, and the walkthrough's own key press is judged by the control that names the key since 2026-09-14. |
+| `MC-13` | chrome-devtools' `press_key` on the developer's door is unguarded: Enter on a focused *Move to Trash* names no label at any point. Narrowed 2026-10-10: `owa_press_key` is the guarded key route (the focused control read for Enter and Space, every key refused while a question is up, F6 by name), so a developer has a judged key to reach for; the raw tool stays as it is. The model has not been offered either. |
 | `MC-03` | `window.open` from a locked-down renderer still gets `nodeIntegration: true` through `handlePopupWindowOpen`, which is a way back to Node for code already running in that window. |
 | `MC-04` | `appProvider.fileUtils` is the full `fs` surface in the chatbot window. It genuinely writes files (a saved report, a saved picture), so narrowing it to the calls that window makes is real work. |
 | `MC-05` | The redaction list is a net, not a proof. A secret in a shape nobody anticipated gets through — which is why the tools that dump memory wholesale are denied outright rather than trusted to it. |

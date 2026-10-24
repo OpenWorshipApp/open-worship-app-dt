@@ -2,29 +2,47 @@
 // chunk carries the stylesheet rather than depending on the other one's import.
 import './LocationNameLookupPanelComp.scss';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
+import { showBibleKeyOption } from '../bible-lookup/BibleKeySelectionComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import {
+    createMouseEvent,
+    getMenuItemAnchor,
+} from '../context-menu/contextMenuEventHelpers';
+import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import OpenGraphPreviewButtonComp from '../graph-view/OpenGraphPreviewButtonComp';
 import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
+import type { LookupAskType } from '../helper/ai/lookupAskHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleViewTextScale } from '../helper/bibleViewHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
+import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import type { VerseDataType } from './bibleVerseHelpers';
 import {
     openVerseInBibleLookup,
-    toVerseFullTitle,
+    shortToBibleItem,
     useLookupVerseFontFamily,
 } from './bibleVerseHelpers';
 import type { DetailPanelType } from './detailPanelHelpers';
-import { closeDetailPanel, useOpenDetailPanels } from './detailPanelHelpers';
+import {
+    closeDetailPanel,
+    openDetailPanel,
+    useOpenDetailPanels,
+} from './detailPanelHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
-import { useLookupLangPresentation } from './lookupLangHelpers';
+import {
+    LookupLangContext,
+    useLookupLangPresentation,
+} from './lookupLangHelpers';
+import LookupLangCodeButtonComp from './LookupLangCodeButtonComp';
 import {
     LookupManagersContext,
     useLookupManagers,
@@ -42,7 +60,6 @@ import {
     RenderVerseDetailComp,
 } from './RenderDetailBodyComp';
 
-const COPIED_FEEDBACK_MILLISECOND = 1600;
 const DETAIL_PANEL_WIDTH = 360;
 // `initialOffset` shifts a widget left and down from the top-right corner, so
 // starting a bit more than the lookup panel's own width out lands the first
@@ -53,47 +70,6 @@ const DETAIL_PANEL_BASE_OFFSET = 372;
 // Each further panel is nudged down-left from the last, so following a chain of
 // references does not bury them all on the same spot.
 const CASCADE_STEP = 28;
-
-function RenderCopyButtonComp({
-    onCopy,
-}: Readonly<{ onCopy: () => Promise<void> }>) {
-    const [isCopied, setIsCopied] = useState(false);
-    const timeoutIdRef = useRef<any>(null);
-    // The widget can be closed while the "Copied" tick is still showing.
-    useEffect(() => {
-        return () => {
-            if (timeoutIdRef.current !== null) {
-                clearTimeout(timeoutIdRef.current);
-                timeoutIdRef.current = null;
-            }
-        };
-    }, []);
-    const label = isCopied ? tran('Copied') : tran('Copy');
-    return (
-        <button
-            type="button"
-            className="floating-widget__button"
-            title={label}
-            aria-label={label}
-            onClick={() => {
-                onCopy()
-                    .then(() => {
-                        setIsCopied(true);
-                        if (timeoutIdRef.current !== null) {
-                            clearTimeout(timeoutIdRef.current);
-                        }
-                        timeoutIdRef.current = setTimeout(() => {
-                            setIsCopied(false);
-                            timeoutIdRef.current = null;
-                        }, COPIED_FEEDBACK_MILLISECOND);
-                    })
-                    .catch(handleError);
-            }}
-        >
-            <i className={`bi bi-${isCopied ? 'check2' : 'copy'}`} />
-        </button>
-    );
-}
 
 /**
  * Loads the verse into the reader's lookup input behind the panel.
@@ -107,7 +83,8 @@ function RenderCopyButtonComp({
  */
 function RenderOpenInLookupButtonComp({
     shortVerse,
-}: Readonly<{ shortVerse: string }>) {
+    bibleKey,
+}: Readonly<{ shortVerse: string; bibleKey?: string }>) {
     const viewController = getCurrentLookupBibleItemController();
     const viewControllerRef = useAppCurrentRef(viewController);
     const label = tran('Open in bible lookup');
@@ -128,7 +105,11 @@ function RenderOpenInLookupButtonComp({
                 if (currentViewController === null) {
                     return;
                 }
-                openVerseInBibleLookup(currentViewController, shortVerse)
+                openVerseInBibleLookup(
+                    currentViewController,
+                    shortVerse,
+                    bibleKey,
+                )
                     .then((isOpened) => {
                         if (!isOpened) {
                             showSimpleToast(
@@ -145,13 +126,141 @@ function RenderOpenInLookupButtonComp({
     );
 }
 
+/**
+ * The 🤖 at the left of the title (2026-10-18, the user's picture of three
+ * panels with that corner circled: _add robot icon, click to open chatbot,
+ * make sure mcp tool provide all information to chatbot session then let
+ * user interact_). It opens the assistant on what the panel shows -- a tab
+ * of its own that reads the record through `owa_lookup_record` and is ready
+ * to be asked about it -- after the 🤖's own two questions (whether AI is
+ * on, then the caution). Handed over is WHICH record and the window it is
+ * open in (`lookupAskHelpers.ts`), where its data is already held.
+ *
+ * Drawn only while AI is on, like the Resources panel's: a control on a
+ * reading surface that can only say "AI is off" is clutter there.
+ */
+function RenderAskAssistantButtonComp({
+    ask,
+}: Readonly<{ ask: LookupAskType }>) {
+    const askRef = useAppCurrentRef(ask);
+    if (!getIsAIEnabled()) {
+        return null;
+    }
+    // Literal keys, so the dictionary check reads each one.
+    const label =
+        ask.kind === 'verse'
+            ? tran('Ask the Assistant About This Passage')
+            : ask.kind === 'location'
+              ? tran('Ask the Assistant About This Place')
+              : tran('Ask the Assistant About This Person');
+    return (
+        <button
+            type="button"
+            className={
+                'floating-widget__button flex-shrink-0' +
+                ' location-name-lookup__title-button'
+            }
+            title={label}
+            aria-label={label}
+            onClick={() => {
+                // Loaded at the press: the dialogs the assistant asks first
+                // and the window opener are nothing a panel needs until then.
+                import('../helper/ai/chatbotHandoffHelpers')
+                    .then(({ openChatbotWithLookup }) => {
+                        return openChatbotWithLookup(askRef.current);
+                    })
+                    .catch(handleError);
+            }}
+        >
+            <i className="bi bi-robot" />
+        </button>
+    );
+}
+
+/**
+ * The verse panel's `KJV`: pressed, it lists the other installed bibles,
+ * and the one picked opens as a panel of its own beside this one -- the
+ * verse in two bibles is two panels, never this one re-read.
+ */
+function RenderVerseBibleKeyButtonComp({
+    bibleKey,
+    shortVerse,
+    title,
+}: Readonly<{ bibleKey: string; shortVerse: string; title: string }>) {
+    const label = tran('Open in another Bible');
+    return (
+        <button
+            type="button"
+            className={
+                'flex-shrink-0 location-name-lookup__kjv-name' +
+                ' location-name-lookup__bible-key-button'
+            }
+            title={label}
+            aria-label={`${label}: ${bibleKey}`}
+            aria-haspopup="menu"
+            onClick={(event) => {
+                showBibleKeyOption(
+                    event,
+                    (newBibleKey) => {
+                        openDetailPanel({
+                            kind: 'verse',
+                            target: shortVerse,
+                            name: title,
+                            bibleKey: newBibleKey,
+                        });
+                    },
+                    [bibleKey],
+                    label,
+                ).catch(handleError);
+            }}
+        >
+            {bibleKey}
+        </button>
+    );
+}
+
+/**
+ * A verse panel's Copy opens the copy menu a Bible view's copy button opens
+ * (2026-10-22, the user: _copy option in bible detail panel should just open
+ * the contextmenu of copy instead of do copying directly_): the title, the
+ * text, both, the keys, and More… for every format, each copying the WHOLE
+ * passage, every chapter of one crossing chapters under its own title.
+ */
+function showVerseCopyingMenu(
+    event: MouseEvent | KeyboardEvent,
+    bibleKey: string,
+    shortVerse: string,
+) {
+    // Read now: the `⋮` menu is gone by the time this one opens.
+    const anchor = getMenuItemAnchor(event);
+    Promise.all([
+        shortToBibleItem(bibleKey, shortVerse),
+        // Loaded at the press, like the widget's own menu.
+        import('../context-menu/appContextMenuHelpers'),
+    ])
+        .then(([bibleItem, { showAppContextMenu }]) => {
+            if (bibleItem === null) {
+                return;
+            }
+            showAppContextMenu(
+                createMouseEvent(
+                    anchor?.x ?? window.innerWidth / 2,
+                    anchor?.y ?? window.innerHeight / 4,
+                ),
+                genBibleItemCopyingContextMenu(bibleItem),
+            );
+        })
+        .catch(handleError);
+}
+
 function RenderDetailPanelComp({
     index,
     managers,
     panel,
 }: Readonly<{
     index: number;
-    managers: LookupManagersType;
+    // Null for a verse panel, which reads nothing out of the lookup dataset.
+    managers: LookupManagersType | null;
     panel: DetailPanelType;
 }>) {
     // The copy payload is assembled from what the body actually resolved, so a
@@ -159,7 +268,7 @@ function RenderDetailPanelComp({
     // references rather than blocking on dozens of bible reads.
     const textScale = useBibleViewTextScale();
     const { fontFamily } = useLookupLangPresentation();
-    const verseFontFamily = useLookupVerseFontFamily();
+    const verseFontFamily = useLookupVerseFontFamily(panel.bibleKey);
     const resolvedVersesRef = useRef<string[]>([]);
     // A verse panel has no record to name it, so `panel.name` — the reference as
     // it read the moment the panel was opened — used to be its title for good.
@@ -177,11 +286,11 @@ function RenderDetailPanelComp({
     // `record` forced an `as any` at each summary call, which is exactly the
     // check that would catch a location record reaching `buildNameSummary`.
     const nameRecord =
-        panel.kind === 'name'
+        panel.kind === 'name' && managers !== null
             ? managers.namesLookupManager.getRecordById(panel.target)
             : null;
     const locationRecord =
-        panel.kind === 'location'
+        panel.kind === 'location' && managers !== null
             ? managers.locationsLookupManager.getRecordById(panel.target)
             : null;
     const record = nameRecord ?? locationRecord;
@@ -190,28 +299,34 @@ function RenderDetailPanelComp({
     // A verse panel's title is a reference, not a record name, so there is
     // never an English one to add to it.
     const kjvName = record === null ? '' : getRecordKjvName(record);
+    // What the 🤖 hands the assistant: the record as the panel was opened
+    // with it, by the name it shows -- the language's own, never the KJV's,
+    // which the record carries for the assistant -- and the passage in the
+    // Bible the body read it in.
+    const assistantAsk: LookupAskType = {
+        kind: panel.kind,
+        target: panel.target,
+        title,
+        ...(panel.kind === 'verse'
+            ? (verseData?.bibleKey ?? panel.bibleKey) === undefined
+                ? {}
+                : { bibleKey: verseData?.bibleKey ?? panel.bibleKey }
+            : panel.langCode === undefined
+              ? {}
+              : { langCode: panel.langCode }),
+        page: globalThis.location?.href ?? '',
+    };
     const handleCopy = async () => {
         if (panel.kind === 'verse') {
-            // The reference belongs with the text — a bare verse pasted into a
-            // sermon note with no "(KJV) Exodus 6:23" attached is not much use.
-            // The body stopped rendering that line once the title bar took the
-            // bible key, so this is where the two are joined back together.
-            const fullTitle =
-                verseData === null ? null : toVerseFullTitle(verseData);
-            const plainText =
-                verseData === null || fullTitle === null
-                    ? panel.target
-                    : `${fullTitle}\n${verseData.text}`;
+            // Not read (yet): the reference is all there is to copy. A read
+            // verse opens the copy menu instead (`showVerseCopyingMenu`).
             await copyRecordToClipboard(
-                plainText,
-                verseData === null || fullTitle === null
-                    ? `<p>${escapeHtml(plainText)}</p>`
-                    : `<p><strong>${escapeHtml(fullTitle)}</strong></p>` +
-                          `<p>${escapeHtml(verseData.text)}</p>`,
+                panel.target,
+                `<p>${escapeHtml(panel.target)}</p>`,
             );
             return;
         }
-        if (record === null) {
+        if (record === null || managers === null) {
             return;
         }
         // The Verses section resolves its titles only once the user expands it,
@@ -275,6 +390,7 @@ function RenderDetailPanelComp({
                                 : fontFamily,
                     }}
                 >
+                    <RenderAskAssistantButtonComp ask={assistantAsk} />
                     {panel.kind === 'verse' ? null : (
                         <OpenGraphPreviewButtonComp
                             kind={panel.kind}
@@ -283,14 +399,11 @@ function RenderDetailPanelComp({
                         />
                     )}
                     {panel.kind === 'verse' && verseData !== null ? (
-                        <span
-                            className={
-                                'flex-shrink-0' +
-                                ' location-name-lookup__kjv-name'
-                            }
-                        >
-                            ({verseData.bibleKey})
-                        </span>
+                        <RenderVerseBibleKeyButtonComp
+                            bibleKey={verseData.bibleKey}
+                            shortVerse={panel.target}
+                            title={title}
+                        />
                     ) : null}
                     <span className="text-truncate">{title}</span>
                     {kjvName === '' ? null : (
@@ -306,6 +419,7 @@ function RenderDetailPanelComp({
                     {panel.kind === 'verse' ? (
                         <RenderOpenInLookupButtonComp
                             shortVerse={panel.target}
+                            bibleKey={panel.bibleKey}
                         />
                     ) : null}
                 </span>
@@ -320,7 +434,11 @@ function RenderDetailPanelComp({
                 minWidth: 260,
                 minHeight: 180,
                 initialOffset: DETAIL_PANEL_BASE_OFFSET + index * CASCADE_STEP,
-                extraClassName: 'location-name-lookup-detail-widget',
+                extraClassName:
+                    'location-name-lookup-detail-widget' +
+                    (panel.kind === 'verse'
+                        ? ' location-name-lookup-detail-widget--verse'
+                        : ''),
                 // The host is a window singleton, so no modal is ever its
                 // ancestor — but the record it shows is opened from a name in
                 // verse text or from the lookup panel, and both of those live
@@ -328,7 +446,48 @@ function RenderDetailPanelComp({
                 // click just asked for.
                 isAboveModal: true,
             }}
-            extraActionButtons={<RenderCopyButtonComp onCopy={handleCopy} />}
+            extraActionButtons={
+                panel.kind === 'verse' ? null : (
+                    <LookupLangCodeButtonComp
+                        isDetailHeader
+                        onSelect={(langCode) => {
+                            openDetailPanel({
+                                kind: panel.kind,
+                                target: panel.target,
+                                name: title,
+                                langCode,
+                            });
+                        }}
+                    />
+                )
+            }
+            // Behind the `⋮` with the widget's collapse and full view, so the
+            // title bar keeps its width for the reference. A menu item has no
+            // tick to turn into, so the toast says the copy landed.
+            menuItems={[
+                {
+                    childBefore: genContextMenuItemIcon('copy'),
+                    menuElement: tran('Copy'),
+                    onSelect: (event) => {
+                        if (panel.kind === 'verse' && verseData !== null) {
+                            showVerseCopyingMenu(
+                                event,
+                                verseData.bibleKey,
+                                panel.target,
+                            );
+                            return;
+                        }
+                        handleCopy()
+                            .then(() => {
+                                showSimpleToast(
+                                    tran('Copy'),
+                                    tran('Text has been copied to clipboard'),
+                                );
+                            })
+                            .catch(handleError);
+                    },
+                },
+            ]}
         >
             {/* Tracks the bible text zoom. `zoom` rather than
                 `transform: scale` so the body keeps a real layout box and
@@ -353,52 +512,118 @@ function RenderDetailPanelComp({
                 {panel.kind === 'verse' ? (
                     <RenderVerseDetailComp
                         shortVerse={panel.target}
+                        bibleKey={panel.bibleKey}
                         onResolved={setVerseData}
                     />
                 ) : null}
             </div>
+            {/* A Bible view's to-the-top, and for a passage its auto-scroll
+                too (2026-10-22, the user: _quick scroll top and auto scroll in
+                bible floating panel as well_, then _add quick scroll top to
+                other floating panel_) -- a name or a place is a record to
+                look at, not text to read down. A direct child of the widget's
+                body because that is what scrolls, and the auto-scroll drives
+                its button's own parent. Pinned against the widget, not the
+                text, in the Bible view's stack 30px apart -- the up-arrow
+                alone takes the chevron's place -- lifted off the bottom
+                resize edge and moved in by `marginRight`, past the scrollbar
+                and the corner handle, so neither covers a control. A margin
+                rather than `right`: the auto-scroll's own ⋮ spreads the same
+                style and sets its own `right`, so the margin carries it
+                along. The body keeps room under the last line for them. */}
+            <ScrollingHandlerComp
+                style={{
+                    bottom: panel.kind === 'verse' ? '38px' : '8px',
+                    marginRight: '10px',
+                }}
+                playToBottomStyle={{ bottom: '8px', marginRight: '10px' }}
+                shouldShowPlayToBottom={panel.kind === 'verse'}
+            />
         </FloatingWidgetComp>
     );
+}
+
+function LoadRecordDetailPanelComp({
+    panel,
+    index,
+}: Readonly<{ panel: DetailPanelType; index: number }>) {
+    const managers = useLookupManagers();
+    if (managers == null) {
+        return (
+            <FloatingWidgetComp
+                title={panel.name}
+                widgetName="Lookup Detail"
+                onClose={() => {
+                    closeDetailPanel(panel.key);
+                }}
+                raiseToken={panel.raiseCount}
+                options={{
+                    width: DETAIL_PANEL_WIDTH,
+                    height: 420,
+                    initialOffset:
+                        DETAIL_PANEL_BASE_OFFSET + index * CASCADE_STEP,
+                    isAboveModal: true,
+                }}
+            >
+                {managers === null ? (
+                    <div className="text-danger p-2">
+                        {tran('Failed to load lookup data')}
+                    </div>
+                ) : (
+                    <LoadingComp message={tran('Loading lookup data')} />
+                )}
+            </FloatingWidgetComp>
+        );
+    }
+    return (
+        <LookupManagersContext value={managers}>
+            <RenderDetailPanelComp
+                index={index}
+                managers={managers}
+                panel={panel}
+            />
+        </LookupManagersContext>
+    );
+}
+
+function LoadDetailPanelComp({
+    panel,
+    index,
+}: Readonly<{ panel: DetailPanelType; index: number }>) {
+    // A verse panel reads one verse out of a bible and nothing out of the
+    // names and places dataset, so it must not make the window load that
+    // ~34MB: a cross reference or a found verse opens one with no lookup
+    // panel already holding the data.
+    if (panel.kind === 'verse') {
+        return (
+            <RenderDetailPanelComp
+                index={index}
+                managers={null}
+                panel={panel}
+            />
+        );
+    }
+    return <LoadRecordDetailPanelComp index={index} panel={panel} />;
 }
 
 export default function LocationNameDetailPanelsComp() {
     const openPanels = useOpenDetailPanels();
     const { theme } = useThemeSource();
-    // The SAME instance the lookup panel holds, whenever that is open: the hook
-    // reference-counts one shared value rather than each tree loading its own
-    // ~34MB copy. The panels can still outlive the lookup, which is why they
-    // take a reference of their own instead of reading one out of a context.
-    const managers = useLookupManagers();
     if (openPanels.length === 0) {
         return null;
     }
     return createPortal(
         <div className="app app-floating-widget-portal" data-bs-theme={theme}>
-            {managers == null ? (
-                <FloatingWidgetComp
-                    title={tran('Loading lookup data')}
-                    widgetName="Lookup Detail"
-                    onClose={() => {
-                        closeDetailPanel(openPanels[0].key);
-                    }}
-                    options={{ width: 300, height: 160, isAboveModal: true }}
-                >
-                    <LoadingComp />
-                </FloatingWidgetComp>
-            ) : (
-                <LookupManagersContext value={managers}>
-                    {openPanels.map((panel, index) => {
-                        return (
-                            <RenderDetailPanelComp
-                                key={panel.key}
-                                index={index}
-                                managers={managers}
-                                panel={panel}
-                            />
-                        );
-                    })}
-                </LookupManagersContext>
-            )}
+            {openPanels.map((panel, index) => {
+                return (
+                    <LookupLangContext
+                        key={panel.key}
+                        value={panel.langCode ?? null}
+                    >
+                        <LoadDetailPanelComp index={index} panel={panel} />
+                    </LookupLangContext>
+                );
+            })}
         </div>,
         document.body,
     );

@@ -43,12 +43,22 @@ import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import type ScreenManager from '../_screen/managers/ScreenManager';
 import type {
     BackgroundSrcType,
-    BibleItemDataType,
     ForegroundDataType,
+    LongTextDataType,
 } from '../_screen/screenTypeHelpers';
+import {
+    checkIsLongTextData,
+    getBibleItemData,
+} from '../_screen/screenLongTextTypeHelpers';
 import type { VarySlideScreenDataType } from '../_screen/screenAppDocumentTypeHelpers';
 import appProvider from '../server/appProvider';
 import { getFileName, pathBasename } from '../server/fileHelpers';
+import {
+    describeCountdown,
+    describeStopwatch,
+} from '../_screen/managers/timerStateHelpers';
+import { toVerseFullKeyFormat } from './bible-helpers/bibleKeyFormatHelpers';
+import { getTargetChapterEnd } from './bible-helpers/bibleTargetHelpers';
 
 export type AgentScreenBackgroundSummaryType = {
     kind: string;
@@ -229,21 +239,34 @@ export function toBackgroundSummary(
 }
 
 export function toBibleSummary(
-    viewData: BibleItemDataType | null,
+    viewData: LongTextDataType | null,
 ): AgentScreenBibleSummaryType | null {
-    if (viewData === null || typeof viewData !== 'object') {
+    // A long text sits in the same layer and is no passage: it is said
+    // among the foreground extras (`toLongTextSummary`), where its panel
+    // is, so nothing reads `KM` as a Bible version.
+    if (
+        viewData === null ||
+        typeof viewData !== 'object' ||
+        checkIsLongTextData(viewData)
+    ) {
         return null;
     }
-    const renderedList = viewData.bibleItemData?.renderedList ?? [];
+    const bibleItemData = getBibleItemData(viewData);
+    const renderedList = bibleItemData?.renderedList ?? [];
     const first = renderedList[0];
-    const bibleItem = viewData.bibleItemData?.bibleItem;
+    const bibleItem = bibleItemData?.bibleItem;
     const version = first?.bibleKey ?? bibleItem?.bibleKey ?? '?';
     let reference = first?.title ?? '';
     if (reference.length === 0 && bibleItem?.target) {
         const { bookKey, chapter, verseStart, verseEnd } = bibleItem.target;
-        reference =
-            `${bookKey} ${chapter}:${verseStart}` +
-            (verseEnd !== verseStart ? `-${verseEnd}` : '');
+        // `JHN 1:2-3:4` when the passage runs on into a later chapter.
+        reference = toVerseFullKeyFormat(
+            bookKey,
+            chapter,
+            verseStart,
+            verseEnd,
+            getTargetChapterEnd(bibleItem.target),
+        );
     }
     const summary: AgentScreenBibleSummaryType = { reference, version };
     if (renderedList.length > 1) {
@@ -253,9 +276,31 @@ export function toBibleSummary(
 }
 
 /**
+ * A long text on the screen, in words: its title and the languages it is in.
+ * One line in the foreground list, never a passage.
+ */
+export function toLongTextSummary(viewData: LongTextDataType | null) {
+    if (!checkIsLongTextData(viewData)) {
+        return [];
+    }
+    const { renderedList } = viewData.longTextData;
+    const title = cutText(toPlainText(renderedList[0]?.title ?? ''));
+    const languages = renderedList
+        .map(({ code }) => {
+            return code;
+        })
+        .join(', ');
+    return [
+        `long text` +
+            (title === '' ? '' : ` "${title}"`) +
+            (languages === '' ? '' : ` in ${languages}`),
+    ];
+}
+
+/**
  * The foreground widgets by name, with the one thing each is showing: a
  * marquee's words, a quick text's words, a clock's title. A countdown's target
- * time is a `Date` and is said as the local time it counts to.
+ * and a stopwatch say what they read (`describeCountdown`, `describeStopwatch`).
  */
 export function toForegroundSummary(
     foregroundData: ForegroundDataType | null | undefined,
@@ -268,25 +313,35 @@ export function toForegroundSummary(
     // puts up mid-service and the likeliest answer to "what is that on the
     // screen?". A rotating set names its COUNT and its first line -- naming
     // only whatever happens to be up would be stale before it was read.
+    // One that does NOT rotate shows every entry at once -- an editor's lines,
+    // or Show All Messages' messages in one box -- so all of it is named: the
+    // second message of a Show All used to go unmentioned.
     for (const message of foregroundData.messageDataList ?? []) {
         const textList = message.textList ?? [];
-        const first = `"${cutText(toPlainText(textList[0] ?? ''))}"`;
-        items.push(
-            message.intervalSecond !== null && textList.length > 1
-                ? `messages in turn (${textList.length}), first: ${first}`
-                : `message: ${first}`,
-        );
+        if (message.intervalSecond !== null && textList.length > 1) {
+            const first = `"${cutText(toPlainText(textList[0] ?? ''))}"`;
+            items.push(
+                `messages in turn (${textList.length}), first: ${first}`,
+            );
+            continue;
+        }
+        const shownText = textList
+            .map((text) => {
+                return toPlainText(text);
+            })
+            .filter((text) => {
+                return text !== '';
+            })
+            .join(' / ');
+        items.push(`message: "${cutText(shownText)}"`);
     }
+    // What each clock READS -- paused, not started, counting the time over --
+    // because "a countdown" alone describes a wall the room is not looking at.
     if (foregroundData.countdownData) {
-        const target = foregroundData.countdownData.dateTime;
-        const when =
-            target instanceof Date && !Number.isNaN(target.getTime())
-                ? ` to ${target.toLocaleTimeString()}`
-                : '';
-        items.push(`countdown${when}`);
+        items.push(describeCountdown(foregroundData.countdownData));
     }
     if (foregroundData.stopwatchData) {
-        items.push('stopwatch');
+        items.push(describeStopwatch(foregroundData.stopwatchData));
     }
     for (const time of foregroundData.timeDataList ?? []) {
         items.push(time.title ? `clock "${time.title}"` : 'clock');
@@ -301,13 +356,19 @@ export function toForegroundSummary(
             `marquee at the bottom: "${cutText(toPlainText(foregroundData.marqueeBottomData.text ?? ''))}"`,
         );
     }
+    // A quick text is MARKUP (its editor writes `<p>…</p>`), unlike a message
+    // or a marquee, so it is read for its words -- it was handed to the model
+    // as `quick text: "<p>zz robot test</p>"`.
     if (foregroundData.quickTextData) {
         items.push(
-            `quick text: "${cutText(toPlainText(foregroundData.quickTextData.htmlText ?? ''))}"`,
+            `quick text: "${cutText(toSungText(foregroundData.quickTextData.htmlText ?? ''))}"`,
         );
     }
     for (const _camera of foregroundData.cameraDataList ?? []) {
         items.push('camera');
+    }
+    for (const screen of foregroundData.screenDataList ?? []) {
+        items.push(`picture of screen ${screen.id}`);
     }
     for (const web of foregroundData.webDataList ?? []) {
         items.push(`web page ${pathBasename(web.filePath ?? '')}`.trim());
@@ -328,12 +389,14 @@ function toScreenSummary(screenManager: ScreenManager): AgentScreenSummaryType {
     const slide = toSlideSummary(
         screenManager.screenVaryAppDocumentManager.varySlideData,
     );
-    const bible = toBibleSummary(
-        screenManager.screenBibleManager.screenViewData,
-    );
-    const foreground = toForegroundSummary(
-        screenManager.screenForegroundManager.foregroundData,
-    );
+    const longTextViewData = screenManager.screenLongTextManager.screenViewData;
+    const bible = toBibleSummary(longTextViewData);
+    const foreground = [
+        ...toForegroundSummary(
+            screenManager.screenForegroundManager.foregroundData,
+        ),
+        ...toLongTextSummary(longTextViewData),
+    ];
     let displayId: number | null = null;
     try {
         displayId = screenManager.displayId;

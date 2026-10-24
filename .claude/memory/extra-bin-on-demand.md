@@ -1,11 +1,11 @@
 ---
 name: extra-bin-on-demand
-description: "yt-dlp/ffmpeg/qjs left the app package on refactor27 — they install on demand into `<data parent>/extra-bin`, and the archive is kept on purpose"
+description: "yt-dlp/ffmpeg/qjs left the app package on refactor27 — they install on demand into `<data parent>/extra-bin`, and the archive is kept on purpose; cloudflared joined the pack in 0.0.4"
 metadata: 
   node_type: memory
   type: project
   originSessionId: 7cc13309-067b-48ac-94f6-322589474419
-  modified: 2026-09-19T17:27:35.582Z
+  modified: 2026-10-09T03:04:15.626Z
 ---
 
 As of refactor27 (2026-08-10) the three media binaries are **no longer bundled**.
@@ -19,6 +19,12 @@ app whose whole point is running on weak church hardware.
 
 **How to apply:**
 
+- **cloudflared is in the pack since 0.0.4 (2026-10-08)**, for Screen Mirror's tunnel,
+  run by the MAIN process (`electron/extraBinPaths.ts`), see [[cloudflare-quick-tunnel]].
+  `checkIsExtraBinInstalled()` checks all four; the media gate passes
+  `EXTRA_BIN_MEDIA_NAMES` so an older pack still downloads video. Each platform dir in
+  `experiment-building` must hold a `cloudflared-*` file or `build-extra-bin.mjs`
+  throws on that host -- it is built for all six from one host (pure Go).
 - **One folder per OS since 2026-09-19 (`EN-29`):**
   `<data parent>/extra-bin/<platform>/{yt,ffmpeg/bin,qjs,info.json,bin-*.tar.gz}`,
   `<platform>` named exactly as `extra-work/buildPlatformHelpers.mjs` names packs (`win`,
@@ -50,7 +56,7 @@ app whose whole point is running on weak church hardware.
 - In dev the install is mocked from the locally built pack; `npm run dev` does NOT build
   it, only `npm i` does.
 - **The pack does NOT follow a change of parent data directory.** The path is recomputed
-  from `appLocalStorage.defaultStorage` on every call, so repointing the parent dir
+  from `appLocalStorage.defaultStorageDirPath` on every call, so repointing the parent dir
   silently orphans the whole ~28 MB install and the panel just says *Not installed* — with
   a perfectly good copy sitting under the old parent. Seen live on 2026-08-12: a QA run
   found the pack missing at `open-worship-data-dev\extra-bin` while a complete 0.0.2 sat in

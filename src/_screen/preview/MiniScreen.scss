@@ -15,6 +15,7 @@
     .mini-screen-preview-body {
       flex: 1 1 auto !important;
       height: auto !important;
+      aspect-ratio: auto !important;
       min-height: 0;
       display: flex;
       align-items: center;
@@ -26,6 +27,30 @@
       width: auto !important;
       height: 100% !important;
       max-width: 100%;
+    }
+  }
+
+  // The face of a card whose rendering is turned off. It covers the preview
+  // body (in full view too, which only resizes that body). Static on purpose --
+  // see `RenderNoRenderingComp`.
+  .mini-screen-no-rendering {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--app-surface) 0 10px,
+      var(--app-line) 10px 20px
+    );
+
+    span {
+      padding: 2px 10px;
+      border-radius: 4px;
+      background-color: var(--app-surface);
+      color: var(--app-muted);
+      font-size: var(--app-text-sm);
     }
   }
 

@@ -99,6 +99,8 @@ Three facts about running it, each of which has already cost a run:
   `--testTimeout=60000` for exactly this reason: at the committed 10s timeout,
   `src/_screen/components.smoke.test.tsx` times out under full instrumentation
   and it looks like a test you broke.
+  Dynamic imports in `beforeAll` pay the same cost, so the script also passes
+  `--hookTimeout=60000`.
 - **A failing test means NO report at all.** vitest writes no
   `coverage-summary.json` when the run fails, and the script says so rather
   than printing a stale number. Green the suite first.
@@ -136,8 +138,9 @@ Then pick batches by **uncovered lines per hour of work**, which usually means:
    has ~1 500 uncovered lines across files that share one domain and were all
    orphaned by the same prune — one mock surface serves the folder.
 2. **The single biggest untested helpers.** `agentFileHelpers`,
-   `agentBibleListHelpers`, `agentNoteHelpers`, `agentBackupHelpers` are ~900
-   lines of pure logic at 0%, and they are the tools that write the user's files.
+   `agentBibleListHelpers`, `agentNoteHelpers`, `agentBackupHelpers` were ~900
+   lines of pure logic at 0% on 2026-09-26 (`UT-03a` and `UT-03b` have since tested
+   their lifecycles), and they are the tools that write the user's files.
 3. **The half-covered heavyweights**, where the uncovered half is the error
    paths: `fileHelpers` (41%), `bibleXMLJsonDataHelpers` (1%),
    `BoxEditorController` (11%), `langHelpers` (14%).
@@ -207,9 +210,9 @@ npx vitest run --config vitest.config.ts --sequence.shuffle   # order dependence
 npx vitest run --config vitest.config.ts --no-file-parallelism
 ```
 
-Also sweep the dead mocks CLAUDE.md names: four test files still
-`vi.mock('.../debuggerHelpers')`, a module that became `appHooks` — inert, and
-it silently fails to stub `useAppEffect`.
+A `vi.mock('.../debuggerHelpers')` is a dead path — that module became
+`appHooks` — and stubs nothing; the four that were left went on 2026-10-11
+(`references/recipes.md` §7 says how to stub `useAppEffect` for real).
 
 ### 6. Prove it, then gate
 
@@ -224,12 +227,13 @@ of the gain: 1290 lines behavioural, 546 lines smoke render
 
 Then `npm run lint` — the whole gate, reading the log body rather than the exit
 code, since it is `&&`-chained and the first failure hides every stage after.
-Two things that will look like your fault and are not:
+Two things to know about the gate:
 
-- **`lint:pre` is red on a Windows checkout for line endings.** `core.autocrlf`
-  is `true` and `.prettierrc` sets no `endOfLine`, so `prettier --check` flags
-  ~1270 files that nobody touched. **Do not run `npm run format`** — it would
-  rewrite the repo. Check only your own new files:
+- **Line endings.** `core.autocrlf` is `true` and `.prettierrc` sets no
+  `endOfLine`, so ~1 350 files sit on disk as CRLF. `lint:pre` passes
+  `--end-of-line auto` (since `408ecbc3`, 2026-09-30) and is green on them;
+  `npm run format` does not, so **do not run `npm run format`** — it would
+  rewrite every one of them. Check only your own new files:
   `npx prettier --check <your files>`, and `--write` those.
 - **`lint:es` does not lint test files** (`--ignore-pattern "src/**/*.test.ts*"`),
   so a new test's eslint cleanliness is not gated — but prettier's is.
@@ -245,8 +249,7 @@ new number and date; [references/plan.md](./references/plan.md) with the batch
 closed and what it actually gained versus predicted; a memory note for any
 testing trap the next session would otherwise re-learn; **and any BUG the tests
 found reported to the user** — that is the real return on this work, and it is
-worth more than the percentage. Mirror `.claude/skills/owa-upgrade-unit-test/`
-to `.agents/skills/`, then
+worth more than the percentage. Then run
 `node extra-work/build-knowledge.mjs` (CLAUDE.md: every `.claude/` edit, same
 change).
 

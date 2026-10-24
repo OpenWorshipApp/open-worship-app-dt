@@ -8,7 +8,12 @@ import type {
     ReactNode,
 } from 'react';
 import { useThemeSource } from '../others/themeHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { handleError } from '../helper/errorHelpers';
+import { applyHorizontalWheelScroll } from '../helper/horizontalWheelScrollHelpers';
 import { tran } from '../lang/langHelpers';
 import {
     COLLAPSED_HEIGHT,
@@ -28,6 +33,7 @@ import {
     writePersistedRect,
 } from './floatingWidgetHelpers';
 import { useIsInModalLayer } from './modalLayerContext';
+import { WidgetMenuExcludedContext } from '../resize-actor/widgetMenuContext';
 import type {
     FloatingWidgetOptions,
     InteractionMode,
@@ -59,6 +65,10 @@ interface MyProps {
     // Widget-specific buttons placed before the collapse/close pair. They share
     // the actions container, so they are excluded from the drag surface too.
     extraActionButtons?: ReactNode;
+    // When set, the collapse and full-view buttons fold into a `⋮` whose
+    // context menu lists these items first and then those two, so a narrow
+    // panel leaves its title the room. Close stays a button of its own.
+    menuItems?: ContextMenuItemType[];
     onClose: () => void;
     // When set, the widget's size and location are saved under this setting key
     // and restored the next time it opens.
@@ -108,6 +118,7 @@ export default function FloatingWidgetComp({
     isBodyHidden = false,
     title,
     extraActionButtons = null,
+    menuItems,
     options = {},
     persistKey,
     widgetName,
@@ -446,6 +457,17 @@ export default function FloatingWidgetComp({
             ) {
                 return;
             }
+            // A long title scrolls sideways, and two quick presses on its
+            // scrollbar are a scroll, not a request to fill the viewport. Only
+            // the title itself is checked: an inline span inside it has a
+            // client size of 0, so every press on it would read as "on the
+            // scrollbar".
+            if (
+                target.classList.contains('floating-widget__title') &&
+                isOnScrollbar(event.clientX, event.clientY, target)
+            ) {
+                return;
+            }
 
             const previousPress = lastHeaderPressRef.current;
             const isDoublePress =
@@ -486,43 +508,77 @@ export default function FloatingWidgetComp({
     const fullViewLabel = isMaximized
         ? tran('Exit full view')
         : tran('Full view');
+    const collapseIcon = `chevron-${isCollapsed ? 'up' : 'down'}`;
+    const fullViewIcon = isMaximized ? 'fullscreen-exit' : 'arrows-fullscreen';
+    const windowButtons =
+        menuItems === undefined ? (
+            <>
+                {isBodyHidden ? null : (
+                    // There is no body to roll up, so the chevron would toggle
+                    // nothing visible — and a control that answers a press with
+                    // nothing is worse than one that is not offered.
+                    <button
+                        type="button"
+                        className="floating-widget__button"
+                        onClick={() => setIsCollapsed((prev) => !prev)}
+                        aria-label={collapseLabel}
+                        title={collapseLabel}
+                    >
+                        <i className={`bi bi-${collapseIcon}`} />
+                    </button>
+                )}
+                <button
+                    type="button"
+                    className="floating-widget__button"
+                    onClick={handleToggleMaximized}
+                    aria-label={fullViewLabel}
+                    title={fullViewLabel}
+                >
+                    <i className={`bi bi-${fullViewIcon}`} />
+                </button>
+            </>
+        ) : (
+            <ContextMenuDotsButtonComp
+                className="floating-widget__button"
+                onOpening={(event) => {
+                    const nativeEvent = event.nativeEvent;
+                    const items: ContextMenuItemType[] = [
+                        ...menuItems,
+                        ...(isBodyHidden
+                            ? []
+                            : [
+                                  {
+                                      childBefore:
+                                          genContextMenuItemIcon(collapseIcon),
+                                      menuElement: collapseLabel,
+                                      onSelect: () => {
+                                          setIsCollapsed((prev) => !prev);
+                                      },
+                                  },
+                              ]),
+                        {
+                            childBefore: genContextMenuItemIcon(fullViewIcon),
+                            menuElement: fullViewLabel,
+                            onSelect: handleToggleMaximized,
+                        },
+                    ];
+                    // Loaded at the press: the menu UI is nothing a widget
+                    // needs until its `⋮` is pressed.
+                    import('../context-menu/appContextMenuHelpers')
+                        .then(({ showAppContextMenu }) => {
+                            showAppContextMenu(nativeEvent, items);
+                        })
+                        .catch(handleError);
+                }}
+            />
+        );
     const actionButtons = (
         <div
             className="floating-widget__actions"
             onPointerDown={(event) => event.stopPropagation()}
         >
             {extraActionButtons}
-            {isBodyHidden ? null : (
-                // There is no body to roll up, so the chevron would toggle
-                // nothing visible — and a control that answers a press with
-                // nothing is worse than one that is not offered.
-                <button
-                    type="button"
-                    className="floating-widget__button"
-                    onClick={() => setIsCollapsed((prev) => !prev)}
-                    aria-label={collapseLabel}
-                    title={collapseLabel}
-                >
-                    <i
-                        className={`bi bi-chevron-${
-                            isCollapsed ? 'up' : 'down'
-                        }`}
-                    />
-                </button>
-            )}
-            <button
-                type="button"
-                className="floating-widget__button"
-                onClick={handleToggleMaximized}
-                aria-label={fullViewLabel}
-                title={fullViewLabel}
-            >
-                <i
-                    className={`bi bi-${
-                        isMaximized ? 'fullscreen-exit' : 'arrows-fullscreen'
-                    }`}
-                />
-            </button>
+            {windowButtons}
             <button
                 type="button"
                 className="floating-widget__button"
@@ -574,7 +630,12 @@ export default function FloatingWidgetComp({
                     className="floating-widget__header"
                     onPointerDown={handleHeaderPointerDown}
                 >
-                    <div className="floating-widget__title">{title}</div>
+                    <div
+                        className="floating-widget__title"
+                        ref={applyHorizontalWheelScroll}
+                    >
+                        {title}
+                    </div>
                     {actionButtons}
                 </div>
             )}
@@ -590,7 +651,9 @@ export default function FloatingWidgetComp({
                     title == null || options.isBodyDraggable ? 'false' : 'true'
                 }
             >
-                {isHeaderOnly ? collapsedChildren : children}
+                <WidgetMenuExcludedContext value={true}>
+                    {isHeaderOnly ? collapsedChildren : children}
+                </WidgetMenuExcludedContext>
             </div>
             {!isHeaderOnly &&
                 RESIZE_HANDLES.map((handle) => (

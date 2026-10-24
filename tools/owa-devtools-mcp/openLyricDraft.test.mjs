@@ -21,6 +21,7 @@ import {
     checkIsBrowserCheckPage,
     checkIsChordLine,
     checkIsMixedSafe,
+    checkIsPlaceholderPage,
     draftOpenLyric,
     draftOpenLyricText,
     parseSectionLabel,
@@ -82,7 +83,9 @@ describe('the pieces', () => {
     });
 
     test('does not read a lyric line as a label', () => {
-        expect(parseSectionLabel('The morning light is on the hill')).toBeNull();
+        expect(
+            parseSectionLabel('The morning light is on the hill'),
+        ).toBeNull();
         expect(parseSectionLabel('[sic]')).toBeNull();
         expect(parseSectionLabel('(2x)')).toBeNull();
         expect(parseSectionLabel('[G]')).toBeNull();
@@ -185,6 +188,47 @@ describe('a browser check is not a page', () => {
         }).join('\n');
         expect(checkIsBrowserCheckPage(wrap(`${CHECK}\n${verses}`))).toBe(
             false,
+        );
+    });
+});
+
+describe('a placeholder page is not a song', () => {
+    const notice =
+        'Example Domain\n\nThis domain is for use in documentation examples without needing permission.\nAvoid use in operations.\n\nLearn more';
+    const wrap = (body) =>
+        'Read https://example.test/song\n--- BEGIN WEBSITE TEXT ---\n' +
+        body +
+        '\n--- END WEBSITE TEXT ---';
+
+    test('refuses documentation notices and missing-page responses before drafting', () => {
+        for (const body of [
+            notice,
+            '404 - Page not found\nHome\nAbout\nContact',
+        ]) {
+            expect(checkIsPlaceholderPage(wrap(body))).toBe(true);
+            expect(draftOpenLyric(wrap(body))).toMatchObject({
+                ok: false,
+                markdown: null,
+                outcome: 'not-a-song',
+            });
+        }
+    });
+
+    test('leaves pasted words and real song pages to the drafter', () => {
+        expect(checkIsPlaceholderPage(notice)).toBe(false);
+        const longSong = Array.from(
+            { length: 60 },
+            () => 'The lantern shines upon the water',
+        ).join('\n');
+        expect(checkIsPlaceholderPage(wrap(notice + '\n' + longSong))).toBe(
+            false,
+        );
+        expectValid(
+            draftOpenLyric(
+                wrap(
+                    'Verse 1\nA lantern on the water\nA light across the bay\nThe quiet shore is waiting\nUntil the break of day',
+                ),
+            ),
         );
     });
 });
@@ -377,20 +421,25 @@ describe('drafting a song', () => {
         expect(draft.markdown).toContain('- Key: G');
         expect(draft.markdown).toContain('- Tempo: 84bpm');
         expect(draft.markdown).toContain('- Time: 3/4');
-        // Nothing was defaulted, so nothing may be claimed as a guess.
-        expect(draft.guessed.join(' ')).not.toContain('120bpm');
+        // Nothing was missing, so nothing may be claimed as a guess.
+        expect(draft.guessed.join(' ')).not.toContain('the text gave no');
     });
 
-    test('says every default it had to fall back on', () => {
+    test('leaves out every optional field the text did not give', () => {
         const draft = draftOpenLyric(
             'A line about the harbour\nAnd another one after it',
         );
         expectValid(draft);
         const said = draft.guessed.join(' ');
-        expect(said).toContain('120bpm');
+        expect(said).toContain('the text gave no key, tempo, time');
         expect(said).toContain('author');
-        expect(draft.markdown).toContain('- Key: C');
-        expect(draft.markdown).toContain('- Time: 4/4');
+        // Only Title and Structure are required; nothing is made up.
+        for (const field of ['Artist', 'Copyright', 'Key', 'Tempo', 'Time']) {
+            expect(draft.markdown).not.toContain(`- ${field}:`);
+        }
+        expect(draft.markdown).not.toContain('Unknown');
+        expect(draft.markdown).toContain('- Title: ');
+        expect(draft.markdown).toContain('- Structure: ');
     });
 
     test('a caller who knows the title beats anything guessed', () => {
@@ -536,8 +585,10 @@ describe('the report', () => {
 
     test('a long song is cut before it is charged for ten rounds', () => {
         const long = Array.from({ length: 400 }, (_ignored, index) => {
-            return `A line of words numbered ${index} in this song\n` +
-                `And a second line numbered ${index} after it\n`;
+            return (
+                `A line of words numbered ${index} in this song\n` +
+                `And a second line numbered ${index} after it\n`
+            );
         }).join('\n');
         const text = draftOpenLyricText(long);
         expect(text).toContain('cut here');
@@ -632,7 +683,7 @@ describe('a song read off a page', () => {
 
     test('does not file the site’s own footer notice as the song’s', () => {
         // The header names the site; the footer's notice names the same site;
-        // the song is somebody else's. `Unknown` is honest, the site is not.
+        // the song is somebody else's. No notice is honest, the site is not.
         const page = [
             'Read https://www.madeupchords.com/chords/1',
             '--- BEGIN WEBSITE TEXT: a document that was read. ---',
@@ -653,7 +704,7 @@ describe('a song read off a page', () => {
         ].join('\n');
         const draft = draftOpenLyric(page);
         expectValid(draft);
-        expect(draft.markdown).toContain('- Copyright: Unknown');
+        expect(draft.markdown).not.toContain('- Copyright:');
         expect(draft.markdown).toContain(
             '- Attachments: https://www.madeupchords.com/chords/1',
         );
@@ -803,7 +854,7 @@ describe('a song read off a page', () => {
         expectValid(draft);
         // The song survives the bad field rather than falling to tier 2.
         expect(draft.tier).toBe(1);
-        expect(draft.markdown).toContain('- Key: C');
+        expect(draft.markdown).not.toContain('- Key:');
         // And a tempo written the long way is corrected rather than refused.
         expect(draft.markdown).toContain('- Tempo: 96bpm');
         expect(draft.guessed.join(' ')).toContain(
@@ -888,7 +939,9 @@ describe('a hymn handed over with its heading still on', () => {
         );
         expect(draft.markdown).toContain('- Artist: Somebody Madeup (1801)');
         expect(draft.markdown).toContain('- Copyright: Public Domain');
-        expect(draft.guessed.join('\n')).toContain('above the first numbered verse');
+        expect(draft.guessed.join('\n')).toContain(
+            'above the first numbered verse',
+        );
     });
 
     test('a long opening block is a verse, numbered stanzas or not', () => {
@@ -937,6 +990,6 @@ describe('what the caller was told outright', () => {
         expectValid(told);
         expect(told.markdown).toContain('- Copyright: Public Domain');
         const untold = draftOpenLyric(words, {});
-        expect(untold.markdown).toContain('- Copyright: Unknown');
+        expect(untold.markdown).not.toContain('- Copyright:');
     });
 });

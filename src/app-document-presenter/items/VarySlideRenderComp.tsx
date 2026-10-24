@@ -1,7 +1,7 @@
 import './VarySlideComp.scss';
 
 import type { CSSProperties, ReactNode, MouseEvent } from 'react';
-import { useCallback, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useMemo } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import type { OnScreenListType } from '../../_screen/managers/varySlideOnScreenHelpers';
@@ -24,7 +24,7 @@ import AttachBackgroundIconComp from '../../others/AttachBackgroundIconComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
-import { getColorNoteFilePathSetting } from '../../helper/FileSourceMetaManager';
+import { useColorNoteFilePathSetting } from '../../helper/useColorNoteFilePathSetting';
 import {
     genAttachBackgroundComponent,
     genChooseColorNoteOption,
@@ -44,6 +44,20 @@ import { toSlideAccessibleName } from './slideAccessibleNameHelpers';
 import { useSlidesPreviewerScope } from './slidesPreviewerScopeHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import {
+    genSlideTransitionMenuItems,
+    SlideTransitionIconComp,
+    useSlideTransition,
+} from '../../others/slideTransitionMenuHelpers';
+import type { TransitionEffectType } from '../../_screen/transitionEffectHelpers';
+import { useSlideStageView } from '../stage/documentStageContexts';
+
+// Only a Stage Previewer pane of stage 1 or up draws it, and it draws the
+// slides around a slide with every kind of slide renderer -- none of which a
+// plain slide list, the slide editor or a run sheet preview should load.
+const LazyStageLookAheadComp = lazy(() => {
+    return import('../stage/StageLookAheadComp');
+});
 
 function RenderScreenInfoComp({
     onScreenList,
@@ -82,18 +96,23 @@ function VarySlideHeaderComp({
     viewIndex,
     name,
     onScreenList,
+    ownTransition,
 }: Readonly<{
     varySlide: VarySlideType;
     viewIndex: number;
     name?: string;
     onScreenList: OnScreenListType;
+    ownTransition?: TransitionEffectType;
 }>) {
     const isChanged =
         Slide.checkIsThisType(varySlide) && (varySlide as Slide).isChanged;
-    const colorNote = getColorNoteFilePathSetting(
+    const colorNote = useColorNoteFilePathSetting(
         varySlide.filePath,
         varySlide.id,
     );
+    const dimTitle =
+        `${tran('Width')}: ${varySlide.width}, ` +
+        `${tran('Height')}: ${varySlide.height}`;
     const handleDimInfoClicking = useCallback((event: any) => {
         event.stopPropagation();
         showSimpleToast(tran('Dimensions'), event.currentTarget.title);
@@ -106,32 +125,40 @@ function VarySlideHeaderComp({
             }}
         >
             <div className="d-flex w-100 overflow-hidden">
-                <div className="d-flex overflow-hidden flex-grow-1">
-                    <RenderSlideIndexComp
-                        viewIndex={viewIndex}
-                        isInSlide
-                        dataKey={toKeyByFilePath(
-                            varySlide.filePath,
-                            varySlide.id,
-                        )}
-                    />
+                <div
+                    className="d-flex overflow-hidden flex-grow-1"
+                    style={{ minWidth: '1.5rem', flexBasis: 0 }}
+                >
+                    <div className="d-flex flex-shrink-0">
+                        <RenderSlideIndexComp
+                            viewIndex={viewIndex}
+                            isInSlide
+                            dataKey={toKeyByFilePath(
+                                varySlide.filePath,
+                                varySlide.id,
+                            )}
+                        />
+                    </div>
                     <span className="mx-1 app-ellipsis">{name}</span>
                 </div>
-                <div className="d-flex justify-content-end">
+                <div
+                    className="d-flex justify-content-end overflow-hidden"
+                    style={{ minWidth: 0 }}
+                >
                     <RenderScreenInfoComp onScreenList={onScreenList} />
                     <AttachBackgroundIconComp
                         filePath={varySlide.filePath}
                         id={varySlide.id}
                     />
-                    <span
-                        title={
-                            `width:${varySlide.width}, ` +
-                            `height:${varySlide.height}`
-                        }
-                    >
+                    <SlideTransitionIconComp
+                        filePath={varySlide.filePath}
+                        id={varySlide.id}
+                        effect={ownTransition}
+                    />
+                    <span title={dimTitle}>
                         <i
                             className="bi bi-aspect-ratio-fill app-caught-hover-pointer"
-                            title={`width:${varySlide.width}, height:${varySlide.height}`}
+                            title={dimTitle}
                             onClick={handleDimInfoClicking}
                         />
                     </span>
@@ -254,6 +281,10 @@ export default function VarySlideRenderComp({
     // slide now wakes that slide and the one it replaced — not every preview in
     // the window.
     const onScreenList = useVarySlideOnScreenList(varySlide);
+    // `null` unless this card sits in a document's Stage Previewer pane of
+    // stage 1 or up -- and read HERE, because the body below renders into a
+    // React root of its own that no context reaches.
+    const stageView = useSlideStageView(varySlide);
     // A touch drag autoscrolls the container named here. Without the scope it
     // named the first previewer in the document, so dragging inside a floating
     // preview scrolled the main panel behind it.
@@ -272,6 +303,11 @@ export default function VarySlideRenderComp({
         varySlide.filePath,
         varySlide.id,
     );
+    const slideTransition = useSlideTransition(
+        varySlide.filePath,
+        varySlide.id,
+    );
+    const slideTransitionRef = useAppCurrentRef(slideTransition);
     const varySlideRef = useAppCurrentRef(varySlide);
     const handleDataDropping = useCallback(async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
@@ -314,6 +350,11 @@ export default function VarySlideRenderComp({
     const attachedBackgroundDataRef = useAppCurrentRef(attachedBackgroundData);
     const onContextMenuRef = useAppCurrentRef(onContextMenu);
     const handleContextMenuOpening = useCallback((event: any) => {
+        // File-based slides read their preview path before opening the menu.
+        // Claim the event now, or the document menu also opens while they await
+        // that read and replaces the slide's own actions.
+        event.preventDefault();
+        event.stopPropagation();
         const menuItems: ContextMenuItemType[] = [];
         if (attachedBackgroundDataRef.current) {
             menuItems.push(
@@ -327,6 +368,14 @@ export default function VarySlideRenderComp({
             ...genChooseColorNoteOption(
                 varySlideRef.current.filePath,
                 varySlideRef.current.id,
+            ),
+            // Every kind of slide appends these extra rows to its own menu, so
+            // this one row reaches a slide document, a song, a PDF and a
+            // PowerPoint file alike.
+            ...genSlideTransitionMenuItems(
+                varySlideRef.current.filePath,
+                varySlideRef.current.id,
+                slideTransitionRef.current,
             ),
         );
         onContextMenuRef.current(event, menuItems);
@@ -396,12 +445,27 @@ export default function VarySlideRenderComp({
                 viewIndex={index + 1}
                 name={varySlide.name}
                 onScreenList={onScreenList}
+                ownTransition={slideTransition.own}
             />
             <div className="card-body app-overflow-hidden w-100 p-0 m-0">
                 <ShadowingFillParentWidthComp width={width}>
                     <VarySlideBodyRenderComp varySlideData={varySlide}>
                         {getSlideItemShadowingStyle()}
-                        {children}
+                        {stageView === null ? (
+                            children
+                        ) : (
+                            // The slide alone while the layout loads, rather
+                            // than an empty card.
+                            <Suspense fallback={children}>
+                                <LazyStageLookAheadComp
+                                    width={varySlide.width}
+                                    height={varySlide.height}
+                                    view={stageView}
+                                >
+                                    {children}
+                                </LazyStageLookAheadComp>
+                            </Suspense>
+                        )}
                     </VarySlideBodyRenderComp>
                 </ShadowingFillParentWidthComp>
             </div>

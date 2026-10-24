@@ -154,6 +154,103 @@ describe('ElectronMainController', () => {
         processExit.mockRestore();
     });
 
+    // `stayAwake` is what `clientSetting['stay-awake']` holds; the test changes
+    // it the way the header's switch does, then tells the controller.
+    function createStayAwakeController(stayAwake: { value: string | null }) {
+        const controller = new ElectronMainController({
+            mainHtmlPath: 'presenter.html',
+            getClientSetting: (key: string) => {
+                return key === 'stay-awake' ? stayAwake.value : null;
+            },
+        } as any);
+        const didNavigate = (
+            controller.win.webContents.on as any
+        ).mock.calls.find(
+            ([eventName]: [string]) => eventName === 'did-navigate',
+        )?.[1];
+        return {
+            controller,
+            navigate: (url: string) => didNavigate({}, url),
+        };
+    }
+
+    test('keeps the computer awake only on the presenter and screen mirror pages', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        try {
+            const { start, stop } = electronMockState.powerSaveBlocker;
+            // Nothing written yet: the switch is on.
+            const { navigate } = createStayAwakeController({ value: null });
+
+            navigate('https://localhost:3000/reader.html');
+            navigate('https://localhost:3000/appDocumentEditor.html');
+            expect(start).not.toHaveBeenCalled();
+
+            navigate('https://localhost:3000/presenter.html?foo=bar');
+            expect(start).toHaveBeenCalledTimes(1);
+            expect(start).toHaveBeenCalledWith('prevent-display-sleep');
+            // A reload of the same page (renderer recovery), and going from
+            // one of the two pages to the other, hold the one request there
+            // already is.
+            navigate('https://localhost:3000/presenter.html');
+            navigate('owa://local/screen-mirror.html');
+            expect(start).toHaveBeenCalledTimes(1);
+            expect(stop).not.toHaveBeenCalled();
+
+            navigate('owa://local/reader.html');
+            expect(stop).toHaveBeenCalledTimes(1);
+            expect(stop).toHaveBeenCalledWith(start.mock.results[0].value);
+            navigate('not a valid URL');
+            expect(stop).toHaveBeenCalledTimes(1);
+
+            navigate('owa://local/screen-mirror.html');
+            expect(start).toHaveBeenCalledTimes(2);
+        } finally {
+            processExit.mockRestore();
+        }
+    });
+
+    test('the stay-awake switch lets the computer sleep, and takes it back', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        try {
+            const { start, stop } = electronMockState.powerSaveBlocker;
+            const stayAwake = { value: 'false' as string | null };
+            const { controller, navigate } =
+                createStayAwakeController(stayAwake);
+
+            // Switched off before the page opened: neither page asks.
+            navigate('owa://local/presenter.html');
+            navigate('owa://local/screen-mirror.html');
+            expect(start).not.toHaveBeenCalled();
+
+            // Switched on while the page is open: asked at once, no reload.
+            stayAwake.value = 'true';
+            controller.syncStayAwake();
+            expect(start).toHaveBeenCalledTimes(1);
+
+            stayAwake.value = 'false';
+            controller.syncStayAwake();
+            expect(stop).toHaveBeenCalledTimes(1);
+            expect(stop).toHaveBeenCalledWith(start.mock.results[0].value);
+
+            // Cleared with every other setting: back to on.
+            stayAwake.value = null;
+            controller.syncStayAwake();
+            expect(start).toHaveBeenCalledTimes(2);
+
+            // On, but the window has left for a page that never asks.
+            navigate('owa://local/reader.html');
+            expect(stop).toHaveBeenCalledTimes(2);
+            controller.syncStayAwake();
+            expect(start).toHaveBeenCalledTimes(2);
+        } finally {
+            processExit.mockRestore();
+        }
+    });
+
     test('sends screen messages over the configured channel', () => {
         const processExit = vi
             .spyOn(process, 'exit')
@@ -184,13 +281,20 @@ describe('ElectronMainController', () => {
         processExit.mockRestore();
     });
 
-    test('closing the main window ends the process', () => {
+    test('closing the main window writes the settings, then ends the process', () => {
+        const calls: string[] = [];
         const processExit = vi
             .spyOn(process, 'exit')
-            .mockImplementation((() => undefined) as any);
+            .mockImplementation((() => {
+                calls.push('exit');
+            }) as any);
         try {
+            const save = vi.fn((isImmediate: boolean) => {
+                calls.push(`save:${isImmediate}`);
+            });
             const controller = new ElectronMainController({
                 mainHtmlPath: 'presenter.html',
+                save,
             } as any);
 
             const closedHandler = (controller.win.on as any).mock.calls.find(
@@ -198,6 +302,8 @@ describe('ElectronMainController', () => {
             )?.[1];
             closedHandler();
             expect(processExit).toHaveBeenCalledWith(0);
+            // At once, not after the one-second wait the exit never reaches.
+            expect(calls).toEqual(['save:true', 'exit']);
 
             controller.close();
             expect(attemptClosing).toHaveBeenCalledWith(controller.win);

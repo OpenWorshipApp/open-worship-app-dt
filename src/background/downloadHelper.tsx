@@ -9,6 +9,7 @@ import { readTextFromClipboard } from '../server/appHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import appProvider from '../server/appProvider';
 import {
+    DownloadHttpError,
     type MessageCallbackType,
     writeStreamToFile,
 } from '../helper/bible-helpers/downloadHelpers';
@@ -243,6 +244,44 @@ const blockUnload = genBlockUnload(() => {
     );
 });
 
+// Node's names for "the address could not be reached at all" -- the request
+// never got an answer, so there is no status to report.
+const UNREACHABLE_ERROR_CODES = new Set([
+    'ECONNREFUSED',
+    'ECONNRESET',
+    'ENOTFOUND',
+    'EAI_AGAIN',
+    'EHOSTUNREACH',
+    'ENETUNREACH',
+    'ETIMEDOUT',
+]);
+
+/**
+ * A failed download in words for the person who typed the link. The raw error
+ * was printed as it came: `Error: Error: Error during download` for a wrong
+ * link, `connect ECONNREFUSED 127.0.0.1:1` for an unreachable one.
+ */
+export function describeDownloadError(error: any): string {
+    if (error instanceof DownloadHttpError) {
+        if (error.statusCode === 404 || error.statusCode === 410) {
+            return (
+                tran('The file was not found at that address.') +
+                ` (HTTP ${error.statusCode})`
+            );
+        }
+        return (
+            tran('The server refused the download.') +
+            ` (HTTP ${error.statusCode})`
+        );
+    }
+    if (UNREACHABLE_ERROR_CODES.has(error?.code)) {
+        return tran(
+            'Could not reach that address. Check the link and the internet connection.',
+        );
+    }
+    return error?.message ?? String(error);
+}
+
 /**
  * `isSilentSuccess` is for callers that download into a temp location as one
  * step of a bigger flow: the completion toast would name a path the user never
@@ -274,7 +313,7 @@ export function streamDownloadFile(
                     if (error) {
                         showSimpleToast(
                             tran('Download Error'),
-                            `Error: ${error}`,
+                            describeDownloadError(error),
                         );
                         reject(error);
                         return;

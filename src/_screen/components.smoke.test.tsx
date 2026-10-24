@@ -10,6 +10,8 @@ const sendScreenMessageMock = vi.fn();
 const showAppContextMenuMock = vi.fn();
 const createRootRenderMock = vi.fn();
 const getSettingMock = vi.fn();
+// The preview card's "No rendering" toggle; off unless a test says otherwise.
+const useStateSettingBooleanSyncedMock = vi.fn(() => [false, vi.fn()]);
 const sendDataSyncMock = vi.fn((channel: string) => {
     if (channel === 'main:app:get-displays') {
         return {
@@ -35,7 +37,6 @@ const sendDataSyncMock = vi.fn((channel: string) => {
     return undefined;
 });
 const setPreviewScaleMock = vi.fn();
-const applyTextStyleMock = vi.fn();
 
 const effectManagerStub = {
     effectType: 'fade',
@@ -66,6 +67,7 @@ const screenManagerMock: any = {
     screenBackgroundManager: {
         render: vi.fn(),
         rootContainer: null,
+        releaseRootContainer: vi.fn(),
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         backgroundSrc: { type: 'video', src: '/video.mp4' },
         isShowing: true,
@@ -79,9 +81,10 @@ const screenManagerMock: any = {
         isShowing: true,
         clear: vi.fn(),
     },
-    screenBibleManager: {
+    screenLongTextManager: {
         render: vi.fn(),
         div: null,
+        releaseDiv: vi.fn(),
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         isShowing: true,
         clear: vi.fn(),
@@ -93,7 +96,9 @@ const screenManagerMock: any = {
     },
     screenForegroundManager: {
         render: vi.fn(),
-        div: null,
+        rootContainer: null,
+        rootContainerBehind: null,
+        releaseRootContainer: vi.fn(),
         containerStyle: { position: 'absolute', width: '100%', height: '100%' },
         isShowing: true,
         clear: vi.fn(),
@@ -109,6 +114,7 @@ const screenManagerMock: any = {
     screenFocusManager: {
         render: vi.fn(),
         div: null,
+        releaseDiv: vi.fn(),
         isShowing: false,
         clear: vi.fn(),
     },
@@ -148,6 +154,7 @@ vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     useStateSettingNumber: vi.fn(() => [9, setPreviewScaleMock]),
     useStateSettingString: vi.fn(() => ['paint', vi.fn()]),
+    useStateSettingBooleanSynced: useStateSettingBooleanSyncedMock,
 }));
 
 vi.mock('../helper/domHelpers', () => ({
@@ -177,6 +184,7 @@ vi.mock('../others/color/colorHelpers', () => ({
 
 vi.mock('../helper/cameraHelpers', () => ({
     getCameraStream: vi.fn(async () => ({ getTracks: () => [] })),
+    stopCameraStream: vi.fn(),
 }));
 
 vi.mock('../helper/audioControlHelpers', () => ({
@@ -284,19 +292,16 @@ vi.mock('./managers/screenManagerBaseHelpers', () => ({
 
 vi.mock('./managers/screenEventHelpers', () => ({
     useScreenBackgroundManagerEvents: vi.fn(),
-    useScreenBibleManagerEvents: vi.fn(),
+    useScreenLongTextManagerEvents: vi.fn(),
     useScreenForegroundManagerEvents: vi.fn(),
     useScreenDrawManagerEvents: vi.fn(),
     useScreenEvents: vi.fn(),
-    useScreenMaskManagerEvents: vi.fn(),
     useScreenVaryAppDocumentManagerEvents: vi.fn(),
 }));
 
-vi.mock('./managers/ScreenBibleManager', () => ({
-    default: class ScreenBibleManager {
+vi.mock('./managers/ScreenLongTextManager', () => ({
+    default: class ScreenLongTextManager {
         static readonly textStyleTextColor = '#ffffff';
-        static readonly textStyleTextFontSize = 64;
-        static readonly applyTextStyle = applyTextStyleMock;
     },
 }));
 
@@ -594,6 +599,73 @@ describe('screen component smoke tests', () => {
         });
     });
 
+    test('a card with rendering off draws its pattern and keeps only the slide, unpainted', async () => {
+        const { default: MiniScreenAppComp } =
+            await import('./preview/MiniScreenAppComp');
+        const { default: ScreenPreviewerItemComp } =
+            await import('./preview/ScreenPreviewerItemComp');
+        const { default: ScreenPreviewerHeaderComp } =
+            await import('./preview/ScreenPreviewerHeaderComp');
+        const renderHeader = () => {
+            return renderToStaticMarkup(
+                <ScreenPreviewerHeaderComp
+                    isFullView={false}
+                    setIsFullView={() => {}}
+                />,
+            );
+        };
+
+        const renderingHeader = renderHeader();
+        expect(renderingHeader).toContain('Stop rendering preview');
+        expect(renderingHeader).toContain('bi-eye ');
+        expect(
+            renderToStaticMarkup(<ScreenPreviewerItemComp width={200} />),
+        ).not.toContain('mini-screen-no-rendering');
+
+        useStateSettingBooleanSyncedMock.mockImplementation(() => [
+            true,
+            vi.fn(),
+        ]);
+        try {
+            const header = renderHeader();
+            expect(header).toContain('Resume rendering preview');
+            expect(header).toContain('bi-eye-slash');
+            expect(header).toContain('aria-pressed="true"');
+
+            const card = renderToStaticMarkup(
+                <ScreenPreviewerItemComp width={200} />,
+            );
+            expect(card).toContain('mini-screen-no-rendering');
+            expect(card).toContain('No rendering');
+            // Still mounted: the slide layer inside it plays a slide's sound.
+            expect(card).toContain('mini-screen-previewer-custom-html');
+
+            const preview = renderToStaticMarkup(
+                <MiniScreenAppComp screenId={1} />,
+            );
+            // Every layer that only draws is gone, the desktop backdrop too...
+            for (const id of [
+                'background',
+                'foreground-behind',
+                'bible-screen-view',
+                'foreground',
+                'draw',
+                'focus',
+            ]) {
+                expect(preview).not.toContain(`id="${id}"`);
+            }
+            expect(preview).not.toContain('background-image');
+            // ...and the slide stays in the document, skipped by the renderer.
+            expect(preview).toMatch(/id="slide"[^>]*content-visibility:hidden/);
+            expect(preview).toContain('.fade{}');
+        } finally {
+            useStateSettingBooleanSyncedMock.mockImplementation(() => [
+                false,
+                vi.fn(),
+            ]);
+        }
+    });
+
     test('mounts the custom preview element into shadow DOM', async () => {
         await import('./preview/CustomHTMLScreenPreviewer');
 
@@ -624,42 +696,5 @@ describe('screen component smoke tests', () => {
         expect((element as any).mountPoint.style.transform).toBe(
             'translate(0px, 0px) scale(0.5)',
         );
-    });
-    test('the bible styling hooks follow text-style broadcasts', async () => {
-        const { useStylingColor, useStylingFontSize } =
-            await import('./preview/stylingHelpers');
-        const screenEventHelpers =
-            await import('./managers/screenEventHelpers');
-        (screenEventHelpers.useScreenBibleManagerEvents as any).mockClear();
-        let latest: any = null;
-
-        function Probe() {
-            const [color, setColorToStyle] = useStylingColor();
-            const [fontSize, setFontSizeToStyle] = useStylingFontSize();
-            latest = { color, fontSize, setColorToStyle, setFontSizeToStyle };
-            return null;
-        }
-
-        renderToStaticMarkup(<Probe />);
-
-        expect(latest.color).toBe('#ffffff');
-        expect(latest.fontSize).toBe(64);
-
-        // a text-style broadcast re-reads the shared style
-        const eventCalls = (
-            screenEventHelpers.useScreenBibleManagerEvents as any
-        ).mock.calls;
-        expect(eventCalls).toHaveLength(2);
-        for (const [, , callback] of eventCalls) {
-            expect(() => {
-                callback?.();
-            }).not.toThrow();
-        }
-
-        // ...and the setters push a new style back out to every screen
-        latest.setColorToStyle('#ff0000');
-        latest.setFontSizeToStyle(72);
-        expect(applyTextStyleMock).toHaveBeenCalledWith({ color: '#ff0000' });
-        expect(applyTextStyleMock).toHaveBeenCalledWith({ fontSize: 72 });
     });
 });

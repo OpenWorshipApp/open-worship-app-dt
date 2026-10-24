@@ -17,6 +17,7 @@ import {
     SpendLimitError,
     allowMoreSpending,
     checkIsSpendLimitError,
+    describeSpendFolded,
     describeSpendGuard,
     describeSpendPause,
     describeSpendState,
@@ -139,6 +140,17 @@ describe('counting the hour', () => {
         expect(describeSpendState(state)).toBe('≈ $0.05 of $1 this hour');
     });
 
+    test('the folded head always says something: the figure, or the cap', () => {
+        // Folded, the picker that was saying the cap is not drawn.
+        expect(describeSpendFolded(getSpendState(T0))).toBe('$1 an hour');
+        expect(describeSpendFolded(setSpendLimitUsd(null, T0))).toBe(
+            'No limit',
+        );
+        setSpendLimitUsd(0.25, T0);
+        const state = recordSpendRound(COLD_ROUND, T0);
+        expect(describeSpendFolded(state)).toBe('≈ $0.05 of $0.25 this hour');
+    });
+
     test('a round older than an hour stops counting, and stops being stored', () => {
         recordSpendRound(COLD_ROUND, T0);
         recordSpendRound(COLD_ROUND, T0 + SPEND_WINDOW_MS + 1);
@@ -240,6 +252,30 @@ describe('the money cap', () => {
         expect(() => throwIfSpendLimitReached(later)).toThrow(SpendLimitError);
     });
 
+    // 2026-10-12, the whole corpus asked of the guide while paused: every
+    // one of 1 111 pause notes named a figure under the cap it said had
+    // been passed, 894 of them "0 model calls in the last hour, which is
+    // more than a person would ask for".
+    test('an hour into a pause the note says what paused it, not an emptied hour', () => {
+        setSpendLimitUsd(0.25, T0);
+        recordSpendRound(DEAR_ROUND, T0);
+        recordSpendRound(DEAR_ROUND, T0 + 1);
+        const atTrip = getSpendState(T0 + 2);
+        expect(describeSpendPause(atTrip)).toMatch(
+            /it has spent about \$0\.\d+ in the last hour, which reaches the \$0\.25 limit/,
+        );
+        const later = getSpendState(T0 + 3 * SPEND_WINDOW_MS);
+        expect(later.isTripped).toBe(true);
+        const pause = describeSpendPause(later);
+        expect(pause).toContain(
+            'within one hour it reached the $0.25 limit set for this window',
+        );
+        expect(pause).not.toContain('in the last hour');
+        expect(pause).not.toContain('spent about');
+        expect(pause).toContain('Press Allow more');
+        expect(describeSpendState(later)).toBe('paused · limit reached');
+    });
+
     test('the latch survives a reload: it is read back off the file', () => {
         setSpendLimitUsd(0.25, T0);
         recordSpendRound(DEAR_ROUND, T0);
@@ -325,6 +361,31 @@ describe('the pace cap', () => {
         expect(describeSpendState(state)).toBe(
             `paused · ${MAX_SPEND_ROUNDS_PER_HOUR} calls this hour`,
         );
+    });
+
+    test('an hour into a pace pause it never says "0 model calls … more than a person"', () => {
+        // One round every twenty seconds: the cap is reached in fifty
+        // minutes.
+        for (let i = 0; i < MAX_SPEND_ROUNDS_PER_HOUR; i++) {
+            recordSpendRound(FREE_ROUND, T0 + i * 20_000);
+        }
+        // Twenty minutes on, part of that hour has rolled away; three hours
+        // on, all of it. The latch holds through both.
+        for (const later of [
+            T0 + SPEND_WINDOW_MS + 10 * 60_000,
+            T0 + 3 * SPEND_WINDOW_MS,
+        ]) {
+            const state = getSpendState(later);
+            expect(state.isTripped).toBe(true);
+            expect(state.spentRounds).toBeLessThan(MAX_SPEND_ROUNDS_PER_HOUR);
+            const pause = describeSpendPause(state);
+            expect(pause).toContain(
+                `it made ${MAX_SPEND_ROUNDS_PER_HOUR} model calls within one hour, which is more than a person would ask for`,
+            );
+            expect(pause).not.toContain('in the last hour');
+            expect(pause).toContain('Press Allow more');
+            expect(describeSpendState(state)).toBe('paused · limit reached');
+        }
     });
 
     test('the pace cap is on whatever the money cap says', () => {

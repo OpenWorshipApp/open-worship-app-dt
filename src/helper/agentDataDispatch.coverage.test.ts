@@ -268,6 +268,41 @@ describe('agent data request dispatch boundaries', () => {
         expect(mocks.handleError).toHaveBeenCalled();
     });
 
+    test('Bible-list rows spell a passage from its target when it cannot be titled', async () => {
+        state.dir = '/bibles';
+        mocks.listAgentFiles.mockResolvedValueOnce([
+            { name: 'Default', filePath: '/bibles/Default.owb' },
+        ]);
+        const untitled = (id: number, target: any) => ({
+            id,
+            bibleKey: 'KJV',
+            target: { bookKey: 'JHN', ...target },
+            toTitleWithBibleKey: async () => {
+                throw new Error('no bible');
+            },
+        });
+        state.bible = {
+            items: [
+                untitled(1, { chapter: 3, verseStart: 16, verseEnd: 16 }),
+                untitled(2, { chapter: 3, verseStart: 16, verseEnd: 18 }),
+                untitled(3, {
+                    chapter: 1,
+                    verseStart: 2,
+                    verseEnd: 4,
+                    chapterEnd: 3,
+                }),
+            ],
+        };
+        const result: any = await handleAgentBibleListRequest({
+            action: 'list',
+        });
+        expect(result.lists[0].items).toEqual([
+            { id: 1, title: '(KJV) JHN 3:16' },
+            { id: 2, title: '(KJV) JHN 3:16-18' },
+            { id: 3, title: '(KJV) JHN 1:2-3:4' },
+        ]);
+    });
+
     test('note requests validate actions and configuration and contain exceptions', async () => {
         await expect(
             handleAgentNoteRequest({ action: 'wat' } as any),
@@ -563,5 +598,66 @@ describe('agent data request dispatch boundaries', () => {
             count: 0,
         });
         expect(mocks.trashAgentFile).toHaveBeenCalledWith('/bibles/Sunday.owb');
+    });
+
+    test('Bible and note additions refuse to mutate when their backup snapshot fails', async () => {
+        state.dir = '/bibles';
+        mocks.listAgentFiles.mockResolvedValue([
+            { name: 'Default', filePath: '/bibles/Default.owb' },
+        ]);
+        const bible = {
+            items: [],
+            maxItemId: 0,
+            addBibleItem: vi.fn(),
+            save: vi.fn(async () => true),
+        };
+        state.bible = bible;
+        mocks.snapshotAgentFile.mockRejectedValueOnce(
+            new Error('Bible snapshot unavailable'),
+        );
+
+        await expect(
+            handleAgentBibleListRequest({
+                action: 'add',
+                list: 'Default',
+                reference: 'John 3:16',
+            }),
+        ).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringContaining('Bible snapshot unavailable'),
+        });
+        expect(bible.addBibleItem).not.toHaveBeenCalled();
+        expect(bible.save).not.toHaveBeenCalled();
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+
+        state.dir = '/notes';
+        mocks.listAgentFiles.mockResolvedValue([
+            { name: 'Default', filePath: '/notes/Default.own' },
+        ]);
+        const note = {
+            maxItemId: 2,
+            items: [],
+            addNoteItem: vi.fn(),
+            save: vi.fn(async () => true),
+        };
+        state.note = note;
+        mocks.snapshotAgentFile.mockRejectedValueOnce(
+            new Error('Note snapshot unavailable'),
+        );
+
+        await expect(
+            handleAgentNoteRequest({
+                action: 'add',
+                file: 'Default',
+                title: 'Sunday',
+                text: 'A note',
+            }),
+        ).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringContaining('Note snapshot unavailable'),
+        });
+        expect(note.addNoteItem).not.toHaveBeenCalled();
+        expect(note.save).not.toHaveBeenCalled();
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
     });
 });

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, createContext, useEffect, useRef, useState } from 'react';
+import { act, createContext, use, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -60,6 +60,9 @@ vi.mock('../event/KeyboardEventListener', () => ({
     },
 }));
 vi.mock('../helper/appHooks', () => ({
+    useAppEffect: (effect: () => void, deps: unknown[] = []) => {
+        useEffect(effect, deps);
+    },
     useAppCurrentRef: (value: unknown) => {
         const ref = useRef(value);
         ref.current = value;
@@ -82,15 +85,19 @@ vi.mock('../helper/appHooks', () => ({
         return [value, setValue];
     },
 }));
-vi.mock('../bible-reader/LookupBibleItemController', () => ({
-    EditingResultContext: createContext(null),
-    useLookupBibleItemControllerContext: () => ({
-        getEditingResult: h.getEditingResultMock,
-        set inputText(inputText: string) {
-            h.typedTexts.push(inputText);
-        },
-    }),
-}));
+vi.mock('../bible-reader/LookupBibleItemController', () => {
+    const EditingResultContext = createContext(null);
+    return {
+        EditingResultContext,
+        useEditingResult: () => use(EditingResultContext),
+        useLookupBibleItemControllerContext: () => ({
+            getEditingResult: h.getEditingResultMock,
+            set inputText(inputText: string) {
+                h.typedTexts.push(inputText);
+            },
+        }),
+    };
+});
 vi.mock('../bible-list/bibleHelpers', () => ({
     useBibleKeyContext: () => 'KJV',
 }));
@@ -130,6 +137,8 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
         return chapter ? `${book} ${chapter}` : `${book} `;
     },
     toTrailingReference: () => null,
+    // Read by the real `lookupEnterHelpers`, which is not mocked here.
+    parseChapterFromGuessing: async () => null,
 }));
 vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
     keyToBook: async (_bibleKey: string, bookKey: string) => {
@@ -141,6 +150,7 @@ vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
     getChapterData: async () => null,
 }));
 vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
+    BIBLE_KJV_KEY: 'KJV',
     kjvBibleModelInfo: { bookKeysSubtype: [] },
 }));
 vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
@@ -156,9 +166,6 @@ vi.mock('./BibleKeySelectionComp', () => ({
     BibleKeySelectionMiniComp: () => null,
 }));
 vi.mock('./RenderVerseOptionsComp', () => ({ default: () => null }));
-vi.mock('../bible-reader/view-extra/BibleViewTextComp', () => ({
-    default: () => null,
-}));
 
 import RenderBibleLookupBodyComp from './RenderBibleLookupBodyComp';
 import { EditingResultContext } from '../bible-reader/LookupBibleItemController';

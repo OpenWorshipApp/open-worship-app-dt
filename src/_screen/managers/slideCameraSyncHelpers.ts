@@ -6,6 +6,7 @@ import {
 } from '../../helper/constants';
 import {
     acquireCameraStream,
+    createCameraCanvasView,
     releaseCameraStream,
     resolveCameraDeviceId,
 } from '../../helper/cameraHelpers';
@@ -52,6 +53,7 @@ export function setCameraBadgeVisibility(
 export class SlideCameraAttachment {
     private generation = 0;
     private readonly acquiredDeviceIds: string[] = [];
+    private readonly viewReleases: (() => void)[] = [];
 
     attach(videoElement: HTMLVideoElement) {
         // `renderToStaticMarkup` drops React's `muted` prop, and Chromium's
@@ -85,6 +87,17 @@ export class SlideCameraAttachment {
                 return;
             }
             this.acquiredDeviceIds.push(resolvedId);
+            // In Safari and Firefox a camera shows in a canvas in the
+            // video's place: an iPad never paints the video.
+            const view = createCameraCanvasView(mediaStream);
+            if (view !== null) {
+                this.viewReleases.push(view.release);
+                view.element.style.cssText = videoElement.style.cssText;
+                videoElement.style.display = 'none';
+                videoElement.after(view.element);
+                setCameraBadgeVisibility(videoElement, false);
+                return;
+            }
             videoElement.srcObject = mediaStream;
             videoElement.onloadedmetadata = () => {
                 void playMediaElement(videoElement);
@@ -97,6 +110,9 @@ export class SlideCameraAttachment {
 
     releaseAll() {
         this.generation += 1;
+        for (const release of this.viewReleases.splice(0)) {
+            release();
+        }
         for (const deviceId of this.acquiredDeviceIds) {
             releaseCameraStream(deviceId);
         }

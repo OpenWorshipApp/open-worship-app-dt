@@ -91,6 +91,8 @@ const h = vi.hoisted(() => {
         setShouldModelNewLineMock: vi.fn(),
         genTimeoutAttemptMock: vi.fn(() => (fn: any) => fn()),
         getLangDataFromBibleKeyMock: vi.fn(async () => null),
+        getVersesCountMock: vi.fn(async (): Promise<number | null> => 31),
+        showBibleKeyOptionMock: vi.fn(),
         cacheStore: new Map<string, any>(),
     };
 });
@@ -114,7 +116,7 @@ vi.mock('../toast/toastHelpers', () => ({
     showSimpleToast: h.showSimpleToastMock,
 }));
 vi.mock('../bible-lookup/BibleKeySelectionComp', () => ({
-    showBibleKeyOption: vi.fn(),
+    showBibleKeyOption: h.showBibleKeyOptionMock,
 }));
 vi.mock('../server/appProvider', () => ({ default: { isDev: false } }));
 vi.mock('../helper/helpers', () => ({
@@ -131,6 +133,7 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
     getShouldModelNewLine: h.getShouldModelNewLineMock,
     setShouldModelNewLine: h.setShouldModelNewLineMock,
     extractBibleTitle: h.extractBibleTitleMock,
+    getVersesCount: h.getVersesCountMock,
 }));
 vi.mock('../context-menu/AppContextMenuComp', () => ({
     elementDivider: h.elementDivider,
@@ -241,6 +244,7 @@ describe('bible-reader LookupBibleItemController', () => {
         vi.clearAllMocks();
         h.getShouldModelNewLineMock.mockReturnValue(true);
         h.unlockingMock.mockImplementation(async (_k: string, cb: any) => cb());
+        h.getVersesCountMock.mockResolvedValue(31);
         setDefaultExtract();
     });
 
@@ -448,6 +452,100 @@ describe('bible-reader LookupBibleItemController', () => {
         expect(ctl.selectedBibleItem.id).toBe(extra.id);
     });
 
+    // Measured live: moving the editor to another view painted the PREVIOUS
+    // view's passage there for ~0.6 s -- the lookup answers the box's old
+    // text again for the new id before the box is retitled.
+    test('a result for the text the box held before a selection shows the selected view', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        ctl.inputText = 'Old Text';
+        await flush();
+        const other = ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 777,
+                bibleKey: 'NIV',
+                target: {
+                    bookKey: 'JHN',
+                    chapter: 3,
+                    verseStart: 16,
+                    verseEnd: 16,
+                },
+            }) as any,
+        );
+        const staleResult = {
+            result: {
+                bibleItem: h.makeFound('KJV'),
+                bookKey: 'GEN',
+                chapter: 1,
+            },
+            bibleKey: 'KJV',
+            inputText: 'Old Text',
+            oldInputText: 'Old Text',
+            time: 0,
+        } as any;
+        expect(ctl.toCurrentEditingResult(staleResult)).toBe(staleResult);
+
+        ctl.selectedBibleItem = other;
+        const shown = ctl.toCurrentEditingResult(staleResult)!;
+        expect(shown).not.toBe(staleResult);
+        expect(shown.bibleKey).toBe('NIV');
+        expect(shown.result.bibleItem!.id).toBe(other.id);
+        expect(shown.result.bibleItem!.target).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 16,
+            verseEnd: 16,
+        });
+        expect(shown.result.bookKey).toBe('JHN');
+
+        // A result for any other text means the box has moved on.
+        ctl.settleEditingResult({ ...staleResult, oldInputText: 'John 3:16' });
+        expect(ctl.toCurrentEditingResult(staleResult)).toBe(staleResult);
+        await flush();
+    });
+
+    test('a result already showing the passage of the selected view stands', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        ctl.inputText = 'Same Title';
+        await flush();
+        const other = ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 778,
+                bibleKey: 'KJV',
+                target: { chapter: 1 },
+            }) as any,
+        );
+        // `makeFound('KJV')` is KJV, chapter 1: the selected view's passage.
+        const result = {
+            result: { bibleItem: h.makeFound('KJV'), extraBibleItems: [{}] },
+            bibleKey: 'KJV',
+            inputText: 'Same Title',
+            oldInputText: 'Same Title',
+            time: 0,
+        } as any;
+        ctl.selectedBibleItem = other;
+        expect(ctl.toCurrentEditingResult(result)).toBe(result);
+        await flush();
+    });
+
+    test('typing without a selection change shows each result as it is', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        ctl.inputText = 'Gen';
+        const result = {
+            result: { bibleItem: null, bookKey: 'GEN', chapter: null },
+            bibleKey: 'KJV',
+            inputText: 'Gen',
+            oldInputText: 'Gen',
+            time: 0,
+        } as any;
+        ctl.settleEditingResult(result);
+        expect(ctl.toCurrentEditingResult(result)).toBe(result);
+        expect(ctl.toCurrentEditingResult(null)).toBeNull();
+        await flush();
+    });
+
     test('editBibleItem no-ops when already selected', async () => {
         const ctl = genController();
         const selected = ctl.selectedBibleItem;
@@ -457,14 +555,12 @@ describe('bible-reader LookupBibleItemController', () => {
         await flush();
     });
 
-    test('editBibleItem deletes old selection when no found item', async () => {
-        h.extractBibleTitleMock.mockResolvedValue({
-            result: { bibleItem: null },
-            bibleKey: 'KJV',
-            oldInputText: '',
-            time: Date.now(),
-        });
+    // A view left on its book or chapter grid used to be closed when the
+    // editing moved to another view.
+    async function editAwayFromGrid(bookKey: string | null) {
         const ctl = genController();
+        await settleFirstSelection(ctl);
+        const oldId = ctl.selectedBibleItem.id;
         const extra = ctl.appendBibleItem(
             new FakeReadItem({
                 id: 321,
@@ -472,10 +568,44 @@ describe('bible-reader LookupBibleItemController', () => {
                 target: { chapter: 1 },
             }) as any,
         );
+        h.extractBibleTitleMock.mockResolvedValue({
+            result: { bibleItem: null, bookKey, chapter: null },
+            bibleKey: 'KJV',
+            oldInputText: '',
+            time: Date.now(),
+        });
+        h.cacheStore.clear();
         const deleteSpy = vi.spyOn(ctl, 'deleteBibleItem');
         await ctl.editBibleItem(extra as any);
         await flush();
-        expect(deleteSpy).toHaveBeenCalled();
+        expect(deleteSpy).not.toHaveBeenCalled();
+        expect(ctl.selectedBibleItem.id).toBe(extra.id);
+        const oldItem = toTargets(ctl).find((item) => item.id === oldId)!;
+        return { ctl, oldItem };
+    }
+
+    test('editing away from the chapter grid keeps that book, chapter 1', async () => {
+        h.getVersesCountMock.mockResolvedValue(22);
+        const { ctl, oldItem } = await editAwayFromGrid('EXO');
+        expect(ctl.straightBibleItems).toHaveLength(2);
+        expect(oldItem.target).toEqual({
+            bookKey: 'EXO',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 22,
+        });
+        expect(h.getVersesCountMock).toHaveBeenCalledWith('KJV', 'EXO', 1);
+    });
+
+    test('editing away from the book grid keeps Genesis 1', async () => {
+        const { ctl, oldItem } = await editAwayFromGrid(null);
+        expect(ctl.straightBibleItems).toHaveLength(2);
+        expect(oldItem.target).toEqual({
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 31,
+        });
     });
 
     test('deleteBibleItem respects the isAlone guard', () => {
@@ -525,6 +655,170 @@ describe('bible-reader LookupBibleItemController', () => {
         close.onSelect!({} as any);
         expect(deleteSpy).toHaveBeenCalled();
         await flush();
+    });
+
+    // `toJson`: the selected view is an `EditingBibleItem`, whose `target`
+    // throws.
+    function toTargets(ctl: LookupBibleItemController) {
+        return ctl.straightBibleItems.map((item) => {
+            const { id, bibleKey, target } = item.toJson();
+            return { id, bibleKey, target };
+        });
+    }
+
+    test('a split from the chapter grid opens that book, chapter 1, on the left', async () => {
+        h.getVersesCountMock.mockResolvedValue(22);
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        const selectedId = ctl.selectedBibleItem.id;
+
+        await ctl.splitWithoutPassage('EXO', true);
+
+        const [newItem, oldItem] = toTargets(ctl);
+        expect(oldItem.id).toBe(selectedId);
+        expect(newItem.id).not.toBe(selectedId);
+        expect(newItem.bibleKey).toBe('KJV');
+        expect(newItem.target).toEqual({
+            bookKey: 'EXO',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 22,
+        });
+        expect(h.getVersesCountMock).toHaveBeenCalledWith('KJV', 'EXO', 1);
+        // The view being typed in keeps the box and stays the selected one.
+        expect(ctl.selectedBibleItem.id).toBe(selectedId);
+    });
+
+    test('a split from the book grid opens Genesis 1 below', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        const selectedId = ctl.selectedBibleItem.id;
+
+        await ctl.splitWithoutPassage(null, false);
+
+        const [oldItem, newItem] = toTargets(ctl);
+        expect(oldItem.id).toBe(selectedId);
+        expect(newItem.target).toEqual({
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 31,
+        });
+        expect(Array.isArray(ctl.nestedBibleItems)).toBe(true);
+        expect(ctl.selectedBibleItem.id).toBe(selectedId);
+    });
+
+    test('a split to another version reads that version, a missing chapter one verse', async () => {
+        h.getVersesCountMock.mockResolvedValue(null);
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+
+        await ctl.splitWithoutPassage('MAT', true, 'NIV');
+
+        const [newItem] = toTargets(ctl);
+        expect(newItem.bibleKey).toBe('NIV');
+        expect(newItem.target).toEqual({
+            bookKey: 'MAT',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 1,
+        });
+        expect(h.getVersesCountMock).toHaveBeenCalledWith('NIV', 'MAT', 1);
+    });
+
+    test('the grid view split button splits at once when no colour is reported', () => {
+        const ctl = genController();
+        const splitSpy = vi
+            .spyOn(ctl, 'splitWithoutPassage')
+            .mockResolvedValue();
+        // A section without a colour note is in the default lime group now,
+        // so the immediate split only answers a controller reporting none.
+        vi.spyOn(ctl, 'getColorNote').mockReturnValue('');
+
+        ctl.splitWithoutPassageOnPress({}, 'EXO', true);
+
+        expect(splitSpy).toHaveBeenCalledExactlyOnceWith('EXO', true);
+        expect(h.showBibleKeyOptionMock).not.toHaveBeenCalled();
+    });
+
+    // The user: _all bible preview section should have color_ -- an untouched
+    // section is in the default lime group, so its grid split asks a version.
+    test('the grid view split button asks which version by default', () => {
+        const ctl = genController();
+        const splitSpy = vi
+            .spyOn(ctl, 'splitWithoutPassage')
+            .mockResolvedValue();
+
+        ctl.splitWithoutPassageOnPress({}, 'EXO', true);
+
+        expect(splitSpy).not.toHaveBeenCalled();
+        expect(h.showBibleKeyOptionMock).toHaveBeenCalledTimes(1);
+    });
+
+    // Asked for by the user: grouped views follow one passage, so a split of
+    // one asks which version the new view reads it in.
+    test('the grid view split button asks which version in a colour group', () => {
+        const ctl = genController();
+        const splitSpy = vi
+            .spyOn(ctl, 'splitWithoutPassage')
+            .mockResolvedValue();
+        vi.spyOn(ctl, 'getColorNote').mockReturnValue('red');
+        const event = { clientX: 5, clientY: 6 };
+
+        ctl.splitWithoutPassageOnPress(event, 'EXO', false);
+
+        expect(splitSpy).not.toHaveBeenCalled();
+        const [openedAt, onBibleKey, , title] =
+            h.showBibleKeyOptionMock.mock.calls[0];
+        expect(openedAt).toBe(event);
+        expect(title).toBe('Split Vertical to');
+        onBibleKey('NIV');
+        expect(splitSpy).toHaveBeenCalledExactlyOnceWith('EXO', false, 'NIV');
+    });
+
+    test('the grid view menu offers the splits with their keys, and no close alone', () => {
+        const ctl = genController();
+        const splitSpy = vi
+            .spyOn(ctl, 'splitWithoutPassage')
+            .mockResolvedValue();
+
+        const menu = ctl.genNoPassageContextMenu('EXO', 'uuid3');
+
+        expect(menu.map((m) => m.menuElement)).toEqual([
+            'Split Horizontal',
+            'Split Horizontal to',
+            'Split Vertical',
+            'Split Vertical to',
+            'Toggle Widget Full View',
+        ]);
+        expect(menu[0].childAfter).toBe('shortcut');
+        expect(menu[2].childAfter).toBe('shortcut');
+        menu[0].onSelect!({} as any);
+        expect(splitSpy).toHaveBeenLastCalledWith('EXO', true, undefined);
+        menu[2].onSelect!({} as any);
+        expect(splitSpy).toHaveBeenLastCalledWith('EXO', false, undefined);
+        menu[3].onSelect!({} as any);
+        const [, onBibleKey] = h.showBibleKeyOptionMock.mock.calls[0];
+        onBibleKey('NIV');
+        expect(splitSpy).toHaveBeenLastCalledWith('EXO', false, 'NIV');
+    });
+
+    test('the grid view menu closes the view when it is not alone', () => {
+        const ctl = genController();
+        ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 777,
+                bibleKey: 'KJV',
+                target: { chapter: 1 },
+            }) as any,
+        );
+
+        const menu = ctl.genNoPassageContextMenu(null, 'uuid4');
+
+        const close = menu.find((m) => m.menuElement === 'Close')!;
+        expect(close.keyboardShortcut).toBe(closeEventMapper);
+        close.onSelect!({} as any);
+        expect(h.closeCurrentEditingBibleItemMock).toHaveBeenCalledWith(ctl);
     });
 
     test('tryJumpingChapter jumps to the next chapter', async () => {
@@ -656,6 +950,55 @@ describe('bible-reader LookupBibleItemController', () => {
 
             expect(addBibleItemHistory).not.toHaveBeenCalled();
         } finally {
+            bibleHistoryStore.addBibleItemHistory = originalAdd;
+        }
+    });
+
+    // The entry is the LAST passage asked for when the 4 s wait ends. Only a
+    // fresh lookup asked, so a reference corrected inside the 3 s cache --
+    // `John 3:16-21`, `John 3:16`, back to `John 3:16-21` -- left the
+    // half-typed `John 3:16` as the last one asked for, and it became the
+    // entry while the box showed John 3:16-21.
+    test('a passage answered from the cache is still the one recorded', async () => {
+        const addBibleItemHistory = vi.fn();
+        const originalAdd = bibleHistoryStore.addBibleItemHistory;
+        bibleHistoryStore.addBibleItemHistory = addBibleItemHistory;
+        const toTitleSpy = vi
+            .spyOn(FakeReadItem.prototype, 'toTitle')
+            .mockImplementation(async function (this: any) {
+                return this.target.text ?? `${this.bibleKey} title`;
+            });
+        h.extractBibleTitleMock.mockImplementation(
+            async (bibleKey: string, inputText: string, time?: number) => ({
+                result: {
+                    bibleItem: new FakeReadItem({
+                        id: -99,
+                        bibleKey,
+                        target: { chapter: 3, text: inputText },
+                    }),
+                    bookKey: 'JHN',
+                    chapter: 3,
+                },
+                bibleKey,
+                oldInputText: inputText,
+                time: time ?? Date.now(),
+            }),
+        );
+        try {
+            const ctl = genController();
+            await settleFirstSelection(ctl);
+            ctl.inputText = 'John 3:16-21';
+            await flush();
+            ctl.inputText = 'John 3:16';
+            await flush();
+            ctl.inputText = 'John 3:16-21';
+            await flush();
+
+            expect(addBibleItemHistory).toHaveBeenLastCalledWith(
+                '(KJV) John 3:16-21',
+            );
+        } finally {
+            toTitleSpy.mockRestore();
             bibleHistoryStore.addBibleItemHistory = originalAdd;
         }
     });

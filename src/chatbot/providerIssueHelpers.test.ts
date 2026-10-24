@@ -36,6 +36,39 @@ function genOpenAiError(
 }
 
 describe('readLlmIssue', () => {
+    // 2026-10-17, the user's LM Studio: a model that did not fit beside the
+    // one already loaded was read as an empty account off "insufficient",
+    // and the person was told, in Khmer, that their money had run out.
+    test('a model the server could not load is not an empty account', () => {
+        const issue = readLlmIssue(
+            genOpenAiError(400, {
+                type: 'invalid_request_error',
+                message:
+                    'Failed to load model "google/gemma-4-26b-a4b". Error: ' +
+                    'Model loading was stopped due to insufficient system ' +
+                    'resources. Continuing to load the model would likely ' +
+                    'overload your system and cause it to freeze.',
+            }),
+        );
+        expect(issue.kind).toBe('modelLoad');
+        expect(checkIsProviderIssue(issue)).toBe(false);
+        expect(
+            genProviderIssueActions('custom', issue.kind, 'LM Studio'),
+        ).toEqual([]);
+        expect(
+            readLlmIssue(genOpenAiError(500, { message: 'CUDA out of memory' }))
+                .kind,
+        ).toBe('modelLoad');
+        // An account short of money is still that.
+        expect(
+            readLlmIssue(
+                genOpenAiError(429, {
+                    message: 'Account balance is insufficient',
+                }),
+            ).kind,
+        ).toBe('noCredit');
+    });
+
     test('an Anthropic empty account is a 402, and a 400 that says so', () => {
         expect(
             readLlmIssue(

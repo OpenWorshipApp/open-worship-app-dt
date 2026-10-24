@@ -421,8 +421,15 @@ export async function createDataArchive(
         try {
             await writeArchiveManifest(stagingDir, manifest);
             for (const { entryPath, text } of unsavedEntries) {
+                const entryParts = entryPath.split('/');
+                // The entry's own folder (`documents/`) is not in the staging
+                // dir yet: without it one unsaved document failed the whole
+                // export with ENOENT (2026-10-24).
+                await ensureDirectory(
+                    pathJoin(stagingDir, ...entryParts.slice(0, -1)),
+                );
                 await fsCreateFile(
-                    pathJoin(stagingDir, ...entryPath.split('/')),
+                    pathJoin(stagingDir, ...entryParts),
                     text,
                     true,
                 );
@@ -450,10 +457,11 @@ export async function createDataArchive(
         return archiveFilePath;
     } catch (error) {
         // A half-built `.part` is not something to leave in someone's Downloads
-        // folder, least of all one the size of their whole data set.
-        if (password) {
-            await attemptDeletingFile(plainFilePath);
-        }
+        // folder, least of all one the size of their whole data set. Without
+        // a password the plain tar IS the archive's own (fresh) name, and a
+        // failed one -- no manifest, a folder missing -- sat there looking
+        // like a backup until the day it was imported.
+        await attemptDeletingFile(plainFilePath);
         throw error;
     }
 }

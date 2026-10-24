@@ -15,10 +15,51 @@ import { useAppCurrentRef } from '../../helper/appHooks';
 import { warnIfBibleKeyDirty } from './bibleEditorDirtyHelpers';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
+import { findBibleNoteUrl } from './bibleImportNoteHelpers';
 
 const BibleXMLDataPreviewCompLazy = lazy(
     () => import('./BibleXMLDataPreviewComp'),
 );
+
+/**
+ * Where an imported Bible came from: its link on show, the whole note one
+ * press away. Read off the info the row already loaded -- no extra read.
+ */
+function BibleXMLNoteComp({ note }: Readonly<{ note: string }>) {
+    const url = findBibleNoteUrl(note);
+    return (
+        <div className="small ms-2 me-1">
+            {url === null ? null : (
+                <div className="d-flex">
+                    <span className="text-muted text-nowrap me-1">
+                        <i className="bi bi-link-45deg" /> {tran('Source')}:
+                    </span>
+                    {/* http(s) only: the window opens it in the browser. */}
+                    <a
+                        className="app-overflow-hidden app-ellipsis"
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={url}
+                    >
+                        {url}
+                    </a>
+                </div>
+            )}
+            <details>
+                <summary className="text-muted">{tran('Note')}</summary>
+                <div
+                    style={{
+                        whiteSpace: 'pre-line',
+                        overflowWrap: 'anywhere',
+                    }}
+                >
+                    {note}
+                </div>
+            </details>
+        </div>
+    );
+}
 
 export default function BibleXMLInfoComp({
     bibleKey,
@@ -93,7 +134,10 @@ export default function BibleXMLInfoComp({
         event.stopPropagation();
         const isConfirmed = await showAppConfirm(
             tran('Delete Bible XML'),
-            `Are you sure to delete bible XML "${bibleKeyRef.current}"?`,
+            tran('Are you sure to delete bible XML "{key}"?').replace(
+                '{key}',
+                () => bibleKeyRef.current,
+            ),
             {
                 cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
@@ -107,6 +151,7 @@ export default function BibleXMLInfoComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const title = bibleInfo ? bibleInfo.title : null;
+    const note = bibleInfo?.note?.trim() ?? '';
     return (
         <li
             className="list-group-item p-1"
@@ -168,6 +213,7 @@ export default function BibleXMLInfoComp({
                 {/* No handler: the row around it owns the menu. */}
                 <ContextMenuDotsButtonComp />
             </div>
+            {note === '' ? null : <BibleXMLNoteComp note={note} />}
             {isShowing ? (
                 <AppSuspenseComp>
                     <BibleXMLDataPreviewCompLazy bibleKey={bibleKey} />

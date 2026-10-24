@@ -11,7 +11,7 @@ import { useBibleFindController } from './BibleFindController';
 import {
     breakItem,
     openContextMenu,
-    openInBibleLookup,
+    openFoundBibleItem,
 } from './bibleFindHelpers';
 import { pressElementLikeButton } from '../helper/helpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
@@ -45,13 +45,10 @@ export default function RenderFoundItemComp({
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleClicking = useCallback((event: any) => {
-        openInBibleLookup(
-            event,
-            viewControllerRef.current,
-            dataRef.current!.bibleItem,
-            true,
-        );
+    // A press reads the verse in a floating panel and leaves the passage
+    // being read alone; putting it beside that passage is in the row's menu.
+    const handleClicking = useCallback(() => {
+        openFoundBibleItem(dataRef.current!.bibleItem);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     if (data === undefined) {
@@ -68,6 +65,7 @@ export default function RenderFoundItemComp({
             onDragStart={handleDragStart}
             onContextMenu={handleContextMenuOpening}
             onClick={handleClicking}
+            title={tran('Click to open the verse')}
             // A div you could only click: no keyboard reached a result.
             role="button"
             tabIndex={0}

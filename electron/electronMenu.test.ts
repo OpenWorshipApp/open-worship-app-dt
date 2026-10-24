@@ -63,7 +63,12 @@ vi.mock('./client/appInfo', () => ({
     },
 }));
 
-import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
+import {
+    initMenu,
+    sendMenuClicked,
+    sendMenuClickedToAllWindows,
+    setCustomMenusData,
+} from './electronMenu';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow } from './testUtils';
 
@@ -156,7 +161,8 @@ describe('electronMenu', () => {
             (item: any) => item.label === 'Print Without Preview',
         );
         const toolsMenu = template.find((item: any) => item.label === 'Tools');
-        const copyItem = toolsMenu.submenu.find(
+        const helpMenu = template.find((item: any) => item.role === 'help');
+        const copyItem = helpMenu.submenu.find(
             (item: any) => item.label === 'Copy Debug Info',
         );
         const fontsItem = toolsMenu.submenu.find(
@@ -269,6 +275,25 @@ describe('electronMenu', () => {
         expect(destroyedWin.webContents.send).not.toHaveBeenCalled();
     });
 
+    test('sends a menu click to every live window at once', () => {
+        const mainWin = new electronMockState.BrowserWindowMock();
+        const popupWin = new electronMockState.BrowserWindowMock();
+        const destroyedWin = createMockBrowserWindow({
+            isDestroyed: vi.fn(() => true),
+        });
+        electronMockState.browserWindows.push(destroyedWin);
+
+        sendMenuClickedToAllWindows({ isOpenDailyTip: true });
+
+        for (const win of [mainWin, popupWin]) {
+            expect(win.webContents.send).toHaveBeenCalledWith(
+                'app:main:menu-item-clicked',
+                { isOpenDailyTip: true },
+            );
+        }
+        expect(destroyedWin.webContents.send).not.toHaveBeenCalled();
+    });
+
     test('every window, tools, and help action is wired up', async () => {
         const appController = createAppController();
         initMenu(appController as any);
@@ -293,7 +318,10 @@ describe('electronMenu', () => {
             consoleLogSpy.mockRestore();
         }
 
-        clickItem(template, 'Tools', 'Copy Full Debug Info');
+        clickSubmenuItem(
+            template.find((item: any) => item.role === 'help'),
+            'Copy Full Debug Info',
+        );
         expect(copyDebugInfoToClipboard).toHaveBeenCalledWith(true);
 
         clickItem(template, 'Tools', 'Local Web Share');

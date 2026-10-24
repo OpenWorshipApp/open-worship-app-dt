@@ -5,19 +5,26 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-107]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-39 — Let the passage scroll itself while you read
 
 When a chapter is longer than the panel, you do not have to keep reaching for the mouse
 wheel — the app can scroll it for you, at whatever pace you set.
 
-1. Open a passage long enough to scroll, in a Bible panel or on the screen preview.
+1. Open a passage long enough to scroll, in a Bible panel, on the screen preview, or in
+   the small floating panel a passage opens in (right-click the passage →
+   **[en:tran:Floating]**, or click a cross reference).
    Down in the bottom-right corner of the text, two faint controls sit one above the
-   other: an up-arrow (**[en:tran:Scroll to the top]**) and a double chevron below it.
+   other: an up-arrow (**[en:tran:Scroll to the top]**, shown only once the text has moved
+   down) and a double chevron below it.
    The double chevron is the auto-scroll button. 📸
 2. Click the double chevron once. The text starts creeping downward. Click it again and
    it goes faster; each click adds a little more speed.
+   It glides at a steady pace on any computer, and the pace follows the text size: make
+   the text bigger and it travels further each second, so you still read the same number
+   of lines a minute. Scroll it yourself while it plays — back up to re-read, or ahead —
+   and it carries on from where you left it.
 3. As soon as it is moving, a **⋯** appears just to its left. Click it. 📸
    A small menu opens listing everything this button can do, with the mouse action for
    each one written beside it:
@@ -26,8 +33,9 @@ wheel — the app can scroll it for you, at whatever pace you set.
    - **[en:tran:Speed Up Faster]** — a bigger jump, the same as double-clicking it.
    - **[en:tran:Slow Down]** — the same as right-clicking it.
    - **[en:tran:Stop Auto Scrolling]** — the same as Alt + right-click.
-4. Pick **Slow Down** a couple of times and watch the speed number fall each time you
-   reopen the menu. Pick **Stop Auto Scrolling** to end it — the text stops and the **⋯**
+4. Pick **[en:tran:Slow Down]** once, reopen the menu and see that the speed number has
+   fallen — after the two clicks of step 2 a second **[en:tran:Slow Down]** would bring it to
+   zero, which stops the scroll by itself. Pick **[en:tran:Stop Auto Scrolling]** to end it — the text stops and the **⋯**
    disappears, because there is nothing left to control. 📸
    > The **⋯** is only ever there while the passage is actually scrolling. If you cannot
    > see it, the passage is not moving — click the double chevron first.
@@ -40,5 +48,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-107`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

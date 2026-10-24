@@ -44,6 +44,8 @@ import { getSetting } from '../../helper/settingHelpers';
 import { genStringListSettingManager } from '../../helper/SettingManager';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { getVersesCount } from '../../helper/bible-helpers/bibleLogicHelpers2';
+import { toTargetChapterSliceList } from '../../helper/bible-helpers/bibleTargetHelpers';
 
 /**
  * A serialized editor state whose root holds NO children at all.
@@ -255,12 +257,24 @@ async function verseFullTextToListShorts(verseFullText: string) {
         return null;
     }
     const { target } = bibleItem;
-    const startVerse = target.verseStart;
-    const endVerse = target.verseEnd;
     const shortVerseList: string[] = [];
-    for (let i = startVerse; i <= endVerse; i++) {
-        const shortVerse = `${target.bookKey} ${target.chapter}:${i}`;
-        shortVerseList.push(shortVerse);
+    // Chapter by chapter: `Genesis 1:30-2:2` is the end of chapter 1 -- how
+    // many verses that is only its count says -- then the start of chapter 2.
+    for (const slice of toTargetChapterSliceList(target)) {
+        const sliceVerseEnd =
+            slice.verseEnd ??
+            (await getVersesCount(
+                BIBLE_KJV_KEY,
+                target.bookKey,
+                slice.chapter,
+            ));
+        if (sliceVerseEnd === null) {
+            break;
+        }
+        for (let i = slice.verseStart; i <= sliceVerseEnd; i++) {
+            const shortVerse = `${target.bookKey} ${slice.chapter}:${i}`;
+            shortVerseList.push(shortVerse);
+        }
     }
     return shortVerseList;
 }

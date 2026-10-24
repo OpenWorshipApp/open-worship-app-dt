@@ -78,11 +78,15 @@ remount nothing. An abandoned walk (unmount mid-scan via `checkShouldStop`)
 returns null and is never cached.
 
 **Folders & settings** (`resourcesFolderHelpers.ts`): list in
-`resources-folder-list` (JSON array, `isErrorToDefault`), per-folder expansion
-in `resources-folder-expanded-<sanitized path>` (prefix registered in
-`RESOURCES_FOLDER_SETTING_PREFIXES` so `removeResourcesFolderSettings` can't
-miss one — settings are one file per key), `resources-search-showing` is
-panel-wide and deliberately NOT removed with a folder. Dedupe is by resolved
+`resources-folder-list` (JSON array, `isErrorToDefault`). A folder box's
+open/collapsed state is plain `useState(true)` since 2026-10-18 — the user
+asked for folders to "expand by default", and the saved
+`resources-folder-expanded-<sanitized path>` made a folder collapsed once (a
+robot run, a slip) come back shut on every launch. Do not persist it again.
+The prefix stays in `RESOURCES_FOLDER_SETTING_PREFIXES` only so
+`removeResourcesFolderSettings` still clears the files older versions left
+(settings are one file per key). `resources-search-showing` is panel-wide and
+deliberately NOT removed with a folder. Dedupe is by resolved
 path, case-folded except on Linux. The list is persisted from the handlers,
 not an effect on `dirPathList` (an effect would re-write the same JSON every
 unrelated re-render). NESTED folders are NOT deduped — `/Docs` +
@@ -129,13 +133,12 @@ refusals (`getResourcesFolderCopyRefusalKey`, no disk) are asked BEFORE the
 confirm too, so a Yes that could only be refused is never asked for; the copy
 asks them again in case the parent dir changed while the confirm was open. The
 renderer then `replaceResourcesFolder`s the list (same index, re-sanitized),
-`carryResourcesFolderSettings` hands the expanded value to the copy BEFORE the
-new box mounts (it reads the setting once), and the original's settings and
-cache are dropped. Since 2026-09-19 (the user's ask) `resources/` IS in
+the copy's box mounts open, and the original's leftover settings and cache are
+dropped. Since 2026-09-19 (the user's ask) `resources/` IS in
 `dataDirectories.ts`, whole, so File → Export Data carries it — see
 [[data-archive-owadata]]; a folder only LISTED from elsewhere is not carried.
-The confirm body is HTML and `sanitizeHelpers.sanitizeHtml` is a no-op: paths
-go through `escapeHtmlText` (Remove Folder's confirm too). `owa_click` cannot
+The confirm body is HTML: paths go through `escapeHtmlText` before the composed
+body is sanitized (Remove Folder's confirm too). `owa_click` cannot
 press the confirm's Yes (firewall `question-press`), so a live check needs a
 person at the window. Matrix `RD-117`, W-37 step 8.
 
@@ -171,7 +174,9 @@ W-37 step 8.
 opens the Markdown Preview window, and a `.own` row expands onto its notes (each
 opening the Bible Note window read-only) and its marked verses with their
 highlights and comments — see [[markdown-preview-window]].
-Everything else still follows the rule below.
+Since 2026-09-21 a `.pdf` row is a third: its press opens the app's own popup on
+Chromium's PDF viewer (`openPdfPreview`, `src/helper/pdfPreviewHelpers.ts`), and **Open**
+in its menu is the OS route. Everything else still follows the rule below.
 
 **Using a row: single click → `appProvider.systemUtils.openFile(filePath)`**
 (OS default app). No drag payload, no double-click-present, no screen

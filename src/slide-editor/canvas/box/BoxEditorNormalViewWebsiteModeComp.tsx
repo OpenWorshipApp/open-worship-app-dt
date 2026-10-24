@@ -180,7 +180,7 @@ function BoxEditorNormalWebsiteFrameComp({
     );
 }
 
-export function BoxEditorNormalWebsiteRender() {
+export function BoxEditorNormalWebsiteRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemWebsitePropsType>();
     try {
         CanvasItemWebsite.validate(props);

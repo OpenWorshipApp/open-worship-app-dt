@@ -1,6 +1,6 @@
 # OWA Robot Test — Observation Knowledge Base
 
-docVersion: 2026-10-01
+docVersion: 2026-10-06b
 
 Field notes for agents/skills doing black-box QA of the **running** Open Worship App.
 Everything here was **verified against the live app**, not inferred. Read this before a run
@@ -14,7 +14,7 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
 
 ## 0. TL;DR — the five things that bite you
 
-1. **Locale is dynamic.** The UI may be **Khmer** or **English** (user setting). Never target
+1. **Locale is dynamic.** The UI may be **Khmer**, **English** or **French** (user setting). Never target
    by hard-coded visible text — target by role/structure/CSS class, or map labels (§1).
 2. **Settings/About/editors are POPUP windows, not main-window routes.** Do **NOT**
    `navigate_page` the main window to `setting.html` — it traps the window (§2). Open them via
@@ -33,16 +33,22 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
 
 ## 1. Localization is dynamic — target by structure, not text
 
-- The app renders in **Khmer (`km-KH`)** or **English (`en`)**, switchable in
-  Settings → Language (`Khmer` / `English` buttons).
+- The app renders in **Khmer (`km-KH`)**, **English (`en-US`)** or **French (`fr-FR`)**, switchable in
+  Settings → Language (one button per language, labelled in its OWN script — `ខ្មែរ` / `English` /
+  `Français` — with the English name as its `title`).
 - ⚠️ **Do NOT trust `window.localStorage['language-locale']`** — it is a stale leftover key
   (verified 2026-07-08: it read `"km-KH"` while the UI rendered English). Settings now go
   through `appLocalStorage` (`src/helper/settingHelpers.ts` → `getSetting`), which is a
   separate store.
-- ⚠️ **Nor `document.documentElement.lang`** — verified 2026-07-26: it read `"en"` while the
-  entire presenter rendered Khmer (the attribute is never updated on locale change; filed as
-  a Low a11y finding). **The only reliable read is Settings → Language: whichever of
-  `Khmer`/`English` is the solid (non-`outline`) button is active.**
+- **The locale is the COMPUTER's, not the data folder's** (2026-10-15): `getCurrentLocale()`
+  reads `clientSetting["language-locale"]` in the userData `setting.json` (the home store,
+  `COMPUTER_SETTING_NAME_LIST` in `appLocalStorage.ts`), so it holds across a data-folder switch. A
+  `<data dir>/local-storage/language-locale` file is an older version's copy — taken once
+  (`language-locale-migrated`), then never read; don't trust it either.
+- **`document.documentElement.lang` IS reliable now** — `init()` in `src/boot.ts` sets it from the
+  locale each time an app window (re)loads, and `owa_app_state` reports it as `language` (on
+  2026-07-26 it read `"en"` under a Khmer presenter; that Low a11y finding is fixed). In Settings →
+  Language the active button is the solid (non-`outline`) one, `aria-pressed="true"`.
 - **Consequence:** the same button reads `ស្វែងរកព្រះគម្ពីរ` or `Bible Lookup` depending on
   locale. Snapshot `uid`s and text both shift.
 - **Do:** click by `button.nav-link` + CSS state (`.active`, `.app-on-screen`), by icon class
@@ -57,16 +63,16 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
 `tran()` (`src/lang/langHelpers.ts`) returns the input string immediately when the locale
 is `en-US` (`DEFAULT_LOCALE`) — **it never looks anything up**. In `km-KH` the same call
 `throw`s `Translation for text "…" not found in locale km-KH` when the key is missing,
-and because nothing wraps these components in an error boundary, **the whole subtree
-renders blank**.
+and because only the slide editor sits in an error boundary (`AppErrorBoundaryComp`), **the
+whole subtree renders blank** everywhere else.
 
 Consequences for a run:
 
 - An **English-only pass cannot detect a missing translation at all** — this is why the
   locale switch (`LT-01..02`, SKILL.md §6d / test-plan §S15) is part of the mandatory
   core, not an optional spot-check.
-- `npm run lint` (tests + typecheck + prettier + eslint + build) stays **fully green**
-  while a screen is broken in Khmer. Only running the app in Khmer finds it.
+- `npm run lint` now fails on a missing STATIC key (`src/lang/tranKeyCoverage.test.ts`), but stays
+  **fully green** for a dynamic `tran(variable)` one. Only running the app in Khmer finds that.
 - **Verified 2026-07-26:** `PositionSizeFieldComp` (`BoxPositionSizeComp.tsx`) called
   `tran(name)` with `name="X:"`; selecting a canvas item blanked the entire slide-editor
   tools panel. Fixed by not translating axis abbreviations.
@@ -78,8 +84,7 @@ Consequences for a run:
   dictionary defines `Loading` only. Because that branch renders on every cold load of the
   Lyrics tab, the **entire Presenter came up blank** (`#root` 0 children, body 80 chars).
   Fixed by moving the ellipsis outside `tran()`.
-- Distinguish from **hardcoded** English (a string that never calls `tran()` at all — e.g.
-  `title="Drag to resize"`, `SlideEditorToolTitleComp title="…"`). Those merely stay
+- Distinguish from **hardcoded** English (a string that never calls `tran()` at all). Those merely stay
   English in Khmer mode: **Low/Info**, not Critical, and not a throw.
 
 In production the same missing key silently falls back to English, so this is a
@@ -91,8 +96,8 @@ dev-visible-only failure — which is exactly why the robot run has to catch it.
 dictionary is re-keyed through it at module load (which also **throws on duplicates after
 sanitization** — that guard is how a bad "fix" gets caught).
 
-So `tran('Remove from screen ')`, `tran('Add items')` and `tran('auto')` all resolve fine
-against `'Remove from screen'`, `'Add Items'` and `'Auto'`. **Do not report padded or
+So `tran('Remove from screen ')` and `tran('auto')` both resolve fine
+against `'Remove from screen'` and `'Auto'`. **Do not report padded or
 differently-cased keys as missing** — a naive grep of `tran('…')` against the dictionary
 produces a pile of false positives (11 of them on 2026-08-03, all bogus). Only a
 difference that survives trim+lowercase is real, e.g. `'loading...'` vs `'loading'`.
@@ -152,7 +157,7 @@ untranslated-string bug**. Always judge translation coverage *after* `Apply Sett
 | Lyrics | អក្សរភ្លេង | list + presenter tab |
 | Bibles | ព្រះគម្ពីរ | presenter/right tab |
 | Foreground | ផ្ទៃខាងមុខ | presenter tab |
-| Presenting Flows | តារាងកម្មវិធី | left list (dev) |
+| Presenting Flows | តារាងកម្មវិធី | left list |
 | Bible Notes | កំណត់ត្រាព្រះគម្ពីរ | right tab |
 | Colors / Images / Videos / Cameras / Web(s) / Audios | ពណ៌ / រូបភាព / វីដេអូ / កាមេរ៉ា / វេបសាយ / សំលេង | background tabs |
 | Clear all/bg/slide/bible/fg (F6–F10) | លុបទាំងអស់ / លុបផ្ទៃខាងក្រោយ / លុបស្លាយ / លុបព្រះគម្ពីរ / លុបផ្ទៃខាងមុខ | mini-screen footer |
@@ -165,14 +170,15 @@ untranslated-string bug**. Always judge translation coverage *after* `Apply Sett
 
 **Main-window pages** (switched in-place via `goToPath()` → `location.href`, per
 `src/router/routeHelpers.tsx`):
-- `presenter.html` (default) · `reader.html` · `appDocumentEditor.html`
+- `presenter.html` · `reader.html` (the default on a fresh profile, §3) · `appDocumentEditor.html` ·
+  `screen-mirror.html` (the header's **Screen Mirror** tab)
 - Verified: clicking the `Bible Reader` header tab navigates the **same** window to
   `reader.html`. `navigate_page` between these is fine.
 
 **Popup windows** (opened via `openSettingPage()`→`openPopupWindow()`→
-`window.open(url?uuid=…)`, per `src/setting/settingHelpers.ts` + `src/helper/domHelpers.ts`):
+`window.open(url?uuid=…)`, per `src/setting/settingHelpers.ts` + `src/helper/popupWindowHelpers.ts`):
 - `setting.html` · `about.html` · `finder.html` · `lyricEditor.html` · `bibleNote.html` ·
-  `webEditor.html`
+  `webEditor.html` · `markdownPreview.html` · `chatbot.html` · `aichat.html`
 - These are **separate windows**. The main window is **never** meant to host them.
 
 ### ❌ Do NOT navigate the main window to a popup-only page
@@ -180,12 +186,12 @@ Forcing the main window to `setting.html` (e.g. `navigate_page → setting.html`
 - It **loads**, but then you **cannot navigate away** — every destination
   (`presenter.html`, `reader.html`, even `about:blank`, via `navigate_page` /
   `location.href` / `location.replace` / `window.open(_self)`) returns
-  **`net::ERR_ABORTED`**. (Server + Vite are healthy; `fetch('/presenter.html')` → 200. It is
-  not a `beforeunload` and not a `will-navigate` block — `guardBrowsing` only sets a
-  window-open handler.)
-- It **persists** `mainHtmlPath:"setting.html"` into
-  `%APPDATA%/open-worship-app/setting.json` (see §3), so the main window **reopens Settings on
-  every restart** until you fix the file.
+  **`net::ERR_ABORTED`**. (Server + Vite are healthy; `fetch('/presenter.html')` → 200. It was
+  not a `beforeunload` or a `will-navigate` block then — `guardBrowsing` only sets a
+  window-open handler; `guardMainNavigation` (`ElectronMainController.ts`) has since put a
+  `will-navigate` guard on the main window that cancels an in-page move to `setting.html`.)
+- It **persists** `mainHtmlPath:"setting.html"` into `setting.json` (see §3), but the main window no
+  longer reopens Settings: at boot `toAllowedMainHtmlPath` falls back to the Reader.
 
 ### ✅ Correct way to test Settings/About/etc.
 1. Click the gear (Settings) / relevant button in the app — it opens a **new popup target**.
@@ -208,9 +214,10 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
 ## 3. Persisted window state & recovery
 
 `electron/ElectronSettingManager.ts` saves the main window's page to **`mainHtmlPath`** in
-`%APPDATA%/open-worship-app/setting.json` on every navigation. File shape:
+`<userData>/setting.json` on every navigation — `%APPDATA%/open-worship-app-dev/` in dev,
+`%APPDATA%/open-worship-app/` packaged (§18.1). File shape:
 ```json
-{"mainWinBounds":{...},"appScreenDisplayId":null,"mainHtmlPath":"presenter.html","themeSource":"system"}
+{"mainWinBounds":{...},"appScreenDisplayId":null,"mainHtmlPath":"presenter.html","clientSetting":{...},"secureSetting":{...},"popupWinBoundsMap":{...},"themeSource":"system"}
 ```
 - **Default is `reader.html`**, not the Presenter (`ElectronSettingManager` seeds
   `mainHtmlPath: htmlFiles.reader`; verified 2026-09-09 on a fresh userData — the packaged
@@ -218,10 +225,10 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   why a long-used dev profile opens on the Presenter.
 - **Recovery if the main window is stuck on a popup page:** (1) stop the app, (2) set
   `mainHtmlPath` back to `"presenter.html"` in `setting.json` (keep the other keys), (3)
-  relaunch. The window will open on the Presenter. Locale (`localStorage['language-locale']`)
-  is stored separately and is preserved.
+  relaunch. The window will open on the Presenter. Locale (`clientSetting["language-locale"]` in that
+  same `setting.json`, §1) is preserved as long as you keep the other keys.
 - The `mainHtmlPath` validation IS implemented (`toAllowedMainHtmlPath` in
-  `electron/ElectronMainController.ts`): only presenter/reader/appDocumentEditor are
+  `electron/ElectronMainController.ts`): only presenter/reader/appDocumentEditor/screen-mirror are
   accepted at boot, anything else falls back to `htmlFiles.reader`. Note it does NOT
   protect against a legitimate main page that hangs at boot (run `20260830-1407`:
   `mainHtmlPath:"reader.html"` + a reader-boot hang re-armed itself on every launch —
@@ -242,7 +249,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   A persistent `.loading` image = bug.
 - `presenter.html` / `appDocumentEditor.html`: also have `#app-header` + `#app-body`.
 - `reader.html`: **no `#app-header`** — wait for bible content instead.
-- `setting.html`: `document.title` matches `/Settings/`; `General` + `Apply Settings` buttons.
+- `setting.html`: `document.title` matches `/Setting/` (`Open Worship app - Setting (⚙️)`); `General` + `Apply Settings` buttons.
 
 ---
 
@@ -252,7 +259,9 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   `StaticText`/`<li>`; a synthetic `.click()` on the `<li>` does **not** fire React's handler.
   Click the actual `button.nav-link` (or the item's `<button>`), or MCP-click the button's
   `uid`.
-- **Background panel starts collapsed.** It's an `app-hidden-widget` (~6px, shows only a
+- **The Background panel may be collapsed.** It ships OPEN (`AppPresenterMiddleComp` defaults to
+  `v1: ['3'], v2: ['1']`), but the layout is persisted, so a used profile can hold it closed.
+  Collapsed, it's an `app-hidden-widget` (~6px, shows only a
   `Background` / `Note` label). Its tabs **do not exist in the DOM until expanded** — an early
   `.nav-tabs` scan finds only the header + presenter tab groups. **Click the `Background`
   label to expand**, then the tabs (`Colors…Audios`) render as real `button.nav-link`s.
@@ -287,14 +296,11 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   `node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=5000`
   (it discovers the published port itself — there is no fixed 9223 any more) before
   assuming a crash.
-- **Contrast-aware dialog.** A background color that would clash with the Bible text
-  color (including the white background a Bible list attaches when a verse is presented)
-  now switches the text to black/white FIRST, then asks *"The text color was changed so it
-  stays visible… Keep the new text color?"* (`No`/`Yes`; `No` puts the old color back).
-  Until 2026-09-30 it asked before fixing, and a showing projector stayed unreadable
-  while the question was open. Handle it. (This is **good UX**, not a bug.)
-- **Sliders.** Presenter has two `input[type=range]`: thumbnail-size (`max="200"`) and
-  mini-screen zoom (`max="30"`). To drive one programmatically: native value setter +
+- **Contrast-aware text colour — a TOAST with Undo, not a question** (2026-10-02, robot run 20261002-1644 F-4). A background color that would clash with the Bible text color (including the white background a Bible list attaches when a verse is presented) switches the text to black/white FIRST, then says so in a toast — **Background and Color** / *"The text color was changed so it stays visible on the new background color."* — with an **Undo** button that puts the old colour back (10 s, held while hovered). It used to be a blocking Yes/No, which stopped a run sheet walking onto a colour line until somebody answered, and left the keyboard on the page body so the run player dropped the next press. Nothing to answer now; to restore a user's colour after a test, press Undo or put the old background back. Remember the colour is GLOBAL (`screen-bible--style-text`), so a clash on a scratch screen changes the user's Bible text everywhere until undone.
+- **The Background › Colors panel edits the screen ALREADY SHOWING a colour, not the selected screen.** Once any screen holds a colour background the panel draws one picker PER SCREEN, each with that screen's id badge (`0`); a swatch pressed there recolours THAT screen whatever the screen selection says. To put a colour on a scratch screen while the user's screen shows one, drag a run-sheet colour line onto the scratch mini screen instead (run 20261002-1644 recoloured the user's hidden screen 0 this way and had to put its white back — stored then as `#FFFFFFFF`, the same white).
+- **Sliders.** The Presenter's `input[type=range]`s: thumbnail-size (`max="200"`),
+  mini-screen zoom (`max="30"`) and, while the Background panel is open in a grid view, its
+  footer's `Thumbnail Size` (`max="500"`). To drive one programmatically: native value setter +
   `dispatchEvent(new Event('input',{bubbles:true}))` (React listens on `input`).
 - **Bible Lookup input is an incremental picker** (book → chapter → verse) **and it now
   resolves a typed full reference too** — ⚠️ corrected **2026-09-11**; this file claimed the
@@ -315,11 +321,10 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   slide thumbnail presents it; clicking the **same** card again simply **re-applies** it —
   `SL` stays solid and the screen badge stays on the card. The repo's own test states the
   rule outright: *"Re-selecting the same slide re-applies it (no toggle-off behavior)"*
-  (`src/_screen/managers/nonBibleManagers.coverage.test.tsx:946`). So **use `F8` (or the
+  (`src/_screen/managers/nonBibleManagers.coverage.test.tsx`). So **use `F8` (or the
   `SL` clear button) to un-present a slide** — never a second click. Still use `click`
   (no `dblClick`), and verify via `.app-on-screen` / the card's `data-screen-icon-id`
-  badge before proceeding. Background **media** items were not re-tested for toggling —
-  do not assume either behaviour there without checking.
+  badge before proceeding. Background **media** items DO toggle (see below).
 - ⚠️ **A bare synthetic `.click()` does NOT present a slide card** (verified 2026-08-10).
   `VarySlideRenderComp` is a **drag surface**, and `element.click()` — which dispatches a
   lone `click` with no pointer sequence — leaves it completely inert: no present, no
@@ -337,13 +342,15 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   driven run; (b) the cross-window scroll-sync send guard
   (`sendSyncScrollPercentage`) leans on it, so with DevTools open BOTH windows may
   pass the guard — the echo loop that allowed is now structurally suppressed
-  (`syncScrollPercentage` stamps `_remoteAppliedScroll` on the element it scrolls and
-  `registerScrollingSyncEvent` swallows that one position-matched event). A scroll in
+  (`syncScrollPercentage` marks the element through `applyRemoteScrollPercentage` and
+  `registerScrollingSyncEvent` swallows every scroll event for `REMOTE_SCROLL_QUIET_MS`
+  (1 s) after it, unless the operator wheeled or pressed that container since — the
+  one-event stamp it replaced on 2026-10-06 let a second listener echo). A scroll in
   one window reflecting in the other exactly ONCE per gesture is correct; a
-  self-sustaining scroll oscillation between windows is a regression on that stamp.
+  self-sustaining scroll oscillation between windows is a regression on that quiet window.
 - ⚠️ **Bible screen text color is a persisted STYLE, not inheritance** — measure
   `#bible-screen-view td span` / `tr`, never a container (verified 2026-08-30, cost a
-  false High). The `screen-bible-style-text` setting (color/text-shadow/font-size) is
+  false High). The `screen-bible--style-text` setting (colour, size, text-shadow and how the words are set) is
   injected as `#bible-screen-view tr {…}` by `ScreenBibleComp` in every window
   (default color WHITE when unset), so preview and screen agree by construction. A
   container element inherits the page theme instead (`rgb(222,226,230)` in the
@@ -357,7 +364,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   `includeSnapshot` → `hover` the `alert` → `press_key F6` with `includeSnapshot` → two
   `alert`s, each *Screen Manager is locked* / *Unlock the screen to change what it shows*
   with its own `button "Close"` (verified 2026-09-12). Two traps. One F6 is refused by all
-  four layer managers, and the refusal is said **once a second per screen**
+  four layer managers, and the refusal is said **once a second for ALL screens**
   (`ScreenManagerBase.checkIsLockedWithMessage`), so a single press no longer shows a stack
   and a second press inside that second stays silent. And a toast lives 4 s, which one tool
   round trip can outlast, so hover the first before pressing again (the `hover` tool clears
@@ -378,7 +385,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
 - ⚠️ **Never drive a resizer with synthetic mouse events — and never collapse a widget by
   dragging.** `FlexResizeActorComp` attaches its `mousemove`/`mouseup` listeners to
   `globalThis`, and `isShouldIgnore` reads `event.target.classList` unguarded
-  (`FlexResizeActorComp.tsx:126`). A `mousemove` you dispatch on `globalThis` has **`window`**
+  (`FlexResizeActorComp.tsx`). A `mousemove` you dispatch on `globalThis` has **`window`**
   as its target, `window.classList` is `undefined`, and every move then throws
   `Uncaught TypeError: Cannot read properties of undefined (reading 'contains')` — which the
   app's global handler turns into a **"Reload is needed — Internal process error"** dialog and
@@ -388,7 +395,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   **The supported way to collapse or restore a widget is the resizer's own context menu:**
   🖱️R the `.flex-resize-actor` → **`Reset Size` / `Close First Widget` / `Close Second
   Widget`**. That path is clean (zero console errors) and is how you put a panel back the way
-  you found it — the Background panel starts collapsed, and expanding it to test the tabs is a
+  you found it — if the Background panel was collapsed when you arrived, expanding it to test the tabs is a
   persisted change you must undo.
 - **Presenting a background/slide with multiple screens and none `Select`ed does NOT apply
   immediately** — `ScreenEventHandler.chooseScreenIds` opens a **screen-chooser context
@@ -398,9 +405,9 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   propagates to every screen with the same colour-note dot and leaves `No Color` screens
   alone (verified 2026-07-26: `lime` screens 0+1 moved together, screen 2 did not). Don't
   file that as "applied to the wrong screen".
-- **Slide/lyric previews live in `<iframe srcdoc>`** (lyric ones inside a
-  `shadowing-parent-width-tag` shadow root, `sandbox="allow-scripts"` so their DOM is
-  unreadable from the parent — inspect the `srcdoc` attribute string instead). A lyric's
+- **Slide/lyric previews live in an open shadow root** (`shadowing-parent-width-tag`,
+  `ShadowingFillParentWidthComp`) — the markup sits in it directly, with no `<iframe srcdoc>` any
+  more, so read it through `el.shadowRoot` as §12.5 does. A lyric's
   slide 1 is often just the `<h1>` title, which at ~0.2 preview scale looks like a blank
   dark card — not a rendering bug.
 - **In-app modal popups (Alert / Confirm / Input) are single-slot and chained.**
@@ -423,7 +430,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   2026-08-24 test prune — the live `window.tryPopup()` probe is now the only coverage.)
 
 - **`press_key ContextMenu` opens the app's own right-click menu on the FOCUSED element**
-  (verified 2026-09-26). There is no right-click tool, and this is the way in: click a
+  (verified 2026-09-26). `owa_click` right-clicks by label since 2026-10-10 (`button: "right"`); the keyboard way in: click a
   focusable control so it takes focus, then press `ContextMenu`. It reached the colour
   swatch menu (`Copy '#000080' to clipboard`, `CM-48`) and the media-session chip menu
   (`Rename Session` / `Remove Session`). It does **not** work on background/document list
@@ -447,12 +454,31 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   applies" half is not provable with these tools.
 - **Background media click is a TOGGLE** — for images *and* videos (verified 2026-09-26;
   earlier revisions said media had not been re-tested). One click applies, a second click
-  on the same item clears (`ScreenBackgroundManager.applyBackgroundSrc` returns null when
+  on the same item clears (`ScreenBackgroundManager.applyBackgroundSrc` applies `null` when
   `this.backgroundSrc?.src === data.src`). Unlike a slide card, which re-applies.
-- **The live-tab marker is `●`, not `*`** — `.app-on-screen::before { content: 'cf' }`
+- **The live-tab marker is `●`, not `*`** — `.app-on-screen::before { content: '\25cf' }`
   (`src/others/appInit.scss`). `take_snapshot` shows it in the accessible name
   (`button "●Videos"`); `owa_list_ui` strips it. The matrix's `PM-27` said `*` until
   2026-09-26.
+- **Electron cannot format a date in Khmer.** It ships Chromium's trimmed ICU data:
+  `Intl.DateTimeFormat.supportedLocalesOf(['km-KH'])` is `[]` in the app, and asked
+  for `km-KH`, `toLocaleDateString` answers in ENGLISH without a word. Node (vitest)
+  has full ICU, so a test passes where the app does not — the stopwatch history's
+  dates first shipped that way. Khmer dates are numbers only now (`04/10 07:57`); see
+  memory `electron-icu-has-no-khmer`.
+- **A divider takes the keyboard** (2026-10-06): Tab reaches it (an info-blue
+  outline), the `ContextMenu` key / Shift+F10 opens its Reset Size / Close First /
+  Close Second Widget menu, and ←→ (↑↓ on a top/bottom divider) move it 20 px (Shift
+  100), never past a pane's minimum. An agent gets focus onto one without a mouse by
+  `fill`ing the control just before it with its CURRENT value (the presenter's
+  `Slide Thumbnail Size Scale` slider at 72 for the Presenter/Background divider),
+  then `press_key Tab` until the snapshot says the separator is `focused` — a mouse
+  press on a divider never focuses it (the drag cancels its mousedown).
+- **Verifying an edited `domMatch.mjs` through a fresh server:** reload the page
+  FIRST and let only the fresh server touch it. The page keeps whichever matcher
+  reached it first (`window.__owaDomMatch`), and this session's own, stale tools
+  reaching it after a relaunch is enough to make a fix read as not working
+  (memory `dom-match-memoised-in-page`).
 - **Scope the thumbnail slider.** `owa_type "Thumbnail Size"` unscoped matches the
   **Presenter's** `Slide Thumbnail Size Scale` (max 200), not the Background footer's
   `Thumbnail Size` (max 500) — it silently resizes the wrong panel. Use
@@ -493,13 +519,13 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
 
 ## 6. `.app-on-screen` / live-output semantics — and driving the screen window
 - Any element currently shown on the presentation output carries **`.app-on-screen`**.
-- The active background tab gets a **`*` prefix** (e.g. `*Videos`, `*Colors`).
+- The background tab whose content is live gets a **`●` prefix** (e.g. `●Videos`, `●Colors`; it was `*` once, §5).
 - Use both to verify "send to screen" toggles:
   `[...document.querySelectorAll('.app-on-screen')].map(e=>e.textContent.trim())`.
 
 ### Screen window CDP visibility (verified, corrected 2026-07-08)
 - While a screen is **SHOWING** (toggle `ShowHideScreen` / `F5`), it **is** a normal CDP
-  target: `https://localhost:3000/screen.html?screenId=N` in `list_pages` — fully
+  target: `http://127.0.0.1:<port>/screen.html?screenId=N` (every screen window loads from the Screen Mirror server, ports 39240-39259 -- `screenMirrorRuntime.screenUrl`; `https://localhost:3000/screen.html` only when that server did not start) in `list_pages` — fully
   drivable (`take_snapshot` / `click` / `take_screenshot`; the ❌ `#close` button has
   been clicked via MCP and it hid the screen).
 - The target **vanishes the moment the screen hides** — an earlier session concluded it
@@ -514,6 +540,57 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
 - Presenting a slide is a **single click, not a toggle** (§5) — present, verify, then
   clear with `F6`–`F10` (a second click on the same card only re-applies it); end with the
   screen hidden unless it started showing.
+
+### 6.0 Multi-screen facts from the 2026-10-06 presenter run
+
+- **A colour-note group shares more than content.** Presenting to one screen of a
+  group puts it on every member — and replaces what they held (a solo-selected
+  scratch screen 1 took screen 0's Bible passage with it). The lock is shared too:
+  one click on a member's lock locks them all, so clicking each member's lock in
+  turn locks and then UNLOCKS the group. Plan a screen test on a screen with its
+  own colour note, or restore every member afterwards.
+- **F5 follows the selection** (fixed 2026-10-06): it acts on the selected screens,
+  every screen when none is selected, and shows them only when all of them are
+  hidden — otherwise it hides them all. Before, each card took the key itself, so
+  one press flipped every screen on its own. The card's own toggle still turns only
+  its screen.
+- **A screen kept on a Screen Mirror guest display that is not connected** (display
+  id `-1000000` and below; its display button reads **Guest display, not connected**
+  with a warning icon) cannot be shown. Pressing show answers with the toast
+  **Screen not shown** and the toggle comes back off. Before the fix it raised the
+  blocking **Reload is needed** dialog and left the toggle on with no window.
+- **The lock refusal is one toast per press with its own Unlock.** It opens over the
+  first card's lock icon; its **Unlock** frees every screen that refused AND closes
+  the toast (since 2026-10-06 — before, it stayed up saying "locked", held open by the
+  hover of the pointer that pressed it; the Background and Color toast's Undo closes
+  its toast the same way). A toast lives 4 s, so drive that button from a snapshot
+  saved to a file (new nodes get ids from `<n>_0`, the Unlock was `<n>_4`), not from a
+  press's inline snapshot — reading that one outlasted the toast. What lands every
+  time: `press_key F6`, `take_snapshot` to a file and `click` on the PREDICTED uid
+  `<next snapshot number>_4`, all three in ONE batch of calls (2026-10-06).
+- **A CDP capture right after a screen shows can be pure white** (2026-10-06, the
+  first `take_screenshot` of `screen.html?screenId=0` straight after F5; the next one,
+  a second later, was correct, transparent parts black). The window is
+  `transparent: true` with a transparent body, so the projector should show the
+  desktop, not white, before the first paint — but CDP cannot see what the projector
+  composites. An OS capture (`Graphics.CopyFromScreen`) can, and only in an UNLOCKED
+  session: with the workstation locked (`LogonUI` running) every frame comes back
+  solid black, which proves nothing either way. Unresolved; measure it with the
+  session unlocked before changing how the screen window shows.
+- **Screens can come back holding different content after a relaunch — seen twice
+  on 2026-10-06, cause NOT established.** The morning run's helper closed the
+  Presenter and both hidden screens came back on slide 2 instead of the Bible
+  passage. The evening run left them on slide 2 with no background; after an MCP
+  edit relaunched the dev app they were on slide 3 with a video background — but
+  that document's attached background (`<file>.bg.json`) had been written mid-run
+  by ANOTHER agent session sharing the data folder, which may explain all of it.
+  Before filing anything that rides on screen content after a relaunch, record
+  `owa_list_screens` just before and just after, note the mtimes of the selected
+  document's `.bg.json`, and confirm no other session is driving the app
+  (`ListAgents`).
+- **A card's Solo / Select / Delete menu is a right-click** — `owa_click` `button: "right"`
+  does it since 2026-10-10; the keyboard way: click any button INSIDE the card (its stage `St:` button, then `Escape` to close
+  that menu) so focus sits in the card, and press `Shift+F10`.
 
 ### 6.1 What the MCP firewall will not do for you (verified 2026-09-15)
 
@@ -556,8 +633,8 @@ key/warning spam, failed dynamic imports.
   `ScreenBackgroundManager._handleBackgroundVideo` used to run the end-of-clip fade by
   calling `render()`, which builds a fresh `<video src=…>`; `file://` media is not cached,
   so each lap was a full `range: bytes=0-` read — 37 re-reads of one 2.6 MB clip in a few
-  minutes on one screen (~470 MB/hour). `_fadeOverVideoLoop` now fades the element that is
-  already playing, and the clip's own `loop` restarts it. **How to check:** filter the
+  minutes on one screen (~470 MB/hour). `_fadeOverVideoLoop` now crossfades to a second copy built
+  once per background (`_ensureVideoLoopTwin`): two reads for its whole life, not one per lap. **How to check:** filter the
   screen (or presenter) target's requests to `resourceTypes: ["media"]`, note the count and
   the highest reqid, wait longer than the clip, and re-list. The count must NOT grow, and
   the reqid base must be unchanged (a base that moved means the page reloaded and the log
@@ -602,7 +679,8 @@ Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken ima
 
 ## 10. Don't disrupt the live window (courtesy)
 - If you change the live **background** (color/image/video) or the selected document, **restore
-  it** afterward (double-click the original item; verified working).
+  it** afterward (click the original item ONCE — a second click on the tile that is
+  live takes it off again, so a double-click can leave nothing up).
 - **Showing the physical screen is part of the mandatory screen block** (SKILL §6a):
   toggle it ON briefly, drive the `screen.html` target, then **hide it and restore
   every control you touched** (lock, transitions, stage number, display, color note).
@@ -655,13 +733,13 @@ window at a time never checks. (This is how the case where **resizing a box in t
   - **`Slide Editor` tab's `bi-box-arrow-up-right` external icon (NAV-21)** — or a doc's
     row/quick-edit **Edit ↗** — → `openAppDocumentEditorExternal` → `openPopupWindow`
     (uuid `app_document_editor`) → a **separate** `Document Editor - <name>` window
-    (`src/app-document-list/AppDocument.ts:529`). **This** is the config to test.
+    (`src/app-document-list/AppDocument.ts`). **This** is the config to test.
 
 ### 12.2 The propagation chain (know each hop so you know where it can break)
 Editor saves a doc → the change must cross to the Presenter/Screen:
 1. Editor renderer `FileSource.writeFileData()` — deletes **only the editor's** cache and
    fires `fireUpdateEvent()` in **only the editor's** renderer; writes the file
-   (`src/helper/FileSource.ts:171`). *(This is why the editor itself updates but nothing
+   (`src/helper/FileSource.ts`). *(This is why the editor itself updates but nothing
    else automatically does.)*
 2. The file on disk changes → **each other renderer's** watch fires. ⚠️ **Rewritten
    2026-08-11 (refactor28):** it is no longer one `fs.watch` per mounted `DirSource`
@@ -720,7 +798,7 @@ Editor saves a doc → the change must cross to the Presenter/Screen:
    `VarySlidesComp` (`src/app-document-presenter/items/VarySlidesComp.tsx:84`) and the
    **list-row** thumbnails (`VaryAppDocumentFileComp`) — each re-reads `getSlides()`
    (debounced **500 ms**) **through a 2-second `fileDataCacheManager` cache**
-   (`src/helper/FileSource.ts:42,137`).
+   (`src/helper/FileSource.ts`).
    - ⚠️ **The live screen / presented slide does NOT auto-reload — this is intentional
      (verified 2026-07-19).** Presenting takes a `cloneJson` **snapshot** into
      `ScreenVaryAppDocumentManager._varySlideData`
@@ -736,8 +814,8 @@ Editor saves a doc → the change must cross to the Presenter/Screen:
 **Failure modes this hides (what a good XW test catches):** `fs.watch` not firing for
 content-only edits (the watch is `recursive: true` everywhere now, so `<name>.histories/`
 sub-writes are seen on every OS); the sidecar→original mapping dropping a suffix; a **consumer's
-own derived cache** never being invalidated (§12.5 — the lyric Stage Previewer's 3-minute slide
-cache, the bug XW-08 exists for); the **2 s per-renderer cache** serving stale bytes to the
+own derived cache** never being invalidated (§12.5 — the lyric Stage Previewer's slide
+cache (3 minutes then, 10 s now), the bug XW-08 exists for); the **2 s per-renderer cache** serving stale bytes to the
 reload; an **auto-reloading** consumer (center preview / list rows) that stopped subscribing;
 a regression in the reload wiring (e.g. the `VaryAppDocumentFileComp` / `LyricFileComp` /
 `PresentingFlowFileComp` `useFileSourceEvents` refactor). **Expected, NOT bugs:** a **saved**
@@ -828,12 +906,13 @@ cache shows the pre-edit content while every hop before it is healthy. The lyric
 Previewer** is the standing example, fixed 2026-08-11:
 
 - `LyricAppDocumentStageAbstract` memoizes its slides in a module-level `CacheManager` with a
-  **3-minute** TTL. The panes re-rendered on every `update` and re-derived the *same cached*
+  **3-minute** TTL then (10 seconds now). The panes re-rendered on every `update` and re-derived the *same cached*
   slides — so an edit showed up in the rendered song above them and not in the slides below,
   for minutes at a time. `LyricSlidesPreviewerComp` now clears **every stage entry's** cache on
   `update` (`useFileSourceEvents(['update'], …, lyricManager.filePath)`).
 - `LyricAppDocument.getOpenLyricPreviewer()` returned the cached `openLyric` instance built at
-  first render; it now re-feeds it `Lyric.getContent()` on each call.
+  first render; it still does, and the previewer re-feeds that instance on the file's `update`
+  instead (`LyricManager.refreshOpenLyricContent`), before the caches are dropped.
 
 **So: always test with ≥2 stages shown, and read EVERY pane.** A cache one consumer clears and
 another does not is invisible with a single pane on screen — and per CLAUDE.md's debounce note,
@@ -927,8 +1006,8 @@ Notes that save time on this subsystem:
   next) is font shaping in the open-lyric output, not a layout bug — check
   `getBoundingClientRect()` on adjacent `.ol-preview-lyric-segment__text` nodes; they are
   strictly adjacent, never overlapping.
-- **Slide 1 of a lyric is the whole-song info card** and slide 3 is deliberately blank
-  (`OPEN_LYRIC_NONE_KEY`). An empty-looking card there is intentional.
+- **Slide 1 of a lyric is its `First` card, slide 2 the whole-song info card** and slide 3 is
+  deliberately blank (`OPEN_LYRIC_NONE_KEY`). An empty-looking card there is intentional.
 - Lyric slide markup carries a **full computed-style dump per node** (~464 KB for one
   chorus). It comes from `open-lyric`, not this repo — worth flagging as a performance
   Info finding, not fixable in `src/`.
@@ -950,7 +1029,7 @@ mis-file a finding:
 | kind | what it is | §|
 | --- | --- | --- |
 | **content** | something to SHOW — a slide, a document, a background, a verse, a widget, audio | §14.2 |
-| **action** | something to DO — 13 that clear a screen, 4 that drive the run itself | §14.9 |
+| **action** | something to DO — 17 that clear a screen, 2 that show or hide it, 5 that drive the run itself | §14.9 |
 | **CC element** | a FOLLOWER of the line above it — rides its host's present | §14.10 |
 
 ### 14.1 It is NOT dev-only any more (corrected 2026-08-04)
@@ -1006,9 +1085,8 @@ This panel is where a careless change becomes a visible stall on the target hard
 - **Icons come from the file extension**, never from instantiating the document
   (`toDocumentIcon`), and the on-screen check for a document matches on `filePath` only —
   never `getSlides()`.
-- **Clicks stop propagating** so they never reach the enclosing `FileItemHandlerComp`
-  `<li>`, whose click fires the one UNSCOPED FileSource `select` in the app and re-renders
-  every file row in the window. PL-63.
+- **Clicks stop propagating** so they never reach the enclosing `FileItemHandlerComp` `<li>`, whose click fires the one UNSCOPED FileSource `select` in the app and re-renders every file row in the window. PL-63.
+- **The tree is a `VirtualListComp`.** Lines outside the panel's viewport are not in the DOM — nor in a snapshot, nor findable by `owa_find_ui` — until scrolled to. A sheet in a short panel looks like it lost rows 10–12; drag the Documents / Presenting Flows divider up (and **Reset Size** it afterwards) or scroll before calling a row missing (run 20261002-1644). An EXPANDED document mounts all its slide rows; that is PL-70's 200-slide case.
 
 ### 14.4 Drag rules (the source of most "it did nothing" reports)
 
@@ -1068,11 +1146,12 @@ PL-54 / PL-58.
   tells two identical entries apart. The key includes the arming value, so re-arming a
   clock or a shortcut re-keys the line.
 - Slide cards inside the widget get a **restricted** right-click menu — the RUN-SHEET
-  family only (**Reveal Original / Set Specific Screen / Disable / Add CC Elements**,
+  family only (**Reveal Original / Show on Screens / Set Specific Screen / Disable / Add CC Elements /
+  Add Media Control**,
   `genPresentingFlowVarySlideContextMenuItems`), caught on the way DOWN via
   `onContextMenuCapture` + `stopPropagation`. The previewer's colour-note/background/edit
-  family acts on the document, not the run sheet, so none of it appears; note there is no
-  **Show on Screens** either (a left-click presents the card). Verified live 2026-08-06 —
+  family acts on the document, not the run sheet, so none of it appears. **Show on Screens** IS offered, unless the slide is parked (the menu
+  had none when this was verified live on 2026-08-06) —
   earlier revisions of this line said "Show on Screens only", which predates the
   pin/CC/disable work of 2026-08-04..06. PL-59.
 - Bible entries render read-only: a verse in a run sheet is a stored preset, not a row of
@@ -1125,13 +1204,11 @@ an old file, not a new bug.
 
 ### 14.8 Failure surfaces that are easy to miss
 
-- A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the
-  presenting flow must still render, and the bad entry must survive a later write of the file
-  (PL-51).
+- A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the presenting flow must still render, and the bad entry must survive a later write of the file (PL-51). The toast and the log line come ONCE per entry per minute (`checkShouldNoticeInvalidItem`), not on every re-read and once per surface: a re-read after a write, or the run player opening, says nothing new. The log names the file and prints the entry as JSON text. A second toast for the same entry within the minute is a regression (it was thirteen in run 20261002-1644).
 - `tran()` throws in dev on a missing Khmer key and blanks the page, so the locale pass
   (§6d / LT-01) MUST cover the presenting flow strings: `Drop items here`,
-  `No items in this presentingFlow`, `No slides`, `Not Supported Item Type`, `Preview PresentingFlow`,
-  `Open Preview`, `Remove from PresentingFlow`, `Choose Color`, `Move up`, `Move down`,
+  `No items in this presenting flow`, `No slides`, `Not Supported Item Type`, `Preview Presenting Flow`,
+  `Open Preview`, `Remove from Presenting Flow`, `Choose Color`, `Move up`, `Move down`,
   `Collapse All`, `Expand All`, `Slide Thumbnail Size Scale`, `Import`, `Export`,
   `Fail to read file data` — plus everything the action families added since:
   `Add Action`, `Clear Screen`, `Other Clear FG Items`, every action label, `Set Specific Screen`,
@@ -1140,9 +1217,9 @@ an old file, not a new bug.
   `Change Shortcut`, `Keyboard Event`, `Shortcut`, `Press a shortcut`,
   and each refusal toast (`This element takes only one CC element`,
   `This element does not accept CC element`, `The set time is already due`,
-  `This shortcut is already used in this presentingFlow`,
+  `This shortcut is already used in this presenting flow`,
   `Attach the elements to show as CC elements`,
-  `Open the presentingFlow preview to use this action`). A menu that renders BLANK in Khmer is
+  `Open the presenting flow preview to use this action`). A menu that renders BLANK in Khmer is
   this throw, not a styling bug — read the console for the key name.
 - **The action rows are the ones to re-check after any new label**: their text is built as
   `tran(label)` + the arming value appended AFTER translation, so a new action ships a new
@@ -1161,8 +1238,7 @@ and `acceptedDragTypeList` must keep refusing it.
 
 Two families, split by a `target` discriminant — the difference decides the whole menu:
 
-- **`target: 'screen'` (15)** — `apply(screenManager)`. Five mirror the mini screen's
-  clear bar; eight are per-foreground-widget clears derived from `foregroundClearMap`
+- **`target: 'screen'` (19 in Add Action, plus the attached-only `Slide: Media Control`)** — `apply(screenManager)`. Five mirror the mini screen's clear bar; TWELVE are per-foreground-widget clears derived from `foregroundClearMap` (Messages, Marquee Top/Bottom, Quick Text, Countdown, Stopwatch, Time, Video/Image/Camera/Screen/Web Show — badges `MS`/`M↑`/`M↓`/`QT`/`CD`/`SW`/`TM`/`VD`/`IM`/`CM`/`SS`/`WB`; Screen Show joined 2026-10-08)
   (keyed by the widget type, so a new widget without a clear is a compile error). They
   behave like content for every purpose except being shown: clickable, draggable onto a
   mini screen, pinnable. The Foreground panel's **Background Images Slide Show** has no
@@ -1176,9 +1252,7 @@ Two families, split by a `target` discriminant — the difference decides the wh
   deliberately do (§14.10).
 
 **The menu is FOUR levels** since 2026-08-08: everything that erases folds behind one
-**Clear Screen** row with a chevron, and inside it the eight per-widget FG clears fold again
-behind **Other Clear FG Items** (thirteen of the twenty entries clear something, so inline
-they were the menu). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
+**Clear Screen** row with a chevron, and inside it the TWELVE per-widget FG clears fold again behind **Other Clear FG Items** (seventeen of the twenty-four entries clear something, so inline they were the menu; the count was eight until the Messages, Video Show and Image Show clears joined — corrected 2026-10-02). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
 ENTRIES, so a family may hold a family — and `presentingFlowActionList` the flat registry an id
 resolves against; only `PresentingFlowFileComp` reads the former, and its `genMenuEntry` walks
 it recursively, so a family added later folds itself away. The stored ids did not change. The
@@ -1187,8 +1261,7 @@ rows in that order (corrected 2026-08-13 — this said seven, which predates `Ne
 Interval`/PL-101 joining the run family): `Clear Screen`, `Screen: Show`, `Screen: Hide`,
 `Next: Interval`, `Next: Clear Interval`, `Next: Timeout`, `Jump to`, `Keyboard Event`.
 **Clear Screen** opens the five whole-layer clears in the mini screen bar's own order plus the
-**Other Clear FG Items** row, which in turn holds the eight per-widget FG clears — all
-verified rendering non-blank in Khmer on 2026-08-13.
+**Other Clear FG Items** row, which in turn holds the twelve per-widget FG clears — all verified rendering non-blank in Khmer on 2026-08-13 (the six top rows of **Clear Screen** and the eight of **Add Action** again on 2026-10-02).
 
 **Three things are asked BEFORE a line is written**, and Cancel must add nothing in every
 case: how a clock is armed, what shortcut a `Keyboard Event` answers to, and — new
@@ -1363,7 +1436,8 @@ archive kind usually means adding a CONFIG, not copying the layer.
 an **app-managed** folder (so there is no folder to resolve and no `kindDirSettingNameMap`
 entry), there are many per bundle, and identity is the bible KEY inside the XML rather than
 the file name. That last part is what makes its import the only one that can say no —
-where every other kind resolves a name collision by adding `a (1).mp4` beside yours, two
+where every other kind resolves a name collision by adding `a (1).mp4` beside yours (or reusing an
+identical file, or merging into a same-name bible list), two
 bibles sharing a key would be ambiguous everywhere else in the app, so a colliding or
 unreadable item becomes a red un-tickable row and is skipped. Keys compare
 **case-insensitively**, and the key is re-read from the extracted FILE because the manifest
@@ -1404,7 +1478,7 @@ purpose.
 - **Download.** `initHttpRequest` is protocol-aware AND **follows up to 5 redirects**, so a
   `github.com/…/raw/…` link resolves to `raw.githubusercontent.com` on its own and a plain
   `http://host:8000/…` works too. The body is streamed to
-  `<appLocalStorage.defaultStorage>/temp-xml/<basename>.xml`, read, then **deleted** — an
+  `<appLocalStorage.defaultStorageDirPath>/temp-xml/<basename>.xml`, read, then **deleted** — an
   import that leaves anything in `temp-xml` failed partway.
 - **`Key is missing`.** Most published XMLs carry no `key`/`abbr`, so `guessingBibleKey`
   loops a `showAppInput` until it has one. The **Guessing keys** buttons are
@@ -1415,14 +1489,14 @@ purpose.
   the `link="https://www.bible.com/bible/1270/GEN.23.ពគប"` attribute hands the operator
   that exact badge as a one-click button. That is where the user's `ពគប` came from.
 - **`Confirm Key for Bible`.** `No` loops back to the key input rather than aborting; the
-  way out of the loop entirely is `Cancel` then `No`.
+  way out of the loop entirely is `Cancel` then `Yes` (to *Are you sure you want to quit?*).
 - The key is **also the file name** (`<key>.xml`). Renaming `key` later in the Info editor
   does NOT rename the file — `updateBibleXMLInfo` saves through `oldBibleInfo.key`, so the
   badge and the file name silently diverge. Settle the key at import time.
 
 ### 15.2 Where the file lands (do not assume the `-dev` folder)
 
-`bibles-data` is app-managed and hangs off `appLocalStorage.defaultStorage`, **not** off any
+`bibles-data` is app-managed and hangs off `appLocalStorage.defaultStorageDirPath`, **not** off any
 Path-Settings folder. On 2026-08-10 the running dev app wrote to
 `Desktop\open-worship-data\bibles-data` while its Bible-Reader folder was
 `Desktop\open-worship-data-dev\bibles-read` — so §14.15's "dev writes to `…-dev`" holds for
@@ -1449,7 +1523,7 @@ single file.
 
 Pencil → **Info** → right-click inside Monaco. `addMonacoBibleInfoActions` adds:
 
-1. **🌎 Choose Locale** — 229-entry `AppContextMenu` of `<locale> (<Language name>)`.
+1. **🌎 Choose Locale** — 229-entry `showAppContextMenu` menu of `<locale> (<Language name>)`.
 2. **#️⃣ Edit Numbers Map** — "Define numbers map for `<lang>`", with a **Translate** link and
    a **Use ១ ២ ៣** button that fills the locale's own digits.
 3. **📚 Edit Books Map** — a second Monaco holding the 66 names, line-numbered with the model
@@ -1493,9 +1567,8 @@ from an earlier run is still on disk, remove it once and stop expecting new ones
 Note the cache folder is named after the **KEY, not the file** — a bible saved as
 `my-kjv.xml` caches under `KJV.xml.cache`.
 
-Also note `saveJsonDataToXMLfile` **returns `true` without checking the write** — it awaits
-`saveXMLText` and discards its boolean — so "the import said it worked" is not evidence the
-file exists. Confirm on disk, or confirm the row in the list.
+`saveJsonDataToXMLfile` returns `false` when `saveXMLText` fails now (until 2026-10-06 it discarded
+that boolean and always answered `true`). Still confirm on disk, or confirm the row in the list.
 
 ---
 
@@ -1519,12 +1592,14 @@ The 4th entry of the Bible Find previewer's 4-way select
   folder spent all 1500 dirs and found nothing), 1500 dirs, 20000 entries. A file
   three folders down is not listed, by design. A drive root degrades with a visible
   "Too many folders to search", never a hang.
-- **A row is a single click** → opens in the OS default app. No drag, no
-  double-click-present, no screen integration. Row menu: Open / Copy Path /
-  Reveal. Folder-header menu: Refresh / Add Folder / Reveal / Remove Folder (red,
-  confirm with Yes/No).
+- **A row is a single click** → opens in the OS default app, except a PDF (the app's own
+  viewer), a markdown file (its preview window), and a bible-note file or a `.json` link
+  list (both unfold in place). No drag, no double-click-present, no screen integration. Row
+  menu: Preview / Preview PDF (for those kinds) / Open / Copy Path to Clipboard / Reveal.
+  Folder-header menu: Refresh / Add Folder / Add Files / Reveal / Copy to Data Directory /
+  Remove Folder (red, confirm with Yes/No).
 - **Empty states are correct behaviour:** no folders → a single **Add Folder**
-  button; no verse selected → "Please select any bible verse."; a saved path that
+  button; a saved path that
   is now a file → "Folder not found" (`ENOTDIR`).
 - The only entry point is the advanced panel's picker. The verse context menu's
   **Open in Resources** item (`CM-93`) was REMOVED 2026-09-11 at the user's request.
@@ -1544,8 +1619,8 @@ host `GraphViewPanelsHostComp` is mounted on the reader AND the main layout
   carries **Set as centre** / **Use as root** (RD-106).
 - The panel is written in the record's lookup language (RD-104), and a box's verse
   list is titled by YOUR bible (RD-100) — two independent language settings.
-- Export goes through `graphExportHelpers` (a correct `fsWriteFile` exemplar — no
-  blob `<a download>`).
+- Export goes through `graphExportHelpers` (`saveGraphImage` → `downloadImageBase64Data`, a
+  real named file — no blob `<a download>`).
 - The core under `graph-view/core/` is pure non-React; geometry constants are
   load-bearing (see memory `graph-view-connection-graph`). Route rows from the
   matrix (`RD-92..106`); the observed recipe is `W-38`.
@@ -1578,8 +1653,8 @@ packaged run — confirm them the first time and drop the mark.
 - **userData** is `%APPDATA%\open-worship-app` (macOS `~/Library/Application
   Support/open-worship-app`, Linux `~/.config/open-worship-app`) — the `-dev` suffix is
   dev only (`applyLaunchOverrides`, `electron/index.ts`). That dir holds `setting.json`
-  (`mainHtmlPath` recovery, §3), `bibles-data/`, `lookup-data/` and the single-instance
-  lock. `OWA_USER_DATA_PATH` / `--owa-user-data-path=` move all of it. **The app's code
+  (`mainHtmlPath` recovery, §3) and the single-instance
+  lock; `bibles-data/` and `lookup-data/` sit there only while no parent directory is chosen (§15.2). `OWA_USER_DATA_PATH` / `--owa-user-data-path=` move all of it. **The app's code
   is `resources/app.asar`** with `electron-build/`, `dist/*.gz.bundle` and
   `tools/owa-devtools-mcp/` unpacked beside it (`asarUnpack` in package.json) — the MCP
   host the chatbot talks to runs from that unpacked copy, so a `tools/` edit reaches
@@ -1619,7 +1694,7 @@ packaged run — confirm them the first time and drop the mark.
 
 | `isDev` branch | Dev | Packaged | QA consequence |
 |---|---|---|---|
-| AI features unset (`checkIsAiEnabledByDefault`, `electron/aiHelpers.ts`) | ON | **OFF** — no CDP, no MCP, no chatbot menu item | Nothing can be driven until `ai-enabled` is `"true"` in `setting.json` (`prod-app.mjs enable-ai`, app closed). Restore afterwards. |
+| AI features unset (`checkIsAiEnabledByDefault`, `electron/aiHelpers.ts`) | ON | ON — only an explicit `ai-enabled: "false"` closes the doors | Nothing is BLOCKED by default; `prod-app.mjs ai-status` (exit 2) says whether that userData was switched off (`prod-app.mjs enable-ai`, app closed, restores afterwards). |
 | `tran()` on a missing key (`src/lang/langHelpers.ts`) | throws, subtree blanks | returns the English text *(source)* | LT-01/02 assert **visually** (raw English on a Khmer screen = Low); the Critical throw class is invisible in prod and the report must say so. |
 | `data-react-comp-name` / `-fp` stamps (`vite-plugin-comp-name.ts`, `apply: 'serve'`) | present | absent | `owa_find_ui` reports no component; findings name the control's label / `data-widget-name`. |
 | `window.testSimpleToasts()` (`src/toast/toastHelpers.ts`) | defined | absent *(source)* | GL-10 toast stacking needs two real refusal toasts, or `PARTIAL`. |
@@ -1699,7 +1774,7 @@ profile inside `release/`; it replaces the *(source)* marks it touches.
   XML* (~5 MB, no network), and the Extra Binaries install from the REAL CDN
   (`INSTALLED 0.0.2`, archive kept, `Re-extract` works offline) all passed here.
 - **`navigate_page` is unusable packaged — use `owa_goto_page`.** The firewall's
-  `checkIsAppUrl` (`firewall.mjs:244`) allows `file:`, `about:blank` and `http(s)` on
+  `checkIsAppUrl` (`firewall.mjs`) allows `file:`, `about:blank` and `http(s)` on
   localhost/127.0.0.1 only; a packaged build serves `owa://local`, so every attempt is
   refused with *"Opening an address outside this app is switched off"*. `owa_goto_page`
   takes `presenter.html` / `reader.html` / `appDocumentEditor.html` and is not affected.
@@ -1721,5 +1796,5 @@ profile inside `release/`; it replaces the *(source)* marks it touches.
   diff the relevant paths before blaming the build, then vary the approach (route,
   selection state, cold boot vs. in-session navigation), then — if it still will not
   reproduce — file the CODE-level risk rather than the behaviour (here: `_getInstance`
-  throws on an extension mismatch and no error boundary wraps `SlideEditorComp`), because
+  throws on an extension mismatch and no error boundary wrapped `SlideEditorComp` — `AppErrorBoundaryComp` does now), because
   an unreproducible blank window is not a release finding but a missing boundary is real.

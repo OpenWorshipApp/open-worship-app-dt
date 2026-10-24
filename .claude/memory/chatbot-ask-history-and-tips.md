@@ -34,8 +34,8 @@ window goes unused.
   `you` messages with NO `note`: a noted one is a walkthrough card's rescue
   (`DO: …`), machine instructions that must not go back to the model as the
   user's words.
-- Only what came out of the BOX is recorded — the form's submit and
-  `handleAdding`, never `handleAsking` itself, or the walk goes past three
+- Only what came out of the BOX is recorded — the form's submit,
+  `handleAdding` and a no-argument command run off the suggestion list, never `handleAsking` itself, or the walk goes past three
   presses of *Yes* to reach the sentence worth keeping.
 - Index -1 is the user's own half-written words, stashed on the way in and given
   back at the bottom of the walk. Typing resets to -1; so does switching tabs.

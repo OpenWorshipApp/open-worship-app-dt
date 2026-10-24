@@ -2,6 +2,8 @@ import { app, BrowserWindow, Menu, MenuItem, shell } from 'electron';
 import path from 'node:path';
 
 import { type ScreenMessageType } from './electronEventListener';
+import { genKeepAwake } from './keepAwakeHelpers';
+import { STAY_AWAKE_SETTING_NAME, toIsStayAwake } from './stayAwakeProtocol';
 import { genRoutProps, genRouteUrl } from './protocolHelpers';
 import type ElectronSettingManager from './ElectronSettingManager';
 import { htmlFiles } from './fsServe';
@@ -19,6 +21,7 @@ const allowedMainHtmlFiles = new Set([
     htmlFiles.presenter,
     htmlFiles.reader,
     htmlFiles.appDocumentEditor,
+    htmlFiles.screenMirror,
 ]);
 
 function toAllowedMainHtmlPath(mainHtmlPath: string) {
@@ -107,9 +110,50 @@ function guardMainNavigation(win: BrowserWindow) {
     win.webContents.on('will-redirect', handleNavigation);
 }
 
+const stayAwakeHtmlFiles = new Set([
+    htmlFiles.presenter,
+    htmlFiles.screenMirror,
+]);
+
+// The Presenter runs the service, and the Screen Mirror guest page stands in
+// for a projector machine: it holds the connection a host's screens arrive
+// through. Either is often left alone for the whole service, so while the main
+// window is on one of them the computer is kept awake -- unless the stay-awake
+// toggle in that page's header was switched off. Leaving the page lets it
+// sleep again; the Reader and the editor never ask. The window closing ends
+// the process, which releases the request with it.
+//
+// Answers with the function to call once the toggle's setting has changed.
+function keepAwakeOnPresentingPages(
+    win: BrowserWindow,
+    settingManager: ElectronSettingManager,
+) {
+    const setIsAwake = genKeepAwake();
+    let isOnPresentingPage = false;
+    const sync = () => {
+        setIsAwake(
+            isOnPresentingPage &&
+                toIsStayAwake(
+                    settingManager.getClientSetting(STAY_AWAKE_SETTING_NAME),
+                ),
+        );
+    };
+    win.webContents.on('did-navigate', (_event, url) => {
+        isOnPresentingPage =
+            URL.canParse(url) &&
+            stayAwakeHtmlFiles.has(
+                new URL(url).pathname.split('/').pop() ?? '',
+            );
+        sync();
+    });
+    return sync;
+}
+
 let instance: ElectronMainController | null = null;
 export default class ElectronMainController {
     win: BrowserWindow;
+    // Re-reads the stay-awake setting; `createWindow` puts the real one here.
+    syncStayAwake = () => {};
 
     constructor(settingManager: ElectronSettingManager) {
         this.win = this.createWindow(settingManager);
@@ -136,6 +180,7 @@ export default class ElectronMainController {
         });
         guardBrowsing(win, webPreferences);
         guardMainNavigation(win);
+        this.syncStayAwake = keepAwakeOnPresentingPages(win, settingManager);
         applyRendererRecovery(win, () => {
             // Re-resolved at crash time: the window may have navigated to
             // another main page since boot, and that navigation is what
@@ -146,6 +191,11 @@ export default class ElectronMainController {
             genRoutProps(currentHtmlPath).loadURL(win);
         });
         win.on('closed', () => {
+            // `process.exit` never reaches `will-quit`, where the settings
+            // still inside their one-second wait are written: a setting saved
+            // just before Relaunch -- the data folder's move off the Desktop,
+            // an Import Settings a Restart follows -- left with the process.
+            settingManager.save(true);
             process.exit(0);
         });
         win.webContents.on('context-menu', (_event, params) => {

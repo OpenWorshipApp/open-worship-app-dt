@@ -5,7 +5,10 @@ import {
     BLANK_HTML_SLIDE_SRC,
     showStaticSlideContextMenu,
 } from './appDocumentHelpers';
-import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import {
+    showAppContextMenu,
+    type ContextMenuItemType,
+} from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { appLog } from '../helper/loggerHelpers';
@@ -48,8 +51,17 @@ export default class DocxAppDocument
         return showStaticSlideContextMenu(event, item, extraMenuItems);
     }
 
-    async showContextMenu(_event: any) {
-        appLog('Method not implemented.');
+    async showContextMenu(
+        event: any,
+        extraMenuItems: ContextMenuItemType[] = [],
+    ) {
+        // A file read as it is: nothing of its own to offer here, only the
+        // rows every slides preview carries (its transition).
+        if (extraMenuItems.length === 0) {
+            appLog('Method not implemented.');
+            return;
+        }
+        showAppContextMenu(event, extraMenuItems);
     }
 
     async getMetadata() {

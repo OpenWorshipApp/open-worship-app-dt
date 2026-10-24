@@ -10,6 +10,7 @@ import {
     genForegroundDragInf,
     toForegroundDragIconName,
     toForegroundDragLabel,
+    toForegroundRowKey,
 } from './foregroundDragHelpers';
 
 function genManager() {
@@ -22,6 +23,7 @@ function genManager() {
         setMarqueeBottomData: vi.fn(),
         setQuickTextData: vi.fn(),
         addCameraData: vi.fn(),
+        addScreenData: vi.fn(),
         addWebData: vi.fn(),
         addVideoData: vi.fn(),
         addImageData: vi.fn(),
@@ -53,12 +55,32 @@ describe('foreground drag helpers', () => {
                 data: { textList: ['Hello'] },
             }),
         ).toBe('Messages: Hello');
+        // `durationSecond` carries the panel's one-second lead, which a row
+        // saved before seconds existed has too -- `301` still reads `5m`.
         expect(
             toForegroundDragLabel({
                 target: 'countdown',
-                data: { durationSecond: 90 },
+                data: { durationSecond: 91 },
             }),
-        ).toBe('Countdown: 2m');
+        ).toBe('Countdown: 1m 30s');
+        expect(
+            toForegroundDragLabel({
+                target: 'countdown',
+                data: { durationSecond: 301 },
+            }),
+        ).toBe('Countdown: 5m');
+        expect(
+            toForegroundDragLabel({
+                target: 'countdown',
+                data: { durationSecond: 3946 },
+            }),
+        ).toBe('Countdown: 1h 5m 45s');
+        expect(
+            toForegroundDragLabel({
+                target: 'countdown',
+                data: { durationSecond: 1 },
+            }),
+        ).toBe('Countdown: 0s');
         expect(
             toForegroundDragLabel(
                 { target: 'quick-text', data: { markdownText: 'Hi' } },
@@ -98,6 +120,17 @@ describe('foreground drag helpers', () => {
         expect(
             manager.setStopwatchData.mock.calls[0][0].dateTime,
         ).toBeInstanceOf(Date);
+        // A row saved before Auto-start existed starts at once, as it always
+        // did -- and a stored row's lead second comes back off its length.
+        expect(manager.setCountdownData.mock.calls[0][0]).toMatchObject({
+            durationMillisecond: 59_000,
+        });
+        expect(
+            manager.setCountdownData.mock.calls[0][0].pausedMillisecond,
+        ).toBeUndefined();
+        expect(
+            manager.setStopwatchData.mock.calls[0][0].pausedMillisecond,
+        ).toBeUndefined();
         expect(manager.setQuickTextData).toHaveBeenCalledWith(
             expect.objectContaining({
                 htmlText: '<p>Bold</p>',
@@ -105,5 +138,81 @@ describe('foreground drag helpers', () => {
             }),
         );
         expect(manager.addVideoData).toHaveBeenCalledWith({ id: 'v' });
+    });
+
+    test('replays a stored Screen Show row only for a plain screen id', async () => {
+        const manager = genManager();
+        await applyForegroundDragData(manager as any, {
+            target: 'screen',
+            data: { id: 1, extraStyle: { width: '30%' } },
+        });
+        expect(manager.addScreenData).toHaveBeenCalledWith({
+            id: 1,
+            extraStyle: { width: '30%' },
+        });
+        // A row from a hand-edited file names nothing that can be shown.
+        for (const id of ['1', -1, 2.5, undefined]) {
+            await applyForegroundDragData(manager as any, {
+                target: 'screen',
+                data: { id },
+            });
+        }
+        expect(manager.addScreenData).toHaveBeenCalledOnce();
+        expect(
+            toForegroundDragLabel(
+                { target: 'screen', data: { id: 1 } },
+                (key) => `t:${key}`,
+            ),
+        ).toBe('t:Screen Show: 1');
+        expect(toForegroundDragIconName('screen')).toBe('display');
+    });
+
+    test('a row dragged with Auto-start off goes up stopped', async () => {
+        const manager = genManager();
+        await applyForegroundDragData(manager as any, {
+            target: 'countdown',
+            data: { durationSecond: 301, isAutoStart: false },
+        });
+        await applyForegroundDragData(manager as any, {
+            target: 'stopwatch',
+            data: { isAutoStart: false },
+        });
+        expect(manager.setCountdownData.mock.calls[0][0]).toMatchObject({
+            durationMillisecond: 300_000,
+            pausedMillisecond: 300_000,
+        });
+        expect(manager.setStopwatchData.mock.calls[0][0]).toMatchObject({
+            pausedMillisecond: 0,
+        });
+    });
+
+    test('stamps the row that put a slot widget up, so the run sheet can tell rows apart', async () => {
+        const manager = genManager();
+        const fiveMinutes = { durationSecond: 300 };
+        await applyForegroundDragData(manager as any, {
+            target: 'countdown',
+            data: fiveMinutes,
+        });
+        await applyForegroundDragData(manager as any, {
+            target: 'stopwatch',
+            data: {},
+        });
+        await applyForegroundDragData(manager as any, {
+            target: 'quick-text',
+            data: { markdownText: 'Hi' },
+        });
+        expect(manager.setCountdownData.mock.calls[0][0].rowKey).toBe(
+            toForegroundRowKey(fiveMinutes),
+        );
+        expect(manager.setStopwatchData.mock.calls[0][0].rowKey).toBe(
+            toForegroundRowKey({}),
+        );
+        expect(manager.setQuickTextData.mock.calls[0][0].rowKey).toBe(
+            toForegroundRowKey({ markdownText: 'Hi' }),
+        );
+        // Two rows that differ only in their numbers are two different keys.
+        expect(toForegroundRowKey({ durationSecond: 300 })).not.toBe(
+            toForegroundRowKey({ durationSecond: 600 }),
+        );
     });
 });

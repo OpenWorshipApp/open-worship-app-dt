@@ -20,6 +20,8 @@ export type QuestionResourcesType = {
     related?: string[];
     /** The exact visible control to ring, in `owa_find_ui`'s syntax. */
     find?: string;
+    /** Words the passage of the recipe that answers it opens on. */
+    passage?: string;
     /** A native menu path, which cannot be ringed: `"View → Widgets"`. */
     menu?: string;
     /** The keystroke that does it, written the way the manual writes it. */
@@ -33,13 +35,17 @@ export type QuestionResourcesType = {
 export type QuestionRowType = {
     /** `<page>.<section>.<question>`, stable across edits to the wording. */
     id: string;
+    /** The words SHOWN: the app language's once an overlay is applied. */
     text: string;
+    /** The row's English words, whatever it shows. */
+    textEn: string;
     kind: 'howto' | 'where' | 'what' | 'state' | 'fix';
     page: string;
     pageLabel: string;
     focus: QuestionFocusType;
     section: string;
     sectionLabel: string;
+    sectionLabelEn: string;
     panel: string | null;
     keywords: string[];
     starter: boolean;
@@ -53,11 +59,15 @@ export type QuestionRowType = {
 export type QuestionSectionType = {
     id: string;
     label: string;
+    /** The English label, once an overlay has put its translation in `label`. */
+    labelEn?: string;
     panel?: string;
     recipes?: string[];
     questions: {
         id: string;
         text: string;
+        /** The English words, once an overlay has put its translation in `text`. */
+        textEn?: string;
         kind?: QuestionRowType['kind'];
         keywords?: string[];
         starter?: boolean;
@@ -85,7 +95,29 @@ export type MatchOptionsType = {
     limit?: number;
 };
 
+/** One `questions/i18n/<code>.json`. */
+export type QuestionOverlayType = {
+    lang: string;
+    updated?: string;
+    sections?: Record<string, { en: string; text: string }>;
+    questions?: Record<string, { en: string; text: string }>;
+};
+
+export function applyQuestionOverlay(
+    pages: QuestionPageType[],
+    overlay: QuestionOverlayType | null | undefined,
+): QuestionPageType[];
+
 export function flattenQuestions(pages: QuestionPageType[]): QuestionRowType[];
+
+export function findTemplateSample(
+    text: string,
+): { at: number; sample: string; kind: number } | null;
+
+export function toEnglishTemplateAsk(
+    typed: string,
+    rows: QuestionRowType[],
+): string | null;
 
 export function matchQuestions(
     query: string,

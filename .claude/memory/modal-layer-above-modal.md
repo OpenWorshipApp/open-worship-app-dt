@@ -4,7 +4,8 @@ description: "Floating widget above a modal: ModalLayerContext for widgets in th
 metadata:
   node_type: memory
   type: project
-  modified: 2026-08-30T00:00:00.000Z
+  modified: 2026-10-09T03:05:54.344Z
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
 ---
 
 From `3f7253ac` ("fixed in floating-widget and modal", 2026-08-16). A floating
@@ -32,5 +33,7 @@ resize-actor, full-view).
 
 Also notable: this commit added `src/app-modal/floatingWidgetModalLayer.test.tsx`,
 but the `47053c9d` test prune (2026-08-24, a week later) deleted it again — the
-modal-layer invariants are **unit-untested today**; verify layering live
+`ModalLayerContext` route is **unit-untested today** (only the explicit
+`isAboveModal` class is asserted, by
+`src/keyboard-shortcut/KeyboardShortcutsComp.test.tsx`); verify layering live
 ([[appprovider-mock-node-env]]).

@@ -1,3 +1,7 @@
+// `SCREEN_FONT_FAMILY` in `screenFontFamily.ts` repeats this stack for the
+// foreground layer and for slide text with no font of its own, which the
+// presenter's mini preview, the thumbnails and the editor also draw. Change
+// both together.
 body {
   font-family:
     system-ui,
@@ -139,4 +143,17 @@ q:after {
 table {
   border-collapse: collapse;
   border-spacing: 0;
+}
+
+// A PDF or Word page shown full width scrolls from the presenter (its sync
+// scroll), never by a hand on the projector: the browser's scrollbar was
+// painted down the right edge -- and along the bottom for Word -- of every
+// screen, virtual display and MP4. Only the screen page loads this file; the
+// presenter's Mini Screen keeps its scrollbar for the operator's mouse.
+#slide .half-scale-container {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

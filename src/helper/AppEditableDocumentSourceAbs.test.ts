@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
     deleteMetaDataFileMock,
+    deleteTransitionMetaDataFileMock,
     createNewFileDetailMock,
     getMimetypeExtensionsMock,
     handleErrorMock,
@@ -9,6 +10,7 @@ const {
     editingHistoryGetInstanceMock,
 } = vi.hoisted(() => ({
     deleteMetaDataFileMock: vi.fn(),
+    deleteTransitionMetaDataFileMock: vi.fn(),
     createNewFileDetailMock: vi.fn(),
     getMimetypeExtensionsMock: vi.fn(),
     handleErrorMock: vi.fn(),
@@ -25,6 +27,11 @@ vi.mock('../editing-manager/EditingHistoryManager', () => ({
 vi.mock('../others/AttachBackgroundManager', () => ({
     attachBackgroundManager: {
         deleteMetaDataFile: deleteMetaDataFileMock,
+    },
+}));
+vi.mock('../others/SlideTransitionManager', () => ({
+    slideTransitionManager: {
+        deleteMetaDataFile: deleteTransitionMetaDataFileMock,
     },
 }));
 
@@ -319,6 +326,8 @@ describe('AppEditableDocumentSourceAbs', () => {
 
         await documentSource.preDelete();
         expect(deleteMetaDataFileMock).toHaveBeenCalledWith(filePath);
+        // Its slides' own transitions go with it too.
+        expect(deleteTransitionMetaDataFileMock).toHaveBeenCalledWith(filePath);
         // The whole folder, not the Discard button: that one no-ops when there
         // is nothing to walk back, and left the history behind for the next
         // file of this name to inherit.

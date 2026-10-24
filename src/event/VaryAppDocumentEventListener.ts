@@ -1,7 +1,7 @@
 import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
 import {
     THUMBNAIL_WIDTH_SETTING_NAME,
-    DEFAULT_THUMBNAIL_SIZE_FACTOR,
+    DEFAULT_THUMBNAIL_SCALE,
 } from '../app-document-list/appDocumentTypeHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { getSetting, useStateSettingNumber } from '../helper/settingHelpers';
@@ -40,7 +40,7 @@ export function useVarySlideSelecting(
 
 export function useVarySlideThumbnailSizeScale({
     settingName = THUMBNAIL_WIDTH_SETTING_NAME,
-    defaultSize = Math.fround(DEFAULT_THUMBNAIL_SIZE_FACTOR / 30),
+    defaultSize = DEFAULT_THUMBNAIL_SCALE,
 }: {
     settingName?: string;
     defaultSize?: number;

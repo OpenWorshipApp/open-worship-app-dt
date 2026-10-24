@@ -2,110 +2,226 @@
 id: W-34
 title: "Add a Bible translation from the internet (XML), and make it read in its own language"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, RD-11, LT-01]
-screenshots: 7
+verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, CB-145, LT-01]
+screenshots: 11
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
-W-33 moves translations you already have. This one **adds a new translation from a link** —
-the way `ពគប` (Khmer BFBS 1954) was added — with no file to download by hand and no file
-manager: every step is in the app.
+Sharing your translations moves the ones you already have to another machine. This workflow
+adds a translation from an XML link and lets you review its language and mappings before
+saving it.
 
-The example throughout is the free Beblia XML collection, whose Khmer edition lives at
-`https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSBible.xml`.
-Any XML in the app's format works the same way (**Import XML File → ?** shows the format).
+Example: `https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`.
+The GitHub redirect works as supplied. You can also use **[en:tran:Choose File]** for
+an XML file already on your computer.
 
-**Part 1 — bring the file in**
+**The easy way: let the assistant do it**
 
-1. Open **Settings** (Tools → Settings, or the ⚙ button) and pick the **[en:tran:Bible]** tab. Top-left is the **[en:tran:Import XML File]** box. 📸
-2. Leave **Choose File** alone and paste the link into the **URL:** box instead. As soon as
-   the link is a valid address the file row dims out and **[en:tran:Import]** lights up.
-   (A malformed address turns the box red with the tip **Invalid URL**.)
-3. Click **Import**. A progress line walks through **Downloading file… → Reading file… →
-   Deleting file…** — the app fetches the file itself, reads it, and throws the download
-   away. Bibles are big; the Khmer one is about 14 MB, so give it a moment.
-   > A GitHub `…/raw/…` link is fine as-is — the app follows the redirect. So is any plain
-   > `http://` address, e.g. a file served off another laptop on your own network.
+**Import from the internet with the assistant.** Open **[en:tran:Settings]** → **[en:tran:Bible]** → **[en:tran:Let the assistant import a Bible for me]**, then accept the AI caution with **[en:tran:Open]**. Before it asks which language, it checks for the **KJV** Bible Open Worship provides. On a computer that does not have it, it says so, recommends it, and carries **Create the provided KJV**: press that, and the app writes its own KJV with no internet and no download. The import you asked for then starts again from its language question. Choose the language and the Bible edition, read where it comes from, and press **[en:tran:I agree]**. Choose an unused short name, confirm the language, choose the numbers when asked, then choose one of the book-name lists. After all four choices, review the summary and press **[en:tran:Install it]**. Choose the installed translation from the Bible version button. You do not need a link or an AI key: this runs on buttons.
 
-**Part 2 — name it (the "Key is missing" question)**
+1. Open **[en:tran:Settings]** (the gear at the top of the window) → **[en:tran:Bible]** and press the blue
+   **[en:tran:Let the assistant import a Bible for me]** at the top of
+   **[en:tran:Import XML File]**. (Or open the assistant 🤖 and type
+   `Import bible for khmer`, `Import bible`, or `Import bible from` and a link. Say it
+   your own way: `I want a Khmer bible`, `Do you have a Korean bible?` and a country —
+   `Import a Bible in Cambodia` — are understood too. And when you ask **how** to
+   import a Bible, the answer has an **Import a Bible for me** button that starts
+   here.) Answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
+2. Before that question, a computer with no **KJV** is offered the one Open Worship
+   provides: **Create the provided KJV** writes it from the app's own copy, with no
+   internet and no download, and then the import starts again here. (If you only
+   wanted the KJV, that is done: press **Cancel** on the import.) Press **Import
+   another Bible anyway** to go on without it.
+   The assistant then asks **Which language do you want the Bible in?** Press
+   **Khmer**, **English** or **French**, or type the language — in English
+   or in its own words (`Thai`, `ខ្មែរ`, `Español`) — or paste a link to a Bible file.
+   **A file on this computer** opens the form below instead. A word it cannot find
+   (`kmer`) is answered with **Did you mean** and the nearest languages to press.
+3. It lists **every** Bible in that language from a free collection of about a
+   thousand (Beblia, on GitHub), each with the title its own file gives — for Khmer,
+   seven, from _Khmer Standard Version 1954 = Hammond Version_ to _Khmer BFBS (ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤)_. One you have installed is marked **you already have this
+   one**, with its short name. Press the one you want, or type its number. 📸
+4. It downloads and reads it, then says what it is — for example _66 books, 1,189
+   chapters, 31,102 verses_, or _It has the New Testament only_ — and, when it is one
+   you have, **You already have this Bible** with the name it is installed under
+   (press **Cancel**, or go on to keep a second copy under another name). Nothing is
+   installed yet.
+   Before it asks you anything, it says **where the Bible is from** and asks you to
+   agree: it was found on the internet — in the free collection on GitHub, with that
+   collection's address and the file's own — it is **not from Open Worship**, and you
+   are **responsible to its publisher**: a Bible translation belongs to the publisher
+   or Bible society that made it, and many are under copyright, so make sure the
+   publisher allows how you will use it. Both addresses are links: press one to open
+   it in your web browser, as **Open the website** does for the collection (or the
+   page the file was listed on). Press **I agree** to go on, or **Cancel** and
+   nothing is installed. 📸
+5. **Step 1 — a short name**: the options are the names this app knows a Bible
+   by, in the language the Bible is in — the language the next step confirms.
+   In Khmer **ពគប**, **គខប**, **គកស១៦**, **អគត**, **GKHB**, **KCB**; in
+   English **KJV**, **NKJV**, **NIV** and the rest; in French **LSG**. The one
+   the downloaded edition is named after comes first. Hover a key to read its
+   full name (Khmer 2023 is **GKHB**, hovering reads _ព្រះគម្ពីរខ្មែរសាកល_).
+   A short name a Bible is already installed under is not offered at all. A
+   language this app has no names for — Thai — shows the file's own suggested
+   names instead. You can also type your own, letters and numbers with no
+   spaces; a name you type that you already have is refused and asked again.
+6. **Step 2 — the language**: it says which it looks like and why (_the verses are
+   written in Khmer script_). Press it, or type another, such as `ខ្មែរ`.
+   Your choice controls the imported Bible's book names and numbers, even when
+   the file was detected as another language. You can change it again while
+   choosing numbers or book names; the choices reload for that language.
+7. **Step 3 — numbers**: **០ ១ ២ ៣ …** or **0 1 2 3 …** (skipped for a language that
+   writes 0–9).
+8. **Step 4 — book names**: each list shows its first names, the names only it has,
+   and how many of its names appear in this Bible's own verses; the suggested one
+   uses the most. **Find more lists online** adds lists from Bible.com and
+   Wordproject. You can also paste a Bible website link here, including a chapter
+   link. The assistant reads that edition's book-name list in your selected
+   language and shows a source link. If it cannot find a complete matching list,
+   your previous choices remain. 📸
+9. **Ready to install** sums it up. Press **Install it**. _Done — KSV is installed_:
+   choose it from the Bible version button. **Undo** under that answer moves it to
+   the trash again. **Add another Bible** under it starts another import in the
+   same conversation, back at the language question — nothing of the one just
+   installed is carried over. **Cancel** at any step stops with nothing installed.
 
-4. Most XML bibles on the internet carry no short code, so the app asks: a **Key is
-   missing** window with **Define a Bible key**, a **Key:** box, and a row of **Guessing
-   keys:** buttons. 📸
-   The buttons are every word the app could find in the file's own header, so one of them
-   is usually the right answer — for the Khmer file the publisher left a bible.com address
-   in the header ending in `…GEN.23.ពគប`, and **`ពគប` is offered as a button**. Click it and
-   the box fills in. Otherwise type your own short code; anything works, including Khmer.
-   > A code you already use is refused — the box turns red with **Key is already taken**.
-   > This code is the badge you will see everywhere in the app, and it also becomes the
-   > file name, so **choose it now**: changing it later in the editor renames the badge but
-   > not the file.
-5. Click **Ok**. The app asks once more — **Confirm Key for Bible**, _Do you want to
-   continue with key="ពគប"?_ — click **Yes**. (**No** takes you back to the box; the way
-   out entirely is **Cancel** then **No**.)
-6. The new translation appears in the **Bibles XML** list on the right, badge on the left
-   and full title beside it. 📸 It works already — but if it is not an English bible, read on.
+You can type instead of pressing at every step: `yes` (or `ok`) takes the suggested
+choice — under the notice of where it is from, **I agree**; at the end, **Install it**
+— a number takes that line of a list (`2`,
+`list 2`), the words on a button press it, and `cancel` stops.
 
-**Part 3 — make it read in its own language**
+Pasting a link works the same way, and the link does not have to be the file: a
+GitHub **page** of the file is turned into its download address, and a GitHub
+**repository** lists its Bible files — type a word (`Khmer`, then `2019`) to narrow
+the list. Under the language question, and under an answer that says a link did not
+lead to a Bible, the link can be pasted on its own.
 
-A file downloaded from the internet almost never says what language it is in, so the app
-assumes English: book names in English, `1 2 3` instead of `១ ២ ៣`, and the translation
-filed under **English** in the bible menu. Three settings fix that, and **the order
-matters** — the last two take their suggestions from the language you set first.
+**When a window says a Bible is not available**
 
-7. Click the ✏️ **pencil** next to your new translation. The **Info** tab opens a text
-   editor holding the translation's settings. **Right-click inside it** — below the usual
-   editing commands are three of the app's own:
-   **🌎 Choose Locale**, **#️⃣ Edit Numbers Map**, **📚 Edit Books Map**. 📸
-8. **🌎 Choose Locale** first. Pick the language from the list — for Khmer that is
-   **km-KH (Khmer (ភាសាខ្មែរ))**. The `"locale"` line in the editor changes and the bar at
-   the bottom starts warning **Unsaved changes**.
-9. **#️⃣ Edit Numbers Map** next. The window is titled **Numbers map** and now says _Define
-   numbers map for km_ — because of step 8. Click **Use ១ ២ ៣** to fill in that language's
-   own digits and click **Ok**. (There is also a **Translate** link to Google Translate if
-   your language is not one the app knows.) 📸
-10. **📚 Edit Books Map** last. This opens the 66 book names, one per line, with the
-    English name of each book shown down the left so you can never lose your place. Click
-    **📖 Guessing Names** — the app lists the book-name sets it ships for that language,
-    labelled by the translations that use them (for Khmer: `អគត`, `ពគប, គកស១៦, GKHB`,
-    `គខប`), with the set matching your code shown first and in bold. Pick one and all 66
-    lines fill in. Click **Ok**. 📸
-    > No set to pick from? Use **Translate** to translate the whole list in one go, paste
-    > it back, and — if what you paste comes back as web markup — **Parse Markup String**
-    > cleans it up. **Reset** puts the English names back.
-11. Click **Save**. The app reloads its windows, which is normal.
-12. Check it: in the **Bible Reader**, open the bible chooser. Your translation has moved
-    out of **English** and now sits under its own language heading, and its references read
-    in its own script and numerals — `(ពគប) កិច្ចការ ២៨:១៥` rather than `(ពគប) Acts 28:15`. 📸
+The Bible Reader or the Bible Lookup opens on _Bible key "KJV" is not available!_ when
+it is set to a Bible this computer does not have — on a new computer, the KJV. **For the
+KJV the card asks first**, once per window: a question titled
+**[en:tran:Create the KJV Bible?]** says Open Worship provides it and that creating it
+needs no internet and no separate download, with **[en:tran:Create the provided KJV]**
+and **[en:tran:Cancel]**. Agreeing writes the copy the app carries inside itself, with a
+progress bar while it does, and the card goes away by itself in every window.
+**[en:tran:Cancel]** leaves the card exactly as it was, with the same
+**[en:tran:Create the provided KJV]** button under its heading (a window that cannot draw
+a question shows that button alone). 📸
+
+For any other missing Bible the card says how the assistant gets a Bible in your
+language, in three steps, and carries the button:
+
+1. Press **[en:tran:Let the assistant import a Bible for me]** on that card and
+   answer the _Be careful with AI_ question with **[en:tran:Open]**. 📸
+2. The assistant opens in a new tab already asking for a Bible in the language this
+   window is shown in — Khmer in a Khmer window. A computer with no **KJV** is offered
+   the one Open Worship provides first: press **Create the provided KJV**. It is
+   written from the app's own copy with no internet and no download, and the Reader's
+   card goes away by itself. Then the import starts again from its language question;
+   if you only wanted the KJV, press **Cancel** there. 📸
+3. Press the Bible you want in the list, or type its language (`Khmer`), then read
+   where it comes from and press **I agree**. Choose its short name, language, numbers
+   and book names as above, then press **Install it**. 📸
+4. The imported Bible appears in the list at the top of the card: choose it there,
+   and the card goes away with the passage showing.
+
+Typing `Import the Bible called "KJV"` in the assistant gets the same offer: the
+provided KJV first. Pasting a link to an English KJV from the internet is answered
+with a sentence saying Open Worship provides it and recommends it; **Use the internet
+copy anyway** still lets you install the downloaded file, after the source notice and
+**I agree**.
+
+**Import a Bible XML file with the form.** Give it the link or choose the file, press
+**[en:tran:Import]**, answer the review, and press **[en:tran:Import]** again to install it:
+
+1. Open **[en:tran:Settings]** → **[en:tran:Bible]**. In
+   **[en:tran:Import XML File]**, paste the link into **[en:tran:URL:]** — or, for an XML
+   file already on this computer, press **[en:tran:Choose File]** and pick it.
+2. Press **[en:tran:Import]**. The download is read and its temporary file removed.
+   **[en:tran:Review Bible import]** appears with the translation title. Nothing has
+   been installed yet. 📸
+3. Choose an unused **[en:tran:Bible key]**. Buttons suggest a language code, a code
+   with the year, and usable words from the file header; you can type your own key.
+   This becomes the badge and file name. Empty, unsafe or already installed keys
+   cannot be imported, and the key is checked again when saving.
+4. Review **[en:tran:Locale]**. A locale stored in the XML is kept; otherwise the
+   filename provides a hint. `KhmerBible.xml` suggests `km-KH`. You can correct it.
+5. Choose **[en:tran:Number mapping]**. Khmer offers `០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩` first
+   and `0 1 2 3 4 5 6 7 8 9` as an alternative.
+6. Choose **[en:tran:Book name mapping]**. Built-in Khmer naming sets appear first;
+   online lookup adds complete lists from Bible.com and Wordproject. Each option
+   shows its edition/source, and **[en:tran:Preview book names]** expands all 66 names.
+   **[en:tran:Keep existing book names]** preserves the names already in the XML.
+   The recommended option is a suggestion: select the wording your church uses.
+   **[en:tran:Find more editions]** checks another batch when available;
+   **[en:tran:Search for more book name lists]** opens a wider web search.
+   If online sources fail, you can still choose built-in names or keep the existing map.
+7. Press **[en:tran:Import]** in the review. The new translation appears in
+   **[en:tran:Bibles XML]**. **[en:tran:Cancel]** exits the review without saving. 📸
+
+**Where an imported Bible came from**
+
+Every Bible imported this way — by the assistant or with the form — keeps a note of
+where it came from: when it was imported and by whom, the link it was downloaded from
+(and the file link really used, when a GitHub page was turned into its file), the
+file's name and size, how many books, chapters and verses it has, and the key,
+language, numbers and book names chosen for it. In **[en:tran:Bibles XML]** its row
+shows **[en:tran:Source]:** and that link — press it to open the page in your
+browser — and **[en:tran:Note]** under it opens the whole note. 📸 The note is part of
+the Bible's info (`"note"` in the pencil → **[en:tran:Info]** editor), so you can add
+to it or clear it there, and a Bible you export (W-33) takes it along. A Bible
+imported before this note existed has none.
+
+A Bible already installed whose book names or numbers still read in English needs no
+second import, and nothing of the import — its review, the assistant's steps — is
+needed again. Later changes remain available through the pencil beside the translation in
+**[en:tran:Settings]** → **[en:tran:Bible]** (its name opens nothing) → **[en:tran:Info]** editor.
+Right-click inside that editor for its three commands, in this order: first
+**🌎 [en:tran:Choose Locale]**, and pick the language; then **#️⃣ [en:tran:Edit Numbers Map]**,
+and press **[en:tran:Ok]**; then **📚 [en:tran:Edit Books Map]**, which opens the 66 book
+names one to a line — press **[en:tran:Guessing Names]** to fill them from the lists the app
+has for that language, or type your own, and press **[en:tran:Ok]**. Those editor actions use
+the locale currently in the editor buffer; save after editing.
+
+**[en:tran:Key is already taken]**
+
+If it says the Bible key is already taken, choose a different unused key in the review.
+The installed translation is kept. Import does not replace it, even if another window
+installed that key while you were choosing mappings. Cancel if you meant to edit the
+existing Bible, then use its pencil instead.
 
 > **Removing one.** The 🗑 next to a translation asks _Are you sure to delete bible XML
-> "…"?_ — **Yes** sends the file to the Recycle Bin. Its badge disappears from every bible
+> "…"?_ — **[en:tran:Yes]** sends the file to the Recycle Bin. Its badge disappears from every bible
 > menu. The sibling `…​.xml.cache` folder is removed too, so stale parsed data cannot
 > reappear if the same key is imported later.
 
 > **Putting the KJV back.** The **KJV** row — and only that row — carries an extra
 > orange ↺ button, **[en:tran:Reset Bible XML]**, to the LEFT of the ✏️ pencil.
 > It asks _Reset this bible XML with the app embedded KJV? All your changes will be
-> lost._ — **Yes** throws away the KJV file you have and writes the copy that ships inside
-> the app (the same copy the **Create KJV Bible XML** row below writes),
+> lost._ — **[en:tran:Yes]** throws away the KJV file you have and writes the copy that ships inside
+> the app (the same copy the **[en:tran:Create KJV Bible XML]** row below writes),
 > then reloads the windows. Use it when your KJV has been edited into a state you no longer
 > want, or looks broken; there is no undo, so export it first (W-33) if you want it back.
 > If the KJV editor is open with unsaved changes the button refuses and warns
-> **Unsaved Bible Data** — save or discard first.
+> **[en:tran:Unsaved Bible Data]** — save or discard first.
 >
 > **Deleted it by mistake?** The KJV is the one translation the app carries inside
 > itself, so it can always be rebuilt. Whenever your list has no **KJV**, a green
 > **[en:tran:Create KJV Bible XML]** row sits at the TOP
-> of the **Bibles XML** list, above the translations — not only on a brand-new install
+> of the **[en:tran:Bibles XML]** list, above the translations — not only on a brand-new install
 > with nothing in the list. Click it and the KJV comes back; the button then disappears
-> because there is nothing left to create.
+> because there is nothing left to create. Any other translation is not carried inside the
+> app. Its file went to the Recycle Bin when it was deleted, and the way back is to import
+> it again the way it came in — **[en:tran:Let the assistant import a Bible for me]**, or
+> **[en:tran:Import XML File]** with its link or file.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `RD-11` · `LT-01`
+`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `CB-145` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

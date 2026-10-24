@@ -1,6 +1,15 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { describeToolCall, watchToolCalls } from './notify.mjs';
+import {
+  describeToolCall,
+  describeToolNotice,
+  genNoticeExpression,
+  genNoticeWords,
+  listNoticeTranKeys,
+  watchToolCalls,
+} from './notify.mjs';
+import { loadTranBundle } from './tran.mjs';
 
 // No banner is drawn here: the app may not be running, and a test must not
 // reach out to it. The transport seam is what matters.
@@ -83,6 +92,44 @@ describe('presenting a passage names the passage', () => {
                 action: 'check',
             }),
         ).toBeNull();
+    });
+});
+
+// A found verse opened in the Bible Lookup replaces the passage being read,
+// so the banner names it; a search or a read of references stays quiet.
+describe('opening a found verse names the verse', () => {
+    it('a book-name URL announces the supplied site', () => {
+        expect(
+            describeToolNotice('owa_bible_xml', {
+                action: 'names',
+                url: 'https://example.org/books',
+            }),
+        ).toMatchObject({
+            text: 'read a page on example.org',
+            key: 'read a website',
+            detail: ['example.org'],
+        });
+    });
+    it('names a verse, and only a verse', () => {
+        expect(describeToolCall('owa_find_verse', { open: 'JHN 3:16' })).toBe(
+            'opened JHN 3:16 in the Bible Lookup',
+        );
+        expect(
+            describeToolCall('owa_find_verse', { open: '1 John 4:18-19' }),
+        ).toBe('opened 1 John 4:18-19 in the Bible Lookup');
+        expect(
+            describeToolCall('owa_find_verse', { open: 'the one about love' }),
+        ).toBe('opened a verse in the Bible Lookup');
+    });
+
+    it('says nothing for a search or a read', () => {
+        expect(
+            describeToolCall('owa_find_verse', { words: 'love enemies' }),
+        ).toBeNull();
+        expect(
+            describeToolCall('owa_find_verse', { refs: 'John 3:16' }),
+        ).toBeNull();
+        expect(describeToolCall('owa_find_verse', {})).toBeNull();
     });
 });
 
@@ -258,10 +305,339 @@ describe('the data tools name what they changed', () => {
         expect(describeToolCall('owa_bible_note', { action: 'read' })).toBeNull();
     });
 
+    it('names the Bible installed, changed or removed, and where it came from', () => {
+        expect(
+            describeToolCall('owa_bible_xml', {
+                action: 'check',
+                url: 'https://github.com/Beblia/x/raw/master/KhmerBible.xml',
+            }),
+        ).toBe('downloaded a Bible file from github.com');
+        expect(
+            describeToolCall('owa_bible_xml', { action: 'import', key: 'KSV' }),
+        ).toBe('installed the Bible "KSV"');
+        expect(
+            describeToolCall('owa_bible_xml', { action: 'delete', key: 'KSV' }),
+        ).toBe('moved the Bible "KSV" to the trash');
+        expect(describeToolCall('owa_bible_xml', { action: 'list' })).toBeNull();
+        expect(describeToolCall('owa_bible_xml', { action: 'cancel' })).toBeNull();
+    });
+
     it('announces an undo, and not a look at the list', () => {
+        // A key names itself; a run-sheet change names the sheet and what
+        // went in. Reading a sheet says nothing; a call with no action at
+        // all (the audit script's probe) gets the generic news.
+        expect(describeToolCall('owa_press_key', { keys: 'F5' })).toBe(
+            'pressed F5',
+        );
+        expect(describeToolCall('owa_drag', { from: 'a', to: 'b' })).toBe(
+            'dragged something',
+        );
+        expect(
+            describeToolCall('owa_menu', { action: 'click', item: 'View > Reload' }),
+        ).toBe('chose View > Reload in the menu');
+        expect(describeToolCall('owa_scroll', { find: 'Document List' })).toBe(
+            'scrolled a list',
+        );
+        expect(
+            describeToolCall('owa_media_file', {
+                action: 'delete',
+                kind: 'video',
+                name: 'bg.mp4',
+            }),
+        ).toBe('moved the media file "bg.mp4" to the trash');
+        expect(
+            describeToolCall('owa_media_file', {
+                action: 'import',
+                kind: 'image',
+                path: 'C:\\pics\\sunrise.jpg',
+            }),
+        ).toBe('imported "C:\\pics\\sunrise.jpg" from the disk');
+        expect(
+            describeToolCall('owa_media_file', { action: 'list', kind: 'image' }),
+        ).toBeNull();
+        expect(describeToolCall('owa_menu', { action: 'list' })).toBeNull();
+        expect(
+            describeToolCall('owa_presenting_flow', {
+                action: 'add',
+                name: 'Sunday',
+                document: 'Amazing Grace',
+            }),
+        ).toBe('added "Amazing Grace" to the run sheet "Sunday"');
+        expect(
+            describeToolCall('owa_presenting_flow', {
+                action: 'add',
+                name: 'Sunday',
+                reference: 'John 3:16',
+            }),
+        ).toBe('added John 3:16 to the run sheet "Sunday"');
+        expect(
+            describeToolCall('owa_presenting_flow', {
+                action: 'remove',
+                name: 'Sunday',
+                line: 2,
+            }),
+        ).toBe('removed a line from the run sheet "Sunday"');
+        expect(
+            describeToolCall('owa_presenting_flow', {
+                action: 'delete',
+                name: 'Sunday',
+            }),
+        ).toBe('moved the run sheet "Sunday" to the trash');
+        expect(describeToolCall('owa_presenting_flow', {})).toBe(
+            'changed a run sheet',
+        );
+        for (const action of ['list', 'info']) {
+            expect(
+                describeToolCall('owa_presenting_flow', { action, name: 'x' }),
+            ).toBeNull();
+        }
         expect(describeToolCall('owa_undo', { action: 'undo' })).toBe(
             'put back an earlier change',
         );
         expect(describeToolCall('owa_undo', { action: 'list' })).toBeNull();
     });
+});
+
+// Reported 2026-10-06: the banner stayed English in a Khmer window. It is said
+// in the language the app is DISPLAYING now, through the app's own dictionary,
+// and a phrase the dictionary does not have yet is said in English WHOLE.
+describe('the banner speaks the language the app is shown in', () => {
+  // A dictionary as `tran.mjs` hands it over: sanitized keys.
+  const dictionaries = {
+    km: {
+      'app assistant': 'ជំនួយការកម្មវិធី',
+      'clicked something': 'បានចុចអ្វីមួយ',
+      'took a foreground extra off the screen': 'បានដកធាតុផ្ទៃខាងមុខ',
+      countdown: 'រាប់ថយក្រោយ',
+      'read a website': 'បានអានគេហទំព័រ',
+    },
+    fr: { assistant: 'Assistant', 'app assistant': "Assistant de l'application" },
+  };
+
+  it('carries a name-free key and the names apart from it', () => {
+    expect(
+      describeToolNotice('owa_read_website', {
+        url: 'https://en.wikipedia.org/wiki/KJV',
+      }),
+    ).toEqual({
+      text: 'read a page on en.wikipedia.org',
+      key: 'read a website',
+      detail: ['en.wikipedia.org'],
+    });
+    expect(
+      describeToolNotice('owa_slide_file', {
+        action: 'update-slide',
+        name: 'Sunday',
+        slide: 3,
+      }),
+    ).toEqual({
+      text: 'changed slide 3 of "Sunday"',
+      key: 'changed a slide',
+      detail: ['"Sunday"', '#3'],
+    });
+    // No name given: the detail is empty rather than English filler.
+    expect(describeToolNotice('owa_lyric_file', { action: 'delete' })).toEqual(
+      {
+        text: 'moved a song to the trash',
+        key: 'moved a song to the trash',
+        detail: [],
+      },
+    );
+  });
+
+  it('translates the phrase, who is acting, and a detail word the dictionary has', () => {
+    const words = genNoticeWords(
+      describeToolNotice('owa_click', {}),
+      dictionaries,
+    );
+    expect(words.en).toEqual({ who: 'Assistant', what: 'clicked something' });
+    // `Assistant` is not in the Khmer dictionary yet: the app's own name for
+    // the assistant stands in.
+    expect(words.km).toEqual({
+      who: 'ជំនួយការកម្មវិធី',
+      what: 'បានចុចអ្វីមួយ',
+    });
+    const stopped = genNoticeWords(
+      describeToolNotice('owa_foreground', {
+        action: 'stop',
+        widget: 'countdown',
+      }),
+      dictionaries,
+    );
+    expect(stopped.km.what).toBe('បានដកធាតុផ្ទៃខាងមុខ · រាប់ថយក្រោយ');
+    // A site is a site in every language.
+    const read = genNoticeWords(
+      describeToolNotice('owa_read_website', { url: 'https://example.com/x' }),
+      dictionaries,
+    );
+    expect(read.km.what).toBe('បានអានគេហទំព័រ · example.com');
+  });
+
+  it('leaves a language out, never half-translated, when it lacks the phrase', () => {
+    const words = genNoticeWords(
+      describeToolNotice('owa_click', {}),
+      dictionaries,
+    );
+    // French has who is acting but not "clicked something".
+    expect(words.fr).toBeUndefined();
+    expect(Object.keys(words).sort()).toEqual(['en', 'km']);
+  });
+
+  // The keys only `tools/` asks for are added to `src/lang/data/km` and
+  // `fr` by hand. Half a pair is the mistake that would go unnoticed: a
+  // French window keeps its English banner and nothing fails.
+  it('finds every banner key translated in both km and fr, or in neither', () => {
+    const bundle = loadTranBundle();
+    const km = bundle.dictionaries.km ?? {};
+    const fr = bundle.dictionaries.fr ?? {};
+    const halfDone = listNoticeTranKeys().filter((key) => {
+      const lowered = key.trim().toLowerCase();
+      return (km[lowered] === undefined) !== (fr[lowered] === undefined);
+    });
+    expect(halfDone).toEqual([]);
+  });
+});
+
+// The pill itself, evaluated the way the page gets it.
+describe('the banner in the page', () => {
+  beforeEach(() => {
+    delete window.__owaAgentNotice;
+    document.getElementById('owa-agent-notice-host')?.remove();
+    document.documentElement.lang = 'en';
+  });
+
+  function show(words) {
+    return new Function(`return (${genNoticeExpression(words)})`)();
+  }
+
+  function readPill() {
+    const root = document.getElementById('owa-agent-notice-host').shadowRoot;
+    return {
+      who: root.querySelector('.who').textContent,
+      what: root.querySelector('.what').textContent,
+      lang: root.querySelector('.pill').lang,
+      css: root.querySelector('style').textContent,
+    };
+  }
+
+  const words = {
+    en: { who: 'Assistant', what: 'clicked something' },
+    km: { who: 'ជំនួយការ', what: 'បានចុចអ្វីមួយ' },
+  };
+
+  it('picks the words for the language the window is displaying', () => {
+    document.documentElement.lang = 'km';
+    expect(show(words)).toBe(true);
+    expect(readPill()).toMatchObject({
+      who: 'ជំនួយការ',
+      what: 'បានចុចអ្វីមួយ',
+      lang: 'km',
+    });
+  });
+
+  it('falls back to English for a language it has no words for', () => {
+    document.documentElement.lang = 'fr';
+    show(words);
+    expect(readPill()).toMatchObject({
+      who: 'Assistant',
+      what: 'clicked something',
+      lang: 'en',
+    });
+  });
+
+  // At the top centre it covered the header's Bible Lookup button and the
+  // title of every app dialog (2026-10-06).
+  it('sits at the bottom centre, clear of the header and dialog titles', () => {
+    show(words);
+    const pillRule = /\.pill \{([^}]*)\}/.exec(readPill().css)[1];
+    expect(pillRule).toContain('bottom: 14px');
+    expect(pillRule).not.toMatch(/\btop:/);
+  });
+
+  // "I want to see through" (2026-10-11): at 94% the pill hid the bottom row
+  // of whatever panel it landed on.
+  it('is glass, and solid only where the engine cannot blur', () => {
+    show(words);
+    const { css } = readPill();
+    const pillRule = /\.pill \{([^}]*)\}/.exec(css)[1];
+    expect(pillRule).toMatch(/\n\s*backdrop-filter: blur\(/);
+    const alpha = /background: rgba\([^)]*,\s*([\d.]+)\)/.exec(pillRule)[1];
+    expect(Number(alpha)).toBeLessThanOrEqual(0.5);
+    const fallback = /@supports not \(backdrop-filter: blur\(1px\)\) \{([^}]*)\}/;
+    expect(fallback.exec(css)[1]).toContain('rgba(16, 21, 28, 0.94)');
+  });
+
+  // The pill is never unmounted, so the blur must not outlive the fade.
+  it('paints nothing at rest', () => {
+    show(words);
+    const { css } = readPill();
+    expect(/\.pill \{([^}]*)\}/.exec(css)[1]).toContain('visibility: hidden');
+    expect(/\.pill\[data-shown="yes"\] \{([^}]*)\}/.exec(css)[1]).toContain(
+      'visibility: visible',
+    );
+  });
+
+  it('replaces a banner an older server left in the page', () => {
+    window.__owaAgentNotice = {
+      show() {
+        return 'old';
+      },
+    };
+    expect(show(words)).toBe(true);
+    expect(window.__owaAgentNotice.version).toBeGreaterThan(1);
+  });
+
+  // Robot run 20261020 F-1: in the Settings window the pill sat on top of
+  // Clear All Settings -- a destructive button whose label it hid. jsdom has
+  // no layout, so the box and the elements under it are supplied here.
+  it('lifts itself clear of a control it would cover', () => {
+    show(words);
+    const pill = document
+      .getElementById('owa-agent-notice-host')
+      .shadowRoot.querySelector('.pill');
+    const button = document.createElement('button');
+    button.getBoundingClientRect = () => ({ top: 700, height: 30 });
+    pill.getBoundingClientRect = () => ({
+      left: 100,
+      right: 400,
+      top: 741,
+      width: 300,
+      height: 32,
+    });
+    const hadElementsFromPoint = 'elementsFromPoint' in document;
+    document.elementsFromPoint = () => [{ closest: () => button }];
+    try {
+      show(words);
+      // innerHeight 768 in jsdom: clear of a control starting at 700.
+      expect(pill.style.bottom).toBe('76px');
+    } finally {
+      if (!hadElementsFromPoint) {
+        delete document.elementsFromPoint;
+      }
+    }
+  });
+
+  it('stays on the bottom row when it covers no control', () => {
+    show(words);
+    const pill = document
+      .getElementById('owa-agent-notice-host')
+      .shadowRoot.querySelector('.pill');
+    pill.getBoundingClientRect = () => ({
+      left: 100,
+      right: 400,
+      top: 741,
+      width: 300,
+      height: 32,
+    });
+    const hadElementsFromPoint = 'elementsFromPoint' in document;
+    document.elementsFromPoint = () => [{ closest: () => null }];
+    try {
+      show(words);
+      expect(pill.style.bottom).toBe('14px');
+    } finally {
+      if (!hadElementsFromPoint) {
+        delete document.elementsFromPoint;
+      }
+    }
+  });
 });

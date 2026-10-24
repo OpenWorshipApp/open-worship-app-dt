@@ -1,11 +1,14 @@
 ---
 name: free-keyless-chatbot-provider
-description: The chatbot answers with no API key via Kilo Code's free models; free models churn and are differently broken, not just weaker
+description: "The chatbot answers with no API key via Kilo Code's free models; free models churn and are differently broken, not just weaker"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: f0bdb2fa-4294-42f4-929f-9fbe6db268b7
+  modified: 2026-10-16T14:15:57.883Z
 ---
 
-The chatbot has a fourth provider, `Free`, that needs no API key: **Kilo Code**
+The chatbot has a provider, `Free`, that needs no API key: **Kilo Code**
 (`api.kilo.ai/api/gateway`), keyless and speaking OpenAI's protocol, so it
 rides the existing `askOpenAiCompatible` loop. Added 2026-09-01 with LLM7
 (`api.llm7.io`) as the default; **LLM7 was dropped 2026-09-12** when its
@@ -20,15 +23,25 @@ cannot converse, look at the app, or walk anyone through anything.
 **How to apply:**
 
 - The mechanism is `keyField` being UNSET on `LLM_PROVIDER_MAP.free`. Unset
-  means always-available; the map's ORDER puts it last, so a real key still
+  means always-available (`custom`, keyless too, is told apart by its `kind`); the map's ORDER puts it last, so a real key still
   wins and a keyless install lands on it by itself. Do not "fix" that into a
   flag or a default.
 - **Free catalogues churn inside weeks.** Before listing a model, drive it
-  through the REAL loop (the ~21 model-visible tools, read-only tools against
+  through the REAL loop (the model-visible tools, read-only tools against
   the live app, six rounds) on several corpus questions — a one-tool ping
   passes models that then return empty answers under the full schema. The
   2026-09-12 list: Nemotron Lightning 7/7 (first), Nex Pro 7/7, Step Flash 6/7
-  (kept: the only one that sees a picture). Routers (`kilo-auto/free`,
+  (kept: the only one that sees a picture). **Gone a month later**
+  (2026-10-16): Nex Pro and Step Flash answered 404 _does not exist_ to every
+  request — two rows of three dead, no free model left that saw a picture, and
+  nothing in the app said so beyond _not available to the account_ under each
+  answer (Auto handed the questions on; a tab set to either failed every
+  time). Re-qualified the same way: **Nemotron Super VL** first (sees
+  pictures), **Nemotron Super**, then Lightning, which timed out on 5 of 7 at
+  240 s that day. Check `GET api.kilo.ai/api/gateway/models` for the ids
+  before a release. **The new ones THINK out of the token cap**: at the old
+  2 000 one answer was cut mid-sentence and one came back empty, so Free has
+  its own `FREE_MAX_TOKENS` (6 000). Routers (`kilo-auto/free`,
   `openrouter/free`) hand each question to a different model and scored 4/7 and
   a raw `<tool_call>` answer — leave them out. Every id must end `:free`; an
   unsuffixed Kilo id is paid and refuses anonymous requests (a test holds it).
@@ -43,7 +56,8 @@ cannot converse, look at the app, or walk anyone through anything.
   provider 5xx and hands the question to another key. Before blaming a
   provider for a failed answer, read the chatbot window's console for which
   URL failed — on 2026-09-12 a host 500 and a dead free model looked alike.
-- Only `stepfun/step-3.7-flash:free` can see a picture.
+- Only `nvidia/nemotron-3.5-super-vl:free` can see a picture (was Step Flash
+  until it was withdrawn).
 - *More models…* is hidden for this provider on purpose: Kilo DOES answer
   `models.list` (377 names, 21 free), mostly paid and partly toolless.
 

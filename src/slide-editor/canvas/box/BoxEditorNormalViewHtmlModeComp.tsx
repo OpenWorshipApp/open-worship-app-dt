@@ -3,9 +3,11 @@ import CanvasItemHtml from '../CanvasItemHtml';
 import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
+import { useCanvasItemSafeHtml } from '../canvasItemSafeHtmlHelpers';
 
 export function BoxEditorNormalHtmlRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemHtmlPropsType>();
+    const html = useCanvasItemSafeHtml(props.html);
     try {
         CanvasItemHtml.validate(props);
     } catch (error) {
@@ -21,7 +23,7 @@ export function BoxEditorNormalHtmlRenderComp() {
                 ...CanvasItemHtml.genStyle(props),
             }}
             dangerouslySetInnerHTML={{
-                __html: props.html,
+                __html: html,
             }}
         />
     );

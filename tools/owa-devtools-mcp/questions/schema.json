@@ -134,6 +134,10 @@
                             "type": "string",
                             "description": "The exact visible control, in `owa_find_ui` syntax -- \"Background > Videos\" when a bare word is ambiguous."
                         },
+                        "passage": {
+                            "type": "string",
+                            "description": "Words the passage of the recipe that answers this question OPENS on, copied from the page (\"Under every answer is Copy\"). For a recipe too long to be read whole, when no control settles which part answers: that passage is what rides on the question and what the search quotes. `questions.test.mjs` fails when the page no longer carries the words."
+                        },
                         "menu": {
                             "type": "string",
                             "description": "A native menu path (\"View → Widgets\"). Use this instead of `find` for menu bar items: they are not in the DOM and cannot be ringed."

@@ -15,9 +15,16 @@ import { useBibleItemsViewControllerContext } from '../../bible-reader/BibleItem
 import BibleItem from '../../bible-list/BibleItem';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
-import type { BibleItemDataType } from '../screenTypeHelpers';
+import type { LongTextDataType } from '../screenTypeHelpers';
+import { getBibleItemData } from '../screenLongTextTypeHelpers';
+import { checkIsSameBibleTarget } from '../../helper/bible-helpers/bibleTargetHelpers';
 import { tran } from '../../lang/langHelpers';
 import { Fragment, useCallback, useMemo } from 'react';
+import {
+    getMirrorState,
+    getMirrorPanelShowing,
+    setMirrorPanelShowing,
+} from '../../screen-mirror/mirrorConnectionHelpers';
 import {
     genColorBar,
     genColorMap,
@@ -33,6 +40,22 @@ import {
 // of the card, so the menu is reachable without a right-click.
 export function openMiniScreenContextMenu(event: any) {
     showAppContextMenu(event, [
+        ...(getMirrorState()?.guests ?? []).map((guest) => ({
+            childBefore: genContextMenuItemIcon('pc-display'),
+            menuElement: `${guest.prefix}: ${guest.name}`,
+            onSelect() {
+                setMirrorPanelShowing(true, 'mirror');
+            },
+        })),
+        {
+            childBefore: genContextMenuItemIcon(
+                getMirrorPanelShowing() ? 'check-square' : 'square',
+            ),
+            menuElement: tran('Virtual Screens Manager'),
+            onSelect() {
+                setMirrorPanelShowing(!getMirrorPanelShowing());
+            },
+        },
         {
             childBefore: genContextMenuItemIcon('window-plus'),
             menuElement: tran('Add New Screen'),
@@ -88,25 +111,49 @@ function viewControllerAndScreenManagers(
         kjvVerseKey: string,
         isToTop: boolean,
     ) => {
-        for (const { screenBibleManager } of screenManagers) {
-            screenBibleManager.handleScreenVersesHighlighting(
+        for (const { screenLongTextManager } of screenManagers) {
+            // A verse clicked in the Reader is no row of a long text:
+            // writing it there would only drop that screen's own
+            // selected section.
+            if (screenLongTextManager.isShowingLongText) {
+                continue;
+            }
+            screenLongTextManager.handleScreenVersesHighlighting(
                 kjvVerseKey,
                 isToTop,
             );
         }
     };
-    for (const { screenBibleManager } of screenManagers) {
-        screenBibleManager.applyBibleViewData = (
-            bibleData: BibleItemDataType | null,
+    for (const { screenLongTextManager } of screenManagers) {
+        screenLongTextManager.applyBibleViewData = (
+            viewData: LongTextDataType | null,
         ) => {
+            // Only a Bible passage is the Reader's to follow.
+            const bibleItemData = getBibleItemData(viewData);
             if (
-                bibleData?.bibleItemData?.bibleItem.target &&
-                bibleData.bibleItemData.renderedList.length > 0
+                bibleItemData?.bibleItem.target &&
+                bibleItemData.renderedList.length > 0
             ) {
+                const { target } = bibleItemData.bibleItem;
+                // The same passage in the same versions already: a screen
+                // drawn one chapter deeper (`...`) or sent again must not
+                // rebuild the Reader's view of it.
+                const currentItems = bibleItemViewController.straightBibleItems;
+                const isSameView =
+                    currentItems.length === bibleItemData.renderedList.length &&
+                    currentItems.every((item, i) => {
+                        const json = item.toJson();
+                        return (
+                            json.bibleKey ===
+                                bibleItemData.renderedList[i].bibleKey &&
+                            checkIsSameBibleTarget(json.target, target)
+                        );
+                    });
+                if (isSameView) {
+                    return;
+                }
                 bibleItemViewController.nestedBibleItems = [];
-                const { target } = bibleData.bibleItemData.bibleItem;
-                for (const { bibleKey } of bibleData.bibleItemData
-                    .renderedList) {
+                for (const { bibleKey } of bibleItemData.renderedList) {
                     const bibleItem = BibleItem.fromJson({
                         id: -1,
                         bibleKey: bibleKey,
@@ -117,7 +164,7 @@ function viewControllerAndScreenManagers(
                 }
             }
         };
-        screenBibleManager.handleBibleViewVersesHighlighting = (
+        screenLongTextManager.handleBibleViewVersesHighlighting = (
             kjvVerseKey: string,
             isToTop: boolean,
         ) => {

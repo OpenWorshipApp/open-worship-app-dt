@@ -70,7 +70,7 @@ export default function SettingDownloadedBibleComp({
                     <>
                         {bibleInfoList.map((bibleInfo, i) => {
                             return (
-                                <RenderItem
+                                <RenderItemComp
                                     key={bibleInfo.key}
                                     index={i}
                                     bibleInfoList={bibleInfoList}
@@ -88,7 +88,7 @@ export default function SettingDownloadedBibleComp({
     );
 }
 
-function RenderItem({
+function RenderItemComp({
     bibleInfoList,
     bibleInfo,
     index,

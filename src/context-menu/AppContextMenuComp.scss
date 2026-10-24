@@ -18,17 +18,88 @@
     overflow-x: hidden;
     overflow-y: auto;
 
+    // Its own scrollbar, at contrast in either theme. The app-wide one
+    // (`scrollbar.scss`) draws a dark theme's thumb in `--bs-gray-600` -- the
+    // very colour of a dark menu -- because its lighter `gradient()` is the
+    // old unprefixed syntax and never applies, so a long menu (every Bible
+    // version) showed no sign of how much of it was out of view. The id
+    // in the selector outranks the app-wide `.app *::-webkit-scrollbar*`.
+    &::-webkit-scrollbar {
+      width: 8px;
+      background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: rgba(var(--bs-body-bg-rgb), 0.35);
+      box-shadow: none;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(var(--bs-emphasis-color-rgb), 0.55);
+      background-image: none;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: rgba(var(--bs-emphasis-color-rgb), 0.8);
+      }
+    }
+
     .app-context-menu-item {
+      // One line, ellipsised. `min-width: 0` is what lets the flex row
+      // shrink the label at all: without it the row sized itself to the
+      // whole nowrap text and the "…" was never drawn.
       .app-context-menu-item-label {
-        // Break inside a long unbroken run too: a display label is one
-        // `Name(1921141341): 1494x934` token as far as the line breaker is
-        // concerned, so plain wrapping alone would still overflow it.
-        overflow-wrap: anywhere;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .app-context-menu-item-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      // A label that does not fit scrolls its whole text on a muted second
+      // line (`markOverflowingMenuLabels`). The text is there twice with a
+      // gap, so sliding by half its own width is exactly one turn and the
+      // loop never jumps. `transform` only: the menu animates on the
+      // compositor and repaints nothing. The empty alternative text after the
+      // `/` keeps the copies out of the accessibility tree, where generated
+      // content counts: a screen reader read an overflowing row's name three
+      // times (`Open beside the current verse` ×3).
+      .app-context-menu-item-label[data-marquee-text]::after {
+        content: attr(data-marquee-text) '\2003\2003\2003'
+          attr(data-marquee-text) '\2003\2003\2003' / '';
+        display: inline-block;
+        width: max-content;
+        margin-left: var(--app-context-menu-marquee-indent, 0);
+        white-space: pre;
+        font-size: 0.8em;
+        line-height: 1.25;
+        opacity: 0.6;
+        will-change: transform;
+        animation: app-context-menu-marquee
+          var(--app-context-menu-marquee-duration, 8s) linear infinite;
       }
 
       &.disabled {
         opacity: 0.4;
         cursor: not-allowed !important;
+      }
+
+      // A group's name (`isSectionHeader`), drawn as a card's header: a
+      // strip of its own at full contrast. It used to be a disabled item,
+      // faded to 40% like an action that is unavailable, and so the one
+      // row that says what the rows under it are was the hardest to read.
+      // The theme overrides leave it out of their hover background.
+      &.app-context-menu-section-header {
+        cursor: default;
+        padding: 6px 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--bs-emphasis-color);
+        background-color: rgba(var(--bs-body-bg-rgb), 0.55);
+        border-bottom: 1px solid rgba(var(--bs-emphasis-color-rgb), 0.2);
       }
 
       &:hover {
@@ -108,5 +179,34 @@
 
   &:hover .context-menu-gesture-hint {
     opacity: 1;
+  }
+}
+
+// The first fifth is a rest with the start of the text in view.
+@keyframes app-context-menu-marquee {
+  0%,
+  20% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+// The global clamp in `interaction.scss` matches elements (`.app *`), never a
+// pseudo-element, so this one stops itself: the whole text, once, wrapped.
+@media (prefers-reduced-motion: reduce) {
+  #app-context-menu-container
+    .app-context-menu
+    .app-context-menu-item
+    .app-context-menu-item-label[data-marquee-text]::after {
+    content: attr(data-marquee-text) / '';
+    display: block;
+    width: auto;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    animation: none;
+    will-change: auto;
   }
 }

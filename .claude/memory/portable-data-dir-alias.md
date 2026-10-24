@@ -1,6 +1,6 @@
 ---
 name: portable-data-dir-alias
-description: "Files inside the data folder store its path as $DATA_DIR_PATH (every JSON escape level + file:/// URLs); only fileHelpers' four text primitives expand it, so any RAW reader sees the alias"
+description: "Files inside the data folder store its path as $DATA_DIR_PATH (every JSON escape level + file:/// URLs); only the text primitives of fileHelpers and storageFileHelpers expand it, so any RAW reader sees the alias"
 metadata: 
   node_type: memory
   type: project
@@ -12,8 +12,9 @@ Since 2026-09-17 (user request: a data folder on a flash drive, opened on any
 computer and any OS), text written INSIDE the data folder stores the folder's
 own path as `$DATA_DIR_PATH`, and every text read expands it to wherever the
 folder is now. Pure logic in `src/server/dataDirAliasHelpers.ts`; wired into
-`_fsReadFile` / `_fsWriteFile` / `fsReadSync` / `fsWriteFileSync` in
-`src/server/fileHelpers.ts`. The switch is
+`_fsReadFile` / `_fsWriteFile` in `src/server/fileHelpers.ts` and `fsReadSync` /
+`fsWriteFileSync` / `fsWriteFileAtomicSync` in `src/server/storageFileHelpers.ts`
+(the start-up leaf of [[renderer-entry-static-closure]]). The switch is
 `appProvider.sessionData.defaultStorageDirPath` (the one mutable field on
 `appProvider`), preloaded first thing in `init()` (`src/boot.ts`) and in
 `src/screen.tsx` `main()` (the screen never runs `init`), updated by
@@ -27,7 +28,7 @@ What is not obvious from a quick read:
   raw `E:\data` inside JSON makes `JSON.parse` throw — never "simplify" it to a
   plain `replaceAll`. Replacements are FUNCTIONS: `$&` in a folder name is a
   replacement pattern.
-- Anything reading data-folder bytes without those four functions sees the
+- Anything reading data-folder bytes without those functions sees the
   alias: `fsCloneFile`/`copyFile`, tar archives (`.owadata`, `.owadoc` …), a
   `fetch`/`<iframe src=file://>`, the main process, external tools, and the
   archive import's MD5 dedupe (an aliased copy differs from a pre-change one).
@@ -76,6 +77,16 @@ What is not obvious from a quick read:
   a link whose path is gone and whose file exists under this folder AS the
   alias, in the link's own form (raw `/`, JSON `\\`, `file:///`). The read side
   then does the rest. Never automatic: it reads every text file once.
+- **The move off the Desktop rewrites by the OLD prefix, not by existence**
+  (2026-10-17, `rewriteMovedDataDirLinks` in `dataDirMoveHelpers.ts`): after
+  the data folder moves to `~/.owa/open-worship-data`, every app text file in
+  it gets `toPortableText(text, genDataDirAlias(oldDir, …))`, so a raw old path
+  in any escape level or `file:///` form becomes the alias even when a copy
+  left the old folder in place — Repair Links would skip those, since the old
+  path still exists. It runs in `init()` before React mounts, because the
+  start-up color-note check drops a note whose file is missing. A copied-away
+  folder keeps its `.owa-data-folder.json` id, so `findDataDirsOnVolumesSync`
+  skips one carrying `migration-moved-to.txt`.
 - **Deleting on a stick**: Windows has no Recycle Bin on a flash drive and
   Electron's `trashItem` aborts there (`Operation was aborted`); the app asks
   **Delete Permanently** instead of failing, except for an agent's delete.

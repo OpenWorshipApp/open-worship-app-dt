@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 
-import {
-    type EventMapperType,
-    useKeyboardRegistering,
-} from '../event/KeyboardEventListener';
+import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { appAssistantEventMappers } from '../keyboard-shortcut/appShortcutMappers';
 import { askAiCaution } from '../helper/ai/aiCautionHelpers';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useAppEffect } from '../helper/appHooks';
@@ -14,20 +12,14 @@ import {
     tran,
 } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
+import { openOnlineHelp } from '../server/onlineHelpHelpers';
 
 // Module-level so the mapper array keeps one identity for the life of the
 // process -- this component is mounted in every window for the whole session.
-// Every platform is spelled out because `toShortcutKey` THROWS on a mapper that
-// carries another platform's control keys and none of its own, and that throw
-// would happen during this component's render, in every window.
-const keyboardEventMappers: EventMapperType[] = [
-    {
-        key: 'A',
-        mControlKey: ['Meta', 'Shift'],
-        wControlKey: ['Ctrl', 'Shift'],
-        lControlKey: ['Ctrl', 'Shift'],
-    },
-];
+// Declared with every other shortcut, which spells out every platform: a
+// mapper carrying only another platform's control keys makes `toShortcutKey`
+// THROW, here during render, in every window.
+const keyboardEventMappers = appAssistantEventMappers;
 
 const MENU_KEY = 'chatbot-assistant';
 
@@ -45,6 +37,11 @@ const MENU_KEY = 'chatbot-assistant';
  * The AI Chat window rides the same entry: a second Tools item, with no
  * shortcut and no gate, since that window holds no key and asks nothing of
  * the assistant service the switch turns off.
+ *
+ * And so does the website's help, as Help -> Open Online Help: the question
+ * mark that offers it stands on the same three pages as the 🤖, and this
+ * component is already the one listening in every window. It opens the page
+ * about the window in front.
  *
  * Renders `null` always; the assistant itself is a separate OS window.
  */
@@ -74,16 +71,25 @@ export default function AppAssistantComp() {
     const handleMenuItemClicked = useCallback(
         (
             _event: any,
-            data: { isOpenChatbot?: boolean; isOpenAiChat?: boolean },
+            data: {
+                isOpenChatbot?: boolean;
+                isOpenAiChat?: boolean;
+                isOpenOnlineHelp?: boolean;
+            },
         ) => {
             const isOpenChatbot = data?.isOpenChatbot === true;
             const isOpenAiChat = data?.isOpenAiChat === true;
-            if (!isOpenChatbot && !isOpenAiChat) {
+            const isOpenOnlineHelp = data?.isOpenOnlineHelp === true;
+            if (!isOpenChatbot && !isOpenAiChat && !isOpenOnlineHelp) {
                 return;
             }
             // The menu-click message reaches every open window; only the one
             // the user is actually looking at should open a help window.
             if (!appProvider.getIsWindowFocused()) {
+                return;
+            }
+            if (isOpenOnlineHelp) {
+                openOnlineHelp();
                 return;
             }
             if (isOpenAiChat) {
@@ -125,6 +131,15 @@ export default function AppAssistantComp() {
                     {
                         label: tran('AI Chat'),
                         clickData: { isOpenAiChat: true },
+                    },
+                ],
+                // Not gated on the switch either: it is a web page. This key
+                // sorts ahead of the tips' and the shortcuts' own, which is
+                // what puts the item at the top of the Help menu.
+                help: [
+                    {
+                        label: tran('Open Online Help'),
+                        clickData: { isOpenOnlineHelp: true },
                     },
                 ],
             },

@@ -4,13 +4,15 @@
     "window": "appDocumentEditor.html",
     "focus": "appDocumentEditor",
     "description": "The Slide Editor: the canvas a slide document is built on, and the list of slides beside it.",
-    "updated": "2026-09-28",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "slides",
             "label": "Working with slides",
             "panel": "Slides",
-            "recipes": ["W-15"],
+            "recipes": [
+                "W-15"
+            ],
             "questions": [
                 {
                     "id": "bulk-font",
@@ -43,6 +45,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
+                        "passage": "Left: the slide list",
                         "guide": true
                     },
                     "starter": true,
@@ -76,6 +79,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
+                        "passage": "Left: the slide list",
                         "guide": true
                     }
                 },
@@ -139,8 +143,49 @@
             "id": "canvas",
             "label": "The slide canvas",
             "panel": "Canvas",
-            "recipes": ["W-15", "W-28"],
+            "recipes": [
+                "W-15",
+                "W-28",
+                "W-48"
+            ],
             "questions": [
+                {
+                    "id": "canvas-item-transition",
+                    "text": "How do I give one canvas item its own slide transition?",
+                    "kind": "howto",
+                    "keywords": [
+                        "canvas item",
+                        "transition",
+                        "own transition",
+                        "fade",
+                        "slide in",
+                        "zoom",
+                        "animation",
+                        "changing slides"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "passage": "One canvas item",
+                        "find": "Canvas item transition",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "imported-html-scripts",
+                    "text": "Why do scripts or embedded pages disappear from imported slide HTML?",
+                    "kind": "howto",
+                    "keywords": [
+                        "html",
+                        "scripts",
+                        "iframe",
+                        "embedded page",
+                        "sanitization",
+                        "literal text"
+                    ],
+                    "resources": {
+                        "recipe": "W-15"
+                    }
+                },
                 {
                     "id": "add-text",
                     "text": "How do I add text to a slide?",
@@ -208,7 +253,9 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": ["W-28"],
+                        "related": [
+                            "W-28"
+                        ],
                         "find": "Insert Medias",
                         "guide": true
                     },
@@ -228,6 +275,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
+                        "passage": "Insert a video from a link.",
                         "find": "Insert Media Link",
                         "guide": true
                     }
@@ -253,11 +301,17 @@
                     "id": "insert-camera",
                     "text": "How do I put a camera on a slide?",
                     "kind": "howto",
-                    "keywords": ["camera", "webcam", "live feed", "video in"],
+                    "keywords": [
+                        "camera",
+                        "webcam",
+                        "live feed",
+                        "video in"
+                    ],
                     "resources": {
                         "recipe": "W-15",
                         "find": "Insert Camera",
-                        "guide": true
+                        "guide": true,
+                        "passage": "Insert a camera on a slide."
                     }
                 },
                 {

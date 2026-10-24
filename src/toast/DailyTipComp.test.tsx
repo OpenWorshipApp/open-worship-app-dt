@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
     page: '/setting.html',
     focused: true,
     isMain: false,
+    isOnOwnFolder: false,
     settings: new Map<string, string>(),
     listeners: new Set<(event: unknown, data: unknown) => void>(),
     menu: vi.fn(),
@@ -27,9 +28,17 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('../server/appHelpers', () => ({
     checkIsMainWindow: () => state.isMain,
 }));
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        get isOnOwnFolder() {
+            return state.isOnOwnFolder;
+        },
+    },
+}));
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: (key: string) => state.settings.get(key),
     setSetting: (key: string, value: string) => state.settings.set(key, value),
+    removeSetting: (key: string) => state.settings.delete(key),
 }));
 vi.mock('../lang/langHelpers', () => ({
     tran: (text: string) => text,
@@ -47,6 +56,8 @@ import DailyTipComp from './DailyTipComp';
 import {
     DAILY_TIP_AUTO_CLOSE_MS,
     DAILY_TIP_AUTO_SHOW_DELAY_MS,
+    DAILY_TIPS_HIDE_MS,
+    getDailyTips,
     getDailyTipSessionKey,
 } from './dailyTipHelpers';
 
@@ -69,6 +80,7 @@ describe('tips in each window', () => {
         state.page = '/setting.html';
         state.focused = true;
         state.isMain = false;
+        state.isOnOwnFolder = false;
         container = document.createElement('div');
         document.body.append(container);
         root = createRoot(container);
@@ -80,21 +92,82 @@ describe('tips in each window', () => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
     });
 
-    it('opens All tips in a focused popup even with automatic tips disabled', async () => {
+    it('opens All tips in a popup that is not in front, even with automatic tips disabled', async () => {
         state.settings.set('daily-tips-disabled', 'true');
         await act(async () => root.render(<DailyTipComp />));
+        // The press is on the main window's menu bar, so the main window has
+        // the focus and this popup does not -- every page still shows its own.
         state.focused = false;
         await sendMenu({ isBrowseDailyTips: true });
-        expect(container.textContent).toBe('');
-        state.focused = true;
-        await sendMenu({ isBrowseDailyTips: true });
         expect(container.textContent).toContain('All tips · Setting');
-        expect(container.textContent).toContain('3/3');
+        const settingTipCount = getDailyTips('setting').length;
+        expect(settingTipCount).toBeGreaterThan(0);
+        expect(container.textContent).toContain(
+            `${settingTipCount}/${settingTipCount}`,
+        );
         expect(container.textContent).not.toContain('Reader');
         expect(state.menu).not.toHaveBeenCalled();
         await act(async () => root.unmount());
         expect(state.listeners.size).toBe(0);
         expect(state.menu).not.toHaveBeenCalled();
+        root = createRoot(container);
+    });
+
+    it('has the main window send Help → Tips to every window, each opening its own', async () => {
+        state.isMain = true;
+        state.page = '/reader.html';
+        state.focused = false;
+        await act(async () => root.render(<DailyTipComp />));
+        expect(state.menu).toHaveBeenCalledWith(
+            'daily-tips',
+            {
+                help: [
+                    {
+                        label: 'Tips of the Day',
+                        clickData: { isOpenDailyTip: true },
+                    },
+                    {
+                        label: 'All tips',
+                        clickData: { isBrowseDailyTips: true },
+                    },
+                ],
+            },
+            { isSentToAllWindows: true },
+        );
+        await sendMenu({ isOpenDailyTip: true });
+        expect(container.textContent).toContain('Tip of the Day');
+        // Asked for from Help, the card does not offer to put the automatic
+        // tips away -- not on the tip, nor after Next tip or All tips.
+        expect(container.textContent).not.toContain('Hide for 30 days');
+        const nextButton = [...container.querySelectorAll('button')].find(
+            (element) => element.textContent === 'Next tip',
+        )!;
+        await act(async () => nextButton.click());
+        expect(container.textContent).not.toContain('Hide for 30 days');
+        await sendMenu({ isBrowseDailyTips: true });
+        const backButton = [...container.querySelectorAll('button')].find(
+            (element) => element.textContent === 'Back to tip',
+        )!;
+        await act(async () => backButton.click());
+        expect(container.textContent).toContain('Tip of the Day');
+        expect(container.textContent).not.toContain('Hide for 30 days');
+        // Closed, the next automatic card offers it again.
+        await act(async () =>
+            container
+                .querySelector<HTMLButtonElement>('[aria-label="Close"]')!
+                .click(),
+        );
+        sessionStorage.clear();
+        await act(async () => root.unmount());
+        root = createRoot(container);
+        await act(async () => root.render(<DailyTipComp />));
+        state.focused = true;
+        await act(async () =>
+            vi.advanceTimersByTime(DAILY_TIP_AUTO_SHOW_DELAY_MS),
+        );
+        expect(container.textContent).toContain('Hide for 30 days');
+        await act(async () => root.unmount());
+        expect(state.menu).toHaveBeenLastCalledWith('daily-tips', null);
         root = createRoot(container);
     });
 
@@ -119,6 +192,53 @@ describe('tips in each window', () => {
         );
         await act(async () => window.dispatchEvent(new Event('focus')));
         expect(container.textContent).toBe('');
+    });
+
+    it('puts no automatic tip over Settings while no data folder is chosen', async () => {
+        state.isOnOwnFolder = true;
+        await act(async () => root.render(<DailyTipComp />));
+        await act(async () =>
+            vi.advanceTimersByTime(DAILY_TIP_AUTO_SHOW_DELAY_MS),
+        );
+        await act(async () => window.dispatchEvent(new Event('focus')));
+        expect(container.textContent).toBe('');
+        // Asked for from Help, a tip still opens.
+        await sendMenu({ isOpenDailyTip: true });
+        expect(container.textContent).toContain('Tip of the Day · Setting');
+    });
+
+    it('hides the automatic tip for 30 days and shows it again after them', async () => {
+        // A launch is a fresh session: nothing shown yet, the wait from zero.
+        const launch = async () => {
+            await act(async () => root.unmount());
+            sessionStorage.clear();
+            root = createRoot(container);
+            await act(async () => root.render(<DailyTipComp />));
+            await act(async () =>
+                vi.advanceTimersByTime(DAILY_TIP_AUTO_SHOW_DELAY_MS),
+            );
+        };
+        await launch();
+        expect(container.textContent).toContain('Tip of the Day · Setting');
+        const button = [...container.querySelectorAll('button')].find(
+            (element) => element.textContent === 'Hide for 30 days',
+        )!;
+        await act(async () => button.click());
+        expect(container.textContent).toBe('');
+        expect(state.settings.has('daily-tips-disabled')).toBe(false);
+
+        await launch();
+        expect(container.textContent).toBe('');
+        // Help is never hidden, and asking there does not end the 30 days.
+        await sendMenu({ isOpenDailyTip: true });
+        expect(container.textContent).toContain('Tip of the Day · Setting');
+        expect(container.textContent).not.toContain('Hide for 30 days');
+        await launch();
+        expect(container.textContent).toBe('');
+
+        vi.setSystemTime(Date.now() + DAILY_TIPS_HIDE_MS);
+        await launch();
+        expect(container.textContent).toContain('Tip of the Day · Setting');
     });
 
     it('takes the tip off after a minute and holds it under the pointer', async () => {

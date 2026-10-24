@@ -2,7 +2,10 @@
 name: scratch-dev-instance-beside-user-app
 description: "Verify a fix on a fresh profile without touching the user's running dev app: start a SECOND dev Electron on OWA_USER_DATA_PATH against the same Vite; never npm run dev or electron:build for it"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: d2887407-24f9-4c3c-8777-b599e6de5d03
+  modified: 2026-10-23T16:05:05.665Z
 ---
 
 When the user's own dev app is up (their `-dev` profile, their real data) and a live check needs
@@ -15,8 +18,26 @@ env -u ELECTRON_RUN_AS_NODE OWA_USER_DATA_PATH="<repo>\release\<scratch>" NODE_E
   ./node_modules/electron/dist/electron.exe .        # background
 ```
 
-with `<scratch>\setting.json` seeded `{"clientSetting":{"selected-parent-dir":"<scratch>\\data"}}`
-and `<scratch>\data` created.
+with `<scratch>\setting.json` seeded
+`{"clientSetting":{"selected-parent-dir":"<scratch>\\data","stay-awake":"false"}}` and
+`<scratch>\data` created.
+
+- **Prove a pid is the scratch one by its `userDataPath` before driving or
+  killing it** (2026-10-23). A loop taking "the first discovery file that is
+  not the user's pid" took the USER's app: they had restarted `electron:dev`
+  meanwhile, so their new pid was not the one excluded. The driver opened a
+  card in their chatbot, a reload hit their pages, and `taskkill //PID … //T`
+  stopped their app. Read the one field (`userDataPath`) of the new file and
+  match it to the scratch folder, every time. And `electron . --owa-open-chatbot`
+  for the scratch profile can come up as a SECOND full app instead of handing
+  over (two came up that day, a `timeout 20` killed neither): list
+  `electron.exe` with its command line afterwards and stop the extra one.
+- **A forgotten one keeps the PC from sleeping** (2026-10-16). Stay Awake is ON when unset
+  (`toIsStayAwake`), so a scratch Presenter holds `prevent-display-sleep` for as long as it
+  lives. pid 13428 (`release/robot-chatbot-20261015-2145`, launcher gone, window hidden) did
+  that for 25 h, and the user found their PC would not sleep. Seed `stay-awake` false as above,
+  and **stop it by pid before the session ends**. Its `lockfile` in the scratch folder is
+  dated with the start time, which is how to match an orphan to its profile.
 
 - **Not `npm run dev` and not `electron:build`.** `strictPort` makes a second `npm run dev` stop on
   the busy :3000, and `electron:build` deletes the `electron-build/` the user's app runs from
@@ -26,10 +47,62 @@ and `<scratch>\data` created.
   `prod-app.mjs status` lists both. Newest-first discovery aims `owa_*` (and a chrome-devtools
   half that reconnects) at the scratch one — prove it with a screenshot of a fresh-profile state
   before the first click.
+- **Only the `owa_*` half follows the scratch instance** (2026-10-11).
+  `take_screenshot`, `click`, `fill` and `list_pages` stayed on the app that
+  was up first, so a uid press meant for the scratch window lands in the
+  user's. Use the `owa_*` tools there and nothing aimed by uid.
+- **Not even `owa_*` stays on it** (2026-10-16): mid-session, with the scratch
+  instance still the newest and its window still published, `owa_app_state`
+  answered with the USER's app (their song on two live screens). Check the
+  answer's content, not the pid list, before every batch. What held: a FRESH
+  stdio server pinned to the scratch port -- `OWA_CDP_PORT=<port> node
+  tools/owa-devtools-mcp/bin.mjs`, JSON-RPC on stdin (initialize →
+  `notifications/initialized` → `tools/call`). The pin is exclusive
+  ([[cdp-pin-is-exclusive]]), every call still passes the firewall, and the
+  fresh process also serves just-edited tool code
+  ([[mcp-tool-edit-two-processes]]).
+- **A scratch instance has a taskbar identity of its own** (2026-10-15,
+  `toAppUserModelId` in `electron/taskbarHelpers.ts`). Before, every dev
+  copy shared `app.openworship.desktop.dev`, and the jump list belongs to
+  the identity: a `release/scratch-lang2` copy started after the user's
+  app pointed the taskbar's tasks at its own folder, and the user's
+  **App Help (Chatbot)** opened a new app on it. Now a scratch copy shows
+  as a separate taskbar button and leaves the user's menu alone.
+- **A covered scratch window also starves the tools** (2026-10-22): its
+  Reader read `visibilityState: hidden`, the first `owa_lookup_record`
+  answered in 2.5 s and every later one timed out at 65 s (Chromium's
+  hidden-page throttling). Launch it with
+  `--disable-background-timer-throttling --disable-renderer-backgrounding
+  --disable-backgrounding-occluded-windows` before the `.` and it stays
+  `visible` and answers in 0.2-5 s, behind the user's window, without being
+  brought to the front.
+- **A scratch window the user's own window covers stops painting**, and
+  `owa_screenshot` then hands back its last frame as if it were now. Trust
+  the DOM tools (`owa_list_ui`, a click's `isOnNow`) and the files under the
+  scratch `data/local-storage/`; for a picture, draw the CSS in an offscreen
+  `BrowserWindow` (`show: false`, `offscreen: true`) instead.
+- A name box or a confirm is the person's to answer there too: seed the
+  state it would have made as a `local-storage` file and reopen the panel
+  (a setting read as absent is believed for 10 s).
+- **Its Presenter window can be HIDDEN outright** (2026-10-16: pid 13428's main window
+  `IsWindowVisible = false`, while its popups — editors, Settings, print preview — still
+  show on the user's desktop). A confirm raised there (e.g. **Select Default "documents"**)
+  is answerable by NOBODY: the firewall refuses it and the user cannot see it, and both
+  instances are titled "Open Worship app - Presenter", so a request to press it lands in
+  the user's own app. Never press a control that asks a question in that window; restore
+  through the path box instead, or write the setting file and `owa_menu View > Reload`.
+  `owa_click` now reports the `question` a press raised, but cannot say the window is
+  hidden: this window's page still reads `visibilityState: 'visible'`, and Electron's
+  CDP has no `Browser.getWindowForTarget` -- check `IsWindowVisible` from the OS.
 - It shares the user's Vite: touching a file to clear a stale transform
   ([[vite-caches-failed-import-resolution]]) reloads THEIR windows too.
 - Settings → General raises **Set according paths** the first time; **Yes** creates the child
-  folders inside the scratch data folder. A state the UI cannot reach without a destructive
+  folders inside the scratch data folder. An agent CANNOT press that Yes — the MCP firewall
+  refuses every confirm (`owa_click` and a uid `click` alike) and any label saying _Remove_ /
+  _Delete_ — so seed one child setting first and the prompt never comes: write
+  `<scratch>\data\local-storage\select-dir-app-document` holding `<scratch>\data\documents`
+  (and create that folder). Seed `local-storage\` in a second data folder too and it counts as
+  a used data folder, so switching to it reloads straight in with no question (2026-10-04). A state the UI cannot reach without a destructive
   press (a missing bible key) can be set in the scratch `data/local-storage/<setting>` file and
   read back after **Apply Settings**, which reloads only the scratch instance's windows.
 - Stop it by its own pid (`taskkill //PID <pid>` from Git Bash exits it cleanly), then delete the

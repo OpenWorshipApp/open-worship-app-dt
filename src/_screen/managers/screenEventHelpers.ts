@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import type { ScreenBackgroundManagerEventType } from './ScreenBackgroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
-import type { ScreenBibleManagerEventType } from '../screenBibleHelpers';
-import ScreenBibleManager from './ScreenBibleManager';
+import type { ScreenLongTextManagerEventType } from '../screenBibleHelpers';
+import ScreenLongTextManager from './ScreenLongTextManager';
 import type { ScreenVaryAppDocumentManagerEventType } from './ScreenVaryAppDocumentManager';
 import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
 import type EventHandler from '../../event/EventHandler';
@@ -14,9 +14,6 @@ import type { ScreenDrawEventType } from './ScreenDrawManager';
 import ScreenDrawManager from './ScreenDrawManager';
 import type { ScreenFocusEventType } from './ScreenFocusManager';
 import ScreenFocusManager from './ScreenFocusManager';
-import type { ScreenMaskEventType } from './ScreenMaskManager';
-import ScreenMaskManager from './ScreenMaskManager';
-import appProvider from '../../server/appProvider';
 import { type ListenerType } from '../../event/EventHandler';
 
 export function useScreenEvents<T extends string>(
@@ -73,14 +70,14 @@ export function useScreenVaryAppDocumentManagerEvents(
     );
 }
 
-export function useScreenBibleManagerEvents(
-    events: ScreenBibleManagerEventType[],
-    screenFulTextManager?: ScreenBibleManager,
+export function useScreenLongTextManagerEvents(
+    events: ScreenLongTextManagerEventType[],
+    screenFulTextManager?: ScreenLongTextManager,
     callback?: ListenerType<any>,
 ) {
     useScreenEvents(
         events,
-        ScreenBibleManager as any,
+        ScreenLongTextManager as any,
         screenFulTextManager,
         callback,
     );
@@ -125,55 +122,6 @@ export function useScreenFocusManagerEvents(
     );
 }
 
-export function useScreenMaskManagerEvents(
-    events: ScreenMaskEventType[],
-    screenMaskManager?: ScreenMaskManager,
-    callback?: ListenerType<void>,
-) {
-    useScreenEvents(
-        events,
-        ScreenMaskManager as any,
-        screenMaskManager,
-        callback,
-    );
-}
-
-export function registerScrollingSyncEvent(
-    divHaftScale: HTMLElement,
-    callback: (scroll: { x: number; y: number }) => void,
-) {
-    divHaftScale.addEventListener('wheel', (event) => {
-        if (
-            !appProvider.getIsMouseOverApp() ||
-            !appProvider.getIsWindowFocused()
-        ) {
-            event.preventDefault();
-        }
-    });
-    divHaftScale.addEventListener('scroll', (event) => {
-        event.preventDefault();
-        // A scroll applied FROM a sync message (`syncScrollPercentage` stamps
-        // the element) must not be broadcast back, or two windows echo each
-        // other's scroll forever. Only the one event the remote scrollTo fires
-        // is swallowed: a genuine user scroll lands on a different position,
-        // fails the tolerance check and goes through.
-        const remoteApplied = (divHaftScale as any)._remoteAppliedScroll;
-        if (remoteApplied !== undefined) {
-            delete (divHaftScale as any)._remoteAppliedScroll;
-            if (
-                Math.abs(divHaftScale.scrollLeft - remoteApplied.left) < 2 &&
-                Math.abs(divHaftScale.scrollTop - remoteApplied.top) < 2
-            ) {
-                return;
-            }
-        }
-        callback({
-            x:
-                divHaftScale.scrollLeft /
-                (divHaftScale.scrollWidth - divHaftScale.clientWidth),
-            y:
-                divHaftScale.scrollTop /
-                (divHaftScale.scrollHeight - divHaftScale.clientHeight),
-        });
-    });
-}
+// Lives in the leaf, so the Bible columns can register theirs without pulling
+// every manager in; re-exported for the managers that always took it here.
+export { registerScrollingSyncEvent } from './screenScrollSyncHelpers';

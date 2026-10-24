@@ -67,7 +67,10 @@ describe('RenderSessionTabsComp', () => {
     };
 
     function render(
-        extra: Partial<typeof handlers> = handlers,
+        extra: Partial<typeof handlers> & {
+            canAdd?: boolean;
+            onAdd?: () => void;
+        } = handlers,
         sessions: TabType[] = TABS,
     ) {
         act(() => {
@@ -186,6 +189,50 @@ describe('RenderSessionTabsComp', () => {
             item.click();
         });
         expect(handlers.onOpenInNewWindow).toHaveBeenCalledWith('b');
+    });
+
+    test('a full strip says why `+` started nothing, until there is room', () => {
+        const onAdd = vi.fn();
+        render({ ...handlers, canAdd: false, onAdd });
+        const add = container.querySelector(
+            '[aria-label="New chat"]',
+        ) as HTMLButtonElement;
+        expect(add.disabled).toBe(false);
+        expect(container.querySelector('[role="status"]')).toBe(null);
+        act(() => {
+            add.click();
+        });
+        expect(onAdd).not.toHaveBeenCalled();
+        expect(
+            container.querySelector('[role="status"]')?.textContent,
+        ).toContain('This window holds 3 chats at most. Close one');
+        // Room again: the line goes, and `+` adds.
+        render({ ...handlers, canAdd: true, onAdd });
+        expect(container.querySelector('[role="status"]')).toBe(null);
+        act(() => {
+            add.click();
+        });
+        expect(onAdd).toHaveBeenCalledOnce();
+    });
+
+    test('a full strip of locked tabs says the lock is in the way', () => {
+        const locked = TABS.map((tab) => {
+            return { ...tab, isLocked: true };
+        });
+        render({ ...handlers, canAdd: false }, locked);
+        act(() => {
+            (
+                container.querySelector(
+                    '[aria-label="New chat"]',
+                ) as HTMLElement
+            ).click();
+        });
+        const notice = container.querySelector('[role="status"]');
+        expect(notice?.textContent).toContain('all of them are locked');
+        act(() => {
+            (notice?.querySelector('button') as HTMLElement).click();
+        });
+        expect(container.querySelector('[role="status"]')).toBe(null);
     });
 
     test('a strip given none of it draws none of it', () => {

@@ -105,8 +105,40 @@ describe('ElectronScreenController', () => {
         expect(ElectronScreenController.getInstance(9)).toBeNull();
     });
 
+    test('keeps the display awake exactly while each screen window is up', () => {
+        const { start, stop } = electronMockState.powerSaveBlocker;
+        const first = ElectronScreenController.createInstance(12);
+        const second = ElectronScreenController.createDetached(12);
+
+        expect(start).toHaveBeenCalledTimes(2);
+        expect(start).toHaveBeenCalledWith('prevent-display-sleep');
+        const [firstId, secondId] = start.mock.results.map(({ value }) => {
+            return value;
+        });
+        expect(firstId).not.toBe(secondId);
+        expect(stop).not.toHaveBeenCalled();
+
+        const getClosedHandler = (controller: ElectronScreenController) => {
+            return (controller.win.once as any).mock.calls.find(
+                ([eventName]: [string]) => eventName === 'closed',
+            )?.[1];
+        };
+        // One window closing releases only its own request: the other
+        // screen is still showing.
+        getClosedHandler(second)();
+        expect(stop).toHaveBeenCalledTimes(1);
+        expect(stop).toHaveBeenCalledWith(secondId);
+
+        getClosedHandler(first)();
+        expect(stop).toHaveBeenCalledTimes(2);
+        expect(stop).toHaveBeenLastCalledWith(firstId);
+    });
+
     test('waits for the screen page to finish loading before it is used', async () => {
         const controller = ElectronScreenController.createInstance(10);
+        // Still loading: a page that has already loaded is not waited for
+        // (the test below).
+        (controller.win.webContents.isLoading as any).mockReturnValue(true);
         const pending = controller.listenLoading();
 
         const [eventName, onceHandler] = (
@@ -116,6 +148,16 @@ describe('ElectronScreenController', () => {
         onceHandler();
 
         await expect(pending).resolves.toBeUndefined();
+    });
+
+    test('a screen page that has already loaded is used at once', async () => {
+        const controller = ElectronScreenController.createInstance(11);
+        (controller.win.webContents.isLoading as any).mockReturnValue(false);
+        await expect(controller.listenLoading()).resolves.toBeUndefined();
+        expect(controller.win.webContents.once as any).not.toHaveBeenCalledWith(
+            'did-finish-load',
+            expect.any(Function),
+        );
     });
 
     test('closes a single screen window and sends raw channel data', () => {

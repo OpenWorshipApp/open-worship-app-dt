@@ -10,6 +10,7 @@ import { CanvasControllerContext } from '../CanvasController';
 import type CanvasController from '../CanvasController';
 import BibleItem from '../../../bible-list/BibleItem';
 import { showBibleKeyOption } from '../../../bible-lookup/BibleKeySelectionComp';
+import { useCanvasItemSafeHtml } from '../canvasItemSafeHtmlHelpers';
 
 export function formatBibleKeys(
     div: HTMLElement,
@@ -62,8 +63,9 @@ export function formatBibleKeys(
     });
 }
 
-export function BoxEditorNormalBibleRender() {
+export function BoxEditorNormalBibleRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemBiblePropsType>();
+    const html = useCanvasItemSafeHtml(props.html);
     try {
         CanvasItemBibleItem.validate(props);
     } catch (error) {
@@ -86,7 +88,7 @@ export function BoxEditorNormalBibleRender() {
                 ...CanvasItemBibleItem.genStyle(props),
             }}
             dangerouslySetInnerHTML={{
-                __html: props.html,
+                __html: html,
             }}
         />
     );

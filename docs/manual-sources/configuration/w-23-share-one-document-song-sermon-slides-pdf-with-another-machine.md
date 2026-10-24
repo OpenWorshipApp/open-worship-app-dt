@@ -5,17 +5,17 @@ section: "Configuration"
 verify: [PL-77, PL-78, PL-79, PL-80, CM-36, CM-37]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-23 — Share one document (song, sermon slides, PDF) with another machine
 
 Sometimes you only want to hand over **one** item, not a whole service. A document
 travels as its own bundle, with everything attached to it.
 
-1. In the **Documents** list, right-click the item you want — an Open Worship slide
+1. In the **[en:tran:Documents]** list, right-click the item you want — an Open Worship slide
    document, a lyric, a PDF, a PowerPoint or a Word file all work — and choose
    **[en:tran:Export]**. 📸
-2. A small panel asks for a **[en:tran:Password]** and a **[en:tran:Confirm Password]**. Leave both empty and press **Ok** for the ordinary bundle, or
+2. A small panel asks for a **[en:tran:Password]** and a **[en:tran:Confirm Password]**. Leave both empty and press **[en:tran:Ok]** for the ordinary bundle, or
    type the same password in both to lock it — see W-22 step 10a, it works identically
    here and there is no way to recover a forgotten one. 📸
 3. You get one `<name>.owadoc.tar.gz` file in your **Downloads** folder (or
@@ -23,7 +23,7 @@ travels as its own bundle, with everything attached to it.
    document itself plus everything hanging off it: the background you attached to it
    (and that background's image or video file), any video placed inside its slides, and
    its colour note.
-4. On the other machine, right-click an empty part of the **Documents** list →
+4. On the other machine, right-click an empty part of the **[en:tran:Documents]** list →
    **[en:tran:Import]** and pick that file — or just **drag the
    `.owadoc.tar.gz` (or `.owadoc.enc`) file from your file manager onto the Documents
    list**, which imports it the same way. A protected bundle asks for its password
@@ -46,9 +46,9 @@ travels as its own bundle, with everything attached to it.
 > import stops before copying anything and tells you which to choose.
 >
 > If you export the same document twice, the second file is named
-> `<name>.owadoc.tar (1).gz`. That name no longer ends in `.owadoc.tar.gz`, so dragging
-> _that_ copy onto the list will not import it — use **Import** and pick it
-> instead (or rename it first).
+> `<name> (1).owadoc.tar.gz`. That name still ends in `.owadoc.tar.gz`, so dragging
+> _that_ copy onto the list imports it like the first (a `<name>.owadoc.tar (1).gz`
+> written by an older version of the app is taken the same way).
 
 
 > This works for a **lyric** too — a lyric is a row in the same Documents list. Its
@@ -60,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-77` · `PL-78` · `PL-79` · `PL-80` · `CM-36` · `CM-37`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

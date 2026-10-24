@@ -2,10 +2,10 @@
 id: W-32
 title: "See who published a Bible translation (and its copyright)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-77, RD-78, RD-11, LT-01]
-screenshots: 3
+verify: [RD-77, RD-78, RD-11, RD-26, LT-01, KB-25, KB-26, CM-79]
+screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-32 — See who published a Bible translation (and its copyright)
 
@@ -16,7 +16,7 @@ You do not need Settings for this. The information is one click away, but only w
 you are still choosing what to read: once a verse is on screen the header gives that
 space to the verse buttons instead.
 
-1. Open **Bible Reader** (see W-11) and make sure the lookup box at the top is
+1. Open **[en:tran:Bible Reader]** (see W-11) and make sure the lookup box at the top is
    **empty**, so the pane shows the grid of book names (**លោកុប្បត្តិ (Genesis)**,
    **និក្ខមនំ (Exodus)**, …). 📸
 2. Look at the **top-right corner of that pane**, on the same line as the small
@@ -40,17 +40,25 @@ space to the verse buttons instead.
    printed order of service.
 6. Close it with the **✕** in its corner, or press **Escape**. You come straight back
    to the book grid exactly as you left it.
-7. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
+7. Left of the **ⓘ** sit the two split buttons, **[en:tran:Split horizontal]** and
+   **[en:tran:Split vertical]** (also **Ctrl+Shift+S** / **Ctrl+Shift+V**, and in the
+   **⋮** or right-click menu). A view always holds a passage, so the new one opens the
+   book you picked at chapter 1 — or Genesis 1 if no book is picked yet — while the
+   view you are typing in keeps its grid. 📸
+   Moving the editing to another view (its pencil, **Ctrl+Shift+arrow**, or
+   **[en:tran:Edit]** in its menu) does the same to the view you leave: it stays
+   open on the book you picked at chapter 1, or on Genesis 1. 📸
+8. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
    verse buttons (copy, split, save, present…) take its place. Clear the box again and
    it returns.
 
 > Want to change any of this rather than just read it? That is still
-> **Settings → Bible**, the pencil next to the translation, then the **Info** tab.
+> **Settings → [en:tran:Bible]**, the pencil next to the translation, then the **[en:tran:Info]** tab.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-77` · `RD-78` · `RD-11` · `LT-01`
+`RD-77` · `RD-78` · `RD-11` · `RD-26` · `LT-01` · `KB-25` · `KB-26` · `CM-79`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

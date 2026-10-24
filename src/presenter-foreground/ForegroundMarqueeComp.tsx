@@ -21,7 +21,10 @@ import {
 } from './foregroundHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import {
+    getForegroundIsBehind,
+    useForegroundPropsSetting,
+} from './propertiesSettingHelpers';
 import PropRowComp, { PropChipsComp } from './ForegroundPropRowComp';
 import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import type {
@@ -33,6 +36,7 @@ import {
     DEFAULT_MARQUEE_SPEED_PERCENTAGE,
     MAX_MARQUEE_SPEED_PERCENTAGE,
     MIN_MARQUEE_SPEED_PERCENTAGE,
+    withForegroundLayer,
 } from '../_screen/screenTypeHelpers';
 import { dragStore, handleDragStart } from '../helper/dragHelpers';
 import { genForegroundDragInf } from './foregroundDragHelpers';
@@ -43,6 +47,8 @@ import {
     toSessionShowingList,
     useForegroundSessions,
 } from './foregroundSessionHelpers';
+import type { TransitionEffectType } from '../_screen/transitionEffectHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 
 const FONT_SIZE_PRESETS = [0, 50, 75, 100, 150];
 const SPEED_PERCENTAGE_PRESETS = [50, 75, 100, 150, 200];
@@ -75,6 +81,8 @@ type MarqueeConfigType = {
         speedPercentage: number,
         isForceChoosing: boolean,
         sessionId: string,
+        isBehind: boolean,
+        transitionEffect?: TransitionEffectType,
     ) => void;
 };
 
@@ -108,6 +116,8 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
             speedPercentage,
             isForceChoosing,
             sessionId,
+            isBehind,
+            transitionEffect,
         ) => {
             ScreenForegroundManager.setMarqueeTop(
                 event,
@@ -116,6 +126,8 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
                 speedPercentage,
                 isForceChoosing,
                 sessionId,
+                isBehind,
+                transitionEffect,
             );
         },
     },
@@ -148,6 +160,8 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
             speedPercentage,
             isForceChoosing,
             sessionId,
+            isBehind,
+            transitionEffect,
         ) => {
             ScreenForegroundManager.setMarqueeBottom(
                 event,
@@ -156,6 +170,8 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
                 speedPercentage,
                 isForceChoosing,
                 sessionId,
+                isBehind,
+                transitionEffect,
             );
         },
     },
@@ -179,16 +195,19 @@ function refreshAllMarquees(
     showingScreenIdDataList: [number, ForegroundMarqueeDataType][],
     extraStyle: CSSProperties,
     speedPercentage: number,
+    isBehind: boolean,
 ) {
     for (const [screenId, data] of showingScreenIdDataList) {
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
-                config.setData(screenForegroundManager, {
-                    ...data,
-                    speedPercentage,
-                    extraStyle,
-                });
+                config.setData(
+                    screenForegroundManager,
+                    withForegroundLayer(
+                        { ...data, speedPercentage, extraStyle },
+                        isBehind,
+                    ),
+                );
             },
         );
     }
@@ -205,11 +224,14 @@ function MarqueeBodyComp({
     sessionId,
     suffix,
     prefix,
+    showingScreenIdDataList,
 }: Readonly<{
     config: MarqueeConfigType;
     sessionId: string;
     suffix: string;
     prefix: string;
+    /** THIS session's marquees only -- see `toSessionShowingList`. */
+    showingScreenIdDataList: [number, ForegroundMarqueeDataType][];
 }>) {
     // Per-instance: nothing here may assume this panel stays a single mount,
     // and a shared one would drop the other marquee's pending refresh.
@@ -229,33 +251,11 @@ function MarqueeBodyComp({
         DEFAULT_MARQUEE_SPEED_PERCENTAGE,
     );
 
-    const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
-        (data) => {
-            return config.getData(data) !== null;
-        },
-    )
-        .map(([screenId, data]): [number, ForegroundMarqueeDataType] | null => {
-            const marqueeData = config.getData(data);
-            if (marqueeData === null) {
-                return null;
-            }
-            return [screenId, marqueeData];
-        })
-        .filter((item) => {
-            return item !== null;
-        });
-
     // `genStyle` only exists after the props-setting hook runs, but the font
     // size and speed controls live inside that hook's `extraControls`. The ref
     // lets those controls push a live update to every showing marquee.
     const genStyleRef = useRef<() => CSSProperties>(() => ({}));
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
-    // THIS session's marquee only. The panel lists every marquee of its
-    // position so the Hide row can always reach one, but a style belongs to
-    // the session it was set on -- see `toSessionShowingList`.
-    const getSessionShowing = () => {
-        return toSessionShowingList(showingRef.current, sessionId);
-    };
     const refreshShowing = (
         newFontSize: number,
         newSpeedPercentage: number,
@@ -263,9 +263,10 @@ function MarqueeBodyComp({
         attemptTimeout(() => {
             refreshAllMarquees(
                 config,
-                getSessionShowing(),
+                showingRef.current,
                 withFontSize(genStyleRef.current(), newFontSize),
                 newSpeedPercentage,
+                getForegroundIsBehind(prefix),
             );
         });
     };
@@ -289,19 +290,23 @@ function MarqueeBodyComp({
 
     const {
         genStyle,
+        getIsBehind,
+        getTransition,
         element: propsSetting,
         fontFamily,
         fontWeight,
     } = useForegroundPropsSetting({
         prefix,
+        widgetKey: config.target,
         isGeometry: false,
-        onChange: (extraStyle) => {
+        onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
                 refreshAllMarquees(
                     config,
-                    getSessionShowing(),
+                    showingRef.current,
                     withFontSize(extraStyle, fontSize),
                     speedPercentage,
+                    isBehind,
                 );
             });
         },
@@ -382,9 +387,19 @@ function MarqueeBodyComp({
                 speedPercentage,
                 isForceChoosing,
                 sessionId,
+                getIsBehind(),
+                getTransition(),
             );
         },
-        [config, text, genExtraStyle, speedPercentage, sessionId],
+        [
+            config,
+            text,
+            genExtraStyle,
+            getIsBehind,
+            getTransition,
+            speedPercentage,
+            sessionId,
+        ],
     );
     const handleShowingRef = useAppCurrentRef(handleShowing);
     const handleContextMenuOpening = useCallback((event: any) => {
@@ -398,16 +413,31 @@ function MarqueeBodyComp({
             if (screenForegroundManager === null) {
                 return;
             }
-            config.setData(screenForegroundManager, {
-                // A LIVE drop from this panel is this session acting; a
-                // run-sheet row replayed weeks later carries none.
-                id: sessionId || undefined,
-                text,
-                speedPercentage,
-                extraStyle: genExtraStyle(),
-            });
+            config.setData(
+                screenForegroundManager,
+                withForegroundLayer(
+                    {
+                        // A LIVE drop from this panel is this session acting;
+                        // a run-sheet row replayed weeks later carries none.
+                        id: sessionId || undefined,
+                        ...toTransitionPart(getTransition()),
+                        text,
+                        speedPercentage,
+                        extraStyle: genExtraStyle(),
+                    },
+                    getIsBehind(),
+                ),
+            );
         },
-        [config, text, genExtraStyle, speedPercentage, sessionId],
+        [
+            config,
+            text,
+            genExtraStyle,
+            getIsBehind,
+            getTransition,
+            speedPercentage,
+            sessionId,
+        ],
     );
     const handleHiding = useCallback(
         (screenId: number) => {
@@ -451,6 +481,8 @@ function MarqueeBodyComp({
     const textRef = useAppCurrentRef(text);
     const speedPercentageRef = useAppCurrentRef(speedPercentage);
     const genExtraStyleRef = useAppCurrentRef(genExtraStyle);
+    const getIsBehindRef = useAppCurrentRef(getIsBehind);
+    const getTransitionRef = useAppCurrentRef(getTransition);
     const configRef = useAppCurrentRef(config);
     const handleMarqueeDragStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
@@ -459,11 +491,15 @@ function MarqueeBodyComp({
             genForegroundDragInf(
                 configRef.current.target as 'marquee-top' | 'marquee-bottom',
                 () => {
-                    return {
-                        text: textRef.current,
-                        speedPercentage: speedPercentageRef.current,
-                        extraStyle: genExtraStyleRef.current(),
-                    };
+                    return withForegroundLayer(
+                        {
+                            ...toTransitionPart(getTransitionRef.current()),
+                            text: textRef.current,
+                            speedPercentage: speedPercentageRef.current,
+                            extraStyle: genExtraStyleRef.current(),
+                        },
+                        getIsBehindRef.current(),
+                    );
                 },
             ),
         );
@@ -566,6 +602,7 @@ export default function ForegroundMarqueeComp({
     // its own speed and its own look.
     const {
         activeId,
+        sessionIds,
         suffix,
         prefix,
         element: sessionsElement,
@@ -575,14 +612,14 @@ export default function ForegroundMarqueeComp({
             return `${config.target}${sessionSuffix}`;
         },
         toOwnSettingNames: genOwnSettingNames.bind(null, config),
-        checkIsOnScreen: (sessionId) => {
+        checkIsOnScreen: (sessionId, _sessionSuffix, idList) => {
             return showingScreenIdDataList.some(([, data]) => {
-                return checkIsSessionData(data, sessionId);
+                return checkIsSessionData(data, sessionId, idList);
             });
         },
-        hideSession: (sessionId) => {
+        hideSession: (sessionId, _sessionSuffix, idList) => {
             for (const [screenId, data] of showingRef.current) {
-                if (!checkIsSessionData(data, sessionId)) {
+                if (!checkIsSessionData(data, sessionId, idList)) {
                     continue;
                 }
                 getScreenForegroundManagerInstances(
@@ -603,6 +640,11 @@ export default function ForegroundMarqueeComp({
                 sessionId={activeId}
                 suffix={suffix}
                 prefix={prefix}
+                showingScreenIdDataList={toSessionShowingList(
+                    showingScreenIdDataList,
+                    activeId,
+                    sessionIds,
+                )}
             />
         </ForegroundLayoutComp>
     );

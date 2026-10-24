@@ -104,19 +104,43 @@ function readPinnedCdpPort() {
 /**
  * Which app to drive, best evidence first: the port pinned by the instance
  * this process lives in, then one pinned by `OWA_CDP_PORT`, then the newest
- * published instance.
+ * published instance of the requested kind (or any kind when unset).
  */
 export function resolveAppBrowserUrl(instances = null) {
-    const pinnedPort = readPinnedCdpPort();
-    if (pinnedPort !== null) {
-        return `http://127.0.0.1:${pinnedPort}`;
+    const explicitPort = readExplicitCdpPort();
+    if (explicitPort !== null) {
+        return `http://127.0.0.1:${explicitPort}`;
     }
-    const envPort = Number(process.env.OWA_CDP_PORT);
-    if (Number.isInteger(envPort) && envPort > 0) {
-        return `http://127.0.0.1:${envPort}`;
-    }
-    const [instance] = instances ?? readLiveInstances();
+    const target = readCdpTarget();
+    const [instance] = filterTargetInstances(
+        instances ?? readLiveInstances(),
+        target,
+    );
     return instance ? `http://127.0.0.1:${instance.port}` : NO_APP_URL;
+}
+
+// A kind pin survives a restart without ever selecting the other kind. Read
+// it and discovery afresh per lookup; neither ports nor instances are cached.
+function readCdpTarget() {
+    const target = process.env.OWA_CDP_TARGET;
+    if (target === undefined || target === '') {
+        return null;
+    }
+    if (target !== 'dev' && target !== 'prod') {
+        throw new Error(
+            'OWA_CDP_TARGET must be dev or prod; unset it to select any running app.',
+        );
+    }
+    return target;
+}
+
+function filterTargetInstances(instances, target) {
+    return target === null
+        ? instances
+        : instances.filter((instance) => {
+              // A missing/unknown kind is not evidence that an instance is prod.
+              return instance.isDev === (target === 'dev');
+          });
 }
 
 /**
@@ -159,10 +183,18 @@ export function listCandidatePorts({ port, excludePorts = [] } = {}) {
         if (explicitPort !== null) {
             ports.push(explicitPort);
         } else {
-            for (const instance of readLiveInstances()) {
+            const target = readCdpTarget();
+            for (const instance of filterTargetInstances(
+                readLiveInstances(),
+                target,
+            )) {
                 ports.push(instance.port);
             }
-            ports.push(...FALLBACK_PORTS);
+            // The legacy port carries no instance kind, so it cannot satisfy
+            // a kind pin even when no matching published app is available.
+            if (target === null) {
+                ports.push(...FALLBACK_PORTS);
+            }
         }
     }
     return [...new Set(ports)].filter((candidate) => {
@@ -179,7 +211,12 @@ export function listCandidatePorts({ port, excludePorts = [] } = {}) {
 export function describeDeadPin() {
     const explicitPort = readExplicitCdpPort();
     if (explicitPort === null) {
-        return null;
+        const target = readCdpTarget();
+        return target === null
+            ? null
+            : `No responding ${target} app was found for OWA_CDP_TARGET=${target}. ` +
+                  `Start a ${target === 'dev' ? 'development' : 'packaged'} app with AI features enabled; ` +
+                  'other instance kinds and legacy ports are not tried.';
     }
     const published = readLiveInstances().map((instance) => {
         return `${instance.port}${instance.isDev ? ' (dev)' : ''}`;
@@ -252,8 +289,9 @@ export function connectToCdp(options = {}) {
             if (index >= candidatePorts.length) {
                 reject(
                     new Error(
-                        'No running Open Worship App found ' +
-                            `(tried ${candidatePorts.join(', ') || 'nothing'})`,
+                        describeDeadPin() ??
+                            'No running Open Worship App found ' +
+                                `(tried ${candidatePorts.join(', ') || 'nothing'})`,
                     ),
                 );
                 return;

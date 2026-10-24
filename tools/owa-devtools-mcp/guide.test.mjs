@@ -1,19 +1,32 @@
 // @vitest-environment jsdom
 import { describe, expect, it, beforeEach } from 'vitest';
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { genDestructiveLabelRule } from './destructiveLabel.mjs';
 import {
+  GUIDE_CARD_HINT_TEMPLATE_LIST,
+  GUIDE_CARD_LABEL_KEY_MAP,
+  listGuideCardTranKeys,
   detectRecipeWindow,
   dropStepsAlreadyDone,
   genGuideExpression,
+  selectGuideStepIndexForTopic,
   selectGuideStepsForTopic,
   stripInternalIds,
   toGuideSteps,
   toKeystroke,
 } from './guide.mjs';
-import { loadTranBundle } from './tran.mjs';
+import { extractDictionary, loadTranBundle } from './tran.mjs';
 
 const GUARD = { rule: genDestructiveLabelRule(loadTranBundle()) };
+const REPO_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+);
 
 // The runtime is a string evaluated in the app page, so it is exercised the
 // way the app gets it: evaluated, then driven through its own api.
@@ -55,6 +68,94 @@ beforeEach(() => {
   };
 });
 
+// The card sits in the app window and speaks its language: every word it
+// asks the dictionary for must be there in Khmer AND French, read straight
+// from the packages (a stale built bundle would hide a new key).
+describe('the card’s own words', () => {
+  it('has every one in every language', () => {
+    const readPack = (code) => {
+      return extractDictionary(
+        readFileSync(
+          path.join(REPO_DIR, 'src', 'lang', 'data', code, 'index.ts'),
+          'utf-8',
+        ),
+      );
+    };
+    const keyList = listGuideCardTranKeys();
+    expect(keyList).toEqual(
+      expect.arrayContaining(['Next', 'Done', 'Do it', 'Step by step']),
+    );
+    for (const code of ['km', 'fr']) {
+      const dictionary = readPack(code);
+      expect(
+        keyList.filter((key) => {
+          return dictionary[key.trim().toLowerCase()] === undefined;
+        }),
+        code,
+      ).toEqual([]);
+    }
+  });
+
+  // The list the server translates and the sentences the card says are two
+  // copies; one drifting from the other is a sentence left in English.
+  it('every sentence the card says is a template on the list', () => {
+    const source = genGuideExpression('status()').replace(/'\s*\+\s*'/g, '');
+    const said = [...source.matchAll(/say\(\s*'([^']*)'/g)].map((match) => {
+      return match[1];
+    });
+    expect(said.length).toBeGreaterThan(20);
+    expect(
+      said.filter((template) => {
+        return !GUIDE_CARD_HINT_TEMPLATE_LIST.includes(template);
+      }),
+    ).toEqual([]);
+    const placeWords = new Set(
+      ['top', 'middle', 'bottom'].flatMap((row) => {
+        return ['left', 'center', 'right'].map((column) => {
+          return `${row} ${column}`;
+        });
+      }),
+    );
+    expect(
+      GUIDE_CARD_HINT_TEMPLATE_LIST.filter((template) => {
+        return !placeWords.has(template) && !source.includes(`'${template}'`);
+      }),
+    ).toEqual([]);
+  });
+
+  it('says its sentences in the words it is handed', () => {
+    startGuide({
+      steps: [{ text: 'ចុចប៊ូតុង' }],
+      words: {
+        'Do this step in the window behind me.':
+          'សូមធ្វើជំហាននេះនៅក្នុងបង្អួចនៅពីក្រោយខ្ញុំ។',
+      },
+      guard: GUARD,
+    });
+    const root = document.getElementById('owa-guide-host').shadowRoot;
+    expect(root.textContent).toContain(
+      'សូមធ្វើជំហាននេះនៅក្នុងបង្អួចនៅពីក្រោយខ្ញុំ។',
+    );
+  });
+
+  it('the counter has a key of its own, not the slider’s Step', () => {
+    expect(GUIDE_CARD_LABEL_KEY_MAP.step).toBe('Walkthrough step');
+  });
+
+  it('takes the words it is handed', () => {
+    startGuide({
+      title: 'ម្តងមួយជំហាន',
+      steps: [{ text: 'ចុចប៊ូតុង' }, { text: 'រួចហើយ' }],
+      labels: { next: 'បន្ទាប់', step: 'ជំហាន' },
+      guard: GUARD,
+    });
+    const root = document.getElementById('owa-guide-host').shadowRoot;
+    expect(root.textContent).toContain('ជំហាន 1/2');
+    expect(root.textContent).toContain('បន្ទាប់');
+    expect(root.textContent).toContain('ម្តងមួយជំហាន');
+  });
+});
+
 describe('selectGuideStepsForTopic', () => {
   const steps = [
     { text: 'Type a full reference such as John 3:16.' },
@@ -80,9 +181,33 @@ describe('selectGuideStepsForTopic', () => {
   it('keeps the whole recipe when the topic is too vague to choose safely', () => {
     expect(selectGuideStepsForTopic(steps, 'Please help me.')).toEqual(steps);
   });
+
+  it('says which step it chose, so the caller can keep the way there', () => {
+    // A deep step's control is on screen only once the earlier steps have
+    // opened its panel; the tool starts from step 1 up to this index then.
+    expect(selectGuideStepIndexForTopic(steps, 'I lost the passage.')).toBe(3);
+    expect(selectGuideStepIndexForTopic(steps, 'Please help me.')).toBeNull();
+    expect(selectGuideStepIndexForTopic([steps[0]], 'passage')).toBeNull();
+  });
 });
 
 describe('toGuideSteps', () => {
+  // A page's own translation is read for its WORDS (`withLocalStepText`):
+  // left to `toEnglishOnly`, a Khmer step was its button names and nothing
+  // else, and the card fell back to the English sentence.
+  it('keeps a translated step whole when asked to', () => {
+    const page = [
+      '1. ចុច **[en:tran:Font Size]** ហើយរំកិលវាទៅខាងស្ដាំ។',
+      '2. ចុច **[en:tran:Add Extra Bible]**។',
+    ].join('\n');
+    expect(toGuideSteps(page)[0].text).toBe('[en:tran:Font Size]');
+    const kept = toGuideSteps(page, undefined, { isTextKept: true });
+    expect(kept.map((step) => step.text)).toEqual([
+      'ចុច [en:tran:Font Size] ហើយរំកិលវាទៅខាងស្ដាំ។',
+      'ចុច [en:tran:Add Extra Bible]។',
+    ]);
+  });
+
   it('keeps a bold control label and drops keystrokes and stressed prose', () => {
     const steps = toGuideSteps(
       [
@@ -276,6 +401,49 @@ describe('dropStepsAlreadyDone', () => {
     ).toHaveLength(1);
   });
 
+  // 2026-10-04: three built-in Presenter tips started a step too far on in
+  // the Presenter -- "Open Bible Lookup at the top of the Presenter." names
+  // this window and goes nowhere; it presses Bible Lookup IN it, so the card
+  // opened on a step inside a popup nobody had opened.
+  it('keeps an opening step that presses a control of this window', () => {
+    const next = { text: 'Type a reference.', finds: [] };
+    // A built-in lesson carries `find` and `finds`; a model-written step
+    // carries `find` alone.
+    for (const opening of [
+      {
+        text: 'Open Bible Lookup at the top of the Presenter.',
+        find: 'Bible Lookup',
+        finds: ['Bible Lookup'],
+      },
+      { text: 'Open Bible Lookup in the Presenter.', find: 'Bible Lookup' },
+      {
+        text: 'Select a document in the Document List so its slide cards appear in the Presenter.',
+        finds: ['Documents'],
+      },
+    ]) {
+      expect(dropStepsAlreadyDone([opening, next], '/presenter.html')).toEqual([
+        opening,
+        next,
+      ]);
+    }
+    // A step that names this window AND does something else in it is not
+    // only the trip -- W-34's "Open Settings ... and pick the Bible tab".
+    const settingsStep = {
+      text: 'Open Settings (Tools → Settings, or the ⚙ button) and pick the Bible tab.',
+      finds: ['Settings', 'Bible'],
+    };
+    expect(
+      dropStepsAlreadyDone([settingsStep, next], '/setting.html'),
+    ).toHaveLength(2);
+    // Every control it names being this window is still the trip alone.
+    expect(
+      dropStepsAlreadyDone(
+        [{ text: 'Open Settings.', finds: ['Settings'] }, next],
+        '/setting.html',
+      ),
+    ).toEqual([next]);
+  });
+
   it('leaves a step alone in a window nothing declares', () => {
     const steps = [
       { text: 'Click the Bible Reader tab.', finds: ['Bible Reader'] },
@@ -334,6 +502,19 @@ describe('detectRecipeWindow', () => {
   it('says nothing when no window is named', () => {
     expect(
       detectRecipeWindow([{ text: 'Select a slide and double-click.' }]),
+    ).toBeNull();
+  });
+
+  it('reads only the sentence that says where the step goes', () => {
+    expect(
+      detectRecipeWindow([
+        {
+          text:
+            'Click the AI Chat button in the top-right corner of the ' +
+            'window. It works whether or not AI features is switched on ' +
+            'in Settings.',
+        },
+      ]),
     ).toBeNull();
   });
 
@@ -506,6 +687,52 @@ describe('the guide runtime', () => {
     );
     expect(document.getElementById('size').value).toBe('17');
 
+    const changed = await window.__owaGuide.act();
+    expect(changed.lastResult).toMatchObject({
+      done: true,
+      did: 'typed',
+      value: '25',
+    });
+    expect(document.getElementById('size').value).toBe('25');
+  });
+
+  it('raises the Font Size range its own titled box wraps, not refusing it as a twin', async () => {
+    // `AppRangeComp`'s real shape: the range is named by its aria-label and
+    // its box by a title of the same words. Hidden until the footer opens,
+    // the box was no twin; opened, the second Do it of the Reader's font tip
+    // was refused for "2 controls are called Font Size" (GL-25).
+    document.body.innerHTML = [
+      '<style>',
+      '.app-auto-hide > div { visibility: hidden; }',
+      '.app-auto-hide.auto-hide-show > div { visibility: visible; }',
+      '</style>',
+      '<div data-widget-name="Bible Reader">',
+      '  <div id="footer" class="app-auto-hide">',
+      '    <div class="app-range" title="Font Size">',
+      '      <input id="size" type="range" aria-label="Font Size" title="17" min="5" max="40" step="2" value="17">',
+      '    </div>',
+      '  </div>',
+      '  <i id="reveal" class="auto-hide-button" title="Reveal Hidden Controls"></i>',
+      '</div>',
+    ].join('');
+    document.getElementById('reveal').addEventListener('click', () => {
+      document.getElementById('footer').classList.add('auto-hide-show');
+    });
+    startGuide({
+      mode: 'demo',
+      steps: [
+        {
+          text: 'Make the words larger.',
+          find: 'Font Size',
+          action: 'type',
+          value: '+8',
+        },
+      ],
+    });
+    const opened = await window.__owaGuide.act();
+    expect(opened.lastResult).toMatchObject({ done: true, did: 'revealed' });
+
+    expect(window.__owaGuide.status().twins).toBeUndefined();
     const changed = await window.__owaGuide.act();
     expect(changed.lastResult).toMatchObject({
       done: true,
@@ -751,6 +978,120 @@ describe('the guide runtime', () => {
     });
     expect(status.isTargetFound).toBe(true);
     expect(status.find).toBe('KJV');
+  });
+
+  it('refuses to press a name that several controls carry, saying where they are', async () => {
+    // Every file row's dots and the Mini Screen's own are "More Options";
+    // the first in the page is the Documents list's, and pressing it
+    // opened the wrong menu for a step about the other one.
+    document.body.innerHTML = [
+      '<div data-widget-name="Document List">',
+      '<button id="rows" title="More Options">⋮</button></div>',
+      '<div data-widget-name="Mini Screen">',
+      '<button id="own" title="More Options">⋮</button></div>',
+    ].join('');
+    const clicked = [];
+    for (const id of ['rows', 'own']) {
+      document.getElementById(id).addEventListener('click', () => {
+        clicked.push(id);
+      });
+    }
+    const status = startGuide({
+      mode: 'demo',
+      steps: [
+        {
+          text: 'Click More Options at the bottom right.',
+          finds: ['More Options'],
+        },
+        { text: 'Done.', finds: [] },
+      ],
+    });
+    expect(status.isTargetFound).toBe(true);
+    expect(status.twins).toEqual({
+      count: 2,
+      panels: ['Document List', 'Mini Screen'],
+    });
+    const result = await window.__owaGuide.act();
+    expect(result.lastResult.done).toBe(false);
+    expect(result.lastResult.reason).toBe(
+      '2 controls are called "More Options" (in Document List, Mini Screen) ' +
+        'and the step does not say which',
+    );
+    expect(clicked).toEqual([]);
+    expect(result.stepNumber).toBe(1);
+  });
+
+  it('presses the one of several that this walkthrough’s last press made', async () => {
+    // Two display cards each carry "Cast to a TV": the one the walkthrough
+    // just added is the one its next step means (2026-10-10). Judged
+    // against the window before the LAST press, not before the start: the
+    // panel holding the cards was itself opened by an earlier step.
+    document.body.innerHTML = [
+      '<div data-widget-name="Virtual Screens Manager">',
+      '<button id="add">Add Virtual Display</button>',
+      '<button id="old" title="Cast to a TV">cast</button></div>',
+    ].join('');
+    const clicked = [];
+    const panel = document.querySelector('[data-widget-name]');
+    document.getElementById('old').addEventListener('click', () => {
+      clicked.push('old');
+    });
+    // Pressing Add makes a card with its own cast icon.
+    document.getElementById('add').addEventListener('click', () => {
+      clicked.push('add');
+      const made = document.createElement('button');
+      made.id = 'new';
+      made.title = 'Cast to a TV';
+      made.textContent = 'cast';
+      made.addEventListener('click', () => {
+        clicked.push('new');
+      });
+      panel.appendChild(made);
+    });
+    startGuide({
+      mode: 'demo',
+      steps: [
+        { text: 'Click Add Virtual Display.', finds: ['Add Virtual Display'] },
+        { text: 'Click Cast to a TV.', finds: ['Cast to a TV'] },
+        { text: 'Done.', finds: [] },
+      ],
+    });
+    const added = await window.__owaGuide.act();
+    expect(added.lastResult.done).toBe(true);
+    window.__owaGuide.next();
+    const status = window.__owaGuide.status();
+    expect(status.stepNumber).toBe(2);
+    expect(status.isTargetFound).toBe(true);
+    expect(status.twins).toBeUndefined();
+    const result = await window.__owaGuide.act();
+    expect(result.lastResult.done).toBe(true);
+    expect(clicked).toEqual(['add', 'new']);
+  });
+
+  it('presses the one of several that the step scopes to its panel', async () => {
+    document.body.innerHTML = [
+      '<div data-widget-name="Document List">',
+      '<button id="rows" title="More Options">⋮</button></div>',
+      '<div data-widget-name="Mini Screen">',
+      '<button id="own" title="More Options">⋮</button></div>',
+    ].join('');
+    const clicked = [];
+    for (const id of ['rows', 'own']) {
+      document.getElementById(id).addEventListener('click', () => {
+        clicked.push(id);
+      });
+    }
+    const status = startGuide({
+      mode: 'demo',
+      steps: [
+        { text: 'Click More Options.', finds: ['Mini Screen > More Options'] },
+        { text: 'Done.', finds: [] },
+      ],
+    });
+    expect(status.twins).toBeUndefined();
+    const result = await window.__owaGuide.act();
+    expect(result.lastResult.done).toBe(true);
+    expect(clicked).toEqual(['own']);
   });
 
   it('acts on the control itself, not the row that contains its text', async () => {
@@ -1622,7 +1963,7 @@ describe('a step that is not the card to press', () => {
   it('will not press the key a destructive control is named by', async () => {
     document.body.innerHTML =
       '<button title="Clear All [F6]">A</button>' +
-      '<button title="Clear Bible [F9]">B</button>';
+      '<button title="Clear Long Text [F9]">B</button>';
     const seen = [];
     document.addEventListener('keydown', (event) => {
       seen.push(event.key);
@@ -1711,5 +2052,32 @@ describe('a control inside a floating panel', () => {
     const result = await window.__owaGuide.act();
     expect(result.lastResult).toMatchObject({ done: true, did: 'clicked' });
     expect(clicked).toEqual(['show']);
+  });
+});
+
+// The Foreground lessons' first Do it presses the Foreground tab, which opens
+// the launcher as a CONTEXT MENU -- placed at the press's coordinates. A bare
+// `element.click()` carries 0,0 and put the menu in the window's top-left
+// corner (2026-10-06), so the card presses where the control is.
+describe('Do it presses at the control', () => {
+  it('clicks at the centre of the control the step names', async () => {
+    document.body.innerHTML = '<button id="tab">Foreground</button>';
+    // An earlier test stubs hit-testing onto an element of its own page.
+    delete document.elementsFromPoint;
+    const seen = [];
+    document.getElementById('tab').addEventListener('click', (event) => {
+      seen.push([event.clientX, event.clientY]);
+    });
+    startGuide({
+      mode: 'demo',
+      steps: [
+        { text: 'Click Foreground.', finds: ['Foreground'] },
+        { text: 'Done.' },
+      ],
+    });
+    const result = await window.__owaGuide.act();
+    expect(result.lastResult).toMatchObject({ done: true, did: 'clicked' });
+    // The stubbed box is x 10, y 10, 40 wide, 20 high.
+    expect(seen).toEqual([[30, 20]]);
   });
 });

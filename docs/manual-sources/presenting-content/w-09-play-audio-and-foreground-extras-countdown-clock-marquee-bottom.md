@@ -2,17 +2,17 @@
 id: W-09
 title: "Play audio, and foreground extras (countdown, clock, marquee bottom…)"
 section: "Presenting content"
-verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, KB-03, KB-07, CB-67]
-screenshots: 3
+verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67]
+screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
 **Goal:** run service extras.
 
-**Audio:** in the Background panel, toggle the **[en:tran:Audios]** tab open, click play
-on a track — the tab is marked while playing; click stop to end. 📸
+**Audio:** in the Background panel, toggle the **[en:tran:Audios]** tab open, click a track
+to open its player and press play — the tab is marked while playing; pause it to end. 📸
 
 **Foreground widgets** — press the middle **[en:tran:Foreground]** tab and a menu
 opens **at the cursor** listing every component. Pick one and it opens in **its own
@@ -26,24 +26,80 @@ itself has no second title bar to collapse: its own header carries the name, the
 on-screen mark and the close button. Each panel has its own controls and a Show/Start
 button:
 
-- **Marquee Top:** type the scrolling text, click Show — it scrolls along the top edge.
-- **Marquee Bottom:** type the scrolling text, click Show — it scrolls along the bottom
-  edge. Top and bottom can be shown at the same time.
+- **[en:tran:Marquee Top]:** type the scrolling text, click
+  **[en:tran:Show Marquee Top]** — it scrolls along the top edge.
+- **[en:tran:Marquee Bottom]:** type the scrolling text, click
+  **[en:tran:Show Marquee Bottom]** — it scrolls along the bottom edge. Top and bottom can be shown at the same time.
 - Both marquees expose a **scroll speed** (%) under _Properties_: `100%` is the default
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
-- **Quick Text:** type a short message, click Show.
-- **Countdown:** two modes — _to a date/time_ (set date + time, press Start) or _for a
-  duration_ (set hours/minutes, press Start). Hide with its Hide button. 📸
-- **Stopwatch**, **Clock**, **Camera Show**: same pattern — configure, Show, Hide.
+- **[en:tran:Quick Text]:** type a short message, click **[en:tran:Show Quick Text]**.
+- **[en:tran:Countdown]:** two modes. _To a date/time_: set date + time and press
+  **[en:tran:Start Countdown to DateTime]** — it starts at once and always counts to that
+  clock time. _For a duration_: set the **h**, **m** and **s** boxes (more than 24
+  hours is fine: 25 h reads `25:00:00`) and press
+  **[en:tran:Show Countdown]** — it goes up STOPPED on its full length (`00:05:00`), so it
+  can be put up early and started on the cue. While it is on a screen,
+  **[en:tran:Start]**, **[en:tran:Pause]** / **[en:tran:Resume]** and **[en:tran:Reset]**
+  (back to the full length, stopped) sit under the button, with a word saying whether it
+  is _[en:tran:Not started]_, _[en:tran:Running]_ or _[en:tran:Paused]_. Turn on
+  **[en:tran:Auto-start]** and the button reads **[en:tran:Start Countdown]** and it counts
+  the moment it is shown. When it reaches zero the digits flash red five times (about ten
+  seconds) and then stay red; they hold `00:00:00` for one
+  second, then count the time OVER behind a **+** (`+00:01:23`) until you
+  hide it. The audience sees only the digits — a paused countdown simply stops. Hide
+  with its Hide button. 📸
+- **[en:tran:Stopwatch]:** the same controls. **[en:tran:Show Stopwatch]** puts it up on
+  `00:00:00`, stopped (running at once with **[en:tran:Auto-start]**), then
+  **[en:tran:Start]** / **[en:tran:Pause]** / **[en:tran:Resume]** / **[en:tran:Reset]**
+  (back to zero). **[en:tran:Reset]** first SAVES the time it read into a
+  **[en:tran:History]** list under the buttons — newest on top, numbered, with the time
+  of day it was reset (in the app's language; in Khmer as numbers, e.g. `04/10 07:57`) — so the 7:42 a testimony ran is not lost with the zero. Each
+  session keeps its own list (the last 20; a reset under one second is not kept), and
+  **[en:tran:Clear]** beside it empties it after a confirm.
+- **[en:tran:Time]** (the clock): same pattern — configure, Show, Hide.
+  **[en:tran:Choose City]** puts the city's name above the clock in words
+  (`Phnom Penh`) with its time; **[en:tran:Use Current Timezone]** goes back to
+  this computer's time and takes that name away with it (a name you typed
+  yourself stays). AM/PM is written in the app's language. A long name wraps
+  inside the box instead of being cut off. With more than one clock, each
+  **[en:tran:Show Time]** button is numbered for a screen reader, like its
+  remove button. A clock added with **[en:tran:Add Time]** starts in a place
+  of its own — the first clock in the middle, the next at the top, then the
+  bottom — so two clocks shown together never sit on top of each other; move
+  one under **[en:tran:Properties]** if you want it elsewhere.
+- **[en:tran:Camera Show]**: same pattern — configure, Show, Hide. A camera that
+  another program is holding says so in its tile instead of loading for ever.
+- **[en:tran:Screen Show]:** what one screen holds, shown on another —
+  screen 1's slide in the corner of screen 0. The panel has one card per
+  screen, in that screen's own colour with its number. Click a card to
+  put that screen on the selected screen, or press its **⋮**
+  (**[en:tran:Show on Screens]**) to choose. Place and size it under
+  _Properties_ like any other overlay. It shows that screen's
+  background, slide, Bible text and overlays as they change, **even
+  while that screen is hidden** — a screen that is up nowhere else can
+  be shown only inside another. Where that screen draws nothing,
+  the one beneath shows through. A screen never shows itself, and two
+  screens never show each other: the app refuses with
+  **[en:tran:A screen cannot show itself]** or
+  **[en:tran:These screens would show each other]** instead. It never
+  carries sound: the screen it shows plays that. Take it off with
+  **[en:tran:Hide Screen Show]**. 📸
 - **[en:tran:Video Show]**, **[en:tran:Image Show]** and **[en:tran:Web Show]:** a clip,
   a picture or a web page shown _over_ the slide instead of behind it. Each lists a
   folder the same way the Background tabs do — only the rows on screen are built, so a
   folder of thousands opens as fast as a folder of ten. Click a tile to put it up,
   click it again to take it off, right-click to choose a display. A clip plays muted
   and loops.
-- **Sessions — every foreground component keeps them.** They are the row of buttons
-  pinned at the top of the panel, with **＋** to add one, and a session is one saved
+  **The volume of what is playing.** A track from the [en:tran:Audios] tab has no
+  volume slider of the app's own: it is as loud as the computer's volume, so turn
+  that up or down. A [en:tran:Video Show] clip has one. Open it from the
+  [en:tran:Foreground] tab, open _[en:tran:Properties]_ in its panel and tick
+  **[en:tran:Play With Sound]**: a **[en:tran:Volume]** slider appears under it, and
+  that slider is the clip's volume.
+- **Sessions — every foreground component keeps them**, except [en:tran:Camera Show] and
+  [en:tran:Screen Show], which lay out one card per camera and per screen instead. They are
+  the row of buttons pinned at the top of the panel, with **＋** to add one, and a session is one saved
   set-up of that panel: its **own** words or numbers **and** its **own**
   _Properties_ (size, place, colours, effects). So **[en:tran:Messages]** holds the
   pre-service notice board in one session and the mid-service alerts in another;
@@ -51,43 +107,59 @@ button:
   the one counting to a date; **[en:tran:Marquee Bottom]** holds the standing welcome
   beside this morning's car-park notice; **[en:tran:Time]** holds a wall of world
   clocks beside the single service clock. Nothing has to be retyped over the set-up
-  that was working. On **[en:tran:Video Show]**, **[en:tran:Image Show]**,
-  **[en:tran:Camera Show]** and **[en:tran:Web Show]** a session also owns its **own
+  that was working. On **[en:tran:Video Show]**, **[en:tran:Image Show]**
+  and **[en:tran:Web Show]** a session also owns its **own
   folder** and its **own slide show**, so one can run a show over your backgrounds
   folder while another holds a logo from somewhere else, both on screen at once.
+  Setting a session up puts nothing on the screen: its show button does that, when
+  you want that one.
 - Right-click a session (or press its **⋮**) to rename or remove it. Only one session
   is shown at a time, so each button carries its own marks: the on-screen dot when
   that session has something up, and a blue ▶ while its slide show is advancing —
   that dot is the only sign of something live belonging to a session you are not
   looking at. Removing a session **takes what it put up off the screens first**, so
   nothing is left behind with no button to hide it.
-- A session's _Properties_ act on **that session's own overlay and nothing else**.
-  The Hide row still reaches whatever is live, whichever session put it there —
-  there must always be a way to take something off a projector — but changing
-  size, colour or place while you are on another session no longer re-dresses
-  the overlay somebody else's session has on the wall.
+- A session's _Properties_ and its Hide row act on **that session's own overlay and
+  nothing else**. Changing size, colour or place on one session never re-dresses
+  what another session has on the wall, and a session with nothing up shows no
+  Hide button at all. To take down what another session put up, press the session
+  button carrying the on-screen dot and use the Hide button there. Something that
+  went up with no session (a dragged run-sheet row, the assistant) belongs to the
+  first session button, which is **[en:tran:Default]** unless Default was removed.
 - **[en:tran:Messages]** and **[en:tran:Time]** hold several items per session
   (several message editors, several clocks), so two sessions can each have something
-  up at once and both stay listed on the Hide row. **[en:tran:Countdown]**,
+  up at once, each listed on its own session's Hide row. **[en:tran:Countdown]**,
   **[en:tran:Stopwatch]**, **[en:tran:Quick Text]** and the two marquees put **one**
   thing on a screen, so showing from another session replaces what was there and the
-  on-screen dot moves to the session that now owns it.
+  on-screen dot moves to the session that now owns it. **[en:tran:Image Show]**,
+  **[en:tran:Video Show]** and **[en:tran:Web Show]** hold one file per session: clicking
+  another tile replaces it. Two pictures up at once — an overlay and a logo — are two
+  sessions: add one with **＋** and show a picture from each.
 - The **[en:tran:Properties]** panel sits once beside the session buttons and governs
   every item that session shows — position, width, scale, opacity, corner and blend.
   That whole row — sessions, _Properties_, the slide show and the screen buttons that
   take the item off — **stays put while the file list scrolls**.
-- **[en:tran:Always on Top]** (every foreground component, not just these) keeps a
+- **[en:tran:Always on Top]** (every foreground component, not just these — under
+  _[en:tran:Properties]_ in its own panel) keeps a
   widget over the others whatever order they went up in — a logo above the falling
   snow. The number beside it separates two that are both on top: the higher wins.
-- The **stopwatch** button in that same row opens the slide show:
+- **[en:tran:Behind Slide]** (every foreground component: under _Properties_ in its
+  own panel, right above _Always on Top_) puts that session's item **behind** the slide and the Bible text — over the
+  background, under the words — so a logo, a clock or a falling-snow clip never covers
+  the lyrics. Tick it while the item is up and it moves at once; untick it and it comes
+  back over the slide. A slide that fills the whole screen with its own picture hides
+  it completely, which is the point. While it is ticked, _Always on Top_ is greyed out:
+  an item behind the slide stays behind it, whatever its number.
+- The slide show sits in the row of session buttons at the top of the panel once the
+  session has something on a screen:
   **[en:tran:Start Slide Show]** and the seconds beside it. It keeps running while you
   are looking at another session, or with the whole Foreground panel closed, and stops
   by itself when that session's item is cleared. The file list is **not** scrolled to
   follow it — the tile that is up is marked when it happens to be in view, and the list
   stays where you left it so you can keep looking for the next picture while the show
   runs.
-- **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show
-  and Web Show) decides how the overlay mixes with whatever is under it. It is the
+- **[en:tran:Blend Mode]** (under _Properties_ on Video Show, Image Show, Camera Show,
+  Screen Show and Web Show) decides how the overlay mixes with whatever is under it. It is the
   answer to a clip that has a black background: pick **[en:tran:Screen Blend]** and the
   black drops out, leaving only the falling snow, sparks or light over the live slide.
   **[en:tran:Multiply]** does the opposite — white drops out. **[en:tran:Normal]** is
@@ -107,7 +179,7 @@ button:
 - Power move: **drag** a widget's Show button and **drop it on the mini screen** to
   start it there; **right-click** the button to choose a specific display.
 
-Press **F10** (Clear Foreground) to clear all foreground widgets, or **F6** to clear
+Press **F10** ([en:tran:Clear Foreground]) to clear all foreground widgets, or **F6** to clear
 everything at once.
 
 **Or ask for it.** In the help window (🤖), _Start a 5 minute countdown on the
@@ -120,7 +192,7 @@ and **/countdown stop** or **/clear-foreground** takes it off again (W-42 step 6
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `KB-03` · `KB-07` · `CB-67`
+`PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

@@ -15,10 +15,15 @@ export type MockWebContents = {
     findInPage: ReturnType<typeof vi.fn>;
     stopFindInPage: ReturnType<typeof vi.fn>;
     isDestroyed: ReturnType<typeof vi.fn>;
+    // Optional because the source calls it as `isLoading?.()`
+    // (`ElectronScreenController`); the fixture still provides it so tests can
+    // drive the "still loading" branch with `.mockReturnValue(true)`.
+    isLoading?: ReturnType<typeof vi.fn>;
     close: ReturnType<typeof vi.fn>;
     focus: ReturnType<typeof vi.fn>;
     id: number;
     capturePage: ReturnType<typeof vi.fn>;
+    invalidate: ReturnType<typeof vi.fn>;
     print: ReturnType<typeof vi.fn>;
     printToPDF: ReturnType<typeof vi.fn>;
 };
@@ -54,6 +59,7 @@ export type MockBrowserWindow = {
     minimize: ReturnType<typeof vi.fn>;
     isMinimized: ReturnType<typeof vi.fn>;
     isMaximized: ReturnType<typeof vi.fn>;
+    isVisible: ReturnType<typeof vi.fn>;
     unmaximize: ReturnType<typeof vi.fn>;
     getNormalBounds: ReturnType<typeof vi.fn>;
     isDestroyed: ReturnType<typeof vi.fn>;
@@ -82,10 +88,12 @@ export function createMockWebContents(
         findInPage: vi.fn(() => 1),
         stopFindInPage: vi.fn(),
         isDestroyed: vi.fn(() => false),
+        isLoading: vi.fn(() => false),
         close: vi.fn(),
         focus: vi.fn(),
         id: (lastMockWebContentsId += 1),
         capturePage: vi.fn(),
+        invalidate: vi.fn(),
         print: vi.fn(),
         printToPDF: vi.fn(async () => Buffer.from('%PDF')),
         ...overrides,
@@ -134,6 +142,7 @@ export function createMockBrowserWindow(
         minimize: vi.fn(),
         isMinimized: vi.fn(() => false),
         isMaximized: vi.fn(() => false),
+        isVisible: vi.fn(() => true),
         unmaximize: vi.fn(),
         getNormalBounds: vi.fn(() => ({
             x: 10,

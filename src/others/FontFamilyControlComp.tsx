@@ -58,10 +58,10 @@ export default function FontFamilyControlComp({
         [],
     );
     if (fontList === undefined) {
-        return <div>Loading Font ...</div>;
+        return <div>{tran('Loading')}...</div>;
     }
     if (fontList === null) {
-        return <div>Fail to load font list</div>;
+        return <div>{tran('Failed to load the font list')}</div>;
     }
     // A family that ships one weight offers no choice. A weight already set
     // stays pickable so it can be put back to the default.

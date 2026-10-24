@@ -1,5 +1,9 @@
 .editing-menu-body {
   width: 200px;
+  // The buttons share what there is (`.btn-group > .btn` shrinks): a narrow
+  // slides pane left less than 200px beside its transition icon, and Save was
+  // the button cut off.
+  max-width: 100%;
   padding: 2px;
   .btn {
     padding-top: 2px !important;

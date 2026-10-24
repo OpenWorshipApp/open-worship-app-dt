@@ -23,7 +23,7 @@
  * (`BibleItem.fromTitleText`, the one the lookup box and the reader use, in
  * every locale it knows -- the version's full book name, never a short form,
  * and a whole chapter widened to all its verses here), presents it exactly as the
- * lookup's **Show bible item** does (`ScreenBibleManager.handleBibleItemSelecting`
+ * lookup's **Show bible item** does (`ScreenLongTextManager.handleBibleItemSelecting`
  * to the screens the user has ticked), and reads the screen back so the tool
  * answers what is on it now rather than what was pressed.
  *
@@ -35,7 +35,7 @@
  *   not load in every window because somebody might ask.
  * - Nothing is written to disk. The lookup's double-click also SAVES the
  *   verse into the Bibles list; this deliberately does not, so the whole
- *   effect is on the screen and **Clear Bible** undoes it.
+ *   effect is on the screen and **Clear Long Text** undoes it.
  * - A locked screen refuses the verse, as it refuses a click, and the answer
  *   says so instead of pretending.
  * - Whether to present at all is decided BEFORE this is called -- the model
@@ -43,7 +43,7 @@
  *   offer it otherwise; `check` resolves the reference without touching a
  *   screen, for the offer and for "what does it say".
  */
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import appProvider from '../server/appProvider';
@@ -91,8 +91,10 @@ export type AgentBibleResultType =
           // The first words of the passage, so the answer can say what went
           // up in a way the user can check against the wall.
           text: string;
-          screens: AgentBibleScreenType[];
-          isAnyShowing: boolean;
+          // The screens, as the Presenter knows them: absent from a
+          // `check` made off that page.
+          screens?: AgentBibleScreenType[];
+          isAnyShowing?: boolean;
           // A popup the present left open for the operator -- see
           // `agentPendingQuestionHelpers`.
           pendingQuestion?: AgentPendingQuestionType;
@@ -249,7 +251,7 @@ function toScreenState(screenId: number): AgentBibleScreenType | null {
         isShowing: screenManager.isShowing,
         isLocked: screenManager.isLocked,
         bible: toBibleSummary(
-            ScreenBibleManager.getInstance(screenId)?.screenViewData ?? null,
+            ScreenLongTextManager.getInstance(screenId)?.screenViewData ?? null,
         ),
     };
 }
@@ -264,7 +266,12 @@ export async function handleAgentBibleRequest(
     if (!(AGENT_BIBLE_ACTIONS as readonly string[]).includes(action)) {
         return toReason(`Unknown action "${action}". Use present or check.`);
     }
-    if (!appProvider.isPagePresenter) {
+    // "check" only reads the passage, so it is answered from any page
+    // (2026-10-17, EC-294: asked from the Reader, every check was refused and
+    // the models quoted the verse from memory instead); putting it up is the
+    // Presenter's.
+    const isOnPresenter = appProvider.isPagePresenter;
+    if (!isOnPresenter && action !== 'check') {
         // Written for a person as much as for a model: the `/verse` command
         // and the offline bot print this sentence, so no tool name in it.
         return toReason(
@@ -310,7 +317,9 @@ export async function handleAgentBibleRequest(
         );
     }
     const title = await bibleItem.toTitle();
-    const text = cutText(await bibleItem.toText());
+    // Cut to `TEXT_LIMIT` characters, so a passage running over chapters
+    // reads its first chapter only: the rest would be read to be thrown away.
+    const text = cutText(await bibleItem.toText(1));
     const targetScreens = getAllScreenManagers().filter((screenManager) => {
         return !screenManager.isDeleted && screenManager.isSelected;
     });
@@ -326,11 +335,13 @@ export async function handleAgentBibleRequest(
             reference: title,
             version: bibleItem.bibleKey,
             text,
-            screens: before,
-            isAnyShowing,
-            note:
-                'Nothing was put on a screen: this only read the passage. ' +
-                'Call again with action "present" to put it up.',
+            // What the screens hold is known on the Presenter only.
+            ...(isOnPresenter ? { screens: before, isAnyShowing } : {}),
+            note: isOnPresenter
+                ? 'Nothing was put on a screen: this only read the passage. ' +
+                  'Call again with action "present" to put it up.'
+                : 'Nothing was put on a screen: this only read the passage. ' +
+                  'It is put up from the Presenter page.',
         };
     }
     if (targetScreens.length === 0) {
@@ -355,7 +366,7 @@ export async function handleAgentBibleRequest(
     // the screens are the ticked ones, which is what a double-click in the
     // lookup would use too. The manager itself steps over a locked screen
     // with a toast, so only the unlocked ones change.
-    await ScreenBibleManager.handleBibleItemSelecting(null, bibleItem);
+    await ScreenLongTextManager.handleBibleItemSelecting(null, bibleItem);
     const after = targetScreens
         .map((screenManager) => toScreenState(screenManager.screenId))
         .filter((one): one is AgentBibleScreenType => one !== null);

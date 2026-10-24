@@ -30,7 +30,11 @@ The primary evidence source. You cannot improve answers you have not read.
 
 1. **Ask the corpus below** through the real window (or `verify-chatbot-e2e.mjs`
    plumbing), presenter and reader, both providers if the change is
-   provider-neutral.
+   provider-neutral. For the WHOLE supported-question corpus — every page,
+   one assistant — `scripts/corpus-run.mjs` does the asking and keeps the
+   transcripts; a pass with `--offline` first (the guide alone, ~6 s a
+   question, free) is the baseline a model has to beat and finds what no
+   model is needed to find.
 2. **Grade each answer** on the scorecard.
 3. **Keep the transcript.** Quote the bad ones in the backlog item you file — a
    verbatim bad answer is what makes an improvement provable later.
@@ -54,6 +58,7 @@ Cover the shapes, not just the topics. Twelve questions is enough for a run.
 | 11 | Ambiguous noun | "How do I add a song?" (lyric? SongSelect? public domain?) |
 | 12 | Follow-up in the same tab | "and how do I undo that?" |
 | 13 | A chip, followed THROUGH | press *Can you make a song from words I paste in?*, then paste the words, then press what appears under the draft |
+| 14 | What the Bible SAYS (not the app), from the Reader — with an assistant AND with `/help` | "what bible verse talk about lover your enemy?", "what are names of 7 churches mentioned in the book of revelation" (added 2026-10-16, `EC-199`: the guide had answered both with app pages) |
 
 **Grade on the assistant the user's window is set to**, not on the paid key
 you would pick. Added 2026-09-08: every row before that was Claude Sonnet 5
@@ -74,7 +79,7 @@ Per answer, record:
 | Correct? | Against the manual and the real app — not against plausibility |
 | Actionable? | Numbered steps, each one a control they can press |
 | Any internals leaked? | A path, id, setting key or component name = a defect, always |
-| Rounds used | From the dev terminal. 1–2 good, 5+ means the tools are not answering |
+| Rounds used | From the hover on the answer's cost figure (`N model rounds`). 1–2 good, 5+ means the tools are not answering |
 | Tools called, in order | Wrong turns are the cheapest thing to fix |
 | Offered a walkthrough? | Multi-step answers should end in a guide, not a paragraph |
 | Guide landed? | Red ring on the right control, or `nearMisses` |
@@ -110,7 +115,7 @@ Then cross them against the tool surface:
 - **Neither**: whole areas with no `owa_*` reach at all. Check whether the
   question is even common before adding a tool (§*The filter* below).
 - **Knows nothing**: a shipped feature with no `W-xx` recipe — that is knowledge
-  work (SKILL.md §6c), not a tool.
+  work (SKILL.md §C), not a tool.
 
 Always ask the cheaper question first: *would a better description of an existing
 tool fix this?*
@@ -134,8 +139,9 @@ useful; "here is an article about agents" is not.
 
 ## Track D — Read the seams (when chasing a specific defect)
 
-- The dev terminal: the MCP host logs every tool call; a bad answer usually has a
-  `Tool error:` behind it that the model quietly routed around.
+- The dev terminal: the MCP host logs its sessions and the firewall its refusals,
+  not every tool call; a bad answer usually has a `Tool error:` in a tool result
+  that the model quietly routed around — call the tool by hand to read it.
 - `git log -S` on the chatbot files: the comments in this subsystem record *why*
   the obvious alternative was wrong. A "fix" that reverts one of them is a
   regression with a nice diff.

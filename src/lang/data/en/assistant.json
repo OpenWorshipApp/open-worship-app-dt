@@ -1,0 +1,139 @@
+{
+    "name": "English",
+    "nativeName": "English",
+    "scriptPattern": "[A-Za-z]",
+    "functionWords": [
+        "the",
+        "how",
+        "do",
+        "does",
+        "is",
+        "are",
+        "what",
+        "where",
+        "why",
+        "when",
+        "can",
+        "my",
+        "to",
+        "in",
+        "on",
+        "it",
+        "and",
+        "you",
+        "this",
+        "with",
+        "for"
+    ],
+    "yesWords": [],
+    "noWords": [],
+    "frameAliases": {},
+    "glossary": {},
+    "lookupWords": {
+        "save": [
+            "save",
+            "add to my list",
+            "my list",
+            "bibles list",
+            "bible list"
+        ],
+        "copy": ["copy", "duplicate"],
+        "anotherBible": [
+            "another bible",
+            "other bible",
+            "different bible",
+            "another version",
+            "other version",
+            "different version"
+        ],
+        "openLookup": ["open in bible lookup", "bible lookup"],
+        "lineage": [
+            "family line",
+            "family tree",
+            "genealogy",
+            "ancestors",
+            "descendants",
+            "lineage",
+            "forefathers"
+        ],
+        "jesus": ["jesus", "christ"],
+        "lineageOrder": ["in order", "in the order"],
+        "notStated": [
+            "does not say",
+            "doesn't say",
+            "does not state",
+            "doesn't state",
+            "not stated",
+            "does not mention",
+            "doesn't mention",
+            "does not tell",
+            "doesn't tell",
+            "does not give the",
+            "doesn't give the",
+            "not given in",
+            "is not recorded"
+        ],
+        "map": ["map", "on a map"],
+        "count": ["how many", "how much", "number of", "count of"],
+        "countChildren": ["children", "sons", "daughters", "kids"],
+        "countSpouses": ["wives", "wife", "spouses", "husbands", "husband"],
+        "countSiblings": ["brothers", "sisters", "siblings"],
+        "countParents": ["parents", "father", "mother"],
+        "vocabulary": [
+            "vocabulary",
+            "each word",
+            "every word",
+            "all the words",
+            "all words",
+            "word by word",
+            "word for word",
+            "study the words",
+            "learn the words"
+        ],
+        "previous": [
+            "previous chapter",
+            "previous verse",
+            "chapter before",
+            "verse before"
+        ],
+        "next": ["next chapter", "next verse", "chapter after", "verse after"],
+        "showPassage": ["show", "read", "display", "quote", "give me"],
+        "verseNumber": ["verses", "verse", "v.", "v"],
+        "beforeAsk": [
+            "before",
+            "earlier",
+            "led up to",
+            "leading up to",
+            "previously"
+        ],
+        "afterAsk": [
+            "after",
+            "afterwards",
+            "next",
+            "then",
+            "later",
+            "following",
+            "what happens"
+        ],
+        "timeAsk": [
+            "how long",
+            "how many days",
+            "how many years",
+            "how many months",
+            "when did",
+            "how much time"
+        ],
+        "namesAsk": [
+            "who is in",
+            "who are in",
+            "who appears",
+            "which people",
+            "what people",
+            "people named in",
+            "characters",
+            "which places are",
+            "what places are",
+            "places named in"
+        ]
+    }
+}

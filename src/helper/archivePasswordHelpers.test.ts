@@ -86,6 +86,7 @@ describe('opening an archive for reading', () => {
         );
 
         expect(readable?.filePath).toBe('/downloads/Service.owapf.tar.gz');
+        expect(readable?.isProtected).toBe(false);
         // No prompt, no decrypt: an unprotected import costs exactly one
         // header read more than it did before this feature existed.
         expect(askForArchivePasswordMock).not.toHaveBeenCalled();
@@ -102,6 +103,8 @@ describe('opening an archive for reading', () => {
         );
 
         expect(readable?.filePath).toBe(PLAIN);
+        // What Import Settings reads to accept credentials from the file.
+        expect(readable?.isProtected).toBe(true);
         expect(decryptFileMock).toHaveBeenCalledWith(ARCHIVE, PLAIN, 'secret');
     });
 

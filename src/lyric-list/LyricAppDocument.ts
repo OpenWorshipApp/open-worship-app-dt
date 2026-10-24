@@ -25,9 +25,14 @@ import {
     type CanvasItemPropsType,
 } from '../slide-editor/canvas/CanvasItem';
 import { getLyricStageStyle } from './lyricStageStyleHelpers';
+import { resolveLiveOpenLyric } from './lyricWarmSlidesHelpers';
 import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import Lyric from './Lyric';
+import {
+    genLyricPlaySteps,
+    type LyricRepeatType,
+} from './lyricStructureHelpers';
 
 export const OPEN_LYRIC_NONE_KEY = 'None';
 export const OPEN_LYRIC_FIRST_KEY = 'First';
@@ -120,10 +125,16 @@ export default class LyricAppDocument extends AppDocument {
         return canvasItemProps;
     }
 
-    genCanvasItemHtmlProps(id: number, html: string) {
+    // `canvasItemBounds` for the same reason as `genCanvasItemBoundsProps`'s:
+    // a whole song builds one of these per verse, and per look-ahead box.
+    genCanvasItemHtmlProps(
+        id: number,
+        html: string,
+        canvasItemBounds = this.canvasItemBounds,
+    ) {
         const canvasItemProps: CanvasItemHtmlPropsType = {
             ...genHtmlDefaultProps(),
-            ...this.genCanvasItemBoundsProps(id, true),
+            ...this.genCanvasItemBoundsProps(id, true, canvasItemBounds),
             html,
             type: 'html',
         };
@@ -132,15 +143,16 @@ export default class LyricAppDocument extends AppDocument {
 
     // Single construction point for every LyricSlide. `displayDim` hits
     // `getDefaultScreenDisplay()` on each read, so callers building a whole song
-    // pass it in once instead of paying for it per slide. `openLyricIndex` is
-    // last because only the slides that stand for a verse of the song have one
-    // — everything else takes the `-1` default.
+    // pass it in once instead of paying for it per slide. `openLyricIndex` and
+    // `openLyricRepeat` are last because only the slides that stand for a verse
+    // of the song have them — everything else takes the defaults.
     genLyricSlide(
         id: number,
         openLyricKey: string,
         canvasItems: CanvasItemPropsType[],
         displayDim = this.displayDim,
         openLyricIndex = -1,
+        openLyricRepeat: LyricRepeatType | null = null,
     ) {
         return new LyricSlide(
             this.filePath,
@@ -156,6 +168,7 @@ export default class LyricAppDocument extends AppDocument {
             },
             openLyricKey,
             openLyricIndex,
+            openLyricRepeat,
         );
     }
 
@@ -165,11 +178,21 @@ export default class LyricAppDocument extends AppDocument {
         dataMap: Record<string, string>,
         displayDim = this.displayDim,
         openLyricIndex = -1,
+        openLyricRepeat: LyricRepeatType | null = null,
+        canvasItemBounds = this.canvasItemBounds,
     ) {
         const srcData = dataMap[key];
         const canvasItemProps = this.genCanvasItemHtmlProps(
             i,
-            typeof srcData === 'string' ? srcData : '',
+            typeof srcData === 'string'
+                ? this.genSlideHtml(
+                      srcData,
+                      key,
+                      openLyricIndex,
+                      openLyricRepeat,
+                  )
+                : '',
+            canvasItemBounds,
         );
         return this.genLyricSlide(
             i,
@@ -177,7 +200,20 @@ export default class LyricAppDocument extends AppDocument {
             [canvasItemProps],
             displayDim,
             openLyricIndex,
+            openLyricRepeat,
         );
+    }
+
+    // The part's markup as ONE slide shows it. `dataMap` is the cached
+    // whole-song render shared by every play of a part, so anything that differs
+    // per slide (a repeat's `(2/3)`) is added here, never written into the map.
+    genSlideHtml(
+        html: string,
+        _openLyricKey: string,
+        _openLyricIndex: number,
+        _openLyricRepeat: LyricRepeatType | null,
+    ) {
+        return html;
     }
 
     extendExtraSlide(
@@ -203,8 +239,21 @@ export default class LyricAppDocument extends AppDocument {
         return newSlides;
     }
 
+    /**
+     * The `OpenLyric` this document derives its slides from, when one is live:
+     * the song's previewer's, held while its slides pane is mounted, else the
+     * one assigned to this document (see `resolveLiveOpenLyric` for the
+     * order). A stage no pane shows — a screen on `St: 2` under a stage-0
+     * pane — has none of its own, so it used to re-read and re-parse the song
+     * on every click.
+     */
+    get liveOpenLyric() {
+        return resolveLiveOpenLyric(this.filePath, this.openLyric);
+    }
+
     async getOpenLyricPreviewer() {
-        if (this.openLyric !== null) {
+        const liveOpenLyric = this.liveOpenLyric;
+        if (liveOpenLyric !== null) {
             // Deliberately NOT re-read from disk here. This sits on the
             // per-slide path (`getSlidesQuick` calls it on every render of
             // every stage pane), and a re-read costs a history-head lookup, a
@@ -212,7 +261,7 @@ export default class LyricAppDocument extends AppDocument {
             // setter — a full open-lyric re-parse. Whoever OWNS the shared
             // instance keeps it current instead, on the file's `update` event:
             // see `LyricManager.refreshOpenLyricContent`.
-            return this.openLyric;
+            return liveOpenLyric;
         }
         // Imported dynamically to keep this module out of the
         // `lyricHelpers → LyricAppDocumentStage0 → LyricAppDocumentStageAbstract
@@ -225,12 +274,21 @@ export default class LyricAppDocument extends AppDocument {
         return openLyric;
     }
 
+    // Must list the same slides, in the same order, as the stage's full
+    // `getStageSlides`: ids are positions, and `getSlideById` and the lyric
+    // editor's `?id=` both turn an id into a part through this list.
     async getSlidesQuick() {
         const openLyricPreviewer = await this.getOpenLyricPreviewer();
-        const structure = openLyricPreviewer.getStructure();
         const displayDim = this.displayDim;
-        const slides = structure.map((key, i) => {
-            return this.genLyricSlide(i, key, [], displayDim, i);
+        const slides = genLyricPlaySteps(openLyricPreviewer).map((step, i) => {
+            return this.genLyricSlide(
+                i,
+                step.key,
+                [],
+                displayDim,
+                step.structureIndex,
+                step.repeat,
+            );
         });
         return this.extendExtraSlide(slides, {});
     }
@@ -238,11 +296,15 @@ export default class LyricAppDocument extends AppDocument {
         return this.getSlidesQuick();
     }
 
-    async showContextMenu(event: any) {
+    async showContextMenu(
+        event: any,
+        extraMenuItems: ContextMenuItemType[] = [],
+    ) {
         const menuItems: ContextMenuItemType[] = [
             genLyricReloadContextMenuItem(() => {
                 this.fileSource.fireUpdateEvent();
             }),
+            ...extraMenuItems,
         ];
         showAppContextMenu(event, menuItems);
     }

@@ -1,0 +1,114 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://www.openworship.app/llm/llm-info.schema.json",
+    "title": "Open Worship shared LLM registry (llm-info.json)",
+    "description": "A registry file to publish with s3-push-llm-registry.mjs: the servers every copy of the Open Worship app is offered, and the address its problem reports are posted to. The same shape as docs/llm-registry/info.schema.json, kept beside the kit so the folder can be copied out whole. Everything in the published file is public, the keys too.",
+    "type": "object",
+    "required": ["version", "servers"],
+    "additionalProperties": true,
+    "properties": {
+        "version": {
+            "const": 1,
+            "description": "The shape of this file. A file of another version is ignored whole."
+        },
+        "updated": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "A date for people reading the file, e.g. 2026-10-10."
+        },
+        "servers": {
+            "type": "array",
+            "maxItems": 20,
+            "items": { "$ref": "#/$defs/server" }
+        }
+    },
+    "$defs": {
+        "server": {
+            "type": "object",
+            "required": ["id", "name", "baseUrl"],
+            "additionalProperties": true,
+            "if": {
+                "required": ["isAcceptingReport"],
+                "properties": { "isAcceptingReport": { "const": true } }
+            },
+            "else": { "required": ["models"] },
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9-]{1,48}$",
+                    "description": "A stable slug, unique in the file. Shown in the app as registry-<id>."
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60,
+                    "description": "What the Assistant picker shows."
+                },
+                "baseUrl": {
+                    "type": "string",
+                    "pattern": "^https?://",
+                    "maxLength": 500,
+                    "description": "The OpenAI-compatible base address, usually ending in /v1."
+                },
+                "apiKey": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Sent as a Bearer token. Held in the app's main process only. Public: use a key that reaches only this server."
+                },
+                "isFree": {
+                    "type": "boolean",
+                    "description": "true prices the server's answers at nothing in the help window."
+                },
+                "note": {
+                    "$ref": "#/$defs/note",
+                    "description": "The server's word to the person choosing it, shown before each of its models' own note. It is SHOWN: a note for admins belongs somewhere else."
+                },
+                "isAcceptingReport": {
+                    "type": "boolean",
+                    "description": "true makes baseUrl the address the help window's Send report posts to: one JSON object -- {version, reference, prompt, attachments} with the report under prompt and its files (the picture of the app, and the pictures, PDFs and text files the person attached) under attachments as {name, mimeType, data (base64)} -- sent with POST to baseUrl exactly as written, with apiKey as a Bearer token. With no models the entry is that and nothing else: never offered as an assistant, listed in no window. With models it is an assistant as well, at the same address (one tunnel doing both, llm-tunnel.mjs --with-reports), and is listed as the assistant only. baseUrl must carry no query and no fragment. The first three such entries are kept."
+                },
+                "models": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "$ref": "#/$defs/model" }
+                }
+            }
+        },
+        "model": {
+            "type": "object",
+            "required": ["model"],
+            "additionalProperties": true,
+            "properties": {
+                "model": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The model id the server knows, e.g. qwen/qwen3.5-9b."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "What the Model picker shows; empty shows the id."
+                },
+                "canSeeImages": {
+                    "type": "boolean",
+                    "description": "true lets a picture be attached to a question."
+                },
+                "note": {
+                    "$ref": "#/$defs/note",
+                    "description": "This model's word to the person choosing it, e.g. that it is slow but saves the cost of usage."
+                }
+            }
+        },
+        "note": {
+            "description": "Shown to the person choosing the server or model: under the help window's pickers, on the model's hover, in Auto's waiting line and in Settings -> Others -> Shared servers. A string, or an object of language code to string ({\"en\": \"...\", \"km\": \"...\"}): the app shows its own language's, then the plain string, then English. Up to 300 characters each, 12 languages. The server's host is taken out of it before any window sees it.",
+            "oneOf": [
+                { "type": "string", "maxLength": 300 },
+                {
+                    "type": "object",
+                    "maxProperties": 12,
+                    "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$" },
+                    "additionalProperties": { "type": "string", "maxLength": 300 }
+                }
+            ]
+        }
+    }
+}

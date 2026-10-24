@@ -1,8 +1,11 @@
 ---
 name: presenting-flow-media-control
-description: Slide: Media Control is the one action that exists ONLY as a CC element and the only one whose settings live on the attachment; its pin narrows the host's screens instead of replacing them
+description: "Slide: Media Control is the one action that exists ONLY as a CC element and the only one whose settings live on the attachment; its pin narrows the host's screens instead of replacing them"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-09T03:05:51.233Z
 ---
 
 `Slide: Media Control` (added 2026-08-08) drives the media INSIDE a slide from the run
@@ -75,9 +78,11 @@ slide goes up, from 0:10, at 2x, and stop it at 1:10" meant sitting on the mouse
   icon; `stopPropagation` is mandatory or the click fires the app's UNSCOPED FileSource
   `select`), with `Media Control Settings` on the CC row menu as the right-click route.
   The floating preview draws CC rows through the same component, so it is there for free.
-- Unit tests: only `src/_screen/managers/screenSlideMediaControlHelpers.test.ts`
-  (fake timers) survives. `presentingFlowMediaControl.test.ts` and the intersection
-  case in `presentingFlowCcPropagation.test.ts` were deleted 2026-08-24 — the
-  presenting-flow half is untested.
+- Unit tests: `src/_screen/managers/screenSlideMediaControlHelpers.test.ts`
+  (fake timers) survived the prune. `presentingFlowMediaControl.test.ts` and the
+  intersection case in `presentingFlowCcPropagation.test.ts` were deleted 2026-08-24;
+  the presenting-flow half was rebuilt 2026-09-26 (`c24d3a43`) in
+  `presentingFlowPureHelpers.coverage.test.ts` and
+  `PresentingFlowCcRowsComp.coverage.test.tsx`.
 
 See [[presenting-flow-cc-elements]], [[presenting-flow-screen-pinning]].

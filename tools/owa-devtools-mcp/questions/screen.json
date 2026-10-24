@@ -4,16 +4,13 @@
     "window": "screen.html",
     "focus": "presenter",
     "description": "What the congregation actually sees: the presentation screen itself, the mini preview that stands for it, and everything about putting content on it and taking it off again.",
-    "updated": "2026-09-27",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "screens",
             "label": "The screen the audience sees",
             "panel": "Mini Screen",
-            "recipes": [
-                "W-10",
-                "W-18"
-            ],
+            "recipes": ["W-10", "W-18"],
             "questions": [
                 {
                     "id": "is-anything-showing",
@@ -30,9 +27,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-10",
-                        "tools": [
-                            "owa_list_screens"
-                        ]
+                        "tools": ["owa_list_screens"]
                     },
                     "starterRank": 14
                 },
@@ -87,9 +82,26 @@
                         "recipe": "W-10",
                         "find": "Toggle showing screen",
                         "shortcut": "F5",
-                        "tools": [
-                            "owa_hide_screens"
-                        ],
+                        "tools": ["owa_hide_screens"],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "stop-preview-rendering",
+                    "text": "How do I stop the mini screen drawing so a slow computer runs faster?",
+                    "kind": "howto",
+                    "keywords": [
+                        "no rendering",
+                        "slow computer",
+                        "low spec",
+                        "lag",
+                        "performance",
+                        "turn off preview",
+                        "disable mini screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "find": "Stop rendering preview",
                         "guide": true
                     }
                 },
@@ -105,10 +117,8 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "shortcut": "F5",
-                        "tools": [
-                            "owa_hide_screens"
-                        ]
+                        "tools": ["owa_hide_screens"],
+                        "passage": "Hide every screen"
                     }
                 },
                 {
@@ -124,9 +134,7 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-01"
-                        ],
+                        "related": ["W-01"],
                         "guide": true
                     }
                 },
@@ -144,6 +152,7 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
+                        "passage": "Behind everything the card draws sits",
                         "find": "Show Monitor Wallpaper",
                         "guide": true
                     }
@@ -162,12 +171,8 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-18"
-                        ],
-                        "tools": [
-                            "owa_list_screens"
-                        ],
+                        "related": ["W-18"],
+                        "tools": ["owa_list_screens"],
                         "guide": true
                     }
                 },
@@ -184,9 +189,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "tools": [
-                            "owa_list_screens"
-                        ],
+                        "tools": ["owa_list_screens"],
                         "guide": true
                     }
                 },
@@ -203,6 +206,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
+                        "passage": "A screen that is not selected keeps what it last showed",
                         "guide": true
                     }
                 },
@@ -219,9 +223,7 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "related": [
-                            "W-22"
-                        ],
+                        "related": ["W-22"],
                         "guide": true
                     }
                 },
@@ -239,7 +241,86 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
+                        "related": ["W-48"],
                         "guide": true
+                    }
+                },
+                {
+                    "id": "transition-per-slide",
+                    "text": "Can one song or one slide have its own transition?",
+                    "kind": "howto",
+                    "keywords": [
+                        "transition",
+                        "per slide",
+                        "per document",
+                        "slides preview",
+                        "own transition",
+                        "override",
+                        "different transition",
+                        "zoom",
+                        "cut"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "related": ["W-10"],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "transition-per-background",
+                    "text": "How do I make pictures fade but videos zoom in?",
+                    "kind": "howto",
+                    "keywords": [
+                        "background transition",
+                        "images tab",
+                        "videos tab",
+                        "one background",
+                        "own transition",
+                        "zoom",
+                        "fade"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "related": ["W-08"],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "transition-per-overlay",
+                    "text": "How do I give the countdown a different transition from the slides?",
+                    "kind": "howto",
+                    "keywords": [
+                        "foreground transition",
+                        "countdown",
+                        "quick text",
+                        "overlay",
+                        "session",
+                        "own transition",
+                        "properties"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "related": ["W-09"],
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "stage-sets-transition-none",
+                    "text": "Why did the slide transition turn off when I changed the stage number?",
+                    "kind": "what",
+                    "keywords": [
+                        "stage number",
+                        "St:",
+                        "transition none",
+                        "fade stopped",
+                        "no fade on stage",
+                        "transition changed by itself"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "passage": "Moving a screen to any stage",
+                        "related": ["W-03", "W-05"],
+                        "find": "Slide transition"
                     }
                 },
                 {
@@ -302,9 +383,8 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "tools": [
-                            "owa_list_screens"
-                        ]
+                        "passage": "To stop one screen receiving content",
+                        "tools": ["owa_list_screens"]
                     }
                 },
                 {
@@ -317,24 +397,27 @@
                         "get rid of a card"
                     ],
                     "resources": {
-                        "recipe": "W-18"
+                        "recipe": "W-18",
+                        "passage": "removes a screen you no longer need"
                     }
                 },
                 {
                     "id": "line-sync",
-                    "text": "How do I keep two screens on the same line of a verse?",
+                    "text": "How do I line up two Bible versions verse by verse on the screen?",
                     "kind": "howto",
                     "keywords": [
                         "set line sync",
                         "same line",
-                        "follow",
-                        "stage display"
+                        "verse by verse",
+                        "versions in rows",
+                        "side by side versions",
+                        "line sync"
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "related": [
-                            "W-06"
-                        ]
+                        "passage": "To line the versions up verse by verse",
+                        "find": "Set Line Sync",
+                        "related": ["W-06"]
                     }
                 },
                 {
@@ -348,9 +431,484 @@
                     ],
                     "resources": {
                         "recipe": "W-18",
-                        "related": [
-                            "W-03"
-                        ]
+                        "related": ["W-03"]
+                    }
+                },
+                {
+                    "id": "screen-locked-message",
+                    "text": "Why does it say Screen Manager is locked?",
+                    "kind": "fix",
+                    "keywords": [
+                        "locked",
+                        "can't change the screen",
+                        "refused",
+                        "padlock",
+                        "red lock",
+                        "unlock the screen",
+                        "nothing changes on the screen"
+                    ],
+                    "resources": {
+                        "recipe": "W-10",
+                        "find": "Lock",
+                        "tools": ["owa_list_screens"]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "screen-mirror",
+            "label": "Screen Mirror",
+            "panel": "Mini Screen",
+            "recipes": ["W-50"],
+            "questions": [
+                {
+                    "id": "connect-guest-computer",
+                    "text": "How do I show the screen on another computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "screen mirror",
+                        "guest",
+                        "network",
+                        "host",
+                        "connect",
+                        "remote monitor",
+                        "rescan",
+                        "host address",
+                        "this computer"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Virtual Screens Manager",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "enable-screen-mirror-host",
+                    "text": "How do I let another computer connect to this one?",
+                    "kind": "howto",
+                    "keywords": [
+                        "screen mirror",
+                        "host",
+                        "turn on",
+                        "allow",
+                        "let other computers connect"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Let other computers connect"
+                    }
+                },
+                {
+                    "id": "connected-guests-header",
+                    "text": "Where can I see which guest computers are connected?",
+                    "kind": "where",
+                    "keywords": [
+                        "connected guests",
+                        "a1",
+                        "a2",
+                        "mini screen",
+                        "header"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "passage": "The host lists it under",
+                        "find": "Connected guests"
+                    }
+                },
+                {
+                    "id": "guest-camera-stream",
+                    "text": "How do I use a camera from a connected guest computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "remote camera",
+                        "guest camera",
+                        "webcam",
+                        "stream"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "related": ["W-08"],
+                        "find": "Cameras",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "open-screen-mirror-to-internet",
+                    "text": "How do I let a computer outside this network connect over the internet?",
+                    "kind": "howto",
+                    "keywords": [
+                        "open to the internet",
+                        "internet",
+                        "router",
+                        "public address",
+                        "port forward",
+                        "upnp",
+                        "outside",
+                        "another church"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Open to the internet"
+                    }
+                },
+                {
+                    "id": "share-screen-mirror-address",
+                    "text": "How do I send the host address to the guest computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy address",
+                        "qr code",
+                        "copy image",
+                        "share",
+                        "send",
+                        "host address"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Host addresses"
+                    }
+                },
+                {
+                    "id": "fill-address-from-qr-or-paste",
+                    "text": "How do I fill in the host address from a QR code or a copied link?",
+                    "kind": "howto",
+                    "keywords": [
+                        "read qr code",
+                        "paste address",
+                        "qr code",
+                        "picture",
+                        "link",
+                        "scan"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Paste address"
+                    }
+                },
+                {
+                    "id": "connect-several-hosts",
+                    "text": "Can this computer show screens from more than one host?",
+                    "kind": "howto",
+                    "keywords": [
+                        "more than one host",
+                        "several hosts",
+                        "multiple hosts",
+                        "second host",
+                        "two computers"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "passage": "A guest can be linked to several hosts at once",
+                        "find": "Connect by address"
+                    }
+                },
+                {
+                    "id": "guest-from-internet-or-local",
+                    "text": "How can I tell which guests are connected from the internet?",
+                    "kind": "where",
+                    "keywords": [
+                        "internet",
+                        "this network",
+                        "local",
+                        "badge",
+                        "who is connected",
+                        "outside"
+                    ],
+                    "resources": {
+                        "recipe": "W-50",
+                        "find": "Connected guests"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "virtual-displays",
+            "label": "Virtual displays",
+            "panel": "Mini Screen",
+            "recipes": ["W-51"],
+            "questions": [
+                {
+                    "id": "make-virtual-display",
+                    "text": "How do I make a virtual display?",
+                    "kind": "howto",
+                    "keywords": [
+                        "virtual display",
+                        "virtual monitor",
+                        "fake monitor",
+                        "add display",
+                        "no projector",
+                        "virtual screens manager"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Add Virtual Display",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "watch-on-phone-or-tv",
+                    "text": "How do I watch the screen on a phone or a TV without a cable?",
+                    "kind": "howto",
+                    "keywords": [
+                        "phone",
+                        "tablet",
+                        "smart tv",
+                        "browser",
+                        "stream",
+                        "watch",
+                        "livestream",
+                        "qr code"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "related": ["W-50"],
+                        "find": "Where to watch"
+                    }
+                },
+                {
+                    "id": "virtual-display-in-media-player",
+                    "text": "How do I get the screen into VLC or OBS as a video?",
+                    "kind": "howto",
+                    "keywords": [
+                        "vlc",
+                        "obs",
+                        "mp4",
+                        "video stream",
+                        "media player",
+                        "recording",
+                        "capture"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "Use the display in VLC or OBS",
+                        "find": "Video for media players (MP4)"
+                    }
+                },
+                {
+                    "id": "let-devices-watch-virtual-display",
+                    "text": "Why can other devices not open the virtual display's address?",
+                    "kind": "fix",
+                    "keywords": [
+                        "cannot connect",
+                        "not loading",
+                        "other devices",
+                        "this network",
+                        "refused",
+                        "firewall"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Let other devices watch"
+                    }
+                },
+                {
+                    "id": "who-watches-virtual-display",
+                    "text": "Who is watching my virtual display?",
+                    "kind": "where",
+                    "keywords": [
+                        "watching now",
+                        "viewers",
+                        "disconnect",
+                        "kick",
+                        "who is connected"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "lists everyone watching",
+                        "find": "Watching now"
+                    }
+                },
+                {
+                    "id": "virtual-display-page-buttons",
+                    "text": "How do I get the buttons back on the virtual display page?",
+                    "kind": "howto",
+                    "keywords": [
+                        "buttons gone",
+                        "full screen",
+                        "double click",
+                        "turn on sound",
+                        "tap the screen",
+                        "controls hidden"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "On the device watching, the page's buttons come back"
+                    }
+                },
+                {
+                    "id": "virtual-display-after-restart",
+                    "text": "Will my virtual display still show after the app restarts?",
+                    "kind": "what",
+                    "keywords": [
+                        "restart",
+                        "reload",
+                        "comes back",
+                        "still showing",
+                        "remember"
+                    ],
+                    "resources": {
+                        "recipe": "W-51"
+                    }
+                },
+                {
+                    "id": "virtual-display-viewer-still-listed",
+                    "text": "Why is a phone that stopped watching still under Watching now?",
+                    "kind": "fix",
+                    "keywords": [
+                        "still listed",
+                        "left the page",
+                        "phone asleep",
+                        "closed the tab",
+                        "ghost viewer"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "leaves the list by itself within about 40 seconds",
+                        "find": "Watching now"
+                    }
+                },
+                {
+                    "id": "let-viewer-interact",
+                    "text": "How do I let a phone watching the virtual display scroll or pick verses?",
+                    "kind": "howto",
+                    "keywords": [
+                        "allow interaction",
+                        "interactive",
+                        "scroll",
+                        "tap a verse",
+                        "control from phone",
+                        "touch"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "on the display's card in the",
+                        "find": "Allow interaction"
+                    }
+                },
+                {
+                    "id": "stop-virtual-viewer-access",
+                    "text": "Does Disconnect immediately stop a viewer from receiving my screen or controlling it?",
+                    "kind": "what",
+                    "keywords": [
+                        "disconnect",
+                        "revoke access",
+                        "camera stream",
+                        "stop interaction"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Disconnect"
+                    }
+                },
+                {
+                    "id": "which-virtual-display-address",
+                    "text": "Which address do I give people to watch the virtual display?",
+                    "kind": "howto",
+                    "keywords": [
+                        "address",
+                        "link",
+                        "qr code",
+                        "share",
+                        "recommended",
+                        "more addresses"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "find": "Where to watch"
+                    }
+                },
+                {
+                    "id": "virtual-display-https",
+                    "text": "How do I give the virtual display an https address?",
+                    "kind": "howto",
+                    "keywords": [
+                        "https",
+                        "secure",
+                        "not secure",
+                        "certificate",
+                        "phone microphone",
+                        "phone camera",
+                        "keep screen on"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "Give a virtual display an HTTPS address",
+                        "find": "Use HTTPS"
+                    }
+                },
+                {
+                    "id": "cast-virtual-display-from-page",
+                    "text": "How do I cast the virtual display to a TV from my phone?",
+                    "kind": "howto",
+                    "keywords": [
+                        "cast",
+                        "casting",
+                        "chromecast",
+                        "google cast",
+                        "smart tv",
+                        "dlna",
+                        "roku",
+                        "airplay",
+                        "put the screen on the tv",
+                        "cast icon"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "On the phone or tablet watching, the browser page has the same button",
+                        "related": ["W-50"],
+                        "find": "Cast to a TV",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "virtual-display-choose-camera",
+                    "text": "How do I share my phone's back camera with the virtual display?",
+                    "kind": "howto",
+                    "keywords": [
+                        "back camera",
+                        "front camera",
+                        "rear camera",
+                        "switch camera",
+                        "choose camera",
+                        "other camera",
+                        "phone camera"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "To share a phone's camera, open the display on the phone",
+                        "find": "Share my cameras"
+                    }
+                },
+                {
+                    "id": "viewer-hides-screen",
+                    "text": "Can someone watching on a phone hide the screen with its ✕?",
+                    "kind": "what",
+                    "keywords": [
+                        "close button",
+                        "x button",
+                        "hide screen",
+                        "allow interaction",
+                        "phone"
+                    ],
+                    "resources": {
+                        "recipe": "W-51",
+                        "passage": "on the display's card in the",
+                        "find": "Allow interaction"
+                    }
+                },
+                {
+                    "id": "virtual-display-sound",
+                    "text": "Why is a screen on a virtual display silent on this computer?",
+                    "kind": "what",
+                    "keywords": [
+                        "no sound",
+                        "muted",
+                        "audio",
+                        "speakers",
+                        "silent"
+                    ],
+                    "resources": {
+                        "recipe": "W-51"
                     }
                 }
             ]

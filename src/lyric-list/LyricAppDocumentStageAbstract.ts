@@ -23,6 +23,16 @@ import CanvasItemVideo from '../slide-editor/canvas/CanvasItemVideo';
 import CanvasItemAudio from '../slide-editor/canvas/CanvasItemAudio';
 import CanvasItemWebsite from '../slide-editor/canvas/CanvasItemWebsite';
 import { checkIsUrlMediaSource } from '../helper/mediaSourceHelpers';
+import {
+    genLyricPlaySteps,
+    type LyricStepRefType,
+} from './lyricStructureHelpers';
+import {
+    dropLyricWarmDecks,
+    getLyricWarmDeck,
+    getLyricWarmGeneration,
+    setLyricWarmDeck,
+} from './lyricWarmSlidesHelpers';
 
 // Entries hold a whole song's rendered HTML, so keep the window short.
 const cacheManager = new CacheManager<any>(10);
@@ -110,14 +120,16 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         // Read ONCE for the whole options object: each access re-reads the
         // stage's setting, and this getter is on the per-slide path.
         const stageStyle = this.stageStyle;
-        // `this.openLyric` is only ever assigned by `LyricSlidesPreviewerComp`,
-        // so it is null in every renderer where that component has not mounted
-        // (the screen window, a stage instance built on demand). Falling back to
-        // the persisted setting keeps the projected slide at the same size as
-        // the previewer instead of open-lyric's 16px default. Resolved BEFORE
-        // the options below because the css has to NAME the family — see
-        // `genFormControlFontCss`.
-        const openLyric = this.openLyric;
+        // A live `OpenLyric` exists only where a song previewer has mounted, so
+        // this is null in the screen window and for a song nobody previews.
+        // Falling back to the persisted setting keeps the projected slide at
+        // the same size as the previewer instead of open-lyric's 16px default.
+        // Resolved BEFORE the options below because the css has to NAME the
+        // family — see `genFormControlFontCss`. The live one, not the
+        // `openLyric` field: every stage of a held song must agree on the font,
+        // or a slide built ahead of the click and the click itself would key
+        // their decks differently (see `genWarmDeckKey`).
+        const openLyric = this.liveOpenLyric;
         const savedFont = getOpenLyricFontSetting();
         const fontFamily = openLyric?.fontFamily || savedFont.fontFamily;
         const options: OpenLyricElementMapOptions = {
@@ -316,7 +328,9 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         return slides;
     }
 
-    async getStageSlides(key?: string) {
+    // `step` is the play-order place a single-key slide stands for, so its
+    // name and corner badge carry the same `(n)` and `(2/3)` as the whole deck.
+    async getStageSlides(key?: string, step?: LyricStepRefType) {
         // Only the whole-song branch below needs the previewer instance; the
         // single-key branch is served from the element-map cache, so resolving
         // it up front would re-read the file for nothing.
@@ -338,20 +352,40 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
                 ...this.allOpenLyricOptions,
                 key,
             });
-            const slide = this.genSlide(key, -1, dataMap);
+            const slide = this.genSlide(
+                key,
+                -1,
+                dataMap,
+                undefined,
+                step?.openLyricIndex,
+                step?.openLyricRepeat,
+            );
             return [slide];
         }
 
         const openLyricPreviewer = await this.getOpenLyricPreviewer();
-        const structure = openLyricPreviewer.getStructure();
+        // A repeated step (`Cx3`) is that many slides in a row — the same list
+        // `getSlidesQuick` builds, which ids are resolved against.
+        const playSteps = genLyricPlaySteps(openLyricPreviewer);
 
         const [firstCanvasItemProps, dataMap] = await Promise.all([
             this.getFirstCanvasItemProps(),
             this.getElementMap(this.allOpenLyricOptions),
         ]);
+        // Each read of either is a blocking display lookup in the main
+        // process, so once for the whole song rather than once per verse.
         const displayDim = this.displayDim;
-        const slides = structure.map((key, i) => {
-            return this.genSlide(key, i, dataMap, displayDim, i);
+        const canvasItemBounds = this.canvasItemBounds;
+        const slides = playSteps.map((step, i) => {
+            return this.genSlide(
+                step.key,
+                i,
+                dataMap,
+                displayDim,
+                step.structureIndex,
+                step.repeat,
+                canvasItemBounds,
+            );
         });
         const newSlides = this.extendExtraSlide(
             slides,
@@ -368,8 +402,60 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         return newSlides;
     }
 
-    async getSlides(key?: string) {
-        return this.getStageSlides(key);
+    /**
+     * What a built deck of this stage depends on, as one string: every
+     * open-lyric option (font, size, theme, the stage's style and css), the
+     * file and the stage — and the display, which the options do not carry
+     * whole but the slide size and the look-ahead boxes are laid out on.
+     */
+    genWarmDeckKey() {
+        const { width, height } = this.displayDim;
+        const optionsKey = this.genCacheKey('deck', this.allOpenLyricOptions);
+        return `${optionsKey}|dim:${width}x${height}`;
+    }
+
+    /**
+     * This stage's deck built ahead of the click, if the song is held and the
+     * deck still matches what it would be built from now.
+     */
+    getWarmDeck() {
+        // Checked first: nothing can be stored for a song no pane holds, and
+        // the key costs the settings reads and a display lookup.
+        if (getLyricWarmGeneration(this.filePath) === null) {
+            return null;
+        }
+        return getLyricWarmDeck(
+            this.filePath,
+            this.stage,
+            this.genWarmDeckKey(),
+        );
+    }
+
+    getWarmSlide(id: number) {
+        return this.getWarmDeck()?.find((slide) => slide.id === id) ?? null;
+    }
+
+    async getSlides(key?: string, step?: LyricStepRefType) {
+        if (key !== undefined) {
+            return this.getStageSlides(key, step);
+        }
+        // The whole deck is kept while the song is held, so a click on any of
+        // its slides for this stage is a lookup. Both read BEFORE the build:
+        // an edit landing while it runs drops the decks and bumps the
+        // generation, and this stale deck is then refused.
+        const generation = getLyricWarmGeneration(this.filePath);
+        const warmKey = generation === null ? null : this.genWarmDeckKey();
+        const slides = await this.getStageSlides();
+        if (warmKey !== null) {
+            setLyricWarmDeck(
+                this.filePath,
+                this.stage,
+                warmKey,
+                slides,
+                generation,
+            );
+        }
+        return slides;
     }
 
     private async getSlideByIdSlow(id: number) {
@@ -378,6 +464,10 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
     }
 
     async getSlideById(id: number) {
+        const warmSlide = this.getWarmSlide(id);
+        if (warmSlide !== null) {
+            return warmSlide;
+        }
         const slidesQuick = await this.getSlidesQuick();
         const slideQuick = slidesQuick.find((slide) => slide.id === id) ?? null;
         if (slideQuick === null) {
@@ -392,7 +482,7 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             return await this.getSlideByIdSlow(id);
         }
         const key = slideQuick.openLyricKey;
-        const slides = await this.getSlides(key);
+        const slides = await this.getSlides(key, slideQuick);
         const slide =
             slides.find((slide) => slide.openLyricKey === key) ?? null;
         if (slide === null) {
@@ -408,11 +498,13 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
      * `cacheManager` is module-level and shared by every stage of every lyric,
      * so a plain `clear()` would make one song's edit throw away the derived
      * slides of every other song too. The key carries the file path — see
-     * `genCacheKey`.
+     * `genCacheKey`. The decks built ahead of the click go with them, every
+     * stage's, for the same reason.
      */
     clearCache() {
         cacheManager.deleteMatchedSync((key) => {
             return key.includes(`|filePath:${this.filePath}|`);
         });
+        dropLyricWarmDecks(this.filePath);
     }
 }

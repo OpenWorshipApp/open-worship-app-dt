@@ -16,26 +16,46 @@ vi.mock('../../others/LoadingComp', () => ({
     default: ({ message }: { message: string | null }) => <div>{message}</div>,
 }));
 
+const importMocks = vi.hoisted(() => ({
+    readFromUrl: vi.fn(),
+    takeRequest: vi.fn((): string | null => null),
+    toJson: vi.fn(),
+    review: vi.fn(),
+}));
 vi.mock('./bibleXMLHelpers', () => ({
     checkIsValidUrl: (url: string) => url.startsWith('https://'),
     getInputByName: (form: HTMLFormElement, name: string) =>
         form.elements.namedItem(name),
     readFromFile: vi.fn(),
-    readFromUrl: vi.fn(),
+    readFromUrl: importMocks.readFromUrl,
     saveJsonDataToXMLfile: vi.fn(),
+}));
+vi.mock('./BibleImportReviewComp', () => ({
+    default: (props: unknown) => {
+        importMocks.review(props);
+        return <div>review</div>;
+    },
 }));
 
 vi.mock('./bibleXMLAttributesGuessing', () => ({
     xmlFormatExample: '<bible />',
 }));
-
-vi.mock('./bibleXMLJsonDataHelpers', () => ({
-    xmlTextToJson: vi.fn(),
+vi.mock('./bibleImportRequestHelpers', () => ({
+    takeBibleImportRequest: importMocks.takeRequest,
 }));
 
+vi.mock('./bibleXMLJsonDataHelpers', () => ({
+    xmlTextToJson: importMocks.toJson,
+}));
+
+const openChatbotAsking = vi.fn(async () => true);
+vi.mock('../../helper/ai/chatbotHandoffHelpers', () => ({
+    openChatbotAsking,
+}));
 vi.mock('../../helper/appHooks', async () => {
     const React = await import('react');
     return {
+        useAppEffect: React.useEffect,
         useAppCurrentRef: (value: unknown) => {
             const ref = React.useRef(value);
             ref.current = value;
@@ -108,5 +128,69 @@ describe('BibleXMLImportComp', () => {
         await act(async () => cancelButton.click());
         expect(container.textContent).toContain('translated:No file chosen');
         expect(container.textContent).not.toContain('khmer.xml');
+    });
+
+    test('the assistant button starts an import in the chat, with the typed link', async () => {
+        await render();
+        const button = Array.from(container.querySelectorAll('button')).find(
+            (one) => {
+                return one.textContent?.includes(
+                    'translated:Let the assistant import a Bible for me',
+                );
+            },
+        ) as HTMLButtonElement;
+        expect(container.textContent).toContain(
+            'translated:It finds Bibles in your language',
+        );
+        await act(async () => button.click());
+        expect(openChatbotAsking).toHaveBeenLastCalledWith('Import bible');
+
+        const urlInput = container.querySelector(
+            'input[name="url"]',
+        ) as HTMLInputElement;
+        const setter = Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            'value',
+        )?.set;
+        await act(async () => {
+            setter?.call(urlInput, 'https://example.com/KhmerBible.xml');
+            urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        expect(container.textContent).toContain(
+            'translated:It will use the link you typed below.',
+        );
+        await act(async () => button.click());
+        expect(openChatbotAsking).toHaveBeenLastCalledWith(
+            'Import bible from https://example.com/KhmerBible.xml',
+        );
+    });
+
+    test('a link the assistant handed over reaches the review with where it came from', async () => {
+        const url = 'https://example.com/bibles/Khmer%201954.xml';
+        importMocks.takeRequest.mockReturnValueOnce(url);
+        importMocks.readFromUrl.mockResolvedValue('<bible>ក</bible>');
+        importMocks.toJson.mockResolvedValue({ info: {}, books: {} });
+        await render();
+        const form = container.querySelector('form') as HTMLFormElement;
+        await act(async () => {
+            form.dispatchEvent(
+                new Event('submit', { bubbles: true, cancelable: true }),
+            );
+        });
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 25));
+        });
+        expect(importMocks.review).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                origin: {
+                    by: 'settings',
+                    isLinkFromChatbot: true,
+                    url,
+                    fileName: 'Khmer 1954.xml',
+                    // `<bible>` and `</bible>` plus one 3-byte Khmer letter.
+                    bytes: 18,
+                },
+            }),
+        );
     });
 });

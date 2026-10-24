@@ -4,6 +4,7 @@ const {
     dirSourceGetAllInstancesMock,
     dirSourceGetInstanceByDirPathMock,
     fileSourceGetInstanceMock,
+    fileSourceFireDeleteEventByPathMock,
     fsCheckDirExistMock,
     fsCheckFileExistMock,
     checkAreArraysEqualMock,
@@ -16,6 +17,7 @@ const {
     dirSourceGetInstanceByDirPathMock: vi.fn(),
     dirSourceGetDirPathBySettingNameMock: vi.fn(),
     fileSourceGetInstanceMock: vi.fn(),
+    fileSourceFireDeleteEventByPathMock: vi.fn(),
     fsCheckDirExistMock: vi.fn(),
     fsCheckFileExistMock: vi.fn(),
     checkAreArraysEqualMock: vi.fn(
@@ -38,6 +40,7 @@ vi.mock('./DirSource', () => ({
 vi.mock('./FileSource', () => ({
     default: {
         getInstance: fileSourceGetInstanceMock,
+        fireDeleteEventByPath: fileSourceFireDeleteEventByPathMock,
     },
 }));
 
@@ -498,6 +501,38 @@ describe('dirWatchingHelpers', () => {
         expect(fileSourceGetInstanceMock).not.toHaveBeenCalledWith(
             '/data/docs/a.owa',
         );
+    });
+
+    test('a file deleted outside the app is told it was deleted', async () => {
+        dirSourceGetInstanceByDirPathMock.mockReturnValue(genDirSource());
+        const { getWatchCallback } = await startWatching();
+        fsCheckFileExistMock.mockResolvedValue(false);
+        // Only its folder is still there.
+        fsCheckDirExistMock.mockImplementation(async (dirPath: string) => {
+            return dirPath === '/data/docs';
+        });
+
+        getWatchCallback()?.('rename', 'docs/a.owa');
+        await flushDebounce();
+
+        // Only the app's own trash said so before: a song deleted in Explorer
+        // stayed in the previewer, and its slides could still be presented.
+        expect(fileSourceFireDeleteEventByPathMock).toHaveBeenCalledWith(
+            '/data/docs/a.owa',
+        );
+    });
+
+    test('a file whose folder is gone too is not called deleted', async () => {
+        dirSourceGetInstanceByDirPathMock.mockReturnValue(genDirSource());
+        const { getWatchCallback } = await startWatching();
+        // A drive that was unplugged answers like a deleted file.
+        fsCheckFileExistMock.mockResolvedValue(false);
+        fsCheckDirExistMock.mockResolvedValue(false);
+
+        getWatchCallback()?.('rename', 'docs/a.owa');
+        await flushDebounce();
+
+        expect(fileSourceFireDeleteEventByPathMock).not.toHaveBeenCalled();
     });
 
     test('an unnamed change reconciles every mounted list', async () => {

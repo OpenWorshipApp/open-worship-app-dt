@@ -14,6 +14,18 @@ import {
     RECEIVING_DROP_CLASSNAME,
 } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
+import { useIsMiniScreenNoRendering } from './miniScreenRenderingHelpers';
+
+// The card's face while it is not drawing its screen. A static pattern -- no
+// animation of any kind, since the whole point is that this card costs nothing
+// at rest.
+function RenderNoRenderingComp() {
+    return (
+        <div className="mini-screen-no-rendering">
+            <span>{tran('No rendering')}</span>
+        </div>
+    );
+}
 
 export default function ScreenPreviewerItemComp({
     width,
@@ -22,6 +34,7 @@ export default function ScreenPreviewerItemComp({
 }>) {
     const screenManager = useScreenManagerContext();
     const [isFullView, setIsFullView] = useState(false);
+    const [isNoRendering] = useIsMiniScreenNoRendering(screenManager.screenId);
     const [screenManagerDim, setScreenManagerDim] = useState({
         width: screenManager.width,
         height: screenManager.height,
@@ -44,9 +57,6 @@ export default function ScreenPreviewerItemComp({
     const selectedCN = screenManager.isSelected
         ? HIGHLIGHT_SELECTED_CLASSNAME
         : '';
-    const height = Math.round(
-        width * (screenManagerDim.height / screenManagerDim.width),
-    );
     const screenManagerRef = useAppCurrentRef(screenManager);
     // The custom-html previewer rescales on a scale event, so whenever its
     // container width changes (full view toggled via the button or exited
@@ -123,7 +133,7 @@ export default function ScreenPreviewerItemComp({
     const handleWheel = useCallback((event: any) => {
         if (
             event.ctrlKey &&
-            screenManagerRef.current.screenBibleManager.isShowing
+            screenManagerRef.current.screenLongTextManager.isShowing
         ) {
             event.stopPropagation();
         }
@@ -146,6 +156,10 @@ export default function ScreenPreviewerItemComp({
             style={{
                 overflow: 'hidden',
                 width: `${width}px`,
+                // Never wider than its column (less the 2px margins): on a
+                // ~900px window the zoom's pixel width ran the card past the
+                // edge, its More Options out of reach.
+                maxWidth: 'calc(100% - 4px)',
                 display: 'inline-block',
                 verticalAlign: 'top',
             }}
@@ -162,7 +176,10 @@ export default function ScreenPreviewerItemComp({
             <div
                 className="mini-screen-preview-body w-100 app-overflow-hidden"
                 style={{
-                    height: `${height}px`,
+                    // From the width the card really got, not the one asked
+                    // for -- `maxWidth` above can make them differ.
+                    aspectRatio: `${screenManagerDim.width} / ${screenManagerDim.height}`,
+                    position: 'relative',
                 }}
                 onScroll={handleScroll}
             >
@@ -175,10 +192,16 @@ export default function ScreenPreviewerItemComp({
                         aspectRatio: `${screenManagerDim.width} / ${screenManagerDim.height}`,
                     }}
                 >
+                    {/* Stays mounted with rendering off: the slide layer inside
+                        it is where a slide's video and audio play their SOUND
+                        (the projected copy is a muted follower), so it keeps
+                        running unseen while every other layer unmounts -- see
+                        `MiniScreenAppComp`. */}
                     <mini-screen-previewer-custom-html
                         screenId={screenManager.screenId}
                     />
                 </div>
+                {isNoRendering ? <RenderNoRenderingComp /> : null}
             </div>
             <ScreenPreviewerFooterComp />
         </div>

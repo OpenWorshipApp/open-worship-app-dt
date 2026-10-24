@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+    checkIsActingTool,
     checkIsAppUrl,
     checkIsRemovingCall,
     checkToolCall,
@@ -24,7 +25,7 @@ const PRESENTER_SNAPSHOT = [
     '## Latest page snapshot',
     'uid=1_0 RootWebArea "Open Worship app - Presenter" url="x"',
     '  uid=1_112 button "Clear All" description="Clear All [F6]"',
-    '  uid=1_115 button "Clear Bible" description="Clear Bible [F9]"',
+    '  uid=1_115 button "Clear Long Text" description="Clear Long Text [F9]"',
     '  uid=1_117 button "Move to Trash" description="Move to Trash"',
     '  uid=1_241 StaticText "and God shall take away and remove his part"',
     '  uid=1_184 textbox "Bible Reference" value="Genesis 1:5"',
@@ -81,9 +82,9 @@ describe('checkToolCall', () => {
         });
         expect(verdict.isAllowed).toBe(false);
         expect(verdict.rule).toBe('foreign-url');
-        expect(checkToolCall('new_page', { url: 'data:text/html,x' }).isAllowed).toBe(
-            false,
-        );
+        expect(
+            checkToolCall('new_page', { url: 'data:text/html,x' }).isAllowed,
+        ).toBe(false);
     });
 
     // "The assistant may point, the human presses."
@@ -100,7 +101,7 @@ describe('checkToolCall', () => {
 
     it('still presses the ordinary controls', () => {
         for (const find of [
-            'Clear Bible',
+            'Clear Long Text',
             'Reset Widgets Size',
             'Next',
             'Background > Videos',
@@ -118,9 +119,9 @@ describe('checkToolCall', () => {
         expect(last.isAllowed).toBe(false);
         expect(last.rule).toBe('rate-limit');
         // Reading is never rationed -- the way out of a loop is to look.
-        expect(
-            checkToolCall('owa_list_ui', {}, { now: 1000 }).isAllowed,
-        ).toBe(true);
+        expect(checkToolCall('owa_list_ui', {}, { now: 1000 }).isAllowed).toBe(
+            true,
+        );
         // ...and the budget is a rolling window, not a session cap.
         expect(
             checkToolCall('owa_click', { find: 'Next' }, { now: 90000 })
@@ -141,9 +142,9 @@ describe('checkToolCall', () => {
     it('stands down entirely when the operator switched it off', () => {
         process.env.OWA_MCP_FIREWALL = 'off';
         expect(checkToolCall('evaluate_script', {}).isAllowed).toBe(true);
-        expect(
-            checkToolCall('owa_click', { find: 'Delete' }).isAllowed,
-        ).toBe(true);
+        expect(checkToolCall('owa_click', { find: 'Delete' }).isAllowed).toBe(
+            true,
+        );
     });
 });
 
@@ -163,11 +164,16 @@ describe('a press that cannot be undone, in the words the window shows', () => {
         }
     });
 
-    // Clear Bible's Khmer is ALSO Delete Bible's. The window cannot tell them
-    // apart, so the ordinary move stays pressable and the app's confirm
-    // stands behind the other.
+    // Clear Background's Khmer is ALSO Remove Background's. The window cannot
+    // tell them apart, so the ordinary move stays pressable and the app's
+    // confirm stands behind the other.
     it('still presses the ordinary Khmer controls', () => {
-        for (const find of ['លុបព្រះគម្ពីរ [F9]', 'លុបស្លាយ', 'បង្ហាញ']) {
+        for (const find of [
+            'លុបអត្ថបទវែង [F9]',
+            'លុបផ្ទៃខាងក្រោយ [F7]',
+            'លុបស្លាយ',
+            'បង្ហាញ',
+        ]) {
             expect(checkToolCall('owa_click', { find }).isAllowed, find).toBe(
                 true,
             );
@@ -190,7 +196,7 @@ describe('a press that cannot be undone, in the words the window shows', () => {
                 'uid=3_0 RootWebArea "x"',
                 '  uid=3_7 menuitem "ផ្លាស់ទីទៅធុងសំរាម"',
                 '  uid=3_8 button "ចាកចេញពីគណនី" description="SongSelect"',
-                '  uid=3_9 button "លុបព្រះគម្ពីរ" description="[F9]"',
+                '  uid=3_9 button "លុបអត្ថបទវែង" description="[F9]"',
             ].join('\n'),
         );
         expect(memory.lookup('3_7')).not.toBeNull();
@@ -247,9 +253,9 @@ describe('removing something of the user', () => {
         expect(
             checkIsRemovingCall('owa_slide_file', { action: 'delete-slide' }),
         ).toBe(true);
-        expect(checkIsRemovingCall('owa_lyric_file', { action: 'delete' })).toBe(
-            true,
-        );
+        expect(
+            checkIsRemovingCall('owa_lyric_file', { action: 'delete' }),
+        ).toBe(true);
         expect(checkIsRemovingCall('owa_undo', { action: 'undo' })).toBe(true);
         expect(checkIsRemovingCall('owa_bible_item', { action: 'list' })).toBe(
             false,
@@ -257,6 +263,29 @@ describe('removing something of the user', () => {
         expect(checkIsRemovingCall('owa_click', { action: 'delete' })).toBe(
             false,
         );
+    });
+
+    it('removing an installed Bible is a removal; reading the list is not', () => {
+        expect(checkIsRemovingCall('owa_bible_xml', { action: 'delete' })).toBe(
+            true,
+        );
+        expect(checkIsRemovingCall('owa_bible_xml', { action: 'list' })).toBe(
+            false,
+        );
+    });
+
+    it('a Bible download is screened like a web read; its other actions are not', () => {
+        const verdict = checkToolCall(
+            'owa_bible_xml',
+            { action: 'check', url: 'https://127.0.0.1:39223/mcp' },
+            { now: 5000 },
+        );
+        expect(verdict.isAllowed).toBe(false);
+        expect(verdict.rule).toBe('foreign-url');
+        expect(
+            checkToolCall('owa_bible_xml', { action: 'list' }, { now: 5000 })
+                .isAllowed,
+        ).toBe(true);
     });
 
     it('rations removals far more tightly than presses', () => {
@@ -329,7 +358,9 @@ describe('findDestructiveLabel', () => {
 
 describe('checkIsAppUrl', () => {
     it('takes the app own pages and about:blank', () => {
-        expect(checkIsAppUrl('https://localhost:3000/presenter.html')).toBe(true);
+        expect(checkIsAppUrl('https://localhost:3000/presenter.html')).toBe(
+            true,
+        );
         expect(checkIsAppUrl('file:///C:/app/electron-build/index.html')).toBe(
             true,
         );
@@ -372,6 +403,10 @@ describe('redactSecrets', () => {
             'sk-ant-api03-Ab3dEf6hIj9kLmN0pQrStUvW_x-Yz12',
             'sk-or-v1-0123456789abcdef0123456789abcdef',
             'sk-Ab3dEf6hIj9kLmN0pQrStUvWxYz1234',
+            // Amazon Bedrock, long-term (base64, `+` `/` `=` included) and
+            // short-term (a presigned URL with `&Version=1` on the end).
+            'ABSKQmVkcm9ja0FQSUtleS1leGFtcGxlLWF0LTEyMzQ1Njc4OTA6ZXhh+/bXBsZQ==',
+            'bedrock-api-key-YmVkcm9jay5hbWF6b25hd3MuY29tLz9BY3Rpb249%3D&Version=1',
         ];
         for (const key of keyList) {
             expect(redactSecrets(`the key is ${key}.`)).toBe(
@@ -573,7 +608,9 @@ describe('guardToolCalls', () => {
             jsonrpc: '2.0',
             id: 31,
             result: {
-                content: [{ type: 'text', text: 'Saved snapshot to snap.txt.' }],
+                content: [
+                    { type: 'text', text: 'Saved snapshot to snap.txt.' },
+                ],
             },
         });
         expect(readPaths).toEqual(['snap.txt']);
@@ -609,7 +646,9 @@ describe('guardToolCalls', () => {
         transport.send({
             jsonrpc: '2.0',
             id: 41,
-            result: { content: [{ type: 'text', text: 'uid=1_0 RootWebArea' }] },
+            result: {
+                content: [{ type: 'text', text: 'uid=1_0 RootWebArea' }],
+            },
         });
         expect(readPaths).toEqual([]);
     });
@@ -689,7 +728,9 @@ describe('the uid interlock', () => {
                 lookup,
             ),
         ).not.toBeNull();
-        expect(findDestructiveUid('click', { uid: '1_115' }, lookup)).toBeNull();
+        expect(
+            findDestructiveUid('click', { uid: '1_115' }, lookup),
+        ).toBeNull();
     });
 
     // The whole point: the snapshot came back through the firewall, so the
@@ -848,7 +889,11 @@ describe('moving within the app', () => {
             // A type that says history but an address that does not: the
             // address is what gets checked, whatever the type claims.
             { pageId: 1, type: 'reload', url: 'https://example.com' },
-            { pageId: 1, type: 'url', url: 'data:text/html,<script>x</script>' },
+            {
+                pageId: 1,
+                type: 'url',
+                url: 'data:text/html,<script>x</script>',
+            },
         ]) {
             expect(
                 checkToolCall('navigate_page', args).rule,
@@ -860,9 +905,9 @@ describe('moving within the app', () => {
     // `new_page` has no history to move through -- it only ever opens an
     // address, so it never takes this exemption.
     it('gives new_page no history exemption', () => {
-        expect(
-            checkToolCall('new_page', { type: 'reload' }).rule,
-        ).toBe('foreign-url');
+        expect(checkToolCall('new_page', { type: 'reload' }).rule).toBe(
+            'foreign-url',
+        );
     });
 });
 
@@ -1003,5 +1048,160 @@ describe('reading a page off the internet', () => {
                 { now: 1000 },
             ).isAllowed,
         ).toBe(true);
+    });
+});
+
+// The label-aimed key, drag and run-sheet tools (2026-10-10). Each is counted
+// as the acting call it is, and the words a call carries are read the way
+// `owa_click`'s are -- the page half reads the control itself.
+describe('the key, drag and run-sheet tools', () => {
+    // The Background files: a delete is a removal, an import or a rename is
+    // acting, a list reads.
+    it('rations what a media-file call takes away', () => {
+        expect(checkIsActingTool('owa_media_file')).toBe(true);
+        expect(
+            checkIsRemovingCall('owa_media_file', { action: 'delete' }),
+        ).toBe(true);
+        for (const action of ['list', 'info', 'rename', 'import', 'create']) {
+            expect(
+                checkIsRemovingCall('owa_media_file', { action }),
+                action,
+            ).toBe(false);
+        }
+    });
+
+    it('counts a scroll as an acting call too', () => {
+        expect(checkIsActingTool('owa_scroll')).toBe(true);
+        expect(
+            checkToolCall('owa_scroll', { find: 'Document List', to: 'down' })
+                .isAllowed,
+        ).toBe(true);
+    });
+
+    it('counts them as acting calls', () => {
+        for (const name of [
+            'owa_press_key',
+            'owa_drag',
+            'owa_presenting_flow',
+        ]) {
+            expect(checkIsActingTool(name), name).toBe(true);
+        }
+    });
+
+    it('refuses a key named for what cannot be undone, and a focus that is', () => {
+        expect(checkToolCall('owa_press_key', { keys: 'Delete' }).rule).toBe(
+            'destructive-label',
+        );
+        expect(
+            checkToolCall('owa_press_key', {
+                keys: 'Enter',
+                find: 'Move to Trash',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_press_key', { keys: 'F9', find: 'Clear Long Text' })
+                .isAllowed,
+        ).toBe(true);
+        expect(
+            checkToolCall('owa_press_key', { keys: 'Ctrl+S' }).isAllowed,
+        ).toBe(true);
+    });
+
+    // F6 is Clear All whether or not the Mini Screen panel that names it is
+    // on screen (2026-10-10: it went through with the panel collapsed).
+    it('refuses the Clear All key by name, and lets the one-layer clears through', () => {
+        const verdict = checkToolCall('owa_press_key', { keys: 'f6' });
+        expect(verdict.rule).toBe('destructive-label');
+        expect(verdict.reason).toContain('Clear All [F6]');
+        for (const keys of ['F5', 'F7', 'F8', 'F9', 'F10']) {
+            expect(
+                checkToolCall('owa_press_key', { keys }).isAllowed,
+                keys,
+            ).toBe(true);
+        }
+    });
+
+    it('refuses a menu item named for what cannot be undone, and counts a menu press', () => {
+        expect(
+            checkToolCall('owa_menu', {
+                action: 'click',
+                item: 'File > Delete All',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_menu', {
+                action: 'click',
+                item: 'View > Reload',
+            }).isAllowed,
+        ).toBe(true);
+        expect(checkIsActingTool('owa_menu')).toBe(true);
+    });
+
+    it('refuses a drag whose either end cannot be undone', () => {
+        expect(
+            checkToolCall('owa_drag', {
+                from: 'Amazing Grace',
+                to: 'Move to Trash',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_drag', {
+                from: ['Discard changed'],
+                to: 'Sunday',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_drag', { from: 'Amazing Grace', to: 'Sunday' })
+                .isAllowed,
+        ).toBe(true);
+    });
+
+    // Files dropped from the disk are counted like a drag, and aimed at a
+    // control that cannot be undone they are refused like one.
+    it('counts a drop of files, and refuses one onto what cannot be undone', () => {
+        expect(checkIsActingTool('owa_drop_files')).toBe(true);
+        expect(
+            checkToolCall('owa_drop_files', {
+                paths: ['/tmp/a.png'],
+                to: 'Move to Trash',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_drop_files', {
+                paths: ['/tmp/a.png'],
+                to: 'Document List',
+            }).isAllowed,
+        ).toBe(true);
+    });
+
+    // A line taken out of a run sheet is a removal, and a sheet to the trash
+    // is one; reading and adding are not.
+    it('rations what a run-sheet call takes away', () => {
+        expect(
+            checkIsRemovingCall('owa_presenting_flow', { action: 'remove' }),
+        ).toBe(true);
+        expect(
+            checkIsRemovingCall('owa_presenting_flow', { action: 'delete' }),
+        ).toBe(true);
+        for (const action of ['list', 'info', 'add', 'move', 'park']) {
+            expect(
+                checkIsRemovingCall('owa_presenting_flow', { action }),
+                action,
+            ).toBe(false);
+        }
+    });
+});
+
+describe('a key named after an object property', () => {
+    // The F6 map is a Map: a key spelt `constructor` must find nothing there,
+    // where a plain object handed back `function Object() { [native code] }`
+    // as the label of a control that does not exist.
+    it('is judged by its words alone', () => {
+        expect(
+            checkToolCall('owa_press_key', { keys: 'constructor' }).isAllowed,
+        ).toBe(true);
+        expect(
+            checkToolCall('owa_press_key', { keys: ' F6 ' }).isAllowed,
+        ).toBe(false);
     });
 });

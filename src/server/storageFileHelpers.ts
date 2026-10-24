@@ -23,6 +23,14 @@ export function pathJoin(...paths: string[]): string {
     return appProvider.pathUtils.join(...paths);
 }
 
+export function pathResolve(...paths: string[]): string {
+    const path = appProvider.pathUtils.resolve(...paths);
+    if (path.endsWith(pathSeparator)) {
+        return path.slice(0, -1);
+    }
+    return path;
+}
+
 /** The active data folder, or null before window startup has selected one. */
 export function getDataDirPath(): string | null {
     return appProvider.sessionData?.defaultStorageDirPath ?? null;
@@ -65,6 +73,11 @@ export function checkIsHiddenName(fileFullName: string) {
 // A data folder carries this id so the same removable drive can be found after
 // Windows changes its drive letter or another OS mounts it somewhere else.
 export const DATA_DIR_MARKER_FILE_NAME = '.owa-data-folder.json';
+// Left by the move off the Desktop (`dataDirMoveHelpers.ts`): "moved to" in a
+// folder that was copied away and is no longer used, "moved from" in the one
+// it went to. Plain text a person can read, never a hidden name.
+export const DATA_DIR_MOVED_TO_FLAG_FILE_NAME = 'migration-moved-to.txt';
+export const DATA_DIR_MOVED_FROM_FLAG_FILE_NAME = 'migration-moved-from.txt';
 
 const POSIX_VOLUME_BASES: [string[], number][] = [
     [['Volumes'], 1],
@@ -203,7 +216,12 @@ export function findDataDirsOnVolumesSync(extraDirPaths: string[] = []) {
         }
     }
     return candidates.filter((dirPath) => {
-        return readDataDirMarkerIdSync(dirPath) !== null;
+        // A folder copied away keeps the marker of the one it became; it is
+        // never offered back.
+        return (
+            readDataDirMarkerIdSync(dirPath) !== null &&
+            !fsExistSync(pathJoin(dirPath, DATA_DIR_MOVED_TO_FLAG_FILE_NAME))
+        );
     });
 }
 

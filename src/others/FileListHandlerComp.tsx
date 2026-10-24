@@ -33,6 +33,7 @@ import { useFileListFilterData } from './fileListFilterHelpers';
 import AskingNewNameComp from './AskingNewNameComp';
 import StickyAutoHideComp from './StickyAutoHideComp';
 import EmptyFileListComp from './EmptyFileListComp';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 
 export type FileListType = FileSource[] | null | undefined;
 
@@ -326,24 +327,29 @@ export default function FileListHandlerComp({
                     onContextMenu={handleMenuShowing}
                 >
                     <StickyAutoHideComp>
-                        <PathSelectorComp
-                            prefix={`path-${className}`}
-                            dirSource={dirSource}
-                            extraElements={
-                                <>
-                                    <FileListFilterIconsComp
-                                        filePaths={filePaths ?? []}
-                                        filterData={filterData}
-                                    />
-                                    {header ? null : (
-                                        <ListMenuButtonComp
-                                            onShowMenu={handleMenuShowing}
-                                            className="px-1"
+                        {/* No data folder: a folder picked here would be
+                            one of its folders, and there is none to keep it
+                            in. The empty state below routes to the choice. */}
+                        {appLocalStorage.isOnOwnFolder ? null : (
+                            <PathSelectorComp
+                                prefix={`path-${className}`}
+                                dirSource={dirSource}
+                                extraElements={
+                                    <>
+                                        <FileListFilterIconsComp
+                                            filePaths={filePaths ?? []}
+                                            filterData={filterData}
                                         />
-                                    )}
-                                </>
-                            }
-                        />
+                                        {header ? null : (
+                                            <ListMenuButtonComp
+                                                onShowMenu={handleMenuShowing}
+                                                className="px-1"
+                                            />
+                                        )}
+                                    </>
+                                }
+                            />
+                        )}
                         {noDirFolderName === undefined &&
                         filterData.isSearchShowing ? (
                             <FileListFilterInputComp filterData={filterData} />
@@ -356,7 +362,16 @@ export default function FileListHandlerComp({
                             isDirSettingRouteHidden={isDirSettingRouteHidden}
                         />
                     ) : (
-                        <ul className="list-group flex-fill d-flex">
+                        <ul
+                            className="list-group flex-fill d-flex"
+                            // Room under the last row for the Scroll to the
+                            // top button (45px, 5px off the bottom right),
+                            // which floats over this list once it scrolls:
+                            // the last row's own controls -- an audio's
+                            // Repeat toggle -- sat under it, and a press
+                            // there scrolled the list instead.
+                            style={{ paddingBottom: '50px' }}
+                        >
                             {onNewFile !== undefined && isCreatingNew ? (
                                 <AskingNewNameComp
                                     applyName={handleNameApplying}

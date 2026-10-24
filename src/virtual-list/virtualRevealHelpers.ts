@@ -10,7 +10,10 @@
  */
 
 /** True when this list HOLDS `key` -- whether or not it had to scroll for it. */
-export type VirtualRevealerType = (key: string) => boolean;
+export type VirtualRevealerType = (
+    key: string,
+    behavior?: ScrollBehavior,
+) => boolean;
 
 const revealerSet = new Set<VirtualRevealerType>();
 
@@ -42,10 +45,10 @@ export function registerVirtualReveal(revealer: VirtualRevealerType) {
  * one scrolled whichever registered first rather than the one the caller's
  * selector is about to find.
  */
-export function revealVirtualItem(key: string) {
+export function revealVirtualItem(key: string, behavior?: ScrollBehavior) {
     let isRevealed = false;
     for (const revealer of revealerSet) {
-        isRevealed = revealer(key) || isRevealed;
+        isRevealed = revealer(key, behavior) || isRevealed;
     }
     return isRevealed;
 }

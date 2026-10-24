@@ -64,7 +64,7 @@ export default function SettingOthersFieldComp({
             <label className="app-setting-others-label" htmlFor={inputId}>
                 {label}
                 <i
-                    className="bi bi-info-circle app-setting-others-hint"
+                    className="bi bi-info-circle app-setting-others-hint ps-1"
                     title={tran(hintKey)}
                 />
                 {isSet ? (

@@ -54,6 +54,9 @@ function BibleNoteBibleLookupComp({
                         tran('Insert Collapse Bible Text') +
                         ` [${toShortcutKey(ctrlEnterEventMapper)}]`
                     }
+                    // An icon alone: without it the button had no name at
+                    // all for a screen reader or the help assistant.
+                    aria-label={tran('Insert Collapse Bible Text')}
                     onClick={async () => {
                         addBibleFullText(newLookupBibleItemController);
                     }}
@@ -67,6 +70,7 @@ function BibleNoteBibleLookupComp({
                         tran('Insert Bible Text') +
                         ` [${toShortcutKey(ctrlShiftEnterEventMapper)}]`
                     }
+                    aria-label={tran('Insert Bible Text')}
                     onClick={async () => {
                         addBibleFullText(newLookupBibleItemController, () => {
                             bibleNote.addText('^');

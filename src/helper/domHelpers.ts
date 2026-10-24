@@ -420,6 +420,34 @@ appProvider.messageUtils.listenForData('main:app:open-chatbot-page', () => {
     })();
 });
 
+// The taskbar icon's Tasks -> App Help (Chatbot) opens it with NO caution
+// (2026-10-15, the user's word: _open from taskbar no need confirmation_):
+// a task right-clicked off the taskbar is a person reaching for help, often
+// with the app minimised, and a question in front of it only stands in the
+// way. Every other way in still asks.
+appProvider.messageUtils.listenForData(
+    'main:app:open-chatbot-from-taskbar',
+    () => {
+        openChatbotPage();
+    },
+);
+
+// Help -> Report a Problem, under it: the same caution, then the request the
+// Help button's third row leaves -- the assistant opens asking what went
+// wrong (`chatbotHandoffStoreHelpers.ts`).
+appProvider.messageUtils.listenForData('main:app:open-chatbot-report', () => {
+    void (async () => {
+        if (await askAiCaution('assistant')) {
+            // Loaded at the press: the settings it writes through are no
+            // part of what every window loads to start.
+            const { requestChatbotReport } =
+                await import('./ai/chatbotHandoffStoreHelpers');
+            requestChatbotReport('');
+            openChatbotPage();
+        }
+    })();
+});
+
 // Help -> AI Chat, same as above.
 appProvider.messageUtils.listenForData('main:app:open-aichat-page', () => {
     void (async () => {
@@ -619,6 +647,50 @@ const AGENT_DATA_WORKER_MAP: Record<
     },
     undo: async () => {
         return (await import('./agentBackupHelpers')).handleAgentUndoRequest;
+    },
+    // `owa_bible_xml`: the installed Bibles themselves -- reading a
+    // downloaded one, installing, changing and removing.
+    'bible-xml': async () => {
+        return (await import('./agentBibleXMLHelpers'))
+            .handleAgentBibleXMLRequest;
+    },
+    // `owa_find_verse`: a verse somebody half-remembers, searched in an
+    // installed Bible, and the one they wanted opened in the Bible Lookup
+    // (2026-10-16).
+    'bible-find': async () => {
+        return (await import('./agentBibleFindHelpers'))
+            .handleAgentBibleFindRequest;
+    },
+    // `owa_lookup_record`: a person or a place of the names lookup, or a
+    // Bible passage -- what a Lookup Detail panel shows -- read whole
+    // (2026-10-18).
+    lookup: async () => {
+        return (await import('./agentLookupHelpers')).handleAgentLookupRequest;
+    },
+    // `owa_resource_file`: the Resources panel's files, listed and read --
+    // a PDF as pictures of its pages (2026-10-17).
+    resources: async () => {
+        return (await import('./agentResourcesHelpers'))
+            .handleAgentResourcesRequest;
+    },
+    // `owa_bible_suggest`: the chat box's input aid -- the books, chapters
+    // and verses of the Bible being read, and the names and places a who/where
+    // question is naming (2026-10-18).
+    'bible-suggest': async () => {
+        return (await import('./agentBibleSuggestHelpers'))
+            .handleAgentBibleSuggestRequest;
+    },
+    // `owa_presenting_flow`: the run sheets and their lines (2026-10-10).
+    'presenting-flow': async () => {
+        return (await import('./agentPresentingFlowHelpers'))
+            .handleAgentPresentingFlowRequest;
+    },
+    // `owa_media_file`: the Background tabs' pictures, clips, tracks and web
+    // pages -- listed, renamed, trashed, imported from the disk, and a web
+    // page written (2026-10-10).
+    media: async () => {
+        return (await import('./agentMediaFileHelpers'))
+            .handleAgentMediaFileRequest;
     },
 };
 

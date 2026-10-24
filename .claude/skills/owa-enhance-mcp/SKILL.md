@@ -1,6 +1,6 @@
 ---
 name: owa-enhance-mcp
-description: 'Make `tools/owa-devtools-mcp` — the MCP server the Open Worship App both SERVES and IS DRIVEN BY — safer, cheaper and better at its two jobs: driving the app for a developer/QA agent over stdio, and answering a volunteer through the in-app chatbot over HTTP. Use when asked to enhance / improve / harden / secure / speed up / slim down the MCP, the owa-devtools tools, the `owa_*` tools, the tool surface, the MCP host or its firewall; to add, sharpen, merge or prune a tool; to cut the tool-schema tokens the chatbot pays on EVERY round of EVERY question; to fix a tool that misfires, returns unusable output, or works for one caller and not the other; to review what an agent driving this app is allowed to do; or to answer "is this safe to ship to a church back room". Covers `tools/owa-devtools-mcp/*` end to end — `server.mjs` (assembly), `firewall.mjs` (the policy layer: denied tools, the destructive-action interlock, the URL allowlist, secret redaction, the rate limit), `owaTools.mjs` (the `owa_*` tools), `domMatch.mjs` (find/click/type), `guide.mjs` (walkthrough cards), `help.mjs` (knowledge search), `questions/*` (the supported-question corpus), `notify.mjs` (the "something is driving your app" banner), `host.mjs` (the in-app HTTP door), `bin.mjs`/`cdp.mjs`/`discovery.mjs` (the stdio door) — plus the app-side surface that door opens onto: `electron/aiHelpers.ts`, `electron/client/rendererLockdown.ts` and the chatbot window CSP. THE SECURITY RULE THAT BINDS EVERY CHANGE: this server drives renderers running with `nodeIntegration: true`, so a tool that can run code, load a foreign page, or read raw memory is arbitrary code execution on the operator machine, reachable by a prompt-injected model reading an attachment the user was handed — see references/threat-model.md, which carries the proven exploit and the harness that re-proves it. Every run MEASURES FIRST (scripts/probe-mcp.mjs for the policy, the chatbot skill audit-mcp-tools.mjs for the token bill), states the before/after numbers, verifies LIVE against the running app — a tool change that only typechecks is not done — and leaves the paper trail: the README tool table, CLAUDE.md Agent access, references/backlog.md MC-xx ids and the Codex mirror.'
+description: 'Make `tools/owa-devtools-mcp` — the MCP server the Open Worship App both SERVES and IS DRIVEN BY — safer, cheaper and better at its two jobs: driving the app for a developer/QA agent over stdio, and answering a volunteer through the in-app chatbot over HTTP. Use when asked to enhance / improve / harden / secure / speed up / slim down the MCP, the owa-devtools tools, the `owa_*` tools, the tool surface, the MCP host or its firewall; to add, sharpen, merge or prune a tool; to cut the tool-schema tokens the chatbot pays on EVERY round of EVERY question; to fix a tool that misfires, returns unusable output, or works for one caller and not the other; to review what an agent driving this app is allowed to do; or to answer "is this safe to ship to a church back room". Covers `tools/owa-devtools-mcp/*` end to end — `server.mjs` (assembly), `firewall.mjs` (the policy layer: denied tools, the destructive-action interlock, the URL allowlist, secret redaction, the rate limit), `owaTools.mjs` (the `owa_*` tools), `domMatch.mjs` (find/click/type), `guide.mjs` (walkthrough cards), `help.mjs` (knowledge search), `questions/*` (the supported-question corpus), `notify.mjs` (the "something is driving your app" banner), `host.mjs` (the in-app HTTP door), `bin.mjs`/`cdp.mjs`/`discovery.mjs` (the stdio door) — plus the app-side surface that door opens onto: `electron/aiHelpers.ts`, `electron/client/rendererLockdown.ts` and the chatbot window CSP. THE SECURITY RULE THAT BINDS EVERY CHANGE: this server drives renderers running with `nodeIntegration: true`, so a tool that can run code, load a foreign page, or read raw memory is arbitrary code execution on the operator machine, reachable by a prompt-injected model reading an attachment the user was handed — see references/threat-model.md, which carries the proven exploit and the harness that re-proves it. Every run MEASURES FIRST (scripts/probe-mcp.mjs for the policy, the chatbot skill audit-mcp-tools.mjs for the token bill), states the before/after numbers, verifies LIVE against the running app — a tool change that only typechecks is not done — and leaves the paper trail: the README tool table, CLAUDE.md Agent access and references/backlog.md MC-xx ids.'
 argument-hint: '[security | perf | tools | dx | chatbot | audit | full — or a plain description of the change]'
 ---
 
@@ -61,7 +61,7 @@ Breaking one of these is a regression even when the feature works.
    the change is wrong.
 3. **A tool that acts must announce itself** — `ACTING_TOOLS` in `notify.mjs`,
    or it changes the operator's window with no banner. `audit-mcp-tools.mjs`
-   fails you on this.
+   warns you about this.
 4. **A tool that acts must be in `firewall.mjs`'s `ACTING_TOOL_SET`** too, or
    it is outside the rate limit and a loop can hammer a live service with it.
    The two lists are deliberately separate — one decides what to SAY, one what
@@ -156,17 +156,14 @@ body, not the exit code. It only checks, so it is safe beside the running app
 In the SAME change, whatever is true of the work:
 
 - `tools/owa-devtools-mcp/README.md` — the tool table, for any tool change.
-- `.claude/CLAUDE.md` §*Agent access* — anything structural: a door, a policy,
-  the master switch, the tool list.
+- `.claude/rules/agent-access.md` / `agent-tools.md` — anything structural: a
+  door, a policy, the master switch, the tool list; and `.claude/CLAUDE.md`
+  §*Agent access* when it changes a rule that holds everywhere.
 - [references/backlog.md](./references/backlog.md) — `MC-xx` status, plus
   everything you found and did NOT do.
 - `docs/test-paths/coverage-matrix.md` — the `CB-xx` rows, if user-visible.
 - A memory file under `.claude/memory/` for anything not derivable from the
   code, plus its `MEMORY.md` line.
-- **The Codex mirror.** `.agents/skills/`, `.codex/memory/` and
-  `.codex/project-instructions.md` mirror `.claude/`. `.claude/` is the source
-  of truth: edit here, then COPY across in the same change. A mirror that
-  disagrees is stale by definition — re-copy, do not reconcile by hand.
 - **Any edit under `.claude/` needs `node extra-work/build-knowledge.mjs` in
   the same change**, or the chatbot keeps answering from the previous text.
 
@@ -205,12 +202,12 @@ schema instead — that is exactly why `owa_app_state`, `owa_list_ui` and
 
 ### B. Performance — the bill the chatbot pays every round
 
-`llmBotHelpers.ts` sends every tool `tools/list` returns to the model on EVERY
-round of the loop (`MAX_TOOL_ROUNDS` 10). Read
+`llmBotHelpers.ts` sends every tool `modelTools.mjs` does not withhold to the
+model on EVERY round of the loop (`MAX_TOOL_ROUNDS` 10). Read
 [references/tool-budget.md](./references/tool-budget.md) for the measurements
 and the levers. In order of size:
 
-1. **Fewer tools.** 29 of them are chrome-devtools'. Each one removed is its
+1. **Fewer tools.** None of chrome-devtools' reach the model now (§D). Each one removed is its
    whole schema off every round of every question.
 2. **Shorter schemas.** Description length is the model's reading cost and
    yours; say what the tool is FOR and when to reach for it, not how it works.
@@ -244,10 +241,10 @@ server. What makes it good for them:
 
 ### D. The chatbot's door — a volunteer, mid-service
 
-- **A tool description has two readers**: a model choosing between 44 of them,
+- **A tool description has two readers**: a model choosing between 26 of them,
   and — through what the model then says — a volunteer about to be acted upon.
 - **Labels are i18n templates.** The knowledge is English, the buttons are not:
-  `[en:tran:Clear Bible]` is filled in with what that key reads as in the
+  `[en:tran:Clear Long Text]` is filled in with what that key reads as in the
   language the app is DISPLAYING, so a `find` matches the DOM in a Khmer
   window. `owa_tran` answers the same question for a label the model wrote.
 - **`questions/*.json` changes in the SAME commit as any recipe or UI it

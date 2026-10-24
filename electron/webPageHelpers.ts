@@ -22,12 +22,12 @@
  * ## Why not `captureWebScreenShot`
  *
  * That one exists for website canvas items and is deliberately left alone. It
- * runs with `webSecurity: false` and the app's own session because it is
- * previewing an address the USER typed into a slide. This is loading an
- * address a language MODEL chose, which is a different trust level and
- * therefore different settings -- a shared function with a "be careful" flag
- * would be the worst of both. See `MC-16` in the enhance-mcp backlog for the
- * hardening that one still wants on its own terms.
+ * runs with `webSecurity: false` because it is previewing an address the USER
+ * typed into a slide. This is loading an address a language MODEL chose, which
+ * is a different trust level and therefore different settings -- a shared
+ * function with a "be careful" flag would be the worst of both. That one got
+ * its own walled, memory-only session on its own terms (`MC-16`, 2026-09-17,
+ * `webCaptureHelpers.ts`).
  *
  * ## The lockdown
  *
@@ -92,6 +92,10 @@ const SETTLE_MILLISECONDS = 1200;
 // there and the work is walking it, so a wait this long means the page is
 // still running scripts of its own and will not stop for us.
 const READ_TIMEOUT_MILLISECONDS = 10 * 1000;
+
+// Any world that is not the page's own (0) nor Electron's context-isolation
+// one (999).
+const READ_WORLD_ID = 1001;
 
 const DEFAULT_VIEWPORT = { width: 1024, height: 768 };
 
@@ -215,7 +219,7 @@ function guardNavigation(win: BrowserWindow, policy: WebUrlPolicyType) {
  *    thrown away -- on a machine chosen for being cheap. The word count is
  *    taken before the cut so the caller can still say how much more there is.
  */
-function genReadExpression(maxChars: number) {
+function genReadExpression(maxChars: number, catalogSource = '') {
     return `(() => {
     const hide = document.querySelectorAll(
         'nav, aside, [role="navigation"], [role="banner"], [role="contentinfo"]',
@@ -250,6 +254,7 @@ function genReadExpression(maxChars: number) {
         }
     }
     return {
+        ${catalogSource ? `bibleCatalog: (${catalogSource})(),` : ''}
         title: document.title || '',
         url: location.href,
         text: full.slice(0, ${maxChars}),
@@ -261,6 +266,10 @@ function genReadExpression(maxChars: number) {
 }
 
 export type WebPageReadType = {
+    bibleCatalog?: {
+        books: { key: string | number; name: string }[];
+        versions: { label: string; url: string }[];
+    };
     title: string;
     url: string;
     text: string;
@@ -313,6 +322,46 @@ async function captureWholePage(win: BrowserWindow, width: number) {
     return image.toDataURL();
 }
 
+/**
+ * Run the read in the page's own world, and in an isolated world when the
+ * page will not run a script there.
+ *
+ * A page may forbid ALL script in itself: a `Content-Security-Policy` with
+ * `sandbox` and no `allow-scripts`, which is what every
+ * `raw.githubusercontent.com` file is served with. `executeJavaScript` is
+ * script in the page's main world, so it was refused there too, with
+ * Electron's catch-all _Script failed to execute_ -- found 2026-10-11 by
+ * running the help window's read of a guide page's newest copy
+ * (`src/chatbot/disputeHelpers.ts`) against the real address, where every
+ * read had failed and the unit tests, fed a made-up result, had passed. An
+ * isolated world is the browser's own answer for a reader that is not the
+ * page: it sees the same document and is not bound by the page's rule
+ * against its own scripts. The main world stays first because that is the
+ * path every other page has been read on.
+ */
+async function runReadExpression(win: BrowserWindow, expression: string) {
+    try {
+        return await win.webContents.executeJavaScript(expression, true);
+    } catch (_error) {
+        try {
+            return await win.webContents.executeJavaScriptInIsolatedWorld(
+                READ_WORLD_ID,
+                [{ code: expression }],
+                true,
+            );
+        } catch (error) {
+            // `cause` is attached rather than passed to the constructor: the
+            // electron build targets a lib without the two-argument `Error`.
+            const unreadableError = new Error(
+                'That page loaded but would not let its text be read. Say ' +
+                    'so plainly, and offer to try a different address.',
+            );
+            (unreadableError as any).cause = error;
+            throw unreadableError;
+        }
+    }
+}
+
 async function withTimeout<T>(promise: Promise<T>, milliseconds: number) {
     let timer: ReturnType<typeof setTimeout> | null = null;
     try {
@@ -349,17 +398,26 @@ export async function readWebPage(
     url: string,
     {
         wantsScreenshot = false,
+        bibleCatalog = false,
         maxChars = 20000,
         width = DEFAULT_VIEWPORT.width,
         height = DEFAULT_VIEWPORT.height,
     }: {
         wantsScreenshot?: boolean;
+        bibleCatalog?: boolean;
         maxChars?: number;
         width?: number;
         height?: number;
     } = {},
 ): Promise<WebPageReadType> {
     const policy = await getWebUrlPolicy();
+    const catalogSource = bibleCatalog
+        ? (
+              await importEsm(
+                  pathToFileURL(toMcpPackagePath('bibleBookNames.mjs')).href,
+              )
+          ).extractBibleCatalog.toString()
+        : '';
     // Re-checked here even though the MCP firewall already refused a bad
     // address: this function is what opens the socket, and it must not depend
     // on a caller having been careful.
@@ -407,9 +465,12 @@ export async function readWebPage(
         // them were left behind by one heavy site, and every later read timed
         // out against a main process busy with pages nobody could see.
         const read = (await withTimeout(
-            win.webContents.executeJavaScript(
-                genReadExpression(Math.max(200, Math.min(maxChars, 20000))),
-                true,
+            runReadExpression(
+                win,
+                genReadExpression(
+                    Math.max(200, Math.min(maxChars, 20000)),
+                    catalogSource,
+                ),
             ),
             READ_TIMEOUT_MILLISECONDS,
         )) as Omit<WebPageReadType, 'imageDataUrl'>;
@@ -421,6 +482,7 @@ export async function readWebPage(
             isCut: read?.isCut === true,
             links: Array.isArray(read?.links) ? read.links : [],
             imageDataUrl,
+            ...(bibleCatalog ? { bibleCatalog: read?.bibleCatalog } : {}),
         };
     } finally {
         attemptClosing(win);

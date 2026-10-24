@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 const h = vi.hoisted(() => ({
     showAppConfirmMock: vi.fn(async () => true),
@@ -15,12 +16,36 @@ vi.mock('../../popup-widget/popupWidgetHelpers', () => ({
     popupWidgetManager: h.popupWidgetManager,
 }));
 
-import { askAiCaution } from './aiCautionHelpers';
+// The hide lives in the browser's own storage (jsdom has one), shared by
+// every window of the app; the test reads it back the way a window does.
+function readStoredHiddenUntil() {
+    return localStorage.getItem(AI_CAUTION_HIDDEN_UNTIL_SETTING);
+}
+
+import {
+    AI_CAUTION_HIDDEN_UNTIL_SETTING,
+    AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING,
+    askAiCaution,
+    checkIsAiCautionHidden,
+    checkIsAiProviderWarnHidden,
+    hideAiCautionForAWhile,
+    hideAiProviderWarnForAWhile,
+    readAiCautionHiddenUntil,
+} from './aiCautionHelpers';
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** The words of the dialog's body, whatever React element carries them. */
+function bodyTextOf(callIndex = 0) {
+    const [, body] = h.showAppConfirmMock.mock.calls[callIndex] as any;
+    return typeof body === 'string' ? body : renderToStaticMarkup(body);
+}
 
 beforeEach(() => {
     vi.clearAllMocks();
     h.showAppConfirmMock.mockResolvedValue(true);
     h.popupWidgetManager.openConfirm = vi.fn();
+    localStorage.clear();
 });
 
 describe('askAiCaution', () => {
@@ -33,8 +58,9 @@ describe('askAiCaution', () => {
 
     test('warns about THIS app for the assistant', async () => {
         await askAiCaution('assistant');
-        const [title, body] = h.showAppConfirmMock.mock.calls[0] as any;
+        const [title] = h.showAppConfirmMock.mock.calls[0] as any;
         expect(title).toBe('Be careful with AI');
+        const body = bodyTextOf();
         expect(body).toContain('AI can be confidently wrong.');
         // The assistant's own risk: it reads this app and can act on it.
         expect(body).toContain('live projector');
@@ -43,7 +69,7 @@ describe('askAiCaution', () => {
 
     test('warns about a stranger site for the AI Chat window', async () => {
         await askAiCaution('aichat');
-        const [, body] = h.showAppConfirmMock.mock.calls[0] as any;
+        const body = bodyTextOf();
         // A different risk entirely -- one warning vague enough to cover both
         // would have warned about neither.
         expect(body).toContain('leaves this computer');
@@ -69,5 +95,87 @@ describe('askAiCaution', () => {
         h.popupWidgetManager.openConfirm = null;
         await expect(askAiCaution('assistant')).resolves.toBe(true);
         expect(h.showAppConfirmMock).not.toHaveBeenCalled();
+    });
+
+    // The user's ask, 2026-10-10: "it's annoying for some users, let put any
+    // button to hide it for a while, e.g. hide for 30 days".
+    test('carries a box that puts the caution away for 30 days, on Open only', async () => {
+        await askAiCaution('assistant');
+        expect(bodyTextOf()).toContain('Do not show this again for 30 days');
+        // The box is ticked on the dialog while it is up: the mock ticks it
+        // through the body's own callback before answering.
+        const answerTicked = (isOk: boolean) => {
+            (h.showAppConfirmMock as any).mockImplementationOnce(
+                async (_title: string, body: any) => {
+                    body.props.onHideChange(true);
+                    return isOk;
+                },
+            );
+        };
+        // Ticked, then cancelled: a change of mind, nothing written.
+        answerTicked(false);
+        await expect(askAiCaution('assistant')).resolves.toBe(false);
+        expect(readStoredHiddenUntil()).toBeNull();
+        // Ticked and opened: hidden until 30 days from now.
+        const before = Date.now();
+        answerTicked(true);
+        await expect(askAiCaution('assistant')).resolves.toBe(true);
+        const until = Number(readStoredHiddenUntil());
+        expect(until).toBeGreaterThanOrEqual(before + 30 * DAY);
+        expect(until).toBeLessThan(before + 31 * DAY);
+        // And the next open does not ask at all.
+        await expect(askAiCaution('aichat')).resolves.toBe(true);
+        expect(h.showAppConfirmMock).toHaveBeenCalledTimes(3);
+    });
+
+    test('asks again once the 30 days are up, and on a value that is not a time', async () => {
+        localStorage.setItem(
+            AI_CAUTION_HIDDEN_UNTIL_SETTING,
+            String(Date.now() - 1),
+        );
+        await askAiCaution('assistant');
+        expect(h.showAppConfirmMock).toHaveBeenCalledTimes(1);
+        localStorage.setItem(AI_CAUTION_HIDDEN_UNTIL_SETTING, 'later');
+        await askAiCaution('assistant');
+        expect(h.showAppConfirmMock).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe('the hidden-until setting', () => {
+    test('is read as a time in the future, and nothing else', () => {
+        const now = 1_000_000;
+        expect(readAiCautionHiddenUntil(null, now)).toBeNull();
+        expect(readAiCautionHiddenUntil('', now)).toBeNull();
+        expect(readAiCautionHiddenUntil('soon', now)).toBeNull();
+        expect(readAiCautionHiddenUntil('999999', now)).toBeNull();
+        expect(readAiCautionHiddenUntil('1000001', now)).toBe(1_000_001);
+    });
+
+    test('is written 30 days ahead and read back by the chat window', () => {
+        const now = 5_000_000;
+        expect(checkIsAiCautionHidden(now)).toBe(false);
+        expect(hideAiCautionForAWhile(now)).toBe(now + 30 * DAY);
+        expect(checkIsAiCautionHidden(now)).toBe(true);
+        expect(checkIsAiCautionHidden(now + 30 * DAY)).toBe(false);
+    });
+});
+
+describe("the provider warning's own hidden-until setting", () => {
+    test('is written 30 days ahead and read back, on its OWN key', () => {
+        const now = 5_000_000;
+        expect(checkIsAiProviderWarnHidden(now)).toBe(false);
+        expect(hideAiProviderWarnForAWhile(now)).toBe(now + 30 * DAY);
+        expect(checkIsAiProviderWarnHidden(now)).toBe(true);
+        expect(checkIsAiProviderWarnHidden(now + 30 * DAY)).toBe(false);
+        // And it says nothing about the cautions' key, nor they about it.
+        expect(
+            localStorage.getItem(AI_CAUTION_HIDDEN_UNTIL_SETTING),
+        ).toBeNull();
+        expect(checkIsAiCautionHidden(now)).toBe(false);
+        expect(
+            localStorage.getItem(AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING),
+        ).toBe(String(now + 30 * DAY));
+        hideAiCautionForAWhile(now);
+        expect(checkIsAiProviderWarnHidden(now + 31 * DAY)).toBe(false);
     });
 });

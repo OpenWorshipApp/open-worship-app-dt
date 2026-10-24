@@ -5,10 +5,12 @@ import type {
 import { useRef, useState } from 'react';
 
 import { useAppEffect } from '../helper/appHooks';
+import { toShownDigits } from './chatLangHelpers';
 import {
     checkCanSoloChatSession,
     toClearableChatSessions,
 } from './chatSessionHelpers';
+import { fillWords, tran } from './chatTranHelpers';
 
 /**
  * What a tab has to be for this strip to draw it. Shared by the help chatbot
@@ -66,12 +68,65 @@ type SweepType =
           sessionId: string;
       };
 
+// The question asked under the strip, in whole sentences: where the count
+// and the plural go is each language's own business.
+function genSweepQuestion(
+    kind: SweepType['kind'],
+    count: number,
+    lockedKeptCount: number,
+) {
+    const isClear = kind === 'clear';
+    const question =
+        count === 1
+            ? isClear
+                ? tran('Clear {count} chat?')
+                : tran('Close {count} chat?')
+            : isClear
+              ? tran('Clear {count} chats?')
+              : tran('Close {count} chats?');
+    const locked =
+        lockedKeptCount === 0
+            ? ''
+            : ' ' +
+              (lockedKeptCount === 1
+                  ? tran('The locked one stays.')
+                  : tran('The locked ones stay.'));
+    return (
+        fillWords(question, { count }) +
+        locked +
+        ' ' +
+        tran('This cannot be undone.')
+    );
+}
+
+// Why `+` started nothing: the strip is full. Which tab to give up is the
+// person's to say, so the sentence says what to do -- and, when every tab is
+// locked, that a lock is what stands in the way.
+function genFullNotice(count: number, isAllLocked: boolean) {
+    return fillWords(
+        isAllLocked
+            ? tran(
+                  'This window holds {count} chats at most, and all of them ' +
+                      'are locked. Unlock one from its ⋮ menu and close it ' +
+                      'to start a new chat.',
+              )
+            : tran(
+                  'This window holds {count} chats at most. Close one to ' +
+                      'start a new chat.',
+              ),
+        // In the language's own digits: `12` in a Khmer sentence reads as
+        // a stray piece of English.
+        { count: toShownDigits(count) },
+    );
+}
+
 // The tab strip. Several conversations at once, the way a browser holds
 // several pages -- and, unlike a browser, every one of them still there after
 // the window is closed and the app restarted.
 export default function RenderSessionTabsComp<T extends TabSessionType>({
     sessions,
     activeId,
+    busyIds,
     onChoose,
     onClose,
     onAdd,
@@ -89,6 +144,10 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
 }: Readonly<{
     sessions: T[];
     activeId: string;
+    // The tabs still waiting on an answer. Each tab works on its own, so the
+    // one being looked at may be idle while another is still going -- and
+    // the strip is the one place all of them are on screen at once.
+    busyIds?: readonly string[];
     // The strip knows a tab by its id and its lock and nothing else; what
     // it is CALLED, and whether there is anything worth adding or sweeping,
     // is the owning window’s business.
@@ -122,9 +181,11 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
     // So is which tab has its menu open, and which sweeping action is waiting
     // to be confirmed. That question is asked in this window rather than in
     // the app's confirm popup because this window loads bootstrap and its own
-    // sheet and nothing else -- pulling the popup in here would bring `tran()`
-    // and a module-scope listener with it (see `openAiSetting`), for one
-    // question with two answers.
+    // sheet and nothing else -- pulling the popup in here would bring the
+    // app's `tran()` and a module-scope listener with it (see
+    // `openAiSetting`), for one question with two answers. The words are the
+    // chatbot's own `tran` (`chatTranHelpers`), which pulls in nothing and
+    // stays English in the AI Chat window, which never plugs a translator in.
     const [menuState, setMenuState] = useState<TabMenuStateType | null>(null);
     const [sweep, setSweep] = useState<SweepType | null>(null);
     // The menu belongs to a tab, and that tab can go out from under it -- by
@@ -147,6 +208,12 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
               });
     if (sweep !== null && sweepingSessions.length === 0) {
         setSweep(null);
+    }
+    // `+` pressed with the strip full. A greyed `+` said nothing about why;
+    // this line does, and goes by itself the moment there is room again.
+    const [isFullNoticeOn, setIsFullNoticeOn] = useState(false);
+    if (isFullNoticeOn && canAdd) {
+        setIsFullNoticeOn(false);
     }
     // Only the locks worth mentioning: the tab a solo is being run FROM is
     // staying because it is the one being soloed, not because of its lock, and
@@ -268,184 +335,260 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
     };
     return (
         <>
-            <div
-                className="chat-tabs"
-                role="tablist"
-                aria-label="Chats"
-                ref={stripRef}
-            >
-                {sessions.map((session) => {
-                    const title = genTitle(session);
-                    const isOn = session.id === activeId;
-                    const isMenuOn = session.id === menuSession?.id;
-                    return (
-                        <div
-                            key={session.id}
-                            className={
-                                'chat-tab' +
-                                (isOn ? ' is-on' : '') +
-                                (isMenuOn ? ' is-menu-on' : '') +
-                                (dropMark?.id === session.id
-                                    ? dropMark.isAfter
-                                        ? ' is-drop-after'
-                                        : ' is-drop-before'
-                                    : '')
-                            }
-                            onContextMenu={(event) => {
-                                handleOpeningMenu(event, session.id);
-                            }}
-                            draggable={checkCanDrag(session.id)}
-                            onDragOver={(event) => {
-                                handleDraggingOver(event, session.id);
-                            }}
-                            onDrop={(event) => {
-                                handleDropping(event, session.id);
-                            }}
-                            onDragStart={(event) => {
-                                draggingIdRef.current = session.id;
-                                // A type of its own, so a site under the
-                                // pointer -- the page below is a website --
-                                // is handed no text and no link to paste.
-                                event.dataTransfer.setData(
-                                    TEAR_OFF_DRAG_TYPE,
-                                    session.id,
-                                );
-                                event.dataTransfer.effectAllowed = 'move';
-                            }}
-                            onDragEnd={(event) => {
-                                draggingIdRef.current = null;
-                                setDropMark(null);
-                                if (
-                                    onTearOff === undefined ||
-                                    !checkIsOutsideWindow(event)
-                                ) {
-                                    return;
+            <div className="chat-tabs">
+                {/*
+                 * Only the tabs scroll. The buttons that start another chat
+                 * sit outside the scroller so they stay on screen when there
+                 * are more tabs than fit -- inside it they were the two
+                 * controls that scrolled away first.
+                 */}
+                <div
+                    className="chat-tabs-scroll"
+                    role="tablist"
+                    aria-label={tran('Chats')}
+                    ref={stripRef}
+                >
+                    {sessions.map((session) => {
+                        const title = genTitle(session);
+                        const isOn = session.id === activeId;
+                        const isMenuOn = session.id === menuSession?.id;
+                        return (
+                            <div
+                                key={session.id}
+                                className={
+                                    'chat-tab' +
+                                    (isOn ? ' is-on' : '') +
+                                    (isMenuOn ? ' is-menu-on' : '') +
+                                    (dropMark?.id === session.id
+                                        ? dropMark.isAfter
+                                            ? ' is-drop-after'
+                                            : ' is-drop-before'
+                                        : '')
                                 }
-                                onTearOff(
-                                    session.id,
-                                    event.screenX,
-                                    event.screenY,
-                                );
-                            }}
-                        >
-                            {/*
-                             * The right-click, spelled out. Nothing on a tab
-                             * says a menu is hiding behind it, and the person
-                             * this window is written for is not going to try
-                             * -- so the dots are always there, dimmed, and
-                             * they OPEN the tab: first thing on the left, in
-                             * the one spot that does not move as the name
-                             * beside it grows, shrinks or is being retyped.
-                             */}
-                            <button
-                                type="button"
-                                className="chat-tab-menu"
-                                aria-label={`More for ${title}`}
-                                aria-haspopup="menu"
-                                aria-expanded={isMenuOn}
-                                title="More"
-                                onClick={(event) => {
+                                onContextMenu={(event) => {
                                     handleOpeningMenu(event, session.id);
                                 }}
-                            >
-                                ⋮
-                            </button>
-                            {renamingId === session.id ? (
-                                <input
-                                    className="chat-tab-input"
-                                    type="text"
-                                    autoFocus
-                                    value={renamingText}
-                                    aria-label="Name this chat"
-                                    onChange={(event) => {
-                                        setRenamingText(event.target.value);
-                                    }}
-                                    onBlur={handleRenamingDone}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter') {
-                                            handleRenamingDone();
-                                        } else if (event.key === 'Escape') {
-                                            setRenamingId(null);
-                                        }
-                                    }}
-                                />
-                            ) : (
-                                <button
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={isOn}
-                                    className="chat-tab-name"
-                                    title={`${title} — double-click to rename`}
-                                    onClick={() => {
-                                        onChoose(session.id);
-                                    }}
-                                    onDoubleClick={() => {
-                                        setRenamingId(session.id);
-                                        setRenamingText(title);
-                                    }}
-                                >
-                                    {title}
-                                </button>
-                            )}
-                            {session.isLocked ? (
-                                // The close button, replaced by the reason it
-                                // is not there. Not a button of its own: a
-                                // lock that comes off with one stray press on
-                                // the exact spot the close used to be is not a
-                                // lock.
-                                <span
-                                    className="chat-tab-lock"
-                                    role="img"
-                                    aria-label={`${title} is locked`}
-                                    title={
-                                        'Locked — unlock it from this tab’s ' +
-                                        'menu to close it'
+                                draggable={checkCanDrag(session.id)}
+                                onDragOver={(event) => {
+                                    handleDraggingOver(event, session.id);
+                                }}
+                                onDrop={(event) => {
+                                    handleDropping(event, session.id);
+                                }}
+                                onDragStart={(event) => {
+                                    draggingIdRef.current = session.id;
+                                    // A type of its own, so a site under the
+                                    // pointer -- the page below is a website --
+                                    // is handed no text and no link to paste.
+                                    event.dataTransfer.setData(
+                                        TEAR_OFF_DRAG_TYPE,
+                                        session.id,
+                                    );
+                                    event.dataTransfer.effectAllowed = 'move';
+                                }}
+                                onDragEnd={(event) => {
+                                    draggingIdRef.current = null;
+                                    setDropMark(null);
+                                    if (
+                                        onTearOff === undefined ||
+                                        !checkIsOutsideWindow(event)
+                                    ) {
+                                        return;
                                     }
-                                >
-                                    <i className="bi bi-lock-fill" />
-                                </span>
-                            ) : (
+                                    onTearOff(
+                                        session.id,
+                                        event.screenX,
+                                        event.screenY,
+                                    );
+                                }}
+                            >
+                                {/*
+                                 * The right-click, spelled out. Nothing on a tab
+                                 * says a menu is hiding behind it, and the person
+                                 * this window is written for is not going to try
+                                 * -- so the dots are always there, dimmed, and
+                                 * they OPEN the tab: first thing on the left, in
+                                 * the one spot that does not move as the name
+                                 * beside it grows, shrinks or is being retyped.
+                                 */}
                                 <button
                                     type="button"
-                                    className="chat-tab-close"
-                                    aria-label={`Close ${title}`}
-                                    title="Close this chat"
-                                    onClick={() => {
-                                        onClose(session.id);
+                                    className="chat-tab-menu"
+                                    aria-label={fillWords(
+                                        tran('More for {title}'),
+                                        { title },
+                                    )}
+                                    aria-haspopup="menu"
+                                    aria-expanded={isMenuOn}
+                                    title={tran('More')}
+                                    onClick={(event) => {
+                                        handleOpeningMenu(event, session.id);
                                     }}
                                 >
-                                    ×
+                                    ⋮
                                 </button>
-                            )}
-                        </div>
-                    );
-                })}
-                <button
-                    type="button"
-                    className="chat-tab-add"
-                    aria-label="New chat"
-                    title={
-                        canAdd
-                            ? 'New chat'
-                            : 'Close one of these before starting another'
-                    }
-                    disabled={!canAdd}
-                    onClick={onAdd}
-                >
-                    +
-                </button>
-                {onNewWindow === undefined ? null : (
+                                {renamingId === session.id ? (
+                                    <input
+                                        className="chat-tab-input"
+                                        type="text"
+                                        autoFocus
+                                        value={renamingText}
+                                        aria-label={tran('Name this chat')}
+                                        onChange={(event) => {
+                                            setRenamingText(event.target.value);
+                                        }}
+                                        onBlur={handleRenamingDone}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter') {
+                                                handleRenamingDone();
+                                            } else if (event.key === 'Escape') {
+                                                setRenamingId(null);
+                                            }
+                                        }}
+                                    />
+                                ) : (
+                                    <button
+                                        type="button"
+                                        role="tab"
+                                        aria-selected={isOn}
+                                        className="chat-tab-name"
+                                        title={fillWords(
+                                            tran(
+                                                '{title} — double-click to rename',
+                                            ),
+                                            { title },
+                                        )}
+                                        onClick={() => {
+                                            onChoose(session.id);
+                                        }}
+                                        onDoubleClick={() => {
+                                            setRenamingId(session.id);
+                                            setRenamingText(title);
+                                        }}
+                                    >
+                                        {title}
+                                    </button>
+                                )}
+                                {/* After the name, beside its ×: where the eye
+                                lands on a tab, and the same place in every
+                                tab whatever its name's length. */}
+                                {busyIds?.includes(session.id) ? (
+                                    <span
+                                        className="chat-tab-busy"
+                                        role="img"
+                                        aria-label={fillWords(
+                                            tran(
+                                                '{title} is working on an answer',
+                                            ),
+                                            { title },
+                                        )}
+                                        title={tran('Working on an answer')}
+                                    >
+                                        <span className="chat-status-dot" />
+                                    </span>
+                                ) : null}
+                                {session.isLocked ? (
+                                    // The close button, replaced by the reason it
+                                    // is not there. Not a button of its own: a
+                                    // lock that comes off with one stray press on
+                                    // the exact spot the close used to be is not a
+                                    // lock.
+                                    <span
+                                        className="chat-tab-lock"
+                                        role="img"
+                                        aria-label={fillWords(
+                                            tran('{title} is locked'),
+                                            { title },
+                                        )}
+                                        title={tran(
+                                            'Locked — unlock it from this tab’s ' +
+                                                'menu to close it',
+                                        )}
+                                    >
+                                        <i className="bi bi-lock-fill" />
+                                    </span>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="chat-tab-close"
+                                        aria-label={fillWords(
+                                            tran('Close {title}'),
+                                            {
+                                                title,
+                                            },
+                                        )}
+                                        title={tran('Close this chat')}
+                                        onClick={() => {
+                                            onClose(session.id);
+                                        }}
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                <div className="chat-tabs-end">
                     <button
                         type="button"
-                        className="chat-tab-add chat-tab-window"
-                        aria-label="New window"
-                        title="New window"
-                        onClick={onNewWindow}
+                        className="chat-tab-add"
+                        aria-label={tran('New chat')}
+                        title={
+                            canAdd
+                                ? tran('New chat')
+                                : tran(
+                                      'Close one of these before starting another',
+                                  )
+                        }
+                        onClick={() => {
+                            if (canAdd) {
+                                onAdd();
+                            } else {
+                                setIsFullNoticeOn(true);
+                            }
+                        }}
                     >
-                        <i className="bi bi-window-plus" />
+                        +
                     </button>
-                )}
+                    {onNewWindow === undefined ? null : (
+                        <button
+                            type="button"
+                            className="chat-tab-add chat-tab-window"
+                            aria-label={tran('New window')}
+                            title={tran('New window')}
+                            onClick={onNewWindow}
+                        >
+                            <i className="bi bi-window-plus" />
+                        </button>
+                    )}
+                </div>
             </div>
+            {isFullNoticeOn ? (
+                <div
+                    className="chat-clear-confirm"
+                    role="status"
+                    aria-label={tran('No room for another chat')}
+                >
+                    <span className="chat-clear-ask">
+                        {genFullNotice(
+                            sessions.length,
+                            sessions.every((session) => {
+                                return session.isLocked;
+                            }),
+                        )}
+                    </span>
+                    <button
+                        type="button"
+                        className="chat-clear-no"
+                        onClick={() => {
+                            setIsFullNoticeOn(false);
+                        }}
+                    >
+                        {tran('Ok')}
+                    </button>
+                </div>
+            ) : null}
             {sweep === null ? null : (
                 // Asked on a line of its own rather than inside the menu, and
                 // never done on the first press: these conversations are the
@@ -455,8 +598,8 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                     role="alertdialog"
                     aria-label={
                         sweep.kind === 'clear'
-                            ? 'Clear all chats'
-                            : 'Close other chats'
+                            ? tran('Clear all chats')
+                            : tran('Close other chats')
                     }
                     onKeyDown={(event) => {
                         if (event.key === 'Escape') {
@@ -465,17 +608,11 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                     }}
                 >
                     <span className="chat-clear-ask">
-                        {sweep.kind === 'clear' ? 'Clear ' : 'Close '}
-                        {sweepingSessions.length} chat
-                        {sweepingSessions.length === 1 ? '' : 's'}?
-                        {lockedKeptCount === 0
-                            ? ''
-                            : ` The locked ${
-                                  lockedKeptCount === 1
-                                      ? 'one stays'
-                                      : 'ones stay'
-                              }.`}{' '}
-                        This cannot be undone.
+                        {genSweepQuestion(
+                            sweep.kind,
+                            sweepingSessions.length,
+                            lockedKeptCount,
+                        )}
                     </span>
                     <button
                         type="button"
@@ -485,7 +622,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                             setSweep(null);
                         }}
                     >
-                        Keep them
+                        {tran('Keep them')}
                     </button>
                     <button
                         type="button"
@@ -499,7 +636,9 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                             setSweep(null);
                         }}
                     >
-                        {sweep.kind === 'clear' ? 'Clear all' : 'Close them'}
+                        {sweep.kind === 'clear'
+                            ? tran('Clear all')
+                            : tran('Close them')}
                     </button>
                 </div>
             )}
@@ -545,7 +684,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                 setRenamingText(genTitle(menuSession));
                             }}
                         >
-                            Rename this chat
+                            {tran('Rename this chat')}
                         </button>
                         <button
                             type="button"
@@ -557,8 +696,8 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                             }}
                         >
                             {menuSession.isLocked
-                                ? 'Unlock this chat'
-                                : 'Lock this chat'}
+                                ? tran('Unlock this chat')
+                                : tran('Lock this chat')}
                         </button>
                         {onOpenInNewWindow === undefined ? null : (
                             <button
@@ -570,7 +709,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                     onOpenInNewWindow(menuSession.id);
                                 }}
                             >
-                                Open in new window
+                                {tran('Open in new window')}
                             </button>
                         )}
                         {menuSession.isLocked ? null : (
@@ -583,7 +722,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                     onClose(menuSession.id);
                                 }}
                             >
-                                Close this chat
+                                {tran('Close this chat')}
                             </button>
                         )}
                         {checkCanSoloChatSession(sessions, menuSession.id) ? (
@@ -601,7 +740,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                         });
                                     }}
                                 >
-                                    Close other chats…
+                                    {tran('Close other chats…')}
                                 </button>
                             </>
                         ) : null}
@@ -622,7 +761,7 @@ export default function RenderSessionTabsComp<T extends TabSessionType>({
                                         setSweep({ kind: 'clear' });
                                     }}
                                 >
-                                    Clear all chats…
+                                    {tran('Clear all chats…')}
                                 </button>
                             </>
                         ) : null}

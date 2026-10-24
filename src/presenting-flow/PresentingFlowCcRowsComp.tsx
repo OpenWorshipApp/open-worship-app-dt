@@ -556,28 +556,39 @@ function PresentingFlowCcRowComp({
             extraChild={
                 <>
                     {isMediaControl ? (
-                        <i
+                        <button
+                            type="button"
                             className={
-                                'bi bi-gear-fill app-caught-hover-pointer' +
+                                'app-caught-hover-pointer' +
                                 ' app-presenting-flow-row-settings-icon'
                             }
                             style={{ color: 'var(--bs-cyan)' }}
                             title={tran('Media Control Settings')}
+                            aria-label={tran('Media Control Settings')}
                             onClick={handleMediaControlEditing}
-                        />
+                        >
+                            <i className="bi bi-gear-fill" aria-hidden="true" />
+                        </button>
                     ) : null}
                     {ccItem.canBeCcArmed ? (
-                        <i
+                        <button
+                            type="button"
                             className={
-                                `bi bi-stopwatch${
-                                    ccItem.hasOwnActionArming ? '-fill' : ''
-                                } app-caught-hover-pointer` +
+                                'app-caught-hover-pointer' +
                                 ' app-presenting-flow-row-settings-icon'
                             }
                             style={{ color: 'var(--bs-warning)' }}
                             title={tran(toCcArmingLabel(ccItem))}
+                            aria-label={tran(toCcArmingLabel(ccItem))}
                             onClick={handleActionArmingEditing}
-                        />
+                        >
+                            <i
+                                className={`bi bi-stopwatch${
+                                    ccItem.hasOwnActionArming ? '-fill' : ''
+                                }`}
+                                aria-hidden="true"
+                            />
+                        </button>
                     ) : null}
                     {ccItem.screenIds.length > 0 ? (
                         <PresentingFlowScreenPinComp

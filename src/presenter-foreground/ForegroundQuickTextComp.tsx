@@ -20,8 +20,12 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import { toTransitionPart } from '../_screen/transitionOverrideHelpers';
 import PropRowComp from './ForegroundPropRowComp';
-import type { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
+import {
+    type ForegroundQuickTextDataType,
+    withForegroundLayer,
+} from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import { renderMarkdown } from '../lyric-list/markdownHelpers';
@@ -47,16 +51,16 @@ function genOwnSettingNames(suffix: string) {
 function refreshAllQuickText(
     showingScreenIds: [number, ForegroundQuickTextDataType][],
     extraStyle: CSSProperties,
+    isBehind: boolean,
 ) {
     for (const [screenId, data] of showingScreenIds) {
         getScreenForegroundManagerInstances(
             screenId,
             (screenForegroundManager) => {
                 screenForegroundManager.setQuickTextData(null);
-                screenForegroundManager.setQuickTextData({
-                    ...data,
-                    extraStyle,
-                });
+                screenForegroundManager.setQuickTextData(
+                    withForegroundLayer({ ...data, extraStyle }, isBehind),
+                );
             },
         );
     }
@@ -78,7 +82,14 @@ function QuickTextBodyComp({
     sessionId,
     suffix,
     prefix,
-}: Readonly<{ sessionId: string; suffix: string; prefix: string }>) {
+    showingScreenIdDataList,
+}: Readonly<{
+    sessionId: string;
+    suffix: string;
+    prefix: string;
+    /** THIS session's quick texts only -- see `toSessionShowingList`. */
+    showingScreenIdDataList: [number, ForegroundQuickTextDataType][];
+}>) {
     // No screen subscription of its own: the wrapper below holds one and this
     // is its child, so a second would cost a listener for the same redraw.
     // Per-instance: nothing here may assume this panel stays a single mount.
@@ -98,38 +109,20 @@ function QuickTextBodyComp({
         3,
     );
 
-    const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
-        (data) => {
-            return data.quickTextData !== null;
-        },
-    )
-        .map(
-            ([screenId, data]):
-                [number, ForegroundQuickTextDataType] | null => {
-                if (data.quickTextData === null) {
-                    return null;
-                }
-                return [screenId, data.quickTextData];
-            },
-        )
-        .filter((item) => {
-            return item !== null;
-        });
     const showingRef = useAppCurrentRef(showingScreenIdDataList);
     const {
         genStyle,
+        getIsBehind,
+        getTransition,
         fontFamily,
         fontWeight,
         element: propsSetting,
     } = useForegroundPropsSetting({
         prefix,
-        onChange: (extraStyle) => {
+        widgetKey: 'quick-text',
+        onChange: (extraStyle, isBehind) => {
             attemptTimeout(() => {
-                // THIS session's quick text only -- see the stopwatch panel.
-                refreshAllQuickText(
-                    toSessionShowingList(showingRef.current, sessionId),
-                    extraStyle,
-                );
+                refreshAllQuickText(showingRef.current, extraStyle, isBehind);
             });
         },
         isFontSize: true,
@@ -148,6 +141,8 @@ function QuickTextBodyComp({
                 genStyle(),
                 isForceChoosing,
                 sessionId,
+                getIsBehind(),
+                getTransition(),
             );
         },
         [
@@ -155,6 +150,8 @@ function QuickTextBodyComp({
             timeSecondDelay,
             timeSecondToLive,
             genStyle,
+            getIsBehind,
+            getTransition,
             sessionId,
         ],
     );
@@ -170,21 +167,29 @@ function QuickTextBodyComp({
             if (screenForegroundManager === null) {
                 return;
             }
-            screenForegroundManager.setQuickTextData({
-                // A LIVE drop from this panel is this session acting; a
-                // run-sheet row replayed weeks later carries none.
-                id: sessionId || undefined,
-                htmlText: await getRenderedHtml(),
-                timeSecondDelay,
-                timeSecondToLive,
-                extraStyle: genStyle(),
-            });
+            screenForegroundManager.setQuickTextData(
+                withForegroundLayer(
+                    {
+                        // A LIVE drop from this panel is this session acting;
+                        // a run-sheet row replayed weeks later carries none.
+                        id: sessionId || undefined,
+                        ...toTransitionPart(getTransition()),
+                        htmlText: await getRenderedHtml(),
+                        timeSecondDelay,
+                        timeSecondToLive,
+                        extraStyle: genStyle(),
+                    },
+                    getIsBehind(),
+                ),
+            );
         },
         [
             getRenderedHtml,
             timeSecondDelay,
             timeSecondToLive,
             genStyle,
+            getIsBehind,
+            getTransition,
             sessionId,
         ],
     );
@@ -217,6 +222,8 @@ function QuickTextBodyComp({
     const timeSecondDelayRef = useAppCurrentRef(timeSecondDelay);
     const timeSecondToLiveRef = useAppCurrentRef(timeSecondToLive);
     const genStyleRef = useAppCurrentRef(genStyle);
+    const getIsBehindRef = useAppCurrentRef(getIsBehind);
+    const getTransitionRef = useAppCurrentRef(getTransition);
     const handleQuickTextDragStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
         // The markdown source travels, not the rendered html: rendering is
@@ -224,12 +231,16 @@ function QuickTextBodyComp({
         handleDragStart(
             event,
             genForegroundDragInf('quick-text', () => {
-                return {
-                    markdownText: markdownTextRef.current,
-                    timeSecondDelay: timeSecondDelayRef.current,
-                    timeSecondToLive: timeSecondToLiveRef.current,
-                    extraStyle: genStyleRef.current(),
-                };
+                return withForegroundLayer(
+                    {
+                        ...toTransitionPart(getTransitionRef.current()),
+                        markdownText: markdownTextRef.current,
+                        timeSecondDelay: timeSecondDelayRef.current,
+                        timeSecondToLive: timeSecondToLiveRef.current,
+                        extraStyle: genStyleRef.current(),
+                    },
+                    getIsBehindRef.current(),
+                );
             }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -360,6 +371,7 @@ export default function ForegroundQuickTextComp() {
     // its own seconds on screen and its own look.
     const {
         activeId,
+        sessionIds,
         suffix,
         prefix,
         element: sessionsElement,
@@ -369,14 +381,14 @@ export default function ForegroundQuickTextComp() {
             return `quick-text${sessionSuffix}`;
         },
         toOwnSettingNames: genOwnSettingNames,
-        checkIsOnScreen: (sessionId) => {
+        checkIsOnScreen: (sessionId, _sessionSuffix, idList) => {
             return showingScreenIdDataList.some(([, data]) => {
-                return checkIsSessionData(data, sessionId);
+                return checkIsSessionData(data, sessionId, idList);
             });
         },
-        hideSession: (sessionId) => {
+        hideSession: (sessionId, _sessionSuffix, idList) => {
             for (const [screenId, data] of showingRef.current) {
-                if (checkIsSessionData(data, sessionId)) {
+                if (checkIsSessionData(data, sessionId, idList)) {
                     handleHiding(screenId);
                 }
             }
@@ -390,6 +402,11 @@ export default function ForegroundQuickTextComp() {
                 sessionId={activeId}
                 suffix={suffix}
                 prefix={prefix}
+                showingScreenIdDataList={toSessionShowingList(
+                    showingScreenIdDataList,
+                    activeId,
+                    sessionIds,
+                )}
             />
         </ForegroundLayoutComp>
     );

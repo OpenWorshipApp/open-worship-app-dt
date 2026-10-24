@@ -68,8 +68,8 @@ describe('the picker runtime', () => {
                 clientY: 20,
             }),
         );
-        // The whole safety property: pointing at "Clear Bible" to ask what it
-        // does must not clear the bible.
+        // The whole safety property: pointing at "Clear Long Text" to ask what
+        // it does must not clear the screen.
         expect(appHits).toBe(0);
         expect(picker.read().phase).toBe('picked');
     });

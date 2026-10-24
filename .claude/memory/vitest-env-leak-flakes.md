@@ -47,8 +47,8 @@ for a scheduling-dependent pass. Good models that DO mock it:
 above, since 2026-08-24 a jsdom pragma alone is not enough — there is no
 provider mock left to fall back on.
 
-Separately, `npm run lint` occasionally aborts with **all 183 src test files**
-(207 incl. `electron/`) failing
+Separately, `npm run lint` occasionally aborts with **every src test file** (183 then,
+207 incl. `electron/`) failing
 `TypeError: Cannot read properties of undefined (reading 'config')` /
 "Vitest failed to find the runner" and `Tests no tests`. That is a transient
 worker-startup flake, not a code break — re-run before investigating (and read

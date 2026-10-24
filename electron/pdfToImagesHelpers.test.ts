@@ -1,4 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const { executeMock, rmSyncMock } = vi.hoisted(() => ({
     executeMock: vi.fn(),
@@ -11,7 +14,12 @@ vi.mock('./electronHelpers', () => ({
 vi.mock('./processHelpers', () => ({ execute: executeMock }));
 vi.mock('node:fs', () => ({ rmSync: rmSyncMock }));
 
-import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
+import {
+    PDF_CHAT_CACHE_DIR,
+    getPagesCount,
+    pdfToChatPages,
+    pdfToImages,
+} from './pdfToImagesHelpers';
 
 beforeEach(() => {
     vi.clearAllMocks();
@@ -178,4 +186,46 @@ test('caches non-null page counts only while they are fresh', async () => {
     await expect(getPagesCount('/docs/null.pdf')).resolves.toBeNull();
     expect(executeMock).toHaveBeenCalledTimes(4);
     vi.useRealTimers();
+});
+
+test('reuses a complete chatbot PDF render until the source changes', async () => {
+    const sourceDir = await mkdtemp(join(tmpdir(), 'owa-pdf-chat-source-'));
+    const sourcePath = join(sourceDir, 'JHN.3.pdf');
+    const rendered = {
+        isSuccessful: true,
+        pageCount: 4,
+        startPage: 0,
+        dataUrls: ['data:image/png;base64,cGFnZQ=='],
+        pageTexts: [{ page: 1, text: 'page text' }],
+    };
+    await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
+    await writeFile(sourcePath, 'first PDF bytes');
+    executeMock.mockResolvedValue(rendered);
+
+    try {
+        await expect(
+            pdfToChatPages(sourcePath, undefined, undefined, 2200, true),
+        ).resolves.toMatchObject({ cacheHit: false, pageCount: 4 });
+        await expect(
+            pdfToChatPages(sourcePath, undefined, undefined, 2200, true),
+        ).resolves.toMatchObject({ cacheHit: true, pageCount: 4 });
+        expect(executeMock).toHaveBeenCalledTimes(1);
+
+        await writeFile(sourcePath, 'changed PDF bytes with a new size');
+        await expect(
+            pdfToChatPages(sourcePath, undefined, undefined, 2200, true),
+        ).resolves.toMatchObject({ cacheHit: false, pageCount: 4 });
+        expect(executeMock).toHaveBeenCalledTimes(2);
+        expect(executeMock).toHaveBeenLastCalledWith(
+            'pdf-to-chat-images.mjs',
+            expect.objectContaining({
+                filePath: sourcePath,
+                allPages: true,
+                longEdge: 2200,
+            }),
+        );
+    } finally {
+        await rm(sourceDir, { recursive: true, force: true });
+        await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
+    }
 });

@@ -1,0 +1,1157 @@
+// @vitest-environment jsdom
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { genDestructiveLabelRule } from './destructiveLabel.mjs';
+import {
+  PRESS_AT_CENTRE_SOURCE,
+  genClickExpression,
+  genDragExpression,
+  genDropAimExpression,
+  genDropReadExpression,
+  genPressKeyExpression,
+  genScrollExpression,
+} from './domMatch.mjs';
+import { toKeystroke } from './guide.mjs';
+import { loadTranBundle } from './tran.mjs';
+
+// The three things a user does on the page that no tool could do until
+// 2026-10-10 -- right-click and double-click a control, press a key with the
+// right panel focused, drag one thing onto another -- exercised the way the
+// app gets them: the expression evaluated against a DOM. Same harness as
+// `domMatch.test.mjs`; its own file so that one stays about matching.
+
+const GUARD = { rule: genDestructiveLabelRule(loadTranBundle()) };
+
+function run(expression) {
+  return new Function(`return (${expression})`)();
+}
+
+beforeEach(() => {
+  delete window.__owaDomMatch;
+  document.body.innerHTML = '';
+  Element.prototype.getBoundingClientRect = function () {
+    return {
+      x: 10,
+      y: 10,
+      width: 40,
+      height: 20,
+      top: 10,
+      left: 10,
+      right: 50,
+      bottom: 30,
+    };
+  };
+  Element.prototype.scrollIntoView = function () {};
+  Element.prototype.checkVisibility = function () {
+    let node = this;
+    while (node !== null && node.nodeType === 1) {
+      if (getComputedStyle(node).display === 'none') {
+        return false;
+      }
+      node = node.parentElement;
+    }
+    return true;
+  };
+  // jsdom's elementFromPoint is a stub answering null; the drop lands on the
+  // target itself then, which is what the fallback is for.
+  document.elementFromPoint = () => null;
+  // jsdom has neither. Chromium's DataTransfer lowercases a format and reads
+  // 'text' as 'text/plain', which is what `carried` below expects to see.
+  window.DataTransfer = class DataTransfer {
+    constructor() {
+      this.map = new Map();
+      this.dropEffect = 'none';
+      this.effectAllowed = 'all';
+    }
+    toKey(format) {
+      const lowered = String(format).toLowerCase();
+      return lowered === 'text' ? 'text/plain' : lowered;
+    }
+    setData(format, value) {
+      this.map.set(this.toKey(format), String(value));
+    }
+    getData(format) {
+      return this.map.get(this.toKey(format)) ?? '';
+    }
+    clearData() {
+      this.map.clear();
+    }
+    get types() {
+      return [...this.map.keys()];
+    }
+  };
+  window.DragEvent = class DragEvent extends MouseEvent {
+    constructor(type, init = {}) {
+      super(type, init);
+      this.dataTransfer = init.dataTransfer ?? null;
+    }
+  };
+});
+
+describe('a press of another kind', () => {
+  it('right-clicks as a contextmenu at the control, and nothing else', () => {
+    document.body.innerHTML =
+      '<li title="Amazing Grace.owl">Amazing Grace</li>';
+    const row = document.querySelector('li');
+    const seen = [];
+    for (const type of ['click', 'dblclick', 'contextmenu']) {
+      row.addEventListener(type, (event) => {
+        seen.push([type, event.button, event.clientX]);
+      });
+    }
+    const press = new Function(`return (${PRESS_AT_CENTRE_SOURCE})`)();
+    expect(press(row, { button: 'right' })).toEqual({
+      x: 30,
+      y: 20,
+      button: 'right',
+    });
+    expect(seen).toEqual([['contextmenu', 2, 30]]);
+  });
+
+  it('double-clicks as a mouse does: click, click, dblclick', () => {
+    document.body.innerHTML = '<button>Open</button>';
+    const button = document.querySelector('button');
+    const seen = [];
+    for (const type of ['click', 'dblclick', 'contextmenu']) {
+      button.addEventListener(type, (event) => {
+        seen.push([type, event.detail]);
+      });
+    }
+    const press = new Function(`return (${PRESS_AT_CENTRE_SOURCE})`)();
+    expect(press(button, { clicks: 2 })).toEqual({ x: 30, y: 20, clicks: 2 });
+    expect(seen).toEqual([
+      ['click', 1],
+      ['click', 2],
+      ['dblclick', 2],
+    ]);
+  });
+
+  it('is an ordinary click when asked for nothing else', () => {
+    document.body.innerHTML = '<button>Open</button>';
+    const button = document.querySelector('button');
+    const seen = [];
+    for (const type of ['click', 'dblclick', 'contextmenu']) {
+      button.addEventListener(type, (event) => {
+        seen.push(type);
+      });
+    }
+    const press = new Function(`return (${PRESS_AT_CENTRE_SOURCE})`)();
+    // The guide card calls it with one argument.
+    expect(press(button)).toEqual({ x: 30, y: 20 });
+    expect(seen).toEqual(['click']);
+  });
+
+  it('reports the menu a right-click opened, and the button it used', async () => {
+    document.body.innerHTML =
+      '<li title="Amazing Grace.owl">Amazing Grace</li>' +
+      '<div id="menu" role="menu" style="display:none">Rename</div>';
+    const row = document.querySelector('li');
+    row.addEventListener('contextmenu', () => {
+      document.getElementById('menu').style.display = 'block';
+    });
+    const result = await run(
+      genClickExpression(['Amazing Grace'], 100, 10, { button: 'right' }),
+    );
+    expect(result.button).toBe('right');
+    expect(result.opened).toBe('menu');
+    expect(result.didChange).toBe(true);
+    expect(result.clicks).toBeUndefined();
+  });
+
+  // The firewall's page half reads the control whatever button is used: a
+  // right-click on a Move to Trash button is still a press on it.
+  it('still refuses a destructively named control on a right-click', async () => {
+    document.body.innerHTML = '<button>Move to Trash</button>';
+    const result = await run(
+      genClickExpression(['Move to Trash'], 100, 10, {
+        button: 'right',
+        guard: GUARD,
+      }),
+    );
+    expect(result.clicked).toBeNull();
+    expect(result.refused).toBe('destructive');
+  });
+});
+
+// What a press brought about when the control itself carries no state of
+// its own (2026-10-16, robot run T3/T5).
+describe('what a press brought about', () => {
+  const setVisibility = (state) => {
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => state,
+    });
+  };
+  beforeEach(() => {
+    setVisibility('visible');
+  });
+
+  // The editing toolbar: Save greys itself out once the history status is
+  // re-read -- after the settle -- and Undo lights Redo up.
+  const TOOLBAR = [
+    '<div class="editing-menu-body btn-group">',
+    '<button id="undo" title="Undo" aria-label="Undo"></button>',
+    '<button id="redo" title="Redo" aria-label="Redo" disabled></button>',
+    '<button id="save" title="Save [Ctrl+S]" aria-label="Save"></button>',
+    '</div>',
+  ].join('');
+
+  it('reads a Save that greys itself out after the settle as its effect', async () => {
+    document.body.innerHTML = TOOLBAR;
+    const save = document.getElementById('save');
+    save.addEventListener('click', () => {
+      setTimeout(() => {
+        save.disabled = true;
+      }, 120);
+    });
+    const result = await run(genClickExpression(['Save'], 100, 10));
+    expect(result.didChange).toBe(true);
+    expect(result.nowDisabled).toEqual(['Save [Ctrl+S]']);
+    expect(result.nowEnabled).toBeUndefined();
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('reads an Undo that lights Redo up as its effect', async () => {
+    document.body.innerHTML = TOOLBAR;
+    document.getElementById('undo').addEventListener('click', () => {
+      document.getElementById('redo').disabled = false;
+    });
+    const result = await run(genClickExpression(['Undo'], 100, 10));
+    expect(result.didChange).toBe(true);
+    expect(result.nowEnabled).toEqual(['Redo']);
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('still says unverified when nothing near the press changed', async () => {
+    document.body.innerHTML = TOOLBAR;
+    const startedAt = Date.now();
+    const result = await run(genClickExpression(['Undo'], 100, 10));
+    expect(result.didChange).toBe(false);
+    expect(result.unverified).toContain('nothing is proven');
+    expect(result.nowEnabled).toBeUndefined();
+    // The late-effect watch is bounded, not a hang.
+    expect(Date.now() - startedAt).toBeLessThan(3000);
+  });
+
+  // The app's own confirm, as ConfirmPopupComp renders it, opened a beat
+  // after the press -- Select Default reads the data folder first.
+  const openConfirm = () => {
+    const container = document.createElement('div');
+    container.id = 'modal-container';
+    container.className = 'modal-container--blocking';
+    container.innerHTML = [
+      '<div id="app-confirm-popup" role="alertdialog">',
+      '<div class="app-popup-header-title">Select Default Folder</div>',
+      '<div id="app-confirm-popup-body" class="app-popup-body">',
+      'This will select "C:\\data\\documents" (will create if not exist)',
+      '</div><button>Cancel</button><button>Ok</button></div>',
+    ].join('');
+    document.body.append(container);
+  };
+
+  it('says the press made the app ask a question, and whose it is', async () => {
+    document.body.innerHTML = '<button>Select Default "documents"</button>';
+    document.querySelector('button').addEventListener('click', () => {
+      setTimeout(openConfirm, 150);
+    });
+    const result = await run(
+      genClickExpression(['Select Default "documents"'], 100, 10),
+    );
+    expect(result.didChange).toBe(true);
+    expect(result.opened).toBe('dialog');
+    expect(result.question).toMatchObject({
+      title: 'Select Default Folder',
+      text: expect.stringContaining('will create if not exist'),
+    });
+    expect(result.question.isWindowHidden).toBeUndefined();
+    expect(result.question.note).toContain('do not answer it for them');
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('says so when the question is in a window nobody can see', async () => {
+    setVisibility('hidden');
+    document.title = 'Open Worship app - Presenter';
+    document.body.innerHTML = '<button>Select Default "documents"</button>';
+    document.querySelector('button').addEventListener('click', openConfirm);
+    const result = await run(
+      genClickExpression(['Select Default "documents"'], 100, 10),
+    );
+    expect(result.question.isWindowHidden).toBe(true);
+    expect(result.question.note).toContain('HIDDEN');
+    expect(result.question.note).toContain('Open Worship app - Presenter');
+  });
+
+  it('does not report a question that was already up as new', async () => {
+    document.body.innerHTML = '<button id="other">Refresh</button>';
+    openConfirm();
+    const result = await run(genClickExpression(['Refresh'], 100, 10));
+    expect(result.question).toBeUndefined();
+  });
+
+  it('reports the question a key made the app ask', async () => {
+    document.body.innerHTML =
+      '<div id="list" tabindex="0" title="Slide list">slides</div>';
+    document.getElementById('list').addEventListener('keydown', openConfirm);
+    const result = await run(
+      genPressKeyExpression(toKeystroke('Delete'), {
+        finds: ['Slide list'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.question?.title).toBe('Select Default Folder');
+    expect(result.didChange).toBe(true);
+  });
+});
+
+describe('a value the press moved', () => {
+  // AppRangeComp: Zoom In steps the slider beside it, and neither carries an
+  // on/off state -- the press read `unverified` with the thumbnails plainly
+  // bigger (2026-10-16, T2 of run 20261016-1920).
+  it('reads a slider beside the pressed control as its effect', async () => {
+    document.body.innerHTML = [
+      '<div class="footer">',
+      '<button title="Zoom Out" aria-label="Zoom Out"></button>',
+      '<input type="range" aria-label="Slide Thumbnail Size Scale" value="30" />',
+      '<button id="in" title="Zoom In" aria-label="Zoom In"></button>',
+      '</div>',
+    ].join('');
+    const range = document.querySelector('input');
+    document.getElementById('in').addEventListener('click', () => {
+      range.value = '40';
+    });
+    const result = await run(genClickExpression(['Zoom In'], 100, 10));
+    expect(result.didChange).toBe(true);
+    expect(result.nowValue).toEqual(['Slide Thumbnail Size Scale: 40']);
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('reads an arrow key that dragged a focused divider', async () => {
+    document.body.innerHTML = [
+      '<div class="pane">',
+      '<div id="divider" role="separator" tabindex="0" aria-valuenow="50"',
+      ' aria-label="Divider between Bibles and Bible Notes"></div>',
+      '</div>',
+    ].join('');
+    const divider = document.getElementById('divider');
+    divider.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown') {
+        divider.setAttribute('aria-valuenow', '83');
+      }
+    });
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowDown'), {
+        finds: ['Divider between Bibles and Bible Notes'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.didChange).toBe(true);
+    expect(result.nowValue).toEqual([
+      'Divider between Bibles and Bible Notes: 83',
+    ]);
+    expect(result.unverified).toBeUndefined();
+  });
+
+  it('still says unverified when the value stayed where it was', async () => {
+    document.body.innerHTML = [
+      '<div class="footer">',
+      '<input type="range" aria-label="Slide Thumbnail Size Scale" value="30" />',
+      '<button title="Zoom In" aria-label="Zoom In"></button>',
+      '</div>',
+    ].join('');
+    const result = await run(genClickExpression(['Zoom In'], 100, 10));
+    expect(result.didChange).toBe(false);
+    expect(result.nowValue).toBeUndefined();
+  });
+});
+
+describe('a label an open menu shares with the page', () => {
+  // A screen card's colour-note menu open over the Background Colors grid:
+  // "red" pressed the swatch BEHIND the menu and put a red background on a
+  // screen (2026-10-16, T1 of run 20261016-1920).
+  it('presses the open menu row, not the page control behind it', async () => {
+    document.body.innerHTML = [
+      '<div class="colors">',
+      '<div id="swatch" role="button" title="red" aria-label="red"></div>',
+      '</div>',
+      '<div role="menu">',
+      '<div id="row" role="menuitem" title="red">red</div>',
+      '</div>',
+    ].join('');
+    const pressed = [];
+    for (const id of ['swatch', 'row']) {
+      document.getElementById(id).addEventListener('click', () => {
+        pressed.push(id);
+      });
+    }
+    await run(genClickExpression(['red'], 100, 10));
+    expect(pressed).toEqual(['row']);
+  });
+
+  it('presses the page control when no menu is open', async () => {
+    document.body.innerHTML =
+      '<div id="swatch" role="button" title="red" aria-label="red"></div>';
+    const pressed = [];
+    document.getElementById('swatch').addEventListener('click', () => {
+      pressed.push('swatch');
+    });
+    await run(genClickExpression(['red'], 100, 10));
+    expect(pressed).toEqual(['swatch']);
+  });
+});
+
+describe('pressing a key', () => {
+  // T4: the focused list carries a <style> of its own, and its CSS was the
+  // name the answer gave it.
+  it('names a focused control by its words, never by a style sheet in it', async () => {
+    document.body.innerHTML =
+      '<div id="list" tabindex="0" title="Slide list">' +
+      '<style>.play-to-bottom { padding: 0; }</style>slides</div>';
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowRight'), {
+        finds: ['Slide list'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.focusedFirst).toBe('slides Slide list');
+    expect(result.focusedFirst).not.toContain('padding');
+  });
+
+  it('sends keydown and keyup with key and code, at the focused control', async () => {
+    document.body.innerHTML =
+      '<div id="list" tabindex="0" title="Slide list">slides</div>';
+    const list = document.getElementById('list');
+    const seen = [];
+    list.addEventListener('keydown', (event) => {
+      seen.push(['keydown', event.key, event.code, event.ctrlKey]);
+    });
+    document.addEventListener('keyup', (event) => {
+      seen.push(['keyup', event.key]);
+    });
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowRight'), {
+        finds: ['Slide list'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.pressed).toBe('ArrowRight');
+    expect(result.focusedFirst).toContain('Slide list');
+    expect(seen).toEqual([
+      ['keydown', 'ArrowRight', 'ArrowRight', false],
+      ['keyup', 'ArrowRight'],
+    ]);
+  });
+
+  // A pane takes no focus; its keyboard surface is the tabIndex box inside
+  // it -- never a button, which Enter would press.
+  it('focuses the keyboard surface inside a named pane', async () => {
+    document.body.innerHTML =
+      '<div data-widget-name="Slides">' +
+      '<button>Move to Trash</button>' +
+      '<div id="inner" tabindex="0" title="Slide box">slides</div></div>';
+    const seen = [];
+    document.getElementById('inner').addEventListener('keydown', (event) => {
+      seen.push(event.key);
+    });
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowRight'), {
+        finds: ['Slides'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.pressed).toBe('ArrowRight');
+    expect(result.focusedFirst).toContain('Slide box');
+    expect(result.focusNote).toBeUndefined();
+    expect(seen).toEqual(['ArrowRight']);
+  });
+
+  it('says when nothing there can take the focus', async () => {
+    document.body.innerHTML =
+      '<div data-widget-name="Slides"><span>nothing focusable</span></div>';
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowRight'), {
+        finds: ['Slides'],
+        settleMs: 10,
+      }),
+    );
+    expect(result.pressed).toBe('ArrowRight');
+    expect(result.focusedFirst).toBeUndefined();
+    expect(result.focusNote).toContain('focus');
+  });
+
+  it('carries the modifiers a shortcut was written with', async () => {
+    const seen = [];
+    document.addEventListener('keydown', (event) => {
+      seen.push([event.key, event.code, event.ctrlKey, event.shiftKey]);
+    });
+    const result = await run(
+      genPressKeyExpression(toKeystroke('Ctrl+Shift+A'), { settleMs: 10 }),
+    );
+    expect(result.pressed).toBe('Ctrl+Shift+A');
+    expect(seen).toEqual([['A', 'KeyA', true, true]]);
+    // Nothing on screen changed, and the answer says so rather than
+    // letting a missing field read as success.
+    expect(result.didChange).toBe(false);
+    expect(result.unverified).toBeTruthy();
+  });
+
+  // `MC-13`: the raw press_key is unguarded. This one is judged by the
+  // control whose title names the key, as the walkthrough card's press is.
+  it('refuses a key whose control cannot be undone', async () => {
+    document.body.innerHTML =
+      '<button title="Clear All [F6]">Clear All</button>';
+    const seen = [];
+    document.addEventListener('keydown', () => {
+      seen.push('keydown');
+    });
+    const result = await run(
+      genPressKeyExpression(toKeystroke('F6'), { guard: GUARD, settleMs: 10 }),
+    );
+    expect(result.pressed).toBeNull();
+    expect(result.refused).toBe('destructive');
+    expect(result.label).toContain('Clear All');
+    expect(seen).toEqual([]);
+  });
+
+  it('lets a key whose control is ordinary through', async () => {
+    document.body.innerHTML =
+      '<button title="Clear Long Text [F9]">Clear Long Text</button>';
+    const result = await run(
+      genPressKeyExpression(toKeystroke('F9'), { guard: GUARD, settleMs: 10 }),
+    );
+    expect(result.pressed).toBe('F9');
+  });
+
+  it('refuses every key while the app is asking the user a question', async () => {
+    document.body.innerHTML =
+      '<div id="app-confirm-popup"><button>Yes</button></div>';
+    const seen = [];
+    document.addEventListener('keydown', () => {
+      seen.push('keydown');
+    });
+    for (const phrase of ['Enter', 'Escape', 'Tab']) {
+      const result = await run(
+        genPressKeyExpression(toKeystroke(phrase), {
+          guard: GUARD,
+          settleMs: 10,
+        }),
+      );
+      expect(result.refused, phrase).toBe('question');
+    }
+    expect(seen).toEqual([]);
+  });
+
+  // The exact case `MC-13` was filed for.
+  it('refuses Enter and Space on a focused control that cannot be undone', async () => {
+    document.body.innerHTML = '<button>Move to Trash</button>';
+    document.querySelector('button').focus();
+    for (const phrase of ['Enter', 'Space']) {
+      const result = await run(
+        genPressKeyExpression(toKeystroke(phrase), {
+          guard: GUARD,
+          settleMs: 10,
+        }),
+      );
+      expect(result.refused, phrase).toBe('destructive');
+    }
+    // ...and an arrow key on the same focus is not a press of it.
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowDown'), {
+        guard: GUARD,
+        settleMs: 10,
+      }),
+    );
+    expect(result.pressed).toBe('ArrowDown');
+  });
+
+  it('will not focus a destructively named control to key it', async () => {
+    document.body.innerHTML = '<button>Move to Trash</button>';
+    const result = await run(
+      genPressKeyExpression(toKeystroke('Enter'), {
+        finds: ['Move to Trash'],
+        guard: GUARD,
+        settleMs: 10,
+      }),
+    );
+    expect(result.refused).toBe('destructive');
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('answers with the near misses when the control to focus is not there', async () => {
+    document.body.innerHTML = '<button>Slide list</button>';
+    const result = await run(
+      genPressKeyExpression(toKeystroke('ArrowRight'), {
+        finds: ['Run player'],
+        timeoutMs: 50,
+        settleMs: 10,
+      }),
+    );
+    expect(result.pressed).toBeNull();
+    expect(result.reason).toContain('focus');
+    expect(Array.isArray(result.nearMisses)).toBe(true);
+  });
+});
+
+describe('dragging one thing onto another', () => {
+  function setUpDragAndDrop() {
+    document.body.innerHTML =
+      '<ul><li id="song" draggable="true" title="Amazing Grace.owl">' +
+      '<span>Amazing Grace</span></li></ul>' +
+      '<div id="sheet" data-widget-name="Presenting Flows">' +
+      '<div id="row" title="Sunday.owapf">Sunday</div></div>';
+    const song = document.getElementById('song');
+    const row = document.getElementById('row');
+    const seen = [];
+    song.addEventListener('dragstart', (event) => {
+      event.dataTransfer.setData(
+        'text',
+        JSON.stringify({ type: 'appDocument' }),
+      );
+      event.dataTransfer.setData('application/x-owa-drag-appdocument', '');
+      seen.push('dragstart');
+    });
+    song.addEventListener('dragend', () => {
+      seen.push('dragend');
+    });
+    row.addEventListener('dragover', (event) => {
+      if (
+        event.dataTransfer.types.includes('application/x-owa-drag-appdocument')
+      ) {
+        event.preventDefault();
+        seen.push(['dragover', event.ctrlKey, event.clientY]);
+      }
+    });
+    row.addEventListener('drop', (event) => {
+      event.preventDefault();
+      seen.push(['drop', JSON.parse(event.dataTransfer.getData('text')).type]);
+    });
+    return seen;
+  }
+
+  it('carries one DataTransfer from the dragstart to the drop', async () => {
+    const seen = setUpDragAndDrop();
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(result.dragged.label).toContain('Amazing Grace');
+    expect(result.onto.label).toContain('Sunday');
+    expect(result.accepted).toBe(true);
+    expect(result.dropped).toBe(true);
+    expect(result.carried).toEqual([
+      'text/plain',
+      'application/x-owa-drag-appdocument',
+    ]);
+    expect(result.unverified).toBeUndefined();
+    expect(seen).toEqual([
+      'dragstart',
+      ['dragover', false, 20],
+      ['drop', 'appDocument'],
+      'dragend',
+    ]);
+  });
+
+  // A real mouse is over the thing and pressed on it before dragstart, and a
+  // source may only be ready by then (a Bible history entry resolves its
+  // passage on the press: dataTransfer is sealed once dragstart yields).
+  it('presses the source like a mouse before the drag starts', async () => {
+    const seen = setUpDragAndDrop();
+    const song = document.getElementById('song');
+    const order = [];
+    for (const type of [
+      'pointerover',
+      'pointerenter',
+      'pointerdown',
+      'mousedown',
+      'dragstart',
+      'pointercancel',
+    ]) {
+      song.addEventListener(type, () => {
+        order.push(type);
+      });
+    }
+    let isReady = false;
+    song.addEventListener('pointerdown', () => {
+      setTimeout(() => {
+        isReady = true;
+      }, 0);
+    });
+    song.addEventListener(
+      'dragstart',
+      (event) => {
+        if (!isReady) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      },
+      { capture: true },
+    );
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(order).toEqual([
+      'pointerover',
+      'pointerenter',
+      'pointerdown',
+      'mousedown',
+      'dragstart',
+      'pointercancel',
+    ]);
+    expect(result.dropped).toBe(true);
+    expect(seen).toContainEqual(['drop', 'appDocument']);
+  });
+
+  // Chromium seals a drag's data when dragstart RETURNS: a source that
+  // awaits before writing sends nothing (a Bible history row did, and only
+  // a real mouse showed it, 2026-10-22).
+  it('carries nothing a source writes after its dragstart has returned', async () => {
+    document.body.innerHTML =
+      '<li id="song" draggable="true" title="Amazing Grace.owl">' +
+      'Amazing Grace</li><div title="Sunday.owapf">Sunday</div>';
+    document
+      .getElementById('song')
+      .addEventListener('dragstart', async (event) => {
+        await Promise.resolve();
+        event.dataTransfer.setData('text', '{"type":"appDocument"}');
+      });
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(result.dragged).toBeNull();
+    expect(result.reason).toContain('starts no drag');
+  });
+
+  // ...and empties it once the drop's handlers have run: a target that
+  // awaits before reading reads nothing.
+  it('empties the drop data once the drop handlers have returned', async () => {
+    setUpDragAndDrop();
+    const row = document.getElementById('row');
+    const reads = [];
+    row.addEventListener('drop', async (event) => {
+      reads.push(event.dataTransfer.getData('text'));
+      await Promise.resolve();
+      reads.push(event.dataTransfer.getData('text'));
+    });
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(result.dropped).toBe(true);
+    expect(reads).toEqual(['{"type":"appDocument"}', '']);
+  });
+
+  // A drop lands on what the window paints at the point. A row scrolled
+  // only to the nearest edge sat under its list's sticky header, and the
+  // drop went to the list instead (a Bibles list, 2026-10-22).
+  it('centres a target that something is drawn over, then drops on it', async () => {
+    const seen = setUpDragAndDrop();
+    const row = document.getElementById('row');
+    const header = document.createElement('div');
+    document.body.appendChild(header);
+    const scrolls = [];
+    row.scrollIntoView = (options) => {
+      scrolls.push(options.block);
+    };
+    document.elementFromPoint = () => {
+      return scrolls.includes('center') ? row : header;
+    };
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(scrolls).toEqual(['nearest', 'center']);
+    expect(result.dropped).toBe(true);
+    expect(seen).toContainEqual(['drop', 'appDocument']);
+  });
+
+  // A slide's canvas draws inside a shadow root, and the document's hit test
+  // stops at its host -- the colour dropped there reached no handler (DD-13).
+  it('drops into the shadow root the target draws inside', async () => {
+    const seen = setUpDragAndDrop();
+    const row = document.getElementById('row');
+    const host = document.createElement('div');
+    row.appendChild(host);
+    const shadow = host.attachShadow({ mode: 'open' });
+    const canvas = document.createElement('div');
+    shadow.appendChild(canvas);
+    shadow.elementFromPoint = () => canvas;
+    canvas.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      seen.push('canvas dragover');
+    });
+    canvas.addEventListener('drop', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      seen.push('canvas drop');
+    });
+    document.elementFromPoint = () => host;
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(result.dropped).toBe(true);
+    expect(seen).toContain('canvas drop');
+    expect(seen).not.toContainEqual(['drop', 'appDocument']);
+  });
+
+  it('refuses a drop on a target that stays covered', async () => {
+    const seen = setUpDragAndDrop();
+    const cover = document.createElement('button');
+    cover.textContent = 'Overlay';
+    document.body.appendChild(cover);
+    document.elementFromPoint = () => cover;
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(result.dragged).toBeNull();
+    expect(result.reason).toContain('drawn over');
+    expect(result.coveredBy.label).toContain('Overlay');
+    expect(seen).not.toContainEqual(['drop', 'appDocument']);
+  });
+
+  // `before` and `after` are the row's reorder bands, sent with Ctrl held --
+  // what this app's rows read as "put it here" rather than "attach it".
+  it('aims before or after the target with Ctrl held', async () => {
+    const seen = setUpDragAndDrop();
+    await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], {
+        place: 'before',
+        settleMs: 10,
+      }),
+    );
+    expect(seen[1]).toEqual(['dragover', true, 12]);
+    const seenAfter = setUpDragAndDrop();
+    await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], {
+        place: 'after',
+        settleMs: 10,
+      }),
+    );
+    expect(seenAfter[1]).toEqual(['dragover', true, 28]);
+  });
+
+  // A Ctrl drop on a row is "put it at MY position" whichever edge it hits,
+  // so `after` a row that has a next one is `before` that next one.
+  it('lands after a row on the next row, before it', async () => {
+    const seen = setUpDragAndDrop();
+    const sheet = document.getElementById('sheet');
+    const monday = document.createElement('div');
+    monday.title = 'Monday.owapf';
+    monday.textContent = 'Monday';
+    sheet.appendChild(monday);
+    const onMonday = [];
+    monday.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      onMonday.push(['dragover', event.ctrlKey, event.clientY]);
+    });
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], {
+        place: 'after',
+        settleMs: 10,
+      }),
+    );
+    expect(onMonday).toEqual([['dragover', true, 12]]);
+    expect(seen).toEqual(['dragstart', 'dragend']);
+    expect(result.accepted).toBe(true);
+  });
+
+  it('says so when nothing under the point took the drop', async () => {
+    document.body.innerHTML =
+      '<li id="song" draggable="true" title="Amazing Grace.owl">Amazing Grace</li>' +
+      '<button>Bible Lookup</button>';
+    document.getElementById('song').addEventListener('dragstart', (event) => {
+      event.dataTransfer.setData('text', '{"type":"appDocument"}');
+    });
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Bible Lookup'], { settleMs: 10 }),
+    );
+    expect(result.accepted).toBe(false);
+    expect(result.dropped).toBe(false);
+    expect(result.unverified).toBeTruthy();
+  });
+
+  // The Mini Screen's drop applies a colour and never cancels the drop, and
+  // a drop that coloured both screens answered `dropped: false` (robot run
+  // 20261024-1008, DD-12): the flag was the drop's own `defaultPrevented`.
+  it('says a drop reached a handler that acted without cancelling it', async () => {
+    document.body.innerHTML =
+      '<li id="swatch" draggable="true" title="red">red</li>' +
+      '<div id="card" title="Screen: 0">Screen 0</div>';
+    document.getElementById('swatch').addEventListener('dragstart', (event) => {
+      event.dataTransfer.setData('application/x-owa-drag-bg-color', '');
+    });
+    const card = document.getElementById('card');
+    const applied = [];
+    card.addEventListener('dragover', (event) => {
+      event.preventDefault();
+    });
+    card.addEventListener('drop', () => {
+      applied.push('#FF0000');
+    });
+    const result = await run(
+      genDragExpression(['red'], ['Screen: 0'], { settleMs: 10 }),
+    );
+    expect(applied).toEqual(['#FF0000']);
+    expect(result.accepted).toBe(true);
+    expect(result.dropped).toBe(true);
+    expect(result.unverified).toBeUndefined();
+  });
+
+  // Chromium drops only on a control that took the dragover. A handler that
+  // acts on a drop it never accepted would pass here and do nothing under a
+  // mouse, so the drag leaves instead.
+  it('sends no drop to a control that never accepted the drag', async () => {
+    document.body.innerHTML =
+      '<li id="song" draggable="true" title="Amazing Grace.owl">' +
+      'Amazing Grace</li><div id="row" title="Sunday.owapf">Sunday</div>';
+    document.getElementById('song').addEventListener('dragstart', (event) => {
+      event.dataTransfer.setData('text', '{"type":"appDocument"}');
+    });
+    const row = document.getElementById('row');
+    const seen = [];
+    row.addEventListener('drop', () => {
+      seen.push('drop');
+    });
+    row.addEventListener('dragleave', () => {
+      seen.push('dragleave');
+    });
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(seen).toEqual(['dragleave']);
+    expect(result.dropped).toBe(false);
+    expect(result.unverified).toBeTruthy();
+  });
+
+  it('refuses a control that is not draggable, or starts no drag', async () => {
+    document.body.innerHTML =
+      '<button>Bible Lookup</button><div title="Sunday.owapf">Sunday</div>';
+    const fixed = await run(
+      genDragExpression(['Bible Lookup'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(fixed.dragged).toBeNull();
+    expect(fixed.reason).toContain('cannot be dragged');
+    document.body.innerHTML =
+      '<div draggable="true" title="Box">Box</div><div title="Sunday.owapf">Sunday</div>';
+    const silent = await run(
+      genDragExpression(['Box'], ['Sunday'], { settleMs: 10 }),
+    );
+    expect(silent.dragged).toBeNull();
+    expect(silent.reason).toContain('starts no drag');
+  });
+
+  it('refuses either end that is named for what cannot be undone', async () => {
+    document.body.innerHTML =
+      '<li draggable="true" title="Amazing Grace.owl">Amazing Grace</li>' +
+      '<button>Move to Trash</button>';
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Move to Trash'], {
+        guard: GUARD,
+        settleMs: 10,
+      }),
+    );
+    expect(result.dragged).toBeNull();
+    expect(result.refused).toBe('destructive');
+  });
+
+  it('answers with the near misses for an end that is not on screen', async () => {
+    document.body.innerHTML =
+      '<li draggable="true" title="Amazing Grace.owl">Amazing Grace</li>';
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Sunday'], {
+        timeoutMs: 50,
+        settleMs: 10,
+      }),
+    );
+    expect(result.dragged).toBeNull();
+    expect(result.reason).toContain('drop on');
+    expect(Array.isArray(result.nearMisses)).toBe(true);
+  });
+});
+
+// MC-51: a file row's title is the name WITH its extension, and an expanded
+// run-sheet row's own text is every line of the sheet -- the title is the one
+// part left that names it.
+describe('a row named by its file name', () => {
+  it('is press-safe by its bare name, through the extension', async () => {
+    document.body.innerHTML =
+      '<ul><li title="Sunday.owpf"><div>Sunday</div>' +
+      '<div>1 Clear All</div><div>2 Amazing Grace</div></li></ul>';
+    const row = document.querySelector('li');
+    let presses = 0;
+    row.addEventListener('contextmenu', () => {
+      presses += 1;
+    });
+    const result = await run(
+      genClickExpression(['Sunday'], 100, 10, { button: 'right' }),
+    );
+    expect(result.clicked).not.toBeNull();
+    expect(result.button).toBe('right');
+    expect(presses).toBe(1);
+  });
+
+  it('still refuses a name that merely begins another', async () => {
+    document.body.innerHTML =
+      '<ul><li title="Sunday Evening.owpf"><div>Sunday Evening</div>' +
+      '<div>1 Clear All</div></li></ul>';
+    const result = await run(genClickExpression(['Sunday'], 100, 10));
+    expect(result.clicked).toBeNull();
+    expect(result.nearest.label).toContain('Sunday Evening');
+  });
+});
+
+// MC-54: the long lists are windowed, so a row past the fold is not in the
+// DOM until the list is scrolled.
+describe('scrolling a list', () => {
+  function setUpList() {
+    document.body.innerHTML =
+      '<div data-widget-name="Document List"><div id="list">' +
+      '<li title="Alpha.owl">Alpha</li><li title="Beta.owl">Beta</li>' +
+      '</div></div><button>Elsewhere</button>';
+    const list = document.getElementById('list');
+    Object.defineProperty(list, 'scrollHeight', { value: 1000 });
+    Object.defineProperty(list, 'clientHeight', { value: 200 });
+    list.getBoundingClientRect = () => {
+      return {
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 200,
+        top: 0,
+        left: 0,
+        right: 300,
+        bottom: 200,
+      };
+    };
+    return list;
+  }
+
+  it('pages the list a row is in and says what is in view', async () => {
+    const list = setUpList();
+    // The browser fires scroll for a moved scrollTop by itself (jsdom does
+    // not); a synthetic one on top made a windowed list render twice.
+    let scrollEvents = 0;
+    list.addEventListener('scroll', () => {
+      scrollEvents += 1;
+    });
+    const result = await run(
+      genScrollExpression(['Alpha'], { to: 'down', settleMs: 10 }),
+    );
+    expect(result.scrolled).toBe('Document List');
+    expect(result.from).toBe(0);
+    expect(result.now).toBe(180);
+    expect(result.max).toBe(800);
+    expect(result.didChange).toBe(true);
+    expect(result.isAtTop).toBe(false);
+    // The words a row is listed under, the same `owa_list_ui` shows.
+    expect(result.inView).toEqual(['Alpha Alpha.owl', 'Beta Beta.owl']);
+    expect(scrollEvents).toBe(0);
+    expect(list.scrollTop).toBe(180);
+  });
+
+  it('finds the list inside a named panel, and stops at the ends', async () => {
+    const list = setUpList();
+    const bottom = await run(
+      genScrollExpression(['Document List'], { to: 'bottom', settleMs: 10 }),
+    );
+    expect(bottom.now).toBe(800);
+    expect(bottom.isAtBottom).toBe(true);
+    const top = await run(
+      genScrollExpression(['Document List'], { to: 'top', settleMs: 10 }),
+    );
+    expect(top.now).toBe(0);
+    expect(top.isAtTop).toBe(true);
+    expect(list.scrollTop).toBe(0);
+  });
+
+  it('answers with the near misses when nothing is called that', async () => {
+    setUpList();
+    const result = await run(
+      genScrollExpression(['Nowhere'], { timeoutMs: 50, settleMs: 10 }),
+    );
+    expect(result.scrolled).toBeNull();
+    expect(result.reason).toContain('scroll');
+  });
+});
+
+describe('aiming a drop of real files', () => {
+  function setUpPictures() {
+    document.body.innerHTML = '<div id="list" title="Pictures">Pictures</div>';
+    return document.getElementById('list');
+  }
+
+  function dropOn(element) {
+    for (const type of ['dragover', 'drop']) {
+      element.dispatchEvent(
+        new DragEvent(type, { bubbles: true, cancelable: true }),
+      );
+    }
+  }
+
+  // The watch reads `defaultPrevented` after every handler -- including a
+  // handler that stops the event before it could bubble up to a listener.
+  it('answers where to drop and reads back what took it', async () => {
+    const list = setUpPictures();
+    list.addEventListener('dragover', (event) => {
+      event.preventDefault();
+    });
+    list.addEventListener('drop', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    const aim = await run(genDropAimExpression(['Pictures']));
+    expect(aim.point).toEqual({ x: 30, y: 20 });
+    expect(aim.onto.label).toContain('Pictures');
+    dropOn(list);
+    const read = await run(genDropReadExpression({ settleMs: 10 }));
+    expect(read).toMatchObject({ accepted: true, dropped: true });
+    expect(read.landedOn.label).toContain('Pictures');
+    expect(window.__owaDropWatch).toBeUndefined();
+  });
+
+  it('refuses to aim files at a control something is drawn over', async () => {
+    setUpPictures();
+    const cover = document.createElement('button');
+    cover.textContent = 'Overlay';
+    document.body.appendChild(cover);
+    document.elementFromPoint = () => cover;
+    const aim = await run(genDropAimExpression(['Pictures']));
+    expect(aim.dropped).toBeNull();
+    expect(aim.coveredBy.label).toContain('Overlay');
+    expect(window.__owaDropWatch).toBeUndefined();
+  });
+
+  it('says nothing took a drop no handler wanted', async () => {
+    const list = setUpPictures();
+    await run(genDropAimExpression(['Pictures']));
+    dropOn(list);
+    const read = await run(genDropReadExpression({ settleMs: 10 }));
+    expect(read).toMatchObject({ accepted: false, dropped: false });
+  });
+
+  // A handler can take the files and never cancel the drop; that is still a
+  // drop delivered, not "nothing there took the drop".
+  it('reads a drop delivered to a handler that does not cancel it', async () => {
+    const list = setUpPictures();
+    const taken = [];
+    list.addEventListener('dragover', (event) => {
+      event.preventDefault();
+    });
+    list.addEventListener('drop', () => {
+      taken.push('picture.png');
+    });
+    await run(genDropAimExpression(['Pictures']));
+    dropOn(list);
+    const read = await run(genDropReadExpression({ settleMs: 10 }));
+    expect(taken).toEqual(['picture.png']);
+    expect(read).toMatchObject({ accepted: true, dropped: true });
+  });
+
+  it('refuses a target named for what cannot be undone, or not on screen', async () => {
+    document.body.innerHTML = '<button>Move to Trash</button>';
+    const refused = await run(
+      genDropAimExpression(['Move to Trash'], { guard: GUARD }),
+    );
+    expect(refused.refused).toBe('destructive');
+    const missing = await run(
+      genDropAimExpression(['Sunday'], { timeoutMs: 50 }),
+    );
+    expect(missing.dropped).toBeNull();
+    expect(missing.reason).toContain('nothing on screen');
+  });
+});

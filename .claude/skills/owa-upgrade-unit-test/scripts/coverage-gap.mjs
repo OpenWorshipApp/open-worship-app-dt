@@ -58,7 +58,11 @@ const SURFACE_MAP = {
         config: 'vitest.config.ts',
         // `tools/**/*.test.mjs` runs under this config too, so the MCP server's
         // own modules are measured here rather than under electron.
-        include: ['src/**/*.ts', 'src/**/*.tsx', 'tools/owa-devtools-mcp/*.mjs'],
+        include: [
+            'src/**/*.ts',
+            'src/**/*.tsx',
+            'tools/owa-devtools-mcp/*.mjs',
+        ],
         out: 'cov-src',
     },
     electron: {
@@ -101,6 +105,9 @@ function runCoverage(key) {
         // ~2.5x slower and pushes one screen-preview test past the config's
         // 10s testTimeout. Raise it here rather than in the committed config.
         '--testTimeout=60000',
+        // Dynamic imports in beforeAll hooks pay the same instrumentation
+        // cost as test bodies, especially on slower machines.
+        '--hookTimeout=60000',
         '--coverage',
         ...surface.include.map((one) => `--coverage.include=${one}`),
         ...EXCLUDE.map((one) => `--coverage.exclude=${one}`),
@@ -117,6 +124,12 @@ function runCoverage(key) {
     });
     const seconds = Math.round((Date.now() - started) / 1000);
     process.stderr.write(`[coverage-gap] ${key}: ${seconds}s\n`);
+    if (result.error || result.status !== 0) {
+        throw new Error(
+            `${key}: coverage run failed (${result.error?.message ?? `exit ${result.status}`}). ` +
+                'Refusing to reuse any existing report as a fresh measurement.',
+        );
+    }
     if (!existsSync(join(reportDir, 'coverage-summary.json'))) {
         throw new Error(
             `${key}: no coverage-summary.json. A FAILING TEST stops the ` +
@@ -153,10 +166,15 @@ function walk(dir, out = []) {
 }
 
 function listSiblingTests() {
-    const files = [...walk(join(REPO_ROOT, 'src')), ...walk(join(REPO_ROOT, 'electron'))];
+    const files = [
+        ...walk(join(REPO_ROOT, 'src')),
+        ...walk(join(REPO_ROOT, 'electron')),
+    ];
     const tests = new Set();
     for (const file of files) {
-        const match = file.match(/^(.*?)(?:\.coverage)?\.(?:test|spec)\.[tj]sx?$/);
+        const match = file.match(
+            /^(.*?)(?:\.coverage)?\.(?:test|spec)\.[tj]sx?$/,
+        );
         if (match) {
             tests.add(match[1]);
         }
@@ -191,7 +209,9 @@ function toRows(summary, siblingTests) {
                 pct: value.lines.pct,
                 branchPct: value.branches.pct,
                 funcPct: value.functions.pct,
-                hasSiblingTest: siblingTests.has(file.replace(/\.[tj]sx?$/, '')),
+                hasSiblingTest: siblingTests.has(
+                    file.replace(/\.[tj]sx?$/, ''),
+                ),
             };
         });
 }
@@ -261,7 +281,12 @@ function byDir(rows, depth = 2) {
     const map = {};
     for (const row of rows) {
         const dir = row.file.split('/').slice(0, depth).join('/');
-        const bucket = (map[dir] ??= { files: 0, lines: 0, covered: 0, zero: 0 });
+        const bucket = (map[dir] ??= {
+            files: 0,
+            lines: 0,
+            covered: 0,
+            zero: 0,
+        });
         bucket.files++;
         bucket.lines += row.lines;
         bucket.covered += row.covered;
@@ -291,7 +316,9 @@ function main() {
         SURFACE === 'all' ? ['src', 'electron'] : SURFACE.split(',');
     for (const key of surfaces) {
         if (!SURFACE_MAP[key]) {
-            throw new Error(`Unknown surface "${key}". Use src, electron or all.`);
+            throw new Error(
+                `Unknown surface "${key}". Use src, electron or all.`,
+            );
         }
     }
     if (!has('no-run')) {
@@ -309,7 +336,11 @@ function main() {
                     .join(', ');
                 process.stdout.write(
                     IS_JSON
-                        ? JSON.stringify({ file: UNCOVERED_OF, ranges }, null, 2)
+                        ? JSON.stringify(
+                              { file: UNCOVERED_OF, ranges },
+                              null,
+                              2,
+                          )
                         : `${UNCOVERED_OF}\nuncovered lines: ${text}\n`,
                 );
                 return;
@@ -363,9 +394,7 @@ function main() {
     out.push(
         `  ${total.zeroFiles} files at 0%   ·   ${total.fullFiles} files at 100%`,
     );
-    out.push(
-        `  to ${GOAL}%: ${total.linesToGoal} more covered lines needed`,
-    );
+    out.push(`  to ${GOAL}%: ${total.linesToGoal} more covered lines needed`);
     out.push('');
     out.push('BY KIND');
     for (const row of report.byKind) {

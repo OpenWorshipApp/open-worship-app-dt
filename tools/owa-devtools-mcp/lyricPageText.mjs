@@ -772,7 +772,7 @@ const PAGE_FIELD_MAP = {
  * `Title: …`, `Author: …`, `Copyright: Public Domain` -- which sits far below
  * the words, outside any region, and which the drafter's line reader
  * therefore never saw: a page that said "Public Domain" in plain sight came
- * out as `Copyright: Unknown`, and with no heading over the words, "Untitled".
+ * out with no copyright, and with no heading over the words, "Untitled".
  *
  * One line, one field, a colon, and a value that is words: `First Line:` is
  * not a field this knows, and `Copyright Policy` has no colon. The first of
@@ -904,7 +904,7 @@ export function checkIsCreditLine(line) {
  * Worth carrying rather than dropping: the notice is the one part of a credit
  * that says who the song belongs to, and a file that has it is a file whose
  * next reader can see whose song it is. Open Lyric has a field for exactly
- * this and it was being filled in with "Unknown".
+ * this and it was being left without one.
  */
 function readCreditCopyright(line) {
     const text = String(line).trim();
@@ -927,7 +927,7 @@ function readCreditCopyright(line) {
  *
  * `readCreditCopyright` reads the line under the words, and a lot of pages do
  * not have one -- they put the notice at the very bottom, outside the region
- * this file works so hard to isolate, so the song came out with `Unknown` on
+ * this file works so hard to isolate, so the song came out with no notice on
  * a page that says whose it is in plain sight.
  *
  * Read from the BOTTOM up, and only a real notice: the SIGN, or `(c) 2026`.

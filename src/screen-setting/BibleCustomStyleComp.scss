@@ -1,0 +1,306 @@
+// Bible Properties: the verse on a stage, the looks as pictures, then one
+// quiet row per value.
+//
+// The panel used to be two bordered cards inside a third, and its presets were
+// white and black words on the panel's own grey -- half of them unreadable in
+// whichever theme the app was wearing. Here the only thing with a background
+// of its own is the STAGE (and the tiles, which are small stages): a look is
+// judged against what will be behind it on the screen, so that is what is
+// painted, and everything around it takes the shell's tokens and no borders.
+// The rows are the Foreground panel's own control strip (`fg-prop`).
+
+.bible-style {
+  // For the stage's type, which is sized to the panel's width.
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+}
+
+// ------------------------------------------------------------- the stage
+//
+// The two backgrounds are not the app's themes -- they are what a church puts
+// behind words: a dark motion loop, or a light plain wall. Each has a cool
+// pool and a warm corner on purpose: an edge drawn in black is invisible on
+// flat black, and the whole reason for an edge is the part of a picture that
+// is NOT the easy tone.
+
+.bible-style-on-dark {
+  --bible-stage-ink: #f4f6fb;
+  --bible-stage-ground: #10162a;
+  --bible-stage-chip: rgba(244, 246, 251, 0.16);
+  background:
+    radial-gradient(
+      90% 70% at 82% 4%,
+      rgba(140, 162, 210, 0.7),
+      transparent 60%
+    ),
+    radial-gradient(
+      80% 110% at 4% 100%,
+      rgba(170, 104, 60, 0.5),
+      transparent 60%
+    ),
+    linear-gradient(160deg, #27314d, #0d1220);
+}
+
+.bible-style-on-light {
+  --bible-stage-ink: #1b2230;
+  --bible-stage-ground: #f4f6fb;
+  --bible-stage-chip: rgba(27, 34, 48, 0.12);
+  background:
+    radial-gradient(
+      90% 70% at 82% 4%,
+      rgba(255, 255, 255, 0.95),
+      transparent 60%
+    ),
+    radial-gradient(
+      80% 110% at 4% 100%,
+      rgba(214, 164, 108, 0.6),
+      transparent 60%
+    ),
+    linear-gradient(160deg, #d3dce6, #93a4b7);
+}
+
+// Stays put while the rows scroll under it. Opaque, and it owns the gap on
+// both sides of the stage, or a row scrolling past would show through above
+// it and butt against it below.
+.bible-style-dock {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 0 12px;
+  background: var(--bs-body-bg);
+}
+
+.bible-style-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+}
+
+.bible-style-verse {
+  margin: 0;
+  // The screen's own size cannot fit here, and does not need to: a look is
+  // measured in text sizes, so it is the same look at this one.
+  font-size: clamp(1.05rem, 5.2cqw, 2rem);
+}
+
+// The screen's own verse number (`#bible-screen-view td .verse-number`), so
+// the sample is a verse and not a sentence.
+.bible-style-verse-number {
+  display: inline-block;
+  margin-right: 0.1em;
+  // The verse's, as on a screen: this page sets the app's own font on every
+  // element, the number included.
+  font-family: inherit;
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: normal;
+  color: rgba(172, 255, 47, 0.645);
+  text-shadow: 0 0 #000000;
+  opacity: 0.7;
+  transform: scale(0.7) translateY(-0.3em);
+  -webkit-text-stroke: 0.01em greenyellow;
+}
+
+// Which side is on is shown by inversion -- the chosen one is a chip in the
+// stage's own ink -- so the switch reads on either background without a
+// colour of its own.
+.bible-style-backdrop {
+  display: inline-flex;
+  align-self: flex-end;
+  padding: 2px;
+  background: var(--bible-stage-chip);
+  border-radius: 999px;
+
+  > button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 10px;
+    font-size: var(--app-text-sm);
+    line-height: 1.6;
+    color: var(--bible-stage-ink);
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    opacity: 0.8;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  > button.bible-style-backdrop-on {
+    color: var(--bible-stage-ground);
+    background: var(--bible-stage-ink);
+    opacity: 1;
+  }
+}
+
+// -------------------------------------------------------------- the looks
+
+.bible-style-looks {
+  display: grid;
+  // Four across at the width the panel opens at, more as it is widened.
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px 8px;
+  margin-bottom: 12px;
+}
+
+.bible-style-look {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 0;
+  color: var(--app-muted);
+  text-align: center;
+  background: none;
+  border: 0;
+
+  &:hover .bible-style-look-sample {
+    border-color: var(--app-muted);
+  }
+}
+
+.bible-style-look-sample {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  overflow: hidden;
+  font-size: 1.45rem;
+  line-height: 1;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+}
+
+.bible-style-look-name {
+  overflow: hidden;
+  font-size: var(--app-text-sm);
+  // Room for a Khmer subscript under the line.
+  line-height: 1.6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// The look the screen is wearing. Accent, not on-air: this is a choice, and
+// the reserved hue is for what a congregation is looking at.
+.bible-style-look-on {
+  color: var(--app-ink);
+
+  .bible-style-look-sample,
+  &:hover .bible-style-look-sample {
+    border-color: var(--app-accent);
+    box-shadow: 0 0 0 1px var(--app-accent);
+  }
+}
+
+// A saved look's menu, on the one that is on. It sits on the tile's own
+// background, so it takes the stage's ink and none of the look it is drawn
+// inside -- an outlined, glowing three dots is not a control.
+.bible-style-look-menu {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  padding: 2px 1px;
+  font-size: var(--app-text-md);
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  color: var(--bible-stage-ink);
+  text-shadow: none;
+  background: var(--bible-stage-chip);
+  border-radius: 4px;
+  opacity: 0.85;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// The tile that saves the look on the stage. Dashed and empty: a place for
+// one more, not one of them.
+.bible-style-look-add {
+  .bible-style-look-sample {
+    font-size: var(--app-text-lg);
+    color: var(--app-muted);
+    border-style: dashed;
+  }
+
+  &:hover:not(:disabled) {
+    color: var(--app-ink);
+
+    .bible-style-look-sample {
+      color: var(--app-ink);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.45;
+  }
+}
+
+// --------------------------------------------------------------- the rows
+
+.bible-style-rows {
+  display: grid;
+  // The Foreground strip's own measure: one column where the panel opens,
+  // two when it is widened, so its height falls as its width grows.
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 0 16px;
+  min-width: 0;
+  padding: 8px 0 4px;
+  border-top: 1px solid var(--app-line);
+}
+
+// Same family as the strip's number boxes. Monospace because it IS code: the
+// one place in the panel where a comma and a unit have to be read exactly.
+.bible-style-css {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 1px 6px;
+  font-family: var(--bs-font-monospace);
+  font-size: var(--app-text-sm);
+  line-height: 1.5;
+  color: inherit;
+  background: rgba(var(--bs-info-rgb), 0.06);
+  border: 1px solid var(--app-line);
+  border-radius: 4px;
+
+  &:hover,
+  &:focus {
+    background: rgba(var(--bs-info-rgb), 0.14);
+    border-color: rgba(var(--bs-info-rgb), 0.55);
+  }
+}
+
+.bible-style-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+}
+
+.bible-style-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 10px;
+  font-size: var(--app-text-sm);
+  line-height: 1.6;
+  color: var(--app-muted);
+  background: none;
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+
+  &:hover {
+    color: var(--app-ink);
+    border-color: var(--app-muted);
+  }
+}

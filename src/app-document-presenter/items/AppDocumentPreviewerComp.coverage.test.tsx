@@ -44,6 +44,16 @@ vi.mock('./VarySlidesPreviewerComp', () => ({
     default: () => <div data-testid="vary-slides-previewer" />,
 }));
 
+// The presenter's slide list sits inside the document Stage Previewer.
+vi.mock('../stage/DocumentStagePreviewerComp', () => ({
+    default: ({ flexSizeNamePrefix }: any) => (
+        <div
+            data-testid="document-stage-previewer"
+            data-prefix={flexSizeNamePrefix}
+        />
+    ),
+}));
+
 vi.mock('./AppDocumentPreviewerFooterComp', () => ({
     default: () => <div data-testid="app-document-footer" />,
 }));
@@ -174,8 +184,11 @@ describe('AppDocumentPreviewerComp branch coverage', () => {
                 ?.textContent,
         ).toContain('service.ows');
         expect(
-            container.querySelector('[data-testid="vary-slides-previewer"]'),
+            container.querySelector('[data-testid="document-stage-previewer"]'),
         ).not.toBeNull();
+        expect(
+            container.querySelector('[data-testid="vary-slides-previewer"]'),
+        ).toBeNull();
         expect(
             container.querySelector('[data-testid="presenter-note"]')
                 ?.textContent,
@@ -210,7 +223,7 @@ describe('AppDocumentPreviewerComp branch coverage', () => {
         });
 
         expect(
-            container.querySelector('[data-testid="vary-slides-previewer"]'),
+            container.querySelector('[data-testid="document-stage-previewer"]'),
         ).not.toBeNull();
         expect(
             container.querySelector('[data-testid="resize-actor"]'),

@@ -2,18 +2,21 @@
 id: W-17
 title: "Find text anywhere (Find bar) & About"
 section: "Configuration"
-verify: [PU-01, PU-05, PU-07]
+verify: [PU-01, PU-05, PU-07, PU-21, PU-22]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-17 — Find text anywhere (Find bar) & About
 
 - **Find bar:** press **Ctrl+F** (**⌘F** on macOS) or use **Edit → Find** in the app
   menu bar. A slim bar drops in at the **top-right of the window itself** and searches
-  only that window. Presenter, Slide Editor, Bible Reader and Settings each have their
-  own; the screens, the bible note and the code editors do not (they have their own
-  search or nothing to find). 📸
+  only that window. Each of these has its own: the Presenter, Slide Editor, Bible
+  Reader, Screen Mirror and Settings, the About and Local Web Share windows, the Web
+  Editor and Lyric Editor, the help window (🤖) and **AI Chat** (✨) — where it searches
+  the website's own words too, Khmer included. The screens (nothing to search on a
+  projector) and the bible note (it has its own search) have none. In the Web Editor
+  the bar finds only the lines the editor is showing, so scroll to the rest. 📸
   - Type to search as you go; the counter shows **`<current>/<total>`**.
   - **Enter** jumps to the next match, **Shift+Enter** to the previous one; the **⌃**
     and **⌄** buttons do the same and wrap around.
@@ -30,7 +33,7 @@ workflowsVersion: "2026-10-01"
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PU-01` · `PU-05` · `PU-07`
+`PU-01` · `PU-05` · `PU-07` · `PU-21` · `PU-22`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

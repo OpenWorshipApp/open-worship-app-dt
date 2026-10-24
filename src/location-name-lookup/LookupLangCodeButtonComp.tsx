@@ -1,9 +1,14 @@
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { getLanguageTitle, tran } from '../lang/langHelpers';
+import {
+    type LocaleType,
+    getLangCode,
+    getLanguageTitle,
+    tran,
+} from '../lang/langHelpers';
 import {
     getLookupLangCodeListAsync,
     setSelectedLookupLangCode,
-    useSelectedLookupLangCode,
+    useLookupLangCode,
 } from './lookupLangHelpers';
 
 /**
@@ -16,15 +21,48 @@ import {
  * The list of choices is resolved ON CLICK, never on mount: answering it imports
  * every shipped language module, and this button is in the bible lookup header,
  * which mounts far more often than anyone opens this menu.
+ *
+ * Given the locale of the bible being read, the code is green while it names
+ * that bible's language and red while it does not — a Khmer bible beside `en`
+ * records is easy to miss. Without a bible it stays grey.
  */
-export default function LookupLangCodeButtonComp() {
-    const langCode = useSelectedLookupLangCode();
+function toColorClass(bibleLangCode: string | null, langCode: string) {
+    if (bibleLangCode === null) {
+        return 'btn-outline-secondary';
+    }
+    return bibleLangCode === langCode
+        ? 'btn-outline-success'
+        : 'btn-outline-danger';
+}
+
+export default function LookupLangCodeButtonComp({
+    onSelect = setSelectedLookupLangCode,
+    isDetailHeader = false,
+    bibleLocale,
+}: Readonly<{
+    onSelect?: (langCode: string) => void;
+    isDetailHeader?: boolean;
+    bibleLocale?: LocaleType;
+}>) {
+    const langCode = useLookupLangCode();
     const label = tran('Names and locations language');
+    const bibleLangCode = bibleLocale ? getLangCode(bibleLocale) : null;
+    let title = `${label} (${getLanguageTitle({ langCode })})`;
+    if (bibleLangCode !== null && bibleLangCode !== langCode) {
+        title +=
+            `\n${tran('Not the language of the Bible')}` +
+            ` (${getLanguageTitle({ langCode: bibleLangCode })})`;
+    }
     return (
         <button
             type="button"
-            className="btn btn-sm btn-outline-secondary px-1 font-monospace"
-            title={`${label} (${getLanguageTitle({ langCode })})`}
+            className={
+                isDetailHeader
+                    ? 'floating-widget__button font-monospace'
+                    : 'btn btn-sm px-1 font-monospace ' +
+                      toColorClass(bibleLangCode, langCode)
+            }
+            title={title}
             aria-label={label}
             onClick={async (event) => {
                 const nativeEvent = event.nativeEvent;
@@ -47,7 +85,7 @@ export default function LookupLangCodeButtonComp() {
                                     <i className="bi bi-check-lg me-1" />
                                 ) : undefined,
                             onSelect: () => {
-                                setSelectedLookupLangCode(itemLangCode);
+                                onSelect(itemLangCode);
                             },
                         };
                     }),

@@ -4,7 +4,7 @@ import { useAppEffect } from '../helper/appHooks';
 import { handleError } from '../helper/errorHelpers';
 import { acquireLookupData, releaseLookupData } from './lookupDataHelpers';
 import type { LookupManagersType } from './lookupDataHelpers';
-import { useSelectedLookupLangCode } from './lookupLangHelpers';
+import { useLookupLangCode } from './lookupLangHelpers';
 
 // The detail bodies nest several levels deep (a person row -> a reference list
 // -> a referenced record button), and every level needs the managers to resolve
@@ -38,7 +38,7 @@ export function useLookupManagers() {
     const [managers, setManagers] = useState<
         LookupManagersType | null | undefined
     >(undefined);
-    const langCode = useSelectedLookupLangCode();
+    const langCode = useLookupLangCode();
     useAppEffect(() => {
         let isMounted = true;
         // Back to the loading state first: the resident managers hold the
@@ -46,7 +46,7 @@ export function useLookupManagers() {
         // ones load would show rows the user just asked to stop seeing. A no-op
         // on the first run, where this is already the value.
         setManagers(undefined);
-        acquireLookupData()
+        acquireLookupData(langCode)
             .then((data) => {
                 if (isMounted) {
                     setManagers(data);
@@ -60,7 +60,7 @@ export function useLookupManagers() {
             });
         return () => {
             isMounted = false;
-            releaseLookupData();
+            releaseLookupData(langCode);
         };
     }, [langCode]);
     return managers;

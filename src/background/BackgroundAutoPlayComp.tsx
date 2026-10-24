@@ -107,13 +107,23 @@ function syncBackgroundAutoPlayRunners(props: BackgroundAutoPlayPropsType) {
     const options = readSlideAutoPlayOptions(prefix);
     const isUntilMediaEnd =
         backgroundType === 'video' && options.isUntilMediaEnd;
+    const isShowing =
+        ScreenBackgroundManager.getBackgroundSrcListByType(backgroundType)
+            .length > 0;
+    // A clear (F7, the live tile pressed off) ENDS the show, as it ends a
+    // foreground one. Stopping only the timer left the show "playing": the
+    // next single picture put up from this list -- on any screen -- started
+    // it cycling again, with Stop Slide Show armed on a show nobody started.
+    if (!isShowing && checkIsSlideAutoPlaying(prefix)) {
+        setIsSlideAutoPlaying(prefix, false);
+        notifySlideAutoPlayStateChanged();
+    }
     const isRunnable =
         checkIsSlideAutoPlaying(prefix) &&
         // Waiting for the clip to finish needs no seconds at all, so an empty
         // seconds box must not stop that show from running.
         (options.seconds > 0 || options.maxSeconds > 0 || isUntilMediaEnd) &&
-        ScreenBackgroundManager.getBackgroundSrcListByType(backgroundType)
-            .length > 0;
+        isShowing;
     // Only ever this list's own runner is named, so a show on the OTHER
     // background list -- or in a foreground widget -- is left alone.
     applyAutoPlayRunners(
@@ -194,10 +204,10 @@ export default function BackgroundAutoPlayComp(
     }, [prefix, backgroundType, dirSourceSettingName]);
     // Whether there is anything to control at all is the CARD's decision --
     // it keeps the strip out of the tree entirely, rather than leaving an
-    // empty row with a rule under it across the top of the grid. Nothing is
-    // needed here to stop a show whose background was cleared: the tick
-    // itself answers false once this list has nothing on a screen, which is
-    // the same guard that ends a show when the operator presses F7.
+    // empty row with a rule under it across the top of the grid. A show whose
+    // background was cleared is ended twice over: by the reconcile above while
+    // this tab is mounted, and by the tick -- which answers false once this
+    // list has nothing on a screen -- while it is not.
     return (
         <SlideAutoPlayComp
             prefix={prefix}

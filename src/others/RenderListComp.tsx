@@ -76,7 +76,7 @@ function ColorNoteGroupComp({
     );
 }
 
-function RenderFileItemsWithColorNote({
+function RenderFileItemsWithColorNoteComp({
     dirSource,
     filePaths,
     bodyHandler,
@@ -132,9 +132,24 @@ function RenderNoMatchComp() {
 }
 
 function RenderFailListComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
+    // Said apart, because the cure is different: a folder that is not there
+    // (renamed, deleted, a drive not plugged in) wants a new path.
+    const isDirMissing = dirSource.isDirPathValid === false;
     return (
         <div className="alert alert-warning app-caught-hover-pointer">
-            {tran('Fail to Get File List')}
+            {isDirMissing ? (
+                <>
+                    <div>{tran('Folder not found')}</div>
+                    <div
+                        className="app-ellipsis-left small"
+                        title={dirSource.dirPath}
+                    >
+                        <bdi>{dirSource.dirPath}</bdi>
+                    </div>
+                </>
+            ) : (
+                tran('Fail to Get File List')
+            )}
             <div className="d-flex flex-wrap justify-content-center">
                 <GotoSettingDirectoryPathComp />
                 <div className="m-2">
@@ -215,7 +230,7 @@ export default function RenderListComp({
         return bodyHandler(newFilePaths);
     }
     return (
-        <RenderFileItemsWithColorNote
+        <RenderFileItemsWithColorNoteComp
             dirSource={dirSource}
             filePaths={filteredFilePaths}
             bodyHandler={bodyHandler}

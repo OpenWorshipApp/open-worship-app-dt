@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93]
 screenshots: 16
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -26,26 +26,29 @@ the Psalms, and it is listed for _every_ chapter of the Psalms, above that chapt
 files. If you have more than one such document, keep going downwards — `-1`, `-2` and so on
 all count as book-level too.
 
-1. In the bible lookup, click **Advance Bible Lookup** (`bi-search`, top right) to open
-   the side panel, then pick **Resources** from the panel's dropdown — the fourth entry
-   after **Find**, **Cross Reference** and **Location-Name (KJV)**. 📸
+1. In the bible lookup, click **[en:tran:Advance Bible Lookup]** (the binoculars, top right) to open
+   the side panel, then pick **[en:tran:Resources]** from the panel's dropdown — the fourth entry
+   after **[en:tran:Find]**, **[en:tran:Cross Reference]** and **[en:tran:Location-Name (KJV)]**. 📸
 2. The top line of the view is the file-name patterns being looked for, one for **each
    passage you have open**, in the order of your panes, so you can always see what it is
    matching — reading Genesis 24 beside Genesis 27, a solid `GEN.24.*` and a solid
    `GEN.27.*` for the chapters' own files, then one dashed `GEN.0.*` for the book's.
+   Above each group of files, the heading also spells out the book and chapter:
+   `JHN.3.*, John chapter 3` or `JHN.0.*, John Introduction`. These full names
+   follow the interface language and are visible without hovering.
    Two panes on the same chapter in two versions count once. The pane you are typing a
    reference into follows what its box says, as soon as the reference is complete;
    moving to another verse of the same chapter changes nothing here — it is the chapter
    that decides. 📸
 3. The first time, the body holds a single **[en:tran:Add Folder]** button. Click it and
-   pick the folder your files are in. You can add as many as you want — the **⋮ More
-   Options** button, or a right-click anywhere in the view including the empty space below
-   the folders, offers **Add Folder** again. Adding the same folder twice does nothing. 📸
+   pick the folder your files are in. You can add as many as you want — the
+   **⋮ [en:tran:More Options]** button, or a right-click anywhere in the view including the empty space below
+   the folders, offers **[en:tran:Add Folder]** again. Adding the same folder twice does nothing. 📸
    **Folders already in your data folder are one press away.** Everything
    **[en:tran:Copy to Data Directory]** (step 8) makes lands in a `resources` folder inside
    your data folder, and so does what **[en:tran:Import Data]** (W-25) brings back. Any
    folder in there that is not on the list yet is listed at the bottom of the view under
-   **[en:tran:In the data directory]** — the first time, right under the **Add Folder**
+   **[en:tran:In the data directory]** — the first time, right under the **[en:tran:Add Folder]**
    button. Click one and it becomes a group straight away, with its matching files already
    listed and no folder picker; it leaves that list as it joins the shelf, and
    **[en:tran:Remove Folder]** puts it back. A folder you make in there while the view is
@@ -78,9 +81,9 @@ all count as book-level too.
    A book-level file is listed **once**, under its dashed pattern, however many chapters
    of that book you have open, and carries a dashed **[en:tran:Introduction]** tag so a
    `PSA.0.pdf` says why it is there. A group with nothing for what you are reading says
-   **No matching files**.
+   **[en:tran:No matching files]**.
 5. Sometimes you want a file that is _not_ named after this verse. Click the **magnifier**
-   (`bi-search`) at the right-hand end of the pattern line and a search box opens under it.
+   at the right-hand end of the pattern line and a search box opens under it.
    Type any part of a file's name — `abc`, `baptism`, `PSA.11` — and every file in your
    folders whose name contains it is listed too, added below that folder's verse files under
    a `*abc*` heading so you can tell the two apart. Your verse files stay exactly where they
@@ -89,8 +92,8 @@ all count as book-level too.
    start — searching `abc` finds `abc.pdf` and `01-abc-notes.docx` alike. If you are used to
    writing `abc*`, that works too; the `*` is simply ignored.
    Click the magnifier again to close the box and put the lists back as they were. If a
-   folder has hundreds of matches only the first 200 are shown, and the box says **Too many
-   matching files** — type a bit more to narrow it down.
+   folder has hundreds of matches only the first 200 are shown, and the box says
+   **[en:tran:Too many matching files]** — type a bit more to narrow it down.
    **To see everything else without typing, tick [en:tran:Others]**, the box just left of the
    magnifier. Each folder then also lists every file whose name is _not_ a book and a
    chapter — `family-tree.jpeg`, `church-map.pdf`, `README.txt` — under an
@@ -99,37 +102,37 @@ all count as book-level too.
    plainly written chapter, so `GEN.5.pdf` stays out of this list while `IMG.2.jpg` and a
    misnumbered `GEN.01.pdf` show up in it — handy for spotting a file you named wrongly. A
    file your search found is listed under the search heading instead, never twice. Up to 200
-   are shown per folder; past that the group says **Too many other files**, and pointing
+   are shown per folder; past that the group says **[en:tran:Too many other files]**, and pointing
    Resources at the folder your material is actually in keeps the list short. Untick
    **[en:tran:Others]** to hide them again — the box stays the way you left it next time.
 6. Click a file to open it in whatever application your computer normally uses for it — a
-   PowerPoint in PowerPoint, a picture in your picture viewer. Right-click one for **Open**,
-   **Copy Path to Clipboard**, or **Reveal in Finder** / **Reveal in File Explorer**.
+   PowerPoint in PowerPoint, a picture in your picture viewer. Right-click one for **[en:tran:Open]**,
+   **[en:tran:Copy Path to Clipboard]**, or **[en:tran:Reveal in Finder]** / **[en:tran:Reveal in File Explorer]**.
    Three kinds of file open **inside the app** instead:
    - **A PDF** (`.pdf`) opens in the app's own PDF viewer window — the same one
      **[en:tran:Preview PDF]** opens from a PDF in the Documents list — with its pages down
-     the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **Open**
+     the side, zoom and print. Right-click the row for **[en:tran:Preview PDF]**, or **[en:tran:Open]**
      to use your own PDF reader instead. Pressing a PDF whose preview is already open brings
      that window forward. 📸
-   - **A markdown file** (`.md`, `.markdown`, drawn with the `bi-markdown` icon) opens in its
+   - **A markdown file** (`.md`, `.markdown`, drawn with the markdown icon) opens in its
      own **Markdown Preview** window, like a Bible Note does: headings, lists, tables, quotes,
      code, pictures kept beside the file, and **Mermaid diagrams** written in a ` ```mermaid `
      block are drawn as diagrams (a diagram with a mistake in it shows the error above its
      code). The window follows the file — save it in your editor and the preview changes.
      A link to a heading scrolls there; a link to another `.md` opens it in the same window,
-     with **[en:tran:Back]** (`bi-arrow-left`) to return; a web link opens in your browser; a
+     with **[en:tran:Back]** (the left arrow) to return; a web link opens in your browser; a
      link to any other file shows it in its folder rather than running it. HTML written
      inside the file is drawn the way GitHub shows a README — a centred picture, a table, a
      section that folds away — but nothing in it can run: scripts, buttons, forms and styles
      are taken out. If a file shows `#` and `**` instead of a heading and bold, the file itself
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
      when text is pasted into it; the preview shows what is written. The head row also has
-     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (to edit it) and **Reveal in
-     File Explorer**. Right-click the row for **[en:tran:Preview]** or **Open**. Pressing a
+     **[en:tran:Reload]**, **[en:tran:Open in Default App]** (to edit it) and
+     **[en:tran:Reveal in File Explorer]**. Right-click the row for **[en:tran:Preview]** or **[en:tran:Open]**. Pressing a
      file whose preview is already open brings that window forward. 📸
    - **A bible note file** (`.own`) gains a chevron: click it and everything in it is
-     listed under it, as the **Bible Notes** panel lists it — its notes, and each verse
-     marked in it (`bi-highlighter`) with its highlights in their colour and its comments
+     listed under it, as the **[en:tran:Bible Notes]** panel lists it — its notes, and each verse
+     marked in it (the highlighter icon) with its highlights in their colour and its comments
      underlined, what was written beside them. Click a note to open it in the **Bible Note**
      window **read-only** — the title bar says **([en:tran:Read-only])**, the lock at the
      bottom shows it is locked, and nothing you do there is saved to the file. Click a
@@ -137,8 +140,11 @@ all count as book-level too.
      fold it away to a count. Nothing in the file can be changed from here. A file that is
      not a bible note says **[en:tran:Not a bible note file]**. 📸
 7. **A `.json` file can hold a list of links** — videos, articles, anything on the web for
-   that chapter — and the panel shows them instead of opening the file. Write it as a list
-   of entries, each with a **title** to read and a **url** to open:
+   that chapter — and the panel shows them instead of opening the file. Save the file
+   inside a folder listed in **[en:tran:Resources]**; to add its folder, click the panel's
+   **⋮** → **[en:tran:Add Folder]** and choose that folder. Write it as a list
+   of entries, each with a **title** to read and a **url** to open — one link is
+   `[{"title": "Notes", "url": "https://www.example.com/notes"}]` — exactly as in this example:
 
    ```json
    [
@@ -153,18 +159,19 @@ all count as book-level too.
    ]
    ```
 
-   Save that as `1CH.0.json` beside your other files and the row for it gains a chevron
-   (`bi-chevron-down`) and a 🔗 icon, with one row per entry hanging under it. **Click a
+   Save it named after its chapter, as the files beside it are (`JHN.3.json` for John 3,
+   `1CH.0.json` for the whole of 1 Chronicles), and the row for it gains a chevron
+   and a 🔗 icon, with one row per entry hanging under it. **Click a
    title to open it in your own web browser** — Chrome, Edge, Safari, whatever you
    normally use — and the site it goes to is shown after the title when the panel is wide
    enough, with the title and the full address on the tooltip either way. Right-click a
-   link (or use its **⋮**) for **Open Link in Browser** and **Copy URL to Clipboard**. 📸
+   link (or use its **⋮**) for **[en:tran:Open Link in Browser]** and **[en:tran:Copy URL to Clipboard]**. 📸
    A few details worth knowing:
    - A bare address on its own line — `"https://www.example.com/talk"` — is a link that
      titles itself, so a quick list needs no titles at all. An entry with no title shows
      its address as the title.
    - Only **`http`** and **`https`** addresses are offered. Anything else is left out and
-     the panel says how many entries it could not read (**1 entry was not understood**),
+     the panel says how many entries it could not read (**1 [en:tran:entry was not understood]**),
      so a typo shows instead of a row quietly going missing.
    - **A `.json` that is not a list of links is just a file.** If it holds other data, or
      is not valid JSON at all, the row keeps the ordinary file icon with no chevron and a
@@ -173,13 +180,13 @@ all count as book-level too.
      shut and open again shows your change. Files found by the **search** in step 5 are
      read on the first click instead, which is why a link list found that way needs one
      press to show its links.
-   - Right-click the `.json` row itself (or its **⋮**) for **Open** if you want to edit
+   - Right-click the `.json` row itself (or its **⋮**) for **[en:tran:Open]** if you want to edit
      the file rather than follow a link.
 
-8. Click a group's header to fold it away; it stays folded next time. Right-click a header
-   for **Refresh** (re-reads that one folder — **Reload** in step 3 does all of them),
-   **Add Folder**, **[en:tran:Add Files]**, **Reveal in Finder**/**File Explorer**,
-   **[en:tran:Copy to Data Directory]** and **Remove Folder**, which asks you to confirm and
+8. Click a group's header to fold it away; it opens again the next time Resources is shown. Right-click a header
+   for **[en:tran:Refresh]** (re-reads that one folder — **[en:tran:Reload]** in step 3 does all of them),
+   **[en:tran:Add Folder]**, **[en:tran:Add Files]**, **[en:tran:Reveal in Finder]**/**[en:tran:Reveal in File Explorer]**,
+   **[en:tran:Copy to Data Directory]** and **[en:tran:Remove Folder]**, which asks you to confirm and
    then only removes it from this list — nothing on disk is touched. 📸
    **[en:tran:Add Files]** is the other way round: it puts files you already have INTO that
    folder. Pick one or several in the picker and they are **copied** in — the originals stay
@@ -193,9 +200,9 @@ all count as book-level too.
    of the app's data, so it lives and moves with it — **[en:tran:Export Data]** (W-25) carries
    it in a backup, which a folder only listed here does not. It asks first, naming the folder and where
    the copy goes — a `resources` folder inside your data folder (the one Settings calls the
-   parent directory). Press **Yes** and everything in the folder is copied there, sub-folders
+   parent directory). Press **[en:tran:Yes]** and everything in the folder is copied there, sub-folders
    and all, while the progress bar runs; then the group switches to the copy, in the same place
-   and folded or open as it was, and a note says where it went. **Your original folder is not
+   and open, and a note says where it went. **Your original folder is not
    touched** — it only leaves this list, so delete it yourself once you are happy with the copy.
    A second copy of a folder with the same name is called `YouTube (1)` rather than mixed into
    the first. The item is not offered on a folder that already is a copy, and a folder that
@@ -209,10 +216,10 @@ all count as book-level too.
 > them in one folder. Write the numbers plainly: no leading zeros (`PSA.01.pdf` is not
 > found), and `-0` is not a number. Upper and lower case do not matter.
 
-> **If a group shows a warning** instead of files: **Folder not found** means the folder was
+> **If a group shows a warning** instead of files: **[en:tran:Folder not found]** means the folder was
 > moved, renamed or deleted since you added it (remove it and add it again);
-> **Cannot read folder** means the app is not allowed to read it. **Too many folders to
-> search** means even those two levels held more folders than it could read — point
+> **[en:tran:Cannot read folder]** means the app is not allowed to read it. **[en:tran:Too many folders to search]**
+> means even those two levels held more folders than it could read — point
 > Resources at the folder your material is actually in rather than at a whole drive.
 > A file you expected that is simply **not listed** is usually more than two folders down:
 > add the folder it sits in (or the one above it) as a group of its own.
@@ -222,5 +229,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

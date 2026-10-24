@@ -11,6 +11,7 @@ const {
     answerGuideHelp,
     askGuideHelp,
     captureOAuthRedirectUrl,
+    captureMiniScreenImage,
     captureWindowImage,
     captureWebScreenShot,
     clearAiChatGuestData,
@@ -37,6 +38,7 @@ const {
     screenInstance,
     sendChatAttachment,
     sendMenuClicked,
+    sendMenuClickedToAllWindows,
     setGuideRunning,
     setCustomMenusData,
     takeChatAttachment,
@@ -45,6 +47,7 @@ const {
     tarExtract,
     closeFindOverlayMock,
     finderOverlayPairs,
+    setFindOverlayMountedMock,
     startFindOverlayDraggingMock,
     stopFindOverlayDraggingMock,
 } = vi.hoisted(() => ({
@@ -53,6 +56,7 @@ const {
     answerGuideHelp: vi.fn(),
     askGuideHelp: vi.fn(),
     captureOAuthRedirectUrl: vi.fn(),
+    captureMiniScreenImage: vi.fn(),
     captureWindowImage: vi.fn(),
     captureWebScreenShot: vi.fn(),
     clearAiChatGuestData: vi.fn(async () => undefined),
@@ -89,10 +93,12 @@ const {
         listenLoading: vi.fn(async () => undefined),
         setDisplay: vi.fn(),
         destroyInstance: vi.fn(),
+        close: vi.fn(),
         sendMessage: vi.fn(),
     },
     sendChatAttachment: vi.fn(),
     sendMenuClicked: vi.fn(),
+    sendMenuClickedToAllWindows: vi.fn(),
     setGuideRunning: vi.fn(),
     setCustomMenusData: vi.fn(),
     takeChatAttachment: vi.fn(() => ({ image: 'pending' })),
@@ -101,6 +107,7 @@ const {
     tarExtract: vi.fn(),
     closeFindOverlayMock: vi.fn(),
     finderOverlayPairs: new Map<any, any>(),
+    setFindOverlayMountedMock: vi.fn(),
     startFindOverlayDraggingMock: vi.fn(),
     stopFindOverlayDraggingMock: vi.fn(),
 }));
@@ -109,10 +116,28 @@ vi.mock('./fontListHelpers', () => ({
     getSystemFontListMap,
 }));
 
+const { getVirtualDisplays } = vi.hoisted(() => ({
+    getVirtualDisplays: vi.fn((): any => null),
+}));
+
+vi.mock('./virtualDisplayService', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    getVirtualDisplays,
+}));
+
+const { getScreenMirror } = vi.hoisted(() => ({
+    getScreenMirror: vi.fn((): any => null),
+}));
+vi.mock('./screenMirrorService', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    getScreenMirror,
+}));
+
 vi.mock('./electronHelpers', () => ({
     attemptClosing,
     answerGuideHelp,
     askGuideHelp,
+    captureMiniScreenImage,
     captureWindowImage,
     captureWebScreenShot,
     findScreenWindow,
@@ -163,6 +188,7 @@ vi.mock('./finderOverlayHelpers', () => ({
         }
         return null;
     },
+    setFindOverlayMounted: setFindOverlayMountedMock,
     startFindOverlayDragging: startFindOverlayDraggingMock,
     stopFindOverlayDragging: stopFindOverlayDraggingMock,
 }));
@@ -176,9 +202,19 @@ vi.mock('./msHelpers', () => ({
     getPptxToHtmlsVersion,
     pptxToHtmls,
 }));
+const agentMenuMocks = vi.hoisted(() => ({
+    listAgentMenuItems: vi.fn(() => [{ path: 'View > Reload' }]),
+    clickAgentMenuItem: vi.fn(() => ({ clicked: 'View > Reload' })),
+}));
+vi.mock('./appMenuAgentHelpers', () => ({
+    AGENT_MENU_LIST_CHANNEL: 'main:app:agent-menu-list',
+    AGENT_MENU_CLICK_CHANNEL: 'main:app:agent-menu-click',
+    ...agentMenuMocks,
+}));
 vi.mock('./electronMenu', () => ({
     initMenu,
     sendMenuClicked,
+    sendMenuClickedToAllWindows,
     setCustomMenusData,
 }));
 vi.mock('./ElectronScreenController', () => ({
@@ -193,6 +229,10 @@ import {
 } from './electronEventListener';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow, flushPromises } from './testUtils';
+import {
+    removeVirtualScreenOutput,
+    setVirtualScreenOutput,
+} from './screenOutputRegistry';
 
 function findOnHandler(eventName: string) {
     const handler = electronMockState.ipcMain.on.mock.calls.find(
@@ -224,6 +264,7 @@ function createAppController(overrides: Record<string, any> = {}) {
             sendScreenMessage: vi.fn(),
             changeBible: vi.fn(),
             sendNotifyInvisibility: vi.fn(),
+            syncStayAwake: vi.fn(),
         },
         settingManager: {
             themeSource: 'system',
@@ -258,11 +299,14 @@ describe('electronEventListener handlers', () => {
         screenControllerMocks.createInstance.mockReturnValue(screenInstance);
         screenControllerMocks.getInstance.mockReturnValue(screenInstance);
         screenControllerMocks.getAllIds.mockReturnValue([3, 4]);
+        screenInstance.isMoving = false;
         getSystemFontListMap.mockResolvedValue({
             Arial: ['400', '700'],
             'Khmer OS': ['400'],
         });
         finderOverlayPairs.clear();
+        getVirtualDisplays.mockReturnValue(null);
+        getScreenMirror.mockReturnValue(null);
         consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         consoleErrorSpy = vi
             .spyOn(console, 'error')
@@ -307,12 +351,41 @@ describe('electronEventListener handlers', () => {
         findOnHandler('main:app:get-temp-path')(tempPathEvent);
         expect(tempPathEvent.returnValue).toBe('/mock/temp');
 
+        // The menu bar for an agent: a list, a press, and a throw that still
+        // answers -- a sendSync left without a returnValue hangs the renderer.
+        const menuListEvent: any = {};
+        findOnHandler('main:app:agent-menu-list')(menuListEvent);
+        expect(menuListEvent.returnValue).toEqual([{ path: 'View > Reload' }]);
+        const menuClickEvent: any = { sender: {} };
+        findOnHandler('main:app:agent-menu-click')(
+            menuClickEvent,
+            'View > Reload',
+        );
+        expect(menuClickEvent.returnValue).toEqual({
+            clicked: 'View > Reload',
+        });
+        expect(agentMenuMocks.clickAgentMenuItem.mock.calls[0]?.[0]).toBe(
+            'View > Reload',
+        );
+        agentMenuMocks.clickAgentMenuItem.mockImplementationOnce(() => {
+            throw new Error('menu gone');
+        });
+        const menuThrowEvent: any = { sender: {} };
+        findOnHandler('main:app:agent-menu-click')(menuThrowEvent, 'View');
+        expect(menuThrowEvent.returnValue).toEqual({
+            isError: true,
+            reason: 'menu gone',
+        });
+
         const sender = { send: vi.fn() };
         await findOnHandler('main:app:select-dirs')(
             { sender },
             { replyEventName: 'reply:dirs' },
         );
         expect(sender.send).toHaveBeenCalledWith('reply:dirs', ['/tmp/dir']);
+        expect(
+            electronMockState.dialog.showOpenDialog.mock.calls.at(-1)?.[1],
+        ).toEqual({ properties: ['openDirectory', 'showHiddenFiles'] });
     });
 
     test('an async handler needs a reply channel and reports its failures', async () => {
@@ -422,6 +495,272 @@ describe('electronEventListener handlers', () => {
             { screenId: 3, displayId: 99 },
         );
         expect(screenInstance.setDisplay).not.toHaveBeenCalled();
+    });
+
+    test('moves screens between monitors and virtual displays without hiding them mid-move', async () => {
+        const controllerClosed: (() => void)[] = [];
+        const virtualController = {
+            isMoving: false,
+            onClosed: vi.fn((callback: () => void) => {
+                controllerClosed.push(callback);
+            }),
+        };
+        const attachedOutput = {
+            screenId: 21,
+            isMoving: false,
+            sendData: vi.fn(),
+            sendMessage: vi.fn(),
+            close: vi.fn(() => removeVirtualScreenOutput(21, attachedOutput)),
+        };
+        const virtualDisplays = {
+            displays: vi.fn(() => [{ id: -500001 }]),
+            showingScreenIds: vi.fn(() => [21]),
+            attachScreen: vi.fn((screenId: number) => {
+                setVirtualScreenOutput(screenId, attachedOutput);
+                return virtualController;
+            }),
+            moveScreen: vi.fn(),
+            closeAllScreens: vi.fn(),
+        };
+        getVirtualDisplays.mockReturnValue(virtualDisplays);
+        const appController = createAppController();
+        initEventScreen(appController);
+        const showScreen = findOnHandler('main:app:show-screen');
+        const sender = { send: vi.fn() };
+        const existingOutput = {
+            screenId: 22,
+            isMoving: false,
+            sendData: vi.fn(),
+            sendMessage: vi.fn(),
+            close: vi.fn(() => removeVirtualScreenOutput(22, existingOutput)),
+        };
+
+        const displaysEvent: any = {};
+        findOnHandler('main:app:get-displays')(displaysEvent);
+        expect(displaysEvent.returnValue.displays).toContainEqual({
+            id: -500001,
+        });
+        const screenListEvent: any = {};
+        findOnHandler('main:app:get-screens')(screenListEvent);
+        expect(screenListEvent.returnValue).toEqual([3, 4]);
+
+        // A monitor screen moves to a virtual display and registers one close
+        // callback; a move itself does not tell the presenter it was hidden.
+        await showScreen(
+            { sender },
+            {
+                replyEventName: 'reply:show',
+                screenId: 21,
+                displayId: -500001,
+            },
+        );
+        expect(screenInstance.isMoving).toBe(true);
+        expect(screenInstance.destroyInstance).toHaveBeenCalledOnce();
+        expect(screenInstance.close).toHaveBeenCalledOnce();
+        expect(virtualDisplays.attachScreen).toHaveBeenCalledWith(21, -500001);
+        const screensAfterAttach: any = {};
+        findOnHandler('main:app:get-screens')(screensAfterAttach);
+        expect(screensAfterAttach.returnValue).toContain(21);
+        controllerClosed[0]();
+        expect(
+            appController.mainController.sendNotifyInvisibility,
+        ).toHaveBeenCalledWith(21);
+        virtualController.isMoving = true;
+        controllerClosed[0]();
+        expect(
+            appController.mainController.sendNotifyInvisibility,
+        ).toHaveBeenCalledOnce();
+
+        // Showing an already registered virtual output is idempotent.
+        setVirtualScreenOutput(22, existingOutput);
+        const attachesBefore = virtualDisplays.attachScreen.mock.calls.length;
+        await showScreen(
+            { sender },
+            {
+                replyEventName: 'reply:show',
+                screenId: 22,
+                displayId: -500001,
+            },
+        );
+        expect(virtualDisplays.attachScreen).toHaveBeenCalledTimes(
+            attachesBefore,
+        );
+
+        // Moving between virtual displays preserves the output object.
+        findOnHandler('main:app:set-screen-display')(
+            {},
+            { screenId: 22, displayId: -500002 },
+        );
+        expect(virtualDisplays.moveScreen).toHaveBeenCalledWith(22, -500002);
+        expect(existingOutput.close).not.toHaveBeenCalled();
+
+        // Moving back to a monitor closes that virtual page, then opens the
+        // regular screen window on the selected monitor.
+        screenInstance.isMoving = false;
+        screenControllerMocks.getInstance.mockReturnValueOnce(null);
+        findOnHandler('main:app:set-screen-display')(
+            {},
+            { screenId: 22, displayId: 8 },
+        );
+        await flushPromises();
+        expect(existingOutput.isMoving).toBe(true);
+        expect(existingOutput.close).toHaveBeenCalledOnce();
+        expect(screenInstance.setDisplay).toHaveBeenCalledWith({
+            id: 8,
+            bounds: { x: 1, y: 2 },
+        });
+        const closeWindow = screenInstance.win.on.mock.calls.find(
+            ([eventName]: [string]) => eventName === 'close',
+        )?.[1] as (() => void) | undefined;
+        expect(closeWindow).toBeDefined();
+        closeWindow?.();
+        expect(
+            appController.mainController.sendNotifyInvisibility,
+        ).toHaveBeenCalledWith(22);
+
+        findOnHandler('app:hide-screen')({}, 21);
+        expect(attachedOutput.close).toHaveBeenCalledOnce();
+        findOnHandler('app:hide-all-screens')({});
+        expect(virtualDisplays.closeAllScreens).toHaveBeenCalledOnce();
+        removeVirtualScreenOutput(21, attachedOutput);
+        removeVirtualScreenOutput(22, existingOutput);
+    });
+
+    test('routes screen output through mirror ownership and local fallbacks', async () => {
+        const mirror = {
+            configure: vi.fn(),
+            displays: vi.fn(() => [{ id: 900 }]),
+            showingIds: vi.fn(() => [30, 34]),
+            closeIncomingOf: vi.fn(() => false),
+            hide: vi.fn(),
+            retargetOutput: vi.fn(),
+            isRemoteDisplay: vi.fn((id: number) => id === 900),
+            isRemoteOutput: vi.fn((id: number) => id === 34),
+            prepareOutput: vi.fn(async () => true),
+            sendFeedback: vi.fn(() => false),
+            sendScreenMessage: vi.fn(() => false),
+            localMessage: vi.fn((message: any) => ({
+                ...message,
+                data: { forwarded: true },
+            })),
+            stepBible: vi.fn(() => false),
+        };
+        getScreenMirror.mockReturnValue(mirror);
+        const virtualDisplays = {
+            displays: vi.fn(() => []),
+            showingScreenIds: vi.fn(() => []),
+            attachScreen: vi.fn(() => ({ onClosed: vi.fn() })),
+            moveScreen: vi.fn(),
+            closeAllScreens: vi.fn(),
+        };
+        getVirtualDisplays.mockReturnValue(virtualDisplays);
+        const appController = createAppController();
+        initEventScreen(appController);
+        expect(mirror.configure).toHaveBeenCalledWith(
+            appController.mainWin.webContents,
+        );
+
+        const displays: any = {};
+        findOnHandler('main:app:get-displays')(displays);
+        expect(displays.returnValue.displays).toContainEqual({ id: 900 });
+
+        const sender = { send: vi.fn() };
+        await findOnHandler('main:app:show-screen')(
+            { sender },
+            { replyEventName: 'reply:show', screenId: 30, displayId: 900 },
+        );
+        expect(mirror.prepareOutput).toHaveBeenCalledWith(30, 900);
+
+        const hide = findOnHandler('app:hide-screen');
+        mirror.closeIncomingOf.mockReturnValueOnce(true);
+        hide({ sender: {} }, 30);
+        expect(mirror.hide).not.toHaveBeenCalled();
+        hide({ sender: {} }, 30);
+        expect(mirror.hide).toHaveBeenCalledWith(30);
+        findOnHandler('app:hide-all-screens')({});
+        expect(mirror.hide).toHaveBeenCalledWith(34);
+
+        const message = findOnHandler('app:screen:message');
+        mirror.sendFeedback.mockReturnValueOnce(true);
+        const consumedFeedback: any = {};
+        await message(consumedFeedback, {
+            isScreen: true,
+            screenId: 30,
+            type: 'draw',
+            data: { action: 'clear' },
+        });
+        expect(consumedFeedback.returnValue).toBeUndefined();
+        expect(
+            appController.mainController.sendScreenMessage,
+        ).not.toHaveBeenCalled();
+        const fallbackFeedback: any = {};
+        await message(fallbackFeedback, {
+            isScreen: true,
+            screenId: 30,
+            type: 'draw',
+            data: { action: 'clear' },
+        });
+        expect(
+            appController.mainController.sendScreenMessage,
+        ).toHaveBeenCalled();
+        expect(fallbackFeedback.returnValue).toBe(true);
+
+        const output = {
+            screenId: 35,
+            isMoving: false,
+            sendData: vi.fn(),
+            sendMessage: vi.fn(),
+            close: vi.fn(),
+        };
+        setVirtualScreenOutput(35, output);
+        await message(
+            {},
+            {
+                isScreen: false,
+                screenId: 35,
+                type: 'draw',
+                data: { action: 'clear' },
+                stage: 2,
+            },
+        );
+        expect(mirror.localMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ screenId: 35, stage: 2 }),
+        );
+        expect(output.sendMessage).toHaveBeenCalledWith('draw', {
+            forwarded: true,
+        });
+        mirror.sendScreenMessage.mockReturnValueOnce(true);
+        const consumedPresenterMessage: any = {};
+        await message(consumedPresenterMessage, {
+            isScreen: false,
+            screenId: 35,
+            type: 'draw',
+            data: { action: 'clear' },
+        });
+        expect(output.sendMessage).toHaveBeenCalledOnce();
+        expect(consumedPresenterMessage.returnValue).toBeUndefined();
+        removeVirtualScreenOutput(35, output);
+
+        mirror.stepBible.mockReturnValueOnce(true);
+        findOnHandler('screen:app:change-bible')(
+            {},
+            {
+                screenId: 30,
+                isNext: true,
+            },
+        );
+        expect(appController.mainController.changeBible).not.toHaveBeenCalled();
+        findOnHandler('screen:app:change-bible')(
+            {},
+            {
+                screenId: 30,
+                isNext: false,
+            },
+        );
+        expect(appController.mainController.changeBible).toHaveBeenCalledWith({
+            screenId: 30,
+            isNext: false,
+        });
     });
 
     test('screen messages route to the presenter or to the screen window', async () => {
@@ -576,6 +915,22 @@ describe('electronEventListener handlers', () => {
         expect(closeFindOverlayMock).toHaveBeenCalledWith(sender);
         expect(startFindOverlayDraggingMock).toHaveBeenCalledWith(sender, 24);
         expect(stopFindOverlayDraggingMock).toHaveBeenCalledWith(sender);
+    });
+
+    test('the bar reports whether its page is drawn, as a strict boolean', () => {
+        initFinderEvent();
+        const sender = { id: 96 };
+        const handleMounted = findOnHandler('finder:app:mounted');
+
+        handleMounted({ sender }, true);
+        handleMounted({ sender }, false);
+        handleMounted({ sender }, 'yes');
+
+        expect(setFindOverlayMountedMock.mock.calls).toEqual([
+            [sender, true],
+            [sender, false],
+            [sender, false],
+        ]);
     });
 
     test('archive, conversion, and office handlers forward their payloads', async () => {
@@ -904,6 +1259,33 @@ describe('electronEventListener handlers', () => {
         expect(setCustomMenusData).toHaveBeenLastCalledWith('lang', null);
     });
 
+    test('custom menu items can be sent to every window at once', () => {
+        const ownerWin = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => ownerWin);
+        electronMockState.BrowserWindowMock();
+        initEventOther(createAppController());
+
+        findOnHandler('main:app:set-menu-items')(
+            { sender: ownerWin.webContents },
+            {
+                key: 'daily-tips',
+                menusData: { help: [{ label: 'Tips of the Day' }] },
+                options: {
+                    isRoutedToFocusedWindow: true,
+                    isSentToAllWindows: true,
+                },
+            },
+        );
+
+        const [, payload] = setCustomMenusData.mock.calls.at(-1) as any;
+        sendMenuClicked.mockClear();
+        payload.clickMenu({ isOpenDailyTip: true });
+        expect(sendMenuClickedToAllWindows).toHaveBeenCalledWith({
+            isOpenDailyTip: true,
+        });
+        expect(sendMenuClicked).not.toHaveBeenCalled();
+    });
+
     test('app IPC exposes AI endpoints, guest cleanup, microphone answers, and screenshots', async () => {
         const appController = createAppController();
         const screenWin = createMockBrowserWindow();
@@ -952,6 +1334,56 @@ describe('electronEventListener handlers', () => {
         );
         expect(findScreenWindow).toHaveBeenCalledWith(4);
         expect(captureWindowImage).toHaveBeenLastCalledWith(screenWin);
+    });
+
+    // `owa_screenshot` aimed at a window of its own -- a Slide Editor chosen
+    // in the help window's window picker -- is a picture of THAT window.
+    test('a page that asks for its own window is photographed itself', async () => {
+        const editorWin = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => editorWin);
+        electronMockState.BrowserWindowMock();
+        const appController = createAppController();
+        captureWindowImage.mockResolvedValue('data:image/png;base64,SHOT');
+        initEventListenerApp(appController);
+        await findOnHandler('main:app:capture-window')(
+            { sender: editorWin.webContents },
+            { replyEventName: 'reply:own', isOwnWindow: true },
+        );
+        expect(captureWindowImage).toHaveBeenLastCalledWith(editorWin);
+        expect(captureWindowImage).not.toHaveBeenCalledWith(
+            appController.mainWin,
+        );
+    });
+
+    // A screen on a virtual display has no window, and is drawn here only
+    // while an MP4 is watched: the rest of the time its Mini Screen is the
+    // picture, never "That window is not open".
+    test('a virtual display screen nobody streams is taken from its Mini Screen', async () => {
+        const appController = createAppController();
+        const captureScreen = vi.fn(async () => null);
+        getVirtualDisplays.mockReturnValue({ captureScreen });
+        captureMiniScreenImage.mockResolvedValue('data:image/png;base64,MINI');
+        initEventListenerApp(appController);
+        const sender = { id: 5, send: vi.fn() };
+        try {
+            await findOnHandler('main:app:capture-window')(
+                { sender },
+                { replyEventName: 'reply:vd', screenId: 6 },
+            );
+        } finally {
+            getVirtualDisplays.mockReturnValue(null);
+        }
+
+        expect(captureScreen).toHaveBeenCalledWith(6);
+        expect(captureMiniScreenImage).toHaveBeenCalledWith(
+            appController.mainWin,
+            6,
+        );
+        expect(captureWindowImage).not.toHaveBeenCalled();
+        expect(sender.send).toHaveBeenCalledWith(
+            'reply:vd',
+            'data:image/png;base64,MINI',
+        );
     });
 
     test('routes remaining main-process services and walkthrough messages', async () => {
@@ -1087,6 +1519,35 @@ describe('electronEventListener handlers', () => {
         expect(call({ key: '', type: 'clear' })).toBe(true);
         // an unknown operation returns nothing rather than throwing
         expect(call({ key: 'a', type: 'unknown' as any })).toBeNull();
+    });
+
+    test('a change to the stay-awake setting reaches the main window at once', () => {
+        const appController = createAppController();
+        initEventOther(appController);
+        const clientSetting = findOnHandler('main:app:client-setting');
+        const { syncStayAwake } = appController.mainController;
+        const call = (data: Record<string, any>) => {
+            clientSetting({}, data);
+        };
+
+        // Reading it, and writing any other setting, asks nothing of the OS.
+        call({ key: 'stay-awake', type: 'get' });
+        call({ key: 'ai-enabled', type: 'set', value: 'true' });
+        call({ key: 'ai-enabled', type: 'delete' });
+        call({ key: '', type: 'get-all-keys' });
+        expect(syncStayAwake).not.toHaveBeenCalled();
+
+        call({ key: 'stay-awake', type: 'set', value: 'false' });
+        expect(syncStayAwake).toHaveBeenCalledTimes(1);
+        // Written before it is acted on: the main window reads it back.
+        expect(
+            appController.settingManager.setClientSetting,
+        ).toHaveBeenCalledWith('stay-awake', 'false');
+        call({ key: 'stay-awake', type: 'delete' });
+        expect(syncStayAwake).toHaveBeenCalledTimes(2);
+        // Clear All Settings takes it with the rest, back to its default.
+        call({ key: '', type: 'clear' });
+        expect(syncStayAwake).toHaveBeenCalledTimes(3);
     });
 
     test('secure settings are read, written, deleted, cleared, and probed', () => {

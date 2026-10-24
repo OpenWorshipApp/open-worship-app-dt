@@ -40,6 +40,10 @@ import {
 import { pathToFileURL } from 'node:url';
 
 import { importEsm, toMcpPackagePath } from './aiHelpers';
+import {
+    checkIsVirtualDisplayGuest,
+    checkIsVirtualDisplayHost,
+} from './virtualDisplayHostRegistry';
 
 // Its twin in `src/aichat/AiChatAppComp.tsx` is what the page puts on the
 // element. A guest on any other partition is refused below.
@@ -594,13 +598,22 @@ export function initAiChatGuestGuard() {
         // The HOST side: every page gets this listener, and it only ever
         // fires in the one window whose preferences allow a `<webview>`.
         contents.on('will-attach-webview', (event, webPreferences, params) => {
+            // A virtual display's compositor holds the app's OWN screen pages
+            // and answers `will-attach-webview` itself (virtualDisplayService).
+            // It is recognised by the WebContents main created, never by URL.
+            if (checkIsVirtualDisplayHost(contents)) {
+                return;
+            }
             if (!checkIsGuestAttachAllowed(params)) {
                 event.preventDefault();
                 return;
             }
             toGuestWebPreferences(webPreferences);
         });
-        if (contents.getType() === 'webview') {
+        if (
+            contents.getType() === 'webview' &&
+            !checkIsVirtualDisplayGuest(contents)
+        ) {
             guardGuest(contents);
         }
     });

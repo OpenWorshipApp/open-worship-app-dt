@@ -29,11 +29,11 @@ password layer ([[archive-password-protection]]), `createWorkDir`/`safeDeleteDir
 `writeArchiveManifest`/`readArchiveManifest`/`ARCHIVE_VERSION` from `appArchiveHelpers`,
 and `tarCreate`/`tarExtract`. Its flow file is a near-copy of
 `src/setting/data-archive/dataArchiveMenuHelpers.tsx` on purpose — same one-dialog
-picker + password, same recursive re-ask, same `runWithProgress`.
+picker + password, same re-ask LOOP (never a recursion — [[archive-password-protection]]), same `runWithProgress`.
 
 **The rule that makes it different: an import never overwrites and never duplicates.**
 Every other kind resolves a name collision by keeping yours and adding the bundled one as
-`a (1).mp4`. Two bibles sharing a key would be ambiguous everywhere else in the app, so
+`a (1).mp4` (a bible LIST is merged into its namesake, identical media is reused). Two bibles sharing a key would be ambiguous everywhere else in the app, so
 here a colliding item is REFUSED instead: it becomes a red, un-tickable row naming why,
 and the clean rows still import. Three reasons, all surfaced the same way
 (`BIBLE_XML_IMPORT_ISSUE_MESSAGE_MAP`): `duplicate` (key already installed),

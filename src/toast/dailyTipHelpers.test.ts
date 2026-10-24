@@ -10,6 +10,9 @@ vi.mock('../helper/settingHelpers', () => ({
     setSetting: (key: string, value: string) => {
         settingValues.set(key, value);
     },
+    removeSetting: (key: string) => {
+        settingValues.delete(key);
+    },
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -20,13 +23,15 @@ import {
     DAILY_TIP_AUTO_SHOW_DELAY_MS,
     DAILY_TIP_LAUNCHED_AT_SESSION_KEY,
     DAILY_TIPS_DISABLED_SETTING_NAME,
-    disableDailyTips,
+    DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME,
+    DAILY_TIPS_HIDE_MS,
     getAreDailyTipsDisabled,
     getDailyTipAutoShowDelay,
     getDailyTipGuide,
     getDailyTipPage,
     getDailyTipSessionKey,
     getDailyTips,
+    hideDailyTips,
     pickDailyTipIndex,
     rememberDailyTip,
     setAreDailyTipsEnabled,
@@ -102,11 +107,11 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('presenter').map(({ demoId }) => demoId)).toEqual(
             PRESENTER_DEMO_IDS,
         );
-        expect(getDailyTips('presenter')).toHaveLength(89);
+        expect(getDailyTips('presenter')).toHaveLength(91);
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
-        expect(getDailyTips('reader')).toHaveLength(99);
+        expect(getDailyTips('reader')).toHaveLength(106);
     });
 
     it('files the added Reader practice demos under useful tip topics', () => {
@@ -210,6 +215,7 @@ describe('daily tip helpers', () => {
             'Video Show',
             'Image Show',
             'Camera Show',
+            'Screen Show',
             'Web Show',
         ]) {
             const found = tips.filter(({ title, detail, category }) => {
@@ -229,7 +235,7 @@ describe('daily tip helpers', () => {
         const foreground = getDailyTips('presenter').filter(({ demoId }) => {
             return demoId.startsWith('presenter-foreground-');
         });
-        expect(foreground).toHaveLength(20);
+        expect(foreground).toHaveLength(21);
         expect(
             foreground.every(({ category }) => {
                 return category === 'Foreground overlays';
@@ -363,7 +369,7 @@ describe('daily tip helpers', () => {
 
     it('stores the global automatic-tip opt-out', () => {
         expect(getAreDailyTipsDisabled()).toBe(false);
-        disableDailyTips();
+        setAreDailyTipsEnabled(false);
         expect(settingValues.get(DAILY_TIPS_DISABLED_SETTING_NAME)).toBe(
             'true',
         );
@@ -375,42 +381,124 @@ describe('daily tip helpers', () => {
         expect(getAreDailyTipsDisabled()).toBe(false);
     });
 
-    it('holds the automatic tip for five minutes from launch', () => {
-        const storage = new Map<string, string>();
-        const sessionStorage = {
-            getItem: (key: string) => storage.get(key) ?? null,
-            setItem: (key: string, value: string) => {
-                storage.set(key, value);
+    it('hides the automatic tips for 30 days and no longer', () => {
+        const now = 1_800_000_000_000;
+        expect(DAILY_TIPS_HIDE_MS).toBe(30 * 24 * 60 * 60 * 1000);
+        hideDailyTips(now);
+        expect(settingValues.get(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME)).toBe(
+            `${now + DAILY_TIPS_HIDE_MS}`,
+        );
+        // Hidden is not switched off: the opt-out is never written.
+        expect(settingValues.has(DAILY_TIPS_DISABLED_SETTING_NAME)).toBe(false);
+        expect(getAreDailyTipsDisabled(now)).toBe(true);
+        expect(getAreDailyTipsDisabled(now + DAILY_TIPS_HIDE_MS - 1)).toBe(
+            true,
+        );
+        expect(getAreDailyTipsDisabled(now + DAILY_TIPS_HIDE_MS)).toBe(false);
+        // A clock corrected backwards by hours keeps them hidden...
+        expect(getAreDailyTipsDisabled(now - 7 * 60 * 60 * 1000)).toBe(true);
+        // ...and a stamp the button could never have set is not believed.
+        expect(getAreDailyTipsDisabled(now - DAILY_TIPS_HIDE_MS - 1)).toBe(
+            false,
+        );
+        settingValues.set(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME, 'not a time');
+        expect(getAreDailyTipsDisabled(now)).toBe(false);
+    });
+
+    it('ends the 30 days early from the Settings switch', () => {
+        const now = 1_800_000_000_000;
+        hideDailyTips(now);
+        setAreDailyTipsEnabled(true);
+        expect(settingValues.has(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME)).toBe(
+            false,
+        );
+        expect(getAreDailyTipsDisabled(now)).toBe(false);
+        // Switched off there instead, the day passing does not bring them back.
+        hideDailyTips(now);
+        setAreDailyTipsEnabled(false);
+        expect(getAreDailyTipsDisabled(now + DAILY_TIPS_HIDE_MS)).toBe(true);
+    });
+
+    function genSessionStorage(entries: [string, string][] = []) {
+        const storage = new Map<string, string>(entries);
+        return {
+            storage,
+            sessionStorage: {
+                getItem: (key: string) => storage.get(key) ?? null,
+                setItem: (key: string, value: string) => {
+                    storage.set(key, value);
+                },
             },
         };
-        const launchedAt = 1_000_000;
-        expect(getDailyTipAutoShowDelay(sessionStorage, launchedAt)).toBe(
-            DAILY_TIP_AUTO_SHOW_DELAY_MS,
-        );
+    }
+
+    it('holds the automatic tip for five minutes from when the page opened', () => {
+        const { storage, sessionStorage } = genSessionStorage();
+        const openedAt = 1_000_000;
+        const delayOf = (now: number) => {
+            return getDailyTipAutoShowDelay('reader', sessionStorage, now, '');
+        };
+        expect(delayOf(openedAt)).toBe(DAILY_TIP_AUTO_SHOW_DELAY_MS);
         expect(DAILY_TIP_AUTO_SHOW_DELAY_MS).toBeGreaterThanOrEqual(
             5 * 60 * 1000,
         );
-        expect(storage.get(DAILY_TIP_LAUNCHED_AT_SESSION_KEY)).toBe(
-            `${launchedAt}`,
+        const key = `${DAILY_TIP_LAUNCHED_AT_SESSION_KEY}:reader`;
+        expect(storage.get(key)).toBe(`${openedAt}`);
+        // A reload two minutes in keeps the page's clock.
+        expect(delayOf(openedAt + 120_000)).toBe(
+            DAILY_TIP_AUTO_SHOW_DELAY_MS - 120_000,
         );
-        // A reload or page switch two minutes in keeps the launch's clock.
-        expect(
-            getDailyTipAutoShowDelay(sessionStorage, launchedAt + 120_000),
-        ).toBe(DAILY_TIP_AUTO_SHOW_DELAY_MS - 120_000);
+        expect(delayOf(openedAt + DAILY_TIP_AUTO_SHOW_DELAY_MS + 1)).toBe(0);
+        // A stamp that cannot be a past opening starts the wait again.
+        storage.set(key, 'not a time');
+        expect(delayOf(openedAt)).toBe(DAILY_TIP_AUTO_SHOW_DELAY_MS);
+        storage.set(key, `${openedAt * 2}`);
+        expect(delayOf(openedAt)).toBe(DAILY_TIP_AUTO_SHOW_DELAY_MS);
+    });
+
+    it('gives every page its own wait, in the main window too', () => {
+        const { sessionStorage } = genSessionStorage();
+        const openedAt = 1_000_000;
+        const tenMinutesIn = openedAt + 10 * 60 * 1000;
+        getDailyTipAutoShowDelay('presenter', sessionStorage, openedAt, '');
         expect(
             getDailyTipAutoShowDelay(
+                'presenter',
                 sessionStorage,
-                launchedAt + DAILY_TIP_AUTO_SHOW_DELAY_MS + 1,
+                tenMinutesIn,
+                '',
             ),
         ).toBe(0);
-        // A stamp that cannot be a past launch starts the wait again.
-        storage.set(DAILY_TIP_LAUNCHED_AT_SESSION_KEY, 'not a time');
-        expect(getDailyTipAutoShowDelay(sessionStorage, launchedAt)).toBe(
-            DAILY_TIP_AUTO_SHOW_DELAY_MS,
-        );
-        storage.set(DAILY_TIP_LAUNCHED_AT_SESSION_KEY, `${launchedAt * 2}`);
-        expect(getDailyTipAutoShowDelay(sessionStorage, launchedAt)).toBe(
-            DAILY_TIP_AUTO_SHOW_DELAY_MS,
+        // The main window moved on to the Reader: the Reader waits its own.
+        expect(
+            getDailyTipAutoShowDelay(
+                'reader',
+                sessionStorage,
+                tenMinutesIn,
+                '',
+            ),
+        ).toBe(DAILY_TIP_AUTO_SHOW_DELAY_MS);
+    });
+
+    it("a popup waits its own five minutes, not its opener's", () => {
+        // `window.open` hands the popup a copy of the opener's storage.
+        const { sessionStorage } = genSessionStorage([
+            [`${DAILY_TIP_LAUNCHED_AT_SESSION_KEY}:setting`, '1000000'],
+        ]);
+        const tenMinutesIn = 1_000_000 + 10 * 60 * 1000;
+        const popupName = 'popup_setting_1729000000000';
+        const delayOf = (now: number) => {
+            return getDailyTipAutoShowDelay(
+                'setting',
+                sessionStorage,
+                now,
+                popupName,
+            );
+        };
+        expect(delayOf(tenMinutesIn)).toBe(DAILY_TIP_AUTO_SHOW_DELAY_MS);
+        // Its own reload a minute later keeps its own clock.
+        expect(delayOf(tenMinutesIn + 60_000)).toBe(
+            DAILY_TIP_AUTO_SHOW_DELAY_MS - 60_000,
         );
     });
 });

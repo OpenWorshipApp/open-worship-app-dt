@@ -13,6 +13,8 @@ import { addBibleItemAndPresent } from './bibleActionHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
+import { handleError } from '../helper/errorHelpers';
 import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
 export function RenderCopyBibleItemActionButtonsComp({
@@ -39,26 +41,76 @@ export function RenderCopyBibleItemActionButtonsComp({
     );
 }
 
+/**
+ * The 🤖 at the end of a Bible view's toolbar (2026-10-18, the user's
+ * picture of that toolbar circled: _add robot icon to part of the icon … to
+ * open the verse in chatbot like open from floating verse detail panel_):
+ * the passage the view shows, opened in the assistant the way a verse
+ * panel's 🤖 opens it (`bibleItemAskHelpers.ts`). Drawn only while AI is on,
+ * like that one.
+ */
+export function RenderAskAssistantBibleItemButtonComp({
+    bibleItem,
+}: Readonly<{ bibleItem: BibleItem }>) {
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleAsking = useCallback(() => {
+        // Loaded at the press: nothing a pane of verses needs until then.
+        import('../helper/ai/bibleItemAskHelpers')
+            .then(({ openChatbotWithBibleItem }) => {
+                return openChatbotWithBibleItem(bibleItemRef.current);
+            })
+            .catch(handleError);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    if (!getIsAIEnabled()) {
+        return null;
+    }
+    const label = tran('Ask the Assistant About This Passage');
+    return (
+        <button
+            className="btn btn-sm btn-secondary"
+            type="button"
+            title={label}
+            aria-label={label}
+            onClick={handleAsking}
+        >
+            <i className="bi bi-robot" />
+        </button>
+    );
+}
+
 export default function RenderActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
     const viewController = useBibleItemsViewControllerContext();
     const viewControllerRef = useAppCurrentRef(viewController);
     const bibleItemRef = useAppCurrentRef(bibleItem);
-    const handleSplitHorizontal = useCallback(() => {
-        viewControllerRef.current.addBibleItemLeft(
+    const handleSplitHorizontal = useCallback((event: any) => {
+        viewControllerRef.current.splitBibleItemOnPress(
+            event,
             bibleItemRef.current,
-            bibleItemRef.current,
+            true,
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleSplitVertical = useCallback(() => {
-        viewControllerRef.current.addBibleItemBottom(
+    const handleSplitVertical = useCallback((event: any) => {
+        viewControllerRef.current.splitBibleItemOnPress(
+            event,
             bibleItemRef.current,
-            bibleItemRef.current,
+            false,
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // In a colour group the split asks which version first, and the buttons
+    // say so: they are the menu's `… to` items then.
+    const isAskingBibleKey =
+        viewController.checkIsSplitAskingBibleKey(bibleItem);
+    const splitHorizontalLabel = isAskingBibleKey
+        ? tran('Split Horizontal to')
+        : tran('Split horizontal');
+    const splitVerticalLabel = isAskingBibleKey
+        ? tran('Split Vertical to')
+        : tran('Split vertical');
     const handleSaveBibleItem = useCallback(() => {
         const lookupViewController =
             viewControllerRef.current as LookupBibleItemController;
@@ -92,8 +144,9 @@ export default function RenderActionButtonsComp({
             <button
                 type="button"
                 className="btn btn-sm btn-info"
-                title={tran('Split horizontal')}
-                aria-label={tran('Split horizontal')}
+                title={splitHorizontalLabel}
+                aria-label={splitHorizontalLabel}
+                aria-haspopup={isAskingBibleKey ? 'menu' : undefined}
                 onClick={handleSplitHorizontal}
             >
                 <i className="bi bi-vr" />
@@ -101,8 +154,9 @@ export default function RenderActionButtonsComp({
             <button
                 className="btn btn-sm btn-info"
                 type="button"
-                title={tran('Split vertical')}
-                aria-label={tran('Split vertical')}
+                title={splitVerticalLabel}
+                aria-label={splitVerticalLabel}
+                aria-haspopup={isAskingBibleKey ? 'menu' : undefined}
                 onClick={handleSplitVertical}
             >
                 <i className="bi bi-hr" />
@@ -157,6 +211,7 @@ export default function RenderActionButtonsComp({
                     </button>
                 </>
             ) : null}
+            <RenderAskAssistantBibleItemButtonComp bibleItem={bibleItem} />
             {viewController.extraActionButtons}
         </div>
     );

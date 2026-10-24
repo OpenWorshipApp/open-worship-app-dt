@@ -1,0 +1,2108 @@
+{
+    "lang": "fr",
+    "updated": "2026-10-23",
+    "sections": {
+        "bible-note.writing": {
+            "en": "Writing a note",
+            "text": "Écrire une note"
+        },
+        "bible-note.sharing": {
+            "en": "Taking notes elsewhere",
+            "text": "Utiliser ses notes ailleurs"
+        },
+        "common.panels": {
+            "en": "Panels & layout",
+            "text": "Panneaux et disposition"
+        },
+        "common.find-bar": {
+            "en": "Find text & About",
+            "text": "Rechercher du texte et À propos"
+        },
+        "common.sharing": {
+            "en": "Sharing & backup",
+            "text": "Partage et sauvegarde"
+        },
+        "common.changes": {
+            "en": "Songs, slides, notes & saved passages",
+            "text": "Chants, diapositives, notes et passages enregistrés"
+        },
+        "common.status": {
+            "en": "What the app is doing right now",
+            "text": "Ce que fait l'application en ce moment"
+        },
+        "common.help": {
+            "en": "This help window",
+            "text": "Cette fenêtre d'aide"
+        },
+        "common.ai-chat": {
+            "en": "AI Chat window",
+            "text": "Fenêtre Chat IA"
+        },
+        "editor.slides": {
+            "en": "Working with slides",
+            "text": "Travailler avec les diapositives"
+        },
+        "editor.canvas": {
+            "en": "The slide canvas",
+            "text": "La zone de travail de la diapositive"
+        },
+        "lyric-editor.writing": {
+            "en": "Writing the song",
+            "text": "Écrire le chant"
+        },
+        "lyric-editor.seeing-it": {
+            "en": "Seeing what it becomes",
+            "text": "Voir ce que cela donne"
+        },
+        "lyric-editor.not-accepted": {
+            "en": "When the song will not go in",
+            "text": "Quand le chant n'est pas accepté"
+        },
+        "presenter.orientation": {
+            "en": "Finding your way around",
+            "text": "Se repérer"
+        },
+        "presenter.making": {
+            "en": "Making a new file",
+            "text": "Créer un nouveau fichier"
+        },
+        "presenter.documents": {
+            "en": "Documents & slides",
+            "text": "Documents et diapositives"
+        },
+        "presenter.lyrics": {
+            "en": "Songs & lyrics",
+            "text": "Chants et paroles"
+        },
+        "presenter.bible": {
+            "en": "Bible verses on screen",
+            "text": "Versets bibliques à l'écran"
+        },
+        "presenter.background": {
+            "en": "Backgrounds",
+            "text": "Arrière-plans"
+        },
+        "presenter.foreground": {
+            "en": "Foreground extras & audio",
+            "text": "Premier plan et audio"
+        },
+        "presenter.control": {
+            "en": "Drawing & spotlight on the app",
+            "text": "Dessin et mise en lumière dans l'application"
+        },
+        "presenting-flow.building": {
+            "en": "Building the running order",
+            "text": "Construire le déroulé"
+        },
+        "presenting-flow.running": {
+            "en": "Running the service from it",
+            "text": "Mener le culte avec le déroulé"
+        },
+        "presenting-flow.automation": {
+            "en": "Making it advance by itself",
+            "text": "Le faire avancer tout seul"
+        },
+        "presenting-flow.actions": {
+            "en": "Lines that do something",
+            "text": "Lignes qui font une action"
+        },
+        "presenting-flow.sharing": {
+            "en": "Sharing a running order",
+            "text": "Partager un déroulé"
+        },
+        "reader.reading": {
+            "en": "Reading a passage",
+            "text": "Lire un passage"
+        },
+        "reader.guided-demos": {
+            "en": "Guided demos without AI",
+            "text": "Démonstrations guidées sans IA"
+        },
+        "reader.find": {
+            "en": "Searching the whole Bible",
+            "text": "Rechercher dans toute la Bible"
+        },
+        "reader.cross-reference": {
+            "en": "Cross references",
+            "text": "Références croisées"
+        },
+        "reader.notes": {
+            "en": "Notes & marks",
+            "text": "Notes et annotations"
+        },
+        "reader.lookup": {
+            "en": "People & places",
+            "text": "Personnes et lieux"
+        },
+        "reader.graph": {
+            "en": "Connection graph",
+            "text": "Graphe de relations"
+        },
+        "reader.resources": {
+            "en": "Your own files beside the verse",
+            "text": "Vos propres fichiers à côté du verset"
+        },
+        "reader.versions": {
+            "en": "Bible translations",
+            "text": "Traductions de la Bible"
+        },
+        "screen.screens": {
+            "en": "The screen the audience sees",
+            "text": "L'écran que voit le public"
+        },
+        "screen.screen-mirror": {
+            "en": "Screen Mirror",
+            "text": "Écran miroir (Screen Mirror)"
+        },
+        "screen.virtual-displays": {
+            "en": "Virtual displays",
+            "text": "Affichages virtuels"
+        },
+        "settings.general": {
+            "en": "Language, theme & fonts",
+            "text": "Langue, thème et polices"
+        },
+        "settings.paths": {
+            "en": "Folders on disk",
+            "text": "Dossiers sur le disque"
+        },
+        "settings.bible-settings": {
+            "en": "Bible versions",
+            "text": "Versions de la Bible"
+        },
+        "settings.ai": {
+            "en": "AI assistants",
+            "text": "Assistants IA"
+        },
+        "settings.others": {
+            "en": "Accounts & extras",
+            "text": "Comptes et autres options"
+        },
+        "troubleshooting.screen": {
+            "en": "Nothing on the projector",
+            "text": "Rien sur le projecteur"
+        },
+        "troubleshooting.settings": {
+            "en": "The app itself is behaving oddly",
+            "text": "L'application se comporte bizarrement"
+        },
+        "troubleshooting.bible": {
+            "en": "A Bible version is wrong or missing",
+            "text": "Une version de la Bible est erronée ou manquante"
+        },
+        "troubleshooting.accounts": {
+            "en": "A sign-in will not connect",
+            "text": "Une connexion à un compte échoue"
+        },
+        "troubleshooting.media": {
+            "en": "A download or a media file fails",
+            "text": "Un téléchargement ou un fichier média échoue"
+        },
+        "troubleshooting.sharing": {
+            "en": "A file somebody sent will not open",
+            "text": "Un fichier reçu ne s'ouvre pas"
+        },
+        "troubleshooting.layout": {
+            "en": "Something has vanished from the window",
+            "text": "Quelque chose a disparu de la fenêtre"
+        },
+        "troubleshooting.editing": {
+            "en": "A slide does not look right",
+            "text": "Une diapositive ne s'affiche pas correctement"
+        },
+        "troubleshooting.running-order": {
+            "en": "The running order is not behaving",
+            "text": "Le déroulé ne se comporte pas comme prévu"
+        },
+        "troubleshooting.reporting": {
+            "en": "Telling someone it is broken",
+            "text": "Signaler que quelque chose ne marche pas"
+        },
+        "web-editor.editing": {
+            "en": "Setting up a web background",
+            "text": "Préparer un arrière-plan web"
+        },
+        "web-editor.using-it": {
+            "en": "Putting it on the screen",
+            "text": "L'afficher à l'écran"
+        }
+    },
+    "questions": {
+        "bible-note.writing.what-is-this": {
+            "en": "What is this Bible Note window for?",
+            "text": "À quoi sert cette fenêtre Note biblique ?"
+        },
+        "bible-note.writing.save-note": {
+            "en": "How do I save the note I am writing?",
+            "text": "Comment enregistrer la note que je suis en train d'écrire ?"
+        },
+        "bible-note.writing.undo-note-change": {
+            "en": "How do I get back what I typed in a note by mistake?",
+            "text": "Comment annuler ce que j'ai tapé par erreur dans une note ?"
+        },
+        "bible-note.sharing.share-notes": {
+            "en": "How do I share a page of Bible notes with another machine?",
+            "text": "Comment partager une page de notes bibliques avec un autre ordinateur ?"
+        },
+        "bible-note.sharing.notes-password": {
+            "en": "Can I put a password on the notes I send?",
+            "text": "Puis-je protéger par mot de passe les notes que j'envoie ?"
+        },
+        "common.panels.context-menu-height": {
+            "en": "Why do I still need to scroll inside a long right-click menu?",
+            "text": "Pourquoi dois-je encore faire défiler un long menu du clic droit ?"
+        },
+        "common.panels.hide-panel": {
+            "en": "How do I hide a panel I do not use?",
+            "text": "Comment masquer un panneau que je n'utilise pas ?"
+        },
+        "common.panels.reset-layout": {
+            "en": "How do I put the layout back the way it started?",
+            "text": "Comment remettre la disposition comme au départ ?"
+        },
+        "common.panels.divider-menu": {
+            "en": "What does right-clicking the line between two panels do?",
+            "text": "Que fait un clic droit sur la ligne entre deux panneaux ?"
+        },
+        "common.panels.divider-keyboard": {
+            "en": "Can I resize or close a panel with the keyboard?",
+            "text": "Puis-je redimensionner ou fermer un panneau au clavier ?"
+        },
+        "common.find-bar.find-on-page": {
+            "en": "How do I find some text in the window I am looking at?",
+            "text": "Comment rechercher du texte dans la fenêtre que je regarde ?"
+        },
+        "common.find-bar.find-next": {
+            "en": "How do I jump to the next match in the find bar?",
+            "text": "Comment passer au résultat suivant dans la barre de recherche ?"
+        },
+        "common.find-bar.find-in-ai-windows": {
+            "en": "Can I search the words in the help window or in AI Chat?",
+            "text": "Puis-je rechercher des mots dans la fenêtre d'aide ou dans la fenêtre Chat IA ?"
+        },
+        "common.find-bar.app-version": {
+            "en": "What version of the app am I running?",
+            "text": "Quelle version de l'application est-ce que j'utilise ?"
+        },
+        "common.sharing.share-document": {
+            "en": "How do I send one song or sermon to another machine?",
+            "text": "Comment envoyer un chant ou une prédication à un autre ordinateur ?"
+        },
+        "common.sharing.import-document": {
+            "en": "How do I import a document somebody sent me?",
+            "text": "Comment importer un document qu'on m'a envoyé ?"
+        },
+        "common.sharing.import-from-url": {
+            "en": "How do I import something from a link?",
+            "text": "Comment importer quelque chose depuis un lien ?"
+        },
+        "common.sharing.backup-everything": {
+            "en": "How do I back everything up?",
+            "text": "Comment tout sauvegarder ?"
+        },
+        "common.sharing.move-machine": {
+            "en": "How do I move everything to a new computer?",
+            "text": "Comment tout transférer sur un nouvel ordinateur ?"
+        },
+        "common.sharing.archive-password": {
+            "en": "How do I password-protect something I export?",
+            "text": "Comment protéger par mot de passe ce que j'exporte ?"
+        },
+        "common.changes.undo-a-change": {
+            "en": "Can you put back something the assistant deleted or changed?",
+            "text": "Pouvez-vous remettre ce que l'assistant a supprimé ou modifié ?"
+        },
+        "common.changes.delete-a-song": {
+            "en": "Can you delete the song I made by mistake?",
+            "text": "Pouvez-vous supprimer le chant que j'ai créé par erreur ?"
+        },
+        "common.changes.restyle-slide-text": {
+            "en": "Can you make the words on a slide bigger or change their colour?",
+            "text": "Pouvez-vous agrandir le texte d'une diapositive ou changer sa couleur ?"
+        },
+        "common.status.where-am-i": {
+            "en": "Which page am I on right now?",
+            "text": "Sur quelle page suis-je en ce moment ?"
+        },
+        "common.status.what-is-on-screen": {
+            "en": "What is on the audience screen at the moment?",
+            "text": "Qu'y a-t-il sur l'écran du public en ce moment ?"
+        },
+        "common.status.which-displays": {
+            "en": "Which displays does this computer have?",
+            "text": "Quels moniteurs sont connectés à cet ordinateur ?"
+        },
+        "common.help.tips-of-the-day": {
+            "en": "How can I browse tips and learn the page I am using?",
+            "text": "Comment parcourir les astuces et apprendre la page que j'utilise ?"
+        },
+        "common.help.tip-of-the-day-disappeared": {
+            "en": "Why did the Tip of the Day disappear on its own?",
+            "text": "Pourquoi l'Astuce du jour a-t-elle disparu toute seule ?"
+        },
+        "common.help.restore-tips-of-the-day": {
+            "en": "How do I show Tips of the Day automatically again?",
+            "text": "Comment réafficher automatiquement les Astuces du jour ?"
+        },
+        "common.help.tips-in-other-windows": {
+            "en": "How do I see the tips for Settings or another open window?",
+            "text": "Comment voir les astuces des Paramètres ou d'une autre fenêtre ouverte ?"
+        },
+        "common.help.what-can-i-ask": {
+            "en": "What can I ask you?",
+            "text": "Que puis-je vous demander ?"
+        },
+        "common.help.open-help-from-taskbar": {
+            "en": "How do I open the help from the taskbar?",
+            "text": "Comment ouvrir l'aide depuis la barre des tâches ?"
+        },
+        "common.help.help-other-window": {
+            "en": "How do I get help with another open window, like a Bible Reader window?",
+            "text": "Comment obtenir de l'aide pour une autre fenêtre ouverte, comme une fenêtre Lecteur biblique ?"
+        },
+        "common.help.hide-tip-line": {
+            "en": "How do I hide the tip line above the box?",
+            "text": "Comment masquer la ligne d'astuce au-dessus de la zone de saisie ?"
+        },
+        "common.help.show-tip-line-again": {
+            "en": "How do I get the tips back after I hid them?",
+            "text": "Comment faire revenir les astuces après les avoir masquées ?"
+        },
+        "common.help.quick-commands": {
+            "en": "What commands can I type instead of asking?",
+            "text": "Quelles commandes puis-je taper au lieu de poser une question ?"
+        },
+        "common.help.suggestion-keyboard": {
+            "en": "How do I pick a suggestion with the keyboard?",
+            "text": "Comment choisir une suggestion au clavier ?"
+        },
+        "common.help.walk-me-through": {
+            "en": "Can you walk me through it step by step?",
+            "text": "Pouvez-vous me guider étape par étape ?"
+        },
+        "common.help.new-chat": {
+            "en": "How do I start a new chat?",
+            "text": "Comment commencer une nouvelle conversation ?"
+        },
+        "common.help.chat-full": {
+            "en": "Why can't I start another chat?",
+            "text": "Pourquoi ne puis-je pas commencer une autre conversation ?"
+        },
+        "common.help.keep-chat": {
+            "en": "How do I stop a chat being closed by accident?",
+            "text": "Comment éviter qu'une conversation soit fermée par accident ?"
+        },
+        "common.help.copy-answer": {
+            "en": "How do I copy an answer?",
+            "text": "Comment copier une réponse ?"
+        },
+        "common.help.answer-was-wrong": {
+            "en": "What can I do when an answer is wrong?",
+            "text": "Que faire quand une réponse est fausse ?"
+        },
+        "common.help.chat-cost": {
+            "en": "How much has this chat cost so far?",
+            "text": "Combien cette conversation a-t-elle coûté jusqu'ici ?"
+        },
+        "common.help.chat-spend-limit": {
+            "en": "How do I stop the assistant spending too much?",
+            "text": "Comment empêcher l'assistant de trop dépenser ?"
+        },
+        "common.help.chat-fold-head": {
+            "en": "How do I get more room for the answers in the help window?",
+            "text": "Comment avoir plus de place pour les réponses dans la fenêtre d'aide ?"
+        },
+        "common.help.ask-again-earlier": {
+            "en": "How do I bring back a question I asked before?",
+            "text": "Comment retrouver une question que j'ai déjà posée ?"
+        },
+        "common.help.quick-answers": {
+            "en": "How do I answer without typing?",
+            "text": "Comment répondre sans taper ?"
+        },
+        "common.help.stop-answer": {
+            "en": "How do I stop it while it is answering?",
+            "text": "Comment l'arrêter pendant qu'il répond ?"
+        },
+        "common.help.what-is-it-doing": {
+            "en": "What is it doing while I wait?",
+            "text": "Que fait-il pendant que j'attends ?"
+        },
+        "common.help.see-more-tips": {
+            "en": "How do I see the other tips above the box?",
+            "text": "Comment voir les autres astuces au-dessus de la zone de saisie ?"
+        },
+        "common.help.read-a-web-page": {
+            "en": "Can you read a web page for me?",
+            "text": "Pouvez-vous lire une page web pour moi ?"
+        },
+        "common.help.choose-model": {
+            "en": "How do I change which model answers?",
+            "text": "Comment changer le modèle qui répond ?"
+        },
+        "common.help.general-question": {
+            "en": "Can I ask the assistant something that is not about this app?",
+            "text": "Puis-je poser à l'assistant une question qui ne concerne pas cette application ?"
+        },
+        "common.help.shared-assistant": {
+            "en": "Can the assistant use a server shared by openworship.app?",
+            "text": "L'assistant peut-il utiliser un serveur partagé par openworship.app ?"
+        },
+        "common.help.auto-assistant": {
+            "en": "What does the Auto assistant do?",
+            "text": "Que fait l'assistant Auto ?"
+        },
+        "common.help.offline-help": {
+            "en": "Does the help still work without internet?",
+            "text": "L'aide fonctionne-t-elle encore sans Internet ?"
+        },
+        "common.help.shortcuts-list": {
+            "en": "What keyboard shortcuts does the app have?",
+            "text": "Quels raccourcis clavier l'application propose-t-elle ?"
+        },
+        "common.help.shortcuts-search": {
+            "en": "Where can I see the keyboard shortcuts for this page?",
+            "text": "Où voir les raccourcis clavier de cette page ?"
+        },
+        "common.help.show-a-picture": {
+            "en": "Can I show you a picture of my screen?",
+            "text": "Puis-je vous montrer une capture de mon écran ?"
+        },
+        "common.help.attach-a-file": {
+            "en": "How do I attach a file to my question?",
+            "text": "Comment joindre un fichier à ma question ?"
+        },
+        "common.help.back-to-reading-the-bible": {
+            "en": "I only want to read the Bible — how do I get back to the Bible Reader?",
+            "text": "Je veux seulement lire la Bible : comment revenir au Lecteur biblique ?"
+        },
+        "common.help.attachment-numbers": {
+            "en": "How do I say which of the pictures I attached I mean?",
+            "text": "Comment indiquer de quelle image jointe je parle ?"
+        },
+        "common.help.point-at-a-control": {
+            "en": "How do I point at the button I mean?",
+            "text": "Comment désigner le bouton dont je parle ?"
+        },
+        "common.help.add-while-waiting": {
+            "en": "Can I add something while you are still answering?",
+            "text": "Puis-je ajouter quelque chose pendant que vous répondez encore ?"
+        },
+        "common.ai-chat.use-chatgpt-inside-the-app": {
+            "en": "Can I use ChatGPT or Claude inside the app?",
+            "text": "Puis-je utiliser ChatGPT ou Claude dans l'application ?"
+        },
+        "common.ai-chat.ai-chat-tab-reloaded": {
+            "en": "Why did my AI Chat tab load again when I came back to it?",
+            "text": "Pourquoi mon onglet Chat IA s'est-il rechargé quand j'y suis revenu ?"
+        },
+        "common.ai-chat.ai-chat-sign-out": {
+            "en": "How do I sign out of the AI chat websites?",
+            "text": "Comment me déconnecter des sites de chat IA ?"
+        },
+        "common.ai-chat.ai-chat-more-windows": {
+            "en": "Can I open more than one AI Chat window?",
+            "text": "Puis-je ouvrir plusieurs fenêtres Chat IA ?"
+        },
+        "common.ai-chat.ai-chat-reopen-closed-tab": {
+            "en": "How do I get back an AI Chat tab I closed?",
+            "text": "Comment rouvrir un onglet Chat IA que j'ai fermé ?"
+        },
+        "common.ai-chat.ai-chat-shared-computer": {
+            "en": "Several people use this computer — is my AI chat account safe?",
+            "text": "Plusieurs personnes utilisent cet ordinateur : mon compte de chat IA est-il en sécurité ?"
+        },
+        "common.ai-chat.ai-chat-not-the-assistant": {
+            "en": "What is the difference between the sparkle button and the robot button?",
+            "text": "Quelle est la différence entre le bouton étincelles et le bouton robot ?"
+        },
+        "common.ai-chat.ai-chat-microphone-blocked": {
+            "en": "Why does the AI chat website say the microphone is blocked?",
+            "text": "Pourquoi le site de chat IA dit-il que le micro est bloqué ?"
+        },
+        "common.ai-chat.ai-chat-link-did-not-open": {
+            "en": "Why didn't a link in the AI Chat window open?",
+            "text": "Pourquoi un lien de la fenêtre Chat IA ne s'est-il pas ouvert ?"
+        },
+        "editor.slides.bulk-font": {
+            "en": "How do I apply a font size or font family to all slides or selected canvas items?",
+            "text": "Comment appliquer une taille ou une famille de police à toutes les diapositives ou aux éléments sélectionnés ?"
+        },
+        "editor.slides.add-slide": {
+            "en": "How do I add a slide?",
+            "text": "Comment ajouter une diapositive ?"
+        },
+        "editor.slides.duplicate-slide": {
+            "en": "How do I copy a slide?",
+            "text": "Comment copier une diapositive ?"
+        },
+        "editor.slides.delete-slide": {
+            "en": "How do I delete a slide?",
+            "text": "Comment supprimer une diapositive ?"
+        },
+        "editor.slides.reorder-slides": {
+            "en": "How do I change the order of the slides?",
+            "text": "Comment changer l'ordre des diapositives ?"
+        },
+        "editor.slides.save-document": {
+            "en": "How do I save my changes?",
+            "text": "Comment enregistrer mes modifications ?"
+        },
+        "editor.slides.undo-edit": {
+            "en": "How do I undo a change I made by mistake?",
+            "text": "Comment annuler une modification faite par erreur ?"
+        },
+        "editor.canvas.canvas-item-transition": {
+            "en": "How do I give one canvas item its own slide transition?",
+            "text": "Comment donner à un seul élément de la diapositive sa propre transition ?"
+        },
+        "editor.canvas.imported-html-scripts": {
+            "en": "Why do scripts or embedded pages disappear from imported slide HTML?",
+            "text": "Pourquoi les scripts ou les pages intégrées disparaissent-ils du HTML de diapositive importé ?"
+        },
+        "editor.canvas.add-text": {
+            "en": "How do I add text to a slide?",
+            "text": "Comment ajouter du texte sur une diapositive ?"
+        },
+        "editor.canvas.edit-text": {
+            "en": "How do I change the words in a text box?",
+            "text": "Comment modifier les mots d'une zone de texte ?"
+        },
+        "editor.canvas.move-resize": {
+            "en": "How do I move or resize a box on the slide?",
+            "text": "Comment déplacer ou redimensionner une zone sur la diapositive ?"
+        },
+        "editor.canvas.insert-media": {
+            "en": "How do I put a picture or video on a slide?",
+            "text": "Comment mettre une image ou une vidéo sur une diapositive ?"
+        },
+        "editor.canvas.insert-link": {
+            "en": "How do I put a video from a link on a slide?",
+            "text": "Comment mettre sur une diapositive une vidéo à partir d'un lien ?"
+        },
+        "editor.canvas.insert-website": {
+            "en": "How do I put a web page on a slide?",
+            "text": "Comment mettre une page web sur une diapositive ?"
+        },
+        "editor.canvas.insert-camera": {
+            "en": "How do I put a camera on a slide?",
+            "text": "Comment mettre une caméra sur une diapositive ?"
+        },
+        "editor.canvas.drag-from-background": {
+            "en": "How do I build a slide by dragging from the Background panel?",
+            "text": "Comment créer une diapositive en faisant glisser des éléments depuis le panneau Arrière-plan ?"
+        },
+        "editor.canvas.drop-colour-locked-box": {
+            "en": "Why doesn’t dropping a colour change my box?",
+            "text": "Pourquoi déposer une couleur ne change-t-il pas ma zone ?"
+        },
+        "editor.canvas.type-slide-colors": {
+            "en": "How do I type an exact background or text color for a slide item?",
+            "text": "Comment saisir une couleur exacte de fond ou de texte pour un élément de diapositive ?"
+        },
+        "editor.canvas.blend-box": {
+            "en": "How do I blend a box with the one behind it?",
+            "text": "Comment fusionner une zone avec celle qui est derrière ?"
+        },
+        "editor.canvas.shadow-box": {
+            "en": "How do I put a shadow behind a box?",
+            "text": "Comment mettre une ombre derrière une zone ?"
+        },
+        "lyric-editor.writing.lyric-structure": {
+            "en": "How do I mark verses and choruses in a song?",
+            "text": "Comment indiquer les couplets et les refrains d'un chant ?"
+        },
+        "lyric-editor.writing.save-lyric": {
+            "en": "How do I save the song I am editing?",
+            "text": "Comment enregistrer le chant que je modifie ?"
+        },
+        "lyric-editor.writing.lyric-reset-style": {
+            "en": "How do I put a song's styling back the way it was?",
+            "text": "Comment remettre le style d'un chant comme avant ?"
+        },
+        "lyric-editor.writing.song-from-text": {
+            "en": "Can you write the notation for words I paste in?",
+            "text": "Pouvez-vous écrire la notation pour des paroles que je colle ?"
+        },
+        "lyric-editor.seeing-it.lyric-preview": {
+            "en": "How do I see what a song will look like on screen?",
+            "text": "Comment voir à quoi ressemblera un chant à l'écran ?"
+        },
+        "lyric-editor.seeing-it.edit-while-presenting": {
+            "en": "Can I change the words while the song is on the screen?",
+            "text": "Puis-je modifier les paroles pendant que le chant est à l'écran ?"
+        },
+        "lyric-editor.not-accepted.lyric-not-accepted": {
+            "en": "Why will the editor not accept my song?",
+            "text": "Pourquoi l'éditeur refuse-t-il mon chant ?"
+        },
+        "lyric-editor.not-accepted.lyric-chord-wrong": {
+            "en": "Why is one of my chords marked as wrong?",
+            "text": "Pourquoi l'un de mes accords est-il marqué comme faux ?"
+        },
+        "lyric-editor.not-accepted.lyric-structure-order": {
+            "en": "What order will my song play in?",
+            "text": "Dans quel ordre mon chant sera-t-il joué ?"
+        },
+        "presenter.orientation.window-parts": {
+            "en": "What is each part of the Presenter window?",
+            "text": "À quoi sert chaque partie de la fenêtre Présentateur ?"
+        },
+        "presenter.orientation.dots-menu": {
+            "en": "What is the ⋮ button next to everything?",
+            "text": "Qu'est-ce que le bouton ⋮ à côté de chaque élément ?"
+        },
+        "presenter.orientation.more-actions": {
+            "en": "Where are the extra actions for a song or a slide?",
+            "text": "Où sont les actions supplémentaires d'un chant ou d'une diapositive ?"
+        },
+        "presenter.orientation.go-reader": {
+            "en": "How do I switch to the Bible Reader?",
+            "text": "Comment passer au Lecteur biblique ?"
+        },
+        "presenter.orientation.go-editor": {
+            "en": "How do I open the Slide Editor?",
+            "text": "Comment ouvrir l'Éditeur de diapositives ?"
+        },
+        "presenter.orientation.go-presenter": {
+            "en": "How do I get back to the Presenter?",
+            "text": "Comment revenir au Présentateur ?"
+        },
+        "presenter.orientation.resize-panels": {
+            "en": "How do I make a panel bigger or smaller?",
+            "text": "Comment agrandir ou réduire un panneau ?"
+        },
+        "presenter.orientation.stay-awake": {
+            "en": "How do I stop the computer going to sleep during the service?",
+            "text": "Comment empêcher l'ordinateur de se mettre en veille pendant le culte ?"
+        },
+        "presenter.orientation.online-help": {
+            "en": "How do I open the online help?",
+            "text": "Comment ouvrir l'aide en ligne ?"
+        },
+        "presenter.orientation.presenter-practice-library": {
+            "en": "Where can I practise Presenter tasks with guided demos?",
+            "text": "Où puis-je m'entraîner aux tâches du Présentateur avec des démonstrations guidées ?"
+        },
+        "presenter.making.new-document": {
+            "en": "How do I make a new slide document?",
+            "text": "Comment créer un nouveau document de diapositives ?"
+        },
+        "presenter.making.new-lyric": {
+            "en": "How do I make a new song?",
+            "text": "Comment créer un nouveau chant ?"
+        },
+        "presenter.making.song-from-text": {
+            "en": "Can you make a song from words I paste in?",
+            "text": "Pouvez-vous créer un chant à partir de paroles que je colle ?"
+        },
+        "presenter.making.open-editor": {
+            "en": "How do I open the Slide Editor for a document?",
+            "text": "Comment ouvrir l'Éditeur de diapositives pour un document ?"
+        },
+        "presenter.making.edit-in-window": {
+            "en": "How do I edit one slide in its own window?",
+            "text": "Comment modifier une diapositive dans sa propre fenêtre ?"
+        },
+        "presenter.making.reserved-document-name": {
+            "en": "Why is a document name such as NUL.old refused?",
+            "text": "Pourquoi un nom de document comme NUL.old est-il refusé ?"
+        },
+        "presenter.making.rename-document": {
+            "en": "How do I rename a document or a song?",
+            "text": "Comment renommer un document ou un chant ?"
+        },
+        "presenter.making.delete-document": {
+            "en": "How do I delete a document I do not need?",
+            "text": "Comment supprimer un document dont je n'ai pas besoin ?"
+        },
+        "presenter.making.open-lyric-editor": {
+            "en": "How do I open the Lyric Editor?",
+            "text": "Comment ouvrir l'Éditeur de paroles ?"
+        },
+        "presenter.documents.document-transition": {
+            "en": "How do I change a document's or a slide's own transition?",
+            "text": "Comment changer la transition propre à un document ou à une diapositive ?"
+        },
+        "presenter.documents.present-slide": {
+            "en": "How do I put a slide on the screen?",
+            "text": "Comment mettre une diapositive à l'écran ?"
+        },
+        "presenter.documents.open-document": {
+            "en": "How do I open a document?",
+            "text": "Comment ouvrir un document ?"
+        },
+        "presenter.documents.which-selected": {
+            "en": "Which song is selected right now?",
+            "text": "Quel chant est sélectionné en ce moment ?"
+        },
+        "presenter.documents.what-is-next": {
+            "en": "What is the next slide?",
+            "text": "Quelle est la diapositive suivante ?"
+        },
+        "presenter.documents.show-next-slide": {
+            "en": "Show the next slide?",
+            "text": "Afficher la diapositive suivante ?"
+        },
+        "presenter.documents.next-slide": {
+            "en": "How do I move to the next slide?",
+            "text": "Comment passer à la diapositive suivante ?"
+        },
+        "presenter.documents.previous-slide": {
+            "en": "How do I go back to the previous slide?",
+            "text": "Comment revenir à la diapositive précédente ?"
+        },
+        "presenter.documents.remote-keys-back": {
+            "en": "My presenter remote stopped changing the slide. How do I get it working again without clicking?",
+            "text": "Ma télécommande de présentation ne change plus les diapositives. Comment la refaire marcher sans cliquer ?"
+        },
+        "presenter.documents.clear-slide": {
+            "en": "How do I take the slide off the screen?",
+            "text": "Comment retirer la diapositive de l'écran ?"
+        },
+        "presenter.documents.present-pdf": {
+            "en": "How do I present a PDF or a PowerPoint?",
+            "text": "Comment présenter un PDF ou un PowerPoint ?"
+        },
+        "presenter.documents.document-stage-monitor": {
+            "en": "How do I show the singer on stage what slide comes next?",
+            "text": "Comment montrer au chanteur sur scène quelle diapositive vient ensuite ?"
+        },
+        "presenter.documents.auto-play": {
+            "en": "How do I make the slides advance by themselves?",
+            "text": "Comment faire défiler les diapositives toutes seules ?"
+        },
+        "presenter.documents.auto-play-stop": {
+            "en": "How do I stop the slides advancing on their own?",
+            "text": "Comment arrêter le défilement automatique des diapositives ?"
+        },
+        "presenter.documents.auto-play-speed": {
+            "en": "How do I change how long each slide stays up?",
+            "text": "Comment changer la durée d'affichage de chaque diapositive ?"
+        },
+        "presenter.documents.compare-documents": {
+            "en": "How do I look at two documents at the same time?",
+            "text": "Comment voir deux documents en même temps ?"
+        },
+        "presenter.documents.pin-document": {
+            "en": "How do I stop a stray click changing the document I am presenting?",
+            "text": "Comment éviter qu'un clic involontaire change le document que je présente ?"
+        },
+        "presenter.documents.unpin-document": {
+            "en": "How do I unpin the document I pinned?",
+            "text": "Comment désépingler le document que j'ai épinglé ?"
+        },
+        "presenter.documents.slide-notes": {
+            "en": "Where are the notes that go with a slide?",
+            "text": "Où sont les notes qui accompagnent une diapositive ?"
+        },
+        "presenter.documents.open-note-panel": {
+            "en": "How do I open the Note panel under the slides?",
+            "text": "Comment ouvrir le panneau Note sous les diapositives ?"
+        },
+        "presenter.documents.trash-document": {
+            "en": "How do I delete a song or document?",
+            "text": "Comment supprimer un chant ou un document ?"
+        },
+        "presenter.documents.restore-trashed-document": {
+            "en": "I moved a file to the trash by mistake, can I get it back?",
+            "text": "J'ai mis un fichier à la corbeille par erreur, puis-je le récupérer ?"
+        },
+        "presenter.documents.export-pptx": {
+            "en": "How do I save a slide document as a PowerPoint file?",
+            "text": "Comment enregistrer un document de diapositives en fichier PowerPoint ?"
+        },
+        "presenter.lyrics.present-lyrics": {
+            "en": "How do I put a song's lyrics on the screen?",
+            "text": "Comment mettre les paroles d'un chant à l'écran ?"
+        },
+        "presenter.lyrics.export-lyric-stages-pptx": {
+            "en": "How do I export a song's lyric stages to PowerPoint?",
+            "text": "Comment exporter les scènes de paroles d'un chant vers PowerPoint ?"
+        },
+        "presenter.lyrics.find-song": {
+            "en": "Where are my songs?",
+            "text": "Où sont mes chants ?"
+        },
+        "presenter.lyrics.edit-lyrics": {
+            "en": "How do I edit the words of a song?",
+            "text": "Comment modifier les paroles d'un chant ?"
+        },
+        "presenter.lyrics.song-look": {
+            "en": "How do I change how the song looks on screen?",
+            "text": "Comment changer l'apparence du chant à l'écran ?"
+        },
+        "presenter.lyrics.song-add-stage": {
+            "en": "How do I add another stage to the Stage Previewer?",
+            "text": "Comment ajouter une autre scène à l'Aperçu des scènes ?"
+        },
+        "presenter.lyrics.stage-pane-hide": {
+            "en": "How do I take a stage away from the Stage Previewer?",
+            "text": "Comment retirer une scène de l'Aperçu des scènes ?"
+        },
+        "presenter.lyrics.song-order": {
+            "en": "How do I change the order the verses are sung in?",
+            "text": "Comment changer l'ordre dans lequel les couplets sont chantés ?"
+        },
+        "presenter.lyrics.song-attachment": {
+            "en": "How do I attach a file or a link to a song?",
+            "text": "Comment joindre un fichier ou un lien à un chant ?"
+        },
+        "presenter.lyrics.songselect": {
+            "en": "How do I bring a song in from CCLI SongSelect?",
+            "text": "Comment importer un chant depuis CCLI SongSelect ?"
+        },
+        "presenter.lyrics.public-domain": {
+            "en": "How do I import a hymn without a SongSelect account?",
+            "text": "Comment importer un cantique sans compte SongSelect ?"
+        },
+        "presenter.bible.present-verse": {
+            "en": "How do I present a Bible verse?",
+            "text": "Comment présenter un verset biblique ?"
+        },
+        "presenter.bible.generate-bible-slides": {
+            "en": "How do I generate Bible slides with multiple versions and an upcoming verse preview?",
+            "text": "Comment générer des diapositives bibliques avec plusieurs versions et un aperçu du verset suivant ?"
+        },
+        "presenter.bible.projector-more-chapters": {
+            "en": "How do I put the rest of a long passage on the screen?",
+            "text": "Comment mettre à l'écran la suite d'un long passage ?"
+        },
+        "presenter.bible.open-lookup": {
+            "en": "Where is the Bible lookup?",
+            "text": "Où est la Recherche biblique ?"
+        },
+        "presenter.bible.verse-range": {
+            "en": "How do I show more than one verse at a time?",
+            "text": "Comment afficher plusieurs versets à la fois ?"
+        },
+        "presenter.bible.change-version": {
+            "en": "How do I change the Bible version on screen?",
+            "text": "Comment changer la version de la Bible à l'écran ?"
+        },
+        "presenter.bible.two-versions": {
+            "en": "How do I show two Bible versions side by side?",
+            "text": "Comment afficher deux versions de la Bible côte à côte ?"
+        },
+        "presenter.bible.next-verse": {
+            "en": "How do I step to the next verse while presenting?",
+            "text": "Comment passer au verset suivant pendant la présentation ?"
+        },
+        "presenter.bible.clear-bible": {
+            "en": "How do I take the verse off the screen?",
+            "text": "Comment retirer le verset de l'écran ?"
+        },
+        "presenter.bible.verse-style": {
+            "en": "How do I make the verse text bigger on screen?",
+            "text": "Comment agrandir le texte du verset à l'écran ?"
+        },
+        "presenter.bible.verse-color": {
+            "en": "How do I change the Bible text color?",
+            "text": "Comment changer la couleur du texte biblique ?"
+        },
+        "presenter.bible.verse-dark-light": {
+            "en": "How do I switch the verse text between white and black?",
+            "text": "Comment faire passer le texte du verset du blanc au noir, ou l'inverse ?"
+        },
+        "presenter.bible.verse-shadow": {
+            "en": "How do I add a shadow behind the verse text?",
+            "text": "Comment ajouter une ombre derrière le texte du verset ?"
+        },
+        "presenter.bible.verse-outline": {
+            "en": "How do I put an outline around the verse text?",
+            "text": "Comment mettre un contour autour du texte du verset ?"
+        },
+        "presenter.bible.verse-preset": {
+            "en": "How do I save my Bible text style as a preset?",
+            "text": "Comment enregistrer mon style de texte biblique comme préréglage ?"
+        },
+        "presenter.bible.verse-font": {
+            "en": "How do I change the font of the Bible text on the screen?",
+            "text": "Comment changer la police du texte biblique à l'écran ?"
+        },
+        "presenter.bible.bible-list": {
+            "en": "How do I save a verse to a list for later?",
+            "text": "Comment enregistrer un verset dans une liste pour plus tard ?"
+        },
+        "presenter.background.add-background": {
+            "en": "How do I add a background?",
+            "text": "Comment ajouter un arrière-plan ?"
+        },
+        "presenter.background.background-colour": {
+            "en": "How do I set a plain colour background?",
+            "text": "Comment mettre un arrière-plan de couleur unie ?"
+        },
+        "presenter.background.background-image": {
+            "en": "How do I use my own picture as the background?",
+            "text": "Comment utiliser ma propre image comme arrière-plan ?"
+        },
+        "presenter.background.background-video": {
+            "en": "How do I use a video as the background?",
+            "text": "Comment utiliser une vidéo comme arrière-plan ?"
+        },
+        "presenter.background.background-camera": {
+            "en": "How do I put a camera on the screen?",
+            "text": "Comment mettre une caméra à l'écran ?"
+        },
+        "presenter.background.background-web": {
+            "en": "How do I show a web page as the background?",
+            "text": "Comment afficher une page web en arrière-plan ?"
+        },
+        "presenter.background.background-from-link": {
+            "en": "How do I download a background video from a link?",
+            "text": "Comment télécharger une vidéo d'arrière-plan depuis un lien ?"
+        },
+        "presenter.background.audio-from-link": {
+            "en": "How do I get an MP3 out of an online link?",
+            "text": "Comment obtenir un MP3 à partir d'un lien en ligne ?"
+        },
+        "presenter.background.clear-background": {
+            "en": "How do I remove the background from the screen?",
+            "text": "Comment retirer l'arrière-plan de l'écran ?"
+        },
+        "presenter.background.background-folder": {
+            "en": "How do I point the app at my own pictures folder?",
+            "text": "Comment indiquer à l'application mon propre dossier d'images ?"
+        },
+        "presenter.background.background-folder-sessions": {
+            "en": "How do I switch between two background folders?",
+            "text": "Comment passer d'un dossier d'arrière-plans à un autre ?"
+        },
+        "presenter.background.background-session-remove": {
+            "en": "How do I remove a background folder session?",
+            "text": "Comment supprimer une session de dossier d'arrière-plans ?"
+        },
+        "presenter.background.background-onto-slide": {
+            "en": "How do I drag a picture onto a slide?",
+            "text": "Comment faire glisser une image sur une diapositive ?"
+        },
+        "presenter.background.new-web-item": {
+            "en": "How do I add a web page to the Background panel?",
+            "text": "Comment ajouter une page web au panneau Arrière-plan ?"
+        },
+        "presenter.foreground.foreground-what": {
+            "en": "What are the foreground extras?",
+            "text": "Que sont les éléments de premier plan ?"
+        },
+        "presenter.foreground.countdown": {
+            "en": "How do I show a countdown before the service?",
+            "text": "Comment afficher un compte à rebours avant le culte ?"
+        },
+        "presenter.foreground.countdown-start": {
+            "en": "Can you start a 5 minute countdown on the screen?",
+            "text": "Pouvez-vous lancer un compte à rebours de 5 minutes à l'écran ?"
+        },
+        "presenter.foreground.countdown-overtime": {
+            "en": "Can the countdown show how long we went over?",
+            "text": "Le compte à rebours peut-il montrer de combien nous avons dépassé ?"
+        },
+        "presenter.foreground.countdown-show-not-started": {
+            "en": "Can I put the countdown up now and start it later?",
+            "text": "Puis-je afficher le compte à rebours maintenant et le lancer plus tard ?"
+        },
+        "presenter.foreground.stopwatch-history": {
+            "en": "Where can I see how long the stopwatch ran before I reset it?",
+            "text": "Où voir combien de temps le chronomètre a tourné avant que je le remette à zéro ?"
+        },
+        "presenter.foreground.timer-pause-reset": {
+            "en": "How do I pause or reset the countdown or the stopwatch?",
+            "text": "Comment mettre en pause ou remettre à zéro le compte à rebours ou le chronomètre ?"
+        },
+        "presenter.foreground.clock": {
+            "en": "How do I put a clock on the screen?",
+            "text": "Comment mettre une horloge à l'écran ?"
+        },
+        "presenter.foreground.clock-city": {
+            "en": "How do I show the time of another city?",
+            "text": "Comment afficher l'heure d'une autre ville ?"
+        },
+        "presenter.foreground.screen-show": {
+            "en": "How do I show one screen inside another screen?",
+            "text": "Comment afficher un écran à l'intérieur d'un autre écran ?"
+        },
+        "presenter.foreground.stopwatch": {
+            "en": "How do I run a stopwatch on the screen?",
+            "text": "Comment lancer un chronomètre à l'écran ?"
+        },
+        "presenter.foreground.marquee": {
+            "en": "How do I scroll a message along the bottom of the screen?",
+            "text": "Comment faire défiler un message en bas de l'écran ?"
+        },
+        "presenter.foreground.quick-text": {
+            "en": "How do I put a quick line of text on the screen?",
+            "text": "Comment mettre rapidement une ligne de texte à l'écran ?"
+        },
+        "presenter.foreground.slideshow": {
+            "en": "How do I run a slideshow of images?",
+            "text": "Comment lancer un diaporama d'images ?"
+        },
+        "presenter.foreground.play-audio": {
+            "en": "How do I play a song or backing track?",
+            "text": "Comment jouer un chant ou une piste d'accompagnement ?"
+        },
+        "presenter.foreground.audio-volume": {
+            "en": "How do I change the volume of what is playing?",
+            "text": "Comment changer le volume de ce qui est en lecture ?"
+        },
+        "presenter.foreground.clear-foreground": {
+            "en": "How do I clear the countdown or the message off the screen?",
+            "text": "Comment retirer le compte à rebours ou le message de l'écran ?"
+        },
+        "presenter.foreground.foreground-two-overlays": {
+            "en": "Can I show two pictures over the slide at the same time?",
+            "text": "Puis-je afficher deux images par-dessus la diapositive en même temps ?"
+        },
+        "presenter.foreground.foreground-sessions": {
+            "en": "How do I keep two different countdowns ready?",
+            "text": "Comment garder prêts deux comptes à rebours différents ?"
+        },
+        "presenter.foreground.foreground-session-dot": {
+            "en": "Why does one of the session buttons have a dot on it?",
+            "text": "Pourquoi l'un des boutons de session a-t-il un point ?"
+        },
+        "presenter.foreground.foreground-always-on-top": {
+            "en": "How do I keep my logo above the other overlays?",
+            "text": "Comment garder mon logo au-dessus des autres superpositions ?"
+        },
+        "presenter.foreground.foreground-behind-slide": {
+            "en": "How do I put a foreground item behind the lyrics?",
+            "text": "Comment mettre un élément de premier plan derrière les paroles ?"
+        },
+        "presenter.foreground.foreground-panels": {
+            "en": "How do I open two foreground panels side by side?",
+            "text": "Comment ouvrir deux panneaux de premier plan côte à côte ?"
+        },
+        "presenter.foreground.foreground-padding": {
+            "en": "My message text touches the edge of its box. How do I add space around it?",
+            "text": "Le texte de mon message touche le bord de sa zone. Comment ajouter de l'espace autour ?"
+        },
+        "presenter.foreground.message-shrinks-to-fit": {
+            "en": "Why did my messages get smaller on the screen?",
+            "text": "Pourquoi mes messages sont-ils devenus plus petits à l'écran ?"
+        },
+        "presenter.foreground.foreground-effects": {
+            "en": "How do I put a border or a shadow on an overlay?",
+            "text": "Comment mettre une bordure ou une ombre sur une superposition ?"
+        },
+        "presenter.foreground.foreground-text-readable": {
+            "en": "The words are hard to read over the video. What can I do?",
+            "text": "Les mots sont difficiles à lire sur la vidéo. Que puis-je faire ?"
+        },
+        "presenter.foreground.messages-practice": {
+            "en": "How can I learn to prepare several notices in Messages?",
+            "text": "Comment apprendre à préparer plusieurs annonces dans Messages ?"
+        },
+        "presenter.foreground.long-text-languages": {
+            "en": "How do I show a song in two languages side by side?",
+            "text": "Comment afficher un chant en deux langues côte à côte ?"
+        },
+        "presenter.foreground.long-text-refused": {
+            "en": "Why is Show Long Text switched off?",
+            "text": "Pourquoi Afficher le texte long est-il désactivé ?"
+        },
+        "presenter.foreground.long-text-jump": {
+            "en": "How do I jump to the chorus while everyone is singing?",
+            "text": "Comment sauter au refrain pendant que tout le monde chante ?"
+        },
+        "presenter.foreground.long-text-keys": {
+            "en": "Can I go to the next part of a Long Text Show with Space or the arrow keys?",
+            "text": "Puis-je passer à la partie suivante de l'Affichage de texte long avec la touche Space ou les flèches ?"
+        },
+        "presenter.control.draw-on-app": {
+            "en": "How do I draw on the app window while I teach?",
+            "text": "Comment dessiner sur la fenêtre de l'application pendant que j'enseigne ?"
+        },
+        "presenter.control.spotlight": {
+            "en": "How do I spotlight part of the app window?",
+            "text": "Comment mettre en lumière une partie de la fenêtre de l'application ?"
+        },
+        "presenter.control.draw-clear": {
+            "en": "How do I clear what I drew?",
+            "text": "Comment effacer ce que j'ai dessiné ?"
+        },
+        "presenter.control.draw-stop": {
+            "en": "How do I stop drawing mode?",
+            "text": "Comment quitter le mode dessin ?"
+        },
+        "presenter.control.keycast": {
+            "en": "How do I show the room which keys I am pressing?",
+            "text": "Comment montrer à la salle les touches sur lesquelles j'appuie ?"
+        },
+        "presenting-flow.building.flow-what": {
+            "en": "What is a presenting flow?",
+            "text": "Qu'est-ce qu'un déroulé ?"
+        },
+        "presenting-flow.building.flow-build": {
+            "en": "How do I build a running order for a service?",
+            "text": "Comment construire le déroulé d'un culte ?"
+        },
+        "presenting-flow.building.flow-add": {
+            "en": "How do I add a song or a verse to a presenting flow?",
+            "text": "Comment ajouter un chant ou un verset à un déroulé ?"
+        },
+        "presenting-flow.building.flow-add-for-me": {
+            "en": "Can you add a song to my presenting flow for me?",
+            "text": "Pouvez-vous ajouter un chant à mon déroulé pour moi ?"
+        },
+        "presenting-flow.building.flow-reorder": {
+            "en": "How do I move a line up or down in the running order?",
+            "text": "Comment monter ou descendre une ligne dans le déroulé ?"
+        },
+        "presenting-flow.building.flow-remove": {
+            "en": "How do I take a line out of the running order?",
+            "text": "Comment retirer une ligne du déroulé ?"
+        },
+        "presenting-flow.building.flow-expand": {
+            "en": "How do I see the slides inside a song in the running order?",
+            "text": "Comment voir les diapositives d'un chant dans le déroulé ?"
+        },
+        "presenting-flow.building.flow-drag-onto": {
+            "en": "How do I drop one line onto another instead of moving it?",
+            "text": "Comment déposer une ligne sur une autre au lieu de la déplacer ?"
+        },
+        "presenting-flow.running.flow-run": {
+            "en": "How do I run the service from the presenting flow?",
+            "text": "Comment mener le culte depuis le déroulé ?"
+        },
+        "presenting-flow.running.flow-preview": {
+            "en": "How do I follow the running order without putting it up yet?",
+            "text": "Comment suivre le déroulé sans encore rien afficher ?"
+        },
+        "presenting-flow.running.flow-preview-many": {
+            "en": "Can I have two running orders open at the same time?",
+            "text": "Puis-je avoir deux déroulés ouverts en même temps ?"
+        },
+        "presenting-flow.running.flow-jump-back": {
+            "en": "How do I go back to an earlier line in the running order?",
+            "text": "Comment revenir à une ligne précédente du déroulé ?"
+        },
+        "presenting-flow.automation.flow-auto-next": {
+            "en": "How do I make the running order advance by itself?",
+            "text": "Comment faire avancer le déroulé tout seul ?"
+        },
+        "presenting-flow.automation.flow-auto-next-time": {
+            "en": "How do I make a line start at a set time on the clock?",
+            "text": "Comment faire démarrer une ligne à une heure précise ?"
+        },
+        "presenting-flow.automation.flow-interval": {
+            "en": "How do I make a loop of slides run over and over before the service?",
+            "text": "Comment faire tourner une boucle de diapositives en continu avant le culte ?"
+        },
+        "presenting-flow.automation.flow-timing-per-line": {
+            "en": "How do I give one line its own waiting time?",
+            "text": "Comment donner à une ligne son propre temps d'attente ?"
+        },
+        "presenting-flow.automation.flow-shortcut": {
+            "en": "How do I give a line its own keyboard shortcut?",
+            "text": "Comment donner à une ligne son propre raccourci clavier ?"
+        },
+        "presenting-flow.actions.flow-action": {
+            "en": "How do I make a line clear the screen or show it?",
+            "text": "Comment faire qu'une ligne efface l'écran ou l'affiche ?"
+        },
+        "presenting-flow.actions.flow-screen-show": {
+            "en": "How do I make a line turn a screen on or off?",
+            "text": "Comment faire qu'une ligne allume ou éteigne un écran ?"
+        },
+        "presenting-flow.actions.flow-cc-element": {
+            "en": "How do I make one line put up two things at once?",
+            "text": "Comment faire qu'une ligne affiche deux choses à la fois ?"
+        },
+        "presenting-flow.actions.flow-pin-screen": {
+            "en": "How do I make one line always go to the same screen?",
+            "text": "Comment faire qu'une ligne aille toujours sur le même écran ?"
+        },
+        "presenting-flow.actions.flow-media-control": {
+            "en": "How do I control a video's play and pause from the running order?",
+            "text": "Comment gérer la lecture et la pause d'une vidéo depuis le déroulé ?"
+        },
+        "presenting-flow.sharing.flow-share": {
+            "en": "How do I share a presenting flow with another machine?",
+            "text": "Comment partager un déroulé avec un autre ordinateur ?"
+        },
+        "presenting-flow.sharing.flow-password": {
+            "en": "How do I put a password on a presenting flow I export?",
+            "text": "Comment protéger par mot de passe un déroulé que j'exporte ?"
+        },
+        "presenting-flow.sharing.flow-import": {
+            "en": "How do I open a running order somebody sent me?",
+            "text": "Comment ouvrir un déroulé qu'on m'a envoyé ?"
+        },
+        "reader.reading.look-up-verse": {
+            "en": "How do I look up a verse?",
+            "text": "Comment chercher un verset ?"
+        },
+        "reader.reading.type-reference": {
+            "en": "Where do I type John 3:16?",
+            "text": "Où dois-je taper Jean 3:16 ?"
+        },
+        "reader.reading.cross-chapter-passage": {
+            "en": "How do I read a passage that runs into the next chapter, like John 1:2-3:4?",
+            "text": "Comment lire un passage qui continue sur le chapitre suivant, comme Jean 1:2-3:4 ?"
+        },
+        "reader.reading.copy-formats": {
+            "en": "How do I copy a passage without verse numbers, or with the version after the reference?",
+            "text": "Comment copier un passage sans numéros de verset, ou avec la version après la référence ?"
+        },
+        "reader.reading.more-chapters": {
+            "en": "Why does a long passage show only three chapters?",
+            "text": "Pourquoi un long passage n'affiche-t-il que trois chapitres ?"
+        },
+        "reader.reading.heading-reference": {
+            "en": "How do I open a passage named in a section heading?",
+            "text": "Comment ouvrir un passage cité dans un titre de section ?"
+        },
+        "reader.reading.reader-versions": {
+            "en": "How do I put two Bible versions side by side?",
+            "text": "Comment mettre deux versions de la Bible côte à côte ?"
+        },
+        "reader.reading.dim-header-icons": {
+            "en": "Why are the color, sync-scroll and audio icons dimmed above my Bible passage?",
+            "text": "Pourquoi les icônes de couleur, de défilement synchronisé et d'audio sont-elles grisées au-dessus de mon passage ?"
+        },
+        "reader.reading.sync-group-scrolling": {
+            "en": "How do I make the other Bible translations follow the verse I am reading?",
+            "text": "Comment faire suivre aux autres traductions le verset que je lis ?"
+        },
+        "reader.reading.split-other-version": {
+            "en": "Why does the split button ask which Bible version to open?",
+            "text": "Pourquoi le bouton Diviser demande-t-il quelle version de la Bible ouvrir ?"
+        },
+        "reader.reading.dropped-pane-own-color": {
+            "en": "Why did the passage I dragged in get a different color?",
+            "text": "Pourquoi le passage que j'ai glissé a-t-il pris une autre couleur ?"
+        },
+        "reader.reading.add-version": {
+            "en": "How do I add another version to what I am reading?",
+            "text": "Comment ajouter une autre version à ce que je lis ?"
+        },
+        "reader.reading.leave-empty-view": {
+            "en": "What happens to a view with no passage yet when I edit another one?",
+            "text": "Que devient une vue encore sans passage quand j'en modifie une autre ?"
+        },
+        "reader.reading.reader-history": {
+            "en": "I lost the passage I was reading. How do I get it back?",
+            "text": "J'ai perdu le passage que je lisais. Comment le retrouver ?"
+        },
+        "reader.reading.reader-history-put-back": {
+            "en": "How do I put a passage from the history back into the passage I am editing?",
+            "text": "Comment remettre un passage de l'historique dans le passage que je modifie ?"
+        },
+        "reader.reading.reader-clear-input": {
+            "en": "How do I clear the reference box?",
+            "text": "Comment vider la zone de référence ?"
+        },
+        "reader.reading.reader-text-size": {
+            "en": "The words are too small. Can you help me?",
+            "text": "Les mots sont trop petits. Pouvez-vous m'aider ?"
+        },
+        "reader.reading.auto-scroll": {
+            "en": "How do I make the passage scroll itself while I read?",
+            "text": "Comment faire défiler le passage tout seul pendant que je lis ?"
+        },
+        "reader.reading.auto-scroll-stop": {
+            "en": "How do I stop the passage scrolling on its own?",
+            "text": "Comment arrêter le défilement automatique du passage ?"
+        },
+        "reader.reading.full-screen-read": {
+            "en": "How do I read without the panels in the way?",
+            "text": "Comment lire sans que les panneaux gênent ?"
+        },
+        "reader.reading.advance-lookup-section": {
+            "en": "How do I close or reopen the Advance Lookup section?",
+            "text": "Comment fermer ou rouvrir la section Recherche avancée ?"
+        },
+        "reader.reading.bible-not-available": {
+            "en": "It says a Bible key is not available. How do I get that Bible?",
+            "text": "On me dit qu'une clé de Bible n'est pas disponible. Comment obtenir cette Bible ?"
+        },
+        "reader.guided-demos.reader-built-in-demos": {
+            "en": "Can I practise the Bible Reader without asking AI?",
+            "text": "Puis-je m'entraîner au Lecteur biblique sans demander à l'IA ?"
+        },
+        "reader.guided-demos.reader-all-tips": {
+            "en": "Where can I find and replay all Reader demos?",
+            "text": "Où trouver et rejouer toutes les démonstrations du Lecteur ?"
+        },
+        "reader.guided-demos.reader-copy-demo": {
+            "en": "Can I practise copying just the reference or just the Bible words?",
+            "text": "Puis-je m'entraîner à copier seulement la référence ou seulement le texte biblique ?"
+        },
+        "reader.guided-demos.reader-saved-list-demo": {
+            "en": "Where are the Reader tips for creating and organizing saved Bible lists?",
+            "text": "Où sont les astuces du Lecteur pour créer et organiser des listes bibliques enregistrées ?"
+        },
+        "reader.guided-demos.reader-note-files-demo": {
+            "en": "Where are the demos for Bible note files and note items?",
+            "text": "Où sont les démonstrations sur les fichiers et les éléments de notes bibliques ?"
+        },
+        "reader.guided-demos.reader-resources-demo": {
+            "en": "Where are the tips for searching and refreshing Reader Resources?",
+            "text": "Où sont les astuces pour rechercher et actualiser les Ressources du Lecteur ?"
+        },
+        "reader.guided-demos.reader-graph-demo": {
+            "en": "Where are the Reader demos for graph connections and presets?",
+            "text": "Où sont les démonstrations du Lecteur sur les liens du graphe et les préréglages ?"
+        },
+        "reader.find.search-words": {
+            "en": "How do I search the Bible for a word?",
+            "text": "Comment rechercher un mot dans la Bible ?"
+        },
+        "reader.find.find-forgotten-verse": {
+            "en": "Can you help me find a Bible verse I forgot?",
+            "text": "Pouvez-vous m'aider à retrouver un verset biblique que j'ai oublié ?"
+        },
+        "reader.find.verse-in-another-bible": {
+            "en": "Can I see the verse it found in another Bible?",
+            "text": "Puis-je voir le verset trouvé dans une autre Bible ?"
+        },
+        "reader.find.search-button": {
+            "en": "Where is the search button?",
+            "text": "Où est le bouton de recherche ?"
+        },
+        "reader.find.search-limit-books": {
+            "en": "How do I search only the New Testament?",
+            "text": "Comment rechercher seulement dans le Nouveau Testament ?"
+        },
+        "reader.find.search-more-results": {
+            "en": "How do I see more search results?",
+            "text": "Comment voir plus de résultats de recherche ?"
+        },
+        "reader.find.search-no-verses": {
+            "en": "Why does Bible Find say no verses found?",
+            "text": "Pourquoi la recherche dans la Bible ne trouve-t-elle aucun verset ?"
+        },
+        "reader.find.search-reset": {
+            "en": "How do I clear the search and start again?",
+            "text": "Comment effacer la recherche et recommencer ?"
+        },
+        "reader.find.search-present": {
+            "en": "How do I put a search result on the screen?",
+            "text": "Comment mettre un résultat de recherche à l'écran ?"
+        },
+        "reader.cross-reference.cross-ref-what": {
+            "en": "What are cross references?",
+            "text": "Que sont les références croisées ?"
+        },
+        "reader.cross-reference.cross-ref-open": {
+            "en": "How do I see what else in scripture speaks to this verse?",
+            "text": "Comment voir ce que le reste de l'Écriture dit de ce verset ?"
+        },
+        "reader.cross-reference.cross-ref-other-bible": {
+            "en": "How do I read a cross reference in another Bible version?",
+            "text": "Comment lire une référence croisée dans une autre version de la Bible ?"
+        },
+        "reader.cross-reference.cross-ref-ai": {
+            "en": "What are AI cross references and do I need a key?",
+            "text": "Que sont les références croisées IA et ai-je besoin d'une clé ?"
+        },
+        "reader.cross-reference.cross-ref-refresh": {
+            "en": "How do I refresh the cross references?",
+            "text": "Comment actualiser les références croisées ?"
+        },
+        "reader.notes.verse-marks": {
+            "en": "What are verse marks?",
+            "text": "Que sont les marques de verset ?"
+        },
+        "reader.notes.highlight-verse": {
+            "en": "How do I highlight words in a passage?",
+            "text": "Comment surligner des mots dans un passage ?"
+        },
+        "reader.notes.comment-verse": {
+            "en": "How do I attach a note to a phrase I am reading?",
+            "text": "Comment joindre une note à une phrase que je lis ?"
+        },
+        "reader.notes.remove-highlight": {
+            "en": "How do I remove a highlight or a note?",
+            "text": "Comment retirer un surlignage ou une note ?"
+        },
+        "reader.notes.bible-notes": {
+            "en": "How do I keep my own Bible notes?",
+            "text": "Comment tenir mes propres notes bibliques ?"
+        },
+        "reader.notes.notes-save": {
+            "en": "How do I save a note I am writing?",
+            "text": "Comment enregistrer une note que je suis en train d'écrire ?"
+        },
+        "reader.notes.notes-share": {
+            "en": "How do I share a page of Bible notes with another machine?",
+            "text": "Comment partager une page de notes bibliques avec un autre ordinateur ?"
+        },
+        "reader.notes.bible-list-add": {
+            "en": "How do I add a verse to a Bible list?",
+            "text": "Comment ajouter un verset à une liste biblique ?"
+        },
+        "reader.lookup.who-is": {
+            "en": "How do I look up who someone in the Bible was?",
+            "text": "Comment savoir qui était une personne de la Bible ?"
+        },
+        "reader.lookup.where-is": {
+            "en": "How do I find where a Bible place is?",
+            "text": "Comment savoir où se trouve un lieu biblique ?"
+        },
+        "reader.lookup.lookup-language-color": {
+            "en": "Why is the language code beside the names button red?",
+            "text": "Pourquoi le code de langue à côté du bouton des noms est-il rouge ?"
+        },
+        "reader.lookup.detail-language": {
+            "en": "How do I open the same person or place in two languages?",
+            "text": "Comment ouvrir la même personne ou le même lieu en deux langues ?"
+        },
+        "reader.lookup.names-in-passage": {
+            "en": "Who and where is named in the passage I am reading?",
+            "text": "Quelles personnes et quels lieux sont cités dans le passage que je lis ?"
+        },
+        "reader.lookup.ask-assistant-about": {
+            "en": "Can the assistant tell me more about a person or place I opened?",
+            "text": "L’assistant peut-il m’en dire plus sur une personne ou un lieu que j’ai ouvert ?"
+        },
+        "reader.lookup.ask-assistant-related-verses": {
+            "en": "Can the assistant find the verses related to a passage I am reading?",
+            "text": "L’assistant peut-il trouver les versets liés à un passage que je lis ?"
+        },
+        "reader.lookup.lookup-to-bible": {
+            "en": "How do I jump from a name to the verses it appears in?",
+            "text": "Comment passer d'un nom aux versets où il apparaît ?"
+        },
+        "reader.lookup.lookup-row-menu": {
+            "en": "Can I copy a person or place without opening it?",
+            "text": "Puis-je copier une personne ou un lieu sans l’ouvrir ?"
+        },
+        "reader.lookup.open-passage-in-chatbot": {
+            "en": "How do I open a passage from my Bibles list in the chatbot?",
+            "text": "Comment ouvrir dans l’assistant conversationnel un passage de ma liste de Bibles ?"
+        },
+        "reader.lookup.passage-save-or-copy": {
+            "en": "How do I save or copy the passage I am asking about?",
+            "text": "Comment enregistrer ou copier le passage sur lequel je pose une question ?"
+        },
+        "reader.lookup.passage-other-language": {
+            "en": "How do I read the passage I am asking about in another language?",
+            "text": "Comment lire dans une autre langue le passage sur lequel je pose une question ?"
+        },
+        "reader.lookup.passage-study-words": {
+            "en": "How do I study the words of a verse one by one?",
+            "text": "Comment étudier les mots d’un verset un par un ?"
+        },
+        "reader.graph.graph-what": {
+            "en": "How do I see how people and places connect?",
+            "text": "Comment voir les liens entre les personnes et les lieux ?"
+        },
+        "reader.graph.graph-find-connection": {
+            "en": "How do I find how two people are related?",
+            "text": "Comment savoir quel lien unit deux personnes ?"
+        },
+        "reader.graph.graph-save": {
+            "en": "How do I save or print a connection graph?",
+            "text": "Comment enregistrer ou imprimer un graphe de relations ?"
+        },
+        "reader.graph.graph-copy-text": {
+            "en": "How do I copy a connection graph into my notes?",
+            "text": "Comment copier un graphe de relations dans mes notes ?"
+        },
+        "reader.graph.graph-open-mermaid-live": {
+            "en": "How do I open a connection graph in the Mermaid Live Editor?",
+            "text": "Comment ouvrir un graphe de relations dans Mermaid Live Editor ?"
+        },
+        "reader.graph.graph-undo": {
+            "en": "How do I undo a change in the connection graph?",
+            "text": "Comment annuler une modification dans le graphe de relations ?"
+        },
+        "reader.resources.resources-what": {
+            "en": "How do I keep my own files beside a passage?",
+            "text": "Comment garder mes propres fichiers à côté d'un passage ?"
+        },
+        "reader.resources.resources-naming": {
+            "en": "What do I have to name a file for Resources to find it?",
+            "text": "Comment dois-je nommer un fichier pour que Ressources le trouve ?"
+        },
+        "reader.resources.resources-book-code": {
+            "en": "What does the three-letter book code in Resources mean?",
+            "text": "Que signifie le code de livre à trois lettres dans Ressources ?"
+        },
+        "reader.resources.resources-folder": {
+            "en": "How do I add a folder to Resources?",
+            "text": "Comment ajouter un dossier à Ressources ?"
+        },
+        "reader.resources.resources-drop-folder": {
+            "en": "Can I drag a folder into Resources instead of picking it?",
+            "text": "Puis-je faire glisser un dossier dans Ressources au lieu de le choisir ?"
+        },
+        "reader.resources.resources-open": {
+            "en": "How do I open one of my Resources files?",
+            "text": "Comment ouvrir l'un de mes fichiers de Ressources ?"
+        },
+        "reader.resources.resources-ask-assistant": {
+            "en": "How do I ask the assistant about a study file for the verses I am reading?",
+            "text": "Comment demander à l’assistant ce que dit un fichier d’étude sur les versets que je lis ?"
+        },
+        "reader.resources.resources-links": {
+            "en": "Can I keep web links for a chapter in Resources?",
+            "text": "Puis-je garder des liens web pour un chapitre dans Ressources ?"
+        },
+        "reader.resources.resources-others": {
+            "en": "How do I see my files in Resources that are not named after a chapter?",
+            "text": "Comment voir mes fichiers de Ressources qui ne portent pas le nom d'un chapitre ?"
+        },
+        "reader.resources.resources-copy-to-data": {
+            "en": "How do I move a Resources folder into my data folder?",
+            "text": "Comment déplacer un dossier de Ressources dans mon dossier de données ?"
+        },
+        "reader.resources.resources-data-dir-folders": {
+            "en": "How do I add a folder that is already in my data folder to Resources?",
+            "text": "Comment ajouter à Ressources un dossier qui est déjà dans mon dossier de données ?"
+        },
+        "reader.resources.resources-add-files": {
+            "en": "How do I copy files into a Resources folder?",
+            "text": "Comment copier des fichiers dans un dossier de Ressources ?"
+        },
+        "reader.resources.resources-markdown-preview": {
+            "en": "How do I read a markdown file from Resources inside the app?",
+            "text": "Comment lire un fichier Markdown de Ressources dans l'application ?"
+        },
+        "reader.resources.resources-markdown-escaped": {
+            "en": "Why does my markdown preview show # and ** instead of headings and bold?",
+            "text": "Pourquoi l'aperçu Markdown affiche-t-il # et ** au lieu des titres et du gras ?"
+        },
+        "reader.resources.resources-note-preview": {
+            "en": "Can I open a bible note file that is in a Resources folder?",
+            "text": "Puis-je ouvrir un fichier de notes bibliques qui se trouve dans un dossier de Ressources ?"
+        },
+        "reader.versions.version-info": {
+            "en": "Who published the Bible version I am reading?",
+            "text": "Qui a publié la version de la Bible que je lis ?"
+        },
+        "reader.versions.add-translation": {
+            "en": "How do I add a Bible translation from the internet?",
+            "text": "Comment ajouter une traduction de la Bible depuis Internet ?"
+        },
+        "reader.versions.translation-language": {
+            "en": "My new Bible reads in English — how do I make it read in its own language?",
+            "text": "Ma nouvelle Bible s'affiche en anglais : comment l'afficher dans sa propre langue ?"
+        },
+        "reader.versions.share-translations": {
+            "en": "How do I share my Bible translations with another machine?",
+            "text": "Comment partager mes traductions de la Bible avec un autre ordinateur ?"
+        },
+        "reader.versions.share-bible-list": {
+            "en": "How do I share a Bible list with another machine?",
+            "text": "Comment partager une liste biblique avec un autre ordinateur ?"
+        },
+        "screen.screens.is-anything-showing": {
+            "en": "Is any screen showing right now?",
+            "text": "Un écran est-il affiché en ce moment ?"
+        },
+        "screen.screens.clear-button": {
+            "en": "Where is the clear button?",
+            "text": "Où est le bouton Effacer ?"
+        },
+        "screen.screens.clear-all": {
+            "en": "How do I clear everything off the screen at once?",
+            "text": "Comment tout effacer de l'écran d'un coup ?"
+        },
+        "screen.screens.show-hide-screen": {
+            "en": "How do I show or hide the screen?",
+            "text": "Comment afficher ou masquer l'écran ?"
+        },
+        "screen.screens.stop-preview-rendering": {
+            "en": "How do I stop the mini screen drawing so a slow computer runs faster?",
+            "text": "Comment arrêter le rendu du mini-écran pour qu'un ordinateur lent aille plus vite ?"
+        },
+        "screen.screens.hide-all-screens": {
+            "en": "How do I hide every screen right now?",
+            "text": "Comment masquer tous les écrans tout de suite ?"
+        },
+        "screen.screens.mini-screen": {
+            "en": "What is the little preview on the right?",
+            "text": "Qu'est-ce que le petit aperçu à droite ?"
+        },
+        "screen.screens.mini-screen-wallpaper": {
+            "en": "Why does the preview show my desktop wallpaper?",
+            "text": "Pourquoi l'aperçu montre-t-il mon fond d'écran ?"
+        },
+        "screen.screens.choose-display": {
+            "en": "How do I choose which display the screen goes to?",
+            "text": "Comment choisir le moniteur sur lequel s'affiche l'écran ?"
+        },
+        "screen.screens.add-screen": {
+            "en": "How do I use more than one screen?",
+            "text": "Comment utiliser plusieurs écrans ?"
+        },
+        "screen.screens.sync-screens": {
+            "en": "How do I make two screens show the same thing?",
+            "text": "Comment faire afficher la même chose à deux écrans ?"
+        },
+        "screen.screens.screen-to-one": {
+            "en": "How do I send something to just one screen?",
+            "text": "Comment envoyer quelque chose sur un seul écran ?"
+        },
+        "screen.screens.transitions": {
+            "en": "How do I change the fade between slides?",
+            "text": "Comment changer le fondu entre les diapositives ?"
+        },
+        "screen.screens.transition-per-slide": {
+            "en": "Can one song or one slide have its own transition?",
+            "text": "Un chant ou une diapositive peut-il avoir sa propre transition ?"
+        },
+        "screen.screens.transition-per-background": {
+            "en": "How do I make pictures fade but videos zoom in?",
+            "text": "Comment faire apparaître les images en fondu mais les vidéos en zoom ?"
+        },
+        "screen.screens.transition-per-overlay": {
+            "en": "How do I give the countdown a different transition from the slides?",
+            "text": "Comment donner au compte à rebours une transition différente de celle des diapositives ?"
+        },
+        "screen.screens.stage-sets-transition-none": {
+            "en": "Why did the slide transition turn off when I changed the stage number?",
+            "text": "Pourquoi la transition des diapositives s'est-elle désactivée quand j'ai changé le numéro de scène ?"
+        },
+        "screen.screens.lock-screen": {
+            "en": "What does the lock on the screen preview do?",
+            "text": "À quoi sert le cadenas sur l'aperçu de l'écran ?"
+        },
+        "screen.screens.clear-one-kind": {
+            "en": "How do I take the background off but leave the words up?",
+            "text": "Comment retirer l'arrière-plan en laissant le texte affiché ?"
+        },
+        "screen.screens.clear-shortcuts": {
+            "en": "What do the F6 to F10 keys do?",
+            "text": "À quoi servent les touches F6 à F10 ?"
+        },
+        "screen.screens.unselect-screen": {
+            "en": "How do I stop one screen receiving content without deleting it?",
+            "text": "Comment empêcher un écran de recevoir du contenu sans le supprimer ?"
+        },
+        "screen.screens.delete-screen": {
+            "en": "How do I remove a screen I no longer need?",
+            "text": "Comment supprimer un écran dont je n'ai plus besoin ?"
+        },
+        "screen.screens.line-sync": {
+            "en": "How do I line up two Bible versions verse by verse on the screen?",
+            "text": "Comment aligner deux versions de la Bible verset par verset à l'écran ?"
+        },
+        "screen.screens.drag-to-screen": {
+            "en": "How do I send one slide to one screen by dragging it?",
+            "text": "Comment envoyer une diapositive sur un écran en la faisant glisser ?"
+        },
+        "screen.screens.screen-locked-message": {
+            "en": "Why does it say Screen Manager is locked?",
+            "text": "Pourquoi est-il indiqué que le gestionnaire d'écran est verrouillé ?"
+        },
+        "screen.screen-mirror.connect-guest-computer": {
+            "en": "How do I show the screen on another computer?",
+            "text": "Comment afficher l'écran sur un autre ordinateur ?"
+        },
+        "screen.screen-mirror.enable-screen-mirror-host": {
+            "en": "How do I let another computer connect to this one?",
+            "text": "Comment permettre à un autre ordinateur de se connecter à celui-ci ?"
+        },
+        "screen.screen-mirror.connected-guests-header": {
+            "en": "Where can I see which guest computers are connected?",
+            "text": "Où voir quels ordinateurs invités sont connectés ?"
+        },
+        "screen.screen-mirror.guest-camera-stream": {
+            "en": "How do I use a camera from a connected guest computer?",
+            "text": "Comment utiliser la caméra d'un ordinateur invité connecté ?"
+        },
+        "screen.screen-mirror.open-screen-mirror-to-internet": {
+            "en": "How do I let a computer outside this network connect over the internet?",
+            "text": "Comment permettre à un ordinateur hors de ce réseau de se connecter par Internet ?"
+        },
+        "screen.screen-mirror.share-screen-mirror-address": {
+            "en": "How do I send the host address to the guest computer?",
+            "text": "Comment envoyer l'adresse de l'hôte à l'ordinateur invité ?"
+        },
+        "screen.screen-mirror.fill-address-from-qr-or-paste": {
+            "en": "How do I fill in the host address from a QR code or a copied link?",
+            "text": "Comment remplir l'adresse de l'hôte à partir d'un code QR ou d'un lien copié ?"
+        },
+        "screen.screen-mirror.connect-several-hosts": {
+            "en": "Can this computer show screens from more than one host?",
+            "text": "Cet ordinateur peut-il afficher les écrans de plusieurs hôtes ?"
+        },
+        "screen.screen-mirror.guest-from-internet-or-local": {
+            "en": "How can I tell which guests are connected from the internet?",
+            "text": "Comment savoir quels invités sont connectés par Internet ?"
+        },
+        "screen.virtual-displays.make-virtual-display": {
+            "en": "How do I make a virtual display?",
+            "text": "Comment créer un affichage virtuel ?"
+        },
+        "screen.virtual-displays.watch-on-phone-or-tv": {
+            "en": "How do I watch the screen on a phone or a TV without a cable?",
+            "text": "Comment regarder l'écran sur un téléphone ou une TV sans câble ?"
+        },
+        "screen.virtual-displays.virtual-display-in-media-player": {
+            "en": "How do I get the screen into VLC or OBS as a video?",
+            "text": "Comment récupérer l'écran dans VLC ou OBS sous forme de vidéo ?"
+        },
+        "screen.virtual-displays.let-devices-watch-virtual-display": {
+            "en": "Why can other devices not open the virtual display's address?",
+            "text": "Pourquoi les autres appareils n'arrivent-ils pas à ouvrir l'adresse de l'affichage virtuel ?"
+        },
+        "screen.virtual-displays.who-watches-virtual-display": {
+            "en": "Who is watching my virtual display?",
+            "text": "Qui regarde mon affichage virtuel ?"
+        },
+        "screen.virtual-displays.virtual-display-page-buttons": {
+            "en": "How do I get the buttons back on the virtual display page?",
+            "text": "Comment faire réapparaître les boutons sur la page de l'affichage virtuel ?"
+        },
+        "screen.virtual-displays.virtual-display-after-restart": {
+            "en": "Will my virtual display still show after the app restarts?",
+            "text": "Mon affichage virtuel s'affichera-t-il encore après le redémarrage de l'application ?"
+        },
+        "screen.virtual-displays.virtual-display-viewer-still-listed": {
+            "en": "Why is a phone that stopped watching still under Watching now?",
+            "text": "Pourquoi un téléphone qui ne regarde plus est-il encore dans Spectateurs actuels ?"
+        },
+        "screen.virtual-displays.let-viewer-interact": {
+            "en": "How do I let a phone watching the virtual display scroll or pick verses?",
+            "text": "Comment permettre à un téléphone qui regarde l'affichage virtuel de faire défiler ou de choisir des versets ?"
+        },
+        "screen.virtual-displays.stop-virtual-viewer-access": {
+            "en": "Does Disconnect immediately stop a viewer from receiving my screen or controlling it?",
+            "text": "Déconnecter empêche-t-il immédiatement un spectateur de recevoir mon écran ou de le contrôler ?"
+        },
+        "screen.virtual-displays.which-virtual-display-address": {
+            "en": "Which address do I give people to watch the virtual display?",
+            "text": "Quelle adresse dois-je donner pour regarder l'affichage virtuel ?"
+        },
+        "screen.virtual-displays.virtual-display-https": {
+            "en": "How do I give the virtual display an https address?",
+            "text": "Comment donner une adresse https à l'affichage virtuel ?"
+        },
+        "screen.virtual-displays.cast-virtual-display-from-page": {
+            "en": "How do I cast the virtual display to a TV from my phone?",
+            "text": "Comment diffuser l'affichage virtuel sur une TV depuis mon téléphone ?"
+        },
+        "screen.virtual-displays.virtual-display-choose-camera": {
+            "en": "How do I share my phone's back camera with the virtual display?",
+            "text": "Comment partager la caméra arrière de mon téléphone avec l'affichage virtuel ?"
+        },
+        "screen.virtual-displays.viewer-hides-screen": {
+            "en": "Can someone watching on a phone hide the screen with its ✕?",
+            "text": "Quelqu'un qui regarde sur un téléphone peut-il masquer l'écran avec son ✕ ?"
+        },
+        "screen.virtual-displays.virtual-display-sound": {
+            "en": "Why is a screen on a virtual display silent on this computer?",
+            "text": "Pourquoi un écran sur un affichage virtuel est-il muet sur cet ordinateur ?"
+        },
+        "settings.general.open-settings": {
+            "en": "Where are the settings?",
+            "text": "Où sont les paramètres ?"
+        },
+        "settings.general.change-language": {
+            "en": "How do I change the app's language?",
+            "text": "Comment changer la langue de l'application ?"
+        },
+        "settings.general.language-across-data-folders": {
+            "en": "Will the app keep my language when I switch to another data folder?",
+            "text": "L'application gardera-t-elle ma langue si je change de dossier de données ?"
+        },
+        "settings.general.change-theme": {
+            "en": "How do I switch between light and dark?",
+            "text": "Comment passer du thème clair au thème sombre ?"
+        },
+        "settings.general.change-font": {
+            "en": "How do I change the font the app's own windows use?",
+            "text": "Comment changer la police des fenêtres de l'application ?"
+        },
+        "settings.paths.change-folders": {
+            "en": "How do I change where my documents and songs are stored?",
+            "text": "Comment changer l'endroit où sont enregistrés mes documents et mes chants ?"
+        },
+        "settings.paths.repair-links": {
+            "en": "My pictures and videos are missing after moving my data folder to another computer. How do I fix them?",
+            "text": "Mes images et mes vidéos ont disparu après le transfert de mon dossier de données sur un autre ordinateur. Comment les réparer ?"
+        },
+        "settings.paths.switch-data-folder": {
+            "en": "How do I switch back to a data folder I used before?",
+            "text": "Comment revenir à un dossier de données que j'utilisais avant ?"
+        },
+        "settings.paths.no-data-folder": {
+            "en": "Why does the app show nothing but \"No Parent Directory Selected\"?",
+            "text": "Pourquoi l'application n'affiche-t-elle que « Aucun dossier parent sélectionné » ?"
+        },
+        "settings.paths.why-data-folder": {
+            "en": "Why do I need to choose a data folder?",
+            "text": "Pourquoi dois-je choisir un dossier de données ?"
+        },
+        "settings.paths.use-default-data-folder": {
+            "en": "How do I use the suggested data folder?",
+            "text": "Comment utiliser le dossier de données suggéré ?"
+        },
+        "settings.paths.data-folder-on-drive": {
+            "en": "How do I use a data folder on a USB stick or another drive?",
+            "text": "Comment utiliser un dossier de données sur une clé USB ou un autre disque ?"
+        },
+        "settings.paths.copy-data-folder": {
+            "en": "How do I copy my data folder to a USB stick or another drive?",
+            "text": "Comment copier mon dossier de données sur une clé USB ou un autre disque ?"
+        },
+        "settings.paths.data-folder-stick-missing": {
+            "en": "My data folder is on a USB stick that is not plugged in. What do I do?",
+            "text": "Mon dossier de données est sur une clé USB qui n'est pas branchée. Que faire ?"
+        },
+        "settings.paths.data-folder-on-desktop": {
+            "en": "How do I move my data folder off the Desktop from Settings?",
+            "text": "Comment déplacer mon dossier de données hors du Bureau depuis les Paramètres ?"
+        },
+        "settings.paths.assistant-from-settings": {
+            "en": "How do I ask the assistant for help from Settings?",
+            "text": "Comment demander de l'aide à l'assistant depuis les Paramètres ?"
+        },
+        "settings.paths.move-data-folder-off-desktop": {
+            "en": "Why does the app ask me to move my data folder off the Desktop?",
+            "text": "Pourquoi l’application me demande-t-elle de déplacer mon dossier de données hors du Bureau ?"
+        },
+        "settings.general.reset-settings": {
+            "en": "What do the reset buttons in Settings do?",
+            "text": "À quoi servent les boutons de réinitialisation dans les Paramètres ?"
+        },
+        "settings.general.export-settings": {
+            "en": "How do I move my settings to another computer?",
+            "text": "Comment transférer mes paramètres sur un autre ordinateur ?"
+        },
+        "settings.general.import-settings": {
+            "en": "How do I bring in settings exported from another computer?",
+            "text": "Comment importer des paramètres exportés depuis un autre ordinateur ?"
+        },
+        "settings.bible-settings.download-bible": {
+            "en": "How do I download another Bible version?",
+            "text": "Comment télécharger une autre version de la Bible ?"
+        },
+        "settings.bible-settings.enable-bible": {
+            "en": "How do I turn a downloaded Bible on or off?",
+            "text": "Comment activer ou désactiver une Bible téléchargée ?"
+        },
+        "settings.bible-settings.import-xml": {
+            "en": "How do I import a Bible XML file?",
+            "text": "Comment importer un fichier XML de Bible ?"
+        },
+        "settings.bible-settings.import-bible-ask-language": {
+            "en": "Can you install a Bible for me?",
+            "text": "Pouvez-vous installer une Bible pour moi ?"
+        },
+        "settings.bible-settings.import-bible-kjv": {
+            "en": "Do I need the KJV Bible before importing another one?",
+            "text": "Ai-je besoin de la Bible KJV avant d'en importer une autre ?"
+        },
+        "settings.bible-settings.import-bible-source": {
+            "en": "Where do the Bibles the assistant installs come from?",
+            "text": "D'où viennent les Bibles que l'assistant installe ?"
+        },
+        "settings.bible-settings.remove-bible-xml": {
+            "en": "How do I remove a Bible translation I installed?",
+            "text": "Comment supprimer une traduction de la Bible que j'ai installée ?"
+        },
+        "settings.bible-settings.bible-xml-source": {
+            "en": "Where did a Bible I imported come from?",
+            "text": "D'où vient une Bible que j'ai importée ?"
+        },
+        "settings.bible-settings.bible-copyright": {
+            "en": "Where do I find a Bible's publisher and copyright?",
+            "text": "Où trouver l'éditeur et les droits d'auteur d'une Bible ?"
+        },
+        "settings.ai.ai-key": {
+            "en": "How do I give the assistant an API key?",
+            "text": "Comment donner une clé API à l'assistant ?"
+        },
+        "settings.ai.custom-ai-server": {
+            "en": "How do I use my own LM Studio or Ollama with the assistant?",
+            "text": "Comment utiliser mon propre LM Studio ou Ollama avec l'assistant ?"
+        },
+        "settings.ai.enable-ai": {
+            "en": "How do I turn the AI features on or off?",
+            "text": "Comment activer ou désactiver les fonctionnalités d'IA ?"
+        },
+        "settings.ai.auto-play-bible-audio": {
+            "en": "Where do I turn automatic Bible audio on?",
+            "text": "Où activer l'audio biblique automatique ?"
+        },
+        "settings.ai.fold-settings-section": {
+            "en": "How do I fold or open a section in Settings?",
+            "text": "Comment replier ou déplier une section des Paramètres ?"
+        },
+        "settings.others.songselect-signin": {
+            "en": "How do I sign in to CCLI SongSelect?",
+            "text": "Comment me connecter à CCLI SongSelect ?"
+        },
+        "settings.others.extra-binaries": {
+            "en": "What are the Extra Binaries and do I need them?",
+            "text": "Que sont les Binaires supplémentaires et en ai-je besoin ?"
+        },
+        "troubleshooting.screen.nothing-showing": {
+            "en": "Nothing is showing on the projector — what do I check?",
+            "text": "Rien ne s'affiche sur le projecteur : que dois-je vérifier ?"
+        },
+        "troubleshooting.screen.two-screens-differ": {
+            "en": "My two screens are showing different things — why?",
+            "text": "Mes deux écrans affichent des choses différentes : pourquoi ?"
+        },
+        "troubleshooting.screen.verse-not-stepping": {
+            "en": "The verse will not move to the next one from the Bible Reader — what do I do?",
+            "text": "Le verset ne passe pas au suivant depuis le Lecteur biblique : que faire ?"
+        },
+        "troubleshooting.settings.language-stuck": {
+            "en": "The app is in a language I cannot read — how do I change it back?",
+            "text": "L'application est dans une langue que je ne sais pas lire : comment revenir à la mienne ?"
+        },
+        "troubleshooting.settings.apply-settings": {
+            "en": "Why has my setting not taken effect yet?",
+            "text": "Pourquoi mon réglage n'est-il pas encore pris en compte ?"
+        },
+        "troubleshooting.bible.bible-key-taken": {
+            "en": "It says the Bible key is already taken — what do I do?",
+            "text": "On me dit que la clé de Bible est déjà prise : que faire ?"
+        },
+        "troubleshooting.bible.lookup-language": {
+            "en": "Why are the names in English when my Bible is not?",
+            "text": "Pourquoi les noms sont-ils en anglais alors que ma Bible ne l'est pas ?"
+        },
+        "troubleshooting.bible.restore-kjv": {
+            "en": "I deleted a Bible by mistake — how do I get it back?",
+            "text": "J'ai supprimé une Bible par erreur : comment la récupérer ?"
+        },
+        "troubleshooting.bible.reference-loses-verse": {
+            "en": "I typed John 3:16 in the Bible Reader and it only opened the chapter — why?",
+            "text": "J'ai tapé Jean 3:16 dans le Lecteur biblique et seul le chapitre s'est ouvert : pourquoi ?"
+        },
+        "troubleshooting.accounts.songselect-fails": {
+            "en": "SongSelect will not connect — what do I check?",
+            "text": "SongSelect ne se connecte pas : que dois-je vérifier ?"
+        },
+        "troubleshooting.media.download-needs-binaries": {
+            "en": "It says I need to install something before downloading a video — why?",
+            "text": "On me demande d'installer quelque chose avant de télécharger une vidéo : pourquoi ?"
+        },
+        "troubleshooting.media.download-left-part-file": {
+            "en": "A download failed and left a temp file behind — what do I do with it?",
+            "text": "Un téléchargement a échoué et a laissé un fichier temporaire : que dois-je en faire ?"
+        },
+        "troubleshooting.sharing.wrong-password": {
+            "en": "It says the password is wrong on a file I was sent — what now?",
+            "text": "On me dit que le mot de passe est faux pour un fichier qu'on m'a envoyé : que faire ?"
+        },
+        "troubleshooting.layout.panel-disappeared": {
+            "en": "A panel has disappeared — how do I get it back?",
+            "text": "Un panneau a disparu : comment le récupérer ?"
+        },
+        "troubleshooting.layout.panel-has-no-height": {
+            "en": "A panel is open but there is nothing in it — how do I get its height back?",
+            "text": "Un panneau est ouvert mais on n'y voit rien : comment lui rendre sa hauteur ?"
+        },
+        "troubleshooting.editing.slide-size": {
+            "en": "Why does my slide look the wrong shape on the screen?",
+            "text": "Pourquoi ma diapositive n'a-t-elle pas la bonne forme à l'écran ?"
+        },
+        "troubleshooting.editing.website-not-live": {
+            "en": "Why does my web slide look frozen in the editor?",
+            "text": "Pourquoi ma diapositive web semble-t-elle figée dans l'éditeur ?"
+        },
+        "troubleshooting.editing.unsaved-edit-on-screen": {
+            "en": "The projector is showing an edit I never saved — how is that possible?",
+            "text": "Le projecteur affiche une modification que je n'ai jamais enregistrée : comment est-ce possible ?"
+        },
+        "troubleshooting.editing.pptx-first-slide-blank": {
+            "en": "Why is the first slide of my PowerPoint blank?",
+            "text": "Pourquoi la première diapositive de mon PowerPoint est-elle vide ?"
+        },
+        "troubleshooting.running-order.flow-drag-between": {
+            "en": "I cannot drag a line from one running order into another — why not?",
+            "text": "Je n'arrive pas à faire glisser une ligne d'un déroulé à un autre : pourquoi ?"
+        },
+        "troubleshooting.running-order.flow-stopped-advancing": {
+            "en": "The running order stopped advancing by itself — what happened?",
+            "text": "Le déroulé a cessé d'avancer tout seul : que s'est-il passé ?"
+        },
+        "troubleshooting.reporting.report-a-problem": {
+            "en": "Something in the app is broken — how do I report it?",
+            "text": "Quelque chose ne marche pas dans l'application : comment le signaler ?"
+        },
+        "troubleshooting.reporting.report-how-can-i": {
+            "en": "How can I report a problem?",
+            "text": "Comment puis-je signaler un problème ?"
+        },
+        "troubleshooting.reporting.report-attach-file": {
+            "en": "Can I send a picture or a PDF with a problem report?",
+            "text": "Puis-je joindre une image ou un PDF à un signalement de problème ?"
+        },
+        "troubleshooting.reporting.report-kept-for-later": {
+            "en": "My report says the server is not answering — is it lost?",
+            "text": "Mon signalement dit que le serveur ne répond pas : est-il perdu ?"
+        },
+        "troubleshooting.reporting.report-where-saved": {
+            "en": "Where does the report go when I press Send report?",
+            "text": "Où va le signalement quand j'appuie sur Envoyer le rapport ?"
+        },
+        "troubleshooting.reporting.report-email-it": {
+            "en": "How do I email a bug report to the developers?",
+            "text": "Comment envoyer un rapport de bug par e-mail aux développeurs ?"
+        },
+        "troubleshooting.reporting.assistant-out-of-credit": {
+            "en": "The assistant says my AI account is out of credit — what do I do?",
+            "text": "L'assistant dit que mon compte IA n'a plus de crédit : que faire ?"
+        },
+        "troubleshooting.reporting.assistant-server-down": {
+            "en": "My own AI server is switched off — will the assistant still answer?",
+            "text": "Mon propre serveur d’IA est éteint — l’assistant répondra-t-il quand même ?"
+        },
+        "troubleshooting.reporting.assistant-key-refused": {
+            "en": "The assistant says my API key was refused — where do I fix it?",
+            "text": "L'assistant dit que ma clé API a été refusée : où la corriger ?"
+        },
+        "web-editor.editing.edit-web-item": {
+            "en": "How do I change the address of a web background?",
+            "text": "Comment changer l'adresse d'un arrière-plan web ?"
+        },
+        "web-editor.editing.web-title": {
+            "en": "How do I give a web background a name?",
+            "text": "Comment donner un nom à un arrière-plan web ?"
+        },
+        "web-editor.editing.save-web-item": {
+            "en": "How do I save the web background I am editing?",
+            "text": "Comment enregistrer l'arrière-plan web que je modifie ?"
+        },
+        "web-editor.using-it.present-web-background": {
+            "en": "How do I show this web page as the background?",
+            "text": "Comment afficher cette page web en arrière-plan ?"
+        },
+        "common.changes.add-a-slide": {
+            "en": "Add a slide to my document that says ...",
+            "text": "Ajoute une diapositive à mon document qui dit ..."
+        },
+        "common.changes.save-a-passage": {
+            "en": "Save John 3:16 to my Bibles list",
+            "text": "Enregistre John 3:16 dans ma liste de Bibles"
+        },
+        "common.changes.write-a-note": {
+            "en": "Write a Bible note about ...",
+            "text": "Écris une note biblique sur ..."
+        },
+        "common.status.find-a-control": {
+            "en": "Where is the button for ...",
+            "text": "Où est le bouton pour ..."
+        },
+        "presenter.making.song-from-title": {
+            "en": "Create a lyric file for song \"Amazing Grace\"",
+            "text": "Crée un fichier de paroles pour le chant \"Amazing Grace\""
+        },
+        "presenter.making.song-from-link": {
+            "en": "Create a lyric file from https://example.com/lyric/amazing_grace",
+            "text": "Crée un fichier de paroles depuis https://example.com/lyric/amazing_grace"
+        },
+        "presenter.bible.present-verse-for-me": {
+            "en": "Put John 3:16 on the screen",
+            "text": "Mets John 3:16 à l’écran"
+        },
+        "settings.bible-settings.import-xml-url": {
+            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
+            "text": "Importer une Bible depuis l’adresse xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml"
+        },
+        "settings.bible-settings.import-bible-language": {
+            "en": "Import a Bible in \"Khmer\"",
+            "text": "Importer une Bible en \"French\""
+        }
+    }
+}

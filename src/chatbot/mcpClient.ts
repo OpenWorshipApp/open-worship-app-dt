@@ -6,6 +6,12 @@
 // except that session id.
 
 import appProvider from '../server/appProvider';
+import { tran } from './chatTranHelpers';
+import {
+    getCurrentWindowAim,
+    toAimedToolArgs,
+    type WindowAimType,
+} from './windowAimHelpers';
 
 export type McpToolType = {
     name: string;
@@ -53,9 +59,11 @@ export class ToolHostError extends Error {
 
     constructor(hostStatus: number) {
         super(
-            "The app's own help service did not respond. Try again in a " +
-                'moment; if it keeps happening, restart the app with View → ' +
-                'Relaunch in the main window.',
+            tran(
+                "The app's own help service did not respond. Try again in a " +
+                    'moment; if it keeps happening, restart the app with View → ' +
+                    'Relaunch in the main window.',
+            ),
         );
         this.name = 'ToolHostError';
         this.hostStatus = hostStatus;
@@ -172,24 +180,28 @@ export async function listTools(
     return result?.tools ?? [];
 }
 
-export async function callTool(
+async function postToolCall(
     name: string,
-    args: any = {},
-    signal?: AbortSignal | null,
+    args: any,
+    signal: AbortSignal | null | undefined,
+    aim: WindowAimType | null,
 ) {
     await ensureSession(signal);
     requestId += 1;
-    const result = await post(
+    return await post(
         {
             jsonrpc: '2.0',
             id: requestId,
             method: 'tools/call',
-            params: { name, arguments: args },
+            params: { name, arguments: toAimedToolArgs(name, args, aim) },
         },
         false,
         signal,
     );
-    const text = (result?.content ?? [])
+}
+
+function toToolText(result: any) {
+    return (result?.content ?? [])
         .filter((item: any) => {
             return item?.type === 'text';
         })
@@ -197,10 +209,79 @@ export async function callTool(
             return item.text;
         })
         .join('\n');
+}
+
+export async function callTool(
+    name: string,
+    args: any = {},
+    signal?: AbortSignal | null,
+    // The window the call works with when the tab has one of its own chosen
+    // (`windowAimHelpers.ts`). Left out, the tab in front's; a model's answer
+    // passes the one it was asked with, `null` included.
+    aim: WindowAimType | null = getCurrentWindowAim(),
+) {
+    const result = await postToolCall(name, args, signal, aim);
+    const text = toToolText(result);
     if (result?.isError) {
         throw new Error(text || 'The tool call failed');
     }
     return text;
+}
+
+/**
+ * The PICTURE a tool answers with, as a data URL: the 📷 of a window of its
+ * own chosen in the window picker goes through `owa_screenshot`, the one way
+ * to photograph a window by its id. `callTool` keeps the words only.
+ */
+export async function callToolPicture(
+    name: string,
+    args: any = {},
+    signal?: AbortSignal | null,
+    aim: WindowAimType | null = getCurrentWindowAim(),
+) {
+    const result = await postToolCall(name, args, signal, aim);
+    const image = (result?.content ?? []).find((item: any) => {
+        return item?.type === 'image' && typeof item.data === 'string';
+    });
+    if (result?.isError || image === undefined) {
+        throw new Error(
+            toToolText(result) || 'The window did not return a picture',
+        );
+    }
+    return `data:${image.mimeType ?? 'image/png'};base64,${image.data}`;
+}
+
+/**
+ * A tool's words AND the pictures it answered with -- `owa_resource_file`
+ * reads a PDF as pictures of its pages -- each picture's base64 apart from
+ * its media type, the shape a model loop hands a provider.
+ */
+export async function callToolWithPictures(
+    name: string,
+    args: any = {},
+    signal?: AbortSignal | null,
+    aim: WindowAimType | null = getCurrentWindowAim(),
+) {
+    const result = await postToolCall(name, args, signal, aim);
+    const text = toToolText(result);
+    if (result?.isError) {
+        throw new Error(text || 'The tool call failed');
+    }
+    const pictures = (result?.content ?? [])
+        .filter((item: any) => {
+            return (
+                item?.type === 'image' &&
+                typeof item.data === 'string' &&
+                /^image\/[a-z+]+$/i.test(String(item.mimeType ?? 'image/png'))
+            );
+        })
+        .map((item: any) => {
+            return {
+                mediaType: String(item.mimeType ?? 'image/png').toLowerCase(),
+                data: String(item.data),
+            };
+        });
+    return { text, pictures };
 }
 
 export function parseToolJson(text: string) {

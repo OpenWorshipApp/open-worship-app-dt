@@ -30,6 +30,7 @@
  * Run:  node docs/scripts/build-manual.mjs
  */
 
+import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -380,3 +381,29 @@ console.log(`✓ Parsed ${workflows.length} workflows from user-workflows.md`);
 console.log(`✓ Wrote manual pages under ${relative(REPO, OUT_DIR).replace(/\\/g, '/')}/`);
 console.log(`✓ Wrote sidebar: ${relative(REPO, join(VITEPRESS_DIR, 'sidebar.generated.json')).replace(/\\/g, '/')}`);
 console.log(`✓ Wrote manifest: ${relative(REPO, MANIFEST_PATH).replace(/\\/g, '/')} (${totalVerify} distinct matrix rows referenced)`);
+
+// ---------------------------------------------------------------------------
+// 5. The app's own copy of these pages, when there is a built app to read it
+// ---------------------------------------------------------------------------
+//
+// The help window answers from electron-build/knowledge/, which is built FROM
+// these pages -- and `npm run dev` builds it once, when it starts. So a page
+// regenerated here was not what the running app answered from until the next
+// start: on 2026-10-16 two manual fixes marked done that morning (the
+// taskbar's way into the help, the icon class names taken out of the steps)
+// were still the old words in the user's app that afternoon, and nothing said
+// so (EC-279). Rebuilt here whenever a built app is there to read it -- the
+// script clears only knowledge/, and a running app reads it per search, so
+// nothing restarts. A checkout with no built app (the docs site's own build)
+// gets none.
+if (existsSync(join(REPO, 'electron-build'))) {
+    const knowledge = spawnSync(
+        process.execPath,
+        [join(REPO, 'extra-work', 'build-knowledge.mjs')],
+        { cwd: REPO, stdio: 'inherit' },
+    );
+    if (knowledge.status !== 0) {
+        console.error('✗ The app’s knowledge was not rebuilt from these pages.');
+        process.exitCode = knowledge.status ?? 1;
+    }
+}

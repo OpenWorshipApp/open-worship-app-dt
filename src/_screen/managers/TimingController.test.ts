@@ -64,3 +64,23 @@ test('formats time as 12 hour with am/pm period', () => {
     pmTiming.stop();
     expect(pmTiming.divAmPm?.textContent).toBe('');
 });
+
+test('ticks once a second on the second, never per animation frame, until paused', () => {
+    const frameSpy = vi.spyOn(globalThis, 'requestAnimationFrame');
+    const timing = new TimingController(createTimeContainer(), 12, true);
+    timing.start();
+    expect(timing.divSecond.textContent).toBe('12');
+    // A second later, the digits moved by one; nothing asked for frames.
+    vi.advanceTimersByTime(1_020);
+    expect(timing.divSecond.textContent).toBe('13');
+    vi.advanceTimersByTime(1_000);
+    expect(timing.divSecond.textContent).toBe('14');
+    expect(frameSpy).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(1);
+
+    timing.pause();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.advanceTimersByTime(5_000);
+    expect(timing.divSecond.textContent).toBe('14');
+    frameSpy.mockRestore();
+});

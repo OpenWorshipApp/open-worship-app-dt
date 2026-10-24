@@ -32,6 +32,7 @@ vi.mock('./electronHelpers', () => ({
 import {
     findUserDataPathArg,
     initAppUserModelId,
+    initLaunchTask,
     initSecondInstance,
     initUserTasks,
     relaunchApp,
@@ -43,6 +44,7 @@ function genAppController() {
     const mainWin = createMockBrowserWindow();
     return {
         mainWin,
+        openChatbotFromTaskbar: vi.fn(),
         settingManager: {
             restoreMainBounds: vi.fn(),
         },
@@ -56,9 +58,11 @@ function getSecondInstanceHandler() {
     return call?.[1] as (...args: any[]) => void;
 }
 
-function getUserTask() {
+function getUserTask(title = 'Reset Position and Size') {
     const [tasks] = electronMockState.app.setUserTasks.mock.calls[0];
-    return tasks[0];
+    return tasks.find((task: any) => {
+        return task.title === title;
+    });
 }
 
 describe('taskbarHelpers', () => {
@@ -110,7 +114,7 @@ describe('taskbarHelpers', () => {
     });
 
     test('claims the packaged app id so the jump list attaches', () => {
-        initAppUserModelId();
+        initAppUserModelId('/mock-user-data');
 
         expect(electronMockState.app.setAppUserModelId).toHaveBeenCalledWith(
             'app.openworship.desktop',
@@ -122,8 +126,8 @@ describe('taskbarHelpers', () => {
         // the reset task below disappear from the jump list.
         platformFlags.isWindowsStore = true;
 
-        initAppUserModelId();
-        initUserTasks();
+        initAppUserModelId('/mock-user-data');
+        initUserTasks(true);
 
         expect(electronMockState.app.setAppUserModelId).not.toHaveBeenCalled();
         expect(electronMockState.app.setUserTasks).toHaveBeenCalledTimes(1);
@@ -131,26 +135,63 @@ describe('taskbarHelpers', () => {
 
     test('keeps a separate taskbar identity in dev', () => {
         platformFlags.isDev = true;
+        electronMockState.app.getPath.mockReturnValue('/mock-user-data-dev');
 
-        initAppUserModelId();
+        initAppUserModelId('/mock-user-data');
 
         expect(electronMockState.app.setAppUserModelId).toHaveBeenCalledWith(
             'app.openworship.desktop.dev',
         );
     });
 
+    // A task click starts a copy with no environment: not "dev" itself, on
+    // the dev folder. It must join the dev app's group, not the installed's.
+    test('names the dev folder as dev whoever opens it', () => {
+        electronMockState.app.getPath.mockReturnValue('/mock-user-data-dev');
+
+        initAppUserModelId('/mock-user-data');
+
+        expect(electronMockState.app.setAppUserModelId).toHaveBeenCalledWith(
+            'app.openworship.desktop.dev',
+        );
+    });
+
+    // The jump list belongs to the identity and the last to set it wins: a
+    // scratch profile started after the user's own dev app took it over, and
+    // the user's App Help started an app on the scratch folder.
+    test('gives a profile of its own an identity of its own', () => {
+        platformFlags.isDev = true;
+        const { getPath, setAppUserModelId } = electronMockState.app;
+        const idList = [
+            '/repo/release/scratch-lang2',
+            '/REPO/release/Scratch-Lang2',
+            '/repo/release/scratch-lang3',
+        ].map((userDataPath) => {
+            getPath.mockReturnValue(userDataPath);
+            initAppUserModelId('/mock-user-data');
+            return setAppUserModelId.mock.calls.at(-1)?.[0];
+        });
+
+        expect(idList[0]).toMatch(
+            /^app\.openworship\.desktop\.dev\.[0-9a-f]{8}$/,
+        );
+        // The same folder whatever its case (Windows), another folder not.
+        expect(idList[1]).toBe(idList[0]);
+        expect(idList[2]).not.toBe(idList[0]);
+    });
+
     test('does nothing off Windows', () => {
         platformFlags.isWindows = false;
 
-        initAppUserModelId();
-        initUserTasks();
+        initAppUserModelId('/mock-user-data');
+        initUserTasks(true);
 
         expect(electronMockState.app.setAppUserModelId).not.toHaveBeenCalled();
         expect(electronMockState.app.setUserTasks).not.toHaveBeenCalled();
     });
 
     test('adds the reset task pointing back at this data dir', () => {
-        initUserTasks();
+        initUserTasks(false);
 
         const [tasks] = electronMockState.app.setUserTasks.mock.calls[0];
         expect(tasks).toHaveLength(1);
@@ -164,7 +205,7 @@ describe('taskbarHelpers', () => {
     test('passes the app path too in dev, where execPath is electron itself', () => {
         platformFlags.isDev = true;
 
-        initUserTasks();
+        initUserTasks(false);
 
         expect(getUserTask().arguments).toBe(
             '/mock-app --owa-user-data-path=/mock-user-data ' +
@@ -175,17 +216,106 @@ describe('taskbarHelpers', () => {
     test('quotes a data dir containing spaces', () => {
         electronMockState.app.getPath.mockReturnValue('/mock user data');
 
-        initUserTasks();
+        initUserTasks(false);
 
         expect(getUserTask().arguments).toBe(
             '"--owa-user-data-path=/mock user data" --owa-reset-window-bounds',
         );
     });
 
+    // Help -> App Help (Chatbot), from the taskbar icon too.
+    test('lists App Help first, with the AI switch on, pointing at this data dir', () => {
+        initUserTasks(true);
+
+        const [tasks] = electronMockState.app.setUserTasks.mock.calls[0];
+        expect(
+            tasks.map((task: any) => {
+                return task.title;
+            }),
+        ).toEqual(['App Help (Chatbot)', 'Reset Position and Size']);
+        expect(getUserTask('App Help (Chatbot)').arguments).toBe(
+            '--owa-user-data-path=/mock-user-data --owa-open-chatbot',
+        );
+        expect(getUserTask('App Help (Chatbot)').program).toBe(
+            process.execPath,
+        );
+    });
+
+    test('opens the help in the running app when the task asks', () => {
+        const appController = genAppController();
+        appController.mainWin.isMinimized.mockReturnValue(true);
+
+        initSecondInstance(appController as any, true);
+        getSecondInstanceHandler()(
+            {},
+            ['electron.exe', '--owa-open-chatbot'],
+            '/cwd',
+            {},
+        );
+
+        // The main window comes up first: it asks the caution.
+        expect(appController.mainWin.restore).toHaveBeenCalledTimes(1);
+        expect(appController.openChatbotFromTaskbar).toHaveBeenCalledTimes(1);
+        expect(
+            appController.mainWin.focus.mock.invocationCallOrder[0],
+        ).toBeLessThan(
+            appController.openChatbotFromTaskbar.mock.invocationCallOrder[0],
+        );
+        expect(
+            appController.settingManager.restoreMainBounds,
+        ).not.toHaveBeenCalled();
+    });
+
+    test('opens no help with the AI switch off, or for a plain launch', () => {
+        const appController = genAppController();
+
+        initSecondInstance(appController as any, false);
+        getSecondInstanceHandler()(
+            {},
+            ['electron.exe', '--owa-open-chatbot'],
+            '/cwd',
+            {},
+        );
+        electronMockState.reset();
+        initSecondInstance(appController as any, true);
+        getSecondInstanceHandler()({}, ['electron.exe'], '/cwd', {});
+
+        expect(appController.openChatbotFromTaskbar).not.toHaveBeenCalled();
+    });
+
+    test('the task pressed with the app closed opens the help once it loads', () => {
+        const appController = genAppController();
+
+        initLaunchTask(
+            appController as any,
+            ['electron.exe', '--owa-open-chatbot'],
+            true,
+        );
+
+        const { once } = appController.mainWin.webContents;
+        expect(once).toHaveBeenCalledWith(
+            'did-finish-load',
+            expect.any(Function),
+        );
+        expect(appController.openChatbotFromTaskbar).not.toHaveBeenCalled();
+        once.mock.calls[0][1]();
+        expect(appController.openChatbotFromTaskbar).toHaveBeenCalledTimes(1);
+
+        // No task, or the switch off: nothing waits for the load.
+        once.mockClear();
+        initLaunchTask(appController as any, ['electron.exe'], true);
+        initLaunchTask(
+            appController as any,
+            ['electron.exe', '--owa-open-chatbot'],
+            false,
+        );
+        expect(once).not.toHaveBeenCalled();
+    });
+
     test('resets the bounds when a relaunch asks for it', () => {
         const appController = genAppController();
 
-        initSecondInstance(appController as any);
+        initSecondInstance(appController as any, true);
         getSecondInstanceHandler()(
             {},
             ['electron.exe', '--owa-reset-window-bounds'],
@@ -206,7 +336,7 @@ describe('taskbarHelpers', () => {
     test('only focuses when a plain second launch happens', () => {
         const appController = genAppController();
 
-        initSecondInstance(appController as any);
+        initSecondInstance(appController as any, true);
         getSecondInstanceHandler()({}, ['electron.exe'], '/cwd', {});
 
         expect(
@@ -221,7 +351,7 @@ describe('taskbarHelpers', () => {
         const appController = genAppController();
         appController.mainWin.isMinimized.mockReturnValue(true);
 
-        initSecondInstance(appController as any);
+        initSecondInstance(appController as any, true);
         getSecondInstanceHandler()(
             {},
             ['electron.exe', '--owa-reset-window-bounds'],

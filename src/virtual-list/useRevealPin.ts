@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { registerVirtualReveal } from './virtualRevealHelpers';
+import type { ScrollToRowType } from './useVirtualRows';
 
 const EMPTY_PINNED_INDEXES: number[] = [];
 // Long enough for a caller to take the element and scroll it into view, short
@@ -32,12 +33,11 @@ export function useRevealPin({
      * Filled in by the caller AFTER `useVirtualRows` has run -- the pin is what
      * that hook takes, so the two cannot be ordered any other way.
      */
-    scrollToRowRef: RefObject<
-        (index: number, align?: 'nearest' | 'center') => boolean
-    >;
+    scrollToRowRef: RefObject<ScrollToRowType>;
 }) {
     const [pinnedIndexes, setPinnedIndexes] =
         useState<number[]>(EMPTY_PINNED_INDEXES);
+    const behaviorRef = useRef<ScrollBehavior>('auto');
     const unpinTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     useAppEffect(() => {
         return () => {
@@ -49,11 +49,12 @@ export function useRevealPin({
 
     const findIndexRef = useAppCurrentRef(findIndex);
     const reveal = useCallback(
-        (key: string) => {
+        (key: string, behavior: ScrollBehavior = 'auto') => {
             const index = findIndexRef.current(key);
             if (index === -1) {
                 return false;
             }
+            behaviorRef.current = behavior;
             setPinnedIndexes((previousIndexes) => {
                 return previousIndexes.length === 1 &&
                     previousIndexes[0] === index
@@ -67,7 +68,7 @@ export function useRevealPin({
                 unpinTimeoutRef.current = null;
                 setPinnedIndexes(EMPTY_PINNED_INDEXES);
             }, PIN_DURATION);
-            scrollToRowRef.current(index, 'center');
+            scrollToRowRef.current(index, 'center', behavior);
             // Answers "this list HOLDS it", not "it had to scroll": an item
             // already in view needs no scrolling, and that is exactly the case
             // a caller waiting for its element must not be told no about.
@@ -78,12 +79,12 @@ export function useRevealPin({
     );
     const revealRef = useAppCurrentRef(reveal);
     useAppEffect(() => {
-        return registerVirtualReveal((key: string) => {
-            return revealRef.current(key);
+        return registerVirtualReveal((key, behavior) => {
+            return revealRef.current(key, behavior);
         });
     }, [revealRef]);
 
-    return pinnedIndexes;
+    return { pinnedIndexes, behaviorRef };
 }
 
 /**
@@ -104,16 +105,26 @@ export function useKeepPinnedRowInView({
     pinnedIndexes,
     totalHeight,
     scrollToRow,
+    behaviorRef,
 }: {
     pinnedIndexes: number[];
     totalHeight: number;
-    scrollToRow: (index: number, align?: 'nearest' | 'center') => boolean;
+    scrollToRow: ScrollToRowType;
+    behaviorRef: RefObject<ScrollBehavior>;
 }) {
     const scrollToRowRef = useAppCurrentRef(scrollToRow);
     useAppEffect(() => {
         if (pinnedIndexes.length === 0) {
             return;
         }
-        scrollToRowRef.current(pinnedIndexes[0], 'nearest');
-    }, [pinnedIndexes, totalHeight, scrollToRowRef]);
+        // A measurement correction must not cancel an in-flight smooth
+        // reveal with an instant jump. Keep aiming at its centre until the
+        // geometry settles; a newer selection replaces the pin and the aim.
+        const behavior = behaviorRef.current;
+        scrollToRowRef.current(
+            pinnedIndexes[0],
+            behavior === 'smooth' ? 'center' : 'nearest',
+            behavior,
+        );
+    }, [pinnedIndexes, totalHeight, scrollToRowRef, behaviorRef]);
 }

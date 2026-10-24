@@ -26,6 +26,7 @@ import {
     setShouldModelNewLine,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import { getTargetChapterEnd } from '../helper/bible-helpers/bibleTargetHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
@@ -37,6 +38,11 @@ import BibleItem from '../bible-list/BibleItem';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { getLangDataFromBibleKey } from '../helper/bible-helpers/bibleStyleHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { BibleGroupScrollSync } from './bibleGroupScrollHelpers';
+import {
+    DEFAULT_BIBLE_COLOR_NOTE,
+    findUnusedColorNote,
+} from '../helper/colorNoteDefaults';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';
@@ -76,7 +82,7 @@ export function attemptAddingHistory(
     });
 }
 
-function toStraightItems(
+export function toStraightItems(
     nestedBibleItems: NestedBibleItemsType,
 ): ReadIdOnlyBibleItem[] {
     const traverse = (items: any): any => {
@@ -103,6 +109,22 @@ function deepSanitizeNestedItems(nestedBibleItems: NestedBibleItemsType): {
         ) {
             return {
                 nestedBibleItems: nestedBibleItems[0],
+                isFoundError: true,
+            };
+        }
+        // A split holding only a split holding only a split: each one-child
+        // level flips the orientation for the level under it, so two of them
+        // cancel and the innermost split lays out exactly as it did. Closing
+        // views left `[[[a, b, c]]]` behind, each level one more renderer.
+        const onlyChild = nestedBibleItems[0];
+        if (
+            nestedBibleItems.length === 1 &&
+            Array.isArray(onlyChild) &&
+            onlyChild.length === 1 &&
+            Array.isArray(onlyChild[0])
+        ) {
+            return {
+                nestedBibleItems: onlyChild[0],
                 isFoundError: true,
             };
         }
@@ -174,12 +196,6 @@ function checkIsIdentical(
     }
     return nestedBibleItem1.checkIsSameId(nestedBibleItem2);
 }
-function checkIsIndexGTZero(index: number) {
-    return index > 0;
-}
-function checkIsIndexLTLengthM1(index: number, length: number) {
-    return index < length - 1;
-}
 
 function seekParent(
     nestedBibleItems: NestedBibleItemsType,
@@ -212,33 +228,6 @@ function seekParent(
     }
     return null;
 }
-function getFirstBibleItemAtIndex(
-    nestedBibleItems: NestedBibleItemsType,
-    index: number,
-    isOrientation: boolean,
-    isGoBack: boolean,
-): ReadIdOnlyBibleItem | null {
-    if (Array.isArray(nestedBibleItems)) {
-        if (index < 0) {
-            index = nestedBibleItems.length - 1;
-        } else if (index >= nestedBibleItems.length) {
-            index = 0;
-        }
-        const target = nestedBibleItems[index];
-        if (target instanceof ReadIdOnlyBibleItem) {
-            return target;
-        } else {
-            return getFirstBibleItemAtIndex(
-                target,
-                isOrientation ? 0 : target.length - 1,
-                isGoBack ? !isOrientation : isOrientation,
-                isGoBack,
-            );
-        }
-    }
-    return null;
-}
-
 const movingPosition: { [key: string]: [boolean, boolean] } = {
     // [isHorizontal, isGoBack]
     left: [true, true],
@@ -248,6 +237,95 @@ const movingPosition: { [key: string]: [boolean, boolean] } = {
 };
 export type MovingPositionType = keyof typeof movingPosition;
 
+type PaneBoxType = {
+    bibleItem: ReadIdOnlyBibleItem;
+    // [start, end] across the width and down the height, as shares of the
+    // whole view.
+    x: [number, number];
+    y: [number, number];
+};
+// The shares are fractions like a third of a half, which floating point does
+// not hold exactly: two panes touch when their edges are this close.
+const PANE_EDGE_EPSILON = 1e-9;
+
+/**
+ * Every pane as a box in a 1x1 square, split the way `BibleViewRendererComp`
+ * lays the tree out: the root array side by side, each nested array the other
+ * way, in equal shares. Sizes dragged by hand are not read: which pane is
+ * beside which is the grid's shape, and the shape costs no layout read.
+ */
+function layoutPaneBoxes(
+    nestedBibleItems: NestedBibleItemsType,
+    isHorizontal = true,
+    x: [number, number] = [0, 1],
+    y: [number, number] = [0, 1],
+    paneBoxes: PaneBoxType[] = [],
+) {
+    if (!Array.isArray(nestedBibleItems)) {
+        paneBoxes.push({ bibleItem: nestedBibleItems, x, y });
+        return paneBoxes;
+    }
+    const [start, end] = isHorizontal ? x : y;
+    const share = (end - start) / nestedBibleItems.length;
+    nestedBibleItems.forEach((item, i) => {
+        const span: [number, number] = [
+            start + share * i,
+            start + share * (i + 1),
+        ];
+        layoutPaneBoxes(
+            item,
+            !isHorizontal,
+            isHorizontal ? span : x,
+            isHorizontal ? y : span,
+            paneBoxes,
+        );
+    });
+    return paneBoxes;
+}
+
+/**
+ * The pane whose facing side sits on `edge` and that overlaps `source` across
+ * the move, or null. Of several, the one level with the source's middle wins
+ * -- the first, top or left, when the middle falls on the line between two --
+ * then the one overlapping most.
+ */
+function pickNeighborPaneBox(
+    paneBoxes: PaneBoxType[],
+    source: PaneBoxType,
+    isHorizontal: boolean,
+    isGoBack: boolean,
+    edge: number,
+) {
+    const along = isHorizontal ? 'x' : 'y';
+    const across = isHorizontal ? 'y' : 'x';
+    const [sourceStart, sourceEnd] = source[across];
+    const middle = (sourceStart + sourceEnd) / 2;
+    let found: PaneBoxType | null = null;
+    let foundScore = 0;
+    for (const paneBox of paneBoxes) {
+        // Going back, it is the neighbour's far side that faces the source.
+        const facing = paneBox[along][isGoBack ? 1 : 0];
+        if (Math.abs(facing - edge) > PANE_EDGE_EPSILON) {
+            continue;
+        }
+        const [start, end] = paneBox[across];
+        const overlap = Math.min(end, sourceEnd) - Math.max(start, sourceStart);
+        if (overlap <= PANE_EDGE_EPSILON) {
+            continue;
+        }
+        const isLevel =
+            start - PANE_EDGE_EPSILON <= middle &&
+            middle <= end + PANE_EDGE_EPSILON;
+        // An overlap is at most 1, so being level outranks any of them.
+        const score = overlap + (isLevel ? 2 : 0);
+        if (score > foundScore + PANE_EDGE_EPSILON) {
+            found = paneBox;
+            foundScore = score;
+        }
+    }
+    return found;
+}
+
 const BIBLE_ITEMS_PREVIEW_SETTING = 'bible-items-preview';
 class BibleItemsViewController extends EventHandler<UpdateEventType> {
     isLookup = true;
@@ -255,6 +333,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     extraActionButtons: ReactNode | null = null;
     shouldSelectFirstItem = false;
     _nestedBibleItems: NestedBibleItemsType = [];
+    readonly groupScrollSync = new BibleGroupScrollSync();
     private readonly _settingNameSuffix: string;
     setBibleVerseKey = (_verseKey: string) => {};
     handleScreenBibleVersesHighlighting = (
@@ -413,7 +492,39 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
 
     getColorNote(bibleItem: ReadIdOnlyBibleItem) {
-        return this.colorNoteMap[bibleItem.id] ?? '';
+        // Every bible preview section has a colour. One whose note was never
+        // set joins the default lime group instead of standing colorless, so
+        // the header's dot, group splitting and sync scrolling all treat it
+        // exactly like a section whose colour was chosen.
+        //
+        // ONE canonical spelling: a stored code keeps the case it was picked
+        // in (`main` writes lime `#00FF00`, `extension` `#00ff00`), and this
+        // string is the group key -- membership, the per-group sync switch and
+        // the scroll-sync registration all compare it. Left as picked, two
+        // sections showing the same lime were two different groups.
+        return (
+            this.colorNoteMap[bibleItem.id] || DEFAULT_BIBLE_COLOR_NOTE
+        ).toLowerCase();
+    }
+
+    getIsGroupScrollSynced(color: string) {
+        return (
+            !!color &&
+            getSetting(
+                this.toSettingName(`-sync-scroll-${encodeURIComponent(color)}`),
+            ) !== 'false'
+        );
+    }
+
+    setIsGroupScrollSynced(color: string, enabled: boolean) {
+        if (!color) {
+            return;
+        }
+        setSetting(
+            this.toSettingName(`-sync-scroll-${encodeURIComponent(color)}`),
+            enabled ? 'true' : 'false',
+        );
+        this.fireUpdateEvent();
     }
 
     _setColorNote(bibleItem: ReadIdOnlyBibleItem, color: string | null) {
@@ -439,16 +550,44 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     setColorNote(bibleItem: ReadIdOnlyBibleItem, color: string | null) {
         this._setColorNote(bibleItem, color);
         this.syncTargetByColorNote(bibleItem);
+        this.fireUpdateEvent();
     }
 
     getBibleItemsByColorNote(colorNote: string) {
         if (!colorNote) {
             return [];
         }
-        const allBibleItems = this.straightBibleItems;
-        return allBibleItems.filter((bibleItem) => {
-            return this.getColorNote(bibleItem) === colorNote;
+        // ONE read of the map for the whole list: the getter parses the stored
+        // settings string every time it is read, and every preview section is
+        // in a colour group now, so a `getColorNote` per item would be one
+        // parse per item for each header that asks who shares its colour.
+        const colorNoteMap = this.colorNoteMap;
+        const targetColorNote = colorNote.toLowerCase();
+        return this.straightBibleItems.filter((bibleItem) => {
+            return (
+                (
+                    colorNoteMap[bibleItem.id] || DEFAULT_BIBLE_COLOR_NOTE
+                ).toLowerCase() === targetColorNote
+            );
         });
+    }
+
+    /**
+     * A colour no section shows yet. A section that was not split off another
+     * one -- dropped in, opened beside -- starts in it, a group of its own:
+     * left without a note it fell into the default lime group with every
+     * untouched view, and was re-targeted along with them.
+     */
+    genUnusedColorNote() {
+        const colorNoteMap = this.colorNoteMap;
+        const usedColorNotes = new Set(
+            this.straightBibleItems.map((bibleItem) => {
+                return (
+                    colorNoteMap[bibleItem.id] || DEFAULT_BIBLE_COLOR_NOTE
+                ).toLowerCase();
+            }),
+        );
+        return findUnusedColorNote(usedColorNotes);
     }
 
     toSettingName(suffixSettingName: string) {
@@ -478,56 +617,50 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         top: ReadIdOnlyBibleItem | null;
         bottom: ReadIdOnlyBibleItem | null;
     } {
-        const seekNeighbor = (
-            nestedBibleItems: NestedBibleItemsType,
-            targetNestedBibleItem: NestedBibleItemsType,
-            position: MovingPositionType,
-        ): ReadIdOnlyBibleItem | null => {
-            if (!positions.includes(position)) {
+        // Geometry, not a walk of the tree. The walk climbed to the split
+        // holding the neighbour and came back down through that split's first
+        // or last child, forgetting the row (or column) it started in:
+        // Ctrl+Shift+Left from the bottom-right of a 2x2 grid landed top-left
+        // (KB-27). A handful of panes, laid out once per key press.
+        const paneBoxes = layoutPaneBoxes(this.nestedBibleItems);
+        const source = paneBoxes.find((paneBox) => {
+            return paneBox.bibleItem.checkIsSameId(bibleItem);
+        });
+        const seekNeighbor = (position: MovingPositionType) => {
+            if (source === undefined || !positions.includes(position)) {
                 return null;
             }
             const [isHorizontal, isGoBack] = movingPosition[position];
-            const found = seekParent(nestedBibleItems, targetNestedBibleItem);
-            if (found === null) {
+            const [start, end] = source[isHorizontal ? 'x' : 'y'];
+            const found =
+                pickNeighborPaneBox(
+                    paneBoxes,
+                    source,
+                    isHorizontal,
+                    isGoBack,
+                    isGoBack ? start : end,
+                ) ??
+                // Off the outer edge the move wraps round to the far side,
+                // as it always has along a row: left from the first of three
+                // is the third.
+                pickNeighborPaneBox(
+                    paneBoxes,
+                    source,
+                    isHorizontal,
+                    isGoBack,
+                    isGoBack ? 1 : 0,
+                );
+            // A pane spanning the whole view that way wraps onto itself.
+            if (found === null || found === source) {
                 return null;
             }
-            const index = found.parentNestedBibleItems.indexOf(
-                found.targetNestedBibleItem,
-            );
-            const isOrientation = found.isHorizontal === isHorizontal;
-            const isMatchIndex = isGoBack
-                ? checkIsIndexGTZero(index)
-                : checkIsIndexLTLengthM1(
-                      index,
-                      found.parentNestedBibleItems.length,
-                  );
-            if (!(isOrientation && isMatchIndex)) {
-                const found1 = seekNeighbor(
-                    nestedBibleItems,
-                    found.parentNestedBibleItems,
-                    position,
-                );
-                if (found1 !== null) {
-                    return found1;
-                }
-            }
-            return getFirstBibleItemAtIndex(
-                found.parentNestedBibleItems,
-                index + (isGoBack ? -1 : 1),
-                isOrientation,
-                isGoBack,
-            );
+            return found.bibleItem;
         };
-        const nestedBibleItems = this.nestedBibleItems;
-        const left = seekNeighbor(nestedBibleItems, bibleItem, 'left');
-        const right = seekNeighbor(nestedBibleItems, bibleItem, 'right');
-        const top = seekNeighbor(nestedBibleItems, bibleItem, 'top');
-        const bottom = seekNeighbor(nestedBibleItems, bibleItem, 'bottom');
         return {
-            left,
-            right,
-            top,
-            bottom,
+            left: seekNeighbor('left'),
+            right: seekNeighbor('right'),
+            top: seekNeighbor('top'),
+            bottom: seekNeighbor('bottom'),
         };
     }
 
@@ -624,10 +757,16 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         newBibleItem: ReadIdOnlyBibleItem,
         isHorizontal: boolean,
         isBefore: boolean,
-        isNoColorNote: boolean,
+        isNewColorGroup: boolean,
     ) {
-        const sourceColor =
-            bibleItem === null ? null : this.getColorNote(bibleItem);
+        // A split view joins its source's group; anything else gets a group of
+        // its own. Read before the new view is in, so it is not counted.
+        let colorNote: string | null = null;
+        if (bibleItem !== null) {
+            colorNote = isNewColorGroup
+                ? this.genUnusedColorNote()
+                : this.getColorNote(bibleItem);
+        }
         newBibleItem = ReadIdOnlyBibleItem.fromJson({
             ...newBibleItem.toJson(),
             id: this.genBibleItemUniqueId(),
@@ -655,8 +794,8 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                     : [bibleItem, newBibleItem];
             }
             this.nestedBibleItems = nestedBibleItems;
-            if (!isNoColorNote && sourceColor) {
-                this.setColorNote(newBibleItem, sourceColor);
+            if (colorNote) {
+                this.setColorNote(newBibleItem, colorNote);
             }
             newBibleItem.toTitle().then((title) => {
                 attemptAddingHistory(newBibleItem.bibleKey, title, true);
@@ -669,32 +808,176 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     addBibleItemLeft(
         bibleItem: ReadIdOnlyBibleItem,
         newBibleItem: ReadIdOnlyBibleItem,
-        isNoColorNote = false,
+        isNewColorGroup = false,
     ) {
-        this.addBibleItem(bibleItem, newBibleItem, true, true, isNoColorNote);
+        this.addBibleItem(bibleItem, newBibleItem, true, true, isNewColorGroup);
     }
     addBibleItemRight(
         bibleItem: ReadIdOnlyBibleItem,
         newBibleItem: ReadIdOnlyBibleItem,
-        isNoColorNote = false,
+        isNewColorGroup = false,
     ) {
-        this.addBibleItem(bibleItem, newBibleItem, true, false, isNoColorNote);
+        this.addBibleItem(
+            bibleItem,
+            newBibleItem,
+            true,
+            false,
+            isNewColorGroup,
+        );
     }
 
     addBibleItemTop(
         bibleItem: ReadIdOnlyBibleItem,
         newBibleItem: ReadIdOnlyBibleItem,
-        isNoColorNote = false,
+        isNewColorGroup = false,
     ) {
-        this.addBibleItem(bibleItem, newBibleItem, false, true, isNoColorNote);
+        this.addBibleItem(
+            bibleItem,
+            newBibleItem,
+            false,
+            true,
+            isNewColorGroup,
+        );
     }
 
     addBibleItemBottom(
         bibleItem: ReadIdOnlyBibleItem,
         newBibleItem: ReadIdOnlyBibleItem,
-        isNoColorNote = false,
+        isNewColorGroup = false,
     ) {
-        this.addBibleItem(bibleItem, newBibleItem, false, false, isNoColorNote);
+        this.addBibleItem(
+            bibleItem,
+            newBibleItem,
+            false,
+            false,
+            isNewColorGroup,
+        );
+    }
+
+    /**
+     * Split `bibleItem`'s view: `newBibleKey` is the version the new view
+     * opens in, `null` for the same one.
+     */
+    splitBibleItem(
+        bibleItem: ReadIdOnlyBibleItem,
+        isHorizontal: boolean,
+        newBibleKey: string | null,
+    ) {
+        let newBibleItem = bibleItem;
+        if (newBibleKey !== null) {
+            newBibleItem = ReadIdOnlyBibleItem.fromJson(bibleItem.toJson());
+            newBibleItem.bibleKey = newBibleKey;
+        }
+        if (isHorizontal) {
+            this.addBibleItemLeft(bibleItem, newBibleItem);
+        } else {
+            this.addBibleItemBottom(bibleItem, newBibleItem);
+        }
+    }
+
+    /**
+     * Whether a view's split button asks which version first. A view in a
+     * colour group hands its colour to the view split off it, and the two then
+     * follow the same passage for good -- the same version twice would show
+     * nothing the first did not.
+     */
+    checkIsSplitAskingBibleKey(bibleItem: ReadIdOnlyBibleItem) {
+        return !!this.getColorNote(bibleItem);
+    }
+
+    /** The version list a grouped view's split opens, named for the split. */
+    protected askSplitBibleKey(
+        event: any,
+        isHorizontal: boolean,
+        split: (newBibleKey: string) => void,
+    ) {
+        showBibleKeyOption(
+            event,
+            split,
+            [],
+            isHorizontal
+                ? tran('Split Horizontal to')
+                : tran('Split Vertical to'),
+        );
+    }
+
+    /**
+     * What a view's split button and its key do: `Split Horizontal` /
+     * `Split Vertical`, or the `… to` item beside each for a view in a colour
+     * group. The version list opens where `event` points.
+     */
+    splitBibleItemOnPress(
+        event: any,
+        bibleItem: ReadIdOnlyBibleItem,
+        isHorizontal: boolean,
+    ) {
+        if (!this.checkIsSplitAskingBibleKey(bibleItem)) {
+            this.splitBibleItem(bibleItem, isHorizontal, null);
+            return;
+        }
+        this.askSplitBibleKey(event, isHorizontal, (newBibleKey) => {
+            this.splitBibleItem(bibleItem, isHorizontal, newBibleKey);
+        });
+    }
+
+    /**
+     * The four split items. `split` gets `null` for the same version and the
+     * chosen key for a "… to" item, so a pane with no passage of its own (the
+     * lookup's book and chapter grids) can offer the same menu.
+     */
+    protected genSplitContextMenu(
+        split: (isHorizontal: boolean, newBibleKey: string | null) => void,
+    ): ContextMenuItemType[] {
+        return [
+            {
+                childBefore: genContextMenuItemIcon('vr'),
+                menuElement: tran('Split Horizontal'),
+                onSelect: () => {
+                    split(true, null);
+                },
+                id: splitHorizontalId,
+            },
+            {
+                childBefore: genContextMenuItemIcon('vr'),
+                childAfter: genContextMenuItemIcon('translate'),
+                menuElement: tran('Split Horizontal to'),
+                onSelect: (event1: any) => {
+                    showBibleKeyOption(event1, (newBibleKey: string) => {
+                        split(true, newBibleKey);
+                    });
+                },
+            },
+            {
+                childBefore: genContextMenuItemIcon('hr'),
+                menuElement: tran('Split Vertical'),
+                onSelect: () => {
+                    split(false, null);
+                },
+                id: splitVerticalId,
+            },
+            {
+                childBefore: genContextMenuItemIcon('hr'),
+                childAfter: genContextMenuItemIcon('translate'),
+                menuElement: tran('Split Vertical to'),
+                onSelect: (event2: any) => {
+                    showBibleKeyOption(event2, (newBibleKey: string) => {
+                        split(false, newBibleKey);
+                    });
+                },
+            },
+        ];
+    }
+
+    protected genFullViewContextMenuItem(uuid: string): ContextMenuItemType {
+        return {
+            childBefore: genContextMenuItemIcon('arrows-fullscreen'),
+            menuElement: tran('Toggle Widget Full View'),
+            onSelect: () => {
+                document
+                    .querySelector(`#uuid-${uuid}`)
+                    ?.classList.toggle(APP_FULL_VIEW_CLASSNAME);
+            },
+        };
     }
 
     async genContextMenu(
@@ -707,62 +990,13 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             {
                 menuElement: elementDivider,
             },
-            {
-                childBefore: genContextMenuItemIcon('vr'),
-                menuElement: tran('Split Horizontal'),
-                onSelect: () => {
-                    this.addBibleItemLeft(bibleItem, bibleItem);
-                },
-                id: splitHorizontalId,
-            },
-            {
-                childBefore: genContextMenuItemIcon('vr'),
-                childAfter: genContextMenuItemIcon('translate'),
-                menuElement: tran('Split Horizontal to'),
-                onSelect: (event1: any) => {
-                    showBibleKeyOption(event1, (newBibleKey: string) => {
-                        const newBibleItem = ReadIdOnlyBibleItem.fromJson(
-                            bibleItem.toJson(),
-                        );
-                        newBibleItem.bibleKey = newBibleKey;
-                        this.addBibleItemLeft(bibleItem, newBibleItem);
-                    });
-                },
-            },
-            {
-                childBefore: genContextMenuItemIcon('hr'),
-                menuElement: tran('Split Vertical'),
-                onSelect: () => {
-                    this.addBibleItemBottom(bibleItem, bibleItem);
-                },
-                id: splitVerticalId,
-            },
-            {
-                childBefore: genContextMenuItemIcon('hr'),
-                childAfter: genContextMenuItemIcon('translate'),
-                menuElement: tran('Split Vertical to'),
-                onSelect: (event2: any) => {
-                    showBibleKeyOption(event2, (newBibleKey: string) => {
-                        const newBibleItem = ReadIdOnlyBibleItem.fromJson(
-                            bibleItem.toJson(),
-                        );
-                        newBibleItem.bibleKey = newBibleKey;
-                        this.addBibleItemBottom(bibleItem, newBibleItem);
-                    });
-                },
-            },
+            ...this.genSplitContextMenu((isHorizontal, newBibleKey) => {
+                this.splitBibleItem(bibleItem, isHorizontal, newBibleKey);
+            }),
             ...(langData
                 ? langData.extraBibleContextMenuItems(bibleItem, appProvider)
                 : []),
-            {
-                childBefore: genContextMenuItemIcon('arrows-fullscreen'),
-                menuElement: tran('Toggle Widget Full View'),
-                onSelect: () => {
-                    document
-                        .querySelector(`#uuid-${uuid}`)
-                        ?.classList.toggle(APP_FULL_VIEW_CLASSNAME);
-                },
-            },
+            this.genFullViewContextMenuItem(uuid),
         ];
     }
 
@@ -771,11 +1005,16 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             ...bibleItem.toJson(),
             id: this.genBibleItemUniqueId(),
         });
+        // Not a split: a group of its own, as `addBibleItem` gives one.
+        const colorNote = this.genUnusedColorNote();
         let nestedBibleItems = this.nestedBibleItems;
         if (!Array.isArray(nestedBibleItems)) {
             nestedBibleItems = [nestedBibleItems];
         }
         this.nestedBibleItems = [...nestedBibleItems, newBibleItem];
+        if (colorNote) {
+            this.setColorNote(newBibleItem, colorNote);
+        }
         return newBibleItem;
     }
 
@@ -936,6 +1175,9 @@ export function compareBibleItemsInBibleOrder(
         toBookIndex(target1.bookKey) - toBookIndex(target2.bookKey) ||
         target1.chapter - target2.chapter ||
         target1.verseStart - target2.verseStart ||
+        // `verseEnd` is in the end chapter: John 1:2-5 comes before
+        // John 1:2-2:3, which comes before John 1:2-3:1.
+        getTargetChapterEnd(target1) - getTargetChapterEnd(target2) ||
         target1.verseEnd - target2.verseEnd ||
         bibleItem1.bibleKey.localeCompare(bibleItem2.bibleKey)
     );

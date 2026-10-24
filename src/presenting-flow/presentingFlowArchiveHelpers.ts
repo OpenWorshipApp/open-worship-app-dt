@@ -22,8 +22,10 @@ import {
 } from '../server/fileHelpers';
 import { getAppFilePathFromFile } from '../helper/localFileHelpers';
 import { initHttpRequest } from '../helper/bible-helpers/downloadHelpers';
+import { checkIsSameBibleTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 import {
     askForURL,
+    describeDownloadError,
     messageCallback,
     streamDownloadFile,
 } from '../background/downloadHelper';
@@ -54,6 +56,7 @@ import {
     genNextArchiveFilePath,
     importArchiveFiles,
     importBackgroundMetas,
+    importTransitionMetas,
     readArchiveManifest,
     resolveKindDirPaths,
     safeDeleteDir,
@@ -83,6 +86,9 @@ type ArchiveManifestType = {
     presentingFlow: string;
     files: ArchiveFileEntryType[];
     backgroundMetas: ArchiveBackgroundMetaType[];
+    // Each document's own transitions; absent from a bundle written before
+    // they existed, or one with none.
+    transitionMetas?: ArchiveBackgroundMetaType[];
     // The exporting machine's data folder (`writeArchiveManifest`); absent
     // from a bundle written before it was recorded.
     dataDirPath?: string | null;
@@ -236,6 +242,9 @@ async function writeArchiveFiles(
         presentingFlow: PRESENTING_FLOW_FILE_NAME,
         files: archiveFiles,
         backgroundMetas: collector.backgroundMetas,
+        ...(collector.transitionMetas.length > 0
+            ? { transitionMetas: collector.transitionMetas }
+            : {}),
     };
     await writeArchiveManifest(stagingDir, manifest);
     return archiveEntries;
@@ -339,6 +348,9 @@ function validateManifest(jsonData: unknown): ArchiveManifestType {
         backgroundMetas: validateArchiveBackgroundMetas(
             manifest.backgroundMetas,
         ),
+        transitionMetas: validateArchiveBackgroundMetas(
+            manifest.transitionMetas,
+        ),
         dataDirPath:
             typeof manifest.dataDirPath === 'string'
                 ? manifest.dataDirPath
@@ -360,11 +372,12 @@ async function importBibleItem(item: PresentingFlowItemType) {
     if (defaultBible === null) {
         throw new Error('Unable to open the Default bible list');
     }
+    // Field by field, `chapterEnd` included: a stringified target depended on
+    // key order, so the same verse written by another version was added twice.
     const existingBibleItem = defaultBible.items.find((existing) => {
         return (
             existing.bibleKey === bibleItem.bibleKey &&
-            JSON.stringify(existing.toJson().target) ===
-                JSON.stringify(bibleItem.toJson().target)
+            checkIsSameBibleTarget(existing.target, bibleItem.target)
         );
     });
     let itemId: number;
@@ -468,6 +481,11 @@ export async function importPresentingFlowArchive(archiveFilePath: string) {
             manifest.backgroundMetas,
             localFilePathByOriginalPath,
         );
+        await importTransitionMetas(
+            extractDir,
+            manifest.transitionMetas ?? [],
+            localFilePathByOriginalPath,
+        );
         const archiveFileName = toArchiveBaseName(
             pathBasename(archiveFilePath),
             PRESENTING_FLOW_ARCHIVE_DOT_EXTENSION,
@@ -568,19 +586,24 @@ export async function askAndImportPresentingFlowArchiveFromUrl() {
             ),
         );
         const response = await initHttpRequest(new URL(url));
-        await streamDownloadFile(
-            archiveFilePath,
-            response,
-            messageCallback,
-            true,
-        );
+        try {
+            await streamDownloadFile(
+                archiveFilePath,
+                response,
+                messageCallback,
+                true,
+            );
+        } catch (error) {
+            // `streamDownloadFile` has already said why, in words: a second
+            // toast here repeated it as the raw message.
+            handleError(error);
+            return null;
+        }
         return await runPresentingFlowArchiveImport(archiveFilePath);
     } catch (error: any) {
+        // The request itself failed -- the address was never reached.
         handleError(error);
-        showSimpleToast(
-            tran(IMPORT_TITLE),
-            error?.message ?? 'Unable to import the presenting flow',
-        );
+        showSimpleToast(tran(IMPORT_TITLE), describeDownloadError(error));
         return null;
     } finally {
         await safeDeleteDir(workDirPath);

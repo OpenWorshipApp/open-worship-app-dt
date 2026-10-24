@@ -7,6 +7,7 @@ import { tran } from '../../lang/langHelpers';
 import { getSetting } from '../../helper/settingHelpers';
 import { genHtmlBackground } from '../ScreenBackgroundComp';
 import { getBackgroundSrcListOnScreenSetting } from '../screenHelpers';
+import { checkIsSoundHere } from '../screenSoundHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
@@ -33,6 +34,12 @@ import type {
     StyleAnimType,
 } from '../screenTypeHelpers';
 import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
+import { stampBackgroundTransition } from '../../background/backgroundTransitionHelpers';
+import {
+    getStyleAnimForNode,
+    TRANSITION_DATASET_KEY,
+    type TransitionEffectType,
+} from '../transitionEffectHelpers';
 import {
     playMediaElement,
     releaseMediaElement,
@@ -62,6 +69,17 @@ class ScreenBackgroundManager
     static readonly eventNamePrefix: string = 'screen-bg-m';
     private _backgroundSrc: BackgroundSrcType | null = null;
     private _rootContainer: HTMLDivElement | null = null;
+    // A background video's sound on a virtual display's page: whether the
+    // presenter's audio for it is playing, at what level, and which of the
+    // loop's two copies is the one being heard.
+    private videoSound: {
+        videoId: string;
+        isPlaying: boolean;
+        volume: number;
+    } | null = null;
+    private soundingVideo: HTMLVideoElement | null = null;
+    // Bumped by every `render`; only the latest one puts its background up.
+    private renderGeneration = 0;
     effectManager: ScreenEffectManager;
     clearTracks = () => {};
 
@@ -90,11 +108,53 @@ class ScreenBackgroundManager
         this.render();
     }
 
+    /**
+     * Let go of the mini preview's root when it unmounts -- its rendering was
+     * turned off, or its panel closed. Dropping the reference alone would
+     * leave what it holds RUNNING in a detached div: a looping clip still
+     * decoding and firing `timeupdate`, a camera still open. So it is torn
+     * down here; `backgroundSrc` stays, and the next root renders it again.
+     *
+     * The root's content goes whichever root it is -- it is leaving the
+     * document either way. The reference and the camera go only if it is
+     * still the root this manager holds: a card remounted for a colour-note
+     * change attaches its new root before the old one's cleanup runs (see
+     * `ScreenDrawManager.releaseDiv`), and that render has already stopped the
+     * old camera. Never on the projected screen, whose layers are the window
+     * itself.
+     */
+    releaseRootContainer(rootContainer: HTMLDivElement) {
+        if (appProvider.isPageScreen) {
+            return;
+        }
+        for (const videoElement of rootContainer.querySelectorAll('video')) {
+            releaseMediaElement(videoElement);
+        }
+        rootContainer.replaceChildren();
+        if (this._rootContainer !== rootContainer) {
+            return;
+        }
+        this._rootContainer = null;
+        this.clearTracks();
+        this.clearTracks = () => {};
+    }
+
     get backgroundSrc() {
         return this._backgroundSrc;
     }
 
-    set backgroundSrc(backgroundSrc: BackgroundSrcType | null) {
+    set backgroundSrc(targetBackgroundSrc: BackgroundSrcType | null) {
+        // Every way a background goes up meets here -- a tile, Show on
+        // Screens, a colour, a drop, a run sheet row, a slide's attached
+        // background, a background slide show, a sync group -- so this is
+        // where its own transition (else its tab's) is put on it, on the
+        // presenter, BEFORE the equality check: stamped, it compares equal to
+        // the same background already up. The screen window keeps the one it
+        // was handed.
+        const backgroundSrc =
+            targetBackgroundSrc !== null && !appProvider.isPageScreen
+                ? stampBackgroundTransition(targetBackgroundSrc)
+                : targetBackgroundSrc;
         if (
             this.screenManagerBase.checkIsLockedWithMessage() ||
             checkAreObjectsEqual(this._backgroundSrc, backgroundSrc)
@@ -266,6 +326,71 @@ class ScreenBackgroundManager
         this.setVideoCurrentTime(data);
     }
 
+    // The presenter's audio for a background video, as a screen on a virtual
+    // display hears it: only that page ever unmutes its video.
+    sendSyncVideoSound(videoId: string, isPlaying: boolean, volume: number) {
+        this.screenManagerBase.sendScreenMessage(
+            {
+                screenId: this.screenId,
+                type: 'background-video-sound',
+                data: { videoId, isPlaying, volume },
+            },
+            true,
+        );
+    }
+
+    applyVideoSound(soundingVideo?: HTMLVideoElement) {
+        const rootContainer = this.rootContainer;
+        if (!appProvider.isPageScreen || rootContainer === null) {
+            return;
+        }
+        if (soundingVideo !== undefined) {
+            this.soundingVideo = soundingVideo;
+        }
+        const sound = this.videoSound;
+        const isSoundHere = checkIsSoundHere(this.screenManagerBase);
+        const videos = [
+            ...rootContainer.querySelectorAll<HTMLVideoElement>(
+                'video[id^="video-"]',
+            ),
+        ];
+        const sounding =
+            this.soundingVideo?.isConnected &&
+            videos.includes(this.soundingVideo)
+                ? this.soundingVideo
+                : (videos.find((video) => !video.paused) ?? null);
+        for (const video of videos) {
+            const isOn =
+                isSoundHere &&
+                sound !== null &&
+                sound.isPlaying &&
+                sound.videoId === video.id &&
+                video === sounding;
+            video.muted = !isOn;
+            if (sound !== null && sound.videoId === video.id) {
+                video.volume = sound.volume;
+            }
+        }
+    }
+
+    receiveSyncVideoSound(message: ScreenMessageType) {
+        const { videoId, isPlaying, volume } = message.data ?? {};
+        if (
+            typeof videoId !== 'string' ||
+            typeof isPlaying !== 'boolean' ||
+            typeof volume !== 'number' ||
+            !(volume >= 0 && volume <= 1)
+        ) {
+            return;
+        }
+        this.videoSound = { videoId, isPlaying, volume };
+        this.applyVideoSound();
+    }
+
+    static receiveSyncVideoSound(message: ScreenMessageType) {
+        this.getInstance(message.screenId)?.receiveSyncVideoSound(message);
+    }
+
     static receiveSyncVideoTime(message: ScreenMessageType) {
         const { screenId } = message;
         const screenBackgroundManager = this.getInstance(screenId);
@@ -396,7 +521,13 @@ class ScreenBackgroundManager
                 if (element.style.opacity === '0') {
                     return Promise.resolve();
                 }
-                return aminData.animOut(element);
+                // It leaves the way it came in (see `TRANSITION_DATASET_KEY`);
+                // `aminData` only for a node nothing tagged.
+                return getStyleAnimForNode(
+                    element,
+                    this.effectManager.styleAnimList,
+                    aminData,
+                ).animOut(element);
             }),
         ).then(() => {
             for (const element of elements) {
@@ -497,9 +628,15 @@ class ScreenBackgroundManager
         if (rootContainer === null) {
             return null;
         }
+        // The node `animIn` put in the root: `container` itself, or the
+        // `.zoom-container` a zoom transition wrapped it in. Comparing with
+        // `container` alone adopted that wrapper -- the clip still playing --
+        // as its own twin, and the second lap faded in a node whose picture
+        // had been parked at opacity 0: a blank background.
+        const ownNode = this._toRootLevelNode(container);
         for (const child of rootContainer.children) {
             if (
-                child === container ||
+                child === ownNode ||
                 !(child instanceof HTMLElement) ||
                 // Already claimed by a background swap in flight.
                 child.dataset.owaBackgroundRemoving === 'true'
@@ -580,36 +717,101 @@ class ScreenBackgroundManager
             return;
         }
         const { twin, twinVideo } = twinData;
+        // Parked and brought back as the node in the ROOT -- the zoom wrapper
+        // when the background zoomed in -- so the picture inside it is never
+        // the thing left at opacity 0.
+        const outgoingNode = this._toRootLevelNode(container);
         // What the element asked for before the fade borrowed its opacity: a
         // foreground Opacity slider writes it straight onto `style.opacity`
-        // through `extraStyle`.
-        const authoredOpacity = container.style.opacity || '1';
+        // through `extraStyle`. A node parked by an earlier lap remembers its
+        // own (a zoom wrapper rests at none at all).
+        const restOpacity =
+            twin.dataset.owaRestOpacity ?? (container.style.opacity || '1');
         twinVideo.currentTime = 0;
         await this._waitForVideoPicture(twinVideo);
         if (!container.isConnected || !twin.isConnected) {
             return;
         }
         await playMediaElement(twinVideo);
-        twin.style.opacity = authoredOpacity;
+        // The copy coming in is the one heard from now on.
+        this.applyVideoSound(twinVideo);
+        twin.style.opacity = restOpacity;
         await this.effectManager.styleAnimList.fade.animIn(twin, rootContainer);
         if (!twin.isConnected) {
             return;
+        }
+        // The lap is a crossfade whatever the background came in with, but
+        // the background still LEAVES the way it came in: the twin takes the
+        // outgoing node's tag -- unless that was a zoom and the twin is a
+        // plain copy with no wrapper to zoom.
+        const enteredWith = outgoingNode.dataset[TRANSITION_DATASET_KEY];
+        if (
+            enteredWith !== undefined &&
+            (enteredWith !== 'zoom' ||
+                twin.classList.contains('zoom-container'))
+        ) {
+            twin.dataset[TRANSITION_DATASET_KEY] = enteredWith;
         }
         // The clip that just ended is covered now, so park it as the copy the
         // NEXT lap brings in -- paused, back at its first frame, and reading
         // nothing until then.
         videoElement.pause();
         videoElement.currentTime = 0;
-        container.style.opacity = '0';
+        outgoingNode.dataset.owaRestOpacity = outgoingNode.style.opacity;
+        outgoingNode.style.opacity = '0';
         this._handleBackgroundVideo(twin as HTMLDivElement);
     }
 
+    /**
+     * `node`, or the ancestor of it that is a direct child of the root -- the
+     * thing a transition appended and the thing that is swapped out.
+     */
+    _toRootLevelNode(node: HTMLElement): HTMLElement {
+        const rootContainer = this.rootContainer;
+        let current = node;
+        while (
+            current.parentElement !== null &&
+            current.parentElement !== rootContainer
+        ) {
+            current = current.parentElement;
+        }
+        return current.parentElement === rootContainer ? current : node;
+    }
+
+    /**
+     * The background's own transition when it carries one (it or its tab
+     * overrides the screen), else the screen's `Background:` effect.
+     */
+    genStyleAnimFor(transitionEffect?: TransitionEffectType) {
+        return (
+            (transitionEffect === undefined
+                ? undefined
+                : this.effectManager.styleAnimList[transitionEffect]) ??
+            this.effectManager.styleAnim
+        );
+    }
+
+    /**
+     * Only the latest render puts its background up. What is in the root is
+     * read NOW but the new copy goes in a microtask later (a camera much
+     * later), so two renders in one tick -- the root attached and the
+     * background set together, as a screen page does on load -- each saw an
+     * empty root and BOTH copies went in, playing on top of each other. At
+     * the end of a lap each took the other for its crossfade twin and parked
+     * it, until every copy sat at opacity 0: the wallpaper showed through
+     * most of every lap on the projected screen, a browser watching a virtual
+     * display and its MP4. A render overtaken is dropped, so a background
+     * cleared in the meantime does not come back either.
+     */
     render(overrideAnimData?: StyleAnimType) {
+        const generation = ++this.renderGeneration;
         const rootContainer = this.rootContainer;
         if (rootContainer === null) {
             return;
         }
-        const aminData = overrideAnimData ?? this.effectManager.styleAnim;
+        const aminData =
+            overrideAnimData ??
+            this.genStyleAnimFor(this.backgroundSrc?.transitionEffect);
         const childList = Array.from(rootContainer.children).filter(
             (element) => {
                 return element instanceof HTMLElement;
@@ -627,6 +829,21 @@ class ScreenBackgroundManager
                 this.backgroundSrc,
             );
             promise.then((clearTracks) => {
+                if (
+                    this.rootContainer !== rootContainer ||
+                    generation !== this.renderGeneration
+                ) {
+                    // Let go of (or replaced) while it was getting ready --
+                    // a camera opening, or another render in the same tick:
+                    // whatever holds the background now has rendered it.
+                    for (const videoElement of newDiv.querySelectorAll(
+                        'video',
+                    )) {
+                        releaseMediaElement(videoElement);
+                    }
+                    clearTracks();
+                    return;
+                }
                 this._handleBackgroundVideo(newDiv);
                 aminData.animIn(newDiv, rootContainer);
                 this.removeOldElements(aminData, childList, this.clearTracks);

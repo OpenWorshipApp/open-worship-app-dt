@@ -1,20 +1,24 @@
 ---
 name: presenting-flow-screen-actions
-description: Presenting Flow "actions" are a non-DragTypeEnum item kind added from a menu; two families now — screen actions and run actions — extend presentingFlowActionList, not the drag pipeline
+description: "Presenting Flow \"actions\" are a non-DragTypeEnum item kind added from a menu; two families now — screen actions and run actions — extend presentingFlowActionList, not the drag pipeline"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
+  modified: 2026-10-12T02:43:45.872Z
 ---
 
 A presenting flow element can be an ACTION (added 2026-08-04, branch refactor23), not just
 content. The registry is `src/presenting-flow/presentingFlowActionHelpers.ts` — id, label, badge,
 icon, color, and a `target` discriminant that splits it into TWO families:
 
-- `target: 'screen'` → `apply(screenManager, presentingFlowItem)`. Sixteen ship: the five
-  that mirror the mini screen's clear bar, plus one per foreground widget
+- `target: 'screen'` → `apply(screenManager, presentingFlowItem)`. Twenty ship: the five
+  that mirror the mini screen's clear bar, plus one per foreground widget — twelve today
   (`clear-foreground-<ForegroundDragTargetType>`) built from `foregroundClearMap`, which
   is keyed by that type so a NEW foreground widget without a clear is a compile error.
-  The Foreground panel's **Background Images Slide Show** has none on purpose — it drives
-  `ScreenBackgroundManager`, so `Clear Background` covers it. Then
+  The Foreground panel's old **Background Images Slide Show** never had one — it drove
+  `ScreenBackgroundManager` — and was removed outright on 2026-09-26: **Image Show** does
+  that job on the foreground and IS in the map. Then
   `screen-show` / `screen-hide` (added 2026-08-06), which are about the WINDOW rather than
   what is on it — see [[presenting-flow-screen-show-hide]] — and `slide-media-control`
   (2026-08-08), the one that acts on what is INSIDE a slide and the only entry that reads
@@ -28,9 +32,10 @@ icon, color, and a `target` discriminant that splits it into TWO families:
   (see [[presenting-flow-keyboard-event]]).
 
 **The `Add Action` menu is FOUR levels now** (2026-08-08): everything that erases folds behind
-one `Clear Screen` row — the five whole-layer clears, and inside them the eight per-widget FG
-clears behind `Other Clear FG Items` again. Thirteen of the twenty-one entries (16 screen
-+ 5 run, verified `presentingFlowActionHelpers.ts:848-855`) clear something, so
+one `Clear Screen` row — the five whole-layer clears, and inside them the per-widget FG
+clears (eight that day, twelve today) behind `Other Clear FG Items` again. Seventeen of the
+twenty-five actions today (20 screen + 5 run — count `presentingFlowActionList`; thirteen
+of twenty-one that day) clear something, so
 inline they WERE the menu. `presentingFlowActionMenuList` is the menu's SHAPE (a flat action or a
 `{label, iconName, color, actionList}` group, told apart by `checkIsPresentingFlowActionGroup`);
 a group holds MENU ENTRIES, so a family may hold a family, and `PresentingFlowFileComp`'s
@@ -68,7 +73,7 @@ holds instructions, "carry on by yourself from here" is one too.
   is also where a run action is peeled off BEFORE `armPresentingFlowCcPropagation`: it
   resolves no screens, so a CC attached TO one could never fire (its menu offers no
   `Add CC Elements`). The other direction is open for the timeout only —
-  `toCcItemJson` reads `canBeCcItem`, and `applyPresentingFlowCcItemsOnScreenIds` fires it.
+  `PresentingFlowItem.resolveCcItemJson` reads `canBeCcItem`, and `applyPresentingFlowCcItemsOnScreenIds` fires it.
 - Colours mirror the clear bar's button variants EXCEPT the two `secondary` ones: the
   context menu's own background IS `--bs-secondary`, so those icons were invisible —
   they use `--bs-gray-500`. The run family wears no eraser and no ONE colour: timeout

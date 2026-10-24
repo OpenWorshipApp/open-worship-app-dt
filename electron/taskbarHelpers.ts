@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+
 import { app } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
@@ -12,6 +15,12 @@ import packageInfo from '../package.json';
 
 export const RESET_WINDOW_BOUNDS_LABEL = 'Reset Position and Size';
 export const RESET_WINDOW_BOUNDS_ARG = '--owa-reset-window-bounds';
+// Help -> App Help (Chatbot), from the taskbar icon too (2026-10-15, the
+// user's ask with the jump list's Tasks circled: _so I can find help_ --
+// with the app minimised, or behind something else, the Help menu is not
+// where anybody can reach it).
+export const OPEN_CHATBOT_LABEL = 'App Help (Chatbot)';
+export const OPEN_CHATBOT_ARG = '--owa-open-chatbot';
 export const USER_DATA_PATH_ARG_PREFIX = '--owa-user-data-path=';
 
 export function findUserDataPathArg(argv: string[]) {
@@ -41,12 +50,47 @@ export function resetWindowsBounds(appController: ElectronAppController) {
 // AUMID generated for it by the application model environment" -- and setting
 // one anyway is documented to make the jump list entries disappear, which is
 // exactly the reset task below.
-export function initAppUserModelId() {
+//
+// The identity follows the DATA FOLDER, not the build (2026-10-15). The jump
+// list belongs to the identity, and the last process to set it wins: a dev
+// instance on a scratch profile (`OWA_USER_DATA_PATH`) started after the
+// user's own dev app took the list over, its tasks naming the scratch folder,
+// and the user's **App Help (Chatbot)** started an app on that profile
+// instead of reaching theirs. So the default folder keeps the shared id, its
+// `-dev` twin keeps `.dev` -- also for the copy a task click starts, which has
+// no environment and so is not "dev" itself -- and any other folder gets an
+// id of its own: its own taskbar button and its own list.
+function toComparablePath(dirPath: string) {
+    return path.resolve(dirPath).toLowerCase();
+}
+
+export function toAppUserModelId(
+    userDataPath: string,
+    defaultUserDataPath: string,
+) {
+    const appId = packageInfo.build.appId;
+    const target = toComparablePath(userDataPath);
+    if (target === toComparablePath(defaultUserDataPath)) {
+        return appId;
+    }
+    if (target === toComparablePath(`${defaultUserDataPath}-dev`)) {
+        return `${appId}.dev`;
+    }
+    const digest = createHash('sha256')
+        .update(target)
+        .digest('hex')
+        .slice(0, 8);
+    return `${isDev ? `${appId}.dev` : appId}.${digest}`;
+}
+
+// `defaultUserDataPath` is the folder Electron chose before any override.
+export function initAppUserModelId(defaultUserDataPath: string) {
     if (!isWindows || isWindowsStore) {
         return;
     }
-    const appId = packageInfo.build.appId;
-    app.setAppUserModelId(isDev ? `${appId}.dev` : appId);
+    app.setAppUserModelId(
+        toAppUserModelId(app.getPath('userData'), defaultUserDataPath),
+    );
 }
 
 // A jump list task cannot call into the running app: Windows launches `program`
@@ -68,8 +112,8 @@ function genRelaunchArgList(extraArgs: string[] = []) {
     ];
 }
 
-function genRelaunchArguments() {
-    return genRelaunchArgList([RESET_WINDOW_BOUNDS_ARG])
+function genRelaunchArguments(taskArg: string) {
+    return genRelaunchArgList([taskArg])
         .map((part) => {
             return part.includes(' ') ? `"${part}"` : part;
         })
@@ -91,20 +135,34 @@ function genRelaunchArguments() {
 export function relaunchApp() {
     app.relaunch({ args: genRelaunchArgList() });
     // `quit`, not `exit`: `will-quit` is where the agent endpoint file is
-    // swept and the settings are flushed.
+    // swept and the settings are flushed (`ElectronSettingManager`).
     app.quit();
 }
 
-// Adds the entry under "Tasks" when the taskbar icon is right-clicked. Must run
-// after `app.whenReady()`.
-export function initUserTasks() {
+// Adds the entries under "Tasks" when the taskbar icon is right-clicked. Must
+// run after `app.whenReady()`. The help is listed only with the AI master
+// switch on, like Help -> App Help (Chatbot): the window it opens would have
+// nothing to talk to. The switch is read once a launch, and so is this list.
+export function initUserTasks(isAiEnabled: boolean) {
     if (!isWindows) {
         return;
     }
     app.setUserTasks([
+        ...(isAiEnabled
+            ? [
+                  {
+                      program: process.execPath,
+                      arguments: genRelaunchArguments(OPEN_CHATBOT_ARG),
+                      iconPath: process.execPath,
+                      iconIndex: 0,
+                      title: OPEN_CHATBOT_LABEL,
+                      description: 'Ask the help assistant about the app',
+                  },
+              ]
+            : []),
         {
             program: process.execPath,
-            arguments: genRelaunchArguments(),
+            arguments: genRelaunchArguments(RESET_WINDOW_BOUNDS_ARG),
             iconPath: process.execPath,
             iconIndex: 0,
             title: RESET_WINDOW_BOUNDS_LABEL,
@@ -113,7 +171,10 @@ export function initUserTasks() {
     ]);
 }
 
-export function initSecondInstance(appController: ElectronAppController) {
+export function initSecondInstance(
+    appController: ElectronAppController,
+    isAiEnabled: boolean,
+) {
     app.on('second-instance', (_event, argv) => {
         const win = appController.mainWin;
         if (win.isMinimized()) {
@@ -124,5 +185,28 @@ export function initSecondInstance(appController: ElectronAppController) {
         }
         // a plain relaunch means "give me the app I already have running"
         win.focus();
+        // After the focus: the main window asks the caution, and the help
+        // opens beside it.
+        if (isAiEnabled && argv.includes(OPEN_CHATBOT_ARG)) {
+            appController.openChatbotFromTaskbar();
+        }
+    });
+}
+
+/**
+ * The help task pressed while the app was NOT running starts it with the
+ * argument itself, and no `second-instance` comes. Asked once the main
+ * window has loaded -- its page is what listens, and asks the caution.
+ */
+export function initLaunchTask(
+    appController: ElectronAppController,
+    argv: string[],
+    isAiEnabled: boolean,
+) {
+    if (!isAiEnabled || !argv.includes(OPEN_CHATBOT_ARG)) {
+        return;
+    }
+    appController.mainWin.webContents.once('did-finish-load', () => {
+        appController.openChatbotFromTaskbar();
     });
 }

@@ -15,7 +15,10 @@ import {
 } from '../helper/mediaControlHelpers';
 import { tran } from '../lang/langHelpers';
 import { toWidgetLabel } from '../others/labelIconHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
+import {
+    createSimpleToastUpdater,
+    showSimpleToast,
+} from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
 import { handleError } from '../helper/errorHelpers';
 import {
@@ -38,18 +41,22 @@ import { useBackgroundSessions } from './backgroundSessionHelpers';
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
     const download = async (audioUrl: string) => {
+        const updateDownloadToast = createSimpleToastUpdater();
         try {
-            showSimpleToast(
-                title,
-                `Downloading audio from "${audioUrl}", please wait...`,
-            );
-            showProgressBar(audioUrl);
             // See BackgroundVideosComp: stage in the OS temp dir rather than the
-            // hardcoded getDefaultDataDir().
+            // hardcoded getDefaultDataDir(), and announce the download only
+            // once the media tools are there.
             const { filePath, fileFullName } = await downloadVideoOrAudio(
                 audioUrl,
                 getTempPath(),
                 false,
+                () => {
+                    updateDownloadToast(
+                        title,
+                        `Downloading audio from "${audioUrl}", please wait...`,
+                    );
+                    showProgressBar(audioUrl);
+                },
             );
             const destFileSource = FileSource.getInstance(
                 dirSource.dirPath,
@@ -61,7 +68,7 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
             // `genNextFilePath` suffixes instead, matching the video flow.
             const downloadedFilePath = await destFileSource.genNextFilePath();
             await fsMove(filePath, downloadedFilePath);
-            showSimpleToast(
+            updateDownloadToast(
                 title,
                 `Audio downloaded successfully, file path: "${downloadedFilePath}"`,
             );
@@ -71,7 +78,7 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
                 return;
             }
             handleError(error);
-            showSimpleToast(
+            updateDownloadToast(
                 title,
                 toDownloadFailureMessage(
                     tran('Error occurred during downloading audio'),
@@ -100,7 +107,7 @@ export default function BackgroundAudiosComp() {
         // Scrubbing, the volume and the repeat icon belong to the player, not
         // to the row: without this, dragging a paused track's scrubber folded
         // the row shut under the mouse.
-        if (target?.closest('audio') != null) {
+        if (target?.closest('audio, [data-background-audio-control]') != null) {
             return;
         }
         // The ROW, whatever inside it was clicked. This walked up exactly ONE

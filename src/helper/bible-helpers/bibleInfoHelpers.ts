@@ -174,34 +174,55 @@ export {
     toVerseFullKeyFormat,
 } from './bibleKeyFormatHelpers';
 
-// JHN 18:33- or JHN 18:33-35, 2SA 1:1, 2SA 1:1-2, 2SA 1:1-
-const regex = /^([A-Z123][A-Z]{2}) (\d+):(\d+)(-(\d+))?$/;
+// JHN 18:33- or JHN 18:33-35, 2SA 1:1, 2SA 1:1-2, 2SA 1:1-, and across
+// chapters JHN 18:33-19:16 or JHN 18:33-19: (to the end of chapter 19)
+const regex = /^([A-Z123][A-Z]{2}) (\d+):(\d+)(?:-(?:(\d+):)?(\d+)?)?$/;
 export async function fromVerseKey(
     bibleKey: string,
     // JHN 18:33-
     verseKey: string,
 ): Promise<BibleTargetType | null> {
-    const isLastDash = verseKey.endsWith('-');
-    if (isLastDash) {
-        verseKey = verseKey.slice(0, -1);
-    }
     const match = regex.exec(verseKey);
     if (!match) {
         return null;
     }
+    const isDash = verseKey.includes('-');
     const bookKey = match[1];
     const chapter = Number.parseInt(match[2], 10);
     const verseStart = Number.parseInt(match[3], 10);
-    let verseEnd = verseStart;
+    let chapterEnd =
+        match[4] === undefined ? chapter : Number.parseInt(match[4], 10);
+    let verseEnd: number | null = verseStart;
     if (match[5] !== undefined) {
         verseEnd = Number.parseInt(match[5], 10);
+    } else if (isDash) {
+        // To the end of the chapter it names.
+        verseEnd = null;
     }
-    if (isLastDash) {
-        const verseCount = await getVersesCount(bibleKey, bookKey, chapter);
+    // A later chapter only: past the book it is the book's last chapter, and
+    // at or before the start chapter there is no second chapter at all.
+    // Asked only of a key that names a second chapter: an unknown book has
+    // no model entry, and a one-chapter key never needed one.
+    if (chapterEnd > chapter) {
+        const chapterCount = getModelChapterCount(bookKey);
+        if (chapterEnd > chapterCount) {
+            chapterEnd = chapterCount;
+            verseEnd = null;
+        }
+    }
+    if (chapterEnd < chapter) {
+        chapterEnd = chapter;
+        verseEnd = null;
+    }
+    if (verseEnd === null) {
+        const verseCount = await getVersesCount(bibleKey, bookKey, chapterEnd);
         if (verseCount === null) {
             return null;
         }
         verseEnd = verseCount;
+    }
+    if (chapterEnd > chapter) {
+        return { bookKey, chapter, verseStart, verseEnd, chapterEnd };
     }
     return {
         bookKey,

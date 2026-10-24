@@ -453,7 +453,6 @@ export type LanguageDataType = {
     version: string;
     locale: LocaleType;
     langCode: string;
-    customMenusData?: CustomMenusDataType;
     editorLink?: string;
     bibleBooks: BibleBookType[];
     checkIsThisLang: (text: string) => boolean;
@@ -479,6 +478,9 @@ export type LanguageDataType = {
      */
     nativeName?: string;
     flagSVG: string;
+    getBibleKeyNameMap: () => {
+        [key: string]: string;
+    };
     getLookupData?: (_args: {
         readJsonFile: (url: string) => Promise<any>;
         packageDir: string;
@@ -505,6 +507,13 @@ export type LanguageDataType = {
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
     stopWords: string[];
+    // A Bible search (`owa_find_verse`, 2026-10-22): the words that say
+    // "the book" before a book's name ("in Genesis", `ក្នុងទំនុកដំកើង`), so
+    // the name is the book to search and not a word of the verse; and the
+    // words of ASKING a person puts in front of what they remember ("the
+    // story of", `ស្វែងរក`), taken off the front only.
+    bookMarkerWords?: string[];
+    findFrameWords?: string[];
     trimText: (text: string) => string;
     endWord: (text: string) => string;
     extraBibleContextMenuItems: (
@@ -542,7 +551,7 @@ export type LanguageDataType = {
 type CustomMenuItemType = {
     label: string;
     // Optional because a submenu PARENT is not clickable — it only groups the
-    // items under it (see the Khmer Tools entry in `data/km`). Matches the
+    // items under it (see the Khmer Tools entry in `data/km/appMenus.ts`). Matches the
     // electron-side `CustomMenuItemType`, which also has it optional.
     clickData?: AnyObjectType;
     accelerator?: string;
@@ -575,6 +584,8 @@ export function checkIsValidLocale(text: string) {
     return !!(allLocalesMap as any)[text];
 }
 
+// This computer's, whatever data folder is open (`COMPUTER_SETTING_NAME_LIST`).
+export const LOCALE_SETTING_NAME = 'language-locale';
 let localeSettingManager: SettingManager<LocaleType> | null = null;
 /**
  * Built on first use, NOT at module load. This module sits inside the
@@ -586,7 +597,7 @@ let localeSettingManager: SettingManager<LocaleType> | null = null;
  */
 function getLocaleSettingManager() {
     localeSettingManager ??= new SettingManager<LocaleType>({
-        settingName: 'language-locale',
+        settingName: LOCALE_SETTING_NAME,
         defaultValue: DEFAULT_LOCALE,
         isErrorToDefault: true,
         validate: checkIsValidLocale,
@@ -742,7 +753,7 @@ export function tran(...args: any[]): string {
         const translated = text.map((t) => tran(t));
         // translated=['a ', ' b'] & args[1] => 'a 1 b'
         return translated.reduce((prev, curr, index) => {
-            return prev + (args[index] ?? '') + curr;
+            return prev + curr + (args[index] ?? '');
         }, '');
     }
     if (typeof text !== 'string') {
@@ -891,6 +902,14 @@ export function checkIsStopWord(locale: LocaleType, text: string) {
         return false;
     }
     return langData.stopWords.includes(text);
+}
+
+export function getBookMarkerWords(locale: LocaleType) {
+    return getLangData(locale)?.bookMarkerWords ?? [];
+}
+
+export function getFindFrameWords(locale: LocaleType) {
+    return getLangData(locale)?.findFrameWords ?? [];
 }
 
 export function quickEndWord(locale: LocaleType, text: string) {
@@ -1051,6 +1070,14 @@ export type AppMenuItemsOptionsType = {
      * reason.
      */
     isRoutedToFocusedWindow?: boolean;
+    /**
+     * Send the click to EVERY window, each of which decides by its own page
+     * whether it has anything to do with it. Help → Tips of the Day opens the
+     * tip of every page that is open, not only the one in front (2026-10-23,
+     * the user: _open `Help` menubar, when click show in all pages_). Wins
+     * over `isRoutedToFocusedWindow`.
+     */
+    isSentToAllWindows?: boolean;
 };
 
 /**
@@ -1090,11 +1117,21 @@ export function registerLangAppMenuClicked() {
     return registerAppMenuClicked(handleLangAppMenusClick);
 }
 
+// A language's menu items live in their own `data/<code>/appMenus.ts`, NOT in
+// its package: this runs on every page of the main window, and the packages
+// are hundreds of KB each (Khmer's also brings the open-lyric plugin).
+const LANG_APP_MENUS_LOADER_MAP = import.meta.glob<{
+    default: CustomMenusDataType;
+}>('./data/*/appMenus.ts');
+
 export async function initLangAppMenu() {
     const menusData: AnyObjectType = {};
-    const langDataList = await getAllLangsAsync();
-    for (const langData of langDataList) {
-        const customMenusData = langData.customMenusData ?? {};
+    const customMenusDataList = await Promise.all(
+        Object.values(LANG_APP_MENUS_LOADER_MAP).map(async (loader) => {
+            return (await loader()).default;
+        }),
+    );
+    for (const customMenusData of customMenusDataList) {
         Object.entries(customMenusData).forEach(([key, value]) => {
             menusData[key] ??= [];
             menusData[key] = menusData[key].concat(value);

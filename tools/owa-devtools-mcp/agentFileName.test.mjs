@@ -3,9 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { checkAgentFileName } from './agentFileName.mjs';
 
 // The name rules are the containment half of these tools' safety, and they are
-// the half a unit test can hold on its own: `createNewFileDetail` still
-// carries a `// TODO: verify file name before create`, so nothing downstream
-// stops a separator from putting a file wherever it points.
+// the half a unit test can hold on its own. Both the tool and the app's disk
+// boundary use this module to refuse unsafe names before doing any work.
 describe('checkAgentFileName', () => {
     it('takes an ordinary song name', () => {
         for (const name of [
@@ -47,10 +46,46 @@ describe('checkAgentFileName', () => {
     // Reserved whatever the extension: the file cannot be created or opened,
     // so refusing early is a better answer than the failure that follows.
     it('refuses a name this platform reserves', () => {
-        for (const name of ['CON', 'con', 'PRN', 'aux', 'COM1', 'lpt9']) {
-            expect(checkAgentFileName(name), name).not.toBeNull();
+        const devices = [
+            'CON',
+            'con',
+            'PRN',
+            'aux',
+            'NUL',
+            ...Array.from({ length: 10 }, (_, digit) => `COM${digit}`),
+            ...Array.from({ length: 10 }, (_, digit) => `lpt${digit}`),
+            ...['¹', '²', '³'].flatMap((digit) => [
+                `COM${digit}`,
+                `LPT${digit}`,
+            ]),
+        ];
+        for (const device of devices) {
+            for (const suffix of ['', '.old', '.tar.gz']) {
+                const name = `${device}${suffix}`;
+                expect(checkAgentFileName(name), name).toBe(
+                    `"${name}" is a name this computer reserves for itself.`,
+                );
+            }
         }
-        expect(checkAgentFileName('Console')).toBeNull();
+        expect(checkAgentFileName('  nul.old  ')).toBe(
+            '"nul.old" is a name this computer reserves for itself.',
+        );
+    });
+
+    it('allows ordinary names sharing a device prefix or extension', () => {
+        for (const name of [
+            'Console',
+            'Console.backup',
+            'NUL song',
+            'COM10',
+            'COM10.old',
+            'lpt99.backup',
+            'COM¹ song',
+            'song.NUL',
+            'Grace.old',
+        ]) {
+            expect(checkAgentFileName(name), name).toBeNull();
+        }
     });
 
     it('refuses a control character, which would not be visible', () => {

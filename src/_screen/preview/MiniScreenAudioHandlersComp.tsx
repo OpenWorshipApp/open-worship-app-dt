@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
@@ -6,8 +6,12 @@ import {
     handleAudioPausing,
     handleAudioEnding,
 } from '../../helper/mediaControlHelpers';
-import { useScreenManagerContext } from '../managers/screenManagerHooks';
-import { useAppCurrentRef } from '../../helper/appHooks';
+import {
+    useScreenManagerContext,
+    useScreenManagerEvents,
+} from '../managers/screenManagerHooks';
+import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
+import { checkIsSoundHere } from '../screenSoundHelpers';
 import { pressElementLikeButton } from '../../helper/helpers';
 
 export default function MiniScreenAudioHandlersComp({
@@ -23,6 +27,38 @@ export default function MiniScreenAudioHandlersComp({
     const fileFullName = decodeSrc.split('/').pop() || decodeSrc;
     const screenManagerRef = useAppCurrentRef(screenManager);
     const videoIdRef = useAppCurrentRef(videoId);
+    const audioRef = useRef<HTMLAudioElement>(null);
+    // A screen on a virtual display plays this sound on its own page (it is
+    // what the display streams): this copy stays silent and tells the page
+    // whether it is playing and how loud.
+    const sendSound = useCallback(() => {
+        const audio = audioRef.current;
+        const manager = screenManagerRef.current;
+        if (audio === null || checkIsSoundHere(manager)) {
+            return;
+        }
+        if (!audio.muted) {
+            audio.muted = true;
+        }
+        manager.screenBackgroundManager.sendSyncVideoSound(
+            videoIdRef.current,
+            !audio.paused,
+            audio.volume,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    useScreenManagerEvents(['display-id'], screenManager);
+    const isSoundHere = checkIsSoundHere(screenManager);
+    useAppEffect(() => {
+        const audio = audioRef.current;
+        if (audio === null) {
+            return;
+        }
+        audio.muted = !isSoundHere;
+        if (!isSoundHere) {
+            sendSound();
+        }
+    }, [isSoundHere]);
     const handleTimeUpdate = useCallback((event: any) => {
         const { screenBackgroundManager } = screenManagerRef.current;
         screenBackgroundManager.setBackgroundVideoCurrentTimeForce(
@@ -30,6 +66,8 @@ export default function MiniScreenAudioHandlersComp({
             event.currentTarget.currentTime,
             false,
         );
+        // A page that loads mid-song learns it from the next tick.
+        sendSound();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const isRepeatingRef = useAppCurrentRef(isRepeating);
@@ -45,13 +83,21 @@ export default function MiniScreenAudioHandlersComp({
             </div>
             <div className="d-flex align-items-center w-100 my-2">
                 <audio
+                    ref={audioRef}
                     className="flex-fill"
                     data-video-id={videoId}
                     controls
-                    onPlay={handleAudioPlaying}
-                    onPause={handleAudioPausing}
+                    onPlay={(event) => {
+                        handleAudioPlaying(event);
+                        sendSound();
+                    }}
+                    onPause={(event) => {
+                        handleAudioPausing(event);
+                        sendSound();
+                    }}
                     onEnded={handleAudioEnding.bind(null, isRepeating)}
                     onTimeUpdate={handleTimeUpdate}
+                    onVolumeChange={sendSound}
                 >
                     <source src={src} />
                     <track kind="captions" />

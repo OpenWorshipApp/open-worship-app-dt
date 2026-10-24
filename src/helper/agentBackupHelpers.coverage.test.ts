@@ -6,18 +6,28 @@ const { state, mocks } = vi.hoisted(() => ({
         texts: new Map<string, string>(),
         listed: [] as string[],
         mimeFiles: [] as string[],
+        noteHasHistories: false,
+        noteEditingData: null as Record<string, unknown> | null,
+        flowData: null as Record<string, unknown> | null,
     },
     mocks: {
         handleError: vi.fn(),
         fsCreateDir: vi.fn(),
+        fsCloneFile: vi.fn(),
         fsDeleteFile: vi.fn(),
+        fsGetFileStamp: vi.fn(),
         fsWriteFile: vi.fn(),
         trashAllMaterialFiles: vi.fn(),
         renameAllMaterialFiles: vi.fn(),
         deleteMetaDataFile: vi.fn(),
+        deleteTransitionMetaDataFile: vi.fn(),
         moveFilePath: vi.fn(),
         preDelete: vi.fn(),
         fireUpdateEvent: vi.fn(),
+        deleteHistories: vi.fn(),
+        addNoteHistory: vi.fn(),
+        saveFlow: vi.fn(),
+        removeFlowSettings: vi.fn(),
     },
 }));
 
@@ -29,11 +39,14 @@ vi.mock('../server/fileHelpers', () => ({
     fsCheckDirExist: async (path: string) => state.existing.has(path),
     fsCheckFileExist: async (path: string) => state.existing.has(path),
     fsCreateDir: mocks.fsCreateDir,
+    fsCloneFile: mocks.fsCloneFile,
     fsDeleteFile: mocks.fsDeleteFile,
+    fsGetFileStamp: mocks.fsGetFileStamp,
     fsListFiles: async () => state.listed,
     fsListFilesWithMimetype: async () => state.mimeFiles,
     fsReadFile: async (path: string) => state.texts.get(path) ?? '',
     fsWriteFile: mocks.fsWriteFile,
+    getFileFullName: (path: string) => path.split('/').at(-1),
     pathJoin: (...parts: string[]) => {
         const joined = parts.join('/').replace(/\/{2,}/g, '/');
         return joined.replace(/\/[^/]+\/\.\.\//g, '/');
@@ -69,11 +82,51 @@ vi.mock('../server/appHelpers', () => ({
     trashAllMaterialFiles: mocks.trashAllMaterialFiles,
     renameAllMaterialFiles: mocks.renameAllMaterialFiles,
 }));
+vi.mock('../others/SlideTransitionManager', () => ({
+    slideTransitionManager: {
+        deleteMetaDataFile: mocks.deleteTransitionMetaDataFile,
+    },
+}));
 vi.mock('../others/AttachBackgroundManager', () => ({
     attachBackgroundManager: { deleteMetaDataFile: mocks.deleteMetaDataFile },
 }));
 vi.mock('../editing-manager/EditingHistoryManager', () => ({
-    default: { moveFilePath: mocks.moveFilePath },
+    default: {
+        moveFilePath: mocks.moveFilePath,
+        getInstance: () => ({
+            checkHasHistories: async () => state.noteHasHistories,
+            deleteHistories: mocks.deleteHistories,
+        }),
+    },
+}));
+vi.mock('../bible-list/note/Note', () => ({
+    default: {
+        fromFilePathEditing: async () =>
+            state.noteEditingData === null
+                ? null
+                : { toJson: () => state.noteEditingData },
+        fromJson: (_filePath: string, jsonData: Record<string, unknown>) => ({
+            addEditingHistory: async () => {
+                state.noteEditingData = jsonData;
+                mocks.addNoteHistory(jsonData);
+            },
+        }),
+    },
+}));
+vi.mock('../presenting-flow/PresentingFlow', () => ({
+    default: {
+        getInstance: () => ({
+            getJsonData: async () => state.flowData,
+            setJsonData: async (jsonData: Record<string, unknown>) => {
+                state.flowData = jsonData;
+            },
+            save: mocks.saveFlow,
+            preDelete: mocks.preDelete,
+        }),
+    },
+}));
+vi.mock('../presenting-flow/presentingFlowHelpers', () => ({
+    removePresentingFlowSettings: mocks.removeFlowSettings,
 }));
 
 import {
@@ -88,7 +141,9 @@ import {
     renameAgentFile,
     runWithAgentBackup,
     saveAgentBackup,
+    snapshotAgentEditing,
     snapshotAgentFile,
+    snapshotAgentFileForDelete,
     snapshotAgentSidecars,
     trashAgentFile,
     toAgentFilePath,
@@ -101,6 +156,21 @@ beforeEach(() => {
     state.texts.clear();
     state.listed = [];
     state.mimeFiles = [];
+    state.noteHasHistories = false;
+    state.noteEditingData = null;
+    state.flowData = null;
+    mocks.fsCreateDir.mockImplementation(async (path: string) => {
+        state.existing.add(path);
+    });
+    mocks.fsCloneFile.mockImplementation(async (from: string, to: string) => {
+        state.existing.add(to);
+        state.texts.set(to, state.texts.get(from) ?? '');
+    });
+    mocks.fsGetFileStamp.mockImplementation(async (path: string) => {
+        return state.existing.has(path)
+            ? { size: state.texts.get(path)?.length ?? 0 }
+            : null;
+    });
     mocks.fsWriteFile.mockImplementation(async (path: string, text: string) => {
         state.existing.add(path);
         state.texts.set(path, text);
@@ -121,6 +191,7 @@ describe('agent backup public contracts', () => {
         expect(AGENT_SIDECAR_EXTENSIONS).toEqual([
             '.bg.json',
             '.preview.bg.json',
+            '.transition.json',
         ]);
     });
 
@@ -270,6 +341,9 @@ describe('agent backup public contracts', () => {
 
         expect(mocks.trashAllMaterialFiles).toHaveBeenCalledOnce();
         expect(mocks.deleteMetaDataFile).toHaveBeenCalledWith('/songs/One.owl');
+        expect(mocks.deleteTransitionMetaDataFile).toHaveBeenCalledWith(
+            '/songs/One.owl',
+        );
     });
 
     test('refuses a delete that the OS trash leaves in place', async () => {
@@ -298,5 +372,320 @@ describe('agent backup public contracts', () => {
         );
         expect(mocks.renameAllMaterialFiles).toHaveBeenCalledOnce();
         expect(mocks.fireUpdateEvent).toHaveBeenCalledOnce();
+    });
+
+    test('undo restores overwritten content and keeps the newer version in its own backup', async () => {
+        const filePath = '/songs/One.owl';
+        state.existing.add(filePath);
+        state.texts.set(filePath, 'new song');
+        const original = await saveAgentBackup('Changed song', [
+            { type: 'file', filePath, text: 'old song' },
+        ]);
+        state.listed = [`${original.id}.meta.json`];
+
+        await expect(undoAgentBackup(original.id)).resolves.toMatchObject({
+            undone: 'Changed song',
+            undoId: expect.any(String),
+        });
+        expect(state.texts.get(filePath)).toBe('old song');
+        expect(mocks.fireUpdateEvent).not.toHaveBeenCalled();
+
+        const originalMeta = JSON.parse(
+            state.texts.get(`/data/agent-backups/${original.id}.meta.json`) ??
+                '',
+        );
+        expect(originalMeta).toMatchObject({
+            undoneAt: expect.any(String),
+            undoneBy: expect.any(String),
+        });
+        const undoData = JSON.parse(
+            state.texts.get(
+                `/data/agent-backups/${originalMeta.undoneBy}.data.json`,
+            ) ?? '',
+        );
+        expect(undoData.restores).toEqual([
+            { type: 'file', filePath, text: 'new song' },
+        ]);
+        await expect(undoAgentBackup(original.id)).resolves.toMatchObject({
+            reason: expect.stringContaining('already undone'),
+        });
+    });
+
+    test('undo removes a newly created file through trash and backs it up', async () => {
+        const filePath = '/songs/New.owl';
+        state.existing.add(filePath);
+        state.texts.set(filePath, 'new song');
+        const original = await saveAgentBackup('Created song', [
+            { type: 'file', filePath, text: null },
+        ]);
+        state.listed = [`${original.id}.meta.json`];
+
+        await expect(undoAgentBackup()).resolves.toMatchObject({
+            undone: 'Created song',
+        });
+        expect(state.existing.has(filePath)).toBe(false);
+        expect(mocks.trashAllMaterialFiles).toHaveBeenCalledOnce();
+        const meta = JSON.parse(
+            state.texts.get(`/data/agent-backups/${original.id}.meta.json`) ??
+                '',
+        );
+        const undoData = JSON.parse(
+            state.texts.get(`/data/agent-backups/${meta.undoneBy}.data.json`) ??
+                '',
+        );
+        expect(undoData.restores).toEqual([
+            { type: 'file', filePath, text: 'new song' },
+        ]);
+    });
+
+    test('an unwritable restore reports a partial undo and marks its backup unfinished', async () => {
+        const filePath = '/songs/One.owl';
+        state.existing.add(filePath);
+        state.texts.set(filePath, 'new song');
+        const original = await saveAgentBackup('Changed song', [
+            { type: 'file', filePath, text: 'old song' },
+        ]);
+        state.listed = [`${original.id}.meta.json`];
+        const fileSource = await import('./FileSource');
+        vi.spyOn(fileSource.default, 'getInstance').mockReturnValueOnce({
+            name: 'One',
+            writeFileData: async () => false,
+        } as any);
+
+        await expect(undoAgentBackup(original.id)).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringContaining('could not be written back'),
+        });
+        expect(state.texts.get(filePath)).toBe('new song');
+        const metaWrites = mocks.fsWriteFile.mock.calls.filter(([path]) =>
+            String(path).endsWith('.meta.json'),
+        );
+        expect(JSON.parse(metaWrites.at(-1)?.[1] ?? '')).toHaveProperty(
+            'failedAt',
+        );
+    });
+
+    test('undo moves a renamed document back with its editing history', async () => {
+        state.existing.add('/songs/New.owl');
+        const original = await saveAgentBackup('Renamed song', [
+            {
+                type: 'rename',
+                from: '/songs/Old.owl',
+                to: '/songs/New.owl',
+                kind: 'lyric',
+            },
+        ]);
+        state.listed = [`${original.id}.meta.json`];
+
+        await expect(undoAgentBackup(original.id)).resolves.toMatchObject({
+            undone: 'Renamed song',
+        });
+        expect(state.existing.has('/songs/New.owl')).toBe(false);
+        expect(state.existing.has('/songs/Old.owl')).toBe(true);
+        expect(mocks.moveFilePath).toHaveBeenCalledWith(
+            '/songs/New.owl',
+            '/songs/Old.owl',
+        );
+        expect(mocks.renameAllMaterialFiles).toHaveBeenCalledOnce();
+        const undoMeta = JSON.parse(
+            state.texts.get(`/data/agent-backups/${original.id}.meta.json`) ??
+                '',
+        );
+        const undoData = JSON.parse(
+            state.texts.get(
+                `/data/agent-backups/${undoMeta.undoneBy}.data.json`,
+            ) ?? '',
+        );
+        expect(undoData.restores).toEqual([
+            {
+                type: 'rename',
+                from: '/songs/New.owl',
+                to: '/songs/Old.owl',
+                kind: 'lyric',
+            },
+        ]);
+    });
+
+    test('undo refuses a missing backup body before changing the file', async () => {
+        const filePath = '/songs/One.owl';
+        state.existing.add(filePath);
+        state.texts.set(filePath, 'current song');
+        const original = await saveAgentBackup('Changed song', [
+            { type: 'file', filePath, text: 'old song' },
+        ]);
+        state.listed = [`${original.id}.meta.json`];
+        state.existing.delete(`/data/agent-backups/${original.id}.data.json`);
+
+        await expect(undoAgentBackup(original.id)).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringContaining('could not be read'),
+        });
+        expect(state.texts.get(filePath)).toBe('current song');
+        expect(mocks.fsWriteFile).toHaveBeenCalledTimes(2);
+    });
+
+    test('undo restores a binary file and keeps the version it replaced', async () => {
+        const filePath = '/media/Photo.png';
+        state.existing.add(filePath);
+        state.texts.set(filePath, 'old-binary');
+        const original = await saveAgentBackup('Changed photo', [
+            { type: 'blob', filePath, sourcePath: filePath },
+        ]);
+        state.listed = [`${original.id}.meta.json`];
+        state.texts.set(filePath, 'new-binary');
+
+        const result = await undoAgentBackup(original.id);
+        expect(result).toMatchObject({ undone: 'Changed photo' });
+        expect(state.texts.get(filePath)).toBe('old-binary');
+        expect(mocks.fireUpdateEvent).toHaveBeenCalledOnce();
+
+        const originalData = JSON.parse(
+            state.texts.get(`/data/agent-backups/${original.id}.data.json`) ??
+                '',
+        );
+        expect(originalData.restores[0]).toMatchObject({
+            type: 'blob',
+            filePath,
+            blobName: `${original.id}.blob-0.bin`,
+        });
+        const undoData = JSON.parse(
+            state.texts.get(`/data/agent-backups/${result.undoId}.data.json`) ??
+                '',
+        );
+        expect(
+            state.texts.get(
+                `/data/agent-backups/${undoData.restores[0].blobName}`,
+            ),
+        ).toBe('new-binary');
+    });
+
+    test('refuses to save a binary backup larger than the copy limit', async () => {
+        const filePath = '/media/Huge.mp4';
+        state.existing.add(filePath);
+        mocks.fsGetFileStamp.mockResolvedValueOnce({
+            size: 201 * 1024 * 1024,
+        });
+
+        await expect(
+            saveAgentBackup('Delete clip', [
+                { type: 'blob', filePath, sourcePath: filePath },
+            ]),
+        ).rejects.toThrow('too big for the copy');
+        expect(mocks.fsCloneFile).not.toHaveBeenCalled();
+        expect(mocks.fsWriteFile).not.toHaveBeenCalled();
+    });
+
+    test('backs up a Bible note editing head only when it has history', async () => {
+        const filePath = '/notes/Study.own';
+        state.existing.add(filePath);
+        state.texts.set(filePath, 'saved note');
+        expect(await snapshotAgentEditing('note', filePath)).toBeNull();
+
+        state.noteHasHistories = true;
+        state.noteEditingData = { title: 'Unsaved title' };
+        state.existing.add(`${filePath}.bg.json`);
+        state.texts.set(`${filePath}.bg.json`, 'background');
+        expect(await snapshotAgentFileForDelete(filePath, 'note')).toEqual([
+            { type: 'file', filePath, text: 'saved note', kind: 'note' },
+            {
+                type: 'editing',
+                filePath,
+                kind: 'note',
+                text: JSON.stringify(state.noteEditingData, null, 2),
+            },
+            {
+                type: 'file',
+                filePath: `${filePath}.bg.json`,
+                text: 'background',
+            },
+        ]);
+    });
+
+    test('undo restores a Bible note as a new editing history step', async () => {
+        const filePath = '/notes/Study.own';
+        state.existing.add(filePath);
+        state.noteHasHistories = true;
+        state.noteEditingData = { title: 'New title' };
+        const original = await saveAgentBackup('Edited note', [
+            {
+                type: 'editing',
+                filePath,
+                kind: 'note',
+                text: JSON.stringify({ title: 'Old title' }),
+            },
+        ]);
+        state.listed = [`${original.id}.meta.json`];
+
+        await expect(undoAgentBackup(original.id)).resolves.toMatchObject({
+            undone: 'Edited note',
+        });
+        expect(state.noteEditingData).toEqual({ title: 'Old title' });
+        expect(mocks.addNoteHistory).toHaveBeenCalledWith({
+            title: 'Old title',
+        });
+        expect(mocks.fireUpdateEvent).toHaveBeenCalledOnce();
+        const meta = JSON.parse(
+            state.texts.get(`/data/agent-backups/${original.id}.meta.json`) ??
+                '',
+        );
+        const undoData = JSON.parse(
+            state.texts.get(`/data/agent-backups/${meta.undoneBy}.data.json`) ??
+                '',
+        );
+        expect(undoData.restores).toEqual([
+            {
+                type: 'editing',
+                filePath,
+                kind: 'note',
+                text: JSON.stringify({ title: 'New title' }, null, 2),
+            },
+        ]);
+    });
+
+    test('trashing a Bible note removes its metadata and history folder', async () => {
+        const filePath = '/notes/Study.own';
+        state.existing.add(filePath);
+
+        await trashAgentFile(filePath, 'note');
+        expect(state.existing.has(filePath)).toBe(false);
+        expect(mocks.deleteMetaDataFile).toHaveBeenCalledWith(filePath);
+        expect(mocks.deleteHistories).toHaveBeenCalledOnce();
+    });
+
+    test('undoing a presenting flow saves its restored editing head to disk', async () => {
+        const filePath = '/flows/Service.owf';
+        state.existing.add(filePath);
+        state.flowData = { items: ['new'] };
+        expect(await snapshotAgentEditing('presentingFlow', filePath)).toEqual({
+            type: 'editing',
+            filePath,
+            kind: 'presentingFlow',
+            text: JSON.stringify(state.flowData, null, 2),
+        });
+        const original = await saveAgentBackup('Changed flow', [
+            {
+                type: 'editing',
+                filePath,
+                kind: 'presentingFlow',
+                text: JSON.stringify({ items: ['old'] }),
+            },
+        ]);
+        state.listed = [`${original.id}.meta.json`];
+
+        await expect(undoAgentBackup(original.id)).resolves.toMatchObject({
+            undone: 'Changed flow',
+        });
+        expect(state.flowData).toEqual({ items: ['old'] });
+        expect(mocks.saveFlow).toHaveBeenCalledOnce();
+        expect(mocks.fireUpdateEvent).toHaveBeenCalledOnce();
+    });
+
+    test('trashing a presenting flow cleans its saved settings', async () => {
+        const filePath = '/flows/Service.owf';
+        state.existing.add(filePath);
+
+        await trashAgentFile(filePath, 'presentingFlow');
+        expect(mocks.preDelete).toHaveBeenCalledOnce();
+        expect(mocks.removeFlowSettings).toHaveBeenCalledWith(filePath);
     });
 });

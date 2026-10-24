@@ -7,7 +7,7 @@ import {
 } from '../../helper/settingHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { SCREEN_MANAGER_SETTING_NAME } from './screenHelpers';
-import { drawPanelSettingPrefixList } from './screenSettingKeyHelpers';
+import { previewerSettingPrefixList } from './screenSettingKeyHelpers';
 
 // A deleted screen's id is REUSED: `genNewScreenManagerBase` hands out the
 // lowest free id, so the next screen the user adds after deleting screen 1 IS
@@ -18,7 +18,7 @@ import { drawPanelSettingPrefixList } from './screenSettingKeyHelpers';
 
 // Content that is stored as one JSON object keyed by screen id, with the lock
 // key its writers take. FULL_TEXT is written under a `set-`-prefixed lock
-// (see ScreenBibleManager's screenViewData setter), the others under the plain
+// (see ScreenLongTextManager's screenViewData setter), the others under the plain
 // setting name.
 const onScreenSettingList = [
     {
@@ -66,15 +66,27 @@ function removeScreenEntryFromOnScreenSetting(
 }
 
 // Per-screen keys that no manager owns: the display assignment (written by
-// `ScreenManagerBase`'s displayId setter) and the previewer draw-panel
+// `ScreenManagerBase`'s displayId setter) and the previewer card's own
 // settings. Managers drop their own keys in their `delete()`.
 function getUnownedPerScreenSettingKeys(screenId: number) {
     return [
         `${SCREEN_MANAGER_SETTING_NAME}-pid-${screenId}`,
-        ...drawPanelSettingPrefixList.map((prefix) => {
+        ...previewerSettingPrefixList.map((prefix) => {
             return `${prefix}${screenId}`;
         }),
     ];
+}
+
+// Per-screen keys of features that no longer exist. The edge Mask (releases
+// 2026.09.29 to 2026.10.01) was removed; a screen whose mask was ever set kept
+// `screen-mask-<id>`, which nothing reads now. A key that is already gone
+// costs one existence check.
+const retiredPerScreenSettingPrefixList = ['screen-mask-'];
+
+export function removeRetiredScreenSettings(screenId: number) {
+    for (const prefix of retiredPerScreenSettingPrefixList) {
+        removeSetting(`${prefix}${screenId}`);
+    }
 }
 
 export async function deleteScreenPersistedData(screenId: number) {

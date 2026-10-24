@@ -13,6 +13,7 @@ import { StrictMode } from 'react';
 import { getCurrentLocale, getLangData, tran } from '../lang/langHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { handleError } from '../helper/errorHelpers';
+import { offerErrorReporting } from '../helper/errorReportOfferHelpers';
 import FileSourceMetaManager from '../helper/FileSourceMetaManager';
 import appProvider from '../server/appProvider';
 import initCrypto from '../_owa-crypto';
@@ -28,16 +29,19 @@ import {
     InputContextMenuHandler,
     handleActiveSelectedElementScrolling,
 } from '../helper/domHelpers';
-import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import {
+    appLocalStorage,
+    DATA_DIR_MOVE_RESULT_SESSION_NAME,
+} from '../setting/directory-setting/appLocalStorage';
 import { unlocking } from '../server/unlockingHelpers';
 import { useAppEffectAsync } from '../helper/appHooks';
-import { openGeneralSetting } from '../setting/settingHelpers';
+import { openPathSetting } from '../setting/settingHelpers';
 import {
-    findDataDirsOnVolumesSync,
-    getDesktopPath,
+    checkIsDesktopDataDir,
+    DATA_DIR_MOVED_FROM_FLAG_FILE_NAME,
+    fsExistSync,
     pathJoin,
 } from '../server/fileHelpers';
-import { escapeHtmlText } from '../helper/sanitizeHelpers';
 import { useThemeSource } from './themeHelpers';
 import { getReactRoot } from './rootHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
@@ -46,61 +50,79 @@ import { initTitleSoundMeter } from '../helper/titleSoundMeterHelpers';
 import { initTouchDragAndDrop } from '../helper/touchDragHelpers';
 import { checkAreChildrenOnscreen } from '../app-modal/floatingWidgetHelpers';
 import { initWidgetAppMenu } from '../resize-actor/widgetAppMenuHelpers';
+import NoDataDirGateComp from './NoDataDirGateComp';
+import DesktopDataDirCardComp from './DesktopDataDirCardComp';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
 
-/**
- * The chosen data folder was not there as the app started, and was found on no
- * other drive either. Said in words, with the folder named: running quietly on
- * the app's own folder looked like every song had been lost.
- */
-async function askAboutMissingDataDir(missingDirPath: string) {
-    const isRetrying = await showAppConfirm(
-        tran('Data Folder Not Found'),
-        `"${escapeHtmlText(missingDirPath)}" ` +
-            tran(
-                'is not available. If it is on a USB flash drive, plug it in and press Retry. Until then the app is using a folder of its own; your data is not touched.',
-            ),
-        {
-            confirmButtonLabel: 'Retry',
-            cancelButtonLabel: 'Choose Another Folder',
-        },
-    );
-    if (isRetrying) {
-        appProvider.reload();
-    } else {
-        openGeneralSetting();
+// Once per launch, not per page: the main window reloads to switch between
+// the Presenter and the Reader, and its `sessionStorage` lasts as long as the
+// window does.
+const DATA_DIR_MOVE_ASKED_SESSION_NAME = 'data-dir-move-asked';
+
+function takeSessionItem(key: string) {
+    try {
+        const value = sessionStorage.getItem(key);
+        if (value !== null) {
+            sessionStorage.removeItem(key);
+        }
+        return value;
+    } catch (_error) {
+        return null;
     }
 }
 
-/**
- * A computer that has never had a data folder chosen, with one on a plugged-in
- * drive (or in the default Desktop folder): offered, rather than leaving the
- * volunteer to know where Path Settings is.
- */
-async function offerFoundDataDir() {
-    const [foundDirPath] = findDataDirsOnVolumesSync([
-        pathJoin(getDesktopPath(), 'open-worship-data'),
-    ]);
-    if (foundDirPath === undefined) {
-        return false;
-    }
-    const isOk = await showAppConfirm(
-        tran('Data Folder Found'),
-        `${tran('Use the data folder found at')} ` +
-            `"${escapeHtmlText(foundDirPath)}"?`,
-        {
-            confirmButtonLabel: 'Yes',
-            cancelButtonLabel: 'No',
-        },
-    );
-    if (!isOk) {
-        return false;
-    }
-    await appLocalStorage.setSelectedParentDirectory(foundDirPath);
-    appProvider.reload();
+function claimOncePerLaunch(key: string) {
+    try {
+        if (sessionStorage.getItem(key) !== null) {
+            return false;
+        }
+        sessionStorage.setItem(key, 'true');
+    } catch (_error) {}
     return true;
+}
+
+/**
+ * A data folder still on the Desktop -- the old default, which OneDrive backs
+ * up -- is asked about at every launch until it is moved or the question is
+ * put away; one that was copied away is reminded of while the old copy is
+ * there. Both dialogs load only then: the common case is two path compares and
+ * one `existsSync`.
+ */
+async function checkDataDirMove(selectedDirPath: string) {
+    const isDesktopDataDir = checkIsDesktopDataDir(selectedDirPath);
+    if (
+        !isDesktopDataDir &&
+        !fsExistSync(
+            pathJoin(selectedDirPath, DATA_DIR_MOVED_FROM_FLAG_FILE_NAME),
+        )
+    ) {
+        return;
+    }
+    if (!claimOncePerLaunch(DATA_DIR_MOVE_ASKED_SESSION_NAME)) {
+        return;
+    }
+    const { askToMoveDesktopDataDir, remindOldDataDirCopy } =
+        await import('../setting/directory-setting/dataDirMoveAskHelpers');
+    if (isDesktopDataDir) {
+        await askToMoveDesktopDataDir(selectedDirPath);
+    } else {
+        await remindOldDataDirCopy(selectedDirPath);
+    }
+}
+
+// Left by `runPendingDataDirMove` as this window started. It already names
+// any old copy, so the launch reminder is not shown on top of it.
+async function showDataDirMoveResult() {
+    const resultText = takeSessionItem(DATA_DIR_MOVE_RESULT_SESSION_NAME);
+    if (resultText === null) {
+        return;
+    }
+    claimOncePerLaunch(DATA_DIR_MOVE_ASKED_SESSION_NAME);
+    const { showDataDirMoveResult } =
+        await import('../setting/directory-setting/dataDirMoveAskHelpers');
+    await showDataDirMoveResult(resultText);
 }
 
 function useCheckSetting() {
@@ -108,27 +130,19 @@ function useCheckSetting() {
         if (!appProvider.isMainPage) {
             return;
         }
-        const missingDirPath = appLocalStorage.missingParentDirPath;
-        if (missingDirPath !== null) {
-            await askAboutMissingDataDir(missingDirPath);
+        await showDataDirMoveResult();
+        const selectedDirPath =
+            await appLocalStorage.getSelectedParentDirectory();
+        if (selectedDirPath) {
+            await checkDataDirMove(selectedDirPath);
             return;
         }
-        if (await appLocalStorage.getSelectedParentDirectory()) {
-            return;
-        }
-        if (await offerFoundDataDir()) {
-            return;
-        }
-        const isOk = await showAppConfirm(
-            tran('No Parent Directory Selected'),
-            tran(
-                'You will be redirected to the General Settings page to ' +
-                    'select a parent directory.',
-            ),
-        );
-        if (isOk) {
-            openGeneralSetting();
-        }
+        // No data folder in use -- none chosen, or the chosen one is not
+        // there. Straight to the choice, with its box focused: Path Settings
+        // names a missing one and lists the data folders found on the drives.
+        // A dialog first let its close button leave the volunteer in a window
+        // with nothing in it and no way on.
+        openPathSetting();
     }, []);
 }
 
@@ -150,12 +164,18 @@ async function confirmLocalStorageErasing() {
 // the last.
 let isReloadingConfirmShowing = false;
 
-async function confirmReloading() {
+async function confirmReloading(error?: unknown) {
     if (isReloadingConfirmShowing) {
         return;
     }
     isReloadingConfirmShowing = true;
     try {
+        // Reporting first, and when they take it, no reload question on top
+        // of it: the assistant reads this window as it stands. The next
+        // error asks about the reload as before.
+        if (await offerErrorReporting(error)) {
+            return;
+        }
         // The lock covers the read-compare-write of the timestamp and NOTHING
         // more. It used to be held across the confirm below as well — that is,
         // for as long as it took a human to answer — so the next error in the
@@ -215,7 +235,7 @@ async function initMain() {
         if (isDomException(reason)) {
             return;
         }
-        confirmReloading();
+        confirmReloading(reason);
     };
 
     globalThis.onerror = function (error: any) {
@@ -223,7 +243,7 @@ async function initMain() {
         if (isDomException(error)) {
             return;
         }
-        confirmReloading();
+        confirmReloading(error);
     };
 
     await initCrypto();
@@ -232,16 +252,22 @@ async function initMain() {
     await appProvider.init();
 }
 
-export function RenderApp({
+export function RenderAppComp({
     children,
 }: Readonly<{
     children: ReactNode;
 }>) {
     useCheckSetting();
     const { theme } = useThemeSource();
+    // A data folder is required. Without one every window but Settings, where
+    // it is chosen, says so and shows nothing else.
+    const isGated = !appProvider.isPageSetting && appLocalStorage.isOnOwnFolder;
     return (
         <div id="app" className="app" data-bs-theme={theme}>
-            <StrictMode>{children}</StrictMode>
+            <StrictMode>
+                {isGated ? <NoDataDirGateComp /> : children}
+                {isGated ? null : <DesktopDataDirCardComp />}
+            </StrictMode>
         </div>
     );
 }
@@ -305,6 +331,6 @@ export async function run(children?: ReactNode) {
     }
     if (children !== undefined) {
         const root = getReactRoot();
-        root.render(<RenderApp>{children}</RenderApp>);
+        root.render(<RenderAppComp>{children}</RenderAppComp>);
     }
 }

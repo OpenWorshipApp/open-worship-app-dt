@@ -14,6 +14,8 @@ import BibleFindController from './BibleFindController';
 import appProvider from '../server/appProvider';
 import { useAppCurrentRef } from '../helper/appHooks';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { openChatbotAsking } from '../helper/ai/chatbotHandoffHelpers';
+import { genVerseFindAsk } from '../helper/ai/verseFindAskHelpers';
 
 function genMenuItem(
     selectedBooks: SelectedBookKeyType[],
@@ -176,10 +178,13 @@ export default function RenderFindingInfoHeaderComp({
     bibleKey,
     selectedBooks,
     setSelectedBooks,
+    findText = '',
 }: Readonly<{
     bibleKey: string;
     selectedBooks: SelectedBookKeyType[];
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void;
+    // What is typed in Find: the assistant searches it at once.
+    findText?: string;
 }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
     const text = useMemo(() => {
@@ -192,6 +197,7 @@ export default function RenderFindingInfoHeaderComp({
                   .join(', ')}`;
     }, [selectedBooks]);
     const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const findTextRef = useAppCurrentRef(findText);
     const selectedBooksRef = useAppCurrentRef(selectedBooks);
     const setSelectedBooksRef = useAppCurrentRef(setSelectedBooks);
     const handleSelectBookKeys = useCallback((event: any) => {
@@ -212,7 +218,21 @@ export default function RenderFindingInfoHeaderComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // The assistant, opened already asking which Bible and then what they
+    // remember of the verse (`src/chatbot/verseFindChatHelpers.ts`). The
+    // Bible this panel is on rides in the request, so it is offered first;
+    // words typed in Find ride too, and are searched at once (2026-10-22:
+    // `shepherd` under the Khmer Bible found nothing here, and the press
+    // had left the word behind). The press asks the 🤖's own two questions
+    // first: whether AI is on, then the caution.
+    const handleAskingAssistant = useCallback(() => {
+        void openChatbotAsking(
+            genVerseFindAsk(bibleKeyRef.current, findTextRef.current),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const isFiltered = selectedBooks.length > 0;
+    const assistantLabel = tran('Find a Verse with the Assistant');
     return (
         <div className="app-find-filter-bar">
             <button
@@ -239,6 +259,15 @@ export default function RenderFindingInfoHeaderComp({
                  */}
                 {isFiltered ? <i className="bi bi-funnel-fill pe-1" /> : null}
                 <span style={{ fontFamily }}>{text}</span>
+            </button>
+            <button
+                className="app-ghost-button ms-auto"
+                type="button"
+                aria-label={assistantLabel}
+                title={assistantLabel}
+                onClick={handleAskingAssistant}
+            >
+                <i className="bi bi-robot" />
             </button>
         </div>
     );

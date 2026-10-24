@@ -26,6 +26,7 @@ const h = vi.hoisted(() => ({
     showFileOrDirExplorerMock: vi.fn(),
     genTimeoutAttemptMock: vi.fn(() => (fn: any) => fn()),
     bibleItemFromTitleTextMock: vi.fn(),
+    getVersesCountMock: vi.fn(),
     showBibleKeyOptionMock: vi.fn(),
     getSettingMock: vi.fn(),
     setSettingMock: vi.fn(),
@@ -130,6 +131,9 @@ vi.mock('../../server/appHelpers', () => ({
 }));
 vi.mock('../../helper/timeoutHelpers', () => ({
     genTimeoutAttempt: h.genTimeoutAttemptMock,
+}));
+vi.mock('../../helper/bible-helpers/bibleLogicHelpers2', () => ({
+    getVersesCount: h.getVersesCountMock,
 }));
 vi.mock('../BibleItem', () => ({
     default: { fromTitleText: h.bibleItemFromTitleTextMock },
@@ -414,11 +418,54 @@ describe('bible-list/note bibleNoteHelpers', () => {
                 'Genesis 1:1-3\n(1) text',
             );
             expect(shorts).toEqual(['GEN 1:1', 'GEN 1:2', 'GEN 1:3']);
+            // One chapter needs no count of its verses.
+            expect(h.getVersesCountMock).not.toHaveBeenCalled();
 
             h.bibleItemFromTitleTextMock.mockResolvedValue(null);
             expect(
                 await capturedConfig.verseFullTextToListShorts('bad\n'),
             ).toBeNull();
+        });
+
+        test('verseFullTextToListShorts lists every chapter of a cross-chapter range', async () => {
+            await setupInit();
+            h.getVersesCountMock.mockReset();
+            h.getVersesCountMock.mockImplementation(
+                async (
+                    _bibleKey: string,
+                    _bookKey: string,
+                    chapter: number,
+                ) => {
+                    return chapter === 1 ? 31 : 3;
+                },
+            );
+            h.bibleItemFromTitleTextMock.mockResolvedValue({
+                target: {
+                    bookKey: 'GEN',
+                    chapter: 1,
+                    verseStart: 30,
+                    verseEnd: 2,
+                    chapterEnd: 3,
+                },
+            });
+            const shorts = await capturedConfig.verseFullTextToListShorts(
+                'Genesis 1:30-3:2\n(30) text',
+            );
+            expect(shorts).toEqual([
+                'GEN 1:30',
+                'GEN 1:31',
+                'GEN 2:1',
+                'GEN 2:2',
+                'GEN 2:3',
+                'GEN 3:1',
+                'GEN 3:2',
+            ]);
+            // Counted in the version the title was read with; the last
+            // chapter's end is the passage's own.
+            expect(h.getVersesCountMock.mock.calls).toEqual([
+                ['KJV', 'GEN', 1],
+                ['KJV', 'GEN', 2],
+            ]);
         });
 
         test('changeBibleKey returns null when no key prefix matches', async () => {

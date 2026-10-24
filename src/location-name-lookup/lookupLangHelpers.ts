@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from 'react';
+import { createContext, use, useMemo, useSyncExternalStore } from 'react';
 
 import { useAppStateAsync } from '../helper/appHooks';
 import { getSetting, setSetting } from '../helper/settingHelpers';
@@ -19,9 +19,9 @@ import {
  * English bible may well want the records in Khmer, and an English UI with
  * Khmer records is just as legitimate the other way round.
  *
- * Every lookup surface reads it from here, so a change reaches the floating
- * panel, the detail panels, the note editor's mentions and the
- * "names and locations in your reading" list alike.
+ * A change reaches the lookup list, the note editor's mentions and the
+ * "names and locations in your reading" list. Person/location details pin
+ * their own language through LookupLangContext.
  */
 const LOOKUP_LANG_SETTING_NAME = 'location-name-lookup-lang-code';
 
@@ -59,9 +59,8 @@ export function setSelectedLookupLangCode(langCode: string) {
 /**
  * Notified AFTER the new code is readable from `getSelectedLookupLangCode`.
  *
- * The data layers hang their invalidation off this: a language change makes
- * every resident lookup structure wrong, and each holder has to drop what it
- * has rather than keep serving the previous language.
+ * The data layers invalidate their global-language caches here; managers still
+ * needed by fixed-language detail panels keep their mounted references.
  */
 export function subscribeLookupLangCode(listener: () => void) {
     listeners.add(listener);
@@ -85,6 +84,15 @@ export type LookupLangPresentationType = {
     translate: (text: string) => string;
 };
 
+// Detail panels pin their content language; other surfaces follow the setting.
+export const LookupLangContext = createContext<string | null>(null);
+
+export function useLookupLangCode() {
+    const panelLangCode = use(LookupLangContext);
+    const selectedCode = useSelectedLookupLangCode();
+    return panelLangCode ?? selectedCode;
+}
+
 /**
  * How to WRITE the lookup language: its font, and its dictionary.
  *
@@ -98,7 +106,7 @@ export type LookupLangPresentationType = {
  * dataset came out of it), so this costs a cache hit, not a load.
  */
 export function useLookupLangPresentation(): LookupLangPresentationType {
-    const langCode = useSelectedLookupLangCode();
+    const langCode = useLookupLangCode();
     const [langData] = useAppStateAsync(() => {
         return getLangDataByCodeAsync(langCode);
     }, [langCode]);

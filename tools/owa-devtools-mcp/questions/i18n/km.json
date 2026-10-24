@@ -1,0 +1,2108 @@
+{
+    "lang": "km",
+    "updated": "2026-10-23",
+    "sections": {
+        "bible-note.writing": {
+            "en": "Writing a note",
+            "text": "ការសរសេរកំណត់ត្រា"
+        },
+        "bible-note.sharing": {
+            "en": "Taking notes elsewhere",
+            "text": "យកកំណត់ត្រាទៅកន្លែងផ្សេង"
+        },
+        "common.panels": {
+            "en": "Panels & layout",
+            "text": "ផ្ទាំង និងការរៀបចំ"
+        },
+        "common.find-bar": {
+            "en": "Find text & About",
+            "text": "ស្វែងរកអក្សរ និងអំពីកម្មវិធី"
+        },
+        "common.sharing": {
+            "en": "Sharing & backup",
+            "text": "ការចែករំលែក និងការបម្រុងទុក"
+        },
+        "common.changes": {
+            "en": "Songs, slides, notes & saved passages",
+            "text": "ចម្រៀង ស្លាយ កំណត់ត្រា និងបទគម្ពីរដែលបានរក្សាទុក"
+        },
+        "common.status": {
+            "en": "What the app is doing right now",
+            "text": "អ្វីដែលកម្មវិធីកំពុងធ្វើឥឡូវនេះ"
+        },
+        "common.help": {
+            "en": "This help window",
+            "text": "ផ្ទាំងជំនួយនេះ"
+        },
+        "common.ai-chat": {
+            "en": "AI Chat window",
+            "text": "ផ្ទាំងជជែក AI"
+        },
+        "editor.slides": {
+            "en": "Working with slides",
+            "text": "ការធ្វើការជាមួយស្លាយ"
+        },
+        "editor.canvas": {
+            "en": "The slide canvas",
+            "text": "ផ្ទៃស្លាយ"
+        },
+        "lyric-editor.writing": {
+            "en": "Writing the song",
+            "text": "ការសរសេរចម្រៀង"
+        },
+        "lyric-editor.seeing-it": {
+            "en": "Seeing what it becomes",
+            "text": "មើលថាវានឹងចេញយ៉ាងណា"
+        },
+        "lyric-editor.not-accepted": {
+            "en": "When the song will not go in",
+            "text": "ពេលចម្រៀងមិនព្រមចូល"
+        },
+        "presenter.orientation": {
+            "en": "Finding your way around",
+            "text": "ស្គាល់កន្លែងនានា"
+        },
+        "presenter.making": {
+            "en": "Making a new file",
+            "text": "ការបង្កើតឯកសារថ្មី"
+        },
+        "presenter.documents": {
+            "en": "Documents & slides",
+            "text": "ឯកសារ និងស្លាយ"
+        },
+        "presenter.lyrics": {
+            "en": "Songs & lyrics",
+            "text": "ចម្រៀង និងទំនុកច្រៀង"
+        },
+        "presenter.bible": {
+            "en": "Bible verses on screen",
+            "text": "ខគម្ពីរលើអេក្រង់"
+        },
+        "presenter.background": {
+            "en": "Backgrounds",
+            "text": "ផ្ទៃខាងក្រោយ"
+        },
+        "presenter.foreground": {
+            "en": "Foreground extras & audio",
+            "text": "ផ្ទៃខាងមុខ និងសំឡេង"
+        },
+        "presenter.control": {
+            "en": "Drawing & spotlight on the app",
+            "text": "គូរ និងបំភ្លឺលើកម្មវិធី"
+        },
+        "presenting-flow.building": {
+            "en": "Building the running order",
+            "text": "ការរៀបចំតារាងកម្មវិធី"
+        },
+        "presenting-flow.running": {
+            "en": "Running the service from it",
+            "text": "ដំណើរការកម្មវិធីថ្វាយបង្គំពីវា"
+        },
+        "presenting-flow.automation": {
+            "en": "Making it advance by itself",
+            "text": "ឲ្យវាទៅមុខដោយខ្លួនឯង"
+        },
+        "presenting-flow.actions": {
+            "en": "Lines that do something",
+            "text": "បន្ទាត់ដែលធ្វើសកម្មភាព"
+        },
+        "presenting-flow.sharing": {
+            "en": "Sharing a running order",
+            "text": "ការចែករំលែកតារាងកម្មវិធី"
+        },
+        "reader.reading": {
+            "en": "Reading a passage",
+            "text": "ការអានបទគម្ពីរ"
+        },
+        "reader.guided-demos": {
+            "en": "Guided demos without AI",
+            "text": "ការបង្ហាញណែនាំដោយមិនប្រើ AI"
+        },
+        "reader.find": {
+            "en": "Searching the whole Bible",
+            "text": "ស្វែងរកក្នុងព្រះគម្ពីរទាំងមូល"
+        },
+        "reader.cross-reference": {
+            "en": "Cross references",
+            "text": "ខគម្ពីរយោង"
+        },
+        "reader.notes": {
+            "en": "Notes & marks",
+            "text": "កំណត់ត្រា និងការសម្គាល់"
+        },
+        "reader.lookup": {
+            "en": "People & places",
+            "text": "មនុស្ស និងទីកន្លែង"
+        },
+        "reader.graph": {
+            "en": "Connection graph",
+            "text": "ក្រាហ្វទំនាក់ទំនង"
+        },
+        "reader.resources": {
+            "en": "Your own files beside the verse",
+            "text": "ឯកសាររបស់អ្នកនៅក្បែរខគម្ពីរ"
+        },
+        "reader.versions": {
+            "en": "Bible translations",
+            "text": "កំណែព្រះគម្ពីរ"
+        },
+        "screen.screens": {
+            "en": "The screen the audience sees",
+            "text": "អេក្រង់ដែលក្រុមជំនុំមើលឃើញ"
+        },
+        "screen.screen-mirror": {
+            "en": "Screen Mirror",
+            "text": "ការបង្ហាញអេក្រង់នៅកុំព្យូទ័រផ្សេង"
+        },
+        "screen.virtual-displays": {
+            "en": "Virtual displays",
+            "text": "ម៉ូនីទ័រនិម្មិត"
+        },
+        "settings.general": {
+            "en": "Language, theme & fonts",
+            "text": "ភាសា រចនាប័ទ្ម និងពុម្ពអក្សរ"
+        },
+        "settings.paths": {
+            "en": "Folders on disk",
+            "text": "ថតលើថាស"
+        },
+        "settings.bible-settings": {
+            "en": "Bible versions",
+            "text": "កំណែព្រះគម្ពីរ"
+        },
+        "settings.ai": {
+            "en": "AI assistants",
+            "text": "ជំនួយការ AI"
+        },
+        "settings.others": {
+            "en": "Accounts & extras",
+            "text": "គណនី និងផ្សេងៗ"
+        },
+        "troubleshooting.screen": {
+            "en": "Nothing on the projector",
+            "text": "គ្មានអ្វីលើម៉ាស៊ីនបញ្ចាំង"
+        },
+        "troubleshooting.settings": {
+            "en": "The app itself is behaving oddly",
+            "text": "កម្មវិធីដំណើរការចម្លែក"
+        },
+        "troubleshooting.bible": {
+            "en": "A Bible version is wrong or missing",
+            "text": "កំណែព្រះគម្ពីរខុស ឬបាត់"
+        },
+        "troubleshooting.accounts": {
+            "en": "A sign-in will not connect",
+            "text": "ការចូលគណនីមិនភ្ជាប់"
+        },
+        "troubleshooting.media": {
+            "en": "A download or a media file fails",
+            "text": "ការទាញយក ឬឯកសារមេឌៀមិនដំណើរការ"
+        },
+        "troubleshooting.sharing": {
+            "en": "A file somebody sent will not open",
+            "text": "ឯកសារដែលគេផ្ញើមកបើកមិនបាន"
+        },
+        "troubleshooting.layout": {
+            "en": "Something has vanished from the window",
+            "text": "មានអ្វីមួយបាត់ពីផ្ទាំង"
+        },
+        "troubleshooting.editing": {
+            "en": "A slide does not look right",
+            "text": "ស្លាយមើលទៅមិនត្រឹមត្រូវ"
+        },
+        "troubleshooting.running-order": {
+            "en": "The running order is not behaving",
+            "text": "តារាងកម្មវិធីដំណើរការមិនត្រឹមត្រូវ"
+        },
+        "troubleshooting.reporting": {
+            "en": "Telling someone it is broken",
+            "text": "ប្រាប់គេថាវាខូច"
+        },
+        "web-editor.editing": {
+            "en": "Setting up a web background",
+            "text": "ការរៀបចំផ្ទៃខាងក្រោយវេបសាយ"
+        },
+        "web-editor.using-it": {
+            "en": "Putting it on the screen",
+            "text": "ដាក់វាលើអេក្រង់"
+        }
+    },
+    "questions": {
+        "bible-note.writing.what-is-this": {
+            "en": "What is this Bible Note window for?",
+            "text": "ផ្ទាំងកំណត់ត្រាព្រះគម្ពីរនេះ ប្រើសម្រាប់ធ្វើអ្វី?"
+        },
+        "bible-note.writing.save-note": {
+            "en": "How do I save the note I am writing?",
+            "text": "តើខ្ញុំរក្សាទុកកំណត់ត្រាដែលខ្ញុំកំពុងសរសេរដោយរបៀបណា?"
+        },
+        "bible-note.writing.undo-note-change": {
+            "en": "How do I get back what I typed in a note by mistake?",
+            "text": "ខ្ញុំកែកំណត់ត្រាខុស។ តើខ្ញុំយកអ្វីដែលខ្ញុំបានវាយមកវិញដោយរបៀបណា?"
+        },
+        "bible-note.sharing.share-notes": {
+            "en": "How do I share a page of Bible notes with another machine?",
+            "text": "តើខ្ញុំចែករំលែកទំព័រកំណត់ត្រាព្រះគម្ពីរទៅកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
+        },
+        "bible-note.sharing.notes-password": {
+            "en": "Can I put a password on the notes I send?",
+            "text": "តើខ្ញុំអាចដាក់ពាក្យសម្ងាត់លើកំណត់ត្រាដែលខ្ញុំផ្ញើបានទេ?"
+        },
+        "common.panels.context-menu-height": {
+            "en": "Why do I still need to scroll inside a long right-click menu?",
+            "text": "ហេតុអ្វីខ្ញុំនៅតែត្រូវរំកិលក្នុងម៉ឺនុយចុចខាងស្តាំដែលវែង?"
+        },
+        "common.panels.hide-panel": {
+            "en": "How do I hide a panel I do not use?",
+            "text": "តើខ្ញុំលាក់ផ្ទាំងដែលខ្ញុំមិនប្រើដោយរបៀបណា?"
+        },
+        "common.panels.reset-layout": {
+            "en": "How do I put the layout back the way it started?",
+            "text": "តើខ្ញុំដាក់ការរៀបចំផ្ទាំងឲ្យដូចដើមវិញដោយរបៀបណា?"
+        },
+        "common.panels.divider-menu": {
+            "en": "What does right-clicking the line between two panels do?",
+            "text": "ពេលខ្ញុំចុចខាងស្តាំលើបន្ទាត់ចន្លោះផ្ទាំងពីរ តើវាធ្វើអ្វី?"
+        },
+        "common.panels.divider-keyboard": {
+            "en": "Can I resize or close a panel with the keyboard?",
+            "text": "តើខ្ញុំអាចប្តូរទំហំ ឬបិទផ្ទាំងដោយប្រើក្តារចុចបានទេ?"
+        },
+        "common.find-bar.find-on-page": {
+            "en": "How do I find some text in the window I am looking at?",
+            "text": "តើខ្ញុំស្វែងរកអក្សរក្នុងផ្ទាំងដែលខ្ញុំកំពុងមើលដោយរបៀបណា?"
+        },
+        "common.find-bar.find-next": {
+            "en": "How do I jump to the next match in the find bar?",
+            "text": "តើខ្ញុំលោតទៅលទ្ធផលបន្ទាប់ក្នុងរបារស្វែងរកដោយរបៀបណា?"
+        },
+        "common.find-bar.find-in-ai-windows": {
+            "en": "Can I search the words in the help window or in AI Chat?",
+            "text": "តើខ្ញុំអាចស្វែងរកពាក្យក្នុងផ្ទាំងជំនួយ ឬក្នុងផ្ទាំងជជែក AI បានទេ?"
+        },
+        "common.find-bar.app-version": {
+            "en": "What version of the app am I running?",
+            "text": "តើខ្ញុំកំពុងប្រើកម្មវិធីកំណែណា?"
+        },
+        "common.sharing.share-document": {
+            "en": "How do I send one song or sermon to another machine?",
+            "text": "តើខ្ញុំផ្ញើចម្រៀង ឬសេចក្តីអធិប្បាយមួយ ទៅកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
+        },
+        "common.sharing.import-document": {
+            "en": "How do I import a document somebody sent me?",
+            "text": "តើខ្ញុំនាំចូលឯកសារដែលគេផ្ញើមកខ្ញុំដោយរបៀបណា?"
+        },
+        "common.sharing.import-from-url": {
+            "en": "How do I import something from a link?",
+            "text": "តើខ្ញុំនាំចូលអ្វីមួយពីតំណភ្ជាប់ដោយរបៀបណា?"
+        },
+        "common.sharing.backup-everything": {
+            "en": "How do I back everything up?",
+            "text": "តើខ្ញុំបម្រុងទុកទិន្នន័យទាំងអស់ដោយរបៀបណា?"
+        },
+        "common.sharing.move-machine": {
+            "en": "How do I move everything to a new computer?",
+            "text": "តើខ្ញុំផ្ទេរទិន្នន័យទាំងអស់ទៅកុំព្យូទ័រថ្មីដោយរបៀបណា?"
+        },
+        "common.sharing.archive-password": {
+            "en": "How do I password-protect something I export?",
+            "text": "តើខ្ញុំដាក់ពាក្យសម្ងាត់លើអ្វីដែលខ្ញុំនាំចេញដោយរបៀបណា?"
+        },
+        "common.changes.undo-a-change": {
+            "en": "Can you put back something the assistant deleted or changed?",
+            "text": "តើអ្នកអាចយកមកវិញនូវអ្វីដែលជំនួយការបានលុប ឬកែប្រែបានទេ?"
+        },
+        "common.changes.delete-a-song": {
+            "en": "Can you delete the song I made by mistake?",
+            "text": "តើអ្នកអាចលុបចម្រៀងដែលខ្ញុំបង្កើតដោយច្រឡំបានទេ?"
+        },
+        "common.changes.restyle-slide-text": {
+            "en": "Can you make the words on a slide bigger or change their colour?",
+            "text": "តើអ្នកអាចធ្វើឲ្យអក្សរលើស្លាយធំជាងមុន ឬប្តូរពណ៌វាបានទេ?"
+        },
+        "common.status.where-am-i": {
+            "en": "Which page am I on right now?",
+            "text": "តើឥឡូវនេះខ្ញុំនៅទំព័រណា?"
+        },
+        "common.status.what-is-on-screen": {
+            "en": "What is on the audience screen at the moment?",
+            "text": "តើឥឡូវនេះមានអ្វីនៅលើអេក្រង់ដែលក្រុមជំនុំមើលឃើញ?"
+        },
+        "common.status.which-displays": {
+            "en": "Which displays does this computer have?",
+            "text": "តើកុំព្យូទ័រនេះមានម៉ូនីទ័រអ្វីខ្លះ?"
+        },
+        "common.help.tips-of-the-day": {
+            "en": "How can I browse tips and learn the page I am using?",
+            "text": "តើខ្ញុំអាចមើលគន្លឹះ និងរៀនពីទំព័រដែលខ្ញុំកំពុងប្រើដោយរបៀបណា?"
+        },
+        "common.help.tip-of-the-day-disappeared": {
+            "en": "Why did the Tip of the Day disappear on its own?",
+            "text": "ហេតុអ្វីគន្លឹះប្រចាំថ្ងៃបាត់ដោយខ្លួនឯង?"
+        },
+        "common.help.restore-tips-of-the-day": {
+            "en": "How do I show Tips of the Day automatically again?",
+            "text": "តើខ្ញុំឲ្យគន្លឹះប្រចាំថ្ងៃបង្ហាញដោយស្វ័យប្រវត្តិវិញដោយរបៀបណា?"
+        },
+        "common.help.tips-in-other-windows": {
+            "en": "How do I see the tips for Settings or another open window?",
+            "text": "តើខ្ញុំមើលគន្លឹះសម្រាប់ការកំណត់ ឬបង្អួចផ្សេងទៀតដែលកំពុងបើកដោយរបៀបណា?"
+        },
+        "common.help.what-can-i-ask": {
+            "en": "What can I ask you?",
+            "text": "តើខ្ញុំអាចសួរអ្នកអំពីអ្វីខ្លះ?"
+        },
+        "common.help.open-help-from-taskbar": {
+            "en": "How do I open the help from the taskbar?",
+            "text": "តើខ្ញុំបើកជំនួយពីរបារភារកិច្ច (taskbar) ដោយរបៀបណា?"
+        },
+        "common.help.help-other-window": {
+            "en": "How do I get help with another open window, like a Bible Reader window?",
+            "text": "តើខ្ញុំសុំជំនួយសម្រាប់ផ្ទាំងផ្សេងទៀតដែលកំពុងបើក ដូចជាផ្ទាំងអានព្រះគម្ពីរ ដោយរបៀបណា?"
+        },
+        "common.help.hide-tip-line": {
+            "en": "How do I hide the tip line above the box?",
+            "text": "តើខ្ញុំលាក់បន្ទាត់គន្លឹះនៅពីលើប្រអប់សរសេរដោយរបៀបណា?"
+        },
+        "common.help.show-tip-line-again": {
+            "en": "How do I get the tips back after I hid them?",
+            "text": "តើខ្ញុំយកគន្លឹះមកវិញដោយរបៀបណា បន្ទាប់ពីខ្ញុំបានលាក់វា?"
+        },
+        "common.help.quick-commands": {
+            "en": "What commands can I type instead of asking?",
+            "text": "តើមានពាក្យបញ្ជាអ្វីខ្លះដែលខ្ញុំអាចវាយជំនួសការសួរ?"
+        },
+        "common.help.suggestion-keyboard": {
+            "en": "How do I pick a suggestion with the keyboard?",
+            "text": "តើខ្ញុំជ្រើសជម្រើសដែលបានស្នើដោយប្រើក្តារចុចដោយរបៀបណា?"
+        },
+        "common.help.walk-me-through": {
+            "en": "Can you walk me through it step by step?",
+            "text": "តើអ្នកអាចណែនាំខ្ញុំម្តងមួយជំហានបានទេ?"
+        },
+        "common.help.new-chat": {
+            "en": "How do I start a new chat?",
+            "text": "តើខ្ញុំចាប់ផ្តើមការជជែកថ្មីដោយរបៀបណា?"
+        },
+        "common.help.chat-full": {
+            "en": "Why can't I start another chat?",
+            "text": "ហេតុអ្វីខ្ញុំមិនអាចចាប់ផ្ដើមការជជែកថ្មីទៀតបាន?"
+        },
+        "common.help.keep-chat": {
+            "en": "How do I stop a chat being closed by accident?",
+            "text": "តើខ្ញុំការពារការជជែកកុំឲ្យបិទដោយចៃដន្យដោយរបៀបណា?"
+        },
+        "common.help.copy-answer": {
+            "en": "How do I copy an answer?",
+            "text": "តើខ្ញុំចម្លងចម្លើយមួយដោយរបៀបណា?"
+        },
+        "common.help.answer-was-wrong": {
+            "en": "What can I do when an answer is wrong?",
+            "text": "ពេលចម្លើយខុស តើខ្ញុំអាចធ្វើអ្វីបាន?"
+        },
+        "common.help.chat-cost": {
+            "en": "How much has this chat cost so far?",
+            "text": "តើការជជែកនេះចំណាយអស់ប៉ុន្មានហើយ?"
+        },
+        "common.help.chat-spend-limit": {
+            "en": "How do I stop the assistant spending too much?",
+            "text": "តើខ្ញុំការពារកុំឲ្យជំនួយការចំណាយលុយច្រើនពេកដោយរបៀបណា?"
+        },
+        "common.help.chat-fold-head": {
+            "en": "How do I get more room for the answers in the help window?",
+            "text": "តើខ្ញុំធ្វើឲ្យមានកន្លែងធំជាងមុនសម្រាប់ចម្លើយក្នុងផ្ទាំងជំនួយដោយរបៀបណា?"
+        },
+        "common.help.ask-again-earlier": {
+            "en": "How do I bring back a question I asked before?",
+            "text": "តើខ្ញុំយកសំណួរដែលខ្ញុំធ្លាប់សួរពីមុនមកវិញដោយរបៀបណា?"
+        },
+        "common.help.quick-answers": {
+            "en": "How do I answer without typing?",
+            "text": "តើខ្ញុំឆ្លើយដោយមិនបាច់វាយដោយរបៀបណា?"
+        },
+        "common.help.stop-answer": {
+            "en": "How do I stop it while it is answering?",
+            "text": "តើខ្ញុំបញ្ឈប់វាពេលវាកំពុងឆ្លើយដោយរបៀបណា?"
+        },
+        "common.help.what-is-it-doing": {
+            "en": "What is it doing while I wait?",
+            "text": "ពេលខ្ញុំរង់ចាំ តើវាកំពុងធ្វើអ្វី?"
+        },
+        "common.help.see-more-tips": {
+            "en": "How do I see the other tips above the box?",
+            "text": "តើខ្ញុំមើលគន្លឹះផ្សេងទៀតនៅពីលើប្រអប់សរសេរដោយរបៀបណា?"
+        },
+        "common.help.read-a-web-page": {
+            "en": "Can you read a web page for me?",
+            "text": "តើអ្នកអាចអានទំព័របណ្ដាញមួយជូនខ្ញុំបានទេ?"
+        },
+        "common.help.choose-model": {
+            "en": "How do I change which model answers?",
+            "text": "តើខ្ញុំប្តូរម៉ូដែល AI ដែលឆ្លើយសំណួរដោយរបៀបណា?"
+        },
+        "common.help.general-question": {
+            "en": "Can I ask the assistant something that is not about this app?",
+            "text": "តើខ្ញុំអាចសួរជំនួយការអំពីរឿងដែលមិនទាក់ទងនឹងកម្មវិធីនេះបានទេ?"
+        },
+        "common.help.shared-assistant": {
+            "en": "Can the assistant use a server shared by openworship.app?",
+            "text": "តើជំនួយការអាចប្រើម៉ាស៊ីនមេដែល openworship.app ចែករំលែកបានទេ?"
+        },
+        "common.help.auto-assistant": {
+            "en": "What does the Auto assistant do?",
+            "text": "តើជំនួយការស្វ័យប្រវត្តិ (Auto) ធ្វើអ្វី?"
+        },
+        "common.help.offline-help": {
+            "en": "Does the help still work without internet?",
+            "text": "តើជំនួយនៅតែដំណើរការបានទេ ពេលគ្មានអ៊ីនធឺណិត?"
+        },
+        "common.help.shortcuts-list": {
+            "en": "What keyboard shortcuts does the app have?",
+            "text": "តើកម្មវិធីមានគ្រាប់ចុចផ្លូវកាត់អ្វីខ្លះ?"
+        },
+        "common.help.shortcuts-search": {
+            "en": "Where can I see the keyboard shortcuts for this page?",
+            "text": "តើខ្ញុំអាចមើលគ្រាប់ចុចផ្លូវកាត់សម្រាប់ទំព័រនេះនៅឯណា?"
+        },
+        "common.help.show-a-picture": {
+            "en": "Can I show you a picture of my screen?",
+            "text": "តើខ្ញុំអាចបង្ហាញរូបភាពអេក្រង់របស់ខ្ញុំដល់អ្នកបានទេ?"
+        },
+        "common.help.attach-a-file": {
+            "en": "How do I attach a file to my question?",
+            "text": "តើខ្ញុំភ្ជាប់ឯកសារជាមួយសំណួររបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "common.help.back-to-reading-the-bible": {
+            "en": "I only want to read the Bible — how do I get back to the Bible Reader?",
+            "text": "ខ្ញុំគ្រាន់តែចង់អានព្រះគម្ពីរ — តើខ្ញុំត្រឡប់ទៅទំព័រអានព្រះគម្ពីរវិញដោយរបៀបណា?"
+        },
+        "common.help.attachment-numbers": {
+            "en": "How do I say which of the pictures I attached I mean?",
+            "text": "តើខ្ញុំប្រាប់ថាខ្ញុំចង់និយាយពីរូបភាពមួយណា ក្នុងចំណោមរូបភាពដែលខ្ញុំបានភ្ជាប់ ដោយរបៀបណា?"
+        },
+        "common.help.point-at-a-control": {
+            "en": "How do I point at the button I mean?",
+            "text": "តើខ្ញុំចង្អុលបង្ហាញប៊ូតុងដែលខ្ញុំចង់និយាយដោយរបៀបណា?"
+        },
+        "common.help.add-while-waiting": {
+            "en": "Can I add something while you are still answering?",
+            "text": "តើខ្ញុំអាចបន្ថែមអ្វីមួយ ខណៈអ្នកកំពុងឆ្លើយបានទេ?"
+        },
+        "common.ai-chat.use-chatgpt-inside-the-app": {
+            "en": "Can I use ChatGPT or Claude inside the app?",
+            "text": "តើខ្ញុំអាចប្រើ ChatGPT ឬ Claude នៅក្នុងកម្មវិធីបានទេ?"
+        },
+        "common.ai-chat.ai-chat-tab-reloaded": {
+            "en": "Why did my AI Chat tab load again when I came back to it?",
+            "text": "ហេតុអ្វីថេបជជែក AI របស់ខ្ញុំផ្ទុកឡើងវិញ ពេលខ្ញុំត្រឡប់មកវាវិញ?"
+        },
+        "common.ai-chat.ai-chat-sign-out": {
+            "en": "How do I sign out of the AI chat websites?",
+            "text": "តើខ្ញុំចាកចេញពីគណនីនៅលើវេបសាយជជែក AI ដោយរបៀបណា?"
+        },
+        "common.ai-chat.ai-chat-more-windows": {
+            "en": "Can I open more than one AI Chat window?",
+            "text": "តើខ្ញុំអាចបើកផ្ទាំងជជែក AI ច្រើនជាងមួយបានទេ?"
+        },
+        "common.ai-chat.ai-chat-reopen-closed-tab": {
+            "en": "How do I get back an AI Chat tab I closed?",
+            "text": "តើខ្ញុំយកថេបជជែក AI ដែលខ្ញុំបានបិទមកវិញដោយរបៀបណា?"
+        },
+        "common.ai-chat.ai-chat-shared-computer": {
+            "en": "Several people use this computer — is my AI chat account safe?",
+            "text": "មនុស្សច្រើននាក់ប្រើកុំព្យូទ័រនេះ — តើគណនីជជែក AI របស់ខ្ញុំមានសុវត្ថិភាពទេ?"
+        },
+        "common.ai-chat.ai-chat-not-the-assistant": {
+            "en": "What is the difference between the sparkle button and the robot button?",
+            "text": "តើប៊ូតុងផ្កាយភ្លឺ និងប៊ូតុងរ៉ូបូត ខុសគ្នាយ៉ាងដូចម្តេច?"
+        },
+        "common.ai-chat.ai-chat-microphone-blocked": {
+            "en": "Why does the AI chat website say the microphone is blocked?",
+            "text": "ហេតុអ្វីវេបសាយជជែក AI និយាយថាមីក្រូហ្វូនត្រូវបានរារាំង?"
+        },
+        "common.ai-chat.ai-chat-link-did-not-open": {
+            "en": "Why didn't a link in the AI Chat window open?",
+            "text": "ហេតុអ្វីតំណភ្ជាប់ក្នុងផ្ទាំងជជែក AI មិនបើក?"
+        },
+        "editor.slides.bulk-font": {
+            "en": "How do I apply a font size or font family to all slides or selected canvas items?",
+            "text": "តើខ្ញុំដាក់ទំហំតួអក្សរ ឬពុម្ពអក្សរ ឲ្យស្លាយទាំងអស់ ឬឲ្យធាតុដែលបានជ្រើសលើផ្ទៃស្លាយ ដោយរបៀបណា?"
+        },
+        "editor.slides.add-slide": {
+            "en": "How do I add a slide?",
+            "text": "តើខ្ញុំបន្ថែមស្លាយដោយរបៀបណា?"
+        },
+        "editor.slides.duplicate-slide": {
+            "en": "How do I copy a slide?",
+            "text": "តើខ្ញុំចម្លងស្លាយមួយដោយរបៀបណា?"
+        },
+        "editor.slides.delete-slide": {
+            "en": "How do I delete a slide?",
+            "text": "តើខ្ញុំលុបស្លាយមួយដោយរបៀបណា?"
+        },
+        "editor.slides.reorder-slides": {
+            "en": "How do I change the order of the slides?",
+            "text": "តើខ្ញុំប្តូរលំដាប់ស្លាយដោយរបៀបណា?"
+        },
+        "editor.slides.save-document": {
+            "en": "How do I save my changes?",
+            "text": "តើខ្ញុំរក្សាទុកការកែប្រែរបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "editor.slides.undo-edit": {
+            "en": "How do I undo a change I made by mistake?",
+            "text": "តើខ្ញុំត្រឡប់ការកែប្រែដែលខ្ញុំធ្វើខុសវិញដោយរបៀបណា?"
+        },
+        "editor.canvas.canvas-item-transition": {
+            "en": "How do I give one canvas item its own slide transition?",
+            "text": "តើខ្ញុំដាក់ការផ្លាស់ប្តូរផ្ទាល់ខ្លួនឲ្យធាតុមួយលើផ្ទៃស្លាយដោយរបៀបណា?"
+        },
+        "editor.canvas.imported-html-scripts": {
+            "en": "Why do scripts or embedded pages disappear from imported slide HTML?",
+            "text": "ហេតុអ្វីស្គ្រីប ឬទំព័របង្កប់ បាត់ពី HTML ស្លាយដែលខ្ញុំបាននាំចូល?"
+        },
+        "editor.canvas.add-text": {
+            "en": "How do I add text to a slide?",
+            "text": "តើខ្ញុំបន្ថែមអក្សរលើស្លាយដោយរបៀបណា?"
+        },
+        "editor.canvas.edit-text": {
+            "en": "How do I change the words in a text box?",
+            "text": "តើខ្ញុំប្តូរពាក្យក្នុងប្រអប់អក្សរដោយរបៀបណា?"
+        },
+        "editor.canvas.move-resize": {
+            "en": "How do I move or resize a box on the slide?",
+            "text": "តើខ្ញុំផ្លាស់ទី ឬប្តូរទំហំប្រអប់លើស្លាយដោយរបៀបណា?"
+        },
+        "editor.canvas.insert-media": {
+            "en": "How do I put a picture or video on a slide?",
+            "text": "តើខ្ញុំដាក់រូបភាព ឬវីដេអូលើស្លាយដោយរបៀបណា?"
+        },
+        "editor.canvas.insert-link": {
+            "en": "How do I put a video from a link on a slide?",
+            "text": "តើខ្ញុំដាក់វីដេអូពីតំណភ្ជាប់លើស្លាយដោយរបៀបណា?"
+        },
+        "editor.canvas.insert-website": {
+            "en": "How do I put a web page on a slide?",
+            "text": "តើខ្ញុំដាក់ទំព័របណ្ដាញលើស្លាយដោយរបៀបណា?"
+        },
+        "editor.canvas.insert-camera": {
+            "en": "How do I put a camera on a slide?",
+            "text": "តើខ្ញុំដាក់កាមេរ៉ាលើស្លាយដោយរបៀបណា?"
+        },
+        "editor.canvas.drag-from-background": {
+            "en": "How do I build a slide by dragging from the Background panel?",
+            "text": "តើខ្ញុំបង្កើតស្លាយដោយអូសពីផ្ទាំងផ្ទៃខាងក្រោយដោយរបៀបណា?"
+        },
+        "editor.canvas.drop-colour-locked-box": {
+            "en": "Why doesn’t dropping a colour change my box?",
+            "text": "ហេតុអ្វីការទម្លាក់ពណ៌មិនប្តូរពណ៌ប្រអប់របស់ខ្ញុំ?"
+        },
+        "editor.canvas.type-slide-colors": {
+            "en": "How do I type an exact background or text color for a slide item?",
+            "text": "តើខ្ញុំវាយពណ៌ផ្ទៃខាងក្រោយ ឬពណ៌អក្សរឲ្យចំៗ សម្រាប់ធាតុលើស្លាយដោយរបៀបណា?"
+        },
+        "editor.canvas.blend-box": {
+            "en": "How do I blend a box with the one behind it?",
+            "text": "តើខ្ញុំលាយប្រអប់មួយជាមួយប្រអប់នៅពីក្រោយវាដោយរបៀបណា?"
+        },
+        "editor.canvas.shadow-box": {
+            "en": "How do I put a shadow behind a box?",
+            "text": "តើខ្ញុំដាក់ស្រមោលនៅពីក្រោយប្រអប់ដោយរបៀបណា?"
+        },
+        "lyric-editor.writing.lyric-structure": {
+            "en": "How do I mark verses and choruses in a song?",
+            "text": "តើខ្ញុំសម្គាល់ឃ្លា និងបន្ទរនៅក្នុងចម្រៀងដោយរបៀបណា?"
+        },
+        "lyric-editor.writing.save-lyric": {
+            "en": "How do I save the song I am editing?",
+            "text": "តើខ្ញុំរក្សាទុកចម្រៀងដែលខ្ញុំកំពុងកែដោយរបៀបណា?"
+        },
+        "lyric-editor.writing.lyric-reset-style": {
+            "en": "How do I put a song's styling back the way it was?",
+            "text": "តើខ្ញុំដាក់រចនាប័ទ្មរបស់ចម្រៀងឲ្យដូចដើមវិញដោយរបៀបណា?"
+        },
+        "lyric-editor.writing.song-from-text": {
+            "en": "Can you write the notation for words I paste in?",
+            "text": "តើអ្នកអាចសរសេរសញ្ញាសម្គាល់ចម្រៀង សម្រាប់ពាក្យដែលខ្ញុំបិទភ្ជាប់បានទេ?"
+        },
+        "lyric-editor.seeing-it.lyric-preview": {
+            "en": "How do I see what a song will look like on screen?",
+            "text": "តើខ្ញុំមើលរូបរាងចម្រៀងនៅលើអេក្រង់ជាមុនដោយរបៀបណា?"
+        },
+        "lyric-editor.seeing-it.edit-while-presenting": {
+            "en": "Can I change the words while the song is on the screen?",
+            "text": "តើខ្ញុំអាចកែពាក្យ ខណៈចម្រៀងកំពុងបង្ហាញលើអេក្រង់បានទេ?"
+        },
+        "lyric-editor.not-accepted.lyric-not-accepted": {
+            "en": "Why will the editor not accept my song?",
+            "text": "ហេតុអ្វីកម្មវិធីកែសម្រួលមិនទទួលយកចម្រៀងរបស់ខ្ញុំ?"
+        },
+        "lyric-editor.not-accepted.lyric-chord-wrong": {
+            "en": "Why is one of my chords marked as wrong?",
+            "text": "ហេតុអ្វីអាកូដមួយរបស់ខ្ញុំត្រូវបានសម្គាល់ថាខុស?"
+        },
+        "lyric-editor.not-accepted.lyric-structure-order": {
+            "en": "What order will my song play in?",
+            "text": "តើចម្រៀងរបស់ខ្ញុំនឹងបង្ហាញតាមលំដាប់ណា?"
+        },
+        "presenter.orientation.window-parts": {
+            "en": "What is each part of the Presenter window?",
+            "text": "តើផ្នែកនីមួយៗនៃផ្ទាំងធ្វើបទបង្ហាញ ជាអ្វី?"
+        },
+        "presenter.orientation.dots-menu": {
+            "en": "What is the ⋮ button next to everything?",
+            "text": "តើប៊ូតុង ⋮ ដែលមាននៅក្បែរគ្រប់កន្លែង ជាអ្វី?"
+        },
+        "presenter.orientation.more-actions": {
+            "en": "Where are the extra actions for a song or a slide?",
+            "text": "តើសកម្មភាពបន្ថែមសម្រាប់ចម្រៀង ឬស្លាយ នៅឯណា?"
+        },
+        "presenter.orientation.go-reader": {
+            "en": "How do I switch to the Bible Reader?",
+            "text": "តើខ្ញុំប្តូរទៅទំព័រអានព្រះគម្ពីរដោយរបៀបណា?"
+        },
+        "presenter.orientation.go-editor": {
+            "en": "How do I open the Slide Editor?",
+            "text": "តើខ្ញុំបើកទំព័រកែសម្រួលស្លាយដោយរបៀបណា?"
+        },
+        "presenter.orientation.go-presenter": {
+            "en": "How do I get back to the Presenter?",
+            "text": "តើខ្ញុំត្រឡប់ទៅទំព័រធ្វើបទបង្ហាញវិញដោយរបៀបណា?"
+        },
+        "presenter.orientation.resize-panels": {
+            "en": "How do I make a panel bigger or smaller?",
+            "text": "តើខ្ញុំធ្វើឲ្យផ្ទាំងធំ ឬតូចជាងមុនដោយរបៀបណា?"
+        },
+        "presenter.orientation.stay-awake": {
+            "en": "How do I stop the computer going to sleep during the service?",
+            "text": "តើខ្ញុំការពារកុំឲ្យកុំព្យូទ័រចូលរបៀបដេក ពេលកំពុងថ្វាយបង្គំដោយរបៀបណា?"
+        },
+        "presenter.orientation.online-help": {
+            "en": "How do I open the online help?",
+            "text": "តើខ្ញុំបើកជំនួយតាមអ៊ីនធឺណិតដោយរបៀបណា?"
+        },
+        "presenter.orientation.presenter-practice-library": {
+            "en": "Where can I practise Presenter tasks with guided demos?",
+            "text": "តើខ្ញុំអាចហាត់ធ្វើការក្នុងទំព័រធ្វើបទបង្ហាញ ជាមួយការបង្ហាញណែនាំ នៅឯណា?"
+        },
+        "presenter.making.new-document": {
+            "en": "How do I make a new slide document?",
+            "text": "តើខ្ញុំបង្កើតឯកសារស្លាយថ្មីដោយរបៀបណា?"
+        },
+        "presenter.making.new-lyric": {
+            "en": "How do I make a new song?",
+            "text": "តើខ្ញុំបង្កើតចម្រៀងថ្មីដោយរបៀបណា?"
+        },
+        "presenter.making.song-from-text": {
+            "en": "Can you make a song from words I paste in?",
+            "text": "តើអ្នកអាចបង្កើតចម្រៀងពីពាក្យដែលខ្ញុំបិទភ្ជាប់បានទេ?"
+        },
+        "presenter.making.open-editor": {
+            "en": "How do I open the Slide Editor for a document?",
+            "text": "តើខ្ញុំបើកទំព័រកែសម្រួលស្លាយសម្រាប់ឯកសារមួយដោយរបៀបណា?"
+        },
+        "presenter.making.edit-in-window": {
+            "en": "How do I edit one slide in its own window?",
+            "text": "តើខ្ញុំកែស្លាយមួយក្នុងផ្ទាំងដាច់ដោយឡែកដោយរបៀបណា?"
+        },
+        "presenter.making.reserved-document-name": {
+            "en": "Why is a document name such as NUL.old refused?",
+            "text": "ហេតុអ្វីឈ្មោះឯកសារដូចជា NUL.old មិនត្រូវបានទទួលយក?"
+        },
+        "presenter.making.rename-document": {
+            "en": "How do I rename a document or a song?",
+            "text": "តើខ្ញុំប្តូរឈ្មោះឯកសារ ឬចម្រៀងដោយរបៀបណា?"
+        },
+        "presenter.making.delete-document": {
+            "en": "How do I delete a document I do not need?",
+            "text": "តើខ្ញុំលុបឯកសារដែលខ្ញុំមិនត្រូវការដោយរបៀបណា?"
+        },
+        "presenter.making.open-lyric-editor": {
+            "en": "How do I open the Lyric Editor?",
+            "text": "តើខ្ញុំបើកកម្មវិធីកែសម្រួលទំនុកច្រៀងដោយរបៀបណា?"
+        },
+        "presenter.documents.document-transition": {
+            "en": "How do I change a document's or a slide's own transition?",
+            "text": "តើខ្ញុំកំណត់ការផ្លាស់ប្តូរផ្ទាល់ខ្លួនរបស់ឯកសារ ឬស្លាយមួយដោយរបៀបណា?"
+        },
+        "presenter.documents.present-slide": {
+            "en": "How do I put a slide on the screen?",
+            "text": "តើខ្ញុំដាក់ស្លាយលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.documents.open-document": {
+            "en": "How do I open a document?",
+            "text": "តើខ្ញុំបើកឯកសារមួយដោយរបៀបណា?"
+        },
+        "presenter.documents.which-selected": {
+            "en": "Which song is selected right now?",
+            "text": "តើឥឡូវនេះចម្រៀងមួយណាកំពុងត្រូវបានជ្រើស?"
+        },
+        "presenter.documents.what-is-next": {
+            "en": "What is the next slide?",
+            "text": "តើស្លាយបន្ទាប់ជាអ្វី?"
+        },
+        "presenter.documents.show-next-slide": {
+            "en": "Show the next slide?",
+            "text": "តើអាចបង្ហាញស្លាយបន្ទាប់បានទេ?"
+        },
+        "presenter.documents.next-slide": {
+            "en": "How do I move to the next slide?",
+            "text": "តើខ្ញុំទៅស្លាយបន្ទាប់ដោយរបៀបណា?"
+        },
+        "presenter.documents.previous-slide": {
+            "en": "How do I go back to the previous slide?",
+            "text": "តើខ្ញុំត្រឡប់ទៅស្លាយមុនវិញដោយរបៀបណា?"
+        },
+        "presenter.documents.remote-keys-back": {
+            "en": "My presenter remote stopped changing the slide. How do I get it working again without clicking?",
+            "text": "រីម៉ូតបញ្ជាស្លាយរបស់ខ្ញុំលែងប្តូរស្លាយហើយ។ តើខ្ញុំធ្វើឲ្យវាដំណើរការវិញ ដោយមិនបាច់ចុចកណ្ដុរ ដោយរបៀបណា?"
+        },
+        "presenter.documents.clear-slide": {
+            "en": "How do I take the slide off the screen?",
+            "text": "តើខ្ញុំដកស្លាយចេញពីអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.documents.present-pdf": {
+            "en": "How do I present a PDF or a PowerPoint?",
+            "text": "តើខ្ញុំបង្ហាញឯកសារ PDF ឬ PowerPoint ដោយរបៀបណា?"
+        },
+        "presenter.documents.document-stage-monitor": {
+            "en": "How do I show the singer on stage what slide comes next?",
+            "text": "តើខ្ញុំបង្ហាញអ្នកច្រៀងនៅលើវេទិកាថាស្លាយណាមកបន្ទាប់ដោយរបៀបណា?"
+        },
+        "presenter.documents.auto-play": {
+            "en": "How do I make the slides advance by themselves?",
+            "text": "តើខ្ញុំធ្វើឲ្យស្លាយទៅមុខដោយខ្លួនឯងដោយរបៀបណា?"
+        },
+        "presenter.documents.auto-play-stop": {
+            "en": "How do I stop the slides advancing on their own?",
+            "text": "តើខ្ញុំបញ្ឈប់ស្លាយមិនឲ្យទៅមុខដោយខ្លួនឯងដោយរបៀបណា?"
+        },
+        "presenter.documents.auto-play-speed": {
+            "en": "How do I change how long each slide stays up?",
+            "text": "តើខ្ញុំប្តូររយៈពេលដែលស្លាយនីមួយៗនៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.documents.compare-documents": {
+            "en": "How do I look at two documents at the same time?",
+            "text": "តើខ្ញុំមើលឯកសារពីរក្នុងពេលតែមួយដោយរបៀបណា?"
+        },
+        "presenter.documents.pin-document": {
+            "en": "How do I stop a stray click changing the document I am presenting?",
+            "text": "តើខ្ញុំការពារកុំឲ្យការចុចខុសប្តូរឯកសារដែលខ្ញុំកំពុងបង្ហាញដោយរបៀបណា?"
+        },
+        "presenter.documents.unpin-document": {
+            "en": "How do I unpin the document I pinned?",
+            "text": "តើខ្ញុំដោះខ្ទាស់ឯកសារដែលខ្ញុំបានខ្ទាស់ដោយរបៀបណា?"
+        },
+        "presenter.documents.slide-notes": {
+            "en": "Where are the notes that go with a slide?",
+            "text": "តើកំណត់ត្រាដែលភ្ជាប់ជាមួយស្លាយនៅឯណា?"
+        },
+        "presenter.documents.open-note-panel": {
+            "en": "How do I open the Note panel under the slides?",
+            "text": "តើខ្ញុំបើកផ្ទាំងកំណត់ត្រានៅខាងក្រោមស្លាយដោយរបៀបណា?"
+        },
+        "presenter.documents.trash-document": {
+            "en": "How do I delete a song or document?",
+            "text": "តើខ្ញុំលុបចម្រៀង ឬឯកសារដោយរបៀបណា?"
+        },
+        "presenter.documents.restore-trashed-document": {
+            "en": "I moved a file to the trash by mistake, can I get it back?",
+            "text": "ខ្ញុំបានផ្លាស់ទីឯកសារទៅធុងសំរាមដោយច្រឡំ។ តើខ្ញុំអាចយកវាមកវិញបានទេ?"
+        },
+        "presenter.documents.export-pptx": {
+            "en": "How do I save a slide document as a PowerPoint file?",
+            "text": "តើខ្ញុំរក្សាទុកឯកសារស្លាយជាឯកសារ PowerPoint ដោយរបៀបណា?"
+        },
+        "presenter.lyrics.present-lyrics": {
+            "en": "How do I put a song's lyrics on the screen?",
+            "text": "តើខ្ញុំដាក់ទំនុកចម្រៀងលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.lyrics.export-lyric-stages-pptx": {
+            "en": "How do I export a song's lyric stages to PowerPoint?",
+            "text": "តើខ្ញុំនាំចេញដំណាក់កាលទំនុកចម្រៀងរបស់ចម្រៀងមួយទៅ PowerPoint ដោយរបៀបណា?"
+        },
+        "presenter.lyrics.find-song": {
+            "en": "Where are my songs?",
+            "text": "តើចម្រៀងរបស់ខ្ញុំនៅឯណា?"
+        },
+        "presenter.lyrics.edit-lyrics": {
+            "en": "How do I edit the words of a song?",
+            "text": "តើខ្ញុំកែពាក្យរបស់ចម្រៀងដោយរបៀបណា?"
+        },
+        "presenter.lyrics.song-look": {
+            "en": "How do I change how the song looks on screen?",
+            "text": "តើខ្ញុំប្តូររូបរាងចម្រៀងនៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.lyrics.song-add-stage": {
+            "en": "How do I add another stage to the Stage Previewer?",
+            "text": "តើខ្ញុំបន្ថែមដំណាក់កាលមួយទៀតក្នុងអ្នកមើលជាមុនដំណាក់កាលដោយរបៀបណា?"
+        },
+        "presenter.lyrics.stage-pane-hide": {
+            "en": "How do I take a stage away from the Stage Previewer?",
+            "text": "តើខ្ញុំដកដំណាក់កាលមួយចេញពីអ្នកមើលជាមុនដំណាក់កាលដោយរបៀបណា?"
+        },
+        "presenter.lyrics.song-order": {
+            "en": "How do I change the order the verses are sung in?",
+            "text": "តើខ្ញុំប្តូរលំដាប់ឃ្លាដែលត្រូវច្រៀងដោយរបៀបណា?"
+        },
+        "presenter.lyrics.song-attachment": {
+            "en": "How do I attach a file or a link to a song?",
+            "text": "តើខ្ញុំភ្ជាប់ឯកសារ ឬតំណភ្ជាប់ជាមួយចម្រៀងដោយរបៀបណា?"
+        },
+        "presenter.lyrics.songselect": {
+            "en": "How do I bring a song in from CCLI SongSelect?",
+            "text": "តើខ្ញុំនាំចម្រៀងចូលពី CCLI SongSelect ដោយរបៀបណា?"
+        },
+        "presenter.lyrics.public-domain": {
+            "en": "How do I import a hymn without a SongSelect account?",
+            "text": "តើខ្ញុំនាំចូលបទទំនុកតម្កើង ដោយគ្មានគណនី SongSelect ដោយរបៀបណា?"
+        },
+        "presenter.bible.present-verse": {
+            "en": "How do I present a Bible verse?",
+            "text": "តើខ្ញុំបង្ហាញខគម្ពីរលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.bible.generate-bible-slides": {
+            "en": "How do I generate Bible slides with multiple versions and an upcoming verse preview?",
+            "text": "តើខ្ញុំបង្កើតស្លាយព្រះគម្ពីរដែលមានច្រើនកំណែ និងមើលខគម្ពីរបន្ទាប់ជាមុន ដោយរបៀបណា?"
+        },
+        "presenter.bible.projector-more-chapters": {
+            "en": "How do I put the rest of a long passage on the screen?",
+            "text": "តើខ្ញុំដាក់ផ្នែកដែលនៅសល់នៃបទគម្ពីរវែងមួយលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.bible.open-lookup": {
+            "en": "Where is the Bible lookup?",
+            "text": "តើផ្ទាំងស្វែងរកព្រះគម្ពីរនៅឯណា?"
+        },
+        "presenter.bible.verse-range": {
+            "en": "How do I show more than one verse at a time?",
+            "text": "តើខ្ញុំបង្ហាញខគម្ពីរច្រើនជាងមួយក្នុងពេលតែមួយដោយរបៀបណា?"
+        },
+        "presenter.bible.change-version": {
+            "en": "How do I change the Bible version on screen?",
+            "text": "តើខ្ញុំប្តូរកំណែព្រះគម្ពីរនៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.bible.two-versions": {
+            "en": "How do I show two Bible versions side by side?",
+            "text": "តើខ្ញុំបង្ហាញព្រះគម្ពីរពីរកំណែនៅក្បែរគ្នាដោយរបៀបណា?"
+        },
+        "presenter.bible.next-verse": {
+            "en": "How do I step to the next verse while presenting?",
+            "text": "តើខ្ញុំទៅខគម្ពីរបន្ទាប់ ពេលកំពុងបង្ហាញ ដោយរបៀបណា?"
+        },
+        "presenter.bible.clear-bible": {
+            "en": "How do I take the verse off the screen?",
+            "text": "តើខ្ញុំដកខគម្ពីរចេញពីអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.bible.verse-style": {
+            "en": "How do I make the verse text bigger on screen?",
+            "text": "តើខ្ញុំធ្វើឲ្យអក្សរខគម្ពីរធំជាងមុននៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.bible.verse-color": {
+            "en": "How do I change the Bible text color?",
+            "text": "តើខ្ញុំប្តូរពណ៌អក្សរព្រះគម្ពីរដោយរបៀបណា?"
+        },
+        "presenter.bible.verse-dark-light": {
+            "en": "How do I switch the verse text between white and black?",
+            "text": "តើខ្ញុំប្តូរអក្សរខគម្ពីររវាងពណ៌ស និងពណ៌ខ្មៅដោយរបៀបណា?"
+        },
+        "presenter.bible.verse-shadow": {
+            "en": "How do I add a shadow behind the verse text?",
+            "text": "តើខ្ញុំដាក់ស្រមោលនៅពីក្រោយអក្សរខគម្ពីរដោយរបៀបណា?"
+        },
+        "presenter.bible.verse-outline": {
+            "en": "How do I put an outline around the verse text?",
+            "text": "តើខ្ញុំដាក់គែមអក្សរជុំវិញអក្សរខគម្ពីរដោយរបៀបណា?"
+        },
+        "presenter.bible.verse-preset": {
+            "en": "How do I save my Bible text style as a preset?",
+            "text": "តើខ្ញុំរក្សាទុករចនាប័ទ្មអក្សរព្រះគម្ពីររបស់ខ្ញុំជាគំរូដោយរបៀបណា?"
+        },
+        "presenter.bible.verse-font": {
+            "en": "How do I change the font of the Bible text on the screen?",
+            "text": "តើខ្ញុំប្តូរពុម្ពអក្សររបស់អក្សរព្រះគម្ពីរនៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.bible.bible-list": {
+            "en": "How do I save a verse to a list for later?",
+            "text": "តើខ្ញុំរក្សាទុកខគម្ពីរក្នុងបញ្ជីសម្រាប់ប្រើពេលក្រោយដោយរបៀបណា?"
+        },
+        "presenter.background.add-background": {
+            "en": "How do I add a background?",
+            "text": "តើខ្ញុំដាក់ផ្ទៃខាងក្រោយដោយរបៀបណា?"
+        },
+        "presenter.background.background-colour": {
+            "en": "How do I set a plain colour background?",
+            "text": "តើខ្ញុំដាក់ផ្ទៃខាងក្រោយជាពណ៌សុទ្ធដោយរបៀបណា?"
+        },
+        "presenter.background.background-image": {
+            "en": "How do I use my own picture as the background?",
+            "text": "តើខ្ញុំប្រើរូបភាពរបស់ខ្ញុំផ្ទាល់ជាផ្ទៃខាងក្រោយដោយរបៀបណា?"
+        },
+        "presenter.background.background-video": {
+            "en": "How do I use a video as the background?",
+            "text": "តើខ្ញុំប្រើវីដេអូជាផ្ទៃខាងក្រោយដោយរបៀបណា?"
+        },
+        "presenter.background.background-camera": {
+            "en": "How do I put a camera on the screen?",
+            "text": "តើខ្ញុំដាក់កាមេរ៉ាលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.background.background-web": {
+            "en": "How do I show a web page as the background?",
+            "text": "តើខ្ញុំបង្ហាញទំព័របណ្ដាញជាផ្ទៃខាងក្រោយដោយរបៀបណា?"
+        },
+        "presenter.background.background-from-link": {
+            "en": "How do I download a background video from a link?",
+            "text": "តើខ្ញុំទាញយកវីដេអូផ្ទៃខាងក្រោយពីតំណភ្ជាប់ដោយរបៀបណា?"
+        },
+        "presenter.background.audio-from-link": {
+            "en": "How do I get an MP3 out of an online link?",
+            "text": "តើខ្ញុំយកឯកសារ MP3 ពីតំណភ្ជាប់អនឡាញដោយរបៀបណា?"
+        },
+        "presenter.background.clear-background": {
+            "en": "How do I remove the background from the screen?",
+            "text": "តើខ្ញុំដកផ្ទៃខាងក្រោយចេញពីអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.background.background-folder": {
+            "en": "How do I point the app at my own pictures folder?",
+            "text": "តើខ្ញុំប្រាប់កម្មវិធីឲ្យប្រើថតរូបភាពរបស់ខ្ញុំផ្ទាល់ដោយរបៀបណា?"
+        },
+        "presenter.background.background-folder-sessions": {
+            "en": "How do I switch between two background folders?",
+            "text": "តើខ្ញុំប្តូររវាងថតផ្ទៃខាងក្រោយពីរដោយរបៀបណា?"
+        },
+        "presenter.background.background-session-remove": {
+            "en": "How do I remove a background folder session?",
+            "text": "តើខ្ញុំលុបវគ្គថតផ្ទៃខាងក្រោយមួយដោយរបៀបណា?"
+        },
+        "presenter.background.background-onto-slide": {
+            "en": "How do I drag a picture onto a slide?",
+            "text": "តើខ្ញុំអូសរូបភាពមួយទៅលើស្លាយដោយរបៀបណា?"
+        },
+        "presenter.background.new-web-item": {
+            "en": "How do I add a web page to the Background panel?",
+            "text": "តើខ្ញុំបន្ថែមទំព័របណ្ដាញទៅក្នុងផ្ទាំងផ្ទៃខាងក្រោយដោយរបៀបណា?"
+        },
+        "presenter.foreground.foreground-what": {
+            "en": "What are the foreground extras?",
+            "text": "តើរបស់បន្ថែមនៅលើផ្ទៃខាងមុខមានអ្វីខ្លះ?"
+        },
+        "presenter.foreground.countdown": {
+            "en": "How do I show a countdown before the service?",
+            "text": "តើខ្ញុំបង្ហាញការរាប់ថយក្រោយមុនកម្មវិធីថ្វាយបង្គំដោយរបៀបណា?"
+        },
+        "presenter.foreground.countdown-start": {
+            "en": "Can you start a 5 minute countdown on the screen?",
+            "text": "តើអ្នកអាចចាប់ផ្តើមរាប់ថយក្រោយ ៥ នាទីលើអេក្រង់បានទេ?"
+        },
+        "presenter.foreground.countdown-overtime": {
+            "en": "Can the countdown show how long we went over?",
+            "text": "តើការរាប់ថយក្រោយអាចបង្ហាញថាយើងហួសពេលប៉ុន្មានបានទេ?"
+        },
+        "presenter.foreground.countdown-show-not-started": {
+            "en": "Can I put the countdown up now and start it later?",
+            "text": "តើខ្ញុំអាចដាក់ការរាប់ថយក្រោយលើអេក្រង់ឥឡូវ ហើយចាប់ផ្តើមវាពេលក្រោយបានទេ?"
+        },
+        "presenter.foreground.stopwatch-history": {
+            "en": "Where can I see how long the stopwatch ran before I reset it?",
+            "text": "តើខ្ញុំអាចមើលថានាឡិកាបញ្ឈប់បានដើររយៈពេលប៉ុន្មាន មុនពេលខ្ញុំកំណត់វាឡើងវិញ នៅឯណា?"
+        },
+        "presenter.foreground.timer-pause-reset": {
+            "en": "How do I pause or reset the countdown or the stopwatch?",
+            "text": "តើខ្ញុំផ្អាក ឬកំណត់ឡើងវិញ ការរាប់ថយក្រោយ ឬនាឡិកាបញ្ឈប់ ដោយរបៀបណា?"
+        },
+        "presenter.foreground.clock": {
+            "en": "How do I put a clock on the screen?",
+            "text": "តើខ្ញុំដាក់នាឡិកាលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.foreground.clock-city": {
+            "en": "How do I show the time of another city?",
+            "text": "តើខ្ញុំបង្ហាញម៉ោងរបស់ទីក្រុងផ្សេងដោយរបៀបណា?"
+        },
+        "presenter.foreground.screen-show": {
+            "en": "How do I show one screen inside another screen?",
+            "text": "តើខ្ញុំបង្ហាញអេក្រង់មួយនៅក្នុងអេក្រង់មួយទៀតដោយរបៀបណា?"
+        },
+        "presenter.foreground.stopwatch": {
+            "en": "How do I run a stopwatch on the screen?",
+            "text": "តើខ្ញុំដំណើរការនាឡិកាបញ្ឈប់លើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.foreground.marquee": {
+            "en": "How do I scroll a message along the bottom of the screen?",
+            "text": "តើខ្ញុំដាក់សារជាអក្សររត់នៅខាងក្រោមអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.foreground.quick-text": {
+            "en": "How do I put a quick line of text on the screen?",
+            "text": "តើខ្ញុំដាក់អក្សរមួយបន្ទាត់យ៉ាងរហ័សលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.foreground.slideshow": {
+            "en": "How do I run a slideshow of images?",
+            "text": "តើខ្ញុំបង្ហាញរូបភាពជាស្លាយបន្តបន្ទាប់គ្នាដោយរបៀបណា?"
+        },
+        "presenter.foreground.play-audio": {
+            "en": "How do I play a song or backing track?",
+            "text": "តើខ្ញុំចាក់ចម្រៀង ឬភ្លេងសុទ្ធដោយរបៀបណា?"
+        },
+        "presenter.foreground.audio-volume": {
+            "en": "How do I change the volume of what is playing?",
+            "text": "តើខ្ញុំប្តូរកម្រិតសំឡេងនៃអ្វីដែលកំពុងចាក់ដោយរបៀបណា?"
+        },
+        "presenter.foreground.clear-foreground": {
+            "en": "How do I clear the countdown or the message off the screen?",
+            "text": "តើខ្ញុំលុបការរាប់ថយក្រោយ ឬសារចេញពីអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenter.foreground.foreground-two-overlays": {
+            "en": "Can I show two pictures over the slide at the same time?",
+            "text": "តើខ្ញុំអាចបង្ហាញរូបភាពពីរនៅពីលើស្លាយក្នុងពេលតែមួយបានទេ?"
+        },
+        "presenter.foreground.foreground-sessions": {
+            "en": "How do I keep two different countdowns ready?",
+            "text": "តើខ្ញុំរៀបចំការរាប់ថយក្រោយពីរផ្សេងគ្នាឲ្យរួចជាស្រេចដោយរបៀបណា?"
+        },
+        "presenter.foreground.foreground-session-dot": {
+            "en": "Why does one of the session buttons have a dot on it?",
+            "text": "ហេតុអ្វីប៊ូតុងវគ្គមួយមានចំណុចនៅលើវា?"
+        },
+        "presenter.foreground.foreground-always-on-top": {
+            "en": "How do I keep my logo above the other overlays?",
+            "text": "តើខ្ញុំទុកឡូហ្គោរបស់ខ្ញុំឲ្យនៅពីលើផ្ទៃខាងមុខផ្សេងទៀតជានិច្ចដោយរបៀបណា?"
+        },
+        "presenter.foreground.foreground-behind-slide": {
+            "en": "How do I put a foreground item behind the lyrics?",
+            "text": "តើខ្ញុំដាក់ធាតុផ្ទៃខាងមុខនៅពីក្រោយទំនុកចម្រៀងដោយរបៀបណា?"
+        },
+        "presenter.foreground.foreground-panels": {
+            "en": "How do I open two foreground panels side by side?",
+            "text": "តើខ្ញុំបើកផ្ទាំងផ្ទៃខាងមុខពីរនៅក្បែរគ្នាដោយរបៀបណា?"
+        },
+        "presenter.foreground.foreground-padding": {
+            "en": "My message text touches the edge of its box. How do I add space around it?",
+            "text": "អក្សរសាររបស់ខ្ញុំប៉ះគែមប្រអប់។ តើខ្ញុំបន្ថែមចន្លោះជុំវិញវាដោយរបៀបណា?"
+        },
+        "presenter.foreground.message-shrinks-to-fit": {
+            "en": "Why did my messages get smaller on the screen?",
+            "text": "ហេតុអ្វីសាររបស់ខ្ញុំតូចជាងមុននៅលើអេក្រង់?"
+        },
+        "presenter.foreground.foreground-effects": {
+            "en": "How do I put a border or a shadow on an overlay?",
+            "text": "តើខ្ញុំដាក់ស៊ុម ឬស្រមោលលើធាតុផ្ទៃខាងមុខដោយរបៀបណា?"
+        },
+        "presenter.foreground.foreground-text-readable": {
+            "en": "The words are hard to read over the video. What can I do?",
+            "text": "អក្សរពិបាកអាននៅពីលើវីដេអូ។ តើខ្ញុំអាចធ្វើអ្វីបាន?"
+        },
+        "presenter.foreground.messages-practice": {
+            "en": "How can I learn to prepare several notices in Messages?",
+            "text": "តើខ្ញុំអាចរៀនរៀបចំសេចក្តីប្រកាសច្រើនក្នុងផ្ទាំងសារដោយរបៀបណា?"
+        },
+        "presenter.foreground.long-text-languages": {
+            "en": "How do I show a song in two languages side by side?",
+            "text": "តើខ្ញុំបង្ហាញចម្រៀងជាពីរភាសានៅក្បែរគ្នាដោយរបៀបណា?"
+        },
+        "presenter.foreground.long-text-refused": {
+            "en": "Why is Show Long Text switched off?",
+            "text": "ហេតុអ្វីប៊ូតុងបង្ហាញអត្ថបទវែងត្រូវបានបិទ?"
+        },
+        "presenter.foreground.long-text-jump": {
+            "en": "How do I jump to the chorus while everyone is singing?",
+            "text": "តើខ្ញុំលោតទៅបន្ទរ ខណៈគ្រប់គ្នាកំពុងច្រៀង ដោយរបៀបណា?"
+        },
+        "presenter.foreground.long-text-keys": {
+            "en": "Can I go to the next part of a Long Text Show with Space or the arrow keys?",
+            "text": "តើខ្ញុំអាចទៅផ្នែកបន្ទាប់នៃការបង្ហាញអត្ថបទវែង ដោយចុច Space ឬគ្រាប់ចុចព្រួញបានទេ?"
+        },
+        "presenter.control.draw-on-app": {
+            "en": "How do I draw on the app window while I teach?",
+            "text": "តើខ្ញុំគូរលើផ្ទាំងកម្មវិធី ពេលកំពុងបង្រៀន ដោយរបៀបណា?"
+        },
+        "presenter.control.spotlight": {
+            "en": "How do I spotlight part of the app window?",
+            "text": "តើខ្ញុំបញ្ចាំងពន្លឺលើផ្នែកខ្លះនៃផ្ទាំងកម្មវិធីដោយរបៀបណា?"
+        },
+        "presenter.control.draw-clear": {
+            "en": "How do I clear what I drew?",
+            "text": "តើខ្ញុំលុបអ្វីដែលខ្ញុំបានគូរដោយរបៀបណា?"
+        },
+        "presenter.control.draw-stop": {
+            "en": "How do I stop drawing mode?",
+            "text": "តើខ្ញុំបិទមុខងារគូរដោយរបៀបណា?"
+        },
+        "presenter.control.keycast": {
+            "en": "How do I show the room which keys I am pressing?",
+            "text": "តើខ្ញុំបង្ហាញអ្នកក្នុងបន្ទប់ថាខ្ញុំកំពុងចុចគ្រាប់ចុចណាដោយរបៀបណា?"
+        },
+        "presenting-flow.building.flow-what": {
+            "en": "What is a presenting flow?",
+            "text": "តើតារាងកម្មវិធីជាអ្វី?"
+        },
+        "presenting-flow.building.flow-build": {
+            "en": "How do I build a running order for a service?",
+            "text": "តើខ្ញុំរៀបចំតារាងកម្មវិធីសម្រាប់ការថ្វាយបង្គំដោយរបៀបណា?"
+        },
+        "presenting-flow.building.flow-add": {
+            "en": "How do I add a song or a verse to a presenting flow?",
+            "text": "តើខ្ញុំបន្ថែមចម្រៀង ឬខគម្ពីរទៅក្នុងតារាងកម្មវិធីដោយរបៀបណា?"
+        },
+        "presenting-flow.building.flow-add-for-me": {
+            "en": "Can you add a song to my presenting flow for me?",
+            "text": "តើអ្នកអាចបន្ថែមចម្រៀងទៅក្នុងតារាងកម្មវិធីរបស់ខ្ញុំជំនួសខ្ញុំបានទេ?"
+        },
+        "presenting-flow.building.flow-reorder": {
+            "en": "How do I move a line up or down in the running order?",
+            "text": "តើខ្ញុំផ្លាស់ទីបន្ទាត់មួយឡើងលើ ឬចុះក្រោមក្នុងតារាងកម្មវិធីដោយរបៀបណា?"
+        },
+        "presenting-flow.building.flow-remove": {
+            "en": "How do I take a line out of the running order?",
+            "text": "តើខ្ញុំដកបន្ទាត់មួយចេញពីតារាងកម្មវិធីដោយរបៀបណា?"
+        },
+        "presenting-flow.building.flow-expand": {
+            "en": "How do I see the slides inside a song in the running order?",
+            "text": "តើខ្ញុំមើលស្លាយនៅក្នុងចម្រៀងមួយក្នុងតារាងកម្មវិធីដោយរបៀបណា?"
+        },
+        "presenting-flow.building.flow-drag-onto": {
+            "en": "How do I drop one line onto another instead of moving it?",
+            "text": "តើខ្ញុំទម្លាក់បន្ទាត់មួយពីលើបន្ទាត់មួយទៀត ជំនួសឲ្យការផ្លាស់ទីវា ដោយរបៀបណា?"
+        },
+        "presenting-flow.running.flow-run": {
+            "en": "How do I run the service from the presenting flow?",
+            "text": "តើខ្ញុំដំណើរការកម្មវិធីថ្វាយបង្គំពីតារាងកម្មវិធីដោយរបៀបណា?"
+        },
+        "presenting-flow.running.flow-preview": {
+            "en": "How do I follow the running order without putting it up yet?",
+            "text": "តើខ្ញុំតាមដានតារាងកម្មវិធី ដោយមិនទាន់ដាក់វាលើអេក្រង់ ដោយរបៀបណា?"
+        },
+        "presenting-flow.running.flow-preview-many": {
+            "en": "Can I have two running orders open at the same time?",
+            "text": "តើខ្ញុំអាចបើកតារាងកម្មវិធីពីរក្នុងពេលតែមួយបានទេ?"
+        },
+        "presenting-flow.running.flow-jump-back": {
+            "en": "How do I go back to an earlier line in the running order?",
+            "text": "តើខ្ញុំត្រឡប់ទៅបន្ទាត់មុនៗក្នុងតារាងកម្មវិធីដោយរបៀបណា?"
+        },
+        "presenting-flow.automation.flow-auto-next": {
+            "en": "How do I make the running order advance by itself?",
+            "text": "តើខ្ញុំធ្វើឲ្យតារាងកម្មវិធីទៅមុខដោយខ្លួនឯងដោយរបៀបណា?"
+        },
+        "presenting-flow.automation.flow-auto-next-time": {
+            "en": "How do I make a line start at a set time on the clock?",
+            "text": "តើខ្ញុំធ្វើឲ្យបន្ទាត់មួយចាប់ផ្តើមនៅម៉ោងកំណត់ដោយរបៀបណា?"
+        },
+        "presenting-flow.automation.flow-interval": {
+            "en": "How do I make a loop of slides run over and over before the service?",
+            "text": "តើខ្ញុំធ្វើឲ្យស្លាយបង្ហាញវិលជុំម្តងហើយម្តងទៀត មុនកម្មវិធីថ្វាយបង្គំ ដោយរបៀបណា?"
+        },
+        "presenting-flow.automation.flow-timing-per-line": {
+            "en": "How do I give one line its own waiting time?",
+            "text": "តើខ្ញុំកំណត់រយៈពេលរង់ចាំផ្ទាល់ខ្លួនឲ្យបន្ទាត់មួយដោយរបៀបណា?"
+        },
+        "presenting-flow.automation.flow-shortcut": {
+            "en": "How do I give a line its own keyboard shortcut?",
+            "text": "តើខ្ញុំកំណត់គ្រាប់ចុចផ្លូវកាត់ផ្ទាល់ខ្លួនឲ្យបន្ទាត់មួយដោយរបៀបណា?"
+        },
+        "presenting-flow.actions.flow-action": {
+            "en": "How do I make a line clear the screen or show it?",
+            "text": "តើខ្ញុំធ្វើឲ្យបន្ទាត់មួយលុបអេក្រង់ ឬបង្ហាញវាដោយរបៀបណា?"
+        },
+        "presenting-flow.actions.flow-screen-show": {
+            "en": "How do I make a line turn a screen on or off?",
+            "text": "តើខ្ញុំធ្វើឲ្យបន្ទាត់មួយបើក ឬបិទអេក្រង់ដោយរបៀបណា?"
+        },
+        "presenting-flow.actions.flow-cc-element": {
+            "en": "How do I make one line put up two things at once?",
+            "text": "តើខ្ញុំធ្វើឲ្យបន្ទាត់មួយបង្ហាញរបស់ពីរក្នុងពេលតែមួយដោយរបៀបណា?"
+        },
+        "presenting-flow.actions.flow-pin-screen": {
+            "en": "How do I make one line always go to the same screen?",
+            "text": "តើខ្ញុំធ្វើឲ្យបន្ទាត់មួយទៅអេក្រង់តែមួយជានិច្ចដោយរបៀបណា?"
+        },
+        "presenting-flow.actions.flow-media-control": {
+            "en": "How do I control a video's play and pause from the running order?",
+            "text": "តើខ្ញុំបញ្ជាការចាក់ និងផ្អាកវីដេអូពីតារាងកម្មវិធីដោយរបៀបណា?"
+        },
+        "presenting-flow.sharing.flow-share": {
+            "en": "How do I share a presenting flow with another machine?",
+            "text": "តើខ្ញុំចែករំលែកតារាងកម្មវិធីទៅកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
+        },
+        "presenting-flow.sharing.flow-password": {
+            "en": "How do I put a password on a presenting flow I export?",
+            "text": "តើខ្ញុំដាក់ពាក្យសម្ងាត់លើតារាងកម្មវិធីដែលខ្ញុំនាំចេញដោយរបៀបណា?"
+        },
+        "presenting-flow.sharing.flow-import": {
+            "en": "How do I open a running order somebody sent me?",
+            "text": "តើខ្ញុំបើកតារាងកម្មវិធីដែលគេផ្ញើមកខ្ញុំដោយរបៀបណា?"
+        },
+        "reader.reading.look-up-verse": {
+            "en": "How do I look up a verse?",
+            "text": "តើខ្ញុំរកមើលខគម្ពីរមួយដោយរបៀបណា?"
+        },
+        "reader.reading.type-reference": {
+            "en": "Where do I type John 3:16?",
+            "text": "តើខ្ញុំវាយ យ៉ូហាន ៣:១៦ នៅឯណា?"
+        },
+        "reader.reading.cross-chapter-passage": {
+            "en": "How do I read a passage that runs into the next chapter, like John 1:2-3:4?",
+            "text": "តើខ្ញុំអានបទគម្ពីរដែលបន្តទៅជំពូកបន្ទាប់ ដូចជា យ៉ូហាន ១:២-៣:៤ ដោយរបៀបណា?"
+        },
+        "reader.reading.copy-formats": {
+            "en": "How do I copy a passage without verse numbers, or with the version after the reference?",
+            "text": "តើខ្ញុំចម្លងបទគម្ពីរដោយគ្មានលេខខ ឬដាក់កំណែនៅក្រោយលេខយោង ដោយរបៀបណា?"
+        },
+        "reader.reading.more-chapters": {
+            "en": "Why does a long passage show only three chapters?",
+            "text": "ហេតុអ្វីបទគម្ពីរវែងបង្ហាញតែបីជំពូក?"
+        },
+        "reader.reading.heading-reference": {
+            "en": "How do I open a passage named in a section heading?",
+            "text": "តើខ្ញុំបើកបទគម្ពីរដែលបានយោងក្នុងចំណងជើងផ្នែកដោយរបៀបណា?"
+        },
+        "reader.reading.reader-versions": {
+            "en": "How do I put two Bible versions side by side?",
+            "text": "តើខ្ញុំដាក់ព្រះគម្ពីរពីរកំណែនៅក្បែរគ្នាដោយរបៀបណា?"
+        },
+        "reader.reading.dim-header-icons": {
+            "en": "Why are the color, sync-scroll and audio icons dimmed above my Bible passage?",
+            "text": "ហេតុអ្វីរូបតំណាងពណ៌ ការរំកិលស្របគ្នា និងសំឡេង នៅពីលើបទគម្ពីររបស់ខ្ញុំ មើលទៅស្រអាប់?"
+        },
+        "reader.reading.sync-group-scrolling": {
+            "en": "How do I make the other Bible translations follow the verse I am reading?",
+            "text": "តើខ្ញុំធ្វើឲ្យកំណែព្រះគម្ពីរផ្សេងទៀតតាមខគម្ពីរដែលខ្ញុំកំពុងអានដោយរបៀបណា?"
+        },
+        "reader.reading.split-other-version": {
+            "en": "Why does the split button ask which Bible version to open?",
+            "text": "ហេតុអ្វីប៊ូតុងបំបែកសួរថាត្រូវបើកកំណែព្រះគម្ពីរមួយណា?"
+        },
+        "reader.reading.dropped-pane-own-color": {
+            "en": "Why did the passage I dragged in get a different color?",
+            "text": "ហេតុអ្វីបទគម្ពីរដែលខ្ញុំអូសចូលបានពណ៌ផ្សេង?"
+        },
+        "reader.reading.add-version": {
+            "en": "How do I add another version to what I am reading?",
+            "text": "តើខ្ញុំបន្ថែមកំណែមួយទៀតទៅលើអ្វីដែលខ្ញុំកំពុងអានដោយរបៀបណា?"
+        },
+        "reader.reading.leave-empty-view": {
+            "en": "What happens to a view with no passage yet when I edit another one?",
+            "text": "ពេលខ្ញុំកែផ្ទាំងមួយទៀត តើផ្ទាំងដែលមិនទាន់មានបទគម្ពីរនឹងទៅជាយ៉ាងណា?"
+        },
+        "reader.reading.reader-history": {
+            "en": "I lost the passage I was reading. How do I get it back?",
+            "text": "ខ្ញុំបាត់បទគម្ពីរដែលខ្ញុំកំពុងអាន។ តើខ្ញុំយកវាមកវិញដោយរបៀបណា?"
+        },
+        "reader.reading.reader-history-put-back": {
+            "en": "How do I put a passage from the history back into the passage I am editing?",
+            "text": "តើខ្ញុំយកបទគម្ពីរពីប្រវត្តិមកដាក់វិញក្នុងបទគម្ពីរដែលខ្ញុំកំពុងកែដោយរបៀបណា?"
+        },
+        "reader.reading.reader-clear-input": {
+            "en": "How do I clear the reference box?",
+            "text": "តើខ្ញុំលុបអក្សរក្នុងប្រអប់វាយខគម្ពីរដោយរបៀបណា?"
+        },
+        "reader.reading.reader-text-size": {
+            "en": "The words are too small. Can you help me?",
+            "text": "អក្សរតូចពេក។ តើអ្នកអាចជួយខ្ញុំបានទេ?"
+        },
+        "reader.reading.auto-scroll": {
+            "en": "How do I make the passage scroll itself while I read?",
+            "text": "តើខ្ញុំធ្វើឲ្យបទគម្ពីររំកិលដោយខ្លួនឯង ពេលខ្ញុំកំពុងអាន ដោយរបៀបណា?"
+        },
+        "reader.reading.auto-scroll-stop": {
+            "en": "How do I stop the passage scrolling on its own?",
+            "text": "តើខ្ញុំបញ្ឈប់បទគម្ពីរមិនឲ្យរំកិលដោយខ្លួនឯងដោយរបៀបណា?"
+        },
+        "reader.reading.full-screen-read": {
+            "en": "How do I read without the panels in the way?",
+            "text": "តើខ្ញុំអានដោយគ្មានផ្ទាំងផ្សេងៗរំខានដោយរបៀបណា?"
+        },
+        "reader.reading.advance-lookup-section": {
+            "en": "How do I close or reopen the Advance Lookup section?",
+            "text": "តើខ្ញុំបិទ ឬបើកផ្នែកស្វែងរកកម្រិតខ្ពស់វិញដោយរបៀបណា?"
+        },
+        "reader.reading.bible-not-available": {
+            "en": "It says a Bible key is not available. How do I get that Bible?",
+            "text": "វាថាកូនសោព្រះគម្ពីរមិនមាន។ តើខ្ញុំយកព្រះគម្ពីរនោះដោយរបៀបណា?"
+        },
+        "reader.guided-demos.reader-built-in-demos": {
+            "en": "Can I practise the Bible Reader without asking AI?",
+            "text": "តើខ្ញុំអាចហាត់ប្រើទំព័រអានព្រះគម្ពីរ ដោយមិនបាច់សួរ AI បានទេ?"
+        },
+        "reader.guided-demos.reader-all-tips": {
+            "en": "Where can I find and replay all Reader demos?",
+            "text": "តើខ្ញុំអាចរក និងមើលការបង្ហាញណែនាំទាំងអស់របស់ទំព័រអានព្រះគម្ពីរម្តងទៀតនៅឯណា?"
+        },
+        "reader.guided-demos.reader-copy-demo": {
+            "en": "Can I practise copying just the reference or just the Bible words?",
+            "text": "តើខ្ញុំអាចហាត់ចម្លងតែលេខយោងខគម្ពីរ ឬតែពាក្យក្នុងព្រះគម្ពីរបានទេ?"
+        },
+        "reader.guided-demos.reader-saved-list-demo": {
+            "en": "Where are the Reader tips for creating and organizing saved Bible lists?",
+            "text": "តើគន្លឹះអានព្រះគម្ពីរសម្រាប់បង្កើត និងរៀបចំបញ្ជីព្រះគម្ពីរដែលបានរក្សាទុក នៅឯណា?"
+        },
+        "reader.guided-demos.reader-note-files-demo": {
+            "en": "Where are the demos for Bible note files and note items?",
+            "text": "តើការបង្ហាញណែនាំសម្រាប់ឯកសារកំណត់ត្រាព្រះគម្ពីរ និងធាតុកំណត់ត្រា នៅឯណា?"
+        },
+        "reader.guided-demos.reader-resources-demo": {
+            "en": "Where are the tips for searching and refreshing Reader Resources?",
+            "text": "តើគន្លឹះសម្រាប់ស្វែងរក និងផ្ទុកឡើងវិញ ឯកសារពាក់ព័ន្ធ ក្នុងទំព័រអានព្រះគម្ពីរ នៅឯណា?"
+        },
+        "reader.guided-demos.reader-graph-demo": {
+            "en": "Where are the Reader demos for graph connections and presets?",
+            "text": "តើការបង្ហាញណែនាំសម្រាប់ការតភ្ជាប់ក្នុងក្រាហ្វ និងគំរូក្រាហ្វ ក្នុងទំព័រអានព្រះគម្ពីរ នៅឯណា?"
+        },
+        "reader.find.search-words": {
+            "en": "How do I search the Bible for a word?",
+            "text": "តើខ្ញុំស្វែងរកពាក្យមួយក្នុងព្រះគម្ពីរដោយរបៀបណា?"
+        },
+        "reader.find.find-forgotten-verse": {
+            "en": "Can you help me find a Bible verse I forgot?",
+            "text": "តើអ្នកអាចជួយខ្ញុំរកខគម្ពីរមួយដែលខ្ញុំភ្លេចបានទេ?"
+        },
+        "reader.find.verse-in-another-bible": {
+            "en": "Can I see the verse it found in another Bible?",
+            "text": "តើខ្ញុំអាចមើលខគម្ពីរដែលវារកឃើញ ក្នុងព្រះគម្ពីរផ្សេងទៀតបានទេ?"
+        },
+        "reader.find.search-button": {
+            "en": "Where is the search button?",
+            "text": "តើប៊ូតុងស្វែងរកនៅឯណា?"
+        },
+        "reader.find.search-limit-books": {
+            "en": "How do I search only the New Testament?",
+            "text": "តើខ្ញុំស្វែងរកតែក្នុងគម្ពីរសញ្ញាថ្មីដោយរបៀបណា?"
+        },
+        "reader.find.search-more-results": {
+            "en": "How do I see more search results?",
+            "text": "តើខ្ញុំមើលលទ្ធផលស្វែងរកបន្ថែមទៀតដោយរបៀបណា?"
+        },
+        "reader.find.search-no-verses": {
+            "en": "Why does Bible Find say no verses found?",
+            "text": "ហេតុអ្វីការស្វែងរកក្នុងព្រះគម្ពីរប្រាប់ថារកមិនឃើញខគម្ពីរ?"
+        },
+        "reader.find.search-reset": {
+            "en": "How do I clear the search and start again?",
+            "text": "តើខ្ញុំលុបការស្វែងរក ហើយចាប់ផ្តើមម្តងទៀតដោយរបៀបណា?"
+        },
+        "reader.find.search-present": {
+            "en": "How do I put a search result on the screen?",
+            "text": "តើខ្ញុំដាក់លទ្ធផលស្វែងរកមួយលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "reader.cross-reference.cross-ref-what": {
+            "en": "What are cross references?",
+            "text": "តើខគម្ពីរយោងជាអ្វី?"
+        },
+        "reader.cross-reference.cross-ref-open": {
+            "en": "How do I see what else in scripture speaks to this verse?",
+            "text": "តើខ្ញុំមើលថាមានបទគម្ពីរណាផ្សេងទៀតដែលនិយាយពីខនេះដោយរបៀបណា?"
+        },
+        "reader.cross-reference.cross-ref-other-bible": {
+            "en": "How do I read a cross reference in another Bible version?",
+            "text": "តើខ្ញុំអានខគម្ពីរយោងក្នុងកំណែព្រះគម្ពីរផ្សេងដោយរបៀបណា?"
+        },
+        "reader.cross-reference.cross-ref-ai": {
+            "en": "What are AI cross references and do I need a key?",
+            "text": "តើខគម្ពីរយោងដោយ AI ជាអ្វី ហើយខ្ញុំត្រូវការសោ API ឬទេ?"
+        },
+        "reader.cross-reference.cross-ref-refresh": {
+            "en": "How do I refresh the cross references?",
+            "text": "តើខ្ញុំផ្ទុកខគម្ពីរយោងឡើងវិញដោយរបៀបណា?"
+        },
+        "reader.notes.verse-marks": {
+            "en": "What are verse marks?",
+            "text": "តើការសម្គាល់ខគម្ពីរជាអ្វី?"
+        },
+        "reader.notes.highlight-verse": {
+            "en": "How do I highlight words in a passage?",
+            "text": "តើខ្ញុំគូសបន្លិចពាក្យក្នុងបទគម្ពីរដោយរបៀបណា?"
+        },
+        "reader.notes.comment-verse": {
+            "en": "How do I attach a note to a phrase I am reading?",
+            "text": "តើខ្ញុំភ្ជាប់កំណត់ត្រាទៅឃ្លាដែលខ្ញុំកំពុងអានដោយរបៀបណា?"
+        },
+        "reader.notes.remove-highlight": {
+            "en": "How do I remove a highlight or a note?",
+            "text": "តើខ្ញុំលុបការគូសបន្លិច ឬកំណត់ត្រាដោយរបៀបណា?"
+        },
+        "reader.notes.bible-notes": {
+            "en": "How do I keep my own Bible notes?",
+            "text": "តើខ្ញុំរក្សាទុកកំណត់ត្រាព្រះគម្ពីររបស់ខ្ញុំផ្ទាល់ដោយរបៀបណា?"
+        },
+        "reader.notes.notes-save": {
+            "en": "How do I save a note I am writing?",
+            "text": "តើខ្ញុំរក្សាទុកកំណត់ត្រាដែលខ្ញុំកំពុងសរសេរដោយរបៀបណា?"
+        },
+        "reader.notes.notes-share": {
+            "en": "How do I share a page of Bible notes with another machine?",
+            "text": "តើខ្ញុំចែករំលែកទំព័រកំណត់ត្រាព្រះគម្ពីរទៅកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
+        },
+        "reader.notes.bible-list-add": {
+            "en": "How do I add a verse to a Bible list?",
+            "text": "តើខ្ញុំបន្ថែមខគម្ពីរទៅបញ្ជីព្រះគម្ពីរដោយរបៀបណា?"
+        },
+        "reader.lookup.who-is": {
+            "en": "How do I look up who someone in the Bible was?",
+            "text": "តើខ្ញុំរកមើលថាមនុស្សម្នាក់ក្នុងព្រះគម្ពីរជានរណាដោយរបៀបណា?"
+        },
+        "reader.lookup.where-is": {
+            "en": "How do I find where a Bible place is?",
+            "text": "តើខ្ញុំរកមើលថាទីកន្លែងមួយក្នុងព្រះគម្ពីរនៅឯណាដោយរបៀបណា?"
+        },
+        "reader.lookup.lookup-language-color": {
+            "en": "Why is the language code beside the names button red?",
+            "text": "ហេតុអ្វីកូដភាសានៅក្បែរប៊ូតុងឈ្មោះមានពណ៌ក្រហម?"
+        },
+        "reader.lookup.detail-language": {
+            "en": "How do I open the same person or place in two languages?",
+            "text": "តើខ្ញុំបើកមនុស្ស ឬទីកន្លែងដដែលជាពីរភាសាដោយរបៀបណា?"
+        },
+        "reader.lookup.names-in-passage": {
+            "en": "Who and where is named in the passage I am reading?",
+            "text": "តើមានមនុស្ស និងទីកន្លែងណាខ្លះត្រូវបានរៀបរាប់ក្នុងបទគម្ពីរដែលខ្ញុំកំពុងអាន?"
+        },
+        "reader.lookup.ask-assistant-about": {
+            "en": "Can the assistant tell me more about a person or place I opened?",
+            "text": "តើជំនួយការអាចប្រាប់ខ្ញុំបន្ថែមអំពីបុគ្គល ឬទីកន្លែងដែលខ្ញុំបានបើកបានទេ?"
+        },
+        "reader.lookup.ask-assistant-related-verses": {
+            "en": "Can the assistant find the verses related to a passage I am reading?",
+            "text": "តើជំនួយការអាចរកខគម្ពីរដែលពាក់ព័ន្ធនឹងបទគម្ពីរដែលខ្ញុំកំពុងអានបានទេ?"
+        },
+        "reader.lookup.lookup-to-bible": {
+            "en": "How do I jump from a name to the verses it appears in?",
+            "text": "តើខ្ញុំលោតពីឈ្មោះមួយទៅខគម្ពីរដែលមានឈ្មោះនោះដោយរបៀបណា?"
+        },
+        "reader.lookup.lookup-row-menu": {
+            "en": "Can I copy a person or place without opening it?",
+            "text": "តើខ្ញុំអាចចម្លងបុគ្គល ឬទីកន្លែងមួយ ដោយមិនបើកវាបានទេ?"
+        },
+        "reader.lookup.open-passage-in-chatbot": {
+            "en": "How do I open a passage from my Bibles list in the chatbot?",
+            "text": "តើខ្ញុំបើកបទគម្ពីរពីបញ្ជីព្រះគម្ពីររបស់ខ្ញុំក្នុង Chatbot ដោយរបៀបណា?"
+        },
+        "reader.lookup.passage-save-or-copy": {
+            "en": "How do I save or copy the passage I am asking about?",
+            "text": "តើខ្ញុំរក្សាទុក ឬចម្លងបទគម្ពីរដែលខ្ញុំកំពុងសួរដោយរបៀបណា?"
+        },
+        "reader.lookup.passage-other-language": {
+            "en": "How do I read the passage I am asking about in another language?",
+            "text": "តើខ្ញុំអានបទគម្ពីរដែលខ្ញុំកំពុងសួរជាភាសាផ្សេងដោយរបៀបណា?"
+        },
+        "reader.lookup.passage-study-words": {
+            "en": "How do I study the words of a verse one by one?",
+            "text": "តើខ្ញុំសិក្សាពាក្យនៃខមួយ ម្ដងមួយពាក្យដោយរបៀបណា?"
+        },
+        "reader.graph.graph-what": {
+            "en": "How do I see how people and places connect?",
+            "text": "តើខ្ញុំមើលទំនាក់ទំនងរវាងមនុស្ស និងទីកន្លែងដោយរបៀបណា?"
+        },
+        "reader.graph.graph-find-connection": {
+            "en": "How do I find how two people are related?",
+            "text": "តើខ្ញុំរកមើលថាមនុស្សពីរនាក់ត្រូវជាអ្វីនឹងគ្នាដោយរបៀបណា?"
+        },
+        "reader.graph.graph-save": {
+            "en": "How do I save or print a connection graph?",
+            "text": "តើខ្ញុំរក្សាទុក ឬបោះពុម្ពក្រាហ្វទំនាក់ទំនងដោយរបៀបណា?"
+        },
+        "reader.graph.graph-copy-text": {
+            "en": "How do I copy a connection graph into my notes?",
+            "text": "តើខ្ញុំចម្លងក្រាហ្វទំនាក់ទំនងទៅក្នុងកំណត់ត្រារបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "reader.graph.graph-open-mermaid-live": {
+            "en": "How do I open a connection graph in the Mermaid Live Editor?",
+            "text": "តើខ្ញុំបើកក្រាហ្វទំនាក់ទំនងក្នុង Mermaid Live Editor ដោយរបៀបណា?"
+        },
+        "reader.graph.graph-undo": {
+            "en": "How do I undo a change in the connection graph?",
+            "text": "តើខ្ញុំត្រឡប់ការកែប្រែក្នុងក្រាហ្វទំនាក់ទំនងវិញដោយរបៀបណា?"
+        },
+        "reader.resources.resources-what": {
+            "en": "How do I keep my own files beside a passage?",
+            "text": "តើខ្ញុំទុកឯកសាររបស់ខ្ញុំផ្ទាល់នៅក្បែរបទគម្ពីរដោយរបៀបណា?"
+        },
+        "reader.resources.resources-naming": {
+            "en": "What do I have to name a file for Resources to find it?",
+            "text": "តើខ្ញុំត្រូវដាក់ឈ្មោះឯកសារយ៉ាងណា ទើបផ្ទាំងឯកសារពាក់ព័ន្ធរកឃើញវា?"
+        },
+        "reader.resources.resources-book-code": {
+            "en": "What does the three-letter book code in Resources mean?",
+            "text": "តើលេខកូដកណ្ឌគម្ពីរបីអក្សរក្នុងឯកសារពាក់ព័ន្ធមានន័យថាអ្វី?"
+        },
+        "reader.resources.resources-folder": {
+            "en": "How do I add a folder to Resources?",
+            "text": "តើខ្ញុំបន្ថែមថតមួយទៅក្នុងឯកសារពាក់ព័ន្ធដោយរបៀបណា?"
+        },
+        "reader.resources.resources-drop-folder": {
+            "en": "Can I drag a folder into Resources instead of picking it?",
+            "text": "តើខ្ញុំអាចអូសថតមួយចូលក្នុងឯកសារពាក់ព័ន្ធ ជំនួសឲ្យការជ្រើសវាបានទេ?"
+        },
+        "reader.resources.resources-open": {
+            "en": "How do I open one of my Resources files?",
+            "text": "តើខ្ញុំបើកឯកសារមួយក្នុងឯកសារពាក់ព័ន្ធរបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "reader.resources.resources-ask-assistant": {
+            "en": "How do I ask the assistant about a study file for the verses I am reading?",
+            "text": "តើខ្ញុំសួរជំនួយការអំពីឯកសារសិក្សាសម្រាប់ខដែលខ្ញុំកំពុងអានដោយរបៀបណា?"
+        },
+        "reader.resources.resources-links": {
+            "en": "Can I keep web links for a chapter in Resources?",
+            "text": "តើខ្ញុំអាចទុកតំណភ្ជាប់វេបសាយសម្រាប់ជំពូកមួយក្នុងឯកសារពាក់ព័ន្ធបានទេ?"
+        },
+        "reader.resources.resources-others": {
+            "en": "How do I see my files in Resources that are not named after a chapter?",
+            "text": "តើខ្ញុំមើលឯកសារក្នុងឯកសារពាក់ព័ន្ធ ដែលមិនបានដាក់ឈ្មោះតាមជំពូក ដោយរបៀបណា?"
+        },
+        "reader.resources.resources-copy-to-data": {
+            "en": "How do I move a Resources folder into my data folder?",
+            "text": "តើខ្ញុំផ្លាស់ទីថតឯកសារពាក់ព័ន្ធមួយទៅក្នុងថតទិន្នន័យរបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "reader.resources.resources-data-dir-folders": {
+            "en": "How do I add a folder that is already in my data folder to Resources?",
+            "text": "តើខ្ញុំបន្ថែមថតដែលមាននៅក្នុងថតទិន្នន័យរបស់ខ្ញុំរួចហើយ ទៅក្នុងឯកសារពាក់ព័ន្ធ ដោយរបៀបណា?"
+        },
+        "reader.resources.resources-add-files": {
+            "en": "How do I copy files into a Resources folder?",
+            "text": "តើខ្ញុំចម្លងឯកសារទៅក្នុងថតឯកសារពាក់ព័ន្ធដោយរបៀបណា?"
+        },
+        "reader.resources.resources-markdown-preview": {
+            "en": "How do I read a markdown file from Resources inside the app?",
+            "text": "តើខ្ញុំអានឯកសារ markdown ពីឯកសារពាក់ព័ន្ធនៅក្នុងកម្មវិធីដោយរបៀបណា?"
+        },
+        "reader.resources.resources-markdown-escaped": {
+            "en": "Why does my markdown preview show # and ** instead of headings and bold?",
+            "text": "ហេតុអ្វីការមើលជាមុន markdown របស់ខ្ញុំបង្ហាញ # និង ** ជំនួសឲ្យចំណងជើង និងអក្សរដិត?"
+        },
+        "reader.resources.resources-note-preview": {
+            "en": "Can I open a bible note file that is in a Resources folder?",
+            "text": "តើខ្ញុំអាចបើកឯកសារកំណត់ត្រាព្រះគម្ពីរដែលនៅក្នុងថតឯកសារពាក់ព័ន្ធបានទេ?"
+        },
+        "reader.versions.version-info": {
+            "en": "Who published the Bible version I am reading?",
+            "text": "តើនរណាជាអ្នកបោះពុម្ពផ្សាយកំណែព្រះគម្ពីរដែលខ្ញុំកំពុងអាន?"
+        },
+        "reader.versions.add-translation": {
+            "en": "How do I add a Bible translation from the internet?",
+            "text": "តើខ្ញុំបន្ថែមកំណែព្រះគម្ពីរពីអ៊ីនធឺណិតដោយរបៀបណា?"
+        },
+        "reader.versions.translation-language": {
+            "en": "My new Bible reads in English — how do I make it read in its own language?",
+            "text": "ព្រះគម្ពីរថ្មីរបស់ខ្ញុំបង្ហាញជាភាសាអង់គ្លេស — តើខ្ញុំធ្វើឲ្យវាបង្ហាញជាភាសារបស់វាផ្ទាល់ដោយរបៀបណា?"
+        },
+        "reader.versions.share-translations": {
+            "en": "How do I share my Bible translations with another machine?",
+            "text": "តើខ្ញុំចែករំលែកកំណែព្រះគម្ពីររបស់ខ្ញុំទៅកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
+        },
+        "reader.versions.share-bible-list": {
+            "en": "How do I share a Bible list with another machine?",
+            "text": "តើខ្ញុំចែករំលែកបញ្ជីព្រះគម្ពីរទៅកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
+        },
+        "screen.screens.is-anything-showing": {
+            "en": "Is any screen showing right now?",
+            "text": "តើឥឡូវនេះមានអេក្រង់ណាកំពុងបង្ហាញទេ?"
+        },
+        "screen.screens.clear-button": {
+            "en": "Where is the clear button?",
+            "text": "តើប៊ូតុងលុបនៅឯណា?"
+        },
+        "screen.screens.clear-all": {
+            "en": "How do I clear everything off the screen at once?",
+            "text": "តើខ្ញុំលុបអ្វីៗទាំងអស់ចេញពីអេក្រង់ក្នុងពេលតែមួយដោយរបៀបណា?"
+        },
+        "screen.screens.show-hide-screen": {
+            "en": "How do I show or hide the screen?",
+            "text": "តើខ្ញុំបង្ហាញ ឬលាក់អេក្រង់ដោយរបៀបណា?"
+        },
+        "screen.screens.stop-preview-rendering": {
+            "en": "How do I stop the mini screen drawing so a slow computer runs faster?",
+            "text": "តើខ្ញុំឈប់ឲ្យអេក្រង់តូចគូររូប ដើម្បីឲ្យកុំព្យូទ័រយឺតដំណើរការលឿនជាងមុន ដោយរបៀបណា?"
+        },
+        "screen.screens.hide-all-screens": {
+            "en": "How do I hide every screen right now?",
+            "text": "តើខ្ញុំលាក់អេក្រង់ទាំងអស់ភ្លាមៗដោយរបៀបណា?"
+        },
+        "screen.screens.mini-screen": {
+            "en": "What is the little preview on the right?",
+            "text": "តើរូបមើលជាមុនតូចនៅខាងស្តាំជាអ្វី?"
+        },
+        "screen.screens.mini-screen-wallpaper": {
+            "en": "Why does the preview show my desktop wallpaper?",
+            "text": "ហេតុអ្វីរូបមើលជាមុនបង្ហាញរូបផ្ទៃតុកុំព្យូទ័ររបស់ខ្ញុំ?"
+        },
+        "screen.screens.choose-display": {
+            "en": "How do I choose which display the screen goes to?",
+            "text": "តើខ្ញុំជ្រើសម៉ូនីទ័រដែលអេក្រង់ត្រូវបង្ហាញដោយរបៀបណា?"
+        },
+        "screen.screens.add-screen": {
+            "en": "How do I use more than one screen?",
+            "text": "តើខ្ញុំប្រើអេក្រង់ច្រើនជាងមួយដោយរបៀបណា?"
+        },
+        "screen.screens.sync-screens": {
+            "en": "How do I make two screens show the same thing?",
+            "text": "តើខ្ញុំធ្វើឲ្យអេក្រង់ពីរបង្ហាញដូចគ្នាដោយរបៀបណា?"
+        },
+        "screen.screens.screen-to-one": {
+            "en": "How do I send something to just one screen?",
+            "text": "តើខ្ញុំផ្ញើអ្វីមួយទៅអេក្រង់តែមួយដោយរបៀបណា?"
+        },
+        "screen.screens.transitions": {
+            "en": "How do I change the fade between slides?",
+            "text": "តើខ្ញុំប្តូរការផ្លាស់ប្តូររវាងស្លាយ (ដូចជាការរលាយចូលគ្នា) ដោយរបៀបណា?"
+        },
+        "screen.screens.transition-per-slide": {
+            "en": "Can one song or one slide have its own transition?",
+            "text": "តើចម្រៀងមួយ ឬស្លាយមួយអាចមានការផ្លាស់ប្តូរផ្ទាល់ខ្លួនបានទេ?"
+        },
+        "screen.screens.transition-per-background": {
+            "en": "How do I make pictures fade but videos zoom in?",
+            "text": "តើខ្ញុំធ្វើឲ្យរូបភាពលេចចេញបន្តិចម្តងៗ តែវីដេអូពង្រីកចូល ដោយរបៀបណា?"
+        },
+        "screen.screens.transition-per-overlay": {
+            "en": "How do I give the countdown a different transition from the slides?",
+            "text": "តើខ្ញុំដាក់ការផ្លាស់ប្តូរឲ្យការរាប់ថយក្រោយខុសពីស្លាយដោយរបៀបណា?"
+        },
+        "screen.screens.stage-sets-transition-none": {
+            "en": "Why did the slide transition turn off when I changed the stage number?",
+            "text": "ហេតុអ្វីការផ្លាស់ប្តូរស្លាយត្រូវបានបិទ ពេលខ្ញុំប្តូរលេខដំណាក់កាល?"
+        },
+        "screen.screens.lock-screen": {
+            "en": "What does the lock on the screen preview do?",
+            "text": "តើរូបសោនៅលើអេក្រង់មើលជាមុនធ្វើអ្វី?"
+        },
+        "screen.screens.clear-one-kind": {
+            "en": "How do I take the background off but leave the words up?",
+            "text": "តើខ្ញុំដកផ្ទៃខាងក្រោយចេញ តែទុកពាក្យនៅលើអេក្រង់ ដោយរបៀបណា?"
+        },
+        "screen.screens.clear-shortcuts": {
+            "en": "What do the F6 to F10 keys do?",
+            "text": "តើគ្រាប់ចុច F6 ដល់ F10 ធ្វើអ្វី?"
+        },
+        "screen.screens.unselect-screen": {
+            "en": "How do I stop one screen receiving content without deleting it?",
+            "text": "តើខ្ញុំឈប់ឲ្យអេក្រង់មួយទទួលមាតិកា ដោយមិនលុបវា ដោយរបៀបណា?"
+        },
+        "screen.screens.delete-screen": {
+            "en": "How do I remove a screen I no longer need?",
+            "text": "តើខ្ញុំលុបអេក្រង់ដែលខ្ញុំលែងត្រូវការដោយរបៀបណា?"
+        },
+        "screen.screens.line-sync": {
+            "en": "How do I line up two Bible versions verse by verse on the screen?",
+            "text": "តើខ្ញុំតម្រឹមព្រះគម្ពីរពីរកំណែឲ្យត្រូវគ្នាតាមខនីមួយៗនៅលើអេក្រង់ដោយរបៀបណា?"
+        },
+        "screen.screens.drag-to-screen": {
+            "en": "How do I send one slide to one screen by dragging it?",
+            "text": "តើខ្ញុំអូសស្លាយមួយទៅអេក្រង់មួយដោយរបៀបណា?"
+        },
+        "screen.screens.screen-locked-message": {
+            "en": "Why does it say Screen Manager is locked?",
+            "text": "ហេតុអ្វីវាថា កម្មវិធីគ្រប់គ្រងអេក្រង់ត្រូវបានចាក់សោ?"
+        },
+        "screen.screen-mirror.connect-guest-computer": {
+            "en": "How do I show the screen on another computer?",
+            "text": "តើខ្ញុំបង្ហាញអេក្រង់នៅលើកុំព្យូទ័រមួយទៀតដោយរបៀបណា?"
+        },
+        "screen.screen-mirror.enable-screen-mirror-host": {
+            "en": "How do I let another computer connect to this one?",
+            "text": "តើខ្ញុំអនុញ្ញាតឲ្យកុំព្យូទ័រមួយទៀតតភ្ជាប់មកកុំព្យូទ័រនេះដោយរបៀបណា?"
+        },
+        "screen.screen-mirror.connected-guests-header": {
+            "en": "Where can I see which guest computers are connected?",
+            "text": "តើខ្ញុំអាចមើលថាម៉ាស៊ីនភ្ញៀវណាខ្លះបានតភ្ជាប់ នៅឯណា?"
+        },
+        "screen.screen-mirror.guest-camera-stream": {
+            "en": "How do I use a camera from a connected guest computer?",
+            "text": "តើខ្ញុំប្រើកាមេរ៉ាពីម៉ាស៊ីនភ្ញៀវដែលបានតភ្ជាប់ដោយរបៀបណា?"
+        },
+        "screen.screen-mirror.open-screen-mirror-to-internet": {
+            "en": "How do I let a computer outside this network connect over the internet?",
+            "text": "តើខ្ញុំអនុញ្ញាតឲ្យកុំព្យូទ័រនៅក្រៅបណ្ដាញនេះ តភ្ជាប់តាមអ៊ីនធឺណិតដោយរបៀបណា?"
+        },
+        "screen.screen-mirror.share-screen-mirror-address": {
+            "en": "How do I send the host address to the guest computer?",
+            "text": "តើខ្ញុំផ្ញើអាសយដ្ឋានម៉ាស៊ីនមេទៅម៉ាស៊ីនភ្ញៀវដោយរបៀបណា?"
+        },
+        "screen.screen-mirror.fill-address-from-qr-or-paste": {
+            "en": "How do I fill in the host address from a QR code or a copied link?",
+            "text": "តើខ្ញុំបំពេញអាសយដ្ឋានម៉ាស៊ីនមេពីកូដ QR ឬពីតំណដែលបានចម្លងដោយរបៀបណា?"
+        },
+        "screen.screen-mirror.connect-several-hosts": {
+            "en": "Can this computer show screens from more than one host?",
+            "text": "តើកុំព្យូទ័រនេះអាចបង្ហាញអេក្រង់ពីម៉ាស៊ីនមេច្រើនជាងមួយបានទេ?"
+        },
+        "screen.screen-mirror.guest-from-internet-or-local": {
+            "en": "How can I tell which guests are connected from the internet?",
+            "text": "តើខ្ញុំដឹងដោយរបៀបណាថាម៉ាស៊ីនភ្ញៀវណាខ្លះតភ្ជាប់តាមអ៊ីនធឺណិត?"
+        },
+        "screen.virtual-displays.make-virtual-display": {
+            "en": "How do I make a virtual display?",
+            "text": "តើខ្ញុំបង្កើតម៉ូនីទ័រនិម្មិតដោយរបៀបណា?"
+        },
+        "screen.virtual-displays.watch-on-phone-or-tv": {
+            "en": "How do I watch the screen on a phone or a TV without a cable?",
+            "text": "តើខ្ញុំមើលអេក្រង់នៅលើទូរស័ព្ទ ឬទូរទស្សន៍ ដោយគ្មានខ្សែ ដោយរបៀបណា?"
+        },
+        "screen.virtual-displays.virtual-display-in-media-player": {
+            "en": "How do I get the screen into VLC or OBS as a video?",
+            "text": "តើខ្ញុំយកអេក្រង់ចូលក្នុង VLC ឬ OBS ជាវីដេអូដោយរបៀបណា?"
+        },
+        "screen.virtual-displays.let-devices-watch-virtual-display": {
+            "en": "Why can other devices not open the virtual display's address?",
+            "text": "ហេតុអ្វីឧបករណ៍ផ្សេងទៀតមិនអាចបើកអាសយដ្ឋានរបស់ម៉ូនីទ័រនិម្មិតបាន?"
+        },
+        "screen.virtual-displays.who-watches-virtual-display": {
+            "en": "Who is watching my virtual display?",
+            "text": "តើនរណាកំពុងមើលម៉ូនីទ័រនិម្មិតរបស់ខ្ញុំ?"
+        },
+        "screen.virtual-displays.virtual-display-page-buttons": {
+            "en": "How do I get the buttons back on the virtual display page?",
+            "text": "តើខ្ញុំយកប៊ូតុងមកវិញនៅលើទំព័រម៉ូនីទ័រនិម្មិតដោយរបៀបណា?"
+        },
+        "screen.virtual-displays.virtual-display-after-restart": {
+            "en": "Will my virtual display still show after the app restarts?",
+            "text": "តើម៉ូនីទ័រនិម្មិតរបស់ខ្ញុំនៅតែបង្ហាញ បន្ទាប់ពីបើកកម្មវិធីឡើងវិញឬទេ?"
+        },
+        "screen.virtual-displays.virtual-display-viewer-still-listed": {
+            "en": "Why is a phone that stopped watching still under Watching now?",
+            "text": "ហេតុអ្វីទូរស័ព្ទដែលឈប់មើលហើយ នៅតែមាននៅក្រោម កំពុងមើលឥឡូវនេះ?"
+        },
+        "screen.virtual-displays.let-viewer-interact": {
+            "en": "How do I let a phone watching the virtual display scroll or pick verses?",
+            "text": "តើខ្ញុំអនុញ្ញាតឲ្យទូរស័ព្ទដែលកំពុងមើលម៉ូនីទ័រនិម្មិត អាចរំកិល ឬជ្រើសខគម្ពីរ ដោយរបៀបណា?"
+        },
+        "screen.virtual-displays.stop-virtual-viewer-access": {
+            "en": "Does Disconnect immediately stop a viewer from receiving my screen or controlling it?",
+            "text": "តើការចុច ផ្តាច់ការតភ្ជាប់ បញ្ឈប់អ្នកមើលភ្លាមៗ មិនឲ្យទទួល ឬបញ្ជាអេក្រង់របស់ខ្ញុំទៀតឬទេ?"
+        },
+        "screen.virtual-displays.which-virtual-display-address": {
+            "en": "Which address do I give people to watch the virtual display?",
+            "text": "តើខ្ញុំត្រូវឲ្យអាសយដ្ឋានណាទៅមនុស្ស ដើម្បីមើលម៉ូនីទ័រនិម្មិត?"
+        },
+        "screen.virtual-displays.virtual-display-https": {
+            "en": "How do I give the virtual display an https address?",
+            "text": "តើខ្ញុំដាក់អាសយដ្ឋាន https ឲ្យម៉ូនីទ័រនិម្មិតដោយរបៀបណា?"
+        },
+        "screen.virtual-displays.cast-virtual-display-from-page": {
+            "en": "How do I cast the virtual display to a TV from my phone?",
+            "text": "តើខ្ញុំបញ្ចាំងម៉ូនីទ័រនិម្មិតទៅទូរទស្សន៍ពីទូរស័ព្ទរបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "screen.virtual-displays.virtual-display-choose-camera": {
+            "en": "How do I share my phone's back camera with the virtual display?",
+            "text": "តើខ្ញុំចែករំលែកកាមេរ៉ាក្រោយនៃទូរស័ព្ទរបស់ខ្ញុំ ជាមួយម៉ូនីទ័រនិម្មិតដោយរបៀបណា?"
+        },
+        "screen.virtual-displays.viewer-hides-screen": {
+            "en": "Can someone watching on a phone hide the screen with its ✕?",
+            "text": "តើអ្នកដែលមើលតាមទូរស័ព្ទ អាចលាក់អេក្រង់ដោយចុច ✕ បានទេ?"
+        },
+        "screen.virtual-displays.virtual-display-sound": {
+            "en": "Why is a screen on a virtual display silent on this computer?",
+            "text": "ហេតុអ្វីអេក្រង់នៅលើម៉ូនីទ័រនិម្មិតគ្មានសំឡេងនៅលើកុំព្យូទ័រនេះ?"
+        },
+        "settings.general.open-settings": {
+            "en": "Where are the settings?",
+            "text": "តើការកំណត់នៅឯណា?"
+        },
+        "settings.general.change-language": {
+            "en": "How do I change the app's language?",
+            "text": "តើខ្ញុំប្តូរភាសារបស់កម្មវិធីដោយរបៀបណា?"
+        },
+        "settings.general.language-across-data-folders": {
+            "en": "Will the app keep my language when I switch to another data folder?",
+            "text": "តើកម្មវិធីនឹងរក្សាភាសារបស់ខ្ញុំ ពេលខ្ញុំប្តូរទៅថតទិន្នន័យផ្សេងឬទេ?"
+        },
+        "settings.general.change-theme": {
+            "en": "How do I switch between light and dark?",
+            "text": "តើខ្ញុំប្តូររវាងពណ៌ភ្លឺ និងពណ៌ងងឹតដោយរបៀបណា?"
+        },
+        "settings.general.change-font": {
+            "en": "How do I change the font the app's own windows use?",
+            "text": "តើខ្ញុំប្តូរពុម្ពអក្សរដែលផ្ទាំងរបស់កម្មវិធីប្រើដោយរបៀបណា?"
+        },
+        "settings.paths.change-folders": {
+            "en": "How do I change where my documents and songs are stored?",
+            "text": "តើខ្ញុំប្តូរកន្លែងរក្សាទុកឯកសារ និងចម្រៀងរបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "settings.paths.repair-links": {
+            "en": "My pictures and videos are missing after moving my data folder to another computer. How do I fix them?",
+            "text": "រូបភាព និងវីដេអូរបស់ខ្ញុំបាត់ បន្ទាប់ពីផ្លាស់ថតទិន្នន័យទៅកុំព្យូទ័រផ្សេង។ តើខ្ញុំជួសជុលវាដោយរបៀបណា?"
+        },
+        "settings.paths.switch-data-folder": {
+            "en": "How do I switch back to a data folder I used before?",
+            "text": "តើខ្ញុំប្តូរទៅថតទិន្នន័យដែលខ្ញុំធ្លាប់ប្រើពីមុនវិញដោយរបៀបណា?"
+        },
+        "settings.paths.no-data-folder": {
+            "en": "Why does the app show nothing but \"No Parent Directory Selected\"?",
+            "text": "ហេតុអ្វីកម្មវិធីបង្ហាញតែ \"មិនមានថតមេត្រូវបានជ្រើសរើសទេ\"?"
+        },
+        "settings.paths.why-data-folder": {
+            "en": "Why do I need to choose a data folder?",
+            "text": "ហេតុអ្វីខ្ញុំត្រូវជ្រើសរើសថតទិន្នន័យ?"
+        },
+        "settings.paths.use-default-data-folder": {
+            "en": "How do I use the suggested data folder?",
+            "text": "តើខ្ញុំប្រើថតទិន្នន័យដែលបានណែនាំដោយរបៀបណា?"
+        },
+        "settings.paths.data-folder-on-drive": {
+            "en": "How do I use a data folder on a USB stick or another drive?",
+            "text": "តើខ្ញុំប្រើថតទិន្នន័យនៅលើ USB ឬដ្រាយផ្សេងដោយរបៀបណា?"
+        },
+        "settings.paths.copy-data-folder": {
+            "en": "How do I copy my data folder to a USB stick or another drive?",
+            "text": "តើខ្ញុំចម្លងថតទិន្នន័យរបស់ខ្ញុំទៅ USB ឬដ្រាយផ្សេងដោយរបៀបណា?"
+        },
+        "settings.paths.data-folder-stick-missing": {
+            "en": "My data folder is on a USB stick that is not plugged in. What do I do?",
+            "text": "ថតទិន្នន័យរបស់ខ្ញុំនៅលើ USB ដែលមិនទាន់ដោត។ តើខ្ញុំត្រូវធ្វើអ្វី?"
+        },
+        "settings.paths.data-folder-on-desktop": {
+            "en": "How do I move my data folder off the Desktop from Settings?",
+            "text": "តើខ្ញុំផ្លាស់ថតទិន្នន័យរបស់ខ្ញុំចេញពី Desktop ពីការកំណត់ដោយរបៀបណា?"
+        },
+        "settings.paths.assistant-from-settings": {
+            "en": "How do I ask the assistant for help from Settings?",
+            "text": "តើខ្ញុំសួរជំនួយពីជំនួយការពីការកំណត់ដោយរបៀបណា?"
+        },
+        "settings.paths.move-data-folder-off-desktop": {
+            "en": "Why does the app ask me to move my data folder off the Desktop?",
+            "text": "ហេតុអ្វីកម្មវិធីសុំឱ្យខ្ញុំផ្លាស់ទីថតទិន្នន័យរបស់ខ្ញុំចេញពី Desktop?"
+        },
+        "settings.general.reset-settings": {
+            "en": "What do the reset buttons in Settings do?",
+            "text": "តើប៊ូតុងកំណត់ឡើងវិញក្នុងការកំណត់ធ្វើអ្វី?"
+        },
+        "settings.general.export-settings": {
+            "en": "How do I move my settings to another computer?",
+            "text": "តើខ្ញុំផ្ទេរការកំណត់របស់ខ្ញុំទៅកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
+        },
+        "settings.general.import-settings": {
+            "en": "How do I bring in settings exported from another computer?",
+            "text": "តើខ្ញុំនាំចូលការកំណត់ដែលបាននាំចេញពីកុំព្យូទ័រផ្សេងដោយរបៀបណា?"
+        },
+        "settings.bible-settings.download-bible": {
+            "en": "How do I download another Bible version?",
+            "text": "តើខ្ញុំទាញយកព្រះគម្ពីរកំណែផ្សេងទៀតដោយរបៀបណា?"
+        },
+        "settings.bible-settings.enable-bible": {
+            "en": "How do I turn a downloaded Bible on or off?",
+            "text": "តើខ្ញុំបើក ឬបិទព្រះគម្ពីរដែលបានទាញយកដោយរបៀបណា?"
+        },
+        "settings.bible-settings.import-xml": {
+            "en": "How do I import a Bible XML file?",
+            "text": "តើខ្ញុំនាំចូលឯកសារព្រះគម្ពីរ XML ដោយរបៀបណា?"
+        },
+        "settings.bible-settings.import-bible-ask-language": {
+            "en": "Can you install a Bible for me?",
+            "text": "តើអ្នកអាចដំឡើងព្រះគម្ពីរឲ្យខ្ញុំបានទេ?"
+        },
+        "settings.bible-settings.import-bible-kjv": {
+            "en": "Do I need the KJV Bible before importing another one?",
+            "text": "តើខ្ញុំត្រូវការព្រះគម្ពីរ KJV មុនពេលនាំចូលព្រះគម្ពីរផ្សេងទៀតទេ?"
+        },
+        "settings.bible-settings.import-bible-source": {
+            "en": "Where do the Bibles the assistant installs come from?",
+            "text": "តើព្រះគម្ពីរដែលជំនួយការដំឡើង មកពីណា?"
+        },
+        "settings.bible-settings.remove-bible-xml": {
+            "en": "How do I remove a Bible translation I installed?",
+            "text": "តើខ្ញុំលុបកំណែព្រះគម្ពីរដែលខ្ញុំបានដំឡើងដោយរបៀបណា?"
+        },
+        "settings.bible-settings.bible-xml-source": {
+            "en": "Where did a Bible I imported come from?",
+            "text": "តើព្រះគម្ពីរដែលខ្ញុំបាននាំចូល មកពីណា?"
+        },
+        "settings.bible-settings.bible-copyright": {
+            "en": "Where do I find a Bible's publisher and copyright?",
+            "text": "តើខ្ញុំរកមើលអ្នកបោះពុម្ពផ្សាយ និងការរក្សាសិទ្ធិរបស់ព្រះគម្ពីរនៅឯណា?"
+        },
+        "settings.ai.ai-key": {
+            "en": "How do I give the assistant an API key?",
+            "text": "តើខ្ញុំដាក់សោ API ឲ្យជំនួយការដោយរបៀបណា?"
+        },
+        "settings.ai.custom-ai-server": {
+            "en": "How do I use my own LM Studio or Ollama with the assistant?",
+            "text": "តើខ្ញុំប្រើ LM Studio ឬ Ollama របស់ខ្ញុំផ្ទាល់ជាមួយជំនួយការដោយរបៀបណា?"
+        },
+        "settings.ai.enable-ai": {
+            "en": "How do I turn the AI features on or off?",
+            "text": "តើខ្ញុំបើក ឬបិទមុខងារ AI ដោយរបៀបណា?"
+        },
+        "settings.ai.auto-play-bible-audio": {
+            "en": "Where do I turn automatic Bible audio on?",
+            "text": "តើខ្ញុំបើកសំឡេងអានព្រះគម្ពីរដោយស្វ័យប្រវត្តិនៅឯណា?"
+        },
+        "settings.ai.fold-settings-section": {
+            "en": "How do I fold or open a section in Settings?",
+            "text": "តើខ្ញុំបត់ ឬបើកផ្នែកមួយក្នុងការកំណត់ដោយរបៀបណា?"
+        },
+        "settings.others.songselect-signin": {
+            "en": "How do I sign in to CCLI SongSelect?",
+            "text": "តើខ្ញុំចូលគណនី CCLI SongSelect ដោយរបៀបណា?"
+        },
+        "settings.others.extra-binaries": {
+            "en": "What are the Extra Binaries and do I need them?",
+            "text": "តើកម្មវិធីបន្ថែម (Extra Binaries) ជាអ្វី ហើយខ្ញុំត្រូវការវាឬទេ?"
+        },
+        "troubleshooting.screen.nothing-showing": {
+            "en": "Nothing is showing on the projector — what do I check?",
+            "text": "គ្មានអ្វីបង្ហាញលើម៉ាស៊ីនបញ្ចាំងទេ — តើខ្ញុំត្រូវពិនិត្យអ្វី?"
+        },
+        "troubleshooting.screen.two-screens-differ": {
+            "en": "My two screens are showing different things — why?",
+            "text": "អេក្រង់ពីររបស់ខ្ញុំបង្ហាញខុសគ្នា — ហេតុអ្វី?"
+        },
+        "troubleshooting.screen.verse-not-stepping": {
+            "en": "The verse will not move to the next one from the Bible Reader — what do I do?",
+            "text": "ខគម្ពីរមិនទៅខបន្ទាប់ពីទំព័រអានព្រះគម្ពីរ — តើខ្ញុំត្រូវធ្វើអ្វី?"
+        },
+        "troubleshooting.settings.language-stuck": {
+            "en": "The app is in a language I cannot read — how do I change it back?",
+            "text": "កម្មវិធីនៅជាភាសាដែលខ្ញុំអានមិនយល់ — តើខ្ញុំប្តូរវាវិញដោយរបៀបណា?"
+        },
+        "troubleshooting.settings.apply-settings": {
+            "en": "Why has my setting not taken effect yet?",
+            "text": "ហេតុអ្វីការកំណត់របស់ខ្ញុំមិនទាន់មានប្រសិទ្ធភាព?"
+        },
+        "troubleshooting.bible.bible-key-taken": {
+            "en": "It says the Bible key is already taken — what do I do?",
+            "text": "វាថាកូនសោព្រះគម្ពីរត្រូវបានប្រើរួចហើយ — តើខ្ញុំត្រូវធ្វើអ្វី?"
+        },
+        "troubleshooting.bible.lookup-language": {
+            "en": "Why are the names in English when my Bible is not?",
+            "text": "ហេតុអ្វីឈ្មោះនានាជាភាសាអង់គ្លេស ខណៈព្រះគម្ពីររបស់ខ្ញុំមិនមែនភាសាអង់គ្លេស?"
+        },
+        "troubleshooting.bible.restore-kjv": {
+            "en": "I deleted a Bible by mistake — how do I get it back?",
+            "text": "ខ្ញុំលុបព្រះគម្ពីរមួយដោយច្រឡំ — តើខ្ញុំយកវាមកវិញដោយរបៀបណា?"
+        },
+        "troubleshooting.bible.reference-loses-verse": {
+            "en": "I typed John 3:16 in the Bible Reader and it only opened the chapter — why?",
+            "text": "ខ្ញុំវាយ យ៉ូហាន ៣:១៦ ក្នុងទំព័រអានព្រះគម្ពីរ តែវាបើកតែជំពូក — ហេតុអ្វី?"
+        },
+        "troubleshooting.accounts.songselect-fails": {
+            "en": "SongSelect will not connect — what do I check?",
+            "text": "SongSelect មិនព្រមតភ្ជាប់ — តើខ្ញុំត្រូវពិនិត្យអ្វី?"
+        },
+        "troubleshooting.media.download-needs-binaries": {
+            "en": "It says I need to install something before downloading a video — why?",
+            "text": "វាថាខ្ញុំត្រូវដំឡើងអ្វីមួយសិន មុនពេលទាញយកវីដេអូ — ហេតុអ្វី?"
+        },
+        "troubleshooting.media.download-left-part-file": {
+            "en": "A download failed and left a temp file behind — what do I do with it?",
+            "text": "ការទាញយកបរាជ័យ ហើយបន្សល់ឯកសារបណ្ដោះអាសន្នមួយ — តើខ្ញុំត្រូវធ្វើអ្វីជាមួយវា?"
+        },
+        "troubleshooting.sharing.wrong-password": {
+            "en": "It says the password is wrong on a file I was sent — what now?",
+            "text": "វាថាពាក្យសម្ងាត់ខុស សម្រាប់ឯកសារដែលគេផ្ញើមកខ្ញុំ — តើខ្ញុំត្រូវធ្វើអ្វីបន្ត?"
+        },
+        "troubleshooting.layout.panel-disappeared": {
+            "en": "A panel has disappeared — how do I get it back?",
+            "text": "ផ្ទាំងមួយបានបាត់ — តើខ្ញុំយកវាមកវិញដោយរបៀបណា?"
+        },
+        "troubleshooting.layout.panel-has-no-height": {
+            "en": "A panel is open but there is nothing in it — how do I get its height back?",
+            "text": "ផ្ទាំងមួយបើកហើយ តែគ្មានអ្វីនៅក្នុងនោះទេ — តើខ្ញុំយកកម្ពស់របស់វាមកវិញដោយរបៀបណា?"
+        },
+        "troubleshooting.editing.slide-size": {
+            "en": "Why does my slide look the wrong shape on the screen?",
+            "text": "ហេតុអ្វីស្លាយរបស់ខ្ញុំមានរាងខុសនៅលើអេក្រង់?"
+        },
+        "troubleshooting.editing.website-not-live": {
+            "en": "Why does my web slide look frozen in the editor?",
+            "text": "ហេតុអ្វីស្លាយទំព័របណ្ដាញរបស់ខ្ញុំនៅស្ងៀម មិនកម្រើក ក្នុងទំព័រកែសម្រួលស្លាយ?"
+        },
+        "troubleshooting.editing.unsaved-edit-on-screen": {
+            "en": "The projector is showing an edit I never saved — how is that possible?",
+            "text": "ម៉ាស៊ីនបញ្ចាំងកំពុងបង្ហាញការកែប្រែដែលខ្ញុំមិនទាន់បានរក្សាទុក — ហេតុអ្វីអាចដូច្នេះ?"
+        },
+        "troubleshooting.editing.pptx-first-slide-blank": {
+            "en": "Why is the first slide of my PowerPoint blank?",
+            "text": "ហេតុអ្វីស្លាយទីមួយនៃឯកសារ PowerPoint របស់ខ្ញុំទទេ?"
+        },
+        "troubleshooting.running-order.flow-drag-between": {
+            "en": "I cannot drag a line from one running order into another — why not?",
+            "text": "ខ្ញុំមិនអាចអូសបន្ទាត់មួយពីតារាងកម្មវិធីមួយ ទៅតារាងកម្មវិធីមួយទៀតបានទេ — ហេតុអ្វី?"
+        },
+        "troubleshooting.running-order.flow-stopped-advancing": {
+            "en": "The running order stopped advancing by itself — what happened?",
+            "text": "តារាងកម្មវិធីឈប់ទៅមុខដោយខ្លួនឯង — តើមានរឿងអ្វីកើតឡើង?"
+        },
+        "troubleshooting.reporting.report-a-problem": {
+            "en": "Something in the app is broken — how do I report it?",
+            "text": "មានអ្វីមួយក្នុងកម្មវិធីខូច — តើខ្ញុំរាយការណ៍វាដោយរបៀបណា?"
+        },
+        "troubleshooting.reporting.report-how-can-i": {
+            "en": "How can I report a problem?",
+            "text": "តើខ្ញុំអាចរាយការណ៍បញ្ហាដោយរបៀបណា?"
+        },
+        "troubleshooting.reporting.report-attach-file": {
+            "en": "Can I send a picture or a PDF with a problem report?",
+            "text": "តើខ្ញុំអាចផ្ញើរូបភាព ឬឯកសារ PDF ជាមួយរបាយការណ៍បញ្ហាបានទេ?"
+        },
+        "troubleshooting.reporting.report-kept-for-later": {
+            "en": "My report says the server is not answering — is it lost?",
+            "text": "របាយការណ៍របស់ខ្ញុំថាម៉ាស៊ីនមេមិនឆ្លើយតប — តើវាបាត់ឬទេ?"
+        },
+        "troubleshooting.reporting.report-where-saved": {
+            "en": "Where does the report go when I press Send report?",
+            "text": "តើរបាយការណ៍ទៅណា ពេលខ្ញុំចុច ផ្ញើរបាយការណ៍?"
+        },
+        "troubleshooting.reporting.report-email-it": {
+            "en": "How do I email a bug report to the developers?",
+            "text": "តើខ្ញុំផ្ញើរបាយការណ៍កំហុសទៅអ្នកអភិវឌ្ឍន៍តាមអ៊ីមែលដោយរបៀបណា?"
+        },
+        "troubleshooting.reporting.assistant-out-of-credit": {
+            "en": "The assistant says my AI account is out of credit — what do I do?",
+            "text": "ជំនួយការថាគណនី AI របស់ខ្ញុំអស់ក្រេឌីតហើយ — តើខ្ញុំត្រូវធ្វើអ្វី?"
+        },
+        "troubleshooting.reporting.assistant-server-down": {
+            "en": "My own AI server is switched off — will the assistant still answer?",
+            "text": "ម៉ាស៊ីនមេ AI ផ្ទាល់ខ្លួនរបស់ខ្ញុំត្រូវបានបិទ — តើជំនួយការនៅតែឆ្លើយបានទេ?"
+        },
+        "troubleshooting.reporting.assistant-key-refused": {
+            "en": "The assistant says my API key was refused — where do I fix it?",
+            "text": "ជំនួយការថាសោ API របស់ខ្ញុំត្រូវបានបដិសេធ — តើខ្ញុំកែវានៅឯណា?"
+        },
+        "web-editor.editing.edit-web-item": {
+            "en": "How do I change the address of a web background?",
+            "text": "តើខ្ញុំប្តូរអាសយដ្ឋាននៃផ្ទៃខាងក្រោយវេបសាយដោយរបៀបណា?"
+        },
+        "web-editor.editing.web-title": {
+            "en": "How do I give a web background a name?",
+            "text": "តើខ្ញុំដាក់ឈ្មោះឲ្យផ្ទៃខាងក្រោយវេបសាយដោយរបៀបណា?"
+        },
+        "web-editor.editing.save-web-item": {
+            "en": "How do I save the web background I am editing?",
+            "text": "តើខ្ញុំរក្សាទុកផ្ទៃខាងក្រោយវេបសាយដែលខ្ញុំកំពុងកែដោយរបៀបណា?"
+        },
+        "web-editor.using-it.present-web-background": {
+            "en": "How do I show this web page as the background?",
+            "text": "តើខ្ញុំបង្ហាញទំព័រវេបសាយនេះជាផ្ទៃខាងក្រោយដោយរបៀបណា?"
+        },
+        "common.changes.add-a-slide": {
+            "en": "Add a slide to my document that says ...",
+            "text": "បន្ថែមស្លាយមួយទៅក្នុងឯកសាររបស់ខ្ញុំ ដែលមានពាក្យថា ..."
+        },
+        "common.changes.save-a-passage": {
+            "en": "Save John 3:16 to my Bibles list",
+            "text": "រក្សាទុក John 3:16 ក្នុងបញ្ជីព្រះគម្ពីររបស់ខ្ញុំ"
+        },
+        "common.changes.write-a-note": {
+            "en": "Write a Bible note about ...",
+            "text": "សរសេរកំណត់ត្រាព្រះគម្ពីរអំពី ..."
+        },
+        "common.status.find-a-control": {
+            "en": "Where is the button for ...",
+            "text": "តើប៊ូតុងសម្រាប់ ... នៅឯណា?"
+        },
+        "presenter.making.song-from-title": {
+            "en": "Create a lyric file for song \"Amazing Grace\"",
+            "text": "បង្កើតឯកសារទំនុកច្រៀងសម្រាប់ចម្រៀង \"Amazing Grace\""
+        },
+        "presenter.making.song-from-link": {
+            "en": "Create a lyric file from https://example.com/lyric/amazing_grace",
+            "text": "បង្កើតឯកសារទំនុកច្រៀងពី https://example.com/lyric/amazing_grace"
+        },
+        "presenter.bible.present-verse-for-me": {
+            "en": "Put John 3:16 on the screen",
+            "text": "ដាក់ John 3:16 លើអេក្រង់"
+        },
+        "settings.bible-settings.import-xml-url": {
+            "en": "Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml",
+            "text": "នាំចូលព្រះគម្ពីរពីអាសយដ្ឋាន xml https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml"
+        },
+        "settings.bible-settings.import-bible-language": {
+            "en": "Import a Bible in \"Khmer\"",
+            "text": "នាំចូលព្រះគម្ពីរជាភាសា \"Khmer\""
+        }
+    }
+}

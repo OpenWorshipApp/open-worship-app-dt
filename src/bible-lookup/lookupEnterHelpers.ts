@@ -1,9 +1,19 @@
-import { checkIsBookAvailable } from '../helper/bible-helpers/bibleInfoHelpers';
+import {
+    checkIsBookAvailable,
+    keyToBook,
+} from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     genBookMatches,
     genChapterMatches,
 } from '../helper/bible-helpers/bibleLogicHelpers1';
-import type { ExtractedBibleResult } from '../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    parseChapterFromGuessing,
+    toInputText,
+    toTrailingReference,
+    type EditingResultType,
+    type ExtractedBibleResult,
+} from '../helper/bible-helpers/bibleLogicHelpers2';
+import { checkIsCrossChapterTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 
 /**
  * Which book the book list highlights, and so which one Enter picks: the first
@@ -70,4 +80,80 @@ export async function genLookupEnterPick(
     return chapterMatch === undefined
         ? null
         : { kind: 'chapter', chapter: chapterMatch.chapter };
+}
+
+/**
+ * The reference-box text a book pick writes: the book's own name, with a
+ * "23:1" typed after a book that matched nothing kept instead of dropped.
+ */
+export async function genBookPickInputText(
+    bibleKey: string,
+    newBook: string,
+    guessingBook: string | null,
+): Promise<string> {
+    const newText = await toInputText(bibleKey, newBook);
+    const trailingReference = toTrailingReference(guessingBook);
+    return trailingReference !== null && newText.endsWith(' ')
+        ? `${newText}${trailingReference}`
+        : newText;
+}
+
+export async function genChapterPickInputText(
+    bibleKey: string,
+    bookKey: string,
+    newChapter: number,
+): Promise<string> {
+    const book = await keyToBook(bibleKey, bookKey);
+    const newText = await toInputText(bibleKey, book, newChapter);
+    return `${newText}:`;
+}
+
+/**
+ * What Tab in the reference box completes the typed text to, or null when
+ * there is nothing to complete. Tab is the box's autocomplete and never moves
+ * focus away mid-typing; it completes as far as the text can go:
+ * - `John 3:16` -> `John 3:16-` (a single verse steps into a range)
+ * - `Psalm 23`  -> `Psalm 23:` (a resolved chapter steps to its verses)
+ * - `Matt` / `Matthew` -> the book or chapter option Enter would pick
+ */
+export async function genLookupTabCompletionText(
+    bibleKey: string,
+    editingResult: EditingResultType,
+): Promise<string | null> {
+    const { result, oldInputText } = editingResult;
+    const { bookKey, guessingBook, guessingChapter, bibleItem } = result;
+    // Nothing typed at all: the book list answers a guessing text, and an
+    // empty box is not a completion attempt.
+    if (oldInputText.trim() === '') {
+        return null;
+    }
+    if (bibleItem !== null) {
+        // `John 1:2-3:2` already has its end, its verses only look the same.
+        return !checkIsCrossChapterTarget(bibleItem.target) &&
+            bibleItem.target.verseStart === bibleItem.target.verseEnd
+            ? `${oldInputText}-`
+            : null;
+    }
+    if (bookKey !== null && guessingChapter !== null) {
+        const chapter = await parseChapterFromGuessing(
+            bibleKey,
+            bookKey,
+            guessingChapter,
+        );
+        if (chapter !== null) {
+            return `${oldInputText}:`;
+        }
+    }
+    const pick = await genLookupEnterPick(bibleKey, result);
+    if (pick === null) {
+        return null;
+    }
+    if (pick.kind === 'book') {
+        return genBookPickInputText(bibleKey, pick.book, guessingBook);
+    }
+    if (bookKey === null) {
+        // Unreachable: a chapter pick exists only with a resolved book.
+        return null;
+    }
+    return genChapterPickInputText(bibleKey, bookKey, pick.chapter);
 }

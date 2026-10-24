@@ -23,12 +23,15 @@ import { cloneJson, freezeObject } from '../helper/helpers';
 import { electronSendAsync } from './appHelpers';
 import { tran } from '../lang/langHelpers';
 import { DATA_DIR_PATH_ALIAS } from './dataDirAliasHelpers';
+import { OWA_HOME_FOLDER_NAME } from './appHomeStorage';
 import {
     checkIsHiddenName,
     fsMkDirSync,
     getDataDirPath,
     pathJoin,
+    pathResolve,
     pathSeparator,
+    toPathCompareKey,
     toPortableFileText,
     toRealFileText,
 } from './storageFileHelpers';
@@ -36,6 +39,8 @@ import {
 export {
     checkIsHiddenName,
     DATA_DIR_MARKER_FILE_NAME,
+    DATA_DIR_MOVED_FROM_FLAG_FILE_NAME,
+    DATA_DIR_MOVED_TO_FLAG_FILE_NAME,
     ensureDataDirMarkerIdSync,
     findDataDirsOnVolumesSync,
     findMovedDataDirSync,
@@ -48,6 +53,7 @@ export {
     getUserWritablePath,
     listVolumeRootsSync,
     pathJoin,
+    pathResolve,
     pathSeparator,
     readDataDirMarkerIdSync,
     splitPathRoot,
@@ -56,6 +62,10 @@ export {
     toPortableFileText,
     toRealFileText,
 } from './storageFileHelpers';
+// The account's name taken out of a path in a line of text. Defined in a
+// leaf of its own -- it needs nothing -- and asked for here like every
+// other path rule.
+export { toPathScrubbed } from './accountPathHelpers';
 
 for (const ml of [
     mimeBibleList,
@@ -150,14 +160,6 @@ export function checkIsAppFile(fileFullName: string) {
     const dotExtension = getFileDotExtension(fileFullName);
     const isAppFile = appExtensions.includes(dotExtension);
     return isAppFile;
-}
-
-export function pathResolve(...paths: string[]): string {
-    const path = appProvider.pathUtils.resolve(...paths);
-    if (path.endsWith(pathSeparator)) {
-        return path.slice(0, -1);
-    }
-    return path;
 }
 
 export function pathBasename(filePath: string) {
@@ -569,6 +571,18 @@ export function checkIsWindowsAbsolutePath(filePath: string) {
 }
 
 /**
+ * `E:` on Windows, the form a drive's root takes once `pathResolve` trims its
+ * separator -- a folder the app stored itself, not a typed drive-relative
+ * path. `isWindows` defaults to the running OS; tests pass it.
+ */
+export function checkIsWindowsDriveRoot(
+    filePath: string,
+    isWindows = pathSeparator === '\\',
+) {
+    return isWindows && /^[A-Za-z]:$/.test(filePath);
+}
+
+/**
  * Whether a stored path was written on the OTHER operating system family:
  * `D:\Songs` read on a Mac, `/Users/me/Songs` read on Windows. Such a path
  * names nothing here, and must be kept exactly as written -- resolving it
@@ -600,6 +614,29 @@ export function checkIsNativeAbsolutePath(
         return checkIsWindowsAbsolutePath(filePath);
     }
     return filePath.startsWith('/');
+}
+
+/**
+ * A folder path as it was typed or pasted, made the path it means: the
+ * spaces around it go, and so do the quotes around it -- Explorer's "Copy as
+ * path" wraps every path in them, and a pasted one was refused as "not a
+ * full path". On Windows `/` is never part of a name, so `//server/share` and
+ * `C:/Songs` take their native separators. `isWindows` defaults to the
+ * running OS; tests pass it.
+ */
+export function cleanTypedDirPath(
+    typedPath: string,
+    isWindows = pathSeparator === '\\',
+) {
+    let dirPath = typedPath.trim();
+    const quoted = /^(["'])(.*)\1$/.exec(dirPath);
+    if (quoted !== null) {
+        dirPath = quoted[2].trim();
+    }
+    if (isWindows) {
+        dirPath = dirPath.replaceAll('/', '\\');
+    }
+    return dirPath;
 }
 
 export function getFileName(fileFullName: string) {
@@ -662,6 +699,15 @@ export const createNewFileDetail = async (
     }
     const fileFullName = `${name}.${extensions[0]}`;
     try {
+        // Said in words: the folder being gone came back as a raw
+        // "ENOENT: no such file or directory, open '…'".
+        if (!(await fsCheckDirExist(dir))) {
+            showSimpleToast(
+                tran('Creating File'),
+                `${tran('Folder not found')}: ${dir}`,
+            );
+            return null;
+        }
         const filePath = pathJoin(dir, fileFullName);
         return await fsCreateFile(filePath, content);
     } catch (error: any) {
@@ -1240,6 +1286,12 @@ export async function fsDeleteDir(dirPath: string) {
 }
 
 export async function fsReadFile(filePath: string) {
+    if (appProvider.screenUtils) {
+        const response = await fetch(toScreenFileURL(filePath));
+        if (!response.ok)
+            throw new Error('Presentation resource is unavailable');
+        return await response.text();
+    }
     let text = await _fsReadFile(filePath, 'utf8');
     // remove `\uFEFF`
     text = text.replace(/^\uFEFF/, '');
@@ -1256,7 +1308,19 @@ export function fsReadFileBase64Sync(filePath: string) {
 // package. Deliberately not through `_fsReadFile`, whose portable-path
 // rewriting is for text.
 export function fsReadFileBytes(filePath: string) {
+    if (appProvider.screenUtils) {
+        return fetch(toScreenFileURL(filePath)).then(async (response) => {
+            if (!response.ok)
+                throw new Error('Presentation resource is unavailable');
+            return new Uint8Array(await response.arrayBuffer());
+        });
+    }
     return fsFilePromise<Uint8Array>(appProvider.fileUtils.readFile, filePath);
+}
+
+/** The screen preload resolves paths against the publishing host, never its own disk. */
+export function toScreenFileURL(filePath: string) {
+    return appProvider.browserUtils.pathToFileURL(filePath);
 }
 
 export async function fsCopyFilePathToPath(
@@ -1278,6 +1342,16 @@ export async function fsCopyFilePathToPath(
     try {
         if (!distFileFullName) {
             throw new Error('Cannot get file name');
+        }
+        // An empty or relative folder joins into a bare name, which the file
+        // system resolves against the app's working directory. A drive root
+        // comes back from `pathResolve` as `E:` (its separator trimmed) and
+        // joins to `E:\name`: a stick's root is a real folder.
+        if (
+            !checkIsNativeAbsolutePath(destinationPath) &&
+            !checkIsWindowsDriveRoot(destinationPath)
+        ) {
+            throw new Error(`No folder to copy into: "${destinationPath}"`);
         }
         const targetFilePath = pathJoin(destinationPath, distFileFullName);
         const targetFileSource = FileSource.getInstance(targetFilePath);
@@ -1342,6 +1416,62 @@ export function getTempPath(): string {
         'main:app:get-special-path',
         'temp',
     );
+}
+export function getHomePath(): string {
+    return appProvider.messageUtils.sendDataSync(
+        'main:app:get-special-path',
+        'home',
+    );
+}
+
+export const DEFAULT_DATA_DIR_NAME = 'open-worship-data';
+
+/**
+ * Where a new data folder goes: `<home>/.owa/open-worship-data`. It was
+ * `<Desktop>/open-worship-data`, and on Windows OneDrive backs up the Desktop
+ * -- syncing it, it turned songs and settings into online-only copies or took
+ * them off the computer. Nothing syncs the home folder itself, on any OS.
+ */
+export function getDefaultDataDirPath() {
+    return pathJoin(getHomePath(), OWA_HOME_FOLDER_NAME, DEFAULT_DATA_DIR_NAME);
+}
+
+/**
+ * The old default, as the app made it (the Desktop the OS names, which
+ * OneDrive may have moved under itself) and as it sits under the home folder.
+ */
+export function getDesktopDataDirPathList() {
+    const dirPathList = [
+        pathJoin(getDesktopPath(), DEFAULT_DATA_DIR_NAME),
+        pathJoin(getHomePath(), 'Desktop', DEFAULT_DATA_DIR_NAME),
+    ];
+    return dirPathList.filter((dirPath, index) => {
+        return (
+            dirPathList.findIndex((otherDirPath) => {
+                return (
+                    toPathCompareKey(pathResolve(otherDirPath)) ===
+                    toPathCompareKey(pathResolve(dirPath))
+                );
+            }) === index
+        );
+    });
+}
+
+export function checkIsDesktopDataDir(dirPath: string) {
+    const key = toPathCompareKey(pathResolve(dirPath));
+    return getDesktopDataDirPathList().some((desktopDirPath) => {
+        return toPathCompareKey(pathResolve(desktopDirPath)) === key;
+    });
+}
+
+/**
+ * Whether a path runs through a OneDrive folder: `OneDrive` for a personal
+ * account, `OneDrive - <Organization>` for a work one.
+ */
+export function checkIsInOneDrivePath(dirPath: string) {
+    return dirPath.split(/[\\/]/).some((name) => {
+        return /^OneDrive( - .+)?$/i.test(name);
+    });
 }
 
 export function writeFileFromBase64Sync(filePath: string, base64: string) {

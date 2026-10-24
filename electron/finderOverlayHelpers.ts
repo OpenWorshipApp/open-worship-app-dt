@@ -31,6 +31,8 @@ type FindOverlayType = {
     dragGrabOffsetX: number | null;
     dragTimer: NodeJS.Timeout | null;
     isDestroyed: boolean;
+    // Set by the bar's own page once React has drawn it (`finder:app:mounted`).
+    isMounted: boolean;
     handleHostResizing: () => void;
     handleHostClosing: () => void;
 };
@@ -104,37 +106,61 @@ function destroyOverlay(overlay: FindOverlayType) {
     }
 }
 
-// The windows whose content is worth a find bar. The screens are a projection,
-// the bible note and the two code editors bring their own search, and the small
-// info popups have nothing to find.
-const FIND_OVERLAY_HOST_HTML_FILES = [
-    htmlFiles.presenter,
-    htmlFiles.appDocumentEditor,
-    htmlFiles.reader,
-    htmlFiles.setting,
-];
+// Every page of the app gets the bar -- a page added to `htmlFiles` included --
+// except these: the screen is a projection, the camera broker and the virtual
+// display compositor are hidden helper windows, the bible note has its own
+// in-page search and only wants the request, and the bar never sits on itself.
+// In the two code editors Monaco answers `Ctrl/Cmd+F` first while it has focus.
+// In AI Chat the site lives in a `<webview>` guest, which `findInPage` on the
+// host walks into, and only match counts ever come back out of it.
+const NO_FIND_OVERLAY_HTML_FILES = new Set<string>([
+    htmlFiles.screen,
+    htmlFiles.cameraBroker,
+    htmlFiles.virtualDisplay,
+    htmlFiles.bibleNote,
+    htmlFiles.finder,
+]);
 
 export function checkIsFindOverlayHost(win: BrowserWindow) {
     if (win.isDestroyed()) {
         return false;
     }
     const url = win.webContents.getURL();
-    return FIND_OVERLAY_HOST_HTML_FILES.some((htmlFileFullName) => {
-        return url.includes(htmlFileFullName);
-    });
+    if (!URL.canParse(url)) {
+        return false;
+    }
+    const pageName = new URL(url).pathname.split('/').pop() ?? '';
+    return (
+        Object.values(htmlFiles).includes(pageName) &&
+        !NO_FIND_OVERLAY_HTML_FILES.has(pageName)
+    );
 }
 
 /**
  * Open the find bar over `hostWin`, or -- when it is already open -- ask it to
  * take focus and re-select its query, the way a second `Ctrl/Cmd+F` behaves in
  * a browser.
+ *
+ * An open bar is reused only while its page is actually drawn. One that loaded
+ * and never mounted (a module that failed in a dev reload, a crashed renderer)
+ * is a transparent view with nothing in it: invisible, with no close button,
+ * and focusing it took the keyboard away from the window on every press. That
+ * one is replaced instead.
  */
 export function openFindOverlay(hostWin: BrowserWindow) {
     const existingOverlay = overlayByHostWindowId.get(hostWin.id);
     if (existingOverlay !== undefined) {
-        existingOverlay.view.webContents.focus();
-        existingOverlay.view.webContents.send('main:app:focus-find');
-        return existingOverlay;
+        const viewWebContents = existingOverlay.view.webContents;
+        if (existingOverlay.isMounted) {
+            viewWebContents.focus();
+            viewWebContents.send('main:app:focus-find');
+            return existingOverlay;
+        }
+        if (viewWebContents.isLoading()) {
+            // Still on its way; `did-finish-load` focuses it.
+            return existingOverlay;
+        }
+        destroyOverlay(existingOverlay);
     }
     const routeProps = genRoutProps(htmlFiles.finder);
     // The same preferences every app window gets. A `WebContentsView` defaults
@@ -153,6 +179,7 @@ export function openFindOverlay(hostWin: BrowserWindow) {
         dragGrabOffsetX: null,
         dragTimer: null,
         isDestroyed: false,
+        isMounted: false,
         handleHostResizing: () => {},
         handleHostClosing: () => {},
     };
@@ -162,6 +189,13 @@ export function openFindOverlay(hostWin: BrowserWindow) {
     overlay.handleHostClosing = () => {
         destroyOverlay(overlay);
     };
+    // A page leaving never runs its React cleanup, so the mounted mark is
+    // dropped here: a reload must mount again before it counts.
+    const handlePageLeaving = () => {
+        overlay.isMounted = false;
+    };
+    view.webContents.on('did-start-loading', handlePageLeaving);
+    view.webContents.on('render-process-gone', handlePageLeaving);
     overlayByHostWindowId.set(hostWin.id, overlay);
     overlayByViewWebContentsId.set(view.webContents.id, overlay);
     hostWin.contentView.addChildView(view);
@@ -184,6 +218,17 @@ export function closeFindOverlay(webContents: WebContents) {
     if (!overlay.hostWin.isDestroyed()) {
         overlay.hostWin.webContents.focus();
     }
+}
+
+export function setFindOverlayMounted(
+    webContents: WebContents,
+    isMounted: boolean,
+) {
+    const overlay = overlayByViewWebContentsId.get(webContents.id);
+    if (overlay === undefined) {
+        return;
+    }
+    overlay.isMounted = isMounted;
 }
 
 /**

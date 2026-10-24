@@ -21,7 +21,9 @@ It drops BOTH the in-memory `bibleJSONCacheManager` entry AND deletes the
 whole `<KEY>.xml.cache` folder (leaving it deleted — the old
 `invalidateBibleXMLCachedFolder` delete+recreate is gone). The in-memory drop
 is NOT optional: leaving it would write the same stale JSON straight back into
-a fresh `all` blob "that then stands for a week". Five call sites: delete
+a fresh `all` blob "that then stands for a week". Five call sites then (the agent's `owa_bible_xml` update and delete in
+`agentBibleXMLHelpers.ts` and an undo's file restore in `agentBackupHelpers.ts` call it
+too since 2026-10-06): delete
 (`deleteBibleXML`, which also fixed Move-to-Trash leaving the cache behind),
 import (`bibleXMLArchiveHelpers.ts`), first-run KJV creation
 (`BibleDataReader.ts`), reset-to-embedded, and key RENAME —

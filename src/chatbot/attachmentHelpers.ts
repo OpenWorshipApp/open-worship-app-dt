@@ -16,8 +16,20 @@
 // dies with the window. A reopened tab shows the chip greyed out, which is the
 // truth rather than a broken thumbnail.
 
-/** The three things that can be attached, and they are not alike. */
-export type ChatAttachmentKindType = 'image' | 'text' | 'element';
+import { checkIsBibleNoteFileName } from '../bible-list/note/bibleNotePreviewHelpers';
+import { tran } from './chatTranHelpers';
+import type { AttachmentWindowType } from './windowAimHelpers';
+
+/**
+ * The four things that can be attached, and they are not alike. A `file` is
+ * a PDF: the model is shown its first pages as PICTURES (2026-10-17, the
+ * user, with a picture of the assistant saying _I cannot open PDF files_:
+ * _convert to images for pdf pages then send image as attachment_), held
+ * beside its id like a picture's bytes, and a problem report takes the file
+ * itself along for the people who can open it (2026-10-13: _and accept files
+ * like markdown pdf_) -- read off the disk at the press that sends it.
+ */
+export type ChatAttachmentKindType = 'image' | 'text' | 'element' | 'file';
 
 /**
  * What is stored ON the message, and so written to disk. No bytes, ever -- see
@@ -43,7 +55,44 @@ export type ChatAttachmentType = {
     // they cost nothing to persist, and re-asking without them would be
     // re-asking a different question.
     summary?: string;
+    // The number its chip shows (2026-10-13, the user, with four chips all
+    // called "my screen" in a picture: _attachment should have id like `1`
+    // `2` `3` ... so user can mention in the text_). One per attachment in
+    // a tab, given when it is attached and never changed -- "the button is
+    // missing in 2" must still mean the same picture after another chip is
+    // taken off. A chip an ANSWER draws has none.
+    number?: number;
+    // `image` from the 📷 and `element` from the ◎ -- WHICH window of the app
+    // it was taken in, so the model can aim its tools there and a pointed-at
+    // chip is rung where it was pointed at (`windowAimHelpers.ts`).
+    window?: AttachmentWindowType;
+    // `file` -- how many pages the PDF has in all, when MuPDF could count
+    // them. Its first pages, as pictures, are held in this window only
+    // (`getAttachmentPages`); this is what says how many were left out.
+    pageCount?: number;
 };
+
+/**
+ * The attachments just added, each with the next number of its tab: one past
+ * the highest already given there, on a message or still in the box
+ * (`taken`). One that has a number keeps it.
+ */
+export function numberAttachments(
+    added: ChatAttachmentType[],
+    taken: readonly ChatAttachmentType[],
+): ChatAttachmentType[] {
+    let highest = taken.reduce((most, one) => {
+        return Math.max(most, one.number ?? 0);
+    }, 0);
+    return added.map((one) => {
+        if (one.number !== undefined) {
+            highest = Math.max(highest, one.number);
+            return one;
+        }
+        highest += 1;
+        return { ...one, number: highest };
+    });
+}
 
 /**
  * An image on its way to a provider. The raw base64 and its media type are kept
@@ -88,7 +137,11 @@ const JPEG_QUALITY = 0.85;
 // because a file that stops mid-line is read as a file that ends there.
 const MAX_TEXT_LENGTH = 16 * 1024;
 
-const liveDataMap = new Map<string, string>();
+// One entry per ATTACHMENT, however many pictures it is: a picture is one, a
+// PDF is its pages. So the ceilings count what was attached, and a PDF is
+// let go of whole rather than page by page -- half a document in front of a
+// model reads as a document that ends there.
+const liveDataMap = new Map<string, string[]>();
 let liveByteCount = 0;
 
 function toDataByteSize(dataUrl: string) {
@@ -96,13 +149,23 @@ function toDataByteSize(dataUrl: string) {
     return commaIndex === -1 ? dataUrl.length : dataUrl.length - commaIndex - 1;
 }
 
+function toListByteSize(dataUrls: string[]) {
+    return dataUrls.reduce((total, dataUrl) => {
+        return total + toDataByteSize(dataUrl);
+    }, 0);
+}
+
 export function dropAttachmentData(id: string) {
     const existing = liveDataMap.get(id);
     if (existing === undefined) {
         return;
     }
-    liveByteCount -= toDataByteSize(existing);
+    liveByteCount -= toListByteSize(existing);
     liveDataMap.delete(id);
+}
+
+export function putAttachmentData(id: string, dataUrl: string) {
+    putAttachmentPages(id, [dataUrl]);
 }
 
 /**
@@ -111,10 +174,13 @@ export function dropAttachmentData(id: string) {
  * free -- and re-putting an id deletes first, so a replaced attachment does not
  * hold its old size against the total.
  */
-export function putAttachmentData(id: string, dataUrl: string) {
+export function putAttachmentPages(id: string, dataUrls: string[]) {
     dropAttachmentData(id);
-    liveDataMap.set(id, dataUrl);
-    liveByteCount += toDataByteSize(dataUrl);
+    if (dataUrls.length === 0) {
+        return;
+    }
+    liveDataMap.set(id, dataUrls);
+    liveByteCount += toListByteSize(dataUrls);
     for (const key of [...liveDataMap.keys()]) {
         if (
             liveDataMap.size <= MAX_LIVE_ATTACHMENTS &&
@@ -130,7 +196,12 @@ export function putAttachmentData(id: string, dataUrl: string) {
 }
 
 export function getAttachmentData(id: string) {
-    return liveDataMap.get(id) ?? null;
+    return liveDataMap.get(id)?.[0] ?? null;
+}
+
+/** A PDF's pages as pictures, in order; none once the window let them go. */
+export function getAttachmentPages(id: string): readonly string[] {
+    return liveDataMap.get(id) ?? [];
 }
 
 export function checkHasAttachmentData(attachment: ChatAttachmentType) {
@@ -222,28 +293,28 @@ export async function normalizeImage(source: Blob | string) {
  * JPEG, which is what a photo-sized capture comes back as, would otherwise be
  * refused with "Type image/jpeg not supported". Throws on failure so the
  * caller can say so: a Copy that looks as though it worked and did not is the
- * worse one.
+ * worse one -- in the window's language, since the preview prints the reason.
  */
 export async function copyImageToClipboard(dataUrl: string) {
     let blob = await (await fetch(dataUrl)).blob();
     if (blob.type !== 'image/png') {
         const image = await loadImageElement(dataUrl);
         if (image === null || image.width === 0 || image.height === 0) {
-            throw new Error('the picture could not be read');
+            throw new Error(tran('the picture could not be read'));
         }
         const canvas = document.createElement('canvas');
         canvas.width = image.width;
         canvas.height = image.height;
         const context = canvas.getContext('2d');
         if (context === null) {
-            throw new Error('the picture could not be redrawn');
+            throw new Error(tran('the picture could not be redrawn'));
         }
         context.drawImage(image, 0, 0);
         const png = await new Promise<Blob | null>((resolve) => {
             canvas.toBlob(resolve, 'image/png');
         });
         if (png === null) {
-            throw new Error('the picture could not be redrawn');
+            throw new Error(tran('the picture could not be redrawn'));
         }
         blob = png;
     }
@@ -266,6 +337,8 @@ export async function genImageAttachment(
     source: Blob | string,
     name: string,
     filePath?: string,
+    // The app window the picture is of -- the 📷, a report's picture.
+    takenIn?: AttachmentWindowType | null,
 ): Promise<ChatAttachmentType | null> {
     const normalized = await normalizeImage(source);
     if (normalized === null) {
@@ -280,6 +353,7 @@ export async function genImageAttachment(
         mimeType: toBotImage(normalized.dataUrl)?.mediaType ?? 'image/png',
         byteSize: normalized.byteSize,
         ...(filePath ? { filePath } : {}),
+        ...(takenIn ? { window: takenIn } : {}),
     };
 }
 
@@ -289,7 +363,7 @@ export async function genImageAttachment(
 // as mojibake -- a model handed the first 16 KB of a .docx answers about the
 // bytes rather than saying it cannot read it.
 const TEXT_FILE_PATTERN =
-    /\.(txt|md|json|csv|log|xml|html?|ya?ml|ini|srt|vtt|owl|ows|owpf|lyric)$/i;
+    /\.(txt|md|markdown|json|csv|log|xml|html?|ya?ml|ini|srt|vtt|owl|ows|owpf|lyric)$/i;
 
 /**
  * By NAME alone -- for the places that have a path and no `File`: a chip being
@@ -298,6 +372,95 @@ const TEXT_FILE_PATTERN =
  */
 export function checkIsReadableTextName(fileName: string) {
     return TEXT_FILE_PATTERN.test(fileName);
+}
+
+// A document: its pages are shown to the model as pictures, and the file
+// itself goes with a problem report.
+const CARRIED_FILE_PATTERN = /\.pdf$/i;
+// What a report may carry in one file (`REPORT_FILE_MAX_BYTES` in
+// `electron/customLlmProtocol.ts`; a test holds the two together).
+export const MAX_CARRIED_FILE_BYTES = 5 * 1024 * 1024;
+
+export function checkIsCarriedFileName(fileName: string) {
+    return CARRIED_FILE_PATTERN.test(fileName);
+}
+
+function toShortSize(byteSize: number) {
+    return byteSize < 1024 * 1024
+        ? `${Math.max(1, Math.round(byteSize / 1024)).toString()} KB`
+        : `${(byteSize / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function toPdfAbout(name: string, byteSize: number, pageCount?: number) {
+    const pages =
+        pageCount === undefined
+            ? ''
+            : `${pageCount.toString()} ${pageCount === 1 ? 'page' : 'pages'}, `;
+    return (
+        `The user attached a file called "${name}" (a PDF, ` +
+        `${pages}${toShortSize(byteSize)}).`
+    );
+}
+
+/**
+ * A PDF. Its first pages go to the model as pictures once they are put
+ * beside its id (`putAttachmentPages`, by `genPdfAttachment` in
+ * `fileAttachHelpers.ts`); the report sends the file itself, from
+ * `filePath`, when Send is pressed. The `summary` kept on it is the
+ * sentence for when no page could be drawn -- what the model is told is
+ * worked out at the ask (`toFileSummary`), from what this window still
+ * holds.
+ */
+export function genFileAttachment(
+    name: string,
+    byteSize: number,
+    filePath: string,
+    pageCount?: number,
+): ChatAttachmentType {
+    return {
+        id: genAttachmentId(),
+        kind: 'file',
+        name,
+        mimeType: 'application/pdf',
+        byteSize,
+        filePath,
+        ...(pageCount === undefined ? {} : { pageCount }),
+        summary:
+            `${toPdfAbout(name, byteSize, pageCount)} You cannot read what ` +
+            'is inside it, so do not guess: if what they ask depends on it, ' +
+            'say you cannot open it and ask them to say what it shows or ' +
+            'attach a picture of the page. It is sent as it is with a ' +
+            'problem report.',
+    };
+}
+
+/**
+ * What the model is told of a PDF NOW. With pages held, it reads them --
+ * and is told which pages were left out, so "it is not in the file" is never
+ * said of a page it was not shown. With none (drawing them failed, or the
+ * window has been closed since), it is the sentence that says it cannot.
+ */
+function toFileSummary(attachment: ChatAttachmentType) {
+    const shownCount = getAttachmentPages(attachment.id).length;
+    if (shownCount === 0) {
+        return attachment.summary ?? '';
+    }
+    const total = attachment.pageCount ?? shownCount;
+    const shown =
+        shownCount >= total
+            ? total === 1
+                ? 'Its page is attached as a picture'
+                : `All ${total.toString()} of its pages are attached as ` +
+                  'pictures, in order'
+            : `Its first ${shownCount.toString()} pages are attached as ` +
+              `pictures, in order; pages ${(shownCount + 1).toString()} to ` +
+              `${total.toString()} are NOT, so if the answer may be on them, ` +
+              'say so rather than that the file does not say';
+    return (
+        `${toPdfAbout(attachment.name, attachment.byteSize, attachment.pageCount)} ` +
+        `${shown}. Read them to answer, in the words the page uses, and say ` +
+        'which page a thing is on. It is sent as it is with a problem report.'
+    );
 }
 
 export function checkIsReadableTextFile(file: File) {
@@ -314,6 +477,21 @@ const IMAGE_FILE_PATTERN = /\.(png|jpe?g|gif|webp|bmp|avif)$/i;
 
 export function checkIsImageName(fileName: string) {
     return IMAGE_FILE_PATTERN.test(fileName);
+}
+
+/**
+ * Whether the assistant can be handed this file at all, by its NAME: a
+ * picture, a PDF (its pages), a Bible note (its words) or a text kind. What
+ * the Resources panel offers its 🤖 on, so it is never offered on a file
+ * the window would then refuse.
+ */
+export function checkCanAttachFileName(fileName: string) {
+    return (
+        checkIsImageName(fileName) ||
+        checkIsCarriedFileName(fileName) ||
+        checkIsBibleNoteFileName(fileName) ||
+        checkIsReadableTextName(fileName)
+    );
 }
 
 /** The media type for a picture read off the disk, by its name. */
@@ -338,6 +516,10 @@ function genAttachedTextHeader(name: string) {
 
 /** What was in the file, without the line written for the model. */
 export function toAttachedText(attachment: ChatAttachmentType) {
+    // A carried file holds a sentence for the model, never the file's words.
+    if (attachment.kind === 'file') {
+        return '';
+    }
     const summary = attachment.summary ?? '';
     const header = genAttachedTextHeader(attachment.name);
     return summary.startsWith(header) ? summary.slice(header.length) : summary;
@@ -402,10 +584,14 @@ function toChipName(described: any) {
     return String(described?.label ?? '').trim();
 }
 
-export function genElementAttachment(described: any): ChatAttachmentType {
+export function genElementAttachment(
+    described: any,
+    // The app window it was pointed at in.
+    takenIn?: AttachmentWindowType | null,
+): ChatAttachmentType {
     const label = toChipName(described);
     const lines = [
-        'The user pointed at a control in the app window. It is:',
+        `The user pointed at a control in ${toWindowWords(takenIn)}. It is:`,
         `- what it says: ${label.length > 0 ? label : '(no words on it)'}`,
     ];
     if (described?.inPanel) {
@@ -441,7 +627,22 @@ export function genElementAttachment(described: any): ChatAttachmentType {
             ? { selector: String(described.selector) }
             : {}),
         summary: lines.join('\n'),
+        ...(takenIn ? { window: takenIn } : {}),
     };
+}
+
+/**
+ * The window in words: "the Settings window", "the main window (on the
+ * Presenter)". Kept apart from its `page`, which is good for one launch and
+ * is worked out at the ask (`toAttachmentLegend`), never stored in words.
+ */
+function toWindowWords(takenIn?: AttachmentWindowType | null) {
+    if (!takenIn) {
+        return 'the app window';
+    }
+    return takenIn.isMain
+        ? `the main window (on the ${takenIn.label})`
+        : `the ${takenIn.label} window`;
 }
 
 /**
@@ -452,26 +653,33 @@ export function genElementAttachment(described: any): ChatAttachmentType {
 export function toBotImages(attachments: ChatAttachmentType[]) {
     const images: BotImageType[] = [];
     for (const attachment of attachments) {
-        if (attachment.kind !== 'image') {
+        // A picture, or a PDF's pages -- each page a picture of its own, in
+        // the order the legend counts them.
+        if (attachment.kind !== 'image' && attachment.kind !== 'file') {
             continue;
         }
-        const dataUrl = getAttachmentData(attachment.id);
-        if (dataUrl === null) {
-            continue;
-        }
-        const image = toBotImage(dataUrl);
-        if (image !== null) {
-            images.push(image);
+        for (const dataUrl of getAttachmentPages(attachment.id)) {
+            const image = toBotImage(dataUrl);
+            if (image !== null) {
+                images.push(image);
+            }
         }
     }
     return images;
 }
 
 /** Everything that is text rather than pixels, as one block for the question. */
-export function toAttachmentText(attachments: ChatAttachmentType[]) {
+export function toAttachmentText(
+    attachments: ChatAttachmentType[],
+    // False for a model the pictures are NOT sent to: a PDF is then the
+    // sentence saying it cannot be opened, never "its pages are attached".
+    isSeeing = true,
+) {
     const parts = attachments
         .map((attachment) => {
-            return attachment.summary ?? '';
+            return attachment.kind === 'file' && isSeeing
+                ? toFileSummary(attachment)
+                : (attachment.summary ?? '');
         })
         .filter((part) => {
             return part.length > 0;
@@ -498,6 +706,171 @@ export const ATTACHMENT_ONLY_QUESTION =
     'unfinished — ask them what they need if that is not clear.';
 
 /**
+ * ...and what a FILE with an empty box is asking. A document from their
+ * folder is not a screen with something wrong on it: "help with whatever
+ * looks wrong" sent a model hunting a sermon's notes for a fault.
+ */
+export const FILE_ONLY_QUESTION =
+    'The user sent this file without typing a question. Say in a few ' +
+    'sentences what it is and what it covers, then ask what they would ' +
+    'like to know about it.';
+
+/**
+ * What a question is asked again WITH when **Ask again** puts it back in
+ * the box (2026-10-22, the user, with `MAT.18.pdf`'s chip missing from the
+ * question asked again: _it should include the context_): everything that
+ * still carries what it was -- a file on disk (read again at the ask), a
+ * pointed-at control or a text file's words (kept on the message), a
+ * picture whose bytes the window still holds. A picture the window let go
+ * of is left out: its chip would go out empty.
+ */
+export function toReusableAttachments(
+    attachments: readonly ChatAttachmentType[] | undefined,
+): ChatAttachmentType[] {
+    return (attachments ?? []).filter((attachment) => {
+        return (
+            attachment.filePath !== undefined ||
+            checkHasAttachmentData(attachment)
+        );
+    });
+}
+
+/**
+ * Attached from a FILE on their computer -- a PDF, a text file, a picture
+ * from a folder -- rather than a picture of the app or a control pointed
+ * at. What a person goes on asking about, question after question
+ * (`findOpenFileAttachments`).
+ */
+export function checkIsFileAttachment(attachment: ChatAttachmentType) {
+    return (
+        attachment.kind !== 'element' &&
+        attachment.filePath !== undefined &&
+        attachment.window === undefined
+    );
+}
+
+/**
+ * The files a tab's next question is still about: those of the LAST
+ * question that had a file attached, unless the tab has closed them since
+ * (`closedAfterId`, the id of the message they were closed at).
+ *
+ * Asked for by the user (2026-10-17): a file opened from Resources is for
+ * asking about _around the content in the file_, and a model is handed
+ * pictures and a file's words on the question they came with alone -- the
+ * history keeps only "(with the file attached)". So the second question
+ * about a sermon's notes was asked of a model that had never seen them.
+ * Only files: a picture of the app is of the app as it WAS.
+ */
+export function findOpenFileAttachments(
+    messages: readonly {
+        id: number;
+        author: string;
+        attachments?: ChatAttachmentType[];
+    }[],
+    closedAfterId?: number,
+): ChatAttachmentType[] {
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
+        if (message.author !== 'you') {
+            continue;
+        }
+        const files = (message.attachments ?? []).filter(checkIsFileAttachment);
+        if (files.length === 0) {
+            continue;
+        }
+        return closedAfterId !== undefined && message.id <= closedAfterId
+            ? []
+            : files;
+    }
+    return [];
+}
+
+function toOrdinal(count: number) {
+    const tail = count % 100;
+    const ending =
+        tail >= 11 && tail <= 13
+            ? 'th'
+            : (['th', 'st', 'nd', 'rd'][count % 10] ?? 'th');
+    return `${count.toString()}${ending}`;
+}
+
+/**
+ * Which attachment each number is, for the model: the person sees a number
+ * on every chip and writes "in 2 the button is missing", and a model is
+ * handed pictures with no names on them at all. A picture is placed by its
+ * ORDER among the ones that reach the model -- the only thing it can tell
+ * them apart by. '' when nothing is numbered.
+ */
+export function toAttachmentLegend(
+    attachments: ChatAttachmentType[],
+    // The `page` that reaches an attachment's window NOW
+    // (`toAttachmentWindowPage`); its stored id when nobody says.
+    toWindowPage: (takenIn: AttachmentWindowType) => string | undefined = (
+        takenIn,
+    ) => {
+        return takenIn.id;
+    },
+) {
+    let pictureCount = 0;
+    const lines: string[] = [];
+    for (const attachment of attachments) {
+        let what: string;
+        if (attachment.kind === 'image') {
+            if (liveDataMap.has(attachment.id)) {
+                pictureCount += 1;
+                what =
+                    `a picture called "${attachment.name}" -- the ` +
+                    `${toOrdinal(pictureCount)} picture attached here`;
+            } else {
+                what = `a picture called "${attachment.name}", no longer attached`;
+            }
+        } else if (attachment.kind === 'element') {
+            what = `the control "${attachment.name}" they pointed at`;
+        } else {
+            what = `the file "${attachment.name}"`;
+            // A PDF's pages are pictures among the others, and counted with
+            // them: the 2nd picture may well be its first page.
+            const pageTotal =
+                attachment.kind === 'file'
+                    ? getAttachmentPages(attachment.id).length
+                    : 0;
+            if (pageTotal === 1) {
+                pictureCount += 1;
+                what +=
+                    ` -- its page is the ${toOrdinal(pictureCount)} ` +
+                    'picture attached here';
+            } else if (pageTotal > 1) {
+                const first = pictureCount + 1;
+                pictureCount += pageTotal;
+                what +=
+                    ` -- its pages 1 to ${pageTotal.toString()} are the ` +
+                    `${toOrdinal(first)} to ${toOrdinal(pictureCount)} ` +
+                    'pictures attached here';
+            }
+        }
+        // WHICH window, and how a tool reaches it: a picture of a Settings
+        // window read against the main window's controls is a wrong answer
+        // with the right picture in front of it.
+        if (attachment.window !== undefined) {
+            const page = toWindowPage(attachment.window);
+            what +=
+                `, in ${toWindowWords(attachment.window)}` +
+                (page === undefined
+                    ? ''
+                    : ` -- for your tool calls about it, page "${page}"`);
+        }
+        if (attachment.number !== undefined) {
+            lines.push(`[${attachment.number.toString()}] ${what}`);
+        }
+    }
+    return lines.length === 0
+        ? ''
+        : 'Each thing the user attached shows a number, and they may call ' +
+              'it by that number ("in 2 the button is missing"):\n' +
+              lines.join('\n');
+}
+
+/**
  * What the MODEL is asked, which is not always what the user typed: the words
  * an element or a file attachment carries are folded in after their sentence,
  * and a bare picture is asked as the question it plainly is.
@@ -510,6 +883,7 @@ export const ATTACHMENT_ONLY_QUESTION =
 export function toAskedOfModel(
     typed: string,
     attachments: ChatAttachmentType[],
+    toWindowPage?: (takenIn: AttachmentWindowType) => string | undefined,
 ) {
     const attachedText = toAttachmentText(attachments);
     const asked = (
@@ -517,9 +891,24 @@ export function toAskedOfModel(
     ).trim();
     // Never for an empty box with nothing clipped to it -- that is not a
     // question at all, and the window turns it away before reaching here.
-    return asked.length === 0 && attachments.length > 0
-        ? ATTACHMENT_ONLY_QUESTION
-        : asked;
+    let question = asked;
+    if (typed.trim().length === 0 && attachments.length > 0) {
+        if (attachments.every(checkIsFileAttachment)) {
+            // A file's words alone are not a question either.
+            question = [FILE_ONLY_QUESTION, attachedText]
+                .filter((part) => {
+                    return part.length > 0;
+                })
+                .join('\n\n');
+        } else if (asked.length === 0) {
+            question = ATTACHMENT_ONLY_QUESTION;
+        }
+    }
+    // Which number is which, last: it is a key to what stands above it.
+    const legend = toAttachmentLegend(attachments, toWindowPage);
+    return legend.length === 0 || question.length === 0
+        ? question
+        : `${question}\n\n${legend}`;
 }
 
 /**
@@ -530,6 +919,35 @@ export function toAskedOfModel(
  * every round of every later question in the tab.
  */
 export function toAttachmentNote(attachments: ChatAttachmentType[]) {
+    // With numbers on them, each by its own: "picture [2]" is what a later
+    // "look at 2 again" refers to.
+    if (
+        attachments.some((attachment) => {
+            return attachment.number !== undefined;
+        })
+    ) {
+        const named = attachments.map((attachment) => {
+            // The window rides into the history by NAME only: a later "look
+            // at 2 again" knows which window, and no launch-bound id is kept.
+            const where =
+                attachment.window === undefined
+                    ? ''
+                    : ` in ${toWindowWords(attachment.window)}`;
+            const what =
+                attachment.kind === 'image'
+                    ? 'picture'
+                    : attachment.kind === 'element'
+                      ? `the "${attachment.name}" control`
+                      : `the file "${attachment.name}"`;
+            return (
+                (attachment.number === undefined
+                    ? what
+                    : `${what} [${attachment.number.toString()}]`) + where
+            );
+        });
+        const last = named.pop() ?? '';
+        return `(with ${named.length === 0 ? last : `${named.join(', ')} and ${last}`} attached)`;
+    }
     const imageCount = attachments.filter((attachment) => {
         return attachment.kind === 'image';
     }).length;

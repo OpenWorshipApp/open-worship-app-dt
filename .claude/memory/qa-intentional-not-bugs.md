@@ -14,18 +14,18 @@ four are deliberate. Don't file them again.
 1. **PDF, PPTX and DOCX documents all show a blank first slide card.** A 5-slide
    `.pptx` renders **6** cards, card #1 empty — and so does a 1-page `.pdf` (2 cards)
    and a `.docx`. All three prepend it: `PptxAppDocument.getSlides()`
-   (`src/app-document-list/PptxAppDocument.ts:96`) and `DocxAppDocument.getSlides()`
-   (`DocxAppDocument.ts:99`) prepend `slide0` with `htmlFilePath: BLANK_HTML_SLIDE_SRC`,
-   `PdfAppDocument.getSlides()` (`PdfAppDocument.ts:76`) with
+   (`src/app-document-list/PptxAppDocument.ts`) and `DocxAppDocument.getSlides()`
+   (`DocxAppDocument.ts`) prepend `slide0` with `htmlFilePath: BLANK_HTML_SLIDE_SRC`,
+   `PdfAppDocument.getSlides()` (`PdfAppDocument.ts`) with
    `imagePreviewSrc: BLANK_IMAGE_SLIDE_SRC`; each returns `[slide0, ...dataList]`. So the
    real slide *n* is card *n+1* — matters when restoring a presented slide, and
    `owa_app_state` reports the padded `slideCount` (a 1-page PDF says 2). Re-verified
    live 2026-09-26; earlier revisions of this note named PPTX only, which made the PDF
    case look like a fresh bug.
 2. **Presenting a bible item replaces the live background.** `applyNewBibleItemJson` calls
-   `applyAttachBackground(...)` (`src/_screen/managers/ScreenBibleManager.ts:387`, the call
-   at `:405` → `screenBackgroundHelpers.ts:6-28`); each bible item carries an *attached
-   background*. Presenting one therefore also clears the Slide layer and swaps `BG`. To QA the screen
+   `applyAttachBackground(...)` (`src/_screen/managers/ScreenLongTextManager.ts` →
+   `screenBackgroundHelpers.ts:6-28`); a bible item or its file can carry an *attached
+   background* (with none, the background stays). Presenting one therefore also clears the Slide layer and swaps `BG`. To QA the screen
    block without disturbing a live setup, present onto an **empty** layer and note that the
    background will still change.
 3. **`Syncing video time (from screen)` flooding the console at ~4 Hz** is a startup
@@ -39,8 +39,9 @@ four are deliberate. Don't file them again.
    clip. Measured live at 37 re-reads of one 2.6 MB background in a few minutes on ONE
    screen (~470 MB/hour; a 100 MB HD loop re-reads 100 MB a lap, all service, on the
    low-spec machines this app targets). The element already carries `loop`, so the
-   re-render bought nothing but the opacity dip. `_fadeOverVideoLoop` now fades the playing
-   element out and back in; re-measured after, 0 media requests across ~5 loops.
+   re-render bought nothing but the opacity dip. `_fadeOverVideoLoop` then faded the playing
+   element out and back in (re-measured after, 0 media requests across ~5 loops); it now
+   crossfades to a twin built once per background ([[video-loop-crossfade-two-elements]]).
 4. **A presented PDF slide showing a blank projector output with a scrollbar** is the
    `pdf-full-width` setting, not a render bug (verified 2026-08-04). `On Screen Width:
    Full Width` (`PageBaseAppearanceSettingComp`, shown in the previewer footer only while a

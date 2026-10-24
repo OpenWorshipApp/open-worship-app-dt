@@ -1,7 +1,15 @@
 import type { CSSProperties, MouseEvent } from 'react';
 
 import { showSimpleToast } from '../../toast/toastHelpers';
-import { tran } from '../../lang/langHelpers';
+import {
+    DEFAULT_LOCALE,
+    getCurrentLocale,
+    getLangData,
+    getLangDataAsync,
+    tran,
+    tranByLangData,
+} from '../../lang/langHelpers';
+import type { ClockPeriodType } from './TimingController';
 import {
     genHtmlForegroundMessage,
     genHtmlForegroundCountdown,
@@ -14,6 +22,7 @@ import {
     genHtmlForegroundWeb,
 } from '../screenForegroundHelpers';
 import { getForegroundDataListOnScreenSetting } from '../screenHelpers';
+import { checkIsPresenterCopySilenced } from '../screenSoundHelpers';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
 import type ScreenManagerBase from './ScreenManagerBase';
@@ -29,6 +38,7 @@ import type {
     ForegroundMarqueeDataType,
     MarqueePositionType,
     ForegroundCameraDataType,
+    ForegroundScreenDataType,
     ForegroundCountdownDataType,
     ForegroundImageDataType,
     ForegroundTimeDataType,
@@ -37,7 +47,10 @@ import type {
     ForegroundVideoDataType,
     ForegroundWebDataType,
 } from '../screenTypeHelpers';
-import { DEFAULT_MARQUEE_SPEED_PERCENTAGE } from '../screenTypeHelpers';
+import {
+    DEFAULT_MARQUEE_SPEED_PERCENTAGE,
+    withForegroundLayer,
+} from '../screenTypeHelpers';
 import {
     checkAreObjectsEqual,
     checkIsItemInArray,
@@ -45,8 +58,31 @@ import {
 import type { OptionalPromise } from '../../helper/typeHelpers';
 import type ScreenEffectManager from './ScreenEffectManager';
 import type { TransitionEffectType } from '../transitionEffectHelpers';
-import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
+import { toTransitionPart } from '../transitionOverrideHelpers';
+import {
+    getCameraAndShowMedia,
+    requestCameraAccess,
+} from '../../helper/cameraHelpers';
+import { getSetting } from '../../helper/settingHelpers';
 import appProvider from '../../server/appProvider';
+import { SCREEN_FONT_FAMILY } from '../screenFontFamily';
+import {
+    checkIsScreenShowFrame,
+    mountScreenShowFrame,
+    type ScreenShowFrameMountType,
+} from '../screenShowFrameHelpers';
+import {
+    checkIsScreenShowSourceId,
+    findScreenShowRefusal,
+} from '../screenShowGraphHelpers';
+import {
+    getAllScreenManagerBases,
+    getScreenManagerBase,
+} from './screenManagerBaseHelpers';
+import {
+    FOREGROUND_MESSAGE_CLASS,
+    layOutMessageStack,
+} from '../foregroundMessageStackHelpers';
 
 export type ScreenForegroundEventType = 'update';
 
@@ -114,9 +150,56 @@ function toMessageDataList(foregroundData: any): any[] {
     return [];
 }
 
+// The Screen Show pictures of a saved foreground entry. Anything that is not
+// a plain screen id is dropped: an entry restored from disk, or one that came
+// from an app that had no such slot, must not stop the rest from loading.
+function toScreenDataList(screenDataList: unknown): ForegroundScreenDataType[] {
+    if (!Array.isArray(screenDataList)) {
+        return [];
+    }
+    return screenDataList.filter((item) => {
+        return checkIsScreenShowSourceId(item?.id);
+    });
+}
+
+type CountdownSetTimingType = Pick<
+    ForegroundCountdownDataType,
+    'dateTime' | 'durationMillisecond' | 'pausedMillisecond'
+>;
+type StopwatchSetTimingType = Pick<
+    ForegroundStopwatchDataType,
+    'dateTime' | 'pausedMillisecond'
+>;
+
+let isClockLangDataRequested = false;
+/**
+ * A clock's AM / PM in the app's language. Not `tran()`: the screen window
+ * registers every language's fonts (`initAllLangCss`) but caches no language
+ * for lookups, and a `tran()` with none throws in dev (`ScreenCloseButtonComp`).
+ * So the first clock asks for the app's language ONCE -- its module is already
+ * imported, so this costs no download -- and reads English until it is there;
+ * the clock's next tick, a second later, picks it up.
+ */
+function toClockPeriodText(period: ClockPeriodType) {
+    const locale = getCurrentLocale();
+    const langData = getLangData(locale);
+    if (
+        langData === null &&
+        locale !== DEFAULT_LOCALE &&
+        !isClockLangDataRequested
+    ) {
+        isClockLangDataRequested = true;
+        getLangDataAsync(locale).catch(() => {
+            isClockLangDataRequested = false;
+        });
+    }
+    return tranByLangData(langData, period);
+}
+
 export default class ScreenForegroundManager extends ScreenEventHandler<ScreenForegroundEventType> {
     static readonly eventNamePrefix: string = 'screen-foreground-m';
-    private _div: HTMLDivElement | null = null;
+    private _rootContainerBehind: HTMLDivElement | null = null;
+    private _rootContainer: HTMLDivElement | null = null;
     // Per-instance: sync-grouped screens share the SAME foreground-data object
     // references, so a module-level map keyed by data would let one screen's
     // render evict another screen's container. Each screen owns its containers.
@@ -125,8 +208,19 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         {
             container: HTMLElement;
             removeHandler: () => OptionalPromise<void>;
+            /**
+             * Take a changed datum in place, answering false when it is not
+             * a change this widget can apply without being remounted. See
+             * `compareAndRender`.
+             */
+            updateHandler?: (newData: any) => boolean;
         }
     >();
+    private messageLayoutFrameId: number | null = null;
+    private isListeningToFonts = false;
+    private readonly handleFontsLoaded = () => {
+        this.scheduleMessageLayout();
+    };
     foregroundData: ForegroundDataType;
     rendererMap: Map<string, (data: any) => void>;
     setterMap: Map<string, (data: any, isNoSyncGroup?: boolean) => void>;
@@ -143,18 +237,35 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const foregroundData = allForegroundDataList[this.key] ?? {};
         this.foregroundData =
             ScreenForegroundManager.parseAllForegroundData(foregroundData);
+        // Each renderer runs only while its root is mounted. Drawn with no root,
+        // a widget still RUNS inside a throwaway div nobody sees -- a
+        // countdown's animation frames, a camera's open tracks, a looping clip
+        // -- which is all a mini preview with its rendering turned off (or its
+        // panel closed) would cost. Attaching a root renders everything it
+        // should hold, so nothing is lost by waiting.
+        const whenMounted = (render: (data: any) => void) => {
+            return (data: any) => {
+                if (this.getMountedRoot(data?.isBehind === true) !== null) {
+                    render(data);
+                }
+            };
+        };
         this.rendererMap = new Map<string, (data: any) => void>([
-            ['messageDataList', this.renderMessage.bind(this)],
-            ['countdownData', this.renderCountdown.bind(this)],
-            ['stopwatchData', this.renderStopwatch.bind(this)],
-            ['timeDataList', this.renderTime.bind(this)],
-            ['marqueeTopData', this.renderMarqueeTop.bind(this)],
-            ['marqueeBottomData', this.renderMarqueeBottom.bind(this)],
-            ['quickTextData', this.renderQuickText.bind(this)],
-            ['cameraDataList', this.renderCamera.bind(this)],
-            ['webDataList', this.renderWeb.bind(this)],
-            ['videoDataList', this.renderVideo.bind(this)],
-            ['imageDataList', this.renderImage.bind(this)],
+            ['messageDataList', whenMounted(this.renderMessage.bind(this))],
+            ['countdownData', whenMounted(this.renderCountdown.bind(this))],
+            ['stopwatchData', whenMounted(this.renderStopwatch.bind(this))],
+            ['timeDataList', whenMounted(this.renderTime.bind(this))],
+            ['marqueeTopData', whenMounted(this.renderMarqueeTop.bind(this))],
+            [
+                'marqueeBottomData',
+                whenMounted(this.renderMarqueeBottom.bind(this)),
+            ],
+            ['quickTextData', whenMounted(this.renderQuickText.bind(this))],
+            ['cameraDataList', whenMounted(this.renderCamera.bind(this))],
+            ['screenDataList', whenMounted(this.renderScreen.bind(this))],
+            ['webDataList', whenMounted(this.renderWeb.bind(this))],
+            ['videoDataList', whenMounted(this.renderVideo.bind(this))],
+            ['imageDataList', whenMounted(this.renderImage.bind(this))],
         ]);
         this.setterMap = new Map<
             string,
@@ -168,23 +279,21 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['marqueeBottomData', this.setMarqueeBottomData.bind(this)],
             ['quickTextData', this.setQuickTextData.bind(this)],
             ['cameraDataList', this.setCameraDataList.bind(this)],
+            ['screenDataList', this.setScreenDataList.bind(this)],
             ['webDataList', this.setWebDataList.bind(this)],
             ['videoDataList', this.setVideoDataList.bind(this)],
             ['imageDataList', this.setImageDataList.bind(this)],
         ]);
     }
 
-    get styleAnimFade() {
-        return this.effectManager.styleAnimList.fade;
-    }
-
     /**
      * The animation ONE overlay comes in with.
      *
-     * The media widgets each choose their own per session, so this reads the
-     * datum first; anything without a choice falls back to the layer's own
-     * effect, and that to `fade`, which is what every foreground item used to
-     * be hardcoded to.
+     * Its own when its session, or its whole component, chose one (stamped on
+     * the datum on the presenter); otherwise the screen's `Foreground:` effect
+     * -- on the screen window, that window's own copy, synced by
+     * `ScreenManager.sendSyncScreen` -- and that to `fade`, which is what
+     * every text and timer overlay used to be hardcoded to.
      */
     styleAnimFor(data: { transitionEffect?: TransitionEffectType } | null) {
         const chosen = data?.transitionEffect ?? this.effectManager.effectType;
@@ -229,6 +338,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             marqueeBottomData: foregroundData['marqueeBottomData'] ?? null,
             quickTextData: foregroundData['quickTextData'] ?? null,
             cameraDataList: foregroundData['cameraDataList'] ?? [],
+            screenDataList: toScreenDataList(foregroundData['screenDataList']),
             webDataList: foregroundData['webDataList'] ?? [],
             videoDataList: foregroundData['videoDataList'] ?? [],
             imageDataList: foregroundData['imageDataList'] ?? [],
@@ -245,16 +355,74 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         });
     }
 
-    get div(): HTMLDivElement {
-        return this._div ?? document.createElement('div');
+    /**
+     * The root the overlays marked `isBehind` are mounted into: a second
+     * foreground root, `#foreground-behind`, between the background and the
+     * slide, so the slide and the Bible text paint over them. See
+     * `ForegroundLayerDataType`.
+     */
+    get rootContainerBehind(): HTMLDivElement {
+        return this._rootContainerBehind ?? document.createElement('div');
     }
 
-    set div(div: HTMLDivElement | null) {
-        if (this._div === div) {
+    set rootContainerBehind(rootContainerBehind: HTMLDivElement | null) {
+        if (this._rootContainerBehind === rootContainerBehind) {
             return;
         }
-        this._div = div;
-        this.render();
+        this._rootContainerBehind = rootContainerBehind;
+        this.render(true);
+    }
+
+    get rootContainer(): HTMLDivElement {
+        return this._rootContainer ?? document.createElement('div');
+    }
+
+    set rootContainer(rootContainer: HTMLDivElement | null) {
+        if (this._rootContainer === rootContainer) {
+            return;
+        }
+        this._rootContainer = rootContainer;
+        this.render(false);
+    }
+
+    private getMountedRoot(isBehind: boolean) {
+        return isBehind ? this._rootContainerBehind : this._rootContainer;
+    }
+
+    /**
+     * Let go of one of the mini preview's roots when it unmounts -- its
+     * rendering was turned off, or its panel closed. Removing the widgets runs
+     * each one's own remove handler, which is what stops a countdown's frames,
+     * a camera's tracks and a clip's player; `foregroundData` stays, and the
+     * next root renders it again.
+     *
+     * Only if it is still the root this manager holds: a card remounted for a
+     * colour-note change attaches its new root first, and that render has
+     * already moved the widgets (see `ScreenDrawManager.releaseDiv`). Never on
+     * the projected screen, whose layers are the window itself.
+     */
+    releaseRootContainer(rootContainer: HTMLDivElement, isBehind: boolean) {
+        if (
+            appProvider.isPageScreen ||
+            this.getMountedRoot(isBehind) !== rootContainer
+        ) {
+            return;
+        }
+        for (const [key, data] of Object.entries(this.foregroundData)) {
+            if (data === null || !this.rendererMap.has(key)) {
+                continue;
+            }
+            for (const item of Array.isArray(data) ? data : [data]) {
+                if ((item?.isBehind === true) === isBehind) {
+                    this.removeDivContainer(item);
+                }
+            }
+        }
+        if (isBehind) {
+            this._rootContainerBehind = null;
+        } else {
+            this._rootContainer = null;
+        }
     }
 
     removeDivContainer(data: any) {
@@ -274,10 +442,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
      * `#foreground` makes one. Giving it a `z-index`, `isolation`, `opacity`
      * below 1, a `filter`, a `transform` or `will-change` would turn every
      * blend mode into a silent no-op.
+     *
+     * The datum decides WHICH root: an overlay marked `isBehind` goes into the
+     * root under the slide, where it still blends with the background.
      */
     createDivContainer(
         data: any,
         removingHandler?: (container: HTMLElement) => Promise<void> | void,
+        updateHandler?: (newData: any) => boolean,
     ): HTMLElement | null {
         const container = document.createElement('div');
         this.removeDivContainer(data);
@@ -287,8 +459,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 await removingHandler?.(container);
                 container.remove();
             },
+            updateHandler,
         });
-        this.div.appendChild(container);
+        const rootContainer =
+            data?.isBehind === true
+                ? this.rootContainerBehind
+                : this.rootContainer;
+        rootContainer.appendChild(container);
         return container;
     }
 
@@ -321,7 +498,34 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             toRenderDataList,
         };
     }
+    /**
+     * Hand a changed datum to the widget already on the screen when it can
+     * take it there -- a countdown or stopwatch started, paused, resumed or
+     * reset. Remounting it instead would fade the clock out and back in on
+     * the wall at every press.
+     */
+    private updateInPlace(oldData: any, newData: any) {
+        if (
+            oldData === null ||
+            newData === null ||
+            oldData === newData ||
+            Array.isArray(oldData) ||
+            Array.isArray(newData)
+        ) {
+            return false;
+        }
+        const entry = this.containerMapper.get(oldData);
+        if (entry?.updateHandler?.(newData) !== true) {
+            return false;
+        }
+        this.containerMapper.delete(oldData);
+        this.containerMapper.set(newData, entry);
+        return true;
+    }
     compareAndRender(oldData: any, newData: any, render: (data: any) => void) {
+        if (this.updateInPlace(oldData, newData)) {
+            return newData;
+        }
         const { toRemoveDataList, toRenderDataList } = this._getDiff(
             oldData,
             newData,
@@ -333,9 +537,38 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             render(data);
         }
         if (toRemoveDataList.length + toRenderDataList.length > 0) {
-            return newData;
+            return this.keepRenderedItems(oldData, newData);
         }
         return oldData;
+    }
+
+    /**
+     * The list to store after a list changed: every item that stayed on the
+     * screen is kept as the OBJECT that was rendered, not the equal copy that
+     * came in. `containerMapper` is keyed by object identity, and the presenter
+     * rebuilds the whole list on every press -- storing the copy left the
+     * mounted container keyed by an object the manager no longer held, so the
+     * next hide (or F10) looked the copy up, found nothing, and the message,
+     * clock or picture stayed on the projector while the presenter said it was
+     * gone. Showing it again then mounted a second copy beside the stale one.
+     */
+    private keepRenderedItems(oldData: any, newData: any) {
+        if (!Array.isArray(oldData) || !Array.isArray(newData)) {
+            return newData;
+        }
+        return newData.map((newItem) => {
+            if (oldData.includes(newItem)) {
+                return newItem;
+            }
+            const renderedItem = oldData.find((oldItem) => {
+                return (
+                    typeof oldItem === 'object' &&
+                    typeof newItem === 'object' &&
+                    checkAreObjectsEqual(oldItem, newItem)
+                );
+            });
+            return renderedItem ?? newItem;
+        });
     }
 
     saveForegroundData() {
@@ -402,11 +635,70 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     renderMessage(data: ForegroundMessageDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundMessage(
             data,
-            this.styleAnimFade,
+            this.styleAnimFor(data),
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
     }
+
+    /**
+     * Lay the messages out by their real heights on the next frame -- once,
+     * however many changes landed in this one. Also when a font finishes
+     * loading, which changes every height after the first layout.
+     */
+    scheduleMessageLayout() {
+        if (this.messageLayoutFrameId !== null) {
+            return;
+        }
+        if (!this.isListeningToFonts && globalThis.document?.fonts) {
+            this.isListeningToFonts = true;
+            document.fonts.addEventListener(
+                'loadingdone',
+                this.handleFontsLoaded,
+            );
+        }
+        this.messageLayoutFrameId = globalThis.requestAnimationFrame(() => {
+            this.messageLayoutFrameId = null;
+            this.layOutMessages();
+        });
+    }
+
+    /**
+     * Every session's shown messages, stacked one under another and shrunk to
+     * fit (`layOutMessageStack`). A rotating set is ONE box whose text keeps
+     * changing, so it is left to its own size.
+     */
+    layOutMessages() {
+        const stackMap = new Map<string, HTMLElement[]>();
+        const messageDataList = this.foregroundData.messageDataList;
+        if (!Array.isArray(messageDataList)) {
+            return;
+        }
+        for (const data of messageDataList) {
+            const isRotating =
+                data.intervalSecond !== null &&
+                data.textList.filter((text) => {
+                    return text.trim() !== '';
+                }).length > 1;
+            const element =
+                this.containerMapper
+                    .get(data)
+                    ?.container.querySelector<HTMLElement>(
+                        `.${FOREGROUND_MESSAGE_CLASS}`,
+                    ) ?? null;
+            if (isRotating || element === null || !element.isConnected) {
+                continue;
+            }
+            const key = `${data.isBehind === true}:${data.stackKey ?? `one:${data.id}`}`;
+            const elementList = stackMap.get(key) ?? [];
+            elementList.push(element);
+            stackMap.set(key, elementList);
+        }
+        for (const elementList of stackMap.values()) {
+            layOutMessageStack(elementList, this.screenManagerBase.height);
+        }
+    }
+
     setMessageDataList(
         dataList: ForegroundMessageDataType[],
         isNoSyncGroup = false,
@@ -465,11 +757,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     renderCountdown(data: ForegroundCountdownDataType) {
-        const { handleAdding, handleRemoving } = genHtmlForegroundCountdown(
+        const { handleAdding, handleRemoving, handleUpdating } =
+            genHtmlForegroundCountdown(data, this.styleAnimFor(data));
+        const divContainer = this.createDivContainer(
             data,
-            this.styleAnimFade,
+            handleRemoving,
+            handleUpdating,
         );
-        const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
     }
     setCountdownData(
@@ -488,20 +782,38 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
      * `sessionId` rides LAST and optional on purpose: the panel passes which of
      * its sessions is putting this up, and everything else that starts a
      * countdown -- a dropped run-sheet row, the assistant -- carries no session
-     * at all and must keep the call it already makes.
+     * at all and must keep the call it already makes. `isBehind` comes after it
+     * for the same reason -- see `ForegroundLayerDataType` -- and then
+     * `transitionEffect`, the session's or the component's own transition.
+     *
+     * `timing` is a bare target `Date` for a countdown that runs at once, or
+     * the whole timing of one that can be started and paused
+     * (`genCountdownTiming`).
      */
     static async setCountdown(
         event: MouseEvent,
-        dateTime: Date | null,
+        timing: CountdownSetTimingType | Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
             (screenForegroundManager) => {
-                const data = dateTime
-                    ? { ...toSessionIdPart(sessionId), dateTime, extraStyle }
+                const data = timing
+                    ? withForegroundLayer(
+                          {
+                              ...toSessionIdPart(sessionId),
+                              ...toTransitionPart(transitionEffect),
+                              ...(timing instanceof Date
+                                  ? { dateTime: timing }
+                                  : timing),
+                              extraStyle,
+                          },
+                          isBehind,
+                      )
                     : null;
                 screenForegroundManager.setCountdownData(data);
             },
@@ -510,11 +822,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     renderStopwatch(data: ForegroundStopwatchDataType) {
-        const { handleAdding, handleRemoving } = genHtmlForegroundStopwatch(
+        const { handleAdding, handleRemoving, handleUpdating } =
+            genHtmlForegroundStopwatch(data, this.styleAnimFor(data));
+        const divContainer = this.createDivContainer(
             data,
-            this.styleAnimFade,
+            handleRemoving,
+            handleUpdating,
         );
-        const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
     }
     setStopwatchData(
@@ -529,25 +843,33 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
-    /** `sessionId` -- see `setCountdown`. */
+    /** `sessionId`, `isBehind` and `timing` -- see `setCountdown`. */
     static async setStopwatch(
         event: MouseEvent,
-        dateTime: Date | null,
+        timing: StopwatchSetTimingType | Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
             (screenForegroundManager) => {
                 const stopwatchData =
-                    dateTime === null
+                    timing === null
                         ? null
-                        : {
-                              ...toSessionIdPart(sessionId),
-                              dateTime,
-                              extraStyle,
-                          };
+                        : withForegroundLayer(
+                              {
+                                  ...toSessionIdPart(sessionId),
+                                  ...toTransitionPart(transitionEffect),
+                                  ...(timing instanceof Date
+                                      ? { dateTime: timing }
+                                      : timing),
+                                  extraStyle,
+                              },
+                              isBehind,
+                          );
                 screenForegroundManager.setStopwatchData(stopwatchData);
             },
             isForceChoosing,
@@ -557,7 +879,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     renderTime(data: ForegroundTimeDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundTime(
             data,
-            this.styleAnimFade,
+            this.styleAnimFor(data),
+            toClockPeriodText,
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
@@ -663,7 +986,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
-    /** `sessionId` -- see `setCountdown`. */
+    /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setMarqueeTop(
         event: MouseEvent,
         text: string | null,
@@ -671,6 +994,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
@@ -678,18 +1003,22 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const marqueeTopData =
                     text === null
                         ? null
-                        : {
-                              ...toSessionIdPart(sessionId),
-                              text,
-                              speedPercentage,
-                              extraStyle,
-                          };
+                        : withForegroundLayer(
+                              {
+                                  ...toSessionIdPart(sessionId),
+                                  ...toTransitionPart(transitionEffect),
+                                  text,
+                                  speedPercentage,
+                                  extraStyle,
+                              },
+                              isBehind,
+                          );
                 screenForegroundManager.setMarqueeTopData(marqueeTopData);
             },
             isForceChoosing,
         );
     }
-    /** `sessionId` -- see `setCountdown`. */
+    /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setMarqueeBottom(
         event: MouseEvent,
         text: string | null,
@@ -697,6 +1026,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
@@ -704,12 +1035,16 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const marqueeBottomData =
                     text === null
                         ? null
-                        : {
-                              ...toSessionIdPart(sessionId),
-                              text,
-                              speedPercentage,
-                              extraStyle,
-                          };
+                        : withForegroundLayer(
+                              {
+                                  ...toSessionIdPart(sessionId),
+                                  ...toTransitionPart(transitionEffect),
+                                  text,
+                                  speedPercentage,
+                                  extraStyle,
+                              },
+                              isBehind,
+                          );
                 screenForegroundManager.setMarqueeBottomData(marqueeBottomData);
             },
             isForceChoosing,
@@ -719,7 +1054,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     renderQuickText(data: ForegroundQuickTextDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundQuickText(
             data,
-            this.styleAnimFade,
+            this.styleAnimFor(data),
             () => {
                 this.setQuickTextData(null);
             },
@@ -739,7 +1074,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             isNoSyncGroup,
         );
     }
-    /** `sessionId` -- see `setCountdown`. */
+    /** `sessionId` and `isBehind` -- see `setCountdown`. */
     static async setQuickText(
         event: MouseEvent,
         htmlText: string | null,
@@ -748,6 +1083,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
         sessionId?: string,
+        isBehind = false,
+        transitionEffect?: TransitionEffectType,
     ) {
         this.setData(
             event,
@@ -755,13 +1092,17 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 const quickTextData =
                     htmlText === null
                         ? null
-                        : {
-                              ...toSessionIdPart(sessionId),
-                              htmlText,
-                              timeSecondDelay,
-                              timeSecondToLive,
-                              extraStyle,
-                          };
+                        : withForegroundLayer(
+                              {
+                                  ...toSessionIdPart(sessionId),
+                                  ...toTransitionPart(transitionEffect),
+                                  htmlText,
+                                  timeSecondDelay,
+                                  timeSecondToLive,
+                                  extraStyle,
+                              },
+                              isBehind,
+                          );
                 screenForegroundManager.setQuickTextData(quickTextData);
             },
             isForceChoosing,
@@ -852,6 +1193,236 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
 
+    /**
+     * Another screen's content, drawn here whether or not that screen is
+     * showing (`screenShowFrameHelpers`). Skipped on the source screen itself
+     * -- a colour-note group copies "show screen 2" to screen 2 as well -- and
+     * inside a copy, which never draws a copy of its own.
+     */
+    renderScreen(data: ForegroundScreenDataType) {
+        if (data.id === this.screenId || checkIsScreenShowFrame()) {
+            return;
+        }
+        let handle: ScreenShowFrameMountType | null = null;
+        const divContainer = this.createDivContainer(data, async () => {
+            await handle?.dispose();
+        });
+        handle = mountScreenShowFrame({
+            sourceScreenId: data.id,
+            ownScreenId: this.screenId,
+            parentContainer: divContainer!,
+            extraStyle: data.extraStyle,
+            animData: this.styleAnimFor(data),
+            getSetting,
+            askCameraAccess: requestCameraAccess,
+            // The presenter reads the source's state straight from its
+            // managers; every other window keeps what the presenter sends.
+            getSnapshot: appProvider.isPageScreen
+                ? undefined
+                : () => {
+                      return (
+                          getScreenManagerBase(
+                              data.id,
+                          )?.genScreenShowPayload() ?? null
+                      );
+                  },
+        });
+    }
+    setScreenDataList(
+        dataList: ForegroundScreenDataType[] | null,
+        isNoSyncGroup = false,
+    ) {
+        const oldSourceIds = this.foregroundData.screenDataList.map((item) => {
+            return item.id;
+        });
+        this.applyForegroundDataWithSyncGroup(
+            {
+                ...this.foregroundData,
+                // A sync message from a sender that has no such slot reads
+                // `?? null` (`receiveSyncScreen`), and a null list would throw
+                // on the next add.
+                screenDataList: dataList ?? [],
+            },
+            isNoSyncGroup,
+        );
+        // A screen just put on this one: its window is sent that screen's
+        // whole state now, before any change of it comes.
+        const addedSourceIds = this.foregroundData.screenDataList
+            .map((item) => {
+                return item.id;
+            })
+            .filter((id) => {
+                return !oldSourceIds.includes(id);
+            });
+        if (addedSourceIds.length > 0) {
+            this.screenManagerBase.sendScreenShowSnapshots(addedSourceIds);
+        }
+    }
+    /**
+     * The screens showing screen `sourceScreenId` right now, other than
+     * itself: where a change of it has to be carried.
+     */
+    static getScreenShowTargetIds(sourceScreenId: number) {
+        return this.getAllInstancesBase<ScreenForegroundManager>()
+            .filter((instance) => {
+                return (
+                    instance.screenId !== sourceScreenId &&
+                    instance.foregroundData.screenDataList.some((item) => {
+                        return item.id === sourceScreenId;
+                    })
+                );
+            })
+            .map((instance) => {
+                return instance.screenId;
+            });
+    }
+    /**
+     * Put screen `data.id`'s picture on this screen, REPLACING the one already
+     * here from the same source (Properties changed). Refused, with a word to
+     * the operator, when it would be this screen itself or close a loop.
+     */
+    addScreenData(data: ForegroundScreenDataType, isNoSyncGroup = false) {
+        if (!checkIsScreenShowSourceId(data?.id)) {
+            return false;
+        }
+        const refusal = ScreenForegroundManager.getScreenShowRefusal(
+            this.screenId,
+            data.id,
+        );
+        if (refusal !== null) {
+            if (!appProvider.isPageScreen) {
+                showSimpleToast(
+                    tran('Screen Show'),
+                    refusal === 'self'
+                        ? tran('A screen cannot show itself')
+                        : tran('These screens would show each other'),
+                );
+            }
+            return false;
+        }
+        const dataList = this.foregroundData.screenDataList;
+        const existingData = dataList.find((item) => {
+            return item.id === data.id;
+        });
+        if (
+            existingData !== undefined &&
+            checkAreObjectsEqual(existingData, data)
+        ) {
+            return true;
+        }
+        this.setScreenDataList(
+            existingData === undefined
+                ? [...dataList, data]
+                : dataList.map((item) => {
+                      return item.id === data.id ? data : item;
+                  }),
+            isNoSyncGroup,
+        );
+        return true;
+    }
+    removeScreenData(data: ForegroundScreenDataType, isNoSyncGroup = false) {
+        const dataList = this.foregroundData.screenDataList.filter((item) => {
+            return item.id !== data.id;
+        });
+        this.setScreenDataList(dataList, isNoSyncGroup);
+    }
+    static async addScreenData(
+        event: MouseEvent,
+        data: ForegroundScreenDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.addScreenData(data);
+            },
+            isForceChoosing,
+        );
+    }
+    static async removeScreenData(
+        event: MouseEvent,
+        data: ForegroundScreenDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeScreenData(data);
+            },
+            isForceChoosing,
+        );
+    }
+    /**
+     * Whether screen `targetScreenId` may show screen `sourceScreenId`. Read
+     * from the DATA of every screen, hidden ones included, so the answer does
+     * not depend on which windows happen to be up. The target's colour-note
+     * group counts with it: the group receives the same foreground. A group
+     * member that IS the source skips its own copy when drawing, so it is no
+     * reason to refuse.
+     */
+    static getScreenShowRefusal(
+        targetScreenId: number,
+        sourceScreenId: number,
+    ) {
+        if (targetScreenId === sourceScreenId) {
+            return 'self';
+        }
+        const edges = new Map<number, number[]>();
+        for (const instance of this.getAllInstancesBase<ScreenForegroundManager>()) {
+            edges.set(
+                instance.screenId,
+                instance.foregroundData.screenDataList.map((item) => {
+                    return item.id;
+                }),
+            );
+        }
+        const colorNote = getScreenManagerBase(targetScreenId)?.colorNote;
+        const groupScreenIds =
+            colorNote === null || colorNote === undefined
+                ? []
+                : getAllScreenManagerBases()
+                      .filter((screenManagerBase) => {
+                          return screenManagerBase.colorNote === colorNote;
+                      })
+                      .map((screenManagerBase) => {
+                          return screenManagerBase.screenId;
+                      });
+        const targetScreenIds = Array.from(
+            new Set([targetScreenId, ...groupScreenIds]),
+        ).filter((screenId) => {
+            return screenId !== sourceScreenId;
+        });
+        return findScreenShowRefusal(sourceScreenId, targetScreenIds, edges);
+    }
+    /**
+     * Screen `sourceScreenId` was deleted. Its id is handed to the NEXT screen
+     * added (`screenManagerDeleteHelpers`), so a picture left pointing at it
+     * would quietly start showing a different screen. Taken off every screen,
+     * locked ones too -- what it showed no longer exists.
+     */
+    static removeScreenShowSource(sourceScreenId: number) {
+        for (const instance of this.getAllInstancesBase<ScreenForegroundManager>()) {
+            const dataList = instance.foregroundData.screenDataList;
+            const removedList = dataList.filter((item) => {
+                return item.id === sourceScreenId;
+            });
+            if (removedList.length === 0) {
+                continue;
+            }
+            for (const item of removedList) {
+                instance.removeDivContainer(item);
+            }
+            // A NEW list: sync-grouped screens share the old one by reference
+            // (memory `foreground-sync-shared-refs`).
+            Object.assign(instance.foregroundData, {
+                screenDataList: dataList.filter((item) => {
+                    return item.id !== sourceScreenId;
+                }),
+            });
+            instance.saveForegroundData();
+        }
+    }
+
     renderWeb(data: ForegroundWebDataType) {
         const { handleAdding, handleRemoving } = genHtmlForegroundWeb(
             data,
@@ -917,6 +1488,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const { handleAdding, handleRemoving } = genHtmlForegroundVideo(
             data,
             this.styleAnimFor(data),
+            checkIsPresenterCopySilenced(this.screenManagerBase),
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         handleAdding(divContainer!);
@@ -1033,15 +1605,45 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
 
+    /**
+     * A clock's `dateTime` back as a Date. A message that crossed JSON on its
+     * way here -- a virtual display's browser page, a Screen Mirror guest --
+     * carries it as text, and a running clock with no Date shows zeros and
+     * never ticks. A Date already there is left as it is, object and all.
+     */
+    static reviveTimerDates(data: ForegroundDataType): ForegroundDataType {
+        const revive = <T extends { dateTime: Date }>(timer: T | null) => {
+            return !timer || timer.dateTime instanceof Date
+                ? timer
+                : { ...timer, dateTime: new Date(timer.dateTime) };
+        };
+        const countdownData = revive(data.countdownData);
+        const stopwatchData = revive(data.stopwatchData);
+        return countdownData === data.countdownData &&
+            stopwatchData === data.stopwatchData
+            ? data
+            : { ...data, countdownData, stopwatchData };
+    }
+
     receiveSyncScreen(message: ScreenMessageType) {
-        const data: ForegroundDataType = message.data;
+        const data = ScreenForegroundManager.reviveTimerDates(message.data);
         for (const [key, setter] of this.setterMap.entries()) {
             setter(data[key as keyof ForegroundDataType] ?? null, true);
         }
         this.fireUpdateEvent();
     }
 
-    render() {
+    /**
+     * Mount every overlay again. `isBehind` narrows it to ONE root's overlays:
+     * the two roots mount (and refresh) separately, and each re-rendering the
+     * other's items as well would replay every overlay's entrance twice.
+     */
+    render(isBehind?: boolean) {
+        const checkIsInRoot = (data: any) => {
+            return (
+                isBehind === undefined || (data.isBehind === true) === isBehind
+            );
+        };
         for (const [key, render] of this.rendererMap.entries()) {
             const data = this.foregroundData[key as keyof ForegroundDataType];
             if (data === null) {
@@ -1049,11 +1651,16 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             }
             if (Array.isArray(data)) {
                 for (const item of data) {
-                    render(item);
+                    if (checkIsInRoot(item)) {
+                        render(item);
+                    }
                 }
-            } else {
+            } else if (checkIsInRoot(data)) {
                 render(data);
             }
+        }
+        if ((this.foregroundData.messageDataList?.length ?? 0) > 0) {
+            this.scheduleMessageLayout();
         }
     }
 
@@ -1077,6 +1684,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             Object.assign(this.foregroundData, {
                 [key as keyof ForegroundDataType]: newData,
             });
+            if (key === 'messageDataList' && newData !== oldData) {
+                this.scheduleMessageLayout();
+            }
         }
         this.saveForegroundData();
     }
@@ -1111,7 +1721,19 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.foregroundData = ScreenForegroundManager.parseAllForegroundData(
             {},
         );
-        this._div = null;
+        if (this.messageLayoutFrameId !== null) {
+            globalThis.cancelAnimationFrame(this.messageLayoutFrameId);
+            this.messageLayoutFrameId = null;
+        }
+        if (this.isListeningToFonts) {
+            this.isListeningToFonts = false;
+            document.fonts.removeEventListener(
+                'loadingdone',
+                this.handleFontsLoaded,
+            );
+        }
+        this._rootContainerBehind = null;
+        this._rootContainer = null;
         super.delete();
     }
 
@@ -1139,6 +1761,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             // 1.5 is too tight for Khmer, whose stacked subscripts overflow the
             // line box and get cut by the `overflow: hidden` above.
             lineHeight: 'normal',
+            // Pinned for the same reason. Inherited through the shadow root,
+            // the presenter's own app font reached every widget in the mini
+            // preview: with Battambang chosen, a countdown read serif there and
+            // its wider digits broke `00:04:40` over two lines, while the real
+            // screen showed one sans-serif line. A widget's own font
+            // (Properties) is set on the widget, so it still wins.
+            fontFamily: SCREEN_FONT_FAMILY,
         };
     }
 

@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [NAV-20, NAV-21, ST-22, GL-17, GL-18]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-31 — Hide, show, and reset the app's panels (View menu)
 
@@ -19,7 +19,7 @@ menu bar does the same thing by name, which is easier when the strip is hard to 
 And the divider itself has a right-click menu that does it in place (steps 7–9) —
 the only way in a popup window, whose menu bar is hidden.
 
-1. Open **View** on the top menu bar → **Widgets** (Widgets). 📸
+1. Open **View** on the top menu bar → **[en:tran:Widgets]**. 📸
    You get one tick-box per panel on the page you are looking at, e.g. on the
    presenter: `App Presenter Left` / `App Presenter Middle` / `App Presenter Right`,
    `Document List`, `Presenting Flow List`, `Presenter`, `Background`,
@@ -41,11 +41,14 @@ the only way in a popup window, whose menu bar is hidden.
 
 **Put everything back:**
 
-5. **[en:tran:Reset Widgets Size]**. Answer **Yes** to
+5. Open **View** on the top menu bar again and click
+   **[en:tran:Reset Widgets Size]**. Do not open **Widgets** for this one:
+   **[en:tran:Reset Widgets Size]** is a row of the **View** menu itself, the row
+   right under **Widgets**. Answer **[en:tran:Yes]** to
    `Are you sure to reset every widget size and reopen the widgets?` 📸
 6. Every panel returns to the width and height it had when the app was installed, and
    **any panel you had collapsed is reopened**. This happens immediately — no reload.
-   Answer **No** and nothing changes.
+   Answer **[en:tran:No]** and nothing changes.
 
 **Or use the divider between two panels** — no menu bar needed, so this also works
 in a popup window:
@@ -54,17 +57,24 @@ in a popup window:
    thin line between the two panels on the left of the presenter (every divider in the
    app has this menu) — and choose **[en:tran:Close First Widget]**. 📸 The first of
    the two panels (the left one, or the upper one) collapses to its green strip and the
-   other takes its space. `Close Second Widget` does the same to the other panel.
+   other takes its space. `Close Second Widget` does the same to the other panel. The
+   menu holds those two and **[en:tran:Reset Size]** (step 9), nothing else.
    Hovering the divider shows the same two choices as small arrows, each named for
    the side it closes — **[en:tran:Collapse left panel]** / **[en:tran:Collapse right panel]**,
    or **[en:tran:Collapse top panel]** / **[en:tran:Collapse bottom panel]** on a
    divider between an upper and a lower panel. A collapsed panel has no divider — if
    one of the two is already a strip, click the strip first.
-8. Click the green **Document List** strip — the panel comes straight back.
+8. Click the green **[en:tran:Document List]** strip — the panel comes straight back.
 9. Right-click the **divider between Document List and Presenting Flow List** again and
    choose **[en:tran:Reset Size]** — just those two panels return to the sizes they
    shipped with. Double-clicking the divider does the same. The View menu's
    `Reset Widgets Size` (step 5) is the version for every panel at once.
+
+**With the keyboard:** press **Tab** until a divider shows a blue outline. The **Menu**
+key (or **Shift+F10**) opens the same menu as the right-click, and the arrow keys move
+the divider — **←/→** for one between side-by-side panels, **↑/↓** for one between an
+upper and a lower panel, **Shift** for bigger steps. The arrows never collapse a panel;
+the menu does that.
 
 > This used to be a button in Settings → General, where it did nothing until you also
 > clicked **Apply Settings** and the app reloaded. It is on the View menu now and takes
@@ -75,5 +85,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-20` · `NAV-21` · `ST-22` · `GL-17` · `GL-18`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

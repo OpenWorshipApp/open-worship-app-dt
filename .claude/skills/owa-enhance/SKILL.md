@@ -1,12 +1,12 @@
 ---
 name: owa-enhance
-description: 'Research-first improvement of the WHOLE Open Worship App — find what is most worth improving, prove it with evidence from the code and the RUNNING app, report a ranked plan, and change NOTHING until the user says which items to apply. Use when asked to enhance / improve / audit / harden / speed up / clean up the app as a whole, to "find what to improve" or "what should I fix next", or to work on an app-wide area with no dedicated skill: security (IPC handlers, node-integrated renderers, HTML sinks, archives, downloads, external content, dependencies), performance (memory, startup, bundle, per-event work on low-spec church machines), reliability (data loss, cross-window races, crashes, console errors, a projector that blanks), ui (volunteer-facing clarity, accessibility, Khmer, design tokens, empty and error states), dev-flow (install, dev loop, test and typecheck speed, the lint gate, packaging, CI, agent tooling), code-health (import cycles, oversized modules, duplication, dead mocks, test gaps, outdated dependencies) and docs (the manual against the live app, memory and CLAUDE.md drift, the Codex mirror, knowledge freshness). With no argument, or `auto`, it TRIAGES every area with cheap read-only signals — scripts/triage.mjs for static leads, scripts/app-vitals.mjs for what the running app costs per process and per page — and researches the area holding the strongest evidenced problem; `full` researches all of them. THE RULE THAT BINDS EVERY RUN: research is read-only — no source edit, format, stage, commit, setting, user data, screen or API credit; its one write is a gitignored report under test-results/owa-enhance/ — and the run ENDS with that report (proposed EN-xx ids, severity, confidence, effort, failure scenario, proposed change, the proof each will be judged by) and a question. Only an explicit `apply` starts changes, which are then verified LIVE, gated by npm run lint last and landed with their paper trail. The AI subsystems keep their own skills (the 🤖 assistant is owa-enhance-chatbot, tools/owa-devtools-mcp is owa-enhance-mcp, the ✨ AI Chat window is owa-enhance-aichat) and /owa-robot-test runs are read as evidence.'
+description: 'Research-first improvement of the WHOLE Open Worship App — find what is most worth improving, prove it with evidence from the code and the RUNNING app, report a ranked plan, and change NOTHING until the user says which items to apply. Use when asked to enhance / improve / audit / harden / speed up / clean up the app as a whole, to "find what to improve" or "what should I fix next", or to work on an app-wide area with no dedicated skill: security (IPC handlers, node-integrated renderers, HTML sinks, archives, downloads, external content, dependencies), performance (memory, startup, bundle, per-event work on low-spec church machines), reliability (data loss, cross-window races, crashes, console errors, a projector that blanks), ui (volunteer-facing clarity, accessibility, Khmer, design tokens, empty and error states), dev-flow (install, dev loop, test and typecheck speed, the lint gate, packaging, CI, agent tooling), code-health (import cycles, oversized modules, duplication, dead mocks, test gaps, outdated dependencies) and docs (the manual against the live app, memory and CLAUDE.md drift, knowledge freshness). With no argument, or `auto`, it TRIAGES every area with cheap read-only signals — scripts/triage.mjs for static leads, scripts/app-vitals.mjs for what the running app costs per process and per page — and researches the area holding the strongest evidenced problem; `full` researches all of them. THE RULE THAT BINDS EVERY RUN: research is read-only — no source edit, format, stage, commit, setting, user data, screen or API credit; its one write is a gitignored report under test-results/owa-enhance/ — and the run ENDS with that report (proposed EN-xx ids, severity, confidence, effort, failure scenario, proposed change, the proof each will be judged by) and a question. Only an explicit `apply` starts changes, which are then verified LIVE, gated by npm run lint last and landed with their paper trail. The AI subsystems keep their own skills (the 🤖 assistant is owa-enhance-chatbot, tools/owa-devtools-mcp is owa-enhance-mcp, the ✨ AI Chat window is owa-enhance-aichat) and /owa-robot-test runs are read as evidence.'
 argument-hint: '[auto (default) | security | performance | reliability | ui | dev-flow | code-health | docs | full | area,area | apply EN-xx … | file | deeper EN-xx | a plain description of what feels wrong]'
 ---
 
 # OWA Enhance — find the improvement worth the most, prove it, then ask
 
-The app-wide sibling of the three `owa-enhance-*` skills. Each of those owns one
+The app-wide sibling of the four `owa-enhance-*` skills. Each of those owns one
 subsystem and changes it; this one looks across **the whole app**, finds where
 an improvement is worth the most, and hands the decision back before a single
 file moves. Asked for on 2026-09-14 in so many words: *research (planning
@@ -66,7 +66,7 @@ Then the user says which.
 | `ui` | `ux`, `a11y`, `i18n`, `khmer`, `design` | a hurried, non-technical volunteer, often reading Khmer |
 | `dev-flow` | `dx`, `tooling`, `ci`, `build`, `release` | the maintainer's hour and every agent session |
 | `code-health` | `health`, `architecture`, `refactor`, `deps`, `tests` | the next change |
-| `docs` | `manual`, `notes`, `mirror` | a volunteer reading the manual or asking the 🤖, and every later session |
+| `docs` | `manual`, `notes` | a volunteer reading the manual or asking the 🤖, and every later session |
 
 Each area's scope, leads, probes, already-known list and proof on apply:
 **[references/areas.md](./references/areas.md).**
@@ -75,7 +75,12 @@ Each area's scope, leads, probes, already-known list and proof on apply:
 with its `research` argument, which is this skill's pause for that subsystem;
 `mcp` / `tools` → `owa-enhance-mcp`; `aichat` → `owa-enhance-aichat`. Those two
 have no research-only mode, so take their baseline and their areas and keep
-this skill's rule: report, then stop. A QA walk is `/owa-robot-test`; a diff
+this skill's rule: report, then stop. The agent docs — CLAUDE.md, rules,
+memory and skills — are `owa-enhance-agent-docs` (its
+`audit` argument is read-only); the `docs` area here keeps the user manual and
+knowledge freshness. The in-app tips (Help → All tips, their coverage of a
+window, a tip that fails) are `owa-enhance-tips` (`TP-xx`; its `measure`
+argument writes nothing). A QA walk is `/owa-robot-test`; a diff
 review is `review-stagged-change` / `review-unstagged-change`.
 
 ## The research contract
@@ -203,7 +208,7 @@ decide, I will start on the obvious one".
    fails before the change and passes after it.
 4. **Implement** under CLAUDE.md: performance first; `Comp` names; a
    per-instance `genTimeoutAttempt(500)` on a multi-instance event hook; every
-   new label a `tran()` key with its Khmer string; no app-module `import()` from
+   new label a `tran()` key with its Khmer and French strings; no app-module `import()` from
    an injected page expression.
 5. **Prove it live** with the finding's *Proof on apply*: the report's baseline
    measurement re-taken the same way, a screenshot, the reproduced failure no
@@ -213,14 +218,15 @@ decide, I will start on the obvious one".
    code — it is `&&`-chained, so the first failure hides every stage after it.
    It only checks (`EN-16`): nothing is reformatted and nothing is built into
    `electron-build/`, so it is safe beside a running app and another session's
-   uncommitted work. A `lint:pre` failure means `npm run format` — over your
-   own files only when the tree holds someone else's (`MC-29`).
+   uncommitted work. A `lint:pre` failure means `npx prettier --write` on your
+   own files — not `npm run format`, which lacks `lint:pre`'s `--end-of-line auto` and
+   rewrites the line endings of the whole CRLF checkout (`MC-29`).
 7. **Paper trail, in the same change:** the backlog (`done` with before → after
    and the proof; every finding of the report NOT applied filed `open`); for
    behaviour a user sees, `user-workflows.md` and `coverage-matrix.md` with
    their dates bumped; `tools/owa-devtools-mcp/questions/*.json` when the
    knowledge moved; a memory note for anything the code cannot tell the next
-   session; CLAUDE.md for anything structural; the Codex mirror; and
+   session; CLAUDE.md for anything structural; and
    `node extra-work/build-knowledge.mjs` after any `.claude/` edit (under
    `electron:dev` that restarts the dev app).
 8. **No commit, push or stage** unless the user asks.

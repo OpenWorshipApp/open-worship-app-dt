@@ -28,6 +28,7 @@ import {
     toWidgetId,
     unregisterWidgets,
 } from './widgetRegistry';
+import { useIsWidgetMenuExcluded } from './widgetMenuContext';
 
 export const renderResizerChildren = (Children: any) => {
     if (typeof Children === 'object' && 'render' in Children) {
@@ -202,7 +203,9 @@ export default function RenderResizeActorItemComp({
     const isWidgetHidden = !isDisableQuickResize && handleReopening !== null;
     // A group that cannot collapse has nothing for the menu to toggle, and a
     // lone pane has no sibling to hand its space to.
-    const canMenuToggle = !isDisableQuickResize && dataInput.length > 1;
+    const isWidgetMenuExcluded = useIsWidgetMenuExcluded();
+    const canMenuToggle =
+        !isWidgetMenuExcluded && !isDisableQuickResize && dataInput.length > 1;
     const widgetId = toWidgetId(flexSizeName, key);
     useAppEffect(() => {
         if (!canMenuToggle) {

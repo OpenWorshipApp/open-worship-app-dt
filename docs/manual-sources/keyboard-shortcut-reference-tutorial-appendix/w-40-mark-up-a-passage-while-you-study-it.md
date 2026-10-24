@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-108, RD-109, RD-110, RD-111, RD-112]
 screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-01"
+workflowsVersion: "2026-10-24"
 ---
 # W-40 — Mark up a passage while you study it
 
@@ -34,28 +34,28 @@ are still there the next time you open the app.
    verse's name at the top and an empty box. Type your note into it.
    Close the window with the **✕**. Nothing else to press — it saves as you type.
 6. Now move the mouse over those underlined words. 📸
-   A little panel appears under them showing what you wrote, with two buttons: a **pencil**
-   to open the note again, and a **bin** to delete it.
+   A little panel appears under them showing what you wrote, with three buttons: a **✕**
+   to put the panel away, a **pencil** to open the note again, and a **bin** to delete it.
    > Move the pointer straight down onto the panel to use its buttons — it waits for you.
 7. Each mark under the verse has a **⋮** at its right end (right-clicking the mark does
    the same). Its menu offers the five other colours, so you can recolour a highlight,
-   **Edit Comment** on a comment, and **Delete**.
+   **[en:tran:Edit Comment]** on a comment, and **[en:tran:Delete]**.
 8. Click any mark in that list. 📸 The verse it belongs to opens as a new passage
    beside the one you are reading — the passage you were in stays where it is — and it
    flashes if it happens to be on screen already.
    > A mark is a place you kept inside something you were reading. Reaching it should not
    > cost you your place, which is why it opens beside rather than on top.
 9. The verse row itself has a **⋮** too. 📸 It can do three things:
-   - **[en:tran:Add to Bible List]** — puts that verse in your **Bibles**
+   - **[en:tran:Add to Bible List]** — puts that verse in your **[en:tran:Bibles]**
      list, ready to present, without going and looking it up again.
    - **[en:tran:Move To]** — moves the whole row, marks and all, into one of your other
      note files.
    - **[en:tran:Delete]** — removes the verse and everything marked on it, after asking.
    > You can also just **drag the verse row and let go**. Dropped on a file in the
-   > **Bibles** panel it arrives as an ordinary bible item, the same as if you had looked
-   > it up; dropped on another file in **Bible Notes** it moves there instead, marks and
+   > **[en:tran:Bibles]** panel it arrives as an ordinary bible item, the same as if you had looked
+   > it up; dropped on another file in **[en:tran:Bible Notes]** it moves there instead, marks and
    > all. One drag, and where you let go decides which it means.
-10. Delete the last mark on a verse and the verse's row disappears from **Bible Notes**
+10. Delete the last mark on a verse and the verse's row disappears from **[en:tran:Bible Notes]**
     too — an empty row would only be something else to tidy up later.
 
 > Marks belong to the translation you made them in, because they remember which words
@@ -71,5 +71,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-108` · `RD-109` · `RD-110` · `RD-111` · `RD-112`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-01).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

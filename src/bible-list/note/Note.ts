@@ -5,7 +5,7 @@ import { notifyElementHighlight } from '../../helper/domHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
 import { cloneJson, toMaxId } from '../../helper/helpers';
-import { getSetting } from '../../helper/settingHelpers';
+import DirSource from '../../helper/DirSource';
 import { type AnyObjectType } from '../../helper/typeHelpers';
 import type DocumentInf from '../../others/DocumentInf';
 import { type ItemSourceInfBasic } from '../../others/ItemSourceInf';
@@ -291,7 +291,10 @@ export default class Note
     }
 
     static async getDefault() {
-        const dir = getSetting(dirSourceSettingNames.BIBLE_NOTES) ?? '';
+        const dir =
+            DirSource.getDirPathBySettingName(
+                dirSourceSettingNames.BIBLE_NOTES,
+            ) ?? '';
         if (!dir) {
             return null;
         }

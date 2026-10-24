@@ -1,8 +1,11 @@
 ---
 name: owa-robot-test-presenting-flow-mode
-description: `/owa-robot-test presentingFlow` is a tracked 11-phase MODE over 69 run-sheet rows, not a focus area that trims the run
+description: '`/owa-robot-test presentingFlow` is a tracked 11-phase MODE over 69 run-sheet rows, not a focus area that trims the run'
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 708fd2eb-2ff1-4f74-84a1-6e5baba965cb
+  modified: 2026-10-02T22:08:02.533Z
 ---
 
 Asking the skill for `presentingFlow` (or `run sheet` / `.owpf`) selects **presenting flow deep mode** —
@@ -35,3 +38,8 @@ runs P0..P10 in order, so a presenting flow run is auditable the same way a full
   families, CC elements, the clocks + GOTO, the hotkey, pinning/parking, the archive
   family, and the CDP traps ([[cdp-dynamic-import-hijack]], the polluted keyboard-layer
   stack that makes the preview keys look dead).
+- **On a one-display machine, add a scratch screen 1 and Solo it** (2026-10-02 run:
+  exercised 26% → 68%, the user's screen 0 never touched). Plan its teardown up front:
+  the firewall refuses the mini screen ⋮ **Delete** (and **Clear All**), so the run
+  clears it layer by layer, hides it, re-Solos screen 0 and asks the user to delete it.
+  The registry now has 18 screen-family actions (11 per-widget clears), not 13.

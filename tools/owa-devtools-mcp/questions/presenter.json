@@ -4,16 +4,12 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-01",
+    "updated": "2026-10-18",
     "sections": [
         {
             "id": "orientation",
             "label": "Finding your way around",
-            "recipes": [
-                "W-01",
-                "W-01b",
-                "W-02"
-            ],
+            "recipes": ["W-01", "W-01b", "W-02"],
             "questions": [
                 {
                     "id": "window-parts",
@@ -32,10 +28,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-01",
-                        "related": [
-                            "W-02",
-                            "W-31"
-                        ],
+                        "related": ["W-02", "W-31"],
                         "guide": true
                     },
                     "starterRank": 9
@@ -89,9 +82,7 @@
                     "resources": {
                         "recipe": "W-02",
                         "find": "Bible Reader",
-                        "tools": [
-                            "owa_goto_page"
-                        ],
+                        "tools": ["owa_goto_page"],
                         "guide": true
                     }
                 },
@@ -126,9 +117,7 @@
                     "resources": {
                         "recipe": "W-02",
                         "find": "Presenter",
-                        "tools": [
-                            "owa_goto_page"
-                        ],
+                        "tools": ["owa_goto_page"],
                         "guide": true
                     }
                 },
@@ -146,9 +135,47 @@
                     ],
                     "resources": {
                         "recipe": "W-01",
-                        "related": [
-                            "W-31"
-                        ]
+                        "related": ["W-31"]
+                    }
+                },
+                {
+                    "id": "stay-awake",
+                    "text": "How do I stop the computer going to sleep during the service?",
+                    "kind": "howto",
+                    "keywords": [
+                        "stay awake",
+                        "keep awake",
+                        "sleep",
+                        "screen turns off",
+                        "display off",
+                        "screensaver",
+                        "goes dark",
+                        "cup"
+                    ],
+                    "resources": {
+                        "recipe": "W-01",
+                        "related": ["W-50"],
+                        "find": "Stay Awake"
+                    }
+                },
+                {
+                    "id": "online-help",
+                    "text": "How do I open the online help?",
+                    "kind": "howto",
+                    "keywords": [
+                        "help website",
+                        "question mark",
+                        "help button",
+                        "open online help",
+                        "help page",
+                        "web help",
+                        "manual online"
+                    ],
+                    "resources": {
+                        "recipe": "W-01",
+                        "related": ["W-42"],
+                        "menu": "Help → Open Online Help",
+                        "find": "Help"
                     }
                 },
                 {
@@ -174,9 +201,7 @@
             "id": "making",
             "label": "Making a new file",
             "panel": "Documents",
-            "recipes": [
-                "W-15"
-            ],
+            "recipes": ["W-15"],
             "questions": [
                 {
                     "id": "new-document",
@@ -232,13 +257,35 @@
                     "starter": true,
                     "starterRank": 3,
                     "resources": {
-                        "tools": [
-                            "owa_lyric_validate",
-                            "owa_lyric_file"
-                        ],
-                        "related": [
-                            "W-15"
-                        ]
+                        "recipe": "W-42",
+                        "passage": "On a server of your own, type",
+                        "tools": ["owa_lyric_validate", "owa_lyric_file"],
+                        "related": ["W-15"]
+                    }
+                },
+                {
+                    "id": "song-from-title",
+                    "text": "Create a lyric file for song \"Amazing Grace\"",
+                    "kind": "howto",
+                    "keywords": [
+                        "song by its name",
+                        "song from a title",
+                        "lyrics of a hymn",
+                        "find a hymn",
+                        "look up a song",
+                        "public domain hymn",
+                        "hymn by name",
+                        "create lyric from a title",
+                        "/lyric",
+                        "lyric command",
+                        "without an assistant"
+                    ],
+                    "starter": true,
+                    "starterRank": 4,
+                    "template": true,
+                    "resources": {
+                        "tools": ["owa_lyric_validate", "owa_lyric_file"],
+                        "related": ["W-15", "W-36"]
                     }
                 },
                 {
@@ -259,16 +306,11 @@
                         "without an assistant"
                     ],
                     "starter": true,
-                    "starterRank": 4,
+                    "starterRank": 16,
                     "template": true,
                     "resources": {
-                        "tools": [
-                            "owa_lyric_validate",
-                            "owa_lyric_file"
-                        ],
-                        "related": [
-                            "W-15"
-                        ]
+                        "tools": ["owa_lyric_validate", "owa_lyric_file"],
+                        "related": ["W-15"]
                     }
                 },
                 {
@@ -284,9 +326,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": [
-                            "W-02"
-                        ],
+                        "related": ["W-02"],
                         "find": "Slide Editor",
                         "guide": true
                     }
@@ -309,6 +349,22 @@
                     }
                 },
                 {
+                    "id": "reserved-document-name",
+                    "text": "Why is a document name such as NUL.old refused?",
+                    "kind": "fix",
+                    "keywords": [
+                        "reserved name",
+                        "CON.backup",
+                        "device name",
+                        "invalid file name"
+                    ],
+                    "resources": {
+                        "recipe": "W-01b",
+                        "passage": "A name Windows keeps for itself is refused",
+                        "tools": ["owa_slide_file", "owa_lyric_file"]
+                    }
+                },
+                {
                     "id": "rename-document",
                     "text": "How do I rename a document or a song?",
                     "kind": "howto",
@@ -321,9 +377,8 @@
                     ],
                     "resources": {
                         "recipe": "W-01b",
-                        "related": [
-                            "W-15"
-                        ],
+                        "passage": "To rename a file",
+                        "related": ["W-15"],
                         "guide": true
                     }
                 },
@@ -340,7 +395,8 @@
                         "tidy"
                     ],
                     "resources": {
-                        "recipe": "W-01b",
+                        "recipe": "W-43",
+                        "related": ["W-01b"],
                         "guide": true
                     }
                 },
@@ -356,9 +412,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": [
-                            "W-05"
-                        ],
+                        "related": ["W-05"],
                         "guide": true
                     }
                 }
@@ -368,14 +422,28 @@
             "id": "documents",
             "label": "Documents & slides",
             "panel": "Documents",
-            "recipes": [
-                "W-03",
-                "W-04",
-                "W-26",
-                "W-27",
-                "W-45"
-            ],
+            "recipes": ["W-03", "W-04", "W-26", "W-27", "W-45", "W-48", "W-49b"],
             "questions": [
+                {
+                    "id": "document-transition",
+                    "text": "How do I change a document's or a slide's own transition?",
+                    "kind": "howto",
+                    "keywords": [
+                        "own transition",
+                        "fade",
+                        "zoom",
+                        "slide in",
+                        "no transition",
+                        "cyan transition icon",
+                        "transition icon buttons",
+                        "background attachment icon"
+                    ],
+                    "resources": {
+                        "recipe": "W-48",
+                        "find": "Transition",
+                        "guide": true
+                    }
+                },
                 {
                     "id": "present-slide",
                     "text": "How do I put a slide on the screen?",
@@ -391,9 +459,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-03",
-                        "related": [
-                            "W-10"
-                        ],
+                        "related": ["W-10"],
                         "find": "Documents",
                         "guide": true
                     },
@@ -413,6 +479,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
+                        "passage": "In the left column, click a document in the",
                         "find": "Documents",
                         "guide": true
                     }
@@ -431,9 +498,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "tools": [
-                            "owa_app_state"
-                        ]
+                        "tools": ["owa_app_state"]
                     }
                 },
                 {
@@ -450,10 +515,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "tools": [
-                            "owa_app_state",
-                            "owa_list_screens"
-                        ]
+                        "tools": ["owa_app_state", "owa_list_screens"]
                     }
                 },
                 {
@@ -487,11 +549,14 @@
                         "arrow keys",
                         "page down",
                         "space",
-                        "continue"
+                        "continue",
+                        "scroll into view",
+                        "smooth scrolling",
+                        "selected slide off screen"
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "shortcut": "Arrow keys / PageDown / Space",
+                        "shortcut": "→ / ↓ / PageDown / Space",
                         "guide": true
                     }
                 },
@@ -508,8 +573,28 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "shortcut": "Arrow keys / PageUp",
+                        "shortcut": "← / ↑ / PageUp / Shift+Space",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "remote-keys-back",
+                    "text": "My presenter remote stopped changing the slide. How do I get it working again without clicking?",
+                    "kind": "howto",
+                    "keywords": [
+                        "remote",
+                        "clicker",
+                        "presenter remote",
+                        "keys do nothing",
+                        "arrows stopped",
+                        "space does nothing",
+                        "lost focus",
+                        "three times"
+                    ],
+                    "resources": {
+                        "recipe": "W-49b",
+                        "passage": "Press the key three times quickly",
+                        "related": ["W-03", "W-22b"]
                     }
                 },
                 {
@@ -525,9 +610,7 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "related": [
-                            "W-10"
-                        ],
+                        "related": ["W-10"],
                         "shortcut": "F8",
                         "guide": true
                     }
@@ -547,10 +630,30 @@
                     ],
                     "resources": {
                         "recipe": "W-03",
-                        "related": [
-                            "W-23"
-                        ],
+                        "related": ["W-23"],
                         "find": "Documents",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "document-stage-monitor",
+                    "text": "How do I show the singer on stage what slide comes next?",
+                    "kind": "howto",
+                    "keywords": [
+                        "stage monitor",
+                        "confidence monitor",
+                        "upcoming slide",
+                        "what is coming",
+                        "slide count",
+                        "lead singer",
+                        "worship leader",
+                        "St:"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "passage": "Show the person on the stage what comes next",
+                        "related": ["W-05"],
+                        "find": "Add Stage",
                         "guide": true
                     }
                 },
@@ -584,6 +687,7 @@
                     ],
                     "resources": {
                         "recipe": "W-04",
+                        "passage": "Stop slides that are already advancing",
                         "guide": true
                     }
                 },
@@ -710,9 +814,7 @@
                     ],
                     "resources": {
                         "recipe": "W-43",
-                        "related": [
-                            "W-01b"
-                        ],
+                        "related": ["W-01b"],
                         "find": "Documents",
                         "guide": true
                     }
@@ -748,9 +850,7 @@
                     ],
                     "resources": {
                         "recipe": "W-45",
-                        "related": [
-                            "W-23"
-                        ],
+                        "related": ["W-23"],
                         "find": "Documents",
                         "guide": true
                     }
@@ -761,12 +861,7 @@
             "id": "lyrics",
             "label": "Songs & lyrics",
             "panel": "Documents",
-            "recipes": [
-                "W-05",
-                "W-35",
-                "W-36",
-                "W-45"
-            ],
+            "recipes": ["W-05", "W-35", "W-36", "W-45"],
             "questions": [
                 {
                     "id": "present-lyrics",
@@ -784,9 +879,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-05",
-                        "related": [
-                            "W-03"
-                        ],
+                        "related": ["W-03"],
                         "find": "Documents",
                         "guide": true
                     },
@@ -806,9 +899,7 @@
                     ],
                     "resources": {
                         "recipe": "W-45",
-                        "related": [
-                            "W-05"
-                        ],
+                        "related": ["W-05"],
                         "find": "Stage Previewer",
                         "guide": true
                     }
@@ -826,9 +917,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
-                        "related": [
-                            "W-16"
-                        ],
+                        "related": ["W-16"],
                         "find": "Documents"
                     }
                 },
@@ -846,9 +935,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
-                        "related": [
-                            "W-15"
-                        ],
+                        "related": ["W-15"],
                         "guide": true
                     }
                 },
@@ -890,6 +977,25 @@
                     }
                 },
                 {
+                    "id": "stage-pane-hide",
+                    "text": "How do I take a stage away from the Stage Previewer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "hide stage",
+                        "remove stage",
+                        "close stage",
+                        "too many stages",
+                        "x on the stage",
+                        "stage pane",
+                        "get rid of stage"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "related": ["W-05"],
+                        "find": "Hide Stage"
+                    }
+                },
+                {
                     "id": "song-order",
                     "text": "How do I change the order the verses are sung in?",
                     "kind": "howto",
@@ -903,6 +1009,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "The order it is sung in is its Structure line",
                         "guide": true
                     }
                 },
@@ -920,6 +1027,7 @@
                     ],
                     "resources": {
                         "recipe": "W-05",
+                        "passage": "To attach links to a song",
                         "guide": true
                     }
                 },
@@ -937,9 +1045,7 @@
                     ],
                     "resources": {
                         "recipe": "W-35",
-                        "related": [
-                            "W-16"
-                        ],
+                        "related": ["W-16"],
                         "find": "Import From SongSelect",
                         "guide": true
                     }
@@ -968,10 +1074,7 @@
             "id": "bible",
             "label": "Bible verses on screen",
             "panel": "Bible Lookup",
-            "recipes": [
-                "W-06",
-                "W-07"
-            ],
+            "recipes": ["W-06", "W-07"],
             "questions": [
                 {
                     "id": "present-verse",
@@ -990,10 +1093,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-07",
-                            "W-11"
-                        ],
+                        "related": ["W-07", "W-11"],
                         "find": "Bible Lookup",
                         "shortcut": "Ctrl+B",
                         "guide": true
@@ -1018,8 +1118,26 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
+                        "passage": "To make an editable slide document from a saved passage",
                         "find": "Generate Slides",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "projector-more-chapters",
+                    "text": "How do I put the rest of a long passage on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "only three chapters",
+                        "rest of the passage",
+                        "next chapter on screen",
+                        "show the next chapter",
+                        "three dots on the mini screen",
+                        "passage across chapters"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "passage": "A passage across chapters."
                     }
                 },
                 {
@@ -1038,10 +1156,7 @@
                     "template": true,
                     "resources": {
                         "recipe": "W-06",
-                        "tools": [
-                            "owa_present_bible",
-                            "owa_list_screens"
-                        ]
+                        "tools": ["owa_present_bible", "owa_list_screens"]
                     }
                 },
                 {
@@ -1076,6 +1191,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
+                        "passage": "More than one verse",
                         "shortcut": "Ctrl+B",
                         "guide": true
                     }
@@ -1094,10 +1210,8 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-32",
-                            "W-34"
-                        ],
+                        "passage": "Another version on the screen",
+                        "related": ["W-32", "W-34"],
                         "guide": true
                     }
                 },
@@ -1114,10 +1228,9 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-11"
-                        ],
-                        "guide": true
+                        "related": ["W-11"],
+                        "guide": true,
+                        "passage": "Another version on the screen"
                     }
                 },
                 {
@@ -1133,7 +1246,8 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "shortcut": "Ctrl/Alt+ArrowRight (on the output screen)",
+                        "passage": "The next verses, from the projector window",
+                        "shortcut": "Ctrl + Right Arrow (Alt + Right Arrow does the same), pressed in the projector window",
                         "guide": true
                     }
                 },
@@ -1142,7 +1256,9 @@
                     "text": "How do I take the verse off the screen?",
                     "kind": "howto",
                     "keywords": [
+                        "clear long text",
                         "clear bible",
+                        "lt button",
                         "remove verse",
                         "blank",
                         "stop showing",
@@ -1150,9 +1266,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-10"
-                        ],
+                        "related": ["W-10"],
                         "shortcut": "F9",
                         "guide": true
                     }
@@ -1163,15 +1277,52 @@
                     "kind": "howto",
                     "keywords": [
                         "font size",
-                        "appearance",
+                        "bible properties",
                         "readable",
                         "too small",
                         "bigger",
-                        "colour"
+                        "smaller"
                     ],
                     "resources": {
                         "recipe": "W-07",
-                        "find": "Bibles",
+                        "find": "Font Size",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-color",
+                    "text": "How do I change the Bible text color?",
+                    "kind": "howto",
+                    "keywords": [
+                        "change text color",
+                        "bible text color",
+                        "text colour",
+                        "font color",
+                        "white words",
+                        "black words",
+                        "bible properties"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Text Color",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-dark-light",
+                    "text": "How do I switch the verse text between white and black?",
+                    "kind": "howto",
+                    "keywords": [
+                        "dark background",
+                        "light background",
+                        "white text",
+                        "black text",
+                        "reset white",
+                        "reset black"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Dark",
                         "guide": true
                     }
                 },
@@ -1181,14 +1332,65 @@
                     "kind": "howto",
                     "keywords": [
                         "text shadow",
-                        "outline",
+                        "soft shadow",
                         "hard to read",
                         "contrast",
-                        "background too busy"
+                        "background too busy",
+                        "glow behind the verse"
                     ],
                     "resources": {
                         "recipe": "W-07",
-                        "find": "Bibles",
+                        "find": "Soft Shadow",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-outline",
+                    "text": "How do I put an outline around the verse text?",
+                    "kind": "howto",
+                    "keywords": [
+                        "outline",
+                        "edge the letters",
+                        "border around the words",
+                        "thick outline"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Outline",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-preset",
+                    "text": "How do I save my Bible text style as a preset?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save as preset",
+                        "save the style",
+                        "my own look",
+                        "reuse a style",
+                        "bible text preset"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Save as Preset",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-font",
+                    "text": "How do I change the font of the Bible text on the screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bible font",
+                        "verse font",
+                        "font of the verse",
+                        "scripture font",
+                        "khmer font for the bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Font Family",
                         "guide": true
                     }
                 },
@@ -1206,10 +1408,7 @@
                     ],
                     "resources": {
                         "recipe": "W-06",
-                        "related": [
-                            "W-24",
-                            "W-40"
-                        ],
+                        "related": ["W-24", "W-40"],
                         "guide": true
                     }
                 }
@@ -1219,11 +1418,7 @@
             "id": "background",
             "label": "Backgrounds",
             "panel": "Background",
-            "recipes": [
-                "W-08",
-                "W-21",
-                "W-28"
-            ],
+            "recipes": ["W-08", "W-21", "W-28"],
             "questions": [
                 {
                     "id": "add-background",
@@ -1277,9 +1472,8 @@
                     ],
                     "resources": {
                         "recipe": "W-08",
-                        "related": [
-                            "W-16"
-                        ],
+                        "passage": "To point a session at a folder of your own",
+                        "related": ["W-16"],
                         "find": "Background > Images",
                         "guide": true
                     }
@@ -1384,9 +1578,8 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-08"
-                        ],
+                        "passage": "Clear buttons",
+                        "related": ["W-08"],
                         "shortcut": "F7",
                         "guide": true
                     }
@@ -1404,10 +1597,9 @@
                         "empty list"
                     ],
                     "resources": {
-                        "recipe": "W-16",
-                        "related": [
-                            "W-08"
-                        ],
+                        "recipe": "W-08",
+                        "passage": "To point a session at a folder of your own, press the folder line above the list",
+                        "related": ["W-16"],
                         "guide": true
                     }
                 },
@@ -1426,9 +1618,8 @@
                     ],
                     "resources": {
                         "recipe": "W-08",
-                        "related": [
-                            "W-16"
-                        ],
+                        "passage": "Folder sessions (Images / Videos / Webs / Audios)",
+                        "related": ["W-16"],
                         "find": "Background > Images",
                         "guide": true
                     }
@@ -1461,9 +1652,8 @@
                     ],
                     "resources": {
                         "recipe": "W-28",
-                        "related": [
-                            "W-15"
-                        ],
+                        "passage": "a slide document open in the",
+                        "related": ["W-15"],
                         "guide": true
                     }
                 },
@@ -1480,9 +1670,7 @@
                     ],
                     "resources": {
                         "recipe": "W-15",
-                        "related": [
-                            "W-08"
-                        ],
+                        "related": ["W-08"],
                         "find": "Background > Webs",
                         "guide": true
                     }
@@ -1493,9 +1681,7 @@
             "id": "foreground",
             "label": "Foreground extras & audio",
             "panel": "Foreground",
-            "recipes": [
-                "W-09"
-            ],
+            "recipes": ["W-09", "W-53"],
             "questions": [
                 {
                     "id": "foreground-what",
@@ -1530,9 +1716,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1550,9 +1734,83 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
+                    }
+                },
+                {
+                    "id": "countdown-overtime",
+                    "text": "Can the countdown show how long we went over?",
+                    "kind": "what",
+                    "keywords": [
+                        "over time",
+                        "overtime",
+                        "count up",
+                        "time is up",
+                        "went over",
+                        "plus sign",
+                        "seconds",
+                        "sermon timer"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Countdown",
+                        "tools": ["owa_foreground"]
+                    }
+                },
+                {
+                    "id": "countdown-show-not-started",
+                    "text": "Can I put the countdown up now and start it later?",
+                    "kind": "howto",
+                    "keywords": [
+                        "show without starting",
+                        "start later",
+                        "not started",
+                        "auto-start",
+                        "auto start",
+                        "start on cue",
+                        "show countdown"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Countdown",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "stopwatch-history",
+                    "text": "Where can I see how long the stopwatch ran before I reset it?",
+                    "kind": "where",
+                    "keywords": [
+                        "stopwatch history",
+                        "saved times",
+                        "previous time",
+                        "last time",
+                        "lap",
+                        "how long it ran",
+                        "after reset"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Stopwatch"
+                    }
+                },
+                {
+                    "id": "timer-pause-reset",
+                    "text": "How do I pause or reset the countdown or the stopwatch?",
+                    "kind": "howto",
+                    "keywords": [
+                        "pause",
+                        "resume",
+                        "reset",
+                        "stop the timer",
+                        "pause the stopwatch",
+                        "restart countdown",
+                        "hold the clock"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Countdown",
+                        "guide": true
                     }
                 },
                 {
@@ -1570,9 +1828,44 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
+                    }
+                },
+                {
+                    "id": "clock-city",
+                    "text": "How do I show the time of another city?",
+                    "kind": "howto",
+                    "keywords": [
+                        "city",
+                        "time zone",
+                        "timezone",
+                        "world clock",
+                        "another country",
+                        "choose city"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "passage": "puts the city's name above the clock in words",
+                        "find": "Foreground",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "screen-show",
+                    "text": "How do I show one screen inside another screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "screen show",
+                        "picture in picture",
+                        "screen in screen",
+                        "mirror a screen",
+                        "show screen 0 on screen 1",
+                        "inset"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Foreground",
+                        "guide": true
                     }
                 },
                 {
@@ -1590,9 +1883,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1611,9 +1902,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1631,9 +1920,7 @@
                         "recipe": "W-09",
                         "find": "Foreground",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1650,6 +1937,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "The slide show sits in the row of session buttons at the top of the panel",
                         "find": "Image Show",
                         "guide": true
                     }
@@ -1686,9 +1974,8 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
-                        "related": [
-                            "W-22"
-                        ],
+                        "passage": "The volume of what is playing",
+                        "related": ["W-22"],
                         "guide": true
                     }
                 },
@@ -1704,14 +1991,10 @@
                     ],
                     "resources": {
                         "recipe": "W-10",
-                        "related": [
-                            "W-09"
-                        ],
+                        "related": ["W-09"],
                         "shortcut": "F10",
                         "guide": true,
-                        "tools": [
-                            "owa_foreground"
-                        ]
+                        "tools": ["owa_foreground"]
                     }
                 },
                 {
@@ -1728,6 +2011,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "Two pictures up at once",
                         "find": "Image Show",
                         "guide": true
                     }
@@ -1748,6 +2032,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "Sessions — every foreground component keeps them",
                         "find": "Countdown",
                         "guide": true
                     }
@@ -1765,6 +2050,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "Only one session is shown at a time, so each button carries its own marks",
                         "find": "Messages"
                     }
                 },
@@ -1783,7 +2069,27 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "keeps a widget over the others",
                         "find": "Always on Top",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "foreground-behind-slide",
+                    "text": "How do I put a foreground item behind the lyrics?",
+                    "kind": "howto",
+                    "keywords": [
+                        "behind slide",
+                        "behind the lyrics",
+                        "behind the words",
+                        "behind the bible",
+                        "under the text",
+                        "logo behind",
+                        "snow behind"
+                    ],
+                    "resources": {
+                        "recipe": "W-09",
+                        "find": "Behind Slide",
                         "guide": true
                     }
                 },
@@ -1820,8 +2126,26 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "is a fold under Properties, on every component, and it dresses the overlay",
                         "find": "Padding",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "message-shrinks-to-fit",
+                    "text": "Why did my messages get smaller on the screen?",
+                    "kind": "what",
+                    "keywords": [
+                        "message smaller",
+                        "text got smaller",
+                        "shrink",
+                        "does not fit",
+                        "runs off the screen",
+                        "too long message"
+                    ],
+                    "resources": {
+                        "recipe": "W-47",
+                        "find": "Show All Messages"
                     }
                 },
                 {
@@ -1840,6 +2164,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "is a fold under Properties, on every component",
                         "find": "Effects",
                         "guide": true
                     }
@@ -1859,6 +2184,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
+                        "passage": "which is what makes a notice readable over a busy picture or a moving video",
                         "find": "Text Shadow",
                         "guide": true
                     }
@@ -1876,11 +2202,81 @@
                     ],
                     "resources": {
                         "recipe": "W-46",
-                        "related": [
-                            "W-09"
-                        ],
+                        "passage": "for separate notices, rotation and spacing",
+                        "related": ["W-09"],
                         "menu": "Help → All tips",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "long-text-languages",
+                    "text": "How do I show a song in two languages side by side?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bilingual",
+                        "translation beside it",
+                        "khmer and english",
+                        "sing along",
+                        "long text",
+                        "lyrics that scroll"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "find": "Long Text Show",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "long-text-refused",
+                    "text": "Why is Show Long Text switched off?",
+                    "kind": "howto",
+                    "keywords": [
+                        "cannot show",
+                        "greyed out",
+                        "same structure",
+                        "same number of sections",
+                        "languages do not match"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "passage": "The languages have to line up",
+                        "find": "Show Long Text"
+                    }
+                },
+                {
+                    "id": "long-text-jump",
+                    "text": "How do I jump to the chorus while everyone is singing?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bring to middle",
+                        "go to verse",
+                        "skip to bridge",
+                        "scroll to a part",
+                        "current section"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "passage": "Jump to a part",
+                        "find": "Long Text Show"
+                    }
+                },
+                {
+                    "id": "long-text-keys",
+                    "text": "Can I go to the next part of a Long Text Show with Space or the arrow keys?",
+                    "kind": "howto",
+                    "keywords": [
+                        "next part",
+                        "presenter remote",
+                        "keyboard",
+                        "right arrow",
+                        "space bar",
+                        "last part"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "passage": "Step with the keys",
+                        "find": "Long Text Show",
+                        "shortcut": "→ / ↓ / PageDown / Space"
                     }
                 }
             ]
@@ -1888,10 +2284,7 @@
         {
             "id": "control",
             "label": "Drawing & spotlight on the app",
-            "recipes": [
-                "W-19",
-                "W-20"
-            ],
+            "recipes": ["W-19", "W-20"],
             "questions": [
                 {
                     "id": "draw-on-app",
@@ -1925,6 +2318,7 @@
                     ],
                     "resources": {
                         "recipe": "W-19",
+                        "passage": "to dim the whole app except a circle",
                         "shortcut": "Ctrl+Shift+P, then F",
                         "guide": true
                     }

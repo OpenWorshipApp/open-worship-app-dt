@@ -1,6 +1,15 @@
 import type ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import type DragInf from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
+import { withForegroundLayer } from '../_screen/screenTypeHelpers';
+import {
+    genCountdownTiming,
+    genStopwatchTiming,
+} from '../_screen/managers/timerStateHelpers';
+import {
+    toTransitionPart,
+    toValidTransitionEffect,
+} from '../_screen/transitionOverrideHelpers';
 
 // Foregrounds used to travel to a screen ONLY through `dragStore.onDropped` — a
 // live closure that dies with the drag. That is enough to drop one on a screen,
@@ -18,6 +27,7 @@ export const foregroundDragTargetList = [
     'video',
     'image',
     'camera',
+    'screen',
     'web',
 ] as const;
 export type ForegroundDragTargetType =
@@ -47,6 +57,7 @@ const targetLabelMap: Record<ForegroundDragTargetType, string> = {
     video: 'Video Show',
     image: 'Image Show',
     camera: 'Camera Show',
+    screen: 'Screen Show',
     web: 'Web Show',
 };
 
@@ -61,6 +72,7 @@ const targetIconMap: Record<ForegroundDragTargetType, string> = {
     video: 'camera-reels',
     image: 'images',
     camera: 'camera-video',
+    screen: 'display',
     web: 'globe2',
 };
 
@@ -95,6 +107,33 @@ export function foregroundDragDeserialize(
 
 export function toForegroundDragIconName(target: ForegroundDragTargetType) {
     return targetIconMap[target] ?? 'front';
+}
+
+/**
+ * The second a stored run-sheet row's `durationSecond` carries beyond what was
+ * typed. The countdown once added it so its display (rounded down) opened on
+ * `05:00` rather than `04:59`; it rounds UP now and needs none, but every row
+ * already saved has it, so a row still WRITES it and every reader of a row
+ * takes it back off -- one rule for old rows and new.
+ */
+export const COUNTDOWN_LEAD_SECOND = 1;
+
+/** `1h 5m`, `5m`, `1m 30s`, `45s` -- only the parts that are not zero. */
+function toDurationLabel(totalSecond: number) {
+    const second = Math.max(0, Math.round(totalSecond));
+    const unitList: [number, string][] = [
+        [Math.floor(second / 3600), 'h'],
+        [Math.floor((second % 3600) / 60), 'm'],
+        [second % 60, 's'],
+    ];
+    const parts = unitList
+        .filter(([value]) => {
+            return value !== 0;
+        })
+        .map(([value, unit]) => {
+            return `${value}${unit}`;
+        });
+    return parts.length > 0 ? parts.join(' ') : '0s';
 }
 
 /**
@@ -135,9 +174,14 @@ export function toForegroundDragLabel(
     }
     if (target === 'countdown') {
         if (typeof data.durationSecond === 'number') {
-            return `${label}: ${Math.round(data.durationSecond / 60)}m`;
+            return `${label}: ${toDurationLabel(
+                data.durationSecond - COUNTDOWN_LEAD_SECOND,
+            )}`;
         }
         return `${label}: ${data.dateTime ?? ''}`;
+    }
+    if (target === 'screen') {
+        return `${label}: ${data.id}`;
     }
     return label;
 }
@@ -146,11 +190,38 @@ export function toForegroundDragLabel(
 // SHOWN, not from the moment it was dragged — otherwise replaying it out of a
 // presenting flow next Sunday would start already expired. The absolute-date form keeps
 // its date, which is exactly what that form means.
-function toCountdownDateTime(data: any) {
+//
+// A row's `isAutoStart` is the panel's switch when it was dragged; a row saved
+// before the switch existed has none, and starts at once as it always did.
+function toCountdownTiming(data: any) {
     if (typeof data.durationSecond === 'number') {
-        return new Date(Date.now() + data.durationSecond * 1000);
+        return genCountdownTiming(
+            data.durationSecond - COUNTDOWN_LEAD_SECOND,
+            data.isAutoStart !== false,
+        );
     }
-    return new Date(data.dateTime);
+    return { dateTime: new Date(data.dateTime) };
+}
+
+/**
+ * Which stored row put a countdown, a stopwatch or a quick text up.
+ *
+ * Those three keep nothing of the row on the screen to compare against: a
+ * countdown's time is worked out when it is SHOWN, and a quick text holds the
+ * rendered html rather than its markdown. So the run sheet marked every such
+ * row live while ANY one of that kind was up -- the panel's own included.
+ * `applyForegroundDragData` stamps this key, read off the row's own payload,
+ * on what it puts up, and `presentingFlowOnScreenHelpers` matches on it. A
+ * short hash rather than the payload itself, because the screen data is
+ * saved whole into the on-screen setting.
+ */
+export function toForegroundRowKey(data: unknown) {
+    const text = JSON.stringify(data ?? null);
+    let hash = 5381;
+    for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) + hash + text.charCodeAt(i)) | 0;
+    }
+    return `${text.length.toString(36)}-${(hash >>> 0).toString(36)}`;
 }
 
 export async function applyForegroundDragData(
@@ -158,26 +229,58 @@ export async function applyForegroundDragData(
     { target, data }: ForegroundDragDataType,
 ) {
     const { extraStyle } = data;
+    // The four rebuilt below are built field by field, so the layer has to be
+    // carried across by hand; the rest replay `data` whole and keep it.
+    const isBehind = data.isBehind === true;
+    // So is its own transition, when the row was made by a session or a
+    // component that had one -- only ever a valid effect, never the key with
+    // nothing in it.
+    const transitionPart = toTransitionPart(
+        toValidTransitionEffect(data.transitionEffect),
+    );
+    const rowKey = toForegroundRowKey(data);
     if (target === 'message') {
-        screenForegroundManager.addMessageData({
-            // A stored run-sheet row replays the whole SESSION, so it lands
-            // under the same reserved id the panel's own "show all" uses --
-            // replaying twice must not stack two copies on the screen.
-            id: 'message-all',
-            textList: data.textList ?? [],
-            intervalSecond: data.intervalSecond ?? null,
-            extraStyle,
-        });
+        screenForegroundManager.addMessageData(
+            withForegroundLayer(
+                {
+                    // A stored run-sheet row replays the whole SESSION, so it
+                    // lands under the same reserved id the panel's own "show
+                    // all" uses -- replaying twice must not stack two copies
+                    // on the screen.
+                    id: 'message-all',
+                    ...transitionPart,
+                    textList: data.textList ?? [],
+                    intervalSecond: data.intervalSecond ?? null,
+                    extraStyle,
+                },
+                isBehind,
+            ),
+        );
     } else if (target === 'countdown') {
-        screenForegroundManager.setCountdownData({
-            dateTime: toCountdownDateTime(data),
-            extraStyle,
-        });
+        screenForegroundManager.setCountdownData(
+            withForegroundLayer(
+                {
+                    ...transitionPart,
+                    ...toCountdownTiming(data),
+                    extraStyle,
+                    rowKey,
+                },
+                isBehind,
+            ),
+        );
     } else if (target === 'stopwatch') {
-        screenForegroundManager.setStopwatchData({
-            dateTime: new Date(),
-            extraStyle,
-        });
+        // `isAutoStart` as for the countdown above.
+        screenForegroundManager.setStopwatchData(
+            withForegroundLayer(
+                {
+                    ...transitionPart,
+                    ...genStopwatchTiming(data.isAutoStart !== false),
+                    extraStyle,
+                    rowKey,
+                },
+                isBehind,
+            ),
+        );
     } else if (target === 'time') {
         screenForegroundManager.addTimeData(data);
     } else if (target === 'marquee-top') {
@@ -191,14 +294,27 @@ export async function applyForegroundDragData(
         const { renderMarkdown } =
             await import('../lyric-list/markdownHelpers');
         const { html } = await renderMarkdown(data.markdownText ?? '');
-        screenForegroundManager.setQuickTextData({
-            htmlText: html,
-            timeSecondDelay: data.timeSecondDelay,
-            timeSecondToLive: data.timeSecondToLive,
-            extraStyle,
-        });
+        screenForegroundManager.setQuickTextData(
+            withForegroundLayer(
+                {
+                    ...transitionPart,
+                    htmlText: html,
+                    timeSecondDelay: data.timeSecondDelay,
+                    timeSecondToLive: data.timeSecondToLive,
+                    extraStyle,
+                    rowKey,
+                },
+                isBehind,
+            ),
+        );
     } else if (target === 'camera') {
         screenForegroundManager.addCameraData(data);
+    } else if (target === 'screen') {
+        // Rows come from files: only a plain screen id gets through, and the
+        // manager still refuses the screen itself and a loop.
+        if (Number.isInteger(data.id) && data.id >= 0) {
+            screenForegroundManager.addScreenData(data);
+        }
     } else if (target === 'web') {
         screenForegroundManager.addWebData(data);
     } else if (target === 'video') {
