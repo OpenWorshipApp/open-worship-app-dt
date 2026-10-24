@@ -36,6 +36,18 @@ describe('checkIsCancelError', () => {
         expect(checkIsCancelError(new Error('fetch failed'))).toBe(false);
         expect(checkIsCancelError(null)).toBe(false);
     });
+
+    // 2026-10-23: a question ended with its echo and nothing under it.
+    test('an abort nobody pressed Stop for is a failure to say', () => {
+        const controller = new AbortController();
+
+        expect(
+            checkIsCancelError({ name: 'AbortError' }, controller.signal),
+        ).toBe(false);
+        expect(
+            checkIsCancelError(new AskCancelledError(), controller.signal),
+        ).toBe(false);
+    });
 });
 
 describe('throwIfCancelled', () => {

@@ -1,17 +1,64 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { readFileSync, writeFileSync, genTimeoutAttempt } = vi.hoisted(() => ({
-    readFileSync: vi.fn(),
-    writeFileSync: vi.fn(),
-    genTimeoutAttempt: vi.fn(() => {
-        return (callback: () => void) => callback();
-    }),
-}));
+const {
+    readFileSync,
+    writeFileSync,
+    genTimeoutAttempt,
+    existingDirs,
+    dataFiles,
+    renameSync,
+    unlinkSync,
+    readdirSync,
+} = vi.hoisted(() => {
+    // The data folder's setting files, apart from `setting.json`, which
+    // every test answers through `readFileSync` as before.
+    const dataFiles = new Map<string, string>();
+    const pendingWrites = new Map<string, string>();
+    const checkIsDataPath = (filePath: string) => {
+        return String(filePath).includes('local-storage');
+    };
+    return {
+        existingDirs: new Set<string>(),
+        dataFiles,
+        readFileSync: vi.fn(),
+        writeFileSync: vi.fn((filePath: string, text: string) => {
+            if (checkIsDataPath(filePath)) {
+                pendingWrites.set(filePath, text);
+            }
+        }),
+        renameSync: vi.fn((fromPath: string, toPath: string) => {
+            dataFiles.set(toPath, pendingWrites.get(fromPath) as string);
+            pendingWrites.delete(fromPath);
+        }),
+        unlinkSync: vi.fn((filePath: string) => {
+            if (!dataFiles.delete(filePath)) {
+                throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+            }
+        }),
+        readdirSync: vi.fn((dirPath: string) => {
+            return [...dataFiles.keys()]
+                .filter((filePath) => {
+                    return filePath.startsWith(dirPath);
+                })
+                .map((filePath) => {
+                    return filePath.slice(dirPath.length + 1);
+                });
+        }),
+        genTimeoutAttempt: vi.fn(() => {
+            return (callback: () => void) => callback();
+        }),
+    };
+});
 
 vi.mock('node:fs', () => ({
     default: {
         readFileSync,
         writeFileSync,
+        renameSync,
+        unlinkSync,
+        readdirSync,
+        mkdirSync: vi.fn(),
+        existsSync: (dirPath: string) => existingDirs.has(dirPath),
     },
 }));
 
@@ -24,7 +71,10 @@ vi.mock('./electronHelpers', () => ({
     genTimeoutAttempt,
 }));
 
+import path from 'node:path';
+
 import ElectronSettingManager from './ElectronSettingManager';
+import { forgetDataDirSettingCache } from './dataDirSettingHelpers';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow } from './testUtils';
 
@@ -32,7 +82,10 @@ describe('ElectronSettingManager', () => {
     beforeEach(() => {
         electronMockState.reset();
         readFileSync.mockReset();
-        writeFileSync.mockReset();
+        writeFileSync.mockClear();
+        existingDirs.clear();
+        dataFiles.clear();
+        forgetDataDirSettingCache();
     });
 
     test('loads persisted settings from disk', () => {
@@ -510,5 +563,135 @@ describe('ElectronSettingManager', () => {
         } finally {
             consoleLogSpy.mockRestore();
         }
+    });
+
+    describe('settings kept in the data folder', () => {
+        const DATA_DIR = '/home/.owa/open-worship-data';
+        const toFile = (dirPath: string, key: string) => {
+            return path.join(dirPath, 'local-storage', key);
+        };
+        const genManager = (clientSetting: Record<string, string>) => {
+            readFileSync.mockImplementation((filePath: string) => {
+                if (String(filePath).includes('local-storage')) {
+                    const text = dataFiles.get(filePath);
+                    if (text === undefined) {
+                        throw Object.assign(new Error('ENOENT'), {
+                            code: 'ENOENT',
+                        });
+                    }
+                    return text;
+                }
+                return JSON.stringify({ clientSetting });
+            });
+            return new ElectronSettingManager();
+        };
+
+        test('are written into the folder in use, never into setting.json', () => {
+            existingDirs.add(DATA_DIR);
+            const manager = genManager({ 'selected-parent-dir': DATA_DIR });
+
+            manager.setClientSetting('screen-mirror-host', 'true');
+            manager.setClientSetting('lexical-playground-settings', '{"a":1}');
+
+            expect(dataFiles.get(toFile(DATA_DIR, 'screen-mirror-host'))).toBe(
+                'true',
+            );
+            expect(manager.getClientSetting('screen-mirror-host')).toBe('true');
+            expect(manager.settingObject.clientSetting).toEqual({
+                'selected-parent-dir': DATA_DIR,
+            });
+            expect(manager.getAllClientSettingKeys().sort()).toEqual([
+                'lexical-playground-settings',
+                'screen-mirror-host',
+                'selected-parent-dir',
+            ]);
+
+            manager.deleteClientSetting('screen-mirror-host');
+            expect(manager.getClientSetting('screen-mirror-host')).toBeNull();
+        });
+
+        test('with no folder in use, are the profile own', () => {
+            const manager = genManager({});
+            manager.setClientSetting('stay-awake', 'false');
+            expect(dataFiles.get(toFile('/mock-user-data', 'stay-awake'))).toBe(
+                'false',
+            );
+        });
+
+        test('leave the computer settings where they are', () => {
+            existingDirs.add(DATA_DIR);
+            const manager = genManager({ 'selected-parent-dir': DATA_DIR });
+            for (const key of [
+                'ai-setting',
+                'ai-enabled',
+                'language-locale',
+                'screen-mirror-identity',
+                'screen-mirror-router-mapping',
+                'screen-mirror-last-port',
+            ]) {
+                manager.setClientSetting(key, 'x');
+                expect(manager.settingObject.clientSetting[key]).toBe('x');
+            }
+            expect(dataFiles.size).toBe(0);
+        });
+
+        test('never make a file of a key that is no plain name', () => {
+            existingDirs.add(DATA_DIR);
+            const manager = genManager({ 'selected-parent-dir': DATA_DIR });
+            const key = 'lexical-playground-../../evil';
+            manager.setClientSetting(key, 'x');
+            expect(dataFiles.size).toBe(0);
+            expect(manager.settingObject.clientSetting[key]).toBe('x');
+        });
+
+        test('move into the folder once, the folder own winning', () => {
+            existingDirs.add(DATA_DIR);
+            dataFiles.set(toFile(DATA_DIR, 'virtual-displays'), '[1]');
+            const manager = genManager({
+                'selected-parent-dir': DATA_DIR,
+                'song-select-setting': '{"clientId":"c"}',
+                'virtual-displays': '[old]',
+                'ai-setting': '{}',
+            });
+
+            manager.moveSettingsToDataDir();
+
+            expect(dataFiles.get(toFile(DATA_DIR, 'song-select-setting'))).toBe(
+                '{"clientId":"c"}',
+            );
+            expect(dataFiles.get(toFile(DATA_DIR, 'virtual-displays'))).toBe(
+                '[1]',
+            );
+            expect(manager.settingObject.clientSetting).toEqual({
+                'selected-parent-dir': DATA_DIR,
+                'ai-setting': '{}',
+            });
+        });
+
+        test('move into a folder the moment it is chosen', () => {
+            existingDirs.add(DATA_DIR);
+            const manager = genManager({ 'stay-awake': 'false' });
+
+            manager.setClientSetting('selected-parent-dir', DATA_DIR);
+
+            expect(dataFiles.get(toFile(DATA_DIR, 'stay-awake'))).toBe('false');
+            expect('stay-awake' in manager.settingObject.clientSetting).toBe(
+                false,
+            );
+        });
+
+        test('wait for a chosen folder that is not there, read meanwhile', () => {
+            const manager = genManager({
+                'selected-parent-dir': 'E:/stick',
+                'stay-awake': 'false',
+            });
+
+            manager.moveSettingsToDataDir();
+
+            expect(manager.settingObject.clientSetting['stay-awake']).toBe(
+                'false',
+            );
+            expect(manager.getClientSetting('stay-awake')).toBe('false');
+        });
     });
 });

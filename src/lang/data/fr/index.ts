@@ -12,6 +12,11 @@ const numList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 // `tranKeyCoverage.test.ts` holds this file to. Machine-translated
 // (2026-09-21); a native speaker should review the phrasing.
 const dictionary = {
+    'Ask about what you are reading': 'Poser une question sur votre lecture',
+    'Use Ask the Assistant About This Passage, Ask the Assistant About This Verse, or Ask the Assistant About This File to ask about that material.':
+        'Utilisez Demander à l’assistant à propos de ce passage, Demander à l’assistant à propos de ce verset ou Demander à l’assistant à propos de ce fichier pour interroger ce contenu.',
+    'For a missing Bible, choose Create the provided KJV, Let the assistant import a Bible for me, or Go to Bible Setting; you decide what to install.':
+        'Pour une Bible absente, choisissez Créer la KJV fournie, Laisser l’assistant importer une Bible pour moi ou Aller aux paramètres de la Bible ; vous décidez quoi installer.',
     // Built-in song draft summaries and extraction notes.
     'Musical key': 'Tonalité',
     Tempo: 'Tempo',
@@ -438,6 +443,9 @@ const dictionary = {
     'Applies to each app page on the next launch.':
         'S’applique à chaque page de l’application au prochain lancement.',
     'Explore General settings': 'Explorer les paramètres généraux',
+    'Choose your data folder': 'Choisir votre dossier de données',
+    'Path Settings holds your data folder, where your songs, Bibles and settings are kept: choose it under Parent Directory, and copy it to a drive with Copy Data Folder.':
+        'Les Paramètres des chemins contiennent votre dossier de données, où sont gardés vos chants, vos Bibles et vos réglages : choisissez-le sous Dossier parent, et copiez-le sur un disque avec Copier le dossier de données.',
     'Manage Bible versions': 'Gérer les versions bibliques',
     'Find AI and extra tools': 'Trouver l’IA et les outils supplémentaires',
     'Bible Note': 'Note biblique',
@@ -812,8 +820,6 @@ const dictionary = {
     'Background Audios': "Audios d'arrière-plan",
     'Background Webs': "Sites web d'arrière-plan",
     'Bible Present': 'Présentation biblique',
-    'Click here to use the default data folder':
-        'Cliquez ici pour utiliser le dossier de données par défaut',
     'Unable to get online bible list':
         "Impossible d'obtenir la liste des Bibles en ligne",
     'Fail to get find controller!':
@@ -983,6 +989,7 @@ const dictionary = {
         "L'application est lancée pour la première fois",
     Close: 'Fermer',
     'Toggle Widget Full View': 'Agrandir/réduire le panneau',
+    Floating: 'Panneau flottant',
     'Split Vertical to': 'Diviser verticalement vers',
     'Split Horizontal to': 'Diviser horizontalement vers',
     'Loading Bible Data': 'Chargement des données bibliques',
@@ -1342,6 +1349,18 @@ const dictionary = {
     'Copy Text': 'Copier le texte',
     'Copy Title': 'Copier le titre',
     'Copy Verse Full Key': 'Copier la clé complète du verset',
+    'More…': 'Plus…',
+    'Every way to copy the title and text':
+        'Toutes les façons de copier le titre et le texte',
+    'Title and Text': 'Titre et texte',
+    'Title Only': 'Titre seul',
+    'Text Only': 'Texte seul',
+    '(Version) Title': '(Version) Titre',
+    'Title (Version)': 'Titre (Version)',
+    'Title without Version': 'Titre sans version',
+    '(1): Text': '(1): Texte',
+    '1: Text': '1: Texte',
+    'Text without Numbers': 'Texte sans numéros',
     'Generate Slides': 'Générer des diapositives',
     'Leave empty for Auto. Text shrinks to fit.':
         'Laissez vide pour Auto. Le texte est réduit si nécessaire.',
@@ -1528,6 +1547,8 @@ const dictionary = {
     'Text Color:': 'Couleur du texte :',
     'Text Color': 'Couleur du texte',
     Theme: 'Thème',
+    'You need to select a parent directory to start using the app.':
+        'Vous devez sélectionner un dossier parent pour commencer à utiliser l’application.',
     'There is no parent directory selected':
         "Aucun dossier parent n'est sélectionné",
     'This will change all Slides': 'Cela modifiera toutes les diapositives',
@@ -1731,6 +1752,8 @@ const dictionary = {
     // name goes on AFTER the translation, never into the key.
     'Exported to': 'Exporté vers',
     Imported: 'Importé',
+    'Imported {copied} file(s); {reused} already up to date':
+        '{copied} fichier(s) importé(s) ; {reused} déjà à jour',
     // The optional password protection on every export.
     Password: 'Mot de passe',
     'Confirm Password': 'Confirmer le mot de passe',
@@ -1796,8 +1819,6 @@ const dictionary = {
     'Use Current Timezone': 'Utiliser le fuseau horaire actuel',
     'Use this device’s timezone': 'Utiliser le fuseau horaire de cet appareil',
     'UTC Offset': 'Décalage UTC',
-    'You will be redirected to the General Settings page to select a parent directory.':
-        'Vous allez être redirigé vers la page Paramètres généraux pour sélectionner un dossier parent.',
     'Start Controlling': 'Démarrer le contrôle',
     'Presenting Control': 'Contrôle de présentation',
     'Presenting tool': 'Outil de présentation',
@@ -2215,6 +2236,9 @@ const dictionary = {
     // The language the lookup DATASET is read in, which is a separate
     // choice from the language of the interface.
     'Names and locations language': 'Langue des noms et des lieux',
+    // Tooltip of that language code while it is red: the bible being read is
+    // in another language.
+    'Not the language of the Bible': 'Pas la langue de la Bible',
     Names: 'Noms',
     Locations: 'Lieux',
     'Search names': 'Rechercher des noms',
@@ -2742,20 +2766,25 @@ const dictionary = {
     'Delete Permanently': 'Supprimer définitivement',
     'could not be moved to the Recycle Bin or Trash. A USB flash drive has none on Windows. Delete it permanently? This cannot be undone.':
         "n'a pas pu être déplacé vers la corbeille. Une clé USB n'en a pas sous Windows. Le supprimer définitivement ? Cette action est irréversible.",
-    'Data Folder Not Found': 'Dossier de données introuvable',
-    'is not available. If it is on a USB flash drive, plug it in and press Retry. Until then the app is using a folder of its own; your data is not touched.':
-        "n'est pas disponible. S'il se trouve sur une clé USB, branchez-la et appuyez sur Réessayer. En attendant, l'application utilise son propre dossier ; vos données ne sont pas modifiées.",
     Retry: 'Réessayer',
-    'Choose Another Folder': 'Choisir un autre dossier',
-    'Data Folder Found': 'Dossier de données trouvé',
-    'Use the data folder found at':
-        'Utiliser le dossier de données trouvé dans',
     // --- The data folder off the Desktop (2026-10-17): OneDrive backs up
     // the Desktop and took songs off it, so the default is
     // `~/.owa/open-worship-data` and a folder still on the Desktop is asked
     // about at launch (`src/setting/directory-setting/dataDirMove*`).
     'Move Your Data Folder Off the Desktop':
         'Déplacer votre dossier de données hors du Bureau',
+    'Copy Data Folder': 'Copier le dossier de données',
+    'Copy this data folder to a drive or another folder':
+        'Copier ce dossier de données sur un disque ou dans un autre dossier',
+    'The data folder was not copied:':
+        "Le dossier de données n'a pas été copié :",
+    'The data folder was copied to': 'Le dossier de données a été copié dans',
+    'Switch to the copy now? Every open window reloads.':
+        'Passer à la copie maintenant ? Toutes les fenêtres ouvertes se rechargent.',
+    'The copy cannot go inside the data folder itself.':
+        'La copie ne peut pas aller dans le dossier de données lui-même.',
+    'The Desktop is not a safe place for your data folder: backup and sync tools can move or empty it while the app is using it.':
+        "Le Bureau n'est pas un endroit sûr pour votre dossier de données : les outils de sauvegarde et de synchronisation peuvent le déplacer ou le vider pendant que l'application l'utilise.",
     'Your songs, slides, Bibles and settings are kept in a folder on the Desktop:':
         'Vos chants, diapositives, Bibles et paramètres sont conservés dans un dossier sur le Bureau :',
     'On Windows, Microsoft OneDrive often backs up the Desktop. While it syncs, OneDrive can replace your files with online-only copies or take them off this computer, so songs, slides and settings can suddenly go missing or come back empty.':
@@ -2810,12 +2839,22 @@ const dictionary = {
     'The app reloads to show them.':
         "L'application se recharge pour les afficher.",
     'Recent Folders': 'Dossiers récents',
+    'Found Data Folders': 'Dossiers de données trouvés',
+    Suggested: 'Suggéré',
+    'Use This Folder': 'Utiliser ce dossier',
     Switch: 'Basculer',
     'Switch Data Folder': 'Changer de dossier de données',
     'Switch to the data folder': 'Basculer vers le dossier de données',
     'Every open window reloads.': 'Toutes les fenêtres ouvertes se rechargent.',
     'Remove from Recent Folders': 'Retirer des dossiers récents',
     'This folder is not there any more.': "Ce dossier n'existe plus.",
+    'Type the full path of the folder, for example':
+        'Saisissez le chemin complet du dossier, par exemple',
+    'Create Data Folder': 'Créer le dossier de données',
+    'There is no folder at': "Il n'y a aucun dossier à l'emplacement",
+    'Create it and use it as the data folder?':
+        "Le créer et l'utiliser comme dossier de données ?",
+    Create: 'Créer',
     // --- Page-aware Tips of the Day and their deterministic walkthroughs.
     'Tips of the Day': 'Astuces du jour',
     'Tip of the Day': 'Astuce du jour',
@@ -2834,6 +2873,16 @@ const dictionary = {
         'Afficher automatiquement les astuces du jour',
     'Applies to the Presenter and Bible Reader on the next app launch.':
         "S'applique au Présentateur et au Lecteur biblique au prochain démarrage de l'application.",
+    // --- The Settings list of what a hide button put away, for restoring.
+    'Put away for 30 days': 'Masqués pendant 30 jours',
+    'Tips in the help window': "Astuces de la fenêtre d'aide",
+    'The caution before an AI window opens':
+        "L'avertissement avant l'ouverture d'une fenêtre IA",
+    'The notice about the free AI service': 'La note sur le service IA gratuit',
+    'The suggestion to move the data folder':
+        'La suggestion de déplacer le dossier de données',
+    'Hidden until': "Masqué jusqu'au",
+    'Show again': 'Afficher à nouveau',
     'Starting walkthrough…': 'Démarrage du guide…',
     'This tip closes by itself': "L'astuce se ferme toute seule",
     'Could not start this walkthrough.': 'Impossible de démarrer ce guide.',
@@ -3140,8 +3189,6 @@ const dictionary = {
         'Régler une Bible qui n’est pas installée',
     'When the Reader names a Bible you do not have, pick another, press Let the assistant import this Bible for me, or Go to Bible Setting.':
         'Quand le Lecteur demande une Bible que vous n’avez pas, choisissez-en une autre, appuyez sur Laisser l’assistant importer cette Bible pour moi, ou Aller aux paramètres de la Bible.',
-    'When the Reader names a Bible you do not have, pick another, press Let the assistant import a Bible for me, or Go to Bible Setting.':
-        'Quand le Lecteur demande une Bible que vous n’avez pas, choisissez-en une autre, appuyez sur Laisser l’assistant importer une Bible pour moi, ou Aller aux paramètres de la Bible.',
     'Or press Let the assistant import a Bible for me: the Assistant offers the KJV the app itself provides first, then looks for a Bible in your language in a free online collection.':
         'Ou appuyez sur Laisser l’assistant importer une Bible pour moi : l’assistant propose d’abord la KJV fournie par l’application, puis cherche une Bible dans votre langue dans une collection gratuite en ligne.',
     'Use verse numbers inside a passage':
@@ -3721,8 +3768,8 @@ const dictionary = {
     '{name} — needs an API key': '{name} — nécessite une clé API',
     '{names} and {last}': '{names} et {last}',
     'Which assistant answers': 'Quel assistant répond',
-    '{names} need an API key of your own — add one in Settings → Others':
-        '{names} nécessitent votre propre clé API — ajoutez-en une dans Paramètres → Autres',
+    '{names} need an API key of your own — add one in Settings → AI Providers':
+        "{names} nécessitent votre propre clé API — ajoutez-en une dans Paramètres → Fournisseurs d'IA",
     '{name} answers your questions here': '{name} répond à vos questions ici',
     'No AI key': 'Aucune clé d’IA',
     '{name} answered the last question.':
@@ -3806,6 +3853,15 @@ const dictionary = {
         'Sur quels versets de ce chapitre voulez-vous vous concentrer ? Par exemple, saisissez 1–3 ou choisissez ci-dessous.',
     'Which verse in this chapter do you want to focus on? For example, type 1, or choose below.':
         'Sur quel verset de ce chapitre voulez-vous vous concentrer ? Par exemple, saisissez 1 ou choisissez ci-dessous.',
+    'This file belongs to the whole book, not to one chapter — like an introduction to it.':
+        'Ce fichier concerne le livre entier, pas un seul chapitre — comme une introduction à ce livre.',
+    'You are reading {passage} in the Bible Reader.':
+        'Vous lisez {passage} dans le Lecteur biblique.',
+    'You are reading {passage} in the Bible Reader. Press {range} to read what this file says about it.':
+        'Vous lisez {passage} dans le Lecteur biblique. Appuyez sur {range} pour lire ce que ce fichier en dit.',
+    'What does it say about {passage}?': 'Que dit ce fichier sur {passage} ?',
+    'Which verse in this chapter do you want to focus on? You are reading {range} — press it, or choose another below.':
+        'Sur quel verset de ce chapitre voulez-vous vous concentrer ? Vous lisez {range} — appuyez dessus ou choisissez-en un autre ci-dessous.',
     'AI analysis can make mistakes. Please read the passage, cross-references, and explanation yourself in the original Bible and PDF.':
         'L’analyse par IA peut contenir des erreurs. Lisez vous-même le passage, les références croisées et l’explication dans la Bible et le PDF d’origine.',
     'I could not read the PDF explanation reliably, so I did not show it. Please check the original PDF yourself or try a model that can read pictures better.':
@@ -3821,6 +3877,7 @@ const dictionary = {
         'Demander à l’assistant à propos de ce passage',
     'Ask the Assistant About This Verse':
         'Demander à l’assistant à propos de ce verset',
+    'Open in Chatbot': "Ouvrir dans l'assistant conversationnel",
     'More things to do': 'Autres choses à faire',
     'Previous chapter': 'Chapitre précédent',
     'Next chapter': 'Chapitre suivant',
@@ -3835,6 +3892,63 @@ const dictionary = {
     'Open another passage': 'Ouvrir un autre passage',
     'Save to my Bibles list': 'Enregistrer dans ma liste de Bibles',
     'Copy the passage': 'Copier le passage',
+    'Show it on a map': 'Le montrer sur une carte',
+    'Related verses': 'Versets liés',
+    'Study files for this chapter': 'Fichiers d’étude pour ce chapitre',
+    'Study the words': 'Étudier les mots',
+    'All words': 'Tous les mots',
+    'Another verse': 'Un autre verset',
+    'Choose a word': 'Choisir un mot',
+    'More words': 'Plus de mots',
+    'I could not read the words of {name} just now.':
+        'Je n’ai pas pu lire les mots de {name} pour le moment.',
+    'Which verse of {name} do you want to study? Press one, and I will list its words.':
+        'Quel verset de {name} voulez-vous étudier ? Appuyez sur l’un d’eux, et j’en listerai les mots.',
+    'Press a word to learn it, or {all} to learn every word of the verse.':
+        'Appuyez sur un mot pour l’apprendre, ou sur {all} pour apprendre chaque mot du verset.',
+    'Next word: {word}': 'Mot suivant : {word}',
+    'Search Google for {word}': 'Rechercher {word} sur Google',
+    'Teach me every word of {verse}': 'Apprendre chaque mot de {verse}',
+    'Teach me the word {word}': 'Apprendre le mot {word}',
+    'Teaching a word needs an assistant, and none could answer just now. You can search Google for it, or pick an assistant in the row above and ask again.':
+        'Enseigner un mot demande un assistant, et aucun n’a pu répondre pour le moment. Vous pouvez le rechercher sur Google, ou choisir un assistant dans la ligne du haut et redemander.',
+    'Opened a Google search for {word} in your browser.':
+        'Recherche Google de {word} ouverte dans votre navigateur.',
+    'Which other verses are related to this passage?':
+        'Quels autres versets sont liés à ce passage ?',
+    "The app's cross references lead from it to {count} other verses.":
+        'Les références croisées de l’application mènent de ce passage à {count} autres versets.',
+    'Resources has {count} study files for its chapter.':
+        'Les Ressources ont {count} fichiers d’étude pour son chapitre.',
+    'You have notes or marks of your own on {count} of its verses.':
+        'Vous avez vos propres notes ou marques sur {count} de ses versets.',
+    'What did I note on these verses?': 'Qu’ai-je noté sur ces versets ?',
+    "The app's cross references have nothing for {name}.":
+        'Les références croisées de l’application n’ont rien pour {name}.',
+    "The app's cross references lead from {name} to {count} other verses. Press one to read it with me.":
+        'Les références croisées de l’application mènent de {name} à {count} autres versets. Appuyez sur l’un d’eux pour le lire avec moi.',
+    '{count} of its verses': '{count} de ses versets',
+    'verses {list}': 'versets {list}',
+    'What most of its verses point to':
+        'Ce vers quoi la plupart de ses versets renvoient',
+    'In the Old Testament': 'Dans l’Ancien Testament',
+    'In the New Testament': 'Dans le Nouveau Testament',
+    'In the New Testament, about the chapters around it':
+        'Dans le Nouveau Testament, sur les chapitres qui l’entourent',
+    'In the Old Testament, about the chapters around it':
+        'Dans l’Ancien Testament, sur les chapitres qui l’entourent',
+    'Themes, verse by verse': 'Thèmes, verset par verset',
+    'Verse {verse}: {themes}': 'Verset {verse} : {themes}',
+    'Resources has no study files for the chapter of {name}.':
+        'Les Ressources n’ont aucun fichier d’étude pour le chapitre de {name}.',
+    'The study files in Resources for the chapter of {name}. Press one to ask about it.':
+        'Les fichiers d’étude des Ressources pour le chapitre de {name}. Appuyez sur l’un d’eux pour poser une question à son sujet.',
+    'The names lookup has no point on a map for {name}.':
+        'La recherche des noms n’a pas de point sur une carte pour {name}.',
+    'Opened {name} on a map in your browser.':
+        '{name} est ouvert sur une carte dans votre navigateur.',
+    'Press {button} to open {name} on a map in your browser.':
+        'Appuyez sur {button} pour ouvrir {name} sur une carte dans votre navigateur.',
     'Press {name} under the passage above.':
         'Appuyez sur {name} sous le passage ci-dessus.',
     'Here is {name} from the Bible it was opened in.':
@@ -3907,6 +4021,8 @@ const dictionary = {
         'Je n’ai pas pu lire {name} dans l’application pour l’instant. Posez-moi quand même votre question et je réessaierai.',
     'I have read {name}. Ask me anything about this passage, or press a question.':
         'J’ai lu {name}. Posez-moi n’importe quelle question sur ce passage, ou appuyez sur une question.',
+    'I have read {name} in the Bible {bible}. Ask me anything about this passage, or press a question.':
+        'J’ai lu {name} dans la Bible {bible}. Posez-moi n’importe quelle question sur ce passage, ou appuyez sur une question.',
     'I have read what the names lookup holds on {name} (drawn from the King James Version). Ask me anything about this person, or press a question.':
         'J’ai lu ce que Lieu-Nom contient sur {name} (tiré de la version King James). Posez-moi n’importe quelle question sur cette personne, ou appuyez sur une question.',
     'I have read what the names lookup holds on {name} (drawn from the King James Version). Ask me anything about this place, or press a question.':
@@ -3926,8 +4042,8 @@ const dictionary = {
     'Which verses mention {name}?': 'Quels versets mentionnent {name} ?',
     'No assistant could answer just now, so here is what the app holds on {name}.':
         'Aucun assistant n’a pu répondre pour l’instant, voici donc ce que l’application contient sur {name}.',
-    'A question about this needs an assistant, and none could answer just now. Pick one in the row above, or add a key in Settings → Others → AI Providers, and ask again.':
-        'Une question à ce sujet nécessite un assistant, et aucun n’a pu répondre pour l’instant. Choisissez-en un dans la ligne ci-dessus, ou ajoutez une clé dans Paramètres → Autres → Fournisseurs d’IA, puis redemandez.',
+    'A question about this needs an assistant, and none could answer just now. Pick one in the row above, or add a key in Settings → AI Providers, and ask again.':
+        "Une question à ce sujet nécessite un assistant, et aucun n’a pu répondre pour l’instant. Choisissez-en un dans la ligne ci-dessus, ou ajoutez une clé dans Paramètres → Fournisseurs d'IA, puis redemandez.",
     'What the app holds on this goes with every question in this tab. Press × when you are done with it.':
         'Ce que l’application contient à ce sujet accompagne chaque question dans cet onglet. Appuyez sur × quand vous avez terminé.',
     'Reading what the names lookup has on “{words}”':
@@ -3969,8 +4085,8 @@ const dictionary = {
     'Searching {bible} for your words': 'Recherche de vos mots dans {bible}',
     'Reading the newest copy of that guide page':
         'Lecture de la version la plus récente de cette page du guide',
-    'A general question needs an assistant, and none could answer just now. Pick one in the row above, or add a key in Settings → Others → AI Providers, and ask again.':
-        'Une question générale nécessite un assistant, et aucun n’a pu répondre pour l’instant. Choisissez-en un dans la ligne ci-dessus, ou ajoutez une clé dans Paramètres → Autres → Fournisseurs d’IA, puis redemandez.',
+    'A general question needs an assistant, and none could answer just now. Pick one in the row above, or add a key in Settings → AI Providers, and ask again.':
+        "Une question générale nécessite un assistant, et aucun n’a pu répondre pour l’instant. Choisissez-en un dans la ligne ci-dessus, ou ajoutez une clé dans Paramètres → Fournisseurs d'IA, puis redemandez.",
     'I cannot look at pictures while I am offline. Tell me in a few words what you can see and what you were trying to do, and I will look it up in the guide.':
         'Je ne peux pas regarder d’images hors ligne. Dites-moi en quelques mots ce que vous voyez et ce que vous essayiez de faire, et je chercherai dans le guide.',
     'Auto is checking which assistants can answer':
@@ -4139,8 +4255,8 @@ const dictionary = {
     'app guide · offline': 'guide de l’application · hors ligne',
     'This assistant cannot look at pictures. Pick one that can, or take the picture off and describe it instead.':
         'Cet assistant ne peut pas regarder d’images. Choisissez-en un qui le peut, ou retirez l’image et décrivez-la à la place.',
-    'This model is not marked as able to look at pictures. If it can, tick Sees pictures for it in Settings → Others → Custom servers; or take the picture off and describe it instead.':
-        'Ce modèle n’est pas marqué comme capable de regarder des images. S’il le peut, cochez Voit les images pour lui dans Paramètres → Autres → Serveurs personnalisés ; ou retirez l’image et décrivez-la à la place.',
+    'This model is not marked as able to look at pictures. If it can, tick Sees pictures for it in Settings → AI Providers → Custom servers; or take the picture off and describe it instead.':
+        "Ce modèle n’est pas marqué comme capable de regarder des images. S’il le peut, cochez Voit les images pour lui dans Paramètres → Fournisseurs d'IA → Serveurs personnalisés ; ou retirez l’image et décrivez-la à la place.",
     '{name} (the one in Find)': '{name} (celle de la recherche)',
     'Open {verse} in Bible Lookup': 'Ouvrir {verse} dans la Recherche biblique',
     'Send a picture of my screen': 'Envoyer une image de mon écran',
@@ -4178,6 +4294,11 @@ const dictionary = {
     'New chat': 'Nouvelle conversation',
     'Close one of these before starting another':
         "Fermez-en une avant d'en commencer une autre",
+    'No room for another chat': 'Plus de place pour une autre conversation',
+    'This window holds {count} chats at most. Close one to start a new chat.':
+        'Cette fenêtre contient au plus {count} conversations. Fermez-en une pour commencer une nouvelle conversation.',
+    'This window holds {count} chats at most, and all of them are locked. Unlock one from its ⋮ menu and close it to start a new chat.':
+        'Cette fenêtre contient au plus {count} conversations, et toutes sont verrouillées. Déverrouillez-en une depuis son menu ⋮ et fermez-la pour commencer une nouvelle conversation.',
     'New window': 'Nouvelle fenêtre',
     'Clear all chats': 'Effacer toutes les conversations',
     'Close other chats': 'Fermer les autres conversations',
@@ -4860,8 +4981,8 @@ const dictionary = {
         '`/{command}` fonctionne sur la page Présentateur, et cette conversation porte sur {window}. Passez la fenêtre principale au Présentateur, choisissez **{presenter}** sous {askingAbout} en haut, puis retapez la commande.',
     'Type `/clear` in the chat window to clear the chat in front of you.':
         'Tapez `/clear` dans la fenêtre de discussion pour effacer la conversation affichée.',
-    '**Say the question after /btw** -- `/btw What is the Bible?` -- and the assistant answers it from its own knowledge instead of looking in this app’s guide. It takes an assistant (a key in Settings → Others, or a server of your own): the built-in guide cannot answer a general question.':
-        '**Écrivez la question après /btw** -- `/btw Qu’est-ce que la Bible ?` -- et l’assistant y répond avec ses propres connaissances au lieu de chercher dans le guide de cette application. Il faut un assistant (une clé dans Paramètres → Autres, ou votre propre serveur) : le guide intégré ne peut pas répondre à une question générale.',
+    '**Say the question after /btw** -- `/btw What is the Bible?` -- and the assistant answers it from its own knowledge instead of looking in this app’s guide. It takes an assistant (a key in Settings → AI Providers, or a server of your own): the built-in guide cannot answer a general question.':
+        "**Écrivez la question après /btw** -- `/btw Qu’est-ce que la Bible ?` -- et l’assistant y répond avec ses propres connaissances au lieu de chercher dans le guide de cette application. Il faut un assistant (une clé dans Paramètres → Fournisseurs d'IA, ou votre propre serveur) : le guide intégré ne peut pas répondre à une question générale.",
     '**On the Presenter page** (switch there first): {commands}.':
         '**Sur la page Présentateur** (allez-y d’abord) : {commands}.',
     '**Commands you can type** -- each one runs on the spot, with no assistant and no internet (except `/btw`, which puts a general question to the assistant):':
@@ -4903,8 +5024,8 @@ const dictionary = {
         '**Rien n’est sélectionné dans la liste des documents.** Cliquez d’abord sur le chant, puis redemandez.',
     'The guide covers using the app and holds none of the Bible’s words — but the Bibles in this app do, and **Bible Find** searches them. Search for “{words}”. If nothing comes back, try fewer words: it looks for them as they are typed.':
         'Le guide parle de l’utilisation de l’application et ne contient aucun mot de la Bible — mais les Bibles de cette application, oui, et la **recherche biblique** les parcourt. Cherchez “{words}”. Si rien ne vient, essayez moins de mots : elle cherche les mots tels qu’ils sont tapés.',
-    'That is a question about the Bible itself, and the guide only knows how to use this app. An assistant can answer it: ask with /btw in front — /btw {question} — and if none answers, pick one in the row above, or add a key in Settings → Others → AI Providers.':
-        'C’est une question sur la Bible elle-même, et le guide ne sait qu’expliquer cette application. Un assistant peut y répondre : posez-la avec /btw devant — /btw {question} — et si aucun ne répond, choisissez-en un dans la rangée au-dessus, ou ajoutez une clé dans Paramètres → Autres → Fournisseurs d’IA.',
+    'That is a question about the Bible itself, and the guide only knows how to use this app. An assistant can answer it: ask with /btw in front — /btw {question} — and if none answers, pick one in the row above, or add a key in Settings → AI Providers.':
+        "C’est une question sur la Bible elle-même, et le guide ne sait qu’expliquer cette application. Un assistant peut y répondre : posez-la avec /btw devant — /btw {question} — et si aucun ne répond, choisissez-en un dans la rangée au-dessus, ou ajoutez une clé dans Paramètres → Fournisseurs d'IA.",
     'The Bibles in this app can be searched too: **Bible Find** lists the verses that have the words you type — try “{words}”, and fewer words if nothing comes back. Press {button} below for where it is.':
         'Les Bibles de cette application peuvent aussi être cherchées : la **recherche biblique** liste les versets qui contiennent les mots tapés — essayez “{words}”, et moins de mots si rien ne vient. Appuyez sur {button} ci-dessous pour voir où elle se trouve.',
     'Show me Bible Find': 'Montrez-moi la recherche biblique',
@@ -4917,6 +5038,34 @@ const dictionary = {
     '{assistant} could not answer — {reason}.':
         '{assistant} n’a pas pu répondre — {reason}.',
     '{assistant} could not answer.': '{assistant} n’a pas pu répondre.',
+    'nothing answered at its address — it is shared by openworship.app and may be switched off right now; try again later or pick another assistant':
+        'rien n’a répondu à son adresse — il est partagé par openworship.app et peut être éteint en ce moment ; réessayez plus tard ou choisissez un autre assistant',
+    'its server is not answering — check that it is running on this computer':
+        'son serveur ne répond pas — vérifiez qu’il tourne sur cet ordinateur',
+    'its server is not answering — check that the computer it runs on is on and awake, and that the server is running':
+        'son serveur ne répond pas — vérifiez que l’ordinateur où il tourne est allumé et réveillé, et que le serveur tourne',
+    'it went quiet in the middle of the question — it is shared by openworship.app and may be switched off right now; try again later or pick another assistant':
+        'il s’est tu au milieu de la question — il est partagé par openworship.app et peut être éteint en ce moment ; réessayez plus tard ou choisissez un autre assistant',
+    'it went quiet in the middle of the question — check that its server is running':
+        'il s’est tu au milieu de la question — vérifiez que son serveur tourne',
+    'it went quiet in the middle of the question — check that the computer it runs on is on and awake, and that its server is running':
+        'il s’est tu au milieu de la question — vérifiez que l’ordinateur où il tourne est allumé et réveillé, et que son serveur tourne',
+    'the server took too long to answer':
+        'le serveur a mis trop de temps à répondre',
+    '{tried} {assistant} answered instead.':
+        '{tried} {assistant} a répondu à la place.',
+    '{failed} could not answer — looking for another assistant that costs nothing':
+        "{failed} n'a pas pu répondre — je cherche un autre assistant gratuit",
+    'Use Auto for this chat': 'Utiliser Auto pour cette conversation',
+    'Use {assistant} for this chat':
+        'Utiliser {assistant} pour cette conversation',
+    'That assistant is not in the list any more. Pick one in the ASSISTANT list at the top of this window.':
+        'Cet assistant n’est plus dans la liste. Choisissez-en un dans la liste ASSISTANT en haut de cette fenêtre.',
+    'This chat now uses Auto: at each question it picks the best assistant that costs nothing and can answer.':
+        'Cette conversation utilise désormais Auto : à chaque question, il choisit le meilleur assistant gratuit qui peut répondre.',
+    'This chat now uses {assistant}. Pick another in the ASSISTANT list at the top of this window to change it again.':
+        'Cette conversation utilise désormais {assistant}. Choisissez-en un autre dans la liste ASSISTANT en haut de cette fenêtre pour changer encore.',
+    'Asking {name} instead': 'Je demande à {name} à la place',
     '{tried} Auto asked {assistant} instead.':
         '{tried} Auto a demandé à {assistant} à la place.',
     'Auto asked {assistant} this time.':
@@ -5049,18 +5198,18 @@ const dictionary = {
     'slow when busy': 'lent quand il est occupé',
     'Answers are coming from a free public AI service ({service}), which needs no API key. Your questions and anything you attach leave this computer and may be kept by that service, so do not send anything private. Answers are also weaker, and can be slow or busy. Your own key in Settings gives better and more private answers.':
         "Les réponses viennent d'un service d'IA public et gratuit ({service}), qui ne demande pas de clé API. Vos questions et tout ce que vous joignez quittent cet ordinateur et peuvent être conservés par ce service : n'envoyez donc rien de privé. Les réponses sont aussi moins bonnes, et peuvent être lentes ou indisponibles. Votre propre clé dans les Paramètres donne des réponses meilleures et plus privées.",
-    'Auto picks an assistant that costs nothing for each question: one of your own servers when it is up to it, otherwise a free public AI service ({service}). When that service answers, your questions and anything you attach leave this computer and may be kept by it, so do not send anything private. Pick one of your own servers in the row above to keep every question in the building.':
-        "Auto choisit pour chaque question un assistant qui ne coûte rien : un de vos propres serveurs quand il en est capable, sinon un service d'IA public et gratuit ({service}). Quand ce service répond, vos questions et tout ce que vous joignez quittent cet ordinateur et peuvent être conservés par lui : n'envoyez donc rien de privé. Choisissez un de vos propres serveurs dans la ligne ci-dessus pour garder chaque question dans le bâtiment.",
+    'Auto picks an assistant that costs nothing for each question: one of your own servers when it is up to it, otherwise a free public AI service ({service}). When that service answers, your questions and anything you attach leave this computer and may be kept by it, so do not send anything private. A server of your own picked in the row above is asked first; when it cannot answer, the question goes on to your other servers and then to this service.':
+        "Auto choisit pour chaque question un assistant qui ne coûte rien : un de vos propres serveurs quand il en est capable, sinon un service d'IA public et gratuit ({service}). Quand ce service répond, vos questions et tout ce que vous joignez quittent cet ordinateur et peuvent être conservés par lui : n'envoyez donc rien de privé. Un de vos propres serveurs choisi dans la ligne ci-dessus est interrogé en premier ; quand il ne peut pas répondre, la question passe à vos autres serveurs, puis à ce service.",
     '{name}, shared by openworship.app': '{name}, partagé par openworship.app',
     '{name}, on this computer': '{name}, sur cet ordinateur',
     '{name}, on your network': '{name}, sur votre réseau',
     'can see pictures': 'voit les images',
     'it wrote no answer this time — a smaller question, or a larger model, usually helps':
         "il n'a écrit aucune réponse cette fois — une question plus courte, ou un modèle plus grand, aide généralement",
-    'this API key needs a workspace id — add it in Settings → Others → AI Providers':
-        "cette clé API demande un identifiant d'espace de travail (workspace id) — ajoutez-le dans Paramètres → Autres → Fournisseurs d'IA",
-    'the API key was refused — check it in Settings → Others':
-        'la clé API a été refusée — vérifiez-la dans Paramètres → Autres',
+    'this API key needs a workspace id — add it in Settings → AI Providers':
+        "cette clé API demande un identifiant d'espace de travail (workspace id) — ajoutez-le dans Paramètres → Fournisseurs d'IA",
+    'the API key was refused — check it in Settings → AI Providers':
+        "la clé API a été refusée — vérifiez-la dans Paramètres → Fournisseurs d'IA",
     'the AI account is out of credit': "le compte d'IA n'a plus de crédit",
     'the AI account is being rate-limited (asked too often) — wait a minute and try again':
         "le compte d'IA est limité (trop de demandes) — attendez une minute et réessayez",
@@ -5091,8 +5240,8 @@ const dictionary = {
     'This assistant’s server cannot use the app’s tools, so this comes from the guide text alone and nothing was checked in the window — for presses and live answers, use LM Studio, Ollama or llama.cpp.':
         "Le serveur de cet assistant ne peut pas utiliser les outils de l'application : cette réponse vient donc du seul texte du guide et rien n'a été vérifié dans la fenêtre — pour des actions et des réponses en direct, utilisez LM Studio, Ollama ou llama.cpp.",
     '{first} or {last}': '{first} ou {last}',
-    '{model} is not offered in {region} — choose {choices} under Settings → Others → AWS Region':
-        "{model} n'est pas proposé en {region} — choisissez {choices} dans Paramètres → Autres → Région AWS",
+    '{model} is not offered in {region} — choose {choices} under Settings → AI Providers → AWS Region':
+        "{model} n'est pas proposé en {region} — choisissez {choices} dans Paramètres → Fournisseurs d'IA → Région AWS",
     'this model is no longer in Settings — pick another one in the row above':
         "ce modèle n'est plus dans les Paramètres — choisissez-en un autre dans la ligne ci-dessus",
     'Waiting for {server} to load {model} — the first answer takes longer':
@@ -5432,14 +5581,14 @@ const dictionary = {
         "redémarrez llama-server (ou llamafile) avec une taille de contexte d'au moins {size} (-c {tokens})",
     'load it with a context length of {size} or more where the model is served':
         "chargez-le avec une longueur de contexte d'au moins {size} là où le modèle est servi",
-    'this server has no model called “{model}” — check the model id in Settings → Others → Custom servers, press Load models from server there, or pull it (ollama pull {model})':
-        "ce serveur n'a pas de modèle appelé « {model} » — vérifiez l'identifiant du modèle dans Paramètres → Autres → Custom servers, appuyez sur Load models from server, ou téléchargez-le (ollama pull {model})",
-    'this server has no model called “{model}” — check the model id in Settings → Others → Custom servers, press Load models from server there':
-        "ce serveur n'a pas de modèle appelé « {model} » — vérifiez l'identifiant du modèle dans Paramètres → Autres → Custom servers, puis appuyez sur Load models from server",
+    'this server has no model called “{model}” — check the model id in Settings → AI Providers → Custom servers, press Load models from server there, or pull it (ollama pull {model})':
+        "ce serveur n'a pas de modèle appelé « {model} » — vérifiez l'identifiant du modèle dans Paramètres → Fournisseurs d'IA → Custom servers, appuyez sur Load models from server, ou téléchargez-le (ollama pull {model})",
+    'this server has no model called “{model}” — check the model id in Settings → AI Providers → Custom servers, press Load models from server there':
+        "ce serveur n'a pas de modèle appelé « {model} » — vérifiez l'identifiant du modèle dans Paramètres → Fournisseurs d'IA → Custom servers, puis appuyez sur Load models from server",
     'this shared server did not answer the way the app expects — its address is openworship.app’s to correct; press ↻ beside the list of assistants to read the shared servers again, or pick another assistant':
         "ce serveur partagé n'a pas répondu comme l'application l'attend — c'est à openworship.app de corriger son adresse ; appuyez sur ↻ à côté de la liste des assistants pour relire les serveurs partagés, ou choisissez un autre assistant",
-    'nothing speaks the OpenAI API at {address} — in Settings → Others → Custom servers, check the address and press Test (Ollama: http://localhost:11434/v1, LM Studio: http://localhost:1234/v1)':
-        "rien ne répond à l'API OpenAI à {address} — dans Paramètres → Autres → Custom servers, vérifiez l'adresse et appuyez sur Test (Ollama : http://localhost:11434/v1, LM Studio : http://localhost:1234/v1)",
+    'this server did not answer the way the app expects — in Settings → AI Providers → Custom servers, check its address and press Test':
+        "ce serveur n'a pas répondu comme l'application l'attend — dans Paramètres → Fournisseurs d'IA → Custom servers, vérifiez son adresse et appuyez sur Test",
     'the server took longer than {minutes} minutes over the question and the window gave up — a local model reads the assistant’s whole instruction set first, and this computer is too slow for that; a general question typed after /btw is small enough to answer here, and questions about the app need a faster computer or a model running on a GPU':
         "le serveur a mis plus de {minutes} minutes sur la question et la fenêtre a abandonné — un modèle local lit d'abord toutes les instructions de l'assistant, et cet ordinateur est trop lent pour cela ; une question générale tapée après /btw est assez courte pour une réponse ici, et les questions sur l'application demandent un ordinateur plus rapide ou un modèle sur un GPU",
     'the server took longer than {minutes} minutes over the question and the window gave up — a local model reads the assistant’s whole instruction set first, and the computer it runs on is too slow for that; a general question typed after /btw is small enough to answer here, and questions about the app need a faster computer or a model running on a GPU':
@@ -5599,6 +5748,19 @@ const dictionary = {
     'Those words are not written in the language of {bible}, so there is nothing in it to match them. Type them the way that Bible writes them, or press **{another}** below to search one in your language for them.':
         'Ces mots ne sont pas écrits dans la langue de {bible}, il n’y a donc rien à leur faire correspondre. Tapez-les comme cette Bible les écrit, ou appuyez sur **{another}** ci-dessous pour les chercher dans une Bible de votre langue.',
     'Show in another Bible': 'Afficher dans une autre Bible',
+    'These words gather in {passages}.':
+        'Ces mots se trouvent surtout dans {passages}.',
+    'By book: {books}.': 'Par livre : {books}.',
+    'Every verse with these words': 'Tous les versets avec ces mots',
+    'More verses': 'Plus de versets',
+    'No more verses in {bible} have those words.':
+        'Aucun autre verset de {bible} ne contient ces mots.',
+    'That is as far as a search goes. Add a word you remember to narrow it down.':
+        'Une recherche ne va pas plus loin. Ajoutez un mot dont vous vous souvenez pour la préciser.',
+    'That is every verse in {bible} with those words.':
+        'Ce sont tous les versets de {bible} qui contiennent ces mots.',
+    'Verses {first} to {last} of {total} in {bible} that have your words:':
+        'Versets {first} à {last} sur {total} dans {bible} qui contiennent vos mots :',
     '{bible} is the only Bible on this computer. To read or search in another language, install a Bible in it first — I can do that with you, one question at a time.':
         '{bible} est la seule Bible sur cet ordinateur. Pour lire ou chercher dans une autre langue, installez d’abord une Bible dans cette langue — je peux le faire avec vous, une question à la fois.',
     'I could not read those verses in {bible}.':
@@ -5611,12 +5773,12 @@ const dictionary = {
         '**Dans quelle Bible dois-je afficher ce verset ?** Choisissez-en une ci-dessous.',
     '**Which Bible should I show the verses in?** Pick one below.':
         '**Dans quelle Bible dois-je afficher ces versets ?** Choisissez-en une ci-dessous.',
-    'An assistant can also take words in your language and find the verse: pick one in the row above, or add a key in Settings → Others → AI Providers.':
-        "Un assistant peut aussi prendre des mots dans votre langue et trouver le verset : choisissez-en un dans la rangée ci-dessus, ou ajoutez une clé dans Paramètres → Autres → Fournisseurs d'IA.",
+    'An assistant can also take words in your language and find the verse: pick one in the row above, or add a key in Settings → AI Providers.':
+        "Un assistant peut aussi prendre des mots dans votre langue et trouver le verset : choisissez-en un dans la rangée ci-dessus, ou ajoutez une clé dans Paramètres → Fournisseurs d'IA.",
     'I could not search the Bible just now. Make sure the main window is open, then type the words again.':
         'Je n’ai pas pu chercher dans la Bible pour l’instant. Vérifiez que la fenêtre principale est ouverte, puis tapez de nouveau les mots.',
-    'If you remember what it is ABOUT rather than its words, an assistant can search by meaning: pick one in the row above, or add a key in Settings → Others → AI Providers.':
-        "Si vous vous souvenez de ce dont il PARLE plutôt que de ses mots, un assistant peut chercher par le sens : choisissez-en un dans la rangée ci-dessus, ou ajoutez une clé dans Paramètres → Autres → Fournisseurs d'IA.",
+    'If you remember what it is ABOUT rather than its words, an assistant can search by meaning: pick one in the row above, or add a key in Settings → AI Providers.':
+        "Si vous vous souvenez de ce dont il PARLE plutôt que de ses mots, un assistant peut chercher par le sens : choisissez-en un dans la rangée ci-dessus, ou ajoutez une clé dans Paramètres → Fournisseurs d'IA.",
     'No verse in {bible} has those words together.':
         'Aucun verset de {bible} ne contient ces mots ensemble.',
     'These are not in it at all: {words}.':
@@ -5728,6 +5890,27 @@ const lang: LanguageDataType = {
             .replaceAll(/\s+/g, ' ')
             .trim();
     },
+    bookMarkerWords: ['dans', 'livre'],
+    findFrameWords: [
+        'trouver',
+        'trouve',
+        'chercher',
+        'cherche',
+        'montre',
+        'montrez',
+        'moi',
+        'aide',
+        'verset',
+        'versets',
+        'bible',
+        'histoire',
+        'récit',
+        'où',
+        'quel',
+        'quelle',
+        'parle',
+        'sur',
+    ],
     stopWords: [
         'le',
         'la',

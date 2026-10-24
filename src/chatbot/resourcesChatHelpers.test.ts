@@ -3,19 +3,24 @@ import { describe, expect, test } from 'vitest';
 import {
     RESOURCE_ASK_TOOL_NAME,
     RESOURCES_CROSS_REFERENCE_HINT,
-    RESOURCES_READ_MENU_HINT,
     RESOURCES_RANGE_HINT,
     RESOURCES_SYSTEM_PROMPT,
     RESOURCES_TOOL_NAME,
     checkIsDegenerateResourceReading,
+    findResourceReading,
     genResourceAskActions,
     genResourceChapterVerseSequence,
+    genResourceOpeningAnswer,
+    genResourceReadMenuReplies,
     genResourceRangeReplies,
     genResourceReadingReplies,
     genResourcesRangeHint,
     sanitizeResourceReadingAnswer,
     toResourceChapterRef,
     toResourceChapterVerseCount,
+    toResourceFileKind,
+    toResourceReadingAsk,
+    toResourceReadingRange,
     toResourcePassageRef,
     toResourcesAsk,
     toResourceVerseFallback,
@@ -44,7 +49,13 @@ describe('a question about the Resources files', () => {
         expect(RESOURCES_SYSTEM_PROMPT).toContain('owa_lookup_record');
         expect(RESOURCES_SYSTEM_PROMPT).toContain('paragraph breaks');
         expect(RESOURCES_SYSTEM_PROMPT).toContain(
-            'Every answer card has exactly one main passage',
+            'has exactly one main passage',
+        );
+        // A question with no verse in it is answered, not met with "which
+        // verses?" (2026-10-22, _Explain it in simple words_ under
+        // `MAT.18.pdf`).
+        expect(RESOURCES_SYSTEM_PROMPT).toContain(
+            'never with a question back about which verse',
         );
         expect(RESOURCES_SYSTEM_PROMPT).toContain('matching explanation');
         expect(RESOURCES_SYSTEM_PROMPT).toContain(
@@ -111,16 +122,30 @@ describe('a question about the Resources files', () => {
         );
     });
 
-    test('the Read menu starts with a brief content description', () => {
-        expect(RESOURCES_READ_MENU_HINT).toContain(
-            'no more than two short sentences',
-        );
-        expect(RESOURCES_READ_MENU_HINT).toContain(
-            'what the attached PDF actually covers',
-        );
-        expect(RESOURCES_READ_MENU_HINT).toContain(
-            'the app adds the verse question and buttons',
-        );
+    test('the Read menu puts the verses being read first', () => {
+        expect(genResourceReadMenuReplies(null)).toEqual([
+            '1',
+            '2',
+            '3',
+            '1-3',
+            'Full chapter',
+        ]);
+        expect(genResourceReadMenuReplies('15-17')).toEqual([
+            '15-17',
+            '1',
+            '2',
+            '3',
+            '1-3',
+            'Full chapter',
+        ]);
+        // Never the same button twice.
+        expect(genResourceReadMenuReplies('1-3')).toEqual([
+            '1-3',
+            '1',
+            '2',
+            '3',
+            'Full chapter',
+        ]);
     });
 
     test('offers the verses after the chosen range and stops at the end', () => {
@@ -347,5 +372,188 @@ describe('a button for another file the assistant read', () => {
             ),
         ).toHaveLength(3);
         expect(genResourceAskActions([], ['a/1.pdf'])).toEqual([]);
+    });
+});
+
+// 2026-10-22, the user's goal with `MAT.18.pdf`'s 🤖 circled under a Reader
+// open on Matthew 18:15-17: _make the chatbot smarter to interact with user
+// for the selected resource file_.
+describe('the card a Resources file opens its tab with', () => {
+    const reading = {
+        bookKey: 'MAT',
+        chapter: 18,
+        verseStart: 15,
+        verseEnd: 17,
+        title: 'ម៉ាថាយ ១៨:១៥-១៧',
+        bibleKey: 'ពគប',
+    };
+
+    test('knows a chapter PDF from a whole-book file and from anything else', () => {
+        expect(toResourceFileKind('MAT.18.pdf')).toBe('chapter-pdf');
+        expect(toResourceFileKind('pdf/MAT.18.pdf')).toBe('chapter-pdf');
+        expect(toResourceFileKind('MAT.0.pdf')).toBe('introduction');
+        expect(toResourceFileKind('YouTube/MAT.0.json')).toBe('introduction');
+        expect(toResourceFileKind('PSA.-1.notes.txt')).toBe('introduction');
+        expect(toResourceFileKind('MAT.18.own')).toBe('other');
+        expect(toResourceFileKind('family-tree.jpeg')).toBe('other');
+        expect(toResourceFileKind('MAT.01.pdf')).toBe('other');
+    });
+
+    test('an introduction is not a chapter to read verse by verse', () => {
+        expect(toResourceChapterRef(['pdf/MAT.0.pdf'])).toBeNull();
+        expect(toResourcePassageRef(['pdf/MAT.0.pdf'], '1')).toBeNull();
+        expect(toResourceChapterRef(['pdf/MAT.0.pdf', 'pdf/MAT.18.pdf'])).toBe(
+            'MAT 18',
+        );
+    });
+
+    test('offers the verses being read, cut to one card', () => {
+        expect(toResourceReadingRange('pdf/MAT.18.pdf', reading)).toBe('15-17');
+        expect(
+            toResourceReadingRange('MAT.18.pdf', {
+                ...reading,
+                verseStart: 6,
+                verseEnd: 6,
+            }),
+        ).toBe('6');
+        expect(
+            toResourceReadingRange('MAT.18.pdf', {
+                ...reading,
+                verseStart: 10,
+                verseEnd: 30,
+            }),
+        ).toBe('10-14');
+        // The whole chapter is no particular passage.
+        expect(
+            toResourceReadingRange('MAT.18.pdf', {
+                ...reading,
+                verseStart: 1,
+                verseEnd: 35,
+            }),
+        ).toBeNull();
+        // Another chapter, another book, no verses, or not a chapter file.
+        expect(toResourceReadingRange('MAT.17.pdf', reading)).toBeNull();
+        expect(toResourceReadingRange('MRK.18.pdf', reading)).toBeNull();
+        expect(
+            toResourceReadingRange('MAT.18.pdf', {
+                bookKey: 'MAT',
+                chapter: 18,
+                title: 'Matthew 18',
+            }),
+        ).toBeNull();
+        expect(toResourceReadingRange('MAT.0.pdf', reading)).toBeNull();
+        expect(toResourceReadingRange('MAT.18.pdf', null)).toBeNull();
+    });
+
+    test('a chapter PDF opens on the verses being read, then Read', () => {
+        const opening = genResourceOpeningAnswer('MAT.18.pdf', reading);
+        expect(opening.text).toContain('MAT.18.pdf is attached below.');
+        expect(opening.text).toContain('Bible chapter study material');
+        expect(opening.text).toContain(
+            'You are reading ម៉ាថាយ ១៨:១៥-១៧ in the Bible Reader. ' +
+                'Press 15-17 to read what this file says about it.',
+        );
+        expect(opening.replies).toEqual([
+            '15-17',
+            'Read',
+            'What is this file about?',
+            'Sum up the main points',
+            'Explain it in simple words',
+        ]);
+        expect(opening.reading).toEqual(reading);
+    });
+
+    test('with nothing being read, it opens as it always did', () => {
+        const opening = genResourceOpeningAnswer('MAT.18.pdf', null);
+        expect(opening.text).not.toContain('You are reading');
+        expect(opening.replies).toEqual([
+            'Read',
+            'What is this file about?',
+            'Sum up the main points',
+            'Explain it in simple words',
+        ]);
+        expect(opening.reading).toBeNull();
+    });
+
+    test('an introduction asks about the passage and has no verse Read', () => {
+        const opening = genResourceOpeningAnswer('MAT.0.pdf', reading);
+        expect(opening.text).not.toContain('arranged by verse');
+        expect(opening.text).toContain('belongs to the whole book');
+        expect(opening.text).toContain(
+            'You are reading ម៉ាថាយ ១៨:១៥-១៧ in the Bible Reader.',
+        );
+        expect(opening.text).not.toContain('Press');
+        expect(opening.replies).toEqual([
+            'What does it say about ម៉ាថាយ ១៨:១៥-១៧?',
+            'What is this file about?',
+            'Sum up the main points',
+            'Explain it in simple words',
+        ]);
+    });
+
+    test('a list of links is not read verse by verse either', () => {
+        const opening = genResourceOpeningAnswer('MAT.0.json', null);
+        expect(opening.replies).not.toContain('Read');
+        expect(opening.replies).not.toContain('1');
+    });
+
+    test('a reading of another book is not said', () => {
+        const opening = genResourceOpeningAnswer('LUK.6.pdf', reading);
+        expect(opening.text).not.toContain('You are reading');
+        expect(opening.replies[0]).toBe('Read');
+        expect(opening.reading).toBeNull();
+    });
+
+    test('the newest card that carries a reading is the one the menu uses', () => {
+        expect(findResourceReading([])).toBeNull();
+        expect(
+            findResourceReading([
+                { resourceReading: { ...reading, verseStart: 2 } },
+                {},
+                { resourceReading: reading },
+                {},
+            ]),
+        ).toBe(reading);
+    });
+});
+
+describe('what the person is reading rides a question that names no verse', () => {
+    const reading = {
+        bookKey: 'MAT',
+        chapter: 18,
+        verseStart: 15,
+        verseEnd: 17,
+        title: 'ម៉ាថាយ ១៨:១៥-១៧',
+        bibleKey: 'ពគប',
+    };
+
+    test('names the passage, its reference and its Bible for the chapter file', () => {
+        const said = toResourceReadingAsk(['pdf/MAT.18.pdf'], reading);
+        expect(said.startsWith('\n\n(They are reading ម៉ាថាយ ១៨:១៥-១៧')).toBe(
+            true,
+        );
+        expect(said).toContain('MAT 18:15-17');
+        expect(said).toContain('do not ask which verse they mean');
+        expect(said).toContain('ref "MAT 18:15-17", bible "ពគប"');
+    });
+
+    test('says only the chapter when the file is not that chapter', () => {
+        const said = toResourceReadingAsk(['pdf/MAT.0.pdf'], reading);
+        expect(said).toContain('(MAT 18)');
+        expect(said).toContain('is about the file');
+        expect(said).not.toContain('owa_lookup_record');
+    });
+
+    test('says nothing for another book or no reading at all', () => {
+        expect(toResourceReadingAsk(['pdf/MRK.18.pdf'], reading)).toBe('');
+        expect(toResourceReadingAsk(['pdf/MAT.18.pdf'], null)).toBe('');
+        expect(toResourceReadingAsk(['pdf/MAT.18.pdf'], undefined)).toBe('');
+    });
+
+    test('leaves the Bible out when the reading named none', () => {
+        const { bibleKey: _bibleKey, ...withoutBible } = reading;
+        const said = toResourceReadingAsk(['MAT.18.pdf'], withoutBible);
+        expect(said).toContain('(ref "MAT 18:15-17")');
+        expect(said).not.toContain('in the Bible "');
     });
 });

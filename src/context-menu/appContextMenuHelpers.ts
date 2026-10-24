@@ -308,7 +308,7 @@ function highlightDomItem(allChildren: HTMLDivElement[], index: number) {
 function checkKeyUpDown(event: any, data: AppContextMenuPropsType) {
     const apply = (item: ContextMenuItemType) => {
         stopEvent();
-        contextControl.setDataDelegator?.(null);
+        data.onClose();
         if (item.disabled) {
             return;
         }

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d2887407-24f9-4c3c-8777-b599e6de5d03
-  modified: 2026-10-17T03:13:50.814Z
+  modified: 2026-10-23T16:05:05.665Z
 ---
 
 When the user's own dev app is up (their `-dev` profile, their real data) and a live check needs
@@ -22,6 +22,16 @@ with `<scratch>\setting.json` seeded
 `{"clientSetting":{"selected-parent-dir":"<scratch>\\data","stay-awake":"false"}}` and
 `<scratch>\data` created.
 
+- **Prove a pid is the scratch one by its `userDataPath` before driving or
+  killing it** (2026-10-23). A loop taking "the first discovery file that is
+  not the user's pid" took the USER's app: they had restarted `electron:dev`
+  meanwhile, so their new pid was not the one excluded. The driver opened a
+  card in their chatbot, a reload hit their pages, and `taskkill //PID … //T`
+  stopped their app. Read the one field (`userDataPath`) of the new file and
+  match it to the scratch folder, every time. And `electron . --owa-open-chatbot`
+  for the scratch profile can come up as a SECOND full app instead of handing
+  over (two came up that day, a `timeout 20` killed neither): list
+  `electron.exe` with its command line afterwards and stop the extra one.
 - **A forgotten one keeps the PC from sleeping** (2026-10-16). Stay Awake is ON when unset
   (`toIsStayAwake`), so a scratch Presenter holds `prevent-display-sleep` for as long as it
   lives. pid 13428 (`release/robot-chatbot-20261015-2145`, launcher gone, window hidden) did
@@ -58,6 +68,14 @@ with `<scratch>\setting.json` seeded
   app pointed the taskbar's tasks at its own folder, and the user's
   **App Help (Chatbot)** opened a new app on it. Now a scratch copy shows
   as a separate taskbar button and leaves the user's menu alone.
+- **A covered scratch window also starves the tools** (2026-10-22): its
+  Reader read `visibilityState: hidden`, the first `owa_lookup_record`
+  answered in 2.5 s and every later one timed out at 65 s (Chromium's
+  hidden-page throttling). Launch it with
+  `--disable-background-timer-throttling --disable-renderer-backgrounding
+  --disable-backgrounding-occluded-windows` before the `.` and it stays
+  `visible` and answers in 0.2-5 s, behind the user's window, without being
+  brought to the front.
 - **A scratch window the user's own window covers stops painting**, and
   `owa_screenshot` then hands back its last frame as if it were now. Trust
   the DOM tools (`owa_list_ui`, a click's `isOnNow`) and the files under the

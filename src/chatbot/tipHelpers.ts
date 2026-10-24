@@ -237,6 +237,17 @@ export function checkIsChatTipHidden(now = Date.now()) {
     return remaining > 0 && remaining <= 2 * CHAT_TIP_HIDE_MS;
 }
 
+/**
+ * The day the line comes back, for the Settings → General list of what was
+ * put away (2026-10-20: _to be able to restore_), the same not-believed rule
+ * as `checkIsChatTipHidden`.
+ */
+export function readChatTipsHiddenAt(now = Date.now()): number | null {
+    const until = Number(getSetting(TIP_HIDDEN_UNTIL_SETTING_NAME));
+    const remaining = until - now;
+    return remaining > 0 && remaining <= 2 * CHAT_TIP_HIDE_MS ? until : null;
+}
+
 export function hideChatTip(now = Date.now()) {
     setSetting(TIP_HIDDEN_UNTIL_SETTING_NAME, `${now + CHAT_TIP_HIDE_MS}`);
 }

@@ -155,6 +155,7 @@ vi.mock('../settingHelpers', () => ({
 }));
 
 vi.mock('./appLocalStorage', () => ({
+    DATA_DIR_MOVE_HIDE_CHANGED_EVENT_NAME: 'data-dir-move-hide-changed',
     DATA_DIR_MOVE_PENDING_SETTING_NAME: 'data-dir-move-pending',
     DATA_DIR_MOVE_RESULT_SESSION_NAME: 'data-dir-move-result',
     SELECTED_PARENT_DIR_SETTING_NAME: 'selected-parent-dir',
@@ -219,10 +220,22 @@ vi.mock('../../server/fileHelpers', () => ({
             return /^OneDrive( - .+)?$/i.test(name);
         });
     },
+    DATA_DIR_MARKER_FILE_NAME: '.owa-data-folder.json',
     DATA_DIR_MOVED_FROM_FLAG_FILE_NAME: 'migration-moved-from.txt',
     DATA_DIR_MOVED_TO_FLAG_FILE_NAME: 'migration-moved-to.txt',
     DEFAULT_DATA_DIR_NAME: 'open-worship-data',
+    ensureDataDirMarkerIdSync: (dirPath: string) => {
+        const markerPath = `${dirPath}/.owa-data-folder.json`;
+        if (!mocks.files.has(markerPath)) {
+            mocks.writeFile(markerPath, '{"id":"a-new-id"}');
+        }
+        return JSON.parse(mocks.files.get(markerPath) as string).id;
+    },
     fsCheckDirExist: async (dirPath: string) => mocks.dirs.has(dirPath),
+    fsCheckFileExist: async (filePath: string) => mocks.files.has(filePath),
+    fsDeleteFile: async (filePath: string) => {
+        mocks.files.delete(filePath);
+    },
     fsCreateDir: async (dirPath: string) => mocks.makeDir(dirPath),
     fsDeleteDir: async (dirPath: string) => mocks.removeTree(dirPath),
     fsGetFileSize: async (filePath: string) => {
@@ -252,7 +265,9 @@ vi.mock('../../server/fileHelpers', () => ({
 
 import {
     checkIsDataDirMoveHidden,
+    copyDataDirTo,
     DATA_DIR_MOVE_HIDE_MS,
+    genDataDirMoveTargetPath,
     hideDataDirMoveForAWhile,
     readDataDirMovedFromFlag,
     readDataDirMovedToFlag,
@@ -533,6 +548,20 @@ describe('runPendingDataDirMove', () => {
         expect(mocks.files.get(`${TARGET_DIR}/images/a.png`)).toBe('png');
     });
 
+    test('names the folder a move would make, and changes nothing to say so', async () => {
+        await expect(genDataDirMoveTargetPath()).resolves.toBe(TARGET_DIR);
+        // An empty default is taken over -- by the move, not by the question.
+        mocks.makeDir(TARGET_DIR);
+        await expect(genDataDirMoveTargetPath()).resolves.toBe(TARGET_DIR);
+        expect(mocks.dirs.has(TARGET_DIR)).toBe(true);
+        // One holding another data folder is left alone, the move goes beside it.
+        seedDataDir(TARGET_DIR);
+        await expect(genDataDirMoveTargetPath()).resolves.toBe(
+            `${TARGET_DIR} (1)`,
+        );
+        expect(mocks.dirs.has(`${TARGET_DIR} (1)`)).toBe(false);
+    });
+
     test('clears a staging folder left by a start that was cut short', async () => {
         mocks.writeFile('/home/.owa/.open-worship-data.moving-1/half', 'x');
         seedDataDir(DESKTOP_DIR);
@@ -579,5 +608,82 @@ describe('the flag files', () => {
         });
         expect(await readDataDirMovedToFlag(TARGET_DIR)).toBeNull();
         expect(await readDataDirMovedFromFlag('/nowhere')).toBeNull();
+    });
+});
+
+// Path Settings' **Copy Data Folder**: a stick, another drive, any folder.
+describe('copying the data folder to where the person chose', () => {
+    const STICK = '/media/stick';
+    const progress = { update: vi.fn() };
+
+    test('makes a whole copy there, a data folder of its own', async () => {
+        seedDataDir(TARGET_DIR);
+        mocks.writeFile(`${TARGET_DIR}/migration-moved-from.txt`, 'Desktop');
+        mocks.makeDir(STICK);
+
+        const result = await copyDataDirTo(TARGET_DIR, STICK, progress);
+
+        expect(result).toEqual({
+            isCopied: true,
+            toDirPath: `${STICK}/open-worship-data`,
+        });
+        const copyPath = `${STICK}/open-worship-data`;
+        expect(mocks.files.get(`${copyPath}/images/a.png`)).toBe('png');
+        // A raw path into the folder copied is the copy's own now: left as
+        // it was, the copy went on using the original's Documents.
+        expect(
+            mocks.files.get(
+                `${copyPath}/local-storage/select-dir-app-document`,
+            ),
+        ).toBe('$DATA_DIR_PATH/documents');
+        expect(
+            mocks.files.get(
+                `${TARGET_DIR}/local-storage/select-dir-app-document`,
+            ),
+        ).toBe(`${TARGET_DIR}/documents`);
+        // Never taken for the folder it came from, never reminding of a move.
+        expect(mocks.files.get(`${copyPath}/.owa-data-folder.json`)).toBe(
+            '{"id":"a-new-id"}',
+        );
+        expect(mocks.files.has(`${copyPath}/migration-moved-from.txt`)).toBe(
+            false,
+        );
+        // The folder in use is as it was.
+        expect(mocks.files.get(`${TARGET_DIR}/.owa-data-folder.json`)).toBe(
+            '{"id":"abc"}',
+        );
+        expect(mocks.files.has(`${TARGET_DIR}/migration-moved-from.txt`)).toBe(
+            true,
+        );
+    });
+
+    test('takes the next free name when one is there already', async () => {
+        seedDataDir(TARGET_DIR);
+        mocks.makeDir(`${STICK}/open-worship-data`);
+
+        const result = await copyDataDirTo(TARGET_DIR, STICK, progress);
+
+        expect(result.toDirPath).toBe(`${STICK}/open-worship-data (1)`);
+        expect(
+            mocks.files.has(`${STICK}/open-worship-data (1)/images/a.png`),
+        ).toBe(true);
+    });
+
+    test('refuses a place inside the data folder itself', async () => {
+        seedDataDir(TARGET_DIR);
+
+        const result = await copyDataDirTo(
+            TARGET_DIR,
+            `${TARGET_DIR}/images`,
+            progress,
+        );
+
+        expect(result.isCopied).toBe(false);
+        expect(result.errorMessage).toBe(
+            'The copy cannot go inside the data folder itself.',
+        );
+        expect(mocks.dirs.has(`${TARGET_DIR}/images/open-worship-data`)).toBe(
+            false,
+        );
     });
 });

@@ -26,6 +26,7 @@ import {
     toAttachmentText,
     toBotImage,
     toBotImages,
+    toReusableAttachments,
 } from './attachmentHelpers';
 
 // The one rule this module exists to keep: bytes live in memory, bounded, for
@@ -710,5 +711,44 @@ describe('a file the tab is still asking about', () => {
         putAttachmentData('shot', 'data:image/png;base64,AAAA');
         expect(toAskedOfModel('', [shot])).toBe(ATTACHMENT_ONLY_QUESTION);
         dropAttachmentData('shot');
+    });
+});
+
+describe('what a question is asked again with', () => {
+    test('keeps a file, a control and a held picture; drops a picture let go of', () => {
+        const pdf = {
+            id: 'r-pdf',
+            kind: 'file' as const,
+            name: 'MAT.18.pdf',
+            mimeType: 'application/pdf',
+            byteSize: 10,
+            filePath: 'C:/Resources/pdf/MAT.18.pdf',
+            number: 1,
+        };
+        const control = {
+            id: 'r-el',
+            kind: 'element' as const,
+            name: 'Clear All',
+            mimeType: 'text/plain',
+            byteSize: 0,
+            summary: 'button Clear All',
+        };
+        const held = {
+            id: 'r-held',
+            kind: 'image' as const,
+            name: 'my screen',
+            mimeType: 'image/png',
+            byteSize: 4,
+        };
+        const gone = { ...held, id: 'r-gone' };
+        putAttachmentData('r-held', 'data:image/png;base64,AAAA');
+        // The same objects, numbers and all: it is the same file.
+        expect(toReusableAttachments([pdf, control, held, gone])).toEqual([
+            pdf,
+            control,
+            held,
+        ]);
+        expect(toReusableAttachments(undefined)).toEqual([]);
+        dropAttachmentData('r-held');
     });
 });

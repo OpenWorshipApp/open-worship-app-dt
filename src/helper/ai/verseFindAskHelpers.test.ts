@@ -14,6 +14,22 @@ describe('asking the assistant to find a verse', () => {
         }
     });
 
+    it('carries the words typed in Find, searched at once', () => {
+        // 2026-10-22: `shepherd` typed in Find was left behind by the 🤖.
+        expect(genVerseFindAsk('ពគប', '  shepherd \n')).toBe(
+            'Help me find a Bible verse in "ពគប": shepherd',
+        );
+        expect(
+            readVerseFindAsk(genVerseFindAsk('ពគប', 'ព្រះយេហូវ៉ាជាអ្នកគង្វាល')),
+        ).toEqual({ bibleKey: 'ពគប', remembered: 'ព្រះយេហូវ៉ាជាអ្នកគង្វាល' });
+        expect(genVerseFindAsk('KJV', '   ')).toBe(
+            'Help me find a Bible verse in "KJV"',
+        );
+        expect(genVerseFindAsk('KJV', 'x'.repeat(500)).length).toBeLessThan(
+            260,
+        );
+    });
+
     it('asks with no Bible when the name cannot ride in the sentence', () => {
         expect(genVerseFindAsk(null)).toBe('Help me find a Bible verse');
         expect(genVerseFindAsk('King James')).toBe(

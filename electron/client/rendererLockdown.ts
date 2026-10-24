@@ -123,6 +123,14 @@ function genDecoyProcess(realProcess: any) {
         nextTick: (callback: () => void) => {
             queueMicrotask(callback);
         },
+        // Electron's renderer redirects `window.onerror` to an
+        // `uncaughtException` event only when something listens for it, and
+        // asks the process how many listeners there are
+        // (lib/renderer/init.ts). A decoy without this method turned every
+        // uncaught error in a locked-down window into a second TypeError --
+        // and hid the first one. Nothing here can register such a listener,
+        // so the honest answer is always 0.
+        listenerCount: (_eventName: string) => 0,
     });
 }
 

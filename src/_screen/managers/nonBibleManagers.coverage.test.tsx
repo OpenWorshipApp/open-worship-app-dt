@@ -36,6 +36,17 @@ const mocks = vi.hoisted(() => ({
     genVideo: vi.fn(),
     genImage: vi.fn(),
     getCameraAndShowMedia: vi.fn(),
+    requestCameraAccess: vi.fn(async () => true),
+    getCurrentLocale: vi.fn(() => 'en'),
+    getLangData: vi.fn(() => null),
+    getLangDataAsync: vi.fn(async () => null),
+    tranByLangData: vi.fn((_data: unknown, period: unknown) => String(period)),
+    layOutMessageStack: vi.fn(),
+    mountScreenShowFrame: vi.fn((_options: any) => ({
+        dispose: vi.fn(async () => {}),
+    })),
+    checkIsScreenShowFrame: vi.fn(() => false),
+    showSimpleToast: vi.fn(),
     genPdfSlide: vi.fn(),
     genPptxSlide: vi.fn(),
     genDocxSlide: vi.fn(),
@@ -111,6 +122,18 @@ vi.mock('../../server/comparisonHelpers', () => ({
     checkIsItemInArray: mocks.checkIsItemInArray,
 }));
 
+vi.mock('../../lang/langHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('../../lang/langHelpers')>();
+    return {
+        ...original,
+        getCurrentLocale: mocks.getCurrentLocale,
+        getLangData: mocks.getLangData,
+        getLangDataAsync: mocks.getLangDataAsync,
+        tranByLangData: mocks.tranByLangData,
+    };
+});
+
 vi.mock('../../helper/loggerHelpers', () => ({
     appLog: mocks.appLog,
 }));
@@ -158,7 +181,32 @@ vi.mock('../screenForegroundHelpers', () => ({
 
 vi.mock('../../helper/cameraHelpers', () => ({
     getCameraAndShowMedia: mocks.getCameraAndShowMedia,
+    requestCameraAccess: mocks.requestCameraAccess,
 }));
+
+vi.mock('../screenShowFrameHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('../screenShowFrameHelpers')>();
+    return {
+        ...original,
+        checkIsScreenShowFrame: mocks.checkIsScreenShowFrame,
+        mountScreenShowFrame: mocks.mountScreenShowFrame,
+    };
+});
+
+vi.mock('../foregroundMessageStackHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<
+            typeof import('../foregroundMessageStackHelpers')
+        >();
+    return { ...original, layOutMessageStack: mocks.layOutMessageStack };
+});
+
+vi.mock('../../toast/toastHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('../../toast/toastHelpers')>();
+    return { ...original, showSimpleToast: mocks.showSimpleToast };
+});
 
 vi.mock('../preview/screenPreviewerHelpers', () => ({
     getAppDocumentListOnScreenSetting: mocks.getAppDocumentListOnScreenSetting,
@@ -292,6 +340,16 @@ describe('non-Bible manager coverage', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mocks.getCurrentLocale.mockReturnValue('en');
+        mocks.getLangData.mockReturnValue(null);
+        mocks.getLangDataAsync.mockResolvedValue(null);
+        mocks.tranByLangData.mockImplementation((_data, period) =>
+            String(period),
+        );
+        mocks.mountScreenShowFrame.mockImplementation(() => ({
+            dispose: vi.fn(async () => {}),
+        }));
+        mocks.checkIsScreenShowFrame.mockReturnValue(false);
         // jsdom implements none of these and writes a "Not
         // implemented" page of stack to the console for every call.
         vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(
@@ -947,6 +1005,407 @@ describe('non-Bible manager coverage', () => {
         expect(ScreenForegroundManager.reviveTimerDates(native)).toBe(native);
     });
 
+    test('a clock period asks for its locale once and retries after a failed load', async () => {
+        mocks.getCurrentLocale.mockReturnValue('km');
+        mocks.getLangData.mockReturnValue(null);
+        mocks.getLangDataAsync.mockRejectedValue(new Error('offline'));
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(48),
+            createEffectManager(),
+        );
+        const timeData = { id: 'time', extraStyle: {} };
+        manager.foregroundData.timeDataList = [timeData] as any;
+        manager.renderTime(timeData as any);
+        const toPeriodText = mocks.genTime.mock.calls.at(-1)?.[2] as (
+            period: string,
+        ) => string;
+
+        expect(toPeriodText('AM')).toBe('AM');
+        expect(mocks.getLangDataAsync).toHaveBeenCalledExactlyOnceWith('km');
+        await Promise.resolve();
+        expect(toPeriodText('PM')).toBe('PM');
+        expect(mocks.getLangDataAsync).toHaveBeenCalledTimes(2);
+        expect(mocks.tranByLangData).toHaveBeenLastCalledWith(null, 'PM');
+        manager.delete();
+    });
+
+    test('restores older message shapes and drops invalid Screen Show ids', () => {
+        const messageDataList = [{ id: 'editor-1', textList: ['Current'] }];
+        expect(
+            ScreenForegroundManager.parseAllForegroundData({
+                messageDataList,
+                messageData: { textList: ['Old'] },
+            }).messageDataList,
+        ).toBe(messageDataList);
+        expect(
+            ScreenForegroundManager.parseAllForegroundData({
+                messageData: { textList: ['Old'] },
+            }).messageDataList,
+        ).toEqual([{ id: 'message-all', textList: ['Old'] }]);
+        expect(
+            ScreenForegroundManager.parseAllForegroundData({
+                alertData: { text: 'Alert', extraStyle: { color: 'red' } },
+            }).messageDataList,
+        ).toEqual([
+            {
+                id: 'message-all',
+                textList: ['Alert'],
+                intervalSecond: null,
+                extraStyle: { color: 'red' },
+            },
+        ]);
+        expect(
+            ScreenForegroundManager.parseAllForegroundData({
+                announcementData: {
+                    textList: ['One', 'Two'],
+                    intervalSecond: 5,
+                    extraStyle: {},
+                },
+            }).messageDataList,
+        ).toEqual([
+            {
+                id: 'message-all',
+                textList: ['One', 'Two'],
+                intervalSecond: 5,
+                extraStyle: {},
+            },
+        ]);
+        expect(
+            ScreenForegroundManager.parseAllForegroundData({
+                screenDataList: 'not a list',
+            }).screenDataList,
+        ).toEqual([]);
+        expect(
+            ScreenForegroundManager.parseAllForegroundData({
+                screenDataList: [
+                    { id: 1 },
+                    null,
+                    { id: '2' },
+                    { id: -1 },
+                    { id: 0 },
+                ],
+            }).screenDataList,
+        ).toEqual([{ id: 1 }, { id: 0 }]);
+
+        const saved = {
+            countdownData: { dateTime: '2026-10-07T20:00:00.000Z' },
+        };
+        const restored = ScreenForegroundManager.parseAllForegroundData(saved);
+        expect(saved.countdownData.dateTime).toBe('2026-10-07T20:00:00.000Z');
+        expect(restored.countdownData?.dateTime).toBeInstanceOf(Date);
+    });
+
+    test('mounted roots release only their own foreground containers', async () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(42),
+            createEffectManager(),
+        );
+        const unattachedRoot = manager.rootContainer;
+        expect(manager.rootContainer).not.toBe(unattachedRoot);
+        const unattachedBehindRoot = manager.rootContainerBehind;
+        expect(manager.rootContainerBehind).not.toBe(unattachedBehindRoot);
+
+        const frontRoot = document.createElement('div');
+        const behindRoot = document.createElement('div');
+        document.body.append(frontRoot, behindRoot);
+        manager.rootContainer = frontRoot;
+        manager.rootContainerBehind = behindRoot;
+        manager.rootContainer = frontRoot;
+        manager.rootContainerBehind = behindRoot;
+
+        const frontData = { id: 'front', isBehind: false };
+        const behindData = { id: 'behind', isBehind: true };
+        manager.foregroundData.messageDataList = [frontData, behindData] as any;
+        const removeFront = vi.fn();
+        const removeBehind = vi.fn();
+        const frontContainer = manager.createDivContainer(
+            frontData,
+            removeFront,
+        )!;
+        const behindContainer = manager.createDivContainer(
+            behindData,
+            removeBehind,
+        )!;
+        expect(frontContainer.parentElement).toBe(frontRoot);
+        expect(behindContainer.parentElement).toBe(behindRoot);
+
+        manager.releaseRootContainer(document.createElement('div'), false);
+        expect(frontContainer.isConnected).toBe(true);
+        mocks.appProvider.isPageScreen = true;
+        manager.releaseRootContainer(frontRoot, false);
+        expect(frontContainer.isConnected).toBe(true);
+        mocks.appProvider.isPageScreen = false;
+        manager.releaseRootContainer(frontRoot, false);
+        await Promise.resolve();
+        expect(removeFront).toHaveBeenCalledWith(frontContainer);
+        expect(frontContainer.isConnected).toBe(false);
+        expect(behindContainer.isConnected).toBe(true);
+        manager.releaseRootContainer(behindRoot, true);
+        await Promise.resolve();
+        expect(removeBehind).toHaveBeenCalledWith(behindContainer);
+        expect(behindContainer.isConnected).toBe(false);
+        expect(manager.rootContainer).not.toBe(frontRoot);
+        expect(manager.rootContainerBehind).not.toBe(behindRoot);
+        manager.delete();
+    });
+
+    test('message layout is coalesced and re-run when fonts finish loading', () => {
+        const callbacks: Array<(time: number) => void> = [];
+        const cancelFrame = vi.fn();
+        const addEventListener = vi.fn();
+        const removeEventListener = vi.fn();
+        const fonts = { addEventListener, removeEventListener };
+        const originalFonts = Object.getOwnPropertyDescriptor(
+            document,
+            'fonts',
+        );
+        Object.defineProperty(document, 'fonts', {
+            configurable: true,
+            value: fonts,
+        });
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            (callback: (time: number) => void) => {
+                callbacks.push(callback);
+                return callbacks.length;
+            },
+        );
+        vi.stubGlobal('cancelAnimationFrame', cancelFrame);
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(43),
+            createEffectManager(),
+        );
+        const layout = vi.spyOn(manager, 'layOutMessages');
+
+        try {
+            manager.scheduleMessageLayout();
+            manager.scheduleMessageLayout();
+            expect(callbacks).toHaveLength(1);
+            expect(addEventListener).toHaveBeenCalledTimes(1);
+            expect(addEventListener).toHaveBeenCalledWith(
+                'loadingdone',
+                expect.any(Function),
+            );
+
+            callbacks[0](0);
+            expect(layout).toHaveBeenCalledTimes(1);
+            const onFontsLoaded = addEventListener.mock.calls[0][1];
+            onFontsLoaded();
+            expect(callbacks).toHaveLength(2);
+            manager.delete();
+            expect(cancelFrame).toHaveBeenCalledWith(2);
+            expect(removeEventListener).toHaveBeenCalledWith(
+                'loadingdone',
+                onFontsLoaded,
+            );
+        } finally {
+            vi.unstubAllGlobals();
+            if (originalFonts) {
+                Object.defineProperty(document, 'fonts', originalFonts);
+            } else {
+                delete (document as any).fonts;
+            }
+        }
+    });
+
+    test('message stacks separate layers, skip rotating text, and ignore detached rows', () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(44),
+            createEffectManager(),
+        );
+        const root = document.createElement('div');
+        const behindRoot = document.createElement('div');
+        document.body.append(root, behindRoot);
+        manager.rootContainer = root;
+        manager.rootContainerBehind = behindRoot;
+
+        const frontOne = {
+            id: 'one',
+            intervalSecond: null,
+            textList: ['One'],
+            stackKey: 'service',
+        };
+        const frontTwo = {
+            id: 'two',
+            intervalSecond: null,
+            textList: ['Two'],
+            stackKey: 'service',
+        };
+        const behind = {
+            id: 'behind',
+            intervalSecond: null,
+            textList: ['Behind'],
+            stackKey: 'service',
+            isBehind: true,
+        };
+        const rotating = {
+            id: 'rotating',
+            intervalSecond: 2,
+            textList: ['First', 'Second'],
+        };
+        const detached = {
+            id: 'detached',
+            intervalSecond: null,
+            textList: ['Gone'],
+        };
+        manager.foregroundData.messageDataList = [
+            frontOne,
+            frontTwo,
+            behind,
+            rotating,
+            detached,
+        ] as any;
+        const addMessageElement = (data: any) => {
+            const container = manager.createDivContainer(data)!;
+            const message = document.createElement('div');
+            message.className = 'foreground-message';
+            container.appendChild(message);
+            return { container, message };
+        };
+        const one = addMessageElement(frontOne);
+        const two = addMessageElement(frontTwo);
+        const behindElement = addMessageElement(behind);
+        addMessageElement(rotating);
+        const detachedElement = addMessageElement(detached);
+        detachedElement.container.remove();
+
+        manager.layOutMessages();
+
+        expect(mocks.layOutMessageStack).toHaveBeenCalledTimes(2);
+        expect(mocks.layOutMessageStack).toHaveBeenNthCalledWith(
+            1,
+            [one.message, two.message],
+            720,
+        );
+        expect(mocks.layOutMessageStack).toHaveBeenNthCalledWith(
+            2,
+            [behindElement.message],
+            720,
+        );
+        manager.delete();
+    });
+
+    test('a missing camera is explained in the presenter but stays quiet on screen', () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(45),
+            createEffectManager(),
+        );
+        manager.renderCamera({
+            deviceId: 'camera-1',
+            label: 'Front camera',
+            extraStyle: {},
+        } as any);
+        const cameraOptions =
+            mocks.getCameraAndShowMedia.mock.calls.at(-1)?.[0];
+        cameraOptions.onUnavailable('Front camera');
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Camera Not Available',
+            'Could not open the camera: Front camera',
+        );
+
+        mocks.appProvider.isPageScreen = true;
+        cameraOptions.onUnavailable('Front camera');
+        expect(mocks.showSimpleToast).toHaveBeenCalledTimes(1);
+        mocks.appProvider.isPageScreen = false;
+        manager.delete();
+    });
+
+    test('Screen Show adds, replaces, and removes its source without creating a loop', () => {
+        const base = createScreenManagerBase(46);
+        base.sendScreenShowSnapshots = vi.fn();
+        const manager = new ScreenForegroundManager(
+            base,
+            createEffectManager(),
+        );
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+        manager.rootContainer = root;
+        const first = { id: 47, extraStyle: { opacity: 0.5 } };
+
+        expect(manager.addScreenData(first as any)).toBe(true);
+        expect(manager.foregroundData.screenDataList).toEqual([first]);
+        expect(base.sendScreenShowSnapshots).toHaveBeenCalledWith([47]);
+        expect(mocks.mountScreenShowFrame).toHaveBeenCalledTimes(1);
+        const firstMount = mocks.mountScreenShowFrame.mock.calls[0][0];
+        expect(firstMount).toMatchObject({
+            sourceScreenId: 47,
+            ownScreenId: 46,
+            parentContainer: expect.any(HTMLElement),
+            extraStyle: { opacity: 0.5 },
+        });
+        expect(firstMount.getSnapshot()).toBeNull();
+
+        expect(manager.addScreenData(first as any)).toBe(true);
+        expect(mocks.mountScreenShowFrame).toHaveBeenCalledTimes(1);
+        expect(ScreenForegroundManager.getScreenShowTargetIds(47)).toEqual([
+            46,
+        ]);
+
+        const changed = { id: 47, extraStyle: { opacity: 0.8 } };
+        expect(manager.addScreenData(changed as any)).toBe(true);
+        expect(manager.foregroundData.screenDataList).toEqual([changed]);
+        expect(mocks.mountScreenShowFrame).toHaveBeenCalledTimes(2);
+        expect(base.sendScreenShowSnapshots).toHaveBeenCalledTimes(1);
+
+        const sourceManager = new ScreenForegroundManager(
+            createScreenManagerBase(47),
+            createEffectManager(),
+        );
+        expect(sourceManager.addScreenData({ id: 46 } as any)).toBe(false);
+        expect(mocks.showSimpleToast).toHaveBeenLastCalledWith(
+            'Screen Show',
+            'These screens would show each other',
+        );
+        expect(manager.addScreenData({ id: 46 } as any)).toBe(false);
+        expect(mocks.showSimpleToast).toHaveBeenLastCalledWith(
+            'Screen Show',
+            'A screen cannot show itself',
+        );
+        expect(manager.addScreenData({ id: 'not a screen' } as any)).toBe(
+            false,
+        );
+
+        mocks.checkIsScreenShowFrame.mockReturnValue(true);
+        manager.renderScreen({ id: 48 } as any);
+        expect(mocks.mountScreenShowFrame).toHaveBeenCalledTimes(2);
+        mocks.checkIsScreenShowFrame.mockReturnValue(false);
+
+        ScreenForegroundManager.removeScreenShowSource(47);
+        expect(manager.foregroundData.screenDataList).toEqual([]);
+        expect(
+            mocks.mountScreenShowFrame.mock.results[0].value.dispose,
+        ).toHaveBeenCalled();
+        manager.delete();
+        sourceManager.delete();
+    });
+
+    test('actions aimed at a screen without a manager are reported and skipped', async () => {
+        vi.spyOn(ScreenForegroundManager, 'chooseScreenIds').mockResolvedValue([
+            999,
+        ]);
+        await ScreenForegroundManager.setData(
+            new MouseEvent('click'),
+            vi.fn(),
+            false,
+        );
+        ScreenForegroundManager.receiveSyncScreen({
+            screenId: 998,
+            type: 'foreground',
+            data: {},
+        } as any);
+
+        expect(mocks.showSimpleToast).toHaveBeenNthCalledWith(
+            1,
+            'Failed to apply to screen. Please make sure the screen is open.',
+            'Error',
+        );
+        expect(mocks.showSimpleToast).toHaveBeenNthCalledWith(
+            2,
+            'Failed to apply to screen. Please make sure the screen is open.',
+            'error',
+        );
+    });
+
     test('covers ScreenVaryAppDocumentManager selection, render branches, cleanup, loading, and sync clearing', async () => {
         const base = createScreenManagerBase(51);
         const effect = createEffectManager();
@@ -1504,6 +1963,130 @@ describe('non-Bible manager coverage', () => {
 
         expect(effectManager.styleAnimList.fade.animOut).not.toHaveBeenCalled();
         expect(effectManager.styleAnimList.fade.animIn).not.toHaveBeenCalled();
+    });
+
+    test('releases background roots without clearing a replacement root', () => {
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(29),
+            createEffectManager(),
+        );
+        const currentRoot = document.createElement('div');
+        const projectedVideo = document.createElement('video');
+        currentRoot.appendChild(projectedVideo);
+        manager.rootContainer = currentRoot;
+        const clearTracks = vi.fn();
+        manager.clearTracks = clearTracks;
+
+        mocks.appProvider.isPageScreen = true;
+        manager.releaseRootContainer(currentRoot);
+        expect(currentRoot.contains(projectedVideo)).toBe(true);
+        expect(HTMLMediaElement.prototype.load).not.toHaveBeenCalled();
+
+        mocks.appProvider.isPageScreen = false;
+        const staleRoot = document.createElement('div');
+        staleRoot.appendChild(document.createElement('video'));
+        manager.releaseRootContainer(staleRoot);
+        expect(staleRoot.children).toHaveLength(0);
+        expect(manager.rootContainer).toBe(currentRoot);
+        expect(clearTracks).not.toHaveBeenCalled();
+
+        manager.releaseRootContainer(currentRoot);
+        expect(currentRoot.children).toHaveLength(0);
+        expect(manager.rootContainer).toBeNull();
+        expect(clearTracks).toHaveBeenCalledOnce();
+        expect(manager.clearTracks).not.toBe(clearTracks);
+    });
+
+    test('plays background video sound only on the selected virtual display copy', () => {
+        mocks.appProvider.isPageScreen = true;
+        const base = createScreenManagerBase(30);
+        base.isOnVirtualDisplay = true;
+        const manager = new ScreenBackgroundManager(
+            base,
+            createEffectManager(),
+        );
+        const root = document.createElement('div');
+        const first = document.createElement('video');
+        first.id = 'video-first';
+        const second = document.createElement('video');
+        second.id = 'video-second';
+        Object.defineProperty(first, 'paused', {
+            configurable: true,
+            value: false,
+        });
+        Object.defineProperty(second, 'paused', {
+            configurable: true,
+            value: false,
+        });
+        root.append(first, second);
+        document.body.appendChild(root);
+        manager.rootContainer = root;
+
+        manager.receiveSyncVideoSound({
+            screenId: 30,
+            type: 'background-video-sound',
+            data: { videoId: 'video-second', isPlaying: true, volume: 0.4 },
+        } as any);
+        manager.applyVideoSound(second);
+        expect(first.muted).toBe(true);
+        expect(second.muted).toBe(false);
+        expect(second.volume).toBe(0.4);
+
+        manager.receiveSyncVideoSound({
+            screenId: 30,
+            type: 'background-video-sound',
+            data: { videoId: 'video-second', isPlaying: false, volume: 0.2 },
+        } as any);
+        expect(second.muted).toBe(true);
+        expect(second.volume).toBe(0.2);
+
+        manager.receiveSyncVideoSound({
+            screenId: 30,
+            type: 'background-video-sound',
+            data: { videoId: 'video-second', isPlaying: true, volume: 2 },
+        } as any);
+        expect(second.muted).toBe(true);
+        expect(second.volume).toBe(0.2);
+        root.remove();
+    });
+
+    test('waits for a video picture only while media is loading', async () => {
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(31),
+            createEffectManager(),
+        );
+        const ready = document.createElement('video');
+        Object.defineProperties(ready, {
+            readyState: { configurable: true, value: 2 },
+            networkState: { configurable: true, value: 2 },
+        });
+        await expect(
+            manager._waitForVideoPicture(ready),
+        ).resolves.toBeUndefined();
+
+        const empty = document.createElement('video');
+        Object.defineProperties(empty, {
+            readyState: { configurable: true, value: 0 },
+            networkState: { configurable: true, value: 0 },
+        });
+        await expect(
+            manager._waitForVideoPicture(empty),
+        ).resolves.toBeUndefined();
+
+        vi.useFakeTimers();
+        const waiting = document.createElement('video');
+        Object.defineProperties(waiting, {
+            readyState: { configurable: true, value: 1 },
+            networkState: { configurable: true, value: 2 },
+        });
+        const loaded = manager._waitForVideoPicture(waiting);
+        waiting.dispatchEvent(new Event('loadeddata'));
+        await expect(loaded).resolves.toBeUndefined();
+
+        const timedOut = manager._waitForVideoPicture(waiting);
+        await vi.advanceTimersByTimeAsync(1000);
+        await expect(timedOut).resolves.toBeUndefined();
+        vi.useRealTimers();
     });
 
     test('the fading-at-end preference defaults to on', async () => {

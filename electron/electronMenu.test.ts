@@ -63,7 +63,12 @@ vi.mock('./client/appInfo', () => ({
     },
 }));
 
-import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
+import {
+    initMenu,
+    sendMenuClicked,
+    sendMenuClickedToAllWindows,
+    setCustomMenusData,
+} from './electronMenu';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow } from './testUtils';
 
@@ -267,6 +272,25 @@ describe('electronMenu', () => {
         expect(
             sendMenuClicked({ isOpenSearch: true }, destroyedWin as any),
         ).toBe(false);
+        expect(destroyedWin.webContents.send).not.toHaveBeenCalled();
+    });
+
+    test('sends a menu click to every live window at once', () => {
+        const mainWin = new electronMockState.BrowserWindowMock();
+        const popupWin = new electronMockState.BrowserWindowMock();
+        const destroyedWin = createMockBrowserWindow({
+            isDestroyed: vi.fn(() => true),
+        });
+        electronMockState.browserWindows.push(destroyedWin);
+
+        sendMenuClickedToAllWindows({ isOpenDailyTip: true });
+
+        for (const win of [mainWin, popupWin]) {
+            expect(win.webContents.send).toHaveBeenCalledWith(
+                'app:main:menu-item-clicked',
+                { isOpenDailyTip: true },
+            );
+        }
         expect(destroyedWin.webContents.send).not.toHaveBeenCalled();
     });
 

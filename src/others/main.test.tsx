@@ -8,9 +8,9 @@ const mocks = vi.hoisted(() => ({
     isPagePresenter: false,
     isPageReader: false,
     isPopup: false,
-    missingParentDirPath: null as string | null,
+    isPageSetting: false,
+    isOnOwnFolder: false,
     selectedParentDir: null as string | null,
-    foundDirs: [] as string[],
     locale: 'en',
     fontFamily: 'Test Font' as string | undefined,
     settings: new Map<string, string>(),
@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
     checkColorNotes: vi.fn(async () => {}),
     setSelectedParentDir: vi.fn(async () => {}),
     clearStorage: vi.fn(async () => {}),
-    openGeneralSetting: vi.fn(),
+    openPathSetting: vi.fn(),
     rootRender: vi.fn(),
     addDomListener: vi.fn(),
     initWidgetMenu: vi.fn(),
@@ -34,7 +34,6 @@ const mocks = vi.hoisted(() => ({
     initMeter: vi.fn(),
     initDragDrop: vi.fn(),
     popupWindow: vi.fn(),
-    findDataDirs: vi.fn((_candidates: string[]) => [] as string[]),
     desktopDataDirs: ['/desktop/open-worship-data'],
     existingPaths: new Set<string>(),
     askToMove: vi.fn(async (_dirPath: string) => {}),
@@ -69,6 +68,9 @@ vi.mock('../server/appProvider', () => ({
         get isPageReader() {
             return mocks.isPageReader;
         },
+        get isPageSetting() {
+            return mocks.isPageSetting;
+        },
         init: mocks.initProvider,
         reload: mocks.reload,
     },
@@ -98,8 +100,8 @@ vi.mock('../helper/domHelpers', () => ({
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     DATA_DIR_MOVE_RESULT_SESSION_NAME: 'data-dir-move-result',
     appLocalStorage: {
-        get missingParentDirPath() {
-            return mocks.missingParentDirPath;
+        get isOnOwnFolder() {
+            return mocks.isOnOwnFolder;
         },
         getSelectedParentDirectory: async () => mocks.selectedParentDir,
         setSelectedParentDirectory: mocks.setSelectedParentDir,
@@ -115,19 +117,13 @@ vi.mock('../helper/appHooks', () => ({
     },
 }));
 vi.mock('../setting/settingHelpers', () => ({
-    openGeneralSetting: mocks.openGeneralSetting,
+    openPathSetting: mocks.openPathSetting,
 }));
 vi.mock('../server/fileHelpers', () => ({
     checkIsDesktopDataDir: (dirPath: string) =>
         mocks.desktopDataDirs.includes(dirPath),
     DATA_DIR_MOVED_FROM_FLAG_FILE_NAME: 'migration-moved-from.txt',
-    findDataDirsOnVolumesSync: (candidates: string[]) => {
-        mocks.findDataDirs(candidates);
-        return mocks.foundDirs;
-    },
     fsExistSync: (filePath: string) => mocks.existingPaths.has(filePath),
-    getDefaultDataDirPath: () => '/home/.owa/open-worship-data',
-    getDesktopDataDirPathList: () => mocks.desktopDataDirs,
     pathJoin: (...parts: string[]) => parts.join('/'),
 }));
 vi.mock('../setting/directory-setting/dataDirMoveAskHelpers', () => ({
@@ -135,9 +131,9 @@ vi.mock('../setting/directory-setting/dataDirMoveAskHelpers', () => ({
     remindOldDataDirCopy: mocks.remindOldCopy,
     showDataDirMoveResult: mocks.showMoveResult,
 }));
-vi.mock('../helper/sanitizeHelpers', () => ({
-    escapeHtmlText: (value: string) => value.replaceAll('<', '&lt;'),
-}));
+vi.mock('./AppAssistantComp', () => ({ default: () => null }));
+vi.mock('./DesktopDataDirCardComp', () => ({ default: () => null }));
+vi.mock('../popup-widget/HandleAlertComp', () => ({ default: () => null }));
 vi.mock('./themeHelpers', () => ({
     useThemeSource: () => ({ theme: 'dark' }),
 }));
@@ -177,11 +173,11 @@ beforeEach(() => {
     mocks.isPagePresenter = false;
     mocks.isPageReader = false;
     mocks.isPopup = false;
-    mocks.missingParentDirPath = null;
+    mocks.isPageSetting = false;
+    mocks.isOnOwnFolder = false;
     mocks.existingPaths.clear();
     sessionStorage.clear();
     mocks.selectedParentDir = null;
-    mocks.foundDirs = [];
     mocks.locale = 'en';
     mocks.fontFamily = 'Test Font';
     mocks.confirm.mockResolvedValue(false);
@@ -267,43 +263,50 @@ describe('data directory startup', () => {
         await mocks.effects[0]();
     }
 
-    test('a missing directory offers retry or opens General Settings', async () => {
-        mocks.missingParentDirPath = '/usb/<missing>';
-        mocks.confirm.mockResolvedValueOnce(true);
+    test('with no data folder in use, opens Path Settings and asks nothing', async () => {
+        // None chosen, or the chosen one not there: the same for the start.
+        mocks.isOnOwnFolder = true;
         await checkDirectory();
-        expect(mocks.confirm.mock.calls[0][1]).toContain('&lt;missing>');
-        expect(mocks.reload).toHaveBeenCalledOnce();
-
-        mocks.effects.length = 0;
-        mocks.confirm.mockResolvedValueOnce(false);
-        await checkDirectory();
-        expect(mocks.openGeneralSetting).toHaveBeenCalledOnce();
-    });
-
-    test('offers a found folder and persists acceptance before reloading', async () => {
-        mocks.foundDirs = ['/usb/open-worship-data'];
-        mocks.confirm.mockResolvedValueOnce(true);
-        await checkDirectory();
-        // The new default first, then the old one on the Desktop.
-        expect(mocks.findDataDirs).toHaveBeenCalledWith([
-            '/home/.owa/open-worship-data',
-            '/desktop/open-worship-data',
-        ]);
-        expect(mocks.setSelectedParentDir).toHaveBeenCalledWith(
-            '/usb/open-worship-data',
-        );
-        expect(mocks.reload).toHaveBeenCalledOnce();
-    });
-
-    test('falls back to folder settings when discovery is declined', async () => {
-        mocks.foundDirs = ['/usb/open-worship-data'];
-        mocks.confirm.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
-        await checkDirectory();
-        expect(mocks.confirm.mock.calls[1][0]).toBe(
-            'No Parent Directory Selected',
-        );
-        expect(mocks.openGeneralSetting).toHaveBeenCalledOnce();
+        expect(mocks.confirm).not.toHaveBeenCalled();
+        expect(mocks.openPathSetting).toHaveBeenCalledOnce();
         expect(mocks.setSelectedParentDir).not.toHaveBeenCalled();
+        expect(mocks.reload).not.toHaveBeenCalled();
+    });
+
+    test('with no data folder, a window shows only that one must be chosen', () => {
+        mocks.isOnOwnFolder = true;
+        const markup = renderToStaticMarkup(
+            <RenderAppComp>
+                <span>songs</span>
+            </RenderAppComp>,
+        );
+        expect(markup).toContain('No Parent Directory Selected');
+        expect(markup).toContain('Go to Settings');
+        // The assistant needs no data folder.
+        expect(markup).toContain('App Assistant');
+        expect(markup).not.toContain('songs');
+    });
+
+    test('Settings is never gated: the folder is chosen there', () => {
+        mocks.isOnOwnFolder = true;
+        mocks.isPageSetting = true;
+        const markup = renderToStaticMarkup(
+            <RenderAppComp>
+                <span>path settings</span>
+            </RenderAppComp>,
+        );
+        expect(markup).toContain('path settings');
+        expect(markup).not.toContain('No Parent Directory Selected');
+    });
+
+    test('with a data folder in use, a window shows what it holds', () => {
+        const markup = renderToStaticMarkup(
+            <RenderAppComp>
+                <span>songs</span>
+            </RenderAppComp>,
+        );
+        expect(markup).toContain('songs');
+        expect(markup).not.toContain('No Parent Directory Selected');
     });
 
     test('asks to move a Desktop data folder once per launch', async () => {

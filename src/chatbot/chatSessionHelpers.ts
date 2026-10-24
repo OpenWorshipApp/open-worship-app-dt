@@ -46,6 +46,10 @@ import {
     type LookupSubjectType,
 } from './lookupChatHelpers';
 import {
+    toValidResourceReading,
+    type ResourceReadingType,
+} from '../helper/ai/resourceReadingAskHelpers';
+import {
     toValidLookupAsk,
     type LookupAskType,
 } from '../helper/ai/lookupAskHelpers';
@@ -134,6 +138,10 @@ export type ChatMessageType = {
     // An answer of that conversation, so the next plain line under it is
     // asked about the same record.
     isLookupAnswer?: true;
+    // The opening card of a conversation about a Resources file: the passage
+    // the Bible Reader was on when its 🤖 was pressed, so the Read menu can
+    // offer those verses first (`resourceReadingAskHelpers.ts`).
+    resourceReading?: ResourceReadingType;
     // An answer of a conversation about the Bible Reader's own material
     // (`bibleReaderChatHelpers.ts`), so the next plain line under it
     // ("and chapter 5?") stays in it.
@@ -548,6 +556,14 @@ function toValidLookupField(raw: any) {
     return lookup === null ? {} : { lookup };
 }
 
+function toValidResourceReadingField(raw: any) {
+    if (raw.author !== 'bot' || raw.resourceReading === undefined) {
+        return {};
+    }
+    const resourceReading = toValidResourceReading(raw.resourceReading);
+    return resourceReading === null ? {} : { resourceReading };
+}
+
 function toValidLookupAwaitsField(raw: any) {
     if (raw.author !== 'bot' || raw.lookupAwaits === undefined) {
         return {};
@@ -589,6 +605,7 @@ function toValidMessage(raw: any): ChatMessageType | null {
             ? { verseFind: raw.verseFind }
             : {}),
         ...toValidLookupField(raw),
+        ...toValidResourceReadingField(raw),
         ...(raw.author === 'bot' && raw.isLookupAnswer === true
             ? { isLookupAnswer: true as const }
             : {}),

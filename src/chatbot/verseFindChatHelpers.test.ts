@@ -52,6 +52,7 @@ import {
     toVerseHeadStartAsk,
     toVerseTranslationAsk,
     describeVerseOpened,
+    genVerseOpenAction,
     genVerseOpenActions,
     readFoundVerses,
     readVerseFindThread,
@@ -62,6 +63,12 @@ import {
     toShownVerseRef,
     genVerseFindThanksAnswer,
     toVerseWebSearchUrl,
+    EVERY_VERSE_LABEL,
+    MORE_VERSES_LABEL,
+    genHeadStartBrowseAction,
+    genVerseBrowseAction,
+    genVerseWhereLine,
+    readFoundPassages,
 } from './verseFindChatHelpers';
 
 const BIBLES = {
@@ -894,5 +901,226 @@ describe('genVerseFindThanksAnswer', () => {
                 'thank you',
             ),
         ).toBeNull();
+    });
+});
+
+describe('where a search’s words gather', () => {
+    // `owa_find_verse` for Noah and the dove in the Khmer Bible, 2026-10-22.
+    const result = {
+        bible: 'ពគប',
+        total: 74,
+        verses: [
+            {
+                key: 'GEN 8:11',
+                ref: 'Genesis 8:11',
+                text: 'ព្រាប​នោះ',
+                title: 'លោកុប្បត្តិ ៨:១១',
+            },
+        ],
+        next: 8,
+        passages: [
+            {
+                ref: 'Genesis 7-9',
+                key: 'GEN 8',
+                verses: 30,
+                title: 'លោកុប្បត្តិ ៧-៩',
+                keyTitle: 'លោកុប្បត្តិ ៨',
+            },
+            { ref: 'broken', key: 'nothing' },
+        ],
+        byBook: [
+            { book: 'Genesis', key: 'GEN', verses: 9, title: 'លោកុប្បត្តិ' },
+            { book: 'Isaiah', key: 'ISA', verses: 2 },
+        ],
+    };
+
+    it('reads a passage as the chapter its key opens', () => {
+        expect(readFoundPassages(result, 'ពគប')).toEqual([
+            {
+                key: 'GEN 8',
+                ref: 'Genesis 8',
+                bible: 'ពគប',
+                title: 'លោកុប្បត្តិ ៨',
+                passage: {
+                    ref: 'Genesis 7-9',
+                    title: 'លោកុប្បត្តិ ៧-៩',
+                    from: 7,
+                    to: 9,
+                },
+            },
+        ]);
+        // The passages come first: a story is the place it is told.
+        expect(
+            readFoundVerses(JSON.stringify(result)).map((one) => {
+                return one.key;
+            }),
+        ).toEqual(['GEN 8', 'GEN 8:11']);
+    });
+
+    it('gives a passage its button when the answer names a chapter of it', () => {
+        const found = readFoundVerses(JSON.stringify(result));
+        for (const answer of [
+            'The flood is told in **Genesis 7-9**.',
+            'Read Genesis 7 first.',
+            'នៅក្នុង **លោកុប្បត្តិ ៦ ដល់ ៩**',
+        ]) {
+            expect(
+                pickNamedVerses(found, answer, 'ពគប').map((one) => {
+                    return one.key;
+                }),
+                answer,
+            ).toEqual(['GEN 8']);
+        }
+        // A verse of it is the verse's button, not the passage's.
+        expect(
+            pickNamedVerses(found, 'See Genesis 8:11.', 'ពគប').map((one) => {
+                return one.key;
+            }),
+        ).toEqual(['GEN 8:11']);
+        // A chapter outside it is no name of it.
+        expect(pickNamedVerses(found, 'Genesis 12 is Abram.', 'ពគប')).toEqual(
+            [],
+        );
+    });
+
+    it('gives a chapter named whole its button when a verse found is in it', () => {
+        // The after-run of 2026-10-22: "told in: Luke 10", and a button for
+        // Luke 10:33-34 alone.
+        const found = readFoundVerses(
+            JSON.stringify({
+                bible: 'ពគប',
+                verses: [
+                    {
+                        key: 'LUK 10:33',
+                        ref: 'Luke 10:33',
+                        text: 'សាសន៍​សាម៉ារី',
+                        title: 'លូកា ១០:៣៣',
+                    },
+                ],
+            }),
+        );
+        const named = pickNamedVerses(
+            found,
+            'The story is told in **លូកា ១០**. **លូកា ១០:៣៣** — …',
+            'ពគប',
+        );
+        expect(
+            named.map((one) => {
+                return [one.key, one.title];
+            }),
+        ).toEqual([
+            ['LUK 10', 'លូកា ១០'],
+            ['LUK 10:33', 'លូកា ១០:៣៣'],
+        ]);
+        expect(genVerseOpenAction(named[0]).args).toEqual({
+            bible: 'ពគប',
+            open: 'LUK 10',
+            title: 'លូកា ១០',
+        });
+    });
+
+    it('says where they gather and how many each book holds', () => {
+        expect(genVerseWhereLine(result, 'ពគប')).toBe(
+            'These words gather in **Genesis 7-9**. By book: Genesis 9, ' +
+                'Isaiah 2.',
+        );
+        expect(genVerseWhereLine({ bible: 'KJV', verses: [] }, 'KJV')).toBe('');
+    });
+});
+
+describe('every verse with their words', () => {
+    const page = (from: number, next?: number) => {
+        return {
+            bible: 'KJV',
+            total: 10,
+            ...(from > 0 ? { from } : {}),
+            verses: Array.from({ length: from === 0 ? 8 : 2 }, (_, index) => {
+                const verse = from + index + 1;
+                return {
+                    key: `JHN 10:${verse}`,
+                    ref: `John 10:${verse}`,
+                    text: 'the shepherd',
+                };
+            }),
+            ...(next === undefined ? {} : { next }),
+            passages: [{ ref: 'John 10', key: 'JHN 10', verses: 10 }],
+        };
+    };
+
+    it('is a step of its own, a page at a time, with no model', async () => {
+        const action = genVerseBrowseAction('KJV', ' shepherd ');
+        expect(action).toEqual({
+            label: EVERY_VERSE_LABEL,
+            toolName: VERSE_FIND_STEP_TOOL_NAME,
+            args: { step: 'more', bible: 'KJV', words: 'shepherd', from: 0 },
+        });
+        const call = genCall(page(0, 8));
+        const answer = await runVerseFindStep(action.args as any, call);
+        expect(call).toHaveBeenCalledWith(VERSE_FIND_TOOL_NAME, {
+            bible: 'KJV',
+            words: 'shepherd',
+            from: 0,
+        });
+        expect(answer.text).toContain(
+            'Verses 1 to 8 of 10 in KJV that have your words:',
+        );
+        expect(answer.text).toContain('These words gather in **John 10**.');
+        expect(answer.verseFind).toBe('KJV');
+        const more = answer.actions?.find((one) => {
+            return one.label === MORE_VERSES_LABEL;
+        });
+        expect(more?.args).toEqual({
+            step: 'more',
+            bible: 'KJV',
+            words: 'shepherd',
+            from: 8,
+        });
+        // Five buttons to open, then the next page, then another Bible.
+        expect(answer.actions).toHaveLength(7);
+    });
+
+    it('says when that was every verse, or all a search reaches', async () => {
+        const last = await runVerseFindStep(
+            { step: 'more', bible: 'KJV', words: 'shepherd', from: 8 },
+            genCall(page(8)),
+        );
+        expect(last.text).toContain('Verses 9 to 10 of 10');
+        expect(last.text).toContain(
+            'That is every verse in KJV with those words.',
+        );
+        expect(
+            last.actions?.some((one) => {
+                return one.label === MORE_VERSES_LABEL;
+            }),
+        ).toBe(false);
+        const none = await runVerseFindStep(
+            { step: 'more', bible: 'KJV', words: 'shepherd', from: 300 },
+            genCall({ bible: 'KJV', total: 400, verses: [] }),
+        );
+        expect(none.text).toBe('No more verses in KJV have those words.');
+    });
+
+    it('is offered under a search that found more than it shows', () => {
+        expect(
+            genHeadStartBrowseAction(
+                [{ what: 'KJV', verses: [], total: 74 }],
+                'shepherd',
+                'KJV',
+            ),
+        ).toEqual([genVerseBrowseAction('KJV', 'shepherd')]);
+        expect(
+            genHeadStartBrowseAction(
+                [
+                    {
+                        what: 'KJV',
+                        verses: [{ key: 'A', ref: 'B', text: 'C' }],
+                        total: 1,
+                    },
+                ],
+                'x',
+                'KJV',
+            ),
+        ).toEqual([]);
+        expect(genHeadStartBrowseAction([], 'x', 'KJV')).toEqual([]);
     });
 });

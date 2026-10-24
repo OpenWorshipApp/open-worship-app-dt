@@ -525,6 +525,18 @@ describe('parseAnswerShows', () => {
         ]);
     });
 
+    // A model reading `owa_app_state` has the DevTools target id of every
+    // window in front of it, and copied one into `SHOWS:` -- the chip drew
+    // `7997B6B7…` to a volunteer and pressing it could ring nothing.
+    test('a raw window id is not a control name', () => {
+        const parsed = parseAnswerShows(
+            'x\nSHOWS: 7997B6B7017A9DF664B24EBA473BD247 | Font Size',
+        );
+        expect(parsed.shows).toEqual([
+            { kind: 'control', value: 'Font Size', name: 'Font Size' },
+        ]);
+    });
+
     test('removes all three closing frames even when options comes first', () => {
         expect(
             parseAnswerFrames(

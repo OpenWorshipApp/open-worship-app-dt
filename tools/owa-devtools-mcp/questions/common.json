@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-18",
+    "updated": "2026-10-23",
     "sections": [
         {
             "id": "panels",
@@ -573,6 +573,29 @@
                     }
                 },
                 {
+                    "id": "tips-in-other-windows",
+                    "text": "How do I see the tips for Settings or another open window?",
+                    "kind": "howto",
+                    "keywords": [
+                        "settings tips",
+                        "tips in settings",
+                        "tips for this window",
+                        "tips in every window",
+                        "tips in all windows",
+                        "popup tips",
+                        "no help menu",
+                        "no menu bar",
+                        "bible note tips",
+                        "lyric editor tips",
+                        "web editor tips"
+                    ],
+                    "resources": {
+                        "recipe": "W-46",
+                        "find": "Tips of the Day",
+                        "menu": "Help → Tips of the Day"
+                    }
+                },
+                {
                     "id": "what-can-i-ask",
                     "text": "What can I ask you?",
                     "kind": "what",
@@ -752,6 +775,22 @@
                     "resources": {
                         "recipe": "W-42",
                         "passage": "A strip of tabs runs along the very top"
+                    }
+                },
+                {
+                    "id": "chat-full",
+                    "text": "Why can't I start another chat?",
+                    "kind": "what",
+                    "keywords": [
+                        "too many chats",
+                        "chat limit",
+                        "full",
+                        "no room",
+                        "cannot add"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "window holds at most 12 chats"
                     }
                 },
                 {

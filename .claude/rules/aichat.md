@@ -124,7 +124,32 @@ The ✨ window — a company's chat site in a sandboxed `<webview>`, owned by th
     guest's own `/json/list` `webview` target. That report was ALSO a dev
     server serving a stale `AiChatAppComp.tsx` (a long-running Vite missed
     the change; fetching the module showed no font code) -- check what is
-    served before debugging the code.
+    served before debugging the code. **A face picked in Settings →
+    General → Font Family reaches the guest too, by NAME only**
+    (2026-10-20: _not effect ai chat as well_, then _like font-family from
+    lang data, it should effect inside the page as well_, then _still not
+    effect_; it is an installed face, nothing of it is fetched or handed
+    over): `aichat.tsx` reads it once (`readChatWindowAppFontFamily`) into
+    `setAppFontFamily`, and `applyGuestLanguageFont` runs
+    `genGuestAppFontScript` -- a `local(...)` FontFace under every loaded
+    site face's name with that face's own weight, style and stretch (the
+    same move the language face makes with bytes), limited to text letters
+    (`U+0-2FFF`, so PUA icon fonts and the emoji planes stay the site's) --
+    plus the body rule with the name in front of everything. Both come
+    AFTER the language face's, so where the ranges overlap the picked face
+    wins; the rule lands too when the app language has no face of its own,
+    which is how a Khmer answer on an English app takes Battambang inside
+    claude.ai. **The first cut named the FAMILY (`local("Battambang")`) and
+    every borrowed face ended in `error`**: `local()` wants the face's
+    FULL name or PostScript name, not the family, and its failure is "A
+    network error occurred" (in the host page as much as in a guest; plain
+    CSS resolves family names fine, which is why the chrome worked while
+    the page did not). Each borrow now tries `local("F Regular")`,
+    `local("F-Regular")` and `local("F")` (plus the Bold pair for a heavy
+    site face), and a face none of them load for is skipped by the letter
+    matcher, leaving the site's own face alone. Verified at the glyph
+    level: `CSS.getPlatformFontsForNode` on the guest's Khmer answer node
+    read `Battambang — glyphs: 23`.
   - **Tabs**: the chatbot's strip EXTRACTED to `RenderSessionTabsComp`
     (generic over `{id, isLocked}` plus `genTitle` / `canAdd` /
     `canClearAll`), shared rules in `chatWindowShared.scss`.

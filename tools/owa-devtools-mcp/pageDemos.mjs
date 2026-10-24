@@ -10,6 +10,17 @@ export const PAGE_DEMO_LIST = [
     find: 'General',
   },
   {
+    // The press the help's "Do it for me" makes for a data-folder question
+    // (`genGuideActions`): Path Settings is there with a folder chosen and
+    // without one, where Use This Folder is not (2026-10-23).
+    id: 'setting-path',
+    page: 'setting',
+    label: 'Choose your data folder',
+    detail:
+      'Path Settings holds your data folder, where your songs, Bibles and settings are kept: choose it under Parent Directory, and copy it to a drive with Copy Data Folder.',
+    find: 'Path Settings',
+  },
+  {
     id: 'setting-bible',
     page: 'setting',
     label: 'Manage Bible versions',

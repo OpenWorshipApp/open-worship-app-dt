@@ -24,6 +24,10 @@ const h = vi.hoisted(() => ({
     rename: vi.fn(),
     trash: vi.fn(),
     error: vi.fn(),
+    isSlideAction: false,
+    applySlideAction: vi.fn(),
+    readSlideDocument: vi.fn(),
+    readSlideRequest: vi.fn(),
 }));
 
 vi.mock('./DirSource', () => ({ default: { getDirPathBySettingName: h.dir } }));
@@ -81,10 +85,11 @@ vi.mock('./agentBackupHelpers', () => ({
 
 // The lifecycle is under test; slide-edit algorithms have their own suite.
 vi.mock('./agentSlideHelpers', () => ({
-    checkIsAgentSlideAction: () => false,
-    applyAgentSlideAction: vi.fn(),
-    readAgentSlideDocument: vi.fn(),
-    readAgentSlideRequest: vi.fn(),
+    checkIsAgentSlideAction: () => h.isSlideAction,
+    applyAgentSlideAction: (...args: unknown[]) => h.applySlideAction(...args),
+    readAgentSlideDocument: (...args: unknown[]) =>
+        h.readSlideDocument(...args),
+    readAgentSlideRequest: (...args: unknown[]) => h.readSlideRequest(...args),
 }));
 
 import { NoBackupError } from './agentBackupHelpers';
@@ -107,6 +112,7 @@ const newItems = [
 ];
 
 beforeEach(() => {
+    h.isSlideAction = false;
     h.dir.mockReturnValue('/documents');
     h.join.mockImplementation(path.posix.join);
     h.exists.mockResolvedValue(true);
@@ -429,6 +435,70 @@ describe.each<AgentFileKindNameType>(['slide', 'lyric'])(
         });
     },
 );
+
+describe('slide action request routing', () => {
+    test('rejects a malformed action before reading the document, then returns its slide list', async () => {
+        h.isSlideAction = true;
+        h.readSlideRequest.mockReturnValueOnce({
+            isError: true,
+            reason: 'The slide action is incomplete.',
+        });
+
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'add-slide' as any,
+                name: 'Example',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'The slide action is incomplete.',
+        });
+        expect(h.exists).not.toHaveBeenCalled();
+        expect(h.getJsonData).not.toHaveBeenCalled();
+
+        h.readSlideRequest.mockReturnValueOnce({ action: 'slides' });
+        const slides = {
+            name: 'Example',
+            slides: [{ number: 1, name: 'Opening' }],
+        };
+        h.readSlideDocument.mockReturnValueOnce({ slideDocument: slides });
+
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'slides' as any,
+                name: 'Example',
+            }),
+        ).resolves.toEqual(slides);
+        expect(h.readSlideDocument).toHaveBeenCalledWith(
+            { metadata: { ...metadata }, items: oldItems },
+            'Example',
+            { action: 'slides' },
+        );
+        expect(h.snapshotEditing).not.toHaveBeenCalled();
+        expect(h.setJsonData).not.toHaveBeenCalled();
+    });
+
+    test('does not change a slide document that cannot be read', async () => {
+        h.isSlideAction = true;
+        h.readSlideRequest.mockReturnValue({ action: 'slides' });
+        h.getJsonData.mockResolvedValue(null);
+
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'slides' as any,
+                name: 'Example',
+            }),
+        ).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringContaining('could not be read'),
+        });
+        expect(h.readSlideDocument).not.toHaveBeenCalled();
+        expect(h.snapshotEditing).not.toHaveBeenCalled();
+    });
+});
 
 describe('document request boundaries', () => {
     test.each(['../outside', 'folder/name', 'NUL', '.hidden'])(

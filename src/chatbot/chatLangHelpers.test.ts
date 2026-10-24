@@ -14,6 +14,7 @@ import {
     listFrameAliases,
     pickReplyLanguage,
     toAsciiDigits,
+    toShownDigits,
 } from './chatLangHelpers';
 
 afterEach(() => {
@@ -166,6 +167,14 @@ describe('the words for yes and no', () => {
 test('native digits are read as the numbers they are', () => {
     expect(toAsciiDigits('យ៉ូហាន ៣:១៦')).toBe('យ៉ូហាន 3:16');
     expect(toAsciiDigits('John 3:16')).toBe('John 3:16');
+});
+
+test('a count is written in the app language’s own digits', () => {
+    stubHtmlLang('km');
+    expect(toShownDigits(74)).toBe('៧៤');
+    expect(toShownDigits('9 to 16')).toBe('៩ to ១៦');
+    stubHtmlLang('en');
+    expect(toShownDigits(74)).toBe('74');
 });
 
 test('a frame marker a model translated is known by the language’s file', () => {

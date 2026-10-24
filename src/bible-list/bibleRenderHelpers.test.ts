@@ -568,6 +568,23 @@ describe('bibleRenderHelper', () => {
                 text: '(1): Alpha (2): Beta (3): Gamma',
             },
         ]);
+        // The copy menu's More…: `16: …`, or no numbers at all, per chapter
+        // too.
+        expect(
+            await bibleRenderHelper.toText(
+                'KJV',
+                crossTarget,
+                true,
+                undefined,
+                'colon',
+            ),
+        ).toBe(
+            'Genesis 1:2-3\n2: The earth 3: Light\n' +
+                'Genesis 2:1-3\n1: Alpha 2: Beta 3: Gamma',
+        );
+        expect(
+            await bibleRenderHelper.toText('KJV', crossTarget, true, 1, 'none'),
+        ).toBe('Genesis 1:2-3\nThe earth Light');
     });
 
     test('jumps to the chapter after where a passage ENDS', async () => {
@@ -657,5 +674,19 @@ describe('bibleRenderHelper', () => {
         expect(await bibleRenderHelper.toText('KJV', target)).toBe(
             '(1): In the beginning (2): The earth',
         );
+
+        toVerseTextListSpy.mockResolvedValueOnce([
+            { localeVerse: '1', text: 'In the beginning' },
+            { localeVerse: '2', text: 'The earth' },
+        ] as any);
+        expect(
+            await bibleRenderHelper.toText(
+                'KJV',
+                target,
+                true,
+                undefined,
+                'colon',
+            ),
+        ).toBe('1: In the beginning 2: The earth');
     });
 });

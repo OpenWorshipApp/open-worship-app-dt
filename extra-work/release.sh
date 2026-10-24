@@ -10,7 +10,51 @@
 #                               `RELEASE_SKIP_INSTALL=true` additionally skips the
 #                               (slow) dependency reinstall -- dry runs and
 #                               mac-intel hosts only.
+#
+# Both take `--force-electron-version <x.y.z>` after a `--`:
+#
+#   npm run release -- --force-electron-version 32.3.3
+#
+# The pack then uses that Electron instead of the one package.json resolves to.
+# It is installed over node_modules with `--no-save` after the normal install,
+# so package.json and the lockfile stay as tagged, and node_modules keeps it
+# until the next `npm run i:d`. The packages go to the SAME platform folder as
+# always and replace the regular build there.
+#
+# Electron versions kept for older systems, to pass with that flag:
+#   32.3.3 -- the last Electron that runs on macOS 10.x (10.15 Catalina is the
+#             oldest it supports); Electron 33 needs macOS 11 Big Sur or later.
 set -euo pipefail
+
+# Read before `git pull`, so a mistyped flag stops the run before anything moves.
+forced_electron_version=""
+set_forced_electron_version() {
+    # Exact versions only: a range would install whatever is newest in it.
+    if [[ ! "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+        echo "Error: --force-electron-version needs an exact version such as 32.3.3, got \"$1\"." >&2
+        exit 1
+    fi
+    forced_electron_version="$1"
+}
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --force-electron-version)
+            set_forced_electron_version "${2:-}"
+            shift 2
+            ;;
+        --force-electron-version=*)
+            set_forced_electron_version "${1#*=}"
+            shift
+            ;;
+        *)
+            # Without the `--`, npm takes the flag for itself and passes on only
+            # the bare version, which lands here.
+            echo "Error: unknown argument \"$1\"." >&2
+            echo "Pass flags after a \`--\`: npm run release -- --force-electron-version 32.3.3" >&2
+            exit 1
+            ;;
+    esac
+done
 
 current_script_dir=$(dirname "$0")
 cd "$current_script_dir/.."
@@ -176,6 +220,24 @@ install_dependencies() {
         echo "WARNING: RELEASE_SKIP_INSTALL is honored on a dry run or a mac-intel host only; installing anyway."
     fi
     npm run i:d
+}
+
+# electron-builder packs the Electron it finds in `node_modules/electron`, so the
+# forced one only has to be installed there. `electron:install` fetches its
+# binary, which npm's blocked install scripts would otherwise leave out.
+install_forced_electron() {
+    if [[ -z "$forced_electron_version" ]]; then
+        return
+    fi
+    log_step "Installing Electron $forced_electron_version (forced)"
+    npm i --no-save --allow-git=root "electron@$forced_electron_version"
+    npm run electron:install
+    local installed_version
+    installed_version=$(node -p "require('./node_modules/electron/package.json').version")
+    if [[ "$installed_version" != "$forced_electron_version" ]]; then
+        fail "node_modules holds Electron $installed_version, not the forced $forced_electron_version."
+    fi
+    echo "Electron $installed_version stays in node_modules after this run; \`npm run i:d\` puts back the tagged one."
 }
 
 is_linux_ubuntu() {
@@ -399,6 +461,11 @@ fi
 echo "Preparing release for version: $package_version"
 echo "  tag    : release-$package_version"
 echo "  target : $target_title"
+if [[ -n "$forced_electron_version" ]]; then
+    declared_electron_version=$(node -p "require('./package.json').devDependencies.electron")
+    echo "  electron: $forced_electron_version (forced; package.json has $declared_electron_version)"
+    echo "            it REPLACES the regular build in this platform's download folder"
+fi
 
 if [[ "$is_dry_run" != "true" ]]; then
     check_worktree_is_clean
@@ -409,6 +476,7 @@ if [[ "$is_dry_run" != "true" ]]; then
 fi
 
 install_dependencies
+install_forced_electron
 
 # After the reset, so it names the commit that is actually being published.
 latest_commit=$(git rev-parse HEAD)
@@ -450,6 +518,9 @@ if [[ ${#staged_dir_list[@]} -gt 0 ]]; then
     for staged_dir in "${staged_dir_list[@]}"; do
         echo "  $staged_dir ($(gen_size "$staged_dir"))"
     done
+fi
+if [[ -n "$forced_electron_version" ]]; then
+    echo "Packed with Electron $forced_electron_version (forced); run \`npm run i:d\` to go back to package.json's."
 fi
 
 if [[ "$is_dry_run" != "true" ]]; then

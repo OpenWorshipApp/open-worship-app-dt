@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
     os: 'windows' as 'windows' | 'mac' | 'linux',
     isHidden: false,
+    // null: the default folder cannot be read (the lookup throws).
+    moveTarget: '/home/.owa/open-worship-data' as string | null,
     existingDirs: new Set<string>(),
     movedFrom: null as { dirPath: string; movedAt: string | null } | null,
     movedTo: null as { dirPath: string; movedAt: string | null } | null,
@@ -58,8 +60,15 @@ vi.mock('../../server/fileHelpers', () => ({
     fsCheckDirExist: async (dirPath: string) => mocks.existingDirs.has(dirPath),
     getDefaultDataDirPath: () => '/home/.owa/open-worship-data',
 }));
+vi.mock('../../helper/errorHelpers', () => ({ handleError: vi.fn() }));
 vi.mock('./dataDirMoveHelpers', () => ({
     checkIsDataDirMoveHidden: () => mocks.isHidden,
+    genDataDirMoveTargetPath: async () => {
+        if (mocks.moveTarget === null) {
+            throw new Error('EACCES: permission denied, scandir');
+        }
+        return mocks.moveTarget;
+    },
     hideDataDirMoveForAWhile: mocks.hide,
     readDataDirMovedFromFlag: async () => mocks.movedFrom,
     readDataDirMovedToFlag: async () => mocks.movedTo,
@@ -79,6 +88,7 @@ beforeEach(() => {
     vi.clearAllMocks();
     mocks.os = 'windows';
     mocks.isHidden = false;
+    mocks.moveTarget = '/home/.owa/open-worship-data';
     mocks.existingDirs.clear();
     mocks.movedFrom = null;
     mocks.movedTo = null;
@@ -115,6 +125,20 @@ describe('askToMoveDesktopDataDir', () => {
         html = renderAskedBody();
         expect(html).toContain('Backup and sync tools');
         expect(html).not.toContain('iCloud');
+    });
+
+    test('names the folder the move makes, not a default that is taken', async () => {
+        // The default holds another data folder: the move goes beside it.
+        mocks.moveTarget = '/home/.owa/open-worship-data (1)';
+        await askToMoveDesktopDataDir(DESKTOP_DIR);
+        expect(renderAskedBody()).toContain('/home/.owa/open-worship-data (1)');
+    });
+
+    test('still asks, naming the default, when the default cannot be read', async () => {
+        mocks.moveTarget = null;
+        await askToMoveDesktopDataDir(DESKTOP_DIR);
+        expect(mocks.confirm).toHaveBeenCalledTimes(1);
+        expect(renderAskedBody()).toContain(TARGET_DIR);
     });
 
     test('Not Now changes nothing, so the next launch asks again', async () => {

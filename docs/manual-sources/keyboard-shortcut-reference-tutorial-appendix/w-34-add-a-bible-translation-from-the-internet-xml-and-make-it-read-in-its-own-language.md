@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, CB-145, LT-01]
 screenshots: 11
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
@@ -223,5 +223,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `CB-145` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

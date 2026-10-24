@@ -301,6 +301,40 @@ describe('electronHelpers coverage', () => {
         vi.runAllTimers();
         // already on screen, so it is only raised
         expect(selfWin.restore).not.toHaveBeenCalled();
+        expect(selfWin.show).not.toHaveBeenCalled();
+        expect(selfWin.focus).toHaveBeenCalledTimes(1);
+    });
+
+    test('an already-open popup that is HIDDEN is shown, not just focused', () => {
+        vi.useFakeTimers();
+        // The bug found live 2026-10-20: a popup hidden without being
+        // minimised (an owned window the OS hid) ignored every press of its
+        // opener, because restore() was a no-op and focus() shows nothing.
+        const url = 'https://localhost:3000/chatbot.html?uuid=chatbot';
+        const selfWin = createWindowAt(
+            url,
+            { x: 0, y: 0 },
+            {
+                isVisible: vi.fn(() => false),
+            },
+        );
+        const parentWin = createMockBrowserWindow();
+        electronMockState.browserWindows.push(selfWin, parentWin);
+
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        const response = windowOpenHandler({
+            url,
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_chatbot`,
+            features: 'popup',
+        } as any);
+
+        expect(response).toEqual({ action: 'deny' });
+        vi.runAllTimers();
+        expect(selfWin.restore).not.toHaveBeenCalled();
+        expect(selfWin.show).toHaveBeenCalledTimes(1);
         expect(selfWin.focus).toHaveBeenCalledTimes(1);
     });
 

@@ -109,7 +109,8 @@ not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS app-level ones —
 `owa_present_bible`, `owa_foreground`, `owa_bible_item` / `_note` / `_xml`,
 `owa_presenting_flow`, `owa_undo`, and — the developer's, withheld from the
 chatbot's model — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
-`owa_media_file`.
+`owa_media_file`, and on the stdio door alone `owa_drop_files` (real fixture
+files dropped from the disk onto a control; the robot test's drag block).
 Reach for those first: `owa_find_ui` locates (and optionally outlines) a control
 by its visible text, `owa_list_ui` enumerates the visible controls of a window,
 `owa_click` / `owa_type` act on a control by its label (`owa_click` right-
@@ -196,7 +197,7 @@ What holds everywhere:
   calls (25 a minute), web reads and removals (10 per 5 minutes each), and
   scrubs provider keys and tokens out of every result. The off switch is the
   env var `OWA_MCP_FIREWALL=off` only. Never weaken it to make a task easier.
-- **Master switch** (Settings → Others → _Enable AI features_, `ai-enabled`):
+- **Master switch** (Settings → AI Providers → _Enable AI features_, `ai-enabled`):
   unset means ON in every build (packaged included); only an explicit `false`
   turns it off, main's `checkIsAiEnabled()`
   and the renderer's `getIsAIEnabled()` must agree, and it takes effect on the
@@ -419,7 +420,7 @@ all of them are in `.claude/rules/project-skills.md`.
   loaded files only (memory `coverage-number-is-loaded-files-only`). No shared
   `appProvider` mock may come back, and a test must be able to fail.
 - **`owa-enhance-agent-docs`** — the agent docs themselves (this file, rules,
-  memory, skills, the Codex mirror) and the manual's recipes the 🤖 answers
+  memory, skills) and the manual's recipes the 🤖 answers
   from: fixes what the code contradicts and
   proposes `AD-xx` ways agents could help more. Code is the truth for facts,
   a doc for decisions; history stays history.
@@ -430,8 +431,3 @@ all of them are in `.claude/rules/project-skills.md`.
   tip run live in English and Khmer; `TP-xx`.
 - **`review-stagged-change`** / **`review-unstagged-change`** — review only the
   staged diff (the index), or only what is not staged yet; performance first.
-
-**The Codex mirror.** `.claude/` is the source of truth. After any edit under
-it, `node extra-work/sync-agent-mirror.mjs` copies it into `.codex/` and
-`.agents/skills/` (rules in `AGENTS.md`; a new skill's Codex preamble is written
-by hand), and the gate's `agentDocsMirror.test.ts` fails until you do.

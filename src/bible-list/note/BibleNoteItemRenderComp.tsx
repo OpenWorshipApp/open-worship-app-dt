@@ -141,19 +141,24 @@ export default function BibleNoteItemRenderComp({
             DragTypeEnum.NOTE_ITEM,
         );
         if (droppedData !== null) {
+            const droppedNoteItem = droppedData.item as NoteItem;
+            // A reorder inside this file is this row's; anything else goes on
+            // to the file row. Decided BEFORE the await -- after it, stopping
+            // the event no longer keeps it from the file row.
+            if (
+                droppedNoteItem.filePath === undefined ||
+                droppedNoteItem.filePath !== noteItemRef.current.filePath
+            ) {
+                return;
+            }
+            stopDraggingState(event);
             const note = await Note.fromFilePath(filePathRef.current);
             if (note === null) {
                 return;
             }
-            const droppedNoteItem = droppedData.item as NoteItem;
-            if (droppedNoteItem.filePath !== undefined) {
-                if (droppedNoteItem.filePath === noteItemRef.current.filePath) {
-                    const toIndex = note.getItemIndex(noteItemRef.current);
-                    note.moveItemToIndex(droppedNoteItem, toIndex);
-                    stopDraggingState(event);
-                    note.save();
-                }
-            }
+            const toIndex = note.getItemIndex(noteItemRef.current);
+            note.moveItemToIndex(droppedNoteItem, toIndex);
+            note.save();
         } else {
             handleAttachBackgroundDrop(event, {
                 filePath: filePathRef.current,

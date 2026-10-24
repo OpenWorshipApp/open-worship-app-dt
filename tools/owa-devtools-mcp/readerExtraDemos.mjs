@@ -42,6 +42,17 @@ const research = 'Study tools';
 
 export const READER_EXTRA_DEMO_LIST = [
   lesson(
+    'ask-about-reading',
+    research,
+    'Ask about what you are reading',
+    'Use Ask the Assistant About This Passage, Ask the Assistant About This Verse, or Ask the Assistant About This File to ask about that material.',
+    [
+      'Hover over a passage header to find Ask the Assistant About This Passage. For one verse, right-click its text and choose Ask the Assistant About This Verse yourself.',
+      'In Resources, use Ask the Assistant About This File beside your chosen file. Review any AI caution yourself before opening the assistant.',
+      'The assistant receives the material you chose. Ask your question there and check its answer against the Bible and your sources.',
+    ],
+  ),
+  lesson(
     'practice-tips',
     'Reader shortcuts',
     'Find and replay Reader demos',
@@ -518,9 +529,10 @@ export const READER_EXTRA_DEMO_LIST = [
     'bible-not-installed',
     'Getting started',
     'Fix a Bible that is not installed',
-    'When the Reader names a Bible you do not have, pick another, press Let the assistant import a Bible for me, or Go to Bible Setting.',
+    'For a missing Bible, choose Create the provided KJV, Let the assistant import a Bible for me, or Go to Bible Setting; you decide what to install.',
     [
       'A passage pane shows this card when its Bible is not installed on this computer. Pick an installed Bible from the Bible key list on the card.',
+      'If the missing Bible is KJV, Create the provided KJV installs the copy supplied with the app. Only press it yourself when you want that Bible installed.',
       'Or press Let the assistant import a Bible for me: the Assistant offers the KJV the app itself provides first, then looks for a Bible in your language in a free online collection.',
       'Or press Go to Bible Setting to add the Bible yourself.',
     ],

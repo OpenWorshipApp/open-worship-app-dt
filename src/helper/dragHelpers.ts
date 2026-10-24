@@ -14,7 +14,7 @@ import AttachBackgroundManager, {
 } from '../others/AttachBackgroundManager';
 import { useAppEffectAsync } from './appHooks';
 import { useFileSourceEvents } from './dirSourceHelpers';
-import { stopDraggingState } from './helpers';
+import { changeDragEventStyle, stopDraggingState } from './helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import Slide from '../app-document-list/Slide';
@@ -28,11 +28,23 @@ export const dragStore: {
     onDropped?: ((event: any) => void) | ((event: any) => Promise<void>) | null;
 } = {};
 
+function clearDragStoreOnDropped() {
+    dragStore.onDropped = null;
+}
+
 export function handleDragStart(
     event: any,
     item: DragInf<any>,
     type?: DragTypeEnum,
 ) {
+    // A source's `onDropped` is for ITS drag only. Nine foreground sources set
+    // it and none took it back, and a screen calls it for any drop it cannot
+    // read, so an OS file or a Bible view title dropped on a screen later
+    // re-sent the last countdown there. `dragend` comes after the drop.
+    window.addEventListener('dragend', clearDragStoreOnDropped, {
+        once: true,
+        capture: true,
+    });
     const data = item.dragSerialize(type);
     event.dataTransfer.setData('text', JSON.stringify(data));
     // A second, VALUELESS entry whose mime type names the kind. The payload
@@ -80,7 +92,16 @@ export function extractDragData(event: any): DragDataType<any> | null {
 
 export function extractDropData(event: any) {
     const dragData = extractDragData(event);
-    return dragData === null ? null : deserializeDragData(dragData);
+    if (dragData === null) {
+        return null;
+    }
+    // A payload of a known kind whose inner data does not parse (a document
+    // slide carries JSON in a string) is someone else's text, not an error.
+    try {
+        return deserializeDragData(dragData);
+    } catch (_error) {
+        return null;
+    }
 }
 
 // A SECOND payload on the same drag, addressed to a different kind of target.
@@ -207,11 +228,10 @@ export function handleAttachBackgroundDrop(
     event: DragEvent,
     item: { filePath: string; id?: number },
 ) {
-    stopDraggingState(event);
     const droppedData = extractDropData(event);
     if (
-        droppedData !== null &&
-        [
+        droppedData === null ||
+        ![
             DragTypeEnum.BACKGROUND_COLOR,
             DragTypeEnum.BACKGROUND_IMAGE,
             DragTypeEnum.BACKGROUND_VIDEO,
@@ -219,12 +239,18 @@ export function handleAttachBackgroundDrop(
             DragTypeEnum.BACKGROUND_WEB,
         ].includes(droppedData.type)
     ) {
-        attachBackgroundManager.attachDroppedBackground(
-            droppedData,
-            item.filePath,
-            item.id,
-        );
+        // Not a background -- a file from the disk, say -- so it goes on to
+        // the list around the row, which copies files in. Stopped here, a
+        // `.owb` dropped on a Bibles row was lost without a word (DD-15).
+        changeDragEventStyle(event, 'opacity', '1');
+        return;
     }
+    stopDraggingState(event);
+    attachBackgroundManager.attachDroppedBackground(
+        droppedData,
+        item.filePath,
+        item.id,
+    );
 }
 
 export function useAttachedBackgroundData(

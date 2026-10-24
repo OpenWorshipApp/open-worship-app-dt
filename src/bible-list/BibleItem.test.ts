@@ -434,6 +434,16 @@ describe('BibleItem', () => {
             crossTarget,
             true,
             3,
+            undefined,
+        );
+        // The copy menu's More…: verses numbered `16: …`.
+        await sameItem.toText(undefined, 'colon');
+        expect(mocks.bibleRenderHelperMock.toText).toHaveBeenLastCalledWith(
+            'KJV',
+            crossTarget,
+            true,
+            undefined,
+            'colon',
         );
         await sameItem.toVerseTextList({ start: 3, count: 1 });
         expect(

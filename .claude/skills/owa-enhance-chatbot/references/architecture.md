@@ -74,7 +74,7 @@ promise, and the door answers 401 without the token.
 
 ## The master switch
 
-Settings → Others → *Enable AI features* writes `ai-enabled` into `clientSetting`
+Settings → AI Providers → *Enable AI features* writes `ai-enabled` into `clientSetting`
 in `<userData>/setting.json`.
 
 - `checkIsAiEnabled()` (`electron/aiHelpers.ts`) reads that file directly, before
@@ -144,7 +144,7 @@ depend on.
   non-reasoning OpenAI model is sent no `reasoning_effort`.
 - Every answer has **Copy**; every question **Ask again**.
 - With no key at all the window opens on the Free assistant, under a notice
-  that names the free service and offers a button into Settings → Others.
+  that names the free service and offers a button into Settings → AI Providers.
 - English-only by design — no `tran()` anywhere in `src/chatbot/*`.
 
 ## The guide cards

@@ -1,7 +1,7 @@
 {
   "page": "reader",
   "window": "reader.html",
-  "updated": "2026-10-16",
+  "updated": "2026-10-22",
   "scope": "html/reader.html -> src/reader.tsx: the reference picker and passage history, the passage views and their footers, the Bibles and Bible Notes panels, the study sidebar (Find, cross references, names and locations, resources), the floating record and graph panels, the header and the native menus as the Reader shows them. The note editor window, Settings, the Presenter and the AI windows are other windows' inventories. A menu row shared by several lists (New File, Rename, Reload...) is one item: the app draws it from one component and it does the same job in each list.",
   "sourceDirs": [
     "src/bible-reader",
@@ -15,6 +15,9 @@
   ],
   "sourceFiles": [],
   "ignore": [
+    {"label":"Or let the assistant import a Bible in your language for you:","reason":"explanatory text on the missing-Bible card, not a control"},
+    {"label":"Press the button below. The assistant opens and looks for a Bible in your language in a free collection online.","reason":"explanatory text on the missing-Bible card, not a control"},
+    {"label":"Keep the short name it suggests, answer its other questions, then press Install it. Then choose it in the list above; this card goes away.","reason":"explanatory text on the missing-Bible card, not a control"},
     { "pattern": "^\\([^)]+\\)\\s?\\S", "reason": "a passage reference such as (KJV) John 3:16: the person's own history, saved lists and views, not a control's name" },
     { "pattern": "^Open \\([^)]+\\)", "reason": "a saved passage row named by its reference: the person's own data" },
     { "pattern": "^⚠️ Duplicated with item number \\d+$", "reason": "a warning badge on a saved row, not a control" },
@@ -111,6 +114,10 @@
     { "file": "src/bible-list/note/BibleNoteEditingMenuComp.tsx", "reason": "the note editor window's undo menu (bibleNote.html)" }
   ],
   "items": [
+    {"id":"ask-passage","surface":"Passage view","labels":["Ask the Assistant About This Passage"],"personOnly":"opens an AI conversation about the chosen passage"},
+    {"id":"ask-verse","surface":"Passage menu","labels":["Ask the Assistant About This Verse"],"personOnly":"opens an AI conversation about the chosen verse"},
+    {"id":"ask-resource","surface":"Resources","labels":["Ask the Assistant About This File"],"personOnly":"chooses a resource for an AI conversation"},
+    {"id":"create-provided-kjv","surface":"Reference box","labels":["Create the provided KJV"],"personOnly":"installs a Bible; the person chooses"},
     { "id": "reference-box", "surface": "Reference box", "labels": ["Bible Reference"], "search": ["reference"] },
     { "id": "clear-input", "surface": "Reference box", "labels": ["Clear input"], "press": ["Shift+Escape"] },
     { "id": "clear-input-chunk", "surface": "Reference box", "labels": ["Clear input chunk"], "press": ["Escape"] },

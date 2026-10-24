@@ -79,6 +79,21 @@ describe('folder file entry actions', () => {
         expect(state.style).toHaveBeenCalledWith(files, 'opacity', '1');
     });
 
+    // The browser empties `dataTransfer` once the drop handler yields, and the
+    // slide canvas awaits each new item between files: every file has to be
+    // out of the list before the first one is handed over.
+    it('takes every dropped file before the caller awaits the first', async () => {
+        const items = [droppedItem('one.jpg'), droppedItem('two.jpg')];
+        const event = drag(items);
+        const read: string[] = [];
+        for await (const file of readDroppedFiles(event as never)) {
+            read.push(file.name);
+            items.length = 0;
+            await Promise.resolve();
+        }
+        expect(read).toEqual(['one.jpg', 'two.jpg']);
+    });
+
     it('reads only file entries from a drop and copies accepted files', async () => {
         const items = [
             droppedItem('one.jpg'),
@@ -108,15 +123,19 @@ describe('folder file entry actions', () => {
     });
 
     it('offers to open a folder before accepting a drop', async () => {
-        const event = drag([droppedItem('one.jpg')]);
-        await genOnDrop({
-            dirSource: { dirPath: null } as never,
-            mimetypeName: 'image',
-        })(event as never);
-        expect(state.toast).toHaveBeenCalledWith(
-            'Open Folder',
-            'Please open a folder first',
-        );
+        // `DirSource.dirPath` answers '' for a list with no folder.
+        for (const dirPath of ['', null]) {
+            state.toast.mockClear();
+            const event = drag([droppedItem('one.jpg')]);
+            await genOnDrop({
+                dirSource: { dirPath } as never,
+                mimetypeName: 'image',
+            })(event as never);
+            expect(state.toast).toHaveBeenCalledWith(
+                'Open Folder',
+                'Please open a folder first',
+            );
+        }
         expect(state.copy).not.toHaveBeenCalled();
     });
 

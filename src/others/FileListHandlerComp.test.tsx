@@ -12,6 +12,15 @@ const h = vi.hoisted(() => ({
     selectedFiles: vi.fn(),
     listProps: null as any,
     drop: vi.fn(),
+    isOnOwnFolder: false,
+}));
+
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        get isOnOwnFolder() {
+            return h.isOnOwnFolder;
+        },
+    },
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -156,6 +165,7 @@ beforeEach(() => {
     h.selectedFiles.mockClear();
     h.drop.mockClear();
     h.listProps = null;
+    h.isOnOwnFolder = false;
     onNewFile = vi
         .fn<
             (
@@ -281,5 +291,16 @@ describe('file list container', () => {
         expect(
             container.querySelector('[aria-label="More Options"]'),
         ).toBeNull();
+        expect(container.querySelector('.path-selector')).not.toBeNull();
+    });
+
+    it('with no data folder, offers no folder picker of its own', async () => {
+        dirSource.dirPath = '';
+        h.paths = null;
+        h.isOnOwnFolder = true;
+        await renderList({ defaultFolderName: 'Songs' });
+        // A folder picked here would have no data folder to be kept in.
+        expect(container.querySelector('.path-selector')).toBeNull();
+        expect(container.textContent).toContain('Choose Songs');
     });
 });

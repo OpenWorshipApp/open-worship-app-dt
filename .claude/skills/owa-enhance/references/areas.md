@@ -295,7 +295,7 @@ then `npm run lint` on one machine is the only gate the code ever passes.
 
 **Leads:** CI workflows; `.only` / `.skip` left in tests; a mock of a module
 path that is gone; test files per root (`triage.mjs`); and, from `docs`,
-mirror drift and a stale knowledge index — the second a chore done by hand.
+a stale knowledge index — a chore done by hand.
 
 **Research** — wall-clock is the measure, so write every duration down:
 
@@ -389,19 +389,18 @@ memory notes.
 **Scope:** `.claude/skills/owa-robot-test/references/user-workflows.md` (the
 source) → `docs/manual-sources/` (generated, tracked);
 `tools/owa-devtools-mcp/questions/`; `.claude/CLAUDE.md`, `.claude/rules/`,
-`.claude/memory/`, `.claude/skills/`; the Codex mirror of all four (`.codex/`,
-`.agents/skills/`); the knowledge bundle
+`.claude/memory/`, `.claude/skills/`; the knowledge bundle
 (`electron-build/knowledge/`); `README.md`, `RELEASE.md`,
 `PRIVACY_POLICY.md`.
 
-**Leads:** mirror drift; repo paths named in CLAUDE.md, a rule file, a memory note or a
+**Leads:** repo paths named in CLAUDE.md, a rule file, a memory note or a
 skill that are gone; a knowledge index older than the notes it is built from
 (`triage.mjs`).
 
 **Routed:** the agent docs in depth — every claim in CLAUDE.md, the rules, the
-memory and the skills checked against the code, the mirror, and how agents
+memory and the skills checked against the code, and how agents
 could help more — are `owa-enhance-agent-docs` (`AD-xx`). Its
-`audit-agent-docs.mjs` supersedes tracks 2, 4 and 5 below; this area keeps the
+`audit-agent-docs.mjs` supersedes tracks 2 and 4 below; this area keeps the
 manual (track 1) and the corpus (track 3).
 
 **Research:**
@@ -416,11 +415,9 @@ manual (track 1) and the corpus (track 3).
 3. **The corpus.** `npx vitest run tools/owa-devtools-mcp/questions.test.mjs`.
 4. **CLAUDE.md, spot-checked** — three concrete claims (a name, a number, a
    path) against the code.
-5. **Mirror drift** — which side is newer. `.claude/` is the source of truth, so
-   a newer `.codex/` or `.agents/` file means an edit landed on the wrong side.
 
 Never run `docs:gen` or `build-knowledge.mjs` while researching — both write.
 
 **Proof on apply:** a manual step watched working live, and none published
 otherwise; `npm run docs:gen`; `node extra-work/build-knowledge.mjs`; the
-corpus test; the mirror copied, never reconciled by hand.
+corpus test.

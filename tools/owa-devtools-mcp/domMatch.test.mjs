@@ -869,6 +869,45 @@ describe('a needle carrying the shortcut a title carries', () => {
     expect(mark === null || mark.isPressSafe !== true).toBe(true);
   });
 
+  // The label a refusal tells the caller to retry with is the parts joined,
+  // and that retry was refused too (2026-10-22: "FG Clear Foreground [F10]").
+  it('is press-safe by the joined label a tool hands out', () => {
+    document.body.innerHTML =
+      '<button title="Clear Foreground [F10]" aria-label="Clear Foreground">' +
+      'FG</button>' +
+      '<button title="Clear Slide [F7]" aria-label="Clear Slide">SL</button>';
+    const dm = install();
+    const shown = dm.describe(dm.findBest(['Clear Foreground']).element).label;
+    const found = dm.findBest([shown]);
+    expect(found.element.getAttribute('aria-label')).toBe('Clear Foreground');
+    expect(found.isPressSafe).toBe(true);
+    // Every word of the joined label, not the start of it.
+    const cut = dm.findBest(['FG Clear']);
+    expect(cut === null || cut.isPressSafe !== true).toBe(true);
+  });
+
+  // A long label is handed out cut (80 characters in describe, 60 in
+  // nearMisses), and a drag by those words was refused (2026-10-22, DD-05).
+  it('is press-safe by the cut label a long control is handed out as', () => {
+    const verse =
+      'Philemon 1:10I beseech thee for my son Onesimus, whom I have begotten' +
+      ' in my bonds:';
+    document.body.innerHTML =
+      '<div draggable="true" title="Click to open">' + verse + '</div>' +
+      '<div draggable="true">Philemon 1:11Which in time past was to thee' +
+      ' unprofitable, but now profitable to thee and to me:</div>';
+    const dm = install();
+    const shown = dm.describe(dm.findBest(['Philemon 1:10']).element).label;
+    expect(shown.length).toBe(80);
+    const found = dm.findBest([shown]);
+    expect(found.element.textContent).toBe(verse);
+    expect(found.isPressSafe).toBe(true);
+    expect(dm.findBest([shown.slice(0, 60)]).isPressSafe).toBe(true);
+    // A short start of it is still a guess.
+    const start = dm.findBest(['Philemon 1:10I beseech thee']);
+    expect(start === null || start.isPressSafe !== true).toBe(true);
+  });
+
   it('never lets bare decoration stand for the words', () => {
     document.body.innerHTML =
       '<button title="Clear Long Text [F9]" aria-label="Clear Long Text">LT' +

@@ -102,7 +102,7 @@ describe('the custom-server client', () => {
         );
     });
 
-    it("hands back the relay's own sentence when nothing answered", async () => {
+    it('says in its own words that the server is not answering, with no address', async () => {
         relay.requestCustomLlm.mockResolvedValue({
             ok: false,
             reason: 'unreachable',
@@ -114,7 +114,24 @@ describe('the custom-server client', () => {
         const failure = toCustomServerFailure(error);
         expect(checkIsCustomServerError(failure)).toBe(true);
         expect(failure?.message).toBe(
-            'unreachable at http://localhost:1234/v1',
+            'its server is not answering — check that it is running on ' +
+                'this computer',
+        );
+        // The help window names a server, never its address (2026-10-22).
+        expect(failure?.message).not.toContain('localhost');
+    });
+
+    it("hands back the relay's own sentence for a rarer failure", async () => {
+        relay.requestCustomLlm.mockResolvedValue({
+            ok: false,
+            reason: 'too-large',
+            detail: '',
+        });
+
+        const error = await ask().catch((caught) => caught);
+
+        expect(toCustomServerFailure(error)?.message).toBe(
+            'too-large at http://localhost:1234/v1',
         );
     });
 
@@ -132,8 +149,11 @@ describe('the custom-server client', () => {
             })
             .catch((caught) => caught);
 
+        // Known as shared by its stand-in address, which is never printed.
         expect(toCustomServerFailure(error)?.message).toBe(
-            'unreachable at https://shared-server.invalid/v1',
+            'nothing answered at its address — it is shared by ' +
+                'openworship.app and may be switched off right now; try ' +
+                'again later or pick another assistant',
         );
     });
 
@@ -276,8 +296,8 @@ describe('the custom-server client', () => {
             })?.message,
         ).toBe(
             'this server has no model called “qwen3.5:4b” — check the model ' +
-                'id in Settings → Others → Custom servers, press Load models ' +
-                'from server there, or pull it (ollama pull qwen3.5:4b)',
+                'id in Settings → AI Providers → Custom servers, press Load ' +
+                'models from server there, or pull it (ollama pull qwen3.5:4b)',
         );
         // Another server: the same, without Ollama's command.
         expect(toCustomServerFailure(error, { model: 'phi' })?.message).toMatch(
@@ -302,10 +322,9 @@ describe('the custom-server client', () => {
                 baseUrl: 'http://localhost:11434/v1/systemone',
             })?.message,
         ).toBe(
-            'nothing speaks the OpenAI API at ' +
-                'http://localhost:11434/v1/systemone — in Settings → Others → ' +
-                'Custom servers, check the address and press Test (Ollama: ' +
-                'http://localhost:11434/v1, LM Studio: http://localhost:1234/v1)',
+            'this server did not answer the way the app expects — in ' +
+                'Settings → AI Providers → Custom servers, check its address ' +
+                'and press Test',
         );
         // A shared server's address is not the person's to check, nor this
         // window's to print: not even the stand-in is written out.

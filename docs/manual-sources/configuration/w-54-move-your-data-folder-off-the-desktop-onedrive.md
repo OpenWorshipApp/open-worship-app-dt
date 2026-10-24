@@ -2,10 +2,10 @@
 id: W-54
 title: "Move your data folder off the Desktop (OneDrive)"
 section: "Configuration"
-verify: [ST-20, ST-80, ST-81]
+verify: [ST-20, ST-80, ST-81, ST-82]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-54 — Move your data folder off the Desktop (OneDrive)
 
@@ -21,7 +21,9 @@ your user folder (`~/.owa/open-worship-data` on a Mac or Linux), which nothing s
 1. Start the app. While your data folder is still `Desktop\open-worship-data`, every
    start asks **[en:tran:Move Your Data Folder Off the Desktop]**. It names your folder,
    says why it is at risk on this computer — OneDrive on Windows, iCloud Drive on a
-   Mac — and where it will go. 📸
+   Mac — and where it will go. Until it is moved, every window also shows a card with
+   the same title, saying the Desktop is not a safe place for your data folder, with
+   **[en:tran:Move Now]** and **[en:tran:Hide for 30 days]**. 📸
 2. Press **[en:tran:Move Now]**. The app closes and opens again, and moves the folder
    before it opens anything in it. Outside OneDrive the folder is simply moved. Inside
    OneDrive, or when a file in it is in use, every file is copied and checked, and the
@@ -55,7 +57,7 @@ file held open) and a Mac.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-20` · `ST-80` · `ST-81`
+`ST-20` · `ST-80` · `ST-81` · `ST-82`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

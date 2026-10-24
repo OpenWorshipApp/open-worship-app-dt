@@ -3,9 +3,9 @@
 Scope: `html/reader.html` → `src/reader.tsx`, including its study sidebar,
 floating record/graph panels, saved passages, notes, header and native menus.
 The separate note editor, Settings, Presenter and AI Chat contents are outside
-this catalog. Updated 2026-10-16: **104 lessons**, **51 with actions**, **53
+this catalog. Updated 2026-10-22: **106 lessons**, **52 with actions**, **54
 self-guided**. The assistant's featured shelf remains 30 small starter lessons;
-**Help → All tips** exposes all 104 without a model call. How many of the
+**Help → All tips** exposes all 106 without a model call. How many of the
 Reader's controls they reach is `/owa-enhance-tips`'s measure, against the
 inventory in `.claude/skills/owa-enhance-tips/references/inventory/reader.json`.
 
@@ -26,6 +26,13 @@ renderer is ahead of an old tool host, an inline Reader fallback preserves the
 complete instructions in show mode.
 
 ## Feature map
+
+`ask-about-reading` teaches the passage, verse and Resources file assistant
+buttons without opening an AI conversation. `bible-not-installed` also names
+Create the provided KJV; installing remains the person's choice. Both lessons
+were found by the control's words and opened through Show it in English and
+Khmer on 2026-10-22. Their explanation steps remain English by the convention
+above; neither lesson has a Do it action.
 
 All ids below have the `reader-` prefix. Combined lessons cover related controls;
 this table records the entry points rather than promising that a fixed script

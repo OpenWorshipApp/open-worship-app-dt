@@ -1156,6 +1156,24 @@ describe('the key, drag and run-sheet tools', () => {
         ).toBe(true);
     });
 
+    // Files dropped from the disk are counted like a drag, and aimed at a
+    // control that cannot be undone they are refused like one.
+    it('counts a drop of files, and refuses one onto what cannot be undone', () => {
+        expect(checkIsActingTool('owa_drop_files')).toBe(true);
+        expect(
+            checkToolCall('owa_drop_files', {
+                paths: ['/tmp/a.png'],
+                to: 'Move to Trash',
+            }).rule,
+        ).toBe('destructive-label');
+        expect(
+            checkToolCall('owa_drop_files', {
+                paths: ['/tmp/a.png'],
+                to: 'Document List',
+            }).isAllowed,
+        ).toBe(true);
+    });
+
     // A line taken out of a run sheet is a removal, and a sheet to the trash
     // is one; reading and adding are not.
     it('rations what a run-sheet call takes away', () => {

@@ -246,6 +246,20 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   corpus driver (`chatbot-cdp-driver-gotchas` in memory) reads it off the
   response body. OpenAI caches a ≥1 024-token prefix on its own; whether
   Moonshot does for Kimi was not measured.
+- **A lookup conversation's record is its FIRST turn** (2026-10-23,
+  `EC-418`, `withRecordTurn` in `llmBotHelpers.ts`). A server of the
+  person's own (Ollama, LM Studio, llama.cpp) keeps what the start of a
+  conversation was and reads only what follows it; the record (~8 600
+  characters for Genesis 8 with its cross references) had ridden at the end
+  of every question, read afresh each time. Now the window passes it as
+  `AskExtraType.lookup.record` and the loop puts it ahead of the history,
+  with a fixed one-line reply (`RECORD_TURN_ACK`) so the turns alternate;
+  the question carries one line naming its subject. Measured on a local
+  Ollama, the second question's prompt processing went from 112 s to
+  4.4 s. Same rule as the cached prefix above: the record turn must be
+  byte-identical question after question -- nothing per question goes in
+  it; what a question reads (`toLookupContextText`) goes under that
+  question.
 - **The prompt is per APP language; a question's language rides in the user
   turn** (2026-10-16, memory `chatbot-follows-app-language`). The language
   the app is shown in is fixed for a window's life (Apply reloads every
@@ -450,7 +464,20 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   after setbacks, busy servers, an unloaded LM Studio and a
   `preferModelPattern`, so a translation still goes to a Gemma 4 first and,
   among those, to its cloud rows. Its words leave the building, as Free's
-  do; the manual says so. **LM Studio serves what is loaded**:
+  do; the manual says so. **And in a language other than English, the
+  language's models go before the size order** (2026-10-20, the user's
+  picture of the Auto picker and the order in so many words: _`gemma4:cloud`
+  (from any assistant) -> `Nemotron Super VL` (from Free) -> `gemma4:31b` ->
+  `gemma4:12b` -> any model in `Free`_ — _gemma4 … support well for language
+  like Khmer_, _apply the ranking for non-english app language setting
+  only_): `LANGUAGE_TIER_LIST` / `readLanguageModelTier` in the policy, five
+  tiers read off the model's id AND shown name, and
+  `AutoRankOptionsType.languageModelsFirst`, which the source helpers default
+  from `getAppLangCode() !== 'en'` (a caller's own option always wins). A tier
+  decides only among the models that CAN answer — setbacks, busy servers and
+  an unloaded LM Studio still go first, and a model that cannot see still
+  loses a picture question; a candidate no tier names falls through to the
+  ordinary cloud-then-size order. **LM Studio serves what is loaded**:
   while one of its models is loaded only loaded ones are candidates, and with
   none loaded its rows are the last resort — its list is every file ever
   downloaded (a 27B beside an 8 GB card on the user's own server), and a
@@ -476,6 +503,60 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   Report asks Auto's first pick once. Seen live 2026-10-12: eight servers,
   one answering (LM Studio with gemma-4-e4b loaded at 32k), four timing out
   at 4 s — _Auto picked Free · Nemotron Lightning_.
+- **A server or free model the TAB names hands the question on too**
+  (2026-10-22, the user, with a picture of _Local Ollama could not answer —
+  nothing answered at http://localhost:11434/v1_ over a verse card the guide
+  had written: _when one server provider fail it should try next one_). In
+  the window's named branch, a failure before any model round came back
+  (Auto's own rule: never after a round, never a Stop, the spend guard's
+  pause or the tool host) asks `resolveHandOnPicks`
+  (`autoAssistantSourceHelpers.ts`): Auto's candidates looked at and ranked
+  with the SAME options as Auto's look (`genAutoRankOptions` — pictures for a
+  Resources ask, the Gemma 4 preference, the busy keys), the failed one left
+  out, and — when it was a server in the building (`checkIsLocalNetworkUrl`
+  of its address; a shared server's stand-in address never is) — the
+  building's other servers first (`orderHandOnPicks`, pure). Then
+  `askWithAutoAssistant`, three attempts. Only a pick Auto could have made is
+  handed on: a paid key keeps `getStandInLlmProvider` and nothing else, and a
+  server on the internet that does not say it is free keeps its failure. The
+  answer's note is `genHandOnAnswerNote` — who could not answer and why, who
+  else was tried, who answered; the waiting line says _… could not answer —
+  looking for another assistant that costs nothing_ then _Asking … instead_.
+  **The tab KEEPS its pick**, unlike the paid stand-in: a server switched off
+  is switched back on, and the next question asks it first again (its
+  failure then costs the 4 s look at most — a server that answered nothing is
+  remembered as away for five minutes). When nobody could, the note over the
+  guide's answer names the tab's own failure and everyone tried after it
+  (`describeSkippedAssistants`). This ends the old _never stands in or is
+  stood in for_ of a custom server, and with it a promise: Auto's notice had
+  said picking a server of your own keeps every question in the building; it
+  now says that server is asked first and the question goes on to the other
+  servers and then to the free service. **A question whose tools can only
+  READ is handed on even after a round came back** (`canHandOnAfterRound`,
+  on Auto and named alike): a Resources ask (`owa_resource_file`,
+  `owa_lookup_record`, `owa_read_website`) and a general one (no tools). Seen
+  the same day on Auto: _Explain it in simple words_ under `MAT.18.pdf`, Free
+  · Nemotron Super VL _wrote no answer_ after 34.7k tokens and the guide
+  answered; a model that wrote nothing pressed nothing either. Every other
+  ask keeps the old rule. **And the relay's failures are said
+  in the window's language** (`describeRelayFailure` in
+  `customServerClientHelpers.ts`, EC-385): _its server is not answering …_,
+  _it went quiet …_ and _took too long_, whole sentences through the
+  chatbot's `tran`; Settings keeps `describeCustomLlmFailure`'s English.
+  **No sentence in the help window names a server's ADDRESS** (2026-10-22,
+  the user, with `http://localhost:11999/v1` circled in the note: _should
+  not show endpont to user_): the server's name is already in front of it,
+  and a wrong path says to check the address in Settings, where Test shows
+  it (`genWrongAddressText`). **The hand-on note offers the change**
+  (the same day: _should provide user the option to change provider … like
+  use another free or use `Auto`_): **Use <who answered> for this chat**
+  and **Use Auto for this chat** under the answer
+  (`genAssistantSwitchActions`, the pseudo tool `USE_ASSISTANT_TOOL_NAME`,
+  caught in `handleActing`). The press moves THIS tab only and asks nothing
+  again; `readAssistantSwitch` takes only `custom` / `free` and a model
+  still listed, so a saved button can never name a paid key. Seen live on the
+  dev chatbot in Khmer: the note with no address, both presses moving the
+  head row.
 - **An unusual answer from a provider comes with the door to it** (2026-09-10,
   `src/chatbot/providerIssueHelpers.ts`; asked for by the user — _if there
   any unusual response from api then give buttons for user to go to the api

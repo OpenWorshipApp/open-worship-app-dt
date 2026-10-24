@@ -11,3 +11,21 @@ import colorList from '../others/color-list.json';
  * hex is written in one place only.
  */
 export const DEFAULT_BIBLE_COLOR_NOTE: string = colorList.main.lime;
+
+/**
+ * The first colour of the menu's list that is not in `usedColorNotes`
+ * (lower-cased codes), `null` once every one is taken. What a bible preview
+ * section that was NOT split off another one starts in (2026-10-22, the user:
+ * _new section that is not from splitting have to assign with different color
+ * (color not used in any section)_).
+ */
+export function findUnusedColorNote(usedColorNotes: Set<string>) {
+    for (const colors of [colorList.main, colorList.extension]) {
+        for (const color of Object.values(colors)) {
+            if (!usedColorNotes.has(color.toLowerCase())) {
+                return color;
+            }
+        }
+    }
+    return null;
+}

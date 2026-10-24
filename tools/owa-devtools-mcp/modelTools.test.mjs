@@ -125,6 +125,7 @@ describe('what the model is offered', () => {
             'owa_menu',
             'owa_scroll',
             'owa_media_file',
+            'owa_drop_files',
         ]) {
             expect(checkIsModelHiddenTool(name), name).toBe(true);
             expect(checkIsActingTool(name), name).toBe(true);

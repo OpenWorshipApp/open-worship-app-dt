@@ -13,12 +13,16 @@ import {
   evaluateInTarget,
   listTargets,
   requireLivePort,
+  runInTarget,
   waitForNewAppPage,
 } from './cdp.mjs';
+import { checkDropFilePaths } from './dropFilePaths.mjs';
 import {
   addOpenedWindow,
   genClickExpression,
   genDragExpression,
+  genDropAimExpression,
+  genDropReadExpression,
   genFindUiExpression,
   genHighlightSelectorExpression,
   genListUiExpression,
@@ -1684,16 +1688,20 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     'owa_find_verse',
     {
       description:
-        'Find a Bible verse the user half-remembers, in a Bible installed ' +
-        'here. `words`: what they remember, any order -- verses holding ' +
-        'the most of them come first, rarer words breaking ties; ' +
-        '`notInBible` names words this Bible never uses. For a verse ' +
-        'remembered by what it MEANS, search the words such a verse ' +
-        'would use, then other forms and synonyms. `refs`: verses you ' +
-        'think fit ("Matthew 6:34; Psalm 23"), quoted from this Bible -- ' +
-        'never quote a verse it did not return. `open`: a result’s ' +
-        '`key`, shown in the Bible Lookup (never on a screen), only when ' +
-        'asked. No arguments: the installed Bibles.',
+        'Find in a Bible installed here a verse the user half-remembers, ' +
+        'a story, or every verse with a word. `words`: what they remember, ' +
+        'any order -- verses holding the most of them come first, rarer ' +
+        'words breaking ties; a book named in them ("in Psalms") is the ' +
+        'book searched; `notInBible` names words this Bible never uses. ' +
+        'For a verse remembered by what it MEANS, search the words such a ' +
+        'verse would use, then other forms and synonyms. A result also ' +
+        'says where its words gather: `passages` (where a story is told; ' +
+        'its key opens the chapter) and `byBook`; `next` is the `from` of ' +
+        'the next page. `refs`: verses or chapters you think fit ("Matthew ' +
+        '6:34; Psalm 23"), quoted from this Bible -- never quote a verse it ' +
+        'did not return. `open`: a result’s `key`, shown in the Bible ' +
+        'Lookup (never on a screen), only when asked. No arguments: the ' +
+        'installed Bibles.',
       inputSchema: {
         bible: z
           .string()
@@ -1705,19 +1713,20 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           .string()
           .optional()
           .describe('Search only these books: "Psalms", "Matthew, Mark"'),
+        from: z.number().int().min(0).optional(),
         open: z
           .string()
           .optional()
-          .describe('A verse key from a result, e.g. "JHN 3:16"'),
+          .describe('A key from a result, e.g. "JHN 3:16" or "GEN 7"'),
         page: z.string().optional(),
       },
     },
-    async ({ bible, words, refs, book, open, page }) => {
+    async ({ bible, words, refs, book, from, open, page }) => {
       try {
         const { value } = await evaluateInApp(
           genAgentDataExpression(
             'bible-find',
-            { bible, words, refs, book, open },
+            { bible, words, refs, book, from, open },
             BIBLE_FIND_TIMEOUT,
           ),
           { match: page, timeout: BIBLE_FIND_TIMEOUT + 5000 },
@@ -1751,8 +1760,9 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         'with their ids for a read. `kind` verse ' +
         'by `ref` ("GEN 2:19-21; John 3:16"): the passage in `bible` ' +
         "(default the lookup's); `near` the chapter (or verse) before or " +
-        'after it instead; `names` also the people and places in it. ' +
-        'Reads only.',
+        'after it instead; `names` also the people and places in it; ' +
+        '`related` also the verses its cross references lead to, by theme ' +
+        '(one verse: all its themes). Reads only.',
       inputSchema: {
         kind: z.enum(['name', 'location', 'verse']),
         id: z.string().optional(),
@@ -1769,15 +1779,28 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
           .describe("The lookup's language code; default the one shown"),
         near: z.enum(['previous', 'next']).optional(),
         names: z.boolean().optional(),
+        related: z.boolean().optional(),
         page: z.string().optional(),
       },
     },
-    async ({ kind, id, name, search, ref, bible, lang, near, names, page }) => {
+    async ({
+      kind,
+      id,
+      name,
+      search,
+      ref,
+      bible,
+      lang,
+      near,
+      names,
+      related,
+      page,
+    }) => {
       try {
         const { value } = await evaluateInApp(
           genAgentDataExpression(
             'lookup',
-            { kind, id, name, search, ref, bible, lang, near, names },
+            { kind, id, name, search, ref, bible, lang, near, names, related },
             LOOKUP_RECORD_TIMEOUT,
           ),
           { match: page, timeout: LOOKUP_RECORD_TIMEOUT + 5000 },
@@ -2639,6 +2662,97 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
       });
     },
   );
+
+  // Real files off the disk dropped on a control, by its words (2026-10-22).
+  // A file a script builds in the page has no path, and every list here
+  // copies a dropped file FROM its path, so the drop is the browser's own:
+  // CDP's `Input.dispatchDragEvent` carrying the files, at the point the
+  // page answers. The STDIO door only -- the developer's and the robot
+  // test's; the chatbot's door never has it -- and fixtures only
+  // (`dropFilePaths.mjs`), because a drop copies what it carries into the
+  // user's folders.
+  if (door === 'stdio') {
+    server.registerTool(
+      'owa_drop_files',
+      {
+        description:
+          'Drop real files or folders from the disk onto a control found ' +
+          'by its label -- a picture onto the slide canvas, a song file ' +
+          'onto the Documents list, a folder onto Resources. Paths must ' +
+          "be absolute and under the repository's test-results folder or " +
+          'the temp folder. The answer says whether the control took the ' +
+          'drop (`accepted`, `dropped`); check the list it went into ' +
+          'before saying it worked.',
+        inputSchema: {
+          paths: z
+            .array(z.string())
+            .describe('Absolute paths of the files or folders to drop'),
+          to: z
+            .union([z.string(), z.array(z.string())])
+            .describe('The label on the control to drop them on'),
+          page: z.string().optional().describe(PAGE_TEXT),
+        },
+      },
+      async ({ paths, to, page }) => {
+        return await attempt(async () => {
+          const checked = checkDropFilePaths(paths);
+          if (checked.refusal !== undefined) {
+            throw new Error(checked.refusal);
+          }
+          const toFinds = (Array.isArray(to) ? to : [to]).filter(Boolean);
+          if (toFinds.length === 0) {
+            throw new Error('Pass the label of the control to drop on.');
+          }
+          const langCode = await readAppLanguage(page);
+          const { target, value: aim } = await evaluateInApp(
+            genDropAimExpression(withTranslations(toFinds, langCode), {
+              guard: genPressGuard(),
+            }),
+            { match: page },
+          );
+          if (typeof aim?.refused === 'string') {
+            recordPressRefusal('owa_drop_files', aim);
+            throw new Error(genPressRefusalReason(aim));
+          }
+          if (aim?.point === undefined) {
+            return aim;
+          }
+          const data = {
+            items: [],
+            files: checked.pathList,
+            dragOperationsMask: 1,
+          };
+          const at = { x: aim.point.x, y: aim.point.y, data };
+          // A busy panel answers dragover late, and Chromium silently drops
+          // a drop that comes before the page has accepted the drag -- a
+          // folder dropped on Resources was lost that way. A second
+          // dragover after a pause is what a hand's own movement gives it.
+          await runInTarget(target, [
+            { method: 'Input.dispatchDragEvent', params: { type: 'dragEnter', ...at } },
+            { method: 'Input.dispatchDragEvent', params: { type: 'dragOver', ...at } },
+            { waitMs: 500 },
+            { method: 'Input.dispatchDragEvent', params: { type: 'dragOver', ...at } },
+            { waitMs: 300 },
+            { method: 'Input.dispatchDragEvent', params: { type: 'drop', ...at } },
+          ]);
+          const read = await evaluateInTarget(target, genDropReadExpression());
+          return {
+            files: checked.pathList.map((filePath) => {
+              return filePath.split(/[\\/]/).pop();
+            }),
+            onto: aim.onto,
+            accepted: read.accepted,
+            dropped: read.dropped,
+            landedOn: read.landedOn,
+            unverified: read.dropped
+              ? undefined
+              : 'Nothing there took the drop. Check the list the files ' +
+                'were meant for before saying it worked.',
+          };
+        });
+      },
+    );
+  }
 
   // A list scrolled. This app's long lists are windowed, so a row past the
   // fold is not in the DOM: `owa_list_ui` cannot list it and `owa_click`

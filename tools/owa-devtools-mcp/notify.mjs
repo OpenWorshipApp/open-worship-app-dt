@@ -58,6 +58,8 @@ const ACTING_TOOLS = {
     // same dictionary keys, so a Khmer window reads them already.
     owa_press_key: 'pressed a key',
     owa_drag: 'dragged something',
+    // Files dropped from the disk: a drag as far as the window can tell.
+    owa_drop_files: 'dragged something',
     // The menu bar. A `list` reads and is quiet; a press names the item.
     owa_menu: 'chose a menu item',
     owa_scroll: 'scrolled a list',
@@ -740,7 +742,27 @@ export function genNoticeWords(
 // and a window first given an older one (by a server started before the
 // change) must be given this one instead of being handed words it cannot
 // read.
-const NOTICE_RUNTIME_VERSION = 5;
+const NOTICE_RUNTIME_VERSION = 6;
+
+// What counts as something a person can press, for the pill's own placement:
+// it must never cover one. A div with a handler and no role is not here on
+// purpose -- the pill sits over panel backgrounds all day, and only a real
+// control is worth moving for.
+const NOTICE_CONTROL_SELECTOR = [
+    'button',
+    'a[href]',
+    'input',
+    'select',
+    'textarea',
+    'label',
+    '[role="button"]',
+    '[role="menuitem"]',
+    '[role="switch"]',
+    '[role="tab"]',
+    '[role="checkbox"]',
+    '[role="radio"]',
+    '[tabindex]:not([tabindex="-1"])',
+].join(', ');
 
 const NOTICE_RUNTIME = `
 (() => {
@@ -773,7 +795,8 @@ const NOTICE_RUNTIME = `
         <style>
             /* Glass, not a slab (2026-10-11, the user's picture of the pill
                over the Reader's footer: "I want to see through"). It lands
-               on the bottom row of whatever panel is there, and at 94% it
+               near the bottom of whatever panel is there -- and lifts just
+               clear of any control under it (place(), below). At 94% it
                hid the very control the assistant had just pointed out. The
                blur and the words' own shadow keep it readable over a busy
                row; where the engine cannot blur, the tint goes back to
@@ -846,6 +869,83 @@ const NOTICE_RUNTIME = `
     const pill = root.querySelector('.pill');
     const who = root.querySelector('.who');
     const what = root.querySelector('.what');
+
+    // The pill lands on the bottom row of whatever panel is there, and in
+    // the Settings window that row IS a button (Clear All Settings) -- the
+    // glass made the row legible again, not reachable, so the notice still
+    // sat on top of the one control it may be warning about (robot run
+    // 20261020 F-1). It stays bottom-centre and lifts itself just clear of
+    // anything a person can press.
+    const CONTROL_SELECTOR = ${JSON.stringify(NOTICE_CONTROL_SELECTOR)};
+    const BASE_BOTTOM_PX = 14;
+    const LIFT_GAP_PX = 8;
+
+    // The LOWEST top edge among the controls under the pill: the one that
+    // decides how far up it has to go. Null when nothing is under it, when
+    // the engine cannot answer (jsdom in the tests), or when the pill has no
+    // box at all.
+    function getLowestControlTop() {
+        if (typeof document.elementsFromPoint !== 'function') {
+            return null;
+        }
+        const rect = pill.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) {
+            return null;
+        }
+        const y = rect.top + rect.height / 2;
+        const xs = [
+            rect.left + rect.width / 2,
+            rect.left + 8,
+            rect.right - 8,
+        ];
+        let top = null;
+        for (const x of xs) {
+            let stack;
+            try {
+                stack = document.elementsFromPoint(x, y);
+            } catch (_error) {
+                return null;
+            }
+            for (const el of stack ?? []) {
+                const control = el.closest?.(CONTROL_SELECTOR);
+                if (control == null || host.contains(control)) {
+                    continue;
+                }
+                const box = control.getBoundingClientRect();
+                if (box.height <= 0) {
+                    continue;
+                }
+                if (top === null || box.top < top) {
+                    top = box.top;
+                }
+            }
+        }
+        return top;
+    }
+
+    // Back where the style sheet puts it, then just clear of the lowest
+    // control it covers. A few rounds, because lifting it may bring it over
+    // the row above; it only ever moves UP, so it cannot oscillate. Never
+    // past the middle: a notice floating in the middle of the window is
+    // worse than one resting on a row.
+    function place() {
+        pill.style.bottom = BASE_BOTTOM_PX + 'px';
+        const ceiling = Math.round(window.innerHeight * 0.55);
+        for (let i = 0; i < 4; i += 1) {
+            const top = getLowestControlTop();
+            if (top === null) {
+                return;
+            }
+            const next = Math.ceil(window.innerHeight - top + LIFT_GAP_PX);
+            const base =
+                Number.parseFloat(pill.style.bottom) || BASE_BOTTOM_PX;
+            if (next <= base || next > ceiling) {
+                return;
+            }
+            pill.style.bottom = next + 'px';
+        }
+    }
+
     let hideTimeout = null;
     const api = {
         version: VERSION,
@@ -866,6 +966,9 @@ const NOTICE_RUNTIME = `
                 : 'en';
             who.textContent = String(words.who);
             what.textContent = String(words.what);
+            // After the words: the pill's width is its words' width, and
+            // what it covers depends on both.
+            place();
             pill.dataset.shown = 'yes';
             clearTimeout(hideTimeout);
             // Long enough to read, short enough that it is gone before the

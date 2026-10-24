@@ -25,6 +25,7 @@ import {
     requestChatbotReport,
     takeChatbotAsk,
     takeChatbotFile,
+    takeChatbotFileRequest,
     takeChatbotLookup,
     takeChatbotReport,
     toProblemText,
@@ -147,6 +148,53 @@ describe('a file handed to the assistant', () => {
         expect(takeChatbotFile()).toBe(longPath);
         expect(takeChatbotFile()).toBeNull();
         expect(takeChatbotAsk()).toBe('Import a Bible for me');
+    });
+
+    // 2026-10-22: the Reader's passage rides with it, checked both ways.
+    it('carries the passage the Reader is on, and drops one that is not', () => {
+        const reading = {
+            bookKey: 'MAT',
+            chapter: 18,
+            verseStart: 15,
+            verseEnd: 17,
+            title: 'ម៉ាថាយ ១៨:១៥-១៧',
+            bibleKey: 'ពគប',
+        };
+        requestChatbotFile('/r/pdf/MAT.18.pdf', reading);
+        expect(takeChatbotFileRequest()).toEqual({
+            filePath: '/r/pdf/MAT.18.pdf',
+            reading,
+        });
+        requestChatbotFile('/r/pdf/MAT.18.pdf');
+        expect(takeChatbotFileRequest()).toEqual({
+            filePath: '/r/pdf/MAT.18.pdf',
+            reading: null,
+        });
+        // A hand-edited setting: the file still opens, the reading does not.
+        store.set(
+            'chatbot-handoff-file',
+            JSON.stringify({
+                filePath: '/r/pdf/MAT.18.pdf',
+                reading: { bookKey: 'mat; rm -rf', chapter: 18, title: 'x' },
+                at: Date.now(),
+            }),
+        );
+        expect(takeChatbotFileRequest()).toEqual({
+            filePath: '/r/pdf/MAT.18.pdf',
+            reading: null,
+        });
+        // A backwards range keeps the chapter and loses the verses.
+        requestChatbotFile('/r/pdf/MAT.18.pdf', {
+            ...reading,
+            verseStart: 17,
+            verseEnd: 15,
+        });
+        expect(takeChatbotFileRequest()?.reading).toEqual({
+            bookKey: 'MAT',
+            chapter: 18,
+            title: 'ម៉ាថាយ ១៨:១៥-១៧',
+            bibleKey: 'ពគប',
+        });
     });
 
     it('is nothing after half a minute, or past what a path can be', () => {

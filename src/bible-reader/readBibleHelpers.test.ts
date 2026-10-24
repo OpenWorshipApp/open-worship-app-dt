@@ -48,6 +48,7 @@ import {
     useNextEditingBibleItem,
 } from './readBibleHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
+import { createSealedDataTransfer } from '../test-setup/sealedDataTransfer';
 
 const RECT = { left: 0, top: 0, width: 100, height: 100 } as DOMRect;
 
@@ -157,11 +158,36 @@ describe('bible-reader readBibleHelpers', () => {
         expect(passedItem.bibleKey).toBe('KJV');
     });
 
-    test('applyDropped handles malformed json through handleError', () => {
-        const event = genEvent(50, 50);
-        event.dataTransfer.getData.mockReturnValue('{not-json');
-        applyDropped(event, {} as any, {} as any);
-        expect(handleErrorMock).toHaveBeenCalled();
+    // A browser empties the drop's data once the handler returns: read
+    // after an await, the passage would be '' and nothing would open.
+    test('applyDropped reads the drop while its handler is running', () => {
+        const ctl = { applyTargetOrBibleKey: vi.fn() } as any;
+        const { dataTransfer, seal } = createSealedDataTransfer({
+            text: JSON.stringify({
+                type: DragTypeEnum.BIBLE_ITEM,
+                data: { bibleKey: 'ESV' },
+            }),
+        });
+        const event = genEvent(50, 50, ['receiving-data-drop']);
+        event.dataTransfer = dataTransfer;
+        applyDropped(event, ctl, { bibleKey: 'KJV' } as any);
+        seal();
+        expect(ctl.applyTargetOrBibleKey).toHaveBeenCalledTimes(1);
+    });
+
+    test('applyDropped quietly ignores a drop that is not a passage', () => {
+        const ctl = { applyTargetOrBibleKey: vi.fn() } as any;
+        // '' is what a drag whose payload was written too late delivers.
+        for (const payload of ['', '{not-json', 'https://x.y', 'null', '7']) {
+            const event = genEvent(50, 50, ['receiving-data-drop']);
+            event.dataTransfer.getData.mockReturnValue(payload);
+            applyDropped(event, ctl, { bibleKey: 'KJV' } as any);
+            expect(
+                event.currentTarget.classList.contains('receiving-data-drop'),
+            ).toBe(false);
+        }
+        expect(ctl.applyTargetOrBibleKey).not.toHaveBeenCalled();
+        expect(handleErrorMock).not.toHaveBeenCalled();
     });
 
     test('useNextEditingBibleItem edits the neighbor for each arrow key', () => {

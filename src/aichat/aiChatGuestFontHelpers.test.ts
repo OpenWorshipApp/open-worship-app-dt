@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
     applyGuestLanguageFont,
+    genGuestAppFontScript,
     genGuestFontScript,
     readLanguageFontFiles,
+    setAppFontFamily,
     setLanguageFont,
     toSafeFontList,
     toUnicodeRange,
@@ -145,7 +147,9 @@ function runInFakePage(
                 face.weight,
                 face.style,
                 face.unicodeRange,
-                face.buffer?.byteLength,
+                typeof face.buffer === 'string'
+                    ? face.buffer
+                    : face.buffer?.byteLength,
             ].join(' | ');
         });
     };
@@ -224,9 +228,59 @@ describe('genGuestFontScript', () => {
     });
 });
 
+describe('genGuestAppFontScript', () => {
+    const genFace = (overrides: Partial<FakeFaceType>): FakeFaceType => {
+        return {
+            family: 'anthropic-sans',
+            weight: '300 800',
+            style: 'normal',
+            stretch: 'normal',
+            unicodeRange: 'U+0-10FFFF',
+            status: 'loaded',
+            ...overrides,
+        };
+    };
+
+    it('borrows over no network and marks the page itself', () => {
+        const script = genGuestAppFontScript('My Font');
+        expect(script).toContain('local(');
+        expect(script).toContain('window.__owaLanguageFont = true');
+        expect(script).not.toMatch(/fetch\(|url\(|atob/);
+    });
+
+    it('aliases each loaded text face to the picked face, keeping icons', () => {
+        const page = runInFakePage(genGuestAppFontScript('My Font'), [
+            genFace({}),
+            // An icon font's letters are PUA: never borrowed for a name.
+            genFace({ family: 'site-icons', unicodeRange: 'U+E000-E0FF' }),
+            genFace({ family: '"Heavy Face"', weight: '700' }),
+        ]);
+        expect(page.run()).toBe('anthropic-sans, system-ui');
+        expect(page.added()).toEqual([
+            'anthropic-sans | 300 800 | normal | U+0-2FFF | ' +
+                'local("My Font Regular"), local("My Font-Regular"), local("My Font")',
+            'Heavy Face | 700 | normal | U+0-2FFF | ' +
+                'local("My Font Bold"), local("My Font-Bold")',
+        ]);
+    });
+
+    it('follows a face the page loads later, once, and marks the page', () => {
+        const page = runInFakePage(genGuestAppFontScript('My Font'), []);
+        expect(page.run()).toBe('anthropic-sans, system-ui');
+        const serif = genFace({ family: 'anthropic-serif' });
+        page.load(serif);
+        page.load({ ...serif });
+        expect(page.added()).toEqual([
+            'anthropic-serif | 300 800 | normal | U+0-2FFF | ' +
+                'local("My Font Regular"), local("My Font-Regular"), local("My Font")',
+        ]);
+    });
+});
+
 describe('applyGuestLanguageFont', () => {
     afterEach(() => {
         setLanguageFont(null);
+        setAppFontFamily(null);
         vi.restoreAllMocks();
     });
 
@@ -283,5 +337,38 @@ describe('applyGuestLanguageFont', () => {
         expect(guest.executeJavaScript).toHaveBeenCalledTimes(1);
         expect(fetchSpy).not.toHaveBeenCalled();
         expect(guest.insertCSS).not.toHaveBeenCalled();
+    });
+
+    it('names the Settings face in front of a site with no language face', async () => {
+        setAppFontFamily('My Font');
+        const { guest, element } = genGuest(false);
+        await applyGuestLanguageFont(element);
+        expect(guest.executeJavaScript).toHaveBeenCalledTimes(2);
+        expect(guest.insertCSS).toHaveBeenCalledWith(
+            'body { font-family: "My Font", anthropic-sans, system-ui; }',
+        );
+    });
+
+    it('sends nothing when neither face is set', async () => {
+        const { guest, element } = genGuest(false);
+        await applyGuestLanguageFont(element);
+        expect(guest.executeJavaScript).not.toHaveBeenCalled();
+        expect(guest.insertCSS).not.toHaveBeenCalled();
+    });
+
+    it('puts the Settings face in front of the language face', async () => {
+        const fetchSpy = useFont();
+        setAppFontFamily('My Font');
+        const { guest, element } = genGuest(false);
+        await applyGuestLanguageFont(element);
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+        expect(guest.insertCSS).toHaveBeenNthCalledWith(
+            1,
+            'body { font-family: "app-Battambang", anthropic-sans, system-ui; }',
+        );
+        expect(guest.insertCSS).toHaveBeenNthCalledWith(
+            2,
+            'body { font-family: "My Font", anthropic-sans, system-ui; }',
+        );
     });
 });

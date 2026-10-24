@@ -24,6 +24,9 @@ const { state, mocks } = vi.hoisted(() => ({
         useLookupManagers: vi.fn(),
         verseFontFamily: vi.fn(),
         openChatbotWithLookup: vi.fn(),
+        shortToBibleItem: vi.fn(),
+        showAppContextMenu: vi.fn(),
+        genCopyingMenu: vi.fn(),
     },
 }));
 
@@ -39,18 +42,36 @@ vi.mock('../app-modal/FloatingWidgetComp', () => ({
         title,
         children,
         extraActionButtons,
+        menuItems,
         onClose,
         options,
     }: {
         title: ReactNode;
         children: ReactNode;
         extraActionButtons?: ReactNode;
+        menuItems?: {
+            menuElement: ReactNode;
+            onSelect?: (event: MouseEvent) => void;
+        }[];
         onClose: () => void;
-        options: { initialOffset: number };
+        options: { initialOffset: number; extraClassName?: string };
     }) => (
-        <section data-offset={options.initialOffset}>
+        <section
+            data-offset={options.initialOffset}
+            className={options.extraClassName}
+        >
             <header>{title}</header>
             {extraActionButtons}
+            {/* The `⋮` menu's items, flattened into buttons. */}
+            {menuItems?.map((item, index) => (
+                <button
+                    key={index}
+                    type="button"
+                    onClick={(event) => item.onSelect?.(event.nativeEvent)}
+                >
+                    {item.menuElement}
+                </button>
+            ))}
             <button type="button" onClick={onClose}>
                 Close detail
             </button>
@@ -78,6 +99,18 @@ vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
 vi.mock('../others/LoadingComp', () => ({
     default: ({ message }: { message: string }) => <div>{message}</div>,
 }));
+vi.mock('../scrolling/ScrollingHandlerComp', () => ({
+    default: ({
+        shouldShowPlayToBottom,
+    }: {
+        shouldShowPlayToBottom?: boolean;
+    }) => (
+        <i
+            data-testid="scrolling-handler"
+            data-play-to-bottom={shouldShowPlayToBottom ? '1' : '0'}
+        />
+    ),
+}));
 vi.mock('../toast/toastHelpers', () => ({
     showSimpleToast: mocks.showToast,
 }));
@@ -86,9 +119,22 @@ vi.mock('../others/themeHelpers', () => ({
 }));
 vi.mock('./bibleVerseHelpers', () => ({
     openVerseInBibleLookup: mocks.openVerse,
-    toVerseFullTitle: (verse: { title: string; bibleKey: string }) =>
-        `(${verse.bibleKey}) ${verse.title}`,
+    shortToBibleItem: mocks.shortToBibleItem,
     useLookupVerseFontFamily: mocks.verseFontFamily,
+}));
+vi.mock('../context-menu/appContextMenuHelpers', () => ({
+    showAppContextMenu: mocks.showAppContextMenu,
+}));
+// jsdom here refuses a `MouseEvent` whose `view` is the test's `window`.
+vi.mock('../context-menu/contextMenuEventHelpers', async () => ({
+    ...(await vi.importActual<any>('../context-menu/contextMenuEventHelpers')),
+    createMouseEvent: (clientX: number, clientY: number) => ({
+        clientX,
+        clientY,
+    }),
+}));
+vi.mock('../bible-list/bibleItemHelpers', () => ({
+    genBibleItemCopyingContextMenu: mocks.genCopyingMenu,
 }));
 vi.mock('./detailPanelHelpers', () => ({
     closeDetailPanel: mocks.closePanel,
@@ -244,7 +290,7 @@ describe('location and name detail panels', () => {
         expect(mocks.closePanel).toHaveBeenCalledWith('name-1');
     });
 
-    test('copies raw and resolved name references and updates its copied feedback', async () => {
+    test('copies raw and resolved name references and toasts each copy', async () => {
         const record = { name: 'Abraham', verses: ['GEN.12.1'] };
         state.panels = [
             {
@@ -267,16 +313,23 @@ describe('location and name detail panels', () => {
             'Abraham: GEN.12.1',
             '<p>Name</p>',
         );
-        expect(document.querySelector('[aria-label="Copied"]')).not.toBeNull();
+        expect(mocks.showToast).toHaveBeenLastCalledWith(
+            'Copy',
+            'Text has been copied to clipboard',
+        );
 
         await act(async () => click('Resolve names'));
-        await act(async () => click('Copied'));
+        await act(async () => click('Copy'));
         expect(mocks.copy).toHaveBeenLastCalledWith(
             'Abraham: Genesis 12:1',
             '<p>Name</p>',
         );
-        await act(async () => vi.advanceTimersByTime(1600));
-        expect(document.querySelector('[aria-label="Copy"]')).not.toBeNull();
+        expect(mocks.showToast).toHaveBeenCalledTimes(2);
+        // A failed copy says nothing landed.
+        mocks.copy.mockRejectedValueOnce(new Error('denied'));
+        await act(async () => click('Copy'));
+        expect(mocks.showToast).toHaveBeenCalledTimes(2);
+        expect(mocks.handleError).toHaveBeenCalled();
         await act(async () => click('French'));
         expect(mocks.openPanel).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -320,14 +373,41 @@ describe('location and name detail panels', () => {
         ];
         state.controller = {};
         await act(async () => root.render(<LocationNameDetailPanelsComp />));
-        await act(async () => click('Resolve verse'));
-        expect(document.body.textContent).toContain('Genesis 1:1');
-        expect(document.body.textContent).toContain('(KJV)');
+        // Not read yet: the reference is all there is to copy.
         await act(async () => click('Copy'));
         expect(mocks.copy).toHaveBeenLastCalledWith(
-            '(KJV) Genesis 1:1\nIn the beginning',
-            expect.stringContaining('<strong>(KJV) Genesis 1:1</strong>'),
+            'GEN.1.1',
+            '<p>GEN.1.1</p>',
         );
+        await act(async () => click('Resolve verse'));
+        expect(document.body.textContent).toContain('Genesis 1:1');
+        expect(document.body.textContent).toContain('KJV');
+        expect(document.body.textContent).not.toContain('(KJV)');
+        // Read, Copy opens the Bible copy menu for the passage rather than
+        // copying straight away (2026-10-22).
+        const bibleItem = { bibleKey: 'KJV' };
+        const copyingMenu = [{ menuElement: 'Copy Title' }];
+        mocks.shortToBibleItem.mockResolvedValue(bibleItem);
+        mocks.genCopyingMenu.mockReturnValue(copyingMenu);
+        const copyCount = mocks.copy.mock.calls.length;
+        await act(async () => click('Copy'));
+        await vi.waitFor(() => {
+            expect(mocks.showAppContextMenu).toHaveBeenCalledWith(
+                { clientX: expect.any(Number), clientY: expect.any(Number) },
+                copyingMenu,
+            );
+        });
+        expect(mocks.shortToBibleItem).toHaveBeenCalledWith('KJV', 'GEN.1.1');
+        expect(mocks.genCopyingMenu).toHaveBeenCalledWith(bibleItem);
+        expect(mocks.copy).toHaveBeenCalledTimes(copyCount);
+        // A passage that no longer reads opens nothing.
+        mocks.shortToBibleItem.mockResolvedValue(null);
+        await act(async () => click('Copy'));
+        await vi.waitFor(() => {
+            expect(mocks.shortToBibleItem).toHaveBeenCalledTimes(2);
+        });
+        await act(async () => vi.advanceTimersByTimeAsync(10));
+        expect(mocks.showAppContextMenu).toHaveBeenCalledTimes(1);
         mocks.openVerse.mockResolvedValueOnce(false);
         await act(async () => click('Open in bible lookup'));
         expect(mocks.openVerse).toHaveBeenCalledWith(
@@ -372,6 +452,56 @@ describe('location and name detail panels', () => {
         );
     });
 
+    // The Bible view's to-the-top on every panel, and its auto-scroll on a
+    // passage only (2026-10-22): a name or a place is a record to look at,
+    // not text to read down.
+    test('every panel scrolls to the top; only a verse panel auto-scrolls', async () => {
+        state.panels = [
+            {
+                key: 'verse:GEN 8:1-22:KHM',
+                kind: 'verse',
+                target: 'GEN 8:1-22',
+                name: 'Genesis 8:1-22',
+                bibleKey: 'KHM',
+                raiseCount: 0,
+            },
+        ];
+        await act(async () => root.render(<LocationNameDetailPanelsComp />));
+        const handler = document.querySelector<HTMLElement>(
+            '[data-testid="scrolling-handler"]',
+        );
+        expect(handler?.dataset.playToBottom).toBe('1');
+        expect(
+            document.querySelector('section')?.classList.value.split(' '),
+        ).toEqual([
+            'location-name-lookup-detail-widget',
+            'location-name-lookup-detail-widget--verse',
+        ]);
+
+        state.panels = [
+            {
+                key: 'name-1',
+                kind: 'name',
+                target: 'n1',
+                name: 'Abraham',
+                raiseCount: 0,
+            },
+        ];
+        state.managers = {
+            namesLookupManager: { getRecordById: () => ({ name: 'Abraham' }) },
+            locationsLookupManager: { getRecordById: () => null },
+        };
+        await act(async () => root.render(<LocationNameDetailPanelsComp />));
+        expect(
+            document.querySelector<HTMLElement>(
+                '[data-testid="scrolling-handler"]',
+            )?.dataset.playToBottom,
+        ).toBe('0');
+        expect(document.querySelector('section')?.className).toBe(
+            'location-name-lookup-detail-widget',
+        );
+    });
+
     test('the bible key in a verse title opens the verse in another bible', async () => {
         state.panels = [
             {
@@ -392,7 +522,7 @@ describe('location and name detail panels', () => {
         const bibleKeyButton = document.querySelector<HTMLButtonElement>(
             '[aria-label="Open in another Bible: KJV"]',
         );
-        expect(bibleKeyButton?.textContent).toBe('(KJV)');
+        expect(bibleKeyButton?.textContent).toBe('KJV');
         await act(async () => bibleKeyButton!.click());
         const [, onSelect, excludedKeys, menuTitle] =
             mocks.showBibleKeyOption.mock.calls[0];

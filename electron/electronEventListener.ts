@@ -101,7 +101,12 @@ import {
     type DocxToHtmlsParamsType,
     type PptxToHtmlsParamsType,
 } from './msHelpers';
-import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
+import {
+    initMenu,
+    sendMenuClicked,
+    sendMenuClickedToAllWindows,
+    setCustomMenusData,
+} from './electronMenu';
 import {
     AGENT_MENU_CLICK_CHANNEL,
     AGENT_MENU_LIST_CHANNEL,
@@ -1295,7 +1300,10 @@ export function initEventOther(appController: ElectronAppController) {
             }: {
                 key: string;
                 menusData: CustomMenusDataType | null;
-                options?: { isRoutedToFocusedWindow?: boolean };
+                options?: {
+                    isRoutedToFocusedWindow?: boolean;
+                    isSentToAllWindows?: boolean;
+                };
             },
         ) => {
             // Route clicks back to the renderer that contributed the items, not
@@ -1311,6 +1319,9 @@ export function initEventOther(appController: ElectronAppController) {
             // window in front is the one that meant to press it.
             const isRoutedToFocusedWindow =
                 options?.isRoutedToFocusedWindow === true;
+            // ...or to every window at once, when each has its own answer to
+            // the same press (Help → Tips of the Day: every page's own tip).
+            const isSentToAllWindows = options?.isSentToAllWindows === true;
             setCustomMenusData(
                 key,
                 menusData === null
@@ -1318,6 +1329,10 @@ export function initEventOther(appController: ElectronAppController) {
                     : {
                           menusData,
                           clickMenu: (menuData: any) => {
+                              if (isSentToAllWindows) {
+                                  sendMenuClickedToAllWindows(menuData);
+                                  return;
+                              }
                               sendMenuClicked(
                                   menuData,
                                   isRoutedToFocusedWindow

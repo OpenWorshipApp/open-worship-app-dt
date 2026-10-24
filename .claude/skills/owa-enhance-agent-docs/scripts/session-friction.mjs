@@ -22,8 +22,7 @@
 // machine; use node"), never as a quote.
 //
 // Transcripts live in `~/.claude/projects/<the repo path, every
-// non-alphanumeric character a dash>/<session>.jsonl`. Codex keeps its own
-// elsewhere and is not read.
+// non-alphanumeric character a dash>/<session>.jsonl`.
 //
 // Exit code: 0, or 2 when no transcript folder is found.
 

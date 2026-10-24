@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [KB-66, KB-67, KB-68]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-49b — Run the slides from a presenter remote (get the keys back without a click)
 
@@ -56,5 +56,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `KB-66` · `KB-67` · `KB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

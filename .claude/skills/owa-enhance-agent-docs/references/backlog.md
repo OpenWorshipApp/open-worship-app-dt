@@ -11,15 +11,15 @@ filed. A finding owned by another skill is filed there: `EN-xx`
 **Nothing is written here until the user decides.** An applied proposal is
 filed as `done`, with before → after and the proof. Every other proposal of
 that report is filed `open`, and every one on `file`. Filing is an edit under
-`.claude/`, so it brings the Codex mirror copy and
-`node extra-work/build-knowledge.mjs` with it.
+`.claude/`, so it brings `node extra-work/build-knowledge.mjs` with it.
 
 This file ships in plaintext inside the installer. Write transcript findings as
 classes, and never quote a session.
 
 Status: `open` · `doing` · `done` · `wontfix` (with the reason). Lens: L1
 blind spots · L2 context cost · L3 prose → machinery · L4 friction · L5
-verification reach · L6 skill routing · L7 Codex parity · L8 the 🤖's corpus ·
+verification reach · L6 skill routing · L7 Codex parity (retired 2026-10-24
+with Codex support) · L8 the 🤖's corpus ·
 `drift` for a decided drift item.
 
 Entry shape. The status stays the last status word on the heading line,
@@ -61,7 +61,9 @@ paragraph went from 7 lines to 4, naming the script. **Cost.** Gate +~4 s
 mirrored SKILL.md files (0 drift before any edit of theirs). The tree test
 FAILED with `.codex/memory/cast-to-tv.md` drifted ("1 out of step"); the sync
 restored it byte-identical, and the test passed. **Route.** This skill.
-Found and applied in run `20261008-2315`.
+Found and applied in run `20261008-2315`. **Superseded 2026-10-24:** Codex
+support was dropped; `AGENTS.md`, `.codex/`, `.agents/skills/`, the script
+and the test are deleted.
 
 ## AD-03 · Quoting breaks a third of sessions; the cure is in the index — `done` · S3 · L4
 
@@ -121,9 +123,8 @@ applied in run `20261008-2315`.
 **Signal.** Past the ~1 530-character cut: `owa-robot-test` by 2 402
 characters, `owa-enhance-chatbot` 1 503, `owa-enhance-mcp` 705, `owa-enhance`
 637. `owa-upgrade-unit-test` states "~45%" against its own baseline of 54.91%
-(2026-09-29). **Change.** Put trigger phrases before the cut, fix the number,
-and keep each Codex preserved description in step (`sync-agent-mirror.mjs`
-does this now). **Cost.** ~0. **Proof on apply.** `--check=skills`. **Route.**
+(2026-09-29). **Change.** Put trigger phrases before the cut and fix the
+number. **Cost.** ~0. **Proof on apply.** `--check=skills`. **Route.**
 Each owning skill, on ask. Found in run `20261008-2315`.
 
 ## AD-08 · The review skills are in neither skill index — `done` 2026-10-11 · S4 · L6

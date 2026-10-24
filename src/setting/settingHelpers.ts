@@ -16,7 +16,9 @@ export {
 export const SETTING_SETTING_NAME = 'setting-tabs';
 const SETTING_TAB_REQUEST_SETTING_NAME = 'setting-tab-request';
 const SETTING_TAB_REQUEST_MAX_AGE_MILLISECONDS = 30_000;
-export type SettingTabKeyType = 'g' | 'b' | 'o';
+// g: General, p: Path Settings, b: Bible, o: Others, a: AI Providers.
+export type SettingTabKeyType = 'g' | 'p' | 'b' | 'o' | 'a';
+const SETTING_TAB_KEY_LIST: SettingTabKeyType[] = ['g', 'p', 'b', 'o', 'a'];
 
 // The tab listener of THIS renderer, when it is the Settings window. A module
 // of its own would be cleaner, but `requestSettingTab` must reach it without
@@ -71,7 +73,7 @@ export function takeSettingTabRequest(): SettingTabKeyType | null {
         typeof data?.requestedAt !== 'number' ||
         Math.abs(Date.now() - data.requestedAt) >
             SETTING_TAB_REQUEST_MAX_AGE_MILLISECONDS ||
-        !['g', 'b', 'o'].includes(data.tabKey)
+        !SETTING_TAB_KEY_LIST.includes(data.tabKey)
     ) {
         return null;
     }
@@ -89,8 +91,19 @@ export function openSettingPage() {
     );
 }
 
-export function openGeneralSetting() {
-    requestSettingTab('g');
+/**
+ * Path Settings grew out of the General tab into one of its own. Every route
+ * that still said "open General" for a folder choice -- the empty-state button,
+ * the startup dialog, the context menu's Edit Parent Path -- comes here.
+ */
+export function openPathSetting() {
+    requestSettingTab('p');
+    openSettingPage();
+}
+
+/** The tab holding the AI master switch, provider keys and custom servers. */
+export function openAISetting() {
+    requestSettingTab('a');
     openSettingPage();
 }
 

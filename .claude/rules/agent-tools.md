@@ -238,7 +238,9 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   (`--owa-guide-page-font`, read off `document.body` as the runtime
   mounts -- Battambang in a Khmer window, which `main.tsx` sets), so Latin
   keeps the system face and Khmer is the app's own. The action banner
-  (`notify.mjs`, runtime version 5) and the picker's line do the same.
+  (`notify.mjs`, runtime version 6 — which also lifts the pill clear of any
+  control it would cover, so it never sits on **Clear All Settings**) and the
+  picker's line do the same.
 - **Guide steps and hidden controls**: A guide can also use `action: "hover"`
   when an event-driven surface creates another control; it dispatches
   pointer/mouse hover events without moving the person's real pointer. A
@@ -255,13 +257,35 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   rediscover those steps: small text uses the named Font Size range, and a
   localized Bible reference uses Clear input → the book's stable model-name
   title → Chapter N → Verse N while the buttons keep their localized visible
-  words.
+  words. **Nor does a data-folder question asked about Settings**
+  (2026-10-23, `genGuideActions`' `isDataFolderAsk`): its **Do it for me** is
+  the `setting-path` lesson, one press on the **[en:tran:Path Settings]** tab.
+  Asked to build the card, a model wrote _click Use This Folder_ with a folder
+  already chosen -- that button shows only while none is -- and then
+  _Parent Directory:_, a heading; the corpus row `why-data-folder` starts its
+  walkthrough at **[en:tran:Path Settings]** for the same reason.
 - **Tips belong to the operator page** (2026-09-28). In addition to Presenter
   and Reader, `pageDemos.mjs` supplies local lessons for Settings, Slide Editor,
   Bible Note, Web Editor, Lyric Editor and Local Web Share. `DailyTipComp`
-  listens for the focused-window Help menu in every supported window; only the
-  main window owns the shared menu registration. Its automatic shown marker is
-  per page, with the existing five-minute delay and global opt-out. **The
+  listens for the Help menu in every supported window; only the main window
+  owns the shared menu registration. **One press opens every open page's
+  card** (2026-10-23, the user: _open `Help` menubar, when click show in all
+  pages_): the items are registered `isSentToAllWindows`, main sends the click
+  to every window (`sendMenuClickedToAllWindows`), and the card no longer
+  checks that its window is in front. A popup hides its menu bar and a press
+  on the main window's menu focuses the main window, so with focus routing a
+  popup's own tips could never be asked for. **A card asked for from Help has
+  no Hide for 30 days** (the same day: _the tip of the day that opened by
+  `Help` menu should have no `Hide for 30 days`_; `isAskedFor`, kept through
+  Next tip and All tips, cleared when the card closes): the hide puts away the
+  AUTOMATIC card, which is the only one that offers it. Its automatic shown marker is
+  per page, with a five-minute wait and the global opt-out. **The wait is
+  per page and per window** (2026-10-23, the user: _tips of the day should
+  delay for few minutes before showing, for all pages_, _per page_;
+  `getDailyTipAutoShowDelay(page)`): a popup opened with `window.open` had
+  read its opener's launch time from the session storage it is handed and put
+  its tip over Settings' own box at once, on every reload; a reload keeps its
+  page's clock, and no automatic tip comes while no data folder is in use. **The
   card's own link is a 30-day hide, not that opt-out** (2026-10-11, the user's
   ask: _change from `Don't show again` to `Hide for 30 days`, will show again
   after 30 days_): it stores the day the hide ends in
@@ -289,7 +313,7 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   empties at once and then contradicts a card that is still there.
 - **The Presenter and Reader have checked-in demos that need no model**
   (2026-09-22, expanded 2026-09-23 and 2026-09-26, `readerDemos.mjs` and
-  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 104
+  `presenterDemos.mjs`). `owa_guide_start { demoId }` resolves 106
   Reader-only lessons through the same guarded card. Thirty are featured
   in the Reader assistant's zero-model practice shelf: the original font
   larger/smaller, localized John 3:16 and Bible Find demos; passage history,
@@ -297,7 +321,7 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   scrolling, line layout, advanced study views and book filtering; and direct
   practice for typing a complete reference, removing one reference part,
   automatic Bible audio, filtering and sorting notes, Settings and Help.
-  Fifty-one of the 104 Reader tips begin with a safe deterministic action;
+  Fifty-two of the 106 Reader tips begin with a safe deterministic action;
   Reader additions cover copying formats, saved list and note file management,
   Resources, names and graphs with practical searchable tips. Mixed steps use
   `look` after the safe action, and scoped labels translate each part. **A
@@ -989,7 +1013,38 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   an `open`; `ref` stays English, the one every tool reads. The help window
   draws a Khmer reader's lines and buttons with it (verified live: the
   ពគប search for ស្រឡាញ់ ខ្មាំងសត្រូវ អធិស្ឋាន, `ម៉ាថាយ ៥:៤៤` first, Psalms as
-  `ទំនុកដំកើង ១០៩:៤`).
+  `ទំនុកដំកើង ១០៩:៤`). **It finds stories and every verse with a word, not
+  only one verse** (2026-10-22, `EC-387`..`EC-391`; the user's picture of the
+  verse finder answering _ស្វែងរកក្នុងគម្ពីរលោកប្បត្តិណូអេលែងព្រាប_ with a
+  Google search and the flood with three scattered verses: _make the chatbot
+  super smart that can find everything in the bible_). Four things, all in
+  the search, so the window's head start, the offline answer and every model
+  get them. **A book named IN the words is the book searched**
+  (`findNamedBooks`, `readNamedBooks`): after a marker (`bookMarkerWords`,
+  per language in its `index.ts`: `in`, `ក្នុង`, `គម្ពីរ`, `dans`) or when no
+  verse uses the name ("Genesis"), even one letter off when the misspelling is
+  in no verse (`លោកប្បត្តិ`); a name verses DO use is a word ("Daniel in the
+  lions' den"). The asking words in FRONT are dropped (`findFrameWords`: "the
+  story of", `ស្វែងរក`, `រឿង`) -- only in front, "seek and ye shall find" is a
+  verse. The user's line had searched "search", "in", "book" and two scraps of
+  the name and found Isaiah 34:16; it finds Genesis 8:8-12 now. **Every result
+  says where its words gather** (`genChapterCountSql`, ONE scan that also
+  gives the total the old count scan gave): `passages`, chapters scored by the
+  search's RARE words (in under 1% of verses -- at 2% a paraphrase of the
+  prodigal son was placed in Leviticus 15), a verse holding several of them
+  weighing more, grown from the strongest chapter into neighbours at least half
+  as strong (never by chaining -- Daniel is named in eight chapters, the den is
+  Daniel 6) and joined where they come to touch; and `byBook` past one page.
+  For a language with spaces a rare word must START a word in that count
+  (`Manoah` had held "noah", and Judges 13 was a passage of the flood).
+  Measured: the flood (KJV) Genesis 6-10, feeding the 5000 Mark 6 / John 6 /
+  Luke 9, shepherd Ezekiel 34 / Zechariah 11 / John 10, Goliath 1 Samuel 17.
+  **Ties go to those chapters**: a word every verse holds alike was listed from
+  Genesis 46, and a model quoted John 10:11 from memory. **`from` pages and
+  `open` takes a chapter** (`GEN 7`, every verse of it); a non-English Bible's
+  passage carries `title` and `keyTitle` (`លោកុប្បត្តិ ៧-៩`, `លោកុប្បត្តិ ៨`)
+  and a counted book its `title`. Model bill: ~+60 tokens a round, verse-find
+  asks alone; the ordinary list and its ratchet did not move.
 
 - **What a Lookup Detail panel shows is `owa_lookup_record`** (2026-10-18;
   the user's picture of three detail panels with the left of each title
@@ -1011,13 +1066,35 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   (`LOOKUP_SOURCE_TEXT`): the names lookup is drawn from the KJV, a
   translated record is a translation of the KJV's, `kjvName` its spelling,
   the verse keys its numbering. `kind` `verse` by `ref` (keys or references
-  in words, `;`-separated, six at most — a key read whole over chapters, the
-  rest through `owa_find_verse`'s own reader) in `bible`; `near`
+  in words, `;`-separated, six at most — written references resolved by
+  `owa_find_verse`, then read by key with the same 6,000-character passage
+  bound, never its 300-character search preview) in `bible`; `near`
   (`previous` / `next`) reads the chapter before or after instead — for a
   single verse the verse, into the next chapter at a chapter's end, across
   books in the model's order — and `names` adds the people and places the
   names lookup has in the passage (`searchByShortVerse` per verse, 200
-  verses and 40 of each at most, each with its id and verses). Reads only; the
+  verses and 40 of each at most, each with its id and verses), and `related`
+  (2026-10-23, `EC-408`) what the app's own cross references lead to from it
+  -- the Reader's **[en:tran:Cross References]** data, one gzipped bundle per
+  language read a verse at a time (`getLocalBibleCrossRef`), in the Bible's
+  language when the app has it -- told by `agentCrossRefHelpers.ts` (pure):
+  `mostCited` (what most of its verses point to, and which of them do),
+  `otherTestament` (the most led to first, so the quoted few are the
+  strongest), `byVerse` (each verse's first themes), the passage itself left
+  out, overlapping references in one chapter merged into one span, the first
+  few quoted and every one titled in the Bible, a reference naming six of
+  the verses that lead to it and counting the rest (`fromCount`), within
+  7 000 characters with every verse's first theme kept to the last; one
+  verse gets all its themes; and `otherTestamentAround`, what the other
+  Testament says of the chapters around it -- the one before, the rest of
+  its own, the one after (`EC-416`: Jesus on the days of Noah is cited from
+  Genesis 6-7, never from 8); every per-verse reference titled as the Bible
+  names it; the whole sized to the room the passage leaves (6 000-9 000
+  characters); and `around`, the verses right before and after the passage
+  (the rest of its chapter on each side, or the chapter before or after);
+  and `yourNotes`, the person's own Bible notes that name its verses (file
+  name, title, first words) and what they highlighted or commented on there
+  (`EC-423`, `agentPassageNoteHelpers.ts`). ~0.2 s for Genesis 8:1-22. Reads only; the
   names dataset is taken through `acquireLookupData` and given back at once,
   so an open panel's copy is the one read and none is kept past the ten
   seconds `getLookupDataCached` keeps anything — which is why the chatbot
@@ -1040,7 +1117,26 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   record's own verse list is a curated few, so a theme or a half-remembered
   verse is the Bible searched by words, and the prompt says to name only what
   the search returned. It costs ~280 tokens a round in a lookup ask alone;
-  the ordinary list and its ratchet did not move.
+  the ordinary list and its ratchet did not move. **And a record answers
+  what people ask of it** (2026-10-22, `EC-399`..`EC-401`; the user, with
+  the Reader's Names and Places row menu on **[en:tran:Open in Chatbot]**
+  circled: _make the chatbot to be super smart that can answer everything
+  about location/name_). One person under several names is ONE: the dataset
+  keeps each KJV spelling and renaming as its own record (Noe beside Noah,
+  with Matthew 24:37; Elias beside Elijah; Sem beside Shem, so Noah had
+  "four" sons) and the main one never points back, so
+  `src/location-name-lookup/lookupNameAliasHelpers.ts` holds 47 hand-checked
+  pairs (a title of the shape _… name of [X]_ is not always X — _[Esau]'s
+  wife_), held to the en/km/fr datasets by a test. A person's `otherForms`
+  carry their own verses, `verses` merges every name's in Bible order, and
+  each family list names a relative once, by the record that IS them.
+  `sameName` names the other people or places of the name, in the dataset's
+  spelling or the KJV's, on EVERY read (a card opens by id, and
+  `otherMatches` came only with a read by name). A place carries
+  `fromJerusalem` (km, miles, compass point — the tool does the arithmetic),
+  `nearby` (the 6 nearest with a point, within 80 km) and `people` (everyone
+  who lists it, 40 named, `peopleCount`). One pass over what an open panel
+  holds; nothing kept; no schema changed.
 
 - **The Resources panel's files are `owa_resource_file`** (2026-10-17; the
   user, from a conversation about `LUK.6.pdf`: _let chatbot access all in
@@ -1156,7 +1252,9 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   a tab asking about the Bible Reader, or an answer that asked for another
   passage (`lookupAwaits`) -- and a name box -- `Who was Moses` / `Where is
 Bethlehem` and every language's own way (`bibleReaderWords.nameAsk`), or a
-  bare name in a script that is not Latin. A bare LATIN word is `allowLoad:
+  bare name in a script that is not Latin -- 16 letters at most, no
+  sentence mark, no question's lead word with more after it, since Khmer
+  writes a whole question with no space (`EC-422`). A bare LATIN word is `allowLoad:
 false` and searches only a dataset a lookup panel already holds
   (`getHeldLookupData`) -- the 34MB names dataset is never fetched
   speculatively. The app side (`src/helper/agentBibleSuggestHelpers.ts`)
@@ -1202,3 +1300,43 @@ John 3:16` -> `John 3:16`), retries the record read and shows the card;
     language step is answered by the assistant with its words kept above the
     question and its buttons. The parsers are pure and tested
     (`stepHelpHelpers.test.ts`).
+
+- **Drag and drop has three tools, one per kind of drag** (2026-10-22, the
+  user's asks: _all elements that support drag/drop should be tested_, then
+  _the robot test should have fake drag/drop mechanism_; robot-test §6h,
+  coverage rows DD-01..19). `owa_drag` aims both ends by their words and is
+  now **sealed like Chromium** (`genDragExpression`): the drop's
+  `DataTransfer` is a copy taken when `dragstart` returned, emptied once the
+  drop's handlers ran, so a handler that awaits before `setData` / `getData`
+  fails here as under a mouse (a Bible history row shipped that way). Its
+  drop walks `elementFromPoint` into open shadow roots, as a real drop's hit
+  test does: the Slide Editor canvas draws in one, and a drop sent to its
+  host took no colour, image or web page. The same run made the PRESS BAR
+  (`checkIsNamedNearly`) take the labels the tools hand out: the parts
+  joined (`FG Clear Foreground [F10]` — text `FG`, a title and an
+  aria-label, none of them that whole) and a long label as cut, 58+
+  characters from its start (80 in a match, 60 in `nearMisses`) — a refusal
+  had named both and refused the retry by them.
+  **`owa_drop_files`** (`{paths, to}`) drops real files or folders from the
+  disk: `genDropAimExpression` finds the control and arms a capture-phase
+  watch that reads the dragover's `defaultPrevented` after every handler,
+  `runInTarget` (`cdp.mjs`, one socket, one gesture) sends
+  `Input.dispatchDragEvent` enter → over → 500 ms → over → drop, and
+  `genDropReadExpression` answers `accepted` / `dropped` / `landedOn`.
+  **`dropped` is a drop that ARRIVED once the drag was accepted, in both
+  tools** (2026-10-24, robot run 20261024-1008, DD-12): it had been the
+  drop's own `defaultPrevented`, and the Mini Screen's drop handler colours
+  both screens and never cancels the drop, so a drop that worked read
+  `dropped: false`. `owa_drag` sends the drop only to a control that took the
+  dragover, a `dragleave` otherwise, as Chromium does — a handler acting on a
+  drop it never accepted would pass here and do nothing under a mouse. The
+  pause is load-bearing: Chromium
+  discards a drop the page has not accepted yet, and Resources lost a folder
+  to a back-to-back drop. It is **registered on the stdio door only** — the
+  chatbot's door never has it — withheld from the model besides, counted as
+  an acting call, refused onto a control that cannot be undone, and its
+  `paths` must sit under the repository's `test-results/` or the temp folder
+  after links are followed (`dropFilePaths.mjs`): a drop copies what it
+  carries into the user's folders. The chrome-devtools `drag` by uid stays
+  the second opinion (the browser's own drag, but its end is reported in
+  page coordinates, which a tab strip reads as a tear-off).

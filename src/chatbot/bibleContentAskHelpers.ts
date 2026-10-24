@@ -62,6 +62,13 @@ const VERSE_ASK_PATTERN_LIST = [
     /^(?:is|are)\s+there\s+(?:a|an|any)\s+(?:(?:holy\s+)?(?:bible|scripture)\s+)?(?:verses?|scriptures?|passages?)\s+(?:about|on|that\s+says?)\s+(.+)$/i,
     // "verses about hope", "bible verse on patience"
     /^(?:(?:holy\s+)?(?:bible|scripture)\s+)?(?:verses?|scriptures?|passages?)\s+(?:about|on|for)\s+(.+)$/i,
+    // A STORY by its name (2026-10-22, EC-389): "where in the bible is the
+    // story of the flood", "where can I find the parable of the sower",
+    // "show me the story of Jonah". It went to the general assistant,
+    // whose Khmer answer named a book the Bible does not have. The words
+    // keep "story of", which tells the search it is a story.
+    /^where\s+(?:in\s+the\s+(?:holy\s+)?(?:bible|scriptures?)\s+)?(?:is|are|can\s+i\s+find|do\s+i\s+find|does\s+it\s+tell)\s+(?:the\s+)?((?:story|stories|account|parable)\s+(?:of|about)\s+.+?)(?:\s+in\s+the\s+(?:holy\s+)?(?:bible|scriptures?))?$/i,
+    /^(?:find|show|give)\s+(?:me\s+)?(?:the\s+)?((?:story|account|parable)\s+(?:of|about)\s+.+)$/i,
 ];
 
 // A verse for the people in the room is the Presenter's work -- "show me a
@@ -159,7 +166,7 @@ export function genBibleKnowledgeText(asked: string) {
                 'knows how to use this app. An assistant can answer it: ask ' +
                 'with /btw in front — /btw {question} — and if none answers, ' +
                 'pick one in the row above, or add a key in Settings → ' +
-                'Others → AI Providers.',
+                'AI Providers.',
         ),
         { question: asked.trim() },
     );

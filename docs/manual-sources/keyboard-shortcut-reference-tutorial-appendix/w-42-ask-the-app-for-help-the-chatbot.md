@@ -3,9 +3,9 @@ id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
-screenshots: 49
+screenshots: 50
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -31,13 +31,15 @@ it is describing.
    choose **App Help (Chatbot)** under **Tasks** — the app comes forward and the help
    opens straight away, without the **[en:tran:Be careful with AI]** question, which is the
    quickest way when the app is minimised or behind something else.
-   With **[en:tran:Enable AI features]** switched off in Settings → Others, the menu entries,
+   With **[en:tran:Enable AI features]** switched off in Settings → **[en:tran:AI Providers]**, the menu entries,
    the taskbar entry and the shortcut go quiet together; the 🤖 button stays, and pressing it says that AI
    features are turned off and offers to open Settings, where the switch is (it takes
    effect after a restart).
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
    a browser holds several pages. **+** starts a new chat (its tab reads **New chat**
-   until a question is asked in it), **×** closes one, and a
+   until a question is asked in it), **×** closes one. The
+   window holds at most 12 chats — pressing **+** with all 12 open says so on a line
+   under the tabs and asks you to close one first. A
    **double-click on a tab's name** renames it (useful once three of them start "how do
    I"). Until you rename it, a tab is called after the first question you asked in it.
    Everything is kept: close the window — close the app — and the tabs, their answers
@@ -405,10 +407,18 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    of my screen_, _Point at the control_, _Attach a file_ — so you never have to
    work out how to send it one. 📸
    **Read a study PDF one verse or range at a time.** In the Bible Reader's
-   Resources panel, press the 🤖 beside a chapter PDF such as `JHN.3.pdf`. Its
-   chat briefly describes the file. Press **[en:tran:Read]**; it asks which verse
-   in that chapter to focus on, shows `1` as the typing example, and offers the
-   first three verses plus **[en:tran:Full chapter]**. You can also type a small
+   Resources panel, press the 🤖 (**[en:tran:Ask the Assistant About This File]**) beside a chapter PDF
+   such as `JHN.3.pdf`. Its
+   chat briefly describes the file and, when the Reader is on verses of that
+   chapter, says which — _You are reading Matthew 18:15-17 in the Bible
+   Reader_ — and offers those verses (`15-17`) as its first button, so one
+   press reads what the file says about the passage in front of you. Press
+   **[en:tran:Read]**; it asks at once which verse in that chapter to focus
+   on, shows `1` as the typing example, and offers the verses you are reading
+   first, then the first three verses plus **[en:tran:Full chapter]**. A file
+   for the whole book, such as `MAT.0.pdf`, is not read verse by verse: its
+   chat says it belongs to the whole book and offers to ask what it says about
+   the passage you are reading. You can also type a small
    range such as `1-3`: each card quotes every verse in it, and every printed
    cross-reference becomes a button. Press one to read that verse in its own
    card; when its chapter has its own PDF in Resources, that file's closest
@@ -417,8 +427,9 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    Resources PDF may add that file's explanation and an
    **[en:tran:Ask about {name}]** button. The PDF's embedded text is
    not used because a legacy Khmer font can decode as unrelated Latin
-   characters. If a visual reading repeats itself, the bad explanation is
-   withheld and the exact installed-Bible verse remains. AI can misread a PDF page,
+   characters. If a visual reading repeats itself, or no assistant can answer,
+   the explanation is left out and the verses from your own Bible remain, with
+   the next verse buttons under them. AI can misread a PDF page,
    so read the original Bible and PDF yourself too; **[en:tran:Hide for 30 days]** puts
    that caution away temporarily.
    **You do not have to press the 🤖 first, and you do not have to say “chapter”.**
@@ -578,7 +589,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
 11. Ask about screens ("is any screen showing?") and the answer comes from the live app,
     not the manual — with a **Hide every screen** button offered, never pressed for you.
-12. With an **AI key** set in **[en:tran:Settings]** → **[en:tran:Others]** → **[en:tran:AI Providers]**, the
+12. With an **AI key** set in **[en:tran:Settings]** → **[en:tran:AI Providers]**, the
     same window becomes a real conversation: the model answers, using the same app
     knowledge and the same tools. Without a key the **Free** assistant answers instead — a
     shared public service, weaker and sometimes busy — and when no assistant can answer
@@ -589,14 +600,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     each card says in plain words what its key is used for — **OpenAI** answers here and
     powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
     Bible Cross Reference, **Kimi** and **Amazon Bedrock** answer here only — so you can tell which key is
-    worth getting before you go and fetch one. 
-    **Play Bible audio automatically.** Open **[en:tran:Settings]** → **[en:tran:Others]** → **[en:tran:AI Providers]**, then open the **OpenAI** card and save an **OpenAI API key** there. Once that key is saved, this card shows **[en:tran:Auto Play Audio AI when available]**. Turn that switch on so supported Reader passages begin their generated audio automatically. A key for a different provider does not reveal or power this switch.
+    worth getting before you go and fetch one.
+    **Play Bible audio automatically.** Open **[en:tran:Settings]** → **[en:tran:AI Providers]**, then open the **OpenAI** card and save an **OpenAI API key** there. Once that key is saved, this card shows **[en:tran:Auto Play Audio AI when available]**. Turn that switch on so supported Reader passages begin their generated audio automatically. A key for a different provider does not reveal or power this switch.
     **No internet?** The help window still answers from the manual by itself, and
     says so. The `/` commands still work, because they need no key and no
     internet. A server of your own on this computer (below) still answers in full,
     with a model that runs there — not one whose name ends in `cloud`.
-    **Every part of the Others page of Settings folds.** Click a section's title —
-    **[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]**,
+    **Every part of the AI Providers and Others pages of Settings folds.** Click a section's
+    title — **[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]** or
     **[en:tran:Extra Binaries]** — and it folds to one row, which still says whether it
     is set up (**[en:tran:Key set]**, **[en:tran:Installed]**) and keeps its buttons;
     click the title again to open it. Inside **[en:tran:AI Providers]**, each provider's card,
@@ -612,10 +623,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     chosen; the others are still in the list, in a quieter colour and reading
     **needs an API key**, so you can see they are there and what they want. Choose one of
     those and the conversation stays on the assistant it had, while **[en:tran:Settings]**
-    opens on **[en:tran:Others]** with the cursor already in that assistant's key box — for Kimi,
+    opens on **[en:tran:AI Providers]** with the cursor already in that assistant's key box — for Kimi,
     **Kimi API Key** — ready for the key to be pasted in. If **[en:tran:Settings]** was
     already open on another page, that same window comes to the front and turns to
-    **[en:tran:Others]**. Beside it is the third list, the
+    **[en:tran:AI Providers]**. Beside it is the third list, the
     **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
     you can change.
     Hold the mouse over a name to see what it is good for, how quick it is and what it
@@ -648,9 +659,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     who answered after it. When the one it picked fails before saying anything, the
     next one is asked, and a small line over the answer says who could not answer
     and who did. Because the **Free** service may be the one that answers, an Auto
-    chat carries a notice saying that your questions may leave this computer; pick
-    one of your own servers by name, and a model of it whose name does not end in
-    `cloud`, to keep every question in the building. Picking
+    chat carries a notice saying that your questions may leave this computer. A
+    server of your own picked by name, with a model whose name does not end in
+    `cloud`, is asked first — but when it cannot answer, the question goes on to
+    your other servers and then to the **Free** service (below). Picking
     any named row ends Auto for that tab. **Auto is what a chat starts on** until
     you pick an assistant by name: the help window opens on it the first time, and
     so does every new chat after it. Once you have picked a named assistant, new
@@ -658,7 +670,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
     or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
     computer or on another computer in the church, or any service that speaks the
-    OpenAI API. In **[en:tran:Settings]** (the gear at the top of the app's main window, not this one) → **[en:tran:Others]** → **[en:tran:Custom servers]** —
+    OpenAI API. In **[en:tran:Settings]** (the gear at the top of the app's main window, not this one) → **[en:tran:AI Providers]** → **[en:tran:Custom servers]** —
     where, for anyone who has no server yet,
     **[en:tran:Watch how to set up a free AI assistant on your own computer]** is
     followed by **[en:tran:LM Studio videos]** and **[en:tran:Ollama videos]**, each
@@ -721,7 +733,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     openworship.app_ and _free_ when the file says so, and never appears in
     **[en:tran:Custom servers]** — it is not yours to edit. It is listed
     right below that box instead, under **[en:tran:Shared servers]**
-    (**[en:tran:Settings]** → **[en:tran:Others]**): each shared server with
+    (**[en:tran:Settings]** → **[en:tran:AI Providers]**): each shared server with
     a lock beside its name and, opened, its models — to read, with nothing
     to type in and nothing to delete. Its address is not shown anywhere in
     the app: a shared server is for the app to ask, not an address to copy
@@ -758,10 +770,23 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     instead and this chat now uses it; pick ChatGPT in the row above to switch back._
     The tab's own list moves to the one that answered, so the next question in it does
     not wait on the dead key again; a new tab still starts on the one you picked, and
-    the moment that key works it answers as before. The **Free** assistant is never
-    stood in for and never stands in — it is a choice you make yourself. With no
-    other key, or when the internet itself is down, the answer comes from this guide,
-    as before, under a note that says which. 📸
+    the moment that key works it answers as before. A key you pay for never answers
+    for the **Free** assistant or a server of your own, and they never answer for
+    it. With no other key, or when the internet itself is down, the answer comes
+    from this guide, as before, under a note that says which. 📸
+    **A server or a free model that cannot answer hands the question on too.** When
+    the server or the **Free** model you picked by name fails before it answers —
+    its computer is off, its program is not running, the free service is full —
+    the question goes down the same line **Auto** uses, among the assistants that
+    cost nothing: your other servers on this computer or the church's network
+    first, then the rest, the **Free** service among them, three at most. The
+    waiting line says _… could not answer — looking for another assistant that
+    costs nothing_ and then _Asking … instead_, and the answer opens with a note
+    saying who could not answer, why, and who answered instead — for example
+    with a server called Church PC switched off, _Church PC · gemma4:31b could not answer — nothing answered at http://localhost:11999/v1 — check that its server is running. Local Ollama · gemma4:cloud answered instead._
+    The chat keeps the one you picked, so the next question asks it first again and
+    it answers as soon as it is back. When none of them can, the guide answers
+    under a note naming every assistant that was tried. 📸
     **The note says what is wrong, and carries the door to it.** For a key that was
     refused, press **Open AI settings** under the note and paste a correct key into that
     assistant's box. The reason is read
@@ -941,8 +966,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     the two buttons underneath, and nothing written to disk until you press
     **Create**.
 20. **[en:tran:Enable AI features]** turns all of this on or off. It is in
-    **[en:tran:Settings]** → **[en:tran:Others]**, at the top of the
-    **[en:tran:AI Providers]** section (click the section's title if it is folded). To
+    **[en:tran:Settings]** → **[en:tran:AI Providers]**, at the top of the
+    section (click the section's title if it is folded). To
     turn the whole feature off, untick it and restart the app: the chatbot, its tools
     and the debugging endpoint they use are then never started. Tick it and restart to
     turn it back on.
@@ -952,5 +977,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

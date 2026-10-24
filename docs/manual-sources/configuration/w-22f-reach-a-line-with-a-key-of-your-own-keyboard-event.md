@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-22f — Reach a line with a key of your own (Keyboard Event)
 

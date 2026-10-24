@@ -46,8 +46,7 @@ for a reader who loads it and remembers it.
   extend the pattern rather than invent one.
 - **Proposal.** *Move section S (N bytes) to `rules/<x>.md` with `paths: [...]`,
   and leave a pointer of M bytes.* Give the bytes saved per session. For a
-  skill description: put the trigger phrases first and cut repetition, while
-  keeping the Codex mirror's preserved full description in step.
+  skill description: put the trigger phrases first and cut repetition.
 - **Proof.** Bytes before → after (`--check=budget`), and the moved text loads
   when its paths are read.
 - **Ask always.** Moving text out of always-loaded context is a judgement
@@ -61,8 +60,6 @@ for a reader who loads it and remembers it.
 - **Research.** For each, ask whether a machine can tell when the rule is
   broken. If it can, it is a candidate. Some already have precedents:
   - Every `*Comp` name → an eslint rule or a test over the component files.
-  - Mirror copied in the same change → already `agentDocsMirror.test.ts` over
-    `extra-work/sync-agent-mirror.mjs --check` (`AD-02`).
   - Knowledge rebuilt after `.claude/` edits → a test comparing
     `index.json`'s inputs, or a hook (ask).
   - `tran()` keys with km and fr → already `tranKeyCoverage.test.ts`. This is
@@ -127,7 +124,7 @@ for a reader who loads it and remembers it.
 
 ## L6 · Skill routing: every request reaches one skill
 
-- **Signal.** `--check=skills` (descriptions, indexes, mirrors) and the
+- **Signal.** `--check=skills` (descriptions, indexes) and the
   listing as a session sees it.
 - **Research.**
   - For each kind of request this repo gets (QA, a docs fix, a perf issue, a
@@ -143,18 +140,6 @@ for a reader who loads it and remembers it.
   overlapping skill ("X goes to Y"), or an index entry.
 - **Ask always** for another skill's description: it changes when that skill
   fires.
-
-## L7 · Codex parity: the same project in the other agent
-
-- **Signal.** `--check=mirror`, `--check=skills` (mirror body), and
-  `AGENTS.md`'s size. Codex does not auto-load `paths:` rules. `AGENTS.md`
-  tells it to read them, so a rule whose `paths:` is wrong fails silently for
-  Codex as well.
-- **Research.** Is the mirror copied by hand on every change? Then a
-  sync-and-check script (L3) pays for itself the first time a mirror is
-  missed. Does `.codex/config.toml` register what `.mcp.json` registers? Does
-  `AGENTS.md` stay small enough to load untruncated?
-- **Proposal.** A script, a test, or a one-line `AGENTS.md` change.
 
 ## L8 · The 🤖's corpus: can the in-app assistant find it?
 

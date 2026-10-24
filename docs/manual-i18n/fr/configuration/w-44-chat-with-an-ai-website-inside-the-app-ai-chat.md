@@ -3,7 +3,7 @@ id: W-44
 title: "Discuter avec un site d'IA dans l'application (Chat IA)"
 section: "Configuration"
 lang: fr
-translatedFrom: f267389fd5f04342
+translatedFrom: 65fc7753ed331d25
 ---
 # W-44 — Discuter avec un site d'IA dans l'application (Chat IA)
 
@@ -21,7 +21,7 @@ quoi que ce soit dans l'application, et aucune clé d'API n'est nécessaire. C'e
    du **🤖** et à gauche du **?**, ou ouvrez **Help** → **AI Chat** dans la barre de menus. Depuis
    une fenêtre sans barre supérieure, utilisez **Tools** → **[en:tran:AI Chat]**. Une fenêtre étroite s'ouvre à côté de
    l'application, de la même taille et à la même place que la fenêtre d'aide. 📸 Elle fonctionne que les **fonctionnalités
-   d'IA** soient activées ou non dans Paramètres → Autres : cette fenêtre ne contient aucune clé et n'ouvre aucune
+   d'IA** soient activées ou non dans Paramètres → [en:tran:AI Providers] : cette fenêtre ne contient aucune clé et n'ouvre aucune
    porte de l'application.
 2. La fenêtre s'ouvre sur une carte, **Choisissez un chat IA à utiliser dans cette fenêtre**, qui liste les
    sites. Cliquez sur l'un d'eux. Le site se charge dans la fenêtre, et sa propre page de connexion apparaît si vous n'êtes

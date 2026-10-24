@@ -16,12 +16,16 @@ import {
 } from '../../server/dataDirAliasHelpers';
 import {
     checkIsInOneDrivePath,
+    DATA_DIR_MARKER_FILE_NAME,
     DATA_DIR_MOVED_FROM_FLAG_FILE_NAME,
     DATA_DIR_MOVED_TO_FLAG_FILE_NAME,
     DEFAULT_DATA_DIR_NAME,
+    ensureDataDirMarkerIdSync,
     fsCheckDirExist,
+    fsCheckFileExist,
     fsCreateDir,
     fsDeleteDir,
+    fsDeleteFile,
     fsGetFileSize,
     fsListDirents,
     fsReadFile,
@@ -37,6 +41,7 @@ import { checkIsMainWindow } from '../../server/mainWindowHelpers';
 import { relaunchApp } from '../settingHelpers';
 import {
     appLocalStorage,
+    DATA_DIR_MOVE_HIDE_CHANGED_EVENT_NAME,
     DATA_DIR_MOVE_PENDING_SETTING_NAME,
     DATA_DIR_MOVE_RESULT_SESSION_NAME,
     SELECTED_PARENT_DIR_SETTING_NAME,
@@ -77,11 +82,41 @@ export function checkIsDataDirMoveHidden(now = Date.now()) {
     return remaining > 0 && remaining <= 2 * DATA_DIR_MOVE_HIDE_MS;
 }
 
+/**
+ * The day the ask comes back, for the Settings → General list of what was put
+ * away (2026-10-20: _to be able to restore_), the same not-believed rule as
+ * `checkIsDataDirMoveHidden`.
+ */
+export function readDataDirMoveHiddenAt(now = Date.now()): number | null {
+    const until = Number(
+        appHomeStorage.getItem(DATA_DIR_MOVE_HIDDEN_UNTIL_SETTING_NAME),
+    );
+    const remaining = until - now;
+    return remaining > 0 && remaining <= 2 * DATA_DIR_MOVE_HIDE_MS
+        ? until
+        : null;
+}
+
+// The card in this window reads the hide once; put away from the start-up
+// question, it stayed on screen saying what had just been put away.
+function sayDataDirMoveHideChanged() {
+    globalThis.dispatchEvent?.(
+        new Event(DATA_DIR_MOVE_HIDE_CHANGED_EVENT_NAME),
+    );
+}
+
+/** Back before the 30 days are up, from that list. */
+export function showDataDirMoveAgain() {
+    appHomeStorage.removeItem(DATA_DIR_MOVE_HIDDEN_UNTIL_SETTING_NAME);
+    sayDataDirMoveHideChanged();
+}
+
 export function hideDataDirMoveForAWhile(now = Date.now()) {
     appHomeStorage.setItem(
         DATA_DIR_MOVE_HIDDEN_UNTIL_SETTING_NAME,
         `${now + DATA_DIR_MOVE_HIDE_MS}`,
     );
+    sayDataDirMoveHideChanged();
 }
 
 /** Nothing comes back: the window asking is gone with the process. */
@@ -171,18 +206,34 @@ async function removeStaleStagingDirs(homeDirPath: string) {
     }
 }
 
+/**
+ * Where a move would put the folder now: the default when free or empty, else
+ * the next free name beside it. For the question to name the folder the move
+ * makes -- it named the default even when that held another data folder,
+ * which read as the two being put together.
+ */
+export async function genDataDirMoveTargetPath() {
+    const defaultDirPath = getDefaultDataDirPath();
+    if (
+        !(await fsCheckDirExist(defaultDirPath)) ||
+        (await fsListDirents(defaultDirPath)).length === 0
+    ) {
+        return defaultDirPath;
+    }
+    return genFreeDirPath(pathDirname(defaultDirPath), DEFAULT_DATA_DIR_NAME);
+}
+
 // The default when free; an empty folder there is taken over, one holding
 // anything gets the next free name beside it.
-async function genTargetDirPath(homeDirPath: string) {
-    const defaultDirPath = getDefaultDataDirPath();
-    if (!(await fsCheckDirExist(defaultDirPath))) {
-        return defaultDirPath;
+async function genTargetDirPath() {
+    const targetDirPath = await genDataDirMoveTargetPath();
+    if (
+        checkIsSamePath(targetDirPath, getDefaultDataDirPath()) &&
+        (await fsCheckDirExist(targetDirPath))
+    ) {
+        await fsDeleteDir(targetDirPath);
     }
-    if ((await fsListDirents(defaultDirPath)).length === 0) {
-        await fsDeleteDir(defaultDirPath);
-        return defaultDirPath;
-    }
-    return genFreeDirPath(homeDirPath, DEFAULT_DATA_DIR_NAME);
+    return targetDirPath;
 }
 
 type ProgressType = { update: (done: number, total: number) => void };
@@ -390,6 +441,79 @@ async function finishDataDirMove(
     }
 }
 
+export type DataDirCopyResultType = {
+    isCopied: boolean;
+    toDirPath: string;
+    errorMessage?: string;
+};
+
+function checkIsPathInside(dirPath: string, parentDirPath: string) {
+    const key = toPathCompareKey(pathResolve(dirPath));
+    const parentKey = toPathCompareKey(pathResolve(parentDirPath));
+    return key === parentKey || key.startsWith(parentKey + pathSeparator);
+}
+
+/**
+ * A copy of the data folder in use, put where the person chose -- a USB
+ * stick, another drive, any folder (the user: _in path setting, add option to
+ * copy data dir to a drive_, _or to a folder_, _so user can decide to choose a
+ * drive_). The copy the move makes (`copyDataDir`: a hidden staging name,
+ * every file counted and its size checked, renamed into place only once
+ * whole), as `<chosen>/open-worship-data` or the next free name. The copy is a
+ * data folder of its OWN: a new marker, so the app never takes it for the one
+ * it came from and Found Data Folders can list it, and none of the move's
+ * flags, so it never reminds of an old copy. The folder in use stays in use.
+ */
+export async function copyDataDirTo(
+    fromDirPath: string,
+    parentDirPath: string,
+    progress: ProgressType,
+): Promise<DataDirCopyResultType> {
+    let toDirPath = pathJoin(parentDirPath, DEFAULT_DATA_DIR_NAME);
+    try {
+        if (checkIsPathInside(parentDirPath, fromDirPath)) {
+            throw new DataDirMoveError(
+                tran('The copy cannot go inside the data folder itself.'),
+            );
+        }
+        toDirPath = await genFreeDirPath(parentDirPath, DEFAULT_DATA_DIR_NAME);
+        await copyDataDir(fromDirPath, toDirPath, parentDirPath, progress);
+        try {
+            // A path saved whole -- before `$DATA_DIR_PATH`, or by a tool
+            // that writes it raw -- still named the folder copied FROM: on
+            // the copy, the Documents setting and a slide's picture went on
+            // reading and writing the original. Repair Links cannot see it,
+            // because the original is still there.
+            await rewriteMovedDataDirLinks(toDirPath, fromDirPath);
+        } catch (error) {
+            // The copy is whole; a link left as it was is what Repair Links
+            // is for once the original is gone.
+            handleError(error);
+        }
+        for (const fileName of [
+            DATA_DIR_MARKER_FILE_NAME,
+            DATA_DIR_MOVED_FROM_FLAG_FILE_NAME,
+            DATA_DIR_MOVED_TO_FLAG_FILE_NAME,
+        ]) {
+            const filePath = pathJoin(toDirPath, fileName);
+            if (await fsCheckFileExist(filePath)) {
+                await fsDeleteFile(filePath);
+            }
+        }
+        ensureDataDirMarkerIdSync(toDirPath);
+    } catch (error) {
+        if (!(error instanceof DataDirMoveError)) {
+            handleError(error);
+        }
+        return {
+            isCopied: false,
+            toDirPath,
+            errorMessage: error instanceof Error ? error.message : `${error}`,
+        };
+    }
+    return { isCopied: true, toDirPath };
+}
+
 /**
  * The move itself. Renamed when the folder is not under OneDrive -- instant,
  * no second copy on the disk -- and copied when it is, or when the rename is
@@ -406,7 +530,7 @@ export async function moveDataDir(
     try {
         await fsCreateDir(homeDirPath);
         await removeStaleStagingDirs(homeDirPath);
-        toDirPath = await genTargetDirPath(homeDirPath);
+        toDirPath = await genTargetDirPath();
         if (appProvider.systemUtils.isMac) {
             checkIsAllOnThisMac(await measureDirTree(fromDirPath));
         }

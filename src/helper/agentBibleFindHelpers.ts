@@ -34,6 +34,8 @@ import LookupBibleItemController, {
 import { getBibleLookupPopupOpener } from '../others/bibleLookupPopupOpener';
 import {
     checkIsStopWord,
+    getBookMarkerWords,
+    getFindFrameWords,
     sanitizeFindingText,
     type LocaleType,
 } from '../lang/langHelpers';
@@ -52,22 +54,33 @@ import {
     checkVerseFitsChapter,
     countWordHits,
     cutFoundText,
+    cutNamedBooks,
+    findNamedBooks,
+    genChapterCountSql,
     genVerseFindSql,
     genVerseRangeReason,
     parseFoundVerseRow,
     parseRefParts,
     pickBibleKeyForBookName,
+    pickRareTerms,
+    readChapterCountRow,
     readVerseKey,
     resolveBookFilter,
     resolveBookKey,
     segmentByVocabulary,
     splitRefList,
+    stripLeadingFrameWords,
+    toBookCounts,
     toFindTermList,
     toEnglishStem,
     toNeededHits,
+    toPassageRunName,
+    toPassageRuns,
     toSingleVerseText,
     toTermWeight,
     toVerseKey,
+    withExactCounts,
+    type ChapterCountType,
 } from './bibleVerseFindHelpers';
 import { cloneJson } from './helpers';
 import type { SQLiteDatabaseType } from '../server/appProvider';
@@ -79,6 +92,8 @@ export type AgentBibleFindRequestType = {
     book?: unknown;
     open?: unknown;
     limit?: unknown;
+    // Where a page of the verses found starts: a search's `next`.
+    from?: unknown;
 };
 
 type RefusalType = { isError: true; reason: string };
@@ -251,8 +266,7 @@ function splitByBibleWords(
  * their forms share ("enemy" finds "enemies"), matched as the start of a
  * word in `findVerses`. None for words in another script.
  */
-async function toSearchTerms(locale: LocaleType, words: string) {
-    const sanitized = (await sanitizeFindingText(locale, words)) ?? words;
+function toTermsOfSanitized(locale: LocaleType, sanitized: string) {
     const isEnglish = locale.toLowerCase().startsWith('en');
     return Array.from(
         new Set(
@@ -265,11 +279,124 @@ async function toSearchTerms(locale: LocaleType, words: string) {
     );
 }
 
+async function toSearchTerms(locale: LocaleType, words: string) {
+    const sanitized = (await sanitizeFindingText(locale, words)) ?? words;
+    return toTermsOfSanitized(locale, sanitized);
+}
+
+// In how many verses a word is, run together the way the table keeps them.
+function countVersesHolding(database: SQLiteDatabaseType, word: string) {
+    const term = word.replaceAll(/['"%_\\;\s]/g, '');
+    if (term.length === 0) {
+        return 0;
+    }
+    const sql = genVerseFindSql({
+        terms: [term],
+        weights: [],
+        bookKeys: [],
+        need: 1,
+        limit: 1,
+    });
+    return Number(database.getAll(sql.termCountSql(term))[0]?.count ?? 0);
+}
+
+/**
+ * A book NAMED in what they remember (2026-10-22, the user's own:
+ * `ស្វែងរកក្នុងគម្ពីរលោកប្បត្តិណូអេលែងព្រាប` -- search in the book of Genesis,
+ * misspelt, Noah released the dove -- whose search was "search", "in",
+ * "book" and two scraps of the misspelt name, and found Isaiah 34:16's
+ * "search in the book of the LORD"). A name is the book to search when a
+ * word like "in" says so, or when this Bible's verses never use it (no verse
+ * says "Genesis"); a name verses DO use is a word of the verse ("Daniel in
+ * the lions' den"). One letter off only where the misspelling itself is in
+ * no verse. Null when no book was named, or when nothing would be left to
+ * search for.
+ */
+function readNamedBooks(
+    database: SQLiteDatabaseType,
+    text: string,
+    nameMapList: { [bookKey: string]: string }[],
+    locale: LocaleType,
+    isSpaced: boolean,
+) {
+    const taken = findNamedBooks(
+        text,
+        nameMapList,
+        getBookMarkerWords(locale),
+        isSpaced,
+    ).filter((named) => {
+        if (named.isNear && countVersesHolding(database, named.typed) > 0) {
+            return false;
+        }
+        return (
+            named.isAfterMarker ||
+            countVersesHolding(database, named.name.toLowerCase()) === 0
+        );
+    });
+    if (taken.length === 0) {
+        return null;
+    }
+    const rest = cutNamedBooks(text, taken);
+    if (rest.length < 2) {
+        return null;
+    }
+    return {
+        rest,
+        bookKeys: Array.from(
+            new Set(
+                taken.map((named) => {
+                    return named.bookKey;
+                }),
+            ),
+        ),
+        typed: taken.map((named) => {
+            return named.typed;
+        }),
+    };
+}
+
+/**
+ * Where the verses found gather -- the passages a story is told in, and the
+ * books -- named in English for every tool, and keyed for `open`.
+ */
+function toWhereFound(
+    chapters: ChapterCountType[],
+    total: number,
+    shownCount: number,
+) {
+    const passages = toPassageRuns(chapters).map((run) => {
+        return {
+            ref: toPassageRunName(
+                englishBookNameMap[run.bookKey] ?? run.bookKey,
+                run,
+            ),
+            key: `${run.bookKey} ${run.densest}`,
+            verses: run.verses,
+        };
+    });
+    return {
+        ...(passages.length > 0 ? { passages } : {}),
+        // Every book they are in, when the page does not show them all.
+        ...(total > shownCount
+            ? {
+                  byBook: toBookCounts(chapters).map((one) => {
+                      return {
+                          book: englishBookNameMap[one.bookKey] ?? one.bookKey,
+                          key: one.bookKey,
+                          verses: one.verses,
+                      };
+                  }),
+              }
+            : {}),
+    };
+}
+
 async function findVerses(
     bibleKey: string,
     words: string,
     book: string,
     limit: number,
+    from = 0,
 ) {
     const controller = await BibleFindController.getInstant(bibleKey);
     if (controller === null) {
@@ -292,10 +419,38 @@ async function findVerses(
     const locale = await getBibleLocale(bibleKey);
     const isSpaced = checkIsSpacedLocale(locale);
     const database = controller.databaseFindHandler?.database ?? null;
-    let terms = await toSearchTerms(locale, words);
-    if (terms.length === 0) {
+    let searchText = (await sanitizeFindingText(locale, words)) ?? words;
+    if (toTermsOfSanitized(locale, searchText).length === 0) {
         // Not one word in this Bible's script: `findVersesAcross` looks for
         // a Bible that reads them.
+        return NO_TERMS;
+    }
+    let bookKeys = filter.bookKeys;
+    let readAsBook: string[] = [];
+    if (book.length === 0 && database !== null) {
+        const named = readNamedBooks(
+            database,
+            searchText,
+            nameMapList,
+            locale,
+            isSpaced,
+        );
+        if (named !== null) {
+            searchText = named.rest;
+            bookKeys = named.bookKeys;
+            readAsBook = named.typed;
+        }
+    }
+    searchText = stripLeadingFrameWords(
+        searchText,
+        getFindFrameWords(locale),
+        (word) => {
+            return checkIsStopWord(locale, word);
+        },
+        isSpaced,
+    );
+    let terms = toTermsOfSanitized(locale, searchText);
+    if (terms.length === 0) {
         return NO_TERMS;
     }
     if (!isSpaced && database !== null) {
@@ -304,13 +459,14 @@ async function findVerses(
     const base = {
         bible: bibleKey,
         words: terms,
-        ...(filter.bookKeys.length > 0
+        ...(bookKeys.length > 0
             ? {
-                  books: filter.bookKeys.map((key) => {
+                  books: bookKeys.map((key) => {
                       return englishBookNameMap[key] ?? key;
                   }),
               }
             : {}),
+        ...(readAsBook.length > 0 ? { readAsBook } : {}),
         ...(filter.unknown.length > 0 ? { notBooks: filter.unknown } : {}),
     };
     if (database === null) {
@@ -322,9 +478,9 @@ async function findVerses(
         }
         const result = await online.doFinding({
             text: terms.join(' '),
-            bookKeys: filter.bookKeys,
-            fromLineNumber: 0,
-            toLineNumber: limit - 1,
+            bookKeys,
+            fromLineNumber: from,
+            toLineNumber: from + limit - 1,
         });
         const verses = (result?.content ?? [])
             .map((item) => parseFoundVerseRow(item.text))
@@ -351,7 +507,7 @@ async function findVerses(
     const counter = genVerseFindSql({
         terms,
         weights: [],
-        bookKeys: filter.bookKeys,
+        bookKeys,
         need: 1,
         limit,
     });
@@ -385,9 +541,11 @@ async function findVerses(
     const sql = genVerseFindSql({
         terms: foundTerms,
         weights,
-        bookKeys: filter.bookKeys,
+        bookKeys,
         need,
-        limit: isSpaced ? MAX_FIND_CANDIDATES : limit,
+        // Every language takes as many as may be ranked: the verses where
+        // the words gather go first among equals, below.
+        limit: MAX_FIND_CANDIDATES,
     });
     const candidates = database
         .getAll(sql.selectSql)
@@ -395,11 +553,41 @@ async function findVerses(
             const row = parseFoundVerseRow(String(item.text));
             return row === null
                 ? null
-                : { row, hits: Number(item.hits), order: Number(item.r) };
+                : {
+                      row,
+                      hits: Number(item.hits),
+                      score: Number(item.score),
+                      order: Number(item.r),
+                  };
         })
         .filter((one) => one !== null);
     let ranked = candidates;
-    let total = Number(database.getAll(sql.countSql)[0]?.count ?? 0);
+    // Every verse found, counted by chapter: the total, and where they
+    // gather -- one scan, where the total alone was one before.
+    let chapters = database
+        .getAll(
+            genChapterCountSql({
+                terms: foundTerms,
+                weights,
+                rareTerms: pickRareTerms(
+                    foundTerms,
+                    foundTerms.map((term) => {
+                        return foundCountList[terms.indexOf(term)];
+                    }),
+                    verseCount,
+                ),
+                bookKeys,
+                need,
+                isSpaced,
+            }),
+        )
+        .map(readChapterCountRow)
+        .filter((one) => {
+            return one !== null;
+        });
+    let total = chapters.reduce((sum, one) => {
+        return sum + one.count;
+    }, 0);
     if (isSpaced) {
         // Read word by word: the table's run-together match counts words
         // that only meet across a space.
@@ -431,9 +619,36 @@ async function findVerses(
         // the run-together count is the nearest there is.
         if (candidates.length < MAX_FIND_CANDIDATES) {
             total = rescored.length;
+            chapters = withExactCounts(
+                chapters,
+                rescored.map(({ row }) => {
+                    return row;
+                }),
+            );
         }
     }
-    const verses = ranked.slice(0, limit).map(({ row, hits }) => {
+    // Among verses holding as many of the words, as strongly, the ones in
+    // the chapters where the words GATHER come first, then the Bible's own
+    // order (2026-10-22, EC-391): "shepherd" was every verse alike and
+    // listed from Genesis 46, so an assistant quoted John 10:11 from memory
+    // -- in words of its own -- rather than from a list that had none of
+    // the verses it knew.
+    const densityMap = new Map<string, number>();
+    for (const one of chapters) {
+        densityMap.set(`${one.bookKey}.${one.chapter}`, one.count);
+    }
+    const toDensity = (row: { bookKey: string; chapter: number }) => {
+        return densityMap.get(`${row.bookKey}.${row.chapter}`) ?? 0;
+    };
+    ranked = [...ranked].sort((one, other) => {
+        return (
+            other.hits - one.hits ||
+            other.score - one.score ||
+            toDensity(other.row) - toDensity(one.row) ||
+            one.order - other.order
+        );
+    });
+    const verses = ranked.slice(from, from + limit).map(({ row, hits }) => {
         return {
             key: toVerseKey(row.bookKey, row.chapter, row.verse),
             ref: toEnglishRef(row.bookKey, row.chapter, row.verse),
@@ -441,11 +656,18 @@ async function findVerses(
             hits,
         };
     });
+    // A page further on: as far as the verses the table hands over go.
+    const next = from + verses.length;
+    const canPage =
+        verses.length > 0 && next < total && next < MAX_FIND_CANDIDATES;
     return {
         ...base,
         of: foundTerms.length,
         total,
+        ...(from > 0 ? { from } : {}),
         verses,
+        ...(canPage ? { next } : {}),
+        ...toWhereFound(chapters, total, verses.length),
         ...(missing.length > 0 ? { notInBible: missing } : {}),
         ...(verses.length === 0
             ? {
@@ -527,8 +749,9 @@ async function findVersesAcross(
     words: string,
     book: string,
     limit: number,
+    from: number,
 ) {
-    const result = await findVerses(bibleKey, words, book, limit);
+    const result = await findVerses(bibleKey, words, book, limit, from);
     if (!('noTerms' in result)) {
         if ('isError' in result) {
             return result;
@@ -550,7 +773,7 @@ async function findVersesAcross(
         if ((await toSearchTerms(other.locale, words)).length === 0) {
             continue;
         }
-        const found = await findVerses(other.key, words, book, limit);
+        const found = await findVerses(other.key, words, book, limit, from);
         if ('noTerms' in found || 'isError' in found) {
             continue;
         }
@@ -716,18 +939,38 @@ async function readOpenParts(bibleKey: string, key: string) {
         return asKey;
     }
     const parts = parseRefParts(key);
-    if (parts === null || parts.verseStart === null) {
+    if (parts === null) {
         return null;
     }
     const bookKey = resolveBookKey(parts.book, await toNameMapList(bibleKey));
-    return bookKey === null
-        ? null
-        : {
-              bookKey,
-              chapter: parts.chapter,
-              verseStart: parts.verseStart,
-              verseEnd: parts.verseEnd ?? parts.verseStart,
-          };
+    if (bookKey === null) {
+        return null;
+    }
+    if (parts.verseStart === null) {
+        // A whole chapter -- a passage a search found, `GEN 7` -- opens as
+        // every verse of it (2026-10-22).
+        const verseCount = await getVersesCount(
+            bibleKey,
+            bookKey,
+            parts.chapter,
+        ).catch(() => {
+            return null;
+        });
+        return verseCount === null || verseCount <= 0
+            ? null
+            : {
+                  bookKey,
+                  chapter: parts.chapter,
+                  verseStart: 1,
+                  verseEnd: verseCount,
+              };
+    }
+    return {
+        bookKey,
+        chapter: parts.chapter,
+        verseStart: parts.verseStart,
+        verseEnd: parts.verseEnd ?? parts.verseStart,
+    };
 }
 
 async function openInLookup(bibleKey: string, key: string) {
@@ -822,8 +1065,63 @@ async function toBibleTitle(bibleKey: string, bibleItem: BibleItem) {
     }
 }
 
+// A passage's `Genesis 7-9` as the Bible writes it -- `លោកុប្បត្តិ ៧-៩` --
+// off its book's own name and its digits, with the chapter its key opens
+// (`keyTitle`, `លោកុប្បត្តិ ៨`), and each book a count is of by its name.
+async function withPassageTitles<
+    T extends {
+        passages?: { ref: string; key: string }[];
+        byBook?: { key: string }[];
+    },
+>(bibleKey: string, result: T): Promise<T> {
+    const hasPassages =
+        Array.isArray(result?.passages) && result.passages.length > 0;
+    const hasBooks = Array.isArray(result?.byBook) && result.byBook.length > 0;
+    if (!hasPassages && !hasBooks) {
+        return result;
+    }
+    const info = await getBibleInfo(bibleKey).catch(() => {
+        return null;
+    });
+    const numbersMap: { [digit: string]: string } = info?.numbersMap ?? {};
+    const toDigits = (text: string) => {
+        return text.replaceAll(/\d/g, (digit) => {
+            return numbersMap[digit] ?? digit;
+        });
+    };
+    const passages = (result.passages ?? []).map((passage) => {
+        const bookName = info?.keyBookMap?.[passage.key.slice(0, 3)];
+        const chapters = /(\d+(?:-\d+)?)$/.exec(passage.ref)?.[1];
+        const keyChapter = /(\d+)$/.exec(passage.key)?.[1];
+        if (bookName === undefined || chapters === undefined) {
+            return passage;
+        }
+        return {
+            ...passage,
+            title: `${bookName} ${toDigits(chapters)}`,
+            ...(keyChapter === undefined
+                ? {}
+                : { keyTitle: `${bookName} ${toDigits(keyChapter)}` }),
+        };
+    });
+    const byBook = (result.byBook ?? []).map((one) => {
+        const bookName = info?.keyBookMap?.[one.key];
+        return bookName === undefined ? one : { ...one, title: bookName };
+    });
+    return {
+        ...result,
+        ...(hasPassages ? { passages } : {}),
+        ...(hasBooks ? { byBook } : {}),
+    };
+}
+
 async function withBibleTitles<
-    T extends { bible?: unknown; verses?: { key: string }[] },
+    T extends {
+        bible?: unknown;
+        verses?: { key: string }[];
+        passages?: { ref: string; key: string }[];
+        byBook?: { key: string }[];
+    },
 >(bibleKey: string, result: T): Promise<T> {
     if (!Array.isArray(result?.verses) || result.verses.length === 0) {
         return result;
@@ -832,6 +1130,7 @@ async function withBibleTitles<
     if (locale.startsWith('en')) {
         return result;
     }
+    const titled = await withPassageTitles(bibleKey, result);
     const verses = await Promise.all(
         result.verses.map(async (verse) => {
             const bibleItem = await BibleItem.fromVerseKey(
@@ -847,7 +1146,7 @@ async function withBibleTitles<
             return title === null ? verse : { ...verse, title };
         }),
     );
-    return { ...result, verses };
+    return { ...titled, verses };
 }
 
 export async function handleAgentBibleFindRequest(
@@ -862,6 +1161,10 @@ export async function handleAgentBibleFindRequest(
     const limit = Number.isFinite(askedLimit)
         ? Math.min(MAX_FIND_LIMIT, Math.max(1, Math.floor(askedLimit)))
         : DEFAULT_FIND_LIMIT;
+    const askedFrom = Number(request.from);
+    const from = Number.isFinite(askedFrom)
+        ? Math.min(MAX_FIND_CANDIDATES, Math.max(0, Math.floor(askedFrom)))
+        : 0;
     let bible = await resolveBible(askedBible);
     if ('isError' in bible) {
         return bible;
@@ -897,7 +1200,13 @@ export async function handleAgentBibleFindRequest(
         );
     }
     if (words.length > 0) {
-        const found = await findVersesAcross(bible.key, words, book, limit);
+        const found = await findVersesAcross(
+            bible.key,
+            words,
+            book,
+            limit,
+            from,
+        );
         return 'isError' in found
             ? found
             : await withBibleTitles(bible.key, found);

@@ -1,6 +1,6 @@
 ---
 name: chatbot-cdp-driver-gotchas
-description: "Driving the chatbot window over CDP from Git Bash - a /command argument is rewritten to C:/Program Files/Git/..., at 12 tabs New chat silently does nothing so every ask lands in the last tab with its history, and a provider picked in the head row becomes the window DEFAULT"
+description: "Driving the chatbot window over CDP from Git Bash - a /command argument is rewritten to C:/Program Files/Git/..., at 12 tabs New chat opens no tab (it says so on a status line now) so every ask lands in the last tab with its history, and a provider picked in the head row becomes the window DEFAULT"
 metadata: 
   node_type: memory
   type: feedback
@@ -16,7 +16,9 @@ textarea, `Network.enable` to count model rounds and `tools/call` posts):
   node as `C:/Program Files/Git/screen` (MSYS path conversion). Set
   `MSYS_NO_PATHCONV=1` (or run from PowerShell). Three paid Claude calls
   answered "that looks like a file path" before this was noticed.
-- **The window caps tabs at 12 and New chat then does nothing.** A driver that
+- **The window caps tabs at 12 and New chat then opens nothing** (since
+  2026-10-22 it draws a `role="status"` line instead of being disabled — a
+  driver must COUNT tabs, never read `.disabled`). A driver that
   opens a tab per question silently starts asking in the LAST tab, with its
   history, from question 12 on — which changes the answers being graded.
   Close the tabs first (`button.chat-tab-close`, one click per React render,

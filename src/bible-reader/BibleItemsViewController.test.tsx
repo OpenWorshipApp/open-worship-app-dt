@@ -631,6 +631,48 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(h.handleErrorMock).toHaveBeenCalled();
         });
 
+        // The user: _new section that is not from splitting have to assign
+        // with different color (color not used in any section)_ -- a drop
+        // used to land colourless, i.e. in the default lime group.
+        test('a view that is not a split gets a colour no view shows', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1), genItem(2)];
+            const [a, b] = ctl.straightBibleItems;
+            ctl.setColorNote(b, '#FF00FF');
+            ctl.addBibleItemRight(a, genItem(3), true);
+            const added = ctl.straightBibleItems[1];
+            // lime (the default a) and fuchsia (b) are taken.
+            expect(ctl.getColorNote(added)).toBe('#ffff00');
+            ctl.addBibleItemBottom(added, genItem(4), true);
+            const colors = ctl.straightBibleItems.map((item: any) => {
+                return ctl.getColorNote(item);
+            });
+            expect(new Set(colors).size).toBe(4);
+        });
+
+        test('a split view joins the colour of the view it came from', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1)];
+            const a = ctl.straightBibleItems[0];
+            ctl.setColorNote(a, 'red');
+            ctl.addBibleItemLeft(a, genItem(2));
+            expect(
+                ctl.straightBibleItems.map((item: any) => {
+                    return ctl.getColorNote(item);
+                }),
+            ).toEqual(['red', 'red']);
+        });
+
+        test('appendBibleItem gives the new view a colour of its own', () => {
+            const ctl = genController();
+            ctl.nestedBibleItems = [genItem(1)];
+            const added = ctl.appendBibleItem(ctl.straightBibleItems[0]);
+            expect(ctl.getColorNote(ctl.straightBibleItems[0])).toBe(
+                DEFAULT_BIBLE_COLOR_NOTE.toLowerCase(),
+            );
+            expect(ctl.getColorNote(added)).toBe('#ff00ff');
+        });
+
         test('appendBibleItem appends to array and wraps singletons', () => {
             const ctl = genController();
             ctl.nestedBibleItems = [genItem(1)];

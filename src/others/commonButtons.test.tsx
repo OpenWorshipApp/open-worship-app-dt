@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
     openSettingPageMock: vi.fn(),
     openChatbotPageMock: vi.fn(),
     openOthersSettingMock: vi.fn(),
+    openAISettingMock: vi.fn(),
     // Typed, so `mock.calls[0][0]` is the title rather than `never`: an
     // untyped `vi.fn` infers an EMPTY parameter tuple and indexing it is a
     // type error.
@@ -56,6 +57,7 @@ vi.mock('../router/routeHelpers', () => ({ goToPath: h.goToPathMock }));
 vi.mock('../setting/settingHelpers', () => ({
     openSettingPage: h.openSettingPageMock,
     openOthersSetting: h.openOthersSettingMock,
+    openAISetting: h.openAISettingMock,
 }));
 vi.mock('../popup-widget/popupWidgetHelpers', () => ({
     showAppConfirm: h.showAppConfirmMock,
@@ -265,7 +267,7 @@ describe('others commonButtons', () => {
         expect(h.showAppConfirmMock.mock.calls[0][0]).toBe(
             'Enable AI features',
         );
-        expect(h.openOthersSettingMock).toHaveBeenCalledTimes(1);
+        expect(h.openAISettingMock).toHaveBeenCalledTimes(1);
         expect(h.openChatbotPageMock).not.toHaveBeenCalled();
     });
 
@@ -325,7 +327,7 @@ describe('others commonButtons', () => {
         await clickButtonAndSettle();
         expect(h.openChatbotPageMock).not.toHaveBeenCalled();
         expect(h.showAppConfirmMock).toHaveBeenCalledTimes(1);
-        expect(h.openOthersSettingMock).toHaveBeenCalledTimes(1);
+        expect(h.openAISettingMock).toHaveBeenCalledTimes(1);
     });
 
     test('ChatbotButtonComp opens nothing when the offer is declined', async () => {
@@ -333,7 +335,7 @@ describe('others commonButtons', () => {
         h.showAppConfirmMock.mockResolvedValueOnce(false);
         await render(<ChatbotButtonComp />);
         await clickButtonAndSettle();
-        expect(h.openOthersSettingMock).not.toHaveBeenCalled();
+        expect(h.openAISettingMock).not.toHaveBeenCalled();
         expect(h.openChatbotPageMock).not.toHaveBeenCalled();
     });
 

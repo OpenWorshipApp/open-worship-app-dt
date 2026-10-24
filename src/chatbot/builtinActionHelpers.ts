@@ -2361,8 +2361,8 @@ async function runGeneralUsage(): Promise<BotAnswerType> {
             '**Say the question after /btw** -- `/btw What is the Bible?` ' +
                 '-- and the assistant answers it from its own knowledge ' +
                 'instead of looking in this app’s guide. It takes an ' +
-                'assistant (a key in Settings → Others, or a server of your ' +
-                'own): the built-in guide cannot answer a general question.',
+                'assistant (a key in Settings → AI Providers, or a server of ' +
+                'your own): the built-in guide cannot answer a general question.',
         ),
     };
 }

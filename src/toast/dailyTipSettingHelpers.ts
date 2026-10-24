@@ -43,3 +43,19 @@ export function hideDailyTips(now = Date.now()) {
         `${now + DAILY_TIPS_HIDE_MS}`,
     );
 }
+
+/**
+ * The day the card comes back, for the Settings → General list of what was
+ * put away (2026-10-20: _to be able to restore_), following the same
+ * not-believed-twice-over rule as `checkAreDailyTipsHidden`.
+ */
+export function readDailyTipsHiddenAt(now = Date.now()): number | null {
+    const until = Number(getSetting(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME));
+    const remaining = until - now;
+    return remaining > 0 && remaining <= 2 * DAILY_TIPS_HIDE_MS ? until : null;
+}
+
+/** Back before the 30 days are up, from that list. */
+export function showDailyTipsAgain() {
+    removeSetting(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME);
+}

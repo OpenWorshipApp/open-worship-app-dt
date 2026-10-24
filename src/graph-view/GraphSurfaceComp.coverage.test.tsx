@@ -22,6 +22,8 @@ const h = vi.hoisted(() => ({
     fits: [] as unknown[][],
     graphSvgOptions: [] as unknown[],
     neighbourReads: 0,
+    neighbourError: null as Error | null,
+    handleError: vi.fn(),
     frames: new Map<number, FrameRequestCallback>(),
     nextFrameId: 0,
 }));
@@ -37,9 +39,10 @@ vi.mock('../helper/appHooks', async () => {
     };
 });
 vi.mock('../app-modal/floatingWidgetHelpers', () => ({
-    isBlankDragArea: () => true,
+    isBlankDragArea: (target: Element) =>
+        target.closest('button, input, textarea, select') === null,
 }));
-vi.mock('../helper/errorHelpers', () => ({ handleError: vi.fn() }));
+vi.mock('../helper/errorHelpers', () => ({ handleError: h.handleError }));
 vi.mock('../helper/helpers', () => ({
     mapInYieldingBatches: async <T, R>(
         items: T[],
@@ -99,7 +102,31 @@ vi.mock('./graphTextExportHelpers', () => ({
     buildGraphMarkdown: () => '# Graph',
     GRAPH_DIAGRAM_FORMAT_LIST: [{ key: 'mermaid', title: 'Copy Mermaid' }],
 }));
-vi.mock('./GraphEdgeLayerComp', () => ({ default: () => null }));
+vi.mock('./GraphEdgeLayerComp', () => ({
+    default: ({ edgeList, resolveLabel }: any) => (
+        <svg className="graph-view__edges">
+            {edgeList.map((edge: any) => {
+                const resolved = resolveLabel(edge);
+                return (
+                    <g key={edge.key}>
+                        <path data-edge-key={edge.key} d="initial-path" />
+                        {resolved.label ? (
+                            <text data-edge-label-for={edge.key} x="0" y="0">
+                                {resolved.label}
+                            </text>
+                        ) : null}
+                        {resolved.isDirected ? (
+                            <path
+                                data-edge-arrow-for={edge.key}
+                                transform="initial-arrow"
+                            />
+                        ) : null}
+                    </g>
+                );
+            })}
+        </svg>
+    ),
+}));
 vi.mock('./GraphNodeBoxComp', () => ({
     default: ({ node, callbacks }: any) => (
         <div
@@ -224,6 +251,9 @@ const source: GraphSourceType<null> = {
     }),
     getNeighbours: () => {
         h.neighbourReads += 1;
+        if (h.neighbourError !== null) {
+            throw h.neighbourError;
+        }
         return h.neighbours;
     },
     countNeighbours: () => h.neighbours.length,
@@ -302,8 +332,11 @@ beforeEach(() => {
     h.fits.length = 0;
     h.graphSvgOptions.length = 0;
     h.neighbourReads = 0;
+    h.neighbourError = null;
+    h.handleError.mockReset();
     h.frames.clear();
     h.nextFrameId = 0;
+    source.relationDefList[0].isDirected = false;
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
         const id = ++h.nextFrameId;
         h.frames.set(id, callback);
@@ -394,6 +427,36 @@ describe('GraphSurfaceComp actions', () => {
         press('Menu Friend');
         selectMenu('remove');
         expect(graph().nodeList).toHaveLength(1);
+
+        press('Expand Root');
+        act(() => vi.runAllTimers());
+        selectMenu('friend');
+        press('Menu Friend');
+        selectMenu('re-root');
+        expect(graph().rootKey).toBe(
+            graph().nodeList.find((node) => node.name === 'Friend')?.key,
+        );
+        press('Menu Root');
+        selectMenu('use-as-root');
+        expect(graph().rootKey).toBe(
+            graph().nodeList.find((node) => node.name === 'Root')?.key,
+        );
+    });
+
+    test('an empty expansion closes cleanly, and a failed neighbour read is reported', () => {
+        vi.useFakeTimers();
+        press('Expand Root');
+        act(() => vi.runAllTimers());
+        expect(h.neighbourReads).toBe(1);
+        expect(h.menu).toEqual([]);
+
+        const failure = new Error('lookup unavailable');
+        h.neighbourError = failure;
+        press('Expand Root');
+        act(() => vi.runAllTimers());
+        expect(h.neighbourReads).toBe(2);
+        expect(h.handleError).toHaveBeenCalledWith(failure);
+        expect(h.menu).toEqual([]);
     });
 
     test('exports the visible graph as image, print and text', async () => {
@@ -443,6 +506,125 @@ describe('GraphSurfaceComp actions', () => {
         pointer(viewport, 'pointerup', 50, 30);
         expect(graph().nodeList[0].x).toBe(before.x + 40);
         expect(graph().nodeList[0].y).toBe(before.y + 20);
+    });
+
+    test('dragging a relation node updates its cached path, label and arrow', async () => {
+        h.neighbours = [
+            {
+                kind: 'name',
+                recordId: 'friend',
+                name: 'Friend',
+                relation: 'friend',
+            },
+        ];
+        source.relationDefList[0].isDirected = true;
+        press('Expand Root');
+        await act(async () => {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+        selectMenu('friend');
+
+        const friend = graph().nodeList.find((node) => node.name === 'Friend')!;
+        const node = host.querySelector<HTMLElement>(
+            `[data-node-key="${friend.key}"]`,
+        )!;
+        const edge = graph().edgeList[0];
+        const path = host.querySelector<SVGPathElement>(
+            `[data-edge-key="${edge.key}"]`,
+        )!;
+        const label = host.querySelector<SVGTextElement>(
+            `[data-edge-label-for="${edge.key}"]`,
+        )!;
+        const arrow = host.querySelector<SVGPathElement>(
+            `[data-edge-arrow-for="${edge.key}"]`,
+        )!;
+        const before = { x: friend.x, y: friend.y };
+
+        pointer(node, 'pointerdown', 10, 10);
+        pointer(
+            host.querySelector('.graph-view__viewport')!,
+            'pointermove',
+            50,
+            30,
+        );
+        flushFrames();
+
+        expect(path.getAttribute('d')).not.toBe('initial-path');
+        expect(label.getAttribute('x')).not.toBe('0');
+        expect(label.getAttribute('y')).not.toBe('0');
+        expect(arrow.getAttribute('transform')).not.toBe('initial-arrow');
+        pointer(
+            host.querySelector('.graph-view__viewport')!,
+            'pointerup',
+            50,
+            30,
+        );
+        expect(
+            graph().nodeList.find((item) => item.key === friend.key),
+        ).toMatchObject({
+            x: before.x + 40,
+            y: before.y + 20,
+        });
+    });
+
+    test('node controls keep pointer gestures and text-entry undo for themselves', () => {
+        const before = graph().nodeList[0];
+        const expandButton = Array.from(host.querySelectorAll('button')).find(
+            (button) => button.textContent?.trim() === 'Expand Root',
+        )!;
+        const viewport = host.querySelector('.graph-view__viewport')!;
+        pointer(expandButton, 'pointerdown', 10, 10);
+        pointer(viewport, 'pointermove', 80, 40);
+        expect(h.frames.size).toBe(0);
+        pointer(viewport, 'pointerup', 80, 40);
+        expect(graph().nodeList[0]).toMatchObject({ x: before.x, y: before.y });
+
+        const input = document.createElement('input');
+        host.appendChild(input);
+        input.focus();
+        act(() => {
+            input.dispatchEvent(
+                new KeyboardEvent('keydown', {
+                    key: 'z',
+                    ctrlKey: true,
+                    bubbles: true,
+                }),
+            );
+        });
+        expect(graph().nodeList).toHaveLength(1);
+        input.remove();
+    });
+
+    test('a cancelled capture still finishes a small drag and releases its pointer', () => {
+        const releasePointer = vi.fn();
+        Object.defineProperties(HTMLElement.prototype, {
+            setPointerCapture: {
+                value: () => {
+                    throw new Error('capture ended');
+                },
+                configurable: true,
+            },
+            hasPointerCapture: {
+                value: () => true,
+                configurable: true,
+            },
+            releasePointerCapture: {
+                value: releasePointer,
+                configurable: true,
+            },
+        });
+        const node = host.querySelector('.graph-view__node')!;
+        const viewport = host.querySelector('.graph-view__viewport')!;
+        const before = graph().nodeList[0];
+        pointer(node, 'pointerdown', 10, 10);
+        pointer(viewport, 'pointermove', 10.5, 10.5);
+        flushFrames();
+        pointer(viewport, 'pointerup', 10.5, 10.5);
+
+        expect(releasePointer).toHaveBeenCalledWith(1);
+        expect(graph().nodeList[0]).toMatchObject({ x: before.x, y: before.y });
     });
 
     test('coalesces wheel ticks and zooms around a two-finger pinch', () => {

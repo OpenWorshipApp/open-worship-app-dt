@@ -416,6 +416,33 @@ select.chat-pick {
   }
 }
 
+// The gear to Settings holds the right end of the row's LAST line, the one
+// the limit wraps to at the width this window opens at. Out of the flow: a
+// second auto margin would split the slack with the model's and float the
+// model mid-row again whenever the row fits on one line. The limit, always
+// last, keeps the room clear for it, and that costs the model's line nothing.
+.chat-head-picks {
+  position: relative;
+
+  > .chat-spend {
+    margin-inline-end: 24px;
+  }
+}
+
+.chat-head-setting {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  // A link-blue icon like the reload beside the Assistant picker.
+  font-size: 13px;
+  line-height: 1;
+}
+
 // The one button in the head. Drawn like Ask, because pressing it is the
 // same kind of decision -- spend some money -- and unlike a link, because a
 // paused window is one the user has to notice.
@@ -1028,7 +1055,7 @@ button.chat-engine {
 
   &:hover:not(:disabled),
   &:focus-visible {
-    border-color: var(--chat-cyan);
+    border-color: var(--chat-signal);
     background-color: var(--chat-panel-soft);
   }
 
@@ -1047,7 +1074,10 @@ button.chat-engine {
   font-size: 12.5px;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--chat-cyan);
+  // Was `--chat-cyan`, a token this sheet never declares: the declaration was
+  // dropped and the label silently fell back to the body colour, taking the
+  // block's only accent with it.
+  color: var(--chat-signal);
 }
 
 .chat-demo-detail {
@@ -2116,4 +2146,16 @@ button.chat-engine {
   .chat-status-dot {
     animation: none;
   }
+}
+
+// Words that are DATA (2026-10-23): a verse's or a word's own, as its Bible
+// spells them. Equipment lettering capitalises, and a capital Greek word
+// loses what a learner reads it by -- _τῇ_ drew as _ΤΗΙ_, _ἐνεθυμήθη_ as
+// _ΈΝΕΘΥΜΉΘΗ_ -- so these keep their case and the reading face.
+.cue-act-data {
+  font-family: var(--chat-font-body);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }

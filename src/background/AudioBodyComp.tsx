@@ -64,7 +64,7 @@ export default function AudioBodyComp({
                     <track kind="captions" />
                     {tran('Browser does not support audio.')}
                 </audio>
-                <div>
+                <div data-background-audio-control="true">
                     {/* Named with the track and given button semantics: the
                         mini-screen previewer has a control with this same
                         title, so bare "Repeat this audio" identified neither

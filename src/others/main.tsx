@@ -35,17 +35,13 @@ import {
 } from '../setting/directory-setting/appLocalStorage';
 import { unlocking } from '../server/unlockingHelpers';
 import { useAppEffectAsync } from '../helper/appHooks';
-import { openGeneralSetting } from '../setting/settingHelpers';
+import { openPathSetting } from '../setting/settingHelpers';
 import {
     checkIsDesktopDataDir,
     DATA_DIR_MOVED_FROM_FLAG_FILE_NAME,
-    findDataDirsOnVolumesSync,
     fsExistSync,
-    getDefaultDataDirPath,
-    getDesktopDataDirPathList,
     pathJoin,
 } from '../server/fileHelpers';
-import { escapeHtmlText } from '../helper/sanitizeHelpers';
 import { useThemeSource } from './themeHelpers';
 import { getReactRoot } from './rootHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
@@ -54,63 +50,11 @@ import { initTitleSoundMeter } from '../helper/titleSoundMeterHelpers';
 import { initTouchDragAndDrop } from '../helper/touchDragHelpers';
 import { checkAreChildrenOnscreen } from '../app-modal/floatingWidgetHelpers';
 import { initWidgetAppMenu } from '../resize-actor/widgetAppMenuHelpers';
+import NoDataDirGateComp from './NoDataDirGateComp';
+import DesktopDataDirCardComp from './DesktopDataDirCardComp';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
-
-/**
- * The chosen data folder was not there as the app started, and was found on no
- * other drive either. Said in words, with the folder named: running quietly on
- * the app's own folder looked like every song had been lost.
- */
-async function askAboutMissingDataDir(missingDirPath: string) {
-    const isRetrying = await showAppConfirm(
-        tran('Data Folder Not Found'),
-        `"${escapeHtmlText(missingDirPath)}" ` +
-            tran(
-                'is not available. If it is on a USB flash drive, plug it in and press Retry. Until then the app is using a folder of its own; your data is not touched.',
-            ),
-        {
-            confirmButtonLabel: 'Retry',
-            cancelButtonLabel: 'Choose Another Folder',
-        },
-    );
-    if (isRetrying) {
-        appProvider.reload();
-    } else {
-        openGeneralSetting();
-    }
-}
-
-/**
- * A computer that has never had a data folder chosen, with one on a plugged-in
- * drive (or in the default folder, or the old default on the Desktop):
- * offered, rather than leaving the volunteer to know where Path Settings is.
- */
-async function offerFoundDataDir() {
-    const [foundDirPath] = findDataDirsOnVolumesSync([
-        getDefaultDataDirPath(),
-        ...getDesktopDataDirPathList(),
-    ]);
-    if (foundDirPath === undefined) {
-        return false;
-    }
-    const isOk = await showAppConfirm(
-        tran('Data Folder Found'),
-        `${tran('Use the data folder found at')} ` +
-            `"${escapeHtmlText(foundDirPath)}"?`,
-        {
-            confirmButtonLabel: 'Yes',
-            cancelButtonLabel: 'No',
-        },
-    );
-    if (!isOk) {
-        return false;
-    }
-    await appLocalStorage.setSelectedParentDirectory(foundDirPath);
-    appProvider.reload();
-    return true;
-}
 
 // Once per launch, not per page: the main window reloads to switch between
 // the Presenter and the Reader, and its `sessionStorage` lasts as long as the
@@ -187,30 +131,18 @@ function useCheckSetting() {
             return;
         }
         await showDataDirMoveResult();
-        const missingDirPath = appLocalStorage.missingParentDirPath;
-        if (missingDirPath !== null) {
-            await askAboutMissingDataDir(missingDirPath);
-            return;
-        }
         const selectedDirPath =
             await appLocalStorage.getSelectedParentDirectory();
         if (selectedDirPath) {
             await checkDataDirMove(selectedDirPath);
             return;
         }
-        if (await offerFoundDataDir()) {
-            return;
-        }
-        const isOk = await showAppConfirm(
-            tran('No Parent Directory Selected'),
-            tran(
-                'You will be redirected to the General Settings page to ' +
-                    'select a parent directory.',
-            ),
-        );
-        if (isOk) {
-            openGeneralSetting();
-        }
+        // No data folder in use -- none chosen, or the chosen one is not
+        // there. Straight to the choice, with its box focused: Path Settings
+        // names a missing one and lists the data folders found on the drives.
+        // A dialog first let its close button leave the volunteer in a window
+        // with nothing in it and no way on.
+        openPathSetting();
     }, []);
 }
 
@@ -327,9 +259,15 @@ export function RenderAppComp({
 }>) {
     useCheckSetting();
     const { theme } = useThemeSource();
+    // A data folder is required. Without one every window but Settings, where
+    // it is chosen, says so and shows nothing else.
+    const isGated = !appProvider.isPageSetting && appLocalStorage.isOnOwnFolder;
     return (
         <div id="app" className="app" data-bs-theme={theme}>
-            <StrictMode>{children}</StrictMode>
+            <StrictMode>
+                {isGated ? <NoDataDirGateComp /> : children}
+                {isGated ? null : <DesktopDataDirCardComp />}
+            </StrictMode>
         </div>
     );
 }

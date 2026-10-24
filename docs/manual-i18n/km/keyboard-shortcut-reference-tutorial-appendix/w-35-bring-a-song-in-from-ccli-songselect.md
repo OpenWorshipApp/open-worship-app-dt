@@ -3,7 +3,7 @@ id: W-35
 title: "នាំចម្រៀងចូល ពី CCLI SongSelect"
 section: "ឯកសារយោងគ្រាប់ចុចផ្លូវកាត់ (ឧបសម្ព័ន្ធមេរៀន)"
 lang: km
-translatedFrom: 4f636708f57a2f05
+translatedFrom: 1fd2e3f1059ee300
 ---
 # W-35 — នាំចម្រៀងចូល ពី CCLI SongSelect
 
@@ -17,7 +17,7 @@ translatedFrom: 4f636708f57a2f05
 > ចូលគណនីចុងក្រោយ ទៅទំព័រយល់ព្រមពិតរបស់ CCLI ត្រូវបានផ្ទៀងផ្ទាត់តាមកូដប្រភព ប៉ុន្តែ **មិនទាន់បានសង្កេតឃើញ**
 > ពីដើមដល់ចប់ទេ ដោយសារគ្មានព័ត៌មានសម្គាល់ពិត។
 
-1. បើក **[en:tran:Settings]** → **[en:tran:Others]**។ នៅចន្លោះកាតកូនសោ AI និង **[en:tran:Extra Binaries]**
+1. បើក **[en:tran:Settings]** → **[en:tran:Others]**។ ខាងលើ **[en:tran:Extra Binaries]**
    មានកាតមួយ ដែលមានចំណងជើង **[en:tran:SongSelect Integration]** ជាមួយប៊ូតុង
    **SongSelect ↗** ដែលបើក songselect.ccli.com នៅក្នុងកម្មវិធីរុករករបស់អ្នក។ កាតដែល
    បង្ហាញតែចំណងជើងរបស់វា គឺត្រូវបានបត់ — ចុចចំណងជើង ដើម្បីបើកវា។ 📸

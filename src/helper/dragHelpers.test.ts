@@ -34,12 +34,16 @@ vi.mock('../server/appProvider', () => {
 const {
     addDragPayload,
     deserializeDragData,
+    dragStore,
     extractDragData,
     extractDropData,
     extractDropDataOfType,
     handleAppDocumentDragStart,
+    handleAttachBackgroundDrop,
     handleDragStart,
 } = await import('./dragHelpers');
+const { attachBackgroundManager } =
+    await import('../others/AttachBackgroundManager');
 const { DragTypeEnum, genDragMimeType } = await import('./DragInf');
 const { default: NoteItem } = await import('../bible-list/note/NoteItem');
 
@@ -137,5 +141,88 @@ describe('drag payload transport', () => {
             }),
         });
         expect(event.values.size).toBe(1);
+    });
+
+    // Only a hand-written text drag can do it, but it used to throw out of
+    // every drop handler that reads a payload.
+    test('a document slide whose inner data does not parse is not ours', () => {
+        const event = makeEvent();
+        event.dataTransfer.setData(
+            'text',
+            JSON.stringify({ type: DragTypeEnum.PDF_SLIDE, data: '{bad' }),
+        );
+        expect(extractDropData(event)).toBeNull();
+        expect(extractDropDataOfType(event, DragTypeEnum.PDF_SLIDE)).toBeNull();
+    });
+
+    // A screen calls `onDropped` for any drop it cannot read: left set, an OS
+    // file dropped there later re-sent the last countdown.
+    test("a source's onDropped lasts until its drag ends", () => {
+        const onDropped = vi.fn();
+        dragStore.onDropped = onDropped;
+        handleDragStart(makeEvent(), {
+            dragSerialize: () => ({ type: DragTypeEnum.FOREGROUND, data: {} }),
+        });
+        expect(dragStore.onDropped).toBe(onDropped);
+        window.dispatchEvent(new Event('dragend'));
+        expect(dragStore.onDropped).toBeNull();
+        dragStore.onDropped = onDropped;
+        window.dispatchEvent(new Event('dragend'));
+        expect(dragStore.onDropped).toBe(onDropped);
+        dragStore.onDropped = null;
+    });
+});
+
+// A row stopped every drop it was handed, so a `.owb` dropped from the disk
+// onto a Bibles row never reached the list that copies files in (DD-15).
+describe('handleAttachBackgroundDrop', () => {
+    function makeDropEvent(text: string) {
+        return {
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
+            target: document.createElement('li'),
+            dataTransfer: {
+                getData: (kind: string) => (kind === 'text' ? text : ''),
+            },
+        };
+    }
+
+    test('a drop that is not a background goes on to the list', () => {
+        const attach = vi
+            .spyOn(attachBackgroundManager, 'attachDroppedBackground')
+            .mockResolvedValue(undefined as any);
+        for (const text of [
+            '',
+            JSON.stringify({ type: DragTypeEnum.APP_DOCUMENT, data: '/a.ows' }),
+        ]) {
+            const event = makeDropEvent(text);
+            event.target.style.opacity = '0.5';
+            handleAttachBackgroundDrop(event as any, { filePath: '/b.owb' });
+            expect(event.stopPropagation).not.toHaveBeenCalled();
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(event.target.style.opacity).toBe('1');
+        }
+        expect(attach).not.toHaveBeenCalled();
+        attach.mockRestore();
+    });
+
+    test('a background is attached and kept from the list', () => {
+        const attach = vi
+            .spyOn(attachBackgroundManager, 'attachDroppedBackground')
+            .mockResolvedValue(undefined as any);
+        const event = makeDropEvent(
+            JSON.stringify({
+                type: DragTypeEnum.BACKGROUND_COLOR,
+                data: '#008080',
+            }),
+        );
+        handleAttachBackgroundDrop(event as any, { filePath: '/b.owb', id: 2 });
+        expect(event.stopPropagation).toHaveBeenCalled();
+        expect(attach).toHaveBeenCalledWith(
+            { type: DragTypeEnum.BACKGROUND_COLOR, item: '#008080' },
+            '/b.owb',
+            2,
+        );
+        attach.mockRestore();
     });
 });

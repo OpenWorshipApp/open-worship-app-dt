@@ -151,6 +151,42 @@ export function toAppWindowList(
 }
 
 /**
+ * The window the help was opened FROM, for its tab to work in (the user,
+ * with **Working in** on the main window under a help opened from Settings:
+ * _open from setting should select setting_). `openerUrl` is the opener's
+ * address, or only its path when main names it on a later launch. The
+ * window's id; `null` for the main window, or a path two windows share --
+ * the main window is the old way, and a guess at one of two is no aim; and
+ * `undefined` while the list does not name it yet (it is asked of main).
+ */
+export function findOpenerWindowId(
+    openerUrl: string,
+    windowList: readonly AppWindowType[],
+): string | null | undefined {
+    let opener: URL;
+    try {
+        opener = new URL(openerUrl, 'http://localhost/');
+    } catch (_error) {
+        return null;
+    }
+    const candidateList = windowList.filter((item) => {
+        const url = toUrlObject(item.url);
+        return (
+            url !== null &&
+            url.pathname === opener.pathname &&
+            (opener.search === '' || url.search === opener.search)
+        );
+    });
+    if (candidateList.length === 0) {
+        return undefined;
+    }
+    if (candidateList.length > 1 || candidateList[0].isMain) {
+        return null;
+    }
+    return candidateList[0].id;
+}
+
+/**
  * What a tab with a window of its own chosen works with, or `null` for the
  * main window -- which is the help's way of working as it always has (the
  * kind of page, the main window when a tool is given none). A window that
@@ -174,6 +210,36 @@ export function toWindowAim(
         windowId: found.id,
         focus: found.focus,
         isSeparateWindow: descriptor?.isMainWindow === true,
+    };
+}
+
+/**
+ * The window a tab ASKING ABOUT a popup kind works in when none is chosen:
+ * Settings, a Bible Note, an editor -- the one open window of that kind. A
+ * kind the main window shows (Presenter, Reader, Document Editor) is the main
+ * window's, the old way. Without it a tab asking about Settings worked in the
+ * main window, and a model's walkthrough card -- its call names no window --
+ * came up in the Reader, ringing nothing, for a button in Settings (the user,
+ * 2026-10-23: _chatbot's do it for me appear in wrong page_). Two windows of
+ * the kind are no aim: which one is the person's to say.
+ */
+export function toFocusWindowAim(
+    focus: BotFocusType,
+    windowList: readonly AppWindowType[],
+): WindowAimType | null {
+    if (getBotFocus(focus)?.isMainWindow !== false) {
+        return null;
+    }
+    const candidateList = windowList.filter((item) => {
+        return item.focus === focus && !item.isMain;
+    });
+    if (candidateList.length !== 1) {
+        return null;
+    }
+    return {
+        windowId: candidateList[0].id,
+        focus,
+        isSeparateWindow: false,
     };
 }
 

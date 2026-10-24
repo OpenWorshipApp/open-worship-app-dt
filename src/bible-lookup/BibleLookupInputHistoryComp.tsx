@@ -1,4 +1,10 @@
-import { type KeyboardEvent, useCallback, useState } from 'react';
+import {
+    type DragEvent,
+    type KeyboardEvent,
+    useCallback,
+    useRef,
+    useState,
+} from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import { tran } from '../lang/langHelpers';
@@ -18,6 +24,7 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { openBibleItemDetailPanel } from '../location-name-lookup/detailPanelHelpers';
+import { genOpenInChatbotContextMenu } from '../helper/ai/bibleItemChatbotMenuHelpers';
 
 const historyTextListSettingManager =
     genStringListSettingManager('history-text-list');
@@ -114,6 +121,7 @@ function openContextMenu(
                     openHistoryBibleItem(bibleItem);
                 },
             },
+            ...genOpenInChatbotContextMenu(bibleItem),
             {
                 childBefore: genContextMenuItemIcon('layout-split'),
                 menuElement: tran('Open beside the current verse'),
@@ -213,6 +221,32 @@ function RendHistoryItemComp({
         handleContextMenuOpeningRef.current(historyTextRef.current, event);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // The drag payload must be written DURING `dragstart`: once the handler
+    // awaits, the browser has sealed `dataTransfer` and the drop reads an
+    // empty string. Resolving the passage needs the bible's own data, so it
+    // starts as the pointer comes onto the row (or presses it, for touch).
+    const draggingBibleItemRef = useRef<BibleItem | null>(null);
+    const handleDragPreparing = useCallback(() => {
+        if (draggingBibleItemRef.current !== null) {
+            return;
+        }
+        getBibleItemFromHistoryText(historyTextRef.current)
+            .then((bibleItem) => {
+                draggingBibleItemRef.current = bibleItem;
+            })
+            .catch(handleError);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // Nothing resolved (yet, or ever for an unparseable entry): no drag at
+    // all rather than one that drops nothing.
+    const handleDraggingStart = useCallback((event: DragEvent) => {
+        const bibleItem = draggingBibleItemRef.current;
+        if (bibleItem === null) {
+            event.preventDefault();
+            return;
+        }
+        handleDragStart(event, bibleItem);
+    }, []);
     return (
         // A plain box, no longer a `<button>`: it holds three controls, and a
         // button may not hold another. The ⋮ used to be a `span` passing for a
@@ -226,14 +260,9 @@ function RendHistoryItemComp({
             title={tran('Click to open the verse')}
             style={{ height: '27px', fontFamily }}
             draggable
-            onDragStart={async (event: any) => {
-                const bibleItem =
-                    await getBibleItemFromHistoryText(historyText);
-                if (bibleItem === null) {
-                    return;
-                }
-                handleDragStart(event, bibleItem);
-            }}
+            onPointerEnter={handleDragPreparing}
+            onPointerDown={handleDragPreparing}
+            onDragStart={handleDraggingStart}
             onContextMenu={handleContextMenuOpening.bind(null, historyText)}
             onClick={handleClick}
         >

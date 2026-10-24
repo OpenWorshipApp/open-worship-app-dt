@@ -37,20 +37,6 @@ export type VerseDataType = {
 };
 
 /**
- * `{ bibleKey: 'KJV', title: 'Genesis 35:11' }` -> `'(KJV) Genesis 35:11'`.
- *
- * The key is carried BESIDE the title rather than baked into it: the panel
- * writes the two into its title bar as separately styled spans, and only the
- * clipboard wants them joined back into one line.
- */
-export function toVerseFullTitle({
-    bibleKey,
-    title,
-}: Readonly<{ bibleKey: string; title: string }>) {
-    return `(${bibleKey}) ${title}`;
-}
-
-/**
  * Which bible a stored reference is READ BACK in.
  *
  * English records were extracted FROM the KJV, so its wording is the one that
@@ -138,7 +124,7 @@ export function useLookupVerseBibleKey() {
  * ranges on the clipboard via Copy — while costing a whole chapter's worth of
  * bible reads and DOM per citation.
  */
-async function shortToBibleItem(bibleKey: string, shortVerse: string) {
+export async function shortToBibleItem(bibleKey: string, shortVerse: string) {
     const bibleItem = await BibleItem.fromVerseKey(bibleKey, shortVerse);
     if (bibleItem !== null) {
         return bibleItem;
@@ -253,8 +239,9 @@ export async function shortToVerseSectionList(
 }
 
 /**
- * The WHOLE passage, for the clipboard: every chapter, each under its own
- * title. Read only when Copy is pressed, never to draw the panel.
+ * The WHOLE passage: every chapter, each under its own title. Read only when
+ * an agent asks for the words (`agentLookupHelpers`), never to draw the
+ * panel; the panel's Copy opens the Bible copy menu instead.
  */
 export async function shortToVerseCopyData(
     bibleKey: string,

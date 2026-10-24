@@ -120,6 +120,18 @@ export default function RenderLookupSuggestionComp({
     );
 }
 
+/**
+ * The KJV question open in THIS window, shared by every card that would ask
+ * it. A first run in the Reader mounts more than one "KJV is not available"
+ * card at once, and each asked its own: answering the first made the KJV and
+ * left the next one up, asking for a Bible that was there -- and a window
+ * shows one confirm at a time, so every later question (Copy to Data
+ * Directory, Remove Folder) waited behind it and the press seemed to do
+ * nothing (2026-10-24). Cleared once answered, so a card that mounts after a
+ * Cancel still offers it.
+ */
+let askingToCreateKJV: Promise<void> | null = null;
+
 export function BibleNotAvailableComp({
     bibleKey,
 }: Readonly<{
@@ -133,11 +145,15 @@ export function BibleNotAvailableComp({
     // would land on top of the first.
     const hasAskedToCreateKJVRef = useRef(false);
     useAppEffect(() => {
-        if (!isKJV || hasAskedToCreateKJVRef.current) {
+        if (
+            !isKJV ||
+            hasAskedToCreateKJVRef.current ||
+            askingToCreateKJV !== null
+        ) {
             return;
         }
         hasAskedToCreateKJVRef.current = true;
-        (async () => {
+        askingToCreateKJV = (async () => {
             // The KJV is the one Bible the app can build by itself, so a
             // window showing "KJV is not available" can offer the way out
             // before sending a volunteer to the Settings form. A window with
@@ -164,7 +180,9 @@ export function BibleNotAvailableComp({
             if (isOk) {
                 await createProvidedKJVBible();
             }
-        })();
+        })().finally(() => {
+            askingToCreateKJV = null;
+        });
     }, [bibleKey, isKJV]);
     const handleBibleKeyChanging = useCallback(
         (

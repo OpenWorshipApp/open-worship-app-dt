@@ -67,6 +67,7 @@ function genContextMenuItems(
     bibleItem: BibleItem,
     targetBibleItem: BibleItem,
     title: string,
+    openInChatbotMenuItems: ContextMenuItemType[],
 ) {
     return [
         {
@@ -78,8 +79,8 @@ function genContextMenuItems(
             menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
             title: `Open "${title}"`,
             onSelect: () => {
-                // Its own passage: kept out of the neighbour's colour-note
-                // sync group, which would re-target it to the lookup's.
+                // Its own passage in a colour group of its own: the
+                // neighbour's would re-target it to the lookup's.
                 bibleItemViewController.addBibleItemRight(
                     bibleItem,
                     targetBibleItem,
@@ -87,6 +88,7 @@ function genContextMenuItems(
                 );
             },
         },
+        ...openInChatbotMenuItems,
         {
             childBefore: genContextMenuItemIcon('copy'),
             menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
@@ -151,12 +153,17 @@ async function handleCustomTitleVerseContextMenu(
         return;
     }
     const title = await targetBibleItem.toTitle();
+    // Loaded on demand, like the detail panel: the screen window's graph
+    // holds this module and has no assistant to open.
+    const { genOpenInChatbotContextMenu } =
+        await import('../ai/bibleItemChatbotMenuHelpers');
     const contextMenuItems: ContextMenuItemType[] = genContextMenuItems(
         bibleItemViewController,
         spanData.bibleKey,
         bibleItem,
         targetBibleItem,
         title,
+        genOpenInChatbotContextMenu(targetBibleItem),
     );
     showAppContextMenu(event, contextMenuItems);
 }

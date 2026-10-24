@@ -70,8 +70,17 @@ export function applyDropped(
     try {
         const positions = removeDraggingClass(event);
         const data = event.dataTransfer.getData('text');
-        const json = JSON.parse(data);
+        // Dragged text, a link, or a drag that wrote no payload at all: not
+        // a passage, and not an error either.
+        let json: any = null;
+        try {
+            json = JSON.parse(data);
+        } catch (_error) {
+            return;
+        }
         if (
+            json === null ||
+            typeof json !== 'object' ||
             ![
                 DragTypeEnum.BIBLE_ITEM,
                 DragTypeEnum.BIBLE_ITEM_TARGET_ONLY,

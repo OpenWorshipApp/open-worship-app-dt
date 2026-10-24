@@ -9184,7 +9184,7 @@ and pressing `ពគប` opened `ម៉ាថាយ ១៨:១-១៤`. Unit tes
 (22), `lookupStepHelpers.test.ts` (12). **Axis:** smarter, easier. **Rung:** 2
 and 5.
 
-### EC-366 — a passage asked for by an English reference is cut to ~300 characters (OPEN 2026-10-19)
+### EC-366 — a passage asked for by an English reference is cut to ~300 characters (DONE 2026-10-21)
 
 `owa_lookup_record { kind: "verse", ref: "Matthew 18:1-14" }` returned the
 passage's text ending `…` after about three verses, while
@@ -9195,6 +9195,20 @@ words (the way a person does) gets a cut passage and may complete the rest from
 memory. File this against `agentLookupHelpers.readPassages` / the find reader:
 quote the whole requested passage whichever way it was written, bounded by
 `MAX_PASSAGE_CHARS`.
+
+**Done.** The finder resolves the written reference, then the lookup re-reads
+its canonical key through `readKeyedPassage`, with the same 6,000-character
+bound and localized title as a code. An unsuccessful re-read is unread,
+never a search preview passed off as the passage. Search results themselves
+keep their small previews. Five regression tests cover parity, the chosen
+Bible/title, the bound, a failed read and a partially resolved list.
+
+**Live proof, 2026-10-21:** `Matthew 18:1-14` stopped in verse 3 before;
+after, it and `MAT 18:1-14` return identical 1,928-character KJV text through
+verse 14. A Khmer reference returns all fourteen verses in the installed
+Khmer Bible, Psalm 23 returns all six, a two-reference request quotes both,
+and Genesis 3:203 still refuses with the real verse count. Six tool checks;
+no new model-answer grade. **Axis:** smarter. **Rung:** 2, still partial.
 
 ### EC-367 — a Latin fragment survives in a Khmer answer (OPEN 2026-10-19)
 
@@ -9416,3 +9430,1002 @@ Thai empty and falling back to the file's names), the order, and the
 exclusion.
 
 **Axis:** easier, smarter. **Rung:** 3.
+
+### EC-378 — the offline verse-lookup answer selects a warning instead of the lookup steps (OPEN 2026-10-21)
+
+Live `/help How do I look up a verse?` in the Khmer Reader returns W-11,
+but its displayed excerpt is step 8: the Reader does not present to an
+audience screen. It never says how to look up the verse. The live search
+result's English excerpt instead starts with saving a verse; its localized
+excerpt is the presentation warning. This is a passage-selection mismatch,
+not a model failure. Preserve both results in
+`test-results/chatbot-quality/answers-2026-10-21-passage-help.jsonl`.
+Check the row's answer anchor and translated excerpt alignment before
+changing a prompt. **Axis:** smarter, easier. **Rung:** 2.
+
+### EC-379 — two passage-card help questions fall back to English in the Khmer window (OPEN 2026-10-21)
+
+Live `/help How do I read the passage I am asking about in another language?`
+and `/help How do I save or copy the passage I am asking about?` both find
+the right W-29 paragraph but display its English prose under the Khmer
+fallback notice. The steps are relevant; an elderly reader of Khmer cannot
+use them. Verify the served W-29 translation's freshness and passage mapping,
+then refresh the translation and re-ask both. No model calls were made.
+Raw answers are in the same file as EC-378. **Axis:** easier. **Rung:** 2.
+
+### EC-380 — a Resources file opens on the passage the Reader is on (DONE 2026-10-22)
+
+**Evidence.** The user's picture: the dev Reader in Khmer on Matthew 18:15-17,
+the 🤖 beside `MAT.18.pdf` circled, and the tab it opened. The goal: _make the
+chatbot smarter to interact with user for the selected resource file_. The
+card offered **Read**, then verses `1`, `2`, `3`, `1-3` -- the file crossed to
+the chat, what the person was reading did not, and a reader of verses 15 to
+17 had to find out that they could type `15-17`.
+
+**Done.** The previewer provides a getter of the open panes
+(`ResourcesReadingContext`, read at the press so a verse click re-renders no
+row); the row's 🤖 hands over the pane that listed the file
+(`toResourceReading`: book, chapter, its verses only when the passage stays
+inside that chapter, the Reader's own title, the Bible) beside the path
+(`requestChatbotFile(path, reading)`, checked by `toValidResourceReading` in
+and out, a hand-edited one dropped while the file still opens). The card says
+_You are reading ម៉ាថាយ ១៨:១៥-១៧ in the Bible Reader. Press 15-17 to read
+what this file says about it._ and its first button is `15-17` -- the
+existing range press, so the card that follows is the one `1-3` already gets.
+The reading is kept on the card (`ChatMessageType.resourceReading`) so the
+Read menu offers it first. A whole chapter selected (from verse 1, longer
+than a card) offers no range; a longer selection is cut to five verses like
+any range.
+
+**Verified live** 2026-10-22, dev Reader in Khmer, Matthew 18:15-17: the card
+and its `15-17` button as above; pressed, the progress read `MAT.18.pdf` and
+`MAT 18:15-17` from the app. The passage is pre-read in the Bible the reading
+came from (`bible` on both `owa_lookup_record` calls): asked of the lookup the
+tab aims at, `18` had come back as the Presenter's KJV in English to a reader
+of Khmer; `19` after the change was **ម៉ាថាយ ១៨:១៩ · ពគប**. Tests: `resourcesChatHelpers.test.ts` (+10),
+`chatbotHandoffStoreHelpers.test.ts` (+1), `ResourcesFileRowComp.test.tsx`
+(+1). **Axis:** smarter, easier. **Rung:** 5 (it knows what the person is in
+the middle of) and 2.
+
+### EC-381 — a book's introduction and a list of links were offered verses to read (DONE 2026-10-22)
+
+**Evidence.** Pressed live, same window: `MAT.0.pdf` (Matthew's introduction)
+opened with _This is Bible chapter study material with verse text,
+cross-references, and explanations arranged by verse_ and **Read**, whose menu
+offers verses 1, 2, 3 of a "chapter 0" that has none (`toResourceChapterRef`
+read `MAT.0.pdf` as `MAT 0`). `MAT.0.json` -- three YouTube links -- got the
+same four buttons, Read among them. Every Resources file opened on the same
+card whatever it was.
+
+**Done.** `toResourceFileKind`: a chapter PDF, a whole-book file (chapter below
+1, as the panel reads it) or anything else. `toResourceChapterRef` needs a
+chapter of 1 or more, so no range, Read or Full chapter can start on an
+introduction. `genResourceOpeningAnswer` writes the card: Read only on a
+chapter PDF; an introduction says it belongs to the whole book; a file of the
+book being read asks _What does it say about {passage}?_ first. A question
+button that names a reference is no longer taken for a cross-reference press
+(it ends in a question mark). **Verified live**: `MAT.0.pdf` and `MAT.0.json`
+re-pressed after the change (see the scoreboard row). **Axis:** smarter.
+**Rung:** 2.
+
+### EC-382 — Read spent a vision round, and fifteen minutes, restating the card (DONE 2026-10-22)
+
+**Evidence.** Pressed live on the user's own tab: **Read** went to the model
+with every page of `MAT.18.pdf` as a picture (`RESOURCES_READ_MENU_HINT`:
+two sentences on what the PDF covers) before the verse menu could appear.
+Auto picked Free · Nemotron Super VL; the window said _Thinking…_ for about
+fifteen minutes and was stopped by hand. The two sentences restate what the
+card already says.
+
+**Done.** Read is answered by the window with no model: the question, the
+reading first, then `1`, `2`, `3`, `1-3`, **Full chapter**
+(`genResourceReadMenuReplies`). `RESOURCES_READ_MENU_HINT` is gone. A typed
+"read" still goes to the model as before. **Verified live**: Read pressed, the
+menu under it at once with `15-17` first. **Axis:** easier (no wait), cost (a
+vision round per Read). **Rung:** 4.
+
+### EC-383 — a free vision round can sit at "Thinking" for ten minutes with no word (OPEN 2026-10-22)
+
+Measured on Auto in Khmer: the free gateway's Nemotron Super VL answered a
+plain one-line ask in 5 s (curl, same day), but a Resources ask carrying
+`MAT.18.pdf`'s pages sat at _Thinking…_ for fifteen minutes (stopped), and the
+`15-17` card's second round (pages at the 2048px `detail: "high"`) took
+several minutes. The free client keeps the SDK's 10-minute timeout, and
+Auto's setback memory is for the user's own servers. A person waiting at a
+Resources card needs either a shorter first-token deadline for a vision round
+on the free service (then the next candidate, or the installed-Bible verse
+alone, `toResourceVerseFallback`), or the normal-detail pictures first.
+Measure before choosing: the page size, the detail, and the time to the first
+token. **Axis:** trustworthy under pressure. **Rung:** 4.
+
+### EC-384 — a Resources verse card that failed was answered with the Find bar (DONE 2026-10-22)
+
+**Evidence.** `15-17` pressed on Auto: after 204 s Free · Nemotron Super VL
+"wrote no answer", and the window fell back to the offline guide, which
+searched the manual for `15-17` and drew the **Find bar** page under the
+verse card, with **Show me step by step** and **Read the whole thing** --
+about something else entirely, in a conversation about Matthew 18. The
+model-empty case already showed the installed-Bible verse
+(`resourceReadingWasRejected`); the provider-failed case went to the guide.
+
+**Done.** `askOffline` answers a Resources ask itself: a passage answers
+empty, so the card shows the verses read from the person's own Bible under
+_I could not read the PDF explanation reliably_; any other Resources question
+gets the existing _A question about this needs an assistant_ sentence and
+**Open AI settings**. **Verified live** with Local Ollama (not running) on the
+tab: `18` and `19` answered in 2 s with the verse and the next three buttons;
+_What does it say about ម៉ាថាយ ១៨:១៥-១៧?_ on `MAT.0.json` with the sentence and
+the button. **Axis:** trustworthy under pressure. **Rung:** 4 and 2.
+
+### EC-385 — a custom server's failure note is English in a Khmer window (DONE 2026-10-22)
+
+_Local Ollama មិនអាចឆ្លើយបានទេ — nothing answered at http://localhost:11434/v1
+— check that its server is running។_ The sentence comes from
+`customServerHelpers.ts` (`nothing answered at` …) and is not a `tran` key, so
+a reader of Khmer gets the one part that says what to do in English. The
+address is the user's own (not a registry server's, which is scrubbed). Make
+it a template with the address as a gap, Khmer and French beside it.
+**Axis:** easier. **Rung:** 2.
+
+**Done.** `describeRelayFailure` (`customServerClientHelpers.ts`, the
+chatbot's client, which already spoke through the chatbot's `tran`) words
+the three weekly failures — _nothing answered at {address}_ (on this
+computer / on another / a shared server), _it went quiet in the middle of
+the question_, _took too long_ — as whole sentences with the address as a
+gap, Khmer and French beside them; the rarer relay reasons and Settings keep
+`describeCustomLlmFailure`'s English. Tests: the client's two relay-failure
+cases now read the window's sentence, and a rarer reason still reads the
+relay's.
+
+### EC-386 — a server the tab names fails and the question goes to the guide (DONE 2026-10-22)
+
+**Evidence.** The user's picture: a Resources tab on **Local Ollama**, the
+server not running, `18` pressed — _Local Ollama could not answer — nothing
+answered at http://localhost:11434/v1_ over the guide's verse card, with
+eight other no-cost servers and the free service in the list. _When one
+server provider fail it should try next one._ Only Auto handed a question
+on (`askWithAutoAssistant`); a named custom server or free model "never stands
+in or is stood in for", and a paid key only to another paid key.
+
+**Done.** The window's named branch: a failure before any model round
+(Auto's rule) asks `resolveHandOnPicks` — Auto's candidates, ranked with the
+same options as Auto's look, the failed one out and, when it was in the
+building, the building's other servers first (`orderHandOnPicks`) — then
+`askWithAutoAssistant`. The note says who failed and why and who answered
+(`genHandOnAnswerNote`); the tab keeps its pick. A paid key is untouched; a
+server on the internet not marked free is untouched. Auto's notice no longer
+promises that a server of your own keeps every question in the building.
+Tests +5 (`orderHandOnPicks`, `genHandOnAnswerNote`,
+`describeSkippedAssistants`). **And a read-only ask is handed on even after a
+round** (`canHandOnAfterRound`, Auto and named): the user's own Auto tab the
+same afternoon — _Explain it in simple words_ under `MAT.18.pdf`, Free ·
+Nemotron Super VL wrote no answer after 34.7k tokens — fell to the guide
+because a round had come back; a Resources or general question's tools only
+read. Unit-tested (+1); not yet seen live, since no model failed after a
+round while it was watched. **Verified live** 2026-10-22, dev chatbot in
+Khmer: a server added at `http://localhost:11999/v1` (nothing listening),
+picked by name, _តើឯកសារនេះមានអ្វីខ្លះ?_ on `MAT.0.json` — the wait line
+_Test Down Server មិនអាចឆ្លើយបានទេ — កំពុងរកជំនួយការឥតគិតថ្លៃមួយទៀត_, then
+the note _Test Down Server · gemma4:31b មិនអាចឆ្លើយបានទេ — គ្មានអ្វីឆ្លើយតបនៅ
+http://localhost:11999/v1 ទេ — សូមពិនិត្យថាម៉ាស៊ីនមេរបស់វាកំពុងដំណើរការ។ Local
+Ollama · gemma4:cloud បានឆ្លើយជំនួសវិញ។_ over a right answer (three video
+links), 2.5k tokens, the tab still on Test Down Server. **Axis:**
+trustworthy under pressure. **Rung:** 4.
+
+### EC-387 — a book named in the words was searched as words (DONE 2026-10-22)
+
+**Evidence.** The user's picture of two verse-finder tabs that asked the same
+Khmer line, _ស្វែងរកក្នុងគម្ពីរលោកប្បត្តិណូអេលែងព្រាប_ (search in the book of
+Genesis — misspelt, a vowel sign left out — Noah released the dove): one
+answered Genesis 8:11, the other _I have not found it … the words look like
+book names (… Daniel … Proverbs)_ and a Google search. Called directly,
+`owa_find_verse` had searched `ស្វែង`, `រក`, `គម្ពីរ`, `លោក`, `ប្`, `បត្តិ`,
+`ណូអេ`, `លែង`, `ព្រាប` and ranked Isaiah 34:16 — _search in the book of the
+LORD_ — first; the dove verses, Genesis 8:8-12, were not in the top eight.
+
+**Done.** In the search, so every caller has it: a book NAMED in the words is
+the book searched (`findNamedBooks`, `readNamedBooks`) — after a marker word
+(`bookMarkerWords` per language in its `index.ts`: `in`, `ក្នុង`, `គម្ពីរ`,
+`dans`) or when no verse of that Bible uses the name, one letter off when the
+misspelling is in no verse; a name verses DO use stays a word ("Daniel in the
+lions' den"). The asking words in FRONT come off (`findFrameWords`: "the story
+of", `ស្វែងរក`, `រឿង`), only in front. The result says `readAsBook`. Live: the
+user's line now searches `ណូអេ លែង ព្រាប` in Genesis and answers Genesis
+8:8-12, all five. Tests: `bibleVerseFindHelpers.test.ts` +5. **Axis:**
+smarter. **Rung:** 2.
+
+### EC-388 — a story was answered with verses out of it, and "every verse" had no way (DONE 2026-10-22)
+
+**Evidence.** The same tab, _រឿងទឹកជំនន់_ (the flood story): Genesis 8:11,
+6:17, 7:11, in that order, never _Genesis 6-9_. Baseline over the new standing
+set (`references/bible-find-asks.json`, 22 rows, gemma4:cloud on the user's
+Local Ollama, Khmer window): **3 of 16** stories opened their passage (a
+chapter or 3+ verses inside where it is told). And `shepherd` (74 verses)
+showed eight, from Genesis 46, with no way to the rest and no count by book.
+
+**Done.** Every result says where its words gather (`genChapterCountSql`: one
+scan, which also gives the total the old count scan gave): `passages` scored
+by the search's RARE words (in under 1% of verses; at 2% a paraphrase of the
+prodigal son landed in Leviticus 15), a verse holding several weighing more,
+grown from the strongest chapter into neighbours at least half as strong,
+joined where they touch; for a spaced language a rare word must start a word
+(`Manoah` held "noah"). `byBook` past one page, `next` / `from` to page, and
+`open` takes a whole chapter (`GEN 7`). The head start carries them to the
+model and the prompt answers a story with its chapters first. A passage is a
+found verse (`readFoundPassages`), named when the answer names any chapter of
+it in any digits or as a range (`៦ ដល់ ៩`); a chapter the answer names whole
+that holds a found verse gets its button too (`withFoundChapters`).
+**Every verse with these words** / **More verses** page the whole search, no
+model (step `more`). Live in Khmer: _shepherd_ → _74 verses … Jeremiah (12),
+Ezekiel (9) …_, the press → verses 1-8 of 74, **More verses** → 9-16 ending
+with John 10:11 in the Bible's own words; _តើរឿងសាខេនៅក្នុងគម្ពីរណា?_ →
+_told in លូកា ១៩_ with **Open លូកា ១៩**. After (before the chapter button):
+**22 / 22 found, 10 / 16 passages**. **Axis:** smarter, easier. **Rung:** 2,
+6 (a word's every verse is one press).
+
+### EC-389 — "where in the Bible is the story of X" went to the general assistant (DONE 2026-10-22)
+
+**Evidence.** Baseline rows `typed-en-flood` and `typed-km-flood`: both
+answered by `/btw`'s general prompt (10.8k tokens), no verse to open; the
+Khmer one named the book _គម្ពីរលោកុីស_, which no Bible has. A **wrong
+answer**.
+
+**Done.** English story shapes in `VERSE_ASK_PATTERN_LIST`
+(`bibleContentAskHelpers.ts`: _where in the bible is the story of …_, _where
+can I find the parable of …_, _show me the story of …_), Khmer as data
+(`verseAsks` in `km/assistant.json`: _តើរឿង … នៅក្នុងគម្ពីរណា?_), "story of"
+kept in the words so the search and the model know. After: both answer
+_told in Genesis 6-9_ / _លោកុប្បត្តិ ៦-៧_ with chapter buttons. French has no
+`verseAsks` at all (`EC-393`). **Axis:** smarter. **Rung:** 2.
+
+### EC-390 — Find's 🤖 left the typed words behind (DONE 2026-10-22)
+
+**Evidence.** The user's picture: `shepherd` typed in Find over ពគប, _no
+data_, the 🤖 beside it circled. The press asked _Help me find a Bible verse
+in "ពគប"_ and then **Which Bible should I search?** — the one Find was on —
+and **What do you remember?**: two steps for what was already typed.
+
+**Done.** `genVerseFindAsk(bibleKey, findText)` carries the words
+(`RenderFindingInfoHeaderComp` gets `findText` from `BibleFindBodyComp`); with
+words, the window asks them at once in Find's Bible in a tab of its own
+(`handedVerseAsk`, asked once that tab is in front: `handleAsking` asks in
+the tab it last rendered with). With no words, the Bible list as before (the
+user's original ask). Seen live: `shepherd` in Find → the press → a tab
+reading _ជួយខ្ញុំស្វែងរកខគម្ពីរមួយក្នុង «ពគប»: shepherd_ and the answer, no
+step between. The selected BOOKS do not ride yet (`EC-395`). **Axis:**
+easier. **Rung:** 6.
+
+### EC-391 — a verse quoted from memory, in words of the model's own (DONE 2026-10-22)
+
+**Evidence.** The live Find check above: gemma4:cloud answered `shepherd` in
+ONE round, no tool called, quoting John 10:11 as _ខ្ញុំ​ជា​អ្នក​គង្វាល​ដ៏​ល្អ …
+ពលី​ជីវិត​ខ្លួន​សម្រាប់​ហ្វូង​សត្វ​ចៀម_ where ពគប says _… ក៏​ស៊ូ​តែ​ប្តូរ​ជីវិត​
+ជំនួស​ចៀម_ — scripture invented and shown as the Bible, with no button. The
+window's own search had handed it Genesis 46 (every verse holds one word
+alike, so Bible order). A **wrong answer**.
+
+**Done.** Two halves. Ties go to the chapters where the words gather
+(`densityMap` in `findVerses`; every language takes 300 candidates):
+`shepherd` opens on Ezekiel 34. And `findUnreadVerseNudge` (both loops, once,
+never on the last round): a verse-search answer naming a chapter:verse no
+search or read of the ask returned goes back with the references to read
+first. After: the `shepherd` rows quote Ezekiel 34, Psalm 23:1 and John
+10:11 each with its button. Test: `llmBotHelpers.test.ts` +1. **Axis:**
+smarter (trust). **Rung:** 2.
+
+### EC-392 — every Bible search spends the firewall's 25 acting calls a minute (OPEN 2026-10-22, the user's decision)
+
+**Evidence.** The baseline run, questions 30 s apart or less: `kjv-david-goliath`
+and `km-in-psalms-rock` were answered _the system encountered a temporary
+error_ — every search after the budget refused with _Too many actions in the
+app in the last minute_. `firewall.mjs` counts `owa_find_verse` (and
+`owa_lookup_record`, `owa_resource_file`) on purpose: _each one scans a whole
+Bible, and a loop of them is the thing the cap is for_. A thorough search is
+the head start's 1-2 plus up to five rounds of the model's own, two or three
+calls a round: two questions inside a minute can spend it. **Proposal:** a
+read-only search budget of its own (60 a minute, say), `open` staying in the
+acting 25 — a firewall policy change, so `owa-enhance-mcp`'s and the user's
+call, not made here.
+
+### EC-393 — French has no verse-ask patterns (OPEN 2026-10-22)
+
+`fr/assistant.json` carries no `verseFindAsks` / `verseAsks`: a verse asked
+for in French goes to the ordinary assistant, as Khmer did before `EC-288`.
+The search's French words (`bookMarkerWords`, `findFrameWords`) are in.
+
+### EC-394 — a modern Khmer spelling is cut into scraps in the 1954 Bible (OPEN 2026-10-22)
+
+`ដាវីឌសម្លាប់កូលីយ៉ាត`: ពគប writes _kill_ `សំឡាប់`, so `សម្លាប់` is segmented
+into `សម្` + `លាប់`, which match unrelated words (Joshua 15 named a passage
+of it before the co-occurrence weight). A small map of spelling variants per
+language (data) would search both.
+
+### EC-395 — Find's book filter does not ride to the chat (OPEN 2026-10-22)
+
+`EC-390` carries the words, not **All Books** narrowed to, say, Psalms: a
+Khmer Bible's book name needs that language's marker word in front to be
+read as the book, and the panel does not know it. Carry the book KEYS as
+their own field of the handed-over ask instead.
+
+### EC-396 — an English question in a Khmer window quotes the Khmer Bible under English words (OPEN 2026-10-22)
+
+`typed-en-flood`, `typed-en-good-samaritan`, before and after: _The story of
+the Good Samaritan is told in Luke 10_ over _(៣៣): តែ​មាន​សាសន៍​សាម៉ារី…_.
+`pickVerseFindBible` takes the window's language over the question's here;
+which one the reader wants is the user's call.
+
+### EC-397 — a how-word under a names card went to the app's guide (DONE 2026-10-22)
+
+**Evidence.** The user's ask with the Reader's Names and Places row menu
+circled on **Open in Chatbot**: _make the chatbot to be super smart that can
+answer everything about location/name_. Under Noah's card, _តើឈ្មោះណូអេមានន័យ
+ដូចម្តេច?_ (what does the name Noah mean?) holds ដូចម្តេច, Khmer's "how":
+`checkIsLookupAppAsk` sent it to the ordinary assistant, which answered that
+the guide covers the app only and to type `/btw` — Genesis 5:29, the answer,
+was quoted in the record. **Fix:** under a lookup card only the app's WORK
+(`checkIsAppWork`: screen, save, copy, settings…) leaves the record's
+conversation; a how-word alone stays (_How did Noah build the ark?_, the
+passage card's own _How can I apply this passage today?_).
+
+### EC-398 — "did Jesus speak about Noah?" was answered as a family line (DONE 2026-10-22)
+
+**Evidence.** `checkIsLookupLineageAsk` took Jesus + the person as the
+genealogy ask, and the window answered _neither family line the Bible gives
+— Matthew 1 and Luke 3 — names Noah_: false twice over (the question was
+about Matthew 24:37; Luke 3:36 names him, as the KJV's Noe). **Fix:** Jesus
+and the person need an IN ORDER word too (`lookupWords.lineageOrder`, en/km/
+fr data); a person is found in a genealogy under any of their names
+(`otherForms`); the answer's heading names the passage as the Bible writes it
+(it had printed _Luke 3:23-38_ inside a Khmer sentence).
+
+### EC-399 — one person under several names (DONE 2026-10-22)
+
+**Evidence.** The names dataset keeps each KJV spelling and renaming as its
+own record — Noe beside Noah, Elias beside Elijah (22 verses), Sem beside
+Shem, Abram, Sarai, Cephas, Saul (Paul), Israel (Jacob) — and the main record
+never points back. Noah's New Testament answer listed Hebrews and the two
+Peters only; his children read Japheth, Sem, Shem, Ham (an English count said
+4). **Fix:** `src/location-name-lookup/lookupNameAliasHelpers.ts`, 47 pairs
+read off the English titles and checked by hand (8 title matches were not the
+same person: _name of [Esau]’s wife_, _Babylonian name of [Hananiah]’s
+companion_ …), held by a test to the en/km/fr datasets; `owa_lookup_record`
+lists a person's `otherForms` with their verses, merges every verse in Bible
+order, and names each relative once by the record that IS them. Noah: 36
+verses (was 33), children 3.
+
+### EC-400 — the other people of a name were invisible to a card opened by id (DONE 2026-10-22)
+
+**Evidence.** _Is anyone else in the Bible called Noah?_ → "no": `otherMatches`
+was filled only for a read BY NAME, and a panel hands over an id; in Khmer the
+daughter of Zelophehad is ណូហា, the same KJV name. **Fix:** `sameName` on every
+read, matched on the dataset's name or the KJV's (one pass over the records a
+panel holds); `otherMatches` keeps only what `sameName` does not name.
+
+### EC-401 — a place had no distance, neighbours, people or map (DONE 2026-10-22)
+
+**Evidence.** _How far is Bethlehem from Jerusalem?_ → "neither the record nor
+the Bible says", with both coordinates in the dataset (450 of 1 002 places
+have them); _who lived in Bethlehem?_ named the three its words name, where 23
+people list it; _show Ararat on the map_ → "I cannot show a map". **Fix:** a
+place's record carries `fromJerusalem` (km, miles, compass direction — the
+tool does the arithmetic), `nearby` (6 nearest within 80 km), `people` (every
+person who lists it, by main record, 40 named and counted), `sameName`; a
+place with a point gets **Show it on a map** on its card (the panel's own
+Google Maps search, built from the record by the window, never from model
+words), and a typed map ask is answered with that button, no model. The
+prompt lets the model give where a place is TODAY and a rough distance from
+general knowledge, said as an estimate.
+
+### EC-402 — the record's verse list misses the Bible's own mentions (DONE 2026-10-22)
+
+**Evidence.** Ararat's record lists Genesis 8:4 and Jeremiah 51:27; the KJV
+says "Armenia" in 2 Kings 19:37 and Isaiah 37:38 and the Khmer Bible says
+អារ៉ារ៉ាត — so _who fled to Ararat?_ was answered from the record's vague
+description, naming nobody, and _which verses?_ gave two. **Fix:** when a
+person's or place's card opens, the window searches the Bible being read for
+the name (and its other names; single words only) with `owa_find_verse` and
+keeps `bibleSearch` on the card — total, books, the first keys, the words when
+there are six or fewer (`withLookupBibleSearch`, bounded under the card's
+16 000 characters). Ararat: 4 verses with their words; Noah 47; Bethlehem 51.
+One search per card, ~0.5 s.
+
+### EC-403 — scripture quoted in a lookup answer in words nothing gave (DONE 2026-10-22)
+
+**Evidence.** Two passes in a row, _where did the ark come to rest?_ under
+Noah's card quoted Genesis 8:4 in Khmer of the model's own with the wrong
+month; the record holds neither the verse nor its words. **Fix:**
+`findMisquoteNudge` (both loops, once, never on the last round): a quoted span
+of 24+ letters that no text this ask was given holds — the question with the
+record, every `owa_lookup_record` / `owa_find_verse` result, compared on
+letters alone — sends the answer back to read the verse and quote it exactly,
+or give the reference without quoting. Seen after: the reference, no invented
+words.
+
+### EC-404 — a place with no point has no map and no neighbours (OPEN 2026-10-22)
+
+Ararat (a region) has no coordinates, so no `fromJerusalem`, no `nearby`, no
+map button: _which places are near Ararat?_ is answered with Assyria and Minni
+(Ashchenaz, beside it in Jeremiah 51:27, missed) and _show it on a map_ with
+where it is in words. A map SEARCH by the KJV name would land on modern towns
+of the same name (Bethel, Alaska) — a point per region, or a curated
+modern-name query, is the dataset's to give.
+
+### EC-405 — a lookup read in a HIDDEN window timed out at 65 s (OPEN 2026-10-22, low)
+
+On a scratch dev instance whose Reader sat behind the user's window
+(`visibilityState: hidden`), the first `owa_lookup_record` answered in 2.5 s
+and every later one timed out at 65 s — Chromium's hidden-page throttling.
+Launched with `--disable-background-timer-throttling
+--disable-renderer-backgrounding --disable-backgrounding-occluded-windows` it
+answered in 0.2-5 s. A user's main window under the chatbot is normally
+visible; a minimised one was not measured.
+
+### EC-406 — counts print Latin digits in Khmer (OPEN 2026-10-22, low)
+
+`genLookupCountAnswer` fills `{count}` with `String(n)`: _កូន 3 នាក់_. The
+language's own digits are in `assistant.json`.
+
+### EC-407 — the alias table is hand-kept (OPEN 2026-10-22, low)
+
+The test holds every pair to the en/km/fr datasets, not the table to every
+alias a new dataset version adds. Re-run the title scan (`… form of [X]`,
+`… name of [X]`, `name given to [X]`) when `namesMap.json`'s `version` moves
+past 102, and check each candidate by hand.
+
+### EC-408 — a passage's related verses were nothing the chat could see (DONE 2026-10-23)
+
+**Evidence.** The user's picture: the help window on a Bible view's 🤖
+conversation about Genesis 8:1-22 (Khmer, ពគប, Local Ollama · gemma4:cloud),
+the card and its buttons circled — _make the chatbot to be super smart that
+can answer everything about selected verses_ — and the goal _help user find
+everything related to the selected verses_. A new standing set,
+`references/passage-khmer-asks.json` (15 questions: Genesis 8:1-22 twelve,
+Matthew 18:15-17 three, each with its right answer and, where it is one, the
+references the app's data gives), asked through the same handoff with
+`scripts/lookup-run.mjs` on a scratch profile: **4 right, 4 partly, 7 wrong**.
+Six of the fifteen ask for related verses, and the record held the passage
+alone: _which other verses relate to this?_ was sent to **Previous chapter** /
+**Next chapter**, _other altars like verse 20?_ named Genesis 22:5 (the altar
+is 22:9), _where else does God remember someone?_ two Psalms by a wrong book
+name, and under Matthew 18 the assistant asked for key words to search. The
+app holds the answer: the Reader's Cross References data, one bundle per
+language (`src/lang/data/<code>/bb-cr.gz.bundle`, ~8 themes a verse, each a
+sentence in that language and the verses it leads to). **Fix:**
+`owa_lookup_record` `related` (`agentCrossRefHelpers.ts`, pure, 9 tests):
+what most of the passage's verses point to, the other Testament's (the
+strongest first, so the quoted few are the strongest), each verse's first
+theme, the passage itself left out, titled in the Bible and bounded at 6 500
+characters (Genesis 8:1-22: 952 references, 0.2 s). A card reads its record
+with it (`toLookupCardArgs`) and `LOOKUP_SYSTEM_PROMPT` answers from it first.
+**After, three runs:** 9 / 5 / 1, 9 / 6 / 0, **11 / 3 / 1**; English shown
+3 → 0. **Axis:** smarter. **Rung:** 2.
+
+### EC-409 — Related verses and Study files, with no model (DONE 2026-10-23)
+
+The card's gathered material as two buttons first on the card --
+**Related verses** (what most of its verses point to, where the other
+Testament speaks of it, each verse's theme; a reference a button that opens
+its own card, which has its own related verses) and **Study files for this
+chapter** (each file with **Ask about …**) -- both ending with the
+conversation's **Previous** / **Next** / **More things to do**, since an
+answer's buttons are drawn under the newest one only and the card's were out
+of reach after one press. The card says how many of each (_… lead from it to
+952 other verses. Resources has 3 study files for its chapter._), and _Which
+other verses are related to this passage?_ is its first question. A
+reference led to by more than three verses says how many, in the app's
+digits (eleven numbers under one line, seen live). Seen live in Khmer.
+**Axis:** easier, more impressive. **Rung:** 6 for this ask.
+
+### EC-410 — the chapter's study files were invisible to a passage chat (DONE 2026-10-23)
+
+_What study files are there for this chapter?_ was answered _the app has no
+study files in this record_ with GEN.8.pdf in Resources. The card lists them
+once as it opens (`withCardStudyFiles`, `owa_resource_file list` by the
+key's book and chapter, ~8 names at most) and keeps them as `studyFiles`;
+the answer named GEN.0.pdf, GEN.8.pdf and GEN.0.json after. **Axis:**
+smarter. **Rung:** 2.
+
+### EC-411 — a passage read with no Bible was quoted from the KJV in a Khmer chat (DONE 2026-10-23)
+
+Under the ពគប card on Matthew 18:15-17, _what did Jesus teach after this?_
+read `MAT 18:18-35` with no `bible`; a code has no language, so the reader
+took the lookup's KJV and the answer quoted it in English inside Khmer
+(_heavenly ឪពុក_). In a record conversation a verse read
+(`owa_lookup_record` kind verse) or search (`owa_find_verse`) that names no
+Bible goes to the record's (`checkReadsInRecordBible`, tested). **Axis:**
+smarter. **Rung:** 2.
+
+### EC-412 — an English gloss after a bold or quoted name stayed (DONE 2026-10-23)
+
+_**ហេព្រើរ** (Hebrews)_, _១ ពេត្រុស (1 Peter)_: the cleaner drops a Latin
+bracket only after the language's own letter, and the last thing before it
+was an asterisk. It reads past closing `*`, `_` and quote marks now
+(`dropEnglishGlosses`, tested). **Axis:** easier. **Rung:** 2.
+
+### EC-413 — a record past the card's bound was cut into broken JSON (DONE 2026-10-23)
+
+`toLookupSubject` sliced the record at 16 000 characters: a long passage
+with its cross references would have kept half an object no reader can
+parse, and the conversation would have been about nothing. `fitLookupFacts`
+sheds what a read can bring back -- the cross references by verse, then the
+rest, a name's search, the people and places -- and only slices a record it
+cannot parse (tested). Latent: not seen live. **Axis:** trustworthy.
+**Rung:** 4.
+
+### EC-414 — a line typed under a passage card vanished once (DONE 2026-10-23, the silent path closed)
+
+In the baseline run, _តើមាននរណា និងទីកន្លែងណាខ្លះនៅក្នុងបទគម្ពីរនេះ?_ (who and
+where is in this passage?) typed 4 s after the previous answer was drawn
+showed as the person's message and then nothing: no progress line, no Stop,
+no tool call, no answer, no error, for 300 s. Not reproduced in four
+re-askings (alone, after the same previous question, and in three full
+runs). **Found:** the one way an ask ends with its echo and nothing under
+it is the outer catch's `checkIsCancelError(error, signal)` -- and that read
+ANY error named `AbortError` as a Stop, even with the ask's own signal
+untouched; only a real Stop writes _Stopped_ in the tab. **Fix:** given a
+signal, a cancel is that signal aborted and nothing else (tested); an abort
+nobody pressed for is said as a failure, and goes on to the next assistant
+or the guide like any other. Which wait threw it was not found (the relay
+and both SDKs turn their own timeouts into errors of their own); not seen
+again in five full runs. **Axis:** trustworthy. **Rung:** 4.
+
+### EC-415 — "how long was Noah in the ark?" is not read from Genesis 7:11 (DONE 2026-10-23)
+
+Two of three runs answered _the passage does not say_ and listed Genesis 8's
+own dates; the third worked out ~370 days from memory with Genesis 7:11's
+day wrong (2nd for 17th). The prompt says to read the chapter before and work
+it out; gemma4:cloud answers such questions in one round with no tool. A
+**Fix:** `findNotStatedNudge` (both loops, once, never the last round): an
+answer in a record conversation that says the Bible does not say it, with
+no tool called, goes back to read the chapter around it or a verse its
+cross references name, and to write the answer afresh (a first fix let the
+model open with _sorry for the earlier mistake_ for a draft nobody saw).
+The words are data, `lookupWords.notStated` in en/km/fr `assistant.json`,
+read in every language. After: three askings of three, Genesis 7:11 read
+and _one year and ten days_ (17th of the 2nd month to the 27th). **Axis:**
+smarter. **Rung:** 2.
+
+### EC-416 — Jesus on the days of Noah is not in Genesis 8's cross references (DONE 2026-10-23)
+
+_Where does the New Testament speak of this?_ under Genesis 8:1-22 names
+Hebrews 11:7, 1 Peter 3:20 and 2 Peter 2:5 from the data, and not Matthew
+24:37-39 or Luke 17:26-27: the bundle cites them from Genesis 6-7, never from
+8. The prompt lets the model add what it knows, read by ref; it did not.
+**Fix:** the record also reads the chapters AROUND the passage -- the one
+before, the rest of its own, the one after, 120 verses at most, ~50 bundle
+reads -- for the other Testament alone (`otherTestamentAround`,
+`listAroundOtherTestament`, six at most, none the passage already names),
+and references that overlap in one chapter are one span now
+(`mergeOverlapping`: Matthew 24:37-39, 24:38-39 and 24:39 had taken half of
+six places). A reference names at most six of the verses that lead to it and
+counts the rest (`fromCount`): twenty-two labels apiece had pushed the
+record over its bound and every theme down to two references. Genesis 8's
+list now opens with Luke 17:26-27 and Matthew 24:37-39; **Related verses**
+shows them under _In the New Testament, about the chapters around it_; the
+answer names both with what Jesus said. The record is 9.0k characters
+(budget 7 000 for the cross references), ~8k input tokens a question.
+
+### EC-417 — the Khmer cross-reference themes carry mistranslations (DONE 2026-10-23)
+
+Genesis 8:10 and 8:12's theme _Noah's patient waiting_ read
+_អ្នកជំងឺរបស់ណូអេ_ — "Noah's sick person" (patient as a noun) — and verse
+10's _The Dove as Messenger_ read _សត្វព្រាបជាកម្មវិធីផ្ញើសារ_, a messaging
+app. The words are the bundle's (`src/lang/data/km/bb-cr.gz.bundle`), shown
+in **Related verses** and the Reader's Cross References, and given to the
+model. Measured over its 231 890 themes: 7 241 titles kept English words
+(_Ravens ជាឧបករណ៍_), 7 291 held a letter that is not Khmer (Latin, Chinese,
+an HTML entity), 90 read "patient" as a sick person — a check for it had
+missed every one written with zero-width spaces between its words
+(`អ្នក​ជំងឺ`) — and ~150 gave a word its modern sense: a company of soldiers
+as a business (ក្រុមហ៊ុន), a calling as a phone call, God's host as a
+machine; a second sweep, after the whole set showed Psalm 23:4's _rod and
+staff_ as _rod and employees_, found 225 more: the temple's courts and
+Pharaoh's court as a LAW court (តុលាការ, 197), a staff as employees
+(បុគ្គលិក, 27), a ship's pilots flying planes. **Fix:** `extra-work/fix-cross-ref-titles.mjs`. A KJV name is
+written as the names lookup writes it in Khmer, with no model (2 175
+titles); what is left is translated by gemma4:cloud forty at a time, told
+the names to use and the modern senses to avoid, and taken only with no
+letter of another script, no markup and no false friend
+(`KM_FALSE_FRIEND_LIST`); eleven no model got right and two it got wrong are
+written by hand in the Khmer Bible's own words
+(`cross-ref-title-fixes/km-hand.json`: ហឹប for the ark, ន៉ាសារីត,
+ព្រះមែស្ស៊ី); every fix is kept in `cross-ref-title-fixes/km.json`; the
+bundle is written again in its own format, moved aside first so an app
+holding it open keeps reading the old one whole (Windows refuses a rename
+over a held file). 7 745 titles changed and nothing else — every key, theme,
+verse list and the order compared with the committed bundle; English words
+7 241 → 0, other letters 7 291 → 0, sick person 90 → 0. Seen live after a
+restart: **Related verses** gives verse 10
+_ការរង់ចាំដោយអត់ធ្មត់របស់លោកណូអេក្នុងពេលទឹកជំនន់_ and verse 12
+_ការរង់ចាំដោយអត់ធ្មត់របស់ណូអេក្នុងទូក_, and Psalm 23:4's theme
+_ដំបង និងឈើច្រករបស់អ្នកគង្វាល_. The bundle changes whole in git
+(28.4 MB); the French one was not looked at.
+
+### EC-418 — a passage chat's record was read again on every question (DONE 2026-10-23)
+
+Genesis 8:1-22 with its cross references is ~8 600 characters, ~7.5k input
+tokens a question on gemma4:cloud where it was ~4.6k. Free on Ollama's
+cloud; on a local server it is prompt time on every question (about 3 s at
+the user's LM Studio box's 1 000 tokens a second), because the record rode
+at the END of each question, past everything a server could keep from the
+question before. **Fix:** the record heads the conversation
+(`toLookupRecordTurn` → `AskExtraType.lookup.record` → `withRecordTurn`): a
+first turn with the same frame and the same fenced data, answered by one
+fixed line (`RECORD_TURN_ACK`) so the turns still alternate, and the
+question says in one line what it is about and that its record is at the
+start (`toLookupQuestion`). Same tokens, the same bytes every question; what
+the record quotes may still be quoted (`quoteSources`, `quoteBible`), and a
+record that could not be read still rides on the question with how to read
+it (`toLookupAsk`). Measured on a local Ollama (qwen3:0.6b, CPU) with the
+Genesis 8 record, two questions in a row: record at the end, the second
+question **112 s** of prompt processing (116 s in all); record at the head,
+**4.4 s** (7.9 s in all) -- the server reused the first question's prefix.
+Answers held: G1, G2, G5, G7, G8, G10, G11, M1 and M3 asked again on
+gemma4:cloud after it, all right. A provider that caches a prefix
+(Anthropic's moving breakpoint, OpenAI's ≥1 024 tokens) should gain the
+same; not measured.
+
+### EC-419 — an answer can name the first two references of a theme that has four (DONE 2026-10-23)
+
+_What does verse 22 promise, and where is it promised again?_ names Genesis
+9:11 and 9:15 and stops, where verse 22's theme in the record also gives
+Isaiah 54:9 and Jeremiah 33:20 (two runs of five; the other three named all
+four or three of them). _Where else does God remember someone?_ and _other
+altars like verse 20?_ did the same before the record's cut kept four
+references a theme. The prompt asks for every reference of a theme that
+answers it. **Fix:** a question that names a verse of the passage by its
+number (`lookupWords.verseNumber`: _ខ ២២_, _verse 22_, _verset 22_) has
+that verse's own cross references read by the window -- every theme, each
+reference titled as the reader's Bible names it -- and handed over under the
+record (`readLookupAskContext`, `readLookupContextText`); and every
+per-verse reference in the record is titled too (`toTitledByVerse`): the
+model named only references it had a name for. After, two runs of two:
+Genesis 9:11, 9:15, Isaiah 54:9, Jeremiah 33:20 and 33:25, Psalms 89:37 and
+119:90; seven altars for verse 20.
+
+### EC-420 — a long chapter's record carries no quoted cross references (DONE 2026-10-23)
+
+John 3:1-36 with its cross references keeps every verse's first theme at two
+references and quotes none: the passage alone is ~5k characters. A
+question about related verses there is answered by title only, or reads them.
+**Fix:** the cross references may take the room the passage's own words
+leave under the card's 16 000 characters, between 6 000 and 9 000
+(`fitPassageCrossRefs(result, maxChars)`): John 3:1-36 keeps four
+references a theme and its quotes (13.9k characters in all), Genesis 8 the
+same at 9.6k. And a verse asked about by number is read whole on demand
+(EC-419).
+
+### EC-422 — a Khmer question typed in the box loaded the names dataset (DONE 2026-10-23)
+
+The chat box's input aid (`owa_bible_suggest`, asked by the window as a
+person types; `bibleInputSuggestHelpers.ts`) takes a bare name in a script
+that is not Latin as worth loading the 34 MB names dataset for. Khmer writes
+a sentence with no space, so a question typed in Khmer in a Reader tab was
+ONE bare name: _តើមានខគម្ពីរណាផ្សេងទៀតដែលទាក់ទងនឹងបទគម្ពីរនេះ?_ under the
+Genesis 8 card went out as `{kind: "name", prefix: <the whole question>,
+allowLoad: true}` — 1.1 s, the dataset loaded, nothing completed (the
+driver's tool log, two questions of two). **Fix:** a bare run is a name
+only at 16 letters or fewer (99% of the lookup's 3 556 Khmer names are 15 or
+fewer, and a name is completed from its start), with no sentence mark, and
+not a question's lead word (`nameAskLead`: តើ, សូម) with more than four
+letters after it — the names that start that way are short (តើស៊ីស,
+សូមើរ). After: the same two questions ask nothing of it.
+
+### EC-423 — a passage chat did not know what the person had written on it (DONE 2026-10-23)
+
+Everything related to the selected verses includes the person's own study
+of them: a Bible note naming a verse, words highlighted, a comment. The
+Reader keeps both indexes (`bibleNoteShortVerseHelpers.ts`: which note
+items name each verse, what is marked on each) and a passage's record had
+neither, so _what did I note here?_ had nothing to answer from. **Fix:** with
+`related`, the record carries `yourNotes` (`agentPassageNoteHelpers.ts`,
+pure): the notes that name its verses — the note file's name (never its
+path), the title, the first 200 characters, the verses — and the
+highlights and comments on them in every Bible, with how many verses carry
+something; the indexes are the Reader's live ones while verses are on
+screen (`readBibleNoteIndexes`), else one scan nobody keeps (~0.3 s for
+Genesis 8 with the note read). The card says _You have notes or marks of
+your own on 3 of its verses._ and asks _What did I note on these verses?_
+first; `LOOKUP_SYSTEM_PROMPT` answers from it as theirs, never as the Bible.
+Measured on a scratch profile holding a note that names Genesis 8:20-21 and
+a highlight with a comment on 8:11 (scenario `gen8own`): both questions
+right in three runs (the first two with a stray word, EC-424), and the
+card's own question pressed answered the same.
+
+### EC-424 — a lowercase word of another language inside a Khmer answer (DONE 2026-10-23)
+
+_អ្នកបានគូស podkre ពាក្យថា_ — Polish for "underline", where the Khmer for
+highlighted belongs, in both answers about the person's own highlights; the
+saved runs held _អ្នកleថា_, _រក្សាhonneur_ and _ការសaurនិង_ too.
+**Fix:** `dropStrayLatinWords` (`answerLanguageHelpers.ts`): a lowercase
+Latin word with the language's own letters before it, and its letters, a
+clause mark or a bracket after, is taken out with the space before it (a
+gloss after it then goes by the gloss rule); never a capitalised word, a
+word with a digit or a dot, a prefix glued to a colon (`ol:Verse 2`), or a
+word at the edge of the text. Replayed over the 492 saved Khmer answer
+texts: 4 changed, all four slips. After: _អ្នកបានគូសចំណាំពាក្យថា
+"ស្លឹក​អូលីវ"_.
+
+### EC-425 — a French passage chat showed `&#39;` in its cross-reference themes (DONE 2026-10-23)
+
+The French bundle writes an apostrophe as `&#39;` in 56 568 of its 231 890
+theme titles (_Profanation du corps et de l&#39;armure de Saül_). The
+Reader's panel draws a title as sanitized HTML, so it never showed; the help
+window draws text, and the model read the entity. **Fix:**
+`toPlainThemeTitle` (`agentCrossRefHelpers.ts`, pure, no HTML parser): tags
+dropped, entities read, `&#39;` as `’`, applied where every passage read
+takes its themes (`readVerseCrossRefs`). Seen in a live read of Genesis 8 in
+LSG with `related`: 0 entities, _L’Arche au repos_, _L’attente patiente de
+Noé_. Six French titles still keep English words (_dans Escape from
+Danger_); fixing them is a rewrite of the 28 MB French bundle, left to the
+user.
+
+### EC-426 — "who is in it" answered from the text, "what does verse 5 mean" without the verse (DONE 2026-10-23)
+
+Of the 31 questions asked last, the two partly right: _who and which places
+are in this passage?_ under Genesis 8 named God, Noah, his family and Ararat
+but neither the raven nor the dove, without reading the names lookup; _what
+does verse 5 mean?_ under Isaiah 53 explained it without quoting it.
+**Fix:** a question about who or which places are in it
+(`lookupWords.namesAsk`, data in en/km/fr -- never `កន្លែងណាខ្លះ`, the
+"where" of _where does the New Testament speak of it_) has the passage read
+with `names` by the WINDOW (`readLookupAskContext` `isNames`,
+`readLookupContextText`), so the 34 MB dataset loads for that question
+only, never for every card; the people and places go under the question
+with their verses, each by its name, and the block says the lookup lists
+only who has a name. Told in the prompt alone, the model read nothing
+(two of two). `LOOKUP_SYSTEM_PROMPT` also names the unnamed people and the
+creatures that act in it, and quotes a verse first when asked what it
+means. Said as an order inside the data block, the model took the block for
+the message and answered that no question had come (three of three); said
+as a description, it answered. After, on a scratch profile: G3 three of
+three with Noah (verses 1, 6, 11, 13, 15, 18, 20), his family (16, 18),
+Ararat (4), the raven (7), the dove (8-12); I2 two of two quoting Isaiah
+53:5 from ពគប first; the set's other 27 unchanged -- **29 of 29**.
+
+### EC-427 — a right answer about unnamed people was sent back as "the Bible does not say" (DONE 2026-10-23)
+
+On a profile holding the person's notes, the first G3 of every run (four
+runs) answered _you haven't asked a specific question yet_. Seen through a
+logging proxy in front of Ollama: the model's first answer was right --
+Noah with his verses, Ararat, the raven and the dove -- and called the
+family _មនុស្សដែលមិនបានបញ្ជាក់ឈ្មោះ_ ("people whose names are not
+stated"). `មិនបានបញ្ជាក់` is a `notStated` word and the model itself had
+read nothing (the WINDOW had), so `findNotStatedNudge` sent back _Not yet:
+you said the Bible does not say it, and read nothing…_, and the model,
+handed a note instead of a question, asked what the question was. **Fix:**
+the window says when it read for the question (`lookup.isReadForAsk`), and
+the loop does not nudge then; and the question is said again after what the
+window read (`toQuestionAgain`), so the turn ends with what is asked. After:
+G3 six of six with no nudge, and the whole set, own notes included, **31 of
+31 right** in 31 model requests with no nudge -- one answer (M1) carried a
+stray English _an_ between Khmer words that four more askings did not
+repeat.
+
+### EC-421 — "before", "after" and "how long" were answered from memory or the wrong chapter (DONE 2026-10-23)
+
+_What happened before this?_ under Genesis 8 was told from memory without
+the 40 days or the 150; _what did Jesus teach after this?_ under Matthew
+18:15-17 read `near: next` -- Matthew 19, past the verses that answer it;
+_how long was Noah in the ark?_ listed Genesis 8's dates with no total (two
+runs of four). **Fix:** a passage record names the verses right before and
+after it (`around`: the rest of its chapter on each side, or the whole
+chapter before or after -- `GEN 7:1-24` / `GEN 9:1-29`, `MAT 18:1-14` /
+`MAT 18:18-35`), and a question that asks about before, after or a length
+of time (`lookupWords.beforeAsk` / `afterAsk` / `timeAsk`, data in en/km/fr)
+has those verses read by the window and handed over under the record --
+both sides for a length of time. After, two runs of two: Genesis 7 told with
+its 40 days and 150 days; Matthew 18:18-35 with seventy times seven and the
+parable; _one year and ten days_ from the 17th of the second month to the
+27th. No model round is added: the reads are the window's, ~0.1 s each.
+
+### EC-428 — a passage's words could not be studied one by one (DONE 2026-10-23)
+
+The user, studying Genesis 8 in the Greek Bible (GB) with a Bible view's 🤖
+conversation open in a Khmer window: _give option like study vocabulary then
+choose verse (if more than one verses) then list word to choose or choose all
+then explain the word_, then _also have option to open the word in google
+search_, and the goal _chatbot can help teaching vocabularies in the selected
+bible verse_. Measured first in that conversation (GB, Genesis 8:1-5,
+gemma4:cloud): _ពន្យល់ពាក្យនីមួយៗក្នុងខ ១_ (explain each word in verse 1)
+came back as four PHRASES glossed in Khmer under a verse quoted as
+`«(1):      ,    ,    ,  ᾿    ត·        ,    .»` (EC-429), 3 rounds, two of
+them the model reading the verse again. **Fix** (`wordStudyHelpers.ts`, pure,
+every rule a test; `lookupStepHelpers.ts` steps `words` / `word` /
+`verseWords` / `wordWeb`): the passage card carries **Study the words**
+(`checkHasPassageText`); a passage of several verses lists its verses, a
+button each with its first words in its Bible's digits, 24 a page; a verse
+lists its words in order, each once, split at spaces and at the Khmer Bible's
+zero-width spaces (`Intl.Segmenter` for a long unspaced run), **All words**
+first, 30 a page, the verse above them — all read off the card's own record
+with no model, a verse the record cut short read again by its key
+(`readStudyPlace`). A word pressed is ONE ask of the assistant in the
+passage's conversation (`handleWordStudyRef` → `handleAsking`'s
+`lookupStudy`): a short English question, the verse as its Bible writes it and
+how to teach it under the record (dictionary form, how to say it in the
+letters of the answer's language, kind and form, meaning, meaning here), none
+of the passage's typed-line readers run on it, nothing in the box is cleared
+or sent with it, and the answer ends with **Next word: …**, **Choose a word**,
+**Search Google for …** (an address the window builds at the press from the
+word and its English reference, `toWordSearchUrl`) and **More things to do**;
+a whole verse ends with **Choose a word**, **Next verse**, **Another verse**.
+Typed, _teach me the vocabulary_ / _ពាក្យនីមួយៗ_ / _chaque mot_
+(`lookupWords.vocabulary`, `readLookupWordStudyAsk`) is the card's button, or,
+with a verse of the passage named, that verse's every word at once. No
+assistant: the Google button and **Open AI settings**. After, live on the dev
+app, gemma4:cloud, Khmer window: the same question answers verse 1 word by
+word, **22 of 22 words with their Greek kept**, each with its dictionary form,
+a Khmer-letter pronunciation and its meaning, 1 round, 3.7 s; one word
+(ἐνεθυμήθη → ἐνθυμέομαι, _នឹកឃើញ_) 1 round, 2.5 s; the Khmer Bible
+(Genesis 8:21: its first 30 words, then **More words**), the KJV (_remembered_ taught with
+the English word kept) and the Google press all seen working. No tool schema
+changed; the ordinary list's ratchet did not move. Evidence:
+`test-results/chatbot-quality/word-study-*-2026-10-23.*`.
+
+### EC-429 — every Greek letter was taken out of a Khmer answer about a Greek passage (DONE 2026-10-23)
+
+`dropThirdScriptLetters` (EC-295) removes letters of a script that is neither
+the answer's language nor Latin — right for a stray _预览_ in a Khmer answer,
+wrong for the Greek, Hebrew or Thai of the passage the conversation is ABOUT:
+the GB passage's verse was quoted as empty guillemets, every glossed phrase as
+`«    »`. **Fix:** `AnswerKeepType` (`answerLanguageHelpers.ts`): the scripts
+of `scriptText` (a closed list a letter is tested against) are kept;
+`isLatinKept` keeps English words and their glosses for a lesson on an English
+verse, where the words ARE the lesson. Every passage answer passes its
+passage's text (`toPassageAnswerKeep`, through `AskExtraType.answerKeep` and
+the translated path), a word study its verse; an ordinary answer about the
+KJV in a Khmer window still loses a stray English word. The translator is
+told to keep a Bible word being taught and any word in a script that is not
+English's. A fourth script slipped into such an answer still goes.
+
+### EC-430 — the action buttons drew a Greek word in capitals, losing its accents (DONE 2026-10-23)
+
+`.cue-act` is uppercase equipment lettering; a word button read _ΈΝΕΘΥΜΉΘΗ_
+for ἐνεθυμήθη, _ΤΗΙ_ for τῇ, _ΖΩΙΑ_ for ζῷα — what a learner reads a word by.
+**Fix:** `BotActionType.isData` — a verse's or a word's own words, drawn as
+written (`.cue-act-data`: the reading face, sentence case) and never through
+the app's dictionary, which had also drawn an English verse's _all_ in Khmer.
+Persisted with the button like `title`. Seen live after: every Greek word
+with its breathing, accents and iota subscript.
+
+### EC-431 — Bible Find and `owa_find_verse` cannot search a Bible in a language the app has no data for (open)
+
+Asked for _ἐνεθυμήθη_ or even _Θεος_ in the GB Bible, `owa_find_verse`
+answers _Those words are not written in this Bible’s language. GB is written
+in "el-GR"_. `sanitizeFindingText` falls back to the ENGLISH language data for
+a locale the app has none for, and English keeps `[a-z0-9 ]` only: every Greek
+letter is taken out of the words searched AND, as far as the code reads, of
+the table Bible Find builds for that Bible (`toFindingText`), so Bible Find
+itself would find nothing in a Greek, Hebrew, Thai or Chinese Bible either.
+Not fixed here: the fallback is app-wide (Bible Find's index, which is built
+once per Bible and kept, would need rebuilding), so it belongs to
+`/owa-enhance` as a reliability item. A Unicode-aware fallback
+(`\p{L}\p{M}\p{N}`, case folded, the marks of a script that writes accents
+kept or stripped by locale) is the likely shape. Verify Bible Find's own
+search on GB live before deciding.
+
+### EC-432 — "Other verses with this word" under a word lesson (idea)
+
+A concordance press with no model: `owa_find_verse` with the word in the
+passage's Bible, the first verses a button each and where they gather. Cheap
+(one search) and the classic next step of learning a word. Blocked on EC-431
+for Greek and Hebrew; works for the KJV and the Khmer Bible today. Not built
+in EC-428 so that a button would not be offered where it cannot work.
+
+### EC-433 — a small model's word lessons slip on grammar (open, narrowed 2026-10-23 by EC-435..EC-439)
+
+Graded by hand on the EC-428 run (gemma4:cloud): the lemmas and meanings
+right, but τὸν glossed as _ដល់_ ("to") where it is the article, γῆν sounded
+_ហីន_, the tense or case of a verb often left out though the ask names it,
+and a Khmer word studied in a Khmer window given a romanisation (_Preah
+Yehovah_). Next: a standing set of word asks (Greek, Hebrew if installed,
+Khmer, KJV) with the right lemma and form beside each, graded per word, before
+and after any prompt change — and whether a stronger model or a second
+checking round is worth its cost here.
+
+**The standing set exists now** (2026-10-23, the run after the user turned
+to the Hebrew Bible): `references/word-study-asks.json`, 22 lessons pressed
+through the card's own buttons — HebrewTD Genesis 1:1 (each of its 7 words
+and **All words**) and 1:7, GREEKGNT John 3:16 (6 words), the Khmer ពគប and
+the KJV John 3:16 (2 each) — with the lexicon's lemma and form beside each,
+run by `scripts/lookup-run.mjs` (which presses now). Graded by hand,
+gemma4:cloud, Khmer window: before **4 right, 10 partly, 2 wrong** of the
+16 lessons asked (four Greek presses missed in that run, a driver bug), 7 of
+the 14 non-English lessons showing English; after EC-435..EC-439 **14 right,
+4 partly, 2 wrong** of 20 — on the same 16, **12 / 4 / 0** — 1 showing
+English (_neuter_), every lesson one round. Still open, all the model's own: ἀπόληται called present active (it
+is aorist middle subjunctive) and αἰώνιον called neuter with no case (it is
+accusative feminine); הָאָרֶץ sounded _ហាតារ៉េតស៍_ / _ហាម៉ារ៉េតស៍_, never
+_ហាអារ៉េតស៍_; a Hebrew perfect named with a made-up Khmer word
+(_សព្វាលីង_) once its English name was taken out of the hint; the article
+"the" glossed as "that, which". A second checking round, or a stronger
+model on the same set, is the next measure.
+
+### EC-434 — the word's Google search brought up the VERSE (DONE 2026-10-23)
+
+The user, with Google's AI overview of Genesis 1:1 up for the search the
+lesson's button wrote, _Θεὸς Genesis 1:1 meaning_: _I'd like to learn the
+word not the verse_. The reference in the query is what turned it into a
+search about the verse. **Fix:** `toWordSearchUrl` searches the WORD alone:
+quoted, in its dictionary accent (a Greek grave inside a sentence is its
+acute: _Θεὸς_ → _Θεός_, _καὶ_ → _καί_), with the language its letters say it
+is in (breathings or polytonic accents → _biblical Greek_, else _Greek_;
+Hebrew → _biblical Hebrew_; Khmer, Thai, Lao, Korean, Japanese, Chinese; a
+Latin word names none) and _word meaning_: `"Θεός" biblical Greek word
+meaning`. Checked on a web search: Strong's G2316 / Thayer's θεός first, and
+G1760 ἐνθυμέομαι for _ἐνεθυμήθη_. Pressed live on Genesis 1:1 in the GB
+Bible; the served module carries it.
+
+### EC-435 — a Hebrew verse's words were joined at the maqaf and listed twice by their accents; a Greek elision lost its mark (DONE 2026-10-23)
+
+Found the morning the user turned from the Greek Bible to the Hebrew
+(HebrewTD, Genesis 1:1 in their own help window), measured on a scratch
+profile with `references/word-study-asks.json`. Genesis 1:7's **Study the
+words** drew 17 buttons for 14 words: `אֶת־הָרָקִיעַ֒` and `וַֽיְהִי־כֵֽן`
+one button each (a maqaf joins two words into one sound; the lesson then
+taught the object marker and "the firmament" as one word, sounded
+_អេត-ហា-រ៉ា-គី-អាស_), and `הַמַּ֨יִם֙` / `הַמַּ֔יִם`, `אֲשֶׁר֙` / `אֲשֶׁ֖ר`,
+`לָרָקִ֔יעַ` / `לָרָקִ֑יעַ` twice each — the same word chanted with another
+accent. GREEKGNT's John 3:16 drew `ἀλλ` for `ἀλλ’` (the 1904 text types the
+elision as ’, which the edges took as punctuation). **Fix**
+(`wordStudyHelpers.ts`): words part at the maqaf too (`WORD_GAP_PATTERN`);
+`toStudyWordKey` compares a word without its case, its Hebrew accents
+(U+0591-U+05AF, the meteg, the extraordinary points) and with a Greek grave
+as its acute — the list, **Next word** and the press all read it; an
+apostrophe right after a Greek letter stays with its word (`toStudyWord`).
+A vowel still tells two words apart (אֵת / אַתְּ). After: 14 buttons for
+14 words, `ἀλλ’` kept — seen in the live window (screenshot in the run).
+
+### EC-436 — a word lesson read its verse again with a tool (DONE 2026-10-23)
+
+3 of 15 lessons in the baseline (`וְאֵ֥ת`, `אֶת־הָרָקִיעַ֒`, `τὸν`) called
+`owa_lookup_record` for the verse the ask already carries: 3 rounds and
+14.5-17.1k tokens where one round is ~5k, and two of them then wrote the
+tool's English reference (_Genesis 1:1_) into the Khmer answer. **Fix:**
+`AskExtraType.lookup.isStudy` (set for `lookupStudy`) makes the ask ONE
+round in both loops, so no tool can be called (`tool_choice: none` on
+Anthropic keeps its cached prefix; the OpenAI-shaped loop sends none on its
+last round). After: 20 of 20 lessons one round, 3.8-5.2k tokens, no
+reference in English.
+
+### EC-437 — a lesson's form, labels and sound were not in the reader's language (DONE 2026-10-23)
+
+Baseline, Khmer window: **All words** wrote `(dictionary: רֵאשִׁית)` seven
+times — the English of the instruction; a Greek lesson named its form
+_Accusative Singular Masculine_ and glossed τὸν as _"the"_; both Khmer
+lessons romanised the Khmer word (_Srolanh_, _Preah Reach Botra_) for a
+reader of no English; and the Hebrew lessons gave a verb no stem and a noun
+no gender or number (the ask said only "its form here"). **Fix**
+(`toWordStudyContext`, `GRAMMAR_HINT_LIST`): what "its form" is in the
+verse's language — Greek case, number and gender, or tense, voice, mood,
+person and number; Hebrew stem (named in Hebrew letters, קַל, נִפְעַל …,
+which the answer keeps — given as Qal, Niphal they came back in Latin
+letters), completed or ongoing (with the וַ of a narrative), person, gender
+and number, and every joined part (וְ, הַ, בְּ, לְ, כְּ, מִ) named apart;
+every label and grammar word in the answer's language, a line of **All
+words** parted by " — " with no label words; "say so rather than guess";
+and no way to say a word written in the answer's own script (the window
+passes the answer's language, `pickReplyLanguage`). After: no Latin letter
+in a Khmer lesson but one model-chosen _neuter_; Hebrew lessons name stem,
+person, gender, number and prefixes; Khmer lessons no romanisation.
+
+### EC-438 — a verse word copied with another script's letter, and a third script's sign on a Khmer letter (DONE 2026-10-23)
+
+**All words** for Genesis 1:1 wrote `הָאָֽរֶץ` — a Khmer ro where the verse
+has a Hebrew resh — in both runs (temperature 0, so every time); a lesson
+on `הָרָקִיעַ` sounded it _ហཱារ៉ាគីអា_, a Tibetan vowel sign on a Khmer
+letter, which `dropThirdScriptLetters` kept because it read a sign by the
+letter before it. **Fix:** `repairStudiedWords` (a run of letters mixing
+the verse's script with another, matching ONE verse word letter for letter
+everywhere else, is that word as the verse writes it; applied to a lesson's
+answer in the window) and, in the cleaner, a combining sign of a third
+script goes even on the language's own letter (an accent every script
+shares stays). Both held by tests; the Hebrew re-run had no mixed word.
+
+### EC-439 — a Hebrew word's Google search carried the chant's accents (DONE 2026-10-23)
+
+`toWordSearchUrl('אֱלֹהִ֑ים')` searched `"אֱלֹהִ֑ים"`, the etnahta inside
+the quotes — a spelling no lexicon writes. Now the dictionary spelling:
+the vowels kept, the accents (U+0591-U+05AF), the meteg and the
+extraordinary points out — `"אֱלֹהִים" biblical Hebrew word meaning`.
+Unit-tested; Google's own results not measured from here.

@@ -1,0 +1,404 @@
+{
+  "about": "Questions a Khmer reader asks the assistant about a passage opened from a Bible view's robot (toolbar 🤖, or a verse's right-click Ask the Assistant About This Passage) -- the user's goal of 2026-10-23: help the user find everything related to the selected verses. Each scenario is one conversation, asked in order in one tab. `expect` is the grader's key, never sent: what a right answer says, and why. `related` lists the references the app's own cross-reference data (src/lang/data/<lang>/bb-cr.gz.bundle, the Reader's AI Cross References panel) gives for the passage, which a right answer to a 'related' question draws on. Run with scripts/lookup-run.mjs; first measured 2026-10-23. Widened 2026-10-23 past the two first passages, to show related content is found for selected verses in general: one verse (John 3:16), a whole psalm (Psalm 23), a parable (Luke 15:11-32), a prophecy (Isaiah 53) and an English KJV card asked in English (Romans 8:28).",
+  "scenarios": [
+    {
+      "id": "gen8",
+      "record": {
+        "kind": "verse",
+        "target": "GEN 8:1-22",
+        "title": "លោកុប្បត្តិ ៨:១-២២",
+        "bibleKey": "ពគប"
+      },
+      "asks": [
+        {
+          "id": "G1",
+          "text": "តើមានខគម្ពីរណាផ្សេងទៀតដែលទាក់ទងនឹងបទគម្ពីរនេះ?",
+          "expect": "several real related passages, each named in Khmer and ideally quoted from ពគប or offered to open: God's covenant after the flood (Genesis 9:8-17, Isaiah 54:9), the New Testament on Noah (Hebrews 11:7, 1 Peter 3:20, 2 Peter 2:5), the heart evil from youth (Genesis 6:5 for v21), seasons kept (Jeremiah 33:20-25 for v22). No invented verse words.",
+          "related": [
+            "GEN 9:11",
+            "GEN 9:15",
+            "ISA 54:9",
+            "HEB 11:7",
+            "1PE 3:20",
+            "2PE 2:5",
+            "GEN 6:5",
+            "JER 33:20",
+            "JER 33:25",
+            "GEN 19:29",
+            "EXO 2:24"
+          ]
+        },
+        {
+          "id": "G2",
+          "text": "តើគម្ពីរសញ្ញាថ្មីនិយាយអំពីរឿងនេះនៅកន្លែងណាខ្លះ?",
+          "expect": "Matthew 24:37-39 and Luke 17:26-27 (Jesus on the days of Noah), Hebrews 11:7, 1 Peter 3:20, 2 Peter 2:5 and 2 Peter 3:5-7; at least four of these, none invented",
+          "related": [
+            "MAT 24:37",
+            "LUK 17:26",
+            "HEB 11:7",
+            "1PE 3:20",
+            "2PE 2:5",
+            "2PE 3:6"
+          ]
+        },
+        {
+          "id": "G3",
+          "text": "តើមាននរណា និងទីកន្លែងណាខ្លះនៅក្នុងបទគម្ពីរនេះ?",
+          "expect": "Noah (ណូអេ), God, Noah's wife, his sons and their wives (v16, v18), the raven and the dove; the mountains of Ararat (អារ៉ារ៉ាត, v4). The names lookup's own people and places for the passage"
+        },
+        {
+          "id": "G4",
+          "text": "តើខ ២១ មានន័យដូចម្តេច?",
+          "expect": "God smelled the pleasing aroma of Noah's offering and resolved never again to curse the ground or strike every living thing because of man, though the imagination of man's heart is evil from his youth (cf. Genesis 6:5); quoted only as ពគប gives it"
+        },
+        {
+          "id": "G5",
+          "text": "តើខ ២២ សន្យាអ្វី ហើយព្រះបានសន្យាដូចនេះម្តងទៀតនៅកន្លែងណា?",
+          "expect": "while the earth remains, seedtime and harvest, cold and heat, summer and winter, day and night shall not cease; the promise is taken up in Genesis 9:11-17 (the rainbow covenant), Jeremiah 33:20-25 and Isaiah 54:9",
+          "related": [
+            "GEN 9:11",
+            "GEN 9:15",
+            "JER 33:20",
+            "JER 33:25",
+            "ISA 54:9",
+            "PSA 74:16",
+            "ACT 14:17"
+          ]
+        },
+        {
+          "id": "G6",
+          "text": "តើមានឯកសារសិក្សាអ្វីខ្លះសម្រាប់ជំពូកនេះ?",
+          "expect": "the Resources files for Genesis 8: GEN.8.pdf (and the book's introduction GEN.0.pdf), named and offered to open; never 'I cannot see your files'"
+        },
+        {
+          "id": "G7",
+          "text": "តើព្រះ «នឹកចាំ» មនុស្សនៅកន្លែងណាផ្សេងទៀតក្នុងព្រះគម្ពីរ?",
+          "expect": "God remembered Abraham and brought Lot out (Genesis 19:29), Rachel (Genesis 30:22), his covenant with Abraham, Isaac and Jacob (Exodus 2:24; 6:5), Hannah (1 Samuel 1:19); at least three, read from the Bible, not from memory",
+          "related": [
+            "GEN 19:29",
+            "GEN 30:22",
+            "EXO 2:24",
+            "EXO 6:5",
+            "1SA 1:19",
+            "PSA 106:4",
+            "LUK 1:72"
+          ]
+        },
+        {
+          "id": "G8",
+          "text": "តើណូអេនៅក្នុងទូកធំប៉ុន្មានថ្ងៃ?",
+          "expect": "about a year and ten days: the flood began in Noah's 600th year, 2nd month, 17th day (Genesis 7:11) and the earth was dry in the 601st year, 2nd month, 27th day (Genesis 8:14) -- roughly 370 days; an answer reading Genesis 7:11 rather than guessing"
+        },
+        {
+          "id": "G9",
+          "text": "តើមានអ្វីកើតឡើងមុនបទគម្ពីរនេះ?",
+          "expect": "Genesis 7: Noah, his family and the animals went into the ark, the rain fell forty days and nights, the waters prevailed 150 days and every living thing outside the ark died"
+        },
+        {
+          "id": "G10",
+          "text": "តើមានខគម្ពីរផ្សេងទៀតអំពីអាសនា និងតង្វាយដុត ដូចក្នុងខ ២០ ដែរឬទេ?",
+          "expect": "other altars built to the LORD: Abram (Genesis 12:7-8, 13:18), Abraham on Moriah (Genesis 22:9), Isaac (Genesis 26:25), Jacob (Genesis 33:20, 35:1); burnt offerings in Leviticus 1; at least three, from the Bible",
+          "related": [
+            "GEN 12:7",
+            "GEN 12:8",
+            "GEN 13:18",
+            "GEN 22:9",
+            "GEN 26:25",
+            "GEN 33:20",
+            "GEN 35:1",
+            "LEV 1:9"
+          ]
+        },
+        {
+          "id": "G11",
+          "text": "តើព្រាប និងស្លឹកអូលីវ មានន័យអ្វី?",
+          "expect": "the dove returned with a freshly plucked olive leaf (v11), so Noah knew the waters had abated from the earth -- plants were growing again; often read as a sign of new life and peace (said as interpretation)"
+        },
+        {
+          "id": "G12",
+          "text": "តើបទគម្ពីរនេះបង្រៀនយើងអ្វីខ្លះអំពីព្រះ?",
+          "expect": "God remembers his people (v1), is faithful to his promise and saves (v1, v16), receives worship (v20-21), is merciful though man's heart is evil (v21), and keeps the order of creation (v22); tied to verses of the passage"
+        }
+      ]
+    },
+    {
+      "id": "mat18",
+      "record": {
+        "kind": "verse",
+        "target": "MAT 18:15-17",
+        "title": "ម៉ាថាយ ១៨:១៥-១៧",
+        "bibleKey": "ពគប"
+      },
+      "asks": [
+        {
+          "id": "M1",
+          "text": "តើមានខគម្ពីរណាផ្សេងទៀតដែលទាក់ទងនឹងបទគម្ពីរនេះ?",
+          "expect": "related teaching on correcting a brother: Leviticus 19:17, Luke 17:3, Galatians 6:1, James 5:19-20; two or three witnesses: Deuteronomy 19:15, 2 Corinthians 13:1; the church's discipline: 1 Corinthians 5, 2 Thessalonians 3:14-15, Titus 3:10",
+          "related": [
+            "LEV 19:17",
+            "LUK 17:3",
+            "GAL 6:1",
+            "JAS 5:19",
+            "DEU 19:15",
+            "2CO 13:1",
+            "1CO 5:11",
+            "2TH 3:14",
+            "TIT 3:10"
+          ]
+        },
+        {
+          "id": "M2",
+          "text": "តើខ ១៦ ដកស្រង់ពីព្រះគម្ពីរសញ្ញាចាស់នៅកន្លែងណា?",
+          "expect": "Deuteronomy 19:15 (also Deuteronomy 17:6): at the mouth of two or three witnesses",
+          "related": [
+            "DEU 19:15",
+            "DEU 17:6",
+            "2CO 13:1",
+            "1TI 5:19"
+          ]
+        },
+        {
+          "id": "M3",
+          "text": "តើព្រះយេស៊ូវបង្រៀនអ្វីបន្ទាប់ពីបទគម្ពីរនេះ?",
+          "expect": "Matthew 18:18-20 (binding and loosing; two or three gathered in his name), then 18:21-22 (forgive seventy times seven) and the parable of the unforgiving servant (18:23-35)"
+        }
+      ]
+    },
+    {
+      "id": "jhn3v16",
+      "record": {
+        "kind": "verse",
+        "target": "JHN 3:16",
+        "title": "យ៉ូហាន ៣:១៦",
+        "bibleKey": "ពគប"
+      },
+      "asks": [
+        {
+          "id": "J1",
+          "text": "តើមានខគម្ពីរណាផ្សេងទៀតដែលនិយាយដូចខនេះ?",
+          "expect": "several of its own cross references, named in Khmer: God's love (Romans 5:8, 1 John 4:9-10), eternal life as gift (Romans 6:23, 1 John 5:11-13, John 5:24), salvation through belief (John 1:12, Acts 16:31, Romans 10:9-10)",
+          "related": [
+            "ROM 5:8",
+            "1JN 4:9",
+            "ROM 6:23",
+            "1JN 5:11",
+            "JHN 5:24",
+            "JHN 1:12",
+            "ACT 16:31",
+            "ROM 10:9",
+            "EPH 2:8"
+          ]
+        },
+        {
+          "id": "J2",
+          "text": "តើមានអ្វីកើតឡើងមុនខនេះ?",
+          "expect": "John 3:1-15: Nicodemus comes to Jesus by night, must be born again (of water and the Spirit), and as Moses lifted up the serpent the Son of man must be lifted up (3:14-15) -- read, not from memory"
+        },
+        {
+          "id": "J3",
+          "text": "តើក្នុងគម្ពីរសញ្ញាចាស់មានខណាទាក់ទងនឹងខនេះ?",
+          "expect": "Old Testament references from its data or around it: Psalm 2:7 (the begotten Son), Isaiah 53:5-6, Isaiah 45:22, Isaiah 55:1, Ezekiel 33:11, Joel 2:32; Numbers 21:8-9 (the serpent, from 3:14) is welcome",
+          "related": [
+            "PSA 2:7",
+            "ISA 53:5",
+            "ISA 45:22",
+            "ISA 55:1",
+            "EZK 33:11",
+            "JOL 2:32",
+            "EZK 18:4",
+            "NUM 21:8"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "psa23",
+      "record": {
+        "kind": "verse",
+        "target": "PSA 23:1-6",
+        "title": "ទំនុកដំកើង ២៣:១-៦",
+        "bibleKey": "ពគប"
+      },
+      "asks": [
+        {
+          "id": "P1",
+          "text": "តើគម្ពីរសញ្ញាថ្មីនិយាយអំពីអ្នកគង្វាលនៅកន្លែងណាខ្លះ?",
+          "expect": "John 10:11 and 10:14 (the good shepherd), Hebrews 13:20, 1 Peter 2:25 and 5:4, Revelation 7:17; at least four",
+          "related": [
+            "JHN 10:11",
+            "JHN 10:14",
+            "HEB 13:20",
+            "1PE 2:25",
+            "1PE 5:4",
+            "REV 7:17"
+          ]
+        },
+        {
+          "id": "P2",
+          "text": "តើខ ៤ ទាក់ទងនឹងខគម្ពីរណាផ្សេងទៀត?",
+          "expect": "verse 4's own cross references: God's presence in trouble (Psalm 46:1-2, Isaiah 43:2, Isaiah 41:10, Deuteronomy 31:6, Joshua 1:9, Hebrews 13:5-6), fear not (Psalm 27:1, 2 Timothy 1:7), comfort (2 Corinthians 1:3-4)",
+          "related": [
+            "PSA 46:1",
+            "ISA 43:2",
+            "ISA 41:10",
+            "DEU 31:6",
+            "JOS 1:9",
+            "HEB 13:5",
+            "PSA 27:1",
+            "2CO 1:3"
+          ]
+        },
+        {
+          "id": "P3",
+          "text": "តើមានអ្វីនៅបន្ទាប់ពីទំនុកនេះ?",
+          "expect": "Psalm 24: the earth is the LORD's, who shall ascend his holy hill (clean hands, pure heart), lift up your heads, the King of glory -- read, not from memory"
+        }
+      ]
+    },
+    {
+      "id": "luk15",
+      "record": {
+        "kind": "verse",
+        "target": "LUK 15:11-32",
+        "title": "លូកា ១៥:១១-៣២",
+        "bibleKey": "ពគប"
+      },
+      "asks": [
+        {
+          "id": "L1",
+          "text": "តើព្រះយេស៊ូវនិយាយរឿងនេះដោយព្រោះអ្វី? តើមានអ្វីកើតឡើងមុននោះ?",
+          "expect": "Luke 15:1-10: tax collectors and sinners drew near, the Pharisees and scribes murmured that he receives sinners and eats with them; he told the lost sheep and the lost coin first -- read from the verses before"
+        },
+        {
+          "id": "L2",
+          "text": "តើខ ២០ ទាក់ទងនឹងខគម្ពីរណាផ្សេងទៀត?",
+          "expect": "verse 20's own cross references: the Father's compassion (Psalm 103:13, Isaiah 49:15, Jeremiah 31:20, Hosea 11:8, Ephesians 2:4-5), God waiting for sinners (Isaiah 30:18, Ezekiel 18:23, 33:11), running to embrace (Genesis 33:4, 45:14-15)",
+          "related": [
+            "PSA 103:13",
+            "ISA 49:15",
+            "JER 31:20",
+            "HOS 11:8",
+            "EPH 2:4",
+            "ISA 30:18",
+            "EZK 18:23",
+            "EZK 33:11",
+            "GEN 33:4",
+            "GEN 45:14"
+          ]
+        },
+        {
+          "id": "L3",
+          "text": "តើមានខគម្ពីរណាផ្សេងទៀតដែលទាក់ទងនឹងរឿងនេះ?",
+          "expect": "several related verses from its cross references: Zephaniah 3:17, Psalm 103:13, Ezekiel 18:23, Jeremiah 31:20, Isaiah 55:7, Hosea 14:4 -- and the two parables before it in the same chapter are welcome",
+          "related": [
+            "ZEP 3:17",
+            "PSA 103:13",
+            "EZK 18:23",
+            "JER 31:20",
+            "ISA 55:7",
+            "HOS 14:4",
+            "HOS 11:8"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "isa53",
+      "record": {
+        "kind": "verse",
+        "target": "ISA 53:1-12",
+        "title": "អេសាយ ៥៣:១-១២",
+        "bibleKey": "ពគប"
+      },
+      "asks": [
+        {
+          "id": "I1",
+          "text": "តើគម្ពីរសញ្ញាថ្មីនិយាយអំពីបទគម្ពីរនេះនៅកន្លែងណាខ្លះ?",
+          "expect": "its New Testament references: 1 Peter 2:24, 2 Corinthians 5:21, Hebrews 9:28, Galatians 3:13, Romans 4:25, Acts 8:32-35 (Philip and the eunuch read it); at least four",
+          "related": [
+            "1PE 2:24",
+            "2CO 5:21",
+            "HEB 9:28",
+            "GAL 3:13",
+            "ROM 4:25",
+            "ACT 8:32",
+            "1PE 3:18",
+            "1JN 2:2"
+          ]
+        },
+        {
+          "id": "I2",
+          "text": "តើខ ៥ មានន័យដូចម្តេច ហើយទាក់ទងនឹងខគម្ពីរណា?",
+          "expect": "verse 5 quoted from ពគប (wounded for our transgressions, by his stripes we are healed) and its own cross references such as 1 Peter 2:24, Romans 4:25, 1 Corinthians 15:3"
+        }
+      ]
+    },
+    {
+      "id": "rom8v28_kjv",
+      "record": {
+        "kind": "verse",
+        "target": "ROM 8:28",
+        "title": "Romans 8:28",
+        "bibleKey": "KJV"
+      },
+      "asks": [
+        {
+          "id": "R1",
+          "text": "What other verses say something like this?",
+          "expect": "its own cross references, in English from the KJV: Genesis 50:20, Ephesians 1:11, Romans 8:29-30, Jeremiah 29:11, Philippians 1:6, 2 Corinthians 4:17",
+          "related": [
+            "GEN 50:20",
+            "EPH 1:11",
+            "ROM 8:29",
+            "ROM 8:30",
+            "JER 29:11",
+            "PHP 1:6",
+            "2CO 4:17",
+            "GEN 45:5"
+          ]
+        },
+        {
+          "id": "R2",
+          "text": "What comes right after this verse?",
+          "expect": "Romans 8:29-39 read: foreknew, predestinate to be conformed to his Son, called, justified, glorified; if God be for us, who can be against us; nothing can separate us from the love of God"
+        },
+        {
+          "id": "R3",
+          "text": "Where does the Old Testament show God working like this?",
+          "expect": "Genesis 50:20 and 45:5-8 (Joseph), Jeremiah 29:11, Psalm 37:23-24, Job 23:10, Proverbs 19:21 -- from its cross references",
+          "related": [
+            "GEN 50:20",
+            "GEN 45:5",
+            "JER 29:11",
+            "PSA 37:23",
+            "JOB 23:10",
+            "PRO 19:21",
+            "PSA 119:71"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gen8own",
+      "record": {
+        "kind": "verse",
+        "target": "GEN 8:1-22",
+        "title": "លោកុប្បត្តិ ៨:១-២២",
+        "bibleKey": "ពគប"
+      },
+      "setup": "The profile's Bible notes hold a note titled Noah's altar whose words name Genesis 8:20-21 (owa_bible_note add), and a verse-marks item on (ពគប) GEN 8:11 highlighting ស្លឹក​អូលីវ with the comment សញ្ញានៃសេចក្ដីសង្ឃឹម៖ ទឹកបានស្រកហើយ. Without them the right answer is that they have nothing of their own on these verses.",
+      "asks": [
+        {
+          "id": "N1",
+          "text": "តើខ្ញុំបានកត់ចំណាំអ្វីខ្លះលើខទាំងនេះ?",
+          "expect": "their note Noah's altar on verses 20-21 (the first altar after the flood, Noah gives thanks first) and their highlight of ស្លឹកអូលីវ in verse 11 with their comment, said as THEIRS, not as the Bible"
+        },
+        {
+          "id": "N2",
+          "text": "ខ ១១ ខ្ញុំបានគូសពាក្យអ្វី ហើយខ្ញុំសរសេរថាម៉េច?",
+          "expect": "the olive leaf (ស្លឹកអូលីវ) highlighted, and their comment that it is a sign of hope, the waters had gone down"
+        }
+      ]
+    }
+  ]
+}

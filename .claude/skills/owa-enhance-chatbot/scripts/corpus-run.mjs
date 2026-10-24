@@ -9,7 +9,7 @@
 //        [--limit=N] [--timeout=480] [--skip=<regex>] [--templates]
 //        [--offline] [--pace=135] [--pace-since=<ISO>] [--pace-files=a,b]
 //        [--no-page-switch] [--as-focus=reader] [--typed] [--dry]
-//        [--profile=<data folder name>]
+//        [--profile=<data folder name>] [--gap=<seconds between asks>]
 //
 // --asks=<file.json> asks a short list of questions the corpus does not have
 // (2026-10-16): each is TYPED, so each joins the window's Alt+Up history.
@@ -1238,7 +1238,21 @@ function countRecentRounds() {
     }
     return rounds;
 }
+// --gap=<seconds> (2026-10-22): at least this long between one question's
+// start and the next, the way a person asks. Back to back, a verse search
+// run spent the firewall's 25 acting calls a minute -- every Bible search
+// counts there -- and two answers said "the system had an error".
+const GAP_MS = Number(args.gap ?? 0) * 1000;
+let lastAskStartedAt = 0;
+async function waitForGap() {
+    const wait = lastAskStartedAt + GAP_MS - Date.now();
+    if (GAP_MS > 0 && wait > 0) {
+        await sleep(wait);
+    }
+    lastAskStartedAt = Date.now();
+}
 async function waitForPace() {
+    await waitForGap();
     if (PACE <= 0) {
         return;
     }

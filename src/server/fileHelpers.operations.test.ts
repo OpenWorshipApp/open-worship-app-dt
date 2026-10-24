@@ -114,7 +114,10 @@ import {
     fsCheckDirExist,
     fsCheckFileExist,
     fsCopyFilePathToPath,
+    fsCreateDir,
     fsCreateFile,
+    fsCreateReadStream,
+    fsCreateWriteStream,
     fsDeleteDir,
     fsDeleteFile,
     fsGetFileSize,
@@ -125,13 +128,21 @@ import {
     fsListFilesWithMimetype,
     fsMove,
     fsReadFile,
+    fsReadFileBase64Sync,
     fsReadFileBytes,
     fsRenameFile,
     fsWriteFile,
     getDotExtensionFromBase64Data,
+    getDownloadPath,
+    getFileBase64,
+    getFileChecksum,
+    getFileFullName,
+    getHomePath,
     getFileMD5,
     getFileMetaData,
     getMimetypeExtensions,
+    getDesktopPath,
+    getTempPath,
     isSupportedExt,
     isSupportedMimetype,
     selectDirs,
@@ -150,6 +161,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    vi.unstubAllGlobals();
     // Only remove this test's direct child of the system temporary directory.
     const resolved = path.resolve(workDir);
     if (
@@ -264,6 +276,21 @@ describe('file operations on a temporary directory', () => {
         expect(h.hideProgressBar).toHaveBeenCalledTimes(2);
     });
 
+    it('refuses an empty or relative folder rather than the working directory', async () => {
+        const source = inWorkDir('dropped.ows');
+        await fsWriteFile(source, 'dropped');
+        for (const destination of ['', 'documents']) {
+            expect(await fsCopyFilePathToPath(source, destination)).toBeNull();
+            expect(
+                fs.existsSync(path.resolve(destination, 'dropped.ows')),
+            ).toBe(false);
+        }
+        expect(h.showSimpleToast).toHaveBeenCalledWith(
+            'Copying File:dropped.ows',
+            expect.stringContaining('No folder to copy into'),
+        );
+    });
+
     it('recognizes file types and a data-URL MIME signature', () => {
         expect(getFileMetaData('SONG.OWS')?.appMimetype.mimetypeName).toBe(
             'appDocument',
@@ -327,5 +354,103 @@ describe('file operations on a temporary directory', () => {
         );
         expect(createdFilePath).not.toBeNull();
         expect(await fsReadFile(createdFilePath!)).toBe('{}');
+    });
+
+    it('creates directories and exposes native file streams and base64 bytes', async () => {
+        const nestedDir = inWorkDir('one', 'two');
+        await fsCreateDir(nestedDir);
+        expect(await fsCheckDirExist(nestedDir)).toBe(true);
+
+        const filePath = path.join(nestedDir, 'picture.bin');
+        const writer = fsCreateWriteStream(filePath);
+        const closed = new Promise<void>((resolve, reject) => {
+            writer.once('error', reject);
+            writer.once('close', resolve);
+        });
+        writer.end(Buffer.from([0, 1, 2, 255]));
+        await closed;
+
+        const chunks: Buffer[] = [];
+        const reader = fsCreateReadStream(filePath);
+        await new Promise<void>((resolve, reject) => {
+            reader.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+            reader.once('error', reject);
+            reader.once('end', resolve);
+        });
+        expect(Buffer.concat(chunks)).toEqual(Buffer.from([0, 1, 2, 255]));
+        expect(fsReadFileBase64Sync(filePath)).toBe('AAEC/w==');
+        expect(getFileFullName(new File(['x'], 'report.txt'))).toBe(
+            'report.txt',
+        );
+        expect(getFileFullName(filePath)).toBe('picture.bin');
+    });
+
+    it('uses the special-path IPC and reads blob URLs as data URLs', async () => {
+        h.sendDataSync.mockImplementation((_channel, name) => `${name}-path`);
+        expect(getDesktopPath()).toBe('desktop-path');
+        expect(getDownloadPath()).toBe('downloads-path');
+        expect(getTempPath()).toBe('temp-path');
+        expect(getHomePath()).toBe('home-path');
+        expect(h.sendDataSync).toHaveBeenCalledWith(
+            'main:app:get-special-path',
+            'home',
+        );
+
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({
+                blob: async () => new Blob(['hello'], { type: 'text/plain' }),
+            }),
+        );
+        await expect(
+            getFileBase64('https://files.test/song.txt'),
+        ).resolves.toBe('data:text/plain;base64,aGVsbG8=');
+    });
+
+    it('propagates fetch and FileReader errors when making a data URL', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockRejectedValue(new Error('network down')),
+        );
+        await expect(
+            getFileBase64('https://files.test/song.txt'),
+        ).rejects.toThrow('network down');
+
+        vi.stubGlobal(
+            'fetch',
+            vi.fn().mockResolvedValue({ blob: async () => new Blob(['song']) }),
+        );
+        vi.stubGlobal(
+            'FileReader',
+            class {
+                onerror: ((error: unknown) => void) | null = null;
+                readAsDataURL() {
+                    this.onerror?.(new Error('reader failed'));
+                }
+            },
+        );
+        await expect(
+            getFileBase64('https://files.test/song.txt'),
+        ).rejects.toThrow('Error reading blob as base64: Error: reader failed');
+    });
+
+    it('returns null for a checksum read error and a failed MIME directory listing', async () => {
+        expect(await getFileChecksum(inWorkDir('missing.bin'), 'sha256')).toBe(
+            null,
+        );
+        expect(h.handleError).toHaveBeenCalled();
+
+        h.handleError.mockClear();
+        expect(
+            await fsListFilesWithMimetype(
+                inWorkDir('missing-directory'),
+                'appDocument',
+            ),
+        ).toBeNull();
+        expect(h.handleError).toHaveBeenCalled();
+        expect(h.showSimpleToast).toHaveBeenCalledWith(
+            'Getting File List',
+            'Error occurred during listing file',
+        );
     });
 });

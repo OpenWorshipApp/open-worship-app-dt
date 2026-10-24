@@ -4,10 +4,13 @@ import './bootstrapCss';
 import { init } from './boot';
 import AiChatAppComp from './aichat/AiChatAppComp';
 import {
+    plugChatWindowAppFont,
     plugChatWindowLanguage,
+    readChatWindowAppFontFamily,
     readChatWindowLanguageFont,
 } from './chatbot/chatWindowLanguage';
 import {
+    setAppFontFamily,
     setLanguageFont,
     toUnicodeRange,
 } from './aichat/aiChatGuestFontHelpers';
@@ -28,6 +31,10 @@ function renderApp() {
 // A window whose `init` fails is still drawn, in English.
 init(() => {
     plugChatWindowLanguage();
+    // And the same face as the sites' pages one, named in front of their
+    // body lists (`plugChatWindowAppFont` sets it on this window's own).
+    void plugChatWindowAppFont();
+    void readChatWindowAppFontFamily().then(setAppFontFamily);
     // And for the sites: the language's face, for its letters only.
     const font = readChatWindowLanguageFont();
     const unicodeRange =

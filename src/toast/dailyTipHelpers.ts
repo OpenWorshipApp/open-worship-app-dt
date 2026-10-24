@@ -112,16 +112,31 @@ export const DAILY_TIP_AUTO_CLOSE_MS = 60 * 1000;
 export const DAILY_TIP_AUTO_SHOW_DELAY_MS = 5 * 60 * 1000;
 export const DAILY_TIP_LAUNCHED_AT_SESSION_KEY = 'daily-tip-launched-at';
 
-// Counted from the launch, not from this page load: session storage outlives a
-// reload and a Presenter/Reader switch, so neither restarts the wait.
+// Counted PER PAGE from when that page was first open in this window (the
+// user: _tips of the day should delay for few minutes before showing, for all
+// pages_, _per page_). Session storage outlives a reload, so a reload keeps
+// the page's clock; the main window moving from the Presenter to the Reader
+// gives the Reader a wait of its own.
+//
+// And per WINDOW, under the window's own name. A popup opened with
+// `window.open` starts with a copy of its opener's session storage, so a
+// Settings window opened ten minutes in read the main window's launch and put
+// its tip over the box it was opened for at once -- and again on every reload.
+// A popup's name is its own (`openPopupWindow`) and lasts through its reloads;
+// the main window has none.
 export function getDailyTipAutoShowDelay(
+    page: DailyTipPageType | null,
     storage: Pick<Storage, 'getItem' | 'setItem'> = globalThis.sessionStorage,
     now = Date.now(),
+    windowName = typeof window === 'undefined' ? '' : window.name,
 ) {
-    let launchedAt = Number(storage.getItem(DAILY_TIP_LAUNCHED_AT_SESSION_KEY));
+    const key = [DAILY_TIP_LAUNCHED_AT_SESSION_KEY, windowName, page]
+        .filter(Boolean)
+        .join(':');
+    let launchedAt = Number(storage.getItem(key));
     if (!Number.isFinite(launchedAt) || launchedAt <= 0 || launchedAt > now) {
         launchedAt = now;
-        storage.setItem(DAILY_TIP_LAUNCHED_AT_SESSION_KEY, `${now}`);
+        storage.setItem(key, `${now}`);
     }
     return Math.max(0, launchedAt + DAILY_TIP_AUTO_SHOW_DELAY_MS - now);
 }

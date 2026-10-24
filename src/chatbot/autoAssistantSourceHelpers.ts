@@ -10,15 +10,20 @@ import {
     getUsableCustomServers,
     readCustomServerModelInfo,
 } from '../helper/ai/customServerHelpers';
-import type { CustomServerType } from '../../electron/customLlmProtocol';
+import {
+    checkIsLocalNetworkUrl,
+    type CustomServerType,
+} from '../../electron/customLlmProtocol';
 
 import {
+    orderHandOnPicks,
     rankAutoCandidates,
     toAutoCandidateKey,
     type AutoCandidateStateType,
     type AutoCandidateType,
     type AutoRankOptionsType,
 } from './autoAssistantHelpers';
+import { DEFAULT_CHAT_LANG_CODE, getAppLangCode } from './chatLangHelpers';
 import {
     checkCanSeeImages,
     checkIsNoCostCustomServer,
@@ -164,6 +169,21 @@ export async function probeAutoCandidates(
 }
 
 /**
+ * The user's word (2026-10-20): the language ranking of `LANGUAGE_TIER_LIST`
+ * holds only while the app is SHOWN in a language other than English -- an
+ * English window keeps the plain size order. A caller's own
+ * `languageModelsFirst` always wins.
+ */
+function withLanguageRank(
+    options: AutoRankOptionsType = {},
+): AutoRankOptionsType {
+    return {
+        languageModelsFirst: getAppLangCode() !== DEFAULT_CHAT_LANG_CODE,
+        ...options,
+    };
+}
+
+/**
  * Who to ask this question, best first: the servers are looked at, and the
  * candidates ranked on what they said.
  */
@@ -172,7 +192,55 @@ export async function resolveAutoPicks(
 ): Promise<AutoCandidateType[]> {
     const candidates = genAutoCandidates();
     const stateMap = await probeAutoCandidates(candidates);
-    return rankAutoCandidates(candidates, stateMap, options);
+    return rankAutoCandidates(candidates, stateMap, withLanguageRank(options));
+}
+
+/**
+ * Who to hand a question to when the tab's OWN assistant could not answer it
+ * (`orderHandOnPicks`), best first, or nothing when that assistant is not one
+ * Auto could have picked -- a paid key, or a server on the internet that does
+ * not say it is free -- because then the question stays where it was put.
+ */
+export async function resolveHandOnPicks(
+    failed: { provider: string; model: string },
+    options: AutoRankOptionsType = {},
+): Promise<{ failed: AutoCandidateType; picks: AutoCandidateType[] } | null> {
+    const candidates = genAutoCandidates();
+    const failedCandidate = candidates.find((candidate) => {
+        return (
+            candidate.provider === failed.provider &&
+            candidate.model === failed.model
+        );
+    });
+    if (failedCandidate === undefined) {
+        return null;
+    }
+    const stateMap = await probeAutoCandidates(candidates);
+    const ranked = rankAutoCandidates(
+        candidates,
+        stateMap,
+        withLanguageRank(options),
+    );
+    // In the building: a server on this computer or the church's network,
+    // read off its address -- a shared server's is a stand-in, never here.
+    const inBuildingIdSet = new Set(
+        getNoCostServers()
+            .filter((server) => {
+                return checkIsLocalNetworkUrl(server.baseUrl);
+            })
+            .map((server) => {
+                return server.id;
+            }),
+    );
+    return {
+        failed: failedCandidate,
+        picks: orderHandOnPicks(ranked, failedCandidate, (candidate) => {
+            return (
+                candidate.serverId !== null &&
+                inBuildingIdSet.has(candidate.serverId)
+            );
+        }),
+    };
 }
 
 /**
@@ -181,5 +249,11 @@ export async function resolveAutoPicks(
  * has one to read before the first question settles it for real.
  */
 export function guessAutoPick(): AutoCandidateType | null {
-    return rankAutoCandidates(genAutoCandidates(), new Map())[0] ?? null;
+    return (
+        rankAutoCandidates(
+            genAutoCandidates(),
+            new Map(),
+            withLanguageRank(),
+        )[0] ?? null
+    );
 }

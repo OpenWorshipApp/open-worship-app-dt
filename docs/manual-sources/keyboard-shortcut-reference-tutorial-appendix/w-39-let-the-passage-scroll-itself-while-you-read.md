@@ -5,14 +5,16 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-107]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-39 — Let the passage scroll itself while you read
 
 When a chapter is longer than the panel, you do not have to keep reaching for the mouse
 wheel — the app can scroll it for you, at whatever pace you set.
 
-1. Open a passage long enough to scroll, in a Bible panel or on the screen preview.
+1. Open a passage long enough to scroll, in a Bible panel, on the screen preview, or in
+   the small floating panel a passage opens in (right-click the passage →
+   **[en:tran:Floating]**, or click a cross reference).
    Down in the bottom-right corner of the text, two faint controls sit one above the
    other: an up-arrow (**[en:tran:Scroll to the top]**, shown only once the text has moved
    down) and a double chevron below it.
@@ -46,5 +48,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-107`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

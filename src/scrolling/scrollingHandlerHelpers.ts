@@ -468,12 +468,17 @@ export function applyPlayToBottom(
         anyElement._playToBottomResizeObserver as ResizeObserver | undefined
     )?.disconnect();
     const resizeObserver = (anyElement._playToBottomResizeObserver =
-        new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                showOnScrollable(entry.target as HTMLElement, element);
-            }
+        new ResizeObserver(() => {
+            showOnScrollable(parent, element);
         }));
     resizeObserver.observe(parent);
+    // The scroller keeps its size while what it holds grows -- a passage read
+    // in after this ran, a chapter appended under it -- and that growth is
+    // what makes it scrollable, so the content is watched too.
+    const content = parent.firstElementChild;
+    if (content !== null && content !== element) {
+        resizeObserver.observe(content);
+    }
     showOnScrollable(parent, element);
     // Last, so the title and any resumed animation reflect the speed the button
     // was already carrying when this ran.

@@ -15,7 +15,9 @@ import {
     getDefaultDataDirPath,
     getFileDotExtension,
     pathJoin,
+    pathResolve,
     repairDataDirLinksInText,
+    toPathCompareKey,
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { tran } from '../../lang/langHelpers';
@@ -56,7 +58,18 @@ export function checkIsUsedDataDir(dirPath: string) {
     return fsCheckDirExist(pathJoin(dirPath, LOCAL_STORAGE_FOLDER_NAME));
 }
 
+// The parent folders this window has asked about already. Choosing a new
+// folder asks, and the Path Settings page that renders on it next checks
+// again and found no child folder either -- so a No had to be given twice
+// (React's second mount in development made it three).
+const childDirAskedKeySet = new Set<string>();
+
+function toChildDirAskedKey(parentDirPath: string) {
+    return toPathCompareKey(pathResolve(parentDirPath));
+}
+
 export async function selectPathForChildDir(parentDirPath: string) {
+    childDirAskedKeySet.add(toChildDirAskedKey(parentDirPath));
     const isOk = await showAppConfirm(
         tran('Set according paths'),
         `${tran('Create and use the standard folders (Documents, Videos, Images and the rest) inside')} ` +
@@ -107,6 +120,23 @@ export async function checkShouldSelectChildDir() {
         return isValid;
     });
     return !isSomeValid;
+}
+
+/**
+ * The question about the standard folders, when the data folder has none of
+ * them set -- once per folder in this window, whatever the answer was. The
+ * key is taken before anything is awaited, so two calls racing (a choice and
+ * the page it reloads into) ask one question.
+ */
+export async function selectPathForChildDirIfNeeded(parentDirPath: string) {
+    const key = toChildDirAskedKey(parentDirPath);
+    if (childDirAskedKeySet.has(key)) {
+        return;
+    }
+    childDirAskedKeySet.add(key);
+    if (await checkShouldSelectChildDir()) {
+        await selectPathForChildDir(parentDirPath);
+    }
 }
 
 export async function selectDefaultDataDirName(

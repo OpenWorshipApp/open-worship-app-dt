@@ -107,7 +107,7 @@ export default function BackgroundAudiosComp() {
         // Scrubbing, the volume and the repeat icon belong to the player, not
         // to the row: without this, dragging a paused track's scrubber folded
         // the row shut under the mouse.
-        if (target?.closest('audio') != null) {
+        if (target?.closest('audio, [data-background-audio-control]') != null) {
             return;
         }
         // The ROW, whatever inside it was clicked. This walked up exactly ONE

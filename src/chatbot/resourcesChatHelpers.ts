@@ -17,7 +17,8 @@
  *
  * Pure, every rule a test: no store, no tool call, no model.
  */
-import { fillWords } from './chatTranHelpers';
+import type { ResourceReadingType } from '../helper/ai/resourceReadingAskHelpers';
+import { fillWords, tran } from './chatTranHelpers';
 import type { BotActionType } from './helpBotHelpers';
 
 export const RESOURCES_ASK_KIND = 'resources';
@@ -35,15 +36,6 @@ const MAX_RESOURCE_ASK_ACTIONS = 3;
 // (`SHOWN_LABEL_PATTERN_LIST` in `ChatbotAppComp.tsx`; held by
 // `chatTranLabels.test.ts`).
 export const RESOURCE_ASK_LABEL_TEMPLATE = 'Ask about {name}';
-
-// The Read chip is deliberately a chooser, not an instruction to pour a
-// chapter into the transcript. Kept separate from the cached Resources
-// prompt so a small local model gets the required answer shape on that turn.
-export const RESOURCES_READ_MENU_HINT =
-    'This was the Resources Read button. In no more than two short sentences, ' +
-    'briefly describe what the attached PDF actually covers. Do not ' +
-    'transcribe verses, ask a question, or write OPTIONS; the app adds the ' +
-    'verse question and buttons after your description.';
 
 export const RESOURCES_RANGE_HINT =
     'This is the verse or range chosen from the Resources Read menu. Keep ' +
@@ -100,18 +92,248 @@ export function genResourcesRangeHint(
     );
 }
 
+// A chapter's study PDF: `MAT.18.pdf`, under its folder or not. Chapter 0 is
+// the book's introduction (`MAT.0.pdf`) and has no verses to read through.
+const CHAPTER_PDF_PATTERN = /(?:^|\/)([A-Z0-9]{3})\.([1-9]\d*)\.pdf$/i;
+
 /** The whole installed-Bible chapter represented by a chapter PDF. */
 export function toResourceChapterRef(
     fileNames: readonly string[],
 ): string | null {
     const file = fileNames.find((name) => {
-        return /(?:^|\/)[A-Z0-9]{3}\.\d+\.pdf$/i.test(name);
+        return CHAPTER_PDF_PATTERN.test(name);
     });
-    const chapter =
-        file === undefined
-            ? null
-            : /(?:^|\/)([A-Z0-9]{3})\.(\d+)\.pdf$/i.exec(file);
+    const chapter = file === undefined ? null : CHAPTER_PDF_PATTERN.exec(file);
     return chapter === null ? null : `${chapter[1]} ${chapter[2]}`;
+}
+
+/**
+ * What a Resources file is, by its name: a chapter's study PDF, a file of the
+ * WHOLE book (`MAT.0.pdf`, `MAT.0.json` -- a chapter below 1, as the panel
+ * reads it), or anything else. Its opening card and its buttons follow
+ * (2026-10-22: the introduction was called "chapter study material arranged
+ * by verse" and a list of three video links was offered verses 1, 2 and 3).
+ */
+export function toResourceFileKind(
+    fileName: string,
+): 'chapter-pdf' | 'introduction' | 'other' {
+    const name = fileName.split('/').pop() ?? fileName;
+    if (CHAPTER_PDF_PATTERN.test(name)) {
+        return 'chapter-pdf';
+    }
+    const chapterText = /^[1-4A-Z][A-Z0-9]{2}\.(-?\d+)\.[^.]/i.exec(name)?.[1];
+    return chapterText !== undefined && Number(chapterText) < 1
+        ? 'introduction'
+        : 'other';
+}
+
+/**
+ * The verses the Reader is on, as the button that reads them (`15-17`), when
+ * they belong to THIS chapter file; null otherwise. A range is cut to what
+ * one card reads, and a selection that is the whole chapter -- from verse 1
+ * and longer than a card -- is no particular passage, so it offers nothing.
+ */
+export function toResourceReadingRange(
+    fileName: string,
+    reading: ResourceReadingType | null | undefined,
+) {
+    const name = fileName.split('/').pop() ?? fileName;
+    const match = CHAPTER_PDF_PATTERN.exec(name);
+    if (
+        match === null ||
+        reading === null ||
+        reading === undefined ||
+        reading.bookKey.toUpperCase() !== match[1].toUpperCase() ||
+        reading.chapter !== Number(match[2]) ||
+        reading.verseStart === undefined ||
+        reading.verseEnd === undefined
+    ) {
+        return null;
+    }
+    const { verseStart, verseEnd } = reading;
+    if (verseStart === 1 && verseEnd > MAX_RESOURCE_RANGE_VERSES) {
+        return null;
+    }
+    const end = Math.min(verseEnd, verseStart + MAX_RESOURCE_RANGE_VERSES - 1);
+    return end === verseStart ? `${verseStart}` : `${verseStart}-${end}`;
+}
+
+// The Read menu's own choices, after the passage being read when there is
+// one. Stored English (`Full chapter` is drawn in the window's language).
+const RESOURCES_READ_MENU_REPLIES = ['1', '2', '3', '1-3', 'Full chapter'];
+
+/** The Read menu: the verses being read first, then the chapter's start. */
+export function genResourceReadMenuReplies(readingRange: string | null) {
+    return [
+        ...new Set([
+            ...(readingRange === null ? [] : [readingRange]),
+            ...RESOURCES_READ_MENU_REPLIES,
+        ]),
+    ];
+}
+
+/**
+ * The card a Resources file opens its tab with, written by the window with
+ * no model: what the file is, what the person is reading, and the questions
+ * that fit THIS file. The verse-by-verse Read is a chapter PDF's alone, and
+ * the passage being read comes first -- as its own verses on a chapter file,
+ * as a question about it on any other file of that book.
+ */
+export function genResourceOpeningAnswer(
+    fileName: string,
+    reading: ResourceReadingType | null,
+) {
+    const kind = toResourceFileKind(fileName);
+    const name = fileName.split('/').pop() ?? fileName;
+    // Only a reading of this file's own book: the panel hands one over only
+    // when it listed the file for it, and a saved card is checked again.
+    const ownReading =
+        reading !== null &&
+        name.toUpperCase().startsWith(`${reading.bookKey.toUpperCase()}.`)
+            ? reading
+            : null;
+    const readingRange = toResourceReadingRange(name, ownReading);
+    const lines = [
+        fillWords(
+            tran(
+                '{name} is attached below. Ask me anything about ' +
+                    'what is in it, or press a question.',
+            ),
+            { name },
+        ),
+    ];
+    if (kind === 'chapter-pdf') {
+        lines.push(
+            tran(
+                'This is Bible chapter study material with verse ' +
+                    'text, cross-references, and explanations ' +
+                    'arranged by verse.',
+            ),
+        );
+    } else if (kind === 'introduction') {
+        lines.push(
+            tran(
+                'This file belongs to the whole book, not to one ' +
+                    'chapter — like an introduction to it.',
+            ),
+        );
+    }
+    if (ownReading !== null) {
+        lines.push(
+            readingRange === null
+                ? fillWords(
+                      tran('You are reading {passage} in the Bible Reader.'),
+                      { passage: ownReading.title },
+                  )
+                : fillWords(
+                      tran(
+                          'You are reading {passage} in the Bible Reader. ' +
+                              'Press {range} to read what this file says ' +
+                              'about it.',
+                      ),
+                      { passage: ownReading.title, range: readingRange },
+                  ),
+        );
+    }
+    const replies: string[] = [];
+    if (readingRange !== null) {
+        replies.push(readingRange);
+    } else if (ownReading !== null) {
+        replies.push(
+            fillWords(tran('What does it say about {passage}?'), {
+                passage: ownReading.title,
+            }),
+        );
+    }
+    if (kind === 'chapter-pdf') {
+        replies.push(tran('Read'));
+    }
+    replies.push(
+        tran('What is this file about?'),
+        tran('Sum up the main points'),
+        tran('Explain it in simple words'),
+    );
+    return {
+        text: lines.join('\n\n'),
+        replies,
+        reading: ownReading,
+    };
+}
+
+/**
+ * The reading the tab was opened on, off its newest card that carries one,
+ * for the Read menu to offer it first.
+ */
+export function findResourceReading(
+    messages: readonly { resourceReading?: ResourceReadingType }[],
+) {
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const reading = messages[index].resourceReading;
+        if (reading !== undefined) {
+            return reading;
+        }
+    }
+    return null;
+}
+
+/**
+ * What the person is reading, said beside a question that names no passage
+ * of its own (2026-10-22, the user, with _Explain it in simple words_ under
+ * `MAT.18.pdf` answered "which verses do you want explained?" twice while
+ * the card above it said they were reading Matthew 18:15-17: _it should
+ * include the context_). The card is history, and history is clipped and
+ * read past; this rides the ask. Only a reading of an open file's own book:
+ * '' otherwise.
+ */
+export function toResourceReadingAsk(
+    fileNames: readonly string[],
+    reading: ResourceReadingType | null | undefined,
+): string {
+    if (reading === null || reading === undefined) {
+        return '';
+    }
+    const bookFiles = fileNames.filter((fileName) => {
+        const name = fileName.split('/').pop() ?? fileName;
+        return name
+            .toUpperCase()
+            .startsWith(`${reading.bookKey.toUpperCase()}.`);
+    });
+    if (bookFiles.length === 0) {
+        return '';
+    }
+    const range =
+        bookFiles
+            .map((fileName) => {
+                return toResourceReadingRange(fileName, reading);
+            })
+            .find((one) => {
+                return one !== null;
+            }) ?? null;
+    const inBible =
+        reading.bibleKey === undefined
+            ? ''
+            : ` in the Bible "${reading.bibleKey}"`;
+    if (range === null) {
+        return (
+            `\n\n(They are reading ${reading.title} ` +
+            `(${reading.bookKey} ${reading.chapter})${inBible} in the Bible ` +
+            'Reader. A question that names no passage of its own is about ' +
+            'the file: answer it, and do not ask which verse they mean.)'
+        );
+    }
+    const ref = `${reading.bookKey} ${reading.chapter}:${range}`;
+    return (
+        `\n\n(They are reading ${reading.title} -- ${ref} --${inBible} in ` +
+        'the Bible Reader. A question that names no verse of its own -- ' +
+        'explain it, sum it up, what does it say -- is about that passage: ' +
+        "answer it for those verses from the file's explanation of them, and " +
+        'do not ask which verse they mean. Read the verses with ' +
+        `owa_lookup_record (ref "${ref}"` +
+        (reading.bibleKey === undefined
+            ? ''
+            : `, bible "${reading.bibleKey}"`) +
+        ') before you quote them.)'
+    );
 }
 
 /**
@@ -451,9 +673,13 @@ export const RESOURCES_SYSTEM_PROMPT =
     'and output an OPTIONS: line ' +
     'with its first three verse numbers plus a Full chapter option. Full ' +
     'chapter starts at verse 1 and continues through the same next-verse ' +
-    'buttons; it never puts the chapter into one model request. Every answer ' +
-    'card has exactly one main passage -- the verse or small range they ' +
-    'chose. For it, quote the full Bible text from ' +
+    'buttons; it never puts the chapter into one model request. A question ' +
+    'that names no verse -- what the file is about, its main points, ' +
+    'explain it in simple words -- is answered at once and never with a ' +
+    'question back about which verse: about the passage their message says ' +
+    'they are reading, otherwise about the whole file. A verse card -- the ' +
+    'answer to a verse or small range they chose -- has exactly one main ' +
+    'passage. For it, quote the full Bible text from ' +
     'owa_lookup_record and name the Bible that returned it. Next, show the ' +
     'cross-reference labels printed beside that passage in the PDF on ONE ' +
     'line, after the word for "references" in their language and separated ' +

@@ -10,10 +10,14 @@
 //
 // Two rules both windows keep (see the header of `ChatbotAppComp.scss`):
 // bootstrap plus their own sheet and nothing else -- no app tokens -- and no
-// webfonts. The one face either draws that is not the system's is the
-// app language's own (`--chat-lang-font`, set by `chatWindowLanguage.ts`
-// from the language pack: Battambang for Khmer, which no face below has a
-// letter of), placed after the window's own faces so Latin keeps them.
+// webfonts. Two faces can come from the app itself. The language's own
+// (`--chat-lang-font`, set by `chatWindowLanguage.ts` from the language pack:
+// Battambang for Khmer, which no face below has a letter of) is placed after
+// the window's own faces so Latin keeps them. And a face the user picked in
+// Settings → General → Font Family (`--chat-app-font`, set by
+// `plugChatWindowAppFont`) heads every stack -- an explicit pick outranks
+// the window's own taste, and boot.ts's `*` rule could never reach past
+// these class rules.
 
 // The palette. Included INSIDE the window's root rule (`.chatbot-app`,
 // `.aichat-app`) so the light-theme block below can nest on `&`.
@@ -22,16 +26,18 @@
   // eyebrows, buttons. Condensed signage lettering -- the language written
   // on the equipment this app drives.
   --chat-font-label:
-    'Bahnschrift', 'DIN Alternate', 'Avenir Next Condensed', 'Segoe UI',
-    var(--chat-lang-font, system-ui), system-ui, sans-serif;
+    var(--chat-app-font, 'Bahnschrift'), 'Bahnschrift', 'DIN Alternate',
+    'Avenir Next Condensed', 'Segoe UI', var(--chat-lang-font, system-ui),
+    system-ui, sans-serif;
   // Answers are read under pressure: the system face, at a size that does
   // not ask anything of the reader.
   --chat-font-body:
-    system-ui, -apple-system, 'Segoe UI Variable Text', 'Segoe UI',
-    var(--chat-lang-font, sans-serif), sans-serif;
+    var(--chat-app-font, system-ui), system-ui, -apple-system,
+    'Segoe UI Variable Text', 'Segoe UI', var(--chat-lang-font, sans-serif),
+    sans-serif;
   --chat-font-data:
-    ui-monospace, 'Cascadia Mono', Consolas, var(--chat-lang-font, monospace),
-    monospace;
+    var(--chat-app-font, ui-monospace), ui-monospace, 'Cascadia Mono', Consolas,
+    var(--chat-lang-font, monospace), monospace;
 
   --chat-ink: #0f141c;
   --chat-panel: #161e2a;
@@ -45,7 +51,9 @@
   --chat-solid: #161e2a;
   --chat-solid-soft: #121a24;
   --chat-text: #e4e9f0;
-  --chat-muted: #8b97a8;
+  // Quiet, but a volunteer reads this at the back of a room: #8b97a8 sat at
+  // 4.9:1 on a glassy panel and the guided-demo details read grey-on-grey.
+  --chat-muted: #9fabbd;
   // The house lamp, not the screen: this window is the operator's side of
   // the room. Spent on the rail and its markers, nowhere else. Named for
   // what it was, kept for what it is -- the one accent slot in this sheet.
@@ -74,7 +82,7 @@
     --chat-solid: #ffffff;
     --chat-solid-soft: #eef2f7;
     --chat-text: #16202e;
-    --chat-muted: #5c6b7f;
+    --chat-muted: #4f5d72;
     --chat-brass: #a8107c;
     --chat-brass-dim: #f0bade;
     --chat-signal: #0e7c99;
@@ -97,11 +105,15 @@
 // a body of its own. Two translucent slabs stacked would add up to an opaque
 // one, and the window would go right back to being a slab with soft edges.
 @mixin chat-window-glass-tokens {
-  --chat-ink: rgb(10 15 22 / 58%);
-  --chat-panel: rgb(255 255 255 / 7%);
+  // Ground and films are a touch firmer than the first cut of this sheet: on a
+  // bright desk the OS backdrop came through a 58% tint and every word in the
+  // window lost contrast with it, which on a low-spec machine in a lit hall
+  // reads as "dim", not as "glass". Still translucent -- the app behind shows.
+  --chat-ink: rgb(10 15 22 / 68%);
+  --chat-panel: rgb(255 255 255 / 8%);
   --chat-panel-suggestion: rgba(60, 60, 60, 95%);
-  --chat-panel-soft: rgb(255 255 255 / 4%);
-  --chat-line: rgb(255 255 255 / 13%);
+  --chat-panel-soft: rgb(255 255 255 / 5%);
+  --chat-line: rgb(255 255 255 / 15%);
 
   // The lit edge that says "pane of glass" rather than "hole in the window".
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 9%);
@@ -186,15 +198,27 @@
 .chat-tabs {
   flex: 0 0 auto;
   display: flex;
+  align-items: stretch;
+  background-color: var(--chat-ink);
+  border-bottom: 1px solid var(--chat-line);
+}
+
+// The tabs scroll sideways instead of squeezing every tab thinner: once
+// there are more chats than fit, each one keeps a readable name and this row
+// is dragged/wheeled past them, the way a browser does it.
+//
+// The buttons that start another chat are NOT in here. They are the strip's
+// sibling below (`.chat-tabs-end`): inside the scroller a sticky button was
+// still pushed past the right edge at the first scroll position, which left
+// `+` and New window unreachable in a 460px window.
+.chat-tabs-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
   gap: 2px;
   padding: 5px 0 0 8px;
-  background-color: var(--chat-ink);
-  border-bottom: 1px solid var(--chat-line);
-  // The strip scrolls sideways instead of squeezing every tab thinner: once
-  // there are more chats than fit, each one keeps a readable name and the
-  // strip is dragged/wheeled past them, the way a browser does it.
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
@@ -203,6 +227,15 @@
   &::-webkit-scrollbar {
     height: 0;
   }
+}
+
+// Always on screen, whatever the tabs do behind it.
+.chat-tabs-end {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding-right: 2px;
 }
 
 .chat-tab {
@@ -411,13 +444,9 @@
   align-self: center;
   font-size: 15px;
   padding: 1px 8px 3px;
-  // Pinned to the right edge of the strip while the tabs scroll underneath,
-  // so starting another chat is never a scroll away.
-  position: sticky;
-  right: 0;
+  // It lives outside the scroller (`.chat-tabs-end`), so starting another
+  // chat is never a scroll away.
   margin-left: 2px;
-  background-color: var(--chat-ink);
-  box-shadow: -6px 0 6px -4px var(--chat-ink);
 }
 
 // Where a tab dragged along the strip would land: a bar on the side of the
@@ -430,14 +459,9 @@
   box-shadow: inset -2px 0 0 var(--chat-signal);
 }
 
-// Another window, beside `+`. Both stay pinned to the strip's right edge
-// while the tabs scroll under them, so `+` stands one button further in.
+// Another window, beside `+`.
 .chat-tab-add.chat-tab-window {
   font-size: 12px;
   padding: 3px 8px;
   margin-left: 0;
-}
-
-.chat-tab-add:has(+ .chat-tab-window) {
-  right: 28px;
 }

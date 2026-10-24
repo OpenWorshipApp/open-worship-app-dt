@@ -70,7 +70,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   its `-dev` twin `.dev` (also for the environment-less copy a task click
   starts), any other folder an id of its own. The 🤖
   STAYS when the master switch is off: the
-  press reads the switch and offers Settings → Others, because a vanished
+  press reads the switch and offers Settings → AI Providers, because a vanished
   button explains nothing; the Tools entry withdraws (a menu item cannot
   explain itself). It talks to the MCP host over HTTP (port from
   `main:app:get-ai-endpoints`) and answers from the manual, live app state, and
@@ -84,6 +84,13 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     other chats…_, _Clear all chats…_ — the last two confirm on a line under
     the strip and `saveChatSessions` at once; a LOCKED tab (`isLocked`) has no
     `×`, is refused by `handleClosingSession`, and both step around it.
+    **At the cap `+` is NOT disabled** (2026-10-22, the user with the greyed
+    `+` circled: _should have message tell user about it rather than
+    disable_): `RenderSessionTabsComp` draws a `role="status"` line under
+    the strip naming the cap and what to do (unlock first, when every tab
+    is locked), dropped by render once `canAdd` is true again. Shared with
+    the ✨ window (8 tabs). A driver still gets no tab: count tabs, never
+    read `disabled`.
   - **The head row belongs to the tab in front**: three `<select>`s — _asking
     about_ (`BOT_FOCUS_LIST`, following the opener window until picked), the
     assistant, the model. **Which WINDOW the tab works in is NOT in the head**:
@@ -140,7 +147,17 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     was asked with (`AskExtraType.windowAim` → `ToolWatchType.windowAim`),
     because it can outlast a tab switch. Per tab, in memory only: an id is
     good for one launch. Choosing one sets _asking about_ to its kind; the
-    main window is no aim at all (the old way). With one chosen, the prompt
+    main window is no aim at all (the old way). **The help opened FROM a
+    window starts working in it** (2026-10-23, the user, Settings' 🤖 working
+    in the Reader: _open from setting should select setting_;
+    `findOpenerWindowId`): its opener's address on the first open, its path
+    when main says a later press came from it; the main window, and a path
+    two windows share, stay no aim. **And a tab ASKING ABOUT a popup kind
+    works in it** (the same day, the user: _chatbot's do it for me appear in
+    wrong page, I ask for setting page and appear in main windows_;
+    `toFocusWindowAim`): with no window chosen, Settings, a Bible Note or an
+    editor is aimed at when exactly one is open -- a model's card names no
+    window, and came up in the Reader for a button in Settings. With one chosen, the prompt
     calls a Reader or Editor window "a window of its own" (no
     `owa_goto_page`, no **Go Back to Presenter**), `/here` names it and the
     main window apart, and a state read of it raises no **Go to the
@@ -208,6 +225,15 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     does). The rail is 14px and the body's right padding 10px — the 24px the
     head's two 12px sides took; at the 412px the window opens at, a rail that
     cost the row ten pixels pushed MODEL off the first line.
+  - **A gear ends the picker row and opens Settings → AI Providers**
+    (2026-10-23, the user's picture with the empty end of the limit's line
+    circled: _add setting icon there to easy open setting from chatbot_;
+    `.chat-head-setting`, `openAiSetting`, labelled **Open AI settings**). It
+    is ABSOLUTE at the bottom-right of `.chat-head-picks`, the row's last
+    line, and the limit (always last) keeps `margin-inline-end: 24px` clear
+    for it. Not an in-flow auto margin: two auto margins split the slack, and
+    a row that fits on one line would float the model mid-row again. The
+    reserve sits on the limit, so the model's line loses nothing at 412px.
   - **Providers are declared ONCE, in `LLM_PROVIDER_MAP`**
     (`Record<LlmProviderType, …>` lookups and a `keyField`; ternaries once sent
     an unknown provider to OpenAI silently): Claude, ChatGPT, **Kimi**,
@@ -245,7 +271,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     `Record<LlmProviderType, true>` so it need not import the SDKs.
   - **Custom servers** (2026-10-09, memory `custom-llm-servers`): the user's
     own OpenAI-compatible servers (LM Studio, Ollama, any URL), added in
-    Settings → Others → **Custom servers** with a name, a base URL, an
+    Settings → AI Providers → **Custom servers** with a name, a base URL, an
     optional key and a model list (id + shown name; **Test** and **Load
     models from server** read `/models`). ONE provider key `custom`, shown
     as ONE ROW PER SERVER (`genAssistantRows`), a model id
@@ -261,7 +287,9 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     at $0; a failed read keeps the last good list and says why on the
     button's tooltip) — only `GET /models`, the four root reads below and `POST /chat/completions`, with
     the key read in main — the chatbot CSP is NOT widened and a custom key
-    never enters the window. Never stands in or is stood in for; this computer AND
+    never enters the window. A paid key never stands in for it nor it for a
+    paid key; when the one a tab NAMES fails before answering, the question
+    goes down Auto's no-cost line (`chatbot-llm.md`, 2026-10-22); this computer AND
     the church's own network (`checkIsLocalNetworkUrl`) are priced at $0; a
     failure says its own sentence (`CustomServerError`). Measured against
     the user's LM Studio box the same day: the fixed request is ~13 400
@@ -364,7 +392,7 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     ask froze every window the one time main had no handler for it (a dev
     renderer hot-reloaded ahead of its main process).
   - With no key at all the window opens on the Free assistant (above), whose
-    sticky notice offers Settings → Others; a failed call falls back to the
+    sticky notice offers Settings → AI Providers; a failed call falls back to the
     offline manual bot. Written for a
     non-technical volunteer, in the language the app is SHOWN in: no ids, no
     paths, manual pages only; `owa_guide_*` walks a task with a numbered card
@@ -432,8 +460,21 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     the pack's `fontFamily` goes on `<html>` as `--chat-lang-font`, which
     every `--chat-font-*` stack in `chatWindowShared.scss` carries AFTER
     the window's own faces, so Latin keeps them and Khmer is Battambang.
-    The walkthrough card, the ◎ picker's line and the action banner, drawn
-    into the app's windows, take the page body's face the same way. Named `tran` so
+    **And a face picked in Settings → General → Font Family heads every
+    stack** (2026-10-20, the user's picture with the chatbot's tab title
+    circled: _custom font-family not effect everyting in chatbot page_,
+    then _not effect ai chat as well_): boot's `* { font-family }` loses to
+    every class stack in these windows, so `plugChatWindowAppFont`
+    (`chatWindowLanguage.ts`, called by both entries) sets the picked face
+    as `--chat-app-font` on `<html>` and each `--chat-font-*` stack starts
+    with it; the ✨ window's guest pages get it through
+    `genGuestAppFontScript` (`aiChatGuestFontHelpers.ts`) — `local()`
+    faces under the site's own face names plus a body rule, and `local()`
+    needs the face's FULL or PostScript name, not the family (see
+    `aichat.md`). The walkthrough card, the ◎ picker's line and the action
+    banner, drawn into the app's windows, take the page body's face the
+    same way — and boot's `*` rule already gives those windows' bodies the
+    picked face, so no extra carry is needed there. Named `tran` so
     `tranKeyCoverage.test.ts` reads every key (Khmer AND French). One rule
     decides where: words CODE reads back -- an action's label
     (`WALKTHROUGH_ACTION_PATTERN`, `DRAFT_ACTION_PATTERN`, `findTypedPress`),
@@ -473,8 +514,12 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
     which acts only on a window OVER the guided one and undoes only its own
     doing. **macOS** (`EC-180`): the window is an `appTopToMain` CHILD, AppKit
     cannot miniaturise a child alone (electron#26031, #39578), and
-    `minimize()` docked the presenter instead. `detachFromParentWhileMinimised`
-    calls `setParentWindow(null)` first and rejoins on the window's own
+    `minimize()` docked the presenter instead. **Windows** (2026-10-20): an
+    OWNED window minimises on its own but its caption strip (icon + restore +
+    maximise + close) is drawn at the bottom-left of the OWNER's client area,
+    over the content, until restored. `detachFromParentWhileMinimised`
+    calls `setParentWindow(null)` first (macOS and Windows; Linux minimises
+    owned windows cleanly) and rejoins on the window's own
     `restore` EVENT — Electron attaches only a VISIBLE window to its parent.
 - **A question can carry more than words**: a file or an image from the
   paperclip, a paste, a drop, a **📷** picture of the app window, or a
@@ -557,10 +602,47 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   picture, PDF, `.own` or text kind, never a `.docx` or a video) leaves a
   `chatbot-handoff-file` request (`requestChatbotFile`, a whole path, 30 s)
   through `openChatbotWithFile` — the two questions first — and the window
-  attaches it in a tab of its own with a brief description and four questions
-  to press. **Read** first gives a two-sentence content description, then asks
-  for one verse or a small range with an example (`1`) and `1`, `2`, `3` /
-  **Full chapter** buttons. Each card renders one main passage -- a verse or
+  attaches it in a tab of its own under a card written with no model
+  (`genResourceOpeningAnswer`). **The passage the Reader is on rides with the
+  file** (2026-10-22, `EC-380`; the user, with `MAT.18.pdf`'s 🤖 circled under
+  a Reader on Matthew 18:15-17: _make the chatbot smarter to interact with
+  user for the selected resource file_): the previewer provides a GETTER of
+  the open panes (`ResourcesReadingContext` — a value that changed with every
+  verse click would re-render every row), the row reads it at the press
+  (`toResourceReading`: the pane that listed the file, its verses only when
+  the passage stays inside the file's chapter, the Reader's own title), and
+  `requestChatbotFile(path, reading)` carries it, `toValidResourceReading`
+  checking it both ways. The card says _You are reading ម៉ាថាយ ១៨:១៥-១៧ in
+  the Bible Reader_ and its first button is that range (`15-17`, cut to five
+  verses; none for a whole chapter), kept on the card
+  (`ChatMessageType.resourceReading`) for the Read menu. **The card fits the
+  file** (`toResourceFileKind`, `EC-381`): **Read** is a chapter PDF's alone
+  — an introduction (`MAT.0.pdf`, any chapter below 1) and a list of links
+  had been offered verses 1, 2, 3 of a "chapter 0" — an introduction says it
+  belongs to the whole book, and any file of the book being read asks _What
+  does it say about {passage}?_ first. **Read is the window's own menu, with
+  no model** (`EC-382`): it had spent a round with every page as a picture to
+  restate the card, and on Auto's free model that round sat at _Thinking_ for
+  fifteen minutes; now the verses being read, then `1`, `2`, `3`, `1-3`,
+  **Full chapter** (`genResourceReadMenuReplies`), at once. A button that
+  names a reference and ends in a question mark is asked as a question, not
+  pressed as a cross-reference. The passage is pre-read in the reading's own
+  Bible (`bible` from the card's `resourceReading`): asked of the lookup the
+  tab aims at, a Khmer reader's `18` came back in the Presenter's KJV. **A
+  Resources ask never falls back to the guide** (`askOffline`, `EC-384`):
+  searched for `15-17` it drew the Find bar page under a verse card; a passage
+  answers with the verses already read and the "could not read the PDF"
+  sentence, anything else with the needs-an-assistant sentence and **Open AI
+  settings**. **A question that names no passage is about the one being
+  read** (2026-10-22, the user: _Explain it in simple words_ under
+  `MAT.18.pdf` answered _which verses do you want explained?_ twice, the card
+  above saying Matthew 18:15-17): the card is only history, so
+  `toResourceReadingAsk` puts the reading on the ASK — its title, `MAT
+  18:15-17`, its Bible, and _do not ask which verse they mean_ — whenever no
+  range was pressed, and `RESOURCES_SYSTEM_PROMPT` answers a question with no
+  verse at once, about that passage or else the whole file, never with a
+  question back. Seen live in Khmer on gemma4:cloud: the verses from ពគប and
+  a three-step explanation. Each card renders one main passage -- a verse or
   a range such as `1-3` -- pre-read from the installed Bible through
   `owa_lookup_record`; every printed cross-reference on the answer's
   references line becomes a clickable button (up to thirty, across books and
@@ -694,7 +776,20 @@ Providers, cost and the model's tool list: `chatbot-llm.md`.
   `aiCautionHelpers.ts` reads it fresh at each open, the chat window once at
   mount), because somebody who has read one has read the warning; the day
   comes round and both are back — 30 days rather than a "never" box on
-  purpose. Not a dismiss for good, and not auto-hide.
+  purpose. **The provider warning hides too, on a key of its own** (2026-10-20,
+  the user with the banner circled: _shoudl be able to hide it for 30 days_):
+  `ai-provider-warn-hidden-until`, the same button in its body
+  (`RenderProviderWarningComp`), ONE key for Auto and the free service both
+  (it is one warning); it is not the cautions' key, because where the words
+  GO is not whether an answer is RIGHT. Not a dismiss for good, and not
+  auto-hide. **Everything a hide button put away is named in Settings →
+  General** (the same day, the user: _everything that can be hidden for 30
+  days should be seen in setting general … to be able to restore_): the Other
+  General Options card's `genHiddenItemRows` — the tips of the day, the help
+  window's tip line, the AI caution, the free-service notice and the
+  data-folder move ask — each row only while hidden, with its day read the way
+  its owner reads it and a **Show again** that clears the stamp
+  (`show…Again` helpers / `showChatTips`).
 - **Opening either AI window asks the caution FIRST** (2026-09-12, `EC-175`,
   the user's own ask, both icons circled in a picture). `askAiCaution`
   (`src/helper/ai/aiCautionHelpers.ts`) is ONE confirm — _Be careful with AI_,
@@ -1247,7 +1342,14 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
 - **The composer button is Send** (2026-10-18, user's screenshot), with
   **Send — Ctrl+Enter**, Khmer **ផ្ញើ** and French **Envoyer**. Keyboard hints,
   tips, reports and W-42 use the same label. **Ask again** remains the action
-  that brings an earlier question back.
+  that brings an earlier question back — **with what it was asked with**
+  (2026-10-22, the user, the re-asked _Explain it in simple words_ without its
+  `MAT.18.pdf` chip: _it should include the context_): `toReusableAttachments`
+  puts the question's files, pointed-at controls and still-held pictures back
+  in the box beside its words, each with its own id and number, nothing in the
+  box dropped; a file whose pages the window let go of is read again at the
+  ask (every box attachment goes through `reloadFileAttachment`, not only an
+  open one).
 
 - **Two thumbs under every answer, and a thumb down is FOLLOWED UP by the
   window** (2026-10-12, `EC-259`, `src/chatbot/answerRatingHelpers.ts` — pure,
@@ -1601,6 +1703,40 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   (`.claude/skills/owa-enhance-chatbot/references/verse-find-asks.json`,
   scored by `scripts/score-verse-find.mjs`): 20 of 20, the typed five from
   17.6-37.1k tokens with no verse to open down to 2.1-6.8k with every one.
+  **A story is answered with where it is told, and a word with every verse
+  that holds it** (2026-10-22, `EC-387`..`EC-391`; the user's ask: _make the
+  chatbot super smart that can find everything in the bible_, with the
+  verse finder and Find's 🤖 circled). The search names `passages` and
+  `byBook` (`agent-tools.md`); the head start carries them to the model
+  (_Where these words gather (a story is told there): Genesis 7-9 (title:
+  លោកុប្បត្តិ ៧-៩)_, _74 verses hold them in all; by book: …_), and
+  `VERSE_FIND_SYSTEM_PROMPT` says to answer a story with its chapters first and
+  a word with how many and where. A passage is a FOUND verse too
+  (`readFoundPassages`: its key opens the strongest chapter whole,
+  **Open លោកុប្បត្តិ ៨ …**), named when the answer names any chapter of it in
+  any digits or as a range (`6-9`, `៦ ដល់ ៩`), never by a verse of it.
+  **Every verse with these words** (`EVERY_VERSE_LABEL`, a
+  `VERSE_FIND_STEP_TOOL_NAME` step `more`, no model) lists eight at a time
+  with where they gather and **More verses** while there are more -- under a
+  head-start or offline answer, and under a model's answer when the window's
+  own search found more than it showed (`verseFind.canBrowse`). **An answer
+  that quotes a verse no search returned goes back once**
+  (`findUnreadVerseNudge`, both loops, never on the last round): seen live,
+  `shepherd` handed from Find was answered with John 10:11 in words of the
+  model's own. **A story asked for by its name routes here**: _where in the
+  bible is the story of the flood?_, _show me the story of Jonah_ (English,
+  `bibleContentAskHelpers.ts`), _តើរឿងទឹកជំនន់នៅក្នុងគម្ពីរណា?_ (Khmer
+  `verseAsks`) -- both had gone to the general assistant, the Khmer answer
+  naming a book the Bible does not have. **Find's 🤖 carries the words typed
+  in Find** (`genVerseFindAsk(bibleKey, findText)`): with words, the tab
+  searches them at once in Find's Bible, no _Which Bible?_ first
+  (`handedVerseAsk`, asked once its new tab is in front -- `handleAsking`
+  asks in the tab it last rendered with); with none, the Bible list as
+  before. Measured on `bible-find-asks.json` (22 rows, gemma4:cloud, Khmer
+  window; `score-verse-find.mjs` reads a button in any language and scores a
+  story twice -- FOUND, and PASSAGE: a chapter or 3+ verses opened inside
+  where it is told): 20 → 22 of 22 found, 3 → 15 of 16 passages, 2 wrong
+  answers → 0, median tokens 2.6k → 2.9k, the largest 10.9k → 6.7k.
 
 - **Scrolled up, a round ↓ takes them back to the newest message**
   (2026-10-16, the user's ask with the corner circled: _when the scrollbar
@@ -1639,7 +1775,15 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   letters of a THIRD script, neither the language's own nor Latin, go with
   the signs on them (`dropThirdScriptLetters`, 2026-10-17, `EC-307`: _预览_,
   _పొ_, _কোথায়_, _الخاص_ in Khmer answers and a chip of the whole-corpus
-  run, letters the reader cannot even sound out). **What the screen shows in
+  run, letters the reader cannot even sound out), and so does a lowercase
+  Latin word inside the language's own words (`dropStrayLatinWords`,
+  `EC-424`: _គូស podkre_, _អ្នកleថា_). **Never what the answer is ABOUT**
+  (2026-10-23, `EC-429`, `AnswerKeepType`): a passage chat passes its
+  passage's text and the letters of every script in it stay -- the Greek
+  Bible's verse had been quoted in a Khmer answer as empty guillemets --
+  and a word study of an English verse keeps its English words and
+  glosses too (`isLatinKept`); an ordinary answer about the KJV still loses
+  a stray English word. **What the screen shows in
   English stays English** (`EC-316`): nothing in a code span is translated,
   nor a word after `ol:`, nor a menu-bar name before an arrow -- the menu
   bar reads File … Help in every language -- and a model's own _ជំនួយ → …_
@@ -1689,8 +1833,10 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   read — _drawn from the King James Version_ for a person or a place — with
   three questions to press. **Every plain line under it is about that
   record** (`readLookupThread`, `lookupChatHelpers.ts`, pure, every rule a
-  test): it is asked with the record fenced as DATA under the question
-  (`toLookupAsk`, the user turn, never the prompt), under a short prompt of
+  test): it is asked with the record fenced as DATA in the conversation,
+  never the prompt -- as its FIRST turn when it was read
+  (`toLookupRecordTurn`, `EC-418`), else under the question with how to
+  read it (`toLookupAsk`) --, under a short prompt of
   its own (`AskExtraType.lookup` → `LOOKUP_SYSTEM_PROMPT`, its own cached
   prefix) with `owa_lookup_record` and `owa_read_website` as its only tools
   for five rounds — the record tool aimed at the panel's window by the
@@ -1795,3 +1941,163 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   the Bible searched by words — the assistant is told to name only what
   that search returned. It costs ~280 tokens a round in a lookup ask alone;
   the ordinary list did not move.
+
+- **A person or a place is answered from the record, the reader's own Bible
+  and its map** (2026-10-22, `EC-397`..`EC-403`; the user with the Names
+  and Places row menu circled: _make the chatbot to be super smart that can
+  answer everything about location/name_; measured on
+  `.claude/skills/owa-enhance-chatbot/references/lookup-khmer-asks.json`,
+  25 questions in Khmer: 11 right / 5 partly / 9 wrong → 22 / 3 / 0). The
+  record says a person's other names, its namesakes, a place's distance
+  from Jerusalem, its neighbours and its people (`agent-tools.md`). **As a
+  person's or place's card opens the window searches the Bible being read
+  for the name** (`toLookupBibleSearch`, `withLookupBibleSearch`,
+  `withCardBibleSearch` — one `owa_find_verse`, ~0.5 s) and keeps
+  `bibleSearch` on the card: total, books, the first keys, their words when
+  six or fewer — the record's list is the KJV's curated few, and the KJV
+  says "Armenia" where the Khmer Bible says អារ៉ារ៉ាត. A place with a point
+  carries **[en:tran:Show it on a map]** (`toLookupMapUrl`, the detail
+  panel's own Google Maps search, built by the window from the record), and
+  a typed map ask (`lookupWords.map`) is answered with that button, offered
+  and not pressed. **Only the app's WORK leaves the record's conversation**
+  (`checkIsLookupAppAsk` is `checkIsAppWork` now): _what does the name Noah
+  mean?_ holds Khmer's how-word and had gone to the guide. **Jesus and the
+  person are not a family line** without an in-order word
+  (`lookupWords.lineageOrder`): _did Jesus speak about Noah?_ had answered
+  "neither genealogy names Noah"; a genealogy finds the person under any of
+  their names (Noe in Luke 3:36). The prompt reads the new fields, lets the
+  model say where a place is TODAY and a rough distance as an estimate, and
+  says to read a prophecy or saying by ref. **Scripture quoted in words
+  nothing gave goes back once** (`findMisquoteNudge`, both loops, never the
+  last round): a quoted span of 24+ letters that neither the question with
+  its record nor any record or verse read of the ask holds, compared on
+  letters alone. Driver: `scripts/lookup-run.mjs` (it opens the conversation
+  through the row's own handoff, so run it on a scratch profile).
+
+- **A passage's chat finds everything related to it** (2026-10-23,
+  `EC-408`..`EC-413`; the user with a Bible view's 🤖 conversation on
+  Genesis 8:1-22 circled: _make the chatbot to be super smart that can
+  answer everything about selected verses_, then the goal _help user find
+  everything related to the selected verses_; measured on
+  `.claude/skills/owa-enhance-chatbot/references/passage-khmer-asks.json`,
+  15 questions in Khmer on gemma4:cloud: 4 / 4 / 7 → 15 / 0 / 0 right /
+  partly / wrong in two runs, English shown 3 → 0). Before, a question about related
+  verses had nothing to answer from: the record held the passage alone, so
+  _which other verses relate to this?_ was sent to **Previous chapter** and
+  _other altars like verse 20?_ answered from memory (Genesis 22:5). Now a
+  passage's CARD reads its record with `related: true` (`toLookupCardArgs`):
+  the app's own cross references (`agent-tools.md`), in the Bible's
+  language where the app has that bundle, ride every question of the
+  conversation as `crossRefs`, and the chapter's Resources files are listed
+  once as the card opens (`withCardStudyFiles`, `owa_resource_file list`)
+  and kept as `studyFiles`; the person's own notes that name its verses and
+  the words they highlighted or commented on there ride it as `yourNotes`
+  (`EC-423`, `readBibleNoteIndexes`). The card says how many of each, offers
+  **[en:tran:Related verses]** and **[en:tran:Study files for this chapter]**
+  first (`crossrefs` / `files` steps, no model; each answer ends with the
+  conversation's **Previous** / **Next** / **More things to do**, since
+  buttons are drawn under the newest answer only) and _Which other verses
+  are related to this passage?_ as its first question (second, after _What
+  did I note on these verses?_, when the person has notes on it). A reference pressed
+  opens its own card, with its own related verses. `LOOKUP_SYSTEM_PROMPT`
+  answers related verses, parallels and the other Testament from
+  `crossRefs` first, then any the model knows read by ref, and never sends
+  a Bible question to a button. In such a chat a verse read or search the
+  model sends without a Bible goes to the record's (`checkReadsInRecordBible`:
+  `MAT 18:18-35` had been quoted from the KJV, in English, under a ពគប
+  card). A record past the card's 16 000 characters sheds what a read can
+  bring back -- the cross references by verse, then the rest, a name's
+  search, the people and places -- rather than being cut into JSON nothing
+  can parse (`fitLookupFacts`). The other Testament is read off the
+  chapters AROUND the passage too (`otherTestamentAround`, `EC-416`): the
+  bundle ties Jesus on the days of Noah to Genesis 6-7, never to 8, and
+  **Related verses** shows them under their own heading. An answer that
+  says the Bible does not say it, with no tool called, goes back once to
+  read the chapter around it and write the answer afresh
+  (`findNotStatedNudge`, words `lookupWords.notStated` per language,
+  `EC-415`; never when the window read for the question,
+  `lookup.isReadForAsk`, `EC-427` -- _people whose names are not stated_
+  had sent a right answer back): _how long was Noah in the ark?_ is Genesis 7:11 to 8:14, one
+  year and ten days. And an abort nobody pressed Stop for is said as a
+  failure (`checkIsCancelError` with a signal is that signal aborted and
+  nothing else, `EC-414`): a question had ended with its echo and not a
+  word under it. **What a line asks of the passage's surroundings is
+  read by the window first** (`readLookupAskContext`, `EC-419`/`EC-421`):
+  a verse named by number (`lookupWords.verseNumber`) has its own cross
+  references read, every theme; before, after or a length of time
+  (`beforeAsk` / `afterAsk` / `timeAsk`, both sides for a length) has the
+  verses the record's `around` names read -- the rest of its chapter, or
+  the chapter before or after; never `near`, which skips to the next
+  chapter -- and who or which places are in it (`namesAsk`, `EC-426`) has
+  the passage read with `names`, the 34 MB dataset for that question only;
+  all of it goes under the record (`toLookupContextText`), so a
+  model answering in one round answers from them. The record costs ~3 500
+  more input tokens a question in a passage chat (~4.6k → ~8k on
+  gemma4:cloud), ~9-12k when a verse or a side was read for it -- read
+  ONCE a conversation by a server that keeps its start, since the record
+  heads the conversation (`withRecordTurn`, `EC-418`: a local Ollama's
+  second question 112 s of prompt → 4.4 s).
+
+- **A passage's words are studied verse by verse, word by word**
+  (2026-10-23, `EC-428`; the user, studying Genesis 8 in the Greek Bible
+  in a Khmer window: _give option like study vocabulary then choose verse
+  (if more than one verses) then list word to choose or choose all then
+  explain the word_, _also have option to open the word in google search_;
+  `wordStudyHelpers.ts`, pure, every rule a test). The card carries
+  **[en:tran:Study the words]** (a `words` step); a passage of several
+  verses lists them, a button each with its first words in its Bible's
+  digits (24 a page, **[en:tran:More verses]**), and a verse lists its
+  words in order, each once (split at spaces and at the zero-width spaces
+  a Khmer Bible puts between words, `Intl.Segmenter` for a long unspaced
+  run; 30 a page, **[en:tran:More words]**), **[en:tran:All words]** first,
+  the verse above them -- all read off the card's own record with no model,
+  a verse the record cut short (its 6 000 characters end in `…`) read
+  again by its key (`readStudyPlace`). A word or **All words** pressed is
+  ONE ask in the passage's conversation (`handleWordStudyRef` →
+  `handleAsking`'s `lookupStudy`): a short ENGLISH question (what the
+  translation is planned on, so a Khmer or Greek word is never put through
+  the question's translator), the verse as its Bible writes it and how to
+  teach it under the record (`toWordStudyContext`: dictionary form, how to
+  say it in the answer language's letters, kind and form, meaning, meaning
+  here; a whole verse one line a word), `isReadForAsk` so no not-stated
+  nudge, none of the passage's typed-line readers, nothing in the box
+  cleared or sent with it, and the answer keeps the verse's script
+  (`toPassageAnswerKeep`). Under the lesson: the next word,
+  **[en:tran:Choose a word]**, a Google search (`wordWeb`: `toWordSearchUrl`,
+  built at the press from the word ALONE, never a model's words nor the
+  verse -- with its reference the search came back about the verse, the
+  user's _I'd like to learn the word not the verse_, `EC-434`: the word
+  quoted, a Greek grave written as its acute, and the language its letters
+  say, `"Θεός" biblical Greek word meaning`, which brings a lexicon up
+  first) and **[en:tran:More things to do]**; under a verse's every word,
+  **[en:tran:Next verse]** and **[en:tran:Another verse]**. Typed under the
+  card, `lookupWords.vocabulary` (data per language) is the button, or with
+  a verse of the passage named, that verse's every word
+  (`readLookupWordStudyAsk`). **A verse's or a word's button is DATA**
+  (`BotActionType.isData`, `.cue-act-data`, `EC-430`): drawn as written,
+  never through the dictionary and never in the action row's capitals,
+  which had turned _τῇ_ into _ΤΗΙ_. Seen live in Khmer on gemma4:cloud: a
+  Greek word in 1 round, 2.5 s, a verse's 22 words in 3.7 s with every
+  Greek word kept. Bible Find cannot search a Bible in a language the app
+  holds no data for (`EC-431`), so there is no "other verses with this
+  word" button yet (`EC-432`).
+  **Hebrew and the lesson's own words** (2026-10-23, measured on
+  `.claude/skills/owa-enhance-chatbot/references/word-study-asks.json`,
+  Hebrew, Greek, Khmer and KJV lessons pressed through the card, gemma4:cloud
+  in Khmer: 4 / 10 / 2 → 12 / 4 / 0 right / partly / wrong on the same 16).
+  A verse's words also part at the Hebrew maqaf, and are one word whatever
+  their chant's accents or a Greek grave (`toStudyWordKey`: Genesis 1:7 had
+  17 buttons for 14 words); an elided Greek word keeps its mark (`ἀλλ’`).
+  A lesson is ONE round with no tool (`AskExtraType.lookup.isStudy`): three
+  in fifteen had read their verse again, ~16k tokens and the English
+  reference in a Khmer answer. `toWordStudyContext` takes the answer's
+  language: what "its form" is in Greek or Hebrew (`GRAMMAR_HINT_LIST`, the
+  Hebrew stems in Hebrew letters -- named Qal, they came back in Latin), every
+  label and grammar word in the reader's language, **All words** lines
+  parted by " — " with no label words (it had written _(dictionary: …)_ in
+  English seven times), and no way to say a word written in the reader's own
+  script (both Khmer lessons had romanised it). A verse word copied with
+  another script's letter in it (`הָאָֽរֶץ`) is put back as the verse writes
+  it (`repairStudiedWords`), and the cleaner drops a third script's sign on
+  the language's own letter. The Google search spells a Hebrew word as a
+  lexicon does, without its accents.

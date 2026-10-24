@@ -15,9 +15,8 @@
 //                                    code they name is uncommitted (your own)
 //
 // The agent documents are what `extra-work/build-knowledge.mjs` ships as the
-// chatbot's internal corpus and what every Claude Code / Codex session reads:
-// `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/`, `.claude/skills/`
-// (and their Codex mirror, checked for drift only).
+// chatbot's internal corpus and what every Claude Code session reads:
+// `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/`, `.claude/skills/`.
 //
 // A hit is a LEAD, never a finding. A backticked name the code does not hold
 // may be a DOM API, a word that only looks like code, or a record of something
@@ -60,7 +59,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-// scripts -> owa-enhance-agent-docs -> skills -> .claude|.agents -> repo root
+// scripts -> owa-enhance-agent-docs -> skills -> .claude -> repo root
 const REPO_ROOT = path.join(HERE, '..', '..', '..', '..');
 
 const CHECK_LIST = [
@@ -73,7 +72,6 @@ const CHECK_LIST = [
     'memory',
     'rules',
     'skills',
-    'mirror',
     'knowledge',
     'manual',
     'budget',
@@ -127,13 +125,13 @@ const LINE_BREAK_PATTERN = /\r?\n/;
 const MAX_READ_BYTES = 2 * 1024 * 1024;
 const CODE_EXTENSION_PATTERN =
     /\.(?:ts|tsx|mts|cts|js|jsx|mjs|cjs|html|scss|css|json|toml|ya?ml|sh)$/;
-// Not code: the notes themselves, their mirrors, the manual and generated docs.
-const NOT_CODE_ROOT_PATTERN = /^(?:\.claude|\.codex|\.agents|docs)\//;
+// Not code: the notes themselves, the manual and generated docs.
+const NOT_CODE_ROOT_PATTERN = /^(?:\.claude|docs)\//;
 // Roots a backticked token must start with to be read as a repo path claim.
 // Generated and ignored roots (`electron-build/`, `dist/`, `release/`,
 // `test-results/`, `node_modules/`) are absent by design and never checked.
 const PATH_ROOT_PATTERN =
-    /^(?:src|electron|tools|extra-work|docs|html|e2e|public|resources|\.claude|\.codex|\.agents|\.vscode)\//;
+    /^(?:src|electron|tools|extra-work|docs|html|e2e|public|resources|\.claude|\.vscode)\//;
 const PLACEHOLDER_PATTERN = /[\s*<>{}$|?…]|\.\.\.|^~|^\/|^[A-Za-z]:/;
 const FILE_EXTENSION_PATTERN = /\.[A-Za-z0-9]{1,6}$/;
 // Code files only: `setting.json`, `index.json`, `.bg.json` are the app's
@@ -380,14 +378,6 @@ function listFilesUnder(dirPath) {
     return relPaths.sort();
 }
 
-function checkIsSameFile(onePath, otherPath) {
-    try {
-        return readFileSync(onePath).equals(readFileSync(otherPath));
-    } catch {
-        return false;
-    }
-}
-
 // Tracked plus untracked-but-not-ignored: a note may name a file another
 // session has written and not yet committed.
 const repoFileList = runGit(['ls-files', '-co', '--exclude-standard'])
@@ -506,7 +496,7 @@ function listAgentDocs() {
     // README naming an `npm run` script that was removed misleads a
     // contributor the way a stale note misleads an agent, and the root
     // README went on documenting `pack:mac:uni` after the script was gone
-    // because nothing here read it. Never mirrored and not in the knowledge.
+    // because nothing here read it. Not in the knowledge.
     for (const relPath of repoFileList) {
         if (
             relPath.endsWith('.md') &&
@@ -524,11 +514,11 @@ function listAgentDocs() {
     return docList;
 }
 
-// Not project documents: the agent docs and their mirror (listed above, or
-// copies), what a script generates, the coverage matrix (the `manual` check
-// reads it), and a third party's own README.
+// Not project documents: the agent docs (listed above), what a script
+// generates, the coverage matrix (the `manual` check reads it), and a third
+// party's own README.
 const PROJECT_DOC_SKIP_PATTERN =
-    /^(?:\.claude|\.codex|\.agents|node_modules|test-results|release)\/|^docs\/(?:manual-sources|test-paths|\.vitepress)\/|^src\/lang\/data\/|^extra-work\/experiment-building\//;
+    /^(?:\.claude|node_modules|test-results|release)\/|^docs\/(?:manual-sources|test-paths|\.vitepress)\/|^src\/lang\/data\/|^extra-work\/experiment-building\//;
 // Somebody's running to-do list is true about its day, like a backlog.
 const PROJECT_SCRATCH_PATTERN = /(?:^|\/)(?:TODO|note)\.md$/;
 
@@ -1354,55 +1344,6 @@ function runRulesCheck() {
     ];
 }
 
-/**
- * A mirrored SKILL.md is the Claude one with a Codex preamble: its own short
- * description, `## Codex usage`, `Arguments: <argument-hint>` and the full
- * description under `### Full workflow scope (preserved from Claude)`. After
- * that paragraph the body is an exact copy.
- */
-function compareMirroredSkill(skillName) {
-    const claudeText = readText(`.claude/skills/${skillName}/SKILL.md`);
-    const mirrorText = readText(`.agents/skills/${skillName}/SKILL.md`);
-    if (claudeText === null || mirrorText === null) {
-        return [];
-    }
-    const problemList = [];
-    const claudeFront = parseFrontMatter(claudeText);
-    const claudeLineList = claudeText.split(LINE_BREAK_PATTERN);
-    const claudeBody = claudeLineList
-        .slice(claudeFront?.bodyStartLine ?? 0)
-        .join('\n')
-        .trim();
-    const mirrorLineList = mirrorText.split(LINE_BREAK_PATTERN);
-    const scopeIndex = mirrorLineList.findIndex((line) => {
-        return line.startsWith('### Full workflow scope');
-    });
-    if (scopeIndex < 0) {
-        return ['no "### Full workflow scope" section'];
-    }
-    let bodyIndex = scopeIndex + 1;
-    while (mirrorLineList[bodyIndex]?.trim() === '') {
-        bodyIndex++;
-    }
-    const mirrorDescription = mirrorLineList[bodyIndex] ?? '';
-    const mirrorBody = mirrorLineList
-        .slice(bodyIndex + 1)
-        .join('\n')
-        .trim();
-    if (mirrorBody !== claudeBody) {
-        problemList.push('body differs from the Claude SKILL.md');
-    }
-    const description = claudeFront?.fieldMap.description ?? '';
-    if (mirrorDescription.trim() !== description.trim()) {
-        problemList.push('preserved description differs');
-    }
-    const hint = claudeFront?.fieldMap['argument-hint'];
-    if (hint && !mirrorText.includes(`Arguments: ${hint}`)) {
-        problemList.push('Arguments line differs from argument-hint');
-    }
-    return problemList;
-}
-
 function runSkillsCheck() {
     const claudeText = readText('.claude/CLAUDE.md') ?? '';
     const indexText = readText('.claude/rules/project-skills.md') ?? '';
@@ -1447,19 +1388,9 @@ function runSkillsCheck() {
                 text: 'rules/project-skills.md has no section for it',
             });
         }
-        if (!checkExists(`.agents/skills/${name}/SKILL.md`)) {
-            problemList.push({ at, text: 'no Codex mirror' });
-        } else {
-            for (const problem of compareMirroredSkill(name)) {
-                problemList.push({
-                    at: `.agents/skills/${name}/SKILL.md`,
-                    text: problem,
-                });
-            }
-        }
     }
     return [
-        { label: 'skill wiring and mirror problems', items: problemList },
+        { label: 'skill wiring problems', items: problemList },
         {
             label: 'skill description lengths (paid in every session listing)',
             items: descriptionList.sort(
@@ -1472,110 +1403,6 @@ function runSkillsCheck() {
 function readLastCommitMs(relPath) {
     const stamp = runGit(['log', '-1', '--format=%ct', '--', relPath]).trim();
     return stamp ? Number(stamp) * 1000 : 0;
-}
-
-/**
- * `.claude/` is the source of truth and the Codex mirror its copy (`AGENTS.md`):
- * `CLAUDE.md` -> `.codex/project-instructions.md`, `rules/` ->
- * `.codex/instructions/`, `memory/` -> `.codex/memory/`, `skills/` ->
- * `.agents/skills/`. A mirror that is NEWER than its source means an edit
- * landed on the wrong side, and is reported as such.
- */
-function runMirrorCheck() {
-    const drift = [];
-    const describe = (claudeRel, mirrorRel) => {
-        const claudeMs = Math.max(
-            readLastCommitMs(claudeRel),
-            statSync(path.join(REPO_ROOT, claudeRel)).mtimeMs,
-        );
-        const mirrorMs = Math.max(
-            readLastCommitMs(mirrorRel),
-            statSync(path.join(REPO_ROOT, mirrorRel)).mtimeMs,
-        );
-        return mirrorMs > claudeMs
-            ? 'differs -- the MIRROR is newer (edited on the wrong side?)'
-            : 'differs -- re-copy from .claude';
-    };
-    if (
-        !checkIsSameFile(
-            path.join(REPO_ROOT, '.claude', 'CLAUDE.md'),
-            path.join(REPO_ROOT, '.codex', 'project-instructions.md'),
-        )
-    ) {
-        drift.push({
-            at: '.codex/project-instructions.md',
-            text: describe(
-                '.claude/CLAUDE.md',
-                '.codex/project-instructions.md',
-            ),
-        });
-    }
-    const compareDirs = (claudeRelDir, mirrorRelDir, isSkill) => {
-        const claudeSet = new Set(
-            listFilesUnder(path.join(REPO_ROOT, claudeRelDir)),
-        );
-        const mirrorSet = new Set(
-            listFilesUnder(path.join(REPO_ROOT, mirrorRelDir)),
-        );
-        for (const relPath of [
-            ...new Set([...claudeSet, ...mirrorSet]),
-        ].sort()) {
-            const claudeRel = `${claudeRelDir}/${relPath}`;
-            const mirrorRel = `${mirrorRelDir}/${relPath}`;
-            if (!mirrorSet.has(relPath)) {
-                drift.push({ at: claudeRel, text: 'missing from the mirror' });
-            } else if (!claudeSet.has(relPath)) {
-                drift.push({ at: mirrorRel, text: 'only in the mirror' });
-            } else if (
-                !(isSkill && relPath === 'SKILL.md') &&
-                !checkIsSameFile(
-                    path.join(REPO_ROOT, claudeRel),
-                    path.join(REPO_ROOT, mirrorRel),
-                )
-            ) {
-                drift.push({
-                    at: mirrorRel,
-                    text: describe(claudeRel, mirrorRel),
-                });
-            }
-        }
-    };
-    compareDirs('.claude/rules', '.codex/instructions', false);
-    compareDirs('.claude/memory', '.codex/memory', false);
-    const skillNameSet = new Set([
-        ...listNames(path.join(REPO_ROOT, '.claude', 'skills'), {
-            isDirectory: true,
-        }),
-        ...listNames(path.join(REPO_ROOT, '.agents', 'skills'), {
-            isDirectory: true,
-        }),
-    ]);
-    for (const name of [...skillNameSet].sort()) {
-        compareDirs(`.claude/skills/${name}`, `.agents/skills/${name}`, true);
-    }
-    // The MCP server both agents are told to use.
-    const configProblem = [];
-    let mcpNameList = [];
-    try {
-        mcpNameList = Object.keys(
-            JSON.parse(readText('.mcp.json') ?? '{}').mcpServers ?? {},
-        );
-    } catch {
-        configProblem.push({ at: '.mcp.json', text: 'does not parse' });
-    }
-    const codexConfigText = readText('.codex/config.toml') ?? '';
-    for (const name of mcpNameList) {
-        if (!codexConfigText.includes(`[mcp_servers.${name}]`)) {
-            configProblem.push({
-                at: '.codex/config.toml',
-                text: `${name} -- in .mcp.json, not registered for Codex`,
-            });
-        }
-    }
-    return [
-        { label: 'mirror drift (.claude -> .codex / .agents)', items: drift },
-        { label: 'MCP registration parity', items: configProblem },
-    ];
 }
 
 function runKnowledgeCheck(docList) {
@@ -2683,7 +2510,6 @@ const RUNNER_MAP = {
     memory: () => runMemoryCheck(targetDocList),
     rules: () => runRulesCheck(),
     skills: () => runSkillsCheck(),
-    mirror: () => runMirrorCheck(),
     knowledge: () => {
         return runKnowledgeCheck(
             docList.filter((doc) => doc.kind !== 'project'),

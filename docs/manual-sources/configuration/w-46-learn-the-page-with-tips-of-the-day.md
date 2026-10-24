@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [GL-25]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-46 — Learn the page with Tips of the Day
 
@@ -24,8 +24,14 @@ control without having to search the manual.
    holds it, and **×** closes the card at once. The tip
    belongs to that page only, and the first tip is chosen at random without
    repeating the last automatic tip shown for that page. **Help → [en:tran:Tips of the Day]**
-   opens one at once, and a tip opened that way stands in for that
-   page's automatic card. Settings, Slide Editor, Bible Note, Web Editor, Lyric
+   opens one at once in EVERY open window that has tips — the main window and
+   each open Settings, Bible Note, editor or Local Web Share window, each with
+   its own page's tip — and a tip opened that way stands in for that page's
+   automatic card. A card you asked for from Help has no
+   **[en:tran:Hide for 30 days]**: that link is on the automatic card only.
+   **Help → [en:tran:All tips]** does the same with each page's list. Those
+   windows hide their menu bar, so the main window's **Help** is how you ask
+   for their tips. Settings, Slide Editor, Bible Note, Web Editor, Lyric
    Editor, and Local Web Share also have their own tips. Each page remembers
    whether its automatic tip has already appeared; visiting another page lets
    you learn that page too. Audience screens and help-only windows show no tips.
@@ -59,7 +65,8 @@ control without having to search the manual.
    for now; reloading a page does not show its automatic card again in the same
    window session. A page whose delay expires while it is behind another window
    waits until you focus it.
-3. In Settings, **Help → [en:tran:All tips]** shows three lessons for **[en:tran:General]**,
+3. With Settings open, **Help → [en:tran:All tips]** in the main window's
+   menu bar shows Settings' own list inside Settings: three lessons for **[en:tran:General]**,
    **[en:tran:Bible]**, and **[en:tran:Others]**. Choose **[en:tran:Explore General settings]**, then **[en:tran:Show it]**:
    the demo card and its red outline appear inside Settings.
    **[en:tran:Show it]** always starts in the originating window, even when a popup and
@@ -87,9 +94,9 @@ control without having to search the manual.
    menu are self-guided too. They explain the exact action but do not reload,
    relaunch, export, reset the layout, open Developer Tools, or change what the
    congregation sees. If **AI features** is off, the app
-   offers to open Settings → Others because the local walkthrough server is
+   offers to open Settings → **[en:tran:AI Providers]** because the local walkthrough server is
    switched off with it.
-4. Click **[en:tran:Hide for 30 days]** to put automatic tips away on all operator
+4. On the automatic card, click **[en:tran:Hide for 30 days]** to put automatic tips away on all operator
    pages for 30 days; after that they come back by themselves. This does not
    remove the lessons: use **Help → [en:tran:Tips of the Day]** to
    open one suggestion, or **Help → [en:tran:All tips]** to browse the whole learning list
@@ -125,5 +132,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-25`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

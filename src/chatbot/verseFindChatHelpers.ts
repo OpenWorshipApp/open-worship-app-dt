@@ -47,6 +47,7 @@ import {
     DEFAULT_CHAT_LANG_CODE,
     getAppLangCode,
     toAsciiDigits,
+    toShownDigits,
 } from './chatLangHelpers';
 import { NOT_IN_LANGUAGE_REASON } from '../helper/bibleVerseFindHelpers';
 import {
@@ -75,6 +76,8 @@ const MAX_VERSE_REF_LENGTH = 40;
 // Stored English and drawn translated (`toShownLabel`).
 export const SEARCH_ANOTHER_BIBLE_LABEL = 'Search another Bible';
 export const SHOW_IN_ANOTHER_BIBLE_LABEL = 'Show in another Bible';
+export const EVERY_VERSE_LABEL = 'Every verse with these words';
+export const MORE_VERSES_LABEL = 'More verses';
 
 // What a change of Bible takes along, so nothing has to be said again:
 // what they remember, and the verses already found.
@@ -98,7 +101,10 @@ export type VerseFindStateType =
           step: 'remember';
           bible: string;
           title?: string;
-      } & VerseFindCarryType);
+      } & VerseFindCarryType)
+    // Every verse with their words, a page at a time (2026-10-22, the
+    // user's ask: _find everything in the bible_), with no model.
+    | { step: 'more'; bible: string; words: string; from?: number };
 
 export type VerseFindAnswerType = BotAnswerType & {
     // The Bible the tab is finding in, stamped on the answer so the next
@@ -116,7 +122,136 @@ export type FoundVerseType = {
     // digits, `ម៉ាថាយ ៥:៤៤` -- which `owa_find_verse` adds for a Bible not
     // in English.
     title?: string;
+    // A PASSAGE the search's words gather in (`Genesis 7-9`), of which `key`
+    // opens the strongest chapter (`GEN 8`, `ref` `Genesis 8`): named when
+    // the answer names any chapter of it.
+    passage?: { ref: string; title?: string; from: number; to: number };
 };
+
+// The most of a search's passages a list carries: where a story is told,
+// not every chapter the words are in.
+const MAX_FOUND_PASSAGES = 3;
+
+/**
+ * The passages one `owa_find_verse` result says its words gather in, as
+ * verses to name and open -- each opens its strongest chapter whole.
+ */
+export function readFoundPassages(
+    result: any,
+    bible: string,
+): FoundVerseType[] {
+    return (Array.isArray(result?.passages) ? result.passages : [])
+        .map((passage: any): FoundVerseType | null => {
+            const key = typeof passage?.key === 'string' ? passage.key : '';
+            const ref = typeof passage?.ref === 'string' ? passage.ref : '';
+            const keyMatch = /^([0-9A-Z]{3}) (\d{1,3})$/.exec(key);
+            const refMatch = /^(.+?) (\d{1,3})(?:-(\d{1,3}))?$/.exec(ref);
+            if (
+                keyMatch === null ||
+                refMatch === null ||
+                ref.length > MAX_VERSE_REF_LENGTH
+            ) {
+                return null;
+            }
+            const from = Number(refMatch[2]);
+            const to = refMatch[3] === undefined ? from : Number(refMatch[3]);
+            const title = readVerseTitle(passage).title;
+            const keyTitle = readVerseTitle({ title: passage.keyTitle }).title;
+            return {
+                key,
+                ref: `${refMatch[1]} ${keyMatch[2]}`,
+                bible,
+                ...(keyTitle === undefined ? {} : { title: keyTitle }),
+                passage: {
+                    ref,
+                    ...(title === undefined ? {} : { title }),
+                    from,
+                    to,
+                },
+            };
+        })
+        .filter((one: FoundVerseType | null) => {
+            return one !== null;
+        })
+        .slice(0, MAX_FOUND_PASSAGES);
+}
+
+/**
+ * **Every verse with these words** -- or, a page on, **More verses**: the
+ * search's whole list, eight at a time, with no model (2026-10-22, the
+ * user's ask: _make the chatbot super smart that can find everything in
+ * the bible_). The words are what was searched.
+ */
+export function genVerseBrowseAction(
+    bible: string,
+    words: string,
+    from = 0,
+): BotActionType {
+    return {
+        label: from === 0 ? EVERY_VERSE_LABEL : MORE_VERSES_LABEL,
+        toolName: VERSE_FIND_STEP_TOOL_NAME,
+        args: {
+            step: 'more',
+            bible,
+            words: words.trim().slice(0, MAX_WEB_SEARCH_WORDS_LENGTH),
+            from,
+        },
+    };
+}
+
+// `byBook` as a person reads it: each book by its own Bible's name.
+function toShownBookCounts(result: any) {
+    return (Array.isArray(result?.byBook) ? result.byBook : [])
+        .filter((one: any) => {
+            return (
+                typeof one?.book === 'string' && Number.isInteger(one?.verses)
+            );
+        })
+        .map((one: any) => {
+            return `${toShownVerseRef({ ref: one.book, ...readVerseTitle(one) })} ${toShownDigits(one.verses)}`;
+        })
+        .join(', ');
+}
+
+/**
+ * The line that says where a search's words gather -- `These words gather in
+ * លោកុប្បត្តិ ៧-៩.` -- and how many are in each book; empty when the result
+ * says neither.
+ */
+export function genVerseWhereLine(result: any, bible: string) {
+    const passages = readFoundPassages(result, bible);
+    const books = toShownBookCounts(result);
+    return [
+        passages.length === 0
+            ? ''
+            : fillWords(tran('These words gather in {passages}.'), {
+                  passages: passages
+                      .map((one) => {
+                          return `**${toShownPassage(one)}**`;
+                      })
+                      .join(', '),
+              }),
+        books.length === 0
+            ? ''
+            : fillWords(tran('By book: {books}.'), { books }),
+    ]
+        .filter((line) => {
+            return line.length > 0;
+        })
+        .join(' ');
+}
+
+/** A passage as the person reads it: its own Bible's words, or English. */
+function toShownPassage(verse: FoundVerseType) {
+    return verse.passage === undefined
+        ? toShownVerseRef(verse)
+        : toShownVerseRef({
+              ref: verse.passage.ref,
+              ...(verse.passage.title === undefined
+                  ? {}
+                  : { title: verse.passage.title }),
+          });
+}
 
 /**
  * A verse's reference as the PERSON reads it: the Bible's own `title` in a
@@ -444,6 +579,101 @@ async function genVersesInBibleAnswer(
 }
 
 /**
+ * A page of every verse with their words (`step: 'more'`): the verses, where
+ * they gather, and **More verses** while there are more.
+ */
+async function genVerseBrowseAnswer(
+    state: { bible: string; words: string; from?: number },
+    call: (name: string, args: any) => Promise<string>,
+): Promise<VerseFindAnswerType> {
+    const { bible, words } = state;
+    const from =
+        Number.isInteger(state.from) && (state.from as number) > 0
+            ? (state.from as number)
+            : 0;
+    let result: any;
+    try {
+        result = parseToolJson(
+            await call(VERSE_FIND_TOOL_NAME, { bible, words, from }),
+        );
+    } catch (_error) {
+        result = null;
+    }
+    const verses = (Array.isArray(result?.verses) ? result.verses : []).filter(
+        (verse: any) => {
+            return (
+                typeof verse?.key === 'string' &&
+                typeof verse?.ref === 'string' &&
+                typeof verse?.text === 'string'
+            );
+        },
+    );
+    if (result === null || verses.length === 0) {
+        return {
+            text: fillWords(
+                tran('No more verses in {bible} have those words.'),
+                { bible },
+            ),
+            actions: [genVerseChangeBibleAction(bible, words)],
+            verseFind: bible,
+        };
+    }
+    const total = Number(result.total);
+    const next = Number(result.next);
+    const last = from + verses.length;
+    const lines = verses.map((verse: any) => {
+        return `- **${toShownVerseRef({ ref: verse.ref, ...readVerseTitle(verse) })}** — ${verse.text}`;
+    });
+    const where = genVerseWhereLine(result, bible);
+    const ending = Number.isInteger(next)
+        ? ''
+        : Number.isInteger(total) && total > last
+          ? tran(
+                'That is as far as a search goes. Add a word you remember ' +
+                    'to narrow it down.',
+            )
+          : fillWords(
+                tran('That is every verse in {bible} with those words.'),
+                { bible },
+            );
+    return {
+        text:
+            fillWords(
+                tran(
+                    'Verses {first} to {last} of {total} in {bible} that ' +
+                        'have your words:',
+                ),
+                {
+                    first: toShownDigits(from + 1),
+                    last: toShownDigits(last),
+                    total: toShownDigits(
+                        Number.isInteger(total) ? total : last,
+                    ),
+                    bible,
+                },
+            ) +
+            `\n\n${lines.join('\n')}` +
+            (where.length > 0 ? `\n\n${where}` : '') +
+            (ending.length > 0 ? `\n\n${ending}` : ''),
+        actions: [
+            ...verses.slice(0, MAX_OPEN_BUTTONS).map((verse: any) => {
+                return genVerseOpenAction({
+                    key: verse.key,
+                    ref: verse.ref,
+                    bible,
+                    ...readVerseTitle(verse),
+                });
+            }),
+            ...(Number.isInteger(next)
+                ? [genVerseBrowseAction(bible, words, next)]
+                : []),
+            genVerseChangeBibleAction(bible, words),
+        ],
+        verseFind: bible,
+    };
+}
+
+/**
  * One step, answered with no model: the Bibles to choose from (with one
  * Bible, straight to the next question), what to tell about the verse, or
  * -- a Bible picked to change to -- the verses found, read from it. A Bible
@@ -454,6 +684,9 @@ export async function runVerseFindStep(
     state: VerseFindStateType,
     call: (name: string, args: any) => Promise<string> = callTool,
 ): Promise<VerseFindAnswerType> {
+    if (state.step === 'more') {
+        return await genVerseBrowseAnswer(state, call);
+    }
     const carry = toVerseFindCarry(state);
     if (state.step === 'remember') {
         if (carry.verses.length > 0) {
@@ -760,6 +993,13 @@ export type VerseHeadStartPartType = {
     // is the head start itself: "In ពគប, for your words".
     shown?: string;
     verses: { key: string; ref: string; text: string; title?: string }[];
+    // Where the words gather and how many verses hold them, the search's
+    // own words: what a story or "every verse with" is answered from.
+    passages?: FoundVerseType[];
+    total?: number;
+    where?: string;
+    // For the model: the books by name and count, in English.
+    byBook?: string;
 };
 
 // Verses each search hands over: the model reads them on every round.
@@ -802,11 +1042,44 @@ function toHeadStartPart(
               bible,
           })
         : '';
+    const passages = readFoundPassages(result, bible);
+    const total = Number(result?.total);
+    const byBook = (Array.isArray(result?.byBook) ? result.byBook : [])
+        .filter((one: any) => {
+            return typeof one?.book === 'string';
+        })
+        .map((one: any) => {
+            return `${one.book} ${one.verses}`;
+        })
+        .join(', ');
+    const where = genVerseWhereLine(result, bible);
     return {
         what: `${what}${searchedIn}`,
         shown: `${shown}${shownSearchedIn}`,
         verses,
+        ...(passages.length > 0 ? { passages } : {}),
+        ...(Number.isInteger(total) ? { total } : {}),
+        ...(where.length > 0 ? { where } : {}),
+        ...(byBook.length > 0 ? { byBook } : {}),
     };
+}
+
+/**
+ * **Every verse with these words** under an answer: when the search for
+ * their own words (the head start's first) found more than it shows -- a
+ * word to see every place of ("shepherd"), not a sentence nobody pages.
+ */
+export function genHeadStartBrowseAction(
+    parts: VerseHeadStartPartType[],
+    remembered: string,
+    bible: string,
+): BotActionType[] {
+    const own = parts[0];
+    return own !== undefined &&
+        typeof own.total === 'number' &&
+        own.total > own.verses.length
+        ? [genVerseBrowseAction(bible, remembered)]
+        : [];
 }
 
 /**
@@ -877,6 +1150,19 @@ export function genVerseHeadStartAnswer(
     }
     const seen = new Set<string>();
     const offered: { key: string; ref: string; title?: string }[] = [];
+    // The passages first: asked for a story, the place it is told.
+    const passages = shown
+        .flatMap((part) => {
+            return part.passages ?? [];
+        })
+        .filter((passage) => {
+            if (seen.has(passage.key)) {
+                return false;
+            }
+            seen.add(passage.key);
+            return true;
+        })
+        .slice(0, MAX_FOUND_PASSAGES);
     const blocks = shown.map((part) => {
         const lines = part.verses.map((verse) => {
             if (!seen.has(verse.key) && offered.length < MAX_OPEN_BUTTONS) {
@@ -889,9 +1175,11 @@ export function genVerseHeadStartAnswer(
             }
             return `- **${toShownVerseRef(verse)}** — ${verse.text}`;
         });
-        return `**${part.shown ?? part.what}:**\n\n${lines.join('\n')}`;
+        const where = part.where === undefined ? '' : `\n\n${part.where}`;
+        return `**${part.shown ?? part.what}:**\n\n${lines.join('\n')}${where}`;
     });
     const webLine = genVerseWebSearchLine(remembered);
+    const opened = [...passages, ...offered].slice(0, MAX_OPEN_BUTTONS);
     return {
         text:
             `${blocks.join('\n\n')}\n\n` +
@@ -901,9 +1189,10 @@ export function genVerseHeadStartAnswer(
             '\n\n' +
             webLine.text,
         actions: [
-            ...offered.map((verse) => {
+            ...opened.map((verse) => {
                 return genVerseOpenAction({ ...verse, bible });
             }),
+            ...genHeadStartBrowseAction(parts, remembered, bible),
             genVerseChangeBibleAction(bible, remembered, offered),
             genVerseWebSearchAction(remembered, bible),
         ],
@@ -918,14 +1207,17 @@ export function toHeadStartFoundVerses(
     bible: string,
 ): FoundVerseType[] {
     return parts.flatMap((part) => {
-        return part.verses.map((verse) => {
-            return {
-                key: verse.key,
-                ref: verse.ref,
-                bible,
-                ...readVerseTitle(verse),
-            };
-        });
+        return [
+            ...(part.passages ?? []),
+            ...part.verses.map((verse) => {
+                return {
+                    key: verse.key,
+                    ref: verse.ref,
+                    bible,
+                    ...readVerseTitle(verse),
+                };
+            }),
+        ];
     });
 }
 
@@ -951,7 +1243,27 @@ export function toVerseHeadStartAsk(parts: VerseHeadStartPartType[]) {
                           return `  ${verse.ref}${title} — ${verse.text}`;
                       })
                       .join('\n');
-        return `- ${part.what}:\n${verses}`;
+        const passages =
+            part.passages === undefined
+                ? ''
+                : '\n  Where these words gather (a story is told there): ' +
+                  part.passages
+                      .map((passage) => {
+                          const title =
+                              passage.passage?.title === undefined
+                                  ? ''
+                                  : ` (title: ${passage.passage.title})`;
+                          return `${passage.passage?.ref ?? passage.ref}${title}`;
+                      })
+                      .join('; ');
+        const counts =
+            part.total === undefined || part.total <= part.verses.length
+                ? ''
+                : `\n  ${part.total} verses hold them in all` +
+                  (part.byBook === undefined
+                      ? ''
+                      : `; by book: ${part.byBook}`);
+        return `- ${part.what}:\n${verses}${passages}${counts}`;
     });
     return (
         '\n\nThe app has already searched, and these need not be searched ' +
@@ -986,6 +1298,13 @@ export function readFoundVerses(text: string): FoundVerseType[] {
     if (bible.length === 0 || !Array.isArray(result?.verses)) {
         return [];
     }
+    return [
+        ...readFoundPassages(result, bible),
+        ...readFoundVerseList(result, bible),
+    ];
+}
+
+function readFoundVerseList(result: any, bible: string): FoundVerseType[] {
     return result.verses
         .filter((verse: any) => {
             return (
@@ -1011,7 +1330,49 @@ function escapeRegExp(text: string) {
  * letter left off, so "Psalm" names "Psalms 23:1"), chapter and first verse,
  * or the key it opens by.
  */
+// Where an answer names a chapter of a passage -- `Genesis 7-9`, `Genesis
+// 8`, `លោកុប្បត្តិ ៦ ដល់ ៩` -- never a verse of it (`Genesis 8:11`, a verse
+// button's): the book, then a chapter inside the passage with no `:` after.
+function findPassageNamedAt(answerText: string, verse: FoundVerseType) {
+    const passage = verse.passage;
+    if (passage === undefined) {
+        return -1;
+    }
+    const books = [/^(.+?) \d/.exec(passage.ref)?.[1]];
+    if (passage.title !== undefined) {
+        books.push(/^(.+?)\s*\d/.exec(toAsciiDigits(passage.title))?.[1]);
+    }
+    const said = toAsciiDigits(answerText);
+    let first = -1;
+    for (const book of books) {
+        if (book === undefined || book.length === 0) {
+            continue;
+        }
+        const stem = book.length > 3 ? book.slice(0, -1) : book;
+        // A chapter, or a range of them however it is said -- `6-9`, `6 to
+        // 9`, `៦ ដល់ ៩` -- that overlaps the passage.
+        const pattern = new RegExp(
+            `${escapeRegExp(stem)}\\S*\\.?\\s*(\\d{1,3})(?!\\d)(?!\\s*:\\s*\\d)` +
+                `(?:\\s*(?:[-–]|to|through|ដល់|à)\\s*(\\d{1,3})(?!\\s*:\\s*\\d))?`,
+            'giu',
+        );
+        for (const match of said.matchAll(pattern)) {
+            const start = Number(match[1]);
+            const end = match[2] === undefined ? start : Number(match[2]);
+            if (start <= passage.to && end >= passage.from) {
+                const at = match.index ?? 0;
+                first = first === -1 ? at : Math.min(first, at);
+                break;
+            }
+        }
+    }
+    return first;
+}
+
 function findNamedAt(answerText: string, verse: FoundVerseType) {
+    if (verse.passage !== undefined) {
+        return findPassageNamedAt(answerText, verse);
+    }
     const match = /^(.+?)\s+(\d+):(\d+)/.exec(verse.ref);
     // Named the way their Bible writes it (`title`), as the prompt asks of
     // an answer not in English -- in its digits or in 0-9 alike.
@@ -1043,9 +1404,58 @@ function findNamedAt(answerText: string, verse: FoundVerseType) {
 }
 
 /**
+ * The chapters the found verses are in, as passages of one chapter each --
+ * none a found passage covers already. An answer that names a chapter whole
+ * ("The story of the Good Samaritan is told in Luke 10") gets that chapter's
+ * button (2026-10-22): measured, four answers in sixteen named the chapters
+ * of a story and had buttons for single verses of it only.
+ */
+function withFoundChapters(found: FoundVerseType[]): FoundVerseType[] {
+    const covered = new Set<string>();
+    for (const one of found) {
+        if (one.passage === undefined) {
+            continue;
+        }
+        for (let at = one.passage.from; at <= one.passage.to; at++) {
+            covered.add(`${one.key.slice(0, 3)} ${at}`);
+        }
+    }
+    const chapters = new Map<string, FoundVerseType>();
+    for (const verse of found) {
+        const keyMatch = /^([0-9A-Z]{3}) (\d{1,3}):/.exec(verse.key);
+        const refMatch = /^(.+?) (\d{1,3}):/.exec(verse.ref);
+        if (
+            verse.passage !== undefined ||
+            keyMatch === null ||
+            refMatch === null
+        ) {
+            continue;
+        }
+        const key = `${keyMatch[1]} ${keyMatch[2]}`;
+        if (covered.has(key) || chapters.has(key)) {
+            continue;
+        }
+        const chapter = Number(keyMatch[2]);
+        const ref = `${refMatch[1]} ${chapter}`;
+        const title = verse.title?.split(':')[0].trim();
+        const titled =
+            title === undefined || title.length === 0 ? {} : { title };
+        chapters.set(key, {
+            key,
+            ref,
+            bible: verse.bible,
+            ...titled,
+            passage: { ref, ...titled, from: chapter, to: chapter },
+        });
+    }
+    return [...found, ...chapters.values()];
+}
+
+/**
  * The found verses an answer NAMES, once each, in the order it names them,
  * in the Bible the conversation searches -- a verse the search returned and
- * the answer set aside is not one to offer.
+ * the answer set aside is not one to offer. A chapter it names whole that
+ * holds one of them is named too (`withFoundChapters`).
  */
 export function pickNamedVerses(
     found: FoundVerseType[],
@@ -1056,7 +1466,7 @@ export function pickNamedVerses(
     bible: string,
 ): FoundVerseType[] {
     const seen = new Set<string>();
-    return found
+    return withFoundChapters(found)
         .map((verse) => {
             return { verse, at: findNamedAt(answerText, verse) };
         })
@@ -1190,7 +1600,7 @@ export async function answerVerseFindOffline(
                     tran(
                         'An assistant can also take words in your language ' +
                             'and find the verse: pick one in the row above, ' +
-                            'or add a key in Settings → Others → AI Providers.',
+                            'or add a key in Settings → AI Providers.',
                     ) +
                     '\n\n' +
                     webLine.text,
@@ -1222,7 +1632,7 @@ export async function answerVerseFindOffline(
     const meaningNote = tran(
         'If you remember what it is ABOUT rather than its words, an ' +
             'assistant can search by meaning: pick one in the row above, or ' +
-            'add a key in Settings → Others → AI Providers.',
+            'add a key in Settings → AI Providers.',
     );
     if (verses.length === 0) {
         const webLine = genVerseWebSearchLine(remembered);
@@ -1270,6 +1680,8 @@ export async function answerVerseFindOffline(
         return `- **${toShownVerseRef({ ref: verse.ref, ...readVerseTitle(verse) })}**${hits} — ${verse.text}`;
     });
     const total = Number(result?.total);
+    const where = genVerseWhereLine(result, bible);
+    const passages = readFoundPassages(result, bible);
     return {
         text:
             fillWords(
@@ -1277,6 +1689,7 @@ export async function answerVerseFindOffline(
                 { bible },
             ) +
             `\n\n${lines.join('\n')}\n\n` +
+            (where.length > 0 ? `${where}\n\n` : '') +
             (Number.isInteger(total) && total > verses.length
                 ? fillWords(
                       tran(
@@ -1288,14 +1701,20 @@ export async function answerVerseFindOffline(
                 : '') +
             meaningNote,
         actions: [
-            ...verses.slice(0, MAX_OPEN_BUTTONS).map((verse: any) => {
-                return genVerseOpenAction({
-                    key: verse.key,
-                    ref: verse.ref,
-                    bible,
-                    ...readVerseTitle(verse),
-                });
-            }),
+            ...passages.map(genVerseOpenAction),
+            ...verses
+                .slice(0, Math.max(0, MAX_OPEN_BUTTONS - passages.length))
+                .map((verse: any) => {
+                    return genVerseOpenAction({
+                        key: verse.key,
+                        ref: verse.ref,
+                        bible,
+                        ...readVerseTitle(verse),
+                    });
+                }),
+            ...(Number.isInteger(total) && total > verses.length
+                ? [genVerseBrowseAction(bible, remembered)]
+                : []),
             genVerseChangeBibleAction(bible, remembered, verses),
             genVerseWebSearchAction(remembered, bible),
         ],

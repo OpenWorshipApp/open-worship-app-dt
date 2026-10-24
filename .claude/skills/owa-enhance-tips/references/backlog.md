@@ -1,5 +1,19 @@
 # Tips backlog — `TP-xx`
 
+## TP-10 · Fresh Reader harvest and localized search gaps remain — `open` · S2 · reader
+
+**Evidence (2026-10-22).** Four new controls are inventoried and taught: the
+passage, verse and resource-file assistant buttons and Create the provided KJV.
+Source leads fell from seven to zero. The first live pass still reports four
+passage-name data labels; do not copy those operator-specific labels into the
+shipped inventory. The full state walk is outstanding, so 175/175 English
+coverage remains provisional. Khmer search is 138/175 and French is 149/175;
+ACTED stays 41/122, with 21 existing not-searchable warnings.
+**Next.** Complete the state walk, account for dynamic name links without
+recording the operator's passage, then improve localized search and safe actions
+under TP-07. Both changed tips passed All tips search and Show it in English
+and Khmer; they are self-guided.
+
 What `/owa-enhance-tips` runs found and did not fix in the run, under stable
 ids, so a later run starts from the truth. A finding owned by another skill is
 filed there and linked here: `EN-xx` (`owa-enhance`, app bugs such as an

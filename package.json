@@ -5,7 +5,7 @@
     "gitRepository": "https://github.com/OpenWorshipApp/open-worship-app-dt",
     "homepage": "https://www.openworship.app",
     "msStoreProductId": "",
-    "version": "2026.10.01",
+    "version": "2026.10.24",
     "type": "commonjs",
     "main": "./electron-build/electron/index.js",
     "scripts": {
@@ -178,7 +178,7 @@
         "cross-env": "^10.1.0",
         "dependency-cruiser": "^17.4.3",
         "diff": "^9.0.0",
-        "electron": "^44.3.0",
+        "electron": "^44.9.2",
         "electron-builder": "^26.15.3",
         "eslint": "^10.5.0",
         "eslint-plugin-react-hooks": "^7.1.1",

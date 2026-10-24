@@ -24,7 +24,7 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { downloadVideoOrAudio, timeToTimeString } from '../server/appHelpers';
 import { fsMove, getTempPath } from '../server/fileHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
+import { createSimpleToastUpdater } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
@@ -163,6 +163,10 @@ function rendChild(
 async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
     const download = async (videoUrl: string) => {
+        // One toast from "downloading" to the outcome (the audios' way): two,
+        // and the first, held open by the pointer on it, still said
+        // "please wait" beside "downloaded successfully".
+        const updateDownloadToast = createSimpleToastUpdater();
         try {
             // Stage in the OS temp dir, not `getDefaultDataDir()`: that one is
             // hardcoded to Desktop/open-worship-data, so it ignored both the
@@ -174,7 +178,7 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 true,
                 // Only once the media tools are there -- see the function.
                 () => {
-                    showSimpleToast(
+                    updateDownloadToast(
                         title,
                         `Downloading video from "${videoUrl}", please wait...`,
                     );
@@ -187,7 +191,7 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
             );
             const downloadedFilePath = await destFileSource.genNextFilePath();
             await fsMove(filePath, downloadedFilePath);
-            showSimpleToast(
+            updateDownloadToast(
                 title,
                 `Video downloaded successfully, file path: "${downloadedFilePath}"`,
             );
@@ -199,7 +203,7 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 return;
             }
             handleError(error);
-            showSimpleToast(
+            updateDownloadToast(
                 title,
                 toDownloadFailureMessage(
                     tran('Error occurred during downloading video'),

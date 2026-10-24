@@ -1,7 +1,7 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~970 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..65 and a context-menu-item matrix CM-01..101, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the inline Review Bible import panel, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch — ON by default, and only an explicit `ai-enabled: "false"` turns it off — strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
-argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "prod [focus]" to build the release and test the PACKAGED app under release/ — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) and a DRAG-AND-DROP pass (an internal drag, a drop on a hidden screen and a real file dropped from the disk through owa_drop_files — DD-08/12/15, §6h; the argument "dnd" runs all DD-01..19) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~970 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..65 and a context-menu-item matrix CM-01..101, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the inline Review Bible import panel, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch — ON by default, and only an explicit `ai-enabled: "false"` turns it off — strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
+argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "dnd" for every drag-and-drop pairing (DD-01..19) — or "full" for a tracked full-coverage run — or "prod [focus]" to build the release and test the PACKAGED app under release/ — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
 # OWA Robot Test — QA e2e via the `owa-devtools` MCP
@@ -72,7 +72,7 @@ npm run dev ──► Vite (localhost:3000, https)
 - `chrome-devtools-mcp` present (the npm dependency `owa-devtools` is built on)
   and the **`owa-devtools`** MCP registered (`./.mcp.json`, see above; its path
   is repo-relative, so start the client from the repo root). AI features must be
-  ON in Settings → Others — with them off the app opens no CDP endpoint at all.
+  ON in Settings → AI Providers — with them off the app opens no CDP endpoint at all.
 - Only ONE Open Worship App instance per userData can run (single-instance lock; dev keeps its
   own `<userData>-dev`, so it runs beside a packaged app). If one is already
   running with the debugger, reuse it instead of starting another.
@@ -111,6 +111,7 @@ through a snapshot:
 | `owa_list_screens`                      | The presentation screens showing right now + the displays available — use it in the mandatory screen block (§6a) instead of inferring from target enumeration.                            |
 | `owa_hide_screens`                      | Hide one screen by id, or all of them. **Destructive** — it takes content off a projector; never call it on a display the user says is in live use.                                       |
 | `owa_help_search` / `owa_help_page`     | Search/read the bundled knowledge (`manual` = the W-xx recipes in references/user-workflows.md, `internal` = these notes) by id.                                                          |
+| `owa_drag` / `owa_drop_files`          | Drag one control onto another by their words (sealed like the browser's), and drop real fixture files or folders from the disk onto a control — the mandatory drag-and-drop block (§6h). `owa_drop_files` exists on the stdio door only. |
 | `owa_guide_start` / `_step` / `_status` | Draw the numbered walkthrough card in the app window. Not needed for QA; it is what the in-app chatbot uses.                                                                              |
 
 ### 1. Is the app already running?
@@ -561,7 +562,10 @@ restarting from zero. This is how a full-coverage pass can span several sessions
    start them before the settings churn rather than after. **Trash both files as soon as
    their evidence is captured** — while the Background panel is still the open one — so
    the run cannot end with ~100 MB of debris in the user's data dir.
-5. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
+5. **Mandatory drag-and-drop block §6h (`DD-08, DD-12, DD-15`)** — while the run sheet,
+   the Background panel and the Mini Screen are still the open ones; its teardown before
+   anything reloads the windows.
+6. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
    the `LT-03..05` theme spot-checks, which ride on `ST-04/05`. Restore everything. Each
    `Apply Settings` (`ST-08`) reloads every window, so these go **very last** — and the
    locale block needs two of them (switch, then switch back).
@@ -1027,6 +1031,74 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
 statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` and
 `<key>.xml.cache` are gone.
 
+### 6h. MANDATORY: drag and drop `[DD-08, DD-12, DD-15]` (every run, every focus; `dnd` runs all DD-01..19)
+
+Drag and drop is the one gesture no click, key or data tool exercises, and the bug it
+hides passes every unit test: a handler that `await`s before writing its drag data, or
+before reading a drop's, works on a plain object and does nothing under a real mouse —
+Chromium lets `dragstart` write and `drop` read only while the handler is running. That
+is how a Bible history row's drag shipped broken (2026-10-22). Three tools, each for
+what it can see:
+
+| Tool | What it is | Use it for |
+| ---- | ---------- | ---------- |
+| `owa_drag` `{from, to, place}` | Synthetic page events, both ends by their words; pointer over + press first, and its `DataTransfer` **sealed** as Chromium seals one (a copy taken when `dragstart` returns, emptied after `drop`) | Every app-internal drag: rows, slides, swatches, foreground widgets, tabs, reorders (`place: before/after`) |
+| chrome-devtools `drag` `{from_uid, to_uid}` | The browser's own drag (CDP drag interception), by snapshot uid | A second opinion on a drop that looks wrong, and labels with a twin. It reports the drag's END in page coordinates, so a tab strip reads a drop inside the window as torn off — use `owa_drag` for tabs |
+| `owa_drop_files` `{paths, to}` | Real files or folders from the disk, dropped on a control found by its words through CDP's `Input.dispatchDragEvent` (enter → over → pause → over → drop). **Stdio door only** (never the chatbot's); paths absolute and under `test-results/` or the temp folder | Everything a person drags in from Explorer: file lists, the slide canvas and previewer, Resources folders, Settings → Bible archives, the 🤖 ask box |
+
+Every drop is **read back**, never trusted: `accepted` / `dropped` only say the target
+agreed and the drop reached its handler, not that the handler did anything. Read the
+list it went into (`owa_presenting_flow info`, `owa_bible_item list`,
+`owa_media_file list`, `owa_list_screens`, `owa_slide_file slides`, the folder on disk).
+
+**Fixtures** go in `test-results/robot-test/run-<runid>/fixtures/` (gitignored, inside the
+allowed root): a tiny PNG, a WAV, an HTML page, a copied `.ows` / `.owb` / `.owpf`, a
+folder holding one text file — written by the run, never a user's real file. Names start
+`zz-dnd-` so the teardown can find every copy.
+
+The block (mandatory, ~2 minutes):
+
+1. **`[DD-08]`** Create a scratch run sheet (`owa_presenting_flow create zz-dnd-<runid>`),
+   open the Presenting Flows panel, `owa_drag` a Documents row onto the sheet's name row.
+   Pass: `owa_presenting_flow info` lists one `appDocument` line.
+2. **`[DD-12]`** With the screens **hidden** (never on a screen in live use — EX-02), note
+   what screen 0 holds (`owa_list_screens`), `owa_drag` a colour swatch from Background →
+   **Colors** onto its Mini Screen card, read it back, then put the old background back the
+   same way. A camera tile with no camera running raises **Camera Error** — the person's
+   Ok, so do not use cameras in this block.
+3. **`[DD-15]`** `owa_drop_files` the fixture PNG onto Background → **Images** (aim at the
+   panel's folder header). Pass: the file is in the images folder and its tile shows.
+4. **Teardown, always:** `owa_presenting_flow delete` the sheet, `owa_media_file delete`
+   the picture (both go to the trash with an `undoId`). Confirm nothing named `zz-dnd-`
+   is left in either folder.
+
+**`dnd` focus** runs every DD row (coverage-matrix.md §DD) in the same way. Three rows
+leave something only the person can take away and are run only when they agree: DD-16
+(a Resources folder — **Remove Folder** is refused to the tools), DD-17 (Settings → Bible
+opens an import dialog — **Cancel** is theirs), DD-18 (the 🤖 and ✨ windows ask the AI
+caution first — the dev **Open** only with their explicit word in this conversation).
+
+**Traps, all met on 2026-10-22:**
+
+- **A drop sent too soon is lost.** Chromium discards a drop the page has not yet
+  accepted on `dragover`, and a busy panel (Resources) answers late — `owa_drop_files`
+  sends a second `dragover` after a pause for exactly that. A hand-rolled CDP drop
+  without it reports `drop ok` and does nothing.
+- **Coordinates are CSS pixels of the page**, not of a screenshot: on a 150% display a
+  screenshot is 1.5× the page. `owa_drop_files` aims by label, so this only bites a
+  hand-rolled drop.
+- **A label with a twin is refused** (`isPressSafe`): two colour palettes both say
+  `white`, a run sheet's name row grows with its lines. Scope it (`Background > red`) or
+  use the chrome `drag` by uid.
+- **A drop on a run-sheet LINE is a CC, on its NAME row an append** — and a passage on a
+  line does both, which is the design (PL-89..93), not a double add.
+- **A torn-off ✨ tab is a new window** that closes with the next app restart; it is not
+  lost data.
+
+**Report line** (required): DD-08 / DD-12 / DD-15 statuses with the read-back evidence,
+what screen 0 held before and after DD-12, and the teardown listing showing no `zz-dnd-`
+leftovers.
+
 ### 7. Report
 
 - Write the full report to `test-results/robot-test/report-<timestamp>.md` (this folder
@@ -1045,6 +1117,9 @@ statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` an
   no other row touches the extra-bin yt-dlp/ffmpeg/qjs, **plus `MD-04`** — how many
   leftovers the pre-download sweep found and the post-run listing showing both dirs clean.
   BLOCKED is acceptable only with no network, and must say so; `MD-04` is never BLOCKED.
+- **Every report** MUST also contain the **mandatory drag-and-drop block** (§6h): the
+  `DD-08/DD-12/DD-15` statuses, each with what was read back after the drop, and the
+  teardown listing with no `zz-dnd-` file left.
 - In **presenting flow deep mode** (§6f) the report MUST additionally carry: the per-phase table
   (P0..P10 → status), the coverage summary over the 69-row scope set, the fixture's name
   and **what was torn down vs. left behind**, and — because they are the rows most easily
@@ -1072,8 +1147,9 @@ statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` an
   media block's teardown actually happened (`MD-04`, §6e step 5): the videos and audios
   dirs hold no copy of the canonical title and no `temp-*.part`. This is the one block that writes
   ~100 MB per run, and the app suffixes duplicates instead of overwriting, so a missed
-  teardown compounds silently. The presenting flow fixture (`zz-robot-<runid>`, §6f) and any
-  scratch document/web item go the same way.
+  teardown compounds silently. The presenting flow fixture (`zz-robot-<runid>`, §6f), the
+  drag-and-drop block's `zz-dnd-` sheet and picture (§6h) and any scratch document/web item
+  go the same way.
 - If YOU started `npm run dev` in step 2, **kill that terminal** to stop Vite + Electron
   (`concurrently -k` tears down both children).
 - In **prod mode**, `prod-app.mjs stop` the packaged app you launched, restore the
@@ -1157,7 +1233,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - **MCP "connection refused"**: the MCP attaches to a running Electron; if it errors, the
   app isn't up yet — re-run the wait script (step 2) before retrying MCP tools. Check
   `<temp>/open-worship-app-cdp/` for a published instance; an empty dir means either no
-  app is running or AI features are switched off in Settings → Others.
+  app is running or AI features are switched off in Settings → AI Providers.
 - **Wrong target selected**: there is normally ONE main window target — keep using it and
   switch pages with `navigate_page` (step 5), not by opening new tabs. A separate
   `screen.html?screenId=N` target exists **only while that screen is showing** — select

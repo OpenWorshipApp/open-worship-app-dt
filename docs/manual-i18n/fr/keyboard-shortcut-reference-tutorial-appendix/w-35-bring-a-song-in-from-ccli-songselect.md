@@ -3,7 +3,7 @@ id: W-35
 title: "Importer un chant depuis CCLI SongSelect"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 4f636708f57a2f05
+translatedFrom: 1fd2e3f1059ee300
 ---
 # W-35 — Importer un chant depuis CCLI SongSelect
 
@@ -17,7 +17,7 @@ les identifiants d'API que CCLI vous a délivrés (un **Client ID**, une **Subsc
 > de remplacement ; le passage final de la connexion vers la vraie page de consentement de CCLI est vérifié
 > dans le code, mais **pas observé** de bout en bout, faute de vrais identifiants.
 
-1. Ouvrez **[en:tran:Settings]** → **[en:tran:Others]**. Entre la carte des clés d'IA et **[en:tran:Extra Binaries]**
+1. Ouvrez **[en:tran:Settings]** → **[en:tran:Others]**. Au-dessus d'**[en:tran:Extra Binaries]**
    se trouve une carte intitulée **[en:tran:SongSelect Integration]**, avec un
    bouton **SongSelect ↗** qui ouvre songselect.ccli.com dans votre navigateur. Une carte
    qui n'affiche que son titre est repliée — cliquez sur le titre pour l'ouvrir. 📸

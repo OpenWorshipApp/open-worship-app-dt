@@ -132,6 +132,15 @@ export function sendMenuClicked(menuData: any, win?: BrowserWindow | null) {
     return true;
 }
 
+// Every window hears it, and each listener acts only on its own `clickData`
+// (every handler already ignores keys it does not own), so a window with
+// nothing to do with the item -- a screen, the chatbot -- does nothing.
+export function sendMenuClickedToAllWindows(menuData: any) {
+    for (const win of BrowserWindow.getAllWindows()) {
+        sendMenuClicked(menuData, win);
+    }
+}
+
 function getCustomMenuItems(key: string) {
     const items = Object.entries(customMenusData)
         .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))

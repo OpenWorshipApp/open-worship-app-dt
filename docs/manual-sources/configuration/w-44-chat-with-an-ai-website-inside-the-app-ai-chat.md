@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [CB-68]
 screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-44 — Chat with an AI website inside the app (AI Chat)
 
@@ -23,7 +23,7 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    of the **🤖** and left of the **?**, or open **Help** → **AI Chat** in the menu bar. From
    a window with no top bar, use **Tools** → **[en:tran:AI Chat]**. A narrow window opens beside the
    app, the same size and place as the help window. 📸 It works whether or not **AI
-   features** is switched on in Settings → Others: this window holds no key and opens no
+   features** is switched on in Settings → **[en:tran:AI Providers]**: this window holds no key and opens no
    door of the app's.
 2. The window opens on a card, **Choose an AI chat to use in this window**, listing the
    sites. Click one. The site loads in the window, and its own sign-in appears if you are
@@ -101,5 +101,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

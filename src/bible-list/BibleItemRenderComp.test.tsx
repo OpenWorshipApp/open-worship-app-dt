@@ -8,6 +8,8 @@ const h = vi.hoisted(() => {
     return {
         appProvider: { isPagePresenter: false, isPageReader: true },
         handleBibleItemSelectingMock: vi.fn(),
+        openBibleItemContextMenuMock: vi.fn(),
+        openInChatbotMock: vi.fn(),
         viewController: {
             isLookup: true,
             selectedBibleItem: { id: 9 },
@@ -69,7 +71,7 @@ vi.mock('../others/AttachBackgroundManager', () => ({
 vi.mock('../others/AttachBackgroundIconComp', () => ({ default: () => null }));
 vi.mock('./bibleHelpers', () => ({
     improveBibleItemTitleOnHover: vi.fn(),
-    openBibleItemContextMenu: vi.fn(),
+    openBibleItemContextMenu: h.openBibleItemContextMenuMock,
     useIsOnScreen: () => false,
 }));
 vi.mock('../helper/FileSource', () => ({
@@ -83,6 +85,14 @@ vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
 }));
 vi.mock('../others/AppSuspenseComp', () => ({
     default: ({ children }: { children: unknown }) => children,
+}));
+vi.mock('../helper/ai/bibleItemChatbotMenuHelpers', () => ({
+    genOpenInChatbotContextMenu: (bibleItem: unknown) => [
+        {
+            menuElement: 'Open in Chatbot',
+            onSelect: () => h.openInChatbotMock(bibleItem),
+        },
+    ],
 }));
 
 import BibleItemRenderComp from './BibleItemRenderComp';
@@ -188,5 +198,25 @@ describe('BibleItemRenderComp', () => {
             h.viewController.setLookupContentFromBibleItem,
         ).not.toHaveBeenCalled();
         expect(h.handleBibleItemSelectingMock).not.toHaveBeenCalled();
+    });
+
+    // Asked for 2026-10-22: beside Open, the passage handed to the
+    // assistant the way a Bible view's 🤖 hands it.
+    test('its menu offers Open in Chatbot right after Open', async () => {
+        await act(async () => {
+            host.querySelector('li')!.dispatchEvent(
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            );
+        });
+        expect(h.openBibleItemContextMenuMock).toHaveBeenCalledTimes(1);
+        const menuItems = h.openBibleItemContextMenuMock.mock.calls[0][4];
+        expect(
+            menuItems.map((item: { menuElement: string }) => item.menuElement),
+        ).toEqual(['Open', 'Open in Chatbot']);
+        menuItems[1].onSelect();
+        expect(h.openInChatbotMock).toHaveBeenCalledWith(bibleItem);
     });
 });

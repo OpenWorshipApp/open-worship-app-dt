@@ -140,6 +140,19 @@
         ],
         "lineage": ["lignée", "généalogie", "ancêtres", "descendants", "aïeux"],
         "jesus": ["jésus", "christ"],
+        "lineageOrder": ["dans l'ordre", "par ordre"],
+        "notStated": [
+            "ne dit pas",
+            "ne précise pas",
+            "n'indique pas",
+            "n’indique pas",
+            "ne mentionne pas",
+            "pas précisé",
+            "pas mentionné",
+            "n'est pas indiqué",
+            "n’est pas indiqué"
+        ],
+        "map": ["carte"],
         "count": ["combien", "nombre de"],
         "countChildren": ["enfants", "fils", "filles"],
         "countSpouses": [
@@ -152,8 +165,36 @@
         ],
         "countSiblings": ["frères", "sœurs", "soeurs"],
         "countParents": ["parents", "père", "mère"],
+        "vocabulary": [
+            "vocabulaire",
+            "chaque mot",
+            "tous les mots",
+            "mot à mot",
+            "mot par mot",
+            "étudier les mots",
+            "apprendre les mots"
+        ],
         "previous": ["chapitre précédent", "verset précédent"],
         "next": ["chapitre suivant", "verset suivant"],
-        "showPassage": ["montre", "affiche", "lis", "cite"]
+        "showPassage": ["montre", "affiche", "lis", "cite"],
+        "verseNumber": ["versets", "verset", "v."],
+        "beforeAsk": ["avant", "auparavant", "précède"],
+        "afterAsk": ["après", "ensuite", "suivant", "suite"],
+        "timeAsk": [
+            "combien de temps",
+            "combien de jours",
+            "combien d'années",
+            "combien d’années",
+            "quand"
+        ],
+        "namesAsk": [
+            "qui est dans",
+            "qui sont dans",
+            "quelles personnes",
+            "quels personnages",
+            "personnages",
+            "quels lieux sont",
+            "lieux nommés"
+        ]
     }
 }

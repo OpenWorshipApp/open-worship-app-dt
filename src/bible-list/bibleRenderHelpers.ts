@@ -17,6 +17,10 @@ import {
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import CacheManager from '../others/CacheManager';
+import {
+    toVerseListText,
+    type BibleVerseNumberStyleType,
+} from './bibleVerseTextHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import {
     getCustomVerseText,
@@ -435,6 +439,7 @@ class BibleRenderHelper {
         target: BibleTargetType,
         isSkipExtra = false,
         range?: { start: number; count: number },
+        verseNumberStyle: BibleVerseNumberStyleType = 'parenthesis',
     ): Promise<BibleTextSectionType[] | null> {
         const verseTextList = await this.toVerseTextList(
             bibleKey,
@@ -471,20 +476,22 @@ class BibleRenderHelper {
                 chapter: first.chapter,
                 localeChapter: first.localeChapter,
                 title,
-                text: toVerseListText(group),
+                text: toVerseListText(group, verseNumberStyle),
             });
         }
         return sectionList;
     }
     /**
      * `(16): For God so loved… (17): …` — and, across chapters, each
-     * chapter's text under its own title line.
+     * chapter's text under its own title line. `verseNumberStyle` numbers
+     * the verses `16: …` or not at all instead.
      */
     async toText(
         bibleKey: string,
         target: BibleTargetType,
         isSkipExtra = false,
         maxChapterCount?: number,
+        verseNumberStyle: BibleVerseNumberStyleType = 'parenthesis',
     ) {
         if (checkIsCrossChapterTarget(target)) {
             const sectionList = await this.toTextSectionList(
@@ -494,6 +501,7 @@ class BibleRenderHelper {
                 maxChapterCount === undefined
                     ? undefined
                     : { start: 0, count: maxChapterCount },
+                verseNumberStyle,
             );
             if (sectionList !== null) {
                 return sectionList
@@ -509,7 +517,7 @@ class BibleRenderHelper {
                 isSkipExtra,
             );
             if (verseTextList !== null) {
-                return toVerseListText(verseTextList);
+                return toVerseListText(verseTextList, verseNumberStyle);
             }
         }
         const bibleVersesKey = bibleRenderHelper.toBibleVersesKey(
@@ -518,14 +526,6 @@ class BibleRenderHelper {
         );
         return `😟Unable to render text for ${bibleVersesKey}`;
     }
-}
-
-function toVerseListText(verseTextList: CompiledVerseType[]) {
-    return verseTextList
-        .map(({ localeVerse, text }) => {
-            return `(${localeVerse}): ${text}`;
-        })
-        .join(' ');
 }
 
 export const bibleRenderHelper = new BibleRenderHelper();

@@ -26,8 +26,15 @@ import {
     getLookupVerseBibleKey,
     shortToReferenceTitle,
     shortToVerseCopyData,
+    shortToVerseTitle,
 } from '../location-name-lookup/bibleVerseHelpers';
-import { DEFAULT_LANG_CODE } from '../lang/langHelpers';
+import {
+    DEFAULT_LANG_CODE,
+    DEFAULT_LOCALE,
+    getLocalBibleCrossRef,
+    supportedLocales,
+    type LocaleType,
+} from '../lang/langHelpers';
 import type { LookupManagersType } from '../location-name-lookup/lookupDataHelpers';
 import {
     acquireLookupData,
@@ -38,22 +45,53 @@ import {
     getSelectedLookupLangCode,
 } from '../location-name-lookup/lookupLangHelpers';
 import { resolveLocationReference } from '../location-name-lookup/lookupRecordHelpers';
+import {
+    listNameFormIds,
+    toMainNameId,
+} from '../location-name-lookup/lookupNameAliasHelpers';
 import type {
+    LocationRecordExtraType,
     LookupLocationRecordType,
     LookupNameRecordType,
     LookupRecordResolverType,
+    NameRecordExtraType,
     QuotedVerseType,
 } from './agentLookupRecordHelpers';
 import {
+    JERUSALEM_PLACE_ID,
+    listNearbyPlaces,
+    listPlacePeople,
+    listSameNameRecords,
     MAX_QUOTED_VERSES,
+    mergeVerseKeyLists,
     toEnglishVerseRef,
     toLocationRecordResult,
     toNameRecordResult,
+    toPlaceDistance,
     toPlainRecordText,
     toQuotedText,
+    toRecordBrief,
 } from './agentLookupRecordHelpers';
+import type {
+    CitedRefType,
+    CrossRefThemeType,
+    VerseCrossRefsType,
+} from './agentCrossRefHelpers';
+import {
+    listAroundOtherTestament,
+    toCrossRefSpan,
+    toPassageCrossRefs,
+    toPlainThemeTitle,
+} from './agentCrossRefHelpers';
+import type { PassageNoteRowType } from './agentPassageNoteHelpers';
+import {
+    collectPassageMarks,
+    collectPassageNoteRefs,
+    toPassageNoteRow,
+    toPassageNotesFacts,
+} from './agentPassageNoteHelpers';
 import { getAllLocalBibleInfoList } from './bible-helpers/bibleDownloadHelpers';
-import { getVerses } from './bible-helpers/bibleInfoHelpers';
+import { getBibleInfo, getVerses } from './bible-helpers/bibleInfoHelpers';
 import { checkVerseFitsChapter } from './bibleVerseFindHelpers';
 import {
     getModelChapterCount,
@@ -77,6 +115,9 @@ export type AgentLookupRequestType = {
     near?: unknown;
     // With a passage, the people and places of the names lookup in it.
     names?: unknown;
+    // With a passage, what the app's cross references say it leads to
+    // (`agentCrossRefHelpers.ts`, 2026-10-23).
+    related?: unknown;
     // Find people (kind "name") or places (kind "location") by words --
     // what the lookup panel's own **Search names** box does. Answers the
     // matches with their ids; nothing is read whole (2026-10-19, EC-370).
@@ -226,17 +267,23 @@ async function readPassages(bibleKey: string, refs: string) {
             bible: bibleKey,
             refs: others.join('; '),
         });
-        for (const verse of found?.verses ?? []) {
-            passages.push({
-                key: String(verse.key),
-                ref: String(verse.ref),
-                ...(typeof verse.title === 'string'
-                    ? { title: verse.title }
-                    : {}),
-                text: String(verse.text),
-            });
-        }
         unread = Array.isArray(found?.unread) ? found.unread : [];
+        for (const verse of found?.verses ?? []) {
+            // The finder resolves book names in every installed language,
+            // but its text is a 300-character search preview (EC-366).
+            // Read the resolved key through the same bounded passage reader
+            // as a code, so the model never has to fill in a cut quotation.
+            const passage = await readKeyedPassage(
+                bibleKey,
+                String(verse.key),
+                MAX_PASSAGE_CHARS,
+            );
+            if (passage === null) {
+                unread.push(String(verse.ref));
+            } else {
+                passages.push(passage);
+            }
+        }
         notFound = Array.isArray(found?.notFound)
             ? found.notFound.filter((one: any) => {
                   return (
@@ -491,6 +538,509 @@ async function readPassageNames(
     }
 }
 
+// A passage's cross references are read this far -- one small read of the
+// bundle a verse -- and told within this many characters, so a card that
+// keeps them stays inside what a card keeps (`MAX_LOOKUP_FACTS_CHARS`).
+const MAX_CROSS_REF_VERSES = 80;
+// The chapters around it -- the one before, the rest of its own, the one
+// after -- are read this far for the other Testament alone.
+const MAX_AROUND_VERSES = 120;
+const MAX_AROUND_REFS = 6;
+// What a passage's cross references may take of a card: the room its own
+// words leave under the card's 16 000 characters, within these two -- a
+// 36-verse chapter (John 3) had kept two references a theme and no quotes
+// at a fixed 7 000 (2026-10-23, `EC-420`).
+const MIN_CROSS_REFS_CHARS = 6000;
+const MAX_CROSS_REFS_CHARS = 9000;
+const CARD_CHARS_FOR_CROSS_REFS = 15000;
+const MAX_QUOTED_CROSS_REFS = 3;
+// What a passage's lists name -- the button's answer shows six of each.
+const MAX_LISTED_CROSS_REFS = 8;
+const CROSS_REF_QUOTE_CHARS = 160;
+
+// One line: the prompt says what each list is (`LOOKUP_SYSTEM_PROMPT`),
+// and this rides every question of the conversation.
+export const CROSS_REF_SOURCE_TEXT =
+    "The app's own cross references (the Reader's Cross References panel); " +
+    'from: the verses that lead there, fromCount how many in all.';
+
+type NamedRefType = CitedRefType & {
+    title?: string;
+    text?: string;
+    fromCount?: number;
+};
+
+// The verses a reference is led to from, named this far and counted past
+// it: around Genesis 8, Luke 17:26-27 is led to from twenty-two, and six
+// such lists pushed the record over its bound and every theme down to two
+// references (2026-10-23).
+const MAX_FROM_NAMED = 6;
+
+/** A reference with its title in the Bible, and its words when quoted. */
+async function toNamedRef(
+    bibleKey: string,
+    cited: CitedRefType,
+    isQuoted: boolean,
+): Promise<NamedRefType> {
+    const counted: NamedRefType =
+        cited.from.length > MAX_FROM_NAMED
+            ? {
+                  ...cited,
+                  from: cited.from.slice(0, MAX_FROM_NAMED),
+                  fromCount: cited.from.length,
+              }
+            : cited;
+    const passage = await readKeyedPassage(
+        bibleKey,
+        cited.key,
+        CROSS_REF_QUOTE_CHARS,
+    ).catch(() => {
+        return null;
+    });
+    if (passage === null) {
+        return counted;
+    }
+    return {
+        ...counted,
+        title: passage.title ?? passage.ref,
+        ...(isQuoted ? { text: passage.text } : {}),
+    };
+}
+
+/** The themes the bundle has for each verse, the verses with none left out. */
+async function readVerseCrossRefs(locale: LocaleType, verseKeyList: string[]) {
+    const verseList: VerseCrossRefsType[] = [];
+    for (const verseKey of verseKeyList) {
+        const span = toCrossRefSpan(verseKey);
+        if (span === null) {
+            continue;
+        }
+        const themes = await getLocalBibleCrossRef(locale, {
+            bookKey: span.bookKey,
+            chapter: span.chapter,
+            verse: span.verse,
+        }).catch(() => {
+            return null;
+        });
+        if (Array.isArray(themes) && themes.length > 0) {
+            verseList.push({
+                verse: verseKey,
+                themes: (themes as CrossRefThemeType[]).map((theme) => {
+                    return {
+                        ...theme,
+                        title: toPlainThemeTitle(String(theme.title ?? '')),
+                    };
+                }),
+            });
+        }
+    }
+    return verseList;
+}
+
+/**
+ * The verses of the chapters around a passage -- the one before, the rest
+ * of its own, the one after -- in order, the passage's own left out.
+ */
+async function listAroundVerseKeys(
+    bibleKey: string,
+    key: string,
+    passageKeySet: Set<string>,
+) {
+    const span = toCrossRefSpan(key);
+    if (span === null) {
+        return [];
+    }
+    let chapterCount: number;
+    try {
+        chapterCount = getModelChapterCount(span.bookKey);
+    } catch (_error) {
+        return [];
+    }
+    const keyList: string[] = [];
+    const firstChapter = Math.max(1, span.chapter - 1);
+    const lastChapter = Math.min(chapterCount, span.endChapter + 1);
+    for (
+        let chapter = firstChapter;
+        chapter <= lastChapter && keyList.length < MAX_AROUND_VERSES;
+        chapter++
+    ) {
+        const verseCount = await countChapterVerses(
+            bibleKey,
+            span.bookKey,
+            chapter,
+        );
+        for (
+            let verse = 1;
+            verse <= verseCount && keyList.length < MAX_AROUND_VERSES;
+            verse++
+        ) {
+            const verseKey = `${span.bookKey} ${chapter}:${verse}`;
+            if (!passageKeySet.has(verseKey)) {
+                keyList.push(verseKey);
+            }
+        }
+    }
+    return keyList;
+}
+
+/**
+ * What the app's cross references say a passage leads to, in the
+ * language of the Bible it was read in when the app has that language's
+ * bundle (the Khmer Bible gets the Khmer themes), else in English. Null
+ * when the bundle has nothing for it. One verse is told whole -- every
+ * theme -- a passage the way `toPassageCrossRefs` tells it, cut to
+ * the room its passage leaves (6 000-9 000) by its per-verse themes first.
+ */
+async function readPassageCrossRefs(
+    bibleKey: string,
+    key: string,
+    passageChars = 0,
+) {
+    const verseKeyList = (await listPassageVerseKeys(bibleKey, key)).slice(
+        0,
+        MAX_CROSS_REF_VERSES,
+    );
+    if (verseKeyList.length === 0) {
+        return null;
+    }
+    const bibleLocale = (await getBibleInfo(bibleKey))?.locale;
+    const locale =
+        bibleLocale !== undefined && supportedLocales.includes(bibleLocale)
+            ? bibleLocale
+            : DEFAULT_LOCALE;
+    const verseList = await readVerseCrossRefs(locale, verseKeyList);
+    if (verseList.length === 0) {
+        return null;
+    }
+    const isOneVerse = verseList.length === 1;
+    const bookOrder = Object.keys(englishBookNameMap);
+    const summary = toPassageCrossRefs(verseList, {
+        passageKey: key,
+        bookOrder,
+        ...(isOneVerse
+            ? { maxCited: 12, maxThemesPerVerse: 12, maxRefsPerTheme: 10 }
+            : {
+                  maxCited: MAX_LISTED_CROSS_REFS,
+                  maxOtherTestament: MAX_LISTED_CROSS_REFS,
+              }),
+    });
+    const mostCited: NamedRefType[] = [];
+    for (const [index, cited] of summary.mostCited.entries()) {
+        mostCited.push(
+            await toNamedRef(bibleKey, cited, index < MAX_QUOTED_CROSS_REFS),
+        );
+    }
+    const otherTestament: NamedRefType[] = [];
+    for (const [index, cited] of summary.otherTestament.entries()) {
+        otherTestament.push(await toNamedRef(bibleKey, cited, index < 2));
+    }
+    const aroundList = await readVerseCrossRefs(
+        locale,
+        await listAroundVerseKeys(bibleKey, key, new Set(verseKeyList)),
+    );
+    const otherTestamentAround: NamedRefType[] = [];
+    for (const [index, cited] of listAroundOtherTestament(aroundList, {
+        passageKey: key,
+        bookOrder,
+        shownKeys: [...summary.mostCited, ...summary.otherTestament].map(
+            (one) => {
+                return one.key;
+            },
+        ),
+        max: MAX_AROUND_REFS,
+    }).entries()) {
+        otherTestamentAround.push(await toNamedRef(bibleKey, cited, index < 1));
+    }
+    const result = {
+        source: CROSS_REF_SOURCE_TEXT,
+        language: locale,
+        verseCount: summary.verseCount,
+        themeCount: summary.themeCount,
+        referenceCount: summary.referenceCount,
+        mostCited,
+        otherTestamentName: summary.otherTestamentName,
+        otherTestament,
+        otherTestamentAround,
+        byVerse: await toTitledByVerse(bibleKey, summary.byVerse),
+    };
+    return fitPassageCrossRefs(
+        result,
+        Math.min(
+            MAX_CROSS_REFS_CHARS,
+            Math.max(
+                MIN_CROSS_REFS_CHARS,
+                CARD_CHARS_FOR_CROSS_REFS - passageChars,
+            ),
+        ),
+    );
+}
+
+/**
+ * Each verse's theme references as the Bible names them (`លោកុប្បត្តិ ៩:១១`,
+ * not `GEN 9:11`), a key the Bible cannot place left as it is
+ * (2026-10-23, `EC-419`): a model named only the references it had a title
+ * for -- verse 22's promise as Genesis 9:11 and 9:15, where its theme also
+ * gave Isaiah 54:9 and Jeremiah 33:20 as keys.
+ */
+async function toTitledByVerse(
+    bibleKey: string,
+    byVerse: { verse: string; themes: { theme: string; refs: string[] }[] }[],
+) {
+    const titleMap = new Map<string, string>();
+    const toTitle = async (key: string) => {
+        if (!titleMap.has(key)) {
+            const title = await shortToVerseTitle(bibleKey, key).catch(() => {
+                return null;
+            });
+            titleMap.set(key, title ?? key);
+        }
+        return titleMap.get(key) ?? key;
+    };
+    const titled: typeof byVerse = [];
+    for (const one of byVerse) {
+        const themes: (typeof byVerse)[number]['themes'] = [];
+        for (const theme of one.themes) {
+            const refs: string[] = [];
+            for (const ref of theme.refs) {
+                refs.push(await toTitle(ref));
+            }
+            themes.push({ ...theme, refs });
+        }
+        titled.push({ ...one, themes });
+    }
+    return titled;
+}
+
+type PassageCrossRefsResultType = {
+    mostCited: NamedRefType[];
+    otherTestament: NamedRefType[];
+    otherTestamentAround: NamedRefType[];
+    byVerse: { verse: string; themes: { theme: string; refs: string[] }[] }[];
+};
+
+/**
+ * Cut to `maxChars`, keeping EVERY verse's first theme to the
+ * last (2026-10-23: cut from the end, Genesis 8:20's "Early Altars Built to
+ * the Lord" was gone and _other altars like verse 20?_ was answered "the
+ * references show none"): one theme a verse, then the quoted words past
+ * the first few, then fewer references a theme, then every quote -- and
+ * only then verses from the end.
+ */
+function fitPassageCrossRefs<T extends PassageCrossRefsResultType>(
+    result: T,
+    maxChars: number,
+) {
+    let fitted: T = result;
+    const toSize = () => {
+        return JSON.stringify(fitted).length;
+    };
+    const unquote = (list: NamedRefType[], keep: number) => {
+        return list.map((ref, index) => {
+            if (index < keep || ref.text === undefined) {
+                return ref;
+            }
+            const { text: _text, ...rest } = ref;
+            return rest;
+        });
+    };
+    // A theme's sentence is long and its references short, and the
+    // references are what a question about related verses is answered
+    // from: one theme a verse goes before fewer references a theme.
+    const steps: (() => T)[] = [
+        () => {
+            return {
+                ...fitted,
+                byVerse: fitted.byVerse.map((one) => {
+                    return { ...one, themes: one.themes.slice(0, 1) };
+                }),
+            };
+        },
+        () => {
+            return {
+                ...fitted,
+                otherTestament: unquote(fitted.otherTestament, 2),
+                otherTestamentAround: unquote(fitted.otherTestamentAround, 1),
+                mostCited: unquote(fitted.mostCited, 3),
+            };
+        },
+        () => {
+            return {
+                ...fitted,
+                byVerse: fitted.byVerse.map((one) => {
+                    return {
+                        ...one,
+                        themes: one.themes.map((theme) => {
+                            return { ...theme, refs: theme.refs.slice(0, 2) };
+                        }),
+                    };
+                }),
+            };
+        },
+        () => {
+            return {
+                ...fitted,
+                otherTestament: unquote(fitted.otherTestament, 0),
+                otherTestamentAround: unquote(fitted.otherTestamentAround, 0),
+                mostCited: unquote(fitted.mostCited, 0),
+            };
+        },
+    ];
+    for (const step of steps) {
+        if (toSize() <= maxChars) {
+            return fitted;
+        }
+        fitted = step();
+    }
+    while (fitted.byVerse.length > 0 && toSize() > maxChars) {
+        fitted = { ...fitted, byVerse: fitted.byVerse.slice(0, -1) };
+    }
+    return fitted;
+}
+
+/** `GEN 7:1-24`, or `GEN 7:1` for one verse. */
+function toRangeKey(
+    bookKey: string,
+    chapter: number,
+    from: number,
+    to: number,
+) {
+    return `${bookKey} ${chapter}:${from}${to > from ? `-${to}` : ''}`;
+}
+
+/**
+ * The person's own notes and marks on a passage's verses (2026-10-23,
+ * `agentPassageNoteHelpers.ts`), or null when there are none. The note
+ * indexes are the Reader's own -- the live ones while verses are on screen
+ * -- and each note named is read from its file for its title and first
+ * words; a note file is named, never its path.
+ */
+async function readPassageNotes(bibleKey: string, key: string) {
+    const verseKeyList = await listPassageVerseKeys(bibleKey, key);
+    if (verseKeyList.length === 0) {
+        return null;
+    }
+    const [{ readBibleNoteIndexes, fromBibleNoteRef }, FileSourceModule] =
+        await Promise.all([
+            import('../bible-list/note/bibleNoteShortVerseHelpers'),
+            import('./FileSource'),
+        ]);
+    const { pathBasename, getFileName } = await import('../server/fileHelpers');
+    const { shortVerseNoteRefs, verseAnnotationsMap } =
+        await readBibleNoteIndexes();
+    const refVersesMap = collectPassageNoteRefs(
+        shortVerseNoteRefs,
+        verseKeyList,
+    );
+    const fileRefsMap = new Map<string, [number, string[]][]>();
+    for (const [ref, verses] of refVersesMap) {
+        const parsed = fromBibleNoteRef(ref);
+        if (parsed !== null) {
+            const list = fileRefsMap.get(parsed.filePath) ?? [];
+            list.push([parsed.noteItemId, verses]);
+            fileRefsMap.set(parsed.filePath, list);
+        }
+    }
+    const notes: PassageNoteRowType[] = [];
+    for (const [filePath, idVersesList] of fileRefsMap) {
+        const data = await FileSourceModule.default
+            .getInstance(filePath)
+            .readFileJsonData()
+            .catch(() => {
+                return null;
+            });
+        const items: any[] = Array.isArray(data?.items) ? data.items : [];
+        const file = getFileName(pathBasename(filePath));
+        for (const [noteItemId, verses] of idVersesList) {
+            const item = items.find((one) => {
+                return one?.metadata?.id === noteItemId;
+            });
+            const row = toPassageNoteRow(file, item, verses);
+            if (row !== null) {
+                notes.push(row);
+            }
+        }
+    }
+    return toPassageNotesFacts(
+        notes,
+        collectPassageMarks(verseAnnotationsMap, verseKeyList),
+    );
+}
+
+/**
+ * The verses right before and right after a passage (2026-10-23): the rest
+ * of its chapter on each side, or the whole chapter before or after when it
+ * starts or ends with its chapter -- each with its title in the Bible. What
+ * a question about what came before or after is read from: `near` jumps to
+ * the next CHAPTER, and _what did Jesus teach after this?_ under Matthew
+ * 18:15-17 was answered from Matthew 19, past the verses that answer it.
+ */
+async function readPassageAround(bibleKey: string, key: string) {
+    const span = toCrossRefSpan(key);
+    if (span === null) {
+        return null;
+    }
+    let chapterCount: number;
+    try {
+        chapterCount = getModelChapterCount(span.bookKey);
+    } catch (_error) {
+        return null;
+    }
+    const { bookKey } = span;
+    let beforeKey: string | null = null;
+    if (span.verse > 1) {
+        beforeKey = toRangeKey(bookKey, span.chapter, 1, span.verse - 1);
+    } else if (span.chapter > 1) {
+        const count = await countChapterVerses(
+            bibleKey,
+            bookKey,
+            span.chapter - 1,
+        );
+        beforeKey =
+            count > 0 ? toRangeKey(bookKey, span.chapter - 1, 1, count) : null;
+    }
+    let afterKey: string | null = null;
+    const lastCount = await countChapterVerses(
+        bibleKey,
+        bookKey,
+        span.endChapter,
+    );
+    if (span.endVerse < lastCount) {
+        afterKey = toRangeKey(
+            bookKey,
+            span.endChapter,
+            span.endVerse + 1,
+            lastCount,
+        );
+    } else if (span.endChapter < chapterCount) {
+        const count = await countChapterVerses(
+            bibleKey,
+            bookKey,
+            span.endChapter + 1,
+        );
+        afterKey =
+            count > 0
+                ? toRangeKey(bookKey, span.endChapter + 1, 1, count)
+                : null;
+    }
+    const toSide = async (sideKey: string | null) => {
+        if (sideKey === null) {
+            return null;
+        }
+        const title = await shortToVerseTitle(bibleKey, sideKey).catch(() => {
+            return null;
+        });
+        return { key: sideKey, title: title ?? sideKey };
+    };
+    const before = await toSide(beforeKey);
+    const after = await toSide(afterKey);
+    return before === null && after === null
+        ? null
+        : {
+              ...(before === null ? {} : { before }),
+              ...(after === null ? {} : { after }),
+          };
+}
+
 async function readPassageRequest(request: AgentLookupRequestType) {
     const askedRefs = toText(request.ref, 400);
     if (askedRefs.length === 0) {
@@ -559,6 +1109,37 @@ async function readPassageRequest(request: AgentLookupRequestType) {
         request.names === true
             ? await resolveLangCode(toText(request.lang, 12))
             : null;
+    const around =
+        request.related === true
+            ? await readPassageAround(readBibleKey, passages[0].key).catch(
+                  () => {
+                      return null;
+                  },
+              )
+            : null;
+    const yourNotes =
+        request.related === true
+            ? await readPassageNotes(readBibleKey, passages[0].key).catch(
+                  () => {
+                      return null;
+                  },
+              )
+            : null;
+    // The cross references take the room the passage's words and the
+    // person's own notes leave.
+    const crossRefs =
+        request.related === true
+            ? await readPassageCrossRefs(
+                  readBibleKey,
+                  passages[0].key,
+                  JSON.stringify(passages).length +
+                      (yourNotes === null
+                          ? 0
+                          : JSON.stringify(yourNotes).length),
+              ).catch(() => {
+                  return null;
+              })
+            : null;
     return {
         kind: 'verse',
         bible: readBibleKey,
@@ -568,6 +1149,9 @@ async function readPassageRequest(request: AgentLookupRequestType) {
         ...(namesLang === null
             ? {}
             : await readPassageNames(readBibleKey, passages[0].key, namesLang)),
+        ...(around === null ? {} : { around }),
+        ...(yourNotes === null ? {} : { yourNotes }),
+        ...(crossRefs === null ? {} : { crossRefs }),
     };
 }
 
@@ -590,6 +1174,111 @@ function genResolver(managers: LookupManagersType): LookupRecordResolverType {
                 idOrName,
             );
         },
+        toMainNameId,
+    };
+}
+
+// The records of the same name, in the dataset's spelling OR the KJV's: in
+// Khmer, Noah the ark-builder is ណូអេ and Zelophehad's daughter ណូអា --
+// the KJV calls both Noah (2026-10-22). One pass over the records a panel
+// already holds.
+function listRecordsNamed<T extends { name: string; kjvName: string | null }>(
+    manager: { getAllRecords: () => T[] },
+    recordList: T[],
+) {
+    const nameSet = new Set(
+        recordList.flatMap((record) => {
+            return [record.name, record.kjvName ?? '']
+                .map((name) => {
+                    return name.trim().toLowerCase();
+                })
+                .filter((name) => {
+                    return name !== '';
+                });
+        }),
+    );
+    return manager.getAllRecords().filter((one) => {
+        return (
+            nameSet.has(one.name.trim().toLowerCase()) ||
+            nameSet.has((one.kjvName ?? '').trim().toLowerCase())
+        );
+    });
+}
+
+/**
+ * A person's other names -- each with its verses -- every verse under any
+ * of them in Bible order, and the other people of the name
+ * (`NameRecordExtraType`). Read off the dataset an open panel already
+ * holds; nothing kept.
+ */
+function genNameRecordExtra(
+    managers: LookupManagersType,
+    record: LookupNameRecordType,
+): NameRecordExtraType {
+    const manager = managers.namesLookupManager;
+    const formList = listNameFormIds(record.id ?? '')
+        .filter((id) => {
+            return id !== record.id;
+        })
+        .flatMap((id) => {
+            const form = manager.getRecordById(id);
+            return form === null ? [] : [form];
+        });
+    const selfIdSet = new Set<string>([
+        record.id ?? '',
+        ...formList.map((form) => form.id ?? ''),
+    ]);
+    return {
+        otherForms: formList.flatMap((form) => {
+            const brief = toRecordBrief(form);
+            return brief === null
+                ? []
+                : [{ ...brief, verses: (form.verses ?? []).slice() }];
+        }),
+        sameName: listSameNameRecords(
+            listRecordsNamed(manager, [record, ...formList]),
+            selfIdSet,
+        ),
+        // A person of one name keeps the dataset's own list and order.
+        verses:
+            formList.length === 0
+                ? (record.verses ?? []).slice()
+                : mergeVerseKeyLists(
+                      [record.verses, ...formList.map((form) => form.verses)],
+                      Object.keys(getModelKeyBookMap()),
+                  ),
+    };
+}
+
+/**
+ * How far a place is from Jerusalem, the places nearest it, the people
+ * tied to it, and the other places of its name (`LocationRecordExtraType`).
+ * One pass over the ~1 000 places and ~2 500 people an open panel already
+ * holds; nothing kept.
+ */
+function genLocationRecordExtra(
+    managers: LookupManagersType,
+    record: LookupLocationRecordType,
+): LocationRecordExtraType {
+    const manager = managers.locationsLookupManager;
+    const jerusalem = manager.getRecordById(JERUSALEM_PLACE_ID);
+    const { people, peopleCount } = listPlacePeople(
+        record,
+        managers.namesLookupManager.getAllRecords(),
+        toMainNameId,
+    );
+    return {
+        fromJerusalem:
+            record.id === JERUSALEM_PLACE_ID || jerusalem === null
+                ? null
+                : toPlaceDistance(jerusalem.coordinates, record.coordinates),
+        nearby: listNearbyPlaces(record, manager.getAllRecords()),
+        people,
+        peopleCount,
+        sameName: listSameNameRecords(
+            listRecordsNamed(manager, [record]),
+            new Set([record.id ?? '']),
+        ),
     };
 }
 
@@ -741,23 +1430,26 @@ async function readRecordRequest(
                         'lookup. Try the English name, or another spelling.',
                 );
             }
+            const record = found.record as LookupNameRecordType;
+            const extra = genNameRecordExtra(managers, record);
             const quoted = await readQuotedVerses(
                 typeof bibleKey === 'string' ? bibleKey : null,
-                found.record.verses,
+                extra.verses,
             );
             return {
                 ...toNameRecordResult(
                     await toLocalizedRecord(
-                        found.record as LookupNameRecordType,
+                        record,
                         typeof bibleKey === 'string' ? bibleKey : null,
                         langCode,
                     ),
                     resolver,
                     quoted,
+                    extra,
                 ),
                 lang: langCode,
                 ...(typeof bibleKey === 'string' ? { bible: bibleKey } : {}),
-                ...toOtherMatches(found.others),
+                ...toOtherMatches(found.others, extra.sameName),
             };
         }
         const manager = managers.locationsLookupManager;
@@ -777,23 +1469,26 @@ async function readRecordRequest(
                     'English name, or another spelling.',
             );
         }
+        const record = found.record as LookupLocationRecordType;
+        const extra = genLocationRecordExtra(managers, record);
         const quoted = await readQuotedVerses(
             typeof bibleKey === 'string' ? bibleKey : null,
-            found.record.verses,
+            record.verses,
         );
         return {
             ...toLocationRecordResult(
                 await toLocalizedRecord(
-                    found.record as LookupLocationRecordType,
+                    record,
                     typeof bibleKey === 'string' ? bibleKey : null,
                     langCode,
                 ),
                 resolver,
                 quoted,
+                extra,
             ),
             lang: langCode,
             ...(typeof bibleKey === 'string' ? { bible: bibleKey } : {}),
-            ...toOtherMatches(found.others),
+            ...toOtherMatches(found.others, extra.sameName),
         };
     } finally {
         releaseLookupData(langCode);
@@ -801,10 +1496,17 @@ async function readRecordRequest(
 }
 
 // Two people of one name are two records: the first is read, the rest are
-// named with their ids so the right one can be read next.
+// named with their ids so the right one can be read next -- those the
+// record does not already name as `sameName`.
 function toOtherMatches(
-    others: { id: string; name: string; kjvName: string | null }[],
+    allOthers: { id: string; name: string; kjvName: string | null }[],
+    sameName: { id: string }[] = [],
 ) {
+    const others = allOthers.filter((one) => {
+        return !sameName.some((same) => {
+            return same.id === one.id;
+        });
+    });
     if (others.length === 0) {
         return {};
     }

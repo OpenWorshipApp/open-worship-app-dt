@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124, RD-125, RD-126, ST-59, CB-125]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-11 — Read the Bible (references, text size, history, versions)
 
@@ -69,7 +69,12 @@ has no header tabs.
    below) it in that version, in the same color group. Panes left on the default
    lime are one group already, so they follow the same passage and scroll
    together until one is given a different color; **[en:tran:No Color]** (or
-   clearing the color) returns a pane to that lime group.
+   clearing the color) returns a pane to that lime group. A pane that was NOT
+   split off another — a passage dragged onto the edge of a pane from the
+   **[en:tran:Bibles]** list, a recent reference row or a search result, or one
+   opened with **[en:tran:Open beside the current verse]** — starts in a color no
+   pane is using yet, so it keeps its own passage instead of following the lime
+   group.
 5. If you lose a passage, you do not need to remember and type it again: the recent
    reference rows near the top keep it. Click one to read it in a small floating
    panel, in the version it was read in; the passage you are on stays as it is. To
@@ -88,7 +93,7 @@ has no header tabs.
    the Bible Lookup and click **[en:tran:Save bible item]** (the floppy disk), or press
    **Ctrl+Enter**: it goes to the **[en:tran:Bibles]** list, ready to present from the Presenter.
 9. To let supported passages start their generated audio automatically, open
-   **[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:AI Providers]**. After an **OpenAI API
+   **[en:tran:Setting]** → **[en:tran:AI Providers]**. After an **OpenAI API
    Key** is saved, turn on **[en:tran:Auto Play Audio AI when available]** under
    the OpenAI key. The switch lives with the provider setting, not in the Bible
    Reference toolbar.
@@ -98,5 +103,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `RD-122` · `RD-124` · `RD-125` · `RD-126` · `ST-59` · `CB-125`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

@@ -257,9 +257,13 @@ export async function handleImporting(archiveFilePath?: string) {
                     return importDataArchive(readableFilePath, selectedFolders);
                 },
             );
+            // Through `tran` with its numbers filled in: it was the one line
+            // of the import a Khmer or French window showed in English.
             showSimpleToast(
                 tran(IMPORT_TITLE),
-                `Imported ${copied} file(s); ${reused} already up to date`,
+                tran('Imported {copied} file(s); {reused} already up to date')
+                    .replace('{copied}', String(copied))
+                    .replace('{reused}', String(reused)),
             );
         } finally {
             await safeDeleteDir(workDir);

@@ -94,6 +94,15 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
     nameList: ['owa_drag'],
   },
   {
+    // Registered on the stdio door only, so the chatbot's server never has
+    // it; withheld here as well, because a drop copies files from the disk
+    // into the user's folders and a model has no file of its own to drop.
+    reason:
+      'Dropping files is not yours to do. Tell the user which file to ' +
+      'drag from their folder and where to drop it.',
+    nameList: ['owa_drop_files'],
+  },
+  {
     // The menu bar is the developer's too: every item a volunteer needs
     // has a button in the window (Settings, Help, the panels), and the
     // rest -- Reload, zoom, Export Data -- changes the window under them.

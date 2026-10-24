@@ -84,6 +84,9 @@ describe('toAnswerShownInLanguage', () => {
         expect(show('ពេលនេះអេក្រង់ធំត្រូវបានបិទ (Off)។')).toBe(
             'ពេលនេះអេក្រង់ធំត្រូវបានបិទ។',
         );
+        // After a book named in bold or in quotes (2026-10-23).
+        expect(show('**ហេព្រើរ** (Hebrews) ១១:៧')).toBe('**ហេព្រើរ** ១១:៧');
+        expect(show('«១ ពេត្រុស» (1 Peter)')).toBe('«១ ពេត្រុស»');
     });
 
     test('a bracket a reader needs stays', () => {
@@ -193,6 +196,39 @@ describe('toAnswerShownInLanguage', () => {
         );
         // A language written in Latin letters is left alone.
         expect(show('Cliquez 预览', 'fr')).toBe('Cliquez 预览');
+        // 2026-10-23, a word lesson: a Tibetan vowel sign on a Khmer letter
+        // goes; Khmer's own signs and a shared accent stay.
+        expect(show('ការបញ្ចេញសំឡេង៖ ហ\u0F71ារ៉ាគីអា')).toBe(
+            'ការបញ្ចេញសំឡេង៖ ហារ៉ាគីអា',
+        );
+        expect(show('ពាក្យ e\u0301 លើ')).toBe('ពាក្យ e\u0301 លើ');
+    });
+
+    // 2026-10-23: a lowercase word of another language inside Khmer words --
+    // `podkre` (Polish, underline) for the person's own highlight.
+    test('a stray lowercase Latin word inside Khmer words is taken out', () => {
+        expect(show('លើខ ១១ អ្នកបានគូស podkre ពាក្យថា')).toBe(
+            'លើខ ១១ អ្នកបានគូស ពាក្យថា',
+        );
+        expect(show('ខ្ញុំប្រាប់អ្នកleថា')).toBe('ខ្ញុំប្រាប់អ្នកថា');
+        expect(show('ដើម្បីរក្សាhonneur របស់គាត់')).toBe(
+            'ដើម្បីរក្សា របស់គាត់',
+        );
+        // Before a gloss, which goes too.
+        expect(show('ការគូស podkre (Highlights):')).toBe('ការគូស:');
+        // A file name, a key, a name, a word at the edge of the sentence and
+        // a French answer stay.
+        for (const kept of [
+            'បើក GEN.8.pdf ឥឡូវនេះ',
+            'ចុច Ctrl+S ដើម្បីរក្សាទុក',
+            'លោក Noah បានសង់អាសនៈ',
+            'សូមអរគុណ ok',
+        ]) {
+            expect(show(kept)).toBe(kept);
+        }
+        expect(show('Vous avez souligné ces mots', 'fr')).toBe(
+            'Vous avez souligné ces mots',
+        );
     });
 
     // The whole corpus asked in Khmer (2026-10-17, EC-316): _ជំនួយ → …_ for

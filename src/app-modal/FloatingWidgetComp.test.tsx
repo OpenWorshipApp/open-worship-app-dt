@@ -4,11 +4,12 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { settings, setSetting } = vi.hoisted(() => ({
+const { settings, setSetting, showAppContextMenu } = vi.hoisted(() => ({
     settings: new Map<string, string>(),
     setSetting: vi.fn((key: string, value: string) => {
         settings.set(key, value);
     }),
+    showAppContextMenu: vi.fn(),
 }));
 
 vi.mock('../helper/settingHelpers', () => ({
@@ -32,7 +33,12 @@ vi.mock('./modalLayerContext', () => ({
     useIsInModalLayer: () => false,
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
+vi.mock('../context-menu/appContextMenuHelpers', () => ({
+    showAppContextMenu,
+}));
+vi.mock('../helper/errorHelpers', () => ({ handleError: vi.fn() }));
 
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import FloatingWidgetComp from './FloatingWidgetComp';
 
 let host: HTMLDivElement;
@@ -52,7 +58,11 @@ function button(label: string) {
 }
 
 function renderWidget(
-    overrides: { isBodyHidden?: boolean; raiseToken?: number } = {},
+    overrides: {
+        isBodyHidden?: boolean;
+        raiseToken?: number;
+        menuItems?: ContextMenuItemType[];
+    } = {},
 ) {
     return act(async () =>
         root.render(
@@ -151,6 +161,55 @@ describe('floating widget', () => {
         expect(widget().style.left).toBe(originalLeft);
         await act(async () => button('Close floating widget').click());
         expect(onClose).toHaveBeenCalledOnce();
+    });
+
+    test('menu items fold collapse and full view into a dots menu', async () => {
+        const onCopy = vi.fn();
+        const menuItems = [{ menuElement: 'Copy', onSelect: onCopy }];
+        // The menu module loads at the press, so the menu opens a task later.
+        const openMenu = async () => {
+            showAppContextMenu.mockClear();
+            await act(async () => {
+                button('More Options').click();
+                await new Promise((resolve) => setTimeout(resolve, 0));
+            });
+            expect(showAppContextMenu).toHaveBeenCalledOnce();
+            return showAppContextMenu.mock.calls[0][1] as ContextMenuItemType[];
+        };
+        await renderWidget({ menuItems });
+        expect(
+            host.querySelector('[aria-label="Collapse floating widget"]'),
+        ).toBeNull();
+        expect(host.querySelector('[aria-label="Full view"]')).toBeNull();
+        expect(button('Close floating widget')).toBeDefined();
+
+        let items = await openMenu();
+        expect(items.map(({ menuElement }) => menuElement)).toEqual([
+            'Copy',
+            'Collapse floating widget',
+            'Full view',
+        ]);
+        await act(async () => items[0].onSelect?.(new MouseEvent('click')));
+        expect(onCopy).toHaveBeenCalledOnce();
+        await act(async () => items[1].onSelect?.(new MouseEvent('click')));
+        expect(widget().textContent).toContain('Collapsed notes');
+
+        items = await openMenu();
+        expect(items[1].menuElement).toBe('Expand floating widget');
+        await act(async () => items[1].onSelect?.(new MouseEvent('click')));
+        expect(widget().textContent).toContain('Full notes');
+        await act(async () => items[2].onSelect?.(new MouseEvent('click')));
+        expect(widget().style.left).toBe('8px');
+        items = await openMenu();
+        expect(items[2].menuElement).toBe('Exit full view');
+
+        // No body to roll up, so no collapse item either.
+        await renderWidget({ menuItems, isBodyHidden: true });
+        items = await openMenu();
+        expect(items.map(({ menuElement }) => menuElement)).toEqual([
+            'Copy',
+            'Exit full view',
+        ]);
     });
 
     test('body hiding is temporary and keeps the user collapse choice', async () => {

@@ -252,8 +252,7 @@ In the same change:
   totals and how many begin with an action) when they moved;
 - one row in `references/scoreboard.md` per window measured, and `TP-xx`
   entries for what was found and not fixed;
-- any edit under `.claude/` → `node extra-work/build-knowledge.mjs` and
-  `node extra-work/sync-agent-mirror.mjs`.
+- any edit under `.claude/` → `node extra-work/build-knowledge.mjs`.
 
 ## The report
 
@@ -288,12 +287,12 @@ findings still open.
   it as `destructive-find`.
 - **The featured shelf is a count the tests hold** (30 Reader, 25 Presenter):
   a new lesson is `isFeatured: false` unless it replaces a featured one.
-- **All tips opens only in a window that has focus** (`DailyTipComp` checks
-  `document.hasFocus()`), and the menu click goes to the window Electron
-  thinks is focused — a Settings window opened for the language switch takes
-  it, so close it first. With nobody at the keyboard, hold a CDP session on
-  the page with `Emulation.setFocusEmulationEnabled` (run in the background;
-  a reload ends it). It presses nothing.
+- **Help → All tips opens in EVERY open window with tips at once**
+  (2026-10-23): the click goes to every window and `DailyTipComp` no longer
+  checks for focus, so a Settings window open beside the window under test
+  gets its own list too. Search inside the card of the window being
+  measured (`owa_find_ui` with that `page`), and close the others' cards
+  with their **×**. It presses nothing.
 - **The firewall allows 25 presses a minute**, and a run that searches,
   opens, shows and presses four times a tip reaches it in six tips. Pace the
   presses; a `find_ui` on the tip's title after each search is not a press.

@@ -19,15 +19,17 @@ import {
 } from '../server/appHelpers';
 import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
 import {
-    fsCheckFileExist,
+    createSimpleToastUpdater,
+    showSimpleToast,
+} from '../toast/toastHelpers';
+import {
     fsDeleteFile,
     fsMove,
     getDotExtensionFromBase64Data,
+    getTempPath,
 } from '../server/fileHelpers';
 import { askForURL, getOpenSharedLinkMenuItem } from './downloadHelper';
-import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import {
     hideProgressBar,
     showProgressBar,
@@ -154,37 +156,51 @@ async function genContextMenuItems(dirSource: DirSource) {
                 if (imageUrl === null) {
                     return;
                 }
+                // One toast that goes from "downloading" to the outcome: two,
+                // and the first -- held open by the pointer resting on it --
+                // went on saying "please wait" after it was done.
+                const updateDownloadToast = createSimpleToastUpdater();
+                // The staged download until it is moved into the folder: a
+                // failure after the download must not leave it in the temp.
+                let stagedFilePath: string | null = null;
                 try {
-                    showSimpleToast(
+                    updateDownloadToast(
                         title,
                         `Downloading image from "${imageUrl}", please wait...`,
                     );
                     showProgressBar(imageUrl);
-                    const defaultPath = getDefaultDataDir();
+                    // Staged in the OS temp folder, as the videos and audios
+                    // are: it was the DEFAULT data folder, so a download
+                    // failed with that folder absent (a data folder on a
+                    // stick) and otherwise wrote into a folder not in use.
                     const { filePath, fileFullName } = await downloadImage(
                         imageUrl,
-                        defaultPath,
+                        getTempPath(),
                     );
+                    stagedFilePath = filePath;
                     const destFileSource = FileSource.getInstance(
                         dirSource.dirPath,
                         fileFullName,
                     );
-                    const downloadedFilePath = destFileSource.filePath;
-                    if (await fsCheckFileExist(downloadedFilePath)) {
-                        await fsDeleteFile(downloadedFilePath);
-                    }
+                    // Never over an image already there (the videos' rule).
+                    const downloadedFilePath =
+                        await destFileSource.genNextFilePath();
                     await fsMove(filePath, downloadedFilePath);
-                    showSimpleToast(
+                    stagedFilePath = null;
+                    updateDownloadToast(
                         title,
                         'Image downloaded successfully, ' +
                             `file path: "${downloadedFilePath}"`,
                     );
                 } catch (error) {
                     handleError(error);
-                    showSimpleToast(
+                    updateDownloadToast(
                         title,
                         tran('Error occurred during downloading image'),
                     );
+                    if (stagedFilePath !== null) {
+                        await fsDeleteFile(stagedFilePath).catch(handleError);
+                    }
                 } finally {
                     hideProgressBar(imageUrl);
                 }

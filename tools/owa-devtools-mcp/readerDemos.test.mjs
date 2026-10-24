@@ -8,7 +8,7 @@ import {
 } from './readerDemos.mjs';
 
 describe('Reader demos', () => {
-  it('keeps the existing ids while expanding to 105 Reader lessons', () => {
+  it('keeps the existing ids while expanding to 106 Reader lessons', () => {
     expect(READER_DEMO_IDS).toEqual(
       expect.arrayContaining([
         'reader-font-larger',
@@ -77,7 +77,7 @@ describe('Reader demos', () => {
       ]),
     );
     expect(new Set(READER_DEMO_IDS).size).toBe(READER_DEMO_LIST.length);
-    expect(READER_DEMO_LIST).toHaveLength(105);
+    expect(READER_DEMO_LIST).toHaveLength(106);
     expect(READER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(true);
     expect(
       READER_DEMO_LIST.filter((demo) => demo.isFeatured !== false),

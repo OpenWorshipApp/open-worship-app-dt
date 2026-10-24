@@ -31,6 +31,10 @@ import {
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import {
+    createMouseEvent,
+    getMenuItemAnchor,
+} from '../context-menu/contextMenuEventHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
@@ -159,6 +163,51 @@ function genAskAssistantContextMenu(
     return items;
 }
 
+/**
+ * One `Copy` in place of every way to copy (2026-10-22, the user: _remove all
+ * copy buttons, add `Copy` and when click it then just trigger the copy
+ * content menu_): it opens the menu the view's copy button opens, where the
+ * item was chosen.
+ */
+function genCopyContextMenuItem(
+    foundBibleItem: ReadIdOnlyBibleItem,
+): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('copy'),
+        menuElement: tran('Copy'),
+        onSelect: (event) => {
+            const anchor = getMenuItemAnchor(event);
+            showAppContextMenu(
+                createMouseEvent(
+                    anchor?.x ?? window.innerWidth / 2,
+                    anchor?.y ?? window.innerHeight / 4,
+                ),
+                genBibleItemCopyingContextMenu(foundBibleItem),
+            );
+        },
+    };
+}
+
+/**
+ * The passage in a floating verse panel, the one a cited passage or a cross
+ * reference opens, so it can be read over another pane.
+ */
+function genFloatingContextMenuItem(
+    foundBibleItem: ReadIdOnlyBibleItem,
+): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('window-stack'),
+        menuElement: tran('Floating'),
+        onSelect: () => {
+            import('../location-name-lookup/detailPanelHelpers')
+                .then(({ openBibleItemDetailPanel }) => {
+                    return openBibleItemDetailPanel(foundBibleItem);
+                })
+                .catch(handleError);
+        },
+    };
+}
+
 async function openContextMenu(
     event: any,
     {
@@ -192,7 +241,8 @@ async function openContextMenu(
     showAppContextMenu(
         event,
         [
-            ...genBibleItemCopyingContextMenu(foundBibleItem),
+            genCopyContextMenuItem(foundBibleItem),
+            genFloatingContextMenuItem(foundBibleItem),
             ...genAskAssistantContextMenu(event, foundBibleItem),
             ...(await viewController.genContextMenu(
                 event,

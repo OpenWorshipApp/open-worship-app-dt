@@ -121,3 +121,14 @@ export function toLookupToolArgs(ask: LookupAskType) {
               ...(ask.page === undefined ? {} : { page: ask.page }),
           };
 }
+
+/**
+ * What a CARD reads its record with: a passage with what the app's cross
+ * references lead to from it as well (`related`, 2026-10-23) -- the card is
+ * where every question about it is asked from -- and the rest as
+ * `toLookupToolArgs` reads them.
+ */
+export function toLookupCardArgs(ask: LookupAskType) {
+    const args = toLookupToolArgs(ask);
+    return ask.kind === 'verse' ? { ...args, related: true } : args;
+}

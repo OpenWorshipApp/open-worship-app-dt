@@ -13,6 +13,7 @@ import { unlocking } from '../server/unlockingHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { getSetting, setSetting } from './settingHelpers';
 import { type OptionalPromise } from './typeHelpers';
 
@@ -50,6 +51,12 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     static getDirPathBySettingName(settingName: string) {
+        // No data folder, no folders in it. The app's own folder may still
+        // name those of a data folder used long ago, and a panel then listed
+        // that folder's files with nothing chosen.
+        if (appLocalStorage.isOnOwnFolder) {
+            return null;
+        }
         const dirPath = getSetting(settingName) ?? '';
         if (!dirPath) {
             return null;

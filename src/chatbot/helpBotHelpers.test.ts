@@ -59,6 +59,35 @@ describe('walkthrough actions', () => {
         expect(actions[1].ask).toBeUndefined();
     });
 
+    // 2026-10-23, live in the user's Settings: a model asked to build the
+    // card wrote "click Use This Folder" with a folder already chosen, then
+    // "Parent Directory:", a heading -- neither could be pressed.
+    test('a data-folder question in Settings does it with the Path Settings lesson', () => {
+        const actions = genGuideActions(
+            { id: 'W-16' },
+            'setting',
+            true,
+            'Why do I need to choose a data folder?',
+            'Path Settings',
+        );
+        expect(actions[1].args).toEqual({ demoId: 'setting-path' });
+        expect(actions[1].ask).toBeUndefined();
+        // Show me step by step still walks the page, from the same control.
+        expect(actions[0].args).toMatchObject({
+            manualId: 'W-16',
+            find: 'Path Settings',
+        });
+        // Another W-16 question is still worked out by the model.
+        const languageActions = genGuideActions(
+            { id: 'W-16' },
+            'setting',
+            true,
+            "How do I change the app's language?",
+        );
+        expect(languageActions[1].args).toMatchObject({ manualId: 'W-16' });
+        expect(languageActions[1].ask).toContain('Do it for me');
+    });
+
     // 2026-10-10, EC-215: for "make computer stay awake" the card opened
     // W-01 at its header paragraph and ringed the first bold's panel, not
     // the cup eight bolds later, and re-asked with the whole hint as the

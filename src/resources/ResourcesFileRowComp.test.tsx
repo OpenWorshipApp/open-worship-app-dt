@@ -9,6 +9,8 @@ const h = vi.hoisted(() => ({
     openMarkdownPreviewMock: vi.fn(),
     openBibleNotePreviewMock: vi.fn(),
     openPdfPreviewMock: vi.fn(),
+    openResourceLinkUrlMock: vi.fn(),
+    readResourceLinksMock: vi.fn(),
     readResourceNoteItemsMock: vi.fn(),
     showAppContextMenuMock: vi.fn(),
     openChatbotWithFileMock: vi.fn(),
@@ -46,6 +48,16 @@ vi.mock('./resourcePreviewHelpers', async (importOriginal) => {
     return {
         ...original,
         readResourceNoteItems: h.readResourceNoteItemsMock,
+    };
+});
+
+vi.mock('./resourceLinksHelpers', async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import('./resourceLinksHelpers')>();
+    return {
+        ...original,
+        openResourceLinkUrl: h.openResourceLinkUrlMock,
+        readResourceLinks: h.readResourceLinksMock,
     };
 });
 
@@ -98,6 +110,10 @@ vi.mock('../server/appProvider', () => ({
 }));
 
 import ResourcesFileRowComp from './ResourcesFileRowComp';
+import {
+    type ResourceReadingPaneType,
+    ResourcesReadingContext,
+} from './resourceReadingHelpers';
 
 async function flush() {
     await act(async () => {
@@ -113,6 +129,7 @@ describe('ResourcesFileRowComp previews', () => {
 
     beforeEach(() => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        h.readResourceLinksMock.mockReset();
         container = document.createElement('div');
         document.body.appendChild(container);
     });
@@ -128,11 +145,32 @@ describe('ResourcesFileRowComp previews', () => {
         container = null;
     });
 
-    async function renderRow(filePath: string) {
+    async function renderRow(
+        filePath: string,
+        paneList: ResourceReadingPaneType[] | null = null,
+        canAutoExpandLinks = false,
+    ) {
+        const row = (
+            <ResourcesFileRowComp
+                filePath={filePath}
+                bookKey="GEN"
+                canAutoExpandLinks={canAutoExpandLinks}
+            />
+        );
         await act(async () => {
             root = createRoot(container!);
             root.render(
-                <ResourcesFileRowComp filePath={filePath} bookKey="GEN" />,
+                paneList === null ? (
+                    row
+                ) : (
+                    <ResourcesReadingContext
+                        value={() => {
+                            return paneList;
+                        }}
+                    >
+                        {row}
+                    </ResourcesReadingContext>
+                ),
             );
         });
         await flush();
@@ -295,6 +333,36 @@ describe('ResourcesFileRowComp previews', () => {
         expect(container!.textContent).toContain('Not a bible note file');
     });
 
+    test.each([
+        ['too-large', 'This file is too large to preview'],
+        ['unreadable', 'Cannot read this file'],
+    ] as const)(
+        'a note file that is %s explains why it cannot open',
+        async (failureReason, message) => {
+            h.readResourceNoteItemsMock.mockResolvedValue({
+                items: [],
+                failureReason,
+            });
+            await renderRow('/r/Document/GEN.1.own');
+            await press(getRowButton());
+            await waitForSelector('.app-resources-note');
+
+            expect(container!.textContent).toContain(message);
+        },
+    );
+
+    test('an empty but readable note file says it has no notes', async () => {
+        h.readResourceNoteItemsMock.mockResolvedValue({
+            items: [],
+            failureReason: null,
+        });
+        await renderRow('/r/Document/GEN.1.own');
+        await press(getRowButton());
+        await waitForSelector('.app-resources-note');
+
+        expect(container!.textContent).toContain('No notes');
+    });
+
     test("a note file's menu has no OS Open", async () => {
         await renderRow('/r/Document/GEN.1.own');
         await act(async () => {
@@ -334,6 +402,63 @@ describe('ResourcesFileRowComp previews', () => {
         expect(h.openPdfPreviewMock).not.toHaveBeenCalled();
     });
 
+    test('a free-text JSON hit is read on its first press and then folded', async () => {
+        h.readResourceLinksMock.mockResolvedValue({
+            links: [{ title: 'Overview', url: 'https://example.com' }],
+            droppedCount: 0,
+            isTruncated: false,
+            failureReason: null,
+        });
+        await renderRow('/r/YouTube/GEN.1.json');
+        expect(h.readResourceLinksMock).not.toHaveBeenCalled();
+
+        await press(getRowButton());
+        expect(h.readResourceLinksMock).toHaveBeenCalledWith(
+            '/r/YouTube/GEN.1.json',
+        );
+        expect(getRowButton().getAttribute('aria-expanded')).toBe('true');
+        expect(container!.querySelector('.app-resources-link')).not.toBeNull();
+
+        await press(getRowButton());
+        expect(getRowButton().getAttribute('aria-expanded')).toBe('false');
+        expect(container!.querySelector('.app-resources-link')).toBeNull();
+    });
+
+    test('JSON content without links stays an ordinary file', async () => {
+        h.readResourceLinksMock.mockResolvedValue({
+            links: [],
+            droppedCount: 0,
+            isTruncated: false,
+            failureReason: 'not-a-list',
+        });
+        await renderRow('/r/YouTube/GEN.1.json');
+
+        await press(getRowButton());
+        await press(getRowButton());
+
+        expect(h.readResourceLinksMock).toHaveBeenCalledTimes(1);
+        expect(h.openFileMock).toHaveBeenCalledTimes(2);
+        expect(h.openFileMock).toHaveBeenLastCalledWith(
+            '/r/YouTube/GEN.1.json',
+        );
+        expect(getRowButton().getAttribute('aria-expanded')).toBeNull();
+    });
+
+    test('verse-matched JSON is read as it appears', async () => {
+        h.readResourceLinksMock.mockResolvedValue({
+            links: [{ title: 'Study', url: 'https://example.com/study' }],
+            droppedCount: 0,
+            isTruncated: false,
+            failureReason: null,
+        });
+        await renderRow('/r/YouTube/GEN.1.json', null, true);
+
+        expect(h.readResourceLinksMock).toHaveBeenCalledWith(
+            '/r/YouTube/GEN.1.json',
+        );
+        expect(container!.querySelector('.app-resources-link')).not.toBeNull();
+    });
+
     // 2026-10-17, the user: _add robot icon to each file, click to open file
     // in chatbot in attachment to analyze_.
     describe('the 🤖 that asks the assistant about a file', () => {
@@ -359,6 +484,7 @@ describe('ResourcesFileRowComp previews', () => {
                 await press(getAskButton()!);
                 expect(h.openChatbotWithFileMock).toHaveBeenCalledWith(
                     filePath,
+                    null,
                 );
                 expect(h.openPdfPreviewMock).not.toHaveBeenCalledWith(filePath);
                 await act(async () => {
@@ -366,6 +492,77 @@ describe('ResourcesFileRowComp previews', () => {
                 });
                 root = null;
             }
+        });
+
+        // 2026-10-22, the user's goal: _make the chatbot smarter to interact
+        // with user for the selected resource file_ -- the Reader was on
+        // Matthew 18:15-17 and the tab offered verses 1, 2 and 3.
+        test('hands over the passage the Reader is on for that file', async () => {
+            h.isAiEnabled = true;
+            const paneList = [
+                {
+                    bibleKey: 'KJV',
+                    target: {
+                        bookKey: 'EXO',
+                        chapter: 2,
+                        verseStart: 1,
+                        verseEnd: 3,
+                    },
+                    toTitle: async () => {
+                        return 'Exodus 2:1-3';
+                    },
+                },
+                {
+                    bibleKey: 'ពគប',
+                    target: {
+                        bookKey: 'GEN',
+                        chapter: 4,
+                        verseStart: 15,
+                        verseEnd: 17,
+                    },
+                    toTitle: async () => {
+                        return 'លោកុប្បត្តិ ៤:១៥-១៧';
+                    },
+                },
+            ];
+            await renderRow('/r/pdf/GEN.4.pdf', paneList);
+            await press(getAskButton()!);
+            expect(h.openChatbotWithFileMock).toHaveBeenLastCalledWith(
+                '/r/pdf/GEN.4.pdf',
+                {
+                    bookKey: 'GEN',
+                    chapter: 4,
+                    verseStart: 15,
+                    verseEnd: 17,
+                    title: 'លោកុប្បត្តិ ៤:១៥-១៧',
+                    bibleKey: 'ពគប',
+                },
+            );
+            await act(async () => {
+                root?.unmount();
+            });
+            // The book's introduction: the chapter being read, no verses.
+            await renderRow('/r/pdf/GEN.0.pdf', paneList);
+            await press(getAskButton()!);
+            expect(h.openChatbotWithFileMock).toHaveBeenLastCalledWith(
+                '/r/pdf/GEN.0.pdf',
+                {
+                    bookKey: 'GEN',
+                    chapter: 4,
+                    title: 'លោកុប្បត្តិ ៤:១៥-១៧',
+                    bibleKey: 'ពគប',
+                },
+            );
+            await act(async () => {
+                root?.unmount();
+            });
+            // Another chapter's file: nothing the Reader is on.
+            await renderRow('/r/pdf/GEN.9.pdf', paneList);
+            await press(getAskButton()!);
+            expect(h.openChatbotWithFileMock).toHaveBeenLastCalledWith(
+                '/r/pdf/GEN.9.pdf',
+                null,
+            );
         });
 
         test('is in the menu too', async () => {

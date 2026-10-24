@@ -27,6 +27,11 @@ into; the memory note it names carries the why.
   sized for the display even with no second monitor. The port is sticky.
   Every viewer query key belongs in the dev allowlist. Showing screens come
   back at start, and frames take the viewer's input.
+- **Its settings go with the DATA FOLDER, three excepted** (2026-10-23, memory
+  `settings-global-vs-data-dir`): mode, host, guests, internet, ports, tunnel
+  and every virtual-display setting are files in `<data folder>/local-storage/`,
+  read through the same `getClientSetting` (`dataDirSettingProtocol.ts`); the
+  identity, the router mapping and the last port stay this computer's.
 - **Intercom and browser cameras** (memory
   `connection-intercom-and-viewer-camera`). Mic, speaker and volume are per
   connection. A `vd-camera:` source is watched only while it is shown, and a

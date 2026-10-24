@@ -39,7 +39,10 @@ import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { getLangDataFromBibleKey } from '../helper/bible-helpers/bibleStyleHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 import { BibleGroupScrollSync } from './bibleGroupScrollHelpers';
-import { DEFAULT_BIBLE_COLOR_NOTE } from '../helper/colorNoteDefaults';
+import {
+    DEFAULT_BIBLE_COLOR_NOTE,
+    findUnusedColorNote,
+} from '../helper/colorNoteDefaults';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';
@@ -569,6 +572,24 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         });
     }
 
+    /**
+     * A colour no section shows yet. A section that was not split off another
+     * one -- dropped in, opened beside -- starts in it, a group of its own:
+     * left without a note it fell into the default lime group with every
+     * untouched view, and was re-targeted along with them.
+     */
+    genUnusedColorNote() {
+        const colorNoteMap = this.colorNoteMap;
+        const usedColorNotes = new Set(
+            this.straightBibleItems.map((bibleItem) => {
+                return (
+                    colorNoteMap[bibleItem.id] || DEFAULT_BIBLE_COLOR_NOTE
+                ).toLowerCase();
+            }),
+        );
+        return findUnusedColorNote(usedColorNotes);
+    }
+
     toSettingName(suffixSettingName: string) {
         return `${BIBLE_ITEMS_PREVIEW_SETTING}${this._settingNameSuffix}${suffixSettingName}`;
     }
@@ -736,10 +757,16 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         newBibleItem: ReadIdOnlyBibleItem,
         isHorizontal: boolean,
         isBefore: boolean,
-        isNoColorNote: boolean,
+        isNewColorGroup: boolean,
     ) {
-        const sourceColor =
-            bibleItem === null ? null : this.getColorNote(bibleItem);
+        // A split view joins its source's group; anything else gets a group of
+        // its own. Read before the new view is in, so it is not counted.
+        let colorNote: string | null = null;
+        if (bibleItem !== null) {
+            colorNote = isNewColorGroup
+                ? this.genUnusedColorNote()
+                : this.getColorNote(bibleItem);
+        }
         newBibleItem = ReadIdOnlyBibleItem.fromJson({
             ...newBibleItem.toJson(),
             id: this.genBibleItemUniqueId(),
@@ -767,8 +794,8 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                     : [bibleItem, newBibleItem];
             }
             this.nestedBibleItems = nestedBibleItems;
-            if (!isNoColorNote && sourceColor) {
-                this.setColorNote(newBibleItem, sourceColor);
+            if (colorNote) {
+                this.setColorNote(newBibleItem, colorNote);
             }
             newBibleItem.toTitle().then((title) => {
                 attemptAddingHistory(newBibleItem.bibleKey, title, true);
@@ -781,32 +808,50 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     addBibleItemLeft(
         bibleItem: ReadIdOnlyBibleItem,
         newBibleItem: ReadIdOnlyBibleItem,
-        isNoColorNote = false,
+        isNewColorGroup = false,
     ) {
-        this.addBibleItem(bibleItem, newBibleItem, true, true, isNoColorNote);
+        this.addBibleItem(bibleItem, newBibleItem, true, true, isNewColorGroup);
     }
     addBibleItemRight(
         bibleItem: ReadIdOnlyBibleItem,
         newBibleItem: ReadIdOnlyBibleItem,
-        isNoColorNote = false,
+        isNewColorGroup = false,
     ) {
-        this.addBibleItem(bibleItem, newBibleItem, true, false, isNoColorNote);
+        this.addBibleItem(
+            bibleItem,
+            newBibleItem,
+            true,
+            false,
+            isNewColorGroup,
+        );
     }
 
     addBibleItemTop(
         bibleItem: ReadIdOnlyBibleItem,
         newBibleItem: ReadIdOnlyBibleItem,
-        isNoColorNote = false,
+        isNewColorGroup = false,
     ) {
-        this.addBibleItem(bibleItem, newBibleItem, false, true, isNoColorNote);
+        this.addBibleItem(
+            bibleItem,
+            newBibleItem,
+            false,
+            true,
+            isNewColorGroup,
+        );
     }
 
     addBibleItemBottom(
         bibleItem: ReadIdOnlyBibleItem,
         newBibleItem: ReadIdOnlyBibleItem,
-        isNoColorNote = false,
+        isNewColorGroup = false,
     ) {
-        this.addBibleItem(bibleItem, newBibleItem, false, false, isNoColorNote);
+        this.addBibleItem(
+            bibleItem,
+            newBibleItem,
+            false,
+            false,
+            isNewColorGroup,
+        );
     }
 
     /**
@@ -960,11 +1005,16 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             ...bibleItem.toJson(),
             id: this.genBibleItemUniqueId(),
         });
+        // Not a split: a group of its own, as `addBibleItem` gives one.
+        const colorNote = this.genUnusedColorNote();
         let nestedBibleItems = this.nestedBibleItems;
         if (!Array.isArray(nestedBibleItems)) {
             nestedBibleItems = [nestedBibleItems];
         }
         this.nestedBibleItems = [...nestedBibleItems, newBibleItem];
+        if (colorNote) {
+            this.setColorNote(newBibleItem, colorNote);
+        }
         return newBibleItem;
     }
 

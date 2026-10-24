@@ -7,6 +7,7 @@ import { handleError } from '../helper/errorHelpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
 import type { BibleTargetType } from './bibleRenderHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
+import type { BibleVerseNumberStyleType } from './bibleVerseTextHelpers';
 import type { BibleItemType } from './bibleItemHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
@@ -287,12 +288,16 @@ export default class BibleItem
     }
     // Every chapter of the passage unless `maxChapterCount` says otherwise:
     // a hover hint reads a few, a copy reads all.
-    toText(maxChapterCount?: number) {
+    toText(
+        maxChapterCount?: number,
+        verseNumberStyle?: BibleVerseNumberStyleType,
+    ) {
         return bibleRenderHelper.toText(
             this.bibleKey,
             this.target,
             true,
             maxChapterCount,
+            verseNumberStyle,
         );
     }
     async toFullText() {

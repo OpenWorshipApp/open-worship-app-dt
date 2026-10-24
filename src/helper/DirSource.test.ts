@@ -14,6 +14,7 @@ const {
     showSimpleToastMock,
     handleErrorMock,
     tranMock,
+    dataDirState,
 } = vi.hoisted(() => {
     return {
         settingStore: new Map<string, string>(),
@@ -29,6 +30,7 @@ const {
         showSimpleToastMock: vi.fn(),
         handleErrorMock: vi.fn(),
         tranMock: vi.fn(),
+        dataDirState: { isOnOwnFolder: false },
     };
 });
 
@@ -47,6 +49,14 @@ function normalizePath(...parts: string[]) {
     }
     return normalizedPath;
 }
+
+vi.mock('../setting/directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        get isOnOwnFolder() {
+            return dataDirState.isOnOwnFolder;
+        },
+    },
+}));
 
 vi.mock('./settingHelpers', () => ({
     getSetting: getSettingMock,
@@ -100,6 +110,7 @@ function genSettingName() {
 describe('DirSource', () => {
     beforeEach(() => {
         settingStore.clear();
+        dataDirState.isOnOwnFolder = false;
         vi.clearAllMocks();
         getSettingMock.mockImplementation((key: string) => {
             return settingStore.get(key) ?? null;
@@ -146,6 +157,16 @@ describe('DirSource', () => {
         settingStore.set(settingName, '/docs//');
         expect(DirSource.getDirPathBySettingName(settingName)).toBe('/docs');
         expect(dirSource.dirPath).toBe('/docs');
+    });
+
+    test('with no data folder in use, a folder setting names nothing', () => {
+        const settingName = genSettingName();
+        // What the app's own folder still says about an old data folder.
+        settingStore.set(settingName, '/old-data/bibles-read');
+        dataDirState.isOnOwnFolder = true;
+
+        expect(DirSource.getDirPathBySettingName(settingName)).toBeNull();
+        expect(new DirSource(settingName).dirPath).toBe('');
     });
 
     test('writes the dir path through the setter and fires a reload', async () => {

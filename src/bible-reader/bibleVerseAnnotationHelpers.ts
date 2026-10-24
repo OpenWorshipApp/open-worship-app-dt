@@ -31,6 +31,12 @@ export type VerseOffsetsType = {
  * shapes a real selection arrives in: a double-click lands its boundary on an
  * element rather than a text node, and a triple-click hands over
  * `(element, childIndex)`.
+ *
+ * Whitespace is trimmed off both ends, and a run of nothing but whitespace is
+ * refused. A double-click in the gap between two words selects that gap (this
+ * is how one mark came to be stored as a single space, in a range that paints
+ * nothing on screen), and a drag that ends past the last word picks up the
+ * space after it — neither is a mark anyone meant to make.
  */
 export function getOffsetsFromRange(
     rootElement: Element,
@@ -44,14 +50,17 @@ export function getOffsetsFromRange(
         // mark the wrong words, so it is refused outright.
         return null;
     }
-    const text = range.toString();
+    const rawText = range.toString();
+    const text = rawText.trim();
     if (text.length === 0) {
         return null;
     }
     const probeRange = document.createRange();
     probeRange.selectNodeContents(rootElement);
     probeRange.setEnd(range.startContainer, range.startOffset);
-    const start = probeRange.toString().length;
+    const start =
+        probeRange.toString().length +
+        (rawText.length - rawText.trimStart().length);
     return { start, end: start + text.length, text };
 }
 

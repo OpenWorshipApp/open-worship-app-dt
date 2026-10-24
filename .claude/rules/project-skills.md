@@ -1,7 +1,6 @@
 ---
 paths:
   - ".claude/skills/**"
-  - ".agents/skills/**"
   - "docs/test-paths/**"
   - "test-results/**"
   - "src/helper/extra-bin/**"
@@ -47,19 +46,6 @@ release-dir exe shares userData and the single-instance lock with the
 installed app, so the second one quits silently; and
 `ELECTRON_RUN_AS_NODE` makes the packaged exe run as Node exactly as it does
 `npm run dev`. `launch` records the pid and `stop` kills that pid only.
-
-`.agents/skills/owa-robot-test`, `.codex/memory/` and
-`.codex/project-instructions.md` are the Codex MIRROR of this skill, of
-`.claude/memory/` and of `.claude/CLAUDE.md` (with `.claude/rules/` →
-`.codex/instructions/`); `AGENTS.md` at the
-repo root says how each is copied (a mirrored `SKILL.md` keeps its Codex
-frontmatter and usage notes, everything else is copied exactly). `.claude/` is
-the source of truth: edit here first, then copy across in the SAME change.
-Mirrors have drifted before (one fell several revisions and seven memory files
-behind), so a mirror file that disagrees with its `.claude/` twin is stale by
-definition — re-copy it with `node extra-work/sync-agent-mirror.mjs` rather
-than reconciling the two by hand (the gate's `agentDocsMirror.test.ts` fails on
-drift since 2026-10-08).
 
 **Screen controlling & presenting testing is mandatory in every run**, whatever
 the focus area — presenting to a screen is the app's core purpose and screen-only
@@ -157,8 +143,6 @@ put it to the user rather than shaving another 200 tokens off a description.
   `research` runs that phase alone and ships nothing.
 - Tracked work carries stable `EC-xx` ids in the skill's `references/backlog.md`;
   add what you find there even when you don't do it.
-- Same mirror rule as owa-robot-test: `.agents/skills/owa-enhance-chatbot` is a
-  copy, `.claude/` is the source of truth.
 - **A tool change is not done until it was driven against the running app.**
   Verify live first and run `npm run lint` last (it no longer builds into
   `electron-build/`, so it no longer kills that app) — and a knowledge change
@@ -195,8 +179,7 @@ bill: `audit-mcp-tools.mjs --ratchet` fails when the model's surface crosses
 descriptions on 2026-09-18 — two of which contradicted the chatbot's prompt),
 so a tool added without a decision cannot land quietly. Tool results are
 compact JSON (`MC-33`): a result rides every later round, and indentation was
-~31% of it. Same mirror rule:
-`.agents/skills/owa-enhance-mcp` is a copy.
+~31% of it.
 
 ## owa-enhance-aichat skill
 
@@ -217,7 +200,7 @@ tells the truth about itself: `references/threat-model.md` carries the four
 walls and the 2026-09-11 measurements (`navigator.webdriver` `true` as
 launched; a plain-Chrome user agent looping Cloudflare's box on claude.ai
 for good, Electron's own passing with no box), `references/backlog.md` the
-`AC-xx` items. Same mirror rule: `.agents/skills/owa-enhance-aichat` is a copy.
+`AC-xx` items.
 
 ## owa-enhance skill
 
@@ -230,7 +213,7 @@ screen or API credit — and its one write is a gitignored
 `test-results/owa-enhance/report-<runid>.md`, which is also what lets
 `apply EN-xx` work after the conversation is cleared. With no area it triages
 every area first — `scripts/triage.mjs` (static leads: HTML sinks, module-level
-maps, empty catches, mirror drift, repo paths in notes that are gone, the
+maps, empty catches, repo paths in notes that are gone, the
 sub-skills' open ids, the newest robot run; no app, no network) and
 `scripts/app-vitals.mjs` (the running app's memory per process from the
 operating system and per page over raw CDP — heap, DOM nodes, listeners) — and
@@ -241,26 +224,23 @@ stay with their own skills; app-wide findings carry `EN-xx` ids in
 `references/backlog.md`. Two tool defaults its research contract exists to
 catch, true for any session driving the live app: `performance_start_trace`
 and `lighthouse_audit` both RELOAD the window they are aimed at unless told
-`reload: false` / `mode: "snapshot"`. Same mirror rule:
-`.agents/skills/owa-enhance` is a copy.
+`reload: false` / `mode: "snapshot"`.
 
 ## owa-enhance-agent-docs skill
 
 `.claude/skills/owa-enhance-agent-docs` owns the AGENT DOCUMENTS (asked for
-on 2026-10-08): `CLAUDE.md`, `rules/`, `memory/`, `skills/`, and their Codex
-mirror (`AGENTS.md`, `.codex/`, `.agents/skills/`, `.mcp.json` ↔
-`.codex/config.toml`). Those are what every Claude and Codex session reads,
-and what the in-app 🤖 answers from as its internal corpus. `owa-enhance`'s
+on 2026-10-08): `CLAUDE.md`, `rules/`, `memory/`, `skills/` and `.mcp.json`.
+Those are what every Claude session reads, and what the in-app 🤖 answers
+from as its internal corpus. `owa-enhance`'s
 `docs` area keeps the user manual and knowledge freshness and routes
 agent-doc work here.
 
 The skill has two jobs. **Drift**: `scripts/audit-agent-docs.mjs` reads
 ~16 000 code spans and links out of ~245 documents in ~1 s, with no app, no
-network and no writes. It runs 16 checks: paths and `file:line` anchors, code
+network and no writes. It runs 15 checks: paths and `file:line` anchors, code
 names, the `owa_*` listings against `server.registerTool`, `npm run` and script
 flags, `OWA_*` variables, ledger ids, the memory index and front matter, rule
-`paths:` globs, skill wiring and mirrored `SKILL.md` bodies, mirror drift with
-direction, knowledge freshness, the manual's recipes (`manual`, since
+`paths:` globs, skill wiring, knowledge freshness, the manual's recipes (`manual`, since
 2026-10-11: labels no code draws, coverage rows citing a file that is gone,
 recipes due a read — `user-workflows.md` had been skipped whole as a
 ledger), the notes due a read (`staleness`), and three leverage signals
@@ -283,10 +263,10 @@ measured 2026-10-11, 4 of 559 corrections were wrong, 45 of 80 set-aside
 statements were settled from files (18 of them wrong), and a fallback held by
 33 unit tests had never worked on a real page. A confirmed lead is fixed in the doc
 in the same run, inside the safe classes `references/checks.md` lists, with
-the mirror copied and the knowledge rebuilt. **Leverage**: eight lenses
+the knowledge rebuilt. **Leverage**: seven lenses
 (`references/leverage.md`) turn blind spots, always-loaded context cost, prose
-rules a test or hook could hold, skill routing, Codex parity, the 🤖's 3 000-
-character index window, and repeated session friction into `AD-xx` proposals
+rules a test or hook could hold, skill routing, the 🤖's 3 000-character
+index window, and repeated session friction into `AD-xx` proposals
 that wait for `apply`. The friction comes from `scripts/session-friction.mjs`,
 which reads the local Claude Code transcripts, prints masked error signatures
 only, and is never quoted into a note, since notes ship.
@@ -299,7 +279,6 @@ history**: ledgers, FIXED notes, dated measurements and the frozen
 calibration run, 2026-10-08: the skill listing cuts a description at ~1 530
 characters, so `owa-robot-test`'s 3 932-character description loses most of
 its triggers. CLAUDE.md + MEMORY.md cost ≈ 11.5k tokens in every session.
-Same mirror rule: `.agents/skills/owa-enhance-agent-docs` is a copy.
 
 ## review-stagged-change skill
 
@@ -308,16 +287,14 @@ Same mirror rule: `.agents/skills/owa-enhance-agent-docs` is a copy.
 untracked files are out of scope and a partially staged file is called out. It
 sweeps its dimensions in priority order with performance and memory first
 (this app's first requirement), reports findings, and changes nothing unless
-asked to `fix`. A generic review skill with no ledger of its own. Same mirror
-rule: `.agents/skills/review-stagged-change` is a copy.
+asked to `fix`. A generic review skill with no ledger of its own.
 
 ## review-unstagged-change skill
 
 `.claude/skills/review-unstagged-change` is the twin of the skill above for
 work in progress: the unstaged worktree delta plus untracked files that are
 not ignored, the file ON DISK judged against its index version. Same
-dimensions, same order, same `fix`. Same mirror rule:
-`.agents/skills/review-unstagged-change` is a copy.
+dimensions, same order, same `fix`.
 
 ## owa-upgrade-unit-test skill
 
@@ -387,7 +364,7 @@ repo's real idioms — the `// @vitest-environment jsdom` first line, `vi.hoiste
 mock bundles, `createRoot` + `act` or `renderToStaticMarkup` (there is no
 `@testing-library/react` here), the `vi.mock`-factory-survives-`resetModules`
 fork, and a table of this app's recurring defect classes as ready-made test
-targets. Same mirror rule: `.agents/skills/owa-upgrade-unit-test` is a copy.
+targets.
 
 ## owa-enhance-tips skill
 
@@ -435,5 +412,4 @@ control's own dictionary name inside the translated detail. And because
 lessons stay terse and a lazy catalog is a proposal (`TP-03`), not a refactor.
 Ledger `references/backlog.md` (`TP-xx`), one row per window per run in
 `references/scoreboard.md`, method and writing rules in
-`references/method.md`. Same mirror rule: `.agents/skills/owa-enhance-tips`
-is a copy.
+`references/method.md`.

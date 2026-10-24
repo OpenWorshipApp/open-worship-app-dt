@@ -5,8 +5,10 @@ import {
     MAX_LOOKUP_FACTS_CHARS,
     checkIsLookupAppAsk,
     checkIsLookupLineageAsk,
+    checkIsLookupMapAsk,
     checkLineageNamesSubject,
     findLineagePassage,
+    fitLookupFacts,
     findOpenLookupSubject,
     genLookupCountAnswer,
     genLookupLineageAnswer,
@@ -15,12 +17,22 @@ import {
     genLookupOpeningAnswer,
     listLookupCardLabels,
     readLookupCountAsk,
+    readLookupAround,
+    readLookupAskContext,
+    toLookupContextText,
+    toLookupQuestion,
+    toLookupRecordTurn,
     readLookupThread,
     readLookupVerseAsk,
+    readLookupWordStudyAsk,
     toLookupAppAsk,
     toLookupAsk,
+    toLookupBibleSearch,
+    toLookupStudyFilesArgs,
     toLookupSubject,
     toValidLookupSubject,
+    withLookupBibleSearch,
+    withLookupStudyFiles,
     type LookupSubjectType,
 } from './lookupChatHelpers';
 
@@ -156,8 +168,34 @@ describe('a line typed under it', () => {
         expect(checkIsLookupAppAsk('What does verse 10 mean?')).toBe(false);
         expect(checkIsLookupAppAsk('តើខ ១០ មានន័យអ្វី?')).toBe(false);
         expect(checkIsLookupAppAsk('/screen')).toBe(false);
+        // A how-word alone is about the record (2026-10-22): "what does the
+        // name Noah mean?" in Khmer holds ដូចម្តេច, "how", and went to the
+        // app's guide, which said to type /btw.
+        expect(checkIsLookupAppAsk('តើឈ្មោះណូអេមានន័យដូចម្តេច?')).toBe(false);
+        expect(checkIsLookupAppAsk('How did Noah build the ark?')).toBe(false);
         // It is still the same conversation: the next plain line is about it.
         expect(readLookupThread([CARD], 'How do I save this?')).toEqual(ADAM);
+    });
+
+    it('asks to see a place on a map, in any of its languages', () => {
+        const PLACE: LookupSubjectType = {
+            kind: 'location',
+            target: 'bethlehem',
+            title: 'Bethlehem',
+            facts: '{}',
+        };
+        expect(checkIsLookupMapAsk('Show Bethlehem on a map', PLACE)).toBe(
+            true,
+        );
+        expect(
+            checkIsLookupMapAsk('បង្ហាញអារ៉ារ៉ាតនៅលើផែនទី', {
+                ...PLACE,
+                title: 'អារ៉ារ៉ាត',
+            }),
+        ).toBe(true);
+        expect(checkIsLookupMapAsk('Where is Bethlehem?', PLACE)).toBe(false);
+        expect(checkIsLookupMapAsk('Show it on a map', ADAM)).toBe(false);
+        expect(checkIsLookupMapAsk('/map', PLACE)).toBe(false);
     });
 
     it('is about the NEWEST card when a tab holds two', () => {
@@ -269,6 +307,259 @@ describe('what the card itself can do', () => {
     });
 });
 
+describe('what a line asks of a passage’s surroundings', () => {
+    const GEN_8: LookupSubjectType = {
+        kind: 'verse',
+        target: 'GEN 8:1-22',
+        title: 'លោកុប្បត្តិ ៨:១-២២',
+        bibleKey: 'ពគប',
+        facts: JSON.stringify({
+            kind: 'verse',
+            around: {
+                before: { key: 'GEN 7:1-24', title: 'លោកុប្បត្តិ ៧:១-២៤' },
+                after: { key: 'GEN 9:1-29', title: 'លោកុប្បត្តិ ៩:១-២៩' },
+            },
+        }),
+    };
+
+    it('reads a verse by its number, in the reader’s digits, inside the passage', () => {
+        expect(
+            readLookupAskContext(
+                'តើខ ២២ សន្យាអ្វី ហើយព្រះបានសន្យាដូចនេះម្តងទៀតនៅកន្លែងណា?',
+                GEN_8,
+            ),
+        ).toEqual({ verseKeys: ['GEN 8:22'], sides: [] });
+        expect(readLookupAskContext('What does verse 21 mean?', GEN_8)).toEqual(
+            { verseKeys: ['GEN 8:21'], sides: [] },
+        );
+        // A verse the passage does not hold is not its verse.
+        expect(readLookupAskContext('What does verse 40 mean?', GEN_8)).toBe(
+            null,
+        );
+    });
+
+    it('reads before, after, and a length of time as both', () => {
+        expect(
+            readLookupAskContext('តើមានអ្វីកើតឡើងមុនបទគម្ពីរនេះ?', GEN_8)
+                ?.sides,
+        ).toEqual(['before']);
+        expect(
+            readLookupAskContext('What did Jesus teach after this?', GEN_8)
+                ?.sides,
+        ).toEqual(['after']);
+        expect(
+            readLookupAskContext('តើណូអេនៅក្នុងទូកធំប៉ុន្មានថ្ងៃ?', GEN_8)
+                ?.sides,
+        ).toEqual(['before', 'after']);
+    });
+
+    // 2026-10-23 (EC-426): who or which places are in it reads the names
+    // lookup, for that question only.
+    it('reads who and which places are in it from the names lookup', () => {
+        expect(
+            readLookupAskContext(
+                'តើមាននរណា និងទីកន្លែងណាខ្លះនៅក្នុងបទគម្ពីរនេះ?',
+                GEN_8,
+            ),
+        ).toEqual({ verseKeys: [], sides: [], isNames: true });
+        expect(
+            readLookupAskContext('Which places are in this passage?', GEN_8)
+                ?.isNames,
+        ).toBe(true);
+        expect(
+            readLookupAskContext('Quels lieux sont nommés ici ?', GEN_8)
+                ?.isNames,
+        ).toBe(true);
+        const context = toLookupContextText({
+            verseThemes: [],
+            sides: [],
+            names: {
+                people: [{ name: 'ណូអេ', verses: ['8:1'] }],
+                places: [{ name: 'អារ៉ារ៉ាត', verses: ['8:4'] }],
+            },
+        });
+        expect(context).toContain('The people and places the names lookup');
+        expect(context).toContain('"verses":["8:4"]');
+    });
+
+    it('asks nothing of a line that names none of them, or of a person', () => {
+        expect(
+            readLookupAskContext('តើព្រាប និងស្លឹកអូលីវ មានន័យអ្វី?', GEN_8),
+        ).toBeNull();
+        expect(readLookupAskContext('/help before', GEN_8)).toBeNull();
+        expect(
+            readLookupAskContext('What happened before?', {
+                ...GEN_8,
+                kind: 'name',
+            }),
+        ).toBeNull();
+    });
+
+    it('names the verses before and after as the record does', () => {
+        expect(readLookupAround(GEN_8)).toEqual({
+            before: { key: 'GEN 7:1-24', title: 'លោកុប្បត្តិ ៧:១-២៤' },
+            after: { key: 'GEN 9:1-29', title: 'លោកុប្បត្តិ ៩:១-២៩' },
+        });
+        expect(readLookupAround({ ...GEN_8, facts: '{}' })).toEqual({
+            before: null,
+            after: null,
+        });
+    });
+
+    it('hands what was read to the model under the record', () => {
+        const context = toLookupContextText({
+            verseThemes: [
+                {
+                    verse: 'GEN 8:22',
+                    title: 'លោកុប្បត្តិ ៨:២២',
+                    themes: [{ theme: 'x', refs: ['អេសាយ ៥៤:៩'] }],
+                },
+            ],
+            sides: [
+                {
+                    side: 'before',
+                    title: 'លោកុប្បត្តិ ៧:១-២៤',
+                    text: 'y'.repeat(5000),
+                },
+            ],
+        });
+        expect(context).toContain('លោកុប្បត្តិ ៨:២២, its own cross references');
+        expect(context).toContain('អេសាយ ៥៤:៩');
+        expect(context).toContain('The verses before it (លោកុប្បត្តិ ៧:១-២៤)');
+        // A side is cut to what an ask can carry.
+        expect(context.length).toBeLessThan(4400);
+        expect(toLookupAsk('q', GEN_8, context)).toContain(
+            'answer from it first',
+        );
+        expect(toLookupContextText({ verseThemes: [], sides: [] })).toBe('');
+    });
+});
+
+describe('the record at the head of the conversation', () => {
+    const PASSAGE: LookupSubjectType = {
+        kind: 'verse',
+        target: 'GEN 8:1-22',
+        title: 'លោកុប្បត្តិ ៨:១-២២',
+        bibleKey: 'ពគប',
+        facts: JSON.stringify({ kind: 'verse', bible: 'ពគប', passages: [] }),
+    };
+
+    it('carries what the question used to carry, the same every time', () => {
+        const turn = toLookupRecordTurn(PASSAGE) ?? '';
+        expect(turn).toContain('Record:');
+        expect(turn).toContain('"bible":"ពគប"');
+        expect(turn).toContain('never write one from memory');
+        expect(toLookupRecordTurn(PASSAGE)).toBe(turn);
+        // The question names what it is about and leaves the record out.
+        const question = toLookupQuestion('why?', PASSAGE, '\n\nread');
+        expect(question).toContain('its record is at the start');
+        expect(question).not.toContain('Record:');
+        // What the window read, then the question again: the turn ends
+        // with what is asked.
+        expect(question).toContain('\n\nread');
+        expect(question.endsWith('The question to answer: why?')).toBe(true);
+        expect(
+            toLookupQuestion('why?', PASSAGE).endsWith(
+                'of this conversation.)',
+            ),
+        ).toBe(true);
+    });
+
+    it('is nothing when the record could not be read', () => {
+        expect(toLookupRecordTurn({ ...PASSAGE, facts: '' })).toBeNull();
+    });
+});
+
+describe('a record within what a card keeps', () => {
+    const passage = 'In the beginning '.repeat(400);
+    const big = {
+        kind: 'verse',
+        bible: 'KJV',
+        passages: [{ key: 'GEN 1:1-31', text: passage }],
+        crossRefs: {
+            referenceCount: 900,
+            mostCited: [{ key: 'JHN 1:1', from: ['1', '2'] }],
+            byVerse: [{ verse: '1', themes: [{ theme: 'x'.repeat(9000) }] }],
+        },
+    };
+
+    it('leaves a record that fits as it is', () => {
+        const text = JSON.stringify({ kind: 'verse', passages: [] });
+        expect(fitLookupFacts(text)).toBe(text);
+    });
+
+    it('sheds the cross references by verse first, and stays a record', () => {
+        const fitted = fitLookupFacts(JSON.stringify(big));
+        expect(fitted.length).toBeLessThanOrEqual(MAX_LOOKUP_FACTS_CHARS);
+        const facts = JSON.parse(fitted);
+        expect(facts.passages[0].text).toBe(passage);
+        expect(facts.crossRefs.byVerse).toBeUndefined();
+        expect(facts.crossRefs.mostCited).toEqual(big.crossRefs.mostCited);
+    });
+
+    it('drops them whole when that is not enough', () => {
+        const fitted = fitLookupFacts(
+            JSON.stringify({
+                ...big,
+                crossRefs: { ...big.crossRefs, mostCited: 'y'.repeat(12000) },
+            }),
+        );
+        expect(JSON.parse(fitted).crossRefs).toBeUndefined();
+    });
+
+    it('a subject kept from a saved conversation is fitted the same way', () => {
+        const subject = toValidLookupSubject({
+            kind: 'verse',
+            target: 'GEN 1:1-31',
+            title: 'Genesis 1',
+            facts: JSON.stringify(big),
+        });
+        expect(JSON.parse(subject?.facts ?? '').crossRefs.byVerse).toBe(
+            undefined,
+        );
+    });
+});
+
+describe('the study files of a passage', () => {
+    it('lists by the chapter its key names', () => {
+        expect(
+            toLookupStudyFilesArgs({
+                kind: 'verse',
+                target: 'GEN 8:1-22',
+                title: 'x',
+            }),
+        ).toEqual({ action: 'list', book: 'GEN', chapter: 8 });
+        expect(
+            toLookupStudyFilesArgs({
+                kind: 'verse',
+                target: 'JHN 3',
+                title: 'x',
+            }),
+        ).toEqual({ action: 'list', book: 'JHN', chapter: 3 });
+        expect(
+            toLookupStudyFilesArgs({ kind: 'name', target: 'id', title: 'x' }),
+        ).toBeNull();
+    });
+
+    it('keeps the files the list named, each once', () => {
+        const facts = JSON.stringify({ kind: 'verse', passages: [] });
+        const kept = JSON.parse(
+            withLookupStudyFiles(facts, {
+                files: [
+                    { file: 'pdf/GEN.8.pdf', kind: 'pdf' },
+                    { file: 'pdf/GEN.0.pdf', kind: 'pdf' },
+                    { file: 'pdf/GEN.8.pdf', kind: 'pdf' },
+                    { kind: 'pdf' },
+                ],
+            }),
+        );
+        expect(kept.studyFiles).toEqual(['pdf/GEN.8.pdf', 'pdf/GEN.0.pdf']);
+        // Nothing listed, or not a list: the record as it was.
+        expect(withLookupStudyFiles(facts, { files: [] })).toBe(facts);
+        expect(withLookupStudyFiles(facts, null)).toBe(facts);
+    });
+});
+
 describe('the card it opens on', () => {
     it('says the record was read, from the KJV, and offers three questions', () => {
         const opening = genLookupOpeningAnswer(ADAM);
@@ -289,8 +580,77 @@ describe('the card it opens on', () => {
             facts: '{"passages":[]}',
         });
         expect(opening.text).not.toContain('King James');
-        expect(opening.replies).toHaveLength(3);
-        expect(opening.replies[0]).toContain('passage');
+        expect(opening.text).not.toContain('in the Bible');
+        // What is related first: the user's goal of 2026-10-23.
+        expect(opening.replies).toHaveLength(4);
+        expect(opening.replies[0]).toBe(
+            'Which other verses are related to this passage?',
+        );
+    });
+
+    // 2026-10-23: a reader is told what else the card gathered.
+    it('says what the card gathered for a passage', () => {
+        const opening = genLookupOpeningAnswer({
+            kind: 'verse',
+            target: 'GEN 8:1-22',
+            title: 'Genesis 8:1-22',
+            facts: JSON.stringify({
+                kind: 'verse',
+                passages: [],
+                crossRefs: { referenceCount: 1180 },
+                studyFiles: ['pdf/GEN.8.pdf', 'pdf/GEN.0.pdf'],
+            }),
+        });
+        expect(opening.text).toContain(
+            "The app's cross references lead from it to 1180 other verses.",
+        );
+        expect(opening.text).toContain(
+            'Resources has 2 study files for its chapter.',
+        );
+        // No notes of the person's own: no line and no question about them.
+        expect(opening.text).not.toContain('of your own');
+        expect(opening.replies[0]).toBe(
+            'Which other verses are related to this passage?',
+        );
+    });
+
+    // 2026-10-23: the person's own notes and marks on the passage.
+    it('says when the person has notes on the passage, and asks first', () => {
+        const opening = genLookupOpeningAnswer({
+            kind: 'verse',
+            target: 'GEN 8:1-22',
+            title: 'Genesis 8:1-22',
+            facts: JSON.stringify({
+                kind: 'verse',
+                passages: [],
+                yourNotes: { verseCount: 3, noteCount: 1, notes: [] },
+            }),
+        });
+        expect(opening.text).toContain(
+            'You have notes or marks of your own on 3 of its verses.',
+        );
+        expect(opening.replies.slice(0, 2)).toEqual([
+            'What did I note on these verses?',
+            'Which other verses are related to this passage?',
+        ]);
+    });
+
+    // The title alone reads the same in every version of one language.
+    it('names the Bible a passage was read in', () => {
+        expect(genLookupOpeningAnswer(VERSE).text).toBe(
+            'I have read ម៉ាថាយ ១៨:១-១៤ in the Bible ពគប. Ask me anything ' +
+                'about this passage, or press a question.',
+        );
+        // The record's own Bible when it says one, else the one handed over.
+        expect(
+            genLookupOpeningAnswer({
+                ...VERSE,
+                facts: JSON.stringify({ kind: 'verse', passages: [] }),
+            }).text,
+        ).toContain('in the Bible ពគប');
+        expect(
+            genLookupOpeningAnswer({ ...VERSE, bibleKey: 'KJV' }).text,
+        ).toContain('in the Bible ពគប');
     });
 
     it('says when nothing could be read, and still offers the questions', () => {
@@ -347,7 +707,15 @@ describe('what the model is asked', () => {
                 title: 'John 3:16',
                 facts: '',
             }),
-        ).toContain('kind "verse", ref "JHN 3:16"');
+        ).toContain('kind "verse", ref "JHN 3:16".');
+        // Read in the Bible it was opened in, not one the tool would pick.
+        const unread = toLookupAsk('What?', { ...VERSE, facts: '' });
+        expect(unread).toContain(
+            'kind "verse", ref "MAT 18:1-14", bible "ពគប"',
+        );
+        expect(unread).toContain(
+            'The record is the passage in the Bible "ពគប"',
+        );
     });
 });
 
@@ -419,6 +787,55 @@ describe('the family line to Jesus', () => {
         expect(checkIsLookupLineageAsk('/screen', DAVID_EN)).toBe(false);
     });
 
+    // Jesus and the person, with nothing asking for an order or a line, is
+    // a question about the person (2026-10-22): "did Jesus speak about
+    // Noah?" was answered "neither family line names Noah".
+    it('is not asked for by Jesus and the person alone', () => {
+        const NOAH_EN: LookupSubjectType = {
+            ...DAVID_EN,
+            target: 'noah',
+            title: 'Noah',
+            facts: JSON.stringify({ kind: 'name', name: 'Noah' }),
+        };
+        const NOAH_KM: LookupSubjectType = { ...NOAH_EN, title: 'ណូអេ' };
+        expect(
+            checkIsLookupLineageAsk('Did Jesus speak about Noah?', NOAH_EN),
+        ).toBe(false);
+        expect(
+            checkIsLookupLineageAsk(
+                'តើព្រះយេស៊ូវបាននិយាយអំពីណូអេដែរឬទេ?',
+                NOAH_KM,
+            ),
+        ).toBe(false);
+        expect(checkIsLookupLineageAsk('genealogy of Noah', NOAH_EN)).toBe(
+            true,
+        );
+    });
+
+    it('finds the person in a genealogy under any of its names', () => {
+        // Luke 3:36 in the KJV: Noah is Noe there.
+        const passage = {
+            key: 'LUK 3:23-38',
+            ref: 'Luke 3:23-38',
+            title: null,
+            text: 'Which was the son of Sem, which was the son of Noe',
+        };
+        const noah = {
+            title: 'Noah',
+            facts: JSON.stringify({
+                name: 'Noah',
+                otherForms: [{ id: 'noe', name: 'Noe' }],
+            }),
+        };
+        expect(checkLineageNamesSubject(passage, noah)).toBe(true);
+        expect(
+            checkLineageNamesSubject(passage, {
+                title: 'Noah',
+                facts: '{"name":"Noah"}',
+            }),
+        ).toBe(false);
+    });
+
     it('reads the genealogy back as a passage, and finds the person in it', () => {
         const passage = findLineagePassage(MATTHEW_FACTS);
         expect(passage).toEqual({
@@ -443,7 +860,8 @@ describe('the family line to Jesus', () => {
             throw new Error('the passage should have been read');
         }
         const text = genLookupLineageAnswer(passage, 'ពគប');
-        expect(text).toContain('Matthew 1:1-17');
+        // Named as the Bible writes it, never the English reference.
+        expect(text).not.toContain('Matthew 1:1-17');
         expect(text).toContain('ពគប');
         expect(text).toContain('**ម៉ាថាយ ១:១-១៧**');
         expect(text).toContain('សាឡូម៉ូន');
@@ -540,5 +958,137 @@ describe('with no assistant to ask', () => {
     it('has nothing to say of nothing read', () => {
         expect(genLookupOfflineText({ ...ADAM, facts: '' })).toBeNull();
         expect(genLookupOfflineText({ ...ADAM, facts: '{}' })).toBeNull();
+    });
+});
+
+describe('the Bible being read, searched for the name', () => {
+    const NOAH_FACTS = {
+        kind: 'name',
+        name: 'ណូអេ',
+        bible: 'ពគប',
+        otherForms: [{ id: 'noe', name: 'ណូអេ', kjvName: 'Noe' }],
+        verseCount: 36,
+    };
+
+    it('searches the name and its other names, single words only', () => {
+        expect(toLookupBibleSearch(NOAH_FACTS)).toEqual({
+            bible: 'ពគប',
+            words: 'ណូអេ',
+        });
+        expect(
+            toLookupBibleSearch({
+                kind: 'name',
+                name: 'Noah',
+                bible: 'KJV',
+                otherForms: [{ name: 'Noe' }],
+            }),
+        ).toEqual({ bible: 'KJV', words: 'Noah Noe' });
+        // "of" would be searched too.
+        expect(
+            toLookupBibleSearch({
+                kind: 'location',
+                name: 'Valley of Rephaim',
+                bible: 'KJV',
+            }),
+        ).toBeNull();
+        expect(toLookupBibleSearch({ kind: 'name', name: 'Noah' })).toBeNull();
+        expect(
+            toLookupBibleSearch({ kind: 'verse', name: 'x', bible: 'KJV' }),
+        ).toBeNull();
+        expect(toLookupBibleSearch(null)).toBeNull();
+    });
+
+    it('keeps how many and where, and the words when there are few', () => {
+        const few = JSON.parse(
+            withLookupBibleSearch(JSON.stringify(NOAH_FACTS), {
+                bible: 'ពគប',
+                words: ['អារ៉ារ៉ាត'],
+                total: 2,
+                verses: [
+                    {
+                        key: '2KI 19:37',
+                        title: '២ ពង្សាវតារក្សត្រ ១៩:៣៧',
+                        text: 'រត់​រួច​ទៅ​ឯ​ស្រុក​អារ៉ារ៉ាត',
+                        hits: 1,
+                    },
+                    { key: 'GEN 8:4', text: 'ភ្នំ​អារ៉ារ៉ាត' },
+                ],
+            }),
+        );
+        expect(few.verseCount).toBe(36);
+        expect(few.bibleSearch).toMatchObject({
+            bible: 'ពគប',
+            words: 'អារ៉ារ៉ាត',
+            total: 2,
+            verses: [
+                {
+                    key: '2KI 19:37',
+                    title: '២ ពង្សាវតារក្សត្រ ១៩:៣៧',
+                    text: 'រត់​រួច​ទៅ​ឯ​ស្រុក​អារ៉ារ៉ាត',
+                },
+                { key: 'GEN 8:4' },
+            ],
+        });
+        const many = JSON.parse(
+            withLookupBibleSearch(JSON.stringify(NOAH_FACTS), {
+                total: 874,
+                byBook: [{ book: '1 Samuel', key: '1SA', verses: 219 }],
+                verses: Array.from({ length: 30 }, (_, index) => {
+                    return { key: `1SA ${index + 1}:1`, text: 'ដាវីឌ' };
+                }),
+            }),
+        );
+        expect(many.bibleSearch.total).toBe(874);
+        expect(many.bibleSearch.byBook).toEqual([
+            { book: '1 Samuel', verses: 219 },
+        ]);
+        // Keys only, a dozen.
+        expect(many.bibleSearch.verses).toHaveLength(12);
+        expect(many.bibleSearch.verses[0]).toBe('1SA 1:1');
+    });
+
+    it('leaves the record as it was when nothing was found', () => {
+        const text = JSON.stringify(NOAH_FACTS);
+        expect(withLookupBibleSearch(text, { total: 0, verses: [] })).toBe(
+            text,
+        );
+        expect(withLookupBibleSearch(text, null)).toBe(text);
+        expect(withLookupBibleSearch('not json', { total: 3 })).toBe(
+            'not json',
+        );
+    });
+});
+
+// 2026-10-23: "teach me the words" under a passage card is its **Study the
+// words**; with a verse named, that verse's every word.
+describe('a line that asks to study the words', () => {
+    const GEN_8: LookupSubjectType = {
+        kind: 'verse',
+        target: 'GEN 8:1-22',
+        title: 'Genesis 8:1-22',
+        bibleKey: 'GB',
+        facts: '',
+    };
+
+    it('reads the study, and the verse when one is named', () => {
+        expect(
+            readLookupWordStudyAsk('ពន្យល់ពាក្យនីមួយៗក្នុងខ ១', GEN_8),
+        ).toEqual({ verseKey: 'GEN 8:1' });
+        expect(
+            readLookupWordStudyAsk('Teach me the vocabulary of this', GEN_8),
+        ).toEqual({ verseKey: null });
+        expect(
+            readLookupWordStudyAsk('Explique chaque mot du verset 3', GEN_8),
+        ).toEqual({ verseKey: 'GEN 8:3' });
+    });
+
+    it('leaves one word, a command and a person to the rest', () => {
+        expect(
+            readLookupWordStudyAsk('What does the word ἐνεθυμήθη mean?', GEN_8),
+        ).toBeNull();
+        expect(readLookupWordStudyAsk('/btw every word', GEN_8)).toBeNull();
+        expect(
+            readLookupWordStudyAsk('vocabulary', { ...GEN_8, kind: 'name' }),
+        ).toBeNull();
     });
 });

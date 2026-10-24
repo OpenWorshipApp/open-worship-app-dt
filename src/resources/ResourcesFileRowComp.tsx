@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useState } from 'react';
+import { lazy, Suspense, use, useCallback, useState } from 'react';
 
 import ContextMenuDotsButtonComp from '../context-menu/ContextMenuDotsButtonComp';
 import {
@@ -22,6 +22,10 @@ import {
     readResourceLinks,
 } from './resourceLinksHelpers';
 import { toResourcePreviewKind } from './resourcePreviewHelpers';
+import {
+    ResourcesReadingContext,
+    toResourceReading,
+} from './resourceReadingHelpers';
 import {
     checkIsBookLevelName,
     toResourceIcon,
@@ -182,12 +186,25 @@ export default function ResourcesFileRowComp({
         void handleClicking();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const getReadingPaneListRef = useAppCurrentRef(
+        use(ResourcesReadingContext),
+    );
     const handleAskingAbout = useCallback(async () => {
+        // The passage the Reader is on for this file goes with it, so the
+        // tab starts at the verses being read (2026-10-22). Read at the
+        // press, never on render.
+        const reading =
+            getReadingPaneListRef.current === null
+                ? null
+                : await toResourceReading(
+                      pathBasename(filePathRef.current),
+                      getReadingPaneListRef.current(),
+                  );
         // Loaded at the press: the dialogs the assistant asks first and the
         // window opener are nothing a shelf of rows needs until then.
         const { openChatbotWithFile } =
             await import('../helper/ai/chatbotHandoffHelpers');
-        await openChatbotWithFile(filePathRef.current);
+        await openChatbotWithFile(filePathRef.current, reading);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const canAskAboutRef = useAppCurrentRef(canAskAbout);

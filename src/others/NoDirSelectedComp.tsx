@@ -1,7 +1,8 @@
 import { tran } from '../lang/langHelpers';
 import type DirSource from '../helper/DirSource';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
-import { openGeneralSetting } from '../setting/settingHelpers';
+import { openPathSetting } from '../setting/settingHelpers';
 
 export function SelectDefaultDirButtonComp({
     dirSource,
@@ -30,7 +31,7 @@ export function GotoSettingDirectoryPathComp() {
             <button
                 className="btn btn-sm btn-warning text-wrap text-break mw-100"
                 onClick={() => {
-                    openGeneralSetting();
+                    openPathSetting();
                 }}
             >
                 <span>{tran('Go to Settings ')}</span>
@@ -59,6 +60,23 @@ export default function NoDirSelectedComp({
      */
     isDirSettingRouteHidden?: boolean;
 }>) {
+    // No data folder at all: a default folder inside it cannot be made, and
+    // the only way on is the page where one is chosen.
+    if (appLocalStorage.isOnOwnFolder) {
+        return (
+            <div className="card p-1 w-100 app-overflow-hidden">
+                <div className="card-body w-100">
+                    <div className="ms-2 text-warning-emphasis">
+                        <i className="bi bi-info-circle me-1" />
+                        <span>{tran('No Parent Directory Selected')}</span>
+                    </div>
+                    <div className="w-100 d-flex flex-column align-items-center justify-content-center">
+                        <GotoSettingDirectoryPathComp />
+                    </div>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="card p-1 w-100 app-overflow-hidden">
             <div className="card-body w-100">

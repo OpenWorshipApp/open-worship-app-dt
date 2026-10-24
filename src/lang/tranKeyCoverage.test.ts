@@ -157,7 +157,9 @@ describe('Khmer translation coverage', () => {
         // Add each key to `src/lang/data/km/index.ts`, checking first for a
         // case or whitespace variant (the module throws on a duplicate).
         expect(missing).toEqual([]);
-    });
+        // Reads every source file: past the 10 s default while the full
+        // suite holds every core (2026-10-24).
+    }, 60000);
 
     test('still finds the calls, so a green run means something', () => {
         // A pattern that broke would match nothing and pass; ~1 600 keys were
@@ -169,7 +171,7 @@ describe('Khmer translation coverage', () => {
         // Unquoted identifier keys are keys too.
         expect(keySet.has(sanitizeTranKey('Sort'))).toBe(true);
         expect(kmSource).toContain('return key.trim().toLowerCase();');
-    });
+    }, 60000);
 
     // `toForegroundDragLabel` translates through a LOOKUP
     // (`tran(targetLabelMap[target])`), so the sweep above cannot see those

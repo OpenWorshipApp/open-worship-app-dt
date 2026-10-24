@@ -4,14 +4,17 @@ import {
     LOOKUP_STEP_TOOL_NAME,
     checkIsOneVerse,
     genBiblesAnswer,
+    genCrossRefsAnswer,
     genLookupActions,
     genLookupAnswerActions,
     genNamesAnswer,
     genRelatedAnswer,
+    genStudyFilesAnswer,
     genVersesAnswer,
     listLookupRelated,
     readLookupFacts,
     toPassageAsk,
+    toLookupMapUrl,
     toPassageCopyText,
     toValidLookupStep,
 } from './lookupStepHelpers';
@@ -71,6 +74,32 @@ describe('what a passage can be asked to do', () => {
             label: 'Next chapter',
             toolName: LOOKUP_STEP_TOOL_NAME,
             args: { step: 'near', ask: PASSAGE, near: 'next' },
+        });
+    });
+
+    // 2026-10-23: what the card gathered comes first, when there is any.
+    it('offers what the card gathered, first', () => {
+        const actions = genLookupActions(PASSAGE, {
+            crossRefs: { referenceCount: 40 },
+            studyFiles: ['pdf/GEN.4.pdf'],
+        });
+        expect(toLabels(actions).slice(0, 3)).toEqual([
+            'Related verses',
+            'Study files for this chapter',
+            'Open in bible lookup',
+        ]);
+        expect(actions[0].args).toEqual({ step: 'crossrefs', ask: PASSAGE });
+        expect(
+            toLabels(
+                genLookupActions(PASSAGE, {
+                    crossRefs: { referenceCount: 0 },
+                    studyFiles: [],
+                }),
+            )[0],
+        ).toBe('Open in bible lookup');
+        expect(toValidLookupStep({ step: 'crossrefs', ask: PASSAGE })).toEqual({
+            step: 'crossrefs',
+            ask: PASSAGE,
         });
     });
 
@@ -141,6 +170,42 @@ describe('what a person or a place can be asked to do', () => {
                 ),
             ),
         ).toEqual(['Related places']);
+        // A place with a point opens on a map; a person never does, and a
+        // region with no point has no such button (2026-10-22).
+        const bethlehem = { ...ADAM, kind: 'location' as const };
+        const mapAction = genLookupActions(bethlehem, {
+            verseCount: 0,
+            coordinates: { latitude: 31.704928, longitude: 35.201605 },
+        }).find((action) => {
+            return action.args.step === 'map';
+        });
+        expect(mapAction?.label).toBe('Show it on a map');
+        expect(mapAction?.toolName).toBe(LOOKUP_STEP_TOOL_NAME);
+        expect(
+            genLookupActions(ADAM, {
+                ...ADAM_FACTS,
+                coordinates: { latitude: 31.7, longitude: 35.2 },
+            }).some((action) => {
+                return action.args.step === 'map';
+            }),
+        ).toBe(false);
+        expect(
+            toLookupMapUrl({
+                coordinates: { latitude: 31.704928, longitude: 35.201605 },
+            }),
+        ).toBe(
+            'https://www.google.com/maps/search/?api=1&query=31.704928%2C35.201605',
+        );
+        expect(toLookupMapUrl({ coordinates: null })).toBeNull();
+        expect(
+            toLookupMapUrl({ coordinates: { latitude: 'x', longitude: 1 } }),
+        ).toBeNull();
+        expect(
+            toLookupMapUrl({ coordinates: { latitude: 99, longitude: 1 } }),
+        ).toBeNull();
+        expect(toValidLookupStep({ step: 'map', ask: bethlehem })?.step).toBe(
+            'map',
+        );
         expect(genLookupActions(ADAM, null)).toEqual([]);
         expect(toLabels(genLookupAnswerActions(ADAM))).toEqual([
             'More things to do',
@@ -191,6 +256,116 @@ describe('what a person or a place can be asked to do', () => {
         });
         expect(answer.text).toContain('17');
         expect(genVersesAnswer(ADAM, {}).actions).toEqual([]);
+    });
+});
+
+describe('what the card gathered for a passage', () => {
+    const GEN_8 = {
+        ...PASSAGE,
+        target: 'GEN 8:1-22',
+        title: 'លោកុប្បត្តិ ៨:១-២២',
+        bibleKey: 'ពគប',
+    };
+    const FACTS = {
+        bible: 'ពគប',
+        crossRefs: {
+            referenceCount: 1180,
+            mostCited: [
+                {
+                    key: 'GEN 9:15',
+                    title: 'លោកុប្បត្តិ ៩:១៥',
+                    from: ['1', '21', '22'],
+                },
+                { key: 'ISA 54:9', from: ['21', '22'] },
+                {
+                    key: 'GEN 9:1',
+                    from: ['1', '5', '11', '12', '13', '14'],
+                    fromCount: 11,
+                },
+                { key: 'HEB 11:7', title: 'ហេព្រើរ ១១:៧', from: ['1'] },
+            ],
+            otherTestamentName: 'New Testament',
+            otherTestament: [
+                { key: 'HEB 11:7', title: 'ហេព្រើរ ១១:៧', from: ['1'] },
+            ],
+            otherTestamentAround: [
+                {
+                    key: 'MAT 24:37-39',
+                    title: 'ម៉ាថាយ ២៤:៣៧-៣៩',
+                    from: ['6:5', '7:1'],
+                },
+            ],
+            byVerse: [
+                {
+                    verse: '1',
+                    themes: [
+                        { theme: 'ព្រះចងចាំប្រជាជនរបស់ទ្រង់', refs: [] },
+                        { theme: 'ការគ្រប់គ្រងលើខ្យល់', refs: [] },
+                    ],
+                },
+            ],
+        },
+    };
+
+    it('tells the cross references with a button for each verse named', () => {
+        const answer = genCrossRefsAnswer(GEN_8, FACTS);
+        expect(answer.text).toContain('to 1180 other verses');
+        expect(answer.text).toContain(
+            '- **លោកុប្បត្តិ ៩:១៥** (verses 1, 21, 22)',
+        );
+        // A reference with no title is named by its key.
+        expect(answer.text).toContain('- **ISA 54:9** (verses 21, 22)');
+        // Past three verses, counted.
+        // Counted by the record's own count, past the six it names.
+        expect(answer.text).toContain('- **GEN 9:1** (11 of its verses)');
+        // Told once, in the other Testament's list.
+        expect(answer.text.split('ហេព្រើរ ១១:៧')).toHaveLength(2);
+        // The rest of the story, named by where around it they come from.
+        expect(answer.text).toContain(
+            '**In the New Testament, about the chapters around it**\n' +
+                '- **ម៉ាថាយ ២៤:៣៧-៣៩** (verses 6:5, 7:1)',
+        );
+        expect(answer.text).toContain('**In the New Testament**');
+        expect(answer.text).toContain(
+            '- Verse 1: ព្រះចងចាំប្រជាជនរបស់ទ្រង់; ការគ្រប់គ្រងលើខ្យល់',
+        );
+        // Each once, opened in the passage's Bible and window.
+        expect(toLabels(answer.actions)).toEqual([
+            'លោកុប្បត្តិ ៩:១៥',
+            'ISA 54:9',
+            'GEN 9:1',
+            'ហេព្រើរ ១១:៧',
+            'ម៉ាថាយ ២៤:៣៧-៣៩',
+        ]);
+        expect(answer.actions[3].args).toEqual({
+            step: 'open',
+            ask: {
+                kind: 'verse',
+                target: 'HEB 11:7',
+                title: 'ហេព្រើរ ១១:៧',
+                bibleKey: 'ពគប',
+                page: PASSAGE.page,
+            },
+        });
+    });
+
+    it('says so when the cross references have nothing', () => {
+        const answer = genCrossRefsAnswer(GEN_8, { crossRefs: null });
+        expect(answer.text).toContain('have nothing for');
+        expect(answer.actions).toEqual([]);
+    });
+
+    it('lists the study files with Ask about for each', () => {
+        const answer = genStudyFilesAnswer(GEN_8, {
+            studyFiles: ['pdf/GEN.8.pdf', 'pdf/GEN.0.pdf'],
+        });
+        expect(answer.text).toContain('- GEN.8.pdf');
+        expect(answer.actions[0]).toEqual({
+            label: 'Ask about GEN.8.pdf',
+            toolName: 'resource-ask',
+            args: { file: 'pdf/GEN.8.pdf' },
+        });
+        expect(genStudyFilesAnswer(GEN_8, {}).actions).toEqual([]);
     });
 });
 

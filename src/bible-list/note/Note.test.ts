@@ -10,7 +10,7 @@ const h = vi.hoisted(() => ({
     appErrorMock: vi.fn(),
     notifyElementHighlightMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
-    getSettingMock: vi.fn(),
+    getDirPathMock: vi.fn(),
     fsListFilesWithMimetypeMock: vi.fn(),
     createNewFileDetailMock: vi.fn(),
     getMimetypeExtensionsMock: vi.fn(() => ['own']),
@@ -70,8 +70,8 @@ vi.mock('../../toast/toastHelpers', () => ({
     showSimpleToast: h.showSimpleToastMock,
 }));
 vi.mock('../../lang/langHelpers', () => ({ tran: (key: string) => key }));
-vi.mock('../../helper/settingHelpers', () => ({
-    getSetting: h.getSettingMock,
+vi.mock('../../helper/DirSource', () => ({
+    default: { getDirPathBySettingName: h.getDirPathMock },
 }));
 vi.mock('../../server/fileHelpers', () => ({
     fsListFilesWithMimetype: h.fsListFilesWithMimetypeMock,
@@ -451,7 +451,7 @@ describe('bible-list/note Note editing history', () => {
     });
 
     test('default note loads an existing file or creates and opens one', async () => {
-        h.getSettingMock.mockReturnValue('/notes');
+        h.getDirPathMock.mockReturnValue('/notes');
         h.fsListFilesWithMimetypeMock.mockResolvedValue([FILE_PATH]);
         h.readFileDataMock.mockResolvedValue(
             JSON.stringify(genNoteJson([genItem(1, 'existing')])),
@@ -475,9 +475,9 @@ describe('bible-list/note Note editing history', () => {
     });
 
     test('default note handles absent directory and failed creation', async () => {
-        h.getSettingMock.mockReturnValue(null);
+        h.getDirPathMock.mockReturnValue(null);
         expect(await Note.getDefault()).toBeNull();
-        h.getSettingMock.mockReturnValue('/notes');
+        h.getDirPathMock.mockReturnValue('/notes');
         h.fsListFilesWithMimetypeMock.mockResolvedValue([]);
         h.createNewFileDetailMock.mockResolvedValue(null);
         expect(await Note.getDefault()).toBeNull();

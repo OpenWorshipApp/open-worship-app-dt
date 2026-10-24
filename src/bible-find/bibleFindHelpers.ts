@@ -23,6 +23,7 @@ import type BibleFindController from './BibleFindController';
 import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleInfoHelpers';
 import { setSetting } from '../helper/settingHelpers';
 import { openBibleItemDetailPanel } from '../location-name-lookup/detailPanelHelpers';
+import { genOpenInChatbotContextMenu } from '../helper/ai/bibleItemChatbotMenuHelpers';
 
 export const BIBLE_SEARCH_SETTING_NAME = 'bible-search-tab';
 
@@ -633,6 +634,7 @@ export function openContextMenu(
                 openFoundBibleItem(bibleItem);
             },
         },
+        ...genOpenInChatbotContextMenu(bibleItem),
         // What a press on the row did before it opened the detail panel; the
         // only other way to put the verse beside the passage is to drag it.
         {

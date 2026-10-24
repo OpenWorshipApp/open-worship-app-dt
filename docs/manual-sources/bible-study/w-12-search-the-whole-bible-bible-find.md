@@ -3,9 +3,9 @@ id: W-12
 title: "Search the whole Bible (Bible Find)"
 section: "Bible study"
 verify: [RD-08, RD-09, RD-45, RD-46, RD-47, RD-124, CB-146]
-screenshots: 6
+screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-12 — Search the whole Bible (Bible Find)
 
@@ -73,11 +73,22 @@ workflowsVersion: "2026-10-19"
    the verses that hold the most of them, with **Search Google for it**. 📸
    You can also just ask in the help window, in any chat: _which verse says do not worry about
    tomorrow?_ — or in one line, `Help me find a Bible verse in "KJV": love your enemies`.
+   **Typed your words in Find first?** Press the robot then, and it searches them at once
+   in the Bible Find is on — no question about which Bible.
+   **A story works too.** Ask _where in the Bible is the story of the flood?_ — or tell the
+   finder _the story of David and Goliath_ — and the answer says where it is told first,
+   _told in 1 Samuel 17_, with a button that opens that whole chapter, then its key verses.
+   Name the book if you remember it — _in Genesis, Noah and the dove_ — and only that book
+   is searched; it is understood even spelt a little wrong.
+   **Every verse with a word.** Look for one word — _shepherd_ — and the answer says how many
+   verses have it and in which books. Press **Every verse with these words** to see them
+   eight at a time, the chapters where the word gathers first, and **More verses** for the
+   next eight. 📸
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47` · `RD-124` · `CB-146`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

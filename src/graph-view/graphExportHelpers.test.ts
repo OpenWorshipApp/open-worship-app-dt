@@ -13,8 +13,18 @@ vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
 vi.mock('../helper/printCssHelpers', () => ({ collectFontFaceCss: vi.fn() }));
 vi.mock('../helper/errorHelpers', () => ({ handleError: h.handleErrorMock }));
 
-const { buildGraphSvg, PRINT_PALETTE, saveGraphImage } =
-    await import('./graphExportHelpers');
+const {
+    buildGraphSvg,
+    genCanvasTextMeasure,
+    loadGraphExportFonts,
+    printGraph,
+    PRINT_PALETTE,
+    saveGraphImage,
+} = await import('./graphExportHelpers');
+const { default: appProvider } = await import('../server/appProvider');
+const { downloadImageBase64Data } = await import('../server/appHelpers');
+const { showSimpleToast } = await import('../toast/toastHelpers');
+const { collectFontFaceCss } = await import('../helper/printCssHelpers');
 const { GRAPH_GEOMETRY } = await import('./core');
 
 function genOptions(kjvName: string) {
@@ -55,6 +65,100 @@ describe('buildGraphSvg', () => {
     test('an English record draws no empty brackets', () => {
         const svg = buildGraphSvg(genOptions(''));
         expect(svg).not.toContain('()');
+    });
+
+    test('bounds an empty graph and draws only edges with both endpoints', () => {
+        const empty = buildGraphSvg({
+            ...genOptions(''),
+            nodeList: [],
+        });
+        expect(empty).toContain('width="264" height="184"');
+
+        const options = genOptions('David');
+        options.nodeList = [
+            options.nodeList[0],
+            {
+                node: { key: 'b', recordId: 'b', name: 'Son', x: 400, y: 0 },
+                view: null,
+                typeColor: '#0a0',
+            },
+            {
+                node: {
+                    key: 'c',
+                    recordId: 'c',
+                    name: 'Grandson',
+                    x: 450,
+                    y: 0,
+                },
+                view: null,
+                typeColor: '#00a',
+            },
+        ];
+        options.edgeList = [
+            { key: 'ab', fromKey: 'a', toKey: 'b' },
+            { key: 'bc', fromKey: 'b', toKey: 'c' },
+            { key: 'missing', fromKey: 'x', toKey: 'y' },
+        ];
+        options.pathEdgeKeySet.add('ab');
+        options.resolveEdge = (edge: any) =>
+            edge.key === 'ab'
+                ? { label: 'Parent & <child>', isDirected: true }
+                : { label: 'Too short', isDirected: false };
+
+        const svg = buildGraphSvg(options);
+        expect(svg).toContain('stroke="#0d6efd" stroke-width="2.5"');
+        expect(svg).toContain('Parent &amp; &lt;child&gt;');
+        expect(svg).toContain('transform="translate(');
+        expect(svg).not.toContain('Too short');
+        expect(svg.match(/<path /g)).toHaveLength(3);
+    });
+});
+
+describe('font measurement and loading', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    test('returns no canvas measurer when unavailable and configures one when present', () => {
+        const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext');
+        getContext.mockReturnValue(null);
+        expect(genCanvasTextMeasure('app-font')).toBeUndefined();
+
+        const context = {
+            font: '',
+            measureText: vi.fn(() => ({ width: 42 })),
+        };
+        getContext.mockReturnValue(context as any);
+        const measure = genCanvasTextMeasure('app-font')!;
+
+        expect(measure('Verse', 13, 600)).toBe(42);
+        expect(context.font).toBe('600 13px app-font');
+        expect(context.measureText).toHaveBeenCalledWith('Verse');
+    });
+
+    test('loads both export weights and tolerates fonts being unavailable or failing', async () => {
+        const originalFonts = Object.getOwnPropertyDescriptor(
+            document,
+            'fonts',
+        );
+        const load = vi.fn().mockResolvedValue([]);
+        Object.defineProperty(document, 'fonts', {
+            configurable: true,
+            value: { load },
+        });
+
+        await loadGraphExportFonts('app-font');
+        expect(load.mock.calls).toEqual([
+            ['600 13px app-font'],
+            ['400 11px app-font'],
+        ]);
+
+        load.mockRejectedValueOnce(new Error('font unavailable'));
+        await expect(loadGraphExportFonts('app-font')).resolves.toBeUndefined();
+
+        if (originalFonts) {
+            Object.defineProperty(document, 'fonts', originalFonts);
+        } else {
+            delete (document as any).fonts;
+        }
     });
 });
 
@@ -210,6 +314,7 @@ describe('saveGraphImage', () => {
 
     afterEach(() => {
         vi.unstubAllGlobals();
+        vi.restoreAllMocks();
         h.imageSourceList.length = 0;
         h.handleErrorMock.mockClear();
         fontStyle.remove();
@@ -261,5 +366,79 @@ describe('saveGraphImage', () => {
         await saveGraphImage(svg, 'app-Battambang');
         expect(h.handleErrorMock).toHaveBeenCalledTimes(1);
         expect(readDrawnSvg()).toBe(svg);
+    });
+
+    test('shows a failure toast when the browser cannot rasterize the picture', async () => {
+        addFontStyle();
+        stubPicture();
+        await saveGraphImage('<svg/>');
+
+        expect(showSimpleToast).toHaveBeenCalledWith(
+            'Save as image',
+            'Failed to save image',
+        );
+        expect(downloadImageBase64Data).not.toHaveBeenCalled();
+    });
+
+    test('writes a successfully rasterized image through the app file helper', async () => {
+        const context = { scale: vi.fn(), drawImage: vi.fn() };
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+            context as any,
+        );
+        vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+            'data:image/png;base64,picture',
+        );
+        vi.stubGlobal(
+            'Image',
+            class {
+                width = 400;
+                height = 200;
+                onload: (() => void) | null = null;
+                set src(_value: string) {
+                    this.onload?.();
+                }
+            },
+        );
+
+        await saveGraphImage('<svg/>');
+
+        expect(context.scale).toHaveBeenCalledWith(2, 2);
+        expect(context.drawImage).toHaveBeenCalled();
+        expect(downloadImageBase64Data).toHaveBeenCalledWith(
+            'data:image/png;base64,picture',
+        );
+        expect(showSimpleToast).not.toHaveBeenCalled();
+    });
+});
+
+describe('printGraph', () => {
+    test('sends an escaped title and embedded font rules through the print channel', () => {
+        const sendData = vi.fn();
+        Object.assign(appProvider, { messageUtils: { sendData } });
+        vi.mocked(collectFontFaceCss).mockReturnValueOnce('@font-face{}');
+
+        printGraph('<svg/>', 'Paul & Silas');
+
+        expect(collectFontFaceCss).toHaveBeenCalledWith('<svg/>');
+        expect(sendData).toHaveBeenCalledWith(
+            'all:app:print',
+            expect.stringContaining('<title>Paul &amp; Silas</title>'),
+        );
+        expect(sendData.mock.calls[0][1]).toContain('@font-face{}');
+    });
+
+    test('reports a print preparation error', () => {
+        const sendData = vi.fn();
+        Object.assign(appProvider, { messageUtils: { sendData } });
+        vi.mocked(collectFontFaceCss).mockImplementationOnce(() => {
+            throw new Error('cannot collect fonts');
+        });
+
+        printGraph('<svg/>', 'Graph');
+
+        expect(h.handleErrorMock).toHaveBeenCalledWith(
+            expect.objectContaining({ message: 'cannot collect fonts' }),
+        );
+        expect(sendData).not.toHaveBeenCalled();
     });
 });

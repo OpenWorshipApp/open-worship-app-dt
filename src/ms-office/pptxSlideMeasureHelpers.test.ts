@@ -754,6 +754,99 @@ describe('PowerPoint slide measurement', () => {
         measurer.destroy();
     });
 
+    it('omits pictures when decoding or canvas serialization fails', async () => {
+        const blobs: (Blob | null)[] = [
+            null,
+            {
+                arrayBuffer: () => Promise.reject(new Error('blob failed')),
+            } as Blob,
+        ];
+        vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(
+            (callback) => callback(blobs.shift() ?? null),
+        );
+        const loaded: unknown[] = [];
+        const media = { id: 17 } as unknown as PptxMediaType;
+        const measurer = makeMeasurer(
+            vi.fn(async (_key: string, load: () => Promise<unknown>) => {
+                const result = await load();
+                loaded.push(result);
+                return result === null ? null : media;
+            }),
+        );
+        const canvas = document.createElement('canvas');
+        canvas.width = 100;
+        canvas.height = 50;
+        for (let index = 0; index < 2; index++) {
+            expect(
+                await measurer.measurePicture(
+                    canvas,
+                    { x: 0, y: 0, width: 100, height: 50 },
+                    getComputedStyle(canvas),
+                    { type: 'canvas' },
+                ),
+            ).toBeNull();
+        }
+
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({ ok: false, headers: { get: () => null } })),
+        );
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+            null,
+        );
+        const image = document.createElement('img');
+        image.src = 'https://example.org/broken.webp';
+        Object.defineProperties(image, {
+            naturalWidth: { configurable: true, value: 40 },
+            naturalHeight: { configurable: true, value: 20 },
+        });
+        expect(
+            await measurer.measurePicture(
+                image,
+                { x: 0, y: 0, width: 40, height: 20 },
+                getComputedStyle(image),
+                { type: 'image' },
+            ),
+        ).toBeNull();
+
+        vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+        expect(
+            await measurer.measurePicture(
+                image,
+                { x: 0, y: 0, width: 40, height: 20 },
+                getComputedStyle(image),
+                { type: 'image' },
+            ),
+        ).toBeNull();
+        expect(fixture.handleError).toHaveBeenCalledWith(
+            expect.objectContaining({ message: 'offline' }),
+        );
+        expect(loaded).toEqual([null, null, null, null]);
+        measurer.destroy();
+    });
+
+    it('omits inline SVG when its image cannot be decoded', async () => {
+        const measurer = makeMeasurer();
+        vi.spyOn(HTMLImageElement.prototype, 'src', 'set').mockImplementation(
+            function (this: HTMLImageElement) {
+                queueMicrotask(() => this.onerror?.(new Event('error')));
+            },
+        );
+        const svg = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'svg',
+        );
+        expect(
+            await measurer.measurePicture(
+                svg,
+                { x: 0, y: 0, width: 100, height: 50 },
+                getComputedStyle(svg),
+                { type: 'bible' },
+            ),
+        ).toBeNull();
+        measurer.destroy();
+    });
+
     it('uses a YouTube thumbnail URL only for a valid video item', async () => {
         mockLoadedImages(480, 360);
         const media = { id: 13 } as unknown as PptxMediaType;

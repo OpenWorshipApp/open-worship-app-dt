@@ -4,26 +4,37 @@ import {
     MAX_FIND_CANDIDATES,
     MAX_FIND_REFS,
     MAX_FIND_TERMS,
+    checkIsOneEditApart,
     checkIsSpacedLocale,
     checkVerseFitsChapter,
     countWordHits,
     cutFoundText,
+    cutNamedBooks,
+    findNamedBooks,
+    genChapterCountSql,
     genVerseFindSql,
     genVerseRangeReason,
     parseFoundVerseRow,
     parseRefParts,
     pickBibleKeyForBookName,
+    pickRareTerms,
+    readChapterCountRow,
     readVerseKey,
     resolveBookFilter,
     resolveBookKey,
     segmentByVocabulary,
     splitRefList,
+    stripLeadingFrameWords,
+    toBookCounts,
     toFindTermList,
     toEnglishStem,
     toNeededHits,
+    toPassageRunName,
+    toPassageRuns,
     toSingleVerseText,
     toTermWeight,
     toVerseKey,
+    withExactCounts,
 } from './bibleVerseFindHelpers';
 
 const STOP_WORD_SET = new Set(['the', 'a', 'and', 'of', 'be']);
@@ -107,7 +118,7 @@ describe('ranking', () => {
             limit: 8,
         });
         expect(sql.selectSql).toBe(
-            "SELECT text, hits, r FROM (SELECT text, rowid AS r, (sText LIKE '%love%') + " +
+            "SELECT text, hits, score, r FROM (SELECT text, rowid AS r, (sText LIKE '%love%') + " +
                 "(sText LIKE '%enemies%') AS hits, (sText LIKE '%love%') * 0.5 + " +
                 "(sText LIKE '%enemies%') * 3.2 AS score FROM verses WHERE " +
                 "(text LIKE 'MAT.%' OR text LIKE 'LUK.%')) WHERE hits >= 2 " +
@@ -381,5 +392,283 @@ describe('the Bible that names the book the way it was written', () => {
     it('else the preferred one, never a guess', () => {
         expect(pickBibleKeyForBookName('Psalms', INFO_LIST, 'KJV')).toBe('KJV');
         expect(pickBibleKeyForBookName('', INFO_LIST, 'KJV')).toBe('KJV');
+    });
+});
+
+describe('a book named among the words remembered', () => {
+    const KHMER_NAMES = {
+        GEN: 'លោកុប្បត្តិ',
+        PSA: 'ទំនុកដំកើង',
+        JON: 'យ៉ូណាស',
+    };
+    const SONG_NAMES = { SNG: 'Song of Solomon', '1SA': '1 Samuel' };
+
+    it('reads one letter off, never a short name', () => {
+        expect(checkIsOneEditApart('លោកុប្បត្តិ', 'លោកប្បត្តិ')).toBe(true);
+        expect(checkIsOneEditApart('genesis', 'genisis')).toBe(true);
+        expect(checkIsOneEditApart('genesis', 'genesiss')).toBe(true);
+        expect(checkIsOneEditApart('genesis', 'gensis')).toBe(true);
+        expect(checkIsOneEditApart('genesis', 'gnsis')).toBe(false);
+        expect(
+            findNamedBooks('the jab of the sword', [ENGLISH_NAMES], [], true),
+        ).toEqual([]);
+    });
+
+    it('finds the misspelt Genesis inside a run, after "book"', () => {
+        // The user's own, 2026-10-22: search in the book of Genesis -- a
+        // vowel sign left out -- Noah released the dove.
+        const text = 'ស្វែងរកក្នុងគម្ពីរលោកប្បត្តិណូអេលែងព្រាប';
+        const found = findNamedBooks(
+            text,
+            [KHMER_NAMES],
+            ['ក្នុង', 'គម្ពីរ'],
+            false,
+        );
+        expect(found).toHaveLength(1);
+        expect(found[0]).toMatchObject({
+            bookKey: 'GEN',
+            typed: 'លោកប្បត្តិ',
+            isAfterMarker: true,
+            isNear: true,
+        });
+        expect(cutNamedBooks(text, found)).toBe('ស្វែងរកក្នុង ណូអេលែងព្រាប');
+    });
+
+    it('finds a name of several words and the word that marks it', () => {
+        const found = findNamedBooks(
+            'in song of solomon my beloved',
+            [SONG_NAMES, ENGLISH_NAMES],
+            ['in'],
+            true,
+        );
+        expect(found).toHaveLength(1);
+        expect(found[0]).toMatchObject({
+            bookKey: 'SNG',
+            isAfterMarker: true,
+            isNear: false,
+        });
+        expect(cutNamedBooks('in song of solomon my beloved', found)).toBe(
+            'my beloved',
+        );
+        // "within" does not end in the word "in".
+        expect(
+            findNamedBooks('within genesis', [ENGLISH_NAMES], ['in'], true)[0]
+                ?.isAfterMarker,
+        ).toBe(false);
+        // A person's name is found as a book too; the caller decides by
+        // whether the verses use it.
+        expect(
+            findNamedBooks(
+                'jonah whale belly',
+                [{ JON: 'Jonah' }],
+                ['in'],
+                true,
+            )[0],
+        ).toMatchObject({ bookKey: 'JON', isAfterMarker: false });
+    });
+});
+
+describe('the words of asking, taken off the front', () => {
+    const check = (word: string) => STOP_WORD_SET.has(word);
+
+    it('takes a frame and its stop words, never all of it', () => {
+        expect(
+            stripLeadingFrameWords(
+                'the story of david and goliath',
+                ['story', 'find'],
+                check,
+                true,
+            ),
+        ).toBe('david and goliath');
+        expect(
+            stripLeadingFrameWords('the story of', ['story'], check, true),
+        ).toBe('of');
+        // Only the front: "seek and ye shall find" is the verse.
+        expect(
+            stripLeadingFrameWords(
+                'seek and ye shall find',
+                ['find'],
+                check,
+                true,
+            ),
+        ).toBe('seek and ye shall find');
+    });
+
+    it('takes the front of a run of letters', () => {
+        expect(
+            stripLeadingFrameWords(
+                'ស្វែងរកក្នុង ណូអេលែងព្រាប',
+                ['ស្វែងរក', 'ក្នុង', 'រឿង'],
+                () => false,
+                false,
+            ),
+        ).toBe('ណូអេលែងព្រាប');
+        expect(
+            stripLeadingFrameWords('រឿងទឹកជំនន់', ['រឿង'], () => false, false),
+        ).toBe('ទឹកជំនន់');
+        expect(stripLeadingFrameWords('រឿង', ['រឿង'], () => false, false)).toBe(
+            'រឿង',
+        );
+    });
+});
+
+describe('where the words gather', () => {
+    const chapter = (
+        bookKey: string,
+        chapterNumber: number,
+        rareVerses: number,
+        rareScore = rareVerses * 5,
+        count = rareVerses,
+    ) => {
+        return {
+            bookKey,
+            chapter: chapterNumber,
+            count,
+            rareVerses,
+            rareScore,
+        };
+    };
+
+    it('reads a chapter row, and a word rare enough to place a story', () => {
+        expect(
+            readChapterCountRow({
+                c: 'GEN.7',
+                count: 3,
+                rareVerses: '2',
+                rareScore: 9.5,
+            }),
+        ).toEqual(chapter('GEN', 7, 2, 9.5, 3));
+        expect(readChapterCountRow({ c: 'GEN7', count: 1 })).toBeNull();
+        expect(
+            pickRareTerms(['noah', 'water', 'dove'], [50, 600, 30], 31000),
+        ).toEqual(['noah', 'dove']);
+        // Everywhere is no place.
+        expect(pickRareTerms(['love'], [3000], 31000)).toEqual([]);
+    });
+
+    it('grows the strongest chapter into its neighbours, not by chaining', () => {
+        const runs = toPassageRuns([
+            chapter('GEN', 5, 1, 4),
+            chapter('GEN', 6, 6, 30),
+            chapter('GEN', 7, 8, 40),
+            chapter('GEN', 8, 9, 60),
+            chapter('GEN', 9, 5, 31),
+            chapter('ISA', 54, 1, 5),
+        ]);
+        expect(runs).toEqual([
+            {
+                bookKey: 'GEN',
+                fromChapter: 6,
+                toChapter: 9,
+                densest: 8,
+                verses: 28,
+            },
+        ]);
+        expect(toPassageRunName('Genesis', runs[0])).toBe('Genesis 6-9');
+        // Daniel is named chapter after chapter; the den is Daniel 6.
+        expect(
+            toPassageRuns([
+                chapter('DAN', 5, 6, 30),
+                chapter('DAN', 6, 16, 200),
+                chapter('DAN', 7, 3, 20),
+            ]).map((run) => {
+                return [run.fromChapter, run.toChapter];
+            }),
+        ).toEqual([[6, 6]]);
+    });
+
+    it('names a few more, joins touching ones, drops thin ones', () => {
+        const runs = toPassageRuns([
+            chapter('EZK', 34, 8, 40),
+            chapter('JHN', 10, 5, 25),
+            chapter('ZEC', 11, 6, 30),
+            // Under half of Zechariah 11, so not grown into; over a third
+            // of Ezekiel 34, so a passage of its own -- which touches.
+            chapter('ZEC', 10, 2, 14),
+            chapter('JER', 50, 2, 14),
+        ]);
+        expect(
+            runs.map((run) => {
+                return `${run.bookKey} ${run.fromChapter}-${run.toChapter}`;
+            }),
+        ).toEqual(['EZK 34-34', 'ZEC 10-11', 'JHN 10-10']);
+        // Two verses are a passage only when nothing stronger was named.
+        expect(
+            toPassageRuns([chapter('1SA', 17, 2, 30)]).map((run) => {
+                return run.bookKey;
+            }),
+        ).toEqual(['1SA']);
+        expect(toPassageRuns([chapter('1SA', 17, 1, 30)])).toEqual([]);
+        expect(toPassageRuns([])).toEqual([]);
+    });
+
+    it('joins passages that came to touch, as the KJV flood did', () => {
+        // "Noah ark flood" in the KJV, 2026-10-22: Genesis 7 alone, then
+        // 9-10, then 8 and 6 joined to 7 -- beside 9-10 by then.
+        const runs = toPassageRuns([
+            chapter('GEN', 7, 11, 105.3),
+            chapter('GEN', 9, 11, 86.6),
+            chapter('GEN', 10, 2, 49.7),
+            chapter('GEN', 8, 7, 43),
+            chapter('GEN', 6, 6, 37),
+            chapter('JOS', 24, 4, 25.1),
+            chapter('GEN', 5, 3, 18.4),
+        ]);
+        expect(
+            runs.map((run) => {
+                return `${run.bookKey} ${run.fromChapter}-${run.toChapter}`;
+            }),
+        ).toEqual(['GEN 6-10']);
+        expect(runs[0].densest).toBe(7);
+    });
+
+    it('counts the books, exactly when the verses were read word by word', () => {
+        const chapters = [
+            chapter('EZK', 34, 8, 40, 8),
+            chapter('EZK', 37, 1, 5, 1),
+            chapter('JHN', 10, 5, 25, 5),
+            chapter('JDG', 13, 3, 15, 3),
+        ];
+        expect(toBookCounts(chapters)).toEqual([
+            { bookKey: 'EZK', verses: 9 },
+            { bookKey: 'JHN', verses: 5 },
+            { bookKey: 'JDG', verses: 3 },
+        ]);
+        // "Manoah" held "noah" run together; read word by word it does not.
+        const exact = withExactCounts(chapters, [
+            { bookKey: 'EZK', chapter: 34 },
+            { bookKey: 'JHN', chapter: 10 },
+        ]);
+        expect(toBookCounts(exact)).toEqual([
+            { bookKey: 'EZK', verses: 1 },
+            { bookKey: 'JHN', verses: 1 },
+        ]);
+    });
+
+    it('asks every chapter at once, rare words whole where there are spaces', () => {
+        const sql = genChapterCountSql({
+            terms: ['noah', 'water'],
+            weights: [6, 1],
+            rareTerms: ['noah'],
+            bookKeys: ['GEN'],
+            need: 2,
+            isSpaced: true,
+        });
+        expect(sql).toContain("instr(text, ':')");
+        expect(sql).toContain('SUM(hits >= 2) AS count');
+        expect(sql).toContain("LIKE '% noah%'");
+        expect(sql).not.toContain("LIKE '% water%'");
+        expect(sql).toContain("WHERE (text LIKE 'GEN.%')");
+        expect(sql).toContain('GROUP BY c');
+        // With no rare word, nothing is a place.
+        expect(
+            genChapterCountSql({
+                terms: ['love'],
+                weights: [1],
+                rareTerms: [],
+                bookKeys: [],
+                need: 1,
+            }),
+        ).toContain('(0) * (0) AS rareScore');
     });
 });

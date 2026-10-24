@@ -24,9 +24,12 @@ function readStoredHiddenUntil() {
 
 import {
     AI_CAUTION_HIDDEN_UNTIL_SETTING,
+    AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING,
     askAiCaution,
     checkIsAiCautionHidden,
+    checkIsAiProviderWarnHidden,
     hideAiCautionForAWhile,
+    hideAiProviderWarnForAWhile,
     readAiCautionHiddenUntil,
 } from './aiCautionHelpers';
 
@@ -154,5 +157,25 @@ describe('the hidden-until setting', () => {
         expect(hideAiCautionForAWhile(now)).toBe(now + 30 * DAY);
         expect(checkIsAiCautionHidden(now)).toBe(true);
         expect(checkIsAiCautionHidden(now + 30 * DAY)).toBe(false);
+    });
+});
+
+describe("the provider warning's own hidden-until setting", () => {
+    test('is written 30 days ahead and read back, on its OWN key', () => {
+        const now = 5_000_000;
+        expect(checkIsAiProviderWarnHidden(now)).toBe(false);
+        expect(hideAiProviderWarnForAWhile(now)).toBe(now + 30 * DAY);
+        expect(checkIsAiProviderWarnHidden(now)).toBe(true);
+        expect(checkIsAiProviderWarnHidden(now + 30 * DAY)).toBe(false);
+        // And it says nothing about the cautions' key, nor they about it.
+        expect(
+            localStorage.getItem(AI_CAUTION_HIDDEN_UNTIL_SETTING),
+        ).toBeNull();
+        expect(checkIsAiCautionHidden(now)).toBe(false);
+        expect(
+            localStorage.getItem(AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING),
+        ).toBe(String(now + 30 * DAY));
+        hideAiCautionForAWhile(now);
+        expect(checkIsAiProviderWarnHidden(now + 31 * DAY)).toBe(false);
     });
 });

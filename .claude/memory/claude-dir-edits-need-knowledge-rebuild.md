@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: c95a672a-48b7-47e0-a94d-10946a3ee48d
-  modified: 2026-10-12T02:59:26.955Z
+  modified: 2026-10-24T21:24:14.903Z
 ---
 
 Every change to `.claude/CLAUDE.md`, `.claude/rules/**`, `.claude/memory/**` or
@@ -38,10 +38,6 @@ PREVIOUS text and the chatbot keeps answering from notes that no longer exist.
   `index.json` on every `owa_help_search` / `owa_help_page` call and caches
   nothing. (Editing the MCP `.mjs` modules themselves still needs a restart —
   see [[agent-access-mcp-chatbot]].)
-- The Codex mirrors (`.codex/memory/`, `.agents/skills/`,
-  `.codex/instructions/`, `.codex/project-instructions.md`) are NOT read by the bundler — only `.claude/` is —
-  but they still have to be re-copied in the same change by the standing mirror
-  rule.
 - With no `electron-build/knowledge/index.json` at all, the tools silently fall
   back to `docs/manual-sources/**` only, so a missing rebuild looks like the
   internal notes simply not existing rather than like an error.
@@ -52,7 +48,7 @@ assistant that was supposed to learn from it, and a deleted/renamed note keeps
 being quoted.
 
 **How to apply:** treat `node extra-work/build-knowledge.mjs` as part of
-finishing any `.claude/` edit — same step as copying the Codex mirror. Run
+finishing any `.claude/` edit. Run
 it before `npm run lint`, and never reach for the full build just to refresh
 knowledge while the app is running. A watcher started before
 `electron:watch` was given `--ignore electron-build/knowledge` (2026-10-11)

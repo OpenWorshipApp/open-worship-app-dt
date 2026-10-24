@@ -121,8 +121,8 @@ export const FALLBACK_STARTERS: Record<BotFocusType, StarterSourceType[]> = {
     ],
     setting: [
         'Nothing is showing on the projector — what do I check?',
+        'Why do I need to choose a data folder?',
         "How do I change the app's language?",
-        'How do I download another Bible version?',
         'How do I change where my documents and songs are stored?',
     ],
     webEditor: [
@@ -139,8 +139,8 @@ export const FALLBACK_STARTERS: Record<BotFocusType, StarterSourceType[]> = {
     ],
     lwShare: [
         'Nothing is showing on the projector — what do I check?',
+        'Why do I need to choose a data folder?',
         "How do I change the app's language?",
-        'How do I download another Bible version?',
         'How do I change where my documents and songs are stored?',
     ],
 };

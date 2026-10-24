@@ -40,12 +40,14 @@ function readSignal(key: string) {
 // read the manual against the code. A hit here is fixed in the document
 // (`/owa-enhance-agent-docs`), or, when the label is another program's, filed
 // in that skill's `references/killed-leads.json` with its reason.
+// Whichever test runs first spawns the audit over the whole repo: ~1 s alone,
+// past the 10 s default while the full suite holds every core (2026-10-24).
 describe('the manual names only what the code still has', () => {
     test('no recipe names a label that no code draws', () => {
         expect(readSignal('dead-label')).toEqual([]);
-    });
+    }, 60000);
 
     test('no coverage row cites a source file that is gone', () => {
         expect(readSignal('gone-file')).toEqual([]);
-    });
+    }, 60000);
 });

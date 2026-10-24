@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-19",
+    "updated": "2026-10-23",
     "sections": [
         {
             "id": "reading",
@@ -71,6 +71,22 @@
                         "recipe": "W-11",
                         "find": "Bible Reference",
                         "passage": "A passage that runs on into later chapters of the same book."
+                    }
+                },
+                {
+                    "id": "copy-formats",
+                    "text": "How do I copy a passage without verse numbers, or with the version after the reference?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy format",
+                        "without verse numbers",
+                        "version after",
+                        "more copy options",
+                        "copy without numbers"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "In a verse window the same"
                     }
                 },
                 {
@@ -182,6 +198,23 @@
                         "related": [
                             "W-32"
                         ]
+                    }
+                },
+                {
+                    "id": "dropped-pane-own-color",
+                    "text": "Why did the passage I dragged in get a different color?",
+                    "kind": "what",
+                    "keywords": [
+                        "drag passage",
+                        "dropped pane",
+                        "new pane",
+                        "different color",
+                        "open beside"
+                    ],
+                    "resources": {
+                        "recipe": "W-11",
+                        "passage": "A pane that was NOT",
+                        "find": "Color Note"
                     }
                 },
                 {
@@ -304,7 +337,9 @@
                         "scroll speed",
                         "teleprompter",
                         "moving",
-                        "font size"
+                        "font size",
+                        "floating panel",
+                        "verse panel"
                     ],
                     "resources": {
                         "recipe": "W-39",
@@ -421,7 +456,7 @@
                         "do it",
                         "next",
                         "practice",
-                        "99 lessons"
+                        "Reader lessons"
                     ],
                     "resources": {
                         "recipe": "W-46"
@@ -973,6 +1008,23 @@
                     }
                 },
                 {
+                    "id": "lookup-language-color",
+                    "text": "Why is the language code beside the names button red?",
+                    "kind": "what",
+                    "keywords": [
+                        "red",
+                        "green",
+                        "language code",
+                        "names language",
+                        "bible language"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "It is green while that is the language of the Bible you are reading",
+                        "find": "Names and locations language"
+                    }
+                },
+                {
                     "id": "detail-language",
                     "text": "How do I open the same person or place in two languages?",
                     "kind": "howto",
@@ -1025,6 +1077,55 @@
                     }
                 },
                 {
+                    "id": "ask-assistant-related-verses",
+                    "text": "Can the assistant find the verses related to a passage I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "related verses",
+                        "cross references",
+                        "everything related",
+                        "study files",
+                        "ask about this passage"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Everything related to it",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "lookup-row-menu",
+                    "text": "Can I copy a person or place without opening it?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy name",
+                        "copy place",
+                        "row menu",
+                        "names in your reading",
+                        "open in chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "The menu does what the person's or place's own window does"
+                    }
+                },
+                {
+                    "id": "open-passage-in-chatbot",
+                    "text": "How do I open a passage from my Bibles list in the chatbot?",
+                    "kind": "howto",
+                    "keywords": [
+                        "open in chatbot",
+                        "bibles list",
+                        "history",
+                        "cross reference",
+                        "which bible"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Or open it from the menu of a passage"
+                    }
+                },
+                {
                     "id": "lookup-to-bible",
                     "text": "How do I jump from a name to the verses it appears in?",
                     "kind": "howto",
@@ -1073,6 +1174,27 @@
                         "recipe": "W-29",
                         "passage": "Ask for one of them and it tells you which button",
                         "find": "Read it in another Bible",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "passage-study-words",
+                    "text": "How do I study the words of a verse one by one?",
+                    "kind": "howto",
+                    "keywords": [
+                        "vocabulary",
+                        "each word",
+                        "word by word",
+                        "study the words",
+                        "learn the words",
+                        "meaning of a word",
+                        "greek word",
+                        "hebrew word"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "Study its words.",
+                        "find": "Study the words",
                         "guide": true
                     }
                 }
@@ -1304,6 +1426,23 @@
                     "resources": {
                         "recipe": "W-37",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "resources-ask-assistant",
+                    "text": "How do I ask the assistant about a study file for the verses I am reading?",
+                    "kind": "howto",
+                    "keywords": [
+                        "ask the assistant",
+                        "robot",
+                        "study pdf",
+                        "verses i am reading",
+                        "explain this file"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "Read a study PDF one verse or range at a time",
+                        "find": "Ask the Assistant About This File"
                     }
                 },
                 {

@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
     checkIsMainWindowUrl,
     findAttachmentWindow,
+    findOpenerWindowId,
     getCurrentWindowAim,
+    toFocusWindowAim,
     toAttachmentWindowPage,
     toWindowPage,
     setCurrentWindowAim,
@@ -174,6 +176,68 @@ describe('toWindowAim', () => {
             },
         ]);
         expect(toWindowAim('LYRIC', lyricList)?.isSeparateWindow).toBe(false);
+    });
+});
+
+// Asking about Settings, a tab works in the Settings window: a model's
+// walkthrough card names no window, and came up in the Reader.
+describe('toFocusWindowAim', () => {
+    const settingEntry = {
+        id: 'SETTING',
+        title: 'Open Worship app - Setting (⚙️)',
+        url: `${HOST}/setting.html?uuid=setting`,
+    };
+
+    it('is the one open window of a popup kind', () => {
+        const list = toAppWindowList([...ENTRY_LIST, settingEntry]);
+        expect(toFocusWindowAim('setting', list)).toEqual({
+            windowId: 'SETTING',
+            focus: 'setting',
+            isSeparateWindow: false,
+        });
+    });
+
+    it('leaves the main window kinds, a closed one and two of a kind alone', () => {
+        const list = toAppWindowList([...ENTRY_LIST, settingEntry]);
+        expect(toFocusWindowAim('reader', list)).toBeNull();
+        expect(toFocusWindowAim('presenter', list)).toBeNull();
+        expect(toFocusWindowAim('bibleNote', list)).toBeNull();
+        const twoList = toAppWindowList([
+            settingEntry,
+            { ...settingEntry, id: 'SETTING-2' },
+        ]);
+        expect(toFocusWindowAim('setting', twoList)).toBeNull();
+    });
+});
+
+// Opened from Settings, the help works in Settings, not the main window.
+describe('findOpenerWindowId', () => {
+    const list = toAppWindowList([
+        ...ENTRY_LIST,
+        {
+            id: 'SETTING',
+            title: 'Open Worship app - Setting (⚙️)',
+            url: `${HOST}/setting.html?uuid=setting`,
+        },
+    ]);
+
+    it('names the window the help was opened from, by address or by path', () => {
+        expect(
+            findOpenerWindowId(`${HOST}/setting.html?uuid=setting`, list),
+        ).toBe('SETTING');
+        // A later press from it: main names its path alone.
+        expect(findOpenerWindowId('/setting.html', list)).toBe('SETTING');
+    });
+
+    it('leaves the main window, and a path two windows share, on the old way', () => {
+        expect(findOpenerWindowId(`${HOST}/presenter.html`, list)).toBeNull();
+        expect(findOpenerWindowId('/reader.html', list)).toBeNull();
+    });
+
+    it('waits while the list does not name it yet', () => {
+        expect(
+            findOpenerWindowId(`${HOST}/setting.html?uuid=setting`, []),
+        ).toBeUndefined();
     });
 });
 

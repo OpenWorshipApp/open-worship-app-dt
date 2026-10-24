@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-19",
+    "updated": "2026-10-24",
     "sections": [
         {
             "id": "general",
@@ -32,7 +32,7 @@
                         "guide": true
                     },
                     "starter": true,
-                    "starterRank": 13
+                    "starterRank": 17
                 },
                 {
                     "id": "change-language",
@@ -50,7 +50,7 @@
                         "recipe": "W-16",
                         "guide": true
                     },
-                    "starterRank": 10
+                    "starterRank": 11
                 },
                 {
                     "id": "language-across-data-folders",
@@ -101,6 +101,70 @@
                         "guide": true
                     }
                 },
+                {
+                    "id": "reset-settings",
+                    "text": "What do the reset buttons in Settings do?",
+                    "kind": "what",
+                    "keywords": [
+                        "reset",
+                        "clear all settings",
+                        "erase",
+                        "start over",
+                        "dangerous",
+                        "default"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-31"
+                        ]
+                    }
+                },
+                {
+                    "id": "export-settings",
+                    "text": "How do I move my settings to another computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "backup settings",
+                        "export settings",
+                        "save settings",
+                        "copy settings",
+                        "new computer",
+                        "transfer"
+                    ],
+                    "resources": {
+                        "recipe": "W-52",
+                        "find": "Export Settings",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "import-settings",
+                    "text": "How do I bring in settings exported from another computer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "import settings",
+                        "restore settings",
+                        "load settings",
+                        "owasetting",
+                        "replace settings"
+                    ],
+                    "resources": {
+                        "recipe": "W-52",
+                        "find": "Import Settings",
+                        "guide": true
+                    }
+                }
+            ]
+        },
+        {
+            "id": "paths",
+            "label": "Folders on disk",
+            "recipes": [
+                "W-16",
+                "W-54"
+            ],
+            "questions": [
                 {
                     "id": "change-folders",
                     "text": "How do I change where my documents and songs are stored?",
@@ -167,6 +231,158 @@
                     }
                 },
                 {
+                    "id": "no-data-folder",
+                    "text": "Why does the app show nothing but \"No Parent Directory Selected\"?",
+                    "kind": "what",
+                    "keywords": [
+                        "no parent directory selected",
+                        "app shows nothing",
+                        "choose a data folder",
+                        "data folder required",
+                        "found data folders",
+                        "use this folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "A data folder is required",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Found Data Folders"
+                    }
+                },
+                {
+                    "id": "why-data-folder",
+                    "text": "Why do I need to choose a data folder?",
+                    "kind": "what",
+                    "keywords": [
+                        "why data folder",
+                        "data folder required",
+                        "parent directory",
+                        "where everything is kept",
+                        "no parent directory selected"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "A data folder is required",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Path Settings"
+                    },
+                    "starter": true,
+                    "starterRank": 10
+                },
+                {
+                    "id": "use-default-data-folder",
+                    "text": "How do I use the suggested data folder?",
+                    "kind": "howto",
+                    "keywords": [
+                        "default data folder",
+                        "suggested folder",
+                        "use this folder",
+                        ".owa",
+                        "create data folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "Suggested offers",
+                        "find": "Use This Folder"
+                    }
+                },
+                {
+                    "id": "data-folder-on-drive",
+                    "text": "How do I use a data folder on a USB stick or another drive?",
+                    "kind": "howto",
+                    "keywords": [
+                        "usb stick",
+                        "another drive",
+                        "found data folders",
+                        "flash drive",
+                        "external drive"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "Found Data Folders lists",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Found Data Folders"
+                    }
+                },
+                {
+                    "id": "copy-data-folder",
+                    "text": "How do I copy my data folder to a USB stick or another drive?",
+                    "kind": "howto",
+                    "keywords": [
+                        "copy data folder",
+                        "backup to usb",
+                        "copy to drive",
+                        "copy to folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "Copy Data Folder",
+                        "related": [
+                            "W-25"
+                        ],
+                        "find": "Copy Data Folder"
+                    }
+                },
+                {
+                    "id": "data-folder-stick-missing",
+                    "text": "My data folder is on a USB stick that is not plugged in. What do I do?",
+                    "kind": "fix",
+                    "keywords": [
+                        "stick not plugged in",
+                        "data folder missing",
+                        "usb missing",
+                        "folder not there"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "A chosen folder that is not there",
+                        "find": "Apply Settings"
+                    }
+                },
+                {
+                    "id": "data-folder-on-desktop",
+                    "text": "How do I move my data folder off the Desktop from Settings?",
+                    "kind": "howto",
+                    "keywords": [
+                        "desktop",
+                        "move now",
+                        "onedrive",
+                        "move data folder"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "passage": "A data folder on the Desktop is never suggested",
+                        "related": [
+                            "W-54"
+                        ],
+                        "find": "Move Now"
+                    }
+                },
+                {
+                    "id": "assistant-from-settings",
+                    "text": "How do I ask the assistant for help from Settings?",
+                    "kind": "howto",
+                    "keywords": [
+                        "assistant",
+                        "help",
+                        "chatbot",
+                        "app assistant"
+                    ],
+                    "resources": {
+                        "recipe": "W-16",
+                        "related": [
+                            "W-42"
+                        ],
+                        "find": "App Assistant"
+                    }
+                },
+                {
                     "id": "move-data-folder-off-desktop",
                     "text": "Why does the app ask me to move my data folder off the Desktop?",
                     "kind": "what",
@@ -183,60 +399,6 @@
                         "related": [
                             "W-16"
                         ]
-                    }
-                },
-                {
-                    "id": "reset-settings",
-                    "text": "What do the reset buttons in Settings do?",
-                    "kind": "what",
-                    "keywords": [
-                        "reset",
-                        "clear all settings",
-                        "erase",
-                        "start over",
-                        "dangerous",
-                        "default"
-                    ],
-                    "resources": {
-                        "recipe": "W-16",
-                        "related": [
-                            "W-31"
-                        ]
-                    }
-                },
-                {
-                    "id": "export-settings",
-                    "text": "How do I move my settings to another computer?",
-                    "kind": "howto",
-                    "keywords": [
-                        "backup settings",
-                        "export settings",
-                        "save settings",
-                        "copy settings",
-                        "new computer",
-                        "transfer"
-                    ],
-                    "resources": {
-                        "recipe": "W-52",
-                        "find": "Export Settings",
-                        "guide": true
-                    }
-                },
-                {
-                    "id": "import-settings",
-                    "text": "How do I bring in settings exported from another computer?",
-                    "kind": "howto",
-                    "keywords": [
-                        "import settings",
-                        "restore settings",
-                        "load settings",
-                        "owasetting",
-                        "replace settings"
-                    ],
-                    "resources": {
-                        "recipe": "W-52",
-                        "find": "Import Settings",
-                        "guide": true
                     }
                 }
             ]
@@ -271,7 +433,7 @@
                         ],
                         "guide": true
                     },
-                    "starterRank": 11
+                    "starterRank": 13
                 },
                 {
                     "id": "enable-bible",
@@ -476,12 +638,10 @@
             ]
         },
         {
-            "id": "others",
-            "label": "Accounts, AI and extras",
+            "id": "ai",
+            "label": "AI assistants",
             "recipes": [
-                "W-35",
-                "W-42",
-                "W-21"
+                "W-42"
             ],
             "questions": [
                 {
@@ -596,10 +756,20 @@
                     ],
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Every part of the Others page of Settings folds",
+                        "passage": "Every part of the AI Providers and Others pages of Settings folds",
                         "find": "AI Providers"
                     }
-                },
+                }
+            ]
+        },
+        {
+            "id": "others",
+            "label": "Accounts & extras",
+            "recipes": [
+                "W-35",
+                "W-21"
+            ],
+            "questions": [
                 {
                     "id": "songselect-signin",
                     "text": "How do I sign in to CCLI SongSelect?",

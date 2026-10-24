@@ -8,6 +8,8 @@ import { toPathScrubbed } from '../../server/accountPathHelpers';
 import { getSettingForce, removeSetting, setSetting } from '../settingHelpers';
 import type { LookupAskType } from './lookupAskHelpers';
 import { toValidLookupAsk } from './lookupAskHelpers';
+import type { ResourceReadingType } from './resourceReadingAskHelpers';
+import { toValidResourceReading } from './resourceReadingAskHelpers';
 
 const HANDOFF_KEY = 'chatbot-handoff-ask';
 const HANDOFF_MAX_AGE_MS = 30 * 1000;
@@ -83,15 +85,37 @@ export function takeChatbotReport(): string | null {
 const FILE_HANDOFF_KEY = 'chatbot-handoff-file';
 const FILE_HANDOFF_MAX_CHARS = 4096;
 
-export function requestChatbotFile(filePath: string) {
+export function requestChatbotFile(
+    filePath: string,
+    reading: ResourceReadingType | null = null,
+) {
     if (filePath.length > FILE_HANDOFF_MAX_CHARS) {
         return;
     }
-    setSetting(FILE_HANDOFF_KEY, JSON.stringify({ filePath, at: Date.now() }));
+    // The passage the Reader was on rides beside the path (2026-10-22,
+    // `resourceReadingAskHelpers.ts`), checked on the way in and out.
+    const validReading = toValidResourceReading(reading);
+    setSetting(
+        FILE_HANDOFF_KEY,
+        JSON.stringify({
+            filePath,
+            ...(validReading === null ? {} : { reading: validReading }),
+            at: Date.now(),
+        }),
+    );
 }
 
-/** The waiting file's path, once; null when none waits or it is stale. */
-export function takeChatbotFile(): string | null {
+export type ChatbotFileRequestType = {
+    filePath: string;
+    reading: ResourceReadingType | null;
+};
+
+/**
+ * The waiting file and the passage the Reader was on, once; null when none
+ * waits or it is stale. A reading that does not check out is dropped and
+ * the file still opens.
+ */
+export function takeChatbotFileRequest(): ChatbotFileRequestType | null {
     const raw = getSettingForce(FILE_HANDOFF_KEY);
     if (!raw) {
         return null;
@@ -108,10 +132,18 @@ export function takeChatbotFile(): string | null {
         ) {
             return null;
         }
-        return data.filePath;
+        return {
+            filePath: data.filePath,
+            reading: toValidResourceReading(data.reading),
+        };
     } catch (_error) {
         return null;
     }
+}
+
+/** The waiting file's path, once; null when none waits or it is stale. */
+export function takeChatbotFile(): string | null {
+    return takeChatbotFileRequest()?.filePath ?? null;
 }
 
 // A fourth kind (2026-10-18, the user, with the robot circled on three

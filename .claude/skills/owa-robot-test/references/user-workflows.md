@@ -21,7 +21,41 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-10-19h** (**W-11 step 4 — every Bible pane has a color, lime until one is picked.** Asked for by the user with the pane's color dot circled: _all bible preview section should have color_ … _when not setting found for the color of the editing section then it should be `lime`_. A section with no color note shows the default **lime** and is in that color group already, so its split asks a version and panes left on the default follow one passage; **[en:tran:No Color]** returns a pane to it. Seen live 2026-10-19 on the dev Reader in Khmer: two sections on the default lime dot, the sync-scroll toggle on both, a split from a lime pane asking a version, both panes following one reference, and red → **[en:tran:No Color]** putting the dot back to lime without a reload.)
+**workflowsVersion: 2026-10-24a** (**W-16 step 2a — a typed data folder is asked about before it is made, and a copy is a data folder of its own.** Found by a robot run over the data-folder settings on a scratch dev profile (`/owa-robot-test` path settings, run 20261024-1009), the user's goal: _make sure all path and data dir functionalities work perfectly_. Four faults, each seen live, fixed and seen again: (1) a path typed into the **[en:tran:Parent Directory:]** box that does not exist was MADE and used -- one typing slip created an empty data folder with `local-storage` and `bibles-data` and switched to it; now it asks **[en:tran:Create Data Folder]** (Cancel puts the box back, nothing made), and a path that is not a whole one (`C:`, `data`) is refused with a toast naming an example; (2) the box's blur after Enter committed the same path again, so every question came twice, and a new folder answered No to **[en:tran:Set according paths]** was asked again by the page that rendered next -- now once per folder per window; (3) emptying the box and leaving it stopped using the data folder with no question, every window showing **[en:tran:No Parent Directory Selected]** -- now the box goes back to the folder in use; (4) **[en:tran:Copy Data Folder]** kept raw paths that named the ORIGINAL folder, so on the copy the Documents setting and a slide's picture read and wrote the original (Repair Links could not see it, the original being there) -- the copy now rewrites them to `$DATA_DIR_PATH` as the move does. Also: the move question named `~/.owa/open-worship-data` even when that folder held another data folder; it names the folder the move will make (`… (1)`), and asking makes nothing. The empty first-run box no longer carries a red mark. Seen live: typed missing folder → Cancel (nothing made) → Create (made, asked once); `C:` refused; emptied box unchanged; a copy of a folder with raw links switched to and reading its own documents; the question naming `open-worship-data (3)`; all in Khmer with no missing key.)
+
+Previous: **workflowsVersion: 2026-10-23e** (**W-46 steps 1, 3 and 4 — Help → Tips of the Day opens every open page's tip at once, with no Hide for 30 days.** Asked for by the user with **[en:tran:Tips of the Day]** and **[en:tran:All tips]** circled in the Reader's Help menu, a Settings window open beside it: _tip of the day and all tips should show on all support pages_, then _open `Help` menubar, when click show in all pages_. A popup hides its menu bar, and pressing the main window's menu focuses the main window, so the press used to reach only the main window and Settings' own tips could not be asked for at all. The click now goes to every window (`isSentToAllWindows`, `sendMenuClickedToAllWindows`), and each page with tips opens its own card. Then, with the link circled on two such cards: _the tip of the day that opened by `Help` menu should have no `Hide for 30 days`_ — a card asked for from Help has none (`isAskedFor` in `DailyTipComp`), not after **[en:tran:Next tip]** or **[en:tran:All tips]** either; the automatic card keeps it. Seen live on the dev Reader with Settings open, 2026-10-23: one press of each item put the Reader's card and Settings' card up together, neither with the link; the chatbot window, which has no tips, showed nothing. GL-25.)
+
+Previous: **workflowsVersion: 2026-10-23d** (**W-16 steps 1 and 2a, W-54 step 1 — a data folder is required, only ever chosen by a press, and never left on the Desktop unsaid.** Asked for by the user over one long session, with Path Settings empty and the Reader still listing an old folder's Bibles and notes: _while no data dir selected there should no data to display at all_, _parent data dir selected is a requirement_, _the default folder path should be just a suggestion, only user click to choose (create if not exist)_, _should recommend only dir found in ~/.owa and drives_, _the data moving warning card should be in all pages_, _tell user it is not a safe place_, _in path setting, add option to copy data dir to a drive or to a folder_, then the goal: _make data dir selection and data moving to safe place work for user, chatbot can help user understand about this, no regression_. With no data folder in use -- none chosen, or the chosen one not there -- every window but Settings shows only that one must be chosen, with Go to Settings and App Assistant; Settings opens on Path Settings (now its default tab) with only General (language, theme) and AI Providers beside it and no automatic tip. Path Settings suggests ~/.owa/open-worship-data (Use This Folder makes it) and lists the data folders at the top of the drives, never one on the Desktop; a missing chosen folder is only marked Missing in Recent Folders; Copy Data Folder copies the folder in use, verified, to a place the person picks. A Desktop data folder in use puts a card in every window saying the Desktop is not a safe place, with Move Now and Hide for 30 days. The two start-up dialogs (Data Folder Not Found, Data Folder Found) are gone. The chatbot opened from a window works in that window, Settings has an App Assistant button, and the corpus carries the why and the how of the data folder. Fixed on the way: unsetting the folder wrote the cleared child paths into a RELATIVE `local-storage/` in the process's working folder, the default folder's button asked about its standard folders twice at once, and a popup's Tip of the Day read its opener's launch time and came up at once -- the wait is now per page.)
+
+Previous: **workflowsVersion: 2026-10-23c** (**W-29 step 13 — study a passage's words.** Asked for by the user, studying Genesis 8 in the Greek Bible with a passage's chat open in Khmer: _give option like study vocabulary then choose verse (if more than one verses) then list word to choose or choose all then explain the word_, and _also have option to open the word in google search_. A passage's card now carries **[en:tran:Study the words]**: the verses to choose from, then a verse's words as buttons in the Bible's own spelling with **[en:tran:All words]** first; a word pressed is taught by the assistant in the app's language (dictionary form, how to say it, kind of word, meaning here) with buttons for the next word, the verse's words again and a Google search; **[en:tran:All words]** teaches every word, one line each. Greek kept in a Khmer answer, where every Greek letter had been taken out. Seen live 2026-10-23 on the dev app in Khmer, GB, the Khmer Bible and the KJV. Row `CB-162`.)
+
+Previous: **workflowsVersion: 2026-10-23b** (**W-29 step 13 — a passage's chat knows your own notes on it, and the Cross References themes read right in Khmer.** The same goal, _help user find everything related to the selected verses_: a Bible note of yours that names one of the passage's verses, and the words you highlighted or commented on in them, now ride the conversation; the card says how many of its verses carry something of yours and asks _What did I note on these verses?_ first. And 7 745 of the Khmer cross-reference theme titles — English words left in, "patient" read as a sick person, a messenger as an app, a temple's court as a law court, a shepherd's staff as employees — were written again: Genesis 8:10's _Noah's patient waiting_ had read _Noah's sick person_. Seen live 2026-10-23 in the Khmer help window on a scratch dev instance, Local Ollama · gemma4:cloud: the card said _អ្នកមានកំណត់ចំណាំ ឬការគូសចំណាំផ្ទាល់ខ្លួន លើខចំនួន ៣ នៃបទគម្ពីរនេះ_, **តើខ្ញុំបានកត់ចំណាំអ្វីខ្លះលើខទាំងនេះ?** was its first question and, pressed, named the note on verses 20-21 and the olive leaf highlighted in verse 11 with its comment; **ខគម្ពីរដែលពាក់ព័ន្ធ** gave verse 10 as _ការរង់ចាំដោយអត់ធ្មត់របស់លោកណូអេ…_. Row `CB-161`.)
+
+Previous: **workflowsVersion: 2026-10-23a** (**W-29 step 13 — a passage's chat finds everything related to it.** Asked for by the user with the help window open on a Bible view's 🤖 conversation about Genesis 8:1-22 circled: _make the chatbot to be super smart that can answer everything about selected verses_, then the goal _help user find everything related to the selected verses_. A passage's card now gathers the app's own cross references and its chapter's study files as it opens and says how many; **[en:tran:Related verses]** and **[en:tran:Study files for this chapter]** list them with no question; _Which other verses are related to this passage?_ is the card's first question; and a question about related verses, parallels or where else the Bible says it is answered from those cross references. Seen live 2026-10-23 in the Khmer help window on a scratch dev instance, Local Ollama · gemma4:cloud: the card said 952 verses and 3 study files, **ខគម្ពីរដែលពាក់ព័ន្ធ** listed them by the Khmer Bible's own names with a button each, **ហេព្រើរ ១១:៧** opened its own card, and **ឯកសារសិក្សាសម្រាប់ជំពូកនេះ** listed GEN.0.pdf, GEN.8.pdf and GEN.0.json. Row `CB-161`.)
+
+Previous: **workflowsVersion: 2026-10-22j** (**W-39 step 1 — the floating verse panel scrolls itself too; W-29 step 6 — a record window scrolls back to the top.** Asked for by the user with a Bible pane's up-arrow and double chevron circled beside a floating verse panel that had neither: _as a user I want to have quick scrol top and auto scroll in bible floating panel as well_, then _add more padding bottom to the bible floating panel to avoid control element cover text_, then, with a person's window (_គ្រីស្ទ (Christ)_), _add quick scroll top to other floating panel_. A passage's floating panel now carries the same **[en:tran:Scroll to the top]** and auto-scroll chevron in its bottom-right corner, clear of its scrollbar and its resize corner, with the **⋯** beside the chevron while it runs, and the passage ends with room enough under its last line to be read above them. A person's or a place's window gets the up-arrow alone, in the chevron's corner, with room under its last row. Seen live 2026-10-22 on the dev Reader in Khmer, Genesis 8:1-22 opened with **[en:tran:Floating]**: one click on the chevron started the text moving and brought up the up-arrow and the **⋯**; at the bottom the last verse sat clear above the up-arrow; the up-arrow took it back to verse 1. Noah's window (ណូអេ, from the verse) showed no chevron; scrolled to its links, the up-arrow sat below them and took it back to the top. Row `RD-107`.)
+
+Previous: **workflowsVersion: 2026-10-22i** (**W-42 step 2 — a full tab strip says why.** Asked for by the user with the greyed **+** of a full help window circled: _when tabs reach limit and can't create more then should have message tell user about it rather than disable_. With 12 chats open, **+** is no longer greyed out: pressing it says the window holds 12 chats at most and to close one first (or, when every chat is locked, to unlock one from its **⋮** menu), and the line goes by itself once a chat is closed. Seen live 2026-10-22 in the Khmer help window. Row `CB-13`.)
+
+Previous: **workflowsVersion: 2026-10-22h** (**W-12 step 6 — the assistant finds a story, a book you name and every verse with a word, and Find's robot takes what you typed.** Asked for by the user with a picture of two verse-finder tabs and Find's robot circled: _make the chatbot super smart that can find everything in the bible_. Every step below was seen live in the Khmer help window on 2026-10-22: the misspelt _លោកប្បត្តិ_ read as Genesis, _តើរឿងសាខេនៅក្នុងគម្ពីរណា?_ answered _told in លូកា ១៩_ with **Open លូកា ១៩**, `shepherd` typed in Find searched at once, and **Every verse with these words** / **More verses** paging 74 verses.)
+
+Previous: **workflowsVersion: 2026-10-22g** (**W-29 step 6 — a name's or a place's row menu opens, copies and asks the assistant.** Asked for by the user with a reading-panel row's **⋮** circled, which held **[en:tran:Open Graph Preview]** alone: _contextmenu of the item shoudl have `Open` `Copy` and `Open in Chatbot`, `Open` is just normal open the floating panel. `Copy` is like copying withing the floating panel copy button. `Open in Chatbot` also like open chatbot from floating panel_. The menu of every row of the lookup list and of **[en:tran:Names and locations in your reading]** now reads **[en:tran:Open]**, **[en:tran:Copy]**, **[en:tran:Open in Chatbot]** (while AI features are on), then **[en:tran:Open Graph Preview]**. Copy writes the same entry the record window's Copy writes, with its verse references; the names dataset is read at the press and let go after. Seen live 2026-10-22 on the dev Reader in Khmer, Genesis 8:1-22: Noah's row copied his whole entry (the toast said so), Ararat's **[en:tran:Open]** opened its window, and Noah's **[en:tran:Open in Chatbot]** opened a chat tab named ណូអេ that had read his record.)
+
+Previous: **workflowsVersion: 2026-10-22f** (**W-29 step 13 — Open in Chatbot beside every Open of a passage, and the chat names its Bible.** Asked for by the user with a Bibles list row's menu, a lookup history entry and a cross reference circled: _add `Open in Chatbot` everywhere have option to open bible item_ — _like open here_, the robot of a Bible view's toolbar — then _open verse in chatbot then chatbot should aware of the bible key (which bible)_. Every menu that opens a passage now has **[en:tran:Open in Chatbot]** right under **[en:tran:Open]**: a row of a Bibles list, an entry of the lookup's history strip, a Bible Find result, a cross reference, and a passage a heading cites. It opens the same chat as the toolbar robot, and that chat's card now says which Bible the passage was read in. Seen live 2026-10-22 on the dev Reader in Khmer: the Bibles list row and a history entry each showed it under **[en:tran:Open]**, and the list row opened a chat on Matthew 18:15-17 whose card names ពគប.)
+
+Previous: **workflowsVersion: 2026-10-22e** (**W-29 step 11 — a verse window's Copy opens the copy menu, and that menu has More….** Asked for by the user with a Bible view's copy button circled: _add another option to copy `More ...`, when I click it it should show maximun option of all (title and text)_, then _each option should show what text be like in mouse hover title_, then, with a verse window's **⋮** → **[en:tran:Copy]** circled, _should just open the contextmenu of copy instead of do copying directly_. Every Bible copy menu ends with **[en:tran:More…]**: fifteen ways to write the title and the text — the version before the title, after it or left out; verses numbered `(1):`, `1:` or not at all — each row's tooltip showing what it copies. A verse window's Copy opens that menu instead of copying. Step 11 also says where a record window's Copy is: behind **⋮**, not a title-bar button. Seen live 2026-10-22 on the dev Reader in Khmer: Genesis 8:1-22 copied as _title (version) + `១:`_ in full, Psalm 55:6 from its verse window as _title (version) + text without numbers_.)
+
+Previous: **workflowsVersion: 2026-10-22d** (**W-29 step 2 — the lookup language code is green or red against the Bible.** Asked for by the user with the `en` beside a `ពគប` reader circled: _make it red when it is different from current bible's language_, then _if match then green_. The code beside the person-and-pin button is green while it names the language of the Bible being read and red while it does not, its tooltip then adding **[en:tran:Not the language of the Bible]** with that Bible's language; the code in a record window's header stays as it was. Seen live 2026-10-22 on the dev Reader in Khmer: `en` red beside `ពគប`, `km` green, `en` restored.)
+
+Previous: **workflowsVersion: 2026-10-22c** (**W-42 — a server or a free model that cannot answer hands the question on.** The user, with a picture of _Local Ollama could not answer — nothing answered at http://localhost:11434/v1_ over a verse card the guide had written: _when one server provider fail it should try next one_. A server or **Free** model picked by name that fails before it answers now hands the question to the next assistant that costs nothing — your other servers first, then the rest — under a note saying who could not answer, why and who did; the chat keeps the one you picked. Auto's notice no longer says a server of your own keeps every question in the building. Seen live 2026-10-22 on the dev chatbot in Khmer, with a server added at an address nothing answers.)
+
+Previous: **workflowsVersion: 2026-10-22b** (**W-42 step 7 — a study file opens on the passage you are reading.** The user's goal, with `MAT.18.pdf`'s 🤖 circled under a Reader on Matthew 18:15-17: _make the chatbot smarter to interact with user for the selected resource file_. The 🤖 on a Resources file now hands over the verses the Reader is on: the chat says _You are reading … in the Bible Reader_ and its first button reads those verses; **[en:tran:Read]** answers at once — it had waited on an assistant to describe the file again, fifteen minutes on the free one — with those verses first; and a file for the whole book (`MAT.0.pdf`) or a list of links is no longer offered verses to read. When no assistant can answer, a verse card shows the verses from your own Bible and says the PDF was not read, instead of an unrelated page of this guide. Seen live 2026-10-22 on the dev Reader in Khmer.)
+
+Previous: **workflowsVersion: 2026-10-22a** (**W-11 step 4 — a pane that is not a split gets a color of its own.** Asked for by the user with two dropped panes circled, both lime: _new section that is not from splitting have to assign with different color (color not used in any section)_. A passage dragged onto the edge of a pane, or opened beside the current one, now starts in the first color of the color-note menu that no pane shows (fuchsia, lime, yellow, green, red, purple, maroon, olive …); a split still joins its source's group. Seen live 2026-10-22 on the dev Reader in Khmer: the user's own drops came up green and yellow, then a recent reference row, a Bibles-list passage, a pane's own title, a verse note and a cross-reference dropped beside panes came up red, purple, maroon and olive in turn, each pane keeping its own passage.)
+
+Previous: **workflowsVersion: 2026-10-20a** (**W-16, W-42, W-11, W-35, W-44, W-46 — two new Settings tabs, at the user's ask.** The folder plumbing moved from **[en:tran:General]** to its own **[en:tran:Path Settings]** tab (next to General — `SettingPathComp.tsx`), and the AI master switch, provider keys and custom servers from **[en:tran:Others]** to **[en:tran:AI Providers]** (`SettingAIComp.tsx`), which sits after Bible and leaves Others last with SongSelect and Extra Binaries. Every route that named Others or General for those pages now names the new tab: the startup folder dialogs and `openPathSetting`, "need a key" lines, the fold sentence ("Every part of the AI Providers and Others pages of Settings folds"), W-35's card position ("Above **[en:tran:Extra Binaries]**"), and W-16 steps 2a/4/5. The Settings sidebar reads at a smaller size under the five tabs. Verified live in the dev app: each tab pressed and its page drawn; unit tests re-run; the Khmer and French dictionaries carry the renamed sentences.)
+
+Previous: **workflowsVersion: 2026-10-19h** (**W-11 step 4 — every Bible pane has a color, lime until one is picked.** Asked for by the user with the pane's color dot circled: _all bible preview section should have color_ … _when not setting found for the color of the editing section then it should be `lime`_. A section with no color note shows the default **lime** and is in that color group already, so its split asks a version and panes left on the default follow one passage; **[en:tran:No Color]** returns a pane to it. Seen live 2026-10-19 on the dev Reader in Khmer: two sections on the default lime dot, the sync-scroll toggle on both, a split from a lime pane asking a version, both panes following one reference, and red → **[en:tran:No Color]** putting the dot back to lime without a reload.)
 
 Previous: **workflowsVersion: 2026-10-19g** (**W-34 — the short-name options are the BIBLE's language's own Bible keys.** Asked for by the user with the key row circled: _during choosing bible key, use `getBibleKeyNameMap()` then show the keys are options. mouse hover to name of bible key in dom title_, _exclude if the key already exist_, with `src/lang/data/km/bibleKeyMap.json` open: _for khmer it should show from this json file_, then _the list of bible keys show for the selected language only_, _if no language data … then show normal guessing_, _e.g. for Thai should show the guessing language_, and with a French import circled _it should show list from fr lang data_. Step 1 offers the keys of the `bibleKeyMap` of the language the downloaded Bible is IN — Khmer **ពគប**, **គខប**, **គកស១៦**, **អគត**, **GKHB**, **KCB**; French **LSG** — with the edition the file is named after first, each key's full name on hover, and a key a Bible is already installed under left out; a language with no data (Thai) keeps the file's own suggested names. Seen live 2026-10-19 on the dev chatbot in Khmer with `ពគប` installed: **GKHB (ណែនាំ)** / **គខប** / **គកស១៦** / **អគត**, `ពគប` absent, hovering reading **ព្រះគម្ពីរខ្មែរសាកល**, **ព្រះគម្ពីរភាសាខ្មែរបច្ចុប្បន្ន ២០០៥**, **ព្រះគម្ពីរបរិសុទ្ធកែសម្រួល ២០១៦**, **អាល់គីតាប**; the French and Thai lists are unit tested.)
 Previous: **workflowsVersion: 2026-10-19f** (**W-34 — a finished import offers another Bible in the same conversation.** Asked for by the user with a picture of the answer after installing `JC` and the space under its button circled: _after complete bible importing then it should have an option to add another bible. So user still can more bible in the same session._ The _Done — … is installed_ answer now carries **Add another Bible** beside **Undo** (the provided-KJV answer too); it starts a fresh import at the language question, carrying nothing of the one just installed. Seen live 2026-10-19 on the dev chatbot in Khmer: an English ASV import, the two buttons, **បន្ថែមព្រះគម្ពីរមួយទៀត** pressed to the language question, then **Undo** returning the test Bible to the trash.)
@@ -2489,7 +2523,12 @@ has no header tabs.
    below) it in that version, in the same color group. Panes left on the default
    lime are one group already, so they follow the same passage and scroll
    together until one is given a different color; **[en:tran:No Color]** (or
-   clearing the color) returns a pane to that lime group.
+   clearing the color) returns a pane to that lime group. A pane that was NOT
+   split off another — a passage dragged onto the edge of a pane from the
+   **[en:tran:Bibles]** list, a recent reference row or a search result, or one
+   opened with **[en:tran:Open beside the current verse]** — starts in a color no
+   pane is using yet, so it keeps its own passage instead of following the lime
+   group.
 5. If you lose a passage, you do not need to remember and type it again: the recent
    reference rows near the top keep it. Click one to read it in a small floating
    panel, in the version it was read in; the passage you are on stays as it is. To
@@ -2508,7 +2547,7 @@ has no header tabs.
    the Bible Lookup and click **[en:tran:Save bible item]** (the floppy disk), or press
    **Ctrl+Enter**: it goes to the **[en:tran:Bibles]** list, ready to present from the Presenter.
 9. To let supported passages start their generated audio automatically, open
-   **[en:tran:Setting]** → **[en:tran:Others]** → **[en:tran:AI Providers]**. After an **OpenAI API
+   **[en:tran:Setting]** → **[en:tran:AI Providers]**. After an **OpenAI API
    Key** is saved, turn on **[en:tran:Auto Play Audio AI when available]** under
    the OpenAI key. The switch lives with the provider setting, not in the Bible
    Reference toolbar.
@@ -2581,6 +2620,17 @@ _Verify: RD-01..07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124..126, ST-5
    the verses that hold the most of them, with **Search Google for it**. 📸
    You can also just ask in the help window, in any chat: _which verse says do not worry about
    tomorrow?_ — or in one line, `Help me find a Bible verse in "KJV": love your enemies`.
+   **Typed your words in Find first?** Press the robot then, and it searches them at once
+   in the Bible Find is on — no question about which Bible.
+   **A story works too.** Ask _where in the Bible is the story of the flood?_ — or tell the
+   finder _the story of David and Goliath_ — and the answer says where it is told first,
+   _told in 1 Samuel 17_, with a button that opens that whole chapter, then its key verses.
+   Name the book if you remember it — _in Genesis, Noah and the dove_ — and only that book
+   is searched; it is understood even spelt a little wrong.
+   **Every verse with a word.** Look for one word — _shepherd_ — and the answer says how many
+   verses have it and in which books. Press **Every verse with these words** to see them
+   eight at a time, the chapters where the word gathers first, and **More verses** for the
+   next eight. 📸
 
 _Verify: RD-08, RD-09, RD-45, RD-46, RD-47, RD-124, CB-146._
 
@@ -2795,7 +2845,10 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
 
 **Goal:** configure the app.
 
-1. Click the **gear** ([en:tran:Setting]) in the header — Settings opens in its own window. 📸
+1. Click the **gear** ([en:tran:Setting]) in the header — Settings opens in its own window,
+   on **[en:tran:Path Settings]**. **[en:tran:App Assistant]** above
+   **[en:tran:Apply Settings]** at the bottom-left opens the help window, to ask about
+   any setting. 📸
 2. **[en:tran:General]** tab:
    - **[en:tran:Language]:** click **English**, **ខ្មែរ** or **Français**. Each language is listed under its
      OWN name, whatever locale you are currently in — so if a mis-click leaves you in
@@ -2811,18 +2864,48 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      configured but not installed on this computer. When the chosen font comes in more
      than one weight, a second list beside it picks one (`400 Regular`, `700 Bold`…);
      **[en:tran:Default]** keeps the font's own weight.
-   - **Directories:** where documents, lyrics, and bibles are stored on disk. With no
-     data folder chosen, **[en:tran:Click here to use the default data folder]** makes
-     `.owa\open-worship-data` in your user folder. One still on the Desktop is asked
-     about at every start — see **W-54**.
+   - **Reset button** (`Clear All Settings`):
+     **this erases configuration; use with care.** It asks for confirmation first.
+   - **[en:tran:Show Tips of the Day automatically]:** controls whether the Presenter and Bible
+     Reader show an automatic tip after the next app launch.
+   - Panel sizes are no longer reset from here — see **W-31**.
+2a. **[en:tran:Path Settings]** tab (next to **[en:tran:General]**): where everything
+    lives on disk.
+   - **Directories:** where documents, lyrics, and bibles are stored on disk. A data
+     folder is required: everything you make and set up — songs, slides, Bibles, notes
+     and most settings — is kept in it, so it can be backed up, carried on a stick and
+     found again. Until one is chosen, every window but Settings shows only
+     **[en:tran:No Parent Directory Selected]**, **[en:tran:Go to Settings]** and
+     **[en:tran:App Assistant]**, and Settings opens on this tab by itself, with only
+     **[en:tran:General]** (language and theme) and **[en:tran:AI Providers]** beside it.
+     Under **[en:tran:Parent Directory:]**, **[en:tran:Suggested]** offers
+     `.owa\open-worship-data` in your user folder: **[en:tran:Use This Folder]** makes
+     it if it is not there and uses it. **[en:tran:Found Data Folders]** lists the data
+     folders at the top of this computer's drives — one on a stick — each with
+     **[en:tran:Switch]**. Nothing is chosen for you. A chosen folder that is not there
+     — a stick not plugged in — counts as none; plug it in and press
+     **[en:tran:Apply Settings]**. A data folder on the Desktop is never suggested; while
+     one is in use, every window shows the card
+     **[en:tran:Move Your Data Folder Off the Desktop]**, which says the Desktop is not a
+     safe place for it, with **[en:tran:Move Now]** and **[en:tran:Hide for 30 days]** —
+     see **W-54**.
+   - **[en:tran:Copy Data Folder]** (under **[en:tran:Parent Directory:]**, while a
+     folder is in use): choose a USB stick, another drive or any folder, and a whole
+     copy is made there as `open-worship-data`, every file counted and checked. Links
+     inside it point at the copy itself, so the copy never reads or changes the
+     original's songs and pictures. The folder in use is not changed; the app then
+     offers to **[en:tran:Switch]** to the copy.
    - **To keep everything somewhere else**, press the folder line
      under **[en:tran:Parent Directory:]** (the folder in use) and a box opens under it: type the
-     folder's path and press Enter, or press **[en:tran:Choose a folder]** and pick it.
-     The app asks **[en:tran:Set according paths]** first, and **[en:tran:Yes]** makes the
+     folder's whole path (starting with the drive, like `D:\`, or with `/`) and press
+     Enter, or press **[en:tran:Choose a folder]** and pick it. A typed folder that is
+     not there yet is asked about first (**[en:tran:Create Data Folder]**) and made only
+     with **[en:tran:Create]**; emptying the box changes nothing.
+     The app asks **[en:tran:Set according paths]** once, and **[en:tran:Yes]** makes the
      standard folders (Documents, Videos, Images and the rest) inside it, uses them and
      reloads. What you already have is not moved. It stays in the old folder, where
      **[en:tran:Recent Folders]** below takes you back, or a backup brings it along (W-25).
-   - **To switch back to a previous data folder.** In **[en:tran:General]**, under **[en:tran:Parent Directory:]** → **[en:tran:Recent Folders]**, press
+   - **To switch back to a previous data folder.** In **[en:tran:Path Settings]**, under **[en:tran:Parent Directory:]** → **[en:tran:Recent Folders]**, press
      **[en:tran:Switch]** beside the folder, then confirm with **[en:tran:Switch]**
      in the **[en:tran:Switch Data Folder]** dialog. Every open window reloads onto
      that folder automatically. The list shows this computer's previously used
@@ -2836,11 +2919,8 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      it once. Pictures, videos and songs still pointing at where the folder USED to be
      are pointed at where it is now; a link to something that still exists is left as it
      is. A box says how many links it repaired, and the app reloads to show them. 📸
-   - **Reset buttons** (`Reset All Child Directories` / `Clear All Settings`):
-     **these erase configuration; use with care.** Both ask for confirmation first.
-   - **[en:tran:Show Tips of the Day automatically]:** controls whether the Presenter and Bible
-     Reader show an automatic tip after the next app launch.
-   - Panel sizes are no longer reset from here — see **W-31**.
+   - **Reset button** (`Reset All Child Directories`):
+     **this erases configuration; use with care.** It asks for confirmation first.
 3. **[en:tran:Bible]** tab: import a Bible XML from a file or URL, edit installed XML Bibles,
    or export/import a **[en:tran:Bible Data]** archive. The old online version list is
    development-only and can be unavailable. 📸
@@ -2849,9 +2929,11 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
    trash icon on its row, **[en:tran:Move to Trash]**, opens a confirmation titled
    **[en:tran:Delete Bible XML]**. Press **[en:tran:Yes]** in that dialog to send
    its file to the Recycle Bin, from where it can be brought back or imported again.
-4. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
+4. **[en:tran:AI Providers]** tab: the AI master switch, the provider keys and the
+   custom servers — see **W-42**.
+5. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
 
-_Verify: ST-01..ST-09, ST-22, ST-52, ST-58, LT-02..04._
+_Verify: ST-01..ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83..ST-86, CB-163, LT-02..04._
 
 ### W-17 — Find text anywhere (Find bar) & About
 
@@ -4001,7 +4083,10 @@ your Bible reading.
    window when you want to read a long list — double-click again to put it back where
    it was. 📸
 2. The small **language code** beside that button (`en`) is the language the names and
-   places themselves are written in. Click it and pick another — `km - Khmer
+   places themselves are written in. It is **green** while that is the language of the
+   Bible you are reading and **red** while it is not — `en` beside a Khmer Bible such as
+   `ពគប` is red, and its tooltip adds **[en:tran:Not the language of the Bible]** with
+   that Bible's language. Click it and pick another — `km - Khmer
 (ភាសាខ្មែរ)` — and the lookup list and the
    "in your reading" panel switch to it at once, with nothing to reload.
    Person and location windows already open keep their own language. The choice is
@@ -4035,6 +4120,9 @@ your Bible reading.
    record it is — a person, a place, a book for a verse — then a short description, then
    a **[en:tran:Details]** section with things like **[en:tran:Also called]**, **[en:tran:Type]**,
    **[en:tran:Gender]**, **[en:tran:Parents]**, **[en:tran:Children]** and **[en:tran:Verses]**. 📸
+   A long record scrolls inside its window. Once you have scrolled down, a faint up-arrow
+   (**[en:tran:Scroll to the top]**) shows in the window's bottom-right corner: click it
+   to go straight back to the top.
    The language code in its header, **[en:tran:Names and locations language]**,
    opens the same language menu. Pick another language to open that same record
    in a second window while keeping the first one open. If that record is
@@ -4042,8 +4130,13 @@ your Bible reading.
    choice leaves the language beside the person-and-pin button unchanged.
    > Every row in the list — and in the **[en:tran:Names and locations in your reading]** panel —
    > also carries a **⋮** button at its right end. It opens the same short menu that
-   > right-clicking the row gives you, so you never need a right mouse button
-   > (see **W-38**).
+   > right-clicking the row gives you, so you never need a right mouse button.
+   > The menu does what the person's or place's own window does, without opening it
+   > first: **[en:tran:Open]** opens that window, as a click on the row does;
+   > **[en:tran:Copy]** copies the whole entry, as the window's **[en:tran:Copy]** does (step 11);
+   > **[en:tran:Open in Chatbot]** — there while AI features are on — opens a chat about it, as the
+   > window's robot does (step 13); and **[en:tran:Open Graph Preview]** opens its
+   > connection graph (see **W-38**).
 7. **[en:tran:Verses]** starts closed and shows how many there are — some entries have hundreds
    (Jerusalem has 712). Click it to open, and the references turn into readable
    titles like _Joshua 10:1-43_.
@@ -4067,9 +4160,14 @@ your Bible reading.
 10. For a place that has coordinates, a map appears at the bottom of its window under
     **[en:tran:Approximate location, the marker is an estimated point]**, with an **[en:tran:Open in Google Maps]** link. The map needs an internet connection; places without
     coordinates (Egypt, for example) simply show no map. 📸
-11. The copy button in a record window's title bar copies the whole entry — its name
+11. **⋮** → **[en:tran:Copy]** in a person's or a place's window copies the whole entry — its name
     with the English one in brackets, and all of its verse references whether or not you
     opened the **[en:tran:Verses]** section — ready to paste into a note or a document.
+    In a verse window the same **[en:tran:Copy]** opens the copy menu of a Bible
+    view: **[en:tran:Copy Title]**, **[en:tran:Copy Text]**, **[en:tran:Copy All]**, the two
+    keys, and **[en:tran:More…]**, which lists every way to write the title and the text
+    (the version before or after the title or left out; verses numbered `(1):`, `1:` or not
+    at all). Rest the mouse on a row to see what it copies.
 12. Closing the lookup window leaves the record windows you opened where they are.
     Each has its own **×**.
 13. **Ask the assistant about it.** The robot at the left end of a record window's
@@ -4095,6 +4193,13 @@ your Bible reading.
     right-click the text and choose **[en:tran:Ask the Assistant About This Verse]** for
     the verse under the mouse or **[en:tran:Ask the Assistant About This Passage]** for
     the whole passage.
+    **Or open it from the menu of a passage.** Anywhere a passage has
+    **[en:tran:Open]** in its menu — a row of your Bibles list, an entry of the
+    lookup's history strip at the top, a Bible Find result, a cross reference, or a
+    passage a heading cites — **[en:tran:Open in Chatbot]** sits right under it and
+    opens the same chat. The card says which Bible the passage was read in (_I have
+    read Matthew 18:15-17 in the Bible KJV_), and the assistant is told that Bible
+    with every question, so it quotes the passage from it.
     **Buttons do the rest, with no question needed.** Under a passage's card:
     **[en:tran:Open in bible lookup]**, **[en:tran:Previous chapter]** and **[en:tran:Next chapter]**
     (**[en:tran:Previous verse]** and **[en:tran:Next verse]** for a single verse),
@@ -4112,6 +4217,41 @@ your Bible reading.
     **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]** and put the
     button beside the answer. A question about using the app — _how do I put this passage
     on the screen?_ — is answered by the app's own help, with the Presenter's Bible Lookup.
+    **Everything related to it.** As a passage's card opens it also gathers what the
+    app's own cross references — the same ones the Reader's
+    **[en:tran:Cross References]** shows — lead to from it, and the study files
+    **[en:tran:Resources]** has for its chapter, and says how many: _The app's cross
+    references lead from it to 952 other verses. Resources has 3 study files for its
+    chapter._ **[en:tran:Related verses]** lists what most of its verses point to, where
+    the New Testament speaks of it (the Old Testament, for a passage of the New) — and of
+    the chapters around it, the rest of the same story, such as Jesus on the days of Noah
+    under Genesis 8 — and each verse's theme, every reference a button that opens it in a
+    card of its own, with its own related verses. **[en:tran:Study files for this chapter]** lists the files, each
+    with **Ask about …**. Or just ask: _Which other verses are related to this passage?_
+    is the first question on the card, and _where else does God remember someone?_ or
+    _what does verse 22 promise, and where is it promised again?_ are answered from those
+    cross references, each verse named the way your Bible names it and quoted from it. A
+    question about one verse by its number reads that verse's own cross references first,
+    and one about what came before or after — _what did Jesus teach after this?_, _how long
+    was Noah in the ark?_ — reads the verses right before or after the passage first and
+    answers from them. Your own study comes too: when one of your Bible notes names a
+    verse of the passage, or you highlighted or commented on its words, the card says
+    so — _You have notes or marks of your own on 3 of its verses._ — and its first
+    question is _What did I note on these verses?_, answered with your notes and marks,
+    as yours.
+    **Study its words.** A passage's card also carries **[en:tran:Study the words]**.
+    For a passage of several verses it asks which verse, a button for each with its
+    first words; press one and the verse comes up with a button for every word in it,
+    in its Bible's own spelling, and **[en:tran:All words]** first. Press a word and the
+    assistant teaches it in the language the app is shown in: the word as the verse
+    writes it, its dictionary form, how to say it, what kind of word it is and what it
+    means in this verse — a Greek or Hebrew word stays in its own letters. Under the
+    lesson, one button goes on to the verse's next word, **[en:tran:Choose a word]**
+    brings the verse's words back, and another searches Google for the word in your
+    browser. **[en:tran:All words]** teaches every word of the verse, one line each,
+    and ends with **[en:tran:Next verse]** and **[en:tran:Another verse]**. Or type it:
+    _teach me the vocabulary_ opens the verse list, and _explain each word in verse 1_
+    teaches verse 1's words straight away. 📸
 
 **Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
 slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
@@ -4122,7 +4262,7 @@ is one word out of a short, fixed list. A person's **[en:tran:Age]** is shown ex
 dataset wrote it, and so is a place type a newer dataset adds before the app knows it.
 
 _Verify: RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63,
-RD-64, RD-80, RD-91, PM-126, CB-149, CB-154._
+RD-64, RD-80, RD-91, PM-126, CB-149, CB-154, CB-162._
 
 ### W-30 — See who and where is in the passage you are reading
 
@@ -4198,7 +4338,7 @@ anything in the app, and no API key is needed. It is the site itself, in a box.
    of the **🤖** and left of the **?**, or open **Help** → **AI Chat** in the menu bar. From
    a window with no top bar, use **Tools** → **[en:tran:AI Chat]**. A narrow window opens beside the
    app, the same size and place as the help window. 📸 It works whether or not **AI
-   features** is switched on in Settings → Others: this window holds no key and opens no
+   features** is switched on in Settings → **[en:tran:AI Providers]**: this window holds no key and opens no
    door of the app's.
 2. The window opens on a card, **Choose an AI chat to use in this window**, listing the
    sites. Click one. The site loads in the window, and its own sign-in appears if you are
@@ -4292,8 +4432,14 @@ control without having to search the manual.
    holds it, and **×** closes the card at once. The tip
    belongs to that page only, and the first tip is chosen at random without
    repeating the last automatic tip shown for that page. **Help → [en:tran:Tips of the Day]**
-   opens one at once, and a tip opened that way stands in for that
-   page's automatic card. Settings, Slide Editor, Bible Note, Web Editor, Lyric
+   opens one at once in EVERY open window that has tips — the main window and
+   each open Settings, Bible Note, editor or Local Web Share window, each with
+   its own page's tip — and a tip opened that way stands in for that page's
+   automatic card. A card you asked for from Help has no
+   **[en:tran:Hide for 30 days]**: that link is on the automatic card only.
+   **Help → [en:tran:All tips]** does the same with each page's list. Those
+   windows hide their menu bar, so the main window's **Help** is how you ask
+   for their tips. Settings, Slide Editor, Bible Note, Web Editor, Lyric
    Editor, and Local Web Share also have their own tips. Each page remembers
    whether its automatic tip has already appeared; visiting another page lets
    you learn that page too. Audience screens and help-only windows show no tips.
@@ -4327,7 +4473,8 @@ control without having to search the manual.
    for now; reloading a page does not show its automatic card again in the same
    window session. A page whose delay expires while it is behind another window
    waits until you focus it.
-3. In Settings, **Help → [en:tran:All tips]** shows three lessons for **[en:tran:General]**,
+3. With Settings open, **Help → [en:tran:All tips]** in the main window's
+   menu bar shows Settings' own list inside Settings: three lessons for **[en:tran:General]**,
    **[en:tran:Bible]**, and **[en:tran:Others]**. Choose **[en:tran:Explore General settings]**, then **[en:tran:Show it]**:
    the demo card and its red outline appear inside Settings.
    **[en:tran:Show it]** always starts in the originating window, even when a popup and
@@ -4355,9 +4502,9 @@ control without having to search the manual.
    menu are self-guided too. They explain the exact action but do not reload,
    relaunch, export, reset the layout, open Developer Tools, or change what the
    congregation sees. If **AI features** is off, the app
-   offers to open Settings → Others because the local walkthrough server is
+   offers to open Settings → **[en:tran:AI Providers]** because the local walkthrough server is
    switched off with it.
-4. Click **[en:tran:Hide for 30 days]** to put automatic tips away on all operator
+4. On the automatic card, click **[en:tran:Hide for 30 days]** to put automatic tips away on all operator
    pages for 30 days; after that they come back by themselves. This does not
    remove the lessons: use **Help → [en:tran:Tips of the Day]** to
    open one suggestion, or **Help → [en:tran:All tips]** to browse the whole learning list
@@ -4406,7 +4553,9 @@ your user folder (`~/.owa/open-worship-data` on a Mac or Linux), which nothing s
 1. Start the app. While your data folder is still `Desktop\open-worship-data`, every
    start asks **[en:tran:Move Your Data Folder Off the Desktop]**. It names your folder,
    says why it is at risk on this computer — OneDrive on Windows, iCloud Drive on a
-   Mac — and where it will go. 📸
+   Mac — and where it will go. Until it is moved, every window also shows a card with
+   the same title, saying the Desktop is not a safe place for your data folder, with
+   **[en:tran:Move Now]** and **[en:tran:Hide for 30 days]**. 📸
 2. Press **[en:tran:Move Now]**. The app closes and opens again, and moves the folder
    before it opens anything in it. Outside OneDrive the folder is simply moved. Inside
    OneDrive, or when a file in it is in use, every file is copied and checked, and the
@@ -4437,7 +4586,7 @@ copy was. **[en:tran:Show Folder]** was not pressed — it opens the computer's 
 window — and is unit-tested. Not seen live: OneDrive itself (the copy was forced by a
 file held open) and a Mac.
 
-_Verify: ST-20, ST-80, ST-81._
+_Verify: ST-20, ST-80, ST-81, ST-82._
 
 ## Keyboard shortcut reference (tutorial appendix)
 
@@ -4875,7 +5024,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 > sign-in hand-off to CCLI's real consent page is source-verified but **not observed**
 > end-to-end, for want of real credentials.
 
-1. Open **[en:tran:Settings]** → **[en:tran:Others]**. Between the AI-key card and **[en:tran:Extra Binaries]**
+1. Open **[en:tran:Settings]** → **[en:tran:Others]**. Above **[en:tran:Extra Binaries]**
    there is a card headed **[en:tran:SongSelect Integration]**, with a
    **SongSelect ↗** button that opens songselect.ccli.com in your browser. A card
    showing only its heading is folded — click the heading to open it. 📸
@@ -5290,7 +5439,9 @@ RD-102, RD-103, RD-104, RD-105, RD-106, RD-121._
 When a chapter is longer than the panel, you do not have to keep reaching for the mouse
 wheel — the app can scroll it for you, at whatever pace you set.
 
-1. Open a passage long enough to scroll, in a Bible panel or on the screen preview.
+1. Open a passage long enough to scroll, in a Bible panel, on the screen preview, or in
+   the small floating panel a passage opens in (right-click the passage →
+   **[en:tran:Floating]**, or click a cross reference).
    Down in the bottom-right corner of the text, two faint controls sit one above the
    other: an up-arrow (**[en:tran:Scroll to the top]**, shown only once the text has moved
    down) and a double chevron below it.
@@ -5449,13 +5600,15 @@ it is describing.
    choose **App Help (Chatbot)** under **Tasks** — the app comes forward and the help
    opens straight away, without the **[en:tran:Be careful with AI]** question, which is the
    quickest way when the app is minimised or behind something else.
-   With **[en:tran:Enable AI features]** switched off in Settings → Others, the menu entries,
+   With **[en:tran:Enable AI features]** switched off in Settings → **[en:tran:AI Providers]**, the menu entries,
    the taskbar entry and the shortcut go quiet together; the 🤖 button stays, and pressing it says that AI
    features are turned off and offers to open Settings, where the switch is (it takes
    effect after a restart).
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
    a browser holds several pages. **+** starts a new chat (its tab reads **New chat**
-   until a question is asked in it), **×** closes one, and a
+   until a question is asked in it), **×** closes one. The
+   window holds at most 12 chats — pressing **+** with all 12 open says so on a line
+   under the tabs and asks you to close one first. A
    **double-click on a tab's name** renames it (useful once three of them start "how do
    I"). Until you rename it, a tab is called after the first question you asked in it.
    Everything is kept: close the window — close the app — and the tabs, their answers
@@ -5823,10 +5976,18 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    of my screen_, _Point at the control_, _Attach a file_ — so you never have to
    work out how to send it one. 📸
    **Read a study PDF one verse or range at a time.** In the Bible Reader's
-   Resources panel, press the 🤖 beside a chapter PDF such as `JHN.3.pdf`. Its
-   chat briefly describes the file. Press **[en:tran:Read]**; it asks which verse
-   in that chapter to focus on, shows `1` as the typing example, and offers the
-   first three verses plus **[en:tran:Full chapter]**. You can also type a small
+   Resources panel, press the 🤖 (**[en:tran:Ask the Assistant About This File]**) beside a chapter PDF
+   such as `JHN.3.pdf`. Its
+   chat briefly describes the file and, when the Reader is on verses of that
+   chapter, says which — _You are reading Matthew 18:15-17 in the Bible
+   Reader_ — and offers those verses (`15-17`) as its first button, so one
+   press reads what the file says about the passage in front of you. Press
+   **[en:tran:Read]**; it asks at once which verse in that chapter to focus
+   on, shows `1` as the typing example, and offers the verses you are reading
+   first, then the first three verses plus **[en:tran:Full chapter]**. A file
+   for the whole book, such as `MAT.0.pdf`, is not read verse by verse: its
+   chat says it belongs to the whole book and offers to ask what it says about
+   the passage you are reading. You can also type a small
    range such as `1-3`: each card quotes every verse in it, and every printed
    cross-reference becomes a button. Press one to read that verse in its own
    card; when its chapter has its own PDF in Resources, that file's closest
@@ -5835,8 +5996,9 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    Resources PDF may add that file's explanation and an
    **[en:tran:Ask about {name}]** button. The PDF's embedded text is
    not used because a legacy Khmer font can decode as unrelated Latin
-   characters. If a visual reading repeats itself, the bad explanation is
-   withheld and the exact installed-Bible verse remains. AI can misread a PDF page,
+   characters. If a visual reading repeats itself, or no assistant can answer,
+   the explanation is left out and the verses from your own Bible remain, with
+   the next verse buttons under them. AI can misread a PDF page,
    so read the original Bible and PDF yourself too; **[en:tran:Hide for 30 days]** puts
    that caution away temporarily.
    **You do not have to press the 🤖 first, and you do not have to say “chapter”.**
@@ -5996,7 +6158,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
 11. Ask about screens ("is any screen showing?") and the answer comes from the live app,
     not the manual — with a **Hide every screen** button offered, never pressed for you.
-12. With an **AI key** set in **[en:tran:Settings]** → **[en:tran:Others]** → **[en:tran:AI Providers]**, the
+12. With an **AI key** set in **[en:tran:Settings]** → **[en:tran:AI Providers]**, the
     same window becomes a real conversation: the model answers, using the same app
     knowledge and the same tools. Without a key the **Free** assistant answers instead — a
     shared public service, weaker and sometimes busy — and when no assistant can answer
@@ -6007,14 +6169,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     each card says in plain words what its key is used for — **OpenAI** answers here and
     powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
     Bible Cross Reference, **Kimi** and **Amazon Bedrock** answer here only — so you can tell which key is
-    worth getting before you go and fetch one. 
-    **Play Bible audio automatically.** Open **[en:tran:Settings]** → **[en:tran:Others]** → **[en:tran:AI Providers]**, then open the **OpenAI** card and save an **OpenAI API key** there. Once that key is saved, this card shows **[en:tran:Auto Play Audio AI when available]**. Turn that switch on so supported Reader passages begin their generated audio automatically. A key for a different provider does not reveal or power this switch.
+    worth getting before you go and fetch one.
+    **Play Bible audio automatically.** Open **[en:tran:Settings]** → **[en:tran:AI Providers]**, then open the **OpenAI** card and save an **OpenAI API key** there. Once that key is saved, this card shows **[en:tran:Auto Play Audio AI when available]**. Turn that switch on so supported Reader passages begin their generated audio automatically. A key for a different provider does not reveal or power this switch.
     **No internet?** The help window still answers from the manual by itself, and
     says so. The `/` commands still work, because they need no key and no
     internet. A server of your own on this computer (below) still answers in full,
     with a model that runs there — not one whose name ends in `cloud`.
-    **Every part of the Others page of Settings folds.** Click a section's title —
-    **[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]**,
+    **Every part of the AI Providers and Others pages of Settings folds.** Click a section's
+    title — **[en:tran:AI Providers]**, **[en:tran:SongSelect Integration]** or
     **[en:tran:Extra Binaries]** — and it folds to one row, which still says whether it
     is set up (**[en:tran:Key set]**, **[en:tran:Installed]**) and keeps its buttons;
     click the title again to open it. Inside **[en:tran:AI Providers]**, each provider's card,
@@ -6030,10 +6192,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     chosen; the others are still in the list, in a quieter colour and reading
     **needs an API key**, so you can see they are there and what they want. Choose one of
     those and the conversation stays on the assistant it had, while **[en:tran:Settings]**
-    opens on **[en:tran:Others]** with the cursor already in that assistant's key box — for Kimi,
+    opens on **[en:tran:AI Providers]** with the cursor already in that assistant's key box — for Kimi,
     **Kimi API Key** — ready for the key to be pasted in. If **[en:tran:Settings]** was
     already open on another page, that same window comes to the front and turns to
-    **[en:tran:Others]**. Beside it is the third list, the
+    **[en:tran:AI Providers]**. Beside it is the third list, the
     **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
     you can change.
     Hold the mouse over a name to see what it is good for, how quick it is and what it
@@ -6066,9 +6228,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     who answered after it. When the one it picked fails before saying anything, the
     next one is asked, and a small line over the answer says who could not answer
     and who did. Because the **Free** service may be the one that answers, an Auto
-    chat carries a notice saying that your questions may leave this computer; pick
-    one of your own servers by name, and a model of it whose name does not end in
-    `cloud`, to keep every question in the building. Picking
+    chat carries a notice saying that your questions may leave this computer. A
+    server of your own picked by name, with a model whose name does not end in
+    `cloud`, is asked first — but when it cannot answer, the question goes on to
+    your other servers and then to the **Free** service (below). Picking
     any named row ends Auto for that tab. **Auto is what a chat starts on** until
     you pick an assistant by name: the help window opens on it the first time, and
     so does every new chat after it. Once you have picked a named assistant, new
@@ -6076,7 +6239,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
     or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
     computer or on another computer in the church, or any service that speaks the
-    OpenAI API. In **[en:tran:Settings]** (the gear at the top of the app's main window, not this one) → **[en:tran:Others]** → **[en:tran:Custom servers]** —
+    OpenAI API. In **[en:tran:Settings]** (the gear at the top of the app's main window, not this one) → **[en:tran:AI Providers]** → **[en:tran:Custom servers]** —
     where, for anyone who has no server yet,
     **[en:tran:Watch how to set up a free AI assistant on your own computer]** is
     followed by **[en:tran:LM Studio videos]** and **[en:tran:Ollama videos]**, each
@@ -6139,7 +6302,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     openworship.app_ and _free_ when the file says so, and never appears in
     **[en:tran:Custom servers]** — it is not yours to edit. It is listed
     right below that box instead, under **[en:tran:Shared servers]**
-    (**[en:tran:Settings]** → **[en:tran:Others]**): each shared server with
+    (**[en:tran:Settings]** → **[en:tran:AI Providers]**): each shared server with
     a lock beside its name and, opened, its models — to read, with nothing
     to type in and nothing to delete. Its address is not shown anywhere in
     the app: a shared server is for the app to ask, not an address to copy
@@ -6176,10 +6339,23 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     instead and this chat now uses it; pick ChatGPT in the row above to switch back._
     The tab's own list moves to the one that answered, so the next question in it does
     not wait on the dead key again; a new tab still starts on the one you picked, and
-    the moment that key works it answers as before. The **Free** assistant is never
-    stood in for and never stands in — it is a choice you make yourself. With no
-    other key, or when the internet itself is down, the answer comes from this guide,
-    as before, under a note that says which. 📸
+    the moment that key works it answers as before. A key you pay for never answers
+    for the **Free** assistant or a server of your own, and they never answer for
+    it. With no other key, or when the internet itself is down, the answer comes
+    from this guide, as before, under a note that says which. 📸
+    **A server or a free model that cannot answer hands the question on too.** When
+    the server or the **Free** model you picked by name fails before it answers —
+    its computer is off, its program is not running, the free service is full —
+    the question goes down the same line **Auto** uses, among the assistants that
+    cost nothing: your other servers on this computer or the church's network
+    first, then the rest, the **Free** service among them, three at most. The
+    waiting line says _… could not answer — looking for another assistant that
+    costs nothing_ and then _Asking … instead_, and the answer opens with a note
+    saying who could not answer, why, and who answered instead — for example
+    with a server called Church PC switched off, _Church PC · gemma4:31b could not answer — nothing answered at http://localhost:11999/v1 — check that its server is running. Local Ollama · gemma4:cloud answered instead._
+    The chat keeps the one you picked, so the next question asks it first again and
+    it answers as soon as it is back. When none of them can, the guide answers
+    under a note naming every assistant that was tried. 📸
     **The note says what is wrong, and carries the door to it.** For a key that was
     refused, press **Open AI settings** under the note and paste a correct key into that
     assistant's box. The reason is read
@@ -6359,8 +6535,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     the two buttons underneath, and nothing written to disk until you press
     **Create**.
 20. **[en:tran:Enable AI features]** turns all of this on or off. It is in
-    **[en:tran:Settings]** → **[en:tran:Others]**, at the top of the
-    **[en:tran:AI Providers]** section (click the section's title if it is folded). To
+    **[en:tran:Settings]** → **[en:tran:AI Providers]**, at the top of the
+    section (click the section's title if it is folded). To
     turn the whole feature off, untick it and restart the app: the chatbot, its tools
     and the debugging endpoint they use are then never started. Tick it and restart to
     turn it back on.

@@ -67,19 +67,21 @@ describe('setting settingHelpers', () => {
         getFontFamilyMapByNodeFontMock.mockResolvedValue({});
     });
 
-    test('opens the setting popup and switches between general and bible tabs', async () => {
+    test('opens the setting popup and switches between path, bible and ai tabs', async () => {
         const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(12345);
         const module = await loadSettingHelpers();
 
         module.openSettingPage();
-        module.openGeneralSetting();
+        module.openPathSetting();
         module.openBibleSetting();
         // The tab the "media tools are missing" dialog jumps to.
         module.openOthersSetting();
+        // The tab the assistant's key requests jump to.
+        module.openAISetting();
 
         expect(setSettingMock).toHaveBeenCalledWith(
             module.SETTING_SETTING_NAME,
-            'g',
+            'p',
         );
         expect(setSettingMock).toHaveBeenCalledWith(
             module.SETTING_SETTING_NAME,
@@ -89,12 +91,16 @@ describe('setting settingHelpers', () => {
             module.SETTING_SETTING_NAME,
             'o',
         );
+        expect(setSettingMock).toHaveBeenCalledWith(
+            module.SETTING_SETTING_NAME,
+            'a',
+        );
         const tabRequests = setSettingMock.mock.calls.filter(
             ([key]) => key === 'setting-tab-request',
         );
-        expect(tabRequests).toHaveLength(3);
-        expect(JSON.parse(tabRequests[2][1])).toEqual({
-            tabKey: 'o',
+        expect(tabRequests).toHaveLength(4);
+        expect(JSON.parse(tabRequests[3][1])).toEqual({
+            tabKey: 'a',
             requestedAt: 12345,
         });
 

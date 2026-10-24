@@ -67,6 +67,22 @@ type AssistantLanguageFileType = {
         showPassage?: string[];
         lineage?: string[];
         jesus?: string[];
+        // Jesus and the person IN ORDER ("names in order from David to
+        // Jesus") ask for the line; the two alone do not (2026-10-22).
+        lineageOrder?: string[];
+        // A place seen on a map (`checkIsLookupMapAsk`, 2026-10-22).
+        map?: string[];
+        // An answer saying the Bible does not say it (`findNotStatedNudge`,
+        // 2026-10-23).
+        notStated?: string[];
+        // What a question under a passage asks of its surroundings
+        // (`readLookupAskContext`, 2026-10-23): a verse by its number, the
+        // verses before it, after it, or a length of time (both).
+        verseNumber?: string[];
+        beforeAsk?: string[];
+        afterAsk?: string[];
+        timeAsk?: string[];
+        namesAsk?: string[];
         // "how many" and the record's lists it can be counted from
         // (`readLookupCountAsk`, 2026-10-19, EC-371).
         count?: string[];
@@ -74,6 +90,9 @@ type AssistantLanguageFileType = {
         countSpouses?: string[];
         countSiblings?: string[];
         countParents?: string[];
+        // A question asking to study the passage's words one by one
+        // (`readLookupWordStudyAsk`, 2026-10-23): "vocabulary", "each word".
+        vocabulary?: string[];
     };
 };
 
@@ -146,11 +165,20 @@ export type AssistantLanguageType = {
         showPassage: string[];
         lineage: string[];
         jesus: string[];
+        lineageOrder: string[];
+        map: string[];
+        notStated: string[];
+        verseNumber: string[];
+        beforeAsk: string[];
+        afterAsk: string[];
+        timeAsk: string[];
+        namesAsk: string[];
         count: string[];
         countChildren: string[];
         countSpouses: string[];
         countSiblings: string[];
         countParents: string[];
+        vocabulary: string[];
     };
 };
 
@@ -237,11 +265,20 @@ function toLanguage(
             showPassage: file.lookupWords?.showPassage ?? [],
             lineage: file.lookupWords?.lineage ?? [],
             jesus: file.lookupWords?.jesus ?? [],
+            lineageOrder: file.lookupWords?.lineageOrder ?? [],
+            map: file.lookupWords?.map ?? [],
+            notStated: file.lookupWords?.notStated ?? [],
+            verseNumber: file.lookupWords?.verseNumber ?? [],
+            beforeAsk: file.lookupWords?.beforeAsk ?? [],
+            afterAsk: file.lookupWords?.afterAsk ?? [],
+            timeAsk: file.lookupWords?.timeAsk ?? [],
+            namesAsk: file.lookupWords?.namesAsk ?? [],
             count: file.lookupWords?.count ?? [],
             countChildren: file.lookupWords?.countChildren ?? [],
             countSpouses: file.lookupWords?.countSpouses ?? [],
             countSiblings: file.lookupWords?.countSiblings ?? [],
             countParents: file.lookupWords?.countParents ?? [],
+            vocabulary: file.lookupWords?.vocabulary ?? [],
         },
     };
 }
@@ -481,6 +518,21 @@ export function toAsciiDigits(text: string) {
         });
     }
     return result;
+}
+
+/**
+ * 0-9 written as the app language's own digits -- `74` as `៧៤` in a Khmer
+ * window -- for a count the window writes beside references the Bible
+ * already writes in them (2026-10-22: _យេរេមា 12_ beside _យ៉ូហាន ១០:១១_).
+ */
+export function toShownDigits(value: number | string) {
+    const digits = getAppLanguage().nativeDigits;
+    const text = String(value);
+    return digits === null
+        ? text
+        : text.replaceAll(/[0-9]/g, (digit) => {
+              return [...digits][Number(digit)];
+          });
 }
 
 /**

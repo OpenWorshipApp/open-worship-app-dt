@@ -32,12 +32,24 @@ import AiCautionBodyComp from './AiCautionBodyComp';
  * time until which both stay hidden, because somebody who has read one has
  * read the warning. Nothing is hidden for good: the day comes round and the
  * caution is back, which is the point of 30 days rather than a checkbox
- * that means never.
+ * that means never. The window's own keyless-service warning (where the
+ * words GO, not whether an answer is right) hides on a key of its own,
+ * `AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING`.
  */
 export type AiWindowKindType = 'assistant' | 'aichat';
 
 /** The key: the time (ms since the epoch) until which both cautions stay hidden. */
 export const AI_CAUTION_HIDDEN_UNTIL_SETTING = 'ai-caution-hidden-until';
+/**
+ * The key for the keyless-service warning INSIDE the window (2026-10-20, the
+ * user with the notice circled: _shoudl be able to hide it for 30 days_). Its
+ * OWN key, not `AI_CAUTION_HIDDEN_UNTIL_SETTING`: the cautions are about
+ * whether an answer is RIGHT, this warning about WHERE the words go, and
+ * putting the one away says nothing about having read the other. Auto and the
+ * free service share the one warning, so one key covers both.
+ */
+export const AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING =
+    'ai-provider-warn-hidden-until';
 export const AI_CAUTION_HIDE_DAYS = 30;
 const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 
@@ -50,25 +62,27 @@ const DAY_MILLISECONDS = 24 * 60 * 60 * 1000;
 // (`https://localhost:3000` in dev, `owa://local` packaged), so a stamp
 // written here by the help window is read by the presenter's 🤖. Read and
 // written in a try, because the accessor can throw in a private window.
-function readHiddenUntilText(): string | null {
+function readHiddenUntilText(key: string): string | null {
     try {
-        return (
-            globalThis.localStorage?.getItem(AI_CAUTION_HIDDEN_UNTIL_SETTING) ??
-            null
-        );
+        return globalThis.localStorage?.getItem(key) ?? null;
     } catch (_error) {
         return null;
     }
 }
 
-function writeHiddenUntilText(value: string) {
+function writeHiddenUntilText(key: string, value: string) {
     try {
-        globalThis.localStorage?.setItem(
-            AI_CAUTION_HIDDEN_UNTIL_SETTING,
-            value,
-        );
+        globalThis.localStorage?.setItem(key, value);
     } catch (_error) {
         // A window that cannot keep it asks again next time, which is safe.
+    }
+}
+
+function clearHiddenUntilText(key: string) {
+    try {
+        globalThis.localStorage?.removeItem(key);
+    } catch (_error) {
+        // Same as above: nothing stored, nothing to clear.
     }
 }
 
@@ -89,14 +103,64 @@ export function readAiCautionHiddenUntil(
 }
 
 export function checkIsAiCautionHidden(now = Date.now()) {
-    return readAiCautionHiddenUntil(readHiddenUntilText(), now) !== null;
+    return (
+        readAiCautionHiddenUntil(
+            readHiddenUntilText(AI_CAUTION_HIDDEN_UNTIL_SETTING),
+            now,
+        ) !== null
+    );
 }
 
 /** Hides both cautions for `AI_CAUTION_HIDE_DAYS` from now; answers the time they come back. */
 export function hideAiCautionForAWhile(now = Date.now()) {
     const until = now + AI_CAUTION_HIDE_DAYS * DAY_MILLISECONDS;
-    writeHiddenUntilText(String(until));
+    writeHiddenUntilText(AI_CAUTION_HIDDEN_UNTIL_SETTING, String(until));
     return until;
+}
+
+/** Whether the window's keyless-service warning is put away right now. */
+export function checkIsAiProviderWarnHidden(now = Date.now()) {
+    return (
+        readAiCautionHiddenUntil(
+            readHiddenUntilText(AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING),
+            now,
+        ) !== null
+    );
+}
+
+/** Puts that warning away for `AI_CAUTION_HIDE_DAYS` from now; answers the time it is back. */
+export function hideAiProviderWarnForAWhile(now = Date.now()) {
+    const until = now + AI_CAUTION_HIDE_DAYS * DAY_MILLISECONDS;
+    writeHiddenUntilText(AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING, String(until));
+    return until;
+}
+
+/**
+ * The time a hide runs out, for the Settings → General list of what was put
+ * away (2026-10-20, the user's ask: _everything that can be hidden for 30
+ * days should be seen in setting general … to be able to restore_).
+ */
+export function readAiCautionHiddenTime(now = Date.now()) {
+    return readAiCautionHiddenUntil(
+        readHiddenUntilText(AI_CAUTION_HIDDEN_UNTIL_SETTING),
+        now,
+    );
+}
+
+export function readAiProviderWarnHiddenTime(now = Date.now()) {
+    return readAiCautionHiddenUntil(
+        readHiddenUntilText(AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING),
+        now,
+    );
+}
+
+/** Back before the 30 days are up, from that list. */
+export function showAiCautionAgain() {
+    clearHiddenUntilText(AI_CAUTION_HIDDEN_UNTIL_SETTING);
+}
+
+export function showAiProviderWarnAgain() {
+    clearHiddenUntilText(AI_PROVIDER_WARN_HIDDEN_UNTIL_SETTING);
 }
 
 export async function askAiCaution(kind: AiWindowKindType) {

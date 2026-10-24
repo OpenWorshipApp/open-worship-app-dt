@@ -8,9 +8,16 @@ import {
     checkHasAutoSetback,
     checkIsCloudModel,
     clearAutoSetbacks,
+    describeSkippedAssistants,
     genAutoAnswerNote,
+    USE_ASSISTANT_TOOL_NAME,
+    USE_AUTO_LABEL,
+    genAssistantSwitchActions,
+    genHandOnAnswerNote,
     markAutoSetback,
+    orderHandOnPicks,
     rankAutoCandidates,
+    readAssistantSwitch,
     readModelSize,
     toAutoBusyKey,
     toAutoCandidateKey,
@@ -338,6 +345,142 @@ describe('rankAutoCandidates', () => {
         ).toEqual([other.label, BIG.label, SMALL.label]);
     });
 
+    // The user's order for an app shown in a language other than English
+    // (2026-10-20, the app's own is Khmer): gemma4:cloud from any assistant,
+    // then Free's Nemotron Super VL, then gemma4:31b, gemma4:12b, then any
+    // free model -- Gemma 4 supports a language like Khmer well.
+    describe('languageModelsFirst', () => {
+        const option = { languageModelsFirst: true };
+        const gemmaCloud = genServerCandidate('super-mac', 'gemma4:cloud');
+        const freeVl = genFreeCandidate('nvidia/nemotron-3.5-super-vl:free');
+        const gemma31 = genServerCandidate('super-mac', 'gemma4:31b');
+        const gemma12 = genServerCandidate('desk', 'google/gemma-4-12b');
+        const freeOther = genFreeCandidate('nvidia/nemotron-3.5-super:free');
+        // Bigger than everything above: the plain size order's first pick.
+        const seventy = genServerCandidate('desk', 'llama3.3:70b');
+
+        test("asks the language-speaking models first, in the list's order", () => {
+            expect(
+                toLabels(
+                    rankAutoCandidates(
+                        [
+                            freeOther,
+                            gemma12,
+                            seventy,
+                            gemma31,
+                            freeVl,
+                            gemmaCloud,
+                        ],
+                        new Map(),
+                        option,
+                    ),
+                ),
+            ).toEqual([
+                gemmaCloud.label,
+                freeVl.label,
+                gemma31.label,
+                gemma12.label,
+                freeOther.label,
+                seventy.label,
+            ]);
+        });
+
+        test('holds the tiers against the cloud and size rules', () => {
+            // gemma4:31b-cloud is the 31b tier; another cloud, and a bigger
+            // model, wait behind the whole list.
+            const gemmaBigCloud = genServerCandidate(
+                'super-mac',
+                'gemma4:31b-cloud',
+            );
+            const otherCloud = genServerCandidate(
+                'super-mac',
+                'deepseek-v4.1-flash:cloud',
+            );
+            expect(
+                toLabels(
+                    rankAutoCandidates(
+                        [
+                            otherCloud,
+                            seventy,
+                            gemmaBigCloud,
+                            freeVl,
+                            gemmaCloud,
+                        ],
+                        new Map(),
+                        option,
+                    ),
+                ),
+            ).toEqual([
+                gemmaCloud.label,
+                freeVl.label,
+                gemmaBigCloud.label,
+                // No tier: a cloud model still before a plainly bigger one.
+                otherCloud.label,
+                seventy.label,
+            ]);
+        });
+
+        test('never a model that cannot answer, and a setback still goes last', () => {
+            const away = genStateMap([[gemmaCloud, { isReachable: false }]]);
+            expect(
+                toLabels(rankAutoCandidates([gemmaCloud, FREE], away, option)),
+            ).toEqual([FREE.label]);
+            const now = 1_000_000;
+            markAutoSetback(toAutoCandidateKey(gemmaCloud), now);
+            expect(
+                toLabels(
+                    rankAutoCandidates([gemmaCloud, FREE], new Map(), {
+                        ...option,
+                        now: now + 1,
+                    }),
+                ),
+            ).toEqual([FREE.label, gemmaCloud.label]);
+        });
+
+        test('matches the wire id and the shown name, never a near miss', () => {
+            expect(
+                toLabels(
+                    rankAutoCandidates(
+                        [FREE, gemmaCloud, gemma31],
+                        new Map(),
+                        option,
+                    ),
+                ),
+            ).toEqual([gemmaCloud.label, gemma31.label, FREE.label]);
+            // `gemma4:31b-cloud` is not `gemma4:cloud`; a gemma-3 name is no
+            // tier at all.
+            const gemmaBigCloud = genServerCandidate(
+                'super-mac',
+                'gemma4:31b-cloud',
+            );
+            const gemma3Cloud = genServerCandidate('super-mac', 'gemma3:cloud');
+            expect(
+                toLabels(
+                    rankAutoCandidates(
+                        [gemma3Cloud, gemmaBigCloud, gemmaCloud],
+                        new Map(),
+                        option,
+                    ),
+                ),
+            ).toEqual([
+                gemmaCloud.label,
+                gemmaBigCloud.label,
+                gemma3Cloud.label,
+            ]);
+        });
+
+        test('is off without the option: the plain size order stands', () => {
+            expect(
+                toLabels(
+                    rankAutoCandidates(
+                        [freeVl, gemmaCloud, gemma31],
+                        new Map(),
+                    ),
+                ),
+            ).toEqual([gemmaCloud.label, gemma31.label, freeVl.label]);
+        });
+    });
+
     test('asks only a model that can see when a picture rides the question', () => {
         const seeing = genFreeCandidate('stepfun/step-3.7-flash:free', {
             canSeeImages: true,
@@ -449,6 +592,29 @@ describe('askWithAutoAssistant', () => {
         expect(checkHasAutoSetback(toAutoCandidateKey(BIG))).toBe(true);
     });
 
+    test('hands a read-only question on even after a round came back', async () => {
+        const ask = vi.fn(
+            async (pick: AutoCandidateType, attempt: AutoAttemptType) => {
+                attempt.hasRound = true;
+                if (pick === BIG) {
+                    throw new Error('it wrote no answer this time');
+                }
+                return 'the file lists three videos';
+            },
+        );
+        const result = await askWithAutoAssistant({
+            picks: [BIG, FREE],
+            ask,
+            checkIsFinal: neverFinal,
+            canHandOnAfterRound: true,
+        });
+        expect(result.answer).toBe('the file lists three videos');
+        expect(result.pick).toBe(FREE);
+        expect(result.skipped).toEqual([
+            { pick: BIG, reason: 'it wrote no answer this time' },
+        ]);
+    });
+
     test('stops at a failure nobody else would change, and holds nothing against the pick', async () => {
         const stop = new Error('stopped');
         const ask = vi.fn(async () => {
@@ -545,5 +711,112 @@ describe('genAutoAnswerNote', () => {
                 `${NINE.label} could not answer. ` +
                 `Auto asked ${FREE.label} instead.`,
         );
+    });
+});
+
+describe('orderHandOnPicks', () => {
+    const LOCAL = genServerCandidate('local-ollama', 'gemma4:31b');
+    const LOCAL_SMALL = genServerCandidate('local-ollama', 'gemma4:e4b');
+    const SHARED = genServerCandidate('registry-church', 'gemma4:27b');
+    const inBuildingIdSet = new Set(['local-ollama', 'super-computer']);
+    const checkIsInBuilding = (candidate: AutoCandidateType) => {
+        return (
+            candidate.serverId !== null &&
+            inBuildingIdSet.has(candidate.serverId)
+        );
+    };
+
+    test('leaves out the one that failed and keeps Auto order otherwise', () => {
+        expect(
+            toLabels(
+                orderHandOnPicks([FREE, LOCAL, BIG], FREE, checkIsInBuilding),
+            ),
+        ).toEqual([LOCAL.label, BIG.label]);
+    });
+
+    test('asks the rest of the building before anything outside it', () => {
+        expect(
+            toLabels(
+                orderHandOnPicks(
+                    [FREE, SHARED, LOCAL, LOCAL_SMALL, BIG],
+                    LOCAL,
+                    checkIsInBuilding,
+                ),
+            ),
+        ).toEqual([LOCAL_SMALL.label, BIG.label, FREE.label, SHARED.label]);
+    });
+
+    test('hands on to nobody when there is nobody else', () => {
+        expect(orderHandOnPicks([LOCAL], LOCAL, checkIsInBuilding)).toEqual([]);
+    });
+});
+
+describe('genHandOnAnswerNote', () => {
+    test('names who failed and why, everyone skipped, and who answered', () => {
+        expect(
+            genHandOnAnswerNote(
+                {
+                    pick: SMALL,
+                    reason:
+                        'its server is not answering — check that it is ' +
+                        'running on this computer',
+                },
+                FREE,
+                [{ pick: BIG, reason: '' }],
+            ),
+        ).toBe(
+            `${SMALL.label} could not answer — its server is not answering ` +
+                '— check that it is running on this computer. ' +
+                `${BIG.label} could not answer. ` +
+                `${FREE.label} answered instead.`,
+        );
+    });
+
+    test('says the same sentences describeSkippedAssistants gives', () => {
+        expect(describeSkippedAssistants([])).toBe('');
+        expect(
+            describeSkippedAssistants([{ pick: NINE, reason: 'busy' }]),
+        ).toBe(`${NINE.label} could not answer — busy.`);
+    });
+});
+
+describe('the buttons that change who this chat asks', () => {
+    test('offer the one that answered, then Auto', () => {
+        const actions = genAssistantSwitchActions(NINE);
+        expect(actions).toEqual([
+            {
+                label: `Use ${NINE.label} for this chat`,
+                toolName: USE_ASSISTANT_TOOL_NAME,
+                args: { provider: 'custom', model: NINE.model },
+            },
+            {
+                label: USE_AUTO_LABEL,
+                toolName: USE_ASSISTANT_TOOL_NAME,
+                args: { auto: true },
+            },
+        ]);
+        // Every button reads back as the choice it was written for.
+        expect(readAssistantSwitch(actions[0].args)).toEqual({
+            isAuto: false,
+            provider: 'custom',
+            model: NINE.model,
+        });
+        expect(readAssistantSwitch(actions[1].args)).toEqual({ isAuto: true });
+    });
+
+    test('a saved button can name no paid key and nothing that is not a model', () => {
+        expect(
+            readAssistantSwitch({ provider: 'anthropic', model: 'claude' }),
+        ).toBeNull();
+        expect(readAssistantSwitch({ provider: 'free', model: '' })).toBeNull();
+        expect(
+            readAssistantSwitch({ provider: 'free', model: 'x'.repeat(201) }),
+        ).toBeNull();
+        expect(readAssistantSwitch({ auto: 'yes' })).toBeNull();
+        expect(readAssistantSwitch(null)).toBeNull();
+        expect(readAssistantSwitch('auto')).toBeNull();
+        expect(
+            readAssistantSwitch({ provider: 'free', model: FREE.model }),
+        ).toEqual({ isAuto: false, provider: 'free', model: FREE.model });
     });
 });

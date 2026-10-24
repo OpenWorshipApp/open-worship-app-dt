@@ -571,6 +571,18 @@ export function checkIsWindowsAbsolutePath(filePath: string) {
 }
 
 /**
+ * `E:` on Windows, the form a drive's root takes once `pathResolve` trims its
+ * separator -- a folder the app stored itself, not a typed drive-relative
+ * path. `isWindows` defaults to the running OS; tests pass it.
+ */
+export function checkIsWindowsDriveRoot(
+    filePath: string,
+    isWindows = pathSeparator === '\\',
+) {
+    return isWindows && /^[A-Za-z]:$/.test(filePath);
+}
+
+/**
  * Whether a stored path was written on the OTHER operating system family:
  * `D:\Songs` read on a Mac, `/Users/me/Songs` read on Windows. Such a path
  * names nothing here, and must be kept exactly as written -- resolving it
@@ -602,6 +614,29 @@ export function checkIsNativeAbsolutePath(
         return checkIsWindowsAbsolutePath(filePath);
     }
     return filePath.startsWith('/');
+}
+
+/**
+ * A folder path as it was typed or pasted, made the path it means: the
+ * spaces around it go, and so do the quotes around it -- Explorer's "Copy as
+ * path" wraps every path in them, and a pasted one was refused as "not a
+ * full path". On Windows `/` is never part of a name, so `//server/share` and
+ * `C:/Songs` take their native separators. `isWindows` defaults to the
+ * running OS; tests pass it.
+ */
+export function cleanTypedDirPath(
+    typedPath: string,
+    isWindows = pathSeparator === '\\',
+) {
+    let dirPath = typedPath.trim();
+    const quoted = /^(["'])(.*)\1$/.exec(dirPath);
+    if (quoted !== null) {
+        dirPath = quoted[2].trim();
+    }
+    if (isWindows) {
+        dirPath = dirPath.replaceAll('/', '\\');
+    }
+    return dirPath;
 }
 
 export function getFileName(fileFullName: string) {
@@ -1307,6 +1342,16 @@ export async function fsCopyFilePathToPath(
     try {
         if (!distFileFullName) {
             throw new Error('Cannot get file name');
+        }
+        // An empty or relative folder joins into a bare name, which the file
+        // system resolves against the app's working directory. A drive root
+        // comes back from `pathResolve` as `E:` (its separator trimmed) and
+        // joins to `E:\name`: a stick's root is a real folder.
+        if (
+            !checkIsNativeAbsolutePath(destinationPath) &&
+            !checkIsWindowsDriveRoot(destinationPath)
+        ) {
+            throw new Error(`No folder to copy into: "${destinationPath}"`);
         }
         const targetFilePath = pathJoin(destinationPath, distFileFullName);
         const targetFileSource = FileSource.getInstance(targetFilePath);

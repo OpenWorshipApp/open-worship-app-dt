@@ -228,6 +228,39 @@ describe('BibleNotAvailableComp', () => {
         expect(mocks.initKJVBible).toHaveBeenCalledTimes(1);
     });
 
+    test('a card mounted while the question is up asks nothing more, and one after it may', async () => {
+        let answer = (_isOk: boolean) => {};
+        mocks.showAppConfirm.mockImplementationOnce(
+            () =>
+                new Promise<boolean>((resolve) => {
+                    answer = resolve;
+                }),
+        );
+        const remount = async () => {
+            act(() => {
+                root.unmount();
+            });
+            root = createRoot(host);
+            await renderCard('KJV');
+        };
+        await renderCard('KJV');
+        expect(mocks.showAppConfirm).toHaveBeenCalledTimes(1);
+        // A first run in the Reader mounts the card again (and more than one)
+        // while the first question is still up: each new card asked again,
+        // and the one left after a Create asked for a KJV that was there.
+        await remount();
+        expect(mocks.showAppConfirm).toHaveBeenCalledTimes(1);
+        await act(async () => {
+            answer(true);
+        });
+        await flush();
+        expect(mocks.initKJVBible).toHaveBeenCalledTimes(1);
+        // Answered: a card mounted afterwards (the Bible removed again, or a
+        // Cancel) still offers it.
+        await remount();
+        expect(mocks.showAppConfirm).toHaveBeenCalledTimes(2);
+    });
+
     test('another missing Bible is not offered the KJV', async () => {
         await renderCard('គខប');
 

@@ -6,7 +6,9 @@ import {
     type BibleTargetType,
 } from '../helper/bible-helpers/bibleTargetHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { getMenuItemAnchor } from '../context-menu/contextMenuEventHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
+import { handleError } from '../helper/errorHelpers';
 
 export type BibleItemType = {
     id: number;
@@ -64,6 +66,23 @@ export function genBibleItemCopyingContextMenu(
             menuElement: tran('Copy Chapter Full Key'),
             onSelect: () => {
                 bibleItem.copyChapterFullKeyToClipboard();
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('three-dots', {
+                color: 'var(--bs-secondary-text-emphasis)',
+            }),
+            menuElement: tran('More…'),
+            title: tran('Every way to copy the title and text'),
+            onSelect: (event) => {
+                // Read now: this menu is gone once the module has loaded.
+                const anchor = getMenuItemAnchor(event);
+                // Loaded at the press: every format and its preview.
+                import('./bibleItemCopyFormatHelpers')
+                    .then(({ showBibleItemCopyFormatMenu }) => {
+                        return showBibleItemCopyFormatMenu(bibleItem, anchor);
+                    })
+                    .catch(handleError);
             },
         },
     ];

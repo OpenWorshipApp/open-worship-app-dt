@@ -1,15 +1,15 @@
 ---
 name: owa-enhance-agent-docs
-description: 'Keep the Open Worship App agent documents true to the code, and make agents more useful across the whole repo. Use when asked to audit, fix, refresh or slim the agent docs: `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/` + MEMORY.md, `.claude/skills/`, the Codex mirror (`AGENTS.md`, `.codex/`, `.agents/skills/`), `.mcp.json` — and the user manual's recipes (`user-workflows.md` → `docs/manual-sources`), which the in-app 🤖 answers from: an outdated guide page, or the chatbot answering with steps that no longer exist. Also use for stale notes, doc-vs-code mismatches, mirror drift, and questions like "what should the agent know" or "how can the agent help more". Two jobs. DRIFT: scripts/audit-agent-docs.mjs lists every claim the code contradicts; each lead is confirmed against code and git history, then the doc is fixed in place, with the mirror re-copied and the knowledge rebuilt. LEVERAGE: blind spots, context cost, prose rules a test or hook could enforce, and repeated session friction (scripts/session-friction.mjs) become AD-xx proposals, reported and applied only on `apply`. Code is the truth for facts; a doc is the truth for decisions; history stays history.'
+description: 'Keep the Open Worship App agent documents true to the code, and make agents more useful across the whole repo. Use when asked to audit, fix, refresh or slim the agent docs: `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/` + MEMORY.md, `.claude/skills/`, `.mcp.json` — and the user manual's recipes (`user-workflows.md` → `docs/manual-sources`), which the in-app 🤖 answers from: an outdated guide page, or the chatbot answering with steps that no longer exist. Also use for stale notes, doc-vs-code mismatches, and questions like "what should the agent know" or "how can the agent help more". Two jobs. DRIFT: scripts/audit-agent-docs.mjs lists every claim the code contradicts; each lead is confirmed against code and git history, then the doc is fixed in place, with the knowledge rebuilt. LEVERAGE: blind spots, context cost, prose rules a test or hook could enforce, and repeated session friction (scripts/session-friction.mjs) become AD-xx proposals, reported and applied only on `apply`. Code is the truth for facts; a doc is the truth for decisions; history stays history.'
 argument-hint: '[auto (default) | audit | drift | leverage | friction | <doc or code path> | apply AD-xx … | file]'
 ---
 
 # OWA Enhance Agent Docs — the notes match the code, and the agent gets better at this repo
 
 The agent documents are how every agent learns this project. That covers every
-Claude Code session, every Codex session through the mirror, and the in-app 🤖.
+Claude Code session and the in-app 🤖.
 The chatbot answers volunteers from `.claude/` as its internal corpus, which
-ships in plaintext inside the installer. A wrong line here misleads all three,
+ships in plaintext inside the installer. A wrong line here misleads both,
 at once and silently. A missing line makes each of them rediscover the same
 trap at a cost. This skill does two jobs:
 
@@ -39,13 +39,9 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
    `coverage-expansion/`), notes marked FIXED, dated measurements (*"measured
    2026-08-31: 42 tools"*) and past tense. Leave it alone. Add a pointer
    (*"since renamed to `X`"*) only when a reader needs today's code.
-3. **A drift fix edits documents only.** That means agent docs and their
-   mirror. Code, tests, settings, hooks, user data and the app's screens wait
-   for `apply`.
-4. **Paper trail in the SAME change.** Copy the Codex mirror again from
-   `.claude/` with `node extra-work/sync-agent-mirror.mjs` (the gate's
-   `agentDocsMirror.test.ts` fails until it matches); never reconcile it by
-   hand. Then run
+3. **A drift fix edits documents only.** That means agent docs. Code, tests,
+   settings, hooks, user data and the app's screens wait for `apply`.
+4. **Paper trail in the SAME change.** Run
    `node extra-work/build-knowledge.mjs`. It clears only
    `electron-build/knowledge`, needs no restart, and relaunches nothing:
    `electron:watch` ignores that folder since 2026-10-11 (`AD-16`; an
@@ -63,9 +59,7 @@ SCAN (scripts, ~1 s + ~15 s)  →  CONFIRM (code · git · live)  →  FIX drift
    `paths:`-scoped rule. Don't write down what the code already says.
 7. **Another session may be mid-work.** Run `git status` first. Edit a doc
    someone else has dirtied only with exact, minimal Edits, and never rewrite
-   it whole. If a file in mirror drift has someone else's uncommitted
-   `.claude/` edit, report it and leave it: they copy it when they finish.
-   The same for CODE nobody has committed: the audit lists a note or a recipe
+   it whole. The same for CODE nobody has committed: the audit lists a note or a recipe
    that is due *only because of an uncommitted file* apart from the ones a
    commit moved (2026-10-11, `AD-18`). Your own file: read the note now and
    stamp it with `--allow-dirty`. Another session's: name the file in the
@@ -116,18 +110,17 @@ to `owa-enhance`. This skill files the lead and names where it went.
 
 | Document | Read by | Loaded | Notes |
 | --- | --- | --- | --- |
-| `.claude/CLAUDE.md` | every Claude session; Codex (`.codex/project-instructions.md`); 🤖 corpus | **always** | the costliest bytes in the repo |
+| `.claude/CLAUDE.md` | every Claude session; 🤖 corpus | **always** | the costliest bytes in the repo |
 | `.claude/memory/MEMORY.md` | every Claude session | **always** (first 200 lines) | one line per note, a hook not a summary |
 | `.claude/memory/*.md` | on demand from the index | when relevant | front matter `name` · `description` · `metadata.type` |
-| `.claude/rules/*.md` | Claude once a file matching `paths:` is read; Codex by `AGENTS.md`'s instruction | conditional | a glob that matches nothing means a rule that never loads |
+| `.claude/rules/*.md` | Claude once a file matching `paths:` is read | conditional | a glob that matches nothing means a rule that never loads |
 | `.claude/skills/*/SKILL.md` | description: every session's skill listing; body: on invoke | listing always | the listing cuts a description at ~1 530 characters |
 | skill `references/`, `scripts/` | when the skill says | on demand | ledgers are history |
-| `AGENTS.md`, `.codex/**`, `.agents/skills/**` | Codex | — | exact copies, except each mirrored `SKILL.md`'s Codex preamble |
-| `.mcp.json` · `.codex/config.toml` | both agents' MCP registration | — | must name the same servers |
+| `.mcp.json` | the agent's MCP registration | — | registers `owa-devtools` |
 | `tools/owa-devtools-mcp/README.md` | humans and agents choosing a tool | — | the tool table |
 | `electron-build/knowledge/` | the in-app 🤖 | built | internal notes indexed to their first 3 000 characters |
 | `.claude/settings.local.json` | this machine's Claude Code | — | personal and untracked: read it, never edit it unasked |
-| `README.md`, `RELEASE.md`, `docs/*.md`, every other tracked `.md` | people | — | read for the same claims since 2026-10-11 (the README named an `npm run` script removed weeks before); never mirrored, not in the knowledge; `TODO.md` / `note.md` are history |
+| `README.md`, `RELEASE.md`, `docs/*.md`, every other tracked `.md` | people | — | read for the same claims since 2026-10-11 (the README named an `npm run` script removed weeks before); not in the knowledge; `TODO.md` / `note.md` are history |
 
 ## Procedure
 
@@ -208,9 +201,6 @@ Safe classes, fixed without asking:
 - A memory note with **no front matter** or off-schema front matter. Write it
   from the note itself.
 - A rule `paths:` glob that matches nothing **because the folder moved**.
-- **Mirror drift**: copy again from `.claude/`. If the mirror side is newer,
-  port that edit into `.claude/` first, then copy. Ask when the two sides
-  disagree in substance.
 - **The manual** (`manual` check), all three of its drift signals:
   - A recipe that **names a control or a file that is gone**. Rewrite the
     step to what the code draws now, and write only what the code or a
@@ -263,7 +253,7 @@ dates as absolute dates, and keep the *why*.
 
 Run the audit again after the fixes. A drift run is done when every drift
 check prints 0 — `paths`, `symbols`, `tools`, `scripts`, `env`, `ids`,
-`memory`, `rules`, `skills` (wiring), `mirror`, `knowledge`, `manual`
+`memory`, `rules`, `skills` (wiring), `knowledge`, `manual`
 (labels, coverage files, recipes due) and `staleness` (notes due a read) — or
 when each lead still printed is
 accounted for in one of three places: `references/killed-leads.json` with its
@@ -321,7 +311,6 @@ Eight lenses, detailed in [references/leverage.md](./references/leverage.md):
 | L4 Friction | Which walls do sessions keep walking into? | `session-friction.mjs` |
 | L5 Verification reach | What do the docs say an agent *cannot* check, and what would let it? | reading; `cannot`, `ask the user` |
 | L6 Skill routing | Does every kind of request reach exactly one skill, with its triggers in view? | `--check=skills`, the listing |
-| L7 Codex parity | Does a Codex session get the same project? | `--check=mirror`, `AGENTS.md` |
 | L8 The 🤖's corpus | Can the in-app assistant find the fact in a note's first 3 000 characters? | `owa_help_search` on the fact |
 
 Each surviving lead becomes an `AD-xx` proposal with five parts: the measured
@@ -344,7 +333,7 @@ then ask.
 - Scan: <n> docs · <n> leads → <n> confirmed (<fixed> fixed · <asked> to ask · <reg> regressions · <hist> history)
 - Manual: <n> recipes read · <n> edited · <n> stamped · <n> steps need a live look (routed)
 - Audit after the fixes: <every drift check 0 | what is left, and where each lead is filed>
-- Knowledge rebuild: done | not run (<why>) · mirror: in sync | <n> left (<why>)
+- Knowledge rebuild: done | not run (<why>)
 
 ## 1. Drift fixed            — doc:line · was → now · the evidence (commit, file)
 ## 2. Drift needing a decision — the same, plus the choice
@@ -382,7 +371,7 @@ most). **Then end the turn.**
    read the log body, not the exit code. Re-run the audit last in every case.
 6. **Paper trail.** Mark the backlog item `done` with before → after. Keep
    CLAUDE.md's skill index and `rules/project-skills.md` in step when a skill
-   changes. Copy the mirror and rebuild the knowledge (Non-negotiable 4).
+   changes. Rebuild the knowledge (Non-negotiable 4).
 7. **No commit, push or stage** unless the user asks.
 
 ## Ranking
@@ -409,9 +398,9 @@ restates the code, or a lead nobody confirmed.
 
 ## Resources
 
-- [scripts/audit-agent-docs.mjs](./scripts/audit-agent-docs.mjs): 16 checks
+- [scripts/audit-agent-docs.mjs](./scripts/audit-agent-docs.mjs): 15 checks
   over the docs. The drift checks are `paths`, `symbols`, `tools`, `scripts`,
-  `env`, `ids`, `memory`, `rules`, `skills`, `mirror`, `knowledge` and
+  `env`, `ids`, `memory`, `rules`, `skills`, `knowledge` and
   `manual` (the recipes and the coverage rows they are verified by). The
   leverage signals are `budget`, `coverage` and `prose-rules`; `staleness`
   is the notes due a read. `--stamp-manual=<ids | all>` and
@@ -436,7 +425,7 @@ restates the code, or a lead nobody confirmed.
   hot reads and hot commands, from the local Claude Code transcripts.
 - [references/checks.md](./references/checks.md): per check, its false
   positives, how to confirm, how to fix, and the reading checks no script does.
-- [references/leverage.md](./references/leverage.md): the eight lenses, with
+- [references/leverage.md](./references/leverage.md): the seven lenses, with
   their signals, the shape of a proposal and the proof.
 - [references/backlog.md](./references/backlog.md): `AD-xx`. Written only after
   the user decides.

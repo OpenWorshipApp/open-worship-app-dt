@@ -375,6 +375,33 @@ class LookupBibleItemController extends BibleItemsViewController {
         return { ...editingResult };
     }
 
+    /**
+     * Ask for the passage the box holds to become the history entry. The
+     * entry is the LAST passage asked for when `attemptAddingHistory`'s wait
+     * ends, so every answer asks -- a cached one too. Asked by a fresh lookup
+     * alone, a reference corrected inside the cache's 3 s (`John 3:16-21`,
+     * `John 3:16`, back to `John 3:16-21`) left the half-typed one as the
+     * last asked for, and it became the entry.
+     */
+    private attemptAddingHistoryOf(
+        inputText: string,
+        bibleItem: ReadIdOnlyBibleItem | null,
+    ) {
+        if (bibleItem === null) {
+            return;
+        }
+        bibleItem.toTitle().then((title) => {
+            // Only a passage the box still holds. Every keystroke is looked
+            // up, and the lookups finish in any order, so the half-typed
+            // `Genesis 1:1-3` of a fast `Genesis 1:1-31` could be the last to
+            // land and became the history entry.
+            if (inputText !== this.inputText) {
+                return;
+            }
+            attemptAddingHistory(bibleItem.bibleKey, title);
+        });
+    }
+
     async getEditingResult(inputText?: string) {
         inputText = inputText ?? this.inputText;
         const cachedKey = `${this.selectedBibleItem.bibleKey}-${inputText}`;
@@ -382,6 +409,10 @@ class LookupBibleItemController extends BibleItemsViewController {
             const cachedEditingResult =
                 await editingResultCacher.get(cachedKey);
             if (cachedEditingResult !== null) {
+                this.attemptAddingHistoryOf(
+                    inputText,
+                    cachedEditingResult.result.bibleItem,
+                );
                 return this.syncFoundBibleItem(cachedEditingResult);
             }
             const editingResult = await extractBibleTitle(
@@ -389,23 +420,16 @@ class LookupBibleItemController extends BibleItemsViewController {
                 inputText,
             );
             if (editingResult.result.bibleItem !== null) {
-                const newFoundBibleItem = (editingResult.result.bibleItem =
-                    FoundBibleItem.fromJson({
-                        ...editingResult.result.bibleItem.toJson(),
-                        extraBibleKeys: this.selectedBibleItem.extraBibleKeys,
-                        isAudioEnabled: this.selectedBibleItem.isAudioEnabled,
-                    }));
-                newFoundBibleItem.toTitle().then((title) => {
-                    // Only a passage the box still holds. Every keystroke is
-                    // looked up, and the lookups finish in any order, so the
-                    // half-typed `Genesis 1:1-3` of a fast `Genesis 1:1-31`
-                    // could be the last to land and became the history entry.
-                    if (inputText !== this.inputText) {
-                        return;
-                    }
-                    attemptAddingHistory(newFoundBibleItem.bibleKey, title);
+                editingResult.result.bibleItem = FoundBibleItem.fromJson({
+                    ...editingResult.result.bibleItem.toJson(),
+                    extraBibleKeys: this.selectedBibleItem.extraBibleKeys,
+                    isAudioEnabled: this.selectedBibleItem.isAudioEnabled,
                 });
             }
+            this.attemptAddingHistoryOf(
+                inputText,
+                editingResult.result.bibleItem,
+            );
             await editingResultCacher.set(cachedKey, editingResult);
             return this.syncFoundBibleItem(editingResult);
         });

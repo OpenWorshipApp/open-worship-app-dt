@@ -63,10 +63,13 @@
       // line (`markOverflowingMenuLabels`). The text is there twice with a
       // gap, so sliding by half its own width is exactly one turn and the
       // loop never jumps. `transform` only: the menu animates on the
-      // compositor and repaints nothing.
+      // compositor and repaints nothing. The empty alternative text after the
+      // `/` keeps the copies out of the accessibility tree, where generated
+      // content counts: a screen reader read an overflowing row's name three
+      // times (`Open beside the current verse` ×3).
       .app-context-menu-item-label[data-marquee-text]::after {
         content: attr(data-marquee-text) '\2003\2003\2003'
-          attr(data-marquee-text) '\2003\2003\2003';
+          attr(data-marquee-text) '\2003\2003\2003' / '';
         display: inline-block;
         width: max-content;
         margin-left: var(--app-context-menu-marquee-indent, 0);
@@ -198,7 +201,7 @@
     .app-context-menu
     .app-context-menu-item
     .app-context-menu-item-label[data-marquee-text]::after {
-    content: attr(data-marquee-text);
+    content: attr(data-marquee-text) / '';
     display: block;
     width: auto;
     white-space: normal;

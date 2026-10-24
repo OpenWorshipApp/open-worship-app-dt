@@ -1,6 +1,6 @@
 {
     "lang": "km",
-    "updated": "2026-10-19",
+    "updated": "2026-10-23",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -162,13 +162,21 @@
             "en": "Language, theme & fonts",
             "text": "ភាសា រចនាប័ទ្ម និងពុម្ពអក្សរ"
         },
+        "settings.paths": {
+            "en": "Folders on disk",
+            "text": "ថតលើថាស"
+        },
         "settings.bible-settings": {
             "en": "Bible versions",
             "text": "កំណែព្រះគម្ពីរ"
         },
+        "settings.ai": {
+            "en": "AI assistants",
+            "text": "ជំនួយការ AI"
+        },
         "settings.others": {
-            "en": "Accounts, AI and extras",
-            "text": "គណនី AI និងផ្សេងៗ"
+            "en": "Accounts & extras",
+            "text": "គណនី និងផ្សេងៗ"
         },
         "troubleshooting.screen": {
             "en": "Nothing on the projector",
@@ -336,6 +344,10 @@
             "en": "How do I show Tips of the Day automatically again?",
             "text": "តើខ្ញុំឲ្យគន្លឹះប្រចាំថ្ងៃបង្ហាញដោយស្វ័យប្រវត្តិវិញដោយរបៀបណា?"
         },
+        "common.help.tips-in-other-windows": {
+            "en": "How do I see the tips for Settings or another open window?",
+            "text": "តើខ្ញុំមើលគន្លឹះសម្រាប់ការកំណត់ ឬបង្អួចផ្សេងទៀតដែលកំពុងបើកដោយរបៀបណា?"
+        },
         "common.help.what-can-i-ask": {
             "en": "What can I ask you?",
             "text": "តើខ្ញុំអាចសួរអ្នកអំពីអ្វីខ្លះ?"
@@ -371,6 +383,10 @@
         "common.help.new-chat": {
             "en": "How do I start a new chat?",
             "text": "តើខ្ញុំចាប់ផ្តើមការជជែកថ្មីដោយរបៀបណា?"
+        },
+        "common.help.chat-full": {
+            "en": "Why can't I start another chat?",
+            "text": "ហេតុអ្វីខ្ញុំមិនអាចចាប់ផ្ដើមការជជែកថ្មីទៀតបាន?"
         },
         "common.help.keep-chat": {
             "en": "How do I stop a chat being closed by accident?",
@@ -1224,6 +1240,10 @@
             "en": "How do I read a passage that runs into the next chapter, like John 1:2-3:4?",
             "text": "តើខ្ញុំអានបទគម្ពីរដែលបន្តទៅជំពូកបន្ទាប់ ដូចជា យ៉ូហាន ១:២-៣:៤ ដោយរបៀបណា?"
         },
+        "reader.reading.copy-formats": {
+            "en": "How do I copy a passage without verse numbers, or with the version after the reference?",
+            "text": "តើខ្ញុំចម្លងបទគម្ពីរដោយគ្មានលេខខ ឬដាក់កំណែនៅក្រោយលេខយោង ដោយរបៀបណា?"
+        },
         "reader.reading.more-chapters": {
             "en": "Why does a long passage show only three chapters?",
             "text": "ហេតុអ្វីបទគម្ពីរវែងបង្ហាញតែបីជំពូក?"
@@ -1247,6 +1267,10 @@
         "reader.reading.split-other-version": {
             "en": "Why does the split button ask which Bible version to open?",
             "text": "ហេតុអ្វីប៊ូតុងបំបែកសួរថាត្រូវបើកកំណែព្រះគម្ពីរមួយណា?"
+        },
+        "reader.reading.dropped-pane-own-color": {
+            "en": "Why did the passage I dragged in get a different color?",
+            "text": "ហេតុអ្វីបទគម្ពីរដែលខ្ញុំអូសចូលបានពណ៌ផ្សេង?"
         },
         "reader.reading.add-version": {
             "en": "How do I add another version to what I am reading?",
@@ -1416,6 +1440,10 @@
             "en": "How do I find where a Bible place is?",
             "text": "តើខ្ញុំរកមើលថាទីកន្លែងមួយក្នុងព្រះគម្ពីរនៅឯណាដោយរបៀបណា?"
         },
+        "reader.lookup.lookup-language-color": {
+            "en": "Why is the language code beside the names button red?",
+            "text": "ហេតុអ្វីកូដភាសានៅក្បែរប៊ូតុងឈ្មោះមានពណ៌ក្រហម?"
+        },
         "reader.lookup.detail-language": {
             "en": "How do I open the same person or place in two languages?",
             "text": "តើខ្ញុំបើកមនុស្ស ឬទីកន្លែងដដែលជាពីរភាសាដោយរបៀបណា?"
@@ -1428,9 +1456,21 @@
             "en": "Can the assistant tell me more about a person or place I opened?",
             "text": "តើជំនួយការអាចប្រាប់ខ្ញុំបន្ថែមអំពីបុគ្គល ឬទីកន្លែងដែលខ្ញុំបានបើកបានទេ?"
         },
+        "reader.lookup.ask-assistant-related-verses": {
+            "en": "Can the assistant find the verses related to a passage I am reading?",
+            "text": "តើជំនួយការអាចរកខគម្ពីរដែលពាក់ព័ន្ធនឹងបទគម្ពីរដែលខ្ញុំកំពុងអានបានទេ?"
+        },
         "reader.lookup.lookup-to-bible": {
             "en": "How do I jump from a name to the verses it appears in?",
             "text": "តើខ្ញុំលោតពីឈ្មោះមួយទៅខគម្ពីរដែលមានឈ្មោះនោះដោយរបៀបណា?"
+        },
+        "reader.lookup.lookup-row-menu": {
+            "en": "Can I copy a person or place without opening it?",
+            "text": "តើខ្ញុំអាចចម្លងបុគ្គល ឬទីកន្លែងមួយ ដោយមិនបើកវាបានទេ?"
+        },
+        "reader.lookup.open-passage-in-chatbot": {
+            "en": "How do I open a passage from my Bibles list in the chatbot?",
+            "text": "តើខ្ញុំបើកបទគម្ពីរពីបញ្ជីព្រះគម្ពីររបស់ខ្ញុំក្នុង Chatbot ដោយរបៀបណា?"
         },
         "reader.lookup.passage-save-or-copy": {
             "en": "How do I save or copy the passage I am asking about?",
@@ -1439,6 +1479,10 @@
         "reader.lookup.passage-other-language": {
             "en": "How do I read the passage I am asking about in another language?",
             "text": "តើខ្ញុំអានបទគម្ពីរដែលខ្ញុំកំពុងសួរជាភាសាផ្សេងដោយរបៀបណា?"
+        },
+        "reader.lookup.passage-study-words": {
+            "en": "How do I study the words of a verse one by one?",
+            "text": "តើខ្ញុំសិក្សាពាក្យនៃខមួយ ម្ដងមួយពាក្យដោយរបៀបណា?"
         },
         "reader.graph.graph-what": {
             "en": "How do I see how people and places connect?",
@@ -1487,6 +1531,10 @@
         "reader.resources.resources-open": {
             "en": "How do I open one of my Resources files?",
             "text": "តើខ្ញុំបើកឯកសារមួយក្នុងឯកសារពាក់ព័ន្ធរបស់ខ្ញុំដោយរបៀបណា?"
+        },
+        "reader.resources.resources-ask-assistant": {
+            "en": "How do I ask the assistant about a study file for the verses I am reading?",
+            "text": "តើខ្ញុំសួរជំនួយការអំពីឯកសារសិក្សាសម្រាប់ខដែលខ្ញុំកំពុងអានដោយរបៀបណា?"
         },
         "reader.resources.resources-links": {
             "en": "Can I keep web links for a chapter in Resources?",
@@ -1760,19 +1808,51 @@
             "en": "How do I change the font the app's own windows use?",
             "text": "តើខ្ញុំប្តូរពុម្ពអក្សរដែលផ្ទាំងរបស់កម្មវិធីប្រើដោយរបៀបណា?"
         },
-        "settings.general.change-folders": {
+        "settings.paths.change-folders": {
             "en": "How do I change where my documents and songs are stored?",
             "text": "តើខ្ញុំប្តូរកន្លែងរក្សាទុកឯកសារ និងចម្រៀងរបស់ខ្ញុំដោយរបៀបណា?"
         },
-        "settings.general.repair-links": {
+        "settings.paths.repair-links": {
             "en": "My pictures and videos are missing after moving my data folder to another computer. How do I fix them?",
             "text": "រូបភាព និងវីដេអូរបស់ខ្ញុំបាត់ បន្ទាប់ពីផ្លាស់ថតទិន្នន័យទៅកុំព្យូទ័រផ្សេង។ តើខ្ញុំជួសជុលវាដោយរបៀបណា?"
         },
-        "settings.general.switch-data-folder": {
+        "settings.paths.switch-data-folder": {
             "en": "How do I switch back to a data folder I used before?",
             "text": "តើខ្ញុំប្តូរទៅថតទិន្នន័យដែលខ្ញុំធ្លាប់ប្រើពីមុនវិញដោយរបៀបណា?"
         },
-        "settings.general.move-data-folder-off-desktop": {
+        "settings.paths.no-data-folder": {
+            "en": "Why does the app show nothing but \"No Parent Directory Selected\"?",
+            "text": "ហេតុអ្វីកម្មវិធីបង្ហាញតែ \"មិនមានថតមេត្រូវបានជ្រើសរើសទេ\"?"
+        },
+        "settings.paths.why-data-folder": {
+            "en": "Why do I need to choose a data folder?",
+            "text": "ហេតុអ្វីខ្ញុំត្រូវជ្រើសរើសថតទិន្នន័យ?"
+        },
+        "settings.paths.use-default-data-folder": {
+            "en": "How do I use the suggested data folder?",
+            "text": "តើខ្ញុំប្រើថតទិន្នន័យដែលបានណែនាំដោយរបៀបណា?"
+        },
+        "settings.paths.data-folder-on-drive": {
+            "en": "How do I use a data folder on a USB stick or another drive?",
+            "text": "តើខ្ញុំប្រើថតទិន្នន័យនៅលើ USB ឬដ្រាយផ្សេងដោយរបៀបណា?"
+        },
+        "settings.paths.copy-data-folder": {
+            "en": "How do I copy my data folder to a USB stick or another drive?",
+            "text": "តើខ្ញុំចម្លងថតទិន្នន័យរបស់ខ្ញុំទៅ USB ឬដ្រាយផ្សេងដោយរបៀបណា?"
+        },
+        "settings.paths.data-folder-stick-missing": {
+            "en": "My data folder is on a USB stick that is not plugged in. What do I do?",
+            "text": "ថតទិន្នន័យរបស់ខ្ញុំនៅលើ USB ដែលមិនទាន់ដោត។ តើខ្ញុំត្រូវធ្វើអ្វី?"
+        },
+        "settings.paths.data-folder-on-desktop": {
+            "en": "How do I move my data folder off the Desktop from Settings?",
+            "text": "តើខ្ញុំផ្លាស់ថតទិន្នន័យរបស់ខ្ញុំចេញពី Desktop ពីការកំណត់ដោយរបៀបណា?"
+        },
+        "settings.paths.assistant-from-settings": {
+            "en": "How do I ask the assistant for help from Settings?",
+            "text": "តើខ្ញុំសួរជំនួយពីជំនួយការពីការកំណត់ដោយរបៀបណា?"
+        },
+        "settings.paths.move-data-folder-off-desktop": {
             "en": "Why does the app ask me to move my data folder off the Desktop?",
             "text": "ហេតុអ្វីកម្មវិធីសុំឱ្យខ្ញុំផ្លាស់ទីថតទិន្នន័យរបស់ខ្ញុំចេញពី Desktop?"
         },
@@ -1824,23 +1904,23 @@
             "en": "Where do I find a Bible's publisher and copyright?",
             "text": "តើខ្ញុំរកមើលអ្នកបោះពុម្ពផ្សាយ និងការរក្សាសិទ្ធិរបស់ព្រះគម្ពីរនៅឯណា?"
         },
-        "settings.others.ai-key": {
+        "settings.ai.ai-key": {
             "en": "How do I give the assistant an API key?",
             "text": "តើខ្ញុំដាក់សោ API ឲ្យជំនួយការដោយរបៀបណា?"
         },
-        "settings.others.custom-ai-server": {
+        "settings.ai.custom-ai-server": {
             "en": "How do I use my own LM Studio or Ollama with the assistant?",
             "text": "តើខ្ញុំប្រើ LM Studio ឬ Ollama របស់ខ្ញុំផ្ទាល់ជាមួយជំនួយការដោយរបៀបណា?"
         },
-        "settings.others.enable-ai": {
+        "settings.ai.enable-ai": {
             "en": "How do I turn the AI features on or off?",
             "text": "តើខ្ញុំបើក ឬបិទមុខងារ AI ដោយរបៀបណា?"
         },
-        "settings.others.auto-play-bible-audio": {
+        "settings.ai.auto-play-bible-audio": {
             "en": "Where do I turn automatic Bible audio on?",
             "text": "តើខ្ញុំបើកសំឡេងអានព្រះគម្ពីរដោយស្វ័យប្រវត្តិនៅឯណា?"
         },
-        "settings.others.fold-settings-section": {
+        "settings.ai.fold-settings-section": {
             "en": "How do I fold or open a section in Settings?",
             "text": "តើខ្ញុំបត់ ឬបើកផ្នែកមួយក្នុងការកំណត់ដោយរបៀបណា?"
         },
@@ -1963,6 +2043,10 @@
         "troubleshooting.reporting.assistant-out-of-credit": {
             "en": "The assistant says my AI account is out of credit — what do I do?",
             "text": "ជំនួយការថាគណនី AI របស់ខ្ញុំអស់ក្រេឌីតហើយ — តើខ្ញុំត្រូវធ្វើអ្វី?"
+        },
+        "troubleshooting.reporting.assistant-server-down": {
+            "en": "My own AI server is switched off — will the assistant still answer?",
+            "text": "ម៉ាស៊ីនមេ AI ផ្ទាល់ខ្លួនរបស់ខ្ញុំត្រូវបានបិទ — តើជំនួយការនៅតែឆ្លើយបានទេ?"
         },
         "troubleshooting.reporting.assistant-key-refused": {
             "en": "The assistant says my API key was refused — where do I fix it?",

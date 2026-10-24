@@ -15,7 +15,6 @@ import {
     checkIsHiddenServerAddress,
     checkIsLoopbackUrl,
     toContextLabel,
-    toCustomServerBaseUrl,
     type CustomLlmFetchResultType,
     type CustomServerKindType,
 } from '../../../electron/customLlmProtocol';
@@ -170,7 +169,7 @@ export async function relayFetch(
                 if (!result.ok) {
                     reject(
                         new CustomServerError(
-                            describeCustomLlmFailure(
+                            describeRelayFailure(
                                 result,
                                 getServerBaseUrl(target.serverId),
                             ),
@@ -194,6 +193,68 @@ export async function relayFetch(
             },
         );
     });
+}
+
+/**
+ * `describeCustomLlmFailure`'s phrase in the help window's language, for the
+ * failures a server of the user's own meets every week -- it is not running,
+ * its computer went to sleep mid-question, it took too long. Whole sentences,
+ * so a translation never stitches a phrase together (EC-385: _nothing
+ * answered at http://localhost:11434/v1 — check that its server is running_
+ * in English under a Khmer note). The rarer ones stay English, as Settings
+ * says them.
+ */
+function describeRelayFailure(
+    result: Extract<CustomLlmFetchResultType, { ok: false }>,
+    baseUrl: string,
+): string {
+    const isShared = checkIsHiddenServerAddress(baseUrl);
+    const isHere = checkIsLoopbackUrl(baseUrl);
+    // No address in the help window, of any server (2026-10-22, the user,
+    // with `http://localhost:11999/v1` circled in the note over an answer:
+    // _should not show endpont to user_): the server's NAME is already in
+    // front of the sentence, and its address is Settings' to show.
+    if (result.reason === 'unreachable') {
+        if (isShared) {
+            return tran(
+                'nothing answered at its address — it is shared by ' +
+                    'openworship.app and may be switched off right now; try ' +
+                    'again later or pick another assistant',
+            );
+        }
+        return isHere
+            ? tran(
+                  'its server is not answering — check that it is running ' +
+                      'on this computer',
+              )
+            : tran(
+                  'its server is not answering — check that the computer ' +
+                      'it runs on is on and awake, and that the server is ' +
+                      'running',
+              );
+    }
+    if (result.reason === 'lost') {
+        return isShared
+            ? tran(
+                  'it went quiet in the middle of the question — it is shared ' +
+                      'by openworship.app and may be switched off right now; ' +
+                      'try again later or pick another assistant',
+              )
+            : isHere
+              ? tran(
+                    'it went quiet in the middle of the question — check that ' +
+                        'its server is running',
+                )
+              : tran(
+                    'it went quiet in the middle of the question — check that ' +
+                        'the computer it runs on is on and awake, and that its ' +
+                        'server is running',
+                );
+    }
+    if (result.reason === 'timeout') {
+        return tran('the server took too long to answer');
+    }
+    return describeCustomLlmFailure(result, baseUrl);
 }
 
 // One client per server, keyed on its id: everything that differs between
@@ -403,7 +464,8 @@ export function genModelMissingText(
         return fillWords(
             tran(
                 'this server has no model called “{model}” — check the ' +
-                    'model id in Settings → Others → Custom servers, press ' +
+                    'model id in Settings → AI Providers → Custom servers, ' +
+                    'press ' +
                     'Load models from server there, or pull it (ollama pull ' +
                     '{model})',
             ),
@@ -413,8 +475,8 @@ export function genModelMissingText(
     return fillWords(
         tran(
             'this server has no model called “{model}” — check the model id ' +
-                'in Settings → Others → Custom servers, press Load models ' +
-                'from server there',
+                'in Settings → AI Providers → Custom servers, press Load ' +
+                'models from server there',
         ),
         { model },
     );
@@ -437,14 +499,11 @@ export function genWrongAddressText(baseUrl: string) {
                 'pick another assistant',
         );
     }
-    return fillWords(
-        tran(
-            'nothing speaks the OpenAI API at {address} — in Settings → ' +
-                'Others → Custom servers, check the address and press Test ' +
-                '(Ollama: http://localhost:11434/v1, LM Studio: ' +
-                'http://localhost:1234/v1)',
-        ),
-        { address: toCustomServerBaseUrl(baseUrl) ?? baseUrl },
+    // Named nowhere here, like a server that does not answer: Settings'
+    // Test shows the address and corrects one a path off.
+    return tran(
+        'this server did not answer the way the app expects — in Settings → ' +
+            'AI Providers → Custom servers, check its address and press Test',
     );
 }
 

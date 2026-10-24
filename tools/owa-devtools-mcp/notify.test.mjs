@@ -586,4 +586,58 @@ describe('the banner in the page', () => {
     expect(show(words)).toBe(true);
     expect(window.__owaAgentNotice.version).toBeGreaterThan(1);
   });
+
+  // Robot run 20261020 F-1: in the Settings window the pill sat on top of
+  // Clear All Settings -- a destructive button whose label it hid. jsdom has
+  // no layout, so the box and the elements under it are supplied here.
+  it('lifts itself clear of a control it would cover', () => {
+    show(words);
+    const pill = document
+      .getElementById('owa-agent-notice-host')
+      .shadowRoot.querySelector('.pill');
+    const button = document.createElement('button');
+    button.getBoundingClientRect = () => ({ top: 700, height: 30 });
+    pill.getBoundingClientRect = () => ({
+      left: 100,
+      right: 400,
+      top: 741,
+      width: 300,
+      height: 32,
+    });
+    const hadElementsFromPoint = 'elementsFromPoint' in document;
+    document.elementsFromPoint = () => [{ closest: () => button }];
+    try {
+      show(words);
+      // innerHeight 768 in jsdom: clear of a control starting at 700.
+      expect(pill.style.bottom).toBe('76px');
+    } finally {
+      if (!hadElementsFromPoint) {
+        delete document.elementsFromPoint;
+      }
+    }
+  });
+
+  it('stays on the bottom row when it covers no control', () => {
+    show(words);
+    const pill = document
+      .getElementById('owa-agent-notice-host')
+      .shadowRoot.querySelector('.pill');
+    pill.getBoundingClientRect = () => ({
+      left: 100,
+      right: 400,
+      top: 741,
+      width: 300,
+      height: 32,
+    });
+    const hadElementsFromPoint = 'elementsFromPoint' in document;
+    document.elementsFromPoint = () => [{ closest: () => null }];
+    try {
+      show(words);
+      expect(pill.style.bottom).toBe('14px');
+    } finally {
+      if (!hadElementsFromPoint) {
+        delete document.elementsFromPoint;
+      }
+    }
+  });
 });

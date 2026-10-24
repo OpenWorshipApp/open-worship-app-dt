@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-57, ST-71, PL-103, PL-104]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-35 — Bring a song in from CCLI SongSelect
 
@@ -19,7 +19,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 > sign-in hand-off to CCLI's real consent page is source-verified but **not observed**
 > end-to-end, for want of real credentials.
 
-1. Open **[en:tran:Settings]** → **[en:tran:Others]**. Between the AI-key card and **[en:tran:Extra Binaries]**
+1. Open **[en:tran:Settings]** → **[en:tran:Others]**. Above **[en:tran:Extra Binaries]**
    there is a card headed **[en:tran:SongSelect Integration]**, with a
    **SongSelect ↗** button that opens songselect.ccli.com in your browser. A card
    showing only its heading is folded — click the heading to open it. 📸
@@ -62,5 +62,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-57` · `ST-71` · `PL-103` · `PL-104`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-19).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
 :::

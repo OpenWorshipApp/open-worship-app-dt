@@ -8,15 +8,17 @@ import {
 
 import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
-import { selectDirs } from '../server/fileHelpers';
+import { cleanTypedDirPath, selectDirs } from '../server/fileHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 
 export default function PathEditorComp({
     dirSource,
     placeholder = '',
+    isAutoFocus = false,
 }: Readonly<{
     dirSource: DirSource;
     placeholder?: string;
+    isAutoFocus?: boolean;
 }>) {
     const [dirPath, setDirPath] = useState(dirSource.dirPath);
 
@@ -30,7 +32,9 @@ export default function PathEditorComp({
     }, [dirSource]);
 
     let dirValidClassname = 'is-valid';
-    if (dirSource.isDirPathValid === null) {
+    // Blank is neither: a red mark on an empty box read as an error before
+    // the person had done anything (the first thing a new install shows).
+    if (!dirSource.dirPath || dirSource.isDirPathValid === null) {
         dirValidClassname = '';
     } else if (!dirSource.isDirPathValid) {
         dirValidClassname = 'is-invalid';
@@ -63,7 +67,11 @@ export default function PathEditorComp({
         },
         [],
     );
-    const commitDirPath = useCallback((newDirPath: string) => {
+    const commitDirPath = useCallback((typedDirPath: string) => {
+        const newDirPath = cleanTypedDirPath(typedDirPath);
+        if (newDirPath !== typedDirPath) {
+            setDirPath(newDirPath);
+        }
         if (newDirPath === dirSourceRef.current.dirPath) {
             return;
         }
@@ -113,6 +121,7 @@ export default function PathEditorComp({
                 onKeyUp={handleKeyingUp}
                 title={tran('Press Enter to apply this folder')}
                 placeholder={placeholder ? `e.g. ${placeholder}` : ''}
+                autoFocus={isAutoFocus}
             />
             <button
                 className="btn btn-secondary"

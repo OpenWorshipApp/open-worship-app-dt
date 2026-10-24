@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
-  modified: 2026-10-19T23:28:58.952Z
+  modified: 2026-10-20T13:07:35.259Z
 ---
 
 Built 2026-08-31 (branch `enhance-after-release`). The app is now drivable by
@@ -65,7 +65,7 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   `AppWindowToolsComp` mounts on all ten pages beside the presenting control
   (never on `about`, `chatbot`, `finder` or `screen`). Help →
   *App Help (Chatbot)* still works too. With the master switch off the menu
-  entries withdraw and the 🤖 stays, its press offering Settings → Others.
+  entries withdraw and the 🤖 stays, its press offering Settings → AI Providers.
   Inside, the assistant `<select>` (`LLM_PROVIDER_MAP`) picks the provider and
   a `<select>` beside it picks the model: three per provider (ten on Bedrock, a
   custom server its own rows), best first, with
@@ -217,7 +217,7 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   6 a walkthrough (search, page read, one look, start) ran the budget out
   mid-answer and the user got "I looked several things up but could not
   settle on an answer" having paid for the whole run.
-- **Master switch**: Settings → Others → *Enable AI features* writes
+- **Master switch**: Settings → AI Providers → *Enable AI features* writes
   `ai-enabled` to `clientSetting` in `<userData>/setting.json`; the main
   process reads that file directly before `ready`. Off = no CDP, no MCP host,
   no chatbot menu item, and the AI providers refuse a client. Next launch only.

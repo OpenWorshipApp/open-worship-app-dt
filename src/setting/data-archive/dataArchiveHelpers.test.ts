@@ -50,6 +50,9 @@ const h = vi.hoisted(() => {
             ) => {},
         ),
         written: [] as { filePath: string; text: string }[],
+        // The folders made in the staging dir, and the files deleted.
+        ensured: [] as string[],
+        deleted: [] as string[],
         listed: new Map<string, { name: string; isFile: boolean }[]>(),
         heads: new Map<string, string | null>(),
         saved: new Map<string, string | null>(),
@@ -73,8 +76,22 @@ vi.mock('../../server/fileHelpers', async (importOriginal) => {
             return h.listed.get(dirPath) ?? [];
         },
         fsCreateFile: async (filePath: string, text: string) => {
+            // The real write needs its folder: an entry whose folder was not
+            // made first failed the whole export with ENOENT.
+            const dirPath = filePath.slice(0, filePath.lastIndexOf('/'));
+            if (dirPath !== '/tmp/staging' && !h.ensured.includes(dirPath)) {
+                throw new Error(
+                    `ENOENT: no such file or directory, open '${filePath}'`,
+                );
+            }
             h.written.push({ filePath, text });
             return true;
+        },
+        ensureDirectory: async (dirPath: string) => {
+            h.ensured.push(dirPath);
+        },
+        fsDeleteFile: async (filePath: string) => {
+            h.deleted.push(filePath);
         },
     };
 });
@@ -173,6 +190,8 @@ describe('a data archive carries the LIVE state of an unsaved document', () => {
         h.tarCreate.mockClear();
         h.tarAppend.mockClear();
         h.written.length = 0;
+        h.ensured.length = 0;
+        h.deleted.length = 0;
         h.listed.clear();
         h.heads.clear();
         h.saved.clear();
@@ -251,5 +270,32 @@ describe('a data archive carries the LIVE state of an unsaved document', () => {
         expect(h.written).toEqual([]);
         const [, , appended] = h.tarAppend.mock.calls[0];
         expect(appended).toEqual(['manifest.json']);
+    });
+
+    test("an unsaved document's folder is made in the staging dir first", async () => {
+        await createDataArchive([documentsFolder]);
+        expect(h.ensured).toEqual(['/tmp/staging/documents']);
+        expect(h.deleted).toEqual([]);
+    });
+
+    test('a failed export leaves no half-built archive, with or without a password', async () => {
+        h.tarAppend.mockRejectedValueOnce(new Error('disk full'));
+        await expect(createDataArchive([documentsFolder])).rejects.toThrow(
+            'disk full',
+        );
+        expect(h.deleted).toEqual([
+            '/home/me/Downloads/open-worship-data.owadata.tar',
+        ]);
+        // With a password the tar is built beside the archive's name, and
+        // the protected archive itself was never begun.
+        h.deleted.length = 0;
+        h.tarAppend.mockRejectedValueOnce(new Error('disk full'));
+        await expect(
+            createDataArchive([documentsFolder], 'secret'),
+        ).rejects.toThrow('disk full');
+        expect(h.deleted).toHaveLength(1);
+        expect(h.deleted[0]).toMatch(
+            /^\/home\/me\/Downloads\/open-worship-data\..+\.plain\.part$/,
+        );
     });
 });

@@ -80,6 +80,10 @@ describe('lockdownRenderer', () => {
         expect(scope.process.env.ANTHROPIC_API_KEY).toBeUndefined();
         expect(scope.process.platform).toBe('win32');
         expect(typeof scope.process.nextTick).toBe('function');
+        // Electron's window.onerror redirect asks `process.listenerCount`
+        // before it emits; without this method the redirect itself threw and
+        // every uncaught error was reported as a TypeError instead.
+        expect(scope.process.listenerCount('uncaughtException')).toBe(0);
         expect(scope.process.binding).toBeUndefined();
         expect(scope.process.dlopen).toBeUndefined();
         expect(Object.isFrozen(scope.process)).toBe(true);

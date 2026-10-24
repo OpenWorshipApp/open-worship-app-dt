@@ -67,6 +67,31 @@ describe('what the input aid asks for', () => {
         });
     });
 
+    // 2026-10-23: Khmer writes a sentence with no space, so a whole question
+    // read as ONE bare name and loaded the names dataset to complete it.
+    test('a Khmer question typed as one run is no name', () => {
+        for (const question of [
+            'តើមានខគម្ពីរណាផ្សេងទៀតដែលទាក់ទងនឹងបទគម្ពីរនេះ?',
+            'តើបទគម្ពីរនេះបង្រៀនយើងអ្វីខ្លះអំពីព្រះ',
+            'ព្រាបមានន័យអ្វី?',
+            'តើណូអេនៅ',
+        ]) {
+            expect(
+                readBibleInputSuggestAskList(question, 'reader', false).filter(
+                    (ask) => ask.kind === 'name',
+                ),
+            ).toEqual([]);
+        }
+        // The names that start like a question are still names.
+        for (const name of ['តើស៊ីស', 'សូមើរ', 'ម៉ាថូសាឡា']) {
+            expect(
+                readBibleInputSuggestAskList(name, 'reader', false),
+            ).toContainEqual(
+                expect.objectContaining({ kind: 'name', prefix: name }),
+            );
+        }
+    });
+
     test('nothing for a command or a question the aid cannot help', () => {
         expect(
             readBibleInputSuggestAskList('/screen', 'reader', false),

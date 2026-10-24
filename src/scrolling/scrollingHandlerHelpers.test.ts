@@ -258,6 +258,8 @@ describe('scrollingHandlerHelpers', () => {
             {} as ResizeObserver,
         );
         expect(play.style.display).toBe('block');
+        // Nothing but the button in it: no content to watch.
+        expect(resizeObserverEntries[0]?.observe).toHaveBeenCalledTimes(1);
 
         const emptyContextEvent = createFakeEvent();
         play.oncontextmenu?.(emptyContextEvent);
@@ -300,6 +302,37 @@ describe('scrollingHandlerHelpers', () => {
         expect(play.title).toBe(
             'Click to scroll to the bottom, double click to speed up, right click to slow down, Alt + right click to stop',
         );
+    });
+
+    // A floating verse panel's body keeps its size while the passage is read
+    // in, or a chapter appended, under a button that was set up beside a
+    // loading message: only the content's growth says it can now scroll.
+    test('shows the play-to-bottom button once the content grows past the scroller', () => {
+        const parent = document.createElement('div');
+        const content = document.createElement('div');
+        const play = document.createElement('i');
+        parent.append(content, play);
+        defineScrollMetrics(parent, {
+            clientHeight: 160,
+            scrollHeight: 160,
+            scrollTop: 0,
+        });
+
+        applyPlayToBottom(play);
+        expect(play.style.display).toBe('none');
+        expect(resizeObserverEntries[0]?.observe).toHaveBeenCalledWith(parent);
+        expect(resizeObserverEntries[0]?.observe).toHaveBeenCalledWith(content);
+
+        Object.defineProperty(parent, 'scrollHeight', {
+            configurable: true,
+            value: 900,
+        });
+        // Reported for the content alone: the scroller did not change size.
+        resizeObserverEntries[0]?.callback(
+            [{ target: content } as unknown as ResizeObserverEntry],
+            {} as ResizeObserver,
+        );
+        expect(play.style.display).toBe('block');
     });
 
     test('stops immediately at the bottom and handles the asking-to-top animation path', () => {

@@ -7,12 +7,52 @@ import {
 } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import { getAssistantLanguage } from './chatLangHelpers';
+import { sanitizeCssValue } from '../helper/sanitizeHelpers';
+import { getAppFontFamily } from '../setting/appFontSettingHelpers';
 
 // The CSS variable `chatWindowShared.scss` puts in every font stack of the
 // two AI windows, ahead of the system faces: a language whose letters the
 // signage and system faces lack (Khmer) is drawn in the face its pack ships,
 // the one the rest of the app draws it in, and Latin keeps the window's own.
 export const CHAT_LANG_FONT_VARIABLE = '--chat-lang-font';
+
+// The face the user picked in Settings → General → Font Family, when one is
+// picked (`appFontSettingHelpers.ts`). boot.ts's `initFontFamily()` writes it
+// as `* { font-family }`, and a universal rule loses to EVERY class stack of
+// these windows (reported 2026-10-20: a custom font had no effect on the
+// chatbot or AI Chat page, tab titles included) -- so here it heads every
+// `--chat-font-*` stack itself as `--chat-app-font`.
+export const CHAT_APP_FONT_VARIABLE = '--chat-app-font';
+
+/**
+ * The chosen app face read once and handed to BOTH things that ask -- the
+ * window's `<html>` (for the stacks) and the caller (the AI Chat window
+ * names it in front of a guest site's body list). Never throws: this
+ * lettering is a nicety, and a font scan failing must not break a window.
+ */
+export async function readChatWindowAppFontFamily() {
+    try {
+        return await getAppFontFamily();
+    } catch (_error) {
+        return null;
+    }
+}
+
+/**
+ * Settings → General's Font Family onto this window's `<html>`; the stacks
+ * in `chatWindowShared.scss` take it from there. Fire-and-forget from the
+ * window's entry, as boot.ts's own `initFontFamily()` is.
+ */
+export async function plugChatWindowAppFont() {
+    const fontFamily = await readChatWindowAppFontFamily();
+    if (fontFamily === null) {
+        return;
+    }
+    document.documentElement.style.setProperty(
+        CHAT_APP_FONT_VARIABLE,
+        `'${sanitizeCssValue(fontFamily)}'`,
+    );
+}
 
 /**
  * The language's own face as the AI Chat window hands it to a site: its

@@ -20,6 +20,10 @@
  *   _Open Worship App_ is not the **Open** button) -- and never a key.
  *
  * Pure: the dictionary comes in as `translateLabel` (`tranLabel`).
+ *
+ * What an answer is ABOUT is never taken out (`AnswerKeepType`, 2026-10-23):
+ * an answer about a passage of the Greek Bible quotes Greek, which the
+ * third-script rule below had deleted letter by letter in a Khmer window.
  */
 
 import {
@@ -89,7 +93,13 @@ function dropEnglishGlosses(text: string, scriptPattern: RegExp) {
     return text.replace(
         BRACKET_PATTERN,
         (whole: string, inner: string, at: number, all: string) => {
-            const before = all.slice(0, at).trimEnd();
+            // Read past the marks that close a bold or a quote: a book named
+            // in bold -- **ហេព្រើរ** (Hebrews) -- kept its English, the
+            // last thing before the bracket being an asterisk (2026-10-23).
+            const before = all
+                .slice(0, at)
+                .trimEnd()
+                .replace(/[*_"”'’»]+$/u, '');
             const lastBefore = [...before].pop() ?? '';
             if (
                 !scriptPattern.test(lastBefore) ||
@@ -107,7 +117,67 @@ function dropEnglishGlosses(text: string, scriptPattern: RegExp) {
 
 const LETTER_PATTERN = /\p{L}/u;
 const MARK_PATTERN = /\p{M}/u;
+// A combining sign that belongs to no one script -- an accent, a dot -- or
+// to every script that uses it.
+const INHERITED_SCRIPT_PATTERN = /[\p{Script=Inherited}\p{Script=Common}]/u;
 const LATIN_PATTERN = /\p{Script=Latin}/u;
+
+/**
+ * What an answer is about, and so must keep whatever the reader's language
+ * (2026-10-23): `scriptText` -- a passage, a verse being studied -- keeps
+ * the letters of every script it is written in; `isLatinKept` keeps English
+ * words too, for a lesson on an English verse's own words.
+ */
+export type AnswerKeepType = {
+    scriptText?: string;
+    isLatinKept?: boolean;
+};
+
+// The scripts a Bible is written in that a text may be told by: a closed
+// list, because JavaScript names no script of a letter, only tests one.
+const KEPT_SCRIPT_PATTERN_LIST = [
+    'Greek',
+    'Hebrew',
+    'Cyrillic',
+    'Arabic',
+    'Syriac',
+    'Armenian',
+    'Georgian',
+    'Ethiopic',
+    'Coptic',
+    'Han',
+    'Hiragana',
+    'Katakana',
+    'Hangul',
+    'Thai',
+    'Lao',
+    'Myanmar',
+    'Khmer',
+    'Devanagari',
+    'Bengali',
+    'Tamil',
+    'Telugu',
+    'Kannada',
+    'Malayalam',
+    'Gujarati',
+    'Gurmukhi',
+    'Oriya',
+    'Sinhala',
+    'Tibetan',
+    'Mongolian',
+].map((script) => {
+    return new RegExp(`\\p{Script=${script}}`, 'u');
+});
+
+/** The scripts of `text` other than Latin, each as a letter's test. */
+function listKeptScripts(text: string | undefined) {
+    if (text === undefined || text.length === 0) {
+        return [];
+    }
+    return KEPT_SCRIPT_PATTERN_LIST.filter((pattern) => {
+        return pattern.test(text);
+    });
+}
 
 /**
  * The letters of a THIRD script -- neither the language's own nor Latin --
@@ -115,14 +185,30 @@ const LATIN_PATTERN = /\p{Script=Latin}/u;
  * script mid-word: measured 2026-10-17 on the whole corpus asked in Khmer,
  * _预览_ (Chinese), _పొ_ (Telugu), _কোথায়_ (Bengali) in a chip, _الخاص_
  * (Arabic) -- letters the reader cannot even sound out (`EC-295`). Latin is
- * left to the label rules and the gloss rule above.
+ * left to the label rules and the gloss rule above. A script the answer's
+ * subject is written in (`keptScripts`) is no third script: a Greek
+ * passage's words are what an answer about it quotes.
  */
-function dropThirdScriptLetters(text: string, scriptPattern: RegExp) {
+function dropThirdScriptLetters(
+    text: string,
+    scriptPattern: RegExp,
+    keptScripts: RegExp[] = [],
+) {
     let shown = '';
     let isDropping = false;
     for (const character of text) {
         if (MARK_PATTERN.test(character)) {
-            if (!isDropping) {
+            // A third script's own sign goes even on the language's letter:
+            // _ហཱារ៉ាគីអា_, a Tibetan vowel sign on a Khmer consonant, in a
+            // Khmer word lesson's way to say a Hebrew word (2026-10-23).
+            // A sign every script shares (an accent) is not one.
+            const isThirdScriptSign =
+                !INHERITED_SCRIPT_PATTERN.test(character) &&
+                !scriptPattern.test(character) &&
+                !keptScripts.some((pattern) => {
+                    return pattern.test(character);
+                });
+            if (!isDropping && !isThirdScriptSign) {
                 shown += character;
             }
             continue;
@@ -130,12 +216,51 @@ function dropThirdScriptLetters(text: string, scriptPattern: RegExp) {
         isDropping =
             LETTER_PATTERN.test(character) &&
             !scriptPattern.test(character) &&
-            !LATIN_PATTERN.test(character);
+            !LATIN_PATTERN.test(character) &&
+            !keptScripts.some((pattern) => {
+                return pattern.test(character);
+            });
         if (!isDropping) {
             shown += character;
         }
     }
     return shown;
+}
+
+/**
+ * A lowercase Latin word INSIDE the language's own words -- glued to them or
+ * between two of them -- which no reader of that script can read: a model
+ * writing Khmer slips into another language's word mid-sentence. Measured
+ * 2026-10-23: _អ្នកបានគូស podkre ពាក្យថា_ (Polish for "underline", where the
+ * Khmer for highlighted belongs, in both answers about the person's own
+ * highlights), and in the saved runs _អ្នកleថា_, _រក្សាhonneur_,
+ * _ការសaurនិង_ -- 2 641 Khmer texts held no other. Taken out with the
+ * space before it, when the script's letters come before it and the
+ * script's letters, a clause's mark or a bracket after (_ការគូស podkre
+ * (Highlights):_ -- the gloss rule takes the bracket next). Never a
+ * capitalised word (a name, or a label the rules below translate), a word
+ * with a digit or a dot, or one at the edge of the text -- a file name, an
+ * address, a code or a key never has the script's letters before it.
+ */
+const STRAY_LATIN_WORD_PATTERN =
+    /(\S)([ \u200B]*)([a-z][a-z'’]*[a-z])(?=[ \u200B]*(\S)(\S?))/gu;
+const STRAY_WORD_END_PATTERN = /[(:;,?!។៖៕]/u;
+
+function dropStrayLatinWords(text: string, scriptPattern: RegExp) {
+    return text.replace(
+        STRAY_LATIN_WORD_PATTERN,
+        (match, before: string, _gap, _word, after: string, next: string) => {
+            // A colon glued to what follows is a prefix -- `ol:Verse 2`,
+            // `http:` -- not the end of a clause.
+            const isEnd =
+                STRAY_WORD_END_PATTERN.test(after) &&
+                !(after === ':' && next !== '');
+            return scriptPattern.test(before) &&
+                (scriptPattern.test(after) || isEnd)
+                ? before
+                : match;
+        },
+    );
 }
 
 // Small words a label's name may hold between its capitalised ones:
@@ -535,11 +660,17 @@ export function toRepliesShownInLanguage(
     replies: string[],
     langCode: string,
     translateLabel: (label: string) => string,
+    keep?: AnswerKeepType,
 ): string[] {
     const language = getAssistantLanguage(langCode);
     return replies
         .map((reply) => {
-            return toAnswerShownInLanguage(reply, langCode, translateLabel);
+            return toAnswerShownInLanguage(
+                reply,
+                langCode,
+                translateLabel,
+                keep,
+            );
         })
         .filter((reply) => {
             if (
@@ -581,6 +712,7 @@ export function toAnswerShownInLanguage(
     text: string,
     langCode: string,
     translateLabel: (label: string) => string,
+    keep?: AnswerKeepType,
 ): string {
     if (langCode === DEFAULT_CHAT_LANG_CODE || text.length === 0) {
         return text;
@@ -589,12 +721,28 @@ export function toAnswerShownInLanguage(
     if (language.code !== langCode) {
         return text;
     }
+    const keptScripts = listKeptScripts(keep?.scriptText);
+    // A lesson on an English verse's words keeps its English: the words ARE
+    // the lesson, and a gloss in brackets is the word being taught -- nor is
+    // one of them a button to write in the window's words.
+    if (keep?.isLatinKept === true) {
+        return language.isLatinScript
+            ? text
+            : dropThirdScriptLetters(text, language.scriptPattern, keptScripts);
+    }
     // The glosses first: "តារាងកម្មវិធី (Presenting Flow)" translated first
     // would read "តារាងកម្មវិធី (តារាងកម្មវិធី)".
     const shown = language.isLatinScript
         ? text
         : dropEnglishGlosses(
-              dropThirdScriptLetters(text, language.scriptPattern),
+              dropStrayLatinWords(
+                  dropThirdScriptLetters(
+                      text,
+                      language.scriptPattern,
+                      keptScripts,
+                  ),
+                  language.scriptPattern,
+              ),
               language.scriptPattern,
           );
     return restoreEnglishNames(

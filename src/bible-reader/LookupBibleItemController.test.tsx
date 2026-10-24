@@ -954,6 +954,55 @@ describe('bible-reader LookupBibleItemController', () => {
         }
     });
 
+    // The entry is the LAST passage asked for when the 4 s wait ends. Only a
+    // fresh lookup asked, so a reference corrected inside the 3 s cache --
+    // `John 3:16-21`, `John 3:16`, back to `John 3:16-21` -- left the
+    // half-typed `John 3:16` as the last one asked for, and it became the
+    // entry while the box showed John 3:16-21.
+    test('a passage answered from the cache is still the one recorded', async () => {
+        const addBibleItemHistory = vi.fn();
+        const originalAdd = bibleHistoryStore.addBibleItemHistory;
+        bibleHistoryStore.addBibleItemHistory = addBibleItemHistory;
+        const toTitleSpy = vi
+            .spyOn(FakeReadItem.prototype, 'toTitle')
+            .mockImplementation(async function (this: any) {
+                return this.target.text ?? `${this.bibleKey} title`;
+            });
+        h.extractBibleTitleMock.mockImplementation(
+            async (bibleKey: string, inputText: string, time?: number) => ({
+                result: {
+                    bibleItem: new FakeReadItem({
+                        id: -99,
+                        bibleKey,
+                        target: { chapter: 3, text: inputText },
+                    }),
+                    bookKey: 'JHN',
+                    chapter: 3,
+                },
+                bibleKey,
+                oldInputText: inputText,
+                time: time ?? Date.now(),
+            }),
+        );
+        try {
+            const ctl = genController();
+            await settleFirstSelection(ctl);
+            ctl.inputText = 'John 3:16-21';
+            await flush();
+            ctl.inputText = 'John 3:16';
+            await flush();
+            ctl.inputText = 'John 3:16-21';
+            await flush();
+
+            expect(addBibleItemHistory).toHaveBeenLastCalledWith(
+                '(KJV) John 3:16-21',
+            );
+        } finally {
+            toTitleSpy.mockRestore();
+            bibleHistoryStore.addBibleItemHistory = originalAdd;
+        }
+    });
+
     // The rewrite was guarded by a `Date.now()` stamp, which two keystrokes
     // inside one millisecond share -- scripted typing does it -- so the answer
     // to the half-typed text, landing after the full one, wrote the box back.

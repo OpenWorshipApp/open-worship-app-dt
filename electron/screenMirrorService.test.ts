@@ -179,6 +179,67 @@ async function guest(
     });
     return { id, socket, packets, send };
 }
+
+function mockHttpRequest(
+    url: string,
+    method = 'GET',
+    remoteAddress = '192.168.1.7',
+) {
+    return {
+        method,
+        url,
+        headers: { host: `127.0.0.1:${service.port}` },
+        socket: { remoteAddress },
+    } as any;
+}
+
+function mockHttpResponse() {
+    const response = new EventEmitter() as any;
+    response.statusCode = 0;
+    response.headers = {} as Record<string, string | number>;
+    response.headersSent = false;
+    response.body = Buffer.alloc(0);
+    response.writableEnded = false;
+    response.setHeader = (name: string, value: string | number) => {
+        response.headers[name.toLowerCase()] = value;
+        return response;
+    };
+    response.writeHead = (
+        statusCode: number,
+        headers: Record<string, string | number> = {},
+    ) => {
+        response.statusCode = statusCode;
+        response.headersSent = true;
+        Object.assign(response.headers, headers);
+        return response;
+    };
+    response.write = (chunk: Buffer | string) => {
+        response.body = Buffer.concat([
+            response.body,
+            Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk),
+        ]);
+        return true;
+    };
+    response.end = (chunk?: Buffer | string) => {
+        if (chunk !== undefined) response.write(chunk);
+        response.writableEnded = true;
+        return response;
+    };
+    response.destroy = vi.fn(() => response.emit('close'));
+    return response;
+}
+
+async function handleHttp(
+    pathname: string,
+    method = 'GET',
+    remoteAddress = '192.168.1.7',
+) {
+    const req = mockHttpRequest(pathname, method, remoteAddress);
+    const res = mockHttpResponse();
+    await (service as any).handleHttp(req, res);
+    return { req, res };
+}
+
 const display = {
     id: 15,
     label: 'HDMI',
@@ -186,6 +247,335 @@ const display = {
     scaleFactor: 1,
     isPrimary: true,
 };
+
+test('reports small service changes and toggles virtual display sharing in place', async () => {
+    expect(service.routerState).toBe('off');
+    const retryMissing = vi.spyOn((service as any).tunnel, 'retryMissing');
+    service.retryTunnel();
+    expect(retryMissing).toHaveBeenCalledOnce();
+
+    const main = { send: vi.fn() } as any;
+    service.configure(main);
+    service.sendDevicesChanged();
+    expect(main.send).toHaveBeenCalledWith('mirror:devices-changed');
+
+    const rebind = vi.spyOn(service as any, 'rebind');
+    const onNetworkChanged = vi.fn();
+    service.setVirtualDisplayHooks({
+        route: vi.fn(),
+        upgrade: vi.fn(),
+        admits: vi.fn(() => true),
+        onNetworkChanged,
+    });
+    await service.setVirtualDisplayShareEnabled(true);
+    expect(service.isVirtualDisplayShareEnabled).toBe(true);
+    expect(rebind).not.toHaveBeenCalled();
+    expect(onNetworkChanged).toHaveBeenCalledOnce();
+
+    await service.setVirtualDisplayShareEnabled(true);
+    expect(onNetworkChanged).toHaveBeenCalledOnce();
+});
+
+test('locks a sender after five wrong codes and keeps correct codes locked until expiry', () => {
+    const address = '203.0.113.40';
+    expect(service.checkSenderCode(address, 'right-code', 'right-code')).toBe(
+        'ok',
+    );
+    expect(service.checkSenderCode(address, null, 'guess')).toBe('wrong');
+    expect(service.checkSenderCode(address, 'short', 'different-length')).toBe(
+        'wrong',
+    );
+    expect(service.checkSenderCode(address, 'wrong', 'guess')).toBe('wrong');
+    expect(service.checkSenderCode(address, 'wrong', 'guess')).toBe('wrong');
+    expect(service.checkSenderCode(address, 'wrong', 'guess')).toBe('locked');
+    expect(service.checkIsSenderLockedOut(address)).toBe(true);
+    expect(service.checkSenderCode(address, 'right-code', 'right-code')).toBe(
+        'locked',
+    );
+
+    const senderKey = (service as any).wrongCodes.keys().next().value;
+    (service as any).wrongCodes.get(senderKey).since = 0;
+    expect(service.checkIsSenderLockedOut(address)).toBe(false);
+});
+
+test('routes local screen messages through output context and identifies remote outputs', () => {
+    const untouched = {
+        screenId: 501,
+        type: 'background',
+        data: { type: 'color', src: '#ffffff' },
+    } as any;
+    expect(service.localMessage(untouched)).toBe(untouched);
+    expect(service.isRemoteOutput(501)).toBe(false);
+
+    const context = {
+        screenId: 502,
+        stage: 0,
+        settings: {},
+        resources: {},
+        fontCss: '',
+        isWindows: false,
+        remote: false,
+        isSoundOwner: false,
+    };
+    (service as any).outputs.set(502, {
+        displayId: 15,
+        scope: 'output:502',
+        context,
+    });
+    const message = {
+        screenId: 502,
+        type: 'background',
+        stage: 4,
+        data: { type: 'color', src: '#ffffff' },
+    } as any;
+    expect(service.localMessage(message)).toMatchObject({ stage: 4 });
+    expect(context.stage).toBe(4);
+
+    (service as any).outputs.set(503, {
+        displayId: -1_000_000,
+        guestId: 'remote-guest',
+        scope: 'output:503',
+        context: { ...context, screenId: 503 },
+    });
+    expect(service.isRemoteOutput(503)).toBe(true);
+});
+
+test('rejects invalid QR input through the trusted command reply channel', async () => {
+    const main = {
+        getURL: () => 'owa://local/presenter.html',
+        isDestroyed: () => false,
+        send: vi.fn(),
+    } as any;
+    service.configure(main);
+
+    ipc('mirror:command')(
+        { sender: main },
+        {
+            action: 'qr',
+            text: ' '.repeat(301),
+            replyEventName: 'mirror:reply',
+        },
+    );
+
+    await vi.waitFor(() => expect(main.send).toHaveBeenCalledOnce());
+    expect(main.send).toHaveBeenCalledWith(
+        'mirror:reply',
+        expect.objectContaining({ message: 'Invalid host or port' }),
+    );
+});
+
+test('returns a QR image for a plain host and port', async () => {
+    const main = {
+        getURL: () => 'owa://local/presenter.html',
+        isDestroyed: () => false,
+        send: vi.fn(),
+    } as any;
+    service.configure(main);
+
+    ipc('mirror:command')(
+        { sender: main },
+        {
+            action: 'qr',
+            text: '192.168.1.8:39240',
+            replyEventName: 'mirror:reply',
+        },
+    );
+
+    await vi.waitFor(() => expect(main.send).toHaveBeenCalledOnce());
+    expect(main.send).toHaveBeenCalledWith('mirror:reply', expect.any(Object));
+});
+
+test('keeps camera requests scoped to their host link and closes denied requests', () => {
+    const socket = {
+        readyState: WebSocket.OPEN,
+        bufferedAmount: 0,
+        send: vi.fn(),
+        close: vi.fn(),
+    } as any;
+    const link = {
+        connection: { id: 'link-a', status: 'connected' },
+        shareCameras: false,
+        socket,
+    } as any;
+    const sendBroker = vi
+        .spyOn(service as any, 'sendBroker')
+        .mockImplementation(() => {});
+    const deliver = (packet: Record<string, unknown>) =>
+        (service as any).deliverGuestCamera(link, packet);
+
+    deliver({ type: 'camera-request' });
+    expect(socket.send).not.toHaveBeenCalled();
+
+    deliver({ type: 'camera-request', requestId: 'denied' });
+    expect(JSON.parse(socket.send.mock.calls[0][0])).toMatchObject({
+        type: 'camera-close',
+        requestId: 'denied',
+    });
+    expect(sendBroker).not.toHaveBeenCalled();
+
+    link.shareCameras = true;
+    deliver({ type: 'camera-request', requestId: 'broker-request' });
+    expect(sendBroker).toHaveBeenCalledWith({
+        type: 'camera-request',
+        requestId: 'broker-request',
+    });
+    expect((service as any).brokerLinks.get('broker-request')).toBe('link-a');
+
+    for (let index = 0; index < 128; index++) {
+        (service as any).brokerLinks.set(`occupied-${index}`, 'other-link');
+    }
+    deliver({ type: 'camera-request', requestId: 'over-capacity' });
+    expect(sendBroker).toHaveBeenCalledTimes(1);
+    for (let index = 0; index < 128; index++) {
+        (service as any).brokerLinks.delete(`occupied-${index}`);
+    }
+
+    const consumers = (service as any).guestConsumers as Map<string, any>;
+    consumers.set('consumer-request', {
+        contentsId: 8,
+        linkId: 'link-a',
+    });
+    link.connection.id = 'link-b';
+    deliver({ type: 'camera-close', requestId: 'consumer-request' });
+    expect(consumers.has('consumer-request')).toBe(true);
+    link.connection.id = 'link-a';
+    deliver({ type: 'camera-close', requestId: 'consumer-request' });
+    expect(consumers.has('consumer-request')).toBe(false);
+    deliver({ type: 'camera-close', requestId: 'broker-request' });
+    expect((service as any).brokerLinks.has('broker-request')).toBe(false);
+
+    const links = (service as any).links as Map<string, any>;
+    links.set('camera-link', {
+        connection: { id: 'camera-link', status: 'connected' },
+        cameras: [{ deviceId: 'camera-1' }],
+    });
+    expect((service as any).cameraLinkFor({ id: 99 }, 'camera-1')).toBe(
+        'camera-link',
+    );
+    links.clear();
+    (service as any).incoming.set('host-screen', {
+        contentsId: 99,
+        linkId: 'incoming-link',
+    });
+    expect((service as any).cameraLinkFor({ id: 99 }, 'unknown-camera')).toBe(
+        'incoming-link',
+    );
+});
+
+test('sends camera and intercom packets through the broker and queues while it loads', () => {
+    const broker = {
+        isDestroyed: vi.fn(() => false),
+        destroy: vi.fn(),
+        webContents: {
+            isLoading: vi.fn(() => false),
+            once: vi.fn(),
+            send: vi.fn(),
+        },
+    };
+    (service as any).broker = broker;
+    const ensureBroker = vi
+        .spyOn(service as any, 'ensureBroker')
+        .mockReturnValue(broker);
+    const scheduleRelease = vi
+        .spyOn(service as any, 'scheduleBrokerRelease')
+        .mockImplementation(() => {});
+    const sendBroker = (service as any).sendBroker.bind(service);
+    const sendIntercom = (service as any).sendBrokerIntercom.bind(service);
+
+    const request = { type: 'camera-request', requestId: 'request-1' };
+    sendBroker(request);
+    expect(ensureBroker).toHaveBeenCalledOnce();
+    expect((service as any).brokerRequests.has('request-1')).toBe(true);
+    expect(broker.webContents.send).toHaveBeenCalledWith(
+        'mirror:camera',
+        request,
+    );
+
+    let finishLoad: (() => void) | undefined;
+    broker.webContents.isLoading.mockReturnValue(true);
+    broker.webContents.once.mockImplementation((_event, callback) => {
+        finishLoad = callback;
+    });
+    const signal = { type: 'camera-signal', requestId: 'request-1' };
+    sendBroker(signal);
+    expect(broker.webContents.once).toHaveBeenCalledWith(
+        'did-finish-load',
+        expect.any(Function),
+    );
+    finishLoad?.();
+    expect(broker.webContents.send).toHaveBeenLastCalledWith(
+        'mirror:camera',
+        signal,
+    );
+
+    broker.webContents.isLoading.mockReturnValue(false);
+    const config = { type: 'config', speakers: {} };
+    sendIntercom(config);
+    expect(broker.webContents.send).toHaveBeenLastCalledWith(
+        'mirror:intercom',
+        config,
+    );
+    const audio = { type: 'audio', key: 'guest:g', data: new Uint8Array([1]) };
+    sendIntercom(audio);
+    expect(broker.webContents.send).toHaveBeenLastCalledWith(
+        'mirror:intercom',
+        audio,
+    );
+
+    broker.webContents.isLoading.mockReturnValue(true);
+    (service as any).brokerRequests.add('intercom');
+    const activeConfig = { type: 'config', isMicOn: true, speakers: {} };
+    sendIntercom(activeConfig);
+    finishLoad?.();
+    expect(broker.webContents.send).toHaveBeenLastCalledWith(
+        'mirror:intercom',
+        activeConfig,
+    );
+
+    sendBroker({ type: 'camera-close', requestId: 'request-1' });
+    expect((service as any).brokerRequests.has('request-1')).toBe(false);
+    expect(scheduleRelease).not.toHaveBeenCalled();
+
+    (service as any).brokerRequests.delete('intercom');
+    (service as any).brokerRequests.add('request-2');
+    sendBroker({ type: 'camera-close', requestId: 'request-2' });
+    expect(scheduleRelease).toHaveBeenCalled();
+});
+
+test('releases camera routes owned by a closing host link', () => {
+    const broker = {
+        isDestroyed: vi.fn(() => false),
+        destroy: vi.fn(),
+        webContents: { send: vi.fn() },
+    };
+    (service as any).broker = broker;
+    const scheduleRelease = vi
+        .spyOn(service as any, 'scheduleBrokerRelease')
+        .mockImplementation(() => {});
+    const consumers = (service as any).guestConsumers as Map<string, any>;
+    const brokerLinks = (service as any).brokerLinks as Map<string, string>;
+    const brokerRequests = (service as any).brokerRequests as Set<string>;
+    consumers.set('consumer-1', { contentsId: 88, linkId: 'link-a' });
+    consumers.set('consumer-2', { contentsId: 89, linkId: 'link-b' });
+    brokerLinks.set('broker-1', 'link-a');
+    brokerLinks.set('broker-2', 'link-b');
+    brokerRequests.add('broker-1');
+    brokerRequests.add('intercom');
+
+    (service as any).closeLinkCameras('link-a');
+
+    expect(consumers.has('consumer-1')).toBe(false);
+    expect(consumers.has('consumer-2')).toBe(true);
+    expect(brokerLinks.has('broker-1')).toBe(false);
+    expect(brokerLinks.has('broker-2')).toBe(true);
+    expect(brokerRequests.has('broker-1')).toBe(false);
+    expect(brokerRequests.has('intercom')).toBe(true);
+    expect(broker.webContents.send).toHaveBeenCalledWith('mirror:camera', {
+        type: 'camera-close',
+        requestId: 'broker-1',
+    });
+    expect(scheduleRelease).not.toHaveBeenCalled();
+});
 
 test('counts connections before hello and releases capacity on transport close', async () => {
     const open = () =>
@@ -342,6 +732,7 @@ test('approval gates displays; HTTP output grants are revoked and resumed guests
     };
     service.configure(main);
     await service.prepareOutput(0, remote.id);
+    expect(service.retargetOutput(0, 1)).toBe(false);
     // Shown on the guest, with no screen window here: the presenting
     // computer is kept awake for it.
     expect(fixture.powerSaveBlocker.start).toHaveBeenCalledWith(
@@ -459,6 +850,221 @@ test('camera signaling is scoped to its approved source and consumer', async () 
             ),
         ).toBe(true),
     );
+});
+
+test('renderer camera IPC validates senders and closes routes when a window goes away', () => {
+    const sendBroker = vi
+        .spyOn(service as any, 'sendBroker')
+        .mockImplementation(function () {});
+    const renderer = {
+        id: 77,
+        getURL: () => 'owa://local/presenter.html',
+        once: vi.fn(),
+        send: vi.fn(),
+    };
+    const untrusted = {
+        ...renderer,
+        id: 78,
+        getURL: () => 'https://outside.example/presenter.html',
+    };
+    const requestId = randomUUID();
+    const request = {
+        type: 'camera-request',
+        requestId,
+        deviceId: `mirror-camera:${service.id}:front-camera`,
+    };
+
+    ipc('mirror:camera-send')({ sender: untrusted }, request);
+    ipc('mirror:camera-send')({ sender: renderer }, { type: 'audio' });
+    expect(sendBroker).not.toHaveBeenCalled();
+
+    ipc('mirror:camera-send')({ sender: renderer }, request);
+    expect(sendBroker).toHaveBeenLastCalledWith({
+        ...request,
+        deviceId: 'front-camera',
+    });
+    expect((service as any).cameraRoutes.has(requestId)).toBe(true);
+
+    const signal = {
+        type: 'camera-signal',
+        requestId,
+        candidate: { candidate: 'candidate:1' },
+    };
+    ipc('mirror:camera-send')({ sender: { ...renderer, id: 88 } }, signal);
+    expect(sendBroker).toHaveBeenCalledTimes(1);
+    ipc('mirror:camera-send')({ sender: renderer }, signal);
+    expect(sendBroker).toHaveBeenLastCalledWith(signal);
+
+    ipc('mirror:camera-send')(
+        { sender: renderer },
+        {
+            type: 'camera-close',
+            requestId,
+        },
+    );
+    expect((service as any).cameraRoutes.has(requestId)).toBe(false);
+
+    const lingeringId = randomUUID();
+    ipc('mirror:camera-send')(
+        { sender: renderer },
+        {
+            ...request,
+            requestId: lingeringId,
+        },
+    );
+    const destroyed = renderer.once.mock.calls.find(
+        ([eventName]) => eventName === 'destroyed',
+    )?.[1] as (() => void) | undefined;
+    expect(destroyed).toBeDefined();
+    destroyed!();
+    expect((service as any).cameraRoutes.has(lingeringId)).toBe(false);
+    expect(sendBroker).toHaveBeenLastCalledWith({
+        type: 'camera-close',
+        requestId: lingeringId,
+    });
+});
+
+test('viewer camera routes stay paired with their approved source and close on either side', () => {
+    const sendBroker = vi
+        .spyOn(service as any, 'sendBroker')
+        .mockImplementation(function () {});
+    const viewerSink = vi.fn();
+    service.setViewerCameraSink(viewerSink);
+    const viewer = 'vd:viewer-1:15';
+    const requestId = randomUUID();
+    const request = {
+        type: 'camera-request',
+        requestId,
+        deviceId: `mirror-camera:${service.id}:front-camera`,
+    };
+
+    service.routeViewerCamera(viewer, { ...request, requestId: 'invalid' });
+    service.routeViewerCamera(viewer, {
+        ...request,
+        deviceId: 'not-a-mirror-camera-id',
+    });
+    expect(sendBroker).not.toHaveBeenCalled();
+
+    service.routeViewerCamera(viewer, request);
+    expect(sendBroker).toHaveBeenCalledWith({
+        ...request,
+        deviceId: 'front-camera',
+    });
+    // A duplicate request cannot replace the route's original source.
+    service.routeViewerCamera(viewer, {
+        ...request,
+        deviceId: `mirror-camera:${randomUUID()}:other-camera`,
+    });
+    expect(sendBroker).toHaveBeenCalledTimes(1);
+
+    const signal = { type: 'camera-signal', requestId, candidate: 'local' };
+    service.routeViewerCamera('broker', signal);
+    expect(viewerSink).toHaveBeenLastCalledWith(viewer, signal);
+    service.routeViewerCamera('unrelated-peer', {
+        ...signal,
+        candidate: 'crossed',
+    });
+    expect(viewerSink).toHaveBeenCalledTimes(1);
+
+    service.closeViewerCameras(viewer);
+    expect(viewerSink).toHaveBeenLastCalledWith(viewer, {
+        type: 'camera-close',
+        requestId,
+    });
+    expect(sendBroker).toHaveBeenLastCalledWith({
+        type: 'camera-close',
+        requestId,
+    });
+    expect((service as any).cameraRoutes.has(requestId)).toBe(false);
+});
+
+test('registered viewer intercom peers receive state and audio until forgotten', async () => {
+    const sent: { id: string; type: string; data: Record<string, unknown> }[] =
+        [];
+    const changed = vi.fn();
+    const sendBrokerIntercom = vi
+        .spyOn(service as any, 'sendBrokerIntercom')
+        .mockImplementation(function () {});
+    service.registerIntercomPeers('viewer', {
+        has: (id) => id === 'browser-1',
+        send: (id, type, data) => sent.push({ id, type, data }),
+        onChanged: changed,
+    });
+
+    await service.setIntercom('viewer:browser-1', {
+        mic: true,
+        speaker: true,
+        volume: 0.25,
+    });
+    expect(sent).toEqual([
+        {
+            id: 'browser-1',
+            type: 'intercom-state',
+            data: { mic: true },
+        },
+    ]);
+    expect(service.intercomStateOf('viewer:browser-1')).toEqual({
+        mic: true,
+        speaker: true,
+        volume: 0.25,
+        remoteMic: false,
+    });
+    expect(changed).toHaveBeenCalledTimes(1);
+
+    service.receiveIntercom('viewer:browser-1', {
+        type: 'intercom-state',
+        mic: true,
+    });
+    service.receiveIntercom('viewer:browser-1', {
+        type: 'audio',
+        data: 'AQID',
+    });
+    expect(service.intercomStateOf('viewer:browser-1').remoteMic).toBe(true);
+    expect(sendBrokerIntercom).toHaveBeenCalledWith({
+        type: 'audio',
+        key: 'viewer:browser-1',
+        data: new Uint8Array([1, 2, 3]),
+    });
+    await expect(
+        service.setIntercom('viewer:missing', { mic: true }),
+    ).rejects.toThrow('Connection failed');
+    await expect(
+        service.setIntercom('unknown:peer', { mic: true }),
+    ).rejects.toThrow('Connection failed');
+
+    service.forgetIntercom('viewer:browser-1');
+    expect(service.intercomStateOf('viewer:browser-1')).toEqual({
+        mic: false,
+        speaker: false,
+        volume: 1,
+        remoteMic: false,
+    });
+});
+
+test('camera inventory adds registered browser sources only for trusted windows', () => {
+    const source = vi.fn(() => [
+        { deviceId: 'viewer:browser-1:camera', label: 'Browser camera' },
+    ]);
+    service.registerCameraSource(source);
+    service.registerCameraSource(source);
+    const trusted = {
+        getURL: () => 'owa://local/virtual-display-viewer.html',
+    };
+    const untrusted = {
+        getURL: () => 'https://outside.example/virtual-display-viewer.html',
+    };
+    const readCameras = (sender: unknown) => {
+        const event: any = { sender };
+        ipc('mirror:cameras')(event);
+        return event.returnValue;
+    };
+
+    expect(readCameras(trusted)).toEqual([
+        { deviceId: 'viewer:browser-1:camera', label: 'Browser camera' },
+    ]);
+    expect(source).toHaveBeenCalledTimes(1);
+    expect(readCameras(untrusted)).toEqual([]);
+    expect(source).toHaveBeenCalledTimes(1);
 });
 
 test('a superseded initialization cannot revoke the replacement output', async () => {
@@ -949,6 +1555,38 @@ test('a virtual display keeps on-demand files relative; a screen window gets its
     outputs.delete(8);
 });
 
+test('a local output can change sound ownership and refresh its presenter snapshot', async () => {
+    const first = answerBootstraps(service);
+    expect(await service.prepareOutput(12, 1)).toBe(false);
+    expect(service.retargetOutput(12, toVirtualDisplayId(1))).toBe(true);
+    expect(service.getOutputContext(12)?.isSoundOwner).toBe(true);
+    expect(service.retargetOutput(12, 1)).toBe(true);
+    expect(service.getOutputContext(12)?.isSoundOwner).toBe(false);
+    expect(service.retargetOutput(99, 1)).toBe(false);
+    expect(
+        first.sent.some(([channel]) => channel === 'mirror:bootstrap-request'),
+    ).toBe(true);
+
+    const refreshed = answerBootstraps(service, [
+        { type: 'background', data: { type: 'color', color: '#123456' } },
+    ]);
+    await service.refreshContext(12);
+    expect(service.getOutputContext(12)?.messages).toMatchObject([
+        { type: 'background', data: { color: '#123456' } },
+    ]);
+    const feedback = {
+        screenId: 12,
+        type: 'sync-scroll-percentage',
+        data: { domSelector: '#text', scroll: { x: 0, y: 0.25 } },
+    };
+    service.forwardViewerFeedback(feedback as any);
+    expect(refreshed.sent).toContainEqual(['screen-message', feedback]);
+
+    await service.refreshContext(99);
+    service.hide(12);
+    expect(service.showingIds()).toEqual([]);
+});
+
 // Cloudflare's quick tunnel reaches this server through a loopback door of
 // its own: whatever its socket's peer says, every request on it is the
 // internet, from the address Cloudflare names, and only a virtual display's
@@ -1219,6 +1857,71 @@ test('the router port is checked against this server, with a token only it answe
     expect(
         JSON.parse(fixture.client.get('screen-mirror-router-mapping')!),
     ).toMatchObject({ externalPort: 40001, internalPort: service.port });
+});
+
+test('the HTTP server routes virtual display viewers and admits only their public assets', async () => {
+    const servedPaths: string[] = [];
+    service.setVirtualDisplayHooks({
+        route: (_req, res, url, network) => {
+            res.writeHead(200).end(`${network}:${url.pathname}`);
+        },
+        upgrade: () => {},
+        admits: (network) => network === 'local',
+        onNetworkChanged: () => {},
+    });
+    vi.spyOn(service, 'serveAppFile').mockImplementation(
+        async (_req, res, url) => {
+            servedPaths.push(url.pathname);
+            res.writeHead(200).end(url.pathname);
+        },
+    );
+
+    const virtual = await handleHttp('/vd/1/video');
+    expect(virtual.res.statusCode).toBe(200);
+    expect(virtual.res.body.toString()).toBe('local:/vd/1/video');
+
+    const viewerPage = await handleHttp('/virtual-display-viewer.html');
+    expect(viewerPage.res.statusCode).toBe(200);
+    expect(servedPaths).toEqual(['/virtual-display-viewer.html']);
+
+    const logo = await handleHttp('/favicon.ico', 'HEAD');
+    expect(logo.res.statusCode).toBe(200);
+    expect(logo.res.headers['content-type']).toBe('image/png');
+    expect(logo.res.writableEnded).toBe(true);
+
+    const discovery = await handleHttp('/discovery', 'HEAD');
+    expect(discovery.res.statusCode).toBe(200);
+    expect(discovery.res.body).toHaveLength(0);
+
+    const unlisted = await handleHttp('/electron-secrets.js');
+    expect(unlisted.res.statusCode).toBe(404);
+    const internetPage = await handleHttp(
+        '/virtual-display-viewer.html',
+        'GET',
+        '198.51.100.9',
+    );
+    expect(internetPage.res.statusCode).toBe(404);
+    expect(servedPaths).toEqual(['/virtual-display-viewer.html']);
+});
+
+test('built app files are contained under dist and answer HEAD requests', async () => {
+    const req = mockHttpRequest('/assets/blank.png', 'HEAD');
+    const safe = mockHttpResponse();
+    await service.serveAppFile(
+        req,
+        safe,
+        new URL('/assets/blank.png', service.baseUrl),
+    );
+    expect(safe.statusCode).toBe(200);
+    expect(safe.headers['content-type']).toBe('image/png');
+    expect(safe.writableEnded).toBe(true);
+
+    const escaped = mockHttpResponse();
+    await service.serveAppFile(req, escaped, {
+        pathname: '/../../outside.txt',
+    } as URL);
+    expect(escaped.statusCode).toBe(404);
+    expect(escaped.writableEnded).toBe(true);
 });
 
 test('a guest links to several hosts, and each host’s screen answers only its host', async () => {

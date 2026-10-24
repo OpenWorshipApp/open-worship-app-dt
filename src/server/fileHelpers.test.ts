@@ -99,20 +99,25 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
 }));
 
 import {
+    checkIsAppFile,
     checkIsDesktopDataDir,
     checkIsInOneDrivePath,
     DATA_DIR_MARKER_FILE_NAME,
+    DATA_DIR_RELATIVE_PATH_TOKEN,
     DATA_DIR_MOVED_TO_FLAG_FILE_NAME,
     getDefaultDataDirPath,
     getDesktopDataDirPathList,
     ensureDataDirMarkerIdSync,
+    describePortableFileNameProblem,
     findDataDirsOnVolumesSync,
     findMovedDataDirSync,
     readDataDirMarkerIdSync,
     splitVolumePath,
     checkIsNativeAbsolutePath,
+    cleanTypedDirPath,
     checkIsSystemFileName,
     checkIsWindowsAbsolutePath,
+    checkIsWindowsDriveRoot,
     fsListFiles,
     fsReadFile,
     fsReadSync,
@@ -126,6 +131,7 @@ import {
     splitFilePath,
     splitPathRoot,
     toBaseNameOfAnyOs,
+    toDataDirRelativePath,
     toFileFullNameFromUrl,
     toFilePathFromFileUrl,
     toPortableFileFullName,
@@ -327,6 +333,42 @@ describe('toPortableFileName', () => {
     });
 });
 
+describe('portable-name reasons and app-file detection', () => {
+    test.each([
+        ['empty', 'Please type a name.'],
+        ['characters', 'A name cannot contain these characters'],
+        ['leading-dot', 'A name cannot start with a dot.'],
+        ['trailing-dot-or-space', 'A name cannot end with a dot or a space.'],
+        ['reserved', 'This name is reserved by Windows.'],
+        ['too-long', 'This name is too long.'],
+    ] as const)('explains the %s name problem', (problem, message) => {
+        expect(describePortableFileNameProblem(problem)).toContain(message);
+    });
+
+    test('recognizes application document extensions rather than media files', () => {
+        expect(checkIsAppFile('song.ows')).toBe(true);
+        expect(checkIsAppFile('song.owl')).toBe(true);
+        expect(checkIsAppFile('background.mp4')).toBe(false);
+    });
+});
+
+describe('data-folder-relative setting paths', () => {
+    beforeEach(() => {
+        h.sessionData.defaultStorageDirPath = DATA_DIR;
+    });
+
+    test('uses a stable token only for paths inside the current data folder', () => {
+        expect(toDataDirRelativePath(DOCUMENT_PATH)).toBe(
+            `${DATA_DIR_RELATIVE_PATH_TOKEN}/documents/song.ows`,
+        );
+        expect(toDataDirRelativePath(`${DATA_DIR}-dev\\song.ows`)).toBe(
+            `${DATA_DIR}-dev\\song.ows`,
+        );
+        h.sessionData.defaultStorageDirPath = null;
+        expect(toDataDirRelativePath(DOCUMENT_PATH)).toBe(DOCUMENT_PATH);
+    });
+});
+
 describe('toBaseNameOfAnyOs', () => {
     test('reads the file name out of a path from either OS family', () => {
         expect(toBaseNameOfAnyOs('C:\\Users\\x\\data\\Song.ows')).toBe(
@@ -365,6 +407,43 @@ describe('checkIsNativeAbsolutePath', () => {
     test('a drive-relative or bare drive is not absolute', () => {
         expect(checkIsWindowsAbsolutePath('C:a.png')).toBe(false);
         expect(checkIsWindowsAbsolutePath('C:')).toBe(false);
+    });
+
+    test("a bare drive is a drive's root on Windows only", () => {
+        // `pathResolve('E:\\')` trims the separator: a stick's root comes
+        // back as `E:`, and a copy into it must not be refused.
+        expect(checkIsWindowsDriveRoot('E:', true)).toBe(true);
+        expect(checkIsWindowsDriveRoot('e:', true)).toBe(true);
+        expect(checkIsWindowsDriveRoot('E:', false)).toBe(false);
+        expect(checkIsWindowsDriveRoot('E:a.png', true)).toBe(false);
+        expect(checkIsWindowsDriveRoot('E:\\photos', true)).toBe(false);
+        expect(checkIsWindowsDriveRoot('', true)).toBe(false);
+    });
+});
+
+describe('cleanTypedDirPath', () => {
+    test('a pasted "Copy as path" loses its quotes and spaces', () => {
+        expect(cleanTypedDirPath('  "C:\\Church Data"  ', true)).toBe(
+            'C:\\Church Data',
+        );
+        expect(cleanTypedDirPath("'/Volumes/USB/data'", false)).toBe(
+            '/Volumes/USB/data',
+        );
+        // One quote is part of what was typed, not a wrapper.
+        expect(cleanTypedDirPath('"C:\\data', true)).toBe('"C:\\data');
+    });
+
+    test('forward slashes become Windows separators on Windows only', () => {
+        const unc = cleanTypedDirPath('//server/share/data', true);
+        expect(unc).toBe('\\\\server\\share\\data');
+        expect(checkIsNativeAbsolutePath(unc, true)).toBe(true);
+        expect(cleanTypedDirPath('C:/Songs', true)).toBe('C:\\Songs');
+        expect(cleanTypedDirPath('/home/me/data', false)).toBe('/home/me/data');
+    });
+
+    test('a box of spaces is an emptied box', () => {
+        expect(cleanTypedDirPath('   ', true)).toBe('');
+        expect(cleanTypedDirPath('""', true)).toBe('');
     });
 });
 

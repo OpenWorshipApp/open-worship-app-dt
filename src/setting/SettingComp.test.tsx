@@ -12,14 +12,26 @@ const {
     takeAIKeyFocusRequestMock,
     warnIfAnyBibleEditorDirtyMock,
     tabRequestListenerSet,
+    dataDirState,
 } = vi.hoisted(() => ({
-    initialTab: { value: 'g' as 'g' | 'b' | 'o' },
-    requestedTab: { value: null as 'g' | 'b' | 'o' | null },
+    initialTab: { value: 'g' as 'g' | 'p' | 'b' | 'o' | 'a' | null },
+    requestedTab: { value: null as 'g' | 'p' | 'b' | 'o' | 'a' | null },
     setSettingMock: vi.fn(),
     getAIKeyFocusRequestMock: vi.fn(() => null),
     takeAIKeyFocusRequestMock: vi.fn(),
     warnIfAnyBibleEditorDirtyMock: vi.fn(() => false),
-    tabRequestListenerSet: new Set<(tabKey: 'g' | 'b' | 'o') => void>(),
+    tabRequestListenerSet: new Set<
+        (tabKey: 'g' | 'p' | 'b' | 'o' | 'a') => void
+    >(),
+    dataDirState: { isOnOwnFolder: false },
+}));
+
+vi.mock('./directory-setting/appLocalStorage', () => ({
+    appLocalStorage: {
+        get isOnOwnFolder() {
+            return dataDirState.isOnOwnFolder;
+        },
+    },
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -38,9 +50,12 @@ vi.mock('../helper/settingHelpers', async () => {
     const React = await import('react');
     return {
         setSetting: setSettingMock,
-        useStateSettingString: () => React.useState(initialTab.value),
+        useStateSettingString: (_key: string, defaultValue: string) =>
+            React.useState(initialTab.value ?? defaultValue),
     };
 });
+
+vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
 
 vi.mock('../helper/ai/aiKeyFocusHelpers', () => ({
     getAIKeyFocusRequest: getAIKeyFocusRequestMock,
@@ -55,7 +70,7 @@ vi.mock('./settingHelpers', () => ({
         return value;
     },
     listenForSettingTabRequest: (
-        callback: (tabKey: 'g' | 'b' | 'o') => void,
+        callback: (tabKey: 'g' | 'p' | 'b' | 'o' | 'a') => void,
     ) => {
         tabRequestListenerSet.add(callback);
         return () => {
@@ -103,6 +118,7 @@ describe('SettingComp cross-window tab requests', () => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
         initialTab.value = 'g';
         requestedTab.value = null;
+        dataDirState.isOnOwnFolder = false;
         tabRequestListenerSet.clear();
         getAIKeyFocusRequestMock.mockReturnValue(null);
         warnIfAnyBibleEditorDirtyMock.mockReturnValue(false);
@@ -178,8 +194,42 @@ describe('SettingComp cross-window tab requests', () => {
         const applyBox = container.querySelector('.app-setting-apply');
         expect(
             Array.from(applyBox?.children ?? []).map((child) => {
-                return child.getAttribute('data-testid');
+                return child.getAttribute('data-testid') ?? child.textContent;
             }),
-        ).toEqual(['apply', 'setting-archive-buttons']);
+        ).toEqual(['App Assistant', 'apply', 'setting-archive-buttons']);
+    });
+
+    test('opens on Path Settings when no tab was chosen before', async () => {
+        initialTab.value = null;
+        await renderSetting();
+        expect(
+            container.querySelector('[data-testid="active-tab"]')?.textContent,
+        ).toBe('p');
+    });
+
+    test('with no data folder, offers the computer’s own settings only', async () => {
+        dataDirState.isOnOwnFolder = true;
+        // Last left on a tab of the data folder's own settings.
+        initialTab.value = 'b';
+        await renderSetting();
+
+        expect(
+            Array.from(container.querySelectorAll('button')).map((button) => {
+                return button.textContent;
+            }),
+        ).toEqual([
+            'General',
+            'Path Settings',
+            'AI Providers',
+            'App Assistant',
+        ]);
+        expect(
+            container.querySelector('[data-testid="active-tab"]')?.textContent,
+        ).toBe('p');
+        expect(container.querySelector('[data-testid="tab-p"]')).not.toBeNull();
+        expect(container.querySelector('[data-testid="tab-b"]')).toBeNull();
+        expect(
+            container.querySelector('[data-testid="setting-archive-buttons"]'),
+        ).toBeNull();
     });
 });

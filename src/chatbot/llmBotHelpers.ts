@@ -1,6 +1,7 @@
 // The chatbot with a model behind it.
 //
-// The app already carries an Anthropic and an OpenAI key (Settings → Others,
+// The app already carries an Anthropic and an OpenAI key (Settings → AI
+// Providers,
 // stored encrypted), and `owa-devtools-mcp` already exposes tools that know
 // this app. Wiring them together is what turns the manual-lookup bot in
 
@@ -69,6 +70,7 @@ import { checkIsCancelError, throwIfCancelled } from './cancelHelpers';
 import {
     toAnswerShownInLanguage,
     toRepliesShownInLanguage,
+    type AnswerKeepType,
 } from './answerLanguageHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
 import { findPageLanguage } from './chatTranslateHelpers';
@@ -77,7 +79,9 @@ import {
     OTHER_CHAT_LANG_CODE,
     getAppLangCode,
     getAssistantLanguage,
+    listAssistantLanguages,
     pickReplyLanguage,
+    toAsciiDigits,
 } from './chatLangHelpers';
 import {
     checkIsSpendLimitError,
@@ -116,6 +120,7 @@ import {
 import {
     VERSE_FIND_ASK_KIND,
     VERSE_FIND_TOOL_NAME,
+    genVerseBrowseAction,
     genVerseChangeBibleAction,
     genVerseOpenAction,
     genVerseWebSearchAction,
@@ -140,6 +145,7 @@ import {
     BIBLE_READER_ASK_KIND,
     BIBLE_READER_MAX_TOOL_ROUNDS,
     BIBLE_READER_SYSTEM_PROMPT,
+    checkHasWord,
     type BibleReaderIntentType,
 } from './bibleReaderChatHelpers';
 import { callTool, callToolWithPictures, listTools } from './mcpClient';
@@ -633,6 +639,36 @@ function toShortenedTurn(text: string) {
  * every round -- and shaped so both providers accept it: the turns alternate
  * and the oldest is the user's.
  */
+// What the conversation answers to the record turn: a line, so the turns
+// still alternate.
+export const RECORD_TURN_ACK =
+    'I have read it. I will answer from it, and read anything more I need.';
+
+/**
+ * The history with a lookup conversation's record as its FIRST turn
+ * (2026-10-23, `EC-418`): a server of the person's own -- LM Studio, Ollama,
+ * llama.cpp -- keeps what the start of a conversation was and reuses it for
+ * the next question, and the record had ridden at the END of every
+ * question, where it was read again each time: ~3 500 tokens a question,
+ * about three seconds each on the user's LM Studio box. At the head it is
+ * the same tokens, read once a conversation. Nothing when there is no
+ * record to put there.
+ */
+export function withRecordTurn(
+    history: ChatTurnType[],
+    record: string | undefined,
+): ChatTurnType[] {
+    const text = record?.trim() ?? '';
+    if (text.length === 0) {
+        return history;
+    }
+    return [
+        { author: 'you', text },
+        { author: 'bot', text: RECORD_TURN_ACK },
+        ...history,
+    ];
+}
+
 export function toHistoryTurns(turns: ChatTurnType[]): ChatTurnType[] {
     // A tab reloaded from disk after the window was closed mid-answer can hold
     // two of a kind in a row, and Anthropic rejects that outright. Joining
@@ -1045,7 +1081,7 @@ export function checkIsNoCostCustomServer(server: {
  * told BEFORE the first one, not found out from the answer.
  */
 const AUTO_ASSISTANT_WARNING_TEXT =
-    'Auto picks an assistant that costs nothing for each question: one of your own servers when it is up to it, otherwise a free public AI service ({service}). When that service answers, your questions and anything you attach leave this computer and may be kept by it, so do not send anything private. Pick one of your own servers in the row above to keep every question in the building.';
+    'Auto picks an assistant that costs nothing for each question: one of your own servers when it is up to it, otherwise a free public AI service ({service}). When that service answers, your questions and anything you attach leave this computer and may be kept by it, so do not send anything private. A server of your own picked in the row above is asked first; when it cannot answer, the question goes on to your other servers and then to this service.';
 
 export const AUTO_ASSISTANT_WARNING = fillWords(AUTO_ASSISTANT_WARNING_TEXT, {
     service: FREE_SERVICE_MAP.kilo.label,
@@ -1938,11 +1974,11 @@ export function describeLlmError(error: any): string {
         case 'workspace':
             return tran(
                 'this API key needs a workspace id — add it in ' +
-                    'Settings → Others → AI Providers',
+                    'Settings → AI Providers',
             );
         case 'badKey':
             return tran(
-                'the API key was refused — check it in Settings → Others',
+                'the API key was refused — check it in Settings → AI Providers',
             );
         case 'noCredit':
             return tran('the AI account is out of credit');
@@ -2066,6 +2102,27 @@ type ToolWatchType = {
      * `findAnswerShapeNudge`.
      */
     isShapeNudged: boolean;
+    /**
+     * A verse search's Bible (null for any other ask), and whether its answer
+     * went back once for quoting a verse nothing returned -- see
+     * `findUnreadVerseNudge`.
+     */
+    verseFindBible: string | null;
+    isVerseNudged: boolean;
+    /**
+     * In a conversation about a lookup record (`AskExtraType.lookup`): the
+     * words this ask was GIVEN -- the question with the record on it, and
+     * every verse a read or a search returned -- reduced to their letters
+     * (`toQuoteKey`), null for any other ask; the Bible the record names;
+     * and whether an answer that quoted words found in none of them went
+     * back once (`findMisquoteNudge`).
+     */
+    quoteSources: string[] | null;
+    quoteBible: string | null;
+    isQuoteNudged: boolean;
+    // An answer that said the Bible does not say it, with nothing read,
+    // went back once (`findNotStatedNudge`).
+    isNotStatedNudged: boolean;
     /**
      * The tool the question asks to have something done WITH, when it was
      * sent to this model (`AskExtraType.knownDoTool`); whether it was called;
@@ -2226,6 +2283,12 @@ export function genToolWatch(): ToolWatchType {
         toolCallCount: 0,
         canSearchGuide: false,
         isShapeNudged: false,
+        verseFindBible: null,
+        isVerseNudged: false,
+        quoteSources: null,
+        quoteBible: null,
+        isQuoteNudged: false,
+        isNotStatedNudged: false,
         doTool: null,
         isDoToolCalled: false,
         isDoNudged: false,
@@ -2497,6 +2560,165 @@ export function findAnswerShapeNudge(
     return null;
 }
 
+// A chapter and verse named in an answer, any script, digits made 0-9
+// first: a book of one or two words (`1 Samuel`, `Song of Solomon`, `១
+// សាំយូអែល`), then `10:11`.
+const NAMED_VERSE_PATTERN =
+    /((?:[1-3]\s?)?[\p{L}\p{M}]+(?:\s(?:of\s)?[\p{L}\p{M}]+)?)\s*(\d{1,3})\s*:\s*(\d{1,3})/gu;
+const MAX_UNREAD_VERSES = 5;
+
+/**
+ * The verses a verse-search answer QUOTES that no search or read of this ask
+ * returned, handed back once to be read first (2026-10-22, `EC-391`). Seen
+ * live through Bible Find's 🤖 with `shepherd` over the Khmer Bible: the
+ * answer quoted John 10:11 in one round with no tool call -- _ខ្ញុំជាអ្នក
+ * គង្វាលដ៏ល្អ … ពលីជីវិតខ្លួន_ where the Bible says _… ក៏ស៊ូតែប្តូរ
+ * ជីវិតជំនួសចៀម_ -- words of its own, shown as scripture, with no button.
+ * The prompt had forbidden it since the first day; a small model reads a
+ * sentence, and this reads the answer. Never on the last round.
+ */
+export function findUnreadVerseNudge(text: string, watch: ToolWatchType) {
+    if (watch.verseFindBible === null || watch.isVerseNudged) {
+        return null;
+    }
+    const said = toAsciiDigits(text);
+    const unread: string[] = [];
+    for (const match of said.matchAll(NAMED_VERSE_PATTERN)) {
+        const named = match[0].trim();
+        const isFound =
+            pickNamedVerses(watch.foundVerses, named, watch.verseFindBible)
+                .length > 0;
+        if (!isFound && !unread.includes(named)) {
+            unread.push(named);
+        }
+    }
+    if (unread.length === 0) {
+        return null;
+    }
+    const refs = unread.slice(0, MAX_UNREAD_VERSES).join('; ');
+    return (
+        `Not yet: no search or read returned ${refs}, so the words you ` +
+        `gave for it are not this Bible's own. Read it first with ` +
+        `${VERSE_FIND_TOOL_NAME} (bible "${watch.verseFindBible}", refs ` +
+        `"${refs}"), then write the answer again, quoting each verse exactly ` +
+        'as it came back -- or leave out any it cannot read.'
+    );
+}
+
+// What is compared of a quote and of what was read: the letters and their
+// marks alone -- a model drops the Khmer Bible's zero-width spaces, a
+// verse's "(៤):", a quote mark, and joins two verses into one.
+export function toQuoteKey(text: string) {
+    return String(text ?? '')
+        .normalize('NFC')
+        .replace(/[^\p{L}\p{M}]/gu, '')
+        .toLowerCase();
+}
+
+// Words in quotation marks, any of the marks a model uses; a quote shorter
+// than this is a name or a button, not a verse.
+const QUOTED_SPAN_PATTERN = /[«“"]([^«»“”"]{8,800})[»”"]/gu;
+const MIN_QUOTE_KEY_LENGTH = 24;
+// The words kept of what a conversation was given, newest last.
+const MAX_QUOTE_SOURCES = 24;
+
+/** Fold a read's words into what the answer may quote from. */
+export function addQuoteSource(watch: ToolWatchType, text: string) {
+    if (watch.quoteSources === null) {
+        return;
+    }
+    watch.quoteSources = [...watch.quoteSources, toQuoteKey(text)].slice(
+        -MAX_QUOTE_SOURCES,
+    );
+}
+
+/**
+ * An answer about a lookup record that QUOTES words as scripture which
+ * nothing it was given holds -- not the record, not a verse it read --
+ * handed back once to read the verse and quote it as it came back, or to
+ * leave the quote out (2026-10-22). Asked under Noah's card _where did the
+ * ark come to rest?_, gemma4:cloud answered Genesis 8:4 with Khmer words
+ * of its own and the wrong month, twice in two passes, the record holding
+ * neither the verse nor its words. The prompt forbade it from the first
+ * day; a small model reads a sentence, and this reads the answer. A quote
+ * cut with an ellipsis is checked a piece at a time. Never on the last
+ * round.
+ */
+export function findMisquoteNudge(text: string, watch: ToolWatchType) {
+    if (watch.quoteSources === null || watch.isQuoteNudged) {
+        return null;
+    }
+    const sourceList = watch.quoteSources;
+    const misquoted: string[] = [];
+    for (const match of text.matchAll(QUOTED_SPAN_PATTERN)) {
+        const pieceList = match[1].split(/…|\.\.\./).filter((piece) => {
+            return toQuoteKey(piece).length >= MIN_QUOTE_KEY_LENGTH;
+        });
+        const isUnread = pieceList.some((piece) => {
+            const key = toQuoteKey(piece);
+            return !sourceList.some((source) => {
+                return source.includes(key);
+            });
+        });
+        if (isUnread) {
+            misquoted.push(match[1].trim());
+        }
+    }
+    if (misquoted.length === 0) {
+        return null;
+    }
+    const shown = misquoted[0].slice(0, 60);
+    const bible =
+        watch.quoteBible === null ? '' : `, bible "${watch.quoteBible}"`;
+    return (
+        `Not yet: the words you quoted -- “${shown}${
+            misquoted[0].length > 60 ? '…' : ''
+        }” -- are not in the record or in anything read in this ` +
+        'conversation, so they are not the Bible’s own. Read the verse ' +
+        `first with ${LOOKUP_TOOL_NAME} (kind "verse", ref${bible}), then ` +
+        'write the answer again quoting it exactly as it came back -- or ' +
+        'give its reference without quoting it.'
+    );
+}
+
+/**
+ * An answer about a record that says the Bible does not say it, written
+ * with nothing read, goes back once (2026-10-23, `EC-415`): asked _how long
+ * was Noah in the ark?_ under Genesis 8, gemma4:cloud answered in one round
+ * that the passage does not state it, two runs of three -- Genesis 7:11
+ * gives the day the flood began, and the record's own cross references
+ * named it. Said with a read behind it, it stands. The words are DATA per
+ * language (`lookupWords.notStated`), read in every language: a model
+ * working in English for a Khmer reader writes English.
+ */
+export function findNotStatedNudge(text: string, watch: ToolWatchType) {
+    if (
+        watch.quoteSources === null ||
+        watch.isNotStatedNudged ||
+        watch.toolCallCount > 0
+    ) {
+        return null;
+    }
+    const isNotStated = listAssistantLanguages().some((language) => {
+        return checkHasWord(text, language.lookupWords.notStated);
+    });
+    if (!isNotStated) {
+        return null;
+    }
+    const bible =
+        watch.quoteBible === null ? '' : `, bible "${watch.quoteBible}"`;
+    return (
+        'Not yet: you said the Bible does not say it, and read nothing. Read ' +
+        `the verses that would first with ${LOOKUP_TOOL_NAME} (kind "verse", ` +
+        `ref${bible}) -- the chapter before or after this passage, or a ` +
+        'verse its cross references name; for a length of time, the verses ' +
+        'that give where it starts and ends -- then write the whole answer ' +
+        'again from them, working it out, and say nothing of this note or ' +
+        'of an earlier answer (they never saw one). Only if the verses truly ' +
+        'do not say it, say so.'
+    );
+}
+
 /**
  * An `owa_bible_xml` answer worth buttons: a downloaded Bible or a page of
  * Bible files. Null for anything else -- a problem with the link is said by
@@ -2589,6 +2811,10 @@ export function applyToolWatch(
             ...watch.foundVerses,
             ...readFoundVerses(text),
         ].slice(-100);
+    }
+    // What a lookup conversation read may be quoted (`findMisquoteNudge`).
+    if (name === LOOKUP_TOOL_NAME || name === VERSE_FIND_TOOL_NAME) {
+        addQuoteSource(watch, text);
     }
     // The page the question needs, off the RESULT: the tool itself says when
     // the Presenter alone knows the answer. Cleared when the model takes the
@@ -2773,7 +2999,9 @@ async function runMcpToolCall(
         typeof args?.id === 'string' &&
         !args.id.includes('@')
             ? { ...args, id: `${args.id.trim()}@${watch.pageLang}` }
-            : (args ?? {});
+            : checkReadsInRecordBible(watch, name, args)
+              ? { ...args, bible: watch.quoteBible }
+              : (args ?? {});
     // A Resources file comes back with its pages as PICTURES, which go to
     // the model after this round's tool results (`watch.pictures`) -- or,
     // to a model that cannot see them, are left out with a sentence saying
@@ -3054,7 +3282,14 @@ export type AskExtraType = {
     // **Open** button without the model searching for it again.
     // `words`: what they remember, when the line asked carried more (the
     // one-line form, `…in "KJV": love your enemies`).
-    verseFind?: { bible: string; words?: string; found?: FoundVerseType[] };
+    verseFind?: {
+        bible: string;
+        words?: string;
+        found?: FoundVerseType[];
+        // The window's search for their words found more than it showed:
+        // **Every verse with these words** goes under the answer.
+        canBrowse?: boolean;
+    };
     /**
      * A question about what a Lookup Detail panel shows -- a person, a place
      * or a passage (`lookupChatHelpers.ts`): the ask carries the record
@@ -3063,7 +3298,27 @@ export type AskExtraType = {
      * other question -- and a web read, for a few rounds. `page`: the window
      * the panel is in, where the record tool reads.
      */
-    lookup?: { page: string | null };
+    // `record`: the record as the FIRST turn of the conversation
+    // (`withRecordTurn`), when the ask carries it there rather than under
+    // the question.
+    // `isReadForAsk`: the window read the verses or names this question
+    // needs before asking (`readLookupContextText`) -- an answer from them
+    // has read something, and the not-stated nudge stays quiet.
+    // `isStudy`: a word lesson (`toWordStudyContext`), which carries its
+    // verse and needs nothing looked up -- ONE round, the tools withheld
+    // (2026-10-23: three lessons in fifteen read the verse again anyway,
+    // three rounds and ~16k tokens where one round is ~5k, and two of them
+    // quoted the tool's English reference into a Khmer answer).
+    lookup?: {
+        page: string | null;
+        record?: string;
+        isReadForAsk?: boolean;
+        isStudy?: boolean;
+    };
+    // What the answer is ABOUT, kept whatever language it is shown in
+    // (`AnswerKeepType`, 2026-10-23): a passage's own script, and the words
+    // of an English verse being studied.
+    answerKeep?: AnswerKeepType;
     /**
      * A question about the Resources panel's files (`resourcesChatHelpers.ts`):
      * the ask names the open file, and it goes out under a short prompt of
@@ -3150,7 +3405,12 @@ const VERSE_FIND_SYSTEM_PROMPT =
     'and quote only verses a search or a read returned from their Bible, ' +
     'as it returned them. Answer with the best few matches, likeliest ' +
     'first, each once: the reference in bold, the verse, and one short line ' +
-    'on why it fits. If none fits, say so and ask what else they remember -- a word, ' +
+    'on why it fits. A STORY or an event (the flood, David and Goliath, the ' +
+    'prodigal son) is answered with WHERE it is told first -- its chapters ' +
+    'in bold, from the passages a search names or the ones you know, read ' +
+    'with refs ("Genesis 7") -- then its key verses. A single word or theme ' +
+    '("shepherd") is answered with how many verses hold it and in which ' +
+    'books, then the best-known few. If none fits, say so and ask what else they remember -- a word, ' +
     'a name or place in it, the book, Old or New Testament. A button under ' +
     'your answer opens each verse you name in the Bible Lookup, so neither ' +
     'open one nor offer to unless they ask, and never write a button or a ' +
@@ -3173,14 +3433,29 @@ const LOOKUP_SYSTEM_PROMPT =
     'Bible says, plainly and in a few short paragraphs, for older readers. ' +
     'The names lookup is drawn from the King James Version (KJV): say so ' +
     'when asked where it comes from, and a kjvName is the name as the KJV ' +
-    `spells it. Read anything more with ${LOOKUP_TOOL_NAME}: a related ` +
-    'person or place by its id or name, or verses by ref -- quote a verse ' +
+    'spells it. otherForms are this same person under another name the ' +
+    'Bible uses (Noe is Noah in the Gospels, Sem is Shem), and their verses ' +
+    'are this person’s; sameName are OTHER people or places of the name. A ' +
+    'place’s fromJerusalem, nearby (km, miles, direction) and people (who ' +
+    'the lookup ties to it) answer where it is, how far, what is near and ' +
+    'who lived there. bibleSearch is the Bible being read searched for the ' +
+    'name: its total and byBook say how often and where it is named, and ' +
+    'its verses can tell what the record’s own list leaves out (a key ' +
+    `without its text is read by ref first). Read anything more with ${LOOKUP_TOOL_NAME}: a ` +
+    'related person or place by the id its list gives (by name only when ' +
+    'there is none), or verses by ref -- quote a verse ' +
     'only as a read returned it, in the Bible it names, and name it by its ' +
     'title when it has one. The record’s lists -- parents, children, ' +
     'spouses, siblings, places -- ARE its answer: when they ask who or how ' +
     'many, name them from the list, and never send them to a button for ' +
     'what the list already holds; when they asked for information, answer ' +
-    'it and stop rather than ending with buttons. A family line or genealogy is never in the ' +
+    'it and stop rather than ending with buttons. When they ask about an ' +
+    'event, a saying or a prophecy the record’s verses do not show, read ' +
+    'the verses you know tell it with ref (Micah 5:2, Matthew 24:37), or ' +
+    'search the Bible with owa_find_verse, and answer from what came back. ' +
+    'Where a place is today, or how far apart two places are when no ' +
+    'distance is given, you may say from general knowledge as an estimate ' +
+    '("about", "usually identified with"). A family line or genealogy is never in the ' +
     'record: its children are only the sons it names. Read the Bible’s ' +
     'own, by key -- MAT 1:1-17 (Abraham to Jesus) or LUK 3:23-38 ' +
     '(Jesus back to Adam), never the reference in words, which comes back ' +
@@ -3189,8 +3464,40 @@ const LOOKUP_SYSTEM_PROMPT =
     'kind. To find verses by words -- a theme, or a verse they ' +
     'half-remember -- search the Bible with owa_find_verse, and name only ' +
     'the verses it returned. For what the record does not hold, you may read ' +
-    'one of its links with owa_read_website, and say you did. When neither ' +
-    'the record nor the Bible says, say so rather than guess. Quote a verse ' +
+    'one of its links with owa_read_website, and say you did. A PASSAGE ' +
+    "record's crossRefs are the app's own cross references for it: " +
+    'mostCited what most of its verses lead to, otherTestament where the ' +
+    'other Testament speaks of it, otherTestamentAround where it speaks ' +
+    'of the chapters around it (the same story), byVerse each verse’s ' +
+    'themes. Answer ' +
+    'related verses, parallels, where else the Bible says it or where the ' +
+    'New Testament speaks of it from them first -- every reference of a ' +
+    'theme that answers it, not only its first two, each by its title ' +
+    '(read one without a title by ref first) with its words or why it ' +
+    'fits -- then any other the Bible gives that you know (Jesus on the ' +
+    'days of Noah), read by ref before quoting; one verse read with ' +
+    '`related` gives all its themes. ' +
+    'studyFiles are their own Resources files for its chapter: name them. ' +
+    'yourNotes is what the person wrote on these verses themselves -- ' +
+    'their Bible notes that name them (title, first words) and the words ' +
+    'they highlighted or commented on: answer what they noted, highlighted ' +
+    'or commented from it, bring it in when it bears on a question, and ' +
+    'never present it as the Bible. Who or which places are in it: read ' +
+    'it by ref with `names` (the names lookup’s people and places in it) ' +
+    'and name them, with anyone it speaks of without a name (his wife, ' +
+    'his sons and their wives) and any creature that acts in it (the ' +
+    'raven, the dove). What a verse means: quote it first as the record gives it, ' +
+    'then explain it. ' +
+    'around names the verses right before and after it: what came before ' +
+    'or after it is read by THAT ref (never `near`, which skips to the ' +
+    'next chapter) and told in order, with its numbers and names, never ' +
+    'from memory; verses the app read for the question come after the ' +
+    'record -- answer from them first. A date or a number counted from ' +
+    'another chapter: read the ' +
+    'verses that give it (Genesis 7:11) and work it out -- never call it ' +
+    'not stated. Answer the question itself; ' +
+    'never send them to a button for it. When neither ' +
+    'the record, the Bible nor a read says, say so rather than guess. Quote a verse ' +
     'only as the record or a tool read returned it: never translate one ' +
     'yourself, and never write one from memory. When they ask what they can ' +
     'do with the record, name the button under it that does it and say ' +
@@ -3477,18 +3784,20 @@ async function askAnthropicCompatible(
     ];
     const reportStep = genProgressReporter(extra?.onProgress);
     // A general question (`AskExtraType.isGeneral`) is one round: there is
-    // nothing to look up, so there is nothing to go round for.
-    const maxRounds = extra?.isGeneral
-        ? 1
-        : extra?.verseFind !== undefined
-          ? VERSE_FIND_MAX_TOOL_ROUNDS
-          : extra?.lookup !== undefined
-            ? LOOKUP_MAX_TOOL_ROUNDS
-            : extra?.resources !== undefined
-              ? RESOURCES_MAX_TOOL_ROUNDS
-              : extra?.bibleReader !== undefined
-                ? BIBLE_READER_MAX_TOOL_ROUNDS
-                : MAX_TOOL_ROUNDS;
+    // nothing to look up, so there is nothing to go round for. Nor for a
+    // word lesson, whose verse rides on the ask (`lookup.isStudy`).
+    const maxRounds =
+        extra?.isGeneral || extra?.lookup?.isStudy === true
+            ? 1
+            : extra?.verseFind !== undefined
+              ? VERSE_FIND_MAX_TOOL_ROUNDS
+              : extra?.lookup !== undefined
+                ? LOOKUP_MAX_TOOL_ROUNDS
+                : extra?.resources !== undefined
+                  ? RESOURCES_MAX_TOOL_ROUNDS
+                  : extra?.bibleReader !== undefined
+                    ? BIBLE_READER_MAX_TOOL_ROUNDS
+                    : MAX_TOOL_ROUNDS;
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
@@ -3578,6 +3887,36 @@ async function askAnthropicCompatible(
                         ],
                     });
                     messages.push({ role: 'user', content: shape.nudge });
+                    continue;
+                }
+                // A verse quoted that nothing returned goes back once.
+                const unreadVerseNudge = isLastRound
+                    ? null
+                    : findUnreadVerseNudge(text, watch);
+                if (unreadVerseNudge !== null) {
+                    watch.isVerseNudged = true;
+                    messages.push({ role: 'assistant', content: text });
+                    messages.push({ role: 'user', content: unreadVerseNudge });
+                    continue;
+                }
+                // Scripture quoted in words nothing gave goes back once.
+                const misquoteNudge = isLastRound
+                    ? null
+                    : findMisquoteNudge(text, watch);
+                if (misquoteNudge !== null) {
+                    watch.isQuoteNudged = true;
+                    messages.push({ role: 'assistant', content: text });
+                    messages.push({ role: 'user', content: misquoteNudge });
+                    continue;
+                }
+                // "The Bible does not say" with nothing read goes back once.
+                const notStatedNudge = isLastRound
+                    ? null
+                    : findNotStatedNudge(text, watch);
+                if (notStatedNudge !== null) {
+                    watch.isNotStatedNudged = true;
+                    messages.push({ role: 'assistant', content: text });
+                    messages.push({ role: 'user', content: notStatedNudge });
                     continue;
                 }
                 // Steps off an excerpt go back once. Not on the last round:
@@ -3810,21 +4149,23 @@ async function askOpenAiCompatible(
         },
     ];
     // A general question (`AskExtraType.isGeneral`) is one round with no
-    // tools: `isLastRound` from the first, which is what leaves them out.
-    const maxRounds = extra?.isGeneral
-        ? 1
-        : Math.min(
-              provider.maxToolRounds ?? MAX_TOOL_ROUNDS,
-              extra?.verseFind !== undefined
-                  ? VERSE_FIND_MAX_TOOL_ROUNDS
-                  : extra?.lookup !== undefined
-                    ? LOOKUP_MAX_TOOL_ROUNDS
-                    : extra?.resources !== undefined
-                      ? RESOURCES_MAX_TOOL_ROUNDS
-                      : extra?.bibleReader !== undefined
-                        ? BIBLE_READER_MAX_TOOL_ROUNDS
-                        : MAX_TOOL_ROUNDS,
-          );
+    // tools: `isLastRound` from the first, which is what leaves them out --
+    // and so is a word lesson (`lookup.isStudy`), its verse on the ask.
+    const maxRounds =
+        extra?.isGeneral || extra?.lookup?.isStudy === true
+            ? 1
+            : Math.min(
+                  provider.maxToolRounds ?? MAX_TOOL_ROUNDS,
+                  extra?.verseFind !== undefined
+                      ? VERSE_FIND_MAX_TOOL_ROUNDS
+                      : extra?.lookup !== undefined
+                        ? LOOKUP_MAX_TOOL_ROUNDS
+                        : extra?.resources !== undefined
+                          ? RESOURCES_MAX_TOOL_ROUNDS
+                          : extra?.bibleReader !== undefined
+                            ? BIBLE_READER_MAX_TOOL_ROUNDS
+                            : MAX_TOOL_ROUNDS,
+              );
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
     // no tools at all, which is the one request a throttled service is most
@@ -4025,6 +4366,33 @@ async function askOpenAiCompatible(
                     content: shape.kept.length > 0 ? shape.kept : '…',
                 });
                 messages.push({ role: 'user', content: shape.nudge });
+                continue;
+            }
+            const unreadVerseNudge = isLastRound
+                ? null
+                : findUnreadVerseNudge(text, watch);
+            if (unreadVerseNudge !== null) {
+                watch.isVerseNudged = true;
+                messages.push({ role: 'assistant', content: text });
+                messages.push({ role: 'user', content: unreadVerseNudge });
+                continue;
+            }
+            const misquoteNudge = isLastRound
+                ? null
+                : findMisquoteNudge(text, watch);
+            if (misquoteNudge !== null) {
+                watch.isQuoteNudged = true;
+                messages.push({ role: 'assistant', content: text });
+                messages.push({ role: 'user', content: misquoteNudge });
+                continue;
+            }
+            const notStatedNudge = isLastRound
+                ? null
+                : findNotStatedNudge(text, watch);
+            if (notStatedNudge !== null) {
+                watch.isNotStatedNudged = true;
+                messages.push({ role: 'assistant', content: text });
+                messages.push({ role: 'user', content: notStatedNudge });
                 continue;
             }
             if (!isLastRound && checkIsStepsWithoutPage(text, watch)) {
@@ -4249,7 +4617,7 @@ export function findBedrockRegionProblem(model: string, region: string) {
     return fillWords(
         tran(
             '{model} is not offered in {region} — choose {choices} ' +
-                'under Settings → Others → AWS Region',
+                'under Settings → AI Providers → AWS Region',
         ),
         { model: known.label, region, choices },
     );
@@ -5033,6 +5401,31 @@ function toShownAnswerLanguage(extra: AskExtraType | undefined) {
 }
 
 /**
+ * Whether a verse read or search a model sends in a conversation about a
+ * record names no Bible, and so goes to the record's (`quoteBible`): with
+ * none named, the reader picks one by the reference's language, and `MAT
+ * 18:18-35` -- a code -- was read from the KJV and quoted in English inside
+ * a Khmer answer under a ពគប passage (2026-10-23).
+ */
+export function checkReadsInRecordBible(
+    watch: { quoteSources: string[] | null; quoteBible: string | null },
+    name: string,
+    args: any,
+) {
+    if (
+        watch.quoteSources === null ||
+        watch.quoteBible === null ||
+        (typeof args?.bible === 'string' && args.bible.trim().length > 0)
+    ) {
+        return false;
+    }
+    return (
+        (name === LOOKUP_TOOL_NAME && args?.kind === 'verse') ||
+        name === VERSE_FIND_TOOL_NAME
+    );
+}
+
+/**
  * Ask the assistant. The answer comes back as the person will read it: in a
  * language other than English, with no English gloss in brackets and no
  * button named in English (`answerLanguageHelpers.ts`) -- done here, after
@@ -5069,10 +5462,16 @@ export async function askLlmBot(
         answer.replies ?? [],
         shownLang,
         tranLabel,
+        extra?.answerKeep,
     );
     return {
         ...answer,
-        text: toAnswerShownInLanguage(answer.text, shownLang, tranLabel),
+        text: toAnswerShownInLanguage(
+            answer.text,
+            shownLang,
+            tranLabel,
+            extra?.answerKeep,
+        ),
         replies: replies.length > 0 ? replies : undefined,
     };
 }
@@ -5196,7 +5595,31 @@ async function askLlmBotAsWritten(
             extra?.isGeneral !== true &&
             extra?.isTranslation !== true;
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
+        seeded.verseFindBible = extra?.verseFind?.bible ?? null;
         seeded.lookupPage = extra?.lookup?.page ?? null;
+        // The record rides on the question or heads the conversation: what
+        // it quotes may be quoted.
+        if (extra?.lookup !== undefined) {
+            const record = extra.lookup.record ?? '';
+            seeded.quoteSources = [
+                toQuoteKey(question),
+                ...(record.length > 0 ? [toQuoteKey(record)] : []),
+            ];
+            seeded.quoteBible =
+                /"bible":"([^"\s]{1,24})"/.exec(
+                    `${record}\n${question}`,
+                )?.[1] ?? null;
+            // Read by the window for this question: nothing to send back.
+            // G3 under Genesis 8 had its people named from the names
+            // lookup and called Noah's family _មនុស្សដែលមិនបានបញ្ជាក់ឈ្មោះ_
+            // ("people whose names are not stated"); the nudge took that
+            // for "the Bible does not say", and the model, handed a note
+            // instead of a question, asked what the question was
+            // (2026-10-23, one asking in three).
+            if (extra.lookup.isReadForAsk === true) {
+                seeded.isNotStatedNudged = true;
+            }
+        }
         seeded.canSeePictures =
             extra?.resources?.canSeePictures === true ||
             extra?.bibleReader?.canSeePictures === true;
@@ -5210,7 +5633,10 @@ async function askLlmBotAsWritten(
         return seeded;
     };
     let watch = genSeededWatch();
-    const history = toHistoryTurns(priorTurns);
+    const history = withRecordTurn(
+        toHistoryTurns(priorTurns),
+        extra?.lookup?.record,
+    );
     // A verse-finding ask is sent its own tool and nothing else, and so is
     // a question about a Lookup Detail panel's record; every other ask the
     // ordinary list, which never carries either.
@@ -5372,10 +5798,21 @@ async function askLlmBotAsWritten(
                 answer.text,
                 bible,
             );
+            const browse =
+                extra.verseFind.canBrowse === true
+                    ? [genVerseBrowseAction(bible, remembered)]
+                    : [];
             if (named.length > 0) {
                 answer.actions = [
                     ...named.map(genVerseOpenAction),
-                    genVerseChangeBibleAction(bible, remembered, named),
+                    ...browse,
+                    genVerseChangeBibleAction(
+                        bible,
+                        remembered,
+                        named.filter((verse) => {
+                            return verse.passage === undefined;
+                        }),
+                    ),
                 ];
                 return answer;
             }
@@ -5386,6 +5823,7 @@ async function askLlmBotAsWritten(
             answer.text = `${answer.text.trimEnd()}\n\n${webLine.text}`;
             answer.links = [...(answer.links ?? []), webLine.url];
             answer.actions = [
+                ...browse,
                 genVerseChangeBibleAction(bible, remembered),
                 genVerseWebSearchAction(remembered, bible),
             ];

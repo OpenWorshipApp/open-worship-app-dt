@@ -16,6 +16,10 @@ vi.mock('./helpBotHelpers', () => {
 });
 
 import { DISLIKE_REPLY_LIST } from './answerRatingHelpers';
+import {
+    USE_ASSISTANT_LABEL_TEMPLATE,
+    USE_AUTO_LABEL,
+} from './autoAssistantHelpers';
 import { LOOKUP_ACTION_LABEL_LIST } from './lookupStepHelpers';
 import { READER_ROUTE_LABEL } from './readerRouteHelpers';
 import { RESOURCE_ASK_LABEL_TEMPLATE } from './resourcesChatHelpers';
@@ -75,6 +79,8 @@ describe('words translated through a variable', () => {
             SPEND_ALLOW_LABEL,
             READER_ROUTE_LABEL,
             RESOURCE_ASK_LABEL_TEMPLATE,
+            USE_AUTO_LABEL,
+            USE_ASSISTANT_LABEL_TEMPLATE,
         ];
         for (const langCode of LANG_CODE_LIST) {
             expect(listMissing(langCode, labelList), langCode).toEqual([]);
@@ -105,10 +111,12 @@ describe('words translated through a variable', () => {
             'Copy song text',
             'Open AI settings',
             'Show me Bible Find',
-            // `verseFindChatHelpers`' two, written out: that module brings
+            // `verseFindChatHelpers`' four, written out: that module brings
             // the Bible import's app-side imports with it.
             'Search another Bible',
             'Show in another Bible',
+            'Every verse with these words',
+            'More verses',
             'No thanks',
             'Send report',
             'Copy report',

@@ -157,7 +157,6 @@
         ".claude/skills/owa-upgrade-unit-test/SKILL.md": { "reviewed": "2026-10-11", "at": "2a9648b4", "text": "c8a03c2d0eb72614", "files": "63683cd535f5cac0", "code": "8bd3769d169edf29" },
         ".claude/skills/owa-upgrade-unit-test/references/recipes.md": { "reviewed": "2026-10-11", "at": "2a9648b4", "text": "1653e60a770fc345", "files": "2f0e70d9ce8412a5", "code": "c33fb4e9aa1379de" },
         ".claude/skills/review-stagged-change/references/checklist.md": { "reviewed": "2026-10-11", "at": "2a9648b4", "text": "a50ddb0593fcc6f1", "files": "51e04fd6f6240d74", "code": "e8b40762a1ca17de" },
-        "AGENTS.md": { "reviewed": "2026-10-11", "at": "2a9648b4", "text": "43b51a990d60194a", "files": "0e8658b6a9bdd232", "code": "9be09abffce530d1" },
         "README.md": { "reviewed": "2026-10-11", "at": "2a9648b4", "text": "0a014c80f768ef81", "files": "da39a3ee5e6b4b0d", "code": "da39a3ee5e6b4b0d" },
         "RELEASE.md": { "reviewed": "2026-10-11", "at": "2a9648b4", "text": "05204fbf46442c89", "files": "0cf0d167bed78abd", "code": "49f842ed75751b56" },
         "docs/README.md": { "reviewed": "2026-10-11", "at": "2a9648b4", "text": "2b7bae1276d90552", "files": "53857beb5cc734fd", "code": "87d6816e43b3d8fa" },

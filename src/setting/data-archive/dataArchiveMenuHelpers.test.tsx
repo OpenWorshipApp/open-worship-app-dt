@@ -8,6 +8,8 @@ const { state, mocks } = vi.hoisted(() => ({
         manifest: { kind: 'app-data', folders: [] as any[] },
         readable: { filePath: '/tmp/plain.tar' } as { filePath: string } | null,
         dictionaries: [] as Record<string, string>[],
+        // Marks what went through `tran`, so a line that bypasses it shows.
+        isMarkingTranslations: false,
     },
     mocks: {
         input: vi.fn(),
@@ -31,7 +33,7 @@ vi.mock('../../lang/langHelpers', () => ({
             if (dictionary[key.trim().toLowerCase()] === undefined)
                 throw new Error(`Missing translation: ${key}`);
         }
-        return key;
+        return state.isMarkingTranslations ? `«${key}»` : key;
     },
 }));
 vi.mock('../../helper/appArchiveHelpers', () => ({
@@ -105,6 +107,7 @@ const bibles = {
 
 beforeEach(() => {
     state.dictionaries = dictionaries;
+    state.isMarkingTranslations = false;
     state.folders = [];
     state.manifest = { kind: 'app-data', folders: [] };
     state.readable = { filePath: '/tmp/plain.tar' };
@@ -190,6 +193,19 @@ describe('whole-data archive menu flows', () => {
         );
         expect(mocks.progress).toHaveBeenCalledWith('Import Data');
         expect(mocks.hideProgress).toHaveBeenCalledWith('Import Data');
+    });
+
+    test('the import result is said in the window language, numbers filled in', async () => {
+        state.isMarkingTranslations = true;
+        state.manifest = {
+            kind: 'app-data',
+            folders: [{ settingName: 'documents-dir', entry: 'documents' }],
+        };
+        await handleImporting('/downloads/data.owadata.tar');
+        expect(mocks.toast).toHaveBeenCalledWith(
+            '«Import Data»',
+            '«Imported 2 file(s); 1 already up to date»',
+        );
     });
 
     test('cancelled decryption returns without a toast and still cleans up', async () => {

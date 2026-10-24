@@ -24,7 +24,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-// scripts -> owa-enhance -> skills -> .claude|.agents -> repo root
+// scripts -> owa-enhance -> skills -> .claude -> repo root
 const REPO_ROOT = path.join(HERE, '..', '..', '..', '..');
 
 const AREA_LIST = [
@@ -65,7 +65,6 @@ const AREA_ALIAS_MAP = {
     tests: 'code-health',
     manual: 'docs',
     notes: 'docs',
-    mirror: 'docs',
 };
 
 const argList = process.argv.slice(2);
@@ -121,7 +120,7 @@ const EVENT_HOOK_DEFINITION_SET = new Set([
     'src/_screen/managers/screenManagerHooks.ts',
     'src/helper/dirSourceHelpers.ts',
 ]);
-// Where code lands, not notes: `.claude/`, its mirrors and `docs/` move with
+// Where code lands, not notes: `.claude/` and `docs/` move with
 // nearly every change and would bury the subsystems a regression comes from.
 const CODE_ROOT_SET = new Set([
     'src',
@@ -193,14 +192,6 @@ function findNewestFile(dirPath, pattern) {
         }
     }
     return newest?.filePath ?? null;
-}
-
-function checkIsSameFile(onePath, otherPath) {
-    try {
-        return readFileSync(onePath).equals(readFileSync(otherPath));
-    } catch {
-        return false;
-    }
 }
 
 // Held for this run only: the process ends once the report is printed.
@@ -701,64 +692,6 @@ function readCodeHealthSignals() {
     ];
 }
 
-/**
- * `.claude/` is the source of truth and the Codex mirror its copy (`AGENTS.md`
- * says how): `CLAUDE.md` -> `.codex/project-instructions.md`, `rules/` ->
- * `.codex/instructions/`, `memory/` -> `.codex/memory/`, `skills/` ->
- * `.agents/skills/`. A mirrored `SKILL.md`
- * keeps Codex frontmatter and usage notes by design, so it is held to
- * existing, not to its bytes; every other file is an exact copy.
- */
-function readMirrorDrift() {
-    const claudeDirPath = path.join(REPO_ROOT, '.claude');
-    const codexDirPath = path.join(REPO_ROOT, '.codex');
-    const drift = [];
-    if (
-        !checkIsSameFile(
-            path.join(claudeDirPath, 'CLAUDE.md'),
-            path.join(codexDirPath, 'project-instructions.md'),
-        )
-    ) {
-        drift.push('CLAUDE.md differs from .codex/project-instructions.md');
-    }
-    const compareDirs = (subPath, mirrorPath) => {
-        const claudePath = path.join(claudeDirPath, subPath);
-        const claudeSet = new Set(listFilesUnder(claudePath));
-        const mirrorSet = new Set(listFilesUnder(mirrorPath));
-        for (const relPath of [...new Set([...claudeSet, ...mirrorSet])].sort()) {
-            if (!mirrorSet.has(relPath)) {
-                drift.push(`${subPath}/${relPath} -- only in .claude`);
-            } else if (!claudeSet.has(relPath)) {
-                drift.push(`${subPath}/${relPath} -- only in the mirror`);
-            } else if (
-                relPath !== 'SKILL.md' &&
-                !checkIsSameFile(
-                    path.join(claudePath, relPath),
-                    path.join(mirrorPath, relPath),
-                )
-            ) {
-                drift.push(`${subPath}/${relPath} -- differs`);
-            }
-        }
-    };
-    compareDirs('rules', path.join(codexDirPath, 'instructions'));
-    compareDirs('memory', path.join(codexDirPath, 'memory'));
-    const agentsSkillsPath = path.join(REPO_ROOT, '.agents', 'skills');
-    const skillNameSet = new Set([
-        ...listNames(path.join(claudeDirPath, 'skills'), {
-            isDirectory: true,
-        }),
-        ...listNames(agentsSkillsPath, { isDirectory: true }),
-    ]);
-    for (const skillName of [...skillNameSet].sort()) {
-        compareDirs(
-            `skills/${skillName}`,
-            path.join(agentsSkillsPath, skillName),
-        );
-    }
-    return drift;
-}
-
 function listNoteFilePaths() {
     const claudeDirPath = path.join(REPO_ROOT, '.claude');
     return [
@@ -844,15 +777,9 @@ function readKnowledgeFreshness() {
 }
 
 function readDocsSignals() {
-    const drift = readMirrorDrift();
     const stale = readStalePathRefs();
     const knowledge = readKnowledgeFreshness();
     return [
-        {
-            label: 'mirror drift (.claude -> .codex / .agents)',
-            value: drift.length,
-            items: drift.map((name) => ({ name })),
-        },
         {
             label: 'repo paths in notes that are gone',
             value: stale.length,

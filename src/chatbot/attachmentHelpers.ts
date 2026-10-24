@@ -716,6 +716,26 @@ export const FILE_ONLY_QUESTION =
     'like to know about it.';
 
 /**
+ * What a question is asked again WITH when **Ask again** puts it back in
+ * the box (2026-10-22, the user, with `MAT.18.pdf`'s chip missing from the
+ * question asked again: _it should include the context_): everything that
+ * still carries what it was -- a file on disk (read again at the ask), a
+ * pointed-at control or a text file's words (kept on the message), a
+ * picture whose bytes the window still holds. A picture the window let go
+ * of is left out: its chip would go out empty.
+ */
+export function toReusableAttachments(
+    attachments: readonly ChatAttachmentType[] | undefined,
+): ChatAttachmentType[] {
+    return (attachments ?? []).filter((attachment) => {
+        return (
+            attachment.filePath !== undefined ||
+            checkHasAttachmentData(attachment)
+        );
+    });
+}
+
+/**
  * Attached from a FILE on their computer -- a PDF, a text file, a picture
  * from a folder -- rather than a picture of the app or a control pointed
  * at. What a person goes on asking about, question after question

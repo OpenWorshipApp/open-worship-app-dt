@@ -59,6 +59,8 @@ vi.mock('../../server/fileHelpers', () => ({
     fsExistSync: fsExistSyncMock,
     getDefaultDataDirPath: getDefaultDataDirPathMock,
     pathJoin: pathJoinMock,
+    pathResolve: (dirPath: string) => dirPath,
+    toPathCompareKey: (dirPath: string) => dirPath.toLowerCase(),
     checkIsHiddenName: (name: string) => name.startsWith('.'),
     getFileDotExtension: (name: string) => name.slice(name.lastIndexOf('.')),
     fsListDirents: async (dirPath: string) => {
@@ -144,6 +146,7 @@ import {
     getDefaultDataDir,
     selectDefaultDataDirName,
     selectPathForChildDir,
+    selectPathForChildDirIfNeeded,
 } from './directoryHelpers';
 
 describe('directoryHelpers', () => {
@@ -259,6 +262,27 @@ describe('directoryHelpers', () => {
             'translated:Creating Default Folder',
             'translated:Fail to create folder "/parent"',
         );
+    });
+
+    test('asks about the standard folders once per data folder, whatever the answer', async () => {
+        // None of the child folders is there.
+        fsCheckDirExistMock.mockResolvedValue(false);
+        showAppConfirmMock.mockResolvedValue(false);
+        // Choosing the folder asks; the page that renders on it next, and
+        // React's second mount in development, must not ask again.
+        await selectPathForChildDir('/Fresh-A');
+        await selectPathForChildDirIfNeeded('/fresh-a');
+        await Promise.all([
+            selectPathForChildDirIfNeeded('/fresh-b'),
+            selectPathForChildDirIfNeeded('/fresh-b'),
+        ]);
+        expect(showAppConfirmMock).toHaveBeenCalledTimes(2);
+        expect(showAppConfirmMock.mock.calls[0][1]).toContain('/Fresh-A');
+        expect(showAppConfirmMock.mock.calls[1][1]).toContain('/fresh-b');
+        // A folder that already has its child folders is not asked about.
+        fsCheckDirExistMock.mockResolvedValue(true);
+        await selectPathForChildDirIfNeeded('/fresh-c');
+        expect(showAppConfirmMock).toHaveBeenCalledTimes(2);
     });
 
     test('checks whether any child directory has already been selected', async () => {

@@ -26,6 +26,7 @@ vi.mock('../lang/langHelpers', () => ({
     getLangDataByCodeAsync: vi.fn(),
     tranByLangData: vi.fn(),
     tran: (text: string) => text,
+    getLangCode: (locale: string) => locale.split('-')[0],
     getLanguageTitle: ({ langCode }: { langCode: string }) => langCode,
 }));
 
@@ -88,5 +89,30 @@ describe('lookup language menu', () => {
             'location-name-lookup-lang-code',
             'km',
         );
+    });
+
+    test('red while the bible is in another language, green when it matches', async () => {
+        await act(async () => {
+            root.render(<LookupLangCodeButtonComp bibleLocale="km-KH" />);
+        });
+        const button = host.querySelector('button')!;
+        expect(button.className).toContain('btn-outline-danger');
+        expect(button.className).not.toContain('btn-outline-secondary');
+        expect(button.title).toBe(
+            'Names and locations language (en)\n' +
+                'Not the language of the Bible (km)',
+        );
+        await act(async () => setSelectedLookupLangCode('km'));
+        expect(button.className).toContain('btn-outline-success');
+        expect(button.className).not.toContain('btn-outline-danger');
+        expect(button.title).toBe('Names and locations language (km)');
+    });
+
+    test('stays grey while the bible locale is unknown', async () => {
+        await act(async () => root.render(<LookupLangCodeButtonComp />));
+        const className = host.querySelector('button')!.className;
+        expect(className).toContain('btn-outline-secondary');
+        expect(className).not.toContain('btn-outline-success');
+        expect(className).not.toContain('btn-outline-danger');
     });
 });

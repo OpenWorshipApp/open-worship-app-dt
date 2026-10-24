@@ -85,6 +85,9 @@ describe('readTypedVerseContentAsk', () => {
         ],
         ['មានខគម្ពីរណាដែលនិយាយអំពីសេចក្ដីសង្ឃឹមទេ?', 'សេចក្ដីសង្ឃឹម'],
         ['រកខគម្ពីរអំពីការអធិស្ឋាន', 'ការអធិស្ឋាន'],
+        // A story by its name (EC-389).
+        ['តើរឿងទឹកជំនន់នៅក្នុងគម្ពីរណា?', 'រឿងទឹកជំនន់'],
+        ['រឿងយ៉ូណាសមាននៅណា', 'រឿងយ៉ូណាស'],
     ])('%s', (asked, words) => {
         expect(readTypedVerseContentAsk(asked)).toEqual({
             kind: 'verse',

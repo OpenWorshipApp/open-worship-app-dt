@@ -18,7 +18,7 @@ and 148 notes whose named code moved since their last edit.
 
 - **Reads.** Backticked tokens under a known root (`src/`, `electron/`,
   `tools/`, `extra-work/`, `docs/`, `html/`, `e2e/`, `public/`, `resources/`,
-  `.claude/`, `.codex/`, `.agents/`). It also reads `scripts/…` and
+  `.claude/`). It also reads `scripts/…` and
   `references/…` relative to the skill a doc sits in, and markdown links
   relative to the doc. `file:120`, `file:12-20` and `#L12` anchors are checked
   against the file's length. A bare **code** file name (`boot.ts`) must be
@@ -128,32 +128,18 @@ and 148 notes whose named code moved since their last edit.
 - **Fix.** If the folder moved, re-point the glob (**fix**). A rule with no
   `paths:` never loads by itself: **ask** what should trigger it.
 
-### `skills` — wiring and the mirror
+### `skills` — wiring
 
 - **Reads.** `SKILL.md` exists with `name` equal to the folder. The skill is
   listed in CLAUDE.md "Project skills" and has a `## <name> skill` section in
-  `rules/project-skills.md`. A Codex mirror exists, with the same body after
-  `### Full workflow scope (preserved from Claude)`, the same preserved
-  description, and `Arguments:` matching `argument-hint`. YAML `''` is
-  unescaped before comparing.
+  `rules/project-skills.md`.
 - **Description length.** The listing a session picks skills from cuts each
   description at ~1 530 characters (measured 2026-10-08). Text past the cut is
   never read when a skill is chosen, so trigger phrases must sit early. This
   is an L6 lead. Change another skill's description only on **ask**.
-- **Fix.** Index and mirror omissions are **fix**. Whether
+- **Fix.** Index omissions are **fix**. Whether
   `review-stagged-change` / `review-unstagged-change` belong in the "Project
   skills" index is an **ask**: they may be left out on purpose as generic.
-
-### `mirror` — `.claude` → `.codex` / `.agents`
-
-- Exact-copy drift with direction. A **mirror newer** than its source means an
-  edit landed on the wrong side: port it to `.claude/`, then copy again.
-  `.mcp.json` servers must also be registered in `.codex/config.toml`.
-- **Fix.** Re-copy with `node extra-work/sync-agent-mirror.mjs` (**fix**). It
-  keeps a mirrored `SKILL.md`'s preamble; for a NEW skill, write the Codex
-  preamble by hand from `AGENTS.md`'s rules: a short discovery description,
-  `## Codex usage`, `Arguments:`, the full description under
-  `### Full workflow scope (preserved from Claude)`, then the exact body.
 
 ### `knowledge` — the 🤖's copy
 

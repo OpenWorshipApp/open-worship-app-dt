@@ -1,0 +1,173 @@
+[
+    {
+        "id": "km-flood-story",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": រឿងទឹកជំនន់",
+        "expectIn": ["Genesis 6-9"],
+        "isStory": true
+    },
+    {
+        "id": "km-noah-dove-misspelt-book",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ស្វែងរកក្នុងគម្ពីរលោកប្បត្តិណូអេលែងព្រាប",
+        "expectIn": ["Genesis 8:6-12"]
+    },
+    {
+        "id": "km-david-goliath",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ដាវីឌសម្លាប់កូលីយ៉ាត",
+        "expectIn": ["1 Samuel 17"],
+        "isStory": true
+    },
+    {
+        "id": "km-jonah-fish",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": រឿងយ៉ូណាសនៅក្នុងពោះត្រី",
+        "expectIn": ["Jonah 1-2"],
+        "isStory": true
+    },
+    {
+        "id": "km-zacchaeus-tree",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": សាខេឡើងដើមឈើ",
+        "expectIn": ["Luke 19:1-10"],
+        "isStory": true
+    },
+    {
+        "id": "km-prodigal-son",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": រឿងកូនពៅចេញទៅស្រុកឆ្ងាយ",
+        "expectIn": ["Luke 15:11-32"],
+        "isStory": true
+    },
+    {
+        "id": "km-english-shepherd",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": shepherd",
+        "expectIn": ["Psalm 23", "John 10", "Ezekiel 34"]
+    },
+    {
+        "id": "km-fear-topic",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ខគម្ពីរអំពីកុំភ័យខ្លាច",
+        "expectIn": [
+            "Isaiah 41:10",
+            "Joshua 1:9",
+            "2 Timothy 1:7",
+            "Psalm 56:3-4",
+            "Psalm 23:4",
+            "Psalm 27:1",
+            "Isaiah 43:1",
+            "John 14:27",
+            "Deuteronomy 31:6-8",
+            "Matthew 10:31",
+            "Luke 12:32",
+            "Matthew 14:27",
+            "Mark 6:50",
+            "Matthew 28:5-10",
+            "Revelation 1:17"
+        ]
+    },
+    {
+        "id": "km-in-psalms-rock",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ក្នុងទំនុកដំកើង ព្រះយេហូវ៉ាជាថ្មដា",
+        "expectIn": ["Psalm 1-150"],
+        "isBookNamed": true
+    },
+    {
+        "id": "kjv-david-goliath",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": the story of David and Goliath",
+        "expectIn": ["1 Samuel 17"],
+        "isStory": true
+    },
+    {
+        "id": "kjv-prodigal-son",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": the prodigal son",
+        "expectIn": ["Luke 15:11-32"],
+        "isStory": true
+    },
+    {
+        "id": "kjv-feeding-five-thousand",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": Jesus fed five thousand people",
+        "expectIn": [
+            "Matthew 14:13-21",
+            "Mark 6:30-44",
+            "Luke 9:10-17",
+            "John 6:1-14"
+        ],
+        "isStory": true
+    },
+    {
+        "id": "kjv-walk-on-water",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": Jesus walked on the water",
+        "expectIn": ["Matthew 14:22-33", "Mark 6:45-52", "John 6:16-21"],
+        "isStory": true
+    },
+    {
+        "id": "kjv-parable-sower",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": the parable of the sower",
+        "expectIn": ["Matthew 13:1-23", "Mark 4:1-20", "Luke 8:4-15"],
+        "isStory": true
+    },
+    {
+        "id": "kjv-red-sea",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": Moses parts the Red Sea",
+        "expectIn": ["Exodus 14"],
+        "isStory": true
+    },
+    {
+        "id": "kjv-in-genesis-rainbow",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": in Genesis, the rainbow promise",
+        "expectIn": ["Genesis 9:8-17"],
+        "isBookNamed": true
+    },
+    {
+        "id": "kjv-shepherd-word",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": shepherd",
+        "expectIn": ["Psalm 23", "John 10", "Ezekiel 34"]
+    },
+    {
+        "id": "kjv-daniel-lions",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"KJV\": Daniel in the lions den",
+        "expectIn": ["Daniel 6"],
+        "isStory": true
+    },
+    {
+        "id": "typed-en-flood",
+        "focus": "reader",
+        "text": "where in the bible is the story of the flood?",
+        "expectIn": ["Genesis 6-9"],
+        "isStory": true
+    },
+    {
+        "id": "typed-en-good-samaritan",
+        "focus": "reader",
+        "text": "which verses tell the good samaritan story",
+        "expectIn": ["Luke 10:25-37"],
+        "isStory": true
+    },
+    {
+        "id": "typed-km-flood",
+        "focus": "reader",
+        "text": "តើរឿងទឹកជំនន់នៅក្នុងគម្ពីរណា?",
+        "expectIn": ["Genesis 6-9"],
+        "isStory": true
+    },
+    {
+        "id": "typed-km-goliath",
+        "focus": "reader",
+        "text": "ដាវីឌសម្លាប់កូលីយ៉ាតនៅខណា?",
+        "expectIn": ["1 Samuel 17"],
+        "isStory": true
+    }
+]

@@ -46,13 +46,19 @@ export class AskCancelledError extends Error {
  * layer names it differently -- `fetch` rejects with a `DOMException` called
  * `AbortError`, both SDKs with their own `APIUserAbortError` -- and this
  * window would otherwise print all three at the user as service problems.
+ *
+ * And while it is NOT aborted, nothing is a stop, whatever it is called
+ * (2026-10-23, `EC-414`): the window's Stop is what writes _Stopped_ in the
+ * tab, so a caller that hears "cancelled" says nothing more -- and an abort
+ * nobody pressed for, read by its name, ended a question with its echo on
+ * screen and not a word under it. Without a signal the name is all there is.
  */
 export function checkIsCancelError(
     error: any,
     signal?: AbortSignal | null,
 ): boolean {
-    if (signal?.aborted === true) {
-        return true;
+    if (signal !== undefined && signal !== null) {
+        return signal.aborted === true;
     }
     const name = error?.name;
     return (

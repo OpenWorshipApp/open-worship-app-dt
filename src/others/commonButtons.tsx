@@ -72,7 +72,7 @@ export function SettingButtonComp() {
  * *Open Chatbot*. One function, so the second way in asks the same two
  * questions as the first and cannot walk around either.
  */
-async function openChatbotOnPress() {
+export async function openChatbotOnPress() {
     // The switch is read at the PRESS, not at render. The button used to
     // disappear with it, which left a volunteer who never turned AI on --
     // the packaged default -- with nothing to press and nothing saying

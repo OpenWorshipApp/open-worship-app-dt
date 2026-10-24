@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-22i — Send a line to one particular screen, or park a line
 

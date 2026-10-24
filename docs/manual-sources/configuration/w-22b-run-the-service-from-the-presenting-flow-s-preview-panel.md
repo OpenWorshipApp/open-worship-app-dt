@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-19"
+workflowsVersion: "2026-10-24"
 ---
 # W-22b — Run the service from the presenting flow's preview panel
 

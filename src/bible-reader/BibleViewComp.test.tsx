@@ -23,7 +23,16 @@ const { state, mocks } = vi.hoisted(() => ({
         followFrame: vi.fn(),
         openWithBibleItem: vi.fn(),
         openWithVerseKey: vi.fn(),
+        openDetailPanel: vi.fn(),
+        handleError: vi.fn(),
     },
+}));
+
+vi.mock('../location-name-lookup/detailPanelHelpers', () => ({
+    openBibleItemDetailPanel: mocks.openDetailPanel,
+}));
+vi.mock('../helper/errorHelpers', () => ({
+    handleError: mocks.handleError,
 }));
 
 vi.mock('../helper/ai/aiHelpers', () => ({
@@ -90,6 +99,14 @@ vi.mock('../context-menu/appContextMenuHelpers', () => ({
 }));
 vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: () => null,
+}));
+// jsdom here refuses a `MouseEvent` whose `view` is the test's `window`.
+vi.mock('../context-menu/contextMenuEventHelpers', async () => ({
+    ...(await vi.importActual<any>('../context-menu/contextMenuEventHelpers')),
+    createMouseEvent: (clientX: number, clientY: number) => ({
+        clientX,
+        clientY,
+    }),
 }));
 vi.mock('../helper/textSelectionHelpers', () => ({
     getSelectedText: mocks.getSelectedText,
@@ -241,7 +258,8 @@ describe('Bible view', () => {
         );
         const [, items, options] = mocks.showMenu.mock.calls.at(-1)!;
         expect(items.map((item: any) => item.menuElement)).toEqual([
-            'Copy passage',
+            'Copy',
+            'Floating',
             'View option',
         ]);
         expect(options.shouldHandleSelectedText).toBe(true);
@@ -275,20 +293,21 @@ describe('Bible view', () => {
         );
         const [, items] = mocks.showMenu.mock.calls.at(-1)!;
         expect(items.map((item: any) => item.menuElement)).toEqual([
-            'Copy passage',
+            'Copy',
+            'Floating',
             'Ask the Assistant About This Verse',
             'Ask the Assistant About This Passage',
             'View option',
         ]);
         // Each is imported at the press -- one press at a time, as a
         // person makes them.
-        await act(async () => items[1].onSelect());
+        await act(async () => items[2].onSelect());
         await vi.waitFor(() => {
             expect(mocks.openWithVerseKey).toHaveBeenCalledWith(
                 '(KJV) GEN 4:6',
             );
         });
-        await act(async () => items[2].onSelect());
+        await act(async () => items[3].onSelect());
         await vi.waitFor(() => {
             expect(mocks.openWithBibleItem).toHaveBeenCalledWith(passage);
         });
@@ -311,11 +330,65 @@ describe('Bible view', () => {
                 .at(-1)![1]
                 .map((item: any) => item.menuElement),
         ).toEqual([
-            'Copy passage',
+            'Copy',
+            'Floating',
             'Ask the Assistant About This Passage',
             'View option',
         ]);
         state.isAiEnabled = false;
+    });
+
+    // Asked for by the user: the passage in the floating verse panel a cited
+    // passage opens, offered just above the assistant.
+    test('Floating opens the passage in a floating verse panel', async () => {
+        const passage = {
+            id: 'first',
+            target: { bookKey: 'GEN', chapter: 8, verseStart: 1, verseEnd: 22 },
+        } as any;
+        await act(async () =>
+            root.render(<BibleViewComp bibleItem={passage} />),
+        );
+        await act(async () =>
+            card().dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        const [, items] = mocks.showMenu.mock.calls.at(-1)!;
+        const floating = items.find(
+            (item: any) => item.menuElement === 'Floating',
+        );
+        await act(async () => floating.onSelect());
+        await vi.waitFor(() => {
+            expect(mocks.openDetailPanel).toHaveBeenCalledExactlyOnceWith(
+                passage,
+            );
+        });
+        expect(mocks.handleError).not.toHaveBeenCalled();
+    });
+
+    // Asked for by the user: one `Copy` in place of every way to copy, that
+    // opens the copy button's menu where it was chosen.
+    test('Copy opens the copying menu where it was chosen', async () => {
+        await act(async () =>
+            root.render(<BibleViewComp bibleItem={bibleItem} />),
+        );
+        await act(async () =>
+            card().dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        const [, items] = mocks.showMenu.mock.calls.at(-1)!;
+        const copy = items.find((item: any) => item.menuElement === 'Copy');
+        mocks.showMenu.mockClear();
+        await act(async () =>
+            copy.onSelect(
+                new MouseEvent('click', { clientX: 40, clientY: 70 }),
+            ),
+        );
+        expect(mocks.showMenu).toHaveBeenCalledOnce();
+        const [openedAt, copyItems] = mocks.showMenu.mock.calls[0];
+        expect([openedAt.clientX, openedAt.clientY]).toEqual([40, 70]);
+        expect(copyItems).toEqual([{ menuElement: 'Copy passage' }]);
     });
 
     test('offers the no-passage menu while editing book selection', async () => {

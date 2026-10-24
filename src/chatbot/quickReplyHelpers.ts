@@ -283,6 +283,11 @@ const EMPTY_SHOW_CONTROL_PATTERN =
 const CONDITIONAL_SHOW_CONTROL_PATTERN =
     /(?:\bif\s+(?:shown|visible|available|present)\b|\bwhen\s+(?:shown|visible|available)\b|\bon\s+(?:the\s+)?screen\b)/i;
 const DESCRIBED_SHOW_CONTROL_PATTERN = /\bbuttons?$/i;
+// A Chrome DevTools target id -- `owa_app_state` lists one per window, and a
+// model now and then copies one into `SHOWS:` ("the window showing this").
+// Nobody can find a control called `7997B6B7…`, so the chip could only ring
+// nothing while showing a volunteer an internals string.
+const RAW_TARGET_ID_PATTERN = /^[0-9a-f]{16,}$/i;
 
 export function checkIsUsableShowControlName(value: string) {
     const clean = toCleanReply(value);
@@ -290,7 +295,8 @@ export function checkIsUsableShowControlName(value: string) {
         clean.length > 0 &&
         !EMPTY_SHOW_CONTROL_PATTERN.test(clean) &&
         !CONDITIONAL_SHOW_CONTROL_PATTERN.test(clean) &&
-        !DESCRIBED_SHOW_CONTROL_PATTERN.test(clean)
+        !DESCRIBED_SHOW_CONTROL_PATTERN.test(clean) &&
+        !RAW_TARGET_ID_PATTERN.test(clean)
     );
 }
 

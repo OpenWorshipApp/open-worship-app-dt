@@ -46,6 +46,19 @@ vi.mock('../helper/appHooks', async () => {
 vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
     checkIsOldTestament: (key: string) => key === 'GEN',
     checkIsApocrypha: (key: string) => key === 'TOB',
+    // Read by the real `lookupEnterHelpers` (`findDefaultBookIndex`'s module);
+    // unmocked they pull the file/database chain with them.
+    checkIsBookAvailable: async () => true,
+    keyToBook: async (_bibleKey: string, bookKey: string) => bookKey,
+}));
+vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
+    parseChapterFromGuessing: async () => null,
+    toInputText: async (
+        _bibleKey: string,
+        book?: string | null,
+        chapter?: number | null,
+    ) => (chapter ? `${book} ${chapter}` : `${book} `),
+    toTrailingReference: () => null,
 }));
 vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
     kjvBibleModelInfo: {

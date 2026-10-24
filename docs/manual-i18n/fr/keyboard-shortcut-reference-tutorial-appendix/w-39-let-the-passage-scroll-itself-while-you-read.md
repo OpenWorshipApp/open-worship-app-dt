@@ -3,13 +3,13 @@ id: W-39
 title: "Laisser le passage défiler tout seul pendant que vous lisez"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 36b4936c1956c0ec
+translatedFrom: cc42e06e31e2ee03
 ---
 # W-39 — Laisser le passage défiler tout seul pendant que vous lisez
 
 Quand un chapitre est plus long que le panneau, vous n'avez pas besoin de revenir sans cesse à la molette de la souris — l'application peut le faire défiler pour vous, au rythme que vous choisissez.
 
-1. Ouvrez un passage assez long pour défiler, dans un panneau biblique ou dans l'aperçu de l'écran. Dans le coin en bas à droite du texte, deux commandes discrètes sont placées l'une au-dessus de l'autre : une flèche vers le haut (**[en:tran:Scroll to the top]**, affichée seulement une fois que le texte est descendu) et un double chevron en dessous. Le double chevron est le bouton de défilement automatique. 📸
+1. Ouvrez un passage assez long pour défiler, dans un panneau biblique, dans l'aperçu de l'écran ou dans le petit panneau flottant où s'ouvre un passage (clic droit sur le passage → **[en:tran:Floating]**, ou clic sur une référence croisée). Dans le coin en bas à droite du texte, deux commandes discrètes sont placées l'une au-dessus de l'autre : une flèche vers le haut (**[en:tran:Scroll to the top]**, affichée seulement une fois que le texte est descendu) et un double chevron en dessous. Le double chevron est le bouton de défilement automatique. 📸
 2. Cliquez une fois sur le double chevron. Le texte commence à descendre lentement. Cliquez à nouveau et il va plus vite ; chaque clic ajoute un peu plus de vitesse. Il glisse à un rythme régulier sur n'importe quel ordinateur, et ce rythme suit la taille du texte : agrandissez le texte et il avance davantage chaque seconde, de sorte que vous lisez toujours le même nombre de lignes par minute. Faites-le défiler vous-même pendant qu'il avance — en arrière pour relire, ou en avant — et il continue à partir de l'endroit où vous l'avez laissé.
 3. Dès qu'il bouge, un **⋯** apparaît juste à sa gauche. Cliquez dessus. 📸 Un petit menu s'ouvre et liste tout ce que ce bouton sait faire, avec l'action de souris correspondante écrite à côté de chacune :
    - **[en:tran:Auto Scroll Speed]** — sa vitesse en ce moment.

@@ -30,6 +30,11 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Ask about what you are reading': 'សួរអំពីអ្វីដែលអ្នកកំពុងអាន',
+    'Use Ask the Assistant About This Passage, Ask the Assistant About This Verse, or Ask the Assistant About This File to ask about that material.':
+        'ប្រើ សួរជំនួយការអំពីបទគម្ពីរនេះ សួរជំនួយការអំពីខគម្ពីរនេះ ឬ សួរជំនួយការអំពីឯកសារនេះ ដើម្បីសួរអំពីខ្លឹមសារនោះ។',
+    'For a missing Bible, choose Create the provided KJV, Let the assistant import a Bible for me, or Go to Bible Setting; you decide what to install.':
+        'សម្រាប់ព្រះគម្ពីរដែលខ្វះ ជ្រើស បង្កើត KJV ដែលផ្តល់ជូន ឱ្យជំនួយការនាំចូលព្រះគម្ពីរមួយសម្រាប់ខ្ញុំ ឬ ទៅកាន់ការកំណត់ព្រះគម្ពីរ។ អ្នកសម្រេចថាត្រូវដំឡើងអ្វី។',
     // Built-in song draft summaries and extraction notes.
     'Musical key': 'សូរគន្លឹះ',
     Tempo: 'ល្បឿនចង្វាក់',
@@ -441,6 +446,9 @@ const dictionary = {
     'Applies to each app page on the next launch.':
         'អនុវត្តចំពោះទំព័រនីមួយៗរបស់កម្មវិធី នៅពេលបើកលើកក្រោយ។',
     'Explore General settings': 'ស្វែងយល់ពីការកំណត់ទូទៅ',
+    'Choose your data folder': 'ជ្រើសថតទិន្នន័យរបស់អ្នក',
+    'Path Settings holds your data folder, where your songs, Bibles and settings are kept: choose it under Parent Directory, and copy it to a drive with Copy Data Folder.':
+        'ការកំណត់ផ្លូវ កាន់ថតទិន្នន័យរបស់អ្នក ដែលទុកបទចម្រៀង ព្រះគម្ពីរ និងការកំណត់របស់អ្នក៖ ជ្រើសវានៅក្រោម ថតមេ ហើយចម្លងវាទៅថាសផ្សេង ដោយ ចម្លងថតទិន្នន័យ។',
     'Manage Bible versions': 'គ្រប់គ្រងកំណែព្រះគម្ពីរ',
     'Find AI and extra tools': 'ស្វែងរក AI និងឧបករណ៍បន្ថែម',
     'Bible Note': 'កំណត់ត្រាព្រះគម្ពីរ',
@@ -785,8 +793,6 @@ const dictionary = {
     'Background Audios': 'សម្លេងផ្ទៃខាងក្រោយ',
     'Background Webs': 'វេបសាយផ្ទៃខាងក្រោយ',
     'Bible Present': 'បង្ហាញព្រះគម្ពីរ',
-    'Click here to use the default data folder':
-        'ចុចទីនេះដើម្បីប្រើថតទិន្នន័យលំនាំដើម',
     'Unable to get online bible list': 'មិនអាចទទួលបានបញ្ជីព្រះគម្ពីរអនឡាញ',
     'Fail to get find controller!': 'មិនអាចទទួលបានកម្មវិធីស្វែងរក!',
     'No slides to display': 'មិនមានស្លាយដែលត្រូវបង្ហាញទេ',
@@ -949,6 +955,7 @@ const dictionary = {
         'កម្មវិធីត្រូវបានចាប់ផ្តើមជាលើកដំបូង',
     Close: 'បិទ',
     'Toggle Widget Full View': 'បិទ/បើក ទិដ្ឋភាពពេញលេញរបស់ផ្ទាំង',
+    Floating: 'ផ្ទាំងអណ្តែត',
     'Split Vertical to': 'បំបែកបញ្ឈរទៅ',
     'Split Horizontal to': 'បំបែកផ្ដេកទៅ',
     'Loading Bible Data': 'កំពុងផ្ទុកទិន្នន័យព្រះគម្ពីរ',
@@ -1298,6 +1305,17 @@ const dictionary = {
     'Copy Text': 'ចម្លងអក្សរ',
     'Copy Title': 'ចម្លងចំណងជើង',
     'Copy Verse Full Key': 'ចម្លងកូនសោរពេញខគម្ពីរ',
+    'More…': 'ច្រើនទៀត…',
+    'Every way to copy the title and text': 'គ្រប់របៀបចម្លងចំណងជើង និងអក្សរ',
+    'Title and Text': 'ចំណងជើង និងអក្សរ',
+    'Title Only': 'តែចំណងជើង',
+    'Text Only': 'តែអក្សរ',
+    '(Version) Title': '(កំណែ) ចំណងជើង',
+    'Title (Version)': 'ចំណងជើង (កំណែ)',
+    'Title without Version': 'ចំណងជើងគ្មានកំណែ',
+    '(1): Text': '(១): អក្សរ',
+    '1: Text': '១: អក្សរ',
+    'Text without Numbers': 'អក្សរគ្មានលេខខ',
     'Generate Slides': 'បង្កើតស្លាយ',
     'Leave empty for Auto. Text shrinks to fit.':
         'ទុកទទេសម្រាប់ទំហំស្វ័យប្រវត្តិ។ អក្សរនឹងរួមតូចដើម្បីឱ្យសមនឹងស្លាយ។',
@@ -1484,6 +1502,8 @@ const dictionary = {
     'Text Color': 'ពណ៌អក្សរ',
     Theme: 'ស្បែក',
     'There is no parent directory selected': 'មិនមានថតមេត្រូវបានជ្រើសរើសទេ',
+    'You need to select a parent directory to start using the app.':
+        'អ្នកត្រូវជ្រើសរើសថតមេ ដើម្បីចាប់ផ្តើមប្រើកម្មវិធី។',
     'This will change all Slides': 'នេះនឹងផ្លាស់ប្តូរស្លាយទាំងអស់',
     'Time Second Delay:': 'ការពន្យារពេល (វិនាទី):',
     'Time Second to Live:': 'ពេលវាលាផ្សាយផ្ទាល់ (វិនាទី):',
@@ -1682,6 +1702,8 @@ const dictionary = {
     // name goes on AFTER the translation, never into the key.
     'Exported to': 'បាននាំចេញទៅ',
     Imported: 'បាននាំចូល',
+    'Imported {copied} file(s); {reused} already up to date':
+        'បាននាំចូលឯកសារ {copied}; {reused} មានរួចហើយ',
     // The optional password protection on every export.
     Password: 'ពាក្យសម្ងាត់',
     'Confirm Password': 'បញ្ជាក់ពាក្យសម្ងាត់',
@@ -1749,8 +1771,6 @@ const dictionary = {
     'Use Current Timezone': 'ប្រើតំបន់ពេលវេលាបច្ចុប្បន្ន',
     'Use this device’s timezone': 'ប្រើតំបន់ពេលវេលានៃឧបករណ៍នេះ',
     'UTC Offset': 'ការបន្ថែម/បញ្ចូល UTC',
-    'You will be redirected to the General Settings page to select a parent directory.':
-        'អ្នកនឹងត្រូវបានបញ្ជូនទៅទំព័រការកំណត់ទូទៅ ដើម្បីជ្រើសរើសថតមេ។',
     'Start Controlling': 'ចាប់ផ្តើមគ្រប់គ្រង',
     'Presenting Control': 'ការគ្រប់គ្រងការបង្ហាញ',
     'Presenting tool': 'ឧបករណ៍បង្ហាញ',
@@ -2145,6 +2165,9 @@ const dictionary = {
     // The language the lookup DATASET is read in, which is a separate
     // choice from the language of the interface.
     'Names and locations language': 'ភាសាឈ្មោះ និងទីកន្លែង',
+    // Tooltip of that language code while it is red: the bible being read is
+    // in another language.
+    'Not the language of the Bible': 'មិនមែនជាភាសារបស់ព្រះគម្ពីរ',
     Names: 'ឈ្មោះ',
     Locations: 'ទីកន្លែង',
     'Search names': 'ស្វែងរកឈ្មោះ',
@@ -2676,19 +2699,24 @@ const dictionary = {
     'Delete Permanently': 'លុបជាអចិន្ត្រៃយ៍',
     'could not be moved to the Recycle Bin or Trash. A USB flash drive has none on Windows. Delete it permanently? This cannot be undone.':
         'មិនអាចផ្លាស់ទីទៅធុងសំរាមបានទេ។ ឧបករណ៍ផ្ទុក USB គ្មានធុងសំរាមនៅលើ Windows ទេ។ លុបវាជាអចិន្ត្រៃយ៍ឬ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។',
-    'Data Folder Not Found': 'រកមិនឃើញថតទិន្នន័យ',
-    'is not available. If it is on a USB flash drive, plug it in and press Retry. Until then the app is using a folder of its own; your data is not touched.':
-        'មិនអាចប្រើបានទេ។ ប្រសិនបើវានៅលើឧបករណ៍ផ្ទុក USB សូមដោតវាចូល ហើយចុច ព្យាយាមម្តងទៀត។ រហូតដល់ពេលនោះ កម្មវិធីកំពុងប្រើថតផ្ទាល់ខ្លួន ហើយទិន្នន័យរបស់អ្នកមិនត្រូវបានប៉ះពាល់ទេ។',
     Retry: 'ព្យាយាមម្តងទៀត',
-    'Choose Another Folder': 'ជ្រើសរើសថតផ្សេង',
-    'Data Folder Found': 'បានរកឃើញថតទិន្នន័យ',
-    'Use the data folder found at': 'ប្រើថតទិន្នន័យដែលបានរកឃើញនៅ',
     // --- The data folder off the Desktop (2026-10-17): OneDrive backs up
     // the Desktop and took songs off it, so the default is
     // `~/.owa/open-worship-data` and a folder still on the Desktop is asked
     // about at launch (`src/setting/directory-setting/dataDirMove*`).
     'Move Your Data Folder Off the Desktop':
         'ផ្លាស់ទីថតទិន្នន័យរបស់អ្នកចេញពី Desktop',
+    'Copy Data Folder': 'ចម្លងថតទិន្នន័យ',
+    'Copy this data folder to a drive or another folder':
+        'ចម្លងថតទិន្នន័យនេះទៅដ្រាយ ឬថតផ្សេង',
+    'The data folder was not copied:': 'ថតទិន្នន័យមិនត្រូវបានចម្លងទេ៖',
+    'The data folder was copied to': 'ថតទិន្នន័យត្រូវបានចម្លងទៅ',
+    'Switch to the copy now? Every open window reloads.':
+        'ប្តូរទៅច្បាប់ចម្លងឥឡូវនេះ? គ្រប់បង្អួចដែលបើកនឹងផ្ទុកឡើងវិញ។',
+    'The copy cannot go inside the data folder itself.':
+        'ច្បាប់ចម្លងមិនអាចដាក់នៅក្នុងថតទិន្នន័យខ្លួនឯងបានទេ។',
+    'The Desktop is not a safe place for your data folder: backup and sync tools can move or empty it while the app is using it.':
+        'Desktop មិនមែនជាកន្លែងសុវត្ថិភាពសម្រាប់ថតទិន្នន័យរបស់អ្នកទេ៖ កម្មវិធីបម្រុងទុក និងធ្វើសមកាលកម្ម អាចផ្លាស់ទី ឬធ្វើឱ្យវាទទេ ពេលកម្មវិធីកំពុងប្រើវា។',
     'Your songs, slides, Bibles and settings are kept in a folder on the Desktop:':
         'ចម្រៀង ស្លាយ ព្រះគម្ពីរ និងការកំណត់របស់អ្នក ត្រូវបានរក្សាទុកក្នុងថតមួយនៅលើ Desktop៖',
     'On Windows, Microsoft OneDrive often backs up the Desktop. While it syncs, OneDrive can replace your files with online-only copies or take them off this computer, so songs, slides and settings can suddenly go missing or come back empty.':
@@ -2742,12 +2770,22 @@ const dictionary = {
     'The app reloads to show them.':
         'កម្មវិធីនឹងផ្ទុកឡើងវិញ ដើម្បីបង្ហាញពួកវា។',
     'Recent Folders': 'ថតដែលបានប្រើថ្មីៗ',
+    'Found Data Folders': 'ថតទិន្នន័យដែលបានរកឃើញ',
+    Suggested: 'បានណែនាំ',
+    'Use This Folder': 'ប្រើថតនេះ',
     Switch: 'ប្តូរ',
     'Switch Data Folder': 'ប្តូរថតទិន្នន័យ',
     'Switch to the data folder': 'ប្តូរទៅថតទិន្នន័យ',
     'Every open window reloads.': 'រាល់បង្អួចដែលកំពុងបើកនឹងផ្ទុកឡើងវិញ។',
     'Remove from Recent Folders': 'ដកចេញពីថតដែលបានប្រើថ្មីៗ',
     'This folder is not there any more.': 'ថតនេះលែងមាននៅទីនោះទៀតហើយ។',
+    'Type the full path of the folder, for example':
+        'សូមវាយផ្លូវពេញរបស់ថត ឧទាហរណ៍',
+    'Create Data Folder': 'បង្កើតថតទិន្នន័យ',
+    'There is no folder at': 'មិនមានថតនៅ',
+    'Create it and use it as the data folder?':
+        'តើចង់បង្កើតវា ហើយប្រើវាជាថតទិន្នន័យទេ?',
+    Create: 'បង្កើត',
     // --- Page-aware Tips of the Day and their deterministic walkthroughs.
     'Tips of the Day': 'គន្លឹះប្រចាំថ្ងៃ',
     'Tip of the Day': 'គន្លឹះប្រចាំថ្ងៃ',
@@ -2766,6 +2804,15 @@ const dictionary = {
         'បង្ហាញគន្លឹះប្រចាំថ្ងៃដោយស្វ័យប្រវត្តិ',
     'Applies to the Presenter and Bible Reader on the next app launch.':
         'អនុវត្តចំពោះទំព័រអ្នកបង្ហាញ និងទំព័រអ្នកអានព្រះគម្ពីរ នៅពេលបើកកម្មវិធីលើកក្រោយ។',
+    // --- The Settings list of what a hide button put away, for restoring.
+    'Put away for 30 days': 'បានលាក់ទុករយៈពេល ៣០ ថ្ងៃ',
+    'Tips in the help window': 'គន្លឹះនៅក្នុងបង្អួចជំនួយ',
+    'The caution before an AI window opens': 'ការព្រមានុនពេលបើកបង្អួច AI',
+    'The notice about the free AI service':
+        'សេចក្តីជូនដំណឹងអំពីសេវា AI ឥតគិតថ្លៃ',
+    'The suggestion to move the data folder': 'សំណើឱ្យផ្លាស់ទីថតទិន្នន័យ',
+    'Hidden until': 'លាក់រហូតដល់',
+    'Show again': 'បង្ហាញម្ដងទៀត',
     'Starting walkthrough…': 'កំពុងចាប់ផ្តើមការណែនាំ…',
     'This tip closes by itself': 'គន្លឹះនេះនឹងបិទដោយខ្លួនឯង',
     'Could not start this walkthrough.': 'មិនអាចចាប់ផ្តើមការណែនាំនេះបានទេ។',
@@ -3045,8 +3092,6 @@ const dictionary = {
     'Fix a Bible that is not installed': 'ដោះស្រាយព្រះគម្ពីរដែលមិនទាន់បានដំឡើង',
     'When the Reader names a Bible you do not have, pick another, press Let the assistant import this Bible for me, or Go to Bible Setting.':
         'ពេលកម្មវិធីអានស្នើព្រះគម្ពីរដែលអ្នកមិនមាន ជ្រើសមួយផ្សេង ចុច ឱ្យជំនួយការនាំចូលព្រះគម្ពីរនេះជំនួសខ្ញុំ ឬ ទៅកាន់ការកំណត់ព្រះគម្ពីរ។',
-    'When the Reader names a Bible you do not have, pick another, press Let the assistant import a Bible for me, or Go to Bible Setting.':
-        'ពេលកម្មវិធីអានស្នើព្រះគម្ពីរដែលអ្នកមិនមាន ជ្រើសមួយផ្សេង ចុច ឱ្យជំនួយការនាំចូលព្រះគម្ពីរមួយសម្រាប់ខ្ញុំ ឬ ទៅកាន់ការកំណត់ព្រះគម្ពីរ។',
     'Or press Let the assistant import a Bible for me: the Assistant offers the KJV the app itself provides first, then looks for a Bible in your language in a free online collection.':
         'ឬចុច ឱ្យជំនួយការនាំចូលព្រះគម្ពីរមួយសម្រាប់ខ្ញុំ៖ ជំនួយការផ្តល់ KJV ដែលកម្មវិធីផ្តល់ជូនជាមុន រួចរកព្រះគម្ពីរជាភាសារបស់អ្នកក្នុងបណ្ដុំឥតគិតថ្លៃនៅលើអ៊ីនធឺណិត។',
     'Use verse numbers inside a passage': 'ប្រើលេខខនៅក្នុងបទគម្ពីរ',
@@ -3579,8 +3624,8 @@ const dictionary = {
     '{name} — needs an API key': '{name} — ត្រូវការ API key',
     '{names} and {last}': '{names} និង {last}',
     'Which assistant answers': 'ជំនួយការណាដែលឆ្លើយ',
-    '{names} need an API key of your own — add one in Settings → Others':
-        '{names} ត្រូវការ API key ផ្ទាល់ខ្លួនរបស់អ្នក — បន្ថែមវានៅក្នុង ការកំណត់ → ផ្សេងទៀត',
+    '{names} need an API key of your own — add one in Settings → AI Providers':
+        '{names} ត្រូវការ API key ផ្ទាល់ខ្លួនរបស់អ្នក — បន្ថែមវានៅក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI',
     '{name} answers your questions here': '{name} ឆ្លើយសំណួររបស់អ្នកនៅទីនេះ',
     'No AI key': 'គ្មាន API key សម្រាប់ AI',
     '{name} answered the last question.': '{name} បានឆ្លើយសំណួរចុងក្រោយ។',
@@ -3659,6 +3704,16 @@ const dictionary = {
         'តើអ្នកចង់ផ្តោតលើខណាខ្លះក្នុងជំពូកនេះ? ឧទាហរណ៍ វាយ 1–3 ឬជ្រើសរើសខាងក្រោម។',
     'Which verse in this chapter do you want to focus on? For example, type 1, or choose below.':
         'តើអ្នកចង់ផ្តោតលើខណាមួយក្នុងជំពូកនេះ? ឧទាហរណ៍ វាយ 1 ឬជ្រើសរើសខាងក្រោម។',
+    'This file belongs to the whole book, not to one chapter — like an introduction to it.':
+        'ឯកសារនេះសម្រាប់កណ្ឌគម្ពីរទាំងមូល មិនមែនសម្រាប់តែជំពូកមួយទេ — ដូចជាសេចក្ដីផ្ដើមនៃកណ្ឌគម្ពីរនោះ។',
+    'You are reading {passage} in the Bible Reader.':
+        'អ្នកកំពុងអាន {passage} នៅក្នុងទំព័រអានព្រះគម្ពីរ។',
+    'You are reading {passage} in the Bible Reader. Press {range} to read what this file says about it.':
+        'អ្នកកំពុងអាន {passage} នៅក្នុងទំព័រអានព្រះគម្ពីរ។ ចុច {range} ដើម្បីអានអ្វីដែលឯកសារនេះនិយាយអំពីខទាំងនោះ។',
+    'What does it say about {passage}?':
+        'តើឯកសារនេះនិយាយអ្វីខ្លះអំពី {passage}?',
+    'Which verse in this chapter do you want to focus on? You are reading {range} — press it, or choose another below.':
+        'តើអ្នកចង់ផ្តោតលើខណាមួយក្នុងជំពូកនេះ? អ្នកកំពុងអានខ {range} — ចុចវា ឬជ្រើសរើសខផ្សេងទៀតខាងក្រោម។',
     'AI analysis can make mistakes. Please read the passage, cross-references, and explanation yourself in the original Bible and PDF.':
         'ការវិភាគរបស់ AI អាចមានកំហុស។ សូមអានបទគម្ពីរ ខគម្ពីរយោង និងសេចក្ដីពន្យល់ដោយខ្លួនឯងនៅក្នុងព្រះគម្ពីរ និងឯកសារ PDF ដើម។',
     'I could not read the PDF explanation reliably, so I did not show it. Please check the original PDF yourself or try a model that can read pictures better.':
@@ -3670,6 +3725,7 @@ const dictionary = {
     'Ask the Assistant About This Place': 'សួរជំនួយការអំពីទីកន្លែងនេះ',
     'Ask the Assistant About This Passage': 'សួរជំនួយការអំពីបទគម្ពីរនេះ',
     'Ask the Assistant About This Verse': 'សួរជំនួយការអំពីខគម្ពីរនេះ',
+    'Open in Chatbot': 'បើកក្នុង Chatbot',
     'More things to do': 'កិច្ចការផ្សេងទៀត',
     'Previous chapter': 'ជំពូកមុន',
     'Next chapter': 'ជំពូកបន្ទាប់',
@@ -3684,6 +3740,62 @@ const dictionary = {
     'Open another passage': 'បើកបទគម្ពីរផ្សេង',
     'Save to my Bibles list': 'រក្សាទុកក្នុងបញ្ជីព្រះគម្ពីររបស់ខ្ញុំ',
     'Copy the passage': 'ចម្លងបទគម្ពីរ',
+    'Show it on a map': 'បង្ហាញនៅលើផែនទី',
+    'Related verses': 'ខគម្ពីរដែលពាក់ព័ន្ធ',
+    'Study files for this chapter': 'ឯកសារសិក្សាសម្រាប់ជំពូកនេះ',
+    'Study the words': 'សិក្សាពាក្យនីមួយៗ',
+    'All words': 'ពាក្យទាំងអស់',
+    'Another verse': 'ខផ្សេងទៀត',
+    'Choose a word': 'ជ្រើសរើសពាក្យ',
+    'More words': 'ពាក្យបន្ថែមទៀត',
+    'I could not read the words of {name} just now.':
+        'ឥឡូវនេះ ខ្ញុំមិនអាចអានពាក្យនៃ {name} បានទេ។',
+    'Which verse of {name} do you want to study? Press one, and I will list its words.':
+        'តើអ្នកចង់សិក្សាខណាមួយនៃ {name}? ចុចលើខមួយ ហើយខ្ញុំនឹងរាយពាក្យរបស់វា។',
+    'Press a word to learn it, or {all} to learn every word of the verse.':
+        'ចុចលើពាក្យមួយ ដើម្បីរៀនវា ឬចុច {all} ដើម្បីរៀនគ្រប់ពាក្យនៃខនេះ។',
+    'Next word: {word}': 'ពាក្យបន្ទាប់៖ {word}',
+    'Search Google for {word}': 'ស្វែងរក {word} ក្នុង Google',
+    'Teach me every word of {verse}': 'បង្រៀនខ្ញុំគ្រប់ពាក្យនៃ {verse}',
+    'Teach me the word {word}': 'បង្រៀនខ្ញុំពីពាក្យ {word}',
+    'Teaching a word needs an assistant, and none could answer just now. You can search Google for it, or pick an assistant in the row above and ask again.':
+        'ការបង្រៀនពាក្យត្រូវការជំនួយការ ហើយឥឡូវនេះគ្មានជំនួយការណាអាចឆ្លើយបានទេ។ អ្នកអាចស្វែងរកវាក្នុង Google ឬជ្រើសរើសជំនួយការនៅជួរខាងលើ ហើយសួរម្ដងទៀត។',
+    'Opened a Google search for {word} in your browser.':
+        'បានបើកការស្វែងរក {word} ក្នុង Google នៅក្នុងកម្មវិធីរុករករបស់អ្នក។',
+    'Which other verses are related to this passage?':
+        'តើមានខគម្ពីរណាផ្សេងទៀតដែលពាក់ព័ន្ធនឹងបទគម្ពីរនេះ?',
+    "The app's cross references lead from it to {count} other verses.":
+        'ខគម្ពីរយោងរបស់កម្មវិធី នាំពីបទគម្ពីរនេះទៅខគម្ពីរផ្សេងទៀតចំនួន {count}។',
+    'Resources has {count} study files for its chapter.':
+        'ឯកសារពាក់ព័ន្ធ មានឯកសារសិក្សាចំនួន {count} សម្រាប់ជំពូករបស់វា។',
+    'You have notes or marks of your own on {count} of its verses.':
+        'អ្នកមានកំណត់ចំណាំ ឬការគូសចំណាំផ្ទាល់ខ្លួន លើខចំនួន {count} នៃបទគម្ពីរនេះ។',
+    'What did I note on these verses?': 'តើខ្ញុំបានកត់ចំណាំអ្វីខ្លះលើខទាំងនេះ?',
+    "The app's cross references have nothing for {name}.":
+        'ខគម្ពីរយោងរបស់កម្មវិធី មិនមានអ្វីសម្រាប់ {name} ទេ។',
+    "The app's cross references lead from {name} to {count} other verses. Press one to read it with me.":
+        'ខគម្ពីរយោងរបស់កម្មវិធី នាំពី {name} ទៅខគម្ពីរផ្សេងទៀតចំនួន {count}។ ចុចលើមួយ ដើម្បីអានវាជាមួយខ្ញុំ។',
+    '{count} of its verses': 'ពី {count} ខ',
+    'verses {list}': 'ខ {list}',
+    'What most of its verses point to': 'អ្វីដែលខភាគច្រើនរបស់វាចង្អុលទៅ',
+    'In the Old Testament': 'ក្នុងគម្ពីរសញ្ញាចាស់',
+    'In the New Testament': 'ក្នុងគម្ពីរសញ្ញាថ្មី',
+    'In the New Testament, about the chapters around it':
+        'ក្នុងគម្ពីរសញ្ញាថ្មី អំពីជំពូកនៅជុំវិញវា',
+    'In the Old Testament, about the chapters around it':
+        'ក្នុងគម្ពីរសញ្ញាចាស់ អំពីជំពូកនៅជុំវិញវា',
+    'Themes, verse by verse': 'ប្រធានបទ តាមខនីមួយៗ',
+    'Verse {verse}: {themes}': 'ខ {verse}៖ {themes}',
+    'Resources has no study files for the chapter of {name}.':
+        'ឯកសារពាក់ព័ន្ធ មិនមានឯកសារសិក្សាសម្រាប់ជំពូករបស់ {name} ទេ។',
+    'The study files in Resources for the chapter of {name}. Press one to ask about it.':
+        'ឯកសារសិក្សាក្នុង ឯកសារពាក់ព័ន្ធ សម្រាប់ជំពូករបស់ {name}។ ចុចលើមួយ ដើម្បីសួរអំពីវា។',
+    'The names lookup has no point on a map for {name}.':
+        'ទីកន្លែង-ឈ្មោះ មិនមានចំណុចនៅលើផែនទីសម្រាប់ {name} ទេ។',
+    'Opened {name} on a map in your browser.':
+        'បានបើក {name} នៅលើផែនទីក្នុងកម្មវិធីរុករករបស់អ្នក។',
+    'Press {button} to open {name} on a map in your browser.':
+        'ចុច {button} ដើម្បីបើក {name} នៅលើផែនទីក្នុងកម្មវិធីរុករករបស់អ្នក។',
     'Press {name} under the passage above.': 'ចុច {name} នៅក្រោមបទគម្ពីរខាងលើ។',
     'Here is {name} from the Bible it was opened in.':
         'នេះជា {name} ពីព្រះគម្ពីរដែលវាត្រូវបានបើក។',
@@ -3754,6 +3866,8 @@ const dictionary = {
         'ខ្ញុំមិនអាចអាន {name} ពីកម្មវិធីបានទេនៅពេលនេះ។ សូមសួរខ្ញុំអំពីវាដដែល ហើយខ្ញុំនឹងព្យាយាមម្ដងទៀត។',
     'I have read {name}. Ask me anything about this passage, or press a question.':
         'ខ្ញុំបានអាន {name} រួចហើយ។ សួរខ្ញុំអ្វីក៏បានអំពីបទគម្ពីរនេះ ឬចុចលើសំណួរមួយ។',
+    'I have read {name} in the Bible {bible}. Ask me anything about this passage, or press a question.':
+        'ខ្ញុំបានអាន {name} ក្នុងព្រះគម្ពីរ {bible} រួចហើយ។ សួរខ្ញុំអ្វីក៏បានអំពីបទគម្ពីរនេះ ឬចុចលើសំណួរមួយ។',
     'I have read what the names lookup holds on {name} (drawn from the King James Version). Ask me anything about this person, or press a question.':
         'ខ្ញុំបានអានអ្វីដែល ទីកន្លែង-ឈ្មោះ មានអំពី {name} (ដកស្រង់ពីព្រះគម្ពីរ KJV) រួចហើយ។ សួរខ្ញុំអ្វីក៏បានអំពីបុគ្គលនេះ ឬចុចលើសំណួរមួយ។',
     'I have read what the names lookup holds on {name} (drawn from the King James Version). Ask me anything about this place, or press a question.':
@@ -3773,8 +3887,8 @@ const dictionary = {
     'Which verses mention {name}?': 'តើខគម្ពីរណាខ្លះនិយាយអំពី {name}?',
     'No assistant could answer just now, so here is what the app holds on {name}.':
         'ឥឡូវនេះគ្មានជំនួយការណាអាចឆ្លើយបានទេ ដូច្នេះនេះជាអ្វីដែលកម្មវិធីមានអំពី {name}។',
-    'A question about this needs an assistant, and none could answer just now. Pick one in the row above, or add a key in Settings → Others → AI Providers, and ask again.':
-        'សំណួរអំពីរឿងនេះត្រូវការជំនួយការ ហើយឥឡូវនេះគ្មានជំនួយការណាអាចឆ្លើយបានទេ។ សូមជ្រើសមួយនៅជួរខាងលើ ឬបន្ថែម API key នៅក្នុង ការកំណត់ → ផ្សេងទៀត → អ្នកផ្តល់សេវា AI រួចសួរម្ដងទៀត។',
+    'A question about this needs an assistant, and none could answer just now. Pick one in the row above, or add a key in Settings → AI Providers, and ask again.':
+        'សំណួរអំពីរឿងនេះត្រូវការជំនួយការ ហើយឥឡូវនេះគ្មានជំនួយការណាអាចឆ្លើយបានទេ។ សូមជ្រើសមួយនៅជួរខាងលើ ឬបន្ថែម API key នៅក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI រួចសួរម្ដងទៀត។',
     'What the app holds on this goes with every question in this tab. Press × when you are done with it.':
         'អ្វីដែលកម្មវិធីមានអំពីរឿងនេះ ត្រូវបានផ្ញើទៅជាមួយគ្រប់សំណួរក្នុងផ្ទាំងនេះ។ ចុច × នៅពេលអ្នកលែងត្រូវការវា។',
     'Reading what the names lookup has on “{words}”':
@@ -3812,8 +3926,8 @@ const dictionary = {
         'កំពុងស្វែងរកពាក្យរបស់អ្នកក្នុង {bible}',
     'Reading the newest copy of that guide page':
         'កំពុងអានច្បាប់ថ្មីបំផុតនៃទំព័រណែនាំនោះ',
-    'A general question needs an assistant, and none could answer just now. Pick one in the row above, or add a key in Settings → Others → AI Providers, and ask again.':
-        'សំណួរទូទៅត្រូវការជំនួយការ ហើយឥឡូវនេះគ្មានជំនួយការណាអាចឆ្លើយបានទេ។ សូមជ្រើសមួយនៅជួរខាងលើ ឬបន្ថែម API key នៅក្នុង ការកំណត់ → ផ្សេងទៀត → អ្នកផ្តល់សេវា AI រួចសួរម្ដងទៀត។',
+    'A general question needs an assistant, and none could answer just now. Pick one in the row above, or add a key in Settings → AI Providers, and ask again.':
+        'សំណួរទូទៅត្រូវការជំនួយការ ហើយឥឡូវនេះគ្មានជំនួយការណាអាចឆ្លើយបានទេ។ សូមជ្រើសមួយនៅជួរខាងលើ ឬបន្ថែម API key នៅក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI រួចសួរម្ដងទៀត។',
     'I cannot look at pictures while I am offline. Tell me in a few words what you can see and what you were trying to do, and I will look it up in the guide.':
         'ខ្ញុំមិនអាចមើលរូបភាពបានទេ ពេលគ្មានអ៊ីនធឺណិត។ សូមប្រាប់ខ្ញុំដោយពាក្យពីរបីថា អ្នកឃើញអ្វី និងអ្នកកំពុងព្យាយាមធ្វើអ្វី ហើយខ្ញុំនឹងស្វែងរកវានៅក្នុងសៀវភៅណែនាំ។',
     'Auto is checking which assistants can answer':
@@ -3981,8 +4095,8 @@ const dictionary = {
     'app guide · offline': 'សៀវភៅណែនាំកម្មវិធី · ក្រៅបណ្ដាញ',
     'This assistant cannot look at pictures. Pick one that can, or take the picture off and describe it instead.':
         'ជំនួយការនេះមិនអាចមើលរូបភាពបានទេ។ សូមជ្រើសជំនួយការដែលអាចមើលបាន ឬដករូបភាពចេញ ហើយពណ៌នាវាជាពាក្យជំនួសវិញ។',
-    'This model is not marked as able to look at pictures. If it can, tick Sees pictures for it in Settings → Others → Custom servers; or take the picture off and describe it instead.':
-        'ម៉ូដែលនេះមិនត្រូវបានកំណត់ថាអាចមើលរូបភាពបានទេ។ បើវាអាចមើលបាន សូមធីក មើលរូបភាពបាន សម្រាប់វា នៅក្នុង ការកំណត់ → ផ្សេងទៀត → ម៉ាស៊ីនមេផ្ទាល់ខ្លួន ឬដករូបភាពចេញ ហើយពណ៌នាវាជាពាក្យជំនួសវិញ។',
+    'This model is not marked as able to look at pictures. If it can, tick Sees pictures for it in Settings → AI Providers → Custom servers; or take the picture off and describe it instead.':
+        'ម៉ូដែលនេះមិនត្រូវបានកំណត់ថាអាចមើលរូបភាពបានទេ។ បើវាអាចមើលបាន សូមធីក មើលរូបភាពបាន សម្រាប់វា នៅក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI → ម៉ាស៊ីនមេផ្ទាល់ខ្លួន ឬដករូបភាពចេញ ហើយពណ៌នាវាជាពាក្យជំនួសវិញ។',
     '{name} (the one in Find)': '{name} (ដែលនៅក្នុងការស្វែងរក)',
     'Open {verse} in Bible Lookup': 'បើក {verse} ក្នុងការស្វែងរកព្រះគម្ពីរ',
     'Send a picture of my screen': 'ផ្ញើរូបភាពអេក្រង់របស់ខ្ញុំ',
@@ -4018,6 +4132,11 @@ const dictionary = {
     'New chat': 'ការសន្ទនាថ្មី',
     'Close one of these before starting another':
         'សូមបិទការសន្ទនាមួយសិន មុននឹងចាប់ផ្ដើមការសន្ទនាថ្មី',
+    'No room for another chat': 'គ្មានកន្លែងសម្រាប់ការសន្ទនាថ្មីទៀតទេ',
+    'This window holds {count} chats at most. Close one to start a new chat.':
+        'បង្អួចនេះផ្ទុកការសន្ទនាបានច្រើនបំផុត {count}។ សូមបិទការសន្ទនាមួយ ដើម្បីចាប់ផ្ដើមការសន្ទនាថ្មី។',
+    'This window holds {count} chats at most, and all of them are locked. Unlock one from its ⋮ menu and close it to start a new chat.':
+        'បង្អួចនេះផ្ទុកការសន្ទនាបានច្រើនបំផុត {count} ហើយការសន្ទនាទាំងអស់ត្រូវបានចាក់សោ។ សូមដោះសោការសន្ទនាមួយពីម៉ឺនុយ ⋮ របស់វា ហើយបិទវា ដើម្បីចាប់ផ្ដើមការសន្ទនាថ្មី។',
     'New window': 'បង្អួចថ្មី',
     'Clear all chats': 'លុបការសន្ទនាទាំងអស់',
     'Close other chats': 'បិទការសន្ទនាផ្សេងទៀត',
@@ -4658,8 +4777,8 @@ const dictionary = {
         '`/{command}` ប្រើបាននៅលើទំព័រធ្វើបទបង្ហាញ ហើយការសន្ទនានេះកំពុងសួរអំពី{window}។ សូមប្ដូរបង្អួចមេទៅទំព័រធ្វើបទបង្ហាញ ជ្រើស **{presenter}** នៅក្រោម {askingAbout} នៅខាងលើ ហើយវាយវាម្តងទៀត។',
     'Type `/clear` in the chat window to clear the chat in front of you.':
         'វាយ `/clear` ក្នុងបង្អួចជជែក ដើម្បីលុបការសន្ទនាដែលនៅខាងមុខអ្នក។',
-    '**Say the question after /btw** -- `/btw What is the Bible?` -- and the assistant answers it from its own knowledge instead of looking in this app’s guide. It takes an assistant (a key in Settings → Others, or a server of your own): the built-in guide cannot answer a general question.':
-        '**សូមវាយសំណួរបន្ទាប់ពី /btw** -- `/btw តើព្រះគម្ពីរជាអ្វី?` -- ហើយជំនួយការនឹងឆ្លើយតាមចំណេះដឹងរបស់វា ជំនួសឲ្យការស្វែងរកក្នុងសៀវភៅណែនាំកម្មវិធីនេះ។ ការនេះត្រូវការជំនួយការ (API key មួយក្នុង ការកំណត់ → ផ្សេងទៀត ឬម៉ាស៊ីនមេផ្ទាល់ខ្លួន)៖ សៀវភៅណែនាំក្នុងកម្មវិធីមិនអាចឆ្លើយសំណួរទូទៅបានទេ។',
+    '**Say the question after /btw** -- `/btw What is the Bible?` -- and the assistant answers it from its own knowledge instead of looking in this app’s guide. It takes an assistant (a key in Settings → AI Providers, or a server of your own): the built-in guide cannot answer a general question.':
+        '**សូមវាយសំណួរបន្ទាប់ពី /btw** -- `/btw តើព្រះគម្ពីរជាអ្វី?` -- ហើយជំនួយការនឹងឆ្លើយតាមចំណេះដឹងរបស់វា ជំនួសឲ្យការស្វែងរកក្នុងសៀវភៅណែនាំកម្មវិធីនេះ។ ការនេះត្រូវការជំនួយការ (API key មួយក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI ឬម៉ាស៊ីនមេផ្ទាល់ខ្លួន)៖ សៀវភៅណែនាំក្នុងកម្មវិធីមិនអាចឆ្លើយសំណួរទូទៅបានទេ។',
     '**On the Presenter page** (switch there first): {commands}.':
         '**នៅលើទំព័រធ្វើបទបង្ហាញ** (ប្ដូរទៅទីនោះជាមុនសិន)៖ {commands}។',
     '**Commands you can type** -- each one runs on the spot, with no assistant and no internet (except `/btw`, which puts a general question to the assistant):':
@@ -4700,8 +4819,8 @@ const dictionary = {
         '**គ្មានអ្វីត្រូវបានជ្រើសក្នុងបញ្ជីឯកសារទេ។** សូមចុចលើចម្រៀងនៅទីនោះជាមុនសិន រួចសួរម្តងទៀត។',
     'The guide covers using the app and holds none of the Bible’s words — but the Bibles in this app do, and **Bible Find** searches them. Search for “{words}”. If nothing comes back, try fewer words: it looks for them as they are typed.':
         'សៀវភៅណែនាំនិយាយតែអំពីការប្រើកម្មវិធី ហើយគ្មានពាក្យនៃព្រះគម្ពីរទេ — ប៉ុន្តែព្រះគម្ពីរក្នុងកម្មវិធីនេះមាន ហើយមុខងារ **ស្វែងរក** ក្នុងព្រះគម្ពីរ អាចស្វែងរកពាក្យទាំងនោះបាន។ សូមស្វែងរក “{words}”។ បើគ្មានលទ្ធផលទេ សូមប្រើពាក្យតិចជាងនេះ៖ វាស្វែងរកពាក្យតាមដែលបានវាយ។',
-    'That is a question about the Bible itself, and the guide only knows how to use this app. An assistant can answer it: ask with /btw in front — /btw {question} — and if none answers, pick one in the row above, or add a key in Settings → Others → AI Providers.':
-        'នោះជាសំណួរអំពីព្រះគម្ពីរផ្ទាល់ ហើយសៀវភៅណែនាំស្គាល់តែរបៀបប្រើកម្មវិធីនេះប៉ុណ្ណោះ។ ជំនួយការអាចឆ្លើយបាន៖ សូមសួរដោយដាក់ /btw នៅខាងមុខ — /btw {question} — ហើយបើគ្មានជំនួយការណាឆ្លើយទេ សូមជ្រើសមួយនៅជួរខាងលើ ឬបន្ថែម API key មួយក្នុង ការកំណត់ → ផ្សេងទៀត → អ្នកផ្តល់សេវា AI។',
+    'That is a question about the Bible itself, and the guide only knows how to use this app. An assistant can answer it: ask with /btw in front — /btw {question} — and if none answers, pick one in the row above, or add a key in Settings → AI Providers.':
+        'នោះជាសំណួរអំពីព្រះគម្ពីរផ្ទាល់ ហើយសៀវភៅណែនាំស្គាល់តែរបៀបប្រើកម្មវិធីនេះប៉ុណ្ណោះ។ ជំនួយការអាចឆ្លើយបាន៖ សូមសួរដោយដាក់ /btw នៅខាងមុខ — /btw {question} — ហើយបើគ្មានជំនួយការណាឆ្លើយទេ សូមជ្រើសមួយនៅជួរខាងលើ ឬបន្ថែម API key មួយក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI។',
     'The Bibles in this app can be searched too: **Bible Find** lists the verses that have the words you type — try “{words}”, and fewer words if nothing comes back. Press {button} below for where it is.':
         'ព្រះគម្ពីរក្នុងកម្មវិធីនេះក៏អាចស្វែងរកបានដែរ៖ មុខងារ **ស្វែងរក** ក្នុងព្រះគម្ពីរ បង្ហាញខគម្ពីរដែលមានពាក្យដែលអ្នកវាយ — សូមសាកល្បង “{words}” ហើយប្រើពាក្យតិចជាងនេះបើគ្មានលទ្ធផល។ ចុច {button} ខាងក្រោម ដើម្បីមើលថាវានៅឯណា។',
     'Show me Bible Find': 'បង្ហាញខ្ញុំពីការស្វែងរកក្នុងព្រះគម្ពីរ',
@@ -4713,6 +4832,33 @@ const dictionary = {
     '{assistant} could not answer — {reason}.':
         '{assistant} មិនអាចឆ្លើយបានទេ — {reason}។',
     '{assistant} could not answer.': '{assistant} មិនអាចឆ្លើយបានទេ។',
+    'nothing answered at its address — it is shared by openworship.app and may be switched off right now; try again later or pick another assistant':
+        'គ្មានអ្វីឆ្លើយតបនៅអាសយដ្ឋានរបស់វាទេ — វាត្រូវបានចែករំលែកដោយ openworship.app ហើយប្រហែលជាត្រូវបានបិទនៅពេលនេះ; សូមព្យាយាមម្ដងទៀតពេលក្រោយ ឬជ្រើសជំនួយការផ្សេង',
+    'its server is not answering — check that it is running on this computer':
+        'ម៉ាស៊ីនមេរបស់វាមិនឆ្លើយតបទេ — សូមពិនិត្យថាវាកំពុងដំណើរការនៅលើកុំព្យូទ័រនេះ',
+    'its server is not answering — check that the computer it runs on is on and awake, and that the server is running':
+        'ម៉ាស៊ីនមេរបស់វាមិនឆ្លើយតបទេ — សូមពិនិត្យថាកុំព្យូទ័រដែលវាដំណើរការ បានបើក និងមិនកំពុងដេក ហើយម៉ាស៊ីនមេកំពុងដំណើរការ',
+    'it went quiet in the middle of the question — it is shared by openworship.app and may be switched off right now; try again later or pick another assistant':
+        'វាស្ងាត់ឈឹងនៅពាក់កណ្ដាលសំណួរ — វាត្រូវបានចែករំលែកដោយ openworship.app ហើយប្រហែលជាត្រូវបានបិទនៅពេលនេះ; សូមព្យាយាមម្ដងទៀតពេលក្រោយ ឬជ្រើសជំនួយការផ្សេង',
+    'it went quiet in the middle of the question — check that its server is running':
+        'វាស្ងាត់ឈឹងនៅពាក់កណ្ដាលសំណួរ — សូមពិនិត្យថាម៉ាស៊ីនមេរបស់វាកំពុងដំណើរការ',
+    'it went quiet in the middle of the question — check that the computer it runs on is on and awake, and that its server is running':
+        'វាស្ងាត់ឈឹងនៅពាក់កណ្ដាលសំណួរ — សូមពិនិត្យថាកុំព្យូទ័រដែលវាដំណើរការ បានបើក និងមិនកំពុងដេក ហើយម៉ាស៊ីនមេរបស់វាកំពុងដំណើរការ',
+    'the server took too long to answer':
+        'ម៉ាស៊ីនមេចំណាយពេលយូរពេកក្នុងការឆ្លើយ',
+    '{tried} {assistant} answered instead.':
+        '{tried} {assistant} បានឆ្លើយជំនួសវិញ។',
+    '{failed} could not answer — looking for another assistant that costs nothing':
+        '{failed} មិនអាចឆ្លើយបានទេ — កំពុងរកជំនួយការឥតគិតថ្លៃមួយទៀត',
+    'Use Auto for this chat': 'ប្រើ ស្វ័យប្រវត្តិ សម្រាប់ការសន្ទនានេះ',
+    'Use {assistant} for this chat': 'ប្រើ {assistant} សម្រាប់ការសន្ទនានេះ',
+    'That assistant is not in the list any more. Pick one in the ASSISTANT list at the top of this window.':
+        'ជំនួយការនោះលែងមាននៅក្នុងបញ្ជីទៀតហើយ។ សូមជ្រើសមួយក្នុងបញ្ជី ជំនួយការ នៅខាងលើវីនដូនេះ។',
+    'This chat now uses Auto: at each question it picks the best assistant that costs nothing and can answer.':
+        'ការសន្ទនានេះឥឡូវប្រើ ស្វ័យប្រវត្តិ៖ នៅរាល់សំណួរ វាជ្រើសជំនួយការល្អបំផុតដែលឥតគិតថ្លៃ ហើយអាចឆ្លើយបាន។',
+    'This chat now uses {assistant}. Pick another in the ASSISTANT list at the top of this window to change it again.':
+        'ការសន្ទនានេះឥឡូវប្រើ {assistant}។ ជ្រើសមួយផ្សេងក្នុងបញ្ជី ជំនួយការ នៅខាងលើវីនដូនេះ ដើម្បីប្ដូរវាម្ដងទៀត។',
+    'Asking {name} instead': 'កំពុងសួរ {name} ជំនួសវិញ',
     '{tried} Auto asked {assistant} instead.':
         '{tried} ស្វ័យប្រវត្តិបានសួរ {assistant} ជំនួសវិញ។',
     'Auto asked {assistant} this time.':
@@ -4839,18 +4985,18 @@ const dictionary = {
     'slow when busy': 'យឺតពេលរវល់',
     'Answers are coming from a free public AI service ({service}), which needs no API key. Your questions and anything you attach leave this computer and may be kept by that service, so do not send anything private. Answers are also weaker, and can be slow or busy. Your own key in Settings gives better and more private answers.':
         'ចម្លើយកំពុងមកពីសេវា AI សាធារណៈឥតគិតថ្លៃ ({service}) ដែលមិនត្រូវការ API key។ សំណួររបស់អ្នក និងអ្វីៗដែលអ្នកភ្ជាប់ នឹងចេញពីកុំព្យូទ័រនេះ ហើយសេវានោះអាចរក្សាទុកវា ដូច្នេះកុំផ្ញើអ្វីដែលជាការឯកជន។ ចម្លើយក៏ខ្សោយជាង ហើយអាចយឺត ឬរវល់។ API key ផ្ទាល់ខ្លួនរបស់អ្នកនៅក្នុងការកំណត់ ផ្ដល់ចម្លើយល្អជាង និងឯកជនជាង។',
-    'Auto picks an assistant that costs nothing for each question: one of your own servers when it is up to it, otherwise a free public AI service ({service}). When that service answers, your questions and anything you attach leave this computer and may be kept by it, so do not send anything private. Pick one of your own servers in the row above to keep every question in the building.':
-        'ស្វ័យប្រវត្តិ ជ្រើសរើសជំនួយការដែលឥតគិតថ្លៃ សម្រាប់សំណួរនីមួយៗ៖ ម៉ាស៊ីនមេផ្ទាល់ខ្លួនរបស់អ្នក ពេលវាអាចឆ្លើយបាន បើមិនដូច្នោះទេ គឺសេវា AI សាធារណៈឥតគិតថ្លៃ ({service})។ ពេលសេវានោះឆ្លើយ សំណួររបស់អ្នក និងអ្វីៗដែលអ្នកភ្ជាប់ នឹងចេញពីកុំព្យូទ័រនេះ ហើយវាអាចរក្សាទុកបាន ដូច្នេះកុំផ្ញើអ្វីដែលជាការឯកជន។ សូមជ្រើសម៉ាស៊ីនមេផ្ទាល់ខ្លួនមួយ នៅជួរខាងលើ ដើម្បីរក្សាសំណួរទាំងអស់នៅក្នុងអគារ។',
+    'Auto picks an assistant that costs nothing for each question: one of your own servers when it is up to it, otherwise a free public AI service ({service}). When that service answers, your questions and anything you attach leave this computer and may be kept by it, so do not send anything private. A server of your own picked in the row above is asked first; when it cannot answer, the question goes on to your other servers and then to this service.':
+        'ស្វ័យប្រវត្តិ ជ្រើសរើសជំនួយការដែលឥតគិតថ្លៃ សម្រាប់សំណួរនីមួយៗ៖ ម៉ាស៊ីនមេផ្ទាល់ខ្លួនរបស់អ្នក ពេលវាអាចឆ្លើយបាន បើមិនដូច្នោះទេ គឺសេវា AI សាធារណៈឥតគិតថ្លៃ ({service})។ ពេលសេវានោះឆ្លើយ សំណួររបស់អ្នក និងអ្វីៗដែលអ្នកភ្ជាប់ នឹងចេញពីកុំព្យូទ័រនេះ ហើយវាអាចរក្សាទុកបាន ដូច្នេះកុំផ្ញើអ្វីដែលជាការឯកជន។ ម៉ាស៊ីនមេផ្ទាល់ខ្លួនដែលអ្នកជ្រើសនៅជួរខាងលើ ត្រូវបានសួរមុនគេ។ ពេលវាមិនអាចឆ្លើយបាន សំណួរនឹងត្រូវបញ្ជូនទៅម៉ាស៊ីនមេផ្សេងទៀតរបស់អ្នក ហើយបន្ទាប់មកទៅសេវានេះ។',
     '{name}, shared by openworship.app': '{name} ចែករំលែកដោយ openworship.app',
     '{name}, on this computer': '{name} នៅលើកុំព្យូទ័រនេះ',
     '{name}, on your network': '{name} នៅលើបណ្ដាញរបស់អ្នក',
     'can see pictures': 'អាចមើលរូបភាពបាន',
     'it wrote no answer this time — a smaller question, or a larger model, usually helps':
         'លើកនេះវាមិនបានសរសេរចម្លើយទេ — សំណួរខ្លីជាង ឬម៉ូដែលធំជាង ជាធម្មតាអាចជួយបាន',
-    'this API key needs a workspace id — add it in Settings → Others → AI Providers':
-        'API key នេះត្រូវការ workspace id — សូមបន្ថែមវានៅក្នុង ការកំណត់ → ផ្សេងទៀត → អ្នកផ្តល់សេវា AI',
-    'the API key was refused — check it in Settings → Others':
-        'API key ត្រូវបានបដិសេធ — សូមពិនិត្យវានៅក្នុង ការកំណត់ → ផ្សេងទៀត',
+    'this API key needs a workspace id — add it in Settings → AI Providers':
+        'API key នេះត្រូវការ workspace id — សូមបន្ថែមវានៅក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI',
+    'the API key was refused — check it in Settings → AI Providers':
+        'API key ត្រូវបានបដិសេធ — សូមពិនិត្យវានៅក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI',
     'the AI account is out of credit': 'គណនី AI អស់ទឹកប្រាក់ហើយ',
     'the AI account is being rate-limited (asked too often) — wait a minute and try again':
         'គណនី AI កំពុងត្រូវបានកំណត់ល្បឿន (សួរញឹកញាប់ពេក) — សូមរង់ចាំមួយនាទី ហើយព្យាយាមម្ដងទៀត',
@@ -4879,8 +5025,8 @@ const dictionary = {
     'This assistant’s server cannot use the app’s tools, so this comes from the guide text alone and nothing was checked in the window — for presses and live answers, use LM Studio, Ollama or llama.cpp.':
         'ម៉ាស៊ីនមេរបស់ជំនួយការនេះមិនអាចប្រើឧបករណ៍របស់កម្មវិធីបានទេ ដូច្នេះចម្លើយនេះមកពីអត្ថបទមគ្គុទ្ទេសក៍តែប៉ុណ្ណោះ ហើយគ្មានអ្វីត្រូវបានពិនិត្យនៅក្នុងបង្អួចទេ — សម្រាប់ការចុច និងចម្លើយផ្ទាល់ សូមប្រើ LM Studio, Ollama ឬ llama.cpp។',
     '{first} or {last}': '{first} ឬ {last}',
-    '{model} is not offered in {region} — choose {choices} under Settings → Others → AWS Region':
-        '{model} មិនមាននៅ {region} ទេ — សូមជ្រើស {choices} នៅ ការកំណត់ → ផ្សេងទៀត → តំបន់ AWS',
+    '{model} is not offered in {region} — choose {choices} under Settings → AI Providers → AWS Region':
+        '{model} មិនមាននៅ {region} ទេ — សូមជ្រើស {choices} នៅ ការកំណត់ → អ្នកផ្តល់សេវា AI → តំបន់ AWS',
     'this model is no longer in Settings — pick another one in the row above':
         'ម៉ូដែលនេះលែងមាននៅក្នុងការកំណត់ទៀតហើយ — សូមជ្រើសមួយផ្សេងទៀតនៅជួរខាងលើ',
     'Waiting for {server} to load {model} — the first answer takes longer':
@@ -5216,14 +5362,14 @@ const dictionary = {
         'សូមចាប់ផ្ដើម llama-server (ឬ llamafile) ម្តងទៀតជាមួយទំហំបរិបទចាប់ពី {size} ឡើងទៅ (-c {tokens})',
     'load it with a context length of {size} or more where the model is served':
         'សូមផ្ទុកវាជាមួយទំហំបរិបទចាប់ពី {size} ឡើងទៅ នៅកន្លែងដែលដំណើរការម៉ូដែល',
-    'this server has no model called “{model}” — check the model id in Settings → Others → Custom servers, press Load models from server there, or pull it (ollama pull {model})':
-        'ម៉ាស៊ីនមេនេះគ្មានម៉ូដែលឈ្មោះ “{model}” ទេ — សូមពិនិត្យលេខសម្គាល់ម៉ូដែលក្នុង ការកំណត់ → ផ្សេងៗ → Custom servers ហើយចុច Load models from server នៅទីនោះ ឬទាញយកវា (ollama pull {model})',
-    'this server has no model called “{model}” — check the model id in Settings → Others → Custom servers, press Load models from server there':
-        'ម៉ាស៊ីនមេនេះគ្មានម៉ូដែលឈ្មោះ “{model}” ទេ — សូមពិនិត្យលេខសម្គាល់ម៉ូដែលក្នុង ការកំណត់ → ផ្សេងៗ → Custom servers ហើយចុច Load models from server នៅទីនោះ',
+    'this server has no model called “{model}” — check the model id in Settings → AI Providers → Custom servers, press Load models from server there, or pull it (ollama pull {model})':
+        'ម៉ាស៊ីនមេនេះគ្មានម៉ូដែលឈ្មោះ “{model}” ទេ — សូមពិនិត្យលេខសម្គាល់ម៉ូដែលក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI → Custom servers ហើយចុច Load models from server នៅទីនោះ ឬទាញយកវា (ollama pull {model})',
+    'this server has no model called “{model}” — check the model id in Settings → AI Providers → Custom servers, press Load models from server there':
+        'ម៉ាស៊ីនមេនេះគ្មានម៉ូដែលឈ្មោះ “{model}” ទេ — សូមពិនិត្យលេខសម្គាល់ម៉ូដែលក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI → Custom servers ហើយចុច Load models from server នៅទីនោះ',
     'this shared server did not answer the way the app expects — its address is openworship.app’s to correct; press ↻ beside the list of assistants to read the shared servers again, or pick another assistant':
         'ម៉ាស៊ីនមេរួមនេះមិនបានឆ្លើយតាមរបៀបដែលកម្មវិធីរំពឹងទុកទេ — អាសយដ្ឋានរបស់វាត្រូវកែដោយ openworship.app; សូមចុច ↻ ក្បែរបញ្ជីជំនួយការ ដើម្បីអានម៉ាស៊ីនមេរួមម្តងទៀត ឬជ្រើសជំនួយការផ្សេង',
-    'nothing speaks the OpenAI API at {address} — in Settings → Others → Custom servers, check the address and press Test (Ollama: http://localhost:11434/v1, LM Studio: http://localhost:1234/v1)':
-        'គ្មានអ្វីឆ្លើយតាម OpenAI API នៅ {address} ទេ — ក្នុង ការកំណត់ → ផ្សេងៗ → Custom servers សូមពិនិត្យអាសយដ្ឋាន ហើយចុច Test (Ollama: http://localhost:11434/v1, LM Studio: http://localhost:1234/v1)',
+    'this server did not answer the way the app expects — in Settings → AI Providers → Custom servers, check its address and press Test':
+        'ម៉ាស៊ីនមេនេះមិនបានឆ្លើយតាមរបៀបដែលកម្មវិធីរំពឹងទុកទេ — ក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI → Custom servers សូមពិនិត្យអាសយដ្ឋានរបស់វា ហើយចុច Test',
     'the server took longer than {minutes} minutes over the question and the window gave up — a local model reads the assistant’s whole instruction set first, and this computer is too slow for that; a general question typed after /btw is small enough to answer here, and questions about the app need a faster computer or a model running on a GPU':
         'ម៉ាស៊ីនមេប្រើពេលលើសពី {minutes} នាទីលើសំណួរនេះ ហើយបង្អួចបានបោះបង់ — ម៉ូដែលនៅលើម៉ាស៊ីនត្រូវអានការណែនាំទាំងអស់របស់ជំនួយការជាមុន ហើយកុំព្យូទ័រនេះយឺតពេកសម្រាប់ការងារនោះ; សំណួរទូទៅដែលវាយបន្ទាប់ពី /btw តូចល្មមអាចឆ្លើយនៅទីនេះបាន ចំណែកសំណួរអំពីកម្មវិធីត្រូវការកុំព្យូទ័រលឿនជាងនេះ ឬម៉ូដែលដែលដំណើរការលើ GPU',
     'the server took longer than {minutes} minutes over the question and the window gave up — a local model reads the assistant’s whole instruction set first, and the computer it runs on is too slow for that; a general question typed after /btw is small enough to answer here, and questions about the app need a faster computer or a model running on a GPU':
@@ -5383,6 +5529,19 @@ const dictionary = {
     'Those words are not written in the language of {bible}, so there is nothing in it to match them. Type them the way that Bible writes them, or press **{another}** below to search one in your language for them.':
         'ពាក្យទាំងនោះមិនមែនសរសេរជាភាសារបស់ {bible} ទេ ដូច្នេះគ្មានអ្វីក្នុងនោះត្រូវគ្នាទេ។ សូមវាយវាតាមរបៀបដែលព្រះគម្ពីរនោះសរសេរ ឬចុច **{another}** ខាងក្រោម ដើម្បីស្វែងរកពាក្យទាំងនោះក្នុងព្រះគម្ពីរជាភាសារបស់អ្នក។',
     'Show in another Bible': 'បង្ហាញក្នុងព្រះគម្ពីរផ្សេងទៀត',
+    'These words gather in {passages}.':
+        'ពាក្យទាំងនេះមានច្រើននៅក្នុង {passages}។',
+    'By book: {books}.': 'តាមគម្ពីរនីមួយៗ៖ {books}។',
+    'Every verse with these words': 'ខគម្ពីរទាំងអស់ដែលមានពាក្យទាំងនេះ',
+    'More verses': 'ខគម្ពីរបន្ថែមទៀត',
+    'No more verses in {bible} have those words.':
+        'គ្មានខគម្ពីរផ្សេងទៀតក្នុង {bible} ដែលមានពាក្យទាំងនោះទេ។',
+    'That is as far as a search goes. Add a word you remember to narrow it down.':
+        'ការស្វែងរកបង្ហាញបានត្រឹមនេះ។ សូមបន្ថែមពាក្យដែលអ្នកចាំ ដើម្បីឲ្យរកបានចំជាងនេះ។',
+    'That is every verse in {bible} with those words.':
+        'នេះជាខគម្ពីរទាំងអស់ក្នុង {bible} ដែលមានពាក្យទាំងនោះ។',
+    'Verses {first} to {last} of {total} in {bible} that have your words:':
+        'ខទី {first} ដល់ {last} ក្នុងចំណោម {total} ខក្នុង {bible} ដែលមានពាក្យរបស់អ្នក៖',
     '{bible} is the only Bible on this computer. To read or search in another language, install a Bible in it first — I can do that with you, one question at a time.':
         '{bible} ជាព្រះគម្ពីរតែមួយគត់នៅលើកុំព្យូទ័រនេះ។ ដើម្បីអាន ឬស្វែងរកជាភាសាផ្សេង សូមដំឡើងព្រះគម្ពីរជាភាសានោះជាមុនសិន — ខ្ញុំអាចជួយធ្វើជាមួយអ្នក ម្តងមួយសំណួរ។',
     'I could not read those verses in {bible}.':
@@ -5395,12 +5554,12 @@ const dictionary = {
         '**តើខ្ញុំគួរបង្ហាញខគម្ពីរនេះក្នុងព្រះគម្ពីរមួយណា?** សូមជ្រើសរើសមួយខាងក្រោម។',
     '**Which Bible should I show the verses in?** Pick one below.':
         '**តើខ្ញុំគួរបង្ហាញខគម្ពីរទាំងនេះក្នុងព្រះគម្ពីរមួយណា?** សូមជ្រើសរើសមួយខាងក្រោម។',
-    'An assistant can also take words in your language and find the verse: pick one in the row above, or add a key in Settings → Others → AI Providers.':
-        'ជំនួយការក៏អាចយកពាក្យជាភាសារបស់អ្នក ហើយស្វែងរកខគម្ពីរបានដែរ៖ សូមជ្រើសរើសមួយនៅជួរខាងលើ ឬបន្ថែមកូនសោក្នុង ការកំណត់ → ផ្សេងទៀត → អ្នកផ្តល់សេវា AI។',
+    'An assistant can also take words in your language and find the verse: pick one in the row above, or add a key in Settings → AI Providers.':
+        'ជំនួយការក៏អាចយកពាក្យជាភាសារបស់អ្នក ហើយស្វែងរកខគម្ពីរបានដែរ៖ សូមជ្រើសរើសមួយនៅជួរខាងលើ ឬបន្ថែមកូនសោក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI។',
     'I could not search the Bible just now. Make sure the main window is open, then type the words again.':
         'ខ្ញុំមិនអាចស្វែងរកក្នុងព្រះគម្ពីរបានទេឥឡូវនេះ។ សូមប្រាកដថាផ្ទាំងមេកំពុងបើក រួចវាយពាក្យនោះម្តងទៀត។',
-    'If you remember what it is ABOUT rather than its words, an assistant can search by meaning: pick one in the row above, or add a key in Settings → Others → AI Providers.':
-        'ប្រសិនបើអ្នកចាំថាវានិយាយអំពីអ្វី ជាជាងពាក្យរបស់វា ជំនួយការអាចស្វែងរកតាមអត្ថន័យបាន៖ សូមជ្រើសរើសមួយនៅជួរខាងលើ ឬបន្ថែមកូនសោក្នុង ការកំណត់ → ផ្សេងទៀត → អ្នកផ្តល់សេវា AI។',
+    'If you remember what it is ABOUT rather than its words, an assistant can search by meaning: pick one in the row above, or add a key in Settings → AI Providers.':
+        'ប្រសិនបើអ្នកចាំថាវានិយាយអំពីអ្វី ជាជាងពាក្យរបស់វា ជំនួយការអាចស្វែងរកតាមអត្ថន័យបាន៖ សូមជ្រើសរើសមួយនៅជួរខាងលើ ឬបន្ថែមកូនសោក្នុង ការកំណត់ → អ្នកផ្តល់សេវា AI។',
     'No verse in {bible} has those words together.':
         'គ្មានខគម្ពីរណាក្នុង {bible} មានពាក្យទាំងនោះជាមួយគ្នាទេ។',
     'These are not in it at all: {words}.':
@@ -5746,6 +5905,23 @@ const lang: LanguageDataType = {
         newText = lang.trimText(newText);
         return newText;
     },
+    bookMarkerWords: ['ក្នុង', 'គម្ពីរ', 'សៀវភៅ', 'កណ្ឌ'],
+    findFrameWords: [
+        'ស្វែងរក',
+        'សូម',
+        'ជួយ',
+        'ខ្ញុំ',
+        'តើ',
+        'ខគម្ពីរ',
+        'បទគម្ពីរ',
+        'ព្រះគម្ពីរ',
+        'គម្ពីរ',
+        'រឿង',
+        'អំពី',
+        'និយាយ',
+        'នៅក្នុង',
+        'ក្នុង',
+    ],
     stopWords: [
         'និង',
         'ដែល',

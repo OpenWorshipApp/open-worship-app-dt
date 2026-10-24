@@ -1,9 +1,11 @@
 import SettingGeneralLanguageComp from './SettingGeneralLanguageComp';
-import SettingGeneralPath from './directory-setting/SettingGeneralDirectoryPathComp';
 import SettingGeneralThemeComp from './SettingGeneralThemeComp';
 import SettingGeneralOtherOptionsComp from './SettingGeneralOtherOptionsComp';
 import SettingGeneralFontFamilyComp from './SettingGeneralFontFamilyComp';
+import { appLocalStorage } from './directory-setting/appLocalStorage';
 
+// The directory paths moved to the Path Settings tab; General keeps the
+// look and language of the app only.
 export default function SettingGeneralComp() {
     return (
         <div
@@ -12,25 +14,22 @@ export default function SettingGeneralComp() {
                 overflowY: 'auto',
             }}
         >
-            {/* A 600px BASIS, not the content's width: sized by its longest
-                path, this column grew until the language column wrapped under
-                it, and in Khmer, whose headings are wider, the switch back to
-                English fell off the first screen. The paths ellipsize from the
-                left (`PathPreviewerComp`), so the column can give way. */}
-            <div
-                className="m-1"
-                style={{ minWidth: '600px', flex: '1 1 600px' }}
-            >
-                <SettingGeneralPath />
-            </div>
             <div
                 className="app-border-white-round m-1"
-                style={{ minWidth: '320px', flex: '0 0 auto' }}
+                // Grows to use the freed width since the path column moved to
+                // its own tab, capped so the controls keep readable lines.
+                style={{ width: '100%', maxWidth: '720px' }}
             >
                 <SettingGeneralLanguageComp />
                 <SettingGeneralThemeComp />
-                <SettingGeneralFontFamilyComp />
-                <SettingGeneralOtherOptionsComp />
+                {/* The rest is kept in a data folder; with none there is
+                    only what belongs to the computer. */}
+                {appLocalStorage.isOnOwnFolder ? null : (
+                    <>
+                        <SettingGeneralFontFamilyComp />
+                        <SettingGeneralOtherOptionsComp />
+                    </>
+                )}
             </div>
         </div>
     );

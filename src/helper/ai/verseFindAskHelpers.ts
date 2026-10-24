@@ -36,12 +36,26 @@ const ASK_PATTERN = new RegExp(
     'iu',
 );
 
-/** The sentence that asks for help finding a verse in the Bible `bibleKey`. */
-export function genVerseFindAsk(bibleKey: string | null) {
+// The most of what was typed in Find that rides along: a search, not a page.
+const MAX_WORDS_LENGTH = 200;
+
+/**
+ * The sentence that asks for help finding a verse in the Bible `bibleKey`
+ * -- with, after a colon, the words typed in Find (2026-10-22, the user's
+ * picture of `shepherd` typed in Find over the Khmer Bible, _no data_, and
+ * the 🤖 beside it circled: the press had opened the chat on "which Bible?"
+ * with the words left behind).
+ */
+export function genVerseFindAsk(bibleKey: string | null, words = '') {
     const key = (bibleKey ?? '').trim();
-    return KEY_PATTERN.test(key)
+    const ask = KEY_PATTERN.test(key)
         ? `Help me find a Bible verse in "${key}"`
         : 'Help me find a Bible verse';
+    const remembered = words
+        .replaceAll(/\s+/g, ' ')
+        .trim()
+        .slice(0, MAX_WORDS_LENGTH);
+    return remembered.length === 0 ? ask : `${ask}: ${remembered}`;
 }
 
 /**

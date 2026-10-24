@@ -142,7 +142,7 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   candidates. Invalid nonempty values fail explicitly. The host's own port
   and `OWA_CDP_PORT` take priority. This selects a kind, not a data profile;
   several matches still follow newest-first discovery, read afresh each time.
-- **Master switch**: Settings → Others → _Enable AI features_ writes
+- **Master switch**: Settings → AI Providers → _Enable AI features_ writes
   `ai-enabled` into `clientSetting` in `<userData>/setting.json`.
   `checkIsAiEnabled()` reads that file directly (before `ready`, before the
   setting manager exists); off means neither door opens, the Help menu drops

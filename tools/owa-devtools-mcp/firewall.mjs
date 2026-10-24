@@ -180,6 +180,9 @@ const ACTING_TOOL_SET = new Set([
     // drop by both ends -- and counted here like one.
     'owa_press_key',
     'owa_drag',
+    // Real files dropped on a control (2026-10-22): the stdio door's alone,
+    // and a drop copies what it carries into the user's folders.
+    'owa_drop_files',
     // The native menu bar. A `list` reads; counted all the same, the way a
     // `check` is -- the budget counts the tool, not the argument.
     'owa_menu',
@@ -608,6 +611,12 @@ function findInterlockLabel(name, args, lookupUidLabel) {
     if (name === 'owa_drag') {
         const label =
             findDestructiveLabel(args?.from) ?? findDestructiveLabel(args?.to);
+        if (label !== null) {
+            return { rule: 'destructive-label', label };
+        }
+    }
+    if (name === 'owa_drop_files') {
+        const label = findDestructiveLabel(args?.to);
         if (label !== null) {
             return { rule: 'destructive-label', label };
         }

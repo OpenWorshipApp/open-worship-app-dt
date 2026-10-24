@@ -118,7 +118,7 @@ node extra-work/verify-chatbot-e2e.mjs       # spends REAL API credit — ask fi
 | A guide lands on the real control | `owa_guide_start`, then look: the red ring must be on the control the step names. `owa_guide_status` reports `isTargetFound` and `nearMisses`. |
 | The answer contains no internals | No file path, id, setting key or component name in what the user sees — including when the model read an `internal` page. |
 | The offline path still works | Ask with the provider deliberately broken (wrong key) and no other paid key set, or that one stands in. The manual answer must come back with a note naming the provider that failed. |
-| The empty state | Clear the keys in Settings → Others and reopen: the window must open on the Free assistant, under the notice about the free public service, with an **Open AI settings** button that opens Settings → Others. |
+| The empty state | Clear the keys in Settings → AI Providers and reopen: the window must open on the Free assistant, under the notice about the free public service, with an **Open AI settings** button that opens Settings → AI Providers. |
 | Tabs survive a reopen | Open two tabs, ask in both, close and reopen the window: both come back (`local-storage/chatbot-sessions`). |
 | The other window | An answer for the presenter must not describe reader controls, and vice versa. The Bible Reader has one reference box and a version button; clearing the box (**Clear input**) shows its book, then chapter, then verse buttons. |
 | Cost | Re-run the audit script and quote before/after. |

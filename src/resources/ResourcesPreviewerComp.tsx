@@ -5,7 +5,7 @@ import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
-import { useAppEffect } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import {
     BIBLE_SHOWN_CHAPTER_COUNT,
     toTargetChapterList,
@@ -13,6 +13,7 @@ import {
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import LoadingComp from '../others/LoadingComp';
 import ResourcesRendererComp from './ResourcesRendererComp';
+import { ResourcesReadingContext } from './resourceReadingHelpers';
 import {
     fromResourceTargetsKey,
     toResourceTargetsKey,
@@ -48,6 +49,18 @@ export default function ResourcesPreviewerComp() {
         return genTimeoutAttempt(READING_CHANGE_DEBOUNCE_MILLISECOND);
     }, []);
     const foundBibleItem = editingResult?.result.bibleItem ?? null;
+    // What a row's 🤖 hands the assistant beside its file: the panes as they
+    // are at the PRESS, read through a getter whose identity never changes,
+    // so a verse click re-renders no row (`resourceReadingHelpers.ts`).
+    const foundBibleItemRef = useAppCurrentRef(foundBibleItem);
+    const getReadingPaneList = useMemo(() => {
+        return () => {
+            return viewController.resolveStraightBibleItems(
+                foundBibleItemRef.current,
+            );
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [viewController]);
     useAppEffect(() => {
         // Immediately on mount: opening the tab must not sit blank for the
         // debounce interval before showing the reading it already knows.
@@ -81,5 +94,9 @@ export default function ResourcesPreviewerComp() {
     if (targetsKey === null) {
         return <LoadingComp />;
     }
-    return <ResourcesRendererComp targets={targets} />;
+    return (
+        <ResourcesReadingContext value={getReadingPaneList}>
+            <ResourcesRendererComp targets={targets} />
+        </ResourcesReadingContext>
+    );
 }

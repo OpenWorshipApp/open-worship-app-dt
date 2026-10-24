@@ -166,9 +166,11 @@ export function toAnswerTranslationAsk(
         `${language.name} (${language.nativeName}) for an older church ` +
         'volunteer: plain everyday words, short sentences. Keep exactly as ' +
         'written: the markdown (**, _, `, -, 1.), the line breaks, links, ' +
-        'numbers, Bible references, key names (F5, Ctrl+B), and every word ' +
+        'numbers, Bible references, key names (F5, Ctrl+B), every word ' +
         'in ** ** (the name of a button on their screen, already in the ' +
-        'words the screen shows). A line starting with NEEDS:, SHOWS: or ' +
+        'words the screen shows, or a Bible word being taught), and every ' +
+        'word in a script that is not English’s (Greek, Hebrew). A line ' +
+        'starting with NEEDS:, SHOWS: or ' +
         'DO: stays as it is. On a line starting with OPTIONS:, keep ' +
         'OPTIONS: and translate the options after it.' +
         toTermsText(

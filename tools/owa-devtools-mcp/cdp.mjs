@@ -202,6 +202,86 @@ export function evaluateInTarget(target, expression, timeout = 15000) {
     });
 }
 
+/**
+ * Runs CDP commands on one page over one socket, in order, a step being
+ * `{ method, params }` or `{ waitMs }`, and answers each command's result.
+ * For what an expression cannot do from inside the page -- the browser's own
+ * drop of real files (`owa_drop_files`) -- where the steps belong to one
+ * gesture and a socket per step would let the page see them apart.
+ */
+export function runInTarget(target, stepList, timeout = 15000) {
+    return new Promise((resolve, reject) => {
+        const socket = new WebSocket(target.webSocketDebuggerUrl);
+        const resultList = [];
+        const waiterMap = new Map();
+        let isDone = false;
+        const timeoutId = setTimeout(() => {
+            finish(new Error(`Timed out acting in ${target.url}`));
+        }, timeout);
+        function finish(error, value) {
+            if (isDone) {
+                return;
+            }
+            isDone = true;
+            clearTimeout(timeoutId);
+            try {
+                socket.close();
+            } catch {
+                // Already closing.
+            }
+            if (error) {
+                reject(error);
+            } else {
+                resolve(value);
+            }
+        }
+        socket.addEventListener('error', () => {
+            finish(new Error(`Could not attach to ${target.url}`));
+        });
+        socket.addEventListener('message', (event) => {
+            let message;
+            try {
+                message = JSON.parse(event.data);
+            } catch {
+                return;
+            }
+            const waiter = waiterMap.get(message.id);
+            if (waiter !== undefined) {
+                waiterMap.delete(message.id);
+                waiter(message);
+            }
+        });
+        socket.addEventListener('open', async () => {
+            let lastId = 0;
+            for (const step of stepList) {
+                if (isDone) {
+                    return;
+                }
+                if (step.waitMs !== undefined) {
+                    await new Promise((done) => {
+                        setTimeout(done, step.waitMs);
+                    });
+                    continue;
+                }
+                lastId += 1;
+                const id = lastId;
+                const message = await new Promise((done) => {
+                    waiterMap.set(id, done);
+                    sendCommand(socket, id, step.method, step.params ?? {});
+                });
+                if (message.error) {
+                    finish(
+                        new Error(`${step.method}: ${message.error.message}`),
+                    );
+                    return;
+                }
+                resultList.push(message.result ?? {});
+            }
+            finish(null, resultList);
+        });
+    });
+}
+
 /** `evaluateInTarget`, resolving the live app and the page for the caller. */
 export async function evaluateInApp(
     expression,

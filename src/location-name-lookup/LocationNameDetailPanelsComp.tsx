@@ -2,11 +2,17 @@
 // chunk carries the stylesheet rather than depending on the other one's import.
 import './LocationNameLookupPanelComp.scss';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import { showBibleKeyOption } from '../bible-lookup/BibleKeySelectionComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import {
+    createMouseEvent,
+    getMenuItemAnchor,
+} from '../context-menu/contextMenuEventHelpers';
+import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import OpenGraphPreviewButtonComp from '../graph-view/OpenGraphPreviewButtonComp';
 import { getCurrentLookupBibleItemController } from '../bible-reader/LookupBibleItemController';
 import { getIsAIEnabled } from '../helper/ai/aiHelpers';
@@ -16,13 +22,13 @@ import { useBibleViewTextScale } from '../helper/bibleViewHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
+import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import type { VerseDataType } from './bibleVerseHelpers';
 import {
     openVerseInBibleLookup,
-    shortToVerseCopyData,
-    toVerseFullTitle,
+    shortToBibleItem,
     useLookupVerseFontFamily,
 } from './bibleVerseHelpers';
 import type { DetailPanelType } from './detailPanelHelpers';
@@ -54,7 +60,6 @@ import {
     RenderVerseDetailComp,
 } from './RenderDetailBodyComp';
 
-const COPIED_FEEDBACK_MILLISECOND = 1600;
 const DETAIL_PANEL_WIDTH = 360;
 // `initialOffset` shifts a widget left and down from the top-right corner, so
 // starting a bit more than the lookup panel's own width out lands the first
@@ -65,47 +70,6 @@ const DETAIL_PANEL_BASE_OFFSET = 372;
 // Each further panel is nudged down-left from the last, so following a chain of
 // references does not bury them all on the same spot.
 const CASCADE_STEP = 28;
-
-function RenderCopyButtonComp({
-    onCopy,
-}: Readonly<{ onCopy: () => Promise<void> }>) {
-    const [isCopied, setIsCopied] = useState(false);
-    const timeoutIdRef = useRef<any>(null);
-    // The widget can be closed while the "Copied" tick is still showing.
-    useEffect(() => {
-        return () => {
-            if (timeoutIdRef.current !== null) {
-                clearTimeout(timeoutIdRef.current);
-                timeoutIdRef.current = null;
-            }
-        };
-    }, []);
-    const label = isCopied ? tran('Copied') : tran('Copy');
-    return (
-        <button
-            type="button"
-            className="floating-widget__button"
-            title={label}
-            aria-label={label}
-            onClick={() => {
-                onCopy()
-                    .then(() => {
-                        setIsCopied(true);
-                        if (timeoutIdRef.current !== null) {
-                            clearTimeout(timeoutIdRef.current);
-                        }
-                        timeoutIdRef.current = setTimeout(() => {
-                            setIsCopied(false);
-                            timeoutIdRef.current = null;
-                        }, COPIED_FEEDBACK_MILLISECOND);
-                    })
-                    .catch(handleError);
-            }}
-        >
-            <i className={`bi bi-${isCopied ? 'check2' : 'copy'}`} />
-        </button>
-    );
-}
 
 /**
  * Loads the verse into the reader's lookup input behind the panel.
@@ -214,7 +178,7 @@ function RenderAskAssistantButtonComp({
 }
 
 /**
- * The verse panel's `(KJV)`: pressed, it lists the other installed bibles,
+ * The verse panel's `KJV`: pressed, it lists the other installed bibles,
  * and the one picked opens as a panel of its own beside this one -- the
  * verse in two bibles is two panels, never this one re-read.
  */
@@ -250,9 +214,43 @@ function RenderVerseBibleKeyButtonComp({
                 ).catch(handleError);
             }}
         >
-            ({bibleKey})
+            {bibleKey}
         </button>
     );
+}
+
+/**
+ * A verse panel's Copy opens the copy menu a Bible view's copy button opens
+ * (2026-10-22, the user: _copy option in bible detail panel should just open
+ * the contextmenu of copy instead of do copying directly_): the title, the
+ * text, both, the keys, and More… for every format, each copying the WHOLE
+ * passage, every chapter of one crossing chapters under its own title.
+ */
+function showVerseCopyingMenu(
+    event: MouseEvent | KeyboardEvent,
+    bibleKey: string,
+    shortVerse: string,
+) {
+    // Read now: the `⋮` menu is gone by the time this one opens.
+    const anchor = getMenuItemAnchor(event);
+    Promise.all([
+        shortToBibleItem(bibleKey, shortVerse),
+        // Loaded at the press, like the widget's own menu.
+        import('../context-menu/appContextMenuHelpers'),
+    ])
+        .then(([bibleItem, { showAppContextMenu }]) => {
+            if (bibleItem === null) {
+                return;
+            }
+            showAppContextMenu(
+                createMouseEvent(
+                    anchor?.x ?? window.innerWidth / 2,
+                    anchor?.y ?? window.innerHeight / 4,
+                ),
+                genBibleItemCopyingContextMenu(bibleItem),
+            );
+        })
+        .catch(handleError);
 }
 
 function RenderDetailPanelComp({
@@ -319,47 +317,12 @@ function RenderDetailPanelComp({
         page: globalThis.location?.href ?? '',
     };
     const handleCopy = async () => {
-        if (panel.kind === 'verse' && verseData?.sectionList) {
-            // Across chapters the WHOLE passage is copied, every chapter under
-            // its own title — not just the chapters the panel shows yet.
-            const copyData = await shortToVerseCopyData(
-                verseData.bibleKey,
-                panel.target,
-            );
-            if (copyData !== null) {
-                const fullTitle = toVerseFullTitle(copyData);
-                await copyRecordToClipboard(
-                    `${fullTitle}\n${copyData.text}`,
-                    `<p><strong>${escapeHtml(fullTitle)}</strong></p>` +
-                        copyData.sectionList
-                            .map(({ title, text }) => {
-                                return (
-                                    `<p><strong>${escapeHtml(title)}</strong></p>` +
-                                    `<p>${escapeHtml(text)}</p>`
-                                );
-                            })
-                            .join(''),
-                );
-                return;
-            }
-        }
         if (panel.kind === 'verse') {
-            // The reference belongs with the text — a bare verse pasted into a
-            // sermon note with no "(KJV) Exodus 6:23" attached is not much use.
-            // The body stopped rendering that line once the title bar took the
-            // bible key, so this is where the two are joined back together.
-            const fullTitle =
-                verseData === null ? null : toVerseFullTitle(verseData);
-            const plainText =
-                verseData === null || fullTitle === null
-                    ? panel.target
-                    : `${fullTitle}\n${verseData.text}`;
+            // Not read (yet): the reference is all there is to copy. A read
+            // verse opens the copy menu instead (`showVerseCopyingMenu`).
             await copyRecordToClipboard(
-                plainText,
-                verseData === null || fullTitle === null
-                    ? `<p>${escapeHtml(plainText)}</p>`
-                    : `<p><strong>${escapeHtml(fullTitle)}</strong></p>` +
-                          `<p>${escapeHtml(verseData.text)}</p>`,
+                panel.target,
+                `<p>${escapeHtml(panel.target)}</p>`,
             );
             return;
         }
@@ -471,7 +434,11 @@ function RenderDetailPanelComp({
                 minWidth: 260,
                 minHeight: 180,
                 initialOffset: DETAIL_PANEL_BASE_OFFSET + index * CASCADE_STEP,
-                extraClassName: 'location-name-lookup-detail-widget',
+                extraClassName:
+                    'location-name-lookup-detail-widget' +
+                    (panel.kind === 'verse'
+                        ? ' location-name-lookup-detail-widget--verse'
+                        : ''),
                 // The host is a window singleton, so no modal is ever its
                 // ancestor — but the record it shows is opened from a name in
                 // verse text or from the lookup panel, and both of those live
@@ -480,23 +447,47 @@ function RenderDetailPanelComp({
                 isAboveModal: true,
             }}
             extraActionButtons={
-                <>
-                    {panel.kind === 'verse' ? null : (
-                        <LookupLangCodeButtonComp
-                            isDetailHeader
-                            onSelect={(langCode) => {
-                                openDetailPanel({
-                                    kind: panel.kind,
-                                    target: panel.target,
-                                    name: title,
-                                    langCode,
-                                });
-                            }}
-                        />
-                    )}
-                    <RenderCopyButtonComp onCopy={handleCopy} />
-                </>
+                panel.kind === 'verse' ? null : (
+                    <LookupLangCodeButtonComp
+                        isDetailHeader
+                        onSelect={(langCode) => {
+                            openDetailPanel({
+                                kind: panel.kind,
+                                target: panel.target,
+                                name: title,
+                                langCode,
+                            });
+                        }}
+                    />
+                )
             }
+            // Behind the `⋮` with the widget's collapse and full view, so the
+            // title bar keeps its width for the reference. A menu item has no
+            // tick to turn into, so the toast says the copy landed.
+            menuItems={[
+                {
+                    childBefore: genContextMenuItemIcon('copy'),
+                    menuElement: tran('Copy'),
+                    onSelect: (event) => {
+                        if (panel.kind === 'verse' && verseData !== null) {
+                            showVerseCopyingMenu(
+                                event,
+                                verseData.bibleKey,
+                                panel.target,
+                            );
+                            return;
+                        }
+                        handleCopy()
+                            .then(() => {
+                                showSimpleToast(
+                                    tran('Copy'),
+                                    tran('Text has been copied to clipboard'),
+                                );
+                            })
+                            .catch(handleError);
+                    },
+                },
+            ]}
         >
             {/* Tracks the bible text zoom. `zoom` rather than
                 `transform: scale` so the body keeps a real layout box and
@@ -526,6 +517,28 @@ function RenderDetailPanelComp({
                     />
                 ) : null}
             </div>
+            {/* A Bible view's to-the-top, and for a passage its auto-scroll
+                too (2026-10-22, the user: _quick scroll top and auto scroll in
+                bible floating panel as well_, then _add quick scroll top to
+                other floating panel_) -- a name or a place is a record to
+                look at, not text to read down. A direct child of the widget's
+                body because that is what scrolls, and the auto-scroll drives
+                its button's own parent. Pinned against the widget, not the
+                text, in the Bible view's stack 30px apart -- the up-arrow
+                alone takes the chevron's place -- lifted off the bottom
+                resize edge and moved in by `marginRight`, past the scrollbar
+                and the corner handle, so neither covers a control. A margin
+                rather than `right`: the auto-scroll's own ⋮ spreads the same
+                style and sets its own `right`, so the margin carries it
+                along. The body keeps room under the last line for them. */}
+            <ScrollingHandlerComp
+                style={{
+                    bottom: panel.kind === 'verse' ? '38px' : '8px',
+                    marginRight: '10px',
+                }}
+                playToBottomStyle={{ bottom: '8px', marginRight: '10px' }}
+                shouldShowPlayToBottom={panel.kind === 'verse'}
+            />
         </FloatingWidgetComp>
     );
 }

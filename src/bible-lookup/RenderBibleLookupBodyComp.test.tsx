@@ -137,6 +137,8 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
         return chapter ? `${book} ${chapter}` : `${book} `;
     },
     toTrailingReference: () => null,
+    // Read by the real `lookupEnterHelpers`, which is not mocked here.
+    parseChapterFromGuessing: async () => null,
 }));
 vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
     keyToBook: async (_bibleKey: string, bookKey: string) => {

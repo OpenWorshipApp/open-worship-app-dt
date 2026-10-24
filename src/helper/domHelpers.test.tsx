@@ -20,8 +20,25 @@ const {
     getFileMD5Mock,
     fsGetFileStampMock,
     sendDataSyncMock,
+    sendDataMock,
     listenForDataMock,
     unlockingMock,
+    agentFileHandlerMock,
+    agentScreenDescribeMock,
+    agentPresenterDescribeMock,
+    agentPresenterNumberMock,
+    agentBibleHandlerMock,
+    agentBibleListHandlerMock,
+    agentNoteHandlerMock,
+    agentUndoHandlerMock,
+    agentBibleXmlHandlerMock,
+    agentBibleFindHandlerMock,
+    agentLookupHandlerMock,
+    agentResourcesHandlerMock,
+    agentBibleSuggestHandlerMock,
+    agentPresentingFlowHandlerMock,
+    agentMediaHandlerMock,
+    agentForegroundHandlerMock,
     openCalls,
     listenerRegistry,
 } = vi.hoisted(() => ({
@@ -53,9 +70,12 @@ const {
         } | null;
     }),
     sendDataSyncMock: vi.fn(),
-    listenForDataMock: vi.fn((channel: string, callback: () => void) => {
-        listenerRegistry[channel] = callback;
-    }),
+    sendDataMock: vi.fn(),
+    listenForDataMock: vi.fn(
+        (channel: string, callback: (...args: any[]) => void) => {
+            listenerRegistry[channel] = callback;
+        },
+    ),
     unlockingMock: vi.fn(
         async (_key: string, callback: () => Promise<unknown>) => {
             return await callback();
@@ -66,7 +86,68 @@ const {
         target?: string;
         features?: string;
     }>,
-    listenerRegistry: {} as Record<string, () => void>,
+    listenerRegistry: {} as Record<string, (...args: any[]) => void>,
+    agentFileHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'file',
+        token: detail?.token,
+    })),
+    agentScreenDescribeMock: vi.fn((_options?: unknown) => ({
+        isAuthoritative: false,
+        screens: [] as { id: number }[],
+    })),
+    agentPresenterDescribeMock: vi.fn(async () => ({ kind: 'presenter' })),
+    agentPresenterNumberMock: vi.fn(async (screens: unknown) => ({
+        screenSummary: screens,
+        numbered: true,
+    })),
+    agentBibleHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'bible',
+        token: detail?.token,
+    })),
+    agentBibleListHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'bible-item',
+        token: detail?.token,
+    })),
+    agentNoteHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'note',
+        token: detail?.token,
+    })),
+    agentUndoHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'undo',
+        token: detail?.token,
+    })),
+    agentBibleXmlHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'bible-xml',
+        token: detail?.token,
+    })),
+    agentBibleFindHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'bible-find',
+        token: detail?.token,
+    })),
+    agentLookupHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'lookup',
+        token: detail?.token,
+    })),
+    agentResourcesHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'resources',
+        token: detail?.token,
+    })),
+    agentBibleSuggestHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'bible-suggest',
+        token: detail?.token,
+    })),
+    agentPresentingFlowHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'presenting-flow',
+        token: detail?.token,
+    })),
+    agentMediaHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'media',
+        token: detail?.token,
+    })),
+    agentForegroundHandlerMock: vi.fn(async (detail: any) => ({
+        kind: 'foreground',
+        token: detail?.token,
+    })),
 }));
 
 vi.mock('../context-menu/contextMenuIconHelpers', () => ({
@@ -178,6 +259,7 @@ vi.mock('../server/appProvider', () => ({
         chatbotHomePage: 'https://app.local/chatbot',
         messageUtils: {
             sendDataSync: sendDataSyncMock,
+            sendData: sendDataMock,
             listenForData: listenForDataMock,
         },
         // `appHooks` reads this at MODULE LOAD to pick between its dev-only
@@ -203,11 +285,61 @@ vi.mock('../server/fileHelpers', () => ({
     getFileMD5: getFileMD5Mock,
 }));
 
+vi.mock('./agentFileHelpers', () => ({
+    handleAgentFileRequest: agentFileHandlerMock,
+}));
+vi.mock('./agentScreenHelpers', () => ({
+    describeScreensForAgent: agentScreenDescribeMock,
+}));
+vi.mock('./agentPresenterHelpers', () => ({
+    describePresenterForAgent: agentPresenterDescribeMock,
+    numberScreenSlidesForAgent: agentPresenterNumberMock,
+}));
+vi.mock('./agentBibleHelpers', () => ({
+    handleAgentBibleRequest: agentBibleHandlerMock,
+}));
+vi.mock('./agentBibleListHelpers', () => ({
+    handleAgentBibleListRequest: agentBibleListHandlerMock,
+}));
+vi.mock('./agentNoteHelpers', () => ({
+    handleAgentNoteRequest: agentNoteHandlerMock,
+}));
+vi.mock('./agentBackupHelpers', () => ({
+    handleAgentUndoRequest: agentUndoHandlerMock,
+}));
+vi.mock('./agentBibleXMLHelpers', () => ({
+    handleAgentBibleXMLRequest: agentBibleXmlHandlerMock,
+}));
+vi.mock('./agentBibleFindHelpers', () => ({
+    handleAgentBibleFindRequest: agentBibleFindHandlerMock,
+}));
+vi.mock('./agentLookupHelpers', () => ({
+    handleAgentLookupRequest: agentLookupHandlerMock,
+}));
+vi.mock('./agentResourcesHelpers', () => ({
+    handleAgentResourcesRequest: agentResourcesHandlerMock,
+}));
+vi.mock('./agentBibleSuggestHelpers', () => ({
+    handleAgentBibleSuggestRequest: agentBibleSuggestHandlerMock,
+}));
+vi.mock('./agentPresentingFlowHelpers', () => ({
+    handleAgentPresentingFlowRequest: agentPresentingFlowHandlerMock,
+}));
+vi.mock('./agentMediaFileHelpers', () => ({
+    handleAgentMediaFileRequest: agentMediaHandlerMock,
+}));
+vi.mock('./agentForegroundHelpers', () => ({
+    handleAgentForegroundRequest: agentForegroundHandlerMock,
+}));
+
 import {
     HoverMotionHandler,
     InputContextMenuHandler,
     addDomChangeEventListener,
+    checkIsDisabled,
     checkIsZoomed,
+    escapeSelectorValue,
+    findVerticalScrollingParent,
     getParamFileFullName,
     getParamIdNum,
     handleActiveSelectedElementScrolling,
@@ -218,6 +350,9 @@ import {
     openPopupWindow,
     removeDomChangeEventListener,
     removeDomTitle,
+    setParamFileFullName,
+    setParamIdNum,
+    setParamKeyValue,
 } from './domHelpers';
 import {
     captureWebScreenShot,
@@ -326,6 +461,75 @@ describe('domHelpers', () => {
         expect(handle).toHaveBeenCalledWith(element);
     });
 
+    test('ignores unrelated mutations and finds the actual scroll container', () => {
+        const fullView = document.createElement('div');
+        fullView.classList.add('app-full-view');
+        handleFullWidgetView(fullView, 'attr-modified');
+        handleFullWidgetView(fullView, 'attr-modified');
+        expect(keyboardRegisterMock).toHaveBeenCalledTimes(1);
+        fullView.classList.remove('app-full-view');
+        handleFullWidgetView(fullView, 'attr-modified');
+        expect(keyboardUnregisterMock).toHaveBeenCalledWith([
+            'escape-listener',
+        ]);
+        handleFullWidgetView(
+            document.createTextNode('not an element'),
+            'added',
+        );
+
+        const action = vi.fn();
+        const ordinary = document.createElement('div');
+        ordinary.classList.add('target-class');
+        handleClassNameAction('target-class', action, ordinary, 'added');
+        expect(action).not.toHaveBeenCalled();
+        ordinary.classList.remove('target-class');
+        handleClassNameAction(
+            'target-class',
+            action,
+            ordinary,
+            'attr-modified',
+        );
+        expect(action).not.toHaveBeenCalled();
+
+        const target = document.createElement('button');
+        const disabledAncestor = document.createElement('div');
+        disabledAncestor.classList.add('is-disabled');
+        disabledAncestor.append(target);
+        expect(checkIsDisabled(target)).toBe(true);
+        handleActiveSelectedElementScrolling(target);
+        expect(bringDomToNearestViewMock).not.toHaveBeenCalled();
+
+        const outer = document.createElement('div');
+        const inner = document.createElement('div');
+        const leaf = document.createElement('span');
+        outer.style.overflowY = 'auto';
+        Object.defineProperties(outer, {
+            scrollHeight: { configurable: true, value: 300 },
+            clientHeight: { configurable: true, value: 100 },
+        });
+        inner.append(leaf);
+        outer.append(inner);
+        document.body.append(outer);
+        expect(findVerticalScrollingParent(leaf)).toBe(outer);
+        outer.style.overflowY = 'hidden';
+        expect(getComputedStyle(outer).overflowY).toBe('hidden');
+        expect(findVerticalScrollingParent(leaf)).toBeNull();
+        outer.remove();
+
+        expect(escapeSelectorValue('a b')).toBe('a b');
+        history.replaceState({}, '', '/preview?keep=one');
+        expect(setParamKeyValue('/preview?keep=one', 'name', 'two words')).toBe(
+            '/preview?keep=one&name=two+words',
+        );
+        expect(setParamIdNum('https://app.local/open', 42)).toBe(
+            'https://app.local/open?id=42',
+        );
+        expect(setParamFileFullName('/open', 'song.owa')).toBe(
+            '/open?file=song.owa',
+        );
+        expect(getParamIdNum('/open?id=not-a-number')).toBeNull();
+    });
+
     test('scrolls selected elements to the center or nearest view as needed', () => {
         const target = document.createElement('div');
         target.dataset.scrollContainerSelector = '#scroll-container';
@@ -364,9 +568,18 @@ describe('domHelpers', () => {
         expect(panel.classList.contains('auto-hide-show')).toBe(true);
 
         panel.dispatchEvent(new Event('mouseleave'));
+        vi.advanceTimersByTime(1000);
+        panel.dispatchEvent(new Event('mouseenter'));
+        vi.advanceTimersByTime(1500);
+        expect(panel.classList.contains('auto-hide-show')).toBe(true);
+        panel.dispatchEvent(new Event('mouseleave'));
         vi.advanceTimersByTime(2000);
         expect(panel.classList.contains('auto-hide-show')).toBe(false);
         expect(clearButton?.style.display).toBe('block');
+
+        const detached = document.createElement('div');
+        handleAutoHide(detached);
+        expect(detached.classList.contains('app-auto-hide')).toBe(false);
     });
 
     test('tracks hover-motion widths and input context menus', async () => {
@@ -403,6 +616,15 @@ describe('domHelpers', () => {
         expect(pasteTextToInputMock).toHaveBeenCalledWith(input, '');
         expect(genContextMenuItemIconMock).toHaveBeenCalledWith('clipboard');
         expect(genContextMenuItemIconMock).toHaveBeenCalledWith('x');
+
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: { readText: vi.fn(async () => '') },
+        });
+        const emptyInput = document.createElement('input');
+        inputHandler.init(emptyInput);
+        await emptyInput.oncontextmenu?.({} as PointerEvent);
+        expect(showAppContextMenuMock).toHaveBeenCalledTimes(1);
     });
 
     test('removes titles, checks zoom state, and opens popup windows', async () => {
@@ -459,6 +681,125 @@ describe('domHelpers', () => {
         expect(openCalls[0]?.url).toContain(
             'https://app.local/chatbot?uuid=chatbot',
         );
+    });
+
+    test('relays agent requests and guide events with their results and tokens', async () => {
+        const request = async (eventName: string, detail: unknown) => {
+            const answer = new Promise<CustomEvent>((resolve) => {
+                document.addEventListener(
+                    `${eventName}-answer`,
+                    (event) => resolve(event as CustomEvent),
+                    { once: true },
+                );
+            });
+            document.dispatchEvent(new CustomEvent(eventName, { detail }));
+            return (await answer).detail;
+        };
+
+        expect(await request('owa-agent-file', { token: 11 })).toEqual({
+            token: 11,
+            result: { kind: 'file', token: 11 },
+        });
+        agentFileHandlerMock.mockRejectedValueOnce(new Error('bad file'));
+        expect(await request('owa-agent-file', { token: 12 })).toEqual({
+            token: 12,
+            result: { isError: true, reason: 'bad file' },
+        });
+        expect(await request('owa-agent-screens', { token: 13 })).toEqual({
+            token: 13,
+            result: { isAuthoritative: false, screens: [] },
+        });
+
+        agentScreenDescribeMock.mockReturnValueOnce({
+            isAuthoritative: true,
+            screens: [{ id: 4 }],
+        });
+        expect(await request('owa-agent-screens', { token: 14 })).toEqual({
+            token: 14,
+            result: {
+                screenSummary: { isAuthoritative: true, screens: [{ id: 4 }] },
+                numbered: true,
+            },
+        });
+        expect(agentPresenterNumberMock).toHaveBeenCalledTimes(1);
+        expect(await request('owa-agent-presenter', { token: 15 })).toEqual({
+            token: 15,
+            result: { kind: 'presenter' },
+        });
+        expect(await request('owa-agent-bible', { token: 16 })).toEqual({
+            token: 16,
+            result: { kind: 'bible', token: 16 },
+        });
+        expect(await request('owa-agent-foreground', { token: 17 })).toEqual({
+            token: 17,
+            result: { kind: 'foreground', token: 17 },
+        });
+
+        const domains = [
+            ['bible-item', { kind: 'bible-item', token: 20 }],
+            ['note', { kind: 'note', token: 21 }],
+            ['undo', { kind: 'undo', token: 22 }],
+            ['bible-xml', { kind: 'bible-xml', token: 23 }],
+            ['bible-find', { kind: 'bible-find', token: 24 }],
+            ['lookup', { kind: 'lookup', token: 25 }],
+            ['resources', { kind: 'resources', token: 26 }],
+            ['bible-suggest', { kind: 'bible-suggest', token: 27 }],
+            ['presenting-flow', { kind: 'presenting-flow', token: 28 }],
+            ['media', { kind: 'media', token: 29 }],
+        ] as const;
+        for (const [domain, result] of domains) {
+            expect(
+                await request('owa-agent-data', {
+                    domain,
+                    token: result.token,
+                }),
+            ).toEqual({ token: result.token, result });
+        }
+        expect(
+            await request('owa-agent-data', { domain: 'constructor' }),
+        ).toEqual({
+            result: {
+                isError: true,
+                reason: 'Unknown kind of data "constructor".',
+            },
+        });
+
+        document.dispatchEvent(
+            new CustomEvent('owa-guide-running', { detail: { isRunning: 1 } }),
+        );
+        expect(sendDataMock).toHaveBeenCalledWith('all:app:guide-running', {
+            isRunning: false,
+        });
+        document.dispatchEvent(
+            new CustomEvent('owa-guide-running', {
+                detail: { isRunning: true },
+            }),
+        );
+        expect(sendDataMock).toHaveBeenLastCalledWith('all:app:guide-running', {
+            isRunning: true,
+        });
+        const help = { token: 31, step: 'open settings' };
+        document.dispatchEvent(
+            new CustomEvent('owa-guide-help', { detail: help }),
+        );
+        expect(sendDataMock).toHaveBeenLastCalledWith(
+            'all:app:guide-help',
+            help,
+        );
+
+        let helpAnswer: unknown;
+        document.addEventListener(
+            'owa-guide-help-answer',
+            (event) => {
+                helpAnswer = (event as CustomEvent).detail;
+            },
+            { once: true },
+        );
+        listenerRegistry['main:app:guide-help-answer']?.(null, {
+            token: 31,
+            text: 'Select Settings',
+        });
+        expect(helpAnswer).toEqual({ token: 31, text: 'Select Settings' });
     });
 
     test('registers the about page listener and highlights newly added elements', async () => {

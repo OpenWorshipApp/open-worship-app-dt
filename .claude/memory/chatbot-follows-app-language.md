@@ -2,7 +2,10 @@
 name: chatbot-follows-app-language
 description: "The 🤖 answers in the app's language (Khmer first); every language is data in src/lang/data/<code>/assistant.json; the prompt is per APP language, the question's language rides in the user turn"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: cceb2542-65df-4852-b7d7-51e364f85d02
+  modified: 2026-10-20T15:41:18.423Z
 ---
 
 Since 2026-10-16 the help window speaks the language the app is SHOWN in, at the
@@ -79,6 +82,13 @@ stays English-only" rule.
   `verseAskExcludeWords`, `removalWords`). Measure a language with the
   elder-persona run (`.claude/skills/owa-enhance-chatbot/scripts/elder-run.mjs`),
   counting every English word an answer SHOWS, not only the window's.
+- **Auto ranks the language's models first when the app is not English**
+  (2026-10-20, the user's order: `gemma4:cloud` from any assistant → Free's
+  Nemotron Super VL → `gemma4:31b` → `gemma4:12b` → the rest of Free):
+  `LANGUAGE_TIER_LIST` / `languageModelsFirst` in
+  `src/chatbot/autoAssistantHelpers.ts`, defaulted from `getAppLangCode()`
+  in `autoAssistantSourceHelpers.withLanguageRank`. Gemma 4 supports Khmer
+  well; setbacks/busy/an unloaded LM Studio still outrank a tier.
 
 **Why:** an English sentence is a dead end for the person this app is for.
 

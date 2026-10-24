@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 78a2ea9b-7bf1-4112-a236-0d3119ccf1c3
-  modified: 2026-10-12T01:26:30.549Z
+  modified: 2026-10-23T02:19:41.720Z
 ---
 
 When verifying a change against the running dev app via the `owa-devtools` MCP,
@@ -61,6 +61,14 @@ font row):
   function` -- twice, a _Reload is needed_ and then a _Something Went
   Wrong_ dialog. Cheapest prevention: while the dev app is up, never send
   two `Edit`s to ONE file in the same batch.
+- **The served module new, the PAGE still on the old one** (2026-10-22,
+  `owa_find_verse`'s passage join). A worker the page imports LAZILY
+  (`agentBibleFindHelpers` through the `owa-agent-data` relay) kept the
+  pure module it had pulled in before the edit: `curl` of the plain path
+  had the new function, a node replay of it on the real database gave the
+  new answer, and the tool still answered the old one -- until **View >
+  Reload** of that window (`owa_menu`). A tool whose code lives in the
+  renderer is checked live only after a reload of the window it runs in.
 
 **How to apply:** before diagnosing a "shortcut is dead" symptom, check
 `performance.getEntriesByType('navigation')` / `performance.now()` for a recent

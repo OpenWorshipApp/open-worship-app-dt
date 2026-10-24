@@ -528,13 +528,35 @@ export const DOM_MATCH_RUNTIME = `
         }
         const stem = withoutExtension(bare);
         const name = withoutStatus(bare);
-        return labelPartsOf(element).some((part) => {
+        const parts = labelPartsOf(element);
+        const isPartNamed = parts.some((part) => {
             const barePart = normaliseLabelPart(part);
             return barePart === bare ||
                 (stem.length > 0 && withoutExtension(barePart) === stem) ||
                 (name.length > 0 && withoutStatus(barePart) === name);
         });
+        if (isPartNamed) {
+            return true;
+        }
+        // The label every tool HANDS OUT is the parts joined, and the press
+        // was refused by exactly those words: the Mini Screen's clear
+        // buttons draw "FG" beside the title "Clear Foreground [F10]", the
+        // refusal said to retry with "FG Clear Foreground [F10]", and the
+        // retry was refused the same way (2026-10-22, DD-12).
+        const shown = shownLabelOf(element);
+        if (parts.length > 1 && normaliseLabelPart(shown) === bare) {
+            return true;
+        }
+        // And a long one is handed out CUT -- 80 characters in describe, 60
+        // in nearMisses -- so a Bible Find result could not be dragged by
+        // the very words its refusal named (2026-10-22, DD-05). That many
+        // characters from the start of the label is its name, not a guess.
+        const asked = String(needle).replace(/\\s+/g, ' ').trim().toLowerCase();
+        return asked.length >= HANDED_OUT_CUT_MIN &&
+            shown.length > asked.length &&
+            shown.toLowerCase().startsWith(asked);
     };
+    const HANDED_OUT_CUT_MIN = 58;
 
     // What a caller is SHOWN, as against what is matched on. A title that
     // carries its shortcut beside an aria-label that does not -- "Clear All
@@ -2324,7 +2346,12 @@ export function genPressKeyExpression(
  * A drop lands on what is painted at the point, found by `elementFromPoint`,
  * so a row's own handler gets it; everything bubbles. `accepted` is whether
  * any target cancelled the dragover, which is the one thing a drop target
- * says about itself before the drop.
+ * says about itself before the drop -- and, as in the browser, the drop is
+ * sent only then (a `dragleave` otherwise), so `dropped` says it reached a
+ * handler. It used to be the drop's own `defaultPrevented`, which says
+ * nothing of whether the handler acted: the Mini Screen's applies a colour
+ * and never cancels the drop, and a drop that coloured both screens read
+ * `dropped: false` (robot run 20261024-1008, DD-12).
  */
 export function genDragExpression(
   fromFinds,
@@ -2407,7 +2434,6 @@ export function genDragExpression(
                 y: Math.round(rect.top + rect.height / 2),
             };
         };
-        const from = centreOf(dragged);
         // \`after\` is the top band of the NEXT row: this app's rows read a
         // Ctrl drop as "put it at my position" top edge or bottom alike, so
         // the row's own bottom band would land the thing BEFORE it. With no
@@ -2416,30 +2442,100 @@ export function genDragExpression(
             target.element;
         const nextRow = place === 'after' ? targetRow.nextElementSibling : null;
         const landing = nextRow ?? target.element;
-        const rect = landing.getBoundingClientRect();
-        const centre = centreOf(landing);
-        const to = {
-            x: centre.x,
-            y: place === 'on'
-                ? centre.y
-                : nextRow !== null || place === 'before'
-                    ? Math.round(rect.top + 2)
-                    : Math.round(rect.bottom - 2),
+        const aimAt = () => {
+            const rect = landing.getBoundingClientRect();
+            const centre = centreOf(landing);
+            return {
+                x: centre.x,
+                y: place === 'on'
+                    ? centre.y
+                    : nextRow !== null || place === 'before'
+                        ? Math.round(rect.top + 2)
+                        : Math.round(rect.bottom - 2),
+            };
         };
+        // The drop lands on what the window PAINTS there. Scrolled only to
+        // the nearest edge, a list's first row can sit under its own sticky
+        // header, and a drop "on" it went to the list container instead and
+        // still read \`dropped\` (a Bibles list row, 2026-10-22). Centred, it
+        // is in view; still covered, the answer says so.
+        const checkIsOnLanding = (point) => {
+            const hit = document.elementFromPoint(point.x, point.y);
+            return hit === null || hit === landing || landing.contains(hit);
+        };
+        let to = aimAt();
+        if (!checkIsOnLanding(to)) {
+            landing.scrollIntoView({ block: 'center', inline: 'nearest' });
+            to = aimAt();
+        }
+        if (!checkIsOnLanding(to)) {
+            return {
+                dragged: null,
+                reason:
+                    'something else is drawn over that control where the ' +
+                    'drop would land -- open or scroll to it first',
+                match: dm.describe(target.element),
+                coveredBy: dm.describe(document.elementFromPoint(to.x, to.y)),
+            };
+        }
+        const from = centreOf(dragged);
+        // What dragstart writes into. Chromium seals a drag's data the
+        // moment dragstart RETURNS and empties it again once the drop's
+        // handlers have run, so a source that awaits before \`setData\`
+        // sends nothing and a target that awaits before \`getData\` reads
+        // nothing. An unsealed synthetic transfer let both pass here while
+        // the real mouse failed (a Bible history row, 2026-10-22), so the
+        // drop gets a COPY taken at dragstart's return, cleared after.
         const dataTransfer = new DataTransfer();
+        let dropTransfer = dataTransfer;
         const send = (element, type, point) => {
             const event = new DragEvent(type, {
                 bubbles: true, cancelable: true, composed: true,
                 clientX: point.x, clientY: point.y,
                 ctrlKey: place !== 'on',
-                dataTransfer: dataTransfer,
+                dataTransfer: type === 'dragstart' ? dataTransfer : dropTransfer,
             });
             element.dispatchEvent(event);
             return event.defaultPrevented;
         };
+        // A mouse comes onto the thing and presses it before the browser
+        // starts a drag, and a source may get ready on either: a Bible
+        // history entry resolves its passage then, because what dragstart
+        // writes has to be ready the moment it fires. The browser cancels
+        // the pointer once the drag takes it over.
+        const pressedAt = document.elementFromPoint(from.x, from.y);
+        const pressTarget = pressedAt !== null && dragged.contains(pressedAt)
+            ? pressedAt
+            : dragged;
+        const point = (type, init) => {
+            const isPointer = type.startsWith('pointer') &&
+                typeof PointerEvent === 'function';
+            const Event = isPointer ? PointerEvent : MouseEvent;
+            pressTarget.dispatchEvent(new Event(type, Object.assign({
+                bubbles: true, cancelable: true, composed: true,
+                clientX: from.x, clientY: from.y,
+                pointerId: 1, pointerType: 'mouse', isPrimary: true,
+                button: 0, buttons: 1,
+            }, init)));
+        };
         const layersBefore = layers.snapshot();
+        point('pointerover', { buttons: 0 });
+        point('pointerenter', { bubbles: false, buttons: 0 });
+        point('pointerdown', {});
+        point('mousedown', {});
+        await new Promise((resolve) => {
+            setTimeout(resolve, Math.min(${settleMs}, 150));
+        });
         send(dragged, 'dragstart', from);
-        if (dataTransfer.types.length === 0) {
+        dropTransfer = new DataTransfer();
+        for (const type of [...dataTransfer.types]) {
+            if (type !== 'Files') {
+                dropTransfer.setData(type, dataTransfer.getData(type));
+            }
+        }
+        dropTransfer.effectAllowed = dataTransfer.effectAllowed;
+        point('pointercancel', { buttons: 0 });
+        if (dropTransfer.types.length === 0) {
             send(dragged, 'dragend', from);
             return {
                 dragged: null,
@@ -2449,10 +2545,29 @@ export function genDragExpression(
                 match: dm.describe(dragged),
             };
         }
-        const at = document.elementFromPoint(to.x, to.y) ?? landing;
+        const carried = [...dropTransfer.types];
+        // A slide's canvas draws inside a SHADOW root, and the document's
+        // hit test stops at its host: a drop sent there never reached the
+        // handlers inside, where the browser's own drop goes (2026-10-22,
+        // DD-13 -- a colour dragged onto the Slide Editor read nothing).
+        let at = document.elementFromPoint(to.x, to.y);
+        while (at !== null && at.shadowRoot) {
+            const inner =
+                at.shadowRoot.elementFromPoint?.(to.x, to.y) ?? null;
+            if (inner === null || inner === at) {
+                break;
+            }
+            at = inner;
+        }
+        at = at ?? landing;
         send(at, 'dragenter', to);
         const accepted = send(at, 'dragover', to);
-        const dropped = send(at, 'drop', to);
+        // Chromium drops only on a control that took the dragover; with
+        // none the drag leaves. A handler acting on a drop it never accepted
+        // would work here and never under a mouse.
+        const dropped = accepted;
+        send(at, accepted ? 'drop' : 'dragleave', to);
+        dropTransfer.clearData?.();
         send(dragged, 'dragend', from);
         await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
         const opened = layers.findOpened(layersBefore);
@@ -2460,15 +2575,154 @@ export function genDragExpression(
             dragged: dm.describe(dragged),
             onto: dm.describe(target.element),
             place,
-            carried: [...dataTransfer.types],
+            carried: [...new Set(carried)],
             accepted,
             dropped,
             opened,
-            unverified: accepted || dropped
+            unverified: dropped
                 ? undefined
                 : 'Nothing under that point took the drop. Check the thing ' +
                     'you meant to change -- owa_app_state, owa_list_ui, a ' +
                     'data tool\\'s list -- before saying it worked.',
+        };
+    })()`;
+}
+
+/**
+ * Where to drop files on a control found by its words, and a watch on what
+ * the app does with them -- the page half of `owa_drop_files` (2026-10-22).
+ *
+ * The drop itself cannot be made in the page: a `File` built by a script has
+ * no path, and every list here copies a dropped file FROM its path. The
+ * server sends it through CDP's `Input.dispatchDragEvent`, the browser's own
+ * drop with real files on disk, at the point this answers. So this finds the
+ * control, brings it into view, and arms one listener per kind on the window
+ * in the CAPTURE phase -- ahead of every handler, including ones that stop
+ * the event before it bubbles up. `accepted` is the dragover's
+ * `defaultPrevented`, read a task later, after those handlers; `dropped` is a
+ * drop arriving once the drag was accepted -- one the browser delivered to a
+ * handler. Not the drop's own `defaultPrevented`: a handler can act and never
+ * cancel it (the Mini Screen's, robot run 20261024-1008, DD-12).
+ */
+export function genDropAimExpression(
+  finds,
+  { timeoutMs = 1500, guard = null } = {},
+) {
+  return `(async () => {
+        const dm = ${DOM_MATCH_RUNTIME};
+        const guard = ${JSON.stringify(guard)};
+        const pressGuard = ${guard === null ? 'null' : PRESS_GUARD_SOURCE};
+        const finds = ${JSON.stringify(finds)};
+        const found = await dm.waitForBest(
+            finds, ${timeoutMs}, { preferPressSafe: true },
+        );
+        if (found.element === null) {
+            return {
+                dropped: null,
+                reason: 'nothing on screen to drop on',
+                nearMisses: found.nearMisses,
+            };
+        }
+        if (found.isPressSafe !== true) {
+            return {
+                dropped: null,
+                reason:
+                    'the closest control on screen is not called that -- ' +
+                    'retry with the label under nearest.',
+                nearest: dm.describe(found.element),
+                nearMisses: dm.nearMisses(finds),
+            };
+        }
+        if (pressGuard !== null) {
+            const refusal = pressGuard.findPressRefusal(
+                found.element, guard.rule,
+            );
+            if (refusal !== null) {
+                return Object.assign(
+                    { dropped: null, match: dm.describe(found.element) },
+                    refusal,
+                );
+            }
+        }
+        const aimAt = () => {
+            const rect = found.element.getBoundingClientRect();
+            return {
+                x: Math.round(rect.left + rect.width / 2),
+                y: Math.round(rect.top + rect.height / 2),
+            };
+        };
+        // The browser drops on what it PAINTS at the point: a control under
+        // a sticky header or a popup is not where the files would go.
+        const checkIsOnTarget = (at) => {
+            const hit = document.elementFromPoint(at.x, at.y);
+            return hit === null || hit === found.element ||
+                found.element.contains(hit);
+        };
+        found.element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        let point = aimAt();
+        if (!checkIsOnTarget(point)) {
+            found.element.scrollIntoView({ block: 'center', inline: 'nearest' });
+            point = aimAt();
+        }
+        if (!checkIsOnTarget(point)) {
+            return {
+                dropped: null,
+                reason:
+                    'something else is drawn over that control where the ' +
+                    'files would land -- open or scroll to it first',
+                match: dm.describe(found.element),
+                coveredBy: dm.describe(document.elementFromPoint(point.x, point.y)),
+            };
+        }
+        const old = window.__owaDropWatch;
+        if (old !== undefined) {
+            old.stop();
+        }
+        const watch = { accepted: false, dropped: false, landedOn: null };
+        const onOver = (event) => {
+            setTimeout(() => {
+                watch.accepted = watch.accepted || event.defaultPrevented;
+            }, 0);
+        };
+        const onDrop = (event) => {
+            const landed = event.target instanceof Element
+                ? event.target
+                : null;
+            // After the dragover's own read, queued before this one.
+            setTimeout(() => {
+                watch.dropped = watch.accepted;
+                watch.landedOn = landed === null ? null : dm.describe(landed);
+            }, 0);
+        };
+        window.addEventListener('dragover', onOver, true);
+        window.addEventListener('drop', onDrop, true);
+        const timeoutId = setTimeout(() => { watch.stop(); }, 20000);
+        watch.stop = () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener('dragover', onOver, true);
+            window.removeEventListener('drop', onDrop, true);
+            if (window.__owaDropWatch === watch) {
+                delete window.__owaDropWatch;
+            }
+        };
+        window.__owaDropWatch = watch;
+        return { point, onto: dm.describe(found.element) };
+    })()`;
+}
+
+/** The watch `genDropAimExpression` armed, read once and taken down. */
+export function genDropReadExpression({ settleMs = 600 } = {}) {
+  return `(async () => {
+        await new Promise((resolve) => { setTimeout(resolve, ${settleMs}); });
+        const watch = window.__owaDropWatch;
+        if (watch === undefined) {
+            return { accepted: false, dropped: false, landedOn: null };
+        }
+        watch.stop();
+        return {
+            accepted: watch.accepted,
+            dropped: watch.dropped,
+            landedOn: watch.landedOn,
         };
     })()`;
 }

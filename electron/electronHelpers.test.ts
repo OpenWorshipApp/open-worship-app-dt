@@ -790,7 +790,10 @@ describe('electronHelpers', () => {
             expect(chatbotWin.setParentWindow).toHaveBeenCalledTimes(1);
         });
 
-        test('elsewhere, minimises the owned window without detaching it', () => {
+        // Reported on Windows with a picture: minimising the owned window drew
+        // its caption strip (restore / maximise / close) at the bottom-left of
+        // the owner window's content instead of going to the taskbar.
+        test('on Windows, detaches first so the minimise goes to the taskbar, and rejoins on restore', () => {
             const { guidedWin, chatbotWin } = genWindows({
                 x: 100,
                 y: 100,
@@ -799,6 +802,32 @@ describe('electronHelpers', () => {
             });
 
             withPlatform('win32', () => {
+                setGuideRunning(guidedWin as any, true);
+            });
+            expect(chatbotWin.setParentWindow).toHaveBeenCalledWith(null);
+            expect(
+                chatbotWin.setParentWindow.mock.invocationCallOrder[0],
+            ).toBeLessThan(chatbotWin.minimize.mock.invocationCallOrder[0]);
+
+            setGuideRunning(guidedWin as any, false);
+            expect(chatbotWin.restore).toHaveBeenCalledTimes(1);
+            expect(chatbotWin.setParentWindow).toHaveBeenCalledTimes(1);
+
+            fireOn(chatbotWin, 'restore');
+            expect(chatbotWin.setParentWindow).toHaveBeenLastCalledWith(
+                guidedWin,
+            );
+        });
+
+        test('on Linux, minimises the owned window without detaching it', () => {
+            const { guidedWin, chatbotWin } = genWindows({
+                x: 100,
+                y: 100,
+                width: 500,
+                height: 540,
+            });
+
+            withPlatform('linux', () => {
                 setGuideRunning(guidedWin as any, true);
             });
             expect(chatbotWin.minimize).toHaveBeenCalledTimes(1);

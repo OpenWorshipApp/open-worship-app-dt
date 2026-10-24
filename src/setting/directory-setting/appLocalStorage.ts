@@ -1,3 +1,4 @@
+import { checkIsDataDirSettingName } from '../../../electron/dataDirSettingProtocol';
 import { handleError } from '../../helper/errorHelpers';
 import CacheManager from '../../others/CacheManager';
 import appProvider from '../../server/appProvider';
@@ -29,6 +30,12 @@ export const SELECTED_PARENT_DIR_ID_SETTING_NAME = 'selected-parent-dir-id';
 export const DATA_DIR_MOVE_PENDING_SETTING_NAME = 'data-dir-move-pending';
 // Its outcome, from that start to the same window once it has rendered.
 export const DATA_DIR_MOVE_RESULT_SESSION_NAME = 'data-dir-move-result';
+// Said in a window when the move question is put away for 30 days or brought
+// back (`dataDirMoveHelpers.ts`), for the card that says the same thing
+// (`DesktopDataDirCardComp`). Here because that card is in every window's
+// first paint and must not import the move helpers to know the name.
+export const DATA_DIR_MOVE_HIDE_CHANGED_EVENT_NAME =
+    'data-dir-move-hide-changed';
 
 export const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
 export const TMP_FILES_FOLDER_NAME = 'tmp-files';
@@ -61,6 +68,9 @@ const absentCache = new CacheManager<boolean>(10);
 // The chosen data folder when it was NOT there as this window started, for the
 // start-up check to name (`useCheckSetting`). Per window, like the rest here.
 let missingParentDirPath: string | null = null;
+// Whether `defaultStorageDirPath` is the app's own folder: no data folder is
+// chosen, or the chosen one is not there.
+let isOnOwnFolder = false;
 // Once per window: the marker costs a stat, and this getter runs every time
 // its 10-second cache lapses.
 let checkedMarkerDirPath: string | null = null;
@@ -122,6 +132,7 @@ class AppLocalStorage {
             return cachedDefaultStorage;
         }
         let selectedParentDir = resolveSelectedParentDir();
+        isOnOwnFolder = selectedParentDir === null;
         if (selectedParentDir === null) {
             // This session runs on the app's own folder; the choice stands.
             selectedParentDir = getUserWritablePath();
@@ -141,6 +152,18 @@ class AppLocalStorage {
         // Set by `defaultStorageDirPath`, which `init()` reads before a
         // window renders anything.
         return missingParentDirPath;
+    }
+
+    /**
+     * True while no data folder is in use, so there is no data to show: the
+     * app's own folder keeps the settings the app needs to run, but what it
+     * still says about the folders of an old data folder is not data
+     * (`DirSource.getDirPathBySettingName`). False on a screen page, which
+     * shows what the presenter sends it.
+     */
+    get isOnOwnFolder() {
+        // Read first: resolving the folder is what sets the flag.
+        return this.defaultStorageDirPath !== '' && isOnOwnFolder;
     }
 
     get localStorageDir() {
@@ -183,7 +206,15 @@ class AppLocalStorage {
     }
 
     async setSelectedParentDirectory(dirPath: string) {
-        cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
+        // No folder is the app's own one, as `defaultStorageDirPath` resolves
+        // it. Cached as '', the settings folder became the RELATIVE
+        // `local-storage`: the child folders unset right after this went into
+        // the process's working directory, and the real ones kept their paths.
+        cache.setSync(
+            SELECTED_PARENT_DIR_SETTING_NAME,
+            dirPath || getUserWritablePath(),
+        );
+        isOnOwnFolder = !dirPath;
         // The settings folder moves with the choice. Left cached, a setting
         // written in the next ten seconds -- the child folders the choice
         // asks about -- went into the OLD folder's settings.
@@ -372,9 +403,15 @@ class AppLocalStorage {
             const { fsListFiles } = await import('../../server/fileHelpers');
             // A computer setting's file here is an older version's copy, not
             // this folder's setting: removing it by key would remove the
-            // computer's.
+            // computer's. And a setting the main process keeps here for the
+            // folder (`dataDirSettingProtocol.ts`) is read and written through
+            // the computer's store, which lists it: listed here as well, an
+            // export carried it twice and an import removed it as unknown.
             return (await fsListFiles(this.localStorageDir)).filter((key) => {
-                return !checkIsComputerSetting(key);
+                return (
+                    !checkIsComputerSetting(key) &&
+                    !checkIsDataDirSettingName(key)
+                );
             });
         } catch (error) {
             handleError(error);

@@ -99,6 +99,11 @@ export type BotActionType = {
     // translated at press time, since it is already in the language it was
     // written in.
     title?: string;
+    // Words that are DATA -- a verse's or a word's own, as its Bible spells
+    // them -- drawn exactly as written: never through the app's dictionary,
+    // never in capitals, which turned the Greek _τῇ_ into _ΤΗΙ_ on a word
+    // to study (2026-10-23).
+    isData?: true;
     // An action either calls a tool directly, or -- when only a model can work
     // out what to press -- asks the model a follow-up question in the user's
     // place. `ask` wins when both are set.
@@ -172,6 +177,20 @@ export function genGuideActions(
         /(?:(?:small|tiny).*(?:words?|text|font)|(?:words?|text|font).*(?:small|tiny|larger|bigger))/i.test(
             topic,
         );
+    // A model asked to build this card from the page wrote "click Use This
+    // Folder" with a folder already chosen -- that button shows only while
+    // none is -- and then "Parent Directory:", a heading no press can land
+    // on (2026-10-23, live in the user's Settings). The lesson's one press
+    // is the Path Settings tab, there in both states.
+    const isDataFolderAsk =
+        hit.id === 'W-16' &&
+        focus === 'setting' &&
+        /data\s*(?:folder|dir)|parent\s+dir/i.test(topic);
+    const demoId = isReaderTextTooSmall
+        ? 'reader-font-larger'
+        : isDataFolderAsk
+          ? 'setting-path'
+          : null;
     const guideActions = [
         {
             // A recipe can only mark a control by bolding it, and the words
@@ -217,27 +236,27 @@ export function genGuideActions(
             // Written as a person would say it: it is shown in the chat as
             // the user's own message, so no tool name and no underscores
             // for the markdown renderer to eat.
-            ask: isReaderTextTooSmall
-                ? undefined
-                : canAsk
-                  ? 'Do it for me in the app window' +
-                    (topic.length > 0 ? `: ${topic}` : '') +
-                    ' — use the controls that are on screen, put the demo ' +
-                    'card up now, and do NOT press a step yet. The person will ' +
-                    'press Do it for one visible step at a time.'
-                  : undefined,
+            ask:
+                demoId !== null
+                    ? undefined
+                    : canAsk
+                      ? 'Do it for me in the app window' +
+                        (topic.length > 0 ? `: ${topic}` : '') +
+                        ' — use the controls that are on screen, put the demo ' +
+                        'card up now, and do NOT press a step yet. The person will ' +
+                        'press Do it for one visible step at a time.'
+                      : undefined,
             toolName: 'owa_guide_start',
-            args: isReaderTextTooSmall
-                ? {
-                      demoId: 'reader-font-larger',
-                  }
-                : {
-                      manualId: hit.id,
-                      page: `${focus}.html`,
-                      mode: 'demo',
-                      ...(topic.length > 0 ? { topic } : {}),
-                      ...findArgs,
-                  },
+            args:
+                demoId !== null
+                    ? { demoId }
+                    : {
+                          manualId: hit.id,
+                          page: `${focus}.html`,
+                          mode: 'demo',
+                          ...(topic.length > 0 ? { topic } : {}),
+                          ...findArgs,
+                      },
         },
     ].filter((_action, index) => {
         // A recipe can point, but its prose cannot safely operate live

@@ -1,6 +1,6 @@
 import { tran } from '../../lang/langHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
-import { openOthersSetting } from '../../setting/settingHelpers';
+import { openAISetting } from '../../setting/settingHelpers';
 
 /** Explain the master switch and offer the settings page that owns it. */
 export async function askToEnableAI() {
@@ -15,6 +15,6 @@ export async function askToEnableAI() {
         },
     );
     if (isOk) {
-        openOthersSetting();
+        openAISetting();
     }
 }

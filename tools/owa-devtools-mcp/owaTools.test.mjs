@@ -650,3 +650,32 @@ describe('registered app tools', () => {
     ).toBe('Open Lookup');
   });
 });
+
+// The stdio door is the developer's and the robot test's; the in-app door
+// is the chatbot's, and a drop copies files from the disk into the user's
+// folders -- so only the first ever has the tool.
+describe('owa_drop_files', () => {
+  it('is registered on the stdio door only', () => {
+    const appDoor = new Set();
+    registerOwaTools(
+      {
+        registerTool(name) {
+          appDoor.add(name);
+        },
+      },
+      { door: 'app' },
+    );
+    expect(handlers.has('owa_drop_files')).toBe(true);
+    expect(appDoor.has('owa_drop_files')).toBe(false);
+    expect(appDoor.has('owa_drag')).toBe(true);
+  });
+
+  it('refuses a file that is not a fixture before touching the app', async () => {
+    const refused = await call('owa_drop_files', {
+      paths: ['C:/Users/someone/secret.txt'],
+      to: 'Document List',
+    });
+    expect(refused.isError).toBe(true);
+    expect(app.evaluateInApp).not.toHaveBeenCalled();
+  });
+});

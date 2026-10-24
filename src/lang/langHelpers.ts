@@ -507,6 +507,13 @@ export type LanguageDataType = {
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
     stopWords: string[];
+    // A Bible search (`owa_find_verse`, 2026-10-22): the words that say
+    // "the book" before a book's name ("in Genesis", `ក្នុងទំនុកដំកើង`), so
+    // the name is the book to search and not a word of the verse; and the
+    // words of ASKING a person puts in front of what they remember ("the
+    // story of", `ស្វែងរក`), taken off the front only.
+    bookMarkerWords?: string[];
+    findFrameWords?: string[];
     trimText: (text: string) => string;
     endWord: (text: string) => string;
     extraBibleContextMenuItems: (
@@ -897,6 +904,14 @@ export function checkIsStopWord(locale: LocaleType, text: string) {
     return langData.stopWords.includes(text);
 }
 
+export function getBookMarkerWords(locale: LocaleType) {
+    return getLangData(locale)?.bookMarkerWords ?? [];
+}
+
+export function getFindFrameWords(locale: LocaleType) {
+    return getLangData(locale)?.findFrameWords ?? [];
+}
+
 export function quickEndWord(locale: LocaleType, text: string) {
     const langData = getLangData(locale);
     if (langData === null) {
@@ -1055,6 +1070,14 @@ export type AppMenuItemsOptionsType = {
      * reason.
      */
     isRoutedToFocusedWindow?: boolean;
+    /**
+     * Send the click to EVERY window, each of which decides by its own page
+     * whether it has anything to do with it. Help → Tips of the Day opens the
+     * tip of every page that is open, not only the one in front (2026-10-23,
+     * the user: _open `Help` menubar, when click show in all pages_). Wins
+     * over `isRoutedToFocusedWindow`.
+     */
+    isSentToAllWindows?: boolean;
 };
 
 /**

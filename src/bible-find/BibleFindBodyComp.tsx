@@ -88,6 +88,7 @@ export default function BibleFindBodyComp({
                 bibleKey={bibleFindController.bibleKey}
                 selectedBooks={selectedBooks ?? []}
                 setSelectedBooks={setSelectedBooks1}
+                findText={findText}
             />
             <BibleFindRenderDataComp
                 findText={findText}

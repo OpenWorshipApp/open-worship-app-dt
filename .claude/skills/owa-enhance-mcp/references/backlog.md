@@ -6,6 +6,33 @@ evidence, so a future run can weigh it without re-deriving it.
 
 Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
+### MC-62 — `owa_find_verse` finds stories, a book named in the words and every verse · done 2026-10-22
+
+The chatbot skill's `EC-387`..`EC-391` (the user: _make the chatbot super
+smart that can find everything in the bible_). The search itself now reads a
+book named in its `words` (a marker word, or a name no verse uses, one letter
+off allowed), drops the asking words in front, answers `passages` (where a
+story is told, by its rare words) and `byBook`, ranks ties by those chapters,
+pages with `from` / `next`, and `open` takes a whole chapter. **Cost:** the
+description and one field, ~280 → ~356 tokens a round, paid by the three asks
+that are offered the tool (verse-find, lookup, Bible-Reader) and nothing else;
+the ordinary list stays 8,347 under the 8,350 ratchet. **Database cost:** one
+grouped scan replaces the old count scan, and every language takes up to 300
+candidates (Khmer took the page only), so a search is about as fast (~60-600
+ms measured). Verified live through the in-app host after its relaunch.
+
+### MC-63 — every Bible search counts in the 25 acting calls a minute · open 2026-10-22
+
+`owa_find_verse`, `owa_lookup_record` and `owa_resource_file` are in
+`ACTING_TOOL_SET` though only `open` acts, for the cost of a read (a whole
+Bible scanned, 34 MB loaded, a PDF drawn). A thorough verse search is the
+window's 1-2 plus up to five model rounds of two or three calls, so two
+questions inside a minute can spend the budget, and the model then answers
+_the system encountered a temporary error_ (seen twice in the chatbot skill's
+baseline run of `bible-find-asks.json`, `EC-392`). Proposal: a read budget of
+its own for those reads (say 60 a minute), `open` staying in the acting 25.
+A firewall policy change: the user's decision, not made.
+
 ### MC-61 — Resources PDF reads expose complete, verifiable page coverage · done 2026-10-18
 
 Asked for directly after the verse-range reader: _make sure the mcp tool can

@@ -3,7 +3,10 @@ import { StrictMode } from 'react';
 import './bootstrapCss';
 import { init } from './boot';
 import ChatbotAppComp from './chatbot/ChatbotAppComp';
-import { plugChatWindowLanguage } from './chatbot/chatWindowLanguage';
+import {
+    plugChatWindowAppFont,
+    plugChatWindowLanguage,
+} from './chatbot/chatWindowLanguage';
 import { handleError } from './helper/errorHelpers';
 import { getReactRoot } from './others/rootHelpers';
 
@@ -22,6 +25,7 @@ function renderApp() {
 // whose `init` fails is still drawn, in English, rather than not at all.
 init(() => {
     plugChatWindowLanguage();
+    void plugChatWindowAppFont();
     renderApp();
 }).catch((error) => {
     handleError(error);

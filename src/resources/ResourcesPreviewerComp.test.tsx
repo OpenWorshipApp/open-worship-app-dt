@@ -28,7 +28,10 @@ vi.mock('../bible-reader/LookupBibleItemController', () => ({
         resolveStraightBibleItems: () => mocks.paneList,
     }),
 }));
-vi.mock('../helper/appHooks', () => ({ useAppEffect: useEffect }));
+vi.mock('../helper/appHooks', () => ({
+    useAppEffect: useEffect,
+    useAppCurrentRef: (value: unknown) => ({ current: value }),
+}));
 vi.mock('../helper/timeoutHelpers', () => ({
     genTimeoutAttempt: () => (callback: () => void) => {
         callback();

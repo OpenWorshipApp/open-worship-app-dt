@@ -8,7 +8,7 @@ const h = vi.hoisted(() => ({
     inputText: '',
     focused: false,
     focusInput: vi.fn(),
-    parseChapter: vi.fn(),
+    genCompletion: vi.fn(),
     editingResult: {
         oldInputText: '',
         result: {
@@ -74,8 +74,9 @@ vi.mock('../keyboard-shortcut/appShortcutMappers', () => ({
 vi.mock('./InputHandlerComp', () => ({
     useInputTextContext: () => ({ inputText: h.inputText }),
 }));
-vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
-    parseChapterFromGuessing: h.parseChapter,
+vi.mock('./lookupEnterHelpers', () => ({
+    genLookupTabCompletionText: (...args: unknown[]) =>
+        h.genCompletion(...args),
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
 
@@ -115,7 +116,7 @@ beforeEach(() => {
     h.inputText = '';
     h.focused = false;
     h.focusInput.mockClear();
-    h.parseChapter.mockReset().mockResolvedValue(null);
+    h.genCompletion.mockReset().mockResolvedValue(null);
     h.editingResult = {
         oldInputText: '',
         result: {
@@ -159,6 +160,7 @@ describe('Bible lookup input actions', () => {
 
     it('completes a single verse with a dash on click and on the Tab shortcut', async () => {
         h.inputText = 'John 3:16';
+        h.genCompletion.mockResolvedValue('John 3:16-');
         h.editingResult = {
             oldInputText: 'John 3:16',
             result: {
@@ -192,6 +194,7 @@ describe('Bible lookup input actions', () => {
     // button used to pull focus into the box and widen the reading to 16-36.
     it('leaves Tab to the browser when the reference box is not focused', async () => {
         h.inputText = 'John 3:16';
+        h.genCompletion.mockResolvedValue('John 3:16-');
         h.editingResult = {
             oldInputText: 'John 3:16',
             result: {
@@ -223,7 +226,7 @@ describe('Bible lookup input actions', () => {
         other.remove();
     });
 
-    it('leaves a cross-chapter passage alone though its verses match', async () => {
+    it('keeps Tab inside the box with nothing to complete', async () => {
         h.inputText = 'John 1:2-3:2';
         h.editingResult = {
             oldInputText: 'John 1:2-3:2',
@@ -244,17 +247,24 @@ describe('Bible lookup input actions', () => {
         expect(action('Tab to complete').getAttribute('aria-disabled')).toBe(
             'true',
         );
-        // Focused, and still nothing to complete: Tab leaves the box.
+        // Focused, and nothing to complete: the text is left alone, but Tab
+        // still does NOT leave the box -- blurring mid-typing is what
+        // autocomplete exists to avoid.
         h.focused = true;
         controller.inputText = 'John 1:2-3:2';
         const event = { stopPropagation: vi.fn(), preventDefault: vi.fn() };
-        await act(async () => h.handlers.get('tab')!(event));
+        await act(async () => {
+            h.handlers.get('tab')!(event);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(event.stopPropagation).toHaveBeenCalledOnce();
         expect(controller.inputText).toBe('John 1:2-3:2');
-        expect(event.preventDefault).not.toHaveBeenCalled();
     });
 
     it('completes a recognized chapter with a colon', async () => {
         h.inputText = 'Psalm 23';
+        h.genCompletion.mockResolvedValue('Psalm 23:');
         h.editingResult = {
             oldInputText: 'Psalm 23',
             result: {
@@ -263,14 +273,12 @@ describe('Bible lookup input actions', () => {
                 bibleItem: null,
             },
         };
-        h.parseChapter.mockResolvedValue(23);
         await render();
         expect(
             action('Tab to complete').getAttribute('aria-disabled'),
         ).toBeNull();
         await act(async () => action('Tab to complete').click());
         expect(controller.inputText).toBe('Psalm 23:');
-        expect(h.parseChapter).toHaveBeenCalledWith('en', 'PSA', 23);
     });
 
     it('removes the last chunk or all text through icons and shortcuts', async () => {

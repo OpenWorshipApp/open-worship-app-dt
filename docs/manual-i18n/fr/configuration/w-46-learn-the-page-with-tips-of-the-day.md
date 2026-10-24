@@ -3,7 +3,7 @@ id: W-46
 title: "Apprendre la page avec les Astuces du jour"
 section: "Configuration"
 lang: fr
-translatedFrom: a9e0c2907bd606f8
+translatedFrom: 978b74df2480c0ef
 ---
 # W-46 — Apprendre la page avec les Astuces du jour
 
@@ -22,8 +22,8 @@ sans avoir à chercher dans le manuel.
    la suspend, et **×** ferme la carte tout de suite. L'astuce
    n'appartient qu'à cette page, et la première astuce est choisie au hasard, sans
    répéter la dernière astuce automatique montrée pour cette page. **Help → [en:tran:Tips of the Day]**
-   en ouvre une tout de suite, et une astuce ouverte ainsi remplace la carte
-   automatique de cette page. Les Paramètres, l'Éditeur de diapositives, la Note biblique, l'Éditeur de page web,
+   en ouvre une tout de suite dans CHAQUE fenêtre ouverte qui a des astuces — la fenêtre principale et chaque fenêtre des Paramètres, de Note biblique, d'éditeur ou de Partage web local ouverte, chacune avec l'astuce de sa propre page — et une astuce ouverte ainsi remplace la carte
+   automatique de cette page. Une carte demandée depuis Help n'a pas de **[en:tran:Hide for 30 days]** : ce lien n'est que sur la carte automatique. **Help → [en:tran:All tips]** fait de même avec la liste de chaque page. Ces fenêtres masquent leur barre de menus : c'est donc le **Help** de la fenêtre principale qui permet de demander leurs astuces. Les Paramètres, l'Éditeur de diapositives, la Note biblique, l'Éditeur de page web,
    l'Éditeur de paroles et le Partage web local ont aussi leurs propres astuces. Chaque page retient
    si son astuce automatique est déjà apparue ; visiter une autre page vous permet
    d'apprendre aussi cette page. Les écrans de l'assemblée et les fenêtres réservées à l'aide n'affichent pas d'astuces.
@@ -56,7 +56,7 @@ sans avoir à chercher dans le manuel.
    pour l'instant ; recharger une page n'affiche pas de nouveau sa carte automatique dans la même
    session de la fenêtre. Une page dont le délai expire pendant qu'elle est derrière une autre fenêtre
    attend que vous l'ayez mise au premier plan.
-3. Dans les Paramètres, **Help → [en:tran:All tips]** affiche trois leçons pour **[en:tran:General]**,
+3. Les Paramètres ouverts, **Help → [en:tran:All tips]** dans la barre de menus de la fenêtre principale affiche la liste propre aux Paramètres, dans les Paramètres : trois leçons pour **[en:tran:General]**,
    **[en:tran:Bible]** et **[en:tran:Others]**. Choisissez **[en:tran:Explore General settings]**, puis **[en:tran:Show it]** :
    la carte de démonstration et son contour rouge apparaissent dans les Paramètres.
    **[en:tran:Show it]** démarre toujours dans la fenêtre d'origine, même quand une fenêtre surgissante et
@@ -84,9 +84,9 @@ sans avoir à chercher dans le manuel.
    natif sont aussi à suivre seul. Elles expliquent l'action exacte, mais ne rechargent pas,
    ne relancent pas, n'exportent pas, ne réinitialisent pas la disposition, n'ouvrent pas les outils de
    développement et ne changent pas ce que l'assemblée voit. Si **Activer les fonctionnalités d'IA** est
-   désactivé, l'application propose d'ouvrir Paramètres → Autres, car le serveur local de démonstration
+   désactivé, l'application propose d'ouvrir Paramètres → [en:tran:AI Providers], car le serveur local de démonstration
    est désactivé en même temps.
-4. Cliquez sur **[en:tran:Hide for 30 days]** pour ranger les astuces automatiques sur toutes les pages
+4. Sur la carte automatique, cliquez sur **[en:tran:Hide for 30 days]** pour ranger les astuces automatiques sur toutes les pages
    d'opérateur pendant 30 jours ; ensuite, elles reviennent d'elles-mêmes. Cela ne
    supprime pas les leçons : utilisez **Help → [en:tran:Tips of the Day]** pour
    ouvrir une suggestion, ou **Help → [en:tran:All tips]** pour parcourir toute la liste d'apprentissage

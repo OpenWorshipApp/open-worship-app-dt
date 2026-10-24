@@ -48,6 +48,15 @@ export type BibleInputSuggestRowType = {
 
 const MAX_REFERENCE_LENGTH = 40;
 const MIN_NAME_LENGTH = 3;
+// 99% of the lookup's Khmer names are 15 letters or fewer, and a name is
+// completed from its start, so a longer run is a sentence: Khmer writes one
+// with no space, and `តើមានខគម្ពីរណាផ្សេងទៀតដែលទាក់ទងនឹងបទគម្ពីរនេះ?` under a
+// passage card loaded the 34MB names dataset to complete it (2026-10-23).
+const MAX_BARE_NAME_LENGTH = 16;
+const SENTENCE_MARK_PATTERN = /[?？!！។៕,，]/u;
+// A question's lead word (`តើ`) with more than this after it is the question
+// being typed; the names that start the same way are short (`តើស៊ីស`).
+const MAX_AFTER_LEAD_LENGTH = 4;
 const ENGLISH_NAME_ASK_PATTERN =
     /^(?:who|where)\s+(?:was|were|is|are)\s+(.+)$/i;
 
@@ -109,6 +118,24 @@ function checkIsNonLatinWord(word: string) {
     });
 }
 
+function checkIsQuestionRun(word: string) {
+    if (
+        word.length > MAX_BARE_NAME_LENGTH ||
+        SENTENCE_MARK_PATTERN.test(word)
+    ) {
+        return true;
+    }
+    return listAssistantLanguages().some((language) => {
+        return language.bibleReaderWords.nameAskLead.some((lead) => {
+            return (
+                lead.length > 0 &&
+                word.startsWith(lead) &&
+                word.length - lead.length > MAX_AFTER_LEAD_LENGTH
+            );
+        });
+    });
+}
+
 function toTrailingNameFragment(text: string) {
     const tail = text
         .replace(/[\s?!.។៕]+$/u, '')
@@ -144,6 +171,7 @@ function readNameAsk(plain: string): BibleInputSuggestAskType | null {
         words.length === 1 &&
         words[0].length >= MIN_NAME_LENGTH &&
         !/\p{Nd}/u.test(words[0]) &&
+        !checkIsQuestionRun(words[0]) &&
         !checkIsNameCue(plain)
     ) {
         return {

@@ -102,6 +102,7 @@ const mocks = vi.hoisted(() => {
         getChapterDataMock: vi.fn(),
         getLangDataFromBibleKeyMock: vi.fn(),
         openBibleItemDetailPanelMock: vi.fn(async () => {}),
+        openInChatbotMock: vi.fn(),
         reset() {
             cacheStores.length = 0;
             verseKeyMap.clear();
@@ -173,6 +174,15 @@ vi.mock('./bibleStyleHelpers', () => ({
 
 vi.mock('../../location-name-lookup/detailPanelHelpers', () => ({
     openBibleItemDetailPanel: mocks.openBibleItemDetailPanelMock,
+}));
+
+vi.mock('../ai/bibleItemChatbotMenuHelpers', () => ({
+    genOpenInChatbotContextMenu: (bibleItem: unknown) => [
+        {
+            menuElement: 'Open in Chatbot',
+            onSelect: () => mocks.openInChatbotMock(bibleItem),
+        },
+    ],
 }));
 
 vi.mock('../errorHelpers', () => ({
@@ -359,7 +369,7 @@ describe('bibleLogicHelpers3', () => {
         expect(mocks.showAppContextMenuMock).not.toHaveBeenCalled();
     });
 
-    test('a right-click on a cited verse opens it beside, or copies it', async () => {
+    test('a right-click on a cited verse opens it beside, in the chatbot, or copies it', async () => {
         const module = await loadModule();
         const { parent, child } = genTitleSpan('GEN 1:1');
         const currentBibleItem = mocks.buildBibleItem(
@@ -378,12 +388,14 @@ describe('bibleLogicHelpers3', () => {
         child.dispatchEvent(
             new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
         );
-        await flushAsyncWork();
+        await vi.waitFor(() => {
+            expect(mocks.showAppContextMenuMock).toHaveBeenCalled();
+        });
 
         const items = mocks.showAppContextMenuMock.mock.calls.at(
             -1,
         )?.[1] as Array<any>;
-        expect(items).toHaveLength(3);
+        expect(items).toHaveLength(4);
         expect(items[0]?.menuElement).toBe('DIVIDER');
         expect(items[1]?.title).toBe('Open "Genesis 1:1"');
         items[1]?.onSelect?.();
@@ -393,7 +405,14 @@ describe('bibleLogicHelpers3', () => {
             true,
         );
 
+        // The cited passage, not the one its heading belongs to.
+        expect(items[2]?.menuElement).toBe('Open in Chatbot');
         items[2]?.onSelect?.();
+        expect(mocks.openInChatbotMock).toHaveBeenCalledWith(
+            mocks.verseKeyMap.get('KJV:GEN 1:1'),
+        );
+
+        items[3]?.onSelect?.();
         expect(mocks.copyToClipboardMock).toHaveBeenCalledWith(
             '(KJV) Genesis 1:1',
         );
@@ -429,13 +448,16 @@ describe('bibleLogicHelpers3', () => {
         child.dispatchEvent(
             new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
         );
-        await flushAsyncWork();
+        await vi.waitFor(() => {
+            expect(mocks.showAppContextMenuMock).toHaveBeenCalled();
+        });
         const items = mocks.showAppContextMenuMock.mock.calls.at(
             -1,
         )?.[1] as Array<any>;
         expect(items.map((item) => item.title)).toEqual([
             undefined,
             'Open "Genesis 1:1-2:3"',
+            undefined,
             'Copy "Genesis 1:1-2:3" to clipboard',
         ]);
         items[1]?.onSelect?.();

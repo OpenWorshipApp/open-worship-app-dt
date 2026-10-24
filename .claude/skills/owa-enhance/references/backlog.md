@@ -9,8 +9,8 @@ there, not here.
 **Nothing is written here while researching.** Entries arrive only after the
 user decides: an applied finding as `done`, with what shipped, the number
 before → after and the proof; every other finding of that report as `open`;
-and all of them on `file`. Filing is an edit under `.claude/`, so it brings the
-Codex mirror copy and `node extra-work/build-knowledge.mjs` with it.
+and all of them on `file`. Filing is an edit under `.claude/`, so it brings
+`node extra-work/build-knowledge.mjs` with it.
 
 This file ships in plaintext inside the installer: a security finding that is
 still open is filed by its class and its location, never as a working exploit.

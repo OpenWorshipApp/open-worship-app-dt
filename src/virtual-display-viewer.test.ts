@@ -4,6 +4,26 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 
+const intercomMock = vi.hoisted(() => {
+    const instance = {
+        close: vi.fn(),
+        receive: vi.fn(),
+        setMic: vi.fn(async () => {}),
+        setSpeaker: vi.fn(),
+        setVolume: vi.fn(),
+    };
+    return {
+        checkSupported: vi.fn(() => true),
+        instance,
+        create: vi.fn(() => instance),
+    };
+});
+
+vi.mock('./screen-mirror/intercomAudio', () => ({
+    checkIsIntercomSupported: intercomMock.checkSupported,
+    createIntercomAudio: intercomMock.create,
+}));
+
 // The browser page watching a virtual display (`/vd/<n>/`), run on its own
 // HTML with a stand-in socket: when it loses the display it says so and
 // offers Retry, which tries at once instead of a reload.
@@ -27,6 +47,10 @@ class FakeSocket {
     }
     send(text: string) {
         this.sent.push(text);
+    }
+    close(code = 1000, reason = '') {
+        this.readyState = FakeSocket.CLOSED;
+        this.emit('close', { code, reason });
     }
     private emit(name: string, event: any) {
         for (const listener of this.listeners.get(name) ?? []) {
@@ -693,4 +717,163 @@ test('the cast button casts through the browser, from the app’s stream', async
     expect(sentOf('cast-close')).toHaveLength(1);
     expect(remote.cancelWatchAvailability).toHaveBeenCalledWith(1);
     expect(video.hasAttribute('src')).toBe(false);
+});
+
+test('microphone access reports refusal, sends audio, and closes with the display', async () => {
+    const intercom = intercomMock.instance;
+    intercom.close.mockClear();
+    intercom.receive.mockClear();
+    intercom.setMic.mockClear();
+    intercom.setSpeaker.mockClear();
+    latest().open();
+    latest().receive({ type: 'layout', layout: LAYOUT });
+    const mic = element<HTMLButtonElement>('mic-button');
+    expect(mic.hidden).toBe(false);
+    intercom.setMic.mockRejectedValueOnce(new Error('Permission denied'));
+    mic.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mic.disabled).toBe(false);
+    expect(mic.getAttribute('aria-pressed')).toBe('false');
+    expect(element('toast').textContent).toContain(
+        'The microphone could not be opened.',
+    );
+
+    mic.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mic.getAttribute('aria-pressed')).toBe('true');
+    expect(latest().sent.map((text) => JSON.parse(text))).toContainEqual({
+        type: 'intercom-state',
+        mic: true,
+    });
+    latest().receive({ type: 'audio', data: 'AQID' });
+    expect(intercom.receive).toHaveBeenCalledWith(
+        'host',
+        new Uint8Array([1, 2, 3]),
+    );
+    latest().receive({ type: 'intercom-state', mic: true });
+    expect(element('sound-button').classList.contains('is-remote-mic')).toBe(
+        true,
+    );
+    element<HTMLButtonElement>('sound-button').click();
+    const volume = element<HTMLInputElement>('sound-volume');
+    volume.value = '50';
+    volume.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(intercom.setSpeaker).toHaveBeenCalledWith('host', 0.5);
+
+    mic.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mic.getAttribute('aria-pressed')).toBe('false');
+    expect(intercom.setMic).toHaveBeenLastCalledWith(false);
+    latest().drop();
+    expect(intercom.close).toHaveBeenCalledTimes(1);
+    expect(element('sound-button').classList.contains('is-remote-mic')).toBe(
+        false,
+    );
+});
+
+test('screen frames retry failed loads and stop retrying after removal', () => {
+    latest().open();
+    const screen = { ...LAYOUT, screenIds: [23] };
+    latest().receive({ type: 'layout', layout: screen });
+    const frame = document.querySelector<HTMLIFrameElement>('#stage iframe')!;
+    const originalSrc = frame.src;
+    const setSrc = vi.fn();
+    Object.defineProperty(frame, 'src', {
+        configurable: true,
+        get: () => originalSrc,
+        set: setSrc,
+    });
+
+    frame.dispatchEvent(new Event('load'));
+    vi.advanceTimersByTime(2000);
+    expect(setSrc).toHaveBeenCalledWith(expect.stringContaining('screenId=23'));
+    expect(setSrc).toHaveBeenCalledTimes(1);
+
+    frame.dispatchEvent(new Event('load'));
+    vi.advanceTimersByTime(4000);
+    expect(setSrc).toHaveBeenCalledTimes(2);
+    frame.dispatchEvent(new Event('load'));
+    vi.advanceTimersByTime(6000);
+    expect(setSrc).toHaveBeenCalledTimes(3);
+    frame.dispatchEvent(new Event('load'));
+    vi.advanceTimersByTime(10000);
+    expect(setSrc).toHaveBeenCalledTimes(3);
+
+    // A pending retry belongs to the frame and must not reload it after the
+    // display removes that screen.
+    latest().receive({ type: 'layout', layout: screen });
+    const removedFrame =
+        document.querySelector<HTMLIFrameElement>('#stage iframe')!;
+    const removedSrc = removedFrame.src;
+    const removedSetSrc = vi.fn();
+    Object.defineProperty(removedFrame, 'src', {
+        configurable: true,
+        get: () => removedSrc,
+        set: removedSetSrc,
+    });
+    removedFrame.dispatchEvent(new Event('load'));
+    latest().receive({ type: 'layout', layout: LAYOUT });
+    vi.advanceTimersByTime(3000);
+    expect(removedSetSrc).not.toHaveBeenCalled();
+    expect(document.querySelector('#stage iframe')).toBeNull();
+});
+
+test('wallpapers replace image and video resources when the layout changes', () => {
+    latest().open();
+    latest().receive({
+        type: 'layout',
+        layout: {
+            ...LAYOUT,
+            wallpaper: { kind: 'image', url: '/wallpaper.jpg' },
+        },
+    });
+    expect(element('wallpaper').querySelector('img')?.src).toContain(
+        '/wallpaper.jpg',
+    );
+    latest().receive({
+        type: 'layout',
+        layout: {
+            ...LAYOUT,
+            wallpaper: { kind: 'video', url: '/wallpaper.mp4' },
+        },
+    });
+    const video = element('wallpaper').querySelector('video')!;
+    expect(video.src).toContain('/wallpaper.mp4');
+    expect(video.muted).toBe(true);
+    expect(video.loop).toBe(true);
+    latest().receive({
+        type: 'layout',
+        layout: { ...LAYOUT, wallpaper: { kind: 'color', color: '#123456' } },
+    });
+    expect(video.pause).toHaveBeenCalled();
+    expect(video.load).toHaveBeenCalled();
+    expect(video.hasAttribute('src')).toBe(false);
+    expect(element('wallpaper').childElementCount).toBe(0);
+    expect(element('wallpaper').style.backgroundColor).toBe('rgb(18, 52, 86)');
+});
+
+test('persisted page lifecycle closes its socket and reloads on return', () => {
+    latest().open();
+    const before = FakeSocket.instances.length;
+    const current = latest();
+    const pagehide = new Event('pagehide');
+    Object.defineProperty(pagehide, 'persisted', { value: true });
+    globalThis.dispatchEvent(pagehide);
+    expect(current.readyState).toBe(FakeSocket.CLOSED);
+    expect(FakeSocket.instances).toHaveLength(before);
+
+    // The public Location.reload method is unforgeable in jsdom; spy on the
+    // implementation it delegates to so this remains a deterministic test.
+    const implementationSymbol = Object.getOwnPropertySymbols(location).find(
+        (symbol) => String(symbol) === 'Symbol(impl)',
+    )!;
+    const locationImplementation = (location as any)[implementationSymbol];
+    const reload = vi
+        .spyOn(Object.getPrototypeOf(locationImplementation), 'reload')
+        .mockImplementation(() => {});
+    const pageshow = new Event('pageshow');
+    Object.defineProperty(pageshow, 'persisted', { value: true });
+    globalThis.dispatchEvent(pageshow);
+    expect(reload).toHaveBeenCalledTimes(1);
+    reload.mockRestore();
 });

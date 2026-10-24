@@ -26,12 +26,16 @@
 //   they are all there is, the best of them is still asked.
 // - **smarter**: among the rest, a server's cloud model first, then the bigger
 //   model first.
+// - **and in the app's own language**: while the app is shown in a language
+//   other than English, the models that speak such a language well are asked
+//   ahead of the size order -- Gemma 4 first of all (`LANGUAGE_TIER_LIST`).
 
 import {
     CUSTOM_CONTEXT_MIN,
     type CustomServerKindType,
 } from '../../electron/customLlmProtocol';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import type { BotActionType } from './helpBotHelpers';
 
 /** The two providers whose answers cost nothing. */
 export type AutoProviderType = 'custom' | 'free';
@@ -132,6 +136,53 @@ export function checkIsCloudModel(name: string): boolean {
     return CLOUD_MODEL_PATTERN.test(String(name ?? ''));
 }
 
+/**
+ * Who is asked first while the app is shown in a language other than English
+ * (`AutoRankOptionsType.languageModelsFirst`), best first. Asked for by the
+ * user with a picture of the Auto picker (2026-10-20): _mode ranking to pick:
+ * `gemma4:cloud` (from any assistant) -> `Nemotron Super VL` (from Free) ->
+ * `gemma4:31b` -> `gemma4:12b` -> any model in `Free`_, _apply the ranking for
+ * non-english app language setting only_, _e.g. my app using Khmer then Gemma4
+ * should be prefered_ -- and the reason given: _gemma4 … support well for
+ * language like Khmer_. A matched pattern is read off the model's id AND its
+ * shown name; `provider` narrows a tier to the keyless service.
+ */
+export const LANGUAGE_TIER_LIST: readonly {
+    provider: AutoProviderType | null;
+    pattern: RegExp;
+}[] = [
+    // `gemma4:cloud`, `Gemma 4 Cloud` -- never `gemma4:31b-cloud`.
+    {
+        provider: null,
+        pattern: /gemma[-_\s]?4[:/_\s-]?cloud(?![a-z0-9])/i,
+    },
+    // The free service's one model that speaks the language well AND sees.
+    { provider: 'free', pattern: /nemotron[-_\s\d.]*super[-_\s]?vl/i },
+    { provider: null, pattern: /gemma[-_\s]?4[^\s]*31b/i },
+    { provider: null, pattern: /gemma[-_\s]?4[^\s]*12b/i },
+    { provider: 'free', pattern: /./ },
+];
+
+// A candidate no tier names, ranked after them all, among itself by the
+// ordinary rules (cloud, size, …).
+export const NO_LANGUAGE_TIER = LANGUAGE_TIER_LIST.length;
+
+/**
+ * A candidate's tier of `LANGUAGE_TIER_LIST`, or `NO_LANGUAGE_TIER` when none
+ * holds -- the tier decides only among the models that CAN answer: setbacks,
+ * busy servers and an LM Studio with nothing loaded still go first.
+ */
+export function readLanguageModelTier(candidate: AutoCandidateType): number {
+    const name = `${candidate.modelName} ${candidate.label}`;
+    const tier = LANGUAGE_TIER_LIST.findIndex((one) => {
+        return (
+            (one.provider === null || one.provider === candidate.provider) &&
+            one.pattern.test(name)
+        );
+    });
+    return tier === -1 ? NO_LANGUAGE_TIER : tier;
+}
+
 /** One candidate, for the memory of what just went wrong with it. */
 export function toAutoCandidateKey(candidate: {
     provider: string;
@@ -198,6 +249,10 @@ export type AutoRankOptionsType = {
     isGeneral?: boolean;
     // `toAutoBusyKey` of every ask this window still has out.
     busyKeys?: readonly string[];
+    // The app is shown in a language other than English: the models that
+    // speak it well (Gemma 4 first of all, `LANGUAGE_TIER_LIST`) go ahead of
+    // the size order, in the list's own order (2026-10-20).
+    languageModelsFirst?: boolean;
     // Models to ask FIRST among those that can answer, read off the model's
     // name -- size and setbacks aside. A verse remembered in Khmer has to be
     // put into English to be found in the KJV, and the user's word was _for
@@ -300,6 +355,10 @@ export function rankAutoCandidates(
                     options.preferModelPattern?.test(
                         `${candidate.modelName} ${candidate.label}`,
                     ) === true,
+                languageTier:
+                    options.languageModelsFirst === true
+                        ? readLanguageModelTier(candidate)
+                        : NO_LANGUAGE_TIER,
                 // The keyless service is a service, not a server's model.
                 isCloud:
                     candidate.provider === 'custom' &&
@@ -323,8 +382,9 @@ export function rankAutoCandidates(
             Number(one.isBusy) - Number(other.isBusy) ||
             Number(one.isLastResort) - Number(other.isLastResort) ||
             Number(other.isPreferred) - Number(one.isPreferred) ||
-            // Every cloud model before every other, a size-less one too:
-            // within each, the bigger first.
+            // The app's language first, then every cloud model before every
+            // other, a size-less one too: within each, the bigger first.
+            one.languageTier - other.languageTier ||
             Number(other.isCloud) - Number(one.isCloud) ||
             other.size - one.size ||
             // As smart as each other: the words stay in the building.
@@ -351,7 +411,8 @@ export const NO_AUTO_ASSISTANT_TEXT =
 export type AutoAttemptType = {
     // A model round came back. From then on the model may have pressed
     // something in the app, and the question is not handed to another one
-    // to press it again.
+    // to press it again -- unless the ask's tools can only read
+    // (`canHandOnAfterRound`).
     hasRound: boolean;
 };
 
@@ -367,13 +428,19 @@ export type AutoSkipType = {
  *
  * `checkIsFinal` names the failures no other assistant would change: a Stop,
  * the spend guard's pause, the app's own tool host. A failure after a round
- * came back is final too (`AutoAttemptType`). Both are thrown as they are;
- * when every attempt failed, the last one's error is.
+ * came back is final too (`AutoAttemptType`) -- except for an ask whose tools
+ * can only READ (`canHandOnAfterRound`: a question about a Resources file,
+ * a general one with no tools), where a model that wrote nothing in the end
+ * has pressed nothing either, and the next one may still answer (2026-10-22:
+ * _Explain it in simple words_ under `MAT.18.pdf`, Free · Nemotron Super VL
+ * wrote no answer after 34.7k tokens and the guide answered instead). Both
+ * are thrown as they are; when every attempt failed, the last one's error is.
  */
 export async function askWithAutoAssistant<T>(options: {
     picks: readonly AutoCandidateType[];
     ask: (pick: AutoCandidateType, attempt: AutoAttemptType) => Promise<T>;
     checkIsFinal: (error: any) => boolean;
+    canHandOnAfterRound?: boolean;
     now?: () => number;
 }): Promise<{ answer: T; pick: AutoCandidateType; skipped: AutoSkipType[] }> {
     const now = options.now ?? Date.now;
@@ -396,7 +463,7 @@ export async function askWithAutoAssistant<T>(options: {
                 throw error;
             }
             markAutoSetback(key, now());
-            if (attempt.hasRound) {
+            if (attempt.hasRound && options.canHandOnAfterRound !== true) {
                 throw error;
             }
             skipped.push({
@@ -421,24 +488,8 @@ export function genAutoAnswerNote(
     previousLabel: string | undefined,
 ): string | null {
     if (skipped.length > 0) {
-        const tried = skipped
-            .map((one) => {
-                const assistant = toShownPickLabel(one.pick);
-                return one.reason.length > 0
-                    ? fillWords(
-                          tran('{assistant} could not answer — {reason}.'),
-                          {
-                              assistant,
-                              reason: one.reason,
-                          },
-                      )
-                    : fillWords(tran('{assistant} could not answer.'), {
-                          assistant,
-                      });
-            })
-            .join(' ');
         return fillWords(tran('{tried} Auto asked {assistant} instead.'), {
-            tried,
+            tried: describeSkippedAssistants(skipped),
             assistant: toShownPickLabel(pick),
         });
     }
@@ -448,6 +499,144 @@ export function genAutoAnswerNote(
         });
     }
     return null;
+}
+
+/**
+ * One sentence for each assistant that could not answer, and why when it
+ * said: what goes in front of who answered instead, or of the guide's answer
+ * when nobody did.
+ */
+export function describeSkippedAssistants(
+    skipped: readonly AutoSkipType[],
+): string {
+    return skipped
+        .map((one) => {
+            const assistant = toShownPickLabel(one.pick);
+            return one.reason.length > 0
+                ? fillWords(tran('{assistant} could not answer — {reason}.'), {
+                      assistant,
+                      reason: one.reason,
+                  })
+                : fillWords(tran('{assistant} could not answer.'), {
+                      assistant,
+                  });
+        })
+        .join(' ');
+}
+
+/**
+ * Who a question is handed to when the assistant the TAB names -- a server of
+ * the user's own, or a free model -- could not answer before saying anything
+ * (2026-10-22, the user, with a picture of _Local Ollama could not answer --
+ * nothing answered at http://localhost:11434/v1_ over a verse card the guide
+ * had written: _when one server provider fail it should try next one_).
+ * Auto's own line, the one that failed left out of it. When that one was in
+ * the building, the others in the building are asked before anything outside
+ * it: the person chose to keep the words here, and the public service is the
+ * last thing to try, not the next.
+ *
+ * A key somebody pays for is never in the line, as on Auto: a paid provider
+ * that fails is stood in for by another key of the user's own
+ * (`getStandInLlmProvider`) and by nothing else.
+ */
+export function orderHandOnPicks(
+    ranked: readonly AutoCandidateType[],
+    failed: AutoCandidateType,
+    checkIsInBuilding: (candidate: AutoCandidateType) => boolean,
+): AutoCandidateType[] {
+    const failedKey = toAutoCandidateKey(failed);
+    const rest = ranked.filter((one) => {
+        return toAutoCandidateKey(one) !== failedKey;
+    });
+    if (!checkIsInBuilding(failed)) {
+        return rest;
+    }
+    return [
+        ...rest.filter(checkIsInBuilding),
+        ...rest.filter((one) => {
+            return !checkIsInBuilding(one);
+        }),
+    ];
+}
+
+/**
+ * The line over an answer another assistant gave because the tab's own could
+ * not: who could not answer and why, and who did. The tab keeps its own pick
+ * -- the next question goes to it first again, so a server switched back on
+ * is asked without anybody having to choose it a second time.
+ */
+export function genHandOnAnswerNote(
+    failed: AutoSkipType,
+    pick: AutoCandidateType,
+    skipped: readonly AutoSkipType[],
+): string {
+    return fillWords(tran('{tried} {assistant} answered instead.'), {
+        tried: describeSkippedAssistants([failed, ...skipped]),
+        assistant: toShownPickLabel(pick),
+    });
+}
+
+// The pseudo tool under that note (2026-10-22, the user, under _Test Down
+// Server could not answer … Local Ollama · gemma4:cloud answered instead_:
+// _should provide user the option to change provider_, _like use another
+// free or use `Auto`_). Pressed, the TAB moves -- to the one that answered,
+// or to Auto -- and nothing is asked again: the answer is already there.
+// Registered nowhere; only the window handles it (`handleActing`), so no
+// model can move a tab.
+export const USE_ASSISTANT_TOOL_NAME = 'use-assistant';
+// Stored English and drawn in the window's language (`SHOWN_LABEL_PATTERN_LIST`
+// in `ChatbotAppComp.tsx`; held by `chatTranLabels.test.ts`).
+export const USE_AUTO_LABEL = 'Use Auto for this chat';
+export const USE_ASSISTANT_LABEL_TEMPLATE = 'Use {assistant} for this chat';
+
+/**
+ * The two buttons under a hand-on note: keep asking the one that answered,
+ * or leave the choosing to Auto. Only an assistant Auto could have picked is
+ * ever a button -- one that costs nothing.
+ */
+export function genAssistantSwitchActions(
+    answered: AutoCandidateType,
+): BotActionType[] {
+    return [
+        {
+            label: `Use ${toShownPickLabel(answered)} for this chat`,
+            toolName: USE_ASSISTANT_TOOL_NAME,
+            args: { provider: answered.provider, model: answered.model },
+        },
+        {
+            label: USE_AUTO_LABEL,
+            toolName: USE_ASSISTANT_TOOL_NAME,
+            args: { auto: true },
+        },
+    ];
+}
+
+export type AssistantSwitchType =
+    | { isAuto: true }
+    | { isAuto: false; provider: AutoProviderType; model: string };
+
+/**
+ * What a press of one of them asks for, as it may be trusted -- read off a
+ * saved conversation too, so a hand-edited button can name no paid key and
+ * nothing that is not a model id. Null for anything else.
+ */
+export function readAssistantSwitch(args: unknown): AssistantSwitchType | null {
+    if (args === null || typeof args !== 'object') {
+        return null;
+    }
+    const { auto, provider, model } = args as Record<string, unknown>;
+    if (auto === true) {
+        return { isAuto: true };
+    }
+    if (
+        (provider !== 'custom' && provider !== 'free') ||
+        typeof model !== 'string' ||
+        model.trim().length === 0 ||
+        model.length > 200
+    ) {
+        return null;
+    }
+    return { isAuto: false, provider, model };
 }
 
 /**

@@ -184,6 +184,14 @@ import {
     cutRunawayAnswer,
     dropModelTokens,
     findAnswerShapeNudge,
+    findUnreadVerseNudge,
+    findMisquoteNudge,
+    findNotStatedNudge,
+    checkReadsInRecordBible,
+    withRecordTurn,
+    RECORD_TURN_ACK,
+    addQuoteSource,
+    toQuoteKey,
     rememberReasoningOff,
     resetReasoningOffMemoryForTests,
     RUNAWAY_ANSWER_NUDGE,
@@ -224,10 +232,10 @@ import {
 describe('describeLlmError', () => {
     test('a refused key sends them to the panel that holds it', () => {
         expect(describeLlmError({ status: 401 })).toContain(
-            'Settings → Others',
+            'Settings → AI Providers',
         );
         expect(describeLlmError({ status: 403 })).toContain(
-            'Settings → Others',
+            'Settings → AI Providers',
         );
     });
 
@@ -244,7 +252,7 @@ describe('describeLlmError', () => {
         };
 
         expect(describeLlmError(error)).toContain('workspace id');
-        expect(describeLlmError(error)).toContain('Settings → Others');
+        expect(describeLlmError(error)).toContain('Settings → AI Providers');
     });
 
     test('a rate limit is said in money terms, not in HTTP', () => {
@@ -2683,7 +2691,7 @@ describe('the Bedrock provider', () => {
                 askLlmBot('Hello?', 'presenter', 'bedrock', 'xai.grok-4.6'),
             ).rejects.toThrow(
                 'Grok 4.6 is not offered in us-east-1 — choose us-west-2 ' +
-                    'under Settings → Others → AWS Region',
+                    'under Settings → AI Providers → AWS Region',
             );
             expect(create).not.toHaveBeenCalled();
             expect(openAiCreate).not.toHaveBeenCalled();
@@ -2697,8 +2705,8 @@ describe('the Bedrock provider', () => {
             findBedrockRegionProblem('openai.gpt-5.6-luna', 'eu-central-1'),
         ).toBe(
             'GPT-5.6 Luna is not offered in eu-central-1 — choose ' +
-                'us-east-1, us-east-2 or us-west-2 under Settings → Others → ' +
-                'AWS Region',
+                'us-east-1, us-east-2 or us-west-2 under Settings → AI ' +
+                'Providers → AWS Region',
         );
         expect(
             findBedrockRegionProblem('google.gemma-4-31b', 'eu-central-1'),
@@ -4715,6 +4723,175 @@ describe('the answer is in their language', () => {
         ).toBeNull();
         watch.isShapeNudged = true;
         expect(findAnswerShapeNudge('OPTIONS: a | b', watch)).toBeNull();
+    });
+
+    // EC-391, 2026-10-22: Bible Find's 🤖 with `shepherd` over the Khmer
+    // Bible, and the answer quoted John 10:11 in words of its own, one round,
+    // nothing read.
+    test('a verse search quoting a verse nothing returned goes back once', () => {
+        const watch = genToolWatch();
+        // Not a verse search: nothing to check.
+        expect(findUnreadVerseNudge('**John 10:11** — I am', watch)).toBeNull();
+        watch.verseFindBible = 'ពគប';
+        watch.foundVerses = [
+            {
+                key: 'GEN 49:24',
+                ref: 'Genesis 49:24',
+                bible: 'ពគប',
+                title: 'លោកុប្បត្តិ ៤៩:២៤',
+            },
+        ];
+        const answer =
+            '**យ៉ូហាន ១០:១១** — ខ្ញុំ​ជា​អ្នក​គង្វាល​ដ៏​ល្អ\n\n' +
+            '**លោកុប្បត្តិ ៤៩:២៤** — ឯ​អ្នក​គង្វាល';
+        const nudge = findUnreadVerseNudge(answer, watch);
+        expect(nudge).toContain('no search or read returned យ៉ូហាន 10:11');
+        expect(nudge).toContain('refs "យ៉ូហាន 10:11"');
+        expect(nudge).not.toContain('លោកុប្បត្តិ');
+        // Every verse it names was found: nothing to say.
+        expect(
+            findUnreadVerseNudge(
+                '**Genesis 49:24** and លោកុប្បត្តិ ៤៩:២៤',
+                watch,
+            ),
+        ).toBeNull();
+        // Once.
+        watch.isVerseNudged = true;
+        expect(findUnreadVerseNudge(answer, watch)).toBeNull();
+    });
+
+    // 2026-10-22: under Noah's card, _where did the ark come to rest?_ was
+    // answered with Genesis 8:4 in Khmer words of the model's own and the
+    // wrong month; the record held neither the verse nor its words.
+    test('a lookup answer quoting words nothing gave goes back once', () => {
+        const watch = genToolWatch();
+        const madeUp =
+            'លោកុប្បត្តិ ៨:៤ ថា «ហើយទូកនោះក៏ចតនៅលើភ្នំអារ៉ារ៉ាត ក្នុងខែទីប្រាំបី»';
+        // Not a lookup conversation: nothing to check.
+        expect(findMisquoteNudge(madeUp, watch)).toBeNull();
+        watch.quoteSources = [
+            toQuoteKey(
+                'Record: {"bible":"ពគប","quoted":[{"text":"(២៩): ដែល​គាត់​ឲ្យ​ឈ្មោះ​ថា ណូអេ ដោយ​និយាយ​ថា កូន​នេះ​នឹង​កំសាន្ត​ចិត្ត​យើង"}]}',
+            ),
+        ];
+        watch.quoteBible = 'ពគប';
+        const nudge = findMisquoteNudge(madeUp, watch);
+        expect(nudge).toContain('ហើយទូកនោះក៏ចតនៅលើភ្នំ');
+        expect(nudge).toContain('kind "verse", ref, bible "ពគប"');
+        // Quoted as it was given -- spaces, verse number and zero-width
+        // spaces dropped, a piece cut with an ellipsis -- stands.
+        expect(
+            findMisquoteNudge(
+                'លោកុប្បត្តិ ៥:២៩ ថា «ដែលគាត់ឲ្យឈ្មោះថា ណូអេ … កូននេះនឹងកំសាន្តចិត្តយើង»',
+                watch,
+            ),
+        ).toBeNull();
+        // A name or a button in quotes is not a verse.
+        expect(findMisquoteNudge('ចុច «ខគម្ពីររបស់វា»', watch)).toBeNull();
+        // What a read returned later may be quoted too.
+        addQuoteSource(
+            watch,
+            '{"passages":[{"text":"(៤): ដល់​ថ្ងៃ​១៧ ខែ​ទី​៧ នោះ​ទូក​ធំ​បាន​កឿង​នៅ​លើ​ភ្នំ​អារ៉ារ៉ាត"}]}',
+        );
+        expect(
+            findMisquoteNudge(
+                '«ដល់ថ្ងៃ១៧ ខែទី៧ នោះទូកធំបានកឿងនៅលើភ្នំអារ៉ារ៉ាត»',
+                watch,
+            ),
+        ).toBeNull();
+        // Once.
+        watch.isQuoteNudged = true;
+        expect(findMisquoteNudge(madeUp, watch)).toBeNull();
+    });
+
+    // 2026-10-23 (EC-418): the record heads the conversation, where a
+    // server of the person's own keeps it between questions.
+    test('a record heads the history, and the turns still alternate', () => {
+        const history = [
+            { author: 'you' as const, text: 'q1' },
+            { author: 'bot' as const, text: 'a1' },
+        ];
+        const withRecord = withRecordTurn(history, 'Record: {"bible":"ពគប"}');
+        expect(withRecord).toEqual([
+            { author: 'you', text: 'Record: {"bible":"ពគប"}' },
+            { author: 'bot', text: RECORD_TURN_ACK },
+            ...history,
+        ]);
+        // The same record gives the same head, question after question.
+        expect(withRecordTurn([], 'R')[0]).toEqual(
+            withRecordTurn(history, 'R')[0],
+        );
+        expect(withRecordTurn(history, undefined)).toBe(history);
+        expect(withRecordTurn(history, '  ')).toBe(history);
+    });
+
+    // 2026-10-23: _how long was Noah in the ark?_ under Genesis 8 was
+    // answered "the passage does not state it" in one round, nothing read.
+    test('"the Bible does not say", with nothing read, goes back once', () => {
+        const watch = genToolWatch();
+        const khmer =
+            'យោងតាមអត្ថបទគម្ពីរ មិនបានបញ្ជាក់ពីចំនួនថ្ងៃសរុបដែលណូអេនៅក្នុងទូកទេ';
+        // Not a lookup conversation.
+        expect(findNotStatedNudge(khmer, watch)).toBeNull();
+        watch.quoteSources = [toQuoteKey('Record: {"bible":"ពគប"}')];
+        watch.quoteBible = 'ពគប';
+        const nudge = findNotStatedNudge(khmer, watch);
+        expect(nudge).toContain('kind "verse", ref, bible "ពគប"');
+        // In English and French too, whatever the reader's language.
+        expect(
+            findNotStatedNudge('The passage does not say how long.', watch),
+        ).not.toBeNull();
+        expect(
+            findNotStatedNudge('Le texte ne précise pas la durée.', watch),
+        ).not.toBeNull();
+        // An answer that says it.
+        expect(
+            findNotStatedNudge('He was in the ark about a year.', watch),
+        ).toBeNull();
+        // Said after a read, it stands; and once.
+        watch.toolCallCount = 1;
+        expect(findNotStatedNudge(khmer, watch)).toBeNull();
+        watch.toolCallCount = 0;
+        watch.isNotStatedNudged = true;
+        expect(findNotStatedNudge(khmer, watch)).toBeNull();
+    });
+
+    // 2026-10-23: under a ពគប passage card, _what did Jesus teach after
+    // this?_ read `MAT 18:18-35` with no Bible and quoted the KJV in English.
+    test('a passage read in a record conversation goes to the record’s Bible', () => {
+        const watch = genToolWatch();
+        const read = { kind: 'verse', ref: 'MAT 18:18-35' };
+        // Not a lookup conversation.
+        expect(checkReadsInRecordBible(watch, 'owa_lookup_record', read)).toBe(
+            false,
+        );
+        watch.quoteSources = [toQuoteKey('Record: {"bible":"ពគប"}')];
+        watch.quoteBible = 'ពគប';
+        expect(checkReadsInRecordBible(watch, 'owa_lookup_record', read)).toBe(
+            true,
+        );
+        expect(
+            checkReadsInRecordBible(watch, 'owa_find_verse', {
+                words: 'ណូអេ',
+            }),
+        ).toBe(true);
+        // A Bible asked for on purpose, a person's record and another tool
+        // are left alone.
+        expect(
+            checkReadsInRecordBible(watch, 'owa_lookup_record', {
+                ...read,
+                bible: 'KJV',
+            }),
+        ).toBe(false);
+        expect(
+            checkReadsInRecordBible(watch, 'owa_lookup_record', {
+                kind: 'name',
+                id: 'x',
+            }),
+        ).toBe(false);
+        expect(checkReadsInRecordBible(watch, 'owa_read_website', {})).toBe(
+            false,
+        );
     });
 
     // The same run: _Does the help still work with no internet?_ became

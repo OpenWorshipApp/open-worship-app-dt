@@ -27,36 +27,8 @@ import {
     lookupTabEventMapper,
 } from '../keyboard-shortcut/appShortcutMappers';
 import { useInputTextContext } from './InputHandlerComp';
-import { parseChapterFromGuessing } from '../helper/bible-helpers/bibleLogicHelpers2';
-import { checkIsCrossChapterTarget } from '../helper/bible-helpers/bibleTargetHelpers';
+import { genLookupTabCompletionText } from './lookupEnterHelpers';
 import { tran } from '../lang/langHelpers';
-
-async function checkNewTabInputText(
-    viewController: LookupBibleItemController,
-    inputText: string,
-) {
-    const editingResult = await viewController.getEditingResult(inputText);
-    const { bookKey, guessingChapter, bibleItem } = editingResult.result;
-    if (bibleItem === null) {
-        if (bookKey !== null && guessingChapter !== null) {
-            const chapter = await parseChapterFromGuessing(
-                viewController.selectedBibleItem.bibleKey,
-                bookKey,
-                guessingChapter,
-            );
-            if (chapter !== null) {
-                return `${editingResult.oldInputText}:`;
-            }
-        }
-    } else if (
-        // `John 1:2-3:2` already has its end, its verses only look the same.
-        !checkIsCrossChapterTarget(bibleItem.target) &&
-        bibleItem.target.verseStart === bibleItem.target.verseEnd
-    ) {
-        return `${editingResult.oldInputText}-`;
-    }
-    return null;
-}
 
 function useTabAvailable(
     viewController: LookupBibleItemController,
@@ -65,9 +37,11 @@ function useTabAvailable(
     const [isTabAvailable, setIsTabAvailable] = useState(false);
     useAppEffectAsync(
         async (contextMethods) => {
-            const newInputText = await checkNewTabInputText(
-                viewController,
-                inputText,
+            const editingResult =
+                await viewController.getEditingResult(inputText);
+            const newInputText = await genLookupTabCompletionText(
+                editingResult.bibleKey,
+                editingResult,
             );
             contextMethods.setIsTabAvailable(newInputText !== null);
         },
@@ -158,30 +132,33 @@ export default function InputExtraButtonsComp() {
     const viewControllerRef = useAppCurrentRef(viewController);
     const inputTextRef = useAppCurrentRef(inputText);
     const handleTabbing = useCallback(async () => {
-        const newInputText = await checkNewTabInputText(
-            viewControllerRef.current,
-            inputTextRef.current,
+        const inputText = inputTextRef.current;
+        const editingResult =
+            await viewControllerRef.current.getEditingResult(inputText);
+        const newInputText = await genLookupTabCompletionText(
+            editingResult.bibleKey,
+            editingResult,
         );
-        if (newInputText === null) {
+        // Typed on while this was worked out: the press belonged to a text
+        // the box no longer holds.
+        if (newInputText === null || inputTextRef.current !== inputText) {
             return;
         }
         viewControllerRef.current.inputText = newInputText;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const isTabAvailableRef = useAppCurrentRef(isTabAvailable);
     const handleTabbingRef = useAppCurrentRef(handleTabbing);
     // Tab is registered on the whole document, so this hears it wherever focus
     // is. Only the reference box completes: Tab on a saved passage's version
     // button is the browser moving focus, and it used to pull focus into the
-    // box and widen `John 3:16` to `John 3:16-` instead. With nothing to
-    // complete (the same state that greys the icon out) Tab leaves the box as
-    // usual, so a keyboard user is never trapped in it.
+    // box and widen `John 3:16` to `John 3:16-` instead. With the box focused
+    // Tab is its autocomplete and NEVER leaves it, even with nothing to
+    // complete: blurring mid-typing is the last thing someone reaching for
+    // autocomplete wants. Shift+Tab is a different event key and still
+    // navigates backward, so a keyboard user is not trapped in the box.
     const handleTabKey = useCallback(
         (event: KeyboardEvent | ReactKeyboardEvent<any>) => {
-            if (
-                !isTabAvailableRef.current ||
-                !checkIsBibleLookupInputFocused()
-            ) {
+            if (!checkIsBibleLookupInputFocused()) {
                 return;
             }
             // Before any await: the focus move is the keydown's default

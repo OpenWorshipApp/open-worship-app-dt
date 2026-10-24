@@ -14,12 +14,14 @@ import {
     fsCheckDirExist,
     getDefaultDataDirPath,
 } from '../../server/fileHelpers';
+import { handleError } from '../../helper/errorHelpers';
 import DataDirMoveBodyComp, {
     DataDirOldCopyBodyComp,
 } from './DataDirMoveBodyComp';
 import {
     checkIsDataDirMoveHidden,
     type DataDirMoveResultType,
+    genDataDirMoveTargetPath,
     hideDataDirMoveForAWhile,
     readDataDirMovedFromFlag,
     readDataDirMovedToFlag,
@@ -33,17 +35,32 @@ import {
  * (`runPendingDataDirMove`). Enter does not answer it: it moves every file
  * the person has.
  */
-export async function askToMoveDesktopDataDir(dataDirPath: string) {
-    if (checkIsDataDirMoveHidden()) {
+/**
+ * `isAskedFor`: pressed in Path Settings, not asked at a start. A question
+ * put away for 30 days stays away from the start, never from a press that
+ * asks for it.
+ */
+export async function askToMoveDesktopDataDir(
+    dataDirPath: string,
+    isAskedFor = false,
+) {
+    if (!isAskedFor && checkIsDataDirMoveHidden()) {
         return;
     }
     let isHiding = false;
+    // The folder the move will make, named in the question. A default folder
+    // that cannot be read must not keep the question from being asked at all:
+    // it names the default, and the move itself reports what it meets.
+    let toDirPath: string;
+    try {
+        toDirPath = await genDataDirMoveTargetPath();
+    } catch (error) {
+        handleError(error);
+        toDirPath = getDefaultDataDirPath();
+    }
     const isMoving = await showAppConfirm(
         tran('Move Your Data Folder Off the Desktop'),
-        <DataDirMoveBodyComp
-            fromDirPath={dataDirPath}
-            toDirPath={getDefaultDataDirPath()}
-        />,
+        <DataDirMoveBodyComp fromDirPath={dataDirPath} toDirPath={toDirPath} />,
         {
             enterToOk: false,
             confirmButtonLabel: 'Move Now',

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 029805b0-9f47-4d9c-b38b-fed0e2ab561c
-  modified: 2026-10-12T02:43:52.232Z
+  modified: 2026-10-20T13:07:35.303Z
 ---
 
 Amazon Bedrock became the fifth chatbot provider on 2026-10-09
@@ -62,7 +62,7 @@ external response (Bedrock's preflight `allow-headers: *` does not cover
 **An agent must not materialise or send a user's API key itself.** Given a
 key in chat, writing it to a scratch file and `curl`-ing the endpoint with it
 were both blocked by the harness (credential materialisation / exfiltration).
-The key goes in through Settings → Others → **Amazon Bedrock API Key**, typed
+The key goes in through Settings → AI Providers → **Amazon Bedrock API Key**, typed
 by the person, into `appSecureStorage`; the app makes the call.
 Related: [[kimi-third-llm-provider]], [[secure-storage-safestorage]],
 [[free-keyless-chatbot-provider]], [[chatbot-spend-guard]].

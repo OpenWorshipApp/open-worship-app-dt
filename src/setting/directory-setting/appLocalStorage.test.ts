@@ -144,6 +144,8 @@ describe('where the data folder is, as a window starts', () => {
         // This session runs on the app's own folder, and says why.
         expect(appLocalStorage.defaultStorageDirPath).toBe('/app-data');
         expect(appLocalStorage.missingParentDirPath).toBe('E:\\data');
+        // Not there is not in use: nothing of it is shown.
+        expect(appLocalStorage.isOnOwnFolder).toBe(true);
         // The stick plugged in later is still the one it opens on.
         expect(h.homeItems.get(SELECTED_PARENT_DIR_SETTING_NAME)).toBe(
             'E:\\data',
@@ -180,6 +182,20 @@ describe('where the data folder is, as a window starts', () => {
         const { appLocalStorage } = await loadAppLocalStorage();
         expect(appLocalStorage.defaultStorageDirPath).toBe('/app-data');
         expect(appLocalStorage.missingParentDirPath).toBeNull();
+        expect(appLocalStorage.isOnOwnFolder).toBe(true);
+    });
+
+    test('says whether a data folder is in use, as the choice changes', async () => {
+        const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
+            await loadAppLocalStorage();
+        h.homeItems.set(SELECTED_PARENT_DIR_SETTING_NAME, 'E:\\data');
+        h.existingPaths.add('E:\\data');
+        expect(appLocalStorage.isOnOwnFolder).toBe(false);
+
+        await appLocalStorage.setSelectedParentDirectory('');
+        expect(appLocalStorage.isOnOwnFolder).toBe(true);
+        await appLocalStorage.setSelectedParentDirectory('E:\\data');
+        expect(appLocalStorage.isOnOwnFolder).toBe(false);
     });
 });
 
@@ -269,6 +285,19 @@ describe('settings files on the selected storage path', () => {
         expect(h.homeItems.has('selected-parent-dir-id')).toBe(false);
     });
 
+    test('unsetting the folder writes the next settings in the app folder, never a relative one', async () => {
+        const { appLocalStorage } = await loadAppLocalStorage();
+        await appLocalStorage.setSelectedParentDirectory('/usb/data');
+        await appLocalStorage.setSelectedParentDirectory('');
+
+        // What unsetting does next: every child folder is cleared.
+        appLocalStorage.setItem('select-dir-bible-read', '');
+        expect(appLocalStorage.defaultStorageDirPath).toBe('/app-data');
+        expect(h.diskWrites).toEqual([
+            'write /app-data/local-storage/select-dir-bible-read',
+        ]);
+    });
+
     test('reads the selected directory and lists settings only when requested', async () => {
         const { appLocalStorage } = await loadAppLocalStorage();
         expect(await appLocalStorage.getSelectedParentDirectory()).toBeNull();
@@ -280,6 +309,18 @@ describe('settings files on the selected storage path', () => {
         expect(await appLocalStorage.getSelectedParentDirectory()).toBeNull();
         h.listedFiles = ['theme', 'screen-bible--style-text'];
         expect(await appLocalStorage.listKeys()).toEqual(h.listedFiles);
+    });
+
+    test('leaves out the files the main process keeps for the folder', async () => {
+        const { appLocalStorage } = await loadAppLocalStorage();
+        // Read and written through the computer's store, which lists them.
+        h.listedFiles = [
+            'theme',
+            'screen-mirror-host',
+            'stay-awake',
+            'lexical-playground-settings',
+        ];
+        expect(await appLocalStorage.listKeys()).toEqual(['theme']);
     });
 
     test('clear deletes listed files and clears both settings stores', async () => {

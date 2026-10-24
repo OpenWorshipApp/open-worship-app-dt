@@ -214,4 +214,19 @@ describe('resolveAutoPicks', () => {
             ['LM Studio super-computer · qwen/qwen3.5-9b', 'Free · Seeing'],
         );
     });
+
+    // The app's own language decides in the window; here the option names it.
+    test('with the language ranking on, the Gemma 4 server model and the free ones lead', async () => {
+        expect(
+            toLabels(await resolveAutoPicks({ languageModelsFirst: true })),
+        ).toEqual([
+            // The Gemma 4 12B tier, then every free model, then the rest by
+            // size.
+            'LM Studio super-computer · Gemma 4 12B',
+            'Free · First',
+            'Free · Seeing',
+            'LM Studio super-computer · qwen/qwen3.5-9b',
+            'Ollama · qwen3.5:4b',
+        ]);
+    });
 });

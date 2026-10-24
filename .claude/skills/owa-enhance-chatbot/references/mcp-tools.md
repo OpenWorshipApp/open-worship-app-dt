@@ -110,8 +110,8 @@ A tool is not "added" until every line is true.
     the banner appears if it acts → the chatbot can be asked a question that makes
     a model choose it.
 13. **Document it**: `tools/owa-devtools-mcp/README.md` tool table, the tool's
-    bullet in `.claude/rules/agent-tools.md`, a `CB-xx` row if a user can
-    notice it, and the Codex mirror of all of the above.
+    bullet in `.claude/rules/agent-tools.md`, and a `CB-xx` row if a user can
+    notice it.
 
 ## Description voice — two readers, one string
 

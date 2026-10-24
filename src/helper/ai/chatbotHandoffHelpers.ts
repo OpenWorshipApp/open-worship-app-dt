@@ -27,6 +27,7 @@ import {
     requestChatbotReport,
 } from './chatbotHandoffStoreHelpers';
 import type { LookupAskType } from './lookupAskHelpers';
+import type { ResourceReadingType } from './resourceReadingAskHelpers';
 
 async function askToOpenChatbot() {
     if (!getIsAIEnabled()) {
@@ -63,14 +64,18 @@ export async function openChatbotReporting(problem = '') {
 
 /**
  * Opens the assistant on a FILE -- the 🤖 on a row of the Resources panel:
- * a tab of its own with the file attached and ready to be asked about. The
- * same two questions first.
+ * a tab of its own with the file attached and ready to be asked about, and
+ * the passage the Reader is on for that file, when it is on one
+ * (`resourceReadingAskHelpers.ts`). The same two questions first.
  */
-export async function openChatbotWithFile(filePath: string) {
+export async function openChatbotWithFile(
+    filePath: string,
+    reading: ResourceReadingType | null = null,
+) {
     if (!(await askToOpenChatbot())) {
         return false;
     }
-    requestChatbotFile(filePath);
+    requestChatbotFile(filePath, reading);
     openChatbotPage();
     return true;
 }

@@ -14,4 +14,11 @@
   }
 
   margin-bottom: 5px;
+
+  // A folder held over a box that takes one. Static: nothing animates.
+  &.path-selector-dropping {
+    border-radius: var(--bs-border-radius);
+    outline: 2px dashed var(--bs-info);
+    outline-offset: 2px;
+  }
 }

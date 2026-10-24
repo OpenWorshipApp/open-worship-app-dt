@@ -15,6 +15,7 @@ const h = vi.hoisted(() => ({
     setLookupContent: vi.fn(),
     openPanel: vi.fn(),
     handleError: vi.fn(),
+    openInChatbot: vi.fn(),
     historyStore: { addBibleItemHistory: (_text: string) => {} },
 }));
 
@@ -78,6 +79,14 @@ vi.mock('../location-name-lookup/detailPanelHelpers', () => ({
     openBibleItemDetailPanel: h.openPanel,
 }));
 vi.mock('../helper/errorHelpers', () => ({ handleError: h.handleError }));
+vi.mock('../helper/ai/bibleItemChatbotMenuHelpers', () => ({
+    genOpenInChatbotContextMenu: (bibleItem: unknown) => [
+        {
+            menuElement: 'Open in Chatbot',
+            onSelect: () => h.openInChatbot(bibleItem),
+        },
+    ],
+}));
 
 import BibleLookupInputHistoryComp from './BibleLookupInputHistoryComp';
 
@@ -219,7 +228,7 @@ describe('Bible lookup input history', () => {
         expect(h.openPanel).not.toHaveBeenCalled();
     });
 
-    it('offers open, open beside, set, copy, save and remove for a valid passage', async () => {
+    it('offers open, open in chatbot, open beside, set, copy, save and remove for a valid passage', async () => {
         await render();
         await act(async () =>
             rows()[0].dispatchEvent(
@@ -234,6 +243,7 @@ describe('Bible lookup input history', () => {
             items.map((item: { menuElement: string }) => item.menuElement),
         ).toEqual([
             'Open',
+            'Open in Chatbot',
             'Open beside the current verse',
             'Set to current editing',
             'Copy passage',
@@ -244,19 +254,59 @@ describe('Bible lookup input history', () => {
         expect(h.openPanel).toHaveBeenCalledWith(bibleItem);
         expect(h.append).not.toHaveBeenCalled();
         expect(h.setLookupContent).not.toHaveBeenCalled();
+        // The passage the entry names, handed to the assistant.
         await act(async () => items[1].onSelect());
+        expect(h.openInChatbot).toHaveBeenCalledWith(bibleItem);
+        await act(async () => items[2].onSelect());
         expect(h.append).toHaveBeenCalledWith(bibleItem);
         expect(h.setLookupContent).not.toHaveBeenCalled();
         // What a press on the entry did before: the editing passage becomes
         // this one, and no pane is added beside it.
-        await act(async () => items[2].onSelect());
+        await act(async () => items[3].onSelect());
         expect(h.setLookupContent).toHaveBeenCalledWith(bibleItem);
         expect(h.append).toHaveBeenCalledTimes(1);
-        await act(async () => items[4].onSelect());
-        expect(h.saveBibleItem).toHaveBeenCalledWith(bibleItem);
         await act(async () => items[5].onSelect());
+        expect(h.saveBibleItem).toHaveBeenCalledWith(bibleItem);
+        await act(async () => items[6].onSelect());
         expect(h.history).toEqual(['(en) Psalm 23']);
         expect(h.openPanel).toHaveBeenCalledTimes(1);
+    });
+
+    it('writes the drag payload inside dragstart, from the passage the press resolved', async () => {
+        await render();
+        const row = rows()[0];
+        // Nothing resolved yet: the drag is cancelled rather than sent empty.
+        const early = new Event('dragstart', {
+            bubbles: true,
+            cancelable: true,
+        });
+        act(() => {
+            row.dispatchEvent(early);
+        });
+        expect(early.defaultPrevented).toBe(true);
+        expect(h.drag).not.toHaveBeenCalled();
+        await act(async () =>
+            row.dispatchEvent(new Event('pointerdown', { bubbles: true })),
+        );
+        expect(h.extract).toHaveBeenCalledWith('en', 'John 3:16');
+        const drag = new Event('dragstart', {
+            bubbles: true,
+            cancelable: true,
+        });
+        // A synchronous act: an `await` before `handleDragStart` would leave
+        // it uncalled here, which is exactly the bug -- the browser seals
+        // `dataTransfer` once the handler yields.
+        act(() => {
+            row.dispatchEvent(drag);
+        });
+        expect(drag.defaultPrevented).toBe(false);
+        expect(h.drag).toHaveBeenCalledTimes(1);
+        expect(h.drag.mock.calls[0][1]).toBe(bibleItem);
+        // Resolved once per row, not again on every press.
+        await act(async () =>
+            row.dispatchEvent(new Event('pointerdown', { bubbles: true })),
+        );
+        expect(h.extract).toHaveBeenCalledTimes(1);
     });
 
     it('keeps an unparseable history entry removable but never drags or opens it', async () => {

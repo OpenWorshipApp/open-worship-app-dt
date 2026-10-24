@@ -20,6 +20,11 @@
       text-align: left;
       border-radius: var(--bs-border-radius);
       margin-bottom: 4px;
+      // Five tabs in a 132px sidebar: at 1rem the Khmer labels wrapped to two
+      // lines each and the strip stopped reading as tabs.
+      font-size: 0.85rem;
+      padding-left: 6px;
+      padding-right: 2px;
 
       &.active {
         background-color: rgba(var(--bs-info-rgb), 0.15);

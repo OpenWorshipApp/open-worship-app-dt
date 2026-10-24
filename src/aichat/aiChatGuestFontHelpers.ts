@@ -16,6 +16,17 @@
 // gets one rule more, on its body: the face's own name in front of the
 // site's own list.
 //
+// A face the user picked in Settings → General → Font Family is handed only
+// its NAME (it is a face installed on this computer, with no bytes here to
+// give), by the same two moves: a `local()` face under every loaded site
+// face's name with the same weight, style and stretch, and one body rule in
+// front of the site's own list. Both come AFTER the language face's, so a
+// letter they both cover is the picked face's -- an explicit pick outranks
+// the pack's. To keep the site's icon fonts its own, the borrowed faces
+// cover only text letters (`GUEST_TEXT_UNICODE_RANGE`; the report of
+// 2026-10-20: the custom font had no effect on the AI Chat page either,
+// then _it should effect inside the page as well_).
+//
 // Each face is added with the SAME weight, style and stretch as the site's
 // face of that name (the user's same-day report: _ai chat font-family not
 // effect the website_). Chromium picks ONE group of faces per name by those
@@ -47,6 +58,14 @@ let languageFont: LanguageFontType | null = null;
 /** Set once by the window's entry, when its language has a face of its own. */
 export function setLanguageFont(font: LanguageFontType | null) {
     languageFont = font;
+}
+
+// The Settings → General face, NAME only (it is installed on this computer).
+let appFontFamily: string | null = null;
+
+/** Set once by the window's entry, when Settings → General picks a face. */
+export function setAppFontFamily(family: string | null) {
+    appFontFamily = family;
 }
 
 /**
@@ -141,6 +160,106 @@ async function toBase64(url: string) {
 // Set on the page's window by the script below; read first, so the second
 // load event of a page sends no font over again.
 const GUEST_FONT_MARK = '__owaLanguageFont';
+// The letter blocks the world's writing systems live in, Khmer's included
+// (U+1780 and U+19E0 are both under this). Everything ABOVE it -- the
+// Private Use Area an icon font's letters live in, the symbol planes, the
+// emoji -- stays the site's own face under a name we borrow, or an answer
+// full of ✓ and arrows would empty out the moment a custom font is picked.
+export const GUEST_TEXT_UNICODE_RANGE = 'U+0-2FFF';
+
+/**
+ * What runs in the page for the face picked in Settings → General → Font
+ * Family, once per document: under the name of every loaded site face (and
+ * every one loaded later) a FontFace pointing AT THIS COMPUTER'S copy of
+ * the picked face (`local(...)`, nothing fetched, the same weight, style
+ * and stretch as the site's face), limited to text letters -- added AFTER
+ * the language face's, so where they both cover a letter this one wins, an
+ * explicit pick outranking the pack's. Hands back the body's font list for
+ * the rule that names it outright. Sets the page's font mark itself, for a
+ * language with no face of its own.
+ *
+ * The `local()` name traps, measured on the user's Battambang: unlike a
+ * bare CSS `font-family` name, `local()` wants the face's FULL name
+ * (`Battambang Regular`) or its PostScript name (`Battambang-Regular`) --
+ * the bare family name loads nothing and the face ends in `error` status
+ * ("A network error occurred", on the host page as much as in a guest), so
+ * each borrow tries all three spellings (regular AND bold, picked by the
+ * site face's weight, as the language script picks its two files). A face
+ * nothing loads for is skipped by the letter matcher, so a failed borrow
+ * leaves the site's own face alone.
+ */
+export function genGuestAppFontScript(family: string) {
+    return `(() => {
+    window.${GUEST_FONT_MARK} = true;
+    const family = ${JSON.stringify(family)};
+    const regularSource =
+        [' Regular', '-Regular', ''].map((suffix) => {
+            return 'local(' + JSON.stringify(family + suffix) + ')';
+        }).join(', ');
+    const boldSource =
+        [' Bold', '-Bold'].map((suffix) => {
+            return 'local(' + JSON.stringify(family + suffix) + ')';
+        }).join(', ');
+    const unicodeRange = ${JSON.stringify(GUEST_TEXT_UNICODE_RANGE)};
+    const clean = (name) => name.trim().replace(/^["']|["']$/g, '');
+    const toRanges = (text) => {
+        return String(text).split(',').map((part) => {
+            const match = /U\\+([0-9A-Fa-f?]+)(?:-([0-9A-Fa-f]+))?/.exec(part);
+            if (match === null) {
+                return null;
+            }
+            const last = match[2] ?? match[1];
+            return [
+                parseInt(match[1].replace(/\\?/g, '0'), 16),
+                parseInt(last.replace(/\\?/g, 'F'), 16),
+            ];
+        }).filter((range) => range !== null);
+    };
+    const letters = toRanges(unicodeRange);
+    const canDraw = (face) => {
+        return toRanges(face.unicodeRange).some(([from, to]) => {
+            return letters.some(([start, end]) => from <= end && start <= to);
+        });
+    };
+    const followed = new Set();
+    const follow = (face) => {
+        const name = clean(face.family);
+        const key = [name, face.weight, face.style, face.stretch].join('|');
+        if (
+            name === family ||
+            face.family === family ||
+            followed.has(key) ||
+            followed.size >= ${MAX_FOLLOWED_FACES} ||
+            !canDraw(face)
+        ) {
+            return;
+        }
+        followed.add(key);
+        const lightest = face.weight === 'bold' ? 700 : parseFloat(face.weight);
+        try {
+            document.fonts.add(new FontFace(name, lightest >= 600 ? boldSource : regularSource, {
+                weight: face.weight,
+                style: face.style,
+                stretch: face.stretch,
+                unicodeRange,
+            }));
+        } catch (_error) {
+            // A name the page cannot take a face under: left as it is.
+        }
+    };
+    for (const face of document.fonts) {
+        if (face.status === 'loaded') {
+            follow(face);
+        }
+    }
+    document.fonts.addEventListener('loadingdone', (event) => {
+        for (const face of event.fontfaces) {
+            follow(face);
+        }
+    });
+    return document.body ? getComputedStyle(document.body).fontFamily : '';
+})()`;
+}
 // Each face handed over is a copy of the file the page parses and keeps.
 const MAX_FOLLOWED_FACES = 12;
 
@@ -256,11 +375,10 @@ const handingOver = new WeakSet<AiChatGuestElementType>();
  */
 export async function applyGuestLanguageFont(guest: AiChatGuestElementType) {
     const font = languageFont;
-    if (font === null || handingOver.has(guest)) {
-        return;
-    }
-    const files = readLanguageFontFiles(font.css, font.family);
-    if (files.length === 0) {
+    const appFont = toSafeFontList(appFontFamily);
+    const files =
+        font === null ? [] : readLanguageFontFiles(font.css, font.family);
+    if ((files.length === 0 && appFont === '') || handingOver.has(guest)) {
         return;
     }
     handingOver.add(guest);
@@ -272,21 +390,36 @@ export async function applyGuestLanguageFont(guest: AiChatGuestElementType) {
         ) {
             return;
         }
-        const faces = await Promise.all(
-            files.map(async (file) => {
-                return { data: await toBase64(file.url), weight: file.weight };
-            }),
-        );
-        const bodyFonts = toSafeFontList(
-            await guest.executeJavaScript(
-                genGuestFontScript(faces, font.family, font.unicodeRange),
-            ),
-        );
-        const family = toSafeFontList(font.family);
-        if (bodyFonts.length > 0 && !bodyFonts.includes(family)) {
-            await guest.insertCSS(
-                `body { font-family: "${family}", ${bodyFonts}; }`,
+        if (font !== null && files.length > 0) {
+            const faces = await Promise.all(
+                files.map(async (file) => {
+                    return {
+                        data: await toBase64(file.url),
+                        weight: file.weight,
+                    };
+                }),
             );
+            const bodyFonts = toSafeFontList(
+                await guest.executeJavaScript(
+                    genGuestFontScript(faces, font.family, font.unicodeRange),
+                ),
+            );
+            const family = toSafeFontList(font.family);
+            if (bodyFonts.length > 0 && !bodyFonts.includes(family)) {
+                await guest.insertCSS(
+                    `body { font-family: "${family}", ${bodyFonts}; }`,
+                );
+            }
+        }
+        if (appFont !== '') {
+            const bodyFonts = toSafeFontList(
+                await guest.executeJavaScript(genGuestAppFontScript(appFont)),
+            );
+            if (bodyFonts.length > 0 && !bodyFonts.includes(appFont)) {
+                await guest.insertCSS(
+                    `body { font-family: "${appFont}", ${bodyFonts}; }`,
+                );
+            }
         }
     } catch (_error) {
         // The page went away, or would not run it: nothing to put right.

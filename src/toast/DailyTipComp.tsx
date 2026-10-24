@@ -11,6 +11,7 @@ import {
 } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import { checkIsMainWindow } from '../server/appHelpers';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import {
     DAILY_TIP_AUTO_CLOSE_MS,
     getDailyTipSessionKey,
@@ -35,9 +36,11 @@ type DailyTipMenuClickType = {
 
 // Read again when the delay ends: the tips may have been hidden from another
 // window's card or switched off in Settings meanwhile, or a tip already opened
-// from Help.
+// from Help. Never while no data folder is in use: the one window then showing
+// anything is Settings, open for that choice, and the card sat on its box.
 function checkIsAutoTipBlocked(page: DailyTipPageType) {
     return (
+        appLocalStorage.isOnOwnFolder ||
         getAreDailyTipsDisabled() ||
         globalThis.sessionStorage.getItem(getDailyTipSessionKey(page)) ===
             'true'
@@ -57,6 +60,12 @@ export default function DailyTipComp() {
     const [tipIndex, setTipIndex] = useState<number | null>(null);
     const [isStarting, setIsStarting] = useState(false);
     const [isBrowsing, setIsBrowsing] = useState(false);
+    // Opened from Help rather than by itself. Such a card has no "Hide for 30
+    // days" (2026-10-23, the user: _the tip of the day that opened by `Help`
+    // menu should have no `Hide for 30 days`_): the hide puts away the
+    // AUTOMATIC card, and somebody who just asked for a tip is not asking for
+    // that.
+    const [isAskedFor, setIsAskedFor] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -87,6 +96,7 @@ export default function DailyTipComp() {
         markAutoTipShown(page);
         setErrorMessage('');
         setIsBrowsing(false);
+        setIsAskedFor(true);
         setTipIndex(pickDailyTipIndex(page, tips));
     }, [page, tips]);
 
@@ -97,6 +107,7 @@ export default function DailyTipComp() {
         markAutoTipShown(page);
         setErrorMessage('');
         setSearchText('');
+        setIsAskedFor(true);
         setTipIndex((oldIndex) => {
             return oldIndex ?? pickDailyTipIndex(page, tips);
         });
@@ -122,9 +133,12 @@ export default function DailyTipComp() {
         if (page === null || checkIsAutoTipBlocked(page)) {
             return;
         }
-        const timeoutId = setTimeout(showAutoTip, getDailyTipAutoShowDelay());
+        const timeoutId = setTimeout(
+            showAutoTip,
+            getDailyTipAutoShowDelay(page),
+        );
         const handleFocus = () => {
-            if (getDailyTipAutoShowDelay() === 0) showAutoTip();
+            if (getDailyTipAutoShowDelay(page) === 0) showAutoTip();
         };
         globalThis.addEventListener('focus', handleFocus);
         return () => {
@@ -137,15 +151,17 @@ export default function DailyTipComp() {
         if (page === null) {
             return;
         }
+        // Every open page shows its own, whether or not its window is in front
+        // (2026-10-23, the user: _open `Help` menubar, when click show in all
+        // pages_): a popup's menu bar is hidden, so the main window's Help is
+        // the one way to ask for Settings' or a Bible Note's tips, and the
+        // press focuses the main window.
         const unregister = registerAppMenuClicked<DailyTipMenuClickType>(
             (_event, data) => {
-                if (data?.isOpenDailyTip && appProvider.getIsWindowFocused()) {
+                if (data?.isOpenDailyTip) {
                     openTip();
                 }
-                if (
-                    data?.isBrowseDailyTips &&
-                    appProvider.getIsWindowFocused()
-                ) {
+                if (data?.isBrowseDailyTips) {
                     openAllTips();
                 }
             },
@@ -167,7 +183,7 @@ export default function DailyTipComp() {
                         },
                     ],
                 },
-                { isRoutedToFocusedWindow: true },
+                { isSentToAllWindows: true },
             );
         return () => {
             unregister();
@@ -185,6 +201,7 @@ export default function DailyTipComp() {
     const handleUnhovering = useCallback(() => setIsHovered(false), []);
     const closeTip = useCallback(() => {
         setIsBrowsing(false);
+        setIsAskedFor(false);
         // A card closed from under the pointer -- Show it, or the timer
         // itself -- never gets its `mouseleave`, so the next one would open
         // already held.
@@ -292,7 +309,7 @@ export default function DailyTipComp() {
                           ? tran('Tip of the Day')
                           : `${tran('Tip of the Day')} · ${getDailyTipPageLabel(page)}`}
                 </span>
-                {isBrowsing ? null : (
+                {isBrowsing || isAskedFor ? null : (
                     <button
                         type="button"
                         className="btn btn-link app-daily-tip-quiet"
