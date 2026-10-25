@@ -176,10 +176,29 @@ preflight() {
     echo "Preflight passed."
 }
 
+# `npm i` writes a GitHub-hosted dependency's `resolved` as `git+ssh://git@...`
+# or `git+https://...` depending on the machine, for the very same commit, so a
+# fresh install (`npm run i:d`, run by every release) leaves package-lock.json
+# "modified" with nothing in it worth keeping. Put the committed copy back when
+# that is the ONLY difference; any other change still reaches the confirm below.
+discard_lockfile_url_churn() {
+    local lock_file="package-lock.json"
+    if git diff --quiet -- "$lock_file"; then
+        return
+    fi
+    local normalize='s#git+ssh://git@github\.com/#git+https://github.com/#g'
+    if cmp -s <(git show ":$lock_file" | sed "$normalize") \
+        <(sed "$normalize" "$lock_file"); then
+        echo "\"$lock_file\" differs only by git+ssh/git+https URLs; restoring it."
+        git checkout -- "$lock_file"
+    fi
+}
+
 # `git reset --hard` below is unrecoverable, so anything it would throw away is
 # shown and confirmed first. Untracked files survive a reset and are not asked
 # about.
 check_worktree_is_clean() {
+    discard_lockfile_url_churn
     local dirty
     dirty=$(git status --porcelain --untracked-files=no)
     if [[ -z "$dirty" ]]; then
@@ -479,6 +498,17 @@ if [[ -n "$forced_electron_version" ]]; then
 fi
 
 if [[ "$is_dry_run" != "true" ]]; then
+    # The version comes from whatever branch is checked out, and `git pull`
+    # only follows that branch: a checkout left on an old feature branch reads
+    # "up to date" and would publish an old build over the newest one.
+    newest_release_tag=$(git tag -l 'release-*' --sort=-version:refname | head -n 1)
+    if [[ -n "$newest_release_tag" && "$newest_release_tag" != "release-$package_version" ]]; then
+        echo "WARNING: \"$newest_release_tag\" is newer than \"release-$package_version\"."
+        echo "         Branch \"$(git rev-parse --abbrev-ref HEAD)\" may be stale - releasing from main?"
+        if ! confirm "Publish the OLDER version $package_version anyway?"; then
+            abort
+        fi
+    fi
     check_worktree_is_clean
     if ! confirm "Do you want to continue?"; then
         abort
