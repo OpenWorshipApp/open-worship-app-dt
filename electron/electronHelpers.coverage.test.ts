@@ -1,3 +1,6 @@
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const { mkdir, readdir, readFile, rm, writeFile, tarC, tarX, tarR } =
@@ -1267,15 +1270,18 @@ describe('electronHelpers coverage', () => {
             }),
         });
         electronMockState.setBrowserWindowFactory(() => captureWin);
-        settingManagerMock.getClientSetting.mockReturnValue(
-            'C:\\mock-user-data',
-        );
+        // Built for the OS running the test: `C:\\mock-user-data` on Windows,
+        // `/mock-user-data` elsewhere, where a `C:` path is not absolute.
+        const dataDirPath = path.resolve('/mock-user-data');
+        settingManagerMock.getClientSetting.mockReturnValue(dataDirPath);
         readdir.mockResolvedValue([
             'select-dir-web-bg-session-a',
             'unrelated-setting',
         ]);
         readFile.mockResolvedValue('$DATA_DIR_PATH/extra-webs');
-        const localUrl = 'file:///C:/mock-user-data/extra-webs/page.html';
+        const localUrl = pathToFileURL(
+            path.join(dataDirPath, 'extra-webs', 'page.html'),
+        ).href;
 
         await expect(
             captureWebScreenShot(localUrl, {
@@ -1296,8 +1302,11 @@ describe('electronHelpers coverage', () => {
         vi.useFakeTimers();
         vi.setSystemTime(Date.now() + 6000);
         readdir.mockRejectedValueOnce(new Error('drive unplugged'));
+        const outsideUrl = pathToFileURL(
+            path.resolve('/outside/page.html'),
+        ).href;
         await expect(
-            captureWebScreenShot('file:///C:/outside/page.html', {
+            captureWebScreenShot(outsideUrl, {
                 width: 320,
                 height: 200,
                 delay: 0,

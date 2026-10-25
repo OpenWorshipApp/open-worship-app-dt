@@ -17,7 +17,11 @@ const packageJson = JSON.parse(
 );
 const packageName = packageJson.name;
 const rpmVersion = normalizeRpmVersion(packageJson.version);
-const appOutDir = join(repoRoot, 'release', 'linux-unpacked');
+// electron-builder names it `linux-unpacked` for x64 only and
+// `linux-<arch>-unpacked` for every other arch (e.g. `linux-arm64-unpacked`).
+const appOutDirName =
+  process.arch === 'x64' ? 'linux-unpacked' : `linux-${process.arch}-unpacked`;
+const appOutDir = join(repoRoot, 'release', appOutDirName);
 const iconPath = join(repoRoot, 'icon.png');
 const licensePath = join(repoRoot, 'LICENSE.txt');
 const rpmTopDir = join(repoRoot, 'extra-work', 'tmp', 'rpm-build');
@@ -65,13 +69,7 @@ for (const dirName of [
 
 execFileSync(
   'tar',
-  [
-    '-C',
-    join(repoRoot, 'release'),
-    '-czf',
-    sourceArchivePath,
-    'linux-unpacked',
-  ],
+  ['-C', join(repoRoot, 'release'), '-czf', sourceArchivePath, appOutDirName],
   {
     stdio: 'inherit',
   },
@@ -222,7 +220,7 @@ tar -xzf %{SOURCE0}
 %install
 rm -rf %{buildroot}
 install -d %{buildroot}/opt/OpenWorshipApp
-cp -a linux-unpacked/. %{buildroot}/opt/OpenWorshipApp/
+cp -a ${appOutDirName}/. %{buildroot}/opt/OpenWorshipApp/
 chmod 4755 %{buildroot}/opt/OpenWorshipApp/chrome-sandbox
 
 install -d %{buildroot}%{_bindir}
