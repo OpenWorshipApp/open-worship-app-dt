@@ -195,27 +195,9 @@ export function initEventListenerApp(appController: ElectronAppController) {
 
     ipcMain.on(
         'main:app:get-special-path',
-        (
-            event,
-            name:
-                | 'desktop'
-                | 'downloads'
-                | 'home'
-                | 'appData'
-                | 'assets'
-                | 'userData'
-                | 'sessionData'
-                | 'temp'
-                | 'exe'
-                | 'module'
-                | 'documents'
-                | 'music'
-                | 'pictures'
-                | 'videos'
-                | 'recent'
-                | 'logs'
-                | 'crashDumps',
-        ) => {
+        // Typed off the installed Electron: the accepted names differ by
+        // version ('assets' is newer than 32.x), and both must build.
+        (event, name: Parameters<typeof app.getPath>[0]) => {
             event.returnValue = app.getPath(name);
         },
     );
