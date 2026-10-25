@@ -189,6 +189,7 @@ function getLinuxBinFilePath(prefix, systemInfo) {
         isUbuntu: !!systemInfo.isUbuntu,
         isFedora: !!systemInfo.isFedora,
         is64System: !!systemInfo.is64System,
+        isArm64: !!systemInfo.isArm64,
         portable: filterBinFileInfo(prefix, data, '.AppImage'),
         installer: systemInfo.isUbuntu
             ? filterBinFileInfo(prefix, data, '.deb')
@@ -211,7 +212,12 @@ function getUploadList() {
                 uploadList.push(...getMacBinFilePath(key, value));
             }
         } else if (isLinux && value.isLinux) {
-            if ((isUbuntu && value.isUbuntu) || (isFedora && value.isFedora)) {
+            // The arch has to match too: an arm64 pack published under an x64
+            // prefix would replace every x64 download with one that cannot run.
+            if (
+                ((isUbuntu && value.isUbuntu) || (isFedora && value.isFedora)) &&
+                isArm64 === !!value.isArm64
+            ) {
                 uploadList.push(...getLinuxBinFilePath(key, value));
             }
         }

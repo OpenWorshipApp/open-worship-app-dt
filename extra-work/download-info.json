@@ -24,10 +24,22 @@
         "is64System": true,
         "isArm64": false
     },
+    "linux-ubuntu-arm64": {
+        "isLinux": true,
+        "isUbuntu": true,
+        "is64System": true,
+        "isArm64": true
+    },
     "linux-fedora": {
         "isLinux": true,
         "isFedora": true,
         "is64System": true,
         "isArm64": false
+    },
+    "linux-fedora-arm64": {
+        "isLinux": true,
+        "isFedora": true,
+        "is64System": true,
+        "isArm64": true
     }
 }

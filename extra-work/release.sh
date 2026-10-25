@@ -367,6 +367,12 @@ mac_prep() {
 
 linux_prep() {
     start_prep "$1"
+    # electron-builder names the update file after the arch on arm64 only:
+    # `latest-linux.yml` for x64, `latest-linux-arm64.yml` for arm64.
+    local yml_file="$1/latest-linux.yml"
+    if [[ "$(node -p "process.arch")" == "arm64" ]]; then
+        yml_file="$1/latest-linux-arm64.yml"
+    fi
     local file
     shopt -s nullglob
     for file in "$1"/*.AppImage "$1"/*.deb "$1"/*.rpm; do
@@ -374,9 +380,9 @@ linux_prep() {
     done
     shopt -u nullglob
     if [[ "$2" == "fedora" ]]; then
-        collect_artifacts "$1" "$1/latest-linux.yml" '.rpm' '.AppImage'
+        collect_artifacts "$1" "$yml_file" '.rpm' '.AppImage'
     else
-        collect_artifacts "$1" "$1/latest-linux.yml" '.deb' '.AppImage'
+        collect_artifacts "$1" "$yml_file" '.deb' '.AppImage'
     fi
 }
 
@@ -414,14 +420,19 @@ build_release() {
         fi
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         build_extra_bin
+        # Must match the `download-info.json` keys `s3-push-release.js` reads.
+        local arch_suffix=""
+        if [[ "$(node -p "process.arch")" == "arm64" ]]; then
+            arch_suffix="-arm64"
+        fi
         if [[ "$RELEASE_LINUX_IS_UBUNTU" == "true" ]]; then
-            log_step "Packing linux-ubuntu"
+            log_step "Packing linux-ubuntu$arch_suffix"
             npm run pack:linux
-            linux_prep "$tmp_dir/linux-ubuntu" "ubuntu"
+            linux_prep "$tmp_dir/linux-ubuntu$arch_suffix" "ubuntu"
         elif [[ "$RELEASE_LINUX_IS_FEDORA" == "true" ]]; then
-            log_step "Packing linux-fedora"
+            log_step "Packing linux-fedora$arch_suffix"
             npm run pack:linux
-            linux_prep "$tmp_dir/linux-fedora" "fedora"
+            linux_prep "$tmp_dir/linux-fedora$arch_suffix" "fedora"
         else
             fail "Unsupported Linux distribution"
         fi
