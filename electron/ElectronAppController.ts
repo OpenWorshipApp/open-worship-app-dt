@@ -8,6 +8,25 @@ import ElectronLWShareController from './ElectronLWShareController';
 
 let instance: ElectronAppController | null = null;
 let lwShareController: ElectronLWShareController | null = null;
+
+// A window `reloadAll` and `sendMessageToAll` may reach. Its webContents is
+// checked on its own: closing the help window runs its `destroyed` listener
+// (`all:app:chatbot-busy` in `electronEventListener.ts`) while its
+// BrowserWindow is still listed and not yet destroyed, and `getURL()` on the
+// gone webContents threw "Object has been destroyed" -- an uncaught exception
+// in the main process, Electron's blocking error dialog.
+function checkIsReachableWindow(win: BrowserWindow) {
+    if (win.isDestroyed() || win.webContents.isDestroyed()) {
+        return false;
+    }
+    const url = win.webContents.getURL();
+    return (
+        !url.includes(htmlFiles.screen) &&
+        // A virtual display's compositor: reloading it cuts every stream.
+        !url.includes(htmlFiles.virtualDisplay)
+    );
+}
+
 export default class ElectronAppController {
     constructor() {
         this.settingManager.syncMainWindow(this.mainWin);
@@ -93,15 +112,9 @@ export default class ElectronAppController {
     // presentation, and the presenter re-pushes their content on its own reload.
     reloadAll() {
         for (const win of BrowserWindow.getAllWindows()) {
-            if (
-                win.isDestroyed() ||
-                win.webContents.getURL().includes(htmlFiles.screen) ||
-                // A virtual display's compositor: reloading it cuts every stream.
-                win.webContents.getURL().includes(htmlFiles.virtualDisplay)
-            ) {
-                continue;
+            if (checkIsReachableWindow(win)) {
+                win.reload();
             }
-            win.reload();
         }
     }
 
@@ -110,15 +123,9 @@ export default class ElectronAppController {
     // miss the Settings window — which is the one that needs most of them.
     sendMessageToAll(channel: string, ...args: any[]) {
         for (const win of BrowserWindow.getAllWindows()) {
-            if (
-                win.isDestroyed() ||
-                win.webContents.getURL().includes(htmlFiles.screen) ||
-                // A virtual display's compositor: reloading it cuts every stream.
-                win.webContents.getURL().includes(htmlFiles.virtualDisplay)
-            ) {
-                continue;
+            if (checkIsReachableWindow(win)) {
+                win.webContents.send(channel, ...args);
             }
-            win.webContents.send(channel, ...args);
         }
     }
 }

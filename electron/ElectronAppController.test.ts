@@ -132,7 +132,10 @@ describe('ElectronAppController', () => {
         const genWin = (url: string, isDestroyed = false) => ({
             isDestroyed: vi.fn(() => isDestroyed),
             reload: vi.fn(),
-            webContents: { getURL: vi.fn(() => url) },
+            webContents: {
+                isDestroyed: vi.fn(() => false),
+                getURL: vi.fn(() => url),
+            },
         });
         // a popup (Settings) must reload too — it is not in `allWindows()`
         const presenterWin = genWin('https://localhost:3000/presenter.html');
@@ -193,6 +196,7 @@ describe('ElectronAppController', () => {
         const live = {
             isDestroyed: vi.fn(() => false),
             webContents: {
+                isDestroyed: vi.fn(() => false),
                 getURL: vi.fn(() => 'https://localhost:3000/setting.html'),
                 send: vi.fn(),
             },
@@ -200,13 +204,18 @@ describe('ElectronAppController', () => {
         const screen = {
             isDestroyed: vi.fn(() => false),
             webContents: {
+                isDestroyed: vi.fn(() => false),
                 getURL: vi.fn(() => 'https://localhost:3000/screen.html?id=2'),
                 send: vi.fn(),
             },
         };
         const destroyed = {
             isDestroyed: vi.fn(() => true),
-            webContents: { getURL: vi.fn(), send: vi.fn() },
+            webContents: {
+                isDestroyed: vi.fn(),
+                getURL: vi.fn(),
+                send: vi.fn(),
+            },
         };
         BrowserWindow.getAllWindows.mockReturnValue([live, screen, destroyed]);
 
@@ -217,5 +226,54 @@ describe('ElectronAppController', () => {
         });
         expect(screen.webContents.send).not.toHaveBeenCalled();
         expect(destroyed.webContents.send).not.toHaveBeenCalled();
+    });
+
+    // Closing the help window mid-answer: its `destroyed` listener broadcasts
+    // `main:app:chatbot-busy` while its BrowserWindow is still listed and not
+    // yet destroyed, but its webContents is -- and touching that threw an
+    // uncaught "Object has been destroyed" in the main process.
+    test('skips a window whose webContents is already destroyed', async () => {
+        const { default: Controller } = await import('./ElectronAppController');
+        const { BrowserWindow } = (await import('electron')) as any;
+        const controller = Controller.getInstance();
+        const throwDestroyed = () => {
+            throw new TypeError('Object has been destroyed');
+        };
+        const live = {
+            isDestroyed: vi.fn(() => false),
+            reload: vi.fn(),
+            webContents: {
+                isDestroyed: vi.fn(() => false),
+                getURL: vi.fn(() => 'https://localhost:3000/presenter.html'),
+                send: vi.fn(),
+            },
+        };
+        const closingChatbot = {
+            isDestroyed: vi.fn(() => false),
+            reload: vi.fn(),
+            webContents: {
+                isDestroyed: vi.fn(() => true),
+                getURL: vi.fn(throwDestroyed),
+                send: vi.fn(throwDestroyed),
+            },
+        };
+        BrowserWindow.getAllWindows.mockReturnValue([closingChatbot, live]);
+
+        expect(() => {
+            controller.sendMessageToAll('main:app:chatbot-busy', {
+                isBusy: false,
+            });
+        }).not.toThrow();
+        expect(() => {
+            controller.reloadAll();
+        }).not.toThrow();
+
+        expect(live.webContents.send).toHaveBeenCalledWith(
+            'main:app:chatbot-busy',
+            { isBusy: false },
+        );
+        expect(live.reload).toHaveBeenCalledTimes(1);
+        expect(closingChatbot.webContents.getURL).not.toHaveBeenCalled();
+        expect(closingChatbot.reload).not.toHaveBeenCalled();
     });
 });
