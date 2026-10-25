@@ -54,6 +54,7 @@ const systemUtils = {
     },
     openFile,
     commitHash,
+    electronVersion: process.versions.electron,
     isDev,
     isWindows,
     isWindowsStore,

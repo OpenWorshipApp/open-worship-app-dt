@@ -71,6 +71,7 @@ export type PathUtilsType = {
 export type SystemUtilsType = {
     copyToClipboard: (str: string) => void;
     commitHash?: string;
+    electronVersion?: string;
     isDev: boolean;
     isWindows: boolean;
     isWindowsStore: boolean;

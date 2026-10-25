@@ -58,7 +58,7 @@ export default function AboutComp() {
         [],
         'Unknown',
     );
-    const commitHash = appProvider.systemUtils.commitHash;
+    const { commitHash, electronVersion } = appProvider.systemUtils;
     return (
         <div
             id="app"
@@ -100,6 +100,9 @@ export default function AboutComp() {
                 <div className="card-body p-2">
                     <div>{appInfo.description}</div>
                     <div className="small mt-2 d-flex flex-wrap">
+                        <div className="m-1 module-version">
+                            Electron ({electronVersion || 'N/A'})
+                        </div>
                         <div className="m-1 module-version">
                             Pptx2Html ({renderVersion(pptxToHtmlsVersion)})
                         </div>
