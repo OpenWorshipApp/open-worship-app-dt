@@ -5,7 +5,7 @@
     "gitRepository": "https://github.com/OpenWorshipApp/open-worship-app-dt",
     "homepage": "https://www.openworship.app",
     "msStoreProductId": "",
-    "version": "2026.10.24",
+    "version": "2026.10.25",
     "type": "commonjs",
     "main": "./electron-build/electron/index.js",
     "scripts": {
@@ -82,7 +82,8 @@
         "asarUnpack": [
             "electron-build/**/*",
             "dist/**/*.gz.bundle",
-            "tools/owa-devtools-mcp/**/*"
+            "tools/owa-devtools-mcp/**/*",
+            "node_modules/chrome-devtools-mcp/**/*"
         ],
         "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
         "dmg": {

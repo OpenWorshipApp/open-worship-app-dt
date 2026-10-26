@@ -222,7 +222,10 @@ async function sweepStaleAiInfo(dirPath: string) {
 
 /**
  * One module of the `owa-devtools-mcp` package on disk. `tools/` ships
- * unpacked beside the asar so the ESM loader can read it.
+ * unpacked beside the asar so the ESM loader can read it -- and so does
+ * `chrome-devtools-mcp` (`asarUnpack`): a bare import from the unpacked folder
+ * looks in `app.asar.unpacked/node_modules` and never inside the asar, so a
+ * packed copy left every chatbot question on "did not respond".
  *
  * Exported because the main process now loads a SECOND module from that
  * package: `webPageHelpers.ts` shares `webUrlPolicy.mjs` with the MCP
