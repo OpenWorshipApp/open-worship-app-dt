@@ -18,7 +18,7 @@ newer.
 | `llm-tunnel.mjs` | The door, cloudflared and the look it takes at itself. With `--publish` it adds its own server to the registry and takes it out again when it stops. With `--reports` its door is the report inbox instead of an LLM server. |
 | `llm-tunnel-startup.mjs` | Starts a tunnel with the computer and brings it back when it stops. |
 | `llm-report-inbox.mjs` | Takes the problem reports the app's help window sends — a `POST` of JSON, the report and its files — keeps them in a SQLite file, and lists them, shows them and writes their files out. |
-| `llm-registry.mjs` | Lists the servers shared right now, asks each whether it answers, and takes one out. |
+| `llm-registry.mjs` | Lists the servers shared right now, asks each whether it answers, takes one out, adds one typed in vim, and changes one in vim or from a file. |
 | `s3-push-llm-registry.mjs` | Checks a registry file the way the app does and publishes it whole to `https://www.openworship.app/llm/info.json`. |
 | `llm-info.json` | A registry to publish by hand. Empty: the tunnels add and remove their own entries on the site. |
 | `llm-info.schema.json` | The JSON Schema of that file (and of the `llm-info-<id>.json` each tunnel writes): what an editor checks and completes it against. |
@@ -128,6 +128,9 @@ node extra-work/local-llm/llm-registry.mjs list                        # the ser
 node extra-work/local-llm/llm-registry.mjs check                       # which answer; asks about each that does not
 node extra-work/local-llm/llm-registry.mjs check --remove-unreachable  # takes those out without asking
 node extra-work/local-llm/llm-registry.mjs remove <id>                 # takes one out (asks first; --yes does not)
+node extra-work/local-llm/llm-registry.mjs add                         # adds one: typed in vim, checked, asked
+node extra-work/local-llm/llm-registry.mjs modify <id>                 # changes one in vim: checked, asked
+node extra-work/local-llm/llm-registry.mjs modify <id> ./entry.json    # changes one to what the file holds: checked, asked
 ```
 
 - **`list`** only reads the public `info.json`: each server's id, name,
@@ -141,6 +144,40 @@ node extra-work/local-llm/llm-registry.mjs remove <id>                 # takes o
   With no terminal to answer in, it reports and takes nothing out.
 - **`remove`** and a yes in `check` write the registry: the copy the site holds
   at that moment, without that server, everything else as it is.
+- **`add`** opens the new entry in vim — `$VISUAL` or `$EDITOR` when one is
+  set — as a temporary JSON file whose every text is a placeholder in
+  `<…>` saying what goes there (`id`, `name`, `note`, `baseUrl`, `apiKey`,
+  `isFree`, `isAcceptingReport`, and a model row: `model`, `name`,
+  `canSeeImages`, `note`). Fill it in and `:wq`. A placeholder left in an
+  optional field, or a `false`, leaves that field out; the model row left
+  as it is names no model, which an entry that only takes reports wants.
+  Once the editor is closed the entry is checked the way the app checks the
+  registry, and refused when another entry already has its **id** or its
+  **name** (whatever the case): it says what is wrong and asks _Edit it
+  again? [y/N]_, reopening it as you left it. A good entry is shown — its
+  key as _(set — not shown)_ — with whether it answers, then _Add it to the
+  shared registry? [y/N]_. A yes writes the copy the site holds at that
+  moment with the entry at the end, unless a tunnel took that id or name
+  meanwhile. `:q!` without a change, an emptied file or `:cq` adds nothing,
+  and the temporary file is deleted either way. It needs a terminal, and
+  refuses when the registry already holds the 20 servers the app reads.
+- **`modify <id>`** opens that entry in vim the same way: as the registry
+  holds it, the key included, with a placeholder in each optional field it
+  leaves out (copy a model row to add a model, delete one to drop it). The
+  same check follows, except that its own id and name are no clash, then
+  the entry with the fields that changed — _The entry, changed (name,
+  note):_ — and _Change it in the shared registry? [y/N]_. Saved with no
+  change, it changes nothing. **`modify <id> ./entry.json`** opens no
+  editor: the file holds the entry as it is to be (the same JSON as the
+  editor's, placeholders too), and is checked, shown and asked about the
+  same way — a file that is not right is said to be wrong and nothing more.
+  A yes writes the entry where it stands in the copy the site holds at that
+  moment, and only while that copy still has the entry as it was opened:
+  a tunnel rewrites its own entry whenever it starts or its address or its
+  models change, keeping only the notes, so change a tunnel's name through
+  its `--name`, not here. A changed id is said before the
+  question: the app knows a server by its id, so to a copy that picked the
+  old one it is a new server.
 
 To publish a whole file by hand instead (it REPLACES the registry, the
 tunnels' entries too — they put theirs back within a few minutes):
@@ -335,8 +372,10 @@ is yours to write: `baseUrl` is the public address ending in `/report`.
 ### In the registry
 
 - A tunnel started with `--reports --publish` writes and removes its own
-  entry, like every tunnel. One kept by hand is published with
-  `s3-push-llm-registry.mjs`, and the tunnels leave it where it is.
+  entry, like every tunnel. One kept by hand is added with
+  `llm-registry.mjs add` (`isAcceptingReport: true`, the model row left as
+  it is) or published with `s3-push-llm-registry.mjs`, and the tunnels leave
+  it where it is.
 - `llm-registry.mjs list` says _takes reports_ in place of the models, and
   `check` asks the address with a `GET` — a report is never sent to try it —
   counting any answer the address gives itself as there and a `5xx` or no

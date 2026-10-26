@@ -228,8 +228,11 @@ Cloudflare quick tunnel in front of the door. With `--publish` each running
 tunnel adds its own server to this file — every time its address changes —
 and takes it out again when it stops, leaving every other server as it is;
 `llm-tunnel-startup.mjs` starts a tunnel with the computer.
-`llm-registry.mjs list` shows what is shared right now, and `check` asks each
-server whether it answers and offers to take out one that does not.
+`llm-registry.mjs list` shows what is shared right now, `check` asks each
+server whether it answers and offers to take out one that does not, and
+`add` opens a new entry in vim, refuses an id or a name another entry has,
+and adds it after a yes; `modify <id>` changes one the same way, in vim or
+from a JSON file (`modify <id> ./entry.json`).
 
 ## Safety
 

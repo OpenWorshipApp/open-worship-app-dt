@@ -3,12 +3,17 @@ import fs from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+    NEW_SERVER_TEMPLATE,
+    addServer,
     checkIsLocalAddress,
     checkSharedServer,
     describeServer,
+    readNewServer,
     readRegistryArgs,
     removeServers,
+    replaceServer,
     runRegistryCommand,
+    toEditableText,
 } from './llm-registry.mjs';
 import {
     PUBLIC_URL,
@@ -180,19 +185,34 @@ describe('llm-info.schema.json', () => {
 });
 
 describe('readRegistryArgs', () => {
-    it('reads the three commands', () => {
+    it('reads the five commands', () => {
         expect(readRegistryArgs(['list'])).toMatchObject({ command: 'list' });
+        expect(readRegistryArgs(['add'])).toMatchObject({ command: 'add' });
         expect(readRegistryArgs(['check', '--remove-unreachable'])).toEqual({
             command: 'check',
             id: '',
+            filePath: '',
             isRemovingUnreachable: true,
             isYes: false,
         });
         expect(readRegistryArgs(['remove', 'old-tunnel', '--yes'])).toEqual({
             command: 'remove',
             id: 'old-tunnel',
+            filePath: '',
             isRemovingUnreachable: false,
             isYes: true,
+        });
+        expect(readRegistryArgs(['modify', 'old-tunnel'])).toMatchObject({
+            command: 'modify',
+            id: 'old-tunnel',
+            filePath: '',
+        });
+        expect(
+            readRegistryArgs(['modify', 'old-tunnel', './entry.json']),
+        ).toMatchObject({
+            command: 'modify',
+            id: 'old-tunnel',
+            filePath: './entry.json',
         });
     });
 
@@ -203,6 +223,14 @@ describe('readRegistryArgs', () => {
         expect(readRegistryArgs(['remove', 'not a slug'])).toBeNull();
         expect(readRegistryArgs(['list', '--yes'])).toBeNull();
         expect(readRegistryArgs(['remove', 'a', 'b'])).toBeNull();
+        // The entry is typed in the editor, not on the command line.
+        expect(readRegistryArgs(['add', 'new-box'])).toBeNull();
+        expect(readRegistryArgs(['add', '--yes'])).toBeNull();
+        // The id first, then at most one file.
+        expect(readRegistryArgs(['modify'])).toBeNull();
+        expect(readRegistryArgs(['modify', './entry.json'])).toBeNull();
+        expect(readRegistryArgs(['modify', 'a', 'b.json', 'c.json'])).toBeNull();
+        expect(readRegistryArgs(['modify', 'a', '--yes'])).toBeNull();
     });
 });
 
@@ -518,5 +546,580 @@ describe('remove', () => {
         const { deps, lines } = genDeps(genRegistry([]), {});
         expect(await runRegistryCommand(['purge'], deps)).toBe(1);
         expect(lines[0]).toContain('Usage: node llm-registry.mjs list');
+    });
+});
+
+// The template as somebody leaves it after filling it in, in the editor.
+function fillTemplate(changes, modelChanges = {}) {
+    const entry = JSON.parse(NEW_SERVER_TEMPLATE);
+    return JSON.stringify(
+        {
+            ...entry,
+            ...changes,
+            models: [{ ...entry.models[0], ...modelChanges }],
+        },
+        null,
+        4,
+    );
+}
+
+const NEW = {
+    id: 'new-box',
+    name: 'New box',
+    baseUrl: 'https://new-box.example.com/v1',
+    apiKey: 'sk-new',
+    isFree: true,
+    note: 'Slow, but it saves us the cost of usage.',
+};
+const NEW_MODEL = { model: 'q/new-model', canSeeImages: true };
+const NEW_SERVER = { ...NEW, models: [NEW_MODEL] };
+
+describe('readNewServer', () => {
+    it('leaves out a placeholder or a false, and keeps what was filled in', () => {
+        expect(
+            readNewServer(
+                fillTemplate(
+                    { ...NEW, name: '  New box ' },
+                    { ...NEW_MODEL, model: ' q/new-model' },
+                ),
+                [TUNNEL],
+            ),
+        ).toEqual({ server: NEW_SERVER, problems: [] });
+    });
+
+    it('says each field not filled in, once', () => {
+        expect(readNewServer(NEW_SERVER_TEMPLATE, []).problems).toEqual([
+            '"id" is not filled in',
+            '"name" is not filled in',
+            '"baseUrl" is not filled in',
+            'models must name at least one model',
+        ]);
+    });
+
+    it('takes an entry that only takes reports with the model row left as it is', () => {
+        const { server, problems } = readNewServer(
+            fillTemplate({
+                id: 'reports',
+                name: 'Report inbox',
+                baseUrl: 'https://reports.example.com/report',
+                isAcceptingReport: true,
+            }),
+            [TUNNEL],
+        );
+        expect(problems).toEqual([]);
+        expect(server).toEqual({
+            id: 'reports',
+            name: 'Report inbox',
+            baseUrl: 'https://reports.example.com/report',
+            isAcceptingReport: true,
+        });
+    });
+
+    it('refuses an id or a name another entry has, whatever its case', () => {
+        expect(
+            readNewServer(
+                fillTemplate(
+                    { ...NEW, id: 'Church-LMStudio', name: 'church lm studio' },
+                    NEW_MODEL,
+                ),
+                [GONE, TUNNEL],
+            ).problems,
+        ).toEqual([
+            'id "Church-LMStudio" is already in the registry ("Church LM Studio"): choose another',
+            'name "church lm studio" is already used by "church-lmstudio": choose another',
+        ]);
+    });
+
+    it('says what the app would refuse or cut', () => {
+        const { problems } = readNewServer(
+            fillTemplate(
+                {
+                    ...NEW,
+                    baseUrl: 'ftp://new-box.example.com',
+                    isFree: 'yes',
+                    name: 'x'.repeat(61),
+                },
+                { model: '', name: 'Named, with no model id' },
+            ),
+            [],
+        );
+        expect(problems).toEqual([
+            '"isFree" must be true or false',
+            '"models[0].model" is not filled in',
+            '"name" is over 60 characters: the app cuts it',
+            'baseUrl must be an http(s) address',
+            'models must name at least one model',
+        ]);
+    });
+
+    it('says when the file is not one JSON object', () => {
+        expect(readNewServer('{ "id": ', []).problems[0]).toMatch(
+            /^not JSON: /,
+        );
+        expect(readNewServer('[]', []).problems).toEqual([
+            'the entry must be one JSON object, { ... }',
+        ]);
+    });
+});
+
+describe('addServer', () => {
+    it('puts the server at the end and leaves every other one as it is', () => {
+        expect(
+            addServer(genRegistry([TUNNEL, GONE]), NEW_SERVER, '2026-10-11'),
+        ).toEqual({
+            version: 1,
+            updated: '2026-10-11',
+            servers: [TUNNEL, GONE, NEW_SERVER],
+        });
+    });
+});
+
+describe('add', () => {
+    const answers = { [`${NEW.baseUrl}/models`]: 200 };
+    const genFilledEdit = (changes = NEW) => {
+        return async () => {
+            return fillTemplate(changes, NEW_MODEL);
+        };
+    };
+    const askYes = async () => {
+        return true;
+    };
+
+    it('opens the placeholders, then checks, shows and adds it after a yes', async () => {
+        const edit = vi.fn(genFilledEdit());
+        const ask = vi.fn(askYes);
+        const { deps, lines, published } = genDeps(
+            genRegistry([TUNNEL]),
+            answers,
+            { edit, ask },
+        );
+        expect(await runRegistryCommand(['add'], deps)).toBe(0);
+        expect(edit.mock.calls).toEqual([[NEW_SERVER_TEMPLATE]]);
+        expect(ask.mock.calls.map((call) => call[0])).toEqual([
+            'Add "New box" (new-box) to the shared registry?',
+        ]);
+        expect(published).toEqual([
+            {
+                version: 1,
+                updated: '2026-10-11',
+                servers: [TUNNEL, NEW_SERVER],
+            },
+        ]);
+        const text = lines.join('\n');
+        expect(text).toContain(
+            '"note": "Slow, but it saves us the cost of usage."',
+        );
+        expect(text).toContain('"apiKey": "(set — not shown)"');
+        expect(text).not.toContain('sk-new');
+        expect(text).toContain('reachable — answers');
+        expect(lines.at(-1)).toBe(
+            'Added: new-box. The app shows it after its next reload.',
+        );
+    });
+
+    it('adds nothing on a no', async () => {
+        const { deps, lines, published } = genDeps(
+            genRegistry([TUNNEL]),
+            answers,
+            { edit: genFilledEdit() },
+        );
+        expect(await runRegistryCommand(['add'], deps)).toBe(0);
+        expect(published).toEqual([]);
+        expect(lines.at(-1)).toBe('Nothing added.');
+    });
+
+    it('adds nothing when the editor is left as it was, emptied or quit with a failure', async () => {
+        for (const [edited, said] of [
+            [NEW_SERVER_TEMPLATE, 'Nothing added.'],
+            ['  \n', 'Nothing added.'],
+            [null, 'Nothing added: the editor ended with a failure.'],
+        ]) {
+            const { deps, lines, published, questions } = genDeps(
+                genRegistry([TUNNEL]),
+                answers,
+                {
+                    edit: async () => {
+                        return edited;
+                    },
+                },
+            );
+            expect(await runRegistryCommand(['add'], deps)).toBe(0);
+            expect(questions).toEqual([]);
+            expect(published).toEqual([]);
+            expect(lines.at(-1)).toBe(said);
+        }
+    });
+
+    it('opens it again as it was left when it cannot be added', async () => {
+        const taken = fillTemplate(
+            { ...NEW, name: 'Church LM Studio' },
+            NEW_MODEL,
+        );
+        const edit = vi
+            .fn()
+            .mockResolvedValueOnce(taken)
+            .mockResolvedValueOnce(fillTemplate(NEW, NEW_MODEL));
+        const ask = vi.fn(askYes);
+        const { deps, lines, published } = genDeps(
+            genRegistry([TUNNEL]),
+            answers,
+            { edit, ask },
+        );
+        expect(await runRegistryCommand(['add'], deps)).toBe(0);
+        expect(lines).toContain(
+            '  - name "Church LM Studio" is already used by "church-lmstudio": choose another',
+        );
+        expect(edit.mock.calls).toEqual([[NEW_SERVER_TEMPLATE], [taken]]);
+        expect(ask.mock.calls.map((call) => call[0])).toEqual([
+            'Edit it again?',
+            'Add "New box" (new-box) to the shared registry?',
+        ]);
+        expect(published[0].servers).toEqual([TUNNEL, NEW_SERVER]);
+    });
+
+    it('adds nothing when it is not to be edited again', async () => {
+        const { deps, lines, published, questions } = genDeps(
+            genRegistry([TUNNEL]),
+            answers,
+            { edit: genFilledEdit({ ...NEW, id: 'church-lmstudio' }) },
+        );
+        expect(await runRegistryCommand(['add'], deps)).toBe(0);
+        expect(questions).toEqual(['Edit it again?']);
+        expect(published).toEqual([]);
+        expect(lines.at(-1)).toBe('Nothing added.');
+    });
+
+    // A tunnel may write the registry while the editor is open.
+    it('adds nothing the registry took meanwhile', async () => {
+        const readPublished = vi
+            .fn()
+            .mockResolvedValueOnce(genRegistry([TUNNEL]))
+            .mockResolvedValueOnce(
+                genRegistry([TUNNEL, { ...GONE, id: 'new-box' }]),
+            );
+        const { deps, lines, published } = genDeps(
+            genRegistry([TUNNEL]),
+            answers,
+            { readPublished, edit: genFilledEdit(), ask: askYes },
+        );
+        expect(await runRegistryCommand(['add'], deps)).toBe(1);
+        expect(published).toEqual([]);
+        expect(lines.at(-1)).toBe(
+            'Not added — the registry changed meanwhile: id "new-box" is already in the registry ("Old tunnel"): choose another.',
+        );
+    });
+
+    it('opens no editor where there is no terminal, or when the registry is full', async () => {
+        const edit = vi.fn();
+        const noTerminal = genDeps(genRegistry([]), {}, {
+            edit,
+            isInteractive: () => {
+                return false;
+            },
+        });
+        expect(await runRegistryCommand(['add'], noTerminal.deps)).toBe(1);
+        expect(noTerminal.lines.join('\n')).toContain('run add in a terminal');
+        const full = genDeps(
+            genRegistry(
+                Array.from({ length: 20 }, (_, index) => {
+                    return { ...GONE, id: `server-${index}` };
+                }),
+            ),
+            {},
+            { edit },
+        );
+        expect(await runRegistryCommand(['add'], full.deps)).toBe(1);
+        expect(full.lines.join('\n')).toContain('take one out first');
+        expect(edit).not.toHaveBeenCalled();
+    });
+});
+
+describe('toEditableText', () => {
+    it('opens an entry with a placeholder in each field it leaves out', () => {
+        const opened = JSON.parse(toEditableText(TUNNEL));
+        expect(opened).toMatchObject({
+            ...TUNNEL,
+            note: JSON.parse(NEW_SERVER_TEMPLATE).note,
+            isAcceptingReport: false,
+        });
+        expect(opened.models[1]).toEqual({
+            ...JSON.parse(NEW_SERVER_TEMPLATE).models[0],
+            model: 'google/gemma-4-e4b',
+        });
+    });
+
+    it('reads back as the entry it opened', () => {
+        expect(readNewServer(toEditableText(TUNNEL), []).server).toEqual(
+            TUNNEL,
+        );
+        expect(readNewServer(toEditableText(REPORTS), []).server).toEqual(
+            REPORTS,
+        );
+    });
+});
+
+describe('replaceServer', () => {
+    it('puts the server where the one with the id stood', () => {
+        expect(
+            replaceServer(
+                genRegistry([TUNNEL, GONE, LAN]),
+                'old-tunnel',
+                NEW_SERVER,
+                '2026-10-11',
+            ),
+        ).toEqual({
+            version: 1,
+            updated: '2026-10-11',
+            servers: [TUNNEL, NEW_SERVER, LAN],
+        });
+    });
+});
+
+describe('modify', () => {
+    // GONE as it reads back: its empty key is no key.
+    const GONE_READ = {
+        id: 'old-tunnel',
+        name: 'Old tunnel',
+        baseUrl: 'https://gone-away-0000.trycloudflare.com/v1',
+        models: [{ model: 'x/model' }],
+    };
+    const genChange = (changes) => {
+        return (text) => {
+            return JSON.stringify(
+                { ...JSON.parse(text), ...changes },
+                null,
+                4,
+            );
+        };
+    };
+    const askYes = async () => {
+        return true;
+    };
+
+    it('opens the entry as it is in the editor, and changes it where it stands after a yes', async () => {
+        const edit = vi.fn(
+            genChange({ name: 'Old tunnel, back', note: 'Back on Sunday.' }),
+        );
+        const ask = vi.fn(askYes);
+        const { deps, lines, published } = genDeps(
+            genRegistry([TUNNEL, GONE, LAN]),
+            {},
+            { edit, ask },
+        );
+        expect(await runRegistryCommand(['modify', 'old-tunnel'], deps)).toBe(
+            0,
+        );
+        expect(edit.mock.calls).toEqual([[toEditableText(GONE)]]);
+        expect(lines).toContain('The entry, changed (name, note):');
+        expect(ask.mock.calls.map((call) => call[0])).toEqual([
+            'Change "Old tunnel" (old-tunnel) in the shared registry?',
+        ]);
+        expect(published).toEqual([
+            {
+                version: 1,
+                updated: '2026-10-11',
+                servers: [
+                    TUNNEL,
+                    {
+                        ...GONE_READ,
+                        name: 'Old tunnel, back',
+                        note: 'Back on Sunday.',
+                    },
+                    LAN,
+                ],
+            },
+        ]);
+        expect(lines.at(-1)).toBe(
+            'Changed: old-tunnel. The app shows it after its next reload.',
+        );
+    });
+
+    it('never prints the key of the entry it changes', async () => {
+        const { deps, lines } = genDeps(genRegistry([TUNNEL]), {}, {
+            edit: genChange({ note: 'Slow on Sundays.' }),
+            ask: askYes,
+        });
+        await runRegistryCommand(['modify', 'church-lmstudio'], deps);
+        expect(lines.join('\n')).not.toContain('sk-the-key');
+        expect(lines.join('\n')).toContain('"apiKey": "(set — not shown)"');
+    });
+
+    it('changes nothing when the entry is left as it is', async () => {
+        for (const [edit, said] of [
+            [(text) => text, 'Nothing changed.'],
+            // Saved again in another shape, but the same entry.
+            [
+                (text) => JSON.stringify(JSON.parse(text)),
+                'Nothing changed: the entry is as the registry holds it.',
+            ],
+        ]) {
+            const { deps, lines, published, questions } = genDeps(
+                genRegistry([TUNNEL, GONE]),
+                {},
+                { edit, ask: askYes },
+            );
+            expect(
+                await runRegistryCommand(['modify', 'old-tunnel'], deps),
+            ).toBe(0);
+            expect(questions).toEqual([]);
+            expect(published).toEqual([]);
+            expect(lines.at(-1)).toBe(said);
+        }
+    });
+
+    it("keeps its own id and name, and refuses another entry's", async () => {
+        const edit = vi.fn(genChange({ name: 'church LM studio' }));
+        const { deps, lines, published, questions } = genDeps(
+            genRegistry([TUNNEL, GONE]),
+            {},
+            { edit },
+        );
+        expect(await runRegistryCommand(['modify', 'old-tunnel'], deps)).toBe(
+            0,
+        );
+        expect(lines).toContain(
+            '  - name "church LM studio" is already used by "church-lmstudio": choose another',
+        );
+        expect(questions).toEqual(['Edit it again?']);
+        expect(published).toEqual([]);
+    });
+
+    it('reads the entry as it is to be from a file, without the editor', async () => {
+        const edit = vi.fn();
+        const readFile = vi.fn(async () => {
+            return JSON.stringify({
+                ...GONE_READ,
+                id: 'new-tunnel',
+                baseUrl: 'https://back-again-1111.trycloudflare.com/v1',
+            });
+        });
+        const ask = vi.fn(askYes);
+        const { deps, lines, published } = genDeps(
+            genRegistry([TUNNEL, GONE, LAN]),
+            {},
+            { edit, readFile, ask },
+        );
+        expect(
+            await runRegistryCommand(
+                ['modify', 'old-tunnel', './entry.json'],
+                deps,
+            ),
+        ).toBe(0);
+        expect(edit).not.toHaveBeenCalled();
+        expect(readFile.mock.calls).toEqual([['./entry.json']]);
+        expect(lines).toContain('The entry, changed (id, baseUrl):');
+        expect(lines.join('\n')).toContain('The id changes from "old-tunnel"');
+        expect(ask.mock.calls.map((call) => call[0])).toEqual([
+            'Change "Old tunnel" (old-tunnel) in the shared registry?',
+        ]);
+        expect(published[0].servers).toEqual([
+            TUNNEL,
+            {
+                ...GONE_READ,
+                id: 'new-tunnel',
+                baseUrl: 'https://back-again-1111.trycloudflare.com/v1',
+            },
+            LAN,
+        ]);
+        expect(lines.at(-1)).toBe(
+            'Changed: old-tunnel, now new-tunnel. The app shows it after its next reload.',
+        );
+    });
+
+    it('says what is wrong with a file and asks nothing', async () => {
+        const { deps, lines, published, questions } = genDeps(
+            genRegistry([TUNNEL, GONE]),
+            {},
+            {
+                readFile: async () => {
+                    return JSON.stringify({ ...GONE_READ, baseUrl: 'gone' });
+                },
+            },
+        );
+        expect(
+            await runRegistryCommand(
+                ['modify', 'old-tunnel', './entry.json'],
+                deps,
+            ),
+        ).toBe(1);
+        expect(lines).toContain('  - baseUrl must be an http(s) address');
+        expect(lines.at(-1)).toBe(
+            'Nothing changed: fix ./entry.json and run it again.',
+        );
+        expect(questions).toEqual([]);
+        expect(published).toEqual([]);
+    });
+
+    it('says which file it cannot read', async () => {
+        const { deps, lines } = genDeps(genRegistry([GONE]), {}, {
+            readFile: async () => {
+                throw Object.assign(new Error('no such file'), {
+                    code: 'ENOENT',
+                });
+            },
+        });
+        expect(
+            await runRegistryCommand(['modify', 'old-tunnel', './nope.json'], deps),
+        ).toBe(1);
+        expect(lines).toEqual([
+            'Nothing changed: ./nope.json cannot be read (ENOENT).',
+        ]);
+    });
+
+    it('says so for an id the registry does not have', async () => {
+        const edit = vi.fn();
+        const { deps, lines } = genDeps(genRegistry([TUNNEL]), {}, { edit });
+        expect(await runRegistryCommand(['modify', 'not-there'], deps)).toBe(
+            1,
+        );
+        expect(lines).toEqual([
+            '"not-there" is not in the registry: list shows the ids.',
+        ]);
+        expect(edit).not.toHaveBeenCalled();
+    });
+
+    // A tunnel rewrites its own entry when its address changes.
+    it('writes nothing over an entry changed while it was open', async () => {
+        const readPublished = vi
+            .fn()
+            .mockResolvedValueOnce(genRegistry([TUNNEL, GONE]))
+            .mockResolvedValueOnce(
+                genRegistry([
+                    TUNNEL,
+                    { ...GONE, baseUrl: 'https://new-1234.trycloudflare.com/v1' },
+                ]),
+            );
+        const { deps, lines, published } = genDeps(
+            genRegistry([TUNNEL, GONE]),
+            {},
+            { readPublished, edit: genChange({ note: 'x' }), ask: askYes },
+        );
+        expect(await runRegistryCommand(['modify', 'old-tunnel'], deps)).toBe(
+            1,
+        );
+        expect(published).toEqual([]);
+        expect(lines.at(-1)).toBe(
+            'Not changed — "old-tunnel" was changed meanwhile: run modify again.',
+        );
+    });
+
+    it('asks nothing where there is no terminal', async () => {
+        const edit = vi.fn();
+        const { deps, lines } = genDeps(genRegistry([GONE]), {}, {
+            edit,
+            isInteractive: () => {
+                return false;
+            },
+        });
+        expect(
+            await runRegistryCommand(
+                ['modify', 'old-tunnel', './entry.json'],
+                deps,
+            ),
+        ).toBe(1);
+        expect(lines).toEqual([
+            'Not asked here (no terminal): run modify in a terminal.',
+        ]);
+        expect(edit).not.toHaveBeenCalled();
     });
 });

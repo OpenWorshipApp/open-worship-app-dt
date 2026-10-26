@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 const OBJECT_KEY = 'www/llm/info.json';
 const INVALIDATION_PATH = '/llm/info.json';
 export const PUBLIC_URL = 'https://www.openworship.app/llm/info.json';
-const MAX_SERVERS = 20;
+export const MAX_SERVERS = 20;
 const ID_PATTERN = /^[A-Za-z0-9-]{1,48}$/;
 
 function readEnvFile(filePath) {
