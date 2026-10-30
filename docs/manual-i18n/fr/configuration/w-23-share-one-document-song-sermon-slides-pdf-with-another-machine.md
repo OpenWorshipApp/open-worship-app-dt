@@ -3,7 +3,7 @@ id: W-23
 title: "Partager un seul document (chant, diapositives de prédication, PDF) avec une autre machine"
 section: "Configuration"
 lang: fr
-translatedFrom: 7a5c2885b43579cd
+translatedFrom: 2185168b8aa54f3b
 ---
 # W-23 — Partager un seul document (chant, diapositives de prédication, PDF) avec une autre machine
 
@@ -14,13 +14,13 @@ voyage dans son propre paquet, avec tout ce qui lui est attaché.
    diapositives Open Worship, un chant, un PDF, un fichier PowerPoint ou Word, tout fonctionne — et
    choisissez **[en:tran:Export]**. 📸
 2. Un petit panneau demande un **[en:tran:Password]** et un **[en:tran:Confirm Password]**. Laissez les deux vides et appuyez sur **[en:tran:Ok]** pour le paquet ordinaire, ou
-   tapez le même mot de passe dans les deux pour le verrouiller — voir W-22 étape 10a ; cela fonctionne
+   tapez le même mot de passe dans les deux pour le verrouiller — voir W-22j étape 1a ; cela fonctionne
    de la même façon ici, et il n'existe aucun moyen de récupérer un mot de passe oublié. 📸
 3. Vous obtenez un seul fichier `<name>.owadoc.tar.gz` dans votre dossier **Téléchargements** (ou
    `<name>.owadoc.enc` si vous avez défini un mot de passe), et le dossier s'ouvre. Il contient le
    document lui-même, plus tout ce qui s'y rattache : l'arrière-plan que vous lui avez attaché
-   (et le fichier image ou vidéo de cet arrière-plan), toute vidéo placée dans ses diapositives, et
-   sa note de couleur.
+   (et le fichier image ou vidéo de cet arrière-plan), toute vidéo ou tout fichier audio placé dans ses
+   diapositives, ses propres transitions et sa note de couleur.
 4. Sur l'autre machine, faites un clic droit sur une partie vide de la liste **[en:tran:Documents]** →
    **[en:tran:Import]** et choisissez ce fichier — ou bien **faites simplement glisser le fichier
    `.owadoc.tar.gz` (ou `.owadoc.enc`) depuis votre gestionnaire de fichiers sur la liste
@@ -34,12 +34,13 @@ voyage dans son propre paquet, avec tout ce qui lui est attaché.
    téléchargement va dans un dossier temporaire, est importé exactement comme ci-dessus, puis
    supprimé.
 
-> Remarques : les mêmes règles que pour un paquet de déroulé s'appliquent. Un fichier déjà présent
-> **avec le même contenu** est réutilisé au lieu d'être dupliqué, donc importer deux fois est sans
-> risque ; un fichier du même NOM qui est en réalité un fichier différent n'est pas touché, et celui du
-> paquet arrive à côté sous le nom `a (1).pdf`. Un document qui a déjà un arrière-plan attaché garde le
-> sien — une importation ne l'écrase jamais, et elle n'écrase pas non plus la note de couleur de ce
-> document. L'importation exige que les dossiers dans lesquels elle écrit soient **déjà choisis** (pour
+> Remarques : les mêmes règles que pour un paquet de déroulé s'appliquent. Une image, une vidéo ou un
+> autre fichier média déjà présent **avec le même contenu** est réutilisé au lieu d'être dupliqué ; un
+> fichier du même NOM qui est en réalité un fichier différent n'est pas touché, et celui du paquet arrive
+> à côté sous le nom `a (1).mp4`. Le document lui-même arrive toujours comme un nouveau fichier : quand
+> un document de ce nom est déjà là — y compris ce même document, importé auparavant — le vôtre n'est pas
+> touché, avec son arrière-plan et sa note de couleur, et celui du paquet arrive à côté sous le nom
+> `a (1).pdf`. L'importation exige que les dossiers dans lesquels elle écrit soient **déjà choisis** (pour
 > un document avec un arrière-plan vidéo, le dossier Vidéos aussi), et s'il en manque un,
 > l'importation s'arrête avant de copier quoi que ce soit et vous dit lequel choisir.
 >

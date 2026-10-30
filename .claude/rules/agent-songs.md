@@ -119,9 +119,9 @@ paths:
 - **Checking a song**: `owa_lyric_validate`
   (`tools/owa-devtools-mcp/openLyric.mjs`) takes song text and answers with
   every mistake — line, section, and what to write instead — then what the song
-  IS: title, key, tempo, its sections and their play order. It is the ONE tool
-  here that asks the app nothing, so it works with no window open and while the
-  user is still typing. It deliberately does NOT call open-lyric: that
+  IS: title, key, tempo, its sections and their play order. With `text` it asks the
+  app nothing, checking or drafting (its `find` mode and a `url` do ask it),
+  so it works with no window open and while the user is still typing. It deliberately does NOT call open-lyric: that
   package's validator takes a Monaco model and pushes markers into an editor,
   its one headless entry (`api.document.checkMarkdown`) answers a **boolean** —
   which is the one thing this tool must not answer — and reaching either drags
@@ -131,7 +131,7 @@ paths:
   grammar the package ships) and fails when a table disagrees — fences,
   structure codes, Config fields, `Key`/`Time` enums, all 229 locale tags, the
   chord pattern character for character; and `openLyricOracle.test.mjs` runs
-  122 documents through open-lyric's own `checkMarkdown` AND through ours and
+  the 123 documents of its `CASE_LIST` through open-lyric's own `checkMarkdown` AND through ours and
   fails on a disagreement. Both were written first, against the live oracle,
   which is what caught the `(2x)` repeat being refused. `problems` are what the
   editor rejects the song for; `warnings` are what it accepts and a musician

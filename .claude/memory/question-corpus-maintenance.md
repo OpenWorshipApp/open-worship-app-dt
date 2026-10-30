@@ -62,7 +62,7 @@ app moves without it.
 - Question `id`s are stable: reword `text` freely, leave the id alone — a test
   and a scoreboard row may name it.
 - A row filed under a page too long to be read whole (over 6 000 characters;
-  the help window's own is 57 000) with no control to go by names its
+  the help window's own passed 60 000 on 2026-10-16 and is ~76 000 now) with no control to go by names its
   `passage`: a few words copied from the lead of the passage that answers.
   Without it the part that rides is chosen by the question's words, and for
   that page it was the wrong part for nine questions in twenty-three

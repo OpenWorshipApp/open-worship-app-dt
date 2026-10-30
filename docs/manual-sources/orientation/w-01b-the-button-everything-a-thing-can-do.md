@@ -5,7 +5,7 @@ section: "Orientation"
 verify: [GL-24, GL-06, CM-04, PL-31]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-01b — The `⋮` button: everything a thing can do
 
@@ -37,7 +37,7 @@ does. Those extras live in a small menu.
 > machines and browsers keep that button for a menu of their own. The `⋮` is the same
 > menu with a button you can see.
 
-**To rename a file** — a document, a song, a picture, a clip — open its menu and pick
+**To rename a file** — a document or a song — open its menu and pick
 **[en:tran:Rename]**. The name turns into a box holding the name it has: change it and
 press **Enter** (or click the ✓). The file is renamed where it lives, and it stays
 selected.
@@ -53,5 +53,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-24` · `GL-06` · `CM-04` · `PL-31`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

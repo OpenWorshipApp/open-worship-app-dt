@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-72, RD-73, RD-74, RD-75, RD-76, RD-57, RD-80, RD-91, RD-113]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-30 — See who and where is in the passage you are reading
 
@@ -25,7 +25,8 @@ those exact verses — without searching for them one by one.
    e.g. `(KJV) Luke 13:1-35`, and lists **[en:tran:Names]** first, then **[en:tran:Locations]**, with a count beside each. 📸
    _One block per passage, not per pane: two panes reading the same verses in two
    versions share one block, and the pane you are typing in is listed by what its
-   reference box says._
+   reference box says. A passage that runs on into later chapters gets a block for
+   each chapter, its first three only._
 3. Every row shows the person or place, the verses of that passage where it comes up
    (`13:4, 13:22, 13:33, 13:34`), and a one-line description. A name that appears in
    several verses is listed **once**, with all of its verses on the row. Reading the
@@ -43,13 +44,11 @@ those exact verses — without searching for them one by one.
 **Good to know:** the list is built from the King James text, which is what the
 names dictionary was made from — that is what the **(KJV)** in the view's name means. You
 can be reading any version, or Khmer; the panel still tells you who is in those verses.
-It also includes people the verse means without naming — Luke 13:16 lists **Satan**,
-which the verse calls "the devil".
 
 **The names in this list follow the lookup language** — the little language code beside
 the person-and-pin button (**W-29** step 2), not the language of the app, and they are set
 in that language's own font. The passage heading above each block is named the way **your
-Bible** names it, and the **(KJV)** note beside the title only appears while that heading is
+Bible** names it — by the King James while the lookup language is English — and the **(KJV)** note beside the title only appears while that heading is
 still a King James one. What the list FINDS is always read from the King James text.
 
 **The underlined names inside the verses follow the BIBLE, not that setting.** A King
@@ -66,5 +65,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-72` · `RD-73` · `RD-74` · `RD-75` · `RD-76` · `RD-57` · `RD-80` · `RD-91` · `RD-113`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

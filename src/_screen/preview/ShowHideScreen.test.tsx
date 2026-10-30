@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+import {
+    useScreenManagerBaseContext,
+    useScreenManagerEvents,
+} from '../managers/screenManagerHooks';
 
 const mocks = vi.hoisted(() => ({
     getAllScreenManagers: vi.fn(),
@@ -86,5 +93,96 @@ describe('toggleScreensShowing (F5)', () => {
             toggleScreensShowing,
             [],
         );
+    });
+});
+
+describe('ShowHideScreenComp', () => {
+    let container: HTMLDivElement;
+    let root: Root;
+
+    async function renderToggle(screen: ReturnType<typeof genScreen>) {
+        vi.mocked(useScreenManagerBaseContext).mockReturnValue(screen as any);
+        const { default: ShowHideScreenComp } =
+            await import('./ShowHideScreen');
+        await act(async () => {
+            root.render(<ShowHideScreenComp />);
+        });
+        return container.querySelector<HTMLElement>('[role="button"]')!;
+    }
+
+    function pressKey(element: HTMLElement, key: string, repeat = false) {
+        const event = new KeyboardEvent('keydown', {
+            key,
+            repeat,
+            bubbles: true,
+            cancelable: true,
+        });
+        element.dispatchEvent(event);
+        return event;
+    }
+
+    beforeEach(() => {
+        vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        root = createRoot(container);
+    });
+
+    afterEach(() => {
+        act(() => {
+            root.unmount();
+        });
+        container.remove();
+        vi.unstubAllGlobals();
+    });
+
+    test('says whether the screen is up, with its key in the name', async () => {
+        const hidden = genScreen(0, false);
+        let toggle = await renderToggle(hidden);
+        expect(toggle.getAttribute('aria-label')).toBe(
+            'Toggle showing screen [F5]',
+        );
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        expect(toggle.style.opacity).toBe('0.4');
+        expect(toggle.querySelector('.bi-file-slides')).not.toBe(null);
+        expect(vi.mocked(useScreenManagerEvents)).toHaveBeenCalledWith(
+            ['visible'],
+            hidden,
+        );
+
+        toggle = await renderToggle(genScreen(1, true));
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        expect(toggle.className).toContain('showing');
+        expect(toggle.style.opacity).toBe('1');
+        expect(toggle.querySelector('.bi-file-slides-fill')).not.toBe(null);
+    });
+
+    test('two quick clicks toggle twice off the live state', async () => {
+        const screen = genScreen(0, false);
+        const toggle = await renderToggle(screen);
+        // No re-render between them: each reads the manager, not a snapshot.
+        toggle.click();
+        expect(screen.isShowing).toBe(true);
+        toggle.click();
+        expect(screen.isShowing).toBe(false);
+        expect(screen.toggled).toBe(2);
+    });
+
+    test('Enter and Space press it; a held key and other keys do not', async () => {
+        const screen = genScreen(0, false);
+        const toggle = await renderToggle(screen);
+
+        const enter = pressKey(toggle, 'Enter');
+        expect(enter.defaultPrevented).toBe(true);
+        expect(screen.isShowing).toBe(true);
+
+        pressKey(toggle, ' ');
+        expect(screen.isShowing).toBe(false);
+
+        const held = pressKey(toggle, 'Enter', true);
+        expect(held.defaultPrevented).toBe(false);
+        const other = pressKey(toggle, 'a');
+        expect(other.defaultPrevented).toBe(false);
+        expect(screen.toggled).toBe(2);
     });
 });

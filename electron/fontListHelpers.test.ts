@@ -159,6 +159,19 @@ describe('parseDarwinFontList', () => {
             return parseDarwinFontList('{}');
         }).toThrow();
     });
+
+    test('skips a face it cannot read, keeping the family readable ones', () => {
+        const stdout = JSON.stringify([
+            [
+                'Khmer Sangam MN',
+                ['Regular', null, ['Mystery', 'heavy'], ['Bold', 9], 42],
+            ],
+        ]);
+
+        expect(parseDarwinFontList(stdout)).toEqual({
+            'Khmer Sangam MN': ['700'],
+        });
+    });
 });
 
 describe('parseSystemProfilerFontList', () => {

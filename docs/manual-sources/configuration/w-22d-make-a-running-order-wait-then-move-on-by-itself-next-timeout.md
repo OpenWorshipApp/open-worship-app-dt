@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-22d — Make a running order wait, then move on by itself (Next: Timeout)
 
@@ -25,9 +25,9 @@ ends exactly when the service starts.
    on what it is holding now. 📸
 2. **[en:tran:Next: Timeout]** waits once. When the run reaches it, it counts down and then moves
    the run on by itself — a slide that should linger ten seconds and then go on without
-   you. **Going somewhere yourself calls it off**: click another line, or press the next
+   you. **Going somewhere yourself calls it off**: click another line in the preview panel, or press the next
    key, and the wait is over and you are driving again. A click that goes nowhere does
-   NOT call it off: clicking a background or a foreground button, or a stray click on
+   NOT call it off: clicking a background or a foreground button in its own panel, or a stray click on
    the panel, leaves it counting, so a mis-aimed click cannot silently cost you the wait.
 3. **Or wait until a time on the clock.** A timeout does not have to be counted in
    seconds. The small box that asks for the seconds — it opens when you add the line
@@ -44,7 +44,7 @@ ends exactly when the service starts.
    in seconds. 📸
 4. **It counts only in the preview panel.** A `Next:` line means something only while that
    presenting flow's **preview panel** is open (W-22b) — that panel is what walks the
-   running order: clicking the line there starts its countdown, and a small pill at the
+   running order: clicking its button there starts its countdown, and a small pill at the
    panel's top-right shows the seconds left, with ⊗ to stop it and ⏸ to hold it. Click the
    line with the panel closed and the app says so
    (**[en:tran:Open the presenting flow preview to use this action]**) rather than looking as
@@ -72,8 +72,8 @@ ends exactly when the service starts.
    its own number; one still following the element shows it hollow. To hand a row back,
    right-click it → **[en:tran:Use Element Timing]** — it goes back to the
    element's number and moves with it again. 📸
-7. **If the run stopped moving on by itself**, one of three things happened. You went
-   somewhere yourself — clicked another line, or pressed the next key — and that calls a
+7. **If the run stopped moving on by itself**, one of four things happened. You went
+   somewhere yourself — clicked another line in the preview panel, or pressed the next key — and that calls a
    timeout off. Or the preview panel was closed: no `Next:` line counts without it. Or the
-   run reached the end of the list. To set it going again, click the `Next:` line (or the
-   line it rides on) in the preview panel.
+   run reached the end of the list. Or someone pressed the pill's ⊗, or its ⏸ is holding it. To set it going again, click the `Next:` line's button (or the
+   preview of the line it rides on) in the preview panel.

@@ -90,6 +90,17 @@ describe('assistant.json beside every language package', () => {
         for (const word of facts.verseAskExcludeWords ?? []) {
             expect(typeof word === 'string' && word.length > 0).toBe(true);
         }
+        // A how-do-I pattern is read case as written (`toPatternList`).
+        for (const source of facts.bibleReaderWords?.howToAsks ?? []) {
+            expect(() => new RegExp(source, 'u'), source).not.toThrow();
+        }
+        // An app word the language's Bibles use too counts in a how-do-I
+        // only, one their Bibles do not use counts anywhere: never both, or
+        // the word counts anywhere after all (2026-10-29).
+        const excludeList: string[] = facts.bibleReaderWords?.exclude ?? [];
+        for (const word of facts.bibleReaderWords?.excludeInHowTo ?? []) {
+            expect(excludeList, word).not.toContain(word);
+        }
         // What a word means is ENGLISH search words (or nothing, for a word
         // that only holds a question together).
         for (const [word, meaning] of Object.entries(facts.glossary ?? {})) {

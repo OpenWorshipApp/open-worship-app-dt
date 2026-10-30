@@ -38,6 +38,7 @@ import {
     LOCATION_TYPE_LABEL,
     getNameTypeIconClass,
     getNameTypeSingularLabel,
+    toRecordAgeLabel,
     toRecordEnumLabel,
 } from './lookupPresentationHelpers';
 import {
@@ -68,10 +69,10 @@ export function RenderNameDetailComp({
     if (record === null) {
         return <RenderMissingRecordComp />;
     }
-    // The datasets keep `type` and `gender` in English whatever language the
-    // record itself is in, so they are keys to translate rather than text to
-    // show -- a Khmer record read `Male` beside a translated `មនុស្ស`. `age` is
-    // left alone: it is free-form ("123 years"), not an enum.
+    // The datasets keep `type`, `gender`, `age` and each year range's type in
+    // English whatever language the record itself is in, so they are keys to
+    // translate rather than text to show -- a Khmer record read `Male`, then
+    // `175 years`, beside a translated `មនុស្ស`.
     const nameTypeKey = getNameTypeSingularLabel(record.type);
     // Decided on the ENGLISH key and only THEN translated. Both this guard and
     // `checkHasDetailValue` inside the row below drop an `unknown` type by
@@ -86,7 +87,8 @@ export function RenderNameDetailComp({
         GENDER_LABEL,
         translate,
     );
-    const facts = [nameTypeLabel, genderLabel, record.age].filter((value) => {
+    const ageLabel = toRecordAgeLabel(record.age, translate);
+    const facts = [nameTypeLabel, genderLabel, ageLabel].filter((value) => {
         return value !== '' && value.toLowerCase() !== 'unknown';
     });
     return (
@@ -132,13 +134,12 @@ export function RenderNameDetailComp({
                         label={tran('Gender')}
                         value={genderLabel}
                     />
-                    <OptionalTextRowComp
-                        label={tran('Age')}
-                        value={record.age}
-                    />
+                    <OptionalTextRowComp label={tran('Age')} value={ageLabel} />
                     <OptionalTextListRowComp
                         label={tran('Years')}
-                        values={record.years.map(getFormattedYearRange)}
+                        values={record.years.map((yearRange) => {
+                            return getFormattedYearRange(yearRange, translate);
+                        })}
                     />
                     <OptionalLocationListRowComp
                         label={tran('Locations')}

@@ -72,9 +72,12 @@ const VERSE_ASK_PATTERN_LIST = [
 ];
 
 // A verse for the people in the room is the Presenter's work -- "show me a
-// verse about love on the screen" -- and its own pages answer it.
+// verse about love on the screen" -- and its own pages answer it. A word
+// the Bible uses too counts only as presenting (2026-10-29, `EC-445`):
+// _Which verse says present your bodies a living sacrifice?_ is Romans 12:1,
+// and _the congregation of Israel_ the Bible's own words.
 const PRESENTING_PATTERN =
-    /\b(?:screens?|projector|present\w*|slides?|congregation|audience|display)\b/i;
+    /\b(?:screens?|projector|presenter|presenting|presentation|slides?)\b|\b(?:to|for)\s+the\s+(?:congregation|audience)\b|\bpresent\s+(?:it|this|that|them)\b/i;
 
 // A part of the app named: the question is about the app, whatever else it
 // says.

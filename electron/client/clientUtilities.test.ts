@@ -241,6 +241,33 @@ describe('fileUtils', () => {
             });
         }
     });
+
+    test('a second copy of the preload keeps the getter already there', async () => {
+        const installed = Object.getOwnPropertyDescriptor(
+            File.prototype,
+            'appFilePath',
+        );
+        expect(installed?.get).toBeTypeOf('function');
+        const addEventListener = vi.spyOn(globalThis, 'addEventListener');
+        vi.resetModules();
+
+        await import('./fileUtils');
+
+        expect(
+            Object.getOwnPropertyDescriptor(File.prototype, 'appFilePath')?.get,
+        ).toBe(installed?.get);
+        // Installed at once: nothing is left waiting for the page to load.
+        expect(
+            addEventListener.mock.calls.some(([name]) => {
+                return name === 'DOMContentLoaded';
+            }),
+        ).toBe(false);
+        electronMock.webUtils.getPathForFile.mockReturnValue('/disk/a.txt');
+        expect(
+            (new File(['a'], 'a.txt') as File & { appFilePath?: string })
+                .appFilePath,
+        ).toBe('/disk/a.txt');
+    });
 });
 
 describe('message, HTTP, browser and system utilities', () => {

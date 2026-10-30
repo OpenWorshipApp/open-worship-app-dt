@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-163, PM-164, PM-165, PM-166]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-53 — Show a song in several languages for everyone to sing (Long Text Show)
 
@@ -13,7 +13,7 @@ workflowsVersion: "2026-10-24"
 languages side by side, each part beside its translation, and let it scroll
 while the room sings.
 
-**Quickest for one song:** right-click it in the **Documents** list and choose
+**Quickest for one song:** right-click it in the **[en:tran:Documents]** list and choose
 **[en:tran:Long Text Show]**. The panel opens on a new session named after the
 song, holding it as an **EN** card read from its **[en:tran:Lyric File]**, and
 **[en:tran:Show Long Text]** is on as soon as the card has read the song — go
@@ -74,7 +74,7 @@ menu.
    goes round to the beginning. A part that is not lit keeps its own keys —
    **Space** presses that one.
 8. **Give a language its own look.** Open **[en:tran:Properties]** on its card:
-   **[en:tran:Font Family]**, **[en:tran:Text Color]**,
+   **[en:tran:Font]**, **[en:tran:Text Color]**,
    **[en:tran:Text Size (%)]** (its size beside the other languages — 80 makes
    it a little smaller) and **[en:tran:Text Align]**. A change reaches a
    showing text about half a second after you stop. Whatever you leave alone
@@ -92,5 +92,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-163` · `PM-164` · `PM-165` · `PM-166`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

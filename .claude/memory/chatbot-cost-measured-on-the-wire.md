@@ -30,8 +30,10 @@ system prompt (a date, the screen state) or the tool list stopped being
 deterministic, and nothing else will say so — the requests keep succeeding,
 the bill is just higher.
 
-**How to apply:** the corpus driver (`ask.mjs`, [[chatbot-cdp-driver-gotchas]])
-captures `usage` off each provider response over CDP `Network.getResponseBody`;
+**How to apply:** the corpus driver (`.claude/skills/owa-enhance-chatbot/scripts/corpus-run.mjs`
+since 2026-10-12; a scratch `ask.mjs` before it, [[chatbot-cdp-driver-gotchas]])
+reads each answer's usage off its cost line, which the window builds from the
+provider's own `usage` fields (`usageHelpers.ts`);
 any `/owa-enhance-chatbot` run quotes those fields for a cost claim, and any
 change to `genSystemPrompt` or the tool list re-checks that round 2's
 `cache_read_input_tokens` is still ≥ the prefix. Related:

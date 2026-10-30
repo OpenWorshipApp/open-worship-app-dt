@@ -222,3 +222,98 @@ describe('slide canvas container', () => {
         expect(focus).toHaveBeenCalledOnce();
     });
 });
+
+describe('slide canvas container guides and guards', () => {
+    it('drags an existing guide from its own handle and leaves the others where they are', async () => {
+        await render();
+        await act(async () => button('Ruler horizontal').click());
+        await act(async () =>
+            window.dispatchEvent(pointer('pointerup', 30, 40)),
+        );
+        await act(async () => button('Ruler vertical').click());
+        await act(async () =>
+            window.dispatchEvent(pointer('pointerup', 30, 40)),
+        );
+        expect(host.textContent).toContain('h:20');
+        expect(host.textContent).toContain('v:15');
+        const verticalGuide = state.bodyProps!.guides.find(
+            (guide: { axis: string }) => guide.axis === 'v',
+        );
+
+        const grab = {
+            clientX: 90,
+            clientY: 10,
+            stopPropagation: vi.fn(),
+            preventDefault: vi.fn(),
+        };
+        await act(async () =>
+            state.bodyProps!.onGuidePointerDown('v', verticalGuide.id, grab),
+        );
+        // The canvas underneath must not start a marquee or lose focus.
+        expect(grab.stopPropagation).toHaveBeenCalledOnce();
+        expect(grab.preventDefault).toHaveBeenCalledOnce();
+        expect(host.textContent).toContain('v:45');
+        expect(host.textContent).toContain('h:20');
+
+        await act(async () =>
+            window.dispatchEvent(pointer('pointermove', 120, 10)),
+        );
+        expect(host.textContent).toContain('v:60');
+        await act(async () =>
+            window.dispatchEvent(pointer('pointerup', 120, 10)),
+        );
+        expect(host.textContent).toContain('v:60');
+        expect(host.textContent).toContain('h:20');
+    });
+
+    it('a collapsed canvas cannot place a guide', async () => {
+        state.scale = 0;
+        await render();
+        await act(async () => button('Ruler horizontal').click());
+        expect(host.textContent).toContain('h:0');
+        await act(async () =>
+            window.dispatchEvent(pointer('pointermove', 50, 60)),
+        );
+        expect(host.textContent).toContain('h:0');
+        await act(async () =>
+            window.dispatchEvent(pointer('pointerup', 50, 60)),
+        );
+    });
+
+    it('does not scroll anything once the canvas is out of its viewport', async () => {
+        await render();
+        const inner = host.querySelector<HTMLDivElement>(
+            '[style*="isolation"]',
+        )!;
+        const viewport = inner.parentElement!;
+        state.center.mockClear();
+        document.body.appendChild(inner);
+        try {
+            controller.toCenterView();
+            expect(state.center).not.toHaveBeenCalled();
+        } finally {
+            viewport.appendChild(inner);
+        }
+    });
+
+    it('the focus shortcut leaves a focused control alone and does nothing once unmounted', async () => {
+        await render();
+        const parent = host.querySelector<HTMLDivElement>('.w-100.h-100')!;
+        const focus = vi.spyOn(parent, 'focus');
+        const field = document.createElement('input');
+        document.body.appendChild(field);
+        field.focus();
+        try {
+            state.keyboard!();
+            expect(focus).not.toHaveBeenCalled();
+        } finally {
+            field.remove();
+        }
+
+        const shortcut = state.keyboard!;
+        await act(async () => root.unmount());
+        root = createRoot(host);
+        expect(() => shortcut()).not.toThrow();
+        expect(focus).not.toHaveBeenCalled();
+    });
+});

@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, CM-93]
 screenshots: 16
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -79,7 +79,7 @@ all count as book-level too.
    than the rest of the name so the reference reads first. Hover a file to see where it
    actually lives. 📸
    A book-level file is listed **once**, under its dashed pattern, however many chapters
-   of that book you have open, and carries a dashed **[en:tran:Introduction]** tag so a
+   of that book you have open, and, unless the panel is very narrow, carries a dashed **[en:tran:Introduction]** tag so a
    `PSA.0.pdf` says why it is there. A group with nothing for what you are reading says
    **[en:tran:No matching files]**.
 5. Sometimes you want a file that is _not_ named after this verse. Click the **magnifier**
@@ -229,5 +229,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

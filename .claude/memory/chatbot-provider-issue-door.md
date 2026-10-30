@@ -12,7 +12,9 @@ A "could not answer" note in the chatbot window carries the door to what
 went wrong (2026-09-10, `src/chatbot/providerIssueHelpers.ts`, `EC-158`):
 `readLlmIssue` classifies the SDK error into a kind (`noCredit`, `badKey`,
 `rateLimited`, `quotaOrRate`, `overloaded`, `serverTrouble`, `modelMissing`,
-`workspace`, `unreachable`, `other`) and `genProviderIssueActions` turns the
+`modelLoad` — since 2026-10-17, a server of the user's own that could not
+load the model, read before the money words — `workspace`, `unreachable`,
+`other`) and `genProviderIssueActions` turns the
 kind into buttons — *Open ChatGPT billing*, *Open AI settings* + *Open Claude
 API keys*, the limits page, the status page, the settings panel for the
 keyless provider.

@@ -209,3 +209,16 @@ describe('HlsSegmenter', () => {
         expect(segmenter.getSegment(0)!.toString('latin1')).toBe('K1');
     });
 });
+
+describe('HlsSegmenter, sound with no picture to go with', () => {
+    test('sound before the first keyframe has no segment, and is dropped', () => {
+        const segmenter = new HlsSegmenter(() => {});
+        segmenter.setInit(toBuffer(buildInitSegment(VIDEO, AUDIO)));
+        segmenter.addFragment(Buffer.from('A-early'), false, null);
+        segmenter.addFragment(Buffer.from('K0'), true, 0);
+        segmenter.addFragment(Buffer.from('A0'), false, null);
+        segmenter.addFragment(Buffer.from('K1'), true, 2);
+        expect(segmenter.segmentCount).toBe(1);
+        expect(segmenter.getSegment(0)!.toString('latin1')).toBe('K0A0');
+    });
+});

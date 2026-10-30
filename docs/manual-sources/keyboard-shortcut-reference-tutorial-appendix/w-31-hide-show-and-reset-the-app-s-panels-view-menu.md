@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [NAV-20, NAV-21, ST-22, GL-17, GL-18]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-31 — Hide, show, and reset the app's panels (View menu)
 
@@ -29,9 +29,10 @@ the only way in a popup window, whose menu bar is hidden.
    **[en:tran:Bible Lookup]**, and **[en:tran:Advance Lookup]**. The top-right
    **[en:tran:Advance Bible Lookup]** binoculars toggle that same Advance Lookup section.
    - **Ticked** = the panel is open. **Unticked** = it is collapsed to its strip.
-   - `Note` — the document and slide notes under the slide previews (W-03) — is the
-     one panel that **starts unticked**: it ships collapsed to its green strip,
+   - `Note` — the document and slide notes under the slide previews (W-03) — is a
+     panel that **starts unticked**: it ships collapsed to its green strip,
      because most services never need it. Tick it, or click the strip, to open it.
+     **[en:tran:Advance Lookup]**, which the binoculars open, starts unticked too.
 2. Click a ticked one — that panel collapses to its green strip, and the space goes to
    its neighbour. 📸
 3. Click it again — the panel comes straight back. Nothing reloads and nothing you
@@ -42,12 +43,13 @@ the only way in a popup window, whose menu bar is hidden.
 **Put everything back:**
 
 5. Open **View** on the top menu bar again and click
-   **[en:tran:Reset Widgets Size]**. Do not open **Widgets** for this one:
+   **[en:tran:Reset Widgets Size]**. Do not open **[en:tran:Widgets]** for this one:
    **[en:tran:Reset Widgets Size]** is a row of the **View** menu itself, the row
-   right under **Widgets**. Answer **[en:tran:Yes]** to
+   right under **[en:tran:Widgets]**. Answer **[en:tran:Yes]** to
    `Are you sure to reset every widget size and reopen the widgets?` 📸
 6. Every panel returns to the width and height it had when the app was installed, and
-   **any panel you had collapsed is reopened**. This happens immediately — no reload.
+   **any panel you had collapsed is reopened** — except **[en:tran:Note]**, which goes back to
+   its strip, the way it shipped. This happens immediately — no reload.
    Answer **[en:tran:No]** and nothing changes.
 
 **Or use the divider between two panels** — no menu bar needed, so this also works
@@ -77,7 +79,7 @@ upper and a lower panel, **Shift** for bigger steps. The arrows never collapse a
 the menu does that.
 
 > This used to be a button in Settings → General, where it did nothing until you also
-> clicked **Apply Settings** and the app reloaded. It is on the View menu now and takes
+> clicked **[en:tran:Apply Settings]** and the app reloaded. It is on the View menu now and takes
 > effect at once.
 
 ::: details 🤖 Robot-verified — coverage traceability
@@ -85,5 +87,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-20` · `NAV-21` · `ST-22` · `GL-17` · `GL-18`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

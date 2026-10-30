@@ -673,3 +673,133 @@ describe('Fmp4Fanout', () => {
         expect(sink.onFragment).toHaveBeenCalledTimes(2);
     });
 });
+
+// -- Box sizes the muxer never writes, as other encoders may ------------------
+
+// A box with a 64-bit `largesize` after its type.
+function largeBox(type: string, ...payload: Buffer[]) {
+    const body = Buffer.concat(payload);
+    const size = Buffer.alloc(8);
+    size.writeBigUInt64BE(BigInt(body.length + 16));
+    return Buffer.concat([u32(1), Buffer.from(type, 'latin1'), size, body]);
+}
+
+// The boxes inside `trak(...)`, to wrap differently.
+function trakChildren(trackId: number, handler: string) {
+    return trak(trackId, handler).subarray(8);
+}
+
+describe('readVideoTrackInfo, box sizes', () => {
+    test('a track box with a 64-bit size is read like any other', () => {
+        const moov = box(
+            'moov',
+            largeBox('trak', trakChildren(7, 'vide')),
+            box('mvex', trex(7, 0x10000)),
+        );
+        expect(readVideoTrackInfo(moov)).toEqual({
+            trackId: 7,
+            trexFlags: 0x10000,
+            timescale: 0,
+        });
+    });
+
+    test('a box sized 0 runs to the end of its parent', () => {
+        const moov = box(
+            'moov',
+            Buffer.concat([
+                u32(0),
+                Buffer.from('trak', 'latin1'),
+                trakChildren(5, 'vide'),
+            ]),
+        );
+        expect(readVideoTrackInfo(moov).trackId).toBe(5);
+    });
+
+    test('a box cut short, too small, or running past its parent ends the reading there', () => {
+        // A 64-bit size whose 8 size bytes are cut short.
+        const cutLarge = box(
+            'moov',
+            trak(7, 'vide'),
+            Buffer.concat([u32(1), Buffer.from('trak', 'latin1'), u32(0)]),
+        );
+        expect(readVideoTrackInfo(cutLarge).trackId).toBe(7);
+        // Claims more than its parent holds: the track inside is not read.
+        const overrun = box(
+            'moov',
+            trak(7, 'vide'),
+            Buffer.concat([
+                u32(4096),
+                Buffer.from('trak', 'latin1'),
+                trakChildren(9, 'vide'),
+            ]),
+        );
+        expect(readVideoTrackInfo(overrun).trackId).toBe(7);
+        // Smaller than its own header.
+        const tiny = box(
+            'moov',
+            trak(7, 'vide'),
+            Buffer.concat([u32(4), Buffer.from('trak', 'latin1')]),
+            trak(9, 'vide'),
+        );
+        expect(readVideoTrackInfo(tiny).trackId).toBe(7);
+    });
+
+    test('a track with no header or no handler is skipped', () => {
+        const moov = box(
+            'moov',
+            // A media box with no handler in it.
+            box(
+                'trak',
+                fullBox('tkhd', 0, 3, Buffer.alloc(8), u32(3)),
+                box('mdia'),
+            ),
+            // A handler with no track header.
+            box(
+                'trak',
+                box(
+                    'mdia',
+                    fullBox(
+                        'hdlr',
+                        0,
+                        0,
+                        u32(0),
+                        Buffer.from('vide', 'latin1'),
+                        Buffer.alloc(12),
+                    ),
+                ),
+            ),
+            trak(8, 'vide'),
+        );
+        expect(readVideoTrackInfo(moov).trackId).toBe(8);
+    });
+});
+
+describe('Fmp4Fanout, a viewer joining again', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test('its first wait does not end the viewer that took its place', () => {
+        const { fanout, join, onClientGone } = setup();
+        const first = join('a');
+        vi.advanceTimersByTime(MAX_WAIT_MILLISECOND / 2);
+        const second = join('a');
+        // The first viewer's wait runs out: the second one keeps waiting.
+        vi.advanceTimersByTime(MAX_WAIT_MILLISECOND / 2);
+        expect(first.statusCode).toBe(0);
+        expect(second.statusCode).toBe(0);
+        expect(second.isEnded).toBe(false);
+        expect(fanout.size).toBe(1);
+        expect(onClientGone).not.toHaveBeenCalled();
+        // Its own wait still ends it.
+        vi.advanceTimersByTime(MAX_WAIT_MILLISECOND / 2);
+        expect(second.statusCode).toBe(503);
+        expect(second.isDestroyed).toBe(true);
+        expect(onClientGone).toHaveBeenCalledTimes(1);
+        expect(fanout.size).toBe(0);
+    });
+});

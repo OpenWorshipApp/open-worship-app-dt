@@ -7,6 +7,39 @@ file size: a folder whose files share one domain needs one mock surface, so
 Status is `open` · `in progress` · `done (before → after)`. A batch is done
 when `coverage-gap.mjs` says so, not when the tests are written.
 
+## Achieved target — 95%, 2026-10-29
+
+The user set the goal at **95% of the whole source surface**. Met:
+**95.25% (79,188 / 83,141)**, 204 lines above the threshold, on the same
+1,292-file denominator; exclusions and thresholds unchanged. See the baseline
+for every number and the evidence files.
+
+### UT-70 · parallel slices across the whole surface
+
+`done` · predicted +11,305 needed; actual **+11,509 lines, +13.85 points**
+(81.40% → 95.25%). 21 disjoint slices by folder in the coordinator's
+scratchpad; 17 ran as subagents on one shared brief, the coordinator took the
+renderer entries and several small folders. 3,626 new tests (renderer + MCP
+8,233 → 11,587; Electron 942 → 1,214), all asserting; 11 of 404 files are
+static-render only. One bug fixed (`toFileTypeName` on an extensionless
+file), three reported. The run hit the account usage limit with every agent
+mid-slice; the lessons are in memory `parallel-test-agent-coverage-run`.
+
+### Remaining toward 99% (3,953 uncovered; 99% needs 3,122 more)
+
+The four slices that never started hold most of the 0% files left:
+
+| Slice | Scope | Notes |
+| --- | --- | --- |
+| S16 | `graph-view`, `location-name-lookup`, `bible-lookup` | `lookupIndexFileHelpers` 42 left |
+| S17 | `presenting-flow`, `virtual-display`, `screen-mirror`, `lwShare`, `virtual-display-viewer.ts` | `ServerControllerComp` and `VirtualDisplaysComp` still 0%; viewer 85 left |
+| S18 | `resize-actor`, `lang`, `server`, `virtual-list`, `toast`, `app-modal` | `langHelpers` 66, `fileHelpers` 57, `useRevealPin` 0% |
+| S19 | `ms-office`, `aichat`, `plugins`, `resources`, `context-menu` … | mostly residual branches |
+
+Then the long tail: 600+ files with a handful of uncovered lines each,
+nearly all error paths — the branch work `UT-08` names. Run at most ~8
+agents at once (CPU and usage limit), and re-slice from a fresh `worklist.json`.
+
 ## Achieved target — 80%, 2026-10-15
 
 The user authorized continued testing to **80% of the whole source surface**.

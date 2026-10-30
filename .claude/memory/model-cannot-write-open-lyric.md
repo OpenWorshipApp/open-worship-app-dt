@@ -20,7 +20,7 @@ The careful row is the whole finding. The two it still fails on are:
 - `Structure: V1CCV2C` — the same part may not sit twice in a row; it must be
   `Cx2`.
 - `guitar solo over the verse chords` inside an `ol:Instrumental` fence — that
-  fence and `Interlude` reject **every word**.
+  fence and `Interlude` reject **every word** outside one opening `{c: …}` cue.
 
 Neither is visible from outside the grammar, so **a longer prompt does not fix
 this**. Don't reach for one. The format is written by

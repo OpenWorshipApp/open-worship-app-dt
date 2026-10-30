@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
 screenshots: 50
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -21,8 +21,9 @@ it is describing.
    **[en:tran:Do not show this again for 30 days]** first puts the question away for that
    long — and a narrow window opens beside the app. 📸
    **The 🤖 button is only on the three windows with a top bar** — the Presenter, the
-   Bible Reader and the Slide Editor. Everywhere else, and on those three as well, the
-   way in is the **Tools** menu → **[en:tran:App Assistant]**, or **Ctrl+Shift+A**
+   Bible Reader and the Slide Editor — and Settings has a 🤖 **[en:tran:App Assistant]**
+   button of its own, at the foot of its list of tabs. Everywhere else, and on those as
+   well, the way in is the **Tools** menu → **[en:tran:App Assistant]**, or **Ctrl+Shift+A**
    (**⌘+Shift+A** on Mac). That works from a Bible Note, Settings, the Web Editor, the
    Lyric Editor and Local Web Share — the windows a volunteer is most likely to be
    stuck in — and the menu bar is hidden on those, so the shortcut is the way in. If a
@@ -36,7 +37,7 @@ it is describing.
    features are turned off and offers to open Settings, where the switch is (it takes
    effect after a restart).
 2. A strip of **tabs** runs along the very top — several conversations at once, the way
-   a browser holds several pages. **+** starts a new chat (its tab reads **New chat**
+   a browser holds several pages. **+** starts a new chat (its tab reads **[en:tran:New chat]**
    until a question is asked in it), **×** closes one. The
    window holds at most 12 chats — pressing **+** with all 12 open says so on a line
    under the tabs and asks you to close one first. A
@@ -45,30 +46,30 @@ it is describing.
    Everything is kept: close the window — close the app — and the tabs, their answers
    and even a half-typed question are all there when you open it again. 📸
 3. Every tab opens with a **⋮** on its left, and a right-click anywhere on the tab
-   does the same thing: it is that chat's own menu — **Rename this chat**, **Lock this
-   chat**, **Close this chat**, and, when there is more than one chat to take, **Close
-   other chats…** and **Clear all chats…**. Those last two are never done on the first
-   press: a line appears under the strip saying how many chats will go, with **Keep
-   them** beside the button that does it. 📸
-4. **Lock this chat** is how you keep one. A locked tab has no **×** any more — a 🔒
-   sits there instead — and neither **Close other chats** nor **Clear all chats** takes
+   does the same thing: it is that chat's own menu — **[en:tran:Rename this chat]**, **[en:tran:Lock this chat]**,
+   **[en:tran:Close this chat]**, and, when there is more than one chat to take,
+   **[en:tran:Close other chats…]** and **[en:tran:Clear all chats…]**. Those last two are never done on the first
+   press: a line appears under the strip saying how many chats will go, with
+   **[en:tran:Keep them]** beside the button that does it. 📸
+4. **[en:tran:Lock this chat]** is how you keep one. A locked tab has no **×** any more — a 🔒
+   sits there instead — and neither **[en:tran:Close other chats]** nor **[en:tran:Clear all chats]** takes
    it, so the strip can be cleared at the end of a service with the one answer worth
-   keeping still in it. **Unlock this chat**, in the same menu, gives the **×** back.
+   keeping still in it. **[en:tran:Unlock this chat]**, in the same menu, gives the **×** back.
    The lock is remembered with everything else, so it is still locked next Sunday. 📸
 5. The rest of the top line belongs to the tab in front, and it is three **drop-down
    lists**, each with its own small grey caption saying what it is for —
-   **ASKING ABOUT**, **ASSISTANT** and **MODEL**. (While the window is narrower than about 560 pixels — and it opens at 460 —
+   **[en:tran:ASKING ABOUT]**, **[en:tran:ASSISTANT]** and **[en:tran:MODEL]**. (While the window is narrower than about 560 pixels — and it opens at 460 —
    each caption sits above its list; drag the window wider and the captions move
    beside their lists.) The first,
-   **ASKING ABOUT**, says which window of the app you are asking about —
-   **Presenter**, **Bible Reader**, **Document Editor**, **Bible Note**, **Settings**,
-   **Web Editor**, **Lyric Editor** or **Local Web Share**. Every time you open the
+   **[en:tran:ASKING ABOUT]**, says which window of the app you are asking about —
+   **[en:tran:Presenter]**, **[en:tran:Bible Reader]**, **[en:tran:Document Editor]**, **[en:tran:Bible Note]**, **[en:tran:Settings]**,
+   **[en:tran:Web Editor]**, **[en:tran:Lyric Editor]** or **[en:tran:Local Web Share]**. Every time you open the
    help — including bringing an already-open help window back to the front — the
    active tab starts on the window you opened it from. A choice you make afterwards
    stays with that tab until the next launch, and the other chat tabs keep their own
    choices. The suggested questions change with it: opened from
    the Lyric Editor it offers marking verses and choruses, opened from Settings it
-   offers the language and the Bible downloads. Answers follow it too — a recipe
+   offers the data folder and the language. Answers follow it too — a recipe
    belonging to another window names buttons that are not on your screen, so it is
    left out. Another tab can be asking about a different window at the same time.
    **More than one window of the app open? Choose it on the WORKING IN line above the box.**
@@ -77,7 +78,7 @@ it is describing.
    Bible Reader opened in a window of its own — and the help then works with the
    one you choose: it reads what that window shows, outlines buttons in it, walks you
    through steps there, the 📷 takes a picture of that window and the ◎ points in it.
-   Choosing one sets **ASKING ABOUT** to match and marks the line with a coloured
+   Choosing one sets **[en:tran:ASKING ABOUT]** to match and marks the line with a coloured
    bar; choosing the main window goes back to the usual way. The choice belongs to
    that chat tab while the help window stays open; the line appears only while there
    is a second window to choose, and it keeps up by itself: a window you open or
@@ -86,20 +87,22 @@ it is describing.
    control from the ◎ remember the window they came from — rest the mouse on the
    chip to see it — and the assistant is told which window each is of; pressing a
    pointed-at chip outlines that control in its own window, whichever window is
-   chosen now. 📸 **ASSISTANT** is which service answers and **MODEL** is which of
-   its models; with no API key at all **ASSISTANT** starts on **Free**, a shared public
-   service that needs no key, and a notice pinned above the conversation says so and
-   carries **Open AI settings**, which opens the settings panel that takes a key. 📸
+   chosen now. 📸 **[en:tran:ASSISTANT]** is which service answers and **[en:tran:MODEL]** is which of
+   its models; until you pick one by name **[en:tran:ASSISTANT]** starts on **[en:tran:Auto]**
+   (step 13), which asks an assistant that costs nothing — with no server of your own,
+   **[en:tran:Free]**, a shared public service that needs no key — and a notice pinned above
+   the conversation says so and carries **[en:tran:Open AI settings]**, which opens the
+   settings panel that takes a key. 📸
    **Short of room? Fold those lists to one line.** A small arrow sits at the left
    edge of the window's top line — the line with the three lists, not the list of
-   suggested questions under it. Click it and the lists — with the **LIMIT PER HOUR** list and
-   the **CREDIT USED** line of step 8 — fold into a single line that still says
+   suggested questions under it. Click it and the lists — with the **[en:tran:LIMIT PER HOUR]** list and
+   the **[en:tran:CREDIT USED]** line of step 8 — fold into a single line that still says
    what each one is set to, such as _Presenter · Claude · Sonnet 5_, with the hourly
    limit at its end (it turns amber when the assistant is close to that limit or
    paused). Click that line to bring the lists back, exactly as they were. It only
    ever folds when you press the arrow — never while you scroll or read — and it
    stays the way you left it in every chat tab. 📸
-   When **ASKING ABOUT** is **Bible Reader**, answers lead with the easiest mouse or
+   When **[en:tran:ASKING ABOUT]** is **[en:tran:Bible Reader]**, answers lead with the easiest mouse or
    touch route, use no more than three steps at first, say where the control is, and
    explain actions such as double-clicking or dragging. A lost item starts with a
    history or recovery route, not a request to remember it, and a failed step gets a
@@ -109,30 +112,32 @@ it is describing.
    respectful and plain; it does not assume the reader knows computer terms or
    keyboard shortcuts.
 6. Type a question and press **Ctrl+Enter**, click **[en:tran:Send]**, or click one of the
-   suggestions. Answers arrive with follow-up buttons: **Read the whole thing** opens
+   suggestions. Answers arrive with follow-up buttons: **[en:tran:Read the whole thing]** opens
    the full recipe, the other button is the next-best match. Pages of this guide are
    always named by their **title** — _the guide page “Set the background”_ — never
    by a code or a number, whatever the assistant was reading. 📸
    **The four suggestions are not all it can answer — press More… to see the
-   rest.** Under the **Try asking** chips on an empty chat is a small
-   **More… — everything it can answer** button. It opens the whole list for the
+   rest.** Under the **[en:tran:Try asking]** chips on an empty chat is a small
+   **[en:tran:More… — everything it can answer]** button. It opens the whole list for the
    window you are asking about, sorted under the panel each question belongs to
    — _Bible verses on screen_, _Backgrounds_, _The screen the audience sees_, _Nothing on the
-   projector_, and so on. There are about 300 of them for the Presenter, and every one
+   projector_, and so on. There are more than 300 of them for the Presenter, and every one
    has a page of this guide or a look at the live app behind it, so nothing on
    that list can be pressed and come back with a shrug. It is worth a scroll
    once: most people use this window for the one thing they first saw it do.
    Press any of them to ask it, or type a few words in the box and the same list
-   narrows itself as you type. **Fewer** folds it away again. 📸
+   narrows itself as you type. **[en:tran:Fewer]** folds it away again. 📸
    **A Bible can be installed from the chat, with no model call.** Ask
    `Import bible from xml url https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBible.xml`
-   — the **Bible versions** section under **More** contains this editable sample. Asking it
-   downloads the file and asks a few quick questions in the chat, each with buttons to
+   — the **Bible versions** section under **[en:tran:More… — everything it can answer]** contains this editable sample. Asking it
+   downloads the file, says where it is from and asks you to press **[en:tran:I agree]** (on a
+   computer with no KJV yet it offers **[en:tran:Create the provided KJV]** first), then asks a
+   few quick questions in the chat, each with buttons to
    press — a short name, the language, the digits and the book names — and installs
-   nothing until you press **Install it**, with **Undo** under the answer afterwards (W-34).
+   nothing until you press **[en:tran:Install it]**, with **[en:tran:Undo]** under the answer afterwards (W-34).
    **The Bible Reader also has 30 guided demos that need no AI model, key or
-   account.** Set **ASKING ABOUT** to **Bible Reader** and, in an empty chat,
-   press one of the demo buttons listed under **Try a guided demo** — those words
+   account.** Set **[en:tran:ASKING ABOUT]** to **[en:tran:Bible Reader]** and, in an empty chat,
+   press one of the demo buttons listed under **[en:tran:Try a guided demo]** — those words
    are a heading, and typing them does nothing. The original four practise text size, opening
    John 3:16 with buttons and finding Bible words. Nineteen more cover passage
    history, clearing the reference, people and places, two Bible versions,
@@ -145,7 +150,7 @@ it is describing.
    saved Bibles, or Bible Notes; those three are self-guided because an open
    pane is not itself a toggle.
    A card appears in the Reader. Press
-   **Do it** for one visible action at a time, or **Skip** to do that step
+   **[en:tran:Do it]** for one visible action at a time, or **[en:tran:Skip]** to do that step
    yourself. The reference demo uses the Bible's own book, chapter and verse
    buttons, so it also works when those buttons are not in English. Study-view
    demos choose the named view even when the panel remembered a different one.
@@ -184,7 +189,7 @@ it is describing.
    **And you rarely have to type the next thing.** Every answer ends with two or
    three short buttons in the assistant's own words — _“How do I style the verse
    text?”_, _“Which button shows it?”_, _“No thanks”_ — and pressing one says it for
-   you, as if you had typed it. A reply that only repeats **Show me step by step**
+   you, as if you had typed it. A reply that only repeats **[en:tran:Show me step by step]**
    in other words is not offered beside it. They are the round-cornered buttons on the bottom row; the
    square ones above them, in capitals, are the ones that DO something in the app.
    Only the newest answer carries them, so a **Yes** is always a yes to the question
@@ -199,12 +204,12 @@ it is describing.
    and this is how you can tell it is getting somewhere rather than stuck — and
    whether it is doing what you meant. If it says _Reading_ a site you did not
    ask about, or _Pressing_ something you did not want pressed, that is the
-   moment to press **Stop**. 📸
+   moment to press **[en:tran:Stop]**. 📸
    **Changed your mind? Press Stop.** While an answer is on its way the **[en:tran:Send]**
-   button becomes **Stop**, and the last line under the steps says so —
+   button becomes **[en:tran:Stop]**, and the last line under the steps says so —
    _press Stop to give up on it._ Pressing it (or **Esc**, while the cursor is not in the box) calls
    the question off there and then: the chat says **Stopped**, nothing arrives
-   afterwards, and your question is still sitting above it with **Ask again**
+   afterwards, and your question is still sitting above it with **[en:tran:Ask again]**
    under it. Use it for a question asked by mistake, one taking longer than you
    have before the service starts, or an assistant that is thinking its way
    round the houses. 📸
@@ -213,10 +218,10 @@ it is describing.
    **Ctrl+Enter**) and it goes into the answer that is already being written, rather than
    starting a second question — the line joins the conversation marked _Added
    while it was working_. If it arrives too late to be worked in, it is answered
-   on its own and the reply says so. Press **Stop** instead and every word you
+   on its own and the reply says so. Press **[en:tran:Stop]** instead and every word you
    added comes straight back into the box: nothing you typed is thrown away. 📸
    **A question you picked from the list is answered from its own page.** The
-   **Try asking** chips, the suggestions under the box and the **More…** list are
+   **[en:tran:Try asking]** chips, the suggestions under the box and the **[en:tran:More…]** list are
    the app's own supported questions, and each one is filed under the page of this
    guide that answers it — so picking one goes straight to that page rather than
    searching for it, with an assistant or without one. Type the question in your
@@ -269,13 +274,13 @@ it is describing.
    off. **The commands that work on the Presenter alone** — the screen's show,
    hide and clears, **/selected**, **/next**, **/previous**, **/slide**, **/run**,
    **/verse**, **/countdown**, **/marquee** — are offered in the list only while
-   **Asking about** is **Presenter**, and typed under another page they answer
-   _works on the Presenter page_ with **Go to the Presenter** under it
+   **[en:tran:Asking about]** is **[en:tran:Presenter]**, and typed under another page they answer
+   _works on the Presenter page_ with **[en:tran:Go to the Presenter]** under it
    (**/commands** names them on one line there); the rest work everywhere,
    and anything the Reader has is on the Presenter too. Asked in words from
    the Bible Reader, _Is anything showing on the projector?_ says whether a
    screen is on and, under the answer, that the main window needs to be on the
-   Presenter page to see what it holds — with the same **Go to the Presenter**
+   Presenter page to see what it holds — with the same **[en:tran:Go to the Presenter]**
    button, which switches the main window and leaves the projector untouched;
    **/find Clear Long Text** outlines a control in red; **/goto reader** switches the
    main window (the projector is untouched); **/here** says which window is in
@@ -287,7 +292,7 @@ it is describing.
    for the Lyric Editor with its chords where the page puts them, and
    **/lyric** followed by pasted words writes those out (also **/lyrics**,
    **/hymn**, **/new-song**); either answers in a few seconds with what the
-   song is and the two buttons — **Create "…"** and **Copy song text** — and
+   song is and the two buttons — **Create "…"** and **[en:tran:Copy song text]** — and
    the song text as it will be saved drawn above them, and NOTHING is saved
    until you press Create (an _Assistant read a page on hymnary.org_ notice appears in
    the app window while the page is read). **/lyric Amazing Grace** — a song's
@@ -304,7 +309,7 @@ it is describing.
    answered from the assistant's own knowledge in one go, with nothing of the
    app looked up and no walkthrough offered (the quotes in `/btw "what is
 holy bible"` are fine), and with no assistant to ask it says so and offers
-   **Open AI settings**, because the built-in guide only knows this app. A
+   **[en:tran:Open AI settings]**, because the built-in guide only knows this app. A
    plain question typed under it — _in Khmer please_ — stays general, so the
    conversation goes on without retyping **/btw** (any **/** command ends
    that, and a new tab starts fresh); ask the assistant something not about
@@ -316,7 +321,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    how to search the Bible's own words in Bible Find, the words to try named,
    and _who wrote the book of Psalms?_ with how to ask an assistant, **/btw**
    in front; in the Bible Reader an assistant's answer to a verse asked for by
-   its words ends with the same search and a **Show me Bible Find** button,
+   its words ends with the same search and a **[en:tran:Show me Bible Find]** button,
    whose card rings **[en:tran:Advance Bible Lookup]**;
    on LM Studio and Ollama a general question goes out with the model's
    thinking switched off, so it answers in seconds rather than in half a
@@ -328,7 +333,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    suggestion list open, empties it (with the list open it only closes the
    list). On a server of your own, _Create a lyric file for song "Amazing
    Grace"_ is looked up and written out by the app itself, with the same
-   **Create** button, because a small local model is not handed the song
+   **[en:tran:Create]** button, because a small local model is not handed the song
    tools; and on such a server _Turn off the screen for me_, _Turn the screen
    on_, _show verse 1 on screen for me_ or _put slide 3 on the projector_ are
    answered from the app's own state at once, with ONE button that does it —
@@ -338,7 +343,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    slide_ the same way, naming the slide the arrow keys would go to and
    offering the one button that puts it up — and _Where is the button for
    Clear All_ is answered by the window itself, which looks for a control
-   called that and outlines it in red where it is, with **Highlight again**
+   called that and outlines it in red where it is, with **[en:tran:Highlight again]**
    under the answer (a name no control carries goes on to the assistant) —
    and a sentence that is not a
    slide of the song
@@ -350,7 +355,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    there for next time. A command with a spelling mistake lists the real ones
    rather than guessing. 📸
    **One line above the box tells you something this window can do.** A 💡 and a
-   short sentence — the picture button, the walkthrough cards, **Report**, **Alt+↑**,
+   short sentence — the picture button, the walkthrough cards, **[en:tran:Report]**, **Alt+↑**,
    locking a tab. It is a different one each time the window opens, and clicking the
    line gives you another; the cursor goes straight back to the box, so reading one
    never costs you the question you were writing. 📸
@@ -386,10 +391,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **Answers can carry them too.** When the assistant points you at a button or a
    file, it puts a chip under its answer as well: press it and the button is
    circled in the app, or the file opens.
-   **Whatever opens, you can keep it.** Under every preview is **Download**,
+   **Whatever opens, you can keep it.** Under every preview is **[en:tran:Download]**,
    which saves the file into your **Downloads** folder and opens it there —
-   a picture, a report, a song, anything. Beside it are **Copy**, which puts
-   the picture or the words on your clipboard, and **Open folder**, which
+   a picture, a report, a song, anything. Beside it are **[en:tran:Copy]**, which puts
+   the picture or the words on your clipboard, and **[en:tran:Open folder]**, which
    shows you where the file already lives. A file that is already in
    Downloads is opened rather than copied again, so pressing Download twice
    never leaves you with two of them. A kind this window cannot draw — a
@@ -440,15 +445,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    Resources, and answers from it. A PDF is read up to eight pages at a time and the
    assistant reads on by itself when the file is longer; you are not asked to turn
    pages.
-8. Under every answer is **Copy**, which puts that answer on the clipboard and says
-   **✓ Copied**. Under every question of yours is **Ask again** — or just click the
+8. Under every answer is **[en:tran:Copy]**, which puts that answer on the clipboard and says
+   **✓ Copied**. Under every question of yours is **[en:tran:Ask again]** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
    **Asked about reading the Bible from the wrong page?** A stray press is enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the
    Presenter or the Document Editor, and the answer ends with one more line and
-   one more button, **Go to the Bible Reader**: press it and the main window
+   one more button, **[en:tran:Go to the Bible Reader]**: press it and the main window
    changes to the Bible Reader, and whatever is on the projector is left as it
    is. The **[en:tran:Bible Reader]** tab in the header at the top of the Presenter
    takes you there too. A question about showing a verse on the screen does not
@@ -461,23 +466,23 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    it asks what was wrong, with three things to press (_A button it names is not
    there_, _The steps did not work_, _That is wrong for the window I am in_), and
    says what most often helps, a smarter model. When the assistant answering has
-   one — **Claude**, **ChatGPT** and **Kimi** list theirs best first — a button
+   one — **Claude**, **ChatGPT** and **[en:tran:Kimi]** list theirs best first — a button
    **Ask again with …** names the next model up: it asks the same question of
    that model and leaves this chat on it, and the new answer says so, because the
    model above costs more. Pick another in the model list at the top to go back.
-   On the best model already, on **Auto**, **Bedrock**, **Free** or a server of
+   On the best model already, on **[en:tran:Auto]**, **Bedrock**, **[en:tran:Free]** or a server of
    your own, it says in words what to try instead. **Typing that an answer is
    wrong** — _that is wrong_, _I cannot find that button_ — brings the same
    advice, and the same button, with the answer to it.
    **And what you clicked stays marked.** A card you click keeps a thin ring
-   round it, and a button you press in it — a thumb, **Copy**, a walkthrough
+   round it, and a button you press in it — a thumb, **[en:tran:Copy]**, a walkthrough
    button — keeps a ring of its own, until you click somewhere else; **Tab**
    moves the same mark from the keyboard. A thumb pressed on an answer further
    up no longer makes the chat jump to its end.
    **And every answer says what it cost.** At the right-hand end of the line under each
-   answer, the one with **Copy** and the thumbs, in small grey figures, is what the assistant spent answering — a few cents at
+   answer, the one with **[en:tran:Copy]** and the thumbs, in small grey figures, is what the assistant spent answering — a few cents at
    most for an ordinary question, and the tokens it used — and a line under the
-   three pickers at the top, **CREDIT USED**,
+   three pickers at the top, **[en:tran:CREDIT USED]**,
    keeps the running total for the whole chat: every question in this tab, including
    one you stopped part-way or one that failed, because the credit is spent whether
    or not an answer arrived. Each tab keeps its own total, and it is remembered with
@@ -491,29 +496,29 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    they are — so for the total in words type **/credit**, which answers from the tab
    itself with no assistant involved. 📸
    **And it cannot run up the bill on its own.** At the right-hand end of the
-   pickers' own line, after MODEL, is **LIMIT PER HOUR**, a small list that starts on **$1** —
+   pickers' own line, after MODEL, is **[en:tran:LIMIT PER HOUR]**, a small list that starts on **$1** —
    the most the assistant may spend in any one hour, across every tab of this
    window. Beside it, once something has been spent, a figure says where the hour
    stands (*≈ $0.31 of $1 this hour*); it turns **amber** past four fifths of the
    cap, and the answer that crosses that line carries a *Heads-up* note. At the
    cap the assistant **pauses**: the next question is answered from this guide
    instead, under a note saying why, the figure reads *paused*, and an
-   **Allow more** button appears in the note and in the top line. Pressing it
+   **[en:tran:Allow more]** button appears in the note and in the top line. Pressing it
    starts the hour again with the whole limit available and asks your question
    once more; nothing else lifts a pause — not time passing, not a restart — because
    the point of it is that a fault which keeps asking cannot press a button.
-   Pick a different amount from the list (**$0.25** to **$20**, or **No limit**)
-   to change it; **No limit** keeps only the pace cap, which pauses after **150
+   Pick a different amount from the list (**$0.25** to **$20**, or **[en:tran:No limit]**)
+   to change it; **[en:tran:No limit]** keeps only the pace cap, which pauses after **150
    model calls in one hour** whatever they cost — more than a person asks for, and
    the one thing that protects a free service, which the money cap cannot see.
    **/limit** says all of this in words and **/limit 2**, **/limit off** or
    **/limit more** do the same as the list and the button. The figures are the same
    estimate the credit line is. 📸
 9. **Something wrong with the app itself? Press Report.** Under **[en:tran:Send]** is a quieter
-   **Report** button, for when the answer is not "how do I" but "this is broken".
+   **[en:tran:Report]** button, for when the answer is not "how do I" but "this is broken".
    Say what went wrong in the box — one line is enough — and press it. It asks
-   first, quoting back what it is about to report, with **Not now** beside
-   **Report it**, so a mis-hit costs you nothing. (Press it with an empty box and it
+   first, quoting back what it is about to report, with **[en:tran:Not now]** beside
+   **[en:tran:Report it]**, so a mis-hit costs you nothing. (Press it with an empty box and it
    takes the last thing you asked, which after a wrong answer is usually what you
    mean.) 📸
    **Attach a picture or PDF to a problem report.** In this help window, type what
@@ -525,15 +530,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    third row, **[en:tran:Report a Problem]** (the menu bar's Help menu has the
    same row), opens the help window on a card
    that asks what went wrong — or what you wish the app did better — with a
-   **Report** button on it: type a line, attach a picture or a file if it
+   **[en:tran:Report]** button on it: type a line, attach a picture or a file if it
    helps (the paperclip takes pictures, text files and a PDF), and
-   press **[en:tran:Send]** or **Report** — either starts it. From then on that tab IS
+   press **[en:tran:Send]** or **[en:tran:Report]** — either starts it. From then on that tab IS
    the report: its name starts with **Report:**, and anything more you type
    or attach there is added to the report rather than answered as a
-   question, until you press **Send report**. And when the app itself
+   question, until you press **[en:tran:Send report]**. And when the app itself
    hits an error it asks first, **[en:tran:Something Went Wrong]**, with
    **[en:tran:Not Now]** beside **[en:tran:Report a Problem]**; say yes and the
-   help window opens on a card naming the error, with the same **Report**
+   help window opens on a card naming the error, with the same **[en:tran:Report]**
    button (type what you were doing first, if you remember — it goes into the
    report). Nothing is looked into before that press, and every one of these
    says first what a report carries: the app's version and build, this
@@ -546,7 +551,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    this computer's account taken out of any file path), and then investigates the
    problem in the running app. A few seconds
    later it comes back with what it found and a report written up in your place,
-   with a **Send report** button under it — and, when you attached files, their
+   with a **[en:tran:Send report]** button under it — and, when you attached files, their
    names, so you see what would go. **Nothing is sent until you press that.**
    Thought of something more while it is still writing? Type it and press **Add**:
    it starts the write-up again with your new words in it, and what you attached
@@ -554,8 +559,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **Not every problem is a fault in the app, so it helps first.** When what you
    describe looks like something you can put right yourself — a setting, a step
    that was missed — the answer is **Try this first** with the steps, and the
-   question _Did that solve it?_ Press **That fixed it** (or just type _yes_) and
-   the report is closed with nothing sent. Press **Still a problem — report it**
+   question _Did that solve it?_ Press **[en:tran:That fixed it]** (or just type _yes_) and
+   the report is closed with nothing sent. Press **[en:tran:Still a problem — report it]**
    and the report it wrote while you tried is put in front of you, saying what you
    were told to try.
    **Press Send report and it goes to the people who make the app.** The line under
@@ -575,11 +580,11 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **When nothing was sent, email it.** When no report server is open at all, or it
    does not take the report, the answer says plainly that nothing was sent, and why,
    and tells you who wants it. It names the maintainers' email address and
-   the subject line to use, and five buttons do the rest — **Copy report** puts the
-   whole write-up on your clipboard, **Copy subject** the subject line,
-   **Copy picture** the screenshot (paste it into the message and most mail apps
-   attach it), **Copy email address** the address, and
-   **Email it** opens your own mail app with the address and subject filled in (the
+   the subject line to use, and five buttons do the rest — **[en:tran:Copy report]** puts the
+   whole write-up on your clipboard, **[en:tran:Copy subject]** the subject line,
+   **[en:tran:Copy picture]** the screenshot (paste it into the message and most mail apps
+   attach it), **[en:tran:Copy email address]** the address, and
+   **[en:tran:Email it]** opens your own mail app with the address and subject filled in (the
    report is on your clipboard, so paste it in and attach the picture from
    Downloads). The address is read from the app's help page at the time, and only
    when that cannot be reached does it fall back to the one built into the app —
@@ -588,14 +593,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 10. Ask **"where is …"** and name a button — the chatbot outlines it in **red** in the app
     window for a few seconds, and tells you where it is. Nothing is clicked for you. 📸
 11. Ask about screens ("is any screen showing?") and the answer comes from the live app,
-    not the manual — with a **Hide every screen** button offered, never pressed for you.
+    not the manual — with a **[en:tran:Hide every screen]** button offered, never pressed for you.
 12. With an **AI key** set in **[en:tran:Settings]** → **[en:tran:AI Providers]**, the
     same window becomes a real conversation: the model answers, using the same app
-    knowledge and the same tools. Without a key the **Free** assistant answers instead — a
+    knowledge and the same tools. Without a key the **[en:tran:Free]** assistant answers instead — a
     shared public service, weaker and sometimes busy — and when no assistant can answer
     (the internet is down, the service is busy) it still answers from the manual, and says
-    so. A notice at the top of a **Free** conversation says that your questions leave this
-    computer, and gives you an **Open AI settings** button that goes straight to the panel
+    so. A notice at the top of a **[en:tran:Free]** conversation says that your questions leave this
+    computer, and gives you an **[en:tran:Open AI settings]** button that goes straight to the panel
     that takes a key. That panel has one card per provider, and
     each card says in plain words what its key is used for — **OpenAI** answers here and
     powers Bible Cross Reference and Bible Audio, **Anthropic** answers here and powers
@@ -617,8 +622,8 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     or **[en:tran:Add server]** is not where this page says, the part holding it is
     folded — click its title. Choosing an assistant that needs a key (the next step)
     opens whatever is folded in front of its key box by itself.
-13. The second list is **who answers** — **Claude**, **ChatGPT**, **Kimi**, **Bedrock**, and
-    **Free**, which needs no key — and you
+13. The second list is **who answers** — **Claude**, **ChatGPT**, **[en:tran:Kimi]**, **Bedrock**, and
+    **[en:tran:Free]**, which needs no key — and you
     can change your mind between two questions. The ones whose key you have set can be
     chosen; the others are still in the list, in a quieter colour and reading
     **needs an API key**, so you can see they are there and what they want. Choose one of
@@ -630,14 +635,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     **model** that will answer — **Opus 5**, **GPT-5**, **Kimi K3** — and it is a list
     you can change.
     Hold the mouse over a name to see what it is good for, how quick it is and what it
-    costs, e.g. `gpt-5 · best answers · slower · $1.25/$10 per 1M tokens`; the smaller
+    costs, e.g. `gpt-5`, `best answers · slower` and `$1.25/$10 per 1M tokens (in/out)`, a
+    line each; the smaller
     models answer a "how do I" just as well for a fraction of it. A model whose price the
-    maker does not publish simply shows no price line rather than a guessed one. Choose **More models…**
+    maker does not publish simply shows no price line rather than a guessed one. Choose **[en:tran:More models…]**
     at the bottom of the list and the window asks your own account what else it can run
     and adds those too. Each tab keeps its own provider and model, and a new tab starts
     on the last pair you picked. 📸
     **Auto, the last row of that list, chooses for you — among the assistants that
-    cost nothing.** Pick **Auto** and the tab stays on it: in front of every question
+    cost nothing.** Pick **[en:tran:Auto]** and the tab stays on it: in front of every question
     the window looks at each of your own servers that costs nothing to ask (one on
     this computer or on the church's own network, or a shared one marked free) and
     asks the best assistant that can answer right now. A server that does not answer
@@ -648,25 +654,25 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     is quicker and stronger than one on a church machine, and your question leaves
     the building to reach it) — the biggest of them first, one whose name gives no
     size last. After those the bigger model is asked first, read off the size in
-    its name (`9b`, `12b`); the **Free** service counts as 8B, so a server model of
+    its name (`9b`, `12b`); the **[en:tran:Free]** service counts as 8B, so a server model of
     8B or more is asked before it and a smaller one after it — which keeps a small
     model of your own for the day the internet is down. On LM Studio only a model
     that is loaded is asked while one is, because asking for another would load it
     in place of yours. An assistant that needs a paid key is never asked by Auto.
     While it looks, the waiting line reads _Auto is checking which assistants can
     answer_ and then _Auto picked_ with the name; where the model list stood,
-    **AUTO PICK** reads _chosen at each question_ until the first answer and names
+    **[en:tran:AUTO PICK]** reads _chosen at each question_ until the first answer and names
     who answered after it. When the one it picked fails before saying anything, the
     next one is asked, and a small line over the answer says who could not answer
-    and who did. Because the **Free** service may be the one that answers, an Auto
+    and who did. Because the **[en:tran:Free]** service may be the one that answers, an Auto
     chat carries a notice saying that your questions may leave this computer. A
     server of your own picked by name, with a model whose name does not end in
     `cloud`, is asked first — but when it cannot answer, the question goes on to
-    your other servers and then to the **Free** service (below). Picking
+    your other servers and then to the **[en:tran:Free]** service (below). Picking
     any named row ends Auto for that tab. **Auto is what a chat starts on** until
     you pick an assistant by name: the help window opens on it the first time, and
     so does every new chat after it. Once you have picked a named assistant, new
-    chats start on that one instead, and picking **Auto** again brings it back. 📸
+    chats start on that one instead, and picking **[en:tran:Auto]** again brings it back. 📸
     **Your own AI server answers too** — LM Studio, Ollama, llama.cpp's `llama-server`
     or llamafile, LocalAI, Jan, GPT4All, vLLM, SGLang or a LiteLLM proxy on this
     computer or on another computer in the church, or any service that speaks the
@@ -771,24 +777,24 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     The tab's own list moves to the one that answered, so the next question in it does
     not wait on the dead key again; a new tab still starts on the one you picked, and
     the moment that key works it answers as before. A key you pay for never answers
-    for the **Free** assistant or a server of your own, and they never answer for
+    for the **[en:tran:Free]** assistant or a server of your own, and they never answer for
     it. With no other key, or when the internet itself is down, the answer comes
     from this guide, as before, under a note that says which. 📸
     **A server or a free model that cannot answer hands the question on too.** When
-    the server or the **Free** model you picked by name fails before it answers —
+    the server or the **[en:tran:Free]** model you picked by name fails before it answers —
     its computer is off, its program is not running, the free service is full —
-    the question goes down the same line **Auto** uses, among the assistants that
+    the question goes down the same line **[en:tran:Auto]** uses, among the assistants that
     cost nothing: your other servers on this computer or the church's network
-    first, then the rest, the **Free** service among them, three at most. The
+    first, then the rest, the **[en:tran:Free]** service among them, three at most. The
     waiting line says _… could not answer — looking for another assistant that
     costs nothing_ and then _Asking … instead_, and the answer opens with a note
     saying who could not answer, why, and who answered instead — for example
-    with a server called Church PC switched off, _Church PC · gemma4:31b could not answer — nothing answered at http://localhost:11999/v1 — check that its server is running. Local Ollama · gemma4:cloud answered instead._
+    with a server called Church PC switched off, _Church PC · gemma4:31b could not answer — its server is not answering — check that the computer it runs on is on and awake, and that the server is running. Local Ollama · gemma4:cloud answered instead._
     The chat keeps the one you picked, so the next question asks it first again and
     it answers as soon as it is back. When none of them can, the guide answers
     under a note naming every assistant that was tried. 📸
     **The note says what is wrong, and carries the door to it.** For a key that was
-    refused, press **Open AI settings** under the note and paste a correct key into that
+    refused, press **[en:tran:Open AI settings]** under the note and paste a correct key into that
     assistant's box. The reason is read
     from what the provider actually said, not only from how loudly it said it: _the
     AI account is out of credit_ when the account is empty, _being rate-limited
@@ -797,17 +803,18 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     or revoked key, _the AI service is overloaded_ or _having trouble_ when it is the
     service's own fault. And the first button in the row under the note takes you to
     the page that fixes it, in your browser — **Open ChatGPT billing** for an empty
-    account, **Open AI settings** and **Open Claude API keys** for a refused key,
+    account, **[en:tran:Open AI settings]** and **Open Claude API keys** for a refused key,
     **Open Kimi usage limits** for a rate limit, **Claude status page** when the
     service is down — named for the assistant that FAILED, so with two keys you top
     up the right one. Hold the mouse over the button to see the address it opens;
     pressing it opens the page and the window says _Opening … in your browser._ The
-    **Free** assistant has no account to go to, so its button is **Open AI settings**,
+    **[en:tran:Free]** assistant has no account to go to, so its button is **[en:tran:Open AI settings]**,
     where a key of your own goes. 📸
-14. Every answer offers **Show me step by step**. Press it and a numbered card
+14. An answer that comes from a page of this guide offers **[en:tran:Show me step by step]**. Press
+    it and a numbered card
     appears in the corner of the app window itself, with the button for the current
-    step **circled in red**: press **Next** on the card when you have done it, or
-    just do it — clicking the circled button moves the card on by itself. **Back**
+    step **circled in red**: press **[en:tran:Next]** on the card when you have done it, or
+    just do it — clicking the circled button moves the card on by itself. **[en:tran:Back]**
     returns a step, **✕** stops. Steps you have already done are not shown: asked
     from the Bible Reader, a recipe that starts "click the Bible Reader tab" starts
     at the step after it instead. 📸
@@ -819,10 +826,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     the app in the first place, it is left exactly where you had it. To fetch it back
     in the middle of a walkthrough, click it in the taskbar or the Dock, or press the **🤖**
     button again — that reopens the chat you were in, not a new one.
-15. **Do it for me** runs the same walkthrough with the app driven for you: the
-    card's button becomes **Do it**, and each press clicks the circled control (or
+15. **[en:tran:Do it for me]** runs the same walkthrough with the app driven for you: the
+    card's button becomes **[en:tran:Do it]**, and each press clicks the circled control (or
     types the text) and moves to the next step. One press per step — nothing runs
-    ahead of you — and **Skip** does a step yourself. Anything that changes what
+    ahead of you — and **[en:tran:Skip]** does a step yourself. Anything that changes what
     the congregation sees is offered, never done for you unasked. 📸
     **It presses the button the step names, and nothing that merely resembles
     it.** A step about the drawing panel's _Clear_ does not press the projector's
@@ -831,7 +838,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     "Clear"_ — and asks the assistant instead. 📸
     **Something in the way is closed first.** With the Bible Lookup popup, a
     right-click menu or a floating panel over the control the step needs, the
-    card rings the way out (the popup's red ✕) and says so; in **Do it for me**
+    card rings the way out (the popup's red ✕) and says so; in **[en:tran:Do it for me]**
     the first press closes it and the next does the step. A question the app is
     asking — _Ok_ / _Cancel_ — is never answered for you: answer it and the card
     carries on. 📸
@@ -860,7 +867,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     into your language, and the waiting line says so. A Gemma 4 model that answers
     is simply asked in your language. 📸
 
-> With no key set, the **Free** assistant answers through a shared public service, so your
+> With no key set, the **[en:tran:Free]** assistant answers through a shared public service, so your
 > questions and anything you attach leave this computer — the notice at the top of the
 > conversation says so. The manual is bundled inside the app.
 
@@ -868,21 +875,21 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     into the box of this help window, where you type a question (not into the Lyric
     Editor) — from an email, from a hymn sheet, from a page you found — and ask
     for a song; or attach a `.txt` of the words with the paperclip; or give it the
-    address of a page the words are on. One of the **Try asking** chips offers this
+    address of a page the words are on. One of the **[en:tran:Try asking]** chips offers this
     outright: _Can you make a song from words I paste in?_ 📸
     The answer comes back in plain words — what the song came out as, its parts and
     the order they play in, and **what it had to guess**, which is usually the key,
     the tempo, the time signature and the author, because ordinary lyrics say none of
     those. Underneath it are two buttons: **Create "<the song's title>"** and
-    **Copy song text**. 📸
+    **[en:tran:Copy song text]**. 📸
     The song's own notation never appears in the chat, and you never have to type it.
-    **Create** writes a real song into your documents list, ready to put on a screen,
-    and answers with two things to press: **Show it in the list**, which draws a red
+    **[en:tran:Create]** writes a real song into your documents list, ready to put on a screen,
+    and answers with two things to press: **[en:tran:Show it in the list]**, which draws a red
     ring round the new song's row in the app window behind, so you can see exactly
     where it landed; and the song's name, which opens it over the conversation, with
-    **Open folder** under it for the folder it was written to.
+    **[en:tran:Open folder]** under it for the folder it was written to.
     📸 It never replaces a song you already have: press it twice and the second is
-    saved beside the first with `(1)` after the name. **Copy song text** puts the same thing on the clipboard, to paste
+    saved beside the first with `(1)` after the name. **[en:tran:Copy song text]** puts the same thing on the clipboard, to paste
     straight into the Lyric Editor.
     Labels help it: write `Chorus`, `Verse 2`, `Bridge` or just `1.` and `2.` above
     the blocks and it uses them. Without labels each block becomes a verse, and a
@@ -903,10 +910,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     assistant out of credit, or refused for asking too often in a minute (a free
     Kimi account allows about three questions a minute), a paste of song words is
     written out by the app itself in a second or two, under a note that reads
-    _I wrote the song out myself instead_ — with the same **Create** and **Copy
-    song text** buttons, and nothing searched in this guide for the words. 📸
+    _I wrote the song out myself instead_ — with the same **[en:tran:Create]** and
+    **[en:tran:Copy song text]** buttons, and nothing searched in this guide for the words. 📸
 19. **Name a song, or give the address of a song page, and it is written out for
-    you.** The fourth **Try asking** chip is not a question but the start of one:
+    you.** The fourth **[en:tran:Try asking]** chip is not a question but the start of one:
     _Create a lyric file for song "Amazing Grace"_. Pressing it does not ask
     anything — it drops the sentence into the box with the cursor in it, so you can
     press **Ctrl+Enter** as it stands or swap the title for the song you want. 📸
@@ -918,7 +925,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     last seventy years — is said so plainly, with the nearest hymn titles when there
     are any, and a request for its words or for the address of a page with it on.
     The address is the other way in: _Create a lyric file from
-    https://example.com/lyric/amazing_grace_ is in **More…**, and works the same
+    https://example.com/lyric/amazing_grace_ is in **[en:tran:More…]**, and works the same
     way — swap the example address for the one you have. A banner appears in the
     app window naming the site while it reads.
     A song page is never just the song: there is a toolbar above it, a strumming
@@ -957,14 +964,14 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     drafted, the box is not there — ask again and it comes back.) Whether your
     church may sing it is your own licence and your own decision — the app copies
     nothing anywhere and sends nothing to anyone, and no file is written until you
-    press **Create**.
+    press **[en:tran:Create]**.
     Because it is a guess about someone else's page, the answer always says **which
     part of the page it used**, quoting the first and last line it took and how many
     lines of menus and links it left out. Read that line. If it took in too much or
     stopped too early, say so in your own words — _the song starts at "…" and ends at
     "…"_ — and ask again. Everything else is the same as pasting the words yourself:
     the two buttons underneath, and nothing written to disk until you press
-    **Create**.
+    **[en:tran:Create]**.
 20. **[en:tran:Enable AI features]** turns all of this on or off. It is in
     **[en:tran:Settings]** → **[en:tran:AI Providers]**, at the top of the
     section (click the section's title if it is folded). To
@@ -977,5 +984,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

@@ -29,6 +29,18 @@ type AssistantLanguageFileType = {
     verseFindAsks?: string[];
     verseAsks?: string[];
     verseAskExcludeWords?: string[];
+    // Knowledge ABOUT the Bible (_who wrote Psalms?_), read as English's
+    // `readBibleContentAsk` reads it (2026-10-29): a question word and a
+    // Bible word, and not a who-was / where-is (the names lookup's),
+    // something the person has open, nor a word of the app (`appWords`,
+    // English's `APP_WORD_PATTERN`: show, search, a page, references).
+    bibleKnowledgeWords?: {
+        leads?: string[];
+        cues?: string[];
+        nameLeads?: string[];
+        ownState?: string[];
+        appWords?: string[];
+    };
     removalWords?: string[];
     closingWords?: string[];
     menuWords?: string[];
@@ -41,8 +53,17 @@ type AssistantLanguageFileType = {
         chapter?: string[];
         resources?: string[];
         names?: string[];
+        // A how-do-I -- what the PERSON does, never "how did God…" --
+        // as words, and as patterns for what words cannot say ("comment"
+        // before an infinitive). Read case as written.
         howTo?: string[];
+        howToAsks?: string[];
+        // The app's own words the language's Bibles do not use: the app's
+        // work wherever they are.
         exclude?: string[];
+        // The app's own words its Bibles use too (size, save, a window):
+        // the app's work only in a how-do-I (2026-10-29).
+        excludeInHowTo?: string[];
         // The words a question names a PERSON or PLACE with ("who was",
         // "where is"): the input aid asks the names lookup for these
         // (`bibleInputSuggestHelpers.ts`).
@@ -131,6 +152,14 @@ export type AssistantLanguageType = {
     verseFindAskPatterns: RegExp[];
     verseAskPatterns: RegExp[];
     verseAskExcludeWords: string[];
+    // See `AssistantLanguageFileType.bibleKnowledgeWords`.
+    bibleKnowledgeWords: {
+        leads: string[];
+        cues: string[];
+        nameLeads: string[];
+        ownState: string[];
+        appWords: string[];
+    };
     // The words that make a reply chip a REMOVAL (delete, remove, reset), in
     // lower case: a chip is a one-press yes, and a removal is said in words
     // (`checkIsRemovalReply`).
@@ -149,7 +178,9 @@ export type AssistantLanguageType = {
         resources: string[];
         names: string[];
         howTo: string[];
+        howToAskPatterns: RegExp[];
         exclude: string[];
+        excludeInHowTo: string[];
         nameAsk: string[];
         nameAskLead: string[];
     };
@@ -184,11 +215,17 @@ export type AssistantLanguageType = {
 
 // A pattern a language file got wrong is left out, never thrown: one bad
 // line must not take the help window down with it (a test holds every file
-// to patterns that compile).
-function toPatternList(sourceList: string[] | undefined): RegExp[] {
+// to patterns that compile). A verse ask is read whatever its case
+// (`Quel verset…`, `quel verset…`); a how-to pattern reads case as written,
+// because a French infinitive after "comment" is lower case and a name is
+// not ("Comment Pierre a-t-il…" asks about Peter).
+function toPatternList(
+    sourceList: string[] | undefined,
+    flags = 'u',
+): RegExp[] {
     return (sourceList ?? []).flatMap((source) => {
         try {
-            return [new RegExp(source, 'u')];
+            return [new RegExp(source, flags)];
         } catch (_error) {
             return [];
         }
@@ -236,9 +273,16 @@ function toLanguage(
         walkthroughEchoWords: file.walkthroughEchoWords ?? [],
         frameAliases: file.frameAliases ?? {},
         translationTerms: file.translationTerms ?? {},
-        verseFindAskPatterns: toPatternList(file.verseFindAsks),
-        verseAskPatterns: toPatternList(file.verseAsks),
+        verseFindAskPatterns: toPatternList(file.verseFindAsks, 'iu'),
+        verseAskPatterns: toPatternList(file.verseAsks, 'iu'),
         verseAskExcludeWords: file.verseAskExcludeWords ?? [],
+        bibleKnowledgeWords: {
+            leads: file.bibleKnowledgeWords?.leads ?? [],
+            cues: file.bibleKnowledgeWords?.cues ?? [],
+            nameLeads: file.bibleKnowledgeWords?.nameLeads ?? [],
+            ownState: file.bibleKnowledgeWords?.ownState ?? [],
+            appWords: file.bibleKnowledgeWords?.appWords ?? [],
+        },
         removalWords: (file.removalWords ?? []).map((word) => {
             return word.toLowerCase();
         }),
@@ -251,7 +295,9 @@ function toLanguage(
             resources: file.bibleReaderWords?.resources ?? [],
             names: file.bibleReaderWords?.names ?? [],
             howTo: file.bibleReaderWords?.howTo ?? [],
+            howToAskPatterns: toPatternList(file.bibleReaderWords?.howToAsks),
             exclude: file.bibleReaderWords?.exclude ?? [],
+            excludeInHowTo: file.bibleReaderWords?.excludeInHowTo ?? [],
             nameAsk: file.bibleReaderWords?.nameAsk ?? [],
             nameAskLead: file.bibleReaderWords?.nameAskLead ?? [],
         },
@@ -397,7 +443,13 @@ export function detectTypedLanguage(text: string): string | null {
     if (best === null && otherCount >= 2 && otherCount >= latinCount) {
         return OTHER_CHAT_LANG_CODE;
     }
-    const wordList = clean.toLowerCase().match(/[\p{L}']+/gu) ?? [];
+    // A curly apostrophe is the straight one, so `l’écran` reads as typed
+    // on any keyboard.
+    const wordList =
+        clean
+            .toLowerCase()
+            .replaceAll('’', "'")
+            .match(/[\p{L}']+/gu) ?? [];
     if (wordList.length < 3) {
         return null;
     }
@@ -407,8 +459,16 @@ export function detectTypedLanguage(text: string): string | null {
         if (!language.isLatinScript || language.functionWordSet.size === 0) {
             continue;
         }
+        // An elided little word is the front of a token (`l'homme`, `qu'il`):
+        // the language lists it with its apostrophe (2026-10-29, _Dieu créa
+        // l'homme à son image_ had read as no language at all).
         const hits = wordList.filter((word) => {
-            return language.functionWordSet.has(word);
+            const elidedAt = word.indexOf("'");
+            return (
+                language.functionWordSet.has(word) ||
+                (elidedAt > 0 &&
+                    language.functionWordSet.has(word.slice(0, elidedAt + 1)))
+            );
         }).length;
         if (hits === 0) {
             continue;

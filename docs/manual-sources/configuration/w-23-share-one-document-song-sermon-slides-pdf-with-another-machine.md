@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-77, PL-78, PL-79, PL-80, CM-36, CM-37]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-23 — Share one document (song, sermon slides, PDF) with another machine
 
@@ -16,13 +16,13 @@ travels as its own bundle, with everything attached to it.
    document, a lyric, a PDF, a PowerPoint or a Word file all work — and choose
    **[en:tran:Export]**. 📸
 2. A small panel asks for a **[en:tran:Password]** and a **[en:tran:Confirm Password]**. Leave both empty and press **[en:tran:Ok]** for the ordinary bundle, or
-   type the same password in both to lock it — see W-22 step 10a, it works identically
+   type the same password in both to lock it — see W-22j step 1a, it works identically
    here and there is no way to recover a forgotten one. 📸
 3. You get one `<name>.owadoc.tar.gz` file in your **Downloads** folder (or
    `<name>.owadoc.enc` if you set a password), and the folder opens. It contains the
    document itself plus everything hanging off it: the background you attached to it
-   (and that background's image or video file), any video placed inside its slides, and
-   its colour note.
+   (and that background's image or video file), any video or audio placed inside its slides, its
+   own transitions and its colour note.
 4. On the other machine, right-click an empty part of the **[en:tran:Documents]** list →
    **[en:tran:Import]** and pick that file — or just **drag the
    `.owadoc.tar.gz` (or `.owadoc.enc`) file from your file manager onto the Documents
@@ -36,12 +36,12 @@ travels as its own bundle, with everything attached to it.
    download goes to a temporary folder, is imported exactly as above, and is then
    deleted.
 
-> Notes: the same rules as a presenting flow bundle apply. A file already there **with the same
-> contents** is reused rather than duplicated, so importing twice is safe; a file of the
-> same NAME that is actually a different file is left untouched and the bundled one lands
-> beside it as `a (1).pdf`. A document that already has a background attached keeps its
-> own — an import never overwrites it, and it does not overwrite that document's colour
-> note either. Importing needs the folders it writes into to be **chosen already** (for a
+> Notes: the same rules as a presenting flow bundle apply. A picture, video or other media file already there
+> **with the same contents** is reused rather than duplicated; one of the same NAME that is
+> actually a different file is left untouched and the bundled one lands beside it as
+> `a (1).mp4`. The document itself always arrives as a new file: when one of that name is
+> already there — even the same document, imported before — yours is left untouched, with
+> its background and colour note, and the bundled one lands beside it as `a (1).pdf`. Importing needs the folders it writes into to be **chosen already** (for a
 > document with a video background, the Videos folder too), and if one is missing the
 > import stops before copying anything and tells you which to choose.
 >
@@ -60,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-77` · `PL-78` · `PL-79` · `PL-80` · `CM-36` · `CM-37`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

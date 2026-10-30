@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PR-04, PR-05, PR-06, PR-07, SP-01, SP-02, SP-03, SP-04, SP-05, SP-06, SP-07, SP-08, SP-09, SP-23, SP-24, KB-03, KB-04, KB-05, KB-06, KB-07, KB-13]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-10 — Control what the audience sees (mini screen + clears)
 
@@ -54,15 +54,15 @@ workflowsVersion: "2026-10-24"
   picture back and start one by hand — the card picks up exactly what is on the
   screen, and a clip that was playing carries on. The card remembers the choice for
   that screen, even after a restart. 📸
-- **[en:tran:Lock]** (header, the padlock): when locked (red), the screen refuses slide changes —
+- **[en:tran:Lock]** (header, the padlock): when locked (red), the screen refuses any change to its slide, background, Bible text or overlays —
   handy during a live moment; click again (green) to unlock. A change it refuses says
   _[en:tran:Screen Manager is locked]_ in a message with its own **[en:tran:Unlock]**: pressing it
   unlocks the screens and closes the message.
-- **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
+- **[en:tran:Display]** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
   screen projects to — the menu lists every display with its resolution, and marks the
   current one with `*` and the primary one with `(primary)`.
 - **Nothing on the projector?** Check its card from the top: it is showing
-  (**[en:tran:Toggle showing screen]**, or **F5**); its footer's **Display** names the
+  (**[en:tran:Toggle showing screen]**, or **F5**); its footer's **[en:tran:Display]** names the
   projector, not this computer's own screen — pick it there; and something is on it — a
   lit clear button says which layer holds something.
 - **Transitions** (footer, `Tr:`): the **[en:tran:Slide]:**, **[en:tran:Background]:** and
@@ -85,5 +85,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-04` · `PR-05` · `PR-06` · `PR-07` · `SP-01` · `SP-02` · `SP-03` · `SP-04` · `SP-05` · `SP-06` · `SP-07` · `SP-08` · `SP-09` · `SP-23` · `SP-24` · `KB-03` · `KB-04` · `KB-05` · `KB-06` · `KB-07` · `KB-13`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

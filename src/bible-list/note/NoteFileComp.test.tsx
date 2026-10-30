@@ -263,4 +263,54 @@ describe('NoteFileComp', () => {
         await act(async () => add.click());
         expect(h.addAndSave).toHaveBeenCalledOnce();
     });
+
+    test('the add icon answers Enter and Space, and no other key', async () => {
+        (note as unknown as { isOpened: boolean }).isOpened = true;
+        await renderFile();
+        const add = container.querySelector<HTMLElement>(
+            '[aria-label="New Note Item"]',
+        )!;
+        const press = async (key: string) => {
+            const event = new KeyboardEvent('keydown', {
+                key,
+                bubbles: true,
+                cancelable: true,
+            });
+            await act(async () => {
+                add.dispatchEvent(event);
+            });
+            return event;
+        };
+        expect((await press('Enter')).defaultPrevented).toBe(true);
+        expect((await press(' ')).defaultPrevented).toBe(true);
+        expect(h.addAndSave).toHaveBeenCalledTimes(2);
+        expect(
+            h.addAndSave.mock.calls.map(([item]) => item.metadata.id),
+        ).toEqual([6, 6]);
+        expect((await press('a')).defaultPrevented).toBe(false);
+        expect(h.addAndSave).toHaveBeenCalledTimes(2);
+        // Enter must not also reach the header and fold the file shut.
+        expect(h.setIsOpened).not.toHaveBeenCalled();
+    });
+
+    test('Reload reads the note file again', async () => {
+        await renderFile();
+        expect(h.fromFilePath).toHaveBeenCalledTimes(1);
+        await click('Reload');
+        expect(h.fromFilePath).toHaveBeenCalledTimes(2);
+        expect(h.fromFilePath).toHaveBeenLastCalledWith(filePath);
+    });
+
+    test('a change to the file on disk is read back in', async () => {
+        await renderFile();
+        const changedNote = {
+            ...note,
+            items: [{ content: 'changed on disk' }],
+        } as unknown as Note;
+        h.fromFilePath.mockResolvedValue(changedNote);
+        await act(async () => h.onFileUpdate?.());
+        expect(h.fromFilePath).toHaveBeenCalledTimes(2);
+        await click('Copy All Items');
+        expect(h.copy).toHaveBeenCalledWith('changed on disk');
+    });
 });

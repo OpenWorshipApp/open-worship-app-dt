@@ -468,12 +468,6 @@
         "why": "history: removed 5c916765; a dated, past-tense example"
     },
     {
-        "check": "symbols",
-        "doc": ".claude/memory/pdf-preload-decodes-all-pages.md",
-        "name": "LazyMountVideoComp",
-        "why": "history: a FIXED note"
-    },
-    {
         "check": "paths",
         "doc": ".claude/skills/owa-enhance-agent-docs/references/checks.md",
         "name": "lib.dom.d.ts",
@@ -557,5 +551,17 @@
         "doc": "src/experiments/html-in-canvas/README.md",
         "name": "InteractionManager",
         "why": "external: the HTML-in-Canvas web API or three.js, which the experiment is about"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/chatbot-report-button.md",
+        "name": "ISSUE_TRACKER_ENDPOINT",
+        "why": "history: removed with the registry report post (eae3c775, 2026-10-13); the note says the seam is gone"
+    },
+    {
+        "check": "symbols",
+        "doc": ".claude/memory/onscreen-setting-parse-amplification.md",
+        "name": "ScreenBibleManager",
+        "why": "history: a FIXED note names the site it fixed; renamed ScreenLongTextManager in eae3c775 (2026-10-13), which the note now says"
     }
 ]

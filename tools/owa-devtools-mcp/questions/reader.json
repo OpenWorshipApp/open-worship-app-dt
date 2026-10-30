@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-10-23",
+    "updated": "2026-10-29",
     "sections": [
         {
             "id": "reading",
@@ -766,7 +766,7 @@
                     ],
                     "resources": {
                         "recipe": "W-13",
-                        "passage": "The version at the start of the panel's title"
+                        "passage": "The version in front of the reference in the panel's title"
                     }
                 },
                 {

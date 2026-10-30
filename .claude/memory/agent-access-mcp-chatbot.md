@@ -98,15 +98,17 @@ self-help chatbot users ask "how do I …?" — see `electron/aiHelpers.ts`,
   AI settings** (the `app guide · offline` BUTTON in the head and the
   empty-state line with its own button are drawn for a tab with NO provider,
   which `getAvailableLlmProviders` no longer produces: Free is always
-  listed); every such button writes `setting-tabs` = `o` and opens
-  `setting.html` themselves rather than importing `openOthersSetting` — that
+  listed); every such button writes `setting-tabs` = `a` and opens
+  `setting.html` themselves rather than importing `openAISetting` — that
   module registers a `go-to-setting-home` listener at module scope, and a popup
   that also listens opens a SECOND settings window on one menu press.
 - **The chatbot answers a VOLUNTEER, not a developer.** Everything user-facing
   goes through that: the offline bot searches `kind: 'manual'` only (internal
   notes are for the model to read, never to quote), no answer shows a document
-  id, a section path or a file name, the window is English-only
-  (`toEnglishOnly` strips the Khmer twin the manual writes beside each label),
+  id, a section path or a file name, the window speaks the app's language
+  since 2026-10-16 ([[chatbot-follows-app-language]]; the manual names a
+  label by `[en:tran:…]` template, and `toEnglishOnly` still strips any Khmer in
+  brackets from an English excerpt),
   and an SDK error is turned into one sentence -- the raw `400 {json}` used to
   land in the bubble, with the markdown renderer eating its underscores.
 - **Answers are scoped to the half of the app that asked.** `build-knowledge`

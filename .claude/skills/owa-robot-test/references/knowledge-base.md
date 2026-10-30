@@ -117,8 +117,8 @@ dictionary is a plain object literal, so any key that is a valid JS identifier i
 **without quotes**:
 
 ```ts
-Seconds: 'វិនាទី',        // line 354 — NOT 'Seconds':
-Stage: 'ស្ទែជ',           // line 601 — NOT 'Stage':
+Seconds: 'វិនាទី',        // NOT 'Seconds':
+Stage: 'ស្ទែជ',           // NOT 'Stage':
 'Change Seconds': '…',    // quoted only because of the space
 ```
 
@@ -525,7 +525,7 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
 
 ### Screen window CDP visibility (verified, corrected 2026-07-08)
 - While a screen is **SHOWING** (toggle `ShowHideScreen` / `F5`), it **is** a normal CDP
-  target: `http://127.0.0.1:<port>/screen.html?screenId=N` (every screen window loads from the Screen Mirror server, ports 39240-39259 -- `screenMirrorRuntime.screenUrl`; `https://localhost:3000/screen.html` only when that server did not start) in `list_pages` — fully
+  target: `http://127.0.0.1:<port>/screen.html?screenId=N` (every screen window loads from the Screen Mirror server, ports 39240-39259 -- `screenMirrorRuntime.screenUrl`; the app's own address (`https://localhost:3000` in dev, `owa://local` packaged) only when that server did not start) in `list_pages` — fully
   drivable (`take_snapshot` / `click` / `take_screenshot`; the ❌ `#close` button has
   been clicked via MCP and it hid the screen).
 - The target **vanishes the moment the screen hides** — an earlier session concluded it
@@ -1607,12 +1607,15 @@ The 4th entry of the Bible Find previewer's 4-way select
 ## 17. Connection Graph — people/places relations (RD-92..106, W-38)
 
 Opened from a Location-Name record's **Open Graph Preview** button
-([location-name-lookup/LocationNameDetailPanelsComp.tsx](../../../../src/location-name-lookup/LocationNameDetailPanelsComp.tsx));
+(`OpenGraphPreviewButtonComp`, mounted in
+[location-name-lookup/LocationNameDetailPanelsComp.tsx](../../../../src/location-name-lookup/LocationNameDetailPanelsComp.tsx))
+or the same item on a record's right-click menu (`genGraphPreviewContextMenuItems`);
 host `GraphViewPanelsHostComp` is mounted on the reader AND the main layout
 ([graph-view/](../../../../src/graph-view/)). Facts that shape a run:
 
-- **Opening a record always starts FRESH** (RD-105) — no state leaks between graphs
-  of different records.
+- **Opening a record always starts FRESH** (RD-105) — nothing is resumed from disk
+  and no state leaks between graphs of different records; a panel still OPEN for
+  that record is raised as it is, not reset (`openGraphPreview`).
 - ⇕ drag boxes, wheel-zoom; **Ctrl+Z / Ctrl+Y walk every move** (drag, zoom,
   expand — RD-102). The ✨ dock button re-lays-out both shapes (RD-103).
 - 🖱️R a box → menu differs for root / non-root / collapsed boxes (RD-101), and
@@ -1655,8 +1658,8 @@ packaged run — confirm them the first time and drop the mark.
   dev only (`applyLaunchOverrides`, `electron/index.ts`). That dir holds `setting.json`
   (`mainHtmlPath` recovery, §3) and the single-instance
   lock; `bibles-data/` and `lookup-data/` sit there only while no parent directory is chosen (§15.2). `OWA_USER_DATA_PATH` / `--owa-user-data-path=` move all of it. **The app's code
-  is `resources/app.asar`** with `electron-build/`, `dist/*.gz.bundle` and
-  `tools/owa-devtools-mcp/` unpacked beside it (`asarUnpack` in package.json) — the MCP
+  is `resources/app.asar`** with `electron-build/`, `dist/*.gz.bundle`,
+  `tools/owa-devtools-mcp/` and `node_modules/chrome-devtools-mcp/` unpacked beside it (`asarUnpack` in package.json) — the MCP
   host the chatbot talks to runs from that unpacked copy, so a `tools/` edit reaches
   prod only through a rebuild.
 - **User content** (documents, lyrics, videos, audios, extra-bin) follows
@@ -1775,7 +1778,7 @@ profile inside `release/`; it replaces the *(source)* marks it touches.
   (`INSTALLED 0.0.2`, archive kept, `Re-extract` works offline) all passed here.
 - **`navigate_page` is unusable packaged — use `owa_goto_page`.** The firewall's
   `checkIsAppUrl` (`firewall.mjs`) allows `file:`, `about:blank` and `http(s)` on
-  localhost/127.0.0.1 only; a packaged build serves `owa://local`, so every attempt is
+  localhost/127.0.0.1/::1 only; a packaged build serves `owa://local`, so every attempt is
   refused with *"Opening an address outside this app is switched off"*. `owa_goto_page`
   takes `presenter.html` / `reader.html` / `appDocumentEditor.html` and is not affected.
 - **A dev-only defect must be re-checked against the package before it is filed against a

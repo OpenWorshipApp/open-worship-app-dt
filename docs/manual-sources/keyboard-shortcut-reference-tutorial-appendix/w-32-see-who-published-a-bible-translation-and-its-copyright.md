@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-77, RD-78, RD-11, RD-26, LT-01, KB-25, KB-26, CM-79]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-32 — See who published a Bible translation (and its copyright)
 
@@ -49,8 +49,8 @@ space to the verse buttons instead.
    **[en:tran:Edit]** in its menu) does the same to the view you leave: it stays
    open on the book you picked at chapter 1, or on Genesis 1. 📸
 8. Pick a book, then a chapter. As soon as the verses appear, the **ⓘ** is gone and the
-   verse buttons (copy, split, save, present…) take its place. Clear the box again and
-   it returns.
+   verse buttons (copy, split, save…) take its place, shown while the mouse is over
+   the pane's top line. Clear the box again and it returns.
 
 > Want to change any of this rather than just read it? That is still
 > **Settings → [en:tran:Bible]**, the pencil next to the translation, then the **[en:tran:Info]** tab.
@@ -60,5 +60,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-77` · `RD-78` · `RD-11` · `RD-26` · `LT-01` · `KB-25` · `KB-26` · `CM-79`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

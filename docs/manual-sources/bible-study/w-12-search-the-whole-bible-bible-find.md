@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-08, RD-09, RD-45, RD-46, RD-47, RD-124, CB-146]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-12 — Search the whole Bible (Bible Find)
 
@@ -65,12 +65,12 @@ workflowsVersion: "2026-10-24"
    Bible, and the internet when it cannot place the verse there, and quotes only verses it found
    in YOUR Bible; under its answer each one has **Open … in Bible Lookup**, which opens it in the
    lookup and puts nothing on a screen. Say more under the answer — _no, it was about sheep_ — and
-   it searches again. Under every answer, **Show in another Bible** — **Search another Bible**
+   it searches again. Under every answer, **[en:tran:Show in another Bible]** — **[en:tran:Search another Bible]**
    when nothing was found — lists the other Bibles on this computer: press one (English, say,
    when you were searching a Khmer one) and the verses found are shown from it, or what you
    typed is searched in it, with nothing to type again; the search then goes on in that Bible.
    With no assistant set up, the window searches your words itself and lists
-   the verses that hold the most of them, with **Search Google for it**. 📸
+   the verses that hold the most of them, with **[en:tran:Search Google for it]**. 📸
    You can also just ask in the help window, in any chat: _which verse says do not worry about
    tomorrow?_ — or in one line, `Help me find a Bible verse in "KJV": love your enemies`.
    **Typed your words in Find first?** Press the robot then, and it searches them at once
@@ -81,8 +81,8 @@ workflowsVersion: "2026-10-24"
    Name the book if you remember it — _in Genesis, Noah and the dove_ — and only that book
    is searched; it is understood even spelt a little wrong.
    **Every verse with a word.** Look for one word — _shepherd_ — and the answer says how many
-   verses have it and in which books. Press **Every verse with these words** to see them
-   eight at a time, the chapters where the word gathers first, and **More verses** for the
+   verses have it and in which books. Press **[en:tran:Every verse with these words]** to see them
+   eight at a time, the chapters where the word gathers first, and **[en:tran:More verses]** for the
    next eight. 📸
 
 ::: details 🤖 Robot-verified — coverage traceability
@@ -90,5 +90,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-08` · `RD-09` · `RD-45` · `RD-46` · `RD-47` · `RD-124` · `CB-146`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

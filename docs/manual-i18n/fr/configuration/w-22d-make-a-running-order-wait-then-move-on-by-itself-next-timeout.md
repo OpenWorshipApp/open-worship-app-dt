@@ -3,7 +3,7 @@ id: W-22d
 title: "Faire attendre un déroulé, puis le faire avancer tout seul (Next: Timeout)"
 section: "Configuration"
 lang: fr
-translatedFrom: be9f12dce6ab0d27
+translatedFrom: ac9d231fbe634ebe
 ---
 # W-22d — Faire attendre un déroulé, puis le faire avancer tout seul (Next: Timeout)
 
@@ -22,9 +22,9 @@ se termine exactement quand le culte commence.
    sur la valeur que la ligne contient maintenant. 📸
 2. **[en:tran:Next: Timeout]** attend une fois. Quand le déroulé l'atteint, il fait un compte à rebours puis fait avancer
    le déroulé tout seul — une diapositive qui doit rester dix secondes puis continuer sans
-   vous. **Aller ailleurs vous-même l'annule** : cliquez sur une autre ligne, ou appuyez sur la touche
+   vous. **Aller ailleurs vous-même l'annule** : cliquez sur une autre ligne dans le panneau d'aperçu, ou appuyez sur la touche
    pour avancer, et l'attente est terminée et c'est de nouveau vous qui pilotez. Un clic qui ne mène nulle part ne
-   l'annule PAS : cliquer sur un arrière-plan ou sur un bouton de premier plan, ou un clic perdu sur
+   l'annule PAS : cliquer sur un arrière-plan ou sur un bouton de premier plan dans son propre panneau, ou un clic perdu sur
    le panneau, le laisse compter, pour qu'un clic mal visé ne puisse pas vous faire perdre l'attente sans que vous le voyiez.
 3. **Ou attendez jusqu'à une heure précise.** Un délai n'a pas à être compté en
    secondes. La petite fenêtre qui demande les secondes — elle s'ouvre quand vous ajoutez la ligne
@@ -41,7 +41,7 @@ se termine exactement quand le culte commence.
    en secondes. 📸
 4. **Il ne compte que dans le panneau d'aperçu.** Une ligne `Next:` n'a de sens que lorsque le
    **panneau d'aperçu** de ce déroulé est ouvert (W-22b) — c'est ce panneau qui fait avancer le
-   déroulé : cliquer sur la ligne à cet endroit lance son compte à rebours, et une petite pastille en haut à droite du
+   déroulé : cliquer sur son bouton à cet endroit lance son compte à rebours, et une petite pastille en haut à droite du
    panneau montre les secondes restantes, avec ⊗ pour l'arrêter et ⏸ pour le suspendre. Cliquez sur la
    ligne avec le panneau fermé et l'application le dit
    (**[en:tran:Open the presenting flow preview to use this action]**) au lieu de faire comme
@@ -69,8 +69,8 @@ se termine exactement quand le culte commence.
    son propre nombre ; une rangée qui suit encore l'élément le montre creux. Pour rendre une rangée à l'élément,
    faites un clic droit dessus → **[en:tran:Use Element Timing]** — elle revient au nombre de
    l'élément et change de nouveau avec lui. 📸
-7. **Si le déroulé a cessé d'avancer tout seul**, l'une de trois choses s'est produite. Vous êtes allé
-   ailleurs vous-même — clic sur une autre ligne, ou appui sur la touche pour avancer — et cela annule un
+7. **Si le déroulé a cessé d'avancer tout seul**, l'une de quatre choses s'est produite. Vous êtes allé
+   ailleurs vous-même — clic sur une autre ligne dans le panneau d'aperçu, ou appui sur la touche pour avancer — et cela annule un
    délai. Ou le panneau d'aperçu a été fermé : aucune ligne `Next:` ne compte sans lui. Ou le
-   déroulé a atteint la fin de la liste. Pour le relancer, cliquez sur la ligne `Next:` (ou sur la
-   ligne qu'elle accompagne) dans le panneau d'aperçu.
+   déroulé a atteint la fin de la liste. Ou quelqu'un a appuyé sur le ⊗ de la pastille, ou son ⏸ le tient en pause. Pour le relancer, cliquez sur le bouton de la ligne `Next:` (ou sur
+   l'aperçu de la ligne qu'elle accompagne) dans le panneau d'aperçu.

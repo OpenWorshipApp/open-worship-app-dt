@@ -370,6 +370,34 @@ describe('electronMenu', () => {
         expect(appController.openChatbotPage).toHaveBeenCalledTimes(1);
     });
 
+    test('Help > Report a Problem opens the assistant on the report', () => {
+        platformFlags.aiEnabled = true;
+        const appController = {
+            ...createAppController(),
+            openChatbotReportPage: vi.fn(),
+        };
+        initMenu(appController as any);
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const helpMenu = template.find((item: any) => item.role === 'help');
+
+        clickSubmenuItem(helpMenu, 'Report a Problem');
+
+        expect(appController.openChatbotReportPage).toHaveBeenCalledTimes(1);
+        expect(appController.openChatbotPage).not.toHaveBeenCalled();
+    });
+
+    test('with AI features off, Help carries neither assistant item', () => {
+        initMenu(createAppController() as any);
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const helpMenu = template.find((item: any) => item.role === 'help');
+        const labels = helpMenu.submenu.map((item: any) => item.label);
+
+        expect(labels).not.toContain('App Help (Chatbot)');
+        expect(labels).not.toContain('Report a Problem');
+    });
+
     test('a Store install drops "Check for Updates Online"', () => {
         // The Store is the only thing that can update an MSIX install, and
         // `Check for Updates` opens it. The website installer beside it would

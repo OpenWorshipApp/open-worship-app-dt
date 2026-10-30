@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, KB-03, KB-07, CB-67]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -139,11 +139,11 @@ button:
   every item that session shows — position, width, scale, opacity, corner and blend.
   That whole row — sessions, _Properties_, the slide show and the screen buttons that
   take the item off — **stays put while the file list scrolls**.
-- **[en:tran:Always on Top]** (every foreground component, not just these — under
+- **[en:tran:Always on Top]** (every foreground component but [en:tran:Long Text Show], not just these — under
   _[en:tran:Properties]_ in its own panel) keeps a
   widget over the others whatever order they went up in — a logo above the falling
   snow. The number beside it separates two that are both on top: the higher wins.
-- **[en:tran:Behind Slide]** (every foreground component: under _Properties_ in its
+- **[en:tran:Behind Slide]** (every foreground component but [en:tran:Long Text Show]: under _Properties_ in its
   own panel, right above _Always on Top_) puts that session's item **behind** the slide and the Bible text — over the
   background, under the words — so a logo, a clock or a falling-snow clip never covers
   the lyrics. Tick it while the item is up and it moves at once; untick it and it comes
@@ -164,7 +164,7 @@ button:
   black drops out, leaving only the falling snow, sparks or light over the live slide.
   **[en:tran:Multiply]** does the opposite — white drops out. **[en:tran:Normal]** is
   the plain overlay that covers what is beneath it.
-- **[en:tran:Effects]** is a fold under _Properties_, on **every** component, and it
+- **[en:tran:Effects]** is a fold under _Properties_, on **every** component but [en:tran:Long Text Show], and it
   dresses the overlay: a **[en:tran:Border]** (style, thickness, colour), a
   **[en:tran:Shadow]** (Soft / Medium / Strong / Glow, with a colour of its own) and
   **[en:tran:Padding]** — the room between what is shown and the edge of its own box,
@@ -194,5 +194,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

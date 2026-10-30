@@ -2,7 +2,10 @@
 name: onscreen-setting-parse-amplification
 description: On-screen settings readers are memoized on their raw setting strings; the getters MUST keep returning a copy or the persist paths corrupt the cache
 metadata:
+  node_type: memory
   type: project
+  originSessionId: cb2907e4-ccee-4b2f-9e58-a0fc3f0bdd80
+  modified: 2026-10-28T21:08:46.066Z
 ---
 
 Measured live 2026-08-04 (branch refactor23). The four "what is on screen"
@@ -29,7 +32,8 @@ Load-bearing invariants — breaking any of these is silent data loss:
 - **Nothing may write through a nested value.** Three sites did and were fixed:
   `parseAllForegroundData` (rewrote `dateTime` in place), `applyVarySlideData`
   (rewrote `itemJson` on its argument), and `ScreenBibleManager._setMetadata`
-  (wrote `scroll` into `_screenViewData`, which is seeded from the getter — on
+  (since 2026-10-13 `ScreenLongTextManager`; it
+  wrote `scroll` into `_screenViewData`, which is seeded from the getter — on
   every scroll frame). The last one also now debounces its persist with a
   per-instance `genTimeoutAttempt(500)`.
 - **No TTL-only cache is acceptable.** The test that pinned this

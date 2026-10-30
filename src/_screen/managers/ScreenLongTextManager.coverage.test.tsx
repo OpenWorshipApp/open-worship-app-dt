@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
     checkIsVerticalPartialInvisible: vi.fn(() => false),
     getSetting: vi.fn((_key: string) => undefined as string | undefined),
     setSetting: vi.fn(),
+    removeSetting: vi.fn(),
     renderScreenLongTextManager: vi.fn(),
     bibleItemJsonToScreenViewData: vi.fn(
         async (bibleItemJson: any, bibleKeys: string[]) => ({
@@ -94,6 +95,7 @@ vi.mock('../../helper/helpers', async () => {
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: mocks.getSetting,
     setSetting: mocks.setSetting,
+    removeSetting: mocks.removeSetting,
 }));
 vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
@@ -1257,5 +1259,275 @@ describe('ScreenLongTextManager coverage', () => {
         writeSubPixelScrollTop(host, 40.5);
         expect(turn().defaultPrevented).toBe(true);
         expect(host.scrollTop).toBe(160);
+    });
+
+    test('the presenter brings back what each screen showed', () => {
+        mocks.appProvider.isPagePresenter = true;
+        const persisted = createScreenViewData(['KJV']);
+        mocks.getBibleListOnScreenSetting.mockReturnValue({ 401: persisted });
+
+        const restored = new ScreenLongTextManager(
+            createScreenManagerBase(401),
+        );
+        expect(restored.screenViewData).toBe(persisted);
+        expect(restored.isShowing).toBe(true);
+
+        const empty = new ScreenLongTextManager(createScreenManagerBase(402));
+        expect(empty.screenViewData).toBeNull();
+    });
+
+    test('an unreadable Bible map is rebuilt from the live screens on the presenter', () => {
+        mocks.appProvider.isPagePresenter = true;
+        // A fresh map per read, as the real reader hands out a copy.
+        mocks.getBibleListOnScreenSetting.mockImplementation(() => ({}));
+        const other = new ScreenLongTextManager(createScreenManagerBase(403));
+        other.screenViewData = createScreenViewData(['KJV']);
+        mocks.getSetting.mockImplementation((key: string) => {
+            return key === 'screen-ft-manager'
+                ? '{"403": {"type": "bib'
+                : undefined;
+        });
+        mocks.setSetting.mockClear();
+        const manager = new ScreenLongTextManager(createScreenManagerBase(404));
+        manager.screenViewData = createScreenViewData(['NIV']);
+
+        const [settingName, written] = mocks.setSetting.mock.calls.at(-1)!;
+        expect(settingName).toBe('screen-ft-manager');
+        const writtenMap = JSON.parse(written);
+        expect(writtenMap['403'].bibleItemData.renderedList).toEqual([
+            { bibleKey: 'KJV' },
+        ]);
+        expect(writtenMap['404'].bibleItemData.renderedList).toEqual([
+            { bibleKey: 'NIV' },
+        ]);
+        expect(mocks.handleError).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: expect.stringContaining('rebuilding it'),
+            }),
+        );
+    });
+
+    test('scrolling the view is sent to the screen as a share of its height', async () => {
+        vi.useFakeTimers();
+        try {
+            const base = createScreenManagerBase(405);
+            const manager = new ScreenLongTextManager(base);
+            const host = document.createElement('div');
+            const registerCount =
+                mocks.registerScrollingSyncEvent.mock.calls.length;
+            manager.div = host;
+            const onScroll =
+                mocks.registerScrollingSyncEvent.mock.calls[registerCount][1];
+
+            onScroll({ x: 0, y: 0.4 }, true);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(base.sendScreenMessage).toHaveBeenCalledWith(
+                {
+                    screenId: 405,
+                    type: 'sync-scroll-percentage',
+                    data: {
+                        domSelector: '.screen-bible-container-scroll',
+                        scroll: { x: 0, y: 0.4 },
+                    },
+                },
+                true,
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a preview div is let go only by the card that holds it', () => {
+        const manager = new ScreenLongTextManager(createScreenManagerBase(406));
+        const held = document.createElement('div');
+        manager.div = held;
+
+        manager.releaseDiv(document.createElement('div'));
+        expect(manager.div).toBe(held);
+
+        mocks.appProvider.isPageScreen = true;
+        manager.releaseDiv(held);
+        expect(manager.div).toBe(held);
+
+        mocks.appProvider.isPageScreen = false;
+        manager.releaseDiv(held);
+        expect(manager.div).toBeNull();
+    });
+
+    test('the scroll position is saved once, after the scrolling stops', async () => {
+        vi.useFakeTimers();
+        try {
+            const manager = new ScreenLongTextManager(
+                createScreenManagerBase(407),
+            );
+            // Nothing on the screen: nothing to remember.
+            manager.scroll = 0.5;
+            expect(manager.scroll).toBe(0);
+
+            manager.screenViewData = createScreenViewData(['KJV']);
+            mocks.setSetting.mockClear();
+            mocks.unlocking.mockClear();
+            manager.scroll = 0.1;
+            manager.scroll = 0.2;
+            manager.scroll = 0.3;
+            expect(manager.scroll).toBe(0.3);
+            expect(mocks.setSetting).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(500);
+            expect(mocks.unlocking).toHaveBeenCalledTimes(1);
+            expect(mocks.unlocking.mock.calls[0][0]).toBe(
+                'set-meta-screen-ft-manager',
+            );
+            const [, written] = mocks.setSetting.mock.calls.at(-1)!;
+            expect(JSON.parse(written)['407'].scroll).toBe(0.3);
+
+            // Cleared before the save ran: there is nothing left to save.
+            manager.scroll = 0.6;
+            (manager as any)._screenViewData = null;
+            mocks.setSetting.mockClear();
+            await vi.advanceTimersByTimeAsync(500);
+            expect(mocks.setSetting).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('the projected screen keeps its scroll in memory only', async () => {
+        vi.useFakeTimers();
+        try {
+            const manager = new ScreenLongTextManager(
+                createScreenManagerBase(408),
+            );
+            manager.screenViewData = createScreenViewData(['KJV']);
+            mocks.appProvider.isPageScreen = true;
+            mocks.setSetting.mockClear();
+            manager.scroll = 0.7;
+            await vi.advanceTimersByTimeAsync(500);
+            expect(manager.scroll).toBe(0.7);
+            expect(mocks.setSetting).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('the container is the screen size and scrolls vertically only', () => {
+        const manager = new ScreenLongTextManager(createScreenManagerBase(409));
+        expect(manager.containerStyle).toEqual({
+            position: 'absolute',
+            width: '960px',
+            height: '540px',
+            overflowX: 'hidden',
+            overflowY: 'auto',
+        });
+    });
+
+    test('messages for a screen that is not there are dropped or reported', async () => {
+        const toastHelpers = await import('../../toast/toastHelpers');
+        const toastSpy = vi.spyOn(toastHelpers, 'showSimpleToast');
+        expect(() => {
+            ScreenLongTextManager.receiveSyncSelectedIndex({
+                screenId: 4999,
+                type: 'bible-screen-view-selected-index',
+                data: { isToTop: true },
+            } as any);
+        }).not.toThrow();
+
+        ScreenLongTextManager.receiveSyncScreen({
+            screenId: 4999,
+            type: 'bible-screen-view',
+            data: null,
+        } as any);
+        expect(toastSpy).toHaveBeenCalledWith(
+            'Failed to apply to screen. Please make sure the screen is open.',
+            'error',
+        );
+    });
+
+    test('a locked screen ignores a sync of its text', () => {
+        const base = createScreenManagerBase(410);
+        const manager = new ScreenLongTextManager(base);
+        const shown = createScreenViewData(['KJV']);
+        manager.screenViewData = shown;
+        base.checkIsLockedWithMessage.mockReturnValue(true);
+
+        manager.receiveSyncScreen({
+            screenId: 410,
+            type: 'bible-screen-view',
+            data: createScreenViewData(['NIV']),
+        } as any);
+        expect(manager.screenViewData).toBe(shown);
+    });
+
+    test('only a Bible passage can show one more chapter', async () => {
+        const manager = new ScreenLongTextManager(createScreenManagerBase(411));
+        const applySpy = vi.spyOn(manager, 'applyFullDataSrcWithSyncGroup');
+        await manager.showMoreBibleChapter();
+        manager.screenViewData = createLongTextData('song-1');
+        await manager.showMoreBibleChapter();
+        expect(applySpy).not.toHaveBeenCalled();
+        expect(mocks.bibleItemJsonToScreenViewData).not.toHaveBeenCalled();
+    });
+
+    test('presenting to a closed screen says so and skips it', async () => {
+        const toastHelpers = await import('../../toast/toastHelpers');
+        const toastSpy = vi.spyOn(toastHelpers, 'showSimpleToast');
+        const open = new ScreenLongTextManager(createScreenManagerBase(412));
+        vi.spyOn(ScreenLongTextManager, 'chooseScreenIds').mockResolvedValue([
+            4998, 412,
+        ]);
+        const applySpy = vi
+            .spyOn(open, 'applyNewBibleItemJson')
+            .mockResolvedValue(undefined);
+        const bibleItem = {
+            filePath: '/bibles/kjv',
+            toJson: () => ({ id: 1, bibleKey: 'KJV' }),
+        };
+
+        await ScreenLongTextManager.handleBibleItemSelecting(
+            null,
+            bibleItem as any,
+        );
+        expect(toastSpy).toHaveBeenCalledWith(
+            'Failed to apply to screen. Please make sure the screen is open.',
+            'Error',
+        );
+        expect(applySpy).toHaveBeenCalledWith(
+            { id: 1, bibleKey: 'KJV' },
+            '/bibles/kjv',
+        );
+
+        toastSpy.mockClear();
+        const shown = await ScreenLongTextManager.handleLongTextShowing(
+            null,
+            createLongTextData('song-2'),
+        );
+        expect(toastSpy).toHaveBeenCalledTimes(1);
+        expect(shown).toEqual([412]);
+        expect(open.checkIsLongTextSource('song-2')).toBe(true);
+    });
+
+    test('deleting a screen drops its line sync and lets go of its Reader hooks', () => {
+        const base = createScreenManagerBase(413);
+        const manager = new ScreenLongTextManager(base);
+        manager.screenViewData = createScreenViewData(['KJV']);
+        manager.div = document.createElement('div');
+        const applyBibleViewData = vi.fn();
+        manager.applyBibleViewData = applyBibleViewData;
+        const clearSpy = vi.spyOn(manager, 'clear');
+        mocks.setSetting.mockClear();
+
+        manager.delete();
+
+        expect(mocks.removeSetting).toHaveBeenCalledWith(
+            'screen-bible-line-sync-413',
+        );
+        expect(manager.screenViewData).toBeNull();
+        expect(manager.div).toBeNull();
+        // Local teardown only: no broadcast, no persisted write.
+        expect(clearSpy).not.toHaveBeenCalled();
+        expect(mocks.setSetting).not.toHaveBeenCalled();
+        expect(ScreenLongTextManager.getInstance(413)).toBeNull();
+        manager.applyBibleViewData(createScreenViewData());
+        expect(applyBibleViewData).not.toHaveBeenCalled();
     });
 });

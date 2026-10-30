@@ -163,8 +163,9 @@ An idea becomes an `EC-xx` item only if all of these hold:
 4. **Safe for a live service.** Nothing that can change what a congregation sees
    without being offered first.
 5. **Fits the constraints.** No long-lived cache, no eager loading, no app-module
-   imports in page expressions, no `tran()` in the chatbot window, English-only
-   answers, and it must work for the outside agent too.
+   imports in page expressions, the chatbot window's words through its own
+   `tran` (`chatTranHelpers.ts`) and answers in the person's language, and it
+   must work for the outside agent too.
 
 Rank survivors by **regressions → wrong answers → unsafe acting tools → cost →
 capability → polish**, and write them into [backlog.md](./backlog.md) with the

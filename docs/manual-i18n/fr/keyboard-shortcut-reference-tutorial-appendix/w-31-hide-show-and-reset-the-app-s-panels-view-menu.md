@@ -3,7 +3,7 @@ id: W-31
 title: "Masquer, afficher et réinitialiser les panneaux de l'application (menu View)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 8a438a4e50c98ec7
+translatedFrom: 87c5dec8b9feb972
 ---
 # W-31 — Masquer, afficher et réinitialiser les panneaux de l'application (menu View)
 
@@ -28,8 +28,9 @@ le seul moyen dans une fenêtre surgissante, dont la barre de menus est masquée
    **[en:tran:Advance Bible Lookup]**, en haut à droite, basculent cette même section de recherche avancée.
    - **Coché** = le panneau est ouvert. **Décoché** = il est réduit à sa bande.
    - `Note` — les notes du document et des diapositives, sous les aperçus des diapositives (W-03) — est
-     le seul panneau qui **démarre décoché** : il est livré réduit à sa bande verte,
+     un panneau qui **démarre décoché** : il est livré réduit à sa bande verte,
      car la plupart des cultes n'en ont jamais besoin. Cochez-le, ou cliquez sur la bande, pour l'ouvrir.
+     **[en:tran:Advance Lookup]**, que les jumelles ouvrent, démarre décoché lui aussi.
 2. Cliquez sur une case cochée — ce panneau se réduit à sa bande verte, et l'espace va à
    son voisin. 📸
 3. Cliquez de nouveau dessus — le panneau revient aussitôt. Rien ne se recharge, et rien de ce que vous
@@ -40,12 +41,13 @@ le seul moyen dans une fenêtre surgissante, dont la barre de menus est masquée
 **Tout remettre en place :**
 
 5. Ouvrez de nouveau **View** dans la barre de menus du haut et cliquez sur
-   **[en:tran:Reset Widgets Size]**. N'ouvrez pas **Panneaux** pour celle-ci :
+   **[en:tran:Reset Widgets Size]**. N'ouvrez pas **[en:tran:Widgets]** pour celle-ci :
    **[en:tran:Reset Widgets Size]** est une ligne du menu **View** lui-même, la ligne
-   juste sous **Panneaux**. Répondez **[en:tran:Yes]** à
+   juste sous **[en:tran:Widgets]**. Répondez **[en:tran:Yes]** à
    `Are you sure to reset every widget size and reopen the widgets?` 📸
 6. Chaque panneau retrouve la largeur et la hauteur qu'il avait à l'installation de l'application, et
-   **tout panneau que vous aviez réduit est rouvert**. Cela se produit immédiatement — sans rechargement.
+   **tout panneau que vous aviez réduit est rouvert** — sauf **[en:tran:Note]**, qui retourne à
+   sa bande, comme il a été livré. Cela se produit immédiatement — sans rechargement.
    Répondez **[en:tran:No]** et rien ne change.
 
 **Ou utilisez le séparateur entre deux panneaux** — pas besoin de barre de menus, donc cela
@@ -75,5 +77,5 @@ entre un panneau du haut et un panneau du bas, **Shift** pour de plus grands pas
 réduisent jamais un panneau ; c'est le menu qui le fait.
 
 > Auparavant, c'était un bouton dans Paramètres → Général, qui ne faisait rien tant que vous ne
-> cliquiez pas aussi sur **Appliquer les paramètres** et que l'application ne s'était pas rechargée. Il
+> cliquiez pas aussi sur **[en:tran:Apply Settings]** et que l'application ne s'était pas rechargée. Il
 > est maintenant dans le menu View et prend effet aussitôt.

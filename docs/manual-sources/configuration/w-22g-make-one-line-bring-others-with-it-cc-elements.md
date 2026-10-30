@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-22g — Make one line bring others with it (CC elements)
 
@@ -62,8 +62,8 @@ workflowsVersion: "2026-10-24"
      **[en:tran:Disable]** on a CC: parking takes a _line_ out of the running order, and a CC is not
      a line of the running order — one you do not want is simply removed. (So attaching a
      line you have parked gives you a CC that _does_ fire, while the parked line itself
-     stays parked.) A whole document and an audio track cannot be CC elements — neither
+     stays parked.) A whole document and an audio track cannot ride along as CC elements — neither
      reaches a screen — and the app says so if you try.
 
-   An element can hold as many CC elements as you like; a CC element cannot have CC
+   Most lines can hold as many CC elements as you like; a CC element cannot have CC
    elements of its own.

@@ -76,11 +76,18 @@ vi.mock('./lyricPrintHelpers', () => ({
 }));
 
 import {
+    applyOpenLyricTheme,
     checkIsValidLyricStage,
+    DEFAULT_OPEN_LYRIC_FONT_SIZE,
     getLyricAppDocumentStageByStage,
+    getOpenLyricFontSetting,
     initOpenLyric,
 } from './lyricHelpers';
 import { OpenLyricPluginPlayer } from 'open-lyric-plugin-player';
+import { checkIsDarkMode } from '../others/themeHelpers';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import FileSource from '../helper/FileSource';
+import { genOpenLyricFontFaces } from '../lang/langHelpers';
 
 const FILE_PATH = '/songs/aa3.owl';
 
@@ -205,5 +212,106 @@ describe('initOpenLyric', () => {
             'player',
             expect.any(OpenLyricPluginPlayer),
         );
+    });
+});
+
+describe('applyOpenLyricTheme', () => {
+    test('follows the app theme, explicit or read off the page', () => {
+        const target = { theme: 'light' as any };
+        applyOpenLyricTheme(target, true);
+        expect(target.theme).toBe('dark-bs');
+        applyOpenLyricTheme(target, false);
+        expect(target.theme).toBe('light-bs');
+
+        vi.mocked(checkIsDarkMode).mockReturnValue(true);
+        applyOpenLyricTheme(target);
+        expect(target.theme).toBe('dark-bs');
+    });
+
+    test('a previewer that is not ready yet is left alone', () => {
+        expect(() => applyOpenLyricTheme(null, true)).not.toThrow();
+        expect(checkIsDarkMode).not.toHaveBeenCalled();
+    });
+});
+
+describe('getOpenLyricFontSetting', () => {
+    test('reads the size and face the previewer saved', () => {
+        vi.mocked(appLocalStorage.getItem).mockReturnValue(
+            JSON.stringify({ fontSize: 61, fontFamily: 'app-Battambang' }),
+        );
+        expect(getOpenLyricFontSetting()).toEqual({
+            fontSize: 61,
+            fontFamily: 'app-Battambang',
+        });
+        expect(appLocalStorage.getItem).toHaveBeenCalledWith(
+            'open-lyric-previewer-setting',
+        );
+    });
+
+    test.each([
+        ['nothing saved', null],
+        ['a corrupt file', '{ not json'],
+        ['a value that is not an object', '61'],
+    ])('falls back to the 16px default on %s', (_label, raw) => {
+        vi.mocked(appLocalStorage.getItem).mockReturnValue(raw);
+        expect(getOpenLyricFontSetting()).toEqual({
+            fontSize: DEFAULT_OPEN_LYRIC_FONT_SIZE,
+            fontFamily: undefined,
+        });
+    });
+});
+
+describe('initOpenLyric wiring', () => {
+    test('the previewer reads and writes the ONE shared setting', async () => {
+        const fileSource = { fireUpdateEvent: vi.fn() };
+        vi.mocked(FileSource.getInstance).mockReturnValue(fileSource as any);
+        vi.mocked(appLocalStorage.getItem).mockReturnValue(
+            JSON.stringify({ fontSize: 40 }),
+        );
+        const previewer: any = await initOpenLyric(FILE_PATH, true);
+
+        expect(previewer.loadSetting()).toEqual({ fontSize: 40 });
+        previewer.saveSetting({ fontSize: 44, fontFamily: 'Arial' });
+        expect(appLocalStorage.setItem).toHaveBeenCalledWith(
+            'open-lyric-previewer-setting',
+            JSON.stringify({ fontSize: 44, fontFamily: 'Arial' }),
+        );
+        // Every pane of the song listens on its file for exactly this.
+        expect(FileSource.getInstance).toHaveBeenCalledWith(FILE_PATH);
+        expect(fileSource.fireUpdateEvent).toHaveBeenCalledTimes(1);
+    });
+
+    test('starts from the song text and the saved font', async () => {
+        mocks.getContentMock.mockResolvedValue('v1: Amazing grace');
+        vi.mocked(appLocalStorage.getItem).mockReturnValue(
+            JSON.stringify({ fontSize: 61, fontFamily: 'app-Battambang' }),
+        );
+        const previewer: any = await initOpenLyric(FILE_PATH, true);
+        expect(previewer.value).toBe('v1: Amazing grace');
+        expect(previewer.fontSize).toBe('61px');
+        expect(previewer.fontFamily).toBe('app-Battambang');
+    });
+
+    test('no saved face leaves open-lyric its own', async () => {
+        const previewer: any = await initOpenLyric(FILE_PATH, true);
+        expect(previewer.fontSize).toBe(`${DEFAULT_OPEN_LYRIC_FONT_SIZE}px`);
+        expect('fontFamily' in previewer).toBe(false);
+    });
+
+    test('each language may plug into the previewer, unless told not to', async () => {
+        const khmerPlugins = vi.fn();
+        mocks.initAllLangCssMock.mockResolvedValue([
+            { initOpenLyricPlugins: khmerPlugins },
+            {},
+        ]);
+        const previewer = await initOpenLyric(FILE_PATH);
+        expect(khmerPlugins).toHaveBeenCalledExactlyOnceWith({
+            openLyric: previewer,
+            genOpenLyricFontFaces,
+        });
+
+        khmerPlugins.mockClear();
+        await initOpenLyric(FILE_PATH, true);
+        expect(khmerPlugins).not.toHaveBeenCalled();
     });
 });

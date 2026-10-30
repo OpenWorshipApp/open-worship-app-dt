@@ -47,6 +47,8 @@ manual, 4 in the notes.
 - **W-51** step 7 — Open the display's browser address on a phone, press Full screen (the picture should turn sideways on an Android phone), move or lift the mouse to see the controls hide, leave the page open past the phone's sleep time, then quit and restart the app and see the page rejoin by itself. · needs a second device
 - **W-51** step 8 — With Let other devices watch on and a Cast, DLNA or Roku TV on the same network, open Cast to a TV on the display card, press Cast on the found TV and see the display play, then press Stop; then open the display's browser page in Chrome, Edge or Safari on a device on the TV's network and use Cast from this browser. · needs a TV
 - **W-52** step 4 — In Settings press Export Settings, open API Keys & Sign-ins and see its rows red with "Type a password below to include these"; type a password and tick one, clear the password and see it go unticked and red again; then type two different passwords, press Ok, and see whether the panel comes back with the same sections still tic… · needs a person's press
+- **W-17** — In the Web Editor and in the Lyric Editor, with the cursor in the text, press Ctrl+F: the editor's own search box should open and the app's Find bar should not (the editors bind Ctrl+F through Monaco; the app's Find bar is the Edit menu's accelerator, which Electron runs only when the page did not take the key). Row KB-54 was never pressed live.
+- **W-21** step 4 — In the Presenter's Background → Videos tab, then the Audios split, press Ok on Download From URL with the canonical MD-01 link and time it until the new thumbnail or row appears: the recipe says a couple of minutes for a whole song or video, and no constant decides it (yt-dlp takes the best format, no time or rate limit). _needs the Extra Binaries pack and the internet_
 
 ### Notes, rules and references
 
@@ -54,6 +56,22 @@ manual, 4 in the notes.
 - **screen-mirror-cross-machine-test** — On a guest instance with another application (a text editor) holding the OS focus, push a host screen to it and read the Z-order: whether the guest's output window is above that application, and whether a click on the guest's main window then brings the main window above the output. · needs a second device
 - **CLAUDE** — In the Lyric Editor or Bible XML editor (a Monaco editor) with another application holding the OS focus, send type_text and a printable press_key over CDP to .native-edit-context and read the model text; then click the Electron window so it has the OS foreground and repeat; then repeat after select_page (bringToFront) only.
 - **chatbot-window** — Open the chatbot window fresh (no remembered bounds) on a 100 % display and read window.innerWidth of its page, then repeat at the display scale and zoom of the machine the note came from; with the head open, check whether MODEL fits the first line at that width and drops to the second at 10 px less.
+- **html-in-canvas README** §1–2 — In the dev Experiment window (it opens with `appBlinkFeatures: ['CanvasDrawElement']`) on Electron 44.9.2 / Chromium 152, check that `'drawElementImage' in CanvasRenderingContext2D.prototype` is true (false in an ordinary window) and that a demo paints its DOM child. The README's measurement is of Electron 43.1.1 / Chromium 150; the binary still carries the feature, behind the same switch.
+
+## Settled on 2026-10-29
+
+Run `20261028-1700`: a second reader took the 7 statements its first readers set aside; 5 were settled from the files, 2 of them wrong and corrected.
+
+### From the files — the document was right
+
+- **W-34** step 3 — The Khmer search lists exactly seven files, from _Khmer Standard Version 1954 = Hammond Version_ to _Khmer BFBS (ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤)_: the repo's own ranking run over the live Beblia listing. It follows a live catalog, so it can drift.
+- **W-38** step 3 — Jacob's box reads 47 (Parents 2, Spouses 4, Siblings 2, Children 16, Cousins 22, Locations 1): the names dataset is committed under `src/lang/data/*/location-name-map-data/`, counted in en, km and fr.
+- **chatbot-llm** tool counts — the chatbot's door lists 64, withholds 35, offers 3 to one kind of ask and 26 to the model at ~8 347 of the 8 350 ceiling (`audit-mcp-tools.mjs --stdio`, which also counts the stdio-only `owa_drop_files`).
+
+### From the files — the document was wrong, and is corrected
+
+- **owa-enhance-mcp/references/tool-budget** §2 — The biggest model-visible tools are `owa_slide_file` ~639, `owa_guide_start` ~573 and `owa_foreground` ~445, in that order (`audit-mcp-tools.mjs --stdio`).
+- **W-33** step 4 — A Bible bundle is `.owabdata.tar.gz`, gzip-compressed: a whole Bible takes about 1–2 MB in it, so a couple of translations come to a few MB, not tens.
 
 ## Settled on 2026-10-11
 

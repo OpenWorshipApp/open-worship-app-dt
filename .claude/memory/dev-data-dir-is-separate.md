@@ -12,22 +12,21 @@ The `-dev` suffix applies only to Electron `userData` (`applyLaunchOverrides` in
 redirect CLAUDE.md documents). **User content** (videos, audios, documents, lyrics,
 bibles) hangs off `appLocalStorage.defaultStorageDirPath`
 (`src/setting/directory-setting/appLocalStorage.ts`): the user-selected parent
-dir, falling back to `userData`. There is no `-dev` string anywhere in `src/`;
+dir, falling back to `userData`. No code in `src/` adds a `-dev`;
 the default (`getDefaultDataDirPath` in `src/server/fileHelpers.ts`) is only a
 seeded default in the folder pickers. It is `<home>/.owa/open-worship-data`
 since 2026-10-17 — it was `Desktop/open-worship-data`, which OneDrive backs up,
 and a folder still there is asked about at launch (W-54,
 `dataDirMoveHelpers.ts`); dev and packaged share that default. The old Windows box had
 dev pointed at `Desktop\open-worship-data-dev` and packaged at
-`Desktop\open-worship-data`; on this macOS machine (`/Users/raksa/…`) the parent is
-whatever the picker was given.
+`Desktop\open-worship-data`; elsewhere the parent is whatever the picker was given.
 
 **FIXED:** the yt-dlp staging quirk is gone — downloads now stage in the OS temp
-dir. `src/background/BackgroundVideosComp.tsx:198-205` ("Stage in the OS temp dir,
+dir. `src/background/BackgroundVideosComp.tsx`'s `genVideoDownloadContextMenuItems` ("Stage in the OS temp dir,
 not getDefaultDataDir(): that one is hardcoded to Desktop/open-worship-data, so it
 ignored both the dev data-dir override and any relocated media dir") calls
-`downloadVideoOrAudio(videoUrl, getTempPath(), true)`; same in
-`BackgroundAudiosComp.tsx:43-47`. `getDefaultDataDir()` is now only a default
+`downloadVideoOrAudio(videoUrl, getTempPath(), true, …)`; same in
+`BackgroundAudiosComp.tsx`'s `genAudioDownloadContextMenuItems`. `getDefaultDataDir()` is now only a default
 offered in folder pickers.
 
 **Why:** during the 2026-08-03 robot-test run, two YouTube downloads and one mp3 all

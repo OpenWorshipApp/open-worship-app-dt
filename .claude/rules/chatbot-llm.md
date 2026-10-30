@@ -19,9 +19,9 @@ What the chatbot sends a provider, what it withholds, what it costs and what
 happens when a provider fails. The window itself: `chatbot-window.md`.
 
 - **The chatbot's model sees the app's own `owa_*` tools and nothing of
-  chrome-devtools' at all** — 34 of 62 withheld (and two offered to one kind of ask each), declared ONCE in
+  chrome-devtools' at all** — 35 of 64 withheld (and three offered only to the kinds of ask `MODEL_ON_ASK_TOOL_MAP` and `MODEL_ASK_SHARED_TOOL_MAP` name), declared ONCE in
   `tools/owa-devtools-mcp/modelTools.mjs` (no `node:fs`, so the renderer
-  bundles the module the audit script reads). All 62 stay registered on the
+  bundles the module the audit script reads). All 64 stay registered on the
   server, so the developer's door is whole — what is withheld is withheld from
   the MODEL, which is the untrusted party. Same two enforcement points as the
   firewall and for the same reason: `askLlmBot` filters the list, and
@@ -45,8 +45,8 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   the ten-round cap and answered "I could not find an answer" after 72 s and
   225 000 tokens; no graded answer had ever called one of these and passed,
   and `owa_list_ui`/`owa_app_state` answer the same questions in the words on
-  the user's screen — the Report button reads the console for itself through
-  `callTool`, which the filter never sees); and the developer instruments
+  the user's screen — the Report button reads the console for itself, from the main
+  process (`main:app:recent-console`), which the filter never sees); and the developer instruments
   (`emulate`, `resize_page`, `lighthouse_audit`, three `performance_*`).
   **And since 2026-10-18 the chat box's input aid**, `owa_bible_suggest`,
   which the WINDOW asks on a debounce as a person types a reference or a
@@ -62,14 +62,17 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `owa_media_file` (`MC-50`, `MC-56`) — so "the model sees every `owa_*` tool" is no longer the rule;
   `modelTools.mjs` is, and it says what to use instead of each. **One tool
   is offered to ONE kind of ask** (2026-10-16, `MODEL_ON_ASK_TOOL_MAP`):
-  `owa_find_verse` goes to a verse-finding conversation alone, under its own
+  `owa_find_verse` goes to a verse-finding conversation (and, shared, to the
+  Bible Reader's asks since 2026-10-18 and the lookup's since 2026-10-19), under its own
   prompt, with `owa_read_website` beside it (`MODEL_ASK_SHARED_TOOL_MAP`,
   `pickAskToolList`) and nothing else -- so the ordinary list, the ratchet's
-  8 350, did not grow; the audit prints it as `[owa_find_verse]`, ~280 a
-  round to that ask. Not refused elsewhere: it reads a Bible and opens a
+  8 350, did not grow; the audit prints it as `[owa_find_verse]`, ~356 a
+  round to that ask (2026-10-29; ~280 when added). Not refused elsewhere: it reads a Bible and opens a
   verse in the lookup. **A second one, 2026-10-18**: `owa_lookup_record`
-  goes to a conversation opened from a Lookup Detail panel's 🤖 alone
-  (kind `lookup`, `owa_read_website` beside it, `LOOKUP_SYSTEM_PROMPT`,
+  goes to a conversation opened from a Lookup Detail panel's 🤖 (and, shared,
+  to the Resources and the Bible Reader's asks)
+  (kind `lookup`, `owa_read_website` and, since 2026-10-19 (`EC-372`),
+  `owa_find_verse` beside it, `LOOKUP_SYSTEM_PROMPT`,
   five rounds; `chatbot-window.md`), and to a custom server's lean list
   for that ask only. **A third, 2026-10-17**: `owa_resource_file` goes to
   a question asked while a file from a Resources folder is open in the tab
@@ -214,7 +217,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   day and a half and every report pressed then was _nothing was sent_. Ten seconds an address, forty in all — plus, for a body past 64 KB,
   a second for every 32 KB up to three minutes (`toReportUploadAllowance`:
   a picture and a PDF over a church hall's uplink) — five reports in ten
-  minutes, 200 000 characters of text; a failure comes back as a sentence
+  minutes, 204 800 characters (200 × 1 024) of text; a failure comes back as a sentence
   written in main — never the server's words, never an error that names the
   host. Three answers are read apart: **413** is `too-large`, said first
   whoever else was asked, and the window sends the words alone; a **2xx

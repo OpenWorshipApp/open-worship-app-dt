@@ -3,7 +3,7 @@ id: W-05
 title: "Présenter les paroles d'un chant"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 228d983faca1febb
+translatedFrom: 74d6bff11d380b45
 ---
 # W-05 — Présenter les paroles d'un chant
 
@@ -46,14 +46,15 @@ translatedFrom: 228d983faca1febb
    c'est pourquoi le panneau indique _[en:tran:Applies to every song]_. **Chaque numéro de scène garde
    ses propres réglages**, si bien que vous pouvez laisser sobre la scène projetée, agrandir la scène des accords,
    et donner un thème sombre à une troisième scène pour la personne à la table de mixage. La Scène 0
-   est l'apparence sobre, paroles seules ; chaque scène à partir de 1 part de l'apparence avec accords et
-   notes, et ne diffère que par ce que vous réglez ici. Le CSS personnalisé est **ajouté à** l'apparence
-   intégrée de la scène au lieu de la remplacer, si bien que la scène 0 continue de masquer ses accords,
-   quoi que vous tapiez.
+   est l'apparence sobre, paroles seules, et la scène 4 aussi ; chaque autre scène part de l'apparence
+   avec accords et notes, et une scène au-delà de 5 ne diffère de la scène 1 que par ce que vous réglez
+   ici. Le CSS personnalisé est **ajouté à** l'apparence intégrée de la scène au lieu de la remplacer,
+   si bien que la scène 0 continue de masquer ses accords.
    **Les scènes 2 à 5 montrent ce qui vient ensuite** autour du couplet chanté : la 2 montre le couplet
    suivant en dessous, la 3 les deux suivants, la 4 fait comme la 2 dans l'apparence sobre, et la 5 montre
    le précédent en haut à gauche et le suivant en bas à droite. Le couplet à venir est en **pleine luminosité**, pas
-   estompé, et le couplet est collé au coin supérieur gauche de l'écran, avec le suivant collé à gauche
+   estompé, et sur les scènes 2 à 4 le couplet est collé au coin supérieur gauche de l'écran, avec le
+   suivant collé à gauche
    juste en dessous, le touchant — sans marge autour ni espace entre eux, quoi qu'indique **[en:tran:Slide Padding (%)]** (la marge
    reste à l'intérieur de la boîte de chaque couplet). Un écran passé à une scène au-dessus de 0 voit sa
    transition **[en:tran:Slide]:** réglée sur **none** (W-10).

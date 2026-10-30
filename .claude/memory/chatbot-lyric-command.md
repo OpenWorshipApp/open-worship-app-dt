@@ -35,7 +35,8 @@ Four things that landed together on 2026-09-10 (`EC-123`, `EC-161`,
   tight… checking your browser…*, which the drafter turned into a valid song
   called "Untitled". The renderer tests a PREFIX of that sentence
   (`checkIsBrowserCheckRefusal`) rather than importing the drafter, pinned by
-  a test; `openLyricDraft.d.mts` exists only for that test.
+  a test; `openLyricDraft.d.mts` exists only for tests (since 2026-10-18
+  `lyricDraftReportHelpers.test.ts` drafts real reports through it too).
 
 **Why:** the fastest way to use the app (rung 6) is one line, and a song page
 is the second commonest thing a volunteer brings; the offline route is what

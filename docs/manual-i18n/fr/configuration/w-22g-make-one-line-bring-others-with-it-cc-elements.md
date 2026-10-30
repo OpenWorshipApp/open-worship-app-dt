@@ -3,7 +3,7 @@ id: W-22g
 title: "Faire qu'une ligne en entraîne d'autres (éléments CC)"
 section: "Configuration"
 lang: fr
-translatedFrom: 52a604f31ebebd53
+translatedFrom: 487f2f6fad913cf8
 ---
 # W-22g — Faire qu'une ligne en entraîne d'autres (éléments CC)
 
@@ -25,6 +25,6 @@ translatedFrom: 52a604f31ebebd53
    - Un CC sur une **ligne de document** accompagne _chaque_ diapositive de ce chant (une ligne de document n'a rien à montrer par elle-même, c'est donc ce que veut dire « garder ce texte défilant affiché pendant ce chant ») ; un CC sur **une diapositive** n'accompagne que cette diapositive.
    - Un CC peut avoir son propre écran : clic droit dessus → **[en:tran:Set Specific Screen]** pour l'envoyer ailleurs pendant que sa ligne va à l'endroit habituel. **[en:tran:No Specific Screen]** le remet à suivre la ligne.
    - **Cliquer sur une ligne CC ne la projette jamais.** Cela fait défiler l'élément vers lequel elle pointe jusqu'à ce qu'il soit visible et le fait clignoter — dans le déroulé et dans la fenêtre d'aperçu à la fois — pour que vous puissiez toujours trouver ce à quoi renvoie une étiquette courte.
-   - Clic droit sur une ligne CC pour **[en:tran:Remove CC Element]**. Il n'y a pas de **[en:tran:Disable]** sur un CC : mettre de côté retire une _ligne_ du déroulé, et un CC n'est pas une ligne du déroulé — celui dont vous ne voulez pas est simplement retiré. (Donc attacher une ligne que vous avez mise de côté vous donne un CC qui se déclenche _bien_, tandis que la ligne mise de côté elle-même reste de côté.) Un document entier et une piste audio ne peuvent pas être des éléments CC — ni l'un ni l'autre n'atteint un écran — et l'application le dit si vous essayez.
+   - Clic droit sur une ligne CC pour **[en:tran:Remove CC Element]**. Il n'y a pas de **[en:tran:Disable]** sur un CC : mettre de côté retire une _ligne_ du déroulé, et un CC n'est pas une ligne du déroulé — celui dont vous ne voulez pas est simplement retiré. (Donc attacher une ligne que vous avez mise de côté vous donne un CC qui se déclenche _bien_, tandis que la ligne mise de côté elle-même reste de côté.) Un document entier et une piste audio ne peuvent pas accompagner une ligne comme éléments CC — ni l'un ni l'autre n'atteint un écran — et l'application le dit si vous essayez.
 
-   Un élément peut avoir autant d'éléments CC que vous voulez ; un élément CC ne peut pas avoir ses propres éléments CC.
+   La plupart des lignes peuvent avoir autant d'éléments CC que vous voulez ; un élément CC ne peut pas avoir ses propres éléments CC.

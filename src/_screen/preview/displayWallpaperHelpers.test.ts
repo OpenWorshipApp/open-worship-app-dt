@@ -147,6 +147,14 @@ describe('refreshDisplayWallpaper', () => {
         );
     });
 
+    test('a refresh while the first read is still out asks only once', async () => {
+        mocks.electronSendAsync.mockReturnValue(new Promise(() => {}));
+        helpers.subscribeDisplayWallpaper(11, vi.fn());
+        helpers.refreshDisplayWallpaper(11);
+        await flush();
+        expect(mocks.electronSendAsync).toHaveBeenCalledTimes(1);
+    });
+
     test('refreshing a display no card is on does nothing', async () => {
         helpers.refreshDisplayWallpaper(11);
         await flush();
@@ -188,5 +196,72 @@ describe('letting go', () => {
         await flush();
         expect(listener).toHaveBeenLastCalledWith(null);
         expect(mocks.handleError).toHaveBeenCalled();
+    });
+});
+
+describe('a Screen Mirror guest display', () => {
+    test('is never asked for a wallpaper: it has no desktop here', async () => {
+        const { MIRROR_REMOTE_DISPLAY_FIRST } =
+            await import('../../../electron/screenMirrorProtocol');
+        const listener = vi.fn();
+        helpers.subscribeDisplayWallpaper(
+            MIRROR_REMOTE_DISPLAY_FIRST - 3,
+            listener,
+        );
+        helpers.refreshDisplayWallpaper(MIRROR_REMOTE_DISPLAY_FIRST - 3);
+        await flush();
+        expect(mocks.electronSendAsync).not.toHaveBeenCalled();
+        expect(listener).toHaveBeenCalledWith(null);
+    });
+});
+
+describe('useDisplayWallpaper', () => {
+    test('hands a card the wallpaper while on, and lets go of it when off', async () => {
+        const { createElement, act } = await import('react');
+        const { createRoot } = await import('react-dom/client');
+        vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+        const seen: unknown[] = [];
+        function ProbeComp({ isEnabled }: { isEnabled: boolean }) {
+            seen.push(helpers.useDisplayWallpaper(11, isEnabled));
+            return null;
+        }
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        try {
+            await act(async () => {
+                root.render(createElement(ProbeComp, { isEnabled: true }));
+            });
+            await act(async () => {
+                await flush();
+            });
+            expect(seen[0]).toBe(null);
+            expect(seen.at(-1)).toEqual(WALLPAPER);
+            expect(mocks.electronSendAsync).toHaveBeenCalledTimes(1);
+
+            // Off: nothing to draw, and the display is released, so a
+            // refresh has nothing to read.
+            await act(async () => {
+                root.render(createElement(ProbeComp, { isEnabled: false }));
+            });
+            expect(seen.at(-1)).toBe(null);
+            helpers.refreshDisplayWallpaper(11);
+            await flush();
+            expect(mocks.electronSendAsync).toHaveBeenCalledTimes(1);
+
+            // On again: read afresh for the card.
+            await act(async () => {
+                root.render(createElement(ProbeComp, { isEnabled: true }));
+            });
+            await act(async () => {
+                await flush();
+            });
+            expect(mocks.electronSendAsync).toHaveBeenCalledTimes(2);
+            expect(seen.at(-1)).toEqual(WALLPAPER);
+        } finally {
+            act(() => {
+                root.unmount();
+            });
+            vi.unstubAllGlobals();
+        }
     });
 });

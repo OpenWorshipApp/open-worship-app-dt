@@ -13,10 +13,12 @@ metadata:
 is, when the window has no popup host mounted. **`false` there is
 indistinguishable from the user pressing Cancel.**
 
-`HandleAlertComp` is what registers the host, and it is mounted in only four
+`HandleAlertComp` is what registers the host, and it is mounted in only five
 places: `src/reader.tsx`, `src/router/AppLayoutComp.tsx` (the main window),
-`src/router/PopupLayoutComp.tsx` and `src/setting.tsx`. **`lwShare`,
-`lyricEditor`, `screen-mirror` and dev's `experiment` mount none** — yet
+`src/router/PopupLayoutComp.tsx`, `src/setting.tsx` and, since 2026-10-23,
+`NoDataDirGateComp` (drawn by `run()` in a window's place while no data folder
+is in use). With one in use, **`lwShare`, `lyricEditor`, `screen-mirror` and
+dev's `experiment` mount none** — yet
 `AppWindowToolsComp` puts `AppAssistantComp` (Ctrl+Shift+A, opens the assistant)
 on all ten renderer entries, so those windows have the feature and no way to
 ask about it.

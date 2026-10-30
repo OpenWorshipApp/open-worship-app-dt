@@ -289,6 +289,25 @@ describe('readWebPage', () => {
         expect(readSession.clearStorageData).toHaveBeenCalledTimes(1);
     });
 
+    test('gives a page that never loads twenty seconds, then says so', async () => {
+        state.window.loadURL.mockReturnValueOnce(new Promise(() => {}));
+
+        const pending = readWebPage('https://example.com/slow');
+        const assertion = expect(pending).rejects.toThrow(
+            'That page did not answer in time.',
+        );
+        await vi.advanceTimersByTimeAsync(19_999);
+        expect(mocks.attemptClosing).not.toHaveBeenCalled();
+        await vi.advanceTimersByTimeAsync(1);
+        await assertion;
+        // Nothing was read off a page that never came; the window is gone.
+        expect(
+            state.window.webContents.executeJavaScript,
+        ).not.toHaveBeenCalled();
+        expect(mocks.attemptClosing).toHaveBeenCalledWith(state.window);
+        expect(readSession.clearStorageData).toHaveBeenCalledTimes(1);
+    });
+
     test('does not let storage cleanup replace a good answer', async () => {
         state.window.webContents.executeJavaScript.mockResolvedValue({
             text: 'answer',

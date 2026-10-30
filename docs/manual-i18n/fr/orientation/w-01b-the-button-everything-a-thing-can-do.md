@@ -3,7 +3,7 @@ id: W-01b
 title: "Le bouton `⋮` : tout ce qu'un élément peut faire"
 section: "Prise en main"
 lang: fr
-translatedFrom: 3d87d404a31090d9
+translatedFrom: f1d07cbfe2a3d7f2
 ---
 # W-01b — Le bouton `⋮` : tout ce qu'un élément peut faire
 
@@ -34,7 +34,7 @@ clic dessus. Ces actions supplémentaires se trouvent dans un petit menu.
 > certains navigateurs réservent ce bouton à un menu qui leur est propre. Le `⋮` est le même menu, avec
 > un bouton que vous pouvez voir.
 
-**Pour renommer un fichier** — un document, un chant, une image, un clip — ouvrez son menu et choisissez
+**Pour renommer un fichier** — un document ou un chant — ouvrez son menu et choisissez
 **[en:tran:Rename]**. Le nom devient une case contenant le nom actuel : modifiez-le et appuyez sur
 **Enter** (ou cliquez sur le ✓). Le fichier est renommé là où il se trouve, et il reste sélectionné.
 

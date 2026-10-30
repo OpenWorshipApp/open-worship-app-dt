@@ -34,9 +34,9 @@ import (`bibleXMLArchiveHelpers.ts`), first-run KJV creation
 **Embedded KJV helpers** (`src/helper/bible-helpers/kjvBibleXMLTextHelpers.ts`):
 `genEmbeddedKJVBibleXMLText()` is `import()`ed inside the function because the
 embedded KJV is ~5 MB of JSON that must never sit in a load-time chunk.
-`resetBibleXMLToEmbeddedKJV(filePath)` takes the row's **`filePath`, not the
+`resetBibleXMLToEmbeddedKJV(filePath)` (in `bibleXMLHelpers.ts`) takes the row's **`filePath`, not the
 key** — resolving the key would write to `<dir>/KJV.xml` and leave two files
 claiming one key — and shares `initKJVBible`'s `unlocking('init-kjv-xml-file')`
-lock. Regression pin: `bibleXMLHelpers.test.tsx` ("delete clears the cache",
-~:447-454). Related: [[bible-xml-import-from-url]],
+lock. Regression pin: `bibleXMLHelpers.test.tsx` (its `deleteBibleXML('KJV')`
+step, in "…and trashes XML files"). Related: [[bible-xml-import-from-url]],
 [[bible-xml-archive-owabdata]], [[filesource-cache-sliding-ttl]].

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PM-118, PM-119, PM-120, PM-126, PL-01, CM-06]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-26 — Compare two documents side by side (floating slide previews)
 
@@ -19,7 +19,7 @@ as well, give it a window of its own.
 
 1. In the left **[en:tran:Documents]** list, **right-click** a document you have NOT
    selected and choose **[en:tran:Open Slides Preview]**. A window titled
-   **Slides: ‹name›** appears over the app. 📸
+   **[en:tran:Slides]: ‹name›** appears over the app. 📸
    Faster, once you know it: hold **Ctrl** (**⌘** on a Mac) and click the row. Same
    thing, no menu — and holding Ctrl again on that row closes the window. The menu
    entry's tooltip reminds you of the shortcut.
@@ -38,8 +38,8 @@ as well, give it a window of its own.
 5. Zoom one window with its slider (or hold **Ctrl** and scroll over it). Only that
    window changes: every window and the middle panel keep their own zoom.
 6. Click inside a window's slide area, then use **Arrow keys / PageUp / PageDown /
-   Space** — they step **that** window's document, not whichever one the middle panel is
-   showing.
+   Space** — while one of its slides is on the screen, they step **that** window's
+   document, not whichever one the middle panel is showing.
 
 Tips:
 
@@ -58,5 +58,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-118` · `PM-119` · `PM-120` · `PM-126` · `PL-01` · `CM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

@@ -58,7 +58,7 @@ per-render `genDataInput()`. Only the dynamic ones — file/slide names in
 `PresenterNoteContainerHandlerComp` / `CanvasNoteContainerHandlerComp` — stay
 raw, which is what `RenderHiddenWidgetTitleComp`'s comment refers to.)
 
-Verify by switching Settings → Language → Khmer → Apply (reloads all windows)
+Verify by switching Settings → Language → Khmer → Apply Settings (reloads all windows)
 and walking the changed screens — **an added `tran()` is not verified until the
 page has been seen rendering in Khmer**; typecheck, eslint and the vitest suite
 all stay green through both failure modes above. Unsaved editor state survives the

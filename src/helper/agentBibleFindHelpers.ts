@@ -138,10 +138,29 @@ function getLookupBibleKey(): string | null {
     }
 }
 
+const WHOLE_BIBLE_BOOK_COUNT = 66;
+
+// A Bible that holds only some books says how many (`books`), so the one
+// chosen to quote from can be a whole one (2026-10-29): the first Khmer
+// Bible here is the 2019 New Testament, and a question under Noah's card
+// asked in Khmer read Genesis 6:15 from it, found nothing and ran out of
+// rounds. A whole Bible says nothing, so the list grows by a word or two.
 async function listInstalledBibles() {
     const infoList = (await getAllLocalBibleInfoList()) ?? [];
     return infoList.map((info) => {
-        return { key: info.key, title: info.title };
+        // Both lists hand over the whole info, which the minimal type does
+        // not promise: read as maybe there.
+        const { booksAvailable } = info as { booksAvailable?: unknown };
+        const bookCount = Array.isArray(booksAvailable)
+            ? booksAvailable.length
+            : 0;
+        return {
+            key: info.key,
+            title: info.title,
+            ...(bookCount > 0 && bookCount < WHOLE_BIBLE_BOOK_COUNT
+                ? { books: bookCount }
+                : {}),
+        };
     });
 }
 

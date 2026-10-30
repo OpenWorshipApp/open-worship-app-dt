@@ -1890,4 +1890,497 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             'error',
         );
     });
+
+    // `handleError` reaches `appProvider.appUtils`, which only these tests
+    // need; set for the one test and taken away again.
+    function withAppErrorHandler() {
+        const handleErrorMock = vi.fn();
+        (mocks.appProvider as any).appUtils = { handleError: handleErrorMock };
+        return {
+            handleErrorMock,
+            release: () => {
+                delete (mocks.appProvider as any).appUtils;
+            },
+        };
+    }
+
+    test('an unreadable on-screen map is rebuilt from the live screens on the presenter', async () => {
+        const { handleErrorMock, release } = withAppErrorHandler();
+        try {
+            mocks.appProvider.isPagePresenter = true;
+            // A fresh map per read, like the real reader (it hands out a
+            // copy): one shared object would carry the last write over.
+            mocks.getAppDocumentListOnScreenSetting.mockImplementation(
+                () => ({}),
+            );
+            const other = new ScreenVaryAppDocumentManager(
+                createScreenManagerBase(201),
+                createEffectManager(),
+            );
+            other.varySlideData = {
+                filePath: '/live/other.slide',
+                itemJson: { id: 5 },
+                isRenderFullWidth: false,
+            };
+            await flushVarySlideData();
+
+            // The file holds entries but the reader handed back nothing:
+            // broken JSON, or entries it dropped.
+            mocks.getSetting.mockReturnValue('{"201": {"filePath": tru');
+            mocks.setSetting.mockClear();
+            const manager = new ScreenVaryAppDocumentManager(
+                createScreenManagerBase(202),
+                createEffectManager(),
+            );
+            manager.varySlideData = {
+                filePath: '/live/new.slide',
+                itemJson: { id: 7 },
+                isRenderFullWidth: false,
+            };
+            await flushVarySlideData();
+
+            const [settingName, written] = mocks.setSetting.mock.calls.at(-1)!;
+            expect(settingName).toBe('screen-vary-app-document-manager');
+            const writtenMap = JSON.parse(written);
+            // The other screen survives the save; it is not wiped.
+            expect(writtenMap['201']).toEqual(
+                expect.objectContaining({ filePath: '/live/other.slide' }),
+            );
+            expect(writtenMap['202']).toEqual(
+                expect.objectContaining({ filePath: '/live/new.slide' }),
+            );
+            expect(handleErrorMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    message: expect.stringContaining('rebuilding it'),
+                }),
+            );
+
+            // Any other window holds no live copy: it skips the save.
+            mocks.appProvider.isPagePresenter = false;
+            mocks.setSetting.mockClear();
+            manager.varySlideData = {
+                filePath: '/live/third.slide',
+                itemJson: { id: 8 },
+                isRenderFullWidth: false,
+            };
+            await flushVarySlideData();
+            expect(mocks.setSetting).not.toHaveBeenCalled();
+            expect(manager.varySlideData?.filePath).toBe('/live/third.slide');
+        } finally {
+            release();
+        }
+    });
+
+    test('a stage screen whose look-ahead cannot be worked out still shows the slide', async () => {
+        const { handleErrorMock, release } = withAppErrorHandler();
+        try {
+            const base = createScreenManagerBase(203);
+            base.stage = 1;
+            const manager = new ScreenVaryAppDocumentManager(
+                base,
+                createEffectManager(),
+            );
+            manager.varySlideData = {
+                filePath: '/slides/stage.slide',
+                itemJson: { id: 4 },
+                isRenderFullWidth: false,
+            };
+            await flushVarySlideData();
+            await flushVarySlideData();
+
+            expect(manager.varySlideData?.filePath).toBe('/slides/stage.slide');
+            expect(manager.varySlideData?.stageLookAhead).toBeUndefined();
+            expect(handleErrorMock).toHaveBeenCalled();
+        } finally {
+            release();
+        }
+    });
+
+    test('a stage change re-applies a COPY of what is up, and nothing when nothing is', async () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(204),
+            createEffectManager(),
+        );
+        const applySpy = vi.spyOn(manager, 'applyVarySlideData');
+        manager.reapplyForStage();
+        expect(applySpy).not.toHaveBeenCalled();
+
+        manager.varySlideData = {
+            filePath: '/slides/a.slide',
+            itemJson: { id: 1 },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        applySpy.mockClear();
+        const current = manager.varySlideData;
+
+        manager.reapplyForStage();
+        expect(applySpy).toHaveBeenCalledTimes(1);
+        const [reapplied] = applySpy.mock.calls[0];
+        expect(reapplied).toEqual(current);
+        // Never the stored object itself: it may be an entry of the
+        // memoized on-screen map.
+        expect(reapplied).not.toBe(current);
+        await flushVarySlideData();
+    });
+
+    test('every playable element of the slide, cameras left out', () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(205),
+            createEffectManager(),
+        );
+        expect(manager.getAllMediaElements()).toEqual([]);
+
+        const host = document.createElement('div');
+        const video = createMedia('video', { src: 'a.mp4' });
+        const audio = createMedia('audio', { src: 'b.mp3' });
+        const camera = createMedia('video');
+        camera.setAttribute('data-camera-item', '');
+        const inner = document.createElement('div');
+        const shadowRoot = inner.attachShadow({ mode: 'open' });
+        const shadowVideo = createMedia('video', { src: 'c.mp4' });
+        shadowRoot.appendChild(shadowVideo);
+        host.append(video, audio, camera, inner);
+        (manager as any)._div = host;
+
+        expect(manager.getAllMediaElements()).toEqual([
+            video,
+            audio,
+            shadowVideo,
+        ]);
+        (manager as any)._div = null;
+    });
+
+    test('a projected screen on a virtual display plays the sound at the master level', () => {
+        const base = createScreenManagerBase(206);
+        base.isOnVirtualDisplay = true;
+        const manager = new ScreenVaryAppDocumentManager(
+            base,
+            createEffectManager(),
+        );
+        const host = document.createElement('div');
+        const video = createMedia('video', { paused: false, currentTime: 10 });
+        video.id = 'video-v';
+        host.appendChild(video);
+        (manager as any)._div = host;
+        mocks.appProvider.isPageScreen = true;
+
+        manager.setVideoCurrentTime({
+            videoId: 'video-v',
+            videoTime: 10.3,
+            timestamp: Date.now(),
+            isPlaying: false,
+            volume: 0.4,
+        });
+        expect(video.volume).toBe(0.4);
+        // The master paused: so does this copy.
+        expect(video.pause).toHaveBeenCalledTimes(1);
+        // A drift of 0.3s is inside the looser 0.4s threshold of a page
+        // that plays its own sound: no correcting seek.
+        expect(video.currentTime).toBe(10);
+
+        manager.setVideoCurrentTime({
+            videoId: 'video-v',
+            videoTime: 10.6,
+            timestamp: Date.now(),
+            isPlaying: false,
+        });
+        expect(video.currentTime).toBeCloseTo(10.6, 5);
+        // No volume in the message means the default level.
+        expect(video.volume).toBe(1);
+
+        // The master's rate is followed, and its absence means 1x again.
+        manager.setVideoCurrentTime({
+            videoId: 'video-v',
+            videoTime: 10.6,
+            timestamp: Date.now(),
+            isPlaying: false,
+            playbackRate: 1.5,
+        });
+        expect(video.playbackRate).toBe(1.5);
+        manager.setVideoCurrentTime({
+            videoId: 'video-v',
+            videoTime: 10.6,
+            timestamp: Date.now(),
+            isPlaying: false,
+        });
+        expect(video.playbackRate).toBe(1);
+        (manager as any)._div = null;
+    });
+
+    test('a YouTube embed on a virtual display page is the one heard', () => {
+        const base = createScreenManagerBase(207);
+        base.isOnVirtualDisplay = true;
+        const manager = new ScreenVaryAppDocumentManager(
+            base,
+            createEffectManager(),
+        );
+        (manager as any)._div = document.createElement('div');
+        mocks.appProvider.isPageScreen = true;
+        const content = document.createElement('div');
+        content.appendChild(createIframe('https://www.youtube.com/embed/v'));
+        manager.cleanupSlideContent(content);
+        const player = mocks.FakeSlideYouTubePlayer.instances.at(-1)!;
+        expect(player.options).toEqual({ muteOnReady: false });
+        (player as any).unMute = vi.fn();
+
+        manager.setVideoCurrentTime({
+            videoId: player.id,
+            videoTime: 0,
+            timestamp: Date.now(),
+            isPlaying: true,
+        });
+        expect((player as any).unMute).toHaveBeenCalledTimes(1);
+        expect(player.mute).not.toHaveBeenCalled();
+        expect(player.play).toHaveBeenCalledTimes(1);
+        (manager as any)._div = null;
+    });
+
+    test('what each screen shows right now is asked of the live managers', async () => {
+        const first = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(208),
+            createEffectManager(),
+        );
+        const second = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(209),
+            createEffectManager(),
+        );
+        new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(210),
+            createEffectManager(),
+        );
+        first.varySlideData = {
+            filePath: '/present/x.slide',
+            itemJson: { id: 1 },
+            isRenderFullWidth: false,
+        };
+        second.varySlideData = {
+            filePath: '/present/x.slide',
+            itemJson: { id: 2 },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        // The persisted copy lags a write behind; it must not be read here.
+        mocks.getAppDocumentListOnScreenSetting.mockReturnValue({
+            208: { filePath: '/present/x.slide', itemJson: { id: 99 } },
+        });
+
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(
+                '/present/x.slide',
+            ).map(([key]: [string, unknown]) => {
+                return key;
+            }),
+        ).toEqual(['208', '209']);
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(
+                '/present/x.slide',
+                2,
+            ),
+        ).toEqual([['209', second.varySlideData]]);
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(
+                '/present/other.slide',
+            ),
+        ).toEqual([]);
+
+        // A window drawing no screen previews has nobody to ask.
+        vi.spyOn(
+            ScreenVaryAppDocumentManager,
+            'getAllInstances',
+        ).mockReturnValue([]);
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(
+                '/present/x.slide',
+            ),
+        ).toEqual([
+            ['208', { filePath: '/present/x.slide', itemJson: { id: 99 } }],
+        ]);
+    });
+
+    test('one screen failing to take a slide does not stop the others', async () => {
+        const { handleErrorMock, release } = withAppErrorHandler();
+        try {
+            const accepting = new ScreenVaryAppDocumentManager(
+                createScreenManagerBase(211),
+                createEffectManager(),
+            );
+            const failing = new ScreenVaryAppDocumentManager(
+                createScreenManagerBase(212),
+                createEffectManager(),
+            );
+            vi.spyOn(
+                ScreenVaryAppDocumentManager,
+                'chooseScreenIds',
+            ).mockResolvedValue([211, 212]);
+            const failure = new Error('render failed');
+            vi.spyOn(failing, 'handleSlideSelecting').mockRejectedValue(
+                failure,
+            );
+            const acceptSpy = vi
+                .spyOn(accepting, 'handleSlideSelecting')
+                .mockResolvedValue(true);
+
+            await expect(
+                ScreenVaryAppDocumentManager.handleSlideSelecting(
+                    new MouseEvent('click') as any,
+                    '/slides/a.slide',
+                    { id: 1 } as any,
+                ),
+            ).resolves.toBe(true);
+            expect(handleErrorMock).toHaveBeenCalledWith(failure);
+
+            // Nobody took it: the caller must not count it as shown.
+            acceptSpy.mockResolvedValue(false);
+            await expect(
+                ScreenVaryAppDocumentManager.handleSlideSelecting(
+                    new MouseEvent('click') as any,
+                    '/slides/a.slide',
+                    { id: 1 } as any,
+                ),
+            ).resolves.toBe(false);
+        } finally {
+            release();
+        }
+    });
+
+    test('on a virtual display the presenter copy stays silent and passes its level on', () => {
+        const base = createScreenManagerBase(213);
+        base.isOnVirtualDisplay = true;
+        const manager = new ScreenVaryAppDocumentManager(
+            base,
+            createEffectManager(),
+        );
+        const forceSpy = vi
+            .spyOn(manager, 'setSlideVideoCurrentTimeForce')
+            .mockResolvedValue(undefined);
+        const content = document.createElement('div');
+        const video = createMedia('video', {
+            src: 'a.mp4',
+            paused: false,
+            currentTime: 4,
+        });
+        content.appendChild(video);
+        manager.cleanupSlideContent(content);
+        expect(video.muted).toBe(true);
+        expect(video.controls).toBe(true);
+
+        // The operator turns it up on the mini screen.
+        video.muted = false;
+        video.volume = 0.6;
+        video.dispatchEvent(new Event('volumechange'));
+        expect(video.muted).toBe(true);
+        expect(forceSpy).toHaveBeenCalledWith(video.id, 4, true, 1, 0.6);
+    });
+
+    test('a volume change where the sound is local sends nothing', () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(214),
+            createEffectManager(),
+        );
+        const forceSpy = vi
+            .spyOn(manager, 'setSlideVideoCurrentTimeForce')
+            .mockResolvedValue(undefined);
+        const content = document.createElement('div');
+        const video = createMedia('video', { src: 'a.mp4' });
+        content.appendChild(video);
+        manager.cleanupSlideContent(content);
+        expect(video.muted).toBe(false);
+
+        video.dispatchEvent(new Event('volumechange'));
+        expect(forceSpy).not.toHaveBeenCalled();
+    });
+
+    test('a media element with no sync id sends no level', () => {
+        const base = createScreenManagerBase(215);
+        base.isOnVirtualDisplay = true;
+        const manager = new ScreenVaryAppDocumentManager(
+            base,
+            createEffectManager(),
+        );
+        const forceSpy = vi
+            .spyOn(manager, 'setSlideVideoCurrentTimeForce')
+            .mockResolvedValue(undefined);
+        mocks.genVideoIDFromSrc.mockReturnValueOnce('');
+        const content = document.createElement('div');
+        const video = createMedia('video', { src: 'a.mp4' });
+        content.appendChild(video);
+        manager.cleanupSlideContent(content);
+
+        video.muted = false;
+        video.dispatchEvent(new Event('volumechange'));
+        expect(video.muted).toBe(true);
+        expect(forceSpy).not.toHaveBeenCalled();
+    });
+
+    test('a preview-only canvas audio plays on the mini screen alone', () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(216),
+            createEffectManager(),
+        );
+        const content = document.createElement('div');
+        const audio = createMedia('audio', { src: 'hymn.mp3' });
+        audio.setAttribute('data-preview-only', '');
+        audio.muted = true;
+        content.appendChild(audio);
+        manager.cleanupSlideContent(content);
+
+        expect(audio.muted).toBe(false);
+        expect(audio.style.pointerEvents).toBe('auto');
+        // No sync id and no sync wiring.
+        expect(audio.id).toBe('');
+        audio.dispatchEvent(new Event('play'));
+        expect(mocks.handleMediaPlaying).toHaveBeenCalledTimes(1);
+        audio.dispatchEvent(new Event('pause'));
+        audio.dispatchEvent(new Event('ended'));
+        expect(mocks.handleMediaStopped).toHaveBeenCalledTimes(2);
+
+        // The projected screen hides it and wires nothing.
+        mocks.appProvider.isPageScreen = true;
+        const screenContent = document.createElement('div');
+        const screenAudio = createMedia('audio', { src: 'hymn.mp3' });
+        screenAudio.setAttribute('data-preview-only', '');
+        screenAudio.muted = true;
+        screenContent.appendChild(screenAudio);
+        manager.cleanupSlideContent(screenContent);
+        expect(screenAudio.muted).toBe(true);
+        expect(screenAudio.style.display).toBe('none');
+        screenAudio.dispatchEvent(new Event('play'));
+        expect(mocks.handleMediaPlaying).toHaveBeenCalledTimes(1);
+    });
+
+    test('deleting a screen empties its container without clearing the group', async () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(217),
+            createEffectManager(),
+        );
+        manager.varySlideData = {
+            filePath: '/slides/a.slide',
+            itemJson: { id: 1 },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        const host = document.createElement('div');
+        host.appendChild(document.createElement('span'));
+        (manager as any)._div = host;
+        const content = document.createElement('div');
+        content.appendChild(createIframe('https://www.youtube.com/embed/z'));
+        manager.cleanupSlideContent(content);
+        const player = mocks.FakeSlideYouTubePlayer.instances.at(-1)!;
+        const camera = mocks.FakeSlideCameraAttachment.instances.at(-1)!;
+        const clearSpy = vi.spyOn(manager, 'clear');
+        mocks.setSetting.mockClear();
+
+        manager.delete();
+
+        expect(host.childElementCount).toBe(0);
+        expect(manager.div).toBeNull();
+        expect(manager.varySlideData).toBeNull();
+        expect(player.destroy).toHaveBeenCalled();
+        expect(camera.releaseAll).toHaveBeenCalled();
+        // Local teardown only: no broadcast, no persisted write.
+        expect(clearSpy).not.toHaveBeenCalled();
+        expect(mocks.setSetting).not.toHaveBeenCalled();
+        expect(ScreenVaryAppDocumentManager.getInstance(217)).toBeNull();
+    });
 });

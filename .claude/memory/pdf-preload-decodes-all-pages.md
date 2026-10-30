@@ -33,7 +33,7 @@ exactly once, with no id, and that `getSlides` is **never** called; `pdfHelpers.
 the header path decodes nothing and that a non-PNG still falls back.
 
 **How to apply:** never reintroduce a per-slide loop in that preload. Note this does NOT make
-`PdfAppDocument.getSlides()` itself cheap — displaying a PDF still renders every page thumbnail
-(a separate, arguably lazy-mountable cost, like `LazyMountVideoComp` does for videos).
+`PdfAppDocument.getSlides()` itself cheap — it still lists and sizes every page — but since
+2026-09-23 the slide grid mounts only the rows on screen (`VirtualGridComp` in `VarySlidesComp.tsx`).
 Related: [[onscreen-check-must-not-parse]] (same "don't parse the document to answer a cheap
 question" principle).

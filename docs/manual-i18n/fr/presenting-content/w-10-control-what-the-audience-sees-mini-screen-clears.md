@@ -3,7 +3,7 @@ id: W-10
 title: "Contrôler ce que voit l'assemblée (mini-écran + effacements)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: d56869c7785b1683
+translatedFrom: 6f92badb1023ce4d
 ---
 # W-10 — Contrôler ce que voit l'assemblée (mini-écran + effacements)
 
@@ -52,14 +52,14 @@ translatedFrom: d56869c7785b1683
   l'image et en lancer un à la main — la carte reprend exactement ce qui est à
   l'écran, et un clip en cours de lecture continue. La carte se souvient de ce choix pour
   cet écran, même après un redémarrage. 📸
-- **[en:tran:Lock]** (en-tête, le cadenas) : quand il est verrouillé (rouge), l'écran refuse les changements de diapositive —
+- **[en:tran:Lock]** (en-tête, le cadenas) : quand il est verrouillé (rouge), l'écran refuse tout changement de sa diapositive, de son arrière-plan, de son texte biblique ou de ses superpositions —
   pratique pendant un moment en direct ; cliquez de nouveau (vert) pour déverrouiller. Un changement refusé affiche
   _[en:tran:Screen Manager is locked]_ dans un message avec son propre bouton **[en:tran:Unlock]** : appuyer dessus
   déverrouille les écrans et ferme le message.
-- **Moniteur** (pied, par ex. `(0):2678…`) : cliquez pour choisir **sur quel moniteur physique** cet
+- **[en:tran:Display]** (pied, par ex. `(0):2678…`) : cliquez pour choisir **sur quel moniteur physique** cet
   écran projette — le menu liste chaque moniteur avec sa résolution, et marque
   l'actuel d'un `*` et le principal de `(principal)`.
-- **Rien sur le projecteur ?** Vérifiez sa carte de haut en bas : il est affiché (**[en:tran:Toggle showing screen]**, ou **F5**) ; le **Moniteur** de son pied nomme le projecteur, pas l'écran de cet ordinateur — choisissez-le là ; et quelque chose y est présenté — un bouton d'effacement allumé dit quelle couche contient quelque chose.
+- **Rien sur le projecteur ?** Vérifiez sa carte de haut en bas : il est affiché (**[en:tran:Toggle showing screen]**, ou **F5**) ; le **[en:tran:Display]** de son pied nomme le projecteur, pas l'écran de cet ordinateur — choisissez-le là ; et quelque chose y est présenté — un bouton d'effacement allumé dit quelle couche contient quelque chose.
 - **Transitions** (pied, `Tr:`) : les boutons **[en:tran:Slide]:**, **[en:tran:Background]:** et
   **[en:tran:Foreground]:** choisissent l'animation de changement pour cet écran —
   **aucune / fondu / déplacement / zoom**. Ils servent de valeur par défaut : un document, une diapositive, un

@@ -456,3 +456,76 @@ describe('general directory settings', () => {
         expect(mocks.hideProgress).toHaveBeenCalledTimes(2);
     });
 });
+
+describe('general directory settings: the paths taken less often', () => {
+    test('Reset All Child Directories asks about the folder in use', async () => {
+        state.selected = '/data';
+        await renderSettings();
+        await act(async () => click('Reset All Child Directories'));
+        expect(mocks.selectChildren).toHaveBeenCalledExactlyOnceWith('/data');
+    });
+
+    test('Repair Links with no data folder to repair says nothing', async () => {
+        state.selected = '/data';
+        mocks.repairLinks.mockResolvedValueOnce(null);
+        await renderSettings();
+        await act(async () => click('Repair Links'));
+        expect(mocks.hideProgress).toHaveBeenCalledWith(
+            'repair-data-dir-links',
+        );
+        expect(mocks.toast).not.toHaveBeenCalled();
+        expect(mocks.alert).not.toHaveBeenCalled();
+        expect(mocks.forceReload).not.toHaveBeenCalled();
+    });
+
+    test('a typed folder that cannot be made is reported and not used', async () => {
+        state.selected = '/old';
+        state.existing.add('/old');
+        mocks.confirm.mockResolvedValueOnce(true);
+        const error = new Error('EACCES');
+        mocks.createDir.mockRejectedValueOnce(error);
+        await renderSettings();
+        await act(async () => click('Choose missing'));
+        expect(mocks.handleError).toHaveBeenCalledWith(error);
+        expect(mocks.toast).toHaveBeenCalledWith(
+            'Create Data Folder',
+            'Fail to create folder "/missing"',
+        );
+        expect(mocks.setSelected).not.toHaveBeenCalled();
+        expect(mocks.unwatch).not.toHaveBeenCalled();
+    });
+
+    test('a typed folder still missing after Create is not used', async () => {
+        state.selected = '/old';
+        state.existing.add('/old');
+        mocks.confirm.mockResolvedValueOnce(true);
+        // Made "successfully", yet not there to be found.
+        mocks.createDir.mockResolvedValueOnce(undefined);
+        await renderSettings();
+        await act(async () => click('Choose missing'));
+        expect(mocks.handleError).not.toHaveBeenCalled();
+        expect(mocks.toast).toHaveBeenCalledWith(
+            'Create Data Folder',
+            'Fail to create folder "/missing"',
+        );
+        expect(mocks.setSelected).not.toHaveBeenCalled();
+    });
+
+    test('a folder gone right after it is chosen drops the standard folders', async () => {
+        state.selected = '/old';
+        state.existing.add('/old');
+        state.existing.add('/used');
+        mocks.setSelected.mockImplementation(async (path: string) => {
+            state.selected = path;
+            state.existing.delete(path);
+        });
+        await renderSettings();
+        await act(async () => click('Choose used'));
+        expect(mocks.unwatch).toHaveBeenCalledOnce();
+        expect(mocks.setSelected).toHaveBeenCalledWith('/used');
+        expect(mocks.removeChildren).toHaveBeenCalledOnce();
+        expect(mocks.selectChildren).not.toHaveBeenCalled();
+        expect(mocks.reload).not.toHaveBeenCalled();
+        expect(mocks.watch).toHaveBeenCalledOnce();
+    });
+});

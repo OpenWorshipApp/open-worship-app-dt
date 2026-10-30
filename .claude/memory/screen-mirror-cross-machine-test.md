@@ -29,7 +29,8 @@ driven by a Claude session on that machine over Remote Control.
   auto-mode classifier — do not route around it.
 - **A pending request shows only inside the panel**: the Mini Screen header lists
   approved guests alone. Reach the panel through the Mini Screen list's bottom ⋮
-  (`aria-haspopup="menu"`; a twin `More Options` sits on the card).
+  (`aria-haspopup="menu"`, titled `Mini Screen Options` since 2026-10-11; each
+  card's own ⋮ is `More Options`).
 - **The guest's output opens in front** (after load: `setAlwaysOnTop(true)` →
   `moveTop` → `setAlwaysOnTop(false)` → `focus`, since 2026-10-05): `moveTop` alone
   lost to another app's focused window under Windows' foreground lock. It is not

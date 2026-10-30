@@ -2,6 +2,7 @@
 
 import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mocks } = vi.hoisted(() => ({
@@ -41,6 +42,8 @@ import CanvasItem, {
     cleanupBlendMode,
     genBoxBorderRadius,
     useCanvasItemContext,
+    useCanvasItemEditEvent,
+    useCanvasItemPropsContext,
     useCanvasItemPropsSetterContext,
     useCanvasItemsContext,
     useEditingCanvasItemAndSetterContext,
@@ -283,5 +286,88 @@ describe('CanvasItem core', () => {
         expect(setEditing).toHaveBeenCalledWith(first);
         edit(second);
         expect(setEditing).toHaveBeenCalledWith(second);
+    });
+});
+
+describe('CanvasItem hooks', () => {
+    it('reads its kind from its props', () => {
+        expect(new TestCanvasItem(props()).type).toBe('text');
+        expect(new TestCanvasItem({ ...props(), type: 'error' }).type).toBe(
+            'error',
+        );
+    });
+
+    it('refuses to run any context hook outside its provider', () => {
+        const cases: [() => unknown, string][] = [
+            [useCanvasItemsContext, 'CanvasItemsContext not found'],
+            [
+                useSelectedCanvasItemsAndSetterContext,
+                'SelectedCanvasItemsAndSetterContext not found',
+            ],
+            [
+                useEditingCanvasItemAndSetterContext,
+                'EditingCanvasItemAndSetterContext not found',
+            ],
+            [useCanvasItemContext, 'CanvasItem not provided in context'],
+            [
+                useCanvasItemPropsSetterContext,
+                'CanvasItem not provided in context',
+            ],
+        ];
+        for (const [hook, message] of cases) {
+            function OrphanComp() {
+                hook();
+                return null;
+            }
+            expect(() => renderToStaticMarkup(<OrphanComp />)).toThrow(message);
+        }
+    });
+
+    it('re-reads the item props when the item fires an edit, and stops after unmount', async () => {
+        const item = new TestCanvasItem(props());
+        const unregister = vi.spyOn(item, 'unregisterEventListener');
+        let renderedProps: CanvasItemPropsType | null = null;
+        function PropsComp() {
+            renderedProps = useCanvasItemPropsContext();
+            return <span>{renderedProps.left}</span>;
+        }
+        await act(async () =>
+            root.render(
+                <CanvasItemContext value={item}>
+                    <PropsComp />
+                </CanvasItemContext>,
+            ),
+        );
+        expect(container.textContent).toBe('20');
+        // A copy, never the item's own object: editing it must not reach the
+        // item behind the controller's back.
+        expect(renderedProps).not.toBe(item.props);
+
+        item.applyProps({ left: 75 });
+        await act(async () => {
+            item.fireEditEvent();
+            await vi.waitFor(() => expect(container.textContent).toBe('75'));
+        });
+
+        await act(async () => root.unmount());
+        root = createRoot(container);
+        expect(unregister).toHaveBeenCalledOnce();
+    });
+
+    it('moves its edit listener to a new item and drops the old one', async () => {
+        const first = new TestCanvasItem(props(1));
+        const second = new TestCanvasItem(props(2));
+        const onEdit = vi.fn();
+        function ListenerComp({ item }: { item: TestCanvasItem }) {
+            useCanvasItemEditEvent(item, () => onEdit(item.id));
+            return null;
+        }
+        await act(async () => root.render(<ListenerComp item={first} />));
+        await act(async () => root.render(<ListenerComp item={second} />));
+
+        first.fireEditEvent();
+        second.fireEditEvent();
+        await vi.waitFor(() => expect(onEdit).toHaveBeenCalledWith(2));
+        expect(onEdit).toHaveBeenCalledOnce();
     });
 });

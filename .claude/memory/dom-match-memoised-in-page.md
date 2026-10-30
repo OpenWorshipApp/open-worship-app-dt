@@ -7,7 +7,9 @@ metadata:
 
 `DOM_MATCH_RUNTIME` and the guide runtime both open with
 `if (window.__owaDomMatch !== undefined) return window.__owaDomMatch;`
-(same for `window.__owaGuide`). They are strings evaluated in the app page and
+(same for `window.__owaGuide`, except that a page holding a guide runtime of
+another `GUIDE_RUNTIME_VERSION` has it stopped and replaced — so bump that
+number with a `guide.mjs` edit). They are strings evaluated in the app page and
 they memoise themselves there, so **a window that has been driven once keeps the
 runtime it was first given** — for the life of that page, across any number of
 tool calls.

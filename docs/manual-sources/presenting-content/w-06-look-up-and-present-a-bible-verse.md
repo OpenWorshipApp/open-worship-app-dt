@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -59,8 +59,7 @@ workflowsVersion: "2026-10-24"
    versions opens. A plain click on one **changes** that column to it — it adds nothing.
    To put a second version **beside** the first, hold **Shift** while you click it
    (the list says **[en:tran:Shift Click to Add]** at its top). With two
-   or more versions showing, the same list has a red row that takes that column away. From the keyboard, highlight a version in that
-   list and press **Shift+Enter** to add it beside the others.
+   or more versions showing, the same list has a red row that takes that column away.
 7. In a hurry, ask the app instead: open the assistant (**🤖**, W-42) and type
    _Put John 3:16 on the screen_ — or the command **/verse John 3:16**, which
    needs no assistant. The passage goes up in the version the lookup is on, and
@@ -99,5 +98,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

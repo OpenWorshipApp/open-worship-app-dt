@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-22j — Share a presenting flow with another machine
 
@@ -50,8 +50,11 @@ machine as one file.
     up with the presenting flow and nothing else left over. A plain `http://…` address with a
     port, such as one served off another laptop, works as well as `https://`. 📸
 
-> Notes: a file that is already there **with the same contents** is reused rather than
-> duplicated, so importing the same bundle twice is safe. If a file of the same NAME is
+> Notes: a picture, video or other media file that is already there **with the same
+> contents** is reused rather than duplicated. The presenting flow itself, its songs and its
+> documents always arrive as new files — beside one of the same name, even the same one
+> imported before, as `name (1)` — so importing the same bundle twice gives you a second
+> copy of each. If a media file of the same NAME is
 > already there but is actually a different file — your own `a.mp4` is not the `a.mp4`
 > in the bundle — yours is left untouched and the bundled one is added beside it as
 > `a (1).mp4`, with the presenting flow pointed at that copy. Slides and documents are

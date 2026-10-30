@@ -2239,6 +2239,16 @@ const dictionary = {
     'Body of water': 'ផ្ទៃទឹក',
     Well: 'អណ្ដូង',
     Wilderness: 'ទីរហោស្ថាន',
+    // A name's `age` and its year ranges, also English in every dataset
+    // (`AGE_PATTERN_LIST`, `YEAR_RANGE_TYPE_LABEL`). `{count}` and `{year}` are
+    // put back in by the caller.
+    '{count} years': '{count} ឆ្នាំ',
+    '{count} at accession': 'ឡើងគ្រងរាជ្យនៅអាយុ {count} ឆ្នាំ',
+    'about {count} at start of ministry':
+        'ប្រហែល {count} ឆ្នាំ នៅពេលចាប់ផ្ដើមព័ន្ធកិច្ច',
+    Reign: 'រជ្ជកាល',
+    Coregency: 'សហរជ្ជកាល',
+    '{year} BC': '{year} មុនគ.ស.',
     // Record detail panel. `Title`, `Type`, `Copy` and `Copied` already exist
     // above and resolve after key sanitization, so they are not repeated here —
     // a duplicate would throw when this module loads.

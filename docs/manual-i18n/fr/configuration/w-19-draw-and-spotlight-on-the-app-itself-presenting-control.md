@@ -3,7 +3,7 @@ id: W-19
 title: "Dessiner et mettre un spot sur l'application elle-même (Contrôle de présentation)"
 section: "Configuration"
 lang: fr
-translatedFrom: f0bca503f042b2e7
+translatedFrom: 2b3e5c2733bcb526
 ---
 # W-19 — Dessiner et mettre un spot sur l'application elle-même (Contrôle de présentation)
 
@@ -15,11 +15,12 @@ du mini-écran (W-10) ; ici, c'est la même paire d'outils, tournée vers l'appl
 1. Ouvrez le menu **Tools** → **[en:tran:Start Controlling]**, ou appuyez plutôt sur **Ctrl+Shift+P**
    (**⌘+Shift+P** sur Mac) — l'un ou l'autre. **Chaque fenêtre de l'application y répond** — le
    Présentateur, le Lecteur biblique, l'Éditeur de diapositives, une Note biblique, les Paramètres,
-   l'Éditeur de page web, l'Éditeur de paroles et le Partage web local — et c'est la fenêtre que vous
-   regardez qui reçoit le panneau. (La sortie du projecteur, la boîte About et la barre de recherche ne
-   répondent pas, et c'est voulu : une surcouche sur ce que voit l'assemblée est le seul endroit où cela ne
-   doit jamais apparaître.) La barre de menus est masquée dans les petites fenêtres, si bien que le raccourci est
-   le moyen d'y accéder.
+   l'Éditeur de page web, l'Éditeur de paroles, le Partage web local et Screen Mirror — et c'est la
+   fenêtre que vous regardez qui reçoit le panneau. (La sortie du projecteur, la boîte About, la barre
+   de recherche et la fenêtre d'aide ne répondent pas, et c'est voulu : une surcouche sur ce que voit
+   l'assemblée est le seul endroit où cela ne doit jamais apparaître. Le Chat IA et l'aperçu Markdown
+   n'en ont pas non plus.) La barre de menus est masquée dans les petites fenêtres, si bien que le
+   raccourci est le moyen d'y accéder.
    Un panneau flottant **[en:tran:Presenting Control]** apparaît — faites-le glisser par sa barre de titre,
    redimensionnez-le depuis n'importe quel bord ou coin, double-cliquez sur la barre de titre pour qu'il
    remplisse la fenêtre (et encore une fois pour le remettre en place), et repliez-le avec le chevron dès
@@ -50,9 +51,9 @@ du mini-écran (W-10) ; ici, c'est la même paire d'outils, tournée vers l'appl
 6. Cliquez sur le **spot** pour assombrir toute l'application sauf un cercle. En mode
    **[en:tran:Follow]** (par défaut), le cercle suit simplement votre pointeur ; appuyez sur le bouton **[en:tran:Follow]** lui-même (`H`)
    et il affiche **[en:tran:Hold]**, qui n'assombrit que tant que le bouton de la souris est
-   enfoncé. **[en:tran:Contrast]** (`X`) l'inverse — le cercle devient la zone masquée. La taille,
-   **[en:tran:Dim color]**, le niveau d'assombrissement et le **flou du bord** (`,` / `.`) ont tous un
-   curseur. 📸
+   enfoncé. **[en:tran:Contrast]** (`X`) l'inverse — le cercle devient la zone masquée. La taille, le
+   niveau d'assombrissement et le **flou du bord** (`,` / `.`) ont chacun un curseur, et
+   **[en:tran:Dim color]** choisit la couleur de l'assombrissement. 📸
 7. L'**appareil photo** au bout de la barre de titre prend une photo de l'application **telle qu'elle est
    en ce moment** — votre dessin, votre spot et tout le reste — et vous demande quoi en faire :
    **[en:tran:Ask the assistant about this]** ouvre la fenêtre d'aide avec la photo déjà jointe, si bien

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-10, PL-29, PL-32, PL-33, PL-34, PL-35, PL-36, PL-37, PL-38, PL-39, PL-40, PL-41, PL-42, PL-43, PL-44, PL-45, PL-46, PL-47, PL-48, PL-49, PL-50, PL-51, PL-52, PL-53, PL-54, PL-55, PL-56, PL-57, PL-58, PL-59, PL-60, PL-61, PL-62, PL-63, PL-64, PL-65, PL-66, PL-67, PL-68, PL-69, PL-70, PL-71, PL-72, PL-73, PL-74, PL-75, PL-76, PL-81, PL-82, PL-83, PL-84, PL-85, PL-86, PL-87, PL-88, PL-89, PL-90, PL-91, PL-92, PL-93, PL-94, PL-95, PL-96, PL-101]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-22 — Build a service presenting flow (a running order)
 
@@ -53,7 +53,7 @@ foreground presets — into one running order you can work down live.
    are separate from then on: parking or recolouring one leaves the other alone. 📸
    You can also drag a
    line up or down **inside the same presenting flow** (dragging a line into a _different_
-   presenting flow does nothing — add it there from its own list instead). A colour shows as a
+   presenting flow does not move it there — add it there from its own list instead). A colour shows as a
    stripe down the left edge of the line and a dot at its right end; the lines stay in
    your running order — they are never re-sorted into colour groups, because the order
    _is_ the meaning here. The colour belongs to that presenting flow alone, so the same song can
@@ -82,5 +82,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-10` · `PL-29` · `PL-32` · `PL-33` · `PL-34` · `PL-35` · `PL-36` · `PL-37` · `PL-38` · `PL-39` · `PL-40` · `PL-41` · `PL-42` · `PL-43` · `PL-44` · `PL-45` · `PL-46` · `PL-47` · `PL-48` · `PL-49` · `PL-50` · `PL-51` · `PL-52` · `PL-53` · `PL-54` · `PL-55` · `PL-56` · `PL-57` · `PL-58` · `PL-59` · `PL-60` · `PL-61` · `PL-62` · `PL-63` · `PL-64` · `PL-65` · `PL-66` · `PL-67` · `PL-68` · `PL-69` · `PL-70` · `PL-71` · `PL-72` · `PL-73` · `PL-74` · `PL-75` · `PL-76` · `PL-81` · `PL-82` · `PL-83` · `PL-84` · `PL-85` · `PL-86` · `PL-87` · `PL-88` · `PL-89` · `PL-90` · `PL-91` · `PL-92` · `PL-93` · `PL-94` · `PL-95` · `PL-96` · `PL-101`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

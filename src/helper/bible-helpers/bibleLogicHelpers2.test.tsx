@@ -774,4 +774,113 @@ describe('bibleLogicHelpers2', () => {
         mocks.getChapterDataMock.mockResolvedValueOnce({ newLines: [] });
         expect(await module.checkShouldNewLine('KJV', 'GEN', 1, 1)).toBe(false);
     });
+
+    test('a Bible in a language with no data resolves no book by spelling', async () => {
+        const module = await loadModule();
+        mocks.getLangDataAsyncMock.mockResolvedValue(null);
+
+        const extracted = await module.extractBibleTitle('KJV', 'Nowhere 3:2');
+        expect(extracted.result.bookKey).toBeNull();
+        expect(extracted.result.guessingBook).toBe('Nowhere 3:2');
+        expect(extracted.inputText).toBe('');
+    });
+
+    test('a chapter whose verses cannot be read keeps the book and the typed chapter', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 5:2');
+        expect(extracted.result).toEqual({
+            bookKey: 'JHN',
+            guessingBook: null,
+            chapter: null,
+            guessingChapter: '5',
+            bibleItem: null,
+        });
+        expect(extracted.inputText).toBe('John 5:2');
+    });
+
+    test('a range from a chapter that cannot be read keeps the chapter as a guess', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 5:1-6:2');
+        expect(extracted.result.bookKey).toBe('JHN');
+        expect(extracted.result.guessingChapter).toBe('5');
+        expect(extracted.result.bibleItem).toBeNull();
+    });
+
+    test('a range ending before it starts is the whole chapter', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 3:3-3:2');
+        expect(mocks.fromDataMock).toHaveBeenLastCalledWith(
+            'KJV',
+            'JHN',
+            3,
+            1,
+            4,
+            undefined,
+        );
+        expect(extracted.result.bibleItem?.target).toMatchObject({
+            chapter: 3,
+            verseStart: 1,
+            verseEnd: 4,
+        });
+    });
+
+    test('a range into a chapter that cannot be read stops at its own chapter', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 3:2-4:1');
+        expect(mocks.fromDataMock).toHaveBeenLastCalledWith(
+            'KJV',
+            'JHN',
+            3,
+            2,
+            4,
+            undefined,
+        );
+        expect(extracted.result.chapter).toBe(3);
+    });
+
+    test('a book key no Bible knows is left as a guess, in every key form', async () => {
+        const module = await loadModule();
+
+        for (const text of ['XYZ 1:1-2', 'XYZ 1:1', 'XYZ 1', 'XYZ']) {
+            const extracted = await module.extractBibleTitle('KJV', text);
+            expect(extracted.result.bookKey).toBeNull();
+            expect(extracted.result.guessingBook).toBe(text);
+            expect(extracted.inputText).toBe('');
+        }
+        expect(mocks.keyToBookMock).toHaveBeenCalledWith('KJV', 'XYZ');
+    });
+
+    test('a version-named range that resolves nothing asks the Bible list once', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'XYZ 1:2-3:4');
+        expect(extracted.result.guessingBook).toBe('XYZ 1:2-3:4');
+        // Asked once for the range, then answered from its own memory.
+        expect(mocks.getAllLocalBibleInfoListMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('a Bible removed while the text was read is not switched to', async () => {
+        const module = await loadModule();
+        mocks.getAllLocalBibleInfoListMock
+            .mockResolvedValueOnce([{ key: 'NIV' }])
+            .mockResolvedValueOnce([]);
+
+        const extracted = await module.extractBibleTitle('KJV', 'NIV Nowhere');
+        expect(extracted.bibleKey).toBe('KJV');
+        expect(extracted.result.guessingBook).toBe('NIV Nowhere');
+    });
+
+    test('the same text asked again soon is answered from memory', async () => {
+        const module = await loadModule();
+
+        const first = await module.extractBibleTitle('KJV', 'John 3:2');
+        const versesReads = mocks.getVersesMock.mock.calls.length;
+        const second = await module.extractBibleTitle('KJV', 'John 3:2');
+        expect(second).toBe(first);
+        expect(mocks.getVersesMock).toHaveBeenCalledTimes(versesReads);
+    });
 });

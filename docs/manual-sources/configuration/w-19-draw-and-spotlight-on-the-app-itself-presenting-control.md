@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-19 — Draw and spotlight on the app itself (Presenting Control)
 
@@ -16,10 +16,11 @@ this is the same pair of tools pointed at the app.
 
 1. Open the **Tools** menu → **[en:tran:Start Controlling]**, or press **Ctrl+Shift+P**
    instead (**⌘+Shift+P** on Mac) — one or the other. **Every window of the app answers it** — the Presenter, the Bible Reader, the
-   Slide Editor, a Bible Note, Settings, the Web Editor, the Lyric Editor and Local Web
-   Share — and the one you are looking at is the one that gets the panel. (The projector
-   output, the About box and the Find bar deliberately do not: an overlay on what the
-   congregation sees is the one place this must never appear.) The menu bar is hidden on
+   Slide Editor, a Bible Note, Settings, the Web Editor, the Lyric Editor, Local Web
+   Share and Screen Mirror — and the one you are looking at is the one that gets the panel. (The projector
+   output, the About box, the Find bar and the help window deliberately do not: an overlay on what the
+   congregation sees is the one place this must never appear. AI Chat and the Markdown
+   preview have none either.) The menu bar is hidden on
    the smaller windows, so the shortcut is the way in there.
    A floating **[en:tran:Presenting Control]** panel appears — drag it by its title bar,
    resize it from any edge or corner, double-click the title bar to fill the window (and
@@ -49,8 +50,8 @@ this is the same pair of tools pointed at the app.
 6. Click the **spotlight** to dim the whole app except a circle. In **[en:tran:Follow]** (the
    default) the circle simply tracks your pointer; press the **[en:tran:Follow]** button itself (`H`) and it reads
    **[en:tran:Hold]**, which dims only while the mouse button is down. **[en:tran:Contrast]** (`X`) inverts it — the
-   circle becomes the blocked area instead. Size, **[en:tran:Dim color]**, dim amount and **edge
-   blur** (`,` / `.`) all have sliders. 📸
+   circle becomes the blocked area instead. Size, dim amount and **edge
+   blur** (`,` / `.`) have sliders, and **[en:tran:Dim color]** picks the colour of the dimming. 📸
 7. The **camera** at the end of the title bar takes a picture of the app **as it looks
    right now** — your drawing, your spotlight and all — and asks what to do with it:
    **[en:tran:Ask the assistant about this]** opens the help window with the picture already

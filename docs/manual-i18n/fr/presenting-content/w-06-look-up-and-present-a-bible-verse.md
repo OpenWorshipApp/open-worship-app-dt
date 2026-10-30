@@ -3,7 +3,7 @@ id: W-06
 title: "Rechercher et présenter un verset biblique"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 282f4aa56f2e2464
+translatedFrom: 9a88b83e940190f0
 ---
 # W-06 — Rechercher et présenter un verset biblique
 
@@ -57,8 +57,7 @@ translatedFrom: 282f4aa56f2e2464
    versions s'ouvre. Un simple clic sur l'une d'elles **remplace** cette colonne par celle-ci — il n'ajoute rien.
    Pour mettre une deuxième version **à côté** de la première, maintenez **Shift** pendant que vous cliquez dessus
    (la liste indique **[en:tran:Shift Click to Add]** en haut). Quand deux
-   versions ou plus sont affichées, la même liste a une ligne rouge qui retire cette colonne. Au clavier, surlignez une version dans cette
-   liste et appuyez sur **Shift+Enter** pour l'ajouter à côté des autres.
+   versions ou plus sont affichées, la même liste a une ligne rouge qui retire cette colonne.
 7. Si vous êtes pressé, demandez plutôt à l'application : ouvrez l'assistant (**🤖**, W-42) et tapez
    _Mettez John 3:16 à l'écran_ — ou la commande **/verse John 3:16**, qui
    n'a besoin d'aucun assistant. Le passage s'affiche dans la version sur laquelle se trouve la recherche, et

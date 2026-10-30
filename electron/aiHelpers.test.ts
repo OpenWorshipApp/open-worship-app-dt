@@ -1,4 +1,10 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+    existsSync,
+    mkdirSync,
+    mkdtempSync,
+    rmSync,
+    writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -326,6 +332,78 @@ describe('aiHelpers', () => {
         } finally {
             globalThis.Function = RealFunction;
             kill.mockRestore();
+        }
+    });
+
+    test('a pinned port that is no port leaves Chromium to pick one', () => {
+        writeSetting('true');
+        try {
+            for (const value of ['70000', '-1', '12.5', 'abc']) {
+                electronMockState.app.commandLine.appendSwitch.mockClear();
+                process.env.OWA_REMOTE_DEBUGGING_PORT = value;
+
+                enableRemoteDebugging();
+
+                expect(
+                    electronMockState.app.commandLine.appendSwitch,
+                ).toHaveBeenCalledWith('remote-debugging-port', '0');
+            }
+        } finally {
+            delete process.env.OWA_REMOTE_DEBUGGING_PORT;
+        }
+    });
+
+    test('the MCP host reads the CDP port once it is known, and the file goes at quit', async () => {
+        writeSetting('true');
+        const startOwaMcpHost = vi.fn().mockResolvedValue({
+            port: 43125,
+            url: 'http://127.0.0.1:43125/mcp',
+            token: 'quit-token',
+            close: vi.fn(),
+        });
+        const RealFunction = globalThis.Function;
+        globalThis.Function = new Proxy(RealFunction, {
+            construct: () => async () => ({ startOwaMcpHost }),
+        });
+        vi.resetModules();
+        const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+        try {
+            const fresh = await import('./aiHelpers');
+            await fresh.startMcpHost();
+            const { getCdpPort } = startOwaMcpHost.mock.calls[0][0];
+            // Asked before Chromium has said: nothing to drive yet.
+            expect(getCdpPort()).toBeNull();
+
+            fresh.enableRemoteDebugging();
+            writeFileSync(
+                path.join(dirPath, 'DevToolsActivePort'),
+                '51237\n/devtools/browser/ghi',
+            );
+            await expect(fresh.publishAiEndpoints(0)).resolves.toBe(51237);
+            expect(getCdpPort()).toBe(51237);
+
+            // The discovery file is this process's own, removed as it quits.
+            const [filePath] = writeFile.mock.calls[0];
+            expect(filePath).toBe(
+                path.join(
+                    dirPath,
+                    'open-worship-app-cdp',
+                    `${process.pid}.json`,
+                ),
+            );
+            mkdirSync(path.dirname(filePath as string), { recursive: true });
+            writeFileSync(filePath as string, '{}');
+            const willQuit = electronMockState.app.on.mock.calls.find(
+                ([name]) => name === 'will-quit',
+            )?.[1] as () => void;
+            willQuit();
+            expect(existsSync(filePath as string)).toBe(false);
+            // Gone already: a second quit hook is no error.
+            expect(() => willQuit()).not.toThrow();
+        } finally {
+            globalThis.Function = RealFunction;
+            log.mockRestore();
+            delete process.env.OWA_KNOWLEDGE_DIR;
         }
     });
 

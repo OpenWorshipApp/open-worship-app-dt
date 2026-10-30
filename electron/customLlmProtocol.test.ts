@@ -1048,3 +1048,121 @@ describe('the shared LLM registry file', () => {
         ).toBe('a super answer');
     });
 });
+
+// The caps and skips each untrusted list is read with: a server answering a
+// list of thousands is held to the cap, and a row that cannot be named is
+// left out rather than failing the read.
+describe('untrusted lists are capped and their bad rows skipped', () => {
+    const CAP = MAX_CUSTOM_MODELS * 4;
+
+    it('holds LM Studio, Ollama and router model lists to the cap', () => {
+        const ids = Array.from({ length: CAP + 5 }, (_, i) => `model-${i}`);
+
+        const lmStudio = toLmStudioModelInfoMap(
+            JSON.stringify({ data: ids.map((id) => ({ id })) }),
+        );
+        expect(lmStudio?.size).toBe(CAP);
+        expect(lmStudio?.has(`model-${CAP - 1}`)).toBe(true);
+        expect(lmStudio?.has(`model-${CAP}`)).toBe(false);
+
+        const ollama = toOllamaModelInfoMap(
+            JSON.stringify({ models: ids.map((model) => ({ model })) }),
+            null,
+        );
+        expect(ollama?.size).toBe(CAP);
+        expect(ollama?.has(`model-${CAP}`)).toBe(false);
+
+        const router = toLlamaCppRouterModelInfoMap(
+            JSON.stringify({
+                data: ids.map((id) => ({ id, status: { value: 'unloaded' } })),
+            }),
+        );
+        expect(router?.size).toBe(CAP);
+        expect(router?.has(`model-${CAP}`)).toBe(false);
+    });
+
+    it('says no context for a loaded router model started without a size', () => {
+        const router = toLlamaCppRouterModelInfoMap(
+            JSON.stringify({
+                data: [
+                    {
+                        id: 'qwen',
+                        status: {
+                            value: 'loaded',
+                            args: ['--model', 'qwen.gguf', '--port', '8080'],
+                        },
+                    },
+                ],
+            }),
+        );
+        expect(router?.get('qwen')).toEqual({
+            isLoaded: true,
+            loadedContext: null,
+            maxContext: null,
+            canSeeImages: false,
+        });
+    });
+
+    it('reads a saved server whose models are not a list as having none', () => {
+        expect(
+            toValidCustomServers({
+                servers: [{ id: SERVER_ID, name: 'Box', models: 'phi' }],
+            }),
+        ).toEqual([{ id: SERVER_ID, name: 'Box', baseUrl: '', models: [] }]);
+    });
+
+    it('drops a saved model row with a bad or repeated id', () => {
+        const [server] = toValidCustomServers({
+            servers: [
+                {
+                    id: SERVER_ID,
+                    name: 'Box',
+                    baseUrl: 'http://localhost:1234/v1',
+                    models: [
+                        { id: ROW_ID, model: 'phi', name: '' },
+                        { id: ROW_ID, model: 'again', name: '' },
+                        { id: 'has spaces', model: 'bad', name: '' },
+                        { model: 'no id' },
+                    ],
+                },
+            ],
+        });
+        expect(server.models).toEqual([{ id: ROW_ID, model: 'phi', name: '' }]);
+    });
+
+    it('holds a registry server to the model cap and skips a row naming none', () => {
+        const registry = toValidLlmRegistry({
+            version: 1,
+            servers: [
+                {
+                    id: 'big',
+                    name: 'Big box',
+                    baseUrl: 'https://big.example.com/v1',
+                    models: [
+                        { name: 'no model named' },
+                        { model: '   ' },
+                        ...Array.from(
+                            { length: MAX_CUSTOM_MODELS + 3 },
+                            (_, i) => ({
+                                model: `m-${i}`,
+                            }),
+                        ),
+                    ],
+                },
+            ],
+        });
+        const models = registry?.servers[0].models ?? [];
+        expect(models).toHaveLength(MAX_CUSTOM_MODELS);
+        expect(models[0].model).toBe('m-0');
+        expect(models.at(-1)?.model).toBe(`m-${MAX_CUSTOM_MODELS - 1}`);
+    });
+
+    it('picks no note from an empty one', () => {
+        expect(pickRegistryNote({}, 'km')).toBe('');
+    });
+
+    it('finds no model for an id that is not one', () => {
+        expect(findCustomModel([genServer()], 'not/an/id')).toBeNull();
+        expect(findCustomModel([genServer()], 42)).toBeNull();
+    });
+});

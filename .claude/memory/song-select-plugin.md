@@ -9,7 +9,8 @@ The SongSelect integration (2026-08-24, branch enhance-after-release) keeps ALL
 its frontend in `src/plugins/song-select/` — the user explicitly asked for
 plugin-style isolation, so new song-select code belongs there, not in feature
 dirs. Three outside touchpoints in code (and, since 2026-10-09, its two setting
-keys by name in `settingArchiveCatalog.ts`): `SettingOthersComp` (renders
+keys by name in `settingArchiveCatalog.ts`; since 2026-10-23 the plaintext one in
+`electron/dataDirSettingProtocol.ts`, which keeps it with the data folder): `SettingOthersComp` (renders
 `SettingOthersSongSelectComp` from the plugin dir), `VaryAppDocumentListComp`
 (gated "Import From SongSelect" menu item + popup state; the menu item is
 gated by `checkIsSongSelectSignedIn(getSongSelectSetting())` read fresh per

@@ -3,7 +3,7 @@ id: W-09
 title: "Lire de l'audio, et les extras de premier plan (compte à rebours, horloge, bandeau défilant en bas…)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: e43f59758ed2997e
+translatedFrom: 67921ac30475819b
 ---
 # W-09 — Lire de l'audio, et les extras de premier plan (compte à rebours, horloge, bandeau défilant en bas…)
 
@@ -135,11 +135,11 @@ Afficher/Démarrer :
   chaque élément que cette session affiche — position, largeur, échelle, opacité, coin et fusion.
   Toute cette rangée — sessions, _Propriétés_, le diaporama et les boutons d'écran qui
   retirent l'élément — **reste en place pendant que la liste de fichiers défile**.
-- **[en:tran:Always on Top]** (chaque composant de premier plan, pas seulement ceux-ci — sous
+- **[en:tran:Always on Top]** (chaque composant de premier plan sauf [en:tran:Long Text Show], pas seulement ceux-ci — sous
   _[en:tran:Properties]_ dans son propre panneau) garde un
   widget au-dessus des autres, quel que soit l'ordre dans lequel ils ont été affichés — un logo au-dessus de la neige
   qui tombe. Le nombre à côté départage deux éléments qui sont tous deux au-dessus : le plus élevé l'emporte.
-- **[en:tran:Behind Slide]** (chaque composant de premier plan : sous _Propriétés_ dans son
+- **[en:tran:Behind Slide]** (chaque composant de premier plan sauf [en:tran:Long Text Show] : sous _Propriétés_ dans son
   propre panneau, juste au-dessus de _Toujours au premier plan_) place l'élément de cette session **derrière** la diapositive et le texte biblique — par-dessus
   l'arrière-plan, sous les mots — pour qu'un logo, une horloge ou un clip de neige qui tombe ne couvre jamais
   les paroles. Cochez-le pendant que l'élément est affiché et il se déplace aussitôt ; décochez-le et il revient
@@ -159,7 +159,7 @@ Afficher/Démarrer :
   noir disparaît, ne laissant que la neige qui tombe, les étincelles ou la lumière par-dessus la diapositive en direct.
   **[en:tran:Multiply]** fait l'inverse — le blanc disparaît. **[en:tran:Normal]** est
   la superposition simple qui couvre ce qui est dessous.
-- **[en:tran:Effects]** est une section repliable sous _Propriétés_, sur **chaque** composant, et elle
+- **[en:tran:Effects]** est une section repliable sous _Propriétés_, sur **chaque** composant sauf [en:tran:Long Text Show], et elle
   habille la superposition : une **[en:tran:Border]** (style, épaisseur, couleur), une
   **[en:tran:Shadow]** (Douce / Moyenne / Forte / Halo, avec sa propre couleur) et
   **[en:tran:Padding]** — l'espace entre ce qui est affiché et le bord de son propre cadre,

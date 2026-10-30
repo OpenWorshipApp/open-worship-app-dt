@@ -2311,6 +2311,16 @@ const dictionary = {
     'Body of water': "Étendue d'eau",
     Well: 'Puits',
     Wilderness: 'Désert',
+    // A name's `age` and its year ranges, also English in every dataset
+    // (`AGE_PATTERN_LIST`, `YEAR_RANGE_TYPE_LABEL`). `{count}` and `{year}` are
+    // put back in by the caller.
+    '{count} years': '{count} ans',
+    '{count} at accession': '{count} ans à son avènement',
+    'about {count} at start of ministry':
+        'environ {count} ans au début de son ministère',
+    Reign: 'Règne',
+    Coregency: 'Corégence',
+    '{year} BC': '{year} av. J.-C.',
     // Record detail panel. `Title`, `Type`, `Copy` and `Copied` already exist
     // above and resolve after key sanitization, so they are not repeated here —
     // a duplicate would throw when this module loads.
@@ -5236,7 +5246,7 @@ const dictionary = {
     'I could not find an answer for that.':
         "Je n'ai pas trouvé de réponse à cela.",
     'I looked several things up but could not settle on an answer. Try asking about one step at a time.':
-        "J'ai cherché plusieurs choses mais je n'ai pas pu arrêter de réponse. Essayez de demander une étape à la fois.",
+        "J'ai vérifié plusieurs choses, mais je ne suis pas arrivé à une réponse. Essayez de demander une étape à la fois.",
     'This assistant’s server cannot use the app’s tools, so this comes from the guide text alone and nothing was checked in the window — for presses and live answers, use LM Studio, Ollama or llama.cpp.':
         "Le serveur de cet assistant ne peut pas utiliser les outils de l'application : cette réponse vient donc du seul texte du guide et rien n'a été vérifié dans la fenêtre — pour des actions et des réponses en direct, utilisez LM Studio, Ollama ou llama.cpp.",
     '{first} or {last}': '{first} ou {last}',

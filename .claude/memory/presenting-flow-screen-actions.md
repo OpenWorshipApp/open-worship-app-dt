@@ -72,12 +72,12 @@ holds instructions, "carry on by yourself from here" is one too.
 - Everything routes through `sendPresentingFlowItemToScreens` in `presentingFlowHelpers.ts` — which
   is also where a run action is peeled off BEFORE `armPresentingFlowCcPropagation`: it
   resolves no screens, so a CC attached TO one could never fire (its menu offers no
-  `Add CC Elements`). The other direction is open for the timeout only —
+  `Add CC Elements`). The other direction is open for the timeout and `next-clear-interval` only —
   `PresentingFlowItem.resolveCcItemJson` reads `canBeCcItem`, and `applyPresentingFlowCcItemsOnScreenIds` fires it.
 - Colours mirror the clear bar's button variants EXCEPT the two `secondary` ones: the
   context menu's own background IS `--bs-secondary`, so those icons were invisible —
   they use `--bs-gray-500`. The run family wears no eraser and no ONE colour: timeout
-  `--bs-warning`, interval `--bs-teal`, jump `--bs-purple` — three different things to find
+  `--bs-warning`, interval `--bs-teal`, jump `--bs-purple`, keyboard event `--bs-pink` — four different things to find
   at a glance mid-service. The row's BADGE is tinted with the icon's colour too (its badges
   are glyphs, not ids), which in practice tints only the action rows.
 - A sync-grouped screen takes its whole group with it when an action runs on one

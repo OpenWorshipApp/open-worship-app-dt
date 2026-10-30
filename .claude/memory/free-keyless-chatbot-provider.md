@@ -74,7 +74,8 @@ through the real loop before wiring anything:
 - "ALWAYS answer in English" holds in the prose and fails in the `OPTIONS:`
   line. `checkIsReadableReply` drops an option with **no Latin letter at all**,
   which deliberately keeps one naming a translated button
-  ([[knowledge-label-i18n-templates]]).
+  ([[knowledge-label-i18n-templates]]). Since 2026-10-18 one written in
+  the answer's or the app's own script is kept too (`checkIsChosenScript`).
 
 The risk is stated, never assumed: a sticky warning at the top of the log and
 the same words in Settings while no key is set. Both **name the service and link

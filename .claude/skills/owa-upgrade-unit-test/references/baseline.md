@@ -1,5 +1,78 @@
 # Baseline — the honest starting point
 
+## Achieved 95% target — 2026-10-29 (UT-70)
+
+The user set the goal at **95% of the whole source surface**. Measured with
+`coverage-gap.mjs --goal=95` over the same 1,292 files and 83,141 lines
+before and after: **81.40% (67,679 / 83,141) → 95.25% (79,188 / 83,141)**,
+**+11,509 covered lines, +13.85 points**. The 95% threshold is **78,984
+covered lines**, cleared by 204 (a mid-run measurement read 79,195; the
+final one, after the gate fixes, is the figure used). Files at 0%: **289 → 52**; at 100%: **344 →
+738**. No exclusions or thresholds changed; the renderer entry files stayed in
+the denominator and were TESTED instead (75.6% → 92.5%).
+
+| Surface        | Lines before → after                                | Branches after              |
+| -------------- | --------------------------------------------------- | --------------------------- |
+| Renderer + MCP | 80.19% (59,664 / 74,405) → 94.71% (70,469 / 74,405) | 87.75% (41,921 / 47,771)    |
+| Electron       | 91.75% (8,015 / 8,736) → 99.81% (8,719 / 8,736)     | 94.40% (5,582 / 5,913)      |
+
+Branch totals before were not captured (the run's own report was wiped, see
+below). By kind, lines: helper 87.2% → 95.4%, module 87.0% → 97.1%,
+component **62.9% → 92.7%**, entry 75.6% → 92.5%.
+
+| Instrumented suite | Before                       | After                          |
+| ------------------ | ---------------------------- | ------------------------------ |
+| Renderer + MCP     | 708 files / 8,233 tests, 122 s | 1,022 files / 11,587 tests, 203–272 s |
+| Electron           | 70 files / 942 tests, 12 s   | 82 files / 1,214 tests, 15 s   |
+
+The uninstrumented renderer suite went 110 s → 121 s.
+
+**How it was done.** The gap was cut into 21 disjoint slices by folder
+(`ChatbotAppComp.tsx` alone, 2,109 uncovered lines, into three) and 17
+subagents wrote file-local tests in parallel from one shared brief; the
+coordinator tested the renderer entry files, the language data modules,
+the song-import plugins, the AI Chat notices, the screen-setting panels, the
+Markdown Preview helpers and the resize actors. 326 new test files and 78
+extended ones: every new test has at least one assertion (scanned; lowest
+1.0 `expect` per test). **Smoke share:** 11 of the 404 files use static
+rendering only (`renderToStaticMarkup`, output asserted); everything else
+drives the component with `createRoot` + `act` or calls the module.
+
+**What went wrong, and is now known** (memory `parallel-test-agent-coverage-run`):
+an agent ran `coverage-gap.mjs --help` — not a flag, so it started a full run
+and vitest emptied `cov-src` before it was stopped; a rebuild in a HEAD
+worktree then failed on CPU-starved timeouts. Seventeen concurrent agents held
+the 12-thread machine at 100% CPU and spent the account's 5-hour usage limit:
+all stopped mid-slice, and four slices (S16–S19) never started. The suite
+stayed green but for two half-written files, both repaired; the
+src test files are type-checked by the gate: seven type errors in four files
+until their mock callbacks were typed (`Mock<(value: number) => void>`). The
+first gate run also failed two lazy-panel tests that waited a fixed 20 ticks
+(now `vi.waitFor`) and one corpus test caught mid-edit by a concurrent
+docs session (green on re-run).
+
+**Bug found and fixed:** `toFileTypeName` (`src/others/fileListFilterHelpers.ts`)
+typed an extensionless file such as `README` as `EADME`, because
+`getFileDotExtension` returns the whole name when there is no dot. Found by a
+failing behavioural test; the fix is local and the test now holds it. Latent
+in the app as shipped: no list currently shows an extensionless file, so it
+was verified by the unit test rather than live. **Reported, not changed:**
+`getFileName('README')` is `''` and a `FileSource` rename of a dotless file
+appends the old name (`set name` adds `dotExtension`, which is the whole
+name); `VirtualBGColorSettingComp`'s clear-mark tooltip is English in every
+language (no `tran()`); the Khmer `trimText` trims spaces before the edge
+U+200B, so a word that ends in a space and then U+200B keeps the space.
+
+**Largest remaining gaps** (whole surface, 3,953 lines): `virtual-display-viewer.ts`
+85, `langHelpers.ts` 66, `pptxSlideMeasureHelpers.ts` 62, `fileHelpers.ts` 57,
+`lwShare/ServerControllerComp.tsx` 53 (0%), `liveMp4Encoder.ts` 51,
+`ChatbotAppComp.tsx` 50 (98.2%, was 22.2%) — mostly the slices that never ran.
+
+Evidence: `ut70-baseline-2026-10-28.log`, `ut70-mid-2026-10-29.log`, `ut70-after.log`,
+`ut70-after-worklist.json`, `ut70-after-src-summary.json`,
+`ut70-after-electron-summary.json`, `ut70-midrun-suite.log`, `ut70-tsc-all.log`
+and `ut70-lint.log` under `test-results/unit-coverage/`.
+
 ## Achieved 80% target — 2026-10-15 (UT-69)
 
 Measured with `coverage-gap.mjs --goal=80` over the same 1,219 files and
@@ -1745,14 +1818,14 @@ raises that rather than printing a stale number.
 
 ## Two environmental facts about the gate
 
-- **Line endings.** `core.autocrlf` is `true` and `.prettierrc` sets no
+- **Line endings.** `core.autocrlf` is `true` and `.prettierrc.json` sets no
   `endOfLine`, so ~1 350 files sit on disk as CRLF. `lint:pre` was red on
   them until 2026-09-30 (`408ecbc3` added `--end-of-line auto`); `npm run
 format` has no such flag, so do **not** run it. Check only your own new
   files.
-- **`lint:es` does not lint test files** —
-  `--ignore-pattern "src/**/*.test.ts*"`. New tests are not eslint-gated;
-  they ARE prettier-gated.
+- **`lint:es` does not lint `src/`'s test files** —
+  `--ignore-pattern "src/**/*.test.ts*"`; `electron/`'s are linted. New `src/` tests
+  are not eslint-gated; they ARE prettier-gated.
 
 ## The ladder to 99%
 

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [SP-04, SP-05, SP-10, SP-11, SP-12, SP-33]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-18 — Use more than one screen (multi-screen)
 
@@ -33,13 +33,13 @@ workflowsVersion: "2026-10-24"
    choose **[en:tran:Set Line Sync]** — one screen is all it needs, and a screen already
    showing takes the rows only once it is hidden and shown again — and
    **[en:tran:Unset Line Sync]** goes back to columns. Its scrolling follows the card either way.
-6. Right-click a card → **[en:tran:Delete]** removes a screen you no longer need (the first
-   screen can't be deleted while it is the only one).
+6. Right-click a card → **[en:tran:Delete]** removes a screen you no longer need (a screen
+   can't be deleted while it is the only one).
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `SP-04` · `SP-05` · `SP-10` · `SP-11` · `SP-12` · `SP-33`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

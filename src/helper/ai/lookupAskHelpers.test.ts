@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     readBibleVersesKey,
+    toLookupCardArgs,
     toLookupToolArgs,
     toValidLookupAsk,
 } from './lookupAskHelpers';
@@ -117,5 +118,34 @@ describe('the key a verse carries in a Bible view', () => {
         expect(readBibleVersesKey('GEN 4:1')).toBeNull();
         expect(readBibleVersesKey('(two words) GEN 4:1')).toBeNull();
         expect(readBibleVersesKey('(KJV) ')).toBeNull();
+    });
+});
+
+describe('what a card reads its record with', () => {
+    it('a passage also asks where its cross references lead', () => {
+        expect(
+            toLookupCardArgs({
+                kind: 'verse',
+                target: 'GEN 8:1-22',
+                title: 'Genesis 8',
+                bibleKey: 'KJV',
+            }),
+        ).toEqual({
+            kind: 'verse',
+            ref: 'GEN 8:1-22',
+            bible: 'KJV',
+            related: true,
+        });
+    });
+
+    it('a person or a place is read as the tool reads it', () => {
+        const ask = {
+            kind: 'location' as const,
+            target: 'place-1',
+            title: 'Eden',
+            langCode: 'km',
+        };
+        expect(toLookupCardArgs(ask)).toEqual(toLookupToolArgs(ask));
+        expect(toLookupCardArgs(ask)).not.toHaveProperty('related');
     });
 });

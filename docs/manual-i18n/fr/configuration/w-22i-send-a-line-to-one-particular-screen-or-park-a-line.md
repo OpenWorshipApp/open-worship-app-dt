@@ -3,7 +3,7 @@ id: W-22i
 title: "Envoyer une ligne vers un écran précis, ou mettre une ligne de côté"
 section: "Configuration"
 lang: fr
-translatedFrom: 965f5d7b1fc8adf1
+translatedFrom: 8c06c62797522d6c
 ---
 # W-22i — Envoyer une ligne vers un écran précis, ou mettre une ligne de côté
 
@@ -43,7 +43,8 @@ ligne que vous ne pouvez pas déclencher par accident.
    n'est projeté, et une ligne de document ne s'ouvre même pas. La faire glisser sur un écran miniature n'y met rien,
    et les touches fléchées et Space du panneau d'aperçu passent directement par-dessus. Clic droit →
    **[en:tran:Enable]** la remet en service. (Tant qu'une ligne est mise de côté, son menu perd
-   **[en:tran:Show on Screens]** — une entrée qui ne pourrait plus rien faire — mais tout le reste
+   **[en:tran:Show on Screens]** (sur une action, l'entrée qui la déclenche) — une entrée qui ne
+   pourrait plus rien faire — mais tout le reste
    demeure, pour que vous puissiez encore changer sa couleur, la déplacer ou la réactiver.) 📸
    Vous pouvez mettre de côté **une diapositive d'un document** de la même façon : ouvrez la flèche du document et
    faites un clic droit sur la diapositive. Mettez de côté **le document lui-même** et chaque diapositive qu'il contient est mise de côté

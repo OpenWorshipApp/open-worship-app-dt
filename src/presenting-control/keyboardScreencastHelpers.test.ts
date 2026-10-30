@@ -114,6 +114,16 @@ describe('toKeystrokeLabel', () => {
         ).toBe('⇧⌘P');
     });
 
+    test('names Alt in each platform spelling, and the Linux meta key', () => {
+        expect(toLabel({ key: 'F4', code: 'F4', altKey: true })).toBe('Alt+F4');
+        setPlatform('mac');
+        expect(toLabel({ key: 'F4', code: 'F4', altKey: true })).toBe('⌥F4');
+        setPlatform('linux');
+        expect(toLabel({ key: 'Meta', code: 'MetaLeft', metaKey: true })).toBe(
+            'Super',
+        );
+    });
+
     test('masks what is typed into a password field', () => {
         const inputElement = document.createElement('input');
         inputElement.type = 'password';

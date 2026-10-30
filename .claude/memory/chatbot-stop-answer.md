@@ -5,8 +5,8 @@ metadata:
   type: project
 ---
 
-An answer on its way in the chatbot window can be STOPPED — the **Ask** button
-becomes **Stop** while it is coming, and Escape does the same (ignored while
+An answer on its way in the chatbot window can be STOPPED — the **Send** button
+(**Ask** until 2026-10-18) becomes **Stop** while it is coming, and Escape does the same (ignored while
 the caret is in a field, because renaming a tab is also Escape). One
 `AbortSignal` per ask (`src/chatbot/cancelHelpers.ts`) runs through `askLlmBot`
 into BOTH providers' request options and into every `callTool` fetch, and each

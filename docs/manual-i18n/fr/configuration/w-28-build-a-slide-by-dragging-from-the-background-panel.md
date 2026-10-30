@@ -3,7 +3,7 @@ id: W-28
 title: "Construire une diapositive en faisant glisser depuis le panneau Arrière-plan"
 section: "Configuration"
 lang: fr
-translatedFrom: 31ca24054f62d4a7
+translatedFrom: e648e9744d67d329
 ---
 # W-28 — Construire une diapositive en faisant glisser depuis le panneau Arrière-plan
 
@@ -27,7 +27,7 @@ panneau **[en:tran:Background]** du bas visible.
    | Images                          | une boîte d'image                                                                                              |
    | Vidéos                          | une boîte vidéo                                                                                                |
    | Audios                          | une boîte de lecteur audio                                                                                     |
-   | Sites web — une page locale     | une boîte de site web montrant une **capture d'écran** de cette page (voir W-24, étape 4)                      |
+   | Sites web — une page locale     | une boîte de site web montrant une **capture d'écran** de cette page (voir W-15, étape 5)                      |
    | Sites web — une URL enregistrée | une boîte de site web montrant une **capture d'écran** ; un lien **YouTube** devient une vraie boîte YouTube   |
    | Caméras                         | une boîte de caméra, portant le nom de cette caméra                                                            |
    | Couleurs                        | une simple boîte colorée (voir l'étape 4)                                                                      |
@@ -38,7 +38,7 @@ panneau **[en:tran:Background]** du bas visible.
    **repeint cette boîte** — aucune nouvelle boîte n'est ajoutée. Déposez-la sur **une partie vide du
    canevas** et vous obtenez à la place un nouveau rectangle coloré. Ce rectangle est au fond une boîte de
    texte ordinaire : vous pouvez double-cliquer dessus et y taper du texte plus tard. Une boîte
-   **verrouillée** (🔒) garde sa couleur : l'application dit _Cet élément est verrouillé_ et n'ajoute
+   **verrouillée** (🔒) garde sa couleur : l'application dit _[en:tran:This item is locked]_ et n'ajoute
    rien — déverrouillez-la d'abord. 📸
 5. Tout ce que vous déposez est une boîte ordinaire : déplacez-la, redimensionnez-la, changez son ordre,
    et **[en:tran:Undo]** (Ctrl+Z) la retire aussitôt. Enregistrez avec **Ctrl+S**.

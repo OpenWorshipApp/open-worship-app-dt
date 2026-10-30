@@ -7,7 +7,9 @@ import { describe, expect, test } from 'vitest';
 import { MIRROR_REMOTE_DISPLAY_FIRST } from './screenMirrorProtocol';
 import {
     readBasicAuthPassword,
+    readScreenMessageCameras,
     readVirtualDisplayAccessMode,
+    readVirtualDisplayViewerFeedback,
     MAX_VIRTUAL_DISPLAYS,
     VIRTUAL_DISPLAY_MAX_PIXELS,
     checkIsVirtualDisplayDevViewerFile,
@@ -475,4 +477,117 @@ test('the access option is approval unless it says code', () => {
     expect(readVirtualDisplayAccessMode('approve')).toBe('approve');
     expect(readVirtualDisplayAccessMode(null)).toBe('approve');
     expect(readVirtualDisplayAccessMode('open')).toBe('approve');
+});
+
+// A header of base64 letters that still is not base64 (a length of one more
+// than a multiple of four) is no password, not a crash.
+test('a Basic header that does not decode has no password', () => {
+    expect(readBasicAuthPassword('Basic A')).toBeNull();
+    expect(readBasicAuthPassword('Basic AAAAA')).toBeNull();
+});
+
+// What a browser let to interact may send on: a verse picked or a page
+// scrolled, every field checked, nothing else.
+test('viewer feedback is a verse or a scroll, checked field by field', () => {
+    const verse = (selectedKJVVerseKey: unknown) => {
+        return readVirtualDisplayViewerFeedback({
+            type: 'bible-screen-view-selected-index',
+            data: { selectedKJVVerseKey },
+        });
+    };
+    expect(verse('EXO 14:18')).toEqual({
+        type: 'bible-screen-view-selected-index',
+        data: { selectedKJVVerseKey: 'EXO 14:18' },
+    });
+    // Nothing picked any more.
+    expect(verse(null)).toEqual({
+        type: 'bible-screen-view-selected-index',
+        data: { selectedKJVVerseKey: null },
+    });
+    for (const key of ['<b>EXO</b>', '', 'x'.repeat(65), 14, undefined]) {
+        expect(verse(key), String(key)).toBeNull();
+    }
+    for (const value of [null, 'feedback', 7, undefined]) {
+        expect(readVirtualDisplayViewerFeedback(value)).toBeNull();
+    }
+    for (const data of [null, 'data', undefined]) {
+        expect(
+            readVirtualDisplayViewerFeedback({
+                type: 'bible-screen-view-selected-index',
+                data,
+            }),
+        ).toBeNull();
+    }
+    expect(
+        readVirtualDisplayViewerFeedback({ type: 'show-screen', data: {} }),
+    ).toBeNull();
+});
+
+// The cameras a browser may ask this computer for: those one screen message
+// puts up, and no other.
+test('the cameras a screen message puts up', () => {
+    expect(
+        readScreenMessageCameras({
+            type: 'foreground',
+            data: {
+                cameraDataList: [
+                    { id: 'cam-1', label: 'Front' },
+                    { id: 'cam-2', label: 5 },
+                    { id: '' },
+                    { id: 'x'.repeat(513), label: 'Too long' },
+                    { id: 7 },
+                    null,
+                ],
+            },
+        }),
+    ).toEqual({
+        layer: 'foreground',
+        cameras: [
+            { id: 'cam-1', label: 'Front' },
+            { id: 'cam-2', label: '' },
+        ],
+    });
+    // A foreground with no camera list puts up none.
+    expect(readScreenMessageCameras({ type: 'foreground', data: {} })).toEqual({
+        layer: 'foreground',
+        cameras: [],
+    });
+    expect(readScreenMessageCameras({ type: 'foreground' })).toEqual({
+        layer: 'foreground',
+        cameras: [],
+    });
+    expect(
+        readScreenMessageCameras({
+            type: 'background',
+            data: { type: 'camera', src: 'cam-3', label: 'Hall' },
+        }),
+    ).toEqual({
+        layer: 'background',
+        cameras: [{ id: 'cam-3', label: 'Hall' }],
+    });
+    // A background that is not a camera clears that layer's cameras.
+    expect(
+        readScreenMessageCameras({
+            type: 'background',
+            data: { type: 'color', src: '#000000' },
+        }),
+    ).toEqual({ layer: 'background', cameras: [] });
+    expect(
+        readScreenMessageCameras({
+            type: 'background',
+            data: { type: 'camera', src: '' },
+        }),
+    ).toEqual({ layer: 'background', cameras: [] });
+    // Any other message says nothing about cameras.
+    expect(readScreenMessageCameras({ type: 'bible-screen-view' })).toBeNull();
+    expect(readScreenMessageCameras({})).toBeNull();
+});
+
+test('a dev viewer address that does not decode is refused', () => {
+    expect(
+        checkIsVirtualDisplayDevViewerFile(
+            new URL('http://192.168.1.3:39240/src/%E0%A4%A.ts'),
+            'C:\\work\\owa',
+        ),
+    ).toBe(false);
 });

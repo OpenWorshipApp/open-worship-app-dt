@@ -20,7 +20,8 @@ vertical, Save bible item, Save and show, Export to MS Word). Since 2026-09-29
 it no longer uses those classes: it lives in `.bible-view-header-actions`
 (`src/bible-reader/BibleViewComp.scss`), absolutely positioned over the END of
 the title on the header's own row, at `opacity: 0` + `pointer-events: none`
-until `.bible-view-header:hover` (or `:has(:focus-visible)`). It had held a
+until `.bible-view-header:hover` (or, since 2026-10-01, a focus inside the strip
+itself: `.bible-view-header-actions:has(:focus-visible)`). It had held a
 second, empty line of every pane while invisible, and wrapped under 550px.
 Opacity rather than `visibility` so a keyboard can still reach it; the matcher
 reads both as `hidden`, and the forced hover below lifts `pointer-events` too.

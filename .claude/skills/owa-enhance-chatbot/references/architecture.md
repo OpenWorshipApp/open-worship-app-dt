@@ -44,7 +44,8 @@ when it starts the DevTools handler, so an awaited free-port lookup loses the ra
 and the app silently gets no endpoint at all.
 
 Both MCP doors build the same server through `createOwaMcpServer()`, so a tool
-added for one is shipped to the other.
+added for one is shipped to the other — unless the code registers it for one
+`door` only, as it does `owa_drop_files` for stdio.
 
 `server.mjs` also does two things that look optional and are not:
 
@@ -107,7 +108,9 @@ directory, every `.md` comes along. It is copied verbatim into the installer and
 lands in plaintext on every operator's disk, which is why it is a named list and
 not a denylist, and why anything you write under `.claude/skills/` ships.
 
-A query reads ONE index file rather than opening ~330 markdown files, and reads a
+A query reads ONE index file (and, for a manual search in a window shown in
+another language, that language's `index.<code>.json`) rather than opening
+~370 markdown files, and reads a
 document in full only when it is actually opened. Nothing is held between
 questions: this runs inside the app, on machines where a cached corpus would be
 felt.
@@ -127,7 +130,8 @@ depend on.
   to `local-storage/chatbot-sessions` (`chatSessionHelpers.ts`, capped at 12 tabs
   × 60 messages, debounced save + `beforeunload` flush).
 - The **entire head row belongs to the tab in front**, not the window, and all
-  three of it are `<select>`s sharing one `.chat-pick` skin: the *asking about*
+  three of it are `<select>`s sharing one `.chat-pick` skin (on an Auto tab the
+  third is plain text in that skin, **Auto pick**, `RenderAutoPickComp`): the *asking about*
   switch (eight windows, from `tools/owa-devtools-mcp/botFocus.mjs` — the ONE
   declaration the picker, both MCP tool schemas, the manual's focus filter and
   the session validator all read; it follows the opener window until the user
@@ -136,16 +140,19 @@ depend on.
   distinct — `extra-work/verify-chatbot-e2e.mjs` addresses each by its label,
   and the provider and model pickers shared one string until 2026-09-01. The
   stored settings
-  (`chatbot-llm-provider`, `chatbot-llm-model-<provider>`) are only what a NEW tab
+  (`chatbot-llm-provider`, `chatbot-llm-model-<provider>`, `chatbot-llm-auto`) are only what a NEW tab
   starts on.
 - The model picker lists three models for Claude, ChatGPT, Kimi and Free (ten for
   Bedrock, a custom server's own rows) with speed and list price on hover, plus
   *More models…* — the account's own `models.list` — for Claude, ChatGPT and Kimi. A
   non-reasoning OpenAI model is sent no `reasoning_effort`.
 - Every answer has **Copy**; every question **Ask again**.
-- With no key at all the window opens on the Free assistant, under a notice
-  that names the free service and offers a button into Settings → AI Providers.
-- English-only by design — no `tran()` anywhere in `src/chatbot/*`.
+- With no key at all the window opens on **Auto** (a new tab does until an
+  assistant is picked by name), under a notice that names the free service it
+  may ask and offers a button into Settings → AI Providers.
+- In the app's language (memory `chatbot-follows-app-language`, which reverses
+  the old English-only design): the window's own words go through the chatbot's
+  own `tran` (`src/chatbot/chatTranHelpers.ts`), never `langHelpers`'.
 
 ## The guide cards
 

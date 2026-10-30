@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126, CB-149, CB-154, CB-162]
 screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -116,7 +116,7 @@ your Bible reading.
     there only while AI features are on, and it asks the same two questions the
     🤖 asks first. The chat reads the whole record from the app — the description,
     the family and the places, every verse reference and the first verses
-    themselves — says it is ready and offers three questions to press, such as
+    themselves — says it is ready and offers a few questions to press, such as
     _Who was Adam?_. Everything you type in that chat is then about that person,
     place or passage, and the assistant looks up the people, places and verses it
     leads to by itself. The names and places come from the King James Version,
@@ -146,12 +146,13 @@ your Bible reading.
     **[en:tran:Open another passage]** (type the one you want, like _John 3:16_),
     **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]**. Under a person's or a
     place's card: **[en:tran:Its verses]**, **[en:tran:Family and places]** (a place:
-    **[en:tran:Related places]**) and **[en:tran:Read it in another Bible]**. A name, a place, a
+    **[en:tran:Related places]**), **[en:tran:Read it in another Bible]** and, for a place
+    that has coordinates, **[en:tran:Show it on a map]**. A name, a place, a
     verse or a Bible in the list that comes back opens its own card in the same chat, and
     every answer ends with **[en:tran:More things to do]**.
     **Ask for one of them and it tells you which button.** Type _show this passage in Khmer_
     and the chat lists the Khmer Bibles on this computer to choose from — or shows the
-    passage again when it is already in that language — and _show this passage in English_
+    passage again when it is already in that language — and on an English passage _show this passage in English_
     repeats the record's own words. _How do I save this?_ and _copy this passage_ name
     **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]** and put the
     button beside the answer. A question about using the app — _how do I put this passage
@@ -205,5 +206,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126` · `CB-149` · `CB-154` · `CB-162`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

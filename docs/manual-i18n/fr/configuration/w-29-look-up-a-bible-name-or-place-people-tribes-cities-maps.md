@@ -3,7 +3,7 @@ id: W-29
 title: "Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)"
 section: "Configuration"
 lang: fr
-translatedFrom: c41a5265bffa0098
+translatedFrom: cfcb186e0cf4d093
 ---
 # W-29 — Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)
 
@@ -115,7 +115,7 @@ votre lecture de la Bible.
     lorsque les fonctions d’IA sont activées, et il pose d’abord les deux mêmes questions que le 🤖.
     La conversation lit toute la fiche dans l’application — la description, la famille et les lieux,
     toutes les références de versets et les premiers versets eux-mêmes — dit qu’elle est prête et
-    propose trois questions à appuyer, comme _Qui était Adam ?_. Tout ce que vous tapez dans cette
+    propose quelques questions à appuyer, comme _Qui était Adam ?_. Tout ce que vous tapez dans cette
     conversation porte alors sur cette personne, ce lieu ou ce passage, et l’assistant consulte de
     lui-même les personnes, les lieux et les versets auxquels elle mène. Les noms et les lieux viennent
     de la version King James, et l’assistant le dit si vous le demandez. La ligne
@@ -142,12 +142,13 @@ votre lecture de la Bible.
     **[en:tran:Open another passage]** (tapez celui que vous voulez, comme _Jean 3:16_),
     **[en:tran:Save to my Bibles list]** et **[en:tran:Copy the passage]**. Sous la carte d’une
     personne ou d’un lieu : **[en:tran:Its verses]**, **[en:tran:Family and places]** (un lieu :
-    **[en:tran:Related places]**) et **[en:tran:Read it in another Bible]**. Un nom, un lieu, un
+    **[en:tran:Related places]**), **[en:tran:Read it in another Bible]** et, pour un lieu
+    qui a des coordonnées, **[en:tran:Show it on a map]**. Un nom, un lieu, un
     verset ou une Bible de la liste qui s’affiche ouvre sa propre carte dans la même conversation, et
     chaque réponse se termine par **[en:tran:More things to do]**.
     **Demandez-en un et il vous indique le bouton.** Tapez _montre ce passage en khmer_
     et la conversation liste les Bibles khmères de cet ordinateur, à choisir — ou montre
-    de nouveau le passage lorsqu’il est déjà dans cette langue — et _montre ce passage en anglais_
+    de nouveau le passage lorsqu’il est déjà dans cette langue — et, sur un passage en anglais, _montre ce passage en anglais_
     reprend les mots du relevé. _Comment l’enregistrer ?_ et _copie ce passage_ nomment
     **[en:tran:Save to my Bibles list]** et **[en:tran:Copy the passage]** et placent le
     bouton près de la réponse. Une question sur l’utilisation de l’application — _comment mettre

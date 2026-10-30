@@ -3,7 +3,7 @@ id: W-22b
 title: "Mener le culte depuis le panneau d'aperçu du déroulé"
 section: "Configuration"
 lang: fr
-translatedFrom: 154f33153c9eceb1
+translatedFrom: 3b1958e6e37525b0
 ---
 # W-22b — Mener le culte depuis le panneau d'aperçu du déroulé
 
@@ -61,13 +61,13 @@ translatedFrom: 154f33153c9eceb1
    Les lignes `Next:` se déclenchent de la même façon, et ce qu'elles commandent, c'est ce panneau : une
    attente qui fait avancer le déroulement toute seule (W-22d), ou une boucle qui le fait avancer sans
    cesse (W-22e).
-4. **Tout ce que vous pouvez cliquer avec le bouton droit dans la liste, vous pouvez le faire ici.** Les
+4. **Chaque ligne que vous pouvez cliquer avec le bouton droit dans la liste peut l'être ici aussi.** Les
    menus de ce panneau sont exactement les mêmes menus — faites un clic droit sur la **ligne de titre** d'un
-   élément (ou sur n'importe quelle partie vide de sa boîte) et vous obtenez son menu complet : **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, les quatre
+   élément (ou sur n'importe quelle partie vide de sa boîte) et vous obtenez son menu complet : **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**, les quatre
    déplacements, **[en:tran:Duplicate]**, **[en:tran:Choose Color]**, **[en:tran:Disable]** / **[en:tran:Enable]** et **[en:tran:Remove from Presenting Flow]**, disponibles exactement aux mêmes conditions que dans la liste. Vous pouvez donc ranger
    et réordonner le déroulé depuis le panneau que vous regardez réellement pendant le culte, sans
    revenir à la liste — et la liste derrière suit immédiatement. 📸
    Deux choses dans une boîte gardent leurs propres menus, parce qu'elles ne sont pas l'élément :
    une **vignette de diapositive** a le menu de la diapositive (**[en:tran:Reveal Original]**, **[en:tran:Show on Screens]**,
-   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**), et une **ligne CC** a
+   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]** ; la vignette d'une ligne à une seule diapositive n'a que les deux premiers et **[en:tran:Disable]**, le reste se trouvant sur sa ligne de titre), et une **ligne CC** a
    son menu court (**[en:tran:Reveal Original]**, **[en:tran:Set Specific Screen]**, **[en:tran:Remove CC Element]**).

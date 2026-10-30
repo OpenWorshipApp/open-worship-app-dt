@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [RD-92, RD-93, RD-94, RD-95, RD-96, RD-97, RD-98, RD-99, RD-100, RD-101, RD-102, RD-103, RD-104, RD-105, RD-106, RD-121]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-38 — See how people and places connect (Connection Graph)
 
@@ -21,7 +21,7 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > **[en:tran:Names and locations in your reading]** panel, underlined inside a verse, or in the
    > related-names list of a record window. The **⋮** is on the rows of the first two,
    > which is where you would go looking for it; a record window also has a small
-   > diagram icon (`bi-diagram-3`) beside its title.
+   > diagram icon beside its title.
 3. Each box shows a number next to a small diagram icon — that is how many related
    records it has. **Click the number.** A menu opens listing **[en:tran:All] (47)** first, then
    only the kinds this record actually has: _Parents (2)_, _Spouses (4)_, _Siblings (2)_,
@@ -38,8 +38,8 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
    > **[en:tran:Verses] (8)**, **[en:tran:Open all Related] (23)**, **[en:tran:Collapse]**, **[en:tran:Set as centre]**,
    > **[en:tran:Use as root]** and **[en:tran:Remove]**. _Set as centre_ re-arranges the whole graph around
    > that box; _Use as root_ clears everything else away and leaves just it, so you can
-   > start exploring again from a record already in front of you. It is the same set as the small buttons along the bottom of the box, but
-   > it also works on a box you have collapsed, which shows no buttons at all. Rows you
+   > start exploring again from a record already in front of you. It has everything the small buttons along the bottom of the box do, and
+   > it also works on a box you have collapsed, which hides those buttons. Rows you
    > could not use are simply absent — the centre box offers no _Remove_, and a record
    > with no relations offers no _Open all Related_.
    > The **[en:tran:Verses]** list names each verse the way YOUR Bible names it —
@@ -120,7 +120,8 @@ parents, spouses, children, cousins and places, all on one canvas you can explor
     > happens the app says so and puts the link on your clipboard instead: open your
     > browser and paste it into the address bar.
 12. Opening a record always starts you at that record, with one box — every time, however
-    you left the window last time. 📸
+    you left the window last time. A window still open for that record is only brought to
+    the front. 📸
     > If an arrangement is worth coming back to, say so: `⋯` → **[en:tran:Save preset]**, name it,
     > and it is waiting in that same menu next time.
 
@@ -129,5 +130,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-92` · `RD-93` · `RD-94` · `RD-95` · `RD-96` · `RD-97` · `RD-98` · `RD-99` · `RD-100` · `RD-101` · `RD-102` · `RD-103` · `RD-104` · `RD-105` · `RD-106` · `RD-121`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

@@ -42,8 +42,8 @@ real user. Same trap for CSS class names, which are not stable and not names.
 
 **Why:** it is the anchor the shared DOM matcher's parent-path support hangs on
 ([[dom-match-memoised-in-page]]) — `containerPathOf`, the `Background > Videos`
-scope syntax, and the `inPanel` a match reports all read this attribute and
-nothing else.
+scope syntax, and the `inPanel` a match reports all read this attribute (a
+scope, since 2026-10-16, also the name a panel SHOWS: `scopePathOf`).
 
 **How to apply:** a new panel added to a `dataInput` list gets its name for free
 through `toWidgetLabel`. One that sets `widgetName` by hand should set

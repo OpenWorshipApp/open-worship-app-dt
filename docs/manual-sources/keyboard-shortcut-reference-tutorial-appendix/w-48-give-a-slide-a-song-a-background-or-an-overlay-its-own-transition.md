@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PM-154, PM-155, PM-156, SP-06, ED-54]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-48 — Give a slide, a song, a background or an overlay its own transition
 
@@ -56,9 +56,10 @@ its slide, then its document, then the screen when its own choice is unticked.
    a colour swatch, a camera or a web link) and choose
    **[en:tran:Transition]**. It follows its tab until you tick it; a picture or
    video tile then shows the effect's icon in its corner.
-6. **A foreground panel, all its sessions.** Each foreground panel
-   (**[en:tran:Countdown]**, **[en:tran:Quick Text]**, **[en:tran:Marquee Top]**
-   …) has a transition button in its title bar, next to the collapse arrow.
+6. **A foreground panel, all its sessions.** Each foreground panel but
+   **[en:tran:Long Text Show]** (**[en:tran:Countdown]**, **[en:tran:Quick Text]**,
+   **[en:tran:Marquee Top]** …) has a transition button in its title bar, next
+   to the collapse arrow.
    Press it, tick **[en:tran:Own transition]** and pick one: every session of
    that panel uses it.
 7. **One session.** Open the panel's **[en:tran:Properties]**: the
@@ -92,5 +93,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-154` · `PM-155` · `PM-156` · `SP-06` · `ED-54`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

@@ -11,11 +11,12 @@ off a snapshot (`focused`, `pressed`, `selected`, `expanded`, a control's name) 
 
 ## Windows & dev URLs
 
-Main window in dev loads `presenter.html`. Other windows open on demand.
+Main window in dev loads the page it last showed (`mainHtmlPath`; `reader.html` on a fresh
+profile, knowledge-base §3). Other windows open on demand.
 
 | Window | Dev URL | Notes |
 |---|---|---|
-| Presenter (main) | `https://localhost:3000/presenter.html` | Default main window |
+| Presenter (main) | `https://localhost:3000/presenter.html` | Main window |
 | Bible Reader | `https://localhost:3000/reader.html` | |
 | Slide/Doc Editor | `https://localhost:3000/appDocumentEditor.html` | Opens when editing a doc |
 | Settings | `https://localhost:3000/setting.html` | Gear button |
@@ -79,9 +80,10 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
   **Ctrl+B** (Cmd+B on mac). Opens the lookup modal.
 - **Settings** button (top-right): icon `bi bi-gear-wide-connected`, title `Setting`.
   Opens `setting.html`.
-- **Help** button (top-right): icon `bi bi-question-circle`. Opens a two-row
-  menu under itself — `Open Online Help` (external help, EX-04) and
-  `Open Chatbot` (the 🤖's own press). The first is also Help → `Open Online
+- **Help** button (top-right): icon `bi bi-question-circle`. Opens a three-row
+  menu under itself — `Open Online Help` (external help, EX-04),
+  `Open Chatbot` (the 🤖's own press) and `Report a Problem` (the 🤖, opened asking
+  what went wrong). The first is also Help → `Open Online
   Help` in the menu bar.
 
 ## Presenter window layout (3 resizable columns)
@@ -180,9 +182,9 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
   `.toast-body` (message), and `button.btn-close`.
 - Toasts **stack** — newest is appended at the bottom, oldest is on top, capped at
   `MAX_STACKED_TOAST_COUNT` (5); past 5 the oldest are dropped.
-- Every toast owns its own timer: default 4000 ms (`toast.timeout ?? 4e3`), hover
-  (`mouseover`) clears only that toast's timer, `mouseout` restarts it at 2000 ms, and
-  `.btn-close` removes only that one.
+- Every toast owns its own timer: default 4000 ms (`DEFAULT_TOAST_TIMEOUT`), hover
+  (`mouseover`) clears only that toast's timer, `mouseout` restarts it at 2000 ms
+  (`MOUSE_LEAVING_TOAST_TIMEOUT`), and `.btn-close` removes only that one.
 - **Trigger**: a refusal on a locked screen (**Lock**, then `F6`). One press is ONE toast —
   all four layers refuse, but the refusal is said once a second for all screens together — so for a stack,
   `hover` the first `alert` and press again ≥1 s later (SKILL §6).
@@ -195,15 +197,17 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
 
 ## Settings window (`setting.html`)
 
-Title matches `/Setting/`. **Three** tabs — `General` / `Bible` / `Others` — in a
+Title matches `/Setting/`. **Five** tabs — `General` / `Path Settings` / `Bible` / `AI Providers` / `Others`;
+only `General` / `Path Settings` / `AI Providers` while no data folder is in use — in a
 vertical left sidebar (`TabRenderComp` nav-links, not a top tab bar), plus a fixed
-`Apply Settings` button (bottom-left). The General tab holds: directory paths,
-`English`/`Khmer`/`French` language buttons (each in its own script: `ខ្មែរ`, `Français`), theme, font family, and the destructive resets
-(`Reset All Child Directories` / `Clear All Settings` — the old `Set Default Data` button
+`Apply Settings` button (bottom-left). The General tab holds:
+`English`/`Khmer`/`French` language buttons (each in its own script: `ខ្មែរ`, `Français`), theme and, with a data folder in use, font family and the destructive
+`Clear All Settings`; the directory paths and the destructive `Reset All Child Directories`
+are on `Path Settings` (the old `Set Default Data` button
 is gone, and since 2026-08-09 so is `Reset Widgets Size`: it is a native **View** menu
 entry now, see below).
 
-**Every part of the `Others` tab FOLDS** (2026-10-10, `useSettingSectionFold`): the
+**Every part of the `Others` and `AI Providers` tabs FOLDS** (2026-10-10, `useSettingSectionFold`): the
 three cards, and inside AI Providers each provider's box, **Custom servers** and each
 server. The title is the button (`aria-expanded`, hover **Collapse** / **Expand**),
 and a folded part's contents are **not in the DOM** — a key box or **Add server** that
@@ -211,8 +215,9 @@ and a folded part's contents are **not in the DOM** — a key box or **Add serve
 The folds persist (`setting-section-collapsed-<name>`), so a run can start on a tab
 somebody left folded; put back what you fold.
 
-The **`Others`** tab now holds **three cards**, in order
-(`src/setting/SettingOthersComp.tsx`): *AI Providers* (`SettingOthersAIComp`),
+The **`Others`** tab now holds **two cards**, in order
+(`src/setting/SettingOthersComp.tsx`; *AI Providers*, `SettingOthersAIComp`, was the first
+until 2026-10-24 and is a tab of its own now, `SettingAIComp`):
 *SongSelect* (`SettingOthersSongSelectComp`, from `src/plugins/song-select/` — CCLI
 sign-in; dev builds add a `(dev) Use Mock Data` toggle), and **Extra Binaries**
 (`SettingOthersExtraBinComp` — the target of the mandatory `MD-05`/`MD-06` block).
@@ -226,8 +231,8 @@ follow). Keys are saved **on blur**, not per keystroke, and then flag
 translated **Auto Play Audio AI when available** switch; it writes immediately and
 used to be a megaphone in the Reader's Bible Reference toolbar. The AI card's key
 labels are hardcoded English so they do **not** translate in Khmer — untranslated
-UI, not the `tran()` throw. The ST section now runs to **ST-78** and covers this
-tab's contents — route from the matrix.
+UI, not the `tran()` throw. The ST section now runs to **ST-86** and covers these
+tabs' contents — route from the matrix.
 
 ## Native View menu (main window only)
 

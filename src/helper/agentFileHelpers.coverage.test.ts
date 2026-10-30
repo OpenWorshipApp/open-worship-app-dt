@@ -92,6 +92,39 @@ vi.mock('./agentSlideHelpers', () => ({
     readAgentSlideRequest: (...args: unknown[]) => h.readSlideRequest(...args),
 }));
 
+// The canvas classes a slide action's boxes are checked with, loaded only on
+// that path (the slide-action tests at the end of this file).
+const slideCanvas = vi.hoisted(() => {
+    class CanvasItemError {}
+    return {
+        CanvasItemError,
+        canvasItemFromJson: vi.fn(),
+        textDefaults: {
+            id: -1,
+            type: 'text',
+            text: 'Open Worship app',
+            color: '#FFFFFF',
+            fontSize: 60,
+        },
+    };
+});
+vi.mock('../slide-editor/canvas/Canvas', () => ({
+    default: { canvasItemFromJson: slideCanvas.canvasItemFromJson },
+}));
+vi.mock('../slide-editor/canvas/CanvasItem', () => ({
+    CanvasItemError: slideCanvas.CanvasItemError,
+}));
+vi.mock('../slide-editor/canvas/CanvasItemText', () => ({
+    default: {
+        genDefaultItem: () => ({
+            toJson: () => ({ ...slideCanvas.textDefaults }),
+        }),
+    },
+}));
+vi.mock('../app-document-list/Slide', () => ({
+    default: { getDefaultDim: () => ({ width: 1280, height: 720 }) },
+}));
+
 import { NoBackupError } from './agentBackupHelpers';
 import { handleAgentFileRequest } from './agentFileHelpers';
 import type {
@@ -569,5 +602,461 @@ describe('document request boundaries', () => {
         );
         expect(h.getFile).toHaveBeenCalledTimes(60);
         expect(h.getJsonData).not.toHaveBeenCalled();
+    });
+});
+
+describe('slide actions: checked, backed up, then one history entry', () => {
+    const slidePath = '/documents/Example.ows';
+    const genChange = (fields: Record<string, unknown> = {}) => ({
+        didChange: true,
+        json: { metadata: { ...metadata }, items: newItems },
+        checkItems: [{ item: { id: 3, type: 'text' } }],
+        summary: 'Added slide 2 to “Example”',
+        result: { added: 2 },
+        note: 'Its box is centred.',
+        ...fields,
+    });
+    const request = (kind: AgentFileKindNameType = 'slide') =>
+        handleAgentFileRequest({
+            kind,
+            action: 'add-slide' as any,
+            name: 'Example',
+        });
+
+    beforeEach(() => {
+        h.isSlideAction = true;
+        h.readSlideRequest.mockReturnValue({ action: 'add-slide' });
+        h.applySlideAction.mockReturnValue(genChange());
+        slideCanvas.canvasItemFromJson.mockReturnValue({});
+    });
+
+    test('a song has no slides of its own: refused before anything is read', async () => {
+        await expect(request('lyric')).resolves.toEqual({
+            isError: true,
+            reason:
+                "A song's slides are made from its words, so it has no " +
+                'slides of its own to change. Change its words with action ' +
+                '"update".',
+        });
+        expect(h.readSlideRequest).not.toHaveBeenCalled();
+        expect(h.exists).not.toHaveBeenCalled();
+    });
+
+    test('a document that is not there is refused before it is read', async () => {
+        h.exists.mockResolvedValue(false);
+        await expect(request()).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringContaining(
+                'There is no slide document called "Example"',
+            ),
+        });
+        expect(h.getJsonData).not.toHaveBeenCalled();
+    });
+
+    test('the change is made to the head, checked, backed up and written once', async () => {
+        const result = await request();
+        expect(result).toEqual({
+            added: 2,
+            isSaved: false,
+            undoId: 'undo-1',
+            note:
+                'Its box is centred. The change is in the document but NOT ' +
+                'on disk yet: it shows a * beside its name, Ctrl+Z undoes ' +
+                'it, and the user presses Save to keep it. Tell them that.',
+        });
+        const [action, json, checked, options] = h.applySlideAction.mock
+            .calls[0] as any[];
+        expect([action, json, checked]).toEqual([
+            'add-slide',
+            { metadata, items: oldItems },
+            { action: 'add-slide' },
+        ]);
+        // A new box is the app's own default text box, on the app's own
+        // default slide size.
+        expect(options.name).toBe('Example');
+        expect(options.genTextDefaults()).toEqual(slideCanvas.textDefaults);
+        expect(options.getDefaultDim()).toEqual({ width: 1280, height: 720 });
+        expect(h.validate).toHaveBeenCalledWith(genChange().json);
+        expect(slideCanvas.canvasItemFromJson).toHaveBeenCalledWith({
+            id: 3,
+            type: 'text',
+        });
+        expect(h.snapshotEditing).toHaveBeenCalledWith('slide', slidePath);
+        expect(h.backup).toHaveBeenCalledWith(
+            'Added slide 2 to “Example”',
+            [expect.objectContaining({ type: 'editing', filePath: slidePath })],
+            expect.any(Function),
+        );
+        expect(h.setJsonData).toHaveBeenCalledExactlyOnceWith(genChange().json);
+        expect(h.refresh).toHaveBeenCalledExactlyOnceWith();
+        expect(h.backup.mock.invocationCallOrder[0]).toBeLessThan(
+            h.setJsonData.mock.invocationCallOrder[0],
+        );
+    });
+
+    test('a change with no box written needs no canvas check, and says only that Save is needed', async () => {
+        h.applySlideAction.mockReturnValue(
+            genChange({ checkItems: [], note: '' }),
+        );
+        const result = await request();
+        expect(result.note).toMatch(/^The change is in the document/);
+        expect(slideCanvas.canvasItemFromJson).not.toHaveBeenCalled();
+        expect(h.setJsonData).toHaveBeenCalledOnce();
+    });
+
+    test('a change the slide rules refuse, or one that changes nothing, writes nothing', async () => {
+        h.applySlideAction.mockReturnValueOnce({
+            isError: true,
+            reason: 'There is no slide 9 in “Example”.',
+        });
+        await expect(request()).resolves.toEqual({
+            isError: true,
+            reason: 'There is no slide 9 in “Example”.',
+        });
+        h.applySlideAction.mockReturnValueOnce({
+            didChange: false,
+            result: { moved: 1 },
+            note: 'Slide 1 is already there.',
+        });
+        await expect(request()).resolves.toEqual({
+            moved: 1,
+            didChange: false,
+            note: 'Slide 1 is already there.',
+        });
+        expect(h.snapshotEditing).not.toHaveBeenCalled();
+        expect(h.backup).not.toHaveBeenCalled();
+        expect(h.setJsonData).not.toHaveBeenCalled();
+    });
+
+    test('a document the app would not open after the change is refused before any backup', async () => {
+        h.validate.mockImplementation(() => {
+            throw new Error('Invalid slide data');
+        });
+        await expect(request()).resolves.toEqual({
+            isError: true,
+            reason:
+                'This app would not open the document after that change, ' +
+                'so it was not made: Invalid slide data',
+        });
+        expect(h.backup).not.toHaveBeenCalled();
+        expect(h.setJsonData).not.toHaveBeenCalled();
+    });
+
+    test('a box the slide editor would not open is refused by its id', async () => {
+        slideCanvas.canvasItemFromJson.mockReturnValue(
+            new slideCanvas.CanvasItemError(),
+        );
+        await expect(request()).resolves.toEqual({
+            isError: true,
+            reason:
+                'Box 3 would not open in the slide editor after that ' +
+                'change, so nothing was changed. Read the slide with action ' +
+                '"slides" and send only the fields to change.',
+        });
+        expect(h.backup).not.toHaveBeenCalled();
+    });
+
+    test('an unreadable head, a failed backup and a failed write are each reported, never claimed', async () => {
+        h.snapshotEditing.mockResolvedValueOnce(null);
+        await expect(request()).resolves.toEqual({
+            isError: true,
+            reason: '"Example" could not be read, so it was not changed.',
+        });
+        expect(h.backup).not.toHaveBeenCalled();
+
+        h.backup.mockRejectedValueOnce(
+            new NoBackupError('The backup folder is full.'),
+        );
+        await expect(request()).resolves.toEqual({
+            isError: true,
+            reason: 'The backup folder is full.',
+        });
+        expect(h.setJsonData).not.toHaveBeenCalled();
+
+        const failure = new Error('disk full');
+        h.setJsonData.mockRejectedValueOnce(failure);
+        await expect(request()).resolves.toEqual({
+            isError: true,
+            reason:
+                'Added slide 2 to “Example” could not be finished: disk ' +
+                'full Anything it did get to do can be put back with ' +
+                'owa_undo.',
+        });
+        expect(h.error).toHaveBeenCalledWith(failure);
+        expect(h.refresh).not.toHaveBeenCalled();
+    });
+});
+
+describe('finding a song by its title', () => {
+    test('the user’s own songs of that name come back beside the collection’s hymn, and nothing is written', async () => {
+        h.list.mockResolvedValue([
+            '/documents/Amazing Grace.owl',
+            '/documents/amazing grace (2).owl',
+            '/documents/Grace Alone.owl',
+        ]);
+        const result: any = await handleAgentFileRequest({
+            kind: 'lyric',
+            action: 'find',
+            name: '  Amazing Grace  ',
+        });
+        expect(result).toMatchObject({
+            asked: 'Amazing Grace',
+            yours: ['Amazing Grace', 'amazing grace (2)'],
+            found: {
+                title: 'Amazing Grace',
+                authors: ['John Newton'],
+                year: '1779',
+            },
+            nearest: [],
+            collectionSize: 36,
+        });
+        // The words are the collection's own, ready for a create.
+        expect(result.found.content).toContain('- Title: Amazing Grace');
+        expect(h.list).toHaveBeenCalledWith('/documents', 'lyric');
+        expect(h.backup).not.toHaveBeenCalled();
+        expect(h.create).not.toHaveBeenCalled();
+    });
+
+    test('only a song is found by its title, and the title has to be given', async () => {
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'find',
+                name: 'Amazing Grace',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'Only a song can be found by its title.',
+        });
+        for (const name of [undefined, '   ', 'x'.repeat(121)]) {
+            await expect(
+                handleAgentFileRequest({ kind: 'lyric', action: 'find', name }),
+            ).resolves.toEqual({
+                isError: true,
+                reason: 'Give the title of the song to find.',
+            });
+        }
+        expect(h.list).not.toHaveBeenCalled();
+    });
+});
+
+describe('the refusals and failures the lifecycle tests leave out', () => {
+    test('slide content that is not JSON is refused before any backup', async () => {
+        h.exists.mockResolvedValue(false);
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'create',
+                name: 'Example',
+                content: '{ not json',
+            }),
+        ).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringMatching(/^That is not valid JSON\. Slide/),
+        });
+        expect(h.backup).not.toHaveBeenCalled();
+    });
+
+    test('a create the document class could not make is reported, not claimed', async () => {
+        h.exists.mockResolvedValue(false);
+        h.create.mockResolvedValue(null);
+        await expect(
+            handleAgentFileRequest({
+                kind: 'lyric',
+                action: 'create',
+                name: 'Example',
+                content: 'new song',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'Making the song “Example” could not be finished: The song ' +
+                'could not be created. Anything it did get to do can be put ' +
+                'back with owa_undo.',
+        });
+        expect(h.refresh).not.toHaveBeenCalled();
+    });
+
+    test('a hundred names taken: the free name is a stamp of the time', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        try {
+            vi.setSystemTime(new Date('2026-10-28T12:00:00Z'));
+            const stamp = Date.now().toString(36);
+            await expect(
+                handleAgentFileRequest({
+                    kind: 'slide',
+                    action: 'create',
+                    name: 'Example',
+                    content: JSON.stringify({ items: newItems }),
+                }),
+            ).resolves.toMatchObject({
+                isError: true,
+                reason: expect.stringContaining(`"Example (${stamp})" is free`),
+            });
+            // The name itself, then "(2)" to "(99)".
+            expect(h.exists).toHaveBeenCalledTimes(1 + 98);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test.each<AgentFileKindNameType>(['slide', 'lyric'])(
+        'an update of a %s whose head cannot be read is reported after its backup',
+        async (kind) => {
+            h.getJsonData.mockResolvedValue(null);
+            await expect(
+                handleAgentFileRequest({
+                    kind,
+                    action: 'update',
+                    name: 'Example',
+                    content:
+                        kind === 'slide'
+                            ? JSON.stringify({ items: newItems })
+                            : 'new song',
+                }),
+            ).resolves.toEqual({
+                isError: true,
+                reason:
+                    `Changing the ${kind === 'slide' ? 'slide document' : 'song'} ` +
+                    '“Example” could not be finished: "Example" could not be ' +
+                    'read. Anything it did get to do can be put back with ' +
+                    'owa_undo.',
+            });
+            expect(h.backup).toHaveBeenCalledOnce();
+            expect(h.setJsonData).not.toHaveBeenCalled();
+            expect(h.setContent).not.toHaveBeenCalled();
+            expect(h.refresh).not.toHaveBeenCalled();
+        },
+    );
+
+    test('a song whose words open-lyric cannot read is still described, without its parts', async () => {
+        const failure = new Error('not a song');
+        h.getInfo.mockImplementation(() => {
+            throw failure;
+        });
+        await expect(
+            handleAgentFileRequest({
+                kind: 'lyric',
+                action: 'info',
+                name: 'Example',
+            }),
+        ).resolves.toMatchObject({
+            name: 'Example',
+            characters: 'saved song'.length,
+            title: null,
+            key: null,
+            sections: [],
+        });
+        expect(h.error).toHaveBeenCalledWith(failure);
+    });
+
+    test('a document that cannot be read is not reported as having unsaved changes', async () => {
+        h.getJsonData.mockResolvedValue(null);
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'info',
+                name: 'Example',
+            }),
+        ).resolves.toMatchObject({
+            hasUnsavedChanges: false,
+            slideCount: 0,
+            dimensions: null,
+        });
+    });
+
+    test('a rename onto a name outside the folder, or a bad new name, is refused', async () => {
+        h.join.mockImplementation((dir: string, file: string) =>
+            file.startsWith('Renamed')
+                ? '/elsewhere/Renamed.ows'
+                : path.posix.join(dir, file),
+        );
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'rename',
+                name: 'Example',
+                newName: 'Renamed',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'That new name would not stay inside the Documents folder.',
+        });
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'rename',
+                name: 'Example',
+                newName: '../Renamed',
+            }),
+        ).resolves.toMatchObject({ isError: true });
+        expect(h.backup).not.toHaveBeenCalled();
+        expect(h.rename).not.toHaveBeenCalled();
+    });
+});
+
+describe('revert: the saved state put back behind a backup', () => {
+    const revert = () =>
+        handleAgentFileRequest({
+            kind: 'slide',
+            action: 'revert',
+            name: 'Example',
+        });
+
+    beforeEach(() => {
+        // The head differs from the saved file.
+        h.getJsonData.mockImplementation(async (isOriginal?: boolean) => ({
+            metadata,
+            items: isOriginal ? oldItems : newItems,
+        }));
+    });
+
+    test('a document that is not there is refused', async () => {
+        h.exists.mockResolvedValue(false);
+        await expect(revert()).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringContaining('There is no slide document'),
+        });
+        expect(h.getJsonData).not.toHaveBeenCalled();
+    });
+
+    test('a saved file that cannot be read, or a head that cannot be kept, changes nothing', async () => {
+        h.getJsonData.mockImplementation(async (isOriginal?: boolean) =>
+            isOriginal ? null : { metadata, items: newItems },
+        );
+        await expect(revert()).resolves.toEqual({
+            isError: true,
+            reason: '"Example" could not be read, so it was not changed.',
+        });
+        expect(h.snapshotEditing).not.toHaveBeenCalled();
+
+        h.getJsonData.mockImplementation(async (isOriginal?: boolean) => ({
+            metadata,
+            items: isOriginal ? oldItems : newItems,
+        }));
+        h.snapshotEditing.mockResolvedValueOnce(null);
+        await expect(revert()).resolves.toEqual({
+            isError: true,
+            reason: '"Example" could not be read, so it was not changed.',
+        });
+        expect(h.backup).not.toHaveBeenCalled();
+        expect(h.setJsonData).not.toHaveBeenCalled();
+    });
+
+    test('a write that fails after the backup is reported with the way back', async () => {
+        h.setJsonData.mockRejectedValue(new Error('disk full'));
+        await expect(revert()).resolves.toEqual({
+            isError: true,
+            reason:
+                'Putting the slide document “Example” back could not be ' +
+                'finished: disk full Anything it did get to do can be put ' +
+                'back with owa_undo.',
+        });
+        expect(h.backup).toHaveBeenCalledOnce();
+        expect(h.setJsonData).toHaveBeenCalledWith({
+            metadata,
+            items: oldItems,
+        });
+        expect(h.refresh).not.toHaveBeenCalled();
     });
 });

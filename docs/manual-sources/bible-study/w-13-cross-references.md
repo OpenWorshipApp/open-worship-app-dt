@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-10, RD-49, RD-50, RD-51, RD-52, RD-124]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-13 — Cross references
 
@@ -20,7 +20,7 @@ workflowsVersion: "2026-10-24"
    Until you have picked a verse the view says **[en:tran:No verse selected]** and tells you what to
    do about it.
 2. The top of the view shows the verse it is working from — its version, its reference and
-   its text, exactly as **[en:tran:Resources]** shows it. Click the reference to move to another
+   its text. Click the reference to move to another
    verse, or the version chip to read the references in another translation. 📸
 3. Under it, **AI [en:tran:Cross References]** with the version it is quoting on the right, and a
    line saying how much there is: **7 [en:tran:Themes] · 35 [en:tran:Verses]**. Click the title to collapse the
@@ -37,7 +37,7 @@ workflowsVersion: "2026-10-24"
    **⋮**) for the usual verse menu: **[en:tran:Open]** does what a click does, and
    **[en:tran:Open beside the current verse]** opens it as a passage beside the verse you
    are on. The keyboard reaches the same rows — **Tab** to one and press **Enter**.
-   The version at the start of the panel's title — **(KJV)** — is a button: click it and
+   The version in front of the reference in the panel's title — **KJV** — is a button: click it and
    choose another Bible, and the same verse opens in a second panel of its own, so the two
    can be read side by side. Close a panel with its **×**.
 6. The **chip** button on the section title (**[en:tran:Generated using AI technology.]**) says a model wrote these; click it for the
@@ -53,5 +53,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-10` · `RD-49` · `RD-50` · `RD-51` · `RD-52` · `RD-124`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

@@ -153,10 +153,10 @@ opening on example.com during a run is the press gate failing.
 > node in a verbose snapshot, then `press_key`). Nothing else drives the
 > site inside — sign-in checks are by hand.
 
-> **Two watchers restart the dev app.** `electron/*.ts` is recompiled by
-> `tsc -w` and nodemon restarts Electron on `electron-build/` AND on
-> `tools/owa-devtools-mcp/**` — so editing the guard, the corpus, or
-> rebuilding the knowledge closes the AI Chat window mid-check. Tabs come
+> **Two watchers restart the dev app under `npm run electron:dev`.**
+> `electron/*.ts` is recompiled by `tsc -w` and nodemon restarts Electron on
+> `electron-build/` (not its `knowledge/`) AND on `tools/owa-devtools-mcp/**`
+> — so editing the guard or the corpus closes the AI Chat window mid-check. Tabs come
 > back from `aichat-sessions` on the next open. `npm run build` deletes
 > `electron-build/` and does the same (memory: `build-kills-running-dev-app`):
 > **verify live FIRST, run the gate LAST.**
@@ -263,7 +263,8 @@ looking at (`AC-13`). A second exception is the user's call, not a run's.
   every field in it is bounded (8 tabs, a 60-character page title, a
   2 000-character address).
 - The host page loads bootstrap and its own sheet, no app tokens, no
-  webfonts — the chatbot's rules, for the same back-room reasons.
+  webfonts but the language pack's own face (`--chat-lang-font`, Battambang
+  for Khmer) — the chatbot's rules, for the same back-room reasons.
 
 ### C. The sites — where the real bugs live
 
@@ -305,9 +306,10 @@ bot-detection page (the probe reads the same signals):
   (`AiChatButtonComp`, `src/others/commonButtons.tsx`, on the three
   headers), **Help → AI Chat** (`electron/electronMenu.ts`), **Tools → AI
   Chat** (`AppAssistantComp`, every window). None is gated on the AI switch.
-- Strings inside the window are English-only, like the chatbot's; the one
-  label the app windows draw (`AI Chat`) goes through `tran()` and has its
-  Khmer key.
+- Strings inside the window are in the app's language, like the chatbot's
+  (2026-10-17): the chatbot's own `tran` (`src/chatbot/chatTranHelpers.ts`),
+  with Khmer and French; the one label the app windows draw (`AI Chat`) goes
+  through the app's `tran()` and has its Khmer key.
 
 ## What counts as an improvement
 

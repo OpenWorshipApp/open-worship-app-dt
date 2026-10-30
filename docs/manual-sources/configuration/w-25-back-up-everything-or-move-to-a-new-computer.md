@@ -5,11 +5,11 @@ section: "Configuration"
 verify: [NAV-17, NAV-18, NAV-19]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-25 — Back up everything, or move to a new computer
 
-W-22 to W-24 each carry one thing. To take **all** your material at once — for a backup,
+W-22j to W-24 each carry one thing. To take **all** your material at once — for a backup,
 or to set up a second machine — use the app's **File** menu.
 
 1. Open the **File** menu at the top of the window and choose **[en:tran:Export Data]**. 📸
@@ -47,7 +47,7 @@ or to set up a second machine — use the app's **File** menu.
    opens. Copy it to a USB stick or the other machine.
 4. On the other machine, open **[en:tran:Settings]** → **[en:tran:Path Settings]**
    and choose the destination folders first. Then choose **File** → **[en:tran:Import Data]** and pick that file. A protected backup asks for its password first. A password typed wrong is asked
-   for again under _[en:tran:Wrong password, try again]_, three times at most, and then the
+   for again under _[en:tran:Wrong password, try again]_ — three tries in all — and then the
    import stops with nothing brought in. Type it exactly as it was set, capital letters and
    all, or ask whoever made the file for it. No one can open it without. The panel then lists only the
    folders the file actually contains — again all ticked — so you can restore just the
@@ -62,12 +62,14 @@ or to set up a second machine — use the app's **File** menu.
    added to the Resources panel's list, so it shows up there without being added by hand
    (press **[en:tran:Reload]** in the panel's ⋮ menu if the panel was already open).
 
-> Notes: this is a **copy, not a replacement**. A file already on the machine with the
-> same contents is left alone, so importing the same backup twice changes nothing and is
-> safe to repeat. If a file has the same NAME but different contents — you edited the song
-> on this machine — **your version is kept** and the one from the backup is added beside
-> it as `song (1).ows`, for you to compare and delete whichever you do not want. Nothing
-> is ever overwritten.
+> Notes: this is a **copy, not a replacement**. A song, a document, a presenting flow or a
+> Bible note with the same NAME as one already on the machine is always added beside it
+> as `song (1).owl` — **your version is kept**, for you to compare and delete whichever you
+> do not want — even when the two are the very same file, so importing the same backup
+> twice gives you a second copy of each. A bible list of the same name only gains the
+> verses it does not have yet. Any other file — a picture, a video, a Resources file — is
+> left alone when the one here has the same contents, and added beside it as `a (1).mp4`
+> when it does not. Nothing is ever overwritten.
 >
 > Importing writes into the folders **this** machine has set up, so choose them first
 > (Settings → Path Settings). If one of them has no folder yet, the import stops before
@@ -75,13 +77,13 @@ or to set up a second machine — use the app's **File** menu.
 >
 > The backup leaves out the working files the app can rebuild by itself — a document's
 > undo history and the page images made for PDF/PowerPoint/Word previews — so it stays
-> much smaller than the folders themselves, and those are regenerated on the other
-> machine the first time you open the document.
+> much smaller than the folders themselves, and the page images are made again on
+> the other machine the first time you open the document (the undo history starts afresh).
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `NAV-17` · `NAV-18` · `NAV-19`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

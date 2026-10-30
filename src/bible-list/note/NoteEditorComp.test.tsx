@@ -192,4 +192,101 @@ describe('note editors', () => {
         );
         expect(updateAndSave).not.toHaveBeenCalled();
     });
+
+    async function renderTitle() {
+        await act(async () =>
+            root.render(<NoteTitleEditorComp note={note} noteItem={item} />),
+        );
+    }
+
+    function readText() {
+        return container.querySelector('[data-text]')?.textContent;
+    }
+
+    test('a file update brings a title changed on disk into the title editor', async () => {
+        await renderTitle();
+        liveItem = {
+            id: 2,
+            title: 'Disk title',
+            content: 'Old content',
+        } as NoteItem;
+        await act(async () => h.onFileUpdate?.());
+        expect(reload).toHaveBeenCalledOnce();
+        expect(readText()).toBe('Disk title');
+        expect(updateAndSave).not.toHaveBeenCalled();
+    });
+
+    test('an item gone from the file leaves either editor as it is', async () => {
+        liveItem = null as unknown as NoteItem;
+        await renderTitle();
+        await act(async () => h.onFileUpdate?.());
+        expect(readText()).toBe('Old title');
+        await act(async () => root.render(<div />));
+        await renderContent();
+        await act(async () => h.onFileUpdate?.());
+        expect(readText()).toBe('Old content');
+        expect(reload).toHaveBeenCalledTimes(2);
+        expect(updateAndSave).not.toHaveBeenCalled();
+    });
+
+    test('an update echoing the text being edited keeps the edit in progress', async () => {
+        await renderContent();
+        await click('Edit');
+        liveItem = { id: 2, title: 'Old title', content: 'edited' } as NoteItem;
+        await act(async () => h.onFileUpdate?.());
+        // Rebuilding the store would have flushed the old one's save.
+        expect(updateAndSave).not.toHaveBeenCalled();
+    });
+
+    test('a reload that resolves after the editor moved on is dropped', async () => {
+        const otherItem = {
+            id: 3,
+            title: 'Other title',
+            content: 'Other content',
+        } as NoteItem;
+        for (const render of [renderContent, renderTitle]) {
+            let finishReload: () => void = () => {};
+            reload.mockImplementationOnce(
+                () =>
+                    new Promise<void>((resolve) => {
+                        finishReload = resolve;
+                    }),
+            );
+            item = {
+                id: 2,
+                title: 'Old title',
+                content: 'Old content',
+            } as NoteItem;
+            await render();
+            liveItem = {
+                id: 2,
+                title: 'Stale title',
+                content: 'Stale content',
+            } as NoteItem;
+            await act(async () => h.onFileUpdate?.());
+            item = otherItem;
+            await render();
+            const shown = readText();
+            expect(shown).toMatch(/^Other /);
+            await act(async () => finishReload());
+            expect(readText()).toBe(shown);
+            await act(async () => root.render(<div />));
+        }
+        expect(updateAndSave).not.toHaveBeenCalled();
+    });
+
+    test("the content editor's own save, echoed back by the file, is not written again", async () => {
+        await renderContent();
+        await click('Edit');
+        await click('Save');
+        expect(updateAndSave).toHaveBeenCalledOnce();
+        // The file now holds what was just saved.
+        liveItem = {
+            id: 2,
+            title: 'Old title',
+            content: 'edited',
+        } as NoteItem;
+        await act(async () => h.onFileUpdate?.());
+        expect(updateAndSave).toHaveBeenCalledOnce();
+    });
 });

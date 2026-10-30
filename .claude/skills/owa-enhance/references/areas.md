@@ -43,7 +43,8 @@ HTML injection in any app window is code execution on the machine, and the
 first class to hunt is outside text reaching an HTML sink or a node-integrated
 window.
 
-**Scope:** `electron/electronEventListener.ts` (every `ipcMain` handler);
+**Scope:** every `ipcMain` handler (`electron/electronEventListener.ts`,
+`electron/screenMirrorService.ts`, `electron/virtualDisplayService.ts`);
 `electron/client/` (the provider bridge each renderer calls — `fileUtils.ts`,
 `httpUtils.ts`, `ytUtils.ts`); `electron/protocolHelpers.ts` and
 `electron/fsServe.ts` (what `owa://` serves); `electron/electronHelpers.ts`
@@ -237,7 +238,8 @@ states; what effects cost to paint (blur, glass, animation — `performance`
 too).
 
 **Owned elsewhere:** the chatbot and AI Chat windows (their own skills, and
-English-only by decision); QA walks and the manual → `/owa-robot-test`; the
+their own `tran` in the app's language — memory
+`chatbot-follows-app-language`); QA walks and the manual → `/owa-robot-test`; the
 in-app tips and their coverage → `/owa-enhance-tips` (`TP-xx`).
 
 **Leads:** literal English `title`, `aria-label`, `placeholder` and `alt`
@@ -265,8 +267,8 @@ the robot run's findings.
    happened and what to do next?
 6. **The robot run's UX rows**, re-checked against HEAD.
 
-**Decisions, not findings:** the chatbot and AI Chat windows are English-only;
-nothing in the chatbot auto-hides and its caution has no dismiss; the
+**Decisions, not findings:** nothing in the chatbot auto-hides and its caution
+has no dismiss for good (a 30-day hide at most); the
 hover-only toolbars are deliberate — finding them is fair game, hiding more is
 not; memory `app-ellipsis-left-reverses-names`,
 `confirm-popup-labels-auto-tran`, `qa-intentional-not-bugs`.
@@ -349,8 +351,8 @@ currency, and the conventions (`Comp` names, `useAppCurrentRef`).
 **Research:**
 
 1. **Cycles.** `npx depcruise src --include-only "^src" --output-type err` to
-   the terminal, a few seconds — never `npm run dc:err`, which writes the
-   tracked `dc-dependency-graph/errors.html`. The config's `no-circular` rule
+   the terminal, a few seconds — never `npm run dc:err`, which writes
+   `dc-dependency-graph/errors.html` into the repository. The config's `no-circular` rule
    reports cycles as warnings, and there are hundreds, so rank a cycle by what
    it costs — a module-initialisation crash, a subsystem that cannot load
    alone — never by the count.

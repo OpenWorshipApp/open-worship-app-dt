@@ -3,7 +3,7 @@ id: W-37
 title: "Garder vos propres fichiers à côté du verset (Ressources)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 0895194b7f6c68d7
+translatedFrom: e6a8845c945ff84b
 ---
 # W-37 — Garder vos propres fichiers à côté du verset (Ressources)
 
@@ -77,7 +77,7 @@ comptent tous aussi au niveau du livre.
    que le reste du nom pour que la référence se lise en premier. Survolez un fichier pour voir où il se
    trouve réellement. 📸
    Un fichier au niveau du livre n'est listé **qu'une fois**, sous son modèle en pointillés, quel que soit le nombre de chapitres
-   de ce livre que vous avez ouverts, et porte une étiquette **[en:tran:Introduction]** en pointillés pour qu'un
+   de ce livre que vous avez ouverts, et, sauf si le panneau est très étroit, porte une étiquette **[en:tran:Introduction]** en pointillés pour qu'un
    `PSA.0.pdf` dise pourquoi il est là. Un groupe qui n'a rien pour ce que vous lisez affiche
    **[en:tran:No matching files]**.
 5. Parfois, vous voulez un fichier qui n'est _pas_ nommé d'après ce verset. Cliquez sur la **loupe**

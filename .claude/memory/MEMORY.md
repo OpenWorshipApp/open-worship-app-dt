@@ -15,7 +15,7 @@
 - [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in a page script
 - Bible notes: [popup CDP](bible-note-floating-toolbar-width.md) · [editor writes a history](bible-note-editing-history.md) · [verse marks are note items](verse-marks-note-items.md)
 - [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — blanks the page · [Confirm labels are auto-tran'd](confirm-popup-labels-auto-tran.md)
-- Tests: [env-leak flakes](vitest-env-leak-flakes.md) · [`document` at module scope](appprovider-mock-node-env.md) · [vi.mock survives resetModules](vitest-mock-factory-survives-resetmodules.md) · [Monaco `.css` failure](monaco-css-test-failure-local-open-lyric.md) · [Coverage = loaded files](coverage-number-is-loaded-files-only.md) — 48% honest
+- Tests: [env-leak flakes](vitest-env-leak-flakes.md) · [`document` at module scope](appprovider-mock-node-env.md) · [vi.mock survives resetModules](vitest-mock-factory-survives-resetmodules.md) · [Monaco `.css` failure](monaco-css-test-failure-local-open-lyric.md) · [Coverage = loaded files](coverage-number-is-loaded-files-only.md) — 48% honest · [Parallel test agents](parallel-test-agent-coverage-run.md) — `--no-run` always, src tests type-checked
 - Toolchain: [npm 12 gotchas](npm-12-install-gotchas.md) · [open-lyric dep](open-lyric-subtree-branch-dep.md) · [TypeScript 7](typescript-7-side-by-side.md) · Vite: [504 → touch config](vite-dep-optimizer-504-restart.md) · [cached failed import](vite-caches-failed-import-resolution.md)
 - [Blob downloads pop Save As](blob-download-pops-save-dialog.md) — orphans a .tmp
 - [Dev data dir is separate](dev-data-dir-is-separate.md) — only `userData` gets `-dev`

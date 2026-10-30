@@ -287,3 +287,153 @@ describe('whole-data archive manifest and restore', () => {
         expect(mocks.error).toHaveBeenCalledWith(error);
     });
 });
+
+describe('whole-data archive export and refusals', () => {
+    const documentsFolder = {
+        dataDirectory: { settingName: 'documents-dir' },
+        dirPath: '/data/documents',
+    } as any;
+    const biblesFolder = {
+        dataDirectory: { settingName: 'bible-dir', fileNamePattern: /\.xml$/i },
+        dirPath: '/data/bibles',
+        fileNames: ['KJV.xml', 'KSV.xml'],
+    } as any;
+
+    test('a folder whose path is gone is not offered', async () => {
+        state.existing.add('/data/bibles');
+        state.entries.set('/data/bibles', [file('KJV.xml')]);
+        expect(await getExportableDataFolders()).toMatchObject([
+            { dirPath: '/data/bibles', fileNames: ['KJV.xml'] },
+        ]);
+        state.paths.documents = '';
+        state.existing.add('/data/documents');
+        expect(await getExportableDataFolders()).toHaveLength(1);
+    });
+
+    test('a filtered folder goes in file by file, one never listed not at all', async () => {
+        const { createDataArchive } = await import('./dataArchiveHelpers');
+        const { tarCreate } = await import('../../server/appHelpers');
+        const unlistedFolder = {
+            dataDirectory: {
+                settingName: 'bible-dir',
+                fileNamePattern: /\.xml$/i,
+            },
+            dirPath: '/data/other',
+        } as any;
+
+        await expect(
+            createDataArchive([documentsFolder, biblesFolder, unlistedFolder]),
+        ).resolves.toBe('/downloads/open-worship-data.owadata.tar');
+
+        const [ancestorDir, , files] = vi.mocked(tarCreate).mock.calls[0];
+        expect(ancestorDir).toBe('/data');
+        expect(files).toEqual([
+            'documents',
+            'bibles/KJV.xml',
+            'bibles/KSV.xml',
+        ]);
+    });
+
+    test('a protected export wraps the plain archive built beside it', async () => {
+        const { createDataArchive } = await import('./dataArchiveHelpers');
+        const { tarCreate } = await import('../../server/appHelpers');
+
+        await expect(
+            createDataArchive([documentsFolder], 'secret'),
+        ).resolves.toBe('/downloads/protected.owadata.enc');
+
+        expect(vi.mocked(tarCreate).mock.calls[0][1]).toBe(
+            '/downloads/open-worship-data.owadata.tar.plain.part',
+        );
+    });
+
+    test('Export Data reveals the archive it wrote', async () => {
+        const { exportData } = await import('./dataArchiveHelpers');
+        const { showFileOrDirExplorer } =
+            await import('../../server/appHelpers');
+
+        const archiveFilePath = await exportData([documentsFolder]);
+
+        expect(archiveFilePath).toBe(
+            '/downloads/open-worship-data.owadata.tar',
+        );
+        expect(showFileOrDirExplorer).toHaveBeenCalledWith(archiveFilePath);
+    });
+
+    test('an export of nothing is refused before tar runs', async () => {
+        const { createDataArchive } = await import('./dataArchiveHelpers');
+        const { tarCreate } = await import('../../server/appHelpers');
+
+        await expect(createDataArchive([])).rejects.toThrow(
+            'No folder to export',
+        );
+        expect(tarCreate).not.toHaveBeenCalled();
+    });
+
+    test('an unlistable folder and an unreadable history are passed over', async () => {
+        const { collectUnsavedDataEntries } =
+            await import('./dataArchiveHelpers');
+        const { default: EditingHistoryManager } =
+            await import('../../editing-manager/EditingHistoryManager');
+        const notesFolder = {
+            dataDirectory: { settingName: 'notes-dir' },
+            dirPath: '/data/notes',
+        } as any;
+        state.entries.set('/data/documents', [
+            dir('locked.ows.histories'),
+            dir('empty.ows.histories'),
+            file('plain.ows'),
+        ]);
+        const listError = new Error('EACCES');
+        const readError = new Error('history locked');
+        const getEntries = state.entries.get.bind(state.entries);
+        vi.spyOn(state.entries, 'get').mockImplementation((dirPath) => {
+            if (dirPath === '/data/notes') {
+                throw listError;
+            }
+            return getEntries(dirPath);
+        });
+        vi.spyOn(EditingHistoryManager, 'getInstance').mockImplementationOnce(
+            () => {
+                throw readError;
+            },
+        );
+
+        await expect(
+            collectUnsavedDataEntries(
+                [notesFolder, documentsFolder],
+                ['notes', 'documents'],
+            ),
+        ).resolves.toEqual([]);
+
+        expect(mocks.error.mock.calls).toEqual([[listError], [readError]]);
+    });
+
+    test('a manifest of another kind or version is refused', async () => {
+        for (const manifest of [
+            null,
+            'text',
+            { version: 2, kind: 'app-data', folders: [docs] },
+            { version: 1, kind: 'other', folders: [docs] },
+            { version: 1, kind: 'app-data', folders: 'documents' },
+        ]) {
+            state.manifest = manifest;
+            await expect(readDataArchiveManifest('/archive')).rejects.toThrow(
+                'Invalid data archive manifest',
+            );
+        }
+        expect(mocks.cleanup).toHaveBeenCalledTimes(5);
+    });
+
+    test('an import of nothing, or of only unknown folders, is refused at once', async () => {
+        await expect(importDataArchive('/archive', [])).rejects.toThrow(
+            'No folder to import',
+        );
+        await expect(
+            importDataArchive('/archive', [
+                { settingName: 'newer-app-dir', entry: 'newer' },
+            ]),
+        ).rejects.toThrow('No known data folder to import');
+        expect(mocks.tarExtract).not.toHaveBeenCalled();
+    });
+});

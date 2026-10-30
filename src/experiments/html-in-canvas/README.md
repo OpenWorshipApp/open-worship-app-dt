@@ -32,8 +32,8 @@ Upstream: <https://html-in-canvas.dev/> · <https://github.com/WICG/html-in-canv
   the first transition of a service. ✅
 - Functional gap to plan for: **cross-origin iframes draw blank**, which is our
   `website` and `youtube` canvas-item types — recoverable three ways: drop the
-  frame (resolve the YouTube URL to its direct stream with the `yt-dlp` we
-  already ship and play it in a `<video>`, which the draw _does_ capture),
+  frame (resolve the YouTube URL to its direct stream with the `yt-dlp` the
+  media downloader installs on demand and play it in a `<video>`, which the draw _does_ capture),
   mirror the real player's pixels out of the frame with Element/Region Capture,
   or keep it in a DOM overlay layer driven by the draw matrix (§8.3). ✅
 
@@ -56,7 +56,7 @@ flag-gated — anything built on it needs feature detection and a DOM fallback.
 | Firefox / Safari                            | no commitment to implement 📄                                                          |
 
 To try it in the app, add one line next to the existing switch in
-[electron/index.ts:41](electron/index.ts#L41):
+`electron/index.ts`'s `main()`:
 
 ```ts
 app.commandLine.appendSwitch('enable-blink-features', 'CanvasDrawElement');
@@ -266,8 +266,8 @@ What this unlocks that CSS can't do as cleanly:
 - **`ctx.filter`** — `blur()`, `brightness()`, etc. applied to a live DOM subtree.
 - **WebGL** via `texElementImage2D` — page-curl, dissolve, particles, 3D.
 - **A frozen outgoing slide.** Today `render()` in
-  [ScreenVaryAppDocumentManager.ts:890](src/_screen/managers/ScreenVaryAppDocumentManager.ts#L890)
-  keeps the old slide's DOM mounted and animates it out (`animOut` then
+  [ScreenVaryAppDocumentManager.ts](../../_screen/managers/ScreenVaryAppDocumentManager.ts)
+  keeps the old slide's DOM mounted and animates it out (`animateSlideOut` then
   `child.remove()`), so two full slide trees — including videos and YouTube
   players — are live at once for the whole transition. An `ElementImage` is
   just pixels, so the old tree can be torn down immediately. That is a direct
@@ -407,19 +407,18 @@ must be re-measured there before committing.
 ## 8. What this would mean for our codebase
 
 1. **The effect layer is a rewrite, not a port.**
-   [transitionEffectHelpers.ts](src/_screen/transitionEffectHelpers.ts) builds
-   `fade`, `move`, `zoom` and `none` out of `@keyframes` on `opacity`,
-   `translate` and `transform: scale()`, applied to the container that would become the drawn
+   [transitionEffectHelpers.ts](../../_screen/transitionEffectHelpers.ts) builds
+   `fade` and `zoom` out of `@keyframes` on `opacity` and
+   `transform: scale()`, applied to the container that would become the drawn
    child. Those are precisely the two properties that are invisible through
-   `drawElementImage`. `move` (which animates `left` via rAF) _would_ still
-   render, since `left` is a layout property — but at the cost of relayout per
-   frame. All of them are better expressed as canvas math.
+   `drawElementImage`. `move` steps the individual `translate` property via
+   rAF, and `none` is a cut with no animation. All of them are better
+   expressed as canvas math.
 2. **We'd gain the transition primitives the TODOs are about.** The two
    `// TODO: fix backdrop filter stop working during animation` notes exist
    because CSS composited animations break `backdrop-filter`. In the canvas
    path `backdrop-filter` renders correctly inside the subtree, and effect
-   opacity lives in `globalAlpha` instead of on the element. Same for the
-   `// TODO: make none effect work without animation to prevent flash`.
+   opacity lives in `globalAlpha` instead of on the element.
 3. **Cross-origin content regresses, but there are three mitigations.**
    `CanvasItemWebsite` (iframe) and `CanvasItemYouTube` (YouTube embed) are
    cross-origin iframes → they draw as blank holes, silently (measured with a
@@ -427,8 +426,8 @@ must be re-measured there before committing.
 
    For `CanvasItemYouTube` specifically the cheaper fix is to **stop using a
    frame**: what the draw refuses is the cross-origin _iframe_, not the video.
-   `resolveMediaStreamUrl` (`src/server/appHelpers.ts`) runs the `yt-dlp` we
-   already ship — the media downloader's own binary — with `-g -f b[ext=mp4]/b`
+   `resolveMediaStreamUrl` (`src/server/appHelpers.ts`) runs the `yt-dlp` the
+   media downloader installs on demand — its own binary — with `-g -f b[ext=mp4]/b`
    to turn a watch URL into its direct muxed stream, and a plain
    `<video crossOrigin="anonymous">` on that URL draws into the canvas like any
    local clip, live, readable, at the video's own paint rate. Verified end to

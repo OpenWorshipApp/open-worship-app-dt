@@ -3,7 +3,7 @@ id: W-04
 title: "Faire défiler les diapositives automatiquement avec une minuterie"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 8374265b09f81140
+translatedFrom: 0ada2ed50941a93b
 ---
 # W-04 — Faire défiler les diapositives automatiquement avec une minuterie
 
@@ -12,7 +12,8 @@ translatedFrom: 8374265b09f81140
 1. Ouvrez les diapositives d'un document et mettez-en une à l'écran (W-03, étapes 1–2) — le
    chronomètre n'est là que tant qu'une diapositive de ce document est à l'écran.
 2. Cliquez sur l'**icône du chronomètre** en bas à gauche de l'aperçu des diapositives — une petite
-   bande s'ouvre : **✕**, lecture, la case des secondes, le compte à rebours et un bouton à curseurs. 📸
+   bande s'ouvre : **✕**, lecture, la case des secondes, le compte à rebours (seulement pendant que les
+   diapositives avancent) et un bouton à curseurs. 📸
 3. Tapez l'intervalle en secondes, puis cliquez sur **lecture**. Les diapositives avancent selon la
    minuterie et le compte à rebours indique combien de temps il reste avant la suivante.
 4. Pour changer la façon dont elles avancent, cliquez sur le bouton à **curseurs**. Les règles s'ouvrent

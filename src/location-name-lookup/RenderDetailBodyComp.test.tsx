@@ -55,7 +55,13 @@ vi.mock('./LookupDetailPartsComp', () => ({
             <div className={`row ${label}`}>{value}</div>
         );
     },
-    OptionalTextListRowComp: () => null,
+    OptionalTextListRowComp: ({
+        label,
+        values,
+    }: {
+        label: string;
+        values: string[];
+    }) => <div className={`row ${label}`}>{values.join('|')}</div>,
     OptionalLocationListRowComp: () => null,
     OptionalNameListRowComp: () => null,
     OptionalVerseListRowComp: () => null,
@@ -69,7 +75,11 @@ vi.mock('./lookupRecordHelpers', () => ({
         return trimmedValue !== '' && trimmedValue.toLowerCase() !== 'unknown';
     },
     getDisplayLinks: () => [],
-    getFormattedYearRange: (value: unknown) => String(value),
+    // Shows which dictionary it was handed: the lookup language's, or not.
+    getFormattedYearRange: (
+        value: { type: string },
+        translate: (text: string) => string,
+    ) => translate(value.type),
 }));
 
 import {
@@ -125,6 +135,20 @@ describe('detail body facts follow the lookup language', () => {
         );
         expect(facts).toBe('km:Person');
         expect(rowText('Gender')).toBeNull();
+    });
+
+    // Abraham under `km` read `175 years` beside `មនុស្ស` and `ប្រុស`.
+    test('a name record translates its age and its year ranges', () => {
+        h.nameRecord = genNameRecord({
+            age: '175 years',
+            years: [{ type: 'reign', start: -1010, end: -970 }],
+        });
+        const { facts, rowText } = render(
+            <RenderNameDetailComp recordId="x" onVersesResolved={() => {}} />,
+        );
+        expect(facts).toBe('km:Person|km:Male|km:175 years');
+        expect(rowText('Age')).toBe('km:175 years');
+        expect(rowText('Years')).toBe('km:reign');
     });
 
     // Siloam under `km` read `Pool`.

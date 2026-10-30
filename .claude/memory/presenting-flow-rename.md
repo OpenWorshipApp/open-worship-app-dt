@@ -41,7 +41,8 @@ false of the translations, and an English-only grep cannot see the difference. S
   kept on purpose (the user's decision, 2026-10-11): it is a volunteer's vocabulary, not a name in the app.
 - (The second lookalike, `displayListeners` — the letters `playList` inside
   `di-splayList-eners` — lived in `src/_screen/preview/preview.runtime.test.tsx`,
-  which has since been deleted.)
+  which has since been deleted; `displayList` in `src/chatbot/reportHelpers.ts`
+  holds the same letters today.)
 
 **The one-off migration** lives in
 [src/helper/presentingFlowRenameMigration.ts](../../src/helper/presentingFlowRenameMigration.ts),
@@ -61,7 +62,7 @@ lookalike, or by reintroducing the old word "just for the migration".
 **How to apply:** before any future sweep for a leftover, check the survivor
 first. If the migration ever needs extending, extend the discovery, not a
 hard-coded name. Its test (`presentingFlowRenameMigration.test.ts`) was deleted
-in the 2026-08-24 test prune (47053c9d); the migration itself is intact
+in the 2026-08-24 test prune (47053c9d) and rebuilt on 2026-10-15; the migration itself is intact
 (`src/helper/presentingFlowRenameMigration.ts`, claimed in `initPresentingFlowRenameMigration`, `src/boot.ts`).
 See [[presenting-flow-drag-and-settings-rules]] for the setting-name sanitizing
 rules the key rewrite depends on.

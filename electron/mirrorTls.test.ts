@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
@@ -213,4 +214,82 @@ test('the port closes once its sockets are destroyed, TLS ones too', async () =>
         socket.destroy();
     }
     await closed;
+});
+
+test('names that are empty, repeated or past the 32nd are left out of the certificate', async () => {
+    const hosts = Array.from({ length: 40 }, (_, index) => `host-${index}`);
+    const { cert } = await genMirrorTlsCertificate(
+        ['', '   ', 'LOCALHOST', '[2001:db8::5]', '2001:db8::5', ...hosts],
+        NOW,
+    );
+    const x509 = new crypto.X509Certificate(cert);
+    const names = x509.subjectAltName!.split(', ');
+    expect(names).toHaveLength(32);
+    expect(names.filter((name) => name === 'DNS:localhost')).toHaveLength(1);
+    expect(names.filter((name) => name.startsWith('IP Address:'))).toHaveLength(
+        1,
+    );
+    expect(x509.checkIP('2001:db8::5')).toBe('2001:db8::5');
+    // localhost and the address take two places: hosts 0..29 fill the rest.
+    expect(x509.checkHost('host-29')).toBe('host-29');
+    expect(x509.checkHost('host-30')).toBeUndefined();
+}, 30_000);
+
+test('a key that cannot be made fails the certificate', async () => {
+    vi.spyOn(crypto, 'generateKeyPair').mockImplementation(((
+        ...args: any[]
+    ) => {
+        args.at(-1)(new Error('no entropy'));
+    }) as any);
+    await expect(genMirrorTlsCertificate([], NOW)).rejects.toThrow(
+        'no entropy',
+    );
+});
+
+// A connection that never says its first byte, as the port's socket sees it.
+class SilentSocket extends EventEmitter {
+    destroyed = false;
+    readableEnded = false;
+    timeouts: number[] = [];
+    setTimeout(milliseconds: number, callback?: () => void) {
+        this.timeouts.push(milliseconds);
+        if (callback) {
+            this.once('timeout', callback);
+        }
+        return this;
+    }
+    read() {
+        return null;
+    }
+    unshift() {}
+    destroy() {
+        this.destroyed = true;
+        return this;
+    }
+}
+
+test('a connection silent for a minute, or failing before it speaks, is closed and routed nowhere', () => {
+    const plain = { emit: vi.fn() };
+    const toSecure = vi.fn(() => null);
+    const silent = new SilentSocket();
+    routeMirrorSocket(silent as unknown as net.Socket, {
+        plain: plain as unknown as net.Server,
+        toSecure,
+    });
+    expect(silent.timeouts).toEqual([60_000]);
+    silent.emit('timeout');
+    expect(silent.destroyed).toBe(true);
+    // A byte that turns up after it was closed goes nowhere.
+    silent.emit('readable');
+    expect(plain.emit).not.toHaveBeenCalled();
+    expect(toSecure).not.toHaveBeenCalled();
+
+    const failing = new SilentSocket();
+    routeMirrorSocket(failing as unknown as net.Socket, {
+        plain: plain as unknown as net.Server,
+        toSecure,
+    });
+    expect(() => failing.emit('error', new Error('ECONNRESET'))).not.toThrow();
+    expect(failing.destroyed).toBe(true);
+    expect(plain.emit).not.toHaveBeenCalled();
 });

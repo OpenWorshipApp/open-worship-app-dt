@@ -24,6 +24,8 @@ const mocks = vi.hoisted(() => {
         verseReadList: [] as unknown[][],
         collectedTargetList: [] as unknown[],
         isKjvMissing: false,
+        // What a scan finds; nothing unless a test says otherwise.
+        foundRecords: null as null | { names: unknown[]; locations: unknown[] },
     };
 });
 
@@ -83,7 +85,31 @@ vi.mock('../location-name-lookup/lookupLangHelpers', () => ({
     useSelectedLookupLangCode: () => mocks.langCode,
 }));
 vi.mock('../location-name-lookup/RenderLookupRecordItemComp', () => ({
-    default: () => null,
+    default: ({
+        kind,
+        record,
+        extraLabel,
+    }: {
+        kind: string;
+        record: {
+            id: string;
+            name: string;
+            kjvName: string;
+            title: string;
+            iconClass: string;
+        };
+        extraLabel: string;
+    }) => (
+        <li
+            className="lookup-record"
+            data-kind={kind}
+            data-id={record.id}
+            data-icon={record.iconClass}
+            title={record.title}
+        >
+            {`${record.name}|${record.kjvName}|${extraLabel}`}
+        </li>
+    ),
 }));
 vi.mock('../location-name-lookup/verseRecordListHelpers', () => ({
     collectVerseRecords: (
@@ -92,9 +118,12 @@ vi.mock('../location-name-lookup/verseRecordListHelpers', () => ({
         target: unknown,
     ) => {
         mocks.collectedTargetList.push(target);
-        return { names: [], locations: [] };
+        return mocks.foundRecords ?? { names: [], locations: [] };
     },
-    toVerseListLabel: () => '',
+    // The real rule: each verse under its chapter.
+    toVerseListLabel: (chapter: number, verseList: number[]) => {
+        return verseList.map((verse) => `${chapter}:${verse}`).join(', ');
+    },
     // The real rule: an open end is where the chapter read ends.
     toVerseRecordChapterTarget: (
         bookKey: string,
@@ -144,6 +173,7 @@ beforeEach(() => {
     mocks.verseReadList = [];
     mocks.collectedTargetList = [];
     mocks.isKjvMissing = false;
+    mocks.foundRecords = null;
 });
 
 afterEach(() => {

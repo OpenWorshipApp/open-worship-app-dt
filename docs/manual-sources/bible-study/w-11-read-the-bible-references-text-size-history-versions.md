@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124, RD-125, RD-126, ST-59, CB-125]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-11 — Read the Bible (references, text size, history, versions)
 
@@ -35,8 +35,8 @@ has no header tabs.
    the button goes once the last one is shown. 📸
    **Open a reference in a section heading.** Some Bibles print references in their section headings — `(… យ៉ូហាន
    ១៨.៣៩-១៩.១៦)` under a heading of Mark 15. Click one and the whole passage it
-   names, every chapter of it, opens in a small floating panel; the passage you
-   are reading stays as it is.
+   names opens in a small floating panel — a long one the same way, three chapters
+   and **...** — and the passage you are reading stays as it is.
 2. If the words are too small, click the small **⋯** at the bottom-left of the
    passage to open the hidden controls. Then press and hold the
    **[en:tran:Font Size]** slider, move it to the right, and let go when the words are
@@ -103,5 +103,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `RD-122` · `RD-124` · `RD-125` · `RD-126` · `ST-59` · `CB-125`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

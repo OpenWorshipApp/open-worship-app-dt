@@ -12,6 +12,8 @@ const h = vi.hoisted(() => ({
     errors: [] as unknown[],
     selectedDirs: new Map<string, string>(),
     sessionData: { defaultStorageDirPath: '/church/data' as string | null },
+    // File names the copy refuses to write -- empty unless a test fills it.
+    copyFailNames: new Set<string>(),
 }));
 
 vi.mock('../server/appProvider', () => ({
@@ -93,6 +95,9 @@ vi.mock('../server/fileHelpers', async (importOriginal) => {
             dir: string,
             name: string,
         ) => {
+            if (h.copyFailNames.has(name)) {
+                return null;
+            }
             const to = posix.join(dir, name);
             h.files.set(to, h.files.get(from) ?? '');
             h.copied.push({ from, to });
@@ -125,6 +130,7 @@ import {
     createWorkDir,
     findExistingLocalFile,
     getImportCollisionPolicy,
+    importArchiveFiles,
     importBackgroundMetas,
     importTransitionMetas,
     readArchiveManifest,
@@ -146,6 +152,7 @@ beforeEach(() => {
     h.errors.length = 0;
     h.selectedDirs.clear();
     h.sessionData.defaultStorageDirPath = '/church/data';
+    h.copyFailNames.clear();
 });
 
 describe('archive manifest boundaries', () => {
@@ -561,5 +568,267 @@ describe('import collision and restoration', () => {
         await importBackgroundMetas('/tmp/extract', backgrounds, pathMap);
         await importTransitionMetas('/tmp/extract', transitions, pathMap);
         expect(h.updates).toHaveLength(3);
+    });
+});
+
+describe('what a bundle leaves out, and what an import refuses', () => {
+    test('a document with no sidecars and no canvas media is bundled alone', async () => {
+        h.files.set('/docs/plain.ows', JSON.stringify({}));
+        h.files.set(
+            '/docs/slides.ows',
+            JSON.stringify({
+                items: [
+                    { title: 'no canvas list' },
+                    {
+                        canvasItems: [
+                            { type: 'video', filePath: '/media/gone.mp4' },
+                        ],
+                    },
+                ],
+            }),
+        );
+        // Not a canvas document at all, and one that is not JSON.
+        h.files.set('/docs/song.owl', '<song/>');
+        h.files.set('/docs/broken.ows', '{bad');
+        const collector = new ArchiveFileCollector();
+        for (const path of [
+            '/docs/plain.ows',
+            '/docs/slides.ows',
+            '/docs/song.owl',
+            '/docs/broken.ows',
+        ]) {
+            expect(await collector.addDocument(path)).toBe(true);
+        }
+        expect([...collector.entryByOriginalPath.keys()]).toEqual([
+            '/docs/plain.ows',
+            '/docs/slides.ows',
+            '/docs/song.owl',
+            '/docs/broken.ows',
+        ]);
+        expect(collector.backgroundMetas).toEqual([]);
+        expect(collector.transitionMetas).toEqual([]);
+        expect(collector.extraContentByArchivePath.size).toBe(0);
+    });
+
+    test('an empty or unusable sidecar is not bundled', async () => {
+        h.files.set('/docs/a.ows', JSON.stringify({ items: [] }));
+        h.files.set('/docs/a.ows.bg.json', '{}');
+        h.files.set(
+            '/docs/a.ows.transition.json',
+            JSON.stringify({ preview: 'bounce' }),
+        );
+        const collector = new ArchiveFileCollector();
+        await collector.addDocument('/docs/a.ows');
+        expect(collector.backgroundMetas).toEqual([]);
+        expect(collector.transitionMetas).toEqual([]);
+        expect(collector.extraContentByArchivePath.size).toBe(0);
+    });
+
+    test('a sidecar entry whose media is gone is carried as it was', async () => {
+        h.files.set('/docs/b.ows', JSON.stringify({ items: [] }));
+        h.files.set(
+            '/docs/b.ows.bg.json',
+            JSON.stringify({
+                first: {
+                    type: DragTypeEnum.BACKGROUND_VIDEO,
+                    item: '/media/missing.mp4',
+                },
+            }),
+        );
+        const collector = new ArchiveFileCollector();
+        await collector.addDocument('/docs/b.ows');
+        expect(collector.entryByOriginalPath.has('/media/missing.mp4')).toBe(
+            false,
+        );
+        expect(collector.backgroundMetas).toHaveLength(1);
+        const [archivedSidecar] = collector.extraContentByArchivePath.values();
+        expect(JSON.parse(archivedSidecar).first.item).toBe(
+            '/media/missing.mp4',
+        );
+    });
+
+    test('a Bible list that cannot be read is written as a new file', async () => {
+        h.files.set('/bibles/list.json', JSON.stringify({ items: [] }));
+        expect(
+            await findExistingLocalFile(
+                'merge-items',
+                '/tmp/extract/files/missing.json',
+                '/bibles/list.json',
+            ),
+        ).toBeNull();
+        expect(h.errors).toHaveLength(1);
+        expect(h.files.get('/bibles/list.json')).toBe(
+            JSON.stringify({ items: [] }),
+        );
+    });
+
+    test('identical media is reused and a document is written anew', async () => {
+        h.files.set('/tmp/extract/files/001-clip.mp4', 'same bytes');
+        h.files.set('/local/videos/clip.mp4', 'same bytes');
+        h.files.set('/tmp/extract/files/002-song.ows', '{"items":[]}');
+        const dirPathByKind = new Map([
+            ['video', '/local/videos'],
+            ['document', '/local/docs'],
+        ] as const);
+        const result = await importArchiveFiles(
+            '/tmp/extract',
+            [
+                {
+                    originalPath: '/old/data/videos/clip.mp4',
+                    archivePath: 'files/001-clip.mp4',
+                    kind: 'video',
+                },
+                {
+                    originalPath: '/old/data/documents/song.ows',
+                    archivePath: 'files/002-song.ows',
+                    kind: 'document',
+                },
+            ],
+            new Map(dirPathByKind),
+            '/old/data',
+        );
+        expect(
+            result.localFilePathByOriginalPath.get('/old/data/videos/clip.mp4'),
+        ).toBe('/local/videos/clip.mp4');
+        // Keyed the way the document reads it back on THIS machine too.
+        expect(
+            result.localFilePathByOriginalPath.get(
+                '/church/data/videos/clip.mp4',
+            ),
+        ).toBe('/local/videos/clip.mp4');
+        expect(result.writtenItemFilePaths).toEqual(['/local/docs/song.ows']);
+        expect(h.copied).toEqual([
+            {
+                from: '/tmp/extract/files/002-song.ows',
+                to: '/local/docs/song.ows',
+            },
+        ]);
+    });
+
+    test('a file missing from the bundle, or one that cannot be written, stops the import', async () => {
+        const dirPathByKind = new Map([['image', '/local/images']] as const);
+        await expect(
+            importArchiveFiles(
+                '/tmp/extract',
+                [
+                    {
+                        originalPath: '/old/a.png',
+                        archivePath: 'files/001-a.png',
+                        kind: 'image',
+                    },
+                ],
+                new Map(dirPathByKind),
+            ),
+        ).rejects.toThrow('Archive file not found: files/001-a.png');
+
+        h.files.set('/tmp/extract/files/001-a.png', 'png');
+        h.copyFailNames.add('a.png');
+        await expect(
+            importArchiveFiles(
+                '/tmp/extract',
+                [
+                    {
+                        originalPath: '/old/a.png',
+                        archivePath: 'files/001-a.png',
+                        kind: 'image',
+                    },
+                ],
+                new Map(dirPathByKind),
+            ),
+        ).rejects.toThrow('Unable to import file: files/001-a.png');
+    });
+
+    test('sidecars of documents not imported, not bundled or unreadable are skipped', async () => {
+        const pathMap = new Map([
+            ['/old/doc.ows', '/documents/doc.ows'],
+            ['/old/other.ows', '/documents/other.ows'],
+            ['/old/third.ows', '/documents/third.ows'],
+        ]);
+        h.files.set('/tmp/extract/files/bad-bg.json', '{bad');
+        h.files.set('/tmp/extract/files/bad-transition.json', '{"a":"bounce"}');
+        await importBackgroundMetas(
+            '/tmp/extract',
+            [
+                {
+                    documentOriginalPath: '/old/not-imported.ows',
+                    archivePath: 'files/bg.json',
+                },
+                {
+                    documentOriginalPath: '/old/doc.ows',
+                    archivePath: 'files/not-there.json',
+                },
+                {
+                    documentOriginalPath: '/old/other.ows',
+                    archivePath: 'files/bad-bg.json',
+                },
+            ],
+            pathMap,
+        );
+        await importTransitionMetas(
+            '/tmp/extract',
+            [
+                {
+                    documentOriginalPath: '/old/not-imported.ows',
+                    archivePath: 'files/transition.json',
+                },
+                {
+                    documentOriginalPath: '/old/doc.ows',
+                    archivePath: 'files/not-there.json',
+                },
+                {
+                    documentOriginalPath: '/old/third.ows',
+                    archivePath: 'files/bad-transition.json',
+                },
+            ],
+            pathMap,
+        );
+        expect(h.updates).toEqual([]);
+        expect(
+            [...h.files.keys()].filter((path) => {
+                return path.startsWith('/documents/');
+            }),
+        ).toEqual([]);
+    });
+
+    test('sidecar entries that are not media, or were not imported, keep their value', async () => {
+        h.files.set(
+            '/tmp/extract/files/bg.json',
+            JSON.stringify({
+                color: { type: DragTypeEnum.BACKGROUND_COLOR, item: '#fff' },
+                broken: { type: DragTypeEnum.BACKGROUND_IMAGE, item: 7 },
+                elsewhere: {
+                    type: DragTypeEnum.BACKGROUND_IMAGE,
+                    item: '/old/not-bundled.png',
+                },
+            }),
+        );
+        await importBackgroundMetas(
+            '/tmp/extract',
+            [
+                {
+                    documentOriginalPath: '/old/doc.ows',
+                    archivePath: 'files/bg.json',
+                },
+            ],
+            new Map([['/old/doc.ows', '/documents/doc.ows']]),
+        );
+        expect(JSON.parse(h.files.get('/documents/doc.ows.bg.json')!)).toEqual({
+            color: { type: DragTypeEnum.BACKGROUND_COLOR, item: '#fff' },
+            broken: { type: DragTypeEnum.BACKGROUND_IMAGE, item: 7 },
+            elsewhere: {
+                type: DragTypeEnum.BACKGROUND_IMAGE,
+                item: '/old/not-bundled.png',
+            },
+        });
+        expect(h.updates).toEqual(['/documents/doc.ows.bg.json']);
+    });
+
+    test('a written document that cannot be read again is left as it is', async () => {
+        await applyImportedCanvasMedia(
+            ['/documents/vanished.ows', '/documents/lyric.owl'],
+            new Map([['/old/clip.mp4', '/media/clip.mp4']]),
+        );
+        expect(h.errors).toHaveLength(1);
+        expect(h.updates).toEqual([]);
     });
 });

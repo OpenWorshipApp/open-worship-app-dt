@@ -123,3 +123,16 @@ test('the other side’s microphone, a dropped connection and an ended one', () 
     intercom.announce('link:b');
     expect(host.send).not.toHaveBeenCalled();
 });
+
+test('a packet with no sound in it, or more than one packet may hold, is not played', () => {
+    const { intercom, host } = genIntercom();
+    intercom.set('guest:a', { speaker: true });
+    host.toBroker.mockClear();
+    // Text, but no bytes once decoded.
+    intercom.receive('guest:a', { data: '!!!!' });
+    // Within the text limit, two bytes over once decoded.
+    intercom.receive('guest:a', { data: 'A'.repeat(1368) });
+    expect(host.toBroker).not.toHaveBeenCalled();
+    intercom.receive('guest:a', { data: 'AQID' });
+    expect(host.toBroker).toHaveBeenCalledTimes(1);
+});

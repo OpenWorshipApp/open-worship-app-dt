@@ -1090,4 +1090,197 @@ describe('screen render helpers', () => {
         expect(html).toContain('Screen: 3');
         expect(html).toContain('data-screen-id="3"');
     });
+
+    test('a message that does not rotate shows all its lines and starts no timer', async () => {
+        vi.useFakeTimers();
+        try {
+            const { genHtmlForegroundMessage } =
+                await import('./screenForegroundHelpers');
+            const animData = {
+                duration: 0,
+                styleText: '',
+                animIn: vi.fn(
+                    async (element: HTMLElement, parent: HTMLElement) => {
+                        parent.appendChild(element);
+                    },
+                ),
+                animOut: vi.fn(async () => {}),
+            };
+            const parent = document.createElement('div');
+            const message = genHtmlForegroundMessage(
+                {
+                    id: 'm1',
+                    // A blank line the writer put inside one message stays.
+                    textList: ['Welcome', '', 'to church'],
+                    intervalSecond: null,
+                    extraStyle: { color: 'red' },
+                } as any,
+                animData,
+            );
+            await message.handleAdding(parent);
+            const element = parent.firstElementChild as HTMLElement;
+            expect(element.textContent).toBe('Welcome\n\nto church');
+            expect(element.style.whiteSpace).toBe('pre-wrap');
+            expect(element.style.color).toBe('red');
+            expect(element.style.transition).toBe('');
+            expect(vi.getTimerCount()).toBe(0);
+
+            // One real entry with an interval has nothing to rotate to.
+            const single = genHtmlForegroundMessage(
+                {
+                    id: 'm2',
+                    textList: ['Only one', '  '],
+                    intervalSecond: 3,
+                } as any,
+                animData,
+            );
+            await single.handleAdding(parent);
+            expect(vi.getTimerCount()).toBe(0);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('rotating messages fade across in turn and stop when taken down', async () => {
+        vi.useFakeTimers();
+        try {
+            const { genHtmlForegroundMessage } =
+                await import('./screenForegroundHelpers');
+            const animData = {
+                duration: 0,
+                styleText: '',
+                animIn: vi.fn(
+                    async (element: HTMLElement, parent: HTMLElement) => {
+                        parent.appendChild(element);
+                    },
+                ),
+                animOut: vi.fn(async () => {}),
+            };
+            const parent = document.createElement('div');
+            const message = genHtmlForegroundMessage(
+                {
+                    id: 'm3',
+                    textList: ['First', '   ', 'Second'],
+                    intervalSecond: 2,
+                } as any,
+                animData,
+            );
+            await message.handleAdding(parent);
+            const element = parent.firstElementChild as HTMLElement;
+            // Blank entries are not messages of their own.
+            expect(element.textContent).toBe('First');
+            expect(element.style.transition).toBe('opacity 400ms ease-in-out');
+
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(element.style.opacity).toBe('0');
+            expect(element.textContent).toBe('First');
+            await vi.advanceTimersByTimeAsync(400);
+            expect(element.textContent).toBe('Second');
+            expect(element.style.opacity).toBe('1');
+
+            // And round again to the first.
+            await vi.advanceTimersByTimeAsync(2400);
+            expect(element.textContent).toBe('First');
+
+            // Taken down mid-fade: no timer is left behind.
+            await vi.advanceTimersByTimeAsync(1400);
+            expect(element.style.opacity).toBe('0');
+            await message.handleRemoving();
+            expect(animData.animOut).toHaveBeenCalledWith(element);
+            expect(vi.getTimerCount()).toBe(0);
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(element.textContent).toBe('First');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a rotation interval below a second is held to one second', async () => {
+        vi.useFakeTimers();
+        try {
+            const { genHtmlForegroundMessage } =
+                await import('./screenForegroundHelpers');
+            const animData = {
+                duration: 0,
+                styleText: '',
+                animIn: vi.fn(
+                    async (element: HTMLElement, parent: HTMLElement) => {
+                        parent.appendChild(element);
+                    },
+                ),
+                animOut: vi.fn(async () => {}),
+            };
+            const parent = document.createElement('div');
+            const message = genHtmlForegroundMessage(
+                { id: 'm4', textList: ['A', 'B'], intervalSecond: 0 } as any,
+                animData,
+            );
+            await message.handleAdding(parent);
+            const element = parent.firstElementChild as HTMLElement;
+            await vi.advanceTimersByTimeAsync(999);
+            expect(element.style.opacity).toBe('');
+            await vi.advanceTimersByTimeAsync(1);
+            expect(element.style.opacity).toBe('0');
+            await message.handleRemoving();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a timer start, pause or reset is taken in place; anything else is not', async () => {
+        const { genHtmlForegroundCountdown, genHtmlForegroundStopwatch } =
+            await import('./screenForegroundHelpers');
+        const animData = {
+            duration: 0,
+            styleText: '',
+            animIn: vi.fn(async (element: HTMLElement, parent: HTMLElement) => {
+                parent.appendChild(element);
+            }),
+            animOut: vi.fn(async () => {}),
+        };
+        const parent = document.createElement('div');
+        const countdownData = {
+            dateTime: new Date(Date.now() + 60_000),
+            extraStyle: { color: 'white' },
+        };
+        const countdown = genHtmlForegroundCountdown(countdownData, animData);
+        await countdown.handleAdding(parent);
+        // Paused: only the timing moved.
+        expect(
+            countdown.handleUpdating({
+                ...countdownData,
+                dateTime: new Date(Date.now() + 30_000),
+                pausedMillisecond: 30_000,
+            } as any),
+        ).toBe(true);
+        // Restyled: it has to be drawn again.
+        expect(
+            countdown.handleUpdating({
+                ...countdownData,
+                extraStyle: { color: 'yellow' },
+            } as any),
+        ).toBe(false);
+
+        const stopwatchData = {
+            dateTime: new Date(Date.now() - 60_000),
+            extraStyle: {},
+        };
+        const stopwatch = genHtmlForegroundStopwatch(stopwatchData, animData);
+        await stopwatch.handleAdding(parent);
+        expect(
+            stopwatch.handleUpdating({
+                ...stopwatchData,
+                dateTime: new Date(),
+            } as any),
+        ).toBe(true);
+        expect(
+            stopwatch.handleUpdating({
+                ...stopwatchData,
+                extraStyle: { fontSize: '40px' },
+            } as any),
+        ).toBe(false);
+
+        await countdown.handleRemoving();
+        await stopwatch.handleRemoving();
+    });
 });

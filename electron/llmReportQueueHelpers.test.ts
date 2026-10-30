@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
     REPORT_QUEUE_MAX_AGE_MILLISECONDS,
+    REPORT_QUEUE_MAX_BYTES,
     REPORT_QUEUE_MAX_COUNT,
     queueReportBody,
     resetReportQueueForTests,
@@ -188,6 +189,60 @@ describe('sending what was kept', () => {
         expect(await sendQueuedReports(deps)).toEqual({ sent: [], left: 1 });
         release({ ok: true });
         expect(await first).toEqual({ sent: ['OWA-261015-0001'], left: 0 });
+        expect(deps.deliver).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('what the folder holds besides kept reports', () => {
+    it('keeps nothing too big to send later, and makes no folder for it', async () => {
+        const body = 'x'.repeat(REPORT_QUEUE_MAX_BYTES + 1);
+        expect(await queueReportBody(body, genDeps())).toBe(false);
+        expect(fs.existsSync(dirPath)).toBe(false);
+    });
+
+    it('leaves a file it did not write alone', async () => {
+        const deps = genDeps();
+        fs.mkdirSync(dirPath, { recursive: true });
+        fs.writeFileSync(path.join(dirPath, 'notes.txt'), 'mine');
+        await queueReportBody(genBody('OWA-261015-0001'), deps);
+        expect(await sendQueuedReports(deps)).toEqual({
+            sent: ['OWA-261015-0001'],
+            left: 0,
+        });
+        expect(listNames()).toEqual(['notes.txt']);
+    });
+
+    it('never drops the report just kept, even when the clock went back', async () => {
+        const deps = genDeps();
+        for (let index = 1; index <= REPORT_QUEUE_MAX_COUNT; index++) {
+            deps.tick(1000);
+            await queueReportBody(
+                genBody(`OWA-261015-000${index.toString()}`),
+                deps,
+            );
+        }
+        // Kept at a time older than every other: it sorts first.
+        deps.tick(-60 * 1000);
+        await queueReportBody(genBody('OWA-261015-0009'), deps);
+        const names = listNames();
+        expect(names).toHaveLength(REPORT_QUEUE_MAX_COUNT);
+        expect(names[0]).toContain('OWA-261015-0009');
+        // The oldest of the others went in its place.
+        expect(names.join()).not.toContain('OWA-261015-0001');
+    });
+
+    it('skips one it cannot read and sends the next', async () => {
+        const deps = genDeps();
+        // A folder named like a report kept a second earlier: it sorts first,
+        // is not a week old, and cannot be read.
+        fs.mkdirSync(path.join(dirPath, '1799999999000-OWA-261015-0000.json'), {
+            recursive: true,
+        });
+        await queueReportBody(genBody('OWA-261015-0001'), deps);
+        expect(await sendQueuedReports(deps)).toEqual({
+            sent: ['OWA-261015-0001'],
+            left: 1,
+        });
         expect(deps.deliver).toHaveBeenCalledTimes(1);
     });
 });

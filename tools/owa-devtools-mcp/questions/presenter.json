@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-18",
+    "updated": "2026-10-29",
     "sections": [
         {
             "id": "orientation",
@@ -2126,7 +2126,7 @@
                     ],
                     "resources": {
                         "recipe": "W-09",
-                        "passage": "is a fold under Properties, on every component, and it dresses the overlay",
+                        "passage": "is a fold under Properties, on every component but Long Text Show, and it dresses the overlay",
                         "find": "Padding",
                         "guide": true
                     }

@@ -310,3 +310,65 @@ test('a window gives no name: it follows only the id it asked for', () => {
     });
     expect(host.toViewer).not.toHaveBeenCalled();
 });
+
+test('a packet that is neither a camera state nor a frame is ignored', () => {
+    const { cameras, host } = genCameras();
+    cameras.receive('viewer-1', '198.51.100.9', {
+        type: 'camera-state',
+        shared: true,
+        label: 'Phone',
+    });
+    cameras.watch('window:7', 'vd-camera:viewer-1', true);
+    host.toViewer.mockClear();
+    host.toWatcher.mockClear();
+    host.onListChanged.mockClear();
+    cameras.receive('viewer-1', '198.51.100.9', {
+        type: 'camera-keyframe',
+        data: 'AQID',
+        timestamp: 1,
+    });
+    expect(host.toViewer).not.toHaveBeenCalled();
+    expect(host.toWatcher).not.toHaveBeenCalled();
+    expect(host.onListChanged).not.toHaveBeenCalled();
+    expect(cameras.list()).toHaveLength(1);
+});
+
+// A window gone stops only what it watched: another viewer's camera, shown
+// in another window, keeps its encoder and its frames.
+test("a watcher forgotten leaves another camera's watchers alone", () => {
+    const { cameras, host } = genCameras();
+    for (const viewerId of ['viewer-1', 'viewer-2']) {
+        cameras.receive(viewerId, '198.51.100.9', {
+            type: 'camera-state',
+            shared: true,
+            label: viewerId,
+        });
+    }
+    cameras.watch('window:7', 'vd-camera:viewer-1', true);
+    cameras.watch('window:8', 'vd-camera:viewer-2', true);
+    host.toViewer.mockClear();
+    cameras.forgetWatcher('window:7');
+    expect(host.toViewer.mock.calls).toEqual([
+        ['viewer-1', { type: 'camera-stop' }],
+    ]);
+    host.toWatcher.mockClear();
+    cameras.receive('viewer-2', '', {
+        type: 'video',
+        data: 'AQID',
+        key: true,
+        timestamp: 5,
+    });
+    expect(host.toWatcher).toHaveBeenCalledWith(
+        'window:8',
+        'vd:camera-frame',
+        expect.objectContaining({ cameraId: 'vd-camera:viewer-2' }),
+    );
+    // The one nobody watches now sends nowhere.
+    cameras.receive('viewer-1', '', {
+        type: 'video',
+        data: 'AQID',
+        key: true,
+        timestamp: 5,
+    });
+    expect(host.toWatcher).toHaveBeenCalledTimes(1);
+});

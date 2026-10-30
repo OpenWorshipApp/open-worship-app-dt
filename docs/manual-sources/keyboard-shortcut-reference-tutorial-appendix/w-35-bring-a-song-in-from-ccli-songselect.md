@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-57, ST-71, PL-103, PL-104]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-35 — Bring a song in from CCLI SongSelect
 
@@ -26,7 +26,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 2. Fill **Client ID**, **Subscription Key** and **Redirect URI** (and **Client Secret**
    if you have one). Each field saves the moment you click away from it and gains a
    green ✓. Until all three are filled, **[en:tran:Sign In]** stays grey — hovering it
-   tells you what is missing.
+   names the three it needs.
 3. Click **[en:tran:Sign In]**. A CCLI window opens for you to log in and approve. If you close
    it instead, the app says **Sign in failed — Sign in was canceled** ([en:tran:Sign in was canceled]) and nothing changes. Once signed in, the card shows a
    green **[en:tran:Signed in]** with a **[en:tran:Sign Out]** button, and the
@@ -52,7 +52,7 @@ credentials CCLI issued to you (a **Client ID**, a **Subscription Key**, and the
 
 > **If SongSelect will not connect, check these.** A grey **[en:tran:Sign In]** means one
 > of the three boxes — Client ID, Subscription Key, Redirect URI — is still empty: hover
-> it and it says which. A search or download that fails says why, right in the panel or
+> it and it names all three; of those, the one without a green ✓ is empty. A search or download that fails says why, right in the panel or
 > as a toast: too many requests in a row asks you to wait a moment; a lapsed session says
 > **[en:tran:SongSelect sign-in expired, please sign in again in Settings]**, so sign in
 > again; no internet says **[en:tran:Could not reach SongSelect]**.
@@ -62,5 +62,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-57` · `ST-71` · `PL-103` · `PL-104`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

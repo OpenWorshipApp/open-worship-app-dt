@@ -48,21 +48,21 @@ Two defects compound:
    module-level `const lockSet = new Set<string>()`. The presenter and every
    `screen.html?screenId=N` are separate processes, and each runs the same
    read-modify-write on the same file in `set_varySlideData`
-   (`src/_screen/managers/ScreenVaryAppDocumentManager.ts` ~line 258): read map → add own
+   (`src/_screen/managers/ScreenVaryAppDocumentManager.ts`; that read-modify-write is `persistOnScreenEntry`'s since the fix): read map → add own
    key → `JSON.stringify` → write back. Nothing serialises that across processes.
 2. **The write is non-atomic.** `appLocalStorage.setItem` → `fsWriteFileSync`
-   (`src/server/fileHelpers.ts:663-668`) writes in place with `flag: 'w'` — no
+   (`src/server/storageFileHelpers.ts` now) writes in place with `flag: 'w'` — no
    write-to-temp + rename. A concurrent reader sees a partial file (the observed
    `Unterminated string in JSON at position 8192`); two concurrent writers interleave.
 
-**Why it matters:** the amplifier is `deriveAppDocumentListOnScreen`'s outer `catch`
-(`src/_screen/preview/screenPreviewerHelpers.ts`) returning `{}` — the caller then persists
+**Why it matters:** the amplifier is `deriveAppDocumentListOnScreen`
+(`src/_screen/preview/screenPreviewerHelpers.ts`) returning `{}` when `parseJsonSafely` gives `null` — the caller then persists
 that `{}` plus its own key, deleting every other screen's entry. Observed end state: after
 the next reload all three mini screens blank, every `SL` clear-button outline, zero
 `.app-on-screen` elements. Lyric slides make it easy to hit because the setting string is
 ~185 KB per presented lyric instead of ~835 bytes.
 `getAppDocumentListOnScreenSetting()` now returns a shallow copy each call
-(`screenPreviewerHelpers.ts:148-150`, with a why-comment) — hardens the in-process case
+(`screenPreviewerHelpers.ts`, with a why-comment) — hardens the in-process case
 but does nothing about the cross-process race, which is this note's point.
 
 **How to apply:** don't treat a `SyntaxError` from `parseJsonSafely` in a screen or

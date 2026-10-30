@@ -34,11 +34,13 @@ export const DEFAULT_SORT_DATA: SortDataType = {
 // `OWS`, ...). Deliberately not `getFileMetaData`: that clones the whole mime
 // table per call, and this runs once per file on every list render.
 export function toFileTypeName(filePath: string) {
-    const dotExtension = getFileDotExtension(pathBasename(filePath));
-    if (!dotExtension) {
+    const fileName = pathBasename(filePath);
+    // No dot, no extension: `getFileDotExtension` answers the WHOLE name for
+    // one, which listed `README` as a file of type "EADME".
+    if (!fileName.includes('.')) {
         return '?';
     }
-    return dotExtension.slice(1).toUpperCase();
+    return getFileDotExtension(fileName).slice(1).toUpperCase() || '?';
 }
 
 export function genFileTypeNames(filePaths: string[]) {

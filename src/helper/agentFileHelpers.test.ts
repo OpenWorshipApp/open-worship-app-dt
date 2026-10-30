@@ -276,4 +276,133 @@ describe('slide document boxes', () => {
         ).toBeNull();
         expect(canvas.canvasItemFromJson).not.toHaveBeenCalled();
     });
+
+    test('a slide with no size of its own centres its new box on the app’s default slide', async () => {
+        const content = JSON.stringify({
+            items: [{ id: 1, canvasItems: [{ type: 'text', text: 'Hi' }] }],
+        });
+
+        expect(await checkContent(content)).toBeNull();
+        await AGENT_FILE_KIND_MAP.slide.create('/docs', 'Hymn', content);
+
+        const box = (createWithContentMock.mock.calls[0] as any[])[2][0]
+            .canvasItems[0];
+        // 1280x720, the mocked `Slide.getDefaultDim()`.
+        expect(box).toMatchObject({
+            width: 1024,
+            height: 216,
+            left: 128,
+            top: 252,
+        });
+    });
+
+    test('only the partial boxes are completed; other slides and boxes are left as written', async () => {
+        const complete = {
+            id: 2,
+            type: 'image',
+            top: 1,
+            left: 2,
+            rotate: 0,
+            width: 30,
+            height: 40,
+            backgroundColor: null,
+        };
+        const content = JSON.stringify({
+            items: [
+                { id: 1, canvasItems: [] },
+                // No boxes at all: nothing to complete on it.
+                { id: 2, metadata: { width: 1920, height: 1080 } },
+                slideOf([complete, { type: 'text', text: 'New words' }]),
+            ],
+        });
+
+        expect(await checkContent(content)).toBeNull();
+        await AGENT_FILE_KIND_MAP.slide.create('/docs', 'Hymn', content);
+
+        const items = (createWithContentMock.mock.calls[0] as any[])[2];
+        expect(items[0]).toEqual({ id: 1, canvasItems: [] });
+        expect(items[1]).toEqual({
+            id: 2,
+            metadata: { width: 1920, height: 1080 },
+        });
+        expect(items[2].canvasItems[0]).toEqual(complete);
+        // Numbered after the highest id already on the slide.
+        expect(items[2].canvasItems[1]).toMatchObject({
+            id: 3,
+            type: 'text',
+            text: 'New words',
+        });
+    });
+
+    test('a slide that is not an object is left for the app’s validator to refuse', async () => {
+        const refusal = await checkContent(
+            JSON.stringify({
+                items: [slideOf([{ type: 'text', text: 'Hi' }]), 'not a slide'],
+            }),
+        );
+
+        expect(refusal).toMatch(/^This app refused that document at slide 2: /);
+    });
+
+    test('a text box with every field written, but of the wrong kinds, is refused by each field', async () => {
+        const refusal = await checkContent(
+            JSON.stringify({
+                items: [
+                    slideOf([
+                        {
+                            type: 'text',
+                            id: 1,
+                            top: 0,
+                            left: 0,
+                            rotate: 0,
+                            width: 100,
+                            height: 50,
+                            backgroundColor: 7,
+                            text: 7,
+                            color: 255,
+                            fontSize: 40,
+                            fontFamily: 3,
+                            fontWeight: false,
+                        },
+                    ]),
+                ],
+            }),
+        );
+
+        expect(refusal).toContain(
+            'it needs backgroundColor (a colour like "#00000080", or null), ' +
+                'text (a string), color (a colour like "#FFFFFF"), ' +
+                'fontFamily (a string, or null), fontWeight (a string, or ' +
+                'null).',
+        );
+    });
+
+    test('a box of a kind the app does not draw, or no box at all, is named as unknown', async () => {
+        const unknownKind = await checkContent(
+            JSON.stringify({
+                items: [
+                    slideOf([
+                        {
+                            type: 'video-wall',
+                            id: 1,
+                            top: 0,
+                            left: 0,
+                            rotate: 0,
+                            width: 1,
+                            height: 1,
+                            backgroundColor: null,
+                        },
+                    ]),
+                ],
+            }),
+        );
+        expect(unknownKind).toMatch(
+            /^Box 1 of slide 1 \(type "video-wall"\) would not open .*Its type is not one this app draws/,
+        );
+
+        const notABox = await checkContent(
+            JSON.stringify({ items: [slideOf(['just words'])] }),
+        );
+        expect(notABox).toMatch(/^Box 1 of slide 1 \(type "unknown"\)/);
+    });
 });

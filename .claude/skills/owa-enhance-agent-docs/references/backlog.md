@@ -90,7 +90,11 @@ signature in 5/40 (×11), the screenshot one in 3/40 (×4). One more wall for
 the same filing: `owa_screenshot` aimed at the chatbot window is refused in 4
 of the 29 sessions since 2026-10-09, and the refusal's way out (leave the page
 argument unset) pictures a different window, where `select_page` +
-`take_screenshot` is what works.
+`take_screenshot` is what works. **Re-measured** in run `20261028-1700`: the
+chatbot-window refusal in 7/40 sessions (its words unchanged), the click
+signature in 3/40 (×5); and `take_screenshot` now needs the `pageId` from
+`list_pages` too (chrome-devtools-mcp 1.8 `pageIdRouting`), refused for its
+lack in 2/40.
 
 ## AD-05 · `user-workflows.md` is re-read whole — `open` · S3 · L4 · L2
 
@@ -102,7 +106,8 @@ or a SKILL.md line: `grep -n '^### W-'`, then Read with an offset. **Cost.**
 `20261011-2249`: 542 KB, read in 12/40 sessions (×27). The dated head — the
 1 410 lines before the first recipe — is 220 659 B, 40% of the file, and
 `docs:gen` reads one line of it (`workflowsVersion:`). The sharper change:
-move all but the newest entry to a history file beside it.
+move all but the newest entry to a history file beside it. **Re-measured** in
+run `20261028-1700`: 740 KB; the dated head 331 KB, 45% of the file.
 
 ## AD-06 · Screen Mirror area gets a scoped rule; its index lines become hooks — `done` · S3 · L1 · L2
 
@@ -125,7 +130,9 @@ characters, `owa-enhance-chatbot` 1 503, `owa-enhance-mcp` 705, `owa-enhance`
 637. `owa-upgrade-unit-test` states "~45%" against its own baseline of 54.91%
 (2026-09-29). **Change.** Put trigger phrases before the cut and fix the
 number. **Cost.** ~0. **Proof on apply.** `--check=skills`. **Route.**
-Each owning skill, on ask. Found in run `20261008-2315`.
+Each owning skill, on ask. Found in run `20261008-2315`. **Re-measured** in run
+`20261028-1700`: past the cut by robot-test 2 627, chatbot 1 505, mcp 687,
+enhance 619, aichat 156, unit-test 82 characters.
 
 ## AD-08 · The review skills are in neither skill index — `done` 2026-10-11 · S4 · L6
 
@@ -294,3 +301,82 @@ entries clear something. The menu holds twenty-four (17 clears, Show and Hide,
 5 run actions); nineteen is its screen actions. It came in with the rewrite of
 "thirteen of the menu's twenty" in the first full pass. Asked, then fixed in
 run `20261011-2249`.
+
+## AD-20 · Front matter is parsed as YAML, in the audit and the gate — `done` 2026-10-29 · S2 · L3
+
+**Signal.** Run `20261028-1700` found three front matters a YAML parser
+refuses, while the `memory` and `skills` checks printed 0 (their reader is
+lenient): this skill's own description, unreadable since 2026-10-24 — every
+session's skill listing showed its title, never its triggers; a memory note's
+since 2026-08-08 (`description: Screen: Show / …`); and the chatbot skill's,
+broken by a reader of that very run and caught only because the listing fell
+back to the title. **Change.** `findFrontMatterYamlProblem` in
+`audit-agent-docs.mjs` (no dependency — `js-yaml` is only electron-builder's):
+the memory and skills checks report it, the rules check has a signal of its
+own, and `src/test-setup/agentDocsAudit.test.ts` (AD-21) fails on it.
+**Cost.** 0 always-loaded. **Proof.** 0 disagreements with `js-yaml` on the
+252 files of that day; all three broken versions caught (`git show HEAD:` and
+the reader's text), each with what to write instead.
+
+## AD-21 · The gate holds the audit's hard drift checks — `done` 2026-10-29 · S2 · L3
+
+**Signal.** Only the manual's two signals were in the gate. At the start of
+run `20261028-1700` the hard checks printed paths 2, symbols 12, tools 1,
+memory 1: a rule had named `stepHelpHelpers.ts`, a file that never existed, for
+ten days; CLAUDE.md left out four registered tools; a function renamed on
+2026-10-19 was still cited. **Change.** `src/test-setup/agentDocsAudit.test.ts`
+runs `paths`, `symbols`, `tools`, `scripts`, `env`, `ids`, `memory`, `rules`
+and `skills` once and fails on any lead (the description lengths are advice,
+not drift). **Cost.** Gate +~3 s. **Proof.** On its first run it failed on a
+`killed-leads.json` entry the run's own fixes had made stale
+(`LazyMountVideoComp`) and on the ids `AD-20`…`AD-24` cited before this ledger
+held them; passes once both were put right.
+
+## AD-22 · `rules/chatbot-window.md` is split by topic — `done` 2026-10-29 · S3 · L2
+
+**Signal.** 155 683 B (≈ 39k tokens) loaded by ANY read under `src/chatbot/`,
+tripled since 2026-10-11 (51 871 B); `ChatbotAppComp.tsx` was read in 7 of the
+last 40 sessions (×39), `llmBotHelpers.ts` in 5, `lookupChatHelpers.ts` in 4.
+**Change.** Asked for by the user (`apply AD-22`): the window stays in
+`chatbot-window.md` (`src/chatbot/**`), with an index, and five parts load by
+their own files only — `chatbot-files-report.md`, `chatbot-commands.md`,
+`chatbot-bible-import.md`, `chatbot-verse-find.md`, `chatbot-lookup.md`. Every
+section moved verbatim; a script checked each appears exactly once.
+**Cost.** CLAUDE.md +~150 B (it must name each rule). **Proof.** The core
+67 476 B (≈ 17k tokens): a read of `ChatbotAppComp.tsx` pays ~22k tokens less,
+a topic helper 8–25 KB more than the core instead of the whole 154 KB;
+`--check=rules` 0 (every glob matches, CLAUDE.md names each).
+
+## AD-23 · The staleness check counts markdown links as named files — `done` 2026-10-29 · S3 · L3
+
+**Signal.** `components-path.md` names ~111 files only as markdown links; 35 of
+them changed since its stamp and the check listed 3, so a reader left ~13
+linked files unchecked row by row until the orchestrator read them.
+**Change.** `collectDocReferences` reads a relative markdown link to a code
+file as a named file (`resolveLinkTarget`, the same resolution the `paths`
+check uses). Applied in the same run, under the user's stated goal
+(_documents are 100%_) rather than an `apply`: the rows it missed stood
+between the run and that goal. **Cost.** 0. **Proof.** Its first run put 9
+documents due that the old check had passed, every one through a link alone.
+Read against the code: 6 were wrong — `components-path.md` 18 of the 32 rows
+whose linked file had changed (a camera row still said "select camera
+device"; the Audios row put `.app-on-screen` on the row, not the tab), the
+Connection Graph section of `knowledge-base.md`, a toast constant in
+`ui-map.md`, two links in `html-in-canvas/README.md` that resolved only from
+the repo root, and two anchors each in `presenting-flow-expansion-follows-position.md`
+and the robot-test `SKILL.md`. 3 held. Found in run `20261028-1700`.
+
+## AD-24 · A manual correction brings its translations — `done` 2026-10-29 · S2 · L3
+
+**Signal.** Run `20261028-1700` corrected 46 recipes, and 46 of the 65 pages
+in Khmer and in French were left behind — the old words still in them, the
+help showing English instead; this skill's paper trail named no translation
+step. **Change.** §3 now carries the translated manual (block for block,
+`--check` ✓, `questionHelpers.test.ts` green), and the `manual` check has a
+`stale-translation` signal (`readTranslationLagList`), out of the gate on
+purpose: `manual-i18n-status.mjs` decided a manual edit never waits for a
+translation. The run's four translators brought both languages to 65 of 65.
+**Proof.** Against the translations as committed, the signal counts 92 (46 per
+language); 0 now. One French page had to be given the English's line break
+before a bold label so its blocks lined up (the test's own comment records the
+same trap: French W-50, 2026-10-18).

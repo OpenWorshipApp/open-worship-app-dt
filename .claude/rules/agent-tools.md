@@ -929,8 +929,8 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   (`suggestBibleLanguages`: the same first four letters, the whole of a short
   name, or a letter or two out), so it can only offer a language that has a
   file. A page's `files[]` and a downloaded file carry `installedAs` — the
-  key of an installed Bible with the same TITLE (`readInstalledTitleMap`
-  over the worker's `list`, a 4 KB head per installed file; `Unknown Title`
+  key of an installed Bible with the same TITLE (`readInstalledSummary`
+  over the worker's `list`, an 8 KB head per installed file; `Unknown Title`
   is nobody's twin), best effort. **The listing is kept ten minutes**
   (`keptListing` in `bibleXmlDraft.mjs`: ONE listing's file names and the
   titles read off them, ~100 KB, let go on a timer): each look at the catalog
@@ -1116,7 +1116,8 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   `owa_find_verse`** (2026-10-19, `EC-372`, `MODEL_ASK_SHARED_TOOL_MAP`): the
   record's own verse list is a curated few, so a theme or a half-remembered
   verse is the Bible searched by words, and the prompt says to name only what
-  the search returned. It costs ~280 tokens a round in a lookup ask alone;
+  the search returned. It costs ~356 tokens a round (2026-10-29; ~280 when
+  added) in a lookup ask alone;
   the ordinary list and its ratchet did not move. **And a record answers
   what people ask of it** (2026-10-22, `EC-399`..`EC-401`; the user, with
   the Reader's Names and Places row menu on **[en:tran:Open in Chatbot]**
@@ -1227,8 +1228,8 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   that answers that it cannot read PDFs. A plain line under such an
   answer stays in the conversation (`isBibleReaderAnswer`), so _and chapter
   5?_ is more of the same. The cue words are DATA per language
-  (`bibleReaderWords` in `assistant.json`: chapter, resources, names, howTo,
-  exclude); English reads in code. Nothing was added to the ordinary tool
+  (`bibleReaderWords` in `assistant.json`: chapter, resources, names,
+  nameAsk, howTo, howToAsks, exclude, excludeInHowTo); English reads in code. Nothing was added to the ordinary tool
   list, so the model ratchet did not move; a **Presenter** tab keeps
   `owa_present_bible` because the route is Reader-only. `owa_resource_file`
   takes the book's own name in ANY installed Bible's language and a `ref`
@@ -1280,26 +1281,33 @@ false` and searches only a dataset a lookup panel already holds
   fails** (2026-10-18; the user's picture of the Bible import's language step,
   `ភាសាថៃ` answered _I do not know the language_: _it should try to ask
   assistant_, _sometime user ask for list of suggestion language_, _llm should
-  help on this_, _this is for general issue_). Three waits, one rule: the
-  local exact match first, then the assistant, then the step goes on.
-  - **The Bible import's catalog search** (`runCheck`): a page of files with
-    `matched: 0` and a typed `find` carries `unknownLanguage`; the window
-    (`handleBibleImportStep`) asks the assistant with a ONE-LINE English
-    translation (`isGeneral`, no tools, reply language English — a Khmer
-    answer there is not the name), reads `Thai (th)` back
-    (`stepHelpHelpers.ts`), retries `check` with `find: "Thai"` and prepends
-    _I read “{from}” as **{to}**._ Seen live: `ភាសាថៃ` -> the Thai Bibles.
-  - **The downloaded draft's language step** (`runTypedLocale`): the same
-    marker, the ISO code read back (`th`), retried as `locale-typed`.
+  help on this_, _this is for general issue_). One rule for every wait: the
+  local exact match first, then ONE interpretation by the assistant, then the
+  step goes on (`waitingInputHelpers.ts`, `EC-354`; the window's side in
+  `chatbot-window.md`). `askWaitingInput` sends `genWaitingInputAsk` — the
+  question, its choices and the tab's last turns as quoted data, no tools
+  (`isGeneral`, `isWaitingInput`) — and `readWaitingInputReply` takes back
+  ONE JSON object: a listed `choice`; a `value` of the step's kind (a
+  language through `normalizeBibleLocale`, which takes `Thai` as well as
+  `th`; a whole `Book chapter:verse` passage; the one link they typed);
+  `help`, a sentence in their language kept above the question and its
+  buttons (a LIST question at the language step is answered so); or
+  `unrelated`, which the ordinary router answers. Anything else keeps the
+  question waiting.
+  - **The Bible import** (`handleBibleImportStep`): a typed reply the step's
+    buttons do not take (`checkBibleImportReplyNeedsHelp`), a catalog page
+    with `matched: 0` for a typed `find` (`runCheck`) and a draft language the
+    tool cannot read (`runTypedLocale`) — the last two carry
+    `unknownLanguage`. `readBibleImportHelpState` turns the reply into the
+    step to run again (`check` with the new `find`, `locale-typed`, `key`,
+    `names-url`). Seen live 2026-10-18, before the JSON reply: `ភាសាថៃ` ->
+    the Thai Bibles.
+  - **The verse finder's _which Bible?_** (`handleVerseFindInputRef`): a
+    `choice` presses that Bible's button.
   - **The lookup's "another passage"** (`awaiting` in `handleLookupStepRef`):
-    the failure asks for the passage as `Book chapter:verse` (`The passage is
-John 3:16` -> `John 3:16`), retries the record read and shows the card;
-    otherwise the failure keeps the await.
-    The verse finder's _which Bible?_ already falls through to the ordinary
-    assistant when the typed pick matches no button. A LIST question at the
-    language step is answered by the assistant with its words kept above the
-    question and its buttons. The parsers are pure and tested
-    (`stepHelpHelpers.test.ts`).
+    a `passage` value retries the record read and shows the card; otherwise
+    the failure keeps the await.
+    The parsers are pure and tested (`waitingInputHelpers.test.ts`).
 
 - **Drag and drop has three tools, one per kind of drag** (2026-10-22, the
   user's asks: _all elements that support drag/drop should be tested_, then

@@ -170,3 +170,125 @@ describe('marked verse row header', () => {
         expect(note.updateAndSaveNoteItem).not.toHaveBeenCalled();
     });
 });
+
+describe('marked verse row actions', () => {
+    const verseBibleItem = { id: -1, bibleKey: 'KJV' };
+
+    async function openMenu() {
+        await renderRow();
+        const dots = [...host.querySelectorAll('button')].find(
+            (button) => button.textContent === 'More verse actions',
+        )!;
+        await act(async () => dots.click());
+        expect(mocks.showMenu).toHaveBeenCalledTimes(1);
+        return mocks.showMenu.mock.calls[0][1] as any[];
+    }
+
+    function dragRow() {
+        const event = new Event('dragstart', {
+            bubbles: true,
+            cancelable: true,
+        });
+        act(() => {
+            host.querySelector('li')!.dispatchEvent(event);
+        });
+        return event;
+    }
+
+    beforeEach(() => {
+        note.deleteNoteItem = vi.fn(async () => {});
+        mocks.toVerseBibleItem.mockReturnValue(verseBibleItem);
+        mocks.saveBibleItem.mockResolvedValue(undefined);
+    });
+
+    test('its menu adds the verse to the Bible list, moves it, or deletes its marks', async () => {
+        const items = await openMenu();
+        expect(items.map((item) => item.menuElement)).toEqual([
+            'Add to Bible List',
+            'Move To',
+            'Delete',
+        ]);
+        await items[0].onSelect();
+        expect(mocks.toVerseBibleItem).toHaveBeenCalledWith('KJV) John 3:16');
+        expect(mocks.saveBibleItem).toHaveBeenCalledWith(verseBibleItem);
+
+        const moveEvent = { type: 'click' };
+        items[1].onSelect(moveEvent);
+        expect(mocks.moveNoteItemTo).toHaveBeenCalledWith(
+            moveEvent,
+            note,
+            noteItem,
+        );
+    });
+
+    test('a right-click opens the same menu', async () => {
+        await renderRow();
+        act(() => {
+            host.querySelector('li')!.dispatchEvent(
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            );
+        });
+        expect(mocks.showMenu).toHaveBeenCalledTimes(1);
+        expect(mocks.showMenu.mock.calls[0][1]).toHaveLength(3);
+    });
+
+    test('a verse that names no verse is not added to the Bible list', async () => {
+        noteItem.verseKey = undefined;
+        mocks.toVerseBibleItem.mockReturnValue(null);
+        const items = await openMenu();
+        await items[0].onSelect();
+        expect(mocks.toVerseBibleItem).toHaveBeenCalledWith('');
+        expect(mocks.saveBibleItem).not.toHaveBeenCalled();
+    });
+
+    test('Delete removes every mark on the verse, only once confirmed', async () => {
+        const items = await openMenu();
+        mocks.confirm.mockResolvedValueOnce(false);
+        await items[2].onSelect();
+        expect(mocks.confirm).toHaveBeenCalledWith(
+            'Delete Verse Marks',
+            'Are you sure to delete all marks on this verse?',
+            { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
+        );
+        expect(note.deleteNoteItem).not.toHaveBeenCalled();
+        mocks.confirm.mockResolvedValueOnce(true);
+        await items[2].onSelect();
+        expect(note.deleteNoteItem).toHaveBeenCalledWith(noteItem);
+    });
+
+    test('dragging carries the verse for the Bible list and the item for a note file', async () => {
+        await renderRow();
+        const event = dragRow();
+        expect(event.defaultPrevented).toBe(false);
+        expect(mocks.dragStart).toHaveBeenCalledTimes(1);
+        expect(mocks.dragStart.mock.calls[0][1]).toBe(verseBibleItem);
+        expect(mocks.addDragPayload).toHaveBeenCalledTimes(1);
+        expect(mocks.addDragPayload.mock.calls[0][1]).toBe(noteItem);
+    });
+
+    test('a verse that cannot be resolved cannot be dragged', async () => {
+        mocks.toVerseBibleItem.mockReturnValue(null);
+        await renderRow();
+        const event = dragRow();
+        expect(event.defaultPrevented).toBe(true);
+        expect(mocks.dragStart).not.toHaveBeenCalled();
+        expect(mocks.addDragPayload).not.toHaveBeenCalled();
+    });
+
+    test('opened, it lists the comments after the highlights', async () => {
+        noteItem.isOpened = true;
+        noteItem.comments = [{ id: 'c1', comment: 'Love' }];
+        noteItem.annotationCount = 2;
+        await renderRow();
+        expect(
+            [...host.querySelectorAll('.app-verse-annotation-list li')].map(
+                (item) => item.textContent,
+            ),
+        ).toEqual(['Mark h1', 'Mark c1']);
+        // Open, the marks are their own count.
+        expect(host.querySelector('.app-verse-note-item__count')).toBeNull();
+    });
+});

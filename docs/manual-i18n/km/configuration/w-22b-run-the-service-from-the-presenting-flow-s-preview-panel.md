@@ -3,7 +3,7 @@ id: W-22b
 title: "ដំណើរការពិធី ពីផ្ទាំងមើលជាមុនរបស់តារាងកម្មវិធី"
 section: "ការកំណត់រចនាសម្ព័ន្ធ"
 lang: km
-translatedFrom: 154f33153c9eceb1
+translatedFrom: 3b1958e6e37525b0
 ---
 # W-22b — ដំណើរការពិធី ពីផ្ទាំងមើលជាមុនរបស់តារាងកម្មវិធី
 
@@ -58,13 +58,13 @@ translatedFrom: 154f33153c9eceb1
    ម្តងទៀត ធ្វើឲ្យអេក្រង់ទទេ ត្រង់ចំណុចនោះក្នុងតារាងកម្មវិធី។
    បន្ទាត់ **[en:tran:Next]៖** ត្រូវបានប្រតិបត្តិតាមរបៀបដដែល ហើយអ្វីដែលពួកវាប្រតិបត្តិ គឺផ្ទាំងនេះ: ការរង់ចាំដែល
    រំកិលការដំណើរការទៅមុខដោយខ្លួនឯង (W-22d) ឬរង្វិលជុំដែលបន្តរំកិលវា (W-22e)។
-4. **អ្វីៗដែលអ្នកអាចចុចកណ្ដុរស្ដាំក្នុងបញ្ជី អ្នកក៏អាចចុចកណ្ដុរស្ដាំនៅទីនេះដែរ។** ម៉ឺនុយក្នុង
+4. **គ្រប់បន្ទាត់ដែលអ្នកអាចចុចកណ្ដុរស្ដាំក្នុងបញ្ជី អ្នកក៏អាចចុចកណ្ដុរស្ដាំនៅទីនេះដែរ។** ម៉ឺនុយក្នុង
    ផ្ទាំងនេះ គឺជាម៉ឺនុយដដែលទាំងស្រុង — ចុចកណ្ដុរស្ដាំលើ **បន្ទាត់ចំណងជើង** របស់ធាតុមួយ (ឬ
-   ផ្នែកទំនេរណាមួយនៃប្រអប់របស់វា) ហើយអ្នកនឹងទទួលបានម៉ឺនុយពេញលេញរបស់វា: **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, ការផ្លាស់ទី
+   ផ្នែកទំនេរណាមួយនៃប្រអប់របស់វា) ហើយអ្នកនឹងទទួលបានម៉ឺនុយពេញលេញរបស់វា: **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**, ការផ្លាស់ទី
    ទាំងបួន, **[en:tran:Duplicate]**, **[en:tran:Choose Color]**, **[en:tran:Disable]** / **[en:tran:Enable]** និង **[en:tran:Remove from Presenting Flow]** ដែលមាន ឬអត់ ដូចក្នុងបញ្ជីដែរ។ ដូច្នេះអ្នកអាចរៀបចំ និងប្ដូរលំដាប់
    តារាងកម្មវិធី ពីផ្ទាំងដែលអ្នកកំពុងមើលពិតៗ ក្នុងពេលពិធី ដោយមិនចាំបាច់
    ត្រឡប់ទៅបញ្ជីវិញ — ហើយបញ្ជីនៅពីក្រោយវា ធ្វើតាមភ្លាមៗ។ 📸
    របស់ពីរនៅក្នុងប្រអប់ មានម៉ឺនុយផ្ទាល់ខ្លួន ព្រោះវាមិនមែនជាធាតុ:
    **រូបតូចស្លាយ** ទទួលបានម៉ឺនុយរបស់ស្លាយ (**[en:tran:Reveal Original]**, **[en:tran:Show on Screens]**,
-   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**) ហើយ **បន្ទាត់ CC** ទទួលបាន
+   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**; រូបតូចនៃបន្ទាត់ដែលមានស្លាយតែមួយ មានតែពីរដំបូង និង **[en:tran:Disable]** ប៉ុណ្ណោះ ដោយធាតុដែលនៅសល់ស្ថិតនៅលើបន្ទាត់ចំណងជើងរបស់វា) ហើយ **បន្ទាត់ CC** ទទួលបាន
    ម៉ឺនុយខ្លីរបស់វា (**[en:tran:Reveal Original]**, **[en:tran:Set Specific Screen]**, **[en:tran:Remove CC Element]**)។

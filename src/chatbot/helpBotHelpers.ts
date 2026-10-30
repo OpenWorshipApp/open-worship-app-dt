@@ -34,8 +34,8 @@ import {
     BIBLE_FIND_QUERY,
     genBibleFindLead,
     genBibleKnowledgeText,
-    readBibleContentAsk,
 } from './bibleContentAskHelpers';
+import { readAnyBibleContentAsk } from './verseAskLanguageHelpers';
 import {
     BIBLE_IMPORT_MANUAL_ID,
     genBibleImportOfferAction,
@@ -1455,13 +1455,13 @@ async function searchManual(
  * verse asked for by its words gets Bible Find's own steps, with the words to
  * search for; knowledge about the Bible gets the way to an assistant. Null
  * when Bible Find's page did not come back, and the manual answers as it
- * always did.
+ * always did. In every language (`readAnyBibleContentAsk`, 2026-10-29).
  */
 async function answerBibleContentAsk(
     question: string,
     focus: BotFocusType,
 ): Promise<BotAnswerType | null> {
-    const ask = readBibleContentAsk(question);
+    const ask = readAnyBibleContentAsk(question);
     if (ask === null) {
         return null;
     }
@@ -1698,7 +1698,7 @@ export async function askHelpBot(
     // it (`answerFromManual`) ahead of the readers below: "find me a verse
     // about patience" is not a control called "me a verse about patience"
     // to point at (EC-199).
-    if (readBibleContentAsk(trimmedQuestion) !== null) {
+    if (readAnyBibleContentAsk(trimmedQuestion) !== null) {
         return withPrefix(
             await answerFromManual(trimmedQuestion, focus),
             prefix,

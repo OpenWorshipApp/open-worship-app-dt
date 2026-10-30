@@ -22,7 +22,7 @@ by the pane's name and by its own `Enable …` title — before `matchTier` on t
 trimmed text.
 
 **Why:** a label that ends in a kind noun is common in this app (every
-`*List` pane, `Bible Lookup`, `Background Audio`) and the trim is invisible
+`*List` pane, the divider menu's `Close First Widget`) and the trim is invisible
 from the outside: the ring still lands, only the PRESS is refused.
 
 **How to apply:** when a control with an exact name is reported as a loose

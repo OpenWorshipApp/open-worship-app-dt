@@ -9,8 +9,10 @@ import {
     openRouterPort,
     probeRouterPort,
     readRouterMapping,
+    readRouterPortOwner,
     readRouterServices,
     renewRouterPort,
+    RouterError,
     ROUTER_PROBE_PATH,
     type RouterGateway,
 } from './screenMirrorRouter';
@@ -371,4 +373,94 @@ test('a remembered mapping is trusted only on a router of this network', () => {
     expect(readRouterMapping(value('file:///etc/passwd'))).toBeNull();
     expect(readRouterMapping('not json')).toBeNull();
     expect(readRouterMapping(null)).toBeNull();
+});
+
+test('a description whose URLBase is no address offers no service', () => {
+    const xml = `<root><URLBase>not an address</URLBase><device>
+        <service><serviceType>${SERVICE}</serviceType><controlURL>/ip</controlURL></service>
+    </device></root>`;
+    expect(
+        readRouterServices(xml, 'http://192.168.1.1:5000/d.xml', '192.168.1.3'),
+    ).toEqual([]);
+});
+
+// Answers every action with more than a description can be.
+async function floodingRouter() {
+    const actions: string[] = [];
+    const server = http.createServer((req, res) => {
+        actions.push(
+            /#(\w+)"$/.exec(String(req.headers.soapaction))?.[1] ?? '',
+        );
+        req.resume();
+        req.on('end', () => res.writeHead(200).end('x'.repeat(300 * 1024)));
+    });
+    servers.push(server);
+    await new Promise<void>((resolve) =>
+        server.listen(0, '127.0.0.1', resolve),
+    );
+    const gateway: RouterGateway = {
+        controlUrl: `http://127.0.0.1:${(server.address() as AddressInfo).port}/ctl`,
+        serviceType: SERVICE,
+        localAddress: '192.168.1.3',
+    };
+    return { actions, gateway };
+}
+
+test('a router whose answer is too large has not answered, and no other port is tried', async () => {
+    const router = await floodingRouter();
+    const failure = await getRouterExternalAddress(router.gateway).catch(
+        (error) => error,
+    );
+    expect(failure).toBeInstanceOf(RouterError);
+    expect(failure).toMatchObject({ message: 'Answer too large', code: -1 });
+    router.actions.length = 0;
+    await expect(
+        openRouterPort(router.gateway, 39241, '203.0.113.10'),
+    ).rejects.toMatchObject({ code: -1 });
+    // Whose the port is: not said. The mapping: no answer, so it stops.
+    expect(router.actions).toEqual([
+        'GetSpecificPortMappingEntry',
+        'AddPortMapping',
+    ]);
+});
+
+test('a router that is not there fails with its own error, not a refusal', async () => {
+    const probe = http.createServer();
+    await new Promise<void>((resolve) => probe.listen(0, '127.0.0.1', resolve));
+    const port = (probe.address() as AddressInfo).port;
+    await new Promise<void>((resolve) => probe.close(() => resolve()));
+    const gateway: RouterGateway = {
+        controlUrl: `http://127.0.0.1:${port}/ctl`,
+        serviceType: SERVICE,
+        localAddress: '192.168.1.3',
+    };
+    const failure = await getRouterExternalAddress(gateway).catch(
+        (error) => error,
+    );
+    expect(failure).not.toBeInstanceOf(RouterError);
+    expect(failure).toMatchObject({ code: 'ECONNREFUSED' });
+    await expect(
+        openRouterPort(gateway, 39241, '203.0.113.10'),
+    ).rejects.toMatchObject({ code: 'ECONNREFUSED' });
+    expect(await readRouterPortOwner(gateway, 39241)).toBe('unknown');
+});
+
+test('a mapping to something that is no address belongs to nobody it can name', async () => {
+    const router = await fakeRouter({
+        table: new Map([[39241, { client: 'router.local', port: 39241 }]]),
+    });
+    expect(await readRouterPortOwner(router.gateway, 39241, 39241)).toBe(
+        'unknown',
+    );
+    expect(await readRouterPortOwner(router.gateway, 40001)).toBe('free');
+});
+
+test('a router that maps only the same port, and refuses that one, is asked for no other', async () => {
+    const router = await fakeRouter({ samePort: true, failures: [606] });
+    await expect(
+        openRouterPort(router.gateway, 39241, '203.0.113.10', {
+            preferredPort: 40500,
+        }),
+    ).rejects.toMatchObject({ code: 606 });
+    expect(router.addedPorts()).toEqual([40500, 39241]);
 });

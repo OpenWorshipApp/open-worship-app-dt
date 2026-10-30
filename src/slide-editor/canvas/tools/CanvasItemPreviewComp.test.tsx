@@ -322,3 +322,131 @@ describe('canvas item preview', () => {
         expect(h.acquire).not.toHaveBeenCalled();
     });
 });
+
+describe('canvas item preview camera races and fallbacks', () => {
+    function setCameraItem(width = 100) {
+        h.item = { id: 1, type: 'camera' };
+        h.props = {
+            type: 'camera',
+            width,
+            height: 100,
+            deviceId: 'camera-1',
+            label: 'Front',
+        };
+        h.cameras = [{ deviceId: 'camera-1', label: 'Front' }];
+    }
+
+    function cameraButton() {
+        return container.querySelector<HTMLButtonElement>(
+            '.cip-camera-actions button',
+        )!;
+    }
+
+    function deferred<T>() {
+        let resolve!: (value: T) => void;
+        const promise = new Promise<T>((done) => {
+            resolve = done;
+        });
+        return { promise, resolve };
+    }
+
+    it('names no source for an item kind it does not know', async () => {
+        h.item = { id: 1, type: 'error' };
+        h.props = { type: 'error', width: 100, height: 100 };
+        await renderPreview();
+        await expand();
+        const source = container.querySelector<HTMLElement>(
+            '.cip-source .app-ellipsis',
+        )!;
+        expect(source.title).toBe('');
+        expect(source.textContent).toBe('');
+        expect(container.textContent).toContain('error');
+    });
+
+    it('draws nothing to fit when the window cannot measure the panel', async () => {
+        vi.stubGlobal('ResizeObserver', undefined);
+        await renderPreview();
+        await expand();
+        expect(container.textContent).toContain('800x400');
+        expect(container.textContent).not.toContain('Rendered item');
+    });
+
+    it('a camera with no preview drawn has nothing to start', async () => {
+        setCameraItem(0);
+        await renderPreview();
+        await expand();
+
+        await act(async () => cameraButton().click());
+
+        expect(h.resolve).not.toHaveBeenCalled();
+        expect(cameraButton().textContent).toBe('Start Camera');
+    });
+
+    it('a camera that cannot be resolved says so and stays off', async () => {
+        setCameraItem();
+        h.resolve.mockResolvedValue(null);
+        await renderPreview();
+        await expand();
+
+        await act(async () => cameraButton().click());
+
+        expect(h.toast).toHaveBeenCalledWith(
+            'Camera Error',
+            'Camera not found',
+        );
+        expect(h.acquire).not.toHaveBeenCalled();
+        expect(cameraButton().textContent).toBe('Start Camera');
+    });
+
+    it('a camera that fails to open reports the error and stays off', async () => {
+        setCameraItem();
+        const error = new Error('device busy');
+        h.acquire.mockRejectedValue(error);
+        await renderPreview();
+        await expand();
+
+        await act(async () => cameraButton().click());
+
+        expect(h.error).toHaveBeenCalledWith(error);
+        expect(h.toast).toHaveBeenCalledWith(
+            'Camera Error',
+            'Error: device busy',
+        );
+        expect(cameraButton().textContent).toBe('Start Camera');
+        expect(container.querySelector('video')!.srcObject).toBeFalsy();
+    });
+
+    it('stopping while the device is being looked up opens nothing', async () => {
+        setCameraItem();
+        const lookup = deferred<string | null>();
+        h.resolve.mockReturnValue(lookup.promise);
+        await renderPreview();
+        await expand();
+
+        await act(async () => cameraButton().click());
+        expect(cameraButton().textContent).toBe('Stop Camera');
+        await act(async () => cameraButton().click());
+        expect(cameraButton().textContent).toBe('Start Camera');
+        await act(async () => lookup.resolve('camera-1'));
+
+        expect(h.acquire).not.toHaveBeenCalled();
+        expect(h.toast).not.toHaveBeenCalled();
+    });
+
+    it('a stream that lands after Stop is released, never attached', async () => {
+        setCameraItem();
+        const opening = deferred<unknown>();
+        h.acquire.mockReturnValue(opening.promise);
+        await renderPreview();
+        await expand();
+
+        await act(async () => cameraButton().click());
+        await vi.waitFor(() => expect(h.acquire).toHaveBeenCalled());
+        await act(async () => cameraButton().click());
+        await act(async () => opening.resolve({ id: 'late-stream' }));
+
+        expect(h.releaseCamera).toHaveBeenCalledExactlyOnceWith('camera-1');
+        expect(container.querySelector('video')!.srcObject).toBeFalsy();
+        expect(cameraButton().textContent).toBe('Start Camera');
+    });
+});

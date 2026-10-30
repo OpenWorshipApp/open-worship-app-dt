@@ -3,14 +3,14 @@ id: W-53
 title: "Afficher un chant en plusieurs langues pour que tout le monde chante (Affichage de texte long)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: f41ca4dbd5524b4b
+translatedFrom: e0759163997668bd
 ---
 # W-53 — Afficher un chant en plusieurs langues pour que tout le monde chante (Affichage de texte long)
 
 **Objectif :** mettre un texte — le plus souvent un chant — à l'écran en deux langues ou plus, côte à
 côte, chaque partie à côté de sa traduction, et le laisser défiler pendant que l'assemblée chante.
 
-**Le plus rapide pour un seul chant :** faites un clic droit dessus dans la liste **Documents** et
+**Le plus rapide pour un seul chant :** faites un clic droit dessus dans la liste **[en:tran:Documents]** et
 choisissez **[en:tran:Long Text Show]**. Le panneau s'ouvre sur une nouvelle session portant le nom du
 chant, qui le contient sous forme d'une carte **EN** lue depuis son **[en:tran:Lyric File]**, et
 **[en:tran:Show Long Text]** est activé dès que la carte a lu le chant — passez à l'étape 5, ou à
@@ -70,7 +70,7 @@ plus besoin se suppriment depuis le menu de leur onglet.
    revient jamais au début. Une partie qui n'est pas allumée garde ses propres touches —
    **Space** appuie sur celle-là.
 8. **Donnez à une langue son propre style.** Ouvrez **[en:tran:Properties]** sur sa carte :
-   **[en:tran:Font Family]**, **[en:tran:Text Color]**,
+   **[en:tran:Font]**, **[en:tran:Text Color]**,
    **[en:tran:Text Size (%)]** (sa taille par rapport aux autres langues — 80 la rend
    un peu plus petite) et **[en:tran:Text Align]**. Une modification atteint un
    texte affiché environ une demi-seconde après que vous vous êtes arrêté. Ce que vous ne touchez pas

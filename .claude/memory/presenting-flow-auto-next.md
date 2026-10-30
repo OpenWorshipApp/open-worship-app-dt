@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 53c6c8a1-b577-4c3d-99d2-d0efc98a350a
-  modified: 2026-10-09T03:05:44.338Z
+  modified: 2026-10-29T19:16:59.451Z
 ---
 
 `src/presenting-flow/presentingFlowAutoNextHelpers.ts` (added 2026-08-05, branch refactor24) is the
@@ -39,7 +39,10 @@ and it names WHICH run, so stepping one open sheet leaves another's clock tickin
   of the sheet, or by a **`Next: Clear Interval`** line (2026-08-08,
   `stopPresentingFlowAutoNextInterval`) — the SHEET's own off switch, since the other three
   are all the operator being at the machine and a loop is exactly what an unattended sheet
-  runs. Do not "fix" this into cancelling.
+  runs. Do not "fix" this into cancelling. Its limit (read 2026-10-29): a line AFTER a
+  `Jump to` loop is never reached — landing on the jump fires it at once
+  (`fireLandedPresentingFlowRun`) — so unattended it ends a loop only as a CC on a line
+  inside it, on that line's first showing; "over and over, then stop" cannot be written.
 
 **A timeout met by a running interval LENDS it its count for one cycle** rather than
 replacing it (`borrowPresentingFlowAutoNextCycle`, 2026-08-06) — interval at 5 + a

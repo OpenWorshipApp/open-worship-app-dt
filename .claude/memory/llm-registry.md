@@ -138,7 +138,9 @@ canSeeImages?, note?}]}`, up to 20; `toValidLlmRegistry` in
   `list` reads the public file and never prints a key; `check` asks each
   server's `/models` with its key and, for one that does not answer, asks
   _[y/N]_ before taking it out (`--remove-unreachable` asks nothing; no
-  terminal, nothing is taken out); `remove <id>`.
+  terminal, nothing is taken out); `remove <id>`; and since 2026-10-25
+  `add` / `modify <id> [<entry.json>]` write one entry typed in vim (or
+  read from a file), refusing an id or a name another entry has, after a yes.
   `llm-tunnel-startup.mjs install -- <options>` registers ONE service per
   tunnel id: a systemd USER service + linger on Linux (cron lines with no
   systemd), a launchd agent on macOS, a logon task repeating every 5

@@ -1020,6 +1020,36 @@ function readLookupBible(subject: LookupSubjectType, facts: any) {
     return subject.bibleKey ?? null;
 }
 
+/** The Bible a record was read in: a passage's, or the one being read. */
+export function readLookupRecordBible(subject: LookupSubjectType) {
+    return readLookupBible(subject, readLookupFacts(subject.facts));
+}
+
+/**
+ * The line that sends a person's or a place's verses to a Bible in the
+ * answer's language (`pickBibleInLanguage`, 2026-10-29): the record is the
+ * Bible being read, and with the Reader on the KJV, a French question about
+ * the ark under Noah's card was answered with Genesis 6:15 in English and
+ * a translation of the model's own in brackets, the Louis Segond installed.
+ * Under the question, never in the record turn, which a server keeps.
+ */
+function genQuoteBibleLine(
+    quoteBible: string | null,
+    subject: LookupSubjectType,
+) {
+    if (quoteBible === null) {
+        return '';
+    }
+    const recordBible = readLookupRecordBible(subject);
+    return (
+        ` Quote verses from the Bible "${quoteBible}", which is in their ` +
+        'language: read each by ref, or search, before quoting it' +
+        (recordBible === null
+            ? '.'
+            : `; the record's own words are "${recordBible}"'s.`)
+    );
+}
+
 // What every ask about a passage says about the wording: the record IS that
 // Bible's words, and a model may not improvise a verse (2026-10-19: asked
 // "show this passage in Khmer", gemma4:cloud wrote its own Khmer translation
@@ -1274,12 +1304,15 @@ export function toLookupQuestion(
     question: string,
     subject: LookupSubjectType,
     contextText = '',
+    // A Bible in the answer's language for its verses (`genQuoteBibleLine`).
+    quoteBible: string | null = null,
 ) {
     const frame = KIND_FRAME_MAP[subject.kind];
     const name = subject.title.replaceAll('"', '”');
     return (
         `${question.trim()}\n\n(${frame}: "${name}"; its record is at the ` +
-        `start of this conversation.)${contextText}` +
+        'start of this conversation.' +
+        `${genQuoteBibleLine(quoteBible, subject)})${contextText}` +
         toQuestionAgain(question, contextText)
     );
 }
@@ -1295,13 +1328,18 @@ export function toLookupAsk(
     subject: LookupSubjectType,
     // What the window read for this question (`toLookupContextText`).
     contextText = '',
+    // A Bible in the answer's language for its verses (`genQuoteBibleLine`).
+    quoteBible: string | null = null,
 ) {
     const frame = KIND_FRAME_MAP[subject.kind];
     const name = subject.title.replaceAll('"', '”');
     const facts = readLookupFacts(subject.facts);
     const bible =
         subject.kind === 'verse' ? readLookupBible(subject, facts) : null;
-    const wording = subject.kind === 'verse' ? genVerseWordingRule(bible) : '';
+    const wording =
+        subject.kind === 'verse'
+            ? genVerseWordingRule(bible)
+            : genQuoteBibleLine(quoteBible, subject);
     const card = genCardActionsLine(listLookupCardLabels(subject));
     if (subject.facts.length === 0) {
         // In ITS Bible: read with no `bible`, the tool picks one by the

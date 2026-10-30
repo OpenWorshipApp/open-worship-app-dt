@@ -15,8 +15,9 @@ but for keyboard shortcuts … a floating panel … in `Help` menubar"; they cho
 the floating panel over the tips card and the menu ONLY (no opening key).
 
 - `KeyboardShortcutsComp` is mounted by `AppWindowToolsComp` in every window,
-  registers the Help item from the main window only (`isRoutedToFocusedWindow`,
-  like the tips), and lazy-loads `KeyboardShortcutsPanelComp` on the first
+  registers the Help item from the main window only, like the tips
+  (`isRoutedToFocusedWindow`; the tips are `isSentToAllWindows` since
+  2026-10-23), and lazy-loads `KeyboardShortcutsPanelComp` on the first
   open. The panel claims NO keyboard layer, so a listed key can be tried while
   it is open; Escape in its box empties it, then closes.
 - There is no runtime registry of shortcuts, so the list is written per page in

@@ -161,6 +161,52 @@ export function toRecordEnumLabel(
         : trimmedValue;
 }
 
+// A name's `years` entry `type`: English in every package, a closed set of two.
+export const YEAR_RANGE_TYPE_LABEL: { [type: string]: string } = {
+    reign: 'Reign',
+    coregency: 'Coregency',
+};
+
+// A name's `age` is English in every package as well, but a number inside a
+// phrase rather than a word, so it cannot be a key as written. These three
+// shapes are every value the shipped datasets use (`175 years`,
+// `20 at accession`, `about 30 at start of ministry`); the number goes back in
+// through `{count}`, because where it sits is the translation's to decide.
+export const AGE_PATTERN_LIST: ReadonlyArray<[RegExp, string]> = [
+    [/^(\d+) years$/, '{count} years'],
+    [/^(\d+) at accession$/, '{count} at accession'],
+    [
+        /^about (\d+) at start of ministry$/,
+        'about {count} at start of ministry',
+    ],
+];
+
+/**
+ * A name record's `age` in the lookup language — a Khmer record read
+ * `175 years` beside its translated type and gender chips.
+ *
+ * Dropped as `unknown` on the English value, like the enums. A phrase none of
+ * the patterns know is shown as the dataset wrote it, never handed to
+ * `translate` (`toRecordEnumLabel` says why).
+ */
+export function toRecordAgeLabel(
+    value: string | null | undefined,
+    translate: (text: string) => string,
+): string {
+    const trimmedValue = (value ?? '').trim();
+    const lowerValue = trimmedValue.toLowerCase();
+    if (lowerValue === '' || lowerValue === 'unknown') {
+        return '';
+    }
+    for (const [pattern, key] of AGE_PATTERN_LIST) {
+        const match = pattern.exec(lowerValue);
+        if (match !== null) {
+            return translate(key).replace('{count}', match[1]);
+        }
+    }
+    return trimmedValue;
+}
+
 /**
  * Every inline reference scheme the datasets emit.
  *

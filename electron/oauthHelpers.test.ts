@@ -81,6 +81,31 @@ describe('captureOAuthRedirectUrl', () => {
         await expect(promise).resolves.toBe(`${REDIRECT_PREFIX}?code=1`);
     });
 
+    test('resolves from a server-side redirect that already happened', async () => {
+        const promise = captureOAuthRedirectUrl({
+            authorizeUrl: AUTHORIZE_URL,
+            redirectUriPrefix: REDIRECT_PREFIX,
+        });
+        const win = getLastWindow();
+        emit(
+            win.webContents,
+            'did-redirect-navigation',
+            {},
+            'https://identityservices.ccli.com/consent',
+        );
+        expect((win as any).destroy).not.toHaveBeenCalled();
+        emit(
+            win.webContents,
+            'did-redirect-navigation',
+            {},
+            `${REDIRECT_PREFIX}?code=redirected`,
+        );
+        await expect(promise).resolves.toBe(
+            `${REDIRECT_PREFIX}?code=redirected`,
+        );
+        expect((win as any).destroy).toHaveBeenCalledTimes(1);
+    });
+
     test('rejects when the window is closed before sign in', async () => {
         const promise = captureOAuthRedirectUrl({
             authorizeUrl: AUTHORIZE_URL,

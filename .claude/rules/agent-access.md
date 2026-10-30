@@ -34,7 +34,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   loads at startup; chrome-devtools-mcp and puppeteer are imported on the first
   MCP session. The SAME server is what `./.mcp.json` spawns over stdio for an
   outside agent (as `owa-devtools`), so the chatbot and the agent share one tool
-  set — chrome-devtools' plus the `owa_*` ones. **The HTTP door requires a
+  set — chrome-devtools' plus the `owa_*` ones; the stdio door alone adds
+  `owa_drop_files`. **The HTTP door requires a
   per-launch bearer capability** (2026-09-23, `MC-01`): 256 random bits from
   `startOwaMcpHost`, published beside `mcpUrl` in the mode-0600 instance file,
   passed to the chatbot over IPC, and checked before an MCP session is opened.
@@ -118,8 +119,8 @@ the `tools/owa-devtools-mcp` package. Two doors, one discovery file:
   against the live app; it spawns a FRESH server because the running host
   cached `server.mjs` on its first session.
 - **Discovery**: `publishAiEndpoints()` writes
-  `<temp>/open-worship-app-cdp/<pid>.json` with `{port, url, mcpUrl, mcpToken, isDev,
-userDataPath, startedAt}` — one file per live instance, swept when a pid is
+  `<temp>/open-worship-app-cdp/<pid>.json` with `{pid, port, url, mcpUrl, mcpToken, isDev,
+version, userDataPath, startedAt}` — one file per live instance, swept when a pid is
   gone, removed on `will-quit`. Chromium reports its chosen port through
   `<userData>/DevToolsActivePort`, which is polled after `ready`.
   **A port named on purpose is a PIN, not a preference** (2026-09-17,
@@ -178,8 +179,8 @@ userDataPath, startedAt}` — one file per live instance, swept when a pid is
   will not delete is emptied by assignment; one that survives that is reported
   as NOT revoked, because a lockdown that quietly did nothing is worse than
   none. `html/chatbot.html` also carries its own CSP, tighter than the app-wide
-  one: `connect-src` names the assistants it may speak to plus the loopback MCP
-  host and nothing else, so an answer that tried to post the user's key
+  one: `connect-src` names the assistants it may speak to plus loopback on any
+  port (the MCP host's is picked at launch) and nothing else, so an answer that tried to post the user's key
   somewhere has nowhere to send it. None of that is the FIRST line — the first
   line is that answers render as TEXT, there is no `dangerouslySetInnerHTML`
   anywhere in `src/chatbot/` and there must never be one. The same list holds

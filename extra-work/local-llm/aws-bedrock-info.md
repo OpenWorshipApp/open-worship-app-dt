@@ -10,15 +10,15 @@ a number: this page is a snapshot, not a feed._
 **Short answer: Claude Haiku 5.5.** It is the one Bedrock model of Claude's
 class at an open-model price, it takes tools, pictures and prompt caching, and
 with the chatbot's cached prefix a question costs a fraction of a cent. The
-catch is that it is not on the route the app's Bedrock provider uses, so it
-needs a small code change (section 6) before a volunteer can pick it.
+catch was that it was not on the route the app's Bedrock provider used, so
+it needed a small code change (section 6) — done the same day.
 
 ## 1. Two hosts, and the app talks to one of them
 
 | Host                                     | Who the app sends there                                                                                   | APIs                                                                                                        | Cross-region ids              | Key                                                                            |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
 | `bedrock-mantle.<region>.api.aws`        | the chatbot's Bedrock provider: `src/helper/ai/bedrockHelpers.ts`, the OpenAI SDK pointed at `/openai/v1` | Chat Completions, Responses, Anthropic Messages (`/anthropic/v1/messages`)                                  | no                            | the `ABSK…` key as `Authorization: Bearer` (`x-api-key` on the Anthropic route) |
-| `bedrock-runtime.<region>.amazonaws.com` | nobody yet                                                                                                | Converse, Invoke, Chat Completions (`/openai/v1`), Responses, Anthropic Messages (`/anthropic/v1/messages`) | yes: `global.`, `us.`, `eu.`… | the same key, or SigV4                                                         |
+| `bedrock-runtime.<region>.amazonaws.com` | Claude Haiku 5.5 since section 6: `src/helper/ai/bedrockClaudeHelpers.ts`, the Anthropic SDK at `/anthropic`                                                                                                | Converse, Invoke, Chat Completions (`/openai/v1`), Responses, Anthropic Messages (`/anthropic/v1/messages`) | yes: `global.`, `us.`, `eu.`… | the same key, or SigV4                                                         |
 
 AWS's endpoints page says per-token prices are identical on both hosts and
 that both run the same Mantle engine; the hosts differ in which models and
@@ -101,7 +101,7 @@ questions an hour before it pauses.
   Haiku 4.5 answered the same kind of question correctly at $0.02; Haiku 5.5
   is a step up from 4.5 on agent tasks at a tenth of its price. Gemma 4 31B
   has one correct run; nothing else on Bedrock has been measured here at all.
-- **The loop already exists.** `askAnthropic` in `src/chatbot/llmBotHelpers.ts`
+- **The loop already exists.** `askAnthropicCompatible` in `src/chatbot/llmBotHelpers.ts`
   caches the prefix (an explicit marker on the system block plus the
   request-level one), keeps the tools on the last round under
   `tool_choice: none`, and leaves effort at the provider's default. Haiku 5.5
@@ -153,8 +153,8 @@ us-west-2, us-east-1 and us-east-2. It sits on Mantle's `/v1` path (or the
 runtime host's `/openai/v1`), so its row needs its own base URL; it is text
 only, so `canSeeImages` stays off and `checkCanSeeImages` refuses a picture
 before the call; no cached rate, so every round is full price. The family's
-free cousin, Nemotron Lightning on Kilo Code, is the app's best free model
-(7 of 7), which is the only hint it would cope.
+free cousin, Nemotron Lightning on Kilo Code, answered 7 of 7 through the
+app's own tool loop (2026-09-12), which is the only hint it would cope.
 
 ## 8. Nova, and why not
 

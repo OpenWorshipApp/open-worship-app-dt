@@ -13,7 +13,7 @@ harness — `benchmarkDemo`, `snapshotDemo`, `youtubeMirrorDemo`,
 `transitionEffects`, with its own `README.md`. Entry page is
 `html/experiment.html`.
 
-**It is dev-only and build-excluded by construction:** `vite.config.ts:45-52`
+**It is dev-only and build-excluded by construction:** `vite.config.ts:45-66`
 has a custom `exclude-experiments` plugin — `excludedHtmlFileNames =
 ['experiment.html']` and `excludedSrcDirPattern = /[\\/]src[\\/]experiments[\\/]/`
 — that throws if product code imports from `src/experiments/` ("Move shared code

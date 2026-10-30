@@ -503,3 +503,138 @@ describe('bible-list/note Note editing history', () => {
         );
     });
 });
+
+describe('bible-list/note Note reading, defaults and failures', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        h.readFileDataMock.mockResolvedValue(null);
+        h.writeFileDataMock.mockResolvedValue(true);
+        h.checkHasHistoriesMock.mockResolvedValue(false);
+        h.getCurrentHistoryMock.mockResolvedValue(null);
+    });
+
+    test('an unreadable item is kept, as written, beside the readable ones', () => {
+        const broken = genItem(2, 'x', { title: 42 });
+        const note = genNote([genItem(1, 'fine'), broken]);
+        const items = note.items;
+        expect(items).toHaveLength(2);
+        expect(items[0].isError).toBe(false);
+        expect(items[1].isError).toBe(true);
+        expect(h.showSimpleToastMock).toHaveBeenCalledWith(
+            'Instantiating Note Item',
+            'Invalid note item data',
+        );
+        // A save must not lose it: it is written back exactly as it came.
+        expect(JSON.parse(JSON.stringify(items[1].toJson()))).toEqual(broken);
+    });
+
+    test("a window's copy of an item is the head's while unsaved, else the saved one", async () => {
+        const note = genNote([genItem(1, 'saved'), genItem(2, 'file only')]);
+        h.getCurrentHistoryMock.mockResolvedValue(
+            JSON.stringify(genNoteJson([genItem(1, 'unsaved')])),
+        );
+        expect((await note.getEditingItemById(1))?.content).toBe('unsaved');
+        expect((await note.getEditingItemById(2))?.content).toBe('file only');
+        h.getCurrentHistoryMock.mockResolvedValue(null);
+        expect((await note.getEditingItemById(1))?.content).toBe('saved');
+        expect(await note.getEditingItemById(3)).toBeNull();
+    });
+
+    test('only the file named Default is the default note', () => {
+        expect(genNote([]).isDefault).toBe(true);
+        const other = Note.fromJson('/notes/Easter.own', genNoteJson([]));
+        expect(other.isDefault).toBe(false);
+    });
+
+    test('an item added to the default note is saved there with a new id', async () => {
+        h.getDirPathMock.mockReturnValue('/notes');
+        h.fsListFilesWithMimetypeMock.mockResolvedValue([FILE_PATH]);
+        h.readFileDataMock.mockResolvedValue(
+            JSON.stringify(genNoteJson([genItem(1, 'existing')])),
+        );
+        const noteItem = genNote([genItem(7, 'from a verse')]).items[0];
+        expect(await Note.addNoteItemToDefault(noteItem)).toBe(noteItem);
+        expect(h.writeFileDataMock).toHaveBeenCalledTimes(1);
+        const [writtenPath, writtenText] = h.writeFileDataMock.mock.calls[0];
+        expect(writtenPath).toBe(FILE_PATH);
+        expect(
+            JSON.parse(writtenText).items.map(
+                (item: { content: string; metadata: { id: number } }) => [
+                    item.metadata.id,
+                    item.content,
+                ],
+            ),
+        ).toEqual([
+            [1, 'existing'],
+            [2, 'from a verse'],
+        ]);
+        expect(h.notifyElementHighlightMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('adding to the default note fails without a default or a save', async () => {
+        const noteItem = genNote([genItem(7, 'from a verse')]).items[0];
+        h.getDirPathMock.mockReturnValue(null);
+        expect(await Note.addNoteItemToDefault(noteItem)).toBeNull();
+        expect(h.writeFileDataMock).not.toHaveBeenCalled();
+
+        h.getDirPathMock.mockReturnValue('/notes');
+        h.fsListFilesWithMimetypeMock.mockResolvedValue([FILE_PATH]);
+        h.readFileDataMock.mockResolvedValue(JSON.stringify(genNoteJson([])));
+        h.writeFileDataMock.mockResolvedValue(false);
+        expect(await Note.addNoteItemToDefault(noteItem)).toBeNull();
+        expect(h.writeFileDataMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('a move that fails half-way says why and deletes nothing', async () => {
+        const sourcePath = '/notes/Source.own';
+        h.readFileDataMock.mockImplementation(async (filePath: string) =>
+            filePath === sourcePath
+                ? JSON.stringify(genNoteJson([genItem(3, 'move')]))
+                : null,
+        );
+        h.writeFileDataMock.mockRejectedValue(new Error('disk full'));
+        await genNote([]).moveItemFrom(sourcePath);
+        expect(h.showSimpleToastMock).toHaveBeenLastCalledWith(
+            'Moving Note Item',
+            'disk full',
+        );
+        // The source was never written: its item is still there.
+        expect(h.writeFileDataMock.mock.calls.map(([path]) => path)).toEqual([
+            FILE_PATH,
+        ]);
+    });
+
+    test('a head that is not a note is not rebased onto', async () => {
+        h.checkHasHistoriesMock.mockResolvedValue(true);
+        h.getCurrentHistoryMock.mockResolvedValue('{ half written');
+        expect(await genNote([genItem(1, 'a')]).save()).toBe(true);
+        expect(h.handleErrorMock).toHaveBeenCalledTimes(1);
+        expect(h.addHistoryMock).not.toHaveBeenCalled();
+    });
+
+    test('a new item flashes its own row in the list', () => {
+        const querySelector = vi.fn(() => 'the row');
+        vi.stubGlobal('document', { querySelector });
+        try {
+            const note = genNote([genItem(1, 'a')]);
+            note.addNoteItem(genNote([genItem(9, 'b')]).items[0]);
+            const findRow = h.notifyElementHighlightMock.mock.calls[0][0];
+            expect(findRow()).toBe('the row');
+            expect(querySelector).toHaveBeenCalledWith(
+                '[data-note-item-id="Default-2"]',
+            );
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
+    test('a reload with nothing to read keeps what it has', async () => {
+        const note = genNote([genItem(1, 'kept')]);
+        await note.reload();
+        expect(note.items[0].content).toBe('kept');
+        await note.reloadEditing();
+        expect(note.items[0].content).toBe('kept');
+        expect(h.readFileDataMock).toHaveBeenCalledWith(FILE_PATH);
+        expect(h.getCurrentHistoryMock).toHaveBeenCalled();
+    });
+});

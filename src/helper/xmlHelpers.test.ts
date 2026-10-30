@@ -488,5 +488,98 @@ describe('appXMLParser.parseFromString', () => {
             expect(rootTagNames).toEqual(['a', 'b']);
             expect(xmlDoc.documentElement?.tagName).toBe('a');
         });
+
+        test('keeps an empty tag as text', () => {
+            const xmlDoc = parse('<root><>text</root>');
+            expect(xmlDoc.documentElement?.textContent).toBe('<>text</root>');
+        });
+    });
+});
+
+describe('the edges of the serializer and the optimizer', () => {
+    const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>';
+
+    test('serializes a bare attribute, a comment, and nothing for an unknown node', () => {
+        const attribute = document.createAttribute('note');
+        attribute.value = 'a "b"\nc';
+        expect(appXMLSerializer.serializeToString(attribute)).toBe(
+            `${XML_DECLARATION}a &quot;b&quot;&#10;c`,
+        );
+        expect(
+            appXMLSerializer.serializeToString(
+                document.createComment(' kept '),
+            ),
+        ).toBe(`${XML_DECLARATION}<!-- kept -->`);
+        expect(
+            appXMLSerializer.serializeToString({ nodeType: 12 } as Node),
+        ).toBe(XML_DECLARATION);
+    });
+
+    test('keeps a self-closing root whole when only keys are wanted', () => {
+        expect(optimizeXMLText('<bible key="KJV"/>', { keys: 'all' })).toBe(
+            '<bible key="KJV"/>',
+        );
+    });
+
+    test('reads tags written with spaces inside the brackets', () => {
+        expect(
+            optimizeXMLText('< bible key="KJV" ><book/></ bible >', {
+                keys: ['key'],
+            }),
+        ).toBe('< bible key="KJV" ></bible>');
+    });
+
+    test('a root that is never closed is emptied to the end of the text', () => {
+        for (const xmlText of [
+            '<bible key="KJV"><book>Genesis',
+            '<bible key="KJV"><book',
+            '<bible key="KJV"><x/>',
+        ]) {
+            expect(optimizeXMLText(xmlText, { keys: 'all' })).toBe(
+                '<bible key="KJV"></bible>',
+            );
+        }
+    });
+
+    test('text, a stray closing tag and a broken tag around the root are kept as they are', () => {
+        expect(
+            optimizeXMLText('<bible a="1"><b/></bible>  tail', { keys: 'all' }),
+        ).toBe('<bible a="1"></bible>  tail');
+        expect(
+            optimizeXMLText('<bible a="1"></bible><extra', { keys: 'all' }),
+        ).toBe('<bible a="1"></bible><extra');
+        expect(
+            optimizeXMLText('</stray><bible a="1"><b/></bible>', {
+                keys: 'all',
+            }),
+        ).toBe('</stray><bible a="1"></bible>');
+    });
+
+    test('a self-closing namesake inside a removed sibling does not end it early', () => {
+        expect(
+            optimizeXMLText(
+                '<bible><book key="1"><book/></book><map/></bible>',
+                {
+                    childTags: ['map'],
+                },
+            ),
+        ).toBe('<bible><map/></bible>');
+    });
+
+    test('child filtering keeps declarations, comments and trailing text', () => {
+        expect(
+            optimizeXMLText(
+                '<?xml version="1.0"?><!-- c --><bible><!-- inner -->' +
+                    '<map/><book/></bible>tail',
+                { childTags: ['map'] },
+            ),
+        ).toBe(
+            '<?xml version="1.0"?><!-- c --><bible><!-- inner --><map/></bible>tail',
+        );
+        expect(
+            optimizeXMLText('<bible><map/><book/></bible><oops', {
+                childTags: ['map'],
+            }),
+        ).toBe('<bible><map/></bible><oops');
     });
 });

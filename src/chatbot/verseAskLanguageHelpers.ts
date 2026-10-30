@@ -22,7 +22,11 @@
  */
 
 import { readVerseFindAsk } from '../helper/ai/verseFindAskHelpers';
-import type { BibleContentAskType } from './bibleContentAskHelpers';
+import {
+    readBibleContentAsk,
+    type BibleContentAskType,
+} from './bibleContentAskHelpers';
+import { checkHasWord, checkIsAppWork } from './bibleReaderChatHelpers';
 import {
     checkIsInLanguageScript,
     listAssistantLanguages,
@@ -41,17 +45,21 @@ function toPlainAsk(text: string) {
     return text.replace(ZERO_WIDTH_PATTERN, '').replace(/\s+/g, ' ').trim();
 }
 
+// A Latin word whole, as `checkHasWord` reads it: French `chant` is not in
+// _chantez à l'Éternel_.
 function checkHasExcludedWord(text: string, language: AssistantLanguageType) {
-    return language.verseAskExcludeWords.some((word) => {
-        return word.length > 0 && text.includes(word);
-    });
+    return checkHasWord(text, language.verseAskExcludeWords);
 }
 
 /**
  * Whether the words name the app's own work in some language's own words --
  * the screen, a slide, a song (`verseAskExcludeWords`) -- which ends a verse
  * search as `VERSE_FIND_EXIT_PATTERN` does for English: _ដាក់វាលើអេក្រង់_
- * under a found verse is not more words of the verse.
+ * under a found verse is not more words of the verse. A verse asked FOR is
+ * read by `checkIsAppWork` instead (2026-10-29): a word the Bible uses too
+ * -- a song, a size -- starts a search unless it is a how-do-I, so
+ * _ខគម្ពីរណាដែលនិយាយថាច្រៀងចម្រៀងថ្មី_ (which verse says sing a new song)
+ * is searched, as its English is.
  */
 export function checkIsAppWorkAsk(text: string) {
     const plain = toPlainAsk(text);
@@ -126,7 +134,7 @@ export function readTypedVerseFindAsk(
                 continue;
             }
             const words = toWords(match);
-            if (checkHasExcludedWord(words, language)) {
+            if (checkIsAppWork(words)) {
                 return null;
             }
             const bibleKey = (match.groups?.bible ?? '').trim();
@@ -152,11 +160,30 @@ export function pickVerseFindBible(
     listed: unknown,
     langCode: string,
 ): string | null {
-    const result = listed as {
-        bible?: unknown;
-        bibles?: { key?: unknown; locale?: unknown }[];
-    } | null;
+    const result = listed as { bible?: unknown } | null;
     const lookupKey = typeof result?.bible === 'string' ? result.bible : null;
+    return pickBibleInLanguage(listed, lookupKey, langCode) ?? lookupKey;
+}
+
+/**
+ * An installed Bible in the language somebody reads, when the one a verse
+ * would be read from is not in it -- off `owa_find_verse` with no arguments
+ * (`{bibles: [{key, locale, books?}]}`), a whole Bible before one that holds
+ * `books` of them only (a New Testament had been picked for Genesis,
+ * 2026-10-29). Null to keep `currentKey`: English, no language, a Bible
+ * already in it, or none in it installed.
+ */
+export function pickBibleInLanguage(
+    listed: unknown,
+    currentKey: string | null,
+    langCode: string,
+): string | null {
+    if (langCode === 'en' || langCode === 'other' || langCode.length === 0) {
+        return null;
+    }
+    const result = listed as {
+        bibles?: { key?: unknown; locale?: unknown; books?: unknown }[];
+    } | null;
     const bibles = (Array.isArray(result?.bibles) ? result.bibles : []).filter(
         (bible) => {
             return typeof bible?.key === 'string';
@@ -167,17 +194,77 @@ export function pickVerseFindBible(
             .toLowerCase()
             .startsWith(langCode.toLowerCase());
     };
-    if (langCode === 'en' || langCode === 'other' || langCode.length === 0) {
-        return lookupKey;
-    }
-    const lookupBible = bibles.find((bible) => {
-        return bible.key === lookupKey;
+    const current = bibles.find((bible) => {
+        return bible.key === currentKey;
     });
-    if (lookupBible !== undefined && isInLanguage(lookupBible)) {
-        return lookupKey;
+    if (current !== undefined && isInLanguage(current)) {
+        return null;
     }
-    const own = bibles.find(isInLanguage);
-    return own === undefined ? lookupKey : String(own.key);
+    const toBookCount = (bible: { books?: unknown }) => {
+        return typeof bible.books === 'number' ? bible.books : Infinity;
+    };
+    const ownList = bibles.filter(isInLanguage);
+    if (ownList.length === 0) {
+        return null;
+    }
+    // The first of the most books: a whole Bible says no count at all.
+    const own = ownList.reduce((best, bible) => {
+        return toBookCount(bible) > toBookCount(best) ? bible : best;
+    });
+    return String(own.key);
+}
+
+/**
+ * Knowledge ABOUT the Bible asked in a language other than English --
+ * _តើនរណាជាអ្នកសរសេរគម្ពីរទំនុកតម្កើង?_, _Qui a écrit le livre des
+ * Psaumes ?_ -- read as `readBibleContentAsk` reads English (2026-10-29,
+ * `EC-444`): a question word and a Bible word, not a who-was / where-is,
+ * nothing the person has open, nothing of the app's work. With no
+ * assistant the guide had searched its manual for them and handed back a
+ * page that does not answer (the failure EC-199 ended for English), where
+ * the English question gets the way to an assistant. Null otherwise.
+ */
+export function readTypedKnowledgeAsk(
+    text: string,
+): BibleContentAskType | null {
+    const plain = toPlainAsk(text);
+    if (
+        plain.length === 0 ||
+        plain.startsWith('/') ||
+        REFERENCE_PATTERN.test(toAsciiDigits(plain)) ||
+        checkIsAppWork(plain)
+    ) {
+        return null;
+    }
+    const isKnowledge = listAssistantLanguages().some((language) => {
+        const words = language.bibleKnowledgeWords;
+        return (
+            words.leads.length > 0 &&
+            checkIsInLanguageScript(plain, language) &&
+            checkHasWord(plain, words.leads) &&
+            checkHasWord(plain, words.cues) &&
+            !checkHasWord(plain, words.nameLeads) &&
+            !checkHasWord(plain, words.ownState) &&
+            !checkHasWord(plain, words.appWords)
+        );
+    });
+    return isKnowledge ? { kind: 'knowledge' } : null;
+}
+
+/**
+ * What kind of Bible question the words are, in English or in the person's
+ * own language: a verse by what it says first, then knowledge about the
+ * Bible. The guide's one reader (`helpBotHelpers.ts`), so a question the
+ * manual cannot answer is said so in every language alike.
+ */
+export function readAnyBibleContentAsk(
+    text: string,
+): BibleContentAskType | null {
+    return (
+        readBibleContentAsk(text) ??
+        readTypedVerseContentAsk(text) ??
+        readTypedKnowledgeAsk(text)
+    );
 }
 
 /**
@@ -190,7 +277,11 @@ export function readTypedVerseContentAsk(
     text: string,
 ): BibleContentAskType | null {
     const plain = toPlainAsk(text);
-    if (plain.length === 0 || REFERENCE_PATTERN.test(toAsciiDigits(plain))) {
+    if (
+        plain.length === 0 ||
+        REFERENCE_PATTERN.test(toAsciiDigits(plain)) ||
+        checkIsAppWork(plain)
+    ) {
         return null;
     }
     for (const language of listAssistantLanguages()) {
@@ -199,9 +290,6 @@ export function readTypedVerseContentAsk(
             !checkIsInLanguageScript(plain, language)
         ) {
             continue;
-        }
-        if (checkHasExcludedWord(plain, language)) {
-            return null;
         }
         for (const pattern of language.verseAskPatterns) {
             const match = pattern.exec(plain);

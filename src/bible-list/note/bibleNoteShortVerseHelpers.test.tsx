@@ -67,6 +67,7 @@ vi.mock('bible-note', () => ({
 
 import {
     fromBibleNoteRef,
+    readBibleNoteIndexes,
     revealBibleNoteRefs,
     toBibleNoteRef,
     useBibleVerseAnnotations,
@@ -231,4 +232,98 @@ test('revealing several refs opens each file once and skips bad refs', async () 
     expect(h.highlight.mock.calls[1][1]).toEqual({});
     expect(h.highlight.mock.calls[2][1]).toHaveProperty('moveToView');
     expect(h.highlight.mock.calls[3][1]).toHaveProperty('moveToView');
+});
+
+test('the flash finds the note file row and the note item row on the page', async () => {
+    h.notes.set('/notes/one.own', { isOpened: true, setIsOpened: vi.fn() });
+    const fileRow = document.createElement('div');
+    fileRow.dataset.fileItemFileSrc = '/notes/one.own';
+    const itemRow = document.createElement('li');
+    itemRow.dataset.noteItemId = 'one.own-7';
+    document.body.append(fileRow, itemRow);
+    try {
+        expect(await revealBibleNoteRefs(['/notes/one.own@7'])).toBe(1);
+        const [findFileRow, findItemRow] = h.highlight.mock.calls.map(
+            ([finder]) => finder as () => Element | null,
+        );
+        expect(findFileRow()).toBe(fileRow);
+        expect(findItemRow()).toBe(itemRow);
+    } finally {
+        fileRow.remove();
+        itemRow.remove();
+    }
+});
+
+test('the assistant gets one scan of both indexes when no verse is on screen', async () => {
+    h.paths = ['/notes/one.own', '/notes/empty.own', '/notes/broken.own'];
+    h.files.set('/notes/one.own', {
+        items: [
+            { metadata: { id: 1 }, content: 'GEN 1:1' },
+            {
+                metadata: { id: 2 },
+                verseKey: '(KJV) GEN 1:2',
+                highlights: [{ id: 'h1' }],
+            },
+        ],
+    });
+    // A file with no item list counts as holding nothing.
+    h.files.set('/notes/empty.own', { metadata: {} });
+    h.files.set('/notes/broken.own', null);
+    const indexes = await readBibleNoteIndexes();
+    expect(indexes.shortVerseNoteRefs).toEqual({
+        'GEN 1:1': ['/notes/one.own@1'],
+        'GEN 1:2': ['/notes/one.own@2'],
+    });
+    expect(Object.keys(indexes.verseAnnotationsMap)).toEqual(['(KJV) GEN 1:2']);
+    expect(h.reads).toHaveBeenCalledTimes(3);
+    // Nothing is subscribed to keep it fresh: it was read for this one ask.
+    expect(h.register).not.toHaveBeenCalled();
+});
+
+test('while verses are on screen the assistant reads the live indexes', async () => {
+    h.paths = ['/notes/one.own'];
+    h.files.set('/notes/one.own', {
+        items: [
+            {
+                metadata: { id: 1 },
+                verseKey: '(KJV) GEN 1:1',
+                highlights: [{ id: 'h1' }],
+            },
+        ],
+    });
+    await act(async () => root.render(<IndexProbe />));
+    await vi.waitFor(() =>
+        expect(snapshot().refs['GEN 1:1']).toEqual(['/notes/one.own@1']),
+    );
+    const reads = h.reads.mock.calls.length;
+    const indexes = await readBibleNoteIndexes();
+    expect(indexes.shortVerseNoteRefs).toEqual(snapshot().refs);
+    expect(Object.keys(indexes.verseAnnotationsMap)).toEqual(['(KJV) GEN 1:1']);
+    expect(h.reads).toHaveBeenCalledTimes(reads);
+});
+
+test('a scan that finishes after the last verse left is not kept', async () => {
+    h.paths = ['/notes/one.own'];
+    let finishFirstRead: (data: unknown) => void = () => {};
+    h.files.set(
+        '/notes/one.own',
+        new Promise((resolve) => {
+            finishFirstRead = resolve;
+        }),
+    );
+    await act(async () => root.render(<IndexProbe />));
+    await act(async () => root.render(<div />));
+    expect(h.unregister).toHaveBeenCalledTimes(1);
+    await act(async () => {
+        finishFirstRead({
+            items: [{ metadata: { id: 1 }, verseKey: '(KJV) GEN 1:1' }],
+        });
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    // Back on screen, the stale scan is not what shows first.
+    h.files.set('/notes/one.own', new Promise(() => {}));
+    await act(async () => root.render(<IndexProbe />));
+    expect(snapshot().refs).toEqual({});
+    expect(snapshot().marks).toEqual({});
 });

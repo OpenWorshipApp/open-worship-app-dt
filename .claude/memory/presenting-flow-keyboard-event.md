@@ -64,7 +64,7 @@ line names). This is the one thing the operator aims themselves, mid-service, wi
   `findNextPresentingFlowPreviewIndex` lost its `checkIsEnterable` gate and `landPresentingFlowRunOnIndex`
   calls `expandPresentingFlowPreviewItem`. See [[presenting-flow-preview-run-player]].
 - The `Add Action` menu is now FOUR levels: every clear folds behind `Clear Screen`, and the
-  eight per-widget FG clears behind `Other Clear FG Items` inside it.
+  per-widget FG clears (eight that day, twelve today) behind `Other Clear FG Items` inside it.
   `presentingFlowActionMenuList` (shape, nestable) is separate from `presentingFlowActionList`
   (flat registry, what an id resolves against) — only the component reads the former.
 - **Unit tests:** `presentingFlowActionKey.test.ts` was deleted with the whole

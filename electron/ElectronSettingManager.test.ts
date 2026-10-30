@@ -680,6 +680,74 @@ describe('ElectronSettingManager', () => {
             );
         });
 
+        test('a value that is no text removes the folder copy', () => {
+            existingDirs.add(DATA_DIR);
+            dataFiles.set(toFile(DATA_DIR, 'stay-awake'), 'false');
+            const manager = genManager({ 'selected-parent-dir': DATA_DIR });
+            expect(manager.getClientSetting('stay-awake')).toBe('false');
+
+            manager.setClientSetting('stay-awake', null);
+
+            expect(dataFiles.has(toFile(DATA_DIR, 'stay-awake'))).toBe(false);
+            expect(manager.getClientSetting('stay-awake')).toBeNull();
+        });
+
+        test('a write or delete drops the old copy that was never moved', () => {
+            const consoleLogSpy = vi
+                .spyOn(console, 'log')
+                .mockImplementation(() => {});
+            try {
+                const manager = genManager({
+                    'stay-awake': 'false',
+                    'screen-mirror-mode': 'code',
+                });
+                const toSavedSettings = () => {
+                    const saves = writeFileSync.mock.calls.filter(
+                        ([filePath]) => {
+                            return !String(filePath).includes('local-storage');
+                        },
+                    );
+                    return JSON.parse(saves.at(-1)![1]).clientSetting;
+                };
+
+                manager.setClientSetting('stay-awake', 'true');
+                expect(
+                    dataFiles.get(toFile('/mock-user-data', 'stay-awake')),
+                ).toBe('true');
+                expect(toSavedSettings()).toEqual({
+                    'screen-mirror-mode': 'code',
+                });
+
+                manager.deleteClientSetting('screen-mirror-mode');
+                expect(toSavedSettings()).toEqual({});
+                // The folder's copy is the one read now: there is none.
+                expect(
+                    manager.getClientSetting('screen-mirror-mode'),
+                ).toBeNull();
+            } finally {
+                consoleLogSpy.mockRestore();
+            }
+        });
+
+        test('keep the settings here when the chosen folder cannot be checked', () => {
+            const manager = genManager({
+                'selected-parent-dir': DATA_DIR,
+                'stay-awake': 'false',
+            });
+            const has = vi.spyOn(existingDirs, 'has').mockImplementation(() => {
+                throw new Error('EACCES');
+            });
+            try {
+                manager.moveSettingsToDataDir();
+            } finally {
+                has.mockRestore();
+            }
+            expect(dataFiles.size).toBe(0);
+            expect(manager.settingObject.clientSetting['stay-awake']).toBe(
+                'false',
+            );
+        });
+
         test('wait for a chosen folder that is not there, read meanwhile', () => {
             const manager = genManager({
                 'selected-parent-dir': 'E:/stick',

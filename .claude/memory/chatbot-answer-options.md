@@ -1,8 +1,11 @@
 ---
 name: chatbot-answer-options
-description: Every chatbot answer ends with buttons the user can press instead of typing — three layers under one `OPTIONS:` frame; only the LAST message shows them, and the marker is stripped wherever it lands
+description: "Every chatbot answer ends with buttons the user can press instead of typing — three layers under one `OPTIONS:` frame; only the LAST message shows them, and the marker is stripped wherever it lands"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: cb2907e4-ccee-4b2f-9e58-a0fc3f0bdd80
+  modified: 2026-10-29T19:55:54.546Z
 ---
 
 Every answer in the help window ends with two or three short things the user can
@@ -28,7 +31,10 @@ Decisions that will look like bugs if you assume otherwise:
 - **Only the LAST message shows its options**, and never while busy. A one-press
   **Yes** still sitting under an offer three turns back would resolve against
   the wrong antecedent — the same class of mistake [[agent-access-mcp-chatbot]]'s
-  history work had to teach the offline bot not to make.
+  history work had to teach the offline bot not to make. The one exception
+  (2026-10-19, `canReplyResource`): a Resources reading card keeps its
+  reference and chapter buttons at any position, never while busy — they name
+  passages, not a reply to the last question.
 - **`Yes` and `No thanks` are those exact words on purpose.** They are what the
   offline bot's `FOLLOW_UP_YES_PATTERN` / `FOLLOW_UP_NO_PATTERN` understand, so a
   press works with no key and with the building's internet down. A test in

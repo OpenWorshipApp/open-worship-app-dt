@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-23",
+    "updated": "2026-10-29",
     "sections": [
         {
             "id": "panels",
@@ -757,7 +757,7 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-42",
-                        "passage": "Every answer offers Show me step by step",
+                        "passage": "An answer that comes from a page of this guide offers Show me step by step",
                         "tools": ["owa_guide_start", "owa_guide_step"]
                     }
                 },

@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [SP-30, SP-31]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-51 — Show screens on a virtual display and watch it from another device
 
@@ -114,8 +114,8 @@ cable or a second copy of the app.
 7. The browser page fits the display to its window. Its
    **[en:tran:Full screen]** button (or a double-click on the picture) fills
    the screen, and **[en:tran:Exit full screen]** (or another double-click)
-   leaves it; on a phone, full screen also turns the picture sideways where
-   the browser allows it.
+   leaves it; on a phone, full screen also turns the picture sideways for a
+   wide display where the browser allows it.
    **On the device watching, the page's buttons come back with the mouse or a tap.**
    Stay on the browser page that is already showing the display: move the mouse
    over its picture or tap the picture once to reveal the buttons. They hide
@@ -201,5 +201,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-30` · `SP-31`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

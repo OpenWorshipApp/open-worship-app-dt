@@ -3,7 +3,7 @@ id: W-49b
 title: "Faire avancer les diapositives avec une télécommande de présentation (reprendre les touches sans cliquer)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: f5eb6f216b9e247c
+translatedFrom: 27bb789489b09cac
 ---
 # W-49b — Faire avancer les diapositives avec une télécommande de présentation (reprendre les touches sans cliquer)
 
@@ -21,7 +21,8 @@ quand vous ne pouvez pas retourner à l'ordinateur pour cliquer sur un panneau.
    touches reviennent à ce qui est présenté. Ce troisième appui ne fait que rendre les
    touches : rien ne change à l'écran. L'appui **suivant** fait avancer.
    Si rien ne se passe, vérifiez si un curseur de réglage a le focus ou si le curseur
-   est dans la case **[en:tran:Bible Lookup]** ouverte : trois appuis laissent ces commandes telles quelles.
+   est dans une case où l'on tape, comme la case **[en:tran:Bible Lookup]** ouverte : trois appuis
+   laissent ces commandes telles quelles.
    Vérifiez aussi qu'un des quatre panneaux ci-dessous a quelque chose en présentation.
 3. **Quel panneau les prend** — le premier de ceux-ci qui a quelque chose en cours :
    - le panneau d'aperçu d'un déroulé qui a été lancé (l'une de ses
@@ -40,8 +41,8 @@ quand vous ne pouvez pas retourner à l'ordinateur pour cliquer sur un panneau.
 4. **Rien du tout n'a les touches** — vous avez fermé le panneau où vous étiez, par exemple :
    pas besoin de trois appuis. Le premier appui va au même
    panneau, dans le même ordre, et le fait avancer.
-5. **Ce à quoi les trois appuis ne prennent jamais les touches :** un curseur de réglage, ou une
-   **[en:tran:Bible Lookup]** ouverte avec le curseur de saisie dans sa case — là, les touches continuent
+5. **Ce à quoi les trois appuis ne prennent jamais les touches :** une case où l'on tape, un
+   curseur de réglage, ou une **[en:tran:Bible Lookup]** ouverte avec le curseur de saisie dans sa case — là, les touches continuent
    de faire ce qu'elles font. Et un panneau qui avance déjà est laissé tranquille,
    aussi vite que vous appuyiez : passer rapidement d'une diapositive à l'autre dans un chant ne vous fait jamais sauter
    au déroulé.

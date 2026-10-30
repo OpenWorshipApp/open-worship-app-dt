@@ -447,3 +447,226 @@ describe('Bible XML MCP tool', () => {
     expect(result.content[0].text).toContain('did not answer');
   });
 });
+
+describe('Bible XML MCP tool, the less travelled paths', () => {
+  const namesFound = (locale) => ({
+    locale,
+    bookNames: [['Genèse', 'Exode']],
+    sources: [{ label: 'French', url: 'https://example.test/fr' }],
+    warnings: [],
+    moreAvailable: false,
+  });
+
+  test('charges each page a name search reads to the network budget', async () => {
+    let read = null;
+    mocks.findNames.mockImplementation(async (locale, { readPage }) => {
+      read = await readPage('https://www.bible.com/bible/1/GEN.1');
+      return namesFound(locale);
+    });
+    const result = value(
+      await call({ action: 'names', locale: 'fr', draftId: 'abcdefghijkl' }),
+    );
+    expect(mocks.firewall).toHaveBeenCalledWith('owa_read_website', {
+      url: 'https://www.bible.com/bible/1/GEN.1',
+    });
+    expect(mocks.evaluateTarget).toHaveBeenCalledWith(
+      { id: 'page' },
+      'https://www.bible.com/bible/1/GEN.1',
+      1000,
+    );
+    expect(read).toEqual({ content: 'page' });
+    // A bare language is installed under its whole locale.
+    expect(result.locale).toBe('fr-FR');
+  });
+
+  test('stops a name search the network budget refuses', async () => {
+    mocks.firewall.mockReturnValue({
+      isAllowed: false,
+      reason: 'That is ten reads in five minutes.',
+    });
+    mocks.findNames.mockImplementation(async (locale, { readPage }) => {
+      await readPage('https://www.bible.com/bible/1/GEN.1');
+      return namesFound(locale);
+    });
+    const result = await call({ action: 'names', locale: 'fr' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe('That is ten reads in five minutes.');
+    expect(mocks.evaluateTarget).not.toHaveBeenCalled();
+  });
+
+  test('keeps a locale it cannot read as it was written', async () => {
+    state.names = namesFound('not a locale!');
+    const result = value(
+      await call({ action: 'names', locale: 'fr', key: 'FRE' }),
+    );
+    expect(result.locale).toBe('not a locale!');
+    // No draft to score the lists against: they stay in their order.
+    expect(result.nameLists[0]).not.toHaveProperty('matches');
+    expect(state.requests.some((request) => request.action === 'score')).toBe(
+      false,
+    );
+  });
+
+  test('leaves the lists unranked when the draft cannot score them', async () => {
+    state.names = {
+      ...namesFound('fr-FR'),
+      bookNames: [['A'], ['B']],
+      sources: [
+        { label: 'First', url: null },
+        { label: 'Second', url: null },
+      ],
+    };
+    const worker = state.worker;
+    state.worker = (request) => {
+      return request.action === 'score' ? {} : worker(request);
+    };
+    const unscored = value(
+      await call({ action: 'names', locale: 'fr-FR', draftId: 'abcdefghijkl' }),
+    );
+    expect(unscored.nameLists.map((list) => list.label)).toEqual([
+      'First',
+      'Second',
+    ]);
+    state.worker = (request) => {
+      if (request.action === 'score') {
+        throw new Error('The window went away.');
+      }
+      return worker(request);
+    };
+    const failed = value(
+      await call({ action: 'names', locale: 'fr-FR', draftId: 'abcdefghijkl' }),
+    );
+    expect(failed.nameLists.map((list) => list.label)).toEqual([
+      'First',
+      'Second',
+    ]);
+  });
+
+  test('says a download that failed for no known reason failed', async () => {
+    mocks.download.mockRejectedValue(new Error('The disk is full.'));
+    const result = await call({
+      action: 'check',
+      url: 'https://example.test/x.xml',
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe('The disk is full.');
+  });
+
+  test('answers a page with no Bible files on it as it is', async () => {
+    state.downloaded = { kind: 'page', files: [], total: 0 };
+    expect(
+      value(await call({ action: 'check', url: 'https://example.test/p' })),
+    ).toEqual({ kind: 'page', files: [], total: 0 });
+    expect(state.requests).toEqual([]);
+  });
+
+  test('removes the draft when it cannot be read at all', async () => {
+    state.worker = (request) => {
+      if (request.action === 'analyze') {
+        throw new Error('Script failed to execute');
+      }
+      return {};
+    };
+    const result = await call({
+      action: 'check',
+      url: 'https://example.test/KhmerBible.xml',
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe('Script failed to execute');
+    expect(mocks.remove).toHaveBeenCalledWith('abcdefghijkl');
+  });
+
+  test('says a draft that is gone is gone, and a broken one is broken', async () => {
+    mocks.readMeta.mockRejectedValueOnce(
+      new BibleXmlProblem('draft-gone', 'That download is no longer there.'),
+    );
+    expect(
+      value(
+        await call({ action: 'import', draftId: 'abcdefghijkl', key: 'KHM' }),
+      ),
+    ).toEqual({
+      problem: 'draft-gone',
+      message: 'That download is no longer there.',
+    });
+    mocks.readMeta.mockRejectedValueOnce(new Error('meta.json is not JSON'));
+    const broken = await call({
+      action: 'import',
+      draftId: 'abcdefghijkl',
+      key: 'KHM',
+    });
+    expect(broken.isError).toBe(true);
+    expect(broken.content[0].text).toBe('meta.json is not JSON');
+  });
+
+  test('asks for the language when the file did not say it', async () => {
+    state.meta = {
+      ...state.meta,
+      recommended: { ...state.meta.recommended, locale: null },
+    };
+    expect(
+      value(
+        await call({ action: 'import', draftId: 'abcdefghijkl', key: 'KHM' }),
+      ),
+    ).toMatchObject({ problem: 'locale' });
+    expect(state.requests.some((request) => request.action === 'import')).toBe(
+      false,
+    );
+  });
+
+  test('passes on what the app refused an import for, and keeps the draft', async () => {
+    state.lists.set('n0', { names: ['Genesis', 'Exodus'] });
+    state.worker = () => {
+      return { isError: true, problem: 'key', reason: 'KJV is taken.' };
+    };
+    expect(
+      value(
+        await call({ action: 'import', draftId: 'abcdefghijkl', key: 'KJV' }),
+      ),
+    ).toEqual({ problem: 'key', message: 'KJV is taken.' });
+    state.worker = () => ({ isError: true, reason: 'The disk is full.' });
+    const failed = await call({
+      action: 'import',
+      draftId: 'abcdefghijkl',
+      key: 'KHM',
+    });
+    expect(failed.isError).toBe(true);
+    expect(failed.content[0].text).toBe('The disk is full.');
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  test('update says so when the Bible to read the digits off is not there', async () => {
+    state.worker = (request) => {
+      return request.action === 'info'
+        ? { isError: true, reason: 'No Bible is installed as "XYZ".' }
+        : {};
+    };
+    const result = await call({ action: 'update', key: 'XYZ', digits: 'local' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe('No Bible is installed as "XYZ".');
+    expect(state.requests.map((request) => request.action)).toEqual(['info']);
+  });
+
+  test('update with an empty list id changes no book names', async () => {
+    value(await call({ action: 'update', key: 'KHM', title: 'K', bookNames: ' ' }));
+    expect(state.requests.at(-1)).toEqual({
+      action: 'update',
+      key: 'KHM',
+      title: 'K',
+    });
+  });
+
+  test('creates the app own KJV, and refuses an action it does not know', async () => {
+    const worker = state.worker;
+    state.worker = (request) => {
+      return request.action === 'create-kjv'
+        ? { created: 'KJV' }
+        : worker(request);
+    };
+    expect(value(await call({ action: 'create-kjv' }))).toEqual({
+      created: 'KJV',
+    });
+    const unknown = await call({ action: 'explode' });
+    expect(unknown.isError).toBe(true);
+    expect(unknown.content[0].text).toBe('Unknown action "explode".');
+  });
+});

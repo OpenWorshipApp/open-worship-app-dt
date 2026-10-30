@@ -5,7 +5,7 @@ section: "Orientation"
 verify: [GL-12, NAV-01, NAV-02, NAV-10, NAV-24, NAV-25, PL-01, PR-04]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-01 — Understand the Presenter window
 
@@ -26,10 +26,11 @@ The Presenter has a header and three resizable columns:
   choice is kept for the next launch. The Bible Reader and the Slide Editor
   never hold the computer awake, so they have no cup. A screen that is
   showing keeps the display on by itself, whatever the cup says.
-  The **?** at the far right (**[en:tran:Help]**) opens a small menu of two rows:
+  The **?** at the far right (**[en:tran:Help]**) opens a small menu of three rows:
   **[en:tran:Open Online Help]** opens the app's help page on its website, in
-  your web browser, and **[en:tran:Open Chatbot]** opens the help window that
-  answers inside the app (W-42). The first is in the menu bar too, as **Help** →
+  your web browser, **[en:tran:Open Chatbot]** opens the help window that
+  answers inside the app (W-42), and **[en:tran:Report a Problem]** opens it on a
+  card that asks what went wrong. The first is in the menu bar too, as **Help** →
   **[en:tran:Open Online Help]**.
 - **Left column:** your content libraries — the **[en:tran:Documents]** list (songs live
   here too, marked with a music note) and **[en:tran:Presenting Flows]**.
@@ -47,5 +48,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `GL-12` · `NAV-01` · `NAV-02` · `NAV-10` · `NAV-24` · `NAV-25` · `PL-01` · `PR-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

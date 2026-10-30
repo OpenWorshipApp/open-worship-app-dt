@@ -43,8 +43,8 @@ slide goes up, from 0:10, at 2x, and stop it at 1:10" meant sitting on the mouse
   Its pin NARROWS the host's screens (`intersectCcScreenIds`) instead of replacing them
   (`resolveCcScreenIds`): it acts on media the host just projected, so a pin naming a screen
   the host never reached names a screen with no media on it and must do NOTHING.
-- **`apply` now takes `(screenManager, presentingFlowItem)`.** The other fifteen entries
-  (16 screen actions total: 5 clears + 8 FG clears + 2 show/hide + media-control)
+- **`apply` now takes `(screenManager, presentingFlowItem)`.** The other nineteen entries
+  (20 screen actions total: 5 clears + 12 FG clears + 2 show/hide + media-control)
   ignore the second argument; widening it beat a third `target` family, which would have
   cost branches in `isScreenReachable`, the pin gate, the drop path and the CC apply loop.
 - **The executor runs on the PRESENTER side** (`screenSlideMediaControlHelpers.ts`, under

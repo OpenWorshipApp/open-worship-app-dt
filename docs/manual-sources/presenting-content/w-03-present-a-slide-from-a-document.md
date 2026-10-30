@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-03 — Present a slide from a document
 
@@ -24,8 +24,8 @@ workflowsVersion: "2026-10-24"
 4. To remove the slide from the screen, press **F8** ([en:tran:Clear Slide]) or click
    the matching clear button (`SL`) in the mini screen's header.
    **The first card of a PowerPoint, PDF or Word document is blank, on purpose.** It is
-   not a page of your document and takes no number: your own page 1 is the card after it,
-   so a five-slide PowerPoint shows six cards. Presenting the blank card puts a blank
+   not a page of your document, though its card is numbered 1: your own page 1 is the card
+   after it, numbered 2, so a five-slide PowerPoint shows six cards. Presenting the blank card puts a blank
    slide on the screen.
    **What the projector shows is what the editor holds, saved or not.** A document you
    have changed and not saved carries a red `*` after its name, and the Presenter and the
@@ -83,13 +83,13 @@ Tips:
   and the display differ, an amber button with a hammer — **[en:tran:Fix slide dimension]**,
   the sizes in its tooltip — shows in the row of buttons at the top of the slides, here
   and in the Slide Editor: press it and the slides that differ take the display's size,
-  and the button goes away. One slide at a time is the Slide Editor's **Width** and
-  **Height** boxes, with **[en:tran:Apply All Slides]** for the whole document.
+  and the button goes away. One slide at a time is the Slide Editor's **[en:tran:Width]** and
+  **[en:tran:Height]** boxes, with **[en:tran:Apply All Slides]** for the whole document.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

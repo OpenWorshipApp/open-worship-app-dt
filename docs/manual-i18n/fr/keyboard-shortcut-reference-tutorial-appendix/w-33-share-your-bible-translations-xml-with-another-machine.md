@@ -3,7 +3,7 @@ id: W-33
 title: "Partager vos traductions de la Bible (XML) avec une autre machine"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 4a914e8d0bcd532b
+translatedFrom: 758f7fbc875f8b0f
 ---
 # W-33 — Partager vos traductions de la Bible (XML) avec une autre machine
 
@@ -26,8 +26,8 @@ fichiers à la main.
    traductions une deuxième fois.
 4. Cliquez sur **[en:tran:Ok]**. Vous obtenez un seul fichier `Bible Data.owabdata.tar.gz` dans votre
    dossier **Téléchargements** (ou `Bible Data.owabdata.enc` si vous avez mis un mot de passe), et le
-   dossier s'ouvre dessus. Les Bibles sont de gros fichiers — deux ou trois traductions peuvent atteindre
-   des dizaines de Mo.
+   dossier s'ouvre dessus. Le fichier est compressé, donc deux ou trois traductions ne font que quelques
+   Mo (une Bible entière y prend environ 1–2 Mo).
 5. Sur l'autre machine, ouvrez **Paramètres → [en:tran:Bible]** et **faites glisser le fichier n'importe
    où sur cette page** — toute la zone des paramètres de la Bible l'accepte, pas seulement la petite carte.
    Ou cliquez sur **[en:tran:Import Bible Data]** et sélectionnez-le. Un paquet

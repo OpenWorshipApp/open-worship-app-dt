@@ -36,8 +36,9 @@ missing key. (Since rebuilt: `c24d3a43`, 2026-09-26, put a presenting-flow suite
 back, and `src/lang/tranKeyCoverage.test.ts` now gates km keys.) What survived: tests that mock appProvider in-file, and every
 `electron/*.test.ts` (separate config, never used the fake). Even a freshly written
 test isn't safe from it: `src/app-modal/floatingWidgetModalLayer.test.tsx` was added
-2026-08-16 (`3f7253ac`) and the prune deleted it a week later — the modal-layer
-invariants are unit-untested today. The same commit added
+2026-08-16 (`3f7253ac`) and the prune deleted it a week later — of the modal-layer
+invariants only the explicit `isAboveModal` class is unit-tested today
+(`src/keyboard-shortcut/KeyboardShortcutsComp.test.tsx`, since 2026-10-05). The same commit added
 `server.deps.inline: ['open-lyric', /monaco-editor/]` to `vitest.config.ts`;
 `package.json` test scripts were unchanged.
 

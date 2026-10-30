@@ -27,7 +27,7 @@ restart `npm run dev`; that kills the user's running app. See
 
 **Second shape (2026-09-08):** the SAME error on an `/@fs/.../node_modules/
 <dep>/dist/*.mjs` URL, surfacing in the app as the "Reload is needed" dialog
-(`errorHelpers` → `confirmReloading` in `main.tsx`). That is a dep Vite had never pre-bundled
+(`confirmReloading` in `main.tsx`; since 2026-10-13 a _Something Went Wrong_ report offer may come first). That is a dep Vite had never pre-bundled
 being DISCOVERED on first use — `bible-note` is imported lazily
 (`import('bible-note')` in `bibleNoteShortVerseHelpers.ts`), so its first
 resolution runs the optimizer, which invalidates the in-flight module graph

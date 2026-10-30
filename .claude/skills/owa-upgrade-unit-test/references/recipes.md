@@ -157,14 +157,14 @@ test('presses the button', async () => {
 });
 ```
 
-Some 110 test files use this shape. Everything goes through `act`, including the
+Some 210 test files use this shape. Everything goes through `act`, including the
 initial render and the unmount.
 
 ### The batched harness — the pattern for breadth
 
 `src/_screen/components.smoke.test.tsx` (~700 lines) builds **one** mock surface
 — a fake screen manager, a fake settings store, a fake display list — and then
-renders many components against it. That is the shape that pays for 417
+renders many components against it. That is the shape that pays for some 470
 components: one expensive mock surface amortised over a folder, instead of 40
 files each booting the world.
 

@@ -3,7 +3,7 @@ id: W-38
 title: "Voir les liens entre personnes et lieux (graphe des liens)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: a6e25a7be9b3b1f0
+translatedFrom: 5e5118f723ac4b29
 ---
 # W-38 — Voir les liens entre personnes et lieux (graphe des liens)
 
@@ -19,7 +19,7 @@ parents, conjoints, enfants, cousins et lieux, le tout sur un seul canevas que v
    > panneau **[en:tran:Names and locations in your reading]**, souligné dans un verset, ou dans la
    > liste des noms liés d'une fenêtre de fiche. Le **⋮** se trouve sur les lignes des deux premiers,
    > là où vous iriez le chercher ; une fenêtre de fiche a aussi une petite icône de
-   > diagramme (`bi-diagram-3`) à côté de son titre.
+   > diagramme à côté de son titre.
 3. Chaque boîte affiche un nombre à côté d'une petite icône de diagramme — c'est le nombre de fiches
    liées qu'elle a. **Cliquez sur le nombre.** Un menu s'ouvre, avec **[en:tran:All] (47)** en premier,
    puis seulement les types que cette fiche possède vraiment : _Parents (2)_, _Conjoints (4)_,
@@ -38,9 +38,9 @@ parents, conjoints, enfants, cousins et lieux, le tout sur un seul canevas que v
    > **[en:tran:Collapse]**, **[en:tran:Set as centre]**, **[en:tran:Use as root]** et
    > **[en:tran:Remove]**. _Définir comme centre_ réorganise tout le graphe autour de cette boîte ;
    > _Utiliser comme racine_ efface tout le reste et ne laisse qu'elle, pour que vous puissiez recommencer à
-   > explorer à partir d'une fiche déjà devant vous. C'est le même ensemble que les petits boutons
-   > en bas de la boîte, mais il fonctionne aussi sur une boîte que vous avez repliée, qui n'affiche
-   > aucun bouton. Les lignes que vous ne pourriez pas utiliser sont simplement absentes — la boîte du
+   > explorer à partir d'une fiche déjà devant vous. Il contient tout ce que font les petits boutons
+   > en bas de la boîte, et il fonctionne aussi sur une boîte que vous avez repliée, qui masque
+   > ces boutons. Les lignes que vous ne pourriez pas utiliser sont simplement absentes — la boîte du
    > centre ne propose pas _Retirer_, et une fiche sans relations ne propose pas _Ouvrir tous les éléments associés_.
    > La liste **[en:tran:Verses]** nomme chaque verset comme le fait VOTRE Bible —
    > _លោកុប្បត្តិ ២៤:២៩-៣០_, et non `GEN 24:29-30` — et en choisir un l'ouvre.
@@ -120,6 +120,7 @@ parents, conjoints, enfants, cousins et lieux, le tout sur un seul canevas que v
     > arrive, l'application vous le dit et met le lien dans votre presse-papiers à la place : ouvrez
     > votre navigateur et collez-le dans la barre d'adresse.
 12. Ouvrir une fiche vous fait toujours commencer par cette fiche, avec une seule boîte — à chaque fois,
-    quelle que soit la façon dont vous avez laissé la fenêtre la dernière fois. 📸
+    quelle que soit la façon dont vous avez laissé la fenêtre la dernière fois. Une fenêtre encore
+    ouverte pour cette fiche est simplement ramenée au premier plan. 📸
     > Si une disposition mérite qu'on y revienne, dites-le : `⋯` → **[en:tran:Save preset]**,
     > nommez-la, et elle vous attend dans ce même menu la prochaine fois.

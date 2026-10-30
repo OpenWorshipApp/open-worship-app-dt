@@ -18,7 +18,8 @@ live slide.
 **Why it works, and what breaks it.** `mix-blend-mode` blends an element with
 whatever is painted below it **within the nearest ancestor stacking context**.
 On `screen.html` the layers are flat siblings inside `#root` with no `z-index`
-anywhere in `src/_screen`, `ScreenForegroundManager.containerStyle` puts
+anywhere in `src/_screen` but on a Bible column inside `#bible-screen-view`
+(`screenBibleColumnHelpers.ts`), `ScreenForegroundManager.containerStyle` puts
 `position: absolute` inline on `#foreground` (overriding the stylesheet's
 `position: fixed`, which WOULD make a stacking context), and
 `createDivContainer` makes a deliberately unstyled `<div>`. So the backdrop is

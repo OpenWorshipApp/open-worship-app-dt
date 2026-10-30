@@ -1,6 +1,6 @@
 ---
 name: mcp-model-hidden-tools
-description: "The chatbot's model is offered owa_* tools only — 26 of 60 since 2026-10-10, 34 withheld by tools/owa-devtools-mcp/modelTools.mjs, NOTHING of chrome-devtools' — filtered AND refused; the last ten went after press_key put the projector on unasked"
+description: "The chatbot's model is offered owa_* tools only — 26 of 64 counted 2026-10-28 (26 of 60 on 2026-10-10): 35 withheld by tools/owa-devtools-mcp/modelTools.mjs and 3 offered to one kind of ask only, NOTHING of chrome-devtools' — filtered AND refused; the last ten went after press_key put the projector on unasked"
 metadata: 
   node_type: memory
   type: project

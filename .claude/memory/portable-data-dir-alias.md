@@ -16,7 +16,8 @@ folder is now. Pure logic in `src/server/dataDirAliasHelpers.ts`; wired into
 `fsWriteFileSync` / `fsWriteFileAtomicSync` in `src/server/storageFileHelpers.ts`
 (the start-up leaf of [[renderer-entry-static-closure]]). The switch is
 `appProvider.sessionData.defaultStorageDirPath` (the one mutable field on
-`appProvider`), preloaded first thing in `init()` (`src/boot.ts`) and in
+`appProvider`), preloaded at the top of `init()` (`src/boot.ts`; only a pending move off the
+Desktop runs before it) and in
 `src/screen.tsx` `main()` (the screen never runs `init`), updated by
 `appLocalStorage.setSelectedParentDirectory`; `null` turns it off.
 
@@ -62,10 +63,12 @@ What is not obvious from a quick read:
   `selected-parent-dir`. A missing folder is KEPT as the choice (it used to be
   deleted from `setting.json`, so a stick plugged in late was forgotten for
   good), looked for under every other mount point and adopted when the id
-  matches (`findMovedDataDirSync`), else named at start-up with Retry
-  (`useCheckSetting` in `src/others/main.tsx`). A computer with nothing chosen
-  is offered a marked folder on a drive. The scan runs ONLY in those two
-  cases, synchronously, through `readdirSync` in the preload.
+  matches (`findMovedDataDirSync`), else, since 2026-10-23, marked _Missing_ in
+  Path Settings' Recent Folders, which `useCheckSetting` (`src/others/main.tsx`)
+  opens instead of a dialog ([[data-folder-required]]). The marked folders on
+  the drives are offered there too (`loadFoundDirs`), scanned only while it is
+  open; both scans are synchronous, through the preload's `readdirSync` /
+  `existsSync`.
 - **Names made from paths.** A setting FILE NAME cannot hold the alias, so
   `toFilePathSettingKey` writes a file inside the folder as `@data_…`
   (`toDataDirRelativePath`), capped at 150 bytes with a hash; old names were

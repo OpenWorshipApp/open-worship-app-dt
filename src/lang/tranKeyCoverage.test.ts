@@ -389,6 +389,42 @@ describe('Khmer translation coverage', () => {
         ).toEqual([]);
     });
 
+    // The names-and-locations datasets keep their enums and `age` in English
+    // in every package, and the lookup panels translate them through maps
+    // with `tranByLangData`, which falls back to English instead of throwing:
+    // a missing key is never an error anywhere, just an English word on a
+    // Khmer record (`175 years`, 2026-10-29).
+    test('every lookup record label has a Khmer string', async () => {
+        const { keySet } = readKhmerKeys();
+        const {
+            AGE_PATTERN_LIST,
+            GENDER_LABEL,
+            LOCATION_TYPE_LABEL,
+            NAME_TYPE_LABEL,
+            NAME_TYPE_SINGULAR_LABEL,
+            YEAR_RANGE_TYPE_LABEL,
+        } = await import('../location-name-lookup/lookupPresentationHelpers');
+        const labels = [
+            ...Object.values(NAME_TYPE_LABEL),
+            ...Object.values(NAME_TYPE_SINGULAR_LABEL),
+            ...Object.values(GENDER_LABEL),
+            ...Object.values(LOCATION_TYPE_LABEL),
+            ...Object.values(YEAR_RANGE_TYPE_LABEL),
+            ...AGE_PATTERN_LIST.map(([, key]) => {
+                return key;
+            }),
+            // `getFormattedYearRange`'s year before Christ.
+            '{year} BC',
+        ];
+        expect(labels).toContain('Pool');
+        expect(labels).toContain('{count} years');
+        expect(
+            labels.filter((label) => {
+                return !keySet.has(sanitizeTranKey(label));
+            }),
+        ).toEqual([]);
+    });
+
     // Every other interface language is held to the Khmer file, which the
     // tests above hold to the app: that also covers the dynamic
     // `tran(prop)` keys no sweep can read. A key French lacks throws in a

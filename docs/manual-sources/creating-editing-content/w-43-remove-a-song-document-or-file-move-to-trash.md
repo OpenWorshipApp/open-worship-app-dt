@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [CM-06, EX-05, PL-03, PL-20, PM-35]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-43 — Remove a song, document or file (Move to Trash)
 
@@ -23,19 +23,23 @@ on a Mac), where it can be brought back if you change your mind.
 3. Choose **[en:tran:Move to Trash]** — the last item, with a red trash icon. 📸
 4. A small window asks **[en:tran:Moving File to Trash]** — _Are you sure you want to move
    "…" to trash?_ Click **[en:tran:Yes]**. (**[en:tran:No]** leaves everything as it was.)
-5. The row disappears from the list. The file, and any pictures or media that belonged only
-   to it, are in the Recycle Bin / Trash — open that from your desktop to restore them.
+   A USB flash drive on Windows has no Recycle Bin: there a second window,
+   **[en:tran:Delete Permanently]**, asks whether to delete the file for good instead —
+   that cannot be undone, and **[en:tran:Cancel]** keeps it.
+5. The row disappears from the list. The file, and the small files beside it that remember
+   its backgrounds and transitions, are in the Recycle Bin / Trash — open that from your desktop to restore them.
 
 **Not there?** A background item that is **on a screen right now** has no **[en:tran:Move to Trash]**
 in its menu — clear it from the screen first (**[en:tran:Clear Background]** on the
 Mini Screen panel, W-10), then try again. A slide INSIDE a document is not a file: to
 remove one, open the document in the **[en:tran:Slide Editor]** and right-click the slide in the
-left-hand list (W-15).
+left-hand list (W-15). A file in the **[en:tran:Resources]** panel has none at all: remove it
+from its folder on your computer.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
 `CM-06` · `EX-05` · `PL-03` · `PL-20` · `PM-35`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

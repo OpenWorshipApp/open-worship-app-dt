@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: cceb2542-65df-4852-b7d7-51e364f85d02
-  modified: 2026-10-20T15:41:18.423Z
+  modified: 2026-10-29T22:39:42.602Z
 ---
 
 Since 2026-10-16 the help window speaks the language the app is SHOWN in, at the
@@ -32,7 +32,7 @@ stays English-only" rule.
   app's — a "yes", a number, a command and anything PRESSED (chip, option,
   suggestion, card rescue: `isPressed` on `handleAsking`) are the app's words.
   The doubt always goes to the app language: the users are often elderly and
-  read only it ([[users-are-elderly-need-own-language]]).
+  read only it (the user's own words, above).
 - A line is written only for an ask that carries `askedText` or `replyLang`:
   a question the window composed itself (a verse put into English) is left
   alone.
@@ -79,7 +79,10 @@ stays English-only" rule.
   quoting English is answered in Khmer, verse references are drawn as the
   Bible writes them, and a verse asked for in Khmer reaches the Bible search
   — the patterns DATA in `assistant.json` (`verseFindAsks`, `verseAsks`,
-  `verseAskExcludeWords`, `removalWords`). Measure a language with the
+  `bibleKnowledgeWords`, `verseAskExcludeWords` — which only END a search —
+  and `removalWords`; a search STARTS unless `bibleReaderWords` calls it the
+  app's work, a word the Bibles use too only in a how-do-I,
+  `excludeInHowTo`, 2026-10-29). Measure a language with the
   elder-persona run (`.claude/skills/owa-enhance-chatbot/scripts/elder-run.mjs`),
   counting every English word an answer SHOWS, not only the window's.
 - **Auto ranks the language's models first when the app is not English**

@@ -687,3 +687,196 @@ describe('copying the data folder to where the person chose', () => {
         );
     });
 });
+
+// What a move or a copy passes over rather than stops for, and the hide's
+// own reading for the list of things put away.
+describe('what a move or a copy passes over', () => {
+    const STICK = '/media/stick';
+    const progress = { update: vi.fn() };
+
+    test('the hide reads back as a date, and can be taken back early', async () => {
+        const { readDataDirMoveHiddenAt, showDataDirMoveAgain } =
+            await import('./dataDirMoveHelpers');
+        const now = 5_000_000;
+        expect(readDataDirMoveHiddenAt(now)).toBeNull();
+
+        hideDataDirMoveForAWhile(now);
+
+        expect(readDataDirMoveHiddenAt(now)).toBe(now + DATA_DIR_MOVE_HIDE_MS);
+        // Seen from a clock far behind, the stamp is not believed.
+        expect(
+            readDataDirMoveHiddenAt(now - 2 * DATA_DIR_MOVE_HIDE_MS),
+        ).toBeNull();
+        const onChanged = vi.fn();
+        globalThis.addEventListener('data-dir-move-hide-changed', onChanged);
+        try {
+            showDataDirMoveAgain();
+        } finally {
+            globalThis.removeEventListener(
+                'data-dir-move-hide-changed',
+                onChanged,
+            );
+        }
+        expect(onChanged).toHaveBeenCalledOnce();
+        expect(readDataDirMoveHiddenAt(now)).toBeNull();
+        expect(checkIsDataDirMoveHidden(now)).toBe(false);
+    });
+
+    test('a flag file without its line names no folder', async () => {
+        mocks.writeFile(
+            `${TARGET_DIR}/migration-moved-from.txt`,
+            'Moved here.\r\n\r\nmoved-at: 2026-10-17T00:00:00.000Z\r\n',
+        );
+        expect(await readDataDirMovedFromFlag(TARGET_DIR)).toBeNull();
+    });
+
+    test('a pending request that cannot be read is dropped without moving', async () => {
+        seedDataDir(DESKTOP_DIR);
+        mocks.home.set('selected-parent-dir', DESKTOP_DIR);
+        mocks.home.set('data-dir-move-pending', '{not json');
+
+        await runPendingDataDirMove();
+
+        expect(mocks.home.has('data-dir-move-pending')).toBe(false);
+        expect(mocks.renameCalls).toEqual([]);
+        expect(readResult()).toBeNull();
+    });
+
+    test('a staging folder that cannot be removed is reported, and the move goes on', async () => {
+        mocks.writeFile('/home/.owa/.open-worship-data.moving-1/half', 'x');
+        seedDataDir(DESKTOP_DIR);
+        askForMove(DESKTOP_DIR);
+        const removeError = new Error('EBUSY');
+        const removeTree = mocks.removeTree;
+        vi.spyOn(mocks, 'removeTree').mockImplementation((dirPath) => {
+            if (dirPath.includes('.moving-')) {
+                throw removeError;
+            }
+            removeTree(dirPath);
+        });
+
+        await runPendingDataDirMove();
+
+        expect(mocks.handleError).toHaveBeenCalledWith(removeError);
+        expect(mocks.dirs.has('/home/.owa/.open-worship-data.moving-1')).toBe(
+            true,
+        );
+        expect(readResult()).toMatchObject({
+            isMoved: true,
+            toDirPath: TARGET_DIR,
+        });
+    });
+
+    test('a home folder that cannot be listed still takes the move', async () => {
+        seedDataDir(DESKTOP_DIR);
+        askForMove(DESKTOP_DIR);
+        const listDirents = mocks.listDirents;
+        vi.spyOn(mocks, 'listDirents').mockImplementation((dirPath) => {
+            if (dirPath === '/home/.owa') {
+                throw new Error('EACCES');
+            }
+            return listDirents(dirPath);
+        });
+
+        await runPendingDataDirMove();
+
+        expect(mocks.handleError).not.toHaveBeenCalled();
+        expect(readResult()).toMatchObject({ isMoved: true });
+    });
+
+    test('links left unrewritten and a flag left unwritten do not undo a move', async () => {
+        seedDataDir(DESKTOP_DIR);
+        askForMove(DESKTOP_DIR);
+        const walkError = new Error('walk failed');
+        const flagError = new Error('EROFS');
+        vi.spyOn(mocks, 'listFilesUnder').mockImplementation(() => {
+            throw walkError;
+        });
+        const writeFile = mocks.writeFile;
+        vi.spyOn(mocks, 'writeFile').mockImplementation((filePath, text) => {
+            if (filePath.endsWith('migration-moved-from.txt')) {
+                throw flagError;
+            }
+            writeFile(filePath, text);
+        });
+
+        await runPendingDataDirMove();
+
+        expect(mocks.handleError.mock.calls).toEqual([
+            [walkError],
+            [flagError],
+        ]);
+        expect(mocks.setSelectedParentDirectory).toHaveBeenCalledWith(
+            TARGET_DIR,
+        );
+        expect(readResult()).toMatchObject({ isMoved: true, isCopied: false });
+    });
+
+    test('a reminder that cannot be left in the old copy does not undo a move', async () => {
+        seedDataDir(ONE_DRIVE_DIR);
+        askForMove(ONE_DRIVE_DIR);
+        const flagError = new Error('EROFS');
+        const writeFile = mocks.writeFile;
+        vi.spyOn(mocks, 'writeFile').mockImplementation((filePath, text) => {
+            if (filePath.endsWith('migration-moved-to.txt')) {
+                throw flagError;
+            }
+            writeFile(filePath, text);
+        });
+
+        await runPendingDataDirMove();
+
+        expect(mocks.handleError).toHaveBeenCalledWith(flagError);
+        expect(mocks.files.has(`${ONE_DRIVE_DIR}/migration-moved-to.txt`)).toBe(
+            false,
+        );
+        expect(readResult()).toMatchObject({ isMoved: true, isCopied: true });
+    });
+
+    test('a copy whose links cannot be rewritten is still a whole copy', async () => {
+        seedDataDir(TARGET_DIR);
+        mocks.makeDir(STICK);
+        const copyPath = `${STICK}/open-worship-data`;
+        const walkError = new Error('walk failed');
+        const listFilesUnder = mocks.listFilesUnder;
+        vi.spyOn(mocks, 'listFilesUnder').mockImplementation((dirPath) => {
+            if (dirPath === copyPath) {
+                throw walkError;
+            }
+            return listFilesUnder(dirPath);
+        });
+
+        const result = await copyDataDirTo(TARGET_DIR, STICK, progress);
+
+        expect(result).toEqual({ isCopied: true, toDirPath: copyPath });
+        expect(mocks.handleError).toHaveBeenCalledWith(walkError);
+        // Left for Repair Links once the original is gone.
+        expect(
+            mocks.files.get(
+                `${copyPath}/local-storage/select-dir-app-document`,
+            ),
+        ).toBe(`${TARGET_DIR}/documents`);
+        expect(mocks.files.get(`${copyPath}/.owa-data-folder.json`)).toBe(
+            '{"id":"a-new-id"}',
+        );
+    });
+
+    test('a copy the disk fails is reported and leaves nothing behind', async () => {
+        seedDataDir(TARGET_DIR);
+        mocks.makeDir(STICK);
+        mocks.copyError = new Error('EIO');
+
+        const result = await copyDataDirTo(TARGET_DIR, STICK, progress);
+
+        expect(result).toEqual({
+            isCopied: false,
+            toDirPath: `${STICK}/open-worship-data`,
+            errorMessage: 'EIO',
+        });
+        expect(mocks.handleError).toHaveBeenCalledWith(mocks.copyError);
+        expect(mocks.dirs.has(`${STICK}/open-worship-data`)).toBe(false);
+        expect(
+            [...mocks.dirs].some((dirPath) => dirPath.includes('.moving-')),
+        ).toBe(false);
+    });
+});

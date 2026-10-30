@@ -47,8 +47,9 @@ installed app, so the second one quits silently; and
 `ELECTRON_RUN_AS_NODE` makes the packaged exe run as Node exactly as it does
 `npm run dev`. `launch` records the pid and `stop` kills that pid only.
 
-**Screen controlling & presenting testing is mandatory in every run**, whatever
-the focus area — presenting to a screen is the app's core purpose and screen-only
+**Screen controlling & presenting testing is mandatory in every run** not
+focused on one area — a focused run stays in its area (memory
+`robot-test-stays-in-the-asked-scope`, 2026-10-24) — presenting to a screen is the app's core purpose and screen-only
 bugs never reproduce in the mini-preview. Each run must present a real item,
 verify clear-button states, show the screen, drive the `screen.html?screenId=N`
 CDP target, then clear/hide/restore. The only exclusion is _leaving_ a screen
@@ -62,7 +63,7 @@ is torn down at the end, and the mandatory blocks ridden from the presenting flo
 other PL rows are the Documents/Lyrics lists — same prefix, different subsystem — including
 the newer `PL-103..104` (Import From SongSelect) and `PL-105` (Import From Public Domain Songs).
 
-**Media download (video AND audio) is mandatory in every run too** (matrix rows
+**Media download (video AND audio) is mandatory in every such run too** (matrix rows
 `MD-01..06`, SKILL.md §6e). `downloadVideoOrAudio` is the only **product** code
 path that runs the `yt-dlp`/`ffmpeg`/`qjs` binaries (the dev-only experiments
 page `src/experiments/html-in-canvas/youtubeDemo.tsx` also runs yt-dlp via
@@ -236,8 +237,8 @@ from as its internal corpus. `owa-enhance`'s
 agent-doc work here.
 
 The skill has two jobs. **Drift**: `scripts/audit-agent-docs.mjs` reads
-~16 000 code spans and links out of ~245 documents in ~1 s, with no app, no
-network and no writes. It runs 15 checks: paths and `file:line` anchors, code
+the documents with no app, no network and no writes (its calibration run,
+2026-10-08: ~16 000 code spans and links out of ~245 documents in ~1 s). It runs 15 checks: paths and `file:line` anchors, code
 names, the `owa_*` listings against `server.registerTool`, `npm run` and script
 flags, `OWA_*` variables, ledger ids, the memory index and front matter, rule
 `paths:` globs, skill wiring, knowledge freshness, the manual's recipes (`manual`, since
@@ -254,7 +255,13 @@ only because of an uncommitted file is listed apart, and a stamp against
 uncommitted code is refused without `--allow-dirty` (`AD-18`: eight notes went
 due mid-run from a file another session had not committed). A run is done when
 the audit prints 0, and `src/test-setup/manualRecipes.test.ts` holds the
-manual's two hard signals in the gate. **A big run ends with a second read**
+manual's two hard signals in the gate — `src/test-setup/agentDocsAudit.test.ts`
+the rest of the hard checks since 2026-10-29 (`AD-21`), front matter that does
+not parse as YAML included (`AD-20`: one had hidden this skill's own
+description from every session's listing for four days). A translated manual
+page behind its English is a `manual` signal, kept out of the gate on purpose
+(`AD-24`); the run that corrects a recipe carries the change into its Khmer and
+French pages. **A big run ends with a second read**
 (`scripts/second-read.mjs`, `references/second-read.md`): every correction
 goes to a reader told no reason and ordered to refute it, every statement set
 aside for the running app gets a deeper look at stylesheets, libraries and
@@ -325,10 +332,11 @@ Three things that run costs if they are not known: full instrumentation is
 so the script passes `--testTimeout=60000`; **a failing test means vitest
 writes NO coverage report at all**, and the script says so rather than
 printing a stale number; and `npm run format` would rewrite ~1 350 CRLF files
-(`core.autocrlf` true, no `endOfLine` in `.prettierrc` — `lint:pre` is green on
+(`core.autocrlf` true, no `endOfLine` in `.prettierrc.json` — `lint:pre` is green on
 them only because it passes `--end-of-line auto`, since 2026-09-30), so check
 your own new files and never `npm run format` the tree.
-`lint:es` does not lint test files; prettier does.
+`lint:es` does not lint `src/`'s test files (it does lint `electron/`'s); prettier
+checks both.
 
 **The gap has a shape, and it names the cause.** By kind: `module` 70%,
 `helper` 57.3%, `component` **10.1%** (415 files — half the remaining gap),

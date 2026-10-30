@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PU-01, PU-05, PU-07, PU-21, PU-22]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-17 — Find text anywhere (Find bar) & About
 
@@ -13,10 +13,12 @@ workflowsVersion: "2026-10-24"
   menu bar. A slim bar drops in at the **top-right of the window itself** and searches
   only that window. Each of these has its own: the Presenter, Slide Editor, Bible
   Reader, Screen Mirror and Settings, the About and Local Web Share windows, the Web
-  Editor and Lyric Editor, the help window (🤖) and **AI Chat** (✨) — where it searches
+  Editor and Lyric Editor, the help window (🤖) and **[en:tran:AI Chat]** (✨) — where it searches
   the website's own words too, Khmer included. The screens (nothing to search on a
   projector) and the bible note (it has its own search) have none. In the Web Editor
-  the bar finds only the lines the editor is showing, so scroll to the rest. 📸
+  the bar finds only the lines the editor is showing, so scroll to the rest. There and in the
+  Lyric Editor, **Ctrl+F** pressed while you type in the code opens the editor's own search
+  box instead. 📸
   - Type to search as you go; the counter shows **`<current>/<total>`**.
   - **Enter** jumps to the next match, **Shift+Enter** to the previous one; the **⌃**
     and **⌄** buttons do the same and wrap around.
@@ -35,5 +37,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PU-01` · `PU-05` · `PU-07` · `PU-21` · `PU-22`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

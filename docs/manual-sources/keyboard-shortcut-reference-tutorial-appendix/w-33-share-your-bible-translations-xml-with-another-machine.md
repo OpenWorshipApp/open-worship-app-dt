@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [ST-34, ST-35, ST-36, ST-37, ST-38, ST-39, ST-40, LT-01]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-33 — Share your Bible translations (XML) with another machine
 
@@ -26,7 +26,7 @@ until now could only be moved by digging the files out by hand.
    translations a second time.
 4. Click **[en:tran:Ok]**. You get one `Bible Data.owabdata.tar.gz` in your **Downloads** folder
    (or `Bible Data.owabdata.enc` if you set a password), and the folder opens on it.
-   Bibles are big files — a couple of translations can run to tens of MB.
+   The file is compressed, so a couple of translations come to only a few MB (a whole Bible takes about 1–2 MB in it).
 5. On the other machine, open **Settings → [en:tran:Bible]** and **drag the file anywhere onto
    that page** — the whole Bible settings area accepts it, not just the small card. Or
    click **[en:tran:Import Bible Data]** and pick it. A protected
@@ -65,5 +65,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-34` · `ST-35` · `ST-36` · `ST-37` · `ST-38` · `ST-39` · `ST-40` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

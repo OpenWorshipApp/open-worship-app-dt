@@ -8706,7 +8706,7 @@ Bible that names the book as written when none was asked. Seen live: the
 Khmer ref read from ពគប, and the KJV ref quoted KJV Genesis 4:1.
 **Scores** smarter/easier in every language.
 
-### EC-347 — French has no verse-ask data (OPEN)
+### EC-347 — French has no verse-ask data (DONE 2026-10-29, `EC-441`)
 
 `src/lang/data/fr/assistant.json` has no `verseAsks`, `verseFindAsks` or
 `verseAskExcludeWords`, so a French verse asked by what it says goes to the
@@ -9727,7 +9727,7 @@ read-only search budget of its own (60 a minute, say), `open` staying in the
 acting 25 — a firewall policy change, so `owa-enhance-mcp`'s and the user's
 call, not made here.
 
-### EC-393 — French has no verse-ask patterns (OPEN 2026-10-22)
+### EC-393 — French has no verse-ask patterns (DONE 2026-10-29, `EC-441`)
 
 `fr/assistant.json` carries no `verseFindAsks` / `verseAsks`: a verse asked
 for in French goes to the ordinary assistant, as Khmer did before `EC-288`.
@@ -10429,3 +10429,128 @@ the quotes — a spelling no lexicon writes. Now the dictionary spelling:
 the vowels kept, the accents (U+0591-U+05AF), the meteg and the
 extraordinary points out — `"אֱלֹהִים" biblical Hebrew word meaning`.
 Unit-tested; Google's own results not measured from here.
+
+### EC-440 — a Bible question under a card went to the app's guide by one word of its language (DONE 2026-10-29)
+
+The user's three pictures of Noah's card: _what is the size of noah ark_
+was answered from the record in English and Khmer, and _Quelle est la
+taille de l'arche de Noé_ was sent to the ordinary assistant, which said
+the guide covers the app only and to type `/btw`. `checkIsLookupAppAsk` is
+`checkIsAppWork`, and French `bibleReaderWords.exclude` held `taille` (the
+font's size); Khmer held `ទំហំ` the same way (the user's own Khmer reached the
+record only because it was spelled `ទំ់ហុំ`). English had no size word, but
+`save`, `Mark`, `help`, `sound`, `window` took _How did God save Noah?_,
+_Does Mark mention Noah?_ and _Why did Noah open the window?_ to the guide
+in English alone, and in a Reader tab _What does Mark 4:39 say?_ was no
+Bible question at all; French `fond` (background) even took the English
+_Was Noah fond of his sons?_ (a Latin script reads every Latin line).
+Measured by a no-model probe of 64 questions asked alike in en/km/fr
+through the window's own readers in `handleAsking`'s order: 30 rows went
+different ways (17 under a card, 11 typed, 2 in a Reader tab). **Rule** (counted 2026-10-29 in each language's old and
+modern Bible — KJV/NIV, LSG/BDS, ពគប/គខប — verses holding the word): an app
+word its Bibles use (≥5 verses) counts in a how-do-I only
+(`ENGLISH_SHARED_APP_WORK_PATTERN`, `bibleReaderWords.excludeInHowTo`), the
+rest anywhere (`exclude`); and a how-do-I is what the PERSON does —
+French `comment` + a lower-case infinitive or `je`/`on`, Khmer `ខ្ញុំ`/`យើង`
++ a how-word or a leading `របៀប` (`bibleReaderWords.howToAsks`, patterns
+read case as written), never any "how" (`Comment Jésus a-t-il sauvé Pierre
+dans Matthieu 14:30 ?` is a Bible question now, as its English is). The
+verse readers that START a search use the same `checkIsAppWork`, so
+_ខគម្ពីរណាដែលនិយាយថាច្រៀងចម្រៀងថ្មី_ (sing a new song) is searched; the exit
+from one keeps `verseAskExcludeWords`, matched as whole words. After: 0 of
+64 apart; `chatLanguageParity.test.ts` holds 63 of those rows in all three
+languages (191 cases with EC-443..EC-445; putting `taille` back fails three). Seen live in the user's own Noé tab on gemma4:cloud: the
+same French line answered from the record, Genesis 6:15. **Scores**
+smarter in every language; rung 2.
+
+### EC-441 — a verse asked for in French reaches the verse finder (DONE 2026-10-29)
+
+`EC-347` / `EC-393`. `fr/assistant.json` carries `verseAsks` (which verse
+says, what does the Bible say about, where does it say, find me, is there,
+verses about, I'm looking for, a story where/show), `verseFindAsks` (the
+finder's own sentence, with « KJV » and the words after a colon) and
+`verseAskExcludeWords` for the exit. Verse patterns compile case-blind
+(`toPatternList(…, 'iu')`, Khmer untouched). Khmer gained _ខគម្ពីរអំពី…_
+(verses about), the one row English read and Khmer did not. Held by the
+parity test: 12 typed rows the same in all three.
+
+### EC-442 — a person's or a place's verses were quoted from the English Bible being read (DONE 2026-10-29)
+
+Re-asked after EC-440, the French ark answer quoted Genesis 6:15 in the
+KJV's English with the model's own French in brackets, LSG and BDS
+installed: a name card's record is read in the Bible the Reader is on, and
+`quoteBible` sends every verse read naming none there. Now the window asks
+`owa_find_verse` for the list when the answer's language is not English
+and a name or place card is asked (`pickBibleInLanguage`, shared with
+`pickVerseFindBible`), passes `AskExtraType.lookup.quoteBible` and one line
+under the QUESTION (`genQuoteBibleLine`; the record turn a server keeps is
+unchanged). A passage card keeps its own Bible. The first Khmer pick was
+GKHB, a New Testament: Genesis 6:15 could not be read and the answer ran
+out of rounds (20.8k tokens, _je n'ai pas pu…_) — so the listing says
+`books` for a Bible of fewer than 66 (`listInstalledBibles`; GKHB, KCB,
+Greek, Aramaic) and the picker takes a whole one first, which also fixes
+the verse finder handing a Khmer search to that New Testament. Seen live:
+French 19.7k → 8.6k tokens, the BDS's own words verbatim; Khmer Genesis
+6:14-16 in Khmer from គកស១៦. Costs one Bible list a non-English question
+under a person or place card.
+
+### EC-443 — the verse-finder exit ended a search on a Bible word (DONE 2026-10-29)
+
+`VERSE_FIND_EXIT_PATTERN` held `save`, `songs?`, `windows?`, `present\w*`
+(226, 63, 42 and 136 KJV verses): _he shall save his people from their
+sins_ typed under a verse-finding answer left the search; Khmer's
+`verseAskExcludeWords` did the same with ចម្រៀង (0/90), រក្សាទុក (34/24),
+ចម្លង (3/97), រូបភាព and នាំចូល, and French (written that morning) did not.
+**Fix:** English keeps the app's own words and the how-to, and save / copy
+/ present / show only as a command aimed at what was found (_save it_);
+Khmer keeps its Bible-free words with _រក្សាទុកវា_, _ចម្លងខនេះ_,
+_នាំចូលព្រះគម្ពីរ_, _អក្សរភ្លេង_; French gained its imperatives (_enregistre-le_,
+_mets-le_). Six rows of the parity test, three that go on searching and
+three that end it, the same in all three.
+
+### EC-444 — "knowledge about the Bible" was read in English only (DONE 2026-10-29)
+
+`readBibleContentAsk`'s `knowledge` kind (_Who wrote the book of Psalms?_
+→ the guide says how to ask an assistant, with `/btw`) had no Khmer or
+French reader, so with no assistant those went to a manual search -- the
+EC-199 failure in two languages. **Fix:** `readTypedKnowledgeAsk`
+(`bibleKnowledgeWords` per language: question words, Bible words, the
+names lookup's who-was / where-is, what the person has open, the app's own
+words -- English's `APP_WORD_PATTERN`) and `readAnyBibleContentAsk`, the
+guide's one reader. The first draft took 13 of the 1 600+ translated
+supported questions (_Pourquoi la recherche dans la Bible ne trouve-t-elle
+aucun verset ?_, _តើខគម្ពីរយោងជាអ្វី?_) until `appWords` and "my" / "that
+I" were added; a test holds every translated row out now. Seen live with no
+model (`/help Qui a écrit le livre des Psaumes ?`): the way to an assistant
+and **Open AI settings**, as the English gets. The word for the app joined
+each language's always-app list (`apps?|application`, `application`,
+`កម្មវិធី`; none in the Bibles).
+
+### EC-445 — `PRESENTING_PATTERN` refused "present your bodies" (DONE 2026-10-29)
+
+`bibleContentAskHelpers.ts` kept a verse ask off when it said `present\w*`,
+`congregation`, `audience` or `display`: _Which verse says present your
+bodies a living sacrifice?_ (Romans 12:1) was not searched in English
+while its French and Khmer were. Presenting is the presenter's words now,
+_to the congregation_ / _present it_, and the screen's; the parity test
+holds the row in all three.
+
+### EC-446 — an English line in a French window was answered in French (DONE 2026-10-29)
+
+Seen live after EC-445: _Which verse says present your bodies a living
+sacrifice?_ typed in the French app was answered in French from the BDS.
+`detectTypedLanguage` tells English from French by their little words, and
+the line held none of English's 21 (`which`, `your`, `says` were not among
+them); French missed `l'homme` and `l'écran` -- the apostrophe joins the
+elided word to the next, so `l'` was never a word. A new parity case asks
+every row of four words or more in each language under each other app
+language: 10 lines came back in the app's language. **Fix:** English's
+list gained the commonest little words that French does not write (`of`,
+`his`, `your`, `which`, `who`, `about`, `from`, `shall`, `was`, … and
+`find`, `help`, `show`, `explain`, `says`), never `a` or `me`, which French
+writes too; French gained `à`, `son`, `tu`, `et`, `ne`, `pas`, … and its
+elisions (`l'`, `d'`, `qu'` …), which the reader now counts at the front of
+a word, a curly apostrophe read as a straight one. After: 0 lines in the
+wrong language. Seen live: the same line answered in English, Romans 12:1
+from the KJV, 1.4k tokens. The window's own words stay in the app's
+language, as `chatbot-window.md` decides.

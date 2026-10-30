@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-22e — Loop a set of slides, stop the loop, and jump back (Next: Interval, Jump to)
 
@@ -28,13 +28,16 @@ where you say, and a running order that can go back to an earlier line.
    one way the SHEET can stop it: the pill, closing the panel and the end of the list are
    all you being at the machine. Add it — it asks nothing, there being only ever one clock
    running — and the line reads `⊘ Next: Clear Interval` in the interval's own colour,
-   because it is that same thing undone. Put it after a looping set (an interval, a few
-   slides, a **[en:tran:Jump to]** pointing back at the interval) and the loop runs until the run
-   reaches this line, then stops and waits for you. Firing it when nothing is looping does
+   because it is that same thing undone. Put it where the run will reach it: after slides the
+   interval walks once, or attached to a slide (below), so the loop stops when that slide is
+   shown and waits for you. A line after a **[en:tran:Jump to]** that points back at the
+   interval is never reached — the jump fires the moment the run lands on it — so a loop like
+   that is ended by you: press this line's button in the preview panel, or the pill's ⊗.
+   Firing it when nothing is looping does
    nothing at all and says nothing, so it is safe to leave in a sheet you re-run. It stops
    an interval you have PAUSED as well; a **[en:tran:Next: Timeout]** it leaves alone, so a wait
    attached to a slide is never killed by a line that only meant to end a loop. 📸
-   **A Next: Interval cannot be attached to anything** and is simply not in that list —
+   **A Next: Interval cannot ride along with another line** —
    an interval is not stopped by anything you do, so one riding a slide would keep moving
    the running order on with nothing to call it off but the panel's own pill. A
    **[en:tran:Next: Clear Interval]** CAN be attached, for the opposite reason: "put this last slide
@@ -50,7 +53,7 @@ where you say, and a running order that can go back to an earlier line.
    that rides along, it is the destination. It takes exactly one, so once you have picked
    the **[en:tran:Add CC Elements]** entry is gone; to re-aim it, remove the CC and pick another.
    To jump now, right-click the presenting flow → **[en:tran:Open Preview]**, then click
-   the **[en:tran:Jump to]** line in the preview; reaching it with **Space** does the same. 📸
+   the **[en:tran:Jump to]** button in the preview; reaching it with **Space** does the same. 📸
 
    **It is the next key aimed at a line of your choosing**: when the run reaches it — or
    you click it — the panel goes to that line and does there exactly what stepping onto it
@@ -68,7 +71,7 @@ where you say, and a running order that can go back to an earlier line.
    presenting flow → **[en:tran:Add Action]** → **[en:tran:Jump to]** and drag it under
    the last slide of the set; then right-click the **[en:tran:Jump to]** line →
    **[en:tran:Add CC Elements]** and pick the **[en:tran:Next: Interval]** line. (c) Open
-   the preview panel (W-22b) and click the **[en:tran:Next: Interval]** line: the set
+   the preview panel (W-22b) and click the **[en:tran:Next: Interval]** button there: the set
    plays round and round by itself. It stops when you click **⊗** on the pill at the
    top-right of the preview panel, or close the panel. Nothing is dragged ONTO the
    interval or the jump: they are lines of their own, in the list.

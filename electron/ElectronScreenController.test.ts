@@ -38,6 +38,7 @@ vi.mock('./protocolHelpers', () => ({
 
 import ElectronScreenController from './ElectronScreenController';
 import { electronMockState } from './testElectronModule';
+import { screenMirrorRuntime } from './screenMirrorRuntime';
 
 describe('ElectronScreenController', () => {
     beforeEach(() => {
@@ -171,5 +172,52 @@ describe('ElectronScreenController', () => {
             'app:screen:ping',
             { at: 1 },
         );
+    });
+});
+
+describe('ElectronScreenController loading through the Screen Mirror', () => {
+    beforeEach(() => {
+        ElectronScreenController.closeAll();
+        electronMockState.reset();
+        loadURL.mockClear();
+    });
+
+    test('loads the screen from the mirror server, and again after a crash', () => {
+        screenMirrorRuntime.screenUrl = (screenId: number) => {
+            return `http://127.0.0.1:39240/screen.html?screenId=${screenId}`;
+        };
+        try {
+            const controller = ElectronScreenController.createInstance(12);
+            expect(controller.win.loadURL).toHaveBeenCalledExactlyOnceWith(
+                'http://127.0.0.1:39240/screen.html?screenId=12',
+            );
+            expect(loadURL).not.toHaveBeenCalled();
+
+            // The renderer died: the same page is loaded again into the window.
+            const [recoveredWin, reload] =
+                applyRendererRecovery.mock.calls.at(-1)!;
+            expect(recoveredWin).toBe(controller.win);
+            reload();
+            expect(controller.win.loadURL).toHaveBeenCalledTimes(2);
+            expect(controller.win.loadURL).toHaveBeenLastCalledWith(
+                'http://127.0.0.1:39240/screen.html?screenId=12',
+            );
+        } finally {
+            delete screenMirrorRuntime.screenUrl;
+        }
+    });
+
+    test('falls back to the app route when the mirror server gives no address', () => {
+        screenMirrorRuntime.screenUrl = () => '';
+        try {
+            const controller = ElectronScreenController.createInstance(13);
+            expect(loadURL).toHaveBeenCalledExactlyOnceWith(
+                controller.win,
+                '?screenId=13',
+            );
+            expect(controller.win.loadURL).not.toHaveBeenCalled();
+        } finally {
+            delete screenMirrorRuntime.screenUrl;
+        }
     });
 });

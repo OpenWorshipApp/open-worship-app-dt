@@ -1,6 +1,6 @@
 ---
 name: owa-upgrade-unit-test
-description: 'Raise the Open Worship App unit-test coverage toward 99% — measured HONESTLY against every source file, not against the ones the tests happen to load. Use when asked to improve / add / upgrade / expand unit tests, to raise or measure test coverage, to write tests for a file or a folder, to reach a coverage percentage, to find what is untested, to fix a flaky or failing vitest suite, or to make the test suite trustworthy. Covers both vitest projects — `vitest.config.ts` (src + tools/owa-devtools-mcp, node env with a per-file jsdom pragma) and `vitest.electron.config.ts` (electron main process) — and every testing idiom this repo actually uses: `vi.hoisted` mock bundles, the `// @vitest-environment jsdom` first line, `createRoot` + `act` or `renderToStaticMarkup` for components, and the batched `*.coverage.test.tsx` / `*.smoke.test.tsx` harnesses that carry many modules on one mock surface. THE MEASUREMENT RULE THAT BINDS EVERY RUN: `npm run test:coverage` reports coverage over LOADED files only and reads ~78%; the honest figure over the whole surface is ~45%, so every number this skill states comes from scripts/coverage-gap.mjs and the goal is defined against that denominator. THE TEST RULE: a test must be able to FAIL — it asserts behaviour, never merely imports a module for the line count, and coverage that came from an assertion-free render is reported as what it is. Hard constraints it must not break: there is NO shared appProvider mock and none may be re-added (the user deleted it and 65 tests with it), a missing Khmer `tran()` key throws in dev, and `npm run lint` is the gate.'
+description: 'Raise the Open Worship App unit-test coverage toward 99% — measured HONESTLY against every source file, not against the ones the tests happen to load. Use when asked to improve / add / upgrade / expand unit tests, to raise or measure test coverage, to write tests for a file or a folder, to reach a coverage percentage, to find what is untested, to fix a flaky or failing vitest suite, or to make the test suite trustworthy. Covers both vitest projects — `vitest.config.ts` (src + tools/owa-devtools-mcp, node env with a per-file jsdom pragma) and `vitest.electron.config.ts` (electron main process) — and every testing idiom this repo actually uses: `vi.hoisted` mock bundles, the `// @vitest-environment jsdom` first line, `createRoot` + `act` or `renderToStaticMarkup` for components, and the batched `*.coverage.test.tsx` / `*.smoke.test.tsx` harnesses that carry many modules on one mock surface. THE MEASUREMENT RULE THAT BINDS EVERY RUN: `npm run test:coverage` reports coverage over LOADED files only and read ~78% when the honest figure over the whole surface was ~45%, so every number this skill states comes from scripts/coverage-gap.mjs and the goal is defined against that denominator. THE TEST RULE: a test must be able to FAIL — it asserts behaviour, never merely imports a module for the line count, and coverage that came from an assertion-free render is reported as what it is. Hard constraints it must not break: there is NO shared appProvider mock and none may be re-added (the user deleted it and 65 tests with it), a missing Khmer `tran()` key throws in dev, and `npm run lint` is the gate.'
 argument-hint: '[measure | plan | <path or folder> | next | continue | fix-flaky | gate | report] — default: measure then plan'
 ---
 
@@ -8,9 +8,12 @@ argument-hint: '[measure | plan | <path or folder> | next | continue | fix-flaky
 
 The goal is **99% line coverage of the app's own source**, and the first thing
 this skill does is refuse the comfortable number. `npm run test:coverage`
-prints ~78% because v8 only measures files a test imported; over the whole
-surface the figure is **~45%**, with **506 files at exactly 0%**. A run that
-reports the 78% is not measuring the thing the goal is about.
+printed ~78% because v8 only measures files a test imported; over the whole
+surface the figure was **~45%**, with **506 files at exactly 0%**. A run that
+reports the 78% is not measuring the thing the goal is about. Every coverage
+figure in this file is from when it was written (2026-09-26);
+[references/baseline.md](./references/baseline.md) carries the newest, at its
+top.
 
 ```text
 MEASURE (honest denominator) → PLAN (ranked, resumable) → WRITE TESTS → PROVE (before → after) → GATE
@@ -229,14 +232,15 @@ Then `npm run lint` — the whole gate, reading the log body rather than the exi
 code, since it is `&&`-chained and the first failure hides every stage after.
 Two things to know about the gate:
 
-- **Line endings.** `core.autocrlf` is `true` and `.prettierrc` sets no
+- **Line endings.** `core.autocrlf` is `true` and `.prettierrc.json` sets no
   `endOfLine`, so ~1 350 files sit on disk as CRLF. `lint:pre` passes
   `--end-of-line auto` (since `408ecbc3`, 2026-09-30) and is green on them;
   `npm run format` does not, so **do not run `npm run format`** — it would
   rewrite every one of them. Check only your own new files:
   `npx prettier --check <your files>`, and `--write` those.
-- **`lint:es` does not lint test files** (`--ignore-pattern "src/**/*.test.ts*"`),
-  so a new test's eslint cleanliness is not gated — but prettier's is.
+- **`lint:es` does not lint `src/`'s test files** (`--ignore-pattern "src/**/*.test.ts*"`;
+  it does lint `electron/`'s), so a new `src/` test's eslint cleanliness is not gated —
+  but prettier's is.
 
 Once a level is won, `gate` proposes locking it in with
 `coverage.thresholds` so it cannot silently fall back. Propose it; the user

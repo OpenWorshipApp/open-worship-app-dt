@@ -16,6 +16,7 @@ import {
     getPlainReferenceText,
     getRecordDisplayName,
     getRecordKjvName,
+    toRecordAgeLabel,
     toRecordEnumLabel,
 } from './lookupPresentationHelpers';
 
@@ -54,6 +55,27 @@ describe('record enum labels (gender, location type)', () => {
         expect(
             toRecordEnumLabel('constructor', LOCATION_TYPE_LABEL, toKhmer),
         ).toBe('constructor');
+    });
+
+    // Abraham under `km` read `175 years` beside `មនុស្ស` and `ប្រុស`.
+    test('translates every age shape the datasets use, number kept', () => {
+        expect(toRecordAgeLabel('175 years', toKhmer)).toBe('km:175 years');
+        expect(toRecordAgeLabel(' 20 at accession ', toKhmer)).toBe(
+            'km:20 at accession',
+        );
+        expect(toRecordAgeLabel('About 30 at start of ministry', toKhmer)).toBe(
+            'km:about 30 at start of ministry',
+        );
+    });
+
+    test('drops an unknown age, shows an unlisted one as written', () => {
+        for (const value of ['unknown', 'Unknown', '', ' ', null, undefined]) {
+            expect(toRecordAgeLabel(value, toKhmer)).toBe('');
+        }
+        expect(toRecordAgeLabel('120', toKhmer)).toBe('120');
+        expect(toRecordAgeLabel('old and full of days', toKhmer)).toBe(
+            'old and full of days',
+        );
     });
 
     // `height` is a hill. `Height` is already the app's word for a dimension.

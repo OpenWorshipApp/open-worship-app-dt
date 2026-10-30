@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
     checkIsAppWorkAsk,
     checkIsClosingLine,
+    pickBibleInLanguage,
     pickVerseFindBible,
     readTypedVerseContentAsk,
     readTypedVerseFindAsk,
@@ -136,6 +137,65 @@ describe('pickVerseFindBible', () => {
             'ពគប',
         );
         expect(pickVerseFindBible(null, 'km')).toBeNull();
+    });
+});
+
+describe('pickBibleInLanguage', () => {
+    const listed = {
+        bibles: [
+            { key: 'KJV', locale: 'en-US' },
+            { key: 'ពគប', locale: 'km-KH' },
+            { key: 'LSG', locale: 'fr-FR' },
+        ],
+    };
+
+    // Noah's card read on the KJV, asked in French (2026-10-29).
+    test('a Bible in the answer’s language over the record’s', () => {
+        expect(pickBibleInLanguage(listed, 'KJV', 'fr')).toBe('LSG');
+        expect(pickBibleInLanguage(listed, 'KJV', 'km')).toBe('ពគប');
+    });
+
+    // The first Khmer Bible here was the 2019 New Testament: Genesis 6:15
+    // could not be read from it, and the answer ran out of rounds.
+    test('a whole Bible over one that holds some books only', () => {
+        expect(
+            pickBibleInLanguage(
+                {
+                    bibles: [
+                        { key: 'KJV', locale: 'en-US' },
+                        { key: 'GKHB', locale: 'km-KH', books: 27 },
+                        { key: 'KCB', locale: 'km-KH' },
+                        { key: 'ពគប', locale: 'km-KH' },
+                    ],
+                },
+                'KJV',
+                'km',
+            ),
+        ).toBe('KCB');
+        // With only partial ones, the one with the most books.
+        expect(
+            pickBibleInLanguage(
+                {
+                    bibles: [
+                        { key: 'NT', locale: 'km', books: 27 },
+                        { key: 'PS', locale: 'km', books: 40 },
+                    ],
+                },
+                'KJV',
+                'km',
+            ),
+        ).toBe('PS');
+    });
+
+    test('null keeps the record’s Bible', () => {
+        // Already in the language.
+        expect(pickBibleInLanguage(listed, 'LSG', 'fr')).toBeNull();
+        // English, or no language this app speaks.
+        expect(pickBibleInLanguage(listed, 'ពគប', 'en')).toBeNull();
+        expect(pickBibleInLanguage(listed, 'KJV', 'other')).toBeNull();
+        // None in the language installed.
+        expect(pickBibleInLanguage(listed, 'KJV', 'th')).toBeNull();
+        expect(pickBibleInLanguage(null, 'KJV', 'fr')).toBeNull();
     });
 });
 

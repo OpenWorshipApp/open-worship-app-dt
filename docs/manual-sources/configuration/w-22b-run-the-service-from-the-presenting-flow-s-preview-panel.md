@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-22b — Run the service from the presenting flow's preview panel
 
@@ -60,13 +60,13 @@ workflowsVersion: "2026-10-24"
    key blanks the screen at exactly that point in the running order.
    The `Next:` lines are fired the same way, and what they fire is this panel: a wait that
    moves the run on by itself (W-22d), or a loop that keeps moving it (W-22e).
-4. **Everything you can right-click in the list, you can right-click here.** The menus in
+4. **Every line you can right-click in the list, you can right-click here.** The menus in
    this panel are the very same menus — right-click an element's **title line** (or any
-   empty part of its box) and you get its full menu: **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, the four
+   empty part of its box) and you get its full menu: **[en:tran:Reveal Original]**, **[en:tran:Show on Screens]** / **[en:tran:Apply on Screens]**, **[en:tran:Set Specific Screen]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**, the four
    moves, **[en:tran:Duplicate]**, **[en:tran:Choose Color]**, **[en:tran:Disable]** / **[en:tran:Enable]** and **[en:tran:Remove from Presenting Flow]**, gated exactly as they are in the list. So you can tidy and re-order the
    running order from the panel you are actually watching during the service, without
    going back to the list — and the list behind it follows immediately. 📸
    Two things inside a box keep menus of their own, because they are not the element:
    a **slide thumbnail** gets the slide's menu (**[en:tran:Reveal Original]**, **[en:tran:Show on Screens]**,
-   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**), and a **CC line** gets its
+   **[en:tran:Set Specific Screen]**, **[en:tran:Disable]**, **[en:tran:Add CC Elements]**, **[en:tran:Add Media Control]**; a single-slide line's thumbnail has only the first two and **[en:tran:Disable]**, the rest being on its title line), and a **CC line** gets its
    short one (**[en:tran:Reveal Original]**, **[en:tran:Set Specific Screen]**, **[en:tran:Remove CC Element]**).

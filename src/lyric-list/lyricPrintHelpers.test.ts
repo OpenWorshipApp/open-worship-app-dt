@@ -131,4 +131,72 @@ describe('installOpenLyricPrintPopupHandler', () => {
             '',
         );
     });
+
+    const LINKED_SHEET =
+        '<!doctype html><html><head><link rel="stylesheet"' +
+        ' href="https://localhost:3000/theme.css" /></head>' +
+        '<body><p>lyric</p></body></html>';
+
+    test('a stylesheet that does not load is left linked, quietly', async () => {
+        globalThis.fetch = vi.fn(async () => ({ ok: false }) as any);
+        writeToPrintPopup(LINKED_SHEET);
+        const htmlText = await getSentHtml();
+        expect(htmlText).toContain('theme.css');
+        expect(htmlText).toContain('<p>lyric</p>');
+        expect(h.handleErrorMock).not.toHaveBeenCalled();
+    });
+
+    test('a stylesheet fetch that throws is reported, and the song still prints', async () => {
+        const error = new Error('offline');
+        globalThis.fetch = vi.fn(async () => {
+            throw error;
+        });
+        writeToPrintPopup(LINKED_SHEET);
+        const htmlText = await getSentHtml();
+        expect(h.handleErrorMock).toHaveBeenCalledWith(error);
+        expect(htmlText).toContain('<p>lyric</p>');
+    });
+
+    test('a document that cannot be prepared says so and prints nothing', async () => {
+        const error = new Error('bad font list');
+        h.collectFontFaceCssMock.mockImplementationOnce(() => {
+            throw error;
+        });
+        writeToPrintPopup('<html><body><p>lyric</p></body></html>');
+        await getSentHtml();
+        expect(h.sendDataMock).not.toHaveBeenCalled();
+        expect(h.handleErrorMock).toHaveBeenCalledWith(error);
+        expect(h.showSimpleToastMock).toHaveBeenCalledWith(
+            'Print',
+            'Unable to prepare the document for printing',
+        );
+    });
+
+    test('lines written with writeln are all kept', async () => {
+        globalThis.fetch = vi.fn();
+        const popupWindow = globalThis.open('', '_blank')!;
+        popupWindow.document.open();
+        popupWindow.document.writeln('<html><body><p>first</p>');
+        popupWindow.document.writeln('<p>second</p></body></html>');
+        popupWindow.document.close();
+        const htmlText = await getSentHtml();
+        expect(htmlText).toContain('<p>first</p>\n<p>second</p>');
+    });
+
+    test('a popup is printed once, however it is told to', async () => {
+        globalThis.fetch = vi.fn();
+        const popupWindow = globalThis.open('about:blank', '_blank')!;
+        popupWindow.document.write('<html><body><p>once</p></body></html>');
+        popupWindow.document.close();
+        popupWindow.print();
+        await getSentHtml();
+        expect(h.sendDataMock).toHaveBeenCalledTimes(1);
+        expect(openMock).not.toHaveBeenCalled();
+    });
+
+    test('installing again does not wrap `open` a second time', () => {
+        const installedOpen = globalThis.open;
+        installOpenLyricPrintPopupHandler();
+        expect(globalThis.open).toBe(installedOpen);
+    });
 });

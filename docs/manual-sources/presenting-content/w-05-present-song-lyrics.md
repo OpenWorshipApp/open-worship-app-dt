@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-05 — Present song lyrics
 
@@ -48,14 +48,13 @@ workflowsVersion: "2026-10-24"
    them, which is why the panel says _[en:tran:Applies to every song]_. **Every stage number keeps
    its own settings**, so you can leave the projected stage plain, make the chord stage
    larger, and give a third stage a dark theme for the person on the sound desk. Stage 0
-   is the plain lyrics-only look; every stage from 1 up starts from the chord-and-notes
-   look and differs only by what you set here. Custom CSS is **added to** the stage's
-   built-in look rather than replacing it, so stage 0 keeps hiding its chords whatever
-   you type.
+   is the plain lyrics-only look, and so is stage 4; every other stage starts from the
+   chord-and-notes look, and a stage past 5 differs from stage 1 only by what you set here. Custom CSS is **added to** the stage's
+   built-in look rather than replacing it, so stage 0 keeps hiding its chords.
    **Stages 2 to 5 show what comes next** around the verse being sung: 2 the next verse
    under it, 3 the next two, 4 like 2 in the plain look, 5 the previous one top left and
    the next one bottom right. The coming verse is at **full brightness**, not faded, and
-   the verse sits flush in the screen's top left corner with the next one flush left
+   on 2 to 4 the verse sits flush in the screen's top left corner with the next one flush left
    under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Padding (%)]** says (the padding stays
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
@@ -98,5 +97,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `XW-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

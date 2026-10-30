@@ -212,6 +212,60 @@ describe('electronHelpers coverage', () => {
         expect(electronMockState.clipboard.writeText).toHaveBeenCalledTimes(2);
     });
 
+    test('debug info names the build when the build stamp is there', async () => {
+        // The stamp is a file a release build writes beside the code; here
+        // the loader is handed one instead of the missing file.
+        const { default: Module } = await import('node:module');
+        const moduleLoader = Module as unknown as {
+            _load: (request: string, ...rest: unknown[]) => unknown;
+        };
+        const originalLoad = moduleLoader._load;
+        const packageInfo: Record<string, unknown> = {
+            commitHash: 'abc1234',
+            buildDate: '2026-10-28',
+        };
+        const load = vi
+            .spyOn(moduleLoader, '_load')
+            .mockImplementation(function (
+                this: unknown,
+                request: string,
+                ...rest: unknown[]
+            ) {
+                if (request === '../package-info.json') {
+                    return packageInfo;
+                }
+                return originalLoad.call(this, request, ...rest);
+            });
+        try {
+            electronMockState.app.getVersion.mockReturnValueOnce('9.8.7');
+            copyDebugInfoToClipboard();
+            const text = electronMockState.clipboard.writeText.mock.calls[0][0];
+            expect(text.split('\n')).toEqual([
+                'App Version: 9.8.7',
+                `Electron Version: ${process.versions.electron}`,
+                `Chrome Version: ${process.versions.chrome}`,
+                `Node.js Version: ${process.versions.node}`,
+                `V8 Version: ${process.versions.v8}`,
+                expect.stringMatching(
+                    new RegExp(`^OS: ${process.platform} ${process.arch} \\S`),
+                ),
+                'Commit Hash: abc1234',
+            ]);
+
+            // The full copy is the whole stamp, with that summary inside it.
+            electronMockState.app.getVersion.mockReturnValueOnce('9.8.7');
+            copyDebugInfoToClipboard(true);
+            const full = electronMockState.clipboard.writeText.mock.calls[1][0];
+            expect(JSON.parse(full)).toEqual({
+                commitHash: 'abc1234',
+                buildDate: '2026-10-28',
+                debugAppInfo: text,
+            });
+        } finally {
+            load.mockRestore();
+        }
+    });
+
     test('a popup joins its existing group instead of opening a duplicate', () => {
         vi.useFakeTimers();
         // Same page, different uuid: it belongs to the group but is not the
@@ -394,6 +448,36 @@ describe('electronHelpers coverage', () => {
             }
         },
     );
+
+    test('a HIDDEN editor reused for the same document is shown, not just focused', () => {
+        const base = 'https://localhost:3000/appDocumentEditor.html';
+        const editor = createWindowAt(
+            `${base}?file=sermon.ows&id=1`,
+            { x: 0, y: 0 },
+            { isVisible: vi.fn(() => false) },
+        );
+        const parent = createMockBrowserWindow();
+        electronMockState.browserWindows.push(editor, parent);
+        guardBrowsing(parent as any, { preload: '/tmp/preload.js' } as any);
+        const open = parent.webContents.setWindowOpenHandler.mock.calls[0][0];
+
+        const nextUrl = `${base}?file=sermon.ows&id=7`;
+        expect(
+            open({
+                url: nextUrl,
+                frameName: `${POPUP_FRAME_NAME_PREFIX}_editor`,
+                features: 'popup',
+            }),
+        ).toEqual({ action: 'deny' });
+        expect(editor.webContents.loadURL).toHaveBeenCalledExactlyOnceWith(
+            nextUrl,
+        );
+        expect(editor.show).toHaveBeenCalledOnce();
+        expect(editor.focus).toHaveBeenCalledOnce();
+        expect(editor.show.mock.invocationCallOrder[0]).toBeLessThan(
+            editor.focus.mock.invocationCallOrder[0],
+        );
+    });
 
     test('opens a new editor when only a different document is open', () => {
         const base = 'https://localhost:3000/appDocumentEditor.html';

@@ -1,5 +1,5 @@
 import { beforeEach, expect, test, vi } from 'vitest';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -228,4 +228,114 @@ test('reuses a complete chatbot PDF render until the source changes', async () =
         await rm(sourceDir, { recursive: true, force: true });
         await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
     }
+});
+
+const RENDERED_PAGES = {
+    isSuccessful: true,
+    pageCount: 4,
+    startPage: 0,
+    dataUrls: ['data:image/png;base64,cGFnZQ=='],
+};
+
+async function withSourcePdf(run: (sourcePath: string) => Promise<void>) {
+    const sourceDir = await mkdtemp(join(tmpdir(), 'owa-pdf-chat-source-'));
+    const sourcePath = join(sourceDir, 'notes.pdf');
+    await writeFile(sourcePath, 'PDF bytes');
+    await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
+    try {
+        await run(sourcePath);
+    } finally {
+        await rm(sourceDir, { recursive: true, force: true });
+        await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
+    }
+}
+
+test('renders a PDF it cannot look at without the cache', async () => {
+    const answer = { isSuccessful: false, message: 'File not found' };
+    executeMock.mockResolvedValue(answer);
+    const missingPath = join(tmpdir(), 'owa-no-such-folder', 'gone.pdf');
+
+    await expect(pdfToChatPages(missingPath, 2, 3)).resolves.toEqual(answer);
+    expect(executeMock).toHaveBeenCalledExactlyOnceWith(
+        'pdf-to-chat-images.mjs',
+        {
+            filePath: missingPath,
+            startPage: 2,
+            maxPages: 3,
+            longEdge: undefined,
+            allPages: undefined,
+        },
+    );
+});
+
+test('keeps neither a failed render nor one too big to hold', async () => {
+    await withSourcePdf(async (sourcePath) => {
+        executeMock.mockResolvedValue({
+            isSuccessful: false,
+            message: 'damaged PDF',
+        });
+        await expect(pdfToChatPages(sourcePath)).resolves.toEqual({
+            isSuccessful: false,
+            message: 'damaged PDF',
+            cacheHit: false,
+        });
+        await expect(pdfToChatPages(sourcePath)).resolves.toMatchObject({
+            cacheHit: false,
+        });
+        expect(executeMock).toHaveBeenCalledTimes(2);
+
+        executeMock.mockResolvedValue({
+            ...RENDERED_PAGES,
+            dataUrls: [`data:image/png;base64,${'A'.repeat(32 * 1024 * 1024)}`],
+        });
+        await expect(pdfToChatPages(sourcePath)).resolves.toMatchObject({
+            cacheHit: false,
+        });
+        await expect(pdfToChatPages(sourcePath)).resolves.toMatchObject({
+            cacheHit: false,
+        });
+        expect(executeMock).toHaveBeenCalledTimes(4);
+        await expect(readdir(PDF_CHAT_CACHE_DIR)).rejects.toMatchObject({
+            code: 'ENOENT',
+        });
+    });
+});
+
+test('renders again over a damaged cache entry, and keeps the new one', async () => {
+    await withSourcePdf(async (sourcePath) => {
+        executeMock.mockResolvedValue(RENDERED_PAGES);
+        await pdfToChatPages(sourcePath);
+        const [entryName] = await readdir(PDF_CHAT_CACHE_DIR);
+        const entryPath = join(PDF_CHAT_CACHE_DIR, entryName);
+
+        for (const damaged of ['not json', 'null', '{"isSuccessful":true}']) {
+            await writeFile(entryPath, damaged);
+            await expect(pdfToChatPages(sourcePath)).resolves.toMatchObject({
+                cacheHit: false,
+                pageCount: 4,
+            });
+        }
+        expect(executeMock).toHaveBeenCalledTimes(4);
+        await expect(pdfToChatPages(sourcePath)).resolves.toMatchObject({
+            cacheHit: true,
+        });
+        expect(executeMock).toHaveBeenCalledTimes(4);
+    });
+});
+
+test('still answers when the cache folder cannot be made', async () => {
+    await withSourcePdf(async (sourcePath) => {
+        // A file sits where the cache folder should be.
+        await writeFile(PDF_CHAT_CACHE_DIR, 'in the way');
+        executeMock.mockResolvedValue(RENDERED_PAGES);
+        await expect(pdfToChatPages(sourcePath)).resolves.toMatchObject({
+            cacheHit: false,
+            pageCount: 4,
+        });
+        await expect(pdfToChatPages(sourcePath)).resolves.toMatchObject({
+            cacheHit: false,
+        });
+        expect(executeMock).toHaveBeenCalledTimes(2);
+        expect(await readFile(PDF_CHAT_CACHE_DIR, 'utf8')).toBe('in the way');
+    });
 });

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
     getLlmRegistryServers,
@@ -186,5 +186,45 @@ describe('the shared LLM registry in main', () => {
         resolveBody(new Response(REGISTRY_TEXT, { status: 200 }));
         await first;
         expect(fetch).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('a registry read that goes wrong', () => {
+    beforeEach(() => {
+        resetLlmRegistryForTests();
+        delete process.env.OWA_LLM_REGISTRY_URL;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('gives the site eight seconds, then says it did not answer in time', async () => {
+        vi.useFakeTimers();
+        const fetch = vi.fn((_url: string, init: RequestInit) => {
+            return new Promise<Response>((_resolve, reject) => {
+                init.signal?.addEventListener('abort', () => {
+                    reject(init.signal?.reason);
+                });
+            });
+        });
+        const pending = refreshLlmRegistry({ fetch });
+        await vi.advanceTimersByTimeAsync(7999);
+        expect(getLlmRegistryStatus().error).toBeNull();
+        await vi.advanceTimersByTimeAsync(1);
+        const status = await pending;
+        expect(status.error).toBe('openworship.app did not answer in time');
+        expect(status.servers).toEqual([]);
+    });
+
+    it('refuses a file too large to be a registry', async () => {
+        const huge = JSON.stringify({
+            version: 1,
+            servers: [],
+            padding: 'x'.repeat(256 * 1024),
+        });
+        const status = await refreshLlmRegistry({ fetch: genFetch(huge) });
+        expect(status.error).toBe('the registry file is too large to be one');
+        expect(status.fetchedAt).toBeNull();
     });
 });

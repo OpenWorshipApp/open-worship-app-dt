@@ -194,11 +194,15 @@ vi.mock('../helper/bible-helpers/bibleModelHelpers', () => ({
 }));
 
 import LookupBibleItemController, {
+    EditingResultContext,
     closeEventMapper,
     ctrlShiftMetaKeys,
+    getCurrentLookupBibleItemController,
+    registerLookupBibleItemController,
+    useEditingResult,
     useLookupBibleItemControllerContext,
 } from './LookupBibleItemController';
-import {
+import BibleItemsViewController, {
     BibleItemsViewControllerContext,
     bibleHistoryStore,
 } from './BibleItemsViewController';
@@ -1177,6 +1181,145 @@ describe('bible-reader LookupBibleItemController', () => {
             });
             expect(container.textContent).toContain('must be used within');
             await flush();
+        });
+    });
+});
+
+describe('LookupBibleItemController: the window registry and the shown result', () => {
+    beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        h.settingStore.clear();
+        h.cacheStore.clear();
+        vi.clearAllMocks();
+        h.getShouldModelNewLineMock.mockReturnValue(true);
+        h.unlockingMock.mockImplementation(async (_k: string, cb: any) => cb());
+        h.getVersesCountMock.mockResolvedValue(31);
+        setDefaultExtract();
+    });
+
+    test('the window publishes one live lookup controller at a time', () => {
+        const first = genController('-first');
+        const second = genController('-second');
+        const unregisterFirst = registerLookupBibleItemController(first);
+        expect(getCurrentLookupBibleItemController()).toBe(first);
+        const unregisterSecond = registerLookupBibleItemController(second);
+        expect(getCurrentLookupBibleItemController()).toBe(second);
+        // The first stepping down late must not unpublish the second.
+        unregisterFirst();
+        expect(getCurrentLookupBibleItemController()).toBe(second);
+        unregisterSecond();
+        expect(getCurrentLookupBibleItemController()).toBeNull();
+    });
+
+    test('the selection is answered from the saved id a view carries', async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        const [first] = ctl.straightBibleItems;
+        const other = ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 779,
+                bibleKey: 'KJV',
+                target: { chapter: 2 },
+            }) as any,
+        );
+        expect(ctl.checkIsBibleItemSelected(first)).toBe(true);
+        expect(ctl.checkIsBibleItemSelected(other)).toBe(false);
+        expect(ctl.selectedIndex).toBe(0);
+        await flush();
+    });
+
+    test("the selected view's own passage, shown for it, is read-only", async () => {
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        ctl.inputText = 'Old Text';
+        await flush();
+        const other = ctl.appendBibleItem(
+            new FakeReadItem({
+                id: 780,
+                bibleKey: 'NIV',
+                target: {
+                    bookKey: 'JHN',
+                    chapter: 3,
+                    verseStart: 16,
+                    verseEnd: 16,
+                },
+            }) as any,
+        );
+        ctl.selectedBibleItem = other;
+        const shown = ctl.toCurrentEditingResult({
+            result: {
+                bibleItem: h.makeFound('KJV'),
+                bookKey: 'GEN',
+                chapter: 1,
+            },
+            bibleKey: 'KJV',
+            inputText: 'Old Text',
+            oldInputText: 'Old Text',
+            time: 0,
+        } as any)!;
+        const found = shown.result.bibleItem!;
+        expect(() => {
+            found.bibleKey = 'KJV';
+        }).toThrow('Read-only bibleKey');
+        expect(() => {
+            found.target = { ...found.target, chapter: 4 };
+        }).toThrow('Read-only target');
+        expect(found.bibleKey).toBe('NIV');
+        expect(found.target.chapter).toBe(3);
+        await flush();
+    });
+
+    describe('useEditingResult', () => {
+        let container: HTMLDivElement;
+        let root: Root;
+        beforeEach(() => {
+            container = document.createElement('div');
+            document.body.appendChild(container);
+            root = createRoot(container);
+        });
+        afterEach(async () => {
+            await act(async () => root.unmount());
+            container.remove();
+        });
+
+        async function readShown(viewController: unknown, editingResult: any) {
+            let shown: unknown = undefined;
+            function ProbeComp() {
+                shown = useEditingResult();
+                return null;
+            }
+            await act(async () => {
+                root.render(
+                    <BibleItemsViewControllerContext.Provider
+                        value={viewController as any}
+                    >
+                        <EditingResultContext value={editingResult}>
+                            <ProbeComp />
+                        </EditingResultContext>
+                    </BibleItemsViewControllerContext.Provider>,
+                );
+            });
+            return shown;
+        }
+
+        test('a lookup shows the result as its selected view should', async () => {
+            const ctl = genController();
+            const editingResult = { oldInputText: 'Gen 1' } as any;
+            const settled = { oldInputText: 'settled' } as any;
+            const toCurrent = vi
+                .spyOn(ctl, 'toCurrentEditingResult')
+                .mockReturnValue(settled);
+            expect(await readShown(ctl, editingResult)).toBe(settled);
+            expect(toCurrent).toHaveBeenCalledWith(editingResult);
+            await flush();
+        });
+
+        test('any other bible view shows the result as it is', async () => {
+            const viewController = new BibleItemsViewController('plain');
+            const editingResult = { oldInputText: 'Gen 1' } as any;
+            expect(await readShown(viewController, editingResult)).toBe(
+                editingResult,
+            );
         });
     });
 });

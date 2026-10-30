@@ -59,6 +59,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+// The translated manual's own reader (`AD-24`), read-only. Null when it cannot
+// be loaded, so the rest of the audit still runs.
+const manualI18n = await import(
+    new URL('../../../../tools/owa-devtools-mcp/manualI18n.mjs', import.meta.url)
+        .href
+).catch(() => null);
 // scripts -> owa-enhance-agent-docs -> skills -> .claude -> repo root
 const REPO_ROOT = path.join(HERE, '..', '..', '..', '..');
 
@@ -201,6 +207,18 @@ const EXTERNAL_NAME_SET = new Set([
     'setupConnectionsTracking',
     'BarcodeDetector',
     'dblClick',
+    // Proven external on 2026-10-28: three `user32.dll` exports (asked of
+    // the DLL itself), a WinUser.h message beside WM_CLOSE, and two DevTools
+    // protocol methods (`CSS.` / `Emulation.` in chrome-devtools-mcp's bundle).
+    'IsWindowVisible',
+    'EnumChildWindows',
+    'SetForegroundWindow',
+    'WM_COMMAND',
+    'getPlatformFontsForNode',
+    'setFocusEmulationEnabled',
+    // chrome-devtools-mcp's own option (`config/mcp-options.js`), on by
+    // default since 1.8: every page tool then requires a `pageId`.
+    'pageIdRouting',
 ]);
 const TOOL_NAME_PATTERN = /\bowa_[a-z][a-z_]*[a-z]\b(?![*_])/g;
 const ENV_NAME_PATTERN = /\bOWA_[A-Z0-9_]*[A-Z0-9]\b/g;
@@ -1160,6 +1178,78 @@ function parseFrontMatter(text) {
     return { fieldMap, bodyStartLine: endIndex + 1 };
 }
 
+// What a YAML parser refuses in a front matter -- for the shapes these files
+// use: `key: value`, a nested `  key: value` (metadata) and a list item
+// `  - value`, each value plain or quoted. `parseFrontMatter` above is
+// lenient on purpose and reads them all; Claude Code reads the block as YAML,
+// and a value it cannot parse loses the WHOLE block. Measured 2026-10-28
+// (`AD-20`): this skill's description had been unreadable for four days (an
+// unescaped `manual's` inside single quotes) and every session's skill
+// listing showed its title instead, a memory note's since 2026-08-08
+// (`description: Screen: Show / …`), and a reader of that very run broke the
+// chatbot skill's (`app's`) -- while every check here printed 0. No
+// dependency: `js-yaml` is only electron-builder's, so this checks the shapes
+// themselves, and agreed with `js-yaml` on all 252 files that day.
+function findYamlScalarProblem(value) {
+    if (value === '') {
+        return null;
+    }
+    if (value.startsWith("'")) {
+        if (value.length < 2 || !value.endsWith("'")) {
+            return 'a single-quoted value is not closed';
+        }
+        return /'/.test(value.slice(1, -1).replace(/''/g, ''))
+            ? "a ' inside single quotes must be written ''"
+            : null;
+    }
+    if (value.startsWith('"')) {
+        if (value.length < 2 || !value.endsWith('"')) {
+            return 'a double-quoted value is not closed';
+        }
+        return /(^|[^\\])"/.test(value.slice(1, -1))
+            ? 'a " inside double quotes must be written \\"'
+            : null;
+    }
+    if (/^[[\]{}&*!|>%@`#,]/.test(value)) {
+        return `a plain value cannot start with \`${value[0]}\` -- quote it`;
+    }
+    if (/:\s/.test(value) || value.endsWith(':')) {
+        return 'a plain value cannot hold `: ` -- quote it';
+    }
+    if (/\s#/.test(value)) {
+        return 'a plain value cannot hold ` #` -- quote it';
+    }
+    return null;
+}
+
+function findFrontMatterYamlProblem(text) {
+    const lineList = (text ?? '').split(LINE_BREAK_PATTERN);
+    if (lineList[0] !== '---') {
+        return null;
+    }
+    const endIndex = lineList.indexOf('---', 1);
+    if (endIndex < 0) {
+        return 'no closing `---`';
+    }
+    for (const [index, line] of lineList.slice(1, endIndex).entries()) {
+        if (line.trim() === '') {
+            continue;
+        }
+        const listItem = line.match(/^\s+-\s+(.*)$/);
+        const field = listItem ? null : line.match(/^\s*[\w-]+:(?:\s+(.*))?$/);
+        if (listItem === null && field === null) {
+            return `line ${index + 2} is no \`key: value\` and no \`- item\``;
+        }
+        const problem = findYamlScalarProblem(
+            (listItem ? listItem[1] : (field[1] ?? '')).trim(),
+        );
+        if (problem !== null) {
+            return `line ${index + 2}: ${problem}`;
+        }
+    }
+    return null;
+}
+
 function runMemoryCheck(docList) {
     const memoryDirPath = path.join(REPO_ROOT, '.claude', 'memory');
     const indexText = readText('.claude/memory/MEMORY.md') ?? '';
@@ -1189,10 +1279,15 @@ function runMemoryCheck(docList) {
     const slugSet = new Set();
     const badFrontMatter = [];
     for (const name of noteNameList) {
-        const parsed = parseFrontMatter(readText(`.claude/memory/${name}`));
+        const noteText = readText(`.claude/memory/${name}`);
+        const parsed = parseFrontMatter(noteText);
         const slug = name.replace(/\.md$/, '');
         slugSet.add(slug);
         const problemList = [];
+        const yamlProblem = findFrontMatterYamlProblem(noteText);
+        if (yamlProblem !== null) {
+            problemList.push(`does not parse as YAML (${yamlProblem})`);
+        }
         if (parsed === null) {
             problemList.push('no front matter');
         } else {
@@ -1290,11 +1385,16 @@ function readRuleGlobs() {
         if (!name.endsWith('.md')) {
             continue;
         }
-        const parsed = parseFrontMatter(readText(`.claude/rules/${name}`));
+        const ruleText = readText(`.claude/rules/${name}`);
+        const parsed = parseFrontMatter(ruleText);
         const globList = Array.isArray(parsed?.fieldMap.paths)
             ? parsed.fieldMap.paths
             : [];
-        ruleList.push({ name, globList });
+        ruleList.push({
+            name,
+            globList,
+            yamlProblem: findFrontMatterYamlProblem(ruleText),
+        });
     }
     return ruleList;
 }
@@ -1304,7 +1404,14 @@ function runRulesCheck() {
     const deadGlob = [];
     const noPaths = [];
     const unnamed = [];
+    const unparsed = [];
     for (const rule of readRuleGlobs()) {
+        if (rule.yamlProblem !== null) {
+            unparsed.push({
+                at: `.claude/rules/${rule.name}`,
+                text: `does not parse as YAML (${rule.yamlProblem}) -- its \`paths:\` may never load it`,
+            });
+        }
         if (rule.globList.length === 0) {
             noPaths.push({
                 at: `.claude/rules/${rule.name}`,
@@ -1341,6 +1448,7 @@ function runRulesCheck() {
         { label: 'rule `paths:` globs that match nothing', items: deadGlob },
         { label: 'rules with no `paths:`', items: noPaths },
         { label: 'rules CLAUDE.md does not name', items: unnamed },
+        { label: 'rule front matter that does not parse', items: unparsed },
     ];
 }
 
@@ -1357,6 +1465,15 @@ function runSkillsCheck() {
         if (text === null) {
             problemList.push({ at, text: 'no SKILL.md' });
             continue;
+        }
+        const yamlProblem = findFrontMatterYamlProblem(text);
+        if (yamlProblem !== null) {
+            problemList.push({
+                at,
+                text:
+                    `SKILL.md front matter does not parse as YAML (${yamlProblem}) ` +
+                    '-- the skill listing shows its title, never its description',
+            });
         }
         const fieldMap = parseFrontMatter(text)?.fieldMap ?? {};
         if (fieldMap.name !== name) {
@@ -1591,6 +1708,11 @@ function collectDocReferences(docList, claimList) {
                     relPath = matchList[0];
                 }
             }
+        } else if (claim.kind === 'link') {
+            // A file named only as a markdown link is named all the same
+            // (`AD-23`): `components-path.md` links ~111 files that way, 35
+            // of them changed since its stamp, and this listed 3.
+            relPath = resolveLinkTarget(claim.token, claim.doc);
         }
         if (
             relPath === null ||
@@ -1828,6 +1950,9 @@ function runStalenessCheck(docList, claimList) {
                                   (changedList.length > 3 ? ' …' : '')
                                 : ''),
                         commitCount: Math.max(1, changedList.length),
+                        // Whole, for `--json`: the text above cuts it at
+                        // three, and a reader splitting the work needs all.
+                        changed: changedList,
                     });
                 }
                 // Read against this very code: due only when the code moves.
@@ -2386,7 +2511,52 @@ function runManualCheck() {
             text: 'make each a template or leave it on purpose; the stamp settles it',
             items: plain.sort((one, other) => other.count - one.count),
         },
+        {
+            key: 'stale-translation',
+            label: 'translated manual pages missing or behind their English',
+            text:
+                'carry the English change in, block for block (`manual-i18n-status.mjs --check <code> <ids>`); ' +
+                'a run is not done while this is above 0',
+            items: readTranslationLagList(),
+        },
     ];
+}
+
+// The manual in the app's other languages (`docs/manual-i18n/<code>/`). A
+// page made from an older English is shown in English, so a corrected recipe
+// left its translations behind every run until 2026-10-29 (`AD-24`): 46 of 65
+// pages in Khmer and in French that day, the old words still in them. Never
+// a failing gate -- `manual-i18n-status.mjs` decided a manual edit must not
+// wait for a translation -- but a run of this skill is not done while one lags.
+function readTranslationLagList() {
+    if (manualI18n === null) {
+        return [];
+    }
+    const englishPageMap = manualI18n.listEnglishManualPages();
+    const lagList = [];
+    for (const langCode of manualI18n.listManualLanguages()) {
+        const translatedSet = new Set();
+        for (const page of manualI18n.listManualTranslations(langCode, {
+            englishPageMap,
+        })) {
+            translatedSet.add(page.id);
+            if (page.isStale) {
+                lagList.push({
+                    at: `docs/manual-i18n/${langCode}/${page.relativePath.replace(/\\/g, '/')}`,
+                    text: `${page.id} (${langCode}): made from an older English page`,
+                });
+            }
+        }
+        for (const [id, english] of englishPageMap) {
+            if (!translatedSet.has(id)) {
+                lagList.push({
+                    at: `docs/manual-sources/${english.relativePath.replace(/\\/g, '/')}`,
+                    text: `${id} (${langCode}): no translation`,
+                });
+            }
+        }
+    }
+    return lagList;
 }
 
 // The one write this script makes, and only when asked: these recipes were

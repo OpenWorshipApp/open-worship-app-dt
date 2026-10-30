@@ -57,8 +57,11 @@ Not running? `env -u ELECTRON_RUN_AS_NODE npm run dev` (the harness exports
 | Settings | `…/setting.html` |
 | A SHOWING projector screen | `…/screen.html?screenId=N` — the target vanishes when it hides |
 
-`mcp__owa-devtools__select_page` + `take_screenshot` is the quickest look at the
-chatbot window. Screenshot before and after any UI change.
+`mcp__owa-devtools__take_screenshot` with the chatbot target's `pageId` (the
+number `list_pages` prints before it) is the quickest look at the chatbot
+window: chrome-devtools-mcp 1.8 requires `pageId` on every page-scoped tool
+(`pageIdRouting` defaults on, and `server.mjs` leaves it on), so `select_page`
+alone does not aim it. Screenshot before and after any UI change.
 
 ## Driving the chatbot window over raw CDP
 
@@ -118,7 +121,7 @@ node extra-work/verify-chatbot-e2e.mjs       # spends REAL API credit — ask fi
 | A guide lands on the real control | `owa_guide_start`, then look: the red ring must be on the control the step names. `owa_guide_status` reports `isTargetFound` and `nearMisses`. |
 | The answer contains no internals | No file path, id, setting key or component name in what the user sees — including when the model read an `internal` page. |
 | The offline path still works | Ask with the provider deliberately broken (wrong key) and no other paid key set, or that one stands in. The manual answer must come back with a note naming the provider that failed. |
-| The empty state | Clear the keys in Settings → AI Providers and reopen: the window must open on the Free assistant, under the notice about the free public service, with an **Open AI settings** button that opens Settings → AI Providers. |
+| The empty state | Clear the keys in Settings → AI Providers and reopen with no assistant picked by name: the window must open on **Auto**, under the notice about the free public service Auto may ask, with an **Open AI settings** button that opens Settings → AI Providers. |
 | Tabs survive a reopen | Open two tabs, ask in both, close and reopen the window: both come back (`local-storage/chatbot-sessions`). |
 | The other window | An answer for the presenter must not describe reader controls, and vice versa. The Bible Reader has one reference box and a version button; clearing the box (**Clear input**) shows its book, then chapter, then verse buttons. |
 | Cost | Re-run the audit script and quote before/after. |
@@ -127,8 +130,8 @@ node extra-work/verify-chatbot-e2e.mjs       # spends REAL API credit — ask fi
 
 - The `npm run dev` terminal carries the electron main process, the MCP host, and
   anything a hidden or early-mount screen window logs (`all:app:log`).
-- The chatbot window's own console: `list_console_messages` after
-  `select_page` on the `chatbot.html` target.
+- The chatbot window's own console: `list_console_messages` with the
+  `chatbot.html` target's `pageId` from `list_pages`.
 - A tool that failed inside the loop is handed back to the model as
   `Tool error: …` text rather than thrown — so a bad answer with no visible error
   often has one in the tool result. Call the tool by hand and read it.

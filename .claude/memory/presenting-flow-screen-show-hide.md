@@ -1,6 +1,6 @@
 ---
 name: presenting-flow-screen-show-hide
-description: Screen: Show / Screen: Hide are the only presenting flow actions that NAME their screens — asked at add time, stored in the ordinary screenIds pin, and no ambient fallback ever
+description: 'Screen: Show / Screen: Hide are the only presenting flow actions that NAME their screens — asked at add time, stored in the ordinary screenIds pin, and no ambient fallback ever'
 metadata:
   type: project
 ---

@@ -3,7 +3,7 @@ id: W-32
 title: "Voir qui a publié une traduction de la Bible (et ses droits d'auteur)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 832ef336995dcbcc
+translatedFrom: 390943dc32928f22
 ---
 # W-32 — Voir qui a publié une traduction de la Bible (et ses droits d'auteur)
 
@@ -24,6 +24,6 @@ Vous n'avez pas besoin des Paramètres pour cela. L'information est à un clic, 
 5. Vous pouvez sélectionner et copier n'importe quelle partie — pratique quand une ligne de droits d'auteur doit figurer sur un programme de culte imprimé.
 6. Fermez-la avec le **✕** dans son coin, ou appuyez sur **Escape**. Vous revenez directement à la grille des livres, exactement comme vous l'aviez laissée.
 7. À gauche du **ⓘ** se trouvent les deux boutons de division, **[en:tran:Split horizontal]** et **[en:tran:Split vertical]** (aussi **Ctrl+Shift+S** / **Ctrl+Shift+V**, et dans le menu **⋮** ou celui du clic droit). Une vue contient toujours un passage, donc la nouvelle s'ouvre sur le livre que vous avez choisi, au chapitre 1 — ou sur Genèse 1 si aucun livre n'est encore choisi — tandis que la vue dans laquelle vous tapez garde sa grille. 📸 Déplacer l'édition vers une autre vue (son crayon, **Ctrl+Shift+flèche**, ou **[en:tran:Edit]** dans son menu) fait de même pour la vue que vous quittez : elle reste ouverte sur le livre que vous avez choisi, au chapitre 1, ou sur Genèse 1. 📸
-8. Choisissez un livre, puis un chapitre. Dès que les versets apparaissent, le **ⓘ** disparaît et les boutons du verset (copier, diviser, enregistrer, présenter…) prennent sa place. Videz à nouveau la case et il revient.
+8. Choisissez un livre, puis un chapitre. Dès que les versets apparaissent, le **ⓘ** disparaît et les boutons du verset (copier, diviser, enregistrer…) prennent sa place, affichés tant que la souris est sur la ligne du haut du volet. Videz à nouveau la case et il revient.
 
 > Vous voulez modifier ces informations plutôt que simplement les lire ? Cela se fait toujours dans **Paramètres → [en:tran:Bible]**, le crayon à côté de la traduction, puis l'onglet **[en:tran:Info]**.

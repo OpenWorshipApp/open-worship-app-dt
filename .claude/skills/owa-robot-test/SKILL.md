@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) and a DRAG-AND-DROP pass (an internal drag, a drop on a hidden screen and a real file dropped from the disk through owa_drop_files — DD-08/12/15, §6h; the argument "dnd" runs all DD-01..19) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~970 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..65 and a context-menu-item matrix CM-01..101, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the inline Review Bible import panel, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch — ON by default, and only an explicit `ai-enabled: "false"` turns it off — strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) and a DRAG-AND-DROP pass (an internal drag, a drop on a hidden screen and a real file dropped from the disk through owa_drop_files — DD-08/12/15, §6h; the argument "dnd" runs all DD-01..19) are MANDATORY in every run not focused on one area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~970 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..65 and a context-menu-item matrix CM-01..101, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the inline Review Bible import panel, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch — ON by default, and only an explicit `ai-enabled: "false"` turns it off — strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "dnd" for every drag-and-drop pairing (DD-01..19) — or "full" for a tracked full-coverage run — or "prod [focus]" to build the release and test the PACKAGED app under release/ — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -161,7 +161,7 @@ see: the asar layout (`build.files` / `asarUnpack` in package.json), the `owa://
 protocol (`electron/fsServe.ts`) serving `dist/`, `tools/owa-devtools-mcp` running out
 of `app.asar.unpacked`, the knowledge dir the chatbot answers from, the native modules
 `copy-build.mjs` places (`db-exts`, `eot2ttf`), and every `isDev` branch flipping the
-other way — AI features **off** unless set, `tran()` **not** throwing, no dev DOM
+other way — `tran()` **not** throwing, no dev DOM
 stamps, no mocked Extra Binaries download, no `ignore-certificate-errors`, the
 un-suffixed userData. KB §18 lists them all with what each does to an assertion.
 
@@ -216,7 +216,8 @@ touch any process it did not start.
    worth testing — most prod bugs a maintainer never sees are first-run bugs.
 5. **A fresh profile has to be furnished before most rows can run**, and each step is a
    real first-run path worth asserting: the Reader opens on **No Parent Directory
-   Selected** → `Ok` opens Settings → General; **set the Parent Directory** (see the
+   Selected** and Settings opens by itself on **Path Settings** (**Go to Settings** on
+   that card opens it again); **set the Parent Directory** (see the
    trap below) → the **Set according paths** confirm → `Yes` writes all 11 child dirs;
    Settings → Bible → **Create KJV Bible XML** gives the Bible layer something to
    present (~5 MB, no network); Settings → Others → **Download and Install** fetches the
@@ -317,7 +318,7 @@ firewall), so it doubles as a prod row rather than costing one.
 
 | Area                                               | Dev                                             | Packaged — what to do instead                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | -------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page URLs (step 5)                                 | `https://localhost:3000/<page>.html`            | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs:297`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well.            |
+| Page URLs (step 5)                                 | `https://localhost:3000/<page>.html`            | **`owa://local/<page>.html`** — but ⚠️ **`navigate_page` cannot be used at all packaged**: the MCP firewall's `checkIsAppUrl` (`tools/owa-devtools-mcp/firewall.mjs`) allows only `file:`, `about:blank` and `http(s)` on localhost/127.0.0.1/::1, and a packaged build serves `owa://`, so every main-window navigation is refused as "an address outside this app". Use **`owa_goto_page`** (`presenter.html` / `reader.html` / `appDocumentEditor.html`) — verified 2026-09-11. The app's own guard (`isSupportedMainNavigation`) rejects any other origin as well.            |
 | userData / `setting.json` (KB §3, §10)             | `%APPDATA%\open-worship-app-dev`                | `%APPDATA%\open-worship-app` (or the `--user-data` dir). User content follows `selected-parent-dir` in THAT file — read the real dirs off the UI (`PathSelectorComp`) before the MD-04 sweep; never assume `open-worship-data-dev`.                                                                                                                                                                                                                                                                                                                                               |
 | Missing Khmer key (§6d)                            | `tran()` **throws**, subtree blanks — Critical  | `tran()` returns the English key silently. LT-01/02 still run, but the assertion is **visual only**: raw English on a Khmer screen = Low finding, and the console will NOT say `Translation for text … not found`. Say in the report that the throw-class check is dev-only.                                                                                                                                                                                                                                                                                                      |
 | Toast stack check (§6, GL-10)                      | lock, `F6`, hover the toast, `F6`               | The same recipe — it needs no dev helper (`window.testSimpleToasts()` is dev-only AND reachable only through the refused `evaluate_script`).                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -327,7 +328,7 @@ firewall), so it doubles as a prod row rather than costing one.
 | Console noise (KB §7)                              | Electron security warnings, HMR, React DevTools | None of those; **any** `[warn]` / `[error]` in the packaged console is worth a look.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Experiments page, `isDev` menu items               | present                                         | Absent; rows citing `src/experiments/` are `EXCLUDED` in prod.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | Window title / icon                                | `icon-dev.png`, dev title                       | The release icon. A dev icon on the packaged window is a packaging bug.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| AI / chatbot (`CB-xx`)                             | on by default                                   | Off unless the setting says on (P0-3). The **Help → App Help (Chatbot)** item and the 🤖 button must be present with it on, and the packaged MCP host (`mcpUrl` in `status`) must serve `tools/list` from `app.asar.unpacked` — one `curl` against it proves the unpacked copy loads.                                                                                                                                                                                                                                                                                             |
+| AI / chatbot (`CB-xx`)                             | on by default                                   | On unless the setting says off (P0-3). The **Help → App Help (Chatbot)** item and the 🤖 button must be present with it on, and the packaged MCP host (`mcpUrl` in `status`) must serve `tools/list` from `app.asar.unpacked` — one `curl` against it proves the unpacked copy loads.                                                                                                                                                                                                                                                                                             |
 | Certificates                                       | `ignore-certificate-errors`                     | Real TLS: a Bible-XML-from-URL import (§6g) or SongSelect that fails only in prod is a finding, not network noise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 Everything else — screen block §6a, media block §6e, presenting flow §6f, coverage
@@ -430,8 +431,10 @@ You can also test the in-app navigation UX itself: click the header tabs `Presen
 Follow [references/test-plan.md](./references/test-plan.md). If the user named a focus
 area (argument-hint), navigate to that page (step 5) and start there; otherwise iterate
 over the pages — `presenter` → `reader` → `appDocumentEditor` → `setting` — navigating to
-each per step 5. **Whatever the focus, two blocks always run: the screen-controlling
-block (§6a) and the locale-switch block (§6d).**
+each per step 5. **With no focus named, two blocks always run: the screen-controlling
+block (§6a) and the locale-switch block (§6d).** A run the user focused on one
+area stays in that area and runs them only when asked (memory
+`robot-test-stays-in-the-asked-scope`, 2026-10-24).
 
 If the user named **"presenting flow"** / **"run sheet"**, run **presenting flow deep mode (§6f)** — a
 tracked mode, not a trimmed focus: coverage accounting is on, the phases run in order, and
@@ -475,7 +478,7 @@ For a page-by-page **component tree with the exact interactions each component s
 (click / double-click / right-click / drag-drop / keyboard-shortcut / slider / input),
 use [references/components-path.md](./references/components-path.md) as the targeting index.
 
-### 6a. MANDATORY: screen controlling & presenting (every run, every focus)
+### 6a. MANDATORY: screen controlling & presenting (every run not focused on one area)
 
 Presenting content to a screen is the app's core purpose, so this block is **not
 optional and not skippable by focus area**: a run that only tested "bible lookup" must
@@ -643,7 +646,7 @@ Caveat: opening/closing the separate editor window can trigger an `owa-devtools`
 reconnected" — re-`list_pages`/`select_page` after each, and read screen visibility from
 `.show-hide.showing`, not target enumeration.
 
-### 6d. MANDATORY: locale switch pass (every run, every focus)
+### 6d. MANDATORY: locale switch pass (every run not focused on one area)
 
 **An English-only run structurally cannot find a missing translation.** `tran()`
 ([src/lang/langHelpers.ts](../../../src/lang/langHelpers.ts)) returns early when the
@@ -688,12 +691,12 @@ Notes:
   mode. That is a **Low/Info** finding (untranslated UI), not the Critical throw above —
   report them separately and name the file.
 
-### 6e. MANDATORY: media download, video AND audio (every run, every focus)
+### 6e. MANDATORY: media download, video AND audio (every run not focused on one area)
 
 **No other product flow runs the media binaries.** `downloadVideoOrAudio`
 ([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only product
 caller of `extra-bin/<platform>/yt/yt-dlp` — `resolveMediaStreamUrl` in the same file
-(appHelpers.ts:352) also runs it, but only from the dev-only experiments page
+also runs it, but only from the dev-only experiments page
 (`src/experiments/html-in-canvas/youtubeDemo.tsx`), and `checkIsExtraBinInstalled` only
 checks file existence, never executes — and `downloadVideoOrAudio` is what points yt-dlp
 at `extra-bin/<platform>/ffmpeg/bin` and `extra-bin/<platform>/qjs/qjs` — so a wrong/missing/stale binary
@@ -1031,7 +1034,7 @@ https://github.com/Beblia/Holy-Bible-XML-Format/raw/refs/heads/master/KhmerBFBSB
 statuses, the ST-44 defaults observed, and confirmation that both `<key>.xml` and
 `<key>.xml.cache` are gone.
 
-### 6h. MANDATORY: drag and drop `[DD-08, DD-12, DD-15]` (every run, every focus; `dnd` runs all DD-01..19)
+### 6h. MANDATORY: drag and drop `[DD-08, DD-12, DD-15]` (every run not focused on one area; `dnd` runs all DD-01..19)
 
 Drag and drop is the one gesture no click, key or data tool exercises, and the bug it
 hides passes every unit test: a handler that `await`s before writing its drag data, or
@@ -1251,8 +1254,8 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - **HTTPS cert warnings**: the Vite dev server uses a self-signed cert; Electron ignores
   cert errors in dev. This does not affect the MCP (it talks to Electron, not Vite).
 - **Prod mode: the packaged app starts and exits at once, publishes nothing**: in order
-  of likelihood — AI features off in that userData (`prod-app.mjs ai-status`; unset is
-  OFF when packaged), the installed app already holding the single-instance lock
+  of likelihood — AI features switched off in that userData (`prod-app.mjs ai-status`;
+  only an explicit `"false"` is off), the installed app already holding the single-instance lock
   (`prod-app.mjs status` shows a `PROD` row whose exe is under `Program Files` / the
   install dir — close it or use `--user-data`), or the exe started with
   `ELECTRON_RUN_AS_NODE=1` in its environment (always start it through
@@ -1277,8 +1280,8 @@ port>` and restart the MCP client. Nothing observed before that fix counts as pr
   to one kind of instance.
 - [scripts/prod-app.mjs](./scripts/prod-app.mjs) — prod mode's door to the packaged
   app: `locate` the build under `release/` (and whether it is stale), `status` of every
-  live instance, `ai-status` / `enable-ai` for the switch a packaged build defaults to
-  off, `launch` (environment scrubbed, pid recorded) and `stop` (that pid only).
+  live instance, `ai-status` / `enable-ai` for the AI switch (on unless set to
+  `"false"`), `launch` (environment scrubbed, pid recorded) and `stop` (that pid only).
 - [references/ui-map.md](./references/ui-map.md) — windows, regions, selectors, readiness
   signals, keyboard shortcuts.
 - [references/components-path.md](./references/components-path.md) — every page → its
@@ -1289,7 +1292,8 @@ port>` and restart the MCP client. Nothing observed before that fix counts as pr
   citation, including a complete keyboard-shortcut matrix (`KB-01..65`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and
   a context-menu-item matrix (`CM-01..101`). Screen controlling & presenting rows
-  (`SP`/`SC`) and the locale-switch rows (`LT-01..02`) are mandatory in every run; the
+  (`SP`/`SC`) and the locale-switch rows (`LT-01..02`) are mandatory in every run not
+  focused on one area; the
   file also carries the policy-exclusion table, statuses, evidence rule, and the coverage
   formula for full-coverage runs. **Note:** this file lives under `docs/test-paths/`, not
   in this skill's `references/`.

@@ -291,3 +291,155 @@ describe('DLNA and Roku', () => {
         expect(toCastTargetName('a'.repeat(200), 'x')).toHaveLength(80);
     });
 });
+
+describe('bytes that are not a whole message', () => {
+    test('a varint cut short, or longer than five bytes, is no message', () => {
+        // A tag with its value missing.
+        expect(decodeCastMessage(Buffer.from([0x08]))).toBeNull();
+        // A tag cut short mid-varint.
+        expect(decodeCastMessage(Buffer.from([0x80]))).toBeNull();
+        // Six continuation bytes: no varint this protocol writes.
+        expect(
+            decodeCastMessage(Buffer.from([0xff, 0xff, 0xff, 0xff, 0xff, 1])),
+        ).toBeNull();
+        // A broken frame is dropped; the whole one behind it is still read.
+        const reader = new CastFrameReader();
+        const broken = Buffer.from([0, 0, 0, 1, 0x08]);
+        const good = encodeCastMessage({
+            sourceId: 'receiver-0',
+            destinationId: 'sender-0',
+            namespace: CAST_NAMESPACE.heartbeat,
+            payload: '{"type":"PING"}',
+        });
+        expect(reader.push(Buffer.concat([broken, good]))).toEqual([
+            {
+                sourceId: 'receiver-0',
+                destinationId: 'sender-0',
+                namespace: CAST_NAMESPACE.heartbeat,
+                payload: '{"type":"PING"}',
+            },
+        ]);
+    });
+});
+
+// A name as a pointer to one earlier in the packet (RFC 1035 4.1.4): how a
+// real Chromecast answers, every name after the first compressed.
+function pointer(offset: number) {
+    return Buffer.from([0xc0 | (offset >> 8), offset & 0xff]);
+}
+
+function recordNamed(
+    name: Buffer,
+    type: number,
+    data: Buffer,
+    length?: number,
+) {
+    const head = Buffer.alloc(10);
+    head.writeUInt16BE(type, 0);
+    head.writeUInt16BE(1, 2);
+    head.writeUInt32BE(120, 4);
+    head.writeUInt16BE(length ?? data.length, 8);
+    return Buffer.concat([name, head, data]);
+}
+
+function packetOf(questions: Buffer[], records: Buffer[]) {
+    const head = Buffer.alloc(12);
+    head.writeUInt16BE(0x8400, 2);
+    head.writeUInt16BE(questions.length, 4);
+    head.writeUInt16BE(records.length, 6);
+    return Buffer.concat([head, ...questions, ...records]);
+}
+
+describe('compressed mDNS answers', () => {
+    const question = Buffer.concat([
+        dnsName(GOOGLE_CAST_SERVICE),
+        Buffer.from([0, 12, 0x80, 1]),
+    ]);
+    // The PTR's data -- the TV's own name -- starts after the question, the
+    // PTR's two-byte name and its ten bytes of type, class, TTL and length.
+    const INSTANCE_AT = 12 + question.length + 2 + 10;
+    const ptr = recordNamed(
+        pointer(12),
+        12,
+        Buffer.concat([Buffer.from([8]), Buffer.from('Lobby-TV'), pointer(12)]),
+    );
+
+    test('a TV whose names all point back is read whole, port and all', () => {
+        const packet = packetOf(
+            [question],
+            [
+                ptr,
+                recordNamed(
+                    pointer(INSTANCE_AT),
+                    16,
+                    txt(['id=lobby-1', 'fn=Lobby TV', 'ca=4101']),
+                ),
+                recordNamed(pointer(INSTANCE_AT), 33, srv(8010, 'lobby.local')),
+            ],
+        );
+        expect(readGoogleCastAnswer(packet, '192.168.1.40')).toEqual([
+            {
+                id: 'google-cast:lobby-1',
+                kind: 'google-cast',
+                name: 'Lobby TV',
+                host: '192.168.1.40',
+                port: 8010,
+            },
+        ]);
+    });
+
+    test('a record cut short ends the reading and keeps the ones before it', () => {
+        const packet = packetOf(
+            [question],
+            [
+                ptr,
+                recordNamed(
+                    pointer(INSTANCE_AT),
+                    16,
+                    txt(['id=lobby-1', 'fn=Lobby TV']),
+                ),
+                // Says 50 bytes of SRV follow; 6 do.
+                recordNamed(pointer(INSTANCE_AT), 33, Buffer.alloc(6), 50),
+            ],
+        );
+        expect(readGoogleCastAnswer(packet, '192.168.1.40')).toEqual([
+            {
+                id: 'google-cast:lobby-1',
+                kind: 'google-cast',
+                name: 'Lobby TV',
+                host: '192.168.1.40',
+                port: 8009,
+            },
+        ]);
+    });
+
+    test('a question with nothing behind it, or a pointer cut short, names nothing', () => {
+        const head = Buffer.alloc(12);
+        head.writeUInt16BE(1, 4);
+        expect(readGoogleCastAnswer(head, '192.168.1.40')).toEqual([]);
+        expect(
+            readGoogleCastAnswer(
+                Buffer.concat([head, Buffer.from([0xc0])]),
+                '192.168.1.40',
+            ),
+        ).toEqual([]);
+    });
+
+    test('a name that points at itself is given up on', () => {
+        const head = Buffer.alloc(12);
+        head.writeUInt16BE(1, 6);
+        const loop = Buffer.concat([head, pointer(12), Buffer.alloc(10)]);
+        expect(readGoogleCastAnswer(loop, '192.168.1.40')).toEqual([]);
+    });
+});
+
+test('a description whose URLBase is no address names no renderer', () => {
+    const xml =
+        '<root><URLBase>not an address</URLBase><device>' +
+        '<friendlyName>TV</friendlyName><serviceList><service>' +
+        '<serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>' +
+        '<controlURL>/avt</controlURL></service></serviceList></device></root>';
+    expect(
+        readDlnaRenderer(xml, 'http://192.168.1.50:7676/dmr.xml'),
+    ).toBeNull();
+});

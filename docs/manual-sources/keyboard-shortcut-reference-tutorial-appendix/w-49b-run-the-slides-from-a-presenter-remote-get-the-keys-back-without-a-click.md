@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [KB-66, KB-67, KB-68]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-49b — Run the slides from a presenter remote (get the keys back without a click)
 
@@ -22,8 +22,9 @@ when you cannot walk back to the computer to click a panel.
 2. **Press the key three times quickly** — inside a second and a half. The
    keys go back to what is being presented. That third press only hands the
    keys over: nothing on the screen changes. The **next** press moves on.
-   If nothing happens, check whether a slider has focus or the cursor is in the
-   open **[en:tran:Bible Lookup]** box: three presses leave those controls alone.
+   If nothing happens, check whether a slider has focus or the cursor is in a
+   box you type in, such as the open **[en:tran:Bible Lookup]** box: three presses
+   leave those controls alone.
    Also check that one of the four panels below has something being presented.
 3. **Which panel takes them** — the first of these that has something going:
    - a presenting flow's preview panel whose run has started (one of its
@@ -42,8 +43,8 @@ when you cannot walk back to the computer to click a panel.
 4. **Nothing at all has the keys** — you closed the panel you were in, say:
    there is no need for three presses. The first press goes to the same
    panel, in the same order, and moves it on.
-5. **What the three presses never take the keys from:** a slider, or an open
-   **[en:tran:Bible Lookup]** with the cursor in its box — there the keys keep
+5. **What the three presses never take the keys from:** a box you type in, a
+   slider, or an open **[en:tran:Bible Lookup]** with the cursor in its box — there the keys keep
    doing what they do. And a panel that is already moving is left alone
    however fast you press: stepping quickly through a song never jumps you
    over to the running order.
@@ -56,5 +57,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `KB-66` · `KB-67` · `KB-68`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

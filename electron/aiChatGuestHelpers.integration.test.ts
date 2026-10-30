@@ -256,4 +256,51 @@ describe('the installed AI Chat guest guard', () => {
             );
         });
     });
+
+    test('steps aside for a registered virtual display compositor only', async () => {
+        vi.clearAllMocks();
+        vi.resetModules();
+        electronMock.session.fromPartition.mockReturnValue(guestSession);
+        mocks.importEsm.mockReturnValue(new Promise(() => {}));
+        const module = await import('./aiChatGuestHelpers');
+        const registry = await import('./virtualDisplayHostRegistry');
+        module.initAiChatGuestGuard();
+        const onCreated = electronMock.app.on.mock.calls[0][1];
+        const screenParams = {
+            src: 'http://127.0.0.1:39240/screen.html?screenId=0',
+            partition: '',
+        };
+
+        // Main's own compositor, registered by its WebContents: its screen
+        // pages attach as main made them.
+        const compositor = createContents('window');
+        registry.markVirtualDisplayHost(compositor as any);
+        onCreated({}, compositor);
+        const compositorAttach = { preventDefault: vi.fn() };
+        const compositorPreferences = {
+            preload: '/app/screen-preload.js',
+            nodeIntegration: true,
+        };
+        compositor.listeners.get('will-attach-webview')!(
+            compositorAttach,
+            compositorPreferences,
+            screenParams,
+        );
+        expect(compositorAttach.preventDefault).not.toHaveBeenCalled();
+        expect(compositorPreferences).toEqual({
+            preload: '/app/screen-preload.js',
+            nodeIntegration: true,
+        });
+
+        // The same request from a page nobody registered is refused.
+        const stranger = { ...createContents('window'), id: 9 };
+        onCreated({}, stranger);
+        const strangerAttach = { preventDefault: vi.fn() };
+        stranger.listeners.get('will-attach-webview')!(
+            strangerAttach,
+            { preload: '/app/screen-preload.js' },
+            screenParams,
+        );
+        expect(strangerAttach.preventDefault).toHaveBeenCalledTimes(1);
+    });
 });

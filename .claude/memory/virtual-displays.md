@@ -37,7 +37,7 @@ cleared on a delete made from the card).
   admitted viewer (the user turned the internet on and expected it to work —
   2026-10-07) but only the viewer's module graph —
   `checkIsVirtualDisplayDevViewerFile` (two pages, `/@fs/<repo>/src/`,
-  `node_modules/` minus dot-dirs except `.vite/deps`, `tools/owa-devtools-mcp/*.mjs`, the four
+  `node_modules/` minus dot-dirs except `.vite/deps`, `tools/owa-devtools-mcp/*.mjs`, the five
   `electron/` protocol files `src/` imports, the Vite client; no `..`, `\`, `?raw`). Measure the graph
   again with a resource log if the screen page starts importing elsewhere: the
   first symptom is a 404 in that list, and on a phone just the wallpaper.
@@ -83,7 +83,7 @@ cleared on a delete made from the card).
   **Allow interaction** switch, off for a new viewer; while on, the screen
   socket's `feedback` packets pass `readVirtualDisplayViewerFeedback` — ONLY
   `bible-screen-view-selected-index` and `sync-scroll-percentage` (two
-  selectors), rebuilt field by field, ≤60/s — to `mirror.forwardViewerFeedback`
+  selectors, plus each side-by-side Bible column's `.screen-bible-column-<n>`), rebuilt field by field, ≤60/s — to `mirror.forwardViewerFeedback`
   → the presenter, as a screen window's own report. Never `visible` (hides the
   screen) or `init` (makes the presenter resend everything). The page is told
   `{type:'interactive'}` so it sends nothing while off. The viewer id is kept in

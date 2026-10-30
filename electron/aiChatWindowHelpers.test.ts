@@ -164,4 +164,33 @@ describe('aiChatWindowHelpers', () => {
         expect(senderWin.webContents.send).not.toHaveBeenCalled();
         expect(presenterWin.webContents.send).not.toHaveBeenCalled();
     });
+
+    test('a sign-out skips an AI Chat window already being torn down', () => {
+        const senderWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => AI_CHAT_URL),
+            }),
+        });
+        const closingWin = createMockBrowserWindow({
+            isDestroyed: vi.fn(() => true),
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => AI_CHAT_URL.replace('_1', '_3')),
+            }),
+        });
+        const otherWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => AI_CHAT_URL.replace('_1', '_2')),
+            }),
+        });
+        electronMockState.browserWindows.push(senderWin, closingWin, otherWin);
+
+        tellOtherAiChatWindowsSignedOut(senderWin.webContents as any);
+
+        // A destroyed window's contents are never touched, the live one is told.
+        expect(closingWin.webContents.getURL).not.toHaveBeenCalled();
+        expect(closingWin.webContents.send).not.toHaveBeenCalled();
+        expect(otherWin.webContents.send).toHaveBeenCalledWith(
+            AI_CHAT_SIGNED_OUT_CHANNEL,
+        );
+    });
 });

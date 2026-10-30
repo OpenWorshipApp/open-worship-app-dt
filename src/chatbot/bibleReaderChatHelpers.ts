@@ -32,6 +32,7 @@ import {
     checkIsInLanguageScript,
     listAssistantLanguages,
     toAsciiDigits,
+    type AssistantLanguageType,
 } from './chatLangHelpers';
 
 export const BIBLE_READER_ASK_KIND = 'bible-reader';
@@ -70,9 +71,21 @@ const ENGLISH_HOW_TO_PATTERN =
 // The app's own nouns and verbs in English, minus the ones a Bible question
 // uses too ("open", "show", "read", "find", "search", "list", "resources",
 // "files"): _put John 3:16 on the screen_ is the Presenter's work, _show
-// resource files for John 3_ is this ask.
+// resource files for John 3_ is this ask. Only words the Bible itself does
+// not use: four verses at most in the KJV and in the NIV each (counted
+// 2026-10-29).
 const ENGLISH_APP_WORK_PATTERN =
-    /\b(?:screens?|projector|present\w*|slides?|congregation|audience|display|buttons?|windows?|click|press|menus?|tabs?|panels?|keys?|keyboard|shortcuts?|settings?|versions?|translations?|import|install|download|xml|fonts?|paste|highlight\w*|marks?|colou?rs?|audio|sound|play|zoom|bigger|smaller|print|export|share|save|undo|delete|chatbot|assistant|help|scroll|url|online|offline|computer|data|backup|sync|bible\s+list|my\s+list)\b/i;
+    /\b(?:apps?|application|screens?|projector|slides?|buttons?|click|menus?|tabs?|keyboard|shortcuts?|versions?|translations?|import|install|download|xml|fonts?|text\s+size|paste|highlight\w*|audio|videos?|volume|backgrounds?|countdown|lyrics?|zoom|bigger|print|export|undo|delete|chatbot|assistant|url|online|offline|computer|data|backup|sync|bible\s+list|my\s+list)\b/i;
+
+// The app's words the Bible uses too, counted the same day: _save_ (226
+// verses of the KJV), _help_ (117), _sound_ (86), _Mark_ the gospel and the
+// mark of Cain (38), the ark's _window_ (42), _present_ (136), the
+// _congregation_ (331). Under Noah's card _How did God save Noah?_ had gone
+// to the app's guide, which answers no Bible question, and in a Reader tab
+// _What does Mark 4:39 say?_ was no Bible question at all. They are the
+// app's work in a how-do-I only (_how do I save this?_).
+const ENGLISH_SHARED_APP_WORK_PATTERN =
+    /\b(?:present\w*|congregation|audience|display|windows?|press|panels?|keys?|settings?|marks?|colou?rs?|sound|play|smaller|share|save|help|scroll|songs?)\b/i;
 
 const ENGLISH_RESOURCES_PATTERN =
     /\b(?:resources?|files?|documents?|study\s+notes?|commentar(?:y|ies)|pdfs?)\b/i;
@@ -270,20 +283,33 @@ function readIntent(text: string): BibleReaderIntentType {
     return 'reference';
 }
 
+// A how-do-I in one language's own words or patterns.
+function checkIsLanguageHowTo(text: string, language: AssistantLanguageType) {
+    return (
+        checkIsInLanguageScript(text, language) &&
+        (checkHasWord(text, language.bibleReaderWords.howTo) ||
+            language.bibleReaderWords.howToAskPatterns.some((pattern) => {
+                return pattern.test(text);
+            }))
+    );
+}
+
 /**
- * Whether the words are a how-to ("how do I…", "របៀប", "comment"): the app's
- * own work, never a Bible question. Shared with the passage conversation,
- * which hands such a line to the ordinary assistant rather than answering it
- * under the Bible prompt (2026-10-19).
+ * Whether the words are a how-do-I ("how do I…", "comment ouvrir…",
+ * "តើខ្ញុំ…ដោយរបៀបណា"): the app's own work, never a Bible question. Shared
+ * with the passage conversation, which hands such a line to the ordinary
+ * assistant rather than answering it under the Bible prompt (2026-10-19).
+ *
+ * What the PERSON does, never any "how" (2026-10-29): French "comment" and
+ * Khmer "ដូចម្តេច" are every "how" there is, and _Comment Jésus a-t-il
+ * sauvé Pierre dans Matthieu 14:30 ?_ was no Bible question in a Reader
+ * tab while the same words in English were one.
  */
 export function checkIsHowTo(text: string) {
     return (
         ENGLISH_HOW_TO_PATTERN.test(text) ||
         listAssistantLanguages().some((language) => {
-            return (
-                checkIsInLanguageScript(text, language) &&
-                checkHasWord(text, language.bibleReaderWords.howTo)
-            );
+            return checkIsLanguageHowTo(text, language);
         })
     );
 }
@@ -293,17 +319,34 @@ export function checkIsHowTo(text: string) {
  * copying, settings -- whatever Bible words ride along. Shared with the
  * passage conversation (2026-10-19), on the same rule: the app answers those,
  * the Bible prompt does not.
+ *
+ * A word the language's Bibles use too counts in a how-do-I only
+ * (2026-10-29, the user's pictures of Noah's card: _what is the size of noah
+ * ark_ answered from the record in English and Khmer, and _Quelle est la
+ * taille de l'arche de Noé_ sent to the app's guide, which said to type
+ * `/btw` -- `taille` is the font's size and Rachel's stature both, 36
+ * verses of the Louis Segond).
  */
 export function checkIsAppWork(text: string) {
-    return (
+    if (
         ENGLISH_APP_WORK_PATTERN.test(text) ||
-        listAssistantLanguages().some((language) => {
-            return (
-                checkIsInLanguageScript(text, language) &&
-                checkHasWord(text, language.bibleReaderWords.exclude)
-            );
-        })
-    );
+        (ENGLISH_HOW_TO_PATTERN.test(text) &&
+            ENGLISH_SHARED_APP_WORK_PATTERN.test(text))
+    ) {
+        return true;
+    }
+    return listAssistantLanguages().some((language) => {
+        if (!checkIsInLanguageScript(text, language)) {
+            return false;
+        }
+        const words = language.bibleReaderWords;
+        return (
+            checkHasWord(text, words.exclude) ||
+            (words.excludeInHowTo.length > 0 &&
+                checkHasWord(text, words.excludeInHowTo) &&
+                checkIsLanguageHowTo(text, language))
+        );
+    });
 }
 
 /**

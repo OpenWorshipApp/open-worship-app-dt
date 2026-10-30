@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-22i — Send a line to one particular screen, or park a line
 
@@ -45,7 +45,7 @@ line you cannot fire by accident.
    is projected, and a document line does not even open. Dragging it onto a mini screen puts nothing there,
    and the arrow/Space keys in the preview panel step straight past it. Right-click →
    **[en:tran:Enable]** puts it back. (While a line is parked its menu drops
-   **[en:tran:Show on Screens]** — an entry that could no longer do anything — but everything else
+   **[en:tran:Show on Screens]** (on an action, the entry that fires it) — an entry that could no longer do anything — but everything else
    stays, so you can still recolour it, move it, or turn it back on.) 📸
    You can park **one slide of a document** the same way: open the document's arrow and
    right-click the slide. Park the **document itself** and every slide under it is parked

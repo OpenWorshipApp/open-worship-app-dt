@@ -57,8 +57,10 @@ over it, which threw the `marginTop` away, so touching any control with two
 messages up dropped them onto one another. The **Show all in turn** datum
 (`MESSAGE_ALL_ID`) is not one of the stacked ones — it keeps its own text and
 interval and takes only the new style. Wrapped lines are still not counted:
-nothing in the panel knows the screen's width, so a message long enough to wrap
-overlaps the next one slightly. That approximation predates this.
+nothing in the panel knows the screen's width. Since 2026-10-18 that offset is
+only the first frame's estimate: the screen lays a session's stack out by the
+heights it drew (`stackKey`, `layOutMessageStack`), so a wrapped message no
+longer overlaps the next one.
 
 Related: [[foreground-blend-mode-stacking]], [[panel-name-in-dom]],
 [[tran-missing-key-throws-in-dev]].

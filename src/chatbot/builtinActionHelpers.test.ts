@@ -55,6 +55,7 @@ import {
     recordSpendRound,
     resetSpendGuardForTests,
 } from './spendGuardHelpers';
+import { setCurrentWindowAim } from './windowAimHelpers';
 
 beforeEach(() => {
     callTool.mockReset();
@@ -1563,6 +1564,419 @@ describe('/lyric', () => {
         expect(steps.map((step) => step.isDone)).toEqual([false, true]);
         expect(steps[0].text).toBe(
             'Reading hymnary.example and writing the song out',
+        );
+    });
+});
+
+// The answers the commands give when the app cannot be read, when a press
+// finds nothing, and when the screens say something the first tests above do
+// not: content held on a screen that is off, a hide that did not take, the
+// window a tab works in. `sleep` waits a real 600ms for a press to land, so
+// those runs go on fake timers.
+describe('the commands when the app answers otherwise', () => {
+    async function runOnFakeTimers(command: string) {
+        vi.useFakeTimers();
+        try {
+            const pending = runBuiltinCommand(command, 'presenter');
+            await vi.advanceTimersByTimeAsync(700);
+            return await pending;
+        } finally {
+            vi.useRealTimers();
+        }
+    }
+
+    function genHeldScreens(isShowing: boolean) {
+        return JSON.stringify({
+            isAnyShowing: isShowing,
+            showingScreenIds: isShowing ? [0, 2] : [],
+            displays: [{ id: 1 }, { id: 2 }],
+            screens: [
+                {
+                    screenId: 0,
+                    isBlank: false,
+                    slide: {
+                        document: 'Amazing Grace',
+                        kind: 'song',
+                        name: 'Verse 1',
+                        text: 'Amazing grace',
+                    },
+                },
+                { screenId: 1, isBlank: true },
+            ],
+        });
+    }
+
+    test('an app that cannot be read is said so, for every reader', async () => {
+        const couldNot = 'I could not reach the app window just now.';
+        callTool.mockResolvedValue('not json');
+        expect(
+            (await runBuiltinCommand('/screen', 'presenter')).text,
+        ).toContain(couldNot);
+        callTool.mockResolvedValue(JSON.stringify({ error: 'gone' }));
+        for (const command of [
+            '/screen',
+            '/screen-show',
+            '/screen-hide',
+            '/selected',
+            '/run',
+            '/next',
+            '/slide 2',
+            '/here',
+        ]) {
+            const answer = await runBuiltinCommand(command, 'presenter');
+            expect(answer.text, command).toContain(couldNot);
+        }
+        expect(await answerSlideShowAsk('verse 1')).toBeNull();
+        expect(await answerSlideStepAsk('next')).toBeNull();
+        expect((await answerScreenToggleAsk('show')).text).toContain(couldNot);
+    });
+
+    test('a screen that is off says what it already holds', async () => {
+        callTool.mockResolvedValue(genHeldScreens(false));
+        const answer = await runBuiltinCommand('/screen', 'presenter');
+        expect(answer.text).toContain('this computer has 2 displays');
+        expect(answer.text).toContain(
+            'Screen 0 already holds the song "Amazing Grace" (Verse 1) -- ' +
+                '"Amazing grace", so turning it on shows that.',
+        );
+        // A blank screen holds nothing worth a sentence.
+        expect(answer.text).not.toContain('Screen 1');
+    });
+
+    test('screens that are showing say what each one shows', async () => {
+        callTool.mockResolvedValue(genHeldScreens(true));
+        const answer = await runBuiltinCommand('/screen', 'presenter');
+        expect(answer.text).toContain('**Screen 0, 2 are showing right now**');
+        expect(answer.text).toContain(
+            'Screen 0 shows the song "Amazing Grace" (Verse 1)',
+        );
+        expect(
+            answer.actions?.map((action) => {
+                return action.args.command;
+            }),
+        ).toEqual(['/screen-hide', '/clear-all']);
+    });
+
+    test('a screen button the window does not have is said in words', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            if (name === 'owa_list_screens') {
+                return genScreens([]);
+            }
+            throw new Error('No control matching "Toggle showing screen"');
+        });
+        const answer = await runBuiltinCommand('/screen-show', 'presenter');
+        expect(answer.text).toContain('I could not find the screen button');
+        expect(answer.text).not.toContain('No control matching');
+        expect(answer.actions?.[0].args.command).toBe('/goto presenter');
+    });
+
+    test('/screen-hide with nothing showing presses nothing', async () => {
+        callTool.mockResolvedValue(genScreens([]));
+        const answer = await runBuiltinCommand('/screen-hide', 'presenter');
+        expect(answer.text).toContain('The screen is already off');
+        expect(callTool).not.toHaveBeenCalledWith('owa_hide_screens', {});
+        expect(answer.actions?.[0].args.command).toBe('/screen-show');
+    });
+
+    test('/screen-hide says so when a screen still reports showing', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            return name === 'owa_list_screens' ? genScreens([0]) : '';
+        });
+        const answer = await runOnFakeTimers('/screen-hide');
+        expect(callTool).toHaveBeenCalledWith('owa_hide_screens', {});
+        expect(answer.text).toContain('one still reports showing');
+        expect(answer.actions?.[0].args.command).toBe('/screen');
+    });
+
+    test('a clear whose button is not in this window says where it is', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            if (name === 'owa_list_screens') {
+                return genScreens([0]);
+            }
+            throw new Error('No control matching "Clear Background"');
+        });
+        const answer = await runBuiltinCommand(
+            '/screen-clear-background',
+            'presenter',
+        );
+        expect(answer.text).toContain(
+            'I could not find the **Clear Background** button',
+        );
+        expect(answer.text).toContain('**F7**');
+    });
+
+    test('a clear that changed nothing says the layer may have been empty', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            if (name === 'owa_list_screens') {
+                return genScreens([0]);
+            }
+            return JSON.stringify({ didChange: false });
+        });
+        const answer = await runBuiltinCommand(
+            '/screen-clear-slide',
+            'presenter',
+        );
+        expect(answer.text).toContain(
+            'I pressed **Clear Slide**, and the button looks the same',
+        );
+        expect(answer.text).toContain('the slide to clear');
+        expect(answer.text).toContain('**F8**');
+    });
+
+    test('/find outlines what it found, or says it found nothing', async () => {
+        callTool.mockResolvedValue(
+            JSON.stringify({
+                count: 1,
+                matches: [
+                    { isVisible: true, label: 'Clear All', where: 'bottom' },
+                ],
+            }),
+        );
+        const found = await runBuiltinCommand('/find Clear All', 'presenter');
+        expect(found.text).toContain('**Clear All** is on screen now');
+        expect(callTool).toHaveBeenCalledWith('owa_find_ui', {
+            text: 'Clear All',
+            highlight: true,
+            page: 'presenter.html',
+        });
+
+        callTool.mockResolvedValue(JSON.stringify({ count: 0, matches: [] }));
+        const missing = await runBuiltinCommand('/find Zebra', 'presenter');
+        expect(missing.text).toContain(
+            'I could not find anything on screen reading "Zebra"',
+        );
+
+        callTool.mockRejectedValue(new Error('evaluate timed out'));
+        const failed = await runBuiltinCommand('/find Zebra', 'presenter');
+        expect(failed.text).toContain('I could not look for "Zebra" just now');
+        expect(failed.text).not.toContain('evaluate timed out');
+    });
+
+    test('/goto says when it is already there, and when it could not go', async () => {
+        callTool.mockResolvedValue(JSON.stringify({ switched: false }));
+        const already = await runBuiltinCommand('/goto editor', 'presenter');
+        expect(already.text).toBe(
+            '**You are already in the Document Editor.**',
+        );
+
+        callTool.mockRejectedValue(new Error('no main window'));
+        const failed = await runBuiltinCommand('/goto bible', 'presenter');
+        expect(failed.text).toContain('I could not switch to the Bible Reader');
+    });
+
+    test('/here names the main window, its language, what else is open and the version', async () => {
+        callTool.mockResolvedValue(
+            JSON.stringify({
+                mainWindow: { page: 'reader.html', language: 'km' },
+                windows: [
+                    { url: 'https://localhost:3000/reader.html' },
+                    { url: 'https://localhost:3000/setting.html?uuid=setting' },
+                    { url: 'https://localhost:3000/setting.html?uuid=setting' },
+                    { url: 'https://localhost:3000/screen.html?screenId=0' },
+                ],
+                instances: [{ version: '2026.10.1' }],
+            }),
+        );
+        const answer = await runBuiltinCommand('/here', 'presenter');
+        expect(answer.text).toBe(
+            '**The main window is on the Bible Reader** in Khmer. Also ' +
+                'open: Settings.\n\nApp version 2026.10.1.',
+        );
+
+        callTool.mockResolvedValue(
+            JSON.stringify({ mainWindow: { page: 'presenter.html' } }),
+        );
+        const plain = await runBuiltinCommand('/here', 'presenter');
+        expect(plain.text).toBe('**The main window is on the Presenter**.');
+
+        callTool.mockResolvedValue(
+            JSON.stringify({
+                mainWindow: { page: 'presenter.html', language: 'en' },
+            }),
+        );
+        const english = await runBuiltinCommand('/here', 'presenter');
+        expect(english.text).toBe(
+            '**The main window is on the Presenter** in English.',
+        );
+    });
+
+    test('/help with words searches the guide, and says when it cannot', async () => {
+        // With no words it is the command list, and asks nothing.
+        const bare = await runBuiltinCommand('/help', 'presenter');
+        expect(bare.text).toContain('/screen-show');
+        expect(callTool).not.toHaveBeenCalled();
+
+        callTool.mockResolvedValue('[]');
+        const nothing = await runBuiltinCommand(
+            '/help zebra stripes',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_help_search', {
+            query: 'zebra stripes',
+            focus: 'presenter',
+            kind: 'manual',
+        });
+        expect(nothing.text).toContain(
+            'I could not find that in the app guide',
+        );
+
+        callTool.mockRejectedValue(new Error('host gone'));
+        const failed = await runBuiltinCommand(
+            '/help zebra stripes',
+            'presenter',
+        );
+        expect(failed.text).toBe(
+            'I could not search the guide just now. Ask the question in ' +
+                'full and I will look it up.',
+        );
+    });
+
+    test('/here in a tab working in a window of its own names both windows', async () => {
+        setCurrentWindowAim({
+            windowId: 'SETTING-1',
+            focus: 'setting',
+            isSeparateWindow: true,
+        });
+        try {
+            callTool.mockResolvedValue(
+                JSON.stringify({
+                    mainWindow: { page: 'setting.html', language: 'fr' },
+                    windows: [
+                        { url: 'https://localhost:3000/presenter.html' },
+                        {
+                            url: 'https://localhost:3000/setting.html?uuid=setting',
+                        },
+                    ],
+                }),
+            );
+            const answer = await runBuiltinCommand('/here', 'presenter');
+            expect(answer.text).toBe(
+                '**This tab works with the Settings, a window of its own** ' +
+                    'in French. The main window is on the Presenter.',
+            );
+
+            callTool.mockResolvedValue(
+                JSON.stringify({
+                    mainWindow: { page: 'setting.html', language: 'de' },
+                }),
+            );
+            const unknown = await runBuiltinCommand('/here', 'presenter');
+            expect(unknown.text).toBe(
+                '**This tab works with the Settings, a window of its own** ' +
+                    'in de.',
+            );
+
+            callTool.mockResolvedValue(
+                JSON.stringify({ mainWindow: { page: 'setting.html' } }),
+            );
+            const silent = await runBuiltinCommand('/here', 'presenter');
+            expect(silent.text).toBe(
+                '**This tab works with the Settings, a window of its own**.',
+            );
+        } finally {
+            setCurrentWindowAim(null);
+        }
+    });
+
+    test('the slide commands off the Presenter, or with nothing selected', async () => {
+        callTool.mockResolvedValue(genAppState(null, 'reader.html'));
+        const selected = await runBuiltinCommand('/selected', 'presenter');
+        expect(selected.text).toContain('the selected song lives there');
+        expect(selected.actions?.[0].args.command).toBe('/goto presenter');
+        const run = await runBuiltinCommand('/run', 'presenter');
+        expect(run.text).toContain('the run sheet lives there');
+        const slide = await runBuiltinCommand('/slide 2', 'presenter');
+        expect(slide.text).toContain('there is no slide list to choose from');
+
+        callTool.mockResolvedValue(genAppState(null));
+        const nothing = await runBuiltinCommand('/slide 2', 'presenter');
+        expect(nothing.text).toContain(
+            'Nothing is selected in the Documents list.',
+        );
+    });
+
+    test('/run on the Presenter says what the run sheet holds, in bold', async () => {
+        callTool.mockResolvedValue(genAppState(null));
+        const answer = await runBuiltinCommand('/run', 'presenter');
+        expect(answer.text).toMatch(/^\*\*.+\*\*$/s);
+        expect(answer.actions).toBeUndefined();
+    });
+
+    test('a slide card that cannot be pressed is said with its number', async () => {
+        callTool.mockImplementation(async (name: string) => {
+            if (name === 'owa_app_state') {
+                return genAppState(SELECTED);
+            }
+            throw new Error('No control matching "Slide 2: Verse 2"');
+        });
+        const answer = await runBuiltinCommand('/next', 'presenter');
+        expect(answer.text).toBe(
+            'I could not find slide 2 of "Amazing Grace" on the screen to ' +
+                'press. Click it in the slide list instead.',
+        );
+    });
+
+    test('a passage or a foreground the app answers with nothing readable', async () => {
+        callTool.mockResolvedValue('');
+        const couldNot = 'I could not reach the app window just now.';
+        expect(
+            (await runBuiltinCommand('/verse John 3:16', 'presenter')).text,
+        ).toContain(couldNot);
+        expect(
+            (await runBuiltinCommand('/countdown 5', 'presenter')).text,
+        ).toContain(couldNot);
+    });
+
+    test('/marquee stop takes the message off; bare /marquee asks for words', async () => {
+        callTool.mockResolvedValue(
+            JSON.stringify({ did: 'stopped', detail: 'stopped' }),
+        );
+        await runBuiltinCommand('/marquee-top stop', 'presenter');
+        expect(callTool).toHaveBeenCalledWith('owa_foreground', {
+            action: 'stop',
+            widget: 'marquee-top',
+        });
+        const bare = await runBuiltinCommand('/marquee', 'presenter');
+        expect(bare.text).toContain('**Say the words to scroll**');
+        expect(bare.text).toContain('`/marquee stop`');
+    });
+
+    test('/lyric over pasted words that cannot be drafted just now', async () => {
+        callTool.mockRejectedValue(new Error('host gone'));
+        const answer = await runBuiltinCommand(
+            '/lyric Line one of the song\nLine two of the song',
+            'presenter',
+        );
+        expect(answer.text).toContain(
+            'I could not write that song out just now',
+        );
+    });
+
+    test('/clear is the window’s own, and says where it works', async () => {
+        const answer = await runBuiltinCommand('/clear', 'presenter');
+        expect(answer.text).toContain('Type `/clear` in the chat window');
+        expect(callTool).not.toHaveBeenCalled();
+    });
+
+    test('/tips brings the tip line back and gives one', async () => {
+        settingMap.set(
+            'chatbot-tip-hidden-until',
+            `${Date.now() + 24 * 60 * 60 * 1000}`,
+        );
+        const back = await runBuiltinCommand('/tips', 'presenter');
+        expect(back.text).toContain('The tips are back');
+        expect(back.text).toContain('\n\n💡 ');
+        expect(settingMap.get('chatbot-tip-hidden-until')).toBe('');
+        const shown = await runBuiltinCommand('/tips', 'presenter');
+        expect(shown.text).toContain('The tips are on the line above the box.');
+    });
+
+    test('a command whose own reading fails is said without the error', async () => {
+        callTool.mockRejectedValue(new Error('socket hang up'));
+        const answer = await runBuiltinCommand('/selected', 'presenter');
+        expect(answer.text).toBe(
+            'I could not do `/selected` just now. Try again in a moment, or ' +
+                'ask me in words and I will find another way.',
         );
     });
 });

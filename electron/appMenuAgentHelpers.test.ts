@@ -145,4 +145,37 @@ describe('appMenuAgentHelpers', () => {
         }
         expect(click).not.toHaveBeenCalled();
     });
+
+    test('an item with no words is neither listed nor pressable', () => {
+        const click = vi.fn();
+        const menu = {
+            items: [
+                {
+                    label: 'Help',
+                    type: 'submenu',
+                    submenu: {
+                        items: [
+                            { label: '   ', type: 'normal', click },
+                            { type: 'normal', click },
+                            { label: 'About', type: 'normal', click },
+                        ],
+                    },
+                },
+            ],
+        } as any;
+        expect(listAgentMenuItems(menu).map((one) => one.path)).toEqual([
+            'Help',
+            'Help > About',
+        ]);
+        // Nothing to name it by: asked for, it is not found, and not pressed.
+        expect(clickAgentMenuItem('Help > ', null, menu)).toEqual({
+            isError: true,
+            reason: expect.stringContaining('no menu item called "Help > "'),
+        });
+        expect(clickAgentMenuItem('Nowhere > Gone', null, menu)).toEqual({
+            isError: true,
+            reason: expect.stringContaining('no menu item called'),
+        });
+        expect(click).not.toHaveBeenCalled();
+    });
 });

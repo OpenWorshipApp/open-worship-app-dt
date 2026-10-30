@@ -19,8 +19,11 @@ vi.mock('./mcpClient', () => ({
 }));
 
 import {
+    answerWhereIs,
     askHelpBot,
+    checkIsPresenterStateAsk,
     describeActionError,
+    detectOpenerFocus,
     genBackToPresenterLead,
     genBackToPresenterRoute,
     genOwnWindowFact,
@@ -1624,5 +1627,468 @@ describe('a guide page a person asked to read', () => {
             id: 'W-42',
             part: 2,
         });
+    });
+});
+
+// The offline bot's answers when the app answers otherwise, and the presses
+// whose card or window did not come up the way the first tests above say.
+describe('the offline bot when the app answers otherwise', () => {
+    const realParse = (text: any) => {
+        try {
+            return typeof text === 'string' && text.length > 0
+                ? JSON.parse(text)
+                : null;
+        } catch (_error) {
+            return null;
+        }
+    };
+
+    beforeEach(() => {
+        parseToolJson.mockImplementation(realParse);
+    });
+
+    test('nothing asked is answered with what to ask', async () => {
+        expect((await askHelpBot('   ', 'presenter')).text).toBe(
+            'Ask me how to do something in the app.',
+        );
+        expect(callTool).not.toHaveBeenCalled();
+    });
+
+    test('the window that opened the help is read off its own file name', () => {
+        expect(detectOpenerFocus('/presenter.html')).toBe('presenter');
+        expect(detectOpenerFocus('/setting.html')).toBe('setting');
+        // With no opener to read -- this suite has no window at all.
+        expect(detectOpenerFocus()).toBeNull();
+    });
+
+    test('a question is the Presenter’s own when it asks what it holds', () => {
+        expect(checkIsPresenterStateAsk('Is anything on the projector?')).toBe(
+            true,
+        );
+        expect(checkIsPresenterStateAsk('Which song is selected now?')).toBe(
+            true,
+        );
+        expect(checkIsPresenterStateAsk('What is in my running order?')).toBe(
+            true,
+        );
+        expect(checkIsPresenterStateAsk('How do I make a new song?')).toBe(
+            false,
+        );
+    });
+
+    test('book buttons asked about with no passage are not a passage', () => {
+        expect(
+            genReaderButtonReferenceAnswer(
+                'How do I use the book buttons?',
+                'reader',
+            ),
+        ).toBeNull();
+    });
+
+    test('the selected song names both ways to step, from the Presenter', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string];
+            return name === 'owa_app_state'
+                ? JSON.stringify({
+                      mainWindow: {
+                          page: 'presenter.html',
+                          selectedDocument: {
+                              name: 'Amazing Grace',
+                              kind: 'song',
+                              slideCount: 3,
+                              slides: [],
+                              onScreen: {
+                                  n: 2,
+                                  name: 'Verse 2',
+                                  find: 'Slide 2: Verse 2',
+                                  text: 'Twas grace',
+                                  onScreens: [0],
+                              },
+                              next: { n: 3, name: 'Verse 3', find: 'S3' },
+                              previous: { n: 1, name: 'Verse 1', find: 'S1' },
+                          },
+                      },
+                  })
+                : '';
+        });
+        const answer = await askHelpBot(
+            'Which song is selected right now?',
+            'presenter',
+        );
+        expect(answer.text).toContain('Amazing Grace');
+        expect(
+            answer.actions?.map((action) => {
+                return action.args?.command;
+            }),
+        ).toEqual(['/next', '/previous']);
+    });
+
+    test('the run sheet off the Presenter says where it lives', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string];
+            return name === 'owa_app_state'
+                ? JSON.stringify({ mainWindow: { page: 'reader.html' } })
+                : '';
+        });
+        const answer = await askHelpBot(
+            "What's next in my running order?",
+            'presenter',
+        );
+        expect(answer.text).toBe(
+            'The run sheet lives in the Presenter, and the main window is ' +
+                'not on it right now.',
+        );
+        expect(answer.actions?.[0].args?.command).toBe('/goto presenter');
+    });
+
+    test('a run sheet or a selection the app cannot say goes to the guide', async () => {
+        callTool.mockResolvedValue('');
+        for (const question of [
+            "What's next in my running order?",
+            'Which song is selected right now?',
+        ]) {
+            const answer = await askHelpBot(question, 'presenter');
+            expect(callTool).toHaveBeenCalledWith('owa_help_search', {
+                query: question,
+                focus: 'presenter',
+                kind: 'manual',
+            });
+            expect(answer.text).toContain(
+                'I could not find that in the app guide',
+            );
+        }
+    });
+
+    test('a passage or a countdown the app could not check goes to the guide', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string];
+            if (name === 'owa_present_bible' || name === 'owa_foreground') {
+                throw new Error('evaluate timed out');
+            }
+            return '';
+        });
+        const verse = await askHelpBot('show John 3:16', 'presenter');
+        expect(callTool).toHaveBeenCalledWith('owa_present_bible', {
+            reference: 'John 3:16',
+            action: 'check',
+        });
+        expect(verse.text).not.toContain('evaluate timed out');
+        const countdown = await askHelpBot(
+            'Start a 5 minute countdown',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_foreground', {
+            action: 'check',
+        });
+        expect(countdown.text).not.toContain('evaluate timed out');
+
+        // An answer with nothing in it is not an answer either.
+        callTool.mockResolvedValue('{}');
+        expect(
+            (await askHelpBot('show John 3:16', 'presenter')).text,
+        ).not.toContain('John 3:16 is');
+    });
+
+    test('a song title that cannot be looked up just now asks for its words', async () => {
+        callTool.mockRejectedValue(new Error('host gone'));
+        const answer = await askHelpBot(
+            'Create a lyric file for song "Amazing Grace"',
+            'presenter',
+        );
+        expect(answer.text).toContain(
+            'I could not look up "Amazing Grace" just now',
+        );
+        expect(answer.text).not.toContain('host gone');
+    });
+
+    test('a song title nobody has offers the nearest names', async () => {
+        callTool.mockResolvedValue(
+            'No song called "Amazin Grace" is in the app’s collection.\n' +
+                'Nearest in the collection: "Amazing Grace", "Abide With Me"',
+        );
+        const answer = await askHelpBot(
+            'Create a lyric file for song "Amazin Grace"',
+            'presenter',
+        );
+        expect(answer.text).toContain(
+            'Did you mean **Amazing Grace**, **Abide With Me**? Ask again ' +
+                'with that name.',
+        );
+    });
+
+    test('a guide page in the window’s language is quoted in it', async () => {
+        callTool.mockResolvedValue(
+            JSON.stringify([
+                {
+                    kind: 'manual',
+                    id: 'W-03',
+                    title: 'Present a slide',
+                    titleInLanguage: 'បង្ហាញស្លាយ',
+                    excerpt: 'Double-click the slide.',
+                    excerptInLanguage: 'ចុចពីរដងលើស្លាយ។',
+                    score: 40,
+                },
+                {
+                    kind: 'manual',
+                    id: 'W-10',
+                    title: 'Clear the screen',
+                    titleInLanguage: 'សម្អាតអេក្រង់',
+                    excerpt: 'Press Clear All.',
+                    score: 30,
+                },
+            ]),
+        );
+        const answer = await askHelpBot(
+            'How do I present a slide?',
+            'presenter',
+        );
+        expect(answer.text).toContain('**បង្ហាញស្លាយ**\n\nចុចពីរដងលើស្លាយ។');
+        expect(answer.text).not.toContain('Double-click the slide.');
+        // The one other place to look, named as it is shown.
+        expect(
+            answer.actions?.find((action) => {
+                return action.args?.id === 'W-10';
+            })?.label,
+        ).toBe('សម្អាតអេក្រង់');
+    });
+
+    test('a control asked for that is on the page but hidden says so', async () => {
+        callTool.mockResolvedValue(
+            JSON.stringify({
+                count: 1,
+                matches: [{ isVisible: false, label: 'Clear All' }],
+            }),
+        );
+        const answer = await answerWhereIs('Clear All', 'presenter');
+        expect(answer?.text).toBe(
+            'I found "Clear All" in the presenter, but it is not visible ' +
+                'right now. Try opening the panel or tab it belongs to first.',
+        );
+    });
+
+    test('a control asked for by the wrong words points at the nearest', async () => {
+        callTool.mockResolvedValue(
+            JSON.stringify({ count: 0, nearMisses: ['Bible Reference'] }),
+        );
+        const answer = await answerWhereIs('reference box', 'reader');
+        expect(answer?.text).toContain(
+            'I could not find "reference box", but there is **Bible ' +
+                'Reference** on screen',
+        );
+        expect(answer?.actions?.[0]).toEqual({
+            label: 'Highlight "Bible Reference"',
+            toolName: 'owa_find_ui',
+            args: {
+                text: 'Bible Reference',
+                highlight: true,
+                page: 'reader.html',
+            },
+        });
+    });
+
+    test('a page that is no window this help knows is no where-is answer', async () => {
+        callTool.mockRejectedValue(
+            new Error('The app has no open page matching "nowhere.html".'),
+        );
+        await expect(answerWhereIs('Clear All', 'presenter')).rejects.toThrow(
+            'no open page',
+        );
+    });
+});
+
+describe('a press whose card or window did not come up', () => {
+    const genNoPageError = (page: string) => {
+        return new Error(
+            `The app has no open page matching "${page}". The open pages ` +
+                'are: chatbot.html?uuid=chatbot, presenter.html.',
+        );
+    };
+
+    beforeEach(() => {
+        parseToolJson.mockImplementation((text: any) => {
+            return typeof text === 'string' && text.length > 0
+                ? JSON.parse(text)
+                : null;
+        });
+    });
+
+    function useGuideStatus(status: Record<string, unknown>) {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string];
+            return name === 'owa_guide_start' ? JSON.stringify(status) : '';
+        });
+    }
+
+    test('a card that did not start says the written steps still work', async () => {
+        useGuideStatus({ isRunning: false });
+        const result = await runBotAction({
+            label: 'Show me step by step',
+            toolName: 'owa_guide_start',
+            args: { manualId: 'W-03', page: 'presenter.html' },
+        });
+        expect(result.text).toBe(
+            'I could not start the walkthrough for that one. The written ' +
+                'steps above still work.',
+        );
+        expect(result.isNeedingModel).toBe(false);
+    });
+
+    test('a card that cannot point at its steps asks the model for better ones', async () => {
+        useGuideStatus({ isRunning: true, isTargetFound: false, stepCount: 4 });
+        const result = await runBotAction({
+            label: 'Show me step by step',
+            toolName: 'owa_guide_start',
+            args: { manualId: 'W-03', page: 'presenter.html' },
+            ask: 'How do I present a slide?',
+        });
+        expect(result.text).toContain(
+            'Some of its steps are not buttons I can point at',
+        );
+        expect(result.isNeedingModel).toBe(true);
+    });
+
+    test('a demo whose steps cannot be pressed says to press Next instead', async () => {
+        useGuideStatus({ isRunning: true, canDemo: false, stepCount: 4 });
+        const result = await runBotAction({
+            label: 'Do it for me',
+            toolName: 'owa_guide_start',
+            args: { demoId: 'reader-font-larger' },
+        });
+        expect(result.text).toBe(
+            '**Look at the app window.** I cannot press this one for you — ' +
+                'its steps are things to do in the page itself, not buttons. ' +
+                'A card is showing step 1 of 4; press **Next** on it as you go.',
+        );
+        expect(result.isNeedingModel).toBe(false);
+    });
+
+    test('a verse opened in the lookup is said in words, and any other press too', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string];
+            return name === 'owa_find_verse'
+                ? JSON.stringify({ opened: 'John 3:16', bible: 'KJV' })
+                : '';
+        });
+        const opened = await runBotAction({
+            label: 'Open John 3:16 in Bible Lookup',
+            toolName: 'owa_find_verse',
+            args: { bible: 'KJV', open: 'JHN 3:16' },
+        });
+        expect(opened.text).toBe(
+            '**Look at the app window.** John 3:16 (KJV) is open in the ' +
+                'Bible Lookup. Nothing went on a screen.',
+        );
+        // A press whose tool says nothing is said done.
+        const plain = await runBotAction({
+            label: 'Show it',
+            toolName: 'owa_list_screens',
+        });
+        expect(plain).toEqual({ text: 'Done.', isNeedingModel: false });
+    });
+
+    test('a window that will not open is pointed at, and asked for by hand', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string];
+            if (name === 'owa_guide_start') {
+                throw genNoPageError('setting.html');
+            }
+            // Neither pressing the control nor ringing it worked.
+            throw new Error('evaluate timed out');
+        });
+        const action = {
+            label: 'Do it for me',
+            toolName: 'owa_guide_start',
+            args: { manualId: 'W-16', page: 'setting.html', mode: 'demo' },
+        };
+        const result = await runBotAction(action);
+        expect(callTool).toHaveBeenCalledWith('owa_click', {
+            find: 'Setting',
+        });
+        expect(callTool).toHaveBeenCalledWith('owa_find_ui', {
+            text: 'Setting',
+            highlight: true,
+            anyPage: true,
+        });
+        expect(result.text).toContain('**Open Settings first.**');
+        expect(result.text).toContain('I have outlined it in red');
+        expect(result.actions?.[0].args).toEqual(action.args);
+    });
+
+    test('a window that was opened but never appeared is asked for by hand', async () => {
+        vi.useFakeTimers();
+        try {
+            callTool.mockImplementation(async (...args: any[]) => {
+                const [name] = args as [string];
+                if (name === 'owa_guide_start') {
+                    throw genNoPageError('setting.html');
+                }
+                if (name === 'owa_app_state') {
+                    // The window list could not be read at all.
+                    throw new Error('evaluate timed out');
+                }
+                return '{}';
+            });
+            const pending = runBotAction({
+                label: 'Do it for me',
+                toolName: 'owa_guide_start',
+                args: { manualId: 'W-16', page: 'setting.html', mode: 'demo' },
+            });
+            await vi.advanceTimersByTimeAsync(9000);
+            const result = await pending;
+            expect(result.text).toContain('**Open Settings first.**');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a button with no tool is done at once, and says when the model is next', async () => {
+        expect(await runBotAction({ label: 'Thanks' })).toEqual({
+            text: 'Done.',
+            isNeedingModel: false,
+        });
+        expect(
+            await runBotAction({ label: 'Tell me more', ask: 'More please' }),
+        ).toEqual({ text: 'Done.', isNeedingModel: true });
+        expect(callTool).not.toHaveBeenCalled();
+    });
+
+    test('a card that failed for another reason is thrown as it was', async () => {
+        callTool.mockRejectedValue(new Error('evaluate timed out'));
+        await expect(
+            runBotAction({
+                label: 'Show me step by step',
+                toolName: 'owa_guide_start',
+                args: { manualId: 'W-03', page: 'presenter.html' },
+            }),
+        ).rejects.toThrow('evaluate timed out');
+    });
+
+    test('a countdown the app answers with nothing goes to the guide', async () => {
+        callTool.mockResolvedValue('');
+        const answer = await askHelpBot(
+            'Start a 5 minute countdown',
+            'presenter',
+        );
+        expect(callTool).toHaveBeenCalledWith('owa_foreground', {
+            action: 'check',
+        });
+        expect(answer.text).toContain('I could not find that in the app guide');
+    });
+
+    test('a page that is no window this help knows is thrown as it was', async () => {
+        callTool.mockImplementation(async (...args: any[]) => {
+            const [name] = args as [string];
+            if (name === 'owa_guide_start') {
+                throw genNoPageError('nowhere.html');
+            }
+            return '';
+        });
+        await expect(
+            runBotAction({
+                label: 'Show me step by step',
+                toolName: 'owa_guide_start',
+                args: { manualId: 'W-16', page: 'nowhere.html' },
+            }),
+        ).rejects.toThrow('no open page matching "nowhere.html"');
     });
 });

@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PM-134, PM-135]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-47 — Put messages on the screen
 
@@ -62,5 +62,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-134` · `PM-135`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

@@ -20,8 +20,10 @@ to revert_, then _Goal set: mcp tool can user automate everything_.
   by the control that titles it: with the Mini Screen panel collapsed nothing
   on the page says `[F6]`, and a live press went through. F7–F10 clear one
   layer each and stay pressable, as their buttons are.
-- **A drag carries ONE `DataTransfer`** through dragstart → dragenter →
-  dragover → drop → dragend, dispatched at `elementFromPoint`; `before` /
+- **A drag carries what dragstart wrote** through dragenter → dragover →
+  drop → dragend (since 2026-10-22 a copy sealed when dragstart returns and
+  emptied after the drop, as Chromium does; no drop unless the dragover was
+  taken), dispatched at `elementFromPoint`; `before` /
   `after` aim at a row's reorder bands WITH Ctrl held (`toPresentingFlowRowDropKind`
   reads Ctrl as "position, not attach"). Proven: a Documents row onto a run
   sheet row went through the app's own drop handler.
@@ -62,7 +64,8 @@ to revert_, then _Goal set: mcp tool can user automate everything_.
   counts `needle + extension` as the name (`MC-51`); `shownLabelOf` still shows
   "Amazing Grace Amazing Grace.owl".
 - **`owa_scroll`** pages the nearest scroller of the control named (or inside
-  the panel named), fires `scroll` so a windowed list renders, and answers
+  the panel named), sets `scrollTop` so the browser's own `scroll` renders a
+  windowed list (a synthetic one rendered it twice), and answers
   `inView` — the labels pressable afterwards (`MC-54`). Withheld from the model
   like the other three: the file tools find a file by name whether or not its
   row is on screen.

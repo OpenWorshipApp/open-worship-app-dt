@@ -65,6 +65,7 @@ import {
     isValidJson,
     isVisible,
     parseJsonSafely,
+    pressElementLikeButton,
     removePX,
     stopDraggingState,
     toMaxId,
@@ -359,5 +360,223 @@ describe('helpers', () => {
             ({ top: -5, bottom: 120 }) as DOMRect;
         expect(checkIsVerticalPartialInvisible(container, target)).toBe(true);
         expect(checkIsVerticalAtBottom(container, target)).toBe(true);
+    });
+});
+
+describe('helpers, the remaining branches', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    function genPlacedElement(rect: {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+    }) {
+        const element = document.createElement('div');
+        Object.defineProperty(element, 'offsetWidth', {
+            configurable: true,
+            value: rect.width,
+        });
+        Object.defineProperty(element, 'offsetHeight', {
+            configurable: true,
+            value: rect.height,
+        });
+        element.getBoundingClientRect = () => rect as DOMRect;
+        return element;
+    }
+
+    test('an element is not visible when hidden, faded, empty, off the window or covered', () => {
+        const computedStyleSpy = vi.spyOn(globalThis, 'getComputedStyle');
+        const setStyle = (style: object) => {
+            computedStyleSpy.mockReturnValue({
+                display: 'block',
+                visibility: 'visible',
+                opacity: '1',
+                ...style,
+            } as any);
+        };
+        const inside = genPlacedElement({
+            left: 10,
+            top: 10,
+            width: 100,
+            height: 50,
+        });
+        const child = document.createElement('span');
+        inside.appendChild(child);
+        document.body.appendChild(inside);
+        const elementFromPoint = vi.fn((): Element | null => child);
+        Object.defineProperty(document, 'elementFromPoint', {
+            configurable: true,
+            value: elementFromPoint,
+        });
+
+        setStyle({ visibility: 'hidden' });
+        expect(isVisible(inside)).toBe(false);
+        setStyle({ opacity: '0' });
+        expect(isVisible(inside)).toBe(false);
+
+        setStyle({});
+        // A child painted at its centre still means it is the one shown.
+        expect(isVisible(inside)).toBe(true);
+        expect(
+            isVisible(
+                genPlacedElement({ left: 0, top: 0, width: 0, height: 0 }),
+            ),
+        ).toBe(false);
+        for (const rect of [
+            { left: -500, top: 10, width: 100, height: 50 },
+            { left: 5000, top: 10, width: 100, height: 50 },
+            { left: 10, top: -500, width: 100, height: 50 },
+            { left: 10, top: 5000, width: 100, height: 50 },
+        ]) {
+            expect(isVisible(genPlacedElement(rect))).toBe(false);
+        }
+
+        // Something else is painted over its centre.
+        elementFromPoint.mockReturnValue(document.createElement('aside'));
+        expect(isVisible(inside)).toBe(false);
+        elementFromPoint.mockReturnValue(null);
+        expect(isVisible(inside)).toBe(false);
+        computedStyleSpy.mockRestore();
+    });
+
+    test('a video size asked for again soon comes from memory', async () => {
+        const originalCreateElement = document.createElement.bind(document);
+        const createdVideos: any[] = [];
+        const createElementSpy = vi
+            .spyOn(document, 'createElement')
+            .mockImplementation(((tagName: string) => {
+                if (tagName.toLowerCase() !== 'video') {
+                    return originalCreateElement(tagName);
+                }
+                const videoElement: any = {
+                    videoWidth: 1280,
+                    videoHeight: 720,
+                    addEventListener: (
+                        _eventName: string,
+                        callback: () => void,
+                    ) => {
+                        videoElement.loadedMetadata = callback;
+                    },
+                    removeEventListener: vi.fn(),
+                };
+                createdVideos.push(videoElement);
+                return videoElement;
+            }) as typeof document.createElement);
+
+        const first = getVideoDim('remembered.mp4');
+        await vi.waitFor(() => {
+            expect(createdVideos).toHaveLength(1);
+        });
+        createdVideos[0].loadedMetadata();
+        await expect(first).resolves.toEqual([1280, 720]);
+
+        await expect(getVideoDim('remembered.mp4')).resolves.toEqual([
+            1280, 720,
+        ]);
+        expect(createdVideos).toHaveLength(1);
+        createElementSpy.mockRestore();
+    });
+
+    test('values of different shapes are never the same', () => {
+        expect(checkIsSameArrays([1], { 0: 1, length: 1 })).toBe(false);
+        expect(checkIsSameArrays('ab', ['a', 'b'])).toBe(false);
+        expect(checkIsSameArrays([1, 2], [1, 2, 3])).toBe(false);
+        expect(checkIsSameObjects('a', { 0: 'a' })).toBe(false);
+        expect(checkIsSameObjects({ a: 1 }, null)).toBe(false);
+        expect(
+            checkIsSameObjects(
+                { style: { font: { size: 12 } } },
+                { style: { font: { size: 14 } } },
+            ),
+        ).toBe(false);
+    });
+
+    test('no element has no offset, and a drag over text changes no style', () => {
+        expect(cumulativeOffset(null)).toEqual({ top: 0, left: 0 });
+        const text = document.createTextNode('x');
+        expect(() => {
+            changeDragEventStyle({ target: text }, 'opacity', '0.5');
+            changeDragEventStyle({ target: null }, 'opacity', '0.5');
+        }).not.toThrow();
+    });
+
+    test('Enter or Space presses a control at its own centre, once', () => {
+        const button = genPlacedElement({
+            left: 100,
+            top: 40,
+            width: 60,
+            height: 20,
+        });
+        const clicks: { x: number; y: number }[] = [];
+        button.addEventListener('click', (event) => {
+            clicks.push({ x: event.clientX, y: event.clientY });
+        });
+        const preventDefault = vi.fn();
+
+        expect(
+            pressElementLikeButton({
+                key: 'Enter',
+                currentTarget: button,
+                preventDefault,
+            }),
+        ).toBe(true);
+        expect(
+            pressElementLikeButton({
+                key: ' ',
+                currentTarget: button,
+                preventDefault,
+            }),
+        ).toBe(true);
+        expect(clicks).toEqual([
+            { x: 130, y: 50 },
+            { x: 130, y: 50 },
+        ]);
+        expect(preventDefault).toHaveBeenCalledTimes(2);
+    });
+
+    test('any other key, a held key or nothing to press does nothing', () => {
+        const button = genPlacedElement({
+            left: 0,
+            top: 0,
+            width: 10,
+            height: 10,
+        });
+        const onClick = vi.fn();
+        button.addEventListener('click', onClick);
+        const preventDefault = vi.fn();
+        expect(
+            pressElementLikeButton({
+                key: 'a',
+                currentTarget: button,
+                preventDefault,
+            }),
+        ).toBe(false);
+        expect(
+            pressElementLikeButton({
+                key: 'Enter',
+                repeat: true,
+                currentTarget: button,
+                preventDefault,
+            }),
+        ).toBe(false);
+        expect(
+            pressElementLikeButton({
+                key: 'Enter',
+                currentTarget: null,
+                preventDefault,
+            }),
+        ).toBe(false);
+        expect(
+            pressElementLikeButton({
+                key: ' ',
+                currentTarget: {},
+                preventDefault,
+            }),
+        ).toBe(false);
+        expect(onClick).not.toHaveBeenCalled();
+        expect(preventDefault).not.toHaveBeenCalled();
     });
 });

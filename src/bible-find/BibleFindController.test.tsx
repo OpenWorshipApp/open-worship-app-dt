@@ -109,7 +109,12 @@ vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
 vi.mock('../helper/loggerHelpers', () => ({ appLog: fixture.appLog }));
 vi.mock('../helper/errorHelpers', () => ({ handleError: fixture.handleError }));
 
-import BibleFindController from './BibleFindController';
+import { renderToStaticMarkup } from 'react-dom/server';
+
+import BibleFindController, {
+    BibleFindControllerContext,
+    useBibleFindController,
+} from './BibleFindController';
 
 const db = {
     exec: fixture.exec,
@@ -314,5 +319,269 @@ describe('Bible Find controller', () => {
         expect(input.value).toBe('God loved ');
         controller.closeSuggestionMenu();
         expect(closeMenu).toHaveBeenCalledTimes(1);
+    });
+});
+
+function genVerses(count: number) {
+    const verses: Record<string, string> = {};
+    for (let i = 1; i <= count; i++) {
+        verses[`${i}`] = `Verse ${i} of the Lord's word`;
+    }
+    return verses;
+}
+
+function flushMacrotask() {
+    return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+describe('Bible Find controller edge paths', () => {
+    it('gives up on the online lookup when the API list is malformed or lacks the Bible', async () => {
+        fixture.appApiFetch.mockResolvedValue({
+            json: async () => ({ mapper: 'not a map' }),
+        });
+        const controller = new BibleFindController('NOMAP', 'en-US');
+        expect(
+            await BibleFindController.getOnlineInstant(controller),
+        ).toBeNull();
+        expect(fixture.handleError).toHaveBeenCalledTimes(1);
+        expect(fixture.handleError.mock.calls[0][0]).toBeInstanceOf(TypeError);
+        expect(fixture.handleError.mock.calls[0][0].message).toBe(
+            'Cannot get bible list',
+        );
+
+        fixture.appApiFetch.mockResolvedValue({
+            json: async () => ({
+                mapper: { OTHER: { apiUrl: 'https://x', apiKey: 'k' } },
+            }),
+        });
+        expect(
+            await BibleFindController.getOnlineInstant(controller),
+        ).toBeNull();
+        expect(controller.onlineFindHandler).toBeNull();
+    });
+
+    it('has no search database path when the XML cannot be read, parsed or cached', async () => {
+        fixture.readFileData.mockResolvedValueOnce(null);
+        expect(
+            await BibleFindController.getDatabaseFilePath('bibles/KJV.xml'),
+        ).toBeNull();
+        expect(fixture.xmlTextToJson).not.toHaveBeenCalled();
+
+        fixture.xmlTextToJson.mockResolvedValueOnce(null);
+        expect(
+            await BibleFindController.getDatabaseFilePath('bibles/KJV.xml'),
+        ).toBeNull();
+        expect(fixture.ensureBibleXMLCachedBasePath).not.toHaveBeenCalled();
+
+        fixture.ensureBibleXMLCachedBasePath.mockResolvedValueOnce(null);
+        expect(
+            await BibleFindController.getDatabaseFilePath('bibles/KJV.xml'),
+        ).toBeNull();
+
+        // ...and an XML Bible with nowhere to keep its index is no instance.
+        fixture.readFileData.mockResolvedValueOnce(null);
+        const controller = new BibleFindController('KJV', 'en-US');
+        expect(
+            await BibleFindController.getXMLInstant(
+                controller,
+                'bibles/KJV.xml',
+            ),
+        ).toBeNull();
+        expect(controller.databaseFindHandler).toBeNull();
+        expect(fixture.getSQLiteDatabaseInstance).not.toHaveBeenCalled();
+    });
+
+    it('resolves the search database of an installed XML Bible by its key', async () => {
+        expect(
+            await BibleFindController.getSearchingDatabaseFilePath('KJV'),
+        ).toBe('cache/KJV2.db');
+        expect(fixture.readFileData).toHaveBeenCalledWith('bibles/KJV.xml');
+    });
+
+    it('builds no index, and writes no success marker, for a Bible with no data', async () => {
+        fixture.fsCheckFileExist.mockResolvedValue(false);
+        fixture.getBibleXMLDataFromKey.mockResolvedValue(null);
+        const controller = new BibleFindController('KJV', 'en-US');
+        expect(
+            await BibleFindController.getXMLInstant(
+                controller,
+                'bibles/KJV.xml',
+            ),
+        ).toBeNull();
+        expect(controller.databaseFindHandler).toBeNull();
+        expect(fixture.fsWriteFile).not.toHaveBeenCalled();
+    });
+
+    it('writes a long book in batches of rows and escapes its quote marks', async () => {
+        fixture.fsCheckFileExist.mockResolvedValue(false);
+        fixture.getBibleXMLDataFromKey.mockResolvedValue({
+            books: { PSA: { '119': genVerses(150) } },
+        });
+        await makeDatabaseController();
+        const inserts = fixture.exec.mock.calls
+            .map(([sql]) => String(sql))
+            .filter((sql) => sql.includes('INSERT INTO verses'));
+        expect(inserts).toHaveLength(2);
+        expect(inserts[0].match(/\('PSA\./g)).toHaveLength(101);
+        expect(inserts[1].match(/\('PSA\./g)).toHaveLength(49);
+        expect(inserts[0]).toContain("PSA.119:1=>Verse 1 of the Lord''s word");
+    });
+
+    it('reads the selected books through the Bible info', async () => {
+        const controller = new BibleFindController('KJV', 'en-US');
+        controller.selectedBookKeys = ['John', 'TOB'];
+        // A key the Bible has no name for keeps the key as its name.
+        expect(await controller.getSelectedBooks()).toEqual([
+            { bookKey: 'John', book: 'John' },
+            { bookKey: 'TOB', book: 'TOB' },
+        ]);
+        fixture.getBibleInfo.mockResolvedValue(null);
+        expect(await controller.getSelectedBooks()).toEqual([]);
+    });
+
+    it('finds and suggests nothing without a search handler', async () => {
+        const controller = new BibleFindController('KJV', 'en-US');
+        expect(await controller.doFinding({ text: 'God' })).toBeNull();
+        expect(await controller.loadSuggestionWords('God')).toEqual([]);
+        expect(fixture.findOnline).not.toHaveBeenCalled();
+        expect(fixture.getAll).not.toHaveBeenCalled();
+    });
+
+    it('keeps one instance per Bible key, backed by its XML search database', async () => {
+        fixture.getAllXMLFileKeys.mockResolvedValue({
+            CACHED: 'bibles/CACHED.xml',
+        });
+        const first = await BibleFindController.getInstant('CACHED');
+        const second = await BibleFindController.getInstant('CACHED');
+        expect(second).toBe(first);
+        expect(first.bibleKey).toBe('CACHED');
+        expect(first.locale).toBe('en-US');
+        expect(first.databaseFindHandler).not.toBeNull();
+        expect(first.onlineFindHandler).toBeNull();
+        expect(fixture.getSQLiteDatabaseInstance).toHaveBeenCalledTimes(1);
+        expect(fixture.getSQLiteDatabaseInstance).toHaveBeenCalledWith(
+            'cache/CACHED2.db',
+        );
+    });
+
+    it('resets a search database: drops its marker, closes it and forgets the instance', async () => {
+        fixture.getAllXMLFileKeys.mockResolvedValue({
+            RESET: 'bibles/RESET.xml',
+        });
+        const instance = await BibleFindController.getInstant('RESET');
+        expect(await BibleFindController.resetSearchingDatabase('RESET')).toBe(
+            true,
+        );
+        expect(fixture.fsDeleteFile).toHaveBeenCalledWith(
+            'cache/RESET2.db-success',
+        );
+        expect(fixture.close).toHaveBeenCalledTimes(1);
+        expect(instance.databaseFindHandler).toBeNull();
+        expect(await BibleFindController.getInstant('RESET')).not.toBe(
+            instance,
+        );
+    });
+
+    it('resets a Bible that was never opened without closing anything', async () => {
+        fixture.getAllXMLFileKeys.mockResolvedValue({
+            NEVER: 'bibles/NEVER.xml',
+        });
+        expect(await BibleFindController.resetSearchingDatabase('NEVER')).toBe(
+            true,
+        );
+        expect(fixture.fsDeleteFile).toHaveBeenCalledWith(
+            'cache/NEVER2.db-success',
+        );
+        expect(fixture.close).not.toHaveBeenCalled();
+    });
+
+    it('reports a reset that cannot delete its marker, and survives a close that throws', async () => {
+        expect(
+            await BibleFindController.resetSearchingDatabase('missing'),
+        ).toBe(false);
+        expect(fixture.fsDeleteFile).not.toHaveBeenCalled();
+
+        fixture.getAllXMLFileKeys.mockResolvedValue({
+            LOCKED: 'bibles/LOCKED.xml',
+        });
+        const instance = await BibleFindController.getInstant('LOCKED');
+        const deleteError = new Error('EBUSY');
+        fixture.fsDeleteFile.mockRejectedValueOnce(deleteError);
+        expect(await BibleFindController.resetSearchingDatabase('LOCKED')).toBe(
+            false,
+        );
+        expect(fixture.handleError).toHaveBeenCalledWith(deleteError);
+        // Nothing was reset, so the open database is kept.
+        expect(instance.databaseFindHandler).not.toBeNull();
+        expect(await BibleFindController.getInstant('LOCKED')).toBe(instance);
+
+        const closeError = new Error('close failed');
+        fixture.close.mockImplementationOnce(() => {
+            throw closeError;
+        });
+        expect(await BibleFindController.resetSearchingDatabase('LOCKED')).toBe(
+            true,
+        );
+        expect(fixture.handleError).toHaveBeenCalledWith(closeError);
+        expect(instance.databaseFindHandler).toBeNull();
+    });
+
+    it('opens no suggestion menu when nothing is suggested', async () => {
+        const controller = new BibleFindController('KJV', 'en-US');
+        const loadSuggestionWords = vi.fn(async () => [] as string[]);
+        controller.loadSuggestionWords = loadSuggestionWords;
+        const input = document.createElement('input');
+        input.value = 'God lov';
+        await controller.handleNewValue({ target: input });
+        await flushMacrotask();
+        expect(loadSuggestionWords).toHaveBeenCalledWith('lov', 100);
+        expect(fixture.showAppContextMenu).not.toHaveBeenCalled();
+        expect(controller.menuControllerSession).toBeNull();
+    });
+
+    it('looks nothing up for a non-input, a finished word, or no word at all', async () => {
+        const controller = new BibleFindController('KJV', 'en-US');
+        const loadSuggestionWords = vi.fn(async () => ['loved']);
+        controller.loadSuggestionWords = loadSuggestionWords;
+        const closeMenu = vi.fn();
+        controller.menuControllerSession = { closeMenu } as any;
+
+        await controller.handleNewValue({
+            target: document.createElement('div'),
+        });
+        // Not an input: even the open menu is left alone.
+        expect(closeMenu).not.toHaveBeenCalled();
+
+        const input = document.createElement('input');
+        input.value = 'God ';
+        await controller.handleNewValue({ target: input });
+        expect(closeMenu).toHaveBeenCalledTimes(1);
+        expect(controller.menuControllerSession).toBeNull();
+
+        input.value = '!!!';
+        await controller.handleNewValue({ target: input });
+        input.value = '';
+        await controller.handleNewValue({ target: input });
+        await flushMacrotask();
+        expect(loadSuggestionWords).not.toHaveBeenCalled();
+        expect(fixture.showAppContextMenu).not.toHaveBeenCalled();
+    });
+
+    it('hands the controller only to components inside its context', () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        function ProbeComp() {
+            return <span>{useBibleFindController().bibleKey}</span>;
+        }
+        expect(() => renderToStaticMarkup(<ProbeComp />)).toThrow(
+            'useBibleFindController must be used within BibleFindControllerContext',
+        );
+        const controller = new BibleFindController('KJV', 'en-US');
+        expect(
+            renderToStaticMarkup(
+                <BibleFindControllerContext value={controller}>
+                    <ProbeComp />
+                </BibleFindControllerContext>,
+            ),
+        ).toBe('<span>KJV</span>');
     });
 });

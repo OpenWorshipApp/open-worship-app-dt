@@ -3314,6 +3314,9 @@ export type AskExtraType = {
         record?: string;
         isReadForAsk?: boolean;
         isStudy?: boolean;
+        // A Bible in the answer's language that a verse read or search
+        // naming none goes to, in place of the record's (2026-10-29).
+        quoteBible?: string;
     };
     // What the answer is ABOUT, kept whatever language it is shown in
     // (`AnswerKeepType`, 2026-10-23): a passage's own script, and the words
@@ -5606,9 +5609,11 @@ async function askLlmBotAsWritten(
                 ...(record.length > 0 ? [toQuoteKey(record)] : []),
             ];
             seeded.quoteBible =
+                extra.lookup.quoteBible ??
                 /"bible":"([^"\s]{1,24})"/.exec(
                     `${record}\n${question}`,
-                )?.[1] ?? null;
+                )?.[1] ??
+                null;
             // Read by the window for this question: nothing to send back.
             // G3 under Genesis 8 had its people named from the names
             // lookup and called Noah's family _មនុស្សដែលមិនបានបញ្ជាក់ឈ្មោះ_

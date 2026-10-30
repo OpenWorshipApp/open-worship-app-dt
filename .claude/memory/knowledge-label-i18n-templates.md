@@ -15,8 +15,9 @@ Press **F9** ([en:tran:Clear Long Text]) to take the verse off screen.
 `tools/owa-devtools-mcp/tran.mjs` fills it in on the way out with what that key
 reads as in the language the app is DISPLAYING right now (`document.documentElement.lang`,
 cached 10s in `owaTools.mjs`): `Clear Long Text` in an English window,
-`លុបអត្ថបទវែង` in a Khmer one. The chatbot's prose stays English-only; only the
-button names move.
+`លុបអត្ថបទវែង` in a Khmer one. Since 2026-10-16 the chatbot's own words follow
+the app's language too ([[chatbot-follows-app-language]]); a passage quoted from
+the English manual stays English, and only its button names move.
 
 **Why:** the docs used to carry both halves by hand — a bold English label with
 its Khmer twin in brackets right after it — which meant (a) the English-only help
@@ -44,8 +45,10 @@ to `សៀវភៅទាំងអស់`, and six labels were wrong when this l
   change needs the same rebuild as any other knowledge edit
   ([[claude-dir-edits-need-knowledge-rebuild]]).
 - `owa_tran` answers the same question for a label the model wrote itself, and
-  `owa_find_ui` / `owa_click` / `owa_type` retry with the translation when the
-  English label matches nothing.
+  `owa_click` / `owa_type` hand the matcher each English label with its
+  translation beside it (`withTranslations`), in the same pass; `owa_find_ui`
+  retries with the translation only when the English label matches nothing
+  (`foundAs`).
 
 Related: [[tran-missing-key-throws-in-dev]] — the app's own `tran()` THROWS on a
 missing key in dev; this one deliberately does not, because a mistyped label in a

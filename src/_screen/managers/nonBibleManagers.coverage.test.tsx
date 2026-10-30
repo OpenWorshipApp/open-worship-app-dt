@@ -2102,4 +2102,754 @@ describe('non-Bible manager coverage', () => {
         expect(getIsFadingAtEndSetting()).toBe(false);
         expect(BACKGROUND_VIDEO_FADING_SETTING_NAME).toContain('fading-at-end');
     });
+
+    test('a foreground widget that can take a new datum is updated on the wall, not remounted', () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(311),
+            createEffectManager(),
+        );
+        manager.rootContainer = document.createElement('div');
+        const oldData = { dateTime: 'a', extraStyle: {} };
+        const newData = { dateTime: 'a', isPaused: true, extraStyle: {} };
+        const removing = vi.fn();
+        const updateHandler = vi.fn(() => true);
+        manager.createDivContainer(oldData, removing, updateHandler);
+        const render = vi.fn();
+
+        expect(manager.compareAndRender(oldData, newData, render)).toBe(
+            newData,
+        );
+        expect(updateHandler).toHaveBeenCalledWith(newData);
+        expect(render).not.toHaveBeenCalled();
+        expect(removing).not.toHaveBeenCalled();
+        // The mounted widget is now keyed by the datum the manager holds,
+        // so hiding it by that datum takes it down.
+        manager.removeDivContainer(newData);
+        expect(removing).toHaveBeenCalledTimes(1);
+
+        // A widget that cannot take the change is remounted instead.
+        const refusing = vi.fn(() => false);
+        manager.createDivContainer(oldData, removing, refusing);
+        expect(manager.compareAndRender(oldData, newData, render)).toBe(
+            newData,
+        );
+        expect(refusing).toHaveBeenCalledWith(newData);
+        expect(render).toHaveBeenCalledWith(newData);
+        expect(removing).toHaveBeenCalledTimes(2);
+
+        // The same object handed back is no change at all.
+        expect(manager.compareAndRender(newData, newData, render)).toBe(
+            newData,
+        );
+        expect(render).toHaveBeenCalledTimes(1);
+        manager.delete();
+    });
+
+    test('an unreadable foreground map is rebuilt from the live screens on the presenter', () => {
+        mocks.appProvider.isPagePresenter = true;
+        // A fresh map per read, as the real reader hands out a copy.
+        mocks.getForegroundDataListOnScreenSetting.mockImplementation(
+            () => ({}),
+        );
+        const other = new ScreenForegroundManager(
+            createScreenManagerBase(312),
+            createEffectManager(),
+        );
+        other.setQuickTextData({
+            htmlText: '<b>Other</b>',
+            timeSecondDelay: 0,
+            timeSecondToLive: 5,
+            extraStyle: {},
+        } as any);
+        mocks.getSetting.mockReturnValue('{"312": {"quickTextData": nul');
+        mocks.setSetting.mockClear();
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(313),
+            createEffectManager(),
+        );
+        manager.setQuickTextData({
+            htmlText: '<i>Mine</i>',
+            timeSecondDelay: 0,
+            timeSecondToLive: 5,
+            extraStyle: {},
+        } as any);
+
+        const [settingName, written] = mocks.setSetting.mock.calls.at(-1)!;
+        expect(settingName).toBe('screen-foreground-manager');
+        const writtenMap = JSON.parse(written);
+        expect(writtenMap['312'].quickTextData.htmlText).toBe('<b>Other</b>');
+        expect(writtenMap['313'].quickTextData.htmlText).toBe('<i>Mine</i>');
+        expect(mocks.handleError).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: expect.stringContaining('rebuilding it'),
+            }),
+        );
+        other.delete();
+        manager.delete();
+    });
+
+    test('a message editor replaces its own message rather than stacking a copy', async () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(314),
+            createEffectManager(),
+        );
+        const first = { id: 'editor-1', textList: ['Welcome'], extraStyle: {} };
+        manager.addMessageData(first as any);
+        expect(manager.foregroundData.messageDataList).toEqual([first]);
+
+        // Pressing Show again on an unchanged message changes nothing.
+        mocks.setSetting.mockClear();
+        manager.addMessageData({ ...first } as any);
+        expect(mocks.setSetting).not.toHaveBeenCalled();
+
+        const edited = { ...first, textList: ['Welcome, all'] };
+        manager.addMessageData(edited as any);
+        expect(manager.foregroundData.messageDataList).toEqual([edited]);
+
+        const second = {
+            id: 'editor-2',
+            textList: ['Offering'],
+            extraStyle: {},
+        };
+        manager.addMessageData(second as any);
+        expect(manager.foregroundData.messageDataList).toEqual([
+            edited,
+            second,
+        ]);
+
+        manager.removeMessageData('editor-1');
+        expect(manager.foregroundData.messageDataList).toEqual([second]);
+
+        // The panel's own entry point picks the screens first.
+        vi.spyOn(ScreenForegroundManager, 'chooseScreenIds').mockResolvedValue([
+            314,
+        ]);
+        await ScreenForegroundManager.addMessageData(
+            new MouseEvent('click') as any,
+            first as any,
+        );
+        await Promise.resolve();
+        expect(manager.foregroundData.messageDataList).toEqual([second, first]);
+        manager.delete();
+    });
+
+    test('a quick text that runs out takes itself off the screen', () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(315),
+            createEffectManager(),
+        );
+        manager.rootContainer = document.createElement('div');
+        manager.setQuickTextData({
+            htmlText: 'Gone soon',
+            timeSecondDelay: 0,
+            timeSecondToLive: 1,
+            extraStyle: {},
+        } as any);
+        expect(manager.foregroundData.quickTextData).not.toBeNull();
+        const call = mocks.genQuickText.mock.calls.find((args: any[]) => {
+            return typeof args[2] === 'function';
+        })!;
+        // The widget calls this when its time to live is over.
+        call[2]();
+        expect(manager.foregroundData.quickTextData).toBeNull();
+        manager.delete();
+    });
+
+    test('a camera taken down while still opening leaves nothing behind', async () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(316),
+            createEffectManager(),
+        );
+        const root = document.createElement('div');
+        manager.rootContainer = root;
+        let resolveCamera: (clearTracks: any) => void = () => {};
+        mocks.getCameraAndShowMedia.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    resolveCamera = resolve;
+                }),
+        );
+        const opening = { deviceId: 'cam-1', label: 'Slow', extraStyle: {} };
+        manager.renderCamera(opening as any);
+        expect(root.childElementCount).toBe(1);
+        manager.removeDivContainer(opening);
+        await Promise.resolve();
+        await Promise.resolve();
+        expect(root.childElementCount).toBe(0);
+        resolveCamera(undefined);
+
+        // Once open, taking it down stops its tracks.
+        const clearTracks = vi.fn(async () => {});
+        mocks.getCameraAndShowMedia.mockImplementationOnce(
+            async () => clearTracks,
+        );
+        const open = { deviceId: 'cam-2', label: 'Fast', extraStyle: {} };
+        manager.renderCamera(open as any);
+        await Promise.resolve();
+        await Promise.resolve();
+        manager.removeDivContainer(open);
+        await Promise.resolve();
+        expect(clearTracks).toHaveBeenCalledTimes(1);
+        manager.delete();
+    });
+
+    test('Screen Show is put on and taken off the chosen screens', async () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(317),
+            createEffectManager(),
+        );
+        const addSpy = vi.spyOn(manager, 'addScreenData').mockReturnValue(true);
+        const removeSpy = vi
+            .spyOn(manager, 'removeScreenData')
+            .mockImplementation(() => {});
+        const saveSpy = vi.spyOn(manager, 'saveForegroundData');
+        vi.spyOn(ScreenForegroundManager, 'chooseScreenIds').mockResolvedValue([
+            317,
+        ]);
+        const data = { id: 318, extraStyle: {} };
+
+        await ScreenForegroundManager.addScreenData(
+            new MouseEvent('click') as any,
+            data as any,
+        );
+        await Promise.resolve();
+        expect(addSpy).toHaveBeenCalledWith(data);
+        await ScreenForegroundManager.removeScreenData(
+            new MouseEvent('click') as any,
+            data as any,
+        );
+        await Promise.resolve();
+        expect(removeSpy).toHaveBeenCalledWith(data);
+        expect(saveSpy).toHaveBeenCalledTimes(2);
+        manager.delete();
+    });
+
+    test('videos and pictures are added once, removed by value, from either entry point', async () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(319),
+            createEffectManager(),
+        );
+        manager.rootContainer = document.createElement('div');
+        const video = { src: '/v/clip.mp4', extraStyle: {} };
+        const image = { src: '/i/pic.png', extraStyle: {} };
+
+        manager.addVideoData(video as any);
+        manager.addVideoData({ ...video } as any);
+        expect(manager.foregroundData.videoDataList).toEqual([video]);
+        expect(mocks.genVideo).toHaveBeenCalledTimes(1);
+        manager.removeVideoData({ ...video } as any);
+        expect(manager.foregroundData.videoDataList).toEqual([]);
+
+        manager.addImageData(image as any);
+        manager.addImageData({ ...image } as any);
+        expect(manager.foregroundData.imageDataList).toEqual([image]);
+        expect(mocks.genImage).toHaveBeenCalledTimes(1);
+        manager.removeImageData({ ...image } as any);
+        expect(manager.foregroundData.imageDataList).toEqual([]);
+
+        vi.spyOn(ScreenForegroundManager, 'chooseScreenIds').mockResolvedValue([
+            319,
+        ]);
+        const event = new MouseEvent('click') as any;
+        await ScreenForegroundManager.addVideoData(event, video as any);
+        await ScreenForegroundManager.addImageData(event, image as any);
+        await Promise.resolve();
+        expect(manager.foregroundData.videoDataList).toEqual([video]);
+        expect(manager.foregroundData.imageDataList).toEqual([image]);
+        await ScreenForegroundManager.removeVideoData(event, video as any);
+        await ScreenForegroundManager.removeImageData(event, image as any);
+        await Promise.resolve();
+        expect(manager.foregroundData.videoDataList).toEqual([]);
+        expect(manager.foregroundData.imageDataList).toEqual([]);
+        manager.delete();
+    });
+
+    test('a locked screen keeps its foreground', () => {
+        const base = createScreenManagerBase(320);
+        const manager = new ScreenForegroundManager(
+            base,
+            createEffectManager(),
+        );
+        base.checkIsLockedWithMessage.mockReturnValue(true);
+        mocks.setSetting.mockClear();
+        manager.addImageData({ src: '/i/x.png', extraStyle: {} } as any);
+        expect(manager.foregroundData.imageDataList).toEqual([]);
+        expect(mocks.setSetting).not.toHaveBeenCalled();
+        manager.delete();
+    });
+
+    test('the same background again changes nothing, and a locked screen refuses another', () => {
+        const base = createScreenManagerBase(321);
+        const manager = new ScreenBackgroundManager(
+            base,
+            createEffectManager(),
+        );
+        manager.backgroundSrc = { type: 'color', src: '#111111' } as any;
+        const renderSpy = vi.spyOn(manager, 'render');
+        mocks.setSetting.mockClear();
+
+        manager.backgroundSrc = { type: 'color', src: '#111111' } as any;
+        expect(renderSpy).not.toHaveBeenCalled();
+        expect(mocks.setSetting).not.toHaveBeenCalled();
+
+        base.checkIsLockedWithMessage.mockReturnValue(true);
+        manager.backgroundSrc = { type: 'color', src: '#222222' } as any;
+        expect(manager.backgroundSrc).toEqual(
+            expect.objectContaining({ src: '#111111' }),
+        );
+        expect(renderSpy).not.toHaveBeenCalled();
+        manager.delete();
+    });
+
+    test('an unreadable background map is rebuilt from the live screens on the presenter', () => {
+        mocks.appProvider.isPagePresenter = true;
+        mocks.getBackgroundSrcListOnScreenSetting.mockImplementation(
+            () => ({}),
+        );
+        const other = new ScreenBackgroundManager(
+            createScreenManagerBase(322),
+            createEffectManager(),
+        );
+        other.backgroundSrc = { type: 'color', src: '#333333' } as any;
+        mocks.getSetting.mockReturnValue('{"322": {"type": "col');
+        mocks.setSetting.mockClear();
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(323),
+            createEffectManager(),
+        );
+        manager.backgroundSrc = { type: 'color', src: '#444444' } as any;
+
+        const [settingName, written] = mocks.setSetting.mock.calls.at(-1)!;
+        expect(settingName).toBe('screen-bg-manager');
+        const writtenMap = JSON.parse(written);
+        expect(writtenMap['322']).toEqual(
+            expect.objectContaining({ src: '#333333' }),
+        );
+        expect(writtenMap['323']).toEqual(
+            expect.objectContaining({ src: '#444444' }),
+        );
+        other.delete();
+        manager.delete();
+    });
+
+    test('a background video is synced only outside its fades, and only when off', () => {
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(324),
+            createEffectManager(),
+        );
+        const data = {
+            videoId: 'video-bg',
+            videoTime: 50,
+            timestamp: Date.now(),
+            isFromScreen: false,
+        };
+        // No root: nothing to sync.
+        expect(() => manager.setVideoCurrentTime(data)).not.toThrow();
+
+        const root = document.createElement('div');
+        const genVideo = (currentTime: number) => {
+            const video = document.createElement('video');
+            video.id = 'video-bg';
+            Object.defineProperties(video, {
+                currentTime: {
+                    configurable: true,
+                    writable: true,
+                    value: currentTime,
+                },
+                duration: { configurable: true, writable: true, value: 120 },
+            });
+            root.appendChild(video);
+            return video;
+        };
+        const fadingIn = genVideo(1);
+        const fadingOut = genVideo(118);
+        const drifted = genVideo(45);
+        const close = genVideo(50.05);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(root as any);
+
+        manager.setVideoCurrentTime({ ...data, timestamp: Date.now() });
+        expect(fadingIn.currentTime).toBe(1);
+        expect(fadingOut.currentTime).toBe(118);
+        expect(drifted.currentTime).toBeGreaterThanOrEqual(50);
+        expect(close.currentTime).toBe(50.05);
+        expect(mocks.appLog).toHaveBeenCalledTimes(1);
+    });
+
+    test('a screen time follows the presenter audio while it plays', () => {
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(325),
+            createEffectManager(),
+        );
+        const root = document.createElement('div');
+        const video = document.createElement('video');
+        video.id = 'video-song';
+        Object.defineProperties(video, {
+            currentTime: { configurable: true, writable: true, value: 30 },
+            duration: { configurable: true, writable: true, value: 120 },
+        });
+        root.appendChild(video);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(root as any);
+        const audio = document.createElement('audio');
+        audio.dataset.videoId = 'video-song';
+        document.body.appendChild(audio);
+
+        // The audio handler is not playing: a time from the screen applies.
+        manager.setVideoCurrentTime({
+            videoId: 'video-song',
+            videoTime: 40,
+            timestamp: Date.now(),
+            isFromScreen: true,
+        });
+        expect(video.currentTime).toBeGreaterThanOrEqual(40);
+
+        // Playing: the audio owns the time, the screen's report is ignored.
+        Object.defineProperty(audio, 'paused', {
+            configurable: true,
+            value: false,
+        });
+        video.currentTime = 30;
+        manager.setVideoCurrentTime({
+            videoId: 'video-song',
+            videoTime: 60,
+            timestamp: Date.now(),
+            isFromScreen: true,
+        });
+        expect(video.currentTime).toBe(30);
+        audio.remove();
+    });
+
+    test('the presenter audio level for a virtual display goes out as a message', () => {
+        const base = createScreenManagerBase(326);
+        const manager = new ScreenBackgroundManager(
+            base,
+            createEffectManager(),
+        );
+        manager.sendSyncVideoSound('video-x', true, 0.7);
+        expect(base.sendScreenMessage).toHaveBeenCalledWith(
+            {
+                screenId: 326,
+                type: 'background-video-sound',
+                data: { videoId: 'video-x', isPlaying: true, volume: 0.7 },
+            },
+            true,
+        );
+    });
+
+    test('incoming sound, time and screen messages reach the right screen only', () => {
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(327),
+            createEffectManager(),
+        );
+        const soundSpy = vi
+            .spyOn(manager, 'receiveSyncVideoSound')
+            .mockImplementation(() => {});
+        const timeSpy = vi
+            .spyOn(manager, 'receiveSyncVideoTime')
+            .mockImplementation(() => {});
+        const screenSpy = vi
+            .spyOn(manager, 'receiveSyncScreen')
+            .mockImplementation(() => {});
+        const message = (screenId: number, type: string) => {
+            return { screenId, type, data: {} } as any;
+        };
+
+        ScreenBackgroundManager.receiveSyncVideoSound(
+            message(327, 'background-video-sound'),
+        );
+        ScreenBackgroundManager.receiveSyncVideoSound(
+            message(9327, 'background-video-sound'),
+        );
+        expect(soundSpy).toHaveBeenCalledTimes(1);
+
+        ScreenBackgroundManager.receiveSyncVideoTime(
+            message(327, 'background-video-time'),
+        );
+        ScreenBackgroundManager.receiveSyncVideoTime(
+            message(9327, 'background-video-time'),
+        );
+        expect(timeSpy).toHaveBeenCalledTimes(1);
+
+        ScreenBackgroundManager.receiveSyncScreen(message(327, 'background'));
+        expect(screenSpy).toHaveBeenCalledTimes(1);
+        ScreenBackgroundManager.receiveSyncScreen(message(9327, 'background'));
+        expect(screenSpy).toHaveBeenCalledTimes(1);
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Failed to apply to screen. Please make sure the screen is open.',
+            'error',
+        );
+        manager.delete();
+    });
+
+    test('picking a background applies it to each chosen screen and reports a closed one', async () => {
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(328),
+            createEffectManager(),
+        );
+        const applySpy = vi
+            .spyOn(manager, 'applyBackgroundSrc')
+            .mockResolvedValue(undefined);
+        vi.spyOn(ScreenBackgroundManager, 'chooseScreenIds').mockResolvedValue([
+            9328, 328,
+        ]);
+        const data = { src: '/img/a.png', scaleType: 'cover' };
+
+        await ScreenBackgroundManager.handleBackgroundSelecting(
+            new MouseEvent('click') as any,
+            'image',
+            data as any,
+        );
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Failed to apply to screen. Please make sure the screen is open.',
+            'Error',
+        );
+        expect(applySpy).toHaveBeenCalledWith('image', data);
+        manager.delete();
+    });
+
+    test('a video whose size cannot be read is put up without one', async () => {
+        const failure = new Error('cannot decode');
+        mocks.getVideoDim.mockRejectedValueOnce(failure);
+        const backgroundSrc =
+            await ScreenBackgroundManager.initBackgroundSrcDim(
+                '/v/broken.mp4',
+                'video',
+            );
+        expect(backgroundSrc).toEqual({ type: 'video', src: '/v/broken.mp4' });
+        expect(mocks.handleError).toHaveBeenCalledWith(failure);
+
+        // Neither an image nor a video: no size to look for.
+        await expect(
+            ScreenBackgroundManager.extractDim({
+                type: 'color',
+                src: '#000000',
+            } as any),
+        ).resolves.toEqual([undefined, undefined]);
+    });
+
+    test('on the projected screen a background clip reports its time to the presenter', async () => {
+        vi.useFakeTimers();
+        mocks.appProvider.isPageScreen = true;
+        const base = createScreenManagerBase(329);
+        const manager = new ScreenBackgroundManager(
+            base,
+            createEffectManager(),
+        );
+        const container = document.createElement('div');
+        const video = document.createElement('video');
+        video.id = 'video-loop';
+        Object.defineProperties(video, {
+            currentTime: { configurable: true, writable: true, value: 12 },
+            duration: { configurable: true, writable: true, value: 120 },
+        });
+        container.appendChild(video);
+        const fadeSpy = vi
+            .spyOn(manager, '_fadeOverVideoLoop')
+            .mockResolvedValue(undefined);
+        manager._handleBackgroundVideo(container);
+        expect(video.dataset.ignoreMediaGuarding).toBe('true');
+
+        video.dispatchEvent(new Event('timeupdate'));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(base.sendScreenMessage).toHaveBeenCalledWith(
+            {
+                screenId: 329,
+                type: 'background-video-time',
+                data: expect.objectContaining({
+                    videoId: 'video-loop',
+                    videoTime: 12,
+                    isFromScreen: true,
+                }),
+            },
+            true,
+        );
+        // Fading at the end is off: no crossfade, however near the end.
+        (video as any).currentTime = 119;
+        video.dispatchEvent(new Event('timeupdate'));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(fadeSpy).not.toHaveBeenCalled();
+    });
+
+    test('the crossfade gives up when there is no root or no clip to copy', async () => {
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(330),
+            createEffectManager(),
+        );
+        const container = document.createElement('div');
+        const video = document.createElement('video');
+        video.id = 'video-a';
+        container.appendChild(video);
+        expect(manager._ensureVideoLoopTwin(container, video)).toBeNull();
+
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(root as any);
+        // Not a background clip (no `video-` id): nothing to make a twin of.
+        const plain = document.createElement('div');
+        const plainVideo = document.createElement('video');
+        plainVideo.id = 'clip';
+        plain.appendChild(plainVideo);
+        root.appendChild(plain);
+        expect(manager._ensureVideoLoopTwin(plain, plainVideo)).toBeNull();
+        await manager._fadeOverVideoLoop(plain, plainVideo);
+        const { animIn } = (manager as any).effectManager.styleAnimList.fade;
+        expect(animIn).not.toHaveBeenCalled();
+        expect(root.children).toHaveLength(1);
+        root.remove();
+    });
+
+    test('the crossfade stops when the background left while the copy got ready', async () => {
+        const effectManager = createEffectManager();
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(331),
+            effectManager,
+        );
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(root as any);
+        const container = document.createElement('div');
+        const video = document.createElement('video');
+        video.id = 'video-left';
+        container.appendChild(video);
+        root.appendChild(container);
+        vi.spyOn(manager, '_waitForVideoPicture').mockImplementation(
+            async () => {
+                // The operator swapped the background meanwhile.
+                container.remove();
+            },
+        );
+
+        await manager._fadeOverVideoLoop(container, video);
+        expect(effectManager.styleAnimList.fade.animIn).not.toHaveBeenCalled();
+        expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
+        root.remove();
+    });
+
+    test('the clip that ended is not parked when its copy was taken away mid-fade', async () => {
+        const effectManager = createEffectManager();
+        effectManager.styleAnimList.fade.animIn = vi.fn(
+            async (element: HTMLElement) => {
+                element.remove();
+            },
+        );
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(332),
+            effectManager,
+        );
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(root as any);
+        const container = document.createElement('div');
+        container.style.opacity = '0.8';
+        const video = document.createElement('video');
+        video.id = 'video-mid';
+        // Its own, so the copy (which uses the prototype's) is told apart.
+        const pauseEnded = vi.fn();
+        video.pause = pauseEnded;
+        container.appendChild(video);
+        root.appendChild(container);
+
+        await manager._fadeOverVideoLoop(container, video);
+        expect(effectManager.styleAnimList.fade.animIn).toHaveBeenCalled();
+        // Still the one on screen: neither paused nor hidden.
+        expect(container.style.opacity).toBe('0.8');
+        expect(pauseEnded).not.toHaveBeenCalled();
+        root.remove();
+    });
+
+    test('the copy coming in leaves the way the background came in', async () => {
+        const effectManager = createEffectManager();
+        effectManager.styleAnimList.fade.animIn = vi.fn(
+            async (element: HTMLElement, parent: HTMLElement) => {
+                parent.appendChild(element);
+            },
+        );
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(333),
+            effectManager,
+        );
+        vi.spyOn(manager, 'render').mockImplementation(() => {});
+        const root = document.createElement('div');
+        document.body.appendChild(root);
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(root as any);
+
+        // Came in with a fade: the copy is tagged the same.
+        const container = document.createElement('div');
+        container.dataset.owaTransition = 'fade';
+        const video = document.createElement('video');
+        video.id = 'video-tagged';
+        container.appendChild(video);
+        root.appendChild(container);
+        await manager._fadeOverVideoLoop(container, video);
+        const twin = root.lastElementChild as HTMLElement;
+        expect(twin).not.toBe(container);
+        expect(twin.dataset.owaTransition).toBe('fade');
+
+        // Came in zoomed, inside a zoom wrapper: the wrapper is the node in
+        // the root, and a plain copy is not tagged with a zoom it cannot do.
+        root.replaceChildren();
+        const wrapper = document.createElement('div');
+        wrapper.className = 'zoom-container';
+        wrapper.dataset.owaTransition = 'zoom';
+        const zoomed = document.createElement('div');
+        const zoomedVideo = document.createElement('video');
+        zoomedVideo.id = 'video-zoomed';
+        zoomed.appendChild(zoomedVideo);
+        wrapper.appendChild(zoomed);
+        root.appendChild(wrapper);
+        expect(manager._toRootLevelNode(zoomedVideo)).toBe(wrapper);
+        await manager._fadeOverVideoLoop(zoomed, zoomedVideo);
+        const plainTwin = root.lastElementChild as HTMLElement;
+        expect(plainTwin).not.toBe(wrapper);
+        expect(plainTwin.dataset.owaTransition).toBeUndefined();
+        // The wrapper, not the picture inside it, is what is parked.
+        expect(wrapper.style.opacity).toBe('0');
+        expect(zoomed.style.opacity).toBe('');
+        root.remove();
+    });
+
+    test('a node outside the root is its own root-level node', () => {
+        const manager = new ScreenBackgroundManager(
+            createScreenManagerBase(334),
+            createEffectManager(),
+        );
+        const root = document.createElement('div');
+        vi.spyOn(manager, 'rootContainer', 'get').mockReturnValue(root as any);
+        const loose = document.createElement('div');
+        const child = document.createElement('span');
+        loose.appendChild(child);
+        expect(manager._toRootLevelNode(child)).toBe(child);
+        // Inside the root, the child of the root that holds it.
+        root.appendChild(loose);
+        expect(manager._toRootLevelNode(child)).toBe(loose);
+    });
+
+    test('deleting a screen tears down its background without clearing the group', () => {
+        const base = createScreenManagerBase(335);
+        const manager = new ScreenBackgroundManager(
+            base,
+            createEffectManager(),
+        );
+        manager.backgroundSrc = { type: 'color', src: '#555555' } as any;
+        const root = document.createElement('div');
+        root.appendChild(document.createElement('div'));
+        (manager as any)._rootContainer = root;
+        const clearTracks = vi.fn();
+        manager.clearTracks = clearTracks;
+        const clearSpy = vi.spyOn(manager, 'clear');
+        mocks.setSetting.mockClear();
+
+        manager.delete();
+
+        expect(clearTracks).toHaveBeenCalledTimes(1);
+        expect(root.childElementCount).toBe(0);
+        expect(manager.rootContainer).toBeNull();
+        expect(manager.backgroundSrc).toBeNull();
+        expect(clearSpy).not.toHaveBeenCalled();
+        expect(mocks.setSetting).not.toHaveBeenCalled();
+        expect(ScreenBackgroundManager.getInstance(335)).toBeNull();
+        // The camera is stopped once: what is left is a no-op.
+        expect(manager.clearTracks).not.toBe(clearTracks);
+        manager.clearTracks();
+        expect(clearTracks).toHaveBeenCalledTimes(1);
+    });
 });

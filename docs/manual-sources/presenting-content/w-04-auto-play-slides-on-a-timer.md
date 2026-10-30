@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-10, PM-137, PM-138, PM-140]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-04 — Auto-play slides on a timer
 
@@ -14,7 +14,8 @@ workflowsVersion: "2026-10-24"
 1. Open a document's slides and put one on the screen (W-03 steps 1–2) — the
    stopwatch is only there while a slide of that document is live.
 2. Click the **stopwatch icon** at the bottom left of the slides previewer — a small
-   strip opens: **✕**, play, the seconds box, the countdown, and a sliders button. 📸
+   strip opens: **✕**, play, the seconds box, the countdown (only while slides are
+   advancing), and a sliders button. 📸
 3. Type the interval in seconds, then click **play**. Slides advance on the timer and
    the countdown says how long until the next one.
 4. To change how it advances, click the **sliders** button. The rules open under the
@@ -46,5 +47,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-10` · `PM-137` · `PM-138` · `PM-140`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

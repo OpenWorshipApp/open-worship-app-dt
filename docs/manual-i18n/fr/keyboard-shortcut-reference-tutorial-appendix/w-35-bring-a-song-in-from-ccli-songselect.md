@@ -3,7 +3,7 @@ id: W-35
 title: "Importer un chant depuis CCLI SongSelect"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 1fd2e3f1059ee300
+translatedFrom: 77dc208713b72ba1
 ---
 # W-35 — Importer un chant depuis CCLI SongSelect
 
@@ -24,7 +24,7 @@ les identifiants d'API que CCLI vous a délivrés (un **Client ID**, une **Subsc
 2. Remplissez **Client ID**, **Subscription Key** et **Redirect URI** (et **Client Secret**
    si vous en avez un). Chaque champ s'enregistre dès que vous cliquez ailleurs, et reçoit un
    ✓ vert. Tant que les trois ne sont pas remplis, **[en:tran:Sign In]** reste gris — le survoler
-   indique ce qui manque.
+   nomme les trois champs dont il a besoin.
 3. Cliquez sur **[en:tran:Sign In]**. Une fenêtre CCLI s'ouvre pour que vous vous connectiez et donniez
    votre accord. Si vous la fermez à la place, l'application affiche **Échec de la connexion — Connexion annulée** ([en:tran:Sign in was canceled]) et rien ne change. Une fois connecté, la carte affiche
    un **[en:tran:Signed in]** vert avec un bouton **[en:tran:Sign Out]**, et
@@ -50,7 +50,7 @@ les identifiants d'API que CCLI vous a délivrés (un **Client ID**, une **Subsc
 
 > **Si SongSelect ne se connecte pas, vérifiez ces points.** Un **[en:tran:Sign In]** gris signifie
 > que l'un des trois champs — Client ID, Subscription Key, Redirect URI — est encore vide : survolez-le
-> et il vous dit lequel. Une recherche ou un téléchargement qui échoue en donne la raison, directement
+> et il les nomme tous les trois ; parmi eux, celui qui n'a pas de ✓ vert est vide. Une recherche ou un téléchargement qui échoue en donne la raison, directement
 > dans le panneau ou dans une notification : trop de requêtes d'affilée vous demandent d'attendre un
 > moment ; une session expirée affiche
 > **[en:tran:SongSelect sign-in expired, please sign in again in Settings]**, alors reconnectez-vous ;

@@ -26,10 +26,11 @@ isolated, but the code path was real. The 2026-07-26 robot-test run re-read the 
 it corrected.
 
 **How to apply:** a screen coming up blank after restart is no longer explained by *this*
-path — but it IS still explained by its sibling. The per-entry guard sits inside a `try`
-whose **outer `catch` still returns `{}`**, so a whole-file `JSON.parse` failure reproduces
-the original all-or-nothing wipe exactly. That is not hypothetical: see
-[[settings-write-race-corrupts-onscreen-map]], observed live 2026-08-07. Check the console
+path — but it IS still explained by its sibling. The per-entry guard runs only once the
+file has parsed: a whole-file `JSON.parse` failure makes **`parseJsonSafely` answer `null` and
+the read `{}`**, which reproduced the original all-or-nothing wipe exactly. That is not hypothetical: see
+[[settings-write-race-corrupts-onscreen-map]], observed live 2026-08-07 (since 2026-09-24
+`persistOnScreenEntry` skips or rebuilds that save rather than writing `{}` back). Check the console
 for a `SyntaxError` from `parseJsonSafely` **before** blaming the sync-group logic
 ([[screen-sync-group-echo-guard]], [[foreground-sync-shared-refs]]). If you see the
 "Dropping invalid on-screen slide entry" error instead, that is the new guard working, and

@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [PR-03, PU-03, KB-11]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-14 — Keep Bible notes
 
@@ -21,10 +21,10 @@ workflowsVersion: "2026-10-24"
    right of the window is how you decide what happens to it.
 4. Press **[en:tran:Save]** (**Ctrl+S**) to write it into the note file.
 5. **[en:tran:Undo Saved Change]** and **[en:tran:Redo Saved Change]** walk that
-   history — they step through what has been typed since the last save, and they
+   history — they step through what has been typed, back past a save as well, and they
    still work after the window has been closed and opened again, so an edit made
-   by mistake can always be taken back. **[en:tran:Discard changed]** throws the
-   unsaved typing away and returns the note to what was last saved.
+   by mistake can be taken back. **[en:tran:Discard changed]** throws the
+   unsaved typing away, with that history, and returns the note to what was last saved.
 
 ::: tip
 The arrows at the TOP of the window are the text editor's own undo and redo;
@@ -36,5 +36,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PR-03` · `PU-03` · `KB-11`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

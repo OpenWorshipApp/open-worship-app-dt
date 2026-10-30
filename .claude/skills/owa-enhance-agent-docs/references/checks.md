@@ -111,7 +111,10 @@ and 148 notes whose named code moved since their last edit.
 
 - **Reads.** Each MEMORY.md link has a note, and each note has an index line.
   Front matter must have `name` equal to the file name, a `description`, and
-  `metadata.type` from `user | feedback | project | reference`. Every memory
+  `metadata.type` from `user | feedback | project | reference`, and the block
+  must parse as YAML (`AD-20`, 2026-10-29): a `'` inside single quotes written
+  `''`, no `: ` or ` #` inside a plain value — Claude Code drops a block it
+  cannot parse whole. Every memory
   reference (*memory* followed by a backticked slug) and every `[[…]]` link
   must resolve to a note.
 - **Fix.** All of these are **fix**, except deleting a note (**ask**). A note
@@ -130,7 +133,9 @@ and 148 notes whose named code moved since their last edit.
 
 ### `skills` — wiring
 
-- **Reads.** `SKILL.md` exists with `name` equal to the folder. The skill is
+- **Reads.** `SKILL.md` exists with `name` equal to the folder, and its front
+  matter parses as YAML — one that does not shows the skill's TITLE in every
+  session's listing, never its description (`AD-20`). The skill is
   listed in CLAUDE.md "Project skills" and has a `## <name> skill` section in
   `rules/project-skills.md`.
 - **Description length.** The listing a session picks skills from cuts each
@@ -150,8 +155,8 @@ and 148 notes whose named code moved since their last edit.
 ### `manual` — the recipes the 🤖 answers from
 
 `user-workflows.md` from its first `### W-` heading on, and the coverage rows
-each recipe's `Verify:` line cites. Four signals. The first three are drift and
-a run is not done while one is above 0; the gate holds the first two
+each recipe's `Verify:` line cites. Five signals. All but the fourth are drift
+and a run is not done while one is above 0; the gate holds the first two
 (`src/test-setup/manualRecipes.test.ts`):
 
 - **A label no code draws.** An `[en:tran:Key]`, or a bolded phrase that is a
@@ -182,6 +187,12 @@ a run is not done while one is above 0; the gate holds the first two
   by the same read: make it a template, or leave it plain on purpose (another
   program's label, the English-only help window, a word leaned on). The stamp
   records that the choice was made.
+- **Translated pages missing or behind their English** (`stale-translation`,
+  since 2026-10-29, `AD-24`). A page of `docs/manual-i18n/<code>/` made from an
+  older English (its `translatedFrom` is not the English hash), or none at
+  all. *Not a false positive:* the help shows the English for it. *Fix:* carry
+  the English change in, block for block (§3), until
+  `manual-i18n-status.mjs --check <code> <ids>` prints ✓. Never in the gate.
 
 ## Leverage signals (see leverage.md)
 

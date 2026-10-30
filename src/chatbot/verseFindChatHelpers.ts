@@ -876,9 +876,13 @@ export function getVerseFindInputChoices(actions: BotActionType[] | undefined) {
 
 // What ends a finding tab's run: the app's own work, which the ordinary
 // assistant answers -- "put it on the screen", "how do I save it". A verse
-// word does not: "it is a verse about sheep" is more of the search.
+// word does not: "it is a verse about sheep" is more of the search. Nor
+// does a word the Bible uses too (2026-10-29, `EC-443`): _he shall save his
+// people_, _sing a new song_, _the windows of heaven_ were more of a
+// verse, and ended the search -- save, copy and present end it only aimed
+// at what was found ("save it").
 const VERSE_FIND_EXIT_PATTERN =
-    /\b(?:screens?|projector|present\w*|slides?|songs?|lyrics?|countdown|settings?|buttons?|menu|windows?|save|copy|how\s+(?:do|can)\s+i|where\s+is)\b/i;
+    /\b(?:screens?|projector|presenter|presentation|slides?|lyrics?|countdown|buttons?|menu|how\s+(?:do|can)\s+i|where\s+is)\b|^(?:(?:please|can\s+you|could\s+you)\s+)?(?:save|copy|present|show)\s+(?:it|this|that|these|them)\b/i;
 
 /**
  * The Bible a typed line goes on searching in: the last answer of the tab

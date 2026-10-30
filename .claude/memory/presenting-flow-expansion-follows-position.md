@@ -13,10 +13,12 @@ follow the DOCUMENT across a reorder. It did not.
 
 The setting *name* is per-document and correct —
 `presenting-flow-item-expanded-<presentingFlow>-<document>` via `useStateSettingBoolean`
-([src/presenting-flow/PresentingFlowItemComp.tsx](../../src/presenting-flow/PresentingFlowItemComp.tsx):48).
+(`useStateSettingBooleanSynced` since 2026-10-02, over `toPresentingFlowSettingName`, in
+[src/presenting-flow/PresentingFlowItemComp.tsx](../../src/presenting-flow/PresentingFlowItemComp.tsx)).
 But `PresentingFlowItemsComp` KEYED its children `` `${presentingFlowItem.type}-${i}` `` —
 **index-based**
-([src/presenting-flow/PresentingFlowFileComp.tsx](../../src/presenting-flow/PresentingFlowFileComp.tsx):77).
+([src/presenting-flow/PresentingFlowFileComp.tsx](../../src/presenting-flow/PresentingFlowFileComp.tsx);
+its rows are keyed by `getItemKey` now).
 A reorder kept the same React instance in a slot while the document under it changed, and
 `useStateSettingBoolean` only reads its setting on first mount, so the open/closed state stayed
 with the slot.

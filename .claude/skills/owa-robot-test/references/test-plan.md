@@ -4,7 +4,7 @@ Work through the scenarios relevant to the requested focus area (or all of them)
 each: take a snapshot, interact, screenshot, then re-check console + network. Record
 anything abnormal using the severity scale and report template below.
 
-> **Three scenarios run in EVERY run, regardless of focus: S0 (baseline), S7 (screen
+> **Three scenarios run in EVERY run not focused on one area: S0 (baseline), S7 (screen
 > controlling & presenting), and S15 (locale switch).** A run that never presented
 > content and never drove the `screen.html` output target is incomplete; so is a run that
 > never re-walked its screens in the other language — a missing translation key throws in
@@ -110,11 +110,12 @@ anything abnormal using the severity scale and report template below.
 - `Webs` tab: 🖱️R the list → **New File**; that file's 🖱️R → **Edit** opens the **Web Editor popup** (S12).
 - Right-click background items → context menu.
 
-### S7 — Screen controlling & presenting `[PR-04..07, SP-01..32, SC-01..08]` — **MANDATORY, every run**
+### S7 — Screen controlling & presenting `[PR-04..07, SP-01..32, SC-01..08]` — **MANDATORY, every run not focused on one area**
 
-This is the app's core flow and runs in **every** session, whatever the focus area
-(SKILL.md §6a). Everything here is self-restoring — end with the screen hidden (unless
-it started showing) and all changed state restored.
+This is the app's core flow and runs in **every** session not focused on one area
+(SKILL.md §6a; a focused run stays in it — memory
+`robot-test-stays-in-the-asked-scope`). Everything here is self-restoring — end with
+the screen hidden (unless it started showing) and all changed state restored.
 
 **Mandatory core (minimum for a focused run):**
 - Present one real item (single-click a slide thumbnail — presenting is a single-click
@@ -250,15 +251,15 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Run every row of the KB table in the matrix explicitly (many will already be PASS from
   earlier scenarios — just fill in the gaps).
 
-### S15 — Locale switch `[LT-01..02]` — **MANDATORY in every run** — + theme `[LT-03..05]`
+### S15 — Locale switch `[LT-01..02]` — **MANDATORY in every run not focused on one area** — + theme `[LT-03..05]`
 
 **Why it is mandatory.** `tran()` returns early on `en-US` (`DEFAULT_LOCALE`) without
 touching the dictionary; in `km-KH` the same call **throws** on a missing key and, with
 no error boundary, blanks the whole subtree. So an English-only run **structurally
 cannot** see a missing translation, and `npm run lint` stays green while a screen is
 broken in Khmer. Observed 2026-07-26: `tran("X:")` in `PositionSizeFieldComp` blanked the
-entire slide-editor tools panel. Run this block whatever the focus area — see SKILL.md
-§6d.
+entire slide-editor tools panel. Run this block in every run not focused on one area —
+see SKILL.md §6d.
 
 Recipe (≈3 min, self-restoring):
 
@@ -290,7 +291,7 @@ Notes:
 screenshot presenter + settings, check contrast and that no text goes invisible, then
 **restore**.
 
-### S19 — Media download `[MD-01..06]` — **MANDATORY in every run** (needs network)
+### S19 — Media download `[MD-01..06]` — **MANDATORY in every run not focused on one area** (needs network)
 
 The only flow that runs the external binaries (`extra-bin/<platform>/yt/yt-dlp` +
 `extra-bin/<platform>/ffmpeg/bin` + `extra-bin/<platform>/qjs/qjs`, installed on demand -- NOT copied in by

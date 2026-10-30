@@ -1733,3 +1733,129 @@ describe('a known page rides in the language it is asked in', () => {
         ).toBeNull();
     });
 });
+
+// The follow-ups offered under an answer, and the lookups an English window
+// answers before reading anything.
+describe('genFollowUpQuestions', () => {
+    const ASKED = 'How do I show a song on the screen?';
+
+    it('never offers the question back, and spreads the rest over sections', async () => {
+        const { genFollowUpQuestions, suggestQuestions } =
+            await import('./questionHelpers');
+        const rows = await suggestQuestions(ASKED, 'presenter', 8);
+        const sectionMap = new Map(
+            rows.map((row) => {
+                return [row.text, row.section];
+            }),
+        );
+        const followUps = await genFollowUpQuestions(ASKED, 'presenter');
+        expect(followUps).toHaveLength(2);
+        expect(followUps).not.toContain(ASKED);
+        // Each is a question the corpus ranked for these words...
+        for (const one of followUps) {
+            expect(sectionMap.has(one), one).toBe(true);
+        }
+        // ...and two from one section are one option offered twice.
+        expect(
+            new Set(
+                followUps.map((one) => {
+                    return sectionMap.get(one);
+                }),
+            ).size,
+        ).toBe(2);
+    });
+
+    it('fills up from the same sections once every section has one', async () => {
+        const { genFollowUpQuestions, suggestQuestions } =
+            await import('./questionHelpers');
+        // Nearly every question about "screen" is filed in one section.
+        const rows = await suggestQuestions('screen', 'presenter', 10);
+        const sectionMap = new Map(
+            rows.map((row) => {
+                return [row.text, row.section];
+            }),
+        );
+        const followUps = await genFollowUpQuestions('screen', 'presenter', 4);
+        expect(followUps).toHaveLength(4);
+        expect(new Set(followUps).size).toBe(4);
+        const sectionList = followUps.map((one) => {
+            return sectionMap.get(one);
+        });
+        // The first ones are one per section; the last comes back to one.
+        const firstSections = sectionList.slice(0, -1);
+        expect(new Set(firstSections).size).toBe(firstSections.length);
+        expect(firstSections).toContain(sectionList.at(-1));
+    });
+
+    it('an English window has no fill-in to put into English, and no words is no row', async () => {
+        const { findTemplateAsk, findKnownQuestion } =
+            await import('./questionHelpers');
+        expect(
+            await findTemplateAsk('Where is the button for Clear All'),
+        ).toBeNull();
+        expect(await findKnownQuestion('?!', 'presenter')).toBeNull();
+    });
+});
+
+describe('a page cut for a known question, the smaller rules', () => {
+    const LONG_FILLER = 'Plain words about something else entirely. '.repeat(
+        160,
+    );
+
+    it('a page that fits rides whole, through the short form too', async () => {
+        const { clipKnownPage } = await import('./questionHelpers');
+        expect(clipKnownPage('# A page\n\n1. Press **Go**.')).toBe(
+            '# A page\n\n1. Press **Go**.',
+        );
+    });
+
+    it('a control the first 6 000 characters name rides with them', async () => {
+        const { clipKnownPageParts } = await import('./questionHelpers');
+        const page = `# A page\n\n1. Press **Clear All**.\n\n${LONG_FILLER}`;
+        expect(page.length).toBeGreaterThan(6000);
+        const cut = clipKnownPageParts(page, 'Clear All');
+        expect(cut.mode).toBe('head');
+        expect(cut.text.startsWith(page.slice(0, 5900))).toBe(true);
+        expect(cut.text).toContain('Press **Clear All**');
+        expect(cut.text.length).toBeLessThan(page.length);
+    });
+
+    it('a part that comes back empty leaves the page saying it goes on', async () => {
+        const { readWholePage } = await import('./questionHelpers');
+        const { genPagePartNote } =
+            await import('../../tools/owa-devtools-mcp/manualPage.mjs');
+        const page = await readWholePage('W-42', async (_id, part) => {
+            return part === 2
+                ? '   '
+                : `# A page\n\n1. One.${genPagePartNote(1, 2)}`;
+        });
+        expect(page).toContain('1. One.');
+        expect(page).toContain('This page goes on: this is part 1 of 2');
+    });
+
+    it('a passage with no words to look for is found nowhere', async () => {
+        const { findLocalizedPassageLead } = await import('./questionHelpers');
+        expect(
+            findLocalizedPassageLead('1. Press Go.', '1. ចុច ទៅ។', '  '),
+        ).toBeNull();
+    });
+
+    it('a part names its controls ten at most', async () => {
+        const { findKnownPartControls } = await import('./questionHelpers');
+        const names = 'កខគឃងចឆជឈញដឋ'.split('');
+        const page =
+            '# A page\n\n1. Press **Go**, then ' +
+            names
+                .map((name) => {
+                    return `**${name}**`;
+                })
+                .join(', ') +
+            '.';
+        const controls = findKnownPartControls(
+            { resources: { find: 'Go' } } as any,
+            page,
+            page,
+        );
+        expect(controls).toEqual(names.slice(0, 10));
+    });
+});

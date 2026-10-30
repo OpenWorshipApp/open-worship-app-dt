@@ -771,4 +771,211 @@ describe('bibleXMLHelpers', () => {
         container.remove();
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
     });
+
+    test('a form with no file box or no link reads nothing', async () => {
+        const { readFromFile, readFromUrl } = await loadModule();
+        const { form: urlOnlyForm } = createFormWithInput('url');
+
+        await expect(readFromFile(urlOnlyForm, vi.fn())).resolves.toBeNull();
+        await expect(readFromUrl(urlOnlyForm, vi.fn())).resolves.toBeNull();
+
+        expect(mocks.initHttpRequestMock).not.toHaveBeenCalled();
+    });
+
+    test('a download that fails half way is reported and reads nothing', async () => {
+        const { readFromUrl } = await loadModule();
+        const { form } = createFormWithInput(
+            'url',
+            'https://example.com/a.xml',
+        );
+        const error = new Error('connection reset');
+        mocks.writeStreamToFileMock.mockImplementationOnce(
+            (filePath: string, callbacks: any) => {
+                callbacks.onDone(error, filePath);
+            },
+        );
+
+        await expect(readFromUrl(form, vi.fn())).resolves.toBeNull();
+
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Download Error',
+            'Error: Error: connection reset',
+        );
+        expect(mocks.handleErrorMock).toHaveBeenCalledWith(error);
+        expect(mocks.readFileDataMock).not.toHaveBeenCalled();
+    });
+
+    test('a key with no XML file has no info, no data, nothing to reveal or trash', async () => {
+        const {
+            deleteBibleXML,
+            getBibleXMLDataFromKey,
+            getBibleXMLInfo,
+            handBibleKeyContextMenuOpening,
+        } = await loadModule();
+
+        await expect(getBibleXMLInfo('MISSING')).resolves.toBeNull();
+        expect(mocks.readFileDataMock).not.toHaveBeenCalled();
+
+        handBibleKeyContextMenuOpening('MISSING', { type: 'contextmenu' });
+        const [, items] = mocks.showAppContextMenuMock.mock.calls[0];
+        await items[0].onSelect();
+        expect(mocks.showFileOrDirExplorerMock).not.toHaveBeenCalled();
+
+        await deleteBibleXML('MISSING');
+        expect(mocks.trashedFiles).toEqual([]);
+        expect(mocks.notifyBibleListChangedMock).not.toHaveBeenCalled();
+
+        // A key that resolves but whose file cannot be read.
+        await expect(getBibleXMLDataFromKey('KJV')).resolves.toBeNull();
+        expect(mocks.xmlTextToJsonMock).not.toHaveBeenCalled();
+    });
+
+    test('a cache folder that cannot be deleted is reported, and others are still told', async () => {
+        const { clearBibleXMLCache } = await loadModule();
+        const error = new Error('EBUSY');
+        mocks.fsDeleteDirMock.mockRejectedValueOnce(error);
+
+        await clearBibleXMLCache('KJV');
+
+        expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith(
+            '/bibles/KJV.xml.cache',
+        );
+        expect(mocks.handleErrorMock).toHaveBeenCalledWith(error);
+        expect(mocks.notifyBibleListChangedMock).toHaveBeenCalledOnce();
+    });
+
+    test('a key with no writable path gets no cache folder and no data', async () => {
+        const { ensureBibleXMLCachedBasePath, readBibleXMLData } =
+            await loadModule();
+        mocks.bibleKeyToXMLFilePathMock.mockResolvedValue(null);
+
+        await expect(ensureBibleXMLCachedBasePath('GONE')).resolves.toBeNull();
+        await expect(readBibleXMLData('GONE', '_info')).resolves.toBeNull();
+
+        expect(mocks.ensureDirectoryMock).not.toHaveBeenCalled();
+        expect(mocks.fsCheckFileExistMock).not.toHaveBeenCalled();
+        expect(mocks.hideProgressBarMock).toHaveBeenCalledWith(
+            'Loading Bible Data',
+        );
+    });
+
+    test('a chapter is read from its own fresh cache without parsing the XML', async () => {
+        const { readBibleXMLData } = await loadModule();
+        const chapter = { title: 'Genesis 1', verses: { 1: 'In the' } };
+        mocks.files.set(
+            '/bibles/KJV.xml.cache/GEN 1',
+            JSON.stringify({
+                _bibleModel: 'model-1',
+                _cachingTime: Date.now(),
+                value: chapter,
+            }),
+        );
+
+        await expect(readBibleXMLData('KJV', 'GEN 1')).resolves.toEqual(
+            chapter,
+        );
+
+        expect(mocks.bookChapterValidateMock).toHaveBeenCalledWith(chapter);
+        expect(mocks.xmlTextToJsonMock).not.toHaveBeenCalled();
+    });
+
+    test('a stale, foreign, invalid or unreadable cache is passed over for the XML', async () => {
+        const { getBibleXMLDataFromKeyCaching, readBibleXMLData } =
+            await loadModule();
+        const eightDays = 8 * 24 * 60 * 60 * 1000;
+        mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
+        // Too old.
+        mocks.files.set(
+            '/bibles/KJV.xml.cache/all',
+            JSON.stringify({
+                _bibleModel: 'model-1',
+                _cachingTime: Date.now() - eightDays,
+                value: { stale: true },
+            }),
+        );
+        // Written for another Bible model.
+        mocks.files.set(
+            '/bibles/KJV.xml.cache/GEN 1',
+            JSON.stringify({
+                _bibleModel: 'model-2',
+                _cachingTime: Date.now(),
+                value: { foreign: true },
+            }),
+        );
+        // Fresh, but no longer what the schema accepts.
+        mocks.files.set(
+            '/bibles/KJV.xml.cache/_info',
+            JSON.stringify({
+                _bibleModel: 'model-1',
+                _cachingTime: Date.now(),
+                value: { key: 7 },
+            }),
+        );
+        mocks.infoValidateMock.mockReturnValueOnce({
+            valid: false,
+            errors: ['key must be a string'],
+        });
+
+        await expect(getBibleXMLDataFromKeyCaching('KJV')).resolves.toEqual(
+            expect.objectContaining({ info: expect.anything() }),
+        );
+        expect(mocks.xmlTextToJsonMock).toHaveBeenCalledOnce();
+
+        await expect(readBibleXMLData('KJV', 'GEN 1')).resolves.toEqual(
+            expect.objectContaining({ title: 'Genesis 1' }),
+        );
+        await expect(readBibleXMLData('KJV', '_info')).resolves.toEqual({
+            key: 'KJV',
+            keyBookMap: { GEN: 'Genesis' },
+        });
+        expect(mocks.handleErrorMock).toHaveBeenCalledWith([
+            'key must be a string',
+        ]);
+    });
+
+    test('a cache file that exists but reads as nothing is ignored', async () => {
+        const { readBibleXMLData } = await loadModule();
+        mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
+        mocks.files.set('/bibles/KJV.xml.cache/_info', 'unreadable');
+        mocks
+            .getInstance('/bibles/KJV.xml.cache/_info')
+            .readFileData.mockResolvedValueOnce(null);
+
+        await expect(readBibleXMLData('KJV', '_info')).resolves.toEqual({
+            key: 'KJV',
+            keyBookMap: { GEN: 'Genesis' },
+        });
+        expect(mocks.infoValidateMock).not.toHaveBeenCalled();
+    });
+
+    test('a book or chapter the Bible lacks reads as nothing', async () => {
+        const { readBibleXMLData } = await loadModule();
+        mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');
+
+        await expect(readBibleXMLData('KJV', 'EXO 1')).resolves.toBeNull();
+        await expect(readBibleXMLData('KJV', 'GEN 9')).resolves.toBeNull();
+        await expect(readBibleXMLData('MISSING', 'GEN 1')).resolves.toBeNull();
+    });
+
+    test('a save or reset whose write fails keeps every cache', async () => {
+        const { resetBibleXMLToEmbeddedKJV, saveJsonDataToXMLfile } =
+            await loadModule();
+        mocks.jsonToXMLTextMock.mockReturnValue('<bible key="KJV" />');
+        mocks.bibleKeyToXMLFilePathMock.mockResolvedValueOnce(null);
+
+        await expect(
+            saveJsonDataToXMLfile({ info: { key: 'KJV' } } as any),
+        ).resolves.toBe(false);
+
+        mocks.genEmbeddedKJVBibleXMLTextMock.mockResolvedValue('<bible />');
+        mocks
+            .getInstance('/bibles/my-kjv.xml')
+            .writeFileData.mockResolvedValueOnce(false);
+        await expect(
+            resetBibleXMLToEmbeddedKJV('/bibles/my-kjv.xml'),
+        ).resolves.toBe(false);
+
+        expect(mocks.fsDeleteDirMock).not.toHaveBeenCalled();
+        expect(mocks.notifyBibleListChangedMock).not.toHaveBeenCalled();
+    });
 });

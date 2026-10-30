@@ -8,7 +8,7 @@ metadata:
   modified: 2026-10-13T15:19:12.211Z
 ---
 
-**Report**, under **Ask** in the chatbot's ask row (`src/chatbot/reportHelpers.ts`,
+**Report**, under **Send** (**Ask** until 2026-10-18) in the chatbot's ask row (`src/chatbot/reportHelpers.ts`,
 added 2026-09-01), is the one press in that window that is not a question. It runs
 investigate → collect → prepare, in that order, and stops there: a second press
 (**Send report**) is the only thing that writes anything.
@@ -100,7 +100,7 @@ server_; a POST with the tunnel's own user-agent is logged; and a 2xx whose
 body says `error` is not _Sent_.
 
 **Three ways in**, all ending in the same two presses (look into it, then
-send): **Report** under Ask; Help's third row **[en:tran:Report a Problem]**;
+send): **Report** under Send; Help's third row **[en:tran:Report a Problem]**;
 and the question an uncaught error now asks BEFORE the reload one
 (`offerErrorReporting` in `src/helper/errorReportOfferHelpers.ts`, with its
 own test, once in ten minutes across
@@ -180,7 +180,7 @@ as _then press Enter_ — the natural press has to do the right thing.
 
 **How to apply:** the window never names or learns a report server's address — a
 new reader of it belongs in main. Do not "tidy" the two-press flow into one: the first press only asks,
-because Report sits directly under Ask where a hurried hand lands. Keep the evidence
+because Report sits directly under Send where a hurried hand lands. Keep the evidence
 TRIMMED (`owa_app_state` carries the user's data directory, and the tab's transcript
 is capped at 8 turns), keep the prepared report in the bounded in-memory map rather
 than in `chatbot-sessions` (see [[chatbot-attachments]]), and keep the model's frame

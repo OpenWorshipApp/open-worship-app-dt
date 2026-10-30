@@ -468,6 +468,27 @@ describe('the record at the head of the conversation', () => {
     it('is nothing when the record could not be read', () => {
         expect(toLookupRecordTurn({ ...PASSAGE, facts: '' })).toBeNull();
     });
+
+    // Noah's card read on the KJV, asked in French (2026-10-29): its verses
+    // go to the Louis Segond, said under the QUESTION -- the record turn a
+    // server keeps is left as it was.
+    it('sends a person’s verses to a Bible in the answer’s language', () => {
+        const noah: LookupSubjectType = {
+            kind: 'name',
+            target: 'noah',
+            title: 'Noé',
+            facts: JSON.stringify({ kind: 'name', bible: 'KJV', name: 'Noah' }),
+        };
+        const turn = toLookupRecordTurn(noah);
+        const question = toLookupQuestion('taille ?', noah, '', 'LSG');
+        expect(question).toContain('Quote verses from the Bible "LSG"');
+        expect(question).toContain('the record\'s own words are "KJV"\'s.');
+        expect(toLookupRecordTurn(noah)).toBe(turn);
+        expect(toLookupAsk('taille ?', noah, '', 'LSG')).toContain(
+            'Quote verses from the Bible "LSG"',
+        );
+        expect(toLookupQuestion('taille ?', noah)).not.toContain('Quote');
+    });
 });
 
 describe('a record within what a card keeps', () => {

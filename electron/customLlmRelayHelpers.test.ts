@@ -8,12 +8,27 @@ vi.mock('./ElectronSettingManager', () => ({
 }));
 vi.mock('./aiHelpers', () => ({ checkIsAiEnabled: vi.fn(() => true) }));
 
+import { EventEmitter } from 'node:events';
+import { session } from 'electron';
+
 import {
     cancelCustomLlmFetch,
+    fetchOnRelaySession,
+    handleCustomLlmFetch,
     runCustomLlmFetch,
     type CustomLlmRelayDepsType,
 } from './customLlmRelayHelpers';
-import { toCustomServersText } from './customLlmProtocol';
+import {
+    CUSTOM_LLM_KEYS_SETTING_KEY,
+    CUSTOM_LLM_SERVERS_SETTING_KEY,
+    toCustomServersText,
+} from './customLlmProtocol';
+import ElectronSettingManager from './ElectronSettingManager';
+import { checkIsAiEnabled } from './aiHelpers';
+import {
+    refreshLlmRegistry,
+    resetLlmRegistryForTests,
+} from './llmRegistryHelpers';
 
 const SERVER_ID = '11111111-2222-3333-4444-555555555555';
 
@@ -561,5 +576,241 @@ describe('runCustomLlmFetch', () => {
         const pending = runCustomLlmFetch(genRequest(), deps);
         await vi.advanceTimersByTimeAsync(12 * 60 * 1000);
         expect(await pending).toMatchObject({ ok: false, reason: 'timeout' });
+    });
+});
+
+describe('reading what came back', () => {
+    beforeEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('reads an answer with no body as empty text', async () => {
+        const deps = genDeps({
+            fetch: vi.fn(async () => new Response(null, { status: 204 })),
+        });
+        expect(await runCustomLlmFetch(genRequest(), deps)).toEqual({
+            ok: true,
+            status: 204,
+            contentType: '',
+            text: '',
+        });
+    });
+
+    it('stops reading an undeclared answer once it is too big, and lets it go', async () => {
+        const megabyte = new Uint8Array(1024 * 1024);
+        let pulled = 0;
+        const cancel = vi.fn();
+        const deps = genDeps({
+            fetch: vi.fn(async () => {
+                // No content-length: only counting the bytes can tell.
+                const stream = new ReadableStream<Uint8Array>({
+                    pull(controller) {
+                        pulled += 1;
+                        controller.enqueue(megabyte);
+                    },
+                    cancel,
+                });
+                return new Response(stream, { status: 200 });
+            }),
+        });
+        expect(await runCustomLlmFetch(genRequest(), deps)).toMatchObject({
+            ok: false,
+            reason: 'too-large',
+        });
+        expect(cancel).toHaveBeenCalledTimes(1);
+        // Four megabytes are held, the fifth is the one that stops it.
+        expect(pulled).toBeLessThanOrEqual(6);
+    });
+
+    it('ignores a Stop that names no request', async () => {
+        let release: (() => void) | undefined;
+        const deps = genDeps({
+            fetch: vi.fn((_url: string, init: RequestInit) => {
+                return new Promise<Response>((resolve, reject) => {
+                    release = () => resolve(new Response('{"data":[]}'));
+                    init.signal?.addEventListener('abort', () => {
+                        reject(new Error('aborted'));
+                    });
+                });
+            }),
+        });
+        const pending = runCustomLlmFetch(
+            genRequest({ requestId: 'req-named' }),
+            deps,
+        );
+        cancelCustomLlmFetch(undefined);
+        cancelCustomLlmFetch(42);
+        release?.();
+        expect(await pending).toMatchObject({ ok: true, status: 200 });
+    });
+});
+
+// The Electron side: the relay's own session and the IPC door around the core.
+// The session is made once for the whole run, so what it registers is kept in
+// plain fields rather than in mock calls a reset would clear.
+const relaySession = {
+    partitions: [] as string[],
+    permissionRequest: undefined as
+        | undefined
+        | ((contents: unknown, permission: string, done: any) => void),
+    permissionCheck: undefined as undefined | (() => boolean),
+    willDownload: undefined as undefined | ((event: any) => void),
+    fetch: vi.fn(),
+};
+
+describe('the relay in main', () => {
+    const settings = {
+        clientSettings: new Map<string, string>(),
+        secureSettings: new Map<string, string>(),
+    };
+
+    beforeEach(() => {
+        vi.useRealTimers();
+        settings.clientSettings.clear();
+        settings.secureSettings.clear();
+        resetLlmRegistryForTests();
+        vi.mocked(checkIsAiEnabled).mockReturnValue(true);
+        vi.mocked(ElectronSettingManager.getInstance).mockReturnValue({
+            getClientSetting: (key: string) => {
+                return settings.clientSettings.get(key) ?? null;
+            },
+            getSecureSetting: (key: string) => {
+                return settings.secureSettings.get(key) ?? null;
+            },
+        } as any);
+        vi.mocked(session.fromPartition).mockImplementation(
+            (partition: string) => {
+                relaySession.partitions.push(partition);
+                return {
+                    setPermissionRequestHandler: (handler: any) => {
+                        relaySession.permissionRequest = handler;
+                    },
+                    setPermissionCheckHandler: (handler: any) => {
+                        relaySession.permissionCheck = handler;
+                    },
+                    on: (name: string, handler: any) => {
+                        if (name === 'will-download') {
+                            relaySession.willDownload = handler;
+                        }
+                    },
+                    fetch: (url: string, init: RequestInit) => {
+                        return relaySession.fetch(url, init);
+                    },
+                } as any;
+            },
+        );
+        relaySession.fetch.mockImplementation(async () => {
+            return new Response('{"data":[]}', {
+                status: 200,
+                headers: { 'content-type': 'application/json' },
+            });
+        });
+    });
+
+    it('sends on its own locked-down session, made once', async () => {
+        const init = { method: 'POST', body: 'report' };
+        await fetchOnRelaySession('https://reports.example/post', init);
+        await fetchOnRelaySession('https://reports.example/post', init);
+        expect(relaySession.fetch).toHaveBeenCalledWith(
+            'https://reports.example/post',
+            init,
+        );
+        expect(relaySession.partitions).toEqual(['custom-llm-relay']);
+
+        const done = vi.fn();
+        relaySession.permissionRequest?.({}, 'media', done);
+        expect(done).toHaveBeenCalledWith(false);
+        expect(relaySession.permissionCheck?.()).toBe(false);
+        const download = { preventDefault: vi.fn() };
+        relaySession.willDownload?.(download);
+        expect(download.preventDefault).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards a window call to the server saved in Settings, with the stored key', async () => {
+        settings.clientSettings.set(
+            CUSTOM_LLM_SERVERS_SETTING_KEY,
+            SERVERS_TEXT,
+        );
+        settings.secureSettings.set(
+            CUSTOM_LLM_KEYS_SETTING_KEY,
+            JSON.stringify({ [SERVER_ID]: 'sk-stored' }),
+        );
+        const sender = new EventEmitter();
+        const result = await handleCustomLlmFetch(genRequest(), sender as any);
+        expect(result).toMatchObject({ ok: true, text: '{"data":[]}' });
+        const [url, init] = relaySession.fetch.mock.calls[0];
+        expect(url).toBe('http://localhost:1234/v1/models');
+        expect(init.headers.authorization).toBe('Bearer sk-stored');
+        // Done: the window's close no longer reaches the finished request.
+        expect(sender.listenerCount('destroyed')).toBe(0);
+    });
+
+    it('drops the question when the asking window is closed', async () => {
+        settings.clientSettings.set(
+            CUSTOM_LLM_SERVERS_SETTING_KEY,
+            SERVERS_TEXT,
+        );
+        relaySession.fetch.mockImplementation(
+            (_url: string, init: RequestInit) => {
+                return new Promise((_resolve, reject) => {
+                    init.signal?.addEventListener('abort', () => {
+                        reject(new Error('aborted'));
+                    });
+                });
+            },
+        );
+        const sender = new EventEmitter();
+        const pending = handleCustomLlmFetch(
+            genRequest({ requestId: 'req-window' }),
+            sender as any,
+        );
+        expect(sender.listenerCount('destroyed')).toBe(1);
+        sender.emit('destroyed');
+        expect(await pending).toMatchObject({
+            ok: false,
+            reason: 'cancelled',
+        });
+    });
+
+    it('asks a registry server main read, by its id', async () => {
+        await refreshLlmRegistry({
+            fetch: async () => {
+                return new Response(
+                    JSON.stringify({
+                        version: 1,
+                        updated: '2026-10-10',
+                        servers: [
+                            {
+                                id: 'super-computer',
+                                name: 'Church LM Studio',
+                                baseUrl: 'https://abc.trycloudflare.com/v1',
+                                apiKey: 'sk-shared',
+                                isFree: true,
+                                note: '',
+                                models: [{ model: 'qwen', name: 'Qwen' }],
+                            },
+                        ],
+                    }),
+                );
+            },
+        });
+        const result = await handleCustomLlmFetch(
+            genRequest({ serverId: 'registry-super-computer' }),
+            new EventEmitter() as any,
+        );
+        expect(result).toMatchObject({ ok: true });
+        const [url, init] = relaySession.fetch.mock.calls[0];
+        expect(url).toBe('https://abc.trycloudflare.com/v1/models');
+        expect(init.headers.authorization).toBe('Bearer sk-shared');
+    });
+
+    it('does nothing with AI switched off in Settings', async () => {
+        vi.mocked(checkIsAiEnabled).mockReturnValue(false);
+        const result = await handleCustomLlmFetch(
+            genRequest(),
+            new EventEmitter() as any,
+        );
+        expect(result).toMatchObject({ ok: false, reason: 'ai-off' });
+        expect(relaySession.fetch).not.toHaveBeenCalled();
     });
 });

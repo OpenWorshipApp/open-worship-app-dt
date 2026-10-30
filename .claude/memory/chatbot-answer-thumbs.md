@@ -19,7 +19,7 @@ What is not obvious from the code:
 
 - **"The next model up" exists only where the list is written best first**:
   `getRankedLlmModelList` answers for Claude, ChatGPT and Kimi. Bedrock's list
-  is in the order to reach for them (its most capable model is fourth), the
+  is in the order to reach for them (its most capable, GPT-6 Astra, is seventh), the
   keyless three are three makers' models, a custom server lists what was
   loaded. Adding a provider means deciding `isModelListRanked` for it.
 - **The window's own follow-up is not a turn of the conversation**

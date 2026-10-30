@@ -83,10 +83,26 @@ vi.mock('../../helper/domHelpers', () => ({
     setParamIdNum: (page: string, id: number) => `${page}&id=${id}`,
 }));
 vi.mock('./NoteEditorComp', () => ({
-    NoteTitleEditorComp: ({ onEscape }: { onEscape: () => void }) => (
-        <button type="button" onClick={onEscape}>
-            Cancel title
-        </button>
+    NoteTitleEditorComp: ({
+        onEscape,
+        onEnter,
+        onBlur,
+    }: {
+        onEscape: () => void;
+        onEnter: () => void;
+        onBlur: () => void;
+    }) => (
+        <>
+            <button type="button" onClick={onEscape}>
+                Cancel title
+            </button>
+            <button type="button" onClick={onEnter}>
+                Confirm title
+            </button>
+            <button type="button" onClick={onBlur}>
+                Leave title
+            </button>
+        </>
     ),
 }));
 vi.mock('./bibleNoteItemArchiveHelpers', () => ({
@@ -286,5 +302,138 @@ describe('Bible note row', () => {
         expect(host.textContent).toContain('Unreadable note');
         expect(host.querySelector('li')).toBeNull();
         expect(mocks.openPopup).not.toHaveBeenCalled();
+    });
+});
+
+describe('Bible note row: menu, drags and title editing', () => {
+    function getRow() {
+        return host.querySelector('li')!;
+    }
+
+    function clickButton(text: string) {
+        const button = [...host.querySelectorAll('button')].find(
+            (element) => element.textContent === text,
+        )!;
+        return act(async () => button.click());
+    }
+
+    async function openMenu() {
+        await clickButton('More note actions');
+        return mocks.openItemMenu.mock.calls.at(-1)![3] as any[];
+    }
+
+    async function fire(type: string) {
+        const event = new Event(type, { bubbles: true, cancelable: true });
+        await act(async () => {
+            getRow().dispatchEvent(event);
+        });
+        return event;
+    }
+
+    test('its menu opens the note window on this item', async () => {
+        await renderRow();
+        const menuItems = await openMenu();
+        expect(mocks.openItemMenu.mock.calls[0][1]).toBe(noteItem);
+        expect(mocks.openItemMenu.mock.calls[0][2]).toBe(2);
+        menuItems[0].onSelect();
+        expect(mocks.openPopup).toHaveBeenCalledWith(
+            '/bible-note?file=Study.own&id=4',
+            expect.stringContaining('Study.own-4_'),
+            expect.any(String),
+            { width: 870 },
+        );
+    });
+
+    test('an item without a live copy exports as listed', async () => {
+        note.getEditingItemById.mockResolvedValue(null);
+        await renderRow();
+        const menuItems = await openMenu();
+        await act(async () => menuItems[2].onSelect());
+        expect(mocks.exportItem).toHaveBeenCalledWith(noteItem);
+    });
+
+    test('a note item from another file is left to that file row', async () => {
+        await renderRow();
+        mocks.extractDropData.mockReturnValueOnce({
+            item: { id: 5, filePath: '/notes/Other.own' },
+        });
+        await fire('drop');
+        mocks.extractDropData.mockReturnValueOnce({
+            item: { id: 6, filePath: undefined },
+        });
+        await fire('drop');
+        expect(mocks.stopDragging).not.toHaveBeenCalled();
+        expect(mocks.fromFilePath).not.toHaveBeenCalled();
+        expect(mocks.attachBackgroundDrop).not.toHaveBeenCalled();
+    });
+
+    test('a reorder in a file that cannot be read moves nothing', async () => {
+        mocks.fromFilePath.mockResolvedValue(null);
+        await renderRow();
+        mocks.extractDropData.mockReturnValueOnce({
+            item: { id: 5, filePath: '/notes/Study.own' },
+        });
+        await fire('drop');
+        expect(mocks.stopDragging).toHaveBeenCalledOnce();
+        expect(mocks.fromFilePath).toHaveBeenCalledWith('/notes/Study.own');
+        expect(note.moveItemToIndex).not.toHaveBeenCalled();
+        expect(note.save).not.toHaveBeenCalled();
+    });
+
+    test('dragging carries the item, and a drag over it dims the row', async () => {
+        await renderRow();
+        await fire('dragstart');
+        expect(mocks.dragStart).toHaveBeenCalledOnce();
+        expect(mocks.dragStart.mock.calls[0][1]).toBe(noteItem);
+        const over = await fire('dragover');
+        expect(over.defaultPrevented).toBe(true);
+        expect(mocks.changeDragStyle.mock.calls.at(-1)!.slice(1)).toEqual([
+            'opacity',
+            '0.5',
+        ]);
+        const leave = await fire('dragleave');
+        expect(leave.defaultPrevented).toBe(true);
+        expect(mocks.changeDragStyle.mock.calls.at(-1)!.slice(1)).toEqual([
+            'opacity',
+            '1',
+        ]);
+    });
+
+    test('a key other than Enter or Space on the opener does nothing', async () => {
+        await renderRow();
+        const opener = host.querySelector<HTMLElement>('[role="button"]')!;
+        const event = new KeyboardEvent('keydown', {
+            key: 'a',
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => {
+            opener.dispatchEvent(event);
+        });
+        expect(event.defaultPrevented).toBe(false);
+        expect(mocks.openPopup).not.toHaveBeenCalled();
+    });
+
+    test('Enter in the title editor, or leaving it, ends the editing', async () => {
+        await renderRow();
+        await act(async () => (await openMenu())[1].onSelect());
+        expect(getRow().draggable).toBe(false);
+        await clickButton('Confirm title');
+        expect(getRow().draggable).toBe(true);
+        expect(host.textContent).toContain('Mercy');
+
+        await act(async () => (await openMenu())[1].onSelect());
+        expect(getRow().draggable).toBe(false);
+        await clickButton('Leave title');
+        expect(getRow().draggable).toBe(true);
+        expect(note.save).not.toHaveBeenCalled();
+    });
+
+    test('a note with no title says so', async () => {
+        await renderRow({ ...noteItem, title: '' });
+        expect(host.querySelector('.fst-italic')!.textContent).toBe('No title');
+        expect(
+            host.querySelector('[role="button"]')!.getAttribute('aria-label'),
+        ).toBe('Open BibleNote: No title');
     });
 });

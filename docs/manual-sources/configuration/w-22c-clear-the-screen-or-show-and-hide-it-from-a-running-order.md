@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-22c — Clear the screen, or show and hide it, from a running order
 
@@ -15,11 +15,11 @@ it — rather than something to show.
 1. **Add a screen action.** A running order can also hold something to _do_ rather than
    something to show. Right-click **the presenting flow itself** — its own row in the
    list, not the empty part of the list and not one of its lines — and choose
-   **[en:tran:Add Action]**: every action is added from that one menu. For a clear,
+   **[en:tran:Add Action]**: every action but a slide's Media Control (W-22h) is added from that one menu. For a clear,
    pick **[en:tran:Clear Screen]** there — a row that adds nothing and opens the clears — and then
    one of **[en:tran:Clear All]**, **[en:tran:Clear Background]**, **Clear
    Slide** ([en:tran:Clear Slide]), **[en:tran:Clear Long Text]** or **[en:tran:Clear Foreground]** — the same five clears as the buttons on each mini screen, and the line
-   carries the same `ALL` / `BG` / `SL` / `LT` / `FG` badge so you can tell them apart at a
+   carries an `ALL` / `BG` / `SL` / `LT` / `FG` badge so you can tell them apart at a
    glance. It lands at the end of the list; drag it up to where it belongs — say between
    the last song and the sermon. 📸
 
@@ -36,9 +36,10 @@ it — rather than something to show.
    screen but about whether there is one: **[en:tran:Screen: Show]** and
    **[en:tran:Screen: Hide]**, the same thing the slides button on each mini screen
    does by hand. Use them when the running order has to work with nobody at the machine —
-   a **[en:tran:Screen: Show]** at the top of a pre-service loop, a **[en:tran:Screen: Hide]** at the end of
-   it, and the screen goes dark on its own instead of holding the last announcement until
-   someone notices.
+   a **[en:tran:Screen: Show]** at the top of a pre-service run of announcements, a
+   **[en:tran:Screen: Hide]** at the end of it, and the screen goes dark on its own instead of
+   holding the last announcement until someone notices — unless a **[en:tran:Jump to]** loops
+   the run back, because then its end is never reached (W-22e step 3).
 
    **These two ask which screen** when you add them, and that is the whole point: a
    checklist of the screens you have open appears (`Screen id: 0`, `Screen id: 1`, …,

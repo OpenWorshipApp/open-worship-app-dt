@@ -45,6 +45,7 @@ import {
     readBibleImportLinkAsk,
     readBibleImportTypedReply,
     runBibleImportStep,
+    describeBibleImportStep,
     toBibleImportEcho,
     toFileLabel,
     type BibleImportStateType,
@@ -1898,4 +1899,392 @@ it('returning to detected Khmer after a Thai override reloads its digits and nam
     );
     expect(digits.actions?.[0].label).toContain('០ ១ ២');
     expect(digits.actions?.[0].args.locale).toBe('km-KH');
+});
+
+// The answers a step gives when the tool answers otherwise: every problem a
+// download can come back with, an install or a KJV that did not happen, a
+// cancel the tool could not finish, and the KJV offer under a model's answer.
+describe('when the tool answers otherwise', () => {
+    const STATE = { step: 'check', url: LINK } as BibleImportStateType;
+
+    it('says each problem a link can have in its own sentence', () => {
+        const cases: [string, string][] = [
+            ['not-found', 'the website answered "not found"'],
+            ['denied', 'It may need a sign-in.'],
+            ['busy', 'That website is busy right now.'],
+            ['server', 'That website had a problem sending the file.'],
+            ['blocked', 'a public web address that starts with https://'],
+            ['unreachable', 'I could not reach that website.'],
+            ['timeout', 'The download took too long and I stopped it.'],
+            ['too-large', 'That file is far too large to be a Bible.'],
+            ['empty', 'That link gave back an empty file.'],
+            ['not-xml', 'A Bible file ends in .xml.'],
+            ['not-bible', 'there is no Bible in it that this app can read'],
+            ['page-without-files', 'there is no Bible file on it'],
+            ['draft-gone', 'downloads are kept for two hours'],
+            ['something-new', 'That link did not lead to a Bible.'],
+        ];
+        for (const [problem, words] of cases) {
+            const answer = genBibleImportCheckAnswer({ problem }, STATE);
+            expect(answer.text, problem).toContain(words);
+        }
+        // No answer at all is the website not being reached.
+        expect(genBibleImportCheckAnswer(null, STATE).text).toContain(
+            'I could not reach that website.',
+        );
+    });
+
+    it('a problem worth trying again offers that; the rest say how to find the file', () => {
+        const busy = genBibleImportCheckAnswer({ problem: 'busy' }, STATE);
+        expect(busy.actions?.map((one) => one.label)).toEqual(['Try again']);
+        expect(busy.actions?.[0].args).toMatchObject({
+            step: 'check',
+            url: LINK,
+        });
+        expect(busy.text).not.toContain('**Raw**');
+        // Nothing to try again with.
+        expect(
+            genBibleImportCheckAnswer({ problem: 'timeout' }, {
+                step: 'check',
+            } as BibleImportStateType).actions,
+        ).toEqual([]);
+        const notXml = genBibleImportCheckAnswer({ problem: 'not-xml' }, STATE);
+        expect(notXml.text).toContain('press **Raw**');
+        expect(notXml.actions?.[0].label).toBe('Look for a Bible by language');
+    });
+
+    it('a downloaded Bible with books missing says which half it holds', () => {
+        const cases: [number, string][] = [
+            [39, 'It has the New Testament only.'],
+            [27, 'It has the Old Testament only.'],
+            [5, 'It is missing 5 of the 66 books.'],
+        ];
+        for (const [count, words] of cases) {
+            const answer = genBibleImportCheckAnswer(
+                {
+                    ...CHECKED,
+                    missingBooks: Array.from({ length: count }, (_x, index) => {
+                        return `B${index}`;
+                    }),
+                },
+                STATE,
+            );
+            expect(answer.text, String(count)).toContain(words);
+        }
+    });
+
+    it('the steps that take a while say what they are waiting on', () => {
+        const said = (step: string) => {
+            return describeBibleImportStep({ step } as BibleImportStateType);
+        };
+        expect(said('check')).toBe('Downloading the Bible file and reading it');
+        for (const step of ['locale-typed', 'more-names', 'names-url']) {
+            expect(said(step), step).toBe(
+                'Looking online for Bible book names — this can take a minute',
+            );
+        }
+        expect(said('import')).toBe('Installing the Bible');
+        expect(said('kjv-create')).toBe('Creating the provided KJV Bible');
+        expect(said('undo')).toBe('Putting it back');
+        expect(said('key')).toBeNull();
+    });
+
+    it('a file on this computer opens the Settings form; a step it does not know is said', async () => {
+        // The installed list could not be read: the import is not held up.
+        mocks.callTool.mockResolvedValueOnce('null');
+        const local = await runBibleImportStep({
+            step: 'local-file',
+        } as BibleImportStateType);
+        expect(mocks.callTool).toHaveBeenCalledWith('owa_bible_xml', {
+            action: 'list',
+        });
+        expect(mocks.openBibleSetting).toHaveBeenCalledTimes(1);
+        expect(mocks.requestBibleImport).not.toHaveBeenCalled();
+        expect(local.text).toContain('I opened **Settings → Bible**');
+        expect(local.text).toContain('**Choose File**');
+
+        const odd = await runBibleImportStep({
+            step: 'nonsense',
+            kjvChecked: true,
+        } as unknown as BibleImportStateType);
+        expect(odd.text).toBe('That step is not one I know.');
+    });
+
+    it('a cancel whose download cannot be let go still says nothing was installed', async () => {
+        mocks.callTool.mockRejectedValueOnce(new Error('host gone'));
+        const answer = await runBibleImportStep({
+            step: 'cancel',
+            draftId: 'd1',
+        } as BibleImportStateType);
+        expect(mocks.callTool).toHaveBeenCalledWith('owa_bible_xml', {
+            action: 'cancel',
+            draftId: 'd1',
+        });
+        expect(answer.text).toBe('Stopped. Nothing was installed.');
+    });
+
+    it('an install the tool refused is said, and one with no answer changes nothing', async () => {
+        const state = {
+            step: 'import',
+            url: LINK,
+            draftId: 'd1',
+            key: 'KSV',
+            locale: 'km-KH',
+            digits: 'local',
+            kjvChecked: true,
+        } as BibleImportStateType;
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({ problem: 'draft-gone' }),
+        );
+        const gone = await runBibleImportStep(state);
+        expect(gone.text).toContain('downloads are kept for two hours');
+        expect(gone.actions?.[0].label).toBe('Try again');
+
+        mocks.callTool.mockResolvedValueOnce(JSON.stringify({}));
+        const odd = await runBibleImportStep(state);
+        expect(odd.text).toBe(
+            'Something went wrong while installing it. Nothing was changed.',
+        );
+    });
+
+    it('a KJV the app could not create offers to try again', async () => {
+        mocks.callTool.mockResolvedValueOnce(JSON.stringify({ isError: true }));
+        const failed = await runBibleImportStep({
+            step: 'kjv-create',
+            wantsKjv: true,
+        } as BibleImportStateType);
+        expect(failed.text).toContain(
+            'I could not create the KJV Open Worship provides',
+        );
+        expect(failed.actions?.map((one) => one.label)).toEqual([
+            'Try again',
+            'Cancel',
+        ]);
+        expect(failed.actions?.[0].args.step).toBe('kjv-create');
+    });
+
+    it('a download that cannot be let go after the KJV is made does not stop the import', async () => {
+        mocks.callTool
+            .mockResolvedValueOnce(JSON.stringify({ created: 'KJV' }))
+            .mockRejectedValueOnce(new Error('host gone'))
+            .mockResolvedValueOnce(JSON.stringify(CHECKED));
+        const answer = await runBibleImportStep({
+            step: 'kjv-create',
+            url: LINK,
+            draftId: 'd1',
+        } as BibleImportStateType);
+        expect(mocks.callTool).toHaveBeenNthCalledWith(2, 'owa_bible_xml', {
+            action: 'cancel',
+            draftId: 'd1',
+        });
+        // The import they wanted starts again from its first step.
+        expect(mocks.callTool).toHaveBeenNthCalledWith(3, 'owa_bible_xml', {
+            action: 'check',
+            url: LINK,
+        });
+        expect(answer.actions?.[0].label).toBe('I agree');
+    });
+
+    it('a KJV file downloaded where the provided KJV is installed says there is no need', async () => {
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                ...CHECKED,
+                title: 'King James Version',
+                hasKjv: true,
+            }),
+        );
+        const answer = await runBibleImportStep({
+            step: 'check',
+            url: LINK,
+        } as BibleImportStateType);
+        expect(answer.text).toContain(
+            '**You already have the KJV Open Worship provides**',
+        );
+        expect(answer.text).toContain('King James Version');
+        expect(answer.actions?.[0].label).toBe('I agree');
+    });
+
+    it('under a model answer, the KJV is offered first when it is not there', () => {
+        const page = {
+            kind: 'page',
+            total: 1,
+            matched: 1,
+            searchedFor: [],
+            files: [{ name: 'KhmerBible.xml', url: LINK }],
+            hasKjv: false,
+        };
+        const underPage = genBibleImportUnderAnswer(page, LINK);
+        expect(underPage.notice).toContain(
+            '**Before another Bible: Open Worship provides the KJV Bible**',
+        );
+        expect(underPage.actions.at(-1)?.label).toBe('Cancel');
+        expect(underPage.links).toEqual([]);
+
+        const underDownload = genBibleImportUnderAnswer(
+            { ...CHECKED, hasKjv: false },
+            LINK,
+        );
+        expect(underDownload.notice).toContain('Creating it needs no internet');
+        expect(underDownload.notice).toContain('Press **I agree** to go on');
+        expect(underDownload.links.length).toBeGreaterThan(0);
+
+        const kjvAgain = genBibleImportUnderAnswer(
+            { ...CHECKED, title: 'King James Version', hasKjv: true },
+            LINK,
+        );
+        expect(kjvAgain.notice).toContain(
+            '**You already have the KJV Open Worship provides**',
+        );
+        expect(kjvAgain.actions[0].label).toBe('I agree');
+    });
+
+    it('nothing typed, or a command, is no reply to a step', () => {
+        expect(readBibleImportTypedReply([], '   ')).toBeNull();
+        expect(readBibleImportTypedReply([], '/screen')).toBeNull();
+    });
+
+    it('a value for a step that waits for words or a link goes on with it', () => {
+        const findAction = {
+            label: 'Cancel',
+            toolName: BIBLE_IMPORT_STEP_TOOL_NAME,
+            args: { step: 'cancel', awaits: 'find', wantedKey: 'KSV' },
+        };
+        expect(
+            readBibleImportHelpState([findAction], {
+                kind: 'value',
+                value: 'Thai',
+            }),
+        ).toMatchObject({ step: 'check', find: 'Thai', wantedKey: 'KSV' });
+        const linkAction = {
+            ...findAction,
+            args: { step: 'cancel', awaits: 'link', wantedKey: 'KSV' },
+        };
+        expect(
+            readBibleImportHelpState([linkAction], {
+                kind: 'value',
+                value: LINK,
+            }),
+        ).toEqual({ step: 'check', url: LINK, wantedKey: 'KSV' });
+        // Nothing waits for a value: there is no step to put it into.
+        expect(
+            readBibleImportHelpState(
+                [{ ...findAction, args: { step: 'cancel' } }],
+                { kind: 'value', value: 'Thai' },
+            ),
+        ).toBeNull();
+        // A step waiting for a kind of value it has no step for.
+        expect(
+            readBibleImportHelpState(
+                [{ ...findAction, args: { step: 'cancel', awaits: 'other' } }],
+                { kind: 'value', value: 'Thai' },
+            ),
+        ).toBeNull();
+    });
+
+    it('a request that names the KJV is offered the provided one before the file', async () => {
+        mocks.callTool
+            // The installed list could not be read: the check goes on.
+            .mockResolvedValueOnce('null')
+            .mockResolvedValueOnce(
+                JSON.stringify({ ...CHECKED, hasKjv: false }),
+            );
+        const answer = await runBibleImportStep({
+            step: 'check',
+            url: LINK,
+            find: 'kjv',
+        } as BibleImportStateType);
+        expect(mocks.callTool).toHaveBeenLastCalledWith('owa_bible_xml', {
+            action: 'check',
+            url: LINK,
+            find: 'kjv',
+        });
+        expect(answer.text).toContain(
+            '**Open Worship provides the KJV Bible** — the recommended King ' +
+                'James Version, and it is not installed yet.',
+        );
+    });
+
+    it('a link that is no address is no request and no pasted link', async () => {
+        expect(
+            readBibleImportLinkAsk('import bible https://exa%mple.com/x.xml'),
+        ).toBeNull();
+        const keyStep = await agreeTo(
+            genBibleImportCheckAnswer(CHECKED, { step: 'check', url: LINK }),
+        );
+        // Nothing to interpret: the step takes it as typed.
+        expect(
+            checkBibleImportReplyNeedsHelp(
+                keyStep,
+                'https://exa%mple.com/x.xml',
+            ),
+        ).toBe(false);
+        // A new request is a new request, not a reply to this step.
+        expect(
+            checkBibleImportReplyNeedsHelp(
+                keyStep,
+                `Import bible from xml url ${LINK}`,
+            ),
+        ).toBe(false);
+        // An answer that is not an import step waits for nothing.
+        expect(
+            checkBibleImportReplyNeedsHelp(
+                { text: 'Hello', actions: [] },
+                'hi',
+            ),
+        ).toBe(false);
+    });
+
+    it('a short name of one letter, or of too many, is asked again', async () => {
+        const keyStep = await agreeTo(
+            genBibleImportCheckAnswer(CHECKED, { step: 'check', url: LINK }),
+        );
+        const typed = readBibleImportTypedReply(keyStep.actions, 'KSV2005');
+        for (const name of ['K', 'K'.repeat(25)]) {
+            const again = await runBibleImportStep({
+                ...(typed as BibleImportStateType),
+                typed: name,
+            });
+            expect(again.text, name).toContain(
+                'A short name is 2 to 24 letters or numbers, like KJV.',
+            );
+            expect(again.text).toContain('Step 1 of 4');
+        }
+    });
+
+    it('more book names found online are added to the list, best first', async () => {
+        mocks.callTool.mockResolvedValueOnce(
+            JSON.stringify({
+                nameLists: [
+                    { id: 'n1', label: 'Known', first: ['Genesis'] },
+                    {
+                        id: 'n2',
+                        label: 'Online',
+                        first: ['Gen', 'Exo'],
+                        own: ['Gen', 'Lev'],
+                        matches: 5,
+                    },
+                ],
+            }),
+        );
+        const answer = await runBibleImportStep({
+            step: 'more-names',
+            locale: 'km-KH',
+            draftId: 'd1',
+            kjvChecked: true,
+            nameLists: [{ id: 'n1', label: 'Known', first: ['Genesis'] }],
+        } as BibleImportStateType);
+        expect(mocks.callTool).toHaveBeenCalledWith('owa_bible_xml', {
+            action: 'names',
+            locale: 'km-KH',
+            draftId: 'd1',
+        });
+        expect(answer.text).toContain('I found 1 more online.');
+        // The new list leads: it matches more of this Bible's words, and
+        // says the names only it has.
+        expect(answer.text).toContain(
+            '1. Online: Gen, Exo… Only this list says: Lev. (5 of its names ' +
+                'are in this Bible)',
+        );
+        expect(answer.text).toContain('2. Known: Genesis…');
+    });
 });

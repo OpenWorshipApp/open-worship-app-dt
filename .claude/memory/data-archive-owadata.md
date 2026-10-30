@@ -67,7 +67,7 @@ Other non-obvious bits:
   nothing (64-byte header + 16-byte tag). It imports as tar's `TAR_BAD_ARCHIVE:
   Unrecognized archive format` and cannot be recovered, only exported again. The plain tar
   is `<archive>.plain.part` now, `encryptFile` / `decryptFile` refuse an input at their
-  output or its `.part`, and import reports an empty archive in plain words. The other four
+  output or its `.part`, and import reports an empty archive in plain words. The other
   archive kinds stage their plain tar in a temp dir and never collided.
 - The folder catalogue is `src/setting/directory-setting/dataDirectories.ts`, shared with
   the Path Settings page — add a folder there and both pick it up. **Some of its entries

@@ -3,7 +3,7 @@ id: W-48
 title: "Donner sa propre transition à une diapositive, un chant, un arrière-plan ou une superposition"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: d9c749fbd4dc1b40
+translatedFrom: fbad8f9687991c8d
 ---
 # W-48 — Donner sa propre transition à une diapositive, un chant, un arrière-plan ou une superposition
 
@@ -53,9 +53,10 @@ sa diapositive, puis son document, puis l'écran quand son propre choix est déc
    sur une pastille de couleur, une caméra ou un lien web) et choisissez
    **[en:tran:Transition]**. Il suit son onglet jusqu'à ce que vous cochiez la case ; une tuile d'image ou de
    vidéo affiche alors l'icône de l'effet dans son coin.
-6. **Un panneau de premier plan, toutes ses sessions.** Chaque panneau de premier plan
-   (**[en:tran:Countdown]**, **[en:tran:Quick Text]**, **[en:tran:Marquee Top]**
-   …) a un bouton de transition dans sa barre de titre, à côté de la flèche de repli.
+6. **Un panneau de premier plan, toutes ses sessions.** Chaque panneau de premier plan sauf
+   **[en:tran:Long Text Show]** (**[en:tran:Countdown]**, **[en:tran:Quick Text]**,
+   **[en:tran:Marquee Top]** …) a un bouton de transition dans sa barre de titre, à côté
+   de la flèche de repli.
    Appuyez dessus, cochez **[en:tran:Own transition]** et choisissez-en une : toutes les sessions de
    ce panneau l'utilisent.
 7. **Une seule session.** Ouvrez les **[en:tran:Properties]** du panneau : la ligne

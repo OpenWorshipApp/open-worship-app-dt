@@ -1,6 +1,6 @@
 ---
 name: owa-enhance-agent-docs
-description: 'Keep the Open Worship App agent documents true to the code, and make agents more useful across the whole repo. Use when asked to audit, fix, refresh or slim the agent docs: `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/` + MEMORY.md, `.claude/skills/`, `.mcp.json` — and the user manual's recipes (`user-workflows.md` → `docs/manual-sources`), which the in-app 🤖 answers from: an outdated guide page, or the chatbot answering with steps that no longer exist. Also use for stale notes, doc-vs-code mismatches, and questions like "what should the agent know" or "how can the agent help more". Two jobs. DRIFT: scripts/audit-agent-docs.mjs lists every claim the code contradicts; each lead is confirmed against code and git history, then the doc is fixed in place, with the knowledge rebuilt. LEVERAGE: blind spots, context cost, prose rules a test or hook could enforce, and repeated session friction (scripts/session-friction.mjs) become AD-xx proposals, reported and applied only on `apply`. Code is the truth for facts; a doc is the truth for decisions; history stays history.'
+description: 'Keep the Open Worship App agent documents true to the code, and make agents more useful across the whole repo. Use when asked to audit, fix, refresh or slim the agent docs: `.claude/CLAUDE.md`, `.claude/rules/`, `.claude/memory/` + MEMORY.md, `.claude/skills/`, `.mcp.json` — and the user manual''s recipes (`user-workflows.md` → `docs/manual-sources`), which the in-app 🤖 answers from: an outdated guide page, or the chatbot answering with steps that no longer exist. Also use for stale notes, doc-vs-code mismatches, and questions like "what should the agent know" or "how can the agent help more". Two jobs. DRIFT: scripts/audit-agent-docs.mjs lists every claim the code contradicts; each lead is confirmed against code and git history, then the doc is fixed in place, with the knowledge rebuilt. LEVERAGE: blind spots, context cost, prose rules a test or hook could enforce, and repeated session friction (scripts/session-friction.mjs) become AD-xx proposals, reported and applied only on `apply`. Code is the truth for facts; a doc is the truth for decisions; history stays history.'
 argument-hint: '[auto (default) | audit | drift | leverage | friction | <doc or code path> | apply AD-xx … | file]'
 ---
 
@@ -231,7 +231,16 @@ Safe classes, fixed without asking:
 
   In the same change: a dated entry at the head of `user-workflows.md` saying
   what was read and what was not seen live, `npm run docs:gen`, the questions
-  corpus when a control was renamed, and the knowledge rebuild.
+  corpus when a control was renamed (and any row whose `passage` quoted words
+  that changed), the translated manual, and the knowledge rebuild. **The
+  translations come with the English** (`AD-24`): every page
+  `node extra-work/manual-i18n-status.mjs` then lists as stale gets the English
+  change carried in, block for block, every `[en:tran:…]` kept and
+  `translatedFrom` set to the new hash — `--check <code> <ids>` ✓ and
+  `src/chatbot/questionHelpers.test.ts` (blocks line up) green. A stale page is
+  shown in English; on 2026-10-28 one run had left 46 per language behind.
+  Translators that only propose would need a second writer, so these edit their
+  own pages, one language and one half of the list each.
 
 Ask before:
 
@@ -254,7 +263,8 @@ dates as absolute dates, and keep the *why*.
 Run the audit again after the fixes. A drift run is done when every drift
 check prints 0 — `paths`, `symbols`, `tools`, `scripts`, `env`, `ids`,
 `memory`, `rules`, `skills` (wiring), `knowledge`, `manual`
-(labels, coverage files, recipes due) and `staleness` (notes due a read) — or
+(labels, coverage files, recipes due, translations behind) and `staleness`
+(notes due a read) — or
 when each lead still printed is
 accounted for in one of three places: `references/killed-leads.json` with its
 *why*, the report's *needs a decision* list, or a regression routed to its
@@ -266,7 +276,12 @@ first few lines of every list and described the rest.
 
 `src/test-setup/manualRecipes.test.ts` holds the first two manual signals in
 the gate: `npm run lint` fails on a recipe naming a label no code draws and on
-a coverage row citing a file that is gone.
+a coverage row citing a file that is gone. `src/test-setup/agentDocsAudit.test.ts`
+holds the rest of the hard checks (`AD-21`) — `paths`, `symbols`, `tools`,
+`scripts`, `env`, `ids`, `memory`, `rules`, `skills`, front matter that does
+not parse as YAML included (`AD-20`) — so a document is failed the day it is
+written wrong, not at the next run of this skill. The translations stay out of
+the gate on purpose: a manual edit must never wait for one.
 
 ### 3c. A second reader, and one real run
 
@@ -301,7 +316,7 @@ would have handed an older page over as the newest.
 
 ### 4. Leverage: how the agent could help more
 
-Eight lenses, detailed in [references/leverage.md](./references/leverage.md):
+Seven lenses, detailed in [references/leverage.md](./references/leverage.md):
 
 | Lens | The question | Main signal |
 | --- | --- | --- |

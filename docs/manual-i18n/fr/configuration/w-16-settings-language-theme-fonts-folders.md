@@ -3,20 +3,20 @@ id: W-16
 title: "Paramètres : langue, thème, polices, dossiers"
 section: "Configuration"
 lang: fr
-translatedFrom: 95ea9b97949a681a
+translatedFrom: be8a41677b58ce29
 ---
 # W-16 — Paramètres : langue, thème, polices, dossiers
 
 **Objectif :** configurer l'application.
 
-1. Cliquez sur l'**engrenage** ([en:tran:Setting]) dans l'en-tête — les Paramètres s'ouvrent dans leur propre fenêtre, sur **[en:tran:Path Settings]**. **[en:tran:App Assistant]** au-dessus de **[en:tran:Apply Settings]** en bas à gauche ouvre la fenêtre d'aide, pour poser une question sur n'importe quel réglage. 📸
+1. Cliquez sur l'**engrenage** ([en:tran:Setting]) dans l'en-tête — les Paramètres s'ouvrent dans leur propre fenêtre, sur **[en:tran:Path Settings]** la première fois, puis sur le dernier onglet que vous avez utilisé. **[en:tran:App Assistant]** au-dessus de **[en:tran:Apply Settings]** en bas à gauche ouvre la fenêtre d'aide, pour poser une question sur n'importe quel réglage. 📸
 2. **[en:tran:General]** (onglet) :
    - **[en:tran:Language] :** cliquez sur **English**, **ខ្មែរ** ou **Français**. Chaque langue est affichée sous son PROPRE nom, quelle que soit la langue dans laquelle vous êtes — ainsi, si un mauvais clic vous laisse dans une écriture que vous ne savez pas lire, le chemin du retour reste lisible. (Survolez un bouton et son `title` donne le nom anglais.) Certains libellés changent tout de suite, mais le changement n'est complet qu'une fois que vous avez cliqué sur **[en:tran:Apply Settings]** en bas à gauche — cela recharge toutes les fenêtres ouvertes. Les modifications non enregistrées dans l'Éditeur de diapositives sont conservées. La langue appartient à cet ordinateur, pas au dossier de données : passez à un autre dossier de données et l'application reste dans la langue que vous avez choisie.
    - **[en:tran:Theme] :** système / clair / sombre.
    - **[en:tran:Font Family] :** la police dans laquelle sont dessinées les fenêtres de l'application elle-même — pas le texte de l'écran de l'assemblée. Une police marquée `(Missing)` est configurée mais n'est pas installée sur cet ordinateur. Quand la police choisie existe en plusieurs graisses, une deuxième liste à côté permet d'en choisir une (`400 Regular`, `700 Bold`…) ; **[en:tran:Default]** garde la graisse propre à la police.
    - **Bouton de réinitialisation** (`Clear All Settings`) :
      **ce bouton efface la configuration ; à utiliser avec prudence.** Il demande d'abord une confirmation.
-   - **[en:tran:Show Tips of the Day automatically] :** indique si le Présentateur et le Lecteur biblique affichent une astuce automatique après le prochain lancement de l'application.
+   - **[en:tran:Show Tips of the Day automatically] :** indique si chaque fenêtre de l'application affiche sa propre astuce automatique après le prochain lancement de l'application.
    - Les tailles des panneaux ne se réinitialisent plus ici — voir **W-31**.
 2a. **[en:tran:Path Settings]** (onglet, à côté de **[en:tran:General]**) : l'endroit où tout
     est stocké sur le disque.
@@ -34,7 +34,7 @@ translatedFrom: 95ea9b97949a681a
    - **Bouton de réinitialisation** (`Reset All Child Directories`) :
      **ce bouton efface la configuration ; à utiliser avec prudence.** Il demande d'abord une confirmation.
 3. **[en:tran:Bible]** (onglet) : importer une Bible XML depuis un fichier ou une URL, modifier les Bibles XML installées, ou exporter/importer une archive **[en:tran:Bible Data]**. L'ancienne liste des versions en ligne est réservée au développement et peut être indisponible. 📸
-   **Une Bible installée n'a pas d'interrupteur marche/arrêt.** Toutes les Bibles de cette liste sont proposées partout où l'on choisit une version. Pour qu'une Bible ne soit plus proposée, retirez-la de l'ordinateur : l'icône de corbeille sur sa ligne, **[en:tran:Move to Trash]**, ouvre une confirmation intitulée **[en:tran:Delete Bible XML]**. Appuyez sur **[en:tran:Yes]** dans cette boîte pour envoyer son fichier dans la Corbeille, d'où elle peut être récupérée ou importée à nouveau.
+   **Une Bible installée n'a pas d'interrupteur marche/arrêt.** Toutes les Bibles de cette liste sont proposées partout où l'on choisit une version. Pour qu'une Bible ne soit plus proposée, retirez-la de l'ordinateur : l'icône de corbeille sur sa ligne, **[en:tran:Move to Trash]**, ouvre une confirmation intitulée **[en:tran:Delete Bible XML]**. Appuyez sur **[en:tran:Yes]** dans cette boîte pour envoyer son fichier dans la Corbeille, d'où elle peut être récupérée ou importée à nouveau. (Sous Windows, un dossier de données sur une clé USB n'a pas de Corbeille ; une boîte **[en:tran:Delete Permanently]** s'affiche alors, et cette suppression ne peut pas être annulée.)
 4. **[en:tran:AI Providers]** (onglet) : le commutateur principal de l'IA, les clés des
    fournisseurs et les serveurs personnalisés — voir **W-42**.
 5. Cliquez sur **[en:tran:Apply Settings]** (en bas à gauche) pour appliquer — les fenêtres de l'application se rechargent.

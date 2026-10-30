@@ -253,3 +253,51 @@ test('the address is up only once its name is in the DNS', async () => {
     ]);
     tunnel.stop();
 });
+
+// Started again before the first start found its binary: only the second
+// one runs, on the second port.
+test('a start overtaken while it looks for the binary runs nothing of its own', async () => {
+    await installPack();
+    const { tunnel, onChange } = genTunnel();
+    tunnel.start(51234);
+    tunnel.start(51235);
+    await vi.waitFor(() => expect(children).toHaveLength(1));
+    await waitALittle();
+    expect(children).toHaveLength(1);
+    expect(children[0].args.at(-1)).toBe('http://127.0.0.1:51235');
+    tunnel.stop();
+
+    // Stopped before it found it: nothing runs, nothing is said.
+    onChange.mockClear();
+    tunnel.start(51236);
+    tunnel.stop();
+    await waitALittle();
+    expect(children).toHaveLength(1);
+    expect(tunnel.state).toEqual({ status: 'off', url: '', error: '' });
+    expect(onChange).not.toHaveBeenCalled();
+});
+
+test("a replaced cloudflared's last words and exit say nothing about the new one", async () => {
+    await installPack();
+    const { tunnel } = genTunnel();
+    tunnel.start(51234);
+    await vi.waitFor(() => expect(children).toHaveLength(1));
+    tunnel.start(51234);
+    await vi.waitFor(() => expect(children).toHaveLength(2));
+    const [old] = children;
+    expect(old.kill).toHaveBeenCalled();
+    old.say(
+        'https://old-name.trycloudflare.com Registered tunnel connection\n',
+    );
+    old.emit('exit', 0);
+    await waitALittle();
+    expect(tunnel.state).toEqual({ status: 'starting', url: '', error: '' });
+    expect(dnsAsked).toEqual([]);
+    // The new one is still the one listened to.
+    children[1].say(
+        'https://new-name.trycloudflare.com Registered tunnel connection\n',
+    );
+    await vi.waitFor(() => expect(tunnel.state.status).toBe('up'));
+    expect(tunnel.state.url).toBe('https://new-name.trycloudflare.com');
+    tunnel.stop();
+});

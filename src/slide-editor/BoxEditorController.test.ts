@@ -395,3 +395,116 @@ describe('snapping', () => {
         ).toEqual({ newX: 100, newY: 100, newW: 100, newH: 80 });
     });
 });
+
+describe('limits and guards', () => {
+    function initBox(width: number, height: number) {
+        controller.scaleFactor = 1;
+        const box = addBox(1, 100, 100, width, height);
+        controller.initEvent(box.editor, box.chrome, done);
+        vi.spyOn(controller, 'getCurrentRotation').mockReturnValue(0);
+        return box;
+    }
+
+    test.each([
+        ['left-top', 90, 90],
+        ['right-bottom', -90, -90],
+    ])(
+        '%s dragged past the minimum stops shrinking at the minimum size',
+        (handle, dx, dy) => {
+            const box = initBox(100, 80);
+            pointer(box.chrome.querySelector(`.${handle}`)!, 'pointerdown');
+            pointer(window, 'pointermove', dx, dy);
+            expect(box.target.style.width).toBe('40px');
+            expect(box.target.style.height).toBe('40px');
+            expect(box.frame.style.width).toBe('40px');
+            expect(document.body.textContent).toContain('w: 40, h: 40');
+            pointer(window, 'pointerup');
+            expect(done).toHaveBeenCalledWith([]);
+        },
+    );
+
+    test.each([
+        // A wide box hits the minimum height first, a tall one the minimum
+        // width; either way the ratio holds and the far corner stays put.
+        [100, 80, 50, 40, 75, 80],
+        [80, 100, 40, 50, 80, 75],
+    ])(
+        'an aspect-locked corner shrunk past the minimum keeps its ratio (%ix%i)',
+        (width, height, newWidth, newHeight, centerX, centerY) => {
+            const box = initBox(width, height);
+            controller.lockAspectRatio = true;
+            pointer(box.chrome.querySelector('.right-bottom')!, 'pointerdown');
+            pointer(window, 'pointermove', -90, -90);
+            expect(box.target.style.width).toBe(`${newWidth}px`);
+            expect(box.target.style.height).toBe(`${newHeight}px`);
+            expect(Number.parseFloat(box.editor.style.left)).toBeCloseTo(
+                centerX,
+            );
+            expect(Number.parseFloat(box.editor.style.top)).toBeCloseTo(
+                centerY,
+            );
+            // The top-left corner did not move.
+            expect(centerX - newWidth / 2).toBeCloseTo(100 - width / 2);
+            expect(centerY - newHeight / 2).toBeCloseTo(100 - height / 2);
+        },
+    );
+
+    test('a Ctrl aspect-locked corner resize grows about the unchanged center', () => {
+        const box = initBox(100, 80);
+        controller.lockAspectRatio = true;
+        pointer(box.chrome.querySelector('.right-bottom')!, 'pointerdown');
+        pointer(window, 'pointermove', 20, 10, { ctrlKey: true });
+        expect(box.target.style.width).toBe('140px');
+        expect(box.target.style.height).toBe('112px');
+        expect(box.editor.style.left).toBe('100px');
+        expect(box.editor.style.top).toBe('100px');
+    });
+
+    test('a move snaps the right edge and the top edge to nearby lines', () => {
+        const snap = vi.fn();
+        controller.onSnapping = snap;
+        expect(
+            controller.applyMoveSnapping(
+                { vertical: [152], horizontal: [58] },
+                100,
+                100,
+                100,
+                80,
+            ),
+        ).toEqual({ x: 102, y: 98 });
+        expect(snap).toHaveBeenCalledWith({
+            vertical: [152],
+            horizontal: [58],
+        });
+    });
+
+    test('reads the rotation from the computed transform of an element', () => {
+        const element = document.createElement('div');
+        element.style.transform = 'matrix(0, 1, -1, 0, 0, 0)';
+        document.body.appendChild(element);
+        try {
+            expect(controller.getCurrentRotation(element)).toBe(90);
+        } finally {
+            element.remove();
+        }
+    });
+
+    test('a controller that holds no box ignores every handler and DOM write', () => {
+        const addListener = vi.spyOn(globalThis, 'addEventListener');
+        const event = new MouseEvent('pointerdown', {
+            cancelable: true,
+        }) as PointerEvent;
+        expect(() => controller.onDone([])).not.toThrow();
+        controller.rotateHandler(event);
+        controller.resizeHandler(event, controller.resizeActorList['left-top']);
+        controller.moveHandler(event);
+        controller.repositionElement(10, 20);
+        controller.resizeBox(30, 40);
+        controller.rotateBox(45);
+        // Nothing was swallowed and no drag was started.
+        expect(event.defaultPrevented).toBe(false);
+        expect(addListener).not.toHaveBeenCalled();
+        expect(controller.getInfo()).toBeNull();
+        expect(done).not.toHaveBeenCalled();
+    });
+});

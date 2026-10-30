@@ -65,4 +65,27 @@ describe('electronOfficeHelpers', () => {
         expect(result).toBeInstanceOf(Error);
         expect(result?.message).toContain('conversion failed');
     });
+
+    test('answers LibreOffice own failure as an Error and writes no PDF', async () => {
+        readFileSync.mockReturnValue(Buffer.from('pptx'));
+        convert.mockImplementation(
+            (
+                _buf: Buffer,
+                _ext: string,
+                _filter: any,
+                callback: (err: any, result: any) => void,
+            ) => {
+                callback('soffice exited with code 1', undefined);
+            },
+        );
+
+        const result = await officeFileToPdf(
+            '/tmp/slides.pptx',
+            '/tmp/out/slides.pdf',
+        );
+
+        expect(result).toBeInstanceOf(Error);
+        expect(result?.message).toBe('soffice exited with code 1');
+        expect(writeFileSync).not.toHaveBeenCalled();
+    });
 });

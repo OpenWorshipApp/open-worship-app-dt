@@ -26,6 +26,7 @@ import {
     toAttachmentText,
     toBotImage,
     toBotImages,
+    toImageMediaType,
     toReusableAttachments,
 } from './attachmentHelpers';
 
@@ -750,5 +751,90 @@ describe('what a question is asked again with', () => {
         ]);
         expect(toReusableAttachments(undefined)).toEqual([]);
         dropAttachmentData('r-held');
+    });
+});
+
+// The smaller rules the cases above leave unrun.
+describe('the rest of what the model is told', () => {
+    test('a picture off the disk is given its media type by its name', () => {
+        expect(toImageMediaType('Stage.JPG')).toBe('image/jpeg');
+        expect(toImageMediaType('stage.jpeg')).toBe('image/jpeg');
+        expect(toImageMediaType('stage.webp')).toBe('image/webp');
+        expect(toImageMediaType('notes.txt')).toBeNull();
+    });
+
+    test('a carried file has no words of its own to show in the preview', () => {
+        const pdf = genFileAttachment('LUK.6.pdf', 10, 'C:/LUK.6.pdf');
+        expect(pdf.summary).toContain('LUK.6.pdf');
+        expect(toAttachedText(pdf)).toBe('');
+    });
+
+    test('a pointed-at control says when it is hidden or greyed out', () => {
+        const onHover = genElementAttachment({
+            label: 'Bible Properties',
+            isVisible: false,
+            showsOnHover: true,
+            isEnabled: false,
+        });
+        expect(onHover.summary).toContain(
+            '- it only shows while the mouse is over that part of the window',
+        );
+        expect(onHover.summary).toContain('- it is greyed out');
+        const offScreen = genElementAttachment({
+            label: 'Clear All',
+            isVisible: false,
+        });
+        expect(offScreen.summary).toContain(
+            '- it is not on screen at the moment',
+        );
+        expect(offScreen.summary).not.toContain('greyed out');
+    });
+
+    test('an empty page list holds nothing, and lets go of what was held', () => {
+        putAttachmentPages('p-empty', ['data:image/png;base64,AAAA']);
+        putAttachmentPages('p-empty', []);
+        expect(getAttachmentPages('p-empty')).toEqual([]);
+        expect(getAttachmentData('p-empty')).toBeNull();
+    });
+
+    test('a one-page PDF is counted as one picture among the others', () => {
+        const pdf = {
+            ...genFileAttachment('one.pdf', 10, 'C:/one.pdf', 1),
+            number: 1,
+        };
+        putAttachmentPages(pdf.id, ['data:image/png;base64,AAAA']);
+        expect(toAttachmentLegend([pdf])).toContain(
+            '[1] the file "one.pdf" -- its page is the 1st picture attached here',
+        );
+        dropAttachmentData(pdf.id);
+    });
+
+    test('the open files are those of the last question that had one', () => {
+        const pdf = genFileAttachment('LUK.6.pdf', 10, 'C:/LUK.6.pdf');
+        const messages = [
+            { id: 1, author: 'you' as const, attachments: [pdf] },
+            { id: 2, author: 'bot' as const },
+            // A later question with no file leaves the file open.
+            { id: 3, author: 'you' as const, attachments: [] },
+        ];
+        expect(findOpenFileAttachments(messages as any)).toEqual([pdf]);
+        // Closed by the × after it was asked about.
+        expect(findOpenFileAttachments(messages as any, 1)).toEqual([]);
+        // No question carried a file: nothing is open.
+        expect(
+            findOpenFileAttachments([
+                { id: 1, author: 'you' },
+                { id: 2, author: 'bot' },
+            ]),
+        ).toEqual([]);
+    });
+
+    test('a text file shows its words without the line for the model', () => {
+        const text = genTextAttachment('order.txt', 'Hymn 1\nHymn 2');
+        expect(toAttachedText(text)).toBe('Hymn 1\nHymn 2');
+        // A summary written some other way is shown as it is.
+        expect(toAttachedText({ ...text, summary: 'other words' })).toBe(
+            'other words',
+        );
     });
 });

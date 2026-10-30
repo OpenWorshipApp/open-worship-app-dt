@@ -3,11 +3,11 @@ id: W-25
 title: "Tout sauvegarder, ou passer à un nouvel ordinateur"
 section: "Configuration"
 lang: fr
-translatedFrom: 03fd39dd73f25670
+translatedFrom: 7c6a8fd1ae8d81d5
 ---
 # W-25 — Tout sauvegarder, ou passer à un nouvel ordinateur
 
-W-22 à W-24 transportent chacun une seule chose. Pour emporter **tout** votre matériel d'un coup — pour
+W-22j à W-24 transportent chacun une seule chose. Pour emporter **tout** votre matériel d'un coup — pour
 une sauvegarde, ou pour préparer une deuxième machine — utilisez le menu **File** de l'application.
 
 1. Ouvrez le menu **File** en haut de la fenêtre et choisissez **[en:tran:Export Data]**. 📸
@@ -45,7 +45,7 @@ une sauvegarde, ou pour préparer une deuxième machine — utilisez le menu **F
    le dossier s'ouvre. Copiez-le sur une clé USB ou sur l'autre machine.
 4. Sur l'autre machine, ouvrez **[en:tran:Settings]** → **[en:tran:Path Settings]**
    et choisissez d'abord les dossiers de destination. Ensuite, choisissez **File** → **[en:tran:Import Data]** et sélectionnez ce fichier. Une sauvegarde protégée demande d'abord son mot de passe. Un mot de passe mal tapé est
-   redemandé sous _[en:tran:Wrong password, try again]_, trois fois au plus, puis l'importation
+   redemandé sous _[en:tran:Wrong password, try again]_ — trois essais en tout — puis l'importation
    s'arrête sans rien importer. Tapez-le exactement comme il a été défini, majuscules comprises, ou
    demandez-le à la personne qui a créé le fichier. Personne ne peut l'ouvrir sans lui. Le panneau liste ensuite seulement
    les dossiers que le fichier contient réellement — tous cochés, là encore — pour que vous puissiez ne
@@ -60,12 +60,14 @@ une sauvegarde, ou pour préparer une deuxième machine — utilisez le menu **F
    ajouté à la liste du panneau Ressources, pour qu'il y apparaisse sans être ajouté à la main
    (appuyez sur **[en:tran:Reload]** dans le menu ⋮ du panneau si celui-ci était déjà ouvert).
 
-> Remarques : il s'agit d'une **copie, pas d'un remplacement**. Un fichier déjà présent sur la machine
-> avec le même contenu est laissé tel quel, donc importer deux fois la même sauvegarde ne change rien et
-> peut être refait sans risque. Si un fichier porte le même NOM mais avec un contenu différent — vous
-> avez modifié le chant sur cette machine — **votre version est conservée** et celle de la sauvegarde est
-> ajoutée à côté sous le nom `song (1).ows`, pour que vous puissiez comparer et supprimer celle que vous
-> ne voulez pas. Rien n'est jamais écrasé.
+> Remarques : il s'agit d'une **copie, pas d'un remplacement**. Un chant, un document, un déroulé ou une
+> note biblique qui porte le même NOM qu'un fichier déjà présent sur la machine est toujours ajouté à côté
+> sous le nom `song (1).owl` — **votre version est conservée**, pour que vous puissiez comparer et supprimer
+> celle que vous ne voulez pas — même quand les deux sont exactement le même fichier, donc importer deux
+> fois la même sauvegarde vous donne une deuxième copie de chacun. Une liste biblique du même nom reçoit
+> seulement les versets qu'elle n'a pas encore. Tout autre fichier — une image, une vidéo, un fichier des
+> Ressources — est laissé tel quel quand celui d'ici a le même contenu, et ajouté à côté sous le nom
+> `a (1).mp4` quand ce n'est pas le cas. Rien n'est jamais écrasé.
 >
 > L'importation écrit dans les dossiers configurés sur **cette** machine, alors choisissez-les d'abord
 > (Paramètres → Paramètres des chemins). Si l'un d'eux n'a pas encore de dossier, l'importation s'arrête
@@ -73,5 +75,6 @@ une sauvegarde, ou pour préparer une deuxième machine — utilisez le menu **F
 >
 > La sauvegarde laisse de côté les fichiers de travail que l'application peut reconstruire seule —
 > l'historique d'annulation d'un document et les images de pages créées pour les aperçus
-> PDF/PowerPoint/Word — elle reste donc bien plus petite que les dossiers eux-mêmes, et ces fichiers sont
-> recréés sur l'autre machine la première fois que vous ouvrez le document.
+> PDF/PowerPoint/Word — elle reste donc bien plus petite que les dossiers eux-mêmes, et les images de pages
+> sont recréées sur l'autre machine la première fois que vous ouvrez le document (l'historique d'annulation
+> repart de zéro).

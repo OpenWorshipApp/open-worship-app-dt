@@ -12,7 +12,7 @@ so every popup (Settings, About, Finder, the document/lyric/bible-note/web edito
 old language, theme, font and directory paths. It now iterates
 `BrowserWindow.getAllWindows()` and skips destroyed windows plus `htmlFiles.screen` outputs
 (reloading a live output would blank the presentation). `sendMessageToAll` got the same
-all-windows enumeration for the same reason (`electron/ElectronAppController.ts:87-100`) —
+all-windows enumeration for the same reason (`electron/ElectronAppController.ts`; both now go through `checkIsReachableWindow`, which also skips a virtual display's compositor) —
 the sibling trap.
 
 **Why:** popups are created in `createPopupWindow()` (`electron/electronHelpers.ts`) off the

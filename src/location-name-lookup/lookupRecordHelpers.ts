@@ -10,8 +10,14 @@ import type {
 
 import { tran } from '../lang/langHelpers';
 import {
+    GENDER_LABEL,
+    LOCATION_TYPE_LABEL,
+    YEAR_RANGE_TYPE_LABEL,
+    getNameTypeSingularLabel,
     getPlainReferenceText,
     getRecordDisplayName,
+    toRecordAgeLabel,
+    toRecordEnumLabel,
 } from './lookupPresentationHelpers';
 
 type LinkType = { type: string; url: string };
@@ -36,10 +42,31 @@ export function getFormattedDetailValue(value: string | null) {
     return trimmedValue;
 }
 
+// The datasets write a year before Christ as a negative number: an encoding,
+// not something to show a reader as `-970`.
+function toYearLabel(year: number, translate: (text: string) => string) {
+    return year < 0
+        ? translate('{year} BC').replace('{year}', `${-year}`)
+        : `${year}`;
+}
+
 // An en-dash rather than a translated "to": the value is a numeric range, and a
-// two-letter dictionary key that generic is asking for a collision.
-export function getFormattedYearRange(yearRange: MentionNameYearRange) {
-    return `${yearRange.type}: ${yearRange.start} – ${yearRange.end}`;
+// two-letter dictionary key that generic is asking for a collision. The type
+// (`reign`, `coregency`) is English in every package, so it is translated like
+// a name's gender.
+export function getFormattedYearRange(
+    yearRange: MentionNameYearRange,
+    translate: (text: string) => string,
+) {
+    const typeLabel = toRecordEnumLabel(
+        yearRange.type,
+        YEAR_RANGE_TYPE_LABEL,
+        translate,
+    );
+    const range =
+        `${toYearLabel(yearRange.start, translate)} – ` +
+        toYearLabel(yearRange.end, translate);
+    return typeLabel === '' ? range : `${typeLabel}: ${range}`;
 }
 
 export function getFormattedLinkType(type: string) {
@@ -188,11 +215,18 @@ export function buildNameSummary(
     resolvedVerses: string[],
 ) {
     const { namesLookupManager, locationsLookupManager } = managers;
-    const basicFacts = [record.type, record.gender, record.age].filter(
-        (value) => {
-            return value !== '' && value.toLowerCase() !== 'unknown';
-        },
-    );
+    // English in every dataset, so translated like the detail panel's chips —
+    // in the interface language here, which the copy's own labels are in.
+    const nameTypeKey = getNameTypeSingularLabel(record.type);
+    const basicFacts = [
+        nameTypeKey === '' || nameTypeKey === 'Unknown'
+            ? ''
+            : tran(nameTypeKey),
+        toRecordEnumLabel(record.gender, GENDER_LABEL, tran),
+        toRecordAgeLabel(record.age, tran),
+    ].filter((value) => {
+        return value !== '';
+    });
     const detailRows: [string, string][] = [];
     if (checkHasDetailValue(record.oldName)) {
         detailRows.push([
@@ -203,7 +237,11 @@ export function buildNameSummary(
     if (record.years.length > 0) {
         detailRows.push([
             tran('Years'),
-            record.years.map(getFormattedYearRange).join(', '),
+            record.years
+                .map((yearRange) => {
+                    return getFormattedYearRange(yearRange, tran);
+                })
+                .join(', '),
         ]);
     }
     const listEntries: [string, string[]][] = [
@@ -250,9 +288,8 @@ export function buildLocationSummary(
     record: MentionLocationPreview,
     resolvedVerses: string[],
 ) {
-    const basicFacts = [record.type].filter((value) => {
-        return value !== '' && value.toLowerCase() !== 'unknown';
-    });
+    const typeLabel = toRecordEnumLabel(record.type, LOCATION_TYPE_LABEL, tran);
+    const basicFacts = typeLabel === '' ? [] : [typeLabel];
     const detailRows: [string, string][] = [];
     if (checkHasDetailValue(record.oldName)) {
         detailRows.push([

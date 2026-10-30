@@ -107,6 +107,7 @@ not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS app-level ones —
 / `_status`, `owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`,
 `owa_read_website`, `owa_lyric_validate`, `owa_lyric_file`, `owa_slide_file`,
 `owa_present_bible`, `owa_foreground`, `owa_bible_item` / `_note` / `_xml`,
+`owa_bible_suggest`, `owa_find_verse`, `owa_lookup_record`, `owa_resource_file`,
 `owa_presenting_flow`, `owa_undo`, and — the developer's, withheld from the
 chatbot's model — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
 `owa_media_file`, and on the stdio door alone `owa_drop_files` (real fixture
@@ -172,8 +173,10 @@ rule file whole** — it records why each thing is the way it is.
   the question corpus, known-question labels, the recipe-id scrub
 - `agent-songs.md` — Open Lyric: reading a song page, drafting, finding by
   title, validating
-- `chatbot-window.md` — the 🤖 window: tabs, pickers, attachments, `/` commands,
-  Report, the AI caution, chips, progress, history, tips
+- `chatbot-window.md` — the 🤖 window: tabs, pickers, the AI caution, chips,
+  progress, history, tips; beside it, each loaded by its own files,
+  `chatbot-files-report.md` (attachments, Report), `chatbot-commands.md`,
+  `chatbot-bible-import.md`, `chatbot-verse-find.md` and `chatbot-lookup.md`
 - `chatbot-llm.md` — providers, the tools withheld from the model, prompt
   caching, cost, the spend guard, the stand-in key, provider-issue doors
 - `aichat.md` — the ✨ AI Chat `<webview>` window
@@ -282,8 +285,9 @@ that OPENS a panel carries the same words as the panel it opened.
   While it is SHOWING it appears on the CDP endpoint as its own `list_pages`
   target, `http://127.0.0.1:<port>/screen.html?screenId=N` -- every screen
   window loads from the Screen Mirror server (ports 39240-39259,
-  `screenMirrorRuntime.screenUrl`), and from `https://localhost:3000` only
-  when that server did not start. It is fully drivable
+  `screenMirrorRuntime.screenUrl`), and from the app's own address
+  (`https://localhost:3000` in dev, `owa://local` packaged) only when that
+  server did not start. It is fully drivable
   (snapshot/click/screenshot the target itself); the target vanishes the moment
   the screen hides. When hidden or during early mount, its console is forwarded:
   `loggerHelpers.callConsole` → `appProvider.messageUtils.sendData('all:app:log', …)`
@@ -397,8 +401,9 @@ all of them are in `.claude/rules/project-skills.md`.
   user-facing documentation** (`references/user-workflows.md`, stable `W-xx`
   recipes). When UI behaviour changes, update it and
   `docs/test-paths/coverage-matrix.md` in the same change and bump their dates;
-  never publish a tutorial step not observed working live. Every run, whatever
-  its focus, presents a real item to a real screen and drives the
+  never publish a tutorial step not observed working live. Every run not
+  focused on one area (a focused run stays in it — memory
+  `robot-test-stays-in-the-asked-scope`) presents a real item to a real screen and drives the
   `screen.html?screenId=N` target, and downloads one video AND one audio
   (`MD-01..06`) — the only product path that runs yt-dlp/ffmpeg/qjs, which are
   NOT bundled but installed on demand (memory `extra-bin-on-demand`); the

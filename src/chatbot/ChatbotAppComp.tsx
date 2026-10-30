@@ -324,6 +324,7 @@ import {
     readLookupCountAsk,
     readLookupAround,
     readLookupAskContext,
+    readLookupRecordBible,
     readLookupThread,
     readLookupVerseAsk,
     readLookupWordStudyAsk,
@@ -374,6 +375,7 @@ import {
 } from './wordStudyHelpers';
 import { readVerseFindAsk } from '../helper/ai/verseFindAskHelpers';
 import {
+    pickBibleInLanguage,
     pickVerseFindBible,
     readTypedVerseContentAsk,
     readTypedVerseFindAsk,
@@ -8139,6 +8141,44 @@ export default function ChatbotAppComp() {
                     }
                     throwIfCancelled(signal);
                 }
+                // A person's or a place's verses come from a Bible in the
+                // answer's language when the record's is not one
+                // (2026-10-29): with the Reader on the KJV, a French question
+                // under Noah's card was answered with Genesis 6:15 in
+                // English, the Louis Segond installed. A passage keeps the
+                // Bible it was opened in -- that is what they are reading.
+                let lookupQuoteBible: string | null = null;
+                if (
+                    provider !== null &&
+                    lookupSubject !== null &&
+                    lookupSubject.kind !== 'verse' &&
+                    !isLookupAppAsk
+                ) {
+                    const answerLang = pickReplyLanguage(echoText, {
+                        isPressed:
+                            options?.isPressed === true ||
+                            options?.shownText !== undefined,
+                    });
+                    if (answerLang !== DEFAULT_CHAT_LANG_CODE) {
+                        try {
+                            lookupQuoteBible = pickBibleInLanguage(
+                                parseToolJson(
+                                    await callTool(
+                                        VERSE_FIND_TOOL_NAME,
+                                        {},
+                                        signal,
+                                        askedWindowAim,
+                                    ),
+                                ),
+                                readLookupRecordBible(lookupSubject),
+                                answerLang,
+                            );
+                        } catch (_error) {
+                            // No list: the record's Bible, as before.
+                        }
+                        throwIfCancelled(signal);
+                    }
+                }
                 // The record heads the conversation when it was read, so a
                 // server keeps it between questions (`toLookupRecordTurn`,
                 // EC-418); the question goes out with a line saying so.
@@ -8164,8 +8204,18 @@ export default function ChatbotAppComp() {
                     subject: LookupSubjectType,
                 ) => {
                     return lookupRecordTurn === null
-                        ? toLookupAsk(text, subject, lookupContextText)
-                        : toLookupQuestion(text, subject, lookupContextText);
+                        ? toLookupAsk(
+                              text,
+                              subject,
+                              lookupContextText,
+                              lookupQuoteBible,
+                          )
+                        : toLookupQuestion(
+                              text,
+                              subject,
+                              lookupContextText,
+                              lookupQuoteBible,
+                          );
                 };
                 const withResources = (text: string) => {
                     if (!isResourcesAsk) {
@@ -8709,6 +8759,12 @@ export default function ChatbotAppComp() {
                                               ...(lookupStudy === null
                                                   ? {}
                                                   : { isStudy: true }),
+                                              ...(lookupQuoteBible === null
+                                                  ? {}
+                                                  : {
+                                                        quoteBible:
+                                                            lookupQuoteBible,
+                                                    }),
                                           },
                                       }),
                                 ...(answerKeep === undefined

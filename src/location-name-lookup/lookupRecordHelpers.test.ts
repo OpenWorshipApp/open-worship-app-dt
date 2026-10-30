@@ -20,6 +20,9 @@ import {
     resolveLocationReference,
 } from './lookupRecordHelpers';
 
+// Stands in for the lookup language's dictionary.
+const toKhmer = (text: string) => `km:${text}`;
+
 function genNameRecord(overrides: Record<string, any> = {}): any {
     return {
         id: 'n-1',
@@ -109,8 +112,22 @@ describe('detail values', () => {
 
     test('a year range reads as a range, not as a sentence', () => {
         expect(
-            getFormattedYearRange({ type: 'born', start: 1, end: 2 } as any),
+            getFormattedYearRange({ type: 'born', start: 1, end: 2 }, toKhmer),
         ).toBe('born: 1 – 2');
+    });
+
+    // `reign` is English in every package, and `-970` is the dataset's way of
+    // writing a year before Christ, not something to show a reader.
+    test('a year range translates its type and writes BC years', () => {
+        expect(
+            getFormattedYearRange(
+                { type: 'reign', start: -1010, end: -970 },
+                toKhmer,
+            ),
+        ).toBe('km:Reign: km:1010 BC – km:970 BC');
+        expect(
+            getFormattedYearRange({ type: '', start: -5, end: 30 }, toKhmer),
+        ).toBe('km:5 BC – 30');
     });
 
     test('capitalizes a link type without touching the rest', () => {
@@ -262,7 +279,36 @@ describe('the clipboard summary', () => {
             [],
         );
 
-        expect(summary.plainText).not.toContain('unknown');
+        expect(summary.plainText.toLowerCase()).not.toContain('unknown');
+    });
+
+    // The datasets' English `person`, `male`, `175 years` and `reign: -1010`
+    // were copied as written; they go through `tran` (identity here) as keys.
+    test('copies the facts and year ranges as labels, not as raw data', () => {
+        const managers = genManagers();
+        const summary = buildNameSummary(
+            managers,
+            genNameRecord({
+                age: '175 years',
+                years: [{ type: 'reign', start: -1010, end: -970 }],
+            }),
+            [],
+        );
+
+        expect(summary.plainText).toContain('Person, Male, 175 years');
+        expect(summary.plainText).toContain('Years: Reign: 1010 BC – 970 BC');
+    });
+
+    test('a location summary copies its type as a label', () => {
+        const { locationsLookupManager } = genManagers();
+        const summary = buildLocationSummary(
+            locationsLookupManager,
+            genLocationRecord({ type: 'pool' }),
+            [],
+        );
+
+        expect(summary.plainText).toContain('Pool');
+        expect(summary.plainText).not.toContain('pool');
     });
 
     test('a location summary carries its coordinates', () => {

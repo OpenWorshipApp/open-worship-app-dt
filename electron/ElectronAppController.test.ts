@@ -65,6 +65,7 @@ vi.mock('./electronHelpers', () => ({
     messageChannels: {
         openAiChatPage: 'main:app:open-aichat-page',
         openChatbotPage: 'main:app:open-chatbot-page',
+        openChatbotReport: 'main:app:open-chatbot-report',
         openChatbotFromTaskbar: 'main:app:open-chatbot-from-taskbar',
     },
 }));
@@ -106,6 +107,18 @@ describe('ElectronAppController', () => {
         );
         expect(mainController.sendMessage).toHaveBeenCalledWith(
             'main:app:open-aichat-page',
+        );
+    });
+
+    test('Help > Report a Problem asks the main window for the report', async () => {
+        const { default: Controller } = await import('./ElectronAppController');
+        const controller = new Controller();
+        mainController.sendMessage.mockClear();
+
+        controller.openChatbotReportPage();
+
+        expect(mainController.sendMessage).toHaveBeenCalledExactlyOnceWith(
+            'main:app:open-chatbot-report',
         );
     });
 

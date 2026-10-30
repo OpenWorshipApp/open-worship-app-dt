@@ -3,7 +3,7 @@ id: W-18
 title: "Utiliser plus d'un écran (multi-écran)"
 section: "Configuration"
 lang: fr
-translatedFrom: 5cc31c278c72a595
+translatedFrom: d7492b0b06a29ec3
 ---
 # W-18 — Utiliser plus d'un écran (multi-écran)
 
@@ -31,5 +31,5 @@ translatedFrom: 5cc31c278c72a595
    et choisissez **[en:tran:Set Line Sync]** — un seul écran suffit, et un écran déjà affiché ne prend
    les rangées qu'une fois masqué puis réaffiché — et **[en:tran:Unset Line Sync]**
    revient aux colonnes. Son défilement suit la carte dans les deux cas.
-6. Un clic droit sur une carte → **[en:tran:Delete]** supprime un écran dont vous n'avez plus besoin (le premier
+6. Un clic droit sur une carte → **[en:tran:Delete]** supprime un écran dont vous n'avez plus besoin (un
    écran ne peut pas être supprimé tant qu'il est le seul).

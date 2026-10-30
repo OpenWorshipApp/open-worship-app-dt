@@ -51,8 +51,10 @@ exist", it is this one. Its tool catalogue and authoring checklist —
 
 Breaking one of these is a regression even when the feature works.
 
-1. **One server, two callers.** Anything added for one is shipped to the other.
-   Behaviour may differ by *policy* (the firewall's `OWA_MCP_FIREWALL=off` is
+1. **One server, two callers.** Anything added for one is shipped to the other,
+   but for `owa_drop_files`, registered on the stdio door alone (2026-10-22: the
+   `door` the launcher passes, never anything a caller says; it copies files off
+   the disk into the user's folders). Behaviour may differ by *policy* (the firewall's `OWA_MCP_FIREWALL=off` is
    set by the person who launched the process, not by the caller), never by
    sniffing who is asking.
 2. **The firewall is not optional and cannot be reached from the wire.** No
@@ -101,8 +103,8 @@ result, and the token bill is the one number a reviewer can check.
 > server already running: the app's HTTP host cached `server.mjs` on its first
 > session, and your own `mcp__owa-devtools__*` tools are a separate long-lived
 > process (memory: `mcp-tool-edit-two-processes`). `probe-mcp.mjs` spawns a
-> fresh stdio server for exactly this reason — it is the only way to see your
-> edit without restarting the app. Restart the app before trusting the audit
+> fresh stdio server for exactly this reason — it, and the audit's own `--stdio`, are
+> the ways to see your edit without restarting the app. Restart the app before trusting the audit
 > script or the chatbot.
 
 > **Build order.** `npm run build` / `electron:build` deletes
@@ -291,4 +293,4 @@ capability only reachable by someone who already knows the internals.
   — tool catalogue and authoring checklist.
 - [`../owa-enhance-chatbot/scripts/audit-mcp-tools.mjs`](../owa-enhance-chatbot/scripts/audit-mcp-tools.mjs)
   — the token bill.
-- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-14`.
+- `/owa-robot-test` — QA the result; chatbot rows are `CB-01..CB-163`.

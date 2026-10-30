@@ -5,14 +5,15 @@ section: "Configuration"
 verify: [ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08, ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83, ST-84, ST-85, ST-86, CB-163, LT-02, LT-03, LT-04]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-24"
+workflowsVersion: "2026-10-29"
 ---
 # W-16 — Settings: language, theme, fonts, folders
 
 **Goal:** configure the app.
 
 1. Click the **gear** ([en:tran:Setting]) in the header — Settings opens in its own window,
-   on **[en:tran:Path Settings]**. **[en:tran:App Assistant]** above
+   on **[en:tran:Path Settings]** the first time, and on the tab you last used after that.
+   **[en:tran:App Assistant]** above
    **[en:tran:Apply Settings]** at the bottom-left opens the help window, to ask about
    any setting. 📸
 2. **[en:tran:General]** tab:
@@ -32,8 +33,8 @@ workflowsVersion: "2026-10-24"
      **[en:tran:Default]** keeps the font's own weight.
    - **Reset button** (`Clear All Settings`):
      **this erases configuration; use with care.** It asks for confirmation first.
-   - **[en:tran:Show Tips of the Day automatically]:** controls whether the Presenter and Bible
-     Reader show an automatic tip after the next app launch.
+   - **[en:tran:Show Tips of the Day automatically]:** controls whether each app window shows
+     its own automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
 2a. **[en:tran:Path Settings]** tab (next to **[en:tran:General]**): where everything
     lives on disk.
@@ -94,7 +95,9 @@ workflowsVersion: "2026-10-24"
    wherever a version is chosen. To stop one being offered, take it off the computer: the
    trash icon on its row, **[en:tran:Move to Trash]**, opens a confirmation titled
    **[en:tran:Delete Bible XML]**. Press **[en:tran:Yes]** in that dialog to send
-   its file to the Recycle Bin, from where it can be brought back or imported again.
+   its file to the Recycle Bin, from where it can be brought back or imported again. (A data
+   folder on a USB flash drive under Windows has no Recycle Bin; there a
+   **[en:tran:Delete Permanently]** box follows, and that cannot be undone.)
 4. **[en:tran:AI Providers]** tab: the AI master switch, the provider keys and the
    custom servers — see **W-42**.
 5. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
@@ -104,5 +107,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-01` · `ST-02` · `ST-03` · `ST-04` · `ST-05` · `ST-06` · `ST-07` · `ST-08` · `ST-09` · `ST-20` · `ST-22` · `ST-52` · `ST-54` · `ST-55` · `ST-58` · `ST-83` · `ST-84` · `ST-85` · `ST-86` · `CB-163` · `LT-02` · `LT-03` · `LT-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-24).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
 :::

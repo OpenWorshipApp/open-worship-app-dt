@@ -5,10 +5,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { APP_WINDOWS_CHANGED_CHANNEL as RENDERER_CHANGED_CHANNEL } from '../src/chatbot/windowAimHelpers';
 import { BOT_FOCUS_LIST } from '../tools/owa-devtools-mcp/botFocus.mjs';
 
-const { appMock } = vi.hoisted(() => {
-    return { appMock: { on: vi.fn() } };
+const { appMock, openWindowList } = vi.hoisted(() => {
+    return { appMock: { on: vi.fn() }, openWindowList: [] as unknown[] };
 });
-vi.mock('electron', () => ({ app: appMock, BrowserWindow: {} }));
+vi.mock('electron', () => ({
+    app: appMock,
+    BrowserWindow: { getAllWindows: () => openWindowList },
+}));
 
 import {
     APP_WINDOWS_CHANGED_CHANNEL,
@@ -166,5 +169,25 @@ describe('initAppWindowListWatch', () => {
             false,
         );
         expect(checkIsWatchedPageUrl('not an address')).toBe(false);
+    });
+
+    it('finds the help windows among every open window by default', () => {
+        const help = genWindow(`${HOST}/chatbot.html?uuid=chatbot`);
+        const reader = genWindow(`${HOST}/reader.html?uuid=reader`);
+        openWindowList.splice(0, openWindowList.length, help, reader);
+        try {
+            vi.useFakeTimers();
+            initAppWindowListWatch();
+            const [, onCreated] = appMock.on.mock.calls.at(-1) as any;
+            onCreated({}, reader);
+            reader.webContents.emit('did-finish-load');
+            vi.advanceTimersByTime(300);
+            expect(help.webContents.send).toHaveBeenCalledExactlyOnceWith(
+                APP_WINDOWS_CHANGED_CHANNEL,
+            );
+            expect(reader.webContents.send).not.toHaveBeenCalled();
+        } finally {
+            openWindowList.splice(0);
+        }
     });
 });

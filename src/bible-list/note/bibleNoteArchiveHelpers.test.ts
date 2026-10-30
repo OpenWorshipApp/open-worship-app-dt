@@ -63,7 +63,17 @@ const {
     collectNoteEmbeddedFiles,
     readLiveNoteContent,
     BIBLE_NOTE_ARCHIVE_DOT_EXTENSION,
+    askAndImportBibleNoteArchiveFromUrl,
+    checkIsBibleNoteArchiveFileFullName,
+    createBibleNoteArchive,
+    exportBibleNote,
+    importBibleNoteArchive,
+    importDroppedBibleNoteArchive,
+    selectAndImportBibleNoteArchive,
 } = await import('./bibleNoteArchiveHelpers');
+const singleItemArchiveHelpers = vi.mocked(
+    await import('../../helper/singleItemArchiveHelpers'),
+);
 
 function toLexicalContent(filePath: string) {
     return JSON.stringify({
@@ -216,5 +226,133 @@ describe('bible-list/note bibleNoteArchiveHelpers', () => {
             expect(fsCreateFileMock).not.toHaveBeenCalled();
             expect(fireUpdateEventMock).not.toHaveBeenCalled();
         });
+    });
+});
+
+describe('bible-list/note bibleNoteArchiveHelpers failures and bundle config', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    test('a note file that is gone collects nothing and is not rewritten', async () => {
+        fsReadFileMock.mockResolvedValue(null);
+        await collectNoteEmbeddedFiles(collector, '/notes/Gone.own');
+        expect(addFileMock).not.toHaveBeenCalled();
+        await applyImportedNoteEmbeddedFiles(
+            '/notes/Gone.own',
+            new Map([['/old/one.png', '/data/tmp-files/one.png']]),
+        );
+        expect(fsCreateFileMock).not.toHaveBeenCalled();
+        expect(handleErrorMock).not.toHaveBeenCalled();
+    });
+
+    test('a note file that cannot be read is reported, not thrown', async () => {
+        const error = new Error('EACCES');
+        fsReadFileMock.mockRejectedValue(error);
+        await collectNoteEmbeddedFiles(collector, '/notes/Locked.own');
+        expect(addFileMock).not.toHaveBeenCalled();
+        expect(handleErrorMock).toHaveBeenCalledWith(error);
+    });
+
+    test('content that is not text is reported and collects nothing', async () => {
+        await collectNoteEmbeddedFiles(
+            collector,
+            '/notes/Default.own',
+            42 as unknown as string,
+        );
+        expect(addFileMock).not.toHaveBeenCalled();
+        expect(fsReadFileMock).not.toHaveBeenCalled();
+        expect(handleErrorMock).toHaveBeenCalledTimes(1);
+        expect(handleErrorMock.mock.calls[0][0]).toBeInstanceOf(TypeError);
+    });
+
+    test('an editing history that cannot be read exports the file as it is', async () => {
+        const error = new Error('history folder locked');
+        checkHasHistoriesMock.mockRejectedValue(error);
+        expect(await readLiveNoteContent('/notes/Default.own')).toBe(null);
+        expect(handleErrorMock).toHaveBeenCalledWith(error);
+    });
+
+    test('an empty head exports the file as it is', async () => {
+        checkHasHistoriesMock.mockResolvedValue(true);
+        getCurrentHistoryMock.mockResolvedValue(null);
+        expect(await readLiveNoteContent('/notes/Default.own')).toBe(null);
+        expect(fsReadFileMock).not.toHaveBeenCalled();
+    });
+
+    test('the bundle is the note kind, with the live text and its pictures', async () => {
+        singleItemArchiveHelpers.createSingleItemArchive.mockResolvedValue(
+            '/out/Sermon.owanote.tar.gz' as any,
+        );
+        expect(await createBibleNoteArchive('/notes/Sermon.own')).toBe(
+            '/out/Sermon.owanote.tar.gz',
+        );
+        const [filePath, config, password] =
+            singleItemArchiveHelpers.createSingleItemArchive.mock.calls[0];
+        expect(filePath).toBe('/notes/Sermon.own');
+        expect(password).toBeNull();
+        expect(config).toMatchObject({
+            itemKind: 'note',
+            dotExtension: '.owanote.tar.gz',
+            fallbackName: 'Bible Note',
+            workDirPrefix: 'owanote',
+            exportTitle: 'Export Bible Note',
+            importTitle: 'Import Bible Note',
+            urlLabel: 'Bible Note Archive URL:',
+            itemLabel: 'bible note',
+            readItemContent: readLiveNoteContent,
+            collectExtraFiles: collectNoteEmbeddedFiles,
+            applyImportedExtraFiles: applyImportedNoteEmbeddedFiles,
+        });
+        // Embedded pictures go back into the app's temp-files folder.
+        const presetDirPaths = await config.getExtraPresetDirPaths!();
+        expect(ensureDirectoryMock).toHaveBeenCalledWith('/data/tmp-files');
+        expect([...presetDirPaths]).toEqual([
+            ['note-asset', '/data/tmp-files'],
+        ]);
+
+        await createBibleNoteArchive('/notes/Sermon.own', 'secret');
+        expect(
+            singleItemArchiveHelpers.createSingleItemArchive.mock.calls[1][2],
+        ).toBe('secret');
+    });
+
+    test('every entry point hands that one config to the shared bundle flow', async () => {
+        await createBibleNoteArchive('/notes/Sermon.own');
+        const config =
+            singleItemArchiveHelpers.createSingleItemArchive.mock.calls[0][1];
+
+        singleItemArchiveHelpers.checkIsSingleItemArchiveFileFullName.mockReturnValue(
+            true,
+        );
+        expect(
+            checkIsBibleNoteArchiveFileFullName('Sermon.owanote.tar.gz'),
+        ).toBe(true);
+        expect(
+            singleItemArchiveHelpers.checkIsSingleItemArchiveFileFullName,
+        ).toHaveBeenCalledWith('Sermon.owanote.tar.gz', config);
+
+        exportBibleNote('/notes/Sermon.own');
+        expect(singleItemArchiveHelpers.exportSingleItem).toHaveBeenCalledWith(
+            '/notes/Sermon.own',
+            config,
+        );
+        importBibleNoteArchive('/in/Sermon.owanote.tar.gz');
+        expect(
+            singleItemArchiveHelpers.importSingleItemArchive,
+        ).toHaveBeenCalledWith('/in/Sermon.owanote.tar.gz', config);
+        selectAndImportBibleNoteArchive();
+        expect(
+            singleItemArchiveHelpers.selectAndImportSingleItemArchive,
+        ).toHaveBeenCalledWith(config);
+        askAndImportBibleNoteArchiveFromUrl();
+        expect(
+            singleItemArchiveHelpers.askAndImportSingleItemArchiveFromUrl,
+        ).toHaveBeenCalledWith(config);
+        const dropped = { name: 'Sermon.owanote.tar.gz' } as any;
+        importDroppedBibleNoteArchive(dropped);
+        expect(
+            singleItemArchiveHelpers.importDroppedSingleItemArchive,
+        ).toHaveBeenCalledWith(dropped, config);
     });
 });

@@ -3,7 +3,7 @@ id: W-22j
 title: "Partager un déroulé avec une autre machine"
 section: "Configuration"
 lang: fr
-translatedFrom: 4ac77fb44d17d3ad
+translatedFrom: 930d38b74e44ec58
 ---
 # W-22j — Partager un déroulé avec une autre machine
 
@@ -46,8 +46,11 @@ machine en un seul fichier.
     obtenez le déroulé et rien d'autre ne reste. Une simple adresse `http://…` avec un
     port, comme celle servie par un autre ordinateur portable, fonctionne aussi bien que `https://`. 📸
 
-> Remarques : un fichier déjà présent **avec le même contenu** est réutilisé plutôt que
-> dupliqué, donc importer deux fois le même paquet est sans risque. Si un fichier du même NOM est
+> Remarques : une image, une vidéo ou un autre fichier média déjà présent **avec le même contenu**
+> est réutilisé plutôt que dupliqué. Le déroulé lui-même, ses chants et ses documents arrivent
+> toujours comme de nouveaux fichiers — à côté d'un fichier du même nom, même celui importé
+> auparavant, sous le nom `name (1)` — donc importer deux fois le même paquet vous donne une
+> deuxième copie de chacun. Si un fichier média du même NOM est
 > déjà présent mais qu'il s'agit en fait d'un autre fichier — votre propre `a.mp4` n'est pas le `a.mp4`
 > du paquet — le vôtre n'est pas touché et celui du paquet est ajouté à côté sous le nom
 > `a (1).mp4`, avec le déroulé pointé vers cette copie. Les diapositives et les documents sont

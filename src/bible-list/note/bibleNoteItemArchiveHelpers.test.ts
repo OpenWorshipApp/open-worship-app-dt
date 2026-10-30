@@ -7,6 +7,9 @@ const h = vi.hoisted(() => ({
     deleted: [] as string[],
     selected: [] as string[],
     password: '' as string | null,
+    // Opt-in failures; their defaults are the behaviour every test above had.
+    isPasswordCancelled: false,
+    deleteError: null as Error | null,
     tarCreate: vi.fn(),
     protect: vi.fn(),
     copy: vi.fn(),
@@ -42,6 +45,9 @@ vi.mock('../../server/fileHelpers', () => ({
     fsReadFile: async (path: string) => h.files.get(path),
     fsDeleteDir: async (dir: string) => {
         h.deleted.push(dir);
+        if (h.deleteError !== null) {
+            throw h.deleteError;
+        }
         for (const path of h.files.keys()) {
             if (path.startsWith(`${dir}/`)) h.files.delete(path);
         }
@@ -60,7 +66,8 @@ vi.mock('../../server/appHelpers', () => ({
 }));
 vi.mock('../../helper/archivePasswordHelpers', () => ({
     askForNewArchivePassword: async () => h.password,
-    openArchiveForReading: async (path: string) => ({ filePath: path }),
+    openArchiveForReading: async (path: string) =>
+        h.isPasswordCancelled ? null : { filePath: path },
     protectArchiveFile: h.protect,
 }));
 vi.mock('../../helper/errorHelpers', () => ({ handleError: h.error }));
@@ -88,6 +95,8 @@ beforeEach(() => {
     h.deleted.length = 0;
     h.selected = [];
     h.password = '';
+    h.isPasswordCancelled = false;
+    h.deleteError = null;
     h.tarCreate
         .mockReset()
         .mockImplementation(async (stagingDir: string, archivePath: string) => {
@@ -269,4 +278,156 @@ test('file-picker import reports success and leaves a cancelled picker alone', a
     h.toast.mockClear();
     expect(await selectAndImportBibleNoteItemArchive(targetNote)).toBeNull();
     expect(h.toast).not.toHaveBeenCalled();
+});
+
+function setArchive(
+    archivePath: string,
+    manifest: unknown,
+    noteItem: unknown = { title: 'T', metadata: { id: 1 }, content: '{}' },
+) {
+    h.archives.set(
+        archivePath,
+        new Map([
+            ['manifest.json', JSON.stringify(manifest)],
+            ['note-item.json', JSON.stringify(noteItem)],
+        ]),
+    );
+}
+
+test('an imported picture keeps its extension only when it has one', () => {
+    for (const filePath of ['/media/photo', '/media/.hidden', '/media/x.']) {
+        expect(toBibleNoteItemTmpFileName('Sunday', 9, filePath, 123)).toMatch(
+            /^bn-[A-Za-z0-9+_=]+$/,
+        );
+    }
+});
+
+test('an export whose picture is gone fails, cleans up, and says why', async () => {
+    const content = JSON.stringify({
+        root: { children: [{ src: '/media/gone.png' }] },
+    });
+    expect(await exportBibleNoteItem(item(content))).toBeNull();
+    expect(h.tarCreate).not.toHaveBeenCalled();
+    expect(h.deleted).toHaveLength(1);
+    expect(h.error).toHaveBeenCalledTimes(1);
+    expect(h.toast).toHaveBeenCalledWith(
+        'Export Bible Note Item',
+        'Embedded file not found: /media/gone.png',
+    );
+    expect(h.explorer).not.toHaveBeenCalled();
+});
+
+test('an export failure with no message still says the export failed', async () => {
+    h.tarCreate.mockRejectedValue({});
+    expect(await exportBibleNoteItem(item('{}'))).toBeNull();
+    expect(h.toast).toHaveBeenCalledWith(
+        'Export Bible Note Item',
+        'Unable to export BibleNote item',
+    );
+});
+
+test('a staging folder that cannot be removed is reported, the export kept', async () => {
+    const error = new Error('EBUSY');
+    h.deleteError = error;
+    expect(await createBibleNoteItemArchive(item('{}'))).toBe(
+        '/downloads/Prayer_ morning.owabn.tar.gz',
+    );
+    expect(h.error).toHaveBeenCalledWith(error);
+});
+
+test('a manifest that is not this bundle is refused', async () => {
+    const archive = '/downloads/odd.owabn.tar.gz';
+    setArchive(archive, 'just text');
+    await expect(importBibleNoteItemArchive(note(), archive)).rejects.toThrow(
+        'Invalid BibleNote item archive manifest',
+    );
+    setArchive(archive, {
+        version: 2,
+        noteItem: 'note-item.json',
+        files: [],
+    });
+    await expect(importBibleNoteItemArchive(note(), archive)).rejects.toThrow(
+        'Invalid BibleNote item archive manifest',
+    );
+    setArchive(archive, {
+        version: 1,
+        noteItem: 'note-item.json',
+        files: [{ originalPath: 5, archivePath: 'files/001-a.png' }],
+    });
+    await expect(importBibleNoteItemArchive(note(), archive)).rejects.toThrow(
+        'Invalid BibleNote item archive file entry',
+    );
+    // Every refusal still clears the folder it unpacked into.
+    expect(h.deleted).toHaveLength(3);
+});
+
+test('a picture that cannot be copied in stops the import', async () => {
+    const archive = '/downloads/pic.owabn.tar.gz';
+    setArchive(archive, {
+        version: 1,
+        noteItem: 'note-item.json',
+        files: [
+            { originalPath: '/media/photo.png', archivePath: 'files/001.png' },
+        ],
+    });
+    h.archives.get(archive)!.set('files/001.png', 'image bytes');
+    h.copy.mockResolvedValueOnce(null);
+    const targetNote = note();
+    await expect(
+        importBibleNoteItemArchive(targetNote, archive),
+    ).rejects.toThrow('Unable to import archive file: files/001.png');
+    expect(targetNote.addAndSaveNoteItem).not.toHaveBeenCalled();
+});
+
+test('an item the note cannot save is an import error', async () => {
+    const archive = '/downloads/item.owabn.tar.gz';
+    setArchive(archive, { version: 1, noteItem: 'note-item.json', files: [] });
+    const targetNote = note();
+    targetNote.addAndSaveNoteItem.mockResolvedValue(false);
+    await expect(
+        importBibleNoteItemArchive(targetNote, archive),
+    ).rejects.toThrow('Unable to save imported BibleNote item');
+    expect(h.deleted).toHaveLength(1);
+});
+
+test('a cancelled password prompt imports nothing and says nothing', async () => {
+    const archive = '/downloads/locked.owabn.enc';
+    setArchive(archive, { version: 1, noteItem: 'note-item.json', files: [] });
+    h.isPasswordCancelled = true;
+    const targetNote = note();
+    expect(await importBibleNoteItemArchive(targetNote, archive)).toBeNull();
+    h.selected = [archive];
+    expect(await selectAndImportBibleNoteItemArchive(targetNote)).toBeNull();
+    expect(targetNote.addAndSaveNoteItem).not.toHaveBeenCalled();
+    expect(h.toast).not.toHaveBeenCalled();
+    expect(h.error).not.toHaveBeenCalled();
+});
+
+test('a picked archive that cannot be imported is reported', async () => {
+    const archive = '/downloads/bad.owabn.tar.gz';
+    setArchive(archive, { version: 9, noteItem: 'x', files: [] });
+    h.selected = [archive];
+    expect(await selectAndImportBibleNoteItemArchive(note())).toBeNull();
+    expect(h.error).toHaveBeenCalledTimes(1);
+    expect(h.toast).toHaveBeenCalledWith(
+        'Import Bible Note Item',
+        'Invalid BibleNote item archive manifest',
+    );
+
+    // ...and one that fails with no message still says the import failed.
+    h.toast.mockClear();
+    h.copy.mockRejectedValueOnce({});
+    setArchive(archive, {
+        version: 1,
+        noteItem: 'note-item.json',
+        files: [
+            { originalPath: '/media/photo.png', archivePath: 'files/001.png' },
+        ],
+    });
+    h.archives.get(archive)!.set('files/001.png', 'image bytes');
+    expect(await selectAndImportBibleNoteItemArchive(note())).toBeNull();
+    expect(h.toast).toHaveBeenCalledWith(
+        'Import Bible Note Item',
+        'Unable to import BibleNote item',
+    );
 });

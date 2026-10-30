@@ -3,7 +3,7 @@ id: W-22c
 title: "Effacer l'écran, ou l'afficher et le masquer, depuis un déroulé"
 section: "Configuration"
 lang: fr
-translatedFrom: 8a56f898f39f0304
+translatedFrom: ff28bb64602ac801
 ---
 # W-22c — Effacer l'écran, ou l'afficher et le masquer, depuis un déroulé
 
@@ -13,10 +13,11 @@ l'éteindre — plutôt que quelque chose à montrer.
 1. **Ajouter une action d'écran.** Un déroulé peut aussi contenir quelque chose à _faire_ plutôt que
    quelque chose à montrer. Faites un clic droit sur **le déroulé lui-même** — sa propre ligne dans la
    liste, pas la partie vide de la liste ni l'une de ses lignes — et choisissez
-   **[en:tran:Add Action]** : toutes les actions s'ajoutent depuis ce seul menu. Pour un effacement,
+   **[en:tran:Add Action]** : toutes les actions, sauf le contrôle média d'une diapositive (W-22h),
+   s'ajoutent depuis ce seul menu. Pour un effacement,
    choisissez-y **[en:tran:Clear Screen]** — une ligne qui n'ajoute rien et ouvre les effacements —
    puis **[en:tran:Clear All]**, **[en:tran:Clear Background]**, **[en:tran:Clear Slide]**, **[en:tran:Clear Long Text]** ou **[en:tran:Clear Foreground]** — les cinq mêmes effacements que les boutons de chaque écran miniature, et la ligne
-   porte le même badge `ALL` / `BG` / `SL` / `LT` / `FG` pour que vous puissiez les distinguer d'un
+   porte un badge `ALL` / `BG` / `SL` / `LT` / `FG` pour que vous puissiez les distinguer d'un
    coup d'œil. Elle arrive en fin de liste ; faites-la glisser vers le haut jusqu'à sa place — par exemple entre
    le dernier chant et la prédication. 📸
 
@@ -33,9 +34,10 @@ l'éteindre — plutôt que quelque chose à montrer.
    écran, mais le fait qu'il y en ait un : **[en:tran:Screen: Show]** et
    **[en:tran:Screen: Hide]**, ce que le bouton des diapositives de chaque écran miniature
    fait à la main. Utilisez-les quand le déroulé doit fonctionner sans personne devant la machine —
-   un **[en:tran:Screen: Show]** au début d'une boucle d'avant-culte, un **[en:tran:Screen: Hide]** à la fin de
-   celle-ci, et l'écran s'éteint tout seul au lieu de garder la dernière annonce jusqu'à ce que
-   quelqu'un s'en aperçoive.
+   un **[en:tran:Screen: Show]** au début d'une série d'annonces d'avant-culte, un
+   **[en:tran:Screen: Hide]** à la fin de celle-ci, et l'écran s'éteint tout seul au lieu de garder la
+   dernière annonce jusqu'à ce que quelqu'un s'en aperçoive — sauf si un **[en:tran:Jump to]** fait
+   reboucler la série, car sa fin n'est alors jamais atteinte (W-22e, étape 3).
 
    **Ces deux actions demandent quel écran** quand vous les ajoutez, et c'est tout l'intérêt : une
    liste à cocher des écrans ouverts apparaît (`Screen id: 0`, `Screen id: 1`, …,

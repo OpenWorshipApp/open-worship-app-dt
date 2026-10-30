@@ -1,7 +1,7 @@
 # The tool budget — what the surface costs, and how to cut it
 
-Every schema `tools/list` returns is re-sent to the model on **every round of
-every question**. `MAX_TOOL_ROUNDS` is 10. So the tool surface is not a
+Every schema `tools/list` returns that `modelTools.mjs` neither withholds nor
+keeps for one kind of ask is re-sent to the model on **every round of every question**. `MAX_TOOL_ROUNDS` is 10. So the tool surface is not a
 one-off cost paid at start-up; it is a tax on every single thing a volunteer
 asks, on a machine and an API bill neither of which has room to spare.
 
@@ -20,15 +20,16 @@ measured without restarting the operator's app (the in-app host caches
 
 **`--ratchet` is the thing that makes this table binding** (`MC-14`, 2026-09-17).
 It exits 1 when the MODEL's bill crosses `MODEL_TOKEN_CEILING`, recorded in the
-script at **7 450** against a measured 7 253 (lowered from 8 200 on 2026-09-18,
-when `MC-07`'s cut would otherwise have left ~950 tokens of room nobody chose
-to spend) — one small tool of headroom, not a budget to spend down to. The
+script at **8 350** since `MC-50` (2026-10-10, against a measured 8 273; it
+was 7 800 before that (`EC-196`), and 7 450 against a measured 7 253 after
+being lowered from 8 200 on 2026-09-18, when `MC-07`'s cut would otherwise have left ~950 tokens of room
+nobody chose to spend) — one small tool of headroom, not a budget to spend down to. The
 ceiling is on the model's bill and not the host's, because the developer's door
 may grow and a tool added "for the developer" that quietly reaches the model is
 exactly what this catches. A deliberate addition
 raises the line IN THE SAME CHANGE and says why; the failure names the three
 biggest model-visible tools, since that is usually where the cut is. It needs a
-running app, so it belongs in a run sheet rather than in `npm run lint`.
+running app unless given `--stdio` (a fresh server's `tools/list` needs none), so it belongs in a run sheet rather than in `npm run lint`.
 
 **The host's bill and the model's bill are different numbers**, and the one
 that matters for a question is the model's. The audit reports both.
@@ -119,7 +120,7 @@ after an edit (memory: `mcp-tool-edit-two-processes`).
 
 ### 1. Fewer tools
 
-29 of the 47 are chrome-devtools', and the chatbot's model cannot usefully
+29 of the 67 the chatbot's door registers are chrome-devtools', and the chatbot's model cannot usefully
 drive most of them. Three are already gone: the firewall's denials remove
 `evaluate_script`, `take_heapsnapshot` and `upload_file` from the list for both
 callers, worth ~668 tokens/round.
@@ -127,8 +128,8 @@ callers, worth ~668 tokens/round.
 The cut that does **not** take anything from the developer is
 `tools/owa-devtools-mcp/modelTools.mjs`: it filters what the MODEL sees while
 the server keeps serving everything. `MC-06` took it from 3 names to 19 —
-−3 217 tokens/round, −32 170 on a worst-case question — and the four groups it
-withholds are documented in that file next to the reason each gets told.
+−3 217 tokens/round, −32 170 on a worst-case question — and the groups it
+withholds (thirteen now) are documented in that file next to the reason each gets told.
 
 Two lessons from doing it, both worth more than the tokens:
 
@@ -148,7 +149,7 @@ ratchet: 8 350 before, 8 350 after.
 
 ### 2. Shorter descriptions
 
-A description has two readers: a model choosing between 44 of them, and a
+A description has two readers: a model choosing between 26 of them, and a
 volunteer who will be acted upon by whatever it chooses. Say what the tool is
 FOR and when to reach for it. Do not explain how it works, do not restate the
 schema in prose, and do not apologise for its limits in three sentences where
@@ -168,9 +169,9 @@ one will do.
   of a card; one sentence back (*the default `show` presses NOTHING*) and the
   card went up. Ask the real window the shape a cut touched.
 
-The biggest now are `owa_slide_file` (~619, mostly its `items` schema — the
-cost of editing a text box's style), `owa_foreground` (~445) and
-`owa_guide_start` (~430).
+The biggest now (2026-10-29, `--stdio`) are `owa_slide_file` (~639, mostly its `items` schema — the
+cost of editing a text box's style), `owa_guide_start` (~573) and
+`owa_foreground` (~445).
 
 ### 3. Fewer rounds
 
@@ -226,7 +227,7 @@ Ask, in this order:
 4. Does the model actually reach for it, or is it a tool for a case you
    imagined? A tool nothing calls is worse than no tool.
 5. Does it have to reach the MODEL, or only the developer? `modelTools.mjs`
-   withholds 29 of the 53 and costs the developer nothing.
+   withholds 35 of the 64 the chatbot's door lists and costs the developer nothing.
 
 Then run `--ratchet`. If it fails, either the tool is worth raising
 `MODEL_TOKEN_CEILING` for — say so in the same change — or it is not.
