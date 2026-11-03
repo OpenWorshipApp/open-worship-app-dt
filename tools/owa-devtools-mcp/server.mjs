@@ -9,8 +9,10 @@
 
 import { createMcpServer } from 'chrome-devtools-mcp';
 import { parseArguments } from 'chrome-devtools-mcp/build/src/config/mcp-options.js';
+import { puppeteer } from 'chrome-devtools-mcp/build/src/third_party/index.js';
 import { VERSION } from 'chrome-devtools-mcp/build/src/version.js';
 
+import { skipDevToolsTargets } from './devToolsTargets.mjs';
 import { resolveAppBrowserUrl } from './discovery.mjs';
 import { guardToolCalls } from './firewall.mjs';
 import { watchToolCalls } from './notify.mjs';
@@ -24,41 +26,45 @@ import { registerOwaTools } from './owaTools.mjs';
  * the user's files, e.g. who installed a Bible.
  */
 export async function createOwaMcpServer({
-    argv = [],
-    logFile,
-    door = 'stdio',
+  argv = [],
+  logFile,
+  door = 'stdio',
 } = {}) {
-    const args = parseArguments(VERSION, ['node', 'owa-devtools-mcp', ...argv]);
-    // Two reasons, both hard requirements:
-    //  - chrome-devtools-mcp's telemetry is a process-wide singleton that
-    //    THROWS on a second `createMcpServer`, and the app serves one server
-    //    per MCP session ("ClearcutLogger is already initialized" -> every
-    //    session after the first one dies);
-    //  - it would report usage from the operator's machine to Google, which an
-    //    app that runs in a church back room has no business doing.
-    args.usageStatistics = false;
-    Object.defineProperty(args, 'browserUrl', {
-        get: () => resolveAppBrowserUrl(),
-        configurable: true,
-        enumerable: true,
-    });
-    const { server } = await createMcpServer(args, { logFile });
-    registerOwaTools(server, { door });
-    // Wrapped here rather than at each transport: the stdio bin and the
-    // in-app HTTP host both reach the window through this one server, and a
-    // click nobody in the room made must say who made it. Set
-    // OWA_MCP_NOTICE=0 to run without the banner.
-    const connect = server.connect.bind(server);
-    server.connect = async (transport) => {
-        const connected = await connect(transport);
-        // After, never before: the SDK chains whatever handler it finds.
-        watchToolCalls(transport);
-        // Last, so it is the OUTERMOST wrapper and therefore runs FIRST. The
-        // order is load-bearing: a call the firewall refuses must not also
-        // raise a banner telling the user the app just did it. See
-        // `firewall.mjs` for what it refuses and why.
-        guardToolCalls(transport);
-        return connected;
-    };
-    return { server, args };
+  const args = parseArguments(VERSION, ['node', 'owa-devtools-mcp', ...argv]);
+  // Two reasons, both hard requirements:
+  //  - chrome-devtools-mcp's telemetry is a process-wide singleton that
+  //    THROWS on a second `createMcpServer`, and the app serves one server
+  //    per MCP session ("ClearcutLogger is already initialized" -> every
+  //    session after the first one dies);
+  //  - it would report usage from the operator's machine to Google, which an
+  //    app that runs in a church back room has no business doing.
+  args.usageStatistics = false;
+  Object.defineProperty(args, 'browserUrl', {
+    get: () => resolveAppBrowserUrl(),
+    configurable: true,
+    enumerable: true,
+  });
+  // Before the first connection: a DevTools window is never a page to the
+  // browser tools -- on Chromium 128 it hung every one of them, and its
+  // console has Node. See `devToolsTargets.mjs`.
+  skipDevToolsTargets(puppeteer);
+  const { server } = await createMcpServer(args, { logFile });
+  registerOwaTools(server, { door });
+  // Wrapped here rather than at each transport: the stdio bin and the
+  // in-app HTTP host both reach the window through this one server, and a
+  // click nobody in the room made must say who made it. Set
+  // OWA_MCP_NOTICE=0 to run without the banner.
+  const connect = server.connect.bind(server);
+  server.connect = async (transport) => {
+    const connected = await connect(transport);
+    // After, never before: the SDK chains whatever handler it finds.
+    watchToolCalls(transport);
+    // Last, so it is the OUTERMOST wrapper and therefore runs FIRST. The
+    // order is load-bearing: a call the firewall refuses must not also
+    // raise a banner telling the user the app just did it. See
+    // `firewall.mjs` for what it refuses and why.
+    guardToolCalls(transport);
+    return connected;
+  };
+  return { server, args };
 }

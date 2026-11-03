@@ -16,83 +16,84 @@
 // talk to the main process over `require('electron').ipcRenderer` (renderers
 // run with node integration).
 
+import { checkIsDevToolsUrl } from './devToolsTargets.mjs';
 import { describeDeadPin, resolveCdpPort } from './discovery.mjs';
 
 let webSocketClassPromise = null;
 
 function getWebSocketClass() {
-    if (typeof globalThis.WebSocket === 'function') {
-        return Promise.resolve(globalThis.WebSocket);
-    }
-    webSocketClassPromise ??= import('ws').then((module) => {
-        return module.WebSocket ?? module.default;
-    });
-    return webSocketClassPromise;
+  if (typeof globalThis.WebSocket === 'function') {
+    return Promise.resolve(globalThis.WebSocket);
+  }
+  webSocketClassPromise ??= import('ws').then((module) => {
+    return module.WebSocket ?? module.default;
+  });
+  return webSocketClassPromise;
 }
 
 async function openSocket(url) {
-    const WebSocketClass = await getWebSocketClass();
-    return new WebSocketClass(url);
+  const WebSocketClass = await getWebSocketClass();
+  return new WebSocketClass(url);
 }
 
 export const PAGE_KINDS = {
-    presenter: 'presenter.html',
-    reader: 'reader.html',
-    editor: 'app-document-editor.html',
-    screen: 'screen.html',
-    setting: 'setting.html',
+  presenter: 'presenter.html',
+  reader: 'reader.html',
+  editor: 'app-document-editor.html',
+  screen: 'screen.html',
+  setting: 'setting.html',
 };
 
 // Which window a question is about, best first. An open DevTools window is a
 // `page` target too, and it was being picked as "the app" -- so app pages are
 // ranked explicitly and everything else is dropped.
 const APP_PAGE_RANK = [
-    PAGE_KINDS.presenter,
-    PAGE_KINDS.reader,
-    'appDocumentEditor.html',
-    'lyricEditor.html',
-    'bibleNote.html',
-    'markdownPreview.html',
-    'webEditor.html',
-    PAGE_KINDS.setting,
-    'about.html',
-    // The chatbot window asking about itself is never the answer.
-    'chatbot.html',
-    // The AI Chat window is somebody else's site in a box; ranked so a
-    // developer can still drive its own page, never picked over the app.
-    'aichat.html',
-    PAGE_KINDS.screen,
+  PAGE_KINDS.presenter,
+  PAGE_KINDS.reader,
+  'appDocumentEditor.html',
+  'lyricEditor.html',
+  'bibleNote.html',
+  'markdownPreview.html',
+  'webEditor.html',
+  PAGE_KINDS.setting,
+  'about.html',
+  // The chatbot window asking about itself is never the answer.
+  'chatbot.html',
+  // The AI Chat window is somebody else's site in a box; ranked so a
+  // developer can still drive its own page, never picked over the app.
+  'aichat.html',
+  PAGE_KINDS.screen,
 ];
 
 function getPageRank(url) {
-    const index = APP_PAGE_RANK.findIndex((pageName) => {
-        return url.includes(pageName);
-    });
-    return index === -1 ? APP_PAGE_RANK.length : index;
+  const index = APP_PAGE_RANK.findIndex((pageName) => {
+    return url.includes(pageName);
+  });
+  return index === -1 ? APP_PAGE_RANK.length : index;
 }
 
 export async function listTargets(port) {
-    const res = await fetch(`http://127.0.0.1:${port}/json/list`, {
-        signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) {
-        throw new Error(`CDP /json/list answered ${res.status}`);
-    }
-    const targets = await res.json();
-    return targets.filter((target) => {
-        return (
-            target.type === 'page' &&
-            typeof target.url === 'string' &&
-            !target.url.startsWith('devtools://')
-        );
-    });
+  const res = await fetch(`http://127.0.0.1:${port}/json/list`, {
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok) {
+    throw new Error(`CDP /json/list answered ${res.status}`);
+  }
+  const targets = await res.json();
+  return targets.filter((target) => {
+    return (
+      target.type === 'page' &&
+      typeof target.url === 'string' &&
+      !checkIsDevToolsUrl(target.url)
+    );
+  });
 }
 
 export async function getVersion(port) {
-    const res = await fetch(`http://127.0.0.1:${port}/json/version`, {
-        signal: AbortSignal.timeout(5000),
-    });
-    return res.ok ? await res.json() : null;
+  const res = await fetch(`http://127.0.0.1:${port}/json/version`, {
+    signal: AbortSignal.timeout(5000),
+  });
+  return res.ok ? await res.json() : null;
 }
 
 /**
@@ -101,43 +102,44 @@ export async function getVersion(port) {
  * asking for help while looking at it.
  */
 export function pickTarget(targets, match) {
-    if (match) {
-        return (
-            // A window by its id first (2026-10-15, the chatbot's window
-            // picker): two Bible Reader windows have the same address, so
-            // only the id tells one from the other. An address is never a
-            // target id, so nothing that matched before matches otherwise.
-            targets.find((target) => target.id === match) ??
-            targets.find((target) => target.url === match) ??
-            targets.find((target) => {
-                return target.url.includes(match);
-            }) ?? null
-        );
-    }
+  if (match) {
     return (
-        [...targets].sort((one, other) => {
-            return getPageRank(one.url) - getPageRank(other.url);
-        })[0] ?? null
+      // A window by its id first (2026-10-15, the chatbot's window
+      // picker): two Bible Reader windows have the same address, so
+      // only the id tells one from the other. An address is never a
+      // target id, so nothing that matched before matches otherwise.
+      targets.find((target) => target.id === match) ??
+      targets.find((target) => target.url === match) ??
+      targets.find((target) => {
+        return target.url.includes(match);
+      }) ??
+      null
     );
+  }
+  return (
+    [...targets].sort((one, other) => {
+      return getPageRank(one.url) - getPageRank(other.url);
+    })[0] ?? null
+  );
 }
 
 export async function requireLivePort(port) {
-    const livePort = await resolveCdpPort({ port });
-    if (livePort === null) {
-        // A pin that is dead is a different problem from no app at all, and
-        // the old message said the second for both -- so a script pinned to a
-        // restarted dev app read "start the app" with the app right there.
-        throw new Error(
-            describeDeadPin() ??
-                'No running Open Worship App was found. Start the app (or ' +
-                    '`npm run dev`) and try again.',
-        );
-    }
-    return livePort;
+  const livePort = await resolveCdpPort({ port });
+  if (livePort === null) {
+    // A pin that is dead is a different problem from no app at all, and
+    // the old message said the second for both -- so a script pinned to a
+    // restarted dev app read "start the app" with the app right there.
+    throw new Error(
+      describeDeadPin() ??
+        'No running Open Worship App was found. Start the app (or ' +
+          '`npm run dev`) and try again.',
+    );
+  }
+  return livePort;
 }
 
 function sendCommand(socket, id, method, params) {
-    socket.send(JSON.stringify({ id, method, params }));
+  socket.send(JSON.stringify({ id, method, params }));
 }
 
 /**
@@ -152,75 +154,74 @@ function sendCommand(socket, id, method, params) {
  * ride along in a model's context for the rest of the question.
  */
 export function toPageErrorMessage(description) {
-    const text = String(description ?? '');
-    const lines = text.split(/\r?\n/);
-    const firstFrame = lines.findIndex((line) => /^\s+at\s/.test(line));
-    const message = (firstFrame === -1 ? lines : lines.slice(0, firstFrame))
-        .join('\n')
-        .trim();
-    return message.replace(/^Error:\s*/, '') || text;
+  const text = String(description ?? '');
+  const lines = text.split(/\r?\n/);
+  const firstFrame = lines.findIndex((line) => /^\s+at\s/.test(line));
+  const message = (firstFrame === -1 ? lines : lines.slice(0, firstFrame))
+    .join('\n')
+    .trim();
+  return message.replace(/^Error:\s*/, '') || text;
 }
 
 export async function evaluateInTarget(target, expression, timeout = 15000) {
-    const socket = await openSocket(target.webSocketDebuggerUrl);
-    return await new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-            socket.close();
-            reject(new Error(`Timed out evaluating in ${target.url}`));
-        }, timeout);
-        const finish = (error, value) => {
-            clearTimeout(timeoutId);
-            try {
-                socket.close();
-            } catch {
-                // Already closing.
-            }
-            if (error) {
-                reject(error);
-            } else {
-                resolve(value);
-            }
-        };
-        socket.addEventListener('error', () => {
-            finish(new Error(`Could not attach to ${target.url}`));
-        });
-        socket.addEventListener('open', () => {
-            sendCommand(socket, 1, 'Runtime.evaluate', {
-                expression,
-                returnByValue: true,
-                awaitPromise: true,
-                allowUnsafeEvalBlockedByCSP: true,
-            });
-        });
-        socket.addEventListener('message', (event) => {
-            let message;
-            try {
-                message = JSON.parse(event.data);
-            } catch {
-                return;
-            }
-            if (message.id !== 1) {
-                return;
-            }
-            if (message.error) {
-                finish(new Error(message.error.message));
-                return;
-            }
-            const { result, exceptionDetails } = message.result ?? {};
-            if (exceptionDetails) {
-                finish(
-                    new Error(
-                        toPageErrorMessage(
-                            exceptionDetails.exception?.description ??
-                                exceptionDetails.text,
-                        ),
-                    ),
-                );
-                return;
-            }
-            finish(null, result?.value);
-        });
+  const socket = await openSocket(target.webSocketDebuggerUrl);
+  return await new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      socket.close();
+      reject(new Error(`Timed out evaluating in ${target.url}`));
+    }, timeout);
+    const finish = (error, value) => {
+      clearTimeout(timeoutId);
+      try {
+        socket.close();
+      } catch {
+        // Already closing.
+      }
+      if (error) {
+        reject(error);
+      } else {
+        resolve(value);
+      }
+    };
+    socket.addEventListener('error', () => {
+      finish(new Error(`Could not attach to ${target.url}`));
     });
+    socket.addEventListener('open', () => {
+      sendCommand(socket, 1, 'Runtime.evaluate', {
+        expression,
+        returnByValue: true,
+        awaitPromise: true,
+        allowUnsafeEvalBlockedByCSP: true,
+      });
+    });
+    socket.addEventListener('message', (event) => {
+      let message;
+      try {
+        message = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      if (message.id !== 1) {
+        return;
+      }
+      if (message.error) {
+        finish(new Error(message.error.message));
+        return;
+      }
+      const { result, exceptionDetails } = message.result ?? {};
+      if (exceptionDetails) {
+        finish(
+          new Error(
+            toPageErrorMessage(
+              exceptionDetails.exception?.description ?? exceptionDetails.text,
+            ),
+          ),
+        );
+        return;
+      }
+      finish(null, result?.value);
+    });
+  });
 }
 
 /**
@@ -231,118 +232,113 @@ export async function evaluateInTarget(target, expression, timeout = 15000) {
  * gesture and a socket per step would let the page see them apart.
  */
 export async function runInTarget(target, stepList, timeout = 15000) {
-    const socket = await openSocket(target.webSocketDebuggerUrl);
-    return await new Promise((resolve, reject) => {
-        const resultList = [];
-        const waiterMap = new Map();
-        let isDone = false;
-        const timeoutId = setTimeout(() => {
-            finish(new Error(`Timed out acting in ${target.url}`));
-        }, timeout);
-        function finish(error, value) {
-            if (isDone) {
-                return;
-            }
-            isDone = true;
-            clearTimeout(timeoutId);
-            try {
-                socket.close();
-            } catch {
-                // Already closing.
-            }
-            if (error) {
-                reject(error);
-            } else {
-                resolve(value);
-            }
-        }
-        socket.addEventListener('error', () => {
-            finish(new Error(`Could not attach to ${target.url}`));
-        });
-        socket.addEventListener('message', (event) => {
-            let message;
-            try {
-                message = JSON.parse(event.data);
-            } catch {
-                return;
-            }
-            const waiter = waiterMap.get(message.id);
-            if (waiter !== undefined) {
-                waiterMap.delete(message.id);
-                waiter(message);
-            }
-        });
-        socket.addEventListener('open', async () => {
-            let lastId = 0;
-            for (const step of stepList) {
-                if (isDone) {
-                    return;
-                }
-                if (step.waitMs !== undefined) {
-                    await new Promise((done) => {
-                        setTimeout(done, step.waitMs);
-                    });
-                    continue;
-                }
-                lastId += 1;
-                const id = lastId;
-                const message = await new Promise((done) => {
-                    waiterMap.set(id, done);
-                    sendCommand(socket, id, step.method, step.params ?? {});
-                });
-                if (message.error) {
-                    finish(
-                        new Error(`${step.method}: ${message.error.message}`),
-                    );
-                    return;
-                }
-                resultList.push(message.result ?? {});
-            }
-            finish(null, resultList);
-        });
+  const socket = await openSocket(target.webSocketDebuggerUrl);
+  return await new Promise((resolve, reject) => {
+    const resultList = [];
+    const waiterMap = new Map();
+    let isDone = false;
+    const timeoutId = setTimeout(() => {
+      finish(new Error(`Timed out acting in ${target.url}`));
+    }, timeout);
+    function finish(error, value) {
+      if (isDone) {
+        return;
+      }
+      isDone = true;
+      clearTimeout(timeoutId);
+      try {
+        socket.close();
+      } catch {
+        // Already closing.
+      }
+      if (error) {
+        reject(error);
+      } else {
+        resolve(value);
+      }
+    }
+    socket.addEventListener('error', () => {
+      finish(new Error(`Could not attach to ${target.url}`));
     });
+    socket.addEventListener('message', (event) => {
+      let message;
+      try {
+        message = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      const waiter = waiterMap.get(message.id);
+      if (waiter !== undefined) {
+        waiterMap.delete(message.id);
+        waiter(message);
+      }
+    });
+    socket.addEventListener('open', async () => {
+      let lastId = 0;
+      for (const step of stepList) {
+        if (isDone) {
+          return;
+        }
+        if (step.waitMs !== undefined) {
+          await new Promise((done) => {
+            setTimeout(done, step.waitMs);
+          });
+          continue;
+        }
+        lastId += 1;
+        const id = lastId;
+        const message = await new Promise((done) => {
+          waiterMap.set(id, done);
+          sendCommand(socket, id, step.method, step.params ?? {});
+        });
+        if (message.error) {
+          finish(new Error(`${step.method}: ${message.error.message}`));
+          return;
+        }
+        resultList.push(message.result ?? {});
+      }
+      finish(null, resultList);
+    });
+  });
 }
 
 /** `evaluateInTarget`, resolving the live app and the page for the caller. */
-export async function evaluateInApp(
-    expression,
-    { port, match, timeout } = {},
-) {
-    const livePort = await requireLivePort(port);
-    const targets = await listTargets(livePort);
-    const target = pickTarget(targets, match);
-    if (target === null) {
-        // Name the pages that ARE open: "no presenter.html" with the main
-        // window on reader.html is the caller's cue to switch pages first,
-        // and it cannot say so without being told where the window is.
-        const openPages = targets
-            .map((one) => {
-                return one.url.replace(/^.*\//, '');
-            })
-            .join(', ');
-        throw new Error(
-            match
-                ? `The app has no open page matching "${match}". The open ` +
-                      `pages are: ${openPages}.`
-                : 'The app has no open page',
-        );
-    }
-    return {
-        port: livePort,
-        target,
-        // The windows as they were BEFORE the expression ran, so a caller
-        // can tell what it opened (`waitForNewAppPage`) without a second
-        // listing up front.
-        targets,
-        value: await evaluateInTarget(target, expression, timeout),
-    };
+export async function evaluateInApp(expression, { port, match, timeout } = {}) {
+  const livePort = await requireLivePort(port);
+  const targets = await listTargets(livePort);
+  const target = pickTarget(targets, match);
+  if (target === null) {
+    // Name the pages that ARE open: "no presenter.html" with the main
+    // window on reader.html is the caller's cue to switch pages first,
+    // and it cannot say so without being told where the window is.
+    const openPages = targets
+      .map((one) => {
+        return one.url.replace(/^.*\//, '');
+      })
+      .join(', ');
+    throw new Error(
+      match
+        ? `The app has no open page matching "${match}". The open ` +
+            `pages are: ${openPages}.`
+        : 'The app has no open page',
+    );
+  }
+  return {
+    port: livePort,
+    target,
+    // The windows as they were BEFORE the expression ran, so a caller
+    // can tell what it opened (`waitForNewAppPage`) without a second
+    // listing up front.
+    targets,
+    value: await evaluateInTarget(target, expression, timeout),
+  };
 }
 
 /** `presenter.html` out of `https://localhost:3000/presenter.html?x=1`. */
 export function toPageName(url) {
-    return String(url)
-        .replace(/[?#].*$/, '')
-        .replace(/^.*\//, '');
+  return String(url)
+    .replace(/[?#].*$/, '')
+    .replace(/^.*\//, '');
 }
 
 /**
@@ -355,21 +351,21 @@ export function toPageName(url) {
  * effect a press result exists to rule out.
  */
 export function listNewAppPages(before, after) {
-    const seenIds = new Set(
-        before.map((target) => {
-            return target.id;
-        }),
-    );
-    return after
-        .filter((target) => {
-            return (
-                !seenIds.has(target.id) &&
-                getPageRank(target.url) < APP_PAGE_RANK.length
-            );
-        })
-        .map((target) => {
-            return toPageName(target.url);
-        });
+  const seenIds = new Set(
+    before.map((target) => {
+      return target.id;
+    }),
+  );
+  return after
+    .filter((target) => {
+      return (
+        !seenIds.has(target.id) &&
+        getPageRank(target.url) < APP_PAGE_RANK.length
+      );
+    })
+    .map((target) => {
+      return toPageName(target.url);
+    });
 }
 
 /**
@@ -379,23 +375,23 @@ export function listNewAppPages(before, after) {
  * after the press misses most of them.
  */
 export async function waitForNewAppPage(port, before, waitMs, pollMs = 200) {
-    const deadline = Date.now() + waitMs;
-    for (;;) {
-        let found = [];
-        try {
-            found = listNewAppPages(before, await listTargets(port));
-        } catch (_error) {
-            // The app went away mid-question; nothing can be said either way.
-            return null;
-        }
-        if (found.length > 0) {
-            return found[0];
-        }
-        if (Date.now() >= deadline) {
-            return null;
-        }
-        await new Promise((resolve) => {
-            setTimeout(resolve, pollMs);
-        });
+  const deadline = Date.now() + waitMs;
+  for (;;) {
+    let found = [];
+    try {
+      found = listNewAppPages(before, await listTargets(port));
+    } catch (_error) {
+      // The app went away mid-question; nothing can be said either way.
+      return null;
     }
+    if (found.length > 0) {
+      return found[0];
+    }
+    if (Date.now() >= deadline) {
+      return null;
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, pollMs);
+    });
+  }
 }

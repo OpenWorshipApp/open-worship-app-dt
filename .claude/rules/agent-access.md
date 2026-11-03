@@ -300,3 +300,15 @@ version, userDataPath, startedAt}` — one file per live instance, swept when a 
 telemetry is a process-wide singleton that throws on the second
 `createMcpServer` (one per MCP session), and it would phone home from the
 operator's machine.
+
+**Nor do its tools ever see a DevTools window** (2026-11-02,
+`devToolsTargets.mjs`, applied in `createOwaMcpServer` to the puppeteer
+chrome-devtools-mcp imports, which offers no option for it). It connects with
+`handleDevToolsAsPage: true` and a filter that keeps `devtools://` pages, and
+on the Electron 32 build (Chromium 128) the DevTools front end never answers an
+outside client: with DevTools open, `Network.enable` timed out and
+`list_pages`, `take_snapshot` and every other page tool hung on BOTH doors —
+48 ms with the window skipped. It is also reach: a DevTools console evaluates
+in a renderer with Node, the reach `evaluate_script` is refused for and
+`owa_menu` refuses Toggle Developer Tools for. The `owa_*` tools already
+skipped it (`listPageTargets`, the same `checkIsDevToolsUrl`).

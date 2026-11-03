@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   watchToolCalls: vi.fn(),
   guardToolCalls: vi.fn(),
   order: [],
+  puppeteer: { connect: null },
 }));
 
 vi.mock('chrome-devtools-mcp', () => ({
@@ -18,6 +19,9 @@ vi.mock('chrome-devtools-mcp', () => ({
 }));
 vi.mock('chrome-devtools-mcp/build/src/config/mcp-options.js', () => ({
   parseArguments: mocks.parseArguments,
+}));
+vi.mock('chrome-devtools-mcp/build/src/third_party/index.js', () => ({
+  puppeteer: mocks.puppeteer,
 }));
 vi.mock('chrome-devtools-mcp/build/src/version.js', () => ({
   VERSION: '9.9.9',
@@ -37,6 +41,7 @@ let innerServer;
 
 beforeEach(() => {
   mocks.order.length = 0;
+  mocks.puppeteer.connect = vi.fn((options) => options);
   innerServer = {
     connect: vi.fn(async () => {
       mocks.order.push('connect');
@@ -92,6 +97,28 @@ describe('createOwaMcpServer', () => {
     expect(mocks.registerOwaTools).toHaveBeenLastCalledWith(innerServer, {
       door: 'app',
     });
+  });
+
+  it('hides DevTools windows from the browser tools before they connect', async () => {
+    const innerConnect = vi.fn((options) => options);
+    mocks.puppeteer.connect = innerConnect;
+    let connectWhenCreated = null;
+    mocks.createMcpServer.mockImplementation(async () => {
+      connectWhenCreated = mocks.puppeteer.connect;
+      return { server: innerServer };
+    });
+    await createOwaMcpServer();
+    expect(connectWhenCreated).not.toBe(innerConnect);
+    const options = mocks.puppeteer.connect({ targetFilter: () => true });
+    const page = (url) => ({ url: () => url });
+    expect(
+      options.targetFilter(
+        page('devtools://devtools/bundled/devtools_app.html'),
+      ),
+    ).toBe(false);
+    expect(
+      options.targetFilter(page('https://localhost:3000/reader.html')),
+    ).toBe(true);
   });
 
   it('wraps every transport with the banner, then the firewall outermost', async () => {
