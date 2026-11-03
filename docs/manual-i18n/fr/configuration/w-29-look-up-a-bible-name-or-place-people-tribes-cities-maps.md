@@ -3,7 +3,7 @@ id: W-29
 title: "Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)"
 section: "Configuration"
 lang: fr
-translatedFrom: cfcb186e0cf4d093
+translatedFrom: ce464bc863832a9a
 ---
 # W-29 — Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)
 
@@ -190,8 +190,10 @@ votre lecture de la Bible.
     **[en:tran:Another verse]**. Ou tapez-le : _apprends-moi le vocabulaire_ ouvre la liste des
     versets, et _explique chaque mot du verset 1_ enseigne aussitôt les mots du verset 1. 📸
 
-**Astuce :** le texte de la recherche grandit et rétrécit avec le texte de votre Bible, donc le curseur
-de police de la Bible (ou **Ctrl+Scroll** sur les versets) redimensionne aussi ces fenêtres.
+**Astuce :** le texte de la fenêtre d'une personne, d'un lieu ou d'un passage grandit et rétrécit avec le
+texte de votre Bible, donc le curseur de police de la Bible (ou **Ctrl+Scroll** sur les versets) le
+redimensionne aussi. La liste des noms et des lieux et les petits boutons de la barre de titre d'une
+fenêtre gardent leur taille.
 
 **À propos de ce qui est traduit :** le type et le **[en:tran:Gender]** d'une personne et le
 **[en:tran:Type]** d'un lieu s'affichent dans la langue de recherche — Jacob est **ប្រុស**, la piscine de

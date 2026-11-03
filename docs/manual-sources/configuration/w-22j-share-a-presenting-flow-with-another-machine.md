@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-29"
+workflowsVersion: "2026-11-02"
 ---
 # W-22j — Share a presenting flow with another machine
 

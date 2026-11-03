@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126, CB-149, CB-154, CB-162]
 screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-10-29"
+workflowsVersion: "2026-11-02"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -193,8 +193,9 @@ your Bible reading.
     _teach me the vocabulary_ opens the verse list, and _explain each word in verse 1_
     teaches verse 1's words straight away. 📸
 
-**Tip:** the lookup text grows and shrinks with your Bible text, so the bible font
-slider (or **Ctrl+Scroll** on the verses) resizes these windows too.
+**Tip:** the text of a person's, place's or passage's window grows and shrinks with your
+Bible text, so the bible font slider (or **Ctrl+Scroll** on the verses) resizes it too. The
+list of names and places and the small buttons on a window's title bar keep their size.
 
 **A note on what is translated:** a person's kind and **[en:tran:Gender]** and a place's **[en:tran:Type]**
 come in the lookup language — Jacob is **ប្រុស**, the Pool of Siloam a **ស្រះ** — because each
@@ -206,5 +207,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126` · `CB-149` · `CB-154` · `CB-162`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-10-29).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-02).
 :::

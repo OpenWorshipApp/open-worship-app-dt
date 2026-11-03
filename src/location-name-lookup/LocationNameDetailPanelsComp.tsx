@@ -368,12 +368,9 @@ function RenderDetailPanelComp({
                         ' px-2 app-selectable-text'
                     }
                     data-no-widget-drag="true"
-                    // Zoomed with the SAME factor as the body, so the record's
-                    // name in the title bar reads at the bible text's size too
-                    // rather than staying at the widget chrome's default — and
-                    // set in the same font for the same reason. The title is the
-                    // record's own name, but it renders in the widget CHROME,
-                    // which is outside the body that carries that font.
+                    // Set in the body's font: the title is the record's own
+                    // name, but it renders in the widget CHROME, which is
+                    // outside the body that carries that font.
                     //
                     // A verse panel is the exception: its title is a
                     // reference written by a BIBLE, not a record name, so it
@@ -383,7 +380,6 @@ function RenderDetailPanelComp({
                     // all and so leaves the chrome exactly as it was.
                     style={{
                         cursor: 'text',
-                        fontSize: `${textScale}em`,
                         fontFamily:
                             panel.kind === 'verse'
                                 ? verseFontFamily
@@ -405,17 +401,28 @@ function RenderDetailPanelComp({
                             title={title}
                         />
                     ) : null}
-                    <span className="text-truncate">{title}</span>
-                    {kjvName === '' ? null : (
-                        <span
-                            className={
-                                'text-truncate' +
-                                ' location-name-lookup__kjv-name'
-                            }
-                        >
-                            ({kjvName})
-                        </span>
-                    )}
+                    {/* Only the record's name or the reference reads at the
+                        bible text's size, with the same factor as the body;
+                        the 🤖, graph and 👁 buttons and a verse's bible key
+                        stay at the chrome's size (2026-11-02, the user with
+                        those circled: _remove the text zoom (bible text
+                        font-size) from area I highlighted_). */}
+                    <span
+                        className="d-inline-flex align-items-center gap-2 text-truncate"
+                        style={{ fontSize: `${textScale}em` }}
+                    >
+                        <span className="text-truncate">{title}</span>
+                        {kjvName === '' ? null : (
+                            <span
+                                className={
+                                    'text-truncate' +
+                                    ' location-name-lookup__kjv-name'
+                                }
+                            >
+                                ({kjvName})
+                            </span>
+                        )}
+                    </span>
                     {panel.kind === 'verse' ? (
                         <RenderOpenInLookupButtonComp
                             shortVerse={panel.target}
