@@ -156,3 +156,30 @@ describe('runInTarget', () => {
     ).rejects.toThrow('Input.dispatchDragEvent: No such drag');
   });
 });
+
+// Electron 32's main process runs Node 20, which has no global `WebSocket`:
+// every app-level tool had answered "WebSocket is not defined".
+describe('a runtime without a global WebSocket', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.doUnmock('ws');
+    vi.resetModules();
+  });
+
+  it('talks to the page through the `ws` package instead', async () => {
+    const sockets = stubWebSocket(() => {
+      return { result: { result: { value: 42 } } };
+    });
+    const FakeWebSocket = globalThis.WebSocket;
+    vi.stubGlobal('WebSocket', undefined);
+    vi.resetModules();
+    vi.doMock('ws', () => {
+      return { default: FakeWebSocket, WebSocket: FakeWebSocket };
+    });
+    const { evaluateInTarget } = await import('./cdp.mjs');
+    const target = { url: 'x', webSocketDebuggerUrl: 'ws://x' };
+    await expect(evaluateInTarget(target, '6 * 7')).resolves.toBe(42);
+    expect(sockets).toHaveLength(1);
+    expect(sockets[0].isClosed).toBe(true);
+  });
+});

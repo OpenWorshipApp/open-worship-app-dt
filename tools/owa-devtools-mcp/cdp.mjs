@@ -2,9 +2,13 @@
 //
 // The browser tools come from chrome-devtools-mcp (puppeteer); this is the
 // small side door the OWA tools use to ask the running app a question. It is
-// deliberately tiny and dependency-free -- Node 22 / Electron 43 both have a
-// global `WebSocket` -- and every call opens and closes its own socket, so
+// deliberately tiny, and every call opens and closes its own socket, so
 // nothing here holds a connection (or memory) between questions.
+//
+// Node 22+ (Electron 33+) has a global `WebSocket`; Electron 32's main process
+// runs Node 20, which does not, and every app-level tool answered "WebSocket is
+// not defined". There -- and only there -- the root's `ws` stands in, loaded
+// once on first need (it is unpacked beside this folder, `asarUnpack`).
 //
 // Evaluated expressions must never `import()` an app module: a dynamic import
 // re-runs module top-level code, and the app installs `document.onkeydown`
@@ -13,6 +17,23 @@
 // run with node integration).
 
 import { describeDeadPin, resolveCdpPort } from './discovery.mjs';
+
+let webSocketClassPromise = null;
+
+function getWebSocketClass() {
+    if (typeof globalThis.WebSocket === 'function') {
+        return Promise.resolve(globalThis.WebSocket);
+    }
+    webSocketClassPromise ??= import('ws').then((module) => {
+        return module.WebSocket ?? module.default;
+    });
+    return webSocketClassPromise;
+}
+
+async function openSocket(url) {
+    const WebSocketClass = await getWebSocketClass();
+    return new WebSocketClass(url);
+}
 
 export const PAGE_KINDS = {
     presenter: 'presenter.html',
@@ -140,9 +161,9 @@ export function toPageErrorMessage(description) {
     return message.replace(/^Error:\s*/, '') || text;
 }
 
-export function evaluateInTarget(target, expression, timeout = 15000) {
-    return new Promise((resolve, reject) => {
-        const socket = new WebSocket(target.webSocketDebuggerUrl);
+export async function evaluateInTarget(target, expression, timeout = 15000) {
+    const socket = await openSocket(target.webSocketDebuggerUrl);
+    return await new Promise((resolve, reject) => {
         const timeoutId = setTimeout(() => {
             socket.close();
             reject(new Error(`Timed out evaluating in ${target.url}`));
@@ -209,9 +230,9 @@ export function evaluateInTarget(target, expression, timeout = 15000) {
  * drop of real files (`owa_drop_files`) -- where the steps belong to one
  * gesture and a socket per step would let the page see them apart.
  */
-export function runInTarget(target, stepList, timeout = 15000) {
-    return new Promise((resolve, reject) => {
-        const socket = new WebSocket(target.webSocketDebuggerUrl);
+export async function runInTarget(target, stepList, timeout = 15000) {
+    const socket = await openSocket(target.webSocketDebuggerUrl);
+    return await new Promise((resolve, reject) => {
         const resultList = [];
         const waiterMap = new Map();
         let isDone = false;

@@ -83,7 +83,8 @@
             "electron-build/**/*",
             "dist/**/*.gz.bundle",
             "tools/owa-devtools-mcp/**/*",
-            "node_modules/chrome-devtools-mcp/**/*"
+            "node_modules/chrome-devtools-mcp/**/*",
+            "node_modules/ws/**/*"
         ],
         "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
         "dmg": {
