@@ -616,6 +616,7 @@ export function connectWebScreen(): Promise<WebScreenConnectionType> {
             ytUtils: { getYTHelper: () => Promise.reject(new Error('No yt')) },
             fontUtils: { getFonts: () => Promise.resolve({}) },
             databaseUtils: {
+                checkIsSupported: () => false,
                 getSQLiteDatabaseInstance: () => {
                     return Promise.reject(new Error('No database'));
                 },

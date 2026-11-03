@@ -225,6 +225,7 @@ export type AppProviderType = Readonly<
         reload: () => void;
         appUtils: AppUtilsType;
         databaseUtils: {
+            checkIsSupported: () => boolean;
             getSQLiteDatabaseInstance: (
                 databaseName: string,
             ) => Promise<SQLiteDatabaseType>;

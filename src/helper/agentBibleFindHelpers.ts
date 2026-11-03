@@ -491,16 +491,24 @@ async function findVerses(
     if (database === null) {
         // A Bible downloaded in the old format is searched by Bible Find's
         // online service, which reads the words as one phrase, in order.
+        // So is any Bible on a runtime with no `node:sqlite` (Electron 32),
+        // by the plain find, which also reads the words in order.
         const online = controller.onlineFindHandler;
-        if (online === null) {
-            return toReason(`The Bible ${bibleKey} cannot be searched.`);
-        }
-        const result = await online.doFinding({
+        const plain = controller.plainFindHandler ?? null;
+        const findData = {
             text: terms.join(' '),
             bookKeys,
             fromLineNumber: from,
             toLineNumber: from + limit - 1,
-        });
+        };
+        let result;
+        if (online !== null) {
+            result = await online.doFinding(findData);
+        } else if (plain !== null) {
+            result = await plain.doFinding(bibleKey, findData);
+        } else {
+            return toReason(`The Bible ${bibleKey} cannot be searched.`);
+        }
         const verses = (result?.content ?? [])
             .map((item) => parseFoundVerseRow(item.text))
             .filter((row) => row !== null)
@@ -516,8 +524,9 @@ async function findVerses(
             total: result?.maxLineNumber ?? verses.length,
             verses,
             note:
-                'This Bible is searched online, as one phrase in the order ' +
-                'given: try fewer words, or other ones, if nothing came back.',
+                `This Bible is searched ${online === null ? 'offline' : 'online'}, ` +
+                'as one phrase in the order given: try fewer words, or other ' +
+                'ones, if nothing came back.',
         };
     }
     const verseCount = Number(

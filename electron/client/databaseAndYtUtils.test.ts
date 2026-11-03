@@ -37,6 +37,10 @@ describe('databaseUtils', () => {
         vi.restoreAllMocks();
     });
 
+    test('reports SQLite as supported on a runtime that has node:sqlite', () => {
+        expect(databaseUtils.checkIsSupported()).toBe(true);
+    });
+
     test('opens SQLite with FTS support and delegates table operations', async () => {
         const db = await databaseUtils.getSQLiteDatabaseInstance(':memory:');
         db.createTable('CREATE TABLE notes (text TEXT)');

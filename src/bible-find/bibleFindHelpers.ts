@@ -337,28 +337,7 @@ export function toFindPageWindow(
  * added -- comes first, since Tab takes the top one: bm25 put `pharaohhophra`
  * (one verse) above `pharaoh` (hundreds), and Tab completed `pharao` to it.
  */
-export function rankSuggestionWords(words: string[], attemptingWord: string) {
-    const needle = attemptingWord.toLowerCase();
-    const rankOf = (word: string) => {
-        const lowerWord = word.toLowerCase();
-        if (lowerWord.startsWith(needle)) {
-            return 0;
-        }
-        return lowerWord.includes(needle) ? 1 : 2;
-    };
-    return words
-        .map((word, index) => ({ word, index, rank: rankOf(word) }))
-        .sort((a, b) => {
-            if (a.rank !== b.rank) {
-                return a.rank - b.rank;
-            }
-            if (a.rank === 0 && a.word.length !== b.word.length) {
-                return a.word.length - b.word.length;
-            }
-            return a.index - b.index;
-        })
-        .map(({ word }) => word);
-}
+export { rankSuggestionWords } from './suggestionWordHelpers';
 
 const graphemeSegmenter = new Intl.Segmenter(undefined, {
     granularity: 'grapheme',

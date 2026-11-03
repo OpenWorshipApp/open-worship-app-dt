@@ -8,11 +8,13 @@ const fixture = vi.hoisted(() => ({
     getAll: vi.fn(),
     close: vi.fn(),
     getSQLiteDatabaseInstance: vi.fn(),
+    checkIsSupported: vi.fn(),
     readFileData: vi.fn(),
     appApiFetch: vi.fn(),
     fsCheckFileExist: vi.fn(),
     fsDeleteFile: vi.fn(),
     fsWriteFile: vi.fn(),
+    fsReadFile: vi.fn(),
     ensureBibleXMLCachedBasePath: vi.fn(),
     getBibleXMLDataFromKey: vi.fn(),
     getAllXMLFileKeys: vi.fn(),
@@ -29,6 +31,7 @@ const fixture = vi.hoisted(() => ({
 vi.mock('../server/appProvider', () => ({
     default: {
         databaseUtils: {
+            checkIsSupported: fixture.checkIsSupported,
             getSQLiteDatabaseInstance: fixture.getSQLiteDatabaseInstance,
         },
     },
@@ -48,6 +51,7 @@ vi.mock('../server/fileHelpers', () => ({
     fsCheckFileExist: fixture.fsCheckFileExist,
     fsDeleteFile: fixture.fsDeleteFile,
     fsWriteFile: fixture.fsWriteFile,
+    fsReadFile: fixture.fsReadFile,
     pathJoin: (...parts: string[]) => parts.join('/'),
 }));
 vi.mock('../setting/bible-setting/bibleXMLHelpers', () => ({
@@ -126,6 +130,7 @@ beforeEach(() => {
     vi.clearAllMocks();
     fixture.selectedBooks = [];
     fixture.getSQLiteDatabaseInstance.mockResolvedValue(db);
+    fixture.checkIsSupported.mockReturnValue(true);
     fixture.readFileData.mockResolvedValue('<XMLBIBLE/>');
     fixture.xmlTextToJson.mockResolvedValue({ info: { key: 'KJV' } });
     fixture.ensureBibleXMLCachedBasePath.mockResolvedValue('cache');
@@ -358,6 +363,50 @@ describe('Bible Find controller edge paths', () => {
             await BibleFindController.getOnlineInstant(controller),
         ).toBeNull();
         expect(controller.onlineFindHandler).toBeNull();
+    });
+
+    it('builds and searches a plain index instead of SQLite when node:sqlite is missing', async () => {
+        fixture.checkIsSupported.mockReturnValue(false);
+        fixture.fsCheckFileExist.mockResolvedValue(false);
+        const controller = await makeDatabaseController();
+        expect(fixture.getSQLiteDatabaseInstance).not.toHaveBeenCalled();
+        expect(controller.databaseFindHandler).toBeNull();
+        expect(controller.plainFindHandler).not.toBeNull();
+        const written = new Map<string, string>(
+            fixture.fsWriteFile.mock.calls.map(([path, text]) => [path, text]),
+        );
+        expect(written.get('cache/KJV2.plain.json-success')).toBe('success');
+        const index = JSON.parse(written.get('cache/KJV2.plain.json') ?? '');
+        expect(index.verses).toEqual([
+            ['John.3:16=>For God so loved the world', 'forgodsolovedtheworld'],
+            ['John.3:17=>For God sent not', 'forgodsentnot'],
+        ]);
+        expect(index.words).toContainEqual(['loved', 'John']);
+
+        const found = await controller.doFinding({ text: 'god loved' });
+        expect(found?.maxLineNumber).toBe(1);
+        expect(found?.content.map((item) => item.text)).toEqual([
+            'John.3:16:For God so loved the world',
+        ]);
+        expect(await controller.loadSuggestionWords('lov')).toEqual(['loved']);
+        expect(fixture.fsReadFile).not.toHaveBeenCalled();
+    });
+
+    it('reads an already built plain index from disk', async () => {
+        fixture.checkIsSupported.mockReturnValue(false);
+        fixture.fsReadFile.mockResolvedValue(
+            JSON.stringify({
+                verses: [['John.3:16=>For God so loved', 'forgodsoloved']],
+                words: [['loved', 'John']],
+            }),
+        );
+        const controller = await makeDatabaseController();
+        expect(fixture.fsWriteFile).not.toHaveBeenCalled();
+        const found = await controller.doFinding({ text: 'loved' });
+        expect(fixture.fsReadFile).toHaveBeenCalledWith(
+            'cache/KJV2.plain.json',
+        );
+        expect(found?.maxLineNumber).toBe(1);
     });
 
     it('has no search database path when the XML cannot be read, parsed or cached', async () => {

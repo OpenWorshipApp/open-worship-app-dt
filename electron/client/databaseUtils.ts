@@ -7,6 +7,21 @@ import {
 } from '../electronHelpers';
 
 // https://nodejs.org/docs/latest-v22.x/api/sqlite.html
+// `node:sqlite` exists from Node 22.5 (Electron 35+). The Electron 32 build
+// for older Intel Macs runs Node 20, where requiring it throws "No such
+// built-in module" -- callers ask `checkIsSupported()` first and fall back.
+let isSQLiteSupported: boolean | null = null;
+function checkIsSQLiteSupported() {
+    if (isSQLiteSupported === null) {
+        try {
+            require('node:sqlite');
+            isSQLiteSupported = true;
+        } catch (_error) {
+            isSQLiteSupported = false;
+        }
+    }
+    return isSQLiteSupported;
+}
 
 function getFileExt() {
     if (isWindows) {
@@ -33,6 +48,11 @@ class SQLiteDatabase {
         this.databaseFilePath = databaseFilePath;
     }
     async initExtension() {
+        if (!checkIsSQLiteSupported()) {
+            throw new Error(
+                `SQLite is not supported by this runtime (Node ${process.versions.node})`,
+            );
+        }
         const { DatabaseSync } = require('node:sqlite');
         const database = new DatabaseSync(this.databaseFilePath, {
             allowExtension: true,
@@ -59,6 +79,9 @@ class SQLiteDatabase {
 }
 
 const databaseUtils = {
+    checkIsSupported() {
+        return checkIsSQLiteSupported();
+    },
     async getSQLiteDatabaseInstance(databaseFilePath: string) {
         const db = new SQLiteDatabase(databaseFilePath);
         await db.initExtension();

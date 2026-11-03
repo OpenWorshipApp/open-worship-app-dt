@@ -33,12 +33,11 @@ import type {
     BibleFindResultType,
     SelectedBookKeyType,
 } from './bibleFindHelpers';
-import {
-    calcPerPage,
-    findOnline,
-    rankSuggestionWords,
-    toFindWildCardText,
-} from './bibleFindHelpers';
+import { findOnline } from './bibleFindHelpers';
+import { prepareFindQuery, toFoundVerseItem } from './bibleFindQueryHelpers';
+import { finishSuggestionWords } from './suggestionWordHelpers';
+import type { PlainFindIndexType } from './PlainFindHandler';
+import PlainFindHandler, { toLikeLowerText } from './PlainFindHandler';
 import type { AppContextMenuControlType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
@@ -50,7 +49,6 @@ import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { appLog } from '../helper/loggerHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
-const DEFAULT_ROW_LIMIT = 20;
 const SUCCESS_FILE_SUFFIX = '-success';
 
 async function loadApiData() {
@@ -76,25 +74,21 @@ function flushBucket(
     bucket.length = 0;
 }
 
-async function initSearchingDatabase(
+/**
+ * Every verse of a Bible as its stored row and sanitized text, handed to
+ * `onVerse` one at a time so the SQLite build can write in small batches;
+ * returns the suggestion words with the books holding each, or `null` when
+ * the Bible has no data.
+ */
+async function forEachSearchingVerse(
     bibleKey: string,
-    databaseFilePath: string,
-    successFileSuffix: string,
+    onVerse: (text: string, sText: string) => void,
 ) {
-    const databaseUtils = appProvider.databaseUtils;
-    const databaseAdmin =
-        await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
-    databaseAdmin.exec(`
-        CREATE TABLE verses(text TEXT, sText TEXT);
-        CREATE VIRTUAL TABLE spell USING fts5(text, bookKeys);
-    `);
     const jsonData = await getBibleXMLDataFromKey(bibleKey);
     if (jsonData === null) {
         return null;
     }
-    const sql = `INSERT INTO verses(text, sText) VALUES`;
     const locale = await getBibleLocale(bibleKey);
-    const bucket = [];
     const words: { [key: string]: Set<string> } = {};
     for (const [bookKey, book] of Object.entries(jsonData.books)) {
         appLog(`DB: Processing ${bookKey}`);
@@ -120,15 +114,38 @@ async function initSearchingDatabase(
                     }
                     sanitizedText = sanitizedText.split(' ').join('');
                 }
-                let text = `${bookKey}.${chapterKey}:${verse}=>${verses[verse]}`;
-                text = text.replaceAll("'", "''");
-                const sText = sanitizedText ?? verses[verse];
-                bucket.push(`('${text}','${sText}')`);
-                if (bucket.length > 100) {
-                    flushBucket(databaseAdmin, sql, bucket);
-                }
+                onVerse(
+                    `${bookKey}.${chapterKey}:${verse}=>${verses[verse]}`,
+                    sanitizedText ?? verses[verse],
+                );
             }
         }
+    }
+    return words;
+}
+
+async function initSearchingDatabase(
+    bibleKey: string,
+    databaseFilePath: string,
+    successFileSuffix: string,
+) {
+    const databaseUtils = appProvider.databaseUtils;
+    const databaseAdmin =
+        await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
+    databaseAdmin.exec(`
+        CREATE TABLE verses(text TEXT, sText TEXT);
+        CREATE VIRTUAL TABLE spell USING fts5(text, bookKeys);
+    `);
+    const sql = `INSERT INTO verses(text, sText) VALUES`;
+    const bucket: string[] = [];
+    const words = await forEachSearchingVerse(bibleKey, (text, sText) => {
+        bucket.push(`('${text.replaceAll("'", "''")}','${sText}')`);
+        if (bucket.length > 100) {
+            flushBucket(databaseAdmin, sql, bucket);
+        }
+    });
+    if (words === null) {
+        return null;
     }
     if (bucket.length > 0) {
         flushBucket(databaseAdmin, sql, bucket);
@@ -149,6 +166,31 @@ async function initSearchingDatabase(
     }
     await fsWriteFile(databaseFilePath + successFileSuffix, 'success');
     return databaseAdmin;
+}
+
+/** The plain fallback index (no `node:sqlite`), written beside the `.db`. */
+async function initPlainSearchingIndex(
+    bibleKey: string,
+    indexFilePath: string,
+    successFileSuffix: string,
+) {
+    const verses: PlainFindIndexType['verses'] = [];
+    const words = await forEachSearchingVerse(bibleKey, (text, sText) => {
+        verses.push([text, toLikeLowerText(sText)]);
+    });
+    if (words === null) {
+        return null;
+    }
+    const data: PlainFindIndexType = {
+        verses,
+        words: Object.entries(words).map(([word, bookKeys]) => {
+            return [word, Array.from(bookKeys).join(' ')];
+        }),
+    };
+    appLog(`DB: Writing plain index of ${verses.length} verses`);
+    await fsWriteFile(indexFilePath, JSON.stringify(data));
+    await fsWriteFile(indexFilePath + successFileSuffix, 'success');
+    return data;
 }
 
 class OnlineFindHandler {
@@ -181,27 +223,12 @@ class DatabaseFindingHandler {
         bibleKey: string,
         findData: BibleFindForType,
     ): Promise<BibleFindResultType | null> {
-        // TODO: use dictionary to break text text to words.
-        // e.g: Khmer language has no space between words so we need to break it to words
-        const { bookKeys, text } = findData;
-        if (!text) {
+        const query = await prepareFindQuery(bibleKey, findData);
+        if (query === null) {
             return null;
         }
-        let { fromLineNumber, toLineNumber } = findData;
-        if (fromLineNumber === undefined || toLineNumber === undefined) {
-            fromLineNumber = 0;
-            toLineNumber = DEFAULT_ROW_LIMIT - 1;
-        }
-        const locale = await getBibleLocale(bibleKey);
-        const sText = (await sanitizeFindingText(locale, text)) ?? text;
-        const wildCardText = toFindWildCardText(locale, sText);
-        if (wildCardText === null) {
-            // The query holds nothing this bible's script can match, so there
-            // is no query to run: `null` puts the view on the same "No data
-            // available" state an empty box does, instead of scanning all
-            // 31,000 verses to answer that every one of them matched.
-            return null;
-        }
+        const { fromLineNumber, toLineNumber, count, wildCardText } = query;
+        const { bookKeys } = findData;
         let sqlBookKey = '';
         if (bookKeys?.length) {
             const bookConditions = bookKeys
@@ -210,19 +237,10 @@ class DatabaseFindingHandler {
             sqlBookKey = ` AND (${bookConditions})`;
         }
         const sqlFrom = `FROM verses WHERE sText LIKE '%${wildCardText}%'${sqlBookKey}`;
-        let sql = `SELECT text ${sqlFrom}`;
-        const count = calcPerPage(toLineNumber, fromLineNumber);
-        if (count < 1) {
-            throw new Error(`Invalid line number ${JSON.stringify(findData)}`);
-        }
-        sql += ` LIMIT ${fromLineNumber}, ${count}`;
+        const sql = `SELECT text ${sqlFrom} LIMIT ${fromLineNumber}, ${count}`;
         const result = this.database.getAll(sql);
         const foundResult = result.map((item) => {
-            const splitted = item.text.split('=>');
-            return {
-                uniqueKey: crypto.randomUUID(),
-                text: `${splitted[0]}:${splitted[1]}`,
-            };
+            return toFoundVerseItem(item.text);
         });
         let maxLineNumber = 0;
         const countResult = this.database.getAll(
@@ -246,31 +264,22 @@ class DatabaseFindingHandler {
         if (!attemptingWord) {
             return [];
         }
-        let result = this.database.getAll(`
+        const result = this.database.getAll(`
             SELECT text, bookKeys FROM spell
             WHERE text MATCH '${attemptingWord.split('').join(' ')}'
             ORDER BY bm25(spell);
         `);
-        if (bookKeys.length > 0) {
-            result = result.filter(({ bookKeys: foundBookKeys }) => {
-                const foundKeys = foundBookKeys.split(' ');
-                if (bookKeys.some((bookKey) => foundKeys.includes(bookKey))) {
-                    return true;
-                }
-                return false;
-            });
-        }
-        const mappedResult = rankSuggestionWords(
-            result.map(({ text }) => {
-                return text.split(' ').join('');
+        return finishSuggestionWords(
+            result.map(({ text, bookKeys: foundBookKeys }) => {
+                return {
+                    text: text.split(' ').join(''),
+                    bookKeys: foundBookKeys,
+                };
             }),
             attemptingWord,
-        ).slice(0, limit);
-        if (mappedResult.includes(attemptingWord)) {
-            mappedResult.splice(mappedResult.indexOf(attemptingWord), 1);
-            mappedResult.unshift(attemptingWord);
-        }
-        return mappedResult;
+            limit,
+            bookKeys,
+        );
     }
 }
 
@@ -283,6 +292,7 @@ const VERSIONS = ['', '1', '2'];
 export default class BibleFindController {
     onlineFindHandler: OnlineFindHandler | null = null;
     databaseFindHandler: DatabaseFindingHandler | null = null;
+    plainFindHandler: PlainFindHandler | null = null;
     private readonly _bibleKey: string;
     locale: LocaleType;
     menuControllerSession: AppContextMenuControlType | null = null;
@@ -341,11 +351,10 @@ export default class BibleFindController {
         if (this.onlineFindHandler !== null) {
             return await this.onlineFindHandler.doFinding(findData);
         }
-        if (this.databaseFindHandler !== null) {
-            return await this.databaseFindHandler.doFinding(
-                this.bibleKey,
-                findData,
-            );
+        const localFindHandler =
+            this.databaseFindHandler ?? this.plainFindHandler;
+        if (localFindHandler !== null) {
+            return await localFindHandler.doFinding(this.bibleKey, findData);
         }
         return null;
     }
@@ -383,6 +392,10 @@ export default class BibleFindController {
             `${fileSource.name}${versions.at(-1)}.db`,
         );
         return databaseFilePath;
+    }
+
+    static toPlainIndexFilePath(dbFilePath: string) {
+        return dbFilePath.replace(/\.db$/, '') + '.plain.json';
     }
 
     static toSearchingDatabaseSuccessFilePath(dbFilePath: string) {
@@ -433,17 +446,24 @@ export default class BibleFindController {
             await fsDeleteFile(
                 this.toSearchingDatabaseSuccessFilePath(databaseFilePath),
             );
+            await fsDeleteFile(
+                this.toSearchingDatabaseSuccessFilePath(
+                    this.toPlainIndexFilePath(databaseFilePath),
+                ),
+            );
         } catch (error) {
             handleError(error);
             return false;
         }
         try {
             cachedInstance?.databaseFindHandler?.close();
+            cachedInstance?.plainFindHandler?.close();
         } catch (error) {
             handleError(error);
         }
         if (cachedInstance) {
             cachedInstance.databaseFindHandler = null;
+            cachedInstance.plainFindHandler = null;
         }
         delete instanceCache[bibleKey];
         return true;
@@ -456,6 +476,10 @@ export default class BibleFindController {
         const databaseFilePath = await this.getDatabaseFilePath(xmlFilePath);
         if (databaseFilePath === null) {
             return null;
+        }
+        if (!appProvider.databaseUtils.checkIsSupported()) {
+            // No `node:sqlite` (Electron 32 / Node 20): the plain find.
+            return await this.getPlainInstant(instance, databaseFilePath);
         }
         let searchingDatabase: SQLiteDatabaseType | null;
         if (await this.checkSearchingDatabaseValid(databaseFilePath)) {
@@ -475,6 +499,26 @@ export default class BibleFindController {
         instance.databaseFindHandler = new DatabaseFindingHandler(
             searchingDatabase,
         );
+        return instance;
+    }
+
+    static async getPlainInstant(
+        instance: BibleFindController,
+        databaseFilePath: string,
+    ) {
+        const indexFilePath = this.toPlainIndexFilePath(databaseFilePath);
+        let data: PlainFindIndexType | null = null;
+        if (!(await this.checkSearchingDatabaseValid(indexFilePath))) {
+            data = await initPlainSearchingIndex(
+                instance.bibleKey,
+                indexFilePath,
+                SUCCESS_FILE_SUFFIX,
+            );
+            if (data === null) {
+                return null;
+            }
+        }
+        instance.plainFindHandler = new PlainFindHandler(indexFilePath, data);
         return instance;
     }
 
@@ -503,9 +547,11 @@ export default class BibleFindController {
         attemptingWord: string,
         limit = 5,
     ): Promise<string[]> {
-        if (this.databaseFindHandler !== null) {
+        const localFindHandler =
+            this.databaseFindHandler ?? this.plainFindHandler;
+        if (localFindHandler !== null) {
             const bookKeys = await this.getSelectedBooks();
-            return await this.databaseFindHandler.loadSuggestionWords(
+            return await localFindHandler.loadSuggestionWords(
                 attemptingWord,
                 limit,
                 bookKeys.map(({ bookKey }) => bookKey),
