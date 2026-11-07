@@ -15,8 +15,19 @@ import { VERSION } from 'chrome-devtools-mcp/build/src/version.js';
 import { skipDevToolsTargets } from './devToolsTargets.mjs';
 import { resolveAppBrowserUrl } from './discovery.mjs';
 import { guardToolCalls } from './firewall.mjs';
+import { listLangPacks, readLangPackJson } from './langPacks.mjs';
 import { watchToolCalls } from './notify.mjs';
 import { registerOwaTools } from './owaTools.mjs';
+import { configureWorldLanguageParts } from './worldLanguages.mjs';
+
+// What the Bible import and the lyric tools know of a language in its own
+// words comes from that language's INSTALLED folder (`world.json`), the same
+// folders `langPacks.mjs` reads its dictionary from; English is the app's.
+configureWorldLanguageParts(() => {
+  return listLangPacks().map((pack) => {
+    return readLangPackJson(pack, 'world.json');
+  });
+});
 
 /**
  * `argv` is chrome-devtools-mcp's own CLI surface (`--headless`, `--viewport`,

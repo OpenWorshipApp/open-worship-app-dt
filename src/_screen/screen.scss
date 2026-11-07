@@ -1,9 +1,11 @@
 // `SCREEN_FONT_FAMILY` in `screenFontFamily.ts` repeats this stack for the
 // foreground layer and for slide text with no font of its own, which the
 // presenter's mini preview, the thumbnails and the editor also draw. Change
-// both together.
+// both together. `app-Google-Sans` is English's face, the app's default on
+// every page (`data/en/fonts.json`), registered here by `initAllLangCss()`.
 body {
   font-family:
+    app-Google-Sans,
     system-ui,
     -apple-system,
     'Segoe UI',

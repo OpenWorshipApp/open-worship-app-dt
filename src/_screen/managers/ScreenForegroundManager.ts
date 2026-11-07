@@ -1110,11 +1110,11 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     renderCamera(data: ForegroundCameraDataType) {
-        const store = {
-            clearCameraTracks: () => ({}) as OptionalPromise<void>,
-        };
+        let isRemoved = false;
+        let clearCameraTracks: (() => OptionalPromise<void>) | null = null;
         const divContainer = this.createDivContainer(data, async () => {
-            await store.clearCameraTracks();
+            isRemoved = true;
+            await clearCameraTracks?.();
         });
         const newData = {
             parentContainer: divContainer!,
@@ -1137,7 +1137,15 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         };
         getCameraAndShowMedia(newData, this.styleAnimFor(data)).then(
             (clearTracks) => {
-                store.clearCameraTracks = clearTracks ?? (() => {});
+                // Taken off while the camera was still opening: the removal
+                // already ran with nothing to close, so close it now, or the
+                // camera (and its light) stays on in a box nobody sees
+                // (2026-11-03).
+                if (isRemoved) {
+                    clearTracks?.();
+                    return;
+                }
+                clearCameraTracks = clearTracks ?? null;
             },
         );
     }

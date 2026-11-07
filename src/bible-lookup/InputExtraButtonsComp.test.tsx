@@ -307,4 +307,57 @@ describe('Bible lookup input actions', () => {
         expect(h.focusInput).toHaveBeenCalledTimes(1);
         other.remove();
     });
+
+    it('presses an action with Enter or Space and ignores any other key', async () => {
+        h.inputText = 'John 3:16 17';
+        await render();
+        const keydown = async (label: string, key: string) => {
+            const event = new KeyboardEvent('keydown', {
+                key,
+                bubbles: true,
+                cancelable: true,
+            });
+            await act(async () => action(label).dispatchEvent(event));
+            return event;
+        };
+        const ignored = await keydown('Clear input chunk', 'a');
+        expect(ignored.defaultPrevented).toBe(false);
+        expect(controller.inputText).toBe('');
+        expect(h.focusInput).not.toHaveBeenCalled();
+
+        const entered = await keydown('Clear input chunk', 'Enter');
+        expect(entered.defaultPrevented).toBe(true);
+        expect(controller.inputText).toBe('John 3:16 ');
+
+        const spaced = await keydown('Clear input [', ' ');
+        expect(spaced.defaultPrevented).toBe(true);
+        expect(controller.inputText).toBe('');
+        expect(h.focusInput).toHaveBeenCalledTimes(2);
+    });
+
+    it('leaves its own position alone when no reference box sits beside it', async () => {
+        await act(async () =>
+            root.render(
+                createElement('div', {}, createElement(InputExtraButtonsComp)),
+            ),
+        );
+        const wrapper = container.querySelector<HTMLElement>(
+            '.custom-clear-input-wrapper',
+        )!;
+        expect(wrapper.style.right).toBe('');
+        expect(wrapper.style.zIndex).toBe('');
+        expect(wrapper.style.position).toBe('absolute');
+    });
+
+    it('empties the box when the last chunk is the only one', async () => {
+        h.inputText = 'John';
+        h.focused = true;
+        await render();
+        controller.inputText = 'John';
+        await act(async () => action('Clear input chunk').click());
+        expect(controller.inputText).toBe('');
+        controller.inputText = 'John';
+        await act(async () => h.handlers.get('escape')!());
+        expect(controller.inputText).toBe('');
+    });
 });

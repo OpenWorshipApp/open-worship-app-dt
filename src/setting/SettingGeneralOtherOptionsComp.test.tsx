@@ -65,6 +65,9 @@ vi.mock('../popup-widget/popupWidgetHelpers', () => ({
 }));
 
 import SettingGeneralOtherOptionsComp from './SettingGeneralOtherOptionsComp';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import { appLocalStorage } from './directory-setting/appLocalStorage';
+import { applyStore } from './SettingApplyComp';
 
 let container: HTMLDivElement;
 let root: Root | null = null;
@@ -165,5 +168,37 @@ describe('SettingGeneralOtherOptionsComp', () => {
             globalThis.dispatchEvent(new Event('focus'));
         });
         expect(container.textContent).toContain('Tips in the help window');
+    });
+
+    test('Clear All Settings asks first and clears only on Yes', async () => {
+        const confirm = vi.mocked(showAppConfirm);
+        const clear = vi.mocked(appLocalStorage.clear);
+        const pendingApply = vi.mocked(applyStore.pendingApply);
+        confirm.mockResolvedValue(false);
+        await act(async () => {
+            root = createRoot(container);
+            root.render(<SettingGeneralOtherOptionsComp />);
+        });
+        const button = container.querySelector(
+            'button[title="Clear All Settings"]',
+        ) as HTMLButtonElement;
+        expect(button.textContent).toBe('Clear All Settings');
+
+        await act(async () => button.click());
+        expect(confirm).toHaveBeenCalledWith(
+            'Clear All Settings',
+            'Are you sure you want to clear all settings?',
+        );
+        expect(clear).not.toHaveBeenCalled();
+        expect(pendingApply).not.toHaveBeenCalled();
+
+        confirm.mockResolvedValue(true);
+        await act(async () => button.click());
+        expect(clear).toHaveBeenCalledOnce();
+        expect(pendingApply).toHaveBeenCalledOnce();
+        // Apply is asked for once the settings are gone, not before.
+        expect(clear.mock.invocationCallOrder[0]).toBeLessThan(
+            pendingApply.mock.invocationCallOrder[0],
+        );
     });
 });

@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { extractDictionary } from '../../../tools/owa-devtools-mcp/tran.mjs';
+import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const { state, mocks } = vi.hoisted(() => ({
     state: {
@@ -58,8 +56,9 @@ vi.mock('../../progress-bar/progressBarHelpers', () => ({
 vi.mock('../../server/appHelpers', () => ({
     showFileOrDirExplorer: mocks.explorer,
 }));
+// A development build: the module also hands both flows to an automated run.
 vi.mock('../../server/appProvider', () => ({
-    default: { systemUtils: { isDev: false } },
+    default: { systemUtils: { isDev: true } },
 }));
 vi.mock('../../server/fileHelpers', () => ({ selectFiles: mocks.selectFiles }));
 vi.mock('../../toast/toastHelpers', () => ({ showSimpleToast: mocks.toast }));
@@ -80,9 +79,18 @@ import {
     handleBibleXMLExporting,
     handleBibleXMLImporting,
 } from './bibleXMLArchiveMenuHelpers';
+import { readSourceDictionary } from '../../../tools/owa-devtools-mcp/langPacks.mjs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../../test-setup/langPackageDirs';
 
-const dictionaries = ['km', 'fr'].map((code) =>
-    extractDictionary(readFileSync(`src/lang/data/${code}/index.ts`, 'utf8')),
+// Every language package but English, found by its folder: its real
+// dictionary.
+const dictionaries = listLangPackageCodes({ isEnglishIncluded: false }).map(
+    (code) => {
+        return readSourceDictionary(toLangPackageDir(code));
+    },
 );
 const bible = (key: string, issue: string | null = null) => ({
     bibleKey: key,
@@ -207,4 +215,49 @@ describe('Bible XML archive menu flows', () => {
         expect(mocks.cleanup).toHaveBeenCalledWith('/tmp/import');
         expect(mocks.hideProgress).toHaveBeenCalledWith('Import Bible Data');
     });
+
+    test('a closed file picker opens nothing', async () => {
+        mocks.selectFiles.mockResolvedValue([]);
+        await handleBibleXMLImporting();
+        expect(mocks.open).not.toHaveBeenCalled();
+        expect(mocks.cleanup).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+    });
+
+    test('an archive with no bible in it says so and asks nothing', async () => {
+        state.rows = [];
+        await handleBibleXMLImporting('/downloads/empty.tar', mocks.callback);
+        expect(mocks.toast).toHaveBeenCalledWith(
+            'Import Bible Data',
+            'This archive holds no bible',
+        );
+        expect(mocks.input).not.toHaveBeenCalled();
+        expect(mocks.imported).not.toHaveBeenCalled();
+        expect(mocks.callback).not.toHaveBeenCalled();
+        expect(mocks.cleanup).toHaveBeenCalledWith('/tmp/import');
+    });
+
+    test('a cancelled choice of bibles imports nothing', async () => {
+        state.rows = [bible('NEW')];
+        mocks.input.mockResolvedValue(false);
+        await handleBibleXMLImporting('/downloads/bibles.tar', mocks.callback);
+        expect(mocks.input).toHaveBeenCalledOnce();
+        expect(mocks.imported).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+        expect(mocks.cleanup).toHaveBeenCalledWith('/tmp/import');
+    });
+
+    test('a development build hands both flows to an automated run', () => {
+        expect((globalThis as any).tryBibleXMLExport).toBe(
+            handleBibleXMLExporting,
+        );
+        expect((globalThis as any).tryBibleXMLImport).toBe(
+            handleBibleXMLImporting,
+        );
+    });
+});
+
+afterAll(() => {
+    delete (globalThis as any).tryBibleXMLExport;
+    delete (globalThis as any).tryBibleXMLImport;
 });

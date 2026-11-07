@@ -333,7 +333,12 @@ describe('screenBibleHelpers', () => {
 
         expect(genHtmlFromLongTextColumnsMock).toHaveBeenCalledWith(
             screenViewData.longTextData.renderedList,
-            { isLineSync: true, isLongText: true },
+            {
+                isLineSync: true,
+                isLongText: true,
+                isStacked: false,
+                isNumberHidden: false,
+            },
         );
         expect(genHtmlFromScreenViewBibleItemMock).not.toHaveBeenCalled();
         expect(screenLongTextManager.div.firstElementChild).not.toBeNull();
@@ -717,5 +722,86 @@ describe('screenBibleHelpers', () => {
             [],
         );
         expect(singleView).not.toHaveProperty('shownChapterCount');
+    });
+
+    test('a Bible picked with Shift held is added beside the others instead of replacing one', async () => {
+        const { renderScreenLongTextManager } =
+            await import('./screenBibleHelpers');
+        genContextMenuBibleKeysMock.mockImplementation(
+            async (
+                handleBibleKeySelection: (
+                    event: any,
+                    bibleKey: string,
+                ) => Promise<void> | void,
+                excludeBibleKeys: string[],
+            ) => {
+                // The ones already up are not offered again.
+                expect(excludeBibleKeys).toEqual(['KJV', 'NIV']);
+                return [
+                    {
+                        menuElement: 'ESV',
+                        onSelect: async () => {
+                            await handleBibleKeySelection(
+                                { shiftKey: true },
+                                'ESV',
+                            );
+                        },
+                    },
+                ];
+            },
+        );
+        const screenLongTextManager = createScreenLongTextManager({
+            type: 'bible-item',
+            locale: 'en-US',
+            bibleItemData: {
+                renderedList: ['KJV', 'NIV'].map((bibleKey) => ({
+                    locale: 'en-US',
+                    bibleKey,
+                    title: 'Genesis 1:1-2',
+                    verses: [],
+                })),
+                bibleItem: createBibleItemJson(),
+            },
+            scroll: 0,
+            selectedKJVVerseKey: null,
+        });
+        await renderScreenLongTextManager(screenLongTextManager);
+        await capturedHighlightHandlers?.onBibleSelect(
+            new MouseEvent('click'),
+            1,
+        );
+        const menuItems = showAppContextMenuMock.mock.calls[0]?.[1] as Array<{
+            menuElement: any;
+            onSelect: () => Promise<void> | void;
+        }>;
+        await menuItems.at(-1)?.onSelect();
+        await new Promise<void>((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        expect(
+            screenLongTextManager.screenViewData.bibleItemData.renderedList.map(
+                ({ bibleKey }: any) => bibleKey,
+            ),
+        ).toEqual(['KJV', 'NIV', 'ESV']);
+    });
+
+    test('a screen whose Bible layer is not mounted is left alone', async () => {
+        const { renderScreenLongTextManager } =
+            await import('./screenBibleHelpers');
+        const screenLongTextManager = {
+            ...createScreenLongTextManager({
+                type: 'bible-item',
+                bibleItemData: { renderedList: [], bibleItem: {} },
+            }),
+            div: null,
+        };
+        await expect(
+            renderScreenLongTextManager(screenLongTextManager),
+        ).resolves.toBeUndefined();
+        expect(genHtmlFromScreenViewBibleItemMock).not.toHaveBeenCalled();
+        expect(genHtmlFromLongTextColumnsMock).not.toHaveBeenCalled();
+        expect(
+            screenLongTextManager.renderSelectedIndex,
+        ).not.toHaveBeenCalled();
     });
 });

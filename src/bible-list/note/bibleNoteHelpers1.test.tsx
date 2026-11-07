@@ -152,7 +152,7 @@ describe('the note editor footer', () => {
                 'bible-key',
                 'bible-lookup',
                 'editing-history',
-                'khmer-markdown-editor km',
+                'lang-markdown-editor km',
                 'toggle-on-top',
             ].sort(),
         );
@@ -168,14 +168,14 @@ describe('the note editor footer', () => {
         await renderProbe(true);
         expect(buttons.has('editing-history')).toBe(false);
         expect(buttons.has('bible-lookup')).toBe(false);
-        expect(buttons.has('khmer-markdown-editor km')).toBe(true);
+        expect(buttons.has('lang-markdown-editor km')).toBe(true);
         expect(buttons.has('toggle-on-top')).toBe(true);
         expect(buttons.has('bible-key')).toBe(true);
     });
 
     test('a language with a markdown editor opens it in the browser', async () => {
         await renderProbe();
-        const editor = getButton('khmer-markdown-editor km');
+        const editor = getButton('lang-markdown-editor km');
         expect(editor.description).toBe('Open in Markdown Editor (km)');
         expect(editor.shortcutKey).toBe('Ctrl+Shift+Alt+K');
         expect(editor.children.props['aria-label']).toBe(

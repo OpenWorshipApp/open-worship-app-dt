@@ -71,7 +71,7 @@ for Ollama's cloud.
 ### The conversations
 
 Eleven of the 34 scenarios in
-`.claude/skills/owa-enhance-chatbot/references/elder-khmer-asks.json`, 23
+`src/lang/data/online/km/chatbot-asks/elder-asks.json`, 23
 asks between them. Each step is either typed or a reply chip pressed.
 
 | Id | What the person does |

@@ -150,10 +150,18 @@ describe('aiChatWindowHelpers', () => {
             }),
         });
         const presenterWin = createMockBrowserWindow();
+        // An AI Chat window closing as the sign-out happens: not told.
+        const closingWin = createMockBrowserWindow({
+            isDestroyed: vi.fn(() => true),
+            webContents: createMockWebContents({
+                getURL: vi.fn(() => AI_CHAT_URL.replace('_1', '_3')),
+            }),
+        });
         electronMockState.browserWindows.push(
             senderWin,
             otherWin,
             presenterWin,
+            closingWin,
         );
 
         tellOtherAiChatWindowsSignedOut(senderWin.webContents as any);
@@ -163,6 +171,8 @@ describe('aiChatWindowHelpers', () => {
         );
         expect(senderWin.webContents.send).not.toHaveBeenCalled();
         expect(presenterWin.webContents.send).not.toHaveBeenCalled();
+        expect(closingWin.webContents.send).not.toHaveBeenCalled();
+        expect(closingWin.webContents.getURL).not.toHaveBeenCalled();
     });
 
     test('a sign-out skips an AI Chat window already being torn down', () => {

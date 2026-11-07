@@ -500,7 +500,6 @@ describe('registered app tools', () => {
     );
     const [expression] = app.evaluateInApp.mock.calls[1];
     expect(expression).toContain('"Documents > More Options"');
-    expect(expression).toContain('"ឯកសារ > ជម្រើសបន្ថែម"');
     // The language read is cached for ONE page; hand the cache back to the
     // default page the later cases are written against.
     app.evaluateInApp

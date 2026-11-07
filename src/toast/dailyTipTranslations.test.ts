@@ -2,8 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import french from '../lang/data/fr';
-import khmer from '../lang/data/km';
+import type { LanguageDataType } from '../lang/langHelpers';
 import { PRESENTER_DEMO_LIST } from '../../tools/owa-devtools-mcp/presenterDemos.mjs';
 import { READER_DEMO_LIST } from '../../tools/owa-devtools-mcp/readerDemos.mjs';
 import { PAGE_DEMO_LIST } from '../../tools/owa-devtools-mcp/pageDemos.mjs';
@@ -27,10 +26,37 @@ const CATALOG_TEXT = [
     ...PAGE_DEMO_LIST.flatMap(({ label, detail }) => [label, detail]),
 ];
 
-describe.each([
-    ['Khmer', khmer],
-    ['French', french],
-])('%s tip translations', (_name, language) => {
+// Every hand-made language package but English (the key language, whose
+// package brings the app's hooks along), found by its folder: one the
+// assistant is written for (an `assistant.json`). A machine-translated one
+// may rightly keep a loanword -- Filipino's "Slide Editor" -- that this test
+// reads as a tip left in English.
+const ASSISTANT_FILE_MAP = import.meta.glob(
+    '../lang/data/online/*/assistant.json',
+);
+const LANGUAGE_MAP = import.meta.glob<LanguageDataType>(
+    '../lang/data/online/*/index.ts',
+    { eager: true, import: 'default' },
+);
+const LANGUAGE_LIST = Object.entries(LANGUAGE_MAP)
+    .filter(([filePath]) => {
+        return (
+            filePath.replace(/index\.ts$/, 'assistant.json') in
+            ASSISTANT_FILE_MAP
+        );
+    })
+    .map(([, language]) => {
+        return [language.name, language] as const;
+    });
+
+describe('tip translations in every language package', () => {
+    // An English-only tree has none, and holds nothing to translate.
+    it('finds the packages there are', () => {
+        expect(Array.isArray(LANGUAGE_LIST)).toBe(true);
+    });
+});
+
+describe.each(LANGUAGE_LIST)('%s tip translations', (_name, language) => {
     it('translates every title, description, category and search label', () => {
         for (const text of CATALOG_TEXT) {
             const key = language.sanitizeTranKey(text);

@@ -28,6 +28,7 @@ import {
 } from '../../tools/owa-devtools-mcp/manualPage.mjs';
 import type { ChatMessageType } from './chatSessionHelpers';
 import { clipKnownPage, HELP_WINDOW_MANUAL_ID } from './questionHelpers';
+import { listAssistantLanguages } from './chatLangHelpers';
 
 // A dispute is short. A long message that happens to hold "does not work" is
 // a new question with its own story in it, and is left to the model.
@@ -47,11 +48,11 @@ const DISPUTE_PATTERN_LIST = [
     /\bno\s+such\b/i,
     /\b(?:does\s?n['’]?t|does\s+not|did\s?n['’]?t|did\s+not|won['’]?t|will\s+not)\s+(?:work|exist|show|appear|open)\b/i,
     /\bstill\s+(?:no|not|nothing|missing|the\s+same)\b/i,
-    // The same, as a Khmer or a French speaker says it.
-    /ខុស|មិនត្រឹមត្រូវ|មិនត្រូវ|រកមិនឃើញ|មិនឃើញ|អត់ឃើញ|អត់មាន|គ្មាន|មិនដំណើរការ/,
-    /\b(?:faux|fausse|incorrecte?|introuvable)\b/i,
-    /\bne\s+(?:(?:le|la|les)\s+|l['’])?(?:marche|fonctionne|vois|trouve)\b[^.?!]*\bpas\b/i,
-    /\bil\s+n['’]y\s+a\s+pas\b/i,
+    // The same, as every other language here says it: its own patterns
+    // (`disputeAsks` in its `assistant.json`).
+    ...listAssistantLanguages().flatMap((language) => {
+        return language.disputeAskPatterns;
+    }),
 ];
 
 export function checkIsDisputingAnswer(text: string): boolean {

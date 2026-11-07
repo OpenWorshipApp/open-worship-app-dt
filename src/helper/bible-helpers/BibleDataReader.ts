@@ -55,7 +55,7 @@ export type BibleInfoType = Readonly<{
     keyBookMap: { [key: string]: string };
     booksAvailable: string[];
     // A downloaded Bible's digits come as `numList`, an XML Bible's as
-    // `numbersMap` ("0" → "๐"); read either through `getBibleNumList`.
+    // `numbersMap` ("0" to the Thai zero); read either through `getBibleNumList`.
     numList?: string[];
     numbersMap?: { [key: string]: string };
     version: number;

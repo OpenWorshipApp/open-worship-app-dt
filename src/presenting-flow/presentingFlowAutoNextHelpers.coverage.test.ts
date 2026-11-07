@@ -216,4 +216,19 @@ describe('presenting-flow automatic run control', () => {
             remainingSeconds: 8,
         });
     });
+
+    test('a timeout that reaches zero steps the run once and is spent', () => {
+        const controller = register('/spent');
+        expect(startPresentingFlowAutoNext('/spent', 'timeout', 2)).toBe(true);
+        vi.advanceTimersByTime(1000);
+        expect(controller.stepForward).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(1000);
+        expect(controller.stepForward).toHaveBeenCalledTimes(1);
+        expect(getPresentingFlowAutoNextState('/spent')).toBeNull();
+        expect(vi.getTimerCount()).toBe(0);
+        vi.advanceTimersByTime(5000);
+        expect(controller.stepForward).toHaveBeenCalledTimes(1);
+        // The run itself stays open for the next one.
+        expect(checkPresentingFlowAutoNextIsRunnable('/spent')).toBe(true);
+    });
 });

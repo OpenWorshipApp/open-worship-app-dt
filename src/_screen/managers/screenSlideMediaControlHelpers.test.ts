@@ -383,4 +383,65 @@ describe('driving the media of a slide from a run sheet', () => {
         vi.advanceTimersByTime(1_000);
         expect(player.isPlaying).toBe(false);
     });
+
+    test('a volume alone sets the level and broadcasts nothing', () => {
+        const media = genFakeMedia();
+        const secondMedia = genFakeMedia('video-def');
+        const manager = genFakeManager([media, secondMedia]);
+
+        applyScreenSlideMediaControl(manager, { mode: 'pause', volume: 30 });
+
+        expect(media.volume).toBe(0.3);
+        expect(secondMedia.volume).toBe(0.3);
+        expect(media.playbackRate).toBe(1);
+        expect(secondMedia.playbackRate).toBe(1);
+        expect(manager.syncCalls).toEqual([]);
+    });
+
+    test('stop pauses a playing YouTube embed and seeks it back', () => {
+        const player = genFakePlayer();
+        player.isPlaying = true;
+        const rewound = genFakePlayer('youtube-def');
+        const manager = genFakeManager([], [player, rewound]);
+
+        applyScreenSlideMediaControl(manager, { mode: 'stop' });
+
+        expect(player.calls).toEqual([
+            ['pause', 0],
+            ['seekTo', 0],
+        ]);
+        // One that was not playing is not paused again, only seeked.
+        expect(rewound.calls).toEqual([['seekTo', 0]]);
+
+        applyScreenSlideMediaControl(manager, {
+            mode: 'stop',
+            startAtSecond: 12,
+        });
+        expect(rewound.calls.at(-1)).toEqual(['seekTo', 12]);
+    });
+
+    test('a tick already handed out when its slot is dropped does nothing', () => {
+        const media = genFakeMedia();
+        const manager = genFakeManager([media]);
+        const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+        applyScreenSlideMediaControl(manager, {
+            mode: 'play',
+            pauseAfterSecond: 5,
+        });
+        // The "pause after 5 s" callback, as the timer queue holds it.
+        const tick = setTimeoutSpy.mock.calls.at(-1)?.[0] as () => void;
+        setTimeoutSpy.mockRestore();
+        expect(media.paused).toBe(false);
+
+        // A new slide lands: the slot goes, but a callback that had already
+        // been handed its tick still runs once.
+        cancelScreenSlideMediaControl(manager.screenId);
+        tick();
+        expect(media.paused).toBe(false);
+
+        // Nor does it pause the next controller's media on the same screen.
+        applyScreenSlideMediaControl(manager, { mode: 'play' });
+        tick();
+        expect(media.paused).toBe(false);
+    });
 });

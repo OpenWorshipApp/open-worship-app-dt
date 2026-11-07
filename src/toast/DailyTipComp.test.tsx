@@ -9,13 +9,16 @@ const state = vi.hoisted(() => ({
     focused: true,
     isMain: false,
     isOnOwnFolder: false,
+    isAIEnabled: true,
     settings: new Map<string, string>(),
     listeners: new Set<(event: unknown, data: unknown) => void>(),
     menu: vi.fn(),
     callTool: vi.fn(async () => '{}'),
 }));
 vi.mock('../helper/appHooks', () => ({ useAppEffect: useEffect }));
-vi.mock('../helper/ai/aiHelpers', () => ({ getIsAIEnabled: () => true }));
+vi.mock('../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: () => state.isAIEnabled,
+}));
 vi.mock('../helper/ai/aiEnableHelpers', () => ({ askToEnableAI: vi.fn() }));
 vi.mock('../server/appProvider', () => ({
     default: {
@@ -52,6 +55,7 @@ vi.mock('../lang/langHelpers', () => ({
 }));
 vi.mock('../chatbot/mcpClient', () => ({ callTool: state.callTool }));
 
+import { askToEnableAI } from '../helper/ai/aiEnableHelpers';
 import DailyTipComp from './DailyTipComp';
 import {
     DAILY_TIP_AUTO_CLOSE_MS,
@@ -81,6 +85,7 @@ describe('tips in each window', () => {
         state.focused = true;
         state.isMain = false;
         state.isOnOwnFolder = false;
+        state.isAIEnabled = true;
         container = document.createElement('div');
         document.body.append(container);
         root = createRoot(container);
@@ -301,5 +306,117 @@ describe('tips in each window', () => {
             expect.objectContaining({ page: location.href }),
         );
         expect(container.textContent).toBe('');
+    });
+
+    function findButton(text: string) {
+        const button = [...container.querySelectorAll('button')].find(
+            (element) => element.textContent === text,
+        );
+        expect(button).toBeDefined();
+        return button as HTMLButtonElement;
+    }
+
+    async function typeSearch(text: string) {
+        const input = container.querySelector<HTMLInputElement>(
+            'input[type="search"]',
+        )!;
+        const setValue = Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            'value',
+        )!.set!;
+        await act(async () => {
+            setValue.call(input, text);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+
+    function listedTitles() {
+        return [
+            ...container.querySelectorAll('.app-daily-tip-list button'),
+        ].map((element) => element.getAttribute('aria-label'));
+    }
+
+    it('asks for AI to be turned on rather than starting a walkthrough without it', async () => {
+        state.isAIEnabled = false;
+        await act(async () => root.render(<DailyTipComp />));
+        await sendMenu({ isOpenDailyTip: true });
+        await act(async () => findButton('Show it').click());
+        expect(askToEnableAI).toHaveBeenCalledOnce();
+        expect(state.callTool).not.toHaveBeenCalled();
+        // The card stays for when AI is on.
+        expect(findButton('Show it').disabled).toBe(false);
+    });
+
+    it('says so on the card when the walkthrough cannot start', async () => {
+        state.callTool.mockRejectedValueOnce(new Error('Host offline'));
+        await act(async () => root.render(<DailyTipComp />));
+        await sendMenu({ isOpenDailyTip: true });
+        await act(async () => findButton('Show it').click());
+        expect(state.callTool).toHaveBeenCalledOnce();
+        expect(
+            container.querySelector('.app-daily-tip-error')?.textContent,
+        ).toBe('Could not start this walkthrough.');
+        // Not left saying it is starting, and still there to try again.
+        expect(findButton('Show it').disabled).toBe(false);
+        await act(async () => findButton('Next tip').click());
+        expect(container.querySelector('.app-daily-tip-error')).toBeNull();
+    });
+
+    it('searches All tips by title, detail or category and opens the row pressed', async () => {
+        state.page = '/presenter.html';
+        await act(async () => root.render(<DailyTipComp />));
+        await sendMenu({ isBrowseDailyTips: true });
+        expect(container.textContent).toContain('All Presenter tips');
+        const tips = getDailyTips('presenter');
+        expect(listedTitles()).toHaveLength(tips.length);
+
+        const withCategory = tips.find((tip) => tip.category)!;
+        const query = withCategory.category!.toLocaleUpperCase();
+        await typeSearch(` ${query} `);
+        const expected = tips.filter((tip) => {
+            return [tip.title, tip.detail, tip.category ?? ''].some((text) => {
+                return text
+                    .toLocaleLowerCase()
+                    .includes(query.toLocaleLowerCase());
+            });
+        });
+        expect(listedTitles()).toEqual(expected.map((tip) => tip.title));
+        expect(listedTitles()).toContain(withCategory.title);
+        expect(container.textContent).toContain(
+            `${expected.length}/${tips.length}`,
+        );
+
+        await typeSearch('zz-no-such-tip-zz');
+        expect(listedTitles()).toEqual([]);
+        expect(container.textContent).toContain('No tips found');
+        expect(container.textContent).toContain(`0/${tips.length}`);
+
+        await typeSearch('');
+        expect(listedTitles()).toHaveLength(tips.length);
+        const row = [
+            ...container.querySelectorAll<HTMLButtonElement>(
+                '.app-daily-tip-list button',
+            ),
+        ].find((element) => {
+            return element.getAttribute('aria-label') === tips[2].title;
+        })!;
+        await act(async () => row.click());
+        expect(container.querySelector('.app-daily-tip-list')).toBeNull();
+        expect(
+            container.querySelector('.app-daily-tip-title')?.textContent,
+        ).toBe(tips[2].title);
+        expect(container.textContent).toContain('Tip of the Day');
+    });
+
+    it('stays out of a window with no tips of its own', async () => {
+        state.page = '/screen.html';
+        state.isMain = true;
+        await act(async () => root.render(<DailyTipComp />));
+        await act(async () =>
+            vi.advanceTimersByTime(DAILY_TIP_AUTO_SHOW_DELAY_MS),
+        );
+        expect(container.innerHTML).toBe('');
+        expect(state.listeners.size).toBe(0);
+        expect(state.menu).not.toHaveBeenCalled();
     });
 });

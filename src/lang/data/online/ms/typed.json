@@ -1,0 +1,12 @@
+{
+    "ms": {
+        "name": "Malay",
+        "nativeName": "Bahasa Melayu",
+        "script": "Latin",
+        "words": "yang dan atau tetapi tidak bukan ada adalah ini itu di ke dari pada untuk dengan dalam oleh saya aku awak kamu anda dia kami kita mereka bagaimana macam apa apakah mana mengapa kenapa bila bilakah siapa boleh dapat mahu ingin perlu juga sudah belum masih sangat lebih sahaja tolong terima kasih",
+        "family": "malay",
+        "yes": ["ya", "boleh"],
+        "no": ["tidak", "tak"],
+        "order": 26
+    }
+}

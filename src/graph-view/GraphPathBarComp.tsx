@@ -35,7 +35,7 @@ export function genNoConnectionMessage() {
  *
  * Records are written in the lookup language, and a list of eight Khmer names
  * that all begin the same way is not something anyone can pick from — the
- * lookup list and the graph boxes both show `ដាវីឌ (David)` for exactly
+ * lookup list and the graph boxes both show `<the name> (David)` for exactly
  * that reason, so the picker has to as well.
  *
  * The English name is not on the search RESULT, it is on the record: one map

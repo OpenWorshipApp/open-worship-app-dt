@@ -22,6 +22,7 @@ import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { extractYouTubeVideoId } from '../slide-editor/canvas/youtubeUrlHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { fsReadFileBytes } from '../server/fileHelpers';
+import { findScriptLocale } from '../others/langScriptHelpers';
 import type {
     PptxBackgroundType,
     PptxBoxType,
@@ -73,7 +74,6 @@ export type PptxMediaAdderType = (
     load: () => Promise<PptxMediaLoadedType | null>,
 ) => Promise<PptxMediaType | null>;
 
-const KHMER_CHAR_REGEX = /[\u1780-\u17ff\u19e0-\u19ff]/;
 const MEDIA_EXTENSION_BY_MIME: Record<string, PptxMediaExtensionType> = {
     'image/png': 'png',
     'image/jpeg': 'jpeg',
@@ -1106,7 +1106,8 @@ export class PptxSlideMeasurer {
                         : verticalAlign === 'sub'
                           ? -25
                           : 0,
-                lang: KHMER_CHAR_REGEX.test(segment.text) ? 'km-KH' : 'en-US',
+                // The installed language whose own script the run is in.
+                lang: findScriptLocale(segment.text) ?? 'en-US',
             };
         });
     }
@@ -1618,12 +1619,14 @@ export class PptxSlideMeasurer {
             }
             const src = `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
             const image = await loadImageElement(src);
-            const media = await this.addMedia(src, () => {
-                return loadPictureMedia(src, image);
-            });
+            // Checked BEFORE anything is stored: bytes stored for a thumbnail
+            // that could not be drawn were a part no slide used (2026-11-03).
             if (image === null) {
                 return null;
             }
+            const media = await this.addMedia(src, () => {
+                return loadPictureMedia(src, image);
+            });
             return toPicture(
                 media,
                 image.naturalWidth,

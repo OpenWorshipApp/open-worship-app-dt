@@ -156,6 +156,7 @@ import {
     mergeCanvasItemSelection,
 } from './canvasSelectionHelpers';
 import { SCREEN_FONT_FAMILY } from '../../_screen/screenFontFamily';
+import { genTextDefaultBoxStyle } from './canvasHelpers';
 
 function createBaseBox(type: string) {
     return {
@@ -525,6 +526,60 @@ describe('CanvasItem models', () => {
         );
     });
 
+    test('refuses a media link that is not a web address, and locks picture ratios', async () => {
+        await expect(
+            CanvasItemImage.genCanvasItemFromLink(1, 2, 'C:/Pictures/a.png'),
+        ).rejects.toThrow('Invalid image link: C:/Pictures/a.png');
+        await expect(
+            CanvasItemVideo.genCanvasItemFromLink(1, 2, 'file:///clip.mp4'),
+        ).rejects.toThrow('Invalid video link: file:///clip.mp4');
+        expect(() =>
+            CanvasItemAudio.genCanvasItemFromLink(1, 2, 'ftp://x/a.mp3'),
+        ).toThrow('Invalid audio link: ftp://x/a.mp3');
+        // nothing was measured for a refused link
+        expect(getImageDimMock).not.toHaveBeenCalled();
+        expect(getVideoDimMock).not.toHaveBeenCalled();
+
+        const imageItem = await CanvasItemImage.genCanvasItemFromLink(
+            0,
+            0,
+            'https://example.com/a.png',
+        );
+        expect(imageItem.shouldLockAspectRatio).toBe(true);
+        const videoItem = await CanvasItemVideo.genCanvasItemFromLink(
+            0,
+            0,
+            'https://example.com/a.mp4',
+        );
+        expect(videoItem.shouldLockAspectRatio).toBe(true);
+    });
+
+    test('drops a colour as an empty text box centred on the point', () => {
+        const item = CanvasItemText.genColorBoxItem(500, 300, '#FF000080');
+        const json = item.toJson();
+        const { width, height } = genTextDefaultBoxStyle();
+        expect(json).toEqual(
+            expect.objectContaining({
+                type: 'text',
+                text: '',
+                backgroundColor: '#FF000080',
+                width,
+                height,
+                left: 500 - width / 2,
+                top: 300 - height / 2,
+            }),
+        );
+        expect(handleErrorMock).not.toHaveBeenCalled();
+    });
+
+    test('turns a YouTube item that does not validate into an error item', () => {
+        const badJson = { ...createBaseBox('youtube'), url: 42 };
+        const item = CanvasItemYouTube.fromJson(badJson as any);
+        expect(handleErrorMock).toHaveBeenCalledTimes(1);
+        expect(canvasItemErrorFromJsonErrorMock).toHaveBeenCalledWith(badJson);
+        expect(item).toEqual({ type: 'error', json: badJson });
+    });
+
     test('builds audio canvas items without reading the media', () => {
         const audioJson = {
             ...createBaseBox('audio'),
@@ -778,6 +833,55 @@ describe('CanvasItem models', () => {
             json: bibleJson,
         });
     });
+    test('styles a Bible box as text and swaps in another Bible item', async () => {
+        const item = new CanvasItemBibleItem({
+            ...createBaseBox('bible'),
+            ...genTextDefaultProps(),
+            fontSize: 50,
+            fontFamily: null,
+            bibleKeys: ['KJV'],
+            bibleItemTarget: 'verse',
+            bibleRenderingList: [],
+        } as any);
+        expect(item.getStyle()).toEqual(
+            expect.objectContaining({
+                fontSize: '50px',
+                fontFamily: SCREEN_FONT_FAMILY,
+                padding: '5px',
+            }),
+        );
+        expect(CanvasItemBibleItem.genStyle(item.props)).toEqual(
+            item.getStyle(),
+        );
+
+        getBibleFontFamilyMock.mockResolvedValue('');
+        const bibleItem = new (BibleItem as any)(
+            'NIV',
+            'John 3:16',
+            'For God so loved',
+            'john-3-16',
+        );
+        bibleItem.target = 'john-3-16';
+        await item.setNewBibleItem(bibleItem);
+        expect(getBibleFontFamilyMock).toHaveBeenCalledWith('NIV');
+        expect(item.props).toEqual(
+            expect.objectContaining({
+                // no Bible font: the box falls back to the screen font
+                fontFamily: null,
+                bibleKeys: ['NIV'],
+                bibleItemTarget: 'john-3-16',
+                textDirection: undefined,
+                bibleRenderingList: [
+                    {
+                        title: '(NIV) John 3:16',
+                        text: 'For God so loved',
+                        verses: [{ num: '1', text: 'For God so loved' }],
+                    },
+                ],
+            }),
+        );
+    });
+
     test('draws a chapter divider before each chapter of a cross-chapter passage', async () => {
         const crossItem = {
             bibleKey: 'KHM',
@@ -792,22 +896,22 @@ describe('CanvasItem models', () => {
             toText: async () => 'John 1:51\n(51): a\nJohn 2:1\n(1): b',
             toVerseTextList: async () => [
                 {
-                    localeVerse: '៥១',
+                    localeVerse: '５１',
                     text: 'a',
                     isChapterStart: true,
-                    localeChapter: '១',
+                    localeChapter: '１',
                 },
                 {
-                    localeVerse: '១',
+                    localeVerse: '１',
                     text: 'b',
                     isChapterStart: true,
-                    localeChapter: '<២>',
+                    localeChapter: '<２>',
                 },
                 {
-                    localeVerse: '២',
+                    localeVerse: '２',
                     text: 'c',
                     isChapterStart: false,
-                    localeChapter: '<២>',
+                    localeChapter: '<２>',
                 },
             ],
         };
@@ -815,9 +919,9 @@ describe('CanvasItem models', () => {
             await CanvasItemBibleItem.fromBibleItem(7, crossItem as any)
         ).toJson() as any;
         expect(json.bibleRenderingList[0].verses).toEqual([
-            { num: '៥១', text: 'a', chapterLabel: '១' },
-            { num: '១', text: 'b', chapterLabel: '<២>' },
-            { num: '២', text: 'c' },
+            { num: '５１', text: 'a', chapterLabel: '１' },
+            { num: '１', text: 'b', chapterLabel: '<２>' },
+            { num: '２', text: 'c' },
         ]);
         expect(json.bibleItemTarget).toEqual(crossItem.target);
         const html: string = json.html;
@@ -828,13 +932,13 @@ describe('CanvasItem models', () => {
             'gap:0.4em;width:100%;margin:0.6em 0 0.2em;opacity:0.75">' +
             '<span style="flex:0 0 1.2em;border-top:1px solid currentColor">' +
             '</span><span style="font-weight:bold;font-size:0.85em">' +
-            '&lt;២&gt;</span><span style="flex:1;border-top:1px solid ' +
+            '&lt;２&gt;</span><span style="flex:1;border-top:1px solid ' +
             'currentColor"></span></div>';
         expect(html).toContain(`a ${secondDivider}<sup`);
-        expect(html.indexOf('&lt;២&gt;')).toBeLessThan(
-            html.indexOf('>១</sup>b'),
+        expect(html.indexOf('&lt;２&gt;')).toBeLessThan(
+            html.indexOf('>１</sup>b'),
         );
-        expect(html).toContain('>១</sup>b <sup');
+        expect(html).toContain('>１</sup>b <sup');
         // Re-derived from the stored list, the divider comes back.
         expect(
             (

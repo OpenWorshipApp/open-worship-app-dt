@@ -5,15 +5,17 @@
 // opens the conversation the way that menu does -- the same handoff the
 // row's press leaves (`chatbot-handoff-lookup`, `requestChatbotLookup`) --
 // and then asks a scenario's questions in that tab, in order
-// (`../references/lookup-khmer-asks.json`).
+// (`src/lang/data/online/<code>/chatbot-asks/lookup-asks.json`, `--lang` or the one
+// language that has it).
 //
 // A scenario's `record` is a person or a place by name, or -- since
-// 2026-10-23, `../references/passage-khmer-asks.json` -- a passage by its
+// 2026-10-23, `src/lang/data/online/<code>/chatbot-asks/passage-asks.json` -- a passage by its
 // verse key, title and Bible, handed over as a Bible view's 🤖 does. An
 // ask is typed (`text`) or PRESSED (`press`, the same day,
-// `../references/word-study-asks.json`): the newest answer's button whose
+// `src/lang/data/online/<code>/chatbot-asks/word-study-asks.json`): the newest answer's button whose
 // words are that, else start with it, else hold it, compared in NFC -- a
-// word is learned by its button, and a Bible writes ά as U+1F71.
+// word is learned by its button, and a Bible writes a Greek alpha with an
+// acute as U+1F71.
 //
 //   node lookup-run.mjs --pid=<published pid> [--server="Local Ollama"]
 //        [--model=gemma4:cloud] [--only=noah,A3] [--timeout=300]
@@ -38,6 +40,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readLanguageAsks } from '../../../../extra-work/language-packages.mjs';
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((arg) => {
@@ -60,14 +63,10 @@ const OUT = path.resolve(
       `lookup-${new Date().toISOString().slice(0, 10)}.jsonl`,
     ),
 );
-const SCENARIOS = JSON.parse(
-  fs.readFileSync(
-    path.resolve(
-      args.scenarios ??
-        path.join(HERE, '..', 'references', 'lookup-khmer-asks.json'),
-    ),
-    'utf8',
-  ),
+const SCENARIOS = (
+  typeof args.scenarios === 'string'
+    ? JSON.parse(fs.readFileSync(path.resolve(args.scenarios), 'utf8'))
+    : readLanguageAsks('lookup-asks.json', args.lang).data
 ).scenarios;
 const RUN_ID = new Date().toISOString();
 
@@ -266,10 +265,10 @@ const TYPE_AND_SEND = (text) => `(() => {
 // A button pressed rather than words typed (2026-10-23, the word study: a
 // word is learned by its button, `word-study-asks.json`). The newest
 // answer's button whose words ARE the needle, else start with it, else hold
-// it -- "Next word: אֵ֥ת" holds the word -- then the next answer's.
+// it -- "Next word: <the word>" holds the word -- then the next answer's.
 const PRESS = (needle) => `(() => {
-    // NFC on both sides: a Bible writes ά as U+1F71, which a copy of the
-    // word into a file comes back as U+03AC.
+    // NFC on both sides: a Bible writes a Greek alpha with an acute as
+    // U+1F71, which a copy of the word into a file comes back as U+03AC.
     const clean = (text) => text.replace(/\\u200b/g, '').trim().normalize('NFC');
     const wanted = clean(${JSON.stringify(needle)});
     const cues = [...document.querySelectorAll('.chat-cues article.cue')]

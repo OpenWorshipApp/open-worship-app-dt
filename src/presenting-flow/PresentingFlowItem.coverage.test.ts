@@ -348,6 +348,37 @@ describe('PresentingFlowItem data model', () => {
         );
     });
 
+    // Found by UT-78 (2026-11-03): an ERROR row answers `toJson()` with the
+    // damaged json it was read from, whose type is not `error` -- so a CC
+    // naming a line that had become one was rebuilt as a working follower and
+    // never validated: an action this version does not know, or a slide with
+    // no id that could still go to a screen.
+    test('a CC naming a line that could not be read builds no follower', () => {
+        const host = PresentingFlowItem.fromJson('/flow', {
+            type: DragTypeEnum.SLIDE,
+            uuid: uuid('host'),
+            filePath: '/doc.owa',
+            id: 1,
+            ccItems: [{ uuid: uuid('future') }, { uuid: uuid('broken') }],
+        } as any);
+        const future = PresentingFlowItem.fromJsonError('/flow', {
+            type: 'action',
+            uuid: uuid('future'),
+            data: 'future-action',
+        });
+        const broken = PresentingFlowItem.fromJsonError('/flow', {
+            type: DragTypeEnum.SLIDE,
+            uuid: uuid('broken'),
+            filePath: '/doc.owa',
+        });
+        PresentingFlowItem.bindCcSources([host, future, broken]);
+
+        expect(future.isError).toBe(true);
+        expect(broken.isError).toBe(true);
+        expect(host.isError).toBe(false);
+        expect(host.ccItems).toEqual([]);
+    });
+
     test('binds and resolves CC references, pins, media settings, and arming', () => {
         const timeout = new PresentingFlowItem('/flow', {
             type: 'action',
@@ -644,5 +675,178 @@ describe('PresentingFlowItem data model', () => {
         expect(PresentingFlowItem.getMaxCcItemCount({ type: ERROR_TYPE })).toBe(
             0,
         );
+    });
+});
+
+describe('PresentingFlowItem edges a sheet meets', () => {
+    function genSlide(extra: Record<string, unknown> = {}) {
+        return PresentingFlowItem.fromJson('/flow', {
+            type: DragTypeEnum.SLIDE,
+            uuid: uuid('slide'),
+            filePath: '/doc.owa',
+            id: 1,
+            ...extra,
+        } as any);
+    }
+
+    test('a sheet with no CC anywhere is bound as it is, and nothing on it follows', () => {
+        const slide = genSlide();
+        const background = PresentingFlowItem.fromJson('/flow', {
+            type: DragTypeEnum.BACKGROUND_COLOR,
+            uuid: uuid('color'),
+            data: '#000',
+        });
+        const items = [slide, background];
+        expect(PresentingFlowItem.bindCcSources(items)).toBe(items);
+        for (const item of items) {
+            expect(item.hasCcItems).toBe(false);
+            expect(item.ccItems).toEqual([]);
+            expect(item.checkHasSlideCcItems(1)).toBe(false);
+            expect(item.getSlideCcItems(1)).toEqual([]);
+            expect(item.getEffectiveSlideCcItems(1)).toEqual([]);
+        }
+        // No per-slide pins either: the slide answers its entry's.
+        expect(slide.getOwnSlideScreenIds(1)).toEqual([]);
+    });
+
+    test('with no CC on its entry, a slide propagates only its own', () => {
+        const documentEntry = PresentingFlowItem.fromJson('/flow', {
+            type: DragTypeEnum.APP_DOCUMENT,
+            uuid: uuid('doc'),
+            filePath: '/doc.owa',
+            slideCcItems: { 3: [{ uuid: uuid('color') }] },
+        });
+        const background = PresentingFlowItem.fromJson('/flow', {
+            type: DragTypeEnum.BACKGROUND_COLOR,
+            uuid: uuid('color'),
+            data: '#000',
+        });
+        PresentingFlowItem.bindCcSources([documentEntry, background]);
+        expect(documentEntry.hasCcItems).toBe(false);
+        const effective = documentEntry.getEffectiveSlideCcItems(3);
+        expect(effective).toHaveLength(1);
+        expect(effective[0].type).toBe(DragTypeEnum.BACKGROUND_COLOR);
+        expect(documentEntry.getEffectiveSlideCcItems(4)).toEqual([]);
+    });
+
+    test('CCs resolve only inside a bound sheet', () => {
+        // Never bound: nothing says what its uuids name.
+        const host = genSlide({ ccItems: [{ uuid: uuid('color') }] });
+        expect(host.hasCcItems).toBe(true);
+        expect(host.ccItems).toEqual([]);
+    });
+
+    test('a CC naming a line that cannot follow is not drawn', () => {
+        const documentEntry = PresentingFlowItem.fromJson('/flow', {
+            type: DragTypeEnum.APP_DOCUMENT,
+            uuid: uuid('doc'),
+            filePath: '/service.owa',
+        });
+        const background = PresentingFlowItem.fromJson('/flow', {
+            type: DragTypeEnum.BACKGROUND_COLOR,
+            uuid: uuid('color'),
+            data: '#000',
+        });
+        const host = genSlide({
+            ccItems: [{ uuid: uuid('doc') }, { uuid: uuid('color') }],
+        });
+        PresentingFlowItem.bindCcSources([host, documentEntry, background]);
+        // A document is opened, never shown, so it can follow nothing.
+        expect(host.ccItems.map((item) => item.type)).toEqual([
+            DragTypeEnum.BACKGROUND_COLOR,
+        ]);
+    });
+
+    test('an error row is refused as a follower and as a target alike', () => {
+        expect(
+            PresentingFlowItem.resolveCcItemJson({ type: ERROR_TYPE }),
+        ).toBeNull();
+        expect(
+            PresentingFlowItem.resolveCcItemJson({ type: ERROR_TYPE }, true),
+        ).toBeNull();
+    });
+
+    test('an action that cannot carry a time or a key answers null for both', () => {
+        const screen = new PresentingFlowItem('/flow', {
+            type: 'action',
+            data: 'clear-all',
+            actionTime: '10:00',
+            actionKey: 'A',
+        });
+        expect(screen.actionTime).toBeNull();
+        expect(screen.actionKey).toBeNull();
+        // A hand-edited file put both on an interval: ignored everywhere.
+        const interval = new PresentingFlowItem('/flow', {
+            type: 'action',
+            data: 'next-interval',
+            actionNumber: 5,
+            actionTime: '10:00',
+            actionKey: 'A',
+        });
+        expect(interval.actionTime).toBeNull();
+        expect(interval.actionKey).toBeNull();
+        expect(interval.actionArming).toEqual({ actionNumber: 5 });
+        const keyed = new PresentingFlowItem('/flow', {
+            type: 'action',
+            data: 'keyboard-event',
+            actionKey: 'Ctrl+K',
+            actionTime: '10:00',
+        });
+        expect(keyed.actionTime).toBeNull();
+        const timed = new PresentingFlowItem('/flow', {
+            type: 'action',
+            data: 'next-timeout',
+            actionTime: '10:00',
+            actionKey: 'Ctrl+K',
+        });
+        expect(timed.actionKey).toBeNull();
+    });
+
+    test('a row built around an action this version does not know reads as its type', () => {
+        const unknown = new PresentingFlowItem('/flow', {
+            type: 'action',
+            data: 'future-action',
+        });
+        expect(unknown.isAction).toBe(true);
+        expect(unknown.action).toBeNull();
+        expect(unknown.title).toBe('action');
+        expect(unknown.idLabel).toBe('');
+    });
+
+    test('content without a number carries no badge, and only a verse is a Bible item', () => {
+        const background = new PresentingFlowItem('/flow', {
+            type: DragTypeEnum.BACKGROUND_COLOR,
+            data: '#000',
+        });
+        const verse = new PresentingFlowItem('/flow', {
+            type: DragTypeEnum.BIBLE_ITEM,
+            data: { bibleKey: 'KJV' },
+        });
+        expect(background.idLabel).toBe('');
+        expect(verse.idLabel).toBe('');
+        expect(verse.isBibleItem).toBe(true);
+        expect(background.isBibleItem).toBe(false);
+        expect(genSlide().isBibleItem).toBe(false);
+    });
+
+    test('a slide that is gone from its document presents nothing', async () => {
+        mocks.getDocument.mockReturnValue({
+            getItemById: vi.fn(async () => null),
+        });
+        await expect(genSlide({ id: 99 }).toDroppedData()).resolves.toBeNull();
+    });
+
+    test('a dropped Bible item without a passage is titled generically', async () => {
+        const built = await PresentingFlowItem.fromDroppedData(
+            { type: DragTypeEnum.BIBLE_ITEM, item: {} },
+            { type: DragTypeEnum.BIBLE_ITEM, data: { bibleKey: 'KJV' } },
+        );
+        expect(built).toMatchObject({
+            type: DragTypeEnum.BIBLE_ITEM,
+            title: 'Bible Item',
+            extraStyle: { fontFamily: 'Khmer Font' },
+        });
+        expect(mocks.bibleTitle).not.toHaveBeenCalled();
+        expect(mocks.getBibleFontFamily).toHaveBeenCalledWith('KJV');
     });
 });

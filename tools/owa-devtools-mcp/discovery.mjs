@@ -119,6 +119,25 @@ export function resolveAppBrowserUrl(instances = null) {
     return instance ? `http://127.0.0.1:${instance.port}` : NO_APP_URL;
 }
 
+/**
+ * The published instance `resolveAppBrowserUrl` drives, or null: the one on
+ * the port named on purpose, else the newest of the requested kind. Read
+ * afresh per call, like the address.
+ */
+export function findDrivenInstance(instances = null) {
+    const liveInstances = instances ?? readLiveInstances();
+    const explicitPort = readExplicitCdpPort();
+    if (explicitPort !== null) {
+        return (
+            liveInstances.find((instance) => {
+                return instance.port === explicitPort;
+            }) ?? null
+        );
+    }
+    const [instance] = filterTargetInstances(liveInstances, readCdpTarget());
+    return instance ?? null;
+}
+
 // A kind pin survives a restart without ever selecting the other kind. Read
 // it and discovery afresh per lookup; neither ports nor instances are cached.
 function readCdpTarget() {

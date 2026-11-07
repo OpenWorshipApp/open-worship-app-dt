@@ -17,6 +17,7 @@ const h = vi.hoisted(() => {
         failRead: false,
         failUnlink: false,
         failDelete: false,
+        failList: false,
         selectedDirExists: true,
     };
 });
@@ -102,7 +103,10 @@ vi.mock('../../server/fileHelpers', () => {
             if (h.failDelete) throw new Error('delete failed');
             h.deletedFiles.push(filePath);
         },
-        fsListFiles: async () => h.listedFiles,
+        fsListFiles: async () => {
+            if (h.failList) throw new Error('list failed');
+            return h.listedFiles;
+        },
     };
 });
 
@@ -127,6 +131,7 @@ beforeEach(() => {
     h.failRead = false;
     h.failUnlink = false;
     h.failDelete = false;
+    h.failList = false;
     h.selectedDirExists = true;
 });
 
@@ -176,6 +181,28 @@ describe('where the data folder is, as a window starts', () => {
         expect(h.homeItems.get(SELECTED_PARENT_DIR_ID_SETTING_NAME)).toBe(
             'marker-id',
         );
+    });
+
+    test('the marker is checked once per window, not on every lapse of the cache', async () => {
+        const { appLocalStorage, SELECTED_PARENT_DIR_ID_SETTING_NAME } =
+            await loadAppLocalStorage();
+        h.homeItems.set('selected-parent-dir', 'E:\\data');
+        h.existingPaths.add('E:\\data');
+        const now = Date.now();
+        const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(now);
+        expect(appLocalStorage.defaultStorageDirPath).toBe('E:\\data');
+        const checkCount = h.existenceChecks.length;
+
+        // Another id on disk now; the folder was checked already.
+        h.markerId = 'another-id';
+        nowSpy.mockReturnValue(now + 11_000);
+        expect(appLocalStorage.defaultStorageDirPath).toBe('E:\\data');
+        // The folder was looked for again, its marker was not.
+        expect(h.existenceChecks.length).toBeGreaterThan(checkCount);
+        expect(h.homeItems.get(SELECTED_PARENT_DIR_ID_SETTING_NAME)).toBe(
+            'marker-id',
+        );
+        nowSpy.mockRestore();
     });
 
     test('with nothing chosen, the app uses its own folder and misses nothing', async () => {
@@ -321,6 +348,16 @@ describe('settings files on the selected storage path', () => {
             'lexical-playground-settings',
         ];
         expect(await appLocalStorage.listKeys()).toEqual(['theme']);
+    });
+
+    test('a settings folder that cannot be listed lists nothing, and says why', async () => {
+        const { appLocalStorage } = await loadAppLocalStorage();
+        h.listedFiles = ['theme'];
+        h.failList = true;
+        expect(await appLocalStorage.listKeys()).toEqual([]);
+        expect(h.errors.map((error) => (error as Error).message)).toEqual([
+            'list failed',
+        ]);
     });
 
     test('clear deletes listed files and clears both settings stores', async () => {

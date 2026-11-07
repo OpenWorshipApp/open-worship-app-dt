@@ -135,17 +135,17 @@ test('a written reference quotes the same complete passage as its book code', as
 
 test('the resolved passage keeps its localized title and selected Bible', async () => {
     mocks.copy.mockResolvedValue({
-        title: 'ម៉ាថាយ ១៨:១-១៤',
+        title: '[xx] Matthew 18:1-14',
         text: fullText,
         sectionList: [{ text: fullText }],
     });
     const result = await handleAgentLookupRequest({
         kind: 'verse',
-        ref: 'ម៉ាថាយ ១៨:១-១៤',
+        ref: '[xx] Matthew 18:1-14',
     });
     expect(result).toMatchObject({
         bible: 'KH',
-        passages: [{ title: 'ម៉ាថាយ ១៨:១-១៤', text: fullText }],
+        passages: [{ title: '[xx] Matthew 18:1-14', text: fullText }],
     });
     expect(mocks.copy).toHaveBeenCalledWith('KH', 'MAT 18:1-14');
 });

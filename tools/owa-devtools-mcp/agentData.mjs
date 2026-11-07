@@ -37,6 +37,14 @@ export const AGENT_NOTE_ACTIONS = [
 export const AGENT_UNDO_ACTIONS = ['list', 'undo'];
 
 /**
+ * `owa_language` (2026-11-05): the installed languages and the catalog's
+ * (`list`), whether the language some words name is installed (`check`), and
+ * installing it from the catalog or turning it back on (`install`). Only
+ * `install` acts, and only it is counted (`firewall.mjs`).
+ */
+export const AGENT_LANGUAGE_ACTIONS = ['list', 'check', 'install'];
+
+/**
  * `owa_presenting_flow` (2026-10-10): the run sheets, and the lines in them.
  * `park` / `unpark` are the panel's own Disable / Enable -- a line kept listed
  * and out of the run -- said the way a stage manager says it.
@@ -87,6 +95,9 @@ export const AGENT_REMOVING_ACTIONS = [
     'delete-file',
     'delete-slide',
     'remove',
+    // A part of a song (`owa_lyric_edit`): backed up and unsaved like every
+    // song edit, and a loop taking a song apart part by part is still one.
+    'remove-section',
     'undo',
 ];
 

@@ -47,7 +47,7 @@ vi.mock('./bibleBookNames.mjs', async (importOriginal) => ({
   getBibleNumberChoices: (locale) =>
     locale.startsWith('km')
       ? [
-          ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'],
+          ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'],
           ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
         ]
       : [['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']],
@@ -95,7 +95,7 @@ function analysis() {
       {
         label: 'Khmer names',
         source: 'built in',
-        names: ['កំណើត', 'និក្ខមនំ'],
+        names: ['GEN ✝', 'EXO ✝'],
       },
       {
         label: 'The names in the file',
@@ -221,7 +221,6 @@ describe('Bible XML MCP tool', () => {
       },
     });
     expect(result.nameLists).toHaveLength(2);
-    expect(result.digits.local).toContain('០');
     expect(mocks.writeMeta).toHaveBeenCalledWith(
       'abcdefghijkl',
       expect.objectContaining({
@@ -263,36 +262,6 @@ describe('Bible XML MCP tool', () => {
     expect(result.content[0].text).toContain('Give the locale');
   });
 
-  test('names returns full settings lists or ranked short previews for a draft', async () => {
-    state.names = {
-      locale: 'km-KH',
-      bookNames: [
-        ['Genesis', 'Exodus'],
-        ['កំណើត', 'និក្ខមនំ'],
-      ],
-      sources: [
-        { label: 'English', url: null },
-        { label: 'Khmer', url: 'https://example.test' },
-      ],
-      warnings: [],
-      moreAvailable: false,
-    };
-    expect(
-      value(await call({ action: 'names', locale: 'km-KH' })).bookNames,
-    ).toHaveLength(2);
-    const ranked = value(
-      await call({ action: 'names', locale: 'km-KH', draftId: 'abcdefghijkl' }),
-    );
-    expect(ranked.nameLists[0]).toMatchObject({ label: 'Khmer', matches: 8 });
-    expect(ranked.nameLists[0].own).toContain('កំណើត');
-    expect(state.requests).toContainEqual(
-      expect.objectContaining({
-        action: 'score',
-        xmlPath: '/drafts/abcdefghijkl.xml',
-      }),
-    );
-  });
-
   test('import requires a chosen key and then uses the saved recommended choices', async () => {
     expect(
       value(await call({ action: 'import', draftId: 'abcdefghijkl' })),
@@ -311,7 +280,6 @@ describe('Bible XML MCP tool', () => {
       locale: 'km-KH',
       bookNames: ['Genesis', 'Exodus'],
     });
-    expect(state.requests.at(-1).numbers[0]).toBe('០');
     expect(mocks.remove).toHaveBeenCalledWith('abcdefghijkl');
   });
 
@@ -451,7 +419,7 @@ describe('Bible XML MCP tool', () => {
 describe('Bible XML MCP tool, the less travelled paths', () => {
   const namesFound = (locale) => ({
     locale,
-    bookNames: [['Genèse', 'Exode']],
+    bookNames: [['GEN ✝', 'EXO ✝']],
     sources: [{ label: 'French', url: 'https://example.test/fr' }],
     warnings: [],
     moreAvailable: false,

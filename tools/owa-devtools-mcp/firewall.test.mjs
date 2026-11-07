@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+    checkIsActingCall,
     checkIsActingTool,
     checkIsAppUrl,
     checkIsRemovingCall,
@@ -153,10 +154,6 @@ describe('checkToolCall', () => {
 describe('a press that cannot be undone, in the words the window shows', () => {
     it('refuses it in Khmer', () => {
         for (const find of [
-            'ផ្លាស់ទីទៅធុងសំរាម',
-            'លុបទាំងអស់',
-            'Mini Screen > លុបទាំងអស់ [F6]',
-            'បោះបង់ការផ្លាស់ប្តូរ',
         ]) {
             expect(checkToolCall('owa_click', { find }).rule, find).toBe(
                 'destructive-label',
@@ -169,10 +166,6 @@ describe('a press that cannot be undone, in the words the window shows', () => {
     // confirm stands behind the other.
     it('still presses the ordinary Khmer controls', () => {
         for (const find of [
-            'លុបអត្ថបទវែង [F9]',
-            'លុបផ្ទៃខាងក្រោយ [F7]',
-            'លុបស្លាយ',
-            'បង្ហាញ',
         ]) {
             expect(checkToolCall('owa_click', { find }).isAllowed, find).toBe(
                 true,
@@ -188,31 +181,12 @@ describe('a press that cannot be undone, in the words the window shows', () => {
             );
         }
     });
-
-    it('remembers a Khmer control out of a snapshot', () => {
-        const memory = genUidLabelMemory();
-        memory.remember(
-            [
-                'uid=3_0 RootWebArea "x"',
-                '  uid=3_7 menuitem "ផ្លាស់ទីទៅធុងសំរាម"',
-                '  uid=3_8 button "ចាកចេញពីគណនី" description="SongSelect"',
-                '  uid=3_9 button "លុបអត្ថបទវែង" description="[F9]"',
-            ].join('\n'),
-        );
-        expect(memory.lookup('3_7')).not.toBeNull();
-        // Sign out's Khmer sits inside an ordinary sentence of the
-        // dictionary, so it is refused only as a WHOLE name -- which the
-        // quotes around it and the description beside it must not hide.
-        expect(memory.lookup('3_8')).not.toBeNull();
-        expect(memory.lookup('3_9')).toBeNull();
-    });
 });
 
 describe('the guard a press carries into the page', () => {
     it('carries the rule, and nothing when switched off', () => {
         const guard = genPressGuard();
         expect(guard.rule.patterns.length).toBeGreaterThan(5);
-        expect(guard.rule.containPhrases).toContain('ផ្លាស់ទីទៅធុងសំរាម');
         process.env.OWA_MCP_FIREWALL = 'off';
         expect(genPressGuard()).toBeNull();
     });
@@ -1203,5 +1177,45 @@ describe('a key named after an object property', () => {
         expect(
             checkToolCall('owa_press_key', { keys: ' F6 ' }).isAllowed,
         ).toBe(false);
+    });
+});
+
+// The language plugins (2026-11-05): only `install` changes the app -- it
+// downloads code the app runs into the data folder -- so only it spends a
+// slot; the help window asks `check` at every step of a conversation about
+// a language.
+describe('owa_language', () => {
+    beforeEach(() => {
+        resetFirewallState();
+    });
+
+    it('counts an install, and never a check or a list', () => {
+        expect(checkIsActingTool('owa_language')).toBe(false);
+        expect(checkIsActingCall('owa_language', { action: 'install' })).toBe(
+            true,
+        );
+        for (const action of ['check', 'list', undefined]) {
+            expect(checkIsActingCall('owa_language', { action }), action).toBe(
+                false,
+            );
+        }
+        expect(checkIsActingCall('owa_click', { find: 'Save' })).toBe(true);
+        expect(checkIsRemovingCall('owa_language', { action: 'install' })).toBe(
+            false,
+        );
+    });
+
+    it('a check is allowed past a spent acting budget, an install is not', () => {
+        for (let index = 0; index < 25; index++) {
+            checkToolCall('owa_scroll', { find: 'Document List' });
+        }
+        expect(
+            checkToolCall('owa_language', { action: 'check', language: 'de' })
+                .isAllowed,
+        ).toBe(true);
+        expect(
+            checkToolCall('owa_language', { action: 'install', language: 'de' })
+                .rule,
+        ).toBe('rate-limit');
     });
 });

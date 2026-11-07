@@ -286,6 +286,25 @@ export function checkIsThereNotHiddenWidget(
     return false;
 }
 
+function toSiblingPane(node: Element, isNext: boolean) {
+    let sibling = (
+        isNext ? node.nextElementSibling : node.previousElementSibling
+    ) as HTMLDivElement | null;
+    // A divider and a collapsed strip carry no `data-fs`: only a pane does.
+    while (sibling !== null && sibling.dataset['fs'] === undefined) {
+        sibling = (
+            isNext ? sibling.nextElementSibling : sibling.previousElementSibling
+        ) as HTMLDivElement | null;
+    }
+    return sibling;
+}
+
+function toFlexWithGrow(flex: string, flexGrow: number) {
+    const parts = flex.split(' ');
+    parts[0] = `${flexGrow}`;
+    return parts.join(' ');
+}
+
 export function calcShowingHiddenWidget(
     event: { currentTarget: HTMLDivElement },
     key: string,
@@ -295,15 +314,27 @@ export function calcShowingHiddenWidget(
 ) {
     const dataFlexSizeKey = keyToDataFlexSizeKey(flexSizeName, key);
     setDisablingSetting(flexSizeName, defaultFlexSize, dataFlexSizeKey);
-    const current = event.currentTarget;
-    const target = (
-        flexSizeDisabled[0] === 'first'
-            ? current.nextElementSibling
-            : current.previousElementSibling
-    ) as HTMLDivElement;
-    const targetFGrow = Number(target.style.flexGrow);
-    const flexGrow = targetFGrow - flexSizeDisabled[1];
-    target.style.flexGrow = `${flexGrow < targetFGrow / 10 ? targetFGrow : flexGrow}`;
+    // The space comes back from the pane that took it, found the way the
+    // closers found it: past every divider and strip. The strip's own
+    // neighbour was taken, which beside a middle pane is a divider -- its
+    // space never came back, and the pane after it grew at every reopening
+    // (2026-11-04).
+    const target = toSiblingPane(
+        event.currentTarget,
+        flexSizeDisabled[0] === 'first',
+    );
+    if (target !== null) {
+        const targetFGrow = Number(target.style.flexGrow);
+        const flexGrow = targetFGrow - flexSizeDisabled[1];
+        target.style.flexGrow = `${flexGrow < targetFGrow / 10 ? targetFGrow : flexGrow}`;
+    }
     const size = genFlexSizeSetting(flexSizeName, defaultFlexSize);
+    // And the pane opens at the grow the flag kept for it: a pane dragged
+    // shut was stored at the size it was dragged to, and opened again at
+    // flex 0 -- open, and nowhere to be seen (2026-11-04).
+    const ownGrow = flexSizeDisabled[1];
+    if (size[key] !== undefined && Number.isFinite(ownGrow) && ownGrow > 0) {
+        size[key][0] = toFlexWithGrow(size[key][0], ownGrow);
+    }
     return size;
 }

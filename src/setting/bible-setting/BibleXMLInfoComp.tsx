@@ -16,6 +16,7 @@ import { warnIfBibleKeyDirty } from './bibleEditorDirtyHelpers';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
 import { findBibleNoteUrl } from './bibleImportNoteHelpers';
+import BibleXMLLangPackageComp from './BibleXMLLangPackageComp';
 
 const BibleXMLDataPreviewCompLazy = lazy(
     () => import('./BibleXMLDataPreviewComp'),
@@ -213,6 +214,10 @@ export default function BibleXMLInfoComp({
                 {/* No handler: the row around it owns the menu. */}
                 <ContextMenuDotsButtonComp />
             </div>
+            {bibleInfo ? (
+                // Asks for the Bible's language when it is not installed.
+                <BibleXMLLangPackageComp locale={bibleInfo.locale} />
+            ) : null}
             {note === '' ? null : <BibleXMLNoteComp note={note} />}
             {isShowing ? (
                 <AppSuspenseComp>

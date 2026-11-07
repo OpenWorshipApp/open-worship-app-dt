@@ -1,0 +1,8 @@
+{
+    "locale": "zh-CN",
+    "order": 50,
+    "name": "Chinese (Simplified)",
+    "nativeName": "简体中文",
+    "version": "0.0.11",
+    "description": "The app in Simplified Chinese, Bible book names in English."
+}

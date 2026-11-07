@@ -67,7 +67,8 @@ vi.mock('../server/unlockingHelpers', () => ({
 vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
     DEFAULT_LOCALE: 'en-US',
-    supportedLocales: ['en-US', 'km-KH'],
+    ensureLangPlugins: async () => [],
+    getSupportedLocales: () => ['en-US', 'km-KH'],
     getLangCode: (locale: string) => h.langCodes.get(locale) ?? null,
     getLocalBibleCrossRef: async (locale: string, target: unknown) => {
         h.localRequests.push([locale, target]);

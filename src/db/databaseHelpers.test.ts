@@ -1,6 +1,25 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { DB_NAME, IndexedDbController } from './databaseHelpers';
+
+// `fake-indexeddb` is not a dependency: each test stubs `indexedDB` and
+// `IDBKeyRange` itself, and the file puts back whatever was there before.
+const originalGlobalDescriptors = {
+    indexedDB: Object.getOwnPropertyDescriptor(globalThis, 'indexedDB'),
+    IDBKeyRange: Object.getOwnPropertyDescriptor(globalThis, 'IDBKeyRange'),
+};
+
+afterAll(() => {
+    for (const [name, descriptor] of Object.entries(
+        originalGlobalDescriptors,
+    )) {
+        if (descriptor === undefined) {
+            delete (globalThis as any)[name];
+        } else {
+            Object.defineProperty(globalThis, name, descriptor);
+        }
+    }
+});
 
 class TestDbController extends IndexedDbController {
     override get storeName() {
@@ -191,6 +210,54 @@ describe('databaseHelpers', () => {
         secondRequest.onsuccess?.({ target: { result: newDb } });
         await init;
         expect(controller.db).toBe(newDb);
+    });
+
+    test('an open blocked by another connection tells every waiting init why, and the next init asks again', async () => {
+        const controller = new TestDbController();
+        const openMock = globalThis.indexedDB.open as any as ReturnType<
+            typeof vi.fn
+        >;
+        const init1 = controller.init();
+        const init2 = controller.init();
+        expect(openMock).toHaveBeenCalledTimes(1);
+        const openRequest = openMock.mock.results[0]?.value;
+
+        // Another window holds the database open and will not let go.
+        openRequest.onblocked?.();
+        await expect(init1).rejects.toThrow(
+            'Database opening blocked by another connection',
+        );
+        await expect(init2).rejects.toThrow(
+            'Database opening blocked by another connection',
+        );
+        expect(controller.isDbOpened).toBe(false);
+
+        // Not stuck on the blocked request: a later init opens afresh.
+        const init3 = controller.init();
+        expect(openMock).toHaveBeenCalledTimes(2);
+        const { db } = createStoreHarness();
+        openMock.mock.results[1]?.value.onsuccess?.({ target: { result: db } });
+        await init3;
+        expect(controller.db).toBe(db);
+    });
+
+    test('a schema change from another window closes this connection', async () => {
+        const controller = new TestDbController();
+        const openMock = globalThis.indexedDB.open as any as ReturnType<
+            typeof vi.fn
+        >;
+        const init = controller.init();
+        const { db } = createStoreHarness();
+        openMock.mock.results[0]?.value.onsuccess?.({ target: { result: db } });
+        await init;
+        expect(controller.isDbOpened).toBe(true);
+        expect(db.close).not.toHaveBeenCalled();
+
+        // Left open, it would block the other window's upgrade forever.
+        (db as any).onversionchange();
+        expect(db.close).toHaveBeenCalledTimes(1);
+        expect(controller.isDbOpened).toBe(false);
+        expect(() => controller.db).toThrow('DB is not initialized');
     });
 
     test('rejects queued init requests on open failure and wires init callbacks', async () => {

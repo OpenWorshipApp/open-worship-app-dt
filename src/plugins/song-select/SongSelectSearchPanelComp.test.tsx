@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
     importSong: vi.fn(),
     handleError: vi.fn(),
 }));
+const popupState = vi.hoisted(() => ({ theme: 'light' }));
 
 vi.mock('../../helper/appHooks', async () => {
     const { useEffect } = await import('react');
@@ -41,9 +42,29 @@ vi.mock('./songSelectApiHelpers', () => ({
 vi.mock('./songSelectImportHelpers', () => ({
     importSongSelectSongToDirectory: mocks.importSong,
 }));
+// The popup's frame: what it is titled, where its rect is kept, how it closes.
+vi.mock('../../app-modal/FloatingWidgetComp', () => ({
+    default: ({ title, persistKey, onClose, options, children }: any) => (
+        <section
+            role="dialog"
+            aria-label={title}
+            data-persist-key={persistKey}
+            data-size={`${options.width}x${options.height}`}
+        >
+            <button type="button" onClick={onClose}>
+                Close widget
+            </button>
+            {children}
+        </section>
+    ),
+}));
+vi.mock('../../others/themeHelpers', () => ({
+    useThemeSource: () => ({ theme: popupState.theme }),
+}));
 
 import type { SongSelectSearchPageType } from './songSelectApiHelpers';
 import SongSelectSearchPanelComp from './SongSelectSearchPanelComp';
+import SongSelectSearchPopupComp from './SongSelectSearchPopupComp';
 
 let host: HTMLDivElement;
 let root: Root;
@@ -211,5 +232,118 @@ describe('SongSelect search panel', () => {
             host.querySelector<HTMLButtonElement>('[aria-label="Download"]')!
                 .disabled,
         ).toBe(false);
+    });
+
+    // The API clamps a page past the last one. The panel takes the page the
+    // answer names as its own, so the pager's next press asks again instead
+    // of being a no-op on a page number it already holds.
+    test('a page the API clamps is mirrored back, so the next press still asks', async () => {
+        mocks.searchSongs.mockImplementation(
+            async (query: string, pageNumber: number) => {
+                return {
+                    ...page(query, Math.min(pageNumber, 1)),
+                    totalPages: 1,
+                };
+            },
+        );
+        const countPageTwoAsks = () => {
+            return mocks.searchSongs.mock.calls.filter(([, pageNumber]) => {
+                return pageNumber === 2;
+            }).length;
+        };
+        const pressPager = async () => {
+            await act(async () => {
+                [...host.querySelectorAll('button')]
+                    .find((button) => button.textContent?.includes('Page 1'))!
+                    .click();
+            });
+        };
+        await act(async () =>
+            root.render(<SongSelectSearchPanelComp dirPath="/songs" />),
+        );
+        await act(async () => changeInput('Grace'));
+        await act(async () => vi.advanceTimersByTime(500));
+        expect(host.textContent).toContain('Page 1');
+
+        await pressPager();
+        expect(countPageTwoAsks()).toBe(1);
+        expect(host.textContent).toContain('Page 1');
+        expect(host.textContent).toContain('Grace Song');
+
+        await pressPager();
+        expect(countPageTwoAsks()).toBe(2);
+        expect(host.textContent).toContain('Page 1');
+    });
+
+    test('an old query that fails after a newer one answered shows no error', async () => {
+        let rejectOld!: (error: Error) => void;
+        mocks.searchSongs.mockImplementation((query: string) =>
+            query === 'Old'
+                ? new Promise<SongSelectSearchPageType>((_resolve, reject) => {
+                      rejectOld = reject;
+                  })
+                : Promise.resolve(page(query)),
+        );
+        await act(async () =>
+            root.render(<SongSelectSearchPanelComp dirPath="/songs" />),
+        );
+        await act(async () => changeInput('Old'));
+        await act(async () => vi.advanceTimersByTime(500));
+        await act(async () => changeInput('New'));
+        await act(async () => vi.advanceTimersByTime(500));
+        expect(host.textContent).toContain('New Song');
+
+        await act(async () => rejectOld(new Error('timed out')));
+        expect(host.textContent).toContain('New Song');
+        expect(host.textContent).not.toContain('Search failed');
+        expect(host.textContent).not.toContain('Loading');
+        expect(mocks.handleError).not.toHaveBeenCalled();
+    });
+});
+
+describe('SongSelect search popup', () => {
+    test('floats the search panel over the page, in the app theme, and closes', async () => {
+        popupState.theme = 'dark';
+        const onClose = vi.fn();
+        await act(async () =>
+            root.render(
+                <SongSelectSearchPopupComp
+                    dirPath="/songs"
+                    onClose={onClose}
+                />,
+            ),
+        );
+        // The panel is lazy: it is fetched only now that the popup is open.
+        for (let round = 0; round < 3; round++) {
+            await act(async () => {
+                await vi.dynamicImportSettled();
+            });
+        }
+        // Portalled to the body, not rendered where it was mounted.
+        expect(host.childElementCount).toBe(0);
+        const portal = document.body.querySelector<HTMLElement>(
+            ':scope > .app-floating-widget-portal',
+        )!;
+        expect(portal.dataset.bsTheme).toBe('dark');
+        const dialog = portal.querySelector('[role="dialog"]')!;
+        expect(dialog.getAttribute('aria-label')).toBe(
+            'Import From SongSelect',
+        );
+        expect(dialog.getAttribute('data-persist-key')).toBe(
+            'floating-widget-rect-song-select-import',
+        );
+        expect(dialog.getAttribute('data-size')).toBe('480x600');
+        expect(dialog.textContent).toContain('Type to search');
+        expect(dialog.querySelector('input')!.placeholder).toBe(
+            'Search songs...',
+        );
+
+        await act(async () => {
+            [...dialog.querySelectorAll('button')]
+                .find((button) => button.textContent === 'Close widget')!
+                .click();
+        });
+        expect(onClose).toHaveBeenCalledTimes(1);
+        popupState.theme = 'light';
     });
 });

@@ -23,18 +23,24 @@ export default function SettingOthersSectionComp({
     headerActions,
     openToken,
     onCollapse,
+    isUpdateAvailable = false,
     children,
 }: Readonly<{
     foldName: SettingSectionFoldNameType;
     iconClassName: string;
     title: string;
-    description: string;
+    // Both optional: a section whose title says it all (Settings > Languages'
+    // picker) shows neither the line under it nor the state pill.
+    description?: string;
     state: SettingOthersStateType;
-    stateLabel: string;
+    stateLabel?: string;
     headerActions?: ReactNode;
     // Both as `useSettingSectionFold` takes them.
     openToken?: number;
     onCollapse?: () => void;
+    // The end of the trail from the Setting gear's dot: something in here has
+    // an update. Beside the title, so a folded section still shows it.
+    isUpdateAvailable?: boolean;
     children: ReactNode;
 }>) {
     const [isCollapsed, handleToggling] = useSettingSectionFold(
@@ -62,11 +68,21 @@ export default function SettingOthersSectionComp({
                         />
                         {tran(title)}
                     </SettingOthersFoldButtonComp>
+                    {isUpdateAvailable ? (
+                        <span
+                            className="app-update-dot-inline"
+                            role="img"
+                            title={tran('Update Available')}
+                            aria-label={tran('Update Available')}
+                        />
+                    ) : null}
                 </h2>
-                <span className="app-setting-others-state">
-                    <i className="bi bi-circle-fill" aria-hidden="true" />
-                    {tran(stateLabel)}
-                </span>
+                {stateLabel ? (
+                    <span className="app-setting-others-state">
+                        <i className="bi bi-circle-fill" aria-hidden="true" />
+                        {tran(stateLabel)}
+                    </span>
+                ) : null}
                 {headerActions ? (
                     <span className="app-setting-others-actions">
                         {headerActions}
@@ -78,9 +94,11 @@ export default function SettingOthersSectionComp({
                 model the user has added. */}
             {isCollapsed ? null : (
                 <>
-                    <p className="app-setting-others-description">
-                        {tran(description)}
-                    </p>
+                    {description ? (
+                        <p className="app-setting-others-description">
+                            {tran(description)}
+                        </p>
+                    ) : null}
                     {children}
                 </>
             )}

@@ -12,6 +12,7 @@ const h = vi.hoisted(() => ({
     files: [] as File[],
     menuRoom: null as any,
     zoomOptions: null as any,
+    presentingPaths: new Set<string>(),
     highlight: vi.fn(),
     register: vi.fn(),
     controlEvent: vi.fn(),
@@ -45,7 +46,8 @@ vi.mock('./SlidesMenuComp', () => ({
     default: () => createElement('span', {}, 'Editing menu'),
 }));
 vi.mock('./varyAppDocumentHelpers', () => ({
-    checkIsVaryAppDocumentPresenting: () => true,
+    checkIsVaryAppDocumentPresenting: (filePath: string) =>
+        h.presentingPaths.has(filePath),
     getContainerDiv: () => document.querySelector('.slide-items-container'),
     SLIDE_ITEMS_CONTAINER_CLASS_NAME: 'slide-items-container',
 }));
@@ -167,6 +169,7 @@ beforeEach(() => {
     h.stage = 0;
     h.typing = false;
     h.files = [];
+    h.presentingPaths.clear();
     h.menuRoom = null;
     h.zoomOptions = null;
     h.doc = Object.assign(new (AppDocument as any)(), {
@@ -285,5 +288,140 @@ describe('slides previewer', () => {
         expect(h.menuRoom).toEqual({ height: 26, width: 64 });
         expect(h.register).not.toHaveBeenCalled();
         expect(h.highlight.mock.calls[0][1].revealKey).toBeUndefined();
+    });
+
+    function genDocument(filePath: string) {
+        return Object.assign(new (AppDocument as any)(), {
+            filePath,
+            isEditable: true,
+            showContextMenu: h.showMenu,
+        });
+    }
+
+    it('looks for the active card only inside its own panel', async () => {
+        await renderPreviewer();
+        const findActiveCard = h.highlight.mock.calls[0][0] as () => unknown;
+        expect(findActiveCard()).toBeNull();
+        // Another previewer's active card is not this one's to scroll to.
+        const elsewhere = document.createElement('div');
+        elsewhere.className = 'document-slide active';
+        document.body.appendChild(elsewhere);
+        try {
+            expect(findActiveCard()).toBeNull();
+            const card = document.createElement('div');
+            card.className = 'document-slide active';
+            panel().appendChild(card);
+            expect(findActiveCard()).toBe(card);
+        } finally {
+            elsewhere.remove();
+        }
+    });
+
+    it('leaves focus alone in a field being typed into, and behind the main panel', async () => {
+        h.typing = true;
+        await renderPreviewer();
+        expect(document.activeElement).toBe(document.body);
+
+        await act(async () => root.unmount());
+        root = createRoot(container);
+        h.typing = false;
+        const mainPanel = document.createElement('div');
+        mainPanel.className = 'slide-items-container';
+        document.body.insertBefore(mainPanel, container);
+        try {
+            await renderPreviewer();
+            expect(panel()).not.toBe(mainPanel);
+            expect(document.activeElement).toBe(document.body);
+        } finally {
+            mainPanel.remove();
+        }
+    });
+
+    it('picking another document keeps focus on a control inside the panel', async () => {
+        await renderPreviewer();
+        expect(document.activeElement).toBe(panel());
+        const menuButton =
+            container.querySelector<HTMLButtonElement>('button')!;
+        menuButton.focus();
+        h.doc = genDocument('C:/documents/next.owa');
+        await renderPreviewer();
+        expect(document.activeElement).toBe(menuButton);
+    });
+
+    it('its keying area is its own panel, live while its current document is on a screen', async () => {
+        const unregister = vi.fn();
+        h.register.mockReturnValue(unregister);
+        await renderPreviewer();
+        const area = h.register.mock.calls[0][0];
+        expect(area.getElement()).toBe(panel());
+        expect(area.checkHasSelected()).toBe(false);
+        h.presentingPaths.add('C:/documents/service.owa');
+        expect(area.checkHasSelected()).toBe(true);
+
+        // Asked of the document showing NOW, not the one it registered with.
+        h.doc = genDocument('C:/documents/next.owa');
+        await renderPreviewer();
+        expect(h.register).toHaveBeenCalledTimes(1);
+        expect(area.checkHasSelected()).toBe(false);
+        h.presentingPaths.add('C:/documents/next.owa');
+        expect(area.checkHasSelected()).toBe(true);
+
+        await act(async () => root.unmount());
+        expect(unregister).toHaveBeenCalledTimes(1);
+        root = createRoot(container);
+    });
+
+    it('a floating preview ranks its keying area below the panel behind it', async () => {
+        container.classList.add('floating-widget');
+        try {
+            await renderPreviewer();
+            expect(h.register.mock.calls[0][0].priority).toBe(10);
+        } finally {
+            container.classList.remove('floating-widget');
+        }
+    });
+
+    it('dims under a drag and comes back when it leaves', async () => {
+        await renderPreviewer();
+        const over = new Event('dragover', { bubbles: true, cancelable: true });
+        await act(async () => panel().dispatchEvent(over));
+        expect(over.defaultPrevented).toBe(true);
+        expect(h.dragStyle).toHaveBeenLastCalledWith(
+            expect.objectContaining({ type: 'dragover' }),
+            'opacity',
+            '0.5',
+        );
+        const leave = new Event('dragleave', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => panel().dispatchEvent(leave));
+        expect(leave.defaultPrevented).toBe(true);
+        expect(h.dragStyle).toHaveBeenLastCalledWith(
+            expect.objectContaining({ type: 'dragleave' }),
+            'opacity',
+            '1',
+        );
+    });
+
+    it('a drop on a document that takes no new slides adds nothing', async () => {
+        // A PDF, a PPTX, a lyric: what is shown here, not an Open Worship file.
+        h.doc = {
+            filePath: 'C:/documents/handout.pdf',
+            isEditable: false,
+            showContextMenu: h.showMenu,
+        };
+        h.files = [new File(['image'], 'photo.png', { type: 'image/png' })];
+        await renderPreviewer();
+        const drop = new Event('drop', { bubbles: true, cancelable: true });
+        await act(async () => panel().dispatchEvent(drop));
+        expect(drop.defaultPrevented).toBe(true);
+        expect(h.dragStyle).toHaveBeenLastCalledWith(
+            expect.objectContaining({ type: 'drop' }),
+            'opacity',
+            '1',
+        );
+        expect(h.createSlides).not.toHaveBeenCalled();
+        expect(h.toast).not.toHaveBeenCalled();
     });
 });

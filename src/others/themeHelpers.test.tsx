@@ -225,4 +225,46 @@ describe('initHelpers', () => {
         expect(latestTheme).toBe('dark');
         expect(latestThemeSource).toBe('system');
     });
+
+    test('with no system matcher "system" reads as light; useIsDarkMode follows the theme', async () => {
+        const initHelpers = await loadModule();
+        const EventHandler = (await import('../event/EventHandler')).default;
+        const matchMediaDescriptor = Object.getOwnPropertyDescriptor(
+            globalThis,
+            'matchMedia',
+        );
+        Object.defineProperty(globalThis, 'matchMedia', {
+            configurable: true,
+            value: undefined,
+        });
+        try {
+            expect(initHelpers.checkIsDarkMode('system')).toBe(false);
+            expect(initHelpers.checkIsDarkMode('dark')).toBe(true);
+
+            const seen: boolean[] = [];
+            function ProbeComp() {
+                seen.push(initHelpers.useIsDarkMode());
+                return null;
+            }
+            sendDataSyncMock.mockReturnValue('dark');
+            await act(async () => {
+                root = createRoot(container!);
+                root.render(<ProbeComp />);
+            });
+            expect(sendDataSyncMock).toHaveBeenCalledWith('main:app:get-theme');
+            expect(seen.at(-1)).toBe(true);
+
+            await act(async () => {
+                EventHandler.addPropEvent('app:theme-changed', 'light');
+                await Promise.resolve();
+            });
+            expect(seen.at(-1)).toBe(false);
+        } finally {
+            Object.defineProperty(
+                globalThis,
+                'matchMedia',
+                matchMediaDescriptor!,
+            );
+        }
+    });
 });

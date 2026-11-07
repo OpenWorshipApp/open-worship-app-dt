@@ -5,7 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test, vi } from 'vitest';
 
 import { BOT_FOCUS_LIST } from '../../tools/owa-devtools-mcp/botFocus.mjs';
-import { extractDictionary } from '../../tools/owa-devtools-mcp/tran.mjs';
+import {
+    listLangPackageCodes,
+    readLangPackageDictionary,
+} from '../test-setup/langPackageDirs';
 
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: () => null,
@@ -33,17 +36,8 @@ import { CHAT_TIP_LIST } from './tipHelpers';
 // shows English in a packaged one; a label missing stays English unnoticed.
 // So each one is held to its Khmer AND its French here.
 
-const DATA_DIR = path.join(
-    path.dirname(fileURLToPath(import.meta.url)),
-    '..',
-    'lang',
-    'data',
-);
-
 function readPack(langCode: string) {
-    return extractDictionary(
-        readFileSync(path.join(DATA_DIR, langCode, 'index.ts'), 'utf-8'),
-    );
+    return readLangPackageDictionary(langCode);
 }
 
 function listMissing(langCode: string, textList: readonly string[]) {
@@ -53,7 +47,8 @@ function listMissing(langCode: string, textList: readonly string[]) {
     });
 }
 
-const LANG_CODE_LIST = ['km', 'fr'];
+// Every language package but English, found by its folder.
+const LANG_CODE_LIST = listLangPackageCodes({ isEnglishIncluded: false });
 
 describe('words translated through a variable', () => {
     test('the packs are read, so a green run means something', () => {

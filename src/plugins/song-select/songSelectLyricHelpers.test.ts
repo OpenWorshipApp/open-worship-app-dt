@@ -35,6 +35,7 @@ import type { SongSelectLyricsType } from './songSelectApiHelpers';
 (document as any).execCommand ??= () => false;
 const { checkOpenLyricMarkdown, sanitizeFileName, songSelectLyricsToMarkdown } =
     await import('./songSelectLyricHelpers');
+const { EditorOpenLyricPlugin } = await import('open-lyric');
 
 function genLyricsData(
     lyricParts: SongSelectLyricsType['lyricParts'],
@@ -219,6 +220,63 @@ describe('songSelectLyricsToMarkdown', () => {
         expect(markdown).toContain('- Title: Untitled Song');
         expect(markdown).toContain('- Artist: Unknown Artist');
         expect(markdown).toContain('- Copyright: Unknown');
+        expect(checkOpenLyricMarkdown(markdown as string)).toBe(true);
+    });
+
+    test('blank lines around a part are trimmed, the ones inside it kept', () => {
+        const markdown = songSelectLyricsToMarkdown(
+            genLyricsData([
+                genPart(
+                    'Verse',
+                    1,
+                    '\n  \nAmazing grace\n\nhow sweet the sound\n \n\n',
+                ),
+            ]),
+        );
+        // A lone verse is bare `Verse`; its SongSelect label stays a comment.
+        expect(markdown).toContain(
+            '```ol:Verse\n// Verse 1\nAmazing grace\n\nhow sweet the sound\n```',
+        );
+        expect(checkOpenLyricMarkdown(markdown as string)).toBe(true);
+    });
+
+    // Tier 2. No input known today slips past the sanitizers, so open-lyric's
+    // validator is made to refuse tier 1 once; the rebuilt document is then
+    // held to the REAL validator, which is the guarantee the fallback makes.
+    test('a document open-lyric refuses is rebuilt as free-text fences', () => {
+        const realGetOpenLyricApi =
+            EditorOpenLyricPlugin.prototype.getOpenLyricApi;
+        const getOpenLyricApiSpy = vi
+            .spyOn(EditorOpenLyricPlugin.prototype, 'getOpenLyricApi')
+            .mockImplementation(function (this: any) {
+                const api = realGetOpenLyricApi.call(this);
+                return {
+                    ...api,
+                    document: { ...api.document, checkMarkdown: () => false },
+                } as any;
+            });
+        const markdown = songSelectLyricsToMarkdown(
+            genLyricsData([
+                genPart('Verse', 1, 'Amazing [grace]\n```ol:Chorus\n'),
+                genPart('Chorus', 1, 'Praise God'),
+                genPart('Misc', 1, 'spoken words', ''),
+            ]),
+        );
+        expect(getOpenLyricApiSpy).toHaveBeenCalledTimes(1);
+        getOpenLyricApiSpy.mockRestore();
+
+        expect(markdown).toContain('- Structure: D1D2D3');
+        // Free text keeps the brackets; a fence-like line still cannot close
+        // the fence; the original label rides along as a comment.
+        expect(markdown).toContain(
+            "```ol:Breakdown 1\n// Verse 1\nAmazing [grace]\n'''ol:Chorus\n```",
+        );
+        expect(markdown).toContain(
+            '```ol:Breakdown 2\n// Chorus 1\nPraise God\n```',
+        );
+        // No label, no comment.
+        expect(markdown).toContain('```ol:Breakdown 3\nspoken words\n```');
+        expect(markdown).not.toContain('```ol:Verse');
         expect(checkOpenLyricMarkdown(markdown as string)).toBe(true);
     });
 

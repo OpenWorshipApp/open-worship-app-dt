@@ -1,9 +1,17 @@
 import {
     DEFAULT_LANG_CODE,
+    DEFAULT_LOCALE,
+    checkIsRtl,
+    ensureLangPlugins,
     getCurrentLocale,
     getLangCode,
     getLangDataAsync,
 } from './lang/langHelpers';
+import { applyUiTextDirection } from './lang/langTextDirectionHelpers';
+import {
+    applyAppFontFamily,
+    genAppFontFamilyList,
+} from './lang/appFontFamilyHelpers';
 import { PRESENTING_FLOW_RENAME_MIGRATION_SETTING_NAME } from './helper/constants';
 import { handleError } from './helper/errorHelpers';
 import { sanitizeCssValue } from './helper/sanitizeHelpers';
@@ -138,10 +146,11 @@ async function initPreviewerNoteCloseMigration() {
  * opens a file in that folder: on Windows an open one stops the rename. The
  * module loads only when a move is waiting.
  */
+function checkIsDataDirMovePending() {
+    return appHomeStorage.getItem(DATA_DIR_MOVE_PENDING_SETTING_NAME) !== null;
+}
+
 async function initPendingDataDirMove() {
-    if (appHomeStorage.getItem(DATA_DIR_MOVE_PENDING_SETTING_NAME) === null) {
-        return;
-    }
     try {
         const { runPendingDataDirMove } =
             await import('./setting/directory-setting/dataDirMoveHelpers');
@@ -152,7 +161,14 @@ async function initPendingDataDirMove() {
 }
 
 export async function init(callback: () => void = () => {}) {
-    await initPendingDataDirMove();
+    // No `await` ahead of the line below unless a move is really waiting: some
+    // windows (`lyricEditor`) read their data without awaiting `init`, and an
+    // `await` hands them the thread even when it resolves at once -- they then
+    // read `$DATA_DIR_PATH\...` settings with nothing to expand them against
+    // and found no file ("Lyric file not found", 2026-11-05).
+    if (checkIsDataDirMovePending()) {
+        await initPendingDataDirMove();
+    }
     // First, before anything reads a file: the migration below reads settings,
     // and some windows (`lyricEditor`) read their data without awaiting `init`.
     appProvider.sessionData.defaultStorageDirPath =
@@ -161,6 +177,10 @@ export async function init(callback: () => void = () => {}) {
     await initSettingKeyPathMigration();
     await initPreviewerNoteCloseMigration();
     initFontFamily();
+    // Which languages this computer has (every one but English is a plugin),
+    // BEFORE the locale is read: a language turned off or deleted reads as
+    // English from here on, and `tran` never asks for a package that is gone.
+    await ensureLangPlugins();
     const currentLocale = getCurrentLocale();
     // Keep the document language in sync with the app locale so assistive tech
     // and `:lang()` CSS see Khmer as Khmer; it otherwise stays the HTML default
@@ -168,6 +188,17 @@ export async function init(callback: () => void = () => {}) {
     // the reload `forceReloadAppWindows` triggers after an Apply Settings.
     document.documentElement.lang =
         getLangCode(currentLocale) ?? DEFAULT_LANG_CODE;
-    await getLangDataAsync(currentLocale);
+    // A right-to-left language keeps the layout and reads each text in the
+    // direction of its own words (`langTextDirectionHelpers.ts` says why).
+    applyUiTextDirection(checkIsRtl(currentLocale));
+    const langData = await getLangDataAsync(currentLocale);
+    // English is the app's default face on every page, behind the language's
+    // own (`appFontFamilyHelpers.ts`): it is loaded -- built in, and loading it
+    // registers its faces -- even when the window is in another language.
+    const defaultLangData =
+        currentLocale === DEFAULT_LOCALE
+            ? langData
+            : await getLangDataAsync(DEFAULT_LOCALE);
+    applyAppFontFamily(genAppFontFamilyList(langData, defaultLangData));
     callback();
 }

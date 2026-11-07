@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, createElement } from 'react';
+import { act, createElement, Suspense } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,6 +19,7 @@ const h = vi.hoisted(() => ({
     resizeProps: null as any,
     contexts: null as any,
     hidePopup: vi.fn(),
+    headerProps: null as any,
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -82,12 +83,17 @@ vi.mock('./RenderLookupSuggestionComp', () => ({
         createElement('div', {}, `Unavailable: ${bibleKey}`),
 }));
 vi.mock('./RenderBibleLookupHeaderComp', () => ({
-    default: ({ toggleAdvanceLookup }: { toggleAdvanceLookup: () => void }) =>
-        createElement(
+    default: (props: { toggleAdvanceLookup: () => void }) => {
+        h.headerProps = props;
+        return createElement(
             'button',
-            { type: 'button', onClick: toggleAdvanceLookup },
+            { type: 'button', onClick: props.toggleAdvanceLookup },
             'Lookup header',
-        ),
+        );
+    },
+}));
+vi.mock('../bible-find/BibleFindPreviewerComp', () => ({
+    default: () => createElement('div', {}, 'Advance body'),
 }));
 vi.mock('./RenderExtraButtonsRightComp', () => ({
     default: () => createElement('div', {}, 'Fallback header'),
@@ -187,6 +193,7 @@ beforeEach(() => {
     h.unregisterBible.mockClear();
     h.resizeProps = null;
     h.contexts = null;
+    h.headerProps = null;
     h.controller = {
         selectedBibleItem: { bibleKey: 'en' },
         inputText: '',
@@ -297,5 +304,59 @@ describe('Bible lookup container', () => {
         expect(h.controller.reloadEditingResult).not.toBe(liveReload);
         expect(h.controller.setBibleKey).not.toBe(liveSetBibleKey);
         root = createRoot(container);
+    });
+
+    it('puts the leading panes first and lets full size collapse them with the Advance Lookup', async () => {
+        await render([
+            { key: 'h1', label: 'Bibles', children: { render: () => null } },
+            { key: 'h3', label: 'Notes', children: { render: () => null } },
+        ]);
+        expect(h.migrate).toHaveBeenCalledWith(
+            'bible-lookup-container-body',
+            true,
+            false,
+        );
+        expect(h.resizeProps.flexSizeDefault).toEqual({ leading: true });
+        expect(
+            h.resizeProps.dataInput.map((item: { key: string }) => item.key),
+        ).toEqual(['h1', 'h3', 'h2', 'advance']);
+        expect(h.headerProps.sideWidgetKeys).toEqual(['h1', 'h3', 'advance']);
+        expect(h.headerProps.flexSizeName).toBe('bible-lookup-container-body');
+    });
+
+    it('loads the Advance Lookup only when its pane is drawn', async () => {
+        await render();
+        const LazyAdvance = h.resizeProps.dataInput.find(
+            (item: { key: string }) => item.key === 'advance',
+        ).children;
+        // A lazy component, so the find body is not in the lookup's graph.
+        expect(LazyAdvance.$$typeof).toBe(Symbol.for('react.lazy'));
+        const advanceHost = document.createElement('div');
+        document.body.appendChild(advanceHost);
+        const advanceRoot = createRoot(advanceHost);
+        try {
+            await act(async () =>
+                advanceRoot.render(
+                    createElement(
+                        Suspense,
+                        { fallback: 'Loading advance' },
+                        createElement(LazyAdvance),
+                    ),
+                ),
+            );
+            for (
+                let i = 0;
+                i < 5 && advanceHost.textContent !== 'Advance body';
+                i++
+            ) {
+                await act(async () => {
+                    await new Promise((resolve) => setTimeout(resolve, 0));
+                });
+            }
+            expect(advanceHost.textContent).toBe('Advance body');
+        } finally {
+            await act(async () => advanceRoot.unmount());
+            advanceHost.remove();
+        }
     });
 });

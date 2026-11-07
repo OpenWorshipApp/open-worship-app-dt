@@ -164,6 +164,19 @@ describe('stopwatch state', () => {
             describeStopwatch({ dateTime: new Date(NOW - 3_600_000) }, NOW),
         ).toBe('stopwatch at 01:00:00, running');
     });
+
+    test('a second Start or Pause is a no-op, and a broken running date is unnamed', () => {
+        const running = genStopwatchTiming(true, NOW);
+        // Start on a running stopwatch must not move its start time.
+        expect(toStartedStopwatchData(running, NOW + 9_000)).toBe(running);
+        const stopped = genStopwatchTiming(false, NOW);
+        // Pause on a stopped one must not overwrite its reading.
+        expect(toPausedStopwatchData(stopped, NOW + 9_000)).toBe(stopped);
+
+        expect(describeStopwatch({ dateTime: new Date('x') }, NOW)).toBe(
+            'stopwatch',
+        );
+    });
 });
 
 describe('shared', () => {

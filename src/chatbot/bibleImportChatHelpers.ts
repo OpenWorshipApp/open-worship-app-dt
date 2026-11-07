@@ -51,8 +51,29 @@ import {
 } from './chatTranHelpers';
 import { checkIsOpenableLink, toOpenableLinks } from './chatLinkHelpers';
 import type { BotActionType, BotAnswerType } from './helpBotHelpers';
+import {
+    LANG_ENABLE_LABEL,
+    LANG_INSTALL_LABEL,
+    LANG_SKIP_LABEL,
+    checkChatLanguage,
+    checkIsLangOffer,
+    describeLangInstall,
+    genLangFailedText,
+    genLangOfferText,
+    genLangReadyText,
+    installChatLanguage,
+    toChatLangLabel,
+} from './langInstallChatHelpers';
 import { callTool, parseToolJson } from './mcpClient';
-import { checkIsLanguageWord, toAsciiDigits } from './chatLangHelpers';
+import {
+    checkIsLanguageWord,
+    DEFAULT_CHAT_LANG_CODE,
+    listAssistantLanguages,
+    listTypedLanguages,
+    SENTENCE_END_MARKS,
+    toAsciiDigits,
+    toCharClassSource,
+} from './chatLangHelpers';
 import {
     readKnownBibleLanguage,
     toWaitingInputData,
@@ -63,6 +84,39 @@ import {
 // A pseudo tool, caught in the window's `handleActing`: no tool host ever
 // registers it, so no model can press these buttons for the person.
 export const BIBLE_IMPORT_STEP_TOOL_NAME = 'owa-bible-import-step';
+
+/**
+ * The languages a "type it in English or in its own words" sentence shows
+ * as examples, from the languages here and never named in code: one written
+ * in a script of its own first (its own name looks nothing like its English
+ * one), by its English name and its own (`name`, `nativeName`), and one
+ * written in Latin letters by its own name (`otherNativeName`). The
+ * languages the app is shown in come before those only typed.
+ */
+export function genLanguageExampleWords() {
+    const languageList = [
+        ...listAssistantLanguages(),
+        ...listTypedLanguages(),
+    ].filter((language) => {
+        return (
+            language.code !== DEFAULT_CHAT_LANG_CODE &&
+            language.nativeName.length > 0 &&
+            language.nativeName !== language.name
+        );
+    });
+    const first =
+        languageList.find((language) => {
+            return !language.isLatinScript;
+        }) ?? languageList[0];
+    const other = languageList.find((language) => {
+        return language !== first && language.isLatinScript;
+    });
+    return {
+        name: first?.name ?? 'Spanish',
+        nativeName: first?.nativeName ?? 'Spanish',
+        otherNativeName: other?.nativeName ?? first?.nativeName ?? 'Spanish',
+    };
+}
 
 // The guide page about adding a Bible from XML. Its own "easy way" is this
 // conversation, so an answer written from it carries the button that starts
@@ -98,7 +152,8 @@ export type BibleImportStepType =
     | 'settings'
     | 'language'
     | 'local-file'
-    | 'kjv-create';
+    | 'kjv-create'
+    | 'lang-install';
 
 export type BibleImportStateType = {
     step: BibleImportStepType;
@@ -147,6 +202,17 @@ export type BibleImportStateType = {
     // The person asked for the KJV itself: once it exists the import is
     // finished, not started again.
     wantsKjv?: boolean;
+    // The language package of the Bible's language was offered (or found
+    // installed) for this code: not asked about again in this import
+    // (`findLangOffer`).
+    langChecked?: string;
+    // **Install it** under that offer: the language to install, how it is
+    // named, whether it only needs turning on, and the step the import goes
+    // on with once it is there.
+    langCode?: string;
+    langLabel?: string;
+    langTurnOn?: boolean;
+    langNext?: 'check' | 'locale-typed';
 };
 
 // A language rarely has more editions than this; a catalog search answers
@@ -346,6 +412,131 @@ function genKjvOfferAnswer(
     };
 }
 
+// --- the Bible's language, installed first -----------------------------------
+
+// The code of a locale's language: `de-DE` -> `de`.
+function toLocaleLangCode(locale: string | undefined) {
+    const langCode = (locale ?? '').split(/[-_]/)[0].trim().toLowerCase();
+    return /^[a-z]{2,3}$/.test(langCode) ? langCode : null;
+}
+
+/**
+ * Where the import goes once the language offer is answered: on with the
+ * step it was about to run -- or, installed at the language step, that
+ * step again (`locale-typed`), because the book-name lists were read before
+ * the language's own were there.
+ */
+function toLangDoneState(
+    state: BibleImportStateType,
+    langCode: string,
+    isInstalled: boolean,
+): BibleImportStateType {
+    const {
+        langCode: _langCode,
+        langLabel: _langLabel,
+        langTurnOn: _langTurnOn,
+        langNext,
+        awaits: _awaits,
+        note: _note,
+        typed: _typed,
+        ...rest
+    } = state;
+    const base = { ...rest, langChecked: langCode };
+    if (langNext === 'locale-typed') {
+        return isInstalled && state.locale !== undefined
+            ? { ...base, step: 'locale-typed', typed: state.locale }
+            : { ...base, step: 'digits' };
+    }
+    return { ...base, step: 'check' };
+}
+
+/**
+ * The language a Bible import settles on, offered FIRST when it is not
+ * installed or is turned off and the catalog has it (2026-11-05, the user:
+ * _user input for french so chatbot should take a moment to help user
+ * install french first before proceed further step_) -- its book names,
+ * digits and search words come from its plugin. Null when there is nothing
+ * to offer (English, installed, no package of it, a check that could not be
+ * made): the import goes on as it was. Asked once per language per import
+ * (`langChecked`).
+ */
+async function findLangOffer(
+    language: string,
+    state: BibleImportStateType,
+    langNext: 'check' | 'locale-typed',
+): Promise<BotAnswerType | null> {
+    const check = await checkChatLanguage(language);
+    if (!checkIsLangOffer(check)) {
+        return null;
+    }
+    const isTurnOn = check.state === 'turned-off';
+    const installState = carry(state, {
+        step: 'lang-install',
+        langCode: check.langCode,
+        langLabel: toChatLangLabel(check),
+        langNext,
+        ...(isTurnOn ? { langTurnOn: true } : {}),
+    });
+    return {
+        text: genLangOfferText(check),
+        actions: [
+            toAction(
+                isTurnOn ? LANG_ENABLE_LABEL : LANG_INSTALL_LABEL,
+                installState,
+            ),
+            toAction(
+                LANG_SKIP_LABEL,
+                toLangDoneState(installState, check.langCode, false),
+            ),
+        ],
+    };
+}
+
+/** The offer for the language a chosen LOCALE is in, unless already asked. */
+async function findLocaleLangOffer(state: BibleImportStateType) {
+    const langCode = toLocaleLangCode(state.locale);
+    if (
+        langCode === null ||
+        langCode === DEFAULT_CHAT_LANG_CODE ||
+        langCode === state.langChecked
+    ) {
+        return null;
+    }
+    return findLangOffer(String(state.locale), state, 'locale-typed');
+}
+
+// **Install it** pressed: the language first, then the import where it was.
+async function runLangInstall(
+    state: BibleImportStateType,
+): Promise<BotAnswerType> {
+    const langCode = state.langCode;
+    if (typeof langCode !== 'string') {
+        return { text: tran('That step is not one I know.') };
+    }
+    const label = state.langLabel ?? langCode;
+    if (await installChatLanguage(langCode)) {
+        const answer = await runBibleImportStep(
+            toLangDoneState(state, langCode, true),
+        );
+        return {
+            ...answer,
+            text: `${genLangReadyText(label)}\n\n${answer.text}`,
+        };
+    }
+    return {
+        text: genLangFailedText(label, state.langTurnOn === true),
+        actions: [
+            toAction(
+                state.langTurnOn === true
+                    ? LANG_ENABLE_LABEL
+                    : LANG_INSTALL_LABEL,
+                state,
+            ),
+            toAction(LANG_SKIP_LABEL, toLangDoneState(state, langCode, false)),
+        ],
+    };
+}
+
 /**
  * The state a step's buttons carry on to the next one: everything chosen so
  * far, minus what only that answer needed.
@@ -452,12 +643,17 @@ function readPastedLink(typed: string) {
  * seven Bibles searched the collection again and drew the same seven, and
  * "yes" under step 1 named the Bible "yes".
  */
+// A typed press's end: a full stop or an exclamation, in any script here.
+const TYPED_PRESS_END_PATTERN = new RegExp(
+    `[.!${toCharClassSource(SENTENCE_END_MARKS)}]+$`,
+);
+
 function findTypedPress(actions: BotActionType[], typed: string) {
     const said = typed
         .normalize('NFKC')
         .replace(/\p{Cf}/gu, '')
         .toLowerCase()
-        .replace(/[.!។៕]+$/, '')
+        .replace(TYPED_PRESS_END_PATTERN, '')
         .trim();
     const labelOf = (action: BotActionType) => {
         return toBibleImportEcho(action.label).toLowerCase();
@@ -506,6 +702,7 @@ function findTypedPress(actions: BotActionType[], typed: string) {
                 return (
                     /\(suggested\)$/.test(action.label) ||
                     action.label === 'Install it' ||
+                    action.label === LANG_ENABLE_LABEL ||
                     action.label === AGREE_LABEL
                 );
             }) ?? null
@@ -517,7 +714,10 @@ function findTypedPress(actions: BotActionType[], typed: string) {
     ) {
         return (
             actions.find((action) => {
-                return action.label === 'Cancel';
+                return (
+                    action.label === 'Cancel' ||
+                    action.label === LANG_SKIP_LABEL
+                );
             }) ?? null
         );
     }
@@ -686,6 +886,10 @@ export function getBibleImportInputContext(
                         names: 'numbers',
                         confirm: 'book names',
                         import: 'review before installation',
+                        'lang-install':
+                            'whether to install the language package of ' +
+                            "the Bible's language first (only the person's " +
+                            'press installs it)',
                     } as Partial<Record<BibleImportStepType, string>>
                 )[state.step] ??
                 state.step,
@@ -920,8 +1124,8 @@ function genKeyChoices(
 
 /**
  * The short names a person can press at step 1. The options are the names
- * the BIBLE'S OWN LANGUAGE knows a Bible by -- `ពគប`, `គខប`, `គកស១៦`, `អគត`,
- * `GKHB`, `KCB` for Khmer, `KJV`, `NKJV`, `NIV` … for English, `LSG` for
+ * the BIBLE'S OWN LANGUAGE knows a Bible by -- the Khmer Bibles' own short
+ * names and `GKHB`, `KCB` for Khmer, `KJV`, `NKJV`, `NIV` … for English, `LSG` for
  * French -- read from that language's `bibleKeyMap.json`, not the invented
  * ones a downloaded file carries (`KM2023`, `KHMER2019` …). The one the
  * file's own TITLE matches comes first, then the rest as the language lists
@@ -1005,7 +1209,7 @@ function genKeyStep(
         ].join('\n\n'),
         actions: [
             ...keyList.map((key, index) => {
-                // A key such as `KJV` or `ពគប` is the button's words; the
+                // A key such as `KJV` (or a Khmer Bible's own) is the button's words; the
                 // name it stands for (`King James Version`, the pack's own
                 // Khmer name) is only as wide as a hover. A key the language
                 // names nowhere -- an imported file's own invention -- gets
@@ -1456,11 +1660,14 @@ function genPageAnswer(
                           'Did you mean one of these? Press it, or type the ' +
                               'language again.',
                       )
-                    : tran(
-                          'Type the language in English or in its own words ' +
-                              '— for example Khmer, ខ្មែរ or Thai. If you have ' +
-                              'a link to a Bible file, you can paste it here ' +
-                              'instead.',
+                    : fillWords(
+                          tran(
+                              'Type the language in English or in its own ' +
+                                  'words — for example {name}, {nativeName} ' +
+                                  'or Thai. If you have a link to a Bible ' +
+                                  'file, you can paste it here instead.',
+                          ),
+                          genLanguageExampleWords(),
                       )),
         );
         const actions = [
@@ -1992,17 +2199,16 @@ async function runTypedLocale(state: BibleImportStateType) {
     const name =
         new Intl.DisplayNames(['en'], { type: 'language' }).of(result.locale) ??
         result.locale;
-    return genDigitsStep(
-        carry(state, {
-            locale: result.locale,
-            localeName: name,
-            digitChoices: genDigitChoices(result.locale),
-            nameLists: result.nameLists ?? [],
-            digits: undefined,
-            bookNames: undefined,
-            namesUrl: undefined,
-        }),
-    );
+    const next = carry(state, {
+        locale: result.locale,
+        localeName: name,
+        digitChoices: genDigitChoices(result.locale),
+        nameLists: result.nameLists ?? [],
+        digits: undefined,
+        bookNames: undefined,
+        namesUrl: undefined,
+    });
+    return (await findLocaleLangOffer(next)) ?? genDigitsStep(next);
 }
 
 async function runMoreNames(state: BibleImportStateType) {
@@ -2297,8 +2503,9 @@ async function runSettings(
  *
  * `unknownLanguage`: the catalog could not read the typed language. The
  * step is still the language question, and the WINDOW asks the assistant
- * before it is shown, because the exact match failed (2026-10-18: _ភាសាថៃ_
- * was answered with _I do not know the language_ instead of asking one).
+ * before it is shown, because the exact match failed (2026-10-18: the Khmer
+ * for "the Thai language" was answered with _I do not know the language_
+ * instead of asking one).
  */
 export type BibleImportStepAnswerType = BotAnswerType & {
     unknownLanguage?: string;
@@ -2351,8 +2558,23 @@ export async function runBibleImportStep(
             }
         }
         switch (state.step) {
-            case 'check':
+            case 'check': {
+                // A search of the collection BY LANGUAGE: that language
+                // first, when it is not installed.
+                const find = typeof state.find === 'string' ? state.find : '';
+                if (
+                    find.trim() !== '' &&
+                    state.langChecked === undefined &&
+                    (state.url === BIBLE_XML_CATALOG_URL ||
+                        state.pageUrl === BIBLE_XML_CATALOG_URL)
+                ) {
+                    const offer = await findLangOffer(find, state, 'check');
+                    if (offer !== null) {
+                        return offer;
+                    }
+                }
                 return await runCheck(state);
+            }
             case 'agree':
                 return genAgreedStep(state);
             case 'source':
@@ -2372,7 +2594,9 @@ export async function runBibleImportStep(
             case 'locale-typed':
                 return await runTypedLocale(state);
             case 'digits':
-                return genDigitsStep(state);
+                return (
+                    (await findLocaleLangOffer(state)) ?? genDigitsStep(state)
+                );
             case 'names':
                 return genNamesStep(state);
             case 'more-names':
@@ -2395,6 +2619,8 @@ export async function runBibleImportStep(
                 return await runLocalFile();
             case 'kjv-create':
                 return await runCreateKjv(state);
+            case 'lang-install':
+                return await runLangInstall(state);
             default:
                 return { text: tran('That step is not one I know.') };
         }
@@ -2559,6 +2785,9 @@ function genLanguageStep(state?: BibleImportStateType): BotAnswerType {
             url: BIBLE_XML_CATALOG_URL,
             find: language,
             ...keepWanted(state),
+            // **Import another Bible anyway** already answered the KJV
+            // offer: the language pressed next must not ask it again.
+            ...(state?.kjvChecked === true ? { kjvChecked: true } : {}),
         });
     };
     const actions = [
@@ -2578,13 +2807,16 @@ function genLanguageStep(state?: BibleImportStateType): BotAnswerType {
         },
     };
     return {
-        text: tran(
-            '**Which language do you want the Bible in?** Press one, or type ' +
-                'its name — in English or in its own words, for example ' +
-                'Thai, ខ្មែរ or Español. I will look in a free collection of ' +
-                'about a thousand Bibles and show you every one in that ' +
-                'language. If you have a link to a Bible file, you can paste ' +
-                'it here instead.',
+        text: fillWords(
+            tran(
+                '**Which language do you want the Bible in?** Press one, or ' +
+                    'type its name — in English or in its own words, for ' +
+                    'example Thai, {nativeName} or {otherNativeName}. I will ' +
+                    'look in a free collection of about a thousand Bibles and ' +
+                    'show you every one in that language. If you have a link ' +
+                    'to a Bible file, you can paste it here instead.',
+            ),
+            genLanguageExampleWords(),
         ),
         actions,
     };
@@ -2619,6 +2851,8 @@ export function describeBibleImportStep(state: BibleImportStateType) {
             return tran('Installing the Bible');
         case 'kjv-create':
             return tran('Creating the provided KJV Bible');
+        case 'lang-install':
+            return describeLangInstall(state.langLabel ?? state.langCode ?? '');
         case 'undo':
             return tran('Putting it back');
         default:

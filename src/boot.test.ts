@@ -13,6 +13,7 @@ const state = vi.hoisted(() => ({
     fontWeight: null as number | null,
     locale: 'km-KH',
     langCode: 'km' as string | null,
+    isRtl: false,
     handleError: vi.fn(),
     renameMigration: vi.fn(),
     keyPathMigration: vi.fn(),
@@ -45,6 +46,10 @@ vi.mock('./setting/appFontSettingHelpers', () => ({
 vi.mock('./helper/errorHelpers', () => ({ handleError: state.handleError }));
 vi.mock('./lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
+    DEFAULT_LOCALE: 'en-US',
+    // The window's language plugins, read before the locale.
+    ensureLangPlugins: async () => [],
+    checkIsRtl: () => state.isRtl,
     getCurrentLocale: () => state.locale,
     getLangCode: () => state.langCode,
     getLangDataAsync: state.getLangDataAsync,
@@ -65,6 +70,13 @@ vi.mock('./setting/directory-setting/dataDirMoveHelpers', () => ({
 import { init } from './boot';
 
 const KEY_PATH_SETTING = 'setting-key-path-migration';
+// Each locale's face as its language data gives it; English's is the app's
+// default (`data/en/fonts.json`).
+const LANG_FONT_FAMILY_MAP: Record<string, string | undefined> = {
+    'en-US': 'app-Google-Sans',
+    'km-KH': 'app-Battambang',
+    'he-IL': undefined,
+};
 const NOTE_CLOSE_SETTING = 'previewer-note-close-migration';
 
 function customStyle() {
@@ -86,6 +98,7 @@ beforeEach(() => {
     state.fontWeight = null;
     state.locale = 'km-KH';
     state.langCode = 'km';
+    state.isRtl = false;
     state.renameMigration.mockImplementation(async () => {
         state.calls.push('run:rename');
     });
@@ -98,14 +111,19 @@ beforeEach(() => {
     state.pendingMove.mockImplementation(async () => {
         state.calls.push('run:data-dir-move');
     });
-    state.getLangDataAsync.mockImplementation(async () => {
-        state.calls.push('lang-data');
+    state.getLangDataAsync.mockImplementation(async (locale: string) => {
+        state.calls.push(`lang-data:${locale}`);
+        return { fontFamily: LANG_FONT_FAMILY_MAP[locale] };
     });
 });
 
 afterEach(() => {
     customStyle()?.remove();
+    document.getElementById('app-ui-text-direction')?.remove();
+    document.documentElement.removeAttribute('data-ui-direction');
     document.documentElement.lang = '';
+    document.documentElement.style.removeProperty('--app-font-family');
+    document.body.style.fontFamily = '';
 });
 
 describe('window boot', () => {
@@ -121,7 +139,9 @@ describe('window boot', () => {
             'run:key-path',
             `claim:${NOTE_CLOSE_SETTING}`,
             'run:note-close',
-            'lang-data',
+            'lang-data:km-KH',
+            // English too, for the app's default face behind Khmer's.
+            'lang-data:en-US',
             'callback',
         ]);
         expect(state.provider.sessionData.defaultStorageDirPath).toBe(
@@ -131,6 +151,19 @@ describe('window boot', () => {
         expect(document.documentElement.lang).toBe('km');
         // No pending move was asked for, so its module is never loaded.
         expect(state.pendingMove).not.toHaveBeenCalled();
+    });
+
+    test('sets the data folder before its first await, for a window that does not wait', async () => {
+        // The Lyric Editor starts `init` and reads its song in the same tick:
+        // the `$DATA_DIR_PATH` in its folder setting expands only once this is
+        // set. An `await` ahead of it -- even one that resolves at once --
+        // left it null, and every song read as "not found".
+        const pending = init();
+        const dirPathInSameTick =
+            state.provider.sessionData.defaultStorageDirPath;
+        await pending;
+
+        expect(dirPathInSameTick).toBe('/data/owa');
     });
 
     test('runs no migration a second time once its marker is claimed', async () => {
@@ -146,7 +179,7 @@ describe('window boot', () => {
         expect(state.renameMigration).not.toHaveBeenCalled();
         expect(state.keyPathMigration).not.toHaveBeenCalled();
         expect(state.noteCloseMigration).not.toHaveBeenCalled();
-        expect(state.calls).toEqual(['lang-data']);
+        expect(state.calls).toEqual(['lang-data:km-KH', 'lang-data:en-US']);
     });
 
     test('reports a failed migration and still finishes booting with the marker kept', async () => {
@@ -196,6 +229,71 @@ describe('window boot', () => {
         await init();
 
         expect(document.documentElement.lang).toBe('en');
+    });
+
+    test('a right-to-left language reads each text its own way without mirroring the window', async () => {
+        state.isRtl = true;
+        state.locale = 'he-IL';
+        state.langCode = 'he';
+
+        await init();
+
+        // The layout stays left to right: an English Bible, a file name or an
+        // untranslated label must not flip with the UI's language.
+        expect(document.documentElement.hasAttribute('dir')).toBe(false);
+        expect(document.documentElement.getAttribute('data-ui-direction')).toBe(
+            'rtl',
+        );
+        expect(
+            document.getElementById('app-ui-text-direction')?.textContent,
+        ).toContain('unicode-bidi: plaintext');
+    });
+
+    test('a left-to-right language injects no text-direction rule', async () => {
+        await init();
+
+        expect(document.documentElement.hasAttribute('dir')).toBe(false);
+        expect(document.getElementById('app-ui-text-direction')).toBeNull();
+    });
+
+    test("puts the language's own face in front of English's on the page", async () => {
+        await init();
+
+        expect(
+            document.documentElement.style.getPropertyValue(
+                '--app-font-family',
+            ),
+        ).toBe('app-Battambang, app-Google-Sans');
+        expect(document.body.style.fontFamily).toBe(
+            'var(--app-font-family), var(--bs-body-font-family, system-ui, sans-serif)',
+        );
+    });
+
+    test('an English window loads English once and draws in its face alone', async () => {
+        state.locale = 'en-US';
+        state.langCode = 'en';
+
+        await init();
+
+        expect(state.getLangDataAsync).toHaveBeenCalledOnce();
+        expect(
+            document.documentElement.style.getPropertyValue(
+                '--app-font-family',
+            ),
+        ).toBe('app-Google-Sans');
+    });
+
+    test("a language with no face of its own is drawn in English's", async () => {
+        state.locale = 'he-IL';
+        state.langCode = 'he';
+
+        await init();
+
+        expect(
+            document.documentElement.style.getPropertyValue(
+                '--app-font-family',
+            ),
+        ).toBe('app-Google-Sans');
     });
 
     test('writes the chosen font family and weight with CSS-breaking characters removed', async () => {

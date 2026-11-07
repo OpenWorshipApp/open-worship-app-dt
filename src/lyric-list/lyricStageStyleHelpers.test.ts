@@ -136,6 +136,39 @@ describe('getLyricStageStyle', () => {
         );
         expect(getLyricStageStyle(0).extraFontSize).toBe(70);
     });
+
+    // Stage numbers have no ceiling, so the memo is bounded at sixteen: one
+    // stage past that drops the OLDEST parse. Seen through `JSON.parse` — a
+    // remembered stage is answered without one, a dropped stage costs one,
+    // and either way the answer is right.
+    test('past sixteen stages the oldest parse is dropped, the rest stay memoized', () => {
+        const toRaw = (settingName: string) => {
+            const stage = Number(settingName.replace('lyric-stage-style-', ''));
+            return JSON.stringify({
+                ...LYRIC_STAGE_STYLE_DEFAULT,
+                extraFontSize: stage,
+            });
+        };
+        getSettingMock.mockImplementation(toRaw);
+        for (let stage = 100; stage <= 116; stage++) {
+            expect(getLyricStageStyle(stage).extraFontSize).toBe(stage);
+        }
+        const parseSpy = vi.spyOn(JSON, 'parse');
+        const countParses = (stage: number) => {
+            const raw = toRaw(toLyricStageStyleSettingName(stage));
+            return parseSpy.mock.calls.filter(([text]) => text === raw).length;
+        };
+        expect(getLyricStageStyle(116).extraFontSize).toBe(116);
+        expect(getLyricStageStyle(101).extraFontSize).toBe(101);
+        expect(countParses(116)).toBe(0);
+        expect(countParses(101)).toBe(0);
+        // The first stage read is the one that went.
+        expect(getLyricStageStyle(100).extraFontSize).toBe(100);
+        expect(countParses(100)).toBe(1);
+        for (let stage = 100; stage <= 116; stage++) {
+            resetLyricStageStyle(stage);
+        }
+    });
 });
 
 describe('setLyricStageStyle', () => {

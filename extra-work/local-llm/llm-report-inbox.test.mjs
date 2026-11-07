@@ -51,7 +51,8 @@ function genReport(reference = 'OWA-261013-127b', title = 'Projector blank') {
         '',
         '## What the user reported',
         '',
-        'អេក្រង់មិនបង្ហាញអ្វីទេ',
+        // Not ASCII, as a report in the user's own words often is.
+        '✝ The screen shows nothing — 📺✖',
         `----- END REPORT ${reference} -----`,
         '',
     ].join('\n');
@@ -94,7 +95,7 @@ const PNG = Buffer.from(
 );
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]);
 const PDF = Buffer.from('%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n');
-const NOTES = Buffer.from('# Order of service\n\nបទទី១\n');
+const NOTES = Buffer.from('# Order of service\n\n♫ Hymn ①\n');
 
 function toFile(name, bytes, mimeType = 'application/octet-stream') {
     return { name, mimeType, data: bytes.toString('base64') };

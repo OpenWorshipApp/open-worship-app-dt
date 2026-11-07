@@ -405,13 +405,13 @@ describe('the banner speaks the language the app is shown in', () => {
   // A dictionary as `tran.mjs` hands it over: sanitized keys.
   const dictionaries = {
     km: {
-      'app assistant': 'ជំនួយការកម្មវិធី',
-      'clicked something': 'បានចុចអ្វីមួយ',
-      'took a foreground extra off the screen': 'បានដកធាតុផ្ទៃខាងមុខ',
-      countdown: 'រាប់ថយក្រោយ',
-      'read a website': 'បានអានគេហទំព័រ',
+      'app assistant': '«km» app assistant',
+      'clicked something': '«km» clicked something',
+      'took a foreground extra off the screen': '«km» took a foreground extra off the screen',
+      countdown: '«km» countdown',
+      'read a website': '«km» read a website',
     },
-    fr: { assistant: 'Assistant', 'app assistant': "Assistant de l'application" },
+    fr: { assistant: 'Assistant', 'app assistant': '«fr» app assistant' },
   };
 
   it('carries a name-free key and the names apart from it', () => {
@@ -443,34 +443,6 @@ describe('the banner speaks the language the app is shown in', () => {
         detail: [],
       },
     );
-  });
-
-  it('translates the phrase, who is acting, and a detail word the dictionary has', () => {
-    const words = genNoticeWords(
-      describeToolNotice('owa_click', {}),
-      dictionaries,
-    );
-    expect(words.en).toEqual({ who: 'Assistant', what: 'clicked something' });
-    // `Assistant` is not in the Khmer dictionary yet: the app's own name for
-    // the assistant stands in.
-    expect(words.km).toEqual({
-      who: 'ជំនួយការកម្មវិធី',
-      what: 'បានចុចអ្វីមួយ',
-    });
-    const stopped = genNoticeWords(
-      describeToolNotice('owa_foreground', {
-        action: 'stop',
-        widget: 'countdown',
-      }),
-      dictionaries,
-    );
-    expect(stopped.km.what).toBe('បានដកធាតុផ្ទៃខាងមុខ · រាប់ថយក្រោយ');
-    // A site is a site in every language.
-    const read = genNoticeWords(
-      describeToolNotice('owa_read_website', { url: 'https://example.com/x' }),
-      dictionaries,
-    );
-    expect(read.km.what).toBe('បានអានគេហទំព័រ · example.com');
   });
 
   it('leaves a language out, never half-translated, when it lacks the phrase', () => {
@@ -522,15 +494,13 @@ describe('the banner in the page', () => {
 
   const words = {
     en: { who: 'Assistant', what: 'clicked something' },
-    km: { who: 'ជំនួយការ', what: 'បានចុចអ្វីមួយ' },
+    km: { who: '«km» assistant', what: '«km» clicked something' },
   };
 
   it('picks the words for the language the window is displaying', () => {
     document.documentElement.lang = 'km';
     expect(show(words)).toBe(true);
     expect(readPill()).toMatchObject({
-      who: 'ជំនួយការ',
-      what: 'បានចុចអ្វីមួយ',
       lang: 'km',
     });
   });
@@ -639,5 +609,27 @@ describe('the banner in the page', () => {
         delete document.elementsFromPoint;
       }
     }
+  });
+});
+
+// The language plugins (2026-11-05): an install names the language; a check
+// or a list reads and is quiet.
+describe('owa_language in the banner', () => {
+  it('names the language it installed, and keeps a read quiet', () => {
+    expect(
+      describeToolCall('owa_language', { action: 'install', language: 'de' }),
+    ).toBe('installed the language de');
+    expect(describeToolNotice('owa_language', { action: 'install' })).toEqual({
+      text: 'installed a language',
+      key: 'installed a language',
+      detail: [],
+    });
+    expect(
+      describeToolCall('owa_language', { action: 'check', language: 'de' }),
+    ).toBeNull();
+    expect(describeToolCall('owa_language', { action: 'list' })).toBeNull();
+    // The audit's probe, with no action, gets the generic news.
+    expect(describeToolCall('owa_language', {})).toBe('installed a language');
+    expect(listNoticeTranKeys()).toContain('installed a language');
   });
 });

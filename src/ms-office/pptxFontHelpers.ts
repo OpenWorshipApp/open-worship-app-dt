@@ -11,6 +11,8 @@
 
 import { getFontFamilyMapByNodeFont } from '../server/fontHelpers';
 import appProvider from '../server/appProvider';
+import { checkEndsWithInvisibleStacker } from '../helper/scriptClusterHelpers';
+import { listScriptSystemFonts } from '../others/langScriptHelpers';
 
 const GENERIC_FAMILY_SET = new Set([
     'serif',
@@ -62,9 +64,9 @@ function getPlatformFonts(): PlatformFontsType {
                 'Times New Roman',
                 'Segoe UI',
                 'Arial',
-                'Khmer UI',
+                // Each language package's own faces for its script.
+                ...listScriptSystemFonts('windows'),
                 'Leelawadee UI',
-                'DaunPenh',
                 'Segoe UI Symbol',
                 'Segoe UI Emoji',
             ],
@@ -92,8 +94,7 @@ function getPlatformFonts(): PlatformFontsType {
                 'Times',
                 'Helvetica Neue',
                 'Helvetica',
-                'Khmer Sangam MN',
-                'Khmer MN',
+                ...listScriptSystemFonts('mac'),
                 'Apple Color Emoji',
             ],
         };
@@ -117,8 +118,7 @@ function getPlatformFonts(): PlatformFontsType {
             'DejaVu Sans',
             'Liberation Serif',
             'Liberation Sans',
-            'Noto Sans Khmer',
-            'Khmer OS',
+            ...listScriptSystemFonts('linux'),
             'Noto Color Emoji',
         ],
     };
@@ -189,17 +189,17 @@ const graphemeSegmenter = new Intl.Segmenter(undefined, {
     granularity: 'grapheme',
 });
 
-const KHMER_COENG = '\u17d2';
-
 // Grapheme clusters, with one repair: Unicode's cluster rules have no conjunct
-// rule for Khmer, so `ស្រី` segments as `ស្` + `រី` — a coeng (the sign that
-// turns the next consonant into a subscript) is kept with what follows it, or
-// a syllable would be measured, and could be re-fonted, in two halves.
+// rule for some scripts (Khmer's), so a syllable with a subscript consonant
+// segments in two -- the sign that turns the next consonant into a subscript
+// (an invisible stacker, `scriptClusterHelpers.ts`) is kept with what
+// follows it, or the syllable would be measured, and could be re-fonted, in
+// two halves.
 export function splitGraphemes(text: string) {
     const graphemeList: string[] = [];
     for (const { segment } of graphemeSegmenter.segment(text)) {
         const last = graphemeList[graphemeList.length - 1];
-        if (last?.endsWith(KHMER_COENG)) {
+        if (last !== undefined && checkEndsWithInvisibleStacker(last)) {
             graphemeList[graphemeList.length - 1] = last + segment;
         } else {
             graphemeList.push(segment);

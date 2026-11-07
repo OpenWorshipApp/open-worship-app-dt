@@ -583,6 +583,30 @@ describe('CanvasController', () => {
         );
     });
 
+    test('a dropped audio file becomes an audio item at the drop point, never an image', async () => {
+        const { controller } = createController();
+        const audioItem = createCanvasItem({ id: 9, type: 'audio' });
+        mocks.genFromFileAudioMock.mockReturnValue(audioItem);
+        const event = {
+            clientX: 110,
+            clientY: 220,
+            target: {
+                getBoundingClientRect: () => ({ left: 10, top: 20 }),
+            },
+        };
+        const file = new Blob(['audio'], { type: 'audio/mpeg' });
+        await expect(
+            controller.genNewMediaItemFromFile(file, event as any),
+        ).resolves.toBe(audioItem);
+        expect(mocks.genFromFileAudioMock).toHaveBeenCalledExactlyOnceWith(
+            100,
+            200,
+            file,
+        );
+        expect(mocks.genFromFileImageMock).not.toHaveBeenCalled();
+        expect(mocks.genFromFileVideoMock).not.toHaveBeenCalled();
+    });
+
     test('creates media items from a link, dispatching on the link extension', async () => {
         const { controller } = createController();
         const imageItem = createCanvasItem({ id: 6, type: 'image' });

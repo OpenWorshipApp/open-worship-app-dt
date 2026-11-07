@@ -44,10 +44,10 @@ import {
     readSlideStepAsk,
     readWhereIsAsk,
     readGeneralQuestion,
-    readInheritedGeneralQuestion,
     readCountdownArgument,
     runBuiltinCommand,
     toBuiltinCommandText,
+    toCommandStartedDraft,
 } from './builtinActionHelpers';
 import {
     SPEND_ALLOW_TOOL_NAME,
@@ -56,6 +56,7 @@ import {
     resetSpendGuardForTests,
 } from './spendGuardHelpers';
 import { setCurrentWindowAim } from './windowAimHelpers';
+import { listAssistantLanguages } from './chatLangHelpers';
 
 beforeEach(() => {
     callTool.mockReset();
@@ -110,6 +111,30 @@ describe('the command list', () => {
         // A URL is not a command.
         expect(checkIsBuiltinCommand('https://example.com/x')).toBe(false);
     });
+
+    test('the / button starts a command without throwing words away', () => {
+        // An empty box gets `/` alone -- the whole list for the page.
+        expect(toCommandStartedDraft('')).toEqual({ text: '/', caret: 1 });
+        expect(toCommandStartedDraft('  \n')).toEqual({ text: '/', caret: 1 });
+        expect(
+            matchBuiltinActions(toCommandStartedDraft('').text, 50),
+        ).not.toEqual([]);
+        // A command already started is left alone.
+        expect(toCommandStartedDraft('/scr')).toEqual({
+            text: '/scr',
+            caret: null,
+        });
+        expect(toCommandStartedDraft('  /btw hi')).toEqual({
+            text: '  /btw hi',
+            caret: null,
+        });
+        // Words stay, behind the `/`, with the caret after it: typing `btw`
+        // there makes a general question of them.
+        const started = toCommandStartedDraft('  what is the Bible');
+        expect(started).toEqual({ text: '/ what is the Bible', caret: 1 });
+        const typed = `${started.text.slice(0, 1)}btw${started.text.slice(1)}`;
+        expect(readGeneralQuestion(typed)).toBe('what is the Bible');
+    });
 });
 
 describe('commands and the page they work on', () => {
@@ -117,16 +142,19 @@ describe('commands and the page they work on', () => {
         const underReader = matchBuiltinActions('/', 50, 'reader').map(
             (one) => one.name,
         );
+        expect(underReader).not.toContain('screen');
         expect(underReader).not.toContain('screen-clear-all');
         expect(underReader).not.toContain('screen-show');
         expect(underReader).not.toContain('next');
         expect(underReader).not.toContain('verse');
         expect(underReader).not.toContain('countdown');
-        // The ones that work anywhere stay: the screen's state, the
-        // window's own, the general question.
+        // `/scr` and the screen's aliases offer nothing there either.
+        expect(matchBuiltinActions('/scr', 50, 'reader')).toEqual([]);
+        expect(matchBuiltinActions('/proj', 50, 'reader')).toEqual([]);
+        // The ones that work anywhere stay: the window's own, the general
+        // question.
         expect(underReader).toEqual(
             expect.arrayContaining([
-                'screen',
                 'find',
                 'goto',
                 'clear',
@@ -178,6 +206,25 @@ describe('commands and the page they work on', () => {
         );
     });
 
+    test('/screen is the Presenter page only: under another page it reads nothing and says the way there', async () => {
+        callTool.mockClear();
+        for (const typed of ['/screen', '/status', '/projector']) {
+            const answer = await runBuiltinCommand(typed, 'setting');
+            expect(answer.text, typed).toContain(
+                '`/screen` works on the Presenter page',
+            );
+            expect(answer.text, typed).toContain('asking about the Settings');
+            expect(answer.actions, typed).toEqual([
+                {
+                    label: 'Go to the Presenter',
+                    toolName: 'builtin-command',
+                    args: { command: '/goto presenter' },
+                },
+            ]);
+        }
+        expect(callTool).not.toHaveBeenCalled();
+    });
+
     test('the clears carry the screen prefix, the old spellings reach them, and /clear is the chat', () => {
         expect(parseBuiltinCommand('/screen-clear-all')?.action?.name).toBe(
             'screen-clear-all',
@@ -215,12 +262,12 @@ describe('commands and the page they work on', () => {
         const answer = await runBuiltinCommand('/commands', 'reader');
         expect(answer.text).toContain('- `/clear` --');
         expect(answer.text).not.toContain('- `/screen-clear-all` --');
+        expect(answer.text).not.toContain('- `/screen` --');
         expect(answer.text).toContain(
-            '**On the Presenter page** (switch there first): `/screen-show`, ' +
-                '`/screen-hide`, `/screen-clear-all`',
+            '**On the Presenter page** (switch there first): `/screen`, ' +
+                '`/screen-show`, `/screen-hide`, `/screen-clear-all`',
         );
         expect(answer.actions?.map((one) => one.label)).toEqual([
-            'Is the screen on?',
             'Go to the Presenter',
         ]);
         const onPresenter = await runBuiltinCommand('/commands', 'presenter');
@@ -245,64 +292,6 @@ describe('/btw', () => {
         expect(readGeneralQuestion('/btw ""')).toBeNull();
         expect(readGeneralQuestion('/screen')).toBeNull();
         expect(readGeneralQuestion('what is the Bible?')).toBeNull();
-    });
-
-    test('a plain follow-up under a general question stays general', () => {
-        const underBtw = [
-            { author: 'you' as const, text: '/btw what is holy bible?' },
-            { author: 'bot' as const, text: 'The Bible is …' },
-        ];
-        expect(readInheritedGeneralQuestion('in khmer please', underBtw)).toBe(
-            'in khmer please',
-        );
-        // A chain holds: the follow-up carries the flag, not the words.
-        const chain = [
-            ...underBtw,
-            {
-                author: 'you' as const,
-                text: 'in khmer please',
-                isGeneral: true as const,
-            },
-            { author: 'bot' as const, text: 'ព្រះគម្ពីរ …' },
-        ];
-        expect(readInheritedGeneralQuestion('shorter', chain)).toBe('shorter');
-        // A slash line is a new thing to do, and the way back to the app.
-        expect(readInheritedGeneralQuestion('/screen', chain)).toBeNull();
-        expect(readInheritedGeneralQuestion('   ', chain)).toBeNull();
-        // And so is anything that names the app's own things: a question
-        // about casting a display is the app's, whatever came before it.
-        expect(
-            readInheritedGeneralQuestion(
-                'How do I cast the virtual display to a TV from my phone?',
-                chain,
-            ),
-        ).toBeNull();
-        expect(
-            readInheritedGeneralQuestion('and the screen?', chain),
-        ).toBeNull();
-        expect(readInheritedGeneralQuestion('in French please', chain)).toBe(
-            'in French please',
-        );
-        expect(readInheritedGeneralQuestion('who wrote it?', chain)).toBe(
-            'who wrote it?',
-        );
-        // Nothing general before it: an app question is an app question.
-        expect(
-            readInheritedGeneralQuestion('in khmer please', [
-                { author: 'you', text: 'How do I show the screen?' },
-                { author: 'bot', text: 'Press F5.' },
-            ]),
-        ).toBeNull();
-        expect(readInheritedGeneralQuestion('in khmer please', [])).toBeNull();
-        // The last QUESTION decides, whatever the bot said after it.
-        expect(
-            readInheritedGeneralQuestion('and then?', [
-                { author: 'you', text: '/btw who wrote Psalms' },
-                { author: 'bot', text: 'Mostly David.' },
-                { author: 'you', text: '/screen' },
-                { author: 'bot', text: 'Nothing is showing.' },
-            ]),
-        ).toBeNull();
     });
 
     test('is offered with the commands, and the bare word says how', async () => {
@@ -1765,23 +1754,35 @@ describe('the commands when the app answers otherwise', () => {
     });
 
     test('/here names the main window, its language, what else is open and the version', async () => {
-        callTool.mockResolvedValue(
-            JSON.stringify({
-                mainWindow: { page: 'reader.html', language: 'km' },
-                windows: [
-                    { url: 'https://localhost:3000/reader.html' },
-                    { url: 'https://localhost:3000/setting.html?uuid=setting' },
-                    { url: 'https://localhost:3000/setting.html?uuid=setting' },
-                    { url: 'https://localhost:3000/screen.html?screenId=0' },
-                ],
-                instances: [{ version: '2026.10.1' }],
-            }),
-        );
-        const answer = await runBuiltinCommand('/here', 'presenter');
-        expect(answer.text).toBe(
-            '**The main window is on the Bible Reader** in Khmer. Also ' +
-                'open: Settings.\n\nApp version 2026.10.1.',
-        );
+        // Every language package by its name (English the one always there).
+        for (const language of listAssistantLanguages()) {
+            callTool.mockResolvedValue(
+                JSON.stringify({
+                    mainWindow: {
+                        page: 'reader.html',
+                        language: language.code,
+                    },
+                    windows: [
+                        { url: 'https://localhost:3000/reader.html' },
+                        {
+                            url: 'https://localhost:3000/setting.html?uuid=setting',
+                        },
+                        {
+                            url: 'https://localhost:3000/setting.html?uuid=setting',
+                        },
+                        {
+                            url: 'https://localhost:3000/screen.html?screenId=0',
+                        },
+                    ],
+                    instances: [{ version: '2026.10.1' }],
+                }),
+            );
+            const answer = await runBuiltinCommand('/here', 'presenter');
+            expect(answer.text).toBe(
+                `**The main window is on the Bible Reader** in ${language.name}. Also ` +
+                    'open: Settings.\n\nApp version 2026.10.1.',
+            );
+        }
 
         callTool.mockResolvedValue(
             JSON.stringify({ mainWindow: { page: 'presenter.html' } }),
@@ -1838,22 +1839,27 @@ describe('the commands when the app answers otherwise', () => {
             isSeparateWindow: true,
         });
         try {
-            callTool.mockResolvedValue(
-                JSON.stringify({
-                    mainWindow: { page: 'setting.html', language: 'fr' },
-                    windows: [
-                        { url: 'https://localhost:3000/presenter.html' },
-                        {
-                            url: 'https://localhost:3000/setting.html?uuid=setting',
+            for (const language of listAssistantLanguages()) {
+                callTool.mockResolvedValue(
+                    JSON.stringify({
+                        mainWindow: {
+                            page: 'setting.html',
+                            language: language.code,
                         },
-                    ],
-                }),
-            );
-            const answer = await runBuiltinCommand('/here', 'presenter');
-            expect(answer.text).toBe(
-                '**This tab works with the Settings, a window of its own** ' +
-                    'in French. The main window is on the Presenter.',
-            );
+                        windows: [
+                            { url: 'https://localhost:3000/presenter.html' },
+                            {
+                                url: 'https://localhost:3000/setting.html?uuid=setting',
+                            },
+                        ],
+                    }),
+                );
+                const answer = await runBuiltinCommand('/here', 'presenter');
+                expect(answer.text).toBe(
+                    '**This tab works with the Settings, a window of its own** ' +
+                        `in ${language.name}. The main window is on the Presenter.`,
+                );
+            }
 
             callTool.mockResolvedValue(
                 JSON.stringify({

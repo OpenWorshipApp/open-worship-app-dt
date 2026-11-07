@@ -4,6 +4,7 @@ import { collectFontFaceCss } from '../helper/printCssHelpers';
 import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import { downloadImageBase64Data } from '../server/appHelpers';
+import { trimTrailingInvisibleStackers } from '../helper/scriptClusterHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { GraphEdgeType, GraphNodeType, GraphNodeViewType } from './core';
 import {
@@ -82,7 +83,6 @@ const NAME_FONT = { size: 13, weight: 600 };
 const KJV_NAME_FONT = { size: 11, weight: 400 };
 const CAPTION_FONT = { size: 10, weight: 400 };
 const ELLIPSIS = '…';
-const KHMER_COENG = '្';
 
 /**
  * Printing always uses a light layout, whatever theme the app is in.
@@ -125,9 +125,10 @@ function clipText(value: string, maxChars: number) {
  * Cuts a line to what the box can hold, by its DRAWN width.
  *
  * Cut between grapheme clusters, never inside one — a base letter keeps its
- * vowel signs — and never right after a Khmer COENG: the subscript letter it
- * joins is a cluster of its own, and a coeng left at the end of a line draws
- * as a stray mark.
+ * vowel signs — and never right after a sign that joins the next letter to
+ * it (an invisible stacker, `scriptClusterHelpers.ts`; Khmer's subscript
+ * sign is one): the letter it joins is a cluster of its own, and
+ * the sign left at the end of a line draws as a stray mark.
  */
 function clipTextToWidth(
     value: string,
@@ -151,11 +152,9 @@ function clipTextToWidth(
         },
     );
     const toPrefix = (count: number) => {
-        let prefix = clusterList.slice(0, count).join('').trimEnd();
-        while (prefix.endsWith(KHMER_COENG)) {
-            prefix = prefix.slice(0, -1);
-        }
-        return prefix;
+        return trimTrailingInvisibleStackers(
+            clusterList.slice(0, count).join('').trimEnd(),
+        );
     };
     // The longest prefix that still fits with its ellipsis.
     let low = 0;

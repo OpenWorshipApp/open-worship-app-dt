@@ -11,10 +11,11 @@ export class AnthropicBibleCrossReference {
     }
 
     generateSystemPrompt(additionalData?: CrossReferenceType[]) {
-        const extraContext =
-            additionalData === null
-                ? ''
-                : `
+        // Every caller asks with none, which is `undefined`: an `=== null`
+        // test told the model to consider the references "undefined".
+        const extraContext = !additionalData?.length
+            ? ''
+            : `
     8. Consider these existing cross-references for additional context: ${JSON.stringify(additionalData, null, 2)}
     9. Use them to enhance the relevance and depth of your references.
     `;

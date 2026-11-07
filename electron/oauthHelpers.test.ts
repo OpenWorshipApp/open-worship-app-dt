@@ -69,6 +69,25 @@ describe('captureOAuthRedirectUrl', () => {
         expect((win as any).destroy).toHaveBeenCalled();
     });
 
+    // A server-side redirect that was not stopped in time: still caught.
+    test('resolves from a redirect already followed, the first one only', async () => {
+        const promise = captureOAuthRedirectUrl({
+            authorizeUrl: AUTHORIZE_URL,
+            redirectUriPrefix: REDIRECT_PREFIX,
+        });
+        const win = getLastWindow();
+        emit(
+            win.webContents,
+            'did-redirect-navigation',
+            {},
+            `${REDIRECT_PREFIX}?code=first`,
+        );
+        emit(win.webContents, 'did-navigate', {}, `${REDIRECT_PREFIX}?code=2`);
+
+        await expect(promise).resolves.toBe(`${REDIRECT_PREFIX}?code=first`);
+        expect((win as any).destroy).toHaveBeenCalledTimes(1);
+    });
+
     test('resolves from did-navigate too and settles only once', async () => {
         const promise = captureOAuthRedirectUrl({
             authorizeUrl: AUTHORIZE_URL,

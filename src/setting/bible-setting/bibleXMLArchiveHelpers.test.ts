@@ -233,6 +233,10 @@ describe('Bible XML archive import', () => {
         ],
         [{ version: 1, itemKind: 'other', bibles: [] }, 'not bible data'],
         [
+            { version: 1, itemKind: 'bible-xml', bibles: 'KJV' },
+            'Invalid bible data archive manifest',
+        ],
+        [
             {
                 version: 1,
                 itemKind: 'bible-xml',

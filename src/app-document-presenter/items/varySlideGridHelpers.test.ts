@@ -120,4 +120,18 @@ describe('genSlideHeightGetter', () => {
         expect(getHeight(slide, 166)).toBe(90);
         expect(getHeight(slide, 4)).toBe(0);
     });
+
+    test('a slide with no width yet takes no height, never an endless one', () => {
+        const getHeight = genSlideHeightGetter(320);
+        const slide = {
+            id: 4,
+            filePath: '/docs/a.pdf',
+            width: 0,
+            height: 1080,
+        } as unknown as VarySlideType;
+
+        expect(getHeight(slide)).toBe(0);
+        expect(getHeight(slide, 200)).toBe(0);
+        expect(getHeight({ ...slide, width: -1 } as VarySlideType)).toBe(0);
+    });
 });

@@ -24,7 +24,7 @@ export type LookupRecordItemType = {
     name: string;
     // The record's English (KJV) name when the lookup language is not English,
     // shown beside the translated one the way a bible book reads
-    // `លោកុប្បត្តិ (Genesis)`. Empty whenever there is nothing to add.
+    // `<the book's own name> (Genesis)`. Empty whenever there is nothing to add.
     kjvName: string;
     title: string;
     iconClass: string;

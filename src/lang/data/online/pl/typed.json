@@ -1,0 +1,12 @@
+{
+    "pl": {
+        "name": "Polish",
+        "nativeName": "Polski",
+        "script": "Latin",
+        "words": "i w we z ze na do od po o u za przez dla bez się nie jest są był była to że jak co gdzie dlaczego kiedy kto który która które czy mój moja moje twój twoja jego jej nasz ja ty on ona ono my wy oni mogę może możesz chcę muszę też także już jeszcze bardzo więcej ten ta te tego tej tutaj proszę dziękuję",
+        "letters": "ąćęłńśźżó",
+        "yes": ["tak", "tak, proszę"],
+        "no": ["nie", "nie, dziękuję"],
+        "order": 8
+    }
+}

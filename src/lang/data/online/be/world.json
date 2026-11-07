@@ -1,0 +1,9 @@
+{
+    "cyrillicLetterLocales": [
+        {
+            "letters": "ў",
+            "locales": ["be-BY", "ru-RU"],
+            "order": 3
+        }
+    ]
+}

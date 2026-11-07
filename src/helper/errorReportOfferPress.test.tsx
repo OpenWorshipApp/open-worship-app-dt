@@ -8,7 +8,15 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    test,
+    vi,
+} from 'vitest';
 
 const { store, openChatbotReportingMock } = vi.hoisted(() => {
     return {
@@ -77,9 +85,15 @@ function findButton(words: string) {
 }
 
 // The dialog is a lazy chunk and the slot it opens in is taken with an
-// await, so it is looked for until it is there.
+// await, so it is looked for until it is there -- by the clock, not by a
+// count of tries: fifty tries of 20 ms was about a second, and under the
+// whole-surface coverage run on a loaded machine the chunk's first transform
+// took longer than that (2 of 3 runs failed, 2026-11-03), while alone it
+// passed every time. A failed test there means no coverage report at all.
+const DIALOG_WAIT_MS = 5000;
 async function waitForDialog() {
-    for (let attempt = 0; attempt < 50; attempt++) {
+    const deadline = Date.now() + DIALOG_WAIT_MS;
+    while (Date.now() < deadline) {
         await act(async () => {
             await new Promise((resolve) => {
                 setTimeout(resolve, 20);
@@ -91,6 +105,12 @@ async function waitForDialog() {
     }
     throw new Error('the dialog never came up');
 }
+
+// Transformed once before any test races the wait above: the first import of
+// a chunk in a fresh worker is the slow part, never the dialog itself.
+beforeAll(async () => {
+    await import('../popup-widget/ConfirmPopupComp');
+}, 60000);
 
 beforeEach(async () => {
     store.clear();

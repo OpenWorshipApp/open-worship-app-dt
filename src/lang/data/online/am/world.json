@@ -1,0 +1,12 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Ethiopic",
+            "locales": ["am-ET"],
+            "order": 2000
+        }
+    ],
+    "languageAliases": {
+        "ethiopia": "amharic"
+    }
+}

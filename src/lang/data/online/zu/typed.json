@@ -1,0 +1,12 @@
+{
+    "zu": {
+        "name": "Zulu",
+        "nativeName": "isiZulu",
+        "script": "Latin",
+        "words": "na futhi kodwa noma ukuthi ngi ngiya ngicela ngiyabonga u si ba ka nga ku kanjani yini kuphi kungani nini ubani yiphi mina wena yena thina nina bona lokhu lokho lapha kakhulu",
+        "family": "nguni",
+        "yes": ["yebo"],
+        "no": ["cha"],
+        "order": 36
+    }
+}

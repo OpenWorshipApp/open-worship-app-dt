@@ -1,0 +1,10 @@
+{
+    "te": {
+        "name": "Telugu",
+        "nativeName": "తెలుగు",
+        "script": "Telugu",
+        "yes": ["అవును", "సరే"],
+        "no": ["కాదు", "వద్దు"],
+        "order": 71
+    }
+}

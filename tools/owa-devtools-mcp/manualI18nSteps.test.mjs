@@ -20,6 +20,13 @@ import { toManualPageBody } from './manualPage.mjs';
 // and the other three were made to (2026-10-17).
 describe('a translated manual page lines up with its English steps', () => {
   const englishPageMap = listEnglishManualPages();
+  // One case whatever is installed: an English-only tree has no translation.
+  it('lists the languages, each a package with a manual', () => {
+    const langCodeList = listManualLanguages();
+    expect(Array.isArray(langCodeList)).toBe(true);
+    expect(langCodeList).not.toContain('en');
+    expect(englishPageMap.size).toBeGreaterThan(0);
+  });
   for (const langCode of listManualLanguages()) {
     it(langCode, () => {
       const missed = [];

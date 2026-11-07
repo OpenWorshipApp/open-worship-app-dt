@@ -1,0 +1,11 @@
+{
+    "mg": {
+        "name": "Malagasy",
+        "nativeName": "Malagasy",
+        "script": "Latin",
+        "words": "ny sy na fa dia ary amin ho tsy aho izaho ianao izy isika izahay ianareo ahoana inona aiza nahoana rahoviana iza ity io eto ao mety te tiako azafady tena koa misaotra",
+        "yes": ["eny", "eny, azafady"],
+        "no": ["tsia", "tsia, misaotra"],
+        "order": 32
+    }
+}

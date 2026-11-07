@@ -144,6 +144,31 @@ describe('readLookAheadBoxHtml', () => {
             ),
         ).toBeNull();
     });
+
+    // The pattern lets any run of number characters through; what does not
+    // read as a number is still not a box, so no verse is moved by NaN.
+    test('a scale or opacity that is not a number is not a box', () => {
+        expect(
+            readLookAheadBoxHtml(
+                genLookAheadBoxHtml(html, 0.5, 10, 10).replace(
+                    'scale(0.5)',
+                    'scale(0..5)',
+                ),
+            ),
+        ).toBeNull();
+        expect(
+            readLookAheadBoxHtml(
+                genLookAheadBoxHtml(html, 0.5, 10, 10, 0.35).replace(
+                    'opacity: 0.35;',
+                    'opacity: 3-5;',
+                ),
+            ),
+        ).toBeNull();
+        // The same box, untouched, still reads.
+        expect(
+            readLookAheadBoxHtml(genLookAheadBoxHtml(html, 0.5, 10, 10, 0.35)),
+        ).toEqual({ html, scale: 0.5, opacity: 0.35 });
+    });
 });
 
 function genItem(type: string, html?: string) {

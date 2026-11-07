@@ -66,6 +66,8 @@ vi.mock('../../helper/bible-helpers/bibleModelHelpers', () => ({
 vi.mock('../settingHelpers', () => ({
     forceReloadAppWindows: h.forceReloadAppWindowsMock,
 }));
+// Its own test: `BibleXMLLangPackageComp.test.tsx`.
+vi.mock('./BibleXMLLangPackageComp', () => ({ default: () => null }));
 vi.mock('./BibleXMLDataPreviewComp', () => ({
     default: ({ bibleKey }: { bibleKey: string }) => (
         <div data-testid="data-preview">{bibleKey}</div>

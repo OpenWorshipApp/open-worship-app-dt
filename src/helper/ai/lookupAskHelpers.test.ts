@@ -8,37 +8,6 @@ import {
 } from './lookupAskHelpers';
 
 describe('what a Lookup Detail panel hands the assistant', () => {
-    it('keeps a person, a place and a passage, each field checked', () => {
-        expect(
-            toValidLookupAsk({
-                kind: 'name',
-                target: '42bd6be4-e60a-4744-9eb8-42a111646073',
-                title: '  អ័ដាម  ',
-                langCode: 'km',
-                page: 'https://localhost:3000/reader.html',
-            }),
-        ).toEqual({
-            kind: 'name',
-            target: '42bd6be4-e60a-4744-9eb8-42a111646073',
-            title: 'អ័ដាម',
-            langCode: 'km',
-            page: 'https://localhost:3000/reader.html',
-        });
-        expect(
-            toValidLookupAsk({
-                kind: 'verse',
-                target: 'GEN 2:19-21',
-                title: 'លោកុប្បត្តិ ២:១៩-២១',
-                bibleKey: 'គកប',
-            }),
-        ).toEqual({
-            kind: 'verse',
-            target: 'GEN 2:19-21',
-            title: 'លោកុប្បត្តិ ២:១៩-២១',
-            bibleKey: 'គកប',
-        });
-    });
-
     // A saved conversation and a setting are both files a person can edit:
     // nothing but the listed fields, and nothing malformed, comes back.
     it('refuses what is not a request, and drops what does not fit', () => {
@@ -97,22 +66,41 @@ describe('what a Lookup Detail panel hands the assistant', () => {
             }),
         ).toEqual({ kind: 'verse', ref: 'JHN 3:16', bible: 'KJV' });
     });
+
+    // The card is where every question about a passage is asked from, so it
+    // reads what the cross references lead to as well; a name or a place is
+    // read exactly as the tool reads it.
+    it('is read by a card with the related verses of a passage only', () => {
+        expect(
+            toLookupCardArgs({
+                kind: 'verse',
+                target: 'GEN 8:1',
+                title: 'Genesis 8:1',
+                bibleKey: 'KJV',
+                page: 'reader.html',
+            }),
+        ).toEqual({
+            kind: 'verse',
+            ref: 'GEN 8:1',
+            bible: 'KJV',
+            page: 'reader.html',
+            related: true,
+        });
+        expect(
+            toLookupCardArgs({
+                kind: 'location',
+                target: 'eden',
+                title: 'Eden',
+                langCode: 'km',
+                bibleKey: 'KJV',
+            }),
+        ).toEqual({ kind: 'location', id: 'eden', lang: 'km', bible: 'KJV' });
+    });
 });
 
 // A Bible view's right-click reads the verse under the pointer off the key
 // its element is stamped with.
 describe('the key a verse carries in a Bible view', () => {
-    it('is its Bible and its verse', () => {
-        expect(readBibleVersesKey('(KJV) GEN 4:1')).toEqual({
-            bibleKey: 'KJV',
-            verseKey: 'GEN 4:1',
-        });
-        expect(readBibleVersesKey(' (ពគប) GEN 4:6 ')).toEqual({
-            bibleKey: 'ពគប',
-            verseKey: 'GEN 4:6',
-        });
-    });
-
     it('is nothing else', () => {
         expect(readBibleVersesKey('')).toBeNull();
         expect(readBibleVersesKey('GEN 4:1')).toBeNull();

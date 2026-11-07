@@ -29,6 +29,8 @@
 // the user is told matches what the editor is complaining about. The few rules
 // §6 leaves unnamed carry `own wording` at their site.
 
+import localeFile from '../../src/lang/data/en/open-lyric-locales.json' with { type: 'json' };
+
 /**
  * @typedef {object} OpenLyricProblemType
  * @property {number} line 1-based line number in the text as given.
@@ -230,39 +232,12 @@ export const OPEN_LYRIC_TIME_LIST = [
 
 // The closed locale set -- the Windows LCID tag list. A tag outside it is an
 // error, so the list has to be here in full rather than approximated by a
-// shape test: `zz-ZZ` has the shape and open-lyric refuses it.
-// prettier-ignore
-export const OPEN_LYRIC_LOCALE_LIST = [
-    'arc', 'af-ZA', 'am-ET', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG', 'ar-IQ',
-    'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'arn-CL', 'ar-OM', 'ar-QA',
-    'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE', 'as-IN', 'az-az', 'az-Cyrl-AZ',
-    'az-Latn-AZ', 'ba-RU', 'be-BY', 'bg-BG', 'bn-BD', 'bn-IN', 'bo-CN', 'br-FR',
-    'bs-Cyrl-BA', 'bs-Latn-BA', 'ca-ES', 'co-FR', 'cs-CZ', 'cy-GB', 'da-DK', 'de-AT',
-    'de-CH', 'de-DE', 'de-LI', 'de-LU', 'dsb-DE', 'dv-MV', 'el-CY', 'el-GR',
-    'en-029', 'en-AU', 'en-BZ', 'en-CA', 'en-cb', 'en-GB', 'en-IE', 'en-IN',
-    'en-JM', 'en-MT', 'en-MY', 'en-NZ', 'en-PH', 'en-SG', 'en-TT', 'en-US',
-    'en-ZA', 'en-ZW', 'es-AR', 'es-BO', 'es-CL', 'es-CO', 'es-CR', 'es-DO',
-    'es-EC', 'es-ES', 'es-GT', 'es-HN', 'es-MX', 'es-NI', 'es-PA', 'es-PE',
-    'es-PR', 'es-PY', 'es-SV', 'es-US', 'es-UY', 'es-VE', 'et-EE', 'eu-ES',
-    'fa-IR', 'fi-FI', 'fil-PH', 'fo-FO', 'fr-BE', 'fr-CA', 'fr-CH', 'fr-FR',
-    'fr-LU', 'fr-MC', 'fy-NL', 'ga-IE', 'gd-GB', 'gd-ie', 'gl-ES', 'gsw-FR',
-    'gu-IN', 'ha-Latn-NG', 'he-IL', 'hi-IN', 'hr-BA', 'hr-HR', 'hsb-DE', 'hu-HU',
-    'hy-AM', 'id-ID', 'ig-NG', 'ii-CN', 'in-ID', 'is-IS', 'it-CH', 'it-IT',
-    'iu-Cans-CA', 'iu-Latn-CA', 'iw-IL', 'ja-JP', 'ka-GE', 'kk-KZ', 'kl-GL', 'km-KH',
-    'kn-IN', 'kok-IN', 'ko-KR', 'ky-KG', 'lb-LU', 'lo-LA', 'lt-LT', 'lv-LV',
-    'mi-NZ', 'mk-MK', 'ml-IN', 'mn-MN', 'mn-Mong-CN', 'moh-CA', 'mr-IN', 'ms-BN',
-    'ms-MY', 'mt-MT', 'nb-NO', 'ne-NP', 'nl-BE', 'nl-NL', 'nn-NO', 'no-no',
-    'nso-ZA', 'oc-FR', 'or-IN', 'pa-IN', 'pl-PL', 'prs-AF', 'ps-AF', 'pt-BR',
-    'pt-PT', 'qut-GT', 'quz-BO', 'quz-EC', 'quz-PE', 'rm-CH', 'ro-mo', 'ro-RO',
-    'ru-mo', 'ru-RU', 'rw-RW', 'sah-RU', 'sa-IN', 'se-FI', 'se-NO', 'se-SE',
-    'si-LK', 'sk-SK', 'sl-SI', 'sma-NO', 'sma-SE', 'smj-NO', 'smj-SE', 'smn-FI',
-    'sms-FI', 'sq-AL', 'sr-BA', 'sr-CS', 'sr-Cyrl-BA', 'sr-Cyrl-CS', 'sr-Cyrl-ME', 'sr-Cyrl-RS',
-    'sr-Latn-BA', 'sr-Latn-CS', 'sr-Latn-ME', 'sr-Latn-RS', 'sr-ME', 'sr-RS', 'sr-sp', 'sv-FI',
-    'sv-SE', 'sw-KE', 'syr-SY', 'ta-IN', 'te-IN', 'tg-Cyrl-TJ', 'th-TH', 'tk-TM',
-    'tlh-QS', 'tn-ZA', 'tr-TR', 'tt-RU', 'tzm-Latn-DZ', 'ug-CN', 'uk-UA', 'ur-PK',
-    'uz-Cyrl-UZ', 'uz-Latn-UZ', 'uz-uz', 'vi-VN', 'wo-SN', 'xh-ZA', 'yo-NG', 'zh-CN',
-    'zh-HK', 'zh-MO', 'zh-SG', 'zh-TW', 'zu-ZA',
-];
+// shape test: `zz-ZZ` has the shape and open-lyric refuses it. Kept with the
+// app's one built-in language, codes only:
+// `src/lang/data/en/open-lyric-locales.json`. It is the SONG format's rule
+// alone -- the app's own locale table (`en/locales.json`) is a different
+// list, and a language may have a tag no song can name.
+export const OPEN_LYRIC_LOCALE_LIST = localeFile.locales;
 
 /** Verbatim from schema.md §3, so a chord this accepts is one open-lyric does. */
 export const OPEN_LYRIC_CHORD_SOURCE =
@@ -404,7 +379,7 @@ function toLines(text) {
  * names one and what follows is not a number -- `Verse two` is a different
  * mistake from `Wibble` and deserves a different sentence.
  */
-function parseFenceInfo(info) {
+export function parseFenceInfo(info) {
     for (const header of HEADERS_LONGEST_FIRST) {
         if (info === header) {
             return { header, indexText: null };
@@ -820,7 +795,7 @@ function checkLocales(value, entry, report) {
  * but it comes back marked `isPartial`, because a play order printed as though
  * it were the whole song says the song ends where the mistake is.
  */
-function parseStructure(value, entry, declaredPartSet, report) {
+export function parseStructure(value, entry, declaredPartSet, report) {
     const order = [];
     const partial = (list) => {
         return { order: list, isPartial: true };

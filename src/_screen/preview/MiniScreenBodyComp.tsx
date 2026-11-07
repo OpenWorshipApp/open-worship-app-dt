@@ -92,7 +92,7 @@ export function openMiniScreenContextMenu(event: any) {
         },
         {
             childBefore: genContextMenuItemIcon('book'),
-            menuElement: tran('Bible Properties'),
+            menuElement: tran('Bible/LongText Properties'),
             // Opens, never toggles: the footer button that owns the toggle
             // auto-hides, so reaching this menu with the panel already open must
             // not close it.
@@ -218,6 +218,11 @@ function RenderWithColorNoteComp({
     const isSingleGroup = Object.keys(screenManagerColorMap).length === 1;
     return colorNotes.flatMap((colorNote) => {
         const subScreenManagers = screenManagerColorMap[colorNote] ?? [];
+        // As the file lists do: the "unknown" group is always seeded, and a
+        // bar with no screen under it is noise (2026-11-03).
+        if (subScreenManagers.length === 0) {
+            return [];
+        }
         const renderedScreenManagers = genScreenManagersRenderer(
             subScreenManagers,
             previewWidth,

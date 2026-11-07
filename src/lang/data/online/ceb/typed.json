@@ -1,0 +1,11 @@
+{
+    "ceb": {
+        "name": "Cebuano",
+        "nativeName": "Cebuano",
+        "script": "Latin",
+        "words": "ang sa mga ug nga si ni ko mo niya namo nato ninyo nila ako ikaw ka siya kami kita kamo sila unsaon unsa asa ngano kinsa hain kini kana kadto dinhi didto dili wala adunay naa pwede gusto kinahanglan usab lang po salamat",
+        "yes": ["oo"],
+        "no": ["dili", "dili, salamat"],
+        "order": 28
+    }
+}

@@ -117,7 +117,7 @@ beforeEach(() => {
     h.chapters = [
         { chapter: 0, chapterLocaleString: '0' },
         { chapter: 1, chapterLocaleString: '1' },
-        { chapter: 2, chapterLocaleString: '២' },
+        { chapter: 2, chapterLocaleString: '２' },
     ];
     h.editorProps = null;
     h.genBookMatchesMock.mockResolvedValue(BOOKS);
@@ -159,7 +159,7 @@ describe('BibleXMLBookChapterEditorComp pickers', () => {
             Array.from(chapterSelect.options).map((option) => {
                 return option.textContent;
             }),
-        ).toEqual(['0', '1', '២ (2)']);
+        ).toEqual(['0', '1', '２ (2)']);
         expect(h.getChapterDataMock).toHaveBeenLastCalledWith('KJV', 'EXO', 1);
         // A chapter missing its optional parts is edited with them empty.
         expect(h.editorProps.jsonData).toEqual({

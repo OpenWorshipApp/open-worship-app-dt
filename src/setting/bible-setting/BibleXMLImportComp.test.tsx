@@ -168,7 +168,7 @@ describe('BibleXMLImportComp', () => {
     test('a link the assistant handed over reaches the review with where it came from', async () => {
         const url = 'https://example.com/bibles/Khmer%201954.xml';
         importMocks.takeRequest.mockReturnValueOnce(url);
-        importMocks.readFromUrl.mockResolvedValue('<bible>ក</bible>');
+        importMocks.readFromUrl.mockResolvedValue('<bible>✝</bible>');
         importMocks.toJson.mockResolvedValue({ info: {}, books: {} });
         await render();
         const form = container.querySelector('form') as HTMLFormElement;
@@ -187,7 +187,7 @@ describe('BibleXMLImportComp', () => {
                     isLinkFromChatbot: true,
                     url,
                     fileName: 'Khmer 1954.xml',
-                    // `<bible>` and `</bible>` plus one 3-byte Khmer letter.
+                    // `<bible>` and `</bible>` plus one 3-byte character.
                     bytes: 18,
                 },
             }),

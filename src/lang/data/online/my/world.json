@@ -1,0 +1,19 @@
+{
+    "nativeLanguageNames": {
+        "မြန်မာ": "burmese"
+    },
+    "scriptLocales": [
+        {
+            "script": "Myanmar",
+            "locales": ["my-MM"],
+            "order": 300
+        }
+    ],
+    "ownScriptLanguages": {
+        "my": "Myanmar"
+    },
+    "languageAliases": {
+        "myanmar": "burmese",
+        "burma": "burmese"
+    }
+}

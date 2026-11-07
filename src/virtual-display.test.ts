@@ -21,12 +21,22 @@ const h = vi.hoisted(() => {
             return this.tracks.slice(1);
         }
     }
+    // What the next encoder's `start` throws, as `LiveMp4Encoder` does on a
+    // computer with no H.264 encoder; spent by that encoder.
+    let nextStartError: unknown = null;
     class FakeEncoder {
         stop = vi.fn();
         start = vi.fn(async () => {});
         requestKeyFrame = vi.fn();
         constructor(public options: any) {
             encoders.push(this);
+            if (nextStartError !== null) {
+                const error = nextStartError;
+                nextStartError = null;
+                this.start = vi.fn(async () => {
+                    throw error;
+                });
+            }
         }
     }
     const encoders: FakeEncoder[] = [];
@@ -54,6 +64,9 @@ const h = vi.hoisted(() => {
         },
         emit: (message: any) => {
             listener?.(null, message);
+        },
+        failNextStart: (error: unknown) => {
+            nextStartError = error;
         },
     };
 });
@@ -114,6 +127,7 @@ function encode(options: VirtualDisplayEncodeOptions) {
 beforeEach(async () => {
     vi.resetModules();
     h.setListener(null);
+    h.failNextStart(null);
     h.send.mockClear();
     h.sendSync
         .mockReset()
@@ -381,5 +395,107 @@ describe('virtual display compositor', () => {
         expect(h.audioSources).toHaveLength(1);
         emit({ type: 'mic', isOn: false });
         expect(h.audioSources[0].disconnect).toHaveBeenCalledTimes(1);
+    });
+
+    test('a microphone already on is not opened a second time', async () => {
+        const stream = audioStream();
+        h.getUserMedia.mockResolvedValueOnce(stream.stream);
+        emit({ type: 'mic', isOn: true });
+        await flush();
+        emit({ type: 'mic', isOn: true });
+        await flush();
+        expect(h.getUserMedia).toHaveBeenCalledTimes(1);
+        expect(h.audioSources).toHaveLength(1);
+        // The one microphone is still the one an "off" lets go of.
+        emit({ type: 'mic', isOn: false });
+        expect(h.audioSources[0].disconnect).toHaveBeenCalledTimes(1);
+        expect(stream.audioTrack.stop).toHaveBeenCalledTimes(1);
+    });
+
+    test('a microphone the computer refuses is logged, and nothing is mixed in', async () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const refused = new Error('Permission denied');
+        h.getUserMedia.mockRejectedValueOnce(refused);
+        emit({ type: 'mic', isOn: true });
+        await flush();
+        expect(error).toHaveBeenCalledExactlyOnceWith(
+            'Virtual display: microphone',
+            refused,
+        );
+        expect(h.audioSources).toHaveLength(0);
+    });
+
+    test('a screen taken off before its turn to capture is never captured', async () => {
+        emit({
+            type: 'config',
+            config: config(undefined, [{ screenId: 6, src: 'screen-6' }]),
+        });
+        document
+            .querySelector('webview')!
+            .dispatchEvent(new Event('dom-ready'));
+        expect(h.sendSync).toHaveBeenCalledWith('vd:guest', {
+            screenId: 6,
+            webContentsId: undefined,
+        });
+        // Taken off while the queued capture still waits for its turn.
+        emit({ type: 'config', config: config() });
+        await flush();
+        expect(h.sendSync).not.toHaveBeenCalledWith('vd:audio-target', 6);
+        expect(h.getDisplayMedia).not.toHaveBeenCalled();
+        expect(h.audioSources).toHaveLength(0);
+    });
+
+    test('a screen whose sound cannot be captured is logged, and the next capture still runs', async () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const denied = new Error('capture denied');
+        h.getDisplayMedia.mockRejectedValueOnce(denied);
+        emit({
+            type: 'config',
+            config: config(undefined, [{ screenId: 3, src: 'screen-3' }]),
+        });
+        document
+            .querySelector('webview')!
+            .dispatchEvent(new Event('dom-ready'));
+        await flush();
+        expect(h.sendSync).toHaveBeenCalledWith('vd:audio-target', 3);
+        expect(error).toHaveBeenCalledExactlyOnceWith(
+            'Virtual display: screen audio',
+            denied,
+        );
+        expect(h.audioSources).toHaveLength(0);
+        // The failed capture does not hold up the queue behind it.
+        encode({ generation: 13, width: 640, height: 360, frameRate: 24 });
+        await flush();
+        expect(h.getDisplayMedia).toHaveBeenCalledTimes(2);
+        expect(h.encoders).toHaveLength(1);
+        expect(h.encoders[0].start).toHaveBeenCalledOnce();
+    });
+
+    test('an encoder that cannot start is stopped with its capture, and the failure is reported', async () => {
+        const captured = videoStream();
+        h.getDisplayMedia.mockResolvedValueOnce(captured.stream);
+        h.failNextStart(new Error('This computer cannot make MP4 video'));
+        encode({ generation: 12, width: 1280, height: 720, frameRate: 30 });
+        await flush();
+        expect(h.encoders).toHaveLength(1);
+        expect(h.encoders[0].stop).toHaveBeenCalledTimes(1);
+        expect(captured.videoTrack.stop).toHaveBeenCalledTimes(1);
+        expect(h.send).toHaveBeenCalledWith('vd:encoder', {
+            generation: 12,
+            state: 'error',
+            error: 'This computer cannot make MP4 video',
+        });
+        // Stopped already: a keyframe request reaches no encoder.
+        emit({ type: 'keyframe' });
+        expect(h.encoders[0].requestKeyFrame).not.toHaveBeenCalled();
+        // A refusal that is not an Error is reported as its own words.
+        h.getDisplayMedia.mockRejectedValueOnce('NotAllowedError');
+        encode({ generation: 14, width: 1280, height: 720, frameRate: 30 });
+        await flush();
+        expect(h.send).toHaveBeenCalledWith('vd:encoder', {
+            generation: 14,
+            state: 'error',
+            error: 'NotAllowedError',
+        });
     });
 });

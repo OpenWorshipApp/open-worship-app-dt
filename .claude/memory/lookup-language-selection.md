@@ -79,7 +79,7 @@ passes a `{ fontFamily }` style object into
 `NamesLookupManager.fromRawDataset` / `LocationsLookupManager.fromRawDataset`,
 so the mention popup, hover card and advanced panel render Khmer correctly —
 the app-side hook below does not reach them. (The map data itself moved out of
-`public/data/` into `src/lang/data/<code>/location-name-map-data/`, with
+`public/data/` into `src/lang/data/online/<code>/location-name-map-data/`, with
 `.prettierignore` entries — `e2acb3c0`.)
 
 The language also decides how the records are WRITTEN, not only their words

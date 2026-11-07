@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 const bases = new Map<number, any>();
 
@@ -69,5 +69,95 @@ describe('getMirrorBootstrap', () => {
             { screenId: 0, type: 'screen-show', data: payload },
             ...ownMessages,
         ]);
+    });
+});
+
+const plainManager = {
+    screenId: 1,
+    stage: 0,
+    genSyncSnapshotMessages: () => [],
+    screenForegroundManager: { foregroundData: { screenDataList: [] } },
+};
+
+describe('getMirrorBootstrap, what else crosses', () => {
+    const styles: HTMLStyleElement[] = [];
+    function addStyle(cssText: string) {
+        const style = document.createElement('style');
+        style.textContent = cssText;
+        document.head.appendChild(style);
+        styles.push(style);
+        return style.sheet!;
+    }
+    afterEach(() => {
+        for (const style of styles.splice(0)) {
+            style.remove();
+        }
+        vi.unstubAllGlobals();
+    });
+
+    test("carries the page's font faces with absolute addresses, past a sheet it may not read", async () => {
+        const fontSheet = addStyle(
+            "@font-face {font-family: Khmer; src: url(fonts/khmer.woff2), url('/fonts/khmer.ttf');} body {color: red;}",
+        );
+        // jsdom keeps its font-face rule class to itself; the browser's is a
+        // global.
+        vi.stubGlobal('CSSFontFaceRule', fontSheet.cssRules[0].constructor);
+        // A stylesheet from another origin: reading its rules throws.
+        const foreignSheet = addStyle('@font-face {font-family: Foreign;}');
+        Object.defineProperty(foreignSheet, 'cssRules', {
+            get() {
+                throw new DOMException('Not allowed', 'SecurityError');
+            },
+        });
+        // The order of the sheets on the page is kept.
+        addStyle('@font-face {font-family: Late; src: url("late.woff");}');
+
+        const context = await getMirrorBootstrap(plainManager as any);
+
+        const base = location.href;
+        expect(context.fontCss).toBe(
+            [
+                `@font-face {font-family: Khmer; src: url("${new URL('fonts/khmer.woff2', base).href}"), url("${new URL('/fonts/khmer.ttf', base).href}");}`,
+                `@font-face {font-family: Late; src: url("${new URL('late.woff', base).href}");}`,
+            ].join('\n'),
+        );
+        expect(context.fontCss).not.toContain('Foreign');
+        expect(context.fontCss).not.toContain('color: red');
+    });
+
+    test('carries no settings value that is missing or too big to send', async () => {
+        const { appLocalStorage } =
+            await import('../setting/directory-setting/appLocalStorage');
+        vi.mocked(appLocalStorage.listKeys).mockResolvedValueOnce([
+            'screen-small',
+            'screen-missing',
+            'screen-huge',
+            'page-base-color',
+            'pdf-full-width',
+            'pdf-full-width-extra',
+        ]);
+        vi.mocked(appLocalStorage.getItem).mockImplementation((key: string) => {
+            if (key === 'screen-missing') {
+                return null;
+            }
+            if (key === 'screen-huge') {
+                return 'x'.repeat(256000);
+            }
+            return `value:${key}`;
+        });
+
+        const context = await getMirrorBootstrap(plainManager as any);
+
+        expect(context.settings).toEqual({
+            'screen-small': 'value:screen-small',
+            'page-base-color': 'value:page-base-color',
+            'pdf-full-width': 'value:pdf-full-width',
+            'language-locale': 'km-KH',
+        });
+        expect(context.fontCss).toBe('');
+        expect(context.resources).toEqual({});
+        expect(context.remote).toBe(false);
+        expect(context.isWindows).toBe(false);
+        expect(context.messages).toEqual([]);
     });
 });

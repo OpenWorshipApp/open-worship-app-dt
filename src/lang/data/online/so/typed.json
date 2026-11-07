@@ -1,0 +1,11 @@
+{
+    "so": {
+        "name": "Somali",
+        "nativeName": "Soomaali",
+        "script": "Latin",
+        "words": "iyo ama laakiin waa ma aan aniga adiga isaga iyada annaga idinka iyaga sidee maxay xaggee maxaa yaa kee kan kaas halkan aad sidoo karaa doonayaa fadlan mahadsanid",
+        "yes": ["haa"],
+        "no": ["maya"],
+        "order": 40
+    }
+}

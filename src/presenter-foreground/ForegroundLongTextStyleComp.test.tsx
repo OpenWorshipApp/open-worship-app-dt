@@ -6,14 +6,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { LongTextColumnStyleType } from '../_screen/screenLongTextTypeHelpers';
 
-// ONE language's own look in Long Text Show: whatever it leaves alone is the
-// screen's Bible text style, so every change leaves through the same reader
-// the screen uses and a key at its default is dropped.
+// ONE language's own font and size in Long Text Show: both unset until chosen,
+// and everything else is Bible/LongText Properties', so every change leaves
+// through the same reader the screen uses and a key at its default is dropped.
 
 const { state } = vi.hoisted(() => ({
     state: {
         fontProps: null as any,
-        pickerProps: null as any,
     },
 }));
 
@@ -22,12 +21,6 @@ vi.mock('../others/FontFamilyControlComp', () => ({
     default: (props: any) => {
         state.fontProps = props;
         return <span data-font={props.fontFamily} />;
-    },
-}));
-vi.mock('../others/color/ColorPicker', () => ({
-    default: (props: any) => {
-        state.pickerProps = props;
-        return <span data-picker={props.color} />;
     },
 }));
 
@@ -40,7 +33,7 @@ const onChange = vi.fn();
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     state.fontProps = null;
-    state.pickerProps = null;
+    onChange.mockClear();
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -54,16 +47,17 @@ afterEach(() => {
 async function render(style: LongTextColumnStyleType | undefined) {
     await act(async () => {
         root.render(
-            <ForegroundLongTextStyleComp
-                style={style}
-                screenColor="#FFFFFF"
-                onChange={onChange}
-            />,
+            <ForegroundLongTextStyleComp style={style} onChange={onChange} />,
         );
     });
 }
 function query<T extends Element = HTMLElement>(selector: string) {
     return container.querySelector(selector) as T | null;
+}
+function listRowLabels() {
+    return Array.from(container.querySelectorAll('.fg-prop-name')).map((item) =>
+        item.textContent?.trim(),
+    );
 }
 function getRow(label: string) {
     const row = Array.from(container.querySelectorAll('.fg-prop')).find(
@@ -85,19 +79,24 @@ async function typeSize(value: string) {
     return input;
 }
 
-describe('a language column’s own look', () => {
-    test('untouched, it shows the screen’s look and lights nothing', async () => {
+describe('a language column’s own font and size', () => {
+    test('holds the font and the size alone: colour, weight and alignment are the Bible’s look', async () => {
+        await render(undefined);
+        expect(listRowLabels()).toEqual(['Font', 'Text Size (%)']);
+        expect(query('button[aria-label="Text Color"]')).toBeNull();
+        expect(query('button[aria-label="Align center"]')).toBeNull();
+        // No weight picker: it would stand against Bold.
+        expect(state.fontProps.setFontWeight).toBeUndefined();
+    });
+
+    test('untouched, both are unset and nothing is lit', async () => {
         await render(undefined);
         expect(container.querySelectorAll('.fg-prop-engaged')).toHaveLength(0);
         expect(state.fontProps).toMatchObject({
             fontFamily: '',
-            fontWeight: '',
             isShowingLabel: false,
         });
         expect(getRow('Font').title).toBe('Font Family');
-        // The swatch shows the screen's own colour while the column has none.
-        const swatchGlyph = query('button[aria-label="Text Color"] i')!;
-        expect(swatchGlyph.style.color).toBe('rgb(255, 255, 255)');
         expect(
             query<HTMLInputElement>('input[aria-label="Text Size (%)"]')!.value,
         ).toBe('100');
@@ -106,91 +105,49 @@ describe('a language column’s own look', () => {
                 'aria-pressed',
             ),
         ).toBe('true');
-        expect(
-            query('button[aria-label="Default"]')!.getAttribute('aria-pressed'),
-        ).toBe('true');
     });
 
-    test('a style that is set lights its rows', async () => {
-        await render({
-            fontFamily: 'Khmer OS',
-            fontWeight: '700',
-            color: '#FF0000',
-            fontSizeScale: 1.5,
-            textAlign: 'right',
-        });
+    test('a font or a size that is set lights its row', async () => {
+        await render({ fontFamily: 'Khmer OS', fontSizeScale: 1.5 });
         expect(
-            ['Font', 'Text Color', 'Text Size (%)', 'Text Align'].map((label) =>
+            ['Font', 'Text Size (%)'].map((label) =>
                 getRow(label).className.includes('fg-prop-engaged'),
             ),
-        ).toEqual([true, true, true, true]);
-        expect(state.fontProps).toMatchObject({
-            fontFamily: 'Khmer OS',
-            fontWeight: '700',
-        });
+        ).toEqual([true, true]);
+        expect(state.fontProps).toMatchObject({ fontFamily: 'Khmer OS' });
         expect(
             query('button[title="Text Size (%): 150"]')!.getAttribute(
                 'aria-pressed',
             ),
         ).toBe('true');
-        expect(
-            query('button[aria-label="Align right"]')!.getAttribute(
-                'aria-pressed',
-            ),
-        ).toBe('true');
     });
 
-    test('a new font family drops the old family’s weight', async () => {
-        await render({ fontFamily: 'Khmer OS', fontWeight: '700' });
+    test('a family is stored, and `--` gives the screen’s back', async () => {
+        await render({ fontSizeScale: 0.8 });
         await act(async () => state.fontProps.setFontFamily('Battambang'));
-        expect(onChange).toHaveBeenLastCalledWith({ fontFamily: 'Battambang' });
-        await act(async () => state.fontProps.setFontWeight('300'));
         expect(onChange).toHaveBeenLastCalledWith({
-            fontFamily: 'Khmer OS',
-            fontWeight: '300',
+            fontFamily: 'Battambang',
+            fontSizeScale: 0.8,
         });
-    });
-
-    test('the colour picker opens from the swatch; "no colour" is the screen’s again', async () => {
-        await render({ color: '#00FF00', textAlign: 'center' });
-        expect(query('[data-picker]')).toBeNull();
-        await act(async () =>
-            query('button[aria-label="Text Color"]')!.click(),
-        );
-        expect(query('.fg-prop-expand')!.getAttribute('aria-label')).toBe(
-            'Text Color',
-        );
-        expect(state.pickerProps).toMatchObject({
-            color: '#00FF00',
-            defaultColor: '#FFFFFF',
-        });
-        await act(async () => state.pickerProps.onColorChange('#123456'));
-        expect(onChange).toHaveBeenLastCalledWith({
-            color: '#123456',
-            textAlign: 'center',
-        });
-        await act(async () => state.pickerProps.onNoColor());
-        // The colour key is gone, not stored empty.
-        expect(onChange).toHaveBeenLastCalledWith({ textAlign: 'center' });
-        await act(async () =>
-            query('button[aria-label="Text Color"]')!.click(),
-        );
-        expect(query('[data-picker]')).toBeNull();
+        await render({ fontFamily: 'Battambang' });
+        await act(async () => state.fontProps.setFontFamily(''));
+        // The family key is gone, not stored empty: no style at all.
+        expect(onChange).toHaveBeenLastCalledWith(undefined);
     });
 
     test('a size preset sets the scale, and 100% is no scale at all', async () => {
-        await render({ textAlign: 'left' });
+        await render({ fontFamily: 'Georgia' });
         await act(async () =>
             query('button[title="Text Size (%): 60"]')!.click(),
         );
         expect(onChange).toHaveBeenLastCalledWith({
+            fontFamily: 'Georgia',
             fontSizeScale: 0.6,
-            textAlign: 'left',
         });
         await act(async () =>
             query('button[title="Text Size (%): 100"]')!.click(),
         );
-        expect(onChange).toHaveBeenLastCalledWith({ textAlign: 'left' });
+        expect(onChange).toHaveBeenLastCalledWith({ fontFamily: 'Georgia' });
         // Everything back at its default is no style at all.
         await render({ fontSizeScale: 1.2 });
         await act(async () =>
@@ -215,19 +172,5 @@ describe('a language column’s own look', () => {
         });
         // The box shows the column's size again (the parent still says 100).
         expect(input.value).toBe('100');
-    });
-
-    test('alignment: a side is stored, Default removes it', async () => {
-        await render({ fontWeight: '600' });
-        await act(async () =>
-            query('button[aria-label="Align center"]')!.click(),
-        );
-        expect(onChange).toHaveBeenLastCalledWith({
-            fontWeight: '600',
-            textAlign: 'center',
-        });
-        await render({ fontWeight: '600', textAlign: 'center' });
-        await act(async () => query('button[aria-label="Default"]')!.click());
-        expect(onChange).toHaveBeenLastCalledWith({ fontWeight: '600' });
     });
 });

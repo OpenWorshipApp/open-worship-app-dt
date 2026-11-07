@@ -334,7 +334,7 @@ describe('MiniScreenBodyComp', () => {
             'Add New Screen',
             'Refresh Preview',
             'Show Monitor Wallpaper',
-            'Bible Properties',
+            'Bible/LongText Properties',
         ]);
     });
 });
@@ -416,10 +416,10 @@ describe('openMiniScreenContextMenu', () => {
         expect(h.setIsWallpaperBackdropEnabled).toHaveBeenLastCalledWith(true);
     });
 
-    test('Bible Properties only ever opens the floating panel', () => {
+    test('Bible/LongText Properties only ever opens the floating panel', () => {
         openMiniScreenContextMenu({});
-        getItem('Bible Properties').onSelect();
-        getItem('Bible Properties').onSelect();
+        getItem('Bible/LongText Properties').onSelect();
+        getItem('Bible/LongText Properties').onSelect();
         expect(h.setIsBibleCustomStyleFloatingShowing.mock.calls).toEqual([
             [true],
             [true],

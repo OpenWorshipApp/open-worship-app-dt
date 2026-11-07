@@ -21,6 +21,7 @@ import {
     subscribeWidgetsChanged,
     toggleWidget,
     toWidgetId,
+    unregisterWidgets,
     type WidgetEntryType,
 } from './widgetRegistry';
 
@@ -60,6 +61,20 @@ describe('resize-actor widgetRegistry', () => {
         vi.runAllTimers();
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    test('withdrawing a key that was never registered tells nobody', () => {
+        const listener = vi.fn();
+        const unsubscribe = subscribeWidgetsChanged(listener);
+        unregisterWidgets('never-registered');
+        vi.runAllTimers();
+        expect(listener).not.toHaveBeenCalled();
+        register('known', [genEntry('known::v1', 'Known')]);
+        unregisterWidgets('known');
+        vi.runAllTimers();
+        expect(listener).toHaveBeenCalledOnce();
+        expect(getWidgetEntries()).toEqual([]);
+        unsubscribe();
     });
 
     test('toWidgetId identifies a pane by its actor and key, not its label', () => {

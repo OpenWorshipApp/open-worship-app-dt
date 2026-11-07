@@ -1,0 +1,12 @@
+{
+    "fi": {
+        "name": "Finnish",
+        "nativeName": "Suomi",
+        "script": "Latin",
+        "words": "ja tai mutta ei en et emme on ovat oli olen olet minä sinä hän me te he minun sinun hänen meidän miten mitä mikä missä mihin miksi milloin kuka ketä kenen kanssa voi voin voit voinko haluan pitää myös vielä jo hyvin paljon enemmän tämä tuo nämä täällä siellä kiitos",
+        "letters": "äö",
+        "yes": ["kyllä", "joo"],
+        "no": ["ei", "ei kiitos"],
+        "order": 17
+    }
+}

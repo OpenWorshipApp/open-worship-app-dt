@@ -8,16 +8,20 @@
 // cannot drift into looking like a different program. Each window's own
 // sheet declares everything below the strip.
 //
-// Two rules both windows keep (see the header of `ChatbotAppComp.scss`):
-// bootstrap plus their own sheet and nothing else -- no app tokens -- and no
-// webfonts. Two faces can come from the app itself. The language's own
-// (`--chat-lang-font`, set by `chatWindowLanguage.ts` from the language pack:
-// Battambang for Khmer, which no face below has a letter of) is placed after
-// the window's own faces so Latin keeps them. And a face the user picked in
+// One rule both windows keep (see the header of `ChatbotAppComp.scss`):
+// bootstrap plus their own sheet and nothing else -- no app tokens. Their
+// faces come from the app itself, in this order. A face the user picked in
 // Settings → General → Font Family (`--chat-app-font`, set by
 // `plugChatWindowAppFont`) heads every stack -- an explicit pick outranks
-// the window's own taste, and boot.ts's `*` rule could never reach past
-// these class rules.
+// everything, and boot.ts's `*` rule could never reach past these class
+// rules. Then the app's own (`--app-font-family`, set by `boot.ts` on every
+// page, 2026-11-06, the user: _all pages should embed and set
+// app-Google-Sans_): the language's face first where it has one (Battambang
+// for Khmer), then English's Google Sans; the window's signage faces are
+// what is left when neither is there. The monospace stack keeps its own
+// faces first, with the app's behind them for the letters they lack. And
+// `--chat-lang-font` (`chatWindowLanguage.ts`: a language's own face,
+// never English's) still stands near the end, as it did before.
 
 // The palette. Included INSIDE the window's root rule (`.chatbot-app`,
 // `.aichat-app`) so the light-theme block below can nest on `&`.
@@ -26,18 +30,21 @@
   // eyebrows, buttons. Condensed signage lettering -- the language written
   // on the equipment this app drives.
   --chat-font-label:
-    var(--chat-app-font, 'Bahnschrift'), 'Bahnschrift', 'DIN Alternate',
+    var(--chat-app-font, var(--app-font-family, 'Bahnschrift')),
+    var(--app-font-family, 'Bahnschrift'), 'Bahnschrift', 'DIN Alternate',
     'Avenir Next Condensed', 'Segoe UI', var(--chat-lang-font, system-ui),
     system-ui, sans-serif;
   // Answers are read under pressure: the system face, at a size that does
   // not ask anything of the reader.
   --chat-font-body:
-    var(--chat-app-font, system-ui), system-ui, -apple-system,
+    var(--chat-app-font, var(--app-font-family, system-ui)),
+    var(--app-font-family, system-ui), system-ui, -apple-system,
     'Segoe UI Variable Text', 'Segoe UI', var(--chat-lang-font, sans-serif),
     sans-serif;
   --chat-font-data:
     var(--chat-app-font, ui-monospace), ui-monospace, 'Cascadia Mono', Consolas,
-    var(--chat-lang-font, monospace), monospace;
+    var(--app-font-family, monospace), var(--chat-lang-font, monospace),
+    monospace;
 
   --chat-ink: #0f141c;
   --chat-panel: #161e2a;

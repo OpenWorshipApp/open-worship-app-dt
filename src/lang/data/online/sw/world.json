@@ -1,0 +1,8 @@
+{
+    "nativeLanguageNames": {
+        "kiswahili": "swahili"
+    },
+    "latinStopWords": {
+        "sw-KE": "na wa ya kwa katika ni la za yake"
+    }
+}

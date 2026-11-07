@@ -150,8 +150,8 @@ function addCandidate(
  * Where `needle` ends in `text` if it starts at `start`, or -1.
  *
  * Compares against the ORIGINAL text and steps over the invisible characters in
- * it, so `អ័ដាម` matches `អ័‌ដាម` and the returned offset still points at the
- * real string. Doing it this way rather than matching a cleaned copy is what
+ * it, so a name matches the same name written with an invisible joiner inside
+ * it, and the returned offset still points at the real string. Doing it this way rather than matching a cleaned copy is what
  * saves building an offset map per verse.
  */
 function matchNeedleAt(text: string, start: number, needle: string) {
@@ -245,8 +245,8 @@ export function findTranslatedLookupMatches(
             searchIndex = end;
         }
     }
-    // Longest first at a shared start, so `អ័ដាម` (Adam) wins over `អ័ដា`
-    // (Adah), and then no two decorations may overlap.
+    // Longest first at a shared start, so the name of Adam wins over Adah's,
+    // which it starts with, and then no two decorations may overlap.
     matchList.sort((one, another) => {
         return one.start - another.start || another.end - one.end;
     });

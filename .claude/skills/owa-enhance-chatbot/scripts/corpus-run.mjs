@@ -16,7 +16,7 @@
 //
 // --lang=km asks every question in the app's OWN language (2026-10-17, the
 // user's ask: _test model gemma4:cloud on Khmer all questions_): the words
-// are each row's translation in `questions/i18n/<lang>.json`, pressed in the
+// are each row's translation in `src/lang/data/<lang>/questions.json`, pressed in the
 // More… list as that window draws it, and the app must already be shown in
 // that language. The head row's pickers are found by what they HOLD (focus
 // keys, Free/Auto, the engine), never by their aria-labels, which are
@@ -94,6 +94,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { genRunWordPattern, genRunWordSource, listPackageCodes, readRunWords } from '../../../../extra-work/language-packages.mjs';
 
 const REPO = fileURLToPath(new URL('../../../../', import.meta.url));
 // Everything this run writes besides its answers: the lock, the marker of the
@@ -133,22 +134,68 @@ const MAIN_PAGES = {
 };
 // What a template row's placeholder is filled with: the row cannot be asked as
 // it stands, and the window fills the box instead of asking it.
+// What the window shows in each language for the words a run reads back
+// (`run-words.json`), beside the English.
+const READ_FROM_CACHE_PATTERN = genRunWordPattern(
+    'read from the cache',
+    'readFromCache',
+    'i',
+);
+// A language with no run words of its own (every dictionary-only package)
+// says the spend guard's pause and its button in its dictionary's words:
+// read them there, or the pause is taken for "no model" and the button is
+// never found (2026-11-05, the run over every app language: Finnish, Greek
+// and Persian each stopped on "three answers with no model").
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const LANG_DICTIONARY = (() => {
+    if (LANG === null) {
+        return {};
+    }
+    const file = path.join(REPO, 'src', 'lang', 'data', 'online', LANG, 'dictionary.json');
+    if (!fs.existsSync(file)) {
+        return {};
+    }
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return raw.dictionary ?? raw;
+})();
+// Each pause sentence as far as its first gap or colon -- the part every
+// variant of it starts with.
+const LANG_PAUSED_SOURCE = [
+    ...new Set(
+        Object.entries(LANG_DICTIONARY)
+            .filter(([key]) => key.startsWith('I have paused the assistant'))
+            .map(([, value]) => String(value).split(/[{:：,，。]/)[0].trim())
+            .filter((lead) => lead.length >= 4)
+            .map(escapeRegExp),
+    ),
+].join('|');
+const LANG_ALLOW_MORE = LANG_DICTIONARY['Allow more'];
+const PAUSED_PATTERN = new RegExp(
+    [genRunWordSource('I have paused the assistant', 'paused'), LANG_PAUSED_SOURCE]
+        .filter((source) => source !== '')
+        .join('|'),
+);
+const ALLOW_MORE_SOURCE = [
+    genRunWordSource('Allow more', 'allowMore'),
+    typeof LANG_ALLOW_MORE === 'string' ? escapeRegExp(LANG_ALLOW_MORE) : '',
+]
+    .filter((source) => source !== '')
+    .join('|');
+
 const TEMPLATE_FILL = {
     en: {
         'add-a-slide': 'Welcome to church',
         'write-a-note': 'grace',
         'find-a-control': 'Clear All',
     },
-    km: {
-        'add-a-slide': 'សូមស្វាគមន៍មកកាន់ព្រះវិហារ',
-        'write-a-note': 'ព្រះគុណ',
-        'find-a-control': 'លុបទាំងអស់',
-    },
-    fr: {
-        'add-a-slide': 'Bienvenue à l’église',
-        'write-a-note': 'la grâce',
-        'find-a-control': 'Tout effacer',
-    },
+    // Every other language's examples are its own data
+    // (`src/lang/data/online/<code>/chatbot-asks/run-words.json`).
+    ...Object.fromEntries(
+        listPackageCodes({ isEnglishIncluded: false }).flatMap((code) => {
+            const fill = readRunWords(code).templateFill;
+            return fill === undefined ? [] : [[code, fill]];
+        }),
+    ),
 };
 
 // ---- plumbing: the dev instance, one CDP socket, the app's own MCP door ---
@@ -417,12 +464,19 @@ function loadCorpus() {
     const dir = path.join(REPO, 'tools/owa-devtools-mcp/questions');
     // `<page>.<section>.<id>` → { en, text }: what the More… list shows in
     // that language.
+    // A language with no corpus of its own (a dictionary-only package) lists
+    // the corpus's English in its window, so its rows are pressed in English
+    // and the answer is held to the window's language (2026-11-05, the user:
+    // _test … on all app translated language_).
+    const translatedPath = LANG === null
+        ? null
+        : path.join(REPO, 'src', 'lang', 'data', 'online', LANG, 'questions.json');
     const translated =
-        LANG === null
+        translatedPath === null
             ? null
-            : JSON.parse(
-                  fs.readFileSync(path.join(dir, 'i18n', `${LANG}.json`), 'utf8'),
-              ).questions;
+            : fs.existsSync(translatedPath)
+              ? JSON.parse(fs.readFileSync(translatedPath, 'utf8')).questions
+              : {};
     const rows = [];
     for (const name of fs.readdirSync(dir).sort()) {
         if (!name.endsWith('.json') || name === 'schema.json') {
@@ -894,7 +948,7 @@ function parseUsageAnyLanguage(costFull) {
     const [inputText, outputText] = rest.split('; ');
     const inputParts = inputText.split(', ');
     const readPart = inputParts.slice(1).find((part) => {
-        return /read from the cache|អានពីឃ្លាំង|lus? depuis le cache/i.test(part);
+        return READ_FROM_CACHE_PATTERN.test(part);
     });
     return {
         rounds: toNumber(head),
@@ -1500,7 +1554,11 @@ for (const row of rows) {
         !OFFLINE &&
         !record.error &&
         (record.usage === null || record.usage === undefined) &&
-        /server is running|on and awake|could not be reached|took longer than|nothing answered|Request timed out|too slow|needs an assistant|មិនអាចភ្ជាប់|ម៉ាស៊ីនមេប្រើពេលលើស|ត្រូវការជំនួយការ/i.test(
+        genRunWordPattern(
+            'server is running|on and awake|could not be reached|took longer than|nothing answered|Request timed out|too slow|needs an assistant',
+            'noModel',
+            'i',
+        ).test(
             `${record.note ?? ''} ${record.answer ?? ''}`,
         )
     ) {
@@ -1522,7 +1580,7 @@ for (const row of rows) {
     // person's press lifts it. Not an answer of this pass; the run stops.
     if (
         !OFFLINE &&
-        /I have paused the assistant|ខ្ញុំបានផ្អាកជំនួយការ/.test(
+        PAUSED_PATTERN.test(
             `${record.note ?? ''} ${record.answer ?? ''}`,
         )
     ) {
@@ -1550,7 +1608,7 @@ for (const row of rows) {
         // guard's button in the window's head, and the paused row again.
         const pressed = await cdp.evaluate(`(() => {
             const button = [...(document.querySelector('.chat-head')?.querySelectorAll('button') ?? [])]
-                .find((one) => /អនុញ្ញាតបន្ថែម|Allow more|Autoriser davantage/.test(one.textContent));
+                .find((one) => new RegExp(${JSON.stringify(ALLOW_MORE_SOURCE)}).test(one.textContent));
             if (!button) return false;
             button.click();
             return true;

@@ -356,12 +356,64 @@ function readText(relPath, maxBytes = MAX_READ_BYTES) {
     }
 }
 
+// Every language but English is an installable package that may not be in
+// this checkout, and the suite must pass with every one of them deleted
+// (`language-packages.md`). A path inside the package of a real language
+// (one English's `language-names.json` names) whose folder is not here
+// belongs to a language not installed, not to a file that is gone. A code no
+// language has (`online/kmm/`) is still held to the disk.
+const ONLINE_LANG_PATH_PATTERN = /^src\/lang\/data\/online\/([^/]+)(?:\/|$)/;
+let languageNameMap = null;
+function checkIsAbsentLangPackagePath(relPath) {
+    const match = ONLINE_LANG_PATH_PATTERN.exec(relPath);
+    if (match === null) {
+        return false;
+    }
+    languageNameMap ??= JSON.parse(
+        readFileSync(
+            path.join(REPO_ROOT, 'src/lang/data/en/language-names.json'),
+            'utf-8',
+        ),
+    );
+    if (!Object.hasOwn(languageNameMap, match[1])) {
+        return false;
+    }
+    try {
+        statSync(path.join(REPO_ROOT, 'src/lang/data/online', match[1]));
+        return false;
+    } catch {
+        return true;
+    }
+}
+
+// What git ignores is generated or the machine's own (`extra-work/.env`, the
+// dev language catalog, `test-results/`): absent by design from a fresh
+// clone, like the ignored roots above, and never held to the disk. Asked only
+// for a path that is missing.
+function checkIsIgnoredPath(relPath) {
+    // A missing path is no directory to git, so a `dir/` rule needs the slash.
+    return [relPath, `${relPath.replace(/\/$/, '')}/`].some((onePath) => {
+        try {
+            execFileSync('git', ['check-ignore', '-q', '--no-index', onePath], {
+                cwd: REPO_ROOT,
+                stdio: 'ignore',
+            });
+            return true;
+        } catch {
+            return false;
+        }
+    });
+}
+
 function checkExists(relPath) {
     try {
         statSync(path.join(REPO_ROOT, relPath));
         return true;
     } catch {
-        return false;
+        return (
+            checkIsAbsentLangPackagePath(relPath) ||
+            checkIsIgnoredPath(relPath)
+        );
     }
 }
 
@@ -2159,7 +2211,9 @@ function runProseRulesCheck(docList) {
 const MANUAL_PATH = ID_OWNER_MAP.W;
 const MANUAL_REVIEW_PATH =
     '.claude/skills/owa-enhance-agent-docs/references/manual-reviewed.json';
-const DICTIONARY_PATH = 'src/lang/data/km/index.ts';
+// Every language package but English's carries the same dictionary keys
+// (`tranKeyCoverage.test.ts`); they are read off whichever packages there are.
+const LANG_DATA_PATH = 'src/lang/data/online';
 const RECIPE_HEADING_PATTERN = /^###\s+(W-\d+[a-z]?)\b/;
 const LABEL_TEMPLATE_PATTERN = /\[en:tran:([^\]]+)\]/g;
 const BOLD_PATTERN = /\*\*([^*\n]{1,60})\*\*/g;
@@ -2178,15 +2232,35 @@ const LABEL_CODE_ROOT_LIST = ['src', 'electron', 'tools'];
 // The matrix and the dictionary are both past the default read cap.
 const MANUAL_READ_BYTES = 16 * 1024 * 1024;
 
+function listDictionaryPaths() {
+    try {
+        return readdirSync(path.join(REPO_ROOT, LANG_DATA_PATH))
+            .filter((code) => {
+                return code !== 'en';
+            })
+            .map((code) => {
+                return `${LANG_DATA_PATH}/${code}/dictionary.json`;
+            })
+            .filter((relPath) => {
+                return readText(relPath, 1) !== null;
+            });
+    } catch (_error) {
+        return [];
+    }
+}
+
 function readDictionaryKeySet() {
     const keySet = new Set();
-    const text = readText(DICTIONARY_PATH, MANUAL_READ_BYTES) ?? '';
-    for (const line of text.split(LINE_BREAK_PATTERN)) {
-        const match = line.match(
-            /^\s+(?:'((?:[^'\\]|\\.)+)'|"((?:[^"\\]|\\.)+)"|([A-Za-z_$][\w$]*)):/,
-        );
-        if (match) {
-            keySet.add((match[1] ?? match[2] ?? match[3]).trim().toLowerCase());
+    for (const relPath of listDictionaryPaths()) {
+        try {
+            const dictionary = JSON.parse(
+                readText(relPath, MANUAL_READ_BYTES) ?? '{}',
+            );
+            for (const key of Object.keys(dictionary)) {
+                keySet.add(key.trim().toLowerCase());
+            }
+        } catch (_error) {
+            // A dictionary that does not parse is the gate's to report.
         }
     }
     return keySet;
@@ -2522,7 +2596,7 @@ function runManualCheck() {
     ];
 }
 
-// The manual in the app's other languages (`docs/manual-i18n/<code>/`). A
+// The manual in the app's other languages (`src/lang/data/online/<code>/manual/`). A
 // page made from an older English is shown in English, so a corrected recipe
 // left its translations behind every run until 2026-10-29 (`AD-24`): 46 of 65
 // pages in Khmer and in French that day, the old words still in them. Never
@@ -2542,7 +2616,7 @@ function readTranslationLagList() {
             translatedSet.add(page.id);
             if (page.isStale) {
                 lagList.push({
-                    at: `docs/manual-i18n/${langCode}/${page.relativePath.replace(/\\/g, '/')}`,
+                    at: `src/lang/data/online/${langCode}/manual/${page.relativePath.replace(/\\/g, '/')}`,
                     text: `${page.id} (${langCode}): made from an older English page`,
                 });
             }

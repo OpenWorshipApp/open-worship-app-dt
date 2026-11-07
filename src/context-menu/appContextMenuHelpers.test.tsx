@@ -229,13 +229,11 @@ describe('markOverflowingMenuLabels', () => {
         );
         const short = genLabel('Open', 180);
         // One pixel over still draws the "…", so it needs the line too.
-        const barely = genLabel('Korean (한국어) &lt;ko-KR&gt;', 181);
+        const barely = genLabel('Language (✝♪☀) &lt;xx-XX&gt;', 181);
         menu.append(long.label, short.label, barely.label);
 
         markOverflowingMenuLabels(menu);
-        expect(barely.label.dataset.marqueeText).toBe(
-            'Korean (한국어) <ko-KR>',
-        );
+        expect(barely.label.dataset.marqueeText).toBe('Language (✝♪☀) <xx-XX>');
 
         // The words once: the second line is a pseudo-element, and the
         // label's own text (what an agent reads a row by) is untouched.
@@ -570,5 +568,15 @@ describe('useAppContextMenuData keyboard behavior', () => {
         document.dispatchEvent(afterClose);
         expect(afterClose.defaultPrevented).toBe(false);
         await expect(menuControl.promiseDone).resolves.toBeUndefined();
+    });
+
+    test('a menu key that arrives with no menu open does nothing', async () => {
+        // The menu's layer left on top with no menu behind it.
+        KeyboardEventListener.addLayer('context-menu');
+        const event = await fireKey('ArrowDown');
+        expect(event.defaultPrevented).toBe(false);
+        expect(host.innerHTML).toBe('');
+        KeyboardEventListener.removeLayer('context-menu');
+        expect(KeyboardEventListener.getLastLayer()).toBe('root');
     });
 });

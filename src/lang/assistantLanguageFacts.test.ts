@@ -1,32 +1,24 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { extractLangMeta } from '../../tools/owa-devtools-mcp/tran.mjs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../test-setup/langPackageDirs';
 
-// Every interface language carries `assistant.json`: what the help window
-// needs to know to be asked and to answer in it (`src/chatbot/
-// chatLangHelpers.ts`, `tools/owa-devtools-mcp/tran.mjs`). A language is
-// added by adding its folder, so the folder has to be complete.
+// `assistant.json` is what the help window needs to know to be asked and to
+// answer in a language (`src/chatbot/chatLangHelpers.ts`,
+// `tools/owa-devtools-mcp/tran.mjs`): English always carries one, and every
+// language that does is held to the same shape. A language without one is
+// answered through English's words (`chatLangHelpers.ts`).
 
-const DATA_DIR = path.join(
-    path.dirname(fileURLToPath(import.meta.url)),
-    'data',
-);
-
-const LANG_CODE_LIST = readdirSync(DATA_DIR).filter((name) => {
-    const dirPath = path.join(DATA_DIR, name);
-    return (
-        statSync(dirPath).isDirectory() &&
-        existsSync(path.join(dirPath, 'index.ts'))
-    );
-});
+const LANG_CODE_LIST = listLangPackageCodes({ fileName: 'assistant.json' });
 
 function readFacts(langCode: string) {
     const text = readFileSync(
-        path.join(DATA_DIR, langCode, 'assistant.json'),
+        path.join(toLangPackageDir(langCode), 'assistant.json'),
         'utf-8',
     );
     return { text, facts: JSON.parse(text) };
@@ -34,23 +26,19 @@ function readFacts(langCode: string) {
 
 describe('assistant.json beside every language package', () => {
     test('the packages are found, so a green run means something', () => {
-        expect(LANG_CODE_LIST).toEqual(
-            expect.arrayContaining(['en', 'km', 'fr']),
-        );
-    });
-
-    test.each(LANG_CODE_LIST)('%s carries one', (langCode) => {
+        // English is the one package that is always there.
+        expect(LANG_CODE_LIST).toContain('en');
         expect(
-            existsSync(path.join(DATA_DIR, langCode, 'assistant.json')),
+            existsSync(path.join(toLangPackageDir('en'), 'assistant.json')),
         ).toBe(true);
     });
 
     test.each(LANG_CODE_LIST)(
-        '%s names itself as its package does',
+        '%s names itself as its manifest does',
         (langCode) => {
-            const meta = extractLangMeta(
+            const meta = JSON.parse(
                 readFileSync(
-                    path.join(DATA_DIR, langCode, 'index.ts'),
+                    path.join(toLangPackageDir(langCode), 'meta.json'),
                     'utf-8',
                 ),
             );
@@ -131,21 +119,5 @@ describe('assistant.json beside every language package', () => {
             .slice(1);
         expect(keyList.length).toBeGreaterThan(0);
         expect(new Set(glossaryKeyList).size).toBe(glossaryKeyList.length);
-    });
-
-    // The package's own test of a Khmer word is the one the app trusts
-    // everywhere else; the help window must agree with it.
-    test('Khmer reads its script as the package does', () => {
-        const { facts } = readFacts('km');
-        const packText = readFileSync(
-            path.join(DATA_DIR, 'km', 'index.ts'),
-            'utf-8',
-        );
-        expect(packText).toContain('/[\\u1780-\\u17FF]/u.test(text)');
-        const pattern = new RegExp(facts.scriptPattern, 'u');
-        for (const sample of ['ក', 'ព្រះគម្ពីរ', '៣', '៿']) {
-            expect(pattern.test(sample), sample).toBe(true);
-        }
-        expect(pattern.test('Bible')).toBe(false);
     });
 });

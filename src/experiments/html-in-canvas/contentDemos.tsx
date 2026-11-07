@@ -26,6 +26,7 @@ import {
     CANVAS_STYLE,
     SlideComp,
 } from './htmlInCanvasUiComps';
+import { SCRIPT_SAMPLES } from './scriptSamples';
 
 export function RichTextComp() {
     const [canvasRef, setCanvasRef] = useHicCanvas();
@@ -72,9 +73,9 @@ export function RichTextComp() {
                             lineHeight: 1.5,
                         }}
                     >
-                        <div>ព្រះគុណដ៏អស្ចារ្យ សូមថ្វាយសិរីល្អ</div>
-                        <div dir="rtl">النعمة المدهشة ما أحلى الصوت</div>
-                        <div>奇異恩典 何等甘甜 · 素晴らしい恵み</div>
+                        <div>{SCRIPT_SAMPLES.stacked}</div>
+                        <div dir="rtl">{SCRIPT_SAMPLES.rightToLeft}</div>
+                        <div>{SCRIPT_SAMPLES.ideographs}</div>
                         <div style={{ fontFamily: 'serif' }}>
                             ligatures: fi fl ffi — kerning: AVATAR
                         </div>

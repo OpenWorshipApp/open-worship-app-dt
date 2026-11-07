@@ -24,8 +24,13 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   `electron-build/knowledge/` with a search index, so answers
   are one file read, not 140. The main process passes the path in through
   `OWA_KNOWLEDGE_DIR`.
-  It also lifts the app's own `tran()` dictionary out of
-  `src/lang/data/<code>/index.ts` into `knowledge/tran.json`.
+  It is ENGLISH ONLY since 2026-11-04 (the user: _everything related to a
+  language have to be loaded from the language data … must not ship in the
+  app, except english_): `knowledge/tran.json` carries English's facts, and
+  every other language's dictionary, corpus and manual travel in its plugin
+  (`tran.json`, `questions.json`, `manual/` + `manual/index.json`, built by
+  `build-lang-plugins.mjs`) and are read from the INSTALLED one
+  (`tools/owa-devtools-mcp/langPacks.mjs`; rule `language-packages.md`).
   **The manual is indexed WHOLE and the internal notes to their first
   3 000 characters** (2026-09-10): W-42 and W-22 run past 30 KB, and with
   every page cut at 3 000 the help window's own page was searchable to
@@ -86,7 +91,7 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   holds. Not `Intl.Segmenter`: Electron's ICU and Node's split Khmer
   differently, and the search runs in both.
 - **The corpus and the manual in the app's other languages** (2026-10-16,
-  memory `chatbot-follows-app-language`). `questions/i18n/<code>.json` holds
+  memory `chatbot-follows-app-language`). `src/lang/data/online/<code>/questions.json` holds
   each row's words (`{ en, text }`, by `<page>.<section>.<id>`) and each
   section's -- fill-in rows too since 2026-10-17, each keeping an example of
   the same kind as the English (`...`, an address, a quoted name, a
@@ -107,17 +112,22 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   `text` and `textEn`. The known-question lookups take either words
   (`findKnownQuestion`, and the search's `findKnownQuestionRow` reads the
   overlays for a non-Latin query). **The manual** in another language is
-  `docs/manual-i18n/<code>/<same path>.md` -- its own tree, because
+  `src/lang/data/online/<code>/manual/<same path>.md` -- its own tree, because
   `build-manual.mjs` rewrites `docs/manual-sources/` -- each page carrying
   `translatedFrom`, the hash of the English body it was made from
-  (`manualI18n.mjs`); `build-knowledge.mjs` writes `index.<code>.json` with
-  `isStale`, read only for that language. It is ranked by the ENGLISH page and
+  (`manualI18n.mjs`); the plugin carries the pages and their index
+  (`genManualIndexEntries`), and `listTranslatedEntries` shows a page only
+  while its `translatedFrom` equals the `hash` `build-knowledge.mjs` writes
+  on that English page -- judged at run time, read only for that language. It is ranked by the ENGLISH page and
   shown in the language: a manual search in a non-English window adds
   `titleInLanguage` / `excerptInLanguage`, the passage at the same place in
   the translation (`genTranslatedExcerpt` -- a translation must keep its
   page's passages, which `manual-i18n-status.mjs --check` holds), and
   `owa_help_page` takes `W-06@km` for the page itself (the window's **Read the
-  whole thing**; no schema field). A stale or missing page is the English one.
+  whole thing**; no schema field) -- its buttons named as the WINDOW shows
+  them, the `@` part choosing only which translation is read (2026-11-04,
+  `EC-457`: a Khmer question in an English window had ridden with the
+  Khmer page's Khmer button names). A stale or missing page is the English one.
   The model is handed the English page: it reads it and writes in theirs.
 - **Questions**: `tools/owa-devtools-mcp/questions/*.json` is the curated list of
   questions the assistant is prepared to be asked — one file per page

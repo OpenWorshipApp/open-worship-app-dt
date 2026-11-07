@@ -265,4 +265,39 @@ describe('presenting-flow item menus', () => {
             'Reveal Original',
         ]);
     });
+
+    test('a re-arming question cancelled writes nothing', async () => {
+        const model = flow();
+        const keyboard = item({
+            isAction: true,
+            isScreenReachable: false,
+            isScreenPinnable: false,
+            actionArming: { actionKey: 'Ctrl+K' },
+            runAction: {
+                iconName: 'key',
+                color: 'pink',
+                number: null,
+                canBeKeyArmed: true,
+                canBeTimeArmed: false,
+                label: 'Keyboard',
+            },
+        });
+        const menu = genPresentingFlowItemContextMenuItems(
+            model,
+            keyboard,
+            2,
+            4,
+        );
+        menu.find((one) => one.menuElement === 'Change Shortcut')?.onSelect?.(
+            {} as any,
+        );
+        // Asked about what the line holds now.
+        expect(mocks.askArming).toHaveBeenCalledExactlyOnceWith(
+            keyboard.runAction,
+            { actionKey: 'Ctrl+K' },
+        );
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(model.setItemActionArming).not.toHaveBeenCalled();
+        expect(mocks.handleError).not.toHaveBeenCalled();
+    });
 });

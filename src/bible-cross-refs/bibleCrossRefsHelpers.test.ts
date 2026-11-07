@@ -225,12 +225,13 @@ describe('reference display', () => {
         expect(await breakItem('KJV', 'UNKNOWN 1:2-3')).toBeNull();
     });
 
-    // RD-51: `PSA 119:ющ` is in every shipped bundle. Read leniently it was a
+    // RD-51: `PSA 119:` with letters of another script after it is in every
+    // shipped bundle. Read leniently it was a
     // row titled `Psalm 119:` opening "Record not found".
     test('builds nothing for a reference that names no passage', async () => {
         h.isUnparsable = true;
-        expect(await breakItem('KJV', 'PSA 119:ющ')).toBeNull();
-        expect(h.parsedKeys).toEqual(['PSA 119:ющ']);
+        expect(await breakItem('KJV', 'PSA 119:✝✝')).toBeNull();
+        expect(h.parsedKeys).toEqual(['PSA 119:✝✝']);
         expect(h.items).toEqual([]);
         expect(h.toTextArgs).toEqual([]);
     });

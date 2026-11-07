@@ -31,6 +31,24 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // scripts -> owa-enhance-mcp -> skills -> .claude|.agents -> repo root
 const REPO_ROOT = path.join(HERE, '..', '..', '..', '..');
+// A label as the first non-English package's dictionary writes it, or null.
+async function readTranslatedLabel(englishLabel) {
+    const { readSourceDictionary } = await import(
+        pathToFileURL(path.join(REPO_ROOT, 'tools', 'owa-devtools-mcp', 'langPacks.mjs')).href
+    );
+    const { listPackageCodes, toPackageDir } = await import(
+        pathToFileURL(path.join(REPO_ROOT, 'extra-work', 'language-packages.mjs')).href
+    );
+    for (const code of listPackageCodes({ isEnglishIncluded: false })) {
+        const dictionary = readSourceDictionary(toPackageDir(code));
+        const value = dictionary[englishLabel.trim().toLowerCase()];
+        if (typeof value === 'string' && value !== englishLabel) {
+            return value;
+        }
+    }
+    return null;
+}
+
 const BIN_PATH = path.join(
     REPO_ROOT,
     'tools',
@@ -346,13 +364,20 @@ try {
     //
     // The words half, in the firewall. Neither label is on an English
     // window, so even a regression presses nothing.
-    const khmer = await call('owa_click', { find: 'លុបទាំងអស់' });
-    check(
-        'a Khmer label that cannot be undone is refused',
-        khmer.result?.isError === true &&
-            toText(khmer).includes('cannot be undone'),
-        `it answered: ${toText(khmer).slice(0, 120)}`,
-    );
+    // Clear All as another language's dictionary writes it -- the first
+    // package that translates it (`src/lang/data/online/<code>/dictionary.json`).
+    const translatedClearAll = await readTranslatedLabel('Clear All');
+    if (translatedClearAll === null) {
+        console.log('  (no language package translates Clear All: skipped)');
+    } else {
+        const translated = await call('owa_click', { find: translatedClearAll });
+        check(
+            'a translated label that cannot be undone is refused',
+            translated.result?.isError === true &&
+                toText(translated).includes('cannot be undone'),
+            `it answered: ${toText(translated).slice(0, 120)}`,
+        );
+    }
     const spaced = await call('owa_click', { find: 'Sign out' });
     check(
         'a no-break space does not hide a label that cannot be undone',

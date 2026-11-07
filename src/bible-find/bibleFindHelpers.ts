@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
+import { checkEndsWithInvisibleStacker } from '../helper/scriptClusterHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
@@ -343,20 +344,22 @@ const graphemeSegmenter = new Intl.Segmenter(undefined, {
     granularity: 'grapheme',
 });
 
-const KHMER_COENG = '្';
-
 /**
  * A verse's grapheme clusters, so a letter and the marks on it move as one.
  * One repair, the one `pptxFontHelpers` makes: Unicode has no conjunct rule for
- * Khmer, so `ស្រី` segments as `ស្` + `រី`, and a match marker dropped between
- * the two would break the subscript off its consonant. A cluster that ends in a
- * coeng is kept with what follows it.
+ * Khmer, so a consonant with a subscript under it segments as two graphemes,
+ * the subscript sign ending the first, and a match marker dropped between the
+ * two would break the subscript off its consonant. A cluster that ends in an
+ * invisible stacker is kept with what follows it.
  */
 function toTextClusters(text: string) {
     const clusters: string[] = [];
     for (const { segment } of graphemeSegmenter.segment(text)) {
         const lastIndex = clusters.length - 1;
-        if (lastIndex >= 0 && clusters[lastIndex].endsWith(KHMER_COENG)) {
+        if (
+            lastIndex >= 0 &&
+            checkEndsWithInvisibleStacker(clusters[lastIndex])
+        ) {
             clusters[lastIndex] += segment;
         } else {
             clusters.push(segment);
@@ -527,11 +530,14 @@ export async function breakItem(
     return { newItem, bibleItem, kjvVerseKey };
 }
 
+// Zero-based, as the first chunk (0 to `perPage - 1`) and SQLite's
+// `LIMIT offset, count` both count: counted from one, every page after the
+// first began a verse late and the verse on each boundary was never shown.
 export function pageNumberToReqData(pagingData: PagingDataTye, page: string) {
     const { perPage } = pagingData;
     let newPageNumber = Number.parseInt(page);
     newPageNumber -= 1;
-    const fromLineNumber = perPage * newPageNumber + 1;
+    const fromLineNumber = perPage * newPageNumber;
     return {
         fromLineNumber,
         toLineNumber: fromLineNumber + perPage - 1,

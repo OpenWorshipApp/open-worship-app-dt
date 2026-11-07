@@ -541,4 +541,73 @@ describe('presenting-flow archives', () => {
         expect(mocks.handleError).toHaveBeenCalled();
         expect(mocks.safeDelete).toHaveBeenCalledWith('/tmp/owapf-dropped');
     });
+
+    test('a bible verse that cannot be read back is left as it was written', async () => {
+        state.readJson = {
+            items: [{ type: DragTypeEnum.BIBLE_ITEM, data: { broken: true } }],
+        };
+        state.bibleItem = null;
+        // No Default list either: it is not even asked for.
+        state.defaultBible = null;
+        await expect(importPresentingFlowArchive('/x')).resolves.toBeTruthy();
+        expect(state.readJson.items[0].data).toEqual({ broken: true });
+    });
+
+    test('a document entry with no path in its payload gets none written into it', async () => {
+        state.readJson = {
+            items: [{ type: DragTypeEnum.APP_DOCUMENT, filePath: '/old/app' }],
+        };
+        mocks.importFiles.mockResolvedValue({
+            localFilePathByOriginalPath: new Map([['/old/app', '/new/app']]),
+            writtenItemFilePaths: [],
+        });
+        await expect(importPresentingFlowArchive('/x')).resolves.toBeTruthy();
+        expect(state.readJson.items[0].filePath).toBe('/new/app');
+        expect(state.readJson.items[0]).not.toHaveProperty('data');
+    });
+
+    test('an import backed out of at the password says nothing, and a failed one says why', async () => {
+        state.selected = ['/picked.owapf.tar.gz'];
+        state.readable = null;
+        await expect(
+            selectAndImportPresentingFlowArchive(),
+        ).resolves.toBeNull();
+        expect(mocks.toast).not.toHaveBeenCalled();
+        expect(mocks.handleError).not.toHaveBeenCalled();
+        expect(mocks.hideProgress).toHaveBeenCalledWith(
+            'Import Presenting Flow',
+        );
+
+        state.readable = { filePath: '/plain' };
+        state.manifest = null;
+        await expect(
+            selectAndImportPresentingFlowArchive(),
+        ).resolves.toBeNull();
+        expect(mocks.handleError).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: 'Invalid presenting flow archive manifest',
+            }),
+        );
+        expect(mocks.toast).toHaveBeenLastCalledWith(
+            'Import Presenting Flow',
+            'Invalid presenting flow archive manifest',
+        );
+
+        // Something thrown without a message still gets a sentence.
+        state.manifest = {
+            version: 3,
+            presentingFlow: 'presentingFlow.json',
+            files: [],
+            backgroundMetas: [],
+        };
+        mocks.importFiles.mockRejectedValueOnce(null);
+        await expect(
+            selectAndImportPresentingFlowArchive(),
+        ).resolves.toBeNull();
+        expect(mocks.toast).toHaveBeenLastCalledWith(
+            'Import Presenting Flow',
+            'Unable to import the presenting flow',
+        );
+        expect(mocks.hideProgress).toHaveBeenCalledTimes(3);
+    });
 });

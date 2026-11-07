@@ -188,16 +188,17 @@ export default function RenderResizeActorItemComp({
         ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // A divider before an open pane, when an open pane stands before it too:
+    // one with only collapsed strips before it has nothing to resize. It was
+    // drawn whenever an open pane came LATER as well, so with the first of
+    // four panes collapsed a divider stood after its strip, and pressing it
+    // threw (2026-11-04).
     const isShowingFlexSizeActor = useMemo(() => {
-        if (
+        return (
             index !== 0 &&
             handleReopening === null &&
-            (checkIsThereNotHiddenWidget(dataInput, flexSize, 0, index) ||
-                checkIsThereNotHiddenWidget(dataInput, flexSize, index + 1))
-        ) {
-            return true;
-        }
-        return false;
+            checkIsThereNotHiddenWidget(dataInput, flexSize, 0, index)
+        );
     }, [index, handleReopening, dataInput, flexSize]);
     const type = isHorizontal ? 'h' : 'v';
     const isWidgetHidden = !isDisableQuickResize && handleReopening !== null;

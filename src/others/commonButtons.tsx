@@ -13,6 +13,10 @@ import { getIsAIEnabled } from '../helper/ai/aiHelpers';
 import { useIsChatbotBusy } from '../helper/ai/chatbotBusyHelpers';
 import { openChatbotReporting } from '../helper/ai/chatbotHandoffHelpers';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
+import {
+    checkHasPackageUpdate,
+    usePackageUpdates,
+} from '../helper/packageUpdateHelpers';
 import { openBibleLookupEventMappers } from '../keyboard-shortcut/appShortcutMappers';
 import { registerBibleLookupPopupOpener } from './bibleLookupPopupOpener';
 import { openAiChatPage, openChatbotPage } from '../helper/domHelpers';
@@ -55,14 +59,26 @@ export function SettingButtonComp() {
     const handleClick = useCallback(() => {
         openSettingPage();
     }, []);
+    // A point of colour when an installed language or the Extra Binaries
+    // has an update (2026-11-04, the user: _sign on the gear icon then on
+    // each tab then on the item to update_). The gear starts the launch's
+    // one look, in the main window only.
+    const packageUpdates = usePackageUpdates(true);
+    const isUpdateAvailable = checkHasPackageUpdate(packageUpdates);
+    const label = isUpdateAvailable
+        ? `${tran('Setting')} — ${tran('Update Available')}`
+        : tran('Setting');
     return (
         <button
-            className="btn btn-outline-success rotating-hover"
-            title={tran('Setting')}
-            aria-label={tran('Setting')}
+            className="btn btn-outline-success rotating-hover app-update-dot-host"
+            title={label}
+            aria-label={label}
             onClick={handleClick}
         >
             <i className="bi bi-gear-wide-connected" />
+            {isUpdateAvailable ? (
+                <span className="app-update-dot" aria-hidden="true" />
+            ) : null}
         </button>
     );
 }

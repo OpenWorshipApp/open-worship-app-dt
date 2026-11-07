@@ -1,6 +1,12 @@
 [
     {
         "check": "paths",
+        "doc": "RELEASE.md",
+        "name": "extra-work/fake-s3",
+        "why": "local: the scratch folder extra-work/s3-push-release.js writes on a dry run; git-ignored by extra-work/.gitignore, so a fresh checkout has none"
+    },
+    {
+        "check": "paths",
         "doc": ".claude/memory/appprovider-mock-node-env.md",
         "name": "src/lang/langHelpers.test.ts",
         "why": "history: deleted in the 2026-08-24 test prune (47053c9d); the doc records it"

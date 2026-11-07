@@ -273,7 +273,18 @@ describe('bibleLogicHelpers2', () => {
                 JUD: 'Jude',
             },
             locale: 'km-KH',
-            numList: ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'],
+            numList: [
+                '０',
+                '１',
+                '２',
+                '３',
+                '４',
+                '５',
+                '６',
+                '７',
+                '８',
+                '９',
+            ],
         });
         mocks.fromStringNumMock.mockImplementation(
             (numList: string[], localeNum: string) => {
@@ -416,23 +427,23 @@ describe('bibleLogicHelpers2', () => {
         const module = await loadModule();
 
         expect(await module.toInputText('KJV')).toBe('');
-        expect(await module.toInputText('KJV', 'Jude')).toBe('Jude ១:');
-        expect(await module.toInputText('KJV', 'John', 3)).toBe('John ៣');
+        expect(await module.toInputText('KJV', 'Jude')).toBe('Jude １:');
+        expect(await module.toInputText('KJV', 'John', 3)).toBe('John ３');
         expect(await module.toInputText('KJV', 'John', 3, 16)).toBe(
-            'John ៣:១៦',
+            'John ３:１６',
         );
         // A range keeps its end; one verse is written once.
         expect(await module.toInputText('KJV', 'John', 3, 16, 18)).toBe(
-            'John ៣:១៦-១៨',
+            'John ３:１６-１８',
         );
         expect(await module.toInputText('KJV', 'John', 3, 16, 16)).toBe(
-            'John ៣:១៦',
+            'John ３:１６',
         );
         expect(await module.toInputText('KJV', 'John', 1, 2, 4, 3)).toBe(
-            'John ១:២-៣:៤',
+            'John １:２-３:４',
         );
         expect(await module.toInputText('KJV', 'John', 3, 2, 4, 3)).toBe(
-            'John ៣:២-៤',
+            'John ３:２-４',
         );
     });
 
@@ -443,8 +454,8 @@ describe('bibleLogicHelpers2', () => {
             parsedNum: ReturnType<typeof module.useFromLocaleNumBible>;
         }> = [];
 
-        expect(await module.toLocaleNumBible('KJV', 3)).toBe('៣');
-        expect(await module.toLocaleNumBible('KJV', 3)).toBe('៣');
+        expect(await module.toLocaleNumBible('KJV', 3)).toBe('３');
+        expect(await module.toLocaleNumBible('KJV', 3)).toBe('３');
         expect(await module.toLocaleNumBible('KJV', null)).toBeNull();
 
         mocks.getBibleInfoMock
@@ -452,7 +463,7 @@ describe('bibleLogicHelpers2', () => {
             .mockResolvedValueOnce({ locale: 'en-US' });
         expect(await module.toLocaleNumBible('WEB', 12)).toBe('en-US:12');
 
-        expect(await module.fromLocaleNumBible('KJV', '៣')).toBe(3);
+        expect(await module.fromLocaleNumBible('KJV', '３')).toBe(3);
         mocks.getBibleInfoMock.mockResolvedValueOnce({ locale: 'en-US' });
         expect(await module.fromLocaleNumBible('WEB', '12')).toBe(12);
         mocks.getBibleInfoMock.mockResolvedValueOnce({ locale: 'en-US' });
@@ -460,7 +471,7 @@ describe('bibleLogicHelpers2', () => {
 
         function HookHarnessComp() {
             const localeNum = module.useToLocaleNumBible('KJV', 3);
-            const parsedNum = module.useFromLocaleNumBible('KJV', '៣');
+            const parsedNum = module.useFromLocaleNumBible('KJV', '３');
 
             useEffect(() => {
                 updates.push({ localeNum, parsedNum });
@@ -481,32 +492,32 @@ describe('bibleLogicHelpers2', () => {
         });
 
         expect(updates.at(-1)).toEqual({
-            localeNum: '៣',
+            localeNum: '３',
             parsedNum: 3,
         });
     });
 
     test("puts the Bible's own number map above the language's digits", async () => {
         const module = await loadModule();
-        const thaiDigits = ['๐', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
-        const thaiInfo = {
+        const ownDigits = ['⓪', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'];
+        const ownMapInfo = {
             locale: 'th-TH',
             numbersMap: Object.fromEntries(
-                thaiDigits.map((digit, i) => [`${i}`, digit]),
+                ownDigits.map((digit, i) => [`${i}`, digit]),
             ),
         };
         // An XML Bible's map, for a locale with no language package.
-        mocks.getBibleInfoMock.mockResolvedValue(thaiInfo);
-        expect(await module.toLocaleNumBible('TK', 31)).toBe('๓๑');
-        expect(await module.fromLocaleNumBible('TK', '๓๑')).toBe(31);
+        mocks.getBibleInfoMock.mockResolvedValue(ownMapInfo);
+        expect(await module.toLocaleNumBible('TK', 31)).toBe('③①');
+        expect(await module.fromLocaleNumBible('TK', '③①')).toBe(31);
         expect(mocks.toLocaleNumMock).not.toHaveBeenCalled();
 
         // It outranks the language's digits too: a Khmer Bible mapped to Thai.
         mocks.getBibleInfoMock.mockResolvedValue({
-            ...thaiInfo,
+            ...ownMapInfo,
             locale: 'km-KH',
         });
-        expect(await module.toLocaleNumBible('KH-TH', 12)).toBe('๑๒');
+        expect(await module.toLocaleNumBible('KH-TH', 12)).toBe('①②');
 
         // The default 0→0 map an import writes is "not set": the language's.
         const plainMap = Object.fromEntries(
@@ -536,9 +547,9 @@ describe('bibleLogicHelpers2', () => {
         expect(
             module.getBibleNumList({
                 ...base,
-                numbersMap: { '0': '๐', '1': '', '2': '๒' },
+                numbersMap: { '0': '⓪', '1': '', '2': '②' },
             }),
-        ).toEqual(['๐', '1', '๒', '3', '4', '5', '6', '7', '8', '9']);
+        ).toEqual(['⓪', '1', '②', '3', '4', '5', '6', '7', '8', '9']);
     });
 
     test('builds extracted bible defaults, parses chapters, and counts verses with caching', async () => {
@@ -552,11 +563,11 @@ describe('bibleLogicHelpers2', () => {
             guessingChapter: null,
         });
 
-        expect(await module.parseChapterFromGuessing('KJV', 'JHN', '៣')).toBe(
+        expect(await module.parseChapterFromGuessing('KJV', 'JHN', '３')).toBe(
             3,
         );
         expect(
-            await module.parseChapterFromGuessing('KJV', 'JHN', '២២'),
+            await module.parseChapterFromGuessing('KJV', 'JHN', '２２'),
         ).toBeNull();
 
         expect(await module.getVersesCount('KJV', 'JHN', 3)).toBe(4);
@@ -694,7 +705,9 @@ describe('bibleLogicHelpers2', () => {
         expect(module.toTrailingReference('Psalms 23:1-6')).toBe('23:1-6');
         expect(module.toTrailingReference('Psalms 23:')).toBe('23:');
         expect(module.toTrailingReference('Psalms 23')).toBe('23');
-        expect(module.toTrailingReference('ទំនុក ២៣:១')).toBe('២៣:១');
+        expect(module.toTrailingReference('[xx] Psalm ２３:１')).toBe(
+            '２３:１',
+        );
         expect(module.toTrailingReference('1 Jo')).toBeNull();
         expect(module.toTrailingReference('Psalms')).toBeNull();
         expect(module.toTrailingReference('23:1')).toBeNull();

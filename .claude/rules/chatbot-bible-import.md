@@ -1,6 +1,7 @@
 ---
 paths:
   - 'src/chatbot/bibleImportChatHelpers.ts'
+  - 'src/chatbot/langInstallChatHelpers.ts'
   - 'src/chatbot/waitingInputHelpers.ts'
   - 'src/chatbot/chatLinkHelpers.ts'
   - 'src/helper/ai/bibleImportAskHelpers.ts'
@@ -128,7 +129,7 @@ window as a whole — tabs, pickers, its language, the caution — is in
   key row circled: _during choosing bible key, use `getBibleKeyNameMap()` then
   show the keys are options. mouse hover to name of bible key in dom title_,
   _exclude if the key already exist_, with
-  `src/lang/data/km/bibleKeyMap.json` open: _for khmer it should show from
+  `src/lang/data/online/km/bibleKeyMap.json` open: _for khmer it should show from
   this json file_, then _the list of bible keys show for the selected language
   only_, _if no language data … then show normal guessing_, _e.g. for Thai
   should show the guessing language_, and with a French import circled _it
@@ -265,3 +266,45 @@ window as a whole — tabs, pickers, its language, the caution — is in
   by the Bible import, by `toValidLinksField` on load (a hand-edited file
   cannot make anything else a link, and a question carries none) and again
   at the press. The model's answer gets the notice's links with the notice.
+
+- **The Bible's language is installed FIRST, when the person agrees**
+  (2026-11-05, the user over a Khmer window's import where **French** had
+  listed the French Bibles at once: _user input for french so chatbot should
+  take a moment to help user install french first before proceed further
+  step_). Only English ships, and a Bible in another language gets its book
+  names, digits and search words from that language's plugin. So before a
+  step that settles the Bible's language -- a `check` of the collection by
+  a language word (a pressed chip, a typed name, _Import bible for German_),
+  and `digits` / `locale-typed` with a locale -- `findLangOffer` asks
+  `owa_language check` (`langInstallChatHelpers.ts`); a language not
+  installed, or turned off, that the catalog has is answered with
+  `genLangOfferText` (its own name and its English one, as the Languages tab
+  shows them, the download's size, and that the app's own language does not
+  change) and **Install it** (**Enable** when turned off) / **Not now**.
+  Nothing is downloaded or searched before the answer. **Install it** is step
+  `lang-install` (not in `HELP_STEP_LIST`: no interpreted reply presses it;
+  a typed `yes` does, as for every **Install it**): it installs, then runs
+  the step it interrupted -- after the language step's own install that is
+  `locale-typed` again, so the book-name lists are read with the new
+  language's own -- under **Done — {language} is ready.** **Not now** runs it
+  as it was. Either way `langChecked` holds the language's code for the rest
+  of the import, so it is asked once. A check that cannot be made, English,
+  an installed language and one with no package ask nothing: the offer never
+  blocks the import. Tests mock `checkChatLanguage` apart from the Bible
+  tool's queue. **The same offer answers a typed request**, _Install the
+  Spanish language_ (`readLangInstallAsk`, English words, no Bible word, not
+  a how-to -- or an installed language's own, `langInstallAsks` in its
+  `assistant.json`, the name it gives resolved through that language's
+  `world.json` `nativeLanguageNames`; Khmer's since 2026-11-05, when
+  _សូមដំឡើងភាសាអេស្ប៉ាញ_ had gone to a model that wrote the steps out with
+  nothing to press), as its own little conversation (`LANG_INSTALL_STEP_TOOL_NAME`,
+  `handleLangInstallStep`) -- read BEFORE the verse finder's and the
+  import's waiting questions, because under an import's list of files it
+  had gone to the import's interpreter, whose model wrote the offer out as
+  words with no button (seen live). And **Import another Bible anyway**
+  now carries `kjvChecked` into the language step's chips: the KJV offer had
+  come back with the file list after the language was pressed. Verified live
+  on a scratch profile in English and Khmer (`test-results` not kept): the
+  French offer, **Install it** to `data/lang/fr@0.0.6` and the 12 French
+  Bibles; in Khmer, Spanish typed at the language step, offered in Khmer and
+  installed.

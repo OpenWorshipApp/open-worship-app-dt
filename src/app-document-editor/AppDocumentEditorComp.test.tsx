@@ -47,11 +47,22 @@ vi.mock('../server/appProvider', () => ({
     },
 }));
 
-vi.mock('../resize-actor/ResizeActorComp', () => ({
-    default: ({ children }: any) => (
-        <div data-testid="resize-actor">{children}</div>
-    ),
-}));
+vi.mock('../resize-actor/ResizeActorComp', async () => {
+    const { Suspense } = await import('react');
+    return {
+        // Draws its panes, so the editor's two lazy chunks really load.
+        default: ({ children, dataInput = [] }: any) => (
+            <div data-testid="resize-actor">
+                {children}
+                {dataInput.map(({ children: PaneComp, key }: any) => (
+                    <Suspense key={key} fallback={null}>
+                        <PaneComp />
+                    </Suspense>
+                ))}
+            </div>
+        ),
+    };
+});
 
 vi.mock('../app-document-presenter/items/AppDocumentPreviewerComp', () => ({
     default: () => <div data-testid="previewer" />,
@@ -138,5 +149,95 @@ describe('AppDocumentEditorComp', () => {
         });
 
         expect(goToPathMock).toHaveBeenCalledWith('/presenter.html');
+    });
+
+    async function renderEditor(selectedVaryAppDocument: unknown) {
+        const { default: AppDocumentEditorComp } =
+            await import('./AppDocumentEditorComp');
+        const { SelectedVaryAppDocumentContext } =
+            await import('../app-document-list/appDocumentHelpers');
+        await act(async () => {
+            root.render(
+                <SelectedVaryAppDocumentContext.Provider
+                    value={
+                        selectedVaryAppDocument === undefined
+                            ? null
+                            : ({
+                                  selectedVaryAppDocument,
+                                  setSelectedVaryAppDocument: vi.fn(),
+                              } as any)
+                    }
+                >
+                    <AppDocumentEditorComp />
+                </SelectedVaryAppDocumentContext.Provider>,
+            );
+        });
+    }
+
+    async function toAppDocument(filePath: string, isEditable: boolean) {
+        const { default: AppDocument } =
+            await import('../app-document-list/AppDocument');
+        return Object.assign(new (AppDocument as any)(), {
+            filePath,
+            isEditable,
+        });
+    }
+
+    test('loads the previewer and the right pane as lazy chunks', async () => {
+        await renderEditor(undefined);
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+        expect(container.querySelector('[data-testid="previewer"]')).not.toBe(
+            null,
+        );
+        expect(container.querySelector('[data-testid="right-pane"]')).not.toBe(
+            null,
+        );
+    });
+
+    test('stays put with no selection or with an editable slide document', async () => {
+        await renderEditor(undefined);
+        await renderEditor(null);
+        await renderEditor(await toAppDocument('/slides/sunday.ows', true));
+        expect(showAppConfirmMock).not.toHaveBeenCalled();
+    });
+
+    test('a lyric — a slide document that cannot be edited — is sent back too', async () => {
+        showAppConfirmMock.mockResolvedValue(false);
+        await renderEditor(await toAppDocument('/lyrics/hymn.owl', false));
+        expect(showAppConfirmMock).toHaveBeenCalledOnce();
+        await act(async () => {
+            await Promise.resolve();
+        });
+        // Declined: the editor stays where it is.
+        expect(goToPathMock).not.toHaveBeenCalled();
+    });
+
+    test('asks once per document, and again for another one', async () => {
+        showAppConfirmMock.mockResolvedValue(false);
+        const pdf = { filePath: '/slides/sample.pdf' };
+        await renderEditor(pdf);
+        await renderEditor(null);
+        await renderEditor({ ...pdf });
+        expect(showAppConfirmMock).toHaveBeenCalledOnce();
+        await renderEditor({ filePath: '/slides/other.pdf' });
+        expect(showAppConfirmMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('an answer that comes after the selection moved on does not navigate', async () => {
+        let answer: (isOk: boolean) => void = () => {};
+        showAppConfirmMock.mockReturnValue(
+            new Promise<boolean>((resolve) => {
+                answer = resolve;
+            }),
+        );
+        await renderEditor({ filePath: '/slides/sample.pdf' });
+        await renderEditor(await toAppDocument('/slides/sunday.ows', true));
+        await act(async () => {
+            answer(true);
+            await Promise.resolve();
+        });
+        expect(goToPathMock).not.toHaveBeenCalled();
     });
 });

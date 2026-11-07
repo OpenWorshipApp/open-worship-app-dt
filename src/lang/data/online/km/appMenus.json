@@ -1,0 +1,27 @@
+{
+    "tools": [
+        {
+            "label": "Khmer Tools",
+            "submenu": [
+                {
+                    "label": "Editor",
+                    "clickData": {
+                        "openExternalUrl": "https://editor-km.openworship.app"
+                    }
+                },
+                {
+                    "label": "Open Lyric",
+                    "clickData": {
+                        "openExternalUrl": "https://lyric-km.openworship.app"
+                    }
+                },
+                {
+                    "label": "BibleNote",
+                    "clickData": {
+                        "openExternalUrl": "https://biblenote-km.openworship.app"
+                    }
+                }
+            ]
+        }
+    ]
+}

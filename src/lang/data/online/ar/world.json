@@ -1,0 +1,12 @@
+{
+    "nativeLanguageNames": {
+        "العربية": "arabic"
+    },
+    "scriptLocales": [
+        {
+            "script": "Arabic",
+            "locales": ["ar-SA"],
+            "order": 800
+        }
+    ]
+}

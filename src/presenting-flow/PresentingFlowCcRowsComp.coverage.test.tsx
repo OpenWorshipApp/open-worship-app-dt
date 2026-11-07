@@ -9,6 +9,8 @@ const { state, mocks } = vi.hoisted(() => ({
         payload: null as any,
         mediaAnswer: null as any,
         arming: null as any,
+        onScreenCheck: null as null | (() => unknown),
+        onScreenKey: null as string | null,
     },
     mocks: {
         showMenu: vi.fn(),
@@ -67,8 +69,12 @@ vi.mock('./presentingFlowMediaControlDialogHelpers', () => ({
 }));
 vi.mock('./presentingFlowOnScreenHelpers', () => ({
     checkIsPresentingFlowItemOnScreen: vi.fn(),
-    toPresentingFlowItemOnScreenKey: () => 'key',
-    useIsOnScreenChecking: () => false,
+    toPresentingFlowItemOnScreenKey: (one: any) => `on-screen:${one.title}`,
+    useIsOnScreenChecking: (check: () => unknown, key: string) => {
+        state.onScreenCheck = check;
+        state.onScreenKey = key;
+        return false;
+    },
 }));
 vi.mock('./presentingFlowOriginHelpers', () => ({
     notifyPresentingFlowCcOrigin: mocks.origin,
@@ -96,6 +102,7 @@ import {
     presentingFlowDraggingStore,
     UNSUPPORTED_DROP_PAYLOAD,
 } from './presentingFlowHelpers';
+import { checkIsPresentingFlowItemOnScreen } from './presentingFlowOnScreenHelpers';
 import PresentingFlowCcRowsComp, {
     genAddCcElementsContextMenu,
     genAddMediaControlContextMenu,
@@ -143,6 +150,8 @@ beforeEach(() => {
     vi.clearAllMocks();
     state.rows = [];
     state.payload = null;
+    state.onScreenCheck = null;
+    state.onScreenKey = null;
     mocks.createEvent.mockReturnValue({ synthetic: true });
     mocks.askMedia.mockResolvedValue(null);
     mocks.askArming.mockResolvedValue(null);
@@ -376,6 +385,65 @@ describe('CC menus and rows', () => {
             ),
         );
         expect(container.innerHTML).toBe('');
+        await act(async () => root.unmount());
+    });
+
+    test('a media control question cancelled adds nothing', async () => {
+        const presentingFlow = model();
+        const stopPropagation = vi.fn();
+        genAddMediaControlContextMenu({
+            presentingFlow,
+            index: 1,
+            slideId: 4,
+        })[0].onSelect?.({ stopPropagation } as any);
+        expect(mocks.askMedia).toHaveBeenCalledExactlyOnceWith();
+        // Let the answer (none) land.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(stopPropagation).toHaveBeenCalledTimes(1);
+        expect(presentingFlow.addItemCcAction).not.toHaveBeenCalled();
+        expect(mocks.handleError).not.toHaveBeenCalled();
+    });
+
+    test('a row asks whether the follower it draws now is on a screen', async () => {
+        const presentingFlow = model();
+        const host = { presentingFlow, index: 2, slideId: null };
+        const first = item({ title: 'First' });
+        const second = item({ title: 'Second' });
+        vi.mocked(checkIsPresentingFlowItemOnScreen).mockResolvedValue(true);
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        await act(async () =>
+            root.render(
+                <PresentingFlowCcRowsComp
+                    host={host}
+                    ccItems={[first]}
+                    depth={1}
+                />,
+            ),
+        );
+        const firstCheck = state.onScreenCheck!;
+        expect(state.onScreenKey).toBe('on-screen:First');
+        expect(await firstCheck()).toBe(true);
+        expect(checkIsPresentingFlowItemOnScreen).toHaveBeenLastCalledWith(
+            first,
+        );
+
+        // The same row now drawing another follower: a new key drops the old
+        // answer, and even the check handed over first asks about the new one.
+        await act(async () =>
+            root.render(
+                <PresentingFlowCcRowsComp
+                    host={host}
+                    ccItems={[second]}
+                    depth={1}
+                />,
+            ),
+        );
+        expect(state.onScreenKey).toBe('on-screen:Second');
+        firstCheck();
+        expect(checkIsPresentingFlowItemOnScreen).toHaveBeenLastCalledWith(
+            second,
+        );
         await act(async () => root.unmount());
     });
 });

@@ -69,6 +69,7 @@ vi.mock('bible-note', () => {
 
 import {
     acquireLookupData,
+    getHeldLookupData,
     releaseLookupData,
     getLookupDataCached,
 } from './lookupDataHelpers';
@@ -338,5 +339,33 @@ describe('changing the lookup language', () => {
         releaseLookupData('en');
         releaseLookupData('km');
         releaseLookupData('km');
+    });
+});
+
+describe('the dataset a mounted panel already holds', () => {
+    test('is handed out without ever loading, and only while it is held', async () => {
+        expect(getHeldLookupData()).toBeNull();
+        expect(h.loadCount).toBe(0);
+
+        const pending = acquireLookupData('km');
+        // Still loading: there is nothing held to hand out yet.
+        expect(getHeldLookupData('km')).toBeNull();
+        const khmer = await pending;
+        expect(getHeldLookupData('km')).toBe(khmer);
+        // Another language is not held just because one is.
+        expect(getHeldLookupData('en')).toBeNull();
+        expect(getHeldLookupData()).toBeNull();
+        expect(h.loadCount).toBe(1);
+
+        releaseLookupData('km');
+        expect(getHeldLookupData('km')).toBeNull();
+    });
+
+    test('follows the selected language by default', async () => {
+        selectLangCode('km');
+        const khmer = await acquireLookupData();
+        expect(getHeldLookupData()).toBe(khmer);
+        releaseLookupData();
+        expect(getHeldLookupData()).toBeNull();
     });
 });

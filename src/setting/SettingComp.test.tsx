@@ -110,6 +110,79 @@ vi.mock('./bible-setting/bibleEditorDirtyHelpers', () => ({
     warnIfAnyBibleEditorDirty: warnIfAnyBibleEditorDirtyMock,
 }));
 
+// What main says has an update; asking it has its own test
+// (`packageUpdateHelpers.test.tsx`).
+const { packageUpdateState } = vi.hoisted(() => ({
+    packageUpdateState: { current: null as any },
+}));
+vi.mock('../helper/packageUpdateHelpers', () => ({
+    usePackageUpdates: () => packageUpdateState.current,
+}));
+
+describe('SettingComp update points on the tabs', () => {
+    let container: HTMLDivElement;
+    let root: Root;
+
+    beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        initialTab.value = 'g';
+        dataDirState.isOnOwnFolder = false;
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        root = createRoot(container);
+    });
+
+    afterEach(async () => {
+        await act(async () => root.unmount());
+        container.remove();
+        packageUpdateState.current = null;
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
+    });
+
+    function listLitTabs() {
+        return Array.from(container.querySelectorAll('button'))
+            .filter((button) => {
+                return button.querySelector('.app-update-dot-inline') !== null;
+            })
+            .map((button) => {
+                return button.textContent;
+            });
+    }
+
+    test('no answer yet, or nothing to update, lights no tab', async () => {
+        const { default: SettingComp } = await import('./SettingComp');
+        await act(async () => root.render(<SettingComp />));
+        expect(listLitTabs()).toEqual([]);
+        packageUpdateState.current = {
+            langCodes: [],
+            isExtraBinOutdated: false,
+        };
+        await act(async () => root.render(<SettingComp />));
+        expect(listLitTabs()).toEqual([]);
+    });
+
+    test('a language lights Languages, the Extra Binaries light Others', async () => {
+        const { default: SettingComp } = await import('./SettingComp');
+        packageUpdateState.current = {
+            langCodes: ['xx'],
+            isExtraBinOutdated: false,
+        };
+        await act(async () => root.render(<SettingComp />));
+        expect(listLitTabs()).toEqual(['Languages']);
+        packageUpdateState.current = {
+            langCodes: ['xx'],
+            isExtraBinOutdated: true,
+        };
+        await act(async () => root.render(<SettingComp />));
+        expect(listLitTabs()).toEqual(['Languages', 'Others']);
+        expect(
+            container
+                .querySelector('.app-update-dot-inline')
+                ?.getAttribute('aria-label'),
+        ).toBe('Update Available');
+    });
+});
+
 describe('SettingComp cross-window tab requests', () => {
     let container: HTMLDivElement;
     let root: Root;
@@ -219,6 +292,7 @@ describe('SettingComp cross-window tab requests', () => {
             }),
         ).toEqual([
             'General',
+            'Languages',
             'Path Settings',
             'AI Providers',
             'App Assistant',

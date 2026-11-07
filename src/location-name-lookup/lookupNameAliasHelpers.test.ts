@@ -4,6 +4,11 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../test-setup/langPackageDirs';
+
+import {
     getLookupNameAliasMap,
     listNameFormIds,
     toMainNameId,
@@ -15,14 +20,15 @@ const SEM_ID = 'ec62956f-b4dc-44ce-b56e-d75b6f25ea31';
 const SHEM_ID = '5599b7b7-bcae-4cde-abd8-70c657daa39b';
 
 // Read as text and searched, never parsed: three ~35MB datasets.
+// Every language package that ships a names dataset, found by its folder.
+const DATASET_LANG_CODE_LIST = listLangPackageCodes({
+    fileName: path.join('location-name-map-data', 'namesMap.json'),
+});
+
 function readNamesDataset(langCode: string) {
     return fs.readFileSync(
         path.join(
-            __dirname,
-            '..',
-            'lang',
-            'data',
-            langCode,
+            toLangPackageDir(langCode),
             'location-name-map-data',
             'namesMap.json',
         ),
@@ -56,7 +62,7 @@ describe('one person under several names', () => {
     // The ids are the same in every language's dataset; a dataset that
     // renumbered its records would leave the table pointing at nobody. The
     // missing ones are listed, never the dataset diffed.
-    it.each(['en', 'km', 'fr'])(
+    it.each(DATASET_LANG_CODE_LIST)(
         'holds every pair to the %s dataset',
         (langCode) => {
             const dataset = readNamesDataset(langCode);

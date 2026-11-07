@@ -14,12 +14,13 @@
  *
  * Every language is data (`chatLangHelpers.ts`): its `assistant.json` says
  * how it writes "chapter", the words that ask for the Resources files, for
- * the names and places, and for a how-to ("របៀប", "comment"), which is the
+ * the names and places, and for a how-to (`howTo`), which is the
  * app's own work and not a Bible question. English reads here. Pure: no
  * store, no tool call, no model.
  *
  * A reference is also written WITHOUT the chapter word -- "Matthew 18",
- * "ម៉ាថាយ ១៨" -- which is how a reader actually says it. The words before
+ * or the same in a Bible's own words and digits -- which is how a reader
+ * actually says it. The words before
  * the number are handed to `readBibleReaderAsk`'s `checkIsBook`, which the
  * WINDOW answers from the reader's own Bible (`readBibleReaderAskWithBook`
  * in `ChatbotAppComp.tsx`); that keeps this module pure and a book name in
@@ -30,8 +31,10 @@
  */
 import {
     checkIsInLanguageScript,
+    COLON_MARKS,
     listAssistantLanguages,
     toAsciiDigits,
+    toCharClassSource,
     type AssistantLanguageType,
 } from './chatLangHelpers';
 
@@ -61,8 +64,14 @@ function escapeRegExp(text: string) {
     return text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// `John 3:16`, `លោកុប្បត្តិ ៣:២០៣`: a chapter and a verse, in any digits.
-const VERSE_REFERENCE_PATTERN = /\d{1,3}\s*[:៖]\s*\d{1,3}/;
+// A colon as any language here writes one (`colonMarks`).
+const COLON_CLASS = `:${toCharClassSource(COLON_MARKS)}`;
+
+// `John 3:16`, or the same in a Bible's own words, colon and digits: a
+// chapter and a verse, in any digits.
+const VERSE_REFERENCE_PATTERN = new RegExp(
+    `\\d{1,3}\\s*[${COLON_CLASS}]\\s*\\d{1,3}`,
+);
 
 // A how-to is the app's own work, whatever it names: the guide answers it.
 const ENGLISH_HOW_TO_PATTERN =
@@ -94,7 +103,8 @@ const ENGLISH_NAMES_PATTERN =
 const ENGLISH_CHAPTER_PATTERN = /\bchapters?\s+\d{1,3}\b/i;
 
 // A Latin word has word boundaries; Khmer and its neighbours are written
-// without spaces, so their words match inside a run ("ជំពូក" in a sentence).
+// without spaces, so their words match inside a run (a chapter word inside a
+// sentence).
 // Without this, an English "commentary" was excluded as French "comment".
 const LATIN_WORD_PATTERN =
     /^[\p{Script=Latin}][\p{Script=Latin}\p{M}0-9'’ -]*$/u;
@@ -131,12 +141,14 @@ export function checkHasResourceFileName(text: string) {
     );
 }
 
-// A chapter written WITHOUT its book's chapter word -- "Matthew 18",
-// "ម៉ាថាយ ១៨": the way an elderly reader actually says it. The number must
+// A chapter written WITHOUT its book's chapter word -- "Matthew 18", or the
+// same in a Bible's own words: the way an elderly reader actually says it. The number must
 // not be a verse's (`3:16`), a decimal (`3.5`) or inside a word; 150 is
 // Psalms' last chapter, so anything larger is not one.
-const BARE_CHAPTER_NUMBER_PATTERN =
-    /(?<![\p{L}\p{M}\d])(\d{1,3})(?!\d)(?!\s*[:៖])(?!\.\d)/gu;
+const BARE_CHAPTER_NUMBER_PATTERN = new RegExp(
+    `(?<![\\p{L}\\p{M}\\d])(\\d{1,3})(?!\\d)(?!\\s*[${COLON_CLASS}])(?!\\.\\d)`,
+    'gu',
+);
 const BOOK_RUN_PATTERN = /(?:\p{L}[\p{M}]*){2,}/u;
 const MAX_CHAPTER_NUMBER = 150;
 const MAX_BOOK_RUN_TOKENS = 3;
@@ -159,7 +171,7 @@ function* iterateBookNumberMatches(
             .split(/\s+/)
             .filter(Boolean)
             .slice(-MAX_BOOK_RUN_TOKENS);
-        // Shortest first: "ម៉ាថាយ", then a longer run only when a numbered
+        // Shortest first: one word ("Matthew"), then a longer run only when a numbered
         // book needs it ("1 Samuel" after "Samuel" matched nothing).
         const bookTextList: string[] = [];
         for (let count = 1; count <= tokenList.length; count++) {
@@ -251,8 +263,9 @@ function findReferenceAt(
 // A reference needs a book in front of it: "chapter 3" alone, or "3:16"
 // alone, says nothing a tool could read. Two LETTER CLUSTERS, so a Khmer
 // book name counts: its vowel and subscript marks sit between the letters
-// (`យ៉ូហាន` has no two adjacent `\p{L}`), which a bare `\p{L}{2,}` missed and
-// let "តើខ្ញុំវាយ យ៉ូហាន 3:16" fall through (found 2026-10-18).
+// (Khmer's name for John has no two adjacent `\p{L}`), which a bare
+// `\p{L}{2,}` missed and let a Khmer "where do I type John 3:16" fall
+// through (found 2026-10-18).
 function checkHasBookBefore(text: string, at: number) {
     return /(?:\p{L}[\p{M}]*){2,}/u.test(text.slice(Math.max(0, at - 40), at));
 }
@@ -295,14 +308,14 @@ function checkIsLanguageHowTo(text: string, language: AssistantLanguageType) {
 }
 
 /**
- * Whether the words are a how-do-I ("how do I…", "comment ouvrir…",
- * "តើខ្ញុំ…ដោយរបៀបណា"): the app's own work, never a Bible question. Shared
+ * Whether the words are a how-do-I ("how do I…", and every language's own
+ * `howTo` / `howToAsks`): the app's own work, never a Bible question. Shared
  * with the passage conversation, which hands such a line to the ordinary
  * assistant rather than answering it under the Bible prompt (2026-10-19).
  *
- * What the PERSON does, never any "how" (2026-10-29): French "comment" and
- * Khmer "ដូចម្តេច" are every "how" there is, and _Comment Jésus a-t-il
- * sauvé Pierre dans Matthieu 14:30 ?_ was no Bible question in a Reader
+ * What the PERSON does, never any "how" (2026-10-29): French's and Khmer's
+ * words for "how" are every "how" there is, and _How did Jesus save Peter
+ * in Matthew 14:30?_ asked in French was no Bible question in a Reader
  * tab while the same words in English were one.
  */
 export function checkIsHowTo(text: string) {
@@ -322,10 +335,10 @@ export function checkIsHowTo(text: string) {
  *
  * A word the language's Bibles use too counts in a how-do-I only
  * (2026-10-29, the user's pictures of Noah's card: _what is the size of noah
- * ark_ answered from the record in English and Khmer, and _Quelle est la
- * taille de l'arche de Noé_ sent to the app's guide, which said to type
- * `/btw` -- `taille` is the font's size and Rachel's stature both, 36
- * verses of the Louis Segond).
+ * ark_ answered from the record in English and Khmer, and the same asked in
+ * French sent to the app's guide, which said to type `/btw` -- the French
+ * word for "size" is the font's size and Rachel's stature both, 36 verses
+ * of the Louis Segond).
  */
 export function checkIsAppWork(text: string) {
     if (

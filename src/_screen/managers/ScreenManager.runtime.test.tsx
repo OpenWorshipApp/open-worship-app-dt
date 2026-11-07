@@ -10,6 +10,8 @@ const removeRetiredScreenSettingsMock = vi.fn();
 const listenForDataMock = vi.fn();
 const sendDataSyncMock = vi.fn(() => true);
 const sendDataMock = vi.fn();
+const applyForegroundDragDataMock = vi.fn();
+const getMirrorBootstrapMock = vi.fn();
 
 const appProviderMock = {
     isPageScreen: false,
@@ -126,6 +128,7 @@ class MockBackgroundManager {
     static readonly fireUpdateEvent = vi.fn();
     static readonly receiveSyncScreen = vi.fn();
     static readonly receiveSyncVideoTime = vi.fn();
+    static readonly receiveSyncVideoSound = vi.fn();
 
     readonly screenId: number;
     isShowing = true;
@@ -134,16 +137,26 @@ class MockBackgroundManager {
     delete = vi.fn();
     sendSyncScreen = vi.fn();
     registerEventListener = vi.fn(() => []);
+    toSyncMessage = () => ({ type: 'background', data: { src: 'bg' } });
 
     constructor(screenManagerBase: any, _effectManager: unknown) {
         this.screenId = screenManagerBase.screenId;
     }
 }
 
+// What a real layer hands back for its listeners, so a test can tell which
+// layer is asked to drop them.
+function genRegisteredEvents(eventNames: string[], listener: unknown) {
+    return eventNames.map((eventName) => {
+        return { eventName, listener };
+    });
+}
+
 class MockVaryManager {
     static readonly eventNamePrefix = 'screen-vary-app-document-m';
     static readonly fireUpdateEvent = vi.fn();
     static readonly receiveSyncScreen = vi.fn();
+    static readonly receiveSyncVideoTime = vi.fn();
 
     readonly screenId: number;
     isShowing = true;
@@ -151,8 +164,10 @@ class MockVaryManager {
     clear = vi.fn();
     delete = vi.fn();
     sendSyncScreen = vi.fn();
-    registerEventListener = vi.fn(() => []);
+    registerEventListener = vi.fn(genRegisteredEvents);
+    unregisterEventListener = vi.fn();
     reapplyForStage = vi.fn();
+    toSyncMessage = () => ({ type: 'vary-app-document', data: { id: 1 } });
 
     constructor(screenManagerBase: any, _effectManager: unknown) {
         this.screenId = screenManagerBase.screenId;
@@ -169,6 +184,7 @@ class MockBibleManager {
         (_fromScreenId: number, _message: { screenId: number }) => true,
     );
     static readonly receiveSyncTextStyle = vi.fn();
+    static readonly textStyle = { fontSize: 40 };
 
     readonly screenId: number;
     isShowing = true;
@@ -178,7 +194,9 @@ class MockBibleManager {
     delete = vi.fn();
     sendSyncScreen = vi.fn();
     reflectBackgroundColor = vi.fn();
-    registerEventListener = vi.fn(() => []);
+    registerEventListener = vi.fn(genRegisteredEvents);
+    unregisterEventListener = vi.fn();
+    toSyncMessage = () => ({ type: 'bible-screen-view', data: null });
 
     constructor(screenManagerBase: any) {
         this.screenId = screenManagerBase.screenId;
@@ -201,6 +219,7 @@ class MockForegroundManager {
     clear = vi.fn();
     delete = vi.fn();
     sendSyncScreen = vi.fn();
+    toSyncMessage = () => ({ type: 'foreground', data: { marquee: 'x' } });
 
     constructor(screenManagerBase: any, _effectManager: unknown) {
         this.screenId = screenManagerBase.screenId;
@@ -216,6 +235,7 @@ class MockDrawManager {
     clear = vi.fn();
     delete = vi.fn();
     sendSyncScreen = vi.fn();
+    toSyncMessage = () => ({ type: 'draw', data: { strokes: [] } });
 
     constructor(screenManagerBase: any) {
         this.screenId = screenManagerBase.screenId;
@@ -231,6 +251,7 @@ class MockFocusManager {
     clear = vi.fn();
     delete = vi.fn();
     sendSyncScreen = vi.fn();
+    toSyncMessage = () => ({ type: 'focus', data: { size: 300 } });
 
     constructor(screenManagerBase: any) {
         this.screenId = screenManagerBase.screenId;
@@ -295,6 +316,13 @@ vi.mock('./screenManagerDeleteHelpers', () => ({
 
 vi.mock('../../server/appProvider', () => ({
     default: appProviderMock,
+}));
+
+vi.mock('../../presenter-foreground/foregroundDragHelpers', () => ({
+    applyForegroundDragData: applyForegroundDragDataMock,
+}));
+vi.mock('../../screen-mirror/screenBootstrapHelpers', () => ({
+    getMirrorBootstrap: getMirrorBootstrapMock,
 }));
 
 const receiveScreenShowPayloadMock = vi.fn();
@@ -512,7 +540,23 @@ describe('ScreenManager runtime orchestration', () => {
             expect.any(Function),
         );
 
+        const varyLayer = screenManager.screenVaryAppDocumentManager as any;
+        const longTextLayer = screenManager.screenLongTextManager as any;
+        const varyEvents =
+            varyLayer.registerEventListener.mock.results[0].value;
+        const longTextEvents =
+            longTextLayer.registerEventListener.mock.results[0].value;
         await screenManager.delete();
+        // Each layer drops the 'update' listener this screen put on IT.
+        // Found by UT-90a (2026-11-03): they were "removed" from the screen
+        // itself, where they never were, so a late update of a deleted
+        // screen still cleared its other layer.
+        expect(
+            varyLayer.unregisterEventListener,
+        ).toHaveBeenCalledExactlyOnceWith(varyEvents);
+        expect(
+            longTextLayer.unregisterEventListener,
+        ).toHaveBeenCalledExactlyOnceWith(longTextEvents);
         expect(screenManager.hide).toHaveBeenCalled();
         expect(screenManager.screenBackgroundManager.delete).toHaveBeenCalled();
         expect(
@@ -1408,5 +1452,251 @@ describe('ScreenManager runtime orchestration', () => {
             data,
         } as any);
         expect(receiveScreenShowPayloadMock).not.toHaveBeenCalled();
+    });
+
+    test('a full sync asked of a group member is answered by the first other member', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const asking = new ScreenManager(30);
+        const member = new ScreenManager(31);
+        asking.colorNote = 'green';
+        member.colorNote = 'green';
+        baseInstances.set(30, asking);
+        baseInstances.set(31, member);
+        const memberSync = vi.spyOn(member, 'sendSyncScreen');
+
+        await asking.sendSyncScreen(true);
+
+        expect(memberSync).toHaveBeenCalledOnce();
+        expect(memberSync).toHaveBeenCalledWith();
+        expect(
+            member.screenBackgroundManager.sendSyncScreen,
+        ).toHaveBeenCalled();
+        expect(
+            asking.screenBackgroundManager.sendSyncScreen,
+        ).not.toHaveBeenCalled();
+        expect(MockBibleManager.sendSynTextStyle).toHaveBeenCalledOnce();
+    });
+
+    test('a lone screen syncs every layer itself, then each screen it shows', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const lone = new ScreenManager(32);
+        baseInstances.set(32, lone);
+        lone.screenForegroundManager.foregroundData.screenDataList = [
+            { id: 1 },
+            { id: 4 },
+        ];
+        const snapshots = vi.spyOn(lone, 'sendScreenShowSnapshots');
+
+        await lone.sendSyncScreen(true);
+
+        for (const layer of [
+            lone.backgroundEffectManager,
+            lone.screenBackgroundManager,
+            lone.foregroundEffectManager,
+            lone.screenForegroundManager,
+            lone.screenVaryAppDocumentManager,
+            lone.varyAppDocumentEffectManager,
+            lone.screenLongTextManager,
+            lone.screenDrawManager,
+            lone.screenFocusManager,
+        ]) {
+            expect(layer.sendSyncScreen).toHaveBeenCalledOnce();
+        }
+        expect(snapshots).toHaveBeenCalledWith([1, 4]);
+    });
+
+    test("a screen's whole state is the messages that would put it there", async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(33);
+        Object.assign(screenManager, { width: 1280, height: 720 });
+        screenManager.varyAppDocumentEffectManager.effectType = 'zoom';
+
+        expect(screenManager.genScreenShowPayload()).toEqual({
+            sourceScreenId: 33,
+            width: 1280,
+            height: 720,
+            stage: 0,
+            isSnapshot: true,
+            messages: [
+                {
+                    screenId: 33,
+                    type: 'effect',
+                    data: { target: 'background', effect: 'fade' },
+                },
+                {
+                    screenId: 33,
+                    type: 'effect',
+                    data: { target: 'foreground', effect: 'fade' },
+                },
+                {
+                    screenId: 33,
+                    type: 'effect',
+                    data: { target: 'vary-app-document', effect: 'zoom' },
+                },
+                {
+                    screenId: 33,
+                    type: 'bible-screen-view-text-style',
+                    data: { textStyle: { fontSize: 40 } },
+                },
+                { screenId: 33, type: 'background', data: { src: 'bg' } },
+                { screenId: 33, type: 'foreground', data: { marquee: 'x' } },
+                { screenId: 33, type: 'vary-app-document', data: { id: 1 } },
+                { screenId: 33, type: 'bible-screen-view', data: null },
+                { screenId: 33, type: 'draw', data: { strokes: [] } },
+                { screenId: 33, type: 'focus', data: { size: 300 } },
+            ],
+        });
+    });
+
+    test('a sub-manager group counts only full screen managers', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(34);
+        const sibling = new ScreenManager(35);
+        const bare = new MockScreenManagerBase(36);
+        screenManager.colorNote = 'pink';
+        sibling.colorNote = 'pink';
+        bare.colorNote = 'pink';
+        baseInstances.set(34, screenManager);
+        baseInstances.set(35, sibling);
+        baseInstances.set(36, bare);
+
+        await expect(
+            screenManager.screenBackgroundManager.getMemberInstances(),
+        ).resolves.toEqual([sibling.screenBackgroundManager]);
+        await expect(
+            screenManager.screenFocusManager.getMemberIds(),
+        ).resolves.toEqual([35]);
+    });
+
+    test('a dropped foreground row goes to the foreground helper, awaited', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(37);
+        const done = Promise.resolve();
+        applyForegroundDragDataMock.mockReturnValue(done);
+        const item = { target: 'message', data: { textList: ['hi'] } };
+
+        const result = screenManager.receiveScreenDropped({
+            type: DragTypeEnum.FOREGROUND,
+            item,
+        } as any);
+
+        expect(result).toBe(done);
+        expect(applyForegroundDragDataMock).toHaveBeenCalledWith(
+            screenManager.screenForegroundManager,
+            item,
+        );
+        expect(appLogMock).not.toHaveBeenCalled();
+    });
+
+    test('focus, background sound and slide video time reach their layer', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        baseInstances.set(38, new ScreenManager(38));
+        const focus = { screenId: 38, type: 'focus', data: { size: 200 } };
+        const sound = {
+            screenId: 38,
+            type: 'background-video-sound',
+            data: { isMuted: true },
+        };
+        const videoTime = {
+            screenId: 38,
+            type: 'vary-app-document-video-time',
+            data: { videoId: 'v', videoTime: 3 },
+        };
+
+        ScreenManager.applyScreenManagerSyncScreen(focus as any);
+        ScreenManager.applyScreenManagerSyncScreen(sound as any);
+        ScreenManager.applyScreenManagerSyncScreen(videoTime as any);
+
+        expect(MockFocusManager.receiveSyncScreen).toHaveBeenCalledWith(focus);
+        expect(
+            MockBackgroundManager.receiveSyncVideoSound,
+        ).toHaveBeenCalledWith(sound);
+        expect(MockVaryManager.receiveSyncVideoTime).toHaveBeenCalledWith(
+            videoTime,
+        );
+        expect(appLogMock).not.toHaveBeenCalled();
+    });
+
+    test('answers a Screen Mirror guest for a screen it has, and follows device changes', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(39);
+        baseInstances.set(39, screenManager);
+        getMirrorBootstrapMock.mockResolvedValue({
+            screenId: 39,
+            messages: [],
+        });
+        ScreenManager.initReceiveScreenMessage();
+        const listenerOf = (channel: string) => {
+            return listenForDataMock.mock.calls.find(([name]) => {
+                return name === channel;
+            })?.[1] as (...args: any[]) => any;
+        };
+
+        const bootstrap = listenerOf('mirror:bootstrap-request');
+        await bootstrap(null, { requestId: 'r-1', screenId: 39 });
+        expect(getMirrorBootstrapMock).toHaveBeenCalledWith(screenManager);
+        expect(sendDataMock).toHaveBeenCalledWith('mirror:bootstrap', {
+            screenId: 39,
+            messages: [],
+            requestId: 'r-1',
+        });
+
+        // A screen this window does not hold, or a bare base: no answer.
+        sendDataMock.mockClear();
+        baseInstances.set(40, new MockScreenManagerBase(40));
+        await bootstrap(null, { requestId: 'r-2', screenId: 99 });
+        await bootstrap(null, { requestId: 'r-3', screenId: 40 });
+        expect(sendDataMock).not.toHaveBeenCalled();
+        expect(getMirrorBootstrapMock).toHaveBeenCalledOnce();
+
+        // A guest display came or went: every screen re-reads its size.
+        const devicesChanged = listenerOf('mirror:devices-changed');
+        const screens = Array.from({ length: 2 }, () => {
+            return {
+                updateDim: vi.fn(),
+                fireRefreshEvent: vi.fn(),
+                addPropEvent: vi.fn(),
+            };
+        });
+        baseInstances.clear();
+        screens.forEach((screen, i) => {
+            baseInstances.set(i, screen);
+        });
+        devicesChanged();
+        for (const screen of screens) {
+            expect(screen.updateDim).toHaveBeenCalledOnce();
+            expect(screen.fireRefreshEvent).toHaveBeenCalledOnce();
+            expect(screen.addPropEvent).toHaveBeenCalledWith('display-id');
+        }
+    });
+
+    test('a projector window never listens for Screen Mirror requests', async () => {
+        appProviderMock.isPageScreen = true;
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        ScreenManager.initReceiveScreenMessage();
+
+        const channels = listenForDataMock.mock.calls.map(([name]) => name);
+        expect(channels).toContain('screen-message-channel');
+        expect(channels).not.toContain('mirror:bootstrap-request');
+        expect(channels).not.toContain('mirror:devices-changed');
+    });
+
+    test('a change of a screen that is gone is not carried to its Screen Show copy', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const sender = new ScreenManager(42);
+        baseInstances.set(42, sender);
+        screenShowFrameState.sourceIds = new Set([43]);
+        try {
+            sender.sendScreenMessage(
+                { screenId: 43, type: 'background', data: { src: 'x' } } as any,
+                false,
+            );
+
+            expect(sendDataMock).toHaveBeenCalledOnce();
+            expect(receiveScreenShowPayloadMock).not.toHaveBeenCalled();
+        } finally {
+            screenShowFrameState.sourceIds = new Set();
+        }
     });
 });

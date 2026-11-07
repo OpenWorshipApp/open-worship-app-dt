@@ -1,0 +1,53 @@
+{
+    "about": "Words a machine translation of a cross-reference theme title gave a MODERN meaning (extra-work/fix-cross-ref-titles.mjs). A title matching `title` is wrong when its English matches `badIf` (or always, with no `badIf`), unless its English matches `badUnless`. Patterns: `title` reads the title (Unicode), the others the English title (case-insensitive).",
+    "falseFriends": [
+        {
+            "title": "អ្នកជំងឺ",
+            "badIf": "\\bpatien(t|ce|tly)\\b",
+            "means": "a sick person, for patience"
+        },
+        {
+            "title": "ក្រុមហ៊ុន",
+            "means": "a business, for a company of people"
+        },
+        {
+            "title": "ទូរស័ព្ទ",
+            "means": "a telephone, for a calling"
+        },
+        {
+            "title": "ទូរសព្ទ",
+            "means": "a telephone, for a calling"
+        },
+        {
+            "title": "កម្មវិធី",
+            "badUnless": "program|plan|agenda|schedule",
+            "means": "a computer program"
+        },
+        {
+            "title": "ម៉ាស៊ីន",
+            "badUnless": "machine|engine|mill|battering",
+            "means": "a machine, for a host"
+        },
+        {
+            "title": "បើកបរ",
+            "badUnless": "driv(e|er|ing)|chariot",
+            "means": "driving a car"
+        },
+        {
+            "title": "តុលាការ",
+            "badIf": "\\bcourts?\\b",
+            "badUnless": "law|legal|judg|justice|trial|tribunal|suit|litigat|worldly|accus|\\bsue|testimon|witness|verdict|case|proceeding|interrog|council|to court",
+            "means": "a law court, for a temple's or a king's court"
+        },
+        {
+            "title": "បុគ្គលិក(?!លក្ខណៈ)",
+            "badIf": "\\bstaff\\b",
+            "means": "employees, for a shepherd's staff (not the word for personality)"
+        },
+        {
+            "title": "យន្តហោះ",
+            "badUnless": "plane|aircraft|aviat",
+            "means": "an aeroplane, for a ship's pilot"
+        }
+    ]
+}

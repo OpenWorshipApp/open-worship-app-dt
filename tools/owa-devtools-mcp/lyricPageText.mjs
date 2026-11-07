@@ -40,6 +40,7 @@
 // question.
 
 import { checkIsOpenLyricChord } from './openLyric.mjs';
+import { readWorldLanguages } from './worldLanguages.mjs';
 
 /** How much of the wall before a song can be its own opening chords. */
 const MAX_OPENER_LINES = 3;
@@ -92,13 +93,24 @@ const LETTER_PATTERN = /\p{L}/u;
 const LATIN_PATTERN = /\p{Script=Latin}/u;
 const NON_LATIN_LETTER_PATTERN = /[^\P{L}\p{Script=Latin}]/u;
 
+// A colon of any script: the ASCII one, the fullwidth one, and the marks
+// an installed language writes one with (`colonMarks`, `worldLanguages.mjs`).
+function genCreditLabelPattern() {
+    return new RegExp(
+        `^\\S{1,20}[:\\uFF1A${(readWorldLanguages().colonMarks ?? '').replace(
+            /[\]\\^-]/g,
+            '\\$&',
+        )}]\\s*\\S`,
+    );
+}
+
 /**
  * The zero of every decimal digit system a Bible or a hymn book in this app is
  * likely to be printed in. Each is a contiguous run of ten, which is what
  * makes the arithmetic below legal.
  *
- * Khmer is the one that matters -- a Khmer hymnal numbers its verses `១.`,
- * `២.`, `៣.` -- and the others cost a line each.
+ * Khmer is the one that matters -- a Khmer hymnal numbers its verses in
+ * Khmer digits, each with a full stop -- and the others cost a line each.
  */
 const DIGIT_ZERO_LIST = [
     0x0660, // Arabic-Indic
@@ -893,8 +905,9 @@ export function checkIsCreditLine(line) {
     if (/\b(?:words|music|lyrics?|translation)\b[^:]{0,20}:/i.test(text)) {
         return true;
     }
-    // `ទំនុកច្រៀងៈ អ្នកណាម្នាក់` -- a short label, a colon of some script, a name.
-    return /^\S{1,20}[:：៖ៈ]\s*\S/.test(text);
+    // A short label, a colon of some script, a name -- a hymnal's own word
+    // for "hymn" and its writer's name.
+    return genCreditLabelPattern().test(text);
 }
 
 /**
@@ -1067,8 +1080,8 @@ export function rejoinChordSheet(lines, checkIsLabel = () => false) {
             // A translation is a whole row on its own -- the page draws it
             // under the line it translates, with no chords over it. Left open,
             // the next row's first fragment appended to it and a slide read
-            // "I am singingដោយអំណរ": an English line and the Khmer line after
-            // it, run together.
+            // "I am singing" with the Khmer line after it glued on: an
+            // English line and its translation, run together.
             if (checkIsSoleTranslation(fragments, out)) {
                 flush();
             }
@@ -1086,8 +1099,9 @@ export function rejoinChordSheet(lines, checkIsLabel = () => false) {
         const text = stripIconPrefix(line);
         // A section name is never part of a sung line, and a chord sitting
         // between it and the words below it made it one: "Intro:Verse
-        // 1:ខ្ញុំមក…" -- one line, no labels found, and a whole hymn drafted
-        // as a single verse. It has to break the run in both directions.
+        // 1:" with the hymn's first Khmer words glued on -- one line, no
+        // labels found, and a whole hymn drafted as a single verse. It has
+        // to break the run in both directions.
         //
         // Tested AFTER the chord test and never before it, because a hymn
         // book's verse number is a bare digit and so is a fingering, and

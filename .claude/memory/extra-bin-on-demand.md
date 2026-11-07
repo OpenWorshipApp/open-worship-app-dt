@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 7cc13309-067b-48ac-94f6-322589474419
-  modified: 2026-10-09T03:04:15.626Z
+  modified: 2026-11-04T20:27:37.312Z
 ---
 
 As of refactor27 (2026-08-10) the three media binaries are **no longer bundled**.
@@ -45,7 +45,9 @@ app whose whole point is running on weak church hardware.
   (`extraBinErrors.ts`, a leaf module) and the Background comps stay quiet for it.
 - **The downloaded `bin-*.tar.gz` is deliberately kept** inside `extra-bin` so Re-extract
   works offline. `extractDownloadedBible` is the tempting model and it deletes in its
-  `finally` — do not copy that.
+  `finally` — do not copy that. Since 2026-11-04 it is also what **Export** hands a
+  friend, and **Import** installs one from a file with no network; see
+  [[pack-file-sharing]].
 - `extra-bin` is intentionally absent from `dataDirectories.ts`, which is what keeps it
   out of the `.owadata` archive. See [[dev-data-dir-is-separate]].
 - Publishing: `s3-push-release.js` READ-MODIFY-WRITES the platform `info.json` via

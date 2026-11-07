@@ -243,4 +243,53 @@ describe('Bible lookup verse options', () => {
             container.querySelector('[aria-label="Show all verses"]'),
         ).toBeNull();
     });
+
+    it('ignores touches that start nowhere, move or end first, or leave the verses', async () => {
+        await render();
+        const grid = container.querySelector<HTMLElement>('.verse-select')!;
+        // Point 99 is on the grid but on no verse.
+        document.elementFromPoint = (x) => (x === 99 ? container : verse(x));
+        const noTouch = (type: string) => {
+            const event = new Event(type, { bubbles: true, cancelable: true });
+            Object.defineProperty(event, 'touches', { value: [] });
+            return event;
+        };
+        const earlyMove = touchEvent('touchmove', 4);
+        await act(async () => grid.dispatchEvent(earlyMove));
+        expect(earlyMove.defaultPrevented).toBe(false);
+        await act(async () => grid.dispatchEvent(touchEvent('touchend', 4)));
+        await act(async () => grid.dispatchEvent(noTouch('touchstart')));
+        const offVerse = touchEvent('touchstart', 99);
+        await act(async () => grid.dispatchEvent(offVerse));
+        expect(offVerse.defaultPrevented).toBe(false);
+        expect(h.applyTarget).not.toHaveBeenCalled();
+
+        // Started on verse 3: a move with no point, or off the verses, keeps it.
+        await act(async () => grid.dispatchEvent(touchEvent('touchstart', 3)));
+        await act(async () => grid.dispatchEvent(noTouch('touchmove')));
+        await act(async () => grid.dispatchEvent(touchEvent('touchmove', 99)));
+        await act(async () => grid.dispatchEvent(touchEvent('touchend', 0)));
+        expect(h.applyTarget).toHaveBeenCalledTimes(1);
+        expect(h.applyTarget.mock.calls[0][1].target).toMatchObject({
+            verseStart: 3,
+            verseEnd: 3,
+        });
+    });
+
+    it('takes no whole chapter while its verse list cannot be read', async () => {
+        h.genVerseList.mockResolvedValue(null);
+        await render();
+        expect(
+            container.querySelector<HTMLElement>('.render-found')!.style
+                .display,
+        ).toBe('none');
+        await act(async () =>
+            container
+                .querySelector<HTMLButtonElement>(
+                    '[aria-label="Show all verses"]',
+                )!
+                .click(),
+        );
+        expect(h.applyTarget).not.toHaveBeenCalled();
+    });
 });

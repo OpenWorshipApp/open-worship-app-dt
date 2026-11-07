@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
     getJsonData: vi.fn(),
     changeSlidesFont: vi.fn(),
+    fileEvents: vi.fn(),
     filePath: '/docs/a.ows',
 }));
 vi.mock('../../../app-document-list/AppDocument', () => ({
@@ -15,7 +16,7 @@ vi.mock('../../../app-document-list/appDocumentHelpers', () => ({
     useSelectedEditingSlideContext: () => ({ filePath: mocks.filePath }),
 }));
 vi.mock('../../../helper/dirSourceHelpers', () => ({
-    useFileSourceEvents: vi.fn(),
+    useFileSourceEvents: (...args: unknown[]) => mocks.fileEvents(...args),
 }));
 vi.mock('../../../helper/errorHelpers', () => ({ handleError: vi.fn() }));
 vi.mock('../../../helper/loggerHelpers', () => ({ appWarning: vi.fn() }));
@@ -165,4 +166,119 @@ test('changing documents clears custom targets and failed writes report failure'
         'Failed to apply font changes',
     );
     expect(host.querySelector('fieldset')?.disabled).toBe(false);
+});
+
+const typeFontSize = async (value: string) => {
+    await act(async () => {
+        const input = host.querySelector<HTMLInputElement>(
+            'input[aria-label="Font Size"]',
+        )!;
+        // React tracks the last value it rendered; only the native setter
+        // makes the following input event count as a change.
+        Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            'value',
+        )!.set!.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+};
+
+test('a typed font size is what gets applied, and a size that is not positive cannot be applied', async () => {
+    const apply = button('Apply Font Size') as HTMLButtonElement;
+    await typeFontSize('72.5');
+    expect(apply.disabled).toBe(false);
+    await click(apply);
+    expect(mocks.changeSlidesFont).toHaveBeenLastCalledWith(
+        { fontSize: 72.5 },
+        { includeLocked: false, targets: undefined },
+    );
+    await typeFontSize('0');
+    expect(apply.disabled).toBe(true);
+    await typeFontSize('');
+    expect(apply.disabled).toBe(true);
+    expect(mocks.changeSlidesFont).toHaveBeenCalledOnce();
+});
+
+test('a second press while the first change is still being written is ignored, and the next one after it goes through', async () => {
+    let finish!: (count: number) => void;
+    mocks.changeSlidesFont.mockImplementationOnce(
+        () =>
+            new Promise<number>((resolve) => {
+                finish = resolve;
+            }),
+    );
+    const apply = button('Apply Font Size');
+    // Both presses land before React re-renders the fieldset as disabled.
+    await act(async () => {
+        apply.click();
+        apply.click();
+    });
+    expect(mocks.changeSlidesFont).toHaveBeenCalledOnce();
+    expect(host.querySelector('fieldset')?.disabled).toBe(true);
+    await act(async () => finish(0));
+    expect(host.querySelector('fieldset')?.disabled).toBe(false);
+    expect(host.querySelector('[role="status"]')?.textContent).toBe(
+        'No items needed updating',
+    );
+    mocks.changeSlidesFont.mockResolvedValueOnce(5);
+    await click(button('Apply Font Size'));
+    expect(mocks.changeSlidesFont).toHaveBeenCalledTimes(2);
+    expect(host.querySelector('[role="status"]')?.textContent).toBe(
+        'Updated items: 5',
+    );
+});
+
+test('a burst of document updates re-reads the target list once, after the burst settles', async () => {
+    const listeners: Array<{
+        events: string[];
+        callback: () => void;
+        filePath: string;
+    }> = [];
+    mocks.fileEvents.mockImplementation(
+        (
+            events: string[],
+            callback: () => void,
+            _deps: unknown[],
+            filePath: string,
+        ) => {
+            listeners.push({ events, callback, filePath });
+        },
+    );
+    await select('Apply to', 'choose');
+    expect(mocks.getJsonData).toHaveBeenCalledOnce();
+    expect(host.textContent).toContain('Slide 1: First');
+    const listener = listeners.at(-1)!;
+    expect(listener.events).toEqual(['update']);
+    expect(listener.filePath).toBe('/docs/a.ows');
+    mocks.getJsonData.mockResolvedValue({
+        items: [
+            {
+                id: 30,
+                name: 'Renamed',
+                canvasItems: [
+                    {
+                        id: 5,
+                        type: 'bible',
+                        bibleRenderingList: [{ title: 'John  3:16\n' }],
+                    },
+                ],
+            },
+        ],
+    });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+        listener.callback();
+        listener.callback();
+        listener.callback();
+        await act(async () => vi.advanceTimersByTime(499));
+        expect(mocks.getJsonData).toHaveBeenCalledOnce();
+        await act(async () => vi.advanceTimersByTime(1));
+    } finally {
+        vi.useRealTimers();
+    }
+    await act(async () => {});
+    expect(mocks.getJsonData).toHaveBeenCalledTimes(2);
+    expect(host.textContent).toContain('Slide 1: Renamed');
+    expect(host.textContent).not.toContain('Slide 1: First');
+    expect(host.textContent).toContain('Item ID: 5 — John 3:16');
 });

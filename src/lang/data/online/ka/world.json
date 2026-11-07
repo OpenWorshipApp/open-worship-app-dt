@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Georgian",
+            "locales": ["ka-GE"],
+            "order": 2100
+        }
+    ]
+}

@@ -4,7 +4,7 @@
     "window": "setting.html",
     "focus": null,
     "description": "The Settings window, opened from the gear in the header: language and theme, Bible versions, folders on disk, and the extras that need an account or a download.",
-    "updated": "2026-10-24",
+    "updated": "2026-11-05",
     "sections": [
         {
             "id": "general",
@@ -12,7 +12,8 @@
             "recipes": [
                 "W-16",
                 "W-52",
-                "W-54"
+                "W-54",
+                "W-55"
             ],
             "questions": [
                 {
@@ -48,9 +49,61 @@
                     "starter": true,
                     "resources": {
                         "recipe": "W-16",
+                        "find": "Languages",
                         "guide": true
                     },
                     "starterRank": 11
+                },
+                {
+                    "id": "install-language",
+                    "text": "How do I install my language?",
+                    "kind": "howto",
+                    "keywords": [
+                        "add a language",
+                        "download a language",
+                        "my language",
+                        "languages tab",
+                        "language plugin",
+                        "hebrew"
+                    ],
+                    "resources": {
+                        "recipe": "W-55",
+                        "find": "Languages",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "turn-off-language",
+                    "text": "How do I hide a language I never use?",
+                    "kind": "howto",
+                    "keywords": [
+                        "turn off a language",
+                        "disable a language",
+                        "fewer languages",
+                        "language list"
+                    ],
+                    "resources": {
+                        "recipe": "W-55",
+                        "find": "Languages"
+                    }
+                },
+                {
+                    "id": "share-language-file",
+                    "text": "How do I give a language to a computer with no internet?",
+                    "kind": "howto",
+                    "keywords": [
+                        "share a language",
+                        "language file",
+                        "save a language",
+                        "import a language",
+                        "no internet",
+                        "offline",
+                        "friend"
+                    ],
+                    "resources": {
+                        "recipe": "W-55",
+                        "find": "Import"
+                    }
                 },
                 {
                     "id": "language-across-data-folders",
@@ -108,6 +161,8 @@
                     "keywords": [
                         "reset",
                         "clear all settings",
+                        "factory reset",
+                        "reset all settings",
                         "erase",
                         "start over",
                         "dangerous",
@@ -115,6 +170,7 @@
                     ],
                     "resources": {
                         "recipe": "W-16",
+                        "menu": "Help → Factory Reset",
                         "related": [
                             "W-31"
                         ]
@@ -619,6 +675,24 @@
                     }
                 },
                 {
+                    "id": "bible-language-not-installed",
+                    "text": "Why does a Bible in my list ask me to install its language?",
+                    "kind": "what",
+                    "keywords": [
+                        "language not installed",
+                        "install that language",
+                        "full language data",
+                        "bible language",
+                        "language package",
+                        "book names in english"
+                    ],
+                    "resources": {
+                        "recipe": "W-34",
+                        "find": "Install",
+                        "passage": "A Bible whose language is not installed"
+                    }
+                },
+                {
                     "id": "bible-copyright",
                     "text": "Where do I find a Bible's publisher and copyright?",
                     "kind": "where",
@@ -807,6 +881,24 @@
                         "related": [
                             "W-35"
                         ],
+                        "find": "Extra Binaries"
+                    }
+                },
+                {
+                    "id": "extra-binaries-from-file",
+                    "text": "How do I install the Extra Binaries on a computer with no internet?",
+                    "kind": "howto",
+                    "keywords": [
+                        "share extra binaries",
+                        "export extra binaries",
+                        "import extra binaries",
+                        "no internet",
+                        "offline",
+                        "friend",
+                        "usb"
+                    ],
+                    "resources": {
+                        "recipe": "W-21",
                         "find": "Extra Binaries"
                     }
                 }

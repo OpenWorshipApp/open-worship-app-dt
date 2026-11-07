@@ -1,0 +1,282 @@
+import { beforeEach, expect, test, vi } from 'vitest';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const { executeMock, rmSyncMock } = vi.hoisted(() => ({
+    executeMock: vi.fn(),
+    rmSyncMock: vi.fn(),
+}));
+
+vi.mock('./electronHelpers', () => ({
+    unlocking: (_key: string, callback: () => unknown) => callback(),
+}));
+vi.mock('./processHelpers', () => ({ execute: executeMock }));
+vi.mock('node:fs', () => ({ rmSync: rmSyncMock }));
+
+import {
+    PDF_CHAT_CACHE_DIR,
+    getPagesCount,
+    pdfToChatPages,
+    pdfToImages,
+} from './pdfToImagesHelpers';
+
+beforeEach(() => {
+    vi.clearAllMocks();
+});
+
+test('converts a long PDF in fresh, sequential page batches', async () => {
+    executeMock
+        .mockResolvedValueOnce({
+            isSuccessful: true,
+            pageCount: 25,
+            filePaths: Array.from(
+                { length: 12 },
+                (_, i) => `/out/page-${i}.png`,
+            ),
+        })
+        .mockResolvedValueOnce({
+            isSuccessful: true,
+            pageCount: 25,
+            filePaths: Array.from(
+                { length: 12 },
+                (_, i) => `/out/page-${i + 12}.png`,
+            ),
+        })
+        .mockResolvedValueOnce({
+            isSuccessful: true,
+            pageCount: 25,
+            filePaths: ['/out/page-24.png'],
+        });
+
+    const onProgress = vi.fn();
+    const result = await pdfToImages(
+        '/docs/long.pdf',
+        '/out',
+        1920,
+        true,
+        onProgress,
+    );
+
+    expect(result.isSuccessful).toBe(true);
+    expect(result.filePaths).toHaveLength(25);
+    expect(executeMock.mock.calls.map((call) => call[1].startPage)).toEqual([
+        0, 12, 24,
+    ]);
+    expect(executeMock.mock.calls.map((call) => call[1].endPage)).toEqual([
+        12, 24, 36,
+    ]);
+    expect(rmSyncMock).not.toHaveBeenCalled();
+    expect(onProgress.mock.calls).toEqual([
+        [12, 25],
+        [24, 25],
+        [25, 25],
+    ]);
+});
+
+test('removes earlier batches when a later batch fails', async () => {
+    executeMock
+        .mockResolvedValueOnce({
+            isSuccessful: true,
+            pageCount: 13,
+            filePaths: Array.from(
+                { length: 12 },
+                (_, i) => `/out/page-${i}.png`,
+            ),
+        })
+        .mockResolvedValueOnce({
+            isSuccessful: false,
+            message: 'malloc failed',
+        });
+
+    const result = await pdfToImages('/docs/failing.pdf', '/out', 1920, true);
+
+    expect(result).toEqual({
+        isSuccessful: false,
+        message: 'malloc failed',
+    });
+    expect(rmSyncMock).toHaveBeenCalledTimes(12);
+    expect(rmSyncMock).toHaveBeenCalledWith('/out/page-0.png', { force: true });
+});
+
+test('rejects a page count that changes between batches', async () => {
+    executeMock
+        .mockResolvedValueOnce({
+            isSuccessful: true,
+            pageCount: 13,
+            filePaths: Array.from({ length: 12 }, (_, i) => `/out/${i}.png`),
+        })
+        .mockResolvedValueOnce({
+            isSuccessful: true,
+            pageCount: 14,
+            filePaths: ['/out/12.png', '/out/13.png'],
+        });
+    rmSyncMock.mockImplementationOnce(() => {
+        throw new Error('already removed');
+    });
+
+    await expect(
+        pdfToImages('/docs/changing.pdf', '/out', 800, true),
+    ).resolves.toEqual({
+        isSuccessful: false,
+        message: 'PDF page count changed during conversion',
+    });
+    expect(rmSyncMock).toHaveBeenCalledTimes(12);
+});
+
+test('rejects malformed and incomplete conversion results', async () => {
+    executeMock.mockResolvedValueOnce({
+        isSuccessful: true,
+        pageCount: 2,
+        filePaths: ['/out/0.png'],
+    });
+
+    await expect(
+        pdfToImages('/docs/incomplete.pdf', '/out', 800, true),
+    ).resolves.toEqual({
+        isSuccessful: false,
+        message: 'PDF conversion returned an incomplete batch',
+    });
+
+    executeMock.mockResolvedValueOnce({
+        isSuccessful: true,
+        pageCount: Number.NaN,
+        filePaths: [],
+    });
+    await expect(
+        pdfToImages('/docs/malformed.pdf', '/out', 800, true),
+    ).resolves.toEqual({
+        isSuccessful: false,
+        message: 'PDF page count changed during conversion',
+    });
+});
+
+test('reuses recent conversions and evicts the least-recently-used fourth entry', async () => {
+    executeMock.mockImplementation(async (_script, options) => ({
+        isSuccessful: true,
+        pageCount: 1,
+        filePaths: [`${options.filePath}.png`],
+    }));
+
+    for (const name of ['a', 'b', 'c']) {
+        await pdfToImages(`/docs/${name}.pdf`, '/out', 800, true);
+    }
+    const onProgress = vi.fn();
+    await pdfToImages('/docs/a.pdf', '/out', 800, false, onProgress);
+    await pdfToImages('/docs/d.pdf', '/out', 800, true);
+    await pdfToImages('/docs/b.pdf', '/out', 800, false);
+
+    expect(onProgress).toHaveBeenCalledWith(1, 1);
+    expect(executeMock).toHaveBeenCalledTimes(5);
+    expect(executeMock.mock.calls.at(-1)?.[1].filePath).toBe('/docs/b.pdf');
+});
+
+test('caches non-null page counts only while they are fresh', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-26T12:00:00Z'));
+    executeMock.mockResolvedValueOnce(7).mockResolvedValueOnce(8);
+
+    await expect(getPagesCount('/docs/count.pdf')).resolves.toBe(7);
+    await expect(getPagesCount('/docs/count.pdf')).resolves.toBe(7);
+    vi.advanceTimersByTime(3001);
+    await expect(getPagesCount('/docs/count.pdf')).resolves.toBe(8);
+
+    executeMock.mockResolvedValue(null);
+    await expect(getPagesCount('/docs/null.pdf')).resolves.toBeNull();
+    await expect(getPagesCount('/docs/null.pdf')).resolves.toBeNull();
+    expect(executeMock).toHaveBeenCalledTimes(4);
+    vi.useRealTimers();
+});
+
+test('reuses a complete chatbot PDF render until the source changes', async () => {
+    const sourceDir = await mkdtemp(join(tmpdir(), 'owa-pdf-chat-source-'));
+    const sourcePath = join(sourceDir, 'JHN.3.pdf');
+    const rendered = {
+        isSuccessful: true,
+        pageCount: 4,
+        startPage: 0,
+        dataUrls: ['data:image/png;base64,cGFnZQ=='],
+        pageTexts: [{ page: 1, text: 'page text' }],
+    };
+    await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
+    await writeFile(sourcePath, 'first PDF bytes');
+    executeMock.mockResolvedValue(rendered);
+
+    try {
+        await expect(
+            pdfToChatPages(sourcePath, undefined, undefined, 2200, true),
+        ).resolves.toMatchObject({ cacheHit: false, pageCount: 4 });
+        await expect(
+            pdfToChatPages(sourcePath, undefined, undefined, 2200, true),
+        ).resolves.toMatchObject({ cacheHit: true, pageCount: 4 });
+        expect(executeMock).toHaveBeenCalledTimes(1);
+
+        await writeFile(sourcePath, 'changed PDF bytes with a new size');
+        await expect(
+            pdfToChatPages(sourcePath, undefined, undefined, 2200, true),
+        ).resolves.toMatchObject({ cacheHit: false, pageCount: 4 });
+        expect(executeMock).toHaveBeenCalledTimes(2);
+        expect(executeMock).toHaveBeenLastCalledWith(
+            'pdf-to-chat-images.mjs',
+            expect.objectContaining({
+                filePath: sourcePath,
+                allPages: true,
+                longEdge: 2200,
+            }),
+        );
+    } finally {
+        await rm(sourceDir, { recursive: true, force: true });
+        await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
+    }
+});
+
+test('a PDF that cannot be looked at is rendered without the cache', async () => {
+    const sourceDir = await mkdtemp(join(tmpdir(), 'owa-pdf-chat-source-'));
+    const missingPath = join(sourceDir, 'gone.pdf');
+    const rendered = {
+        isSuccessful: false,
+        message: 'The file could not be opened.',
+    };
+    executeMock.mockResolvedValue(rendered);
+
+    try {
+        // The renderer's own answer, as it gave it: no cache to tell of.
+        await expect(
+            pdfToChatPages(missingPath, undefined, undefined, 2200, true),
+        ).resolves.toBe(rendered);
+        expect(executeMock).toHaveBeenCalledWith(
+            'pdf-to-chat-images.mjs',
+            expect.objectContaining({ filePath: missingPath }),
+        );
+    } finally {
+        await rm(sourceDir, { recursive: true, force: true });
+    }
+});
+
+test('a render too large to keep is not kept', async () => {
+    const sourceDir = await mkdtemp(join(tmpdir(), 'owa-pdf-chat-source-'));
+    const sourcePath = join(sourceDir, 'BIG.pdf');
+    // Over the 32 MiB a cached render may take.
+    const rendered = {
+        isSuccessful: true,
+        pageCount: 1,
+        startPage: 0,
+        dataUrls: ['data:image/png;base64,cGFnZQ=='],
+        pageTexts: [{ page: 1, text: 'a'.repeat(32 * 1024 * 1024) }],
+    };
+    await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
+    await writeFile(sourcePath, 'PDF bytes');
+    executeMock.mockResolvedValue(rendered);
+
+    try {
+        for (let read = 0; read < 2; read++) {
+            await expect(
+                pdfToChatPages(sourcePath, undefined, undefined, 2200, true),
+            ).resolves.toMatchObject({ cacheHit: false, pageCount: 1 });
+        }
+        expect(executeMock).toHaveBeenCalledTimes(2);
+    } finally {
+        await rm(sourceDir, { recursive: true, force: true });
+        await rm(PDF_CHAT_CACHE_DIR, { recursive: true, force: true });
+    }
+});

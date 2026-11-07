@@ -2,10 +2,10 @@
 id: W-34
 title: "Add a Bible translation from the internet (XML), and make it read in its own language"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, CB-145, LT-01]
-screenshots: 11
+verify: [ST-41, ST-42, ST-43, ST-44, ST-45, ST-46, ST-47, ST-48, ST-49, ST-50, ST-24, ST-25, ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, ST-91, RD-11, RD-123, CB-80, CB-81, CB-82, CB-107, CB-108, CB-109, CB-145, LT-01]
+screenshots: 12
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-02"
+workflowsVersion: "2026-11-06"
 ---
 # W-34 — Add a Bible translation from the internet (XML), and make it read in its own language
 
@@ -189,6 +189,21 @@ names one to a line — press **[en:tran:Guessing Names]** to fill them from the
 has for that language, or type your own, and press **[en:tran:Ok]**. Those editor actions use
 the locale currently in the editor buffer; save after editing.
 
+**A Bible whose language is not installed**
+
+English is part of the app; every other language is a package you install (W-55), and a
+Bible in that language takes its book names, numbers, letters and search words from it.
+So a row of **[en:tran:Bibles XML]** whose language is not on this computer asks for it,
+under the Bible's title: _This Bible is in Français (French). Install that language to give
+the Bible its full language data._ Press **[en:tran:Install]** at the end of that line: the
+language installs as it does from **[en:tran:Find a Language]**, and every open window
+reloads at once to use it, the line gone. 📸 A language you turned off says _…which is
+turned off…_ instead, with **[en:tran:Enable]** to turn it on again, which reloads every
+window the same way. With no internet the button reads
+**[en:tran:Languages]** and opens that tab, where **[en:tran:Import]** installs a language
+from a file (W-55 step 8). A Bible in English, or in a language Open Worship has no package
+for, has no such line.
+
 **[en:tran:Key is already taken]**
 
 If it says the Bible key is already taken, choose a different unused key in the review.
@@ -224,7 +239,7 @@ existing Bible, then use its pencil instead.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `CB-145` · `LT-01`
+`ST-41` · `ST-42` · `ST-43` · `ST-44` · `ST-45` · `ST-46` · `ST-47` · `ST-48` · `ST-49` · `ST-50` · `ST-24` · `ST-25` · `ST-26` · `ST-29` · `ST-31` · `ST-32` · `ST-51` · `ST-60` · `ST-79` · `ST-91` · `RD-11` · `RD-123` · `CB-80` · `CB-81` · `CB-82` · `CB-107` · `CB-108` · `CB-109` · `CB-145` · `LT-01`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-02).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-06).
 :::

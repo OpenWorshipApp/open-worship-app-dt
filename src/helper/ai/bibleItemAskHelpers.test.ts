@@ -62,21 +62,6 @@ describe('asking the assistant about what a Bible view shows', () => {
         expect(await openChatbotWithBibleItem(bibleItem as any)).toBe(false);
     });
 
-    test('one verse is read off the key its element carries', async () => {
-        const bibleItem = genBibleItem('ពគប', 'GEN 4:6', 'លោកុប្បត្តិ ៤:៦');
-        h.fromVerseKey.mockResolvedValue(bibleItem);
-        expect(await openChatbotWithVerseKey(' (ពគប) GEN 4:6 ')).toBe(true);
-        expect(h.fromVerseKey).toHaveBeenCalledWith('ពគប', 'GEN 4:6');
-        expect(h.openChatbotWithLookup).toHaveBeenCalledWith(
-            expect.objectContaining({
-                kind: 'verse',
-                target: 'GEN 4:6',
-                title: 'លោកុប្បត្តិ ៤:៦',
-                bibleKey: 'ពគប',
-            }),
-        );
-    });
-
     test('a key that names no verse opens nothing', async () => {
         expect(await openChatbotWithVerseKey('GEN 4:6')).toBe(false);
         expect(h.fromVerseKey).not.toHaveBeenCalled();

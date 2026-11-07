@@ -3,25 +3,29 @@
 - FIXED: [HTML sanitization](document-html-sanitization.md) · [Entry static closure](renderer-entry-static-closure.md) · [On-screen all-or-nothing](screen-onscreen-setting-all-or-nothing.md) · [Apply skips popups](apply-settings-skips-popups.md) · [Injected URL params](injected-app-document-file-param.md) · [Change-bible IPC](screen-change-bible-dead-ipc.md) · [Lyric fonts first](screen-window-has-no-app-fonts.md) · [On-screen parse](onscreen-setting-parse-amplification.md) · [PDF preload](pdf-preload-decodes-all-pages.md) · [Port 3000](dev-electron-hardcodes-port-3000.md) · [Cache sliding expiry](filesource-cache-sliding-ttl.md) · [Settings write race](settings-write-race-corrupts-onscreen-map.md)
 - [A static render must not parse HTML](static-render-must-not-parse-html.md) — the parser runs waiting callbacks mid-call
 - [Foreground Effects in one setting](foreground-effects-one-setting.md) — one JSON key
-- [Bible text style](bible-text-style-looks-and-presets.md) — looks in `em`; a preset is the whole style
+- [Bible/LongText text style](bible-text-style-looks-and-presets.md) — one panel for both layers; looks in `em`; a preset is the whole style; a selection band per Dark/Light
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) · [Sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky
 - [Timer state in the datum](foreground-timer-state-in-datum.md) — updated in place
 - [Screen draw](screen-draw-feature.md) · [Focus spotlight](screen-focus-spotlight.md) — its own `#focus` layer
 - [Screen Bible columns](screen-bible-columns.md) — only the leader is sent
-- [Long Text Show](long-text-show.md) — a song in several languages in the Bible’s layer
+- [Long Text Show](long-text-show.md) — a song in several languages in the Bible’s layer; a language keeps only its font and size; Atom Mode = a row per line; Stack / Hide Number ride on the screen data
+- [Screen selection glides into view](screen-selection-glides-into-view.md) — ease-out, timed in screen heights, re-marked every frame
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — fixed 2026-07-22
 - [Dev HMR stale state](dev-hmr-stale-state-qa.md) — a write can blank a page; View > Reload · [Main-process change needs a relaunch](main-process-change-needs-relaunch.md)
 - [`build` kills the dev app](build-kills-running-dev-app.md) · [Scratch dev instance](scratch-dev-instance-beside-user-app.md) — 2nd `electron .` on `OWA_USER_DATA_PATH`, no-throttling switches, `stay-awake` false, stop it · [Pack from a snapshot](pack-release-from-snapshot.md)
 - [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in a page script
 - Bible notes: [popup CDP](bible-note-floating-toolbar-width.md) · [editor writes a history](bible-note-editing-history.md) · [verse marks are note items](verse-marks-note-items.md)
 - [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — blanks the page · [Confirm labels are auto-tran'd](confirm-popup-labels-auto-tran.md)
-- Tests: [env-leak flakes](vitest-env-leak-flakes.md) · [`document` at module scope](appprovider-mock-node-env.md) · [vi.mock survives resetModules](vitest-mock-factory-survives-resetmodules.md) · [Monaco `.css` failure](monaco-css-test-failure-local-open-lyric.md) · [Coverage = loaded files](coverage-number-is-loaded-files-only.md) — 48% honest · [Parallel test agents](parallel-test-agent-coverage-run.md) — `--no-run` always, src tests type-checked
+- Tests: [env-leak flakes](vitest-env-leak-flakes.md) · [`document` at module scope](appprovider-mock-node-env.md) · [vi.mock survives resetModules](vitest-mock-factory-survives-resetmodules.md) · [Monaco `.css` failure](monaco-css-test-failure-local-open-lyric.md) · [Coverage = loaded files](coverage-number-is-loaded-files-only.md) — 48% honest · [Parallel test agents](parallel-test-agent-coverage-run.md) — `--no-run` always, src tests type-checked · [Flakes only under the coverage run](coverage-run-load-flakes.md) · [jsdom + `node:sqlite` on Node 22](jsdom-node-sqlite-import.md)
 - Toolchain: [npm 12 gotchas](npm-12-install-gotchas.md) · [open-lyric dep](open-lyric-subtree-branch-dep.md) · [TypeScript 7](typescript-7-side-by-side.md) · Vite: [504 → touch config](vite-dep-optimizer-504-restart.md) · [cached failed import](vite-caches-failed-import-resolution.md)
 - [Blob downloads pop Save As](blob-download-pops-save-dialog.md) — orphans a .tmp
 - [Dev data dir is separate](dev-data-dir-is-separate.md) — only `userData` gets `-dev`
 - [A data folder is required](data-folder-required.md) — none in use gates every window but Settings; never the Desktop
 - [Data-folder live test](data-folder-live-test-recipe.md) — Win32 folder picker, `subst` sticks, the real home for the Desktop move · [A scoped robot test stays in scope](robot-test-stays-in-the-asked-scope.md) — no screen/media/export blocks unless asked
 - [Settings: computer vs data folder](settings-global-vs-data-dir.md) — `dataDirSettingProtocol.ts` · [Language is a computer setting](language-is-a-computer-setting.md)
+- [Languages are runtime plugins](language-plugins-runtime.md) — only English ships; all 50 others (Khmer, French too) in `data/online`, installed into `<data folder>/lang`; the MCP reads them from the installed plugin; dev: `npm run lang:pack -- --pack=km` then Settings > Languages; the 🤖 offers a missing one (`owa_language`, the person presses)
+- [Changed language data raises its version](language-data-change-bumps-version.md) — `meta.json` version up AND `npm run lang:pack` + Update to in the same change, or installed copies (the dev app's too) never update
+- [Update signs are a trail](attention-sign-trail.md) — amber dot on the gear → the Settings tab → the item; looked up once per launch, kept by main
 - Lyrics: [architecture](lyric-subsystem-architecture.md) · [in the Documents list](lyric-in-documents-list.md) · [helpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) · [passes the AppDocument check](lyric-passes-appdocument-typecheck.md)
 - [Document stages](document-stage-previewer.md) — drawn at render time
 - [On-screen check must not parse](onscreen-check-must-not-parse.md) — runs per row per screen event
@@ -46,7 +50,7 @@
 - Drag: [kind mime](drag-kind-mime-and-dim-target.md) · [canceled pointerdown kills click](canceled-pointerdown-kills-click.md) · [payload written in dragstart](drag-payload-written-in-dragstart.md) — no await before it
 - [Website items are screenshots](website-screenshot-not-iframe.md) — live only on the screen
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) · [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md)
-- [Media binaries on demand](extra-bin-on-demand.md) — `<data parent>/extra-bin/<platform>`
+- [Media binaries on demand](extra-bin-on-demand.md) — `<data parent>/extra-bin/<platform>` · [Packs shared as files](pack-file-sharing.md) — Export/Download to Downloads, Import from disk; unverified → the person is asked
 - [SongSelect plugin](song-select-plugin.md) · [Public Domain Songs](public-domain-songs-plugin.md) · [open-lyric fence ground truth](open-lyric-fence-ground-truth.md)
 - [Credentials use safeStorage](secure-storage-safestorage.md) — a separate `-secret` store
 - [Connection graph](graph-view-connection-graph.md) · [No renderer `clipboard`](renderer-has-no-clipboard-module.md) — Copy goes through main
@@ -66,7 +70,7 @@
 - [Window tools on every page](app-window-tools-everywhere.md) · [The chatbot opens the window](chatbot-opens-the-window.md)
 - [Local models at temperature 0](local-model-temperature-zero.md) · [Thumbs under an answer](chatbot-answer-thumbs.md)
 - [Answer options](chatbot-answer-options.md) · [Stop aborts on the wire](chatbot-stop-answer.md) · [Additions in flight](chatbot-mid-flight-additions.md) · [Recipe ids scrubbed](chatbot-recipe-id-scrub.md)
-- [Chatbot follows the app language](chatbot-follows-app-language.md) — each language is `assistant.json` data
+- [Chatbot follows the app language](chatbot-follows-app-language.md) — each language is `assistant.json` data; any TYPED one its installed `typed.json`
 - LLM: [Kimi](kimi-third-llm-provider.md) · [Kimi free tier](kimi-free-tier-round-budget.md) · [Free keyless](free-keyless-chatbot-provider.md) · [Bedrock](bedrock-llm-provider.md) · [Custom servers](custom-llm-servers.md) — main-process relay · [LLM registry](llm-registry.md) — `openworship.app/llm/info.json`
 - [Chatbot attachments](chatbot-attachments.md) · [Report button](chatbot-report-button.md) · [Tabs work independently](chatbot-tabs-work-independently.md)
 - [Progress log](chatbot-progress-log.md) · [Ask history & tips](chatbot-ask-history-and-tips.md) · [Built-in commands](chatbot-builtin-commands.md) — no model but `/btw`
@@ -77,7 +81,7 @@
 - [Reading a web page](mcp-read-website-tool.md) · [A slide website loads in a box](slide-website-loads-in-a-box.md)
 - [A CDP pin is exclusive](cdp-pin-is-exclusive.md) · [A preload must not eval at load](preload-must-not-eval-at-load.md)
 - [Press says what changed](click-reports-effect-not-action.md) · [Exact label wins](dom-match-exact-label-beats-everything.md) · [Kind noun trimmed](dom-match-kind-noun-exact.md) · [Twin name, no selector](selector-name-with-a-twin.md)
-- Songs: [checking](open-lyric-validator-in-mcp.md) · [model can't write Open Lyric](model-cannot-write-open-lyric.md) · [page as URL](song-page-goes-in-as-url.md) · [/lyric offline](chatbot-lyric-command.md)
+- Songs: [checking](open-lyric-validator-in-mcp.md) · [model can't write Open Lyric](model-cannot-write-open-lyric.md) · [page as URL](song-page-goes-in-as-url.md) · [/lyric offline](chatbot-lyric-command.md) · [changed by words in the 🤖](chatbot-lyric-edit.md) — the editor takes outside changes as EDITS
 - [Chatbot over CDP](chatbot-cdp-driver-gotchas.md) — Git Bash rewrites `/screen` · [Bash halves `\\`](bash-heredoc-halves-backslashes.md) — use a script file
 - [Corpus run in a shared app](corpus-run-in-a-shared-dev-app.md) — own the tab, undo only your doing · [Goal = failures fixed](corpus-test-goal-means-failures-fixed.md)
 - [Discovery file holds the token](discovery-file-holds-the-token.md) — never print the file · [No user-entered references in notes](no-user-specific-references-in-notes.md)
@@ -87,6 +91,7 @@
 - [AI Chat window](aichat-window.md) — sandboxed `<webview>` · [Guest cannot reach this machine](aichat-guest-cannot-reach-loopback.md)
 - [Chat windows honor the app font](chat-windows-honor-app-font.md) · [A confirm needs a popup host](confirm-needs-a-popup-host.md) · [Popup deep link](popup-deep-link-by-setting.md)
 - [CRLF breaks line regexes](crlf-checkout-line-regex.md) — split on `/\r?\n/` · [Prettier reindents `.mjs` outside `src/`](prettier-reindents-mjs-outside-src.md)
+- [Google Sans is the app's default face](app-default-font-google-sans.md) — `en/fonts.json`; a language's face in FRONT of it; every page, screens too
 - [Canvas blend mode](canvas-item-blend-mode.md) · [Canvas shadow](canvas-item-shadow.md) · [Foreground blend & stacking](foreground-blend-mode-stacking.md)
 - [Infinite paint animations at rest](infinite-paint-animation-at-rest.md) — EN-19 · [Transition overrides](transition-overrides.md)
 - [Looping video crossfades with a twin](video-loop-crossfade-two-elements.md) · [Own font list with weights](own-font-list-with-weights.md)

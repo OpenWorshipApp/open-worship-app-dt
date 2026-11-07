@@ -1,0 +1,12 @@
+{
+    "gl": {
+        "name": "Galician",
+        "nativeName": "Galego",
+        "script": "Latin",
+        "words": "unha non cando moi máis tamén xa aínda axuda axúdame grazas facer fago podo pode quero teño tes ten hai isto iso nós vós coma sen miña túa súa ningún ningunha algún algunha onde que como por para con o a os as do da no na un eu ti el ela meu teu seu este esta aquí ver pero nada todo",
+        "letters": "ñáéíóú",
+        "yes": ["si", "claro", "si, por favor"],
+        "no": ["non", "non, grazas"],
+        "order": 85
+    }
+}

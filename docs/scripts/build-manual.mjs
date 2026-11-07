@@ -53,7 +53,12 @@ const MANIFEST_PATH = join(REPO, 'docs', 'test-manifest.json');
 function slug(text) {
     return text
         .toLowerCase()
-        .replace(/[^a-z0-9ក-៿]+/g, '-') // keep ascii + khmer, collapse the rest
+        // Keep ASCII letters and digits and any script that is not Latin
+        // (a heading in its own script); collapse the rest.
+        .replace(
+            /(?:(?![a-z0-9])[\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}])+/gu,
+            '-',
+        )
         .replace(/^-+|-+$/g, '')
         .replace(/-{2,}/g, '-');
 }

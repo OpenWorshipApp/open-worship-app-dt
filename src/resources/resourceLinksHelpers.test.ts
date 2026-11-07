@@ -41,6 +41,7 @@ import {
     parseResourceLinks,
     readResourceLinks,
     toResourceLinkHostLabel,
+    toResourceLinksDroppedLabel,
 } from './resourceLinksHelpers';
 
 function genLinksText(links: any) {
@@ -227,6 +228,20 @@ describe('toResourceLinkHostLabel', () => {
             'example.com',
         );
         expect(toResourceLinkHostLabel('nonsense')).toBe('');
+    });
+});
+
+describe('toResourceLinksDroppedLabel', () => {
+    test('counts what was left out, one entry in the singular', () => {
+        expect(toResourceLinksDroppedLabel(1)).toBe(
+            '1 entry was not understood',
+        );
+        expect(toResourceLinksDroppedLabel(2)).toBe(
+            '2 entries were not understood',
+        );
+        expect(toResourceLinksDroppedLabel(0)).toBe(
+            '0 entries were not understood',
+        );
     });
 });
 

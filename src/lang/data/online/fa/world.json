@@ -1,0 +1,13 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Arabic",
+            "locales": ["fa-IR"],
+            "order": 801
+        }
+    ],
+    "languageAliases": {
+        "iran": "persian",
+        "farsi": "persian"
+    }
+}

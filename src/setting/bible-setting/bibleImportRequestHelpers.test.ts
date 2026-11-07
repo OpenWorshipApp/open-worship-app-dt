@@ -42,3 +42,20 @@ test('a cross-window request is consumed once and stale requests expire', () => 
     expect(takeBibleImportRequest()).toBeNull();
     expect(state.text).toBeNull();
 });
+
+test('a link to no XML file, or a broken link, is not taken', () => {
+    // Neither the address nor the words say XML.
+    expect(
+        readBibleImportAsk('Import bible from https://example.com/kjv'),
+    ).toBe(null);
+    // The words may say it for an address that does not.
+    expect(readBibleImportAsk('Import bible xml https://example.com/kjv')).toBe(
+        'https://example.com/kjv',
+    );
+    expect(readBibleImportAsk('Import bible xml http://[')).toBeNull();
+});
+test('a request that cannot be read is dropped', () => {
+    state.text = '{not json';
+    expect(takeBibleImportRequest()).toBeNull();
+    expect(state.text).toBeNull();
+});

@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-10-29",
+    "updated": "2026-11-06",
     "sections": [
         {
             "id": "orientation",
@@ -1067,6 +1067,24 @@
                         "find": "Import From Public Domain Songs",
                         "guide": true
                     }
+                },
+                {
+                    "id": "change-song-with-assistant",
+                    "text": "Can the assistant translate or change my song?",
+                    "kind": "howto",
+                    "keywords": [
+                        "translate song",
+                        "song in another language",
+                        "add a verse",
+                        "add chords",
+                        "change the key",
+                        "open in chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-56",
+                        "related": ["W-53"],
+                        "find": "Open in Chatbot"
+                    }
                 }
             ]
         },
@@ -1300,11 +1318,31 @@
                         "font color",
                         "white words",
                         "black words",
-                        "bible properties"
+                        "bible properties",
+                        "bible/longtext properties"
                     ],
                     "resources": {
                         "recipe": "W-07",
                         "find": "Text Color",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "verse-highlight",
+                    "text": "How do I change the color that marks the selected verse?",
+                    "kind": "howto",
+                    "keywords": [
+                        "highlight color",
+                        "selected verse color",
+                        "pink highlight",
+                        "selection band",
+                        "highlight on dark",
+                        "highlight on light",
+                        "mark color"
+                    ],
+                    "resources": {
+                        "recipe": "W-07",
+                        "find": "Highlight Color",
                         "guide": true
                     }
                 },
@@ -2227,6 +2265,25 @@
                     }
                 },
                 {
+                    "id": "long-text-style",
+                    "text": "How do I change the color or the size of a Long Text Show?",
+                    "kind": "howto",
+                    "keywords": [
+                        "long text color",
+                        "long text style",
+                        "long text font",
+                        "long text size",
+                        "bible/longtext properties",
+                        "one language bigger"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "related": ["W-07"],
+                        "passage": "Give a language its own font and size",
+                        "find": "Bible/LongText Properties"
+                    }
+                },
+                {
                     "id": "long-text-refused",
                     "text": "Why is Show Long Text switched off?",
                     "kind": "howto",
@@ -2277,6 +2334,41 @@
                         "passage": "Step with the keys",
                         "find": "Long Text Show",
                         "shortcut": "→ / ↓ / PageDown / Space"
+                    }
+                },
+                {
+                    "id": "long-text-atom",
+                    "text": "How do I show each line of a song on its own row?",
+                    "kind": "howto",
+                    "keywords": [
+                        "atom mode",
+                        "line by line",
+                        "one line per row",
+                        "split the verse",
+                        "each line numbered"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "passage": "Every line on a row of its own",
+                        "find": "Atom Mode"
+                    }
+                },
+                {
+                    "id": "long-text-stack",
+                    "text": "How do I put the languages one under another instead of side by side?",
+                    "kind": "howto",
+                    "keywords": [
+                        "stack",
+                        "one under another",
+                        "same row",
+                        "interlinear",
+                        "hide number",
+                        "without numbers"
+                    ],
+                    "resources": {
+                        "recipe": "W-53",
+                        "passage": "Every language in the same row",
+                        "find": "Stack"
                     }
                 }
             ]

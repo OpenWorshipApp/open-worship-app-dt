@@ -1,0 +1,15 @@
+{
+    "nativeLanguageNames": {
+        "עברית": "hebrew"
+    },
+    "scriptLocales": [
+        {
+            "script": "Hebrew",
+            "locales": ["he-IL"],
+            "order": 900
+        }
+    ],
+    "languageAliases": {
+        "israel": "hebrew"
+    }
+}

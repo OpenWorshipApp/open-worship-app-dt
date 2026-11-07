@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { extractDictionary } from '../../../tools/owa-devtools-mcp/tran.mjs';
 
 const { state, mocks } = vi.hoisted(() => ({
     state: {
@@ -84,9 +82,18 @@ vi.mock('./dataArchiveHelpers', () => ({
 }));
 
 import { handleExporting, handleImporting } from './dataArchiveMenuHelpers';
+import { readSourceDictionary } from '../../../tools/owa-devtools-mcp/langPacks.mjs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../../test-setup/langPackageDirs';
 
-const dictionaries = ['km', 'fr'].map((code) =>
-    extractDictionary(readFileSync(`src/lang/data/${code}/index.ts`, 'utf8')),
+// Every language package but English, found by its folder: its real
+// dictionary.
+const dictionaries = listLangPackageCodes({ isEnglishIncluded: false }).map(
+    (code) => {
+        return readSourceDictionary(toLangPackageDir(code));
+    },
 );
 const documents = {
     dataDirectory: {
@@ -230,5 +237,104 @@ describe('whole-data archive menu flows', () => {
         );
         expect(mocks.toast).toHaveBeenCalledWith('Import Data', 'disk full');
         expect(mocks.cleanup).toHaveBeenCalledWith('/tmp/import');
+    });
+
+    test('cancelling the export folder dialog exports nothing and says nothing', async () => {
+        state.folders = [documents, bibles];
+        mocks.input.mockResolvedValue(false);
+        await handleExporting();
+        expect(mocks.input).toHaveBeenCalledOnce();
+        expect(mocks.export).not.toHaveBeenCalled();
+        expect(mocks.progress).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+    });
+
+    test('unchecking every folder is the same as cancelling', async () => {
+        state.folders = [documents, bibles];
+        mocks.input.mockImplementation(async (_title: string, content: any) => {
+            content.props.children[0].props.onChange([]);
+            return true;
+        });
+        await handleExporting();
+        expect(mocks.input).toHaveBeenCalledOnce();
+        expect(mocks.export).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+    });
+
+    test('three mismatched passwords give up, saying why on each re-ask', async () => {
+        state.folders = [documents];
+        const invalidMessages: unknown[] = [];
+        mocks.input.mockImplementation(async (_title: string, content: any) => {
+            const passwordComp = content.props.children[1].props.children;
+            invalidMessages.push(passwordComp.props.invalidMessage);
+            passwordComp.props.onChange('secret', 'secrte');
+            return true;
+        });
+        await handleExporting();
+        expect(mocks.input).toHaveBeenCalledTimes(3);
+        expect(invalidMessages).toEqual([
+            undefined,
+            'Passwords do not match',
+            'Passwords do not match',
+        ]);
+        expect(mocks.export).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+    });
+
+    test('no file picked: nothing is opened and no work folder is made', async () => {
+        mocks.selectFiles.mockResolvedValue([]);
+        await handleImporting();
+        expect(mocks.selectFiles).toHaveBeenCalledExactlyOnceWith([
+            {
+                name: 'Open Worship Data Archive',
+                extensions: ['tar', 'enc'],
+            },
+        ]);
+        expect(mocks.open).not.toHaveBeenCalled();
+        expect(mocks.cleanup).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+    });
+
+    test('a folder this version does not know is not offered for import', async () => {
+        state.manifest = {
+            kind: 'app-data',
+            folders: [
+                { settingName: 'newer-dir', entry: 'newer' },
+                { settingName: 'documents-dir', entry: 'documents' },
+            ],
+        };
+        let offeredChoices: unknown = null;
+        mocks.input.mockImplementation(async (_title: string, content: any) => {
+            const [selector, passwordContainer] = content.props.children;
+            offeredChoices = selector.props.choices;
+            // Importing asks for no new password.
+            expect(passwordContainer).toBeNull();
+            return true;
+        });
+        await handleImporting('/downloads/data.owadata.tar');
+        expect(offeredChoices).toEqual([
+            {
+                key: 'documents-dir',
+                title: 'Documents',
+                iconClassName: 'bi-file',
+                detail: 'documents',
+            },
+        ]);
+        expect(mocks.import).toHaveBeenCalledExactlyOnceWith('/tmp/plain.tar', [
+            { settingName: 'documents-dir', entry: 'documents' },
+        ]);
+    });
+
+    test('cancelling the import folder dialog imports nothing and still cleans up', async () => {
+        state.manifest = {
+            kind: 'app-data',
+            folders: [{ settingName: 'documents-dir', entry: 'documents' }],
+        };
+        mocks.input.mockResolvedValue(false);
+        await handleImporting('/downloads/data.owadata.tar');
+        expect(mocks.input).toHaveBeenCalledOnce();
+        expect(mocks.import).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+        expect(mocks.cleanup).toHaveBeenCalledExactlyOnceWith('/tmp/import');
     });
 });

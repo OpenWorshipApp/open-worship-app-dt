@@ -38,6 +38,10 @@ vi.mock('../helper/AppEditableDocumentSourceAbs', () => {
                 ...extraData,
             };
         }
+        // The real one: a subclass instance counts, anything else does not.
+        static checkIsThisType(appDocument: any) {
+            return appDocument instanceof this;
+        }
     }
     return { default: AppEditableDocumentSourceAbs };
 });
@@ -137,13 +141,25 @@ vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
 
 vi.mock('./appDocumentTypeHelpers', () => ({}));
 
-vi.mock('../server/appProvider', () => ({ default: {} }));
+vi.mock('../server/appProvider', () => ({
+    default: { appDocumentEditorHomePage: 'app-document-editor.html' },
+}));
 
 vi.mock('../popup-widget/popupWidgetHelpers', () => ({
     showAppAlert: vi.fn(),
 }));
 
-import AppDocument from './AppDocument';
+import AppDocument, {
+    checkIsAppDocumentSelected,
+    openAppDocumentEditorExternal,
+} from './AppDocument';
+import { getSelectedVaryAppDocument } from './appDocumentHelpers';
+import {
+    openPopupWindow,
+    setParamFileFullName,
+    setParamIdNum,
+} from '../helper/domHelpers';
+import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 
 describe('AppDocument.changeSlidesFont', () => {
     const text = (id: number, extra: object = {}) => ({
@@ -504,5 +520,59 @@ describe('AppDocument.getJsonData', () => {
         expect(second).toBe(first);
         expect(mocks.showSimpleToastMock).toHaveBeenCalledTimes(1);
         expect(mocks.setJsonDataMock).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('AppDocument selection and its editor window', () => {
+    test('only an editable Open Worship document counts as selected', async () => {
+        const getSelected = vi.mocked(getSelectedVaryAppDocument);
+        // `LyricAppDocument` IS an AppDocument, but one that cannot be saved.
+        const lyricLike = new AppDocument('/lyrics/song.owl');
+        lyricLike.isEditable = false;
+        for (const selected of [null, { isEditable: true }, lyricLike]) {
+            getSelected.mockResolvedValueOnce(selected as any);
+            await expect(checkIsAppDocumentSelected()).resolves.toBe(false);
+        }
+        expect(showAppAlert).toHaveBeenCalledTimes(3);
+        expect(showAppAlert).toHaveBeenLastCalledWith(
+            'No slide selected',
+            'Please select an Open Worship slide first',
+        );
+
+        vi.mocked(showAppAlert).mockClear();
+        getSelected.mockResolvedValueOnce(
+            new AppDocument('/docs/sunday.ows') as any,
+        );
+        await expect(checkIsAppDocumentSelected()).resolves.toBe(true);
+        expect(showAppAlert).not.toHaveBeenCalled();
+    });
+
+    test('opens the editor in a window of its own on the file, at one slide when asked', async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(1234);
+        vi.mocked(setParamFileFullName).mockImplementation(
+            (pathname: string, fileFullName: string) =>
+                `${pathname}?file=${fileFullName}`,
+        );
+        vi.mocked(setParamIdNum).mockImplementation(
+            (pathname: string, idNum: number) => `${pathname}&id=${idNum}`,
+        );
+        const varyAppDocument = {
+            fileSource: { fullName: 'Sunday.ows' },
+        } as any;
+
+        await openAppDocumentEditorExternal(varyAppDocument);
+        expect(setParamIdNum).not.toHaveBeenCalled();
+        expect(openPopupWindow).toHaveBeenLastCalledWith(
+            'app-document-editor.html?file=Sunday.ows',
+            'app_document_editor_1234',
+            'app_document_editor',
+        );
+
+        await openAppDocumentEditorExternal(varyAppDocument, 7);
+        expect(openPopupWindow).toHaveBeenLastCalledWith(
+            'app-document-editor.html?file=Sunday.ows&id=7',
+            'app_document_editor_1234',
+            'app_document_editor',
+        );
     });
 });

@@ -49,5 +49,9 @@ let a tool's error text reach the user, (3) never be startable by a model —
 offers *Turn the screen on* itself) is a pseudo tool the server never
 registers, caught in `handleActing`. Typing the command IS the consent, so the
 offered-never-done rule for the congregation's screen does not apply to it.
+(4) be filed by PAGE in `COMMAND_PAGE_MAP` when it reads or acts on one
+page's state — the user's rule (2026-10-10, then 2026-11-05 for `/screen`:
+_chatbot commands should be avialable base on their page_): off its page it
+is not offered and is refused with **Go to the Presenter**.
 Related: [[click-reports-effect-not-action]], [[chatbot-answer-options]],
 [[chatbot-cdp-driver-gotchas]].

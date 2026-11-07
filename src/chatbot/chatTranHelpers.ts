@@ -22,9 +22,7 @@
 // are translated where they are DRAWN (`tranLabel`). Words nothing reads back
 // are translated when they are written.
 
-import enBibleKeyMap from '../lang/data/en/bibleKeyMap.json';
-import frBibleKeyMap from '../lang/data/fr/bibleKeyMap.json';
-import kmBibleKeyMap from '../lang/data/km/bibleKeyMap.json';
+import { getLangFile } from '../lang/langFileStore';
 
 let strictTranslate = (text: string): string => text;
 let lenientTranslate = (text: string): string => text;
@@ -33,24 +31,19 @@ type BibleKeyNameMapType = { [key: string]: string };
 
 // A Bible's short names AS THE BIBLE'S OWN LANGUAGE KNOWS THEM -- the JSON
 // each language pack's `getBibleKeyNameMap()` returns (`KJV` -> `King James
-// Version`, `ពគប` -> `ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤`). The import chooses the
-// Bible's language, which is often not the window's, so these are read here
-// by language code: loading a whole pack (dictionary, fonts, lookup data)
-// for one small map would cost a low-spec machine its memory. A language
-// with no entry -- Thai today -- has no list, and Step 1 falls back to the
-// file's own names.
-const BIBLE_KEY_NAME_MAP_BY_LANG_CODE: {
-    [langCode: string]: BibleKeyNameMapType;
-} = {
-    en: enBibleKeyMap,
-    fr: frBibleKeyMap,
-    km: kmBibleKeyMap,
-};
+// Version`, and each language's own short names for its own editions). The
+// import chooses the Bible's language, which is often not the window's, so
+// these are read here by language code: loading a whole pack (dictionary,
+// fonts, lookup data) for one small map would cost a low-spec machine its
+// memory. Every language this window has that carries the file -- English's
+// and each enabled language plugin's (`langFileStore.ts`), a few hundred
+// bytes each. A language with no entry -- Thai today -- has no list, and Step
+// 1 falls back to the file's own names.
 
 /** The names that language knows, or null when the app holds none for it. */
 function readBibleKeyNameMap(locale: string | null | undefined) {
     const langCode = locale?.split('-')[0]?.toLowerCase() ?? '';
-    return BIBLE_KEY_NAME_MAP_BY_LANG_CODE[langCode] ?? null;
+    return getLangFile<BibleKeyNameMapType>(langCode, 'bibleKeyMap.json');
 }
 
 /**
@@ -69,7 +62,7 @@ export function setChatTranslator(
 
 /**
  * Every short name ONE LANGUAGE knows a Bible by, in the order its data
- * lists them (`KJV`, `NKJV` …; `ពគប`, `គខប` …), for the language the Bible
+ * lists them (`KJV`, `NKJV` …, or another language's own), for the language the Bible
  * being imported is IN. These are the options Step 1 offers: the app's own
  * names for the translations those readers use, rather than the invented
  * ones a downloaded file carries. Empty when the app holds no names for that
@@ -87,7 +80,7 @@ export function getChatBibleKeyList(locale: string | null | undefined) {
 
 /**
  * What a short Bible key stands for in that language: `KJV` ->
- * `King James Version`, `ពគប` -> `ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤`. Null for a
+ * `King James Version`, and so on in each language's own words. Null for a
  * key the language names nowhere -- an imported file's own short name, which
  * means nothing outside that file.
  *
@@ -134,7 +127,7 @@ function normalizeBibleName(text: string) {
 /**
  * The key this language knows a Bible by, matched on the NAME its edition
  * carries: `Khmer 2012 (Khmer Christian Bible)` is this app's `KCB`, and
- * `Khmer 2023 (ព្រះគម្ពីរខ្មែរសាកល)` its `GKHB`. Null for an edition no
+ * `Khmer 2023 (<its own name in Khmer>)` its `GKHB`. Null for an edition no
  * language pack names -- most files of the free collection -- because a
  * guessed name is worse than none.
  *

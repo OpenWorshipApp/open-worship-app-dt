@@ -4,6 +4,9 @@ paths:
   - "tools/owa-devtools-mcp/lyricPageText*.mjs"
   - "tools/owa-devtools-mcp/songLookup*.mjs"
   - "src/chatbot/lyricDraftHelpers.ts"
+  - "tools/owa-devtools-mcp/agentLyricEdit*.mjs"
+  - "src/chatbot/lyricChatHelpers.ts"
+  - "src/lyric-list/lyricEditorChatbotSync.ts"
 ---
 
 # Agent songs: reading, drafting and checking Open Lyric
@@ -140,3 +143,49 @@ paths:
   as an error. A `Structure` that broke mid-way reports its play order marked
   PARTIAL and accuses nothing of being unplayed: past the broken token, unread
   is not the same as unplayed.
+- **A song is CHANGED part by part from words: `owa_lyric_edit`** (2026-11-06,
+  the user, with a song row's menu open: _add lyric context menu `Open In
+  Chatbot` … the chatbot should provide all operations related to lyric
+  modification_ -- add a section, translate it, change its words, its key;
+  then _should have options: replace or append the translation under the
+  line_ and _it should translate title and sub-title as well_). The model
+  writes WORDS; `tools/owa-devtools-mcp/openLyricEdit.mjs` (pure, no app)
+  splices them into the document and rebuilds `Structure` with
+  `toStructureText`, so the notation is never a model's
+  (`model-cannot-write-open-lyric`). Actions: `read` (Config, play order,
+  every part's lines, translations beside them), `set-lines` (replace a
+  part's words -- a translation in place), `add-translation` (one
+  tab-indented line under each sung line, replacing one already there),
+  `set-chords` (refused when a word changes), `add-section` (`Verse` takes
+  the next number; a `Note` is not played unless placed -- a played Note is
+  a slide on the projector), `remove-section` (a removal, in the
+  firewall's budget), `set-order` (`Chorus x2`), `set-config` and
+  `transpose` (its own transposer: root and `/bass` by the key gap, flats
+  for a flat key, the chord's own spelling in C and Am -- open-lyric's music
+  theory is browser-only). `set-lines` and `add-translation` take `config`
+  too, so a translation's Title and Subtitle go in the same call and undo.
+  **SURGICAL**: the document is split into fences and the text between, an
+  untouched split joins back byte for byte, and an edit replaces only its
+  lines -- comments, `Attachments`, a strumming pattern stay as the person
+  left them. Every result goes through `validateOpenLyric`; a change that
+  ADDS a problem is refused with the validator's line (problems the song
+  already had are said, not blocking), and the tests run every output
+  through open-lyric's own `checkMarkdown` too. The tool is three steps
+  (`agentLyricEdit.mjs`): the app reads the song's editing HEAD with a
+  hash (`owa-agent-file` `read`, `agentFileHelpers.ts`, the path cache
+  let go first), node makes the change, the app writes it back through
+  `update` with that hash -- refused when the song changed in between (the
+  Lyric Editor typing over it) -- backed up, unsaved. `file` is a Documents
+  name or, from an outside agent, a whole `.owl` path (absolute, no `..`,
+  a song's extension, there, readable as a song -- checked again at the
+  disk). **In the chatbot the model never handles a path**: offered only to
+  a `lyric` ask (`MODEL_ON_ASK_TOOL_MAP`; ~519 tokens to that ask alone,
+  the ordinary list unchanged at ~8 348), and `runMcpToolCall` turns the
+  NAME it gives into the attached file's path (`resolveLyricEditFile`),
+  refusing a path it wrote -- words planted in a song could ask for any
+  file. Translating has two ways and the PERSON picks: the card's buttons
+  carry the way (`readLyricTranslateMode` → a line on the ask), and a
+  typed request that does not say is asked first. Seen live 2026-11-06:
+  _Add another language under each line_ → _Spanish_ wrote a Spanish line
+  under all 18 sung lines with `Locales: en-US, es-ES`, chords and play
+  order untouched, and **Undo this change** put it back.

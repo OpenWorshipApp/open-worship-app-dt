@@ -113,3 +113,29 @@ describe('canvas item transitions', () => {
         );
     });
 });
+
+describe('a stale entrance', () => {
+    test('that settles after the exit took over leaves the exit running', async () => {
+        const { transitions, slide, content, nodes } = fixture(['move']);
+        transitions.enter(slide, content, 'fade', () => 500);
+        const [{ node, runs }] = nodes;
+        // The entrance ends on the very frame the next slide goes up: its
+        // settled callback runs only once the exit holds the item.
+        runs[0].resolve();
+        const exit = transitions.exit(slide);
+        await Promise.resolve();
+        await Promise.resolve();
+
+        // Only the exit cancelled it; the late callback did nothing.
+        expect(runs[0].cancel).toHaveBeenCalledOnce();
+        expect(runs[1].cancel).not.toHaveBeenCalled();
+        expect(node.style.visibility).toBe('');
+
+        runs[1].resolve();
+        await exit;
+        // Had the stale callback cleared the item, this would stay shown.
+        expect(node.style.visibility).toBe('hidden');
+        expect(runs[1].cancel).toHaveBeenCalledOnce();
+        expect(transitions.has(slide)).toBe(false);
+    });
+});

@@ -7,6 +7,11 @@ import { initConsoleLog } from './consoleLogHelpers';
 import { initLlmReportQueue } from './llmReportHelpers';
 import { isDev, sweepStalePrintPreviewFiles } from './electronHelpers';
 import {
+    resetAllSettingFiles,
+    resetBrowserSettingStorage,
+    takeFactoryResetRequest,
+} from './factoryResetHelpers';
+import {
     customScheme,
     initCustomSchemeHandler,
     schemePrivileges,
@@ -80,10 +85,21 @@ async function main() {
         app.quit();
         return;
     }
+    // Help -> Factory Reset, asked for by the process that just closed. After
+    // the lock, so a second launch never resets the app already running;
+    // before the AI master switch is read off `setting.json` just below.
+    const isFactoryReset = takeFactoryResetRequest();
+    if (isFactoryReset) {
+        resetAllSettingFiles();
+    }
     // Before `ready` (Chromium reads the switch there) but after the lock, so
     // the throwaway process a jump list task spawns never touches it.
     enableRemoteDebugging();
     await app.whenReady();
+    if (isFactoryReset) {
+        // Before the first window, which reads it.
+        await resetBrowserSettingStorage();
+    }
     // Fire-and-forget: clear print preview temp files left behind by a
     // previous run that was killed with a preview open.
     sweepStalePrintPreviewFiles();

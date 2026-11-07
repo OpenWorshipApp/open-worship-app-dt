@@ -6,6 +6,9 @@ import {
   toCompleteBibleBookList,
 } from './bibleBookNames.mjs';
 import { checkWebUrl } from './webUrlPolicy.mjs';
+// Which languages' book names must be written in their own script
+// (`ownScriptLanguages`, by Unicode's name for it) is data.
+import { readWorldLanguages } from './worldLanguages.mjs';
 
 export function toBibleBookIndexUrl(input) {
   const verdict = checkWebUrl(input);
@@ -39,13 +42,15 @@ function matchesLanguage(books, language, sourceLanguage) {
       /* No trustworthy language metadata; check the names below. */
     }
   }
-  const script = {
-    km: /\p{Script=Khmer}/u,
-    th: /\p{Script=Thai}/u,
-    lo: /\p{Script=Lao}/u,
-    my: /\p{Script=Myanmar}/u,
-  }[language];
-  return !script || books.every((name) => script.test(name));
+  const scriptName = readWorldLanguages().ownScriptLanguages?.[language];
+  if (!scriptName) return true;
+  let script;
+  try {
+    script = new RegExp(`\\p{Script=${scriptName}}`, 'u');
+  } catch {
+    return true;
+  }
+  return books.every((name) => script.test(name));
 }
 
 export async function findBibleBookNamesFromUrl(url, locale, { readPage }) {

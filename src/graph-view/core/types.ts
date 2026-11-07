@@ -221,8 +221,8 @@ export type GraphSourceType<TContext> = {
      *
      * Optional: a source whose verse strings are already readable omits it and
      * the raw string is shown. Asynchronous because a reference is named by a
-     * BIBLE, which is loaded on demand — turning `GEN 30:42` into
-     * `លោកុប្បត្តិ ៣០:៤២` is a read, not a lookup in a table the graph
+     * BIBLE, which is loaded on demand — turning `GEN 30:42` into the Bible's
+     * own book name and digits is a read, not a lookup in a table the graph
      * could hold. Resolved only when a verse list is actually opened.
      */
     resolveVerseTitle?: (

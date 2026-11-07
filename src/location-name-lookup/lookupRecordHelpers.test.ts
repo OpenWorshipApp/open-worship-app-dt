@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 // `tran` is the only thing this module pulls from the lang layer, and importing
 // the real one drags the whole locale/bible-bundle graph into a node test.
@@ -11,6 +11,7 @@ import {
     buildLocationSummary,
     buildNameSummary,
     checkHasDetailValue,
+    copyRecordToClipboard,
     escapeHtml,
     getDisplayLinks,
     getFormattedDetailValue,
@@ -333,5 +334,147 @@ describe('the clipboard summary', () => {
         );
 
         expect(summary.plainText).not.toContain('Modern identification');
+    });
+});
+
+describe('copying a summary to the clipboard', () => {
+    // A stand-in `ClipboardItem` that keeps what it was built from.
+    class FakeClipboardItem {
+        items: Record<string, Blob>;
+        constructor(items: Record<string, Blob>) {
+            this.items = items;
+        }
+    }
+
+    function stubClipboard(clipboard: Record<string, any>) {
+        vi.stubGlobal('navigator', { clipboard });
+    }
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    test('writes the HTML and the plain text together', async () => {
+        vi.stubGlobal('ClipboardItem', FakeClipboardItem);
+        const write = vi.fn(async (_itemList: FakeClipboardItem[]) => {});
+        const writeText = vi.fn(async (_text: string) => {});
+        stubClipboard({ write, writeText });
+
+        await copyRecordToClipboard('Moses', '<p><strong>Moses</strong></p>');
+
+        expect(write).toHaveBeenCalledTimes(1);
+        const [item] = write.mock.calls[0][0];
+        expect(Object.keys(item.items)).toEqual(['text/html', 'text/plain']);
+        expect(item.items['text/html'].type).toBe('text/html');
+        expect(await item.items['text/html'].text()).toBe(
+            '<p><strong>Moses</strong></p>',
+        );
+        expect(item.items['text/plain'].type).toBe('text/plain');
+        expect(await item.items['text/plain'].text()).toBe('Moses');
+        expect(writeText).not.toHaveBeenCalled();
+    });
+
+    test('falls back to plain text when the two-format write is refused', async () => {
+        vi.stubGlobal('ClipboardItem', FakeClipboardItem);
+        const write = vi.fn(async () => {
+            throw new Error('NotAllowedError');
+        });
+        const writeText = vi.fn(async (_text: string) => {});
+        stubClipboard({ write, writeText });
+
+        await copyRecordToClipboard('Moses', '<p>Moses</p>');
+
+        expect(write).toHaveBeenCalledTimes(1);
+        expect(writeText).toHaveBeenCalledWith('Moses');
+    });
+
+    test('writes plain text where rich clipboard writes do not exist', async () => {
+        // No `ClipboardItem` at all, as in this node runner.
+        vi.stubGlobal('ClipboardItem', undefined);
+        const write = vi.fn(async () => {});
+        const writeText = vi.fn(async (_text: string) => {});
+        stubClipboard({ write, writeText });
+        await copyRecordToClipboard('Egypt', '<p>Egypt</p>');
+        expect(write).not.toHaveBeenCalled();
+        expect(writeText).toHaveBeenCalledWith('Egypt');
+
+        // `ClipboardItem` exists but the clipboard cannot `write` it.
+        vi.stubGlobal('ClipboardItem', FakeClipboardItem);
+        const plainOnlyWriteText = vi.fn(async (_text: string) => {});
+        stubClipboard({ writeText: plainOnlyWriteText });
+        await copyRecordToClipboard('Goshen', '<p>Goshen</p>');
+        expect(plainOnlyWriteText).toHaveBeenCalledWith('Goshen');
+    });
+});
+
+describe('every row a summary can carry', () => {
+    const egypt = genLocationRecord({ id: 'l-1', name: 'Egypt' });
+    const goshen = genLocationRecord({ id: 'l-2', name: 'Goshen' });
+
+    test('a name summary lists its other name, years, places and links', () => {
+        const managers = genManagers({}, { 'l-1': egypt, 'l-2': goshen });
+        const summary = buildNameSummary(
+            managers,
+            genNameRecord({
+                oldName: 'Hosea',
+                years: [{ type: 'born', start: 1, end: 2 }],
+                // An id, a legacy plain name, and a name nobody bears.
+                locations: ['l-1', 'Goshen', 'Nowhere'],
+                links: [{ type: 'website', url: 'https://example.org/m' }],
+                wikipedia: 'https://en.wikipedia.org/wiki/Moses',
+            }),
+            [],
+        );
+
+        expect(summary.plainText).toBe(
+            'Moses\n\nLeader of Israel\n\nPerson, Male, 120\n\n' +
+                'Also called: Hosea\n' +
+                'Years: born: 1 – 2\n' +
+                'Locations: Egypt, Goshen, Nowhere\n' +
+                'Links: Website: https://example.org/m, ' +
+                'Wikipedia: https://en.wikipedia.org/wiki/Moses',
+        );
+        expect(summary.html).toBe(
+            '<p><strong>Moses</strong></p>' +
+                '<p><em>Leader of Israel</em></p>' +
+                '<p>Person, Male, 120</p>' +
+                '<p><strong>Also called:</strong> Hosea<br />' +
+                '<strong>Years:</strong> born: 1 – 2<br />' +
+                '<strong>Locations:</strong> Egypt, Goshen, Nowhere<br />' +
+                '<strong>Links:</strong> Website: https://example.org/m, ' +
+                'Wikipedia: https://en.wikipedia.org/wiki/Moses</p>',
+        );
+    });
+
+    test('a location summary lists every row, escaped in the HTML', () => {
+        const { locationsLookupManager } = genManagers(
+            {},
+            { 'l-1': egypt, 'l-2': goshen },
+        );
+        const summary = buildLocationSummary(
+            locationsLookupManager,
+            genLocationRecord({
+                oldName: 'Mizraim',
+                modernIdentification: 'Cairo & Giza',
+                relatedLocations: ['l-2', 'Pithom'],
+                coordinates: { latitude: 30.1, longitude: 31.2 },
+                wikipedia: 'https://en.wikipedia.org/wiki/Egypt',
+            }),
+            ['Genesis 12:10', 'Exodus 1:1'],
+        );
+
+        expect(summary.plainText).toBe(
+            'Egypt\n\nA land\n\nRegion\n\n' +
+                'Also called: Mizraim\n' +
+                'Modern identification: Cairo & Giza\n' +
+                'Related locations: Goshen, Pithom\n' +
+                'Verses: Genesis 12:10, Exodus 1:1\n' +
+                'Coordinates: 30.1, 31.2\n' +
+                'Links: Wikipedia: https://en.wikipedia.org/wiki/Egypt',
+        );
+        expect(summary.html).toContain(
+            '<strong>Modern identification:</strong> Cairo &amp; Giza<br />',
+        );
+        expect(summary.html).not.toContain('Cairo & Giza');
     });
 });

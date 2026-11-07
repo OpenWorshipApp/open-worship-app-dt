@@ -63,17 +63,21 @@ function calcBoxPropsXSize(options: {
         return { newW: initW, newH: initH, newX: initX, newY: initY };
     }
 
+    // A clamped edge moved only as far as the minimum allows, measured from
+    // the width the drag started at: from the clamped one it was always 0,
+    // and the box jumped back to its first center (2026-11-03).
+    const startW = initW;
     if (left) {
         initW -= rotatedWDiff;
         if (initW < minWidth) {
             initW = minWidth;
-            rotatedWDiff = initW - minWidth;
+            rotatedWDiff = startW - minWidth;
         }
     } else {
         initW = initW + rotatedWDiff;
         if (initW < minWidth) {
             initW = minWidth;
-            rotatedWDiff = minWidth - initW;
+            rotatedWDiff = minWidth - startW;
         }
     }
     initX += 0.5 * rotatedWDiff * cosFraction;
@@ -111,17 +115,19 @@ function calcBoxPropsYSize(options: {
         return { newX: initX, newY: initY, newW: initW, newH: initH };
     }
 
+    // Measured from the starting height, as in calcBoxPropsXSize.
+    const startH = initH;
     if (top) {
         initH -= rotatedHDiff;
         if (initH < minHeight) {
             initH = minHeight;
-            rotatedHDiff = initH - minHeight;
+            rotatedHDiff = startH - minHeight;
         }
     } else {
         initH = initH + rotatedHDiff;
         if (initH < minHeight) {
             initH = minHeight;
-            rotatedHDiff = minHeight - initH;
+            rotatedHDiff = minHeight - startH;
         }
     }
     initX -= 0.5 * rotatedHDiff * sinFraction;
@@ -360,11 +366,43 @@ export default class BoxEditorController {
         );
         this.listened.push(listenerEvent);
     }
+    // Ends the drag in progress, set while its window listeners are on. A
+    // release in the middle of a drag (the box deselected or gone) ends it
+    // there: left on, they kept moving the boxes and the badge, and once a
+    // box was attached again the next pointerup committed the old drag
+    // through its callback (2026-11-03).
+    private stopDragging: (() => void) | null = null;
+    private listenToDrag(
+        onMove: (event: PointerEvent) => void,
+        onEnd: (event: PointerEvent) => void,
+    ) {
+        this.stopDragging?.();
+        const stop = () => {
+            globalThis.removeEventListener('pointermove', onMove);
+            globalThis.removeEventListener('pointerup', handleEnd);
+            globalThis.removeEventListener('pointercancel', handleEnd);
+            if (this.stopDragging === stop) {
+                this.stopDragging = null;
+            }
+        };
+        const handleEnd = (event: PointerEvent) => {
+            stop();
+            onEnd(event);
+        };
+        this.stopDragging = stop;
+        globalThis.addEventListener('pointermove', onMove);
+        globalThis.addEventListener('pointerup', handleEnd);
+        globalThis.addEventListener('pointercancel', handleEnd);
+    }
     release() {
         this.onDone = () => {};
         while (this.listened.length) {
             const obj = this.listened.shift();
             obj?.target.removeEventListener(obj.eventName, obj.listener as any);
+        }
+        if (this.stopDragging !== null) {
+            this.stopDragging();
+            this.emitSnapLines([], []);
         }
         this.hideDragInfo();
         this.editor = null;
@@ -606,19 +644,7 @@ export default class BoxEditorController {
             this.showDragInfo(event, infoLines.join('\n'));
         };
         const eventMouseUpHandler = (event: PointerEvent) => {
-            if (this.editor === null || this.target === null) {
-                return;
-            }
             this.blockMouseEvent(event);
-            globalThis.removeEventListener(
-                'pointermove',
-                eventMouseMoveHandler,
-            );
-            globalThis.removeEventListener('pointerup', eventMouseUpHandler);
-            globalThis.removeEventListener(
-                'pointercancel',
-                eventMouseUpHandler,
-            );
             this.emitSnapLines([], []);
             this.hideDragInfo();
             if (isMoving) {
@@ -627,9 +653,7 @@ export default class BoxEditorController {
                 this.onClick(event);
             }
         };
-        globalThis.addEventListener('pointermove', eventMouseMoveHandler);
-        globalThis.addEventListener('pointerup', eventMouseUpHandler);
-        globalThis.addEventListener('pointercancel', eventMouseUpHandler);
+        this.listenToDrag(eventMouseMoveHandler, eventMouseUpHandler);
     }
     rotationFromStyle(style: CSSStyleDeclaration) {
         const transform = style.getPropertyValue('transform');
@@ -738,15 +762,10 @@ export default class BoxEditorController {
         };
         const eventEndHandler = (event: PointerEvent) => {
             this.blockMouseEvent(event);
-            globalThis.removeEventListener('pointermove', eventMoveHandler);
-            globalThis.removeEventListener('pointerup', eventEndHandler);
-            globalThis.removeEventListener('pointercancel', eventEndHandler);
             this.hideDragInfo();
             this.onDone([]);
         };
-        globalThis.addEventListener('pointermove', eventMoveHandler);
-        globalThis.addEventListener('pointerup', eventEndHandler);
-        globalThis.addEventListener('pointercancel', eventEndHandler);
+        this.listenToDrag(eventMoveHandler, eventEndHandler);
     }
     resizeHandler(event: PointerEvent, options: ResizeType) {
         if (this.editor === null || this.target === null) {
@@ -817,19 +836,11 @@ export default class BoxEditorController {
 
         const eventMouseUpHandler = (event: PointerEvent) => {
             this.blockMouseEvent(event);
-            globalThis.removeEventListener('pointermove', mouseMoveHandler);
-            globalThis.removeEventListener('pointerup', eventMouseUpHandler);
-            globalThis.removeEventListener(
-                'pointercancel',
-                eventMouseUpHandler,
-            );
             this.emitSnapLines([], []);
             this.hideDragInfo();
             this.onDone([]);
         };
-        globalThis.addEventListener('pointermove', mouseMoveHandler);
-        globalThis.addEventListener('pointerup', eventMouseUpHandler);
-        globalThis.addEventListener('pointercancel', eventMouseUpHandler);
+        this.listenToDrag(mouseMoveHandler, eventMouseUpHandler);
     }
     private snapAxis(value: number, targets: number[], threshold: number) {
         let best: { line: number; diff: number } | null = null;

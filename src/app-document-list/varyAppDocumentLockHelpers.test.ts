@@ -2,7 +2,7 @@
 // jsdom because the module resolves the pin button through `document`, and
 // `appProvider` touches `document` at module scope.
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
     appProviderMock,
@@ -200,5 +200,101 @@ describe('varyAppDocumentLockHelpers', () => {
         // `notifyElementHighlight` retries a null getter for ~3s, so a window
         // without the pin must never reach it.
         expect(notifyElementHighlightMock).not.toHaveBeenCalled();
+    });
+});
+
+describe('useIsVaryAppDocumentPinned', () => {
+    type HelpersType = Awaited<ReturnType<typeof importFreshModule>>;
+
+    const unmounts: Array<() => void> = [];
+
+    beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        vi.clearAllMocks();
+        getSettingMock.mockReturnValue(null);
+        appProviderMock.isPagePresenter = true;
+        document.body.innerHTML = '';
+    });
+
+    afterEach(() => {
+        while (unmounts.length > 0) {
+            unmounts.pop()?.();
+        }
+        delete (globalThis as any).IS_REACT_ACT_ENVIRONMENT;
+    });
+
+    // Imported after `importFreshModule`, so the probe and the store it reads
+    // share one React whatever the registry reset reaches.
+    async function mountPinProbe(helpers: HelpersType) {
+        const React = await import('react');
+        const { createRoot } = await import('react-dom/client');
+        const renders: boolean[] = [];
+        function PinProbeComp() {
+            const isPinned = helpers.useIsVaryAppDocumentPinned();
+            renders.push(isPinned);
+            return React.createElement(
+                'span',
+                null,
+                isPinned ? 'pinned' : 'free',
+            );
+        }
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        const root = createRoot(container);
+        React.act(() => {
+            root.render(React.createElement(PinProbeComp));
+        });
+        let isMounted = true;
+        const unmount = () => {
+            if (!isMounted) {
+                return;
+            }
+            isMounted = false;
+            React.act(() => {
+                root.unmount();
+            });
+            container.remove();
+        };
+        unmounts.push(unmount);
+        return { act: React.act, container, renders, unmount };
+    }
+
+    test('a pin button opens on the stored state and redraws on every change', async () => {
+        getSettingMock.mockReturnValue('true');
+        const helpers = await importFreshModule();
+        const probe = await mountPinProbe(helpers);
+        expect(probe.container.textContent).toBe('pinned');
+
+        probe.act(() => {
+            helpers.toggleIsVaryAppDocumentPinned();
+        });
+        expect(probe.container.textContent).toBe('free');
+        probe.act(() => {
+            helpers.setIsVaryAppDocumentPinned(true);
+        });
+        expect(probe.container.textContent).toBe('pinned');
+        // The delete event's unpin reaches the button too, or it would go on
+        // showing a pin that no longer refuses anything.
+        probe.act(() => {
+            helpers.forceUnpinVaryAppDocument();
+        });
+        expect(probe.container.textContent).toBe('free');
+        expect(probe.renders).toEqual([true, false, true, false]);
+        // Read once for the button's whole life, not once per render.
+        expect(getSettingMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('a pin button left mounted still follows after another one unmounts', async () => {
+        const helpers = await importFreshModule();
+        const leaving = await mountPinProbe(helpers);
+        const staying = await mountPinProbe(helpers);
+        leaving.unmount();
+
+        staying.act(() => {
+            helpers.setIsVaryAppDocumentPinned(true);
+        });
+        expect(staying.container.textContent).toBe('pinned');
+        expect(staying.renders).toEqual([false, true]);
+        expect(leaving.renders).toEqual([false]);
     });
 });

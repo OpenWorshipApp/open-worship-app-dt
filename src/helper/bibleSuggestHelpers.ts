@@ -12,6 +12,43 @@
  * Pure. Zero-width spaces (Khmer keyboards) are taken out first.
  */
 
+import { getLangFilesVersion, listLangFiles } from '../lang/langFileStore';
+
+// The signs a language writes between a chapter and its verse besides `:`
+// (`data/<code>/bibleReference.json`): a language's own keyboard may give it
+// a colon of its script. A few bytes for every language this window has
+// (`langFileStore.ts`: English's and each enabled language plugin's), so the
+// draft is read the same whichever window reads it; worked out again only
+// when that set of languages changes.
+let chapterVerseSeparatorCache: { version: number; pattern: RegExp } | null =
+    null;
+function getChapterVerseSeparatorPattern() {
+    const version = getLangFilesVersion();
+    if (chapterVerseSeparatorCache?.version === version) {
+        return chapterVerseSeparatorCache.pattern;
+    }
+    const separatorList = [
+        ':',
+        ...listLangFiles<{ chapterVerseSeparators?: string[] }>(
+            'bibleReference.json',
+        ).flatMap(({ file }) => {
+            return (file.chapterVerseSeparators ?? []).filter((sign) => {
+                return typeof sign === 'string' && sign.length > 0;
+            });
+        }),
+    ];
+    const pattern = new RegExp(
+        `[${[...new Set(separatorList)]
+            .map((sign) => {
+                return sign.replace(/[\\\]^-]/g, '\\$&');
+            })
+            .join('')}]`,
+        'u',
+    );
+    chapterVerseSeparatorCache = { version, pattern };
+    return pattern;
+}
+
 export type BibleBookOptionType = {
     bookKey: string;
     /** The book's name in the Bible being read. */
@@ -38,7 +75,10 @@ export function toReferenceDraft(text: string) {
     return text.replace(ZERO_WIDTH_PATTERN, '').replace(/\s+/g, ' ').trim();
 }
 
-/** `John 3:16`, `យ៉ូហាន ៣:១៦`, `1 John 4` -- a reference being typed. */
+/**
+ * `John 3:16`, the same in another language's name and digits, `1 John 4` --
+ * a reference being typed.
+ */
 export function readBibleReferencePrefix(
     text: string,
 ): BibleReferencePrefixType {
@@ -62,7 +102,7 @@ export function readBibleReferencePrefix(
     }
     const bookPart = plain.slice(0, digitAt).trim();
     const rest = plain.slice(digitAt);
-    const colonAt = rest.search(/[:៖]/u);
+    const colonAt = rest.search(getChapterVerseSeparatorPattern());
     if (colonAt === -1) {
         return {
             bookPart,

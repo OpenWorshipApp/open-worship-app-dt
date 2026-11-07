@@ -91,7 +91,7 @@ A window is named as its page file, its key or its label: `reader.html`,
 | `tools/owa-devtools-mcp/appMenuDemos.mjs` | File / Edit / Tools / Window / Help menu lessons, shared by both pages |
 | `tools/owa-devtools-mcp/pageDemos.mjs` | ONE step per lesson for Settings, the editors, Bible Note, Local Web Share |
 | `src/toast/dailyTipHelpers.ts` · `DailyTipComp.tsx` | The All tips list, its categories, its search (title + detail + category), Show it |
-| `src/lang/data/km/index.ts` · `fr/index.ts` | Every tip string's translation |
+| `src/lang/data/online/<code>/dictionary.json` | Every tip string's translation, in every language |
 
 The same catalogs feed `owa_guide_start { demoId }` and the chatbot's practice
 shelf, so a tip is also an answer the 🤖 can run. **Before changing any of
@@ -223,7 +223,13 @@ For every new or changed tip, in the running dev window:
    Settings**, which reloads every window), open All tips, search the
    control's KHMER words, Show it, one **Do it**. A missing key throws here and
    blanks the card; a find that resolves in English and not in Khmer is a
-   `translateFind` gap. Restore the recorded language the same way.
+   `translateFind` gap. Restore the recorded language the same way. Pack
+   and update Khmer FIRST when a tip string was added or changed
+   (`npm run lang:pack -- --pack=km`, then Settings → **Languages** →
+   **Refresh** → **Update to**, offered only once its `meta.json` version
+   was raised past the installed one): the window reads the installed plugin, so
+   a string just written into `online/km/` is not there yet and throws as
+   missing.
 
 `--steps=<demoId>` prints a tip as an `owa_guide_start` payload for a quick
 check without the menu; it is not the product path and does not replace 1–3.

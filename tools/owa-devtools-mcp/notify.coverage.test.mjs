@@ -25,19 +25,19 @@ const BUNDLE = {
   dictionaries: {
     en: { 'clicked something': 'clicked something' },
     km: {
-      'clicked something': 'បានចុចអ្វីមួយ',
-      'pressed a key': 'បានចុចគ្រាប់ចុច',
-      assistant: 'ជំនួយការ',
+      'clicked something': '«km» clicked something',
+      'pressed a key': '«km» pressed a key',
+      assistant: '«km» assistant',
       'not a banner word': 'x',
     },
-    fr: { 'clicked something': 'a cliqué quelque chose' },
+    fr: { 'clicked something': '«fr» clicked something' },
   },
 };
 
-const KHMER_CLICK_WORDS = {
+const CLICK_WORDS = {
   en: { who: 'Assistant', what: 'clicked something' },
-  km: { who: 'ជំនួយការ', what: 'បានចុចអ្វីមួយ' },
-  fr: { who: 'Assistant', what: 'a cliqué quelque chose' },
+  km: { who: '«km» assistant', what: '«km» clicked something' },
+  fr: { who: 'Assistant', what: '«fr» clicked something' },
 };
 
 // Five minutes between tests (none moves its own clock that far): the
@@ -68,7 +68,7 @@ describe('notifyToolCall', () => {
   it('raises the banner in every language the dictionary has, in the window acted on', () => {
     notifyToolCall('owa_click', { find: 'Clear', page: 'reader.html' });
     expect(mocks.evaluateInApp).toHaveBeenCalledWith(
-      genNoticeExpression(KHMER_CLICK_WORDS),
+      genNoticeExpression(CLICK_WORDS),
       { match: 'reader.html' },
     );
   });
@@ -95,21 +95,6 @@ describe('notifyToolCall', () => {
     expect(mocks.evaluateInApp.mock.calls[2][1]).toEqual({
       match: 'reader.html',
     });
-  });
-
-  it('reads the dictionary once a minute, keeping only the banner words', () => {
-    notifyToolCall('owa_click', {});
-    notifyToolCall('owa_press_key', { keys: 'F5' });
-    expect(mocks.loadTranBundle).toHaveBeenCalledTimes(1);
-    expect(mocks.evaluateInApp.mock.calls[1][0]).toBe(
-      genNoticeExpression({
-        en: { who: 'Assistant', what: 'pressed F5' },
-        km: { who: 'ជំនួយការ', what: 'បានចុចគ្រាប់ចុច · F5' },
-      }),
-    );
-    vi.setSystemTime(clock + 61 * 1000);
-    notifyToolCall('owa_click', {});
-    expect(mocks.loadTranBundle).toHaveBeenCalledTimes(2);
   });
 
   it('falls back to English when the dictionary cannot be read', () => {

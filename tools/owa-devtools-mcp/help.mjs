@@ -33,7 +33,13 @@ import {
 import { flattenQuestions } from './questionMatch.mjs';
 import { loadQuestionOverlays, loadQuestionPages } from './questions.mjs';
 import { loadTranBundle, resolveTranTemplates } from './tran.mjs';
-import { listManualTranslations } from './manualI18n.mjs';
+import { findLangPack, readLangPackJson } from './langPacks.mjs';
+import {
+  genManualIndexEntries,
+  listEnglishManualPages,
+  MANUAL_DIR_NAME,
+  MANUAL_INDEX_FILE_NAME,
+} from './manualI18n.mjs';
 import {
   findQuestionLanguage,
   toEnglishSearchWords,
@@ -195,53 +201,67 @@ export function listKnowledgeEntries() {
   }
 }
 
+// Which English page each translation must have been made from: the hash the
+// bundle's index carries for every manual page (`build-knowledge.mjs`), or,
+// in a checkout with no build, the hash of the page on disk.
+function readEnglishPageHashMap(englishEntries) {
+  const hashMap = new Map();
+  for (const entry of englishEntries) {
+    if (entry.kind === 'manual' && typeof entry.hash === 'string') {
+      hashMap.set(entry.id, entry.hash);
+    }
+  }
+  if (hashMap.size === 0) {
+    for (const [id, page] of listEnglishManualPages()) {
+      hashMap.set(id, page.hash);
+    }
+  }
+  return hashMap;
+}
+
 /**
  * The manual's pages in one of the app's other languages that are still
- * translations of the English as it stands (`manualI18n.mjs`), from the
- * bundle's `index.<code>.json` -- read only when a window in that language
- * asks, per call, like the English index -- or straight from
- * `docs/manual-i18n/` in a checkout with no build.
+ * translations of the English as it stands (`manualI18n.mjs`), out of that
+ * language's own folder (`langPacks.mjs`): an installed plugin's
+ * `manual/index.json`, or a checkout's source pages. A language that is not
+ * installed has none -- the bundle is English alone. Read per call, only when
+ * a window in that language asks, like the English index; staleness is judged
+ * here, against the English manual of THIS app, because an installed language
+ * outlives the release it was built beside.
  */
-export function listTranslatedEntries(langCode) {
-  const code = String(langCode ?? '').split('-')[0];
-  if (code === '' || code === 'en') {
+export function listTranslatedEntries(
+  langCode,
+  englishEntries = listKnowledgeEntries(),
+) {
+  const pack = findLangPack(langCode);
+  if (pack === null) {
     return [];
   }
-  const knowledgeDirPath = findKnowledgeDirPath();
-  if (knowledgeDirPath !== null) {
-    const indexPath = path.join(knowledgeDirPath, `index.${code}.json`);
-    if (!existsSync(indexPath)) {
-      return [];
-    }
-    try {
-      const index = JSON.parse(readFileSync(indexPath, 'utf-8'));
-      return (index.entries ?? [])
-        .filter((entry) => {
-          return entry.isStale !== true;
-        })
-        .map((entry) => {
-          return {
-            ...entry,
-            absolutePath: path.join(knowledgeDirPath, entry.file),
-          };
-        });
-    } catch (_error) {
-      return [];
-    }
+  const manualDirPath = path.join(pack.dirPath, MANUAL_DIR_NAME);
+  const pageEntries = pack.isSource
+    ? genManualIndexEntries(pack.dirPath)
+    : (readLangPackJson(
+        pack,
+        path.join(MANUAL_DIR_NAME, MANUAL_INDEX_FILE_NAME),
+      )?.entries ?? []);
+  if (pageEntries.length === 0) {
+    return [];
   }
-  return listManualTranslations(code)
-    .filter((page) => {
-      return !page.isStale;
+  const hashMap = readEnglishPageHashMap(englishEntries);
+  return pageEntries
+    .filter((entry) => {
+      return (
+        typeof entry?.file === 'string' &&
+        entry.translatedFrom != null &&
+        hashMap.get(entry.id) === entry.translatedFrom
+      );
     })
-    .map((page) => {
+    .map((entry) => {
       return {
-        id: page.id,
-        lang: code,
-        title: page.title,
-        section: page.section,
+        ...entry,
+        lang: pack.code,
         kind: 'manual',
-        absolutePath: page.absolutePath,
-        searchText: toManualPageBody(page.content),
+        absolutePath: path.join(manualDirPath, entry.file),
       };
     });
 }
@@ -403,29 +423,41 @@ function scoreCounts(entry, counts, inverseFrequencies) {
 }
 
 // The help window is English-only, and the manual writes app labels with their
-// Khmer twin ("Bible Lookup / ស្វែងរកព្រះគម្ពីរ"). Passing that on gives a
-// reader who cannot read Khmer a label they cannot match to their screen.
+// twin in another script (a Khmer one after "Bible Lookup / "). Passing that on
+// gives a reader who cannot read it a label they cannot match to their screen.
+// Read by SCRIPT, not by language: a character of any script but Latin (and
+// the Common and Inherited signs every script shares) is the twin's.
+const OTHER_SCRIPT_SOURCE =
+  '[^\\p{Script=Latin}\\p{Script=Common}\\p{Script=Inherited}]';
+const OTHER_SCRIPT_RUN_SOURCE = `${OTHER_SCRIPT_SOURCE}(?:${OTHER_SCRIPT_SOURCE}|[\\u200b \\t])*`;
+const OTHER_SCRIPT_BRACKET_PATTERN = new RegExp(
+  `\\s*\\([^()]*${OTHER_SCRIPT_SOURCE}[^()]*\\)`,
+  'gu',
+);
+const OTHER_SCRIPT_TWIN_END_PATTERN = new RegExp(
+  `\\s*[/\\u2013\\u2014-]\\s*${OTHER_SCRIPT_RUN_SOURCE}(?=[),.;:]|$)`,
+  'gmu',
+);
+const OTHER_SCRIPT_TWIN_PATTERN = new RegExp(
+  `\\s*[/\\u2013\\u2014-]\\s*${OTHER_SCRIPT_RUN_SOURCE}`,
+  'gu',
+);
+const OTHER_SCRIPT_RUN_PATTERN = new RegExp(OTHER_SCRIPT_RUN_SOURCE, 'gu');
 export function toEnglishOnly(text) {
   return (
     text
-      // Whatever introduced the twin goes with it -- "(\u17A2\u17B6\u1793)",
-      // "Bible Lookup / \u179F\u17D2\u179C\u17C2\u1784\u179A\u1780", "Clear Bible \u2014 \u179F\u1798\u17D2\u17A2\u17B6\u178F" -- or the
-      // leftover punctuation reads as a typo: "Bible Lookup / in the
-      // header", "(Clear Bible \u2014)".
-      // Any bracket holding Khmer at all, not only one holding
-      // NOTHING else: "(ទាញយកពី URL)" is the twin of
-      // "Download From URL", and stripping just its Khmer left a
-      // card reading "...choose Download From URL (URL)".
-      .replace(/\s*\([^()]*[\u1780-\u17FF][^()]*\)/gu, '')
-      .replace(
-        /\s*[/\u2013\u2014-]\s*[\u1780-\u17FF][\u1780-\u17FF\u200b \t]*(?=[),.;:]|$)/gmu,
-        '',
-      )
-      .replace(
-        /\s*[/\u2013\u2014-]\s*[\u1780-\u17FF][\u1780-\u17FF\u200b \t]*/gu,
-        ' ',
-      )
-      .replace(/[\u1780-\u17FF\u19E0-\u19FF][\u1780-\u17FF\u200b \t]*/gu, '')
+      // Whatever introduced the twin goes with it -- a bracket, a slash
+      // after "Bible Lookup", a dash after "Clear Bible" -- or the leftover
+      // punctuation reads as a typo: "Bible Lookup / in the header",
+      // "(Clear Bible —)".
+      // Any bracket holding another script at all, not only one holding
+      // NOTHING else: a bracket of Khmer words and "URL" is the twin of
+      // "Download From URL", and stripping just its Khmer left a card
+      // reading "...choose Download From URL (URL)".
+      .replace(OTHER_SCRIPT_BRACKET_PATTERN, '')
+      .replace(OTHER_SCRIPT_TWIN_END_PATTERN, '')
+      .replace(OTHER_SCRIPT_TWIN_PATTERN, ' ')
+      .replace(OTHER_SCRIPT_RUN_PATTERN, '')
       .replace(/\(\s*\)/g, '')
       // A label that was Khmer and nothing else leaves its markers behind --
       // an EMPTY pair, standing alone. Not the closing and opening markers of
@@ -583,7 +615,8 @@ const STOP_WORDS = new Set([
 
 function toTerms(query) {
   // Marks are part of a word: Khmer vowel signs and its subscript mark are
-  // `\p{M}`, and splitting on them cut `ស្វែងរក` into pieces no page holds.
+  // `\p{M}`, and splitting on them cut the word for "search" into pieces
+  // no page holds.
   const terms = query
     .toLowerCase()
     .split(/[^\p{L}\p{M}\p{N}]+/u)
@@ -701,7 +734,7 @@ export function findKnownQuestionRow(query) {
     return row;
   }
   // A chip pressed in another language is that row in its words
-  // (`questions/i18n/`), read only for a question that is not in Latin
+  // (`src/lang/data/online/<code>/questions.json`), read only for a question that is not in Latin
   // letters -- the chip a Khmer window shows.
   if (!/(?=\p{L})\P{Script=Latin}/u.test(String(query ?? ''))) {
     return null;
@@ -744,7 +777,8 @@ export function searchHelp(
   if (terms.length === 0) {
     return [];
   }
-  const counted = listKnowledgeEntries()
+  const englishEntries = listKnowledgeEntries();
+  const counted = englishEntries
     .filter((entry) => {
       return kind === 'manual' || kind === 'internal'
         ? entry.kind === kind
@@ -815,7 +849,10 @@ export function searchHelp(
   // (the offline guide's): the index of that language is read then and only
   // then.
   const translatedMap = new Map(
-    (kind === 'manual' ? listTranslatedEntries(langCode) : []).map((one) => {
+    (kind === 'manual'
+      ? listTranslatedEntries(langCode, englishEntries)
+      : []
+    ).map((one) => {
       return [one.id, one];
     }),
   );
@@ -945,12 +982,18 @@ export function readHelpPage(
 ) {
   let wantedId = id.trim().toLowerCase();
   // `W-06@km`: the page in that language when its translation is current,
-  // and the English page (its labels in that language) when it is not.
+  // and the English page when it is not. Its buttons are named as the
+  // WINDOW shows them when the caller says which language that is
+  // (2026-11-04): a Khmer question in an English window rode with the Khmer
+  // page's own Khmer button names, and was answered with a slider called
+  // what no control on that screen is called -- a Spanish one, which has no
+  // page of its own, said Font Size. With no window named, the page's
+  // language names them.
   const languageMatch = LANGUAGE_PAGE_ID_PATTERN.exec(wantedId);
   let translatedEntry;
   if (languageMatch !== null) {
     wantedId = languageMatch[1];
-    langCode = languageMatch[2];
+    langCode = langCode ?? languageMatch[2];
     translatedEntry = listTranslatedEntries(languageMatch[2]).find((item) => {
       return item.id.toLowerCase() === wantedId;
     });

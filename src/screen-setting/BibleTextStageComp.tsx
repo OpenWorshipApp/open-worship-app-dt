@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
+import { genBibleTextHighlightBackground } from '../_screen/bibleTextStyleHelpers';
 import type { BibleBackdropType } from './bibleTextLookHelpers';
 
 function BackdropButtonComp({
@@ -44,20 +45,32 @@ function BackdropButtonComp({
 export default function BibleTextStageComp({
     backdrop,
     sampleStyle,
+    highlightColor,
     onBackdropChange,
 }: Readonly<{
     backdrop: BibleBackdropType;
     sampleStyle: CSSProperties;
+    // The selection band of this side, drawn under the sample as it is under
+    // a selected verse on a screen.
+    highlightColor: string;
     onBackdropChange: (backdrop: BibleBackdropType) => void;
 }>) {
     return (
         <div className={`bible-style-stage bible-style-on-${backdrop}`}>
             <p className="bible-style-verse" style={sampleStyle}>
-                <span className="bible-style-verse-number">16</span>
-                {tran(
-                    'For God so loved the world, ' +
-                        'that he gave his only begotten Son',
-                )}
+                <span
+                    className="bible-style-verse-highlight"
+                    style={{
+                        background:
+                            genBibleTextHighlightBackground(highlightColor),
+                    }}
+                >
+                    <span className="bible-style-verse-number">16</span>
+                    {tran(
+                        'For God so loved the world, ' +
+                            'that he gave his only begotten Son',
+                    )}
+                </span>
             </p>
             <div
                 className="bible-style-backdrop"

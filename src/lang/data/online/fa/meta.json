@@ -1,0 +1,9 @@
+{
+    "locale": "fa-IR",
+    "order": 14,
+    "name": "Persian",
+    "nativeName": "فارسی",
+    "version": "0.0.11",
+    "direction": "rtl",
+    "description": "A right-to-left language: the app in Persian, Bible book names in English."
+}

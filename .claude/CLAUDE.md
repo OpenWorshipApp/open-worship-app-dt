@@ -61,12 +61,62 @@ Every React function component must have a name ending in `Comp`
 (e.g. `ScreenCloseButtonComp`, `ForegroundCountDownComp`).
 
 Every label a user reads goes through `tran()` (in render, never at module
-scope) with its Khmer string in `src/lang/data/km/index.ts` AND its French
-string in `src/lang/data/fr/index.ts`. A missing one THROWS in dev.
-`src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC key without
-Khmer, and on any difference between the French and Khmer key sets — write
-keys as literals so it can read them (EN-20). A dynamic `tran(prop)` still
-needs the live Khmer pass (memory `tran-missing-key-throws-in-dev`).
+scope) with its string in EVERY language's `dictionary.json`
+(`src/lang/data/online/<code>/`, no English fallback). A missing one THROWS
+in dev.
+`src/lang/tranKeyCoverage.test.ts` fails the gate on any STATIC key a package
+lacks, and on any difference between the packages' key sets — write keys as
+literals so it can read them (EN-20). A dynamic `tran(prop)` still needs the
+live Khmer pass (memory `tran-missing-key-throws-in-dev`).
+
+## Every non-English language is a package in `src/lang/data/online/<code>/`
+
+(2026-11-03, the user: _make sure no non-english data tied to the code base
+beside src/lang/data_, _in the future all non-english is modular_.) A
+language is its folder — dictionary, `meta.json`, `assistant.json`, corpus
+`questions.json`, `manual/`, script facts, eval asks and its own `tests/` —
+and code finds packages by folder, naming none. No letter, digit or sign of
+another script (escapes included), no accented Latin, and no non-English
+word lives outside `src/lang/data`, in code, tests or comments; code names no
+`km`/`fr` code or locale. `src/lang/languageConfinement.test.ts` holds it
+(`node extra-work/language-confinement.mjs <path>` lists what is left), and
+the suite must pass with every non-English package deleted. Prose (`*.md`,
+`.claude` notes, `docs/`) may quote a language. Layout, loaders, the
+packaged-app path and how to add a language: `.claude/rules/language-packages.md`.
+
+**At runtime only English is built in, and nothing else ships** (2026-11-04,
+the user: _everything related to a language have to be loaded from the
+language data (from language installation catalog), must not ship in the app,
+except english_): every other language — Khmer and French included, all in
+`src/lang/data/online/` — is a PLUGIN packed by
+`extra-work/build-lang-plugins.mjs` and installed from Settings →
+**Languages** into `<data folder>/lang` — one format, one scanner, loaded
+through `appProvider.langUtils`. Its dictionary, corpus, manual and Bible
+names travel IN the plugin: the knowledge bundle is English only and both MCP
+doors read a language from its installed folder (`langPacks.mjs`). App code
+never globs `src/lang/data/*/` (the build check fails on a non-English
+package in `dist/`). **A dev app starts English-only**: for a Khmer pass,
+`npm run lang:pack -- --pack=km` (bare `npm run lang:pack` packs all 87), then
+Settings → **Languages** → **Install**. Memory `language-plugins-runtime`.
+
+**Changed language data raises its version, then is packed again** (2026-11-04,
+the user: _everytime language data got modified it have to increase meta
+version_; 2026-11-05: _make sure run the pack everyting language got
+updated_). Any change to a language's files — a dictionary entry,
+`assistant.json`, the corpus, the manual, script facts, fonts, Bible data —
+raises `version` in its `meta.json` in the SAME change. The scanner keeps the
+highest version, an equal
+one loses to the shipped copy, and a release under an unchanged version only
+REPLACES its catalog entry: an installed copy would never see the new data.
+Then, still in that change, run `npm run lang:pack -- --pack=<code>[,<code>]`
+for the languages touched (bare `npm run lang:pack` when a change touches
+many — a new `tran` key touches all 87), and in the dev app press Settings →
+**Languages** → **Refresh** → **Update to** (offered only for a HIGHER version,
+so raise first; re-packed under the same one, delete the installed copy and
+**Install** again). The running app reads the INSTALLED plugin, never
+`src/lang/data/online/`, so an edit that was not packed and updated is
+invisible to a live check, and a new key the installed copy lacks throws in
+dev. Memory `language-data-change-bumps-version`.
 
 ## Running the app for verification (`npm run dev`)
 
@@ -110,7 +160,8 @@ not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS app-level ones —
 `owa_bible_suggest`, `owa_find_verse`, `owa_lookup_record`, `owa_resource_file`,
 `owa_presenting_flow`, `owa_undo`, and — the developer's, withheld from the
 chatbot's model — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
-`owa_media_file`, and on the stdio door alone `owa_drop_files` (real fixture
+`owa_media_file`, `owa_language` (the help window's own offer to install a
+language, pressed by the person), and on the stdio door alone `owa_drop_files` (real fixture
 files dropped from the disk onto a control; the robot test's drag block).
 Reach for those first: `owa_find_ui` locates (and optionally outlines) a control
 by its visible text, `owa_list_ui` enumerates the visible controls of a window,
@@ -216,10 +267,14 @@ What holds everywhere:
   `tools/owa-devtools-mcp/questions/*.json` changes in the same commit**, and the
   manual names a control as `[en:tran:Clear Long Text]`, never as an English label.
 - **The chatbot speaks the app's language, and every language is DATA**
-  (memory `chatbot-follows-app-language`): `src/lang/data/<code>/assistant.json`,
-  the corpus's words in `questions/i18n/<code>.json` (a new question needs its
+  (memory `chatbot-follows-app-language`) -- a question in any OTHER language
+  is answered in it, that language named by its INSTALLED `typed.json`
+  (`src/lang/data/online/<code>/typed.json`; one not installed is answered in
+  its own words unnamed)
+  (`anyLanguage.test.ts` holds both): `src/lang/data/online/<code>/assistant.json`,
+  the corpus's words in `src/lang/data/online/<code>/questions.json` (a new question needs its
   row there in every language — `questions.test.mjs`), the manual's in
-  `docs/manual-i18n/<code>/` (`node extra-work/manual-i18n-status.mjs` lists
+  `src/lang/data/online/<code>/manual/` (`node extra-work/manual-i18n-status.mjs` lists
   what is missing or stale). The window's own words go through the chatbot's
   `tran` in `src/chatbot/chatTranHelpers.ts`, never `langHelpers`'. Behind the
   scenes any model but a Gemma 4 works in ENGLISH, a no-cost Gemma 4

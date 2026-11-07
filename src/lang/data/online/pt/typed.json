@@ -1,0 +1,12 @@
+{
+    "pt": {
+        "name": "Portuguese",
+        "nativeName": "Português",
+        "script": "Latin",
+        "words": "o a os as um uma do da dos das no na nos nas ao aos à em de e ou que quê qual quais como onde quando quem porque por para com sem é são está estão estou sou há tem meu minha meus minhas seu sua me te se lhe este esta isto esse essa isso aqui posso pode quero preciso faço fazer ver muito mais mas também já ainda nada tudo ajuda ajude favor obrigado obrigada não você eu",
+        "letters": "ãõçâêôàáéíóú",
+        "yes": ["sim", "claro", "sim, por favor"],
+        "no": ["não", "não, obrigado", "não, obrigada"],
+        "order": 1
+    }
+}

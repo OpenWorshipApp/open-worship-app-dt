@@ -1,0 +1,12 @@
+{
+    "to": {
+        "name": "Tongan",
+        "nativeName": "Lea faka-Tonga",
+        "script": "Latin",
+        "words": "ko e he mo ki ʻa ʻi ʻoku ʻe au koe ia mau tau nau fēfē hā fē ʻafē hai ʻeni ʻena ʻikai mālō kātaki",
+        "letters": "ʻ",
+        "yes": ["ʻio"],
+        "no": ["ʻikai"],
+        "order": 45
+    }
+}

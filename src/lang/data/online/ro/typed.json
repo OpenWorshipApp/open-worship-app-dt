@@ -1,0 +1,12 @@
+{
+    "ro": {
+        "name": "Romanian",
+        "nativeName": "Română",
+        "script": "Latin",
+        "words": "și şi sau dar nu este sunt e era am ai are au eu tu el ea noi voi ei ele meu mea mei mele tău său cum ce unde când cine care cât de la din în pe pentru cu fără un o al ale lui această acest asta aici pot poate vreau trebuie face vedea foarte mai deja încă nimic tot ajutor mulțumesc",
+        "letters": "ăâîșțşţ",
+        "yes": ["da", "da, te rog"],
+        "no": ["nu", "nu, mulțumesc"],
+        "order": 7
+    }
+}

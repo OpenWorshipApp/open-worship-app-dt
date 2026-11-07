@@ -120,4 +120,29 @@ describe('BibleCrossReferencePreviewerComp', () => {
         });
         expect(mocks.jsonList[0].target.chapterEnd).toBeUndefined();
     });
+
+    test('keeps its placeholder for an empty verse key until a verse is chosen', async () => {
+        mocks.verseKey = '';
+        await renderPreviewer();
+        expect(mocks.jsonList).toHaveLength(0);
+        expect(mocks.renderedBibleItemList).toHaveLength(0);
+        expect(
+            host.querySelector('.app-xref-placeholder-title')?.textContent,
+        ).toBe('No verse selected');
+        mocks.extracted = {
+            bibleKey: 'KJV',
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 1,
+        };
+        await act(async () => {
+            controller.setBibleVerseKey('(KJV) GEN 1:1');
+        });
+        expect(mocks.jsonList).toHaveLength(1);
+        expect(host.querySelector('.app-xref-placeholder')).toBeNull();
+        expect(mocks.renderedBibleItemList.at(-1)).toEqual({
+            json: mocks.jsonList[0],
+        });
+    });
 });

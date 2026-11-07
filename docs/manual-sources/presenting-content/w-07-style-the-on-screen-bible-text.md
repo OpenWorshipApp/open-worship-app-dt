@@ -2,22 +2,24 @@
 id: W-07
 title: "Style the on-screen Bible text"
 section: "Presenting content"
-verify: [PM-13, PM-14, PM-57, PM-159, PM-160, PM-161, PM-162, SP-21]
+verify: [PM-13, PM-14, PM-57, PM-159, PM-160, PM-161, PM-162, PM-167, SP-21]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-02"
+workflowsVersion: "2026-11-06"
 ---
 # W-07 — Style the on-screen Bible text
 
 **Goal:** change how verses look on the screen — their size, their colour, and
-the edge or shadow that keeps them readable over a picture.
+the edge or shadow that keeps them readable over a picture. A
+**[en:tran:Long Text Show]** is drawn in the same look.
 
 1. In the **[en:tran:Mini Screen]** panel, press **[en:tran:Reveal Hidden Controls]** —
    the three dots **⋯** at its bottom edge. The buttons under the Mini Screen
    are hidden until you do, and they stay up while the mouse is on them. The
    passage in the middle **[en:tran:Bibles]** tab has the same **⋯** under it,
-   with the same button behind it.
-2. In the row of buttons that came up, press **[en:tran:Bible Properties]** —
+   with the same button behind it, and **[en:tran:Long Text Show]** has it
+   beside **[en:tran:Add Language]**, always in view.
+2. In the row of buttons that came up, press **[en:tran:Bible/LongText Properties]** —
    the one with a book and a gear. A floating panel opens; there is no card to
    open inside it, and no separate colour for verse numbers. 📸
 3. **Say what is behind the words.** The top of the panel shows a verse on a
@@ -38,7 +40,14 @@ the edge or shadow that keeps them readable over a picture.
 6. **Change the colour.** Press the small square at the end of the
    **[en:tran:Text Color]** row; a colour picker opens under it. Pick a colour
    and the words on the screen change at once. Press the square again to close
-   the picker.
+   the picker. **[en:tran:Highlight Color]**, a section of its own under these
+   rows, is the faint band under a selected verse or section:
+   **[en:tran:Highlight on Dark]** (the moon; pink until you choose) is the band
+   while the words are on **[en:tran:Dark]**, and **[en:tran:Highlight on Light]**
+   (the sun; blue) while they are on **[en:tran:Light]** — the one in use has
+   its icon lit. Press a square to choose a colour, keeping the picker's
+   opacity low (the band lies under every line of what is selected); the arrow
+   beside it puts that side back to its default.
 7. **Change how the words are set.** **[en:tran:Font Family]** is a list of
    the fonts on this computer: pick one and every verse is drawn in it; pick
    the first line of the list, `--`, to go back to each Bible's own font. Letters
@@ -60,12 +69,13 @@ the edge or shadow that keeps them readable over a picture.
    Right-click a saved tile for **[en:tran:Rename Preset]**,
    **[en:tran:Replace with Current Look]** and **[en:tran:Remove Preset]**.
 10. **[en:tran:Reset]**, at the bottom, goes back to plain words and keeps the
-   size. The font goes back to each Bible's own.
+   size. The font goes back to each Bible's own, and both highlight colours
+   to their own.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-13` · `PM-14` · `PM-57` · `PM-159` · `PM-160` · `PM-161` · `PM-162` · `SP-21`
+`PM-13` · `PM-14` · `PM-57` · `PM-159` · `PM-160` · `PM-161` · `PM-162` · `PM-167` · `SP-21`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-02).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-06).
 :::

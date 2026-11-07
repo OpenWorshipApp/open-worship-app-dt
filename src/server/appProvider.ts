@@ -4,6 +4,8 @@ import type zlip from 'node:zlib';
 import type path from 'node:path';
 import type * as nodeCrypto from 'node:crypto';
 import type { MirrorScreenContext } from '../../electron/screenMirrorProtocol';
+import type { LanguageDataType } from '../lang/langHelpers';
+import type { LangPluginType } from '../../electron/langPluginProtocol';
 
 export type MessageEventType = {
     returnValue: any;
@@ -194,8 +196,26 @@ type EnvUtilsType = {
     isFEUseEffectWarning: boolean;
 };
 
+export type { LangPluginType };
+
+// Every language but English is a plugin (`electron/langPluginProtocol.ts`):
+// found by the main process in `electron-build/lang` and `<data folder>/lang`,
+// loaded by the preload (`electron/client/langUtils.ts`) -- or, on a remote
+// browser viewer, by `src/virtual-display/webScreenProvider.ts`.
+export type LangUtilsType = {
+    getLangPlugin: (langCode: string) => Promise<LangPluginType | null>;
+    getLangPlugins: () => Promise<LangPluginType[]>;
+    getLangData: (langCode: string) => Promise<LanguageDataType | null>;
+    // One of the plugin's own `*.json` files, parsed, or null.
+    readLangPluginJson: (langCode: string, fileName: string) => Promise<any>;
+    // `<data folder>/lang`, where Settings > Languages installs; null when the
+    // window cannot write there (a remote viewer).
+    getLangPluginsDirPath: () => string | null;
+};
+
 export type AppProviderType = Readonly<
     PagePropsType & {
+        langUtils: LangUtilsType;
         appType: AppTypeEnum;
         isDesktop: boolean;
         fontUtils: {

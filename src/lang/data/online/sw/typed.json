@@ -1,0 +1,11 @@
+{
+    "sw": {
+        "name": "Swahili",
+        "nativeName": "Kiswahili",
+        "script": "Latin",
+        "words": "na ya wa kwa ni la za katika kama je nini wapi kwanini lini nani gani mimi wewe yeye sisi ninyi wao yangu yako yake yetu hii hiyo hizi hayo hapa pale sana zaidi pia tu si siyo naweza unaweza nataka nahitaji tafadhali asante kwenye jinsi ninawezaje kuna hakuna ndani juu kutoka kwamba lakini au kila vipi",
+        "yes": ["ndiyo", "ndio", "sawa"],
+        "no": ["hapana", "hapana, asante"],
+        "order": 29
+    }
+}

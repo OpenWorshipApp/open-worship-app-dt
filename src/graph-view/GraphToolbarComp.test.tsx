@@ -285,3 +285,56 @@ describe('graph toolbar', () => {
         delete (document as any).fullscreenElement;
     });
 });
+
+describe('graph toolbar edge cases', () => {
+    test('fullscreen does nothing when the canvas is not inside a panel', async () => {
+        const requestFullscreen = vi.fn(async () => undefined);
+        Object.defineProperty(widget, 'requestFullscreen', {
+            configurable: true,
+            value: requestFullscreen,
+        });
+        // A viewport with no floating widget around it.
+        viewport = document.createElement('div');
+        await renderToolbar();
+        await act(async () => button('Fullscreen').click());
+        expect(requestFullscreen).not.toHaveBeenCalled();
+        expect(button('Fullscreen')).toBeDefined();
+    });
+
+    test('a preset is saved under the name typed into the prompt', async () => {
+        mocks.showInput.mockImplementation(async (_title, body: any) => {
+            body.props.onChange({ target: { value: 'Abraham and sons' } });
+            return true;
+        });
+        await renderToolbar();
+        await act(async () => button('Presets').click());
+        const menuItems = mocks.showMenu.mock.calls.at(-1)?.[1];
+        await act(async () => menuItems[2].onSelect());
+        expect(mocks.savePreset).toHaveBeenCalledWith(
+            'Abraham and sons',
+            graph,
+        );
+    });
+
+    test('a cancelled prompt saves nothing, a declined delete deletes nothing', async () => {
+        state.inputConfirmed = false;
+        state.confirmDeletion = false;
+        state.presets = [
+            { name: 'Morning', graph: { key: 'other', title: 'Morning' } },
+            { name: 'Evening', graph: { key: 'late', title: 'Evening' } },
+        ];
+        await renderToolbar();
+        await act(async () => button('Presets').click());
+        const menuItems = mocks.showMenu.mock.calls.at(-1)?.[1];
+        await act(async () => menuItems[2].onSelect());
+        expect(mocks.savePreset).not.toHaveBeenCalled();
+        const deleteItem = menuItems.at(-1);
+        expect(deleteItem.menuElement).toBe('Delete preset');
+        await act(async () => deleteItem.onSelect());
+        expect(mocks.showConfirm).toHaveBeenCalledWith(
+            'Delete preset',
+            'Morning, Evening',
+        );
+        expect(mocks.deletePreset).not.toHaveBeenCalled();
+    });
+});

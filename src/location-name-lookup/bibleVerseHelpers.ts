@@ -137,7 +137,7 @@ export async function shortToBibleItem(bibleKey: string, shortVerse: string) {
 /**
  * The font of the bible those references are read in.
  *
- * A verse panel's TITLE is a reference in that bible — `លោកុប្បត្តិ ១០:៤`, not
+ * A verse panel's TITLE is a reference in that bible — its own book name and digits, not
  * `Genesis 10:4`, once the lookup language stops being English — and it renders
  * in the widget chrome, outside the body that carries `VerseDataType.style`. It
  * takes the BIBLE's font rather than the lookup language's: the two are
@@ -306,7 +306,7 @@ export const BIBLE_REFERENCE_KIND_BY_SCHEME: {
  * One inline reference as the READER's bible names it.
  *
  * The datasets are written against the KJV, so a token's label is always its
- * English wording — a Khmer record reads `...ក្នុងកណ្ឌ [Acts](book-key://ACT)`,
+ * English wording — a Khmer record reads its own words up to `[Acts](book-key://ACT)`,
  * one English word stranded in Khmer prose. Only the stored KEY is canonical,
  * so the label is re-derived here per bible: the book name comes from that
  * bible's own book map and the chapter number through its numeral list, exactly

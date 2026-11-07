@@ -48,6 +48,9 @@ vi.mock('./RenderPathTitleComp', () => ({
 
 import PathSelectorComp from './PathSelectorComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { copyToClipboard, showFileOrDirExplorer } from '../server/appHelpers';
+import { openPathSetting } from '../setting/settingHelpers';
+import appProvider from '../server/appProvider';
 
 /**
  * Stands in for a `DirSource`: what the selector reads (`dirPath`), what it
@@ -281,5 +284,129 @@ describe('PathSelectorComp folder dropping', () => {
         const parentLabels = await menuLabelsOf(false);
         expect(parentLabels).not.toContain('Unset Directory Path');
         expect(parentLabels).toContain('Copy to Clipboard');
+    });
+
+    test('an empty box swallows the right-click instead of offering a menu', async () => {
+        const { dirSource } = genDirSource('');
+        await render(dirSource);
+        const documentContextMenu = vi.fn();
+        document.addEventListener('contextmenu', documentContextMenu);
+        try {
+            const event = new MouseEvent('contextmenu', {
+                bubbles: true,
+                cancelable: true,
+            });
+            await dispatch(event);
+            expect(event.defaultPrevented).toBe(true);
+            expect(documentContextMenu).not.toHaveBeenCalled();
+            expect(showAppContextMenu).not.toHaveBeenCalled();
+        } finally {
+            document.removeEventListener('contextmenu', documentContextMenu);
+        }
+    });
+
+    test('the menu copies, reveals, edits and unsets the folder', async () => {
+        (appProvider as any).isPageSetting = false;
+        try {
+            const { dirSource, committedDirPaths } = genDirSource('/data/old');
+            await render(dirSource, false);
+            await dispatch(
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            );
+            const [, items] = vi.mocked(showAppContextMenu).mock.calls[0] as [
+                unknown,
+                any[],
+            ];
+            expect(items.map((item) => item.menuElement)).toEqual([
+                'Copy to Clipboard',
+                undefined, // the mocked "reveal" title
+                'Edit Parent Path',
+                'Unset Directory Path',
+            ]);
+            items[0].onSelect();
+            expect(copyToClipboard).toHaveBeenCalledWith('/data/old');
+            items[1].onSelect();
+            expect(showFileOrDirExplorer).toHaveBeenCalledWith('/data/old');
+            items[2].onSelect();
+            expect(openPathSetting).toHaveBeenCalledTimes(1);
+            items[3].onSelect();
+            expect(committedDirPaths).toEqual(['']);
+        } finally {
+            (appProvider as any).isPageSetting = true;
+        }
+    });
+
+    test('the chevron row shows and hides the path editor', async () => {
+        const { dirSource } = genDirSource('/data/old');
+        await render(dirSource);
+        const previewer = container.querySelector(
+            '.path-previewer',
+        ) as HTMLElement;
+        expect(previewer.title).toBe('Show path editor');
+        expect(previewer.querySelector('i')!.className).toBe(
+            'bi bi-chevron-right',
+        );
+        expect(previewer.textContent).toBe('/data/old');
+        await act(async () => {
+            previewer.click();
+        });
+        expect(previewer.title).toBe('Hide path editor');
+        expect(previewer.querySelector('i')!.className).toBe(
+            'bi bi-chevron-down',
+        );
+        // The title row gives way to the editor.
+        expect(previewer.textContent).toBe('');
+        await act(async () => {
+            previewer.click();
+        });
+        expect(previewer.title).toBe('Show path editor');
+    });
+
+    test('leaving onto a child keeps the outline, leaving the box drops it', async () => {
+        const { dirSource } = genDirSource('/data/old');
+        await render(dirSource);
+        await dispatch(genDragEvent('dragover', { paths: ['/data/new'] }));
+        // A second dragover is no new transition.
+        await dispatch(genDragEvent('dragover', { paths: ['/data/new'] }));
+        expect(getSelector().className).toContain('path-selector-dropping');
+        const child = container.querySelector('.path-previewer')!;
+        await dispatch(
+            new MouseEvent('dragleave', {
+                bubbles: true,
+                relatedTarget: child,
+            }),
+        );
+        expect(getSelector().className).toContain('path-selector-dropping');
+        await dispatch(
+            new MouseEvent('dragleave', {
+                bubbles: true,
+                relatedTarget: document.body,
+            }),
+        );
+        expect(getSelector().className).not.toContain('path-selector-dropping');
+        await dispatch(genDragEvent('dragover', { paths: ['/data/new'] }));
+        await dispatch(new MouseEvent('dragleave', { bubbles: true }));
+        expect(getSelector().className).not.toContain('path-selector-dropping');
+    });
+
+    test('a drop of text, or of files with no path on disk, changes nothing', async () => {
+        const { dirSource, committedDirPaths } = genDirSource('/data/old');
+        await render(dirSource);
+        const textDrop = genDragEvent('drop', {
+            paths: ['GEN 1:1'],
+            kind: 'string',
+        });
+        await dispatch(textDrop);
+        expect(textDrop.defaultPrevented).toBe(false);
+        const pathlessDrop = genDragEvent('drop', { paths: ['/data/new'] });
+        pathlessDrop.dataTransfer.files = [{}];
+        await dispatch(pathlessDrop);
+        expect(pathlessDrop.defaultPrevented).toBe(true);
+        expect(checkDirExistMock).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+        expect(committedDirPaths).toEqual([]);
     });
 });

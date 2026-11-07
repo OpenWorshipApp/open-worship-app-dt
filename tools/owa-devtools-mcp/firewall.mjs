@@ -243,6 +243,8 @@ const ACTING_TOOL_SET = new Set([
 const REMOVING_TOOL_SET = new Set([
     'owa_lyric_file',
     'owa_slide_file',
+    // `remove-section` takes a part out of a song.
+    'owa_lyric_edit',
     'owa_bible_item',
     'owa_bible_note',
     'owa_undo',
@@ -261,6 +263,35 @@ export function checkIsRemovingCall(name, args) {
 
 export function checkIsActingTool(name) {
     return ACTING_TOOL_SET.has(name);
+}
+
+// Tools that act with ONE of their actions and only read with the rest, so
+// a read does not spend a slot of the budget. `owa_language`'s `install`
+// downloads a language plugin -- code the app runs -- into the data folder;
+// its `check` is asked by the help window at every step of a conversation
+// about a language, and `list` only reads.
+const ACTING_ACTION_MAP = {
+    owa_language: ['install'],
+};
+
+// The other way round: tools that only READ with these actions and change
+// the user's things with every other. `owa_lyric_edit`'s `read` is asked by
+// the help window before every question about an attached song; each of its
+// other actions writes the song (backed up, unsaved) and is counted like
+// `owa_lyric_file`.
+const READING_ACTION_MAP = {
+    owa_lyric_edit: ['read'],
+};
+
+/** Does THIS call change the app (the tool, or the action it was given)? */
+export function checkIsActingCall(name, args) {
+    return (
+        checkIsActingTool(name) ||
+        (Object.hasOwn(ACTING_ACTION_MAP, name) &&
+            ACTING_ACTION_MAP[name].includes(args?.action)) ||
+        (Object.hasOwn(READING_ACTION_MAP, name) &&
+            !READING_ACTION_MAP[name].includes(args?.action))
+    );
 }
 
 /**
@@ -284,10 +315,6 @@ const NETWORK_WHEN_URL_TOOL_SET = new Set([
     'owa_lyric_validate',
     'owa_bible_xml',
 ]);
-
-export function checkIsNetworkTool(name) {
-    return NETWORK_TOOL_SET.has(name);
-}
 
 /** Does THIS call go out to the internet? The name, or the name plus a url. */
 export function checkIsNetworkCall(name, args) {
@@ -793,7 +820,7 @@ export function checkToolCall(
     }
     // Both budgets are looked at before either is spent, so a call refused
     // by one does not use up a slot of the other.
-    const isActing = checkIsActingTool(name);
+    const isActing = checkIsActingCall(name, args);
     const isRemoving = checkIsRemovingCall(name, args);
     if (isActing && !checkHasRoom('acting', now)) {
         return refuse(
@@ -916,6 +943,67 @@ function redactContentList(contentList, uidMemory = null) {
         return text === item.text ? item : { ...item, text };
     });
 }
+
+/**
+ * The same net over `structuredContent`, which chrome-devtools-mcp can send
+ * beside `content` (`--experimentalStructuredContent`) and which was never
+ * scrubbed (2026-11-03). Read as its JSON text, so a credential named by its
+ * KEY -- `{"x-api-key": "..."}` -- is caught the way the last rule above
+ * catches one in a header; a value alone matches nothing. A text the scrub
+ * left unreadable (a value cut at an escaped quote, a long number under a
+ * credential's name) is not let out as it came: it fails closed, and the
+ * readable answer is still in `content`.
+ */
+function redactStructuredContent(structured) {
+    let json;
+    try {
+        json = JSON.stringify(structured);
+    } catch {
+        return { redacted: REDACTED };
+    }
+    if (typeof json !== 'string') {
+        return structured;
+    }
+    const text = redactSecrets(json);
+    if (text === json) {
+        return structured;
+    }
+    try {
+        return JSON.parse(text);
+    } catch {
+        return { redacted: REDACTED };
+    }
+}
+
+/**
+ * What a response answers when its request is no longer remembered -- the
+ * pending map is bounded, and a client with more than 64 calls in flight had
+ * the oldest one's result go out unscrubbed (2026-11-03) -- judged by its
+ * shape: only a tool list carries `tools`, only a tool result `content` or
+ * `structuredContent`. Anything else (`initialize`, a ping) is left alone.
+ */
+function toAskedByShape(message) {
+    const result = message?.result;
+    if (result === null || typeof result !== 'object') {
+        return undefined;
+    }
+    if (Array.isArray(result.tools)) {
+        return 'tools/list';
+    }
+    if (
+        Array.isArray(result.content) ||
+        result.structuredContent !== undefined
+    ) {
+        return 'tools/call';
+    }
+    return undefined;
+}
+
+const CHECK_FAILED_REASON =
+    'This call was not run: the safety check could not read its arguments. ' +
+    'Call the tool again with the arguments its schema describes -- text ' +
+    'where it asks for text -- or tell the user in plain words what you ' +
+    'were trying to do.';
 
 function genRefusalMessage(id, reason) {
     // An `isError` RESULT, not a JSON-RPC error. A protocol error is a
@@ -1048,25 +1136,50 @@ export function guardToolCalls(
                     }
                     snapshotFileMap.set(id, snapshotFilePath);
                 }
-                if (checkIsActingTool(name)) {
-                    recordDecision({ name, rule: 'acted', isAllowed: true });
-                } else if (checkIsNetworkTool(name)) {
-                    // Logged with the address: an operator asking what was
-                    // done needs to see where it went, not just that it went.
+                // Logged with the address: an operator asking what was done
+                // needs to see where it went, not just that it went. Asked of
+                // the CALL, not the tool: the song drafter and the Bible
+                // importer go out only when they carry a url.
+                const args = message.params?.arguments;
+                const urlEntry = checkIsNetworkCall(name, args)
+                    ? { url: args?.url }
+                    : null;
+                if (checkIsActingCall(name, args)) {
+                    recordDecision({
+                        name,
+                        rule: 'acted',
+                        isAllowed: true,
+                        ...urlEntry,
+                    });
+                } else if (urlEntry !== null) {
                     recordDecision({
                         name,
                         rule: 'fetched',
                         isAllowed: true,
-                        url: message.params?.arguments?.url,
+                        ...urlEntry,
                     });
                 }
             }
         } catch (error) {
-            // A broken check must fail CLOSED for a tool it was asked about,
-            // but it must not take down the session. Nothing here can throw
-            // for a well-formed message, so this is the unreachable branch;
-            // if it is ever reached, say so rather than silently opening.
+            // A broken check fails CLOSED for the call it was judging -- it is
+            // answered here like any refusal and never reaches the server
+            // below -- but it must not take down the session. Nothing here
+            // throws for a well-formed call; one whose arguments cannot even
+            // be read as text (`keys: {toString: 1}`) is not one to run
+            // unjudged. It used to be logged and forwarded (2026-11-03).
             log(`firewall check failed: ${String(error?.message ?? error)}`);
+            if (message?.method === 'tools/call') {
+                pendingMethodMap.delete(message.id);
+                recordDecision({
+                    name: message.params?.name,
+                    rule: 'check-failed',
+                    isAllowed: false,
+                });
+                transport.send?.(
+                    genRefusalMessage(message.id, CHECK_FAILED_REASON),
+                );
+                return undefined;
+            }
         }
         return innerOnMessage?.call(transport, message, extra);
     };
@@ -1075,7 +1188,9 @@ export function guardToolCalls(
     if (innerSend !== undefined) {
         transport.send = (message, options) => {
             try {
-                const asked = pendingMethodMap.get(message?.id);
+                const asked =
+                    pendingMethodMap.get(message?.id) ??
+                    toAskedByShape(message);
                 if (asked !== undefined) {
                     pendingMethodMap.delete(message.id);
                     if (asked === 'tools/list' && message.result?.tools) {
@@ -1087,6 +1202,12 @@ export function guardToolCalls(
                             message.result.content,
                             uidMemory,
                         );
+                        if (message.result.structuredContent !== undefined) {
+                            message.result.structuredContent =
+                                redactStructuredContent(
+                                    message.result.structuredContent,
+                                );
+                        }
                         const snapshotFilePath = snapshotFileMap.get(
                             message.id,
                         );

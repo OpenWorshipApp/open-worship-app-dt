@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const fileSourceGetInstance = vi.fn((filePath: string) => ({
     filePath,
@@ -274,7 +274,7 @@ describe('screen render helpers', () => {
         expect(html).toContain('Genesis 1:1-2');
         expect(html).toContain('data-kjv-verse-key="GEN-1-1"');
         expect(html).toContain('data-kjv-verse-key="GEN-1-2"');
-        // The family chosen in Bible Properties first, the language's own
+        // The family chosen in Bible/LongText Properties first, the language's own
         // behind it -- and alone while nothing is chosen.
         expect(html).toContain(
             'font-family:var(--bible-font-family, Font-en-US), Font-en-US',
@@ -399,9 +399,10 @@ describe('screen render helpers', () => {
         // Both columns are there although they share a title.
         const headers = Array.from(root.querySelectorAll<HTMLElement>('th'));
         expect(headers).toHaveLength(2);
+        // The header keeps the screen's size: no column class on it.
         expect(headers.map((header) => header.className)).toEqual([
-            'header screen-long-text-column-0',
-            'header screen-long-text-column-1',
+            'header',
+            'header',
         ]);
         // A language code, with no Bible versions menu to hang on it.
         expect(root.querySelector('.bible-name')).toBeNull();
@@ -435,10 +436,13 @@ describe('screen render helpers', () => {
         ).toBe(true);
         const styleText = root.querySelector('style')?.textContent ?? '';
         expect(styleText).toContain(
-            'td.screen-long-text-column-1 ' +
-                '{ font-size: 0.8em; text-align: center !important; }',
+            '.screen-long-text-column-1 { font-size: 0.8em; }',
         );
-        expect(styleText).toContain('color: #ff0000; font-weight: 300;');
+        // A colour, a weight and a side of its own are not drawn: they are
+        // Bible/LongText Properties', for every language.
+        expect(styleText).not.toContain('#ff0000');
+        expect(styleText).not.toContain('font-weight');
+        expect(styleText).not.toContain('text-align');
         expect(styleText).not.toContain('column-0');
         expect(styleText).not.toContain('url(');
     });
@@ -1282,5 +1286,462 @@ describe('screen render helpers', () => {
 
         await countdown.handleRemoving();
         await stopwatch.handleRemoving();
+    });
+});
+
+describe('foreground messages and the timers already up', () => {
+    function genAnimData() {
+        return {
+            duration: 0,
+            styleText: '',
+            animIn: vi.fn(async (element: HTMLElement, parent: HTMLElement) => {
+                parent.appendChild(element);
+            }),
+            animOut: vi.fn(async () => {}),
+        };
+    }
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test('one message stays put: every line shows and nothing ticks', async () => {
+        const { genHtmlForegroundMessage } =
+            await import('./screenForegroundHelpers');
+        const { FOREGROUND_MESSAGE_CLASS } =
+            await import('./foregroundMessageStackHelpers');
+        const animData = genAnimData();
+        const parent = document.createElement('div');
+        const message = genHtmlForegroundMessage(
+            {
+                id: 'm1',
+                // A blank line inside one message is the writer's, and stays.
+                textList: ['Line one', '', 'Line <b>three</b>'],
+                intervalSecond: null,
+                extraStyle: { color: 'red' },
+            } as any,
+            animData,
+        );
+        await message.handleAdding(parent);
+        const element = parent.firstElementChild as HTMLElement;
+        expect(element.className).toBe(FOREGROUND_MESSAGE_CLASS);
+        // Text, never markup.
+        expect(element.textContent).toBe('Line one\n\nLine <b>three</b>');
+        expect(element.querySelector('b')).toBeNull();
+        expect(element.style.whiteSpace).toBe('pre-wrap');
+        expect(element.style.color).toBe('red');
+        expect(element.style.transition).toBe('');
+        expect(vi.getTimerCount()).toBe(0);
+
+        // One real entry has nothing to rotate to, interval or not.
+        const single = genHtmlForegroundMessage(
+            {
+                id: 'm2',
+                textList: ['  ', 'Only one'],
+                intervalSecond: 3,
+            } as any,
+            animData,
+        );
+        await single.handleAdding(parent);
+        expect(parent.lastElementChild!.textContent).toBe('  \nOnly one');
+        expect(vi.getTimerCount()).toBe(0);
+
+        await message.handleRemoving();
+        expect(animData.animOut).toHaveBeenCalledWith(element);
+    });
+
+    test('several messages take turns, fading across, until taken down', async () => {
+        const { genHtmlForegroundMessage } =
+            await import('./screenForegroundHelpers');
+        const animData = genAnimData();
+        const parent = document.createElement('div');
+        const message = genHtmlForegroundMessage(
+            {
+                id: 'm3',
+                textList: ['First', '   ', 'Second', 'Third'],
+                intervalSecond: 2,
+            } as any,
+            animData,
+        );
+        await message.handleAdding(parent);
+        const element = parent.firstElementChild as HTMLElement;
+        expect(element.textContent).toBe('First');
+        expect(element.style.transition).toBe('opacity 400ms ease-in-out');
+
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(element.style.opacity).toBe('0');
+        expect(element.textContent).toBe('First');
+        await vi.advanceTimersByTimeAsync(400);
+        expect(element.textContent).toBe('Second');
+        expect(element.style.opacity).toBe('1');
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(element.textContent).toBe('Third');
+        // ...and round again; the blank entry is never shown.
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(element.textContent).toBe('First');
+
+        // Taken down mid-fade: neither timer survives it.
+        await vi.advanceTimersByTimeAsync(1700);
+        expect(element.style.opacity).toBe('0');
+        await message.handleRemoving();
+        expect(vi.getTimerCount()).toBe(0);
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(element.textContent).toBe('First');
+        expect(animData.animOut).toHaveBeenCalledWith(element);
+    });
+
+    test('an interval under a second rotates once a second', async () => {
+        const { genHtmlForegroundMessage } =
+            await import('./screenForegroundHelpers');
+        const parent = document.createElement('div');
+        const message = genHtmlForegroundMessage(
+            { id: 'm4', textList: ['A', 'B'], intervalSecond: 0 } as any,
+            genAnimData(),
+        );
+        await message.handleAdding(parent);
+        const element = parent.firstElementChild as HTMLElement;
+        await vi.advanceTimersByTimeAsync(999);
+        expect(element.style.opacity).toBe('');
+        await vi.advanceTimersByTimeAsync(1 + 400);
+        expect(element.textContent).toBe('B');
+        await message.handleRemoving();
+    });
+
+    test('a countdown takes a start, pause or reset in place, but not a new look', async () => {
+        const { genHtmlForegroundCountdown } =
+            await import('./screenForegroundHelpers');
+        const animData = genAnimData();
+        const parent = document.createElement('div');
+        const data = {
+            dateTime: new Date(Date.now() + 60_000),
+            durationMillisecond: 60_000,
+            extraStyle: {},
+        };
+        const countdown = genHtmlForegroundCountdown(data as any, animData);
+        await countdown.handleAdding(parent);
+        const readClock = () => {
+            return ['#hour', '#minute', '#second']
+                .map((selector) => parent.querySelector(selector)!.textContent)
+                .join(':');
+        };
+
+        const paused = { ...data, pausedMillisecond: 30_000 };
+        expect(countdown.handleUpdating(paused as any)).toBe(true);
+        expect(readClock()).toBe('00:00:30');
+        // A different look is a different clock: left for a fresh one.
+        expect(
+            countdown.handleUpdating({
+                ...paused,
+                extraStyle: { color: 'red' },
+            } as any),
+        ).toBe(false);
+        expect(readClock()).toBe('00:00:30');
+        // Resumed from the PAUSED datum it now holds.
+        expect(
+            countdown.handleUpdating({
+                ...data,
+                dateTime: new Date(Date.now() + 45_000),
+            } as any),
+        ).toBe(true);
+        expect(readClock()).toBe('00:00:45');
+        await countdown.handleRemoving();
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    test('a stopwatch takes a pause in place, but not a different session', async () => {
+        const { genHtmlForegroundStopwatch } =
+            await import('./screenForegroundHelpers');
+        const animData = genAnimData();
+        const parent = document.createElement('div');
+        const data = {
+            id: 'a',
+            dateTime: new Date(Date.now()),
+            extraStyle: {},
+        };
+        const stopwatch = genHtmlForegroundStopwatch(data as any, animData);
+        await stopwatch.handleAdding(parent);
+        expect(
+            stopwatch.handleUpdating({
+                ...data,
+                pausedMillisecond: 90_000,
+            } as any),
+        ).toBe(true);
+        expect(parent.querySelector('#minute')!.textContent).toBe('01');
+        expect(parent.querySelector('#second')!.textContent).toBe('30');
+        expect(stopwatch.handleUpdating({ ...data, id: 'b' } as any)).toBe(
+            false,
+        );
+        expect(parent.querySelector('#second')!.textContent).toBe('30');
+        await stopwatch.handleRemoving();
+        expect(vi.getTimerCount()).toBe(0);
+    });
+});
+
+describe('Bible and long text views at their edges', () => {
+    test('no columns is an empty table, and a language with no data borrows the default one', async () => {
+        const bibleScreenHelper = (await import('./bibleScreenHelpers'))
+            .default;
+        const empty = await bibleScreenHelper.genHtmlFromLongTextColumns([], {
+            isLineSync: false,
+            isLongText: true,
+        });
+        expect(empty.tagName).toBe('TABLE');
+        expect(empty.childElementCount).toBe(0);
+
+        getLangDataAsyncMock.mockResolvedValueOnce(null as any);
+        const view = await bibleScreenHelper.genHtmlFromLongTextColumns(
+            [
+                {
+                    locale: 'xx-XX' as any,
+                    code: 'XX',
+                    title: 'Hymn',
+                    sections: [{ num: '1', text: 'Line', key: 'lt-1' }],
+                },
+            ],
+            { isLineSync: true, isLongText: true },
+        );
+        expect(
+            getLangDataAsyncMock.mock.calls.map(([locale]) => locale),
+        ).toEqual(['xx-XX', 'en-US']);
+        const span = view.querySelector('span.highlight') as HTMLElement;
+        expect(span.style.fontFamily).toContain('Font-en-US');
+    });
+
+    test('stacked, every language is in the same row under one header, each keeping its own look', async () => {
+        const { LongTextTableComp } = await import('./bibleScreenComps');
+        const genColumn = (
+            locale: string,
+            code: string,
+            title: string,
+            texts: string[],
+            nums: string[],
+        ) => {
+            return {
+                locale: locale as any,
+                code,
+                title,
+                langData: {
+                    genCss: () => '',
+                    fontFamily: `Font-${code}`,
+                } as any,
+                sections: texts.map((text, i) => {
+                    return { num: nums[i], text, key: `lt-${i + 1}` };
+                }),
+            };
+        };
+        const host = document.createElement('div');
+        host.innerHTML = renderToStaticMarkup(
+            <LongTextTableComp
+                columns={[
+                    genColumn(
+                        'en-US',
+                        'EN',
+                        'Still',
+                        ['Hide me', 'Cover me'],
+                        ['1', '2'],
+                    ),
+                    {
+                        ...genColumn('arc', 'AR', 'Psalm', ['shalom'], ['a']),
+                        style: { fontSizeScale: 0.8 },
+                    },
+                ]}
+                isLineSync
+                isLongText
+                isStacked
+            />,
+        );
+        // One header for all: every code, every title.
+        const headers = host.querySelectorAll('th');
+        expect(headers).toHaveLength(1);
+        expect(headers[0].querySelector('.bible-key')?.textContent).toBe(
+            'EN | AR',
+        );
+        expect(headers[0].querySelector('.title')?.textContent).toBe(
+            'Still | Psalm',
+        );
+        // A row is ONE cell: its numbers on a line, then each language.
+        const rows = Array.from(host.querySelectorAll('tbody tr'));
+        expect(rows).toHaveLength(2);
+        const [firstRow, secondRow] = rows;
+        expect(firstRow.querySelectorAll('td')).toHaveLength(1);
+        expect(firstRow.querySelector('.verse-number')?.textContent).toBe(
+            '1, a',
+        );
+        const lines = Array.from(
+            firstRow.querySelectorAll<HTMLElement>('td > span[class]'),
+        );
+        expect(lines.map((line) => line.className)).toEqual([
+            'screen-long-text-column-0',
+            'screen-long-text-column-1',
+        ]);
+        expect(lines[1].getAttribute('dir')).toBe('rtl');
+        expect(lines[1].style.textAlign).toBe('right');
+        // Every line carries the row's key, and no number of its own.
+        const spans = Array.from(
+            firstRow.querySelectorAll<HTMLElement>('span.highlight'),
+        );
+        expect(spans.map((span) => span.dataset.kjvVerseKey)).toEqual([
+            'lt-1',
+            'lt-1',
+        ]);
+        expect(spans.map((span) => span.textContent)).toEqual([
+            'Hide me',
+            'shalom',
+        ]);
+        expect(spans[1].style.fontFamily).toContain('Font-AR');
+        // A language that has ended draws nothing in the row.
+        expect(secondRow.querySelectorAll('span.highlight')).toHaveLength(1);
+        expect(secondRow.querySelector('.verse-number')?.textContent).toBe('2');
+        // Its size still reaches its lines.
+        expect(host.querySelector('style')?.textContent).toContain(
+            '.screen-long-text-column-1 { font-size: 0.8em; }',
+        );
+
+        // Hide Number: no number line, and no number on any line.
+        host.innerHTML = renderToStaticMarkup(
+            <LongTextTableComp
+                columns={[
+                    genColumn('en-US', 'EN', 'Still', ['Hide me'], ['1']),
+                    genColumn('arc', 'AR', 'Psalm', ['shalom'], ['a']),
+                ]}
+                isLineSync
+                isLongText
+                isStacked
+                isNumberHidden
+            />,
+        );
+        expect(host.querySelector('.verse-number')).toBeNull();
+        expect(host.querySelectorAll('span.highlight')).toHaveLength(2);
+        // Side by side too.
+        host.innerHTML = renderToStaticMarkup(
+            <LongTextTableComp
+                columns={[
+                    genColumn('en-US', 'EN', 'Still', ['Hide me'], ['1']),
+                    genColumn('arc', 'AR', 'Psalm', ['shalom'], ['a']),
+                ]}
+                isLineSync
+                isLongText
+                isNumberHidden
+            />,
+        );
+        expect(host.querySelectorAll('th')).toHaveLength(2);
+        expect(host.querySelector('.verse-number')).toBeNull();
+        expect(
+            Array.from(host.querySelectorAll('span.highlight')).map(
+                (span) => span.textContent,
+            ),
+        ).toEqual(['Hide me', 'shalom']);
+
+        // One language is not stacked: there is nothing to stack.
+        host.innerHTML = renderToStaticMarkup(
+            <LongTextTableComp
+                columns={[genColumn('en-US', 'EN', 'Still', ['a'], ['1'])]}
+                isLineSync
+                isLongText
+                isStacked
+            />,
+        );
+        expect(host.querySelector('tbody td')?.className).toBe(
+            'screen-long-text-column-0',
+        );
+    });
+
+    test('a right-to-left column reads right to left; a language with no font sets none', async () => {
+        const { LongTextTableComp } = await import('./bibleScreenComps');
+        const host = document.createElement('div');
+        host.innerHTML = renderToStaticMarkup(
+            <LongTextTableComp
+                columns={[
+                    {
+                        locale: 'arc' as any,
+                        code: 'AR',
+                        title: 'Psalm',
+                        langData: { genCss: () => '' } as any,
+                        sections: [{ num: '1', text: 'shalom', key: 'lt-1' }],
+                    },
+                    {
+                        locale: 'en-US' as any,
+                        code: 'EN',
+                        title: 'Psalm',
+                        langData: { genCss: () => '' } as any,
+                        sections: [{ num: '1', text: 'peace', key: 'lt-1' }],
+                    },
+                ]}
+                isLineSync={false}
+                isLongText
+            />,
+        );
+        const [rtlHeader, ltrHeader] = Array.from(
+            host.querySelectorAll<HTMLElement>('th'),
+        );
+        expect(rtlHeader.getAttribute('dir')).toBe('rtl');
+        expect(rtlHeader.style.textAlign).toBe('right');
+        expect(ltrHeader.hasAttribute('dir')).toBe(false);
+        expect(ltrHeader.style.textAlign).toBe('');
+        const [rtlCell, ltrCell] = Array.from(
+            host.querySelectorAll<HTMLElement>('tbody td'),
+        );
+        expect(rtlCell.getAttribute('dir')).toBe('rtl');
+        expect(ltrCell.hasAttribute('dir')).toBe(false);
+        expect(rtlHeader.style.fontFamily).toBe('');
+        expect(
+            (rtlCell.querySelector('span.highlight') as HTMLElement).style
+                .fontFamily,
+        ).toBe('');
+    });
+
+    test('a Bible name lights on hover, and a double click on the next-chapter button selects nothing', async () => {
+        const bibleScreenHelper = (await import('./bibleScreenHelpers'))
+            .default;
+        const bibleItem = {
+            bibleKey: 'KJV',
+            target: {
+                bookKey: 'GEN',
+                chapter: 1,
+                verseStart: 1,
+                verseEnd: 2,
+                chapterEnd: 3,
+            },
+            toTitle: vi.fn(async () => 'Genesis 1:1-3:2'),
+        } as any;
+        const [rendered] = await bibleScreenHelper.genBibleItemRenderList([
+            bibleItem,
+        ]);
+        const screenView =
+            await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
+                [rendered, { ...rendered, bibleKey: 'NIV' }],
+                true,
+                'Show the next chapter',
+            );
+        const onSelectKey = vi.fn();
+        bibleScreenHelper.registerHighlight(screenView, {
+            onSelectKey,
+            onBibleSelect: vi.fn(),
+        });
+        const bibleName = screenView.querySelector(
+            'div.bible-name[data-index="1"]',
+        ) as HTMLElement;
+        bibleName.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+        expect(bibleName.classList.contains('hover')).toBe(true);
+        expect(
+            screenView.querySelectorAll('div.bible-name.hover'),
+        ).toHaveLength(1);
+        bibleName.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+        expect(bibleName.classList.contains('hover')).toBe(false);
+
+        const onRootDoubleClick = vi.fn();
+        screenView.addEventListener('dblclick', onRootDoubleClick);
+        const moreButton = screenView.querySelector(
+            '[data-bible-more-chapter]',
+        ) as HTMLButtonElement;
+        moreButton.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+        expect(onRootDoubleClick).not.toHaveBeenCalled();
+        expect(onSelectKey).not.toHaveBeenCalled();
+        // With no handler of its own, a click still selects no verse.
+        moreButton.click();
+        expect(onSelectKey).not.toHaveBeenCalled();
     });
 });

@@ -1,0 +1,19 @@
+{
+    "nativeLanguageNames": {
+        "ไทย": "thai"
+    },
+    "languageWordPrefixes": ["ภาษา"],
+    "scriptLocales": [
+        {
+            "script": "Thai",
+            "locales": ["th-TH"],
+            "order": 100
+        }
+    ],
+    "ownScriptLanguages": {
+        "th": "Thai"
+    },
+    "languageAliases": {
+        "thailand": "thai"
+    }
+}

@@ -194,6 +194,12 @@ async function render(node: any) {
     });
 }
 
+async function settle() {
+    for (let i = 0; i < 20; i++) {
+        await Promise.resolve();
+    }
+}
+
 describe('bible-list bibleHelpers', () => {
     beforeEach(() => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -489,6 +495,47 @@ describe('bible-list bibleHelpers', () => {
         expect(bible.swapItems).toHaveBeenCalledWith(1, 2);
     });
 
+    test('openBibleItemContextMenu tells the user when the list file is gone by the time an edit is pressed', async () => {
+        const bible = {
+            filePath: '/b/x.bible',
+            duplicate: vi.fn(),
+            save: vi.fn(),
+            deleteBibleItem: vi.fn(),
+            swapItems: vi.fn(),
+            itemsLength: 3,
+        };
+        h.bibleFromFilePathMock.mockResolvedValueOnce(bible);
+        await openBibleItemContextMenu(
+            {},
+            {
+                filePath: '/b/x.bible',
+                bibleKey: 'kjv',
+                target: {},
+                id: 2,
+            } as any,
+            1,
+            null,
+            [],
+        );
+        const items = h.showAppContextMenuMock.mock.calls[0][1];
+        const byName = (name: string) =>
+            items.find((it: any) => it.menuElement === name);
+        // The menu stayed open while the file was removed.
+        h.bibleFromFilePathMock.mockResolvedValue(null);
+        for (const name of ['Duplicate', 'Move up', 'Move down']) {
+            await byName(name).onSelect();
+        }
+        expect(h.bibleFromFilePathMock).toHaveBeenLastCalledWith('/b/x.bible');
+        expect(h.showSimpleToastMock.mock.calls).toEqual([
+            ['Bible Item', 'Unable to get bible'],
+            ['Bible Item', 'Unable to get bible'],
+            ['Bible Item', 'Unable to get bible'],
+        ]);
+        expect(bible.duplicate).not.toHaveBeenCalled();
+        expect(bible.swapItems).not.toHaveBeenCalled();
+        expect(bible.save).not.toHaveBeenCalled();
+    });
+
     test('openBibleItemContextMenu omits move up at first and lookup when null', async () => {
         const bible = {
             duplicate: vi.fn(),
@@ -587,6 +634,17 @@ describe('bible-list bibleHelpers', () => {
         ).toBe(false);
     });
 
+    test('checkIsBibleItemOnScreen answers no without building a title when nothing is on a screen', async () => {
+        h.getAllScreenManagersMock.mockReturnValue([]);
+        const toTitle = vi.fn(async () => 'Match');
+        expect(
+            await checkIsBibleItemOnScreen([
+                { bibleKey: 'kjv', toTitle } as any,
+            ]),
+        ).toBe(false);
+        expect(toTitle).not.toHaveBeenCalled();
+    });
+
     test('useIsOnScreen resolves the on-screen state via effects', async () => {
         h.getAllScreenManagersMock.mockReturnValue([
             {
@@ -617,6 +675,78 @@ describe('bible-list bibleHelpers', () => {
             await h.captured.screenCb();
         });
         expect(value).toBe(true);
+    });
+
+    // Re-fed other verses while a screen event's check was still building
+    // titles: the answer is the OLD verses' state and must not land.
+    test('useIsOnScreen drops a screen-event answer for verses it no longer holds', async () => {
+        h.getAllScreenManagersMock.mockReturnValue([
+            {
+                screenLongTextManager: {
+                    screenViewData: {
+                        bibleItemData: {
+                            renderedList: [{ bibleKey: 'kjv', title: 'Match' }],
+                        },
+                    },
+                },
+            },
+        ]);
+        let resolveTitle: (title: string) => void = () => undefined;
+        const firstToTitle = vi
+            .fn()
+            .mockResolvedValueOnce('Match')
+            .mockReturnValueOnce(
+                new Promise<string>((resolve) => {
+                    resolveTitle = resolve;
+                }),
+            );
+        const firstItems = [
+            {
+                id: 1,
+                bibleKey: 'kjv',
+                target: { chapter: 1 },
+                toTitle: firstToTitle,
+            } as any,
+        ];
+        const secondItems = [
+            {
+                id: 2,
+                bibleKey: 'kjv',
+                target: { chapter: 2 },
+                toTitle: async () => 'Other',
+            } as any,
+        ];
+        let value: boolean | null = null;
+        function Probe({ items }: Readonly<{ items: any[] }>) {
+            value = useIsOnScreen(items);
+            return null;
+        }
+        await render(<Probe items={firstItems} />);
+        // An event answered for the verses still held lands.
+        await act(async () => {
+            h.captured.screenCb();
+            await settle();
+        });
+        expect(value).toBe(true);
+
+        const firstScreenCb = h.captured.screenCb;
+        await act(async () => {
+            firstScreenCb();
+            await settle();
+        });
+        await act(async () => {
+            root?.render(<Probe items={secondItems} />);
+        });
+        await act(async () => {
+            await h.captured.effectCb();
+        });
+        expect(value).toBe(false);
+        await act(async () => {
+            resolveTitle('Match');
+            await settle();
+        });
+        expect(firstToTitle).toHaveBeenCalledTimes(2);
+        expect(value).toBe(false);
     });
 
     test('exportToWordDocument returns early with no items', async () => {
@@ -717,6 +847,29 @@ describe('bible-list bibleHelpers', () => {
         await exportToWordDocument(items);
         expect(h.getFileBase64Mock).not.toHaveBeenCalled();
         expect(h.writeFileFromBase64SyncMock).not.toHaveBeenCalled();
+    });
+
+    test('exportToWordDocument reports a font it cannot read and still reveals the document', async () => {
+        h.getLangDataAsyncMock.mockResolvedValue({
+            getFontFamilyFiles: () => ['/fonts/a.ttf'],
+        });
+        h.showAppConfirmMock.mockResolvedValue(true);
+        h.fsCheckFileExistMock.mockResolvedValue(false);
+        const readError = new Error('read fail');
+        h.getFileBase64Mock.mockRejectedValue(readError);
+        await exportToWordDocument([
+            {
+                bibleKey: 'kjv',
+                toText: async () => 'body',
+                toTitleWithBibleKey: async () => 'title',
+            } as any,
+        ]);
+        expect(h.getFileBase64Mock).toHaveBeenCalledWith('/fonts/a.ttf');
+        expect(h.handleErrorMock).toHaveBeenCalledWith(readError);
+        expect(h.writeFileFromBase64SyncMock).not.toHaveBeenCalled();
+        expect(h.showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/downloads/owa-bible-verses.docx',
+        );
     });
 
     test('improveBibleItemTitleOnHover lazily loads the verse text', async () => {

@@ -126,7 +126,8 @@ vi.mock('../location-name-lookup/bibleVerseHelpers', () => ({
 vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LANG_CODE: 'en',
     DEFAULT_LOCALE: 'en-US',
-    supportedLocales: ['en-US', 'km-KH', 'fr-FR'],
+    ensureLangPlugins: async () => [],
+    getSupportedLocales: () => ['en-US', 'km-KH', 'fr-FR'],
     getLocalBibleCrossRef: mocks.crossRef,
 }));
 vi.mock('../location-name-lookup/lookupDataHelpers', () => ({
@@ -1408,89 +1409,6 @@ describe('a person or a place', () => {
         expect(result).not.toHaveProperty('quoted');
         expect(result).not.toHaveProperty('bible');
         expect(mocks.copy).not.toHaveBeenCalled();
-    });
-
-    test('in another language a record’s references are titled by its Bible, a failed title kept as written', async () => {
-        state.lookupBibleKey = 'KH';
-        state.langCode = 'km';
-        const eden = {
-            id: 'eden',
-            name: 'អេដែន',
-            kjvName: 'Eden',
-            oldName: null,
-            title: 'សួនក្នុង [Genesis](book-key://GEN)',
-            description:
-                'មើល [Genesis 2](chapter-key://GEN 2) និង ' +
-                '[Ezekiel 28:13](verse-key://EZK 28:13)',
-            type: 'region',
-            relatedLocations: [],
-            modernIdentification: null,
-            coordinates: null,
-            verses: ['GEN 2:8'],
-            links: [],
-            wikipedia: null,
-            uncertainty: false,
-        };
-        mocks.acquire.mockResolvedValue(
-            genManagers({
-                locationsLookupManager: {
-                    getRecordById: vi.fn((id: string) =>
-                        id === 'eden' ? eden : null,
-                    ),
-                },
-            }),
-        );
-        mocks.referenceTitle.mockImplementation(
-            async (_bibleKey: string, kind: string, target: string) => {
-                if (target === 'EZK 28:13') {
-                    throw new Error('no such book in this Bible');
-                }
-                return kind === 'book' ? 'លោកុប្បត្តិ' : 'លោកុប្បត្តិ ២';
-            },
-        );
-        const result: any = await handleAgentLookupRequest({
-            kind: 'location',
-            id: 'eden',
-        });
-        expect(result).toMatchObject({
-            kind: 'location',
-            name: 'អេដែន',
-            kjvName: 'Eden',
-            lang: 'km',
-            bible: 'KH',
-            summary: 'សួនក្នុង លោកុប្បត្តិ',
-            description: 'មើល លោកុប្បត្តិ ២ និង Ezekiel 28:13',
-        });
-        expect(mocks.referenceTitle).toHaveBeenCalledWith('KH', 'book', 'GEN');
-        expect(mocks.referenceTitle).toHaveBeenCalledWith(
-            'KH',
-            'chapter',
-            'GEN 2',
-        );
-    });
-
-    test('a translated record with no reference in its words is left as it is', async () => {
-        state.langCode = 'km';
-        const ruth = genPerson('ruth', 'រស់', {
-            title: 'ស្ត្រីសាសន៍ម៉ូអាប់',
-            gender: 'female',
-        });
-        mocks.acquire.mockResolvedValue(
-            genManagers({
-                namesLookupManager: {
-                    getRecordById: vi.fn(() => ruth),
-                },
-            }),
-        );
-        const result: any = await handleAgentLookupRequest({
-            kind: 'name',
-            id: 'ruth',
-        });
-        expect(result).toMatchObject({
-            summary: 'ស្ត្រីសាសន៍ម៉ូអាប់',
-            lang: 'km',
-        });
-        expect(mocks.referenceTitle).not.toHaveBeenCalled();
     });
 
     test('a search in a language the lookup does not have names the ones it has', async () => {

@@ -138,23 +138,36 @@ export async function getViewerCameraStream(cameraId: string) {
     const { stream } = sink;
     // A delta frame before the first key frame has nothing to build on.
     let isWaitingForKey = true;
-    const decoder = new VideoDecoder({
-        output: (frame) => {
-            sink.write(frame);
-            setLive(watch, true);
-        },
-        error: () => {
-            isWaitingForKey = true;
-        },
-    });
-    decoder.configure({ codec: 'vp8', optimizeForLatency: true });
+    // A decoder that reports an error has already closed itself for good
+    // (WebCodecs), so the box hides and a fresh one waits for the next key
+    // frame. Kept, the closed one dropped every frame after it while the box
+    // went on showing its last picture -- a frozen face (2026-11-03).
+    const createDecoder = () => {
+        const newDecoder = new VideoDecoder({
+            output: (frame) => {
+                sink.write(frame);
+                setLive(watch, true);
+            },
+            error: () => {
+                isWaitingForKey = true;
+                setLive(watch, false);
+                // Not for a camera already let go: nothing would close it.
+                if (watches.get(stream) === watch) {
+                    watch.decoder = createDecoder();
+                }
+            },
+        });
+        newDecoder.configure({ codec: 'vp8', optimizeForLatency: true });
+        return newDecoder;
+    };
     const watch: WatchType = {
         cameraId,
-        decoder,
+        decoder: createDecoder(),
         sink,
         isLive: false,
         liveListeners: new Set(),
         onFrame: (_event, data) => {
+            const { decoder } = watch;
             if (
                 data?.cameraId !== cameraId ||
                 !(data.data instanceof Uint8Array) ||

@@ -1,0 +1,12 @@
+{
+    "lt": {
+        "name": "Lithuanian",
+        "nativeName": "Lietuvių",
+        "script": "Latin",
+        "words": "ir ar bet ne nėra yra buvo esu esi aš tu jis ji mes jūs jie jos mano tavo jo mūsų kaip ką kas kur kodėl kada kuris kuri su iš į apie be per galiu gali noriu turiu taip pat jau dar labai daugiau šis ši tai čia ten prašau ačiū",
+        "letters": "ąčęėįšųūž",
+        "yes": ["taip", "taip, prašau"],
+        "no": ["ne", "ne, ačiū"],
+        "order": 19
+    }
+}

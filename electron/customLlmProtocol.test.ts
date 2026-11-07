@@ -890,9 +890,9 @@ describe('the shared LLM registry file', () => {
                     ...entry,
                     note: {
                         en: ' On the church computer ',
-                        km: 'នៅលើកុំព្យូទ័រព្រះវិហារ',
+                        xx: 'On the church computer (xx) ✝',
                         'not a code': 'dropped',
-                        fr: 7,
+                        yy: 7,
                     },
                     models: [
                         {
@@ -908,7 +908,7 @@ describe('the shared LLM registry file', () => {
         const [server] = registry.servers;
         expect(server.note).toEqual({
             en: 'On the church computer',
-            km: 'នៅលើកុំព្យូទ័រព្រះវិហារ',
+            xx: 'On the church computer (xx) ✝',
         });
         expect(server.models.map((row) => row.note)).toEqual([
             { '': 'Slow, but it saves us the cost of usage.' },
@@ -932,15 +932,15 @@ describe('the shared LLM registry file', () => {
     });
 
     it('picks the note in the window’s language, then a fallback', () => {
-        const note = { en: 'Slow', km: 'យឺត', pt: 'Lento' };
-        expect(pickRegistryNote(note, 'km')).toBe('យឺត');
-        expect(pickRegistryNote(note, 'pt-BR')).toBe('Lento');
-        expect(pickRegistryNote(note, 'fr')).toBe('Slow');
-        expect(pickRegistryNote({ '': 'Plain', km: 'យឺត' }, 'fr')).toBe(
+        const note = { en: 'Slow', xx: 'Slow (xx)', yy: 'Slow (yy)' };
+        expect(pickRegistryNote(note, 'xx')).toBe('Slow (xx)');
+        expect(pickRegistryNote(note, 'yy-BR')).toBe('Slow (yy)');
+        expect(pickRegistryNote(note, 'zz')).toBe('Slow');
+        expect(pickRegistryNote({ '': 'Plain', xx: 'Slow (xx)' }, 'zz')).toBe(
             'Plain',
         );
-        expect(pickRegistryNote({ de: 'Langsam' }, 'fr')).toBe('Langsam');
-        expect(pickRegistryNote(undefined, 'km')).toBe('');
+        expect(pickRegistryNote({ ww: 'Slow (ww)' }, 'zz')).toBe('Slow (ww)');
+        expect(pickRegistryNote(undefined, 'xx')).toBe('');
     });
 
     it('hands a window the notes with the server’s host taken out', () => {

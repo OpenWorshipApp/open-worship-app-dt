@@ -1183,6 +1183,128 @@ describe('bible-reader LookupBibleItemController', () => {
             await flush();
         });
     });
+
+    test('a saved selection no view carries selects the first view', () => {
+        const ctl = genController();
+        const [first] = ctl.straightBibleItems;
+        h.settingStore.set(ctl.toSettingName('-selected-bible-item'), '999');
+        expect(ctl.checkIsBibleItemSelected(first)).toBe(true);
+        expect(ctl.getSavedBibleId()).toBe(first.id);
+    });
+
+    test('at the last chapter, jumping on says there is no next chapter', async () => {
+        vi.spyOn(FakeReadItem.prototype, 'getJumpingChapter').mockResolvedValue(
+            null,
+        );
+        const ctl = genController();
+        await settleFirstSelection(ctl);
+        const inputText = ctl.inputText;
+        await ctl.tryJumpingChapter(true);
+        expect(h.showSimpleToastMock).toHaveBeenCalledWith(
+            'Try Next Chapter',
+            'Unable to find next chapter',
+        );
+        // The box stays on the passage it holds.
+        expect(ctl.inputText).toBe(inputText);
+        await flush();
+    });
+
+    test('the window reaches the lookup registered last, until that one goes', () => {
+        const first = genController('-a');
+        const second = genController('-b');
+        const unregisterFirst = registerLookupBibleItemController(first);
+        expect(getCurrentLookupBibleItemController()).toBe(first);
+        const unregisterSecond = registerLookupBibleItemController(second);
+        expect(getCurrentLookupBibleItemController()).toBe(second);
+        // A lookup going away takes back only its own registration.
+        unregisterFirst();
+        expect(getCurrentLookupBibleItemController()).toBe(second);
+        unregisterSecond();
+        expect(getCurrentLookupBibleItemController()).toBeNull();
+    });
+
+    describe('useEditingResult', () => {
+        let container: HTMLDivElement;
+        let root: Root | null = null;
+        beforeEach(() => {
+            container = document.createElement('div');
+            document.body.appendChild(container);
+        });
+        afterEach(async () => {
+            if (root) {
+                await act(async () => root?.unmount());
+                root = null;
+            }
+            container.remove();
+        });
+
+        test("a view under the lookup shows the selected view's passage, any other view the result as given", async () => {
+            const ctl = genController();
+            await settleFirstSelection(ctl);
+            ctl.inputText = 'Old Text';
+            await flush();
+            const other = ctl.appendBibleItem(
+                new FakeReadItem({
+                    id: 779,
+                    bibleKey: 'NIV',
+                    target: {
+                        bookKey: 'JHN',
+                        chapter: 3,
+                        verseStart: 16,
+                        verseEnd: 16,
+                    },
+                }) as any,
+            );
+            ctl.selectedBibleItem = other;
+            const staleResult = {
+                result: {
+                    bibleItem: h.makeFound('KJV'),
+                    bookKey: 'GEN',
+                    chapter: 1,
+                },
+                bibleKey: 'KJV',
+                inputText: 'Old Text',
+                oldInputText: 'Old Text',
+                time: 0,
+            } as any;
+            let seen: any = null;
+            function ProbeComp() {
+                seen = useEditingResult();
+                return null;
+            }
+            const renderUnder = async (viewController: any) => {
+                await act(async () => {
+                    root ??= createRoot(container);
+                    root.render(
+                        <BibleItemsViewControllerContext.Provider
+                            value={viewController}
+                        >
+                            <EditingResultContext.Provider value={staleResult}>
+                                <ProbeComp />
+                            </EditingResultContext.Provider>
+                        </BibleItemsViewControllerContext.Provider>,
+                    );
+                });
+            };
+
+            await renderUnder(ctl);
+            expect(seen).not.toBe(staleResult);
+            expect(seen.bibleKey).toBe('NIV');
+            expect(seen.result.bibleItem.id).toBe(other.id);
+            // What the lookup found is shown, never changed in place.
+            expect(() => {
+                seen.result.bibleItem.bibleKey = 'KJV';
+            }).toThrow('Read-only bibleKey');
+            expect(() => {
+                seen.result.bibleItem.target = { chapter: 2 };
+            }).toThrow('Read-only target');
+            expect(seen.result.bibleItem.bibleKey).toBe('NIV');
+
+            await renderUnder(new BibleItemsViewController('plain'));
+            expect(seen).toBe(staleResult);
+            await flush();
+        });
+    });
 });
 
 describe('LookupBibleItemController: the window registry and the shown result', () => {

@@ -27,6 +27,17 @@ window as a whole — tabs, pickers, its language, the caution — is in
   (`SuggestRowType` is the one shape questions and commands share; a command
   with no argument asks on the press, one with an argument fills the box;
   Tab fills either — see _Tab finishes the word_ above).
+  **A `/` button ends the attach row** (2026-11-05, the user's ask with the
+  row under the box circled: _add an icon of `/` somewhere to click then add
+  `/` to input, so user know how `/` for. dom of the icon should explain what
+  it is for_; `.chat-start-command`, `bi-slash-square`, `aria-label` **List
+  every command**, a tooltip saying what the press does).
+  `toCommandStartedDraft` decides the box: empty → `/` and the list opens;
+  already a command → unchanged, the list brought back if Escape put it
+  away; holding words → `/ ` IN FRONT of them, caret after the `/`, no list
+  (a row taken would fill the box over the words; typing `btw` there makes
+  `/btw <words>`). It goes through `handleTypingQuestion`, so the list opens
+  exactly as for a typed `/`.
   Three rules: a command reports what CHANGED (the screens are read back before
   AND after the press — `EC-76`'s lesson); typing it IS the consent, so the
   offered-never-done rule for the congregation's screen does not apply, but a
@@ -82,11 +93,20 @@ window as a whole — tabs, pickers, its language, the caution — is in
   to say _type `/btw` before it_ when asked something outside the app or how
   to ask one, and a 💡 tip says the same. **Commands are offered where they
   work** (`COMMAND_PAGE_MAP`, `checkIsCommandOnPage`): the Presenter's own —
-  screen show / hide / clears, `/selected`, `/run`, `/next`, `/previous`,
+  `/screen` (since 2026-11-05, the user's picture of it offered under Bible
+  Reader: _`/screen` should be available when working presenter page only_;
+  only the Presenter knows what a screen holds), screen show / hide / clears,
+  `/selected`, `/run`, `/next`, `/previous`,
   `/slide`, `/verse`, `/countdown`, `/marquee`, `/marquee-top` — are listed only while the tab asks
-  about the Presenter and are refused elsewhere with **Go to the Presenter**;
-  `/commands` names them on one line there; the rest work everywhere (a
-  Reader command would be filed `['reader', 'presenter']`). **`/slide <n |
+  about the Presenter and are refused elsewhere with **Go to the Presenter**,
+  no tool called;
+  `/commands` names them on one line there, its one button **Go to the
+  Presenter** (no screen button that would only be refused); the rest —
+  the chat window's own, `/find`, `/goto`, `/here`, `/help`, `/lyric` —
+  work everywhere (a
+  Reader command would be filed `['reader', 'presenter']`). A NEW command
+  that reads or acts on one page's state gets its row in that map in the
+  same change. **`/slide <n |
   words>`** presents one slide of the selected song by its card's own
   `find` (`presentSlideAndReport`, shared with `/next`); and **on a custom
   server two asks in words skip the model** (EC-206, EC-210 — a 4B model

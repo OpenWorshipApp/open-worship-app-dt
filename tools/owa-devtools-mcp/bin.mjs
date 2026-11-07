@@ -17,7 +17,8 @@ import net from 'node:net';
 
 import { StdioServerTransport } from 'chrome-devtools-mcp/build/src/third_party/index.js';
 
-import { connectToCdp } from './discovery.mjs';
+import { connectToCdp, findDrivenInstance } from './discovery.mjs';
+import { configureLangPacks } from './langPacks.mjs';
 import { createOwaMcpServer } from './server.mjs';
 
 process.title = 'owa-devtools-mcp';
@@ -73,6 +74,14 @@ async function startBridge(listenPort) {
 if (argv.includes('--bridge')) {
     await startBridge(Number(readFlagValue('listen') ?? 0));
 } else {
+    // A language's dictionary, corpus and manual are read from the folders
+    // the app being driven has INSTALLED (its instance file names them,
+    // `langDirs`), the same ones its own in-app door reads; the checkout's
+    // source packages only when no app says (`langPacks.mjs`).
+    configureLangPacks(() => {
+        const langDirs = findDrivenInstance()?.langDirs;
+        return Array.isArray(langDirs) ? langDirs : null;
+    });
     const { server } = await createOwaMcpServer({
         argv: argv.filter((arg) => {
             return arg !== '--bridge' && !arg.startsWith('--listen=');

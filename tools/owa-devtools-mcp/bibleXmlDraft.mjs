@@ -558,8 +558,18 @@ export async function downloadBibleXml({
         stream.end(resolve);
       };
       pump().catch((error) => {
+        // Rejected only once the file is shut. Destroyed before its open had
+        // finished, the stream still creates the file -- after the `rm`
+        // below had looked for it, which left the `.part` behind on a
+        // loaded machine (2026-11-03).
+        if (stream.closed) {
+          reject(error);
+          return;
+        }
+        stream.once('close', () => {
+          reject(error);
+        });
         stream.destroy();
-        reject(error);
       });
     });
     await rename(partPath, xmlPath);

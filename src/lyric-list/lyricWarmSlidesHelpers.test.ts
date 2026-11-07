@@ -113,6 +113,16 @@ describe('lyricWarmSlidesHelpers', () => {
         releaseSecond();
     });
 
+    // An edit to a song no pane shows still fires the drop; it must not create
+    // an entry (that would hold the song for good) nor throw.
+    test('dropping the decks of a song nobody holds creates nothing', () => {
+        const filePath = '/edited-unheld.owl';
+        expect(() => dropLyricWarmDecks(filePath)).not.toThrow();
+        expect(getLyricWarmGeneration(filePath)).toBeNull();
+        setLyricWarmDeck(filePath, 0, 'k', DECK, null);
+        expect(getLyricWarmDeck(filePath, 0, 'k')).toBeNull();
+    });
+
     test('the held OpenLyric wins over a document’s own', () => {
         const filePath = '/live.owl';
         const stale = { name: 'stale' } as any;

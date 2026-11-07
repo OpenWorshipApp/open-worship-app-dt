@@ -28,8 +28,8 @@ import { getLanguageTitle, type LocaleType } from './langHelpers';
 
 describe('getLanguageTitle', () => {
     test('a language in the table keeps its own name', () => {
-        expect(getLanguageTitle({ locale: 'fr-FR' }, true)).toBe(
-            'French (Français) <fr-FR>',
+        expect(getLanguageTitle({ locale: 'af-ZA' }, true)).toBe(
+            'Afrikaans <af-ZA>',
         );
     });
 

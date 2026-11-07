@@ -16,8 +16,9 @@ const CODE_ERROR_TYPE_LIST = [
  * key that is missing, a server that is down come as sentences written for
  * the person (`describeLlmError`) and are said after "I could not answer
  * that:". A bug in this window's own code is not one: seen 2026-10-17 as
- * _ខ្ញុំមិនអាចឆ្លើយសំណួរនោះបានទេ៖ DO_ON_ASK_TOOL_SET is not defined_ under
- * 26 Khmer answers, a half-saved edit hot-reloaded into a dev window (EC-324).
+ * the Khmer for "I could not answer that:" followed by
+ * _DO_ON_ASK_TOOL_SET is not defined_ under 26 Khmer answers, a half-saved
+ * edit hot-reloaded into a dev window (EC-324).
  * That goes to the log, and the person reads what to do.
  */
 export function describeAnswerError(error: unknown): string {

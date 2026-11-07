@@ -11,12 +11,16 @@ import {
   toEnglishOnly,
   toPageParts,
 } from './help.mjs';
+import { configureLangPacks } from './langPacks.mjs';
 
 // `searchHelp` decides which page answers a volunteer's question, so it is
 // graded here against a fixture corpus rather than the real one -- the real one
 // is rebuilt whenever the manual changes, and a ranking test that moves with it
 // grades nothing. The pages below carry only the words each assertion needs.
 let knowledgeDirPath = '';
+// An installed made-up language: its manual and its dictionary are in its
+// own folder, never in the knowledge bundle.
+let packDirPath = '';
 let previousDirPath;
 
 function writeEntry(entry, body) {
@@ -39,6 +43,8 @@ beforeAll(() => {
         kind: 'manual',
         surface: 'presenter',
         file: 'manual/w-10.md',
+        // What a translation of it must say it was made from.
+        hash: 'hash-of-W-10',
       },
       '# Control what the audience sees\nShow or hide the screen, or press F5.\nThe Clear buttons empty a layer. The display button picks which display.\n',
     ),
@@ -109,11 +115,56 @@ beforeAll(() => {
     path.join(knowledgeDirPath, 'index.json'),
     JSON.stringify({ generatedAt: '', entries }),
   );
+  // A made-up language with its own page and its own word for one button,
+  // so a translated page's button names can be told apart from the window's.
+  // Installed as its plugin lays it out: `manual/` with its index, `tran.json`.
+  packDirPath = mkdtempSync(path.join(tmpdir(), 'owa-pack-xx-'));
+  const translatedText =
+    '# [xx] Control what the audience sees\n[xx] Press [en:tran:Clear All] to empty every layer.\n';
+  mkdirSync(path.join(packDirPath, 'manual'), { recursive: true });
+  writeFileSync(path.join(packDirPath, 'manual', 'w-10.md'), translatedText);
+  writeFileSync(
+    path.join(packDirPath, 'manual', 'index.json'),
+    JSON.stringify({
+      entries: [
+        {
+          id: 'W-10',
+          title: '[xx] Control what the audience sees',
+          section: 'Presenting content',
+          file: 'w-10.md',
+          translatedFrom: 'hash-of-W-10',
+          headings: '',
+          searchText: translatedText,
+        },
+      ],
+    }),
+  );
+  writeFileSync(
+    path.join(packDirPath, 'meta.json'),
+    JSON.stringify({ langCode: 'xx', name: 'Test', nativeName: 'Test' }),
+  );
+  writeFileSync(
+    path.join(packDirPath, 'tran.json'),
+    JSON.stringify({ 'clear all': '[xx] Empty everything' }),
+  );
+  // The bundle is English alone.
+  writeFileSync(
+    path.join(knowledgeDirPath, 'tran.json'),
+    JSON.stringify({
+      languages: [{ code: 'en', name: 'English', nativeName: 'English' }],
+      dictionaries: {},
+    }),
+  );
+  configureLangPacks(() => {
+    return [packDirPath];
+  });
   previousDirPath = process.env.OWA_KNOWLEDGE_DIR;
   process.env.OWA_KNOWLEDGE_DIR = knowledgeDirPath;
 });
 
 afterAll(() => {
+  configureLangPacks(null);
+  rmSync(packDirPath, { recursive: true, force: true });
   if (previousDirPath === undefined) {
     delete process.env.OWA_KNOWLEDGE_DIR;
   } else {
@@ -265,6 +316,25 @@ describe('readHelpPage', () => {
     ).toBe(whole.body);
   });
 
+  // A question in a language with a page of its own, asked in a window
+  // shown in another, rode with that page -- and its button names in the
+  // PAGE's language, a control no screen of that window is called
+  // (2026-11-04, the robot run: a Khmer question in an English window was
+  // answered with the slider by its Khmer name).
+  it('names the buttons of a translated page as the window shows them', () => {
+    const inEnglishWindow = readHelpPage('W-10@xx', 'en');
+    expect(inEnglishWindow.title).toBe('[xx] Control what the audience sees');
+    expect(inEnglishWindow.body).toContain('Press Clear All to empty');
+    expect(inEnglishWindow.body).not.toContain('Empty everything');
+    expect(readHelpPage('W-10@xx', 'xx').body).toContain(
+      'Press [xx] Empty everything to empty',
+    );
+    // With no window named, the page's own language names them.
+    expect(readHelpPage('W-10@xx').body).toContain(
+      'Press [xx] Empty everything to empty',
+    );
+  });
+
   it('caps a builder note so one lookup cannot eat the conversation', () => {
     // The measured worst case was 208 KB (~52 000 tokens) returned as one
     // tool result, which then rides every remaining round of the loop on
@@ -306,17 +376,6 @@ describe('toPageParts', () => {
   });
 });
 
-describe('toEnglishOnly', () => {
-  it('takes the Khmer twin and whatever introduced it', () => {
-    expect(toEnglishOnly('Bible Lookup / ស្វែងរក in the header')).toBe(
-      'Bible Lookup in the header',
-    );
-    expect(toEnglishOnly('press Clear All (លុបទាំងអស់)')).toBe(
-      'press Clear All',
-    );
-  });
-});
-
 // Two bolds side by side are two bolds. Only a pair left EMPTY (a label that
 // was Khmer and nothing else) goes: W-53 read `**Take it down.Hide Long
 // Text**` in every language.
@@ -325,39 +384,9 @@ describe('toEnglishOnly and neighbouring bolds', () => {
     const text = '**Take it down.** **Hide Long Text** clears it.';
     expect(toEnglishOnly(text)).toBe(text);
   });
-
-  it('takes away a bold that held only Khmer', () => {
-    expect(toEnglishOnly('Press **ស្វែងរក** to look it up.')).toBe(
-      'Press to look it up.',
-    );
-  });
-});
-
-// A question typed in Khmer is searched by the English words it names
-// (`queryLanguage.mjs`): it used to be cut into fragments at every vowel
-// sign and found nothing.
-describe('a question asked in Khmer', () => {
-  it('finds the page its words are about', () => {
-    // "How do I read the Bible?"
-    const hits = searchHelp('តើខ្ញុំអានព្រះគម្ពីរដោយរបៀបណា?', 3, 'manual');
-    expect(hits[0]?.id).toBe('W-11');
-  });
-
-  it('a question whose words the app does not know finds nothing', () => {
-    // "Hello" -- no page is about it, and its letters are no evidence.
-    expect(searchHelp('សួស្តី', 3, 'manual')).toEqual([]);
-  });
 });
 
 describe('the Khmer twin the manual writes beside every label', () => {
-  it('takes the whole bracket, not only the Khmer inside it', () => {
-    // The card read "...and choose Download From URL (URL)." because the
-    // bracket held a Latin word too, so only its Khmer was stripped.
-    expect(toEnglishOnly('choose **Download From URL** (ទាញយកពី URL).')).toBe(
-      'choose **Download From URL**.',
-    );
-  });
-
   it('leaves a bracket that is all English alone', () => {
     const text = 'Click **Add URL** (or right-click the empty list).';
     expect(toEnglishOnly(text)).toBe(text);

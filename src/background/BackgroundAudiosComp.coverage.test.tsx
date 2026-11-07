@@ -12,8 +12,17 @@ const { state, mocks } = vi.hoisted(() => ({
         mediaProps: null as any,
         posterDataUrl: null as string | null,
         sessionOptions: null as any,
+        downloadMenu: null as any,
+        toastUpdates: [] as [string, string][],
+        resizeProps: null as any,
+        varyProps: null as any,
     },
     mocks: {
+        downloadVideoOrAudio: vi.fn(),
+        fsMove: vi.fn(),
+        handleError: vi.fn(),
+        showProgressBar: vi.fn(),
+        hideProgressBar: vi.fn(),
         repeatSetter: vi.fn(),
         playMediaElement: vi.fn(),
         releaseMediaElementWhenDetached: vi.fn(),
@@ -24,8 +33,11 @@ const { state, mocks } = vi.hoisted(() => ({
 
 vi.mock('../helper/FileSource', () => ({
     default: {
-        getInstance: (_dirPathOrFilePath: string, fileName?: string) => {
-            const filePath = fileName ?? _dirPathOrFilePath;
+        getInstance: (dirPathOrFilePath: string, fileName?: string) => {
+            const filePath =
+                fileName === undefined
+                    ? dirPathOrFilePath
+                    : `${dirPathOrFilePath}/${fileName}`;
             return {
                 src: `file:///${filePath}`,
                 name: filePath.split(/[\\/]/).at(-1),
@@ -82,9 +94,6 @@ vi.mock('../helper/appHooks', () => ({
 vi.mock('../helper/helpers', () => ({
     pressElementLikeButton: vi.fn(),
 }));
-vi.mock('../helper/extra-bin/extraBinErrors', () => ({
-    checkIsExtraBinMissingError: () => false,
-}));
 vi.mock('../server/appProvider', () => ({
     default: { systemUtils: { generateMD5: () => 'track-hash' } },
 }));
@@ -93,11 +102,11 @@ vi.mock('../server/fileHelpers', () => ({
         state.fileMetaType === null
             ? null
             : { appMimetype: { mimetypeName: state.fileMetaType } },
-    fsMove: vi.fn(),
+    fsMove: mocks.fsMove,
     getTempPath: () => 'C:/temp',
 }));
 vi.mock('../server/appHelpers', () => ({
-    downloadVideoOrAudio: vi.fn(),
+    downloadVideoOrAudio: mocks.downloadVideoOrAudio,
 }));
 vi.mock('../server/updatingAppHelpers', () => ({
     checkIsVersionOutdated: () => false,
@@ -107,23 +116,49 @@ vi.mock('../others/labelIconHelpers', () => ({
     toWidgetLabel: (label: string) => ({ widgetName: label }),
 }));
 vi.mock('../toast/toastHelpers', () => ({
-    createSimpleToastUpdater: () => vi.fn(),
+    createSimpleToastUpdater: () => (title: string, message: string) => {
+        state.toastUpdates.push([title, message]);
+    },
     showSimpleToast: mocks.showSimpleToast,
 }));
-vi.mock('../helper/errorHelpers', () => ({ handleError: vi.fn() }));
+vi.mock('../helper/errorHelpers', () => ({ handleError: mocks.handleError }));
 vi.mock('../progress-bar/progressBarHelpers', () => ({
-    showProgressBar: vi.fn(),
-    hideProgressBar: vi.fn(),
+    showProgressBar: mocks.showProgressBar,
+    hideProgressBar: mocks.hideProgressBar,
 }));
 vi.mock('./downloadHelper', () => ({
-    genDownloadContextMenuItems: () => [],
-    toDownloadFailureMessage: () => 'Download failed',
+    genDownloadContextMenuItems: (
+        options: unknown,
+        dirSource: unknown,
+        download: (url: string) => Promise<void>,
+        sharedKey: string,
+    ) => {
+        state.downloadMenu = { options, dirSource, download, sharedKey };
+        return [{ menuElement: 'download menu' }];
+    },
+    toDownloadFailureMessage: (prefix: string, error: any) =>
+        `${prefix}: ${error.message}`,
 }));
 vi.mock('./VaryAppDocumentAudiosComp', () => ({
-    default: () => <div>Document audio</div>,
+    default: (props: any) => {
+        state.varyProps = props;
+        return <div>Document audio</div>;
+    },
 }));
+// Draws each pane the way `renderResizerChildren` does for a `render` child.
 vi.mock('../resize-actor/ResizeActorComp', () => ({
-    default: () => <div>Resize actor</div>,
+    default: (props: any) => {
+        state.resizeProps = props;
+        return (
+            <div>
+                {props.dataInput.map((item: any) => (
+                    <div key={item.key} data-pane={item.key}>
+                        {item.children.render()}
+                    </div>
+                ))}
+            </div>
+        );
+    },
 }));
 vi.mock('./backgroundHelpers', () => ({
     useAppDocumentAudioData: () => state.appDocumentAudioData,
@@ -162,6 +197,10 @@ beforeEach(() => {
     state.mediaProps = null;
     state.posterDataUrl = null;
     state.sessionOptions = null;
+    state.downloadMenu = null;
+    state.toastUpdates = [];
+    state.resizeProps = null;
+    state.varyProps = null;
     mocks.repeatSetter.mockClear();
     mocks.playMediaElement.mockClear();
     mocks.releaseMediaElementWhenDetached.mockClear();
@@ -344,4 +383,157 @@ test('view-mode buttons expose and change the active mode', async () => {
         (host.querySelector('[title="List View"]') as HTMLButtonElement)
             .disabled,
     ).toBe(true);
+});
+
+async function openDownloadMenu() {
+    await act(async () => root.render(<BackgroundAudiosComp />));
+    const items = await state.mediaProps.genContextMenuItems({
+        dirPath: '/data/audios',
+    });
+    expect(items).toEqual([{ menuElement: 'download menu' }]);
+    expect(state.downloadMenu).toMatchObject({
+        options: { title: 'Download From URL', subTitle: 'Audio URL:' },
+        dirSource: { dirPath: '/data/audios' },
+        sharedKey: 'audios',
+    });
+    return state.downloadMenu.download as (url: string) => Promise<void>;
+}
+
+test('a URL download is staged in the temp folder, then moved beside the audios without overwriting', async () => {
+    const url = 'https://example.com/watch?v=1';
+    mocks.downloadVideoOrAudio.mockImplementation(
+        async (_url: string, _dir: string, _isVideo: boolean, onStart) => {
+            expect(state.toastUpdates).toEqual([]);
+            onStart();
+            return { filePath: 'C:/temp/Song.mp3', fileFullName: 'Song.mp3' };
+        },
+    );
+    mocks.fsMove.mockResolvedValue(undefined);
+    const download = await openDownloadMenu();
+
+    await download(url);
+    expect(mocks.downloadVideoOrAudio).toHaveBeenCalledWith(
+        url,
+        'C:/temp',
+        false,
+        expect.any(Function),
+    );
+    expect(mocks.showProgressBar).toHaveBeenCalledWith(url);
+    // The next free name, never the plain one an existing audio may hold.
+    expect(mocks.fsMove).toHaveBeenCalledWith(
+        'C:/temp/Song.mp3',
+        '/data/audios/Song.mp3.1',
+    );
+    expect(state.toastUpdates).toEqual([
+        [
+            'Download From URL',
+            `Downloading audio from "${url}", please wait...`,
+        ],
+        [
+            'Download From URL',
+            'Audio downloaded successfully, file path: "/data/audios/Song.mp3.1"',
+        ],
+    ]);
+    expect(mocks.hideProgressBar).toHaveBeenCalledWith(url);
+    expect(mocks.handleError).not.toHaveBeenCalled();
+});
+
+test('missing media tools stay silent: the install dialog already said so', async () => {
+    const url = 'https://example.com/watch?v=2';
+    mocks.downloadVideoOrAudio.mockRejectedValue(
+        new Error('extra-bin is not installed'),
+    );
+    const download = await openDownloadMenu();
+
+    await download(url);
+    expect(mocks.handleError).not.toHaveBeenCalled();
+    expect(state.toastUpdates).toEqual([]);
+    expect(mocks.fsMove).not.toHaveBeenCalled();
+    expect(mocks.hideProgressBar).toHaveBeenCalledWith(url);
+});
+
+test('a failed download is reported, with its reason, in the same toast', async () => {
+    const url = 'https://example.com/watch?v=3';
+    const failure = new Error('HTTP Error 404: Not Found');
+    mocks.downloadVideoOrAudio.mockImplementation(
+        async (_url: string, _dir: string, _isVideo: boolean, onStart) => {
+            onStart();
+            throw failure;
+        },
+    );
+    const download = await openDownloadMenu();
+
+    await download(url);
+    expect(mocks.handleError).toHaveBeenCalledWith(failure);
+    expect(state.toastUpdates).toEqual([
+        [
+            'Download From URL',
+            `Downloading audio from "${url}", please wait...`,
+        ],
+        [
+            'Download From URL',
+            'Error occurred during downloading audio: HTTP Error 404: Not Found',
+        ],
+    ]);
+    expect(mocks.fsMove).not.toHaveBeenCalled();
+    expect(mocks.hideProgressBar).toHaveBeenCalledWith(url);
+});
+
+test('a click outside any row, or on a row without a file marker, opens nothing', async () => {
+    await act(async () => root.render(<BackgroundAudiosComp />));
+    const loose = document.createElement('span');
+    const unmarkedRow = document.createElement('div');
+    unmarkedRow.dataset.fileItemFileSrc = 'file:///music/track.mp3';
+    unmarkedRow.innerHTML = '<span>track</span>';
+    // The marker must be the row's body DIV: a span carrying it is not one.
+    const spanMarkedRow = document.createElement('div');
+    spanMarkedRow.dataset.fileItemFileSrc = 'file:///music/track.mp3';
+    spanMarkedRow.innerHTML = '<span data-file-path="music/track.mp3">x</span>';
+    await act(async () => {
+        state.mediaProps.onClick({ target: loose });
+        state.mediaProps.onClick({ target: unmarkedRow.firstElementChild });
+        state.mediaProps.onClick({ target: spanMarkedRow.firstElementChild });
+    });
+    expect(host.querySelector('audio')).toBeNull();
+
+    // The real row still opens.
+    await act(async () => {
+        (
+            host.querySelector('[data-testid="track-name"]') as HTMLElement
+        ).click();
+    });
+    expect(host.querySelector('audio')).not.toBeNull();
+});
+
+test('a document with audio splits the tab: the list above, the document’s audios below', async () => {
+    state.appDocumentAudioData = {
+        'C:/slides/service.slide': [
+            { slideIndex: 0, slideId: 7, filePath: 'music/track.mp3' },
+        ],
+    };
+    await act(async () => root.render(<BackgroundAudiosComp />));
+    expect(state.resizeProps).toMatchObject({
+        flexSizeName: 'flex-size-background',
+        isHorizontal: false,
+        isDisableQuickResize: true,
+        flexSizeDefault: { v1: ['3'], v2: ['1'] },
+    });
+    expect(
+        state.resizeProps.dataInput.map((item: any) => [
+            item.key,
+            item.widgetName,
+        ]),
+    ).toEqual([
+        ['v1', 'Background'],
+        ['v2', 'Background Audio'],
+    ]);
+    expect(
+        host.querySelector('[data-pane="v1"] [data-testid="audio-row"]'),
+    ).not.toBeNull();
+    expect(host.querySelector('[data-pane="v2"]')?.textContent).toBe(
+        'Document audio',
+    );
+    expect(state.varyProps.appDocumentAudioData).toBe(
+        state.appDocumentAudioData,
+    );
 });

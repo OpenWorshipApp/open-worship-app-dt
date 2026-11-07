@@ -62,7 +62,7 @@ export function useBibleNoteControl({
                 `${tran('Open in Markdown Editor')}` +
                 ` (${langData.langCode})`;
             bibleNote.prependFooterActionButton({
-                id: 'khmer-markdown-editor ' + langData.langCode,
+                id: 'lang-markdown-editor ' + langData.langCode,
                 description: editorTitle,
                 shortcutKey: 'Ctrl+Shift+Alt+K',
                 children: (

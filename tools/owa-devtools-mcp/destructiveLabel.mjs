@@ -10,8 +10,8 @@
 //    dictionary has a Khmer translation -- 41 of them -- and not one was
 //    caught. `owa_list_ui`, `owa_list_screens` and the manual all hand the
 //    model the words AS DISPLAYED, so in a Khmer window the model is given
-//    `ផ្លាស់ទីទៅធុងសំរាម` for Move to Trash and `លុបទាំងអស់` for Clear All, and
-//    `owa_click` pressed either one by those words.
+//    the Khmer words for Move to Trash and for Clear All, and `owa_click`
+//    pressed either one by those words.
 //  - **It read the words, not the control.** The matcher collapses whitespace
 //    before it compares and the patterns did not, so `Clear All` or
 //    `Clear  All` matched no pattern and pressed Clear All [F6].
@@ -283,10 +283,10 @@ function checkIsEnglishDestructive(text) {
  *
  *  - **A translation the dictionary ALSO uses for an allowed control is not a
  *    phrase at all.** The window cannot tell the two apart, so neither can
- *    this. On the Khmer dictionary there are two: `លុប` is both Delete and
- *    Clear, `លុបផ្ទៃខាងក្រោយ` both Remove Background and Clear Background.
- *    (Three until 2026-10-13: `លុបព្រះគម្ពីរ` was Delete Bible and Clear
- *    Bible. That button is Clear Long Text now, with words of its own, so
+ *    this. On the Khmer dictionary there are two: one word is both Delete and
+ *    Clear, one phrase both Remove Background and Clear Background. (Three
+ *    until 2026-10-13: one phrase was Delete Bible and Clear Bible. That
+ *    button is Clear Long Text now, with words of its own, so
  *    the phrase is Delete Bible's alone and is refused.) The allowed
  *    reading wins -- Clear Background is an ordinary presenting move, the
  *    same call that keeps bare "clear" off the English list -- and what stands
@@ -336,11 +336,36 @@ export function genDestructiveLabelRule(bundle) {
             (isInsideAllowed ? exactSet : containSet).add(phrase);
         }
     }
+    const patterns = DESTRUCTIVE_LABEL_PATTERNS.map((pattern) => {
+        return { source: pattern.source, flags: pattern.flags };
+    });
+    // A phrase the rest of the rule already refuses is carried for nothing
+    // (2026-11-04): "delete this language from this computer" is refused by
+    // "delete language" wherever it stands, since a match reads only the
+    // letters on either side of it, and those are the same inside the longer
+    // phrase as in any label that holds it. Shortest first, so what is kept
+    // is what catches the rest.
+    const keptContainList = [];
+    for (const phrase of [...containSet].sort((a, b) => {
+        return a.length - b.length || a.localeCompare(b);
+    })) {
+        const isCaught = checkIsDestructiveLabelText(phrase, {
+            patterns,
+            containPhrases: keptContainList,
+        });
+        if (!isCaught) {
+            keptContainList.push(phrase);
+        }
+    }
+    const keptExactList = [...exactSet].filter((phrase) => {
+        return !checkIsDestructiveLabelText(phrase, {
+            patterns,
+            containPhrases: keptContainList,
+        });
+    });
     return {
-        patterns: DESTRUCTIVE_LABEL_PATTERNS.map((pattern) => {
-            return { source: pattern.source, flags: pattern.flags };
-        }),
-        containPhrases: [...containSet].sort(),
-        exactPhrases: [...exactSet].sort(),
+        patterns,
+        containPhrases: keptContainList.sort(),
+        exactPhrases: keptExactList.sort(),
     };
 }

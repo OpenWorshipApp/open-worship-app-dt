@@ -21,6 +21,7 @@ const {
     getMcpToken,
     getMcpUrl,
     getRemoteDebuggingPort,
+    republishAiLangDirs,
     getSystemFontListMap,
     getPagesCount,
     getPptxSlidesCount,
@@ -66,6 +67,7 @@ const {
     getMcpToken: vi.fn(() => 'mcp-token'),
     getMcpUrl: vi.fn(() => 'http://127.0.0.1:43123/mcp'),
     getRemoteDebuggingPort: vi.fn(() => 51234),
+    republishAiLangDirs: vi.fn(),
     getSystemFontListMap: vi.fn(async () => ({
         Arial: ['400', '700'],
         'Khmer OS': ['400'],
@@ -161,6 +163,7 @@ vi.mock('./aiHelpers', () => ({
     getMcpToken,
     getMcpUrl,
     getRemoteDebuggingPort,
+    republishAiLangDirs,
 }));
 
 vi.mock('./aiChatGuestHelpers', () => ({
@@ -227,6 +230,7 @@ import {
     initEventScreen,
     initFinderEvent,
 } from './electronEventListener';
+import { LANG_PLUGINS_CHANGED_BROADCAST_CHANNEL } from './langPluginProtocol';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow, flushPromises } from './testUtils';
 import {
@@ -331,6 +335,12 @@ describe('electronEventListener handlers', () => {
 
         expect(findInvokeHandler('get-is-packaged')()).toBe(false);
         expect(findInvokeHandler('get-app-path')()).toBe('/mock-app');
+
+        // The agent doors read a language from its installed folder: told
+        // where those are once found, and again whenever one changes.
+        expect(republishAiLangDirs).toHaveBeenCalledTimes(1);
+        findOnHandler(LANG_PLUGINS_CHANGED_BROADCAST_CHANNEL)({});
+        expect(republishAiLangDirs).toHaveBeenCalledTimes(2);
 
         const dataPathEvent: any = {};
         findOnHandler('main:app:get-data-path')(dataPathEvent);

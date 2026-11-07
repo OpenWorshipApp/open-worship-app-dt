@@ -45,10 +45,12 @@ const MAXIMUM_PHRASE_WORD_COUNT = 4;
 // ("Amos", "Abba", "Ben") would otherwise produce against ordinary prose.
 //
 // The ligatures are part of a word: the KJV's words-of-Christ verses spell
-// `Cæsar`, `Galilæans` and `Zacchæus` with them, and an ASCII-only pattern cut
-// `Galilæans` into `Galil` + `ans`, so Luke 13:2 was left undecorated while
-// 13:1, spelling it `Galilaeans`, was underlined.
-const TOKEN_PATTERN = /[A-Za-zÆæŒœ][A-Za-zÆæŒœ'’-]*/g;
+// Caesar, Galilaeans and Zacchaeus with the ae ligature, and an ASCII-only
+// pattern cut Galilaeans, so written, into `Galil` + `ans`, so Luke 13:2 was
+// left undecorated while 13:1, spelling it `Galilaeans`, was underlined.
+// The ae and oe ligatures, upper and lower case, as escapes.
+const TOKEN_PATTERN =
+    /[A-Za-z\u00C6\u00E6\u0152\u0153][A-Za-z\u00C6\u00E6\u0152\u0153'\u2019-]*/g;
 
 const POSSESSIVE_PATTERN = /['’]s?$/;
 
@@ -58,8 +60,8 @@ function toNeedle(rawText: string) {
     return rawText
         .toLowerCase()
         .replace(POSSESSIVE_PATTERN, '')
-        .replaceAll('æ', 'ae')
-        .replaceAll('œ', 'oe');
+        .replaceAll('\u00E6', 'ae')
+        .replaceAll('\u0153', 'oe');
 }
 
 // "Lot the son of Haran" names a PERSON, whatever else "Haran" is. When the

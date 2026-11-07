@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 78a2ea9b-7bf1-4112-a236-0d3119ccf1c3
-  modified: 2026-10-23T02:19:41.720Z
+  modified: 2026-11-07T00:38:03.592Z
 ---
 
 When verifying a change against the running dev app via the `owa-devtools` MCP,
@@ -49,7 +49,12 @@ font row):
   reload. Compare what is served with what is on disk —
   `curl -sk https://localhost:3000/src/<path> | grep <new name>` — and `touch`
   the file when they differ. Do this before reasoning about why half a change
-  "does not work". **Curl it with NO query** (2026-10-16, two `Edit`s to
+  "does not work". Its worst shape (2026-11-06): the call added in one `Edit`
+  and its import in the next, so the kept transform used a name it never
+  imported -- `ReferenceError: readBibleTextHighlightColor is not defined`
+  inside a lazy panel with no error boundary blanked the WHOLE Presenter, and
+  the blank survived the user's relaunch of the app. Add the import FIRST, or
+  `touch` every edited file and reload. **Curl it with NO query** (2026-10-16, two `Edit`s to
   `helpBotHelpers.ts` in one batch again): `?t=<now>` is a fresh URL and Vite
   transforms it anew, so it showed the new code while the plain path and the
   window both had the old one — two `navigate_page` reloads later the help

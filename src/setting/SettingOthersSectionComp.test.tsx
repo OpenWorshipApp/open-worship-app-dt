@@ -160,6 +160,34 @@ describe('SettingOthersSectionComp', () => {
         expect(h.saveMock).not.toHaveBeenCalled();
     });
 
+    // Settings > Languages' picker: a title that says it all, so no line
+    // under it and no state pill.
+    test('with no description or state label, shows neither', async () => {
+        await act(async () => {
+            root ??= createRoot(container);
+            root.render(
+                <SettingOthersSectionComp
+                    foldName="languages-app"
+                    iconClassName="bi-translate"
+                    title="Language"
+                    state="ready"
+                >
+                    <input id="inside" />
+                </SettingOthersSectionComp>,
+            );
+        });
+
+        expect(getFoldButton().textContent).toBe('Language');
+        expect(checkIsBodyMounted()).toBe(true);
+        expect(
+            container.querySelector('.app-setting-others-description'),
+        ).toBeNull();
+        expect(container.querySelector('.app-setting-others-state')).toBeNull();
+        expect(container.querySelector('section')!.className).toContain(
+            'app-setting-others-ready',
+        );
+    });
+
     test('tells its caller about a fold by hand, never about an opening', async () => {
         const onCollapse = vi.fn();
         await renderSection({ onCollapse });

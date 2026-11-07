@@ -5,6 +5,7 @@ const h = vi.hoisted(() => ({
     options: null as null | {
         serialize: (items: unknown[]) => string;
         deserialize: (json: string) => unknown[];
+        validate: (json: string) => boolean;
     },
     getSetting: vi.fn(),
     setSetting: vi.fn(),
@@ -146,5 +147,18 @@ describe('saved background web URLs', () => {
     it('creates a uniquely identified source for a new address', async () => {
         const source = await promptBackgroundWebUrlSource([]);
         expect(source?.toData()).toEqual({ ...item, id: 'new-id' });
+    });
+
+    it('takes only a saved JSON list; anything else falls back to no URLs', () => {
+        expect(h.options).toMatchObject({
+            defaultValue: [],
+            isErrorToDefault: true,
+        });
+        const { validate } = h.options!;
+        expect(validate('[]')).toBe(true);
+        expect(validate(JSON.stringify([item]))).toBe(true);
+        expect(validate('{}')).toBe(false);
+        expect(validate('"https://example.org/"')).toBe(false);
+        expect(validate('not json')).toBe(false);
     });
 });

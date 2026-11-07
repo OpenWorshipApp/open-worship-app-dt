@@ -29,10 +29,6 @@ export type TranBundle = {
 
 export const DEFAULT_LANG_CODE: 'en';
 export function extractDictionary(source: string): Record<string, string>;
-export function extractLangMeta(source: string): {
-  name: string | null;
-  nativeName: string | null;
-};
 export function loadTranBundle(): TranBundle;
 export function listTranLanguages(): NonNullable<TranBundle['languages']>;
 export function readSourceAssistantFacts(

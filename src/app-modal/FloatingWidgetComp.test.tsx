@@ -326,3 +326,117 @@ describe('floating widget', () => {
         expect(button('Exit full view')).toBeDefined();
     });
 });
+
+describe('floating widget presses that are not a move', () => {
+    function press(
+        target: Element,
+        type: string,
+        pointerId: number,
+        buttonNumber = 0,
+    ) {
+        const event = new MouseEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            button: buttonNumber,
+        });
+        Object.defineProperty(event, 'pointerId', { value: pointerId });
+        target.dispatchEvent(event);
+    }
+
+    function stubPointerCapture(element: HTMLDivElement, isHeld = false) {
+        element.setPointerCapture = vi.fn();
+        element.hasPointerCapture = vi.fn(() => isHeld);
+        element.releasePointerCapture = vi.fn();
+    }
+
+    test('a right-button press on the header neither counts toward full view nor moves it', async () => {
+        await renderWidget();
+        const element = widget();
+        stubPointerCapture(element);
+        const header = element.querySelector('.floating-widget__header')!;
+        const left = element.style.left;
+        await act(async () => press(header, 'pointerdown', 1, 2));
+        await act(async () => press(header, 'pointerdown', 2, 2));
+        expect(button('Full view')).toBeDefined();
+        expect(element.setPointerCapture).not.toHaveBeenCalled();
+        await act(async () => pointer(element, 'pointermove', 2, -80, 0));
+        expect(element.style.left).toBe(left);
+        expect(element.className).not.toContain('floating-widget--moving');
+    });
+
+    test('a press on its buttons or its body is theirs, not a move or a full-view press', async () => {
+        await renderWidget();
+        const element = widget();
+        stubPointerCapture(element);
+        const left = element.style.left;
+        const fullView = button('Full view');
+        await act(async () => press(fullView, 'pointerdown', 1));
+        await act(async () => press(fullView, 'pointerdown', 2));
+        expect(button('Full view')).toBeDefined();
+
+        // The body is no drag surface unless the widget says it is.
+        const body = host.querySelector('.floating-widget__content span')!;
+        await act(async () => press(body, 'pointerdown', 3));
+        await act(async () => pointer(element, 'pointermove', 3, -80, 0));
+        expect(element.style.left).toBe(left);
+        expect(element.setPointerCapture).not.toHaveBeenCalled();
+        expect(element.className).not.toContain('floating-widget--moving');
+    });
+
+    test('a pointer it holds is let go when the press is cancelled', async () => {
+        await renderWidget();
+        const element = widget();
+        stubPointerCapture(element, true);
+        const header = element.querySelector('.floating-widget__header')!;
+        await act(async () => press(header, 'pointerdown', 5));
+        expect(element.setPointerCapture).toHaveBeenCalledWith(5);
+        expect(element.className).toContain('floating-widget--moving');
+        await act(async () => press(element, 'pointercancel', 5));
+        expect(element.releasePointerCapture).toHaveBeenCalledWith(5);
+        expect(element.className).not.toContain('floating-widget--moving');
+    });
+
+    test('a new raise token brings an older widget back on top', async () => {
+        const renderTwo = (raiseToken: number) => {
+            return act(async () =>
+                root.render(
+                    <>
+                        <FloatingWidgetComp
+                            title="First"
+                            widgetName="First"
+                            options={{}}
+                            raiseToken={raiseToken}
+                            onClose={onClose}
+                        >
+                            <span>one</span>
+                        </FloatingWidgetComp>
+                        <FloatingWidgetComp
+                            title="Second"
+                            widgetName="Second"
+                            options={{}}
+                            onClose={onClose}
+                        >
+                            <span>two</span>
+                        </FloatingWidgetComp>
+                    </>,
+                ),
+            );
+        };
+        const offsets = () => {
+            return [...host.querySelectorAll<HTMLElement>('.floating-widget')]
+                .map((element) => {
+                    return element.style.getPropertyValue(
+                        '--floating-widget-z-offset',
+                    );
+                })
+                .map(Number);
+        };
+        await renderTwo(0);
+        expect(offsets()).toEqual([8, 9]);
+        // The same token again is no new request.
+        await renderTwo(0);
+        expect(offsets()).toEqual([8, 9]);
+        await renderTwo(1);
+        expect(offsets()).toEqual([9, 8]);
+    });
+});

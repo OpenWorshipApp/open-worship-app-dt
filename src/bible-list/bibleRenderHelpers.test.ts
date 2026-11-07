@@ -254,6 +254,22 @@ describe('bibleRenderHelper', () => {
         ).toBe('text > (KJV) GEN 1:1-3');
     });
 
+    test('a key this app wrote with a range cut off after its dash reads as its first verse', async () => {
+        const bibleRenderHelper = await loadHelper();
+        expect(bibleRenderHelper.fromKJVBibleVersesKey('GEN 1:1-')).toEqual({
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 1,
+        });
+        expect(bibleRenderHelper.fromKJVBibleVersesKey('JHN 3:16-')).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 16,
+            verseEnd: 16,
+        });
+    });
+
     // RD-51: the cross-reference data spells some targets in ways no passage
     // has. Read leniently, `PSA 56:title` was verse NaN: a row titled
     // `Psalm 56:` whose press opened "Record not found".
@@ -296,11 +312,13 @@ describe('bibleRenderHelper', () => {
             verseStart: 1,
             verseEnd: 1,
         });
-        // The garbage the shipped bundles actually hold, and its neighbours.
+        // The garbage the shipped bundles actually hold -- letters of another
+        // script after the colon, written here as symbols -- and its
+        // neighbours.
         for (const key of [
-            'PSA 119:ступ-106',
-            'PSA 119:ведения',
-            'PSA 119:ющ',
+            'PSA 119:✝✝✝✝-106',
+            'PSA 119:✝✝✝✝✝✝✝',
+            'PSA 119:✝✝',
             'GEN 1:title',
             'PSA title:1',
             'PSA 0:title',
@@ -585,6 +603,19 @@ describe('bibleRenderHelper', () => {
         expect(
             await bibleRenderHelper.toText('KJV', crossTarget, true, 1, 'none'),
         ).toBe('Genesis 1:2-3\nThe earth Light');
+    });
+
+    test('a passage whose chapter cannot be read has no sections to copy', async () => {
+        const bibleRenderHelper = await loadHelper();
+        mocks.getVersesMock.mockResolvedValueOnce(null);
+        expect(
+            await bibleRenderHelper.toTextSectionList(
+                'KJV',
+                { bookKey: 'GEN', chapter: 1, verseStart: 1, verseEnd: 2 },
+                true,
+            ),
+        ).toBeNull();
+        expect(mocks.getVersesMock).toHaveBeenCalledWith('KJV', 'GEN', 1);
     });
 
     test('jumps to the chapter after where a passage ENDS', async () => {

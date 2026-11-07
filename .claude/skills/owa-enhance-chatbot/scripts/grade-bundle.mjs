@@ -27,8 +27,26 @@ const args = Object.fromEntries(
         return match ? [match[1], match[2] ?? true] : ['file', arg];
     }),
 );
-const LANG = typeof args.lang === 'string' ? args.lang : 'km';
 const FILE = path.resolve(String(args.file));
+// The language the corpus file was asked in, off its first record that
+// names one -- `--lang` overrides it.
+function readFileLang(filePath) {
+    try {
+        for (const line of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+            if (line.trim() === '') continue;
+            const lang = JSON.parse(line).lang;
+            if (typeof lang === 'string' && lang !== '') return lang;
+        }
+    } catch (_error) {
+        // An unreadable file is reported where it is read.
+    }
+    return null;
+}
+const LANG = typeof args.lang === 'string' ? args.lang : readFileLang(FILE);
+if (LANG === null) {
+    console.error('Name the language the corpus was asked in: --lang=<code>.');
+    process.exit(1);
+}
 const PARTS = Number(args.parts ?? 4);
 const OUT_DIR = path.resolve(
     String(args['out-dir'] ?? path.join(path.dirname(FILE), 'grade')),
@@ -54,7 +72,7 @@ function indexManual(dir) {
     return map;
 }
 const EN_PAGES = indexManual(path.join(REPO, 'docs', 'manual-sources'));
-const LOCAL_PAGES = indexManual(path.join(REPO, 'docs', 'manual-i18n', LANG));
+const LOCAL_PAGES = indexManual(path.join(REPO, 'src', 'lang', 'data', 'online', LANG, 'manual'));
 
 const checked = JSON.parse(
     execFileSync(

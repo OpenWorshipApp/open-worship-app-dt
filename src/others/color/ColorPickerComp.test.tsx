@@ -332,3 +332,176 @@ describe('color picker controls', () => {
         expect(slider.value).toBe('120');
     });
 });
+
+describe('color picker value box, opacity and menu', () => {
+    function pressKeyOn(element: HTMLElement, key: string) {
+        const event = new KeyboardEvent('keydown', {
+            key,
+            bubbles: true,
+            cancelable: true,
+        });
+        element.dispatchEvent(event);
+        return event;
+    }
+
+    it('applies the typed hex on Enter and puts the held one back on Escape', async () => {
+        await renderPicker({
+            color: '#112233',
+            isCollapsable: true,
+            colorInputLabel: 'Fill hex',
+        });
+        const input = container.querySelector<HTMLInputElement>(
+            'input[aria-label="Fill hex"]',
+        )!;
+        const documentKeyDown = vi.fn();
+        document.addEventListener('keydown', documentKeyDown);
+        try {
+            await act(async () => changeInputValue(input, '#a1b2c3'));
+            let event: KeyboardEvent | null = null;
+            await act(async () => {
+                event = pressKeyOn(input, 'Enter');
+            });
+            expect(event!.defaultPrevented).toBe(true);
+            expect(onColorChange).toHaveBeenCalledTimes(1);
+            expect(onColorChange).toHaveBeenCalledWith(
+                '#A1B2C3',
+                expect.any(MouseEvent),
+            );
+            expect(input.value).toBe('#A1B2C3');
+
+            await act(async () => changeInputValue(input, 'ffffff'));
+            await act(async () => {
+                event = pressKeyOn(input, 'Escape');
+            });
+            expect(event!.defaultPrevented).toBe(true);
+            expect(input.value).toBe('#A1B2C3');
+            expect(onColorChange).toHaveBeenCalledTimes(1);
+            // Both keys stay inside the box, e.g. away from a popup's Enter/Esc.
+            expect(documentKeyDown).not.toHaveBeenCalled();
+
+            await act(async () => {
+                event = pressKeyOn(input, 'Tab');
+            });
+            expect(event!.defaultPrevented).toBe(false);
+            expect(documentKeyDown).toHaveBeenCalledTimes(1);
+        } finally {
+            document.removeEventListener('keydown', documentKeyDown);
+        }
+    });
+
+    it('keeps the held color when nobody listens for a change', async () => {
+        await act(async () =>
+            root.render(
+                createElement(ColorPickerComp, {
+                    defaultColor: '#112233',
+                    color: '#FFFFFF',
+                }),
+            ),
+        );
+        expect(getButton('white').getAttribute('aria-pressed')).toBe('true');
+        await act(async () => getButton('fuchsia').click());
+        expect(getButton('white').getAttribute('aria-pressed')).toBe('true');
+        expect(getButton('fuchsia').getAttribute('aria-pressed')).toBe('false');
+        // Nothing to clear with either.
+        expect(container.querySelector('[aria-label="No Color"]')).toBeNull();
+    });
+
+    it('changes the opacity of the held color, and of none when none is held', async () => {
+        await renderPicker({ color: '#FF0000FF' });
+        const slider = container.querySelector<HTMLInputElement>(
+            'input[type="range"]',
+        )!;
+        await act(async () => changeInputValue(slider, '128'));
+        await act(async () => vi.advanceTimersByTime(500));
+        expect(onColorChange).toHaveBeenCalledTimes(1);
+        expect(onColorChange.mock.calls[0][0]).toBe('#FF000080');
+
+        await act(async () =>
+            root.render(
+                createElement(ColorPickerComp, {
+                    defaultColor: '#112233',
+                    color: undefined,
+                    onColorChange,
+                }),
+            ),
+        );
+        const emptySlider = container.querySelector<HTMLInputElement>(
+            'input[type="range"]',
+        )!;
+        expect(emptySlider.value).toBe('255');
+        await act(async () => changeInputValue(emptySlider, '40'));
+        await act(async () => vi.advanceTimersByTime(500));
+        expect(onColorChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers to copy the held color, from its dots and a right-click', async () => {
+        await renderPicker({ color: '#ABCDEF' });
+        await act(async () => getButton('Swatch menu').click());
+        expect(h.menu).toHaveBeenCalledTimes(1);
+        const menuItems = h.menu.mock.calls[0][1];
+        expect(
+            menuItems.map((item: { menuElement: string }) => item.menuElement),
+        ).toEqual(['Copy Color']);
+        await act(async () => menuItems[0].onSelect());
+        expect(h.copy).toHaveBeenCalledWith('#ABCDEF');
+        await act(async () =>
+            container
+                .querySelector('.color-picker')!
+                .dispatchEvent(
+                    new MouseEvent('contextmenu', { bubbles: true }),
+                ),
+        );
+        expect(h.menu).toHaveBeenCalledTimes(2);
+
+        await renderPicker({ color: null });
+        await act(async () => getButton('Swatch menu').click());
+        expect(h.menu).toHaveBeenCalledTimes(2);
+    });
+
+    it('writes out the held color code and copies it when pressed', async () => {
+        await renderPicker({ color: '#ABCDEF80' });
+        const codeButton = getButton('Copy Color: #ABCDEF80');
+        expect(codeButton.textContent).toBe('#ABCDEF80');
+        await act(async () => codeButton.click());
+        expect(h.copy).toHaveBeenCalledWith('#ABCDEF80', 'Copy Color');
+
+        await renderPicker({ color: null });
+        expect(container.querySelector('.color-picker-code')).toBeNull();
+    });
+
+    it('passes a mixed color on after its pause, and No Color on Enter', async () => {
+        const onSelection = vi.fn();
+        await act(async () =>
+            root.render(
+                createElement(RenderColorsComp, {
+                    colors: { ruby: '#AA0000' },
+                    selectedColor: '#AA0000',
+                    onColorChange: onSelection,
+                }),
+            ),
+        );
+        const mixInput = container.querySelector<HTMLInputElement>(
+            'input[type="color"]',
+        )!;
+        // One `input`, the way a picked color arrives.
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(
+                HTMLInputElement.prototype,
+                'value',
+            )!.set!.call(mixInput, '#123456');
+            mixInput.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        await act(async () => vi.advanceTimersByTime(499));
+        expect(onSelection).not.toHaveBeenCalled();
+        await act(async () => vi.advanceTimersByTime(1));
+        expect(onSelection).toHaveBeenCalledTimes(1);
+        expect(onSelection.mock.calls[0][0]).toBe('#123456');
+        expect(onSelection.mock.calls[0][1]).toBeInstanceOf(MouseEvent);
+
+        await act(async () => {
+            pressKeyOn(getButton('No Color'), 'Enter');
+        });
+        expect(onSelection).toHaveBeenCalledTimes(2);
+        expect(onSelection.mock.calls[1][0]).toBeNull();
+    });
+});

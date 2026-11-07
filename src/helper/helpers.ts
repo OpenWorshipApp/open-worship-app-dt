@@ -42,7 +42,7 @@ export function isVisible(elem: any) {
     if (style.visibility !== 'visible') {
         return false;
     }
-    if (Number.parseInt(style.opacity) < 0.1) {
+    if (Number.parseFloat(style.opacity) < 0.1) {
         return false;
     }
     if (

@@ -20,7 +20,10 @@ vi.mock('../helper/FileSource', () => ({
 }));
 
 import type { BackgroundWebUrlSource } from './backgroundWebUrlHelpers';
-import { genBackgroundWebColorSections } from './backgroundWebCompHelpers';
+import {
+    genBackgroundWebColorSections,
+    genBackgroundWebDisplayedSrcList,
+} from './backgroundWebCompHelpers';
 
 function createUrlSource(
     id: string,
@@ -94,5 +97,41 @@ describe('backgroundWebCompHelpers', () => {
                 urlSources: [redUrlSource],
             },
         ]);
+    });
+
+    test('lists what the grid draws, as screen src strings: each colour group, files before URLs', () => {
+        getFileSourceMock.mockImplementation(
+            (filePath: string) =>
+                ({
+                    filePath,
+                    colorNote: fileSourceColorNotes.get(filePath) ?? null,
+                    src: `file://${filePath}`,
+                }) as any,
+        );
+        fileSourceColorNotes.set('/web/c.html', 'red');
+        fileSourceColorNotes.set('/web/a.html', null);
+        fileSourceColorNotes.set('/web/b.html', 'red');
+        const redUrlSource = {
+            ...createUrlSource('url-1', 'https://red.example/', 'red'),
+            src: 'https://red.example/',
+        } as BackgroundWebUrlSource;
+        const plainUrlSource = {
+            ...createUrlSource('url-2', 'https://plain.example/', null),
+            src: 'https://plain.example/',
+        } as BackgroundWebUrlSource;
+
+        expect(
+            genBackgroundWebDisplayedSrcList(
+                ['/web/c.html', '/web/a.html', '/web/b.html'],
+                [plainUrlSource, redUrlSource],
+            ),
+        ).toEqual([
+            'file:///web/b.html',
+            'file:///web/c.html',
+            'https://red.example/',
+            'file:///web/a.html',
+            'https://plain.example/',
+        ]);
+        expect(genBackgroundWebDisplayedSrcList([], [])).toEqual([]);
     });
 });

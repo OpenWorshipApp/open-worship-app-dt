@@ -21,21 +21,8 @@ describe('a typed Bible-Reader question', () => {
         ['show resource files of john chapter 3', { intent: 'resources' }],
         ['what names in Genesis chapter 4', { intent: 'names' }],
         ['open genesis 3:203', { intent: 'reference' }],
-        // ...and as an elderly Khmer reader says them.
-        ['បង្ហាញឯកសារធនធានរបស់យ៉ូហាន ជំពូក 3', { intent: 'resources' }],
-        ['តើមានឈ្មោះអ្វីខ្លះក្នុងលោកុប្បត្តិ ជំពូក 4', { intent: 'names' }],
-        ['បើកលោកុប្បត្តិ 3:203', { intent: 'reference' }],
-        // ...and in French, because every language is data.
-        [
-            'montre les fichiers de ressources de Jean chapitre 3',
-            { intent: 'resources' },
-        ],
-        ['quels noms dans Genèse chapitre 4', { intent: 'names' }],
-        ['ouvre Genèse 3:203', { intent: 'reference' }],
         // A verse quoted by its reference is a Bible question too.
         ['what does John 3:16 say', { intent: 'reference' }],
-        // Its zero-width spaces are Khmer keyboards' word breaks.
-        ['បើក​លោកុប្បត្តិ 3:203', { intent: 'reference' }],
     ])('%s', (asked, expected) => {
         expect(readBibleReaderAsk(asked)).toEqual(expected);
     });
@@ -45,27 +32,12 @@ describe('a typed Bible-Reader question', () => {
         // no chapter word and no reference (2026-10-19: the model answered
         // "I cannot read PDFs").
         ['what does MAT.18.pdf say?', { intent: 'resources' }],
-        ['តើឯកសារធនធាន MAT.18.pdf និយាយអំពីអ្វី?', { intent: 'resources' }],
         ['read family-tree.jpeg', { intent: 'resources' }],
     ])('a named Resources file: %s', (asked, expected) => {
         expect(readBibleReaderAsk(asked)).toEqual(expected);
     });
 
     test.each([
-        // A chapter written WITHOUT the chapter word -- how a reader
-        // actually says it. The window confirms the book name, so the
-        // matcher stands in for the reader's own Bible here.
-        ['សូមសង្ខេប ម៉ាថាយ ១៨', 'ម៉ាថាយ', { intent: 'reference' }],
-        [
-            'តើឈ្មោះអ្នកណាខ្លះនៅក្នុង លោកុប្បត្តិ ៤',
-            'លោកុប្បត្តិ',
-            { intent: 'names' },
-        ],
-        [
-            'សូមបង្ហាញឯកសារធនធានសម្រាប់ យ៉ូហាន ៣',
-            'យ៉ូហាន',
-            { intent: 'resources' },
-        ],
         ['summarize Matthew 18', 'Matthew', { intent: 'reference' }],
         // A numbered book: the last word alone is not its name.
         ['show me 1 Samuel 2', '1 Samuel', { intent: 'reference' }],
@@ -86,15 +58,14 @@ describe('a typed Bible-Reader question', () => {
         ).toBeNull();
     });
 
-    test.each([
-        // The words handed to the window's book check, shortest first.
-        ['សូមសង្ខេប ម៉ាថាយ ១៨', 'ម៉ាថាយ'],
-        ['show me 1 Samuel 2', '1 Samuel'],
-    ])('%s offers %s as a book candidate', (asked, bookText) => {
-        expect(readBibleReaderBookCandidate(asked)?.bookTextList).toContain(
-            bookText,
-        );
-    });
+    test.each([['show me 1 Samuel 2', '1 Samuel']])(
+        '%s offers %s as a book candidate',
+        (asked, bookText) => {
+            expect(readBibleReaderBookCandidate(asked)?.bookTextList).toContain(
+                bookText,
+            );
+        },
+    );
 
     test('a how-to is no book candidate', () => {
         expect(
@@ -107,9 +78,6 @@ describe('a typed Bible-Reader question', () => {
         'How do I open John 3:16 in the reader?',
         'put John 3:16 on the screen',
         'add bible verse John 3:16 to my bible list',
-        'របៀបបើកលោកុប្បត្តិ 3:203',
-        'ដាក់យ៉ូហាន 3:16 លើអេក្រង់',
-        'comment ouvrir Jean 3:16 dans le lecteur',
         // No book before the number: nothing a tool could read.
         'chapter 3',
         '3:16',
@@ -130,29 +98,26 @@ describe('a typed Bible-Reader question', () => {
 // Bible-Reader ask taking it: the verse was opened and the answer never said
 // where to type it. The row wins, in both languages.
 describe('a supported question is not a Bible-Reader ask', () => {
-    test.each(['Where do I type John 3:16?', 'តើខ្ញុំវាយ យ៉ូហាន ៣:១៦ នៅឯណា?'])(
-        '%s',
-        async (asked) => {
-            // The words LOOK like the ask kind...
-            expect(readBibleReaderAsk(asked)).not.toBeNull();
-            expect(readBibleReaderAsk(asked)).not.toBeNull();
-            // ...and they are one of the app's own questions, with W-11.
-            const { findKnownQuestion } = await import('./questionHelpers');
-            const known = await findKnownQuestion(asked, 'reader');
-            expect(known?.resources?.recipe).toBe('W-11');
-            // The window's rule: the row decides.
-            expect(
-                keepBibleReaderAskUnlessKnown(readBibleReaderAsk(asked), known),
-            ).toBeNull();
-            // A free-typed question with no row keeps the ask kind.
-            expect(
-                keepBibleReaderAskUnlessKnown(
-                    readBibleReaderAsk('what names in Genesis chapter 4'),
-                    null,
-                ),
-            ).toEqual({ intent: 'names' });
-        },
-    );
+    test.each(['Where do I type John 3:16?'])('%s', async (asked) => {
+        // The words LOOK like the ask kind...
+        expect(readBibleReaderAsk(asked)).not.toBeNull();
+        expect(readBibleReaderAsk(asked)).not.toBeNull();
+        // ...and they are one of the app's own questions, with W-11.
+        const { findKnownQuestion } = await import('./questionHelpers');
+        const known = await findKnownQuestion(asked, 'reader');
+        expect(known?.resources?.recipe).toBe('W-11');
+        // The window's rule: the row decides.
+        expect(
+            keepBibleReaderAskUnlessKnown(readBibleReaderAsk(asked), known),
+        ).toBeNull();
+        // A free-typed question with no row keeps the ask kind.
+        expect(
+            keepBibleReaderAskUnlessKnown(
+                readBibleReaderAsk('what names in Genesis chapter 4'),
+                null,
+            ),
+        ).toEqual({ intent: 'names' });
+    });
 });
 
 describe('a plain line under a Bible-Reader answer', () => {

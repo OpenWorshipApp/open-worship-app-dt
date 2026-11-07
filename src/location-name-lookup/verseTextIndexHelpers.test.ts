@@ -27,6 +27,14 @@ import {
     toVerseTextSegments,
 } from './verseTextIndexHelpers';
 import { collectVerseRecords } from './verseRecordListHelpers';
+import {
+    allLocalesMap,
+    DEFAULT_LANG_CODE,
+    ensureLangPlugins,
+    getSupportedLangCodes,
+    getSupportedLocales,
+    type LocaleType,
+} from '../lang/langHelpers';
 import type {
     LookupRecordLabelsType,
     LookupTextIndexType,
@@ -265,27 +273,27 @@ describe('findLookupTextMatches', () => {
     // dataset spells them with `ae`.
     test('matches a name written with the ae ligature', () => {
         const text =
-            'Suppose ye that these Galilæans were sinners above all the ' +
-            'Galilæans?';
+            'Suppose ye that these Galil\u00e6ans were sinners above all the ' +
+            'Galil\u00e6ans?';
         const matchList = findLookupTextMatches(genIndex(), text, 'LUK 13:2');
         expect(matchList).toHaveLength(2);
         for (const match of matchList) {
             expect(match).toMatchObject({
-                text: 'Galilæans',
+                text: 'Galil\u00e6ans',
                 kind: 'name',
                 recordId: GALILAEANS,
             });
             // Offsets are the text's own, ligature included.
-            expect(text.slice(match.start, match.end)).toBe('Galilæans');
+            expect(text.slice(match.start, match.end)).toBe('Galil\u00e6ans');
         }
     });
 
     test('keeps a ligature name whole around a possessive', () => {
-        const text = "Abram's and the Galilæans' sins.";
+        const text = "Abram's and the Galil\u00e6ans' sins.";
         const matchList = findLookupTextMatches(genIndex(), text, 'LUK 13:2');
         expect(matchList.map((match) => match.text)).toEqual([
             'Abram',
-            'Galilæans',
+            'Galil\u00e6ans',
         ]);
     });
 });
@@ -452,15 +460,37 @@ describe('getVerseTextLookupLangCode', () => {
         expect(getVerseTextLookupLangCode('KJVD', 'en-US')).toBeNull();
     });
 
-    test('a bible in a language that ships a lookup package uses it', () => {
-        expect(getVerseTextLookupLangCode('ពគប', 'km-KH')).toBe('km');
-        // Its own package's names, whatever the bible is called.
-        expect(getVerseTextLookupLangCode('គខប', 'km-KH')).toBe('km');
-        expect(getVerseTextLookupLangCode('LSG', 'fr-FR')).toBe('fr');
+    test('a bible in a language that ships a lookup package uses it', async () => {
+        // Every installed language but English, whatever the bible is called
+        // -- the languages a window knows once its plugins are read.
+        await ensureLangPlugins();
+        const supportedLocales = getSupportedLocales();
+        getSupportedLangCodes().forEach((langCode, index) => {
+            if (langCode !== DEFAULT_LANG_CODE) {
+                expect(
+                    getVerseTextLookupLangCode('ANY', supportedLocales[index]),
+                ).toBe(langCode);
+            }
+        });
     });
 
-    test('a language with no package is left undecorated', () => {
-        expect(getVerseTextLookupLangCode('Greek', 'el-GR' as any)).toBeNull();
-        expect(getVerseTextLookupLangCode('RVR', 'es-ES' as any)).toBeNull();
+    // Every world locale whose language has no package (in a test, the
+    // packages of the checkout stand in for the installed plugins), and a
+    // made-up one.
+    test('a language with no package is left undecorated', async () => {
+        await ensureLangPlugins();
+        const supportedLangCodes: string[] = getSupportedLangCodes();
+        const noPackageLocaleList = (
+            Object.keys(allLocalesMap) as LocaleType[]
+        ).filter((locale) => {
+            return !supportedLangCodes.includes(allLocalesMap[locale]);
+        });
+        for (const locale of noPackageLocaleList) {
+            expect(
+                getVerseTextLookupLangCode('ANY', locale),
+                locale,
+            ).toBeNull();
+        }
+        expect(getVerseTextLookupLangCode('ANY', 'xx-XX' as any)).toBeNull();
     });
 });

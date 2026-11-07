@@ -1,0 +1,16 @@
+{
+    "cyrillicLetterLocales": [
+        {
+            "letters": "ђћџљњ",
+            "locales": ["sr-Cyrl-RS", "mk-MK"],
+            "order": 1
+        }
+    ],
+    "scriptLocales": [
+        {
+            "script": "Cyrillic",
+            "locales": ["sr-Cyrl-RS"],
+            "order": 1103
+        }
+    ]
+}

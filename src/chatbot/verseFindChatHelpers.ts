@@ -46,10 +46,12 @@ import {
 import {
     DEFAULT_CHAT_LANG_CODE,
     getAppLangCode,
+    listAssistantLanguages,
     toAsciiDigits,
     toShownDigits,
 } from './chatLangHelpers';
 import { NOT_IN_LANGUAGE_REASON } from '../helper/bibleVerseFindHelpers';
+import { trimTrailingInvisibleStackers } from '../helper/scriptClusterHelpers';
 import {
     genVerseFindAsk,
     readVerseFindAsk,
@@ -112,15 +114,21 @@ export type VerseFindAnswerType = BotAnswerType & {
     verseFind?: string;
 };
 
-type BibleRowType = { key: string; title: string };
+type BibleRowType = {
+    key: string;
+    title: string;
+    // The Bible's locale (`en-US` …) as the tool says it; unknown when not.
+    locale?: string;
+    // A part of a Bible -- a New Testament -- names how many `books` it has.
+    isPart?: boolean;
+};
 
 export type FoundVerseType = {
     key: string;
     ref: string;
     bible: string;
     // The reference as the Bible itself writes it -- its book's own name and
-    // digits, `ម៉ាថាយ ៥:៤៤` -- which `owa_find_verse` adds for a Bible not
-    // in English.
+    // digits -- which `owa_find_verse` adds for a Bible not in English.
     title?: string;
     // A PASSAGE the search's words gather in (`Genesis 7-9`), of which `key`
     // opens the strongest chapter (`GEN 8`, `ref` `Genesis 8`): named when
@@ -215,7 +223,8 @@ function toShownBookCounts(result: any) {
 
 /**
  * The line that says where a search's words gather -- `These words gather in
- * លោកុប្បត្តិ ៧-៩.` -- and how many are in each book; empty when the result
+ * Genesis 7-9.`, in the Bible's own words -- and how many are in each book;
+ * empty when the result
  * says neither.
  */
 export function genVerseWhereLine(result: any, bible: string) {
@@ -297,8 +306,44 @@ function toBibleRows(listed: any): BibleRowType[] {
             return {
                 key: String(one.key),
                 title: typeof one.title === 'string' ? one.title : '',
+                locale: typeof one.locale === 'string' ? one.locale : '',
+                isPart: typeof one.books === 'number',
             };
         });
+}
+
+/**
+ * The Bibles in the order their buttons are drawn: the one asked for first,
+ * then -- in a window shown in another language than English -- the whole
+ * Bibles in that language, its parts after them, then every other. Only
+ * `MAX_BIBLE_BUTTONS` are buttons and the rest must be typed, and in the
+ * install order a Khmer reader with 21 Bibles got ten mostly English buttons
+ * and had to type the short name of the Khmer Bible they read (2026-11-05).
+ * Each group keeps the order it came in.
+ */
+function orderBibleChoices(
+    choices: BibleRowType[],
+    preferred: BibleRowType | null,
+    langCode: string,
+): BibleRowType[] {
+    const others = choices.filter((bible) => bible !== preferred);
+    const langBase = langCode.toLowerCase().split('-')[0];
+    const toRank = (bible: BibleRowType) => {
+        const isInLanguage =
+            langBase !== DEFAULT_CHAT_LANG_CODE &&
+            langBase.length > 0 &&
+            (bible.locale ?? '').toLowerCase().split('-')[0] === langBase;
+        if (!isInLanguage) {
+            return 2;
+        }
+        return bible.isPart === true ? 1 : 0;
+    };
+    return [
+        ...(preferred === null ? [] : [preferred]),
+        ...[0, 1, 2].flatMap((rank) => {
+            return others.filter((bible) => toRank(bible) === rank);
+        }),
+    ];
 }
 
 /**
@@ -599,7 +644,23 @@ async function genVerseBrowseAnswer(
     } catch (_error) {
         result = null;
     }
-    const verses = (Array.isArray(result?.verses) ? result.verses : []).filter(
+    // A page that could not be READ is not the end of the list: said as
+    // "No more verses", it stood under "Verses 1 to 8 of 10" (2026-11-03).
+    // The same press tries again.
+    if (result === null || typeof result !== 'object') {
+        return {
+            text: tran(
+                'I could not search the Bible just now. Make sure the main ' +
+                    'window is open, then type the words again.',
+            ),
+            actions: [
+                genVerseBrowseAction(bible, words, from),
+                genVerseChangeBibleAction(bible, words),
+            ],
+            verseFind: bible,
+        };
+    }
+    const verses = (Array.isArray(result.verses) ? result.verses : []).filter(
         (verse: any) => {
             return (
                 typeof verse?.key === 'string' &&
@@ -608,7 +669,7 @@ async function genVerseBrowseAnswer(
             );
         },
     );
-    if (result === null || verses.length === 0) {
+    if (verses.length === 0) {
         return {
             text: fillWords(
                 tran('No more verses in {bible} have those words.'),
@@ -683,6 +744,8 @@ async function genVerseBrowseAnswer(
 export async function runVerseFindStep(
     state: VerseFindStateType,
     call: (name: string, args: any) => Promise<string> = callTool,
+    // The language the window is shown in: its Bibles are offered first.
+    langCode: string = getAppLangCode(),
 ): Promise<VerseFindAnswerType> {
     if (state.step === 'more') {
         return await genVerseBrowseAnswer(state, call);
@@ -749,10 +812,7 @@ export async function runVerseFindStep(
             tran('There is one Bible on this computer, so that is the one.'),
         );
     }
-    const ordered = [
-        ...(preferred === null ? [] : [preferred]),
-        ...choices.filter((bible) => bible !== preferred),
-    ];
+    const ordered = orderBibleChoices(choices, preferred, langCode);
     const shown = ordered.slice(0, MAX_BIBLE_BUTTONS);
     const rest = ordered.slice(MAX_BIBLE_BUTTONS);
     const question =
@@ -991,10 +1051,11 @@ export function readVerseTranslation(answerText: string): string | null {
 }
 
 export type VerseHeadStartPartType = {
-    // What was searched, in words, for the MODEL: "ពគប, for their own words".
+    // What was searched, in words, for the MODEL: "<Bible key>, for their
+    // own words".
     what: string;
     // The same said to the PERSON, in the app's language, when the answer
-    // is the head start itself: "In ពគប, for your words".
+    // is the head start itself: "In <Bible key>, for your words".
     shown?: string;
     verses: { key: string; ref: string; text: string; title?: string }[];
     // Where the words gather and how many verses hold them, the search's
@@ -1009,6 +1070,33 @@ export type VerseHeadStartPartType = {
 // Verses each search hands over: the model reads them on every round.
 const MAX_HEAD_START_VERSES = 5;
 const MAX_HEAD_START_TEXT = 160;
+// U+200B, the zero-width space a Bible may put between words in a script
+// written without spaces.
+const ZERO_WIDTH_SPACE = String.fromCharCode(0x200b);
+
+/**
+ * A verse cut to what the head start carries: at its last word break and
+ * marked with an ellipsis, never inside a letter cluster. Cut at a fixed
+ * length, Romans 8:28 reached a Khmer reader ending on a subscript sign with
+ * no letter under it, quoted back by the model as the verse (2026-11-05).
+ */
+export function cutHeadStartVerse(text: string) {
+    if (text.length <= MAX_HEAD_START_TEXT) {
+        return text;
+    }
+    const cut = text.slice(0, MAX_HEAD_START_TEXT);
+    const breakAt = Math.max(
+        cut.lastIndexOf(' '),
+        cut.lastIndexOf(ZERO_WIDTH_SPACE),
+    );
+    // A break too early would drop most of the verse: then only the half
+    // cluster at the end goes.
+    const kept =
+        breakAt >= MAX_HEAD_START_TEXT / 2
+            ? cut.slice(0, breakAt)
+            : trimTrailingInvisibleStackers(cut);
+    return `${kept.trimEnd()}…`;
+}
 
 function toHeadStartPart(
     what: string,
@@ -1030,7 +1118,7 @@ function toHeadStartPart(
             return {
                 key: verse.key,
                 ref: verse.ref,
-                text: verse.text.slice(0, MAX_HEAD_START_TEXT),
+                text: cutHeadStartVerse(verse.text),
                 ...readVerseTitle(verse),
             };
         });
@@ -1329,14 +1417,26 @@ function escapeRegExp(text: string) {
     return text.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// What stands between the two chapters of a range: a dash, the English
+// words, every package's own (`rangeWords`).
+const RANGE_WORD_SOURCE = [
+    '[-–]',
+    'to',
+    'through',
+    ...listAssistantLanguages().flatMap((language) => {
+        return language.rangeWords.map(escapeRegExp);
+    }),
+].join('|');
+
 /**
  * Where in an answer a found verse is NAMED, or -1: its book (the last
  * letter left off, so "Psalm" names "Psalms 23:1"), chapter and first verse,
  * or the key it opens by.
  */
 // Where an answer names a chapter of a passage -- `Genesis 7-9`, `Genesis
-// 8`, `លោកុប្បត្តិ ៦ ដល់ ៩` -- never a verse of it (`Genesis 8:11`, a verse
-// button's): the book, then a chapter inside the passage with no `:` after.
+// 8`, the same in the Bible's own words and digits -- never a verse of it
+// (`Genesis 8:11`, a verse button's): the book, then a chapter inside the
+// passage with no `:` after.
 function findPassageNamedAt(answerText: string, verse: FoundVerseType) {
     const passage = verse.passage;
     if (passage === undefined) {
@@ -1354,10 +1454,11 @@ function findPassageNamedAt(answerText: string, verse: FoundVerseType) {
         }
         const stem = book.length > 3 ? book.slice(0, -1) : book;
         // A chapter, or a range of them however it is said -- `6-9`, `6 to
-        // 9`, `៦ ដល់ ៩` -- that overlaps the passage.
+        // 9`, or with the language's own word between (`rangeWords`) --
+        // that overlaps the passage.
         const pattern = new RegExp(
             `${escapeRegExp(stem)}\\S*\\.?\\s*(\\d{1,3})(?!\\d)(?!\\s*:\\s*\\d)` +
-                `(?:\\s*(?:[-–]|to|through|ដល់|à)\\s*(\\d{1,3})(?!\\s*:\\s*\\d))?`,
+                `(?:\\s*(?:${RANGE_WORD_SOURCE})\\s*(\\d{1,3})(?!\\s*:\\s*\\d))?`,
             'giu',
         );
         for (const match of said.matchAll(pattern)) {

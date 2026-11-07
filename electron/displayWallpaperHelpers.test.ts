@@ -8,6 +8,7 @@ const { mocks } = vi.hoisted(() => ({
         readdirSync: vi.fn(),
         statSync: vi.fn(),
         createFromPath: vi.fn(),
+        createThumbnailFromPath: vi.fn(),
         getPath: vi.fn(() => '/appdata'),
     },
 }));
@@ -18,7 +19,10 @@ vi.mock('node:fs', () => ({
 }));
 vi.mock('electron', () => ({
     app: { getPath: mocks.getPath },
-    nativeImage: { createFromPath: mocks.createFromPath },
+    nativeImage: {
+        createFromPath: mocks.createFromPath,
+        createThumbnailFromPath: mocks.createThumbnailFromPath,
+    },
 }));
 
 import type * as DisplayWallpaperHelpersType from './displayWallpaperHelpers';
@@ -398,5 +402,125 @@ describe('on Linux', () => {
             '/usr/share/back ground.jpg',
         );
         expect(wallpaper?.color).toBe('#2e3436');
+    });
+});
+
+describe('a virtual display’s own wallpaper', () => {
+    const VIDEO_FILE_PATH = 'C:\videos\loop.mp4';
+    const IMAGE_FILE_PATH = 'C:\pictures\stage.jpg';
+
+    function genStill(isEmpty = false) {
+        return {
+            isEmpty: () => isEmpty,
+            toJPEG: vi.fn(() => Buffer.from('STILL', 'utf8')),
+        };
+    }
+
+    test('none is black, the colour that display streams', async () => {
+        expect(
+            await helpers.readVirtualDisplayWallpaper({ kind: 'none' }),
+        ).toEqual({ imageDataUrl: null, color: '#000000', fit: 'cover' });
+        expect(mocks.createFromPath).not.toHaveBeenCalled();
+    });
+
+    test('a colour is passed through as it is', async () => {
+        expect(
+            await helpers.readVirtualDisplayWallpaper({
+                kind: 'color',
+                color: '#336699',
+            }),
+        ).toEqual({ imageDataUrl: null, color: '#336699', fit: 'cover' });
+    });
+
+    test('a picture is a small JPEG of it, read once for the hold', async () => {
+        const image = genImage();
+        mocks.createFromPath.mockReturnValue(image);
+        const first = await helpers.readVirtualDisplayWallpaper(
+            { kind: 'image', filePath: IMAGE_FILE_PATH },
+            200,
+        );
+        const second = await helpers.readVirtualDisplayWallpaper(
+            { kind: 'image', filePath: IMAGE_FILE_PATH },
+            200,
+        );
+        expect(first).toEqual({
+            imageDataUrl: EXPECTED_DATA_URL,
+            color: '#000000',
+            fit: 'cover',
+        });
+        expect(second).toBe(first);
+        expect(mocks.createFromPath).toHaveBeenCalledTimes(1);
+        expect(image.resize).toHaveBeenCalledWith({ width: 200 });
+    });
+
+    test('a video is a still of it, never the video itself', async () => {
+        const still = genStill();
+        mocks.createThumbnailFromPath.mockResolvedValue(still);
+        const wallpaper = await helpers.readVirtualDisplayWallpaper(
+            { kind: 'video', filePath: VIDEO_FILE_PATH },
+            320,
+        );
+        expect(mocks.createThumbnailFromPath).toHaveBeenCalledWith(
+            VIDEO_FILE_PATH,
+            { width: 320, height: 240 },
+        );
+        expect(still.toJPEG).toHaveBeenCalledWith(70);
+        expect(wallpaper).toEqual({
+            imageDataUrl: `data:image/jpeg;base64,${Buffer.from(
+                'STILL',
+                'utf8',
+            ).toString('base64')}`,
+            color: '#000000',
+            fit: 'cover',
+        });
+        expect(mocks.createFromPath).not.toHaveBeenCalled();
+    });
+
+    test('a video with no still to give is black', async () => {
+        mocks.createThumbnailFromPath.mockResolvedValue(genStill(true));
+        expect(
+            await helpers.readVirtualDisplayWallpaper({
+                kind: 'video',
+                filePath: VIDEO_FILE_PATH,
+            }),
+        ).toEqual({ imageDataUrl: null, color: '#000000', fit: 'cover' });
+    });
+
+    test('a video the system cannot open is black, not an error', async () => {
+        mocks.createThumbnailFromPath.mockRejectedValue(
+            new Error('Failed to get thumbnail'),
+        );
+        await expect(
+            helpers.readVirtualDisplayWallpaper({
+                kind: 'video',
+                filePath: VIDEO_FILE_PATH,
+            }),
+        ).resolves.toEqual({
+            imageDataUrl: null,
+            color: '#000000',
+            fit: 'cover',
+        });
+    });
+
+    test('on Linux, which has no thumbnailer here, a video is black', async () => {
+        definePlatform('linux');
+        expect(
+            await helpers.readVirtualDisplayWallpaper({
+                kind: 'video',
+                filePath: '/videos/loop.mp4',
+            }),
+        ).toEqual({ imageDataUrl: null, color: '#000000', fit: 'cover' });
+        expect(mocks.createThumbnailFromPath).not.toHaveBeenCalled();
+    });
+
+    test('its still is released with the rest when the hold passes', async () => {
+        mocks.createThumbnailFromPath.mockResolvedValue(genStill());
+        const wallpaper = { kind: 'video' as const, filePath: VIDEO_FILE_PATH };
+        await helpers.readVirtualDisplayWallpaper(wallpaper);
+        await helpers.readVirtualDisplayWallpaper(wallpaper);
+        expect(mocks.createThumbnailFromPath).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(5 * 60 * 1000 + 1);
+        await helpers.readVirtualDisplayWallpaper(wallpaper);
+        expect(mocks.createThumbnailFromPath).toHaveBeenCalledTimes(2);
     });
 });

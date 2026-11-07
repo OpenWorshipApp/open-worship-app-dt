@@ -156,7 +156,7 @@ surface is its footer action buttons + a floating Bible-Lookup widget.
 
 | Proposed ID | Target (component) | Interaction | Keys | Given | When | Then (observable) | Source (file:line) | Status |
 |---|---|---|---|---|---|---|---|---|
-| PU-05 | About readiness + version | observe | — | native menu "About <app>" clicked | popup opens | version text + module versions (Pptx2Html/Docx2Html/Bible Note) render (or "Loading…"→value). Opened via **native menu**, not in-app button | `AboutComp.tsx:42-102`, `electronMenu.ts:80` | REFINE — trigger is native menu; enumerate links below |
+| PU-05 | About readiness + version | observe | — | native menu "About <app>" clicked | popup opens | version text + module versions (Pptx to Html Converter/Docx to Html Converter/Bible Note) render (or "Loading…"→value). Opened via **native menu**, not in-app button | `AboutComp.tsx:42-102`, `electronMenu.ts:80` | REFINE — trigger is native menu; enumerate links below |
 | PU-16 | About — links & GitHub button | 🖱️ | — | about open | inspect/click links | "Fork me on GitHub" (`btn-success`/`bi-github`) → `openExternalURL`; version link → release tag; commit link → commit; homepage link (`bi-box-arrow-up-right`). All EX-04 (presence/name only) | `AboutComp.tsx:103-120,25-27,75-88` | GAP |
 
 ---

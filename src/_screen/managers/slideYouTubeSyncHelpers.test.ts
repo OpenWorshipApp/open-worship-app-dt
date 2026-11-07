@@ -183,3 +183,41 @@ describe('YouTube slide synchronization', () => {
         expect(onPlay).toHaveBeenCalledTimes(1);
     });
 });
+
+describe('a player that is not reachable', () => {
+    it('gives the handshake up after 25 unanswered retries', () => {
+        const { iframe, post } = makeIframe();
+        const player = new SlideYouTubePlayer(iframe, 'slide-1', {});
+        vi.advanceTimersByTime(400 * 30);
+        // The first poke plus 25 retries, and no timer left running.
+        expect(post).toHaveBeenCalledTimes(26);
+        expect(vi.getTimerCount()).toBe(0);
+        player.destroy();
+    });
+
+    it('waits for an iframe that is not in the page yet, then pokes it', () => {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube.com/embed/abc?enablejsapi=1';
+        const player = new SlideYouTubePlayer(iframe, 'slide-2', {});
+        expect(iframe.contentWindow).toBeNull();
+        // No window to post to: the commands are dropped, the state kept.
+        expect(() => {
+            player.play();
+            player.seekTo(5);
+        }).not.toThrow();
+        expect(player.getCurrentTime()).toBe(5);
+
+        document.body.appendChild(iframe);
+        const post = vi.spyOn(iframe.contentWindow!, 'postMessage');
+        vi.advanceTimersByTime(400);
+        expect(post).toHaveBeenCalled();
+        for (const [message] of post.mock.calls) {
+            expect(JSON.parse(message as string)).toEqual({
+                event: 'listening',
+                id: 'slide-2',
+                channel: 'widget',
+            });
+        }
+        player.destroy();
+    });
+});

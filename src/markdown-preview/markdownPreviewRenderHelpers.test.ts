@@ -158,7 +158,6 @@ describe('toHeadingSlug', () => {
     test('keeps letters of every script and drops punctuation', () => {
         expect(toHeadingSlug('Getting Started!')).toBe('getting-started');
         expect(toHeadingSlug('  What’s new?  ')).toBe('whats-new');
-        expect(toHeadingSlug('សេចក្ដីផ្ដើម ១')).toBe('សេចក្ដីផ្ដើម-១');
     });
 });
 
@@ -180,6 +179,26 @@ describe('classifyMarkdownHref', () => {
         expect(classifyMarkdownHref('C:%5Cnotes%5Ca.md')).toEqual({
             kind: 'local',
             filePath: 'C:\\notes\\a.md',
+        });
+    });
+
+    test('a malformed escape is kept as written, never thrown', () => {
+        expect(classifyMarkdownHref('#100%')).toEqual({
+            kind: 'anchor',
+            slug: '100%',
+        });
+        expect(classifyMarkdownHref('notes/50%off.md')).toEqual({
+            kind: 'local',
+            filePath: 'notes/50%off.md',
+        });
+    });
+
+    test('a web address that does not parse is unsupported', () => {
+        expect(classifyMarkdownHref('https://')).toEqual({
+            kind: 'unsupported',
+        });
+        expect(classifyMarkdownHref('http://exa mple.com/')).toEqual({
+            kind: 'unsupported',
         });
     });
 

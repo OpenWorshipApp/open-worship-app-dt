@@ -9,6 +9,7 @@ import {
     getLangDataByCodeAsync,
     tranByLangData,
 } from '../lang/langHelpers';
+import { onLangFilesChanged } from '../lang/langFileStore';
 
 /**
  * Which language the names-and-locations dataset is read in.
@@ -120,13 +121,18 @@ export function useLookupLangPresentation(): LookupLangPresentationType {
     }, [langData]);
 }
 
-// The shipped language packages cannot change under a running app, so this is
-// resolved at most once — and only when the picker is actually opened, since
-// answering it imports every language module.
+// Resolved once — and only when the picker is actually opened, since
+// answering it imports every language module — and again after a language is
+// installed, deleted or turned on or off (Settings > Languages).
 let langCodeListPromise: Promise<string[]> | null = null;
+// The store is set again whenever the window re-reads its language plugins.
+onLangFilesChanged(() => {
+    langCodeListPromise = null;
+});
 
 /**
- * The language codes that ship a lookup dataset, in `supportedLangCodes` order.
+ * The language codes that ship a lookup dataset, in `getSupportedLangCodes()`
+ * order.
  *
  * Only the CODES are kept: the language modules themselves are let go again, so
  * opening the picker does not leave every package resident.

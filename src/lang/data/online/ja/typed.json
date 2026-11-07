@@ -1,0 +1,10 @@
+{
+    "ja": {
+        "name": "Japanese",
+        "nativeName": "日本語",
+        "script": "Han Hiragana Katakana",
+        "yes": ["はい", "ええ", "お願いします"],
+        "no": ["いいえ", "いや", "結構です"],
+        "order": 81
+    }
+}

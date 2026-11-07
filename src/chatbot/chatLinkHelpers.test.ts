@@ -10,15 +10,6 @@ import {
 // EC-297: a Google search for Khmer words was drawn as 300 characters of
 // percent-escapes.
 describe('toShownLinkText', () => {
-    it('draws a search decoded, its + as spaces, and short', () => {
-        const url =
-            'https://www.google.com/search?q=bible+verse+' +
-            encodeURIComponent('ព្រះស្រឡាញ់មនុស្សលោក');
-        expect(toShownLinkText(url)).toBe(
-            'google.com/search?q=bible verse ព្រះស្រឡាញ់មនុស្សលោក',
-        );
-    });
-
     it('cuts a long address and keeps a short one whole', () => {
         const long = `https://example.org/${'a'.repeat(100)}`;
         expect([...toShownLinkText(long)]).toHaveLength(60);

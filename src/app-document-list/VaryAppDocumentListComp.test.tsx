@@ -331,4 +331,64 @@ describe('Documents list', () => {
         expect(h.error).toHaveBeenCalledTimes(1);
         expect(h.hideProgress).toHaveBeenCalledTimes(2);
     });
+
+    it('draws nothing until a documents folder source exists', async () => {
+        h.dirSource = null as any;
+        await renderList();
+        expect(container.innerHTML).toBe('');
+        expect(h.props).toBeNull();
+    });
+
+    it('a dropped file it cannot use is left alone', async () => {
+        await renderList();
+        expect(h.props.takeDroppedFile('C:/incoming/photo.png')).toBe(false);
+        expect(h.importDropped).not.toHaveBeenCalled();
+        expect(h.convertOffice).not.toHaveBeenCalled();
+    });
+
+    it('lists a PowerPoint deck and hides a Word lock file', async () => {
+        await renderList();
+        expect(h.dirSource.checkExtraFile('deck.pptx')).toEqual({
+            fileFullName: 'deck.pptx',
+            appMimetype: 'mime/pptx',
+        });
+        expect(h.dirSource.checkExtraFile('~$draft.docx')).toBeNull();
+    });
+
+    it('offers no imports before a documents folder is chosen', async () => {
+        h.dirSource = { dirPath: '', checkExtraFile: undefined };
+        h.signedIn.mockReturnValue(true);
+        await renderList();
+        const defaults = [{ menuElement: 'New', onSelect: vi.fn() }];
+        expect(await h.props.genItemsAddingMenuItems(defaults)).toEqual(
+            defaults,
+        );
+    });
+
+    it('a cancelled download address downloads nothing', async () => {
+        await renderList();
+        const items = await addingMenu();
+        await act(async () => menuItem(items, 'Download From URL').onSelect());
+        expect(h.askForURL).toHaveBeenCalledWith(
+            'Download From URL',
+            'Documents URL:',
+        );
+        expect(h.request).not.toHaveBeenCalled();
+        expect(h.showProgress).not.toHaveBeenCalled();
+        expect(h.toast).not.toHaveBeenCalled();
+    });
+
+    it('closes the SongSelect search it opened', async () => {
+        h.signedIn.mockReturnValue(true);
+        await renderList();
+        const items = await addingMenu();
+        await act(async () =>
+            menuItem(items, 'Import From SongSelect').onSelect(),
+        );
+        expect(container.textContent).toContain('SongSelect popup');
+        await act(async () =>
+            container.querySelector<HTMLButtonElement>('button')!.click(),
+        );
+        expect(container.textContent).not.toContain('SongSelect popup');
+    });
 });

@@ -32,6 +32,7 @@ import {
 } from './website.mjs';
 import { AGENT_UNDO_TEXT, genAgentDataExpression } from './agentData.mjs';
 import { findKnowledgeDirPath } from './help.mjs';
+import { findLangPack, readLangPackJson } from './langPacks.mjs';
 import {
   BIBLE_BOOK_KEYS,
   findBibleBookNames,
@@ -93,9 +94,9 @@ async function runBibleWorker(request, timeout = SHORT_WORK_MS) {
   return value;
 }
 
-// "French" arrives as `fr`; a Bible is installed under a whole locale, and
-// the app's list picks the FIRST French one it knows for a bare language,
-// which is not the one anybody means.
+// "French" arrives as its bare two-letter code; a Bible is installed under a
+// whole locale, and the app's list picks the FIRST French one it knows for a
+// bare language, which is not the one anybody means.
 function toFullLocale(locale) {
   try {
     const parsed = new Intl.Locale(locale);
@@ -174,9 +175,19 @@ async function rankForDraft(draftId, lists) {
   }
 }
 
+// The book-name lists a language carries (its `bibleBooks.json`): English's
+// in the knowledge bundle, any other's in its own folder -- installed, or
+// none (`langPacks.mjs`).
 async function readBundledNameSets(locale) {
   try {
     const { language } = normalizeBibleLocale(locale);
+    if (language !== 'en') {
+      const nameSets = readLangPackJson(
+        findLangPack(language),
+        'bibleBooks.json',
+      );
+      return Array.isArray(nameSets) ? nameSets : [];
+    }
     return (
       JSON.parse(
         await readFile(

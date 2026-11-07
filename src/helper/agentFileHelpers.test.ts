@@ -406,3 +406,145 @@ describe('slide document boxes', () => {
         expect(notABox).toMatch(/^Box 1 of slide 1 \(type "unknown"\)/);
     });
 });
+
+describe('slide document content edges', () => {
+    beforeEach(() => {
+        validateMock.mockClear();
+        canvas.canvasItemFromJson.mockClear();
+        createWithContentMock.mockClear();
+    });
+
+    const createdItems = () => {
+        return (createWithContentMock.mock.calls[0] as any[])[2];
+    };
+
+    test('refuses content that is not JSON, naming the shape it wants', async () => {
+        expect(await checkContent('{"items": [')).toMatch(
+            /^That is not valid JSON\. Slide content is the document as JSON, with an `items` array/,
+        );
+        expect(validateMock).not.toHaveBeenCalled();
+    });
+
+    test('completes a box on a slide with no usable size at the default size', async () => {
+        const content = JSON.stringify({
+            items: [
+                {
+                    id: 1,
+                    metadata: { width: 'wide', height: 1080 },
+                    canvasItems: [{ type: 'text', text: 'Hi' }],
+                },
+            ],
+        });
+
+        expect(await checkContent(content)).toBeNull();
+        await AGENT_FILE_KIND_MAP.slide.create('/docs', 'Hymn', content);
+        expect(createdItems()[0].canvasItems[0]).toMatchObject({
+            id: 1,
+            text: 'Hi',
+            width: 1024,
+            height: 216,
+            left: 128,
+            top: 252,
+        });
+    });
+
+    test('leaves a slide with no boxes, and a box already whole, as they were', async () => {
+        const whole = {
+            id: 4,
+            type: 'text',
+            text: 'Ready',
+            color: '#000000',
+            fontSize: 40,
+            fontFamily: 'Arial',
+            fontWeight: null,
+            top: 0,
+            left: 0,
+            rotate: 0,
+            width: 100,
+            height: 50,
+            backgroundColor: null,
+        };
+        const bare = { id: 2, metadata: { width: 1920, height: 1080 } };
+        const content = JSON.stringify({
+            items: [
+                {
+                    id: 1,
+                    metadata: { width: 1920, height: 1080 },
+                    canvasItems: [whole, { type: 'text', text: 'New' }],
+                },
+                bare,
+            ],
+        });
+
+        expect(await checkContent(content)).toBeNull();
+        await AGENT_FILE_KIND_MAP.slide.create('/docs', 'Hymn', content);
+        const [first, second] = createdItems();
+        expect(first.canvasItems[0]).toEqual(whole);
+        // Numbered after the boxes already there.
+        expect(first.canvasItems[1]).toMatchObject({
+            id: 5,
+            type: 'text',
+            text: 'New',
+        });
+        expect(second).toEqual(bare);
+    });
+
+    test('never hands the app a missing slide list, whatever it was given', async () => {
+        await AGENT_FILE_KIND_MAP.slide.create('/docs', 'Hymn', 'not json');
+        await AGENT_FILE_KIND_MAP.slide.create(
+            '/docs',
+            'Hymn',
+            '{"title":"no slides"}',
+        );
+        expect(createWithContentMock.mock.calls).toEqual([
+            ['/docs', 'Hymn', []],
+            ['/docs', 'Hymn', []],
+        ]);
+    });
+
+    test('names every field of a text box written with the wrong type', async () => {
+        const content = JSON.stringify({
+            items: [
+                {
+                    id: 1,
+                    canvasItems: [
+                        {
+                            id: 1,
+                            type: 'text',
+                            top: 0,
+                            left: 0,
+                            rotate: 0,
+                            width: 10,
+                            height: 10,
+                            backgroundColor: 5,
+                            text: 5,
+                            color: 7,
+                            fontSize: 40,
+                            fontFamily: 3,
+                            fontWeight: true,
+                        },
+                    ],
+                },
+            ],
+        });
+
+        expect(await checkContent(content)).toContain(
+            'Box 1 of slide 1 (type "text") would not open in this app, so ' +
+                'nothing was written: it needs backgroundColor (a colour like ' +
+                '"#00000080", or null), text (a string), color (a colour like ' +
+                '"#FFFFFF"), fontFamily (a string, or null), fontWeight (a ' +
+                'string, or null).',
+        );
+    });
+
+    test('names a box that is not an object by no type at all', async () => {
+        const content = JSON.stringify({
+            items: [{ id: 1, canvasItems: [5] }],
+        });
+
+        expect(await checkContent(content)).toMatch(
+            /^Box 1 of slide 1 \(type "unknown"\) would not open in this app, so nothing was written\. Its type is not one this app draws/,
+        );
+        expect(canvas.canvasItemFromJson).not.toHaveBeenCalled();
+    });
+});

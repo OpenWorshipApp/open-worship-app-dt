@@ -3,6 +3,7 @@ import { beforeEach, expect, test, vi } from 'vitest';
 const h = vi.hoisted(() => {
     return {
         settings: new Map<string, string>(),
+        writes: [] as string[],
         provider: { isPagePresenter: true } as { isPagePresenter: boolean },
     };
 });
@@ -11,6 +12,7 @@ vi.mock('../../server/appProvider', () => ({ default: h.provider }));
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: (key: string) => h.settings.get(key) ?? null,
     setSetting: (key: string, value: string) => {
+        h.writes.push(`${key}=${value}`);
         h.settings.set(key, value);
     },
 }));
@@ -25,6 +27,7 @@ async function load() {
 
 beforeEach(() => {
     h.settings.clear();
+    h.writes.length = 0;
     h.provider.isPagePresenter = true;
     h.settings.set('screen-display--pid-0', VIRTUAL);
     h.settings.set('screen-display--pid-1', VIRTUAL);
@@ -96,4 +99,21 @@ test('only the presenter keeps or restores it; hiding every screen forgets it', 
 
     h.settings.set(key, 'not json');
     expect(helpers.readVirtualScreensShowing()).toEqual([]);
+});
+
+test('the kept list is in screen order, so the same screens in any order write once', async () => {
+    const helpers = await load();
+    const key = helpers.VIRTUAL_SCREENS_SHOWING_SETTING_NAME;
+    helpers.restoreVirtualScreensShowing([]);
+
+    helpers.rememberVirtualScreensShowing([
+        { screenId: 1, isShowing: true },
+        { screenId: 0, isShowing: true },
+    ]);
+    expect(h.settings.get(key)).toBe('[0,1]');
+    helpers.rememberVirtualScreensShowing([
+        { screenId: 0, isShowing: true },
+        { screenId: 1, isShowing: true },
+    ]);
+    expect(h.writes).toEqual([`${key}=[0,1]`]);
 });

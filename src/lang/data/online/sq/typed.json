@@ -1,0 +1,12 @@
+{
+    "sq": {
+        "name": "Albanian",
+        "nativeName": "Shqip",
+        "script": "Latin",
+        "words": "dhe ose por nuk është janë ishte jam je unë ti ai ajo ne ju ata ato im ime yt jote i e të një si çfarë ku pse kur kush cili cila me për nga në mbi pa mund dua duhet gjithashtu edhe tashmë shumë më ky kjo këtu atje lutem faleminderit",
+        "letters": "ëç",
+        "yes": ["po", "po, ju lutem"],
+        "no": ["jo", "jo, faleminderit"],
+        "order": 21
+    }
+}

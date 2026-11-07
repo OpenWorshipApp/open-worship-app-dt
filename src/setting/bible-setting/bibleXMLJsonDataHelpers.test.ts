@@ -113,7 +113,7 @@ describe('Bible XML metadata and conversion', () => {
     test('reads aliases, numeric book indexes, maps and metadata without losing verse text', async () => {
         const result =
             await xmlTextToJson(`<bible abbr="TEST" name="Title" desc="Desc" version="3" locale="en-US" status="Public" publisher="Press" copyRights="Rights">
-            <map><number-map key="1" value="១"/><number-map value="ignored"/><book-map key="GEN" value="First"/><book-map key="EXO"/></map>
+            <map><number-map key="1" value="１"/><number-map value="ignored"/><book-map key="GEN" value="First"/><book-map key="EXO"/></map>
             <testament><book id="1"><chapter index="1"><verse id="1">A &amp; B</verse><verse>skip</verse></chapter><chapter/></book></testament>
             <book key="EXO"><chapter number="2"><verse index="4">Second</verse></chapter></book>
             <book key="UNKNOWN"/><book number="bad"/><book number="99"/>
@@ -137,7 +137,7 @@ describe('Bible XML metadata and conversion', () => {
                         String(i),
                     ]),
                 ),
-                '1': '១',
+                '1': '１',
             },
         });
         expect(result?.books).toEqual({
@@ -278,6 +278,53 @@ describe('Bible XML metadata and conversion', () => {
             ]['1'],
         ).toBe('In & out <light>');
         expect(parse).toHaveBeenCalledTimes(1);
+    });
+
+    test('a preview of text with no Bible in it offers no key and fills in every default', async () => {
+        const choices = vi.fn();
+        expect(
+            await getBibleInfoJson('<other/>', {
+                isImportPreview: true,
+                onKeyChoices: choices,
+            }),
+        ).toEqual({
+            key: '',
+            title: 'Unknown Title',
+            description: 'Unknown Description',
+            version: 1,
+            locale: 'en-US',
+            legalNote: 'Unknown Legal Note',
+            publisher: 'Unknown Publisher',
+            copyRights: 'Unknown Copy Rights',
+            note: '',
+            numbersMap: Object.fromEntries(
+                Array.from({ length: 10 }, (_, i) => [String(i), String(i)]),
+            ),
+            keyBookMap: { GEN: 'Genesis', EXO: 'Exodus' },
+            booksAvailable: [],
+        });
+        expect(choices).toHaveBeenCalledWith([]);
+        expect(mocks.input).not.toHaveBeenCalled();
+    });
+
+    test('a Bible whose key is never given is not converted', async () => {
+        mocks.downloaded.mockResolvedValue(null);
+        expect(await xmlTextToJson(`<bible title="T">${book}</bible>`)).toBe(
+            null,
+        );
+    });
+
+    test('a heading with nothing in it is written empty and read back as none', async () => {
+        const original = await xmlTextToJson(`<bible key="T">${book}</bible>`);
+        const xml = jsonToXMLText({
+            ...original!,
+            newLinesTitleMap: { 'GEN 1:1': undefined as any },
+        });
+        expect(xml).toMatch(
+            /<item key="GEN 1:1"\s*\/>|<item key="GEN 1:1"><\/item>/,
+        );
+        expect(xml).not.toContain('CDATA');
+        expect((await xmlTextToJson(xml!))?.newLinesTitleMap).toEqual({});
     });
 });
 

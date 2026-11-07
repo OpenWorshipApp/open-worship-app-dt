@@ -81,7 +81,7 @@ anything abnormal using the severity scale and report template below.
 - Close via the modal close button and via **Ctrl+Q**.
 - Presenter `Bibles` tab shows selected verse; the right column's `Bibles` / `Bible Notes` panes
   (a split, not tabs) both render.
-- The Bibles tab's footer carries the **Bible Properties** toggle (a floating
+- The Bibles tab's footer carries the **Bible/LongText Properties** toggle (a floating
   panel, also in the Mini Screen's footer): flip **Dark** / **Light**, press one
   look tile and change one row, confirm the sample and the preview restyle, then
   **Reset** and put the size back (PM-13, PM-14).
@@ -265,9 +265,10 @@ Recipe (≈3 min, self-restoring):
 
 1. **Read the starting locale** from Settings → Language (which button is active). Do
    **not** read `localStorage['language-locale']` — stale key (KB §1). You restore this.
-2. **Switch to the other locale** → `Apply Settings`. This calls
-   `forceReloadAppWindows()`: every window reloads, so re-`list_pages` / `select_page`
-   and re-run the readiness check. All previous snapshot `uid`s are dead.
+2. **Switch to the other locale** — the press itself calls
+   `forceReloadAppWindows()` (no `Apply Settings` since 2026-11-05): every window
+   reloads, so re-`list_pages` / `select_page` and re-run the readiness check. All
+   previous snapshot `uid`s are dead.
 3. **Re-walk every screen the run touched**, plus the presenter baseline. Per screen:
    `take_screenshot` + `list_console_messages`.
 4. **Assert:**
@@ -280,7 +281,7 @@ Recipe (≈3 min, self-restoring):
      (Khmer glyphs are taller — check buttons, tabs, table cells).
    - Hardcoded English left in a Khmer screen = **Low/Info** (untranslated UI), a
      different and much less severe finding than the throw. Name the file.
-5. **Restore** the starting locale → `Apply Settings` again.
+5. **Restore** the starting locale (another reload of every window).
 
 Notes:
 - Unsaved editor state survives the reloads (disk-backed `<file>.histories/<n>-head`), so

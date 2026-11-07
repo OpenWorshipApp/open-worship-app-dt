@@ -1,0 +1,8 @@
+{
+    "latinStopWords": {
+        "pl-PL": "i w nie się na z że do to jest jego"
+    },
+    "languageAliases": {
+        "poland": "polish"
+    }
+}

@@ -1694,3 +1694,63 @@ describe('what a tab is still asking about', () => {
         );
     });
 });
+
+describe('the / button beside the box', () => {
+    const slashButton = () => {
+        return query<HTMLButtonElement>('button.chat-start-command');
+    };
+    const box = () => {
+        return query<HTMLTextAreaElement>('.chat-input')!;
+    };
+    const commandRows = () => {
+        return queryAll('.chat-suggest-text').map((row) => {
+            return row.textContent ?? '';
+        });
+    };
+
+    test('says what it is for, and puts / in an empty box with the commands listed', async () => {
+        await renderApp();
+        const button = slashButton();
+        expect(button?.getAttribute('aria-label')).toBe('List every command');
+        expect(button?.title).toBe(
+            'Start a command: puts / in the box and lists the commands you can type',
+        );
+        expect(commandRows()).toEqual([]);
+        await click(button);
+        expect(box().value).toBe('/');
+        expect(document.activeElement).toBe(box());
+        expect(box().selectionStart).toBe(1);
+        expect(commandRows().length).toBeGreaterThan(1);
+        expect(
+            commandRows().every((text) => {
+                return text.startsWith('/');
+            }),
+        ).toBe(true);
+        expect(commandRows()).toContain('/commands');
+        // Pressed again, a command already started is left as it is.
+        await click(slashButton());
+        expect(box().value).toBe('/');
+    });
+
+    test('keeps the words already typed, behind the / with the caret after it', async () => {
+        await renderApp();
+        await typeQuestion('what is the Bible');
+        await click(slashButton());
+        expect(box().value).toBe('/ what is the Bible');
+        expect(box().selectionStart).toBe(1);
+        expect(box().selectionEnd).toBe(1);
+        // No row: taking one would fill the box over their words.
+        expect(commandRows()).toEqual([]);
+    });
+
+    test('brings the list back after Escape put it away', async () => {
+        await renderApp();
+        await typeQuestion('/sc');
+        expect(commandRows().length).toBeGreaterThan(0);
+        await pressKey(box(), 'Escape');
+        expect(commandRows()).toEqual([]);
+        await click(slashButton());
+        expect(box().value).toBe('/sc');
+        expect(commandRows().length).toBeGreaterThan(0);
+    });
+});

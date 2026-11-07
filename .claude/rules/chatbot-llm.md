@@ -19,9 +19,9 @@ What the chatbot sends a provider, what it withholds, what it costs and what
 happens when a provider fails. The window itself: `chatbot-window.md`.
 
 - **The chatbot's model sees the app's own `owa_*` tools and nothing of
-  chrome-devtools' at all** — 35 of 64 withheld (and three offered only to the kinds of ask `MODEL_ON_ASK_TOOL_MAP` and `MODEL_ASK_SHARED_TOOL_MAP` name), declared ONCE in
+  chrome-devtools' at all** — 36 of 65 withheld (and three offered only to the kinds of ask `MODEL_ON_ASK_TOOL_MAP` and `MODEL_ASK_SHARED_TOOL_MAP` name), declared ONCE in
   `tools/owa-devtools-mcp/modelTools.mjs` (no `node:fs`, so the renderer
-  bundles the module the audit script reads). All 64 stay registered on the
+  bundles the module the audit script reads). All 65 stay registered on the
   server, so the developer's door is whole — what is withheld is withheld from
   the MODEL, which is the untrusted party. Same two enforcement points as the
   firewall and for the same reason: `askLlmBot` filters the list, and
@@ -52,6 +52,11 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   which the WINDOW asks on a debounce as a person types a reference or a
   name; its reason says to answer with `owa_find_verse` / `owa_lookup_record`
   (`agent-tools.md`).
+  **And since 2026-11-05 the language plugins**, `owa_language`: the help
+  window checks the language a conversation turns to and offers its install
+  as buttons the PERSON presses (`chatbot-bible-import.md`); a language
+  plugin is code the app runs, so no model stands in for that press, and the
+  model's list and its ratchet did not move (26 tools, ~8 348 a round).
   Measured 2026-09-08: **the host bill and the model's bill are different
   numbers** — 48 tools / ~11 113 per round at the host, 19 / ~5 503 to the
   model (was 29 / ~7 366).
@@ -279,7 +284,12 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   QUESTION is in changes per question, so it goes at the end of the ask
   (`genReplyLanguageLine`, appended in `askLlmBot`): nothing for English in
   an English app, `(Answer in Khmer.)` in a Khmer one, a sentence when they
-  wrote in another language. Only for an ask that carries `askedText` or
+  wrote in another language -- any language a person may type, by name
+  (an installed language's `typed.json`), saying to name every button exactly as the tools
+  and the guide give it and to write what follows `OPTIONS:` in that language
+  (2026-11-03, `EC-449`: told _They wrote in French_ of a Spanish line, a
+  model renamed the Font Size slider _Taille de police_ on an English screen,
+  and the free tier wrote English options under Chinese answers). Only for an ask that carries `askedText` or
   `replyLang` -- the verse translation asks a model for ENGLISH and gets no
   line; the report passes the language of the person's complaint. **All of
   this is now for a Gemma 4 model only, or when nothing can translate**
@@ -689,6 +699,11 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   started (`cutRunawayAnswer`), and a model's own control token printed as
   words (_ច<audio|> View_, gemma-4-12b) is taken out of the words and the
   chips (`dropModelTokens`, which also draws a LaTeX `$\rightarrow$` as →).
+  **And one in the wrong language** (2026-11-04, `EC-460`): a Thai
+  question in a Khmer window, told _answer in Thai_, came back wholly in
+  Khmer once of twice. An answer that must be in a language with a script
+  of its own (`toAnswerScript`, never Latin) and holds none of its letters
+  in 30 or more goes back once (`checkIsWrongScriptAnswer`).
 - **Steps written with NOTHING looked up go back once too** (2026-10-17,
   `EC-311`, `checkIsStepsWithoutPage` with `ToolWatchType.toolCallCount` /
   `canSearchGuide`): the Khmer stress run on gemma4:cloud wrote every list
@@ -722,3 +737,15 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `checkIsDoneWithoutTool` (`EC-325`) hands back an ask to put something up
   that ended without the tool that does it: gemma4:cloud had said a
   countdown was started having called nothing.
+
+- **A fifth tool offered to one kind of ask** (2026-11-06): `owa_lyric_edit`
+  goes to a `lyric` ask -- a question while a `.owl` is open in the tab
+  (attached now or still open), unless the typed words are a corpus row --
+  under `LYRIC_SYSTEM_PROMPT`, six rounds, the song read fresh into the user
+  turn (`toLyricAsk`), and on a custom server's lean list. ~519 tokens to
+  that ask alone; the ordinary list and its ratchet did not move (~8 348 of
+  8 350). The WINDOW turns the song's name into its path
+  (`resolveLyricEditFile` in `runMcpToolCall`), a path the model writes is
+  refused, and outside a lyric ask the tool is refused. On Auto a
+  translation prefers a Gemma 4 model (`checkIsLyricTranslateAsk` →
+  `preferModelPattern`).

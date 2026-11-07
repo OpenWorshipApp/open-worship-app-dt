@@ -29,7 +29,6 @@ import {
 } from './bibleReaderChatHelpers';
 import {
     checkIsInLanguageScript,
-    getAssistantLanguage,
     listAssistantLanguages,
     toAsciiDigits,
     toShownDigits,
@@ -173,7 +172,7 @@ export function withLookupStudyFiles(factsText: string, listed: any) {
  *
  * The record's verse list is a curated few, and it is the KJV's: Ararat's
  * lists Genesis 8:4 and Jeremiah 51:27, where the KJV says "Armenia" in 2
- * Kings 19:37 and Isaiah 37:38 and the Khmer Bible says អារ៉ារ៉ាត -- so
+ * Kings 19:37 and Isaiah 37:38 and the Khmer Bible says Ararat -- so
  * _who fled to Ararat?_ was answered from the record's vague description
  * and named nobody. The Bible being read, searched for the name, finds all
  * four, and Noah's 47 verses where the record lists 36.
@@ -365,8 +364,8 @@ export function readLookupThread(
  * because the answer is marked as one (`isLookupAnswer`).
  *
  * The app's WORK decides, never a how-word alone (2026-10-22): under
- * Noah's card _តើឈ្មោះណូអេមានន័យដូចម្តេច?_ (what does the name Noah mean?)
- * holds ដូចម្តេច, Khmer's "how", and went to the app's guide, which said
+ * Noah's card _what does the name Noah mean?_, asked in Khmer, holds
+ * Khmer's word for "how", and went to the app's guide, which said
  * to type `/btw` -- with Genesis 5:29, the answer, quoted in the record.
  * _How did Noah build the ark?_ is about the record too. A how-to about
  * the app names what it is about: the screen, saving, a setting.
@@ -412,7 +411,7 @@ export function checkIsLookupMapAsk(text: string, ask: LookupSubjectType) {
  * `action`: name the card's button, offered and not pressed.
  */
 export type LookupVerseAskType =
-    | { kind: 'anotherBible'; language?: 'en' | 'km' | 'fr' }
+    | { kind: 'anotherBible'; language?: string }
     | { kind: 'sameBible' }
     | {
           kind: 'action';
@@ -420,28 +419,20 @@ export type LookupVerseAskType =
           near?: 'previous' | 'next';
       };
 
-const NAMED_LANGUAGE_LIST = ['en', 'km', 'fr'] as const;
-const LANGUAGE_ENGLISH_NAME_MAP = {
-    en: 'English',
-    km: 'Khmer',
-    fr: 'French',
-} as const;
-
-/** The language a question names, if any, in the app's own words. */
+/**
+ * The language a question names, if any, in the app's own words: any
+ * language with a package here, by its own name, its English name or the
+ * window's word for it.
+ */
 function readNamedLanguage(text: string) {
-    for (const code of NAMED_LANGUAGE_LIST) {
-        const language = getAssistantLanguage(code);
+    for (const language of listAssistantLanguages()) {
         // Lenient: a language pack that never translated the name must not
         // take the window down with a missing-key throw.
-        const localName = tranLabel(LANGUAGE_ENGLISH_NAME_MAP[code]);
+        const localName = tranLabel(language.name);
         if (
-            checkHasWord(text, [
-                language.nativeName,
-                LANGUAGE_ENGLISH_NAME_MAP[code],
-                localName,
-            ])
+            checkHasWord(text, [language.nativeName, language.name, localName])
         ) {
-            return code;
+            return language.code;
         }
     }
     return null;
@@ -737,8 +728,8 @@ const COUNT_FIELD_KEY_MAP = {
  * Which list a line under a PERSON's card asks the number of, or null
  * (2026-10-19, EC-371).
  *
- * Measured on gemma4:cloud under David's record: _តើលោកមានកូនប៉ុន្មាន?_ (how
- * many children?) answered "20" over a list of nineteen names -- the record's
+ * Measured on gemma4:cloud under David's record: _how many children did he
+ * have?_, asked in Khmer, answered "20" over a list of nineteen names -- the record's
  * own `children` list is nineteen long. A model counting words is a model
  * making an arithmetic mistake, so the window counts the list itself.
  *
@@ -1135,7 +1126,8 @@ export function readLookupAskContext(
             for (const word of language.lookupWords.verseNumber) {
                 // A Latin word stands alone ("verse 22", never "Gev 1"); a
                 // word of a script without spaces is read where it is
-                // ("តើខ ២១").
+                // (a Khmer question's "verse 21" is written with no space
+                // after a particle).
                 const lead = language.isLatinScript ? '(?<!\\p{L})' : '';
                 const pattern = new RegExp(
                     `${lead}${escapeForPattern(word)}\\s*(\\p{Nd}+)`,
@@ -1172,8 +1164,8 @@ export function readLookupAskContext(
 
 /**
  * A line under a PASSAGE card that asks to study its words (2026-10-23):
- * "teach me the vocabulary", _ពន្យល់ពាក្យនីមួយៗក្នុងខ ១_ (explain each word
- * in verse 1). The card's own **Study the words**, with no model -- or, with
+ * "teach me the vocabulary", _explain each word in verse 1_ (asked in
+ * Khmer). The card's own **Study the words**, with no model -- or, with
  * a verse of the passage named by number, that verse's every word taught at
  * once (`verseKey`). The words are DATA (`lookupWords.vocabulary`); a
  * question about ONE word is the assistant's as it is.

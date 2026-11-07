@@ -277,12 +277,12 @@ describe('the launcher menu', () => {
     test('names each screen badge in the menu’s own words', () => {
         state.foregroundList = [[2, { webDataList: [{ id: 'w' }] }]];
         const items = genForegroundPanelMenuItems('', vi.fn(), (key) =>
-            key === 'Screen' ? 'Écran' : key,
+            key === 'Screen' ? 'Screen (xx)' : key,
         );
         renderMenuElements(items);
         const badge = container.querySelector('.badge') as HTMLElement;
         expect(badge.textContent).toBe('2');
-        expect(badge.title).toBe('Écran: 2');
+        expect(badge.title).toBe('Screen (xx): 2');
     });
 
     test('each panel remembers its own size and place', () => {

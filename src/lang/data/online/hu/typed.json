@@ -1,0 +1,12 @@
+{
+    "hu": {
+        "name": "Hungarian",
+        "nativeName": "Magyar",
+        "script": "Latin",
+        "words": "a az egy és vagy de nem is van vannak volt hogy hogyan mi mit mik hol hova miért mikor ki kit melyik én te ő ti ők meg el be fel le tudom tudok tudja szeretném szeretnék kell már még nagyon több ez ezt azt itt ott kérem köszönöm",
+        "letters": "őűáéíóöúü",
+        "yes": ["igen", "igen, kérem"],
+        "no": ["nem", "nem, köszönöm"],
+        "order": 13
+    }
+}

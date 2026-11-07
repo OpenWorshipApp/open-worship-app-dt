@@ -31,8 +31,9 @@ import {
 import {
     DEFAULT_LANG_CODE,
     DEFAULT_LOCALE,
+    ensureLangPlugins,
     getLocalBibleCrossRef,
-    supportedLocales,
+    getSupportedLocales,
     type LocaleType,
 } from '../lang/langHelpers';
 import type { LookupManagersType } from '../location-name-lookup/lookupDataHelpers';
@@ -296,6 +297,20 @@ async function readPassages(bibleKey: string, refs: string) {
     return { passages, unread, notFound };
 }
 
+// The key a passage written the way a person writes it names (`John 3:16`,
+// a book's own name in the Bible's language, a code the model got wrong such
+// as `JOH`), read by the verse finder; null when it reads none.
+async function readRefKey(bibleKey: string, ref: string) {
+    const { handleAgentBibleFindRequest } =
+        await import('./agentBibleFindHelpers');
+    const found: any = await handleAgentBibleFindRequest({
+        bible: bibleKey,
+        refs: ref,
+    });
+    const key = found?.verses?.[0]?.key;
+    return typeof key === 'string' ? key : null;
+}
+
 async function countChapterVerses(
     bibleKey: string,
     bookKey: string,
@@ -316,12 +331,18 @@ function stepChapter(
 ) {
     const bookKeyList = Object.keys(getModelKeyBookMap());
     const bookIndex = bookKeyList.indexOf(bookKey);
+    // A book the model does not have has no chapters to step through: `JOH
+    // 3:16` (John is `JHN`) parsed, and its chapter count threw a raw
+    // TypeError instead of saying there is no passage beside it (2026-11-03).
+    if (bookIndex === -1) {
+        return null;
+    }
     if (near === 'next') {
         if (chapter < getModelChapterCount(bookKey)) {
             return { bookKey, chapter: chapter + 1 };
         }
         const nextBookKey = bookKeyList[bookIndex + 1];
-        return bookIndex === -1 || nextBookKey === undefined
+        return nextBookKey === undefined
             ? null
             : { bookKey: nextBookKey, chapter: 1 };
     }
@@ -704,8 +725,9 @@ async function readPassageCrossRefs(
         return null;
     }
     const bibleLocale = (await getBibleInfo(bibleKey))?.locale;
+    await ensureLangPlugins();
     const locale =
-        bibleLocale !== undefined && supportedLocales.includes(bibleLocale)
+        bibleLocale !== undefined && getSupportedLocales().includes(bibleLocale)
             ? bibleLocale
             : DEFAULT_LOCALE;
     const verseList = await readVerseCrossRefs(locale, verseKeyList);
@@ -776,8 +798,8 @@ async function readPassageCrossRefs(
 }
 
 /**
- * Each verse's theme references as the Bible names them (`លោកុប្បត្តិ ៩:១១`,
- * not `GEN 9:11`), a key the Bible cannot place left as it is
+ * Each verse's theme references as the Bible names them (Genesis 9:11 in the
+ * Bible's own book name and digits, not `GEN 9:11`), a key the Bible cannot place left as it is
  * (2026-10-23, `EC-419`): a model named only the references it had a title
  * for -- verse 22's promise as Genesis 9:11 and 9:15, where its theme also
  * gave Isaiah 54:9 and Jeremiah 33:20 as keys.
@@ -1073,7 +1095,18 @@ async function readPassageRequest(request: AgentLookupRequestType) {
     let refs = askedRefs;
     if (near === 'previous' || near === 'next') {
         const firstRef = askedRefs.split(/\s*;\s*/)[0] ?? '';
-        const nearKey = await findNearKey(readBibleKey, firstRef, near);
+        let nearKey = await findNearKey(readBibleKey, firstRef, near);
+        // The step reads book codes alone, and a passage is as often written
+        // the way a person writes it: `John 3:16` -- this tool's own example
+        // -- answered "There is no passage" after it AND before it
+        // (2026-11-03). The finder reads it, and the step goes on from the
+        // key it read; a code that steps by itself never costs that read.
+        if (nearKey === null) {
+            const refKey = await readRefKey(readBibleKey, firstRef);
+            if (refKey !== null && refKey !== firstRef) {
+                nearKey = await findNearKey(readBibleKey, refKey, near);
+            }
+        }
         if (nearKey === null) {
             return toReason(
                 `There is no passage ${
@@ -1179,8 +1212,8 @@ function genResolver(managers: LookupManagersType): LookupRecordResolverType {
 }
 
 // The records of the same name, in the dataset's spelling OR the KJV's: in
-// Khmer, Noah the ark-builder is ណូអេ and Zelophehad's daughter ណូអា --
-// the KJV calls both Noah (2026-10-22). One pass over the records a panel
+// Khmer, Noah the ark-builder and Zelophehad's daughter Noah are spelt
+// apart -- the KJV calls both Noah (2026-10-22). One pass over the records a panel
 // already holds.
 function listRecordsNamed<T extends { name: string; kjvName: string | null }>(
     manager: { getAllRecords: () => T[] },

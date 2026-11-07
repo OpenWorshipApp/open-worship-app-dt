@@ -50,7 +50,7 @@ describe('RenderAIBibleCrossReferenceComp', () => {
             root.render(
                 <RenderAIBibleCrossReferenceComp
                     crossReference={{
-                        title: 'ព្រះអម្ចាស់',
+                        title: '[xx] The Lord',
                         titleEn: 'The Lord',
                         verses: [],
                     }}
@@ -63,7 +63,7 @@ describe('RenderAIBibleCrossReferenceComp', () => {
         // The caution used to sit inside the heading and become part of
         // its name; a heading holding a control also dropped out of the
         // headings a tool lists.
-        expect(heading.textContent).toBe('ព្រះអម្ចាស់');
+        expect(heading.textContent).toBe('[xx] The Lord');
         expect(heading.contains(note)).toBe(false);
         // Both sentences of the caution go through the dictionary.
         expect(note.getAttribute('aria-label')).toBe(

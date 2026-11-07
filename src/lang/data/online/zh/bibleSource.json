@@ -1,0 +1,9 @@
+{
+    "wordLanguages": [
+        {
+            "pattern": "\\p{Script=Han}",
+            "name": "Chinese",
+            "order": 8
+        }
+    ]
+}

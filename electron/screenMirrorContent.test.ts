@@ -28,7 +28,7 @@ afterEach(async () => {
 });
 describe('presentation resources', () => {
     test('streams byte ranges and HEAD; invalid ranges return 416', async () => {
-        const file = path.join(directory, 'ភ្លេង #1.mp4');
+        const file = path.join(directory, '♫ 🎵 #1.mp4');
         await writeFile(file, '0123456789');
         const resource = registry.publish(registry.createScope(), file)!;
         const response = await fetch(base + resource, {

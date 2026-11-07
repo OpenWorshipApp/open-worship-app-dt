@@ -10,6 +10,14 @@
 // is for is old and not technical: everything here exists so that "I pasted
 // the link from GitHub" ends in a Bible on the screen, not in "that is not a
 // valid XML file".
+//
+// What it knows about the world's languages -- their names in their own
+// words, the other names they go by, the scripts and little words that tell
+// them apart -- is DATA, each installed language's `world.json` read through
+// `worldLanguages.mjs` (English's own in `src/lang/data/en/world.json`), as a JSON
+// module so the renderer and the server still get the same thing with no I/O.
+
+import { readWorldLanguages } from './worldLanguages.mjs';
 
 export const BIBLE_XML_ACTIONS = [
   'check',
@@ -200,7 +208,8 @@ export function extractBibleXmlLinks(text, baseUrl) {
 }
 
 // Marks too: a Khmer word is letters AND the marks between them, and
-// splitting "ខ្មែរ" at its signs left nothing that names a language.
+// splitting the language's own name for itself at its signs left nothing
+// that names a language.
 function toPlainSearchWords(text) {
   return (
     String(text ?? '')
@@ -213,35 +222,11 @@ function toPlainSearchWords(text) {
 }
 
 // A language as its own speakers write it, to the English word the catalog's
-// files are named with.
-const NATIVE_LANGUAGE_MAP = {
-  ខ្មែរ: 'khmer',
-  ថៃ: 'thai',
-  ไทย: 'thai',
-  ລາວ: 'lao',
-  မြန်မာ: 'burmese',
-  'tiếng việt': 'vietnamese',
-  中文: 'chinese',
-  汉语: 'chinese',
-  漢語: 'chinese',
-  日本語: 'japanese',
-  한국어: 'korean',
-  français: 'french',
-  español: 'spanish',
-  português: 'portuguese',
-  deutsch: 'german',
-  русский: 'russian',
-  українська: 'ukrainian',
-  العربية: 'arabic',
-  עברית: 'hebrew',
-  ελληνικά: 'greek',
-  हिन्दी: 'hindi',
-  বাংলা: 'bengali',
-  தமிழ்: 'tamil',
-  'bahasa indonesia': 'indonesian',
-  tagalog: 'tagalog',
-  kiswahili: 'swahili',
-};
+// files are named with (`nativeLanguageNames`) -- an INSTALLED language's
+// own words (`worldLanguages.mjs`).
+function readNativeLanguageMap() {
+  return readWorldLanguages().nativeLanguageNames;
+}
 
 // A country, its people, or another name the language goes by, to the word
 // the catalog's files are named with. A person asks for the Bible "in
@@ -250,67 +235,11 @@ const NATIVE_LANGUAGE_MAP = {
 // "myanmar" and "espanol" each found nothing. Only names that are not
 // already the START of the catalog's own word: "korea" finds `Korean…` by
 // itself. Every value is a word of `CATALOG_LANGUAGE_WORDS`; a test holds it.
-export const LANGUAGE_ALIAS_MAP = {
-  cambodia: 'khmer',
-  cambodian: 'khmer',
-  kampuchea: 'khmer',
-  china: 'chinese',
-  mandarin: 'chinese',
-  cantonese: 'chinese',
-  taiwan: 'chinese',
-  france: 'french',
-  francais: 'french',
-  thailand: 'thai',
-  laos: 'lao',
-  laotian: 'lao',
-  myanmar: 'burmese',
-  burma: 'burmese',
-  spain: 'spanish',
-  espanol: 'spanish',
-  mexico: 'spanish',
-  germany: 'german',
-  portugal: 'portuguese',
-  portugues: 'portuguese',
-  brazil: 'portuguese',
-  brasil: 'portuguese',
-  italy: 'italian',
-  italiano: 'italian',
-  greece: 'greek',
-  israel: 'hebrew',
-  netherlands: 'dutch',
-  holland: 'dutch',
-  nederlands: 'dutch',
-  england: 'english',
-  america: 'english',
-  american: 'english',
-  philippines: 'tagalog',
-  filipino: 'tagalog',
-  pilipino: 'tagalog',
-  iran: 'persian',
-  farsi: 'persian',
-  turkey: 'turkish',
-  sweden: 'swedish',
-  norway: 'norwegian',
-  denmark: 'danish',
-  finland: 'finnish',
-  poland: 'polish',
-  hungary: 'hungarian',
-  ukraine: 'ukrainian',
-  ireland: 'irish',
-  iceland: 'icelandic',
-  ethiopia: 'amharic',
-  madagascar: 'malagasy',
-  bangladesh: 'bengali',
-  bangla: 'bengali',
-  sinhalese: 'sinhala',
-  tibet: 'tibetian',
-  tibetan: 'tibetian',
-  azerbaijani: 'azerbaijan',
-  azeri: 'azerbaijan',
-  moldovan: 'moldovian',
-  galician: 'galacian',
-  oriya: 'odia',
-};
+// The English ones are the app's; one in a language's own words (`espanol`)
+// comes with that language installed (`worldLanguages.mjs`).
+export function readLanguageAliases() {
+  return readWorldLanguages().languageAliases;
+}
 
 // The two English Bibles everybody names by their letters and the catalog
 // files under other ones (`EnglishKJBible.xml`): "kjv" alone found the THAI
@@ -363,11 +292,40 @@ const ENGLISH_LANGUAGE_NAMES = new Intl.DisplayNames(['en'], {
   type: 'language',
 });
 
+function toAlternationSource(wordList) {
+  return (wordList ?? [])
+    .map((word) => {
+      return word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    })
+    .join('|');
+}
+
+// The word for "language" a person types in front of its name
+// (`languageWordPrefixes`, the installed languages').
+function genLanguageWordPrefixPattern() {
+  const prefixList = readWorldLanguages().languageWordPrefixes ?? [];
+  return prefixList.length === 0
+    ? null
+    : new RegExp(`^(?:${toAlternationSource(prefixList)})\\s*`, 'u');
+}
+
+// A book's number at the end of its name, with a language's own word for
+// "number" before it (`bookNumberWords`, the installed languages').
+function genBookNumberEndPattern() {
+  const wordList = readWorldLanguages().bookNumberWords ?? [];
+  return wordList.length === 0
+    ? /\s*\p{Nd}+\s*$/u
+    : new RegExp(
+        `\\s*(?:(?:${toAlternationSource(wordList)})\\s*)?\\p{Nd}+\\s*$`,
+        'u',
+      );
+}
+
 /**
  * A language as the catalog spells it -- in English, the way its files are
  * named (`KhmerBible.xml`) -- for one a person typed in their own language
- * ("ខ្មែរ", "français") or as a code ("km"). A code only when it is the WHOLE
- * answer: "so", "no" and "am" are codes too, and are words first.
+ * (Khmer or French in its own words) or as a code. A code only when it is the
+ * WHOLE answer: "so", "no" and "am" are codes too, and are words first.
  */
 export function toCatalogLanguageWord(word, canBeCode = false) {
   const text = String(word ?? '')
@@ -381,15 +339,22 @@ export function toCatalogLanguageWord(word, canBeCode = false) {
     }
   }
   // Written out, not asked of `Intl`: Electron's own copy of the language
-  // data has no Khmer at all -- `Intl.DisplayNames(['km'])` answers
-  // "Khmer" there, where Node answers "ខ្មែរ" -- and Khmer is who this
-  // app is for. "ភាសា" / "ภาษา" is "language", typed in front of the name.
-  const bare = text.replace(/^(?:ភាសា|ภาษา|ພາສາ)\s*/u, '');
-  if (Object.hasOwn(NATIVE_LANGUAGE_MAP, bare)) {
-    return NATIVE_LANGUAGE_MAP[bare];
+  // data has no Khmer at all -- asked for Khmer's own name for itself it
+  // answers "Khmer", where Node answers in Khmer -- and Khmer is who this
+  // app is for. The word for "language" a person types in front of the name
+  // (`languageWordPrefixes`) comes off first.
+  const languageWordPrefixPattern = genLanguageWordPrefixPattern();
+  const bare =
+    languageWordPrefixPattern === null
+      ? text
+      : text.replace(languageWordPrefixPattern, '');
+  const nativeLanguageMap = readNativeLanguageMap();
+  if (Object.hasOwn(nativeLanguageMap, bare)) {
+    return nativeLanguageMap[bare];
   }
-  if (Object.hasOwn(LANGUAGE_ALIAS_MAP, text)) {
-    return LANGUAGE_ALIAS_MAP[text];
+  const languageAliasMap = readLanguageAliases();
+  if (Object.hasOwn(languageAliasMap, text)) {
+    return languageAliasMap[text];
   }
   if (/^[a-z]+$/.test(text)) {
     return null;
@@ -438,8 +403,8 @@ export function checkIsBibleLanguageWord(word) {
     .toLowerCase();
   return (
     CATALOG_LANGUAGE_WORDS.has(text) ||
-    Object.hasOwn(NATIVE_LANGUAGE_MAP, text) ||
-    Object.hasOwn(LANGUAGE_ALIAS_MAP, text)
+    Object.hasOwn(readNativeLanguageMap(), text) ||
+    Object.hasOwn(readLanguageAliases(), text)
   );
 }
 
@@ -623,8 +588,8 @@ export function rankBibleXmlLinks(links, words, limit = 6) {
 /**
  * A Bible's own title off the first bytes of its file -- the root tag's
  * `translation`, `title` or `name`. A file NAME says "Khmer2019Bible"; the
- * file itself says "Khmer 2023 (ព្រះគម្ពីរខ្មែរសាកល)", which is what a
- * person recognises from the cover of their own Bible.
+ * file itself says "Khmer 2023" and the Bible's own name in its own script,
+ * which is what a person recognises from the cover of their own Bible.
  */
 export function readBibleXmlTitle(head) {
   const rootTag = /<bible\b[^>]*>/i.exec(String(head ?? ''))?.[0] ?? '';
@@ -660,68 +625,28 @@ export function checkIsLikelyXml(head) {
 
 // A script that belongs to one language (or one first). Matched on the
 // LETTERS of the verses, which no file name and no attribute can get wrong.
-const SCRIPT_LOCALES = [
-  ['Khmer', ['km-KH']],
-  ['Thai', ['th-TH']],
-  ['Lao', ['lo-LA']],
-  ['Myanmar', ['my-MM']],
-  ['Hangul', ['ko-KR']],
-  ['Hiragana', ['ja-JP']],
-  ['Katakana', ['ja-JP']],
-  ['Han', ['zh-CN', 'zh-TW', 'ja-JP']],
-  ['Arabic', ['ar-SA', 'fa-IR', 'ur-PK']],
-  ['Hebrew', ['he-IL']],
-  ['Greek', ['el-GR']],
-  ['Cyrillic', ['ru-RU', 'uk-UA', 'bg-BG', 'sr-Cyrl-RS']],
-  ['Devanagari', ['hi-IN', 'ne-NP', 'mr-IN']],
-  ['Bengali', ['bn-BD', 'bn-IN']],
-  ['Tamil', ['ta-IN']],
-  ['Telugu', ['te-IN']],
-  ['Kannada', ['kn-IN']],
-  ['Malayalam', ['ml-IN']],
-  ['Gujarati', ['gu-IN']],
-  ['Gurmukhi', ['pa-IN']],
-  ['Ethiopic', ['am-ET']],
-  ['Georgian', ['ka-GE']],
-  ['Armenian', ['hy-AM']],
-  ['Sinhala', ['si-LK']],
-  ['Tibetan', ['bo-CN']],
-  ['Latin', []],
-];
+function readScriptLocales() {
+  return Object.entries(readWorldLanguages().scriptLocales);
+}
 
-// The commonest little words of each language written in Latin letters. A
-// verse is long enough that these alone tell English from French reliably.
-const LATIN_STOP_WORDS = {
-  'en-US':
-    'the and of to that in he shall unto for his they be is him not them it with all thou lord',
-  'fr-FR':
-    'et de la le les des il à que en qui ne pas est dans pour sur une du vous',
-  'es-ES': 'y de la el que en los se no las por con su para del lo al',
-  'pt-BR': 'e de o que a do da em não os se para com ele por as dos',
-  'de-DE': 'und die der das zu er nicht den sie ist ich ein mit dem des',
-  'it-IT': 'e di il che la non per in del si gli le con una sono',
-  'nl-NL': 'en de het van die in een niet zij hij te dat met',
-  'id-ID': 'dan yang itu di ia ke tidak dengan dari akan untuk mereka',
-  'vi-VN': 'và của người là không thì đã có cho các những trong',
-  'fil-PH': 'ang at ng sa mga si na ay kay kanyang',
-  'sw-KE': 'na wa ya kwa katika ni la za yake',
-  'pl-PL': 'i w nie się na z że do to jest jego',
-  'ro-RO': 'și în de la nu cu să a pe lui',
-};
-
+// The commonest little words of each language written in Latin letters -- an
+// installed language's own (`latinStopWords`), English the app's. A verse is
+// long enough that these alone tell English from French reliably.
 function guessCyrillic(text) {
-  if (/[іїєґ]/i.test(text)) return ['uk-UA', 'ru-RU'];
-  if (/[ђћџљњ]/i.test(text)) return ['sr-Cyrl-RS', 'mk-MK'];
-  if (/[ѓќѕ]/i.test(text)) return ['mk-MK', 'sr-Cyrl-RS'];
-  if (/ў/i.test(text)) return ['be-BY', 'ru-RU'];
-  if (/[ыэ]/i.test(text)) return ['ru-RU', 'uk-UA'];
-  return ['bg-BG', 'ru-RU'];
+  const lowerText = text.toLowerCase();
+  const world = readWorldLanguages();
+  for (const [letters, locales] of world.cyrillicLetterLocales) {
+    if ([...letters].some((letter) => lowerText.includes(letter))) {
+      return locales;
+    }
+  }
+  return world.cyrillicDefaultLocales;
 }
 
 function guessLatin(text) {
   const words = text.toLowerCase().match(/\p{L}+/gu) ?? [];
   if (words.length === 0) return [];
-  return Object.entries(LATIN_STOP_WORDS)
+  return Object.entries(readWorldLanguages().latinStopWords)
     .map(([locale, list]) => {
       const set = new Set(list.split(' '));
       const hits = words.filter((word) => set.has(word)).length;
@@ -740,7 +665,7 @@ function guessLatin(text) {
 export function guessBibleLocalesFromText(sample) {
   const text = String(sample ?? '').slice(0, 6000);
   let best = null;
-  for (const [script, locales] of SCRIPT_LOCALES) {
+  for (const [script, locales] of readScriptLocales()) {
     const count = (text.match(new RegExp(`\\p{Script=${script}}`, 'gu')) ?? [])
       .length;
     if (count > 0 && (best === null || count > best.count)) {
@@ -774,8 +699,8 @@ const KEY_SKIP_WORDS = new Set(
 );
 
 // The zero of each script whose digits a Bible title is written in -- Khmer,
-// Thai, Lao, Myanmar, Arabic-Indic, Persian, Devanagari, Bengali. A year in
-// "ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤" is 1954 all the same.
+// Thai, Lao, Myanmar, Arabic-Indic, Persian, Devanagari, Bengali. A year
+// written in Khmer digits after a Khmer Bible's name is 1954 all the same.
 const DIGIT_ZERO_LIST = [
   0x17e0, 0x0e50, 0x0ed0, 0x1040, 0x0660, 0x06f0, 0x0966, 0x09e6,
 ];
@@ -872,19 +797,20 @@ export function genBibleKeyChoices({
 /**
  * How many of each list's book names appear in the Bible's own words.
  *
- * Editions spell the same books differently -- a 1954 Khmer Bible says
- * លោកុប្បត្តិ where a modern one says កំណើតពិភពលោក -- and the names of
- * Isaiah, John and Paul are all over the verses of the Bible they belong
- * to. So the list whose names the text USES is the one that matches it.
- * Names every list shares tell nothing apart and are not counted, nor is a
- * name's number ("1 Samuel", "សាំយូអែល ទី ១").
+ * Editions spell the same books differently -- a 1954 Khmer Bible names
+ * Genesis one way and a modern one another -- and the names of Isaiah, John
+ * and Paul are all over the verses of the Bible they belong to. So the list
+ * whose names the text USES is the one that matches it. Names every list
+ * shares tell nothing apart and are not counted, nor is a name's number
+ * ("1 Samuel", or a number after a language's own word for "number",
+ * `bookNumberWords`).
  */
 export function scoreNameLists(text, lists) {
   const shareCountMap = new Map();
   const toBare = (name) => {
     return name
       .replace(/^\s*\p{Nd}+\s*/u, '')
-      .replace(/\s*(?:ទី\s*)?\p{Nd}+\s*$/u, '')
+      .replace(genBookNumberEndPattern(), '')
       .trim();
   };
   const bareLists = lists.map((list) => {

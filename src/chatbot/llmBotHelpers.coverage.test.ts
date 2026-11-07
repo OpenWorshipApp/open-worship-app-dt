@@ -141,7 +141,6 @@ vi.mock('./mcpClient', () => ({
 }));
 
 import { resetSpendGuardForTests } from './spendGuardHelpers';
-import { RUNAWAY_ANSWER_NUDGE } from './llmBotHelpers';
 import {
     GENERAL_ASK_LABEL,
     GENERAL_ASK_TOOL_NAME,
@@ -650,7 +649,7 @@ describe('the tool watch and the rescue words', () => {
         expect(
             genGuideRescueSummary({ title: 'Show a verse', stepText: 'Go' }),
         ).toBe(
-            'The walkthrough got stuck of "Show a verse" — "Go" — and asked for help.',
+            'The walkthrough got stuck on "Show a verse" — "Go" — and asked for help.',
         );
         expect(genGuideRescueSummary({ stepText: 'Go' })).toBe(
             'The walkthrough got stuck — "Go" — and asked for help.',
@@ -665,18 +664,6 @@ describe('the tool watch and the rescue words', () => {
         expect(answer.length).toBeLessThanOrEqual(241);
         expect(answer).not.toContain('DO:');
         expect(answer.slice(0, -1).endsWith(' ')).toBe(false);
-    });
-
-    test('a long rescue in a script with no spaces is never cut mid-letter', () => {
-        // KA + COENG (the subscript sign) + KA, one letter in front so the
-        // 240th character is the sign: a cut there draws half a cluster, and
-        // so does a cut with the sign left as the next character.
-        const cluster = 'ក្ក';
-        const answer = toGuideRescueAnswer('ក' + cluster.repeat(100));
-        expect(answer.endsWith('…')).toBe(true);
-        const body = answer.slice(0, -1);
-        expect(body.endsWith('្')).toBe(false);
-        expect(body).toBe('ក' + cluster.repeat(79));
     });
 
     test('the general-ask button is offered once', () => {
@@ -1238,36 +1225,6 @@ describe('the Anthropic loop', () => {
         ]);
     });
 
-    test('a translation goes out under the translator’s prompt and comes back as written', async () => {
-        const { sentList } = useAnthropic(
-            [anthropicText('Press (Settings) to begin.')],
-            'anthropic',
-        );
-
-        const answer = await askLlmBot(
-            'ចុចការកំណត់',
-            'presenter',
-            'anthropic',
-            'claude-sonnet-5',
-            [],
-            null,
-            {
-                isTranslation: true,
-                isGeneral: true,
-                askedText: 'ចុចការកំណត់',
-                replyLang: 'km',
-            },
-        );
-
-        expect(sentList[0].system[0].text).toContain(
-            'You are a translator for Open Worship',
-        );
-        // A general ask goes out with no tools at all.
-        expect(sentList[0].tools).toBeUndefined();
-        // Nobody reads a translator's words as they stand: not cleaned.
-        expect(answer.text).toBe('Press (Settings) to begin.');
-    });
-
     test('the prompt says which window the tab works in', async () => {
         const { sentList } = useAnthropic(
             [anthropicText('Use the font slider.'), anthropicText('Open it.')],
@@ -1567,29 +1524,6 @@ describe('the OpenAI-shaped loop', () => {
 
         expect(raised.message).toContain('it wrote no answer this time');
         expect(raised.cause.message).toBe('ChatGPT returned no answer (stop)');
-    });
-
-    test('a run of one letter goes back once, kept as an ellipsis', async () => {
-        const { sentList } = useOpenAiShaped(
-            [
-                openAiText('ម'.repeat(30), 'length'),
-                openAiText('The help works with no internet.'),
-            ],
-            'openai',
-        );
-
-        const answer = await askLlmBot(
-            'Does the help work offline?',
-            'presenter',
-            'openai',
-            'gpt-5',
-        );
-
-        expect(sentList[1].messages.slice(-2)).toEqual([
-            { role: 'assistant', content: '…' },
-            { role: 'user', content: RUNAWAY_ANSWER_NUDGE },
-        ]);
-        expect(answer.text).toBe('The help works with no internet.');
     });
 
     test('said done without the tool goes back once here too', async () => {

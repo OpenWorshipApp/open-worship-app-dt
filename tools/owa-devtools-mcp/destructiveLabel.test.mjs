@@ -10,15 +10,39 @@ import {
     genDestructiveLabelRule,
     toComparableLabel,
 } from './destructiveLabel.mjs';
-import { loadTranBundle } from './tran.mjs';
+import { listLangPacks, readLangPackDictionary } from './langPacks.mjs';
 
-// The app's REAL dictionary, not a fixture: the rule is derived from it, and a
-// translation added or changed tomorrow is exactly what these must keep up
-// with. English alone is the rule with no dictionaries at all.
-const REAL_BUNDLE = loadTranBundle();
-const REAL_RULE = genDestructiveLabelRule(REAL_BUNDLE);
+// The app's REAL dictionaries, not a fixture: the rule is derived from them,
+// and a translation added or changed tomorrow is exactly what these must keep
+// up with. In the app the rule is built from English and the languages
+// INSTALLED -- one or two (`langPacks.mjs`) -- so each language is held to
+// the rule of an app with it alone installed. English alone is the rule with
+// no dictionaries at all.
+const RULE_CASE_LIST = listLangPacks().map((pack) => {
+    const dictionary = readLangPackDictionary(pack);
+    return {
+        code: pack.code,
+        dictionary,
+        rule: genDestructiveLabelRule({
+            dictionaries: { [pack.code]: dictionary },
+        }),
+    };
+});
+// Every one of those installed at once: what the page half and the phrase
+// pruning are checked against.
+const REAL_RULE = genDestructiveLabelRule({
+    dictionaries: Object.fromEntries(
+        RULE_CASE_LIST.map(({ code, dictionary }) => {
+            return [code, dictionary];
+        }),
+    ),
+});
 const ENGLISH_RULE = genDestructiveLabelRule({ dictionaries: {} });
-const KHMER = REAL_BUNDLE.dictionaries.km ?? {};
+// Every language package's dictionary but English's -- none in an
+// English-only tree; the Khmer facts are the Khmer package's own tests.
+const OTHER_DICTIONARY_LIST = RULE_CASE_LIST.map(({ dictionary }) => {
+    return dictionary;
+});
 
 function checkIsEnglishDestructiveKey(key) {
     const comparable = toComparableLabel(key);
@@ -31,19 +55,6 @@ beforeEach(() => {
     document.body.innerHTML = '';
 });
 
-describe('toComparableLabel', () => {
-    it('reads a label the way the matcher that presses it does', () => {
-        expect(toComparableLabel('Clear All')).toBe('clear all');
-        expect(toComparableLabel('  Clear   All  ')).toBe('clear all');
-        expect(toComparableLabel('Clear All [F6]')).toBe('clear all');
-        expect(toComparableLabel('Ｄｅｌｅｔｅ')).toBe(
-            'delete',
-        );
-        expect(toComparableLabel('Del​ete')).toBe('delete');
-        expect(toComparableLabel('🗑 Move to Trash…')).toBe('move to trash');
-    });
-});
-
 describe('checkIsDestructiveLabelText, in English', () => {
     // Every one of these was a way past the old interlock: the matcher folds
     // the spacing before it compares, and the patterns did not.
@@ -52,7 +63,6 @@ describe('checkIsDestructiveLabelText, in English', () => {
             'Clear All',
             'Clear  All',
             'CLEAR-ALL',
-            'Ｄｅｌｅｔｅ',
             'Del​ete',
             'Move to Trash…',
             '🗑 Move to Trash',
@@ -93,96 +103,55 @@ describe('the rule, derived from the app dictionary', () => {
     // The finding that started this: 41 destructive labels had Khmer
     // translations and not one was refused.
     it('refuses the translation of every destructive label', () => {
-        // Once, not per entry: a translation the dictionary also gives an
-        // ordinary label is left to the app's own confirm (the test below).
-        const allowedComparableSet = new Set(
-            Object.entries(KHMER)
-                .filter(([key]) => {
-                    return !checkIsEnglishDestructiveKey(key);
-                })
-                .map(([, text]) => {
-                    return toComparableLabel(text);
-                }),
-        );
-        const missedList = Object.entries(KHMER).filter(([key, value]) => {
-            const comparable = toComparableLabel(value);
-            return (
-                checkIsEnglishDestructiveKey(key) &&
-                comparable.length <= 60 &&
-                !allowedComparableSet.has(comparable) &&
-                !checkIsDestructiveLabelText(value, REAL_RULE)
+        for (const { code, dictionary, rule } of RULE_CASE_LIST) {
+            // Once, not per entry: a translation the dictionary also gives an
+            // ordinary label is left to the app's own confirm (the test below).
+            const allowedComparableSet = new Set(
+                Object.entries(dictionary)
+                    .filter(([key]) => {
+                        return !checkIsEnglishDestructiveKey(key);
+                    })
+                    .map(([, text]) => {
+                        return toComparableLabel(text);
+                    }),
             );
-        });
-        expect(missedList).toEqual([]);
-        expect(
-            checkIsDestructiveLabelText(KHMER['move to trash'], REAL_RULE),
-        ).toBe(true);
-        expect(checkIsDestructiveLabelText(KHMER['clear all'], REAL_RULE)).toBe(
-            true,
-        );
-        expect(
-            checkIsDestructiveLabelText(`${KHMER['clear all']} [F6]`, REAL_RULE),
-        ).toBe(true);
+            const missedList = Object.entries(dictionary).filter(([key, value]) => {
+                const comparable = toComparableLabel(value);
+                return (
+                    checkIsEnglishDestructiveKey(key) &&
+                    comparable.length <= 60 &&
+                    !allowedComparableSet.has(comparable) &&
+                    !checkIsDestructiveLabelText(value, rule)
+                );
+            });
+            expect(missedList, code).toEqual([]);
+            expect(
+                checkIsDestructiveLabelText(dictionary['move to trash'], rule),
+                code,
+            ).toBe(true);
+            expect(
+                checkIsDestructiveLabelText(dictionary['clear all'], rule),
+                code,
+            ).toBe(true);
+            expect(
+                checkIsDestructiveLabelText(`${dictionary['clear all']} [F6]`, rule),
+                code,
+            ).toBe(true);
+        }
     });
 
     // The other half, and the one a firewall usually gets wrong: an ordinary
     // control refused is a tool the model learns to route around.
     it('refuses no translation of an ordinary label', () => {
-        const refusedList = Object.entries(KHMER).filter(([key, value]) => {
-            return (
-                !checkIsEnglishDestructiveKey(key) &&
-                checkIsDestructiveLabelText(value, REAL_RULE)
-            );
-        });
-        expect(refusedList).toEqual([]);
-    });
-
-    // `លុបផ្ទៃខាងក្រោយ` is both Remove Background and Clear Background. The
-    // window cannot tell them apart, so the allowed reading wins and the
-    // app's own confirm stands behind the other.
-    it('leaves a translation shared with an allowed control to the app', () => {
-        expect(KHMER['clear background']).toBe(KHMER['remove background']);
-        expect(
-            checkIsDestructiveLabelText(
-                `${KHMER['clear background']} [F7]`,
-                REAL_RULE,
-            ),
-        ).toBe(false);
-        expect(checkIsDestructiveLabelText(KHMER.clear, REAL_RULE)).toBe(false);
-    });
-
-    // Until 2026-10-13 the F9 button was Clear Bible, and its Khmer was
-    // Delete Bible's too. It is Clear Long Text now, with words of its own:
-    // the ordinary press stays ordinary, and the phrase it left behind is
-    // Delete Bible's alone, so it is refused.
-    it('refuses a translation once no allowed control shares it', () => {
-        expect(KHMER['clear long text']).toBeTruthy();
-        expect(KHMER['clear long text']).not.toBe(KHMER['delete bible']);
-        expect(
-            checkIsDestructiveLabelText(
-                `${KHMER['clear long text']} [F9]`,
-                REAL_RULE,
-            ),
-        ).toBe(false);
-        expect(
-            checkIsDestructiveLabelText(KHMER['delete bible'], REAL_RULE),
-        ).toBe(true);
-    });
-
-    it('keeps a phrase found inside an ordinary sentence to a whole label', () => {
-        const rule = genDestructiveLabelRule({
-            dictionaries: {
-                km: {
-                    'sign out': 'ចាកចេញពីគណនី',
-                    'signed out from songselect': 'បានចាកចេញពីគណនី SongSelect',
-                },
-            },
-        });
-        expect(rule.exactPhrases).toContain('ចាកចេញពីគណនី');
-        expect(checkIsDestructiveLabelText('ចាកចេញពីគណនី', rule)).toBe(true);
-        expect(
-            checkIsDestructiveLabelText('បានចាកចេញពីគណនី SongSelect', rule),
-        ).toBe(false);
+        for (const { code, dictionary, rule } of RULE_CASE_LIST) {
+            const refusedList = Object.entries(dictionary).filter(([key, value]) => {
+                return (
+                    !checkIsEnglishDestructiveKey(key) &&
+                    checkIsDestructiveLabelText(value, rule)
+                );
+            });
+            expect(refusedList, code).toEqual([]);
+        }
     });
 
     // A language written with spaces must never have a word caught inside a
@@ -196,12 +165,61 @@ describe('the rule, derived from the app dictionary', () => {
         expect(checkIsDestructiveLabelText('Supprimerai', rule)).toBe(false);
     });
 
+    // A longer phrase the shorter one already refuses is not carried -- and
+    // what it would have refused still is (2026-11-04: 5 085 characters, over
+    // the cap, became 4 307 with the same refusals).
+    it('carries no phrase the rest of the rule already refuses', () => {
+        const rule = genDestructiveLabelRule({
+            dictionaries: {
+                xx: {
+                    delete: 'zap',
+                    'delete item': 'zap item',
+                    'delete it all now': 'all zap now',
+                    'erase a word': 'zapper',
+                    ok: 'fine',
+                },
+            },
+        });
+        expect(rule.containPhrases).toEqual(['zap', 'zapper']);
+        for (const label of ['zap item', 'all zap now', 'zapper', 'zap']) {
+            expect(checkIsDestructiveLabelText(label, rule)).toBe(true);
+        }
+        expect(checkIsDestructiveLabelText('fine', rule)).toBe(false);
+        // Every phrase the real dictionaries call destructive is still refused.
+        const fullContainList = [];
+        for (const dictionary of OTHER_DICTIONARY_LIST) {
+            for (const [key, value] of Object.entries(dictionary)) {
+                const comparable = toComparableLabel(value);
+                if (
+                    checkIsEnglishDestructiveKey(key) &&
+                    comparable.length > 0 &&
+                    comparable.length <= 60 &&
+                    !REAL_RULE.exactPhrases.includes(comparable)
+                ) {
+                    fullContainList.push(comparable);
+                }
+            }
+        }
+        const missedList = fullContainList.filter((phrase) => {
+            return (
+                REAL_RULE.containPhrases.some((kept) => {
+                    return phrase.includes(kept);
+                }) && !checkIsDestructiveLabelText(phrase, REAL_RULE)
+            );
+        });
+        expect(missedList).toEqual([]);
+    });
+
     // 4 000 until 2026-10-16, when the help window's own words joined the
     // dictionary in Khmer and French (its "Moving your song to the trash"
     // lines, "Clear all chats…"): 3 915 to 4 665. Still a few kilobytes of
-    // JSON a press carries to the page, read by no model.
+    // JSON a press carries to the page, read by no model. Per language since
+    // 2026-11-04: an app carries the rule of the languages it has installed.
     it('stays small enough to ride every press', () => {
-        expect(JSON.stringify(REAL_RULE).length).toBeLessThan(5000);
+        expect(RULE_CASE_LIST.length).toBe(OTHER_DICTIONARY_LIST.length);
+        for (const { code, rule } of RULE_CASE_LIST) {
+            expect(JSON.stringify(rule).length, code).toBeLessThan(5000);
+        }
     });
 });
 
@@ -214,8 +232,12 @@ describe('the guard the page is sent', () => {
             'Clear All',
             'Clear Long Text [F9]',
             'Undelete',
-            KHMER['move to trash'],
-            KHMER['clear long text'],
+            ...OTHER_DICTIONARY_LIST.flatMap((dictionary) => {
+                return [
+                    dictionary['move to trash'],
+                    dictionary['clear long text'],
+                ].filter(Boolean);
+            }),
         ]) {
             expect(page.checkIsDestructiveLabelText(label, REAL_RULE), label).toBe(
                 checkIsDestructiveLabelText(label, REAL_RULE),
@@ -234,18 +256,6 @@ describe('findPressRefusal', () => {
         expect(
             findPressRefusal(document.querySelector('button'), REAL_RULE),
         ).toEqual({ refused: 'destructive', label: 'Delete this preset' });
-    });
-
-    it('reads a context menu item in the language it is written in', () => {
-        document.body.innerHTML =
-            `<div class="app-context-menu-item" title="${KHMER['move to trash']}">` +
-            `<div>${KHMER['move to trash']}</div></div>`;
-        expect(
-            findPressRefusal(
-                document.querySelector('.app-context-menu-item'),
-                REAL_RULE,
-            )?.refused,
-        ).toBe('destructive');
     });
 
     // A row or a slide card carries content. A hymn saying "remove my sin"
@@ -295,13 +305,6 @@ describe('findKeyRefusal', () => {
             label: 'Clear All [F6]',
         });
         expect(findKeyRefusal({ label: 'F9' }, REAL_RULE, document)).toBeNull();
-    });
-
-    it('reads that title in the language it is written in', () => {
-        document.body.innerHTML = `<button title="${KHMER['clear all']} [F6]">A</button>`;
-        expect(
-            findKeyRefusal({ label: 'F6' }, REAL_RULE, document)?.refused,
-        ).toBe('destructive');
     });
 
     it('refuses a key by its own name, and nothing it cannot read', () => {

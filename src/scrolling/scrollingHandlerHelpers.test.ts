@@ -174,6 +174,27 @@ describe('scrollingHandlerHelpers', () => {
         expect(play.onclick).toBeNull();
     });
 
+    test('applied again (an inline ref, every render) it swaps its scroll listener', () => {
+        const parent = document.createElement('div');
+        const toTop = document.createElement('i');
+        parent.append(toTop);
+        const addSpy = vi.spyOn(parent, 'addEventListener');
+        const removeSpy = vi.spyOn(parent, 'removeEventListener');
+        applyToTheTop(toTop);
+        expect(removeSpy).not.toHaveBeenCalled();
+        applyToTheTop(toTop);
+        applyToTheTop(toTop);
+        const scrollListeners = addSpy.mock.calls
+            .filter(([type]) => type === 'scroll')
+            .map(([, listener]) => listener);
+        expect(scrollListeners).toHaveLength(3);
+        // Each run took the previous one's listener off first.
+        expect(removeSpy.mock.calls).toEqual([
+            ['scroll', scrollListeners[0]],
+            ['scroll', scrollListeners[1]],
+        ]);
+    });
+
     test('toggles the top button and scrolls to top only when play-to-bottom is idle', () => {
         const parent = document.createElement('div');
         const toTop = document.createElement('i');

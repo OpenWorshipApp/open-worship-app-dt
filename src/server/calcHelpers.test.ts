@@ -23,11 +23,11 @@ describe('calcHelpers', () => {
     });
 
     test('encodes and decodes utf-8 text as base64', () => {
-        const encoded = toBase64('hello 한글');
+        const encoded = toBase64('hello ✝♪');
 
         expect(encoded).toBe(
-            Buffer.from('hello 한글', 'utf-8').toString('base64'),
+            Buffer.from('hello ✝♪', 'utf-8').toString('base64'),
         );
-        expect(fromBase64(encoded)).toBe('hello 한글');
+        expect(fromBase64(encoded)).toBe('hello ✝♪');
     });
 });

@@ -346,6 +346,70 @@ describe('manager helper coverage', () => {
         expect(base.createScreenManagerBaseGhost).toHaveBeenCalledWith(20);
     });
 
+    test('sends a scroll only when the operator made it, on the next macrotask', async () => {
+        const { default: ScreenEventHandler } =
+            await import('./ScreenEventHandler');
+
+        class ScrollHandler extends ScreenEventHandler<'update'> {
+            static readonly eventNamePrefix = 'scroll-handler';
+            get isShowing() {
+                return true;
+            }
+            toSyncMessage() {
+                return { type: 'background', data: null } as any;
+            }
+            receiveSyncScreen() {}
+            render() {}
+            clear() {}
+        }
+
+        const base = new MockScreenManagerBase(21) as any;
+        const handler = new ScrollHandler(base);
+        const scroll = { x: 0, y: 0.25 };
+        const flush = async () => {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        };
+
+        // A programmatic scroll: the mouse is elsewhere, or the window is not
+        // in front -- nothing goes to the screen, not even later.
+        appProviderMock.getIsMouseOverApp.mockReturnValue(false);
+        handler.sendSyncScrollPercentage('.a', scroll);
+        appProviderMock.getIsMouseOverApp.mockReturnValue(true);
+        appProviderMock.getIsWindowFocused.mockReturnValue(false);
+        handler.sendSyncScrollPercentage('.a', scroll);
+        await flush();
+        expect(base.sendScreenMessage).not.toHaveBeenCalled();
+
+        // A wheel on the element proves it, whatever the window flags say.
+        handler.sendSyncScrollPercentage('.a', scroll, true);
+        expect(base.sendScreenMessage).not.toHaveBeenCalled();
+        await flush();
+        expect(base.sendScreenMessage).toHaveBeenLastCalledWith(
+            {
+                screenId: 21,
+                type: 'sync-scroll-percentage',
+                data: { domSelector: '.a', scroll },
+            },
+            true,
+        );
+
+        appProviderMock.getIsWindowFocused.mockReturnValue(true);
+        handler.sendSyncScrollPercentage('.b', scroll, false, true);
+        await flush();
+        expect(base.sendScreenMessage).toHaveBeenLastCalledWith(
+            {
+                screenId: 21,
+                type: 'sync-scroll-percentage',
+                data: { domSelector: '.b', scroll, isSubPixel: true },
+            },
+            true,
+        );
+        expect(base.sendScreenMessage).toHaveBeenCalledTimes(2);
+        handler.delete();
+    });
+
     test('attaches dropped backgrounds using explicit and fallback lookups', async () => {
         const { applyAttachBackground } =
             await import('./screenBackgroundHelpers');

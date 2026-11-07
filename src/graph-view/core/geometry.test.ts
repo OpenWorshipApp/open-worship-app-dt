@@ -2,10 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import {
     GRAPH_GEOMETRY,
+    centreGraphInViewport,
+    fitGraphToViewport,
     getEdgeArrowTransform,
     getEdgeCurve,
     getEdgePathD,
+    getNodeAnchor,
     getNodeRect,
+    getWorldBounds,
+    layoutPathChain,
 } from './geometry';
 
 function parseTransform(transform: string) {
@@ -169,5 +174,199 @@ describe('getEdgeArrowTransform', () => {
         );
         expect(Math.abs(reversed.angle)).toBeCloseTo(180, 1);
         expect(reversed.x).toBeLessThan(160);
+    });
+});
+
+describe('degenerate inputs and the viewport fits', () => {
+    it('a path with no boxes lays out nothing', () => {
+        expect(layoutPathChain({ nodeCount: 0, availableWidth: 1200 })).toEqual(
+            [],
+        );
+        expect(
+            layoutPathChain({ nodeCount: -3, availableWidth: 1200 }),
+        ).toEqual([]);
+    });
+
+    it('two boxes too close to trim between keep the untrimmed line', () => {
+        const from = { x: 0, y: 0 };
+        // 190 apart leaves a 4-unit strip between the two box gaps: far too
+        // little to draw a trimmed line in.
+        const to = { x: 190, y: 0 };
+        const curve = getEdgeCurve(
+            from,
+            to,
+            0,
+            getNodeRect(from),
+            getNodeRect(to),
+        );
+        expect(curve[0]).toEqual(from);
+        expect(curve[3]).toEqual(to);
+        // Far enough apart, the same call does trim to the borders.
+        const farTo = { x: 400, y: 0 };
+        const trimmed = getEdgeCurve(
+            from,
+            farTo,
+            0,
+            getNodeRect(from),
+            getNodeRect(farTo),
+        );
+        expect(trimmed[0].x).toBeGreaterThan(
+            GRAPH_GEOMETRY.NODE_WIDTH / 2 + GRAPH_GEOMETRY.EDGE_BOX_GAP,
+        );
+        expect(trimmed[3].x).toBeLessThan(
+            farTo.x -
+                GRAPH_GEOMETRY.NODE_WIDTH / 2 -
+                GRAPH_GEOMETRY.EDGE_BOX_GAP,
+        );
+    });
+
+    it('a collapsed box is anchored at the centre of what is left of it', () => {
+        const centre = { x: 50, y: 100 };
+        expect(getNodeAnchor(centre)).toBe(centre);
+        const anchor = getNodeAnchor(centre, true);
+        expect(anchor.x).toBe(50);
+        // The collapsed box keeps its top (y 56) and is 32 tall: centre 72.
+        expect(anchor.y).toBeCloseTo(72);
+        const rect = getNodeRect(centre, true);
+        expect((rect.top + rect.bottom) / 2).toBeCloseTo(anchor.y);
+    });
+
+    it('an empty graph still has a one-unit world box', () => {
+        expect(getWorldBounds([])).toEqual({
+            left: 0,
+            top: 0,
+            width: 1,
+            height: 1,
+        });
+    });
+
+    it('centring an empty graph or a zero-size viewport does not pan', () => {
+        expect(
+            centreGraphInViewport({
+                nodeList: [],
+                viewportWidth: 800,
+                viewportHeight: 600,
+                zoomPercent: 100,
+            }),
+        ).toEqual({ panX: 0, panY: 0 });
+        expect(
+            centreGraphInViewport({
+                nodeList: [{ x: 10, y: 10 }],
+                viewportWidth: 0,
+                viewportHeight: 600,
+                zoomPercent: 100,
+            }),
+        ).toEqual({ panX: 0, panY: 0 });
+        expect(
+            centreGraphInViewport({
+                nodeList: [{ x: 10, y: 10 }],
+                viewportWidth: 800,
+                viewportHeight: -1,
+                zoomPercent: 100,
+            }),
+        ).toEqual({ panX: 0, panY: 0 });
+    });
+
+    it('centres one box, and the middle of several, at the zoom given', () => {
+        const single = centreGraphInViewport({
+            nodeList: [{ x: 0, y: 0 }],
+            viewportWidth: 800,
+            viewportHeight: 600,
+            zoomPercent: 100,
+        });
+        expect(single.panX).toBeCloseTo(400);
+        expect(single.panY).toBeCloseTo(300);
+        const zoomed = centreGraphInViewport({
+            nodeList: [{ x: 0, y: 0 }],
+            viewportWidth: 800,
+            viewportHeight: 600,
+            zoomPercent: 200,
+        });
+        expect(zoomed.panX).toBeCloseTo(200);
+        expect(zoomed.panY).toBeCloseTo(150);
+        const several = centreGraphInViewport({
+            nodeList: [
+                { x: -100, y: -50 },
+                { x: 300, y: 150 },
+                { x: 20, y: 0 },
+            ],
+            viewportWidth: 800,
+            viewportHeight: 600,
+            zoomPercent: 50,
+        });
+        // Content centre (100, 50); the viewport is 1600 x 1200 graph units.
+        expect(several.panX).toBeCloseTo(700);
+        expect(several.panY).toBeCloseTo(550);
+    });
+
+    it('fitting nothing, or into nothing, is the identity viewport', () => {
+        const identity = { panX: 0, panY: 0, zoomPercent: 100 };
+        expect(
+            fitGraphToViewport({
+                nodeList: [],
+                viewportWidth: 800,
+                viewportHeight: 600,
+                minZoomPercent: 25,
+                maxZoomPercent: 500,
+            }),
+        ).toEqual(identity);
+        expect(
+            fitGraphToViewport({
+                nodeList: [{ x: 0, y: 0 }],
+                viewportWidth: 800,
+                viewportHeight: 0,
+                minZoomPercent: 25,
+                maxZoomPercent: 500,
+            }),
+        ).toEqual(identity);
+    });
+
+    it('fits one box up to the zoom cap and centres it', () => {
+        const capped = fitGraphToViewport({
+            nodeList: [{ x: 0, y: 0 }],
+            viewportWidth: 800,
+            viewportHeight: 600,
+            minZoomPercent: 25,
+            maxZoomPercent: 100,
+        });
+        expect(capped).toEqual({ panX: 400, panY: 300, zoomPercent: 100 });
+        // Uncapped, one 168 x 88 box plus 48 padding a side fills the width at
+        // 800 / 264 = 3.03x.
+        const free = fitGraphToViewport({
+            nodeList: [{ x: 0, y: 0 }],
+            viewportWidth: 800,
+            viewportHeight: 600,
+            minZoomPercent: 25,
+            maxZoomPercent: 500,
+        });
+        expect(free.zoomPercent).toBe(303);
+        expect(free.panX).toBeCloseTo(800 / 3.03 / 2);
+        expect(free.panY).toBeCloseTo(600 / 3.03 / 2);
+    });
+
+    it('shrinks a wide graph to fit, but never below the minimum zoom', () => {
+        const nodeList = [
+            { x: 0, y: 0 },
+            { x: 2000, y: 1000 },
+        ];
+        const fitted = fitGraphToViewport({
+            nodeList,
+            viewportWidth: 800,
+            viewportHeight: 600,
+            minZoomPercent: 25,
+            maxZoomPercent: 500,
+        });
+        // Content 2264 x 1184: the width binds, 800 / 2264 = 0.353.
+        expect(fitted.zoomPercent).toBe(35);
+        expect(fitted.panX).toBeCloseTo(800 / 0.35 / 2 - 1000);
+        expect(fitted.panY).toBeCloseTo(600 / 0.35 / 2 - 500);
+        const floored = fitGraphToViewport({
+            nodeList,
+            viewportWidth: 800,
+            viewportHeight: 600,
+            minZoomPercent: 50,
+            maxZoomPercent: 500,
+        });
+        expect(floored).toEqual({ panX: -200, panY: 100, zoomPercent: 50 });
     });
 });

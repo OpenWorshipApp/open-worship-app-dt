@@ -877,3 +877,41 @@ test('persisted page lifecycle closes its socket and reloads on return', () => {
     expect(reload).toHaveBeenCalledTimes(1);
     reload.mockRestore();
 });
+
+// A TV cannot reach 127.0.0.1: on the display's own computer the stream is
+// handed by the app's network address, and with none (nobody else may watch)
+// there is nothing to cast.
+test('on this computer with no network address there is no stream to cast', async () => {
+    // The page left above closed its socket: Retry connects again.
+    element<HTMLButtonElement>('retry-button').click();
+    latest().open();
+    latest().receive({ type: 'layout', layout: LAYOUT });
+    element<HTMLButtonElement>('cast-button').click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(
+        latest()
+            .sent.map((text) => JSON.parse(text))
+            .filter((packet) => packet.type === 'cast-stream'),
+    ).toHaveLength(1);
+    latest().receive({ type: 'cast-stream', path: '/vd/1/video?cast=def456' });
+    expect(element<HTMLButtonElement>('cast-picker').disabled).toBe(true);
+    expect(
+        [...document.querySelectorAll<HTMLVideoElement>('body > video')].some(
+            (video) => video.src.includes('cast=def456'),
+        ),
+    ).toBe(false);
+    latest().receive({
+        type: 'cast',
+        state: {
+            isAllowed: true,
+            isSharing: false,
+            isSearching: false,
+            targets: [],
+        },
+    });
+    expect(element('cast-picker-note').textContent).toBe(
+        'Turn on “Let other devices watch” to cast to a TV.',
+    );
+    element<HTMLButtonElement>('cast-close').click();
+    expect(element('cast-panel').hidden).toBe(true);
+});

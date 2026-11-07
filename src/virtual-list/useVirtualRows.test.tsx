@@ -10,6 +10,8 @@ const state = vi.hoisted(() => ({
     scrollCallback: null as null | (() => void),
     scrollBand: vi.fn(),
     scrollers: [] as { scrollTop: number }[],
+    clippingAncestors: [] as HTMLElement[],
+    findClippingCount: 0,
     unsubscribe: vi.fn(),
     observe: vi.fn(),
     disconnect: vi.fn(),
@@ -27,7 +29,10 @@ vi.mock('../helper/appHooks', async () => {
     };
 });
 vi.mock('./virtualScrollHelpers', () => ({
-    findClippingAncestors: () => [],
+    findClippingAncestors: () => {
+        state.findClippingCount += 1;
+        return state.clippingAncestors;
+    },
     findScrollingAncestors: () => state.scrollers,
     toVisibleWindow: () => ({ top: state.top, bottom: state.bottom }),
     subscribeScrollerList: (_list: object[], update: () => void) => {
@@ -75,6 +80,8 @@ beforeEach(() => {
     state.top = 0;
     state.bottom = 25;
     state.scrollers = [];
+    state.clippingAncestors = [];
+    state.findClippingCount = 0;
     state.scrollCallback = null;
     state.scrollBand.mockReset().mockReturnValue(true);
     state.unsubscribe.mockReset();
@@ -210,6 +217,61 @@ describe('useVirtualRows', () => {
             ),
         );
         expect(scroller.scrollTop).toBe(560);
+    });
+
+    it('observes its parent and every clipping ancestor, and re-walks them on a window resize', async () => {
+        const panel = document.createElement('div');
+        state.clippingAncestors = [panel];
+        // A parent React does not own, so the list keeps it.
+        const parent = document.createElement('div');
+        parent.append(scrollContainer);
+        document.body.append(parent);
+        await act(async () => root.render(<Harness {...options()} />));
+        expect(state.observe).toHaveBeenCalledWith(scrollContainer);
+        expect(state.observe).toHaveBeenCalledWith(parent);
+        expect(state.observe).toHaveBeenCalledWith(panel);
+        expect(state.findClippingCount).toBe(1);
+
+        state.top = 40;
+        state.bottom = 60;
+        await act(async () => window.dispatchEvent(new Event('resize')));
+        // Walked again, and the band read again from the new geometry.
+        expect(state.findClippingCount).toBe(2);
+        expect(current.rows.map((row) => row.index)).toEqual([
+            3, 4, 5, 6, 7, 9,
+        ]);
+
+        await act(async () => root.unmount());
+        await act(async () => window.dispatchEvent(new Event('resize')));
+        expect(state.findClippingCount).toBe(2);
+        root = createRoot(host);
+        parent.remove();
+    });
+
+    it("aims the band at the row's offset inside the scroller", async () => {
+        await act(async () => root.render(<Harness {...options()} />));
+        vi.spyOn(scrollContainer, 'getBoundingClientRect').mockReturnValue({
+            top: 150,
+        } as DOMRect);
+        const scroller = {
+            getBoundingClientRect: () => ({ top: 100 }),
+            scrollTop: 30,
+        } as unknown as HTMLElement;
+        let bandTop = -1;
+        state.scrollBand.mockImplementation(
+            (scrollOptions: {
+                toBandTop: (element: HTMLElement) => number;
+            }) => {
+                bandTop = scrollOptions.toBandTop(scroller);
+                return true;
+            },
+        );
+        await act(async () => {
+            current.scrollToRow(6);
+        });
+        // The list sits 50px into the scroller's view, which is scrolled 30px:
+        // row 6 starts 60px into the list.
+        expect(bandTop).toBe(150 - 100 + 30 + 60);
     });
 
     it('unsubscribes and disconnects its observer on unmount', async () => {

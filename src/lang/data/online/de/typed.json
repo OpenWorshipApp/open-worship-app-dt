@@ -1,0 +1,12 @@
+{
+    "de": {
+        "name": "German",
+        "nativeName": "Deutsch",
+        "script": "Latin",
+        "words": "der die das den dem des ein eine einen einem einer und oder aber nicht kein keine ist sind war bin bist hat habe hast haben wird ich du er sie es wir ihr mein meine meinen dein deine sein seine ihre unser wie was wo wohin warum wann wer welche welcher welches mit von zu zum zur im ins am auf aus für bei nach über unter vor durch ohne kann kannst können möchte will muss soll auch noch schon sehr mehr hier dort bitte danke",
+        "letters": "äöüß",
+        "yes": ["ja", "ja, bitte", "gerne"],
+        "no": ["nein", "nein, danke"],
+        "order": 3
+    }
+}

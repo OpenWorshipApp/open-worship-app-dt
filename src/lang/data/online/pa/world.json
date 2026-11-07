@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Gurmukhi",
+            "locales": ["pa-IN"],
+            "order": 1900
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "si": {
+        "name": "Sinhala",
+        "nativeName": "සිංහල",
+        "script": "Sinhala",
+        "yes": ["ඔව්"],
+        "no": ["නැහැ", "එපා"],
+        "order": 74
+    }
+}

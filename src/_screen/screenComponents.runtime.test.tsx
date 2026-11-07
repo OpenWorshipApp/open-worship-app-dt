@@ -50,6 +50,7 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('./managers/ScreenManager', () => ({
     default: class ScreenManager {
         static readonly initReceiveScreenMessage = vi.fn();
+        static readonly applyScreenManagerSyncScreen = vi.fn();
     },
 }));
 
@@ -663,5 +664,162 @@ describe('screen component runtime behavior', () => {
             'Camera Error',
             'Unable to access the camera for background. Please check your camera settings.',
         );
+    });
+
+    test('a screen page takes the context it was opened with: its stage, then the state it was sent, then asks for the rest', async () => {
+        const { default: ScreenAppComp } = await import('./ScreenAppComp');
+        const { default: ScreenManager } =
+            await import('./managers/ScreenManager');
+        const applySync = (ScreenManager as any).applyScreenManagerSyncScreen;
+        const messages = [
+            { screenId: 5, type: 'background', data: { src: 'red' } },
+            { screenId: 5, type: 'foreground', data: null },
+        ];
+        Object.assign(appProviderMock, {
+            isPageScreen: true,
+            windowTitle: 'Open Worship',
+            screenUtils: { getContext: () => ({ stage: 3, messages }) },
+        });
+        try {
+            await act(async () => {
+                root.render(<ScreenAppComp />);
+            });
+        } finally {
+            delete (appProviderMock as any).screenUtils;
+            delete (appProviderMock as any).windowTitle;
+        }
+        expect(document.title).toBe('Open Worship - 5');
+        expect(screenManager._stage).toBe(3);
+        expect(applySync.mock.calls.map(([message]: any[]) => message)).toEqual(
+            messages,
+        );
+        expect(screenManager.sendScreenMessage).toHaveBeenCalledWith(
+            { screenId: 5, type: 'init', data: null },
+            true,
+        );
+        // What changed since is asked for only once the sent state is in.
+        expect(Math.max(...applySync.mock.invocationCallOrder)).toBeLessThan(
+            screenManager.sendScreenMessage.mock.invocationCallOrder[0],
+        );
+    });
+
+    test('an address with no screen id, or one that is not a number, is no screen at all', async () => {
+        const { default: ScreenAppComp } = await import('./ScreenAppComp');
+        for (const search of ['?other=1', '?screenId=abc']) {
+            globalThis.history.replaceState({}, '', search);
+            await act(async () => {
+                root.render(<ScreenAppComp />);
+            });
+            expect(container.textContent).toContain(
+                'Screen ID is not provided',
+            );
+            // The close button is shown outright: nothing else is up.
+            expect(
+                (container.querySelector('#close') as HTMLElement).style
+                    .opacity,
+            ).toBe('1');
+            await act(async () => {
+                root.unmount();
+            });
+            root = createRoot(container);
+        }
+        expect(createScreenManagerMock).not.toHaveBeenCalled();
+    });
+
+    test('the close button of a window with no screen closes the window itself', async () => {
+        const { default: ScreenCloseButtonComp } =
+            await import('./ScreenCloseButtonComp');
+        const close = vi.fn();
+        vi.stubGlobal('close', close);
+        screenManager = null;
+        try {
+            await act(async () => {
+                root.render(<ScreenCloseButtonComp />);
+            });
+            const button = container.querySelector('#close') as HTMLElement;
+            expect(button.getAttribute('aria-label')).toBe('Hide this screen');
+            expect(button.style.opacity).toBe('');
+            await act(async () => {
+                button.click();
+            });
+            expect(close).toHaveBeenCalledOnce();
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
+    test('a refresh never redraws a slide whose media is playing, and an unpainted slide is not painted', async () => {
+        const { default: ScreenVaryAppDocumentComp } =
+            await import('./ScreenVaryAppDocumentComp');
+        const manager = screenManager.screenVaryAppDocumentManager;
+        manager.checkIsMediaPlaying.mockReturnValue(true);
+        await act(async () => {
+            root.render(<ScreenVaryAppDocumentComp isUnpainted />);
+        });
+        expect(useScreenManagerEventsMock).toHaveBeenCalledWith(
+            ['refresh'],
+            screenManager,
+            expect.any(Function),
+        );
+        expect(manager.render).not.toHaveBeenCalled();
+        const slide = container.querySelector('#slide') as HTMLElement;
+        expect(manager.div).toBe(slide);
+        expect(slide.style.position).toBe('absolute');
+        expect(slide.style.visibility).toBe('hidden');
+        expect(slide.style.pointerEvents).toBe('none');
+
+        manager.checkIsMediaPlaying.mockReturnValue(false);
+        await act(async () => {
+            root.render(<ScreenVaryAppDocumentComp />);
+        });
+        expect(manager.render).toHaveBeenCalledOnce();
+        expect(slide.style.visibility).toBe('');
+        expect(slide.style.pointerEvents).toBe('');
+    });
+
+    test('a picture, a video or a colour background is drawn for its own screen, in the look it was given', async () => {
+        const { RenderBackgroundComp, genHtmlBackground } =
+            await import('./ScreenBackgroundComp');
+        // jsdom's selector engine answers `querySelector` with null on a
+        // DETACHED element that itself matches the selector (`div` in a
+        // `div`), where Chromium -- and the DOM standard -- give the first
+        // matching descendant. The background is built in such a div, so the
+        // standard's own definition stands in for this test.
+        const querySelectorSpy = vi
+            .spyOn(Element.prototype, 'querySelector')
+            .mockImplementation(function (this: Element, selector: string) {
+                return this.querySelectorAll(selector)[0] ?? null;
+            });
+        const sources = [
+            { type: 'image', src: '/image.png' },
+            { type: 'video', src: '/video.mp4' },
+            { type: 'color', src: '#123456' },
+        ];
+        for (const { type, src } of sources) {
+            const { newDiv, promise } = genHtmlBackground(7, {
+                type,
+                src,
+                extraStyle: { opacity: '0.4' },
+            } as any);
+            expect(getScreenManagerBaseMock).toHaveBeenLastCalledWith(7);
+            expect(
+                newDiv.querySelector(`[data-background="${type}"]`)
+                    ?.textContent,
+            ).toBe(src);
+            expect(newDiv.style.opacity).toBe('0.4');
+            // Nothing to stop later: the cleanup is a no-op.
+            const clear = await promise;
+            expect(() => clear()).not.toThrow();
+        }
+        querySelectorSpy.mockRestore();
+        expect(getCameraStreamMock).not.toHaveBeenCalled();
+        // A camera is put up apart from this markup: none is drawn in it.
+        expect(
+            renderToStaticMarkup(
+                <RenderBackgroundComp
+                    backgroundSrc={{ type: 'camera', src: 'camera-1' } as any}
+                />,
+            ),
+        ).not.toContain('data-background=');
     });
 });

@@ -29,6 +29,8 @@ const h = vi.hoisted(() => ({
     closeFloating: vi.fn(),
     genFloatingMenu: vi.fn(),
     getFileSource: vi.fn(),
+    openChatbot: vi.fn(),
+    genChatbotMenu: vi.fn(),
 }));
 
 function genLyric(filePath: string) {
@@ -135,6 +137,10 @@ vi.mock('../app-document-list/appDocumentPreviewFloatingHelpers', () => ({
 vi.mock('../presenter-foreground/foregroundLongTextOpenHelpers', () => ({
     openLyricInLongTextShow: h.openLongText,
 }));
+// The help window's own item, a leaf of its own (AI on/off is its rule).
+vi.mock('../helper/ai/lyricChatbotMenuHelpers', () => ({
+    genLyricOpenInChatbotContextMenu: h.genChatbotMenu,
+}));
 
 import LyricFileComp from './LyricFileComp';
 import { SelectedVaryAppDocumentContext } from '../app-document-list/appDocumentHelpers';
@@ -192,6 +198,16 @@ beforeEach(() => {
     h.setSelected.mockResolvedValue(true);
     h.openFloating.mockReturnValue(false);
     h.genFloatingMenu.mockReturnValue({ menuElement: 'Open slide preview' });
+    h.genChatbotMenu.mockImplementation((filePath: string) => {
+        return [
+            {
+                menuElement: 'Open in Chatbot',
+                onSelect: () => {
+                    h.openChatbot(filePath);
+                },
+            },
+        ];
+    });
     h.getFileSource.mockImplementation((filePath: string) => ({
         name: filePath.split('/').at(-1),
     }));
@@ -334,7 +350,30 @@ describe('context menu', () => {
                     ? item.menuElement
                     : item.menuElement.props.children[0];
             }),
-        ).toEqual(['Open slide preview', 'Long Text Show', 'Edit', 'Export']);
+        ).toEqual([
+            'Open slide preview',
+            'Long Text Show',
+            'Open in Chatbot',
+            'Edit',
+            'Export',
+        ]);
+    });
+
+    test('Open in Chatbot opens the help window on this song, by its path', async () => {
+        await renderRow();
+        expect(h.genChatbotMenu).toHaveBeenCalledWith(FILE_PATH);
+        getMenuItem('Open in Chatbot').onSelect();
+        expect(h.openChatbot).toHaveBeenCalledWith(FILE_PATH);
+    });
+
+    test('with AI off the song offers no Open in Chatbot', async () => {
+        h.genChatbotMenu.mockReturnValue([]);
+        await renderRow();
+        expect(
+            h.props.contextMenuItems.some((item: MenuItemType) => {
+                return item.menuElement === 'Open in Chatbot';
+            }),
+        ).toBe(false);
     });
 
     test('Edit opens the lyric editor and Export exports the file', async () => {

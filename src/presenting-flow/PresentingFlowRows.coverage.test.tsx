@@ -130,4 +130,48 @@ describe('presenting-flow row primitives', () => {
         expect(mocks.toggle).toHaveBeenCalled();
         await act(async () => root.unmount());
     });
+
+    test('Enter on the chevron opens the row out and never presents it', async () => {
+        const rootElement = document.createElement('div');
+        document.body.append(rootElement);
+        const root = createRoot(rootElement);
+        await act(async () =>
+            root.render(
+                <PresentingFlowRowComp
+                    iconName="x"
+                    label="Sermon slides"
+                    isExpandable
+                    onToggleExpanding={mocks.toggle}
+                    onClick={mocks.click}
+                />,
+            ),
+        );
+        const chevron = rootElement.querySelector(
+            '.app-presenting-flow-row-chevron[role="button"]',
+        ) as HTMLElement;
+        const pressKey = (key: string) => {
+            const event = new KeyboardEvent('keydown', {
+                key,
+                bubbles: true,
+                cancelable: true,
+            });
+            act(() => {
+                chevron.dispatchEvent(event);
+            });
+            return event;
+        };
+
+        expect(pressKey('Enter').defaultPrevented).toBe(true);
+        expect(mocks.toggle).toHaveBeenCalledTimes(1);
+        // The row's own Enter presents it; this press must not reach it.
+        expect(mocks.click).not.toHaveBeenCalled();
+        expect(mocks.createEvent).not.toHaveBeenCalled();
+
+        // Any other key is left to the row, which ignores it too.
+        pressKey('a');
+        expect(mocks.toggle).toHaveBeenCalledTimes(1);
+        expect(mocks.click).not.toHaveBeenCalled();
+        await act(async () => root.unmount());
+        rootElement.remove();
+    });
 });

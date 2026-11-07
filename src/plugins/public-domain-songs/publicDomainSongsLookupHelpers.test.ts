@@ -26,11 +26,29 @@ vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
     },
 }));
 
+import type { PublicDomainSongType } from './publicDomainSongsData';
 import { publicDomainSongCatalog } from './publicDomainSongsData';
 import {
     lookupPublicDomainSong,
     toComparableSongTitle,
 } from './publicDomainSongsLookupHelpers';
+
+// A hand-made catalog: the lookup is pure, so a case the 36 hymns do not
+// happen to contain (a tie, a song without words) is built directly.
+function genCatalogSong(
+    title: string,
+    verses: string[] = [`${title} first line`],
+): PublicDomainSongType {
+    return {
+        id: title.toLowerCase().replace(/[^a-z]+/g, '-'),
+        title,
+        authors: ['Anonymous'],
+        year: '1900',
+        sources: [],
+        verses,
+        refrain: null,
+    };
+}
 
 function findTitle(asked: string) {
     return lookupPublicDomainSong(publicDomainSongCatalog, asked).found?.title;
@@ -97,6 +115,34 @@ describe('lookupPublicDomainSong', () => {
         expect(result.found).toBeNull();
         expect(result.nearest.length).toBeGreaterThan(0);
         expect(result.nearest.length).toBeLessThanOrEqual(5);
+    });
+
+    it('an ask made only of filler words names nothing and suggests nothing', () => {
+        expect(
+            lookupPublicDomainSong(publicDomainSongCatalog, 'The hymn lyrics'),
+        ).toEqual({ found: null, nearest: [] });
+    });
+
+    // Two hymns that both answer is a question for the person: the tied
+    // titles come back, a weaker match does not, and nothing is written.
+    it('a tie at the top is not a find', () => {
+        const catalog = [
+            genCatalogSong('Silent Night'),
+            genCatalogSong('Silent Night (Stille Nacht)'),
+            genCatalogSong('Night Silent Holy'),
+            genCatalogSong('Abide with Me'),
+        ];
+        expect(lookupPublicDomainSong(catalog, 'Silent Night')).toEqual({
+            found: null,
+            nearest: ['Silent Night', 'Silent Night (Stille Nacht)'],
+        });
+    });
+
+    it('a song with no words to write is not handed on as found', () => {
+        const catalog = [genCatalogSong('Empty Hymn Tune', ['   ', ''])];
+        expect(
+            lookupPublicDomainSong(catalog, 'Empty Hymn Tune').found,
+        ).toBeNull();
     });
 
     it('finds every hymn in the collection by its own title', () => {

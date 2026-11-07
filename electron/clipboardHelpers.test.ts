@@ -81,6 +81,20 @@ test('an old retry cannot overwrite a newer copy', async () => {
     expect(clipboard.writeText.mock.calls).toEqual([['old'], ['new']]);
 });
 
+test('a copy waiting to try again gives way to a newer one', async () => {
+    clipboard.readText.mockReturnValueOnce('').mockReturnValue('new');
+    const oldCopy = writeClipboardText('old');
+    // The old copy read nothing back and waits to try again.
+    await vi.advanceTimersByTimeAsync(10);
+    expect(clipboard.writeText).toHaveBeenCalledTimes(1);
+    const newCopy = writeClipboardText('new');
+    await vi.runAllTimersAsync();
+    await expect(newCopy).resolves.toBe(true);
+    await expect(oldCopy).resolves.toBe(false);
+    // The old one never wrote again over the new text.
+    expect(clipboard.writeText.mock.calls).toEqual([['old'], ['new']]);
+});
+
 test.each([null, 1, {}, ''])(
     'rejects invalid or empty text without clearing existing clipboard: %s',
     async (value) => {

@@ -3,6 +3,7 @@ import {
     DEFAULT_LANG_CODE,
     getCurrentLocale,
     getLangData,
+    readTranValue,
     tranByLangData,
 } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
@@ -13,8 +14,26 @@ import { getAppFontFamily } from '../setting/appFontSettingHelpers';
 // The CSS variable `chatWindowShared.scss` puts in every font stack of the
 // two AI windows, ahead of the system faces: a language whose letters the
 // signage and system faces lack (Khmer) is drawn in the face its pack ships,
-// the one the rest of the app draws it in, and Latin keeps the window's own.
+// the one the rest of the app draws it in. Never English's: its Google Sans
+// reaches these windows as the app's default (`--app-font-family`, boot.ts),
+// and is no language's script face.
 export const CHAT_LANG_FONT_VARIABLE = '--chat-lang-font';
+
+// A language's own face, never English's -- the app's default, not a face a
+// script needs (`appFontFamilyHelpers.ts`).
+function readLanguageOwnFontFamily(
+    langData: ReturnType<typeof getLangData>,
+): string | null {
+    if (
+        langData === null ||
+        langData.langCode === DEFAULT_LANG_CODE ||
+        langData.fontFamily === undefined ||
+        langData.fontFamily === ''
+    ) {
+        return null;
+    }
+    return langData.fontFamily;
+}
 
 // The face the user picked in Settings → General → Font Family, when one is
 // picked (`appFontSettingHelpers.ts`). boot.ts's `initFontFamily()` writes it
@@ -57,19 +76,17 @@ export async function plugChatWindowAppFont() {
 /**
  * The language's own face as the AI Chat window hands it to a site: its
  * name, the pack's @font-face sheet (for the files) and the script pattern
- * (for the letters it is for). Null for a language with no face of its own.
+ * (for the letters it is for). Null for a language with no face of its own,
+ * and for English: a stranger's site keeps its own Latin faces.
  */
 export function readChatWindowLanguageFont() {
     const langData = getLangData(getCurrentLocale());
-    if (
-        langData === null ||
-        langData.fontFamily === undefined ||
-        langData.fontFamily === ''
-    ) {
+    const family = readLanguageOwnFontFamily(langData);
+    if (langData === null || family === null) {
         return null;
     }
     return {
-        family: langData.fontFamily,
+        family,
         css: langData.genCss(),
         scriptPatternSource: getAssistantLanguage(langData.langCode)
             .scriptPattern.source,
@@ -94,7 +111,9 @@ export function plugChatWindowLanguage() {
             if (langData === null || langData.langCode === DEFAULT_LANG_CODE) {
                 return text;
             }
-            const value = langData.dictionary[langData.sanitizeTranKey(text)];
+            // What the dictionary HOLDS: a plugin's own fallback is not a
+            // translation (`readTranValue`).
+            const value = readTranValue(langData, text);
             if (value !== undefined) {
                 return value;
             }
@@ -110,8 +129,8 @@ export function plugChatWindowLanguage() {
             return tranByLangData(langData, text);
         },
     );
-    const fontFamily = langData?.fontFamily;
-    if (fontFamily !== undefined && fontFamily !== '') {
+    const fontFamily = readLanguageOwnFontFamily(langData);
+    if (fontFamily !== null) {
         document.documentElement.style.setProperty(
             CHAT_LANG_FONT_VARIABLE,
             fontFamily,

@@ -67,31 +67,27 @@ const documents = [
 const query = 'quick brown';
 testBM25(documents, query);
 
-const documents1 = [
-    'ខ្ញុំ ស្រលាញ់ អ្នក',
-    'តាម ដែល អ្នក បាន ស្គាល់',
-    'មិន អាច ស្គាល់ បាន ទេ',
-    'ស្រលា',
-    'អ្នក',
-    'ខ្ញុំ',
-];
-const query1 = 'ខ្ញុំ ស្រលាញ់';
-testBM25(documents1, query1);
+// Samples in other languages are each language's own data:
+// `src/lang/data/<code>/experiment/bm25-samples.json`.
+const fs = require('node:fs');
+const path = require('node:path');
 
-const documents2 = [
-    'ស្រលាស់',
-    'ស្រលាញ់',
-    'ស្លាញ់',
-    'លាញ់',
-    'លាញ',
-    'រលាញ់',
-    'ក្រលាញ់',
-    'ឆ្នាំង',
-    'មិន',
-];
-const query2 = 'រលាញ';
-testBM25(
-    documents2.map((item) => item.split('').join(' ')),
-    query2.split('').join(' '),
-    true,
-);
+const langDataDir = path.join(__dirname, '..', 'src', 'lang', 'data');
+for (const code of fs.readdirSync(langDataDir)) {
+    const filePath = path.join(langDataDir, code, 'experiment', 'bm25-samples.json');
+    if (!fs.existsSync(filePath)) {
+        continue;
+    }
+    const { samples } = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    for (const { documents: sampleDocuments, query: sampleQuery, isByLetter } of samples) {
+        if (isByLetter) {
+            testBM25(
+                sampleDocuments.map((item) => item.split('').join(' ')),
+                sampleQuery.split('').join(' '),
+                true,
+            );
+        } else {
+            testBM25(sampleDocuments, sampleQuery);
+        }
+    }
+}

@@ -65,10 +65,23 @@ vi.mock('./bibleVerseHelpers', () => ({
         target: string,
     ) => {
         h.titleReads.push(`${kind}:${target}`);
+        // `XXX` names a book no bible knows; `NUL` one it cannot title.
+        if (target.startsWith('XXX')) {
+            throw new Error('unknown book');
+        }
+        if (target.startsWith('NUL')) {
+            return null;
+        }
         return `Localized ${target}`;
     },
     shortToVerseTitle: async (_bibleKey: string, target: string) => {
         h.titleReads.push(target);
+        if (target.startsWith('XXX')) {
+            throw new Error('unreadable verse');
+        }
+        if (target.startsWith('NUL')) {
+            return null;
+        }
         return `Verse ${target}`;
     },
 }));
@@ -330,5 +343,130 @@ describe('lookup detail parts', () => {
             target: 'GEN 1:51',
             name: 'Verse GEN 1:51',
         });
+    });
+});
+
+describe('lookup detail parts with missing or unreadable data', () => {
+    async function settle() {
+        await act(async () => {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+    }
+
+    const getLinkLabels = () => {
+        return Array.from(
+            host.querySelectorAll('.location-name-lookup__ref-link'),
+        ).map((button) => {
+            return button.textContent;
+        });
+    };
+
+    test('a token with no target, an id that is gone and an unreadable reference', async () => {
+        await render(
+            <ReferenceTextComp
+                bibleKey="KM"
+                value={
+                    '[Nobody](name-id://  ) met [Gone](name-id://n9) at ' +
+                    '[Old](location-id://l9) in [Bad](verse-key://XXX 1:1) ' +
+                    'and [Ruth](book-key://NUL).'
+                }
+            />,
+        );
+        await settle();
+        // Both bible tokens were asked for; neither could be re-titled.
+        expect(h.titleReads).toEqual(['verse:XXX 1:1', 'book:NUL']);
+        expect(host.textContent).toBe(
+            'Nobody met Gone at Old in Bad and Ruth.',
+        );
+        // The empty target stays prose; the rest keep their typed labels.
+        expect(getLinkLabels()).toEqual(['Gone', 'Old', 'Bad']);
+        press('Gone');
+        press('Old');
+        press('Bad');
+        expect(h.opened).toEqual([
+            { kind: 'name', target: 'n9', name: 'Gone', langCode: 'km' },
+            { kind: 'location', target: 'l9', name: 'Old', langCode: 'km' },
+            { kind: 'verse', target: 'XXX 1:1', name: 'Bad', langCode: 'km' },
+        ]);
+    });
+
+    test('every list row renders nothing when it has nothing to list', async () => {
+        const resolved = vi.fn();
+        await render(
+            <>
+                <OptionalTextListRowComp label="Facts" values={[]} />
+                <OptionalLinkRowComp links={[]} />
+                <OptionalNameListRowComp label="People" ids={[]} />
+                <OptionalLocationListRowComp label="Places" values={[]} />
+                <OptionalVerseListRowComp
+                    bibleKey="KM"
+                    values={[]}
+                    onResolved={resolved}
+                />
+            </>,
+        );
+        expect(host.innerHTML).toBe('');
+        expect(resolved).not.toHaveBeenCalled();
+    });
+
+    test('an entry with no English name or title shows only its name', async () => {
+        h.names.set('n1', { id: 'n1', name: 'Moses', kjvName: '', title: '' });
+        h.locations.set('l1', {
+            id: 'l1',
+            name: 'Egypt',
+            kjvName: '',
+            title: '',
+        });
+        await render(
+            <>
+                <OptionalNameListRowComp label="People" ids={['n1']} />
+                <OptionalLocationListRowComp label="Places" values={['l1']} />
+            </>,
+        );
+        expect(getLinkLabels()).toEqual(['Moses', 'Egypt']);
+        expect(
+            host.querySelector('.location-name-lookup__kjv-name'),
+        ).toBeNull();
+        const [, egyptButton] = Array.from(
+            host.querySelectorAll('.location-name-lookup__ref-link'),
+        );
+        expect(egyptButton.hasAttribute('title')).toBe(false);
+        act(() => {
+            egyptButton.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            );
+        });
+        expect(h.menus).toEqual([
+            { kind: 'location', recordId: 'l1', name: 'Egypt' },
+        ]);
+    });
+
+    test('a verse the bible cannot title keeps its raw reference', async () => {
+        const values = ['GEN 1:1', 'XXX 1:1', 'NUL 1:1'];
+        const resolved = vi.fn();
+        await render(
+            <OptionalVerseListRowComp
+                bibleKey="KM"
+                values={values}
+                onResolved={resolved}
+            />,
+        );
+        press('Verses3');
+        await settle();
+        expect(getLinkLabels()).toEqual([
+            'Verse GEN 1:1',
+            'XXX 1:1',
+            'NUL 1:1',
+        ]);
+        expect(resolved).toHaveBeenCalledWith([
+            'Verse GEN 1:1',
+            'XXX 1:1',
+            'NUL 1:1',
+        ]);
+        expect(
+            host.querySelector('.location-name-lookup__show-more'),
+        ).toBeNull();
     });
 });

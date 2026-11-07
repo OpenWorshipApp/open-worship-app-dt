@@ -1,7 +1,7 @@
 import AppDocument from '../app-document-list/AppDocument';
 import { type VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
 import type Slide from '../app-document-list/Slide';
-import {
+import KeyboardEventListener, {
     checkIsControlKeys,
     checkIsKeyboardEventMatch,
     PlatformEnum,
@@ -23,6 +23,18 @@ import type CanvasItem from './canvas/CanvasItem';
 function consumeEvent(event: any) {
     event.preventDefault();
     event.stopPropagation();
+}
+
+/**
+ * A context menu, a modal, a popup or an armed presenting tool holds the
+ * keyboard, and the list or canvas that kept focus is behind it. Its keys were
+ * still answered here AND stopped: Escape never reached the open menu (it
+ * stayed up over a focused slide list), and Delete took the held slides or
+ * boxes away behind it (2026-11-04). The keying areas are silent behind a
+ * layer for the same reason (`keyingAreaHelpers`).
+ */
+function checkIsKeyboardHeldAbove() {
+    return KeyboardEventListener.getLastLayer() !== 'root';
 }
 
 function handleHistory(appDocument: AppDocument, event: any) {
@@ -109,10 +121,13 @@ export async function onSlideItemsKeyboardEvent(
         setHoldingSlides([]);
         isHandled = true;
     } else if (event.type === 'keydown') {
-        if (checkIsControlKeys(event)) {
+        if (checkIsControlKeys(event) || checkIsKeyboardHeldAbove()) {
             return;
         }
-        const allSelectedSlides = holdingSlides;
+        // A copy: `holdingSlides` is React's state array, and pushing the
+        // slide being edited into it changed the held list behind React's
+        // back on every key (2026-11-03).
+        const allSelectedSlides = [...holdingSlides];
         if (
             selectedSlideEditing !== null &&
             holdingSlides.some((holdingSlide) => {
@@ -140,8 +155,10 @@ export async function onSlideItemsKeyboardEvent(
             )
         ) {
             consumeEvent(event);
-            if (holdingSlides.length > 0) {
-                await appDocument.deleteSlides(holdingSlides);
+            // The held slides and the one being edited, as copy and duplicate
+            // take them -- what Delete took through that shared array.
+            if (allSelectedSlides.length > 0) {
+                await appDocument.deleteSlides(allSelectedSlides);
             }
             isHandled = true;
         } else if (
@@ -240,7 +257,11 @@ export async function onCanvasKeyboardEvent(
     },
     event: any,
 ) {
-    if (event.type !== 'keydown' || checkIsControlKeys(event)) {
+    if (
+        event.type !== 'keydown' ||
+        checkIsControlKeys(event) ||
+        checkIsKeyboardHeldAbove()
+    ) {
         return;
     }
     let isHandled = false;

@@ -240,6 +240,17 @@ async function readFilePreview(
                     ),
                 };
             }
+            // With no copy either, the card says so: it showed nothing and
+            // said nothing (2026-11-03). Its buttons still work.
+            return {
+                ...base,
+                kind: 'file',
+                byteSize,
+                note: fillWords(
+                    tran('I could not read the words of {name} just now.'),
+                    { name: attachment.name },
+                ),
+            };
         }
     }
     return {

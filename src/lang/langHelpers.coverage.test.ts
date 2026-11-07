@@ -71,6 +71,11 @@ vi.mock('./gzBundleFilePath', () => ({
 }));
 
 import {
+    checkHasLangPackage,
+    findOtherLangPackage,
+} from '../test-setup/langPackageDirs';
+import {
+    allLocalesMap,
     checkIsRtl,
     checkIsStopWord,
     checkIsValidLangCode,
@@ -112,8 +117,10 @@ beforeEach(() => {
 });
 
 test('locale validation and picker fallback keep the current locale usable', () => {
-    expect(checkIsValidLangCode('km')).toBe(true);
-    expect(checkIsValidLangCode('de')).toBe(false);
+    // A code is valid when its package is installed: English always is,
+    // and a code no package has never is.
+    expect(checkIsValidLangCode('en')).toBe(true);
+    expect(checkIsValidLangCode('xx')).toBe(false);
     expect(checkIsValidLocale('en-GB')).toBe(true);
     expect(checkIsValidLocale('made-up')).toBe(false);
     expect(getLangCode('fr-CA')).toBe('fr');
@@ -158,13 +165,34 @@ test('English search cleanup, word endings and number conversion use the loaded 
     expect(await fromLocaleNum('en-GB', '245')).toBe(245);
 });
 
-test('translation preserves English, interpolates fragments and rejects unloaded dev locale', () => {
+test('translation preserves English and interpolates fragments', () => {
     expect(tran('Save')).toBe('Save');
     expect(tran(['There are ', ' people'], 3)).toBe('There are 3 people');
     expect(tran(42)).toBe('42');
-    h.locale = 'km-KH';
-    expect(() => tran('Missing key')).toThrow('Language data for locale km-KH');
-    h.isDev = false;
+});
+
+// A language found on disk whose data this window never loaded.
+const otherPackage = findOtherLangPackage();
+test.runIf(otherPackage !== null)(
+    'a language on disk with its data unloaded throws in dev only',
+    () => {
+        h.locale = otherPackage!.locale as LocaleType;
+        expect(() => tran('Missing key')).toThrow(
+            `Language data for locale ${otherPackage!.locale}`,
+        );
+        h.isDev = false;
+        expect(tran('Missing key')).toBe('Missing key');
+    },
+);
+
+// A stored locale whose language is not on disk (deleted, or never there)
+// reads as English, even in dev.
+const absentLocale = Object.entries(allLocalesMap).find(([, langCode]) => {
+    return langCode !== 'en' && !checkHasLangPackage(langCode);
+})?.[0];
+test('a language that is not on disk reads as English, even in dev', () => {
+    expect(absentLocale).toBeDefined();
+    h.locale = absentLocale as LocaleType;
     expect(tran('Missing key')).toBe('Missing key');
 });
 

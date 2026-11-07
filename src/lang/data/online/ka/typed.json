@@ -1,0 +1,10 @@
+{
+    "ka": {
+        "name": "Georgian",
+        "nativeName": "ქართული",
+        "script": "Georgian",
+        "yes": ["კი", "დიახ"],
+        "no": ["არა"],
+        "order": 58
+    }
+}

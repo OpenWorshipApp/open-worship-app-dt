@@ -220,3 +220,49 @@ describe('location and name lookup panel', () => {
         });
     });
 });
+
+describe('lookup panel answers the manager gives back', () => {
+    function genLookup() {
+        return {
+            namesLookupManager: {
+                nameTypes: [],
+                searchNamesPagination: state.namesSearch,
+            },
+            locationsLookupManager: {
+                searchLocationsPagination: state.locationsSearch,
+            },
+        };
+    }
+
+    it('says there are no matches instead of drawing an empty list', async () => {
+        state.namesSearch.mockImplementation(() => ({
+            page: 1,
+            totalPages: 0,
+            totalRecords: 0,
+            records: [],
+        }));
+        state.lookup = genLookup();
+        await act(async () => root.render(<LocationNameLookupPanelComp />));
+        expect(host.textContent).toContain('No matches');
+        expect(host.querySelector('ul')).toBeNull();
+        expect(button('Page')).toBeUndefined();
+    });
+
+    it('takes the page the manager clamped to as the current one', async () => {
+        state.lookup = genLookup();
+        await act(async () => root.render(<LocationNameLookupPanelComp />));
+        await act(async () => button('Page 1').click());
+        await act(async () => button('Page 2').click());
+        expect(host.textContent).toContain('name:3');
+        const callCount = state.namesSearch.mock.calls.length;
+        // Asking past the last page: the manager answers page 3 again.
+        await act(async () => button('Page 3').click());
+        expect(
+            state.namesSearch.mock.calls.slice(callCount).map(([options]) => {
+                return options.page;
+            }),
+        ).toEqual([4, 3]);
+        expect(button('Page 3 of 3')).toBeDefined();
+        expect(host.textContent).toContain('name:3');
+    });
+});

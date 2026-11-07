@@ -93,7 +93,7 @@ describe('toFilePathSettingKey', () => {
     });
 
     test('a key too long for a file name is cut and given a hash', () => {
-        const longPath = `/data/documents/${'សេចក្តីស្រឡាញ់'.repeat(8)}.ows`;
+        const longPath = `/data/documents/${'✝✝✝✝✝✝✝✝✝✝✝✝✝✝'.repeat(8)}.ows`;
         const key = toFilePathSettingKey(
             '/data/presenting-flows/a.owpf',
             longPath,

@@ -1,0 +1,32 @@
+{
+    "about": "Khmer sample documents for experiment/bm25.js: words with spaces between them, then single letters, the way Bible Find's spell table is matched.",
+    "samples": [
+        {
+            "documents": [
+                "ខ្ញុំ ស្រលាញ់ អ្នក",
+                "តាម ដែល អ្នក បាន ស្គាល់",
+                "មិន អាច ស្គាល់ បាន ទេ",
+                "ស្រលា",
+                "អ្នក",
+                "ខ្ញុំ"
+            ],
+            "query": "ខ្ញុំ ស្រលាញ់",
+            "isByLetter": false
+        },
+        {
+            "documents": [
+                "ស្រលាស់",
+                "ស្រលាញ់",
+                "ស្លាញ់",
+                "លាញ់",
+                "លាញ",
+                "រលាញ់",
+                "ក្រលាញ់",
+                "ឆ្នាំង",
+                "មិន"
+            ],
+            "query": "រលាញ",
+            "isByLetter": true
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "sn": {
+        "name": "Shona",
+        "nativeName": "chiShona",
+        "script": "Latin",
+        "words": "uye kana asi ini iwe iye isu imi ivo sei chii kupi nei rini ani ndeupi ichi icho pano zvakanyanya zvakare ndinoda ndapota ndatenda",
+        "yes": ["hongu", "ehe"],
+        "no": ["kwete"],
+        "order": 38
+    }
+}

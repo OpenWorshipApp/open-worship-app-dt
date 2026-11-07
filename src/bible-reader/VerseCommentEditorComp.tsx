@@ -37,16 +37,22 @@ export default function VerseCommentEditorComp({
     const targetRef = useAppCurrentRef(target);
     const commentRef = useAppCurrentRef(comment);
     // Flush on unmount: the debounce is there to spare the disk a write per
-    // keystroke, not to lose the last one when the widget closes.
+    // keystroke, not to lose the last one when the widget closes. Through the
+    // debounce, at once: that also cancels the save still pending from the last
+    // keystroke, which would write the same words a second time -- or, with
+    // the comment reopened and changed meanwhile, put these older words back
+    // over the newer ones.
     useAppEffect(() => {
         return () => {
-            const { filePath, noteItemId, commentId } = targetRef.current;
-            updateVerseComment(
-                filePath,
-                noteItemId,
-                commentId,
-                commentRef.current,
-            );
+            attemptSaving(() => {
+                const { filePath, noteItemId, commentId } = targetRef.current;
+                updateVerseComment(
+                    filePath,
+                    noteItemId,
+                    commentId,
+                    commentRef.current,
+                );
+            }, true);
         };
     }, []);
     return (

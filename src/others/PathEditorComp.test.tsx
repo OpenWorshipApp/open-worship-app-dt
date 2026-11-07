@@ -22,6 +22,7 @@ vi.mock('../server/fileHelpers', () => ({
 }));
 
 import PathEditorComp from './PathEditorComp';
+import { selectDirs } from '../server/fileHelpers';
 
 function genDirSource(initialDirPath: string) {
     const committedDirPaths: string[] = [];
@@ -104,5 +105,122 @@ describe('PathEditorComp committing a typed path', () => {
         const input = await typeAndPressEnter('"/data/old"');
         expect(committedDirPaths).toEqual([]);
         expect(input.value).toBe('/data/old');
+    });
+});
+
+describe('PathEditorComp controls', () => {
+    let container: HTMLDivElement;
+    let root: Root;
+
+    beforeEach(() => {
+        vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        root = createRoot(container);
+    });
+
+    afterEach(async () => {
+        await act(async () => root.unmount());
+        container.remove();
+        vi.unstubAllGlobals();
+    });
+
+    async function renderEditor(dirSource: any, placeholder?: string) {
+        await act(async () => {
+            root.render(
+                <PathEditorComp
+                    dirSource={dirSource}
+                    placeholder={placeholder}
+                />,
+            );
+        });
+        return container.querySelector('input') as HTMLInputElement;
+    }
+
+    async function typeInto(input: HTMLInputElement, text: string) {
+        await act(async () => {
+            Object.getOwnPropertyDescriptor(
+                HTMLInputElement.prototype,
+                'value',
+            )!.set!.call(input, text);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    }
+
+    test('marks the box by the folder state, a blank box being neither', async () => {
+        const { dirSource } = genDirSource('/data/old');
+        let input = await renderEditor(dirSource, '/home/me/worship');
+        expect(input.className).toBe('form-control form-control-sm is-valid');
+        expect(input.placeholder).toBe('e.g. /home/me/worship');
+        dirSource.isDirPathValid = false;
+        input = await renderEditor({ ...dirSource, dirPath: '/data/old' });
+        expect(input.className).toBe('form-control form-control-sm is-invalid');
+        input = await renderEditor({
+            ...genDirSource('/data/old').dirSource,
+            isDirPathValid: null,
+            dirPath: '/data/old',
+        });
+        expect(input.className).toBe('form-control form-control-sm ');
+        input = await renderEditor(genDirSource('').dirSource);
+        expect(input.className).toBe('form-control form-control-sm ');
+        expect(input.placeholder).toBe('');
+        // Nothing to reload while no folder is set.
+        expect(container.querySelector('[aria-label="Reload"]')).toBeNull();
+    });
+
+    test('reloads the folder and takes the first folder picked', async () => {
+        const { dirSource, committedDirPaths } = genDirSource('/data/old');
+        await renderEditor(dirSource);
+        await act(async () => {
+            (
+                container.querySelector('[aria-label="Reload"]') as HTMLElement
+            ).click();
+        });
+        expect(dirSource.fireReloadEvent).toHaveBeenCalledTimes(1);
+        const chooseButton = container.querySelector(
+            '[aria-label="Choose a folder"]',
+        ) as HTMLElement;
+        vi.mocked(selectDirs).mockResolvedValue([]);
+        await act(async () => {
+            chooseButton.click();
+        });
+        expect(committedDirPaths).toEqual([]);
+        vi.mocked(selectDirs).mockResolvedValue(['/picked', '/other']);
+        await act(async () => {
+            chooseButton.click();
+        });
+        expect(selectDirs).toHaveBeenCalledTimes(2);
+        expect(committedDirPaths).toEqual(['/picked']);
+    });
+
+    test('a blur commits, Escape abandons, a change from outside shows', async () => {
+        const { dirSource, committedDirPaths } = genDirSource('/data/old');
+        const input = await renderEditor(dirSource);
+        await typeInto(input, '/data/typed');
+        // Typing alone commits nothing.
+        expect(committedDirPaths).toEqual([]);
+        await act(async () => {
+            input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+        });
+        expect(committedDirPaths).toEqual(['/data/typed']);
+
+        await typeInto(input, '/data/half');
+        await act(async () => {
+            input.dispatchEvent(
+                new KeyboardEvent('keyup', { key: 'Escape', bubbles: true }),
+            );
+        });
+        expect(input.value).toBe('/data/typed');
+        await act(async () => {
+            input.dispatchEvent(
+                new KeyboardEvent('keyup', { key: 'a', bubbles: true }),
+            );
+        });
+        expect(committedDirPaths).toEqual(['/data/typed']);
+
+        await act(async () => {
+            dirSource.setDirPath('/data/from-settings');
+        });
+        expect(input.value).toBe('/data/from-settings');
     });
 });

@@ -30,9 +30,9 @@ export function checkIsValidPresentingFlowActionTime(
  *
  * Written out here rather than left to `toLocaleTimeString`, which would answer
  * in the SYSTEM's language and format — a run sheet reading `19:30` in one place
- * and `७:३० अपराह्न` in another, from the same file, is the confusion this
- * avoids. 12-hour with an explicit AM/PM is what the operator typed in the
- * question, so it is what the row says back.
+ * and in another script's digits and words in another, from the same file, is
+ * the confusion this avoids. 12-hour with an explicit AM/PM is what the
+ * operator typed in the question, so it is what the row says back.
  */
 export function toPresentingFlowActionTimeLabel(time: string) {
     if (!checkIsValidPresentingFlowActionTime(time)) {

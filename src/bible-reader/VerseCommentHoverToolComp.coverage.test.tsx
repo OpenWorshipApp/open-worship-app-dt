@@ -179,7 +179,7 @@ describe('its actions', () => {
         h.toVerseAnchor.mockResolvedValue({
             verseKey: HOVERED.verseKey,
             shortVerse: 'GEN 22:1',
-            title: '(KHM) លោកុប្បត្តិ 22:1',
+            title: '(KHM) [xx] Genesis 22:1',
         });
         await render();
         await press('Edit Comment');
@@ -189,7 +189,7 @@ describe('its actions', () => {
             noteItemId: 3,
             commentId: 'c-7',
             comment: 'Abraham obeyed',
-            title: '(KHM) លោកុប្បត្តិ 22:1',
+            title: '(KHM) [xx] Genesis 22:1',
             verseKey: '(KHM) GEN 22:1',
         });
         // The editor is up: the tooltip under it goes.

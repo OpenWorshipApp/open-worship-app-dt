@@ -703,7 +703,7 @@ test('approval gates displays; HTTP output grants are revoked and resumed guests
     await vi.waitFor(() => expect(service.displays()).toHaveLength(1));
     const remote = service.displays()[0];
     expect(remote).toMatchObject({ id: -1000000, label: 'a1', localId: 15 });
-    const file = path.join(directory, 'រូប #1.png');
+    const file = path.join(directory, '✝ 📖 #1.png');
     await writeFile(file, 'host picture');
     const main = new EventEmitter() as any;
     main.isDestroyed = () => false;

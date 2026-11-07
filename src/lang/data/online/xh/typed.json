@@ -1,0 +1,12 @@
+{
+    "xh": {
+        "name": "Xhosa",
+        "nativeName": "isiXhosa",
+        "script": "Latin",
+        "words": "kwaye kodwa okanye ukuba ndi ndiya ndicela enkosi u si ba ka nga ku njani yintoni phi kutheni nini ngubani eyiphi mna wena yena thina nina bona oku oko apha kakhulu",
+        "family": "nguni",
+        "yes": ["ewe"],
+        "no": ["hayi"],
+        "order": 37
+    }
+}

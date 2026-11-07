@@ -26,7 +26,7 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     },
 }));
 
-import { tranByLangData } from './langHelpers';
+import { readTranValue, tranByLangData } from './langHelpers';
 import type { LanguageDataType } from './langHelpers';
 
 // Dictionaries are stored under sanitized keys, exactly as a real package
@@ -42,20 +42,24 @@ function genLangData(
     } as unknown as LanguageDataType;
 }
 
-const khmerLangData = genLangData('km', {
-    people: 'មនុស្ស',
-    person: 'មនុស្ស',
-    'all types': 'គ្រប់ប្រភេទ',
+// A language package's words, in a made-up language: what is read is which
+// dictionary, never what it says.
+const otherLangData = genLangData('xx', {
+    people: '[xx] people',
+    person: '[xx] people',
+    'all types': '[xx] every kind',
 });
 
 describe('translating into a named language', () => {
     test('reads the named language, not the interface locale', () => {
-        expect(tranByLangData(khmerLangData, 'People')).toBe('មនុស្ស');
-        expect(tranByLangData(khmerLangData, 'All types')).toBe('គ្រប់ប្រភេទ');
+        expect(tranByLangData(otherLangData, 'People')).toBe('[xx] people');
+        expect(tranByLangData(otherLangData, 'All types')).toBe(
+            '[xx] every kind',
+        );
     });
 
     test('matches keys the way the package sanitizes them', () => {
-        expect(tranByLangData(khmerLangData, '  people ')).toBe('មនុស្ស');
+        expect(tranByLangData(otherLangData, '  people ')).toBe('[xx] people');
     });
 
     // English IS the key language, so a package that carries no dictionary for
@@ -76,6 +80,37 @@ describe('translating into a named language', () => {
     // DATA is not, and blanking the lookup panel over one missing category label
     // would be a far worse outcome than showing it in English.
     test('degrades to English on a missing key even in dev', () => {
-        expect(tranByLangData(khmerLangData, 'Deities')).toBe('Deities');
+        expect(tranByLangData(otherLangData, 'Deities')).toBe('Deities');
+    });
+});
+
+// What every lookup counts as translated: the dictionary's own key. A
+// plugin's dictionary that answers a missing key by itself (a Proxy handing
+// the key back), or a key that only reaches the object's prototype, is not.
+describe('readTranValue', () => {
+    test('reads what the dictionary holds, by the key the package makes', () => {
+        expect(readTranValue(otherLangData, ' People ')).toBe('[xx] people');
+    });
+
+    test('a fallback the dictionary makes up is not a translation', () => {
+        const proxied = genLangData(
+            'xx',
+            new Proxy({ people: '[xx] people' } as { [key: string]: string }, {
+                get(target, key) {
+                    if (typeof key !== 'string') {
+                        return undefined;
+                    }
+                    return Object.hasOwn(target, key) ? target[key] : key;
+                },
+            }),
+        );
+        expect(readTranValue(proxied, 'People')).toBe('[xx] people');
+        expect(readTranValue(proxied, 'Deities')).toBeUndefined();
+        expect(tranByLangData(proxied, 'Deities')).toBe('Deities');
+    });
+
+    test('nor is what only the prototype has', () => {
+        expect(readTranValue(otherLangData, 'constructor')).toBeUndefined();
+        expect(readTranValue(otherLangData, 'toString')).toBeUndefined();
     });
 });

@@ -1,10 +1,8 @@
 // @vitest-environment jsdom
 
-import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { extractDictionary } from '../../tools/owa-devtools-mcp/tran.mjs';
 
 const { state, mocks } = vi.hoisted(() => ({
     state: {
@@ -312,11 +310,20 @@ vi.mock('../media-sessions/MediaSessionsComp', () => ({
 
 import ForegroundMediaComp from './ForegroundMediaComp';
 import { dirSourceSettingNames } from '../helper/constants';
+import { readSourceDictionary } from '../../tools/owa-devtools-mcp/langPacks.mjs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../test-setup/langPackageDirs';
 
 let container: HTMLDivElement;
 let root: Root;
-const dictionaries = ['km', 'fr'].map((code) =>
-    extractDictionary(readFileSync(`src/lang/data/${code}/index.ts`, 'utf8')),
+// Every language package but English, found by its folder: its real
+// dictionary.
+const dictionaries = listLangPackageCodes({ isEnglishIncluded: false }).map(
+    (code) => {
+        return readSourceDictionary(toLangPackageDir(code));
+    },
 );
 const mediaData = (kind: string, data: any[] = []) => ({
     videoDataList: [],
@@ -666,6 +673,27 @@ describe('foreground media autoplay', () => {
         expect(
             state.settings.get('foreground-image-a-slide-auto-play-playing'),
         ).toBe('false');
+    });
+
+    test('a Web Show runner sizes the next page from its session width, with no panel to ask', async () => {
+        state.sessions.set('foreground-web', [{ id: 'a' }]);
+        state.screens = [
+            [1, mediaData('web', [{ id: 'a', filePath: '/a.png' }])],
+        ];
+        runnerSetting('web', 'playing', 'true');
+        await render('web');
+        const runner = state.runners[0];
+        expect(runner.key).toBe('foreground-web-a');
+        expect(await runner.tick()).toBe(true);
+        await act(async () => vi.advanceTimersByTimeAsync(0));
+        const [presented] = mocks.setList.mock.calls.at(-1)![0];
+        // The session's width (80%) as the share of the screen the page takes.
+        expect(presented).toMatchObject({
+            id: 'a',
+            filePath: '/b.png',
+            widthScale: 0.8,
+        });
+        expect(presented.heightScale).toBeCloseTo(0.45);
     });
 
     test('a runner stops when its folder has no usable file list', async () => {

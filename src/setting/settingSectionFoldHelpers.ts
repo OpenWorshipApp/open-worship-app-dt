@@ -35,6 +35,9 @@ export type SettingSectionFoldNameType =
     | 'ai-bedrock'
     | 'ai-custom-servers'
     | 'ai-shared-servers'
+    | 'languages-app'
+    | 'languages-installed'
+    | 'languages-find'
     | `ai-custom-server-${string}`;
 
 // Claimed by `layout.windows` in `settingArchiveCatalog` by this prefix.

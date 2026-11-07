@@ -1,0 +1,12 @@
+{
+    "id": {
+        "name": "Indonesian",
+        "nativeName": "Bahasa Indonesia",
+        "script": "Latin",
+        "words": "yang dan atau tetapi tapi tidak bukan ada adalah ini itu di ke dari pada untuk dengan dalam oleh saya aku kamu anda dia ia kami kita mereka bagaimana apa apakah mana mengapa kenapa kapan siapa bisa dapat mau ingin harus juga sudah belum masih sangat lebih tolong terima kasih",
+        "family": "malay",
+        "yes": ["ya", "iya", "ya, tolong"],
+        "no": ["tidak", "tidak, terima kasih"],
+        "order": 25
+    }
+}

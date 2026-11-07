@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+# A language's own (its `package.json`, installed by extra-work/install-lang-deps.mjs)
+/src/lang/data/online/*/node_modules/
 /.pnp
 .pnp.js
 
@@ -34,6 +36,10 @@ experiment/bm25.pdb
 coverage-electron/
 playwright-report/
 test-results/
+
+# Language plugin packs and the dev mock catalog
+# (`node extra-work/build-lang-plugins.mjs --pack`)
+/extra-work/lang/
 
 # VitePress manual build artifacts (see docs/README.md)
 docs/.vitepress/dist/

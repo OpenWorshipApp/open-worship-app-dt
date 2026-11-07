@@ -1,0 +1,22 @@
+{
+    "nativeLanguageNames": {
+        "українська": "ukrainian"
+    },
+    "cyrillicLetterLocales": [
+        {
+            "letters": "іїєґ",
+            "locales": ["uk-UA", "ru-RU"],
+            "order": 0
+        }
+    ],
+    "scriptLocales": [
+        {
+            "script": "Cyrillic",
+            "locales": ["uk-UA"],
+            "order": 1101
+        }
+    ],
+    "languageAliases": {
+        "ukraine": "ukrainian"
+    }
+}

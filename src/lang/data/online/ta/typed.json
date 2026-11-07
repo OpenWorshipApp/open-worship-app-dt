@@ -1,0 +1,10 @@
+{
+    "ta": {
+        "name": "Tamil",
+        "nativeName": "தமிழ்",
+        "script": "Tamil",
+        "yes": ["ஆம்", "சரி"],
+        "no": ["இல்லை"],
+        "order": 70
+    }
+}

@@ -130,8 +130,8 @@ const BLOCK_TAG_PATTERN = /<(div|p|br|li|h[1-6]|section|tr|td|th)\b/gi;
 
 /**
  * The words in a slide's markup, as sung. A song slide from open-lyric
- * renders its chords INTO the words -- `ចូរមានស|[G]ង្ឃឹម`, the chord landing
- * mid-word as chords do -- which is right on a projector and noise in a
+ * renders its chords INTO the words -- a chord box landing between a Khmer
+ * letter and its vowel sign, mid-word as chords do -- which is right on a projector and noise in a
  * sentence about what is on it. The chord boxes (every one is marked
  * aria-hidden, and carries the segment-chord class) come out of the tree
  * BEFORE the text is read, so the word closes up again exactly as the page's

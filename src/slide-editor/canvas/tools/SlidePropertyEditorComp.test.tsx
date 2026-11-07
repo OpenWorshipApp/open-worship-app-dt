@@ -8,6 +8,10 @@ const h = vi.hoisted(() => ({
     slide: null as any,
     slides: [] as any[],
     fileCallbacks: [] as Array<() => void>,
+    fileListeners: [] as Array<{
+        callback: () => Promise<void> | void;
+        deps: unknown[];
+    }>,
     getSlides: vi.fn(),
     getSlideIndex: vi.fn(),
     changeDimensions: vi.fn(),
@@ -64,8 +68,13 @@ vi.mock('../../../popup-widget/popupWidgetHelpers', () => ({
     showAppConfirm: h.confirm,
 }));
 vi.mock('../../../helper/dirSourceHelpers', () => ({
-    useFileSourceEvents: (_events: unknown, callback: () => void) => {
+    useFileSourceEvents: (
+        _events: unknown,
+        callback: () => void,
+        deps: unknown[],
+    ) => {
         h.fileCallbacks.push(callback);
+        h.fileListeners.push({ callback, deps });
     },
 }));
 vi.mock('../../../helper/timeoutHelpers', () => ({
@@ -129,6 +138,7 @@ beforeEach(() => {
         if (vi.isMockFunction(value)) value.mockReset();
     }
     h.fileCallbacks = [];
+    h.fileListeners = [];
     h.slide = {
         id: 'slide-1',
         filePath: 'C:/documents/service.owa',
@@ -234,5 +244,56 @@ describe('slide property editor', () => {
         h.getSlideIndex.mockResolvedValue(4);
         await act(async () => h.fileCallbacks.at(-1)!());
         expect(container.textContent).toContain('Index 5');
+    });
+});
+
+describe('slide property editor: the other-slides warning', () => {
+    // The dimension listener is the one that depends on the size it checks.
+    function latestDimensionListener() {
+        return h.fileListeners.findLast((listener) => {
+            return listener.deps.length === 3;
+        })!.callback;
+    }
+
+    it('follows a document update that makes every slide the same size', async () => {
+        await renderEditor();
+        await expand();
+        expect(button('Apply All Slides')).toBeDefined();
+        h.slides[1].metadata = { width: 800, height: 600 };
+        await act(async () => {
+            await latestDimensionListener()();
+        });
+        expect(button('Apply All Slides')).toBeUndefined();
+    });
+
+    it('drops an update read that finishes after the size was retyped', async () => {
+        await renderEditor();
+        await expand();
+        expect(button('Apply All Slides')).toBeDefined();
+        const staleListener = latestDimensionListener();
+        let finish!: (slides: any[]) => void;
+        h.getSlides.mockImplementationOnce(() => {
+            return new Promise((resolve) => {
+                finish = resolve;
+            });
+        });
+        let pending!: Promise<void> | void;
+        await act(async () => {
+            pending = staleListener();
+        });
+        await typeValue(input('Width'), '1024');
+        expect(button('Apply All Slides')).toBeDefined();
+        // answers for 800x600, which is no longer what is being edited
+        await act(async () => {
+            finish([
+                h.slide,
+                {
+                    metadata: { width: 800, height: 600 },
+                    checkIsSame: () => false,
+                },
+            ]);
+            await pending;
+        });
+        expect(button('Apply All Slides')).toBeDefined();
     });
 });

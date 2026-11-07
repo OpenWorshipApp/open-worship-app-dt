@@ -16,9 +16,17 @@ export {
 export const SETTING_SETTING_NAME = 'setting-tabs';
 const SETTING_TAB_REQUEST_SETTING_NAME = 'setting-tab-request';
 const SETTING_TAB_REQUEST_MAX_AGE_MILLISECONDS = 30_000;
-// g: General, p: Path Settings, b: Bible, o: Others, a: AI Providers.
-export type SettingTabKeyType = 'g' | 'p' | 'b' | 'o' | 'a';
-const SETTING_TAB_KEY_LIST: SettingTabKeyType[] = ['g', 'p', 'b', 'o', 'a'];
+// g: General, p: Path Settings, b: Bible, o: Others, a: AI Providers,
+// l: Languages.
+export type SettingTabKeyType = 'g' | 'p' | 'b' | 'o' | 'a' | 'l';
+const SETTING_TAB_KEY_LIST: SettingTabKeyType[] = [
+    'g',
+    'p',
+    'b',
+    'o',
+    'a',
+    'l',
+];
 
 // The tab listener of THIS renderer, when it is the Settings window. A module
 // of its own would be cleaner, but `requestSettingTab` must reach it without
@@ -116,6 +124,13 @@ export function openOthersSetting() {
     requestSettingTab('o');
     openSettingPage();
 }
+
+/** Settings > Languages: what is installed, the catalog, Import from a file. */
+export function openLanguagesSetting() {
+    requestSettingTab('l');
+    openSettingPage();
+}
+
 appProvider.messageUtils.listenForData('app:main:go-to-setting-home', () => {
     openBibleSetting();
 });

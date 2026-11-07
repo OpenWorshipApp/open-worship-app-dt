@@ -483,6 +483,107 @@ test('a picture is normalized before it is returned as an image', async () => {
     expect(mocks.normalizeImage).toHaveBeenCalledOnce();
 });
 
+test('a book named in another installed Bible’s language is found past a Bible that cannot be read', async () => {
+    state.bibleList = [{ key: 'KJV' }, { key: 'FR' }];
+    state.bibleMaps = { FR: { JHN: 'Jean' } };
+    mocks.getBibleInfo.mockImplementation(async (key: string) => {
+        if (key === 'KJV') {
+            throw new Error('unreadable Bible');
+        }
+        return { keyBookMap: state.bibleMaps[key] ?? {} };
+    });
+    state.scanResults['/resources'] = { filePaths: ['/resources/JHN.3.pdf'] };
+
+    await expect(
+        handleAgentResourcesRequest({ action: 'list', book: 'Jean' }),
+    ).resolves.toMatchObject({
+        files: [{ file: 'resources/JHN.3.pdf', kind: 'pdf' }],
+    });
+    expect(mocks.scan).toHaveBeenCalledWith('/resources', [], 'JHN.');
+    expect(mocks.getBibleInfo).toHaveBeenCalledWith('FR');
+});
+
+test('an overview passes over a folder it cannot open, and says a shelf too big to walk was cut', async () => {
+    state.folders = ['/resources', '/big'];
+    state.dirents = {
+        '/resources': [
+            file('JHN.3.pdf'),
+            file('locked', 'directory'),
+            file('sub', 'directory'),
+        ],
+        '/resources/sub': [file('GEN.1.pdf')],
+        '/big': Array.from({ length: 101 }, (_, index) => {
+            return file(`GEN.${index + 1}.pdf`);
+        }),
+    };
+    mocks.listDirents.mockImplementation(async (path: string) => {
+        if (path === '/resources/locked') {
+            throw new Error('permission denied');
+        }
+        return state.dirents[path] ?? [];
+    });
+
+    const result: any = await handleAgentResourcesRequest({ action: 'list' });
+
+    expect(result.overview).toEqual([
+        { folder: 'resources', files: ['JHN.3.pdf', 'GEN.1.pdf'] },
+        { folder: 'big', files: [], isCut: true },
+    ]);
+    expect(mocks.listDirents).toHaveBeenCalledWith('/resources/locked');
+});
+
+test('a listing stops at sixty files and says there are more', async () => {
+    state.scanResults['/resources'] = {
+        filePaths: Array.from({ length: 61 }, (_, index) => {
+            return `/resources/JHN.${index + 1}.pdf`;
+        }),
+    };
+
+    const result: any = await handleAgentResourcesRequest({
+        action: 'list',
+        search: 'JHN',
+    });
+
+    expect(result.files).toHaveLength(60);
+    expect(result.files.at(-1)).toEqual({
+        file: 'resources/JHN.60.pdf',
+        kind: 'pdf',
+    });
+    expect(result.note).toContain('There are more');
+});
+
+test('a read naming a folder that is not a Resources folder is refused without a scan', async () => {
+    await expect(
+        handleAgentResourcesRequest({
+            action: 'read',
+            file: 'Downloads/JHN.3.pdf',
+        }),
+    ).resolves.toEqual({
+        isError: true,
+        reason: expect.stringContaining('Only files in the Resources folders'),
+    });
+    expect(mocks.scan).not.toHaveBeenCalled();
+    expect(mocks.getSize).not.toHaveBeenCalled();
+});
+
+test('a bare file name is still found when another Resources folder cannot be scanned', async () => {
+    state.folders = ['/one/resources', '/two/resources'];
+    state.scanErrors = ['/one/resources'];
+    const filePath = '/two/resources/sermon.txt';
+    state.scanResults['/two/resources'] = { filePaths: [filePath] };
+    state.sizes[filePath] = 5;
+    state.texts[filePath] = 'grace';
+
+    await expect(
+        handleAgentResourcesRequest({ action: 'read', file: 'sermon.txt' }),
+    ).resolves.toEqual({
+        file: 'resources/sermon.txt',
+        kind: 'text',
+        text: 'grace',
+    });
+    expect(mocks.scan).toHaveBeenCalledWith('/one/resources', [], 'sermon.txt');
+});
+
 test('missing files and images that cannot be normalized are refused', async () => {
     const imagePath = '/resources/map.jpg';
     state.scanResults['/resources'] = { filePaths: [imagePath] };

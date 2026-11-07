@@ -366,4 +366,79 @@ describe('AttachBackgroundManager', () => {
             } as any);
         }).toThrow('Unsupported dropped data type: slide');
     });
+
+    test('a web page FILE background is kept by its name in the web folder', async () => {
+        const manager = new AttachBackgroundManager();
+        const filePath = '/docs/web-file.txt';
+        const metaPath = AttachBackgroundManager.genMetaDataFilePath(filePath);
+        baseDirFileFullNameOrPathMap['select-dir-web-bg|/webs/clock.html'] =
+            'clock.html';
+
+        await manager.saveData(filePath, {
+            self: {
+                type: DragTypeEnum.BACKGROUND_WEB,
+                item: getMockFileSource('/webs/clock.html'),
+            },
+        });
+
+        expect(getMockFileSource(metaPath).writeFileData).toHaveBeenCalledWith(
+            JSON.stringify({
+                self: { type: DragTypeEnum.BACKGROUND_WEB, item: 'clock.html' },
+            }),
+        );
+    });
+
+    test('an unreadable sidecar holds nothing, and a file that is gone is dropped', async () => {
+        const manager = new AttachBackgroundManager();
+        const filePath = '/docs/broken.txt';
+        const metaPath = AttachBackgroundManager.genMetaDataFilePath(filePath);
+
+        // There, but its JSON reads as nothing.
+        expect(await manager.readData(filePath)).toEqual({});
+        expect(
+            getMockFileSource(metaPath).readFileJsonData,
+        ).toHaveBeenCalledOnce();
+
+        jsonDataMap[metaPath] = {
+            image: { type: DragTypeEnum.BACKGROUND_IMAGE, item: 'gone.png' },
+            web: { type: DragTypeEnum.BACKGROUND_WEB, item: 'clock.html' },
+        };
+        baseDirResolvedFilePathMap['select-dir-image-bg|gone.png'] = null;
+        baseDirResolvedFilePathMap['select-dir-web-bg|clock.html'] =
+            '/webs/clock.html';
+
+        const data = await manager.readData(filePath);
+
+        expect(Object.keys(data)).toEqual(['web']);
+        expect(data.web.type).toBe(DragTypeEnum.BACKGROUND_WEB);
+        expect(data.web.item.filePath).toBe('/webs/clock.html');
+    });
+
+    test('a first lookup reads the sidecar once; later ones come from the cache', async () => {
+        const manager = new AttachBackgroundManager();
+        const filePath = '/docs/first-look.txt';
+        const metaPath = AttachBackgroundManager.genMetaDataFilePath(filePath);
+        const colorData = {
+            type: DragTypeEnum.BACKGROUND_COLOR,
+            item: '#445566',
+        };
+        jsonDataMap[metaPath] = { '3': colorData };
+
+        expect(manager.getAttachedBackgroundSync(filePath, 3)).toBeUndefined();
+        expect(await manager.getAttachedBackground(filePath, 3)).toEqual(
+            colorData,
+        );
+        expect(await manager.getAttachedBackground(filePath, 4)).toBeNull();
+
+        expect(
+            getMockFileSource(metaPath).readFileJsonData,
+        ).toHaveBeenCalledOnce();
+        expect(manager.getAttachedBackgroundSync(filePath, 3)).toEqual(
+            colorData,
+        );
+        expect(unlockingMock).toHaveBeenCalledWith(
+            'attached-background-/docs/first-look.txt',
+            expect.any(Function),
+        );
+    });
 });

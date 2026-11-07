@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+    <path fill="#fff" d="M0 0h640v480h-640z"/>
+    <g transform="rotate(33.7 320 240)">
+        <path fill="#cd2e3a" d="M200 240a120 120 0 0 1 240 0a60 60 0 0 0-120 0a60 60 0 0 1-120 0z"/>
+        <path fill="#0047a0" d="M200 240a60 60 0 0 0 120 0a60 60 0 0 1 120 0a120 120 0 0 1-240 0z"/>
+    </g>
+    <g fill="#000" transform="translate(136 102) rotate(-53.1)"><rect x="-48" y="-32" width="96" height="16"/><rect x="-48" y="-8" width="96" height="16"/><rect x="-48" y="16" width="96" height="16"/></g>
+    <g fill="#000" transform="translate(504 378) rotate(-53.1)"><rect x="-48" y="-32" width="42" height="16"/><rect x="6" y="-32" width="42" height="16"/><rect x="-48" y="-8" width="42" height="16"/><rect x="6" y="-8" width="42" height="16"/><rect x="-48" y="16" width="42" height="16"/><rect x="6" y="16" width="42" height="16"/></g>
+    <g fill="#000" transform="translate(504 102) rotate(53.1)"><rect x="-48" y="-32" width="42" height="16"/><rect x="6" y="-32" width="42" height="16"/><rect x="-48" y="-8" width="96" height="16"/><rect x="-48" y="16" width="42" height="16"/><rect x="6" y="16" width="42" height="16"/></g>
+    <g fill="#000" transform="translate(136 378) rotate(53.1)"><rect x="-48" y="-32" width="96" height="16"/><rect x="-48" y="-8" width="42" height="16"/><rect x="6" y="-8" width="42" height="16"/><rect x="-48" y="16" width="96" height="16"/></g>
+  </svg>

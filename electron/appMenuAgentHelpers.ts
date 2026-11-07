@@ -12,9 +12,10 @@
  * app down or open a door onto the machine. `toggleDevTools` is a console with
  * Node in every renderer -- the same reach `evaluate_script` was denied for;
  * `quit`, `close` and `Relaunch` end the operator's windows (and Relaunch asks
- * through a NATIVE dialog nothing here could answer); the macOS app-menu roles
- * hide the app. Refused by role or label, with the reason, and marked in the
- * list so a caller need not try.
+ * through a NATIVE dialog nothing here could answer); Factory Reset deletes
+ * every setting and cannot be undone; the macOS app-menu roles hide the app.
+ * Refused by role or label, with the reason, and marked in the list so a
+ * caller need not try.
  */
 import { BrowserWindow, Menu, type MenuItem } from 'electron';
 
@@ -36,6 +37,10 @@ const DENIED_ROLE_SET = new Set([
 ]);
 // Labels, for the items that carry no role. Compared case-insensitively.
 const DENIED_LABEL_SET = new Set(['relaunch']);
+// Help -> Factory Reset (`FACTORY_RESET_LABEL`, `factoryResetHelpers.ts`;
+// spelled here so this module needs nothing but electron -- a test holds the
+// two together).
+export const FACTORY_RESET_DENIED_LABEL = 'factory reset';
 
 export type AgentMenuEntryType = {
     /** `View > Reload`: the labels from the bar down, joined by ` > `. */
@@ -64,7 +69,15 @@ function findRefusal(item: MenuItem) {
             "the user's to press."
         );
     }
-    if (DENIED_LABEL_SET.has(String(item.label ?? '').toLowerCase())) {
+    const label = String(item.label ?? '').toLowerCase();
+    if (label === FACTORY_RESET_DENIED_LABEL) {
+        return (
+            'That deletes every setting of the app and restarts it -- it ' +
+            'cannot be undone, and asks through a dialog nothing here can ' +
+            "answer. It is the user's to press."
+        );
+    }
+    if (DENIED_LABEL_SET.has(label)) {
         return (
             'That closes and reopens the app -- every window, a screen in ' +
             'front of a congregation included -- and asks through a dialog ' +

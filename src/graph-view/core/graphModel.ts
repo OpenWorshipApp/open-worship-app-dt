@@ -700,8 +700,14 @@ export function relayoutGraph(
                 },
             ),
             occupiedList: Array.from(positionMap.values()),
+            // The known order, then a relation it does not name, each ONCE:
+            // every relation appended had each counted twice, and a fan of
+            // three was laid over six slots, crowded to one side
+            // (2026-11-04).
             relationOrder: relationOrder.concat(
-                Array.from(groupCountMap.keys()),
+                Array.from(groupCountMap.keys()).filter((relation) => {
+                    return !relationOrder.includes(relation);
+                }),
             ),
         });
         const placementByRelation = new Map<

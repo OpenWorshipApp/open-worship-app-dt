@@ -17,24 +17,25 @@ import type {
 // weight -- the language layer least of all (types only), which is why the
 // one check that needs it takes it as an argument.
 
-export const longTextTextAlignList = ['left', 'center', 'right'] as const;
-export type LongTextTextAlignType = (typeof longTextTextAlignList)[number];
-
 /**
- * What ONE column says about itself, over the screen's own text style. Every
- * key is present only while it is set: the on-screen data is compared and
- * persisted as JSON, and a key holding `undefined` is a different object from
- * one without it.
+ * What ONE column says about itself: its font family and its size beside the
+ * others, nothing else. A language needs a face of its own (a Latin one cannot
+ * draw Khmer), and two faces at the same size are not the same size on the
+ * wall; every other value of the look -- colour, weight, alignment, shadow,
+ * the selection band, the size itself -- is the Bible's, set in
+ * Bible/LongText Properties for both (the user, 2026-11-06: _make sure all
+ * style that apply to bible have to apply to long text as well_, then _keep
+ * font-family_ _and font-size, because some font-family make different
+ * size_). A column saved by an earlier release with a colour, a weight or an
+ * alignment of its own is read without them. Every key is present only while
+ * it is set: the on-screen data is compared and persisted as JSON, and a key
+ * holding `undefined` is a different object from one without it.
  */
 export type LongTextColumnStyleType = {
     fontFamily?: string;
-    // '100' .. '900'
-    fontWeight?: string;
-    // #rrggbb or #rrggbbaa
-    color?: string;
-    // Of the screen's text size; 1 is never stored.
+    // Of the screen's text size, so the size set for both still moves it;
+    // 1 is never stored.
     fontSizeScale?: number;
-    textAlign?: LongTextTextAlignType;
 };
 
 export type LongTextSectionType = {
@@ -62,8 +63,6 @@ export type LongTextColumnType = {
 export const MIN_LONG_TEXT_FONT_SIZE_SCALE = 0.5;
 export const MAX_LONG_TEXT_FONT_SIZE_SCALE = 2;
 const MAX_FONT_FAMILY_LENGTH = 100;
-const FONT_WEIGHT_PATTERN = /^[1-9]00$/;
-const HEX_COLOR_PATTERN = /^#(?:[\da-f]{6}|[\da-f]{8})$/i;
 
 /**
  * A section's key. ASCII on purpose, and short: a viewer on a virtual display
@@ -106,7 +105,9 @@ function readFontSizeScale(value: unknown) {
  * A column's style as it may be drawn: only the keys that hold a usable value,
  * and `undefined` when none does. The one reader for the panel, for a style
  * arriving from a setting file or a Screen Mirror peer, and for the renderer
- * -- all of it ends up inside a `<style>` or a `style` attribute.
+ * -- all of it ends up inside a `<style>` or a `style` attribute. Whatever
+ * else an older column carries (`color`, `fontWeight`, `textAlign`) is
+ * dropped here.
  */
 export function readLongTextColumnStyle(
     value: unknown,
@@ -116,25 +117,10 @@ export function readLongTextColumnStyle(
     }
     const raw = value as { [key: string]: unknown };
     const fontFamily = readFontFamily(raw.fontFamily);
-    const fontWeight =
-        typeof raw.fontWeight === 'string' &&
-        FONT_WEIGHT_PATTERN.test(raw.fontWeight)
-            ? raw.fontWeight
-            : '';
-    const color =
-        typeof raw.color === 'string' && HEX_COLOR_PATTERN.test(raw.color)
-            ? raw.color
-            : '';
     const fontSizeScale = readFontSizeScale(raw.fontSizeScale);
-    const textAlign = longTextTextAlignList.find((align) => {
-        return align === raw.textAlign;
-    });
     const style: LongTextColumnStyleType = {
         ...(fontFamily === '' ? {} : { fontFamily }),
-        ...(fontWeight === '' ? {} : { fontWeight }),
-        ...(color === '' ? {} : { color }),
         ...(fontSizeScale === 1 ? {} : { fontSizeScale }),
-        ...(textAlign === undefined ? {} : { textAlign }),
     };
     return Object.keys(style).length === 0 ? undefined : style;
 }
@@ -253,60 +239,28 @@ export function genLongTextFontFamilyCss(
     );
 }
 
-const HEADER_JUSTIFY_MAP: {
-    [key in LongTextTextAlignType]: [ltr: string, rtl: string];
-} = {
-    left: ['flex-start', 'flex-end'],
-    center: ['center', 'center'],
-    right: ['flex-end', 'flex-start'],
-};
-
 /**
- * The rules of one column's own colour, weight, size and alignment -- its
- * family is said inline, where the language's font already is.
+ * The rule of one column's own size -- its family is said inline, where the
+ * language's font already is. Empty while the column follows the screen's
+ * size, which is every column until a size is chosen on its card.
  *
- * The size is on the cells only: the header is resized on every scroll
- * (`applyHeaderEffectOnScroll`) and stays the screen's. The alignment is
- * `!important` and by class, because Bible Properties writes
- * `tr td { text-align: … !important }` and an inline style would lose to it.
+ * In `em` of the size set in Bible/LongText Properties, so changing that one
+ * still moves every column. On the cells only -- or, stacked, on that
+ * language's lines in the one cell: the header is resized on every scroll
+ * (`applyHeaderEffectOnScroll`) and stays the screen's.
  */
 export function genLongTextColumnCss(
     index: number,
     style: LongTextColumnStyleType | undefined,
-    isRtl: boolean,
 ) {
-    if (style === undefined) {
+    if (style?.fontSizeScale === undefined) {
         return '';
     }
     const className = toLongTextColumnClassName(index);
-    const cell = `#bible-screen-view td.${className}`;
-    const header = `#bible-screen-view th.${className}`;
-    const sharedDeclarations: string[] = [];
-    if (style.color !== undefined) {
-        sharedDeclarations.push(`color: ${style.color};`);
-    }
-    if (style.fontWeight !== undefined) {
-        sharedDeclarations.push(`font-weight: ${style.fontWeight};`);
-    }
-    const cellDeclarations: string[] = [];
-    if (style.fontSizeScale !== undefined) {
-        cellDeclarations.push(`font-size: ${style.fontSizeScale}em;`);
-    }
-    if (style.textAlign !== undefined) {
-        cellDeclarations.push(`text-align: ${style.textAlign} !important;`);
-    }
-    const rules: string[] = [];
-    if (sharedDeclarations.length > 0) {
-        rules.push(`${cell}, ${header} { ${sharedDeclarations.join(' ')} }`);
-    }
-    if (cellDeclarations.length > 0) {
-        rules.push(`${cell} { ${cellDeclarations.join(' ')} }`);
-    }
-    if (style.textAlign !== undefined) {
-        const justify = HEADER_JUSTIFY_MAP[style.textAlign][isRtl ? 1 : 0];
-        rules.push(`${header} > div { justify-content: ${justify}; }`);
-    }
-    return rules.join('\n');
+    return (
+        `#bible-screen-view .${className} ` +
+        `{ font-size: ${style.fontSizeScale}em; }`
+    );
 }
 
 /**

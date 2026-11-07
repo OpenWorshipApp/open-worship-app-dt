@@ -1,0 +1,10 @@
+{
+    "pa": {
+        "name": "Punjabi",
+        "nativeName": "ਪੰਜਾਬੀ",
+        "script": "Gurmukhi",
+        "yes": ["ਹਾਂ", "ਜੀ"],
+        "no": ["ਨਹੀਂ"],
+        "order": 67
+    }
+}

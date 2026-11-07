@@ -19,7 +19,7 @@ Under `en-US` `tran` is a passthrough, so the bug is invisible in an
 English-only run.
 
 **How to apply:** when adding or reviewing a `showAppConfirm` call, check that
-labels are bare string literals present as keys in `src/lang/data/km/index.ts`,
+labels are bare string literals present as keys in every `src/lang/data/online/<code>/dictionary.json`,
 and that a `confirmButtonLabel: 'Yes'` is paired with `cancelButtonLabel: 'No'`
 (otherwise the dialog reads "Cancel / Yes"). Sites that keep both defaults get
 the coherent "Cancel / Ok" pair and need no options object.

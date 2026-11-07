@@ -248,7 +248,7 @@ function modelBookToKey(book: string) {
 // "Psalms 23:1" (no such book) => "23:1": the part of an input no book
 // matched that was already a chapter, or a chapter and verses, so picking the
 // book it was meant to be does not throw that part away. Digits of any
-// script (`\p{Nd}`), so a Khmer `២៣:១` is kept too, and a range across
+// script (`\p{Nd}`), so `23:1` in Khmer digits is kept too, and a range across
 // chapters (`23:1-24:3`) whole.
 const TRAILING_REFERENCE_REGEX =
     /\s(\p{Nd}+(?::\p{Nd}*)?(?:-(?:\p{Nd}+(?::\p{Nd}*)?)?)?)$/u;
@@ -262,7 +262,8 @@ export function toTrailingReference(guessingBook: string | null) {
 
 /**
  * The book a typed name means: the Bible's own name for it, then the
- * language's other spellings of that name (ពេត្រុសទី១ => ១ ពេត្រុស), then the
+ * language's other spellings of that name (First Peter
+ * written as one word with its number last => the number first), then the
  * model's English name.
  */
 async function resolveBibleBookKey(bibleKey: string, book: string) {

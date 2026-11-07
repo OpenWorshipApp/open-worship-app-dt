@@ -212,10 +212,11 @@ be a key as a whole) and its id in the right set in `getPresenterTips`.
 step, `find` optional.
 
 **Strings** — every new `label`, `detail` and `category`, and every
-`translateFind` / `translateValue` key, in `src/lang/data/km/index.ts` and
-`src/lang/data/fr/index.ts`. Reuse the dictionary's existing translation of
-each control name inside the translated detail. A reworded string's old entry
-comes out of both files.
+`translateFind` / `translateValue` key, in every
+`src/lang/data/online/<code>/dictionary.json` (Khmer's and French's by hand
+first; `tranKeyCoverage.test.ts` holds the rest to the same keys). Reuse the
+dictionary's existing translation of each control name inside the translated
+detail. A reworded string's old entry comes out of every file.
 
 **Tests** — the totals and the featured counts in `readerDemos.test.mjs`,
 `presenterDemos.test.mjs` and `src/toast/dailyTipHelpers.test.ts`; a new

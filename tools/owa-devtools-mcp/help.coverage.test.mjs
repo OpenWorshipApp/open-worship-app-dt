@@ -62,7 +62,11 @@ import {
   searchHelp,
   toPageParts,
 } from './help.mjs';
-import { listManualTranslations, readFrontMatter } from './manualI18n.mjs';
+import {
+  listManualLanguages,
+  listManualTranslations,
+  readFrontMatter,
+} from './manualI18n.mjs';
 import { flattenQuestions } from './questionMatch.mjs';
 import { loadQuestionOverlays, loadQuestionPages } from './questions.mjs';
 import { tranText } from './tran.mjs';
@@ -90,18 +94,6 @@ const W01_EN = [
   '2. Type the reference and press Enter to see the passage.',
   '',
 ].join('\n');
-const W01_KM = [
-  '---',
-  'id: W-01',
-  'title: "រកវគ្គបទ"',
-  '---',
-  '# W-01 — រកវគ្គបទ',
-  '',
-  '1. ចុច **[en:tran:Bible Lookup]** ដើម្បីបើក។',
-  '',
-  '2. វាយឯកសារយោង ហើយចុច Enter។',
-  '',
-].join('\n');
 const W03_EN = [
   '# W-03 — Hide the screen',
   '',
@@ -110,7 +102,6 @@ const W03_EN = [
   '2. Press it again to show the projector.',
   '',
 ].join('\n');
-const W03_KM = '# W-03 — លាក់អេក្រង់\n\nចុចប៊ូតុងដើម្បីលាក់។\n';
 const NOTE = '# memory / short\nA short note about the projector.\n';
 
 function toBody(content) {
@@ -127,8 +118,6 @@ beforeAll(() => {
   knowledgeDirPath = mkdtempSync(path.join(os.tmpdir(), 'owa-help-'));
   writeFile(knowledgeDirPath, 'manual/w-01.md', W01_EN);
   writeFile(knowledgeDirPath, 'manual/w-03.md', W03_EN);
-  writeFile(knowledgeDirPath, 'manual-km/w-01.md', W01_KM);
-  writeFile(knowledgeDirPath, 'manual-km/w-03.md', W03_KM);
   writeFile(knowledgeDirPath, 'internal/memory/short.md', NOTE);
   const entry = (id, title, file, searchText, extra = {}) => {
     return {
@@ -164,26 +153,6 @@ beforeAll(() => {
       ],
     }),
   );
-  writeFile(
-    knowledgeDirPath,
-    'index.km.json',
-    JSON.stringify({
-      entries: [
-        entry('W-01', 'រកវគ្គបទ', 'manual-km/w-01.md', toBody(W01_KM), {
-          lang: 'km',
-          isStale: false,
-        }),
-        entry('W-02', 'សម្អាតអេក្រង់', 'manual-km/w-02.md', 'x', {
-          lang: 'km',
-          isStale: true,
-        }),
-        entry('W-03', 'លាក់អេក្រង់', 'manual-km/w-03.md', W03_KM, {
-          lang: 'km',
-          isStale: false,
-        }),
-      ],
-    }),
-  );
   writeFile(knowledgeDirPath, 'index.de.json', '{not json');
   brokenDirPath = mkdtempSync(path.join(os.tmpdir(), 'owa-help-broken-'));
   writeFile(brokenDirPath, 'index.json', '{"entries": [');
@@ -208,64 +177,6 @@ afterEach(() => {
   } else {
     process.env.OWA_KNOWLEDGE_DIR = previousDirPath;
   }
-});
-
-describe('a page in the window language', () => {
-  it('lists only the translations that are still current', () => {
-    const entries = listTranslatedEntries('km-KH');
-    expect(entries.map((one) => one.id)).toEqual(['W-01', 'W-03']);
-    expect(entries[0].absolutePath).toBe(
-      path.join(knowledgeDirPath, 'manual-km/w-01.md'),
-    );
-    expect(listTranslatedEntries('en')).toEqual([]);
-    expect(listTranslatedEntries(null)).toEqual([]);
-    // No index for the language, or one that does not parse.
-    expect(listTranslatedEntries('fr')).toEqual([]);
-    expect(listTranslatedEntries('de')).toEqual([]);
-  });
-
-  it('reads the translation of a page asked for as W-01@km', () => {
-    const page = readHelpPage('W-01@km');
-    expect(page.lang).toBe('km');
-    expect(page.title).toBe('រកវគ្គបទ');
-    expect(page.body).toContain(
-      `ចុច **${tranText('Bible Lookup', 'km')}** ដើម្បីបើក។`,
-    );
-    expect(page.date).toBeNull();
-  });
-
-  it('falls back to the English page, in Khmer labels, when the translation is stale', () => {
-    // W-02's file is not on the disk either: the index copy answers.
-    const page = readHelpPage('W-02@km');
-    expect(page.title).toBe('Clear the screen');
-    expect(page.body).toBe(
-      `Clear the screen with **${tranText('Clear Long Text', 'km')}**.`,
-    );
-    expect(page.date).toBeNull();
-  });
-
-  it('quotes the same passage out of the translation beside a search hit', () => {
-    const [hit] = searchHelp('bible lookup', 5, 'manual', null, 'km');
-    expect(hit.id).toBe('W-01');
-    expect(hit.titleInLanguage).toBe('រកវគ្គបទ');
-    expect(hit.excerptInLanguage).toContain('ចុច');
-    expect(hit.excerptInLanguage).toContain(tranText('Bible Lookup', 'km'));
-    expect(hit.excerptInLanguage).not.toContain('[en:tran:');
-    // A translation whose passages do not line up is not quoted.
-    const [hidden] = searchHelp('hide screen projector', 5, 'manual', null, 'km');
-    expect(hidden.id).toBe('W-03');
-    expect(hidden).not.toHaveProperty('titleInLanguage');
-    // An English search reads no translation at all.
-    expect(searchHelp('bible lookup', 5, 'manual')[0]).not.toHaveProperty(
-      'excerptInLanguage',
-    );
-  });
-
-  it('reads a Khmer question by the English labels it names', () => {
-    const khmer = tranText('Bible Lookup', 'km');
-    const [hit] = searchHelp(`${khmer} bible`, 5, 'auto', null, 'km');
-    expect(hit.id).toBe('W-01');
-  });
 });
 
 describe('readHelpPage', () => {
@@ -322,18 +233,21 @@ describe('a checkout whose bundle is broken or missing', () => {
     expect(entries.length).toBeGreaterThan(10);
     expect(entries.every((entry) => entry.kind === 'manual')).toBe(true);
 
-    const translated = listTranslatedEntries('km');
-    const current = listManualTranslations('km').filter((page) => {
-      return !page.isStale;
-    });
-    expect(translated.map((one) => one.id)).toEqual(
-      current.map((page) => page.id),
-    );
-    expect(translated.length).toBeGreaterThan(0);
-    for (const entry of translated) {
-      expect(entry.lang).toBe('km');
-      expect(entry.kind).toBe('manual');
-      expect(entry.searchText.startsWith('---')).toBe(false);
+    // Every language package with a manual (`src/lang/data/online/<code>/manual/`).
+    for (const code of listManualLanguages()) {
+      const translated = listTranslatedEntries(code);
+      const current = listManualTranslations(code).filter((page) => {
+        return !page.isStale;
+      });
+      expect(translated.map((one) => one.id), code).toEqual(
+        current.map((page) => page.id),
+      );
+      expect(translated.length, code).toBeGreaterThan(0);
+      for (const entry of translated) {
+        expect(entry.lang).toBe(code);
+        expect(entry.kind).toBe('manual');
+        expect(entry.searchText.startsWith('---')).toBe(false);
+      }
     }
   });
 });
@@ -360,16 +274,25 @@ describe('a supported question is a label', () => {
     expect(findKnownQuestionRecipe('something nobody asked')).toBeNull();
   });
 
-  it('knows a chip pressed in Khmer as the row it translates', () => {
-    const overlay = loadQuestionOverlays().find((one) => {
-      return one.lang === 'km';
-    });
-    const [id, words] = Object.entries(overlay.questions).find(
-      ([rowId, one]) => {
-        return rows.some((row) => row.id === rowId && row.text === one.en);
-      },
-    );
-    expect(findKnownQuestionRow(words.text)?.id).toBe(id);
+  // Read only for a question that is not in Latin letters: every language
+  // whose corpus words are in a script of its own.
+  it('knows a chip pressed in another script as the row it translates', () => {
+    const otherScript = /(?=\p{L})\P{Script=Latin}/u;
+    for (const overlay of loadQuestionOverlays()) {
+      const found = Object.entries(overlay.questions ?? {}).find(
+        ([rowId, one]) => {
+          return (
+            otherScript.test(one.text) &&
+            rows.some((row) => row.id === rowId && row.text === one.en)
+          );
+        },
+      );
+      if (found === undefined) {
+        continue;
+      }
+      const [id, words] = found;
+      expect(findKnownQuestionRow(words.text)?.id, overlay.lang).toBe(id);
+    }
   });
 
   it('does not take a translation of words the row no longer says', () => {
@@ -377,11 +300,9 @@ describe('a supported question is a label', () => {
     questionState.loadOverlays = () => [
       {
         questions: {
-          [row.id]: { en: `${row.text} (old)`, text: 'សំណួរចាស់មួយ' },
         },
       },
     ];
-    expect(findKnownQuestionRow('សំណួរចាស់មួយ')).toBeNull();
     // A Latin-letter question is never looked up in the translations.
     questionState.loadOverlays = () => {
       throw new Error('must not be read');

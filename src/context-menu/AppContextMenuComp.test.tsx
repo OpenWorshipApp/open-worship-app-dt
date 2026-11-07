@@ -21,7 +21,10 @@ vi.mock('./appContextMenuHelpers', () => ({
 vi.mock('../event/KeyboardEventListener', () => ({
     toShortcutKey: () => 'Ctrl + K',
 }));
-import AppContextMenuComp from './AppContextMenuComp';
+import AppContextMenuComp, {
+    elementDivider,
+    genContextMenuItemGestureHint,
+} from './AppContextMenuComp';
 
 let host: HTMLDivElement;
 let root: ReturnType<typeof createRoot>;
@@ -127,4 +130,127 @@ test('renders an accessible menu, positions it, and closes before selecting an e
     await new Promise((resolve) => setTimeout(resolve));
     expect(close).toHaveBeenCalledOnce();
     expect(select).toHaveBeenCalledOnce();
+});
+
+test('nothing is drawn while no menu is open', async () => {
+    state.data = null;
+    await act(async () => root.render(<AppContextMenuComp />));
+    expect(host.innerHTML).toBe('');
+});
+
+test('a press beside the menu closes it, and so does a right-click there', async () => {
+    const close = vi.fn();
+    state.data = {
+        event: new MouseEvent('contextmenu'),
+        onClose: close,
+        items: [{ menuElement: 'Open', onSelect: vi.fn() }],
+    };
+    await act(async () => root.render(<AppContextMenuComp />));
+    const backdrop = host.querySelector(
+        '#app-context-menu-container',
+    ) as HTMLElement;
+    await act(async () => backdrop.click());
+    expect(close).toHaveBeenCalledOnce();
+    await act(async () => {
+        backdrop.dispatchEvent(
+            new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+        );
+    });
+    expect(close).toHaveBeenCalledTimes(2);
+});
+
+test('a disabled item swallows its press without closing the menu', async () => {
+    const close = vi.fn();
+    const select = vi.fn();
+    state.data = {
+        event: new MouseEvent('contextmenu'),
+        onClose: close,
+        items: [
+            { menuElement: 'Unavailable', disabled: true, onSelect: select },
+        ],
+    };
+    await act(async () => root.render(<AppContextMenuComp />));
+    const item = host.querySelector('[role="menuitem"]') as HTMLElement;
+    await act(async () => {
+        item.click();
+        await new Promise((resolve) => setTimeout(resolve));
+    });
+    // Not even the backdrop under it heard the press.
+    expect(close).not.toHaveBeenCalled();
+    expect(select).not.toHaveBeenCalled();
+});
+
+test('Enter or Space chooses an item; any other key is left alone', async () => {
+    const close = vi.fn();
+    const select = vi.fn();
+    state.data = {
+        event: new MouseEvent('contextmenu'),
+        onClose: close,
+        items: [{ menuElement: 'Open', onSelect: select }],
+    };
+    await act(async () => root.render(<AppContextMenuComp />));
+    const item = host.querySelector('[role="menuitem"]') as HTMLElement;
+    const pressKey = async (key: string) => {
+        const event = new KeyboardEvent('keydown', {
+            key,
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => {
+            item.dispatchEvent(event);
+            await new Promise((resolve) => setTimeout(resolve));
+        });
+        return event;
+    };
+    const arrow = await pressKey('ArrowDown');
+    expect(arrow.defaultPrevented).toBe(false);
+    expect(select).not.toHaveBeenCalled();
+
+    const space = await pressKey(' ');
+    // Space would have scrolled the page behind the menu.
+    expect(space.defaultPrevented).toBe(true);
+    expect(close).toHaveBeenCalledOnce();
+    expect(select).toHaveBeenCalledOnce();
+
+    await pressKey('Enter');
+    expect(close).toHaveBeenCalledTimes(2);
+    expect(select).toHaveBeenCalledTimes(2);
+});
+
+test('a divider is drawn as a rule, not as an item', async () => {
+    state.data = {
+        event: new MouseEvent('contextmenu'),
+        onClose: vi.fn(),
+        items: [
+            { menuElement: 'Above', onSelect: vi.fn() },
+            { menuElement: elementDivider },
+            { menuElement: 'Below', onSelect: vi.fn() },
+        ],
+    };
+    await act(async () => root.render(<AppContextMenuComp />));
+    const menu = host.querySelector('[role="menu"]') as HTMLElement;
+    expect(
+        [...menu.children].map((child) => {
+            return child.getAttribute('role') ?? child.tagName;
+        }),
+    ).toEqual(['menuitem', 'HR', 'menuitem']);
+});
+
+test('a mouse gesture hint is a chip of its own in the row', async () => {
+    state.data = {
+        event: new MouseEvent('contextmenu'),
+        onClose: vi.fn(),
+        items: [
+            {
+                menuElement: 'Open in new tab',
+                onSelect: vi.fn(),
+                childAfter: genContextMenuItemGestureHint('Alt + Right Click'),
+            },
+        ],
+    };
+    await act(async () => root.render(<AppContextMenuComp />));
+    const hint = host.querySelector(
+        '[role="menuitem"] .context-menu-gesture-hint',
+    );
+    expect(hint?.textContent).toBe('Alt + Right Click');
 });

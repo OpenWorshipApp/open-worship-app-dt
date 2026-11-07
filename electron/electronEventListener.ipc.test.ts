@@ -60,6 +60,7 @@ vi.mock('./aiHelpers', () => ({
     getMcpUrl: vi.fn(),
     getRemoteDebuggingPort: state.getRemoteDebuggingPort,
     importEsm: state.importEsm,
+    republishAiLangDirs: vi.fn(),
     toMcpPackagePath: state.toMcpPackagePath,
 }));
 vi.mock('./appWindowListHelpers', () => ({

@@ -4,26 +4,36 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { openChatbotAsking, openBibleSetting, getCurrentLocale, mocks } =
-    vi.hoisted(() => {
-        return {
-            openChatbotAsking: vi.fn(async (_text: string) => true),
-            openBibleSetting: vi.fn(),
-            getCurrentLocale: vi.fn(() => 'en-US'),
-            mocks: {
-                initKJVBible: vi.fn(async () => {}),
-                showAppConfirm: vi.fn(
-                    async (_title: string, _body: string, _options?: unknown) =>
-                        false,
-                ),
-                notifyBibleListChanged: vi.fn(),
-                showProgressBar: vi.fn(),
-                hideProgressBar: vi.fn(),
-                showSimpleToast: vi.fn(),
-                handleError: vi.fn(),
-            },
-        };
-    });
+const {
+    openChatbotAsking,
+    openBibleSetting,
+    getCurrentLocale,
+    lookupController,
+    mocks,
+} = vi.hoisted(() => {
+    return {
+        // Outside `mocks`: those are reset to no implementation each test.
+        lookupController: {
+            selectedBibleItem: { bibleKey: 'XYZ' },
+            applyTargetOrBibleKey: vi.fn(),
+        },
+        openChatbotAsking: vi.fn(async (_text: string) => true),
+        openBibleSetting: vi.fn(),
+        getCurrentLocale: vi.fn(() => 'en-US'),
+        mocks: {
+            initKJVBible: vi.fn(async () => {}),
+            showAppConfirm: vi.fn(
+                async (_title: string, _body: string, _options?: unknown) =>
+                    false,
+            ),
+            notifyBibleListChanged: vi.fn(),
+            showProgressBar: vi.fn(),
+            hideProgressBar: vi.fn(),
+            showSimpleToast: vi.fn(),
+            handleError: vi.fn(),
+        },
+    };
+});
 
 vi.mock('../lang/langHelpers', () => ({
     tran: (text: string) => `translated:${text}`,
@@ -33,17 +43,34 @@ vi.mock('./RenderChapterOptionsComp', () => ({ default: () => null }));
 vi.mock('./RenderVerseOptionsComp', () => ({ default: () => null }));
 vi.mock('./RenderBookOptionsComp', () => ({ default: () => null }));
 vi.mock('./BibleKeySelectionComp', () => ({
-    BibleKeySelectionMiniComp: ({ bibleKey }: { bibleKey: string }) => (
-        <span className="bible-selector">{bibleKey}</span>
+    BibleKeySelectionMiniComp: ({
+        bibleKey,
+        onBibleKeyChange,
+    }: {
+        bibleKey: string;
+        onBibleKeyChange: (
+            isContextMenu: boolean,
+            oldBibleKey: string,
+            newBibleKey: string,
+        ) => void;
+    }) => (
+        <>
+            <span className="bible-selector">{bibleKey}</span>
+            <button
+                type="button"
+                onClick={() => {
+                    onBibleKeyChange(false, bibleKey, 'NIV');
+                }}
+            >
+                Pick NIV
+            </button>
+        </>
     ),
 }));
 vi.mock('./selectionHelpers', () => ({ RENDER_FOUND_CLASS: 'found' }));
 vi.mock('../bible-reader/LookupBibleItemController', () => ({
     useEditingResult: () => null,
-    useLookupBibleItemControllerContext: () => ({
-        selectedBibleItem: {},
-        applyTargetOrBibleKey: vi.fn(),
-    }),
+    useLookupBibleItemControllerContext: () => lookupController,
 }));
 vi.mock('../setting/settingHelpers', () => ({ openBibleSetting }));
 vi.mock('../helper/appHooks', async () => {
@@ -86,7 +113,9 @@ vi.mock('../helper/errorHelpers', () => ({
     handleError: mocks.handleError,
 }));
 
-import { BibleNotAvailableComp } from './RenderLookupSuggestionComp';
+import RenderLookupSuggestionComp, {
+    BibleNotAvailableComp,
+} from './RenderLookupSuggestionComp';
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -97,6 +126,7 @@ beforeEach(() => {
     openChatbotAsking.mockClear();
     openBibleSetting.mockClear();
     getCurrentLocale.mockReturnValue('en-US');
+    lookupController.applyTargetOrBibleKey.mockReset();
     for (const mock of Object.values(mocks)) {
         mock.mockReset();
     }
@@ -177,7 +207,7 @@ describe('BibleNotAvailableComp', () => {
 
     test('it asks in the window language, whichever key is missing', async () => {
         await renderCard('KJV');
-        await renderCard('គខប');
+        await renderCard('KH16');
         getCurrentLocale.mockReturnValue('km-KH');
 
         await act(async () => {
@@ -262,7 +292,7 @@ describe('BibleNotAvailableComp', () => {
     });
 
     test('another missing Bible is not offered the KJV', async () => {
-        await renderCard('គខប');
+        await renderCard('KH16');
 
         expect(mocks.showAppConfirm).not.toHaveBeenCalled();
         expect(
@@ -282,5 +312,38 @@ describe('BibleNotAvailableComp', () => {
         );
         expect(mocks.hideProgressBar).toHaveBeenCalledTimes(1);
         expect(mocks.notifyBibleListChanged).not.toHaveBeenCalled();
+    });
+
+    test('a Bible picked on the card takes the missing one’s place', async () => {
+        await renderCard('XYZ');
+        expect(host.querySelector('.bible-selector')!.textContent).toBe('XYZ');
+
+        await act(async () => findButton('Pick NIV').click());
+
+        expect(
+            lookupController.applyTargetOrBibleKey,
+        ).toHaveBeenCalledExactlyOnceWith(lookupController.selectedBibleItem, {
+            bibleKey: 'NIV',
+        });
+    });
+});
+
+describe('RenderLookupSuggestionComp', () => {
+    test('says it is loading until the editing result is there', async () => {
+        const applyChapterSelection = vi.fn();
+        const applyBookSelection = vi.fn();
+        await act(async () => {
+            root.render(
+                <RenderLookupSuggestionComp
+                    applyChapterSelection={applyChapterSelection}
+                    applyBookSelection={applyBookSelection}
+                />,
+            );
+        });
+
+        expect(host.textContent).toBe('translated:Loading...');
+        expect(host.querySelector('.found')).toBeNull();
+        expect(applyChapterSelection).not.toHaveBeenCalled();
+        expect(applyBookSelection).not.toHaveBeenCalled();
     });
 });

@@ -208,6 +208,17 @@ describe('HlsSegmenter', () => {
         expect(segmenter.segmentCount).toBe(1);
         expect(segmenter.getSegment(0)!.toString('latin1')).toBe('K1');
     });
+
+    test('sound from before a segment has its first picture is not kept', () => {
+        const segmenter = new HlsSegmenter(() => {});
+        segmenter.setInit(INIT);
+        segmenter.addFragment(Buffer.from('a0'), false, null);
+        segmenter.addFragment(Buffer.from('K0'), true, 0);
+        segmenter.addFragment(Buffer.from('a1'), false, null);
+        segmenter.addFragment(Buffer.from('K1'), true, 2);
+        expect(segmenter.segmentCount).toBe(1);
+        expect(segmenter.getSegment(0)!.toString('latin1')).toBe('K0a1');
+    });
 });
 
 describe('HlsSegmenter, sound with no picture to go with', () => {

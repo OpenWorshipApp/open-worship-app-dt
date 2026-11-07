@@ -70,7 +70,7 @@ export function setAppFontFamily(family: string | null) {
 
 /**
  * The letters a language's script pattern names, as a CSS `unicode-range`:
- * `[ក-៿᧠-᧿]` → `U+1780-17FF, U+19E0-19FF`. Null for a
+ * a class of two ranges of letters → `U+1780-17FF, U+19E0-19FF`. Null for a
  * pattern written another way -- no range, no face.
  */
 export function toUnicodeRange(patternSource: string): string | null {

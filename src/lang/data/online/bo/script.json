@@ -1,0 +1,4 @@
+{
+    "scriptPattern": "\\p{Script=Tibetan}",
+    "isUnspaced": true
+}

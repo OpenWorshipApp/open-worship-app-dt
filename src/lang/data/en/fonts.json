@@ -1,0 +1,32 @@
+{
+    "uiFamily": "app-Google-Sans",
+    "family": "Google Sans",
+    "faces": [
+        {
+            "file": "Google_Sans/static/GoogleSans-Regular.ttf",
+            "weight": "normal"
+        },
+        {
+            "file": "Google_Sans/static/GoogleSans-Medium.ttf",
+            "weight": "500"
+        },
+        {
+            "file": "Google_Sans/static/GoogleSans-SemiBold.ttf",
+            "weight": "600"
+        },
+        {
+            "file": "Google_Sans/static/GoogleSans-Bold.ttf",
+            "weight": "bold"
+        },
+        {
+            "file": "Google_Sans/static/GoogleSans-Italic.ttf",
+            "weight": "normal",
+            "style": "italic"
+        },
+        {
+            "file": "Google_Sans/static/GoogleSans-BoldItalic.ttf",
+            "weight": "bold",
+            "style": "italic"
+        }
+    ]
+}

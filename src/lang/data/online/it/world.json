@@ -1,0 +1,9 @@
+{
+    "languageAliases": {
+        "italiano": "italian",
+        "italy": "italian"
+    },
+    "latinStopWords": {
+        "it-IT": "e di il che la non per in del si gli le con una sono"
+    }
+}

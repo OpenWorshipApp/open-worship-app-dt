@@ -1,0 +1,10 @@
+{
+    "bn": {
+        "name": "Bengali",
+        "nativeName": "বাংলা",
+        "script": "Bengali",
+        "yes": ["হ্যাঁ", "জি"],
+        "no": ["না"],
+        "order": 66
+    }
+}

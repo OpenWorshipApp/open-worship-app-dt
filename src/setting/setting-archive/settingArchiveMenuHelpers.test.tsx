@@ -1,6 +1,4 @@
-import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { extractDictionary } from '../../../tools/owa-devtools-mcp/tran.mjs';
 
 const { state, mocks } = vi.hoisted(() => ({
     state: {
@@ -103,9 +101,18 @@ import {
     handleSettingsExporting,
     handleSettingsImporting,
 } from './settingArchiveMenuHelpers';
+import { readSourceDictionary } from '../../../tools/owa-devtools-mcp/langPacks.mjs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../../test-setup/langPackageDirs';
 
-const dictionaries = ['km', 'fr'].map((code) =>
-    extractDictionary(readFileSync(`src/lang/data/${code}/index.ts`, 'utf8')),
+// Every language package but English, found by its folder: its real
+// dictionary.
+const dictionaries = listLangPackageCodes({ isEnglishIncluded: false }).map(
+    (code) => {
+        return readSourceDictionary(toLangPackageDir(code));
+    },
 );
 
 beforeEach(() => {
@@ -234,5 +241,106 @@ describe('Settings archive menu flows', () => {
         });
         await handleSettingsImporting('/downloads/settings.tar');
         expect(mocks.relaunch).toHaveBeenCalledOnce();
+    });
+
+    test('three mismatched confirmations give up without writing a file', async () => {
+        state.exportAnswer = {
+            leafIds: ['appearance'],
+            password: 'secret',
+            confirmedPassword: 'secrte',
+        };
+        await handleSettingsExporting();
+        expect(mocks.input).toHaveBeenCalledTimes(3);
+        expect(mocks.create).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+    });
+
+    test('the picked file is opened; no file picked opens nothing', async () => {
+        await handleSettingsImporting();
+        expect(mocks.selectFiles).toHaveBeenCalledExactlyOnceWith([
+            {
+                name: 'Open Worship Settings',
+                extensions: ['gz', 'tgz', 'tar', 'enc'],
+            },
+        ]);
+        expect(mocks.open).toHaveBeenCalledExactlyOnceWith(
+            '/downloads/settings.owasetting.tar.gz',
+            '/tmp/settings-import',
+            'Import Settings',
+        );
+
+        mocks.selectFiles.mockResolvedValue([]);
+        await handleSettingsImporting();
+        expect(mocks.selectFiles).toHaveBeenCalledTimes(2);
+        expect(mocks.open).toHaveBeenCalledOnce();
+        // No work folder was made for it, so none is removed.
+        expect(mocks.cleanup).toHaveBeenCalledOnce();
+    });
+
+    test('a file with no section this version knows says so and asks nothing', async () => {
+        state.opened = {
+            manifest: { version: 1, sections: [] },
+            isProtected: false,
+        };
+        await handleSettingsImporting('/downloads/settings.tar');
+        expect(mocks.toast).toHaveBeenCalledExactlyOnceWith(
+            'Import Settings',
+            'This file holds no settings this version can import',
+        );
+        expect(mocks.input).not.toHaveBeenCalled();
+        expect(mocks.import).not.toHaveBeenCalled();
+        expect(mocks.cleanup).toHaveBeenCalledWith('/tmp/settings-import');
+    });
+
+    test('a cancelled or empty choice of sections imports nothing', async () => {
+        mocks.input.mockResolvedValueOnce(false);
+        await handleSettingsImporting('/downloads/settings.tar');
+        state.importLeafIds = [];
+        await handleSettingsImporting('/downloads/settings.tar');
+        expect(mocks.input).toHaveBeenCalledTimes(2);
+        expect(mocks.import).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+        expect(mocks.pending).not.toHaveBeenCalled();
+        expect(mocks.cleanup.mock.calls).toEqual([
+            ['/tmp/settings-import'],
+            ['/tmp/settings-import'],
+        ]);
+    });
+
+    test('only the sections in the file are offered, and credentials only where they can be kept', async () => {
+        state.opened = {
+            manifest: {
+                version: 1,
+                sections: ['general.language', 'secrets.aiKeys'],
+            },
+            isProtected: true,
+        };
+        const optionsFor: ((leaf: any) => any)[] = [];
+        mocks.tree.mockImplementation(
+            (_counts: unknown, toLeafOption: (leaf: any) => any) => {
+                optionsFor.push(toLeafOption);
+                return [];
+            },
+        );
+        mocks.input.mockResolvedValue(false);
+        await handleSettingsImporting('/downloads/settings.owasetting.enc');
+        state.secure = true;
+        await handleSettingsImporting('/downloads/settings.owasetting.enc');
+        const aiKeys = {
+            id: 'secrets.aiKeys',
+            needsPassword: true,
+            isOptInOnImport: true,
+        };
+        const [withoutSafeStorage, withSafeStorage] = optionsFor;
+        expect(withoutSafeStorage({ id: 'general.theme' })).toEqual({
+            isHidden: true,
+        });
+        expect(withoutSafeStorage({ id: 'general.language' })).toEqual({});
+        expect(withoutSafeStorage(aiKeys)).toEqual({
+            isDefaultUnchecked: true,
+            invalidMessage: 'This computer cannot keep them safely',
+        });
+        expect(withSafeStorage(aiKeys)).toEqual({ isDefaultUnchecked: true });
+        expect(withSafeStorage(aiKeys).invalidMessage).toBeUndefined();
     });
 });

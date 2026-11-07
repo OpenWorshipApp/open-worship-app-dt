@@ -69,7 +69,8 @@ These are this repo's, not this skill's, and they outrank any coverage gain.
    every other change in the repo. Suite wall-clock is reported every run.
 3. **A missing Khmer `tran()` key throws in dev.** A test that renders a
    component with a new label will throw unless the key exists in
-   `src/lang/data/km/index.ts` AND `src/lang/data/fr/index.ts`. When a test
+   every `src/lang/data/online/<code>/dictionary.json` (Khmer's and French's
+   first). When a test
    surfaces a missing key, that is a REAL BUG found — file it, do not mock
    `tran` to step around it.
 4. **Performance outranks elegance** (CLAUDE.md). That applies to the suite

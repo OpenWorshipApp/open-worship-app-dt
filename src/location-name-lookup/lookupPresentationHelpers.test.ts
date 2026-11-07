@@ -57,7 +57,7 @@ describe('record enum labels (gender, location type)', () => {
         ).toBe('constructor');
     });
 
-    // Abraham under `km` read `175 years` beside `មនុស្ស` and `ប្រុស`.
+    // Abraham under the Khmer lookup read `175 years` beside its words for human and male.
     test('translates every age shape the datasets use, number kept', () => {
         expect(toRecordAgeLabel('175 years', toKhmer)).toBe('km:175 years');
         expect(toRecordAgeLabel(' 20 at accession ', toKhmer)).toBe(
@@ -221,12 +221,12 @@ describe('stripping inline reference tokens for a one-line summary', () => {
 
 describe('the English name beside a translated one', () => {
     test('shows the KJV name of a translated record', () => {
-        expect(
-            getRecordKjvName({ name: 'លោកុប្បត្តិ', kjvName: 'Genesis' }),
-        ).toBe('Genesis');
-        expect(
-            getRecordDisplayName({ name: 'លោកុប្បត្តិ', kjvName: 'Genesis' }),
-        ).toBe('លោកុប្បត្តិ (Genesis)');
+        expect(getRecordKjvName({ name: '✝♪', kjvName: 'Genesis' })).toBe(
+            'Genesis',
+        );
+        expect(getRecordDisplayName({ name: '✝♪', kjvName: 'Genesis' })).toBe(
+            '✝♪ (Genesis)',
+        );
     });
 
     // The KJV dataset itself carries none: its `name` already IS the English

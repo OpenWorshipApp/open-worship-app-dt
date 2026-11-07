@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const h = vi.hoisted(() => ({
     settingNames: [] as string[],
     shortcuts: new Map<string, () => void>(),
+    rangeShortcutTargets: new Map<string, () => boolean>(),
     manager: {
         isFocused: false,
         isShowing: true,
@@ -82,15 +83,20 @@ vi.mock('./miniScreenOverlayControlComps', () => ({
         label,
         value,
         setValue,
+        checkIsShortcutTarget,
     }: {
         label: string;
         value: number;
         setValue: (value: number) => void;
-    }) => (
-        <button type="button" onClick={() => setValue(value - 1)}>
-            {label} range
-        </button>
-    ),
+        checkIsShortcutTarget: () => boolean;
+    }) => {
+        h.rangeShortcutTargets.set(label, checkIsShortcutTarget);
+        return (
+            <button type="button" onClick={() => setValue(value - 1)}>
+                {label} range
+            </button>
+        );
+    },
 }));
 
 import MiniScreenDrawHandlersComp from './MiniScreenDrawHandlersComp';
@@ -114,6 +120,7 @@ describe('MiniScreenDrawHandlersComp', () => {
         vi.clearAllMocks();
         h.settingNames.length = 0;
         h.shortcuts.clear();
+        h.rangeShortcutTargets.clear();
         h.manager.isFocused = false;
         h.manager.isShowing = true;
         h.manager.isHighQuality = true;
@@ -212,5 +219,17 @@ describe('MiniScreenDrawHandlersComp', () => {
         h.manager.isShowing = true;
         await act(async () => h.shortcuts.get('clearDrawing')?.());
         expect(h.manager.clear).toHaveBeenCalledOnce();
+    });
+
+    test('a slider step key belongs to whichever canvas holds the keyboard', async () => {
+        await act(async () => root.render(<MiniScreenDrawHandlersComp />));
+        expect([...h.rangeShortcutTargets.keys()]).toEqual(['Size', 'Opacity']);
+        for (const checkIsShortcutTarget of h.rangeShortcutTargets.values()) {
+            // Read at key time, never at bind time.
+            h.manager.isFocused = false;
+            expect(checkIsShortcutTarget()).toBe(false);
+            h.manager.isFocused = true;
+            expect(checkIsShortcutTarget()).toBe(true);
+        }
     });
 });

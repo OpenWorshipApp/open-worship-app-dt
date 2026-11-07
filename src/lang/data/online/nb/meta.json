@@ -1,0 +1,8 @@
+{
+    "locale": "nb-NO",
+    "order": 32,
+    "name": "Norwegian Bokmål",
+    "nativeName": "Norsk bokmål",
+    "version": "0.0.12",
+    "description": "The app in Norwegian Bokmål, Bible book names in English."
+}

@@ -1,0 +1,12 @@
+{
+    "is": {
+        "name": "Icelandic",
+        "nativeName": "Íslenska",
+        "script": "Latin",
+        "words": "og að það sem er var hef hefur ég þú hann hún við þið þeir þær minn mín þinn hvernig hvað hvar hvert af hverju hvenær hver hvaða með fyrir til frá um á í úr ekki líka mjög meira hér þar þetta takk",
+        "letters": "ðþæ",
+        "yes": ["já", "já takk"],
+        "no": ["nei", "nei takk"],
+        "order": 47
+    }
+}

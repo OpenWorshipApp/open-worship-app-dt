@@ -156,4 +156,43 @@ describe('AskingNewNameComp', () => {
             'refused: leading-dot',
         );
     });
+
+    test('Escape gives up with no name; Enter on an empty box does nothing', async () => {
+        const applyName = vi.fn();
+        const input = await renderBox(applyName);
+
+        await typeName(input, '');
+        await pressEnter(input);
+        expect(applyName).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
+
+        await typeName(input, 'Half typed');
+        await act(async () => {
+            input.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+            );
+        });
+        expect(applyName).toHaveBeenCalledExactlyOnceWith(null);
+    });
+
+    test('a click inside the box stays in the box', async () => {
+        const outerClick = vi.fn();
+        await act(async () => {
+            root.render(
+                <div onClick={outerClick}>
+                    <AskingNewNameComp
+                        defaultName="Song"
+                        applyName={vi.fn()}
+                        customIcon={<b className="custom-icon">ok</b>}
+                    />
+                </div>,
+            );
+        });
+        expect(container.querySelector('input')!.value).toBe('Song');
+        expect(container.querySelector('button .custom-icon')).not.toBeNull();
+        await act(async () => {
+            container.querySelector('input')!.click();
+        });
+        expect(outerClick).not.toHaveBeenCalled();
+    });
 });

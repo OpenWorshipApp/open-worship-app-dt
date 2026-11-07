@@ -189,9 +189,9 @@ describe('genBibleBooksMapXMLInput', () => {
         const onChange = await renderBooksMap();
         const { onContentChange } = h.monacoCalls.at(-1)!;
 
-        onContentChange('', 'Genèse\nExode');
+        onContentChange('', 'Book one\nBook two');
 
-        expect(onChange).toHaveBeenCalledWith(['Genèse', 'Exode']);
+        expect(onChange).toHaveBeenCalledWith(['Book one', 'Book two']);
     });
 
     test('links the translation of the book names for the locale', async () => {

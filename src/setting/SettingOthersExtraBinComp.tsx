@@ -14,10 +14,13 @@ import {
 } from '../helper/extra-bin/extraBinHelpers';
 import type { ExtraBinEntryType } from '../helper/extra-bin/extraBinInstallHelpers';
 import {
+    exportExtraBinArchive,
     findLocalExtraBinArchive,
     getExtraBinEntry,
+    importExtraBinFromFile,
     installExtraBin,
 } from '../helper/extra-bin/extraBinInstallHelpers';
+import { reportPackageUpdates } from '../helper/packageUpdateHelpers';
 import { tran } from '../lang/langHelpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
 import { checkIsVersionOutdated } from '../server/updatingAppHelpers';
@@ -51,6 +54,30 @@ async function readExtraBinLocalState(): Promise<LocalStateType> {
         installedVersion,
         archiveFileFullName: archive,
     };
+}
+
+/**
+ * Whether the installed pack is older than the published one; null while that
+ * cannot be told (still reading, or offline with a pack installed). A pack not
+ * installed has no update to offer.
+ */
+function toIsExtraBinOutdated(
+    localState: LocalStateType | null | undefined,
+    onlineEntry: ExtraBinEntryType | null | undefined,
+) {
+    if (!localState) {
+        return null;
+    }
+    if (localState.installedVersion === null) {
+        return false;
+    }
+    if (!onlineEntry) {
+        return null;
+    }
+    return checkIsVersionOutdated(
+        localState.installedVersion,
+        onlineEntry.version,
+    );
 }
 
 function RenderDetailComp({
@@ -104,6 +131,15 @@ export default function SettingOthersExtraBinComp() {
             });
         });
     }, []);
+    // What this panel learns goes to the Setting gear's dot and this tab's
+    // (`packageUpdateHelpers.ts`): an update installed here clears them, and
+    // one found by Refresh lights them, with no second look.
+    const isOutdatedAnswer = toIsExtraBinOutdated(localState, onlineEntry);
+    useAppEffect(() => {
+        if (isOutdatedAnswer !== null) {
+            reportPackageUpdates({ isExtraBinOutdated: isOutdatedAnswer });
+        }
+    }, [isOutdatedAnswer]);
 
     type InstallArgsType = [
         isForceDownload: boolean,
@@ -157,6 +193,28 @@ export default function SettingOthersExtraBinComp() {
             return oldCount + 1;
         });
     }, []);
+    // A pack a friend saved, installed with no network (2026-11-04, the user:
+    // _store the extra-bin and language downloaded file somewhere so I can
+    // share to my friend easily_); Export is the saving half.
+    const handleImporting = useCallback(async () => {
+        setIsBusy(true);
+        try {
+            await importExtraBinFromFile();
+        } finally {
+            setIsBusy(false);
+            setRefreshCount((oldCount) => {
+                return oldCount + 1;
+            });
+        }
+    }, []);
+    const handleExporting = useCallback(async () => {
+        setIsBusy(true);
+        try {
+            await exportExtraBinArchive();
+        } finally {
+            setIsBusy(false);
+        }
+    }, []);
     const handleRevealing = useCallback(() => {
         const dirPath = localStateRef.current?.dirPath;
         if (dirPath) {
@@ -175,10 +233,7 @@ export default function SettingOthersExtraBinComp() {
         installedVersion,
         archiveFileFullName,
     } = localState;
-    const isOutdated =
-        installedVersion !== null &&
-        !!onlineEntry &&
-        checkIsVersionOutdated(installedVersion, onlineEntry.version);
+    const isOutdated = isOutdatedAnswer === true && !!onlineEntry;
     const primaryAction = isOutdated ? (
         <button
             className="btn btn-sm btn-warning"
@@ -207,6 +262,7 @@ export default function SettingOthersExtraBinComp() {
                 'downloaded separately to keep the app small.'
             }
             state={isInstalled && !isOutdated ? 'ready' : 'attention'}
+            isUpdateAvailable={isOutdated}
             stateLabel={
                 !isInstalled
                     ? 'Not installed'
@@ -308,6 +364,25 @@ ${tran('Reveal Folder')}`}
                 >
                     {tran('Reinstall')}
                 </button>
+                {/* Sharing the pack as a file: Import installs one picked
+                    from the disk, Export copies the kept archive into
+                    Downloads to pass on. */}
+                <button
+                    className="btn btn-sm btn-secondary"
+                    disabled={isBusy}
+                    onClick={handleImporting}
+                >
+                    {tran('Import')}
+                </button>
+                {archiveFileFullName !== null ? (
+                    <button
+                        className="btn btn-sm btn-secondary"
+                        disabled={isBusy}
+                        onClick={handleExporting}
+                    >
+                        {tran('Export')}
+                    </button>
+                ) : null}
             </div>
         </SettingOthersSectionComp>
     );

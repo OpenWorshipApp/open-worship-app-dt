@@ -85,12 +85,23 @@ vi.mock('../../helper/helpers', async () => {
     const actual = (await vi.importActual('../../helper/helpers')) as any;
     return {
         ...actual,
-        bringDomToCenterView: mocks.bringDomToCenterView,
-        bringDomToNearestView: mocks.bringDomToNearestView,
-        bringDomToTopView: mocks.bringDomToTopView,
         checkIsVerticalPartialInvisible: mocks.checkIsVerticalPartialInvisible,
     };
 });
+
+// A selection is brought into view by a glide now; each mock stands for
+// where it is brought.
+vi.mock('./screenGlideScrollHelpers', () => ({
+    glideDomIntoView: (dom: Element, block: string) => {
+        if (block === 'center') {
+            mocks.bringDomToCenterView(dom);
+        } else if (block === 'start') {
+            mocks.bringDomToTopView(dom);
+        } else {
+            mocks.bringDomToNearestView(dom);
+        }
+    },
+}));
 
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: mocks.getSetting,
@@ -717,11 +728,11 @@ describe('ScreenLongTextManager coverage', () => {
         managerA.scroll = 0.5;
         managerA.selectedKJVVerseKey = 'lt-2';
         ScreenLongTextManager.restyleLongText('long-text', {
-            EN: { color: '#ff0000', fontSizeScale: 0.8 },
+            EN: { fontFamily: 'Georgia', fontSizeScale: 0.8 },
         });
         const restyled = managerA.screenViewData;
         expect(restyled.longTextData.renderedList[1].style).toEqual({
-            color: '#ff0000',
+            fontFamily: 'Georgia',
             fontSizeScale: 0.8,
         });
         expect('style' in restyled.longTextData.renderedList[0]).toBe(false);
@@ -739,7 +750,7 @@ describe('ScreenLongTextManager coverage', () => {
         // The same style again changes nothing, so nothing is sent again.
         baseA.sendScreenMessage.mockClear();
         ScreenLongTextManager.restyleLongText('long-text', {
-            EN: { color: '#ff0000', fontSizeScale: 0.8 },
+            EN: { fontFamily: 'Georgia', fontSizeScale: 0.8 },
         });
         expect(baseA.sendScreenMessage).not.toHaveBeenCalled();
 
@@ -767,6 +778,70 @@ describe('ScreenLongTextManager coverage', () => {
         managerA.screenViewData = null;
         managerB.screenViewData = null;
         managerC.screenViewData = null;
+    });
+
+    test('puts a long text up again only where it already is, each screen keeping its place', async () => {
+        const baseA = createScreenManagerBase(331);
+        const baseB = createScreenManagerBase(332);
+        const baseC = createScreenManagerBase(333);
+        const baseD = createScreenManagerBase(334);
+        const managerA = new ScreenLongTextManager(baseA);
+        const managerB = new ScreenLongTextManager(baseB);
+        const managerC = new ScreenLongTextManager(baseC);
+        const managerD = new ScreenLongTextManager(baseD);
+        managerA.screenViewData = createLongTextData('long-text');
+        managerB.screenViewData = createLongTextData('long-text');
+        managerC.screenViewData = createLongTextData('long-text-s1');
+        managerD.screenViewData = createScreenViewData(['KJV']);
+        managerA.scroll = 0.4;
+        managerA.selectedKJVVerseKey = 'lt-2';
+        baseB.isLocked = true;
+
+        // Atom mode's rows: each section broken into two lines.
+        const newData = createLongTextData('long-text');
+        newData.longTextData.renderedList.forEach((column: any) => {
+            column.sections = [1, 2, 3, 4].map((num) => {
+                return { num: `${num}`, text: `line ${num}`, key: `lt-${num}` };
+            });
+        });
+        const toSelectedKey = vi.fn((oldKey: string | null) => {
+            return oldKey === 'lt-2' ? 'lt-3' : null;
+        });
+        ScreenLongTextManager.replaceLongText(
+            'long-text',
+            newData,
+            toSelectedKey,
+        );
+        const replaced = managerA.screenViewData;
+        expect(
+            replaced.longTextData.renderedList[0].sections.map(
+                ({ text }: { text: string }) => text,
+            ),
+        ).toEqual(['line 1', 'line 2', 'line 3', 'line 4']);
+        expect(replaced.scroll).toBe(0.4);
+        expect(replaced.selectedKJVVerseKey).toBe('lt-3');
+        expect(toSelectedKey).toHaveBeenCalledWith('lt-2');
+        // A copy goes up, never the caller's own object.
+        expect(replaced).not.toBe(newData);
+        // A locked screen, another session's text and a Bible passage are
+        // left as they were.
+        expect(
+            managerB.screenViewData.longTextData.renderedList[0].sections,
+        ).toHaveLength(2);
+        expect(toSelectedKey).toHaveBeenCalledTimes(1);
+        expect(managerC.screenViewData.longTextData.sourceId).toBe(
+            'long-text-s1',
+        );
+        expect(
+            managerC.screenViewData.longTextData.renderedList[0].sections,
+        ).toHaveLength(2);
+        expect(managerD.getRenderedBibleKeys()).toEqual(['KJV']);
+
+        baseB.isLocked = false;
+        managerA.screenViewData = null;
+        managerB.screenViewData = null;
+        managerC.screenViewData = null;
+        managerD.screenViewData = null;
     });
 
     test('brings a row to the middle here and on the projector, once for the whole row', async () => {

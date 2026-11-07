@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: f04bc2fc-3469-4a09-8e3a-7de58f3cfc35
-  modified: 2026-09-13T01:04:40.860Z
+  modified: 2026-11-05T14:35:34.532Z
 ---
 
 When a window fails with `Failed to fetch dynamically imported module:
@@ -35,8 +35,9 @@ and fails the dynamic import. Once `_metadata.json` lists the dep the reload
 works; the durable fix is `optimizeDeps.include` for lazily-imported deps.
 
 **Third shape (2026-09-12) — FIXED in `vite.config.ts` `optimizeDeps`:** a 504
-on `.vite/deps/open-lyric-plugin-km-kh.js`, imported by
-`src/lang/data/km/index.ts`, which is reached ONLY through `langHelpers.ts`'s
+on `.vite/deps/open-lyric-plugin-km-kh.js`, imported by the Khmer package
+(then its `index.ts`; since 2026-11-05 `src/lang/data/online/km/openLyricPlugin.ts`
+inside a language plugin vite does not serve), which was reached ONLY through `langHelpers.ts`'s
 template `import(`./data/${langCode}/index.ts`)`. The dep scanner cannot follow
 a template import, so that package was discovered at runtime on EVERY cold
 server, and this time the server stayed stuck answering 504 for that `?v=` across
@@ -51,3 +52,9 @@ same way; bundled in the same run as `open-lyric`, both import one shared chunk,
 so `registerPlugin` reaches the one registry. A new language file that imports a
 package needs the same treatment. Vite 8 gives each optimized file its OWN `?v=`
 — curling one file with another's hash 504s and proves nothing.
+**The third shape cannot happen any more** (2026-11-05): no window reaches a
+language's `index.ts` through Vite (every language is a built plugin, loaded by
+the preload), and the song plugin is declared in the Khmer folder's own
+`package.json`, not the app's — so the `exclude` list was removed from
+`vite.config.ts`. `include: ['open-lyric/internal']` stays: the app imports it
+too, and one pre-bundled copy is the one registry a language plugin binds to.

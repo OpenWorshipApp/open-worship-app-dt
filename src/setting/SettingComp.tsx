@@ -1,8 +1,12 @@
 import './SettingComp.scss';
 
-import { lazy, useCallback } from 'react';
+import { lazy, useCallback, type ReactNode } from 'react';
 
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
+import {
+    usePackageUpdates,
+    type PackageUpdatesType,
+} from '../helper/packageUpdateHelpers';
 import {
     getAIKeyFocusRequest,
     takeAIKeyFocusRequest,
@@ -36,12 +40,16 @@ const LazySettingOthersComp = lazy(() => {
 const LazySettingAIComp = lazy(() => {
     return import('./SettingAIComp');
 });
+const LazySettingLanguagesComp = lazy(() => {
+    return import('./SettingLanguagesComp');
+});
 
 // Label KEYS, translated in render: `toIconedLabel` calls `tran()`, and
 // called here at import it froze the tabs in whatever language was in force
 // when this module first loaded (and throws in dev before language data is in).
 const tabTypeList = [
     ['g', 'General', LazySettingGeneralComp],
+    ['l', 'Languages', LazySettingLanguagesComp],
     ['p', 'Path Settings', LazySettingPathComp],
     ['b', 'Bible', LazySettingBibleComp],
     ['a', 'AI Providers', LazySettingAIComp],
@@ -50,11 +58,44 @@ const tabTypeList = [
 type TabKeyType = (typeof tabTypeList)[number][0];
 // With no data folder only these: the language, the theme and the AI
 // assistants belong to the computer, and the other tabs are settings of a
-// data folder there is not.
-const NO_DATA_DIR_TAB_KEY_LIST: TabKeyType[] = ['g', 'p', 'a'];
+// data folder there is not. The languages are this computer's too (a
+// language installed with no data folder goes in the app's own).
+const NO_DATA_DIR_TAB_KEY_LIST: TabKeyType[] = ['g', 'l', 'p', 'a'];
 // The tab holding the AI keys -- not Others, which is where the panel used to
 // be mounted; a request for the key box must land beside the box.
 const AI_TAB_KEY: TabKeyType = 'a';
+
+/** Whether a tab holds an item with an update: the trail from the gear. */
+function checkIsTabUpdateAvailable(
+    tabKey: TabKeyType,
+    packageUpdates: PackageUpdatesType | null,
+) {
+    if (packageUpdates === null) {
+        return false;
+    }
+    if (tabKey === 'l') {
+        return packageUpdates.langCodes.length > 0;
+    }
+    // Others holds the Extra Binaries.
+    return tabKey === 'o' && packageUpdates.isExtraBinOutdated;
+}
+
+function genTabTitle(labelKey: string, isUpdateAvailable: boolean): ReactNode {
+    if (!isUpdateAvailable) {
+        return toIconedLabel(labelKey);
+    }
+    return (
+        <>
+            {toIconedLabel(labelKey)}
+            <span
+                className="app-update-dot-inline"
+                role="img"
+                title={tran('Update Available')}
+                aria-label={tran('Update Available')}
+            />
+        </>
+    );
+}
 
 /**
  * The assistant, a press away from every setting: Settings has no top bar for
@@ -86,6 +127,7 @@ export default function SettingComp() {
         SETTING_SETTING_NAME,
         'p',
     );
+    const packageUpdates = usePackageUpdates();
     const isOnOwnFolder = appLocalStorage.isOnOwnFolder;
     const shownTabTypeList = isOnOwnFolder
         ? tabTypeList.filter(([key]) => {
@@ -184,7 +226,10 @@ export default function SettingComp() {
                     tabs={shownTabTypeList.map(([key, labelKey]) => {
                         return {
                             key,
-                            title: toIconedLabel(labelKey),
+                            title: genTabTitle(
+                                labelKey,
+                                checkIsTabUpdateAvailable(key, packageUpdates),
+                            ),
                         };
                     })}
                     activeTabs={[tabKey]}

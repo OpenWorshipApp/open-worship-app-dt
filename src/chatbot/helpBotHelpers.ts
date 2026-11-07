@@ -101,8 +101,9 @@ export type BotActionType = {
     title?: string;
     // Words that are DATA -- a verse's or a word's own, as its Bible spells
     // them -- drawn exactly as written: never through the app's dictionary,
-    // never in capitals, which turned the Greek _τῇ_ into _ΤΗΙ_ on a word
-    // to study (2026-10-23).
+    // never in capitals, which turned a Greek word's accents and its
+    // subscript iota into bare capital letters on a word to study
+    // (2026-10-23).
     isData?: true;
     // An action either calls a tool directly, or -- when only a model can work
     // out what to press -- asks the model a follow-up question in the user's

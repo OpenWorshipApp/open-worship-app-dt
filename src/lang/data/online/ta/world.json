@@ -1,0 +1,12 @@
+{
+    "nativeLanguageNames": {
+        "தமிழ்": "tamil"
+    },
+    "scriptLocales": [
+        {
+            "script": "Tamil",
+            "locales": ["ta-IN"],
+            "order": 1400
+        }
+    ]
+}

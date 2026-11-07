@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 const fake = vi.hoisted(() => ({
     measuredHeights: [11, 22, 33],
     rowKeys: [] as string[],
+    findIndex: null as null | ((key: string) => number),
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -31,7 +32,10 @@ vi.mock('./useMeasuredRowHeights', () => ({
     },
 }));
 vi.mock('./useRevealPin', () => ({
-    useRevealPin: () => ({ pinnedIndexes: [], behaviorRef: { current: null } }),
+    useRevealPin: ({ findIndex }: { findIndex: (key: string) => number }) => {
+        fake.findIndex = findIndex;
+        return { pinnedIndexes: [], behaviorRef: { current: null } };
+    },
     useKeepPinnedRowInView: () => {},
 }));
 vi.mock('./useVirtualRows', () => ({
@@ -109,6 +113,131 @@ describe('virtual grid geometry', () => {
         expect(container.firstElementChild?.getAttribute('style')).toContain(
             'height: 80px',
         );
+    });
+
+    test('a reveal finds the ROW holding an item, at the current column count', () => {
+        const items = [
+            { id: 'a', height: 30 },
+            { id: 'b', height: 60 },
+            { id: 'c', height: 20 },
+        ];
+        const renderGrid = (columnCount: number) => {
+            act(() =>
+                root.render(
+                    <VirtualGridComp
+                        items={items}
+                        getItemKey={(item) => item.id}
+                        renderItem={(item) => (
+                            <span key={item.id}>{item.id}</span>
+                        )}
+                        itemWidth={100}
+                        columnCount={columnCount}
+                        estimateRowHeight={50}
+                        getItemHeight={(item) => item.height}
+                    />,
+                ),
+            );
+        };
+        renderGrid(2);
+        expect(['a', 'b', 'c', 'zzz'].map(fake.findIndex!)).toEqual([
+            0, 0, 1, -1,
+        ]);
+        renderGrid(1);
+        expect(fake.findIndex!('c')).toBe(2);
+
+        // Without `getItemKey` an item is its own key.
+        act(() =>
+            root.render(
+                <VirtualGridComp
+                    items={['one', 'two', 'three']}
+                    renderItem={(item) => <span key={item}>{item}</span>}
+                    itemWidth={80}
+                    columnCount={2}
+                    estimateRowHeight={34}
+                />,
+            ),
+        );
+        expect(fake.findIndex!('three')).toBe(1);
+        expect(fake.findIndex!('four')).toBe(-1);
+    });
+
+    test("measures the cards' chrome off one row and adds it to every row", () => {
+        vi.useFakeTimers();
+        const observerCallbacks: Array<() => void> = [];
+        globalThis.ResizeObserver = class {
+            constructor(callback: () => void) {
+                observerCallbacks.push(callback);
+            }
+            observe() {}
+            disconnect() {}
+        } as unknown as typeof ResizeObserver;
+        try {
+            const items = [
+                { id: 'a', height: 30 },
+                { id: 'b', height: 60 },
+                { id: 'c', height: 20 },
+            ];
+            act(() =>
+                root.render(
+                    <VirtualGridComp
+                        items={items}
+                        getItemKey={(item) => item.id}
+                        renderItem={(item) => (
+                            <span key={item.id}>{item.id}</span>
+                        )}
+                        itemWidth={100}
+                        columnCount={2}
+                        estimateRowHeight={50}
+                        getItemHeight={(item) => item.height}
+                    />,
+                ),
+            );
+            const rowTop = (rowIndex: number) => {
+                return container.querySelector<HTMLElement>(
+                    `[data-virtual-row-index="${rowIndex}"]`,
+                )!.style.top;
+            };
+            // Before any measuring: the guess, less the first row's items.
+            expect(rowTop(1)).toBe('60px');
+            const firstRow = container.querySelector(
+                '[data-virtual-row-index="0"]',
+            )!;
+            const rect = vi
+                .spyOn(firstRow, 'getBoundingClientRect')
+                .mockReturnValue({ height: 75 } as DOMRect);
+            // Measured on a timer too: an occluded window delivers no
+            // observer callbacks at all.
+            act(() => vi.advanceTimersByTime(0));
+            // The tallest card is 60, so every row carries 15 of chrome.
+            expect(rowTop(1)).toBe('75px');
+            expect(
+                container.firstElementChild?.getAttribute('style'),
+            ).toContain('height: 110px');
+
+            const notifyRow = () => {
+                act(() => {
+                    for (const callback of observerCallbacks) {
+                        callback();
+                    }
+                });
+            };
+            // Shorter than its own items: the body has not drawn yet.
+            rect.mockReturnValue({ height: 40 } as DOMRect);
+            notifyRow();
+            expect(rowTop(1)).toBe('75px');
+            rect.mockReturnValue({ height: 0 } as DOMRect);
+            notifyRow();
+            expect(rowTop(1)).toBe('75px');
+            // Under a pixel is the same chrome.
+            rect.mockReturnValue({ height: 75.6 } as DOMRect);
+            notifyRow();
+            expect(rowTop(1)).toBe('75px');
+            rect.mockReturnValue({ height: 82 } as DOMRect);
+            notifyRow();
+            expect(rowTop(1)).toBe('82px');
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     test('uses individually measured heights when cards cannot report them', () => {

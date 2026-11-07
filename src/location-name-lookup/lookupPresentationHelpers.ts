@@ -141,7 +141,7 @@ export const LOCATION_TYPE_LABEL: { [type: string]: string } = {
  *
  * Decided on the ENGLISH value and only then translated, for the reason the
  * name type is: `unknown` is dropped by comparing the string, and a translated
- * `មិនស្គាល់` would no longer be recognized as one. A value missing from the
+ * word for it would no longer be recognized as one. A value missing from the
  * map is shown as the dataset wrote it -- never handed to `translate`, where it
  * could collide with an unrelated key of the app's dictionary.
  */
@@ -245,7 +245,7 @@ export function getPlainReferenceText(value: string): string {
  * is nothing to add — the KJV dataset itself, whose `name` already IS the
  * English one, or a translated record that spells it identically.
  *
- * Shown the way a bible book reads in a translated UI: `លោកុប្បត្តិ (Genesis)`.
+ * Shown the way a bible book reads in a translated UI: `<its own name> (Genesis)`.
  *
  * Mirrors `bible-note`'s own `getMentionKjvName`, reimplemented here for the
  * same reason as `normalizeNameType` above: this module is imported by surfaces

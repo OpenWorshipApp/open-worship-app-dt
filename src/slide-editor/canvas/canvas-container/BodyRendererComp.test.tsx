@@ -293,3 +293,78 @@ describe('slide canvas body', () => {
         expect(canvas().style.opacity).toBe('1');
     });
 });
+
+describe('slide canvas body marquee edge cases', () => {
+    function marqueeBox() {
+        return canvas().lastElementChild as HTMLElement;
+    }
+
+    it('starts at the origin and follows nothing while the canvas has no width yet', async () => {
+        h.width = 0;
+        await renderBody();
+        await act(async () =>
+            canvas().dispatchEvent(pointer('pointerdown', 10, 20)),
+        );
+        expect(marqueeBox().style.left).toBe('0px');
+        expect(marqueeBox().style.top).toBe('0px');
+        expect(marqueeBox().style.borderWidth).toBe('1px');
+        await act(async () =>
+            document.dispatchEvent(pointer('pointermove', 80, 90)),
+        );
+        expect(marqueeBox().style.width).toBe('0px');
+        await act(async () =>
+            document.dispatchEvent(pointer('pointerup', 80, 90)),
+        );
+        expect(h.clamp).not.toHaveBeenCalled();
+        expect(h.getHits).not.toHaveBeenCalled();
+        expect(h.setSelected).not.toHaveBeenCalled();
+    });
+
+    it('moves the marquee at most once per frame', async () => {
+        const frames: FrameRequestCallback[] = [];
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            (callback: FrameRequestCallback) => {
+                frames.push(callback);
+                return frames.length;
+            },
+        );
+        await renderBody();
+        await act(async () =>
+            canvas().dispatchEvent(pointer('pointerdown', 10, 20)),
+        );
+        await act(async () =>
+            document.dispatchEvent(pointer('pointermove', 20, 30)),
+        );
+        await act(async () =>
+            document.dispatchEvent(pointer('pointermove', 40, 50)),
+        );
+        expect(frames).toHaveLength(1);
+        await act(async () => frames[0](0));
+        expect(marqueeBox().style.width).toBe('20px');
+        expect(marqueeBox().style.height).toBe('20px');
+        await act(async () =>
+            document.dispatchEvent(pointer('pointerup', 50, 60)),
+        );
+        expect(h.getHits).toHaveBeenCalledWith(h.canvasItems, {
+            minX: 20,
+            maxX: 100,
+            minY: 40,
+            maxY: 120,
+        });
+    });
+
+    it('leaves a press inside a text box being typed in alone', async () => {
+        await renderBody();
+        const textarea = document.createElement('textarea');
+        canvas().appendChild(textarea);
+        const record = JSON.stringify({ time: Date.now(), x: 10, y: 20 });
+        textarea.dataset.mouseDown = record;
+        await act(async () =>
+            textarea.dispatchEvent(pointer('pointerup', 10, 20)),
+        );
+        expect(h.stopModes).not.toHaveBeenCalled();
+        expect(textarea.dataset.mouseDown).toBe(record);
+        textarea.remove();
+    });
+});

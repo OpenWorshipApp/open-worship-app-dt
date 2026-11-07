@@ -100,7 +100,9 @@ function toGhostLabel(sourceElement: HTMLElement) {
         ''
     ).trim();
     if (text.length === 0) {
-        return sourceElement.title.trim() || '⠿';
+        // The six-dot grip glyph (braille pattern dots 1-6), as a code
+        // point: a symbol, not a letter of any language.
+        return sourceElement.title.trim() || '\u283F';
     }
     if (text.length > GHOST_LABEL_MAX_LENGTH) {
         return `${text.slice(0, GHOST_LABEL_MAX_LENGTH)}…`;

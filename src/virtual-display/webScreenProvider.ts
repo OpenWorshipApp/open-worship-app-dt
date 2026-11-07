@@ -16,6 +16,7 @@ import {
     type VirtualDisplayWebContext,
 } from '../../electron/virtualDisplayProtocol';
 import { md5Hex } from './md5Helpers';
+import { genWebLangUtils } from './webLangUtils';
 
 const SCREEN_MESSAGE_CHANNEL = 'app:screen:message';
 const RECONNECT_DELAY_MILLISECOND = 2000;
@@ -615,6 +616,8 @@ export function connectWebScreen(): Promise<WebScreenConnectionType> {
             },
             ytUtils: { getYTHelper: () => Promise.reject(new Error('No yt')) },
             fontUtils: { getFonts: () => Promise.resolve({}) },
+            // The app's language plugins, served by the Screen Mirror server.
+            langUtils: genWebLangUtils(),
             databaseUtils: {
                 checkIsSupported: () => false,
                 getSQLiteDatabaseInstance: () => {

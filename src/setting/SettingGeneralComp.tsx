@@ -1,11 +1,10 @@
-import SettingGeneralLanguageComp from './SettingGeneralLanguageComp';
 import SettingGeneralThemeComp from './SettingGeneralThemeComp';
 import SettingGeneralOtherOptionsComp from './SettingGeneralOtherOptionsComp';
 import SettingGeneralFontFamilyComp from './SettingGeneralFontFamilyComp';
 import { appLocalStorage } from './directory-setting/appLocalStorage';
 
-// The directory paths moved to the Path Settings tab; General keeps the
-// look and language of the app only.
+// The directory paths moved to the Path Settings tab, and the language picker
+// to the Languages tab; General keeps the look of the app only.
 export default function SettingGeneralComp() {
     return (
         <div
@@ -20,7 +19,6 @@ export default function SettingGeneralComp() {
                 // its own tab, capped so the controls keep readable lines.
                 style={{ width: '100%', maxWidth: '720px' }}
             >
-                <SettingGeneralLanguageComp />
                 <SettingGeneralThemeComp />
                 {/* The rest is kept in a data folder; with none there is
                     only what belongs to the computer. */}

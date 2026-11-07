@@ -7,11 +7,38 @@ import {
 import { getFontFamilies } from '../../../server/fontHelpers';
 import { handleError } from '../../../helper/errorHelpers';
 
+import { genFontsData, type LangFontsFileType } from '../online/langFontFaces';
+
 import bibleBooks from './bibleBooks.json';
 import bibleKeyMap from './bibleKeyMap.json';
 import bbCR from './bb-cr.gz.bundle';
 import locationsMapUrl from './location-name-map-data/locationsMap.json?url';
 import namesMapUrl from './location-name-map-data/namesMap.json?url';
+import fontsFile from './fonts.json';
+import googleSansRegularUrl from './Google_Sans/static/GoogleSans-Regular.ttf?url';
+import googleSansMediumUrl from './Google_Sans/static/GoogleSans-Medium.ttf?url';
+import googleSansSemiBoldUrl from './Google_Sans/static/GoogleSans-SemiBold.ttf?url';
+import googleSansBoldUrl from './Google_Sans/static/GoogleSans-Bold.ttf?url';
+import googleSansItalicUrl from './Google_Sans/static/GoogleSans-Italic.ttf?url';
+import googleSansBoldItalicUrl from './Google_Sans/static/GoogleSans-BoldItalic.ttf?url';
+
+// English's own face, Google Sans, is the app's default on every page
+// (2026-11-06, the user: _use en's font-family as default app_, _all pages
+// should embed and set app-Google-Sans_), made the way every language's is
+// (`fonts.json`, `../online/langFontFaces.ts`); a language with a face of its
+// own goes in front of it (`appFontFamilyHelpers.ts`). Each face is fetched
+// only when text uses it. No `globalFontFamily` / `getFontFamilyFiles`: those
+// make the Word export of a Bible offer to copy the font files, which an
+// English Bible has never needed.
+const fonts = fontsFile as LangFontsFileType;
+const fontsData = genFontsData(fonts, {
+    'Google_Sans/static/GoogleSans-Regular.ttf': googleSansRegularUrl,
+    'Google_Sans/static/GoogleSans-Medium.ttf': googleSansMediumUrl,
+    'Google_Sans/static/GoogleSans-SemiBold.ttf': googleSansSemiBoldUrl,
+    'Google_Sans/static/GoogleSans-Bold.ttf': googleSansBoldUrl,
+    'Google_Sans/static/GoogleSans-Italic.ttf': googleSansItalicUrl,
+    'Google_Sans/static/GoogleSans-BoldItalic.ttf': googleSansBoldItalicUrl,
+});
 
 const lang: LanguageDataType = {
     packageDir: '',
@@ -26,8 +53,9 @@ const lang: LanguageDataType = {
         return true;
     },
     genCss: () => {
-        return '';
+        return fontsData.css;
     },
+    fontFamily: fonts.uiFamily,
     numList: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
     dictionary: {},
     name: 'English',

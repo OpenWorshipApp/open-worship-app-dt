@@ -13,6 +13,8 @@ const { state, mocks } = vi.hoisted(() => ({
         bibleItem: null as any,
         flowItems: new Map<string, any[]>(),
         screenUpdate: null as null | (() => void),
+        // Set once, when the module under test is imported.
+        screenManagers: null as null | (() => unknown[]),
     },
     mocks: {
         backgroundSelect: vi.fn(),
@@ -38,9 +40,10 @@ vi.mock('../_screen/managers/ScreenVaryAppDocumentManager', () => ({
 }));
 vi.mock('../_screen/managers/screenUpdateSubscriberHelpers', () => ({
     genRefCountedScreenUpdateSubscriber: (
-        _managers: unknown,
+        managers: () => unknown[],
         refresh: () => void,
     ) => {
+        state.screenManagers = managers;
         state.screenUpdate = refresh;
         return {
             acquire: () => {
@@ -82,6 +85,10 @@ vi.mock('./PresentingFlow', () => ({
     },
 }));
 
+import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
+import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
+import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
+import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import { DragTypeEnum } from '../helper/DragInf';
 import { toForegroundRowKey } from '../presenter-foreground/foregroundDragHelpers';
 import {
@@ -371,5 +378,43 @@ describe('presenting-flow on-screen matching', () => {
         await Promise.resolve();
         expect(mocks.handleError).toHaveBeenCalled();
         await act(async () => brokenRoot.unmount());
+    });
+
+    test('the one screen subscription hears every manager a row can be live on', () => {
+        const managers = state.screenManagers!();
+        const expected = [
+            ScreenVaryAppDocumentManager,
+            ScreenBackgroundManager,
+            ScreenLongTextManager,
+            ScreenForegroundManager,
+        ];
+        expect(managers).toHaveLength(expected.length);
+        for (const manager of expected) {
+            expect(managers).toContain(manager);
+        }
+    });
+
+    test('a message row carrying no list of words is never live', async () => {
+        state.foregrounds = { one: { messageDataList: [{ textList: ['a'] }] } };
+        for (const data of [{}, { textList: 'a' }, null]) {
+            expect(
+                await checkIsPresentingFlowItemOnScreen(
+                    item({
+                        isForeground: true,
+                        data: { target: 'message', data },
+                    }),
+                ),
+                JSON.stringify(data),
+            ).toBe(false);
+        }
+    });
+
+    test('several run sheets with nothing of theirs up answer no', async () => {
+        state.appDocs = { live: {} };
+        state.flowItems.set('/one', [item()]);
+        expect(
+            await checkIsAnyPresentingFlowOnScreen(['/one', '/missing']),
+        ).toBe(false);
+        expect(await checkIsAnyPresentingFlowOnScreen([])).toBe(false);
     });
 });

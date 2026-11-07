@@ -10,8 +10,17 @@ const { state, mocks } = vi.hoisted(() => ({
         >(),
         manifest: null as unknown,
         size: 100,
+        // Folders that cannot be listed, and the editing heads per file.
+        listErrors: new Set<string>(),
+        heads: new Map<string, string>(),
+        saved: new Map<string, string>(),
+        brokenHeads: new Set<string>(),
     },
     mocks: {
+        tarCreate: vi.fn(),
+        tarAppend: vi.fn(),
+        reveal: vi.fn(),
+        protect: vi.fn(),
         tarExtract: vi.fn(),
         clone: vi.fn(),
         cleanup: vi.fn(),
@@ -44,7 +53,7 @@ vi.mock('../../helper/appArchiveHelpers', () => ({
     writeArchiveManifest: async () => {},
 }));
 vi.mock('../../helper/archivePasswordHelpers', () => ({
-    protectArchiveFile: async () => '/downloads/protected.owadata.enc',
+    protectArchiveFile: mocks.protect,
 }));
 vi.mock('../../helper/DirSource', () => ({
     default: { getDirPathBySettingName: async () => state.paths.documents },
@@ -57,14 +66,24 @@ vi.mock('../../helper/FileSource', () => ({
     },
 }));
 vi.mock('../../editing-manager/EditingHistoryManager', () => ({
-    default: { getInstance: () => ({ getCurrentHistory: async () => null }) },
+    default: {
+        getInstance: (filePath: string) => ({
+            getCurrentHistory: async () => {
+                if (state.brokenHeads.has(filePath)) {
+                    throw new Error(`unreadable head: ${filePath}`);
+                }
+                return state.heads.get(filePath) ?? null;
+            },
+            getOriginalData: async () => state.saved.get(filePath) ?? null,
+        }),
+    },
     sanitizeForUpdatingComparison: (value: unknown) => value,
 }));
 vi.mock('../../helper/errorHelpers', () => ({ handleError: mocks.error }));
 vi.mock('../../server/appHelpers', () => ({
-    showFileOrDirExplorer: vi.fn(),
-    tarAppend: vi.fn(),
-    tarCreate: vi.fn(),
+    showFileOrDirExplorer: mocks.reveal,
+    tarAppend: mocks.tarAppend,
+    tarCreate: mocks.tarCreate,
     tarExtract: mocks.tarExtract,
 }));
 vi.mock('../../server/fileHelpers', () => ({
@@ -75,7 +94,12 @@ vi.mock('../../server/fileHelpers', () => ({
     fsCreateFile: vi.fn(),
     fsDeleteFile: vi.fn(),
     fsGetFileSize: async () => state.size,
-    fsList: async (path: string) => state.entries.get(path) ?? [],
+    fsList: async (path: string) => {
+        if (state.listErrors.has(path)) {
+            throw new Error(`cannot list ${path}`);
+        }
+        return state.entries.get(path) ?? [];
+    },
     getDownloadPath: () => '/downloads',
     pathJoin: (...parts: string[]) => parts.join('/').replace(/\/+/g, '/'),
     pathSeparator: '/',
@@ -108,12 +132,18 @@ vi.mock('../directory-setting/dataDirectories', () => {
 });
 
 import {
+    collectUnsavedDataEntries,
+    createDataArchive,
+    exportData,
     getDataDirectoryPath,
     getExportableDataFolders,
     importDataArchive,
     readDataArchiveManifest,
     reportDataArchiveError,
 } from './dataArchiveHelpers';
+import { dataDirectories } from '../directory-setting/dataDirectories';
+
+const [documentsDirectory, biblesDirectory] = dataDirectories;
 
 const docs = { settingName: 'documents-dir', entry: 'documents' };
 const bibles = { settingName: 'bible-dir', entry: 'bibles' };
@@ -132,6 +162,13 @@ beforeEach(() => {
     state.entries.clear();
     state.manifest = null;
     state.size = 100;
+    state.listErrors.clear();
+    state.heads.clear();
+    state.saved.clear();
+    state.brokenHeads.clear();
+    mocks.tarCreate.mockResolvedValue(undefined);
+    mocks.tarAppend.mockResolvedValue(undefined);
+    mocks.protect.mockResolvedValue('/downloads/protected.owadata.enc');
     mocks.tarExtract.mockResolvedValue(undefined);
     mocks.clone.mockResolvedValue(true);
     mocks.cleanup.mockResolvedValue(undefined);
@@ -167,6 +204,122 @@ describe('whole-data archive directory selection', () => {
         ]);
         state.entries.set('/data/bibles', [file('database.sqlite')]);
         expect(await getExportableDataFolders()).toHaveLength(1);
+    });
+
+    test('leaves out a folder with no path chosen, and one that is gone', async () => {
+        state.paths.documents = '';
+        state.existing.add('/data/bibles');
+        state.entries.set('/data/bibles', [file('KJV.xml')]);
+        expect(await getExportableDataFolders()).toMatchObject([
+            { dirPath: '/data/bibles', fileNames: ['KJV.xml'] },
+        ]);
+        // Chosen, but not there any more.
+        state.paths.documents = '/data/documents';
+        expect(
+            (await getExportableDataFolders()).map((folder) => folder.dirPath),
+        ).toEqual(['/data/bibles']);
+    });
+});
+
+describe('building the whole-data archive', () => {
+    const documentsFolder = {
+        dataDirectory: documentsDirectory,
+        dirPath: '/data/documents',
+    };
+
+    test('nothing chosen is nothing to export', async () => {
+        await expect(createDataArchive([])).rejects.toThrow(
+            'No folder to export',
+        );
+        expect(mocks.tarCreate).not.toHaveBeenCalled();
+    });
+
+    test('a filtered folder goes in file by file, a whole one by its name', async () => {
+        const archiveFilePath = await createDataArchive([
+            documentsFolder,
+            {
+                dataDirectory: biblesDirectory,
+                dirPath: '/data/bibles',
+                fileNames: ['KJV.xml', 'Khmer.xml'],
+            },
+        ]);
+        expect(archiveFilePath).toBe(
+            '/downloads/open-worship-data.owadata.tar',
+        );
+        expect(mocks.tarCreate.mock.calls[0].slice(0, 3)).toEqual([
+            '/data',
+            '/downloads/open-worship-data.owadata.tar',
+            ['documents', 'bibles/KJV.xml', 'bibles/Khmer.xml'],
+        ]);
+        expect(mocks.tarAppend).toHaveBeenCalledWith(
+            '/downloads/open-worship-data.owadata.tar',
+            '/tmp/extract',
+            ['manifest.json'],
+        );
+        expect(mocks.protect).not.toHaveBeenCalled();
+    });
+
+    test('a filtered folder whose files were never listed adds nothing', async () => {
+        await createDataArchive([
+            documentsFolder,
+            { dataDirectory: biblesDirectory, dirPath: '/data/bibles' },
+        ]);
+        expect(mocks.tarCreate.mock.calls[0][2]).toEqual(['documents']);
+    });
+
+    test('a password wraps the plain archive, written beside it', async () => {
+        const archiveFilePath = await createDataArchive(
+            [documentsFolder],
+            'church-secret',
+        );
+        const plainFilePath =
+            '/downloads/open-worship-data.owadata.tar.plain.part';
+        expect(mocks.tarCreate.mock.calls[0][1]).toBe(plainFilePath);
+        expect(mocks.protect).toHaveBeenCalledExactlyOnceWith(
+            plainFilePath,
+            '/downloads/open-worship-data.owadata.tar',
+            'church-secret',
+        );
+        expect(archiveFilePath).toBe('/downloads/protected.owadata.enc');
+    });
+
+    test('Export Data shows the archive it made in its folder', async () => {
+        const archiveFilePath = await exportData([documentsFolder]);
+        expect(archiveFilePath).toBe(
+            '/downloads/open-worship-data.owadata.tar',
+        );
+        expect(mocks.reveal).toHaveBeenCalledExactlyOnceWith(archiveFilePath);
+    });
+
+    test('an unsaved head is carried; an unlistable folder or unreadable head is passed over', async () => {
+        state.listErrors.add('/data/documents');
+        state.entries.set('/data/notes', [
+            dir('typed.own.histories'),
+            dir('untouched.own.histories'),
+            dir('same.own.histories'),
+            dir('broken.own.histories'),
+            file('typed.own'),
+            dir('pictures'),
+        ]);
+        state.heads.set('/data/notes/typed.own', 'typed text');
+        state.saved.set('/data/notes/typed.own', 'saved text');
+        state.heads.set('/data/notes/same.own', 'saved text');
+        state.saved.set('/data/notes/same.own', 'saved text');
+        state.brokenHeads.add('/data/notes/broken.own');
+        const unsavedEntries = await collectUnsavedDataEntries(
+            [
+                documentsFolder,
+                { dataDirectory: documentsDirectory, dirPath: '/data/notes' },
+            ],
+            ['documents', 'notes'],
+        );
+        expect(unsavedEntries).toEqual([
+            { entryPath: 'notes/typed.own', text: 'typed text' },
+        ]);
+        expect(mocks.error.mock.calls).toEqual([
+            [new Error('cannot list /data/documents')],
+            [new Error('unreadable head: /data/notes/broken.own')],
+        ]);
     });
 });
 
@@ -210,6 +363,19 @@ describe('whole-data archive manifest and restore', () => {
         });
     });
 
+    test.each([
+        [null],
+        [{ version: 2, kind: 'app-data', folders: [docs] }],
+        [{ version: 1, kind: 'settings', folders: [docs] }],
+        [{ version: 1, kind: 'app-data', folders: 'documents' }],
+    ])('refuses manifest %j as no data archive', async (manifest) => {
+        state.manifest = manifest;
+        await expect(readDataArchiveManifest('/archive')).rejects.toThrow(
+            'Invalid data archive manifest',
+        );
+        expect(mocks.cleanup).toHaveBeenCalledWith('/tmp/extract');
+    });
+
     test('rejects a manifest with no known safe folder and still cleans extraction', async () => {
         state.manifest = {
             version: 1,
@@ -220,6 +386,18 @@ describe('whole-data archive manifest and restore', () => {
             'no known data folder',
         );
         expect(mocks.cleanup).toHaveBeenCalledWith('/tmp/extract');
+    });
+
+    test('nothing chosen, or nothing this build knows, is not imported', async () => {
+        await expect(importDataArchive('/archive', [])).rejects.toThrow(
+            'No folder to import',
+        );
+        await expect(
+            importDataArchive('/archive', [
+                { settingName: 'newer-app-dir', entry: 'newer' },
+            ]),
+        ).rejects.toThrow('No known data folder to import');
+        expect(mocks.tarExtract).not.toHaveBeenCalled();
     });
 
     test('checks every destination before extracting and refuses a missing path', async () => {

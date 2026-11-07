@@ -47,6 +47,10 @@ import {
 } from './mirrorTls';
 import { MIRROR_INTERCOM_KEY_PATTERN, MirrorIntercom } from './mirrorIntercom';
 import { getRootUrl } from './protocolHelpers';
+import {
+    findLangPluginAssetFilePath,
+    getLangPlugins,
+} from './langPluginHelpers';
 import { isDev, messageChannels } from './electronHelpers';
 import { genKeepAwake } from './keepAwakeHelpers';
 import {
@@ -184,6 +188,14 @@ function checkIsLoopbackPortAnswering(port: number) {
 // The file behind one of the app's own page addresses (`/assets/blank.png`,
 // `/src/...`, Vite's `/@fs/...`), as a screen window of this computer loads it.
 function toAppFile(pathname: string) {
+    // A language plugin's file (`owa://local/@lang/<code>/...`) is in its own
+    // folder, wherever that plugin is installed.
+    if (pathname.startsWith('/@lang/')) {
+        return (
+            findLangPluginAssetFilePath(pathname) ??
+            path.join(app.getAppPath(), 'dist', pathname)
+        );
+    }
     if (!isDev) {
         return path.join(app.getAppPath(), 'dist', pathname);
     }
@@ -195,6 +207,57 @@ function toAppFile(pathname: string) {
         pathname.startsWith('/src/') ? '' : 'public',
         pathname,
     );
+}
+// What a browser watching a virtual display may read of the language
+// plugins: their list, and each one's code, fonts and dictionaries -- the
+// screen it draws is in the app's languages too.
+const LANG_PLUGIN_VIEWER_FILE_PATTERN =
+    /^\/@lang\/(?:plugins\.json|[a-z]{2,3}\/[\w.\-/]+\.(?:js|css|json|woff2?|ttf|otf|dic|aff))$/;
+function checkIsLangPluginViewerFile(pathname: string) {
+    return (
+        LANG_PLUGIN_VIEWER_FILE_PATTERN.test(pathname) &&
+        !pathname.includes('..')
+    );
+}
+// The enabled plugins as another device is told of them: never a path on
+// this computer.
+function genViewerLangPluginList() {
+    return getLangPlugins()
+        .filter((plugin) => {
+            return plugin.isEnabled;
+        })
+        .map((plugin) => {
+            return {
+                ...plugin,
+                dirPath: '',
+                removableDirPaths: [],
+            };
+        });
+}
+async function serveLangPluginViewerFile(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+    pathname: string,
+) {
+    if (pathname === '/@lang/plugins.json') {
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'no-store',
+            'X-Content-Type-Options': 'nosniff',
+        });
+        res.end(
+            req.method === 'HEAD'
+                ? undefined
+                : JSON.stringify(genViewerLangPluginList()),
+        );
+        return;
+    }
+    const filePath = findLangPluginAssetFilePath(pathname);
+    if (filePath === null) {
+        res.writeHead(404).end();
+        return;
+    }
+    await serveMirrorFile(req, res, filePath);
 }
 function checkIsVirtualDisplayAppFile(pathname: string) {
     return (
@@ -1483,6 +1546,7 @@ export class ScreenMirrorService {
                 !!this.virtualDisplayHooks?.admits(network) &&
                 (url.pathname.startsWith('/content/') ||
                     isViewerIcon ||
+                    checkIsLangPluginViewerFile(url.pathname) ||
                     (isDev
                         ? checkIsVirtualDisplayDevViewerFile(
                               url,
@@ -1492,6 +1556,8 @@ export class ScreenMirrorService {
             if (isViewerAdmitted) {
                 if (url.pathname.startsWith('/content/')) {
                     await this.content.serve(req, res, url.pathname);
+                } else if (checkIsLangPluginViewerFile(url.pathname)) {
+                    await serveLangPluginViewerFile(req, res, url.pathname);
                 } else if (isViewerIcon) {
                     // The app's 6 KB logo, also for the `/favicon.ico` a
                     // browser asks for by itself: the real .ico is 370 KB,
@@ -2360,8 +2426,15 @@ export class ScreenMirrorService {
                         let data = '';
                         response.on('data', (chunk) => {
                             data += chunk;
-                            if (data.length > 2048)
-                                request.destroy(new Error('Connection failed'));
+                            // Refused HERE, and the request torn down with no
+                            // error of its own: a whole answer in one read has
+                            // already ended, its socket back in the keep-alive
+                            // pool, and an error destroyed into that socket is
+                            // thrown in the main process with nothing listening.
+                            if (data.length > 2048) {
+                                reject(new Error('Connection failed'));
+                                request.destroy();
+                            }
                         });
                         response.on('error', reject);
                         response.on('end', () => {

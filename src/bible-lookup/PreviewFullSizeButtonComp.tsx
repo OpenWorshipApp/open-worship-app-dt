@@ -140,7 +140,7 @@ export default function PreviewFullSizeButtonComp({
     );
     return (
         <button
-            className={'btn btn-sm' + `-${isFullSize ? '' : 'outline-'}info`}
+            className={`btn btn-sm btn-${isFullSize ? '' : 'outline-'}info`}
             title={label}
             aria-label={label}
             aria-pressed={isFullSize}

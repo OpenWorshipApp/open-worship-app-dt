@@ -1,0 +1,20 @@
+{
+    "grammarHints": [
+        {
+            "script": "Greek",
+            "hint": "For a noun, adjective, article or pronoun: its case, number and gender. For a verb: its tense, voice, mood, person and number (a participle: its case, number and gender too)."
+        }
+    ],
+    "wordLanguages": [
+        {
+            "pattern": "[\\u1F00-\\u1FFF]|\\u0313|\\u0314|\\u0342|\\u0345",
+            "name": "biblical Greek",
+            "order": 0
+        },
+        {
+            "pattern": "\\p{Script=Greek}",
+            "name": "Greek",
+            "order": 1
+        }
+    ]
+}

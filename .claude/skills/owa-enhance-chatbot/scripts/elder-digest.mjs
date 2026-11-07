@@ -1,6 +1,7 @@
 // Prints a run file as something to grade: per scenario, the three models'
 // answers to each step side by side, plus a numbers table per model.
 import fs from 'node:fs';
+import { listPackageCodes, readAssistantFacts } from '../../../../extra-work/language-packages.mjs';
 
 const file = process.argv[2];
 const only = process.argv[3] ?? null;
@@ -46,7 +47,7 @@ if (only !== 'numbers') {
             `${s.usage ? s.usage.input + s.usage.cacheRead : '-'}tok ` +
             `tools=${(s.tools ?? []).map((t) => t.name.replace('owa_', '') + (t.isError ? '!' : '')).join('>')} ` +
             `${s.found !== undefined ? `found=${s.found}` : ''} ${s.leak ? `LEAK=${s.leak}` : ''} ` +
-            `km=${s.script?.kmShare} ${s.pageErrors?.length ? `PAGEERR=${JSON.stringify(s.pageErrors)}` : ''}` +
+            `own=${s.script?.ownShare ?? s.script?.kmShare} ${s.pageErrors?.length ? `PAGEERR=${JSON.stringify(s.pageErrors)}` : ''}` +
             `${s.timedOut ? ' TIMEOUT' : ''}${s.error ? ` ERROR=${s.error}` : ''}`,
         );
         console.log(`    > ${what}`);
@@ -107,13 +108,23 @@ function englishOf(s) {
     ),
   ];
 }
-// Letters of a script that is neither Khmer nor Latin, in a Khmer answer:
-// "អេកក्रीन" (Devanagari), "សមាជិកមন্ডল" (Bengali).
+// Letters of a script that is neither the app's own nor Latin, in an
+// answer in the app's language: a Devanagari or a Bengali syllable in the
+// middle of a Khmer word. The app's scripts are its packages' own
+// (`assistant.json`).
+const OWN_SCRIPT_SOURCE_LIST = listPackageCodes()
+  .map((code) => readAssistantFacts(code).scriptPattern)
+  .filter((source) => typeof source === 'string');
+const FOREIGN_LETTER_PATTERN = new RegExp(
+  `${OWN_SCRIPT_SOURCE_LIST.map((source) => `(?!${source})`).join('')}` +
+    '(?!\\p{Script=Latin})(?!\\p{Script=Common})(?!\\p{Script=Inherited})\\p{L}',
+  'gu',
+);
 function foreignScriptOf(s) {
   const shown = [s.answer ?? '', ...(s.buttons ?? [])].join('\n');
   return (
     shown.match(
-      /(?![ក-៿᧠-᧿])(?!\p{Script=Latin})(?!\p{Script=Common})(?!\p{Script=Inherited})\p{L}/gu,
+      FOREIGN_LETTER_PATTERN,
     ) ?? []
   ).join('');
 }
@@ -145,7 +156,7 @@ for (const model of models) {
     `englishShown=${mine.filter((s) => englishOf(s).length).length}`,
     `englishWords=${mine.reduce((sum, s) => sum + englishOf(s).join(' ').split(/\s+/).filter(Boolean).length, 0)}`,
     `foreignScript=${mine.filter((s) => foreignScriptOf(s).length).length}`,
-    `lowKhmer=${mine.filter((s) => (s.script?.kmShare ?? 1) < 0.5).length}`,
+    `lowOwnScript=${mine.filter((s) => (s.script?.ownShare ?? s.script?.kmShare ?? 1) < 0.5).length}`,
     `verseFound=${steps.filter((s) => s.model === model && s.found === true).length}/${steps.filter((s) => s.model === model && s.found !== undefined).length}`,
   );
 }

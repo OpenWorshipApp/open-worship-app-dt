@@ -19,6 +19,7 @@ import {
     getMcpUrl,
     getRemoteDebuggingPort,
     importEsm,
+    republishAiLangDirs,
     toMcpPackagePath,
 } from './aiHelpers';
 import { getRecentConsoleLines } from './consoleLogHelpers';
@@ -78,6 +79,29 @@ import {
     stopFindOverlayDragging,
 } from './finderOverlayHelpers';
 import ElectronScreenController from './ElectronScreenController';
+import {
+    DISABLED_LANG_CODES_SETTING_NAME,
+    LANG_PLUGINS_CHANGED_BROADCAST_CHANNEL,
+    LANG_PLUGINS_CHANGED_RENDERER_CHANNEL,
+    LANG_PLUGINS_CHANNEL,
+    LANG_PLUGINS_DIR_CHANNEL,
+    parseDisabledLangCodes,
+} from './langPluginProtocol';
+import {
+    clearLangPluginsCache,
+    configureLangPlugins,
+    getBuiltInLangPluginsDirPath,
+    getLangPlugins,
+    getLangPluginsDirPath,
+} from './langPluginHelpers';
+import {
+    PACKAGE_UPDATES_BROADCAST_CHANNEL,
+    PACKAGE_UPDATES_GET_CHANNEL,
+    PACKAGE_UPDATES_RENDERER_CHANNEL,
+    mergePackageUpdates,
+    type PackageUpdatesType,
+} from './packageUpdateProtocol';
+import appInfo from '../package.json';
 import { getScreenMirror } from './screenMirrorService';
 import { getVirtualDisplays } from './virtualDisplayService';
 import {
@@ -191,6 +215,37 @@ export function initEventListenerApp(appController: ElectronAppController) {
 
     ipcMain.on('main:app:get-app-path', (event) => {
         event.returnValue = app.getAppPath();
+    });
+
+    // Language plugins (`langPluginHelpers.ts`): found here, for every window
+    // alike; the preload's `langUtils` loads the one a window asks for.
+    configureLangPlugins(() => {
+        return {
+            builtInDirPath: getBuiltInLangPluginsDirPath(app.getAppPath()),
+            dataDirPath: appController.settingManager.dataDirPath,
+            disabledLangCodes: parseDisabledLangCodes(
+                appController.settingManager.getClientSetting(
+                    DISABLED_LANG_CODES_SETTING_NAME,
+                ),
+            ),
+            appVersion: appInfo.version,
+        };
+    });
+    ipcMain.handle(LANG_PLUGINS_CHANNEL, () => {
+        return getLangPlugins();
+    });
+    ipcMain.on(LANG_PLUGINS_DIR_CHANNEL, (event) => {
+        event.returnValue = getLangPluginsDirPath();
+    });
+    // A language installed, updated, deleted, turned on or off in one window:
+    // every window reads the list again.
+    // The agent doors read a language from its installed folder: tell the
+    // stdio one (its own process) which those are now.
+    republishAiLangDirs();
+    ipcMain.on(LANG_PLUGINS_CHANGED_BROADCAST_CHANNEL, () => {
+        clearLangPluginsCache();
+        appController.sendMessageToAll(LANG_PLUGINS_CHANGED_RENDERER_CHANNEL);
+        republishAiLangDirs();
     });
 
     ipcMain.on(
@@ -1124,6 +1179,26 @@ export function initEventOther(appController: ElectronAppController) {
     // this replies.
     ipcMain.on('all:app:get-chatbot-busy', (event) => {
         event.sender.send('main:app:chatbot-busy', { isBusy: isChatbotBusy });
+    });
+
+    // Which installed packages (languages, the Extra Binaries) have an update,
+    // for the sign on the Setting gear and the Settings tabs in every window
+    // (`electron/packageUpdateProtocol.ts`). Kept for the launch: `null` until
+    // the main window's one look reports, which is what tells that window to
+    // look -- a page switch reloads it, and asking the network again on every
+    // switch would be a fetch per press.
+    let packageUpdates: PackageUpdatesType | null = null;
+    ipcMain.on(PACKAGE_UPDATES_BROADCAST_CHANNEL, (_event, data: unknown) => {
+        packageUpdates = mergePackageUpdates(packageUpdates, data);
+        appController.sendMessageToAll(
+            PACKAGE_UPDATES_RENDERER_CHANNEL,
+            packageUpdates,
+        );
+    });
+    // Answered to the asking window alone, never as a synchronous
+    // `returnValue` (the same reason as the chatbot's busy dot above).
+    ipcMain.on(PACKAGE_UPDATES_GET_CHANNEL, (event) => {
+        event.sender.send(PACKAGE_UPDATES_RENDERER_CHANNEL, packageUpdates);
     });
 
     ipcMain.on('all:app:print', (event, htmlText?: string) => {

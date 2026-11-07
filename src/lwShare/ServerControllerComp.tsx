@@ -1,12 +1,12 @@
 import { type ChangeEvent, useCallback, useState } from 'react';
 
-import type { StatusDataType, StatusType } from './lwShareHelpers';
+import type {
+    ServerDataType,
+    StatusDataType,
+    StatusType,
+} from './lwShareHelpers';
 import { controller } from './lwShareHelpers';
-import {
-    useAppEffect,
-    useAppStateAsync,
-    useAppCurrentRef,
-} from '../helper/appHooks';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { ensureDataDirectory } from '../setting/directory-setting/directoryHelpers';
 import LoadingComp from '../others/LoadingComp';
 import appProvider from '../server/appProvider';
@@ -133,9 +133,12 @@ export default function ServerControllerComp() {
     });
     const [status, setStatus] = useState<StatusType>('stopped');
     const [port, setPort] = useState<number>(8080);
-    const [serverData, setServerData] = useAppStateAsync(async () => {
-        return genNewServerData(port, setStatus, setStatusData);
-    });
+    // Set up by the port effect alone, which runs on mount too: a second
+    // first-render setup ran `initServer` twice, and each call re-inits
+    // lw-share and adds its status listeners again (2026-11-03).
+    const [serverData, setServerData] = useState<
+        ServerDataType | null | undefined
+    >(undefined);
     useAppEffect(() => {
         if (port === undefined) {
             return;

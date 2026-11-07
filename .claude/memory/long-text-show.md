@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 6301d837-d2bf-49ee-ae70-5b5cdb819c41
-  modified: 2026-10-15T22:16:47.252Z
+  modified: 2026-11-07T01:55:22.126Z
 ---
 
 Asked for on 2026-10-12: _I want to have foreground component call `Long Text
@@ -64,10 +64,13 @@ What is not obvious from the code:
 - **A test importing the real open-lyric imports it at the TOP of the file.**
   Left to the code under test's own lazy import, the seconds of monaco are
   charged to the first test's timeout, which a full-suite run then fails.
-- **A column's own look.** Family: inline, WITHOUT `var(--bible-font-family)`,
-  or the screen-wide font wins. Alignment: a class rule with `!important`,
-  because Bible Properties writes `tr td { text-align … !important }`. Size:
-  on the cells only — the header's `font-size` is rewritten on every scroll.
+- **A column's own font and size, nothing else** (2026-11-06: the colour,
+  weight and alignment rows were removed so every value of
+  Bible/LongText Properties reaches the text — [[bible-text-style-looks-and-presets]];
+  both are unset until chosen). Family: inline, WITHOUT
+  `var(--bible-font-family)`, or the screen-wide font wins. Size: `em` of the
+  screen's, on the cells only — the header's `font-size` is rewritten on every
+  scroll. A column saved with a colour or a side is read without them.
 - **Bring to middle** rides the selected-index message as `isToMiddle` and
   centres the ROW once (`closest('tr')`): a row's cells are other heights in
   each language.
@@ -137,6 +140,40 @@ What is not obvious from the code:
   which opens the panel and bumps its `raiseToken` — false when no launcher is
   mounted, and the caller writes `foreground-open-panels` instead. Always a NEW
   session named after the song: the open one may be typed text or on a screen.
+
+- **Atom Mode: a row per LINE** (2026-11-06, the toggle's place circled
+  beside the book-and-gear: _break text in each element by `\n`, keep
+  empty text_; then _all rendering will be preserved_). The session holds
+  `isAtomMode: true` (absent when off). `verifyLongText(outlines,
+  isAtomMode)` answers `screenRows: { row, line? }[]` beside `rowIndexes`,
+  and EVERYTHING per row -- part buttons and cards, the typed number
+  buttons, keys, the lit mark, `lt-<n>` keys, nums -- goes by screen row,
+  so Atom mode needed no mapping layer. Chosen with the user: numbers run on
+  through the song; a part broken into other line counts is refused
+  (`kind: 'lines'`), but a cell with no words (a part one language only
+  plays) has 0 lines and is not counted. Blank typed lines are kept, a
+  trailing one too. Outlines carry `lineCount`, never the words. Two traps:
+  every `applySession({ languages })` literal dropped the flag -- they spread
+  the session now; and flipping it on a text that is up must re-put it
+  (`ScreenLongTextManager.replaceLongText`, mark moved by
+  `mapLongTextSectionKey`), or the panel's buttons name rows the screen
+  does not have. A selected row glides into view:
+  [[screen-selection-glides-into-view]].
+- **Stack and Hide Number** (the same evening: _render 2+ language in the
+  same line … in title should `english | khmer | ...`_, _I mean in the same
+  row_, with the Bible Reader's merged versions as the picture; then
+  _`Hide Number` to hide the number_). Session `isStacked` /
+  `isNumberHidden`, carried onto the SCREEN data as
+  `longTextData.isStacked` / `.isNumberHidden` (absent when off), because
+  the screen window draws from the data alone. `LongTextStackedTableComp`
+  draws one header (codes and titles joined by ` | `) and ONE cell per row:
+  a number line (each language's own digits joined by `, `), then a block
+  per language carrying the column's class. That is why
+  `genLongTextColumnCss` targets `.screen-long-text-column-N`, no longer
+  `td.`: stacked, a language's size has to reach its lines. A single
+  language is never stacked. Neither flag changes the rows, so a re-put
+  keeps the very mark (`handleLayoutToggling`, the same door as Atom mode).
+  The panel keeps its numbers under Hide Number.
 
 Not built, by decision of the first change: a Presenting Flow row or a drag to
 a screen, the `owa_foreground` tool and a tip lesson for it, a saved-text

@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Devanagari",
+            "locales": ["ne-NP"],
+            "order": 1201
+        }
+    ]
+}

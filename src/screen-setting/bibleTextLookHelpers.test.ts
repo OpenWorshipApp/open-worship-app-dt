@@ -12,10 +12,21 @@ import {
     genBibleTextLookEffect,
     genBibleTextLookList,
     genBibleTextResetPatch,
+    genBibleWordColor,
     toBibleBackdrop,
     toBibleTextPanelEffect,
     toPreviewTextShadow,
 } from './bibleTextLookHelpers';
+
+describe('genBibleWordColor', () => {
+    test('words are white over a dark background and black over a light one', () => {
+        expect(genBibleWordColor('dark')).toBe('#FFFFFF');
+        expect(genBibleWordColor('light')).toBe('#000000');
+        // The colour it gives is read back as the backdrop it was asked for.
+        expect(toBibleBackdrop(genBibleWordColor('dark'))).toBe('dark');
+        expect(toBibleBackdrop(genBibleWordColor('light'))).toBe('light');
+    });
+});
 
 describe('toBibleBackdrop', () => {
     test('light words are for a dark background, dark words for a light one', () => {
@@ -189,6 +200,14 @@ describe('toPreviewTextShadow', () => {
     test('pixels are scaled to the sample, so an old preset is not drawn four times as heavy', () => {
         expect(toPreviewTextShadow('2px -2px 0 #000, 0 0 5PX red', 100)).toBe(
             '0.02em -0.02em 0 #000, 0 0 0.05em red',
+        );
+    });
+
+    test('a size that is not a size leaves the pixels alone instead of dividing by it', () => {
+        // Divided by zero, every length would come out `Infinityem`.
+        expect(toPreviewTextShadow('2px 2px 0 #000', 0)).toBe('2px 2px 0 #000');
+        expect(toPreviewTextShadow('2px 2px 0 #000', -40)).toBe(
+            '2px 2px 0 #000',
         );
     });
 });

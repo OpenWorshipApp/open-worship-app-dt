@@ -1,0 +1,87 @@
+{
+    "cardTitles": {
+        "noah": "ណូអេ"
+    },
+    "cardExtra": [
+        {
+            "label": "the user’s own Khmer, as they spelled it",
+            "subject": "noah",
+            "text": "តើទូកណូអេមានទំ់ហុំយ៉ាងដូចម្តេច",
+            "expected": "record"
+        }
+    ],
+    "alike": {
+        "a thank-you": "អរគុណច្រើន",
+        "a removal chip": "លុបទាំងអស់",
+        "a how-do-I": "តើខ្ញុំបើកព្រះគម្ពីរដោយរបៀបណា?"
+    },
+    "notHowTo": ["តើព្រះសង្គ្រោះណូអេយ៉ាងដូចម្តេច?"],
+    "card": {
+        "the size of the ark (the user’s three pictures)": "តើទូកណូអេមានទំហំយ៉ាងដូចម្តេច",
+        "saved by God": "តើព្រះសង្គ្រោះណូអេពីទឹកជំនន់យ៉ាងដូចម្តេច?",
+        "Mark the gospel": "តើម៉ាកុសនិយាយពីណូអេទេ?",
+        "help to understand": "ជួយខ្ញុំយល់ពីមូលហេតុដែលព្រះបញ្ជូនទឹកជំនន់",
+        "fond, and the bottom of the ark": "តើមានអ្វីនៅបាតទូក?",
+        "the sound of the rain": "តើណូអេបានឮសំឡេងភ្លៀងទេ?",
+        "the ark’s window": "ហេតុអ្វីណូអេបើកបង្អួចទូក?",
+        "a name’s meaning": "តើឈ្មោះណូអេមានន័យដូចម្តេច?",
+        "a mountain’s size": "តើភ្នំអារ៉ារ៉ាតមានទំហំប៉ុណ្ណា?",
+        "how many children": "តើណូអេមានកូនប៉ុន្មាននាក់?",
+        "the family line": "បង្ហាញពូជពង្សរបស់ណូអេដល់ព្រះយេស៊ូវ",
+        "a map": "បង្ហាញអារ៉ារ៉ាតលើផែនទី",
+        "other versions": "តើពុម្ពផ្សេងនិយាយយ៉ាងដូចម្តេច?",
+        "save it": "រក្សាទុកវគ្គនេះក្នុងបញ្ជី",
+        "the next chapter": "ជំពូកបន្ទាប់",
+        "every word": "ពន្យល់ពាក្យនីមួយៗក្នុងខ ១",
+        "a verse by number": "តើខ ២០ មានន័យអ្វី?",
+        "a length of time": "តើណូអេនៅក្នុងទូករយៈពេលប៉ុន្មាន?",
+        "who is in it": "តើមាននរណាខ្លះក្នុងវគ្គនេះ?",
+        "the screen": "តើខ្ញុំដាក់ខគម្ពីររបស់ណូអេលើអេក្រង់ដោយរបៀបណា?",
+        "the text size": "តើខ្ញុំប្តូរទំហំអក្សរដោយរបៀបណា?",
+        "bigger words": "តើខ្ញុំធ្វើឲ្យអក្សរធំជាងនេះដោយរបៀបណា?",
+        "deleting": "តើខ្ញុំលុបការសន្ទនានេះដោយរបៀបណា?",
+        "saving, in a how-do-I": "តើខ្ញុំរក្សាទុកវាដោយរបៀបណា?",
+        "the settings": "តើការកំណត់នៅឯណា?",
+        "the background": "តើខ្ញុំប្តូរផ្ទៃខាងក្រោយដោយរបៀបណា?",
+        "undoing": "តើខ្ញុំត្រឡប់វិញដោយរបៀបណា?",
+        "a keyboard shortcut": "តើផ្លូវកាត់ក្តារចុចគឺអ្វី?",
+        "a passage on the screen": "ដាក់វគ្គនេះលើអេក្រង់"
+    },
+    "typed": {
+        "a verse by what it says": "ខគម្ពីរណាដែលនិយាយថាកុំខ្វល់ពីថ្ងៃស្អែក?",
+        "what the Bible says about": "តើព្រះគម្ពីរចែងអំពីការអភ័យទោសយ៉ាងដូចម្តេច?",
+        "where the Bible says it": "ព្រះគម្ពីរចែងថាព្រះជាសេចក្តីស្រឡាញ់នៅឯណា?",
+        "a story by its name": "តើរឿងទឹកជំនន់នៅក្នុងគម្ពីរណា?",
+        "find me a verse": "សូមរកខគម្ពីរអំពីសេចក្តីសង្ឃឹម",
+        "verses about": "ខគម្ពីរអំពីការអត់ធ្មត់",
+        "is there a verse": "តើមានខគម្ពីរណាដែលនិយាយអំពីកំហឹងទេ?",
+        "a song the Bible sings": "ខគម្ពីរណាដែលនិយាយថាច្រៀងចម្រៀងថ្មីថ្វាយព្រះ?",
+        "the verse finder, nothing remembered yet": "ជួយរកខគម្ពីរមួយផង",
+        "the verse finder with its words": "ជួយរកខគម្ពីរ៖ ស្រឡាញ់ខ្មាំងសត្រូវ",
+        "a verse forgotten": "ជួយរកខគម្ពីរដែលខ្ញុំភ្លេចផង",
+        "a verse for the screen is the app’s work": "បង្ហាញខគម្ពីរអំពីសេចក្ដីស្រឡាញ់លើអេក្រង់",
+        "present, a Bible word (Romans 12:1)": "ខគម្ពីរណាដែលនិយាយថាចូរថ្វាយរូបកាយជាយញ្ញបូជារស់?",
+        "who wrote a book": "តើនរណាជាអ្នកសរសេរគម្ពីរទំនុកតម្កើង?",
+        "how many books": "តើព្រះគម្ពីរមានប៉ុន្មានគម្ពីរ?",
+        "when Jesus was born": "តើព្រះយេស៊ូប្រសូតនៅពេលណា?",
+        "who was — the names lookup’s": "តើម៉ូសេជានរណា?",
+        "what is open — the app’s own state": "តើនរណាសរសេរគម្ពីរនេះ?"
+    },
+    "thread": {
+        "a new song": "ខដែលនិយាយអំពីការច្រៀងចម្រៀងថ្មី",
+        "in his image": "ព្រះបង្កើតមនុស្សតាមរូបភាពរបស់ទ្រង់",
+        "he keeps his people": "ទ្រង់នឹងរក្សាទុកប្រជារាស្ត្ររបស់ទ្រង់",
+        "on the screen": "ដាក់វាលើអេក្រង់",
+        "save it": "រក្សាទុកវា",
+        "how do I": "តើខ្ញុំរក្សាទុកវាដោយរបៀបណា?"
+    },
+    "reader": {
+        "the names in a chapter": "តើមានឈ្មោះអ្វីខ្លះក្នុងលោកុប្បត្តិ ជំពូក ៤?",
+        "a verse by its reference": "តើយ៉ូហាន ៣:១៦ និយាយអ្វី?",
+        "a size in a verse": "តើទំហំទូកក្នុងលោកុប្បត្តិ ៦:១៥ ប៉ុន្មាន?",
+        "Mark’s gospel": "តើម៉ាកុស ៤:៣៩ និយាយអ្វី?",
+        "how Jesus saved (no how-do-I)": "តើព្រះយេស៊ូវសង្គ្រោះពេត្រុសយ៉ាងដូចម្តេចក្នុងម៉ាថាយ ១៤:៣០?",
+        "a how-do-I is the app’s": "តើខ្ញុំបើកយ៉ូហាន ៣:១៦ ដោយរបៀបណា?",
+        "the screen is the app’s": "ដាក់យ៉ូហាន ៣:១៦ លើអេក្រង់"
+    }
+}

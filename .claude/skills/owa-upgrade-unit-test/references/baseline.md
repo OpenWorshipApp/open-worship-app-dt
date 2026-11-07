@@ -1,5 +1,59 @@
 # Baseline — the honest starting point
 
+## Achieved 99% target — 2026-11-04 (UT-71 → UT-97)
+
+The user set the goal at **99% of the whole source surface**. Measured with
+`coverage-gap.mjs --goal=99`: **81.75% (67,969 / 83,141) → 99.63% (83,472 /
+83,781)**, 1,292 → 1,299 files; files at 0%: **289 → 0**; at 100%: **1,148**.
+99% of the new surface is 82,944 covered lines, cleared by 528. No
+exclusions or thresholds changed.
+
+**Whose lines these are.** This run started from a checkout that did not yet
+hold UT-70's tests (95.25% on the same denominator, 2026-10-29) and met them
+at the pull of 2026-11-04, together with the user's own later tests on
+`fixed-language`. The after figure is the merged tree's; the per-batch
+before → after in `plan.md` is this run's own, measured on its own checkout.
+
+| Surface        | Lines after                   | Branches after              |
+| -------------- | ----------------------------- | --------------------------- |
+| Renderer + MCP | 99.61% (74,729 / 75,019)      | 94.14% (45,409 / 48,235)    |
+| Electron       | 99.78% (8,743 / 8,762)        | 94.86% (5,615 / 5,919)      |
+
+By kind, lines: helper 99.7% (524 files), module 99.7% (281), component
+99.3% (470), entry 99.9% (24).
+
+| Instrumented suite | After                                   |
+| ------------------ | --------------------------------------- |
+| Renderer + MCP     | 1,487 files / 17,146 tests, 576-580 s   |
+| Electron           | 112 files / 1,683 tests, 19-21 s        |
+
+The renderer suite's wall clock is about 2.8x UT-70's (203-272 s): 17,146
+tests against 11,587, and `*.ut99.test.*` copies beside the branch's
+same-named files cover some of the same lines twice (a prune is the user's
+call, not done).
+
+**Tests that can fail.** 701 test files written or extended by this run hold
+8,427 tests; a scan for a test with no `expect` / `assert` / `toThrow` /
+`rejects` found two, neither written here: one now asserts the verse it
+selects, the other (`pptxXmlHelpers`, a parse that throws on bad XML) can
+fail as it stands. **Smoke share:** 16 of the 701 files render with
+`renderToStaticMarkup` only (output asserted); every batch reported 0 smoke
+tests but UT-75 (2), UT-78 (1 near-smoke) and UT-93 (2 static renders).
+
+**Bugs.** 62 found and fixed in product code (1-4, 6-18, 20-36, 38-65), each
+with a regression test; the list, and the ones reported but not fixed, are
+in `plan.md` under each batch.
+
+**What the measuring cost.** A failing test leaves no report, and three of
+the four final runs failed: a docs audit named an id `plan.md` did not hold
+yet; a commit landed while one ran (the tree changed under the suite); and a
+test of this run's broke when the window began reading the language
+packages' book names (`EC-461`). Note the HEAD before and after a run.
+
+Evidence: `ut99-after.log`, `ut99-after-worklist.json`,
+`ut99-after-src-summary.json` and `ut99-after-electron-summary.json` under
+`test-results/unit-coverage/`.
+
 ## Achieved 95% target — 2026-10-29 (UT-70)
 
 The user set the goal at **95% of the whole source surface**. Measured with

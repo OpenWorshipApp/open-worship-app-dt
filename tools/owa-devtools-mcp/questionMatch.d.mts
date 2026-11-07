@@ -95,7 +95,7 @@ export type MatchOptionsType = {
     limit?: number;
 };
 
-/** One `questions/i18n/<code>.json`. */
+/** One `src/lang/data/<code>/questions.json`. */
 export type QuestionOverlayType = {
     lang: string;
     updated?: string;

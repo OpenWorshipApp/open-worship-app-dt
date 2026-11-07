@@ -238,6 +238,41 @@ describe('verse annotation persistence', () => {
         ).toHaveLength(3);
     });
 
+    test('an edit to one of two marks leaves its neighbour exactly as it was', async () => {
+        const first = (await addVerseHighlight(anchor, selection, 'yellow'))!;
+        const second = (await addVerseHighlight(anchor, selection, 'green'))!;
+        const firstComment = (await addVerseComment(anchor, selection, 'A'))!;
+        const secondComment = (await addVerseComment(anchor, selection, 'B'))!;
+        const before = structuredClone(h.files.get(path)![0]);
+
+        expect(
+            await updateVerseHighlightColor(
+                path,
+                1,
+                second.annotationId,
+                'pink',
+            ),
+        ).toBe(true);
+        expect(
+            await updateVerseComment(
+                path,
+                1,
+                firstComment.annotationId,
+                'A, edited',
+            ),
+        ).toBe(true);
+        const after = h.files.get(path)![0];
+        expect(after.highlights.map((mark) => mark.id)).toEqual([
+            first.annotationId,
+            second.annotationId,
+        ]);
+        expect(after.highlights[0]).toEqual(before.highlights[0]);
+        expect(after.highlights[1].color).toBe('pink');
+        expect(after.comments[0].comment).toBe('A, edited');
+        expect(after.comments[1]).toEqual(before.comments[1]);
+        expect(after.comments[1].id).toBe(secondComment.annotationId);
+    });
+
     test('removes one mark, then deletes the empty verse item', async () => {
         const highlight = (await addVerseHighlight(
             anchor,

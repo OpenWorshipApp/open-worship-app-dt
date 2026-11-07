@@ -412,17 +412,42 @@ the record's chat, family line, related verses, word study).
     Khmer then the chatbot have to be ready for khmer language_, _this is for
     church elderly user_, _chatbot have to be localization friendly_; memory
     `chatbot-follows-app-language`). The app language is the window's own
-    `<html lang>` (`getAppLangCode`, `chatLangHelpers.ts`); what a question
+    `<html lang>` (`getAppLangCode`, `chatLangHelpers.ts`) -- ANY installed
+    language, not only one with an `assistant.json`: a dictionary-only one is
+    taken by its `typed.json`, under the code that file names it by
+    (Filipino's folder `fil` is `tl`, Norwegian's `nb` is `no`). Until
+    2026-11-05 only Khmer and French were, and the robot run over every app
+    language found a window shown in Spanish, Hebrew, Afrikaans or Amharic
+    answering every pressed question in English, its chips English too;
+    Spanish went from 0 of 10 answers in the language to 7 of 10 clean. What a question
     is in, `pickReplyLanguage`: what they TYPED, else the app's -- a "yes", a
     command and anything PRESSED (`handleAsking`'s `isPressed`: a starter
     chip, an option, a suggestion row, an action's ask, a card rescue) are
     the app's words. Latin-script languages are told apart by their little
     words (`functionWords`; a French elision `l'` counts at the front of a
     word, 2026-10-29, `EC-446`: an English line with none of English's had
-    been answered in a French window's French), and
+    been answered in a French window's French). **Any language a person
+    TYPES is named** (2026-11-03, the user: _no matter what language I type
+    it work seamlessly_; `EC-447`..`EC-451`): each language's own
+    `typed.json` (`src/lang/data/online/<code>/`, 84 of them, 47 in a
+    package and 37 in a data-only folder until theirs is made) says its name,
+    Unicode script, little words, letters, a family and yes/no, read -- since
+    2026-11-04, only for an INSTALLED language (nothing but English ships) --
+    as languages with `isPackaged` false and every list empty; a language not
+    installed is `other`, answered in the language it was written in
+    (a Latin-script one only when it writes letters English never does and
+    no word English or an installed language claims; else the app's)
+    -- Spanish had been answered in French, Portuguese in a Khmer app in
+    Khmer, and every Thai, Chinese or Russian answer had lost its chips; the
+    window's cleaner and chips read the SCREEN's language
+    (`screenLangCode`) -- a Latin-script answer in a window of another
+    language keeps its own capitalised words, only a bold or quoted label
+    being the window's (`EC-458`: _la Bible_ had become the Khmer for the
+    Bible tab) --, and `anyLanguage.test.ts` holds 469 supported
+    questions in each packaged language to their own. And
     `chatLanguageParity.test.ts` asks every row in each language under each
     other app language. Every language is DATA in
-    `src/lang/data/<code>/assistant.json`: its script, digits, words for yes
+    `src/lang/data/online/<code>/assistant.json`: its script, digits, words for yes
     and no (the offline bot's follow-ups take them), the yes/no chip words and
     how such a question is asked (`genQuickReplies`), walkthrough-echo words,
     the markers a model translates (`ជម្រើស:` for `OPTIONS:` -- every frame
@@ -476,6 +501,14 @@ the record's chat, family line, related verses, word study).
     the pack's `fontFamily` goes on `<html>` as `--chat-lang-font`, which
     every `--chat-font-*` stack in `chatWindowShared.scss` carries AFTER
     the window's own faces, so Latin keeps them and Khmer is Battambang.
+    **Since 2026-11-06 the app's own faces head the stacks** (the user:
+    _all pages should embed and set app-Google-Sans_; memory
+    `app-default-font-google-sans`): boot sets `--app-font-family` on every
+    page -- the language's face, then English's Google Sans -- and the label
+    and body stacks put it right after the user's pick, so the signage faces
+    (Bahnschrift) are only what is left; the monospace stack keeps its own
+    faces first. `--chat-lang-font` and the ✨ guest's language face are
+    never English's: a stranger's site keeps its own Latin faces.
     **And a face picked in Settings → General → Font Family heads every
     stack** (2026-10-20, the user's picture with the chatbot's tab title
     circled: _custom font-family not effect everyting in chatbot page_,
@@ -919,7 +952,11 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   removal (`checkIsRemovalReply`, `removalWords` per language) — a chip is a
   one-press yes; and a chip with none of the language's letters is dropped
   (`toRepliesShownInLanguage` — a model working in English left its own when
-  the translator dropped the `OPTIONS:` line). An answer that says to type
+  the translator dropped the `OPTIONS:` line), and so is one holding a
+  capitalised Latin word alone between the script's letters that the answer
+  above never says and that is no key, menu name or label
+  (`checkHasUnsaidLatinWord`, 2026-11-04, `EC-459`: the Malay _Kecil_ in a
+  Khmer chip; a name or product the answer says stays). An answer that says to type
   `/btw` carries **Ask it as a general question** (`GENERAL_ASK_TOOL_NAME`),
   the command written for them. A thank-you under a found verse ends the
   search (`checkIsClosingLine`, `closingWords`) — it was searched as verse

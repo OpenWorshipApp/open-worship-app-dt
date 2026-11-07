@@ -7,7 +7,7 @@ const GZ_BUNDLE_SUFFIX = '.gz.bundle';
 /**
  * Map a `*.gz.bundle` source path to its on-disk location inside the build
  * output (`dist`). The path is kept verbatim relative to the project `src`
- * directory (e.g. `lang/data/km/bb-cr.gz.bundle`) so the emitted asset is not
+ * directory (e.g. `lang/data/<code>/bb-cr.gz.bundle`) so the emitted asset is not
  * hashed and the runtime can resolve it deterministically against the `dist`
  * directory of the packaged app.
  */

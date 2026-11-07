@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-10-29",
+    "updated": "2026-11-03",
     "sections": [
         {
             "id": "panels",
@@ -617,6 +617,26 @@
                         "passage": "The four suggestions are not all it can answer",
                         "tools": ["owa_list_questions"],
                         "find": "More… — everything it can answer"
+                    }
+                },
+                {
+                    "id": "ask-in-my-language",
+                    "text": "Can I ask in my own language, like Spanish or Thai?",
+                    "kind": "what",
+                    "keywords": [
+                        "my language",
+                        "my own language",
+                        "other language",
+                        "which languages",
+                        "foreign language",
+                        "spanish",
+                        "thai",
+                        "chinese",
+                        "answer in"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "That is any language, not only the ones the app can be shown in"
                     }
                 },
                 {

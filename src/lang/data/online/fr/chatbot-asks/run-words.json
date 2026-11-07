@@ -1,0 +1,12 @@
+{
+    "about": "What the chatbot skill's run scripts (`.claude/skills/owa-enhance-chatbot/scripts/`) read off the window in this language: each `patterns` entry is a regular-expression source matched beside its English (`extra-work/language-packages.mjs`, `genRunWordSource`); `templateFill` finishes a fill-in question the way a person would; `bookNames` reads a verse button back to English.",
+    "patterns": {
+        "allowMore": "Autoriser davantage",
+        "readFromCache": "lus? depuis le cache"
+    },
+    "templateFill": {
+        "add-a-slide": "Bienvenue à l’église",
+        "write-a-note": "la grâce",
+        "find-a-control": "Tout effacer"
+    }
+}

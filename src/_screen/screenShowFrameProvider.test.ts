@@ -165,4 +165,112 @@ describe('connectScreenShowFrame', () => {
             expect(reply).toHaveBeenCalledWith({}, true);
         });
     });
+
+    test('a parent page it may not read is no screen to draw', () => {
+        // A cross-origin parent: reading anything off it throws.
+        Object.defineProperty(globalThis, '__owaScreenShowFrameHosts', {
+            configurable: true,
+            get() {
+                throw new DOMException('Blocked a frame', 'SecurityError');
+            },
+        });
+        globalThis.history.replaceState(
+            null,
+            '',
+            '/vd-screen.html?screenId=1&screenShow=k1',
+        );
+        expect(() => connectScreenShowFrame()).toThrow(
+            'This Screen Show has no screen to draw',
+        );
+    });
+
+    test('what cannot be copied into this realm is used as it is', () => {
+        const message = {
+            screenId: 1,
+            type: 'background',
+            data: { onDone: () => {} },
+        };
+        const state = {
+            stage: 1,
+            fontCss: '',
+            isWindows: false,
+            messages: [message],
+        };
+        const host = genHost({ getState: vi.fn(() => state) });
+        mountHost(host, '?screenId=1&screenShow=k1');
+        const provider: any = connectScreenShowFrame();
+        expect(provider.screenUtils.getContext().messages).toBe(state.messages);
+
+        const listener = vi.fn();
+        provider.messageUtils.listenForData(SCREEN_MESSAGE_CHANNEL, listener);
+        host.send([message]);
+        expect(listener.mock.calls[0][1]).toBe(message);
+    });
+
+    test('a camera the holding window could not ask about reads as refused', async () => {
+        const host = genHost({
+            askCameraAccess: vi.fn(async () => {
+                throw new Error('no camera service');
+            }),
+        });
+        mountHost(host, '?screenId=1&screenShow=k1');
+        const { messageUtils }: any = connectScreenShowFrame();
+        const reply = vi.fn();
+        messageUtils.listenOnceForData('reply-2', reply);
+        // A request with no reply to send is not passed on at all.
+        messageUtils.sendData('main:app:ask-camera-access', {});
+        expect(host.askCameraAccess).not.toHaveBeenCalled();
+        messageUtils.sendData('main:app:ask-camera-access', {
+            replyEventName: 'reply-2',
+        });
+        await vi.waitFor(() => {
+            expect(reply).toHaveBeenCalledWith({}, false);
+        });
+        expect(reply).toHaveBeenCalledOnce();
+    });
+
+    test('a listener taken off hears nothing more, and what it missed is held for the next one', async () => {
+        const host = genHost();
+        mountHost(host, '?screenId=1&screenShow=k1');
+        const { messageUtils }: any = connectScreenShowFrame();
+        const first = vi.fn();
+        messageUtils.listenForData(SCREEN_MESSAGE_CHANNEL, first);
+        messageUtils.removeListener(SCREEN_MESSAGE_CHANNEL, first);
+        // Off a channel nobody ever listened on: nothing to take off.
+        expect(() => {
+            messageUtils.removeListener('never-listened', first);
+        }).not.toThrow();
+
+        const missed = { screenId: 1, type: 'foreground', data: { c: 3 } };
+        host.send([missed]);
+        expect(first).not.toHaveBeenCalled();
+        const next = vi.fn();
+        messageUtils.listenForData(SCREEN_MESSAGE_CHANNEL, next);
+        expect(next).not.toHaveBeenCalled();
+        await Promise.resolve();
+        expect(next).toHaveBeenCalledWith({}, missed);
+        expect(first).not.toHaveBeenCalled();
+    });
+
+    test('reloads its own page, opens no link, and is ready at once', async () => {
+        const host = genHost();
+        mountHost(host, '?screenId=1&screenShow=k1');
+        const provider: any = connectScreenShowFrame();
+
+        provider.browserUtils.openExternalURL('https://example.com');
+        expect(
+            host.baseProvider.browserUtils.openExternalURL,
+        ).not.toHaveBeenCalled();
+        await expect(provider.init()).resolves.toBeUndefined();
+
+        const reload = vi.fn();
+        vi.stubGlobal('location', { reload });
+        try {
+            provider.reload();
+        } finally {
+            vi.unstubAllGlobals();
+        }
+        expect(reload).toHaveBeenCalledOnce();
+        expect(host.baseProvider.reload).not.toHaveBeenCalled();
+    });
 });

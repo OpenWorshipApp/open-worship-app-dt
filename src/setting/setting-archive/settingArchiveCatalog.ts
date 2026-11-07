@@ -469,6 +469,9 @@ const EXCLUDED_LOCAL_PATTERN_LIST = [
 
 const HOME_KEY_LEAF_MAP = new Map<string, string>([
     ['language-locale', 'general.language'], // `MOVED_TO_HOME_KEY_LIST`
+    // The languages turned off in Settings > Languages
+    // (`DISABLED_LANG_CODES_SETTING_NAME`, `electron/langPluginProtocol.ts`).
+    ['disabled-lang-codes', 'general.language'],
     // `{isAutoPlay, anthropicWorkspaceId, bedrockRegion}` -- the plaintext half.
     ['ai-setting', 'ai.providers'],
     ['ai-custom-servers', 'ai.providers'], // `electron/customLlmProtocol.ts`

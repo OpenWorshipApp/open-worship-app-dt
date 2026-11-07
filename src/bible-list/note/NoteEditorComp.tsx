@@ -77,9 +77,12 @@ export function NoteTitleEditorComp({
                 ) {
                     return;
                 }
+                // The TITLE on disk against the title typed: held up to the
+                // content (2026-11-04), every update rebuilt the field and the
+                // store it replaced wrote its title again on the way out.
                 if (
                     newNoteItem === null ||
-                    newNoteItem.content === store.currentText
+                    newNoteItem.title === store.currentText
                 ) {
                     return;
                 }

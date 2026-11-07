@@ -75,7 +75,10 @@ window as a whole — tabs, pickers, its language, the caution — is in
   ASKING ABOUT is Bible Reader that names a verse (`3:16`, `៣:១៦`) or a
   chapter word + number (`chapter 4`, `ជំពូក 4`, `chapitre 4`) with a book
   before it -- or a bare `book + number` in any Bible's own language
-  (`Matthew 18`, `ម៉ាថាយ ១៨`, confirmed by `owa_bible_suggest`), or a
+  (`Matthew 18`, `ម៉ាថាយ ១៨`, confirmed by `owa_bible_suggest`, and when
+  the open Bible names no such book by every language package's own names,
+  `listLangBibleBookNames` -- `EC-461`: _Résume Matthieu 18_ with the KJV
+  open had gone to the ordinary assistant), or a
   Resources file by name (`MAT.18.pdf`) -- and not a how-to or the app's own
   work, is a `bible-reader` ask: the names lookup, the Resources reader and the verse
   reader are offered together (`AskExtraType.bibleReader`), the installed

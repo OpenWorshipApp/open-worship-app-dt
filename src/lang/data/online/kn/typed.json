@@ -1,0 +1,10 @@
+{
+    "kn": {
+        "name": "Kannada",
+        "nativeName": "ಕನ್ನಡ",
+        "script": "Kannada",
+        "yes": ["ಹೌದು", "ಸರಿ"],
+        "no": ["ಇಲ್ಲ", "ಬೇಡ"],
+        "order": 72
+    }
+}

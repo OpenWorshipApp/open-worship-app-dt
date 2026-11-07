@@ -78,8 +78,8 @@ describe('the marks on a passage', () => {
     it('takes every Bible a verse was marked in, in the passage order', () => {
         const marks = collectPassageMarks(
             {
-                '(ពគប) GEN 8:11': {
-                    highlights: [genHighlight('ស្លឹកអូលីវ')],
+                '(KH54) GEN 8:11': {
+                    highlights: [genHighlight('[xx] an olive leaf')],
                     comments: [],
                 },
                 '(KJV) GEN 8:1': {
@@ -118,8 +118,34 @@ describe('the marks on a passage', () => {
             },
             {
                 verse: 'GEN 8:11',
-                bible: 'ពគប',
-                highlighted: ['ស្លឹកអូលីវ'],
+                bible: 'KH54',
+                highlighted: ['[xx] an olive leaf'],
+                comments: [],
+            },
+        ]);
+    });
+
+    it('leaves out a verse whose marks were all removed, and a key that is no verse', () => {
+        expect(
+            collectPassageMarks(
+                {
+                    '(KJV) GEN 8:3': { highlights: [], comments: [] },
+                    'GEN 8:4': {
+                        highlights: [genHighlight('the ark rested')],
+                        comments: [],
+                    },
+                    '(KJV) GEN 8:5': {
+                        highlights: [genHighlight('the tops of the mountains')],
+                        comments: [],
+                    },
+                },
+                GEN_8,
+            ),
+        ).toEqual([
+            {
+                verse: 'GEN 8:5',
+                bible: 'KJV',
+                highlighted: ['the tops of the mountains'],
                 comments: [],
             },
         ]);

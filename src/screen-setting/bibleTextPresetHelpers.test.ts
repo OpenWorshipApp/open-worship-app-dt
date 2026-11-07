@@ -182,6 +182,8 @@ describe('putting a preset back', () => {
                 'effect',
                 'fontFamily',
                 'fontSize',
+                'highlightColorDark',
+                'highlightColorLight',
                 'isBold',
                 'isItalic',
                 'letterSpacing',
@@ -198,6 +200,8 @@ describe('putting a preset back', () => {
             letterSpacing: 0.1,
             lineHeight: 2,
             textAlign: 'center',
+            highlightColorDark: '#00ff0040',
+            highlightColorLight: '#ff000040',
             ...patch,
         };
         expect(toBibleTextStyleView(applied)).toEqual(plainView);

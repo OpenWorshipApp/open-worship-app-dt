@@ -113,6 +113,22 @@ describe('describeToolStep', () => {
             }),
         ).toBe('Reading example.com and writing the song out');
     });
+
+    test('a song changed part by part is named, never by its path', () => {
+        expect(
+            describeToolStep('owa_lyric_edit', {
+                action: 'read',
+                file: 'Still khmer',
+            }),
+        ).toBe('Reading one of your song: “Still khmer”');
+        expect(
+            describeToolStep('owa_lyric_edit', {
+                action: 'add-translation',
+                file: 'C:\\docs\\Still khmer.owl',
+            }),
+        ).toBe('Editing a song: “Still khmer”');
+        expect(describeToolStep('owa_lyric_edit', {})).toBe('Editing a song');
+    });
 });
 
 describe('the progress store', () => {

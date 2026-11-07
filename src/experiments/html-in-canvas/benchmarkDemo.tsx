@@ -14,6 +14,7 @@ import {
     centeredScale,
 } from './htmlInCanvasHelpers';
 import { useHicCanvas } from './htmlInCanvasHooks';
+import { SCRIPT_SAMPLES } from './scriptSamples';
 import {
     DemoFrameComp,
     ButtonComp,
@@ -260,7 +261,10 @@ export function BenchmarkComp() {
                 <SlideComp
                     elementRef={elementRef}
                     heading="Benchmark"
-                    lines={['1920 x 1080 subtree', 'ព្រះគុណ · 中文 · عربى']}
+                    lines={[
+                        '1920 x 1080 subtree',
+                        `${SCRIPT_SAMPLES.stacked} · ${SCRIPT_SAMPLES.ideographs} · ${SCRIPT_SAMPLES.rightToLeft}`,
+                    ]}
                 />
             </canvas>
             <table

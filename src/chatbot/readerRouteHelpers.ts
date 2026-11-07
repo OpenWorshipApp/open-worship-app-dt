@@ -1,6 +1,7 @@
 import { detectBotFocus } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 import { tran } from './chatTranHelpers';
 import { BUILTIN_TOOL_NAME, type BotActionType } from './helpBotHelpers';
+import { checkHasAnyLanguageWord } from './chatLangHelpers';
 
 /**
  * The way back to the Bible Reader, offered under an answer about reading
@@ -24,15 +25,33 @@ import { BUILTIN_TOOL_NAME, type BotActionType } from './helpBotHelpers';
 // The pages of the main window that are not the Reader.
 const OTHER_MAIN_PAGE_LIST = ['presenter', 'appDocumentEditor'];
 
-const BIBLE_PATTERN =
-    /\b(?:bibles?|scriptures?|verses?|passages?|psalms?|gospels?)\b|ព្រះគម្ពីរ|គម្ពីរ/i;
+// In English here; every other language's words are its own
+// (`readerRouteWords` in its `assistant.json`).
+const ENGLISH_BIBLE_PATTERN =
+    /\b(?:bibles?|scriptures?|verses?|passages?|psalms?|gospels?)\b/i;
 // Reading it, getting to it, finding something in it.
-const READING_PATTERN =
-    /\b(?:read|reading|open|opening|find|finding|look(?:ing)?\s?up|lookup|search|searching|study|studying|where|go\s+to|get\s+to|see)\b|អាន|បើក|រក|មើល/i;
+const ENGLISH_READING_PATTERN =
+    /\b(?:read|reading|open|opening|find|finding|look(?:ing)?\s?up|lookup|search|searching|study|studying|where|go\s+to|get\s+to|see)\b/i;
 // For the people in the room: that is the Presenter's own work, and the
 // answer about it needs no way out.
-const PRESENTING_PATTERN =
-    /\b(?:screens?|projectors?|present|presenting|presentation|display|slides?|congregation|audience|live|cast)\b|\bshow(?:ing|s)?\b.*\b(?:on|to)\b|អេក្រង់|បញ្ចាំង/i;
+const ENGLISH_PRESENTING_PATTERN =
+    /\b(?:screens?|projectors?|present|presenting|presentation|display|slides?|congregation|audience|live|cast)\b|\bshow(?:ing|s)?\b.*\b(?:on|to)\b/i;
+
+type ReaderRouteWordKindType = 'bible' | 'reading' | 'presenting';
+const ENGLISH_PATTERN_MAP: Record<ReaderRouteWordKindType, RegExp> = {
+    bible: ENGLISH_BIBLE_PATTERN,
+    reading: ENGLISH_READING_PATTERN,
+    presenting: ENGLISH_PRESENTING_PATTERN,
+};
+
+function checkHasRouteWord(words: string, kind: ReaderRouteWordKindType) {
+    return (
+        ENGLISH_PATTERN_MAP[kind].test(words) ||
+        checkHasAnyLanguageWord(words, (language) => {
+            return language.readerRouteWords[kind];
+        })
+    );
+}
 
 export const READER_ROUTE_COMMAND = '/goto reader';
 // Stored English on the button and translated where it is drawn
@@ -77,9 +96,9 @@ const OPEN_WINDOW_PATTERN = /\bopen\s+windows?\b/gi;
 export function checkIsBibleReadingAsk(asked: string) {
     const words = asked.replace(OPEN_WINDOW_PATTERN, 'window');
     return (
-        BIBLE_PATTERN.test(words) &&
-        READING_PATTERN.test(words) &&
-        !PRESENTING_PATTERN.test(words)
+        checkHasRouteWord(words, 'bible') &&
+        checkHasRouteWord(words, 'reading') &&
+        !checkHasRouteWord(words, 'presenting')
     );
 }
 

@@ -1,0 +1,9 @@
+{
+    "wordLanguages": [
+        {
+            "pattern": "\\p{Script=Myanmar}",
+            "name": "Burmese",
+            "order": 9
+        }
+    ]
+}

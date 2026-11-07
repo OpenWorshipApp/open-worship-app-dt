@@ -120,3 +120,100 @@ test('a volume changes the speaker it belongs to, within 0 to 1', () => {
     expect(decoders[1].close).toHaveBeenCalled();
     expect(decoders[0].close).not.toHaveBeenCalled();
 });
+
+test('a message of no known type changes nothing', () => {
+    mod.receiveIntercomMessage({ type: 'probe' } as any);
+    expect(contexts).toHaveLength(0);
+    expect(decoders).toHaveLength(0);
+    // And an audio packet before any configuration has nowhere to go.
+    mod.receiveIntercomMessage({
+        type: 'audio',
+        key: 'guest:a',
+        data: new Uint8Array([1]),
+    });
+    expect(decoders).toHaveLength(0);
+});
+
+// The microphone read through a track processor, as in this Electron.
+function stubMicrophone(getUserMedia: ReturnType<typeof vi.fn>) {
+    const encoders: any[] = [];
+    vi.stubGlobal(
+        'AudioEncoder',
+        class {
+            state = 'configured';
+            configure = vi.fn();
+            encode = vi.fn();
+            close = vi.fn();
+            constructor(readonly init: any) {
+                encoders.push(this);
+            }
+        },
+    );
+    const frame = { sampleRate: 48000, numberOfChannels: 1, close: vi.fn() };
+    const read = vi
+        .fn()
+        .mockResolvedValueOnce({ value: frame, done: false })
+        .mockReturnValue(new Promise(() => {}));
+    vi.stubGlobal(
+        'MediaStreamTrackProcessor',
+        class {
+            readable = {
+                getReader: () => ({ read, cancel: vi.fn(async () => {}) }),
+            };
+        },
+    );
+    vi.stubGlobal('navigator', { mediaDevices: { getUserMedia } });
+    return { encoders };
+}
+
+test("this computer's microphone packets go to the sender the broker was given", async () => {
+    const track = { stop: vi.fn() };
+    const getUserMedia = vi.fn(async () => ({
+        getAudioTracks: () => [track],
+        getTracks: () => [track],
+    }));
+    const { encoders } = stubMicrophone(getUserMedia);
+    const sent: Uint8Array[] = [];
+    mod.initMirrorIntercomBroker((data) => {
+        sent.push(data);
+    });
+    mod.receiveIntercomMessage({ type: 'config', isMicOn: true, speakers: {} });
+    await vi.waitFor(() => expect(encoders).toHaveLength(1));
+    expect(getUserMedia).toHaveBeenCalledOnce();
+    encoders[0].init.output({
+        byteLength: 2,
+        copyTo: (target: Uint8Array) => target.set([7, 8]),
+    });
+    expect(sent).toEqual([new Uint8Array([7, 8])]);
+    // Said again, the microphone is not asked for twice.
+    mod.receiveIntercomMessage({ type: 'config', isMicOn: true, speakers: {} });
+    expect(getUserMedia).toHaveBeenCalledOnce();
+    // Off: the microphone is let go.
+    mod.receiveIntercomMessage({
+        type: 'config',
+        isMicOn: false,
+        speakers: {},
+    });
+    expect(track.stop).toHaveBeenCalledOnce();
+});
+
+test('a microphone that cannot be had is reported, let go and asked for again on the next config', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const denied = new Error('Permission denied');
+    const getUserMedia = vi.fn(async () => {
+        throw denied;
+    });
+    stubMicrophone(getUserMedia);
+    mod.receiveIntercomMessage({ type: 'config', isMicOn: true, speakers: {} });
+    await vi.waitFor(() =>
+        expect(warn).toHaveBeenCalledWith(
+            'Intercom microphone is unavailable',
+            denied,
+        ),
+    );
+    expect(getUserMedia).toHaveBeenCalledOnce();
+    // The wish was dropped with the failure, so the same config asks again.
+    mod.receiveIntercomMessage({ type: 'config', isMicOn: true, speakers: {} });
+    await vi.waitFor(() => expect(warn).toHaveBeenCalledTimes(2));
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+});

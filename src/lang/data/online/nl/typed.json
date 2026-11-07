@@ -1,0 +1,12 @@
+{
+    "nl": {
+        "name": "Dutch",
+        "nativeName": "Nederlands",
+        "script": "Latin",
+        "words": "de het een en of maar niet geen is zijn was ben bent heb hebt heeft hebben wordt ik jij je u hij zij ze wij jullie mijn jouw uw haar ons onze hoe wat waar waarom wanneer wie welke welk met van voor op aan in uit bij naar om over door kan kunt kunnen wil wilt moet mag ook nog al erg heel meer hier daar dit dat deze die er alsjeblieft alstublieft bedankt",
+        "letters": "ĳ",
+        "yes": ["ja", "ja, graag", "graag"],
+        "no": ["nee", "nee, dank je"],
+        "order": 4
+    }
+}

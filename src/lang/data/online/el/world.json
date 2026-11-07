@@ -1,0 +1,15 @@
+{
+    "nativeLanguageNames": {
+        "ελληνικά": "greek"
+    },
+    "scriptLocales": [
+        {
+            "script": "Greek",
+            "locales": ["el-GR"],
+            "order": 1000
+        }
+    ],
+    "languageAliases": {
+        "greece": "greek"
+    }
+}

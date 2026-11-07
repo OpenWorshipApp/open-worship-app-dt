@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
     dirSource: { dirPath: '/photos' } as null | { dirPath: string },
     fileListProps: null as null | Record<string, any>,
     gridProps: null as null | Record<string, any>,
+    itemPropsList: [] as Record<string, any>[],
 }));
 
 vi.mock('../_screen/managers/screenEventHelpers', () => ({
@@ -45,7 +46,10 @@ vi.mock('../virtual-list/VirtualGridComp', () => ({
     },
 }));
 vi.mock('./BackgroundMediaItemComp', () => ({
-    default: ({ filePath }: { filePath: string }) => <span>{filePath}</span>,
+    default: (props: Record<string, any>) => {
+        state.itemPropsList.push(props);
+        return <span>{props.filePath}</span>;
+    },
 }));
 vi.mock('./BackgroundFooterComp', () => ({
     default: () => <footer>Footer</footer>,
@@ -70,6 +74,7 @@ beforeEach(() => {
     state.dirSource = { dirPath: '/photos' };
     state.fileListProps = null;
     state.gridProps = null;
+    state.itemPropsList = [];
 });
 
 describe('background media card', () => {
@@ -148,5 +153,28 @@ describe('background media card', () => {
             itemWidth: 0,
             estimateRowHeight: 30,
         });
+    });
+
+    it('hands every tile one shared empty extra menu unless the caller brings its own', () => {
+        renderToStaticMarkup(<BackgroundMediaComp {...baseProps} />);
+        renderToStaticMarkup(<BackgroundMediaComp {...baseProps} />);
+        const menuList = state.itemPropsList.map(
+            (props) => props.genExtraItemContextMenuItems,
+        );
+        expect(menuList).toHaveLength(4);
+        // The SAME function each render, so a memoised tile is not redrawn.
+        expect(new Set(menuList).size).toBe(1);
+        expect(menuList[0]('/photos/a.jpg')).toEqual([]);
+
+        const genExtraItemContextMenuItems = () => [{ menuElement: 'Edit' }];
+        renderToStaticMarkup(
+            <BackgroundMediaComp
+                {...baseProps}
+                genExtraItemContextMenuItems={genExtraItemContextMenuItems}
+            />,
+        );
+        expect(state.itemPropsList.at(-1)!.genExtraItemContextMenuItems).toBe(
+            genExtraItemContextMenuItems,
+        );
     });
 });

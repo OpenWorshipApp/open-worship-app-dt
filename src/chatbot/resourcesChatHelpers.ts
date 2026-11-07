@@ -19,6 +19,11 @@
  */
 import type { ResourceReadingType } from '../helper/ai/resourceReadingAskHelpers';
 import { fillWords, tran } from './chatTranHelpers';
+import {
+    COLON_MARKS,
+    listAssistantLanguages,
+    toCharClassSource,
+} from './chatLangHelpers';
 import type { BotActionType } from './helpBotHelpers';
 
 export const RESOURCES_ASK_KIND = 'resources';
@@ -444,19 +449,53 @@ export function genResourceRangeReplies(
 // runaway guard, not a display budget.
 const MAX_RESOURCE_CROSS_REFERENCES = 30;
 
-// The line the answer writes for its cross-references, in English or Khmer:
-// `References: Matthew 9:32, ...`, `យោង៖ ម៉ាថាយ ៩:៣២, ...`.
+// A colon as any language here writes one.
+const COLON_CLASS = `:：${toCharClassSource(COLON_MARKS)}`;
+
+// The line the answer writes for its cross-references, in English or in the
+// answer's language (`crossReferenceLabels`): `References: Matthew 9:32, ...`,
+// or the same with the language's own label, colon and digits.
 // The block after the label, not only its first line: a model wraps a long
 // list across lines, and the first three of six references became the only
 // buttons (seen live 2026-10-19). The split below keeps line breaks apart.
-const CROSS_REFERENCE_LINE_PATTERN =
-    /(?:^|\n)[^\n]*?(?:cross[- ]?references?|references?|xref|យោង|ខយោង)[^\n]*?[:：៖]\s*([\s\S]+)/iu;
+const CROSS_REFERENCE_LABEL_SOURCE = [
+    'cross[- ]?references?',
+    'references?',
+    'xref',
+    ...listAssistantLanguages().flatMap((language) => {
+        return language.crossReferenceLabels.map((label) => {
+            return label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        });
+    }),
+].join('|');
+const CROSS_REFERENCE_LINE_PATTERN = new RegExp(
+    `(?:^|\\n)[^\\n]*?(?:${CROSS_REFERENCE_LABEL_SOURCE})[^\\n]*?[${COLON_CLASS}]\\s*([\\s\\S]+)`,
+    'iu',
+);
+const COLON_NUMBER_PATTERN = new RegExp(`[${COLON_CLASS}]\\s*\\p{N}`, 'u');
+const CROSS_REFERENCE_LABEL_PATTERN = new RegExp(
+    `(?:${CROSS_REFERENCE_LABEL_SOURCE})\\s*[${COLON_CLASS}]`,
+    'iu',
+);
+
+/**
+ * Whether the text carries a references line's label and colon, in English
+ * or in any language here (`crossReferenceLabels`, `colonMarks`).
+ */
+export function checkHasCrossReferenceLabel(text: string) {
+    return CROSS_REFERENCE_LABEL_PATTERN.test(text);
+}
+
+/** Whether a colon, as any language here writes one, comes before a number. */
+export function checkHasColonNumber(text: string) {
+    return COLON_NUMBER_PATTERN.test(text);
+}
 
 function checkIsResourceCrossReference(value: string) {
     return (
         value.length > 0 &&
         value.length <= 80 &&
-        /[:：៖]\s*\p{N}/u.test(value) &&
+        COLON_NUMBER_PATTERN.test(value) &&
         // A vision model once exposed legacy-font guesses such as
         // "mf 3:7" and "kc 23:6-8" as buttons. A verified reference can
         // always use the full book name; do not make a raw short OCR token

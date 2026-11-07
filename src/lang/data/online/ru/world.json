@@ -1,0 +1,25 @@
+{
+    "nativeLanguageNames": {
+        "русский": "russian"
+    },
+    "cyrillicLetterLocales": [
+        {
+            "letters": "ыэ",
+            "locales": ["ru-RU", "uk-UA"],
+            "order": 4
+        }
+    ],
+    "scriptLocales": [
+        {
+            "script": "Cyrillic",
+            "locales": ["ru-RU"],
+            "order": 1100
+        }
+    ],
+    "cyrillicDefaultLocales": [
+        {
+            "locale": "ru-RU",
+            "order": 1
+        }
+    ]
+}

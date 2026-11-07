@@ -3,7 +3,6 @@ import type { CSSProperties } from 'react';
 import {
     HEX_COLOR_BLACK,
     HEX_COLOR_WHITE,
-    checkIsColorDark,
 } from '../others/color/colorValueHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import {
@@ -11,18 +10,15 @@ import {
     genBibleTextEffectDefault,
     genBibleTextFontFamilyCss,
     genBibleTextShadow,
+    toBibleBackdrop,
+    type BibleBackdropType,
     type BibleTextEffectType,
     type BibleTextStyleViewType,
 } from '../_screen/bibleTextStyleHelpers';
 
-/**
- * What is BEHIND the words. It is what decides everything else here: words on
- * a dark picture are light and edged in dark, words on a light one the
- * reverse, and a look judged against the wrong one tells the operator nothing.
- * Never stored -- it is read off the colour of the words, so a colour changed
- * anywhere (the contrast fix a colour background makes) moves it too.
- */
-export type BibleBackdropType = 'dark' | 'light';
+// The backdrop lives beside the style now -- the screen reads it to pick the
+// selection band -- and is still offered here for the panel's callers.
+export { toBibleBackdrop, type BibleBackdropType };
 
 export const BIBLE_TEXT_LOOK_ID_LIST = [
     'normal',
@@ -54,10 +50,6 @@ const TINT_COLOR_MAP: Record<BibleBackdropType, string> = {
     dark: '#16235F',
     light: '#A9BAFF',
 };
-
-export function toBibleBackdrop(color: string): BibleBackdropType {
-    return checkIsColorDark(color) ? 'light' : 'dark';
-}
 
 export function genBibleWordColor(backdrop: BibleBackdropType) {
     return WORD_COLOR_MAP[backdrop];
@@ -249,6 +241,8 @@ export function genBibleTextResetPatch(
         lineHeight: undefined,
         letterSpacing: undefined,
         textAlign: undefined,
+        highlightColorDark: undefined,
+        highlightColorLight: undefined,
     };
 }
 

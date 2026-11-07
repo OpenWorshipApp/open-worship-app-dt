@@ -92,7 +92,7 @@ dev-visible-only failure — which is exactly why the robot run has to catch it.
 
 #### Keys are sanitized — `trim().toLowerCase()` — before lookup ⚠️
 
-`sanitizeTranKey` (`src/lang/data/km/index.ts`) is `key.trim().toLowerCase()`, and the
+`sanitizeTranKey` (`src/lang/data/online/onlineLangPackage.ts`, every language's) is `key.trim().toLowerCase()`, and the
 dictionary is re-keyed through it at module load (which also **throws on duplicates after
 sanitization** — that guard is how a bad "fix" gets caught).
 

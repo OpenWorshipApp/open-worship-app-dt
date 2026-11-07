@@ -1,0 +1,12 @@
+{
+    "vi": {
+        "name": "Vietnamese",
+        "nativeName": "Tiếng Việt",
+        "script": "Latin",
+        "words": "làm sao để của và là có không tôi bạn này được cho với trong những các một thế nào gì ở đâu tại vì khi ai nó chúng ta thì mà rồi lên ra vào xin cảm ơn giúp muốn cần phải đã đang sẽ cũng rất hơn",
+        "letters": "ăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ",
+        "yes": ["có", "vâng", "dạ", "dạ vâng", "được"],
+        "no": ["không", "không, cảm ơn"],
+        "order": 24
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "ca": {
+        "name": "Catalan",
+        "nativeName": "Català",
+        "script": "Latin",
+        "words": "el la els les l' un una uns unes del dels al als i o que què qual quin quina com on quan qui perquè per amb sense en de d' és són està estan estic hi ha meu meva teu teva seu seva em et ens aquest aquesta això aquí puc pot vull fer veure molt més però també ja res tot ajuda gràcies",
+        "letters": "çàèéíïòóúü·",
+        "yes": ["sí", "si, si us plau"],
+        "no": ["no", "no, gràcies"],
+        "order": 6
+    }
+}

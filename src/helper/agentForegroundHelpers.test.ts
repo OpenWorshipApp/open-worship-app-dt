@@ -40,6 +40,7 @@ import {
     AGENT_FOREGROUND_WIDGETS,
     handleAgentForegroundRequest,
     parseClockTimeToday,
+    type AgentForegroundRequestType,
 } from './agentForegroundHelpers';
 import {
     AGENT_FOREGROUND_ACTIONS as MJS_ACTIONS,
@@ -462,6 +463,148 @@ describe('handleAgentForegroundRequest', () => {
             reason: expect.stringContaining('Screen 0 is locked'),
         });
         expect(h.managers[0].screenForegroundManager.calls).toEqual([]);
+    });
+
+    it('refuses an action it does not know before touching a screen', async () => {
+        expect(
+            await handleAgentForegroundRequest({
+                action: 'pause',
+                widget: 'countdown',
+                minutes: 5,
+            }),
+        ).toEqual({
+            isError: true,
+            reason: 'Unknown action "pause". Use start, stop or check.',
+        });
+        expect(h.managers[0].screenForegroundManager.calls).toEqual([]);
+    });
+
+    it('scrolls a message along the top, and only the top', async () => {
+        const result = await handleAgentForegroundRequest({
+            widget: 'marquee-top',
+            text: ' Welcome   all ',
+        });
+        expect((result as any).detail).toBe(
+            'a message scrolling along the top: "Welcome all"',
+        );
+        const manager = h.managers[0].screenForegroundManager;
+        expect(manager.calls).toEqual(['marqueeTopData']);
+        expect(manager.foregroundData.marqueeTopData).toEqual({
+            text: 'Welcome all',
+            speedPercentage: 100,
+            extraStyle: {},
+        });
+        expect(manager.foregroundData.marqueeBottomData).toBeNull();
+        expect((result as any).screens[0].foreground).toEqual([
+            'marquee at the top: "Welcome all"',
+        ]);
+    });
+
+    it('refuses a quick text with no words or too many, and keeps its time up within bounds', async () => {
+        expect(
+            await handleAgentForegroundRequest({
+                widget: 'quick-text',
+                text: '   ',
+            }),
+        ).toMatchObject({
+            isError: true,
+            reason: expect.stringContaining('Say the words to show'),
+        });
+        expect(
+            await handleAgentForegroundRequest({
+                widget: 'quick-text',
+                text: 'x'.repeat(301),
+            }),
+        ).toMatchObject({
+            isError: true,
+            reason:
+                'That is 301 characters; a quick text is at most 300. ' +
+                'Shorten it.',
+        });
+        const manager = h.managers[0].screenForegroundManager;
+        expect(manager.calls).toEqual([]);
+        // Ten minutes at most, and a fraction of a second is no time at all.
+        await handleAgentForegroundRequest({
+            widget: 'quick-text',
+            text: 'Long',
+            seconds: 5000,
+        });
+        expect(manager.foregroundData.quickTextData.timeSecondToLive).toBe(600);
+        await handleAgentForegroundRequest({
+            widget: 'quick-text',
+            text: 'Short',
+            seconds: 0.5,
+        });
+        expect(manager.foregroundData.quickTextData.timeSecondToLive).toBe(10);
+    });
+
+    const stopCases: [
+        string,
+        string,
+        string,
+        AgentForegroundRequestType,
+        unknown,
+    ][] = [
+        ['stopwatch', 'stopwatchData', 'stopwatch', {}, null],
+        ['clock', 'timeDataList', 'clock', {}, []],
+        [
+            'marquee-top',
+            'marqueeTopData',
+            'scrolling message along the top',
+            { text: 'Hello' },
+            null,
+        ],
+        [
+            'marquee-bottom',
+            'marqueeBottomData',
+            'scrolling message along the bottom',
+            { text: 'Hello' },
+            null,
+        ],
+        [
+            'quick-text',
+            'quickTextData',
+            'line of text',
+            { text: 'Hello' },
+            null,
+        ],
+    ];
+    it.each(stopCases)(
+        'stops the %s it started, and says when there was none',
+        async (widget, key, noun, extra, cleared) => {
+            await handleAgentForegroundRequest({ widget, ...extra }, NOW);
+            const manager = h.managers[0].screenForegroundManager;
+            expect(manager.foregroundData[key]).not.toEqual(cleared);
+            const stopped = await handleAgentForegroundRequest({
+                action: 'stop',
+                widget,
+            });
+            expect(stopped).toMatchObject({
+                did: 'stopped',
+                widget,
+                detail: `The ${noun} is off the screen now.`,
+            });
+            expect((stopped as any).note).toBeUndefined();
+            expect(manager.foregroundData[key]).toEqual(cleared);
+            expect((stopped as any).screens[0].foreground).toEqual([]);
+            const again = await handleAgentForegroundRequest({
+                action: 'stop',
+                widget,
+            });
+            expect((again as any).note).toBe(
+                `There was no ${noun} on the screen, so nothing changed.`,
+            );
+        },
+    );
+
+    it('says which screens hold an extra, and which of them are off', async () => {
+        h.managers = [genManager(0, { isShowing: true }), genManager(1)];
+        await handleAgentForegroundRequest({ widget: 'clock' }, NOW);
+        const held = await handleAgentForegroundRequest({ action: 'check' });
+        expect((held as any).detail).toBe(
+            'Screen 0 holds clock. Screen 1 holds clock (off).',
+        );
+        expect((held as any).isAnyShowing).toBe(true);
     });
 
     it('steps over a locked screen when another ticked one is free', async () => {

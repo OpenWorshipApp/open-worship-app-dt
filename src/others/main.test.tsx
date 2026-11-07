@@ -201,7 +201,8 @@ describe('renderer startup', () => {
         expect(mocks.initMeter).toHaveBeenCalledOnce();
         expect(mocks.initDragDrop).toHaveBeenCalledOnce();
         expect(mocks.initWidgetMenu).toHaveBeenCalledOnce();
-        expect(document.body.style.fontFamily).toBe('Test Font');
+        // The page's font is boot's (`boot.ts`), set before `run()`.
+        expect(document.body.style.fontFamily).toBe('');
         expect(mocks.rootRender.mock.calls[0][0].type).toBe(RenderAppComp);
         expect(
             renderToStaticMarkup(<RenderAppComp>service</RenderAppComp>),
@@ -367,5 +368,115 @@ describe('data directory startup', () => {
         mocks.selectedParentDir = '/saved';
         await checkDirectory();
         expect(mocks.confirm).not.toHaveBeenCalled();
+    });
+
+    test('a window refused its session storage still asks, with no move result', async () => {
+        // A locked-down profile can refuse storage: the launch question then
+        // fails open instead of never being asked.
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+            throw new Error('storage refused');
+        });
+        mocks.selectedParentDir = '/desktop/open-worship-data';
+        await checkDirectory();
+        expect(mocks.showMoveResult).not.toHaveBeenCalled();
+        expect(mocks.askToMove).toHaveBeenCalledExactlyOnceWith(
+            '/desktop/open-worship-data',
+        );
+    });
+});
+
+describe('uncaught failures, quitting and updates, more ways in', () => {
+    async function flushMicrotasks() {
+        for (let i = 0; i < 10; i++) {
+            await Promise.resolve();
+        }
+    }
+
+    test('a burst of failures opens one question at a time; Reload reloads', async () => {
+        await run();
+        let answer!: (isOk: boolean) => void;
+        mocks.confirm.mockImplementationOnce(
+            () =>
+                new Promise<boolean>((resolve) => {
+                    answer = resolve;
+                }),
+        );
+        (globalThis.onerror as any)('first');
+        await vi.waitFor(() => expect(mocks.confirm).toHaveBeenCalledOnce());
+        (globalThis.onerror as any)('second');
+        (globalThis.onunhandledrejection as any)({
+            reason: new Error('third'),
+        });
+        await flushMicrotasks();
+        expect(mocks.handleError).toHaveBeenCalledTimes(3);
+        expect(mocks.offerReport).toHaveBeenCalledOnce();
+        expect(mocks.confirm).toHaveBeenCalledOnce();
+        expect(mocks.confirm.mock.calls[0][0]).toBe('Reload is needed');
+        answer(true);
+        await vi.waitFor(() => expect(mocks.reload).toHaveBeenCalledOnce());
+        // The question is down again: the next failure is offered anew.
+        mocks.offerReport.mockResolvedValue(true);
+        (globalThis.onerror as any)('fourth');
+        await flushMicrotasks();
+        expect(mocks.offerReport).toHaveBeenCalledTimes(2);
+        expect(mocks.offerReport).toHaveBeenLastCalledWith('fourth');
+        expect(mocks.confirm).toHaveBeenCalledOnce();
+    });
+
+    test('a failure the person reports asks no reload question', async () => {
+        await run();
+        mocks.offerReport.mockResolvedValue(true);
+        const reason = new Error('lost the screen');
+        (globalThis.onunhandledrejection as any)({ reason });
+        await flushMicrotasks();
+        expect(mocks.handleError).toHaveBeenCalledExactlyOnceWith(reason);
+        expect(mocks.offerReport).toHaveBeenCalledExactlyOnceWith(reason);
+        expect(mocks.confirm).not.toHaveBeenCalled();
+        // Nothing counted toward the "local settings are broken" repeat.
+        expect(mocks.settings.has('error-datetime-setting')).toBe(false);
+    });
+
+    test('a DOM exception is logged and asks nothing', async () => {
+        await run();
+        const error = new DOMException('play() was interrupted', 'AbortError');
+        (globalThis.onerror as any)(error);
+        await flushMicrotasks();
+        expect(mocks.handleError).toHaveBeenCalledExactlyOnceWith(error);
+        expect(mocks.offerReport).not.toHaveBeenCalled();
+        expect(mocks.confirm).not.toHaveBeenCalled();
+    });
+
+    test('Quick Exit closes the window only on Yes', async () => {
+        const close = vi.spyOn(window, 'close').mockImplementation(() => {});
+        await run();
+        KeyboardEventListener.onMacQuitting?.();
+        await vi.waitFor(() => expect(mocks.confirm).toHaveBeenCalledOnce());
+        expect(mocks.confirm).toHaveBeenCalledWith(
+            'Quick Exit',
+            'Are you sure you want to quit the app?',
+            { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
+        );
+        await flushMicrotasks();
+        expect(close).not.toHaveBeenCalled();
+        mocks.confirm.mockResolvedValue(true);
+        KeyboardEventListener.onMacQuitting?.();
+        await vi.waitFor(() => expect(close).toHaveBeenCalledOnce());
+    });
+
+    test('the Presenter and the Reader look for an update a minute after start', async () => {
+        vi.useFakeTimers();
+        await run();
+        await vi.advanceTimersByTimeAsync(6e4);
+        expect(mocks.checkUpdate).not.toHaveBeenCalled();
+        for (const isPresenter of [true, false]) {
+            mocks.isPagePresenter = isPresenter;
+            mocks.isPageReader = !isPresenter;
+            mocks.checkUpdate.mockClear();
+            await run();
+            await vi.advanceTimersByTimeAsync(6e4 - 1);
+            expect(mocks.checkUpdate).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(1);
+            expect(mocks.checkUpdate).toHaveBeenCalledOnce();
+        }
     });
 });

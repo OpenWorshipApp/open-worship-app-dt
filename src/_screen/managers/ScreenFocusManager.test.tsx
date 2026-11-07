@@ -90,6 +90,19 @@ function mountOverlay(manager: any) {
     return div;
 }
 
+// An overlay that collapsed (its panel hidden): there is no point to map to.
+const ZERO_RECT = {
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+} as DOMRect;
+
 function pointerEvent(type: string, clientX: number, clientY: number) {
     return new MouseEvent(type, { clientX, clientY, bubbles: true, button: 0 });
 }
@@ -456,5 +469,211 @@ describe('ScreenFocusManager', () => {
             data: null,
         } as any);
         expect(showSimpleToast).toHaveBeenCalled();
+    });
+
+    test('a value it already has is no change: no event, no write', async () => {
+        const ScreenFocusManager = await importManager();
+        vi.useFakeTimers();
+        try {
+            const manager = new ScreenFocusManager(createBase(80));
+            mountOverlay(manager);
+            manager.setIsArmed(true);
+            manager.setIsPanelOpen(true);
+            manager.setSize(400);
+            manager.setDimColor('#112233');
+            manager.setDimOpacity(40);
+            manager.setEdgeBlur(10);
+            manager.setIsContrast(true);
+            vi.advanceTimersByTime(200);
+            await Promise.resolve();
+            setSettingMock.mockClear();
+            const onUpdate = vi.fn();
+            manager.registerEventListener(['update'], onUpdate);
+
+            manager.setIsArmed(true);
+            manager.setIsPanelOpen(true);
+            manager.setSize(400);
+            manager.setDimColor('#112233');
+            manager.setDimOpacity(40);
+            manager.setEdgeBlur(10);
+            manager.setIsContrast(true);
+            vi.advanceTimersByTime(200);
+            for (let i = 0; i < 5; i++) {
+                await Promise.resolve();
+            }
+
+            expect(onUpdate).not.toHaveBeenCalled();
+            expect(setSettingMock).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('the same overlay handed in again keeps a press going', async () => {
+        const ScreenFocusManager = await importManager();
+        const manager = new ScreenFocusManager(createBase(81));
+        const div = mountOverlay(manager);
+        manager.setIsArmed(true);
+        press(div, 50, 25);
+
+        // A re-render passing the very same div must not drop the gesture.
+        manager.div = div;
+        moveTo(25, 10);
+        expect(manager.isSpotlighting).toBe(true);
+        expect(manager.point).toEqual({ x: 50, y: 20 });
+        release();
+        expect(manager.isSpotlighting).toBe(false);
+    });
+
+    test('a mini preview lets go of its overlay only if it is still held', async () => {
+        const ScreenFocusManager = await importManager();
+        const manager = new ScreenFocusManager(createBase(82));
+        const div = mountOverlay(manager);
+        manager.setIsArmed(true);
+
+        // An older preview unmounting after a newer one took over.
+        manager.releaseDiv(document.createElement('div'));
+        expect(manager.div).toBe(div);
+
+        manager.releaseDiv(div);
+        expect(manager.div).not.toBe(div);
+        // Its pointer listeners went with it.
+        press(div, 50, 25);
+        expect(manager.isSpotlighting).toBe(false);
+    });
+
+    test('the projected screen never lets go of its overlay', async () => {
+        const ScreenFocusManager = await importManager();
+        appProviderMock.isPagePresenter = false;
+        appProviderMock.isPageScreen = true;
+        const manager = new ScreenFocusManager(createBase(83));
+        const div = mountOverlay(manager);
+
+        manager.releaseDiv(div);
+        expect(manager.div).toBe(div);
+    });
+
+    test('a secondary button or a collapsed overlay is not a press', async () => {
+        const ScreenFocusManager = await importManager();
+        const base = createBase(84);
+        const manager = new ScreenFocusManager(base);
+        const div = mountOverlay(manager);
+        manager.setIsArmed(true);
+
+        div.dispatchEvent(
+            new MouseEvent('pointerdown', {
+                clientX: 50,
+                clientY: 25,
+                bubbles: true,
+                button: 2,
+            }),
+        );
+        expect(manager.isSpotlighting).toBe(false);
+
+        div.getBoundingClientRect = () => ZERO_RECT;
+        press(div, 50, 25);
+        expect(manager.isSpotlighting).toBe(false);
+        expect(manager.point).toBeNull();
+        expect(base.sendScreenMessage).not.toHaveBeenCalled();
+        // No gesture was started, so no move is tracked.
+        moveTo(25, 10);
+        expect(manager.point).toBeNull();
+    });
+
+    test('a move with no point, or after the spotlight stopped, is ignored', async () => {
+        const ScreenFocusManager = await importManager();
+        const manager = new ScreenFocusManager(createBase(85));
+        const div = mountOverlay(manager);
+        manager.setIsArmed(true);
+        const liveRect = div.getBoundingClientRect;
+
+        press(div, 50, 25);
+        // A second finger lands as the overlay collapses: no point anywhere.
+        div.getBoundingClientRect = () => ZERO_RECT;
+        press(div, 10, 10);
+        moveTo(25, 10);
+        expect(manager.isSpotlighting).toBe(true);
+        expect(manager.point).toEqual({ x: 100, y: 50 });
+        release();
+
+        div.getBoundingClientRect = liveRect;
+        press(div, 50, 25);
+        // Cleared from the panel while the button is still down.
+        manager.clear();
+        moveTo(25, 10);
+        expect(manager.isSpotlighting).toBe(false);
+        expect(manager.point).toEqual({ x: 100, y: 50 });
+        release();
+    });
+
+    test('the hole follows every move but the screen hears one per 40 ms', async () => {
+        const ScreenFocusManager = await importManager();
+        const base = createBase(86);
+        const manager = new ScreenFocusManager(base);
+        const div = mountOverlay(manager);
+        manager.setIsArmed(true);
+        const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(10_000);
+
+        press(div, 50, 25);
+        base.sendScreenMessage.mockClear();
+        nowSpy.mockReturnValue(10_039);
+        moveTo(25, 10);
+        expect(manager.point).toEqual({ x: 50, y: 20 });
+        expect(base.sendScreenMessage).not.toHaveBeenCalled();
+
+        nowSpy.mockReturnValue(10_040);
+        moveTo(30, 10);
+        expect(base.sendScreenMessage).toHaveBeenCalledTimes(1);
+        expect(base.sendScreenMessage).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                screenId: 86,
+                type: 'focus',
+                data: expect.objectContaining({
+                    isSpotlighting: true,
+                    point: { x: 60, y: 20 },
+                }),
+            }),
+            false,
+        );
+        release();
+        nowSpy.mockRestore();
+    });
+
+    test('a sync with no data is ignored; a blur in one is clamped', async () => {
+        const ScreenFocusManager = await importManager();
+        const manager = new ScreenFocusManager(createBase(87));
+        mountOverlay(manager);
+
+        manager.receiveSyncScreen(focusMessage(87, null));
+        expect(manager.edgeBlur).toBe(35);
+        expect(manager.isSpotlighting).toBe(false);
+
+        manager.receiveSyncScreen(
+            focusMessage(87, { isSpotlighting: false, edgeBlur: 999 }),
+        );
+        expect(manager.edgeBlur).toBe(100);
+        manager.receiveSyncScreen(
+            focusMessage(87, { isSpotlighting: false, edgeBlur: 12 }),
+        );
+        expect(manager.edgeBlur).toBe(12);
+        expect(manager.point).toBeNull();
+    });
+
+    test('a sync message for an open screen is applied to it', async () => {
+        const ScreenFocusManager = await importManager();
+        const { showSimpleToast } = await import('../../toast/toastHelpers');
+        const manager = new ScreenFocusManager(createBase(88));
+
+        ScreenFocusManager.receiveSyncScreen(
+            focusMessage(88, {
+                isSpotlighting: true,
+                point: { x: 5, y: 6 },
+                size: 450,
+            }),
+        );
+        expect(manager.isSpotlighting).toBe(true);
+        expect(manager.point).toEqual({ x: 5, y: 6 });
+        expect(manager.size).toBe(450);
+        expect(showSimpleToast).not.toHaveBeenCalled();
     });
 });

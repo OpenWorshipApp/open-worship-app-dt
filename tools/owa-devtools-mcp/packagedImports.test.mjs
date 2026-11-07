@@ -45,8 +45,37 @@ function listShippedPackageNames() {
   return [...names].sort();
 }
 
+// The files a shipped module imports from OUTSIDE this folder, repo-relative:
+// English's own language data (`src/lang/data/en/world.json`, the locale
+// codes), which the renderer bundles and a packaged server must find beside it.
+function listShippedOutsideImports() {
+  const pattern =
+    /(?:^|[\s;])(?:import|export)\s[^'"]*?from\s*['"](\.[^'"]+)['"]/g;
+  const repoRoot = path.join(HERE, '..', '..');
+  const found = new Set();
+  for (const fileName of readdirSync(HERE).filter(checkIsShipped)) {
+    const text = readFileSync(path.join(HERE, fileName), 'utf8');
+    for (const match of text.matchAll(pattern)) {
+      const target = path.resolve(HERE, match[1]);
+      if (!target.startsWith(HERE + path.sep)) {
+        found.add(path.relative(repoRoot, target).split(path.sep).join('/'));
+      }
+    }
+  }
+  return [...found].sort();
+}
+
 describe('a packaged app can load this package', () => {
   const packageNames = listShippedPackageNames();
+
+  test('ships and unpacks every file it imports from outside its folder', () => {
+    const outsideList = listShippedOutsideImports();
+    expect(outsideList).toContain('src/lang/data/en/world.json');
+    for (const rel of outsideList) {
+      expect(ROOT_PACKAGE.build.files, rel).toContain(rel);
+      expect(ROOT_PACKAGE.build.asarUnpack, rel).toContain(rel);
+    }
+  });
 
   test('reads chrome-devtools-mcp, the import this test exists for', () => {
     expect(packageNames).toContain('chrome-devtools-mcp');

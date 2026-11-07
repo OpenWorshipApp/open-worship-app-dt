@@ -1,0 +1,8 @@
+{
+    "locale": "hu-HU",
+    "order": 20,
+    "name": "Hungarian",
+    "nativeName": "Magyar",
+    "version": "0.0.11",
+    "description": "The app in Hungarian, Bible book names in English."
+}

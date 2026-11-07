@@ -1,24 +1,25 @@
 // Fix the theme titles of a language's cross-reference bundle
-// (`src/lang/data/<code>/bb-cr.gz.bundle`, the data the Reader's Cross
+// (`src/lang/data/online/<code>/bb-cr.gz.bundle`, the data the Reader's Cross
 // References panel and the 🤖's passage chat read) where the translation went
 // wrong (2026-10-23, EC-417). Measured on the Khmer bundle: of 231 890 themes,
-// 7 241 left English words in the Khmer (`ភ្នំ Jezreel`, `ព្រះ Pagan`), 7 291
-// held a letter that is not Khmer, 90 read "patient" as a sick person
-// (`អ្នកជំងឺ`) and ~150 gave a word its modern sense (`KM_FALSE_FRIEND_LIST`)
-// -- a reader of no English sees them, in the panel and in **Related
+// 7 241 left English words in the Khmer (a mountain's or a god's English
+// name after the Khmer word for it), 7 291 held a letter that is not Khmer,
+// 90 read "patient" as a sick person and ~150 gave a word its modern sense
+// (the language's `cross-ref-title-rules.json`) -- a reader of no English
+// sees them, in the panel and in **Related
 // verses**. A second sweep found 225 more (a temple's court as a law court, a
 // shepherd's staff as employees). 7 745 titles were written again; the
 // rescan finds none left.
 //
-//   node extra-work/fix-cross-ref-titles.mjs --lang=km [--dry] [--show-left]
+//   node extra-work/fix-cross-ref-titles.mjs --lang=<code> [--dry] [--show-left]
 //        [--translate --server=http://localhost:11434/v1 --model=gemma4:cloud
 //         [--batch=40] [--timeout=180] [--temperature=0] [--debug]]
-//        [--hand=extra-work/cross-ref-title-fixes/km-hand.json]
+//        [--hand=src/lang/data/online/<code>/cross-ref-title-fixes-hand.json]
 //        [--write]
 //
 // Four steps, each kept so a run can be repeated and read:
 // 1. A KJV name in a title is written as the names lookup writes it in that
-//    language (`src/lang/data/<code>/location-name-map-data/`), the same
+//    language (`src/lang/data/online/<code>/location-name-map-data/`), the same
 //    spelling the Bible and the lookup panel use -- no model.
 // 2. `--translate`: what is still wrong is translated by a model, told the
 //    names it must use and the modern senses to avoid, a batch at a time; a
@@ -26,7 +27,7 @@
 //    friend is not taken (`--debug` prints it). A batch that hangs is
 //    dropped at `--timeout` seconds and asked again by the next run; a title
 //    the model gets wrong the same way every time may take `--temperature`.
-//    Every fix is kept in `extra-work/cross-ref-title-fixes/<code>.json`
+//    Every fix is kept in `src/lang/data/online/<code>/cross-ref-title-fixes.json`
 //    (English title + old title -> new title), so a second run asks only for
 //    what is missing (`--show-left` lists it).
 // 3. `--hand`: what no model got right, written by hand in the words the
@@ -45,69 +46,67 @@ const args = Object.fromEntries(
     return match ? [match[1], match[2] ?? true] : [arg, true];
   }),
 );
-const LANG = args.lang ?? 'km';
+const LANG = args.lang;
+if (typeof LANG !== 'string' || !/^[a-z]{2,3}$/.test(LANG)) {
+  console.error('Name the language package: --lang=<code> (src/lang/data/online/<code>/).');
+  process.exit(1);
+}
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
-const BUNDLE = path.join(ROOT, 'src', 'lang', 'data', LANG, 'bb-cr.gz.bundle');
-const MAP_DIR = path.join(ROOT, 'src', 'lang', 'data', LANG, 'location-name-map-data');
-const FIX_FILE = path.join(ROOT, 'extra-work', 'cross-ref-title-fixes', `${LANG}.json`);
+const BUNDLE = path.join(ROOT, 'src', 'lang', 'data', 'online', LANG, 'bb-cr.gz.bundle');
+const MAP_DIR = path.join(ROOT, 'src', 'lang', 'data', 'online', LANG, 'location-name-map-data');
+const FIX_FILE = path.join(ROOT, 'src', 'lang', 'data', 'online', LANG, 'cross-ref-title-fixes.json');
 const MAGIC = 'FBBNDL01';
 const LATIN_RUN = /[A-Za-z]{2,}/;
-// A translation is taken only with no Latin letter at all: a stray one
-// (`រូបគោp`) is a typo the model left, not a name. In Khmer, no letter of
-// another script either (`ការចុះ服ក្រោមសម្ពាធ`, `ចម្ការ انگूर`) and no HTML
-// entity (`លេវី&#39;s`) -- 62 of the first 4 984 translations held one.
+// A translation is taken only with no Latin letter at all: a stray one is a
+// typo the model left, not a name. In a language with a script of its own
+// (its `assistant.json` `scriptPattern`), no letter of another script either
+// (Han or Arabic letters inside a Khmer title came back) and no HTML entity
+// (an `&#39;s`) -- 62 of the first 4 984 Khmer translations held one.
 const ANY_LATIN = /[A-Za-z]/;
+const LANG_FACTS = JSON.parse(
+  fs.readFileSync(path.join(ROOT, 'src', 'lang', 'data', 'online', LANG, 'assistant.json'), 'utf8'),
+);
+const OWN_SCRIPT_SOURCE = LANG_FACTS.scriptPattern ?? '[A-Za-z]';
+const IS_OWN_SCRIPT_LATIN = new RegExp(OWN_SCRIPT_SOURCE, 'u').test('a');
 // Nor markup: one title came back ending in `**`.
-const STRAY_LETTER =
-  LANG === 'km'
-    ? /(?![\u1780-\u17FF\u19E0-\u19FF])\p{L}|&#?\w+;|[*_#`<>[\]{}|\\]/u
-    : ANY_LATIN;
+const STRAY_LETTER = IS_OWN_SCRIPT_LATIN
+  ? ANY_LATIN
+  : new RegExp(`(?!${OWN_SCRIPT_SOURCE})\\p{L}|&#?\\w+;|[*_#\`<>[\\]{}|\\\\]`, 'u');
 const BATCH = Number(args.batch ?? 40);
 // Words a machine translation gave a MODERN meaning, each with the English
-// that would make it right (null: never right in a Bible theme). "Companies
-// of Warriors" was ក្រុមហ៊ុន (a business), "Calling" ហៅទូរស័ព្ទ (a phone call),
-// "God's Host" ម៉ាស៊ីន (a machine), "The Dove as Messenger" កម្មវិធីផ្ញើសារ (a
-// messaging app) -- Genesis 8:10 and 8:12, the passage the user asked about.
-// A second sweep found the temple's courts and Pharaoh's court as a LAW
-// court (តុលាការ, 197), a shepherd's staff as employees (បុគ្គលិក, 27 --
-// Psalm 23:4's _rod and staff_, under the passage chat's own answer) and a
-// ship's pilots flying planes. A word may be a pattern, and what makes it
-// right may be a test of the English.
-const LAW_WORDS =
-  /law|legal|judg|justice|trial|tribunal|suit|litigat|worldly|accus|\bsue|testimon|witness|verdict|case|proceeding|interrog|council|to court/i;
-const KM_FALSE_FRIEND_LIST = [
-  ['ក្រុមហ៊ុន', null],
-  ['ទូរស័ព្ទ', null],
-  ['ទូរសព្ទ', null],
-  ['កម្មវិធី', /program|plan|agenda|schedule/i],
-  ['ម៉ាស៊ីន', /machine|engine|mill|battering/i],
-  ['បើកបរ', /driv(e|er|ing)|chariot/i],
-  ['តុលាការ', (titleEn) => !/\bcourts?\b/i.test(titleEn) || LAW_WORDS.test(titleEn)],
-  // Not បុគ្គលិកលក្ខណៈ, personality.
-  [/បុគ្គលិក(?!លក្ខណៈ)/, (titleEn) => !/\bstaff\b/i.test(titleEn)],
-  ['យន្តហោះ', /plane|aircraft|aviat/i],
-];
-// Khmer titles separate words with zero-width spaces (`អ្នក​ជំងឺ`): every
-// check reads the title without them.
-const toPlainKhmer = (text) => String(text ?? '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+// that would make it right -- the language's own
+// `src/lang/data/online/<code>/cross-ref-title-rules.json`. "Companies of Warriors"
+// had become a business, "Calling" a phone call, "God's Host" a machine,
+// "The Dove as Messenger" a messaging app -- Genesis 8:10 and 8:12, the
+// passage the user asked about. A second sweep found the temple's courts and
+// Pharaoh's court as a LAW court (197), a shepherd's staff as employees (27
+// -- Psalm 23:4's _rod and staff_, under the passage chat's own answer) and
+// a ship's pilots flying planes. A rule's `title` is a pattern; what makes
+// it wrong or right is a test of the English.
+const RULE_FILE = path.join(ROOT, 'src', 'lang', 'data', 'online', LANG, 'cross-ref-title-rules.json');
+const FALSE_FRIEND_LIST = (
+  fs.existsSync(RULE_FILE) ? JSON.parse(fs.readFileSync(RULE_FILE, 'utf8')).falseFriends ?? [] : []
+).map((rule) => {
+  return {
+    title: new RegExp(rule.title, 'u'),
+    badIf: rule.badIf ? new RegExp(rule.badIf, 'i') : null,
+    badUnless: rule.badUnless ? new RegExp(rule.badUnless, 'i') : null,
+  };
+});
+// Some languages separate words with zero-width spaces (Khmer titles do):
+// every check reads the title without them.
+const toPlainTitle = (text) => String(text ?? '').replace(/[\u200B-\u200D\uFEFF]/g, '');
 
-function checkHasKhmerFalseFriend(title, titleEn) {
-  if (LANG !== 'km') {
-    return false;
-  }
-  const plain = toPlainKhmer(title);
-  if (/\bpatien(t|ce|tly)\b/i.test(titleEn) && plain.includes('អ្នកជំងឺ')) {
-    return true;
-  }
-  return KM_FALSE_FRIEND_LIST.some(([word, fine]) => {
-    const isThere = typeof word === 'string' ? plain.includes(word) : word.test(plain);
-    if (!isThere) {
+function checkHasFalseFriend(title, titleEn) {
+  const plain = toPlainTitle(title);
+  return FALSE_FRIEND_LIST.some((rule) => {
+    if (!rule.title.test(plain)) {
       return false;
     }
-    if (fine === null) {
-      return true;
+    if (rule.badIf !== null && !rule.badIf.test(titleEn)) {
+      return false;
     }
-    return typeof fine === 'function' ? !fine(titleEn) : !fine.test(titleEn);
+    return rule.badUnless === null || !rule.badUnless.test(titleEn);
   });
 }
 
@@ -181,9 +180,9 @@ function checkIsBadTitle(theme) {
   }
   return (
     LATIN_RUN.test(title) ||
-    (LANG === 'km' && STRAY_LETTER.test(title)) ||
+    (!IS_OWN_SCRIPT_LATIN && STRAY_LETTER.test(title)) ||
     title.trim() === titleEn.trim() ||
-    checkHasKhmerFalseFriend(title, titleEn)
+    checkHasFalseFriend(title, titleEn)
   );
 }
 
@@ -255,7 +254,6 @@ function replaceNames(title, nameMap, everydayWords) {
 
 // ---- the model ---------------------------------------------------------------
 
-const LANGUAGE_NAME = { km: 'Khmer', fr: 'French', en: 'English' };
 
 async function translateBatch(items, nameMap) {
   const glossary = new Map();
@@ -267,7 +265,7 @@ async function translateBatch(items, nameMap) {
       }
     }
   }
-  const language = LANGUAGE_NAME[LANG] ?? LANG;
+  const language = LANG_FACTS.name ?? LANG;
   const prompt =
     `Translate each English Bible cross-reference theme title into ` +
     `natural ${language}, as a short title in the style of a ${language} ` +
@@ -363,8 +361,8 @@ const left = [...badMap].filter(([key]) => {
   return fixes[key] === undefined;
 });
 // `--hand=<file>`: titles no model got right, written by hand -- English
-// title -> the language's, in the words its Bible uses (the ark is ហឹប in
-// ពគប). Checked like a translation.
+// title -> the language's, in the words its Bible uses (the ark as the
+// language's own Bible names it). Checked like a translation.
 if (typeof args.hand === 'string') {
   const hand = JSON.parse(fs.readFileSync(path.resolve(ROOT, args.hand), 'utf8'));
   for (const [key, theme] of left) {
@@ -372,7 +370,7 @@ if (typeof args.hand === 'string') {
     if (
       typeof value === 'string' &&
       !STRAY_LETTER.test(value) &&
-      !checkHasKhmerFalseFriend(value, theme.titleEn)
+      !checkHasFalseFriend(value, theme.titleEn)
     ) {
       fixes[key] = value;
     }
@@ -413,7 +411,7 @@ if (args.translate === true) {
       if (
         value.length > 0 &&
         !STRAY_LETTER.test(value) &&
-        !checkHasKhmerFalseFriend(value, item.titleEn)
+        !checkHasFalseFriend(value, item.titleEn)
       ) {
         fixes[item.key] = value;
         taken++;

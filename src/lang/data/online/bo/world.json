@@ -1,0 +1,13 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Tibetan",
+            "locales": ["bo-CN"],
+            "order": 2400
+        }
+    ],
+    "languageAliases": {
+        "tibet": "tibetian",
+        "tibetan": "tibetian"
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Cyrillic",
+            "locales": ["bg-BG"],
+            "order": 1102
+        }
+    ],
+    "cyrillicDefaultLocales": [
+        {
+            "locale": "bg-BG",
+            "order": 0
+        }
+    ]
+}

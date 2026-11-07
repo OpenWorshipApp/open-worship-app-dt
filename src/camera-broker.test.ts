@@ -240,4 +240,32 @@ describe('mirror camera broker', () => {
         window.dispatchEvent(new Event('beforeunload'));
         expect(state.closeIntercom).toHaveBeenCalledOnce();
     });
+
+    it('finds a camera by its label when its device id changed', async () => {
+        state.enumerateDevices.mockResolvedValue([
+            { kind: 'audioinput', deviceId: 'mic-1', label: 'Camera One' },
+            { kind: 'videoinput', deviceId: 'cam-2', label: 'Camera Two' },
+            { kind: 'videoinput', deviceId: 'cam-new', label: 'Camera One' },
+        ]);
+        emit({
+            type: 'camera-request',
+            requestId: 'renamed',
+            deviceId: 'cam-1',
+            label: 'Camera One',
+        });
+        await flushPromises();
+        expect(state.getUserMedia).toHaveBeenCalledExactlyOnceWith({
+            audio: false,
+            video: {
+                deviceId: { exact: 'cam-new' },
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                frameRate: { ideal: 15, max: 15 },
+            },
+        });
+        expect(state.peers[0].addTrack).toHaveBeenCalledWith(
+            state.tracks[0],
+            expect.any(Object),
+        );
+    });
 });

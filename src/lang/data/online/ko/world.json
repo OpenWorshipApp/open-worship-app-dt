@@ -1,0 +1,12 @@
+{
+    "nativeLanguageNames": {
+        "한국어": "korean"
+    },
+    "scriptLocales": [
+        {
+            "script": "Hangul",
+            "locales": ["ko-KR"],
+            "order": 400
+        }
+    ]
+}

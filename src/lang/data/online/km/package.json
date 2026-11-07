@@ -1,0 +1,8 @@
+{
+    "name": "owa-lang-km",
+    "private": true,
+    "description": "What the Khmer language plugin bundles beyond its own files: the Khmer song plugin (NiDA keyboard, Hunspell spellcheck, segmentation, fonts). Installed into this folder's node_modules by extra-work/install-lang-deps.mjs; the app itself declares none of it.",
+    "devDependencies": {
+        "open-lyric-plugin-km-kh": "^0.1.11"
+    }
+}

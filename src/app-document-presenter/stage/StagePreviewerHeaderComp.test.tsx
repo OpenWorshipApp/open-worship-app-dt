@@ -209,4 +209,19 @@ describe('StagePreviewerHeaderComp', () => {
         });
         expect(showAppContextMenuMock.mock.calls[0][1]).toHaveLength(6);
     });
+
+    test("choosing Increment adds the stage past the highest shown, whatever the chips' order", () => {
+        const onStagesChange = render({
+            stages: [0, 7, 3],
+            isWithIncrement: true,
+        });
+        act(() => {
+            getAddButton().click();
+        });
+        const items = showAppContextMenuMock.mock.calls[0][1];
+        const increment = items.at(-1);
+        expect(increment.menuElement).toBe('Increment · Stage 8');
+        increment.onSelect();
+        expect(onStagesChange).toHaveBeenCalledExactlyOnceWith([0, 7, 3, 8]);
+    });
 });

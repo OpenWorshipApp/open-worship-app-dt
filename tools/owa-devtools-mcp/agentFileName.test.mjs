@@ -11,7 +11,6 @@ describe('checkAgentFileName', () => {
             'Amazing Grace',
             'Blessed Assurance (2)',
             'song 159 old - offering',
-            'ទ្រង់មានចេស្តា',
             '10,000 Reasons',
         ]) {
             expect(checkAgentFileName(name), name).toBeNull();

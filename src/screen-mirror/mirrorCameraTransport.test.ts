@@ -171,3 +171,47 @@ test('negotiates a mirror camera, releases streams and closes failed requests', 
         type: 'probe',
     });
 });
+
+test('a camera link that fails or closes tells the host and ends its request', async () => {
+    const peers: FakePeer[] = [];
+    let requestNumber = 0;
+    vi.stubGlobal('crypto', {
+        randomUUID: () => `link-${++requestNumber}`,
+    });
+    vi.stubGlobal(
+        'RTCPeerConnection',
+        class extends FakePeer {
+            constructor(_configuration: any) {
+                super();
+                peers.push(this);
+            }
+        },
+    );
+    const { getMirrorCameraStream } = await import('./mirrorCameraTransport');
+
+    const failing = getMirrorCameraStream('camera-a');
+    // On its way: nothing ends.
+    peers[0].connectionState = 'connecting';
+    peers[0].onconnectionstatechange?.();
+    expect(peers[0].close).not.toHaveBeenCalled();
+    peers[0].connectionState = 'failed';
+    peers[0].onconnectionstatechange?.();
+    await expect(failing).rejects.toThrow('Camera is unavailable');
+    expect(peers[0].close).toHaveBeenCalledOnce();
+    expect(mocks.sendData).toHaveBeenCalledWith('mirror:camera-send', {
+        type: 'camera-close',
+        requestId: 'link-1',
+    });
+
+    const closing = getMirrorCameraStream('camera-b');
+    peers[1].connectionState = 'closed';
+    peers[1].onconnectionstatechange?.();
+    await expect(closing).rejects.toThrow('Camera is unavailable');
+    expect(mocks.sendData).toHaveBeenCalledWith('mirror:camera-send', {
+        type: 'camera-close',
+        requestId: 'link-2',
+    });
+    // Ended once: a later state change has no request left to end.
+    peers[1].onconnectionstatechange?.();
+    expect(peers[1].close).toHaveBeenCalledOnce();
+});

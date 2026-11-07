@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
-// The General tab rendered whole -- language, theme and font cards -- beside
-// the real Apply Settings button, which each of them marks as pending.
+// The General tab rendered whole -- theme and font cards -- and the language
+// picker that moved to the Languages tab, each beside the real Apply Settings
+// button, which each of them marks as pending.
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -19,6 +20,7 @@ const h = vi.hoisted(() => ({
     setThemeSourceMock: vi.fn(),
     setSettingMock: vi.fn(),
     forceReloadAppWindowsMock: vi.fn(),
+    pluginsChangedListener: null as null | (() => void),
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -27,6 +29,17 @@ vi.mock('../lang/langHelpers', () => ({
     getLangDataAsync: h.getLangDataAsyncMock,
     setCurrentLocale: h.setCurrentLocaleMock,
     tran: (text: string) => text,
+}));
+
+// What an install, update, delete or switch in Settings > Languages ends in:
+// every window re-reads its languages and tells whoever listens.
+vi.mock('../lang/langPluginRegistry', () => ({
+    onLangPluginsChanged: (listener: () => void) => {
+        h.pluginsChangedListener = listener;
+        return () => {
+            h.pluginsChangedListener = null;
+        };
+    },
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -97,6 +110,14 @@ vi.mock('./settingHelpers', () => ({
     forceReloadAppWindows: h.forceReloadAppWindowsMock,
 }));
 
+// The section's fold reads a stored setting; here it is only its title and
+// what it holds.
+vi.mock('./SettingOthersSectionComp', () => ({
+    default: ({ title, children }: any) => (
+        <section data-title={title}>{children}</section>
+    ),
+}));
+
 vi.mock('./directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
         get isOnOwnFolder() {
@@ -123,7 +144,7 @@ vi.mock('./SettingGeneralOtherOptionsComp', () => ({
 
 import SettingGeneralComp from './SettingGeneralComp';
 import SettingApplyComp, { applyStore } from './SettingApplyComp';
-import SettingGeneralLanguageComp from './SettingGeneralLanguageComp';
+import SettingLanguagePickerComp from './SettingLanguagePickerComp';
 
 const ENGLISH = {
     locale: 'en-US',
@@ -134,7 +155,7 @@ const ENGLISH = {
 const KHMER = {
     locale: 'km-KH',
     name: 'Khmer',
-    nativeName: 'ខ្មែរ',
+    nativeName: '✝✝',
     flagSVG: '<svg data-flag="km"></svg>',
 };
 const FRENCH = { locale: 'fr-FR', name: 'French', flagSVG: '' };
@@ -154,6 +175,17 @@ function getApplyButton() {
     return container.querySelector(
         'button[title="Will reload the app to apply settings"]',
     ) as HTMLButtonElement;
+}
+
+async function renderPicker() {
+    await act(async () => {
+        root.render(
+            <>
+                <SettingApplyComp />
+                <SettingLanguagePickerComp />
+            </>,
+        );
+    });
 }
 
 async function renderGeneral() {
@@ -196,7 +228,9 @@ describe('SettingGeneralComp', () => {
                     return header.textContent;
                 },
             ),
-        ).toEqual(['Language', 'Theme', 'Font Family']);
+        ).toEqual(['Theme', 'Font Family']);
+        // The language picker is the Languages tab's now.
+        expect(container.querySelector('.options')).toBeNull();
         expect(
             container.querySelector('[data-testid="other-options"]'),
         ).not.toBeNull();
@@ -212,9 +246,12 @@ describe('SettingGeneralComp', () => {
     });
 });
 
-describe('SettingGeneralLanguageComp', () => {
+describe('SettingLanguagePickerComp', () => {
     test('names each language in its own script and marks the one in force', async () => {
-        await renderGeneral();
+        await renderPicker();
+        expect(
+            container.querySelector('section')?.getAttribute('data-title'),
+        ).toBe('Language');
         const buttons = Array.from(
             container.querySelectorAll<HTMLButtonElement>('.options button'),
         );
@@ -228,7 +265,7 @@ describe('SettingGeneralLanguageComp', () => {
             }),
         ).toEqual([
             ['English', 'English', 'true'],
-            ['ខ្មែរ', 'Khmer', 'false'],
+            ['✝✝', 'Khmer', 'false'],
             // No native name: the English one stands in.
             ['French', 'French', 'false'],
         ]);
@@ -237,20 +274,72 @@ describe('SettingGeneralLanguageComp', () => {
         expect(buttons[1].querySelector('svg[data-flag="km"]')).not.toBeNull();
     });
 
-    test('choosing a language loads it, marks it and asks for Apply', async () => {
-        await renderGeneral();
+    test('choosing a language loads it, marks it and reloads every window at once', async () => {
+        await renderPicker();
         expect(getApplyButton().className).toContain('btn-outline-success');
 
-        await act(async () => findButton('ខ្មែរ')!.click());
+        await act(async () => findButton('✝✝')!.click());
 
         expect(h.setCurrentLocaleMock).toHaveBeenCalledWith('km-KH');
         expect(h.getLangDataAsyncMock).toHaveBeenCalledWith('km-KH');
-        expect(findButton('ខ្មែរ')!.getAttribute('aria-pressed')).toBe('true');
+        // Loaded before it is stored: `tran` throws in dev on a language this
+        // window has not loaded.
+        expect(h.getLangDataAsyncMock.mock.invocationCallOrder[0]).toBeLessThan(
+            h.setCurrentLocaleMock.mock.invocationCallOrder[0],
+        );
+        expect(findButton('✝✝')!.getAttribute('aria-pressed')).toBe('true');
         expect(findButton('English')!.getAttribute('aria-pressed')).toBe(
             'false',
         );
-        expect(getApplyButton().className).toContain('btn-outline-warning');
-        expect(getApplyButton().querySelector('.bi-asterisk')).not.toBeNull();
+        // Applied at once, nothing left waiting for Apply Settings -- and
+        // only once the choice is stored.
+        expect(h.forceReloadAppWindowsMock).toHaveBeenCalledOnce();
+        expect(h.setCurrentLocaleMock.mock.invocationCallOrder[0]).toBeLessThan(
+            h.forceReloadAppWindowsMock.mock.invocationCallOrder[0],
+        );
+        expect(getApplyButton().className).toContain('btn-outline-success');
+    });
+
+    test('pressing the language already in force reloads nothing', async () => {
+        await renderPicker();
+        await act(async () => findButton('English')!.click());
+        expect(h.getLangDataAsyncMock).not.toHaveBeenCalled();
+        expect(h.setCurrentLocaleMock).not.toHaveBeenCalled();
+        expect(h.forceReloadAppWindowsMock).not.toHaveBeenCalled();
+    });
+
+    test('a language installed or turned off below is offered, or not, with no reload', async () => {
+        h.currentLocale = 'fr-FR';
+        await renderPicker();
+        const readButtons = () => {
+            return Array.from(
+                container.querySelectorAll<HTMLButtonElement>(
+                    '.options button',
+                ),
+            ).map((button) => {
+                return [button.title, button.getAttribute('aria-pressed')];
+            });
+        };
+        expect(readButtons()).toEqual([
+            ['English', 'false'],
+            ['Khmer', 'false'],
+            ['French', 'true'],
+        ]);
+
+        // French turned off while the app is in it: the stored choice went
+        // back to English, and the list no longer has it.
+        h.allLangsPromise = Promise.resolve([ENGLISH, KHMER]);
+        h.currentLocale = 'en-US';
+        await act(async () => h.pluginsChangedListener!());
+        expect(readButtons()).toEqual([
+            ['English', 'true'],
+            ['Khmer', 'false'],
+        ]);
+
+        // Unmounted, it listens no more.
+        act(() => root.unmount());
+        expect(h.pluginsChangedListener).toBeNull();
+        root = createRoot(container);
     });
 
     test('shows loading, then says when there is no language to offer', async () => {
@@ -258,7 +347,7 @@ describe('SettingGeneralLanguageComp', () => {
         h.allLangsPromise = new Promise((resolve) => {
             resolveLangs = resolve;
         });
-        await act(async () => root.render(<SettingGeneralLanguageComp />));
+        await act(async () => root.render(<SettingLanguagePickerComp />));
         expect(container.querySelector('img[alt="Loading..."]')).not.toBeNull();
 
         await act(async () => resolveLangs([]));
@@ -266,7 +355,7 @@ describe('SettingGeneralLanguageComp', () => {
 
         h.allLangsPromise = Promise.resolve(null);
         await act(async () =>
-            root.render(<SettingGeneralLanguageComp key="null" />),
+            root.render(<SettingLanguagePickerComp key="null" />),
         );
         expect(container.textContent).toContain('No languages available.');
     });

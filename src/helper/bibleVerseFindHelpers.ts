@@ -19,7 +19,8 @@
  * word goes into the SQL as a quoted LIKE operand, so what can reach it is
  * cut to letters, digits and marks first (`toFindTermList`).
  *
- * No imports: a test reads every rule here with no SQLite and no app.
+ * One import, a table of data: a test reads every rule here with no SQLite
+ * and no app.
  */
 
 // More words than a person remembers of one verse: the rest is a paragraph
@@ -147,8 +148,8 @@ export function genVerseFindSql({
 }
 
 // A word typed in a script with no spaces that is this long is likely a
-// phrase: "ព្រះយេស៊ូសួរពេត្រុសច្រើនដង" (Jesus asked Peter many times) is one
-// run of letters, and found as one it matches nothing.
+// phrase: the Khmer for "Jesus asked Peter many times" is one run of
+// letters, and found as one it matches nothing.
 export const LONG_UNSPACED_TERM_LENGTH = 7;
 const COMBINING_MARK_PATTERN = /^\p{M}$/u;
 
@@ -178,8 +179,9 @@ export function segmentByVocabulary(
         }
         if (matched === '') {
             // A vowel sign or a mark is the end of the word before it, not
-            // the start of one: "យេស" + "៊ូ" is "យេស៊ូ", which the Bible's
-            // "យេស៊ូវ" holds.
+            // the start of one: the first letters of Jesus' name in Khmer
+            // and the vowel signs after them are one piece, which the
+            // Bible's own spelling of the name holds.
             if (
                 unknown === '' &&
                 pieces.length > 0 &&
@@ -205,14 +207,31 @@ export function segmentByVocabulary(
     return pieces;
 }
 
-// Scripts written with no space between words: their table can only be
-// matched run together, and no word starts anywhere in particular.
-const UNSPACED_LANGUAGE_LIST = ['km', 'th', 'lo', 'my', 'zh', 'ja'];
+// Scripts written with no space between words (ISO 15924 codes): their
+// table can only be matched run together, and no word starts anywhere in
+// particular. It is a property of the SCRIPT, so no language is named or
+// shipped for it (2026-11-04, the user: _everything related to a language
+// have to be loaded from the language data … must not ship in the app,
+// except english_): a locale's script is the runtime's own likely-subtags,
+// `Intl.Locale#maximize` -- answered in Electron's trimmed ICU as in Node.
+const UNSPACED_SCRIPT_SET: ReadonlySet<string> = new Set([
+    'Hans',
+    'Hant',
+    'Jpan',
+    'Khmr',
+    'Laoo',
+    'Mymr',
+    'Thai',
+]);
 
 export function checkIsSpacedLocale(locale: string) {
-    return !UNSPACED_LANGUAGE_LIST.includes(
-        locale.toLowerCase().split(/[-_]/)[0],
-    );
+    try {
+        const script = new Intl.Locale(locale.replace(/_/g, '-')).maximize()
+            .script;
+        return script === undefined || !UNSPACED_SCRIPT_SET.has(script);
+    } catch (_error) {
+        return true;
+    }
 }
 
 /**
@@ -427,13 +446,14 @@ export function splitRefList(refs: string): string[] {
 }
 
 /**
- * A script's own digits as ASCII (`យ៉ូហាន ៣:១៦` -> `យ៉ូហាន 3:16`), so a
+ * A script's own digits as ASCII (John 3:16 written in
+ * Khmer digits -> the same with `3:16`), so a
  * reference written the way the reader's Bible writes it parses. Unicode's
  * decimal digits are contiguous runs of ten, so a digit's value is its
  * offset from the start of its own run; `\p{Nd}` alone is not enough
- * (`Number('១')` is NaN). Needed by `owa_resource_file`'s `ref`, where a
- * model writing what the person said gave `"ម៉ាថាយ ១៨" is not a book and
- * chapter` (seen live 2026-10-19).
+ * (`Number` of a Khmer digit is NaN). Needed by `owa_resource_file`'s `ref`, where a
+ * model writing what the person said gave `"<Matthew 18 in Khmer>" is not a book
+ * and chapter` (seen live 2026-10-19).
  */
 export function toAsciiDigitText(text: string) {
     return text.replaceAll(/\p{Nd}/gu, (digit) => {
@@ -513,8 +533,7 @@ export function genVerseRangeReason(
 
 /**
  * Two words at most one letter apart -- one added, dropped or changed:
- * `លោកប្បត្តិ` for `លោកុប្បត្តិ` (the user's own, 2026-10-22, a vowel sign
- * left out), `Genisis` for `Genesis`.
+ * Genesis in Khmer with a vowel sign left out (the user's own, 2026-10-22), `Genisis` for `Genesis`.
  */
 export function checkIsOneEditApart(one: string, other: string) {
     if (one === other) {
@@ -535,7 +554,7 @@ export function checkIsOneEditApart(one: string, other: string) {
 }
 
 // A book's name this long may be one letter off and still be read as it;
-// shorter ones are too near other words (`Job`, `Amos`, `យ៉ូប`).
+// shorter ones are too near other words (`Job`, `Amos`, and Job in Khmer).
 const MIN_NEAR_BOOK_NAME_LENGTH = 6;
 
 export type NamedBookType = {
@@ -545,7 +564,7 @@ export type NamedBookType = {
     typed: string;
     name: string;
     // Where it is in the text, the word that says "the book" before it
-    // (`in`, `ក្នុង`, `គម្ពីរ`) included, so both can come out together.
+    // (`in`, or the language's own words for "in" and "the book") included, so both can come out together.
     start: number;
     end: number;
     isAfterMarker: boolean;
@@ -594,8 +613,8 @@ function findMarkerBefore(text: string, at: number, markerWords: string[]) {
 
 /**
  * The books a person NAMED among the words they remember -- "in Genesis,
- * the rainbow", `ស្វែងរកក្នុងគម្ពីរលោកប្បត្តិណូអេលែងព្រាប` (search in the book
- * of Genesis, Noah released the dove) -- found where they are in `text`
+ * the rainbow", or the Khmer typed as one run for "search in the book of
+ * Genesis, Noah released the dove" -- found where they are in `text`
  * (the words as the Bible's language sanitizes them). A name is read whole
  * (several words: "Song of Solomon", "1 John"), or one letter off when it
  * is long enough; with no space between words (`isSpaced` false) it is found
@@ -734,8 +753,8 @@ export function cutNamedBooks(text: string, namedList: NamedBookType[]) {
 
 /**
  * The words of the ASKING taken off the front of what they remember --
- * "the story of", "a verse about", `ស្វែងរក` (search), `រឿង` (the story
- * of) -- so the search is for the verse's own words. Only at the front: in
+ * "the story of", "a verse about", the language's own words for "search"
+ * and "the story of" -- so the search is for the verse's own words. Only at the front: in
  * "seek and ye shall find" the same word is the verse. Never all of it.
  */
 export function stripLeadingFrameWords(

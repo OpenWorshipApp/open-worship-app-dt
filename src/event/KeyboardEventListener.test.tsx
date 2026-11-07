@@ -450,3 +450,110 @@ describe('KeyboardEventListener', () => {
         expect(secondListener).toHaveBeenCalledWith(event);
     });
 });
+
+describe('KeyboardEventListener keys, platforms and the document handler', () => {
+    beforeEach(() => {
+        setPlatform('windows');
+        (KeyboardEventListener as any).eventHandler = null;
+        (KeyboardEventListener as any)._layers.length = 0;
+        (KeyboardEventListener as any)._layers.push('root');
+        KeyboardEventListener.onMacQuitting = null;
+    });
+
+    afterEach(() => {
+        KeyboardEventListener.onMacQuitting = null;
+    });
+
+    test('a printable key is read off its physical place, whatever the layout', () => {
+        const toKey = (key: string, code: string) => {
+            return KeyboardEventListener.toEnUsKey({ key, code } as any);
+        };
+        expect(toKey('ArrowUp', 'ArrowUp')).toBe('ArrowUp');
+        expect(toKey('a', '')).toBe('a');
+        // A German layout swaps Y and Z; the shortcut keeps its place.
+        expect(toKey('z', 'KeyY')).toBe('y');
+        expect(toKey('Z', 'KeyY')).toBe('Y');
+        expect(toKey('§', 'Digit2')).toBe('2');
+        expect(toKey('1', 'Numpad1')).toBe('1');
+        expect(toKey('°', 'Minus')).toBe('°');
+    });
+
+    test('Alt on Windows, Shift on a Mac and every control on Linux are kept', () => {
+        const event = {
+            key: 'k',
+            ctrlKey: true,
+            altKey: true,
+            shiftKey: true,
+            metaKey: false,
+        } as any;
+        expect(
+            KeyboardEventListener.addControlKey({ key: 'k' }, event),
+        ).toEqual({ key: 'k', wControlKey: ['Ctrl', 'Alt', 'Shift'] });
+        setPlatform('mac');
+        expect(
+            KeyboardEventListener.addControlKey({ key: 'k' }, event),
+        ).toEqual({ key: 'k', mControlKey: ['Ctrl', 'Option', 'Shift'] });
+        setPlatform('linux');
+        expect(
+            KeyboardEventListener.addControlKey({ key: 'k' }, event),
+        ).toEqual({ key: 'k', lControlKey: ['Ctrl', 'Alt', 'Shift'] });
+        expect(
+            KeyboardEventListener.addControlKey({ key: 'k' }, {
+                key: 'k',
+            } as any),
+        ).toEqual({ key: 'k', lControlKey: [] });
+    });
+
+    test('an instance of its own stops at a prevented event too', async () => {
+        const handler = new KeyboardEventListener();
+        const listener = vi.fn();
+        handler.registerEventListener(['root>K'], listener);
+        handler.addPropEvent('root>K', { defaultPrevented: false });
+        await flushAsyncEvents();
+        expect(listener).toHaveBeenCalledOnce();
+        handler.addPropEvent('root>K', { defaultPrevented: true });
+        await flushAsyncEvents();
+        expect(listener).toHaveBeenCalledOnce();
+    });
+
+    test('the document passes a key on but never a bare control key', () => {
+        const fireEvent = vi.spyOn(KeyboardEventListener, 'fireEvent');
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift' }));
+        document.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'Control', ctrlKey: true }),
+        );
+        expect(fireEvent).not.toHaveBeenCalled();
+        const event = new KeyboardEvent('keydown', { key: 'a', code: 'KeyA' });
+        document.dispatchEvent(event);
+        expect(fireEvent).toHaveBeenCalledExactlyOnceWith(event);
+    });
+
+    test('Command+Q on a Mac quits through its own handler, once one is set', () => {
+        setPlatform('mac');
+        const fireEvent = vi.spyOn(KeyboardEventListener, 'fireEvent');
+        const quit = () => {
+            const event = new KeyboardEvent('keydown', {
+                key: 'q',
+                code: 'KeyQ',
+                metaKey: true,
+                cancelable: true,
+            });
+            document.dispatchEvent(event);
+            return event;
+        };
+        expect(quit().defaultPrevented).toBe(false);
+        expect(fireEvent).toHaveBeenCalledOnce();
+
+        const onMacQuitting = vi.fn();
+        KeyboardEventListener.onMacQuitting = onMacQuitting;
+        expect(quit().defaultPrevented).toBe(true);
+        expect(onMacQuitting).toHaveBeenCalledOnce();
+        expect(fireEvent).toHaveBeenCalledOnce();
+
+        // The same press on Windows is an ordinary key.
+        setPlatform('windows');
+        expect(quit().defaultPrevented).toBe(false);
+        expect(onMacQuitting).toHaveBeenCalledOnce();
+        expect(fireEvent).toHaveBeenCalledTimes(2);
+    });
+});

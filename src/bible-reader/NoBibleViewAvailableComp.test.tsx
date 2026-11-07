@@ -41,6 +41,7 @@ const { default: NoBibleViewAvailableComp } =
     await import('./NoBibleViewAvailableComp');
 const { DragTypeEnum } = await import('../helper/DragInf');
 const { ReadIdOnlyBibleItem } = await import('./ReadIdOnlyBibleItem');
+const { RECEIVING_DROP_CLASSNAME } = await import('../helper/helpers');
 
 let root: Root;
 let container: HTMLDivElement;
@@ -112,5 +113,67 @@ describe('NoBibleViewAvailableComp', () => {
         }
         expect(h.addBibleItem).not.toHaveBeenCalled();
         expect(h.handleError).not.toHaveBeenCalled();
+    });
+
+    it('marks itself while a drag is over it, and not after', () => {
+        const view = container.querySelector('.bible-view')!;
+        act(() => {
+            view.dispatchEvent(
+                new Event('dragover', { bubbles: true, cancelable: true }),
+            );
+        });
+        expect(view.classList.contains(RECEIVING_DROP_CLASSNAME)).toBe(true);
+        act(() => {
+            view.dispatchEvent(
+                new Event('dragleave', { bubbles: true, cancelable: true }),
+            );
+        });
+        expect(view.classList.contains(RECEIVING_DROP_CLASSNAME)).toBe(false);
+
+        act(() => {
+            view.dispatchEvent(
+                new Event('dragover', { bubbles: true, cancelable: true }),
+            );
+        });
+        drop('');
+        expect(view.classList.contains(RECEIVING_DROP_CLASSNAME)).toBe(false);
+    });
+
+    it('a passage too broken to open is reported, and opens nothing', () => {
+        drop(
+            JSON.stringify({
+                type: DragTypeEnum.BIBLE_ITEM,
+                data: { id: 7, target: { bookKey: 'JHN' } },
+            }),
+        );
+        expect(h.addBibleItem).not.toHaveBeenCalled();
+        expect(h.handleError).toHaveBeenCalledTimes(1);
+        expect(h.handleError.mock.calls[0][0].message).toBe(
+            'Invalid bible item data',
+        );
+    });
+
+    it('the opened item keeps its id, which nothing may change', () => {
+        drop(
+            JSON.stringify({
+                type: DragTypeEnum.BIBLE_ITEM,
+                data: {
+                    id: 7,
+                    bibleKey: 'KJV',
+                    target: {
+                        bookKey: 'JHN',
+                        chapter: 3,
+                        verseStart: 16,
+                        verseEnd: 16,
+                    },
+                },
+            }),
+        );
+        const opened = h.addBibleItem.mock.calls[0][1];
+        expect(opened.id).toBe(7);
+        expect(() => {
+            opened.id = 8;
+        }).toThrow('ReadOnlyBibleItem: id cannot be set');
+        expect(opened.id).toBe(7);
     });
 });

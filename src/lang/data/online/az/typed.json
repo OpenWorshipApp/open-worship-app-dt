@@ -1,0 +1,12 @@
+{
+    "az": {
+        "name": "Azerbaijani",
+        "nativeName": "Azərbaycanca",
+        "script": "Latin",
+        "words": "və ya amma deyil yoxdur var bir bu o mən sən biz siz onlar mənim sənin onun bizim necə nə niyə harada haraya vaxt kim hansı mi mı ilə üçün kimi qədər daha çox ən də da ki edə istəyirəm zəhmət olmasa təşəkkür",
+        "letters": "əçğıöşü",
+        "yes": ["bəli", "hə"],
+        "no": ["xeyr", "yox"],
+        "order": 23
+    }
+}

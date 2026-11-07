@@ -34,6 +34,43 @@
     }
   }
 
+  // "Mix Color:", its swatch and the held color's code, on one line. Should a
+  // picker ever be too narrow for all three, the words give way, not the
+  // swatch or the code.
+  .color-picker-mix-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    > span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    > input,
+    > .color-picker-code {
+      flex: 0 0 auto;
+    }
+  }
+
+  // The held color's code: pressed, it copies. `.btn` too, to beat
+  // `.app .btn`'s hardcoded padding.
+  .btn.color-picker-code {
+    --bs-btn-color: var(--bs-body-color);
+    --bs-btn-hover-color: var(--bs-body-color);
+    --bs-btn-hover-bg: var(--bs-tertiary-bg);
+    --bs-btn-active-color: var(--bs-body-color);
+    --bs-btn-active-bg: var(--bs-tertiary-bg);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0 0.25rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
   .item {
     width: 30px;
     height: 30px;

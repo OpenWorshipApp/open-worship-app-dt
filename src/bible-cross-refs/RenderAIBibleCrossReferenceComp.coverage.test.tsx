@@ -84,7 +84,7 @@ describe('RenderAIBibleCrossReferenceComp', () => {
 
     test('the translation note opens the page about it, and nothing else', async () => {
         await render({
-            title: 'សេចក្ដីស្រឡាញ់',
+            title: '[xx] Love',
             titleEn: 'Love',
             verses: [],
         });

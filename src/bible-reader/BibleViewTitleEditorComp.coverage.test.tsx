@@ -173,14 +173,14 @@ describe('a title with nothing to change', () => {
 describe('the parts read as the bible writes them', () => {
     test('once the bible has named them', async () => {
         h.titleParts = {
-            book: 'លោកុប្បត្តិ',
-            chapter: '១',
-            verseStart: '២',
-            verseEnd: '៤',
+            book: '[xx] Genesis',
+            chapter: 'i',
+            verseStart: 'ii',
+            verseEnd: 'iv',
             chapterEnd: null,
         };
         await render();
-        expect(host.textContent).toBe('លោកុប្បត្តិ ១:២-៤');
+        expect(host.textContent).toBe('[xx] Genesis i:ii-iv');
     });
 });
 

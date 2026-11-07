@@ -121,6 +121,24 @@ describe('Preview full size button', () => {
         );
     });
 
+    // Found by UT-80 (2026-11-03): the class was built as
+    // `btn btn-sm-outline-info`, a class Bootstrap does not have, so the
+    // button was neither small nor coloured and pressed looked like unpressed.
+    it('is a small info button, filled while pressed', async () => {
+        render();
+        expect(Array.from(getButton().classList)).toEqual([
+            'btn',
+            'btn-sm',
+            'btn-outline-info',
+        ]);
+        await act(async () => getButton().click());
+        expect(Array.from(getButton().classList)).toEqual([
+            'btn',
+            'btn-sm',
+            'btn-info',
+        ]);
+    });
+
     it('leaves a pane that was already closed closed when restoring', async () => {
         h.entries[1].isHidden = true;
         render();
@@ -131,5 +149,64 @@ describe('Preview full size button', () => {
         await act(async () => getButton().click());
         expect(h.entries[0].isHidden).toBe(false);
         expect(h.entries[1].isHidden).toBe(true);
+    });
+
+    it('does nothing until its panes have registered, then follows them', async () => {
+        h.entries = [];
+        render();
+        await act(async () => getButton().click());
+        expect(getButton().getAttribute('aria-pressed')).toBe('false');
+        expect(getButton().getAttribute('aria-label')).toBe(
+            'Full size preview',
+        );
+
+        // The panes register a frame later and announce it.
+        h.entries = [
+            { id: 'reader:h1', isHidden: true },
+            { id: 'reader:h3', isHidden: true },
+        ];
+        await act(async () => {
+            for (const listener of h.listeners) listener();
+        });
+        expect(getButton().getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('reopens every hidden pane when full size was reached some other way', async () => {
+        h.entries[0].isHidden = true;
+        h.entries[1].isHidden = true;
+        render();
+        expect(getButton().getAttribute('aria-label')).toBe(
+            'Exit full size preview',
+        );
+        await act(async () => getButton().click());
+        expect(h.entries.map(({ isHidden }) => isHidden)).toEqual([
+            false,
+            false,
+        ]);
+        expect(getButton().getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('leaves a pane the operator reopened and shut again to the operator', async () => {
+        const operatorToggle = async (index: number) => {
+            await act(async () => {
+                h.entries[index].isHidden = !h.entries[index].isHidden;
+                for (const listener of h.listeners) listener();
+            });
+        };
+        render();
+        await act(async () => getButton().click());
+        expect(h.entries.map(({ isHidden }) => isHidden)).toEqual([true, true]);
+
+        await operatorToggle(0);
+        expect(getButton().getAttribute('aria-pressed')).toBe('false');
+        await operatorToggle(0);
+        expect(getButton().getAttribute('aria-pressed')).toBe('true');
+
+        // Only the Advance Lookup is still the button's to bring back.
+        await act(async () => getButton().click());
+        expect(h.entries.map(({ isHidden }) => isHidden)).toEqual([
+            true,
+            false,
+        ]);
     });
 });

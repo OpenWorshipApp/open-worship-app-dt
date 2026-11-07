@@ -1,0 +1,11 @@
+{
+    "ny": {
+        "name": "Chichewa",
+        "nativeName": "Chichewa",
+        "script": "Latin",
+        "words": "ndi kapena koma ine iwe iye ife inu iwo bwanji chiyani kuti chifukwa liti ndani uyu uyo pano kwambiri komanso ndikufuna chonde zikomo",
+        "yes": ["inde"],
+        "no": ["ayi"],
+        "order": 39
+    }
+}

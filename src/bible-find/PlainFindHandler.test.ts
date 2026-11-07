@@ -57,7 +57,9 @@ afterEach(() => {
 
 describe('plain find helpers', () => {
     it('folds ASCII letters only, the way SQLite LIKE does', () => {
-        expect(toLikeLowerText('GoD Ä')).toBe('god Ä');
+        // A capital A with a diaeresis: a letter past ASCII, by code point.
+        const capital = String.fromCodePoint(0xc4);
+        expect(toLikeLowerText(`GoD ${capital}`)).toBe(`god ${capital}`);
     });
 
     it('needs every needle in order without overlap', () => {

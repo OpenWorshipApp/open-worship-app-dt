@@ -427,6 +427,30 @@ describe('recently closed tabs', () => {
         expect(loadAiChatClosedTabs()).toEqual([]);
     });
 
+    test('closing only chooser tabs writes nothing at all', () => {
+        settingMap.set(
+            'aichat-closed-tabs',
+            JSON.stringify([
+                {
+                    id: 'kept',
+                    providerKey: 'chatgpt',
+                    lastUrl: 'https://chatgpt.com/c/kept',
+                    closedAt: 5,
+                },
+            ]),
+        );
+        const before = settingMap.get('aichat-closed-tabs');
+        rememberClosedAiChatTabs([
+            genNewAiChatSession(),
+            genNewAiChatSession(),
+        ]);
+        // Not rewritten (and so not reordered or re-capped) for nothing.
+        expect(settingMap.get('aichat-closed-tabs')).toBe(before);
+        settingMap.clear();
+        rememberClosedAiChatTabs([genNewAiChatSession()]);
+        expect(settingMap.has('aichat-closed-tabs')).toBe(false);
+    });
+
     test('clearing the list empties it', () => {
         rememberClosedAiChatTabs([genSession()]);
         forgetAiChatClosedTabs();

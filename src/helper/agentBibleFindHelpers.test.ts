@@ -18,7 +18,11 @@ import {
     test,
     vi,
 } from 'vitest';
-import { DatabaseSync } from 'node:sqlite';
+// Read at run time, not imported: before Node 23.5 `node:sqlite` is not in
+// `builtinModules`, so vite's jsdom environment could not place a static
+// import of it and the whole file failed to load (Node 22.20, 2026-11-04).
+const { DatabaseSync } = process.getBuiltinModule('node:sqlite');
+type DatabaseSync = InstanceType<typeof DatabaseSync>;
 
 const { state, mocks, EN_BOOKS } = vi.hoisted(() => ({
     EN_BOOKS: {
@@ -68,16 +72,20 @@ const { state, mocks, EN_BOOKS } = vi.hoisted(() => ({
     },
 }));
 
+// The second installed Bible: a language other than English, by its key and
+// locale. Its own words are the language package's tests
+// (`src/lang/data/online/km/tests/helper/agentBibleFindHelpers.test.ts`); here it
+// is only another Bible, so its names and digits are stand-ins.
 const KH_BOOKS: Record<string, string> = {
-    GEN: 'លោកុប្បត្តិ',
-    EXO: 'និក្ខមនំ',
-    LEV: 'លេវីវិន័យ',
-    PSA: 'ទំនុកដំកើង',
-    MAT: 'ម៉ាថាយ',
-    JHN: 'យ៉ូហាន',
+    GEN: 'Xgen',
+    EXO: 'Xexo',
+    LEV: 'Xlev',
+    PSA: 'Xpsa',
+    MAT: 'Xmat',
+    JHN: 'Xjhn',
 };
 const KH_DIGITS: Record<string, string> = Object.fromEntries(
-    '០១២៣៤៥៦៧៨៩'.split('').map((digit, index) => [String(index), digit]),
+    '0123456789'.split('').map((digit, index) => [String(index), digit]),
 );
 
 vi.mock('../bible-find/BibleFindController', () => ({
@@ -105,22 +113,16 @@ vi.mock('../others/bibleLookupPopupOpener', () => ({
 }));
 vi.mock('../lang/langHelpers', () => ({
     // The packs' own lists, as far as these words reach.
-    checkIsStopWord: (locale: string, word: string) => {
-        return (
-            locale.startsWith('km')
-                ? ['និង', 'ដែល', 'ជា', 'ក្នុង', 'ទៅ']
-                : ['a', 'and', 'in', 'of', 'the', 'to', 'which', 'from']
-        ).includes(word);
+    checkIsStopWord: (_locale: string, word: string) => {
+        return ['a', 'and', 'in', 'of', 'the', 'to', 'which', 'from'].includes(
+            word,
+        );
     },
-    getBookMarkerWords: (locale: string) => {
-        return locale.startsWith('km')
-            ? ['ក្នុង', 'គម្ពីរ']
-            : ['in', 'inside', 'from', 'book'];
+    getBookMarkerWords: () => {
+        return ['in', 'inside', 'from', 'book'];
     },
-    getFindFrameWords: (locale: string) => {
-        return locale.startsWith('km')
-            ? ['ស្វែងរក', 'រឿង']
-            : ['find', 'search', 'verse', 'about', 'story'];
+    getFindFrameWords: () => {
+        return ['find', 'search', 'verse', 'about', 'story'];
     },
     sanitizeFindingText: mocks.sanitize,
 }));
@@ -145,12 +147,13 @@ vi.mock('./helpers', () => ({
 
 import { handleAgentBibleFindRequest } from './agentBibleFindHelpers';
 
-// The language packs' `sanitizeFindingText`: English keeps a-z and digits,
-// Khmer its own letters, each cutting everything else to a space.
+// The packs' `sanitizeFindingText`: English keeps a-z and digits, and the
+// other Bible's language keeps its own letters -- none of these -- each
+// cutting everything else to a space.
 function sanitizeAs(locale: string, text: string) {
-    const kept = locale.startsWith('km')
-        ? text.replaceAll(/[^ក-៿]/gu, ' ')
-        : text.toLowerCase().replaceAll(/[^a-z0-9 ]/g, ' ');
+    const kept = locale.startsWith('en')
+        ? text.toLowerCase().replaceAll(/[^a-z0-9 ]/g, ' ')
+        : text.replaceAll(/[\x00-\x7f]/g, ' ');
     return kept.replaceAll(/\s+/g, ' ').trim();
 }
 
@@ -187,27 +190,7 @@ const KJV_VERSES: Record<string, string> = {
     'JHN 10:14':
         'I am the good shepherd, and know my sheep, and am known of mine.',
 };
-const KH_VERSES: Record<string, string> = {
-    'GEN 7:1': 'ព្រះអម្ចាស់មានព្រះបន្ទូលមកកាន់ណូអេ',
-    'GEN 8:8': 'គាត់ក៏លែងព្រាបមួយ',
-    'GEN 8:9': 'ព្រាបរកកន្លែងទំជើងមិនបាន',
-    'GEN 8:11': 'ព្រាបនាំស្លឹកអូលីវមក ណូអេក៏ដឹង',
-    'GEN 8:12': 'គាត់លែងព្រាបម្ដងទៀត',
-    'MAT 26:34': 'ព្រះយេស៊ូមានព្រះបន្ទូលនឹងពេត្រុស',
-    'JHN 21:17': 'ព្រះយេស៊ូសួរពេត្រុសជាលើកទីបី',
-    'JHN 10:11': 'ខ្ញុំជាគង្វាលល្អ',
-    // A book this Bible's own name list leaves out.
-    'DAN 6:16': 'គេបោះដានីយ៉ែលទៅក្នុងរូងសិង្ហ',
-    'DAN 6:22': 'ព្រះបានបិទមាត់សិង្ហ',
-};
-const KH_VOCABULARY = [
-    'ព្រះយេស៊ូ',
-    'សួរ',
-    'ពេត្រុស',
-    'ព្រាប',
-    'ណូអេ',
-    'ព្រះបន្ទូល',
-];
+const KH_VERSES: Record<string, string> = {};
 
 /** Bible Find's table, built the way `initSearchingDatabase` builds it. */
 function genSearchDatabase(
@@ -264,7 +247,7 @@ function genController(database: DatabaseSync) {
     };
 }
 
-function toKhmerDigits(value: number | string) {
+function toOwnDigits(value: number | string) {
     return String(value).replaceAll(/\d/g, (digit) => KH_DIGITS[digit]);
 }
 
@@ -301,7 +284,7 @@ function genBibleItem(bibleKey: string, target: any) {
                     ? `-${target.verseEnd}`
                     : '';
             const title = `${book} ${target.chapter}:${target.verseStart}${end}`;
-            return bibleKey === 'KH' ? toKhmerDigits(title) : title;
+            return bibleKey === 'KH' ? toOwnDigits(title) : title;
         },
     };
 }
@@ -316,12 +299,7 @@ beforeAll(() => {
         KJV_VERSES,
         'These are the statutes and judgments.',
     );
-    khDatabase = genSearchDatabase(
-        'km',
-        KH_VERSES,
-        'នេះជាច្បាប់',
-        KH_VOCABULARY,
-    );
+    khDatabase = genSearchDatabase('km', KH_VERSES, 'filler');
 });
 
 afterAll(() => {
@@ -657,235 +635,7 @@ describe('a book named in the words, or given', () => {
     });
 });
 
-describe('a Bible written with no spaces', () => {
-    test('a found word is matched as letters, the passage titled in the Bible’s own words, and the English Bible named', async () => {
-        const result: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'ព្រាប',
-            limit: 2,
-        });
-        expect(result).toEqual({
-            bible: 'KH',
-            words: ['ព្រាប'],
-            of: 1,
-            total: 4,
-            verses: [
-                {
-                    key: 'GEN 8:8',
-                    ref: 'Genesis 8:8',
-                    text: KH_VERSES['GEN 8:8'],
-                    hits: 1,
-                    title: 'លោកុប្បត្តិ ៨:៨',
-                },
-                {
-                    key: 'GEN 8:9',
-                    ref: 'Genesis 8:9',
-                    text: KH_VERSES['GEN 8:9'],
-                    hits: 1,
-                    title: 'លោកុប្បត្តិ ៨:៩',
-                },
-            ],
-            next: 2,
-            passages: [
-                {
-                    ref: 'Genesis 8',
-                    key: 'GEN 8',
-                    verses: 4,
-                    title: 'លោកុប្បត្តិ ៨',
-                    keyTitle: 'លោកុប្បត្តិ ៨',
-                },
-            ],
-            byBook: [
-                {
-                    book: 'Genesis',
-                    key: 'GEN',
-                    verses: 4,
-                    title: 'លោកុប្បត្តិ',
-                },
-            ],
-            note:
-                'This script has no spaces, so a word was matched as ' +
-                'letters and may be part of a longer word: check each verse ' +
-                'says what they remember.',
-            englishBible: 'KJV',
-        });
-    });
-
-    test('a long run of letters is cut into the Bible’s own words', async () => {
-        const result: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'ព្រះយេស៊ូសួរពេត្រុស',
-        });
-        expect(result.words).toEqual(['ព្រះយេស៊ូ', 'សួរ', 'ពេត្រុស']);
-        expect(result.verses.map((one: any) => [one.key, one.hits])).toEqual([
-            ['JHN 21:17', 3],
-            ['MAT 26:34', 2],
-        ]);
-    });
-
-    test('a book named inside the run, even a letter off, is the book searched', async () => {
-        const exact: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'ក្នុងលោកុប្បត្តិព្រាប',
-        });
-        expect(exact).toMatchObject({
-            words: ['ព្រាប'],
-            books: ['Genesis'],
-            readAsBook: ['លោកុប្បត្តិ'],
-            total: 4,
-        });
-        // The user's own words, with a vowel sign left out (2026-10-22).
-        const misspelt: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'ក្នុងលោកប្បត្តិព្រាប',
-        });
-        expect(misspelt).toMatchObject({
-            books: ['Genesis'],
-            readAsBook: ['លោកប្បត្តិ'],
-            total: 4,
-        });
-    });
-
-    test('a verse that cannot be titled keeps its English reference only', async () => {
-        state.failingTitles.add('GEN 8:8');
-        state.brokenKeys.add('GEN 8:9');
-        const result: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'ព្រាប',
-            limit: 3,
-        });
-        expect(result.verses.map((one: any) => one.title)).toEqual([
-            undefined,
-            undefined,
-            'លោកុប្បត្តិ ៨:១១',
-        ]);
-    });
-
-    test('a passage in a book the Bible has no name for keeps its English name', async () => {
-        const result: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'សិង្ហ',
-            limit: 1,
-        });
-        expect(result).toMatchObject({
-            total: 2,
-            passages: [{ ref: 'Daniel 6', key: 'DAN 6', verses: 2 }],
-            byBook: [{ book: 'Daniel', key: 'DAN', verses: 2 }],
-        });
-        expect(result.passages[0]).not.toHaveProperty('title');
-        expect(result.byBook[0]).not.toHaveProperty('title');
-    });
-
-    test('no English Bible installed: none is named', async () => {
-        state.bibles = [{ key: 'KH', title: 'Khmer Bible' }];
-        const result: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'ព្រាប',
-        });
-        expect(result.total).toBe(4);
-        expect(result).not.toHaveProperty('englishBible');
-    });
-
-    test('another English Bible is named when the KJV is not installed', async () => {
-        state.bibles = [
-            { key: 'KH', title: 'Khmer Bible' },
-            { key: 'WEB', title: 'World English Bible' },
-        ];
-        const result: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'ព្រាប',
-        });
-        expect(result.englishBible).toBe('WEB');
-    });
-});
-
 describe('words in another language than the Bible’s', () => {
-    test('Khmer words under the KJV are searched in the Khmer Bible and quoted from the KJV', async () => {
-        state.bibles = [
-            { key: 'KJV', title: 'King James Version' },
-            { key: 'WEB', title: 'World English Bible' },
-            { key: 'KH', title: 'Khmer Bible' },
-        ];
-        // The KJV has no Genesis 8:12 to quote: that one keeps the Khmer.
-        state.verseTexts.KJV = { ...KJV_VERSES };
-        delete state.verseTexts.KJV['GEN 8:12'];
-        const result: any = await handleAgentBibleFindRequest({
-            bible: 'KJV',
-            words: 'ព្រាប',
-        });
-        expect(result).toMatchObject({
-            bible: 'KJV',
-            searchedIn: 'KH',
-            total: 4,
-            verses: [
-                { key: 'GEN 8:8', text: KJV_VERSES['GEN 8:8'] },
-                { key: 'GEN 8:9', text: KJV_VERSES['GEN 8:9'] },
-                { key: 'GEN 8:11', text: KJV_VERSES['GEN 8:11'] },
-                { key: 'GEN 8:12', text: KH_VERSES['GEN 8:12'], in: 'KH' },
-            ],
-            note:
-                'These words are not in KJV’s language, so they were ' +
-                'searched in KH and each verse is quoted from KJV. Put them ' +
-                'into KJV’s language and search again for more.',
-        });
-        // The English Bible could not read them and was passed over.
-        expect(mocks.getInstant).not.toHaveBeenCalledWith('WEB');
-    });
-
-    test('English words under the Khmer Bible go to the KJV first, then any English one', async () => {
-        state.bibles = [
-            { key: 'KH', title: 'Khmer Bible' },
-            { key: 'WEB', title: 'World English Bible' },
-            { key: 'KJV', title: 'King James Version' },
-        ];
-        // The KJV's table cannot be opened: the next English Bible is.
-        state.controllers.KJV = null;
-        state.controllers.WEB = genController(kjvDatabase);
-        const result: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            words: 'shepherd',
-        });
-        expect(mocks.getInstant.mock.calls.map(([key]) => key)).toEqual([
-            'KH',
-            'KJV',
-            'WEB',
-        ]);
-        expect(result).toMatchObject({
-            bible: 'KH',
-            searchedIn: 'WEB',
-            verses: [
-                {
-                    key: 'JHN 10:11',
-                    text: KH_VERSES['JHN 10:11'],
-                    title: 'យ៉ូហាន ១០:១១',
-                },
-                { key: 'JHN 10:14', in: 'WEB' },
-                { key: 'PSA 23:1', in: 'WEB' },
-            ],
-            passages: [
-                {
-                    ref: 'John 10',
-                    title: 'យ៉ូហាន ១០',
-                    keyTitle: 'យ៉ូហាន ១០',
-                },
-            ],
-        });
-    });
-
-    test('no installed Bible reads the words: refused, with the Bible’s language named', async () => {
-        state.bibles = [{ key: 'KJV', title: 'King James Version' }];
-        await expect(
-            handleAgentBibleFindRequest({ bible: 'KJV', words: 'ព្រាប' }),
-        ).resolves.toEqual({
-            isError: true,
-            reason:
-                'Those words are not written in this Bible’s language. KJV ' +
-                'is written in "en": put the words they remember into that ' +
-                'language, or read the verses you think of with refs, which ' +
-                'work in any language.',
-        });
-    });
-
     test('nothing but asking words is no search in any Bible', async () => {
         await expect(
             handleAgentBibleFindRequest({ bible: 'KJV', words: 'find a' }),
@@ -989,29 +739,6 @@ describe('reading references', () => {
                 '"Psalm 23".',
             notFound: [
                 { ref: 'Genesis 3:203', reason: 'Genesis 3 has 24 verses.' },
-            ],
-        });
-    });
-
-    test('a reference in another Bible’s language is read from the Bible that names the book so', async () => {
-        state.failingInfos.add('WEB');
-        state.bibles = [
-            { key: 'KJV', title: 'King James Version' },
-            { key: 'WEB', title: 'World English Bible' },
-            { key: 'KH', title: 'Khmer Bible' },
-        ];
-        const result: any = await handleAgentBibleFindRequest({
-            refs: 'យ៉ូហាន 10:11',
-        });
-        expect(result).toEqual({
-            bible: 'KH',
-            verses: [
-                {
-                    key: 'JHN 10:11',
-                    ref: 'John 10:11',
-                    text: KH_VERSES['JHN 10:11'],
-                    title: 'យ៉ូហាន ១០:១១',
-                },
             ],
         });
     });
@@ -1155,26 +882,6 @@ describe('opening a verse in the Bible Lookup', () => {
             },
         );
         expect(mocks.openPopup).toHaveBeenCalledOnce();
-    });
-
-    test('a verse opened in a Bible not in English carries its own title, when it has one', async () => {
-        state.liveLookup = {
-            selectedBibleItem: { id: 'live' },
-            applyTargetOrBibleKey: mocks.applyLive,
-        };
-        await expect(
-            handleAgentBibleFindRequest({ bible: 'KH', open: 'JHN 21:17' }),
-        ).resolves.toMatchObject({
-            opened: 'John 21:17',
-            title: 'យ៉ូហាន ២១:១៧',
-        });
-        state.failingTitles.add('JHN 21:17');
-        const untitled: any = await handleAgentBibleFindRequest({
-            bible: 'KH',
-            open: 'JHN 21:17',
-        });
-        expect(untitled.opened).toBe('John 21:17');
-        expect(untitled).not.toHaveProperty('title');
     });
 
     test.each([

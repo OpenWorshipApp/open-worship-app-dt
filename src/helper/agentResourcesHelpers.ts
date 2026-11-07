@@ -129,7 +129,7 @@ function toWholeNumber(value: unknown) {
 
 /**
  * A book's key from its code, its English name, or its name in any installed
- * Bible's own language (`យ៉ូហាន`). The English and code halves are pure and
+ * Bible's own language (the Khmer Bible's own name for John). The English and code halves are pure and
  * tried first; only a name in another language reads the installed Bibles'
  * book maps, so the ordinary call does no I/O (2026-10-18).
  */
@@ -223,7 +223,7 @@ async function listResources(request: AgentResourcesRequestType) {
                 'is where a folder is added.',
         );
     }
-    // `<book> <chapter>` together (`ref: "John 3"`, `ref: "យ៉ូហាន 3"`), or
+    // `<book> <chapter>` together (`ref: "John 3"`, John 3 named in the Bible's own language), or
     // the two fields. The panel's own file names use the KJV's codes, and
     // the book may be named the way the person's Bible writes it.
     const ref = typeof request.ref === 'string' ? request.ref.trim() : '';

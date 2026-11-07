@@ -481,7 +481,7 @@ describe('update', () => {
     });
 
     test('the same passage in another version: what it IS changes, its id and settings stay', async () => {
-        const khmer = genPassage(0, '(KH) យ៉ូហាន ៣:១៦', {
+        const khmer = genPassage(0, '(KH) [xx] John 3:16', {
             bibleKey: 'KH',
             target: {
                 bookKey: 'JHN',
@@ -495,7 +495,7 @@ describe('update', () => {
             request({ action: 'update', id: 5, version: 'KH' }),
         ).resolves.toEqual({
             where: 'Presenter',
-            updated: '(KH) យ៉ូហាន ៣:១៦',
+            updated: '(KH) [xx] John 3:16',
             was: '(KJV) John 3:16',
             list: 'Default',
             id: 5,
@@ -506,7 +506,7 @@ describe('update', () => {
         expect(mocks.fromVerseKey).toHaveBeenCalledWith('KH', 'JHN 3:16');
         expect(mocks.runWithAgentBackup).toHaveBeenCalledWith(
             'Changed “(KJV) John 3:16” in the Bibles list “Default” to ' +
-                '“(KH) យ៉ូហាន ៣:១៦”',
+                '“(KH) [xx] John 3:16”',
             [expect.objectContaining({ filePath: '/bibles/Default.owb' })],
             expect.any(Function),
         );

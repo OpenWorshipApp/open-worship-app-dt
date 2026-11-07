@@ -53,7 +53,7 @@ const FUNCTION_BLOCK_PATTERN =
     /<function(?:=|\s+name=")([^>"\s]+)"?\s*>([\s\S]*?)(?:<\/function>|$)/gi;
 const PARAMETER_PATTERN =
     /<parameter(?:=|\s+name=")([^>"\s]+)"?\s*>([\s\S]*?)<\/parameter>/gi;
-const TOOL_CALLS_ARRAY_PATTERN = /\[TOOL_CALLS\]\s*(\[[\s\S]*?\])/i;
+const TOOL_CALLS_MARKER_PATTERN = /\[TOOL_CALLS\]\s*(?=\[)/i;
 const FENCED_JSON_PATTERN = /```(?:json)?\s*([\s\S]*?)```/gi;
 
 /**
@@ -74,6 +74,38 @@ function readSchemaType(schema: any, key: string): string | undefined {
         return type.find((one) => one !== 'null');
     }
     return typeof type === 'string' ? type : undefined;
+}
+
+/**
+ * The JSON list that starts at `start`, read to ITS closing bracket; null
+ * when it never closes. A lazy pattern stopped at the first `]`, which an
+ * argument's own list (`"find": ["Bible Lookup", "Search"]`) or a string
+ * holding a bracket closes first -- and the call was shown as words
+ * (2026-11-03). Brackets inside a string do not count.
+ */
+function readJsonListAt(text: string, start: number) {
+    let depth = 0;
+    let isInString = false;
+    for (let index = start; index < text.length; index++) {
+        const char = text[index];
+        if (isInString) {
+            if (char === '\\') {
+                index++;
+            } else if (char === '"') {
+                isInString = false;
+            }
+        } else if (char === '"') {
+            isInString = true;
+        } else if (char === '[' || char === '{') {
+            depth++;
+        } else if (char === ']' || char === '}') {
+            depth--;
+            if (depth === 0) {
+                return text.slice(start, index + 1);
+            }
+        }
+    }
+    return null;
 }
 
 function parseJsonLoose(text: string): unknown {
@@ -222,10 +254,16 @@ export function parseTextToolCalls(
         candidates.push(...readCandidates(block, schemaByName));
         return '';
     });
-    const arrayMatch = TOOL_CALLS_ARRAY_PATTERN.exec(rest);
-    if (arrayMatch !== null) {
-        candidates.push(...readCandidates(arrayMatch[1], schemaByName));
-        rest = rest.replace(arrayMatch[0], '');
+    const markerMatch = TOOL_CALLS_MARKER_PATTERN.exec(rest);
+    if (markerMatch !== null) {
+        const listStart = markerMatch.index + markerMatch[0].length;
+        const list = readJsonListAt(rest, listStart);
+        if (list !== null) {
+            candidates.push(...readCandidates(list, schemaByName));
+            rest =
+                rest.slice(0, markerMatch.index) +
+                rest.slice(listStart + list.length);
+        }
     }
     rest = rest.replace(FENCED_JSON_PATTERN, (block: string, inner: string) => {
         const found = readCandidates(inner, schemaByName);

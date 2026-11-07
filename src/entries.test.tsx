@@ -28,7 +28,7 @@ const state = vi.hoisted(() => ({
         css: string;
         scriptPatternSource: string;
     },
-    unicodeRange: 'U+1780-17FF' as string | null,
+    unicodeRange: 'U+2600-26FF' as string | null,
     setAppFontFamily: vi.fn(),
     setLanguageFont: vi.fn(),
     bibleNoteData: null as null | Record<string, unknown>,
@@ -180,6 +180,15 @@ async function settle() {
     });
 }
 
+// The help and AI Chat windows import their pages once `init` is done and
+// the language plugins' files are in, so they draw a moment after it.
+async function settleDrawn() {
+    await settle();
+    await vi.waitFor(() => {
+        expect(state.render).toHaveBeenCalled();
+    });
+}
+
 beforeEach(() => {
     vi.resetModules();
     state.order = [];
@@ -189,7 +198,7 @@ beforeEach(() => {
     state.isMainWindow = true;
     state.appFontFamily = 'Battambang';
     state.languageFont = null;
-    state.unicodeRange = 'U+1780-17FF';
+    state.unicodeRange = 'U+2600-26FF';
     state.bibleNoteData = null;
     state.menuHandlers = [];
     state.initBibleNote.mockImplementation(async () => state.bibleNote);
@@ -308,13 +317,13 @@ describe('the Bible Reader', () => {
 describe('the help window', () => {
     test('plugs the app language in before drawing', async () => {
         await import('./chatbot');
-        await settle();
+        await settleDrawn();
 
         expect(state.order).toEqual([
             'init',
+            'init-done',
             'plug-language',
             'render',
-            'init-done',
         ]);
         expect(state.plugAppFont).toHaveBeenCalledOnce();
         expect(markupOf(state.render.mock.calls[0][0])).toBe('<i>Chatbot</i>');
@@ -338,17 +347,17 @@ describe('the AI Chat window', () => {
         state.languageFont = {
             family: 'Battambang',
             css: '@font-face{}',
-            scriptPatternSource: '[\\u1780-\\u17FF]',
+            scriptPatternSource: '[\\u2600-\\u26FF]',
         };
 
         await import('./aichat');
-        await settle();
+        await settleDrawn();
 
         expect(state.plugLanguage).toHaveBeenCalledOnce();
         expect(state.setLanguageFont).toHaveBeenCalledWith({
             family: 'Battambang',
             css: '@font-face{}',
-            unicodeRange: 'U+1780-17FF',
+            unicodeRange: 'U+2600-26FF',
         });
         await vi.waitFor(() => {
             expect(state.setAppFontFamily).toHaveBeenCalledWith('Battambang');
@@ -358,7 +367,7 @@ describe('the AI Chat window', () => {
 
     test('clears the guest language face when the language has none or no range', async () => {
         await import('./aichat');
-        await settle();
+        await settleDrawn();
         expect(state.setLanguageFont).toHaveBeenLastCalledWith(null);
 
         vi.resetModules();
@@ -370,7 +379,7 @@ describe('the AI Chat window', () => {
         };
         state.unicodeRange = null;
         await import('./aichat');
-        await settle();
+        await settleDrawn();
         expect(state.setLanguageFont).toHaveBeenLastCalledWith(null);
     });
 

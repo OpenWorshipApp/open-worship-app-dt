@@ -40,6 +40,7 @@ Main Goals:
 - [🛠️ Tech Stack](#️-tech-stack)
 - [📋 Requirements](#-requirements)
 - [🚀 Quick Start](#-quick-start)
+- [🌍 Languages](#-languages)
 - [📦 Building for Production](#-building-for-production)
 - [🧹 Linting and Formatting](#-linting-and-formatting)
 - [🕸️ Dependencies Troubleshooting](#️-dependencies-troubleshooting)
@@ -129,6 +130,39 @@ npm run dev
 ```
 
 The app will launch in development mode with hot reload enabled.
+
+---
+
+## 🌍 Languages
+
+Only English is built into the app. Every other language (Khmer, French and
+the rest, each a folder in `src/lang/data/online/<code>/`) is a plugin that is
+installed from **Settings → Languages**. A development app starts with English
+only, until you pack the languages into the local development catalog
+(`extra-work/lang/`):
+
+```bash
+# Pack every language
+npm run lang:pack
+
+# Pack only the languages you need (faster)
+npm run lang:pack -- --pack=km,fr
+```
+
+Then open **Settings → Languages**, find the language and press **Install**.
+
+**Every time you change a language's data** (its `dictionary.json` or
+`index.ts`, `assistant.json`, `questions.json`, `manual/`, fonts, Bible data…):
+
+1. Raise `version` in that language's `meta.json` (and in its `index.ts` when
+   it repeats the version).
+2. Pack it again: `npm run lang:pack -- --pack=<code>`, or `npm run lang:pack`
+   when many languages changed (a new label touches all of them).
+3. In **Settings → Languages**, press **Refresh**, then **Update to**. The app
+   reads the installed copy, not the source folder, so until you update it you
+   are still looking at the old data. **Update to** only appears for a higher
+   version than the one installed; if you pack again under the same version,
+   delete the installed language and press **Install** again.
 
 ---
 

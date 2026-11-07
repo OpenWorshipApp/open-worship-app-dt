@@ -123,7 +123,7 @@ describe('readLexicalText', () => {
             'Welcome',
             'line one\nline two',
             'line one\n\nline three',
-            'ក្រោកឡើង ហើយភ្លឺឡើង',
+            '✝ Arise, shine ✨ 📖',
         ]) {
             expect(readLexicalText(toLexicalContent(text))).toBe(text);
         }
@@ -137,6 +137,29 @@ describe('readLexicalText', () => {
                 '(KJV) Genesis 1:1-3',
                 'In the beginning God created the heaven',
             ].join('\n'),
+        );
+    });
+
+    // A hand-edited or damaged state: words straight under the root, a block
+    // after them, and entries that are no node at all.
+    it('reads loose words as their own lines and passes over what is no node', () => {
+        const loose = JSON.stringify({
+            root: {
+                type: 'root',
+                children: [
+                    { type: 'text', text: 'loose words' },
+                    null,
+                    ['not', 'a', 'node'],
+                    {
+                        type: 'paragraph',
+                        children: [{ type: 'text', text: 'a paragraph' }, 7],
+                    },
+                    { type: 'text', text: 'trailing words' },
+                ],
+            },
+        });
+        expect(readLexicalText(loose)).toBe(
+            'loose words\na paragraph\ntrailing words',
         );
     });
 
@@ -169,6 +192,39 @@ describe('readLexicalMentions', () => {
         });
         expect(readLexicalMentions(twice)).toEqual(['(KJV) Genesis 1:1-3']);
         expect(readLexicalMentions('')).toEqual([]);
+    });
+
+    it('passes over entries that are no node and mentions with no name', () => {
+        const damaged = JSON.stringify({
+            root: {
+                type: 'root',
+                children: [
+                    null,
+                    'text',
+                    {
+                        type: 'paragraph',
+                        children: [
+                            {
+                                type: 'mention',
+                                mentionKind: 'bible-verse',
+                                text: '(KJV) John 3:16',
+                            },
+                            {
+                                type: 'mention',
+                                mentionKind: 'bible-verse',
+                                mentionName: '  ',
+                            },
+                            {
+                                type: 'mention',
+                                mentionKind: 'person',
+                                mentionName: 'Moses',
+                            },
+                        ],
+                    },
+                ],
+            },
+        });
+        expect(readLexicalMentions(damaged)).toEqual(['(KJV) John 3:16']);
     });
 });
 

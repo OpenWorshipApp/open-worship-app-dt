@@ -12,6 +12,7 @@ for (const moduleName of [
     './fileUtils',
     './fontUtils',
     './httpUtils',
+    './langUtils',
     './messageUtils',
     './pathUtils',
     './systemUtils',

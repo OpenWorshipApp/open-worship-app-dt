@@ -3,11 +3,11 @@ import {
     getSlidesCount as pptxGetSlidesCount,
     getVersion as pptxGetVersion,
     exportPptx as pptxExportHtmls,
-} from 'pptx-to-html';
+} from 'pptx-to-html-conv';
 import {
     getVersion as docxGetVersion,
     exportDocx as docxExportHtmls,
-} from 'docx-to-html';
+} from 'docx-to-html-conv';
 
 import { isWindows, toUnpackedPath } from './electronHelpers';
 

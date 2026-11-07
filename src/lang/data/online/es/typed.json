@@ -1,0 +1,12 @@
+{
+    "es": {
+        "name": "Spanish",
+        "nativeName": "Español",
+        "script": "Latin",
+        "words": "el la los las un una unos unas lo del al y o a que qué cual cuál cuales cuáles como cómo donde dónde cuando cuándo quien quién porque por para con sin en de es son está están estoy soy hay mi mis tu tus su sus me te se le les nos este esta esto ese esa eso aquí puedo puede quiero necesito hago hacer ver muy más pero también ya todavía nada todo ayuda ayúdame favor gracias no",
+        "letters": "ñ¿¡áéíóú",
+        "yes": ["sí", "si", "claro", "vale", "sí, por favor"],
+        "no": ["no", "no, gracias"],
+        "order": 0
+    }
+}

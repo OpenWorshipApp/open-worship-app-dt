@@ -14,10 +14,11 @@
 //        test-results/chatbot-quality/verse-find.jsonl [--text] [--data=<dir>]
 //
 // The rows name Bibles by their short names on the dev profile it was made on
-// (KJV, ពគប); a row whose Bible is not installed fails for that reason, and
+// (KJV and the Khmer one); a row whose Bible is not installed fails for that reason, and
 // its answer says so. First run: 20 of 20 (2026-10-16).
 //
-// `../references/bible-find-asks.json` (2026-10-22, the user's ask: _make the
+// `../references/bible-find-asks.json` and each language's own
+// `src/lang/data/online/<code>/chatbot-asks/bible-find-asks.json` (2026-10-22, the user's ask: _make the
 // chatbot super smart that can find everything in the bible_) adds stories,
 // a book named inside the words, topics and "where is the story of …": its
 // rows carry `expectIn` (where it is told) and `isStory`, and a story is
@@ -27,6 +28,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { listPackageCodes, readAssistantFacts } from '../../../../extra-work/language-packages.mjs';
 
 const [asksPath, outPath] = process.argv.slice(2);
 
@@ -70,8 +72,9 @@ function checkIsInRange(ref, range) {
     );
 }
 
-// A button is drawn in the window's language (2026-10-22): `បើក លោកុប្បត្តិ
-// ៨:១១ ក្នុងការស្វែងរកព្រះគម្ពីរ` for a Khmer reader. The installed Bibles'
+// A button is drawn in the window's language (2026-10-22): the Khmer words
+// for Open, the verse as the Khmer Bible writes it, and the words for
+// "in Bible Lookup", for a Khmer reader. The installed Bibles'
 // own book names (`<data folder>/bibles-data/<key>.xml.cache/_info`) read it
 // back into `Genesis 8:11`. --data=<data folder>; the dev one by default.
 const DATA_DIR = (() => {
@@ -100,15 +103,25 @@ try {
 } catch {
     // No data folder: English labels still read.
 }
+// Each language's own digits (`nativeDigits` in its `assistant.json`).
+const NATIVE_DIGIT_LIST = listPackageCodes()
+    .map((code) => readAssistantFacts(code).nativeDigits)
+    .filter((digits) => typeof digits === 'string' && [...digits].length === 10);
 function toAsciiDigits(text) {
-    return text.replaceAll(/[០-៩]/g, (digit) => {
-        return String(digit.charCodeAt(0) - 0x17e0);
-    });
+    return [...text]
+        .map((one) => {
+            for (const digits of NATIVE_DIGIT_LIST) {
+                const value = [...digits].indexOf(one);
+                if (value !== -1) return String(value);
+            }
+            return one;
+        })
+        .join('');
 }
 /** `Open X in Bible Lookup` in any language, X as an English reference. */
 function readOpenedRef(label) {
     const english = /^Open (.+) in Bible Lookup$/i.exec(label);
-    // `បើក X ក្នុងការស្វែងរកព្រះគម្ពីរ`: the first word, X, the last.
+    // In another language: its word for Open first, X, its words after.
     const local = /^\S+\s+(.+?)\s+\S+$/u.exec(label);
     const shown = english?.[1] ?? local?.[1];
     if (shown === undefined) {
@@ -117,7 +130,7 @@ function readOpenedRef(label) {
     if (/^[\x20-\x7E–]+$/.test(shown)) {
         return /\d/.test(shown) ? shown : null;
     }
-    const match = /^(.+?)\s+([\d០-៩:\-–]+)$/u.exec(shown.trim());
+    const match = /^(.+?)\s+([\p{Nd}:\-–]+)$/u.exec(shown.trim());
     const key = match === null ? undefined : bookKeyByName.get(match[1]);
     return key === undefined
         ? null

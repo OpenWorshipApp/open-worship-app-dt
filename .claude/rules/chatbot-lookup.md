@@ -182,7 +182,7 @@ window as a whole — tabs, pickers, its language, the caution — is in
   and its map** (2026-10-22, `EC-397`..`EC-403`; the user with the Names
   and Places row menu circled: _make the chatbot to be super smart that can
   answer everything about location/name_; measured on
-  `.claude/skills/owa-enhance-chatbot/references/lookup-khmer-asks.json`,
+  `src/lang/data/online/km/chatbot-asks/lookup-asks.json`,
   25 questions in Khmer: 11 right / 5 partly / 9 wrong → 22 / 3 / 0). The
   record says a person's other names, its namesakes, a place's distance
   from Jerusalem, its neighbours and its people (`agent-tools.md`). **As a
@@ -215,7 +215,7 @@ window as a whole — tabs, pickers, its language, the caution — is in
   Genesis 8:1-22 circled: _make the chatbot to be super smart that can
   answer everything about selected verses_, then the goal _help user find
   everything related to the selected verses_; measured on
-  `.claude/skills/owa-enhance-chatbot/references/passage-khmer-asks.json`,
+  `src/lang/data/online/km/chatbot-asks/passage-asks.json`,
   15 questions in Khmer on gemma4:cloud: 4 / 4 / 7 → 15 / 0 / 0 right /
   partly / wrong in two runs, English shown 3 → 0). Before, a question about related
   verses had nothing to answer from: the record held the passage alone, so
@@ -318,7 +318,7 @@ window as a whole — tabs, pickers, its language, the caution — is in
   holds no data for (`EC-431`), so there is no "other verses with this
   word" button yet (`EC-432`).
   **Hebrew and the lesson's own words** (2026-10-23, measured on
-  `.claude/skills/owa-enhance-chatbot/references/word-study-asks.json`,
+  `src/lang/data/online/km/chatbot-asks/word-study-asks.json`,
   Hebrew, Greek, Khmer and KJV lessons pressed through the card, gemma4:cloud
   in Khmer: 4 / 10 / 2 → 12 / 4 / 0 right / partly / wrong on the same 16).
   A verse's words also part at the Hebrew maqaf, and are one word whatever

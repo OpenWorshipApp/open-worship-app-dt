@@ -29,6 +29,8 @@ import {
     invalidateResourcesScanCache,
     MAX_OTHER_MATCHES,
     MAX_SCAN_DEPTH,
+    MAX_SCAN_DIRECTORIES,
+    MAX_SCAN_ENTRIES,
     MAX_SEARCH_MATCHES,
     normalizeResourceSearchText,
     toResourceSearchWords,
@@ -175,6 +177,9 @@ describe('checkIsBookLevelName', () => {
         // Not one of this book's files at all, so not book-level either.
         ['GEN.0.pdf', false],
         ['notes.pdf', false],
+        // Too short to hold a chapter at all.
+        ['PSA', false],
+        ['PSA.', false],
     ])('%s -> %s', (fileFullName, expected) => {
         expect(checkIsBookLevelName(fileFullName, 'PSA')).toBe(expected);
     });
@@ -224,6 +229,9 @@ describe('checkIsMatchedName', () => {
         ['2 PSA.1.pdf', false],
         ['1CH.1.pdf', false],
         ['PSA.pdf', false],
+        ['PSA.', false],
+        ['PS', false],
+        ['', false],
     ])('%s -> %s', (fileFullName, expected) => {
         expect(checkIsMatchedName(fileFullName, 'PSA', 1)).toBe(expected);
     });
@@ -456,6 +464,87 @@ describe('scanResourceFiles', () => {
         // ...unless something is typed, which is a question of its own.
         const searched = await scanResourceFiles('/root', [], 'gen');
         expect(searched?.searchedFilePaths).toEqual(['/root/GEN.1.pdf']);
+    });
+
+    // A drive root: the entry budget stops the walk at the next folder, with
+    // what was found so far, and says so.
+    test('a folder past the entry budget is not walked further, and says so', async () => {
+        const names = ['sub/', 'PSA.1.pdf'];
+        for (let index = names.length; index < MAX_SCAN_ENTRIES; index++) {
+            names.push(`photo${index}.jpg`);
+        }
+        installTree({ '/root': names, '/root/sub': ['PSA.1.more.pdf'] });
+        const result = await scanResourceFiles('/root', PSA_1);
+        expect(readdirMock).toHaveBeenCalledTimes(1);
+        expect(result?.filePaths).toEqual(['/root/PSA.1.pdf']);
+        expect(result?.isTruncated).toBe(true);
+    });
+
+    test('never more folder reads than the directory budget', async () => {
+        const subfolders: string[] = [];
+        for (let index = 0; index < MAX_SCAN_DIRECTORIES; index++) {
+            subfolders.push(`a${index}/`);
+        }
+        const tree: FakeTreeType = { '/root': subfolders };
+        for (let index = 0; index < MAX_SCAN_DIRECTORIES; index++) {
+            tree[`/root/a${index}`] = [`PSA.1.n${index}.pdf`];
+        }
+        installTree(tree);
+        // The walk yields every 16 folders, ~94 times on the way: faked, or
+        // each costs a real timer tick (~15 ms on Windows).
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+        let result: Awaited<ReturnType<typeof scanResourceFiles>> = null;
+        let isDone = false;
+        try {
+            void scanResourceFiles('/root', PSA_1).then((value) => {
+                result = value;
+                isDone = true;
+            });
+            for (let turn = 0; turn < 1000 && !isDone; turn++) {
+                // Lets the walk run on to its next yield, then releases it.
+                await new Promise((resolve) => {
+                    setImmediate(resolve);
+                });
+                vi.runOnlyPendingTimers();
+            }
+        } finally {
+            vi.useRealTimers();
+        }
+        expect(isDone).toBe(true);
+        result = result as Awaited<ReturnType<typeof scanResourceFiles>>;
+        // The root and 1499 of its folders; the last one is never opened.
+        expect(readdirMock).toHaveBeenCalledTimes(MAX_SCAN_DIRECTORIES);
+        expect(result?.filePaths).toHaveLength(MAX_SCAN_DIRECTORIES - 1);
+        expect(result?.filePaths).not.toContain(
+            `/root/a${MAX_SCAN_DIRECTORIES - 1}/PSA.1.n${MAX_SCAN_DIRECTORIES - 1}.pdf`,
+        );
+        expect(result?.isTruncated).toBe(true);
+    });
+
+    // A long walk must not hold the window: every 16 folders it lets other
+    // work in. A short one never needs to.
+    test('a long walk lets other work in as it goes; a short one runs straight through', async () => {
+        async function walkBeside(subfolderCount: number) {
+            invalidateResourcesScanCache();
+            const tree: FakeTreeType = { '/root': [] };
+            for (let index = 0; index < subfolderCount; index++) {
+                (tree['/root'] as string[]).push(`a${index}/`);
+                tree[`/root/a${index}`] = [];
+            }
+            installTree(tree);
+            const order: string[] = [];
+            const timerId = setTimeout(() => {
+                order.push('other work');
+            }, 0);
+            await scanResourceFiles('/root', PSA_1);
+            order.push('walk done');
+            clearTimeout(timerId);
+            return order;
+        }
+        // 4 folders read: all of it before anything else gets a turn.
+        expect(await walkBeside(3)).toEqual(['walk done']);
+        // 21 folders read: the other work ran mid-walk.
+        expect(await walkBeside(20)).toEqual(['other work', 'walk done']);
     });
 });
 

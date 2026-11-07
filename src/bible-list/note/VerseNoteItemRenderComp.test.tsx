@@ -169,6 +169,131 @@ describe('marked verse row header', () => {
         expect(enter.defaultPrevented).toBe(false);
         expect(note.updateAndSaveNoteItem).not.toHaveBeenCalled();
     });
+
+    test('opened, it lists every highlight and then every comment', async () => {
+        noteItem.comments = [{ id: 'c1', comment: 'So loved' }];
+        noteItem.annotationCount = 2;
+        await renderRow();
+        expect(host.textContent).toContain('2');
+        await act(async () => getHeader().click());
+        expect(
+            [...host.querySelectorAll('ul li')].map((row) => row.textContent),
+        ).toEqual(['Mark h1', 'Mark c1']);
+    });
+});
+
+describe('marked verse row actions', () => {
+    function getRow() {
+        return host.querySelector<HTMLLIElement>('li[data-note-item-id]')!;
+    }
+
+    async function openMenu() {
+        await renderRow();
+        await act(async () => {
+            getRow().dispatchEvent(
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            );
+        });
+        const [, menuItems] = mocks.showMenu.mock.lastCall!;
+        return (name: string) =>
+            menuItems.find((item: any) => item.menuElement === name);
+    }
+
+    test('names its row for the reader to flash, and offers three actions', async () => {
+        await renderRow();
+        expect(getRow().dataset.noteItemId).toBe('Default-3');
+        expect(getRow().dataset.index).toBe('1');
+        await act(async () => {
+            host.querySelector('button')!.click();
+        });
+        const [, menuItems] = mocks.showMenu.mock.lastCall!;
+        expect(menuItems.map((item: any) => item.menuElement)).toEqual([
+            'Add to Bible List',
+            'Move To',
+            'Delete',
+        ]);
+    });
+
+    test('Add to Bible List saves the verse, or nothing when it names none', async () => {
+        const findItem = await openMenu();
+        const bibleItem = { bibleKey: 'KJV', target: { bookKey: 'JHN' } };
+        mocks.toVerseBibleItem.mockReturnValueOnce(bibleItem);
+        await findItem('Add to Bible List').onSelect();
+        expect(mocks.toVerseBibleItem).toHaveBeenLastCalledWith(
+            'KJV) John 3:16',
+        );
+        expect(mocks.saveBibleItem).toHaveBeenCalledWith(bibleItem);
+
+        mocks.toVerseBibleItem.mockReturnValueOnce(null);
+        noteItem.verseKey = undefined;
+        await findItem('Add to Bible List').onSelect();
+        expect(mocks.toVerseBibleItem).toHaveBeenLastCalledWith('');
+        expect(mocks.saveBibleItem).toHaveBeenCalledOnce();
+    });
+
+    test('Move To hands the press, the note and the item on', async () => {
+        const findItem = await openMenu();
+        const pressEvent = { clientX: 4 };
+        findItem('Move To').onSelect(pressEvent);
+        expect(mocks.moveNoteItemTo).toHaveBeenCalledWith(
+            pressEvent,
+            note,
+            noteItem,
+        );
+    });
+
+    test('Delete removes every mark of the verse only once confirmed', async () => {
+        note.deleteNoteItem = vi.fn();
+        const findItem = await openMenu();
+        mocks.confirm.mockResolvedValueOnce(false);
+        await findItem('Delete').onSelect();
+        expect(mocks.confirm).toHaveBeenCalledWith(
+            'Delete Verse Marks',
+            'Are you sure to delete all marks on this verse?',
+            { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
+        );
+        expect(note.deleteNoteItem).not.toHaveBeenCalled();
+        mocks.confirm.mockResolvedValueOnce(true);
+        await findItem('Delete').onSelect();
+        expect(note.deleteNoteItem).toHaveBeenCalledWith(noteItem);
+    });
+
+    test('a drag carries the verse and the item, or does not start without a verse', async () => {
+        await renderRow();
+        const bibleItem = { bibleKey: 'KJV' };
+        mocks.toVerseBibleItem.mockReturnValueOnce(bibleItem);
+        const dragEvent = new MouseEvent('dragstart', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => {
+            getRow().dispatchEvent(dragEvent);
+        });
+        expect(dragEvent.defaultPrevented).toBe(false);
+        expect(mocks.dragStart).toHaveBeenCalledWith(
+            expect.anything(),
+            bibleItem,
+        );
+        expect(mocks.addDragPayload).toHaveBeenCalledWith(
+            expect.anything(),
+            noteItem,
+        );
+
+        mocks.toVerseBibleItem.mockReturnValueOnce(null);
+        const refusedEvent = new MouseEvent('dragstart', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => {
+            getRow().dispatchEvent(refusedEvent);
+        });
+        expect(refusedEvent.defaultPrevented).toBe(true);
+        expect(mocks.dragStart).toHaveBeenCalledOnce();
+        expect(mocks.addDragPayload).toHaveBeenCalledOnce();
+    });
 });
 
 describe('marked verse row actions', () => {

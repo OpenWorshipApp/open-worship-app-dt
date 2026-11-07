@@ -98,6 +98,7 @@ import {
 } from './agentMenu.mjs';
 import {
   AGENT_BIBLE_ITEM_ACTIONS,
+  AGENT_LANGUAGE_ACTIONS,
   AGENT_MEDIA_FILE_ACTIONS,
   AGENT_MEDIA_KINDS,
   AGENT_NOTE_ACTIONS,
@@ -123,6 +124,7 @@ import {
 } from './tran.mjs';
 import { genListScreensExpression } from './agentScreens.mjs';
 import { registerBibleXmlTool } from './agentBibleXml.mjs';
+import { registerLyricEditTool } from './agentLyricEdit.mjs';
 import {
   AGENT_BIBLE_ACTIONS,
   formatPresentBibleResult,
@@ -164,6 +166,10 @@ const BIBLE_FIND_TIMEOUT = 120 * 1000;
 const LOOKUP_RECORD_TIMEOUT = 60 * 1000;
 // A Resources PDF is drawn page by page in a child process of main.
 const RESOURCE_FILE_TIMEOUT = 60 * 1000;
+// `owa_language` `install`: a language pack is up to ~30 MB (Khmer, with its
+// fonts and Bible data), checked and extracted on a cheap machine over a
+// church hall's internet.
+const LANGUAGE_INSTALL_TIMEOUT = 10 * 60 * 1000;
 
 // What language the app's own interface is in RIGHT NOW.
 //
@@ -318,7 +324,7 @@ function localizeFinds(finds, langCode, bundle) {
 // the same steps in the same order, read off the same lines; when they are
 // not, the English text stands.
 // The page's own translation is read first when it is current (`W-11@km`,
-// `docs/manual-i18n/`): the whole step in the window's language, not the
+// `src/lang/data/online/<code>/manual/`): the whole step in the window's language, not the
 // English step with its button names translated -- which is what a Khmer
 // window had shown, an English sentence round a Khmer word (2026-10-17).
 function readLocalStepPage(manualId, langCode) {
@@ -808,7 +814,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         lang: z
           .string()
           .optional()
-          .describe('e.g. "km"; default the language the app is showing.'),
+          .describe('A language code; default the language the app is showing.'),
       },
     },
     async ({ text, lang }) => {
@@ -1608,6 +1614,11 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     );
   }
 
+  // A song changed part by part from words: a section, a translation,
+  // chords, another key (`agentLyricEdit.mjs`). Offered to the chatbot's
+  // model only in a conversation about an attached song.
+  registerLyricEditTool(server);
+
   // The saved passages and the notes. A list or file name reaches the disk,
   // so it is checked here first with the document tools' own rule -- and
   // again by the worker, at the disk -- and only the names a call carries
@@ -1827,7 +1838,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         "The user's Resources files: study PDFs, notes, links and " +
         'pictures named by book and chapter (LUK.6.pdf is Luke 6, LUK.0 ' +
         'its introduction). `list` by `book` (+ `chapter`) or `search`, or ' +
-        'by `ref` (a book and chapter together: "John 3", "យ៉ូហាន 3") -- a ' +
+        'by `ref` (a book and chapter together: "John 3") -- a ' +
         "book may be named in any installed Bible's own language, its " +
         'English name or its code; `read` a `file` as listed, or its bare ' +
         'file name when only one file in the folders has it -- a PDF ' +
@@ -2128,6 +2139,46 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
     async ({ action, id, page }) => {
       try {
         return await runDataRequest('undo', { action, id }, page);
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    },
+  );
+
+  // The language plugins (2026-11-05, the user: _mcp should be able to help
+  // install language package_). The work is the app's own Languages tab's
+  // (`src/helper/agentLanguageHelpers.ts`), in the main window, whose toast
+  // and progress bar say how it went. The help window asks `check` whenever
+  // a conversation turns to a language and offers the install as a button
+  // the PERSON presses -- its model is never offered this tool
+  // (`modelTools.mjs`), because a language plugin is code the app runs.
+  server.registerTool(
+    'owa_language',
+    {
+      description:
+        'The app languages. `list`: the installed ones and the catalog\'s ' +
+        'others. `check` the `language` some words name (English name, ' +
+        'own name, code or locale): `state` english, installed, ' +
+        'turned-off, missing (with `size` in bytes), unavailable or ' +
+        'unknown. `install` downloads a missing one from the catalog, or ' +
+        'turns a turned-off one on; it does not switch the app to it.',
+      inputSchema: {
+        action: z.enum(AGENT_LANGUAGE_ACTIONS),
+        language: z.string().max(200).optional(),
+      },
+    },
+    async ({ action, language }) => {
+      // A pack is up to ~30 MB, downloaded over whatever a church hall has.
+      const timeout = action === 'install' ? LANGUAGE_INSTALL_TIMEOUT : 60000;
+      try {
+        const { value } = await evaluateInApp(
+          genAgentDataExpression('language', { action, language }, timeout),
+          { timeout: timeout + 5000 },
+        );
+        const formatted = formatAgentDataResult(value);
+        return formatted.isError
+          ? toErrorResult(new Error(formatted.text))
+          : toTextResult(formatted.text);
       } catch (error) {
         return toErrorResult(error);
       }

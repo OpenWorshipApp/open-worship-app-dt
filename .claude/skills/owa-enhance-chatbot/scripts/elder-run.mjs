@@ -9,7 +9,7 @@
 // Language-blind: the head row's pickers are found by their options, never
 // by their aria-labels, which are translated.
 //
-//   node elder-run.mjs --models="Ollam super-mac|gemma4:cloud,ឥតគិតថ្លៃ|"
+//   node elder-run.mjs --models="Ollam super-mac|gemma4:cloud,<the Free row's name>|"
 //        [--only=V1-,N4-] [--pace=125] [--timeout=420] [--out=<file>]
 //        [--scenarios=<file>] [--allow-more]
 //   node elder-digest.mjs <out> [scenario-prefix | numbers]
@@ -39,6 +39,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { genRunWordPattern, genRunWordSource, listPackageCodes, readAssistantFacts, readLanguageAsks, readRunBookNames, readWorldLanguages, toScriptPattern } from '../../../../extra-work/language-packages.mjs';
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((arg) => {
@@ -73,16 +74,23 @@ const OUT = path.resolve(
       `elder-${new Date().toISOString().slice(0, 10)}.jsonl`,
     ),
 );
-const SCENARIOS = JSON.parse(
-  fs.readFileSync(
-    path.resolve(
-      args.scenarios ??
-        path.join(HERE, '..', 'references', 'elder-khmer-asks.json'),
-    ),
-    'utf8',
-  ),
-);
+// The scenarios are the language's own (`--lang`, or the one language
+// with them): `src/lang/data/online/<code>/chatbot-asks/elder-asks.json`.
+const { lang: RUN_LANG, data: SCENARIOS } =
+  typeof args.scenarios === 'string'
+    ? {
+        lang: typeof args.lang === 'string' ? args.lang : null,
+        data: JSON.parse(fs.readFileSync(path.resolve(args.scenarios), 'utf8')),
+      }
+    : readLanguageAsks('elder-asks.json', args.lang);
 const PACE = Number(args.pace ?? 135);
+const PAUSED_PATTERN = genRunWordPattern('I have paused the assistant', 'paused');
+const ALLOW_MORE_SOURCE = genRunWordSource('Allow more', 'allowMore');
+// The cost hover's head before its first colon, a colon of any script
+// (`colonMarks`, world data).
+const COST_HEAD_PATTERN = new RegExp(
+  `^[^:\uFF1A${readWorldLanguages().colonMarks ?? ''}]*[:\uFF1A${readWorldLanguages().colonMarks ?? ''}]\\s*`,
+);
 const ANSWER_TIMEOUT_MS = Number(args.timeout ?? 300) * 1000;
 const STOP_FILE = path.join(WORK_DIR, 'ELDER-STOP');
 const RUN_ID = new Date().toISOString();
@@ -90,8 +98,11 @@ const PROFILE = 'open-worship-app-dev';
 const FOCUS_INDEX = { presenter: 0, reader: 1 };
 // Never pressed, whatever a scenario says: what reaches a projector, removes,
 // acts for the person, lifts the spend guard, or leaves the app.
-const DENY_PRESS =
-  /អេក្រង់|screen|ធ្វើជំនួសខ្ញុំ|Do it|អនុញ្ញាតបន្ថែម|Allow more|លុប|Delete|Trash|សម្អាត|Clear|Google|http/i;
+const DENY_PRESS = genRunWordPattern(
+  'screen|Do it|Allow more|Delete|Trash|Clear|Google|http',
+  'neverPress',
+  'i',
+);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const log = (...parts) => {
@@ -384,47 +395,60 @@ function parseUsage(costFull) {
   };
 }
 
-const KHMER = /[ក-៿]/g;
+// The run language's own letters (its `assistant.json` `scriptPattern`)
+// against Latin ones: how much of an answer a reader of no English can read.
+const OWN_SCRIPT = (RUN_LANG === null ? null : toScriptPattern(RUN_LANG, 'gu')) ?? /(?!)/gu;
 const LATIN = /[A-Za-z]/g;
 function scriptMix(text) {
-  const km = (text.match(KHMER) ?? []).length;
+  const own = (text.match(OWN_SCRIPT) ?? []).length;
   const en = (text.match(LATIN) ?? []).length;
   return {
-    km,
+    own,
     en,
-    kmShare: km + en === 0 ? null : Math.round((km / (km + en)) * 100) / 100,
+    ownShare: own + en === 0 ? null : Math.round((own / (own + en)) * 100) / 100,
   };
 }
 const LEAK =
   /\bowa_[a-z_]+|\bW-\d{2}\w?\b|\b[\w/-]+\.(?:tsx?|mjs|json|html)\b|\bsrc\/|data-react|\bisShowing\b|\bneedsPage\b|\bundefined\b|\[object |\{"|"[a-zA-Z]+":|<\/?[a-z]+>|\bmanualId\b|\bdemoId\b/;
-const ERROR_WORDS =
-  /could not answer|I could not|TypeError|ReferenceError|is not a function|Cannot read|stack|មិនអាចឆ្លើយបានទេ/i;
+const ERROR_WORDS = genRunWordPattern(
+  'could not answer|I could not|TypeError|ReferenceError|is not a function|Cannot read|stack',
+  'couldNotAnswer',
+  'i',
+);
 
 function openedRefs(buttons) {
   return (buttons ?? [])
     .map((label) => {
-      const m =
-        /^(?:Open|បើក)\s+(.+?)\s+(?:in Bible Lookup|ក្នុងការស្វែងរកព្រះគម្ពីរ)$/i.exec(
-          label,
-        );
+      const m = OPENED_REF_PATTERN.exec(label);
       return m ? m[1] : null;
     })
     .filter(Boolean);
 }
-// A Khmer button names the verse as ពគប writes it (`ម៉ាថាយ ៥:៤៤`): read
-// back to the English the scenarios expect.
-const KM_BOOK_MAP = {
-  ម៉ាថាយ: 'matthew',
-  លូកា: 'luke',
-  ទំនុកដំកើង: 'psalm',
-  រ៉ូម: 'romans',
-  យ៉ូហាន: 'john',
-  សុភាសិត: 'proverbs',
-};
+// A button in another language names the verse as its Bible writes it, its
+// book in its own words and its own digits: read back to the English the
+// scenarios expect (`bookNames` in each language's `run-words.json`, and
+// the digits its `assistant.json` writes).
+const OPENED_REF_PATTERN = new RegExp(
+  `^(?:${genRunWordSource('Open', 'open')})\\s+(.+?)\\s+(?:${genRunWordSource('in Bible Lookup', 'inBibleLookup')})$`,
+  'i',
+);
+const BOOK_NAME_MAP = readRunBookNames();
+const NATIVE_DIGIT_LIST = listPackageCodes()
+  .map((code) => readAssistantFacts(code).nativeDigits)
+  .filter((digits) => typeof digits === 'string' && [...digits].length === 10);
 const normRef = (ref) => {
-  let text = ref.replace(/[០-៩]/g, (d) => String('០១២៣៤៥៦៧៨៩'.indexOf(d)));
-  for (const [km, en] of Object.entries(KM_BOOK_MAP)) {
-    text = text.replace(km, en);
+  let text = ref;
+  for (const digits of NATIVE_DIGIT_LIST) {
+    const digitList = [...digits];
+    text = [...text]
+      .map((one) => {
+        const value = digitList.indexOf(one);
+        return value === -1 ? one : String(value);
+      })
+      .join('');
+  }
+  for (const [own, en] of Object.entries(BOOK_NAME_MAP)) {
+    text = text.replace(own, en);
   }
   return text
     .toLowerCase()
@@ -726,7 +750,7 @@ async function runStep(step, record) {
   } else if (step.askAgain) {
     await pace();
     const pressed = await cdp.evaluate(
-      PRESS('^(សួរម្ដងទៀត|Ask again)$', null, 'you'),
+      PRESS(`^(${genRunWordSource('Ask again', 'askAgain')})$`, null, 'you'),
     );
     record.press = pressed;
     await sleep(600);
@@ -737,7 +761,7 @@ async function runStep(step, record) {
     }
   } else if (step.thumbsDown) {
     const pressed = await cdp.evaluate(
-      PRESS('^(ចម្លើយមិនល្អ|Bad answer)$', null, 'bot'),
+      PRESS(`^(${genRunWordSource('Bad answer', 'badAnswer')})$`, null, 'bot'),
     );
     record.press = pressed;
     await sleep(2500);
@@ -867,7 +891,7 @@ for (const { scenario, model } of order) {
         (record.costFull ?? '')
           .split('\n')
           .find((one) => one.includes('·'))
-          ?.replace(/^[^:：៖]*[:：៖]\s*/, '') ?? null;
+          ?.replace(COST_HEAD_PATTERN, '') ?? null;
       record.alert = final.alert;
       record.tools = toolCalls.map((c) => ({
         name: c.name,
@@ -885,7 +909,7 @@ for (const { scenario, model } of order) {
       record.errorWords = (ERROR_WORDS.exec(
         `${record.answer}\n${record.note ?? ''}`,
       ) ?? [null])[0];
-      record.paused = /ខ្ញុំបានផ្អាកជំនួយការ|I have paused the assistant/.test(
+      record.paused = PAUSED_PATTERN.test(
         `${record.note ?? ''} ${record.answer}`,
       );
       if (step.expect) {
@@ -939,7 +963,7 @@ for (const { scenario, model } of order) {
         }
         const pressed = await cdp.evaluate(`(() => {
                     const button = [...(document.querySelector('.chat-head')?.querySelectorAll('button') ?? [])]
-                        .find((b) => /អនុញ្ញាតបន្ថែម|Allow more/.test(b.textContent));
+                        .find((b) => new RegExp(${JSON.stringify(ALLOW_MORE_SOURCE)}).test(b.textContent));
                     if (!button) return false;
                     button.click();
                     return true;

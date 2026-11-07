@@ -27,7 +27,7 @@ export default function BibleCustomStyleFloatingComp() {
     if (!isShowing) {
         return null;
     }
-    const label = tran('Bible Properties');
+    const label = tran('Bible/LongText Properties');
     return createPortal(
         <div className="app app-floating-widget-portal" data-bs-theme={theme}>
             {/* Named like every foreground floating panel: without it every
@@ -36,7 +36,7 @@ export default function BibleCustomStyleFloatingComp() {
                 button was findable only as a bare "Close floating widget". */}
             <FloatingWidgetComp
                 title={label}
-                widgetName="Bible Properties"
+                widgetName="Bible/LongText Properties"
                 persistKey="floating-widget-rect-bible-property"
                 onClose={() => {
                     setIsBibleCustomStyleFloatingShowing(false);

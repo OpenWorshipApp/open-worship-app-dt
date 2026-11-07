@@ -95,6 +95,22 @@ vi.mock('../helper/ai/chatbotHandoffStoreHelpers', () => ({
 vi.mock('../helper/ai/chatbotBusyHelpers', () => ({
     useIsChatbotBusy: () => false,
 }));
+// The gear's update point: how main is asked has its own test
+// (`packageUpdateHelpers.test.tsx`); here, what the gear draws from it.
+const { packageUpdateState, usePackageUpdatesMock } = vi.hoisted(() => ({
+    packageUpdateState: { current: null as any },
+    usePackageUpdatesMock: vi.fn(),
+}));
+vi.mock('../helper/packageUpdateHelpers', async () => {
+    const protocol = await import('../../electron/packageUpdateProtocol');
+    return {
+        checkHasPackageUpdate: protocol.checkHasPackageUpdate,
+        usePackageUpdates: (isCheckingAtLaunch?: boolean) => {
+            usePackageUpdatesMock(isCheckingAtLaunch);
+            return packageUpdateState.current;
+        },
+    };
+});
 
 import {
     BibleLookupButtonComp,
@@ -107,6 +123,7 @@ import {
     useIsBibleLookupShowingContext,
     useToggleBibleLookupPopupContext,
 } from './commonButtons';
+import { getBibleLookupPopupOpener } from './bibleLookupPopupOpener';
 
 let container: HTMLDivElement;
 let root: Root | null = null;
@@ -159,6 +176,7 @@ describe('others commonButtons', () => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
         vi.clearAllMocks();
         h.appProvider.browserUtils.openExternalURL = h.openExternalURLMock;
+        packageUpdateState.current = null;
         container = document.createElement('div');
         document.body.appendChild(container);
     });
@@ -176,10 +194,43 @@ describe('others commonButtons', () => {
         expect(h.goToPathMock).toHaveBeenCalledWith('/home');
     });
 
+    test('QuitCurrentPageComp shows nothing outside the main window', async () => {
+        h.appProvider.messageUtils.sendDataSync.mockReturnValue(false);
+        await render(<QuitCurrentPageComp title="Quit" pathname="/home" />);
+        expect(container.querySelector('button')).toBeNull();
+        expect(h.appProvider.messageUtils.sendDataSync).toHaveBeenCalledWith(
+            'all:app:check-is-main-window',
+        );
+    });
+
     test('SettingButtonComp opens the setting page', async () => {
         await render(<SettingButtonComp />);
         clickButton();
         expect(h.openSettingPageMock).toHaveBeenCalled();
+    });
+
+    // The user's ask: _sign on the gear icon then on each tab then on the
+    // item to update_.
+    test('SettingButtonComp carries a point while an installed package has an update', async () => {
+        await render(<SettingButtonComp />);
+        // The gear is what starts the launch's one look.
+        expect(usePackageUpdatesMock).toHaveBeenCalledWith(true);
+        const button = container.querySelector('button')!;
+        expect(button.querySelector('.app-update-dot')).toBeNull();
+        expect(button.getAttribute('aria-label')).toBe('Setting');
+        await act(async () => root?.unmount());
+
+        packageUpdateState.current = {
+            langCodes: [],
+            isExtraBinOutdated: true,
+        };
+        await render(<SettingButtonComp />);
+        const litButton = container.querySelector('button')!;
+        expect(litButton.querySelector('.app-update-dot')).not.toBeNull();
+        expect(litButton.getAttribute('aria-label')).toBe(
+            'Setting — Update Available',
+        );
+        expect(litButton.title).toBe('Setting — Update Available');
     });
 
     // Asked for by the user: the question mark offers both kinds of help
@@ -353,6 +404,27 @@ describe('others commonButtons', () => {
         // fire the registered keyboard shortcut too
         h.captured.kbCb();
         expect(setIsShowing).toHaveBeenCalledTimes(2);
+    });
+
+    test('BibleLookupButtonComp lends its press to the assistant while mounted', async () => {
+        const setIsShowing = vi.fn();
+        expect(getBibleLookupPopupOpener()).toBeNull();
+        await render(
+            <BibleLookupTogglePopupContext.Provider
+                value={{ isShowing: false, setIsShowing }}
+            >
+                <BibleLookupButtonComp />
+            </BibleLookupTogglePopupContext.Provider>,
+        );
+        const open = getBibleLookupPopupOpener();
+        expect(open).not.toBeNull();
+        act(() => {
+            open!();
+        });
+        expect(setIsShowing).toHaveBeenCalledExactlyOnceWith(true);
+        await act(async () => root?.unmount());
+        root = null;
+        expect(getBibleLookupPopupOpener()).toBeNull();
     });
 
     test('useIsBibleLookupShowingContext throws without a provider', async () => {

@@ -2,7 +2,8 @@
 // same faces -- with a website where the conversation would be.
 //
 // Same two rules as the chatbot's sheet: bootstrap and THIS sheet, nothing
-// else; and no webfonts. Everything shared with the chatbot lives in
+// else; and no font from the internet (the app's own faces are files it
+// ships). Everything shared with the chatbot lives in
 // `../chatbot/chatWindowShared.scss`.
 @use '../chatbot/chatWindowShared.scss' as *;
 

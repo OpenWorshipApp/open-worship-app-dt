@@ -111,13 +111,16 @@ describe('archive password protection', () => {
     );
 
     test(
-        'round trips a Khmer password across normalisation forms',
+        'round trips a non-ASCII password across normalisation forms',
         async () => {
             const content = randomBytes(256);
             const plainFilePath = await writeFixture('archive.tar', content);
             const encryptedFilePath = toPath('archive.enc');
             const restoredFilePath = toPath('restored.tar');
-            const password = 'ព្រះគម្ពីរ ២០២៦';
+            // Symbols every script shares, one with a canonical twin: the
+            // left angle bracket U+2329 is U+3008 once decomposed.
+            const password = '✝ 📖 \u2329 ２０２６';
+            expect(password.normalize('NFD')).not.toBe(password);
 
             await encryptFile(plainFilePath, encryptedFilePath, password);
             const result = await decryptFile(

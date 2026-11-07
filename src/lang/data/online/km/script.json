@@ -1,0 +1,13 @@
+{
+    "scriptPattern": "[\\u1780-\\u17FF\\u19E0-\\u19FF]",
+    "isUnspaced": true,
+    "digits": ["០", "១", "២", "៣", "៤", "៥", "៦", "៧", "៨", "៩"],
+    "ignoredPattern": "[\\u200B\\u200C]",
+    "previewIgnoresSpaces": true,
+    "findingLetterPattern": "[\\u1780-\\u17B3\\u17B6-\\u17D3\\u17E0-\\u17E9]",
+    "systemFonts": {
+        "windows": ["Khmer UI", "DaunPenh"],
+        "mac": ["Khmer Sangam MN", "Khmer MN"],
+        "linux": ["Noto Sans Khmer", "Khmer OS"]
+    }
+}

@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import {
     VERSE_ANNOTATION_ANCHOR_ATTR,
     checkIsOffsetInside,
     checkIsOverlapping,
     createRangeFromOffsets,
+    getOffsetFromPoint,
     getOffsetsFromRange,
 } from './bibleVerseAnnotationHelpers';
 
@@ -170,5 +171,63 @@ describe('offset predicates', () => {
         expect(checkIsOverlapping(annotation, 0, 11)).toBe(true);
         expect(checkIsOverlapping(annotation, 19, 30)).toBe(true);
         expect(checkIsOverlapping(annotation, 12, 15)).toBe(true);
+    });
+});
+
+// A CSS-painted mark has no element to hover: a point is turned into a caret,
+// and the caret into an offset in the same space the marks are stored in.
+describe('the offset under a point', () => {
+    afterEach(() => {
+        delete (document as any).caretPositionFromPoint;
+    });
+
+    function stubCaret(answer: () => unknown) {
+        const pointList: [number, number][] = [];
+        Object.defineProperty(document, 'caretPositionFromPoint', {
+            configurable: true,
+            value: (x: number, y: number) => {
+                pointList.push([x, y]);
+                return answer();
+            },
+        });
+        return pointList;
+    }
+
+    test.each(shapes)(
+        '%s: the caret is counted over the whole verse',
+        (_name, innerHtml) => {
+            const anchorElement = mount(innerHtml);
+            // The text node holding "God", wherever this shape put it.
+            const walker = document.createTreeWalker(
+                anchorElement,
+                NodeFilter.SHOW_TEXT,
+            );
+            let godNode = walker.nextNode();
+            while (godNode !== null && !godNode.textContent!.includes('God')) {
+                godNode = walker.nextNode();
+            }
+            const offset = godNode!.textContent!.indexOf('God') + 1;
+            const pointList = stubCaret(() => ({
+                offsetNode: godNode,
+                offset,
+            }));
+            expect(getOffsetFromPoint(anchorElement, 40, 12)).toBe(
+                VERSE_TEXT.indexOf('God') + 1,
+            );
+            expect(pointList).toEqual([[40, 12]]);
+        },
+    );
+
+    test('no offset without a caret API, without a caret, or with a caret outside the verse', () => {
+        const anchorElement = mount(VERSE_TEXT);
+        expect(getOffsetFromPoint(anchorElement, 1, 1)).toBeNull();
+
+        let caret: unknown = null;
+        stubCaret(() => caret);
+        expect(getOffsetFromPoint(anchorElement, 1, 1)).toBeNull();
+        const outsideNode = document.createTextNode('not this verse');
+        document.body.appendChild(outsideNode);
+        caret = { offsetNode: outsideNode, offset: 2 };
+        expect(getOffsetFromPoint(anchorElement, 1, 1)).toBeNull();
     });
 });

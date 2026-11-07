@@ -121,6 +121,9 @@ vi.mock('./SettingOthersComp', () => ({
 vi.mock('./SettingAIComp', () => ({
     default: () => <div data-testid="panel">AI panel</div>,
 }));
+vi.mock('./SettingLanguagesComp', () => ({
+    default: () => <div data-testid="panel">Languages panel</div>,
+}));
 
 import SettingComp from './SettingComp';
 

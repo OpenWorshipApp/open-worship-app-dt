@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     askForURLMock: vi.fn(),
+    windowDim: { width: 0, height: 0 },
 }));
 
 // A marked `tran` makes a second translation visible: anything that reaches
@@ -37,10 +38,15 @@ vi.mock('../../helper/cameraHelpers', () => ({
 }));
 
 vi.mock('../../helper/helpers', () => ({
-    getWindowDim: () => ({ width: 0, height: 0 }),
+    getWindowDim: () => mocks.windowDim,
 }));
 
 import { canvasInsertActionList } from './canvasInsertActionHelpers';
+import {
+    createMouseEvent,
+    showAppContextMenu,
+} from '../../context-menu/appContextMenuHelpers';
+import { getAllCameraDevices } from '../../helper/cameraHelpers';
 
 function findAction(key: string) {
     const action = canvasInsertActionList.find((item) => item.key === key);
@@ -69,5 +75,46 @@ describe('canvasInsertActionHelpers URL prompts', () => {
         const [title, subTitle] = mocks.askForURLMock.mock.calls[0];
         expect(title.startsWith('tran:')).toBe(true);
         expect(subTitle).toBe(label);
+    });
+});
+
+describe('canvasInsertActionHelpers camera from the menu bar', () => {
+    beforeEach(() => {
+        mocks.windowDim = { width: 1200, height: 800 };
+    });
+
+    test('opens the camera list in the middle of the window, and the chosen camera is placed by the controller, not at that point', async () => {
+        const cameras = [
+            { deviceId: 'cam-1', groupId: 'g1', label: '' },
+            { deviceId: 'cam-2', groupId: 'g2', label: 'Desk camera' },
+        ];
+        vi.mocked(getAllCameraDevices).mockResolvedValue(cameras);
+        const centerEvent = new Event('contextmenu') as MouseEvent;
+        vi.mocked(createMouseEvent).mockReturnValue(centerEvent);
+        const newItem = { id: 9 };
+        const controller = {
+            genNewCameraItem: vi.fn(() => newItem),
+            addNewItems: vi.fn(),
+        };
+        // The Insert menu has no pointer: no event at all.
+        await findAction('camera').handle(controller as any);
+        expect(createMouseEvent).toHaveBeenCalledExactlyOnceWith(600, 400);
+        expect(showAppContextMenu).toHaveBeenCalledOnce();
+        const [menuEvent, items] = vi.mocked(showAppContextMenu).mock.calls[0];
+        expect(menuEvent).toBe(centerEvent);
+        expect(items.map((item) => item.menuElement)).toEqual([
+            'tran:Camera 1',
+            'Desk camera',
+        ]);
+        items[1].onSelect!(centerEvent);
+        // The window-centre event only places the menu; the box itself gets
+        // no event so the controller centres it on the slide.
+        expect(controller.genNewCameraItem).toHaveBeenCalledExactlyOnceWith(
+            cameras[1],
+            undefined,
+        );
+        expect(controller.addNewItems).toHaveBeenCalledExactlyOnceWith([
+            newItem,
+        ]);
     });
 });

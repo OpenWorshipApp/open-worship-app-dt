@@ -182,4 +182,66 @@ describe('slide auto-play runners', () => {
         expect(onEnded).toHaveBeenCalledOnce();
         expect(getRunningAutoPlayKeys()).toEqual([]);
     });
+
+    it('a tick still running when its show is stopped or replaced leaves the newer state alone', async () => {
+        const finishTicks: ((isAlive: boolean) => void)[] = [];
+        const tick = vi.fn(() => {
+            return new Promise<boolean>((resolve) => {
+                finishTicks.push(resolve);
+            });
+        });
+        const onEnded = vi.fn();
+        applyAutoPlayRunners([runner('slow', { tick, onEnded })]);
+        await flushPromises();
+        await vi.advanceTimersByTimeAsync(2_000);
+        expect(tick).toHaveBeenCalledOnce();
+        // Stopped (F10) while the picture is still going up.
+        applyAutoPlayRunners([]);
+        state.dueAt.mockClear();
+        finishTicks[0](true);
+        await flushPromises();
+        await vi.advanceTimersByTimeAsync(10_000);
+        expect(tick).toHaveBeenCalledOnce();
+        expect(getRunningAutoPlayKeys()).toEqual([]);
+        expect(state.dueAt).not.toHaveBeenCalled();
+        expect(onEnded).not.toHaveBeenCalled();
+
+        // Replaced by new rules mid-tick: the old tick's end is not the new
+        // show's end.
+        applyAutoPlayRunners([runner('slow', { tick, onEnded })]);
+        await flushPromises();
+        await vi.advanceTimersByTimeAsync(2_000);
+        expect(tick).toHaveBeenCalledTimes(2);
+        const newTick = vi.fn().mockReturnValue(true);
+        applyAutoPlayRunners([
+            runner('slow', { signature: 'fixed-3', tick: newTick, onEnded }),
+        ]);
+        await flushPromises();
+        finishTicks[1](false);
+        await flushPromises();
+        expect(onEnded).not.toHaveBeenCalled();
+        expect(getRunningAutoPlayKeys()).toEqual(['slow']);
+        await vi.advanceTimersByTimeAsync(2_000);
+        expect(newTick).toHaveBeenCalledOnce();
+    });
+
+    it('stopping everything clears every countdown and runs no more ticks', async () => {
+        const tick = vi.fn().mockReturnValue(true);
+        applyAutoPlayRunners([
+            runner('foreground:one', { tick }),
+            runner('background:two', { tick }),
+        ]);
+        await flushPromises();
+        expect(getRunningAutoPlayKeys()).toEqual([
+            'foreground:one',
+            'background:two',
+        ]);
+        stopAllAutoPlay();
+        expect(getRunningAutoPlayKeys()).toEqual([]);
+        expect(state.dueAt).toHaveBeenCalledWith('foreground:one', null);
+        expect(state.dueAt).toHaveBeenCalledWith('background:two', null);
+        expect(state.drawnSeconds).toHaveBeenCalledWith('background:two', null);
+        await vi.advanceTimersByTimeAsync(10_000);
+        expect(tick).not.toHaveBeenCalled();
+    });
 });

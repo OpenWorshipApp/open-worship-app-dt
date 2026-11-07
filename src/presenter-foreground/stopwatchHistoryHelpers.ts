@@ -91,8 +91,8 @@ function padTwo(value: number) {
  * A locale `Intl` cannot format gets NUMBERS only -- `07:57` today,
  * `04/10 07:57` on another day, day first and a 24-hour clock -- which read
  * the same in any language. That is Khmer in the app: Electron ships
- * Chromium's trimmed ICU data, which has none, and asked for `km-KH` it
- * quietly answers in English (Node, which runs the tests, has it all).
+ * Chromium's trimmed ICU data, which has none, and asked for the Khmer locale
+ * it quietly answers in English (Node, which runs the tests, has it all).
  */
 export function toStopwatchHistoryWhenText(
     endedAt: number,

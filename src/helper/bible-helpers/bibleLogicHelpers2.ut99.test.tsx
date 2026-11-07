@@ -1,0 +1,763 @@
+// @vitest-environment jsdom
+
+import { act } from 'react';
+import type { Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+const mocks = vi.hoisted(() => {
+    const cacheStores: Map<string, unknown>[] = [];
+    const globalCacheStore = new Map<string, unknown>();
+    const titleTextMap = new Map<string, any>();
+
+    class MockCacheManager<T> {
+        private readonly store = new Map<string, T>();
+
+        constructor(_ttl: number) {
+            cacheStores.push(this.store as Map<string, unknown>);
+        }
+
+        async get(key: string) {
+            return this.store.has(key) ? this.store.get(key) : null;
+        }
+
+        async has(key: string) {
+            return this.store.has(key);
+        }
+
+        async set(key: string, value: T) {
+            this.store.set(key, value);
+        }
+    }
+
+    class MockBibleItem {
+        bibleKey: string;
+        target: {
+            bookKey: string;
+            chapter: number;
+            verseEnd: number;
+            verseStart: number;
+        };
+        private readonly titleOverride?: string;
+
+        constructor(
+            bibleKey: string,
+            bookKey: string,
+            chapter: number,
+            verseStart: number,
+            verseEnd: number,
+            titleOverride?: string,
+        ) {
+            this.bibleKey = bibleKey;
+            this.target = { bookKey, chapter, verseEnd, verseStart };
+            this.titleOverride = titleOverride;
+        }
+
+        async toTitle() {
+            return (
+                this.titleOverride ??
+                `${this.target.bookKey} ${this.target.chapter}:${this.target.verseStart}-${this.target.verseEnd}`
+            );
+        }
+    }
+
+    const buildBibleItem = (
+        bibleKey: string,
+        bookKey: string,
+        chapter: number,
+        verseStart: number,
+        verseEnd: number,
+        titleOverride?: string,
+    ) =>
+        new MockBibleItem(
+            bibleKey,
+            bookKey,
+            chapter,
+            verseStart,
+            verseEnd,
+            titleOverride,
+        );
+
+    const fromDataMock = vi.fn(
+        (
+            bibleKey: string,
+            bookKey: string,
+            chapter: number,
+            verseStart: number,
+            verseEnd: number,
+        ) => buildBibleItem(bibleKey, bookKey, chapter, verseStart, verseEnd),
+    );
+    const fromTitleTextMock = vi.fn(
+        async (bibleKey: string, titleText: string) => {
+            return titleTextMap.get(`${bibleKey}:${titleText}`) ?? null;
+        },
+    );
+
+    return {
+        MockCacheManager,
+        appLogMock: vi.fn(),
+        bookToKeyMock: vi.fn(),
+        buildBibleItem,
+        cacheStores,
+        fromDataMock,
+        fromLocaleNumMock: vi.fn(),
+        fromStringNumMock: vi.fn(),
+        fromTitleTextMock,
+        getAllLocalBibleInfoListMock: vi.fn(),
+        getBibleInfoMock: vi.fn(),
+        getBibleModelInfoMock: vi.fn(),
+        getChapterDataMock: vi.fn(),
+        getFontFamilyByLocaleMock: vi.fn(),
+        getLangDataAsyncMock: vi.fn(),
+        getModelChapterCountMock: vi.fn(),
+        getModelKeyBookMapMock: vi.fn(),
+        getSettingMock: vi.fn(),
+        getVersesMock: vi.fn(),
+        globalCacheManager10Seconds: {
+            get: vi.fn(async (key: string) => {
+                return globalCacheStore.has(key)
+                    ? globalCacheStore.get(key)
+                    : null;
+            }),
+            has: vi.fn(async (key: string) => globalCacheStore.has(key)),
+            set: vi.fn(async (key: string, value: unknown) => {
+                globalCacheStore.set(key, value);
+            }),
+        },
+        globalCacheStore,
+        keyToBookMock: vi.fn(),
+        reset() {
+            cacheStores.length = 0;
+            globalCacheStore.clear();
+            titleTextMap.clear();
+        },
+        setSettingMock: vi.fn(),
+        titleTextMap,
+        toLocaleNumMock: vi.fn(),
+        toStringNumMock: vi.fn(),
+        toVerseFullKeyFormatMock: vi.fn(
+            (bookKey: string, chapter: number, verseStart: number | string) => {
+                return `${bookKey} ${chapter}:${verseStart}`;
+            },
+        ),
+        unlockingMock: vi.fn(
+            async (_key: string, callback: () => Promise<unknown>) => {
+                return callback();
+            },
+        ),
+    };
+});
+
+vi.mock('./bibleInfoHelpers', () => ({
+    bookToKey: mocks.bookToKeyMock,
+    getBibleInfo: mocks.getBibleInfoMock,
+    getChapterData: mocks.getChapterDataMock,
+    getVerses: mocks.getVersesMock,
+    keyToBook: mocks.keyToBookMock,
+    toVerseFullKeyFormat: mocks.toVerseFullKeyFormatMock,
+}));
+
+vi.mock('../../lang/langHelpers', () => ({
+    DEFAULT_LOCALE: 'en-US',
+    fromLocaleNum: mocks.fromLocaleNumMock,
+    fromStringNum: mocks.fromStringNumMock,
+    getFontFamilyByLocale: mocks.getFontFamilyByLocaleMock,
+    getLangDataAsync: mocks.getLangDataAsyncMock,
+    toLocaleNum: mocks.toLocaleNumMock,
+    toStringNum: mocks.toStringNumMock,
+}));
+
+vi.mock('../appHooks', async () => {
+    const React = await import('react');
+    return {
+        useAppEffect: React.useEffect,
+        useAppStateAsync: (
+            factory: () => Promise<unknown>,
+            deps: unknown[],
+        ) => {
+            const [value, setValue] = React.useState<unknown>(undefined);
+            React.useEffect(() => {
+                let active = true;
+                Promise.resolve(factory()).then((nextValue) => {
+                    if (active) {
+                        setValue(nextValue);
+                    }
+                });
+                return () => {
+                    active = false;
+                };
+            }, deps);
+            return [value];
+        },
+    };
+});
+
+vi.mock('../../bible-list/BibleItem', () => ({
+    default: class BibleItem {
+        static readonly fromData = mocks.fromDataMock;
+        static readonly fromTitleText = mocks.fromTitleTextMock;
+    },
+}));
+
+vi.mock('./bibleLogicHelpers1', () => ({
+    getModelChapterCount: mocks.getModelChapterCountMock,
+    getModelKeyBookMap: mocks.getModelKeyBookMapMock,
+}));
+
+vi.mock('../../others/CacheManager', () => ({
+    default: mocks.MockCacheManager,
+    globalCacheManager10Seconds: mocks.globalCacheManager10Seconds,
+}));
+
+vi.mock('./bibleDownloadHelpers', () => ({
+    getAllLocalBibleInfoList: mocks.getAllLocalBibleInfoListMock,
+}));
+
+vi.mock('../../server/unlockingHelpers', () => ({
+    unlocking: mocks.unlockingMock,
+}));
+
+vi.mock('../settingHelpers', () => ({
+    getSetting: mocks.getSettingMock,
+    setSetting: mocks.setSettingMock,
+}));
+
+vi.mock('../loggerHelpers', () => ({
+    appLog: mocks.appLogMock,
+}));
+
+vi.mock('./bibleModelHelpers', () => ({
+    getBibleModelInfo: mocks.getBibleModelInfoMock,
+    modelNewLinerInfo: ['GEN 1:3'],
+}));
+
+async function loadModule() {
+    return await import('./bibleLogicHelpers2');
+}
+
+describe('bibleLogicHelpers2', () => {
+    let container: HTMLDivElement | null = null;
+    let root: Root | null = null;
+
+    beforeEach(() => {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        vi.clearAllMocks();
+        vi.resetModules();
+        mocks.reset();
+
+        mocks.bookToKeyMock.mockImplementation(
+            async (_bibleKey: string, book: string) => {
+                const normalized = book.toLowerCase();
+                if (normalized === 'john' || normalized === 'jhn') {
+                    return 'JHN';
+                }
+                if (normalized === 'jude') {
+                    return 'JUD';
+                }
+                return null;
+            },
+        );
+        mocks.keyToBookMock.mockImplementation(
+            async (_bibleKey: string, bookKey: string) => {
+                if (bookKey === 'JHN') {
+                    return 'John';
+                }
+                if (bookKey === 'JUD') {
+                    return 'Jude';
+                }
+                return null;
+            },
+        );
+        mocks.getBibleInfoMock.mockResolvedValue({
+            keyBookMap: {
+                JHN: 'John',
+                JUD: 'Jude',
+            },
+            locale: 'km-KH',
+            numList: [
+                '０',
+                '１',
+                '２',
+                '３',
+                '４',
+                '５',
+                '６',
+                '７',
+                '８',
+                '９',
+            ],
+        });
+        mocks.fromStringNumMock.mockImplementation(
+            (numList: string[], localeNum: string) => {
+                const digits = numList.reduce<Record<string, string>>(
+                    (map, value, index) => {
+                        map[value] = `${index}`;
+                        return map;
+                    },
+                    {},
+                );
+                const normalized = localeNum
+                    .split('')
+                    .map((char) => digits[char] ?? char)
+                    .join('');
+                const parsed = Number.parseInt(normalized, 10);
+                return Number.isNaN(parsed) ? null : parsed;
+            },
+        );
+        mocks.toStringNumMock.mockImplementation(
+            (numList: string[], value: number) => {
+                return `${value}`
+                    .split('')
+                    .map((digit) => numList[Number.parseInt(digit, 10)])
+                    .join('');
+            },
+        );
+        mocks.fromLocaleNumMock.mockImplementation(
+            async (_locale: string, localeNum: string) => {
+                if (localeNum === '12') {
+                    return 12;
+                }
+                return null;
+            },
+        );
+        mocks.toLocaleNumMock.mockImplementation(
+            async (locale: string, value: number) => {
+                return `${locale}:${value}`;
+            },
+        );
+        mocks.getLangDataAsyncMock.mockImplementation(
+            async (locale: string) => {
+                if (locale === 'km-KH') {
+                    return {
+                        fontFamily: 'Khmer Font',
+                        sanitizeText: (text: string) =>
+                            text.replaceAll('.', ':'),
+                        transformBibleBookName: (text: string) => [text],
+                    };
+                }
+                if (locale === 'en-US') {
+                    return {
+                        fontFamily: 'English Font',
+                        sanitizeText: (text: string) => text,
+                        transformBibleBookName: (text: string) => [text],
+                    };
+                }
+                return null;
+            },
+        );
+        mocks.getModelKeyBookMapMock.mockReturnValue({
+            JHN: 'John',
+            JUD: 'Jude',
+            PSA: 'Psalm',
+        });
+        mocks.getModelChapterCountMock.mockImplementation((bookKey: string) => {
+            if (bookKey === 'PSA') {
+                return 150;
+            }
+            if (bookKey === 'JUD') {
+                return 1;
+            }
+            if (bookKey === 'JHN') {
+                return 21;
+            }
+            return 0;
+        });
+        mocks.getAllLocalBibleInfoListMock.mockResolvedValue([
+            { key: 'KJV' },
+            { key: 'ESV' },
+        ]);
+        mocks.getSettingMock.mockReturnValue(undefined);
+        mocks.getBibleModelInfoMock.mockReturnValue({
+            oneChapterBooks: ['JUD'],
+        });
+        mocks.getVersesMock.mockImplementation(
+            async (_bibleKey: string, _bookKey: string, chapter: number) => {
+                if (chapter === 3) {
+                    return { 1: 'v1', 2: 'v2', 3: 'v3', 4: 'v4' };
+                }
+                if (chapter === 1) {
+                    return { 1: 'v1', 2: 'v2', 3: 'v3' };
+                }
+                if (chapter === 2) {
+                    return { 1: 'v1', 2: 'v2', 3: 'v3' };
+                }
+                return null;
+            },
+        );
+        mocks.getChapterDataMock.mockResolvedValue(null);
+        mocks.fromDataMock.mockImplementation(
+            (
+                bibleKey: string,
+                bookKey: string,
+                chapter: number,
+                verseStart: number,
+                verseEnd: number,
+            ) =>
+                mocks.buildBibleItem(
+                    bibleKey,
+                    bookKey,
+                    chapter,
+                    verseStart,
+                    verseEnd,
+                ),
+        );
+        mocks.fromTitleTextMock.mockImplementation(
+            async (bibleKey: string, titleText: string) => {
+                return (
+                    mocks.titleTextMap.get(`${bibleKey}:${titleText}`) ?? null
+                );
+            },
+        );
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+    });
+
+    afterEach(async () => {
+        if (root) {
+            await act(async () => {
+                root?.unmount();
+            });
+            root = null;
+        }
+        container?.remove();
+        container = null;
+    });
+
+    test('extracts bible titles from direct verse strings and bible-key-prefixed text', async () => {
+        const module = await loadModule();
+
+        expect(await module.extractBibleTitle('KJV', '')).toEqual({
+            bibleKey: 'KJV',
+            inputText: '',
+            oldInputText: '',
+            result: module.genExtractedBible(),
+            time: expect.any(Number),
+        });
+
+        mocks.getVersesMock.mockImplementationOnce(async () => {
+            return Object.fromEntries(
+                Array.from({ length: 20 }, (_, index) => {
+                    return [`${index + 1}`, `v${index + 1}`];
+                }),
+            );
+        });
+        const direct = await module.extractBibleTitle('KJV', '  John  3.16 ');
+        expect(direct.bibleKey).toBe('KJV');
+        expect(direct.result.bookKey).toBe('JHN');
+        expect(direct.result.bibleItem?.target).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseEnd: 16,
+            verseStart: 16,
+        });
+
+        const prefixed = await module.extractBibleTitle(
+            'KJV',
+            '(ESV) John 3:16',
+        );
+        expect(prefixed.bibleKey).toBe('ESV');
+        expect(prefixed.result.bibleItem?.bibleKey).toBe('ESV');
+
+        const keyed = await module.extractBibleTitle('KJV', 'JHN 3:16-17');
+        expect(keyed.result.bibleItem?.target.verseEnd).toBe(17);
+
+        const unknown = await module.extractBibleTitle('KJV', 'Unknown Book');
+        expect(unknown.result.guessingBook).toBe('Unknown Book');
+        expect(unknown.inputText).toBe('');
+    });
+
+    // The book-KEY form is what Copy Verse Full Key puts on the clipboard, and
+    // `MRK 4:39` read as Mark 4:39-41 -- to the end of the chapter -- while
+    // `Mark 4:39` names the one verse (F4 of robot run 20261001-1646). `JUD`
+    // is a key only `keyToBook` knows here, so the key patterns are the ones
+    // that answer.
+    test('a book-key reference names one verse, as a book name does', async () => {
+        const module = await loadModule();
+
+        const single = await module.extractBibleTitle('KJV', 'JUD 1:2');
+        expect(single.result.bibleItem?.target).toEqual({
+            bookKey: 'JUD',
+            chapter: 1,
+            verseStart: 2,
+            verseEnd: 2,
+        });
+
+        const range = await module.extractBibleTitle('KJV', 'JUD 1:1-2');
+        expect(range.result.bibleItem?.target).toEqual({
+            bookKey: 'JUD',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 2,
+        });
+    });
+
+    test('falls back to transformed bible book name candidates', async () => {
+        const module = await loadModule();
+
+        mocks.getLangDataAsyncMock.mockImplementation(
+            async (locale: string) => {
+                if (locale === 'km-KH') {
+                    return {
+                        fontFamily: 'Khmer Font',
+                        sanitizeText: (text: string) => text,
+                        transformBibleBookName: (text: string) => [
+                            text,
+                            'John',
+                        ],
+                    };
+                }
+                return null;
+            },
+        );
+
+        const extracted = await module.extractBibleTitle(
+            'KJV',
+            'Translated John 3:2',
+        );
+
+        expect(extracted.result.bookKey).toBe('JHN');
+        expect(extracted.result.bibleItem?.target).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseEnd: 2,
+            verseStart: 2,
+        });
+    });
+
+    test('resolves a book by its model (English) name when the Bible names it otherwise', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'Psalm 3:2');
+
+        expect(extracted.result.bookKey).toBe('PSA');
+        expect(extracted.result.guessingBook).toBeNull();
+        expect(extracted.result.bibleItem?.target).toEqual({
+            bookKey: 'PSA',
+            chapter: 3,
+            verseEnd: 2,
+            verseStart: 2,
+        });
+
+        const unknown = await module.extractBibleTitle('KJV', 'Psalms 3:2');
+        expect(unknown.result.bookKey).toBeNull();
+        expect(unknown.result.guessingBook).toBe('Psalms 3:2');
+    });
+
+    // One item across chapters, where the lookup used to hand back the first
+    // chapter's part and the rest as "extra" items nothing else could keep.
+    test('reads a range across chapters as one passage', async () => {
+        const module = await loadModule();
+        mocks.fromDataMock.mockImplementation(
+            (
+                bibleKey: string,
+                bookKey: string,
+                chapter: number,
+                verseStart: number,
+                verseEnd: number,
+                chapterEnd?: number,
+            ) => {
+                const bibleItem = mocks.buildBibleItem(
+                    bibleKey,
+                    bookKey,
+                    chapter,
+                    verseStart,
+                    verseEnd,
+                );
+                if (chapterEnd !== undefined) {
+                    (bibleItem.target as any).chapterEnd = chapterEnd;
+                }
+                return bibleItem;
+            },
+        );
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 1:1-2:3');
+        expect(extracted.result.bookKey).toBe('JHN');
+        expect(extracted.result.bibleItem?.target).toEqual({
+            bookKey: 'JHN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 3,
+            chapterEnd: 2,
+        });
+        expect(extracted.result).not.toHaveProperty('extraBibleItems');
+    });
+
+    test('persists newline settings and checks model and chapter newline markers', async () => {
+        const module = await loadModule();
+
+        expect(module.getShouldModelNewLine()).toBe(true);
+        module.setShouldModelNewLine(false);
+        expect(mocks.setSettingMock).toHaveBeenCalledWith(
+            'view-should-model-new-line',
+            'false',
+        );
+
+        mocks.getSettingMock.mockReturnValueOnce('false');
+        expect(await module.checkShouldNewLineModel('KJV', 'GEN', 1, 3)).toBe(
+            false,
+        );
+
+        mocks.getChapterDataMock.mockResolvedValueOnce({
+            newLines: ['GEN 1:3'],
+        });
+        expect(await module.checkShouldNewLineModel('KJV', 'GEN', 1, 3)).toBe(
+            false,
+        );
+
+        mocks.getChapterDataMock.mockResolvedValueOnce({ newLines: [] });
+        expect(await module.checkShouldNewLineModel('KJV', 'GEN', 1, 3)).toBe(
+            true,
+        );
+
+        mocks.getChapterDataMock.mockResolvedValueOnce({
+            newLines: ['GEN 1:3'],
+        });
+        expect(await module.checkShouldNewLine('KJV', 'GEN', 1, 3)).toBe(true);
+        mocks.getChapterDataMock.mockResolvedValueOnce({ newLines: [] });
+        expect(await module.checkShouldNewLine('KJV', 'GEN', 1, 1)).toBe(false);
+    });
+
+    test('a book stays unresolved when even the default language cannot be read', async () => {
+        const module = await loadModule();
+        mocks.getLangDataAsyncMock.mockResolvedValue(null);
+
+        const extracted = await module.extractBibleTitle('KJV', 'Psalms 3:2');
+
+        expect(extracted.result.bookKey).toBeNull();
+        expect(extracted.result.guessingBook).toBe('Psalms 3:2');
+        expect(extracted.inputText).toBe('');
+    });
+
+    test('a key whose Bible gives it a blank name is not taken for a book', async () => {
+        const module = await loadModule();
+        mocks.keyToBookMock.mockImplementation(
+            async (_bibleKey: string, bookKey: string) => {
+                return bookKey === 'XYZ' ? '' : null;
+            },
+        );
+
+        const extracted = await module.extractBibleTitle('KJV', 'XYZ 1:1');
+
+        expect(mocks.keyToBookMock).toHaveBeenCalledWith('KJV', 'XYZ');
+        expect(extracted.result.bookKey).toBeNull();
+        expect(extracted.result.bibleItem).toBeNull();
+        expect(extracted.result.guessingBook).toBe('XYZ 1:1');
+    });
+
+    // Shaped like a copied full key, but a key this Bible does not have: every
+    // book-key form gives up and the text is kept as typed.
+    test('a book key the Bible does not know is kept as typed', async () => {
+        const module = await loadModule();
+
+        for (const inputText of ['XYZ 1:1-2', 'XYZ 1:1', 'XYZ 1', 'XYZ']) {
+            const extracted = await module.extractBibleTitle('KJV', inputText);
+            expect(extracted.result.bookKey).toBeNull();
+            expect(extracted.result.bibleItem).toBeNull();
+            expect(extracted.result.guessingBook).toBe(inputText);
+            expect(extracted.inputText).toBe('');
+        }
+        expect(mocks.keyToBookMock).toHaveBeenCalledTimes(4);
+        expect(mocks.keyToBookMock).toHaveBeenCalledWith('KJV', 'XYZ');
+    });
+
+    test('a chapter whose verses cannot be read keeps only the book', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 5:1');
+
+        expect(extracted.result).toEqual({
+            bookKey: 'JHN',
+            guessingBook: null,
+            chapter: null,
+            guessingChapter: '5',
+            bibleItem: null,
+        });
+    });
+
+    test('a range whose first chapter cannot be read keeps the chapter as a guess', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 5:1-6:2');
+
+        expect(extracted.result).toEqual({
+            bookKey: 'JHN',
+            guessingBook: null,
+            chapter: null,
+            guessingChapter: '5',
+            bibleItem: null,
+        });
+    });
+
+    test('a same-chapter range ending before it starts is the whole chapter', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 3:4-3:2');
+
+        expect(extracted.result.chapter).toBe(3);
+        expect(extracted.result.bibleItem?.target).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 1,
+            verseEnd: 4,
+        });
+    });
+
+    test('a range into a chapter that cannot be read stops at its own chapter end', async () => {
+        const module = await loadModule();
+
+        const extracted = await module.extractBibleTitle('KJV', 'John 3:2-5:1');
+
+        expect(extracted.result.bibleItem?.target).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 2,
+            verseEnd: 4,
+        });
+        expect(mocks.fromDataMock).toHaveBeenLastCalledWith(
+            'KJV',
+            'JHN',
+            3,
+            2,
+            4,
+            undefined,
+        );
+    });
+
+    test('answers a repeated lookup from the cache', async () => {
+        const module = await loadModule();
+
+        const first = await module.extractBibleTitle('KJV', 'John 3:2');
+        const bookToKeyCallCount = mocks.bookToKeyMock.mock.calls.length;
+        const second = await module.extractBibleTitle('KJV', 'John 3:2');
+
+        expect(second).toBe(first);
+        expect(mocks.bookToKeyMock).toHaveBeenCalledTimes(bookToKeyCallCount);
+
+        // Another Bible's lookup of the same words finds the version-name
+        // answer cached: the local Bible list is not read again.
+        await module.extractBibleTitle('KJV', 'Unknown Book');
+        const listReadCount =
+            mocks.getAllLocalBibleInfoListMock.mock.calls.length;
+        const other = await module.extractBibleTitle('ESV', 'Unknown Book');
+        expect(other.result.guessingBook).toBe('Unknown Book');
+        expect(mocks.getAllLocalBibleInfoListMock).toHaveBeenCalledTimes(
+            listReadCount,
+        );
+    });
+
+    test('does not switch to a Bible removed while the lookup runs', async () => {
+        const module = await loadModule();
+        mocks.getAllLocalBibleInfoListMock
+            .mockResolvedValueOnce([{ key: 'KJV' }, { key: 'ESV' }])
+            .mockResolvedValue([{ key: 'KJV' }]);
+
+        const extracted = await module.extractBibleTitle(
+            'KJV',
+            '(ESV) Unknown 3:16',
+        );
+
+        expect(extracted.bibleKey).toBe('KJV');
+        expect(extracted.inputText).toBe('');
+        expect(extracted.result.guessingBook).toBe('(ESV) Unknown 3:16');
+    });
+});

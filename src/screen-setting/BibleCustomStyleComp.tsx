@@ -2,7 +2,10 @@ import './BibleCustomStyleComp.scss';
 
 import { tran } from '../lang/langHelpers';
 import { useBibleTextStyleEditing } from '../_screen/preview/stylingHelpers';
-import type { BibleTextEffectType } from '../_screen/bibleTextStyleHelpers';
+import {
+    readBibleTextHighlightColor,
+    type BibleTextEffectType,
+} from '../_screen/bibleTextStyleHelpers';
 import BibleTextControlsComp from './BibleTextControlsComp';
 import BibleTextLooksComp from './BibleTextLooksComp';
 import BibleTextPresetTilesComp from './BibleTextPresetTilesComp';
@@ -17,7 +20,10 @@ import {
 } from './bibleTextLookHelpers';
 
 /**
- * Bible Properties: how a verse is drawn on a screen.
+ * Bible/LongText Properties: how a verse is drawn on a screen, and a Long
+ * Text Show with it -- both go up in the same layer, in this one style. A
+ * long text's language can only set its own font and its size beside the
+ * others, in that card's Properties; unset, it follows this.
  *
  * Three parts, in the order a volunteer needs them. The stage shows the verse
  * as it will look, on the kind of background it is going over; the looks are
@@ -55,6 +61,7 @@ export default function BibleCustomStyleComp() {
                         lineHeight: view.lineHeight,
                         textAlign: view.textAlign,
                     }}
+                    highlightColor={readBibleTextHighlightColor(view)}
                     onBackdropChange={handleBackdropChange}
                 />
             </div>

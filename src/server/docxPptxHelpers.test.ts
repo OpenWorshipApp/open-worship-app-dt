@@ -467,4 +467,67 @@ describe('docxHelpers and pptxHelpers', () => {
         ).resolves.toEqual([]);
         expect(electronSendAsyncMock).not.toHaveBeenCalled();
     });
+
+    function mockPreviewInfo(
+        filePath: string,
+        fileFullName: string,
+        infoData: object | null,
+    ) {
+        const infoReadMock = vi.fn().mockResolvedValue(infoData);
+        const infoPaths: string[] = [];
+        fileSourceGetInstanceMock.mockImplementation((path: string) => {
+            if (path === filePath) {
+                return {
+                    baseDirPath: '/files',
+                    fullName: fileFullName,
+                    name: fileFullName.split('.')[0],
+                };
+            }
+            if (path.endsWith('/info.json')) {
+                infoPaths.push(path);
+                return { readFileJsonData: infoReadMock };
+            }
+            throw new Error(`Unexpected file source: ${path}`);
+        });
+        return { infoReadMock, infoPaths };
+    }
+
+    test('reads the docx fonts missing on this computer from info.json alone', async () => {
+        const module = await loadDocxModule();
+        const { infoPaths } = mockPreviewInfo('/files/book.docx', 'book.docx', {
+            missingFontFamily: ['Khmer OS Muol'],
+        });
+        await expect(
+            module.getDocxMissingFontFamilyList('/files/book.docx'),
+        ).resolves.toEqual(['Khmer OS Muol']);
+        expect(infoPaths).toEqual(['/files/book.docx-docx-htmls/info.json']);
+        expect(generateFileMD5Mock).not.toHaveBeenCalled();
+        expect(electronSendAsyncMock).not.toHaveBeenCalled();
+
+        mockPreviewInfo('/files/book.docx', 'book.docx', null);
+        await expect(
+            module.getDocxMissingFontFamilyList('/files/book.docx'),
+        ).resolves.toEqual([]);
+        mockPreviewInfo('/files/book.docx', 'book.docx', {});
+        await expect(
+            module.getDocxMissingFontFamilyList('/files/book.docx'),
+        ).resolves.toEqual([]);
+    });
+
+    test('reads the pptx fonts missing on this computer from info.json alone', async () => {
+        const module = await loadPptxModule();
+        const { infoPaths } = mockPreviewInfo('/files/talk.pptx', 'talk.pptx', {
+            missingFontFamily: ['Kh Battambang', 'Calibri'],
+        });
+        await expect(
+            module.getPptxMissingFontFamilyList('/files/talk.pptx'),
+        ).resolves.toEqual(['Kh Battambang', 'Calibri']);
+        expect(infoPaths).toEqual(['/files/talk.pptx-htmls/info.json']);
+        expect(generateFileMD5Mock).not.toHaveBeenCalled();
+
+        mockPreviewInfo('/files/talk.pptx', 'talk.pptx', null);
+        await expect(
+            module.getPptxMissingFontFamilyList('/files/talk.pptx'),
+        ).resolves.toEqual([]);
+    });
 });

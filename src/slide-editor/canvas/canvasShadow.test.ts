@@ -151,6 +151,14 @@ describe('canvas item shadow', () => {
         expect(genCanvasShadowStyle({})).toEqual({});
     });
 
+    test('a stored shadow of an unknown kind draws nothing', () => {
+        expect(
+            genCanvasShadowStyle({
+                shadow: { ...SOFT_SHADOW, kind: 'glow' } as any,
+            }),
+        ).toEqual({});
+    });
+
     test('box is the rectangle, drop is what is painted', () => {
         expect(genCanvasShadowStyle({ shadow: { ...SOFT_SHADOW } })).toEqual({
             boxShadow: '0px 8px 24px #000000A6',

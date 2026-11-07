@@ -98,7 +98,7 @@ describe('opening a detail panel', () => {
         openDetailPanel({
             kind: 'verse',
             target: 'GEN 17:5',
-            name: 'លោកុប្បត្តិ',
+            name: '✝♪',
             bibleKey: 'KHM',
         });
         openDetailPanel({

@@ -28,10 +28,10 @@ function genLongTextData(): LongTextItemDataType {
                 {
                     locale: 'km-KH',
                     code: 'KM',
-                    title: 'ចម្រៀង',
+                    title: '♪ ✝',
                     sections: [
-                        { num: '១', text: 'បន្ទាត់ ១', key: 'lt-1' },
-                        { num: '២', text: 'បន្ទាត់ ២', key: 'lt-2' },
+                        { num: '①', text: 'Line ①', key: 'lt-1' },
+                        { num: '②', text: 'Line ②', key: 'lt-2' },
                     ],
                 },
                 {
@@ -42,7 +42,7 @@ function genLongTextData(): LongTextItemDataType {
                         { num: '1', text: 'Line 1', key: 'lt-1' },
                         { num: '2', text: 'Line 2', key: 'lt-2' },
                     ],
-                    style: { color: '#ff0000' },
+                    style: { fontSizeScale: 0.8 },
                 },
             ],
         },
@@ -87,32 +87,38 @@ function genBibleData(): BibleItemDataType {
 }
 
 describe('a long-text column style', () => {
-    test('keeps only the keys that hold a usable value', () => {
+    test('keeps only its family and its size, each while it holds a usable value', () => {
         expect(
             readLongTextColumnStyle({
                 fontFamily: '  Noto   Sans  ',
-                fontWeight: '700',
-                color: '#AABBCC',
                 fontSizeScale: 0.8,
-                textAlign: 'center',
             }),
         ).toEqual({
             fontFamily: 'Noto Sans',
-            fontWeight: '700',
-            color: '#AABBCC',
             fontSizeScale: 0.8,
-            textAlign: 'center',
         });
+    });
+
+    test('a column saved with a colour, a weight or a side of its own is read without them', () => {
+        // Everything else is Bible/LongText Properties', for every language.
+        expect(
+            readLongTextColumnStyle({
+                fontFamily: 'Georgia',
+                fontWeight: '700',
+                color: '#AABBCC',
+                textAlign: 'center',
+            }),
+        ).toEqual({ fontFamily: 'Georgia' });
+        expect(
+            readLongTextColumnStyle({ color: '#ffffff', textAlign: 'right' }),
+        ).toBeUndefined();
     });
 
     test('drops what could not be drawn, and is undefined when nothing is left', () => {
         expect(
             readLongTextColumnStyle({
                 fontFamily: 'a /* b',
-                fontWeight: 'bold',
-                color: 'red; } body { display: none',
                 fontSizeScale: Number.NaN,
-                textAlign: 'justify',
             }),
         ).toBeUndefined();
         expect(readLongTextColumnStyle(null)).toBeUndefined();
@@ -123,11 +129,10 @@ describe('a long-text column style', () => {
 
     test('never writes a key holding undefined', () => {
         const style = readLongTextColumnStyle({
-            color: '#000000',
+            fontSizeScale: 0.6,
             fontFamily: undefined,
-            textAlign: undefined,
         });
-        expect(Object.keys(style ?? {})).toEqual(['color']);
+        expect(Object.keys(style ?? {})).toEqual(['fontSizeScale']);
     });
 
     test('takes what could close a CSS string out of a family, and clamps the size', () => {
@@ -156,42 +161,18 @@ describe('a long-text column in CSS', () => {
         ).toBe(true);
     });
 
-    test('writes nothing for an unstyled column', () => {
-        expect(genLongTextColumnCss(0, undefined, false)).toBe('');
+    test('writes nothing for a column that follows the screen size', () => {
+        expect(genLongTextColumnCss(0, undefined)).toBe('');
+        // A family is said inline, not here.
+        expect(genLongTextColumnCss(0, { fontFamily: 'Georgia' })).toBe('');
     });
 
-    test('puts colour and weight on cell and header, the size on the cell only', () => {
-        const css = genLongTextColumnCss(
-            1,
-            { color: '#112233', fontWeight: '300', fontSizeScale: 0.8 },
-            false,
-        );
-        expect(css).toContain(
-            '#bible-screen-view td.screen-long-text-column-1, ' +
-                '#bible-screen-view th.screen-long-text-column-1 ' +
-                '{ color: #112233; font-weight: 300; }',
-        );
-        expect(css).toContain(
-            '#bible-screen-view td.screen-long-text-column-1 ' +
+    test('its size is in em of the screen size, on what carries the column class', () => {
+        // A cell, or -- stacked -- that language's lines in the one cell.
+        expect(genLongTextColumnCss(1, { fontSizeScale: 0.8 })).toBe(
+            '#bible-screen-view .screen-long-text-column-1 ' +
                 '{ font-size: 0.8em; }',
         );
-        expect(css).not.toContain('th.screen-long-text-column-1 { font-size');
-    });
-
-    test('aligns by class and !important, the header following the reading direction', () => {
-        const left = genLongTextColumnCss(0, { textAlign: 'left' }, false);
-        expect(left).toContain(
-            '#bible-screen-view td.screen-long-text-column-0 ' +
-                '{ text-align: left !important; }',
-        );
-        expect(left).toContain('> div { justify-content: flex-start; }');
-        // Right to left, the start of the header's row is its right edge.
-        expect(genLongTextColumnCss(0, { textAlign: 'left' }, true)).toContain(
-            '> div { justify-content: flex-end; }',
-        );
-        expect(
-            genLongTextColumnCss(0, { textAlign: 'center' }, true),
-        ).toContain('> div { justify-content: center; }');
     });
 });
 
@@ -277,15 +258,15 @@ describe('the data of the long-text layer', () => {
     test('restyles the columns by code and keeps the words, the position and the selection', () => {
         const data = genLongTextData();
         const restyled = withLongTextColumnStyles(data, {
-            KM: { fontFamily: 'Battambang', textAlign: 'center' },
+            KM: { fontFamily: 'Battambang', fontSizeScale: 1.2 },
             EN: undefined,
         });
         const [km, en] = restyled.longTextData.renderedList;
         expect(km.style).toEqual({
             fontFamily: 'Battambang',
-            textAlign: 'center',
+            fontSizeScale: 1.2,
         });
-        // EN is named with no style, so the colour it had is gone -- and the
+        // EN is named with no style, so the size it had is gone -- and the
         // key with it, not left behind holding `undefined`.
         expect('style' in en).toBe(false);
         expect(restyled.scroll).toBe(0.4);
@@ -294,13 +275,13 @@ describe('the data of the long-text layer', () => {
         expect(km.sections).toEqual(data.longTextData.renderedList[0].sections);
         // A column nobody names is left exactly as it is.
         expect(
-            withLongTextColumnStyles(data, { KM: { color: '#000000' } })
+            withLongTextColumnStyles(data, { KM: { fontFamily: 'Georgia' } })
                 .longTextData.renderedList[1],
         ).toBe(data.longTextData.renderedList[1]);
         // The data on the screen is not written through.
         expect(data.longTextData.renderedList[0].style).toBeUndefined();
         expect(data.longTextData.renderedList[1].style).toEqual({
-            color: '#ff0000',
+            fontSizeScale: 0.8,
         });
     });
 });

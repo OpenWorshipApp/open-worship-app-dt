@@ -1,4 +1,4 @@
-// Bible Properties: the verse on a stage, the looks as pictures, then one
+// Bible/LongText Properties: the verse on a stage, the looks as pictures, then one
 // quiet row per value.
 //
 // The panel used to be two bordered cards inside a third, and its presets were
@@ -279,6 +279,59 @@
     background: rgba(var(--bs-info-rgb), 0.14);
     border-color: rgba(var(--bs-info-rgb), 0.55);
   }
+}
+
+// Highlight Color: a section of its own -- its title across the grid, then the
+// moon's row and the sun's. The side the words are on now (the band the screen
+// draws) has its icon lit; the other is quieter but still a control.
+.bible-style-section-title {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0 4px;
+  font-size: var(--app-text-sm);
+  font-weight: 600;
+  color: var(--app-ink);
+}
+
+.bible-style-highlight-side {
+  min-width: 0;
+
+  .fg-prop-name i {
+    color: var(--app-muted);
+  }
+
+  &.bible-style-highlight-side-on .fg-prop-name i {
+    color: var(--bs-info);
+  }
+}
+
+.bible-style-highlight-reset {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 0 5px;
+  line-height: 1.6;
+  color: var(--app-muted);
+  background: none;
+  border: 1px solid var(--app-line);
+  border-radius: 4px;
+
+  &:hover:not(:disabled) {
+    color: var(--app-ink);
+    border-color: var(--app-muted);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+  }
+}
+
+// The sample verse wears the band of the side it is on, as a selected verse
+// does on a screen.
+.bible-style-verse-highlight {
+  border-radius: 0.5em;
 }
 
 .bible-style-foot {

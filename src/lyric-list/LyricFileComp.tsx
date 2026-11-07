@@ -21,6 +21,7 @@ import { tran } from '../lang/langHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { handleAppDocumentDragStart } from '../helper/dragHelpers';
 import { exportAppDocument } from '../app-document-list/appDocumentArchiveHelpers';
+import { genLyricOpenInChatbotContextMenu } from '../helper/ai/lyricChatbotMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import {
     checkHandleOpenSlidesPreviewClicking,
@@ -53,6 +54,9 @@ function genContextMenuItems(
                 }
             },
         },
+        // The help window with this song attached, ready to change it: a
+        // part added, its words translated, chords, another key.
+        ...genLyricOpenInChatbotContextMenu(lyric.filePath),
         {
             childBefore: genContextMenuItemIcon('pencil-square'),
             // A fragment, as the document's own Edit: the menu gives every

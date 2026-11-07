@@ -97,6 +97,16 @@ test('at most a hundred packets a second come in from one connection', () => {
     expect(host.toBroker).toHaveBeenCalledTimes(101);
 });
 
+test('a packet whose text decodes to no sound is not played', () => {
+    const { intercom, host } = genIntercom();
+    intercom.set('link:b', { speaker: true });
+    host.toBroker.mockClear();
+    intercom.receive('link:b', { data: '!!!!' });
+    expect(host.toBroker).not.toHaveBeenCalled();
+    intercom.receive('link:b', { data: 'AQID' });
+    expect(host.toBroker).toHaveBeenCalledOnce();
+});
+
 test('the other side’s microphone, a dropped connection and an ended one', () => {
     const { intercom, host } = genIntercom();
     intercom.setRemoteMic('link:b', true);

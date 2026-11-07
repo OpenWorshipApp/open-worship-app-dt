@@ -220,3 +220,20 @@ describe('what the model is offered', () => {
         }
     });
 });
+
+// A language plugin is code the app runs: the help window offers its
+// install as a button the person presses, and no model is offered the tool
+// -- nor pays its schema every round (2026-11-05).
+describe('owa_language', () => {
+    it('is withheld from the model, with what to say instead', () => {
+        expect(checkIsModelHiddenTool('owa_language')).toBe(true);
+        expect(findModelHiddenReason('owa_language')).toContain(
+            'Settings > Languages',
+        );
+        expect(
+            filterModelToolList([{ name: 'owa_language' }, { name: 'owa_tran' }]).map(
+                (one) => one.name,
+            ),
+        ).toEqual(['owa_tran']);
+    });
+});

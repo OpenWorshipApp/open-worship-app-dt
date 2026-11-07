@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Malayalam",
+            "locales": ["ml-IN"],
+            "order": 1700
+        }
+    ]
+}

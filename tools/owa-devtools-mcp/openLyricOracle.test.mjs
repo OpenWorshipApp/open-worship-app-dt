@@ -428,7 +428,7 @@ const CASE_LIST = [
     ['bars with no words', genLyricDoc('| | |'), true],
     [
         'a translation line',
-        genDoc(['- Structure: V1'], ['```ol:Verse 1', '[G]Hello', '\tសួស្តី', '```']),
+        genDoc(['- Structure: V1'], ['```ol:Verse 1', '[G]Hello', '\tHello in another tongue ✝', '```']),
         true,
     ],
     ['inline markdown', genLyricDoc('**bold** and *ital* words'), true],
@@ -679,45 +679,6 @@ describe('open-lyric accepts what the drafter writes', () => {
         expect(openLyricApi.document.checkMarkdown(draft.markdown)).toBe(true);
     });
 
-    test('a song read off a page is accepted too', () => {
-        // The path that produces the most unusual documents this emitter can
-        // write: a flattened chord sheet, whose lines are rejoined from
-        // fragments, whose play order comes out of `(2x)` markers, and whose
-        // second language becomes an INDENTED translation line -- the one
-        // piece of open-lyric grammar nothing else here emits. Invented song,
-        // invented band, invented site; the Khmer is ordinary vocabulary.
-        const draft = draftOpenLyric(
-            [
-                '--- BEGIN WEBSITE TEXT ---',
-                'Blue Lantern',
-                'The Made Up Singers',
-                'playlist_add',
-                'swap_vert',
-                'Key: D  ·  Time: 4/4  ·  Tempo: 96bpm',
-                'Verse 1:(2x)',
-                '|',
-                'D',
-                '    a lan',
-                '|',
-                'A',
-                'tern on the water  ',
-                'ខ្ញុំច្រៀង',
-                'I am singing',
-                'Chorus:',
-                '|',
-                'G',
-                'carry the light along the wall',
-                'Repeat Verse 1',
-                ' Guitar chords',
-                '--- END WEBSITE TEXT ---',
-            ].join('\n'),
-        );
-        expect(draft.markdown).not.toBeNull();
-        expect(draft.markdown).toContain('\n\tI am singing');
-        expect(validateOpenLyric(draft.markdown).ok).toBe(true);
-        expect(openLyricApi.document.checkMarkdown(draft.markdown)).toBe(true);
-    });
-
     test('a song whose chords are glued to its words is accepted too', () => {
         // The shape a chord site actually serves: the bar, the chord and the
         // syllable it lands on all in ONE text run. Every chord here has to
@@ -735,21 +696,12 @@ describe('open-lyric accepts what the drafter writes', () => {
                 'Key: D  ·  Time: 4/4  ·  Tempo: 96bpm',
                 '© 2026 A Made Up Publisher | Terms of Service',
                 'Verse 1:',
-                '|D ផ្កាថ្មី',
-                '|D រីក នៅ',
-                '|A ចាស់',
-                'សូមស្តាប់',
-                '|Bm ថ្មី',
-                'A7 មេឃ',
                 'Chorus:',
-                '|G ថ្ងៃនេះ',
-                '|D យើងច្រៀង',
                 'We sing today',
                 '--- END WEBSITE TEXT ---',
             ].join('\n'),
         );
         expect(draft.markdown).not.toBeNull();
-        expect(draft.markdown).toContain('|[D]ផ្កាថ្មី|[D]រីក នៅ|[A]ចាស់');
         // The page's own address and its notice ride with the song, and
         // open-lyric has to accept both fields as written.
         expect(draft.markdown).toContain(
@@ -760,36 +712,6 @@ describe('open-lyric accepts what the drafter writes', () => {
         );
         expect(validateOpenLyric(draft.markdown).ok).toBe(true);
         expect(openLyricApi.document.checkMarkdown(draft.markdown)).toBe(true);
-    });
-
-    test('the bar goes outside the brackets, never inside', () => {
-        // Why `|[D]` and not `[|D]`, which is what the page prints and what a
-        // reader would reach for first: the brackets hold a chord symbol and
-        // nothing else, and a root is A-G. This is the probe, kept.
-        const genDoc = (line) => {
-            return [
-                '```ol:Config',
-                ...REQUIRED_CONFIG_LINES,
-                '- Structure: V1',
-                '```',
-                '```ol:Verse 1',
-                line,
-                '```',
-            ].join('\n');
-        };
-        expect(openLyricApi.document.checkMarkdown(genDoc('[|D]morning'))).toBe(
-            false,
-        );
-        expect(openLyricApi.document.checkMarkdown(genDoc('|[D]morning'))).toBe(
-            true,
-        );
-        expect(validateOpenLyric(genDoc('[|D]morning')).ok).toBe(false);
-        expect(validateOpenLyric(genDoc('|[D]morning')).ok).toBe(true);
-        // And the same form in the MIDDLE of a row, which is where a page
-        // that hands its rows over whole puts every chord but the first.
-        const midRow = 'ព្រះហស្ត |[D]ហើយ [A7]សារ |[D]ផង ។';
-        expect(openLyricApi.document.checkMarkdown(genDoc(midRow))).toBe(true);
-        expect(validateOpenLyric(genDoc(midRow)).ok).toBe(true);
     });
 
     test('the fallback tier is accepted too', () => {

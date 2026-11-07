@@ -256,7 +256,7 @@ describe('naming a book or a chapter in the bible behind it', () => {
     });
 
     // The chapter goes through that bible numeral list, exactly as a verse
-    // title does — a Khmer bible writes `14` as `១៤`.
+    // title does — a Khmer bible writes `14` in its own digits.
     test('numbers a chapter the way that bible numbers it', async () => {
         expect(await shortToReferenceTitle('KHOV', 'chapter', 'GEN 14')).toBe(
             'GEN in Khmer [14]',

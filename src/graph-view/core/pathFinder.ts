@@ -60,7 +60,10 @@ export function findShortestPath(
         if (head === levelEnd) {
             hopCount += 1;
             levelEnd = queue.length;
-            if (hopCount > maxHopCount) {
+            // The next level walked finds records `hopCount + 1` steps away:
+            // checked with `>`, a cap of 30 let a 31-step path through
+            // (2026-11-04).
+            if (hopCount >= maxHopCount) {
                 return null;
             }
         }

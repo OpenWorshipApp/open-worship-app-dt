@@ -18,11 +18,11 @@ describe('a theme title as text', () => {
         expect(toPlainThemeTitle('A &amp; B &lt;C&gt; &#x41;')).toBe(
             'A & B <C> A',
         );
-        expect(toPlainThemeTitle('<b>Noé</b> et l&apos;arche')).toBe(
-            'Noé et l’arche',
+        expect(toPlainThemeTitle('<b>Noah ✝</b> and the ark&apos;s dove')).toBe(
+            'Noah ✝ and the ark’s dove',
         );
         // Nothing to do, and an entity nobody knows, stay as they are.
-        expect(toPlainThemeTitle('សត្វព្រាប')).toBe('សត្វព្រាប');
+        expect(toPlainThemeTitle('✝ 📖 dove')).toBe('✝ 📖 dove');
         expect(toPlainThemeTitle('&bogus; &#0;')).toBe('&bogus; &#0;');
     });
 });
@@ -339,5 +339,29 @@ describe('listPassageCrossRefThemes', () => {
             theme: 'Waters Subsiding and Deliverance',
             refs: ['PSA 104:7-9'],
         });
+    });
+
+    // A damaged bundle entry: no title, no verse list, a verse that is no
+    // key. The page lists what it can and names the verse as it stands.
+    it('passes over a theme with no title or verses, and keeps a verse that is no key', () => {
+        const themes = listPassageCrossRefThemes(
+            [
+                {
+                    verse: 'the verse',
+                    themes: [
+                        { title: 42, verses: ['GEN 9:11'] } as any,
+                        { title: 'No verses', verses: 'GEN 9:11' } as any,
+                        {
+                            title: ' A promise ',
+                            verses: ['GEN 9:11', 7],
+                        } as any,
+                    ],
+                },
+            ],
+            'not a passage',
+        );
+        expect(themes).toEqual([
+            { verse: 'the verse', theme: 'A promise', refs: ['GEN 9:11'] },
+        ]);
     });
 });

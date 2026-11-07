@@ -299,7 +299,11 @@ describe('bibleDownloadHelpers', () => {
             json: async () => ({ mapper: null }),
         });
         expect(await getOnlineBibleInfoList()).toBeNull();
-        expect(mocks.handleErrorMock).toHaveBeenCalled();
+        // Turned away by the check itself (`typeof null` is 'object'), not by
+        // whatever happens to throw on a null further on.
+        expect(mocks.handleErrorMock).toHaveBeenCalledExactlyOnceWith(
+            new TypeError('Cannot get bible list'),
+        );
 
         mocks.getWritableBiblePathMock.mockResolvedValueOnce('/data/bibles');
         mocks.fsListDirectoriesMock.mockResolvedValueOnce([

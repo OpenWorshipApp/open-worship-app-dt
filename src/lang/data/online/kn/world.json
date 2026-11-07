@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Kannada",
+            "locales": ["kn-IN"],
+            "order": 1600
+        }
+    ]
+}

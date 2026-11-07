@@ -40,9 +40,9 @@ export default function DownloadedBibleItemComp({
         if (!isOk) {
             return;
         }
+        const progressKey = `Deleting bible "${titleRef.current}"`;
+        showProgressBar(progressKey);
         try {
-            const progressKey = `Deleting bible "${titleRef.current}"`;
-            showProgressBar(progressKey);
             const bibleDestination = await bibleDataReader.toBiblePath(
                 keyRef.current,
             );
@@ -53,10 +53,13 @@ export default function DownloadedBibleItemComp({
                 await fsDeleteDir(bibleDestination);
                 await bibleDataReader.clearBibleDatabaseData(keyRef.current);
             }
-            hideProgressBar(progressKey);
             onDeletedRef.current();
         } catch (error: any) {
             showSimpleToast(tran('Deleting'), error.message);
+        } finally {
+            // A delete that fails took the bar down with it too: it was
+            // left running for good (2026-11-03).
+            hideProgressBar(progressKey);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

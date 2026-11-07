@@ -1,0 +1,10 @@
+{
+    "or": {
+        "name": "Odia",
+        "nativeName": "ଓଡ଼ିଆ",
+        "script": "Oriya",
+        "yes": ["ହଁ"],
+        "no": ["ନା"],
+        "order": 69
+    }
+}

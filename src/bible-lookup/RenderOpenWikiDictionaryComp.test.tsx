@@ -22,6 +22,7 @@ const h = vi.hoisted(() => {
         showAppContextMenuMock: vi.fn(),
         openExternalURLMock: vi.fn(),
         getBibleLocaleMock: vi.fn(async (): Promise<string> => 'km-KH'),
+        unknownCodes: [] as string[],
     };
 });
 
@@ -34,7 +35,9 @@ vi.mock('../lang/langHelpers', () => ({
     getLangCode: (locale: string) => h.localeMap[locale] ?? null,
     getLangData: () => null,
     getLanguageTitle: ({ langCode }: { langCode: string }) => {
-        return `Language ${langCode}`;
+        return h.unknownCodes.includes(langCode)
+            ? 'Unknown'
+            : `Language ${langCode}`;
     },
     tran: (text: string) => text,
 }));
@@ -77,6 +80,7 @@ describe('RenderOpenWikiDictionaryComp', () => {
     beforeEach(() => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
         vi.clearAllMocks();
+        h.unknownCodes = [];
         container = document.createElement('div');
         document.body.appendChild(container);
         root = createRoot(container);
@@ -109,5 +113,49 @@ describe('RenderOpenWikiDictionaryComp', () => {
         expect(urls[0]).toBe('https://id.wiktionary.org');
         expect(urls.filter((url) => url.includes('id.'))).toHaveLength(1);
         expect(urls.some((url) => /\/\/(in|iw)\./.test(url))).toBe(false);
+    });
+
+    test('an English Bible adds no edition of its own, and each row opens its site', async () => {
+        h.getBibleLocaleMock.mockResolvedValueOnce('en-US');
+
+        const urls = await openMenuUrls();
+
+        expect(urls).toEqual([
+            'https://he.wiktionary.org',
+            'https://id.wiktionary.org',
+            'https://km.wiktionary.org',
+        ]);
+        const items: any[] = h.showAppContextMenuMock.mock.calls[0][1];
+        expect(items[0]).toMatchObject({
+            menuElement: 'Open Wiki Dictionary',
+            isSectionHeader: true,
+        });
+        items.find((item) => item.menuElement === 'English').onSelect();
+        expect(h.openExternalURLMock).toHaveBeenLastCalledWith(
+            'https://en.wiktionary.org',
+        );
+        items
+            .find((item) => item.title === 'https://km.wiktionary.org')
+            .onSelect();
+        expect(h.openExternalURLMock).toHaveBeenLastCalledWith(
+            'https://km.wiktionary.org',
+        );
+        expect(h.openExternalURLMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('names a language it has no title for by its code', async () => {
+        h.unknownCodes = ['he'];
+
+        await openMenuUrls();
+
+        const items: any[] = h.showAppContextMenuMock.mock.calls[0][1];
+        const labels = items
+            .filter((item) => typeof item.title === 'string')
+            .map((item) => item.menuElement);
+        expect(labels).toEqual([
+            'Language km [km]',
+            'he (Unknown)',
+            'Language id [id]',
+        ]);
     });
 });

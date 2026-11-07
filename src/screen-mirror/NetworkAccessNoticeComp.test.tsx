@@ -14,10 +14,7 @@ vi.mock('../helper/appHooks', async () => {
     const { useEffect } = await import('react');
     return { useAppEffect: useEffect };
 });
-vi.mock('../helper/timeoutHelpers', () => ({
-    genTimeoutAttempt: (ms: number) => (callback: () => void) =>
-        setTimeout(callback, ms),
-}));
+// `genTimeoutAttempt` is the real one: a burst of focus events must collapse.
 vi.mock('../server/appHelpers', () => ({ copyToClipboard: h.copy }));
 vi.mock('./mirrorConnectionHelpers', () => ({ mirrorCommand: h.command }));
 
@@ -138,4 +135,61 @@ test('healthy, unknown and failed firewall checks do not claim a blockage', asyn
     h.command.mockRejectedValueOnce(new Error('unavailable'));
     await render();
     expect(container.querySelector('[role="alert"]')).toBeNull();
+});
+
+// Access is given in another window: coming back to this one is when to look
+// again, once for a burst of focus events, and not at all once it is fine.
+test('coming back to the window checks again while the firewall blocks, and stops once it does not', async () => {
+    vi.useFakeTimers();
+    try {
+        await render();
+        expect(container.querySelector('[role="alert"]')).not.toBeNull();
+        h.command.mockClear();
+        await act(async () => {
+            window.dispatchEvent(new Event('focus'));
+            window.dispatchEvent(new Event('focus'));
+        });
+        expect(h.command).not.toHaveBeenCalled();
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(500);
+        });
+        expect(h.command).toHaveBeenCalledExactlyOnceWith('firewall', {
+            isForced: true,
+        });
+
+        // This time the operator did allow it.
+        h.status = status({ verdict: 'ok' });
+        await act(async () => {
+            window.dispatchEvent(new Event('focus'));
+            await vi.advanceTimersByTimeAsync(500);
+        });
+        expect(h.command).toHaveBeenCalledTimes(2);
+        expect(container.querySelector('[role="alert"]')).toBeNull();
+        await act(async () => {
+            window.dispatchEvent(new Event('focus'));
+            await vi.advanceTimersByTimeAsync(500);
+        });
+        expect(h.command).toHaveBeenCalledTimes(2);
+    } finally {
+        vi.clearAllTimers();
+        vi.useRealTimers();
+    }
+});
+
+test('while a check runs, Check again waits for it', async () => {
+    await render();
+    let answer!: (value: MirrorFirewallStatus) => void;
+    h.command.mockImplementation(
+        () =>
+            new Promise((resolve) => {
+                answer = resolve;
+            }),
+    );
+    await click('Check again');
+    expect(button('Check again').disabled).toBe(true);
+    await act(async () => {
+        answer(status({ ruleNames: ['Rule A', 'Rule B'] }));
+    });
+    expect(button('Check again').disabled).toBe(false);
+    expect(container.textContent).toContain('Rule A, Rule B');
 });

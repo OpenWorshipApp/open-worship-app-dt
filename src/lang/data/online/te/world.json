@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Telugu",
+            "locales": ["te-IN"],
+            "order": 1500
+        }
+    ]
+}

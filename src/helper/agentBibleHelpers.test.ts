@@ -14,6 +14,8 @@ const h = vi.hoisted(() => {
         viewData: {} as Record<number, any>,
         presentCalls: [] as any[],
         pendingQuestion: null as { title: string; text: string } | null,
+        // What else happens while the verse goes up.
+        onPresent: null as null | (() => void),
     };
 });
 
@@ -56,6 +58,7 @@ vi.mock('../_screen/managers/ScreenLongTextManager', () => ({
         }),
         handleBibleItemSelecting: async (event: any, bibleItem: any) => {
             h.presentCalls.push({ event, bibleItem });
+            h.onPresent?.();
             // The manager steps over a locked screen and fills the rest.
             for (const manager of h.managers) {
                 if (manager.isSelected && !manager.isLocked) {
@@ -139,6 +142,7 @@ beforeEach(() => {
     h.viewData = {};
     h.presentCalls = [];
     h.pendingQuestion = null;
+    h.onPresent = null;
 });
 
 describe('handleAgentBibleRequest', () => {
@@ -241,7 +245,9 @@ describe('handleAgentBibleRequest', () => {
         h.lookupKey = 'KHM';
         h.parseMap = {
             KJV: { 'John 3:16': JOHN },
-            KHM: { 'John 3:16': genItem('KHM', 'យ៉ូហាន 3:16', 'khmer words') },
+            KHM: {
+                'John 3:16': genItem('KHM', '[xx] John 3:16', 'other words'),
+            },
         };
         const result = await handleAgentBibleRequest({
             reference: 'John 3:16',
@@ -249,7 +255,7 @@ describe('handleAgentBibleRequest', () => {
         });
         expect(result).toMatchObject({
             version: 'KHM',
-            reference: 'យ៉ូហាន 3:16',
+            reference: '[xx] John 3:16',
         });
     });
 
@@ -270,7 +276,9 @@ describe('handleAgentBibleRequest', () => {
     it('uses the version asked for and only that one', async () => {
         h.parseMap = {
             KJV: { 'John 3:16': JOHN },
-            KHM: { 'John 3:16': genItem('KHM', 'យ៉ូហាន 3:16', 'khmer words') },
+            KHM: {
+                'John 3:16': genItem('KHM', '[xx] John 3:16', 'other words'),
+            },
         };
         const result = await handleAgentBibleRequest({
             reference: 'John 3:16',
@@ -427,5 +435,55 @@ describe('handleAgentBibleRequest', () => {
             action: 'check',
         });
         expect(refused).toMatchObject({ isError: true });
+    });
+
+    // The verses of John 3 cannot be counted here (`getVersesCount` says
+    // nothing for it): the chapter is read as its first verse, never refused.
+    it('reads a chapter whose verses cannot be counted as its first verse', async () => {
+        h.parseMap = {
+            KJV: {
+                'John 3:1': genItem('KJV', 'John 3:1', '(1): There was a man'),
+            },
+        };
+        await expect(
+            handleAgentBibleRequest({ reference: 'John 3', action: 'check' }),
+        ).resolves.toMatchObject({
+            reference: 'John 3:1',
+            version: 'KJV',
+            text: '(1): There was a man',
+        });
+    });
+
+    it('reads in the installed order when the Bible Lookup cannot be read', async () => {
+        h.lookupKey = null;
+        h.installed = [{ key: 'KHM' }, { key: 'KJV' }];
+        h.parseMap = {
+            KJV: { 'John 3:16': JOHN },
+            KHM: { 'John 3:16': genItem('KHM', '✝ 3:16', 'its own words') },
+        };
+        await expect(
+            handleAgentBibleRequest({
+                reference: 'John 3:16',
+                action: 'check',
+            }),
+        ).resolves.toMatchObject({ version: 'KHM' });
+    });
+
+    it('leaves out a screen that was removed while the verse went up', async () => {
+        h.managers = [genManager(0), genManager(1)];
+        h.onPresent = () => {
+            h.managers = h.managers.filter((one) => {
+                return one.screenId !== 1;
+            });
+        };
+        const result: any = await handleAgentBibleRequest({
+            reference: 'John 3:16',
+        });
+        expect(result.isPresented).toBe(true);
+        expect(
+            result.screens.map((one: { screenId: number }) => {
+                return one.screenId;
+            }),
+        ).toEqual([0]);
     });
 });

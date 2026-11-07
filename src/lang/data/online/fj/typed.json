@@ -1,0 +1,11 @@
+{
+    "fj": {
+        "name": "Fijian",
+        "nativeName": "Na Vosa Vakaviti",
+        "script": "Latin",
+        "words": "na ka e kei ki vei au iko koya keimami keda ira vakacava cava evei baleta naica cei qo qori sega rawa via kerekere sara talega vinaka",
+        "yes": ["io", "io, kerekere"],
+        "no": ["sega"],
+        "order": 46
+    }
+}

@@ -3,14 +3,14 @@
  * types -- the books, chapters and verses of the Bible being read, and the
  * people and places of the names lookup (2026-10-18).
  *
- * Asked for with a picture of a lookup conversation whose box held `១` and
+ * Asked for with a picture of a lookup conversation whose box held a Khmer digit one and
  * offered nothing: _assistant should help the input ... book auto complete ->
  * chapter -> verse_, then _if for location/name then should recommend the
  * auto-complete_. The window asks on a debounce (`bibleInputSuggestHelpers.ts`
  * decides WHEN); this reads what the app holds.
  *
  * - A reference is completed in the Bible the READER is on: the lookup's
- *   language's Bible, so a Khmer reader is offered `យ៉ូហាន ៣:១៦`, its own
+ *   language's Bible, so a Khmer reader is offered John 3:16 in its own
  *   digits and name. Books come from that Bible's `keyBookMap`, chapters from
  *   the model's chapter count, verses from the chapter itself.
  * - A name or a place comes from the names lookup, taken through
@@ -50,7 +50,7 @@ export type AgentBibleSuggestRequestType = {
     kind?: unknown;
     prefix?: unknown;
     // The book the draft is already inside: the lookup card it came from
-    // (`JHN`), so digits alone (`១`) can still be completed.
+    // (`JHN`), so digits alone (in any script) can still be completed.
     book?: unknown;
     // A NAME may load the ~34MB dataset only when the person is clearly
     // naming one (a who/where question). A bare name waits for a lookup panel
@@ -113,8 +113,8 @@ async function resolveSuggestBible() {
     // The lookup's own Bible is the one the Reader draws, so its names are
     // the ones on screen. Preferring "the first Bible in their language"
     // picked a DIFFERENT Khmer edition whose book list did not include
-    // Genesis or Psalms: typing `លោកុប្បត្តិ` offered nothing while
-    // `ម៉ាថាយ` offered chapters (seen live 2026-10-19). `own` stays as the
+    // Genesis or Psalms: typing Genesis in Khmer offered nothing while
+    // Matthew offered chapters (seen live 2026-10-19). `own` stays as the
     // fallback for a lookup Bible in another language.
     const chosen = looked ?? own ?? infoList[0];
     const info = await getBibleInfo(chosen.key).catch(() => {

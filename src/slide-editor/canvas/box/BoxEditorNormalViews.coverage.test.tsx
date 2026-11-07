@@ -850,6 +850,44 @@ describe('BoxEditor normal view components', () => {
         }
     });
 
+    test('a move onto something inside the box is not a leave, a move out of it is', async () => {
+        vi.useFakeTimers();
+        try {
+            const frame = await renderWebsiteInEditor();
+            await dispatchOnFrame(frame, 'mouseover');
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(1000);
+            });
+            const iframe = container?.querySelector('iframe');
+            expect(iframe).not.toBeNull();
+
+            // A child that became a hit target (a badge added later, say)
+            // sends a bubbling mouseout towards itself: tearing down on it
+            // would make the over/out pair flap forever.
+            await act(async () => {
+                frame?.dispatchEvent(
+                    new MouseEvent('mouseout', {
+                        bubbles: true,
+                        relatedTarget: iframe ?? null,
+                    }),
+                );
+            });
+            expect(container?.querySelector('iframe')).toBe(iframe);
+
+            await act(async () => {
+                frame?.dispatchEvent(
+                    new MouseEvent('mouseout', {
+                        bubbles: true,
+                        relatedTarget: document.body,
+                    }),
+                );
+            });
+            expect(container?.querySelector('iframe')).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test('never goes live on hover outside the editor', async () => {
         vi.useFakeTimers();
         try {

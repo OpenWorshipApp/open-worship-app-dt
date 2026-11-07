@@ -2,10 +2,10 @@
 id: W-53
 title: "Show a song in several languages for everyone to sing (Long Text Show)"
 section: "Presenting content"
-verify: [PM-163, PM-164, PM-165, PM-166]
+verify: [PM-163, PM-164, PM-165, PM-166, PM-167]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-02"
+workflowsVersion: "2026-11-06"
 ---
 # W-53 — Show a song in several languages for everyone to sing (Long Text Show)
 
@@ -65,6 +65,33 @@ menu.
    row, **[en:tran:View as Text Cards]**, turns them into small buttons
    with only the part's name, and back; the card remembers which.
 
+   A row is never thrown into view: it glides there, quickly at first and
+   then slowing into place, so a room reading along is not lost — a Bible
+   passage's selected verse moves the same way.
+
+   **Every line on a row of its own.** Press **[en:tran:Atom Mode]**, beside
+   the book and gear at the top of the panel, and each LINE of a part
+   becomes a card, a button and a screen row of its own, numbered on
+   through the whole song: a verse of four lines is `1 Verse 1` to
+   `4 Verse 1`, and the chorus after it starts at `5 Chorus`. A blank line
+   in typed text is kept as an empty row. The buttons, the light and the
+   keys then go line by line. Every language must break each part into the
+   same number of lines, or the panel says which part differs and
+   **[en:tran:Show Long Text]** stays off. Pressed while the text is up, it
+   goes up again on the same screens at once, at the same place. The
+   session remembers it; press it again to go back to a row per part.
+
+   **Every language in the same row.** Press **[en:tran:Stack]** and the
+   languages stop standing side by side: each row holds every language, one
+   under the other in the order of the cards, the way the Bible Reader shows
+   versions together. The row's number sits on a line of its own above them,
+   in each language's digits (`4, ៤`), and the one header reads `EN | KM`
+   with the titles `Still | Still`. Each language keeps its own font and
+   size. Press **[en:tran:Hide Number]** to put the rows up without their
+   numbers, side by side or stacked — the cards in the panel keep theirs.
+   Both go up again at once on a screen showing the text, with the same row
+   marked.
+
    **Step with the keys.** Once you have pressed a part, its button has the
    keys, the way the slides do: **Space**, **→**, **↓** or **Page Down**
    presses the next part's button, and **Shift+Space**, **←**, **↑** or
@@ -73,12 +100,15 @@ menu.
    presenter remote. It stops at the last part, and at the first: it never
    goes round to the beginning. A part that is not lit keeps its own keys —
    **Space** presses that one.
-8. **Give a language its own look.** Open **[en:tran:Properties]** on its card:
-   **[en:tran:Font]**, **[en:tran:Text Color]**,
+8. **Give a language its own font and size.** The whole text is drawn in
+   **[en:tran:Bible/LongText Properties]**, the book and gear beside
+   **[en:tran:Add Language]** (W-07): its colour, boldness, alignment, shadow
+   and highlight are every language's. Open **[en:tran:Properties]** on a card
+   for the two things a language may need of its own: **[en:tran:Font]**, and
    **[en:tran:Text Size (%)]** (its size beside the other languages — 80 makes
-   it a little smaller) and **[en:tran:Text Align]**. A change reaches a
-   showing text about half a second after you stop. Whatever you leave alone
-   follows the screen's own Bible text style.
+   it a little smaller; two fonts at the same size can look different sizes).
+   Both are unset until you choose them, and unset they follow the panel. A
+   change reaches a showing text about half a second after you stop.
 9. **Change the words.** Edit a card and press **[en:tran:Show Long Text]**
    again: what is on the screen is the text as it was when you last pressed it.
 10. **Take it down.** **[en:tran:Hide Long Text]** beside the show button, or
@@ -90,7 +120,7 @@ menu.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-163` · `PM-164` · `PM-165` · `PM-166`
+`PM-163` · `PM-164` · `PM-165` · `PM-166` · `PM-167`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-02).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-06).
 :::

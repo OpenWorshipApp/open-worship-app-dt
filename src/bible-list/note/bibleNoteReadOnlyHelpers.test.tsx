@@ -228,6 +228,60 @@ describe('lockBibleNoteReadOnly', () => {
     });
 });
 
+// The poll itself, on a stand-in note: when the toolbar can hear the re-lock,
+// and that a window whose editor never connects stops asking.
+describe('lockBibleNoteReadOnly — waiting for the editor', () => {
+    function genStandInNote() {
+        const lockWriteList: boolean[] = [];
+        const note = {
+            content: '',
+            set isReadOnly(value: boolean) {
+                lockWriteList.push(value);
+            },
+        };
+        return { note, lockWriteList };
+    }
+
+    test('re-locks once the editor answers, then stops polling', () => {
+        vi.useFakeTimers();
+        try {
+            const { note, lockWriteList } = genStandInNote();
+            lockBibleNoteReadOnly(note as any);
+            expect(lockWriteList).toEqual([true]);
+            // Not connected yet: polled four times, nothing touched.
+            vi.advanceTimersByTime(200);
+            expect(lockWriteList).toEqual([true]);
+            expect(vi.getTimerCount()).toBe(1);
+
+            note.content = genContent('Connected');
+            vi.advanceTimersByTime(50);
+            expect(lockWriteList).toEqual([true, false, true]);
+            expect(vi.getTimerCount()).toBe(0);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('gives up after ten seconds with the lock still on', () => {
+        vi.useFakeTimers();
+        try {
+            const { note, lockWriteList } = genStandInNote();
+            lockBibleNoteReadOnly(note as any);
+            vi.advanceTimersByTime(9_950);
+            expect(vi.getTimerCount()).toBe(1);
+            vi.advanceTimersByTime(50);
+            expect(vi.getTimerCount()).toBe(0);
+            // Never lifted: an editor that connects late reads the lock as
+            // it starts.
+            note.content = genContent('Too late');
+            vi.advanceTimersByTime(1_000);
+            expect(lockWriteList).toEqual([true]);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+});
+
 describe('genPreviewSettingStore', () => {
     test('passes every setting through but the lock', () => {
         const shared = genSharedSettingStore();

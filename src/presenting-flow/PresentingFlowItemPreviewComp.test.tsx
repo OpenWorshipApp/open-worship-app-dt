@@ -12,6 +12,10 @@ const { state, mocks } = vi.hoisted(() => ({
             setItemSlideDisabled: vi.fn(),
         },
         expanded: true,
+        onScreen: false,
+        ccRowOffered: false,
+        selectedChildIndex: -1,
+        hiddenSlideIds: new Set<number>(),
     },
     mocks: {
         selectItem: vi.fn(),
@@ -80,7 +84,14 @@ vi.mock('../app-document-presenter/items/varyAppDocumentHelpers', () => ({
 }));
 vi.mock('../virtual-list/VirtualGridComp', () => ({
     default: ({ items, renderItem }: any) => (
-        <div data-testid="grid">{items.map(renderItem)}</div>
+        <div data-testid="grid">
+            {items
+                .filter(
+                    (gridItem: any) =>
+                        !state.hiddenSlideIds.has(gridItem.varySlide.id),
+                )
+                .map(renderItem)}
+        </div>
     ),
 }));
 vi.mock('../virtual-list/virtualRevealHelpers', () => ({
@@ -138,9 +149,9 @@ vi.mock('./presentingFlowItemMenuHelpers', () => ({
     genPresentingFlowVarySlideContextMenuItems: mocks.slideMenu,
 }));
 vi.mock('./presentingFlowOnScreenHelpers', () => ({
-    checkIsPresentingFlowItemOnScreen: () => false,
+    checkIsPresentingFlowItemOnScreen: () => state.onScreen,
     toPresentingFlowItemOnScreenKey: () => 'on-screen-key',
-    useIsOnScreenChecking: () => false,
+    useIsOnScreenChecking: (check: () => boolean) => check(),
 }));
 vi.mock('./presentingFlowOriginHelpers', () => ({
     notifyPresentingFlowItemOrigin: mocks.origin,
@@ -150,7 +161,12 @@ vi.mock('./PresentingFlow', () => ({
 }));
 vi.mock('./PresentingFlowCcRowsComp', () => ({
     default: ({ ccItems }: any) => (
-        <button data-presenting-flow-cc-row="">CC {ccItems.length}</button>
+        <button
+            data-presenting-flow-cc-row=""
+            className={state.ccRowOffered ? 'app-caught-hover-pointer' : ''}
+        >
+            CC {ccItems.length}
+        </button>
     ),
 }));
 vi.mock('./presentingFlowCcApplyHelpers', () => ({
@@ -173,10 +189,19 @@ vi.mock('./PresentingFlowScreenPinComp', () => ({
 vi.mock('./presentingFlowPreviewFloatingHelpers', () => ({
     PRESENTING_FLOW_PREVIEW_ITEM_INDEX_KEY: 'data-preview-index',
     bringPresentingFlowRunElementToView: mocks.bringToView,
-    findNextPresentingFlowPreviewChildIndex: (_slides: any[], from: number) =>
-        from + 1,
+    findNextPresentingFlowPreviewChildIndex: (
+        slides: any[],
+        from: number,
+        checkIsDisabled?: (index: number) => boolean,
+    ) => {
+        for (let i = from + 1; i < slides.length; i++) {
+            if (!checkIsDisabled?.(i)) return i;
+        }
+        return -1;
+    },
     registerPresentingFlowPreviewChildStepping: mocks.registerStepping,
-    resolvePresentingFlowPreviewSelectedChildIndex: () => -1,
+    resolvePresentingFlowPreviewSelectedChildIndex: () =>
+        state.selectedChildIndex,
     setPresentingFlowPreviewSelectedChild: mocks.selectChild,
     setPresentingFlowPreviewSelectedItem: mocks.selectItem,
     toPresentingFlowPreviewItemKey: (item: any) => `item-${item.uuid}`,
@@ -260,6 +285,10 @@ beforeEach(() => {
             : 'auto',
     }));
     state.expanded = true;
+    state.onScreen = false;
+    state.ccRowOffered = false;
+    state.selectedChildIndex = -1;
+    state.hiddenSlideIds.clear();
     mocks.loadDocument.mockResolvedValue({ id: 'document' });
     mocks.loadSlides.mockResolvedValue([{ id: 3 }, { id: 4 }]);
     container = document.createElement('div');
@@ -584,5 +613,174 @@ describe('presenting flow item preview', () => {
         expect(
             container.querySelector('.app-presenting-flow-preview-item-body'),
         ).toBeNull();
+    });
+
+    it('marks the label of an element that is on a screen', async () => {
+        await render(item({ isAction: true }));
+        const label = () =>
+            find('.app-presenting-flow-preview-item-label .app-ellipsis');
+        expect(label().className).not.toContain('app-on-screen');
+        state.onScreen = true;
+        await render(item({ isAction: true, uuid: 'entry-2' }));
+        expect(label().className).toContain('app-on-screen');
+    });
+
+    it('a click on a CC row only reveals it and never moves the cursor', async () => {
+        state.ccRowOffered = true;
+        await render(item({ hasCcItems: true, ccItems: [item()] }));
+        await act(async () =>
+            find('[data-presenting-flow-cc-row]').dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            ),
+        );
+        expect(mocks.selectItem).not.toHaveBeenCalled();
+    });
+
+    it('an entry of a kind this build cannot read says so', async () => {
+        await render(item({ isError: true }));
+        expect(find('.app-presenting-flow-preview-item-body').textContent).toBe(
+            'Not Supported Item Type',
+        );
+    });
+
+    it('a background that cannot reach a screen offers no drag', async () => {
+        await render(item({ isBackground: true, isScreenReachable: false }));
+        const card = find<HTMLElement>(
+            '.app-presenting-flow-preview-item-body .card',
+        );
+        expect(card.hasAttribute('draggable')).toBe(false);
+    });
+
+    it('a parked Bible item is not shown by a click', async () => {
+        await render(
+            item({
+                isBibleItem: true,
+                isDisabled: true,
+                toDroppedData: vi.fn(async () => ({
+                    item: { bibleKey: 'KJV', title: 'John 1:1' },
+                })),
+            }),
+        );
+        await act(async () =>
+            find<HTMLElement>(
+                '.app-presenting-flow-preview-item-body .card',
+            ).click(),
+        );
+        expect(mocks.showDropped).not.toHaveBeenCalled();
+        expect(mocks.armCc).not.toHaveBeenCalled();
+    });
+
+    it('a single slide that cannot be read says so', async () => {
+        await render(
+            item({ isSlide: true, getVarySlide: vi.fn(async () => null) }),
+        );
+        expect(container.textContent).toContain('Fail to read file data');
+        mocks.loadDocument.mockResolvedValueOnce(null);
+        await render(item({ isSlide: true, uuid: 'entry-2' }));
+        expect(container.textContent).toContain('Fail to read file data');
+        expect(
+            container.querySelector('[data-testid="slide-card"]'),
+        ).toBeNull();
+    });
+
+    it("parking a single-slide entry from its card's menu parks the entry", async () => {
+        await render(item({ isSlide: true }));
+        await act(async () =>
+            find('.app-presenting-flow-preview-slide').dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        const menuArgs = (mocks.slideMenu.mock.lastCall as any[])?.[0] as any;
+        menuArgs.setSlideDisabled(7, true);
+        expect(state.flow.setItemDisabled).toHaveBeenCalledExactlyOnceWith(
+            1,
+            true,
+        );
+        // The entry IS the slide: there is no per-slide pin to set.
+        expect(menuArgs.setSlideScreenIds).toBeUndefined();
+    });
+
+    it('a document whose slides cannot be read says so', async () => {
+        mocks.loadSlides.mockResolvedValueOnce(null);
+        await render(item({ isAppDocument: true }));
+        expect(container.textContent).toContain('Fail to read file data');
+        expect(mocks.registerStepping).not.toHaveBeenCalled();
+    });
+
+    it('steps over parked slides and answers "nothing left" past the last one', async () => {
+        const entry = item({
+            isAppDocument: true,
+            checkIsSlideDisabled: vi.fn((slideId: number) => slideId === 3),
+        });
+        await render(entry);
+        const step = (mocks.registerStepping.mock.calls as any[][])[0][2];
+        expect(step(new MouseEvent('click'), true)).toBe(true);
+        expect(entry.checkIsSlideDisabled).toHaveBeenCalledWith(3);
+        expect(mocks.bringToView).toHaveBeenCalledExactlyOnceWith(
+            find('[data-slide-id="4"]'),
+        );
+
+        // The run is on the last slide: the press is the next element's.
+        state.selectedChildIndex = 1;
+        expect(step(new MouseEvent('click'), false)).toBe(false);
+        expect(mocks.bringToView).toHaveBeenCalledOnce();
+    });
+
+    it('reveals a slide card the window has not drawn before pressing it', async () => {
+        state.hiddenSlideIds.add(4);
+        await render(item({ isAppDocument: true }));
+        const step = (mocks.registerStepping.mock.calls as any[][])[0][2];
+        state.selectedChildIndex = 0;
+
+        // Nothing holds that card at all: nothing this press can do.
+        mocks.reveal.mockReturnValueOnce(false);
+        expect(step(new MouseEvent('click'), false)).toBe(false);
+        expect(mocks.reveal).toHaveBeenLastCalledWith('slide-4');
+        expect(mocks.waitFor).not.toHaveBeenCalled();
+
+        const revealed = document.createElement('div');
+        revealed.getBoundingClientRect = () =>
+            ({ left: 20, top: 30 }) as DOMRect;
+        const onRevealedClick = vi.fn();
+        revealed.addEventListener('click', (event) =>
+            onRevealedClick(event.clientX, event.clientY),
+        );
+        mocks.reveal.mockReturnValueOnce(true);
+        mocks.waitFor.mockResolvedValueOnce(revealed);
+        await act(async () => {
+            expect(step(new MouseEvent('click'), false)).toBe(true);
+        });
+        expect(mocks.waitFor).toHaveBeenCalledWith(
+            expect.any(Function),
+            'slide-4',
+        );
+        // The card is still not drawn when it is looked for again.
+        expect((mocks.waitFor.mock.calls as any[][])[0][0]()).toBeNull();
+        expect(mocks.bringToView).toHaveBeenCalledExactlyOnceWith(revealed);
+        expect(onRevealedClick).toHaveBeenCalledExactlyOnceWith(28, 38);
+
+        // Revealed to nothing, or failing: nothing is pressed.
+        mocks.reveal.mockReturnValue(true);
+        mocks.waitFor.mockResolvedValueOnce(null);
+        await act(async () => {
+            expect(step(new MouseEvent('click'), false)).toBe(true);
+        });
+        const failure = new Error('reveal failed');
+        mocks.waitFor.mockRejectedValueOnce(failure);
+        await act(async () => {
+            expect(step(new MouseEvent('click'), false)).toBe(true);
+        });
+        expect(mocks.handleError).toHaveBeenCalledWith(failure);
+        expect(mocks.bringToView).toHaveBeenCalledOnce();
+    });
+
+    it('a stepper left over from slides that are gone answers "nothing left"', async () => {
+        await render(item({ isAppDocument: true }));
+        const step = (mocks.registerStepping.mock.calls as any[][])[0][2];
+        mocks.loadDocument.mockResolvedValueOnce(null);
+        await render(item({ isAppDocument: true, uuid: 'entry-2' }));
+        expect(container.textContent).toContain('Fail to read file data');
+        expect(step(new MouseEvent('click'), true)).toBe(false);
+        expect(mocks.bringToView).not.toHaveBeenCalled();
     });
 });

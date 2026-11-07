@@ -297,6 +297,7 @@ vi.mock('../helper/FileSource', () => ({
 
 import AppDocument from './AppDocument';
 import * as appDocumentHelpers from './appDocumentHelpers';
+import { getSelectedVaryAppDocumentFilePathWithEnsure } from './selectedVaryAppDocumentHelpers';
 
 describe('appDocumentHelpers coverage', () => {
     let container: HTMLDivElement | null = null;
@@ -563,5 +564,97 @@ describe('appDocumentHelpers coverage', () => {
         });
 
         expect(container?.textContent).toBe('true');
+    });
+
+    test('stops before converting when the file cannot be copied to the temp folder', async () => {
+        fsCopyFilePathToPathMock.mockResolvedValue(null);
+
+        await appDocumentHelpers.convertOfficeFile(
+            { name: 'sermon.docx' } as any,
+            { dirPath: '/docs' } as any,
+        );
+
+        expect(handleErrorMock).toHaveBeenCalledWith(
+            expect.objectContaining({ message: 'Fail to copy file' }),
+        );
+        expect(showSimpleToastMock).toHaveBeenCalledExactlyOnceWith(
+            'Converting to PDF',
+            'Something wrong during converting, please try again.',
+        );
+        expect(getSlidesCountMock).not.toHaveBeenCalled();
+        expect(convertToPdfMock).not.toHaveBeenCalled();
+        expect(hideProgressBarMock).toHaveBeenCalledWith('Converting to PDF');
+    });
+
+    test('names the file and the reason when the conversion answers with an error', async () => {
+        getSlidesCountMock.mockRejectedValueOnce(new Error('unreadable'));
+        convertToPdfMock.mockResolvedValue(new Error('bad page 3'));
+
+        await appDocumentHelpers.convertOfficeFile(
+            { name: 'sermon.docx' } as any,
+            { dirPath: '/docs' } as any,
+        );
+
+        // An unreadable count is not an error of its own.
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Converting to PDF',
+            'Document with unknown slides count is being converted. Do not close application',
+        );
+        expect(showSimpleToastMock).toHaveBeenLastCalledWith(
+            'Converting to PDF',
+            'Failed to convert <b>sermon.docx</b> to PDF. Error: bad page 3',
+        );
+        // Nothing was converted, so the PDF is neither counted nor announced.
+        expect(getSlidesCountMock).toHaveBeenCalledOnce();
+        expect(showSimpleToastMock).toHaveBeenCalledTimes(2);
+        expect(handleErrorMock).not.toHaveBeenCalled();
+        // Found by UT-78 (2026-11-03): this answer returned before the
+        // progress bar was taken down, so it stayed up for good.
+        expect(hideProgressBarMock).toHaveBeenCalledWith('Converting to PDF');
+    });
+
+    test('the selected-document setter refuses to run outside its provider', async () => {
+        function Probe() {
+            let message = 'no error';
+            try {
+                appDocumentHelpers.useSelectedAppDocumentSetterContext();
+            } catch (error: any) {
+                message = error.message;
+            }
+            return <span>{message}</span>;
+        }
+        await act(async () => {
+            root?.render(<Probe />);
+        });
+        expect(container?.textContent).toBe(
+            'No SelectedVaryAppDocumentContext found',
+        );
+
+        const setSelected = vi.fn();
+        await act(async () => {
+            root?.render(
+                <appDocumentHelpers.SelectedVaryAppDocumentContext
+                    value={{
+                        selectedVaryAppDocument: null,
+                        setSelectedVaryAppDocument: setSelected,
+                    }}
+                >
+                    <Probe />
+                </appDocumentHelpers.SelectedVaryAppDocumentContext>,
+            );
+        });
+        expect(container?.textContent).toBe('no error');
+    });
+
+    test('answers no selected document when nothing is selected', async () => {
+        vi.mocked(
+            getSelectedVaryAppDocumentFilePathWithEnsure,
+        ).mockResolvedValue(null);
+        await expect(
+            appDocumentHelpers.getSelectedVaryAppDocument(),
+        ).resolves.toBeNull();
+        await expect(
+            appDocumentHelpers.getSelectedEditingSlide(),
+        ).resolves.toBeNull();
     });
 });

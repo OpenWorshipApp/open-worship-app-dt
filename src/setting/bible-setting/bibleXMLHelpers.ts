@@ -76,12 +76,16 @@ export function readFromFile(
 ) {
     return new Promise<string | null>((resolve, reject) => {
         const inputFile = getInputByName(form, 'file');
+        // Each answer returns: with no file the read went on, said
+        // "Reading file..." and threw, and the message stayed (2026-11-03).
         if (inputFile === null || !(inputFile instanceof HTMLInputElement)) {
             resolve(null);
+            return;
         }
-        const file = (inputFile as any).files?.[0];
+        const file = inputFile.files?.[0];
         if (!file) {
             resolve(null);
+            return;
         }
         messageCallback('Reading file...');
         const reader = new FileReader();
@@ -94,6 +98,7 @@ export function readFromFile(
             );
         };
         reader.onerror = function (error) {
+            messageCallback(null);
             handleError(error);
             reject(new Error('Error during reading file'));
         };

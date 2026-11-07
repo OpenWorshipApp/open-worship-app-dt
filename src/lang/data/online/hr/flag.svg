@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
+    <path fill="#ff0000" d="M0 0h640v160h-640z"/>
+    <path fill="#fff" d="M0 160h640v160h-640z"/>
+    <path fill="#171796" d="M0 320h640v160h-640z"/>
+    <path fill="#ff0000" d="M260 150h120v144h-120z"/>
+    <path fill="#fff" d="M284 150h24v24h-24z"/>
+    <path fill="#fff" d="M332 150h24v24h-24z"/>
+    <path fill="#fff" d="M260 174h24v24h-24z"/>
+    <path fill="#fff" d="M308 174h24v24h-24z"/>
+    <path fill="#fff" d="M356 174h24v24h-24z"/>
+    <path fill="#fff" d="M284 198h24v24h-24z"/>
+    <path fill="#fff" d="M332 198h24v24h-24z"/>
+    <path fill="#fff" d="M260 222h24v24h-24z"/>
+    <path fill="#fff" d="M308 222h24v24h-24z"/>
+    <path fill="#fff" d="M356 222h24v24h-24z"/>
+    <path fill="#fff" d="M284 246h24v24h-24z"/>
+    <path fill="#fff" d="M332 246h24v24h-24z"/>
+    <path fill="#fff" d="M260 270h24v24h-24z"/>
+    <path fill="#fff" d="M308 270h24v24h-24z"/>
+    <path fill="#fff" d="M356 270h24v24h-24z"/>
+  </svg>

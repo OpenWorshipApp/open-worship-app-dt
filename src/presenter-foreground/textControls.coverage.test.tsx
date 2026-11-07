@@ -1,10 +1,8 @@
 // @vitest-environment jsdom
 
-import { readFileSync } from 'node:fs';
 import { act, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { extractDictionary } from '../../tools/owa-devtools-mcp/tran.mjs';
 
 const { state, mocks } = vi.hoisted(() => ({
     state: {
@@ -224,6 +222,7 @@ vi.mock('./ForegroundLayoutComp', () => ({
 vi.mock('./ScreensRendererComp', () => ({
     default: ({
         showingScreenIdDataList,
+        genTitle,
         buttonText,
         handleForegroundHiding,
     }: any) => (
@@ -232,6 +231,8 @@ vi.mock('./ScreensRendererComp', () => ({
                 ([id, data]: [number, any], index: number) => (
                     <button
                         key={`${id}-${index}`}
+                        // Not `title`: tests find controls by their title.
+                        data-chip-title={genTitle?.(data)}
                         onClick={() => handleForegroundHiding(id, data)}
                     >
                         {buttonText}
@@ -287,17 +288,28 @@ import ForegroundMarqueeComp from './ForegroundMarqueeComp';
 import ForegroundQuickTextComp from './ForegroundQuickTextComp';
 import ForegroundCountDownComp from './ForegroundCountDownComp';
 import ForegroundStopwatchComp from './ForegroundStopwatchComp';
-import ForegroundTimeComp from './ForegroundTimeComp';
+import ForegroundTimeComp, {
+    seedNewClockAlignment,
+} from './ForegroundTimeComp';
 import ForegroundMessageComp from './ForegroundMessageComp';
 import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import ForegroundTimerControlsComp, {
     ForegroundAutoStartSwitchComp,
 } from './ForegroundTimerControlsComp';
+import { readSourceDictionary } from '../../tools/owa-devtools-mcp/langPacks.mjs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../test-setup/langPackageDirs';
 
 let container: HTMLDivElement;
 let root: Root;
-const dictionaries = ['km', 'fr'].map((code) =>
-    extractDictionary(readFileSync(`src/lang/data/${code}/index.ts`, 'utf8')),
+// Every language package but English, found by its folder: its real
+// dictionary.
+const dictionaries = listLangPackageCodes({ isEnglishIncluded: false }).map(
+    (code) => {
+        return readSourceDictionary(toLangPackageDir(code));
+    },
 );
 
 beforeEach(() => {
@@ -444,6 +456,60 @@ describe('foreground text panels', () => {
                 isBehind: true,
             }),
         );
+    });
+
+    test('a marquee size or speed reaches its own showing scroll once, after the hand stops', async () => {
+        const own = { id: 'session-a', text: 'Ours', speedPercentage: 100 };
+        const other = { id: 'session-b', text: 'Theirs' };
+        state.screens = [
+            [3, { marqueeTopData: own }],
+            [4, { marqueeTopData: other }],
+        ];
+        await render(<ForegroundMarqueeComp position="top" />);
+        await change('Marquee Top font size (0 = auto)', '75');
+        await change('Marquee Top scroll speed (%)', '150');
+        await act(async () => vi.advanceTimersByTimeAsync(499));
+        expect(mocks.setTop).not.toHaveBeenCalled();
+        await act(async () => vi.advanceTimersByTimeAsync(1));
+        // Both changes, in ONE refresh of this session's scroll only.
+        expect(mocks.manager.mock.calls).toEqual([[3]]);
+        expect(mocks.setTop).toHaveBeenCalledExactlyOnceWith({
+            ...own,
+            speedPercentage: 150,
+            extraStyle: { color: 'red', fontSize: '75px' },
+            isBehind: true,
+        });
+    });
+
+    test("a marquee session's tab and its removal reach only its own scroll", async () => {
+        state.screens = [
+            [1, { marqueeTopData: { id: 'session-a', text: 'A' } }],
+            [2, { marqueeTopData: { id: 'session-b', text: 'B' } }],
+            [
+                3,
+                {
+                    marqueeTopData: null,
+                    marqueeBottomData: { id: 'session-b', text: 'C' },
+                },
+            ],
+        ];
+        await render(<ForegroundMarqueeComp position="top" />);
+        const options = state.sessionOptions.get('marquee-top');
+        const idList = ['session-a', 'session-b'];
+        expect(options.checkIsOnScreen('session-b', '-session-b', idList)).toBe(
+            true,
+        );
+        expect(options.checkIsOnScreen('session-c', '-session-c', idList)).toBe(
+            false,
+        );
+        act(() => {
+            options.hideSession('session-b', '-session-b', idList);
+        });
+        // Session B's top scroll comes down; its bottom one is not this
+        // panel's, and Session A's stays.
+        expect(mocks.manager.mock.calls).toEqual([[2]]);
+        expect(mocks.setTop).toHaveBeenCalledExactlyOnceWith(null);
+        expect(mocks.setBottom).not.toHaveBeenCalled();
     });
 
     test('switches text sessions without carrying the previous session text into the next', async () => {
@@ -945,6 +1011,41 @@ describe('countdown panel', () => {
         ).toBe('09:00');
     });
 
+    test('a right-click on the date-time start, or its dots, asks which screens', async () => {
+        await render(<ForegroundCountDownComp />);
+        await change('Countdown Date', '2026-10-15');
+        await change('Countdown Time', '10:30');
+        await act(async () =>
+            container
+                .querySelector('[title="Start Countdown to DateTime"]')!
+                .dispatchEvent(
+                    new MouseEvent('contextmenu', { bubbles: true }),
+                ),
+        );
+        expect(mocks.showCountdown).toHaveBeenCalledTimes(1);
+        expect(mocks.showCountdown.mock.calls[0].slice(1, 6)).toEqual([
+            new Date('2026-10-15 10:30'),
+            { color: 'red' },
+            true,
+            'session-a',
+            true,
+        ]);
+        // The date-time form's own dots: the first of the panel's two, the
+        // duration form's coming after it.
+        const dotsButtons = Array.from(
+            container.querySelectorAll('button'),
+        ).filter((button) => {
+            return button.textContent?.trim() === 'Show on Screens';
+        });
+        expect(dotsButtons).toHaveLength(2);
+        await act(async () => dotsButtons[0].click());
+        expect(mocks.showCountdown).toHaveBeenCalledTimes(2);
+        expect(mocks.showCountdown.mock.calls[1][1]).toEqual(
+            new Date('2026-10-15 10:30'),
+        );
+        expect(mocks.showCountdown.mock.calls[1][3]).toBe(true);
+    });
+
     test('start, pause, resume and reset update only this session’s duration countdowns', async () => {
         const duration = {
             id: 'session-a',
@@ -1394,6 +1495,69 @@ describe('world-time panel', () => {
         expect(showTitles()).toEqual(['Show Time 1', 'Show Time 2']);
     });
 
+    test('a new clock starts on the first free cell, a broken alignment counting as the middle', () => {
+        // The first clock stays in the middle, and nothing is written for it.
+        seedNewClockAlignment('clock-new', []);
+        expect(state.settings.has('time-clock-new-alignment')).toBe(false);
+
+        state.settings.set('time-clock-a-alignment', '{"horizontalAlignment":');
+        seedNewClockAlignment('clock-new', ['clock-a']);
+        expect(
+            JSON.parse(state.settings.get('time-clock-new-alignment')),
+        ).toEqual({
+            horizontalAlignment: 'center',
+            verticalAlignment: 'start',
+        });
+
+        // Every cell taken: there is no free one to start on.
+        const idList = [
+            ['center', 'center'],
+            ['center', 'start'],
+            ['center', 'end'],
+            ['left', 'center'],
+            ['right', 'center'],
+            ['left', 'start'],
+            ['right', 'start'],
+            ['left', 'end'],
+            ['right', 'end'],
+        ].map(([horizontalAlignment, verticalAlignment], index) => {
+            state.settings.set(
+                `time-full-${index}-alignment`,
+                JSON.stringify({ horizontalAlignment, verticalAlignment }),
+            );
+            return `full-${index}`;
+        });
+        mocks.persist.mockClear();
+        seedNewClockAlignment('clock-tenth', idList);
+        expect(state.settings.has('time-clock-tenth-alignment')).toBe(false);
+        expect(mocks.persist).not.toHaveBeenCalled();
+    });
+
+    test("a clock picked from a city takes that city's offset as it is today", async () => {
+        seedClocks();
+        state.settings.set(
+            'foreground-timezone-name-setting-clock-a',
+            'Asia/Kolkata',
+        );
+        // Saved before the zone's offset changed.
+        state.settings.set(
+            'foreground-timezone-minute-offset-setting-clock-a',
+            4,
+        );
+        await render(<ForegroundTimeComp />);
+        expect(
+            state.settings.get(
+                'foreground-timezone-minute-offset-setting-clock-a',
+            ),
+        ).toBe(5.5);
+        // Opened again with the offset already right: nothing is rewritten.
+        act(() => root.unmount());
+        root = createRoot(container);
+        mocks.persist.mockClear();
+        await render(<ForegroundTimeComp />);
+        expect(mocks.persist).not.toHaveBeenCalled();
+    });
+
     test('a new session creates one clock; its callbacks own only that session’s clocks', async () => {
         const newId = '00000000-0000-4000-8000-000000000001';
         vi.spyOn(crypto, 'randomUUID').mockReturnValue(newId);
@@ -1542,6 +1706,69 @@ describe('message panel', () => {
                 return item.id;
             }),
         ).toEqual(['message-1-session-a', 'message-0-session-a']);
+    });
+
+    test("a moved message re-stacks the screens holding single messages, never the session's all box", async () => {
+        seedMessages('First\n\nSecond');
+        const allBox = {
+            id: 'message-all-session-a',
+            textList: ['First', 'Second'],
+            intervalSecond: null,
+        };
+        state.screens = [
+            // Only the all box: it is one item, in no order to change.
+            [1, { messageDataList: [allBox] }],
+            [
+                2,
+                {
+                    messageDataList: [
+                        { id: 'message-0-session-a', textList: ['First'] },
+                    ],
+                },
+            ],
+        ];
+        await render(<ForegroundMessageComp />);
+        mocks.manager.mockClear();
+        await clickTitle('Move down 1');
+        expect(mocks.manager.mock.calls).toEqual([[2]]);
+    });
+
+    test('Show All with nothing typed in any message puts nothing up', async () => {
+        await render(<ForegroundMessageComp />);
+        await click('Add Message');
+        const showAllButton = container.querySelector(
+            '[title="Show All Messages"]',
+        ) as HTMLButtonElement;
+        expect(showAllButton.disabled).toBe(false);
+        await act(async () => showAllButton.click());
+        await click('Show on Screens');
+        expect(mocks.showMessageSet).not.toHaveBeenCalled();
+    });
+
+    test("each Hide chip is titled with its message's first line", async () => {
+        seedMessages('First\nline\n\nSecond');
+        state.screens = [
+            [
+                1,
+                {
+                    messageDataList: [
+                        {
+                            id: 'message-0-session-a',
+                            textList: ['First', 'line'],
+                        },
+                        { id: 'message-1-session-a', textList: [] },
+                    ],
+                },
+            ],
+        ];
+        await render(<ForegroundMessageComp />);
+        expect(
+            Array.from(container.querySelectorAll('[data-chip-title]')).map(
+                (chip) => {
+                    return chip.getAttribute('data-chip-title');
+                },
+            ),
+        ).toEqual(['First', '']);
     });
 
     test('saved text reseeds editors only after confirmation and switching sessions reads their own text', async () => {

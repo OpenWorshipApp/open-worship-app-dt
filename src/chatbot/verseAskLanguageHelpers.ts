@@ -4,8 +4,8 @@
  * -- `readVerseFindAsk` ("Help me find a Bible verse in "KJV": …") and
  * `readBibleContentAsk` ("which verse says …") -- read English, so in a
  * Khmer window every verse asked for in Khmer went to the ordinary
- * assistant, which has no Bible search: asked _ជួយរកខគម្ពីរមួយផង … ស្រឡាញ់
- * ខ្មាំងសត្រូវ_, all three models named Matthew 5:44 and QUOTED a Khmer text
+ * assistant, which has no Bible search: asked in Khmer to help find a verse
+ * about loving one's enemies, all three models named Matthew 5:44 and QUOTED a Khmer text
  * of their own making (the installed Bible says otherwise), with no button to
  * open it; one invented the book's Khmer name; one sent an elderly user to
  * type `/btw`. Typed in English the same asks found the verse 20 of 20.
@@ -29,8 +29,11 @@ import {
 import { checkHasWord, checkIsAppWork } from './bibleReaderChatHelpers';
 import {
     checkIsInLanguageScript,
+    COLON_MARKS,
     listAssistantLanguages,
+    SENTENCE_END_MARKS,
     toAsciiDigits,
+    toCharClassSource,
     type AssistantLanguageType,
 } from './chatLangHelpers';
 
@@ -39,14 +42,24 @@ const ZERO_WIDTH_PATTERN = /\p{Cf}/gu;
 
 // A reference with a chapter and a verse, in any digits: the verse readers
 // take those (`readBibleContentAsk` leaves them alone for the same reason).
-const REFERENCE_PATTERN = /\d+\s*[:៖.]\s*\d+/;
+const REFERENCE_PATTERN = new RegExp(
+    `\\d+\\s*[:.${toCharClassSource(COLON_MARKS)}]\\s*\\d+`,
+);
+// What comes before and after the words of a frame: its colon and a comma,
+// and its question or full stop, in any script here.
+const WORDS_LEAD_PATTERN = new RegExp(
+    `^[\\s:,،${toCharClassSource(COLON_MARKS)}]+`,
+);
+const WORDS_END_PATTERN = new RegExp(
+    `[\\s?!${toCharClassSource(SENTENCE_END_MARKS)}]+$`,
+);
 
 function toPlainAsk(text: string) {
     return text.replace(ZERO_WIDTH_PATTERN, '').replace(/\s+/g, ' ').trim();
 }
 
-// A Latin word whole, as `checkHasWord` reads it: French `chant` is not in
-// _chantez à l'Éternel_.
+// A Latin word whole, as `checkHasWord` reads it: French "song" is not in
+// a French verse that says "sing to the Lord".
 function checkHasExcludedWord(text: string, language: AssistantLanguageType) {
     return checkHasWord(text, language.verseAskExcludeWords);
 }
@@ -54,12 +67,12 @@ function checkHasExcludedWord(text: string, language: AssistantLanguageType) {
 /**
  * Whether the words name the app's own work in some language's own words --
  * the screen, a slide, a song (`verseAskExcludeWords`) -- which ends a verse
- * search as `VERSE_FIND_EXIT_PATTERN` does for English: _ដាក់វាលើអេក្រង់_
- * under a found verse is not more words of the verse. A verse asked FOR is
+ * search as `VERSE_FIND_EXIT_PATTERN` does for English: "put it on the
+ * screen", in Khmer, under a found verse is not more words of the verse. A verse asked FOR is
  * read by `checkIsAppWork` instead (2026-10-29): a word the Bible uses too
  * -- a song, a size -- starts a search unless it is a how-do-I, so
- * _ខគម្ពីរណាដែលនិយាយថាច្រៀងចម្រៀងថ្មី_ (which verse says sing a new song)
- * is searched, as its English is.
+ * _which verse says sing a new song_, asked in Khmer, is searched, as its
+ * English is.
  */
 export function checkIsAppWorkAsk(text: string) {
     const plain = toPlainAsk(text);
@@ -82,7 +95,8 @@ const MAX_CLOSING_LENGTH = 40;
  * Whether the line is a thank-you or a goodbye, in English or in any
  * language's own words (`closingWords`). Under a verse search such a line
  * was searched as more words of the verse (2026-10-17, the elder-persona
- * run: _អរគុណច្រើន 🙏_ came back with a Google search for "thank you").
+ * run: a Khmer "thank you very much 🙏" came back with a Google search for
+ * "thank you").
  */
 export function checkIsClosingLine(text: string) {
     const plain = toPlainAsk(text)
@@ -103,8 +117,8 @@ export function checkIsClosingLine(text: string) {
 
 function toWords(match: RegExpExecArray) {
     return (match.groups?.words ?? '')
-        .replace(/^[\s:៖,،]+/, '')
-        .replace(/[\s?!។៕]+$/, '')
+        .replace(WORDS_LEAD_PATTERN, '')
+        .replace(WORDS_END_PATTERN, '')
         .trim();
 }
 
@@ -189,10 +203,13 @@ export function pickBibleInLanguage(
             return typeof bible?.key === 'string';
         },
     );
+    // By the language alone: a question typed in `zh-Hant` reads a Bible
+    // whose locale is `zh-TW` or `zh`.
+    const langBase = langCode.toLowerCase().split('-')[0];
     const isInLanguage = (bible: { locale?: unknown }) => {
         return String(bible.locale ?? '')
             .toLowerCase()
-            .startsWith(langCode.toLowerCase());
+            .startsWith(langBase);
     };
     const current = bibles.find((bible) => {
         return bible.key === currentKey;
@@ -216,8 +233,8 @@ export function pickBibleInLanguage(
 
 /**
  * Knowledge ABOUT the Bible asked in a language other than English --
- * _តើនរណាជាអ្នកសរសេរគម្ពីរទំនុកតម្កើង?_, _Qui a écrit le livre des
- * Psaumes ?_ -- read as `readBibleContentAsk` reads English (2026-10-29,
+ * _who wrote the book of Psalms?_ asked in Khmer or in French -- read as
+ * `readBibleContentAsk` reads English (2026-10-29,
  * `EC-444`): a question word and a Bible word, not a who-was / where-is,
  * nothing the person has open, nothing of the app's work. With no
  * assistant the guide had searched its manual for them and handed back a

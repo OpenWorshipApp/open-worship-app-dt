@@ -2,10 +2,10 @@
 id: W-21
 title: "Add a background video or song from a link"
 section: "Configuration"
-verify: [MD-01, MD-02, MD-03, CM-24, PM-102]
+verify: [MD-01, MD-02, MD-03, MD-07, CM-24, PM-102, ST-90]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-02"
+workflowsVersion: "2026-11-06"
 ---
 # W-21 — Add a background video or song from a link
 
@@ -40,10 +40,28 @@ app: the first time, a **[en:tran:Media Tools Required]** box offers to open
 > closed in the middle of a download can a file named `temp-…` be left in that temporary
 > folder: nothing in the app uses it, and it is safe to delete once no download is running.
 
+> **A computer with no internet** can get the download tools from one that has them.
+> There, open **[en:tran:Extra Binaries]** and press **[en:tran:Export]** (it is there
+> once the tools are installed): they are saved as one file into your Downloads folder,
+> which opens on it, named for the kind of computer they run on — `bin-0.0.4-win.tar.gz`
+> (`win`, `mac`, `linux` …). Copy it across, then on the other computer press
+> **[en:tran:Import]** in the same place and choose it. A file for another kind of
+> computer is refused. The app checks the file against what Open Worship publishes, and
+> when it cannot — the file was changed, or there is no internet to check with — it asks
+> first: the tools are programs the app runs, so press **[en:tran:Import]** only for a
+> file from someone you trust.
+
+> **When newer tools are out**, the app says so by itself: a few seconds after it
+> starts, it compares the installed tools with what Open Worship publishes, and a small
+> amber dot appears on the **gear** at the top right of the window, again after
+> **[en:tran:Others]** in Settings and after **[en:tran:Extra Binaries]**, which reads
+> **[en:tran:Update Available]** with an **[en:tran:Update to]** button. Press it and
+> the dots go away. Tools never installed are never checked.
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`MD-01` · `MD-02` · `MD-03` · `CM-24` · `PM-102`
+`MD-01` · `MD-02` · `MD-03` · `MD-07` · `CM-24` · `PM-102` · `ST-90`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-02).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-06).
 :::

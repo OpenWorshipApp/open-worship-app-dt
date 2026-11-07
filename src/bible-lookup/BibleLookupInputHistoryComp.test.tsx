@@ -330,4 +330,46 @@ describe('Bible lookup input history', () => {
         );
         expect(h.openPanel).not.toHaveBeenCalled();
     });
+
+    it('offers only Remove from the row menu for a passage its bible cannot find', async () => {
+        h.extract.mockResolvedValue({ result: { bibleItem: null } });
+        await render();
+        await act(async () =>
+            rows()[0]
+                .querySelector<HTMLButtonElement>(
+                    '[aria-label="History menu"]',
+                )!
+                .click(),
+        );
+        expect(h.extract).toHaveBeenCalledWith('en', 'John 3:16');
+        const items = h.menu.mock.calls.at(-1)![1];
+        expect(
+            items.map((item: { menuElement: string }) => item.menuElement),
+        ).toEqual(['Remove']);
+        expect(h.openPanel).not.toHaveBeenCalled();
+        await act(async () => items[0].onSelect());
+        expect(h.history).toEqual(['(en) Psalm 23']);
+    });
+
+    it('ignores other keys and a held-down Enter on the label', async () => {
+        await render();
+        const label =
+            rows()[0].querySelector<HTMLButtonElement>('button.text-reset')!;
+        const keydown = async (key: string, repeat = false) => {
+            const event = new KeyboardEvent('keydown', {
+                key,
+                repeat,
+                bubbles: true,
+                cancelable: true,
+            });
+            await act(async () => label.dispatchEvent(event));
+            return event;
+        };
+        expect((await keydown('a')).defaultPrevented).toBe(false);
+        expect((await keydown('Enter', true)).defaultPrevented).toBe(false);
+        expect(h.extract).not.toHaveBeenCalled();
+        expect((await keydown(' ')).defaultPrevented).toBe(true);
+        expect(h.extract).toHaveBeenCalledExactlyOnceWith('en', 'John 3:16');
+        expect(h.openPanel).toHaveBeenCalledExactlyOnceWith(bibleItem);
+    });
 });

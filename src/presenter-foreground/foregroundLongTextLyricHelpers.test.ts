@@ -53,7 +53,7 @@ function genSong(structure: string) {
         '```ol:Verse 1',
         '// sing softly',
         '|[G]Amazing grace how |[C]sweet the sound',
-        '\tព្រះគុណដ៏អស្ចារ្យ',
+        '\t✝✝',
         'That saved a wretch like me',
         '```',
         '',
@@ -110,7 +110,7 @@ describe('a lyric file as a long text', () => {
         // languages no way to be told apart).
         expect(verse1.text).toBe(
             'Amazing grace how sweet the sound\n' +
-                'ព្រះគុណដ៏អស្ចារ្យ\n' +
+                '✝✝\n' +
                 'That saved a wretch like me',
         );
         expect(chorus.text).toBe("My chains are gone\nI've been set free");
@@ -142,6 +142,26 @@ describe('a lyric file as a long text', () => {
         expect(await parseLyricLongText('just some words')).toEqual({
             problem: { kind: 'invalid' },
         });
+    });
+
+    test('a song the reader breaks on is reported, called invalid, and its reader still let go', async () => {
+        const { OpenLyric } = await import('open-lyric');
+        const error = new Error('render failed');
+        const mapSpy = vi
+            .spyOn(OpenLyric.prototype, 'getElementMap')
+            .mockRejectedValueOnce(error);
+        const destroySpy = vi.spyOn(OpenLyric.prototype, 'destroy');
+        try {
+            expect(await parseLyricLongText(genSong('V1C'))).toEqual({
+                problem: { kind: 'invalid' },
+            });
+            expect(mocks.handleError).toHaveBeenCalledWith(error);
+            // The throwaway reader is destroyed on the way out all the same.
+            expect(destroySpy).toHaveBeenCalledTimes(1);
+        } finally {
+            mapSpy.mockRestore();
+            destroySpy.mockRestore();
+        }
     });
 
     test('reads a file by its content, and says which way it could not', async () => {

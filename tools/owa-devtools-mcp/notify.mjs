@@ -79,12 +79,19 @@ const ACTING_TOOLS = {
     // have hidden exactly the part worth seeing.
     owa_read_website: 'read a website',
     owa_bible_xml: 'changed the installed Bibles',
+    // A language plugin, installed from the catalog or turned back on, at a
+    // press in the help window. Named below: which language is the whole
+    // news. `list` and `check` only read.
+    owa_language: 'installed a language',
     // Writing the user's own documents. The banner says the ACTION and the
     // NAME, because "changed a song" is the one notice where which song is
     // the whole question -- and a read (`list` / `info`) says nothing at all,
     // the same rule every other reading tool follows.
     owa_lyric_file: 'changed a song',
     owa_slide_file: 'changed a slide document',
+    // A song changed part by part: the same news and the same key, the
+    // song named below. Its `read` stays quiet.
+    owa_lyric_edit: 'changed a song',
     // The verse goes on the congregation's screen, so the banner NAMES it:
     // "put a verse on the screen" says nothing the operator can check
     // against the wall. A `check` reads the passage and touches no screen,
@@ -417,8 +424,16 @@ function describeBibleXmlNotice(args) {
         return null;
     }
     const key = BIBLE_XML_KEY_MAP[action];
-    const named = toQuotedName(args?.key, 'a Bible');
-    const detail = [toQuotedName(args?.key, null)];
+    // With no key there is no name to say, and the plain news is the whole
+    // sentence: "the Bible a Bible" is what the fallback name made of it.
+    const named = toQuotedName(args?.key, null);
+    const detail = [named];
+    if (
+        named === null &&
+        (action === 'import' || action === 'update' || action === 'delete')
+    ) {
+        return toNotice(key);
+    }
     switch (action) {
         case 'names': {
             const site = toSiteName(args?.url);
@@ -488,6 +503,26 @@ export function describeToolNotice(name, args) {
             toQuotedName(args?.name, null),
             hasSlide ? `#${args.slide}` : null,
         ]);
+    }
+    if (name === 'owa_lyric_edit') {
+        if (args?.action === 'read') {
+            return null;
+        }
+        // `file` is a name, or -- from an outside agent -- a whole path, of
+        // which the banner names the song alone.
+        const songName =
+            typeof args?.file === 'string'
+                ? (args.file
+                      .split(/[\\/]/)
+                      .pop()
+                      ?.replace(/\.owl$/i, '') ?? '')
+                : '';
+        const named = toQuotedName(songName, null);
+        return toNotice(
+            named === null ? 'changed a song' : `changed the song ${named}`,
+            'changed a song',
+            [named],
+        );
     }
     if (Object.hasOwn(AGENT_DATA_PHRASE_MAP, name)) {
         const phraseMap = AGENT_DATA_PHRASE_MAP[name];
@@ -575,6 +610,23 @@ export function describeToolNotice(name, args) {
     }
     if (name === 'owa_bible_xml') {
         return describeBibleXmlNotice(args);
+    }
+    if (name === 'owa_language') {
+        // No action at all is the audit's probe: the generic news.
+        if (args?.action !== undefined && args.action !== 'install') {
+            return null;
+        }
+        const language =
+            typeof args?.language === 'string'
+                ? args.language.trim().slice(0, 40)
+                : '';
+        return language === ''
+            ? toNotice(ACTING_TOOLS.owa_language)
+            : toNotice(
+                  `installed the language ${language}`,
+                  ACTING_TOOLS.owa_language,
+                  [language],
+              );
     }
     if (name === 'owa_read_website' || checkIsDraftFromPage(name, args)) {
         const site = toSiteName(args?.url);

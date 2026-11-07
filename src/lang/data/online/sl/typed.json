@@ -1,0 +1,13 @@
+{
+    "sl": {
+        "name": "Slovenian",
+        "nativeName": "Slovenščina",
+        "script": "Latin",
+        "words": "in v na s z za od do o po iz pri brez je so sem si smo bil bila da ne kako kaj kje zakaj kdaj kdo kateri katera moj moja tvoj njegov njen naš jaz ti on ona mi vi oni lahko morem moram želim tudi že še zelo več ta to tukaj prosim hvala",
+        "letters": "čšž",
+        "family": "south-slavic",
+        "yes": ["da", "ja", "da, prosim"],
+        "no": ["ne", "ne, hvala"],
+        "order": 12
+    }
+}

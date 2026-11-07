@@ -41,6 +41,17 @@ export type LongTextLanguageType = {
 
 export type LongTextSessionType = {
     languages: LongTextLanguageType[];
+    // ATOM MODE: every LINE of a section is a row of its own, numbered on
+    // from the one before -- a verse of four lines is four rows. Kept only
+    // while on, the way a card's `sectionView` is.
+    isAtomMode?: true;
+    // STACK: the languages one under another in the SAME row, under one
+    // header, instead of side by side. The screen's layout only: the rows,
+    // their numbers and their keys are the same either way.
+    isStacked?: true;
+    // HIDE NUMBER: the screen draws the rows without their numbers. The
+    // panel keeps them -- they are how the operator finds a part.
+    isNumberHidden?: true;
 };
 
 /**
@@ -140,7 +151,13 @@ export function parseLongTextSession(
     } catch (_error) {
         return { languages: [] };
     }
-    const rawLanguages = (json as { languages?: unknown } | null)?.languages;
+    const rawSession = json as {
+        languages?: unknown;
+        isAtomMode?: unknown;
+        isStacked?: unknown;
+        isNumberHidden?: unknown;
+    } | null;
+    const rawLanguages = rawSession?.languages;
     if (!Array.isArray(rawLanguages)) {
         return { languages: [] };
     }
@@ -156,7 +173,14 @@ export function parseLongTextSession(
             languages.push(language);
         }
     }
-    return { languages };
+    return {
+        languages,
+        ...(rawSession?.isAtomMode === true ? { isAtomMode: true } : {}),
+        ...(rawSession?.isStacked === true ? { isStacked: true } : {}),
+        ...(rawSession?.isNumberHidden === true
+            ? { isNumberHidden: true }
+            : {}),
+    };
 }
 
 export function serializeLongTextSession(session: LongTextSessionType) {
@@ -218,15 +242,30 @@ export function toRawResolvedLanguage(
 }
 
 /**
- * What a language's words come to for CHECKING: which parts, and whether each
- * has any words. It is all a card needs to keep between two reads of a lyric
- * file -- the words themselves are read again when they go up.
+ * A section's words as the rows Atom mode puts up, one per line. A blank line
+ * is KEPT, as an empty row, at the user's word (_keep empty text_): a line
+ * left blank in one language is a line in the others too. A section with no
+ * words at all has no line, so a part one language only plays (an Intro of
+ * chords) is no mismatch -- its cells are left empty, as they always were.
+ */
+export function toLongTextAtomLines(text: string) {
+    if (text === '') {
+        return [];
+    }
+    return text.split(/\r?\n/);
+}
+
+/**
+ * What a language's words come to for CHECKING: which parts, whether each
+ * has any words, and how many lines it has (what Atom mode lines up). It is
+ * all a card needs to keep between two reads of a lyric file -- the words
+ * themselves are read again when they go up.
  */
 export type LongTextOutlineType = {
     langCode: string;
     source: LongTextSourceType;
     title: string;
-    steps: { partName?: string; isEmpty: boolean }[];
+    steps: { partName?: string; isEmpty: boolean; lineCount: number }[];
     readProblem?: { kind: LongTextReadProblemType; partName?: string };
 };
 
@@ -241,6 +280,7 @@ export function toLongTextOutline(
             return {
                 ...(partName === undefined ? {} : { partName }),
                 isEmpty: text.trim() === '',
+                lineCount: toLongTextAtomLines(text).length,
             };
         }),
         ...(resolved.readProblem === undefined
@@ -271,7 +311,26 @@ export type LongTextProblemType =
     | { kind: 'count'; langCode: string; count: number; expectedCount: number }
     // A typed section with no words in it.
     | { kind: 'empty'; langCode: string; index: number }
-    | { kind: 'no-section' };
+    | { kind: 'no-section' }
+    // Atom mode: two languages break the same row into another number of
+    // lines. `index` is the ROW (a part, or a typed section); its part's name
+    // when a lyric language has one.
+    | {
+          kind: 'lines';
+          index: number;
+          partName?: string;
+          langCode: string;
+          count: number;
+          otherLangCode: string;
+          otherCount: number;
+      };
+
+/**
+ * One row as it goes up on the screen. `row` is the text's row -- a part, or
+ * a typed section -- and `line` the line of it, in Atom mode only. Without
+ * Atom mode a screen row IS a row; with it, a row of four lines is four.
+ */
+export type LongTextScreenRowType = { row: number; line?: number };
 
 export type LongTextVerifyResultType =
     | { problem: LongTextProblemType }
@@ -282,6 +341,9 @@ export type LongTextVerifyResultType =
           // chords only has nothing to sing. Typed languages have exactly one
           // section per row.
           rowIndexes: number[];
+          // The rows as they are numbered on the screen, and as the panel
+          // lists them: one per row, or one per LINE in Atom mode.
+          screenRows: LongTextScreenRowType[];
       };
 
 function findStructureProblem(
@@ -307,6 +369,52 @@ function findStructureProblem(
 }
 
 /**
+ * Atom mode's rows: each row as its lines, which every language must break it
+ * into alike -- or line 3 of one language would sit beside line 3 of another
+ * that is not its translation. A language with no words in a row (a part it
+ * only plays) has no lines there and is not counted.
+ */
+function genAtomScreenRows(
+    outlines: LongTextOutlineType[],
+    rowIndexes: number[],
+):
+    | { problem: LongTextProblemType }
+    | { problem: null; screenRows: LongTextScreenRowType[] } {
+    const screenRows: LongTextScreenRowType[] = [];
+    for (let row = 0; row < rowIndexes.length; row++) {
+        let first: { langCode: string; count: number } | null = null;
+        let partName: string | undefined;
+        for (const { langCode, source, steps } of outlines) {
+            const step = steps[source === 'lyric' ? rowIndexes[row] : row];
+            partName ??= step?.partName;
+            const count = step?.lineCount ?? 0;
+            if (count === 0) {
+                continue;
+            }
+            if (first === null) {
+                first = { langCode, count };
+            } else if (first.count !== count) {
+                return {
+                    problem: {
+                        kind: 'lines',
+                        index: row,
+                        ...(partName === undefined ? {} : { partName }),
+                        langCode: first.langCode,
+                        count: first.count,
+                        otherLangCode: langCode,
+                        otherCount: count,
+                    },
+                };
+            }
+        }
+        for (let line = 0; line < (first?.count ?? 0); line++) {
+            screenRows.push({ row, line });
+        }
+    }
+    return { problem: null, screenRows };
+}
+
+/**
  * Whether the languages of one text can be put up side by side, row for row.
  *
  * Every language has to have the SAME sections in the SAME order, or the rows
@@ -319,11 +427,13 @@ function findStructureProblem(
  *  3. The rows are those steps, less the ones no lyric language has words
  *     for (an instrumental).
  *  4. A typed language has exactly one non-empty section per row.
+ *  5. In Atom mode, every language breaks each row into as many lines.
  *
  * The first thing wrong is the one reported: it is the one to fix first.
  */
 export function verifyLongText(
     outlines: LongTextOutlineType[],
+    isAtomMode = false,
 ): LongTextVerifyResultType {
     if (outlines.length === 0) {
         return { problem: { kind: 'no-language' } };
@@ -392,7 +502,20 @@ export function verifyLongText(
             return { problem: { kind: 'empty', langCode, index: emptyIndex } };
         }
     }
-    return { problem: null, rowIndexes };
+    if (!isAtomMode) {
+        return {
+            problem: null,
+            rowIndexes,
+            screenRows: rowIndexes.map((_, row) => {
+                return { row };
+            }),
+        };
+    }
+    const atomResult = genAtomScreenRows(outlines, rowIndexes);
+    if (atomResult.problem !== null) {
+        return { problem: atomResult.problem };
+    }
+    return { problem: null, rowIndexes, screenRows: atomResult.screenRows };
 }
 
 /** A language's words, one per row of a text that passed `verifyLongText`. */
@@ -408,6 +531,50 @@ export function genLongTextRowTexts(
     return rowIndexes.map((index) => {
         return resolved.sections[index]?.text ?? '';
     });
+}
+
+/**
+ * A language's words, one per SCREEN row: a row's words, or in Atom mode the
+ * one line of them -- empty where this language has no words in that row.
+ */
+export function genLongTextScreenTexts(
+    resolved: LongTextResolvedLanguageType,
+    rowIndexes: number[],
+    screenRows: LongTextScreenRowType[],
+) {
+    const rowTexts = genLongTextRowTexts(resolved, rowIndexes);
+    return screenRows.map(({ row, line }) => {
+        const text = rowTexts[row] ?? '';
+        return line === undefined
+            ? text
+            : (toLongTextAtomLines(text)[line] ?? '');
+    });
+}
+
+/**
+ * Where the mark goes when the same text goes up again in rows of another
+ * kind (Atom mode turned on or off on a showing text): to the first screen
+ * row of the ROW that was marked, so the song is where it had got to.
+ */
+export function mapLongTextSectionKey(
+    key: string | null,
+    oldScreenRows: LongTextScreenRowType[],
+    newScreenRows: LongTextScreenRowType[],
+) {
+    if (key === null) {
+        return null;
+    }
+    const oldIndex = oldScreenRows.findIndex((_, index) => {
+        return toLongTextSectionKey(index) === key;
+    });
+    if (oldIndex === -1) {
+        return null;
+    }
+    const { row } = oldScreenRows[oldIndex];
+    const newIndex = newScreenRows.findIndex((screenRow) => {
+        return screenRow.row === row;
+    });
+    return newIndex === -1 ? null : toLongTextSectionKey(newIndex);
 }
 
 /**
@@ -428,6 +595,17 @@ export function toInlineSectionText(text: string) {
         .join(' / ');
 }
 
+/**
+ * What a part's card reads: its words on one line, or in Atom mode the ONE
+ * line of them the card stands for.
+ */
+export function toLongTextCardText(text: string, line?: number) {
+    if (line === undefined) {
+        return toInlineSectionText(text);
+    }
+    return (toLongTextAtomLines(text)[line] ?? '').trim();
+}
+
 export type LongTextColumnInputType = {
     langCode: string;
     locale: LocaleType;
@@ -442,6 +620,10 @@ export type LongTextColumnInputType = {
 export function genLongTextItemData(
     sourceId: string,
     columns: LongTextColumnInputType[],
+    {
+        isStacked = false,
+        isNumberHidden = false,
+    }: { isStacked?: boolean; isNumberHidden?: boolean } = {},
 ): LongTextItemDataType {
     return {
         type: 'long-text',
@@ -450,6 +632,8 @@ export function genLongTextItemData(
         selectedKJVVerseKey: null,
         longTextData: {
             sourceId,
+            ...(isStacked ? { isStacked: true } : {}),
+            ...(isNumberHidden ? { isNumberHidden: true } : {}),
             renderedList: columns.map(
                 ({ langCode, locale, title, texts, nums, style }) => {
                     const columnStyle = readLongTextColumnStyle(style);

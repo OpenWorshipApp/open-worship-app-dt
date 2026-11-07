@@ -295,6 +295,23 @@ describe('genDocumentStageLayout', () => {
         expect(layout.sideList).toHaveLength(2);
         expect(layout.currentScale).toBeLessThan(1);
     });
+
+    test('a slide with no size yet is left as laid out, never scaled without bound', () => {
+        expect(
+            genDocumentStageLayout(
+                getDocumentStageDefinition(1)!,
+                0,
+                0,
+                1920,
+                1080,
+            ),
+        ).toEqual({
+            current: { x: 0, y: 0, width: 0, height: 0 },
+            sideList: [],
+            currentScale: 1,
+            sideScale: 1,
+        });
+    });
 });
 
 describe('getStageSideOpacity', () => {

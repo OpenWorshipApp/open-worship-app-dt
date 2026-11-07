@@ -20,8 +20,8 @@ describe('bibleKeyFormatHelpers', () => {
     test('spells a passage across chapters with its end chapter', () => {
         expect(toVerseFullKeyFormat('JHN', 1, 2, 4, 3)).toBe('JHN 1:2-3:4');
         expect(toVerseFullKeyFormat('JHN', 1, 4, 4, 3)).toBe('JHN 1:4-3:4');
-        expect(toVerseFullKeyFormat('យ៉ូហាន', '១', '២', '៤', '៣')).toBe(
-            'យ៉ូហាន ១:២-៣:៤',
+        expect(toVerseFullKeyFormat('[xx] John', 'i', 'ii', 'iv', 'iii')).toBe(
+            '[xx] John i:ii-iii:iv',
         );
     });
 });

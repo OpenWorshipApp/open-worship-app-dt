@@ -23,6 +23,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { listLangPacks, readLangPackJson } from './langPacks.mjs';
 import {
     matchQuestions as matchQuestionsIn,
     outlineQuestions as outlineQuestionsIn,
@@ -81,29 +82,22 @@ export function loadQuestionPages() {
     return pages;
 }
 
+// The corpus in the app's other languages lives in each language's own
+// folder, `questions.json`, so a language is added or taken out with it: in
+// the app, the INSTALLED language plugins (`langPacks.mjs`) -- the knowledge
+// bundle is English alone -- and in a checkout, the source packages.
+const OVERLAY_FILE_NAME = 'questions.json';
+
 /**
- * Every translation of the corpus (`questions/i18n/<code>.json`), read per
+ * Every translation of the corpus (each language's `questions.json`), read per
  * call like the pages: only a question in another script asks for them.
  */
 export function loadQuestionOverlays() {
-    const dirPath = path.join(QUESTIONS_DIR, 'i18n');
-    if (!existsSync(dirPath)) {
-        return [];
-    }
     const overlays = [];
-    for (const name of readdirSync(dirPath).sort()) {
-        if (!name.endsWith('.json') || name === 'schema.json') {
-            continue;
-        }
-        try {
-            const overlay = JSON.parse(
-                readFileSync(path.join(dirPath, name), 'utf8'),
-            );
-            if (overlay?.questions !== undefined) {
-                overlays.push(overlay);
-            }
-        } catch (_error) {
-            continue;
+    for (const pack of listLangPacks()) {
+        const overlay = readLangPackJson(pack, OVERLAY_FILE_NAME);
+        if (overlay?.questions !== undefined) {
+            overlays.push(overlay);
         }
     }
     return overlays;

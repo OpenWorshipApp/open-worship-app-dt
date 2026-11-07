@@ -50,6 +50,8 @@ vi.mock('../../helper/bible-helpers/bibleModelHelpers', () => ({
     BIBLE_KJV_KEY: 'KJV',
 }));
 vi.mock('../settingHelpers', () => ({ forceReloadAppWindows: vi.fn() }));
+// Its own test: `BibleXMLLangPackageComp.test.tsx`.
+vi.mock('./BibleXMLLangPackageComp', () => ({ default: () => null }));
 vi.mock('./BibleXMLDataPreviewComp', () => ({ default: () => null }));
 
 import BibleXMLInfoComp from './BibleXMLInfoComp';

@@ -364,6 +364,14 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         divElement.classList.remove(HIDDEN_WIDGET_CLASS);
     }
 
+    removeWindowListeners() {
+        globalThis.removeEventListener('mousemove', this.mouseMoveListener);
+        globalThis.removeEventListener('mouseup', this.mouseUpListener);
+        globalThis.removeEventListener('touchmove', this.touchMoveListener);
+        globalThis.removeEventListener('touchend', this.touchEndListener);
+        globalThis.removeEventListener('touchcancel', this.touchEndListener);
+    }
+
     onMouseUp(event: PointerLikeEvent) {
         if (this.isShouldIgnore(event)) {
             return;
@@ -371,11 +379,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         if (!this.currentNode) {
             return;
         }
-        globalThis.removeEventListener('mousemove', this.mouseMoveListener);
-        globalThis.removeEventListener('mouseup', this.mouseUpListener);
-        globalThis.removeEventListener('touchmove', this.touchMoveListener);
-        globalThis.removeEventListener('touchend', this.touchEndListener);
-        globalThis.removeEventListener('touchcancel', this.touchEndListener);
+        this.removeWindowListeners();
 
         this.setInactive();
         this.scheduleValueNowStamp();
@@ -537,21 +541,28 @@ export default class FlexResizeActorComp extends Component<Props, object> {
                     this.resetSize();
                 },
             },
-            {
-                childBefore: genContextMenuItemIcon('x-square'),
-                menuElement: tran('Close First Widget'),
-                onSelect: () => {
-                    this.close('left');
-                },
-            },
-            {
-                childBefore: genContextMenuItemIcon('x-square'),
-                menuElement: tran('Close Second Widget'),
-                onSelect: () => {
-                    this.close('right');
-                },
-            },
         ];
+        // A group whose panes do not collapse has no strip to bring one
+        // back: closed from this menu, a pane went with no way to open it
+        // but View → Reset Widgets Size (2026-11-04).
+        if (!this.props.isDisableQuickResize) {
+            menuItems.push(
+                {
+                    childBefore: genContextMenuItemIcon('x-square'),
+                    menuElement: tran('Close First Widget'),
+                    onSelect: () => {
+                        this.close('left');
+                    },
+                },
+                {
+                    childBefore: genContextMenuItemIcon('x-square'),
+                    menuElement: tran('Close Second Widget'),
+                    onSelect: () => {
+                        this.close('right');
+                    },
+                },
+            );
+        }
         showAppContextMenu(event, menuItems);
     }
 
@@ -641,6 +652,10 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     }
 
     componentWillUnmount() {
+        // Taken away mid-drag (its layout changed under the pointer), it had
+        // left the window listening: every move after it threw on the gone
+        // node, and so did the release that would have let go (2026-11-04).
+        this.removeWindowListeners();
         if (this.valueNowFrameId !== null) {
             globalThis.cancelAnimationFrame(this.valueNowFrameId);
             this.valueNowFrameId = null;

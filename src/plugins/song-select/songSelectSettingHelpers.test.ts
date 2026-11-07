@@ -1,8 +1,9 @@
-/**
- * @vitest-environment jsdom
- */
+// @vitest-environment jsdom
+
 // `appHooks` -> `appProvider` touches `document` at module scope.
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { act, createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const { homeStore, secureStore } = vi.hoisted(() => ({
     homeStore: new Map<string, string>(),
@@ -40,7 +41,10 @@ import {
     genEmptySongSelectSetting,
     getSongSelectSetting,
     setSongSelectSetting,
+    useSongSelectSetting,
 } from './songSelectSettingHelpers';
+import { appHomeStorage } from '../../server/appHomeStorage';
+import { appSecureStorage } from '../../server/appSecureStorage';
 
 const FULL_SETTING = {
     clientId: 'client-id',
@@ -142,5 +146,74 @@ describe('songSelectSettingHelpers secret splitting', () => {
         secureStore.set('song-select-setting-secret', 'not json either');
 
         expect(getSongSelectSetting()).toEqual(genEmptySongSelectSetting());
+    });
+});
+
+// Every mounted reader of the setting (the Settings card, the search popup)
+// follows a save made anywhere in the window, and stops listening on unmount.
+describe('useSongSelectSetting', () => {
+    function SettingProbeComp() {
+        const setting = useSongSelectSetting();
+        return createElement(
+            'output',
+            null,
+            `${setting.clientId}|${checkIsSongSelectSignedIn(setting)}`,
+        );
+    }
+
+    async function mountProbe() {
+        const host = document.createElement('div');
+        document.body.append(host);
+        const root = createRoot(host);
+        await act(async () => root.render(createElement(SettingProbeComp)));
+        return {
+            host,
+            unmount: async () => {
+                await act(async () => root.unmount());
+                host.remove();
+            },
+        };
+    }
+
+    beforeEach(() => {
+        vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+        homeStore.clear();
+        secureStore.clear();
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    test('a save reaches every mounted reader, and none after it unmounts', async () => {
+        setSongSelectSetting(FULL_SETTING);
+        const first = await mountProbe();
+        const second = await mountProbe();
+        expect(first.host.textContent).toBe('client-id|true');
+        expect(second.host.textContent).toBe('client-id|true');
+
+        await act(async () => {
+            setSongSelectSetting({
+                ...FULL_SETTING,
+                clientId: 'next-id',
+                refreshToken: '',
+            });
+        });
+        expect(first.host.textContent).toBe('next-id|false');
+        expect(second.host.textContent).toBe('next-id|false');
+
+        await first.unmount();
+        await act(async () => {
+            setSongSelectSetting({ ...FULL_SETTING, clientId: 'third-id' });
+        });
+        expect(second.host.textContent).toBe('third-id|true');
+
+        // Nothing listens any more: a save no longer reads the setting back.
+        await second.unmount();
+        vi.mocked(appHomeStorage.getItem).mockClear();
+        vi.mocked(appSecureStorage.getItem).mockClear();
+        setSongSelectSetting(FULL_SETTING);
+        expect(appHomeStorage.getItem).not.toHaveBeenCalled();
+        expect(appSecureStorage.getItem).not.toHaveBeenCalled();
     });
 });

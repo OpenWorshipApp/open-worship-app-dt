@@ -68,7 +68,11 @@ vi.mock('../helper/appHooks', () => ({
     useAppEffect: vi.fn(),
 }));
 
-import { genVideoIDFromSrc, toMediaSyncKey } from './screenHelpers';
+import {
+    genVideoIDFromSrc,
+    getStageAccentColor,
+    toMediaSyncKey,
+} from './screenHelpers';
 
 const SCOPE_ID = 'a1'.repeat(24);
 const RESOURCE_ID = 'b2'.repeat(12);
@@ -105,11 +109,11 @@ describe('toMediaSyncKey / genVideoIDFromSrc', () => {
         }
     });
 
-    test('an encoded Khmer name with a space and # decodes to one key', () => {
-        const name = 'ភ្លេង #1.mp4';
+    test('an encoded non-ASCII name with a space and # decodes to one key', () => {
+        const name = '♪✝ #1.mp4';
         const sources = [
             toPresenterUrl(name),
-            'https://localhost:3000/data/videos/ភ្លេង%20%231.mp4',
+            'https://localhost:3000/data/videos/♪✝%20%231.mp4',
             toMirrorUrl(name),
         ];
         // The `#` must be encoded in every one of them, or it is a fragment.
@@ -148,8 +152,8 @@ describe('toMediaSyncKey / genVideoIDFromSrc', () => {
         const second = toMirrorUrl('15_cv.mp4');
         expect(toMediaSyncKey(first)).not.toBe(toMediaSyncKey(second));
         expect(genVideoIDFromSrc(first)).not.toBe(genVideoIDFromSrc(second));
-        expect(genVideoIDFromSrc(toPresenterUrl('ភ្លេង #1.mp4'))).not.toBe(
-            genVideoIDFromSrc(toPresenterUrl('ភ្លេង #2.mp4')),
+        expect(genVideoIDFromSrc(toPresenterUrl('♪✝ #1.mp4'))).not.toBe(
+            genVideoIDFromSrc(toPresenterUrl('♪✝ #2.mp4')),
         );
     });
 
@@ -160,9 +164,34 @@ describe('toMediaSyncKey / genVideoIDFromSrc', () => {
         expect(toMediaSyncKey('')).toBe('');
     });
 
+    test('an address that does not parse, or a name that does not decode, is its own key', () => {
+        // A broken percent sequence: decoding it throws.
+        const broken = 'https://localhost:3000/data/videos/%E0%A4%A.mp4';
+        expect(toMediaSyncKey(broken)).toBe(broken);
+        expect(genVideoIDFromSrc(broken)).toBe(`video-${md5(broken)}`);
+        const unparsable = 'http://[::1/videos/14_cv.mp4';
+        expect(toMediaSyncKey(unparsable)).toBe(unparsable);
+    });
+
     test('the id is selector safe', () => {
-        expect(genVideoIDFromSrc(toPresenterUrl('ភ្លេង #1.mp4'))).toMatch(
+        expect(genVideoIDFromSrc(toPresenterUrl('♪✝ #1.mp4'))).toMatch(
             /^video-[0-9a-f]{32}$/,
         );
+    });
+});
+
+describe('getStageAccentColor', () => {
+    test('every stage of a picker has an accent of its own, and the list wraps', () => {
+        const firstEight = Array.from({ length: 8 }, (_, stage) => {
+            return getStageAccentColor(stage);
+        });
+        expect(new Set(firstEight).size).toBe(8);
+        expect(firstEight[0]).toBe('#4dabf7');
+        expect(firstEight[1]).toBe('#51cf66');
+        expect(getStageAccentColor(8)).toBe(firstEight[0]);
+        expect(getStageAccentColor(13)).toBe(firstEight[5]);
+        // A negative stage reads as its distance from 0, never as no colour.
+        expect(getStageAccentColor(-1)).toBe(firstEight[1]);
+        expect(getStageAccentColor(-9)).toBe(firstEight[1]);
     });
 });

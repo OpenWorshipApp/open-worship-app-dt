@@ -1,0 +1,12 @@
+{
+    "lv": {
+        "name": "Latvian",
+        "nativeName": "Latviešu",
+        "script": "Latin",
+        "words": "un vai bet ne nav ir bija esmu esi es tu viņš viņa mēs jūs viņi mans mana tavs tava mūsu kā ko kas kur kāpēc kad kurš kura ar no uz par bez pie varu var gribu vēlos man jums arī jau vēl ļoti vairāk šis šī tas tā šeit tur lūdzu paldies",
+        "letters": "āčēģīķļņšūž",
+        "yes": ["jā", "jā, lūdzu"],
+        "no": ["nē", "nē, paldies"],
+        "order": 20
+    }
+}

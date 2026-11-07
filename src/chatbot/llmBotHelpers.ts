@@ -62,6 +62,8 @@ import {
 } from '../../electron/customLlmProtocol';
 
 import { getSetting, setSetting } from '../helper/settingHelpers';
+import bibleModel from '../helper/bible-helpers/kjvBibleConfig.json';
+import { resolveBookKey } from '../helper/bibleVerseFindHelpers';
 import {
     ATTACHMENT_ONLY_QUESTION,
     type BotImageType,
@@ -81,8 +83,10 @@ import {
     getAssistantLanguage,
     listAssistantLanguages,
     pickReplyLanguage,
+    SENTENCE_END_MARKS,
     toAsciiDigits,
 } from './chatLangHelpers';
+import { checkEndsWithInvisibleStacker } from '../helper/scriptClusterHelpers';
 import {
     checkIsSpendLimitError,
     recordSpendRound,
@@ -141,6 +145,17 @@ import {
     RESOURCES_TOOL_NAME,
     genResourceAskActions,
 } from './resourcesChatHelpers';
+import {
+    LYRIC_ASK_KIND,
+    LYRIC_EDIT_TOOL_NAME,
+    LYRIC_MAX_TOOL_ROUNDS,
+    LYRIC_SYSTEM_PROMPT,
+    genLyricUndoAction,
+    readEditedLyric,
+    resolveLyricEditFile,
+    type EditedLyricType,
+    type LyricAskFileType,
+} from './lyricChatHelpers';
 import {
     BIBLE_READER_ASK_KIND,
     BIBLE_READER_MAX_TOOL_ROUNDS,
@@ -1486,7 +1501,7 @@ ${genLanguageRule(langCode)}
   knowledge, the next question in that tab staying general.
 - **Button names are the one exception, and you do not translate them.** The
   app can run in another language, so a control the manual calls **Clear
-  Bible** may read \`លុបព្រះគម្ពីរ\` on their screen. Whatever a help page, a
+  Bible** may read in that language's own words on their screen. Whatever a help page, a
   guide card or a tool hands you as a label is ALREADY in the language they are
   looking at: pass it on exactly as you received it, letter for letter, and
   never "helpfully" put it back into English or print both. For a label you
@@ -2071,6 +2086,16 @@ type ToolWatchType = {
      */
     createdLyric: { name: string; filePath: string } | null;
     /**
+     * The songs this ask may change (`AskExtraType.lyric`), or null: then
+     * `owa_lyric_edit` is not the model's to call at all.
+     */
+    lyricFiles: LyricAskFileType[] | null;
+    /**
+     * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
+     * the answer carries the button that undoes it.
+     */
+    editedLyric: EditedLyricType | null;
+    /**
      * The last `owa_bible_xml` check that found Bibles: a download or a page
      * of files. Off the RESULT, like the song draft above -- the answer then
      * carries the import's own buttons, so the person PRESSES their choices
@@ -2098,10 +2123,16 @@ type ToolWatchType = {
     canSearchGuide: boolean;
     /**
      * The answer has already been handed back once for its shape -- no words
-     * under its frames, or a run of one letter. Once per ask -- see
-     * `findAnswerShapeNudge`.
+     * under its frames, a run of one letter, or written in another language
+     * than the one asked for. Once per ask -- see `findAnswerShapeNudge`.
      */
     isShapeNudged: boolean;
+    /**
+     * The language this answer must be written in, when it has a script of
+     * its own (`toShownAnswerLanguage`), else null: an answer with not one
+     * letter of it is in the wrong language (`findAnswerShapeNudge`).
+     */
+    answerScript: { name: string; pattern: RegExp } | null;
     /**
      * A verse search's Bible (null for any other ask), and whether its answer
      * went back once for quoting a verse nothing returned -- see
@@ -2261,7 +2292,7 @@ const PRESENTER_PAGE_NEEDED_TEXT =
 
 function genGoToPresenterAction() {
     // The window's own `/goto presenter`, which reports the page it reached;
-    // the same button the offline bot and `/screen` offer off the Presenter.
+    // the same button the offline bot and a Presenter command offer off it.
     return {
         label: 'Go to the Presenter',
         toolName: BUILTIN_TOOL_NAME,
@@ -2277,12 +2308,15 @@ export function genToolWatch(): ToolWatchType {
         isActedOn: false,
         draftedLyric: null,
         createdLyric: null,
+        lyricFiles: null,
+        editedLyric: null,
         bibleImportCheck: null,
         pageTitles: {},
         isPageNudged: false,
         toolCallCount: 0,
         canSearchGuide: false,
         isShapeNudged: false,
+        answerScript: null,
         verseFindBible: null,
         isVerseNudged: false,
         quoteSources: null,
@@ -2451,7 +2485,7 @@ export function pickCheckedAnswer(
     const isTooShort = isWhatAsk
         ? trimmed.length < 80
         : trimmed.length < Math.max(80, kept.length * 0.3) &&
-          !/^\s*(?:\d+|[០-៩]+)[.)]\s/mu.test(trimmed);
+          !/^\s*\p{Nd}+[.)]\s/mu.test(trimmed);
     if (
         new RegExp(`^\\W*${COMPLETENESS_KEEP_WORD}\\W*$`, 'i').test(trimmed) ||
         trimmed.length === 0 ||
@@ -2497,14 +2531,16 @@ export function cutRunawayAnswer(text: string) {
     return match === null ? text : text.slice(0, match.index).trimEnd();
 }
 
-// A model's own control tokens printed as words: _ច<audio|> View_ in the
-// middle of a Khmer step (gemma-4-12b on LM Studio, 2026-10-17). A `<` or a
+// A model's own control tokens printed as words: a Khmer letter, then
+// _<audio|> View_, in the middle of a Khmer step (gemma-4-12b on LM Studio,
+// 2026-10-17). A `<` or a
 // `>` with a pipe against it is no word of any language and no markdown.
 const MODEL_TOKEN_PATTERN =
     /<\|?[A-Za-z_][\w-]{0,30}\|>|<\|[A-Za-z_][\w-]{0,30}>|<(?:start_of_turn|end_of_turn|eos|bos)>/g;
 
-// And a LaTeX arrow where a menu path's arrow belongs: _ឧបករណ៍ $\rightarrow$
-// …_ (gemma4:cloud, twice in the Khmer corpus run). Nothing here draws math.
+// And a LaTeX arrow where a menu path's arrow belongs: the Khmer for Tools,
+// then _$\rightarrow$ …_ (gemma4:cloud, twice in the Khmer corpus run).
+// Nothing here draws math.
 const LATEX_ARROW_PATTERN =
     /\$\s*\\(?:rightarrow|Rightarrow|longrightarrow|to)\s*\$|\\(?:rightarrow|Rightarrow)\b/g;
 
@@ -2540,7 +2576,8 @@ export const RUNAWAY_ANSWER_NUDGE =
  *   came back as two chips under no words at all -- not that it had started,
  *   not that nobody could see it.
  * - **Ran away**: _Does the help still work with no internet?_ became
- *   _សេវាកម្ម_ and then _ម_ nineteen hundred times, until the round's 2 000
+ *   the Khmer for "service" and then one Khmer letter nineteen hundred
+ *   times, until the round's 2 000
  *   tokens were spent. Kept up to where it broke, so the broken run is not
  *   what the model reads back.
  */
@@ -2554,26 +2591,89 @@ export function findAnswerShapeNudge(
     if (RUNAWAY_PATTERN.test(text)) {
         return { nudge: RUNAWAY_ANSWER_NUDGE, kept: cutRunawayAnswer(text) };
     }
-    if (parseAnswerFrames(text).text.trim().length === 0) {
+    const words = parseAnswerFrames(text).text;
+    if (words.trim().length === 0) {
         return { nudge: WORDLESS_ANSWER_NUDGE, kept: text };
+    }
+    if (
+        watch.answerScript !== null &&
+        checkIsWrongScriptAnswer(words, watch.answerScript.pattern)
+    ) {
+        return {
+            nudge: genWrongLanguageNudge(watch.answerScript.name),
+            kept: text,
+        };
     }
     return null;
 }
 
+// Enough letters to be an answer and not a name or a key cap.
+const MIN_WRONG_SCRIPT_LETTERS = 30;
+
+/**
+ * Whether an answer that must be in a language with a script of its own
+ * holds not one letter of it, and is long enough to be an answer: written in
+ * another language altogether (2026-11-04, `EC-460`: a Thai question in a
+ * Khmer window, the language line saying _answer in Thai_, came back wholly
+ * in Khmer once of twice). A button named as the screen shows it is a few
+ * letters inside the language's own, never the whole answer.
+ */
+export function checkIsWrongScriptAnswer(words: string, scriptPattern: RegExp) {
+    const scriptGlobal = new RegExp(scriptPattern.source, 'gu');
+    if ((words.match(scriptGlobal) ?? []).length > 0) {
+        return false;
+    }
+    return (words.match(/\p{L}/gu) ?? []).length >= MIN_WRONG_SCRIPT_LETTERS;
+}
+
+/** What the model is told when its reply is in another language. */
+export function genWrongLanguageNudge(languageName: string) {
+    return (
+        `Not yet: they wrote in ${languageName}, and that reply is not in ` +
+        `${languageName}. Write the same answer again in ${languageName} -- ` +
+        'every button named exactly as the tools and the guide give it -- ' +
+        'then the OPTIONS: line as before.'
+    );
+}
+
 // A chapter and verse named in an answer, any script, digits made 0-9
-// first: a book of one or two words (`1 Samuel`, `Song of Solomon`, `១
-// សាំយូអែល`), then `10:11`.
+// first: a book of one or two words (`1 Samuel`, `Song of Solomon`, the same
+// in a Bible's own words and digits), then `10:11`.
 const NAMED_VERSE_PATTERN =
     /((?:[1-3]\s?)?[\p{L}\p{M}]+(?:\s(?:of\s)?[\p{L}\p{M}]+)?)\s*(\d{1,3})\s*:\s*(\d{1,3})/gu;
 const MAX_UNREAD_VERSES = 5;
+
+// The pattern takes the word before a one-word book too -- `in Matthew
+// 5:44`, `Try John 3:16` -- and the tool reads no book of that name, so the
+// verse handed back to be read was never read (2026-11-03). A name that is
+// no book is cut to its last word when that one is; `1 John` and `Song of
+// Solomon` are books and stay whole, `I John` is 1 John (never John), and a
+// name in another script is left as it was written.
+function toNamedVerseRef(match: RegExpMatchArray) {
+    const named = match[0].trim();
+    const words = match[1].split(/\s+/);
+    const nameMapList = [bibleModel.keyBookMap];
+    if (
+        words.length < 2 ||
+        /^I{1,3}$/.test(words[0]) ||
+        resolveBookKey(match[1], nameMapList) !== null
+    ) {
+        return named;
+    }
+    const lastWord = words[words.length - 1];
+    if (resolveBookKey(lastWord, nameMapList) === null) {
+        return named;
+    }
+    return match[0].slice(match[1].length - lastWord.length).trim();
+}
 
 /**
  * The verses a verse-search answer QUOTES that no search or read of this ask
  * returned, handed back once to be read first (2026-10-22, `EC-391`). Seen
  * live through Bible Find's 🤖 with `shepherd` over the Khmer Bible: the
- * answer quoted John 10:11 in one round with no tool call -- _ខ្ញុំជាអ្នក
- * គង្វាលដ៏ល្អ … ពលីជីវិតខ្លួន_ where the Bible says _… ក៏ស៊ូតែប្តូរ
- * ជីវិតជំនួសចៀម_ -- words of its own, shown as scripture, with no button.
+ * answer quoted John 10:11 in one round with no tool call -- "I am the good
+ * shepherd … gives his own life" in Khmer of its own, where the Khmer Bible
+ * words it otherwise -- shown as scripture, with no button.
  * The prompt had forbidden it since the first day; a small model reads a
  * sentence, and this reads the answer. Never on the last round.
  */
@@ -2584,7 +2684,7 @@ export function findUnreadVerseNudge(text: string, watch: ToolWatchType) {
     const said = toAsciiDigits(text);
     const unread: string[] = [];
     for (const match of said.matchAll(NAMED_VERSE_PATTERN)) {
-        const named = match[0].trim();
+        const named = toNamedVerseRef(match);
         const isFound =
             pickNamedVerses(watch.foundVerses, named, watch.verseFindBible)
                 .length > 0;
@@ -2607,7 +2707,8 @@ export function findUnreadVerseNudge(text: string, watch: ToolWatchType) {
 
 // What is compared of a quote and of what was read: the letters and their
 // marks alone -- a model drops the Khmer Bible's zero-width spaces, a
-// verse's "(៤):", a quote mark, and joins two verses into one.
+// verse's "(4):" in the Bible's own digits, a quote mark, and joins two
+// verses into one.
 export function toQuoteKey(text: string) {
     return String(text ?? '')
         .normalize('NFC')
@@ -2887,6 +2988,15 @@ export function applyToolWatch(
         // name, a song that did not parse) is prose, and nothing was written.
         watch.createdLyric = readCreatedFile(text) ?? watch.createdLyric;
     }
+    if (name === LYRIC_EDIT_TOOL_NAME && args?.action !== 'read') {
+        // Off the RESULT: a refusal is prose and changed nothing. A song
+        // changed is the ask DONE -- no walkthrough is offered under it.
+        const edited = readEditedLyric(text);
+        if (edited !== null) {
+            watch.editedLyric = edited;
+            watch.isActedOn = true;
+        }
+    }
     if (name === 'owa_help_page' && typeof args?.id === 'string') {
         // Last one wins: a model that opens two pages answers from the one it
         // stopped on.
@@ -2985,6 +3095,29 @@ async function runMcpToolCall(
     if (name === 'owa_bible_xml' && args?.action === 'create-kjv') {
         return `Tool refused: ${BIBLE_KJV_MODEL_REFUSAL}`;
     }
+    // A song is changed only in a conversation about one the person
+    // attached, and named by its NAME: the window puts the attached file's
+    // own path in (`resolveLyricEditFile`). A path the model writes -- words
+    // planted in a song could ask for any file -- is refused.
+    let lyricEditArgs: any = null;
+    if (name === LYRIC_EDIT_TOOL_NAME) {
+        if (watch.lyricFiles === null) {
+            return (
+                `Tool refused: ${LYRIC_EDIT_TOOL_NAME} changes a song the ` +
+                'person attached to this chat. Ask them to open the song in ' +
+                'the chat (Open in Chatbot, in its menu in the Documents ' +
+                'list), or use owa_lyric_file.'
+            );
+        }
+        const resolved = resolveLyricEditFile(args?.file, watch.lyricFiles);
+        if ('reason' in resolved) {
+            return `Tool refused: ${resolved.reason}`;
+        }
+        lyricEditArgs = {
+            ...(args ?? {}),
+            file: 'filePath' in resolved ? resolved.filePath : resolved.name,
+        };
+    }
     if (checkIsModelRemoval(args)) {
         if (watch.removalCount >= MAX_MODEL_REMOVALS_PER_ASK) {
             return `Tool refused: ${MODEL_REMOVAL_REFUSAL}`;
@@ -2994,14 +3127,16 @@ async function runMcpToolCall(
     // The page in the language the answer is written in (`pageLang`). The
     // watch keeps the id as the model gave it: it names the recipe.
     const calledArgs =
-        name === 'owa_help_page' &&
-        watch.pageLang !== null &&
-        typeof args?.id === 'string' &&
-        !args.id.includes('@')
-            ? { ...args, id: `${args.id.trim()}@${watch.pageLang}` }
-            : checkReadsInRecordBible(watch, name, args)
-              ? { ...args, bible: watch.quoteBible }
-              : (args ?? {});
+        lyricEditArgs !== null
+            ? lyricEditArgs
+            : name === 'owa_help_page' &&
+                watch.pageLang !== null &&
+                typeof args?.id === 'string' &&
+                !args.id.includes('@')
+              ? { ...args, id: `${args.id.trim()}@${watch.pageLang}` }
+              : checkReadsInRecordBible(watch, name, args)
+                ? { ...args, bible: watch.quoteBible }
+                : (args ?? {});
     // A Resources file comes back with its pages as PICTURES, which go to
     // the model after this round's tool results (`watch.pictures`) -- or,
     // to a model that cannot see them, are left out with a sentence saying
@@ -3346,6 +3481,16 @@ export type AskExtraType = {
         intent: BibleReaderIntentType;
         canSeePictures: boolean;
     };
+    /**
+     * A question about a SONG attached to the tab (`lyricChatHelpers.ts`):
+     * the ask carries each song as it reads now, and it goes out under
+     * `LYRIC_SYSTEM_PROMPT` with `owa_lyric_edit` -- offered to no other
+     * question -- for a few rounds. `files`: what a `file` the model names is
+     * turned into (`resolveLyricEditFile`), so it never handles a path.
+     */
+    lyric?: {
+        files: LyricAskFileType[];
+    };
 };
 
 // The frame a `/btw` question goes to the model in. In the USER turn, never
@@ -3546,6 +3691,9 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     if (extra?.bibleReader !== undefined) {
         return BIBLE_READER_SYSTEM_PROMPT;
     }
+    if (extra?.lyric !== undefined) {
+        return LYRIC_SYSTEM_PROMPT;
+    }
     return genSystemPrompt(
         focus,
         extra?.windowAim?.isSeparateWindow === true,
@@ -3553,16 +3701,32 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     );
 }
 
-const KEEP_MARKERS_TEXT = 'Keep OPTIONS:, SHOWS: and NEEDS: in English.';
+// The markers a parser reads stay English and what follows them is theirs: a
+// model told only to keep them in English wrote the options in English too,
+// under answers in Chinese, Thai and Russian (2026-11-03, the free tier).
+function genKeepMarkersText(languageName: string) {
+    return (
+        'Keep OPTIONS:, SHOWS: and NEEDS: in English and write what follows ' +
+        `them in ${languageName}.`
+    );
+}
 const SEARCH_IN_ENGLISH_TEXT =
     'The guide is in English: search it with English words.';
+// The screen is in the APP's language, whatever they wrote in: told to answer
+// a Spanish question in French, a model renamed the Font Size slider in
+// French, a name nothing on that English screen carries (2026-11-03).
+const BUTTON_NAMES_TEXT =
+    'Name every button and menu exactly as the tools and the guide give ' +
+    'it: that is how their screen shows it.';
 
 /**
  * The line at the very end of an ask that says which language to answer in.
  * Nothing at all for English asked in an English app, so that request is
  * the one it always was. In the USER turn and never the system prompt: the
  * prompt is a cached prefix, and the language of a question changes from one
- * question to the next.
+ * question to the next. Any language a person may type is named
+ * (an installed language's `typed.json`); a script nobody here knows is "the language they
+ * wrote in".
  */
 export function genReplyLanguageLine(replyLang: string, appLang: string) {
     if (replyLang === appLang && appLang === DEFAULT_CHAT_LANG_CODE) {
@@ -3571,7 +3735,8 @@ export function genReplyLanguageLine(replyLang: string, appLang: string) {
     if (replyLang === OTHER_CHAT_LANG_CODE) {
         return (
             '(Answer in the language they wrote in. ' +
-            `${SEARCH_IN_ENGLISH_TEXT} ${KEEP_MARKERS_TEXT})`
+            `${BUTTON_NAMES_TEXT} ${SEARCH_IN_ENGLISH_TEXT} ` +
+            `${genKeepMarkersText('that language')})`
         );
     }
     const { name } = getAssistantLanguage(replyLang);
@@ -3585,8 +3750,8 @@ export function genReplyLanguageLine(replyLang: string, appLang: string) {
         );
     }
     return (
-        `(They wrote in ${name}: answer in ${name}. ` +
-        `${SEARCH_IN_ENGLISH_TEXT} ${KEEP_MARKERS_TEXT})`
+        `(They wrote in ${name}: answer in ${name}. ${BUTTON_NAMES_TEXT} ` +
+        `${SEARCH_IN_ENGLISH_TEXT} ${genKeepMarkersText(name)})`
     );
 }
 
@@ -3800,7 +3965,9 @@ async function askAnthropicCompatible(
                   ? RESOURCES_MAX_TOOL_ROUNDS
                   : extra?.bibleReader !== undefined
                     ? BIBLE_READER_MAX_TOOL_ROUNDS
-                    : MAX_TOOL_ROUNDS;
+                    : extra?.lyric !== undefined
+                      ? LYRIC_MAX_TOOL_ROUNDS
+                      : MAX_TOOL_ROUNDS;
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
@@ -4167,7 +4334,9 @@ async function askOpenAiCompatible(
                           ? RESOURCES_MAX_TOOL_ROUNDS
                           : extra?.bibleReader !== undefined
                             ? BIBLE_READER_MAX_TOOL_ROUNDS
-                            : MAX_TOOL_ROUNDS,
+                            : extra?.lyric !== undefined
+                              ? LYRIC_MAX_TOOL_ROUNDS
+                              : MAX_TOOL_ROUNDS,
               );
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
@@ -4731,6 +4900,8 @@ const LOCAL_TOOL_NAME_LIST = [
     LOOKUP_TOOL_NAME,
     // ...and about the Resources files.
     RESOURCES_TOOL_NAME,
+    // ...and about a song attached to the tab.
+    LYRIC_EDIT_TOOL_NAME,
 ];
 const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
 
@@ -5261,7 +5432,7 @@ export function genGuideRescueSummary(request: GuideHelpRequestType): string {
     if (request.title) {
         return fillWords(
             tran(
-                'The walkthrough got stuck of "{title}" — "{step}" — and ' +
+                'The walkthrough got stuck on "{title}" — "{step}" — and ' +
                     'asked for help.',
             ),
             values,
@@ -5318,8 +5489,10 @@ export function toGuideRescueAnswer(text: string): string {
         cut.lastIndexOf('. '),
         cut.lastIndexOf('! '),
         cut.lastIndexOf('? '),
-        // Khmer's full stop, which needs no space after it.
-        cut.lastIndexOf('។'),
+        // A script's own full stop, which needs no space after it.
+        ...[...SENTENCE_END_MARKS].map((mark) => {
+            return cut.lastIndexOf(mark);
+        }),
     );
     if (lastStop > RESCUE_MAX / 2) {
         return cut.slice(0, lastStop + 1);
@@ -5333,7 +5506,8 @@ export function toGuideRescueAnswer(text: string): string {
     // syllable.
     while (
         cut.length > 0 &&
-        (/^\p{M}/u.test(flat.slice(cut.length)) || cut.endsWith('\u17D2'))
+        (/^\p{M}/u.test(flat.slice(cut.length)) ||
+            checkEndsWithInvisibleStacker(cut))
     ) {
         cut = cut.slice(0, -1);
     }
@@ -5404,11 +5578,27 @@ function toShownAnswerLanguage(extra: AskExtraType | undefined) {
 }
 
 /**
+ * The script an answer in `langCode` must be written in, when the language
+ * has one of its own (never Latin: French and English share it, and a button
+ * named in English inside an answer is right), for the wrong-language check
+ * of `findAnswerShapeNudge`.
+ */
+export function toAnswerScript(langCode: string | null) {
+    if (langCode === null) {
+        return null;
+    }
+    const language = getAssistantLanguage(langCode);
+    return language.code === langCode && !language.isLatinScript
+        ? { name: language.name, pattern: language.scriptPattern }
+        : null;
+}
+
+/**
  * Whether a verse read or search a model sends in a conversation about a
  * record names no Bible, and so goes to the record's (`quoteBible`): with
  * none named, the reader picks one by the reference's language, and `MAT
  * 18:18-35` -- a code -- was read from the KJV and quoted in English inside
- * a Khmer answer under a ពគប passage (2026-10-23).
+ * a Khmer answer under a passage of a Khmer Bible (2026-10-23).
  */
 export function checkReadsInRecordBible(
     watch: { quoteSources: string[] | null; quoteBible: string | null },
@@ -5461,11 +5651,16 @@ export async function askLlmBot(
     if (shownLang === null || /^\s*REPORT\s*:/im.test(answer.text)) {
         return answer;
     }
+    // The language the screen is in, which names the buttons: a Spanish
+    // answer in an English window keeps them in English.
+    const screenLang = extra?.appLang ?? getAppLangCode();
     const replies = toRepliesShownInLanguage(
         answer.replies ?? [],
         shownLang,
         tranLabel,
         extra?.answerKeep,
+        screenLang,
+        answer.text,
     );
     return {
         ...answer,
@@ -5474,6 +5669,7 @@ export async function askLlmBot(
             shownLang,
             tranLabel,
             extra?.answerKeep,
+            screenLang,
         ),
         replies: replies.length > 0 ? replies : undefined,
     };
@@ -5544,7 +5740,8 @@ async function askLlmBotAsWritten(
         extra?.verseFind !== undefined ||
         extra?.lookup !== undefined ||
         extra?.resources !== undefined ||
-        extra?.bibleReader !== undefined
+        extra?.bibleReader !== undefined ||
+        extra?.lyric !== undefined
             ? null
             : genReaderButtonReferenceAnswer(extra?.askedText ?? asked, focus);
     if (readerButtonAnswer !== null) {
@@ -5586,17 +5783,21 @@ async function askLlmBotAsWritten(
             extra?.verseFind === undefined &&
             extra?.lookup === undefined &&
             extra?.resources === undefined &&
-            extra?.bibleReader === undefined;
+            extra?.bibleReader === undefined &&
+            extra?.lyric === undefined;
         seeded.partControls = extra?.knownPartControls ?? [];
         seeded.isWhatAsk = extra?.isKnownWhatAsk === true;
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
+        seeded.answerScript = toAnswerScript(toShownAnswerLanguage(extra));
         seeded.canSearchGuide =
             extra?.verseFind === undefined &&
             extra?.lookup === undefined &&
             extra?.resources === undefined &&
             extra?.bibleReader === undefined &&
+            extra?.lyric === undefined &&
             extra?.isGeneral !== true &&
             extra?.isTranslation !== true;
+        seeded.lyricFiles = extra?.lyric?.files ?? null;
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
         seeded.verseFindBible = extra?.verseFind?.bible ?? null;
         seeded.lookupPage = extra?.lookup?.page ?? null;
@@ -5616,8 +5817,8 @@ async function askLlmBotAsWritten(
                 null;
             // Read by the window for this question: nothing to send back.
             // G3 under Genesis 8 had its people named from the names
-            // lookup and called Noah's family _មនុស្សដែលមិនបានបញ្ជាក់ឈ្មោះ_
-            // ("people whose names are not stated"); the nudge took that
+            // lookup and called Noah's family, in Khmer, "people whose names
+            // are not stated"; the nudge took that
             // for "the Bible does not say", and the model, handed a note
             // instead of a question, asked what the question was
             // (2026-10-23, one asking in three).
@@ -5654,7 +5855,9 @@ async function askLlmBotAsWritten(
                 ? pickAskToolList(tools, RESOURCES_ASK_KIND)
                 : extra?.bibleReader !== undefined
                   ? pickAskToolList(tools, BIBLE_READER_ASK_KIND)
-                  : filterModelToolList(tools);
+                  : extra?.lyric !== undefined
+                    ? pickAskToolList(tools, LYRIC_ASK_KIND)
+                    : filterModelToolList(tools);
     // Every round's usage goes to the spend guard's ledger BEFORE it goes to
     // whoever asked -- here, once, rather than in each provider loop, so
     // that no caller of this function (the window, the report, a rescue, one
@@ -5892,6 +6095,19 @@ async function askLlmBotAsWritten(
                     name: 'Show it in the list',
                 },
                 { kind: 'file', value: filePath, name },
+            ];
+        } else if (answer.actions === undefined && watch.editedLyric !== null) {
+            // A song the model changed: the press that puts it back, and the
+            // row it is on -- no walkthrough, the ask has been done.
+            const undoAction = genLyricUndoAction(watch.editedLyric);
+            answer.actions = undoAction === null ? [] : [undoAction];
+            answer.shows = [
+                ...(answer.shows ?? []),
+                {
+                    kind: 'control',
+                    value: `Document List > ${watch.editedLyric.name}`,
+                    name: 'Show it in the list',
+                },
             ];
         } else if (
             answer.actions === undefined &&

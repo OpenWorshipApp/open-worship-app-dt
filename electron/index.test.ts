@@ -26,6 +26,9 @@ const initConsoleLog = vi.fn();
 const initAiChatGuestGuard = vi.fn();
 const initScreenMirror = vi.fn(async () => {});
 const getInstance = vi.fn(() => ({ id: 'app-controller' }));
+const takeFactoryResetRequest = vi.fn(() => false);
+const resetAllSettingFiles = vi.fn();
+const resetBrowserSettingStorage = vi.fn(async () => {});
 
 vi.mock('./fsServe', () => ({
     customScheme: 'owa',
@@ -66,6 +69,11 @@ vi.mock('./screenMirrorService', () => ({
 const initVirtualDisplays = vi.fn();
 vi.mock('./virtualDisplayService', () => ({ initVirtualDisplays }));
 vi.mock('./electronMenu', () => ({ initMenu }));
+vi.mock('./factoryResetHelpers', () => ({
+    resetAllSettingFiles,
+    resetBrowserSettingStorage,
+    takeFactoryResetRequest,
+}));
 vi.mock('./devtools', () => ({ initDevtools }));
 vi.mock('./displayMediaHelpers', () => ({ initDisplayMediaHandler }));
 vi.mock('./ElectronAppController', () => ({
@@ -108,6 +116,10 @@ describe('electron index', () => {
         initAppWindowListWatch.mockClear();
         initScreenMirror.mockClear();
         getInstance.mockClear();
+        takeFactoryResetRequest.mockClear();
+        takeFactoryResetRequest.mockReturnValue(false);
+        resetAllSettingFiles.mockClear();
+        resetBrowserSettingStorage.mockClear();
         electronMockState.reset();
         electronMockState.app.whenReady.mockResolvedValue(undefined);
         vi.doMock('./electronHelpers', () => ({
@@ -222,6 +234,48 @@ describe('electron index', () => {
             'userData',
             '/named-data',
         );
+    });
+
+    test('a start without the Factory Reset marker resets nothing', async () => {
+        await import('./index');
+
+        expect(takeFactoryResetRequest).toHaveBeenCalledTimes(1);
+        expect(resetAllSettingFiles).not.toHaveBeenCalled();
+        expect(resetBrowserSettingStorage).not.toHaveBeenCalled();
+    });
+
+    test('Help > Factory Reset is carried out before anything reads a setting', async () => {
+        takeFactoryResetRequest.mockReturnValue(true);
+
+        await import('./index');
+
+        const fileOrder = resetAllSettingFiles.mock.invocationCallOrder[0];
+        const storageOrder =
+            resetBrowserSettingStorage.mock.invocationCallOrder[0];
+        // The files go before the AI switch is read off `setting.json` to
+        // open the debugging door ...
+        expect(fileOrder).toBeLessThan(
+            enableRemoteDebugging.mock.invocationCallOrder[0],
+        );
+        // ... the browser storage after `ready`, before the first window.
+        expect(storageOrder).toBeGreaterThan(
+            electronMockState.app.whenReady.mock.invocationCallOrder[0],
+        );
+        expect(storageOrder).toBeLessThan(
+            getInstance.mock.invocationCallOrder[0],
+        );
+    });
+
+    test('a second launch never resets the app already running', async () => {
+        electronMockState.app.requestSingleInstanceLock.mockReturnValueOnce(
+            false,
+        );
+
+        await import('./index');
+
+        // Not even asked: asking takes the marker away.
+        expect(takeFactoryResetRequest).not.toHaveBeenCalled();
+        expect(resetAllSettingFiles).not.toHaveBeenCalled();
     });
 
     test('a duplicate launch quits without ever starting Chromium', async () => {

@@ -8,9 +8,13 @@ vi.mock('../app-document-list/AppDocument', () => ({
     },
 }));
 
+// The keyboard layer on top: `root` unless a test opens a menu over the list.
+const keyboardLayer = vi.hoisted(() => ({ last: 'root' }));
+
 // Enough of the matcher for the keys used here: the key itself plus whether
 // Ctrl and Shift are held.
 vi.mock('../event/KeyboardEventListener', () => ({
+    default: { getLastLayer: () => keyboardLayer.last },
     PlatformEnum: { Windows: 'windows', MacOS: 'mac', Linux: 'linux' },
     checkIsControlKeys: () => false,
     checkIsKeyboardEventMatch: (matchers: any[], event: any) => {
@@ -234,6 +238,53 @@ describe('slideEditingKeyboardEventHelpers', () => {
         expect(appDocument.historyUndo).toHaveBeenCalledOnce();
         expect(appDocument.historyRedo).toHaveBeenCalledOnce();
         expect(appDocument.save).toHaveBeenCalledOnce();
+    });
+
+    test('a menu holding the keyboard keeps its keys from the slide list and the canvas behind it', async () => {
+        // A right-click menu over a focused slide list: Escape is the MENU's
+        // (registered under its own layer), and Delete must not take the held
+        // slides away behind it.
+        const appDocument = { deleteSlides: vi.fn(), historyUndo: vi.fn() };
+        const context = {
+            holdingSlides: [{ id: 1 }] as any,
+            selectedSlideEditing: null,
+            setHoldingSlides: vi.fn(),
+            varyAppDocument: appDocument as any,
+        };
+        const canvasController = {
+            canvas: { canvasItems: [] },
+            deleteItems: vi.fn(),
+            matchEvent: vi.fn(() => false),
+        };
+        const canvasContext = {
+            stopAllModes: vi.fn(),
+            canvasController: canvasController as any,
+            selectedCanvasItems: [{ props: { id: 1 } }] as any,
+            setSelectedCanvasItems: vi.fn(),
+        };
+        keyboardLayer.last = 'context-menu';
+        try {
+            for (const key of ['Escape', 'Delete']) {
+                const event = genKeyEvent(key);
+                await onSlideItemsKeyboardEvent(context, event);
+                expect(event.preventDefault).not.toHaveBeenCalled();
+                expect(event.stopPropagation).not.toHaveBeenCalled();
+                const canvasEvent = genKeyEvent(key);
+                await onCanvasKeyboardEvent(canvasContext, canvasEvent);
+                expect(canvasEvent.stopPropagation).not.toHaveBeenCalled();
+            }
+            expect(context.setHoldingSlides).not.toHaveBeenCalled();
+            expect(appDocument.deleteSlides).not.toHaveBeenCalled();
+            expect(canvasContext.stopAllModes).not.toHaveBeenCalled();
+            expect(canvasController.deleteItems).not.toHaveBeenCalled();
+        } finally {
+            keyboardLayer.last = 'root';
+        }
+        // The menu gone, the same Escape is the list's again.
+        const event = genKeyEvent('Escape');
+        await onSlideItemsKeyboardEvent(context, event);
+        expect(context.setHoldingSlides).toHaveBeenCalledWith([]);
+        expect(event.stopPropagation).toHaveBeenCalled();
     });
 
     test('canvas Tab cycles by item id and delete removes the selected item', async () => {

@@ -618,7 +618,7 @@ export const lookupGraphSource: GraphSourceType<LookupManagersType> = {
     },
 
     /**
-     * `GEN 30:42` -> `លោកុប្បត្តិ ៣០:៤២`.
+     * `GEN 30:42` -> the reference in the Bible's own book name and digits.
      *
      * The record stores canonical keys; what a reference is CALLED belongs to
      * the bible the reader is showing, which is why the lookup managers passed

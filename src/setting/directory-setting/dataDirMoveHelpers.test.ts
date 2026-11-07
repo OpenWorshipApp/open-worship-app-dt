@@ -93,6 +93,11 @@ const mocks = vi.hoisted(() => {
         copyError: null as Error | null,
         copyDroppedFile: null as string | null,
         renameCalls: [] as [string, string][],
+        // What the disk refuses: a walk, a write, a listing, a delete.
+        walkError: null as Error | null,
+        writeErrors: new Set<string>(),
+        listErrors: new Set<string>(),
+        deleteDirErrors: new Set<string>(),
         relaunchApp: vi.fn(),
         handleError: vi.fn(),
         setSelectedParentDirectory: vi.fn(async (dirPath: string) => {
@@ -174,6 +179,9 @@ vi.mock('./directoryHelpers', () => ({
         dataDirPath: string,
         handler: (filePath: string) => Promise<void>,
     ) => {
+        if (mocks.walkError !== null) {
+            throw mocks.walkError;
+        }
         for (const filePath of mocks.listFilesUnder(dataDirPath)) {
             await handler(filePath);
         }
@@ -237,11 +245,21 @@ vi.mock('../../server/fileHelpers', () => ({
         mocks.files.delete(filePath);
     },
     fsCreateDir: async (dirPath: string) => mocks.makeDir(dirPath),
-    fsDeleteDir: async (dirPath: string) => mocks.removeTree(dirPath),
+    fsDeleteDir: async (dirPath: string) => {
+        if (mocks.deleteDirErrors.has(dirPath)) {
+            throw new Error(`EBUSY: ${dirPath}`);
+        }
+        mocks.removeTree(dirPath);
+    },
     fsGetFileSize: async (filePath: string) => {
         return (mocks.files.get(filePath) as string).length;
     },
-    fsListDirents: async (dirPath: string) => mocks.listDirents(dirPath),
+    fsListDirents: async (dirPath: string) => {
+        if (mocks.listErrors.has(dirPath)) {
+            throw new Error(`EACCES: ${dirPath}`);
+        }
+        return mocks.listDirents(dirPath);
+    },
     fsReadFile: async (filePath: string) => {
         const text = mocks.files.get(filePath);
         if (text === undefined) {
@@ -250,6 +268,9 @@ vi.mock('../../server/fileHelpers', () => ({
         return text;
     },
     fsWriteFile: async (filePath: string, text: string) => {
+        if (mocks.writeErrors.has(filePath)) {
+            throw new Error(`EACCES: ${filePath}`);
+        }
         mocks.writeFile(filePath, text);
         return filePath;
     },
@@ -271,9 +292,11 @@ import {
     hideDataDirMoveForAWhile,
     readDataDirMovedFromFlag,
     readDataDirMovedToFlag,
+    readDataDirMoveHiddenAt,
     requestDataDirMove,
     rewriteMovedDataDirLinks,
     runPendingDataDirMove,
+    showDataDirMoveAgain,
 } from './dataDirMoveHelpers';
 
 const DESKTOP_DIR = '/home/Desktop/open-worship-data';
@@ -320,6 +343,10 @@ beforeEach(() => {
     mocks.copyError = null;
     mocks.copyDroppedFile = null;
     mocks.renameCalls.length = 0;
+    mocks.walkError = null;
+    mocks.writeErrors.clear();
+    mocks.listErrors.clear();
+    mocks.deleteDirErrors.clear();
     mocks.makeDir('/home');
     sessionStorage.clear();
     document.body.innerHTML = '';
@@ -342,6 +369,26 @@ describe('the 30-day hide', () => {
     test('does not believe a stamp set while the clock ran far ahead', () => {
         const now = 1_000_000;
         hideDataDirMoveForAWhile(now + 10 * DATA_DIR_MOVE_HIDE_MS);
+        expect(checkIsDataDirMoveHidden(now)).toBe(false);
+    });
+
+    test('says until when it is put away, and comes back on request', () => {
+        const now = 1_000_000;
+        expect(readDataDirMoveHiddenAt(now)).toBeNull();
+        hideDataDirMoveForAWhile(now);
+        expect(readDataDirMoveHiddenAt(now)).toBe(now + DATA_DIR_MOVE_HIDE_MS);
+        expect(readDataDirMoveHiddenAt(now + DATA_DIR_MOVE_HIDE_MS)).toBeNull();
+        // A stamp from a clock far ahead is not believed here either.
+        expect(
+            readDataDirMoveHiddenAt(now - 10 * DATA_DIR_MOVE_HIDE_MS),
+        ).toBeNull();
+
+        const told = vi.fn();
+        globalThis.addEventListener('data-dir-move-hide-changed', told);
+        showDataDirMoveAgain();
+        globalThis.removeEventListener('data-dir-move-hide-changed', told);
+        expect(told).toHaveBeenCalledOnce();
+        expect(readDataDirMoveHiddenAt(now)).toBeNull();
         expect(checkIsDataDirMoveHidden(now)).toBe(false);
     });
 });
@@ -562,6 +609,69 @@ describe('runPendingDataDirMove', () => {
         expect(mocks.dirs.has(`${TARGET_DIR} (1)`)).toBe(false);
     });
 
+    test('drops a request that cannot be read', async () => {
+        seedDataDir(DESKTOP_DIR);
+        mocks.home.set('selected-parent-dir', DESKTOP_DIR);
+        mocks.home.set('data-dir-move-pending', '{not json');
+        await runPendingDataDirMove();
+        expect(mocks.home.has('data-dir-move-pending')).toBe(false);
+        expect(mocks.renameCalls).toEqual([]);
+        expect(readResult()).toBeNull();
+    });
+
+    test('a staging folder that will not go is reported, and the move goes on', async () => {
+        const stagingDirPath = '/home/.owa/.open-worship-data.moving-1';
+        mocks.writeFile(`${stagingDirPath}/half`, 'x');
+        mocks.deleteDirErrors.add(stagingDirPath);
+        seedDataDir(DESKTOP_DIR);
+        askForMove(DESKTOP_DIR);
+        await runPendingDataDirMove();
+        expect(mocks.handleError).toHaveBeenCalledExactlyOnceWith(
+            new Error(`EBUSY: ${stagingDirPath}`),
+        );
+        expect(readResult()).toMatchObject({
+            isMoved: true,
+            toDirPath: TARGET_DIR,
+        });
+    });
+
+    test('a home folder that cannot be listed has no staging folder to clear', async () => {
+        mocks.makeDir('/home/.owa');
+        mocks.listErrors.add('/home/.owa');
+        seedDataDir(DESKTOP_DIR);
+        askForMove(DESKTOP_DIR);
+        await runPendingDataDirMove();
+        expect(mocks.handleError).not.toHaveBeenCalled();
+        expect(readResult()).toMatchObject({ isMoved: true });
+    });
+
+    test('the move stands when its links or its flags cannot be written', async () => {
+        seedDataDir(ONE_DRIVE_DIR);
+        askForMove(ONE_DRIVE_DIR);
+        mocks.walkError = new Error('walk failed');
+        mocks.writeErrors.add(`${TARGET_DIR}/migration-moved-from.txt`);
+        mocks.writeErrors.add(`${ONE_DRIVE_DIR}/migration-moved-to.txt`);
+        await runPendingDataDirMove();
+        expect(readResult()).toEqual({
+            isMoved: true,
+            fromDirPath: ONE_DRIVE_DIR,
+            toDirPath: TARGET_DIR,
+            isCopied: true,
+        });
+        expect(mocks.setSelectedParentDirectory).toHaveBeenCalledWith(
+            TARGET_DIR,
+        );
+        expect(mocks.handleError.mock.calls).toEqual([
+            [new Error('walk failed')],
+            [new Error(`EACCES: ${TARGET_DIR}/migration-moved-from.txt`)],
+            [new Error(`EACCES: ${ONE_DRIVE_DIR}/migration-moved-to.txt`)],
+        ]);
+        expect(mocks.files.has(`${TARGET_DIR}/migration-moved-from.txt`)).toBe(
+            false,
+        );
+        expect(mocks.files.get(`${TARGET_DIR}/images/a.png`)).toBe('png');
+    });
+
     test('clears a staging folder left by a start that was cut short', async () => {
         mocks.writeFile('/home/.owa/.open-worship-data.moving-1/half', 'x');
         seedDataDir(DESKTOP_DIR);
@@ -608,6 +718,28 @@ describe('the flag files', () => {
         });
         expect(await readDataDirMovedToFlag(TARGET_DIR)).toBeNull();
         expect(await readDataDirMovedFromFlag('/nowhere')).toBeNull();
+    });
+
+    test('a flag without its path line, or with it empty, names nothing', async () => {
+        mocks.writeFile(
+            `${TARGET_DIR}/migration-moved-to.txt`,
+            'Copied.\n\nmoved-at: 2026-10-17T00:00:00.000Z\n',
+        );
+        expect(await readDataDirMovedToFlag(TARGET_DIR)).toBeNull();
+        mocks.writeFile(
+            `${TARGET_DIR}/migration-moved-to.txt`,
+            'Copied.\n\nmoved-to: \n',
+        );
+        expect(await readDataDirMovedToFlag(TARGET_DIR)).toBeNull();
+        // No date is no reason to lose the path.
+        mocks.writeFile(
+            `${TARGET_DIR}/migration-moved-to.txt`,
+            'Copied.\n\nmoved-to: /media/stick/open-worship-data\n',
+        );
+        expect(await readDataDirMovedToFlag(TARGET_DIR)).toEqual({
+            dirPath: '/media/stick/open-worship-data',
+            movedAt: null,
+        });
     });
 });
 
@@ -667,6 +799,46 @@ describe('copying the data folder to where the person chose', () => {
         expect(
             mocks.files.has(`${STICK}/open-worship-data (1)/images/a.png`),
         ).toBe(true);
+    });
+
+    test('a copy stands when its links cannot be rewritten', async () => {
+        seedDataDir(TARGET_DIR);
+        mocks.makeDir(STICK);
+        mocks.walkError = new Error('walk failed');
+
+        const result = await copyDataDirTo(TARGET_DIR, STICK, progress);
+
+        expect(result).toEqual({
+            isCopied: true,
+            toDirPath: `${STICK}/open-worship-data`,
+        });
+        expect(mocks.handleError).toHaveBeenCalledExactlyOnceWith(
+            new Error('walk failed'),
+        );
+        // Left for Repair Links, once the original is gone.
+        expect(
+            mocks.files.get(
+                `${STICK}/open-worship-data/local-storage/select-dir-app-document`,
+            ),
+        ).toBe(`${TARGET_DIR}/documents`);
+    });
+
+    test('a copy that fails on the disk is reported and says why', async () => {
+        seedDataDir(TARGET_DIR);
+        mocks.makeDir(STICK);
+        mocks.copyError = new Error('ENOSPC: no space left');
+
+        const result = await copyDataDirTo(TARGET_DIR, STICK, progress);
+
+        expect(result).toEqual({
+            isCopied: false,
+            toDirPath: `${STICK}/open-worship-data`,
+            errorMessage: 'ENOSPC: no space left',
+        });
+        expect(mocks.handleError).toHaveBeenCalledExactlyOnceWith(
+            mocks.copyError,
+        );
+        expect(mocks.dirs.has(`${STICK}/open-worship-data`)).toBe(false);
     });
 
     test('refuses a place inside the data folder itself', async () => {

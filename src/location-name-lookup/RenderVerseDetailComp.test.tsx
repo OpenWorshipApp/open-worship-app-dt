@@ -190,3 +190,51 @@ describe('RenderVerseDetailComp', () => {
         });
     });
 });
+
+describe('RenderVerseDetailComp for a verse it cannot read', () => {
+    let host: HTMLDivElement;
+    let root: Root;
+    beforeEach(() => {
+        host = document.createElement('div');
+        document.body.appendChild(host);
+        root = createRoot(host);
+    });
+    afterEach(() => {
+        act(() => {
+            root.unmount();
+        });
+        host.remove();
+    });
+
+    test('a failed read and a missing verse both say the record is not found', async () => {
+        const onResolved = vi.fn();
+        h.shortToVerseDataMock.mockRejectedValue(new Error('bible unreadable'));
+        act(() => {
+            root.render(
+                <RenderVerseDetailComp
+                    shortVerse="JHN 3:16"
+                    onResolved={onResolved}
+                />,
+            );
+        });
+        await flush();
+        expect(host.textContent).toBe('Record not found');
+
+        h.shortToVerseDataMock.mockResolvedValue(null);
+        act(() => {
+            root.render(
+                <RenderVerseDetailComp
+                    shortVerse="XXX 9:9"
+                    onResolved={onResolved}
+                />,
+            );
+        });
+        await flush();
+        expect(h.shortToVerseDataMock).toHaveBeenLastCalledWith(
+            'KJV',
+            'XXX 9:9',
+        );
+        expect(host.textContent).toBe('Record not found');
+        expect(onResolved).not.toHaveBeenCalled();
+    });
+});

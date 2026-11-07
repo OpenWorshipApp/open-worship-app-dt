@@ -49,8 +49,8 @@ describe('graph history', () => {
         const { engine, graphKey, getGraph } = createTestEngine();
         const rootKey = getGraph().rootKey;
         const initial = getGraph();
-        engine.setResolvedTitle(graphKey, rootKey, 'ឫស');
-        expect(getGraph()).toEqual({ ...initial, title: 'ឫស' });
+        engine.setResolvedTitle(graphKey, rootKey, '✝ root');
+        expect(getGraph()).toEqual({ ...initial, title: '✝ root' });
         expect(getGraph().nodeList).toBe(initial.nodeList);
         expect(getGraph().edgeList).toBe(initial.edgeList);
         expect(engine.canUndo(graphKey)).toBe(false);
@@ -230,5 +230,148 @@ describe('graph history', () => {
         expect(engine.canUndo(graphKey)).toBe(true);
         engine.restore([]);
         expect(engine.canUndo(graphKey)).toBe(false);
+    });
+});
+
+describe('graph engine operations', () => {
+    function genChild(recordId: string) {
+        return {
+            kind: 'name',
+            recordId,
+            name: recordId.toUpperCase(),
+            relation: 'child',
+        };
+    }
+
+    function genExpandedEngine() {
+        const testEngine = createTestEngine();
+        testEngine.engine.addNeighbours(testEngine.graphKey, {
+            originKey: testEngine.getGraph().rootKey,
+            neighbourList: [genChild('a'), genChild('b')],
+            relationDefList: RELATION_DEF_LIST,
+        });
+        return testEngine;
+    }
+
+    test('opening an open graph raises it instead of adding a second', () => {
+        const { engine, graphKey, getGraph } = createTestEngine();
+        engine.moveNode(graphKey, getGraph().rootKey, 30, 40);
+        let notifications = 0;
+        engine.subscribe(() => {
+            notifications++;
+        });
+        const againKey = engine.open({
+            sourceId: 'test',
+            root: { kind: 'name', recordId: 'root', name: 'Root' },
+        });
+        expect(againKey).toBe(graphKey);
+        expect(engine.getSnapshot()).toHaveLength(1);
+        expect(getGraph().raiseCount).toBe(1);
+        // Re-opening keeps what the user had explored.
+        expect(getGraph().nodeList[0].x).toBe(30);
+        expect(notifications).toBe(1);
+    });
+
+    test('closing a graph that is not open changes and notifies nothing', () => {
+        const { engine } = createTestEngine();
+        const before = engine.getSnapshot();
+        let notifications = 0;
+        engine.subscribe(() => {
+            notifications++;
+        });
+        engine.close('test:name:nobody');
+        expect(engine.getSnapshot()).toBe(before);
+        expect(notifications).toBe(0);
+    });
+
+    test('expanding inside a graph that is not open answers null', () => {
+        const { engine } = createTestEngine();
+        expect(
+            engine.addNeighbours('test:name:nobody', {
+                originKey: 'name:root',
+                neighbourList: [genChild('a')],
+                relationDefList: RELATION_DEF_LIST,
+            }),
+        ).toBeNull();
+    });
+
+    test('collapsing every box is one undoable step', () => {
+        const { engine, graphKey, getGraph } = genExpandedEngine();
+        engine.setAllNodesCollapsed(graphKey, true);
+        expect(
+            getGraph().nodeList.map((node) => {
+                return node.isCollapsed;
+            }),
+        ).toEqual([true, true, true]);
+        expect(engine.undo(graphKey)).toBe(true);
+        expect(
+            getGraph().nodeList.some((node) => {
+                return node.isCollapsed;
+            }),
+        ).toBe(false);
+    });
+
+    test('hiding a relation and soloing another', () => {
+        const { engine, graphKey, getGraph } = genExpandedEngine();
+        engine.toggleRelationHidden(graphKey, 'child');
+        expect(getGraph().hiddenRelationList).toEqual(['child']);
+        engine.toggleRelationHidden(graphKey, 'child');
+        expect(getGraph().hiddenRelationList).toEqual([]);
+        const definitionList = [
+            ...RELATION_DEF_LIST,
+            { ...RELATION_DEF_LIST[0], kind: 'spouse', label: 'Spouses' },
+        ];
+        engine.soloRelation(graphKey, 'child', definitionList);
+        expect(getGraph().hiddenRelationList).toEqual(['spouse']);
+        // Soloing what is already solo shows everything again.
+        engine.soloRelation(graphKey, 'child', definitionList);
+        expect(getGraph().hiddenRelationList).toEqual([]);
+    });
+
+    test('re-rooting without a vocabulary moves the box to the origin only', () => {
+        const { engine, graphKey, getGraph } = genExpandedEngine();
+        const child = getGraph().nodeList[1];
+        const offsetX = getGraph().nodeList[0].x - child.x;
+        engine.reRoot(graphKey, child.key);
+        const graph = getGraph();
+        expect(graph.rootKey).toBe(child.key);
+        expect(graph.title).toBe(child.name);
+        expect(graph.nodeList[1]).toMatchObject({ x: 0, y: 0 });
+        // Not re-fanned: the old root sits exactly where it was, relatively.
+        expect(graph.nodeList[0].x).toBeCloseTo(offsetX);
+        expect(engine.undo(graphKey)).toBe(true);
+        expect(getGraph().rootKey).toBe('name:root');
+    });
+
+    test('re-rooting at a box that is not there is no step at all', () => {
+        const { engine, graphKey } = genExpandedEngine();
+        const before = engine.getSnapshot();
+        engine.reRoot(graphKey, 'name:ghost', RELATION_DEF_LIST);
+        expect(engine.getSnapshot()).toBe(before);
+    });
+
+    test('a path replaces the canvas and clearing it is undoable', () => {
+        const { engine, graphKey, getGraph } = genExpandedEngine();
+        engine.setPath(graphKey, {
+            refList: [
+                { kind: 'name', recordId: 'x', name: 'X' },
+                { kind: 'name', recordId: 'y', name: 'Y' },
+            ],
+            hopList: [{ relation: 'child', isReversed: false }],
+            availableWidth: 1000,
+        });
+        expect(getGraph().pathNodeKeyList).toEqual(['name:x', 'name:y']);
+        expect(getGraph().rootKey).toBe('name:x');
+        engine.clearPath(graphKey);
+        expect(getGraph().pathNodeKeyList).toEqual([]);
+        // Clearing an already-empty path is not another step.
+        let notifications = 0;
+        engine.subscribe(() => {
+            notifications++;
+        });
+        engine.clearPath(graphKey);
+        expect(notifications).toBe(0);
+        expect(engine.undo(graphKey)).toBe(true);
+        expect(getGraph().pathNodeKeyList).toEqual(['name:x', 'name:y']);
     });
 });

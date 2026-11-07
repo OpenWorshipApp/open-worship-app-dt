@@ -14,6 +14,8 @@ const {
     copiedMessageMock,
     setItemMock,
     showSimpleToastMock,
+    sendDataMock,
+    handleErrorMock,
 } = vi.hoisted(() => ({
     scanResourceFilesMock: vi.fn(),
     invalidateMock: vi.fn(),
@@ -24,6 +26,8 @@ const {
     copiedMessageMock: vi.fn(),
     setItemMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
+    sendDataMock: vi.fn(),
+    handleErrorMock: vi.fn(),
 }));
 
 vi.mock('../context-menu/appContextMenuHelpers', async (importOriginal) => {
@@ -115,7 +119,12 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
 vi.mock('../server/appProvider', () => ({
     default: {
         systemUtils: { isDev: false, isMac: true },
-        messageUtils: { sendDataSync: () => null, listenForData: () => {} },
+        messageUtils: {
+            sendData: sendDataMock,
+            sendDataSync: () => null,
+            listenForData: () => {},
+        },
+        appUtils: { handleError: handleErrorMock },
         pathUtils: {
             basename: (filePath: string) =>
                 filePath.slice(filePath.lastIndexOf('/') + 1),
@@ -571,5 +580,167 @@ describe('ResourcesDirBoxComp', () => {
         // Not merely "ignore the result": the walk must stop READING, or a
         // 1500-directory scan runs on after the user has moved away.
         expect(checkShouldStop()).toBe(true);
+    });
+
+    test('Add Folder asks the panel; Reveal opens this folder in the file manager', async () => {
+        const onAddFolder = vi.fn();
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(
+                <ResourcesDirBoxComp
+                    dirPath="/a/songs"
+                    targets={PSA_1}
+                    searchText=""
+                    isOthersShowing={false}
+                    onAddFolder={onAddFolder}
+                    onCopyFolderToDataDir={vi.fn()}
+                    onRemoveFolder={vi.fn()}
+                />,
+            );
+        });
+        const menuItems = openFolderMenu();
+        const labels = menuItems.map((item) => item.menuElement);
+        menuItems[labels.indexOf('Add Folder')].onSelect();
+        expect(onAddFolder).toHaveBeenCalledTimes(1);
+        expect(sendDataMock).not.toHaveBeenCalled();
+        // isMac in this file's app: the Finder wording.
+        menuItems[labels.indexOf('Reveal in Finder')].onSelect();
+        expect(sendDataMock).toHaveBeenCalledWith(
+            'main:app:reveal-path',
+            '/a/songs',
+        );
+    });
+
+    test('a second Add Files while a copy is writing is ignored, and one after it is not', async () => {
+        selectFilesMock.mockResolvedValue(['/downloads/PSA.1.pdf']);
+        let finishCopy!: (result: unknown) => void;
+        copyFilesMock.mockImplementationOnce(() => {
+            return new Promise((resolve) => {
+                finishCopy = resolve;
+            });
+        });
+        await renderBox();
+        await pickAddFiles();
+        expect(copyFilesMock).toHaveBeenCalledTimes(1);
+        // The menu opened again over the same folder mid-copy.
+        await pickAddFiles();
+        expect(selectFilesMock).toHaveBeenCalledTimes(1);
+        expect(copyFilesMock).toHaveBeenCalledTimes(1);
+        await act(async () => {
+            finishCopy({ copiedFilePaths: [], skippedCount: 1, error: null });
+        });
+        copyFilesMock.mockResolvedValue({
+            copiedFilePaths: [],
+            skippedCount: 1,
+            error: null,
+        });
+        await pickAddFiles();
+        expect(selectFilesMock).toHaveBeenCalledTimes(2);
+        expect(copyFilesMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('a copy that failed part way is reported, and what did land is listed', async () => {
+        selectFilesMock.mockResolvedValue([
+            '/downloads/PSA.1.pdf',
+            '/downloads/PSA.1.notes.pdf',
+        ]);
+        const diskError = new Error('ENOSPC: no space left on device');
+        copyFilesMock.mockResolvedValue({
+            copiedFilePaths: ['/a/songs/PSA.1.pdf'],
+            skippedCount: 0,
+            error: diskError,
+        });
+        await renderBox();
+        await pickAddFiles();
+        expect(handleErrorMock).toHaveBeenCalledWith(diskError);
+        expect(invalidateMock).toHaveBeenCalledWith('/a/songs');
+        expect(scanResourceFilesMock).toHaveBeenCalledTimes(2);
+        expect(showSimpleToastMock).toHaveBeenCalledWith('Add Files', 'copied');
+    });
+
+    test('an unexpected failure is reported and said in words, and nothing is re-scanned', async () => {
+        selectFilesMock.mockResolvedValue(['/downloads/PSA.1.pdf']);
+        const error = new Error('EPERM: operation not permitted');
+        copyFilesMock.mockRejectedValue(error);
+        await renderBox();
+        await pickAddFiles();
+        expect(handleErrorMock).toHaveBeenCalledWith(error);
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Add Files',
+            'Cannot copy file: EPERM: operation not permitted',
+        );
+        expect(scanResourceFilesMock).toHaveBeenCalledTimes(1);
+        // The guard is let go: the next Add Files opens the dialog again.
+        selectFilesMock.mockResolvedValue([]);
+        await pickAddFiles();
+        expect(selectFilesMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('Enter on the folder header folds it; a key from inside the header does not', async () => {
+        await renderBox();
+        const header = getFolderHeader() as HTMLElement;
+        act(() => {
+            header.dispatchEvent(
+                new KeyboardEvent('keydown', {
+                    key: 'Enter',
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            );
+        });
+        expect(header.getAttribute('aria-expanded')).toBe('false');
+        // The ⋮ button inside the header has keys of its own.
+        const dotsButton = header.querySelector('button');
+        expect(dotsButton).not.toBeNull();
+        act(() => {
+            dotsButton!.dispatchEvent(
+                new KeyboardEvent('keydown', {
+                    key: 'Enter',
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            );
+        });
+        expect(header.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    test('a walk that was stopped leaves the box loading, not empty', async () => {
+        scanResourceFilesMock.mockResolvedValue(null);
+        await renderBox();
+        expect(container?.textContent).not.toContain('No matching files');
+        expect(
+            container?.querySelector('.app-resources-body')?.children,
+        ).toHaveLength(1);
+        expect(container?.querySelector('[title="/a/songs/PSA.1.pdf"]')).toBe(
+            null,
+        );
+    });
+
+    test('a failure from a walk already given up on says nothing', async () => {
+        let failFirstWalk!: (error: unknown) => void;
+        scanResourceFilesMock
+            .mockImplementationOnce(() => {
+                return new Promise((_resolve, reject) => {
+                    failFirstWalk = reject;
+                });
+            })
+            .mockResolvedValue(
+                genScanResult({ filePaths: ['/a/songs/PSA.1.pdf'] }),
+            );
+        await renderBox();
+        // A new search replaces the walk before it fails.
+        await act(async () => {
+            root?.render(genBox('psalm'));
+        });
+        await act(async () => {
+            failFirstWalk(Object.assign(new Error('gone'), { code: 'ENOENT' }));
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+        expect(container?.textContent).not.toContain('Folder not found');
+        expect(
+            container?.querySelector('[title="/a/songs/PSA.1.pdf"]'),
+        ).not.toBeNull();
     });
 });

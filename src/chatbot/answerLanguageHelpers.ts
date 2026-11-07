@@ -5,15 +5,17 @@
  * day, a model told to write Khmer still wrote English into it, in two ways
  * this module undoes in code, whatever the model:
  *
- * - **A gloss in brackets** after the Khmer words: _រូបកង់ធ្មេញ (Settings)_,
- *   _ទំនុកតម្កាយ ២៣:១ (Psalm 23:1)_, _កណ្ដុរ (mouse)_ -- English the
- *   reader cannot read beside words they already have. Taken out, only in a
+ * - **A gloss in brackets** after the Khmer words: the Khmer for the gear
+ *   then _(Settings)_, a Khmer reference then _(Psalm 23:1)_, the Khmer for
+ *   a mouse then _(mouse)_ -- English the reader cannot read beside words
+ *   they already have. Taken out, only in a
  *   language with a script of its own (in French an English bracket cannot
  *   be told from a French one), and never a key as printed on the keyboard
  *   (_(Ctrl+S)_), a command, an address, or a bracket that holds any of the
  *   language's own letters.
- * - **A button named in English**: _ចុចប៊ូតុង 🖥️ Go Back to Presenter_,
- *   _ប្រអប់ Mini Screen_ -- the words on the button are Khmer in a Khmer
+ * - **A button named in English**: the Khmer for "press the button" then
+ *   _🖥️ Go Back to Presenter_, the Khmer for "box" then _Mini Screen_ -- the
+ *   words on the button are Khmer in a Khmer
  *   window. A run of capitalised English words that the app's own dictionary
  *   holds as a label is written as the label shows. The whole run, or two
  *   words or more of it -- never one word out of a longer name (_Open_ in
@@ -27,8 +29,13 @@
  */
 
 import {
+    COLON_MARKS,
     DEFAULT_CHAT_LANG_CODE,
+    detectTypedLanguage,
     getAssistantLanguage,
+    listTextScriptPatterns,
+    SENTENCE_END_MARKS,
+    toCharClassSource,
 } from './chatLangHelpers';
 import { toBoldLabelsShown } from './chatTranslateHelpers';
 
@@ -94,8 +101,9 @@ function dropEnglishGlosses(text: string, scriptPattern: RegExp) {
         BRACKET_PATTERN,
         (whole: string, inner: string, at: number, all: string) => {
             // Read past the marks that close a bold or a quote: a book named
-            // in bold -- **ហេព្រើរ** (Hebrews) -- kept its English, the
-            // last thing before the bracket being an asterisk (2026-10-23).
+            // in bold -- its Khmer name in bold, then (Hebrews) -- kept its
+            // English, the last thing before the bracket being an asterisk
+            // (2026-10-23).
             const before = all
                 .slice(0, at)
                 .trimEnd()
@@ -133,58 +141,17 @@ export type AnswerKeepType = {
     isLatinKept?: boolean;
 };
 
-// The scripts a Bible is written in that a text may be told by: a closed
-// list, because JavaScript names no script of a letter, only tests one.
-const KEPT_SCRIPT_PATTERN_LIST = [
-    'Greek',
-    'Hebrew',
-    'Cyrillic',
-    'Arabic',
-    'Syriac',
-    'Armenian',
-    'Georgian',
-    'Ethiopic',
-    'Coptic',
-    'Han',
-    'Hiragana',
-    'Katakana',
-    'Hangul',
-    'Thai',
-    'Lao',
-    'Myanmar',
-    'Khmer',
-    'Devanagari',
-    'Bengali',
-    'Tamil',
-    'Telugu',
-    'Kannada',
-    'Malayalam',
-    'Gujarati',
-    'Gurmukhi',
-    'Oriya',
-    'Sinhala',
-    'Tibetan',
-    'Mongolian',
-].map((script) => {
-    return new RegExp(`\\p{Script=${script}}`, 'u');
-});
-
-/** The scripts of `text` other than Latin, each as a letter's test. */
-function listKeptScripts(text: string | undefined) {
-    if (text === undefined || text.length === 0) {
-        return [];
-    }
-    return KEPT_SCRIPT_PATTERN_LIST.filter((pattern) => {
-        return pattern.test(text);
-    });
-}
+// The scripts of `text` other than Latin, each as a letter's test: a closed
+// list (`listTextScriptPatterns`), because JavaScript names no script of a
+// letter, only tests one.
+const listKeptScripts = listTextScriptPatterns;
 
 /**
  * The letters of a THIRD script -- neither the language's own nor Latin --
  * taken out with the signs on them. A model writing Khmer slips into another
  * script mid-word: measured 2026-10-17 on the whole corpus asked in Khmer,
- * _预览_ (Chinese), _పొ_ (Telugu), _কোথায়_ (Bengali) in a chip, _الخاص_
- * (Arabic) -- letters the reader cannot even sound out (`EC-295`). Latin is
+ * Chinese, Telugu and Bengali letters in a chip, an Arabic word -- letters
+ * the reader cannot even sound out (`EC-295`). Latin is
  * left to the label rules and the gloss rule above. A script the answer's
  * subject is written in (`keptScripts`) is no third script: a Greek
  * passage's words are what an answer about it quotes.
@@ -199,8 +166,8 @@ function dropThirdScriptLetters(
     for (const character of text) {
         if (MARK_PATTERN.test(character)) {
             // A third script's own sign goes even on the language's letter:
-            // _ហཱារ៉ាគីអា_, a Tibetan vowel sign on a Khmer consonant, in a
-            // Khmer word lesson's way to say a Hebrew word (2026-10-23).
+            // a Tibetan vowel sign on a Khmer consonant, in a Khmer word
+            // lesson's way to say a Hebrew word (2026-10-23).
             // A sign every script shares (an accent) is not one.
             const isThirdScriptSign =
                 !INHERITED_SCRIPT_PATTERN.test(character) &&
@@ -231,20 +198,25 @@ function dropThirdScriptLetters(
  * A lowercase Latin word INSIDE the language's own words -- glued to them or
  * between two of them -- which no reader of that script can read: a model
  * writing Khmer slips into another language's word mid-sentence. Measured
- * 2026-10-23: _អ្នកបានគូស podkre ពាក្យថា_ (Polish for "underline", where the
- * Khmer for highlighted belongs, in both answers about the person's own
- * highlights), and in the saved runs _អ្នកleថា_, _រក្សាhonneur_,
- * _ការសaurនិង_ -- 2 641 Khmer texts held no other. Taken out with the
+ * 2026-10-23: _podkre_ (Polish for "underline") between Khmer words, where
+ * the Khmer for highlighted belongs, in both answers about the person's own
+ * highlights, and in the saved runs _le_, _honneur_ and _aur_ glued to
+ * Khmer letters -- 2 641 Khmer texts held no other. Taken out with the
  * space before it, when the script's letters come before it and the
- * script's letters, a clause's mark or a bracket after (_ការគូស podkre
- * (Highlights):_ -- the gloss rule takes the bracket next). Never a
+ * script's letters, a clause's mark or a bracket after (Khmer, then
+ * _podkre (Highlights):_ -- the gloss rule takes the bracket next). Never a
  * capitalised word (a name, or a label the rules below translate), a word
  * with a digit or a dot, or one at the edge of the text -- a file name, an
  * address, a code or a key never has the script's letters before it.
  */
 const STRAY_LATIN_WORD_PATTERN =
     /(\S)([ \u200B]*)([a-z][a-z'’]*[a-z])(?=[ \u200B]*(\S)(\S?))/gu;
-const STRAY_WORD_END_PATTERN = /[(:;,?!។៖៕]/u;
+const STRAY_WORD_END_PATTERN = new RegExp(
+    `[(:;,?!${toCharClassSource(SENTENCE_END_MARKS + COLON_MARKS)}]`,
+    'u',
+);
+// A sentence's end in any script here, and a line's.
+const SENTENCE_END_CLASS = `.!?${toCharClassSource(SENTENCE_END_MARKS)}\\n`;
 
 function dropStrayLatinWords(text: string, scriptPattern: RegExp) {
     return text.replace(
@@ -318,8 +290,8 @@ function translateRun(
 // The menu bar is drawn by the OS with English names in every language
 // (`electron/electronMenu.ts`), so a menu path starts with one of these as
 // it stands: _Help → …_. Measured on the whole corpus asked in Khmer
-// (2026-10-17, `EC-316`): _ជំនួយ → ផ្លូវកាត់ក្ដារចុច_ under eight questions,
-// a name the volunteer cannot find on the bar.
+// (2026-10-17, `EC-316`): the Khmer for "Help → Keyboard Shortcuts" under
+// eight questions, a name the volunteer cannot find on the bar.
 const MENU_BAR_NAME_LIST = ['File', 'Edit', 'View', 'Tools', 'Window', 'Help'];
 
 /**
@@ -327,8 +299,9 @@ const MENU_BAR_NAME_LIST = ['File', 'Edit', 'View', 'Tools', 'Window', 'Help'];
  * `electron/electronMenu.ts` as they stand, never through `tran` -- unlike
  * the items a window adds to them (Tools → Start Controlling, View → Widgets,
  * Help → Tips of the Day), which are translated. Pass 6 of the corpus asked
- * in Khmer: _Help → ជជែក AI_ under three answers and _Edit → ស្វែងរក_, words
- * nobody finds in that menu. A test holds the list to that file.
+ * in Khmer: _Help →_ with AI Chat in Khmer under three answers and _Edit →_
+ * with Find in Khmer, words nobody finds in that menu. A test holds the list
+ * to that file.
  */
 export const NATIVE_MENU_ITEM_MAP: Record<string, string[]> = {
     File: ['Print', 'Print Without Preview'],
@@ -339,6 +312,7 @@ export const NATIVE_MENU_ITEM_MAP: Record<string, string[]> = {
     Help: [
         'Copy Debug Info',
         'Copy Full Debug Info',
+        'Factory Reset',
         'App Help (Chatbot)',
         'Report a Problem',
         'AI Chat',
@@ -351,8 +325,8 @@ export const NATIVE_MENU_ITEM_MAP: Record<string, string[]> = {
 /**
  * Items a window adds to those menus that nothing else in the app carries:
  * the menu's name before one of them, in the same sentence, is the menu --
- * _ចុច ជំនួយ រួចជ្រើសរើស គន្លឹះប្រចាំថ្ងៃ_, "click Help, then choose Tips
- * of the Day" (pass 7, EC-326; the **?** button has no tips). Not **Open
+ * "click Help, then choose Tips of the Day", in Khmer (pass 7, EC-326; the
+ * **?** button has no tips). Not **Open
  * Online Help** or **Report a Problem**: that button carries them too.
  */
 const MENU_ONLY_ITEM_MAP: Record<string, string[]> = {
@@ -366,7 +340,9 @@ function checkIsBeforeMenuItem(
     after: string,
     translateLabel: (label: string) => string,
 ) {
-    const sentence = after.split(/[.!?។\n]/)[0].slice(0, 60);
+    const sentence = after
+        .split(new RegExp(`[${SENTENCE_END_CLASS}]`, 'u'))[0]
+        .slice(0, 60);
     return [
         ...(MENU_ONLY_ITEM_MAP[menu] ?? []),
         ...(NATIVE_MENU_ITEM_MAP[menu] ?? []).filter((item) => {
@@ -443,9 +419,10 @@ const CODE_SPAN_PATTERN = /(```[\s\S]*?```|`[^`\n]*`)/;
  * Whether a run is a song part as a song names it, not a word to translate:
  * with its number after it (a slide's own name, _(2)-Verse 1_), or beside
  * another part name in the same sentence (_Verse V, Chorus C, Bridge B_).
- * The dictionary's _Verse_ is a Bible verse, ខគម្ពីរ, and pass 8 of the
- * whole list asked in Khmer had _(2)-ខគម្ពីរ 1_ for a song's slide and a
- * list of part names with Verse alone translated (EC-329).
+ * The dictionary's _Verse_ is a Bible verse, and pass 8 of the whole list
+ * asked in Khmer had _(2)-_ and the Khmer for a Bible verse, then _1_, for a
+ * song's slide and a list of part names with Verse alone translated
+ * (EC-329).
  */
 function checkIsSongPartName(run: string, at: number, all: string) {
     if (!LYRIC_PART_NAME_LIST.includes(run) || run === 'Note') {
@@ -456,11 +433,13 @@ function checkIsSongPartName(run: string, at: number, all: string) {
         return true;
     }
     const start = Math.max(
-        all.lastIndexOf('.', at),
-        all.lastIndexOf('។', at),
-        all.lastIndexOf('\n', at),
+        ...['.', '\n', ...SENTENCE_END_MARKS].map((mark) => {
+            return all.lastIndexOf(mark, at);
+        }),
     );
-    const end = after.search(/[.។\n]/);
+    const end = after.search(
+        new RegExp(`[.\\n${toCharClassSource(SENTENCE_END_MARKS)}]`, 'u'),
+    );
     const sentence =
         all.slice(start + 1, at) + (end === -1 ? after : after.slice(0, end));
     return LYRIC_PART_NAME_LIST.some((name) => {
@@ -472,7 +451,8 @@ function escapeForPattern(text: string) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// The language's word for a menu right before a name: _ម៉ឺនុយ **Help**_.
+// The language's word for a menu right before a name: its word for "menu",
+// then _**Help**_.
 function toMenuWordBeforePattern(menuWords: string[]) {
     if (menuWords.length === 0) {
         return null;
@@ -506,6 +486,12 @@ function translateEnglishLabels(
     text: string,
     translateLabel: (label: string) => string,
     menuWords: string[],
+    // The run of capitalised words, read as a label wherever it stands. Not in
+    // a language only TYPED that is written in Latin letters: its own words
+    // may be capitalised and spelt as an English label -- every German noun,
+    // _Text_, _Position_ -- and nothing here knows them apart. A control
+    // named in bold or in quotes is a control in any language.
+    isRunRead = true,
 ) {
     const menuWordBeforePattern = toMenuWordBeforePattern(menuWords);
     // What is in code is typed as it stands: a file name, `ol:Verse 1`.
@@ -522,10 +508,14 @@ function translateEnglishLabels(
             // left in English inside a Khmer answer (seen live 2026-10-19).
             // Menu names this translates are put back by
             // `restoreEnglishNames` after it.
-            return translateQuotedLabels(
+            const labelled = translateQuotedLabels(
                 toBoldLabelsShown(part, translateLabel),
                 translateLabel,
-            ).replace(
+            );
+            if (!isRunRead) {
+                return labelled;
+            }
+            return labelled.replace(
                 LABEL_RUN_PATTERN,
                 (run: string, at: number, all: string) => {
                     const before = all.slice(0, at);
@@ -550,8 +540,9 @@ function translateEnglishLabels(
 
 /**
  * The English a model translated that the app shows in English: the menu
- * bar's name at the head of a menu path (_ជំនួយ → …_ is _Help → …_) and a
- * song part after `ol:` (_ol:ខគម្ពីរ 1_ is _ol:Verse 1_). Read through the
+ * bar's name at the head of a menu path (the Khmer for Help, then _→ …_, is
+ * _Help → …_) and a song part after `ol:` (`ol:` and the Khmer for a Bible
+ * verse, then 1, is _ol:Verse 1_). Read through the
  * dictionary, so any language's words for them are known.
  */
 function restoreEnglishNames(
@@ -567,7 +558,8 @@ function restoreEnglishNames(
             continue;
         }
         // Before an arrow, or after the word for a menu -- and then a whole
-        // word, not the start of a longer one (_ម៉ឺនុយ ជំនួយការ_ is the
+        // word, not the start of a longer one (the Khmer for "menu" then
+        // "assistant", which starts with the Khmer for "help", is the
         // assistant's menu).
         const pattern = new RegExp(
             `${escapeForPattern(local)}(?=(?:\\*\\*)?[ \\t]*${MENU_ARROW_SOURCE}|(?![\\p{L}\\p{M}]))`,
@@ -600,10 +592,10 @@ function restoreEnglishNames(
             return /[\p{L}\p{M}]/u.test(last) ? ` ${name}` : name;
         });
     }
-    // Then the native items after the names put back: _Help → ជជែក AI_ is
-    // _Help → AI Chat_, and so is the item a few words on in the same
-    // sentence, with no other menu named between (_ម៉ឺនុយ Help រួចជ្រើសរើស
-    // រាយការណ៍បញ្ហា_, "the Help menu, then choose Report a Problem").
+    // Then the native items after the names put back: _Help →_ and AI Chat
+    // in Khmer is _Help → AI Chat_, and so is the item a few words on in the
+    // same sentence, with no other menu named between ("the Help menu, then
+    // choose Report a Problem", in Khmer).
     for (const [menu, items] of Object.entries(NATIVE_MENU_ITEM_MAP)) {
         if (!shown.includes(menu)) {
             continue;
@@ -619,7 +611,7 @@ function restoreEnglishNames(
             }
             shown = shown.replace(
                 new RegExp(
-                    `(\\b${menu}\\b)([^.!?។\\n]{0,40}?)` +
+                    `(\\b${menu}\\b)([^${SENTENCE_END_CLASS}]{0,40}?)` +
                         `${escapeForPattern(local)}(?![\\p{L}\\p{M}])`,
                     'gu',
                 ),
@@ -647,6 +639,54 @@ function restoreEnglishNames(
     return shown;
 }
 
+// A capitalised Latin word alone between two letters of another script, the
+// letter after it read ahead so two such words in a row are both seen.
+const LONE_LATIN_WORD_PATTERN =
+    /([\p{L}\p{M}])[ \u200B]+(\p{Lu}\p{Ll}+)(?=[ \u200B]+([\p{L}\p{M}]))/gu;
+
+/**
+ * Whether a chip holds a word of a THIRD language the reader cannot read:
+ * capitalised, in Latin letters, alone between the reader's own script's
+ * letters, and never said in the answer it is under (2026-11-04, `EC-459`:
+ * Khmer for "how do I make it", then the Malay _Kecil_ ("small"), then Khmer
+ * for "again", under a Khmer answer about text size). `dropStrayLatinWords`
+ * takes only a lowercase word, as a capitalised one may be a name the person
+ * sees; a chip is their own next words, pressed with no reading, so one
+ * there that the answer never named goes whole. Measured on the 7 578
+ * Khmer texts of the saved runs that day: eight words stood so -- the
+ * other seven a key (Enter), names (Noah, Urartu), products (Google,
+ * Ollama, Markdown) and a button (Widgets). A key stays, and so does a name
+ * the answer says.
+ */
+function checkHasUnsaidLatinWord(
+    reply: string,
+    scriptPattern: RegExp,
+    saidText: string,
+    translateLabel: (label: string) => string,
+) {
+    for (const match of reply.matchAll(LONE_LATIN_WORD_PATTERN)) {
+        const [, before, word, after] = match;
+        if (
+            !scriptPattern.test(before) ||
+            !scriptPattern.test(after) ||
+            checkIsKeyWords(word) ||
+            MENU_BAR_NAME_LIST.includes(word) ||
+            translateLabel(word) !== word
+        ) {
+            continue;
+        }
+        // The word itself is letters only: no pattern sign to escape.
+        const saidPattern = new RegExp(
+            `(?<![\\p{L}\\p{M}])${word}(?![\\p{L}\\p{M}])`,
+            'iu',
+        );
+        if (!saidPattern.test(saidText)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /**
  * The reply chips a reader of `langCode` can read. Each is cleaned as the
  * answer is; in a language with a script of its own, a chip with none of its
@@ -655,14 +695,35 @@ function restoreEnglishNames(
  * another verse_, _/btw what does the Bible Reader do?_): a model working
  * in English behind the scenes leaves its own chips when the translator
  * drops the `OPTIONS:` line, and the verse finder is not translated at all.
+ * In a language written in Latin letters too, a chip that reads as English
+ * goes (2026-11-03: _The words are big enough now_ under a translated answer
+ * whose `OPTIONS:` line the translator had dropped).
+ *
+ * `screenLangCode` is the language the app's SCREEN is in, by default the
+ * reader's own: on an English screen a capitalised English name in a chip is
+ * the button it names (_Font Size_ then Chinese for "still too small"), not
+ * English the reader cannot
+ * read.
+ *
+ * `answerText` is what the answer says above the chips. Given, a chip in a
+ * language with a script of its own goes when it holds a capitalised Latin
+ * word alone between that script's letters which the answer never says
+ * (`checkHasUnsaidLatinWord`).
  */
 export function toRepliesShownInLanguage(
     replies: string[],
     langCode: string,
     translateLabel: (label: string) => string,
     keep?: AnswerKeepType,
+    screenLangCode = langCode,
+    answerText?: string,
 ): string[] {
     const language = getAssistantLanguage(langCode);
+    const isScreenEnglish = screenLangCode === DEFAULT_CHAT_LANG_CODE;
+    const saidText =
+        answerText === undefined || keep?.isLatinKept === true
+            ? null
+            : `${answerText}\n${keep?.scriptText ?? ''}`;
     return replies
         .map((reply) => {
             return toAnswerShownInLanguage(
@@ -670,33 +731,52 @@ export function toRepliesShownInLanguage(
                 langCode,
                 translateLabel,
                 keep,
+                screenLangCode,
             );
         })
         .filter((reply) => {
             if (
                 langCode === DEFAULT_CHAT_LANG_CODE ||
-                language.code !== langCode ||
-                language.isLatinScript
+                language.code !== langCode
             ) {
                 return true;
             }
-            // Mostly the reader's own letters: _ទេ thanks_ and _Back to the
-            // អានព្រះគម្ពីរ_ carry a few and are still English to them. And
-            // never a command to type (_/btw សំណួរផ្សេង_): the answer's own
+            if (language.isLatinScript) {
+                return detectTypedLanguage(reply) !== DEFAULT_CHAT_LANG_CODE;
+            }
+            // Mostly the reader's own letters: a Khmer "no" then _thanks_, and
+            // _Back to the_ then a Khmer button's name, carry a few and are
+            // still English to them. And never a command to type (_/btw_ then
+            // Khmer words): the answer's own
             // **Ask it as a general question** is the press for that.
             if (reply.trim().startsWith('/')) {
+                return false;
+            }
+            if (
+                saidText !== null &&
+                checkHasUnsaidLatinWord(
+                    reply,
+                    language.scriptPattern,
+                    saidText,
+                    translateLabel,
+                )
+            ) {
                 return false;
             }
             // A script's letters are counted with their vowel signs and
             // subscripts, so a few Khmer words outnumber an English phrase
             // letter for letter: three of theirs to one Latin letter, a key
-            // cap or a short name in capitals (F5, KJV) not counted.
+            // cap or a short name in capitals (F5, KJV) not counted -- nor,
+            // on an English screen, a button's capitalised name.
             const own = [...reply].filter((character) => {
                 return language.scriptPattern.test(character);
             }).length;
             const latin = (reply.match(/\p{Script=Latin}+/gu) ?? [])
                 .filter((word) => {
-                    return word !== word.toUpperCase();
+                    return (
+                        word !== word.toUpperCase() &&
+                        !(isScreenEnglish && /^\p{Lu}/u.test(word))
+                    );
                 })
                 .join('').length;
             return own > 0 && own >= latin * 3;
@@ -704,15 +784,19 @@ export function toRepliesShownInLanguage(
 }
 
 /**
- * The answer as it is shown to somebody reading `langCode`: unchanged for
- * English, and with no English bracket glosses and no button named in
- * English otherwise.
+ * The answer as it is shown to somebody reading `langCode` on a screen in
+ * `screenLangCode` (by default their own language, the case this module was
+ * written for): unchanged for English, and with no button named in English
+ * otherwise -- and, where the screen is not in English, no English bracket
+ * gloss. On an English screen the gloss is the word the reader has to find
+ * there (Chinese for settings, then _(Settings)_), and stays.
  */
 export function toAnswerShownInLanguage(
     text: string,
     langCode: string,
     translateLabel: (label: string) => string,
     keep?: AnswerKeepType,
+    screenLangCode = langCode,
 ): string {
     if (langCode === DEFAULT_CHAT_LANG_CODE || text.length === 0) {
         return text;
@@ -721,7 +805,16 @@ export function toAnswerShownInLanguage(
     if (language.code !== langCode) {
         return text;
     }
-    const keptScripts = listKeptScripts(keep?.scriptText);
+    const screenLanguage = getAssistantLanguage(screenLangCode);
+    // The screen's own letters are no third script: a Thai answer in a Khmer
+    // window names its buttons as that window draws them.
+    const keptScripts = [
+        ...listKeptScripts(keep?.scriptText),
+        ...(screenLanguage.code !== language.code &&
+        !screenLanguage.isLatinScript
+            ? [screenLanguage.scriptPattern]
+            : []),
+    ];
     // A lesson on an English verse's words keeps its English: the words ARE
     // the lesson, and a gloss in brackets is the word being taught -- nor is
     // one of them a button to write in the window's words.
@@ -730,23 +823,33 @@ export function toAnswerShownInLanguage(
             ? text
             : dropThirdScriptLetters(text, language.scriptPattern, keptScripts);
     }
-    // The glosses first: "តារាងកម្មវិធី (Presenting Flow)" translated first
-    // would read "តារាងកម្មវិធី (តារាងកម្មវិធី)".
-    const shown = language.isLatinScript
-        ? text
-        : dropEnglishGlosses(
-              dropStrayLatinWords(
-                  dropThirdScriptLetters(
-                      text,
-                      language.scriptPattern,
-                      keptScripts,
-                  ),
-                  language.scriptPattern,
-              ),
-              language.scriptPattern,
-          );
+    // The glosses first: the Khmer for Presenting Flow then "(Presenting
+    // Flow)", translated first, would read the Khmer twice.
+    let shown = text;
+    if (!language.isLatinScript) {
+        shown = dropStrayLatinWords(
+            dropThirdScriptLetters(text, language.scriptPattern, keptScripts),
+            language.scriptPattern,
+        );
+        if (screenLanguage.code !== DEFAULT_CHAT_LANG_CODE) {
+            shown = dropEnglishGlosses(shown, language.scriptPattern);
+        }
+    }
+    // A run of capitalised words is read as a label only where the answer's
+    // own words cannot be taken for English ones: a script of its own, or
+    // the screen's own language, whose dictionary gives its word back. A
+    // Latin-script answer in a window shown in another language reads its
+    // own capitalised words as labels as a language only typed would
+    // (2026-11-04: _la Bible_ in a French answer, in a Khmer window, came
+    // out with the Khmer for the Bible tab in the middle of the French).
     return restoreEnglishNames(
-        translateEnglishLabels(shown, translateLabel, language.menuWords),
+        translateEnglishLabels(
+            shown,
+            translateLabel,
+            language.menuWords,
+            !language.isLatinScript ||
+                (language.isPackaged && language.code === screenLanguage.code),
+        ),
         translateLabel,
         language.menuWords,
     );

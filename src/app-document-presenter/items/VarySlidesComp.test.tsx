@@ -292,4 +292,88 @@ describe('slide list', () => {
         expect(container.textContent).toContain('Slide 0');
         expect(h.gridProps.items[0].varySlide.id).toBe('updated');
     });
+
+    function deferSlides() {
+        let resolve!: (slides: any[] | null) => void;
+        const promise = new Promise<any[] | null>((resolver) => {
+            resolve = resolver;
+        });
+        return { promise, resolve };
+    }
+
+    function gridIds() {
+        return h.gridProps.items.map((item: any) => item.varySlide.id);
+    }
+
+    it('a PDF shows its loading state while it is re-read, and a step meanwhile moves nothing', async () => {
+        h.doc.kind = 'pdf';
+        h.selected = true;
+        await renderSlides();
+        expect(gridIds()).toEqual(['one', 'two']);
+        const stepWhileLoaded = h.autoNext!;
+
+        const reread = deferSlides();
+        h.getSlides.mockReturnValueOnce(reread.promise);
+        await act(async () => h.fileUpdate!());
+        expect(container.textContent).toContain('Loading slides');
+        expect(container.textContent).toContain(
+            'PDF progress: C:/documents/service.owa',
+        );
+        expect(stepWhileLoaded({ isNext: true, options: {} })).toBeUndefined();
+        expect(h.selectNext).not.toHaveBeenCalled();
+
+        await act(async () => reread.resolve([{ id: 'three', height: 90 }]));
+        expect(container.textContent).not.toContain('Loading slides');
+        expect(gridIds()).toEqual(['three']);
+    });
+
+    it('a re-read that lands after the document changed reads the new document instead', async () => {
+        await renderSlides();
+        const staleRead = deferSlides();
+        h.getSlides.mockReturnValueOnce(staleRead.promise);
+        await act(async () => h.fileUpdate!());
+
+        const otherGetSlides = vi
+            .fn()
+            .mockResolvedValueOnce([{ id: 'other-1', height: 100 }])
+            .mockResolvedValueOnce([{ id: 'other-2', height: 100 }]);
+        h.doc = {
+            kind: 'app',
+            filePath: 'C:/documents/other.owa',
+            fileSource: { fireUpdateEvent: vi.fn() },
+            getSlides: otherGetSlides,
+            getMissingFontFamilyList: h.getMissingFonts,
+        };
+        await renderSlides();
+        expect(gridIds()).toEqual(['other-1']);
+
+        await act(async () => staleRead.resolve([{ id: 'stale', height: 1 }]));
+        expect(otherGetSlides).toHaveBeenCalledTimes(2);
+        expect(gridIds()).toEqual(['other-2']);
+    });
+
+    it.each([
+        ['pptx', 'Refresh PPTX Slides', 'removePptx'],
+        ['docx', 'Refresh DOCX Pages', 'removeDocx'],
+    ])(
+        'a %s with missing fonts offers the rebuild that picks a new font up',
+        async (kind, label, remover) => {
+            h.doc.kind = kind;
+            await renderSlides();
+            expect(h.bannerProps.refreshLabel).toBe(label);
+            await act(async () => h.bannerProps.onRefresh());
+            expect((h as any)[remover]).toHaveBeenCalledWith(h.doc.filePath);
+            expect(h.doc.fileSource.fireUpdateEvent).toHaveBeenCalledTimes(1);
+        },
+    );
+
+    it.each(['app', 'pdf'])(
+        'a %s document offers no font rebuild',
+        async (kind) => {
+            h.doc.kind = kind;
+            await renderSlides();
+            expect(h.bannerProps.refreshLabel).toBeUndefined();
+            expect(h.bannerProps.onRefresh).toBeUndefined();
+        },
+    );
 });

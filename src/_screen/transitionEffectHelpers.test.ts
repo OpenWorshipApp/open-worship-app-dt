@@ -137,6 +137,135 @@ describe('transition effects', () => {
     });
 });
 
+describe('transition effects on the way out', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+    afterEach(() => {
+        vi.useRealTimers();
+        document.body.innerHTML = '';
+    });
+
+    function trackDone(promise: Promise<unknown>) {
+        const state = { isDone: false };
+        void promise.then(() => {
+            state.isDone = true;
+        });
+        return state;
+    }
+
+    test('a fade out ends transparent, and only once it has run', async () => {
+        const parent = genParent();
+        const element = document.createElement('div');
+        parent.appendChild(element);
+        const anim = styleAnimList.fade('test');
+        const removing = trackDone(anim.animOut(element));
+        expect(element.style.animationName).toContain('-out');
+        expect(element.style.opacity).toBe('1');
+        await vi.advanceTimersByTimeAsync(anim.duration);
+        expect(removing.isDone).toBe(false);
+        await vi.advanceTimersByTimeAsync(ANIM_END_DELAY_MILLISECOND);
+        expect(removing.isDone).toBe(true);
+        expect(element.style.opacity).toBe('0');
+    });
+
+    test('a fade taken down while still coming in does not come back', async () => {
+        const parent = genParent();
+        const element = document.createElement('div');
+        element.style.opacity = '0.4';
+        const anim = styleAnimList.fade('test');
+        const adding = trackDone(anim.animIn(element, parent));
+        const removing = trackDone(anim.animOut(element));
+        await vi.advanceTimersByTimeAsync(
+            anim.duration + ANIM_END_DELAY_MILLISECOND,
+        );
+        // The entrance still settles for whoever awaits it...
+        expect(adding.isDone).toBe(true);
+        expect(removing.isDone).toBe(true);
+        // ...without putting back the opacity it borrowed.
+        expect(element.style.opacity).toBe('0');
+        expect(element.style.animationName).toContain('-out');
+    });
+
+    test('Slide In leaves to the right by its parent width and rests there', async () => {
+        const parent = genParent();
+        Object.defineProperty(parent, 'offsetWidth', { get: () => 300 });
+        const element = document.createElement('div');
+        parent.appendChild(element);
+        const anim = styleAnimList.move();
+        const removing = trackDone(anim.animOut(element));
+        await vi.advanceTimersByTimeAsync(anim.duration / 2);
+        const [midway] = element.style.translate.split('px');
+        expect(Number(midway)).toBeGreaterThan(0);
+        expect(Number(midway)).toBeLessThan(300);
+        expect(removing.isDone).toBe(false);
+        await vi.advanceTimersByTimeAsync(anim.duration);
+        expect(removing.isDone).toBe(true);
+        expect(element.style.translate).toBe('300px 0px');
+    });
+
+    test('Slide In with no parent has nowhere to go and still finishes', async () => {
+        const element = document.createElement('div');
+        const anim = styleAnimList.move();
+        const removing = trackDone(anim.animOut(element));
+        await vi.advanceTimersByTimeAsync(anim.duration + 100);
+        expect(removing.isDone).toBe(true);
+        expect(element.style.translate).toBe('0px 0px');
+    });
+
+    test('a zoom handed its own wrapper zooms that wrapper out', async () => {
+        const parent = genParent();
+        const element = document.createElement('div');
+        const anim = styleAnimList.zoom('test');
+        await (async () => {
+            const adding = anim.animIn(element, parent);
+            await vi.advanceTimersByTimeAsync(
+                anim.duration + ANIM_END_DELAY_MILLISECOND,
+            );
+            await adding;
+        })();
+        const wrapper = element.parentElement!;
+        const removing = trackDone(anim.animOut(wrapper));
+        expect(wrapper.style.animationName).toContain('-out');
+        expect(wrapper.style.transform).toBe('scale(1)');
+        await vi.advanceTimersByTimeAsync(
+            anim.duration + ANIM_END_DELAY_MILLISECOND,
+        );
+        expect(removing.isDone).toBe(true);
+        expect(wrapper.style.transform).toBe('scale(0.1)');
+        expect(wrapper.style.opacity).toBe('0');
+    });
+
+    test('a zoom taken down while still coming in ends zoomed out', async () => {
+        const parent = genParent();
+        const element = document.createElement('div');
+        const anim = styleAnimList.zoom('test');
+        const adding = trackDone(anim.animIn(element, parent));
+        const wrapper = element.parentElement!;
+        const removing = trackDone(anim.animOut(element));
+        await vi.advanceTimersByTimeAsync(
+            anim.duration + ANIM_END_DELAY_MILLISECOND,
+        );
+        expect(adding.isDone).toBe(true);
+        expect(removing.isDone).toBe(true);
+        // Not cleared to "at rest" by the entrance's timer.
+        expect(wrapper.style.transform).toBe('scale(0.1)');
+        expect(wrapper.style.animationName).toContain('-out');
+    });
+
+    test('a zoom out of something that never zoomed in leaves its transform alone', async () => {
+        const parent = genParent();
+        const element = document.createElement('div');
+        element.style.transform = 'scale(0.5)';
+        parent.appendChild(element);
+        const removing = trackDone(styleAnimList.zoom('test').animOut(element));
+        await Promise.resolve();
+        expect(removing.isDone).toBe(true);
+        expect(element.style.transform).toBe('scale(0.5)');
+        expect(element.style.animationName).toBe('');
+    });
+});
+
 describe('transition overrides', () => {
     test('the list of effects is the screen menu list', () => {
         expect([...TRANSITION_EFFECT_LIST]).toEqual(

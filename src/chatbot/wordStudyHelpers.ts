@@ -17,7 +17,7 @@
  *
  * Measured first, in the passage chat as it stood: asked in Khmer to explain
  * the words of Genesis 8:1 in the GB Bible, the answer quoted the verse as
- * `«(1):      ,    ,    ,  ᾿    ត·        ,    .»` -- every Greek letter
+ * guillemets round its verse number, commas and spaces -- every Greek letter
  * taken out by the answer cleaner as a "third script" -- so the words to
  * keep are the PASSAGE's script too (`toPassageAnswerKeep`).
  *
@@ -26,7 +26,12 @@
 import type { LookupAskType } from '../helper/ai/lookupAskHelpers';
 import type { AnswerKeepType } from './answerLanguageHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
-import { toAsciiDigits } from './chatLangHelpers';
+import {
+    COLON_MARKS,
+    toAsciiDigits,
+    toCharClassSource,
+} from './chatLangHelpers';
+import { listLangFiles } from '../lang/langFileStore';
 import type { BotActionType } from './helpBotHelpers';
 import { toLookupStudyAction } from './lookupStepHelpers';
 
@@ -34,11 +39,12 @@ export type StudyVerseType = {
     // `GEN 8:1`: what a read and a button carry.
     key: string;
     number: number;
-    // The verse number as the Bible writes it (`១`).
+    // The verse number as the Bible writes it (in its own digits).
     shownNumber: string;
     // `Genesis 8:1`: what the model and a web search are given.
     ref: string;
-    // `លោកុប្បត្តិ ៨:១` in a Bible not in English, else the English one.
+    // The reference in the Bible's own words and digits in a Bible not in
+    // English, else the English one.
     title: string;
     // '' when the record did not carry this verse.
     text: string;
@@ -58,10 +64,20 @@ const LONG_RUN_CHARS = 20;
 
 const KEY_PATTERN =
     /^([0-9A-Z]{3}) (\d{1,3}):(\d{1,3})(?:-(?:(\d{1,3}):)?(\d{1,3}))?$/;
-// `(1): ` / `(២១): ` in front of each verse of a record's passage.
+// `(1): ` in front of each verse of a record's passage, in any digits.
 const MARKER_PATTERN = /\((\p{Nd}{1,3})\):\s*/gu;
-// A chapter's heading in a passage over chapters: `លោកុប្បត្តិ ៩:១-២`.
-const HEADING_PATTERN = /(\p{Nd}{1,3})\s*[:៖]\s*\p{Nd}/u;
+// A colon as any language here writes one (`colonMarks`).
+const COLON_CLASS = `:${toCharClassSource(COLON_MARKS)}`;
+// A chapter's heading in a passage over chapters: `Genesis 9:1-2`, in any
+// Bible's words, colon and digits.
+const HEADING_PATTERN = new RegExp(
+    `(\\p{Nd}{1,3})\\s*[${COLON_CLASS}]\\s*\\p{Nd}`,
+    'u',
+);
+const TITLE_REFERENCE_PATTERN = new RegExp(
+    `\\s*\\p{Nd}+\\s*[${COLON_CLASS}].*$`,
+    'u',
+);
 const DIGIT_PATTERN = /\p{Nd}/u;
 
 /** A digit of any script's 0-9 as its value, or null. */
@@ -95,7 +111,7 @@ export function readAnyDigits(text: string) {
     return text.length === 0 ? Number.NaN : value;
 }
 
-/** A number in the digits `sample` is written in (`៨` for a Khmer one). */
+/** A number in the digits `sample` is written in (Khmer digits for a Khmer one). */
 export function toDigitsLike(value: number, sample: string) {
     const first = [...sample].find((one) => {
         return DIGIT_PATTERN.test(one);
@@ -134,10 +150,11 @@ export function listStudyVerses(facts: any): StudyVerseType[] {
             typeof passage.ref === 'string'
                 ? passage.ref.replace(/\s+\d+:\d+.*$/, '').trim() || book
                 : book;
-        // The Bible's own book name, off its title (`លោកុប្បត្តិ ៨:១-២២`).
+        // The Bible's own book name, off its title (its words for
+        // `Genesis 8:1-22`).
         const bookTitle =
             typeof passage.title === 'string'
-                ? passage.title.replace(/\s*\p{Nd}+\s*[:៖].*$/u, '').trim()
+                ? passage.title.replace(TITLE_REFERENCE_PATTERN, '').trim()
                 : '';
         const text = typeof passage.text === 'string' ? passage.text : '';
         const isCut = text.trimEnd().endsWith('…');
@@ -257,27 +274,56 @@ export function readStudyVerse(facts: any, key: string) {
     );
 }
 
-// What is not part of a word at either end of it: punctuation (`,` `·`
-// `។`), symbols and the zero-width joiners -- never `᾿`, the Greek mark of
-// a letter left off (`μετ᾿`), which is a modifier symbol.
+// What is not part of a word at either end of it: punctuation (a comma, a
+// Greek raised dot, a script's own full stop), symbols and the zero-width
+// joiners -- never the Greek mark of a letter left off (the psili an elided
+// word ends with), which is a modifier symbol.
 const WORD_EDGE_PATTERN =
     /^[\p{P}\p{Sm}\p{Sc}\p{So}\p{Cf}]+|[\p{P}\p{Sm}\p{Sc}\p{So}\p{Cf}]+$/gu;
 const LETTER_PATTERN = /\p{L}/u;
+// What the languages a Bible is studied in need -- the marks their script
+// joins or chants words with, what "its form here" means in each, and which
+// letters say a word is in which language -- is each language's own DATA, its
+// `bibleSource.json` (`src/lang/data/online/<code>/`), there when that
+// language is INSTALLED (2026-11-04, the user: _everything related to a
+// language have to be loaded from the language data … must not ship in the
+// app, except english_). A language not installed is studied plainly: no
+// marks taken off, no form hint, its words not named.
+type BibleSourceFileType = {
+    grammarHints?: { script: string; hint: string }[];
+    wordJoinerMarks?: string;
+    chantMarks?: string;
+    wordLanguages?: { pattern: string; name: string; order?: number }[];
+};
+const BIBLE_SOURCE_FILE_LIST = listLangFiles<BibleSourceFileType>(
+    'bibleSource.json',
+).map(({ file }) => {
+    return file;
+});
+const WORD_JOINER_MARKS = BIBLE_SOURCE_FILE_LIST.map((file) => {
+    return file.wordJoinerMarks ?? '';
+}).join('');
+const CHANT_MARKS = BIBLE_SOURCE_FILE_LIST.map((file) => {
+    return file.chantMarks ?? '';
+}).join('');
 // Where a verse's words part: spaces, the zero-width spaces a Khmer Bible
-// puts between its words, and the Hebrew maqaf (־), which joins two words
-// into one sound -- `אֶת־הָרָקִיעַ` is the object marker and "the
-// firmament", two words a lexicon lists apart (2026-10-23: one button
+// puts between its words, and the marks a source language joins two words
+// into one sound with (`wordJoinerMarks` in its `bibleSource.json`:
+// the Hebrew maqaf) -- Genesis 1:7's object marker joined to "the
+// firmament" is two words a lexicon lists apart (2026-10-23: one button
 // taught both, its sound run together).
-const WORD_GAP_PATTERN = /[\s\u200B\u05BE]+/;
-// A Greek word ending in an apostrophe is elided -- `ἀλλ’` is ἀλλά -- and
-// the mark is part of it, whichever apostrophe the Bible typed (the GNT
+const WORD_GAP_PATTERN = new RegExp(`[\\s\\u200B${WORD_JOINER_MARKS}]+`, 'u');
+// A Greek word ending in an apostrophe is elided -- "but" with its last
+// vowel left off -- and the mark is part of it, whichever apostrophe the
+// Bible typed (the GNT
 // 1904 types ’, a punctuation mark the edges would take).
 const GREEK_ELISION_PATTERN = /\p{Script=Greek}\p{M}*$/u;
 const ELISION_MARK_PATTERN = /^['’ʼ]/u;
-// The Hebrew accents (te'amim, U+0591-U+05AF) and the meteg say how a word
-// is CHANTED in its verse, not which word it is: `אֲשֶׁר֙` and `אֲשֶׁ֖ר` are
-// one word, and no lexicon writes them.
-const HEBREW_ACCENT_PATTERN = /[\u0591-\u05AF\u05BD\u05C4\u05C5]/g;
+// The Hebrew accents (te'amim) and the meteg say how a word is CHANTED in
+// its verse, not which word it is: "which" with two different accents is
+// one word, and no lexicon writes them (`chantMarks` in its
+// `bibleSource.json`).
+const HEBREW_ACCENT_PATTERN = new RegExp(`[${CHANT_MARKS}]`, 'gu');
 
 /**
  * A word as the verse writes it, with what does not belong to it off both
@@ -294,7 +340,7 @@ function toStudyWord(token: string) {
 /**
  * What makes two of a verse's words the same word to learn: its case,
  * its Hebrew accents, and the grave a Greek word takes inside a sentence
- * (`Θεὸς` is `Θεός`) left out.
+ * ("God" with a grave is "God" with an acute) left out.
  */
 export function toStudyWordKey(word: string) {
     return word
@@ -554,28 +600,29 @@ export function toWordStudyQuestion(
 }
 
 // What "its form here" means in the languages a Bible is studied in, so a
-// small model names the form rather than skipping it (EC-433: τὸν glossed
-// as "to", a verb's tense and case left out). Read off the verse's letters.
-const GRAMMAR_HINT_LIST: [RegExp, string][] = [
-    [
-        /\p{Script=Greek}/u,
-        'For a noun, adjective, article or pronoun: its case, number and ' +
-            'gender. For a verb: its tense, voice, mood, person and number ' +
-            '(a participle: its case, number and gender too).',
-    ],
-    [
-        /\p{Script=Hebrew}/u,
-        // The stems in Hebrew letters, which an answer keeps: given as Qal,
-        // Niphal, Piel, they came back in Latin letters inside the Khmer.
-        // No "state": a noun with no article was called definite.
-        'For a verb: its stem (קַל, נִפְעַל, פִּעֵל, הִפְעִיל …), whether ' +
-            'it is completed or ongoing (with the וַ of a narrative), or a ' +
-            'command, an infinitive or a participle, and its person, gender ' +
-            'and number. For a noun: its gender and number. Every part ' +
-            'joined to it -- וְ "and", הַ "the", בְּ "in", לְ "to", כְּ ' +
-            '"like", מִ "from", an ending -- named apart, with what it means.',
-    ],
-];
+// small model names the form rather than skipping it (EC-433: the Greek
+// article glossed as "to", a verb's tense and case left out). Read off the
+// verse's letters. The hints are DATA (each language's `bibleSource.json`,
+// `grammarHints`): the Hebrew one names the stems in Hebrew
+// letters, which an answer keeps -- given as Qal, Niphal, Piel, they came
+// back in Latin letters inside the Khmer -- and says no "state": a noun with
+// no article was called definite.
+const GRAMMAR_HINT_LIST: [RegExp, string][] = BIBLE_SOURCE_FILE_LIST.flatMap(
+    (file) => {
+        return file.grammarHints ?? [];
+    },
+).flatMap(({ script, hint }) => {
+    try {
+        return [
+            [new RegExp(`\\p{Script=${script}}`, 'u'), hint] as [
+                RegExp,
+                string,
+            ],
+        ];
+    } catch (_error) {
+        return [];
+    }
+});
 
 /**
  * The verse as its Bible writes it, and how to teach it, under the record
@@ -641,8 +688,8 @@ const OTHER_SCRIPT_LETTER_PATTERN = /(?=\p{L})[^\p{Script=Latin}]/u;
 
 /**
  * A verse's word the model copied with a letter of ANOTHER script inside it,
- * put back as the verse writes it: _הָאָֽរֶץ_, a Khmer ro where the verse
- * has a Hebrew resh, in both "All words" answers about Genesis 1:1
+ * put back as the verse writes it: "the earth" with a Khmer ro where the
+ * verse has a Hebrew resh, in both "All words" answers about Genesis 1:1
  * (2026-10-23, at temperature 0, so every time). Only a run that mixes the
  * verse's script with another, and only when ONE of the verse's words
  * matches it letter for letter everywhere else.
@@ -711,26 +758,36 @@ export function toWordStudyEcho(verse: StudyVerseType, word: string | null) {
 
 // The language a word's letters say it is in, for a search to name: only
 // where the letters leave no doubt. A Greek word with breathings or the
-// accents of the old texts is biblical Greek, one without is Greek.
-const WORD_LANGUAGE_LIST: [RegExp, string][] = [
-    [/[\u1F00-\u1FFF]|\u0313|\u0314|\u0342|\u0345/u, 'biblical Greek'],
-    [/\p{Script=Greek}/u, 'Greek'],
-    [/\p{Script=Hebrew}/u, 'biblical Hebrew'],
-    [/\p{Script=Khmer}/u, 'Khmer'],
-    [/\p{Script=Thai}/u, 'Thai'],
-    [/\p{Script=Lao}/u, 'Lao'],
-    [/\p{Script=Hangul}/u, 'Korean'],
-    [/[\p{Script=Hiragana}\p{Script=Katakana}]/u, 'Japanese'],
-    [/\p{Script=Han}/u, 'Chinese'],
-];
+// accents of the old texts is biblical Greek, one without is Greek. DATA,
+// first match wins, in `order` (`wordLanguages` in each language's
+// `bibleSource.json`).
+const WORD_LANGUAGE_LIST: [RegExp, string][] = BIBLE_SOURCE_FILE_LIST.flatMap(
+    (file) => {
+        return file.wordLanguages ?? [];
+    },
+)
+    .sort((one, other) => {
+        return (
+            (one.order ?? Number.MAX_SAFE_INTEGER) -
+            (other.order ?? Number.MAX_SAFE_INTEGER)
+        );
+    })
+    .flatMap(({ pattern, name }) => {
+        try {
+            return [[new RegExp(pattern, 'u'), name] as [RegExp, string]];
+        } catch (_error) {
+            return [];
+        }
+    });
 
 /**
  * A Greek word as a dictionary spells it: the grave accent a word takes
- * only inside a sentence -- _Θεὸς_, _καὶ_ -- is its acute.
+ * only inside a sentence -- "God" and "and" inside a verse -- is its acute.
  */
 function toDictionaryAccent(word: string) {
     // A Hebrew word keeps its vowels and loses the accents that say how
-    // its verse is chanted: a lexicon writes `אֱלֹהִים`, never `אֱלֹהִ֑ים`.
+    // its verse is chanted: a lexicon writes "God" with its vowels, never
+    // with the accent of the verse it was read in.
     if (/\p{Script=Hebrew}/u.test(word)) {
         return word
             .normalize('NFD')
@@ -749,11 +806,12 @@ function toDictionaryAccent(word: string) {
 /**
  * **Search Google for …**: the address the window writes from the word --
  * never one a model wrote. A search for the WORD, not its verse (2026-10-23,
- * the user, with Google's overview of Genesis 1:1 up for _Θεὸς Genesis 1:1
- * meaning_: _I'd like to learn the word not the verse_): the word quoted, in
- * its dictionary accent, with the language its letters are in, which is what
- * brings a lexicon up first (Strong's G2316 for _"Θεός" biblical Greek word
- * meaning_). The zero-width joiners a Khmer word carries are taken out, or
+ * the user, with Google's overview of Genesis 1:1 up for the Greek "God"
+ * then _Genesis 1:1 meaning_: _I'd like to learn the word not the verse_):
+ * the word quoted, in its dictionary accent, with the language its letters
+ * are in, which is what brings a lexicon up first (Strong's G2316 for the
+ * quoted word then _biblical Greek word meaning_). The zero-width joiners a
+ * Khmer word carries are taken out, or
  * the search looks for them too.
  */
 export function toWordSearchUrl(word: string) {

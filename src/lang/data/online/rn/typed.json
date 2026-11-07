@@ -1,0 +1,12 @@
+{
+    "rn": {
+        "name": "Kirundi",
+        "nativeName": "Ikirundi",
+        "script": "Latin",
+        "words": "na canke ariko si nta ni ari jewe wewe we twebwe mwebwe bo gute iki iyihe hehe kubera ryari nde uyu uwo aha hano cane kandi nshobora ndashaka nkeneye murakoze kuri muri",
+        "family": "rwanda-rundi",
+        "yes": ["ego"],
+        "no": ["oya"],
+        "order": 31
+    }
+}

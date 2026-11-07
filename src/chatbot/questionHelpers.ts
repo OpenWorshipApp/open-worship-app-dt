@@ -19,6 +19,7 @@ import type {
     QuestionPageType,
     QuestionRowType,
 } from '../../tools/owa-devtools-mcp/questionMatch.d.mts';
+import { loadLangFile } from '../lang/langFileStore';
 
 import { BOT_FOCUS_LIST } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 // The same reading of a page the server quotes its search hits with: small,
@@ -36,7 +37,13 @@ import {
     readPagePartNote,
 } from '../../tools/owa-devtools-mcp/manualPage.mjs';
 import type { BotFocusType } from './helpBotHelpers';
-import { DEFAULT_CHAT_LANG_CODE, getAppLangCode } from './chatLangHelpers';
+import {
+    COLON_MARKS,
+    DEFAULT_CHAT_LANG_CODE,
+    getAppLangCode,
+    SENTENCE_END_MARKS,
+    toCharClassSource,
+} from './chatLangHelpers';
 import { tranLabel } from './chatTranHelpers';
 import { NATIVE_MENU_ITEM_MAP } from './answerLanguageHelpers';
 
@@ -164,12 +171,9 @@ const PAGE_LOADER_MAP = import.meta.glob([
 ]);
 
 // One file per language the corpus is translated into
-// (`questions/i18n/<code>.json`), a loader each, so a window loads its own
-// language's file and no other -- and an English one none at all.
-const OVERLAY_LOADER_MAP = import.meta.glob<QuestionOverlayType>(
-    '../../tools/owa-devtools-mcp/questions/i18n/*.json',
-    { import: 'default' },
-);
+// (`src/lang/data/online/<code>/questions.json`, carried by that language's plugin),
+// read when asked, so a window loads its own language's file and no other --
+// and an English one none at all.
 
 /** The corpus words of the language this window is shown in, or null. */
 async function loadOverlay(): Promise<QuestionOverlayType | null> {
@@ -177,14 +181,11 @@ async function loadOverlay(): Promise<QuestionOverlayType | null> {
     if (langCode === DEFAULT_CHAT_LANG_CODE) {
         return null;
     }
-    const loader = Object.entries(OVERLAY_LOADER_MAP).find(([path]) => {
-        return path.endsWith(`/i18n/${langCode}.json`);
-    })?.[1];
-    if (loader === undefined) {
-        return null;
-    }
     try {
-        return await loader();
+        return await loadLangFile<QuestionOverlayType>(
+            langCode,
+            'questions.json',
+        );
     } catch (_error) {
         // The English questions still work; a failed translation is no
         // reason for an empty help window.
@@ -867,10 +868,13 @@ const LINE_LEAD_LENGTH = 60;
 // How many of a translated block's first characters point at it.
 const PASSAGE_LEAD_LENGTH = 60;
 // Where a sentence ends: a full stop, a question or exclamation mark, a colon
-// or semicolon -- and the marks of a script that has its own (Khmer's ។ ៕ ៖)
-// -- before a space. Read off both sides of a pair of blocks, and believed
-// only when they come to the same count.
-const SENTENCE_END_PATTERN = /(?<=[.!?:;។៕៖])\s+/u;
+// or semicolon -- and the marks of a script that has its own
+// (`sentenceEndMarks`, `colonMarks`) -- before a space. Read off both sides of
+// a pair of blocks, and believed only when they come to the same count.
+const SENTENCE_END_PATTERN = new RegExp(
+    `(?<=[.!?:;${toCharClassSource(SENTENCE_END_MARKS + COLON_MARKS)}])\\s+`,
+    'u',
+);
 
 function splitSentences(text: string) {
     return text.split(SENTENCE_END_PATTERN).filter((sentence) => {
@@ -952,8 +956,9 @@ function checkIsBlockInCut(block: string, flatCut: string) {
  * English cut's blocks stand, in order, with … where some were left out. The
  * cut is CHOSEN in English, because the row's control, passage and keywords
  * are English words, and READ in their language -- handed the English cut,
- * gemma4:cloud answering in Khmer copied its sentences as they stood: _បើក
- * View on the top menu bar again and click_ (2026-10-17). Null when the two
+ * gemma4:cloud answering in Khmer copied its sentences as they stood, a
+ * Khmer "open" before _View on the top menu bar again and click_
+ * (2026-10-17). Null when the two
  * pages do not line up block for block, or no block of the cut was found.
  *
  * Whole blocks ride, so a cut that took the start of a long one takes all of
@@ -1033,7 +1038,7 @@ export function findLocalizedPassageLead(
         return null;
     }
     // A quote's `>` is no word of it: a passage inside one was pointed at as
-    // "> > លុបវា…" (W-34's KJV note, 2026-10-18).
+    // "> > " and its first words (W-34's KJV note, 2026-10-18).
     const toLeadText = (text: string) => {
         return text
             .replace(/^[ \t]*>[ \t]?/gm, '')
@@ -1183,6 +1188,12 @@ function toPartControlsField(controls: string[]) {
 // A bold that is a sentence (a lead ending in a stop) or longer than a name
 // is not a control.
 const PART_CONTROL_LIMIT = 10;
+// A bold that ends like a sentence or a label's colon is not a control's
+// name, in any script here.
+const NAME_END_PATTERN = new RegExp(
+    `[.:?!${toCharClassSource(SENTENCE_END_MARKS + COLON_MARKS)}]$`,
+    'u',
+);
 
 /**
  * The controls the page part a known question is filed with names -- its
@@ -1223,8 +1234,9 @@ export function findKnownPartControls(
         partText = part?.text ?? null;
     }
     // Read off the ENGLISH part as the window has it: its labels come
-    // resolved into the window's language (`[en:tran:Padding]` →
-    // _ចន្លោះខាងក្នុង_) while emphasis stays English (**every**, **WORDS**),
+    // resolved into the window's language (`[en:tran:Padding]` → the
+    // dictionary's word for it) while emphasis stays English (**every**,
+    // **WORDS**),
     // so in a window not in English a bold in its own letters IS a control.
     // In English the two cannot be told apart, and the check stays general.
     if (partText === null || localPageText === null) {
@@ -1236,7 +1248,7 @@ export function findKnownPartControls(
         if (
             name.length === 0 ||
             !/[^\p{Script=Latin}\p{N}\p{P}\p{S}\p{Z}]/u.test(name) ||
-            /[.:។៖?!]$/u.test(name) ||
+            NAME_END_PATTERN.test(name) ||
             controls.includes(name)
         ) {
             continue;
@@ -1338,9 +1350,13 @@ function clipNamedPart(text: string) {
     }
     const lineEnd = text.lastIndexOf('\n', NAMED_PASSAGE_CHAR_LIMIT);
     const sentenceEnd = Math.max(
-        ...['. ', '។ ', '? ', '! '].map((mark) => {
-            return text.lastIndexOf(mark, NAMED_PASSAGE_CHAR_LIMIT);
-        }),
+        ...['.', '?', '!', ...SENTENCE_END_MARKS]
+            .map((mark) => {
+                return `${mark} `;
+            })
+            .map((mark) => {
+                return text.lastIndexOf(mark, NAMED_PASSAGE_CHAR_LIMIT);
+            }),
     );
     const cutAt =
         lineEnd > NAMED_PASSAGE_CHAR_LIMIT / 2

@@ -31,6 +31,7 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers1', () => ({
 import {
     genBookPickInputText,
     genChapterPickInputText,
+    genLookupEnterPick,
     genLookupTabCompletionText,
 } from './lookupEnterHelpers';
 
@@ -213,5 +214,78 @@ describe('genChapterPickInputText', () => {
         expect(await genChapterPickInputText('en', 'GEN', 3)).toBe(
             'Genesis 3:',
         );
+    });
+});
+
+describe('genLookupEnterPick', () => {
+    it('picks no book while the book list cannot be read', async () => {
+        h.genBookMatches.mockResolvedValue(null);
+        const { result } = genEditingResult({ oldInputText: 'x' });
+        expect(await genLookupEnterPick('en', result)).toBeNull();
+        // No guessing text yet: the list is asked for every book.
+        expect(h.genBookMatches).toHaveBeenCalledExactlyOnceWith('en', {
+            guessingBook: '',
+        });
+    });
+
+    it('picks the first book the bible has, or none when it has none', async () => {
+        h.genBookMatches.mockResolvedValue([
+            { book: 'Genesis', isAvailable: false },
+            { book: 'Matthew', isAvailable: true },
+        ]);
+        const { result } = genEditingResult({
+            oldInputText: 'm',
+            guessingBook: 'm',
+        });
+        expect(await genLookupEnterPick('en', result)).toEqual({
+            kind: 'book',
+            book: 'Matthew',
+        });
+        h.genBookMatches.mockResolvedValue([
+            { book: 'Genesis', isAvailable: false },
+        ]);
+        expect(await genLookupEnterPick('en', result)).toBeNull();
+    });
+
+    it('picks no chapter of a book this bible lacks', async () => {
+        h.checkIsBookAvailable.mockResolvedValue(false);
+        h.genChapterMatches.mockResolvedValue([{ chapter: 1 }]);
+        const { result } = genEditingResult({
+            oldInputText: 'Tobit',
+            bookKey: 'TOB',
+        });
+        expect(await genLookupEnterPick('en', result)).toBeNull();
+        expect(h.checkIsBookAvailable).toHaveBeenCalledWith('en', 'TOB');
+        expect(h.genChapterMatches).not.toHaveBeenCalled();
+    });
+
+    it('picks the first chapter option, and nothing for a settled passage', async () => {
+        h.genChapterMatches.mockResolvedValue([
+            { chapter: 3 },
+            { chapter: 30 },
+        ]);
+        const { result } = genEditingResult({
+            oldInputText: 'Genesis 3',
+            bookKey: 'GEN',
+            guessingChapter: 3,
+        });
+        expect(await genLookupEnterPick('en', result)).toEqual({
+            kind: 'chapter',
+            chapter: 3,
+        });
+        expect(h.genChapterMatches).toHaveBeenCalledWith('en', 'GEN', 3);
+        const withChapter = genEditingResult({
+            oldInputText: 'Genesis 3:',
+            bookKey: 'GEN',
+            chapter: 3,
+        }).result;
+        expect(await genLookupEnterPick('en', withChapter)).toBeNull();
+        const withPassage = genEditingResult({
+            oldInputText: 'Genesis 3:1',
+            bibleItem: { target: { verseStart: 1, verseEnd: 1 } },
+        }).result;
+        expect(await genLookupEnterPick('en', withPassage)).toBeNull();
+        h.genChapterMatches.mockResolvedValue([]);
+        expect(await genLookupEnterPick('en', result)).toBeNull();
     });
 });

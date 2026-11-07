@@ -63,6 +63,7 @@ import { handleError } from './errorHelpers';
 import DirSource from './DirSource';
 import { dirSourceSettingNames } from './constants';
 import { checkAgentFileName } from '../../tools/owa-devtools-mcp/agentFileName.mjs';
+import { toEditingHistoryFolderPath } from '../editing-manager/editingHistoryPathHelpers';
 import {
     fsCheckFileExist,
     fsListFilesWithMimetype,
@@ -99,6 +100,7 @@ export type AgentFileActionType =
     | 'delete'
     | 'revert'
     | 'find'
+    | 'read'
     | AgentSlideActionType;
 
 /**
@@ -121,6 +123,20 @@ export type AgentFileRequestType = {
     slide?: unknown;
     to?: unknown;
     items?: unknown;
+    /**
+     * A song by its whole path instead of its Documents name (`read`,
+     * `info`, `update`; songs only). `owa_lyric_edit` reads a song the help
+     * window had ATTACHED, which may live in any folder.
+     */
+    filePath?: string;
+    /**
+     * `update` only: the `hash` its `read` answered. The write is refused
+     * when the song changed in between -- a person typing in the Lyric
+     * Editor while an assistant worked must never be written over.
+     */
+    expectedHash?: string;
+    /** `update` only: what the change was, for the backup's line. */
+    summary?: string;
 };
 
 export type AgentFileResultType = {
@@ -823,6 +839,7 @@ async function handleUpdate(
     content: string,
     kind: AgentFileKindType,
     kindName: AgentFileKindNameType,
+    options: { expectedHash?: string; summary?: string } = {},
 ) {
     const filePath = toFilePath(dirPath, name, kind);
     if (filePath === null || !(await fsCheckFileExist(filePath))) {
@@ -831,13 +848,79 @@ async function handleUpdate(
                 'to make one, or "list" to see what is there.',
         );
     }
+    return await handleUpdateAt(
+        filePath,
+        name,
+        content,
+        kind,
+        kindName,
+        options,
+    );
+}
+
+/**
+ * A short fingerprint of a song's text, for `read` to hand out and `update`
+ * to check: FNV-1a over the UTF-16 units. Not a security measure -- it only
+ * has to tell "the same text" from "changed since you read it".
+ */
+export function toAgentContentHash(text: string) {
+    let hash = 0x811c9dc5;
+    for (let index = 0; index < text.length; index += 1) {
+        hash ^= text.charCodeAt(index);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return `${text.length.toString(36)}-${hash.toString(36)}`;
+}
+
+/**
+ * The song's editing head as it is NOW. The path cache is let go first: the
+ * Lyric Editor writes this history from another window, and a read inside
+ * the cache's two seconds would answer the text from before that write
+ * (memory: the MC-25 stale-head bug).
+ */
+async function readFreshLyricContent(filePath: string) {
+    const FileSourceClass = await getFileSourceClass();
+    FileSourceClass.forgetCachedData(filePath);
+    FileSourceClass.forgetCachedDataUnder(toEditingHistoryFolderPath(filePath));
+    const Lyric = await getLyricClass();
+    const lyric = Lyric.getInstance(filePath);
+    const json = await lyric.getJsonData();
+    return json === null ? null : json.content;
+}
+
+async function handleUpdateAt(
+    filePath: string,
+    name: string,
+    content: string,
+    kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
+    options: { expectedHash?: string; summary?: string } = {},
+) {
+    if (options.expectedHash !== undefined && kindName === 'lyric') {
+        const current = await readFreshLyricContent(filePath);
+        if (current === null) {
+            return fail(`"${name}" could not be read, so it was not changed.`);
+        }
+        if (toAgentContentHash(current) !== options.expectedHash) {
+            return fail(
+                `"${name}" changed while this was being worked out (it is ` +
+                    'probably open in the Lyric Editor), so nothing was ' +
+                    'written. Read it again and make the change on what it ' +
+                    'says now.',
+            );
+        }
+    }
     const editing = await snapshotAgentEditing(kindName, filePath);
     if (editing === null) {
         return fail(`"${name}" could not be read, so it was not changed.`);
     }
+    const summary =
+        typeof options.summary === 'string' && options.summary.trim() !== ''
+            ? `: ${options.summary.trim().slice(0, 160)}`
+            : '';
     try {
         const { meta } = await runWithAgentBackup(
-            `Changed the ${kind.label} “${name}”`,
+            `Changed the ${kind.label} “${name}”${summary}`,
             [editing],
             async () => {
                 if ((await kind.update(filePath, content)) === null) {
@@ -1141,6 +1224,115 @@ async function handleSlideAction(
     }
 }
 
+// A whole path: a drive (`C:\` / `C:/`), a share (`\\server`) or a root.
+const ABSOLUTE_PATH_PATTERN = /^(?:[A-Za-z]:[\\/]|\\\\|\/)/;
+
+/**
+ * A song by its whole path -- the help window's ATTACHED song, which may live
+ * in any folder. The same promises a name gets from the Documents folder,
+ * made on the path itself: a whole path, no `..`, a song's own extension, a
+ * file that is there, and one this app reads as a song.
+ */
+async function resolveLyricPath(
+    rawPath: unknown,
+    kind: AgentFileKindType,
+): Promise<AgentFileResultType | { filePath: string; name: string }> {
+    const filePath = typeof rawPath === 'string' ? rawPath.trim() : '';
+    if (filePath === '' || !ABSOLUTE_PATH_PATTERN.test(filePath)) {
+        return fail('A song path must be the whole path to the file.');
+    }
+    if (
+        filePath.split(/[\\/]/).some((part) => {
+            return part === '..';
+        })
+    ) {
+        return fail('A song path may not step out of its folder with "..".');
+    }
+    const extension = getExtension(kind);
+    if (!filePath.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
+        return fail(
+            `Only a song file (.${extension}) can be read or changed this way.`,
+        );
+    }
+    if (!(await fsCheckFileExist(filePath))) {
+        return fail('There is no song file at that path.');
+    }
+    if ((await readFreshLyricContent(filePath)) === null) {
+        return fail('That file is not a song this app can read.');
+    }
+    const FileSourceClass = await getFileSourceClass();
+    return { filePath, name: FileSourceClass.getInstance(filePath).name };
+}
+
+/**
+ * A song's text as it is now -- the editing head, unsaved edits included --
+ * with the `hash` an `update` hands back to prove nothing changed meanwhile.
+ */
+async function handleRead(
+    filePath: string,
+    name: string,
+    kindName: AgentFileKindNameType,
+) {
+    const content = await readFreshLyricContent(filePath);
+    if (content === null) {
+        return fail(`"${name}" could not be read.`);
+    }
+    return {
+        name,
+        filePath,
+        content,
+        hash: toAgentContentHash(content),
+        hasUnsavedChanges: (await readUnsavedState(kindName, filePath))
+            .hasUnsavedChanges,
+    };
+}
+
+/** `read`, `info` and `update` on a song named by its whole path. */
+async function handleByPath(
+    request: AgentFileRequestType,
+    kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
+) {
+    const { action, content, expectedHash, summary } = request;
+    if (kindName !== 'lyric') {
+        return fail('Only a song can be named by its path.');
+    }
+    if (action !== 'read' && action !== 'info' && action !== 'update') {
+        return fail(
+            'A song named by its path can be read or changed (read, info, ' +
+                'update); anything else takes its Documents name.',
+        );
+    }
+    const resolved = await resolveLyricPath(request.filePath, kind);
+    if (!('filePath' in resolved) || typeof resolved.filePath !== 'string') {
+        return resolved as AgentFileResultType;
+    }
+    const { filePath, name } = resolved as { filePath: string; name: string };
+    if (action === 'read') {
+        return await handleRead(filePath, name, kindName);
+    }
+    if (action === 'info') {
+        return {
+            name,
+            filePath,
+            hasUnsavedChanges: (await readUnsavedState(kindName, filePath))
+                .hasUnsavedChanges,
+            ...(await kind.describe(filePath)),
+        };
+    }
+    if (typeof content !== 'string' || content.trim() === '') {
+        return fail(`Content is required to update a ${kind.label}.`);
+    }
+    const contentReason = await kind.checkContent(content);
+    if (contentReason !== null) {
+        return fail(contentReason);
+    }
+    return await handleUpdateAt(filePath, name, content, kind, kindName, {
+        expectedHash,
+        summary,
+    });
+}
+
 /**
  * One request from a tool. Always answers with a plain object and never
  * throws: the caller is a page expression whose only channel back is a DOM
@@ -1183,6 +1375,9 @@ export async function handleAgentFileRequest(
             }
             return await handleFind(dirPath, kind, title);
         }
+        if (request?.filePath !== undefined) {
+            return await handleByPath(request, kind, kindName);
+        }
         const nameReason = checkAgentFileName(name);
         if (nameReason !== null) {
             return fail(nameReason);
@@ -1190,6 +1385,16 @@ export async function handleAgentFileRequest(
         const safeName = (name as string).trim();
         if (action === 'info') {
             return await handleInfo(dirPath, safeName, kind, kindName);
+        }
+        if (action === 'read') {
+            if (kindName !== 'lyric') {
+                return fail('Only a song is read whole this way.');
+            }
+            const filePath = toFilePath(dirPath, safeName, kind);
+            if (filePath === null || !(await fsCheckFileExist(filePath))) {
+                return fail(genNoSuchFileReason(kind, safeName));
+            }
+            return await handleRead(filePath, safeName, kindName);
         }
         if (action === 'delete') {
             return await handleDelete(dirPath, safeName, kind, kindName);
@@ -1238,6 +1443,10 @@ export async function handleAgentFileRequest(
                       content,
                       kind,
                       kindName,
+                      {
+                          expectedHash: request.expectedHash,
+                          summary: request.summary,
+                      },
                   );
         }
         return fail(

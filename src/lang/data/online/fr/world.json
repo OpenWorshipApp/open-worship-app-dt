@@ -1,0 +1,12 @@
+{
+    "nativeLanguageNames": {
+        "français": "french"
+    },
+    "languageAliases": {
+        "francais": "french",
+        "france": "french"
+    },
+    "latinStopWords": {
+        "fr-FR": "et de la le les des il à que en qui ne pas est dans pour sur une du vous"
+    }
+}

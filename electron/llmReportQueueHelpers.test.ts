@@ -101,9 +101,58 @@ describe('keeping a report for later', () => {
             await queueReportBody(genBody('OWA-261015-0001'), genDeps()),
         ).toBe(false);
     });
+
+    it('does not keep a report larger than the whole folder may hold', async () => {
+        const body = 'x'.repeat(REPORT_QUEUE_MAX_BYTES + 1);
+        expect(await queueReportBody(body, genDeps())).toBe(false);
+        // Not even the folder was made for it.
+        expect(fs.existsSync(dirPath)).toBe(false);
+    });
+
+    it('keeps the report just made even when the clock says it is the oldest', async () => {
+        const deps = genDeps();
+        for (let index = 1; index <= REPORT_QUEUE_MAX_COUNT; index++) {
+            deps.tick(1000);
+            await queueReportBody(
+                genBody(`OWA-261015-000${index.toString()}`),
+                deps,
+            );
+        }
+        // The computer's clock was set back.
+        deps.tick(-60_000);
+        expect(await queueReportBody(genBody('OWA-261015-0009'), deps)).toBe(
+            true,
+        );
+        const names = listNames();
+        expect(names).toHaveLength(REPORT_QUEUE_MAX_COUNT);
+        expect(names[0]).toContain('OWA-261015-0009');
+        // The oldest of the others went instead.
+        expect(names.join(' ')).not.toContain('OWA-261015-0001');
+        expect(names.at(-1)).toContain(
+            `OWA-261015-000${REPORT_QUEUE_MAX_COUNT.toString()}`,
+        );
+    });
 });
 
 describe('sending what was kept', () => {
+    it('passes over what is no kept report, and one it cannot read', async () => {
+        const deps = genDeps();
+        await queueReportBody(genBody('OWA-261015-0001'), deps);
+        deps.tick(1000);
+        await queueReportBody(genBody('OWA-261015-0002'), deps);
+        fs.writeFileSync(path.join(dirPath, 'notes.txt'), 'not a report');
+        // A kept report's name on a folder: there is no body to read.
+        const unreadable = '1799999999000-OWA-261015-0000.json';
+        fs.mkdirSync(path.join(dirPath, unreadable));
+
+        expect(await sendQueuedReports(deps)).toEqual({
+            sent: ['OWA-261015-0001', 'OWA-261015-0002'],
+            left: 1,
+        });
+        expect(deps.deliver).toHaveBeenCalledTimes(2);
+        expect(listNames()).toEqual([unreadable, 'notes.txt']);
+    });
+
     it('sends the oldest first and lets go of each one taken', async () => {
         const deps = genDeps();
         await queueReportBody(genBody('OWA-261015-0001'), deps);

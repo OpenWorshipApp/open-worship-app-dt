@@ -16,6 +16,7 @@ import {
     colorDeserialize,
     colorToTransparent,
     compareColor,
+    removeOpacityFromHexColor,
     serializeForDragging,
     toHexColorString,
     transparentColor,
@@ -71,5 +72,14 @@ describe('colorHelpers', () => {
         expect(checkIsColorDark('#ffffff')).toBe(false);
         expect(checkIsColorDark('#00000000')).toBe(false);
         expect(checkIsColorDark('invalid')).toBe(false);
+    });
+
+    test('drops the alpha of a hex color and leaves any other color alone', () => {
+        expect(removeOpacityFromHexColor('#11223380')).toBe('#112233');
+        expect(removeOpacityFromHexColor('#112233')).toBe('#112233');
+        expect(removeOpacityFromHexColor('rgba(1, 2, 3, 0.5)')).toBe(
+            'rgba(1, 2, 3, 0.5)',
+        );
+        expect(removeOpacityFromHexColor('teal')).toBe('teal');
     });
 });

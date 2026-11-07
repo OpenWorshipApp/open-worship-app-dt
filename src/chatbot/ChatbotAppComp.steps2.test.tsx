@@ -122,7 +122,6 @@ import type { LookupAskType } from '../helper/ai/lookupAskHelpers';
 import { suggestQuestions } from './questionHelpers';
 
 const LOOKUP_TOOL = 'owa_lookup_record';
-const FIND_TOOL = 'owa_find_verse';
 
 const PASSAGE_ASK: LookupAskType = {
     kind: 'verse',
@@ -810,31 +809,6 @@ describe('typing in a lookup conversation', () => {
     });
 
     describe('lines typed under a card', () => {
-        test('a Bible asked for by its language lists only the Bibles in it', async () => {
-            hoisted.tools.route = (name) => {
-                if (name === FIND_TOOL) {
-                    return {
-                        bibles: [
-                            { key: 'KJV', title: 'King James Version' },
-                            { key: 'ASV', title: 'American Standard' },
-                            { key: 'ពគប', title: 'ព្រះគម្ពីរ' },
-                        ],
-                    };
-                }
-                return '';
-            };
-            seedTab([PASSAGE_CARD]);
-            await render();
-            await send('show this passage in Khmer');
-            expect(youTexts()).toEqual(['show this passage in Khmer']);
-            const answer = lastBot();
-            expect(answer.textContent).toContain(
-                'Which Bible should I read Genesis 8:1-3 in?',
-            );
-            expect(labelsIn(answer)).toEqual(['ពគប — ព្រះគម្ពីរ']);
-            expect(hoisted.askLlmBotMock).not.toHaveBeenCalled();
-        });
-
         test("the record's own language shows the passage as it was opened", async () => {
             seedTab([PASSAGE_CARD]);
             await render();

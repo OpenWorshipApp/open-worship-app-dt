@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, beforeEach } from 'vitest';
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -19,7 +19,8 @@ import {
   toGuideSteps,
   toKeystroke,
 } from './guide.mjs';
-import { extractDictionary, loadTranBundle } from './tran.mjs';
+import { readSourceDictionary } from './langPacks.mjs';
+import { loadTranBundle } from './tran.mjs';
 
 const GUARD = { rule: genDestructiveLabelRule(loadTranBundle()) };
 const REPO_DIR = path.join(
@@ -73,19 +74,22 @@ beforeEach(() => {
 // from the packages (a stale built bundle would hide a new key).
 describe('the card’s own words', () => {
   it('has every one in every language', () => {
+    // Every language package there is but English's: a folder of
+    // `src/lang/data/online/` with its `dictionary.json`.
+    const dataDir = path.join(REPO_DIR, 'src', 'lang', 'data', 'online');
     const readPack = (code) => {
-      return extractDictionary(
-        readFileSync(
-          path.join(REPO_DIR, 'src', 'lang', 'data', code, 'index.ts'),
-          'utf-8',
-        ),
-      );
+      return readSourceDictionary(path.join(dataDir, code));
     };
     const keyList = listGuideCardTranKeys();
     expect(keyList).toEqual(
       expect.arrayContaining(['Next', 'Done', 'Do it', 'Step by step']),
     );
-    for (const code of ['km', 'fr']) {
+    const codeList = existsSync(dataDir)
+      ? readdirSync(dataDir).filter((code) => {
+          return existsSync(path.join(dataDir, code, 'dictionary.json'));
+        })
+      : [];
+    for (const code of codeList) {
       const dictionary = readPack(code);
       expect(
         keyList.filter((key) => {
@@ -123,36 +127,8 @@ describe('the card’s own words', () => {
     ).toEqual([]);
   });
 
-  it('says its sentences in the words it is handed', () => {
-    startGuide({
-      steps: [{ text: 'ចុចប៊ូតុង' }],
-      words: {
-        'Do this step in the window behind me.':
-          'សូមធ្វើជំហាននេះនៅក្នុងបង្អួចនៅពីក្រោយខ្ញុំ។',
-      },
-      guard: GUARD,
-    });
-    const root = document.getElementById('owa-guide-host').shadowRoot;
-    expect(root.textContent).toContain(
-      'សូមធ្វើជំហាននេះនៅក្នុងបង្អួចនៅពីក្រោយខ្ញុំ។',
-    );
-  });
-
   it('the counter has a key of its own, not the slider’s Step', () => {
     expect(GUIDE_CARD_LABEL_KEY_MAP.step).toBe('Walkthrough step');
-  });
-
-  it('takes the words it is handed', () => {
-    startGuide({
-      title: 'ម្តងមួយជំហាន',
-      steps: [{ text: 'ចុចប៊ូតុង' }, { text: 'រួចហើយ' }],
-      labels: { next: 'បន្ទាប់', step: 'ជំហាន' },
-      guard: GUARD,
-    });
-    const root = document.getElementById('owa-guide-host').shadowRoot;
-    expect(root.textContent).toContain('ជំហាន 1/2');
-    expect(root.textContent).toContain('បន្ទាប់');
-    expect(root.textContent).toContain('ម្តងមួយជំហាន');
   });
 });
 
@@ -192,22 +168,6 @@ describe('selectGuideStepsForTopic', () => {
 });
 
 describe('toGuideSteps', () => {
-  // A page's own translation is read for its WORDS (`withLocalStepText`):
-  // left to `toEnglishOnly`, a Khmer step was its button names and nothing
-  // else, and the card fell back to the English sentence.
-  it('keeps a translated step whole when asked to', () => {
-    const page = [
-      '1. ចុច **[en:tran:Font Size]** ហើយរំកិលវាទៅខាងស្ដាំ។',
-      '2. ចុច **[en:tran:Add Extra Bible]**។',
-    ].join('\n');
-    expect(toGuideSteps(page)[0].text).toBe('[en:tran:Font Size]');
-    const kept = toGuideSteps(page, undefined, { isTextKept: true });
-    expect(kept.map((step) => step.text)).toEqual([
-      'ចុច [en:tran:Font Size] ហើយរំកិលវាទៅខាងស្ដាំ។',
-      'ចុច [en:tran:Add Extra Bible]។',
-    ]);
-  });
-
   it('keeps a bold control label and drops keystrokes and stressed prose', () => {
     const steps = toGuideSteps(
       [
@@ -220,24 +180,6 @@ describe('toGuideSteps', () => {
       ].join('\n'),
     );
     expect(steps.map((step) => step.finds)).toEqual([['Bible Reader'], [], []]);
-  });
-
-  // The keystroke is dropped as a thing to RING and kept as a thing to
-  // press: W-06 step 4 ("close the dialog ... or Ctrl+Q") named no control
-  // at all, so "Do it" could only apologise on it.
-  it('scopes a control to the panel the same step names', () => {
-    // W-21 step 1, verbatim. "Background" on its own is also the word on
-    // the screen preview's background-transition button, which is where
-    // the ring landed before the panel was part of the question.
-    const steps = toGuideSteps(
-      '1. Open the **Background** (ផ្ទៃខាងក្រោយ) panel and choose the ' +
-        '**Videos** (វីដេអូ) tab.\n',
-    );
-    expect(steps[0].finds[0]).toBe('Background > Videos');
-    // The panel itself is next, so a COLLAPSED panel still gets rung --
-    // that is the half of the step not done yet.
-    expect(steps[0].finds).toContain('Background panel');
-    expect(steps[0].finds).toContain('Background');
   });
 
   it('leaves a step that names no panel exactly as it was', () => {

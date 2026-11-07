@@ -1,0 +1,12 @@
+{
+    "et": {
+        "name": "Estonian",
+        "nativeName": "Eesti",
+        "script": "Latin",
+        "words": "ja või aga ei on oli olen oled mina ma sina sa tema ta meie me teie te nemad nad minu sinu kuidas mida mis kus kuhu miks millal kes kelle kellega saab saan saad tahan pean ka veel juba väga palju rohkem see need siin seal palun aitäh",
+        "letters": "õäöüšž",
+        "yes": ["jah", "jah, palun"],
+        "no": ["ei", "ei, aitäh"],
+        "order": 18
+    }
+}

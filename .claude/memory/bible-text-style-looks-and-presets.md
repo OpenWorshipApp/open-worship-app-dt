@@ -1,14 +1,14 @@
 ---
 name: bible-text-style-looks-and-presets
-description: "Bible Properties: looks are in em and kept as effect + the textShadow it comes out as; the screen reads textShadow alone; the Dark/Light switch is read off the colour; a preset is the WHOLE style; Reset keeps the size"
+description: "Bible/LongText Properties (renamed from Bible Properties 2026-11-06; a Long Text Show is drawn in it too): looks are in em and kept as effect + the textShadow it comes out as; the screen reads textShadow alone; the Dark/Light switch is read off the colour and also picks the selection band (one colour per side); a preset is the WHOLE style; Reset keeps the size"
 metadata:
   node_type: memory
   type: project
   originSessionId: 33d4368d-2c69-4d2b-8951-f48932510f71
-  modified: 2026-10-12T01:26:35.148Z
+  modified: 2026-11-07T00:50:18.826Z
 ---
 
-Bible Properties (`src/screen-setting/BibleCustomStyleComp.tsx`, redesigned
+Bible/LongText Properties (`src/screen-setting/BibleCustomStyleComp.tsx`, redesigned
 2026-10-11 on the user's ask) edits ONE setting object,
 `screen-bible--style-text`. What is decided, and not obvious from the code:
 
@@ -47,6 +47,29 @@ Bible Properties (`src/screen-setting/BibleCustomStyleComp.tsx`, redesigned
   nested `& td` block so `ScreenBibleComp` and its test mocks did not change;
   `text-align` is `!important` because a right-to-left column sets its side
   inline.
+
+- **One panel for both layers' text** (2026-11-06, the user: _rename `Bible
+  Properties` to `Bible/LongText Properties`_, _make … be properties setting of
+  both bible and long text show_, _make sure all style that apply to bible have
+  to apply to long text as well_). A Long Text Show goes up in the same
+  `#bible-screen-view` and is drawn by the same `tr` rule; its panel has the
+  same toggle beside **Add Language**. A long text's language may set only
+  its own font family and its size (`LongTextColumnStyleType`), both unset
+  until chosen on its card — _keep font-family_ _and font-size, because some
+  font-family make different size_, _so those 2 unset by default then
+  override_. Its colour, weight and alignment rows were removed; a column
+  saved with them is read without them (`readLongTextColumnStyle`).
+- **The selection band has a colour per side** (2026-11-06, _make the
+  highlight background color be customizable … between dark/light_; the user
+  chose one colour for each). `highlightColorDark` (default the old pink
+  `#FF009D33`) and `highlightColorLight` (`#006EFF33`); the screen draws the
+  one for the side the words are on, so Dark/Light swaps it. Only a CHOSEN
+  band rides in the `tr` rule (`& .highlight.selected`); the default is
+  `ScreenBibleComp`'s own sheet, picked by the words' colour — so an untouched
+  style is still exactly its three declarations (a test holds that). Compared
+  case-insensitively: the picker writes lowercase hex. In the panel it is a
+  SECTION of its own under the text rows (_add a section … (default
+  pink/blue)_): a row per side, an arrow back to that side's default.
 
 **Why:** each of these looks like something to tidy, and each was chosen.
 

@@ -1,0 +1,10 @@
+{
+    "am": {
+        "name": "Amharic",
+        "nativeName": "አማርኛ",
+        "script": "Ethiopic",
+        "yes": ["አዎ", "እሺ"],
+        "no": ["አይ", "አይደለም"],
+        "order": 83
+    }
+}

@@ -13,7 +13,11 @@ import {
 } from './managers/screenManagerHooks';
 import { getColorParts } from '../others/themeHelpers';
 import { checkIsZoomed } from '../helper/domHelpers';
-import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
+import { HEX_COLOR_BLACK, HEX_COLOR_WHITE } from '../others/color/colorHelpers';
+import {
+    genBibleTextDefaultHighlightColor,
+    genBibleTextHighlightBackground,
+} from './bibleTextStyleHelpers';
 import {
     SCREEN_BIBLE_COLUMNS_CLASSNAME,
     SCREEN_BIBLE_COLUMN_CLASSNAME,
@@ -208,12 +212,13 @@ function getStyleText(textColor?: string) {
 
 /* Faint on purpose, for a verse and for a song's section alike: it marks
    every line of what is selected, and at 0.6 that was a band of colour over
-   the words a room is reading. It still says where the reading is. */
+   the words a room is reading. It still says where the reading is. This is
+   the default band of the side the words are on; one chosen in
+   Bible/LongText Properties is the text style's (\`#bible-screen-view tr\`). */
 #bible-screen-view .highlight.selected {
-    background: ${
-        'linear-gradient(transparent, transparent, ' +
-        'rgba(255, 0, 157, 0.2), transparent);'
-    }
+    background: ${genBibleTextHighlightBackground(
+        genBibleTextDefaultHighlightColor(textColor ?? HEX_COLOR_WHITE),
+    )};
 }`;
 }
 

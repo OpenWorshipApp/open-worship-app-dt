@@ -84,7 +84,7 @@ const APP_MENU_DEMO_LIST = [
         text: 'Tips of the Day opens one learning suggestion for this page. All tips opens its complete searchable lesson list, and Keyboard Shortcuts lists every shortcut.',
       },
       {
-        text: 'Help > Copy Debug Info copies the app, runtime, operating-system, and commit versions for a support report. Help > Copy Full Debug Info also includes the complete build metadata.',
+        text: 'Help > Copy Debug Info copies the app, runtime, operating-system, and commit versions for a support report. Help > Copy Full Debug Info also includes the complete build metadata. Help > Factory Reset is the last resort when a setting has broken the app: after asking, it puts every setting back as on a new install and restarts the app, keeping your documents, songs and Bibles.',
       },
       {
         text: 'App Help (Chatbot) opens the app-aware assistant when AI features are enabled. AI Chat opens supported chat websites, which do not know what is happening inside this app.',

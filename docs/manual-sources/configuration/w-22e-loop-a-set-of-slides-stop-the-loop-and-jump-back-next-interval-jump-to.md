@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-02"
+workflowsVersion: "2026-11-06"
 ---
 # W-22e — Loop a set of slides, stop the loop, and jump back (Next: Interval, Jump to)
 

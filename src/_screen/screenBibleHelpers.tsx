@@ -242,7 +242,13 @@ export async function renderScreenLongTextManager(
         // showing screen would not hear it change.
         newDiv = await bibleScreenHelper.genHtmlFromLongTextColumns(
             toLongTextColumns(screenViewData),
-            { isLineSync: true, isLongText: true },
+            {
+                isLineSync: true,
+                isLongText: true,
+                isStacked: screenViewData.longTextData.isStacked === true,
+                isNumberHidden:
+                    screenViewData.longTextData.isNumberHidden === true,
+            },
         );
     } else if (bibleItemData !== undefined) {
         newDiv = await bibleScreenHelper.genHtmlFromScreenViewBibleItem(

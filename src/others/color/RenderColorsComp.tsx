@@ -7,6 +7,29 @@ import RenderColorComp from './RenderColorComp';
 import RenderNoColorComp from './RenderNoColorComp';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { copyToClipboard } from '../../server/appHelpers';
+import { tran } from '../../lang/langHelpers';
+
+// The held color's code, written out where it can be read and pressed to copy:
+// before, it was only in a right-click menu, and with the open picker showing
+// nothing but swatches, nobody could tell which code they had picked.
+function CopyColorCodeComp({ color }: Readonly<{ color: AppColorType }>) {
+    const label = `${tran('Copy Color')}: ${color}`;
+    return (
+        <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary color-picker-code"
+            title={label}
+            aria-label={label}
+            onClick={() => {
+                copyToClipboard(color, tran('Copy Color'));
+            }}
+        >
+            <i className="bi bi-clipboard" />
+            <span className="font-monospace">{color}</span>
+        </button>
+    );
+}
 
 export default function RenderColorsComp({
     colors,
@@ -71,12 +94,15 @@ export default function RenderColorsComp({
                     },
                 )}
             </div>
-            <div className="m-2">
+            <div className="m-2 color-picker-mix-row">
                 <SelectCustomColorComp
                     color={selectedColor}
                     onColorSelected={handleColorSelecting}
                     isNoImmediate={isNoImmediate}
                 />
+                {selectedColor ? (
+                    <CopyColorCodeComp color={selectedColor} />
+                ) : null}
             </div>
         </div>
     );

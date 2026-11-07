@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const { providerState } = vi.hoisted(() => ({
-    providerState: { isPageScreen: false },
+    providerState: { isPageScreen: false, screenUtils: undefined as any },
 }));
 
 vi.mock('../server/appProvider', () => ({
     default: {
         get isPageScreen() {
             return providerState.isPageScreen;
+        },
+        get screenUtils() {
+            return providerState.screenUtils;
         },
     },
 }));
@@ -20,6 +23,7 @@ import {
 describe('screenSoundHelpers', () => {
     beforeEach(() => {
         providerState.isPageScreen = false;
+        providerState.screenUtils = undefined;
     });
 
     // [window is the screen page, screen is on a virtual display,
@@ -58,5 +62,27 @@ describe('screenSoundHelpers', () => {
         expect(
             checkIsPresenterCopySilenced({ isOnVirtualDisplay: false }),
         ).toBe(false);
+    });
+
+    test('a copy of another screen drawn inside this one is never heard, wherever either is', () => {
+        providerState.screenUtils = {
+            getContext: () => ({ isScreenShowFrame: true }),
+        };
+        for (const isPageScreen of [false, true]) {
+            providerState.isPageScreen = isPageScreen;
+            for (const isOnVirtualDisplay of [false, true]) {
+                expect(
+                    checkIsPresenterCopySilenced({ isOnVirtualDisplay }),
+                ).toBe(true);
+            }
+        }
+        // A screen page of its own is not such a copy.
+        providerState.screenUtils = {
+            getContext: () => ({ isScreenShowFrame: false }),
+        };
+        providerState.isPageScreen = true;
+        expect(checkIsPresenterCopySilenced({ isOnVirtualDisplay: true })).toBe(
+            false,
+        );
     });
 });

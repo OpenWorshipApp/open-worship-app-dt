@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type * as FactoryResetHelpersType from './factoryResetHelpers';
 import type * as FinderOverlayHelpersType from './finderOverlayHelpers';
 
 vi.mock('electron', async () => {
@@ -8,6 +9,7 @@ vi.mock('electron', async () => {
 });
 
 const {
+    confirmFactoryReset,
     copyDebugInfoToClipboard,
     goDownload,
     openFindOverlay,
@@ -16,6 +18,7 @@ const {
     resetPopupWindowsBounds,
     toShortcutKey,
 } = vi.hoisted(() => ({
+    confirmFactoryReset: vi.fn(async (_dataDirPath: string | null) => {}),
     copyDebugInfoToClipboard: vi.fn(),
     goDownload: vi.fn(),
     openFindOverlay: vi.fn(),
@@ -30,6 +33,12 @@ vi.mock('./finderOverlayHelpers', async (importOriginal) => {
     // decision itself is covered.
     const actual = await importOriginal<typeof FinderOverlayHelpersType>();
     return { ...actual, openFindOverlay };
+});
+
+vi.mock('./factoryResetHelpers', async (importOriginal) => {
+    // Only the asking is stubbed: what it does is `factoryResetHelpers.test`.
+    const actual = await importOriginal<typeof FactoryResetHelpersType>();
+    return { ...actual, confirmFactoryReset };
 });
 
 // Read inside the menu builder, so a getter over mutable state lets one test
@@ -77,6 +86,7 @@ describe('electronMenu', () => {
         electronMockState.reset();
         platformFlags.isWindowsStore = false;
         platformFlags.aiEnabled = false;
+        confirmFactoryReset.mockClear();
         copyDebugInfoToClipboard.mockClear();
         goDownload.mockClear();
         openFindOverlay.mockClear();
@@ -368,6 +378,12 @@ describe('electronMenu', () => {
         clickSubmenuItem(helpMenu, 'App Help (Chatbot)');
 
         expect(appController.openChatbotPage).toHaveBeenCalledTimes(1);
+        expect(appController.openChatbotReportPage).not.toHaveBeenCalled();
+
+        // The same window, opened asking what went wrong.
+        clickSubmenuItem(helpMenu, 'Report a Problem');
+        expect(appController.openChatbotReportPage).toHaveBeenCalledTimes(1);
+        expect(appController.openChatbotPage).toHaveBeenCalledTimes(1);
     });
 
     test('Help > Report a Problem opens the assistant on the report', () => {
@@ -532,6 +548,34 @@ describe('electronMenu', () => {
         expect(electronMockState.app.quit).toHaveBeenCalledTimes(1);
     });
 
+    test('Help > Factory Reset sits with the debug info and asks first', () => {
+        const appController = createAppController();
+        appController.settingManager.getClientSetting.mockImplementation(
+            (key: string) => {
+                return key === 'selected-parent-dir' ? '/church-data' : null;
+            },
+        );
+        initMenu(appController as any);
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const helpMenu = template.find((item: any) => item.role === 'help');
+        const labelList = helpMenu.submenu.map((item: any) => {
+            return item.label ?? item.type;
+        });
+        const index = labelList.indexOf('Copy Debug Info');
+        expect(labelList.slice(index, index + 4)).toEqual([
+            'Copy Debug Info',
+            'Copy Full Debug Info',
+            'Factory Reset',
+            'separator',
+        ]);
+
+        clickSubmenuItem(helpMenu, 'Factory Reset');
+        // The folder in use is named in the question, so the person knows
+        // where their files still are after the reset.
+        expect(confirmFactoryReset).toHaveBeenCalledWith('/church-data');
+    });
+
     test('the View menu keeps its roles and appends renderer widget items', () => {
         // With nothing registered the menu must be untouched — the built-in
         // roles are the whole View menu on every page that has no widgets.
@@ -691,6 +735,7 @@ function createAppController() {
         openAboutPage: vi.fn(),
         openAiChatPage: vi.fn(),
         openChatbotPage: vi.fn(),
+        openChatbotReportPage: vi.fn(),
         openFindPage: vi.fn(),
         mainController: {
             gotoSettingHomePage: vi.fn(),
@@ -698,7 +743,10 @@ function createAppController() {
         },
         lwShareController: { open: vi.fn() },
         mainWin: createMockBrowserWindow(),
-        settingManager: { restoreMainBounds: vi.fn() },
+        settingManager: {
+            restoreMainBounds: vi.fn(),
+            getClientSetting: vi.fn((_key: string) => null as string | null),
+        },
     };
 }
 

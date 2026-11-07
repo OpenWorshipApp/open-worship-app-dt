@@ -1,0 +1,4 @@
+{
+    "scriptPattern": "[\\p{Script=Hiragana}\\p{Script=Katakana}]",
+    "isUnspaced": true
+}

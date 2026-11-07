@@ -917,7 +917,7 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   isolated profile: the sample installed (1.5 s), info, update, delete, undo.
   **A country is a language too, and a `check` says what the user already
   has** (2026-10-10, measured against the catalog's 998 file names):
-  `LANGUAGE_ALIAS_MAP` takes _cambodia_, _china_, _france_, _laos_, _myanmar_,
+  `readLanguageAliases` takes _cambodia_, _china_, _france_, _laos_, _myanmar_,
   _espanol_ … to the catalog's own word (only names that are not already its
   START — _korea_ finds `Korean…` by itself; a test holds every value to a
   language the catalog has), `kjv` / `nkjv` ALONE mean the English ones
@@ -957,7 +957,7 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   the presenting-flow preview -- have no `:hover` rule: only a press on their
   **[en:tran:Reveal Hidden Controls]** adds `auto-hide-show`. `describe`
   called such a control `showsOnHover`, so the assistant told a user to look
-  for **[en:tran:Bible Properties]** where no mouse would bring it up and its
+  for **[en:tran:Bible/LongText Properties]** where no mouse would bring it up and its
   ring landed on an empty corner (the user's pictures: _it should tell user to
   click the 3 dots first_, _then find out how to show to element to user_).
   A match and a list row now carry `revealBy`, the words on the control to
@@ -1021,7 +1021,7 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   the search, so the window's head start, the offline answer and every model
   get them. **A book named IN the words is the book searched**
   (`findNamedBooks`, `readNamedBooks`): after a marker (`bookMarkerWords`,
-  per language in its `index.ts`: `in`, `ក្នុង`, `គម្ពីរ`, `dans`) or when no
+  per language in its `words.json`: `in`, `ក្នុង`, `គម្ពីរ`, `dans`) or when no
   verse uses the name ("Genesis"), even one letter off when the misspelling is
   in no verse (`លោកប្បត្តិ`); a name verses DO use is a word ("Daniel in the
   lions' den"). The asking words in FRONT are dropped (`findFrameWords`: "the
@@ -1348,3 +1348,51 @@ false` and searches only a dataset a lookup panel already holds
   carries into the user's folders. The chrome-devtools `drag` by uid stays
   the second opinion (the browser's own drag, but its end is reported in
   page coordinates, which a tab strip reads as a tear-off).
+
+- **The language plugins are `owa_language`, and only the person installs
+  one** (2026-11-05; the user, with a Khmer chatbot's Bible import listing
+  the French Bibles the moment **French** was pressed, French not
+  installed: _mcp should be able to help install language package. chatbot
+  must ask user permission to install any language package that related to
+  chatting session_). `tools/owa-devtools-mcp/owaTools.mjs` → the
+  `owa-agent-data` relay, domain `language` →
+  `src/helper/agentLanguageHelpers.ts`, the name reading pure in
+  `agentLanguageNameHelpers.ts`. `list` (installed + the catalog's others),
+  `check` the `language` some words name -- English's table of names and the
+  installed plugins' own first, so an installed language costs no catalog
+  read; a name only a language gives itself is looked for in the catalog;
+  last, a word read the way the Bible collection's own search reads one, by
+  how a name STARTS (`findByNameStart`: _korea_ is Korean, _germany_ German,
+  _thailand_ Thai; four Latin letters at least, one language only -- the
+  user's picture the same day, _korea_ listing the eleven Korean Bibles with
+  no offer) --
+  answering `english`, `installed`, `turned-off`, `missing` (with the pack's
+  `size`), `unavailable` (`isOffline` when the catalog could not be read) or
+  `unknown`; `install` is the Languages tab's own `installLangPlugin` (the
+  checksum before the extract, its progress bar and toast in the main
+  window, every window told), or `setLangPluginEnabled` for a turned-off
+  one, and never switches the app to the language. Ten minutes' wait (a
+  Khmer pack is ~30 MB). The catalog is read through
+  `readLangCatalogForBibles` (30 s, quiet). **Only `install` is counted**:
+  `checkIsActingCall` (`firewall.mjs`) adds per-ACTION acting to the
+  per-tool set, because the help window asks `check` at every step of a
+  conversation about a language; the banner names the language installed.
+  **Withheld from the model** (`modelTools.mjs`): a plugin is code the app
+  runs, so the press is the consent -- the help window offers it itself
+  (`chatbot-bible-import.md`, `langInstallChatHelpers.ts`), and the model's
+  26 tools and ~8 348 tokens a round did not move. Verified live on a
+  scratch profile through a fresh stdio server: `check` French (missing,
+  13 MB), English, an unknown word; `install` Khmer, then the help window
+  in Khmer offering Spanish and installing it.
+
+- **A song changed part by part is `owa_lyric_edit`** (2026-11-06) -- the
+  words-only edit tool beside `owa_lyric_file`, offered to the chatbot's
+  model only in a conversation about an attached song; its rules are in
+  `agent-songs.md`. Firewall: every action but `read` is an acting call
+  (`READING_ACTION_MAP`, the reverse of `owa_language`'s
+  `ACTING_ACTION_MAP`), and `remove-section` is a removal
+  (`AGENT_REMOVING_ACTIONS`). The banner says _changed the song "<name>"_
+  (key `changed a song`, the song's name never its path); a read is quiet.
+  The worker's `owa-agent-file` request takes `filePath` (songs only:
+  `read`, `info`, `update`) and `update` an `expectedHash` and a
+  `summary` for the backup's line.

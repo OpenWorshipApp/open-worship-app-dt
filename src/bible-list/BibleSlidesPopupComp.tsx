@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import { useAppStateAsync } from '../helper/appHooks';
 import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
+import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import type BibleItem from './BibleItem';
@@ -23,7 +24,17 @@ export default function BibleSlidesPopupComp({
 }>) {
     const { theme } = useThemeSource();
     const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
-    const [bibles] = useAppStateAsync(getAllLocalBibleInfoList, []);
+    // A list that could not be read is null, and says so: a rejection leaves
+    // the hook's value as it was, and the popup read "Loading" for good
+    // (2026-11-04).
+    const [bibles] = useAppStateAsync(async () => {
+        try {
+            return await getAllLocalBibleInfoList();
+        } catch (error) {
+            handleError(error);
+            return null;
+        }
+    }, []);
     const [title] = useAppStateAsync(
         () => bibleItem.toTitleWithBibleKey(),
         [bibleItem],

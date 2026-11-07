@@ -189,6 +189,33 @@ test('thumbnail tiles expose an accessible name and route click, keyboard and dr
     expect(mocks.drag).toHaveBeenCalledOnce();
 });
 
+test('a caller’s own click handler takes the tile’s click, with its file, instead of selecting it', async () => {
+    const onClick = vi.fn();
+    await renderTile({ onClick });
+    await act(async () =>
+        (host.querySelector('[role="button"]') as HTMLElement).click(),
+    );
+    expect(onClick).toHaveBeenCalledOnce();
+    const [event, fileSource] = onClick.mock.calls[0];
+    expect(event.type).toBe('click');
+    expect(fileSource).toMatchObject({
+        src: 'file:///media/clip.mp4',
+        fullName: 'clip.mp4',
+    });
+    expect(mocks.select).not.toHaveBeenCalled();
+
+    // The newest handler answers, in the list view as well.
+    const nextOnClick = vi.fn();
+    await renderTile({ onClick: nextOnClick, viewMode: 'list' });
+    await act(async () => state.listProps.onClick({ type: 'click' }));
+    expect(nextOnClick).toHaveBeenCalledWith(
+        { type: 'click' },
+        expect.objectContaining({ src: 'file:///media/clip.mp4' }),
+    );
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(mocks.select).not.toHaveBeenCalled();
+});
+
 test('context menu includes common, screen, item-specific and available trash actions', async () => {
     await renderTile();
     const tile = host.querySelector('[role="button"]') as HTMLDivElement;

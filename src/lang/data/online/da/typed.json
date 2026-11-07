@@ -1,0 +1,13 @@
+{
+    "da": {
+        "name": "Danish",
+        "nativeName": "Dansk",
+        "script": "Latin",
+        "words": "og at det den de som en et er var har havde jeg du han hun vi jer mig dig min mit mine din dit hans hendes vores hvordan hvad hvor hvorfor hvornår hvem hvilken hvilket hvilke på i med for til af fra om uden kan vil skal må ikke også meget mere her der dette denne tak",
+        "letters": "æøå",
+        "family": "danish-norwegian",
+        "yes": ["ja", "ja tak"],
+        "no": ["nej", "nej tak"],
+        "order": 16
+    }
+}

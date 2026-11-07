@@ -17,7 +17,8 @@ The user's rules for the data (parent) folder, set 2026-10-23 over one session
   Settings, App Assistant), and `DirSource.getDirPathBySettingName` names no
   folder: the app's own folder still holds old child paths, and showing them
   read as data with nothing chosen. Settings keeps only what belongs to the
-  computer -- General (language, theme), Path Settings, AI Providers.
+  computer -- General (theme), Languages (the language picker since
+  2026-11-04), Path Settings, AI Providers.
 - **No start-up dialog.** A missing or unset folder opens Path Settings with
   the box focused; a missing chosen folder is only marked _Missing_ in Recent
   Folders -- the user called a warning naming it "wrong".

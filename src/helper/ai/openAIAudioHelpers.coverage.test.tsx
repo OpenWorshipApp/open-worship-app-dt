@@ -143,7 +143,7 @@ describe('textToSpeech', () => {
 
 describe('bibleTextToSpeech', () => {
     const VERSE = {
-        text: 'ព្រះយេស៊ូទ្រង់ព្រះកន្សែង',
+        text: '[xx] Jesus wept.',
         bibleKey: 'KHOV',
         bookKey: 'JHN',
         chapter: 11,

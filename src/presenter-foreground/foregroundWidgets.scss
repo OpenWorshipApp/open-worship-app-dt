@@ -119,6 +119,42 @@
   gap: 8px;
 }
 
+// The take row of a body that grows as long as its text -- a Long Text's
+// cards hold a whole song -- held at the bottom of the panel's scroller, so
+// Show is in reach without scrolling past the last verse. The body's LAST
+// child, so `bottom: 0` keeps it in view for the whole of the body.
+//
+// At rest it is the plain row above: the bar and its hairline are drawn only
+// while it is STUCK, i.e. while cards are passing under it -- the rule against
+// a line between a button and its fields still holds when the song is short.
+// Paint only (a colour, never a size), so being stuck cannot move anything.
+// `z-index: 1` clears the cards and stays under the panel's resize handles (2).
+.fg-actions-dock {
+  position: sticky;
+  // Not 0: at a fractional zoom the scroller's last position stops a part
+  // of a pixel short of the row, and the row read as stuck -- bar and all --
+  // with the list scrolled to its end. The pixel it hangs below the edge
+  // while stuck is its own padding.
+  bottom: -1px;
+  z-index: 1;
+  container-type: scroll-state;
+  // Gives back what the row's own padding and hairline add to the body's
+  // gap, so at rest it sits where every other widget's row sits.
+  margin-top: -7px;
+
+  > .fg-actions {
+    padding: 6px 0;
+    border-top: 1px solid transparent;
+  }
+}
+
+@container scroll-state(stuck: bottom) {
+  .fg-actions-dock > .fg-actions {
+    background-color: var(--app-surface);
+    border-top-color: var(--app-line);
+  }
+}
+
 // What is on a screen RIGHT NOW, beside the control that put it there --
 // which is where an operator looks when they need it gone. It was a bordered
 // box below, holding one full-size grey button per screen.

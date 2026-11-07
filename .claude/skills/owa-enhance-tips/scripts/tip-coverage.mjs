@@ -322,28 +322,54 @@ function getGuidePayload(pageInfo, demoId) {
 // Read as SOURCE, never imported, the way `src/lang/tranKeyCoverage.test.ts`
 // reads it: the module pulls in font files and a `.gz.bundle`. Sanitized key
 // → the translated string, or null when the file is no longer shaped so.
+function readPackOrder(langCode) {
+    try {
+        const meta = JSON.parse(
+            readFileSync(
+                path.join(REPO_ROOT, 'src', 'lang', 'data', 'online', langCode, 'meta.json'),
+                'utf8',
+            ),
+        );
+        return Number.isFinite(meta.order) ? meta.order : Number.MAX_SAFE_INTEGER;
+    } catch (_error) {
+        return Number.MAX_SAFE_INTEGER;
+    }
+}
+
+// Every language package but English's, found by its folder.
+function readNonEnglishPacks() {
+    const dataDir = path.join(REPO_ROOT, 'src', 'lang', 'data', 'online');
+    return Object.fromEntries(
+        readdirSync(dataDir)
+            .filter((langCode) => {
+                return (
+                    langCode !== 'en' &&
+                    existsSync(path.join(dataDir, langCode, 'dictionary.json'))
+                );
+            })
+            // In the language picker's order (`meta.json`).
+            .sort((one, other) => {
+                return readPackOrder(one) - readPackOrder(other) ||
+                    one.localeCompare(other);
+            })
+            .map((langCode) => {
+                return [langCode, readPack(langCode)];
+            }),
+    );
+}
+
 function readPack(langCode) {
     const filePath = path.join(
         REPO_ROOT,
         'src',
         'lang',
         'data',
+        'online',
         langCode,
-        'index.ts',
+        'dictionary.json',
     );
     try {
-        const source = readFileSync(filePath, 'utf8');
-        const start = source.indexOf('const dictionary = {');
-        const end = source.indexOf('function sanitizeTranKey');
-        if (start === -1 || end === -1) {
-            return null;
-        }
-        const objectText = source
-            .slice(start + 'const dictionary = '.length, end)
-            .trim()
-            .replace(/;$/, '');
-        // Only ever an object literal of strings: the slice above.
-        const dictionary = new Function(`return (${objectText});`)();
+        const dictionary = JSON.parse(readFileSync(filePath, 'utf8'));
         return new Map(
             Object.entries(dictionary).map(([key, value]) => {
                 return [toTranKey(key), value];
@@ -963,7 +989,7 @@ async function measurePage(pageInfo, { isHarvesting, port }) {
         const live = await readLiveWindow(pageInfo, port);
         ({ harvest, pass } = mergeHarvest(pageInfo.key, harvest, live));
     }
-    const packMap = { km: readPack('km'), fr: readPack('fr') };
+    const packMap = readNonEnglishPacks();
     const qualityList = genQualityFindings(tipList, keyMode, inventory, packMap);
     // Every catalog is imported statically by `dailyTipHelpers.ts`, which
     // `DailyTipComp` → `ToastComp` puts in every window that shows toasts: a

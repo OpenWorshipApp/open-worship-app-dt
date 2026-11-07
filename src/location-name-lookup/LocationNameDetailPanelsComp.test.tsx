@@ -574,3 +574,65 @@ describe('location and name detail panels', () => {
         state.isAiEnabled = false;
     });
 });
+
+describe('detail panels whose verses resolve later or whose record is gone', () => {
+    test('a location panel copies the verse titles its body resolved, then closes', async () => {
+        const record = { name: 'Jerusalem', verses: ['JOS.10.1'] };
+        state.panels = [
+            {
+                key: 'location-1',
+                kind: 'location',
+                target: 'l1',
+                name: 'Old',
+                raiseCount: 0,
+            },
+        ];
+        state.managers = {
+            namesLookupManager: { getRecordById: () => null },
+            locationsLookupManager: { getRecordById: () => record },
+        };
+        await act(async () => root.render(<LocationNameDetailPanelsComp />));
+        await act(async () => click('Resolve locations'));
+        await act(async () => click('Copy'));
+        expect(mocks.buildLocationSummary).toHaveBeenLastCalledWith(
+            state.managers.locationsLookupManager,
+            record,
+            ['Exodus 2:2'],
+        );
+        expect(mocks.copy).toHaveBeenLastCalledWith(
+            'Jerusalem: Exodus 2:2',
+            '<p>Location</p>',
+        );
+        await act(async () => click('Close detail'));
+        expect(mocks.closePanel).toHaveBeenCalledWith('location-1');
+    });
+
+    test('a record the dataset does not hold copies nothing', async () => {
+        state.panels = [
+            {
+                key: 'name-9',
+                kind: 'name',
+                target: 'gone',
+                name: 'Gone',
+                raiseCount: 0,
+            },
+        ];
+        state.managers = {
+            namesLookupManager: { getRecordById: () => null },
+            locationsLookupManager: { getRecordById: () => null },
+        };
+        await act(async () => root.render(<LocationNameDetailPanelsComp />));
+        // The title is the name the panel was opened with.
+        expect(
+            document.querySelector('header span[class="text-truncate"]')!
+                .textContent,
+        ).toBe('Gone');
+        await act(async () => click('Copy'));
+        expect(mocks.buildNameSummary).not.toHaveBeenCalled();
+        expect(mocks.buildLocationSummary).not.toHaveBeenCalled();
+        expect(mocks.copy).not.toHaveBeenCalled();
+        // 2026-11-04: and nothing says it was copied -- the toast came
+        // whether or not anything reached the clipboard.
+        expect(mocks.showToast).not.toHaveBeenCalled();
+    });
+});

@@ -100,6 +100,34 @@ function click(label: string) {
     act(() => button.click());
 }
 
+// A controlled number box takes a typed value through the native setter and
+// an `input` event, as a keyboard would give it.
+function typeInto(label: string, value: string) {
+    const input = container.querySelector<HTMLInputElement>(
+        `input[aria-label="${label}"]`,
+    )!;
+    expect(input, label).not.toBeNull();
+    const setValue = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value',
+    )!.set!;
+    act(() => {
+        setValue.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+}
+
+function tick(label: string) {
+    const input = container.querySelector<HTMLInputElement>(
+        `input[aria-label="${label}"]`,
+    )!;
+    expect(input, label).not.toBeNull();
+    act(() => input.click());
+    return input;
+}
+
+const SETTING = 'background-images-slide-auto-play-';
+
 beforeEach(() => {
     h.settings.clear();
     vi.useFakeTimers();
@@ -226,5 +254,79 @@ describe('slide-show controls', () => {
         expect(
             container.querySelector('[aria-label="Start Slide Show"]'),
         ).toBeNull();
+    });
+
+    it('the seconds box writes the wait, never below zero, and says it changed', async () => {
+        await render({ isInline: true });
+        typeInto('Seconds', '9');
+        expect(h.settings.get(`${SETTING}timer-seconds`)).toBe('9');
+        expect(onStateChange).toHaveBeenCalledTimes(1);
+        typeInto('Seconds', '-3');
+        expect(h.settings.get(`${SETTING}timer-seconds`)).toBe('0');
+        typeInto('Seconds', '');
+        expect(h.settings.get(`${SETTING}timer-seconds`)).toBe('0');
+        expect(onStateChange).toHaveBeenCalledTimes(3);
+    });
+
+    it('the options write each rule, keep the numbers in range, and say each change', async () => {
+        await render({ isInline: true, canUntilMediaEnd: true });
+        click('Slide Show Options');
+
+        const repeatAll = tick('Repeat All');
+        expect(repeatAll.checked).toBe(false);
+        expect(h.settings.get(`${SETTING}repeat`)).toBe('none');
+        tick('Repeat All');
+        expect(h.settings.get(`${SETTING}repeat`)).toBe('all');
+
+        typeInto('Jumping Step', '3');
+        expect(h.settings.get(`${SETTING}step`)).toBe('3');
+        // A step of 0 would never move.
+        typeInto('Jumping Step', '0');
+        expect(h.settings.get(`${SETTING}step`)).toBe('1');
+
+        typeInto('Random Up To Seconds', '12');
+        expect(h.settings.get(`${SETTING}timer-max-seconds`)).toBe('12');
+        // A ceiling makes the seconds box show a drawn wait, not a typed one.
+        expect(
+            container.querySelector<HTMLInputElement>(
+                'input.slide-auto-play-seconds',
+            )?.readOnly,
+        ).toBe(true);
+        typeInto('Random Up To Seconds', '-1');
+        expect(h.settings.get(`${SETTING}timer-max-seconds`)).toBe('0');
+
+        tick('Wait Until The Video Ends');
+        expect(h.settings.get(`${SETTING}until-media-end`)).toBe('true');
+        // Waiting on the clip leaves no random ceiling to set.
+        expect(
+            container.querySelector('[aria-label="Random Up To Seconds"]'),
+        ).toBeNull();
+        expect(onStateChange).toHaveBeenCalledTimes(7);
+    });
+
+    it('a show stopped while its tick is still running schedules nothing more', async () => {
+        let finishTick!: (canContinue: boolean) => void;
+        onNext.mockImplementationOnce(() => {
+            return new Promise<boolean>((resolve) => {
+                finishTick = resolve;
+            });
+        });
+        await render({ isInline: true });
+        // The countdown's own once-a-second read.
+        const idleTimerCount = vi.getTimerCount();
+        click('Start Slide Show');
+        await act(async () => vi.advanceTimersByTimeAsync(5000));
+        expect(onNext).toHaveBeenCalledOnce();
+        // Stopped while the slide is still going up.
+        click('Stop Slide Show');
+        await act(async () => {
+            finishTick(true);
+        });
+        expect(
+            getSlideAutoPlayRemainingSeconds('background-images'),
+        ).toBeNull();
+        await act(async () => vi.advanceTimersByTimeAsync(20_000));
+        expect(onNext).toHaveBeenCalledOnce();
+        expect(vi.getTimerCount()).toBe(idleTimerCount);
     });
 });

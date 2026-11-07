@@ -196,4 +196,37 @@ describe('Bible lookup book options', () => {
             event,
         );
     });
+
+    it('pads the last row with ghosts as wide as a book option', async () => {
+        h.matches.mockResolvedValue([
+            {
+                bookKey: 'MAT',
+                book: 'Matthew',
+                modelBook: 'Matthew',
+                isAvailable: true,
+            },
+        ]);
+        expect(container.querySelectorAll('.book-option-ghost')).toHaveLength(
+            0,
+        );
+        Object.defineProperty(document.body, 'clientWidth', {
+            configurable: true,
+            value: 250,
+        });
+        try {
+            await render();
+        } finally {
+            delete (document.body as any).clientWidth;
+        }
+        const ghosts = Array.from(
+            container.querySelectorAll<HTMLElement>('.book-option-ghost'),
+        );
+        expect(ghosts).toHaveLength(3);
+        expect(ghosts.map((ghost) => ghost.style.width)).toEqual([
+            '120px',
+            '120px',
+            '120px',
+        ]);
+        expect(container.querySelectorAll('button')).toHaveLength(1);
+    });
 });

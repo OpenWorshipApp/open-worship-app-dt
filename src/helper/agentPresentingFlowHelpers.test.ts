@@ -15,6 +15,9 @@ const { state, mocks } = vi.hoisted(() => ({
             lyric: ['/documents/Amazing Grace.owl'],
         } as Record<string, string[]>,
         items: [] as any[],
+        // The sheet reading back as nothing (a damaged file), or throwing.
+        isUnreadable: false,
+        readError: null as Error | null,
     },
     mocks: {
         handleError: vi.fn(),
@@ -50,7 +53,12 @@ vi.mock('../presenting-flow/PresentingFlow', () => ({
     default: {
         create: (...args: any[]) => mocks.create(...args),
         getInstance: () => ({
-            getItems: async () => state.items.map(toItem),
+            getItems: async () => {
+                if (state.readError !== null) {
+                    throw state.readError;
+                }
+                return state.isUnreadable ? null : state.items.map(toItem);
+            },
             addItem: (...args: any[]) => mocks.addItem(...args),
             addActionItem: (...args: any[]) => mocks.addActionItem(...args),
             removeItemAtIndex: (...args: any[]) =>
@@ -87,10 +95,13 @@ vi.mock('../presenting-flow/presentingFlowActionHelpers', () => ({
 }));
 vi.mock('./agentBibleHelpers', () => ({
     MAX_REFERENCE_LENGTH: 100,
-    resolveVersionOrder: async (version: string | null) => ({
-        order: [version ?? 'KJV'],
-        installed: [version ?? 'KJV'],
-    }),
+    resolveVersionOrder: async (version: string | null) =>
+        version === 'NOPE'
+            ? { reason: 'There is no Bible called "NOPE".', versions: ['KJV'] }
+            : {
+                  order: [version ?? 'KJV'],
+                  installed: [version ?? 'KJV'],
+              },
     resolveBibleItem: (...args: any[]) => mocks.resolveBibleItem(...args),
 }));
 vi.mock('./DragInf', () => ({
@@ -161,12 +172,14 @@ vi.mock('./agentBackupHelpers', () => ({
         mocks.snapshotAgentEditing(...args),
     snapshotAgentFileForDelete: (...args: any[]) =>
         mocks.snapshotAgentFileForDelete(...args),
+    // A name that would climb out of the folder has no path in it.
     toAgentFilePath: (dir: string, name: string, extension: string) =>
-        `${dir}/${name}.${extension}`,
+        name.startsWith('..') ? null : `${dir}/${name}.${extension}`,
     trashAgentFile: (...args: any[]) => mocks.trashAgentFile(...args),
 }));
 
 import { handleAgentPresentingFlowRequest } from './agentPresentingFlowHelpers';
+import { NoBackupError } from './agentBackupHelpers';
 
 const SUNDAY = '/flows/Sunday.owapf';
 
@@ -187,6 +200,8 @@ beforeEach(() => {
         },
         { type: 'action', data: 'clear-all', title: 'Clear All' },
     ];
+    state.isUnreadable = false;
+    state.readError = null;
     mocks.runWithAgentBackup.mockImplementation(
         async (
             _summary: string,
@@ -546,5 +561,374 @@ describe('owa_presenting_flow worker', () => {
             isError: true,
             reason: expect.stringContaining('left the sheet as it was'),
         });
+    });
+});
+
+describe('owa_presenting_flow worker: what it reads back and what it refuses', () => {
+    test('reads a parked line, the screens a line runs on and a damaged line', async () => {
+        state.items = [
+            {
+                type: 'appDocument',
+                title: 'Welcome',
+                data: '/documents/Welcome.ows',
+                isDisabled: true,
+            },
+            {
+                type: 'action',
+                data: 'screen-show',
+                title: 'Screen: Show',
+                screenIds: [1, 2],
+            },
+            { type: 'error', title: 'whatever was there' },
+        ];
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'info',
+                name: 'Sunday',
+            }),
+        ).resolves.toEqual({
+            name: 'Sunday',
+            filePath: SUNDAY,
+            count: 3,
+            lines: [
+                { n: 1, title: 'Welcome', kind: 'appDocument', isParked: true },
+                {
+                    n: 2,
+                    title: 'Screen: Show',
+                    kind: 'action:screen-show',
+                    screenIds: [1, 2],
+                },
+                { n: 3, title: 'invalid line', kind: 'error' },
+            ],
+        });
+    });
+
+    test('cuts a long sheet and a long list of sheets, and says so', async () => {
+        state.items = Array.from({ length: 201 }, (_, index) => {
+            return { type: 'slide', title: `Line ${index + 1}` };
+        });
+        const info: any = await handleAgentPresentingFlowRequest({
+            action: 'info',
+            name: 'Sunday',
+        });
+        expect(info.count).toBe(201);
+        expect(info.lines).toHaveLength(200);
+        expect(info.isTruncated).toBe(true);
+        state.files = Array.from({ length: 61 }, (_, index) => {
+            return `/flows/Sheet ${index + 1}.owapf`;
+        });
+        const list: any = await handleAgentPresentingFlowRequest({
+            action: 'list',
+        });
+        expect(list.count).toBe(61);
+        expect(list.names).toHaveLength(60);
+        expect(list.isTruncated).toBe(true);
+    });
+
+    test('a sheet that reads back as nothing is said so, and nothing is changed', async () => {
+        state.isUnreadable = true;
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'info',
+                name: 'Sunday',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'The run sheet "Sunday" could not be read.',
+        });
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'remove',
+                name: 'Sunday',
+                line: 1,
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'The run sheet "Sunday" could not be read.',
+        });
+        expect(mocks.removeItemAtIndex).not.toHaveBeenCalled();
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+    });
+
+    test('no snapshot of the sheet, no change', async () => {
+        mocks.snapshotAgentEditing.mockResolvedValue(null);
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'park',
+                name: 'Sunday',
+                line: 1,
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'The run sheet "Sunday" could not be read, so it was not ' +
+                'changed.',
+        });
+        expect(mocks.setItemDisabled).not.toHaveBeenCalled();
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+    });
+
+    test('a backup that cannot be saved is refused in its own words, and the line stays', async () => {
+        mocks.runWithAgentBackup.mockRejectedValueOnce(
+            new NoBackupError(
+                'No backup could be saved, so nothing was changed.',
+            ),
+        );
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'duplicate',
+                name: 'Sunday',
+                line: 1,
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'No backup could be saved, so nothing was changed.',
+        });
+        expect(mocks.duplicateItemAtIndex).not.toHaveBeenCalled();
+        // A missing backup is an answer, not an error to report.
+        expect(mocks.handleError).not.toHaveBeenCalled();
+    });
+
+    test('a delete whose snapshot fails trashes nothing', async () => {
+        mocks.snapshotAgentFileForDelete.mockRejectedValueOnce(
+            new Error('disk full'),
+        );
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'delete',
+                name: 'Sunday',
+            }),
+        ).resolves.toEqual({ isError: true, reason: 'Error: disk full' });
+        expect(mocks.trashAgentFile).not.toHaveBeenCalled();
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+    });
+
+    test('refuses a name that is no name, or that would leave the folder, before touching a file', async () => {
+        const refusals: [Record<string, unknown>, string][] = [
+            [{ action: 'create', name: '' }, 'A name is required.'],
+            [
+                { action: 'create', name: '..Escape' },
+                'That name would not stay inside the Presenting Flows folder.',
+            ],
+            [{ action: 'info', name: 'a/b' }, 'A name is required.'],
+            [
+                { action: 'info', name: '..Sunday' },
+                'That name would not stay inside the Presenting Flows folder.',
+            ],
+            [
+                { action: 'rename', name: 'Sunday', newName: ' ' },
+                'A name is required.',
+            ],
+            [
+                { action: 'rename', name: 'Sunday', newName: '..Up' },
+                'That new name would not stay inside the Presenting Flows ' +
+                    'folder.',
+            ],
+        ];
+        for (const [request, reason] of refusals) {
+            await expect(
+                handleAgentPresentingFlowRequest(request),
+                JSON.stringify(request),
+            ).resolves.toEqual({ isError: true, reason });
+        }
+        state.files = [SUNDAY, '/flows/Monday.owapf'];
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'rename',
+                name: 'Sunday',
+                newName: 'Monday',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'Something called "Monday" is already there, so "Sunday" ' +
+                'was not renamed.',
+        });
+        state.files = [];
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'info',
+                name: 'Sunday',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'There is no run sheet called "Sunday". There are none yet ' +
+                '-- action "create" makes one.',
+        });
+        expect(mocks.create).not.toHaveBeenCalled();
+        expect(mocks.renameAgentFile).not.toHaveBeenCalled();
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+    });
+
+    test('says what could not be finished, and that owa_undo puts back what was done', async () => {
+        mocks.create.mockResolvedValueOnce(null);
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'create',
+                name: 'Monday',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'Making the run sheet “Monday” could not be finished: The ' +
+                'run sheet could not be created. Anything it did get to do ' +
+                'can be put back with owa_undo.',
+        });
+        mocks.renameAgentFile.mockRejectedValueOnce('the file is in use');
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'rename',
+                name: 'Sunday',
+                newName: 'Monday',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'Renaming the run sheet “Sunday” could not be finished: the ' +
+                'file is in use Anything it did get to do can be put back ' +
+                'with owa_undo.',
+        });
+        mocks.trashAgentFile.mockRejectedValueOnce(
+            new Error('the trash is unavailable'),
+        );
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'delete',
+                name: 'Sunday',
+            }),
+        ).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringContaining(
+                'Moving the run sheet “Sunday” to the trash could not be ' +
+                    'finished: the trash is unavailable',
+            ),
+        });
+        expect(mocks.handleError).toHaveBeenCalledTimes(3);
+    });
+
+    test('refuses an add with no Documents folder, an over-long reference, two things at once or an unknown version', async () => {
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'add',
+                name: 'Sunday',
+                document: 'Welcome',
+                reference: 'John 3:16',
+            }),
+        ).resolves.toMatchObject({
+            reason: expect.stringContaining('Say what to add'),
+        });
+        state.documentsDirPath = null;
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'add',
+                name: 'Sunday',
+                document: 'Welcome',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'No Documents folder is set up yet.',
+        });
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'add',
+                name: 'Sunday',
+                reference: 'J'.repeat(101),
+            }),
+        ).resolves.toMatchObject({
+            reason: expect.stringContaining('longer than a reference'),
+        });
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'add',
+                name: 'Sunday',
+                reference: 'John 3:16',
+                version: 'NOPE',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'There is no Bible called "NOPE".',
+        });
+        expect(mocks.resolveBibleItem).not.toHaveBeenCalled();
+        expect(mocks.addItem).not.toHaveBeenCalled();
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+    });
+
+    test('an action on screens keeps only the whole-number screen ids, at the line asked', async () => {
+        mocks.addActionItem.mockImplementation(
+            async (_id: string, _data: unknown, toIndex?: number) => {
+                state.items.splice(toIndex ?? state.items.length, 0, {
+                    type: 'action',
+                    data: 'screen-show',
+                    title: 'Screen: Show',
+                });
+                return true;
+            },
+        );
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'add',
+                name: 'Sunday',
+                actionId: 'screen-show',
+                screenIds: [1, 'two', 2.5, 3],
+                at: 2,
+            }),
+        ).resolves.toMatchObject({
+            added: 'Screen: Show',
+            line: 2,
+            count: 3,
+            sheet: 'Sunday',
+        });
+        expect(mocks.addActionItem).toHaveBeenCalledWith(
+            'screen-show',
+            {},
+            1,
+            [1, 3],
+        );
+    });
+
+    test('parks a parked line no further, and puts one back in play', async () => {
+        state.items[0].isDisabled = true;
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'park',
+                name: 'Sunday',
+                line: 1,
+            }),
+        ).resolves.toEqual({
+            sheet: 'Sunday',
+            line: 1,
+            isParked: true,
+            didChange: false,
+            note: 'That line was parked already.',
+        });
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'unpark',
+                name: 'Sunday',
+                line: 1,
+            }),
+        ).resolves.toEqual({
+            unparked: 'Welcome',
+            line: 1,
+            isParked: false,
+            sheet: 'Sunday',
+            note: 'It takes part in the run again.',
+            undoId: 'backup-id',
+        });
+        expect(mocks.setItemDisabled).toHaveBeenCalledWith(0, false);
+        expect(mocks.snapshotAgentEditing).toHaveBeenCalledOnce();
+    });
+
+    test('an unexpected failure is answered, never thrown', async () => {
+        state.readError = new Error('the disk went away');
+        await expect(
+            handleAgentPresentingFlowRequest({
+                action: 'info',
+                name: 'Sunday',
+            }),
+        ).resolves.toEqual({ isError: true, reason: 'the disk went away' });
+        expect(mocks.handleError).toHaveBeenCalledWith(state.readError);
     });
 });

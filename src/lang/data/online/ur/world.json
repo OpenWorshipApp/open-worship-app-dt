@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Arabic",
+            "locales": ["ur-PK"],
+            "order": 802
+        }
+    ]
+}

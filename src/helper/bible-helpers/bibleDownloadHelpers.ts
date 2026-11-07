@@ -146,7 +146,9 @@ export async function getOnlineBibleInfoList(): Promise<
     try {
         const content = await appApiFetch('info.json');
         const json = await content.json();
-        if (typeof json.mapper !== 'object') {
+        // `typeof null` is 'object': a null mapper must be turned away here
+        // too, not left to fail on Object.entries with a vaguer error.
+        if (json.mapper === null || typeof json.mapper !== 'object') {
             throw new TypeError('Cannot get bible list');
         }
         return Object.entries(json.mapper).map(

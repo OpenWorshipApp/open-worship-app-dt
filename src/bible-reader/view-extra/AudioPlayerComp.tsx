@@ -43,6 +43,26 @@ export default function AudioPlayerComp({
         },
         [],
     );
+    const onStartRef = useAppCurrentRef(onStart);
+    // Once per `<audio>`: an inline ref is a new function on every render, and
+    // React calls a new ref callback again on every commit -- which played the
+    // verse over, took the focus and asked for the next verse's speech again
+    // each time anything drew this player again.
+    const handleAudioMounting = useCallback(
+        (element: HTMLAudioElement | null) => {
+            if (
+                appProvider.isPageReader &&
+                getAIIsAutoPlay() &&
+                element?.checkVisibility()
+            ) {
+                playMediaElement(element);
+                element.focus();
+                onStartRef.current(element);
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const onEndRef = useAppCurrentRef(onEnd);
     const handleEnded = useCallback(
         (event: SyntheticEvent<HTMLAudioElement>) => {
@@ -76,17 +96,7 @@ export default function AudioPlayerComp({
         <span className="d-inline-flex align-items-center">
             <audio
                 className="verse-audio"
-                ref={(element) => {
-                    if (
-                        appProvider.isPageReader &&
-                        getAIIsAutoPlay() &&
-                        element?.checkVisibility()
-                    ) {
-                        playMediaElement(element);
-                        element.focus();
-                        onStart(element);
-                    }
-                }}
+                ref={handleAudioMounting}
                 controls
                 onPlay={handlePlay}
                 onEnded={handleEnded}

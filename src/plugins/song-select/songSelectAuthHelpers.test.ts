@@ -183,6 +183,34 @@ describe('signInSongSelect', () => {
         settingStore.value = genSetting({ clientId: '' });
         await expect(signInSongSelect()).rejects.toThrow('not configured');
     });
+
+    test('a redirect without a code is refused without a token request', async () => {
+        electronSendAsyncMock.mockImplementation(async (_: any, data: any) => {
+            const state = new URL(data.authorizeUrl).searchParams.get('state');
+            return `${REDIRECT_URI}?state=${state}`;
+        });
+        await expect(signInSongSelect()).rejects.toThrow(
+            'Sign in failed: no authorization code returned',
+        );
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(settingStore.value.accessToken).toBe('');
+    });
+
+    test('a token answer without an access token stores nothing', async () => {
+        electronSendAsyncMock.mockImplementation(async (_: any, data: any) => {
+            const state = new URL(data.authorizeUrl).searchParams.get('state');
+            return `${REDIRECT_URI}?code=code-1&state=${state}`;
+        });
+        fetchMock.mockResolvedValue(
+            genTokenResponse({ refresh_token: 'refresh-1', expires_in: 3600 }),
+        );
+        await expect(signInSongSelect()).rejects.toThrow(
+            'Invalid token response',
+        );
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(settingStore.value.refreshToken).toBe('');
+        expect(settingStore.value.accessTokenExpiresAt).toBe(0);
+    });
 });
 
 describe('getFreshAccessToken', () => {

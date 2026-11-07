@@ -1,0 +1,14 @@
+{
+    "nativeLanguageNames": {
+        "português": "portuguese"
+    },
+    "languageAliases": {
+        "portugues": "portuguese",
+        "brasil": "portuguese",
+        "portugal": "portuguese",
+        "brazil": "portuguese"
+    },
+    "latinStopWords": {
+        "pt-BR": "e de o que a do da em não os se para com ele por as dos"
+    }
+}

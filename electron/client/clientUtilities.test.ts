@@ -390,8 +390,8 @@ describe('small provider utilities', () => {
             .spyOn(console, 'error')
             .mockImplementation(() => {});
 
-        expect(appUtils.base64Decode(appUtils.base64Encode('សួស្តី'))).toBe(
-            'សួស្តី',
+        expect(appUtils.base64Decode(appUtils.base64Encode('✝ 📖 ♫'))).toBe(
+            '✝ 📖 ♫',
         );
         appUtils.handleError(new Error('broken'));
         expect(traceSpy).toHaveBeenCalledWith('An error occurred:');

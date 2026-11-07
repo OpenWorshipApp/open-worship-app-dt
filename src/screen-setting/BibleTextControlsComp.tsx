@@ -31,6 +31,7 @@ import {
     MIN_BIBLE_TEXT_LETTER_SPACING,
     MIN_BIBLE_TEXT_LINE_HEIGHT,
     checkIsBibleTextShadowOn,
+    checkIsDefaultBibleHighlightColor,
     type BibleTextAlignType,
     type BibleTextEffectType,
     type BibleTextStyleViewType,
@@ -96,7 +97,14 @@ const STARTER_OUTLINE_WIDTH = 0.03;
 const STARTER_SHADOW = { shadowY: 0.04, shadowBlur: 0.1 };
 const STARTER_GLOW_SIZE = 0.2;
 
-type OpenedColorType = 'text' | 'outline' | 'shadow' | 'glow' | null;
+type OpenedColorType =
+    | 'text'
+    | 'outline'
+    | 'shadow'
+    | 'glow'
+    | 'highlight-dark'
+    | 'highlight-light'
+    | null;
 
 function toPickerColor(color: string) {
     return (toHexColorString(color) ?? HEX_COLOR_WHITE) as AppColorType;
@@ -192,6 +200,69 @@ function ColorExpandComp({
 }
 
 /**
+ * One side's selection band: its square, and a press back to the side's own
+ * default (pink on Dark, blue on Light). The side the words are on now -- the
+ * band the screen draws -- is marked.
+ */
+function HighlightSideRowComp({
+    side,
+    iconClassName,
+    label,
+    color,
+    isInUse,
+    isOpened,
+    onToggle,
+    onReset,
+}: Readonly<{
+    side: BibleBackdropType;
+    iconClassName: string;
+    label: string;
+    color: string;
+    isInUse: boolean;
+    isOpened: boolean;
+    onToggle: () => void;
+    onReset: () => void;
+}>) {
+    const isDefault = checkIsDefaultBibleHighlightColor(color, side);
+    const resetLabel = `${tran('Default')}: ${label}`;
+    return (
+        <div
+            className={
+                'bible-style-highlight-side' +
+                (isInUse ? ' bible-style-highlight-side-on' : '')
+            }
+            aria-current={isInUse ? 'true' : undefined}
+        >
+            <PropRowComp
+                iconClassName={iconClassName}
+                label={label}
+                isEngaged={!isDefault}
+            >
+                <PropSwatchComp
+                    label={label}
+                    color={color}
+                    isOpened={isOpened}
+                    onToggle={onToggle}
+                />
+                <button
+                    type="button"
+                    className="bible-style-highlight-reset"
+                    title={resetLabel}
+                    aria-label={resetLabel}
+                    disabled={isDefault}
+                    onClick={onReset}
+                >
+                    <i
+                        className="bi bi-arrow-counterclockwise"
+                        aria-hidden="true"
+                    />
+                </button>
+            </PropRowComp>
+        </div>
+    );
+}
+
+/**
  * Every value of the look, one row each: the same control strip the
  * Foreground panel's Effects uses, so an operator who has set a message's
  * shadow already knows how to set a verse's.
@@ -249,6 +320,9 @@ export default function BibleTextControlsComp({
     const glowLabel = tran('Glow');
     const glowColorLabel = tran('Glow Color');
     const textShadowLabel = tran('Text Shadow');
+    const highlightLabel = tran('Highlight Color');
+    const highlightDarkLabel = tran('Highlight on Dark');
+    const highlightLightLabel = tran('Highlight on Light');
     return (
         <>
             <div className="bible-style-rows">
@@ -403,6 +477,62 @@ export default function BibleTextControlsComp({
                     <span className="fg-unit-static">em</span>
                 </PropRowComp>
             </div>
+            {/* A section of its own (the user: _add a section … for
+                customizing text highlight color (default pink/blue)_). One
+                band per side: the screen draws the one the words are on, so
+                Dark and Light on the stage swap it with them. Both pickers
+                open under both rows, never between them. */}
+            <section
+                className="bible-style-rows bible-style-highlight"
+                aria-label={highlightLabel}
+            >
+                <div className="bible-style-section-title">
+                    <i className="bi bi-highlighter" aria-hidden="true" />
+                    <span>{highlightLabel}</span>
+                </div>
+                <HighlightSideRowComp
+                    side="dark"
+                    iconClassName="bi bi-moon-stars-fill"
+                    label={highlightDarkLabel}
+                    color={view.highlightColorDark}
+                    isInUse={backdrop === 'dark'}
+                    isOpened={openedColor === 'highlight-dark'}
+                    onToggle={genColorToggle('highlight-dark')}
+                    onReset={() => {
+                        applyStyle({ highlightColorDark: undefined });
+                    }}
+                />
+                <HighlightSideRowComp
+                    side="light"
+                    iconClassName="bi bi-sun-fill"
+                    label={highlightLightLabel}
+                    color={view.highlightColorLight}
+                    isInUse={backdrop === 'light'}
+                    isOpened={openedColor === 'highlight-light'}
+                    onToggle={genColorToggle('highlight-light')}
+                    onReset={() => {
+                        applyStyle({ highlightColorLight: undefined });
+                    }}
+                />
+                {openedColor === 'highlight-dark' ? (
+                    <ColorExpandComp
+                        label={highlightDarkLabel}
+                        color={view.highlightColorDark}
+                        onColorChange={(highlightColorDark) => {
+                            applyStyle({ highlightColorDark });
+                        }}
+                    />
+                ) : null}
+                {openedColor === 'highlight-light' ? (
+                    <ColorExpandComp
+                        label={highlightLightLabel}
+                        color={view.highlightColorLight}
+                        onColorChange={(highlightColorLight) => {
+                            applyStyle({ highlightColorLight });
+                        }}
+                    />
+                ) : null}
+            </section>
             <div className="bible-style-rows">
                 <PropRowComp
                     iconClassName="bi bi-bounding-box"

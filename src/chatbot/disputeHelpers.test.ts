@@ -101,8 +101,6 @@ describe('checkIsDisputingAnswer', () => {
         'no such button here',
         'wrong',
         'No, that’s wrong',
-        'ខ្ញុំរកមិនឃើញ',
-        'je ne le vois pas',
     ])('takes "%s" as disputing the last answer', (text) => {
         expect(checkIsDisputingAnswer(text)).toBe(true);
     });

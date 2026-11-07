@@ -74,4 +74,37 @@ describe('DocxSlideRenderComp', () => {
         expect(markup).toContain('width:816px');
         expect(markup).toContain('height:1056px');
     });
+
+    test('a page with no HTML yet is framed from its file, scaled to the width it is given', async () => {
+        const { DocxSlideRenderContentComp } =
+            await import('./DocxSlideRenderComp');
+
+        const fitted = renderToStaticMarkup(
+            <DocxSlideRenderContentComp
+                htmlFilePath="/slides/page.html"
+                width={816}
+                height={1056}
+                parentWidth={408}
+            />,
+        );
+        expect(htmlSlideRenderCompSpy).not.toHaveBeenCalled();
+        expect(fitted).toContain('src="/slides/page.html"');
+        // The page keeps its own size and is scaled down, inside a box that
+        // holds the page's proportions.
+        expect(fitted).toContain('aspect-ratio:816 / 1056');
+        expect(fitted).toContain('width:816px;height:1056px');
+        expect(fitted).toContain('transform:scale(0.5)');
+        expect(fitted).toContain('transform-origin:top left');
+
+        const asIs = renderToStaticMarkup(
+            <DocxSlideRenderContentComp
+                htmlFilePath="/slides/page.html"
+                width={816}
+                height={1056}
+            />,
+        );
+        expect(asIs).toContain('width:816px;height:1056px');
+        expect(asIs).not.toContain('scale(');
+        expect(asIs).not.toContain('aspect-ratio');
+    });
 });

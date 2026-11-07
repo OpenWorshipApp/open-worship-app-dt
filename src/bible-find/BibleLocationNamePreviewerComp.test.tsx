@@ -166,7 +166,7 @@ beforeEach(() => {
             },
         },
         {
-            bibleKey: 'ពគប',
+            bibleKey: 'KH54',
             target: { bookKey: 'GEN', chapter: 4, verseStart: 1, verseEnd: 1 },
         },
     ];
@@ -200,7 +200,7 @@ async function renderPreviewer() {
 }
 
 describe('BibleLocationNamePreviewerComp headings', () => {
-    // Every section was named in the EDITING pane's bible, so a ពគប pane's
+    // Every section was named in the EDITING pane's bible, so a Khmer Bible's pane's
     // reading was headed `(NIV) Genesis 3:20`.
     test('a non-English lookup names each passage in its own pane bible', async () => {
         mocks.langCode = 'km';
@@ -209,7 +209,7 @@ describe('BibleLocationNamePreviewerComp headings', () => {
 
         expect(headingList).toEqual([
             '(KJV) Genesis 3:20',
-            '(ពគប) Genesis 4:1',
+            '(KH54) Genesis 4:1',
         ]);
         // The headings are not all KJV any more, so the header must not say so.
         expect(header).not.toContain('(KJV)');
@@ -303,7 +303,7 @@ describe('BibleLocationNamePreviewerComp for a passage crossing chapters', () =>
         mocks.isKjvMissing = true;
         mocks.paneList = [
             {
-                bibleKey: 'ពគប',
+                bibleKey: 'KH54',
                 target: {
                     bookKey: 'GEN',
                     chapter: 1,
@@ -319,7 +319,7 @@ describe('BibleLocationNamePreviewerComp for a passage crossing chapters', () =>
         // Only the chapter with an open end needs counting.
         expect(mocks.verseReadList).toEqual([
             ['KJV', 'GEN', 1],
-            ['ពគប', 'GEN', 1],
+            ['KH54', 'GEN', 1],
             ['KJV', 'GEN', 2],
         ]);
         expect(mocks.collectedTargetList).toEqual([

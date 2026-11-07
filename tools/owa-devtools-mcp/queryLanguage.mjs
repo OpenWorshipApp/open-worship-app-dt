@@ -3,8 +3,8 @@
 //
 // The manual is English, and the help search counts English words in it
 // (`help.mjs`). A question typed in Khmer used to be cut into fragments at
-// every vowel sign -- `ស្វែងរកព្រះគម្ពីរ` became `["ងរកព", "គម"]`, which no
-// page contains -- and came back with nothing. But the app already knows what
+// every vowel sign -- the words for "Bible Lookup" became two broken scraps,
+// which no page contains -- and came back with nothing. But the app already knows what
 // most of its words mean: its own `tran()` dictionary maps every English label
 // to the words on the Khmer button. Read backwards, that is a phrase book for
 // exactly the vocabulary a question about this app uses ("Bible Lookup",
@@ -15,8 +15,8 @@
 //
 // Khmer is written without spaces between words, so a run of the script is
 // read longest phrase first, and a phrase may only end where a letter ends --
-// never before a vowel sign or after the subscript mark, or `ខ` (a letter of
-// its own) would be found inside `ខ្ញុំ`. Deliberately NOT `Intl.Segmenter`:
+// never before a vowel sign or after the subscript mark, or a one-letter word
+// would be found inside the first letter of a longer one. Deliberately NOT `Intl.Segmenter`:
 // Electron's ICU splits Khmer words differently from Node's (measured: the
 // word for "screen" cut in two), and the search runs in both. What matches
 // nothing is dropped -- an unmatched Khmer fragment is no evidence about any
@@ -31,7 +31,12 @@
 const MAX_PHRASE_LENGTH = 40;
 const MAX_KEY_WORDS = 4;
 
-const SUBSCRIPT_MARK = '\u17D2';
+// The marks after which the next letter is part of the same cluster -- a
+// script's subscript or joining sign -- are the language's own facts
+// (`joiningMarks` in its `assistant.json`), so this names no script.
+function toJoiningMarkSet(facts) {
+    return new Set([...String(facts?.joiningMarks ?? '')]);
+}
 
 function toLanguagePattern(facts) {
     try {
@@ -117,11 +122,11 @@ export function genPhraseTable(dictionary, facts) {
     return table;
 }
 
-function checkIsLetterEnd(text, at) {
+function checkIsLetterEnd(text, at, joiningMarkSet) {
     if (at >= text.length) {
         return true;
     }
-    if (text[at - 1] === SUBSCRIPT_MARK) {
+    if (joiningMarkSet.has(text[at - 1])) {
         return false;
     }
     return !/\p{M}/u.test(text[at]);
@@ -145,7 +150,7 @@ function indexPhrases(table) {
     return index;
 }
 
-function readRun(run, table, phraseIndex) {
+function readRun(run, table, phraseIndex, joiningMarkSet) {
     const groups = [];
     let at = 0;
     while (at < run.length) {
@@ -155,11 +160,17 @@ function readRun(run, table, phraseIndex) {
         }
         const candidates = phraseIndex.get(run[at]) ?? [];
         const phrase = candidates.find((one) => {
-            return run.startsWith(one, at) && checkIsLetterEnd(run, at + one.length);
+            return (
+                run.startsWith(one, at) &&
+                checkIsLetterEnd(run, at + one.length, joiningMarkSet)
+            );
         });
         if (phrase === undefined) {
             at += 1;
-            while (at < run.length && !checkIsLetterEnd(run, at)) {
+            while (
+                at < run.length &&
+                !checkIsLetterEnd(run, at, joiningMarkSet)
+            ) {
                 at += 1;
             }
             continue;
@@ -189,16 +200,17 @@ export function toEnglishSearchWords(query, dictionary, facts) {
     }
     const table = genPhraseTable(dictionary, facts);
     const phraseIndex = indexPhrases(table);
+    const joiningMarkSet = toJoiningMarkSet(facts);
     const groups = [];
     // A run of the script, across the single spaces some writers put between
-    // phrases -- a label may have one inside it (`ទេ អរគុណ`).
+    // phrases -- a label may have one inside it (the Khmer "No, thanks").
     const source = facts.scriptPattern;
     const runPattern = new RegExp(
         `(?:${source})(?:(?:${source})| (?=(?:${source})))*`,
         'gu',
     );
     const rest = text.replace(runPattern, (run) => {
-        groups.push(...readRun(run, table, phraseIndex));
+        groups.push(...readRun(run, table, phraseIndex, joiningMarkSet));
         return ' ';
     });
     const seen = new Set();

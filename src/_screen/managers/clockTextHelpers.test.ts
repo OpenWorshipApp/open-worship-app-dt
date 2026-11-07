@@ -170,6 +170,26 @@ describe('CountdownController', () => {
         expect(vi.getTimerCount()).toBe(0);
     });
 
+    test('once disposed, a late update or start neither redraws nor ticks', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-10-03T10:00:00.000Z'));
+        const controller = CountdownController.init(
+            genAttachedContainer(),
+            new Date(Date.now() + 2_000),
+        );
+        controller.start();
+        expect(readClock(controller)).toBe('00:00:02');
+        controller.dispose();
+
+        // A pause/resume that lands after the widget came down.
+        controller.update({ dateTime: new Date(Date.now() + 600_000) });
+        controller.start();
+        expect(readClock(controller)).toBe('00:00:02');
+        expect(vi.getTimerCount()).toBe(0);
+        vi.advanceTimersByTime(3_000);
+        expect(readClock(controller)).toBe('00:00:02');
+    });
+
     test('shown not started, it reads its full length and does not tick', () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-10-03T10:00:00.000Z'));

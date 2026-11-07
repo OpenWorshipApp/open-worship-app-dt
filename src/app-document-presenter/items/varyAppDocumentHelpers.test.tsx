@@ -494,4 +494,179 @@ describe('varyAppDocumentHelpers', () => {
         handleArrowing(ignoredEvent as any, [slide1, slide3]);
         expect(ignoredEvent.preventDefault).not.toHaveBeenCalled();
     });
+
+    test('announces a clicked card one macrotask later, carrying the card itself', async () => {
+        const { default: EventHandler } =
+            await import('../../event/EventHandler');
+        const { fireOnSlideItemSelectedEvent, ON_SLIDE_ITEM_SELECTED_EVENT } =
+            await import('./varyAppDocumentHelpers');
+        const listener = vi.fn();
+        const registered = EventHandler.registerEventListener(
+            [ON_SLIDE_ITEM_SELECTED_EVENT],
+            listener,
+        );
+        const flushMicrotasks = async () => {
+            for (let i = 0; i < 5; i++) {
+                await Promise.resolve();
+            }
+        };
+        try {
+            const card = document.createElement('div');
+            // React nulls `currentTarget` once the handler has returned.
+            const event = { currentTarget: card } as any;
+            fireOnSlideItemSelectedEvent(event);
+            event.currentTarget = null;
+            await flushMicrotasks();
+            expect(listener).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(0);
+            await flushMicrotasks();
+            expect(listener).toHaveBeenCalledOnce();
+            expect(listener.mock.calls[0][0]).toEqual({ target: card });
+            expect(listener.mock.calls[0][0].target).toBe(card);
+        } finally {
+            EventHandler.unregisterEventListener(registered);
+        }
+    });
+
+    test('scrolling to a card that is not drawn does nothing', async () => {
+        const { showVarySlideInViewport } =
+            await import('./varyAppDocumentHelpers');
+        showVarySlideInViewport(404);
+        expect(() => vi.runAllTimers()).not.toThrow();
+    });
+
+    test('a document is presenting while a screen shows any slide of it', async () => {
+        const { checkIsVaryAppDocumentPresenting } =
+            await import('./varyAppDocumentHelpers');
+        expect(checkIsVaryAppDocumentPresenting('/docs/main.ows')).toBe(false);
+        expect(getDataListMock).toHaveBeenLastCalledWith('/docs/main.ows');
+        getDataListMock.mockReturnValue([['10', { id: 1 }]]);
+        expect(checkIsVaryAppDocumentPresenting('/docs/main.ows')).toBe(true);
+    });
+
+    test('the editor page never steps a screen', async () => {
+        const { handleNextItemSelecting } =
+            await import('./varyAppDocumentHelpers');
+        appProviderMock.isPageAppDocumentEditor = true;
+        getDataListMock.mockReturnValue([['10', { id: 1 }]]);
+        expect(
+            handleNextItemSelecting({
+                varySlides: [createVarySlide(1), createVarySlide(2)],
+                isNext: true,
+            }),
+        ).toBe(false);
+        expect(getDataListMock).not.toHaveBeenCalled();
+        expect(slideItemSelectedMock).not.toHaveBeenCalled();
+    });
+
+    test.each([
+        [
+            'every slide is disabled',
+            [
+                createVarySlide(1, { isDisabled: true }),
+                createVarySlide(2, { isDisabled: true }),
+            ],
+            undefined,
+        ],
+        [
+            'the slide on screen is the only one enabled',
+            [createVarySlide(1), createVarySlide(2, { isDisabled: true })],
+            undefined,
+        ],
+        [
+            'a show that does not repeat has reached the end',
+            [createVarySlide(2), createVarySlide(1)],
+            {
+                seconds: 5,
+                maxSeconds: 0,
+                repeatKind: 'none',
+                step: 1,
+                isUntilMediaEnd: false,
+            },
+        ],
+    ])(
+        'answers "nothing to step to" when %s',
+        async (_name, varySlides, options) => {
+            const { handleNextItemSelecting } =
+                await import('./varyAppDocumentHelpers');
+            getDataListMock.mockImplementation(
+                (_filePath?: string, id?: number) => {
+                    return id === 1 ? [['10', { id: 1 }]] : [];
+                },
+            );
+            expect(
+                handleNextItemSelecting({
+                    varySlides,
+                    isNext: true,
+                    options: options as any,
+                }),
+            ).toBe(false);
+            vi.runAllTimers();
+            expect(slideItemSelectedMock).not.toHaveBeenCalled();
+            expect(getScreenManagerByScreenIdMock).not.toHaveBeenCalled();
+        },
+    );
+
+    test('one slide on two screens is recorded once and stepped on each live screen', async () => {
+        const { handleNextItemSelecting } =
+            await import('./varyAppDocumentHelpers');
+        const screenManager = {
+            screenVaryAppDocumentManager: {
+                varySlideData: null as unknown,
+                toSlideData: vi.fn((filePath: string, json: any) => ({
+                    filePath,
+                    json,
+                })),
+            },
+        };
+        // Screen 11 has gone away since it took the slide.
+        getScreenManagerByScreenIdMock.mockImplementation(
+            (screenId: number) => {
+                return screenId === 10 ? screenManager : null;
+            },
+        );
+        getDataListMock.mockImplementation(
+            (_filePath?: string, id?: number) => {
+                return id === 1
+                    ? [
+                          ['11', { id: 1 }],
+                          ['10', { id: 1 }],
+                      ]
+                    : [];
+            },
+        );
+        const slide2 = createVarySlide(2);
+        expect(
+            handleNextItemSelecting({
+                varySlides: [createVarySlide(1), slide2],
+                isNext: true,
+            }),
+        ).toBe(true);
+        expect(slideItemSelectedMock).toHaveBeenCalledExactlyOnceWith(
+            2,
+            slide2,
+        );
+        expect(getScreenManagerByScreenIdMock).toHaveBeenCalledWith(11);
+        expect(getScreenManagerByScreenIdMock).toHaveBeenCalledWith(10);
+        vi.runAllTimers();
+        expect(
+            screenManager.screenVaryAppDocumentManager.toSlideData,
+        ).toHaveBeenCalledExactlyOnceWith('/docs/main.ows', {
+            id: 2,
+            filePath: '/docs/main.ows',
+        });
+    });
+
+    test('a key with no slides container anywhere is left alone', async () => {
+        const { handleSlideMoving: handleArrowing } =
+            await import('./varyAppDocumentHelpers');
+        const event = {
+            key: 'ArrowRight',
+            shiftKey: false,
+            preventDefault: vi.fn(),
+        };
+        handleArrowing(event as any, [createVarySlide(1)]);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(getDataListMock).not.toHaveBeenCalled();
+    });
 });

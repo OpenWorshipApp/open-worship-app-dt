@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
     enableVarySyncGroup: vi.fn(),
     enableBibleSyncGroup: vi.fn(),
     enableForegroundSyncGroup: vi.fn(),
+    rememberVirtualScreensShowing: vi.fn(),
     appProvider: {
         isPagePresenter: true,
         isPageScreen: false,
@@ -77,6 +78,11 @@ vi.mock('../../server/appProvider', () => ({
 
 vi.mock('../../toast/toastHelpers', () => ({
     showSimpleToast: mocks.showSimpleToast,
+}));
+
+// What the presenter keeps for the next start, recorded instead of written.
+vi.mock('./virtualScreenShowingHelpers', () => ({
+    rememberVirtualScreensShowing: mocks.rememberVirtualScreensShowing,
 }));
 
 vi.mock('./ScreenBackgroundManager', () => ({
@@ -468,5 +474,95 @@ describe('ScreenManagerBase', () => {
         expect(ghost.getScreenManagerBaseForce(9)).toBeInstanceOf(
             ScreenManagerBaseGhost,
         );
+    });
+
+    test('a show or hide keeps which live screens are up, never a deleted one', async () => {
+        const { setScreenManagerBaseCache, cache } =
+            await import('./screenManagerBaseHelpers');
+        const { ScreenManagerBaseGhost } = await import('./ScreenManagerBase');
+        const shown = new TestScreenManagerBase(11);
+        const hidden = new TestScreenManagerBase(12);
+        setScreenManagerBaseCache(hidden);
+        setScreenManagerBaseCache(shown);
+        setScreenManagerBaseCache(new ScreenManagerBaseGhost(13) as any);
+        try {
+            shown.isShowing = true;
+            expect(
+                mocks.rememberVirtualScreensShowing,
+            ).toHaveBeenLastCalledWith([
+                { screenId: 11, isShowing: true },
+                { screenId: 12, isShowing: false },
+            ]);
+
+            // Moved onto another display while up: kept again.
+            mocks.rememberVirtualScreensShowing.mockClear();
+            hidden.displayId = 205;
+            expect(mocks.setSetting).toHaveBeenCalledWith(
+                'screen-manager-pid-12',
+                '205',
+            );
+            expect(mocks.rememberVirtualScreensShowing).toHaveBeenCalledTimes(
+                1,
+            );
+        } finally {
+            cache.clear();
+        }
+    });
+
+    test('on the presenter a virtual display is the stored one, if it still exists', () => {
+        const manager = new TestScreenManagerBase(14);
+        const storedBy = (value: string | null) => {
+            mocks.getSetting.mockImplementation((key: string) => {
+                return key === 'screen-manager-pid-14' ? value : null;
+            });
+        };
+
+        storedBy('-500001');
+        mocks.getDisplayIdByScreenId.mockReturnValue(-500001);
+        expect(manager.isOnVirtualDisplay).toBe(true);
+        // The virtual display was deleted: the screen fell back to a monitor.
+        mocks.getDisplayIdByScreenId.mockReturnValue(114);
+        expect(manager.isOnVirtualDisplay).toBe(false);
+        // A real monitor, a Screen Mirror guest, or nothing stored.
+        storedBy('114');
+        expect(manager.isOnVirtualDisplay).toBe(false);
+        storedBy('-1000001');
+        mocks.getDisplayIdByScreenId.mockReturnValue(-1000001);
+        expect(manager.isOnVirtualDisplay).toBe(false);
+        storedBy(null);
+        expect(manager.isOnVirtualDisplay).toBe(false);
+        mocks.getDisplayIdByScreenId.mockImplementation(
+            (screenId: number) => screenId + 100,
+        );
+    });
+
+    test('on the screen page it is whether this window owns the sound', () => {
+        const manager = new TestScreenManagerBase(15);
+        const provider = mocks.appProvider as any;
+        provider.isPageScreen = true;
+        try {
+            expect(manager.isOnVirtualDisplay).toBe(false);
+            provider.screenUtils = { getContext: () => null };
+            expect(manager.isOnVirtualDisplay).toBe(false);
+            provider.screenUtils = {
+                getContext: () => ({ isSoundOwner: true }),
+            };
+            expect(manager.isOnVirtualDisplay).toBe(true);
+            provider.screenUtils = {
+                getContext: () => ({ isSoundOwner: 'yes' }),
+            };
+            expect(manager.isOnVirtualDisplay).toBe(false);
+            // Never read from the stored choice there.
+            expect(mocks.getSetting).not.toHaveBeenCalled();
+        } finally {
+            delete provider.screenUtils;
+        }
+    });
+
+    test('a bare base has no Screen Show state to give, and sends none', () => {
+        const manager = new TestScreenManagerBase(16);
+        expect(manager.genScreenShowPayload()).toBeNull();
+        expect(manager.sendScreenShowSnapshots([1, 2])).toBeUndefined();
+        expect(manager.sendScreenMessage).not.toHaveBeenCalled();
     });
 });

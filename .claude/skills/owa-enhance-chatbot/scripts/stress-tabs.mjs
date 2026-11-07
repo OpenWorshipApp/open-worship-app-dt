@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { genRunWordPattern, genRunWordSource } from '../../../../extra-work/language-packages.mjs';
 
 const REPO = fileURLToPath(new URL('../../../../', import.meta.url));
 const WORK_DIR = path.join(REPO, 'test-results', 'chatbot-quality', 'run');
@@ -32,6 +33,11 @@ const args = Object.fromEntries(
         return match ? [match[1], match[2] ?? true] : [arg, true];
     }),
 );
+// The window's words for what a run reads back, in every language
+// (`src/lang/data/online/<code>/chatbot-asks/run-words.json`).
+const CACHE_PATTERN = genRunWordPattern('cache', 'cache');
+const PAUSED_PATTERN = genRunWordPattern('I have paused the assistant', 'paused');
+const ALLOW_MORE_SOURCE = genRunWordSource('Allow more', 'allowMore');
 const LANG = typeof args.lang === 'string' && args.lang !== 'en' ? args.lang : null;
 const TAB_COUNT = Math.min(Number(args.tabs ?? 4), 8);
 const WAVES = Number(args.waves ?? 5);
@@ -249,7 +255,7 @@ function parseUsage(costFull) {
     return {
         rounds: toNumber(head),
         input: toNumber(inputParts[0]),
-        cacheRead: toNumber(inputParts.slice(1).find((p) => /cache|ឃ្លាំង/.test(p))),
+        cacheRead: toNumber(inputParts.slice(1).find((p) => CACHE_PATTERN.test(p))),
         output: toNumber(outputText),
     };
 }
@@ -260,7 +266,7 @@ const toPlain = (text) => String(text ?? '').replace(/\s+/g, ' ').trim();
 
 function loadQuestions() {
     const dir = path.join(REPO, 'tools', 'owa-devtools-mcp', 'questions');
-    const translated = LANG === null ? null : JSON.parse(fs.readFileSync(path.join(dir, 'i18n', `${LANG}.json`), 'utf8')).questions;
+    const translated = LANG === null ? null : JSON.parse(fs.readFileSync(path.join(REPO, 'src', 'lang', 'data', 'online', LANG, 'questions.json'), 'utf8')).questions;
     const rows = [];
     for (const name of fs.readdirSync(dir).sort()) {
         if (!name.endsWith('.json') || name === 'schema.json') continue;
@@ -336,7 +342,7 @@ let windowDefault = null;
 async function pressAllowMore() {
     return await cdp.evaluate(`(() => {
         const button = [...(document.querySelector('.chat-head')?.querySelectorAll('button') ?? [])]
-            .find((one) => /អនុញ្ញាតបន្ថែម|Allow more|Autoriser davantage/.test(one.textContent));
+            .find((one) => new RegExp(${JSON.stringify(ALLOW_MORE_SOURCE)}).test(one.textContent));
         if (!button) return false;
         button.click();
         return true;
@@ -390,7 +396,7 @@ for (let wave = 0; wave < WAVES; wave++) {
             const bots = now.cues.filter((cue) => cue.author === 'bot');
             const last = now.cues[now.cues.length - 1];
             if (!now.isBusy && last?.author === 'bot') {
-                const paused = /ខ្ញុំបានផ្អាកជំនួយការ|I have paused the assistant/.test(`${last.note ?? ''} ${last.text}`);
+                const paused = PAUSED_PATTERN.test(`${last.note ?? ''} ${last.text}`);
                 if (paused && args['allow-more'] === true) {
                     log('ALLOW MORE pressed (user-authorized):', await pressAllowMore());
                 }

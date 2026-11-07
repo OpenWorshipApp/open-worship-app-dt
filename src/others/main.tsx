@@ -146,9 +146,21 @@ function useCheckSetting() {
     }, []);
 }
 
+// The error dialogs' words must never throw. `tran` does in dev when the
+// language in force is not loaded in this window, and a throw here is one more
+// unhandled rejection that comes straight back here: 209,171 of them in the
+// Setting window once Khmer was installed (2026-11-05).
+function tranSafely(text: string) {
+    try {
+        return tran(text);
+    } catch (_error) {
+        return text;
+    }
+}
+
 async function confirmLocalStorageErasing() {
     const isOk = await showAppConfirm(
-        tran('Unfixable Error'),
+        tranSafely('Unfixable Error'),
         'We were sorry, local settings are broken, we need to erase local' +
             ' storage and reload the app',
     );
@@ -203,8 +215,8 @@ async function confirmReloading(error?: unknown) {
             return;
         }
         const isOk = await showAppConfirm(
-            tran('Reload is needed'),
-            tran(
+            tranSafely('Reload is needed'),
+            tranSafely(
                 'Sorry, an internal process error occurred. Please refresh the app.',
             ),
         );
@@ -214,6 +226,14 @@ async function confirmReloading(error?: unknown) {
     } finally {
         isReloadingConfirmShowing = false;
     }
+}
+
+// Its own failure is logged, never rejected: an unhandled rejection from here
+// would call it again, and again.
+function confirmReloadingQuietly(error?: unknown) {
+    confirmReloading(error).catch((reloadingError) => {
+        console.error('Failed to offer a reload:', reloadingError);
+    });
 }
 
 function isDomException(error: any) {
@@ -235,7 +255,7 @@ async function initMain() {
         if (isDomException(reason)) {
             return;
         }
-        confirmReloading(reason);
+        confirmReloadingQuietly(reason);
     };
 
     globalThis.onerror = function (error: any) {
@@ -243,7 +263,7 @@ async function initMain() {
         if (isDomException(error)) {
             return;
         }
-        confirmReloading(error);
+        confirmReloadingQuietly(error);
     };
 
     await initCrypto();
@@ -310,14 +330,10 @@ export async function run(children?: ReactNode) {
             handleActiveSelectedElementScrolling,
         ),
     );
+    // The page's font is set by `init()` (`boot.ts`), on every page.
     const currentLocale = getCurrentLocale();
-    const langData = getLangData(currentLocale);
-    if (langData === null) {
+    if (getLangData(currentLocale) === null) {
         throw new Error(`Lang data not found for locale ${currentLocale}`);
-    }
-    const { fontFamily } = langData;
-    if (fontFamily != undefined) {
-        document.body.style.fontFamily = fontFamily;
     }
 
     if (appProvider.isPagePresenter || appProvider.isPageReader) {

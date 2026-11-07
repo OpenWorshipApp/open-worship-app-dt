@@ -1,0 +1,12 @@
+{
+    "rw": {
+        "name": "Kinyarwanda",
+        "nativeName": "Ikinyarwanda",
+        "script": "Latin",
+        "words": "na cyangwa ariko si nta ni ari njye jye wowe we twe mwe bo gute iki iyihe he kubera ryari nde uyu uwo aha hano cyane kandi nshobora ndashaka nkeneye murakoze kuri muri ese",
+        "family": "rwanda-rundi",
+        "yes": ["yego"],
+        "no": ["oya"],
+        "order": 30
+    }
+}

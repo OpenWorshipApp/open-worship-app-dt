@@ -11,6 +11,8 @@ const runSheetMocks = vi.hoisted(() => ({
     openPaths: [] as string[],
     availablePaths: [] as string[] | null,
     failingPaths: new Set<string>(),
+    // The Presenting Flows folder failing to open, as an unset one does.
+    dirError: null as Error | null,
 }));
 
 // `fileHelpers` reaches `appProvider` on load (memory
@@ -59,9 +61,14 @@ vi.mock('../presenting-flow/presentingFlowDocumentHelpers', () => ({
 }));
 vi.mock('./DirSource', () => ({
     default: {
-        getInstance: async () => ({
-            getFilePaths: async () => runSheetMocks.availablePaths,
-        }),
+        getInstance: async () => {
+            if (runSheetMocks.dirError !== null) {
+                throw runSheetMocks.dirError;
+            }
+            return {
+                getFilePaths: async () => runSheetMocks.availablePaths,
+            };
+        },
     },
 }));
 
@@ -229,6 +236,25 @@ describe('toRunLineKind', () => {
             'Bible passage',
         );
     });
+    it('names an audio, a background, a foreground and a PowerPoint line, in that order of say', () => {
+        expect(
+            toRunLineKind({ ...base, isAudio: true, isBackground: true }),
+        ).toBe('audio');
+        expect(
+            toRunLineKind({ ...base, isBackground: true, isForeground: true }),
+        ).toBe('background');
+        expect(toRunLineKind({ ...base, isForeground: true })).toBe(
+            'foreground widget',
+        );
+        expect(
+            toRunLineKind({
+                ...base,
+                type: 'pptxSlide',
+                itemFilePath: 'x/a.pptx',
+            }),
+        ).toBe('PowerPoint slide');
+        expect(toRunLineKind({ ...base, type: 'slide' })).toBe('slide');
+    });
 });
 
 describe('assistant run-sheet state', () => {
@@ -240,6 +266,46 @@ describe('assistant run-sheet state', () => {
         runSheetMocks.openPaths = [];
         runSheetMocks.availablePaths = [];
         runSheetMocks.failingPaths.clear();
+        runSheetMocks.dirError = null;
+    });
+
+    it('reads the cursor on a document that will not load as the line alone', async () => {
+        const filePath = '/runs/Broken.flow';
+        runSheetMocks.itemsByPath.set(filePath, [
+            genItem('Missing song', {
+                isAppDocument: true,
+                itemFilePath: '/songs/Gone.owl',
+            }),
+            genItem('Prayer'),
+        ]);
+        // No slides for `/songs/Gone.owl`: the document could not be loaded.
+        runSheetMocks.cursorByPath.set(filePath, 0);
+        runSheetMocks.childByPath.set(filePath, 11);
+        const sheet = await describeRunSheetForAgent(filePath);
+        expect(sheet?.cursor).toEqual({
+            n: 1,
+            title: 'Missing song',
+            kind: 'song',
+        });
+        // With no slides to walk, the next press leaves for the next line.
+        expect(sheet?.next).toEqual({ n: 2, title: 'Prayer', kind: 'slide' });
+        expect(sheet?.isAtEnd).toBeUndefined();
+    });
+
+    it('answers no sheets when the Presenting Flows folder cannot be read', async () => {
+        runSheetMocks.dirError = new Error('No Presenting Flows folder set');
+        const state = await describeRunSheetsForAgent();
+        expect(state).toEqual({
+            openSheets: [],
+            availableSheets: [],
+            note: expect.stringContaining('lists none'),
+        });
+
+        runSheetMocks.dirError = null;
+        runSheetMocks.availablePaths = null;
+        const unlisted = await describeRunSheetsForAgent();
+        expect(unlisted.availableSheets).toEqual([]);
+        expect(unlisted.note).toContain('lists none');
     });
 
     it('reports a document cursor, skips parked slides and truncates only the line list', async () => {

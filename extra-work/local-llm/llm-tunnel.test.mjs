@@ -1132,7 +1132,7 @@ describe('the registry entry', () => {
         const before = {
             ...server,
             baseUrl: 'http://old/v1',
-            note: { en: 'Free for us', km: 'ឥតគិតថ្លៃសម្រាប់យើង' },
+            note: { en: 'Free for us', xx: 'Free for us (xx) ✝' },
             models: [{ ...models[0], note: 'Slow, but saves cost' }],
         };
         const [merged] = mergeRegistry(
@@ -1176,7 +1176,7 @@ describe('the registry entry', () => {
     it('says which note the app would cut or drop', () => {
         expect(findNoteProblem(undefined)).toBeNull();
         expect(findNoteProblem('Slow, but saves cost')).toBeNull();
-        expect(findNoteProblem({ en: 'Slow', km: 'យឺត', 'pt-BR': 'Lento' })).toBeNull();
+        expect(findNoteProblem({ en: 'Slow', xx: 'Slow (xx)', 'yy-BR': 'Slow (yy)' })).toBeNull();
         expect(findNoteProblem('x'.repeat(301))).toContain('300');
         expect(findNoteProblem(['Slow'])).toContain('language code');
         expect(findNoteProblem({ English: 'Slow' })).toContain('"English"');

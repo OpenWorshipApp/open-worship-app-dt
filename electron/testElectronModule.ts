@@ -130,6 +130,7 @@ export const electronMockState = {
                 onErrorOccurred: vi.fn(),
             },
             setDisplayMediaRequestHandler: vi.fn(),
+            clearStorageData: vi.fn(async () => {}),
         },
         // Every partitioned session shares one object, which is enough for the
         // callers here: they register handlers on it and never read it back.
@@ -145,6 +146,7 @@ export const electronMockState = {
     dialog: {
         showOpenDialog: vi.fn(),
         showMessageBox: vi.fn(async () => ({ response: 1 })),
+        showErrorBox: vi.fn(),
     },
     ipcMain: {
         handle: vi.fn(),
@@ -214,10 +216,14 @@ export const electronMockState = {
         this.session.defaultSession.webRequest.onCompleted.mockClear();
         this.session.defaultSession.webRequest.onErrorOccurred.mockClear();
         this.session.defaultSession.setDisplayMediaRequestHandler.mockClear();
+        this.session.defaultSession.clearStorageData
+            .mockClear()
+            .mockImplementation(async () => {});
         this.dialog.showOpenDialog.mockClear();
         this.dialog.showMessageBox
             .mockClear()
             .mockImplementation(async () => ({ response: 1 }));
+        this.dialog.showErrorBox.mockClear();
         this.ipcMain.handle.mockClear();
         this.ipcMain.on.mockClear();
         this.systemPreferences.askForMediaAccess.mockClear();

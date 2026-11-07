@@ -667,6 +667,90 @@ describe('ResourcesRendererComp folder actions', () => {
         );
     });
 
+    test('declining the copy writes nothing and shows no progress', async () => {
+        getFolderListMock.mockReturnValue(['/a/songs']);
+        showAppConfirmMock.mockResolvedValue(false);
+        await renderPanel();
+        const header = getPanel().querySelector('.app-resources-group-header');
+        if (!header) {
+            throw new Error('Missing folder header');
+        }
+
+        await selectMenuItem(openMenu(header), 'Copy to Data Directory');
+
+        expect(showAppConfirmMock).toHaveBeenCalledTimes(1);
+        expect(copyFolderMock).not.toHaveBeenCalled();
+        expect(showProgressBarMock).not.toHaveBeenCalled();
+        expect(setFolderListMock).not.toHaveBeenCalled();
+        expect(
+            getPanel()
+                .querySelector('.app-resources-group-header')
+                ?.getAttribute('title'),
+        ).toBe('/a/songs');
+    });
+
+    test('a second copy of a folder still being copied is not started', async () => {
+        getFolderListMock.mockReturnValue(['/a/songs']);
+        let finishCopy!: (result: { destinationDirPath: string }) => void;
+        copyFolderMock.mockImplementation(() => {
+            return new Promise((resolve) => {
+                finishCopy = resolve;
+            });
+        });
+        await renderPanel();
+        const header = getPanel().querySelector('.app-resources-group-header');
+        if (!header) {
+            throw new Error('Missing folder header');
+        }
+
+        await selectMenuItem(openMenu(header), 'Copy to Data Directory');
+        expect(copyFolderMock).toHaveBeenCalledTimes(1);
+        // Pressed again while the first copy is writing.
+        await selectMenuItem(openMenu(header), 'Copy to Data Directory');
+        expect(showAppConfirmMock).toHaveBeenCalledTimes(1);
+        expect(copyFolderMock).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            finishCopy({ destinationDirPath: '/data/resources/songs' });
+            await new Promise((resolve) => {
+                setTimeout(resolve, 0);
+            });
+        });
+        expect(setFolderListMock).toHaveBeenCalledWith([
+            '/data/resources/songs',
+        ]);
+        expect(hideProgressBarMock).toHaveBeenCalledWith(
+            'Copy to Data Directory: /a/songs',
+        );
+    });
+
+    test("the panel menu's Add Folder opens the same picker as the button", async () => {
+        promptAddFoldersMock.mockResolvedValue(['/a/hymns']);
+        await renderPanel();
+        const moreButton = getPanel().querySelector<HTMLButtonElement>(
+            'button[aria-label="More Options"]',
+        );
+        if (!moreButton) {
+            throw new Error('Missing More Options button');
+        }
+        act(() => {
+            moreButton.click();
+        });
+        const items = contextMenuMock.mock.calls.at(-1)?.[1] as Array<{
+            menuElement: string;
+            onSelect: () => unknown;
+        }>;
+        await selectMenuItem(items, 'Add Folder');
+
+        expect(promptAddFoldersMock).toHaveBeenCalledWith([]);
+        expect(setFolderListMock).toHaveBeenCalledWith(['/a/hymns']);
+        expect(
+            getPanel()
+                .querySelector('.app-resources-group-header')
+                ?.getAttribute('title'),
+        ).toBe('/a/hymns');
+    });
+
     test('Reload refreshes the folder list and invalidates every scan', async () => {
         getFolderListMock
             .mockReturnValueOnce([])

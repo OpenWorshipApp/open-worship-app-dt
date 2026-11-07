@@ -82,6 +82,7 @@ vi.mock('../../helper/domHelpers', () => ({
         `${page}?file=${fullName}`,
     setParamIdNum: (page: string, id: number) => `${page}&id=${id}`,
 }));
+// Escape first: the row's first button while its title is being edited.
 vi.mock('./NoteEditorComp', () => ({
     NoteTitleEditorComp: ({
         onEscape,
@@ -302,6 +303,151 @@ describe('Bible note row', () => {
         expect(host.textContent).toContain('Unreadable note');
         expect(host.querySelector('li')).toBeNull();
         expect(mocks.openPopup).not.toHaveBeenCalled();
+    });
+
+    function getOpener() {
+        return host.querySelector<HTMLElement>('[role="button"]')!;
+    }
+
+    async function openRowMenu() {
+        await act(async () =>
+            host.querySelector('li')!.dispatchEvent(
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            ),
+        );
+        return mocks.openItemMenu.mock.lastCall!;
+    }
+
+    test('the menu’s Open opens this note’s own window', async () => {
+        await renderRow();
+        const [, menuNoteItem, menuIndex, menuItems] = await openRowMenu();
+        expect(menuNoteItem).toBe(noteItem);
+        expect(menuIndex).toBe(2);
+        await act(async () => menuItems[0].onSelect());
+        expect(mocks.openPopup).toHaveBeenCalledWith(
+            '/bible-note?file=Study.own&id=4',
+            expect.stringContaining('Study.own-4_'),
+            expect.any(String),
+            { width: 870 },
+        );
+    });
+
+    test('the title field closes on Enter and on leaving it, and holds the row still meanwhile', async () => {
+        await renderRow();
+        for (const closingLabel of ['Confirm title', 'Leave title']) {
+            const [, , , menuItems] = await openRowMenu();
+            const menuCallCount = mocks.openItemMenu.mock.calls.length;
+            await act(async () => menuItems[1].onSelect());
+            expect(host.querySelector('li')!.draggable).toBe(false);
+            // No menu and no opening while the title is being typed.
+            await openRowMenu();
+            expect(mocks.openItemMenu).toHaveBeenCalledTimes(menuCallCount);
+            await act(async () =>
+                host
+                    .querySelector('li')!
+                    .dispatchEvent(
+                        new MouseEvent('dblclick', { bubbles: true }),
+                    ),
+            );
+            expect(mocks.openPopup).not.toHaveBeenCalled();
+
+            const closingButton = [...host.querySelectorAll('button')].find(
+                (button) => button.textContent?.trim() === closingLabel,
+            )!;
+            await act(async () => closingButton.click());
+            expect(host.querySelector('li')!.draggable).toBe(true);
+            expect(host.textContent).toContain('Mercy');
+            expect(host.textContent).not.toContain(closingLabel);
+        }
+        expect(note.save).not.toHaveBeenCalled();
+    });
+
+    test('a note dragged in from another file is the file row’s; a vanished file reorders nothing', async () => {
+        await renderRow();
+        const row = host.querySelector('li')!;
+        for (const item of [
+            { id: 9, filePath: '/notes/Other.own' },
+            { id: 10 },
+        ]) {
+            mocks.extractDropData.mockReturnValueOnce({ item });
+            await act(async () =>
+                row.dispatchEvent(new Event('drop', { bubbles: true })),
+            );
+        }
+        expect(mocks.stopDragging).not.toHaveBeenCalled();
+        expect(mocks.fromFilePath).not.toHaveBeenCalled();
+        expect(mocks.attachBackgroundDrop).not.toHaveBeenCalled();
+
+        mocks.fromFilePath.mockResolvedValueOnce(null);
+        mocks.extractDropData.mockReturnValueOnce({
+            item: { id: 5, filePath: '/notes/Study.own' },
+        });
+        await act(async () =>
+            row.dispatchEvent(new Event('drop', { bubbles: true })),
+        );
+        expect(mocks.stopDragging).toHaveBeenCalledOnce();
+        expect(mocks.fromFilePath).toHaveBeenCalledWith('/notes/Study.own');
+        expect(note.moveItemToIndex).not.toHaveBeenCalled();
+        expect(note.save).not.toHaveBeenCalled();
+    });
+
+    test('dragging the row starts with this item, and a drag over it dims it until it leaves', async () => {
+        await renderRow();
+        const row = host.querySelector('li')!;
+        await act(async () =>
+            row.dispatchEvent(new MouseEvent('dragstart', { bubbles: true })),
+        );
+        expect(mocks.dragStart).toHaveBeenCalledWith(
+            expect.anything(),
+            noteItem,
+        );
+        const over = new MouseEvent('dragover', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => row.dispatchEvent(over));
+        expect(over.defaultPrevented).toBe(true);
+        expect(mocks.changeDragStyle).toHaveBeenLastCalledWith(
+            expect.anything(),
+            'opacity',
+            '0.5',
+        );
+        const leave = new MouseEvent('dragleave', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => row.dispatchEvent(leave));
+        expect(leave.defaultPrevented).toBe(true);
+        expect(mocks.changeDragStyle).toHaveBeenLastCalledWith(
+            expect.anything(),
+            'opacity',
+            '1',
+        );
+    });
+
+    test('any other key on the opener opens nothing', async () => {
+        await renderRow();
+        for (const key of ['a', 'Escape', 'Tab']) {
+            const event = new KeyboardEvent('keydown', {
+                key,
+                bubbles: true,
+                cancelable: true,
+            });
+            await act(async () => getOpener().dispatchEvent(event));
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(mocks.openPopup).not.toHaveBeenCalled();
+    });
+
+    test('a note with no title says so, on the row and on its opener', async () => {
+        await renderRow({ ...noteItem, title: '' });
+        expect(host.textContent).toContain('No title');
+        expect(getOpener().getAttribute('aria-label')).toBe(
+            'Open BibleNote: No title',
+        );
     });
 });
 

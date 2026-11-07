@@ -48,6 +48,7 @@ import { readSongAddress, readSongTitleArgument } from './lyricDraftHelpers';
 import { callTool, parseToolJson } from './mcpClient';
 import { checkIsChatTipHidden, pickChatTip, showChatTips } from './tipHelpers';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import { listAssistantLanguages } from './chatLangHelpers';
 import {
     checkIsMainWindowUrl,
     getCurrentWindowAim,
@@ -747,17 +748,14 @@ function genVersionLine(version: unknown) {
         : '';
 }
 
+// A language the app has a package for, by its English name (a dictionary
+// key) in the window's words; any other by its code. No language is named
+// in code.
 function languageName(code: string) {
-    switch (code) {
-        case 'en':
-            return tran('English');
-        case 'km':
-            return tran('Khmer');
-        case 'fr':
-            return tran('French');
-        default:
-            return code;
-    }
+    const language = listAssistantLanguages().find((one) => {
+        return one.code === code;
+    });
+    return language === undefined ? code : tranLabel(language.name);
 }
 
 async function runHelp({ argument, focus, report }: BuiltinRunContextType) {
@@ -1028,7 +1026,7 @@ function genSlideWords(slide: SlideSummaryType) {
 function toSlideKey(text: string) {
     return text
         .toLowerCase()
-        .replace(/[^a-z0-9ក-៿]+/g, ' ')
+        .replace(/[^\p{L}\p{M}\p{N}]+/gu, ' ')
         .trim();
 }
 
@@ -1855,10 +1853,14 @@ export const CLEAR_CHAT_COMMAND = 'clear';
  * bible reader also part of presenter so it should available in presenter as
  * well"): these on the Presenter, every other command everywhere -- a
  * command of the Reader's own would be filed `['reader', 'presenter']`, the
- * Presenter holding the Reader's lookup too. `/screen` stays everywhere: it
- * says whether a screen is on from any page, and offers the Presenter.
+ * Presenter holding the Reader's lookup too. `/screen` is the Presenter's as
+ * well (2026-11-05, the user's picture of it offered under Bible Reader:
+ * _`/screen` should be available when working presenter page only_): only
+ * that page knows what the screens hold, and off it the command could say no
+ * more than "go to the Presenter".
  */
 const COMMAND_PAGE_MAP: Record<string, BotFocusType[]> = {
+    screen: ['presenter'],
     'screen-show': ['presenter'],
     'screen-hide': ['presenter'],
     'screen-clear-all': ['presenter'],
@@ -2202,6 +2204,34 @@ export function checkIsBuiltinCommand(text: string) {
     return text.trim().startsWith('/');
 }
 
+/**
+ * The box after the `/` button beside it is pressed (2026-11-05, the user's
+ * ask with the attach row circled: _add an icon of `/` somewhere to click then
+ * add `/` to input, so user know how `/` for_). `caret` is where the caret
+ * goes, or null to leave the box and the caret as they are.
+ *
+ * - Empty: `/` alone, which lists every command for the page.
+ * - Already a command: unchanged -- a second `/` would make it no command.
+ * - Holding words: `/` goes IN FRONT of them, a space between, the caret
+ *   after the `/`. A command is read only at the start of the line, and the
+ *   words are never thrown away: typing `btw` there makes
+ *   `/btw what is the Bible`. The list stays shut, because a row taken from
+ *   it would fill the box over those words.
+ */
+export function toCommandStartedDraft(draft: string): {
+    text: string;
+    caret: number | null;
+} {
+    const words = draft.trimStart();
+    if (words.length === 0) {
+        return { text: '/', caret: 1 };
+    }
+    if (words.startsWith('/')) {
+        return { text: draft, caret: null };
+    }
+    return { text: `/ ${words}`, caret: 1 };
+}
+
 export function parseBuiltinCommand(text: string): ParsedCommandType | null {
     const match = COMMAND_PATTERN.exec(text.trim());
     if (match === null) {
@@ -2410,19 +2440,15 @@ function genCommandList(focus?: BotFocusType): BotAnswerType {
             elsewhereText +
             '\n\n' +
             tran('Type `/` and the list appears as you type.'),
+        // Off the Presenter its screen buttons would only be refused, so
+        // the one button is the way there.
         actions:
             elsewhere.length === 0
                 ? [
                       genCommandAction('Is the screen on?', '/screen'),
                       genCommandAction('Turn the screen on', '/screen-show'),
                   ]
-                : [
-                      genCommandAction('Is the screen on?', '/screen'),
-                      genCommandAction(
-                          'Go to the Presenter',
-                          '/goto presenter',
-                      ),
-                  ],
+                : [genCommandAction('Go to the Presenter', '/goto presenter')],
     };
 }
 

@@ -49,7 +49,8 @@ export async function importSongSelectSongToDirectory(
             markdown,
         );
         if (fileSource === null) {
-            showSimpleToast(title, tran('SongSelect request failed'));
+            // The download worked; writing the file did not (2026-11-03).
+            showSimpleToast(title, tran('Failed to create lyric document'));
             return false;
         }
         fileSource.fireUpdateEvent();

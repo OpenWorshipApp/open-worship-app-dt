@@ -10,7 +10,6 @@
  */
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const KHMER_DIGITS = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 const LATIN_DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 const mocks = vi.hoisted(() => {
@@ -87,23 +86,12 @@ const BIBLE_INFO: Record<string, any> = {
     ESV: { key: 'ESV', locale: 'en-US', keyBookMap: ENGLISH_BOOKS },
     NKJV: { key: 'NKJV', locale: 'en-US', keyBookMap: ENGLISH_BOOKS },
     NIV: { key: 'NIV', locale: 'en-US', keyBookMap: ENGLISH_BOOKS },
-    KHM: {
-        key: 'KHM',
-        locale: 'km-KH',
-        numList: KHMER_DIGITS,
-        keyBookMap: {
-            GEN: 'លោកុប្បត្តិ',
-            JHN: 'យ៉ូហាន',
-            '1PE': '១ ពេត្រុស',
-            PSA: 'ទំនុកដំកើង',
-        },
-    },
-    // A Bible whose book names carry a dot ("1. Mose"): a dot-to-colon pass
+    // A Bible whose book names carry a dot ("1. Xgen"): a dot-to-colon pass
     // must leave a dot followed by a space alone.
     GER: {
         key: 'GER',
         locale: 'en-US',
-        keyBookMap: { GEN: '1. Mose', EXO: '2. Mose', JHN: 'Johannes' },
+        keyBookMap: { GEN: '1. Xgen', EXO: '2. Xexo', JHN: 'Xjhn' },
     },
 };
 
@@ -132,26 +120,6 @@ const LANG_DATA: Record<string, any> = {
         numList: LATIN_DIGITS,
         sanitizeText: (text: string) => text,
         transformBibleBookName: (bookName: string) => [bookName],
-    },
-    'km-KH': {
-        locale: 'km-KH',
-        numList: KHMER_DIGITS,
-        sanitizeText: (text: string) => {
-            return text.replaceAll('​', '').replaceAll('‌', '');
-        },
-        // A copy of the Khmer language's own: ពេត្រុសទី១ => ១ ពេត្រុស
-        transformBibleBookName: (bookName: string) => {
-            bookName = bookName.trim();
-            const arr = bookName.split('ទី');
-            if (
-                arr.length > 1 &&
-                KHMER_DIGITS.includes(arr[1].trim()) &&
-                arr[0].trim().length > 0
-            ) {
-                return [bookName, `${arr[1].trim()} ${arr[0].trim()}`];
-            }
-            return [bookName];
-        },
     },
 };
 
@@ -398,106 +366,22 @@ describe('bible title parsing (characterization)', () => {
         `);
     });
 
-    test('legacy Khmer forms stay as they were', async () => {
-        const module = await loadModule();
-        const summary = await summarize(module, 'KHM', [
-            'យ៉ូហាន ៣:១៦',
-            'យ៉ូហាន ៣:១៦-១៨',
-            'យ៉ូហាន ៣:១៦-',
-            'យ៉ូហាន ៣:',
-            'យ៉ូហាន ៣',
-            'យ៉ូហាន ៣.១៦',
-            'យ៉ូហាន​ ៣:១៦',
-            'យ៉ូហាន 3:16',
-            'ពេត្រុសទី១ ១:៣',
-            '១ ពេត្រុស ១:៣',
-            'John 3:16',
-        ]);
-        expect(summary).toMatchInlineSnapshot(`
-          {
-            "John 3:16": "KHM | JHN | 3 |  |  | JHN 3:16-16",
-            "ពេត្រុសទី១ ១:៣": "KHM | 1PE | 1 |  |  | 1PE 1:3-3",
-            "យ៉ូហាន 3:16": "KHM | JHN | 3 |  |  | JHN 3:16-16",
-            "យ៉ូហាន ៣": "KHM | JHN |  |  | ៣ | ",
-            "យ៉ូហាន ៣.១៦": "KHM | JHN | 3 |  |  | JHN 3:16-16",
-            "យ៉ូហាន ៣:": "KHM | JHN | 3 |  |  | JHN 3:1-36",
-            "យ៉ូហាន ៣:១៦": "KHM | JHN | 3 |  |  | JHN 3:16-16",
-            "យ៉ូហាន ៣:១៦-": "KHM | JHN | 3 |  |  | JHN 3:16-36",
-            "យ៉ូហាន ៣:១៦-១៨": "KHM | JHN | 3 |  |  | JHN 3:16-18",
-            "យ៉ូហាន​ ៣:១៦": "KHM | JHN | 3 |  |  | JHN 3:16-16",
-            "១ ពេត្រុស ១:៣": "KHM | 1PE | 1 |  |  | 1PE 1:3-3",
-          }
-        `);
-    });
-
     test('legacy dotted book names stay as they were', async () => {
         const module = await loadModule();
         const summary = await summarize(module, 'GER', [
-            '1. Mose 1.1',
-            '1. Mose 1:1-3',
-            '1. Mose 1',
-            '1. Mose 1:',
-            'Johannes 3.16',
+            '1. Xgen 1.1',
+            '1. Xgen 1:1-3',
+            '1. Xgen 1',
+            '1. Xgen 1:',
+            'Xjhn 3.16',
         ]);
         expect(summary).toMatchInlineSnapshot(`
           {
-            "1. Mose 1": "GER | GEN |  |  | 1 | ",
-            "1. Mose 1.1": "GER | GEN | 1 |  |  | GEN 1:1-1",
-            "1. Mose 1:": "GER | GEN | 1 |  |  | GEN 1:1-31",
-            "1. Mose 1:1-3": "GER | GEN | 1 |  |  | GEN 1:1-3",
-            "Johannes 3.16": "GER | JHN | 3 |  |  | JHN 3:16-16",
-          }
-        `);
-    });
-
-    test('legacy trailing references stay as they were', async () => {
-        const module = await loadModule();
-        const summary = Object.fromEntries(
-            [
-                'Psalms 23:1',
-                'Psalms 23:1-6',
-                'Psalms 23:',
-                'Psalms 23',
-                'ទំនុក ២៣:១',
-                '1 Jo',
-                'Psalms',
-                '23:1',
-                'Psalms 23:1-',
-            ].map((text) => [text, module.toTrailingReference(text)]),
-        );
-        expect(summary).toMatchInlineSnapshot(`
-          {
-            "1 Jo": null,
-            "23:1": null,
-            "Psalms": null,
-            "Psalms 23": "23",
-            "Psalms 23:": "23:",
-            "Psalms 23:1": "23:1",
-            "Psalms 23:1-": "23:1-",
-            "Psalms 23:1-6": "23:1-6",
-            "ទំនុក ២៣:១": "២៣:១",
-          }
-        `);
-    });
-
-    test('legacy input text formatting stays as it was', async () => {
-        const module = await loadModule();
-        const summary = {
-            empty: await module.toInputText('KJV'),
-            book: await module.toInputText('KJV', 'John'),
-            oneChapterBook: await module.toInputText('KJV', 'Jude'),
-            chapter: await module.toInputText('KJV', 'John', 3),
-            verse: await module.toInputText('KJV', 'John', 3, 16),
-            khmerChapter: await module.toInputText('KHM', 'យ៉ូហាន', 3, 16),
-        };
-        expect(summary).toMatchInlineSnapshot(`
-          {
-            "book": "John ",
-            "chapter": "John 3",
-            "empty": "",
-            "khmerChapter": "យ៉ូហាន ៣:១៦",
-            "oneChapterBook": "Jude 1:",
-            "verse": "John 3:16",
+            "1. Xgen 1": "GER | GEN |  |  | 1 | ",
+            "1. Xgen 1.1": "GER | GEN | 1 |  |  | GEN 1:1-1",
+            "1. Xgen 1:": "GER | GEN | 1 |  |  | GEN 1:1-31",
+            "1. Xgen 1:1-3": "GER | GEN | 1 |  |  | GEN 1:1-3",
+            "Xjhn 3.16": "GER | JHN | 3 |  |  | JHN 3:16-16",
           }
         `);
     });
@@ -559,42 +443,11 @@ describe('bible title parsing: ranges across chapters', () => {
         expect(summary[inputText]).toBe(expected);
     });
 
-    test('reads ranges in a Bible numbering in its own digits', async () => {
-        const module = await loadModule();
-        expect(
-            await summarize(module, 'KHM', [
-                'យ៉ូហាន ១៨.៣៣-១៩.១៦',
-                'យ៉ូហាន ១:២-៣:៤',
-                'យ៉ូហាន ១-៣',
-            ]),
-        ).toEqual({
-            'យ៉ូហាន ១៨.៣៣-១៩.១៦': 'KHM | JHN | 18 |  |  | JHN 18:33-19:16',
-            'យ៉ូហាន ១:២-៣:៤': 'KHM | JHN | 1 |  |  | JHN 1:2-3:4',
-            'យ៉ូហាន ១-៣': 'KHM | JHN | 1 |  |  | JHN 1:1-3:36',
-        });
-    });
-
     test('leaves a book name with a dot of its own alone', async () => {
         const module = await loadModule();
-        expect(await summarize(module, 'GER', ['1. Mose 1.1-2.3'])).toEqual({
-            '1. Mose 1.1-2.3': 'GER | GEN | 1 |  |  | GEN 1:1-2:3',
+        expect(await summarize(module, 'GER', ['1. Xgen 1.1-2.3'])).toEqual({
+            '1. Xgen 1.1-2.3': 'GER | GEN | 1 |  |  | GEN 1:1-2:3',
         });
-    });
-
-    test('writes a range back as input text, across chapters too', async () => {
-        const module = await loadModule();
-        expect(await module.toInputText('KJV', 'John', 3, 16, 18)).toBe(
-            'John 3:16-18',
-        );
-        expect(await module.toInputText('KJV', 'John', 3, 16, 16)).toBe(
-            'John 3:16',
-        );
-        expect(await module.toInputText('KJV', 'John', 1, 2, 4, 3)).toBe(
-            'John 1:2-3:4',
-        );
-        expect(await module.toInputText('KHM', 'យ៉ូហាន', 1, 2, 4, 3)).toBe(
-            'យ៉ូហាន ១:២-៣:៤',
-        );
     });
 
     test('keeps a range across chapters an unresolved book was typed with', async () => {

@@ -5,9 +5,6 @@ import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
-    bringDomToCenterView,
-    bringDomToNearestView,
-    bringDomToTopView,
     checkIsVerticalPartialInvisible,
     cloneJson,
 } from '../../helper/helpers';
@@ -58,6 +55,7 @@ import {
     withLongTextColumnStyles,
 } from '../screenLongTextTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
+import { glideDomIntoView } from './screenGlideScrollHelpers';
 import {
     HEX_COLOR_BLACK,
     checkIsColorDark,
@@ -863,6 +861,36 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
         }
     }
 
+    /**
+     * Put that source's text up again, in rows of another kind, on the
+     * screens already showing it -- and on no other: Atom mode turned on or
+     * off on a text that is up. Each screen keeps its place: its scroll, and
+     * its mark moved to the row it stands on now (`toSelectedKey`). A locked
+     * screen is passed over, as a restyle passes it.
+     */
+    static replaceLongText(
+        sourceId: string,
+        longTextData: LongTextItemDataType,
+        toSelectedKey: (oldKey: string | null) => string | null,
+    ) {
+        for (const instance of this.getLongTextSourceInstances(sourceId)) {
+            const screenViewData = instance.screenViewData;
+            if (
+                !checkIsLongTextData(screenViewData) ||
+                instance.screenManagerBase.isLocked
+            ) {
+                continue;
+            }
+            instance.applyFullDataSrcWithSyncGroup({
+                ...cloneJson(longTextData),
+                scroll: screenViewData.scroll,
+                selectedKJVVerseKey: toSelectedKey(
+                    screenViewData.selectedKJVVerseKey,
+                ),
+            });
+        }
+    }
+
     render() {
         renderScreenLongTextManager(this);
     }
@@ -879,48 +907,53 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
         this.isToTop = false;
         const isToMiddle = this.isToMiddle;
         this.isToMiddle = false;
-        if (this.div === null) {
+        const div = this.div;
+        if (div === null) {
             return;
         }
-        bibleScreenHelper.removeClassName(this.div, 'selected');
+        bibleScreenHelper.removeClassName(div, 'selected');
         const selectedBlockDoms = bibleScreenHelper.resetClassName(
-            this.div,
+            div,
             'selected',
             true,
             `${this.selectedKJVVerseKey}`,
         );
         if (selectedBlockDoms.length > 0) {
-            markScreenBibleProgrammaticScroll(this.div);
+            markScreenBibleProgrammaticScroll(div);
         }
+        // Every move below GLIDES, fast to slow, so a room reading along is
+        // not thrown by it (`screenGlideScrollHelpers`).
         if (isToMiddle) {
             // The ROW, once. The cells of one row are other heights in each
             // language, and centring them one after another left the last
             // cell centred and the row wherever that happened to put it.
             const firstBlockDom = selectedBlockDoms[0];
             if (firstBlockDom !== undefined) {
-                bringDomToCenterView(
+                glideDomIntoView(
                     firstBlockDom.closest('tr') ?? firstBlockDom,
+                    'center',
+                    div,
                 );
             }
             return;
         }
         for (const blockDom of selectedBlockDoms) {
             if (isToTop) {
-                bringDomToTopView(blockDom);
+                glideDomIntoView(blockDom, 'start', div);
                 this.handleBibleViewVersesHighlighting(
                     (blockDom as any).dataset.kjvVerseKey,
                     true,
                 );
             } else {
                 const isPartiallyInvisible = checkIsVerticalPartialInvisible(
-                    this.div,
+                    div,
                     blockDom as HTMLElement,
                 );
-                if (isPartiallyInvisible) {
-                    bringDomToCenterView(blockDom);
-                } else {
-                    bringDomToNearestView(blockDom);
-                }
+                glideDomIntoView(
+                    blockDom,
+                    isPartiallyInvisible ? 'center' : 'nearest',
+                    div,
+                );
                 this.handleBibleViewVersesHighlighting(
                     (blockDom as any).dataset.kjvVerseKey,
                     false,

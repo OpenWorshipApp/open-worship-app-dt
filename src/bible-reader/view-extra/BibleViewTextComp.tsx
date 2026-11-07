@@ -320,7 +320,11 @@ export default function BibleViewTextComp({
             ref={containerRef}
             className={`${BIBLE_VIEW_TEXT_CLASS} app-selectable-text p-1`}
             data-bible-item-id={bibleItem.id}
-            dir={passageView?.isRtl && !isExtraVerses ? 'rtl' : undefined}
+            // One Bible reads in its own direction, never the window's: an
+            // English Bible in a right-to-left interface still reads left to
+            // right. Compared columns are never flipped as a whole -- each
+            // keeps its own.
+            dir={isExtraVerses ? undefined : passageView?.isRtl ? 'rtl' : 'ltr'}
             style={{
                 fontSize: `${fontSize}px`,
                 paddingBottom: '100px',

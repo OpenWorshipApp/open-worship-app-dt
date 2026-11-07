@@ -1,0 +1,11 @@
+{
+    "sm": {
+        "name": "Samoan",
+        "nativeName": "Gagana Samoa",
+        "script": "Latin",
+        "words": "le o e i ma ua na ai ou oe ia matou tatou latou outou faapefea fa'apefea fea aisea anafea lenei lena mafai fia faamolemole fa'amolemole tele foi fa'afetai",
+        "yes": ["ioe"],
+        "no": ["leai"],
+        "order": 44
+    }
+}

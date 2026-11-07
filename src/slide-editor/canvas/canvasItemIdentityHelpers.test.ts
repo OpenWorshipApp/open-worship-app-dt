@@ -85,3 +85,11 @@ describe('canvas item identity', () => {
         expect(toCanvasItemUuid(first[0].uuid)).toBe(first[0].uuid);
     });
 });
+
+describe('canvas item identity of an empty slide', () => {
+    test('hands an empty item list back as is', () => {
+        const items: { uuid?: string }[] = [];
+        expect(ensureCanvasItemUuids(items)).toBe(items);
+        expect(items).toEqual([]);
+    });
+});

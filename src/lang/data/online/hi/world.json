@@ -1,0 +1,12 @@
+{
+    "nativeLanguageNames": {
+        "हिन्दी": "hindi"
+    },
+    "scriptLocales": [
+        {
+            "script": "Devanagari",
+            "locales": ["hi-IN"],
+            "order": 1200
+        }
+    ]
+}

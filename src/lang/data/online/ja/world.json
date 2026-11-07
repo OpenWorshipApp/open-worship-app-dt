@@ -1,0 +1,22 @@
+{
+    "nativeLanguageNames": {
+        "日本語": "japanese"
+    },
+    "scriptLocales": [
+        {
+            "script": "Hiragana",
+            "locales": ["ja-JP"],
+            "order": 500
+        },
+        {
+            "script": "Katakana",
+            "locales": ["ja-JP"],
+            "order": 600
+        },
+        {
+            "script": "Han",
+            "locales": ["ja-JP"],
+            "order": 702
+        }
+    ]
+}

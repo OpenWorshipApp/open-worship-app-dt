@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => {
-    const nameRecord = { id: 'noah', name: 'ណូអេ', verses: ['GEN 8:1'] };
+    const nameRecord = { id: 'noah', name: '✝✝', verses: ['GEN 8:1'] };
     const locationRecord = {
         id: 'ararat',
-        name: 'អារ៉ារ៉ាត',
+        name: '✝♪',
         verses: ['GEN 8:4'],
     };
     const managers = {
@@ -87,11 +87,11 @@ import {
     showLookupRecordContextMenu,
 } from './lookupRecordMenuHelpers';
 
-const noahTarget = { kind: 'name', recordId: 'noah', name: 'ណូអេ' } as const;
+const noahTarget = { kind: 'name', recordId: 'noah', name: '✝✝' } as const;
 const araratTarget = {
     kind: 'location',
     recordId: 'ararat',
-    name: 'អារ៉ារ៉ាត',
+    name: '✝♪',
 } as const;
 
 function findItem(label: string) {
@@ -142,7 +142,7 @@ describe('a name or place row’s menu', () => {
         expect(h.openDetailPanel).toHaveBeenCalledWith({
             kind: 'name',
             target: 'noah',
-            name: 'ណូអេ',
+            name: '✝✝',
         });
     });
 
@@ -207,7 +207,7 @@ describe('a name or place row’s menu', () => {
             expect(h.openChatbotWithLookup).toHaveBeenCalledWith({
                 kind: 'name',
                 target: 'noah',
-                title: 'ណូអេ',
+                title: '✝✝',
                 langCode: 'km',
                 page: globalThis.location?.href ?? '',
             });

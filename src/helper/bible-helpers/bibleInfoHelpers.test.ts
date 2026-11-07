@@ -105,7 +105,7 @@ describe('bibleInfoHelpers', () => {
         mocks.checkIsRtlMock.mockReturnValue(true);
         mocks.fromLocaleNumBibleMock.mockImplementation(
             async (_bibleKey: string, localeNum: string) => {
-                if (localeNum === '២') {
+                if (localeNum === 'ii') {
                     return 2;
                 }
                 return null;
@@ -124,7 +124,7 @@ describe('bibleInfoHelpers', () => {
             keyBookMap: {
                 EXO: 'Exodus',
                 GEN: 'Genesis',
-                TI2: '២ Timothy',
+                TI2: 'ii Timothy',
             },
             locale: 'km-KH',
         };

@@ -9,6 +9,8 @@ const { state, mocks } = vi.hoisted(() => ({
         slidesProps: null as any,
         payload: null as any,
         dropKind: 'cc' as 'cc' | 'position',
+        onScreenCheck: null as null | (() => unknown),
+        onScreenKey: null as string | null,
     },
     mocks: {
         showMenu: vi.fn(),
@@ -71,8 +73,12 @@ vi.mock('./presentingFlowItemMenuHelpers', () => ({
 vi.mock('./presentingFlowOnScreenHelpers', () => ({
     checkIsPresentingFlowItemOnScreen: vi.fn(),
     refreshOnScreenAfterPresenting: mocks.refresh,
-    toPresentingFlowItemOnScreenKey: () => 'key',
-    useIsOnScreenChecking: () => false,
+    toPresentingFlowItemOnScreenKey: (one: any) => `on-screen:${one.title}`,
+    useIsOnScreenChecking: (check: () => unknown, key: string) => {
+        state.onScreenCheck = check;
+        state.onScreenKey = key;
+        return false;
+    },
 }));
 vi.mock('./presentingFlowOriginHelpers', () => ({
     notifyPresentingFlowItemOrigin: mocks.origin,
@@ -102,6 +108,7 @@ import {
     UNSUPPORTED_DROP_PAYLOAD,
 } from './presentingFlowHelpers';
 import PresentingFlowItemComp from './PresentingFlowItemComp';
+import { checkIsPresentingFlowItemOnScreen } from './presentingFlowOnScreenHelpers';
 
 function model() {
     return {
@@ -177,6 +184,8 @@ beforeEach(() => {
     state.slidesProps = null;
     state.payload = null;
     state.dropKind = 'cc';
+    state.onScreenCheck = null;
+    state.onScreenKey = null;
     presentingFlowDraggingStore.current = null;
     dragStore.onDropped = null;
 });
@@ -344,6 +353,38 @@ describe('PresentingFlowItemComp interactions', () => {
         expect(mocks.showMenu).toHaveBeenCalledWith(e, [
             { menuElement: 'menu' },
         ]);
+        await act(async () => rendered.root.unmount());
+    });
+
+    test('a line asks whether the element it draws now is on a screen', async () => {
+        vi.mocked(checkIsPresentingFlowItemOnScreen).mockResolvedValue(true);
+        const first = item({ title: 'Welcome' });
+        const rendered = await render(first);
+        const firstCheck = state.onScreenCheck!;
+        expect(state.onScreenKey).toBe('on-screen:Welcome');
+        expect(await firstCheck()).toBe(true);
+        expect(checkIsPresentingFlowItemOnScreen).toHaveBeenLastCalledWith(
+            first,
+        );
+
+        // The same line now holding another element (the sheet re-read): a
+        // new key drops the old answer, and the check asks about the new one.
+        const second = item({ title: 'Offering' });
+        await act(async () =>
+            rendered.root.render(
+                <PresentingFlowItemComp
+                    presentingFlow={rendered.modelValue}
+                    presentingFlowItem={second}
+                    index={1}
+                    itemCount={3}
+                />,
+            ),
+        );
+        expect(state.onScreenKey).toBe('on-screen:Offering');
+        firstCheck();
+        expect(checkIsPresentingFlowItemOnScreen).toHaveBeenLastCalledWith(
+            second,
+        );
         await act(async () => rendered.root.unmount());
     });
 });

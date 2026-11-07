@@ -18,6 +18,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import http from 'node:http';
 
 import { pinCdpPort } from './discovery.mjs';
+import { configureLangPacks } from './langPacks.mjs';
 
 export const DEFAULT_MCP_PORT = 39223;
 const MCP_PATH = '/mcp';
@@ -152,14 +153,23 @@ function sendJson(res, status, body, headers = {}) {
  * `null` until Chromium has reported it). Pinned for the whole process -- the
  * chrome-devtools tools and the `owa_*` ones resolve the app separately, and
  * both must land on THIS instance rather than the newest published one.
+ *
+ * `listLangDirs` answers the folders of the language plugins installed and
+ * turned on in THIS app: a language's dictionary, corpus and manual are read
+ * from there and nowhere else (`langPacks.mjs`), never from a checkout's
+ * source the app happens to sit in.
  */
 export async function startOwaMcpHost({
     port = DEFAULT_MCP_PORT,
     logger = () => {},
     getCdpPort = null,
+    listLangDirs = null,
 } = {}) {
     if (getCdpPort !== null) {
         pinCdpPort(getCdpPort);
+    }
+    if (listLangDirs !== null) {
+        configureLangPacks(listLangDirs);
     }
     // A fresh capability for every app launch. It is published only in the
     // mode-0600 discovery file and handed to the in-app client over IPC; it

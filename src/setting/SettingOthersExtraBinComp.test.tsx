@@ -10,9 +10,17 @@ const h = vi.hoisted(() => ({
     findLocalExtraBinArchiveMock: vi.fn(),
     getExtraBinEntryMock: vi.fn(),
     installExtraBinMock: vi.fn(),
+    importExtraBinFromFileMock: vi.fn(),
+    exportExtraBinArchiveMock: vi.fn(),
     showFileOrDirExplorerMock: vi.fn(),
     unregisterMock: vi.fn(),
     changedListeners: [] as (() => void)[],
+    reportUpdatesMock: vi.fn(),
+}));
+
+// The gear's and the tab's points hear what this panel learned.
+vi.mock('../helper/packageUpdateHelpers', () => ({
+    reportPackageUpdates: h.reportUpdatesMock,
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -58,8 +66,10 @@ vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
 }));
 
 vi.mock('../helper/extra-bin/extraBinInstallHelpers', () => ({
+    exportExtraBinArchive: h.exportExtraBinArchiveMock,
     findLocalExtraBinArchive: h.findLocalExtraBinArchiveMock,
     getExtraBinEntry: h.getExtraBinEntryMock,
+    importExtraBinFromFile: h.importExtraBinFromFileMock,
     installExtraBin: h.installExtraBinMock,
 }));
 
@@ -152,6 +162,9 @@ beforeEach(() => {
     setLocalState({ isInstalled: true, version: '2026.2.1' });
     h.getExtraBinEntryMock.mockResolvedValue(ONLINE_ENTRY);
     h.installExtraBinMock.mockResolvedValue(undefined);
+    h.importExtraBinFromFileMock.mockReset().mockResolvedValue(true);
+    h.exportExtraBinArchiveMock.mockReset().mockResolvedValue('/dl/x');
+    h.reportUpdatesMock.mockClear();
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -164,6 +177,38 @@ afterEach(() => {
 });
 
 describe('SettingOthersExtraBinComp', () => {
+    test('an older pack carries the update point and tells the gear; an update clears it', async () => {
+        setLocalState({ isInstalled: true, version: '2026.1.0' });
+        await renderPanel();
+        expect(
+            getSection().querySelector('.app-update-dot-inline'),
+        ).not.toBeNull();
+        expect(h.reportUpdatesMock).toHaveBeenLastCalledWith({
+            isExtraBinOutdated: true,
+        });
+
+        setLocalState({ isInstalled: true, version: '2026.2.1' });
+        await act(async () => findButton('Update to 2026.2.1')!.click());
+        expect(getSection().querySelector('.app-update-dot-inline')).toBeNull();
+        expect(h.reportUpdatesMock).toHaveBeenLastCalledWith({
+            isExtraBinOutdated: false,
+        });
+    });
+
+    test('offline with a pack installed says nothing to the gear; no pack is no update', async () => {
+        h.getExtraBinEntryMock.mockResolvedValue(null);
+        await renderPanel();
+        expect(h.reportUpdatesMock).not.toHaveBeenCalled();
+
+        act(() => root.unmount());
+        root = createRoot(container);
+        setLocalState({ isInstalled: false, missingNames: ['ffmpeg'] });
+        await renderPanel();
+        expect(h.reportUpdatesMock).toHaveBeenCalledWith({
+            isExtraBinOutdated: false,
+        });
+    });
+
     test('shows nothing until the local state has been read', async () => {
         h.checkIsExtraBinInstalledMock.mockReturnValue(new Promise(() => {}));
         await renderPanel();
@@ -345,6 +390,44 @@ describe('SettingOthersExtraBinComp', () => {
         act(() => root.unmount());
         expect(h.unregisterMock).toHaveBeenCalledOnce();
         root = createRoot(container);
+    });
+
+    test('Import is offered even with nothing installed, and the panel reads again after it', async () => {
+        setLocalState({ isInstalled: false });
+        await renderPanel();
+        // A friend's file is how a computer with no internet gets the pack.
+        expect(findButton('Export')).toBeNull();
+        h.checkIsExtraBinInstalledMock.mockClear();
+
+        await act(async () => findButton('Import')!.click());
+
+        expect(h.importExtraBinFromFileMock).toHaveBeenCalledOnce();
+        expect(h.installExtraBinMock).not.toHaveBeenCalled();
+        expect(h.checkIsExtraBinInstalledMock).toHaveBeenCalled();
+    });
+
+    test('Export is there only when an archive is kept, and copies it out', async () => {
+        setLocalState({
+            isInstalled: true,
+            version: '2026.2.1',
+            archive: 'bin-2026.2.1.tar.gz',
+        });
+        let finish!: (value: string) => void;
+        h.exportExtraBinArchiveMock.mockReturnValue(
+            new Promise((resolve) => {
+                finish = resolve;
+            }),
+        );
+        await renderPanel();
+
+        await act(async () => findButton('Export')!.click());
+
+        expect(h.exportExtraBinArchiveMock).toHaveBeenCalledOnce();
+        // Nothing else runs over the copy.
+        expect(findButton('Reinstall')!.disabled).toBe(true);
+        await act(async () => finish('/dl/bin-2026.2.1-win.tar.gz'));
+        expect(findButton('Reinstall')!.disabled).toBe(false);
+        expect(h.installExtraBinMock).not.toHaveBeenCalled();
     });
 
     test('the location path opens its folder', async () => {

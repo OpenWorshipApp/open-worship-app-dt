@@ -1,6 +1,7 @@
 import {
     HEX_COLOR_BLACK,
     HEX_COLOR_WHITE,
+    checkIsColorDark,
 } from '../others/color/colorValueHelpers';
 import { sanitizeCssValue } from '../helper/sanitizeHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
@@ -19,6 +20,34 @@ import { SCREEN_FONT_FAMILY } from './screenFontFamily';
 // reads `textShadow` alone.
 
 export type BibleTextAlignType = 'start' | 'center' | 'end' | 'justify';
+
+/**
+ * What is BEHIND the words. It is what decides everything else here: words on
+ * a dark picture are light and edged in dark, words on a light one the
+ * reverse, and a look judged against the wrong one tells the operator nothing.
+ * Never stored -- it is read off the colour of the words, so a colour changed
+ * anywhere (the contrast fix a colour background makes) moves it too.
+ */
+export type BibleBackdropType = 'dark' | 'light';
+
+export function toBibleBackdrop(color: string): BibleBackdropType {
+    return checkIsColorDark(color) ? 'light' : 'dark';
+}
+
+/**
+ * The band a selected verse -- or a long text's selected section -- is
+ * marked with, one per backdrop: the screen draws the one for the side the
+ * words are on, so pressing Dark or Light swaps it with them. Faint on
+ * purpose (it lies under every line of what is selected, and at 0.6 alpha
+ * that was a band of colour over the words a room is reading); the Dark one
+ * is the pink the mark always was.
+ */
+export const DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP: Readonly<
+    Record<BibleBackdropType, string>
+> = {
+    dark: '#FF009D33',
+    light: '#006EFF33',
+};
 
 /**
  * Every length is in `em`, so a look stays the same look when the font size
@@ -48,6 +77,10 @@ export type BibleTextStyleViewType = {
     lineHeight: number;
     letterSpacing: number;
     textAlign: BibleTextAlignType;
+    /** The selection band over a dark backdrop (light words). */
+    highlightColorDark: string;
+    /** The selection band over a light backdrop (dark words). */
+    highlightColorLight: string;
 };
 
 export const DEFAULT_BIBLE_TEXT_FONT_SIZE = 65;
@@ -98,10 +131,14 @@ function clampNumber(value: unknown, min: number, max: number, fallback = 0) {
     return Math.min(max, Math.max(min, value));
 }
 
-function toEffectColor(value: unknown) {
+function toHexColor(value: unknown, fallback: string) {
     return typeof value === 'string' && HEX_COLOR_PATTERN.test(value)
         ? value
-        : HEX_COLOR_BLACK;
+        : fallback;
+}
+
+function toEffectColor(value: unknown) {
+    return toHexColor(value, HEX_COLOR_BLACK);
 }
 
 export function genBibleTextEffectDefault(): BibleTextEffectType {
@@ -279,7 +316,43 @@ export function toBibleTextStyleView(
         textAlign: TEXT_ALIGN_LIST.includes(textStyle.textAlign)
             ? textStyle.textAlign
             : 'start',
+        highlightColorDark: toHexColor(
+            textStyle.highlightColorDark,
+            DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.dark,
+        ),
+        highlightColorLight: toHexColor(
+            textStyle.highlightColorLight,
+            DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.light,
+        ),
     };
+}
+
+/** The selection band the screen draws now: the one for the words' side. */
+export function readBibleTextHighlightColor(view: BibleTextStyleViewType) {
+    return toBibleBackdrop(view.color) === 'light'
+        ? view.highlightColorLight
+        : view.highlightColorDark;
+}
+
+/** The band itself: the colour across the lower half of each line. */
+export function genBibleTextHighlightBackground(color: string) {
+    return `linear-gradient(transparent, transparent, ${color}, transparent)`;
+}
+
+/** The band nobody chose, for the side words of this colour are on. */
+export function genBibleTextDefaultHighlightColor(color: string) {
+    return DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP[toBibleBackdrop(color)];
+}
+
+/** The picker writes lowercase hex; the defaults are upper. */
+export function checkIsDefaultBibleHighlightColor(
+    highlightColor: string,
+    backdrop: BibleBackdropType,
+) {
+    return (
+        highlightColor.toUpperCase() ===
+        DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP[backdrop]
+    );
 }
 
 /**
@@ -305,6 +378,18 @@ export function genBibleTextStylePatch(
                 : view.lineHeight,
         letterSpacing: view.letterSpacing || undefined,
         textAlign: view.textAlign === 'start' ? undefined : view.textAlign,
+        highlightColorDark: checkIsDefaultBibleHighlightColor(
+            view.highlightColorDark,
+            'dark',
+        )
+            ? undefined
+            : view.highlightColorDark,
+        highlightColorLight: checkIsDefaultBibleHighlightColor(
+            view.highlightColorLight,
+            'light',
+        )
+            ? undefined
+            : view.highlightColorLight,
     };
 }
 
@@ -315,6 +400,10 @@ export function genBibleTextStylePatch(
  * rule and only when they are set: unset, the screen sheet's `1.5em` and each
  * column's own reading direction stand exactly as before. `text-align` is
  * `!important` because a right-to-left column sets its side inline.
+ *
+ * The selection band rides inside it too, the one for the words' side
+ * (`readBibleTextHighlightColor`), as `& .highlight.selected` -- only when it
+ * is not that side's default, which the screen sheet draws itself.
  *
  * A chosen family is written twice, for two readers: the declaration for
  * whatever inherits the row's font, the variable for a verse that names its
@@ -353,6 +442,21 @@ export function genBibleTextViewCss(view: BibleTextStyleViewType) {
     }
     if (cellDeclarations.length > 0) {
         declarations.push(`& td { ${cellDeclarations.join(' ')} }`);
+    }
+    // Only a band somebody chose: the default one for the words' side is the
+    // screen sheet's own (`genBibleTextDefaultHighlightCss`), so an untouched
+    // style stays the three declarations it always was. Last, like the cells.
+    const highlightColor = readBibleTextHighlightColor(view);
+    if (
+        !checkIsDefaultBibleHighlightColor(
+            highlightColor,
+            toBibleBackdrop(view.color),
+        )
+    ) {
+        declarations.push(
+            '& .highlight.selected { background: ' +
+                `${genBibleTextHighlightBackground(highlightColor)}; }`,
+        );
     }
     return declarations.join('\n');
 }

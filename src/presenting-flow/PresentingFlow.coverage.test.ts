@@ -6,6 +6,8 @@ const { state, mocks } = vi.hoisted(() => ({
         instances: new Map<string, any>(),
         nextDropped: null as any,
         throwDropped: null as Error | null,
+        throwActionId: null as Error | null,
+        throwReadPaths: new Set<string>(),
         uuidIndex: 0,
     },
     mocks: {
@@ -22,6 +24,9 @@ vi.mock('../helper/AppEditableDocumentSourceAbs', () => ({
             this.filePath = filePath;
         }
         async getJsonData() {
+            if (state.throwReadPaths.has(this.filePath)) {
+                throw new Error('read failed');
+            }
             const value = state.documents.get(this.filePath);
             return value === null || value === undefined
                 ? (value ?? null)
@@ -102,6 +107,7 @@ vi.mock('./PresentingFlowItem', () => ({
             arming: Record<string, unknown> = {},
             screenIds: number[] = [],
         ) {
+            if (state.throwActionId !== null) throw state.throwActionId;
             return {
                 type: 'action',
                 uuid: `generated-${++state.uuidIndex}`,
@@ -152,6 +158,8 @@ beforeEach(() => {
     state.instances.clear();
     state.nextDropped = null;
     state.throwDropped = null;
+    state.throwActionId = null;
+    state.throwReadPaths.clear();
     state.uuidIndex = 0;
 });
 
@@ -429,5 +437,236 @@ describe('PresentingFlow mutations', () => {
         await expect(
             flow.addItemCcFromItemIndex(0, null, '/other.owapf', 99),
         ).resolves.toBe(false);
+    });
+});
+
+describe('PresentingFlow edge and failure paths', () => {
+    test('announces a damaged entry again once its minute is over, as text even when unserialisable', async () => {
+        vi.useFakeTimers();
+        try {
+            vi.setSystemTime(new Date('2030-01-01T00:00:00Z'));
+            state.documents.set('/expire.owapf', {
+                metadata: {},
+                items: [{ type: 'bad' }],
+            });
+            const flow = new PresentingFlow('/expire.owapf');
+            await flow.getItems();
+            vi.setSystemTime(new Date('2030-01-01T00:00:30Z'));
+            await flow.getItems();
+            expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
+            // Past the minute the notice is pruned, so it is said once more.
+            vi.setSystemTime(new Date('2030-01-01T00:01:31Z'));
+            await flow.getItems();
+            expect(mocks.showSimpleToast).toHaveBeenCalledTimes(2);
+            expect(mocks.appError).toHaveBeenCalledTimes(2);
+
+            // JSON cannot carry a BigInt: the entry is still logged, as text.
+            state.documents.set('/bigint.owapf', {
+                metadata: {},
+                items: [{ type: 'bad', size: 1n }],
+            });
+            const items = await new PresentingFlow('/bigint.owapf').getItems();
+            expect(items?.[0].isError).toBe(true);
+            expect(mocks.appError).toHaveBeenLastCalledWith(
+                expect.any(Error),
+                'in /bigint.owapf:',
+                '[object Object]',
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('answers null or false, writing nothing, when the document is gone', async () => {
+        const flow = new PresentingFlow('/missing.owapf');
+        await expect(flow.getItems()).resolves.toBeNull();
+        await expect(flow.clearItems()).resolves.toBe(false);
+        await expect(flow.removeItemAtIndex(0)).resolves.toBe(false);
+        expect(state.documents.has('/missing.owapf')).toBe(false);
+    });
+
+    test('refuses a new action whose shortcut is taken and takes a free one', async () => {
+        state.documents.set('/flow.owapf', {
+            metadata: {},
+            items: [{ type: 'action', uuid: 'one', actionKey: 'Ctrl+A' }],
+        });
+        const flow = new PresentingFlow('/flow.owapf');
+
+        await expect(
+            flow.addActionItem('keyboard-event' as any, {
+                actionKey: 'Ctrl+A',
+            }),
+        ).resolves.toBe(false);
+        expect(itemsOf()).toHaveLength(1);
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Keyboard Event',
+            'This shortcut is already used in this presenting flow: Ctrl+A',
+        );
+
+        await expect(
+            flow.addActionItem('keyboard-event' as any, {
+                actionKey: 'Ctrl+B',
+            }),
+        ).resolves.toBe(true);
+        expect(itemsOf().map((itemJson: any) => itemJson.actionKey)).toEqual([
+            'Ctrl+A',
+            'Ctrl+B',
+        ]);
+        // Re-arming a line with the key it already holds is not a clash.
+        await expect(
+            flow.setItemActionArming(0, { actionKey: 'Ctrl+A' }),
+        ).resolves.toBe(true);
+        await expect(
+            flow.setItemActionArming(9, { actionNumber: 3 }),
+        ).resolves.toBe(false);
+        expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
+    });
+
+    test('reports an action that cannot be built instead of throwing', async () => {
+        state.documents.set('/flow.owapf', { metadata: {}, items: [] });
+        state.throwActionId = new Error('unknown action');
+        const flow = new PresentingFlow('/flow.owapf');
+        await expect(flow.addActionItem('nope' as any)).resolves.toBe(false);
+        expect(mocks.handleError).toHaveBeenCalledWith(state.throwActionId);
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Adding Presenting Flow Action',
+            'unknown action',
+        );
+        expect(itemsOf()).toEqual([]);
+    });
+
+    test('removing a line drops only the followers naming it, and the emptied lists with them', async () => {
+        state.documents.set('/flow.owapf', {
+            metadata: {},
+            items: [
+                { type: 'slide' },
+                { type: 'slide', uuid: 'source' },
+                {
+                    type: 'slide',
+                    uuid: 'host',
+                    ccItems: [{ uuid: 'source' }],
+                    slideCcItems: { 3: [{ uuid: 'source' }] },
+                },
+                { type: 'slide', uuid: 'bystander', ccItems: [{ uuid: 'x' }] },
+            ],
+        });
+        const flow = new PresentingFlow('/flow.owapf');
+
+        // A line with no identity has no followers to drop.
+        await expect(flow.removeItemAtIndex(0)).resolves.toBe(true);
+        expect(itemsOf()[1]).toMatchObject({ ccItems: [{ uuid: 'source' }] });
+
+        await expect(flow.removeItemAtIndex(0)).resolves.toBe(true);
+        expect(itemsOf()).toEqual([
+            { type: 'slide', uuid: 'host' },
+            { type: 'slide', uuid: 'bystander', ccItems: [{ uuid: 'x' }] },
+        ]);
+    });
+
+    test('a slide CC list emptied away takes its map along, and a bad CC index is refused', async () => {
+        state.documents.set('/flow.owapf', {
+            metadata: {},
+            items: [
+                {
+                    type: 'slide',
+                    uuid: 'host',
+                    slideCcItems: { 3: [{ uuid: 'source' }] },
+                },
+                { type: 'slide', uuid: 'source' },
+            ],
+        });
+        const flow = new PresentingFlow('/flow.owapf');
+
+        await expect(flow.setItemCcItemScreenIds(0, 3, 5, [1])).resolves.toBe(
+            false,
+        );
+        expect(itemsOf()[0].slideCcItems).toEqual({ 3: [{ uuid: 'source' }] });
+        await expect(flow.removeItemCcItemAtIndex(0, 3, 0)).resolves.toBe(true);
+        expect(itemsOf()[0]).toEqual({ type: 'slide', uuid: 'host' });
+    });
+
+    test('reports a dropped CC payload that cannot be read', async () => {
+        state.documents.set('/flow.owapf', {
+            metadata: {},
+            items: [{ type: 'slide', uuid: 'host' }],
+        });
+        state.throwDropped = new Error('drop failed');
+        const flow = new PresentingFlow('/flow.owapf');
+        await expect(
+            flow.addItemCcFromDroppedData(0, null, {} as any, {} as any),
+        ).resolves.toBe(false);
+        expect(mocks.handleError).toHaveBeenCalledWith(state.throwDropped);
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Adding CC Element',
+            'drop failed',
+        );
+        expect(itemsOf()).toHaveLength(1);
+    });
+
+    test('a row of the same sheet is followed where it is, by uuid or by position', async () => {
+        state.documents.set('/flow.owapf', {
+            metadata: {},
+            items: [
+                { type: 'slide', uuid: 'host' },
+                { type: 'slide', uuid: 'listed' },
+                { type: 'slide' },
+            ],
+        });
+        const flow = new PresentingFlow('/flow.owapf');
+
+        await expect(
+            flow.addItemCcFromItemIndex(0, null, '/flow.owapf', 1),
+        ).resolves.toBe(true);
+        expect(itemsOf()).toHaveLength(3);
+        expect(itemsOf()[0].ccItems).toEqual([{ uuid: 'listed' }]);
+
+        // No uuid to find it by: found at its position and given one, so the
+        // CC and the line it names agree — and nothing is appended.
+        await expect(
+            flow.addItemCcFromItemIndex(0, null, '/flow.owapf', 2),
+        ).resolves.toBe(true);
+        expect(itemsOf()).toHaveLength(3);
+        expect(itemsOf()[2]).toEqual({ type: 'slide', uuid: 'generated-1' });
+        expect(itemsOf()[0].ccItems).toEqual([
+            { uuid: 'listed' },
+            { uuid: 'generated-1' },
+        ]);
+    });
+
+    test('a dropped payload with no uuid is given one before it is followed', async () => {
+        state.documents.set('/flow.owapf', {
+            metadata: {},
+            items: [{ type: 'slide', uuid: 'host' }],
+        });
+        state.nextDropped = { type: 'background' };
+        const flow = new PresentingFlow('/flow.owapf');
+        await expect(
+            flow.addItemCcFromDroppedData(0, null, {} as any, {} as any),
+        ).resolves.toBe(true);
+        expect(itemsOf()[1]).toEqual({
+            type: 'background',
+            uuid: 'generated-1',
+        });
+        expect(itemsOf()[0].ccItems).toEqual([{ uuid: 'generated-1' }]);
+    });
+
+    test('reports a source sheet that cannot be read', async () => {
+        state.documents.set('/flow.owapf', {
+            metadata: {},
+            items: [{ type: 'slide', uuid: 'host' }],
+        });
+        state.throwReadPaths.add('/broken.owapf');
+        const flow = new PresentingFlow('/flow.owapf');
+        await expect(
+            flow.addItemCcFromItemIndex(0, null, '/broken.owapf', 0),
+        ).resolves.toBe(false);
+        expect(mocks.handleError).toHaveBeenCalledWith(
+            expect.objectContaining({ message: 'read failed' }),
+        );
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Adding CC Element',
+            'read failed',
+        );
+        expect(itemsOf()).toEqual([{ type: 'slide', uuid: 'host' }]);
     });
 });

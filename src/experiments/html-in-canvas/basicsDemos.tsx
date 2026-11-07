@@ -29,6 +29,7 @@ import {
     CANVAS_STYLE,
     SlideComp,
 } from './htmlInCanvasUiComps';
+import { SCRIPT_SAMPLES } from './scriptSamples';
 
 export function BasicDrawComp() {
     const [canvasRef, setCanvasRef] = useHicCanvas();
@@ -91,7 +92,7 @@ export function BasicDrawComp() {
                 <SlideComp
                     elementRef={elementRef}
                     heading="Amazing grace"
-                    lines={['how sweet the sound', 'ព្រះគុណដ៏អស្ចារ្យ']}
+                    lines={['how sweet the sound', SCRIPT_SAMPLES.stacked]}
                 />
             </canvas>
             <div

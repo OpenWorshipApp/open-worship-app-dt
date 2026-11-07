@@ -1,10 +1,8 @@
 // @vitest-environment jsdom
 
-import { readFileSync } from 'node:fs';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { extractDictionary } from '../../../tools/owa-devtools-mcp/tran.mjs';
 
 const { state, mocks } = vi.hoisted(() => ({
     state: {
@@ -15,6 +13,7 @@ const { state, mocks } = vi.hoisted(() => ({
         dictionaries: [] as Record<string, string>[],
         languageData: null as any,
         numbersChanged: null as null | ((values: string[]) => void),
+        options: null as any,
     },
     mocks: {
         dirty: vi.fn(),
@@ -43,8 +42,9 @@ vi.mock('../../lang/langHelpers', () => ({
     },
 }));
 vi.mock('../../helper/monacoEditorHelpers', () => ({
-    useInitMonacoEditor: ({ onContentChange }: any) => {
+    useInitMonacoEditor: ({ onContentChange, options }: any) => {
         state.onChange = onContentChange;
+        state.options = options;
         return state.store;
     },
 }));
@@ -100,9 +100,18 @@ import BibleXMLEditorComp, {
     addMonacoBibleInfoActions,
     genBibleBooksMapXMLInput,
 } from './BibleXMLEditorComp';
+import { readSourceDictionary } from '../../../tools/owa-devtools-mcp/langPacks.mjs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../../test-setup/langPackageDirs';
 
-const dictionaries = ['km', 'fr'].map((code) =>
-    extractDictionary(readFileSync(`src/lang/data/${code}/index.ts`, 'utf8')),
+// Every language package but English, found by its folder: its real
+// dictionary.
+const dictionaries = listLangPackageCodes({ isEnglishIncluded: false }).map(
+    (code) => {
+        return readSourceDictionary(toLangPackageDir(code));
+    },
 );
 const uri = { toString: () => 'bible://KJV' } as any;
 let container: HTMLDivElement;
@@ -156,6 +165,7 @@ beforeEach(() => {
     state.onChange = null;
     state.languageData = null;
     state.numbersChanged = null;
+    state.options = null;
     state.editorStore = {
         systemContent: '',
         editorInstance: { getValue: () => state.value },
@@ -281,6 +291,22 @@ describe('Bible XML JSON editor', () => {
         expect(button('Reset').disabled).toBe(true);
     });
 
+    test('a Save that finds the editor back at its baseline, or invalid, saves nothing', async () => {
+        await render();
+        const baseline = state.value;
+        await edit('{"a":2}');
+        await advance();
+        expect(button('Save').disabled).toBe(false);
+        // The text moved on before its change event arrived.
+        state.value = baseline;
+        await act(async () => button('Save').click());
+        state.value = '{"a":"two"}';
+        await act(async () => button('Save').click());
+        expect(mocks.save).not.toHaveBeenCalled();
+        expect(state.editorStore.systemContent).toBe(baseline);
+        expect(container.textContent).toContain('Unsaved changes');
+    });
+
     test('an absent Bible removes the editor and unmount clears its dirty flag', async () => {
         await render(null);
         expect(container.querySelector('.card')).toBeNull();
@@ -348,6 +374,94 @@ describe('Bible book names editor and Monaco actions', () => {
         expect(state.value).toBe('Genesis\nExodus');
     });
 
+    test('numbers each line by the book it names in the model order', async () => {
+        await act(async () =>
+            root.render(
+                genBibleBooksMapXMLInput(['First'], 'en-US', 'KJV', vi.fn()),
+            ),
+        );
+        const { lineNumbers } = state.options;
+        expect(lineNumbers(1)).toBe('Genesis (GEN) 01');
+        // Past the last book of the model there is only the number.
+        expect(lineNumbers(2)).toBe('02');
+        expect(lineNumbers(12)).toBe('12');
+    });
+
+    test('each edit of the names is reported line by line', async () => {
+        const changed = vi.fn();
+        await act(async () =>
+            root.render(
+                genBibleBooksMapXMLInput(['First'], 'en-US', 'KJV', changed),
+            ),
+        );
+        await act(async () => state.onChange?.('First', 'Genesis\nExodus'));
+        expect(changed).toHaveBeenCalledWith(['Genesis', 'Exodus']);
+    });
+
+    describe('parsing pasted markup into one name a line', () => {
+        // jsdom has no `innerText`; for a parsed document it is the text.
+        beforeEach(() => {
+            Object.defineProperty(HTMLElement.prototype, 'innerText', {
+                configurable: true,
+                get() {
+                    return this.textContent;
+                },
+            });
+        });
+        afterEach(() => {
+            delete (HTMLElement.prototype as any).innerText;
+        });
+
+        async function parse(markup: string, changed = vi.fn()) {
+            await act(async () =>
+                root.render(
+                    genBibleBooksMapXMLInput(['Old'], 'km-KH', 'KJV', changed),
+                ),
+            );
+            state.value = markup;
+            await act(async () =>
+                button('Parse Markup String (HTML|XML)').click(),
+            );
+            return changed;
+        }
+
+        test('a list of elements becomes one trimmed name per line', async () => {
+            const changed = await parse(
+                '<ul><li>Genesis</li>  <li>  Exodus</li>\n\n<li>1 Samuel</li></ul>',
+            );
+            expect(changed).toHaveBeenCalledWith([
+                'Genesis',
+                'Exodus',
+                '1 Samuel',
+            ]);
+            expect(state.editorStore.replaceValue).toHaveBeenLastCalledWith(
+                'Genesis\nExodus\n1 Samuel',
+            );
+        });
+
+        // Found by UT-83 (2026-11-03): only the space AFTER a line break
+        // went, so `<li>Exodus </li>` was kept as "Exodus " -- a book name
+        // with a space nobody can see at its end.
+        test('a space before a closing tag is trimmed too', async () => {
+            const changed = await parse(
+                '<li>Genesis</li><li>Exodus </li><li>1 Samuel  </li>',
+            );
+            expect(changed).toHaveBeenCalledWith([
+                'Genesis',
+                'Exodus',
+                '1 Samuel',
+            ]);
+        });
+
+        test("the names are cleaned by the Bible locale's own rules", async () => {
+            state.languageData = {
+                sanitizeText: (text: string) => text.replaceAll('​', ''),
+            };
+            const changed = await parse('<p>Gene​sis</p><p>Exo​dus</p>');
+            expect(changed).toHaveBeenCalledWith(['Genesis', 'Exodus']);
+        });
+    });
+
     test('does not parse plain text as markup', async () => {
         state.languageData = { sanitizeText: vi.fn() };
         const changed = vi.fn();
@@ -386,12 +500,12 @@ describe('Bible book names editor and Monaco actions', () => {
             'edit-books-map',
         ]);
         mocks.input.mockImplementationOnce(async () => {
-            state.numbersChanged?.(['០', '១']);
+            state.numbersChanged?.(['０', '１']);
             return true;
         });
         await actions.get('edit-numbers-map').run();
         expect(setInfo).toHaveBeenCalledWith({
-            numbersMap: { '0': '០', '1': '១' },
+            numbersMap: { '0': '０', '1': '１' },
         });
         await actions.get('choose-locale').run();
         const locales = mocks.menu.mock.calls[0][1];

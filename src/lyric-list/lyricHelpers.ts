@@ -15,6 +15,9 @@ import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract'
 import { checkIsDarkMode } from '../others/themeHelpers';
 import { installOpenLyricPrintPopupHandler } from './lyricPrintHelpers';
 import { OpenLyricPluginPlayer } from 'open-lyric-plugin-player';
+// Already in this module's graph (the player plugin imports it); handed to the
+// language plugins so they register into this registry.
+import * as openLyricInternal from 'open-lyric/internal';
 
 interface ThemeTargetInf {
     get theme(): OpenLyricTheme;
@@ -115,6 +118,7 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
         for (const langData of langDataList) {
             langData.initOpenLyricPlugins?.({
                 openLyric: openLyricPreviewer,
+                openLyricInternal,
                 genOpenLyricFontFaces,
             });
         }

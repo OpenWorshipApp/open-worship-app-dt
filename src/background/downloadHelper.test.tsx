@@ -182,6 +182,38 @@ describe('toDownloadFailureReason', () => {
             'Download failed',
         );
     });
+
+    test('names the one fix when the refusal reads like media tools too old for the site', () => {
+        const forbidden = new Error(
+            [
+                'Download failed: ',
+                'ERROR: [youtube] abc: HTTP Error 403: Forbidden',
+            ].join('\n'),
+        );
+        expect(
+            toDownloadFailureMessage(
+                'Error occurred during downloading video',
+                forbidden,
+            ),
+        ).toBe(
+            'Error occurred during downloading video: HTTP Error 403: Forbidden.' +
+                ' The media tools may be out of date' +
+                ' (Extra Binaries → Reinstall)',
+        );
+        expect(
+            toDownloadFailureMessage(
+                'Download failed',
+                new Error('ERROR: Requested format is not available'),
+            ),
+        ).toContain('(Extra Binaries → Reinstall)');
+        // Somebody else's outage gets no such advice.
+        expect(
+            toDownloadFailureMessage(
+                'Download failed',
+                new Error('ERROR: HTTP Error 404: Not Found'),
+            ),
+        ).toBe('Download failed: HTTP Error 404: Not Found');
+    });
 });
 
 describe('downloadHelper', () => {

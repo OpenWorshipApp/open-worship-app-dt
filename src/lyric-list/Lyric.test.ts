@@ -132,6 +132,34 @@ describe('Lyric', () => {
         });
     });
 
+    // The import paths (SongSelect, public domain songs) create the file WITH
+    // its words: they must land on disk as given, never as the example sheet,
+    // and never through the editing history (which would leave it unsaved).
+    test('a lyric created with content is written with that content', async () => {
+        const created = await Lyric.createWithContent(
+            '/docs',
+            'Amazing Grace',
+            'v1: Amazing grace',
+        );
+        expect(created).toEqual(
+            expect.objectContaining({ filePath: '/docs/new.lyric' }),
+        );
+        expect(createNewFileDetailMock).toHaveBeenCalledWith(
+            '/docs',
+            'Amazing Grace',
+            expect.any(String),
+            'lyric',
+        );
+        const [, , dataText] = createNewFileDetailMock.mock.calls[0];
+        const jsonData = JSON.parse(dataText);
+        expect(jsonData.content).toBe('v1: Amazing grace');
+        expect(jsonData.metadata).toEqual({
+            ...Lyric.getDefaultContentJsonData().metadata,
+            initDate: expect.any(String),
+        });
+        expect(historyManagers.size).toBe(0);
+    });
+
     test('reads and writes the lyric body through the history', async () => {
         const filePath = '/docs/song.lyric';
         const lyric = Lyric.getInstance(filePath);

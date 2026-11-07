@@ -225,6 +225,7 @@ vi.mock('./GraphToolbarComp', () => ({
 
 import GraphSurfaceComp from './GraphSurfaceComp';
 import { getGraphEngine, useGraphView } from './graphViewStore';
+import { GRAPH_NODE_LIMIT } from './core';
 import type { GraphSourceType } from './core';
 
 const source: GraphSourceType<null> = {
@@ -668,5 +669,357 @@ describe('GraphSurfaceComp actions', () => {
         act(() =>
             viewport.dispatchEvent(new Event('touchend', { bubbles: true })),
         );
+    });
+});
+
+describe('GraphSurfaceComp edge cases', () => {
+    const friendOf = (recordId: string) => {
+        return {
+            kind: 'name',
+            recordId,
+            name: recordId.toUpperCase(),
+            relation: 'friend',
+        };
+    };
+
+    function keyDown(target: EventTarget, init: KeyboardEventInit) {
+        const event = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            ...init,
+        });
+        act(() => {
+            target.dispatchEvent(event);
+        });
+        return event;
+    }
+
+    function getViewport() {
+        return host.querySelector<HTMLElement>('.graph-view__viewport')!;
+    }
+
+    function remount() {
+        act(() => root.unmount());
+        root = createRoot(host);
+        act(() => root.render(<GraphHost />));
+    }
+
+    async function settle() {
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+    }
+
+    function addFriendOfRoot() {
+        h.neighbours = [friendOf('friend')];
+        vi.useFakeTimers();
+        press('Expand Root');
+        act(() => vi.runAllTimers());
+        selectMenu('friend');
+        return graph().nodeList.find((node) => node.name === 'FRIEND')!;
+    }
+
+    test('keys that are not undo or redo, and keys typed into text, leave the graph alone', () => {
+        const rootKey = graph().rootKey;
+        act(() => getGraphEngine().moveNode(graphKey, rootKey, 50, 0));
+        const viewport = getViewport();
+        const plain = keyDown(viewport, { key: 'z' });
+        expect(plain.defaultPrevented).toBe(false);
+        const other = keyDown(viewport, { key: 'a', ctrlKey: true });
+        expect(other.defaultPrevented).toBe(false);
+        const textarea = document.createElement('textarea');
+        viewport.appendChild(textarea);
+        const typed = keyDown(textarea, { key: 'z', ctrlKey: true });
+        expect(typed.defaultPrevented).toBe(false);
+        textarea.remove();
+        expect(graph().nodeList[0].x).toBe(50);
+        // An SVG target is not a text box: the graph takes the key.
+        const svg = host.querySelector('.graph-view__edges')!;
+        const undo = keyDown(svg, { key: 'z', metaKey: true });
+        expect(undo.defaultPrevented).toBe(true);
+        expect(graph().nodeList[0].x).toBe(0);
+    });
+
+    test('a key on the page body only steps the graph when it is a history key', () => {
+        const rootKey = graph().rootKey;
+        act(() => getGraphEngine().moveNode(graphKey, rootKey, 70, 0));
+        (document.activeElement as HTMLElement | null)?.blur?.();
+        // Working in this panel, with focus fallen to the body.
+        act(() => {
+            getViewport().dispatchEvent(
+                new FocusEvent('focusin', { bubbles: true }),
+            );
+        });
+        const other = keyDown(document.body, { key: 'x', ctrlKey: true });
+        expect(other.defaultPrevented).toBe(false);
+        expect(graph().nodeList[0].x).toBe(70);
+        const undo = keyDown(document.body, { key: 'z', ctrlKey: true });
+        expect(undo.defaultPrevented).toBe(true);
+        expect(graph().nodeList[0].x).toBe(0);
+        expect(document.activeElement).toBe(getViewport());
+    });
+
+    test('a drag redraws only its own lines, and skips one that is hidden', () => {
+        const engine = getGraphEngine();
+        act(() => {
+            engine.addNeighbours(graphKey, {
+                originKey: 'name:root',
+                neighbourList: [friendOf('a')],
+                relationDefList: source.relationDefList,
+            });
+            engine.addNeighbours(graphKey, {
+                originKey: 'name:a',
+                neighbourList: [friendOf('b')],
+                relationDefList: source.relationDefList,
+            });
+        });
+        const [rootEdge, farEdge] = graph().edgeList;
+        expect(farEdge).toMatchObject({ fromKey: 'name:a', toKey: 'name:b' });
+        const pathOf = (key: string) => {
+            return host
+                .querySelector(`[data-edge-key="${key}"]`)!
+                .getAttribute('d');
+        };
+        const rootBox = host.querySelector('[data-node-key="name:root"]')!;
+        pointer(rootBox, 'pointerdown', 10, 10);
+        pointer(getViewport(), 'pointermove', 20, 10);
+        pointer(getViewport(), 'pointermove', 30, 10);
+        // Two moves before a paint still ask for ONE frame.
+        expect(h.frames.size).toBe(1);
+        flushFrames();
+        expect(pathOf(rootEdge.key)).not.toBe('initial-path');
+        expect(pathOf(farEdge.key)).toBe('initial-path');
+        pointer(getViewport(), 'pointerup', 30, 10);
+        expect(graph().nodeList[0]).toMatchObject({ x: 20, y: 0 });
+
+        act(() => engine.toggleRelationHidden(graphKey, 'friend'));
+        expect(host.querySelector(`[data-edge-key="${rootEdge.key}"]`)).toBe(
+            null,
+        );
+        pointer(rootBox, 'pointerdown', 10, 10);
+        pointer(getViewport(), 'pointermove', 10, 40);
+        flushFrames();
+        pointer(getViewport(), 'pointerup', 10, 40);
+        expect(graph().nodeList[0]).toMatchObject({ x: 20, y: 30 });
+    });
+
+    test('letting go before the frame paints cancels the frame and still commits', () => {
+        const rootBox = host.querySelector('.graph-view__node')!;
+        pointer(rootBox, 'pointerdown', 0, 0);
+        pointer(getViewport(), 'pointermove', 15, 25);
+        expect(h.frames.size).toBe(1);
+        pointer(getViewport(), 'pointerup', 15, 25);
+        expect(h.frames.size).toBe(0);
+        expect(graph().nodeList[0]).toMatchObject({ x: 15, y: 25 });
+    });
+
+    test('unmounting cancels a pending drag frame and a pending wheel frame', () => {
+        const rootBox = host.querySelector('.graph-view__node')!;
+        pointer(rootBox, 'pointerdown', 0, 0);
+        pointer(getViewport(), 'pointermove', 15, 25);
+        act(() => {
+            getViewport().dispatchEvent(
+                new WheelEvent('wheel', { deltaY: -100, bubbles: true }),
+            );
+        });
+        expect(h.frames.size).toBe(2);
+        act(() => root.unmount());
+        expect(h.frames.size).toBe(0);
+        root = createRoot(host);
+    });
+
+    test('a touch move that is not a started pinch does not zoom', () => {
+        const before = graph().zoomPercent;
+        const touch = (type: string, touchList: object[]) => {
+            const event = new Event(type, { bubbles: true, cancelable: true });
+            Object.defineProperty(event, 'touches', { value: touchList });
+            act(() => getViewport().dispatchEvent(event));
+            return event;
+        };
+        const two = [
+            { clientX: 0, clientY: 0 },
+            { clientX: 80, clientY: 0 },
+        ];
+        // Two fingers, but no touchstart measured where the pinch began.
+        expect(touch('touchmove', two).defaultPrevented).toBe(false);
+        touch('touchstart', two);
+        expect(touch('touchmove', [two[0]]).defaultPrevented).toBe(false);
+        expect(graph().zoomPercent).toBe(before);
+    });
+
+    test('a measured viewport centres the graph once, not as an undo step', () => {
+        const sizeOf = (size: number) => {
+            return {
+                configurable: true,
+                get(this: HTMLElement) {
+                    return this.classList.contains('graph-view__viewport')
+                        ? size
+                        : 0;
+                },
+            };
+        };
+        Object.defineProperty(
+            HTMLElement.prototype,
+            'clientWidth',
+            sizeOf(800),
+        );
+        Object.defineProperty(
+            HTMLElement.prototype,
+            'clientHeight',
+            sizeOf(600),
+        );
+        try {
+            remount();
+        } finally {
+            delete (HTMLElement.prototype as any).clientWidth;
+            delete (HTMLElement.prototype as any).clientHeight;
+        }
+        expect(graph()).toMatchObject({ panX: 400, panY: 300 });
+        expect(getGraphEngine().canUndo(graphKey)).toBe(false);
+    });
+
+    test('a large "All" asks first, then fills up to the node limit and says so', async () => {
+        h.neighbours = Array.from({ length: 130 }, (_unused, index) => {
+            return friendOf(`n${index}`);
+        });
+        vi.useFakeTimers();
+        press('Expand Root');
+        act(() => vi.runAllTimers());
+        expect(h.menu[0].menuElement).toBe('All (130)');
+        await act(async () => {
+            h.menu[0].onSelect();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+        expect(graph().nodeList).toHaveLength(GRAPH_NODE_LIMIT);
+        expect(h.toasts).toEqual([
+            ['Graph Preview', 'Graph node limit reached'],
+        ]);
+        expect(h.fits).toHaveLength(1);
+    });
+
+    test('a small "All" adds every neighbour straight away', () => {
+        h.neighbours = [friendOf('a'), friendOf('b')];
+        vi.useFakeTimers();
+        press('Expand Root');
+        act(() => vi.runAllTimers());
+        selectMenu('all');
+        expect(
+            graph()
+                .nodeList.map((node) => node.name)
+                .sort(),
+        ).toEqual(['A', 'B', 'Root']);
+        expect(h.toasts).toEqual([]);
+    });
+
+    test('a menu left open on a box that is gone does nothing', () => {
+        h.verses = ['GEN 1:1'];
+        const friend = addFriendOfRoot();
+        press('Menu FRIEND');
+        const staleMenu = h.menu;
+        expect(staleMenu.map((item) => item.id)).toEqual(
+            expect.arrayContaining(['detail', 'verses', 'expand']),
+        );
+        act(() => getGraphEngine().removeNode(graphKey, friend.key));
+        const detailCount = h.details.length;
+        const readCount = h.neighbourReads;
+        for (const id of ['detail', 'verses', 'expand']) {
+            const item = staleMenu.find((entry) => entry.id === id);
+            act(() => item.onSelect());
+        }
+        act(() => vi.runAllTimers());
+        expect(h.details).toHaveLength(detailCount);
+        expect(h.menu).toBe(staleMenu);
+        expect(h.neighbourReads).toBe(readCount);
+    });
+
+    test('a menu action after the panel closed fits nothing', () => {
+        addFriendOfRoot();
+        press('Menu FRIEND');
+        const resetItem = h.menu.find((entry) => entry.id === 'use-as-root');
+        const fitCount = h.fits.length;
+        act(() => getGraphEngine().close(graphKey));
+        expect(host.querySelector('.graph-view')).toBeNull();
+        expect(() => act(() => resetItem.onSelect())).not.toThrow();
+        expect(h.fits).toHaveLength(fitCount);
+    });
+
+    test('verse menus: none without verses, keys for unknown titles or no resolver', async () => {
+        press('Verses Root');
+        await settle();
+        expect(h.menu).toEqual([]);
+
+        h.verses = ['GEN 1:1', 'BAD 9:9'];
+        const original = source.resolveVerseTitle;
+        try {
+            source.resolveVerseTitle = async (_context, verse) => {
+                if (verse === 'BAD 9:9') {
+                    throw new Error('unknown book');
+                }
+                return `Title ${verse}`;
+            };
+            press('Verses Root');
+            await settle();
+            expect(h.menu.map((item) => item.menuElement)).toEqual([
+                'Title GEN 1:1',
+                'BAD 9:9',
+            ]);
+            delete (source as any).resolveVerseTitle;
+            h.menu = [];
+            press('Verses Root');
+            // No titles to look up: the menu opens at once, with the keys.
+            expect(h.menu.map((item) => item.menuElement)).toEqual([
+                'GEN 1:1',
+                'BAD 9:9',
+            ]);
+        } finally {
+            source.resolveVerseTitle = original;
+        }
+    });
+
+    test('the box menu collapses, opens verses and expands', async () => {
+        h.verses = ['GEN 1:1'];
+        const friend = addFriendOfRoot();
+        press('Menu FRIEND');
+        expect(h.menu.find((item) => item.id === 'collapse').menuElement).toBe(
+            'Collapse',
+        );
+        selectMenu('collapse');
+        expect(
+            graph().nodeList.find((node) => node.key === friend.key)
+                ?.isCollapsed,
+        ).toBe(true);
+        press('Menu FRIEND');
+        expect(h.menu.find((item) => item.id === 'collapse').menuElement).toBe(
+            'Expand',
+        );
+
+        selectMenu('verses');
+        await settle();
+        expect(h.menu.map((item) => item.menuElement)).toEqual([
+            'Title GEN 1:1',
+        ]);
+
+        press('Menu FRIEND');
+        const readCount = h.neighbourReads;
+        selectMenu('expand');
+        act(() => vi.runAllTimers());
+        expect(h.neighbourReads).toBe(readCount + 1);
+        expect(h.menu.map((item) => item.id)).toEqual(['all', 'friend']);
+    });
+
+    test('an export reads each line as its label and direction only', async () => {
+        addFriendOfRoot();
+        await act(async () => {
+            press('Save graph');
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+        const options = h.graphSvgOptions.at(-1) as any;
+        expect(options.resolveEdge(graph().edgeList[0])).toEqual({
+            label: 'translated friend',
+            isDirected: false,
+        });
     });
 });

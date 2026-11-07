@@ -99,12 +99,12 @@ async function render(bibleVersesKey: string) {
 }
 
 describe('BibleCrossRefAIRenderFoundItemComp', () => {
-    // RD-51: a target the data spells wrongly (`PSA 119:ющ`) names no passage.
+    // RD-51: a target the data spells wrongly (`PSA 119:` and letters of another script) names no passage.
     // It used to be a row titled `Psalm 119:` that opened "Record not found".
     test('a reference that names no passage leaves no row behind', async () => {
         h.breakItem.mockResolvedValue(null);
-        await render('PSA 119:ющ');
-        expect(h.breakItem).toHaveBeenCalledWith('KJV', 'PSA 119:ющ');
+        await render('PSA 119:✝✝');
+        expect(h.breakItem).toHaveBeenCalledWith('KJV', 'PSA 119:✝✝');
         expect(host.innerHTML).toBe('');
         expect(host.querySelector('[role="button"]')).toBeNull();
     });

@@ -5,7 +5,16 @@
 // lining up with its English page.
 
 export const MANUAL_SOURCE_DIR: string;
+/** The installable language packages (`src/lang/data/online`); a manual is `<code>/manual/`. */
 export const MANUAL_I18N_DIR: string;
+export const MANUAL_DIR_NAME: string;
+/** A plugin's prebuilt index of its manual, inside its `manual/`. */
+export const MANUAL_INDEX_FILE_NAME: string;
+export const MANUAL_SEARCH_TEXT_LIMIT: number;
+export const MANUAL_HEADINGS_LIMIT: number;
+
+/** A page body's headings and bold leads, one line each, capped. */
+export function genManualHeadings(body: string): string;
 
 /** A page's front matter as plain strings by key. */
 export function readFrontMatter(content: string): Record<string, string>;
@@ -26,6 +35,7 @@ export function listManualTranslations(
   langCode: string,
   options?: {
     i18nDir?: string;
+    packDir?: string;
     englishPageMap?: Map<
       string,
       { id: string; relativePath: string; hash: string }
@@ -41,4 +51,15 @@ export function listManualTranslations(
   translatedFrom: string | null;
   isStale: boolean;
   content: string;
+}[];
+
+/** The search entries of the manual in `<packDir>/manual/`. */
+export function genManualIndexEntries(packDir: string): {
+  id: string;
+  title: string;
+  section: string;
+  file: string;
+  translatedFrom: string | null;
+  headings: string;
+  searchText: string;
 }[];

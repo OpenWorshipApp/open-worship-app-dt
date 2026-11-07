@@ -1,0 +1,12 @@
+{
+    "af": {
+        "name": "Afrikaans",
+        "nativeName": "Afrikaans",
+        "script": "Latin",
+        "words": "die 'n en of maar nie geen is was het sal ek jy hy sy ons julle hulle my jou hoe wat waar hoekom waarom wanneer wie watter met van vir op in uit by na om oor deur kan wil moet ook nog al baie meer hier daar hierdie daardie asseblief dankie",
+        "letters": "êëôû",
+        "yes": ["ja", "ja, asseblief"],
+        "no": ["nee", "nee, dankie"],
+        "order": 5
+    }
+}

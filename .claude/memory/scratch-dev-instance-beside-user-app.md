@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d2887407-24f9-4c3c-8777-b599e6de5d03
-  modified: 2026-10-23T16:05:05.665Z
+  modified: 2026-11-05T18:12:01.528Z
 ---
 
 When the user's own dev app is up (their `-dev` profile, their real data) and a live check needs
@@ -39,6 +39,18 @@ with `<scratch>\setting.json` seeded
   and **stop it by pid before the session ends**. Its `lockfile` in the scratch folder is
   dated with the start time, which is how to match an orphan to its profile.
 
+- **A model's rare slip is shown live with a stand-in model** (2026-11-04,
+  `EC-460`): a real model drifted into the wrong language once in two asks
+  and not again on demand. Launch the scratch instance with
+  `OWA_LLM_REGISTRY_URL=http://127.0.0.1:<port>/info.json` pointing at a
+  small node server that serves a version-1 registry naming ITSELF
+  (`isFree`, one model named `gemma4:cloud` so Auto picks it and asks in the
+  language typed), `GET /v1/models`, and a `POST /v1/chat/completions` that
+  answers by what it was asked -- the wrong script first, then the right one
+  to the nudge -- logging each request body. No setting, no key, nothing in
+  the user's profile. On a fresh profile the Reader's _Create the KJV
+  Bible?_ prompt holds the popup host, so the AI caution waits behind it
+  until that prompt is answered.
 - **Not `npm run dev` and not `electron:build`.** `strictPort` makes a second `npm run dev` stop on
   the busy :3000, and `electron:build` deletes the `electron-build/` the user's app runs from
   ([[build-kills-running-dev-app]]). `electron .` reuses the compiled `electron-build/`, so `grep`
@@ -81,6 +93,19 @@ with `<scratch>\setting.json` seeded
   the DOM tools (`owa_list_ui`, a click's `isOnNow`) and the files under the
   scratch `data/local-storage/`; for a picture, draw the CSS in an offscreen
   `BrowserWindow` (`show: false`, `offscreen: true`) instead.
+- **A NATIVE dialog of the main process can be checked there, at the OS
+  level** (2026-11-05, Help → Factory Reset's `dialog.showMessageBox`, which
+  no `owa_*` tool sees and `owa_menu` refuses to open). Start the scratch
+  copy with `--inspect=<port>` before the `.`; over that Node inspector
+  `Runtime.evaluate` (`includeCommandLineAPI: true`, so `require` works)
+  `Menu.getApplicationMenu()` → the item → `.click()`. The dialog is a
+  Win32 task dialog (class #32770), a top-level window of the scratch PID:
+  UI Automation reads its words, the Win32 PrintWindow call pictures it
+  even when covered, and its buttons have no Invoke pattern -- each has the
+  automation id CommandButton_N, and with `noLink: true` every button is
+  custom, N = 100 + its index -- pressed by posting the task dialog's
+  click-button message (0x0466, wParam N) to the dialog. Never coordinates or SendKeys: they land in whatever window
+  the user has in front. Aim only by the scratch pid, never the user's app.
 - A name box or a confirm is the person's to answer there too: seed the
   state it would have made as a `local-storage` file and reopen the panel
   (a setting read as absent is believed for 10 s).

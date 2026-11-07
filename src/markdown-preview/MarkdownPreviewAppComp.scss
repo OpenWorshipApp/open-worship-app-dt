@@ -61,7 +61,10 @@
   max-width: 52rem;
   margin: 0 auto;
   padding: 1.25rem 1.5rem 3rem;
+  // The app's own faces first (`--app-font-family`, boot.ts: the language's,
+  // then English's Google Sans), then every installed language's.
   font-family:
+    var(--app-font-family, var(--bs-body-font-family)),
     var(--bs-body-font-family),
     var(--app-markdown-lang-font-families, sans-serif);
   line-height: 1.6;

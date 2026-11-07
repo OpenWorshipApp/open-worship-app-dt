@@ -1,0 +1,17 @@
+{
+    "grammarHints": [
+        {
+            "script": "Hebrew",
+            "hint": "For a verb: its stem (קַל, נִפְעַל, פִּעֵל, הִפְעִיל …), whether it is completed or ongoing (with the וַ of a narrative), or a command, an infinitive or a participle, and its person, gender and number. For a noun: its gender and number. Every part joined to it -- וְ \"and\", הַ \"the\", בְּ \"in\", לְ \"to\", כְּ \"like\", מִ \"from\", an ending -- named apart, with what it means."
+        }
+    ],
+    "wordJoinerMarks": "־",
+    "chantMarks": "֑-ֽׅ֯ׄ",
+    "wordLanguages": [
+        {
+            "pattern": "\\p{Script=Hebrew}",
+            "name": "biblical Hebrew",
+            "order": 2
+        }
+    ]
+}

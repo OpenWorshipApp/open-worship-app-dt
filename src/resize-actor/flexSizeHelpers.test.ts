@@ -22,6 +22,7 @@ vi.mock('../helper/errorHelpers', () => ({ handleError: mocks.error }));
 
 import {
     checkIsThereNotHiddenWidget,
+    clearFlexSizeSetting,
     clearWidgetSizeSetting,
     getFlexSizeSetting,
     keyToDataFlexSizeKey,
@@ -55,6 +56,52 @@ describe('flex size settings', () => {
                 { key: 'right' },
             ] as any),
         ).toEqual({ left: ['0.8 1 0%'], right: ['0.8 1 0%'] });
+    });
+    test('a stored pane closed by an unknown side or a non-number is not trusted', () => {
+        values.set(
+            toSettingString('x'),
+            JSON.stringify({ left: ['1', ['middle', 'x']], right: ['1'] }),
+        );
+        expect(getFlexSizeSetting('x', defaults)).toEqual(defaults);
+        expect(mocks.set).toHaveBeenCalledWith(
+            toSettingString('x'),
+            JSON.stringify(defaults),
+        );
+    });
+    test('a closed pane keeps its flag while the open ones are doubled to fill', () => {
+        values.set(
+            toSettingString('x'),
+            JSON.stringify({
+                left: ['0.2 1 0%', ['first', 0.3]],
+                right: ['0.3 1 0%'],
+            }),
+        );
+        const flexSize = getFlexSizeSetting('x', defaults, [
+            { key: 'left' },
+            { key: 'right' },
+        ] as any);
+        expect(flexSize.right).toEqual(['1.2 1 0%']);
+        expect(flexSize.left[0]).toBe('0.8 1 0%');
+        expect(flexSize.left[1]?.[0]).toBe('first');
+        expect(mocks.set).not.toHaveBeenCalled();
+    });
+    test('a grow that is not a number counts as nothing toward the sum', () => {
+        values.set(
+            toSettingString('x'),
+            JSON.stringify({ left: ['auto'], right: ['0.5 1 0%'] }),
+        );
+        const flexSize = getFlexSizeSetting('x', defaults, [
+            { key: 'left' },
+            { key: 'right' },
+        ] as any);
+        expect(flexSize.right).toEqual(['1 1 0%']);
+    });
+    test('clearing one actor blanks its own setting only', () => {
+        clearFlexSizeSetting('x');
+        expect(mocks.set).toHaveBeenCalledExactlyOnceWith(
+            toSettingString('x'),
+            '',
+        );
     });
     test('stores disabling state from the live layout and uses collision-proof names', async () => {
         const pane = document.createElement('div');

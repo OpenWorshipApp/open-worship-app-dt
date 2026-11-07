@@ -1,0 +1,12 @@
+{
+    "ht": {
+        "name": "Haitian Creole",
+        "nativeName": "Kreyòl ayisyen",
+        "script": "Latin",
+        "words": "ak oswa men pa mwen ou li nou yo kijan kisa kote poukisa kilè kiyès kiles sa se nan pou sou avèk ka vle dwe tou deja anpil plis tanpri mèsi",
+        "letters": "òè",
+        "yes": ["wi", "wi, tanpri"],
+        "no": ["non", "non, mèsi"],
+        "order": 42
+    }
+}

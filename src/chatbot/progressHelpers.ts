@@ -661,6 +661,20 @@ export function describeToolStep(name: string, args: any): string {
         }
         case 'owa_lyric_file':
             return describeFileStep(args, true);
+        // A song changed part by part: read, or edited -- the same lines a
+        // whole-song read and update say, the song named by its `file`.
+        case 'owa_lyric_edit':
+            return describeSongStep(
+                args?.action === 'read' ? 'info' : 'update',
+                toStepQuote(
+                    typeof args?.file === 'string'
+                        ? (args.file.split(/[\\/]/).pop() ?? '').replace(
+                              /\.owl$/i,
+                              '',
+                          )
+                        : null,
+                ),
+            );
         case 'owa_slide_file':
             return describeFileStep(args, false);
         case 'owa_bible_item':

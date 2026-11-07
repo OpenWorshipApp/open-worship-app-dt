@@ -91,4 +91,8 @@ describe('layOutMessageStack', () => {
         layOutMessageStack([element, second], 720);
         expect(second.style.marginTop).toBe('5em');
     });
+
+    test('a session with no message left lays out nothing', () => {
+        expect(() => layOutMessageStack([], 1080)).not.toThrow();
+    });
 });

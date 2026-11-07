@@ -35,11 +35,11 @@ import {
 } from './mermaidLiveHelpers';
 
 const DIAGRAM =
-    '%% ដាវីឌ — connection graph\n' +
+    '%% ✝ David — connection graph\n' +
     'flowchart LR\n' +
-    '    n0["ដាវីឌ (David)<br/>មនុស្ស"]\n' +
-    '    n1["អ៊ីសាយ (Jesse)<br/>មនុស្ស"]\n' +
-    '    n0 -->|"ឪពុក"| n1\n';
+    '    n0["✝ David (David)<br/>📖 person"]\n' +
+    '    n1["✝ Jesse (Jesse)<br/>📖 person"]\n' +
+    '    n0 -->|"✨ father"| n1\n';
 
 /** The editor's own `deserializeState`, written out. */
 function readMermaidLiveUrl(url: string) {

@@ -457,4 +457,58 @@ describe('Bible view', () => {
             otherView.remove();
         }
     });
+
+    test('follows a matching verse no bible view holds, and nothing without a verse of its own to follow by', async () => {
+        const currentVerse = document.createElement('span');
+        currentVerse.dataset.kjvVerseKey = 'GEN.1.1';
+        // In no `.bible-view`: so in no pane that could be playing.
+        const looseVerse = document.createElement('span');
+        document.body.append(looseVerse);
+        try {
+            state.controller.getVerseElements.mockImplementation(
+                (id: string) =>
+                    id === 'first' ? [currentVerse] : [looseVerse],
+            );
+            state.controller.getBibleItemsByColorNote.mockReturnValue([
+                bibleItem,
+                { id: 'second' },
+            ]);
+            await act(async () =>
+                root.render(<BibleViewComp bibleItem={bibleItem} />),
+            );
+            state.movedCheck.check(card().querySelector('.card-body'));
+            expect(mocks.bringToView.mock.calls).toEqual([[looseVerse]]);
+
+            // The verse in sight carries no key to find the others by.
+            delete currentVerse.dataset.kjvVerseKey;
+            state.movedCheck.check(card().querySelector('.card-body'));
+            expect(mocks.bringToView).toHaveBeenCalledOnce();
+            expect(state.controller.getVerseElements.mock.calls.at(-1)).toEqual(
+                ['first'],
+            );
+        } finally {
+            looseVerse.remove();
+        }
+    });
+
+    test('searching the selected text with nothing selected searches nothing', async () => {
+        const controller = new LookupBibleItemController() as any;
+        state.controller = controller;
+        mocks.getSelectedText.mockReturnValue('');
+        await act(async () =>
+            root.render(<BibleViewComp bibleItem={bibleItem} />),
+        );
+        await act(async () =>
+            card().dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        const [, , options] = mocks.showMenu.mock.calls.at(-1)!;
+        await act(async () =>
+            options.extraSelectedTextContextMenuItems[0].onSelect(),
+        );
+        expect(mocks.setRecentSearch).not.toHaveBeenCalled();
+        expect(controller.openBibleSearch).not.toHaveBeenCalled();
+        expect(controller.setIsAdvanceLookupOpened).not.toHaveBeenCalled();
+    });
 });

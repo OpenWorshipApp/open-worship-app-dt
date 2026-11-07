@@ -52,6 +52,32 @@ function HeightProbeComp({
     );
 }
 
+// A list whose container is not mounted yet: the rows are, the box is not.
+function DetachedProbeComp({
+    onRender,
+}: {
+    onRender: (probe: ReturnType<typeof useMeasuredRowHeights>) => void;
+}) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const probe = useMeasuredRowHeights({
+        rowKeys: ['a', 'b'],
+        estimateRowHeight: 34,
+        containerRef,
+    });
+    onRender(probe);
+    return (
+        <>
+            {['a', 'b'].map((key) => (
+                <div
+                    key={key}
+                    {...{ [VIRTUAL_ROW_KEY]: key }}
+                    ref={probe.handleRowRef}
+                />
+            ))}
+        </>
+    );
+}
+
 describe('measured virtual row heights', () => {
     let container: HTMLDivElement;
     let root: Root;
@@ -118,6 +144,41 @@ describe('measured virtual row heights', () => {
         render(['c', 'd'], ['c']);
         expect(latest.rowHeight(0)).toBe(2000);
         expect(latest.rowHeight(1)).toBe(2000);
+    });
+
+    test('without a container it watches nothing, and still measures its rows', async () => {
+        const OriginalMutationObserver = globalThis.MutationObserver;
+        let mutationObserverCount = 0;
+        globalThis.MutationObserver = class extends OriginalMutationObserver {
+            constructor(callback: MutationCallback) {
+                super(callback);
+                mutationObserverCount += 1;
+            }
+        };
+        try {
+            // With a container, its content is watched for late growth.
+            render(['a', 'b'], ['a']);
+            expect(mutationObserverCount).toBe(1);
+
+            mutationObserverCount = 0;
+            let probe!: ReturnType<typeof useMeasuredRowHeights>;
+            act(() =>
+                root.render(
+                    <DetachedProbeComp
+                        onRender={(value) => {
+                            probe = value;
+                        }}
+                    />,
+                ),
+            );
+            expect(mutationObserverCount).toBe(0);
+            await measure();
+            expect([0, 1].map(probe.rowHeight)).toEqual([20, 40]);
+            // The old ref protocol: a null element is a no-op with no cleanup.
+            expect(probe.handleRowRef(null)).toBeUndefined();
+        } finally {
+            globalThis.MutationObserver = OriginalMutationObserver;
+        }
     });
 
     test('ignores detached rows and sub-pixel changes, then measures a real resize', async () => {

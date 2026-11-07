@@ -1,0 +1,12 @@
+{
+    "ha": {
+        "name": "Hausa",
+        "nativeName": "Hausa",
+        "script": "Latin",
+        "words": "da a na ta ya su mu ku ni kai ita shi wannan wancan yaya me ina yasa yaushe wa wane wace ba zan iya so kuma sosai don allah nagode",
+        "letters": "ɓɗƙƴ",
+        "yes": ["na'am"],
+        "no": ["a'a"],
+        "order": 35
+    }
+}

@@ -1,4 +1,9 @@
 // Shared, dependency-free import advice. No verse text or persistent cache.
+// The other names a language goes by are that language's data, there when
+// it is installed (`localeNameAliases` in its `world.json`,
+// `worldLanguages.mjs`).
+import { readWorldLanguages } from './worldLanguages.mjs';
+
 export const BIBLE_BOOK_KEYS = (
   'GEN EXO LEV NUM DEU JOS JDG RUT 1SA 2SA 1KI 2KI ' +
   '1CH 2CH EZR NEH EST JOB PSA PRO ECC SNG ISA JER LAM EZK DAN HOS JOL AMO ' +
@@ -43,7 +48,7 @@ export function normalizeBibleLocale(input) {
       [
         iso,
         names.of(code)?.toLowerCase(),
-        code === 'km' ? 'cambodian' : null,
+        ...(readWorldLanguages().localeNameAliases?.[code] ?? []),
       ].includes(text.toLowerCase())
     )
       text = code;
@@ -60,6 +65,16 @@ export function normalizeBibleLocale(input) {
   }
 }
 
+// `language-REGION`, or null for a code no region is known for: `kjv.xml`
+// read as the language "kjv" and answered `kjv-undefined`, a string that won
+// over the Settings import's own default (2026-11-03).
+function toRegionLocale(code) {
+  const expanded = new Intl.Locale(code).maximize();
+  return expanded.region === undefined
+    ? null
+    : `${expanded.language}-${expanded.region}`;
+}
+
 export function guessBibleLocale(fileName) {
   let name;
   try {
@@ -73,17 +88,13 @@ export function guessBibleLocale(fileName) {
   for (const code of Object.keys(LANGUAGE_CODES)) {
     const language = names.of(code);
     if (language && name.toLowerCase().startsWith(language.toLowerCase())) {
-      const expanded = new Intl.Locale(code).maximize();
-      return `${expanded.language}-${expanded.region}`;
+      return toRegionLocale(code);
     }
   }
   const match = name.match(/^([a-z]{2,3}(?:[-_][A-Z]{2})?)[-_.]/);
   if (!match) return null;
   try {
-    const expanded = new Intl.Locale(
-      normalizeBibleLocale(match[1]).locale,
-    ).maximize();
-    return `${expanded.language}-${expanded.region}`;
+    return toRegionLocale(normalizeBibleLocale(match[1]).locale);
   } catch {
     return null;
   }
@@ -128,7 +139,8 @@ export function extractBibleCatalog() {
   for (const anchor of document.querySelectorAll('a[href]')) {
     // `innerText` where the page is laid out: an edition link is three
     // spans (abbreviation, name, publisher), and `textContent` runs them
-    // together into "BFCBible en français courantFrench Bible Society".
+    // together into the edition's abbreviation, its name and its publisher
+    // with no space between them.
     const text = (anchor.innerText || anchor.textContent || '')
       .replace(/\s+/g, ' ')
       .trim();

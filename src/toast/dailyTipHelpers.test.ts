@@ -29,6 +29,7 @@ import {
     getDailyTipAutoShowDelay,
     getDailyTipGuide,
     getDailyTipPage,
+    getDailyTipPageLabel,
     getDailyTipSessionKey,
     getDailyTips,
     hideDailyTips,
@@ -37,6 +38,10 @@ import {
     setAreDailyTipsEnabled,
     startDailyTipGuide,
 } from './dailyTipHelpers';
+import {
+    readDailyTipsHiddenAt,
+    showDailyTipsAgain,
+} from './dailyTipSettingHelpers';
 
 describe('daily tip helpers', () => {
     beforeEach(() => {
@@ -500,5 +505,100 @@ describe('daily tip helpers', () => {
         expect(delayOf(tenMinutesIn + 60_000)).toBe(
             DAILY_TIP_AUTO_SHOW_DELAY_MS - 60_000,
         );
+    });
+});
+
+describe('daily tip labels, odd host answers and the day the card comes back', () => {
+    beforeEach(() => {
+        settingValues.clear();
+    });
+
+    it('names every page the way its card header does', () => {
+        const pages = [
+            'presenter',
+            'reader',
+            'setting',
+            'appDocumentEditor',
+            'bibleNote',
+            'webEditor',
+            'lyricEditor',
+            'lwShare',
+        ] as const;
+        expect(
+            pages.map((page) => {
+                return getDailyTipPageLabel(page);
+            }),
+        ).toEqual([
+            'Presenter tip',
+            'Reader tip',
+            'Setting',
+            'Slide Editor',
+            'Bible Note',
+            'Web Editor',
+            'Lyric Editor',
+            'Local Web Share',
+        ]);
+    });
+
+    it('takes a host answer that is not JSON as a start, not as a stale one', async () => {
+        const tip = getDailyTips('presenter').find(
+            ({ id }) => id === 'presenter-build-flow',
+        );
+        expect(getDailyTipGuide('presenter', tip!)?.mode).toBe('demo');
+        const callTool = vi.fn().mockResolvedValue('Walkthrough started');
+        await startDailyTipGuide('presenter', tip!, callTool);
+        expect(callTool).toHaveBeenCalledOnce();
+    });
+
+    it('has no walkthrough for a tip whose demo is gone, and says so', async () => {
+        const tip = {
+            id: 'gone',
+            demoId: 'no-such-demo',
+            title: 'Gone tip',
+            detail: '',
+        };
+        expect(getDailyTipGuide('setting', tip)).toBeNull();
+        expect(getDailyTipGuide('presenter', tip)).toBeNull();
+        expect(getDailyTipGuide('reader', tip)).toBeNull();
+        const callTool = vi
+            .fn()
+            .mockRejectedValue(
+                new Error('Unknown built-in demo "no-such-demo".'),
+            );
+        await expect(
+            startDailyTipGuide('setting', tip, callTool),
+        ).rejects.toThrow('No walkthrough is available for "Gone tip".');
+        expect(callTool).toHaveBeenCalledOnce();
+    });
+
+    it('picks the only tip there is, and the first of none', () => {
+        const [tip] = getDailyTips('reader');
+        rememberDailyTip('reader', tip);
+        expect(pickDailyTipIndex('reader', [tip], () => 0.9)).toBe(0);
+        expect(pickDailyTipIndex('reader', [], () => 0.9)).toBe(0);
+    });
+
+    it('tells Settings the day the card comes back, and brings it back early', () => {
+        const now = 1_000_000;
+        expect(readDailyTipsHiddenAt(now)).toBeNull();
+        hideDailyTips(now);
+        expect(readDailyTipsHiddenAt(now)).toBe(now + DAILY_TIPS_HIDE_MS);
+        // Once the day has come there is nothing left to list.
+        expect(readDailyTipsHiddenAt(now + DAILY_TIPS_HIDE_MS)).toBeNull();
+        // A stamp further off than twice the hide is not believed.
+        settingValues.set(
+            DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME,
+            `${now + 3 * DAILY_TIPS_HIDE_MS}`,
+        );
+        expect(readDailyTipsHiddenAt(now)).toBeNull();
+
+        hideDailyTips(now);
+        expect(getAreDailyTipsDisabled(now)).toBe(true);
+        showDailyTipsAgain();
+        expect(settingValues.has(DAILY_TIPS_HIDDEN_UNTIL_SETTING_NAME)).toBe(
+            false,
+        );
+        expect(getAreDailyTipsDisabled(now)).toBe(false);
+        expect(readDailyTipsHiddenAt(now)).toBeNull();
     });
 });

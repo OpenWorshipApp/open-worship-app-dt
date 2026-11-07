@@ -755,7 +755,7 @@ export const LLM_REGISTRY_VERSION = 1;
 const REGISTRY_ENTRY_ID_PATTERN = /^[A-Za-z0-9-]{1,48}$/;
 const REGISTRY_NOTE_MAX = 300;
 
-// A note's language codes: `km`, `fr`, `pt-BR`.
+// A note's language codes: `en`, `pt-BR`.
 const REGISTRY_NOTE_LANG_PATTERN = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
 const MAX_REGISTRY_NOTE_LANGS = 12;
 

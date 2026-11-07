@@ -21,6 +21,7 @@ const getValidOnScreenMock = vi.fn((items: Record<string, unknown>) => {
     );
 });
 const useScreenUpdateEventsMock = vi.fn();
+const showPlayToBottomContextMenuMock = vi.fn();
 
 let updateCallback: (() => Promise<void> | void) | undefined;
 
@@ -118,6 +119,10 @@ vi.mock('../helper/appHooks', async (importOriginal) => {
 
 vi.mock('./managers/screenManagerHooks', () => ({
     useScreenUpdateEvents: useScreenUpdateEventsMock,
+}));
+
+vi.mock('../scrolling/playToBottomMenuHelpers', () => ({
+    showPlayToBottomContextMenu: showPlayToBottomContextMenuMock,
 }));
 
 describe('screenHelpers extra coverage', () => {
@@ -330,5 +335,307 @@ describe('screenHelpers extra coverage', () => {
             await Promise.resolve();
         });
         expect(container.querySelector('div')?.dataset.onScreen).toBe('true');
+    });
+
+    test('with no mini screen up, a menu opens from the corner; with one, from its corner', async () => {
+        const screenHelpers = await import('./screenHelpers');
+        expect(screenHelpers.genScreenMouseEvent()).toEqual({
+            clientX: 0,
+            clientY: 0,
+        });
+        expect(createMouseEventMock).toHaveBeenLastCalledWith(0, 0);
+
+        const miniScreen = document.createElement('div');
+        miniScreen.className = 'mini-screen';
+        miniScreen.getBoundingClientRect = () => ({ x: 12, y: 34 }) as DOMRect;
+        document.body.appendChild(miniScreen);
+        expect(screenHelpers.genScreenMouseEvent()).toEqual({
+            clientX: 12,
+            clientY: 34,
+        });
+    });
+
+    test('a foreground map that cannot be checked against the screens is reported and reads as empty', async () => {
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
+        const screenHelpers = await import('./screenHelpers');
+        const error = new Error('no screen list');
+        getValidOnScreenMock.mockImplementationOnce(() => {
+            throw error;
+        });
+        getSettingMock.mockImplementation((key: string) => {
+            if (key === screenManagerSettingNames.FOREGROUND) {
+                return JSON.stringify({
+                    1: { marqueeTopData: { text: 'not checked' } },
+                });
+            }
+            return undefined;
+        });
+        expect(screenHelpers.getForegroundDataListOnScreenSetting()).toEqual(
+            {},
+        );
+        expect(handleErrorMock).toHaveBeenCalledWith(error);
+    });
+
+    test('the Bible map drops only the entries it cannot show, and says which', async () => {
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
+        const BibleItem = (await import('../bible-list/BibleItem'))
+            .default as any;
+        const screenHelpers = await import('./screenHelpers');
+        BibleItem.validate.mockImplementation((bibleItem: any) => {
+            if (bibleItem?.id === 'broken') {
+                throw new Error('Invalid bible item');
+            }
+        });
+        getValidOnScreenMock.mockImplementation((items) => items);
+        const renderedList = [
+            {
+                locale: 'en',
+                bibleKey: 'KJV',
+                title: 'John 3:16',
+                verses: [{ num: '16', text: 'For God so loved' }],
+            },
+        ];
+        const valid = {
+            type: 'bible-item',
+            bibleItemData: { bibleItem: { id: 'ok' }, renderedList },
+        };
+        getSettingMock.mockImplementation((key: string) => {
+            if (key === screenManagerSettingNames.FULL_TEXT) {
+                return JSON.stringify({
+                    1: valid,
+                    2: {
+                        type: 'bible-item',
+                        bibleItemData: {
+                            bibleItem: { id: 'broken' },
+                            renderedList,
+                        },
+                    },
+                    // Written by a newer build sharing the data folder.
+                    3: { type: 'hymn-sheet' },
+                });
+            }
+            return undefined;
+        });
+        expect(screenHelpers.getBibleListOnScreenSetting()).toEqual({
+            1: valid,
+        });
+        expect(
+            handleErrorMock.mock.calls.map(([error]) => {
+                return (error as Error).message;
+            }),
+        ).toEqual([
+            'Dropping invalid bible-screen-view entry for screen id: 2',
+            'Dropping invalid bible-screen-view entry for screen id: 3',
+        ]);
+    });
+
+    test('a Bible map that is not there, or cannot be checked against the screens, reads as empty', async () => {
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
+        const screenHelpers = await import('./screenHelpers');
+        const settings = new Map<string, string>([
+            [screenManagerSettingNames.FULL_TEXT, ''],
+            [screenManagerSettingNames.MANAGERS, '["bible-empty-case"]'],
+        ]);
+        getSettingMock.mockImplementation((key: string) => settings.get(key));
+        expect(screenHelpers.getBibleListOnScreenSetting()).toEqual({});
+        expect(getValidOnScreenMock).not.toHaveBeenCalled();
+
+        const error = new Error('no screen list');
+        getValidOnScreenMock.mockImplementation(() => {
+            throw error;
+        });
+        settings.set(
+            screenManagerSettingNames.FULL_TEXT,
+            JSON.stringify({ 1: { type: 'hymn-sheet' } }),
+        );
+        expect(screenHelpers.getBibleListOnScreenSetting()).toEqual({});
+        expect(handleErrorMock).toHaveBeenLastCalledWith(error);
+    });
+
+    test('on the projected screen the auto-scroll button has no menu; in a preview its menu opens without scrolling', async () => {
+        const appProvider = (await import('../server/appProvider'))
+            .default as any;
+        const screenHelpers = await import('./screenHelpers');
+        appProvider.isPageScreen = true;
+        try {
+            const onScreen = document.createElement('div');
+            screenHelpers.addPlayToBottom(onScreen);
+            expect(onScreen.querySelector('img.play-to-bottom')).not.toBeNull();
+            expect(
+                onScreen.querySelector('img.play-to-bottom-menu'),
+            ).toBeNull();
+        } finally {
+            delete appProvider.isPageScreen;
+        }
+
+        const preview = document.createElement('div');
+        const onFrame = vi.fn();
+        screenHelpers.addPlayToBottom(preview, onFrame);
+        const button = preview.querySelector(
+            'img.play-to-bottom',
+        ) as HTMLImageElement;
+        expect(button.title).toBe('Play to bottom');
+        expect(applyPlayToBottomMock).toHaveBeenLastCalledWith(
+            button,
+            undefined,
+            onFrame,
+        );
+        const menu = preview.querySelector(
+            'img.play-to-bottom-menu',
+        ) as HTMLImageElement;
+        // Right after its button: the stylesheet's sibling selector shows it.
+        expect(button.nextElementSibling).toBe(menu);
+        expect(menu.title).toBe('Auto Scroll Options');
+        expect(menu.src).toMatch(/^data:image\/svg\+xml/);
+
+        const onPreviewClick = vi.fn();
+        preview.addEventListener('click', onPreviewClick);
+        const click = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
+        menu.dispatchEvent(click);
+        expect(click.defaultPrevented).toBe(true);
+        expect(onPreviewClick).not.toHaveBeenCalled();
+        expect(showPlayToBottomContextMenuMock).toHaveBeenCalledWith(
+            click,
+            button,
+        );
+    });
+
+    test('screen updates are checked once they stop coming, by every instance for itself', async () => {
+        vi.useFakeTimers();
+        try {
+            const screenHelpers = await import('./screenHelpers');
+            const live = new Set<string>();
+            const checkIsOnScreen = vi.fn(async (paths: string[]) => {
+                return live.has(paths[0]);
+            });
+            const callbacks = new Map<string, () => void>();
+            let renderingId = '';
+            useScreenUpdateEventsMock.mockImplementation(
+                (_screenManagerBase: unknown, callback: () => void) => {
+                    callbacks.set(renderingId, callback);
+                },
+            );
+            function Host({ id }: Readonly<{ id: string }>) {
+                renderingId = id;
+                const isOnScreen = screenHelpers.useFileSourceIsOnScreen(
+                    [`/slides/${id}.txt`],
+                    checkIsOnScreen,
+                );
+                return <div data-id={id} data-on-screen={`${isOnScreen}`} />;
+            }
+            const read = () => {
+                return ['a', 'b'].map((id) => {
+                    return container.querySelector<HTMLElement>(
+                        `[data-id="${id}"]`,
+                    )!.dataset.onScreen;
+                });
+            };
+            await act(async () => {
+                root.render(
+                    <>
+                        <Host id="a" />
+                        <Host id="b" />
+                    </>,
+                );
+            });
+            await act(async () => {
+                await Promise.resolve();
+            });
+            expect(read()).toEqual(['false', 'false']);
+
+            live.add('/slides/a.txt');
+            live.add('/slides/b.txt');
+            // One screen update reaches both instances...
+            act(() => {
+                callbacks.get('a')!();
+                callbacks.get('b')!();
+            });
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(300);
+            });
+            // ...and another reaches only a before the wait is over.
+            act(() => {
+                callbacks.get('a')!();
+            });
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(200);
+            });
+            expect(read()).toEqual(['false', 'true']);
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(299);
+            });
+            expect(read()).toEqual(['false', 'true']);
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(1);
+            });
+            expect(read()).toEqual(['true', 'true']);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('an answer for paths the hook no longer holds is dropped, not passed on', async () => {
+        vi.useFakeTimers();
+        try {
+            const screenHelpers = await import('./screenHelpers');
+            const held: { resolve?: (isOnScreen: boolean) => void } = {};
+            let isHolding = false;
+            const checkIsOnScreen = vi.fn((_paths: string[]) => {
+                if (isHolding) {
+                    isHolding = false;
+                    return new Promise<boolean>((resolve) => {
+                        held.resolve = resolve;
+                    });
+                }
+                return Promise.resolve(false);
+            });
+            const onUpdate = vi.fn();
+            function Host({ filePaths }: Readonly<{ filePaths: string[] }>) {
+                const isOnScreen = screenHelpers.useFileSourceIsOnScreen(
+                    filePaths,
+                    checkIsOnScreen,
+                    onUpdate,
+                );
+                return <div data-on-screen={`${isOnScreen}`} />;
+            }
+            await act(async () => {
+                root.render(<Host filePaths={['/slides/old.txt']} />);
+            });
+            await act(async () => {
+                await Promise.resolve();
+            });
+            const fireUpdate = updateCallback!;
+            isHolding = true;
+            await act(async () => {
+                fireUpdate();
+                await vi.advanceTimersByTimeAsync(500);
+            });
+            expect(checkIsOnScreen).toHaveBeenLastCalledWith([
+                '/slides/old.txt',
+            ]);
+            expect(held.resolve).toBeDefined();
+
+            // Re-fed another file while that check was out.
+            await act(async () => {
+                root.render(<Host filePaths={['/slides/new.txt']} />);
+            });
+            await act(async () => {
+                held.resolve!(true);
+                await Promise.resolve();
+                await Promise.resolve();
+            });
+            expect(onUpdate).not.toHaveBeenCalledWith(true);
+            expect(container.querySelector('div')!.dataset.onScreen).toBe(
+                'false',
+            );
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });

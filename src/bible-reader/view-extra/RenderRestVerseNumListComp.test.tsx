@@ -57,15 +57,15 @@ describe('RenderRestVerseNumListComp', () => {
 
     test('draws each number as the bible writes it, smaller than the text', async () => {
         await render([
-            { verse: 17, label: '១៧' },
-            { verse: 18, label: '១៨' },
+            { verse: 17, label: 'xvii' },
+            { verse: 18, label: 'xviii' },
         ]);
         const numbers = Array.from(
             host.querySelectorAll<HTMLDivElement>('.verse-number'),
         );
         expect(numbers.map((element) => element.textContent)).toEqual([
-            '១៧',
-            '១៨',
+            'xvii',
+            'xviii',
         ]);
         expect(numbers[0].title).toBe(
             'Double click to select verses John 3:17',

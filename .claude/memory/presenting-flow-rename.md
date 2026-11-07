@@ -18,7 +18,7 @@ project, not even as a legacy constant.
 
 **The Khmer dictionary was MISSED — found and FIXED 2026-08-08.** The sweep had covered the
 English source and every identifier, but four values in
-[src/lang/data/km/index.ts](../../src/lang/data/km/index.ts) still said `បញ្ជីចាក់`
+the Khmer dictionary (then `index.ts`, today [src/lang/data/online/km/dictionary.json](../../src/lang/data/online/km/dictionary.json)) still said `បញ្ជីចាក់`
 ("playlist") where the rest of the file says `តារាងកម្មវិធី` (grep the term; the
 file has moved on and the old line numbers are stale) —
 `This item is disabled in this presenting flow` (the tooltip on every parked row),

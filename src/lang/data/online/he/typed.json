@@ -1,0 +1,10 @@
+{
+    "he": {
+        "name": "Hebrew",
+        "nativeName": "עברית",
+        "script": "Hebrew",
+        "yes": ["כן", "כן, בבקשה"],
+        "no": ["לא", "לא, תודה"],
+        "order": 59
+    }
+}

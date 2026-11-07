@@ -1,0 +1,12 @@
+{
+    "yo": {
+        "name": "Yoruba",
+        "nativeName": "Yorùbá",
+        "script": "Latin",
+        "words": "ati tabi ṣugbọn sugbon ko kò ni ti si fun pẹlu bi kini kí nibo nitori igba wo tani mo o a wọn won mi rẹ re yi yìí naa le fẹ fe jọwọ ẹ ṣe",
+        "letters": "ẹọṣ",
+        "yes": ["bẹẹni", "beeni"],
+        "no": ["rara"],
+        "order": 33
+    }
+}

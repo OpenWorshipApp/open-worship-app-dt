@@ -7,6 +7,233 @@ file size: a folder whose files share one domain needs one mock surface, so
 Status is `open` · `in progress` · `done (before → after)`. A batch is done
 when `coverage-gap.mjs` says so, not when the tests are written.
 
+## Achieved target — 99%, 2026-11-04 (UT-71 → UT-97; UT-70 is the 95% run)
+
+`done` · **81.75% → 99.63% (83,472 / 83,781)**, 0 files at 0%, measured
+2026-11-04 on the merged tree (`references/baseline.md`). The user set
+**99% of the whole source surface** as the goal. This run started from
+**81.75% (67,969 / 83,141)**, 1,292 files, 289
+at 0%, on a checkout that did not yet hold UT-70's tests: the two runs went
+in parallel on the same denominator and met at the pull of 2026-11-04
+(UT-97). Where both wrote a test file of the same name, this run's copy was
+kept beside the other as `*.ut99.test.*`. 99% leaves at most **831
+uncovered lines**. The gap was cut into folder batches of ~300-900
+uncovered lines, one agent per batch, up to six at once, each held to the
+same brief: behavioural tests only, the jsdom pragma, no shared
+`appProvider` mock, a test that can fail, prettier on its own files, bugs
+reported and never asserted as correct.
+
+Every batch's numbers below are its own focused before → after; the whole-
+surface result is in the baseline entry.
+
+### UT-94–96 · `src/chatbot/ChatbotAppComp.tsx`, in three line ranges
+
+`done` · the biggest single file (2,711 lines, 602 covered). Three agents took
+lines 1-5000, 5001-7600 and 7601-end into `.ui*`, `.steps*` and `.asking*`
+test files: 330 tests, 0 smoke, the file to ~2,680 / 2,711. About 32 lines are
+unreachable (provider-null guards behind a rendered provider). Bugs 11-13
+fixed by the lead (a Bible pressed under **Search another Bible** was never
+searched; a pressed import step ended on its echo; an element chip without a
+selector).
+
+### UT-73 · `tools/owa-devtools-mcp/*.mjs`
+
+`done` · 4,590 → 5,416 / 5,422 (99.89%), 33 new `*.test.mjs`, 429 tests.
+Firewall bugs 1-4 fixed by the lead: a check that threw failed OPEN; a
+pending-id map capped at 64 let the 65th result skip redaction; a
+`structuredContent` JSON text went unscrubbed; the decision log missed
+network calls.
+
+### UT-74 · `src/helper/agent*.ts`
+
+`done` · 3,539 → 4,328 / 4,346 (99.6%), 313 tests, branches 70.8 → 93.3%.
+Bug 10 fixed (a mistyped book code stepping `next` threw a raw TypeError).
+
+### UT-75 · the rest of `src/helper`
+
+`done` · 5,467 → 6,290 / 6,356, 551 tests (2 smoke). Bugs 6-9 and 14-16 fixed
+(a no-key Bible banner, a draft rejected after its stream closed, a chord-only
+title row, `parseInt` on an opacity, every Bible cross-ref prompt ending
+"context: undefined", a settings migration that renamed the user's own
+folders).
+
+### UT-76 · `electron/**`
+
+`done` · 8,015 → 8,711 / 8,736 (99.71%), branches 93.75%, 317 tests. Bugs 20
+(an over-long discovery answer threw an UNCAUGHT exception in main) and 21 (an
+internet player waiting for Allow was stranded 5 minutes when its session
+ended) fixed.
+
+### UT-77 · `src/presenter-foreground` + `src/presenting-control`
+
+`done` · 2,322 → 3,056 / 3,070 (99.54%), branches 95.4%, 158 tests.
+
+### UT-78 · `src/presenting-flow` + the app-document folders
+
+`done` · 4,260 → 4,738 / 5,032 in the folder run (the rest is covered by
+other folders' tests), 209 tests. Bugs 22 (a failed office conversion left its
+progress bar up) and 23 (a damaged run-sheet row rebuilt unvalidated) fixed.
+
+### UT-79 · `src/bible-reader`
+
+`done` · 1,515 → 2,031 / 2,052 (98.97%), 170 tests. Bugs 17 (closing a verse
+comment within 500 ms wrote the OLD words over the new) and 18 (every
+re-render replayed the verse audio) fixed.
+
+### UT-80 · `src/bible-find` + `bible-cross-refs` + `bible-lookup`
+
+`done` · 1,473 → 2,041 / 2,051 (99.5%), 126 tests. Bugs 24 (the 21st, 41st …
+found verse was never shown — an existing test asserted it), 25 and 26 fixed
+and verified live.
+
+### UT-81 · `src/others`
+
+`done` · 1,153 → 1,753 / 1,760 (99.6%), 132 tests. Bug 27 fixed.
+
+### UT-83 · `src/setting`
+
+`done` · 2,887 → 3,669 / 3,672 (99.92%), 272 tests, 0 smoke. Bugs 29-33
+fixed, 32 and 33 verified live: a failed Bible delete left its progress bar
+up; a book name parsed from markup kept a trailing space; "Reading file..."
+stayed up; the XML example's digit 1 wrote `value` twice and no key; the book
+chapter schema carried the Extra schema's `$id`, so Monaco checked and
+completed the Extra editor by the chapter's rules.
+
+### UT-85 · `src/lyric-list` + `src/plugins` + `src/lwShare`
+
+`done` · 887 → 1,513 / 1,523 (99.34%), 132 tests, 0 smoke. Bugs 38-40 fixed:
+the Local Web Share window set its server up TWICE on opening (another
+socket.io server and three more status listeners each time); a markdown
+`theme` option called a `setTheme` that markdown-it 14 does not have (the
+option was dead and is gone); a SongSelect import whose lyric file could not
+be written toasted "SongSelect request failed" for a request that worked.
+
+### UT-89b · the rest of `src/chatbot` (not `ChatbotAppComp`)
+
+`done` · 5,659 → 6,015 / 6,024 (99.85%), 199 tests, 0 smoke. Bugs 34-36
+fixed: a `[TOOL_CALLS]` list was cut at its first `]`, so a call with a list
+argument was dropped and its JSON shown as words; a verse page that could not
+be read was told as "no more verses have those words"; a text attachment that
+could not be read gave a card that said nothing. 37 (a rename committed by
+Escape) was checked live and is not a bug.
+
+### UT-90a · `src/_screen/managers`
+
+`done` · 3,333 → 3,909 / 3,912 (99.92%), 213 tests, 0 smoke. Bugs 47-48
+fixed: a deleted screen manager unsubscribed its layers' `update` listeners
+from its OWN emitter, so every one stayed subscribed; a camera taken off the
+screen while it was still opening was never closed (the removal ran before
+the close function existed), leaving the camera and its light on.
+
+### UT-90b · the rest of `src/_screen`
+
+`done` · 477 → 17 uncovered of 2,502 (99.3%), 133 tests, 0 smoke. Bug 46
+fixed: with every screen on one colour note, the Mini Screen drew an empty
+divider with no card under it.
+
+### UT-92 · `src/slide-editor` + `src/ms-office` + `src/editing-manager`
+
+`done` · 3,799 → 4,488 / 4,493 (99.88%), 196 tests, 0 smoke. Bugs 41-45
+fixed: a slide note typed after the note changed on disk was never saved; a
+box released mid-drag kept following the mouse and a stray button-up later
+committed the old drag; a box clamped at its minimum size jumped back by the
+shift it should have kept; every key in the slide editor pushed the slide
+being edited into React state; a YouTube item whose thumbnail could not be
+drawn still stored its media in the `.pptx`. One latent ruler drift is
+reported, not fixed (unreachable at the 0.1×-2× zoom the editor allows).
+
+### UT-82 · `src/resize-actor`, `router`, `popup-widget`, `event`, `toast`, `app-modal`, `context-menu`, `find`, `navigation`
+
+`done` · 1,673 → 2,236 / 2,251 (99.33%), 157 tests, 0 smoke. Bugs 60-64
+fixed, 60 and 64 verified live: a MIDDLE pane reopened from its strip took
+its space back from the divider instead of the pane that had taken it (the
+pane beside it kept both shares); a pane dragged shut reopened at nothing;
+with the first of four panes collapsed a divider stood after its strip and
+pressing it threw; a divider unmounted mid-drag left five window listeners
+behind, each throwing on every move; a fixed group's divider offered Close
+First / Second Widget, and a pane closed there had no strip to come back by.
+Reported, not fixed: a group asked not to save its sizes
+(`isNotSaveSetting`) still writes them on a collapse.
+
+### UT-84 · `src/lang` + `src/server` + the renderer entry files
+
+`done` · 1,286 → 1,805 / 1,816 (99.4%), 189 tests, 0 smoke. Notes only (a
+concatenated `tran` key, two unhandled rejections at boot, `pathResolve('/')`
+returning `''` on POSIX).
+
+### UT-86 · `src/background`
+
+`done` · 570 → 866 / 873 (99.2%), 69 tests, 0 smoke. No bugs. The lazy-tab
+test waits by a wall-clock deadline (8 s) rather than a count of turns.
+
+### UT-87 · `src/bible-list`
+
+`done` · 2,126 → 2,547 / 2,559 (99.53%), 115 tests, 0 smoke. Bugs 55-56
+fixed: a note's title editor compared the file's CONTENT to the title, so
+every update rebuilt its store and the replaced store saved itself again;
+the Bible slides popup said "Loading" for good when the version list could
+not be read.
+
+### UT-88 · `src/location-name-lookup` + `src/graph-view`
+
+`done` · 475 → 12 uncovered of 3,332 (99.6%), 187 tests, 0 smoke. Bugs 57-59
+fixed: a path search took one hop more than its cap; re-laying out a fan
+dropped the relations it was not handed and drew a different fan; Copy on a
+record the dataset does not hold toasted "Copied".
+
+### UT-89a · `llmBotHelpers`, `builtinActionHelpers`, `attachmentHelpers`, `fileAttachHelpers`
+
+`done` · 1,434 → 1,856 / 1,865 (99.5%), 147 tests, 0 smoke. Bug 53 fixed: an
+unread verse named after another word ("in Matthew 5:44") was handed to the
+verse finder WITH that word, which reads no such book. Copy fix 54 ("stuck
+of" → "stuck on", Khmer and French kept).
+
+### UT-93 · `virtual-display*`, `screen-mirror`, `screen-setting`
+
+`done` · 2,366 → 2,848 / 2,850 (99.93%), 177 tests added. Bugs 51-52 fixed:
+a viewer camera whose decoder failed once dropped every later frame and
+froze on the last face; the intercom volume slider kept a value the command
+had refused.
+
+### UT-91 · `virtual-list`, `aichat`, `markdown-preview`, `presenter`, `resources`, `slide-auto-play`, `progress-bar`, `scrolling`, `keyboard-shortcut`, `db`, `media-sessions`
+
+`done` · 2,864 → 3,232 / 3,252 (99.4%), ~145 tests, 0 smoke; 20 lines
+unreachable. No bugs.
+
+### Lead · bug 65, found live (2026-11-04)
+
+The focused slide list (and the slide editor's canvas) answered keys and
+STOPPED them while a context menu, modal, popup or armed tool held the
+keyboard: Escape never reached an open right-click menu (seen live: the
+Documents | Bible divider's menu stayed up), and Delete would have deleted
+the held slides or boxes behind it. `slideEditingKeyboardEventHelpers.ts`
+now answers nothing while a layer above `root` holds the keyboard. Its test
+failed first; `src/context-menu/contextMenuKeyboard.test.tsx` drives the real
+menu host (Escape closes, chooses nothing, gives the keyboard back; a key the
+menu does not answer leaves it open). Re-checked live after the fix
+(Presenter, Khmer): with the slide list focused, a right-click menu on
+the document closed on Escape, and the list, its focus and the open
+document stayed as they were.
+
+### UT-97 · the run carried onto `fixed-language` (2026-11-04)
+
+The branch the work landed on had just made every non-English language a
+package (`src/lang/data/online/<code>/`) and gated it
+(`src/lang/languageConfinement.test.ts`). 73 of this run's test files held
+another script, 2 more read a package by a hard-coded path. Six agents moved
+each case that is about a language into its package's `tests/`, rewrote each
+case that only needed "another script" with symbols, full-width digits and a
+made-up `xx` code, and dropped a case only where the branch already held the
+same one (each drop named against the case that covers it): the gate reads
+0 files. Cases that had already failed in their old place (a moved overlay
+layout, the scorer of 8088dae8, glosses dropped only off an English window,
+options translated in their own call) were brought to the code as it is.
+Seven failures the merge itself raised were fixed by the lead, two of them in
+the branch's own tests: a jsdom test cannot place a STATIC
+`import 'node:sqlite'` on Node 22 before 23.5 (not in `builtinModules`), so
+both `agentBibleFindHelpers` suites failed to load -- they read it with
+`process.getBuiltinModule` now.
+
 ## Achieved target — 95%, 2026-10-29
 
 The user set the goal at **95% of the whole source surface**. Met:
@@ -951,6 +1178,17 @@ paths — precisely the code that runs on the volunteer's bad night. Sweep with
 
 Either excluded with a reason or tested by mocking `createRoot`. **Put it to
 the user.** See _Exclusions_ in [baseline.md](./baseline.md).
+
+### `UT-94` · `ChatbotAppComp.tsx` by line range (with `UT-95`, `UT-96`)
+
+`done` · 2026-11-03 · 1 file, ~12 000 lines, 22% → ~99%
+
+The help window's component through its DOM alone, in eleven
+`ChatbotAppComp.<part>.test.tsx` files (`ui*`, `steps*`, `asking*` and the
+older `coverage`), split by line range so the runner spreads them over
+workers. How, and the traps (route the tool host by name and throw on the
+rest, wait by the real clock under fake timers, cancel a debounce that
+outlives its component): [recipes.md](./recipes.md) §10.
 
 ---
 

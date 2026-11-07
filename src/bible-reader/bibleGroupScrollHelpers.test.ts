@@ -584,3 +584,72 @@ test('alignTo leaves a pane that is not a member alone', () => {
     expect(sync.checkIsLeading(stranger)).toBe(false);
     expect(writes.get(member)).toEqual([]);
 });
+
+/** A pane whose verses are laid out as given: one list of line boxes each. */
+function layout(verseLineList: Partial<DOMRect>[][]) {
+    const container = document.createElement('div');
+    document.body.append(container);
+    Object.defineProperties(container, {
+        clientHeight: { value: 200 },
+        clientWidth: { value: 300 },
+        scrollHeight: { value: 400 },
+    });
+    container.getBoundingClientRect = () =>
+        ({ top: 0, bottom: 200, left: 0, height: 200, width: 300 }) as DOMRect;
+    verseLineList.forEach((lineList, i) => {
+        const verse = document.createElement('div');
+        verse.className = 'verse-text';
+        verse.dataset.kjvVerseKey = `GEN 1:${i + 1}`;
+        verse.getClientRects = () => rects(...lineList);
+        container.append(verse);
+    });
+    return container;
+}
+
+function line(top: number, height = 40) {
+    return { top, height, left: 0, right: 300 };
+}
+
+test('above its first verse a pane reads as before it, and is put back there', () => {
+    // A heading takes the 50px above the first verse.
+    const container = layout([[line(50)], [line(90)]]);
+    const position = readPosition(container, 20);
+    expect(position).toEqual({
+        key: 'GEN 1:1',
+        part: 'before',
+        fraction: 0.4,
+    });
+    expect(locatePosition(container, position!)).toBe(20);
+});
+
+test('a verse with no box leaves no reading position, and nowhere to put one back', () => {
+    // Every verse folded away.
+    expect(readPosition(layout([[], []]), 10)).toBeNull();
+    // The verse after the one under the point has no box: no end to its span.
+    expect(readPosition(layout([[line(0)], [line(40)], []]), 60)).toBeNull();
+    // The last verse ends on an empty line box: no end either.
+    expect(
+        readPosition(layout([[line(0)], [line(40), line(80, 0)]]), 60),
+    ).toBeNull();
+    const folded = layout([[line(0)], []]);
+    for (const part of ['before', 'verse'] as const) {
+        expect(
+            locatePosition(folded, { key: 'GEN 1:2', part, fraction: 0.5 }),
+        ).toBeNull();
+    }
+});
+
+test('a leader whose verses cannot be measured moves no follower', () => {
+    const sync = new BibleGroupScrollSync();
+    const source = pane();
+    const target = pane(300, 180);
+    source.querySelectorAll<HTMLElement>('.verse-text').forEach((verse) => {
+        verse.getClientRects = () => rects();
+    });
+    join(sync, source);
+    join(sync, target);
+    wheel(source, 250);
+    // One frame finds nothing to follow, and asks for no other.
+    expect(settle()).toBe(1);
+    expect(writes.get(target)).toEqual([]);
+});

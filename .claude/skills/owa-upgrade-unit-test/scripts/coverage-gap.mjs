@@ -43,6 +43,43 @@ const flag = (name, fallback = null) => {
 };
 const has = (name) => args.includes(`--${name}`);
 
+const BARE_FLAGS = ['no-run', 'json'];
+const VALUE_FLAGS = ['surface', 'top', 'dir', 'uncovered', 'goal'];
+
+// The usage is the header comment's own command lines.
+function writeUsage(stream) {
+    const lines = readFileSync(new URL(import.meta.url), 'utf8')
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith(' *   '))
+        .map((line) => line.slice(3));
+    stream.write(`${lines.join('\n')}\n`);
+}
+
+// Checked before anything runs. A run empties the last report as it starts,
+// so an argument this script did not know -- `--help`, `--norun`, `--dir x`
+// without its `=` -- started ten minutes of tests and cost the report it was
+// asked to read (2026-11-03).
+function checkArgs() {
+    if (args.includes('--help') || args.includes('-h')) {
+        writeUsage(process.stdout);
+        process.exit(0);
+    }
+    const unknown = args.filter((one) => {
+        return (
+            !BARE_FLAGS.some((name) => one === `--${name}`) &&
+            !VALUE_FLAGS.some((name) => one.startsWith(`--${name}=`))
+        );
+    });
+    if (unknown.length > 0) {
+        process.stderr.write(
+            `[coverage-gap] unknown argument: ${unknown.join(' ')} -- nothing ran\n`,
+        );
+        writeUsage(process.stderr);
+        process.exit(2);
+    }
+}
+checkArgs();
+
 const GOAL = Number(flag('goal', '99'));
 const TOP = Number(flag('top', '30'));
 const IS_JSON = has('json');

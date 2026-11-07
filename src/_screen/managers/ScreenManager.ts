@@ -18,7 +18,6 @@ import {
     removeRetiredScreenSettings,
 } from './screenManagerDeleteHelpers';
 import ScreenManagerBase, { ScreenManagerBaseGhost } from './ScreenManagerBase';
-import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
 import type {
     ScreenMessageType,
@@ -90,7 +89,11 @@ export default class ScreenManager extends ScreenManagerBase {
     readonly backgroundEffectManager: ScreenEffectManager;
     readonly varyAppDocumentEffectManager: ScreenEffectManager;
     readonly foregroundEffectManager: ScreenEffectManager;
-    private readonly registeredEventListeners: RegisteredEventType<any, any>[];
+    // The 'update' listeners this screen put on its two layers come off THOSE
+    // layers: taken off the screen itself, where they never were, they
+    // stayed, and a late update of a deleted screen still cleared its other
+    // layer (2026-11-03).
+    private readonly unregisterLayerListeners: () => void;
 
     constructor(screenId: number) {
         super(screenId);
@@ -161,25 +164,29 @@ export default class ScreenManager extends ScreenManagerBase {
                 return (screenManagerBase as ScreenManager).screenFocusManager;
             },
         );
-        this.registeredEventListeners = [];
-        this.registeredEventListeners.push(
-            ...this.screenVaryAppDocumentManager.registerEventListener(
+        const varyAppDocumentEvents =
+            this.screenVaryAppDocumentManager.registerEventListener(
                 ['update'],
                 () => {
                     if (this.screenVaryAppDocumentManager.isShowing) {
                         this.screenLongTextManager.clear();
                     }
                 },
-            ),
-            ...this.screenLongTextManager.registerEventListener(
-                ['update'],
-                () => {
-                    if (this.screenLongTextManager.isShowing) {
-                        this.screenVaryAppDocumentManager.clear();
-                    }
-                },
-            ),
+            );
+        const longTextEvents = this.screenLongTextManager.registerEventListener(
+            ['update'],
+            () => {
+                if (this.screenLongTextManager.isShowing) {
+                    this.screenVaryAppDocumentManager.clear();
+                }
+            },
         );
+        this.unregisterLayerListeners = () => {
+            this.screenVaryAppDocumentManager.unregisterEventListener(
+                varyAppDocumentEvents,
+            );
+            this.screenLongTextManager.unregisterEventListener(longTextEvents);
+        };
 
         this.initEvent();
     }
@@ -450,10 +457,7 @@ export default class ScreenManager extends ScreenManagerBase {
         }
         this.isDeleted = true;
         this.hide();
-        for (const { eventName, listener } of this.registeredEventListeners) {
-            this.removeOnEventListener(eventName, listener);
-        }
-        this.registeredEventListeners.length = 0;
+        this.unregisterLayerListeners();
         this.varyAppDocumentEffectManager.delete();
         this.backgroundEffectManager.delete();
         this.foregroundEffectManager.delete();

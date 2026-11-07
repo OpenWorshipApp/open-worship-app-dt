@@ -92,7 +92,20 @@ import {
     toWholeResourceChapterRef,
     toResourcesAsk,
     toResourceVerseFallback,
+    checkHasColonNumber,
+    checkHasCrossReferenceLabel,
 } from './resourcesChatHelpers';
+import {
+    LYRIC_EDIT_TOOL_NAME,
+    LYRIC_UNDO_TOOL_NAME,
+    checkIsLyricFileName,
+    checkIsLyricTranslateAsk,
+    findLyricAskFiles,
+    genLyricOpeningAnswer,
+    readLyricTranslateMode,
+    toLyricAsk,
+    toLyricSongText,
+} from './lyricChatHelpers';
 import {
     keepBibleReaderAskUnlessKnown,
     readBibleReaderAsk,
@@ -102,6 +115,7 @@ import {
     type BibleReaderAskType,
 } from './bibleReaderChatHelpers';
 import { toCompactBookName } from '../helper/bibleSuggestHelpers';
+import { listLangBibleBookNames } from '../lang/langPackageFileHelpers';
 import {
     readBibleInputSuggestAskList,
     toBibleInputSuggestRows,
@@ -281,6 +295,14 @@ import {
     subscribeProgress,
     type ProgressStateType,
 } from './progressHelpers';
+import {
+    LANG_INSTALL_STEP_TOOL_NAME,
+    describeLangInstallStep,
+    findLangInstallTypedPress,
+    readLangInstallAsk,
+    runLangInstallStep,
+    type LangInstallStateType,
+} from './langInstallChatHelpers';
 import {
     BIBLE_IMPORT_STEP_TOOL_NAME,
     describeBibleImportStep,
@@ -518,9 +540,21 @@ import {
 import { checkIsDisputingAnswer, readDisputeHint } from './disputeHelpers';
 import {
     DEFAULT_CHAT_LANG_CODE,
+    getAppLangCode,
+    getAppLanguage,
     getAssistantLanguage,
+    listAssistantLanguages,
+    listTypedLanguages,
     pickReplyLanguage,
+    SENTENCE_END_MARKS,
+    toCharClassSource,
 } from './chatLangHelpers';
+
+// Where a warning's first sentence ends, in any script here.
+const WARNING_SENTENCE_END_PATTERN = new RegExp(
+    `(?<=[.!?${toCharClassSource(SENTENCE_END_MARKS)}])\\s+`,
+    'u',
+);
 import {
     findPageLanguage,
     genAskTranslation,
@@ -574,6 +608,7 @@ import {
     BUILTIN_TOOL_NAME,
     checkIsBuiltinCommand,
     matchBuiltinActions,
+    toCommandStartedDraft,
     CLEAR_CHAT_COMMAND,
     answerScreenToggleAsk,
     answerSlideShowAsk,
@@ -732,7 +767,8 @@ function toShownBibleImportAsk(asked: string) {
 /**
  * An action's words as drawn. A found verse's button reads the reference the
  * way the Bible writes it in a window not in English (`toShownVerseRef`):
- * `បើក ម៉ាថាយ ៥:៤៤ ក្នុងការស្វែងរកព្រះគម្ពីរ`, not `… HEBREWS 5:14 …`.
+ * the Khmer "open", the Bible's own "Matthew 5:44" and the rest of the
+ * label in Khmer, not `… HEBREWS 5:14 …`.
  */
 function toShownActionLabel(action: BotActionType): string {
     const verseRef = /^Open (.+) in Bible Lookup$/.exec(action.label)?.[1];
@@ -1121,11 +1157,7 @@ type SuggestRowType = {
  * references pressable (2026-10-19).
  */
 function checkIsResourceReadingText(text: string) {
-    return (
-        /(?:យោង|references?|cross[- ]?references?|xref)\s*[:：៖]/iu.test(
-            text,
-        ) && /PDF/iu.test(text)
-    );
+    return checkHasCrossReferenceLabel(text) && /PDF/iu.test(text);
 }
 
 function toQuestionSuggestRow(row: QuestionRowType): SuggestRowType {
@@ -1140,13 +1172,14 @@ function toQuestionSuggestRow(row: QuestionRowType): SuggestRowType {
 
 /**
  * A typed question with a chapter number and no chapter word ("Matthew 18",
- * "ម៉ាថាយ ១៨") is a Bible-Reader ask when the words before the number name a
+ * or the same in a Bible's own words and digits) is a Bible-Reader ask when
+ * the words before the number name a
  * book of the Bible being read. The pure reader cannot know a book name in
  * every installed Bible's language, so the window asks its own reference aid
  * -- the same `owa_bible_suggest` the box completes with -- about the
  * shortest run of words first, and hands the reader a matcher for the run
- * that answered (2026-10-19: asked "សូមសង្ខេប ម៉ាថាយ ១៨" the assistant
- * summarized from memory, and asked for John 3's Resources it gave the
+ * that answered (2026-10-19: asked in Khmer to summarize Matthew 18, the
+ * assistant summarized from memory, and asked for John 3's Resources it gave the
  * steps for opening the panel).
  */
 async function readBibleReaderAskWithBook(asked: string) {
@@ -1154,6 +1187,12 @@ async function readBibleReaderAskWithBook(asked: string) {
     if (candidate === null) {
         return null;
     }
+    const readWithBook = (bookText: string) => {
+        const wanted = toCompactBookName(bookText);
+        return readBibleReaderAsk(asked, (value: string) => {
+            return toCompactBookName(value) === wanted;
+        });
+    };
     for (const bookText of candidate.bookTextList) {
         try {
             const listed = parseToolJson(
@@ -1169,15 +1208,29 @@ async function readBibleReaderAskWithBook(asked: string) {
             if (suggestions.length === 0) {
                 continue;
             }
-            const wanted = toCompactBookName(bookText);
-            return readBibleReaderAsk(asked, (value: string) => {
-                return toCompactBookName(value) === wanted;
-            });
+            return readWithBook(bookText);
         } catch (_error) {
             // The next run of words, or no route at all.
         }
     }
-    return null;
+    // A book named in a language other than the open Bible's: a French
+    // "summarize" with the French name of Matthew and a chapter, typed in a
+    // French window with the KJV open, went to the ordinary assistant, which
+    // said to type /btw (2026-11-04, EC-461). Every language package names
+    // the books too (`data/<code>/bibleBooks.json`).
+    try {
+        const nameSet = new Set(
+            (await listLangBibleBookNames()).map((name) => {
+                return toCompactBookName(name);
+            }),
+        );
+        const bookText = candidate.bookTextList.find((text) => {
+            return nameSet.has(toCompactBookName(text));
+        });
+        return bookText === undefined ? null : readWithBook(bookText);
+    } catch (_error) {
+        return null;
+    }
 }
 
 /**
@@ -1402,8 +1455,9 @@ function RenderSuggestionsComp({
 // is replaced by a tick, because "-" is punctuation the model typed, not
 // something the reader needs to see.
 const BULLET_PATTERN = /^\s*[-*•]\s+/;
-// Khmer digits too: a step a model numbers `១.` is a step all the same.
-const NUMBERED_PATTERN = /^\s*([0-9០-៩]{1,2}[.)])\s+/u;
+// Any script's digits too: a step a model numbers in Khmer digits is a step
+// all the same.
+const NUMBERED_PATTERN = /^\s*(\p{Nd}{1,2}[.)])\s+/u;
 
 /**
  * A web address the APP wrote into an answer (`ChatMessageType.links`),
@@ -1811,8 +1865,8 @@ const NO_PROVIDER_VALUE = '';
 const OFFLINE_ENGINE_LABEL = 'app guide · offline';
 
 // The button that adds words to an answer being written reads **Add**, as the
-// manual names it. The dictionary's `Add` is the blend mode's (Khmer បូក, the
-// sum), so another language says the longer key's words instead.
+// manual names it. The dictionary's `Add` is the blend mode's (in Khmer the
+// word for a sum), so another language says the longer key's words instead.
 const ADD_BUTTON_KEY = 'Add more';
 function toAddButtonLabel() {
     const shown = tran(ADD_BUTTON_KEY);
@@ -2184,8 +2238,9 @@ function RenderProviderWarningComp({
     // The first sentence carries the whole point of the warning; the rest is
     // what to do about it. So the folded line is not a summary somebody has to
     // keep in step with the warning -- it is the warning's own opening words,
-    // ended however its language ends a sentence (`.` or Khmer `។`).
-    const foldedText = warning.split(/(?<=[.!?។])\s+/)[0];
+    // ended however its language ends a sentence (`.`, or a script's own
+    // full stop, `sentenceEndMarks`).
+    const foldedText = warning.split(WARNING_SENTENCE_END_PATTERN)[0];
     return (
         <p className={`chat-warn${isFolded ? ' is-folded' : ''}`} role="note">
             <span className="chat-warn-mark" aria-hidden="true">
@@ -2416,7 +2471,12 @@ function toChipTitle(
     if (isGone) {
         return fillWords(tran('{name} — not attached any more'), { name });
     }
-    if (attachment.selector !== undefined) {
+    // A pointed-at control is rung where it lives: by its selector, or --
+    // when none could be built -- by its words (`handleShowingAttachment`).
+    if (
+        attachment.selector !== undefined ||
+        (attachment.kind === 'element' && attachment.name.length > 0)
+    ) {
         return fillWords(tran('{name} — press to ring it in the app'), {
             name,
         });
@@ -4325,6 +4385,9 @@ export default function ChatbotAppComp() {
     // is a question about to be corrected or added to, and a caret left at
     // character zero makes every recall start with a press of End.
     const isCaretToEndRef = useRef(false);
+    // The same, to a place of its own: the `/` button puts the caret right
+    // after the `/` it set in front of words already typed.
+    const caretAtRef = useRef<number | null>(null);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
     // The box grows with what is in it. A pasted verse, a log line and a
     // sentence a volunteer rewrote twice were all one scrolling line before,
@@ -4362,6 +4425,11 @@ export default function ChatbotAppComp() {
             isCaretToEndRef.current = false;
             const end = element.value.length;
             element.setSelectionRange(end, end);
+        }
+        if (caretAtRef.current !== null) {
+            const caret = Math.min(caretAtRef.current, element.value.length);
+            caretAtRef.current = null;
+            element.setSelectionRange(caret, caret);
         }
     }, [question]);
     const handleTipPressed = useCallback(() => {
@@ -4575,6 +4643,25 @@ export default function ChatbotAppComp() {
         },
         [handleDrafting],
     );
+    // The `/` button beside the attach icons (2026-11-05, the user's ask:
+    // _add an icon of `/` somewhere to click then add `/` to input, so user
+    // know how `/` for_). The placeholder says `/` is there; the button is
+    // the way to find out what it does without being told. Through
+    // `handleTypingQuestion`, as if the `/` had been typed, so the command
+    // list opens exactly as it does for a key press.
+    const handleStartingCommand = useCallback(() => {
+        const started = toCommandStartedDraft(question);
+        if (started.text === question) {
+            // Already a command: the list it was showing comes back, in case
+            // Escape had put it away.
+            setIsSuggestDismissed(false);
+            setSuggestIndex(-1);
+        } else {
+            handleTypingQuestion(started.text);
+            caretAtRef.current = started.caret;
+        }
+        inputRef.current?.focus();
+    }, [question, handleTypingQuestion]);
     // Set once `handleAsking` exists (it is declared further down and needs
     // most of this component): the one path by which choosing a suggestion
     // ASKS rather than fills -- a command with nothing to add to it.
@@ -5561,6 +5648,11 @@ export default function ChatbotAppComp() {
             state: BibleImportStateType | null,
             echo: string,
             waitingQuestion?: BotAnswerType,
+            // Only a TYPED line can be handed on to the ordinary assistant
+            // (`false` back) when the interpreter calls it another task. A
+            // press or a handoff carries nobody's words to hand on, and its
+            // caller would end the tab on the echo, so it keeps the question.
+            isTyped = false,
         ): Promise<boolean> => {
             const previous = sessionStateRef.current.sessions
                 .find((one) => one.id === sessionId)
@@ -5618,7 +5710,7 @@ export default function ChatbotAppComp() {
                                   usageTally,
                               );
                     throwIfCancelled(pending.controller.signal);
-                    if (help?.kind === 'unrelated') {
+                    if (help?.kind === 'unrelated' && isTyped) {
                         return false;
                     }
                     const retryState =
@@ -5681,6 +5773,47 @@ export default function ChatbotAppComp() {
         ],
     );
     const handleBibleImportStepRef = useAppCurrentRef(handleBibleImportStep);
+    // A language asked for in so many words ("install the French language"),
+    // offered and installed by buttons, with no model
+    // (`langInstallChatHelpers.ts`): the press goes into the transcript as
+    // the person's own words and the next answer comes back.
+    const handleLangInstallStep = useCallback(
+        async (
+            sessionId: string,
+            state: LangInstallStateType,
+            echo: string,
+        ) => {
+            addMessage(sessionId, { author: 'you', text: echo });
+            const pending = genPendingAsk(sessionId, undefined, false);
+            clearProgressSteps(sessionId);
+            syncBusy();
+            const finishLine = genProgressReporter(
+                genSessionProgress(sessionId),
+            )(describeLangInstallStep(state) ?? tran('Connecting to the app'));
+            try {
+                const answer = await runLangInstallStep(state);
+                throwIfCancelled(pending.controller.signal);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: answer.text,
+                    actions: answer.actions,
+                });
+            } catch (error) {
+                if (!checkIsCancelError(error, pending.controller.signal)) {
+                    addMessage(sessionId, {
+                        author: 'bot',
+                        text: describeAnswerError(error),
+                    });
+                }
+            } finally {
+                finishLine();
+                endPendingAsk(pending);
+                settleSession(sessionId);
+            }
+        },
+        [addMessage, genPendingAsk, endPendingAsk, syncBusy, settleSession],
+    );
+    const handleLangInstallStepRef = useAppCurrentRef(handleLangInstallStep);
     // A step of finding a verse (`verseFindChatHelpers`): which Bible, then
     // the question what they remember. No model: the choice goes into the
     // transcript as the person's own words, the next question comes back.
@@ -5854,6 +5987,23 @@ export default function ChatbotAppComp() {
                     ),
                 };
             });
+            // A song (a Documents row's or the Lyric Editor's Open in
+            // Chatbot): what can be done to it, and the changes asked for
+            // most as buttons -- written with no model.
+            if (checkIsLyricFileName(filePath)) {
+                const lyricOpening = genLyricOpeningAnswer(
+                    result.attachment.name,
+                    getAppLanguage(),
+                    [...listAssistantLanguages(), ...listTypedLanguages()],
+                );
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: lyricOpening.text,
+                    replies: lyricOpening.replies,
+                });
+                inputRef.current?.focus();
+                return;
+            }
             const opening = genResourceOpeningAnswer(
                 result.attachment.name,
                 reading,
@@ -7251,8 +7401,8 @@ export default function ChatbotAppComp() {
                 return;
             }
             // A "how many" question the record's own lists answer is
-            // counted by the window (2026-10-19, EC-371): asked _តើលោកមាន
-            // កូនប៉ុន្មាន?_, gemma4:cloud said "20" over a list of nineteen
+            // counted by the window (2026-10-19, EC-371): asked in Khmer
+            // how many children he had, gemma4:cloud said "20" over a list of nineteen
             // names. The card already holds the list, so no round is spent.
             if (typedLookupSubject !== null) {
                 const countField = readLookupCountAsk(
@@ -7301,6 +7451,31 @@ export default function ChatbotAppComp() {
                           ),
                       ])
                     : [];
+            // A SONG open in this tab, the same way, makes it a question
+            // about changing that song (`lyricChatHelpers.ts`) -- unless the
+            // words are one of the app's own supported questions, which the
+            // guide answers whatever is attached. A button pressed under the
+            // song's card is never a corpus row.
+            const lyricAskFiles =
+                (options?.shownText === undefined ||
+                    options?.keepOpenFiles === true) &&
+                !trimmedAsked.startsWith('/') &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0
+                    ? findLyricAskFiles([
+                          ...attachments,
+                          ...findOpenFileAttachments(
+                              lookupTab?.messages ?? [],
+                              lookupTab?.fileClosedAt,
+                          ),
+                      ])
+                    : [];
+            const isLyricAsk =
+                lyricAskFiles.length > 0 &&
+                (options?.isPressed === true ||
+                    trimmedAsked.length === 0 ||
+                    (await findKnownQuestion(trimmedAsked, focus)) === null);
             // What they remember of a verse, under a verse-finding answer:
             // more of the same search, asked of the assistant under its own
             // prompt with the verse finder as its only tool (`AskExtraType.
@@ -7396,6 +7571,7 @@ export default function ChatbotAppComp() {
                 generalQuestion === null &&
                 lookupSubject === null &&
                 resourceFileNames.length === 0 &&
+                !isLyricAsk &&
                 verseFindBible === null &&
                 trimmedAsked.length > 0
                     ? (readBibleReaderAsk(trimmedAsked) ??
@@ -7426,7 +7602,8 @@ export default function ChatbotAppComp() {
                 verseFindBible === null &&
                 (lookupSubject === null || isLookupAppAsk) &&
                 resourceFileNames.length === 0 &&
-                bibleReaderAsk === null;
+                bibleReaderAsk === null &&
+                !isLyricAsk;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
             // to a provider, no history goes with it, and nothing attached
@@ -7525,6 +7702,48 @@ export default function ChatbotAppComp() {
                 }
                 return;
             }
+            // A language asked for in so many words ("install the French
+            // language"), or a typed "yes" / "no" under the window's own
+            // offer of one: offered and installed by buttons, with no model
+            // (`langInstallChatHelpers`). A model is never offered the tool.
+            // Read BEFORE the verse finder's and the Bible import's waiting
+            // questions, as a new Bible request is: under an import's list of
+            // files, "Install the Spanish language" went to the import's
+            // interpreter, whose model wrote the offer out as words with no
+            // button to press (seen live, 2026-11-05).
+            // Never while a SONG is open in the tab: "Add Spanish under each
+            // line" is a translation of that song, and was read as a
+            // language to install (seen live, 2026-11-06, the song card's
+            // own button).
+            if (
+                !withoutEcho &&
+                options?.shownText === undefined &&
+                attachments.length === 0 &&
+                lookupSubject === null &&
+                lyricAskFiles.length === 0
+            ) {
+                const lastLangAnswer = sessionStateRef.current.sessions
+                    .find((session) => session.id === activeSessionId)
+                    ?.messages.at(-1);
+                const langState =
+                    (lastLangAnswer?.author === 'bot'
+                        ? findLangInstallTypedPress(
+                              lastLangAnswer.actions,
+                              trimmedAsked,
+                          )
+                        : null) ?? readLangInstallAsk(trimmedAsked);
+                if (langState !== null) {
+                    updateSession(activeSessionId, (session) => {
+                        return { ...session, draft: '' };
+                    });
+                    await handleLangInstallStepRef.current(
+                        activeSessionId,
+                        langState,
+                        echoText,
+                    );
+                    return;
+                }
+            }
             // "Help me find a Bible verse", or a Bible picked by typing its
             // name under "Which Bible should I search?" -- the verse finder's
             // own steps, with no model (`verseFindChatHelpers`).
@@ -7578,7 +7797,11 @@ export default function ChatbotAppComp() {
                     return;
                 }
                 const lastVerseQuestion = verseMessages.at(-1);
+                // A line that already names its Bible and its words is the
+                // search itself -- the search-again pick asks one -- and never
+                // a reply for the list's interpreter to read.
                 if (
+                    verseFindBible === null &&
                     lastVerseQuestion?.author === 'bot' &&
                     !trimmedAsked.startsWith('/') &&
                     getVerseFindInputChoices(lastVerseQuestion.actions).length >
@@ -7627,6 +7850,7 @@ export default function ChatbotAppComp() {
                         null,
                         echoText,
                         lastImportQuestion,
+                        true,
                     );
                     if (handled) return;
                     isUnrelated = true;
@@ -7648,6 +7872,8 @@ export default function ChatbotAppComp() {
                         activeSessionId,
                         importState,
                         echoText,
+                        undefined,
+                        true,
                     );
                     if (handled) return;
                     withoutEcho = true;
@@ -8019,6 +8245,61 @@ export default function ChatbotAppComp() {
                 // how to read the rest, on the ask alone.
                 const isResourcesAsk =
                     resourceFileNames.length > 0 && verseFindBible === null;
+                // A question about an attached song carries each song as it
+                // reads NOW (`owa_lyric_edit read`, unsaved edits included):
+                // the attachment's own words are from when it was attached,
+                // and stale after the first change.
+                const isSongAsk =
+                    isLyricAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null;
+                const lyricSongs = isSongAsk
+                    ? await Promise.all(
+                          lyricAskFiles.map(async (file) => {
+                              try {
+                                  return {
+                                      name: file.name,
+                                      text: toLyricSongText(
+                                          parseToolJson(
+                                              await callTool(
+                                                  LYRIC_EDIT_TOOL_NAME,
+                                                  {
+                                                      action: 'read',
+                                                      file: file.filePath,
+                                                  },
+                                                  signal,
+                                              ),
+                                          ),
+                                      ),
+                                  };
+                              } catch (_error) {
+                                  throwIfCancelled(signal);
+                                  return { name: file.name, text: null };
+                              }
+                          }),
+                      )
+                    : [];
+                throwIfCancelled(signal);
+                // The song's words go to the model as read above, never also
+                // as the attachment's notation -- a model shown notation
+                // writes notation back.
+                const askAttachments =
+                    isSongAsk && trimmedAsked.length > 0
+                        ? modelAttachments.filter((one) => {
+                              return !checkIsLyricFileName(
+                                  one.filePath ?? one.name,
+                              );
+                          })
+                        : modelAttachments;
+                const withLyric = (text: string) => {
+                    return isSongAsk
+                        ? toLyricAsk(
+                              text,
+                              lyricSongs,
+                              readLyricTranslateMode(trimmedAsked),
+                          )
+                        : text;
+                };
                 const resourcePassageRef = isResourcesAsk
                     ? (toResourcePassageRef(resourceFileNames, trimmedAsked) ??
                       (options?.askHint === RESOURCES_CROSS_REFERENCE_HINT
@@ -8276,11 +8557,13 @@ export default function ChatbotAppComp() {
                                     lookupSubject,
                                 )
                           : generalQuestion === null
-                            ? withResources(
-                                  toAskedOfModel(
-                                      trimmedAsked,
-                                      modelAttachments,
-                                      toAttachedPage,
+                            ? withLyric(
+                                  withResources(
+                                      toAskedOfModel(
+                                          trimmedAsked,
+                                          askAttachments,
+                                          toAttachedPage,
+                                      ),
                                   ),
                               )
                             : toGeneralQuestionAsk(
@@ -8464,6 +8747,26 @@ export default function ChatbotAppComp() {
                     // Bible under the sentence saying the PDF was not read
                     // (`resourceReadingWasRejected`); anything else is told
                     // it needs an assistant, with the door to one.
+                    // A song to change with no assistant: never the guide,
+                    // which would answer "add a verse" with how to type one.
+                    if (isSongAsk) {
+                        return {
+                            text: tran(
+                                'A question about this needs an ' +
+                                    'assistant, and none could answer just ' +
+                                    'now. Pick one in the row above, or ' +
+                                    'add a key in Settings → AI Providers, ' +
+                                    'and ask again.',
+                            ),
+                            actions: [
+                                {
+                                    label: OPEN_AI_SETTING_LABEL,
+                                    toolName: OPEN_AI_SETTING_TOOL_NAME,
+                                    args: {},
+                                },
+                            ],
+                        };
+                    }
                     if (isResourcesAsk) {
                         return resourcePassageRef !== null
                             ? { text: '' }
@@ -8593,24 +8896,32 @@ export default function ChatbotAppComp() {
                                   isWordsEnglish: templateAsk !== null,
                                   findTranslator: findTranslationPick,
                                   translate: async (ask, translator, kind) => {
-                                      const finishStep = genProgressReporter(
-                                          genSessionProgress(askedSessionId),
-                                      )(
-                                          fillWords(
-                                              kind === 'question'
-                                                  ? tran(
-                                                        'Putting your question into English with {model}',
-                                                    )
-                                                  : tran(
-                                                        'Putting the answer into your language with {model}',
+                                      // The options are put into their
+                                      // language beside the answer, whose
+                                      // line already says so.
+                                      const finishStep =
+                                          kind === 'replies'
+                                              ? null
+                                              : genProgressReporter(
+                                                    genSessionProgress(
+                                                        askedSessionId,
                                                     ),
-                                              {
-                                                  model: toShownPickLabel(
-                                                      translator.label,
-                                                  ),
-                                              },
-                                          ),
-                                      );
+                                                )(
+                                                    fillWords(
+                                                        kind === 'question'
+                                                            ? tran(
+                                                                  'Putting your question into English with {model}',
+                                                              )
+                                                            : tran(
+                                                                  'Putting the answer into your language with {model}',
+                                                              ),
+                                                        {
+                                                            model: toShownPickLabel(
+                                                                translator.label,
+                                                            ),
+                                                        },
+                                                    ),
+                                                );
                                       try {
                                           const translated = await askLlmBot(
                                               ask,
@@ -8638,7 +8949,7 @@ export default function ChatbotAppComp() {
                                           }
                                           return '';
                                       } finally {
-                                          finishStep();
+                                          finishStep?.();
                                       }
                                   },
                               });
@@ -8699,11 +9010,13 @@ export default function ChatbotAppComp() {
                                             lookupSubject,
                                         )
                                   : generalQuestion === null
-                                    ? withResources(
-                                          toAskedOfModel(
-                                              plan.english,
-                                              modelAttachments,
-                                              toAttachedPage,
+                                    ? withLyric(
+                                          withResources(
+                                              toAskedOfModel(
+                                                  plan.english,
+                                                  askAttachments,
+                                                  toAttachedPage,
+                                              ),
                                           ),
                                       )
                                     : toGeneralQuestionAsk(
@@ -8792,6 +9105,9 @@ export default function ChatbotAppComp() {
                                               ),
                                           },
                                       }),
+                                ...(isSongAsk
+                                    ? { lyric: { files: lyricAskFiles } }
+                                    : {}),
                                 ...(verseFindBible === null
                                     ? {}
                                     : {
@@ -8857,17 +9173,25 @@ export default function ChatbotAppComp() {
                             return modelAnswer;
                         }
                         throwIfCancelled(signal);
-                        // The options go with the words, on their own line,
-                        // so one round translates both.
-                        const replies = modelAnswer.replies ?? [];
-                        const shown = await askTranslation.translateAnswer(
-                            replies.length === 0
-                                ? modelAnswer.text
-                                : `${modelAnswer.text}\n\nOPTIONS: ${replies.join(' | ')}`,
-                            plan.language,
-                            plan.translator,
-                            tranLabel,
-                        );
+                        // The options are put into their language on their
+                        // own, beside the words: riding the words as an
+                        // OPTIONS line they came back with no such line
+                        // under 6 of 6 answers (2026-11-03), and the model's
+                        // English chips stood under a Spanish answer.
+                        const [shown, translatedReplies] = await Promise.all([
+                            askTranslation.translateAnswer(
+                                modelAnswer.text,
+                                plan.language,
+                                plan.translator,
+                                tranLabel,
+                            ),
+                            askTranslation.translateReplies(
+                                modelAnswer.replies ?? [],
+                                plan.language,
+                                plan.translator,
+                                tranLabel,
+                            ),
+                        ]);
                         if (shown === null) {
                             translationNote = fillWords(
                                 tran(
@@ -8880,24 +9204,31 @@ export default function ChatbotAppComp() {
                         const frames = parseAnswerFrames(shown);
                         // Put into their language by a model, with the
                         // English a model leaves in it taken out by code
-                        // (`answerLanguageHelpers.ts`).
+                        // (`answerLanguageHelpers.ts`) -- by what the SCREEN
+                        // shows, which names the buttons.
+                        const screenLang = getAppLangCode();
                         const toShown = (text: string) => {
                             return toAnswerShownInLanguage(
                                 text,
                                 plan.language.code,
                                 tranLabel,
                                 answerKeep,
+                                screenLang,
                             );
                         };
-                        // A translator that dropped the OPTIONS line left the
-                        // model's English chips: only chips in their script.
+                        // Never the model's English chips in place of theirs:
+                        // a translation that failed shows none.
+                        // A name the chips carry is checked against both
+                        // the answer as put and as the model wrote it.
                         const shownReplies = toRepliesShownInLanguage(
                             frames.options.length > 0
                                 ? frames.options
-                                : (modelAnswer.replies ?? []),
+                                : (translatedReplies ?? []),
                             plan.language.code,
                             tranLabel,
                             answerKeep,
+                            screenLang,
+                            `${frames.text}\n${modelAnswer.text}`,
                         );
                         return {
                             ...modelAnswer,
@@ -8928,6 +9259,15 @@ export default function ChatbotAppComp() {
                                 ? {
                                       preferModelPattern:
                                           VERSE_TRANSLATION_MODEL_PATTERN,
+                                  }
+                                : {}),
+                            // A song put into another language: Gemma 4
+                            // first, the user's word for any translation.
+                            ...(isSongAsk &&
+                            checkIsLyricTranslateAsk(trimmedAsked)
+                                ? {
+                                      preferModelPattern:
+                                          TRANSLATION_MODEL_PATTERN,
                                   }
                                 : {}),
                             // Every OTHER ask still out, in any tab: a
@@ -9463,7 +9803,7 @@ export default function ChatbotAppComp() {
                                     options?.carryReplies ?? []
                                 ).filter((one) => {
                                     return (
-                                        /[:：៖]\s*\p{N}/u.test(one) &&
+                                        checkHasColonNumber(one) &&
                                         !/^\s*\p{N}+\s*[-–]\s*\p{N}+\s*$/u.test(
                                             one,
                                         )
@@ -11079,9 +11419,49 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            if (action.toolName === LANG_INSTALL_STEP_TOOL_NAME) {
+                await handleLangInstallStepRef.current(
+                    actedSessionId,
+                    action.args as LangInstallStateType,
+                    toShownLabel(action.label),
+                );
+                return;
+            }
             // **Ask about <another file the assistant read>** under a
             // Resources answer: the file is attached to this tab, so the
             // next question is about it (`resourcesChatHelpers.ts`).
+            // **Undo this change** under a song the assistant changed: put
+            // back here, by the change's own id, and said in a sentence --
+            // the undo tool's answer is JSON nobody should have to read.
+            if (action.toolName === LYRIC_UNDO_TOOL_NAME) {
+                const undoId = String(action.args?.id ?? '');
+                const songName = String(action.args?.name ?? '');
+                try {
+                    await callTool('owa_undo', { action: 'undo', id: undoId });
+                    addMessage(actedSessionId, {
+                        author: 'bot',
+                        isFollowUp: true,
+                        text: fillWords(
+                            tran(
+                                '“{name}” is back as it was before that ' +
+                                    'change.',
+                            ),
+                            { name: songName },
+                        ),
+                    });
+                } catch (error: any) {
+                    addMessage(actedSessionId, {
+                        author: 'bot',
+                        isFollowUp: true,
+                        text: /already undone/i.test(
+                            String(error?.message ?? ''),
+                        )
+                            ? tran('That was already undone.')
+                            : describeActionError(error, action),
+                    });
+                }
+                return;
+            }
             if (action.toolName === RESOURCE_ASK_TOOL_NAME) {
                 const fileName = String(action.args?.file ?? '').trim();
                 const filePath =
@@ -12100,6 +12480,24 @@ export default function ChatbotAppComp() {
                         onClick={handlePicking}
                     >
                         <i className="bi bi-bullseye" />
+                    </button>
+                    {/*
+                     * Last in the row, beside the box it writes into: it puts
+                     * `/` there and the command list opens, which is how
+                     * someone who never read the placeholder learns what `/`
+                     * is for. Says so in its own words (label and tooltip), not
+                     * only in the glyph.
+                     */}
+                    <button
+                        type="button"
+                        className="chat-attach chat-start-command"
+                        aria-label={tran('List every command')}
+                        title={tran(
+                            'Start a command: puts / in the box and lists the commands you can type',
+                        )}
+                        onClick={handleStartingCommand}
+                    >
+                        <i className="bi bi-slash-square" aria-hidden="true" />
                     </button>
                     <input
                         ref={fileInputRef}

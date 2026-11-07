@@ -7,7 +7,18 @@ import {
     tokenizeBibleRangeReference,
 } from './bibleReferenceTokenizer';
 
-const KHMER_DIGITS = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+const OTHER_DIGITS = [
+    '０',
+    '１',
+    '２',
+    '３',
+    '４',
+    '５',
+    '６',
+    '７',
+    '８',
+    '９',
+];
 
 function tokenize(text: string) {
     return tokenizeBibleRangeReference(normalizeBibleReferenceText(text));
@@ -27,23 +38,13 @@ describe('normalizeBibleReferenceText', () => {
         ['John 1:2--3:4', 'John 1:2-3:4'],
         ['John 3,16-4,2', 'John 3:16-4:2'],
         ['John 3:16, 18', 'John 3:16, 18'],
-        ['1. Mose 1.1', '1. Mose 1:1'],
+        ['1. Xgen 1.1', '1. Xgen 1:1'],
         ['Matt. 5:1', 'Matt. 5:1'],
         ['1 John 1:5', '1 John 1:5'],
         ['John', 'John'],
         ['Tomorrow to John', 'Tomorrow to John'],
     ])('%s => %s', (text, expected) => {
         expect(normalizeBibleReferenceText(text)).toBe(expected);
-    });
-
-    test('reads digits of any script, and a Bible numbering of its own', () => {
-        expect(normalizeBibleReferenceText('យ៉ូហាន ១៨.៣៣-១៩.១៦')).toBe(
-            'យ៉ូហាន ១៨:៣៣-១៩:១៦',
-        );
-        const pattern = toBibleDigitPattern(['a', 'b', 'c', 'd']);
-        expect(normalizeBibleReferenceText('Book b.c - d.a', pattern)).toBe(
-            'Book b:c-d:a',
-        );
     });
 });
 
@@ -131,24 +132,6 @@ describe('tokenizeBibleRangeReference', () => {
     ])('leaves %s alone', (text) => {
         expect(tokenize(text)).toBeNull();
     });
-
-    test('reads a Bible numbering of its own', () => {
-        const pattern = toBibleDigitPattern(KHMER_DIGITS);
-        expect(
-            tokenizeBibleRangeReference('យ៉ូហាន ១៨:៣៣-១៩:១៦', pattern),
-        ).toMatchObject({
-            book: 'យ៉ូហាន',
-            chapter: '១៨',
-            verseStart: '៣៣',
-            chapterEnd: '១៩',
-            verseEnd: '១៦',
-        });
-        const ownPattern = toBibleDigitPattern(['a', 'b', 'c']);
-        expect(
-            tokenizeBibleRangeReference('Book b:c-c:a', ownPattern),
-        ).toMatchObject({ chapter: 'b', chapterEnd: 'c', verseEnd: 'a' });
-        expect(tokenizeBibleRangeReference('Book b:c-c:a')).toBeNull();
-    });
 });
 
 describe('checkHasBibleRangeReference', () => {
@@ -163,7 +146,7 @@ describe('checkHasBibleRangeReference', () => {
 describe('toBibleDigitPattern', () => {
     test('adds only the digits that are not already decimal digits', () => {
         expect(toBibleDigitPattern()).toBe(String.raw`\p{Nd}`);
-        expect(toBibleDigitPattern(KHMER_DIGITS)).toBe(String.raw`\p{Nd}`);
+        expect(toBibleDigitPattern(OTHER_DIGITS)).toBe(String.raw`\p{Nd}`);
         expect(toBibleDigitPattern(['x', '.', ''])).toBe(
             String.raw`(?:\p{Nd}|x|\.)`,
         );

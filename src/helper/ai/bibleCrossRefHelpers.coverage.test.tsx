@@ -185,11 +185,11 @@ describe('useBibleKeyContext', () => {
 
         await act(async () =>
             root.render(
-                <BibleKeyContext value="ពគប">
+                <BibleKeyContext value="KH54">
                     <ProbeComp />
                 </BibleKeyContext>,
             ),
         );
-        expect(seen.at(-1)).toBe('ពគប');
+        expect(seen.at(-1)).toBe('KH54');
     });
 });

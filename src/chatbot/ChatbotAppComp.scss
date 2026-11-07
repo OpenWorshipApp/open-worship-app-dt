@@ -11,10 +11,12 @@
 // Two rules this window cannot break:
 //   * it loads bootstrap and THIS sheet, nothing else -- no app tokens, no
 //     `.app-data`, so every colour it needs is declared here;
-//   * no webfonts. The building's internet is the first thing to go, and a
-//     help window that waits on a font download is a help window that is not
-//     there. Bahnschrift ships with Windows, DIN Alternate with macOS, and the
-//     stack falls back to the system UI face.
+//   * no font from the internet. The building's internet is the first thing
+//     to go, and a help window that waits on a font download is a help
+//     window that is not there. The app's own faces (Google Sans, a
+//     language's face; `chatWindowShared.scss`) are files the app ships, read
+//     from the disk; Bahnschrift ships with Windows, DIN Alternate with
+//     macOS, and the stack falls back to the system UI face.
 @use './chatWindowShared.scss' as *;
 
 .chatbot-app {
@@ -2150,8 +2152,9 @@ button.chat-engine {
 
 // Words that are DATA (2026-10-23): a verse's or a word's own, as its Bible
 // spells them. Equipment lettering capitalises, and a capital Greek word
-// loses what a learner reads it by -- _τῇ_ drew as _ΤΗΙ_, _ἐνεθυμήθη_ as
-// _ΈΝΕΘΥΜΉΘΗ_ -- so these keep their case and the reading face.
+// loses what a learner reads it by -- its breathings, accents and subscript
+// iota drew as bare capitals -- so these keep their case and the reading
+// face.
 .cue-act-data {
   font-family: var(--chat-font-body);
   font-size: 13px;

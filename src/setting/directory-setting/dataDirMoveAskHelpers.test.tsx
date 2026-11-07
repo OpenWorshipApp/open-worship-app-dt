@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
     existingDirs: new Set<string>(),
     movedFrom: null as { dirPath: string; movedAt: string | null } | null,
     movedTo: null as { dirPath: string; movedAt: string | null } | null,
+    // The digits of the app's language; null: it has none of its own.
+    numList: null as string[] | null,
     confirm: vi.fn(
         async (
             _title: string,
@@ -38,9 +40,9 @@ vi.mock('../../server/appProvider', () => ({
 }));
 vi.mock('../../lang/langHelpers', () => ({
     getCurrentLocale: () => 'km-KH',
-    getLangData: () => ({
-        numList: ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'],
-    }),
+    getLangData: () => {
+        return mocks.numList === null ? null : { numList: mocks.numList };
+    },
     toStringNum: (numList: string[], n: number) => {
         return `${n}`
             .split('')
@@ -92,6 +94,19 @@ beforeEach(() => {
     mocks.existingDirs.clear();
     mocks.movedFrom = null;
     mocks.movedTo = null;
+    // A language's own digits (stand-ins: the full-width ones).
+    mocks.numList = [
+        '０',
+        '１',
+        '２',
+        '３',
+        '４',
+        '５',
+        '６',
+        '７',
+        '８',
+        '９',
+    ];
 });
 
 function renderAskedBody() {
@@ -258,8 +273,30 @@ describe('remindOldDataDirCopy', () => {
         // The date in the app's language and digits, not the browser's.
         const html = renderAskedBody();
         // Year first, 24-hour, whatever the browser would make of km-KH.
-        expect(html).toMatch(/២០២៦-១០-[០-៩]{2} [០-៩]{2}:[០-៩]{2}/);
+        expect(html).toMatch(/２０２６-１０-[０-９]{2} [０-９]{2}:[０-９]{2}/);
         expect(html).not.toMatch(/2026|PM|AM/);
         expect(mocks.showExplorer).toHaveBeenCalledExactlyOnceWith(DESKTOP_DIR);
+    });
+
+    test('a language with no digits of its own keeps the plain ones', async () => {
+        mocks.numList = null;
+        mocks.movedFrom = {
+            dirPath: DESKTOP_DIR,
+            movedAt: '2026-10-17T09:30:00.000Z',
+        };
+        mocks.movedTo = { dirPath: TARGET_DIR, movedAt: null };
+        mocks.existingDirs.add(DESKTOP_DIR);
+        await remindOldDataDirCopy(TARGET_DIR);
+        expect(renderAskedBody()).toMatch(/2026-10-\d{2} \d{2}:\d{2}/);
+    });
+
+    test('a move date that cannot be read is left out', async () => {
+        mocks.movedFrom = { dirPath: DESKTOP_DIR, movedAt: 'last Sunday' };
+        mocks.movedTo = { dirPath: TARGET_DIR, movedAt: null };
+        mocks.existingDirs.add(DESKTOP_DIR);
+        await remindOldDataDirCopy(TARGET_DIR);
+        const html = renderAskedBody();
+        expect(html).toContain(DESKTOP_DIR);
+        expect(html).not.toContain('Moved on:');
     });
 });

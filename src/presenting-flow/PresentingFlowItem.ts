@@ -468,8 +468,15 @@ export default class PresentingFlowItem {
         for (const raw of rawList) {
             const sourceItem = ccSourceMap.get(raw?.uuid);
             // Never itself: a line that followed itself would fire twice on one
-            // click, once as the host and once as its own follower.
-            if (sourceItem === undefined || sourceItem === this) {
+            // click, once as the host and once as its own follower. Never a line
+            // that could not be read either: its `toJson()` is the damaged json
+            // as it was found, which is not typed `error`, so the refusal in
+            // `resolveCcItemJson` would never see it.
+            if (
+                sourceItem === undefined ||
+                sourceItem === this ||
+                sourceItem.isError
+            ) {
                 continue;
             }
             const ccJson = PresentingFlowItem.resolveCcItemJson(

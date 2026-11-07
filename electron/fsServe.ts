@@ -1,8 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { app, net, protocol, session, type WebContents } from 'electron';
 
 import appInfo from '../package.json';
+import { findLangPluginAssetFilePath } from './langPluginHelpers';
+import { LANG_PLUGIN_ROUTE_SEGMENT } from './langPluginProtocol';
 
 export const htmlFiles = {
     appDocumentEditor: 'appDocumentEditor.html',
@@ -60,6 +63,28 @@ function genFilePathUrl(dirPath: string, url: string) {
         (filePath !== null ? toFileFullPath(filePath) : null) ??
         path.join(dirPath, htmlFiles.presenter);
     return `file://${filePath}`;
+}
+
+/**
+ * A language plugin's file (`owa://local/@lang/<code>/<path>`), from whichever
+ * of its two homes holds the copy in use -- same origin as every packaged
+ * page, so the CSP's `'self'` admits its fonts and its spellcheck worker. Open
+ * to other origins too: a dev page (`https://localhost:3000`) and a screen
+ * served by the Screen Mirror server read the same fonts.
+ */
+async function handlerLangPlugin(url: string) {
+    const filePath = findLangPluginAssetFilePath(new URL(url).pathname);
+    if (filePath === null) {
+        return new Response('Not Found', { status: 404 });
+    }
+    const response = await net.fetch(pathToFileURL(filePath).href);
+    const headers = new Headers(response.headers);
+    headers.set('access-control-allow-origin', '*');
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+    });
 }
 
 function handlerLocal(dirPath: string, url: string) {
@@ -144,8 +169,12 @@ function toUrlOrigin(urlString: string | undefined) {
 
 export function initCustomSchemeHandler() {
     const dirPath = path.resolve(app.getAppPath(), 'dist');
+    const langPluginUrlPrefix = `${rootUrl}/${LANG_PLUGIN_ROUTE_SEGMENT}/`;
     protocol.handle(customScheme, (request) => {
         const url = request.url;
+        if (url.startsWith(langPluginUrlPrefix)) {
+            return handlerLangPlugin(url);
+        }
         if (url.startsWith(rootUrl)) {
             return handlerLocal(dirPath, url);
         }

@@ -1,0 +1,25 @@
+{
+    "nativeLanguageNames": {
+        "中文": "chinese",
+        "汉语": "chinese",
+        "漢語": "chinese"
+    },
+    "scriptLocales": [
+        {
+            "script": "Han",
+            "locales": ["zh-CN"],
+            "order": 700
+        },
+        {
+            "script": "Han",
+            "locales": ["zh-TW"],
+            "order": 701
+        }
+    ],
+    "languageAliases": {
+        "china": "chinese",
+        "mandarin": "chinese",
+        "cantonese": "chinese",
+        "taiwan": "chinese"
+    }
+}

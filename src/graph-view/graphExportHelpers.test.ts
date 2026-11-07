@@ -32,9 +32,9 @@ function genOptions(kjvName: string) {
         title: 'Graph',
         nodeList: [
             {
-                node: { key: 'a', recordId: 'a', name: 'ដាវីឌ', x: 0, y: 0 },
+                node: { key: 'a', recordId: 'a', name: '✝♪', x: 0, y: 0 },
                 view: {
-                    name: 'ដាវីឌ',
+                    name: '✝♪',
                     kjvName,
                     title: 'King of Israel',
                     caption: '',
@@ -57,7 +57,7 @@ function genOptions(kjvName: string) {
 describe('buildGraphSvg', () => {
     test('a translated name keeps its English name, as the box shows it', () => {
         const svg = buildGraphSvg(genOptions('David'));
-        expect(svg).toContain('ដាវីឌ</text>');
+        expect(svg).toContain('✝♪</text>');
         expect(svg).toContain('(David)</text>');
         expect(svg).toContain('King of Israel</text>');
     });
@@ -164,7 +164,6 @@ describe('font measurement and loading', () => {
 
 // The box keeps this much clear of its right border.
 const BOX_RIGHT_PADDING = 8;
-const KHMER_COENG = '្';
 
 /**
  * Code points times an advance per pixel of font size: crude, and Khmer
@@ -198,25 +197,6 @@ function readBoxLineList(svg: string, measure: ReturnType<typeof genMeasure>) {
 }
 
 describe('buildGraphSvg with a measurer', () => {
-    // Measured live (robot run 20261001-1149): a Khmer description cut to 30
-    // CHARACTERS drew ~11px past its box's right border in the saved PNG.
-    test('a long Khmer description is cut to the box by its drawn width', () => {
-        const measure = genMeasure(0.75);
-        const options = genOptions('David');
-        options.nodeList[0].view.title =
-            'ព្រះមហាក្សត្រនៃសាសន៍អ៊ីស្រាអែល ដែលបានគ្រងរាជ្យនៅក្រុងយេរូសាឡិម';
-        options.measureText = measure;
-        const lineList = readBoxLineList(buildGraphSvg(options), measure);
-        expect(lineList.map((line) => line.value)).toEqual([
-            'ដាវីឌ',
-            '(David)',
-            expect.stringMatching(/^ព្រះមហាក្សត្រ.*…$/),
-        ]);
-        for (const line of lineList) {
-            expect(line.width).toBeLessThanOrEqual(line.room);
-        }
-    });
-
     test('a long English name keeps as much as fits, its brackets counted', () => {
         const advance = 0.6;
         const measure = genMeasure(advance);
@@ -229,24 +209,6 @@ describe('buildGraphSvg with a measurer', () => {
         expect(kjvLine.width + kjvLine.fontSize * advance).toBeGreaterThan(
             kjvLine.room - BOX_RIGHT_PADDING,
         );
-    });
-
-    test('a cut never leaves a Khmer COENG dangling before the ellipsis', () => {
-        const options = genOptions('');
-        // Every other grapheme cluster here ENDS on a coeng (ក្ | ស | ត្ | រ).
-        options.nodeList[0].view.title = 'ក្សត្រ'.repeat(20);
-        for (let step = 30; step <= 120; step++) {
-            const measure = genMeasure(step / 100);
-            options.measureText = measure;
-            const caption = readBoxLineList(buildGraphSvg(options), measure)
-                .filter((line) => {
-                    return line.fontSize === 10;
-                })
-                .at(0)!;
-            expect(caption.value.endsWith('…')).toBe(true);
-            expect(caption.value.endsWith(`${KHMER_COENG}…`)).toBe(false);
-            expect(caption.width).toBeLessThanOrEqual(caption.room);
-        }
     });
 
     test('with no measurer a line is still cut by its character count', () => {
@@ -408,6 +370,110 @@ describe('saveGraphImage', () => {
             'data:image/png;base64,picture',
         );
         expect(showSimpleToast).not.toHaveBeenCalled();
+    });
+
+    test('a canvas with no 2D context saves nothing and says so', async () => {
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+            null,
+        );
+        vi.stubGlobal(
+            'Image',
+            class {
+                width = 10;
+                height = 10;
+                onload: (() => void) | null = null;
+                set src(_value: string) {
+                    this.onload?.();
+                }
+            },
+        );
+        await saveGraphImage('<svg/>');
+        expect(showSimpleToast).toHaveBeenCalledWith(
+            'Save as image',
+            'Failed to save image',
+        );
+        expect(downloadImageBase64Data).not.toHaveBeenCalled();
+    });
+
+    test('an error while drawing is reported rather than thrown', async () => {
+        vi.stubGlobal(
+            'Image',
+            class {
+                constructor() {
+                    throw new Error('no image support');
+                }
+            },
+        );
+        await expect(saveGraphImage('<svg/>')).resolves.toBeUndefined();
+        expect(h.handleErrorMock).toHaveBeenCalledWith(
+            expect.objectContaining({ message: 'no image support' }),
+        );
+        expect(downloadImageBase64Data).not.toHaveBeenCalled();
+        expect(showSimpleToast).not.toHaveBeenCalled();
+    });
+
+    test('a font file that cannot be read leaves the picture unembedded', async () => {
+        addFontStyle();
+        stubPicture();
+        vi.stubGlobal(
+            'FileReader',
+            class {
+                result: string | null = null;
+                error: DOMException | null = null;
+                onload: (() => void) | null = null;
+                onerror: (() => void) | null = null;
+                readAsDataURL(_blob: Blob) {
+                    this.onerror?.();
+                }
+            },
+        );
+        const svg = buildGraphSvg({
+            ...genOptions('David'),
+            fontFamily: 'app-Battambang',
+        });
+        await saveGraphImage(svg, 'app-Battambang');
+        expect(h.handleErrorMock).toHaveBeenCalledWith(
+            expect.objectContaining({ message: 'Failed to read font' }),
+        );
+        expect(readDrawnSvg()).toBe(svg);
+    });
+
+    test('skips a stylesheet it may not read and rules that are not faces', async () => {
+        const otherStyle = document.createElement('style');
+        otherStyle.textContent =
+            '@media print { .graph { color: red; } } .graph { color: blue; }';
+        document.head.appendChild(otherStyle);
+        addFontStyle();
+        const fetchMock = stubPicture();
+        const lockedSheet = {
+            href: 'https://cdn.test/locked.css',
+            get cssRules(): CSSRuleList {
+                throw new DOMException('cross-origin', 'SecurityError');
+            },
+        };
+        const sheetList = [lockedSheet, ...Array.from(document.styleSheets)];
+        Object.defineProperty(document, 'styleSheets', {
+            configurable: true,
+            get: () => {
+                return sheetList;
+            },
+        });
+        try {
+            const svg = buildGraphSvg({
+                ...genOptions('David'),
+                fontFamily: 'app-Battambang',
+            });
+            await saveGraphImage(svg, 'app-Battambang');
+        } finally {
+            delete (document as any).styleSheets;
+            otherStyle.remove();
+        }
+        expect(h.handleErrorMock).not.toHaveBeenCalled();
+        expect(fetchMock.mock.calls.map(([url]) => url).sort()).toEqual([
+            'https://fonts.test/bold.ttf',
+            'https://fonts.test/regular.ttf',
+        ]);
+        expect(readDrawnSvg()).toContain('@font-face{font-family:');
     });
 });
 

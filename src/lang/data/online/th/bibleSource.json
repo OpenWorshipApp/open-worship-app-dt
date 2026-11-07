@@ -1,0 +1,9 @@
+{
+    "wordLanguages": [
+        {
+            "pattern": "\\p{Script=Thai}",
+            "name": "Thai",
+            "order": 4
+        }
+    ]
+}

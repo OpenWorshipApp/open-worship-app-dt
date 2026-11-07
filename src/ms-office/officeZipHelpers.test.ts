@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { OfficeZipWriter, concatBytes, toZipBytes } from './officeZipHelpers';
 
@@ -128,9 +128,9 @@ describe('OfficeZipWriter', () => {
 
     test('marks file names as UTF-8', async () => {
         const [file] = await readZip(
-            await toZipBytes([{ fileName: 'ស្លាយ.xml', data: '<a/>' }]),
+            await toZipBytes([{ fileName: '✝♪.xml', data: '<a/>' }]),
         );
-        expect(file.fileName).toBe('ស្លាយ.xml');
+        expect(file.fileName).toBe('✝♪.xml');
         expect(file.flags & 0x800).toBe(0x800);
     });
 
@@ -146,5 +146,58 @@ describe('OfficeZipWriter', () => {
         order.push('added');
         await writer.finish();
         expect(order.indexOf('added')).toBe(2);
+    });
+
+    describe('limits of a classic ZIP', () => {
+        afterEach(() => {
+            vi.unstubAllGlobals();
+        });
+
+        test('stores every entry as it is where the platform cannot deflate', async () => {
+            vi.stubGlobal('CompressionStream', undefined);
+            const repeated = '<a:p>slide</a:p>'.repeat(200);
+            const [slide] = await readZip(
+                await toZipBytes([{ fileName: 'slide.xml', data: repeated }]),
+            );
+            expect(slide.method).toBe(0);
+            expect(new TextDecoder().decode(slide.bytes)).toBe(repeated);
+        });
+
+        test('refuses a 65536th entry and writes nothing for it', async () => {
+            let chunkCount = 0;
+            const writer = new OfficeZipWriter(() => {
+                chunkCount++;
+            });
+            const bytes = Uint8Array.of(1);
+            for (let index = 0; index < 0xffff; index++) {
+                await writer.addEntry(`${index}`, bytes, {
+                    isCompressible: false,
+                });
+            }
+            expect(chunkCount).toBe(0xffff * 2);
+            await expect(
+                writer.addEntry('one-too-many', bytes, {
+                    isCompressible: false,
+                }),
+            ).rejects.toThrow('Too many entries for a ZIP package');
+            expect(chunkCount).toBe(0xffff * 2);
+        });
+
+        test('refuses an entry that would end past 4 GiB before writing any of it', async () => {
+            const chunkList: Uint8Array[] = [];
+            const writer = new OfficeZipWriter((chunk) => {
+                chunkList.push(chunk);
+            });
+            await writer.addEntry('a.xml', '<a/>');
+            expect(chunkList).toHaveLength(2);
+            // stands in for the 4 GiB of pictures already streamed to disk
+            (writer as any).offset = 0xffffffff - 40;
+            await expect(
+                writer.addEntry('big.png', new Uint8Array(16), {
+                    isCompressible: false,
+                }),
+            ).rejects.toThrow('The package is too large for a ZIP file');
+            expect(chunkList).toHaveLength(2);
+        });
     });
 });

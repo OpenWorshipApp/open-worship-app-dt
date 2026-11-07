@@ -1,0 +1,9 @@
+{
+    "locale": "km-KH",
+    "order": 1,
+    "name": "Khmer",
+    "nativeName": "ខ្មែរ",
+    "version": "0.0.26",
+    "editorLink": "https://editor-km.openworship.app",
+    "description": "The app in Khmer, with Khmer Bible book names, the Battambang fonts, and the Khmer keyboard and spellcheck for songs."
+}

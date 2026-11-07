@@ -223,3 +223,66 @@ describe('website screenshots in printed slides', () => {
         expect(div.textContent).toContain('Waiting');
     });
 });
+
+describe('what a printed page leaves out', () => {
+    function sentPages() {
+        return Array.from(
+            new DOMParser().parseFromString(sentHtml(), 'text/html').body
+                .children,
+        );
+    }
+
+    it('a slide with no size gets no page rule of its own, but is still printed', async () => {
+        await printAppDocument({
+            getSlides: async () => [
+                slide('sized'),
+                slide('no-width', 0, 600),
+                slide('no-height', 800, -1),
+            ],
+            fileSource: { name: 'Service' },
+        } as any);
+        const html = sentHtml();
+        // No rule asks for a page of no size; those slides take the default.
+        expect(html.match(/@page page-/g)).toEqual(['@page page-']);
+        expect(html).toContain('@page page-800x600 {');
+        expect(html).not.toContain('@page page-0x600');
+        expect(html).not.toContain('@page page-800x-1');
+        expect(html).toContain('Text for no-width');
+        expect(html).toContain('Text for no-height');
+    });
+
+    it('a video background whose frame cannot be read prints the slide alone', async () => {
+        h.frame.mockResolvedValue(null);
+        h.background.mockResolvedValue({
+            type: 'video',
+            item: { src: 'file:///missing.mp4' },
+        });
+        await printAppDocument({
+            getSlides: async () => [slide('one')],
+            fileSource: { name: 'Service' },
+        } as any);
+        const [page] = sentPages();
+        expect(h.frame).toHaveBeenCalledWith('file:///missing.mp4');
+        expect(page.querySelector('img')).toBeNull();
+        expect(
+            Array.from(page.children).map((child) => child.className),
+        ).toEqual(['slide-content']);
+    });
+
+    it.each([
+        ['camera', { id: 'camera-1' }],
+        ['web', { src: 'https://example.org' }],
+    ])('a live %s background is left off the page', async (type, item) => {
+        h.background.mockResolvedValue({ type, item });
+        await printAppDocument({
+            getSlides: async () => [slide('one')],
+            fileSource: { name: 'Service' },
+        } as any);
+        const [page] = sentPages();
+        expect(
+            Array.from(page.children).map((child) => child.className),
+        ).toEqual(['slide-content']);
+        expect(h.frame).not.toHaveBeenCalled();
+        expect(h.screenshot).not.toHaveBeenCalled();
+    });
+});

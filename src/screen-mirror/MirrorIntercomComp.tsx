@@ -113,8 +113,22 @@ export default function MirrorIntercomComp({
                             onChange={(event) => {
                                 const value = Number(event.target.value) / 100;
                                 setVolume(value);
-                                attemptVolume(() => {
-                                    void onChange({ volume: value });
+                                attemptVolume(async () => {
+                                    try {
+                                        await onChange({ volume: value });
+                                    } catch {
+                                        // The volume in effect shows below.
+                                    }
+                                    // Settled: main sends the new state before
+                                    // it answers, so a volume still not in it
+                                    // was refused or failed -- it must not stay
+                                    // on the slider as if it took (2026-11-03).
+                                    // A newer drag keeps its own value.
+                                    setVolume((current) => {
+                                        return current === value
+                                            ? null
+                                            : current;
+                                    });
                                 });
                             }}
                         />

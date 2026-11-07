@@ -315,4 +315,24 @@ describe('Documents list file row', () => {
             ),
         ).toBe(true);
     });
+
+    it('a row whose file reads as no document opens no editor and selects nothing', async () => {
+        h.doc = null;
+        await renderFile();
+        expect(h.props.fileData).toBeNull();
+
+        item('Edit').onSelect();
+        expect(h.openEditor).not.toHaveBeenCalled();
+        await act(async () => h.props.onClick({ type: 'click' }));
+        // The floating-preview shortcut is still asked: it needs the path only.
+        expect(h.openFloating).toHaveBeenCalledTimes(1);
+        expect(h.setSelected).not.toHaveBeenCalled();
+        expect(h.showPreview).not.toHaveBeenCalled();
+        // Nothing there to print or export.
+        const titles = h.props.contextMenuItems.map(
+            ({ menuElement }: MenuItem) => menuElement,
+        );
+        expect(titles).not.toContain('Print');
+        expect(titles).not.toContain('Export');
+    });
 });

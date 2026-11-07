@@ -198,6 +198,20 @@ describe('background layer helpers', () => {
         expect(container.textContent).toBe('none');
     });
 
+    it('reads nothing until a Documents folder is set, then reads that one', async () => {
+        h.useGenDirSourceReload.mockReturnValue(null);
+        await act(async () => root.render(createElement(AudioData)));
+        expect(container.textContent).toBe('none');
+        expect(h.checkDirExist).not.toHaveBeenCalled();
+        expect(dirSource.getFilePathsQuick).not.toHaveBeenCalled();
+        expect(dirSource.registerEventListener).not.toHaveBeenCalled();
+
+        h.useGenDirSourceReload.mockReturnValue(dirSource);
+        await act(async () => root.render(createElement(AudioData)));
+        expect(container.textContent).toBe('A');
+        expect(dirSource.registerEventListener).toHaveBeenCalledOnce();
+    });
+
     it('leaves the audio list empty when the folder has no audio', async () => {
         h.getPptx.mockReturnValue({
             fileSource: { name: 'A' },

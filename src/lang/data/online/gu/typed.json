@@ -1,0 +1,10 @@
+{
+    "gu": {
+        "name": "Gujarati",
+        "nativeName": "ગુજરાતી",
+        "script": "Gujarati",
+        "yes": ["હા"],
+        "no": ["ના"],
+        "order": 68
+    }
+}

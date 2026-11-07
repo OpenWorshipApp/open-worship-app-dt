@@ -2,11 +2,20 @@ import { describe, expect, test } from 'vitest';
 
 import {
     BIBLE_TEXT_FONT_FAMILY_VAR,
+    type BibleTextStyleViewType,
+    DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP,
     DEFAULT_BIBLE_TEXT_FONT_SIZE,
+    DEFAULT_BIBLE_TEXT_LINE_HEIGHT,
     MAX_BIBLE_TEXT_OUTLINE_WIDTH,
+    checkIsDefaultBibleHighlightColor,
+    genBibleTextDefaultHighlightColor,
     genBibleTextEffectDefault,
+    genBibleTextHighlightBackground,
     genBibleTextShadow,
     genBibleTextStyleCss,
+    genBibleTextStylePatch,
+    readBibleTextHighlightColor,
+    toBibleBackdrop,
     toBibleTextEffect,
     toBibleTextStyleView,
 } from './bibleTextStyleHelpers';
@@ -124,6 +133,9 @@ describe('toBibleTextStyleView', () => {
             lineHeight: 1.5,
             letterSpacing: 0,
             textAlign: 'start',
+            // The pink band it always was, and its light-backdrop twin.
+            highlightColorDark: '#FF009D33',
+            highlightColorLight: DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.light,
         });
     });
 
@@ -216,7 +228,7 @@ describe('genBibleTextStyleCss', () => {
         // machine that does not have the font.
         expect(lines).toContainEqual(
             expect.stringMatching(
-                /^font-family: "Khmer OS Battambang", system-ui, .*;$/,
+                /^font-family: "Khmer OS Battambang", app-Google-Sans, system-ui, .*;$/,
             ),
         );
         // The variable a Khmer verse reads ahead of its inline Battambang.
@@ -257,5 +269,151 @@ describe('genBibleTextStyleCss', () => {
         expect(css.split('\n').every((line) => /^[^;]*;$/.test(line))).toBe(
             true,
         );
+    });
+});
+
+describe('genBibleTextStylePatch', () => {
+    const STYLE_KEYS = [
+        'color',
+        'effect',
+        'fontFamily',
+        'fontSize',
+        'highlightColorDark',
+        'highlightColorLight',
+        'isBold',
+        'isItalic',
+        'letterSpacing',
+        'lineHeight',
+        'textAlign',
+        'textShadow',
+    ];
+
+    test('names every key, and leaves the ones at their default undefined so they clear another look', () => {
+        const view: BibleTextStyleViewType = {
+            fontFamily: '',
+            fontSize: DEFAULT_BIBLE_TEXT_FONT_SIZE,
+            color: '#ffffff',
+            textShadow: 'none',
+            effect: null,
+            isBold: false,
+            isItalic: false,
+            lineHeight: DEFAULT_BIBLE_TEXT_LINE_HEIGHT,
+            letterSpacing: 0,
+            textAlign: 'start',
+            highlightColorDark: DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.dark,
+            // The picker writes lowercase: still the default.
+            highlightColorLight:
+                DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.light.toLowerCase(),
+        };
+        const patch = genBibleTextStylePatch(view);
+        expect(Object.keys(patch).sort()).toEqual(STYLE_KEYS);
+        expect(patch).toStrictEqual({
+            fontFamily: undefined,
+            fontSize: DEFAULT_BIBLE_TEXT_FONT_SIZE,
+            color: '#ffffff',
+            textShadow: 'none',
+            effect: undefined,
+            isBold: undefined,
+            isItalic: undefined,
+            lineHeight: undefined,
+            letterSpacing: undefined,
+            textAlign: undefined,
+            highlightColorDark: undefined,
+            highlightColorLight: undefined,
+        });
+    });
+
+    test('a look that is set is written as it is', () => {
+        const view: BibleTextStyleViewType = {
+            fontFamily: 'Khmer OS Battambang',
+            fontSize: 80,
+            color: '#ffff00',
+            textShadow: '1px 1px 0 #000000',
+            effect: genEffect({ outlineWidth: 0.04 }),
+            isBold: true,
+            isItalic: true,
+            lineHeight: 2,
+            letterSpacing: 0.02,
+            textAlign: 'center',
+            highlightColorDark: '#00ff0040',
+            highlightColorLight: '#ff000040',
+        };
+        const patch = genBibleTextStylePatch(view);
+        expect(Object.keys(patch).sort()).toEqual(STYLE_KEYS);
+        expect(patch).toStrictEqual({ ...view });
+    });
+});
+
+describe('the selection band', () => {
+    test('is read off the side the words are on, one colour per side', () => {
+        expect(toBibleBackdrop('#FFFFFF')).toBe('dark');
+        expect(toBibleBackdrop('#000000')).toBe('light');
+        const style = {
+            highlightColorDark: '#00ff0040',
+            highlightColorLight: '#ff000040',
+        };
+        expect(
+            readBibleTextHighlightColor(
+                toBibleTextStyleView({ ...style, color: '#FFFFFF' }),
+            ),
+        ).toBe('#00ff0040');
+        expect(
+            readBibleTextHighlightColor(
+                toBibleTextStyleView({ ...style, color: '#000000' }),
+            ),
+        ).toBe('#ff000040');
+    });
+
+    test('nobody chose one: the defaults, the pink it always was over a dark backdrop', () => {
+        const view = toBibleTextStyleView({});
+        expect(view.highlightColorDark).toBe('#FF009D33');
+        expect(view.highlightColorLight).toBe(
+            DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.light,
+        );
+        expect(genBibleTextDefaultHighlightColor('#FFFFFF')).toBe(
+            DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.dark,
+        );
+        expect(genBibleTextDefaultHighlightColor('#000000')).toBe(
+            DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.light,
+        );
+        expect(checkIsDefaultBibleHighlightColor('#ff009d33', 'dark')).toBe(
+            true,
+        );
+        expect(checkIsDefaultBibleHighlightColor('#ff009d33', 'light')).toBe(
+            false,
+        );
+    });
+
+    test('a value that is not a hex colour is the default, never written into the sheet', () => {
+        const view = toBibleTextStyleView({
+            highlightColorDark: 'red; } body { display: none',
+            highlightColorLight: 42,
+        });
+        expect(view.highlightColorDark).toBe(
+            DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.dark,
+        );
+        expect(view.highlightColorLight).toBe(
+            DEFAULT_BIBLE_HIGHLIGHT_COLOR_MAP.light,
+        );
+    });
+
+    test('only a chosen band is written into the row, the one for the words side, last', () => {
+        // The default stays the screen sheet's.
+        expect(
+            genBibleTextStyleCss({
+                highlightColorLight: '#ff000040',
+            }),
+        ).not.toContain('highlight');
+        const lines = genBibleTextStyleCss({
+            color: '#000000',
+            textAlign: 'center',
+            highlightColorDark: '#00ff0040',
+            highlightColorLight: '#ff000040',
+        }).split('\n');
+        expect(lines.at(-1)).toBe(
+            '& .highlight.selected { background: ' +
+                `${genBibleTextHighlightBackground('#ff000040')}; }`,
+        );
+        expect(lines.join('\n')).not.toContain('#00ff0040');
     });
 });

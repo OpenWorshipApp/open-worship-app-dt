@@ -141,6 +141,26 @@ describe('genStageLookAheadData', () => {
             subHtmls: [],
         });
     });
+
+    test('a PDF side page has nothing to strip and goes as it is', async () => {
+        const pdfJson = {
+            id: 2,
+            type: 'pdf-slide',
+            imagePreviewSrc: 'file:///a/page-2.png',
+            pdfPageNumber: 1,
+        };
+        getSlidesMock.mockResolvedValue([
+            genCanvasSlide(1),
+            { id: 2, name: '', isDisabled: false, toJson: () => pdfJson },
+        ]);
+        const data = await genStageLookAheadData(
+            '/docs/a.pdf',
+            { id: 1 } as any,
+            2,
+        );
+        // The very object the slide handed out: no copy, nothing dropped.
+        expect(data?.sideList[0]?.itemJson).toBe(pdfJson);
+    });
 });
 
 describe('checkStageLookAheadData', () => {

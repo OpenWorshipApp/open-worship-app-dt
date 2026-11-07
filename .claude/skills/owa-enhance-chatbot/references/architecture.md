@@ -109,7 +109,7 @@ lands in plaintext on every operator's disk, which is why it is a named list and
 not a denylist, and why anything you write under `.claude/skills/` ships.
 
 A query reads ONE index file (and, for a manual search in a window shown in
-another language, that language's `index.<code>.json`) rather than opening
+another language, the installed language plugin's `manual/index.json`) rather than opening
 ~370 markdown files, and reads a
 document in full only when it is actually opened. Nothing is held between
 questions: this runs inside the app, on machines where a cached corpus would be

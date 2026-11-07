@@ -1,0 +1,12 @@
+{
+    "tr": {
+        "name": "Turkish",
+        "nativeName": "Türkçe",
+        "script": "Latin",
+        "words": "ve veya ama fakat değil yok var bir bu şu o ben sen biz siz onlar benim senin onun bizim nasıl ne neden niye nerede nereye zaman kim hangi mi mı mu mü ile için gibi kadar daha çok en de da ki ise olarak olan yapabilir yapmak istiyorum lütfen teşekkürler",
+        "letters": "çğıöşü",
+        "yes": ["evet", "evet, lütfen"],
+        "no": ["hayır", "hayır, teşekkürler"],
+        "order": 22
+    }
+}

@@ -112,10 +112,11 @@ function genChapterOption({
         ` ${OPTION_CLASS}` +
         ` ${i === 0 ? OPTION_SELECTED_CLASS : ''}`;
     const isDiff = `${chapter}` !== chapterLocaleString;
+    const chapterTitle = isDiff ? `${tran('Chapter')} ${chapter}` : undefined;
     return (
         <div
             key={chapter}
-            title={isDiff ? `Chapter ${chapter}` : undefined}
+            title={chapterTitle}
             style={{
                 margin: '2px',
                 width: CHAPTER_OPTION_WIDTH,
@@ -123,7 +124,7 @@ function genChapterOption({
         >
             <button
                 className={className}
-                title={isDiff ? `Chapter ${chapter}` : undefined}
+                title={chapterTitle}
                 onClick={() => {
                     onSelect(chapter);
                 }}

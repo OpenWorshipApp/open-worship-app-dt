@@ -19,7 +19,13 @@ vi.mock('../helper/errorHelpers', () => ({ handleError: vi.fn() }));
 
 import { createGraphView } from './core';
 import type { GraphViewType } from './core';
-import { getPresetList, repairGraph, savePreset } from './graphPresetHelpers';
+import { handleError } from '../helper/errorHelpers';
+import {
+    deletePreset,
+    getPresetList,
+    repairGraph,
+    savePreset,
+} from './graphPresetHelpers';
 
 function genGraph(): GraphViewType {
     return createGraphView({
@@ -105,5 +111,82 @@ describe('graph presets', () => {
             JSON.stringify([{ name: 'broken', savedAt: 1, graph: null }]),
         );
         expect(getPresetList()).toHaveLength(0);
+    });
+});
+
+describe('graph preset storage edge cases', () => {
+    beforeEach(() => {
+        getSettingMock.mockReturnValue(null);
+    });
+
+    function genStored(nameList: string[]) {
+        return JSON.stringify(
+            nameList.map((name, index) => {
+                return { name, savedAt: index, graph: genGraph() };
+            }),
+        );
+    }
+
+    function getWrittenNameList() {
+        const [settingName, value] = setSettingMock.mock.calls.at(-1) ?? [];
+        expect(settingName).toBe('graph-view-presets');
+        return (JSON.parse(value as string) as { name: string }[]).map(
+            (preset) => {
+                return preset.name;
+            },
+        );
+    }
+
+    test('a corrupted stored value is reported and read as no presets', () => {
+        getSettingMock.mockReturnValue('{not json');
+        expect(getPresetList()).toEqual([]);
+        expect(handleError).toHaveBeenCalledTimes(1);
+        expect(handleError).toHaveBeenCalledWith(expect.any(SyntaxError));
+    });
+
+    test('a blank name saves nothing', () => {
+        savePreset('   ', genGraph());
+        expect(setSettingMock).not.toHaveBeenCalled();
+    });
+
+    test('saving under an existing name replaces it and moves it first', () => {
+        getSettingMock.mockReturnValue(genStored(['Abraham', 'Isaac']));
+        savePreset('  Isaac ', genGraph());
+        expect(getWrittenNameList()).toEqual(['Isaac', 'Abraham']);
+    });
+
+    test('keeps at most thirty presets, dropping the oldest', () => {
+        getSettingMock.mockReturnValue(
+            genStored(
+                Array.from({ length: 30 }, (_unused, index) => {
+                    return `Preset ${index}`;
+                }),
+            ),
+        );
+        savePreset('Newest', genGraph());
+        const nameList = getWrittenNameList();
+        expect(nameList).toHaveLength(30);
+        expect(nameList[0]).toBe('Newest');
+        expect(nameList).not.toContain('Preset 29');
+    });
+
+    test('deleting removes only the preset with that name', () => {
+        getSettingMock.mockReturnValue(
+            genStored(['Abraham', 'Isaac', 'Jacob']),
+        );
+        deletePreset('Isaac');
+        expect(getWrittenNameList()).toEqual(['Abraham', 'Jacob']);
+    });
+
+    test('a settings write that throws is reported, not thrown', () => {
+        setSettingMock.mockImplementation(() => {
+            throw new Error('disk full');
+        });
+        expect(() => {
+            savePreset('Abraham', genGraph());
+        }).not.toThrow();
+        expect(handleError).toHaveBeenCalledWith(
+            expect.objectContaining({ message: 'disk full' }),
+        );
     });
 });

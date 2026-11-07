@@ -40,9 +40,11 @@ to `សៀវភៅទាំងអស់`, and six labels were wrong when this l
 - Khmer that is CONTENT — a bible's name, a Khmer book title, a translation key
   like `ពគប`, or a name to type into the lookup — stays verbatim. Only labels
   are templated.
-- The dictionary ships as `electron-build/knowledge/tran.json`, lifted out of
-  `src/lang/data/<code>/index.ts` by `extra-work/build-knowledge.mjs`, so a doc
-  change needs the same rebuild as any other knowledge edit
+- The dictionary travels in each language's plugin as `tran.json`, lifted
+  out of `src/lang/data/online/<code>/index.ts` (or its `dictionary.json`) by
+  `extra-work/build-lang-plugins.mjs`, and `tran.mjs` reads the INSTALLED
+  ones (`langPacks.mjs`, since 2026-11-04 -- the knowledge bundle is
+  English only). A doc change still needs the knowledge rebuild
   ([[claude-dir-edits-need-knowledge-rebuild]]).
 - `owa_tran` answers the same question for a label the model wrote itself, and
   `owa_click` / `owa_type` hand the matcher each English label with its

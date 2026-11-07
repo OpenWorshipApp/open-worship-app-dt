@@ -351,3 +351,27 @@ window as a whole — tabs, pickers, its language, the caution — is in
   HELD in the main process (`sendChatAttachment` / `takeChatAttachment`, exactly
   one) because the same press also opens that window, and a renderer still
   loading has nobody listening.
+
+- **A song is attached as its words and changed in its tab** (2026-11-06).
+  A `.owl` attachment is its Open Lyric text, not the JSON wrapper
+  (`toLyricFileText` in `genAttachmentFromPath`). A Documents row's
+  **[en:tran:Open in Chatbot]** and the Lyric Editor's robot hand it over
+  through `openChatbotWithFile` (`src/helper/ai/lyricChatbotMenuHelpers.ts`),
+  and the window opens it under a card written with no model
+  (`genLyricOpeningAnswer`): what can be changed in a sentence, then five
+  buttons -- replace the words with / add under each line (the language the
+  song's NAME says, else the app's, else _another language_), add a section,
+  add chords, change the key. A question while the song is open is a
+  `lyric` ask (`chatbot-llm.md`): the song is read AGAIN before every
+  question (`owa_lyric_edit read`), because the attachment's words are from
+  when it was attached, and its notation never reaches the model. After a
+  change the answer carries **[en:tran:Undo this change]**
+  (`LYRIC_UNDO_TOOL_NAME`: the window calls `owa_undo` and says it in a
+  sentence) and **[en:tran:Show it in the list]**. The install-a-language
+  route stays out of a tab with a song open: _Add another language under
+  each line_ had been read as a language to install (seen live). The Lyric
+  Editor follows a change made from outside it (`lyricEditorChatbotSync.ts`):
+  it opens on the SAVED text with the unsaved edits applied as an edit, so
+  Save is there to press, and writes an outside change through Monaco's own
+  edit -- never open-lyric's `value` setter, which resets the dirty baseline
+  and greyed Save out (seen live).

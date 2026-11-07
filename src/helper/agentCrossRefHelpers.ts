@@ -104,7 +104,7 @@ const NAMED_ENTITY_MAP: Record<string, string> = {
  * it, sanitized HTML (`RenderAIBibleCrossReferenceComp`), and the French one
  * writes an apostrophe as `&#39;` in 56 568 of its 231 890 titles -- shown
  * as it stands in the help window, which draws text, and read so by the
- * model: _l&#39;armure de Saül_ (2026-10-23). Tags are dropped and
+ * model: a French theme title holding an escaped apostrophe (2026-10-23). Tags are dropped and
  * entities read, by hand: a static render must not parse HTML.
  */
 export function toPlainThemeTitle(title: string) {

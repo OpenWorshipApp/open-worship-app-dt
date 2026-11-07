@@ -36,10 +36,10 @@ describe('md5Hex', () => {
         },
     );
 
-    test('Khmer text is hashed as its UTF-8 bytes', () => {
-        const text = 'ភ្លេង #1.mp4';
+    test('text past ASCII is hashed as its UTF-8 bytes', () => {
+        const text = '♪✝ #1.mp4';
         expect(md5Hex(text)).toBe(nodeMd5(text));
-        expect(md5Hex('សេចក្តីស្រឡាញ់')).toBe(nodeMd5('សេចក្តីស្រឡាញ់'));
+        expect(md5Hex('✝ ☀ ♥')).toBe(nodeMd5('✝ ☀ ♥'));
     });
 
     test('emoji (astral code points) match Node', () => {
@@ -50,7 +50,7 @@ describe('md5Hex', () => {
     test('a 10 KB string matches Node', () => {
         let text = '';
         for (let index = 0; text.length < 10 * 1024; index++) {
-            text += `${index}:ភ${String.fromCharCode(65 + (index % 26))};`;
+            text += `${index}:✝${String.fromCharCode(65 + (index % 26))};`;
         }
         expect(md5Hex(text)).toBe(nodeMd5(text));
     });

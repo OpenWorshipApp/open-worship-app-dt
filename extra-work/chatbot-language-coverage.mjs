@@ -261,12 +261,12 @@ async function waitIdle(page) {
 
 // ---- The piles -----------------------------------------------------------------
 
-const { extractDictionary } = await import(
-    pathToFileURL(path.join(repoDir, 'tools/owa-devtools-mcp/tran.mjs')).href
+const { readSourceDictionary } = await import(
+    pathToFileURL(path.join(repoDir, 'tools/owa-devtools-mcp/langPacks.mjs')).href
 );
 
 function readScriptPattern(langCode) {
-    const filePath = path.join(repoDir, 'src/lang/data', langCode, 'assistant.json');
+    const filePath = path.join(repoDir, 'src/lang/data', langCode === 'en' ? '' : 'online', langCode, 'assistant.json');
     return new RegExp(JSON.parse(fs.readFileSync(filePath, 'utf8')).scriptPattern, 'u');
 }
 
@@ -506,18 +506,15 @@ if (lang === 'en') {
 const scriptPattern = readScriptPattern(lang);
 const englishWordSet = new Set();
 if (scriptPattern.test('a')) {
-    const english = extractDictionary(
-        fs.readFileSync(path.join(repoDir, 'src/lang/data/km/index.ts'), 'utf8'),
-    );
-    const theirs = extractDictionary(
-        fs.readFileSync(path.join(repoDir, 'src/lang/data', lang, 'index.ts'), 'utf8'),
-    );
+    // The dictionary's KEYS are the English words; every package carries the
+    // same keys (`tranKeyCoverage.test.ts`), so the language's own has them.
+    const theirs = readSourceDictionary(path.join(repoDir, 'src/lang/data/online', lang));
     const theirWordSet = new Set(
         Object.values(theirs).flatMap((value) => {
             return String(value).toLowerCase().match(/\p{L}+/gu) ?? [];
         }),
     );
-    for (const key of Object.keys(english)) {
+    for (const key of Object.keys(theirs)) {
         for (const word of key.toLowerCase().match(/\p{L}+/gu) ?? []) {
             if (word.length > 2 && !theirWordSet.has(word)) {
                 englishWordSet.add(word);

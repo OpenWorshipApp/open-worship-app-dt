@@ -1,0 +1,32 @@
+[
+    {
+        "id": "km-shepherd",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ព្រះយេហូវ៉ាជាអ្នកគង្វាលខ្ញុំ",
+        "expect": ["Psalm 23:1"]
+    },
+    {
+        "id": "km-god-loved",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ព្រះស្រឡាញ់មនុស្សលោកណាស់",
+        "expect": ["John 3:16"]
+    },
+    {
+        "id": "km-peter",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": ព្រះយេស៊ូសួរពេត្រុសច្រើនដង",
+        "expect": ["John 21:17", "John 21:15", "John 21:16"]
+    },
+    {
+        "id": "km-worry",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": កុំខ្វល់ខ្វាយពីថ្ងៃស្អែក",
+        "expect": ["Matthew 6:34"]
+    },
+    {
+        "id": "en-in-km-be-still",
+        "focus": "reader",
+        "text": "Help me find a Bible verse in \"ពគប\": be still and know that I am God",
+        "expect": ["Psalm 46:10"]
+    }
+]

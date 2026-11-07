@@ -26,6 +26,7 @@ import {
     MirrorCustomPortComp,
     MirrorGuestAccessComp,
     MirrorInternetWarningComp,
+    MirrorPublicAddressComp,
     MirrorTunnelComp,
 } from './MirrorInternetComps';
 
@@ -159,6 +160,82 @@ test('a tunnel waiting for the Extra Binaries leads to Settings', async () => {
         button('Go to Settings').click();
     });
     await vi.waitFor(() => expect(openOthersSetting).toHaveBeenCalledTimes(1));
+});
+
+// A tunnel that would not run at all (`failed`) has no advice of its own and
+// no way to Settings: the Extra Binaries are there.
+test('a tunnel that will not run says so, with no way to Settings', () => {
+    render(
+        <MirrorTunnelComp
+            state={{
+                tunnelEnabled: true,
+                tunnel: { status: 'error', url: '', error: 'failed' },
+            }}
+            busy={false}
+            perform={perform}
+            idPrefix="test"
+        />,
+    );
+    const status = container.querySelector('[role="status"]')!;
+    expect(status.textContent).toBe('The tunnel is not working.');
+    expect(status.className).toBe('text-warning');
+    expect(button('Go to Settings')).toBeUndefined();
+});
+
+test('the public address is saved as typed, then the box empties to show it', async () => {
+    const draw = (publicAddress: string, busy = false) => {
+        render(
+            <MirrorPublicAddressComp
+                publicAddress={publicAddress}
+                busy={busy}
+                perform={perform}
+            />,
+        );
+    };
+    draw('');
+    const input = container.querySelector<HTMLInputElement>(
+        'input[aria-label="Public address (optional)"]',
+    )!;
+    // Nothing kept yet: an example of what to type.
+    expect(input.placeholder).toBe('example.ddns.net');
+    type(input, 'church.ddns.net');
+    expect(input.value).toBe('church.ddns.net');
+    await act(async () => button('Save address').click());
+    expect(mirrorCommand).toHaveBeenCalledExactlyOnceWith('public-address', {
+        text: 'church.ddns.net',
+    });
+    expect(input.value).toBe('');
+    // The kept one is what the empty box shows.
+    draw('church.ddns.net');
+    expect(input.placeholder).toBe('church.ddns.net');
+    // An empty save clears it.
+    await act(async () => button('Save address').click());
+    expect(mirrorCommand).toHaveBeenLastCalledWith('public-address', {
+        text: '',
+    });
+    draw('church.ddns.net', true);
+    expect(button('Save address').disabled).toBe(true);
+});
+
+test('a public address the server refuses stays in the box to be fixed', async () => {
+    mirrorCommand.mockRejectedValueOnce(new Error('Invalid host or port'));
+    const failures: unknown[] = [];
+    render(
+        <MirrorPublicAddressComp
+            publicAddress=""
+            busy={false}
+            perform={async (work) => {
+                await work().catch((error: unknown) => {
+                    failures.push(error);
+                });
+            }}
+        />,
+    );
+    const input = container.querySelector<HTMLInputElement>('input')!;
+    type(input, 'not an address');
+    await act(async () => button('Save address').click());
+    expect(failures).toHaveLength(1);
+    expect(input.value).toBe('not an address');
 });
 
 test('the custom port takes a port or nothing', async () => {

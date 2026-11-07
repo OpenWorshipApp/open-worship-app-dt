@@ -53,14 +53,14 @@ let root: Root;
 function toggles() {
     return [
         ...host.querySelectorAll<HTMLButtonElement>(
-            'button[aria-label="Bible Properties"]',
+            'button[aria-label="Bible/LongText Properties"]',
         ),
     ];
 }
 
 function widget() {
     return document.body.querySelector(
-        '.app-floating-widget-portal section[data-widget-name="Bible Properties"]',
+        '.app-floating-widget-portal section[data-widget-name="Bible/LongText Properties"]',
     );
 }
 
@@ -87,7 +87,7 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
-describe('Bible Properties floating panel', () => {
+describe('Bible/LongText Properties floating panel', () => {
     test('opens one panel from any toggle, keeps every toggle in step, and closes from the panel', async () => {
         expect(widget()).toBeNull();
         expect(toggles().map((button) => button.className)).toEqual([
@@ -107,7 +107,7 @@ describe('Bible Properties floating panel', () => {
             document.body.querySelectorAll('.app-floating-widget-portal'),
         ).toHaveLength(1);
         expect(widget()?.querySelector('h2')?.textContent).toBe(
-            'Bible Properties',
+            'Bible/LongText Properties',
         );
         expect(
             widget()

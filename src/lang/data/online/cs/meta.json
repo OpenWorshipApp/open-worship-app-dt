@@ -1,0 +1,8 @@
+{
+    "locale": "cs-CZ",
+    "order": 9,
+    "name": "Czech",
+    "nativeName": "Čeština",
+    "version": "0.0.10",
+    "description": "The app in Czech, Bible book names in English."
+}

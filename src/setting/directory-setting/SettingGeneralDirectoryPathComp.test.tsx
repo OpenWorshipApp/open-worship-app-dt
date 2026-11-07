@@ -8,7 +8,8 @@ const { state, mocks } = vi.hoisted(() => ({
     state: {
         selected: null as string | null,
         existing: new Set<string>(),
-        childPath: '/songs',
+        // `null`: the setting has no folder source at all.
+        childPath: '/songs' as string | null,
     },
     mocks: {
         getSelected: vi.fn(),
@@ -177,7 +178,9 @@ vi.mock('../../others/NoDirSelectedComp', () => ({
     SelectDefaultDirButtonComp: () => <span>Select default child</span>,
 }));
 vi.mock('../../helper/dirSourceHelpers', () => ({
-    useGenDirSourceReload: () => ({ dirPath: state.childPath }),
+    useGenDirSourceReload: () => {
+        return state.childPath === null ? null : { dirPath: state.childPath };
+    },
 }));
 vi.mock('../../helper/dirWatchingHelpers', () => ({
     unwatchDataDir: mocks.unwatch,
@@ -454,6 +457,72 @@ describe('general directory settings', () => {
         expect(mocks.forceReload).toHaveBeenCalledOnce();
         expect(mocks.showProgress).toHaveBeenCalledTimes(2);
         expect(mocks.hideProgress).toHaveBeenCalledTimes(2);
+    });
+
+    test('Repair Links with no data folder to repair says nothing', async () => {
+        state.selected = '/data';
+        await renderSettings();
+        await act(async () => click('Repair Links'));
+        expect(mocks.repairLinks).toHaveBeenCalledOnce();
+        expect(mocks.hideProgress).toHaveBeenCalledWith(
+            'repair-data-dir-links',
+        );
+        expect(mocks.toast).not.toHaveBeenCalled();
+        expect(mocks.alert).not.toHaveBeenCalled();
+        expect(mocks.forceReload).not.toHaveBeenCalled();
+    });
+
+    test('Reset All Child Directories asks again about the standard folders', async () => {
+        state.selected = '/data';
+        await renderSettings();
+        await act(async () => click('Reset All Child Directories'));
+        expect(mocks.selectChildren).toHaveBeenCalledExactlyOnceWith('/data');
+    });
+
+    test('a typed folder that cannot be made is said, and the one in use kept', async () => {
+        state.selected = '/old';
+        state.existing.add('/old');
+        mocks.confirm.mockResolvedValueOnce(true);
+        const error = new Error('EACCES: /missing');
+        mocks.createDir.mockRejectedValueOnce(error);
+        await renderSettings();
+        await act(async () => click('Choose missing'));
+        expect(mocks.handleError).toHaveBeenCalledExactlyOnceWith(error);
+        expect(mocks.toast).toHaveBeenCalledWith(
+            'Create Data Folder',
+            'Fail to create folder "/missing"',
+        );
+        expect(mocks.setSelected).not.toHaveBeenCalled();
+        expect(mocks.unwatch).not.toHaveBeenCalled();
+    });
+
+    test('a folder gone the moment after it was checked forgets the standard folders', async () => {
+        state.selected = '/old';
+        state.existing.add('/old');
+        state.existing.add('/used');
+        mocks.checkUsed.mockImplementation(async (dirPath: string) => {
+            state.existing.delete(dirPath);
+            return false;
+        });
+        await renderSettings();
+        await act(async () => click('Choose used'));
+        expect(mocks.setSelected).toHaveBeenCalledWith('/used');
+        expect(mocks.removeChildren).toHaveBeenCalledOnce();
+        expect(mocks.selectChildren).not.toHaveBeenCalled();
+        expect(mocks.reload).not.toHaveBeenCalled();
+        expect(mocks.watch).toHaveBeenCalledOnce();
+    });
+
+    test('a standard folder with no folder source draws no row', async () => {
+        state.selected = '/data';
+        await renderSettings();
+        expect(host.querySelectorAll('.app-setting-path-item')).toHaveLength(1);
+        await act(async () => root.unmount());
+        root = createRoot(host);
+        state.childPath = null;
+        await renderSettings();
+        expect(host.textContent).toContain('Child Directories');
+        expect(host.querySelectorAll('.app-setting-path-item')).toHaveLength(0);
     });
 });
 

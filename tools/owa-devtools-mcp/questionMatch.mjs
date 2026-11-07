@@ -28,7 +28,7 @@ function checkMatchesFocus(page, focus) {
 
 /**
  * The corpus in a language of the app's: `overlay` is one
- * `questions/i18n/<code>.json`, `{ sections: { "<page>.<section>": { en, text
+ * `src/lang/data/online/<code>/questions.json`, `{ sections: { "<page>.<section>": { en, text
  * } }, questions: { "<page>.<section>.<id>": { en, text } } }`. A row reads
  * its translation in `text` and keeps its English in `textEn` (a section the
  * same in `label` / `labelEn`), so everything that SHOWS a question shows the
@@ -73,16 +73,20 @@ export function applyQuestionOverlay(pages, overlay) {
 // The part of a fill-in row the person replaces: its three dots, the
 // address, the quoted name or the reference it gives as an example. In that
 // order, because a row may carry two (`Import bible from xml url https://…`).
+// A reference is a capitalised Latin book name with its digits, or a book
+// name in a script with no capitals (`\p{Lo}`) with its own digits -- the
+// reference a translated row writes as its Bible does; until 2026-11-05 a
+// translation had to keep the Latin one, the last English in its rows.
 const TEMPLATE_SAMPLE_PATTERN_LIST = [
     /\.{3}|…/,
     /https?:\/\/\S+/,
     /["“][^"“”]+["”]/,
-    /\b(?:[1-3] )?\p{Lu}\p{Ll}+ \d+:\d+(?:-\d+)?\b/u,
+    /\b(?:[1-3] )?\p{Lu}\p{Ll}+ \d+:\d+(?:-\d+)?\b|(?<![\p{L}\p{M}\p{N}])(?:\p{Nd} )?\p{Lo}[\p{Lo}\p{M}]* \p{Nd}+:\p{Nd}+(?:-\p{Nd}+)?(?![\p{L}\p{M}\p{N}])/u,
 ];
 
 /**
  * Where a fill-in row's example is, or null: `{ at, sample, kind }`. A
- * row's translation (`questions/i18n/<code>.json`) carries an example of
+ * row's translation (`src/lang/data/online/<code>/questions.json`) carries an example of
  * the same KIND -- the dots, an address, a quoted name, a reference -- so
  * the two can be told apart around it; a quoted name may be the reader's
  * own (`"French"` in a French window, the user's ask 2026-10-17: _question
@@ -199,7 +203,7 @@ const QUERY_ALIASES = {
 };
 
 // Letters of every alphabet, not `[a-z]` alone: a French row read in French
-// (`é`) must keep its words whole.
+// (an accented e) must keep its words whole.
 function normalize(text) {
     return String(text ?? '')
         .toLowerCase()

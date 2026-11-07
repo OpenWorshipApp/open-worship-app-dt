@@ -11,9 +11,10 @@ import { unlocking } from '../server/unlockingHelpers';
 import {
     DEFAULT_LANG_CODE,
     DEFAULT_LOCALE,
+    ensureLangPlugins,
     getLangCode,
     getLocalBibleCrossRef,
-    supportedLocales,
+    getSupportedLocales,
 } from '../lang/langHelpers';
 import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import { validateCrossReference } from '../helper/ai/bibleCrossRefHelpers';
@@ -137,7 +138,8 @@ async function fetchBibleCrossRefAI(
     verseNum: number,
 ) {
     let locale = await getBibleLocale(bibleKey);
-    if (supportedLocales.includes(locale) === false) {
+    await ensureLangPlugins();
+    if (getSupportedLocales().includes(locale) === false) {
         locale = DEFAULT_LOCALE;
     }
 
@@ -288,7 +290,8 @@ function toPreviewText(text: string) {
 }
 
 // Null for a reference that names no passage -- a book this model lacks, or a
-// target the data spells wrongly (`PSA 119:ющ`) -- so it gets no row at all:
+// target the data spells wrongly (`PSA 119:` followed by letters of another
+// script) -- so it gets no row at all:
 // read leniently it was a row titled `Psalm 119:` opening "Record not found".
 export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     const extracted = bibleRenderHelper.parseKJVBibleVersesKey(bibleVerseKey);

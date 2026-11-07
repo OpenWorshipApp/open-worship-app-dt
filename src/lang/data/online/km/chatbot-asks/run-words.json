@@ -1,0 +1,29 @@
+{
+    "about": "What the chatbot skill's run scripts (`.claude/skills/owa-enhance-chatbot/scripts/`) read off the window in this language: each `patterns` entry is a regular-expression source matched beside its English (`extra-work/language-packages.mjs`, `genRunWordSource`); `templateFill` finishes a fill-in question the way a person would; `bookNames` reads a verse button back to English.",
+    "patterns": {
+        "paused": "ខ្ញុំបានផ្អាកជំនួយការ",
+        "allowMore": "អនុញ្ញាតបន្ថែម",
+        "readFromCache": "អានពីឃ្លាំង",
+        "noModel": "មិនអាចភ្ជាប់|ម៉ាស៊ីនមេប្រើពេលលើស|ត្រូវការជំនួយការ",
+        "cache": "ឃ្លាំង",
+        "couldNotAnswer": "មិនអាចឆ្លើយបានទេ",
+        "open": "បើក",
+        "inBibleLookup": "ក្នុងការស្វែងរកព្រះគម្ពីរ",
+        "askAgain": "សួរម្ដងទៀត",
+        "badAnswer": "ចម្លើយមិនល្អ",
+        "neverPress": "អេក្រង់|ធ្វើជំនួសខ្ញុំ|អនុញ្ញាតបន្ថែម|លុប|សម្អាត"
+    },
+    "templateFill": {
+        "add-a-slide": "សូមស្វាគមន៍មកកាន់ព្រះវិហារ",
+        "write-a-note": "ព្រះគុណ",
+        "find-a-control": "លុបទាំងអស់"
+    },
+    "bookNames": {
+        "ម៉ាថាយ": "matthew",
+        "លូកា": "luke",
+        "ទំនុកដំកើង": "psalm",
+        "រ៉ូម": "romans",
+        "យ៉ូហាន": "john",
+        "សុភាសិត": "proverbs"
+    }
+}

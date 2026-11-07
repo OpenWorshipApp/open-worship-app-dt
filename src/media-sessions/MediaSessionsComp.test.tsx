@@ -302,4 +302,47 @@ describe('media sessions', () => {
         );
         expect(mocks.showAppContextMenu.mock.lastCall?.[1]).toHaveLength(1);
     });
+
+    it("the active chip's dots open its menu without choosing the chip again", async () => {
+        const onChoose = vi.fn();
+        await act(async () =>
+            root.render(
+                <MediaSessionsComp
+                    target="background-image"
+                    sessions={[
+                        { id: '', name: 'Default' },
+                        { id: 's1', name: 'Sunday' },
+                    ]}
+                    activeId="s1"
+                    onChoose={onChoose}
+                    onAdd={vi.fn()}
+                    onRename={vi.fn()}
+                    onRemove={vi.fn()}
+                    genRemovedSettingNames={() => []}
+                    genSessionState={() => ({
+                        isOnScreen: false,
+                        isAutoPlaying: false,
+                    })}
+                />,
+            ),
+        );
+        // Only the session being worked on carries them.
+        const dotsList = container.querySelectorAll<HTMLElement>(
+            '.media-session-menu',
+        );
+        expect(dotsList).toHaveLength(1);
+        expect(
+            dotsList[0].closest('button')?.getAttribute('aria-pressed'),
+        ).toBe('true');
+        await act(async () => dotsList[0].click());
+        expect(mocks.showAppContextMenu).toHaveBeenCalledOnce();
+        const [event, menu] = mocks.showAppContextMenu.mock.lastCall!;
+        expect(event.type).toBe('click');
+        expect(menu.map((item: any) => item.menuElement)).toEqual([
+            'Rename Session',
+            'Remove Session',
+        ]);
+        // The press stops at the dots: the chip under them is not pressed.
+        expect(onChoose).not.toHaveBeenCalled();
+    });
 });

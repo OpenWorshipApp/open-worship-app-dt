@@ -111,6 +111,36 @@ describe('parseTextToolCalls', () => {
         expect(bare!.text).toBe('');
     });
 
+    // Found by UT-89b (2026-11-03): the list was read to its FIRST `]`, so a
+    // call whose argument is a list of its own -- `owa_click`'s `find` takes
+    // one -- or a string holding a bracket was shown as words and never ran.
+    it('reads a [TOOL_CALLS] list to its own closing bracket', () => {
+        const parsed = parseTextToolCalls(
+            'Opening it.\n[TOOL_CALLS] [{"name": "owa_click", "arguments": ' +
+                '{"find": ["Bible Lookup", "Search"]}}, {"name": ' +
+                '"owa_help_search", "arguments": {"query": "press \\"]\\" now"}}]' +
+                '\nDone.',
+            TOOLS,
+        );
+        expect(
+            parsed!.calls.map((call) => {
+                return call.function.name;
+            }),
+        ).toEqual(['owa_click', 'owa_help_search']);
+        expect(argsOf(parsed)).toEqual({ find: ['Bible Lookup', 'Search'] });
+        expect(argsOf(parsed, 1)).toEqual({ query: 'press "]" now' });
+        expect(parsed!.text).toBe('Opening it.\n\nDone.');
+    });
+
+    it('leaves a [TOOL_CALLS] list that never closes as the words', () => {
+        expect(
+            parseTextToolCalls(
+                '[TOOL_CALLS] [{"name": "owa_click", "arguments": {"find": ["Bible',
+                TOOLS,
+            ),
+        ).toBeNull();
+    });
+
     it('reads a fenced json block and OpenAI’s own {function: {…}} shape', () => {
         const parsed = parseTextToolCalls(
             'Searching.\n```json\n{"function": {"name": "owa_help_search", "arguments": "{\\"query\\": \\"undo\\"}"}}\n```',

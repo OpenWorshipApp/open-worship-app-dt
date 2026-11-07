@@ -266,6 +266,54 @@ describe('Markdown Preview window', () => {
         expect(h.load).toHaveBeenCalledTimes(3);
     });
 
+    it('only a link press is taken over; a right press on one does nothing', async () => {
+        await render();
+        const heading = container.querySelector('h1')!;
+        const plainClick = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => heading.dispatchEvent(plainClick));
+        // Not a link: the press is the page's own (text selection etc).
+        expect(plainClick.defaultPrevented).toBe(false);
+        expect(h.openExternalURL).not.toHaveBeenCalled();
+        expect(h.reveal).not.toHaveBeenCalled();
+
+        // A right press (auxclick, button 2) is stopped but opens nothing.
+        await clickLink('https://example.org', 'auxclick', 2);
+        expect(h.openExternalURL).not.toHaveBeenCalled();
+        // A middle press is a press.
+        await clickLink('https://example.org', 'auxclick', 1);
+        expect(h.openExternalURL).toHaveBeenCalledWith('https://example.org');
+    });
+
+    it('a mermaid pass is told it is stale once the file re-renders', async () => {
+        // A fresh result per read, as the real loader returns.
+        h.load.mockImplementation(async () => ({
+            status: 'ready',
+            html: '<div data-mermaid-index="0"><pre><code>graph TD</code></pre></div>',
+            mermaidSources: ['graph TD'],
+        }));
+        await render();
+        expect(h.mermaid).toHaveBeenCalledTimes(1);
+        expect(h.mermaid).toHaveBeenCalledWith(
+            expect.any(HTMLDivElement),
+            ['graph TD'],
+            expect.objectContaining({ isDark: false }),
+        );
+        const firstOptions = h.mermaid.mock.calls[0][2] as {
+            checkIsStale: () => boolean;
+        };
+        expect(firstOptions.checkIsStale()).toBe(false);
+        await act(async () => button('Reload').click());
+        expect(h.mermaid).toHaveBeenCalledTimes(2);
+        expect(firstOptions.checkIsStale()).toBe(true);
+        const secondOptions = h.mermaid.mock.calls[1][2] as {
+            checkIsStale: () => boolean;
+        };
+        expect(secondOptions.checkIsStale()).toBe(false);
+    });
+
     it('shows a read error and permits retry', async () => {
         h.load
             .mockResolvedValueOnce({ status: 'unreadable' })

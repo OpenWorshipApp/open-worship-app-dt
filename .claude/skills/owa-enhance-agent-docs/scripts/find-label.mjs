@@ -13,7 +13,7 @@
 // Read-only: one `git grep`, nothing written, no app, no network.
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -23,17 +23,13 @@ const REPO_ROOT = path.join(HERE, '..', '..', '..', '..');
 const SHOWN_HIT_COUNT = 6;
 
 function readKeySet(language) {
-    const text = readFileSync(
-        path.join(REPO_ROOT, 'src/lang/data', language, 'index.ts'),
-        'utf-8',
+    const dictionary = JSON.parse(
+        readFileSync(
+            path.join(REPO_ROOT, 'src/lang/data/online', language, 'dictionary.json'),
+            'utf-8',
+        ),
     );
-    const keySet = new Set();
-    const pattern =
-        /^\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)"|([A-Za-z_$][\w$]*))\s*:/gm;
-    for (const match of text.matchAll(pattern)) {
-        keySet.add((match[1] ?? match[2] ?? match[3]).replace(/\\(.)/g, '$1'));
-    }
-    return keySet;
+    return new Set(Object.keys(dictionary));
 }
 
 function findInCode(label) {
@@ -74,13 +70,28 @@ if (labelList.length === 0) {
     console.error('Usage: find-label.mjs "<label>" ["<label>" …]');
     process.exit(1);
 }
-const khmerKeySet = readKeySet('km');
-const frenchKeySet = readKeySet('fr');
+// Every language package but English's, found by its folder.
+const keySetMap = new Map(
+    readdirSync(path.join(REPO_ROOT, 'src/lang/data/online'))
+        .filter((language) => {
+            return (
+                language !== 'en' &&
+                existsSync(path.join(REPO_ROOT, 'src/lang/data/online', language, 'dictionary.json'))
+            );
+        })
+        .map((language) => {
+            return [language, readKeySet(language)];
+        }),
+);
 for (const label of labelList) {
     const hitList = findInCode(label);
+    const keyText = [...keySetMap]
+        .map(([language, keySet]) => {
+            return `${language} key ${keySet.has(label) ? 'YES' : 'no'}`;
+        })
+        .join(', ');
     console.log(
-        `"${label}": Khmer key ${khmerKeySet.has(label) ? 'YES' : 'no'}, ` +
-            `French key ${frenchKeySet.has(label) ? 'YES' : 'no'}, ` +
+        `"${label}": ${keyText}, ` +
             `written in code ${hitList.length} time(s)`,
     );
     for (const hit of hitList.slice(0, SHOWN_HIT_COUNT)) {

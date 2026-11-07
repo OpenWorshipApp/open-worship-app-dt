@@ -146,12 +146,13 @@ function toMigratedSettingKey(
     legacyDirKey: string,
     dirKey: string,
 ) {
-    return key
-        .split(legacyDirKey)
-        .join(dirKey)
-        .split(token)
-        .join(NAME)
-        .replace(/_owp(?![A-Za-z0-9])/g, '_owpf');
+    // The old word is replaced in the PREFIX only, and the folder is put in
+    // whole after both rewrites: replaced across the whole key, it rewrote a
+    // folder or a file name of the user's own that happened to hold it.
+    const [prefix, ...fileParts] = key.split(legacyDirKey);
+    return [prefix.split(token).join(NAME), ...fileParts]
+        .map((part) => part.replace(/_owp(?![A-Za-z0-9])/g, '_owpf'))
+        .join(dirKey);
 }
 
 async function migrateSettings(

@@ -46,12 +46,23 @@ vi.mock('../../helper/helpers', async () => {
     const actual = (await vi.importActual('../../helper/helpers')) as any;
     return {
         ...actual,
-        bringDomToCenterView: mocks.bringDomToCenterView,
-        bringDomToNearestView: mocks.bringDomToNearestView,
-        bringDomToTopView: mocks.bringDomToTopView,
         checkIsVerticalPartialInvisible: mocks.checkIsVerticalPartialInvisible,
     };
 });
+
+// A selection is brought into view by a glide now; each mock stands for
+// where it is brought.
+vi.mock('./screenGlideScrollHelpers', () => ({
+    glideDomIntoView: (dom: Element, block: string) => {
+        if (block === 'center') {
+            mocks.bringDomToCenterView(dom);
+        } else if (block === 'start') {
+            mocks.bringDomToTopView(dom);
+        } else {
+            mocks.bringDomToNearestView(dom);
+        }
+    },
+}));
 
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: mocks.getSetting,

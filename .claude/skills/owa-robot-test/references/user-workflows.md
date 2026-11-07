@@ -21,7 +21,35 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-02a** (**W-29 tip — the names and places list and a detail window's title-bar buttons no longer grow with the Bible text.** Asked for by the user, with the lookup's record list and the 🤖, graph, 👁 and `KJV` controls on two detail windows circled: _remove the text zoom (bible text font-size) from area I highlighted_. At a large Bible font the list showed three or four records to the window and the title-bar buttons were drawn at the verse's size. Now only a detail window's body and its title (the name or the reference) follow the Bible text. Seen live on the dev Reader in Khmer, 2026-11-02. RD-64.)
+**workflowsVersion: 2026-11-06d** (**New W-56 — change a song with the assistant.** The user, with a song row's menu open in **[en:tran:Documents]**: _add lyric context menu `Open In Chatbot` … the chatbot should provide all operations related to lyric modification_ (add a section, translate it, change its words, its key), then with the Lyric Editor's top bar: _add robot icon to click for `Open In Chatbot`_, then _should have options: replace or append the translation under the line_ and _it should translate title and sub-title as well_. A song's menu carries **[en:tran:Open in Chatbot]**, and the Lyric Editor a robot left of Reset and Save; both open the help window with the song attached under a card of buttons, and the assistant changes the song by its words, the change unsaved with **[en:tran:Undo this change]** under the answer. Seen live 2026-11-06 on the dev app: the menu item, the card, **Add another language under each line** answered _Spanish_ putting a Spanish line under every sung line, **[en:tran:Undo this change]** putting it back, the editor's robot, and an open editor following the change with Save enabled. The title and subtitle in the same call were driven through a fresh MCP server. PL-107, CB-166.)
+
+Previous: **workflowsVersion: 2026-11-06c** (**W-53 step 7 — Atom Mode puts every line on a row of its own, Stack puts the languages in one row, Hide Number takes the numbers off the screen, and a selected row GLIDES into view.** The user, with the empty space between **[en:tran:Add Language]** and the book-and-gear button circled: _add toggle to `Atom mode`, atom mode mean break text in each element by `\n`, keep empty text, so one chunk to be one element. e.g. verse 1 has 3 lines so it will render each line for each element with numbered_, then, with a song's `1 Verse 1` card circled: _this one will become 3 element, all rendering will be preserved_ (that verse has four lines, so it is four). Chosen with the user: the numbers run on through the whole song, and two languages that break the same part into another number of lines are refused, in words, the way two songs of other parts are. **[en:tran:Atom Mode]** sits in that space; on, every line of a part (or of a typed section, a blank line kept) is its own numbered card in the panel and its own row on the screen, so the buttons, the light and the keys go line by line. Turned on or off while the text is up, it goes up again on the same screens at once, keeping its place. Then, mid-change: _for bible and longtext text on screen scroll into view in selected, shoud be ease in fast to slow, let say while user reading and it move quickly this will cause distruptioin_ — a selected verse or row is brought into view by a glide that leaves quickly and slows into place, over half a second to just under a second, for a Bible passage and a long text alike, on the Mini Screen and on the projector. Then: _add `Toggle Stack` to render 2+ language in the same line, e.g. enlish on top then khmer below then next language below, in title should `english | khmer | ...`_, _I mean in the same row_, with the Bible Reader's merged versions as the picture (_line this rendering_) — **[en:tran:Stack]** draws every language in the same row, one under the other, the row's numbers on a line of their own (`4, ៤`, each language's digits) and one header, `EN | KM` and `Still | Still`; and _add toggle option `Hide Number` to hide the number_ — **[en:tran:Hide Number]** draws the rows without numbers, side by side or stacked, the panel keeping its own. Both re-put a text that is up at once, its mark kept. Seen live 2026-11-06 on the dev app with `Still` (EN and KM) on both screens: the panel listed `1 Verse 1 Hide me now` … `4 Verse 1 Within Your mighty hand`, `5 Chorus When the oceans rise`; both Mini Screens drew a row per line numbered on; `3 Verse 1` lit its card and marked its row; **→** twice stepped to 4 and on to `5 Chorus`; Atom Mode turned off with the text up put the parts back as rows with `2 Chorus` lit, and on again lit `5 Chorus`; with **[en:tran:Stack]** and **[en:tran:Hide Number]** on (the user's own pressing), both Mini Screens drew `EN | KM` · `Still | Still` over rows of an English line with its Khmer under it and no number, and **[en:tran:Hide Number]** off brought `3, ៣`, `4, ៤`, `5, ៥` back above the rows, `4 Verse 1` still lit. Not seen live: the glide's curve itself (a screenshot cannot catch it; the unit tests hold its frames), the line-count refusal (unit tested) and the Khmer label (packed, not installed in the dev app). PM-166.)
+
+Previous: **workflowsVersion: 2026-11-06b** (**W-07 and W-53 — one panel styles a Bible passage and a Long Text Show, a language keeps only its own font and size, and the selection band has a colour per side.** The user, with the panel's title circled: _rename `Bible Properties` to `Bible/LongText Properties`_, then _make `Bible/LongText Properties` be properties setting of both bible and long text show_, then, with a Mini Screen whose selected lines wore the pink band: _make the highlight background color be customizable on `Bible/LongText Properties` between dark/light_ (one colour for each side, the user's choice); then, with the long text still white on **[en:tran:Light]**: _text color in light node does not apply to the long text_, _make sure all style that apply to bible have to apply to long text as well_, _keep font-family_ _and font-size, because some font-family make different size_, _so those 2 unset by default then override_. The panel is **[en:tran:Bible/LongText Properties]**; **[en:tran:Long Text Show]** has its book-and-gear button beside **[en:tran:Add Language]**; and **[en:tran:Highlight Color]** is a section of its own (the user, then: _add a section in `Bible/LongText Properties` for customizing text highlight color (default ping/blue)_) with a row per side, **[en:tran:Highlight on Dark]** (the moon, the pink the band always was) and **[en:tran:Highlight on Light]** (the sun, a faint blue), each with its square and an arrow back to its default: the screen draws the one for the side the words are on, so **[en:tran:Dark]** and **[en:tran:Light]** swap it; **[en:tran:Reset]** puts both back. A language card's **[en:tran:Properties]** holds only **[en:tran:Font]** (the family, no weight) and **[en:tran:Text Size (%)]**, both unset until chosen; a colour, weight or alignment a card saved before is no longer drawn. Seen live 2026-11-06 on the dev app with `Still` up in a Long Text Show on two screens: the panel and the Mini Screen menu carry the new name, the button beside **[en:tran:Add Language]** is lit while the panel is open, both Mini Screen cards drew the band blue on **[en:tran:Light]** and pink on **[en:tran:Dark]**, green picked under **[en:tran:Highlight on Dark]** turned it green on both cards at once at the picker's own faint opacity (51), yellow under **[en:tran:Highlight on Light]** changed only that square, and **[en:tran:Reset]** put both squares and the band back; the EN card, which still stored a white colour of its own, was drawn in **[en:tran:Light]**'s black at its own 60%, and its **[en:tran:Properties]** opened on **[en:tran:Font]** (`--`) and **[en:tran:Text Size (%)]** alone; the **[en:tran:Highlight Color]** section stood under the text rows, its title across the panel, the moon's row lit on **[en:tran:Dark]** and both arrows disabled at the defaults. Not pressed live: the Khmer names (packed, not installed in the dev app), and a saved preset carrying the band (unit tested). PM-13, PM-57, PM-166, PM-167.)
+
+Previous: **workflowsVersion: 2026-11-06a** (**W-55 step 2 — a language's folder, one press away.** The user, with the space left of each installed language's trash icon circled: _add folder icon to click to reveal folder location_. Every row under **[en:tran:Installed Languages]** but English's has a folder icon (**[en:tran:Reveal Folder]**) beside its trash icon, which opens the file manager on that language's folder and changes nothing. Seen live 2026-11-06 on the dev app: forty rows carried it, and Khmer's opened the data folder's `lang` folder with Khmer's chosen. ST-87.)
+
+Previous: **workflowsVersion: 2026-11-05d** (**W-42 — /screen is a Presenter command.** The user, with **/screen** circled in the list a `/` opened under **[en:tran:Asking about]** **Bible Reader**: _chatbot commands should be avialable base on their page, e.g. `/screen` should be available when working presenter page only_. **/screen** joins the commands that work on the Presenter alone: under another page the list no longer offers it (nor **/scr**, **/status** or **/projector**), typed there it answers _works on the Presenter page_ with **[en:tran:Go to the Presenter]**, and **/commands** names it on the **On the Presenter page** line with that one button under it. Seen live 2026-11-05 on the dev app's help window: under **Bible Reader** a bare `/` listed no **/screen**, `/screen` sent there answered _`/screen` works on the Presenter page, and this chat is asking about the Bible Reader_ with **[en:tran:Go to the Presenter]**, and `/commands` put **/screen** first on the Presenter line with that button alone; under **[en:tran:Presenter]** `/scr` offered **/screen** first again. CB-94.)
+
+Previous: **workflowsVersion: 2026-11-05c** (**W-16 steps 4a and 5, W-55 steps 3–8, W-34 — a language change applies itself.** The user: _when there are any modification on language setting like installed removed updated selected new language it should apply the setting (reload the app) instancely_. Choosing a language under **[en:tran:Language]**, turning one on or off, installing, updating, importing or deleting one — in **[en:tran:Languages]** or from a Bible's line in **[en:tran:Bible]** — reloads every window at once, the way **[en:tran:Apply Settings]** does, instead of turning that button amber; choosing the language already in use does nothing, and a delete that leaves files in use keeps its message on screen and turns the button amber instead. Seen live 2026-11-05 in the development app: French → English → French reloaded the Presenter and Settings in each language, Settings back on **[en:tran:Languages]**; Khmer turned off and on reloaded them too; **[en:tran:Update to]** on Khmer (0.0.14 → 0.0.16) and on French, the language in use (0.0.8 → 0.0.9), reloaded them once each was in; **[en:tran:Apply Settings]** never lit. Install, delete and import unit tested. ST-04, ST-87, ST-88, ST-89, ST-91.)
+
+Previous: **workflowsVersion: 2026-11-05b** (**W-16 step 2 — Help → Factory Reset.** The user, with the **Help** menu circled: _in `Help` menubar add `Factory Reset` to reset all setting. just in case there unrecoverable error so user has ability to reset_. The item sits under **Copy Full Debug Info**, belongs to the main process (so it works with every page blank), asks in the operating system's own dialog naming the data folder in use, and restarts the app with every setting removed — `setting.json` (the computer's settings, the credentials, the window places, the theme), the `local-storage` folder of the data folder in use and of the app's own folder, and the windows' browser storage; documents and the rest of the data folder stay. Seen live 2026-11-05 on a scratch development profile seeded with a data folder, a light theme, window bounds and thirteen folder settings: the item listed under **Help** (and refused to an agent), the restart it asks for removing every one of them while `documents/keep-me.txt` stayed, and the app opening on **[en:tran:No Parent Directory Selected]** with Settings beside it. The confirmation dialog seen live the same day on a second scratch profile, pressed at the operating system's level (no agent door can press it): it opened with **Cancel** focused, named the data folder, and nothing was written while it waited; **Cancel** closed it with the app running and every setting still there; **Factory Reset** closed the app, opened it again and removed every setting, the document kept. ST-92.)
+
+Previous: **workflowsVersion: 2026-11-05a** (**W-34 — a Bible whose language is not installed asks for it.** The user, with a picture of Settings → Bible's **[en:tran:Bibles XML]** list and the BDS row circled: _the bible should ask for language package installed, e.g. BDS is fr (french) should ask for French language package installed to have fully language data_. A row whose language is a package not on this computer says so under its title with **[en:tran:Install]** (the catalog read once for the whole list); a turned-off one with **[en:tran:Enable]**; offline, **[en:tran:Languages]** opens that tab. English, and a language the catalog has no package for (Aramaic), say nothing. Seen live 2026-11-05 on the dev app against the development catalog: BDS, Khmer 2019 and the Greek New Testament asked, the English rows and Aramaic did not; **[en:tran:Install]** on BDS put `fr@0.0.5` in the data folder's `lang` with nothing left behind, the line went and **[en:tran:Apply Settings]** turned amber; French switched off in **[en:tran:Languages]** brought the _turned off_ line back, and its **[en:tran:Enable]** turned it on and cleared it. Not seen live: the offline **[en:tran:Languages]** button (unit tests hold it). ST-91.)
+
+Previous: **workflowsVersion: 2026-11-04e** (**W-55 step 6 and a W-21 note — an update to what you installed is signed at launch.** The user, with the Setting gear, the Settings tabs and the **[en:tran:Extra Binaries]** card circled: _as a user I want the app check for installed packages (languages, extra-bin) for available update at launch so I can know_, then _sign on the gear icon then on each tab then on the item to update_. A few seconds after start the main window checks the installed languages and the download tools once against what Open Worship publishes; an amber dot marks the gear, the **[en:tran:Languages]** or **[en:tran:Others]** tab, the section and the language's row, and each goes once updated. Seen live on a scratch development profile with Khmer and the tools one version behind: every dot up, **[en:tran:Update to]** on the tools cleared the **[en:tran:Others]** tab and card while the gear stayed for Khmer, Khmer's cleared the rest. ST-90.)
+
+Previous: **workflowsVersion: 2026-11-04d** (**W-16 step 2 and 4a, W-55 steps 1, 3 and 5 — the language buttons moved from [en:tran:General] to the top of the [en:tran:Languages] tab.** Asked for by the user, with the **[en:tran:Language]** card on the **[en:tran:General]** tab circled and an arrow to **[en:tran:Languages]**: _move the setting to languages_. Choosing the language the app is shown in now sits above **[en:tran:Installed Languages]** and **[en:tran:Find a Language]**, and **[en:tran:Manage Languages]**, which took **[en:tran:General]** to that tab, is gone; **[en:tran:General]** keeps the theme, the font and the other options. Seen live on the dev app: **[en:tran:General]** without the card, **[en:tran:Languages]** opening on **[en:tran:Language]**, **Tiếng Việt** pressed there (the section's title turned **Ngôn ngữ** and **[en:tran:Apply Settings]** amber), then **English** and **[en:tran:Apply Settings]**, every window back in English. ST-04, ST-87.)
+
+Previous: **workflowsVersion: 2026-11-04c** (**W-55 step 8 and a W-21 note — a language and the download tools passed on as a file.** The user: _make extra-bin and language catalog able to install from local file and can save the downloaded file … as a user I want to able to store the extra-bin and language downloaded file somewhere so I can share to my friend easily_. A row of **[en:tran:Find a Language]** has a **[en:tran:Download]** arrow that saves the checked pack into Downloads without installing it, and **[en:tran:Installed Languages]** an **[en:tran:Import]** that installs one from a file; **[en:tran:Extra Binaries]** has **[en:tran:Export]** (the kept archive, copied to Downloads as `bin-<version>-<platform>.tar.gz`) and **[en:tran:Import]** (a pack for another kind of computer refused). A file whose checksum no published pack has — changed, or no internet to check — is asked about first (`src/helper/packFileHelpers.ts`). Seen live on the dev app (Windows on ARM, files picked in the native Open dialog): Spanish downloaded, imported from that file, and a changed copy asked about; Extra Binaries exported as `bin-0.0.3-win-arm64.tar.gz`, a pack labelled `mac` refused naming both platforms, and the development pack imported with no question (installed 0.0.4, the old archive gone). An unchecked Extra Binaries pack asks the same question as the language's — unit tested, not pressed. ST-89, MD-07. In the same change, from the session that moved Khmer and French to the catalog (the user: _must not ship in the app, except english_): W-55's opening, step 2 and step 7 no longer say a language comes with the app — seen live on a scratch dev profile, English alone reads **[en:tran:Built in]** and Khmer, found by `khmer`, installs as **[en:tran:Installed]** with a trash icon.)
+
+Previous: **workflowsVersion: 2026-11-04b** (**W-16 — a right-to-left language no longer mirrors the windows.** The user, with a picture of the Reader in Hebrew: _right to left make it worse on UI, find solution_. Laying the whole window out from the right had turned everything that is not the app's own words around with it: an English Bible's verse bar ran 25 to 1, its search results sat on the right with the full stop moved to the front, the tabs and titles reversed, and every English label still waiting for a Hebrew word did the same. Now the windows keep their layout in every language and each piece of text reads in the direction of its own words. Seen live 2026-11-04 on the dev Reader and Settings in Hebrew: the verse bar 1 to 25, the search results and English labels as in English, the Hebrew labels reading from the right, and the Languages tab in the same layout as in English.)
+
+Previous: **workflowsVersion: 2026-11-04a** (**W-55 — find and install a language; W-16 — the language list shows the languages turned on, with [en:tran:Manage Languages] beside it.** Asked for by the user: _Khmer and French are modular, only English is built in_, _add new tab `Languages` to list language plugin (include English), it should enable/disable (except English) the language data_, _as a user I want to be able to search and install my language_, and _when language plugin is deleted then should fallback to english if the language selected_. Every language but English is now a plugin: Khmer and French come with the app, others are installed from the online list into the data folder. Seen live 2026-11-04 on the dev app, against the development catalog: Hebrew found by `hebr` and by its own name, installed, chosen in General (the windows laid out right to left), updated from 0.0.1 to 0.0.2, deleted while in use (the app back in English), and French turned off (gone from General's list) and on again.)
+
+Previous: **workflowsVersion: 2026-11-03a** (**W-42 step 17 — answers in any language you write in, not only the app's.** Asked for by the user: _make chatbot generic for language, it flexible to internationalization. no matter what language I type it work seamlessly_. A question written in Spanish had been answered in French, one in Portuguese in a Khmer window in Khmer, and an answer in Chinese, Thai, Korean, Russian or Arabic came with no suggestions under it; now the language written in is the one answered in -- eighty-four more are named -- the suggestions are in it too, and every button keeps the name the screen shows. Seen live 2026-11-03 on the dev app in English: _The words are too small_ asked in twelve languages on Auto (gemma4:cloud), every answer in the language asked, every one with its suggestions in that language and the slider named **Font Size**; asked in six on Free (an assistant asked in English, a Gemma 4 model translating), six of six in the language asked, and -- once the suggestions were put into it on their own -- the Spanish answer's suggestions in Spanish. Not seen live: the other five on Free again (the hour's limit paused the assistant), and the same in a Khmer or French window (unit tests hold every language under each).)
+
+Previous: **workflowsVersion: 2026-11-02a** (**W-29 tip — the names and places list and a detail window's title-bar buttons no longer grow with the Bible text.** Asked for by the user, with the lookup's record list and the 🤖, graph, 👁 and `KJV` controls on two detail windows circled: _remove the text zoom (bible text font-size) from area I highlighted_. At a large Bible font the list showed three or four records to the window and the title-bar buttons were drawn at the verse's size. Now only a detail window's body and its title (the name or the reference) follow the Bible text. Seen live on the dev Reader in Khmer, 2026-11-02. RD-64.)
 
 Previous: **workflowsVersion: 2026-10-29a** (**Every recipe changed since 2026-10-11 read against the code, and every correction read a second time — nothing here was pressed in the app.** An `/owa-enhance-agent-docs` run (`20261028-1700`) read the 57 recipes whose words or code had moved since the last full pass — W-22b … W-22j, W-49b, W-53 and W-54 for the first time — step by step against the code, and handed each correction to a second reader told no reason and asked to refute it. 104 wrong claims fixed in 46 recipes, among them: a section-heading reference opens three chapters and **...**, not every chapter (W-11); a **[en:tran:Next: Clear Interval]** after a **[en:tran:Jump to]** loop is never reached, because the jump fires the moment the run lands on it — a loop like that is ended by hand (W-22e, and W-22c's **[en:tran:Screen: Hide]** at the end of one); a song, document or presenting flow imported again always arrives as a new copy and only pictures, videos and other media are reused (W-22j, W-23, W-25); the KJV offer, the short-name step and the missing-Bible card of the assistant's Bible import (W-34); the Help button's third row (W-01); the Reader's 106 lessons (W-46); a Bible bundle is a few MB, not tens (W-33). 121 controls named in plain English are now `[en:tran:…]`; the rest are left plain on purpose (another program's label, a native menu, a word only leaned on). Not seen live — the statements only the running app can settle are in `owa-enhance-agent-docs/references/live-checks.md`: W-17's Ctrl+F in the editors and W-21's download time added, the earlier ones still open.)
 
@@ -61,7 +89,7 @@ Previous: **workflowsVersion: 2026-10-20a** (**W-16, W-42, W-11, W-35, W-44, W-4
 
 Previous: **workflowsVersion: 2026-10-19h** (**W-11 step 4 — every Bible pane has a color, lime until one is picked.** Asked for by the user with the pane's color dot circled: _all bible preview section should have color_ … _when not setting found for the color of the editing section then it should be `lime`_. A section with no color note shows the default **lime** and is in that color group already, so its split asks a version and panes left on the default follow one passage; **[en:tran:No Color]** returns a pane to it. Seen live 2026-10-19 on the dev Reader in Khmer: two sections on the default lime dot, the sync-scroll toggle on both, a split from a lime pane asking a version, both panes following one reference, and red → **[en:tran:No Color]** putting the dot back to lime without a reload.)
 
-Previous: **workflowsVersion: 2026-10-19g** (**W-34 — the short-name options are the BIBLE's language's own Bible keys.** Asked for by the user with the key row circled: _during choosing bible key, use `getBibleKeyNameMap()` then show the keys are options. mouse hover to name of bible key in dom title_, _exclude if the key already exist_, with `src/lang/data/km/bibleKeyMap.json` open: _for khmer it should show from this json file_, then _the list of bible keys show for the selected language only_, _if no language data … then show normal guessing_, _e.g. for Thai should show the guessing language_, and with a French import circled _it should show list from fr lang data_. Step 1 offers the keys of the `bibleKeyMap` of the language the downloaded Bible is IN — Khmer **ពគប**, **គខប**, **គកស១៦**, **អគត**, **GKHB**, **KCB**; French **LSG** — with the edition the file is named after first, each key's full name on hover, and a key a Bible is already installed under left out; a language with no data (Thai) keeps the file's own suggested names. Seen live 2026-10-19 on the dev chatbot in Khmer with `ពគប` installed: **GKHB (ណែនាំ)** / **គខប** / **គកស១៦** / **អគត**, `ពគប` absent, hovering reading **ព្រះគម្ពីរខ្មែរសាកល**, **ព្រះគម្ពីរភាសាខ្មែរបច្ចុប្បន្ន ២០០៥**, **ព្រះគម្ពីរបរិសុទ្ធកែសម្រួល ២០១៦**, **អាល់គីតាប**; the French and Thai lists are unit tested.)
+Previous: **workflowsVersion: 2026-10-19g** (**W-34 — the short-name options are the BIBLE's language's own Bible keys.** Asked for by the user with the key row circled: _during choosing bible key, use `getBibleKeyNameMap()` then show the keys are options. mouse hover to name of bible key in dom title_, _exclude if the key already exist_, with `src/lang/data/online/km/bibleKeyMap.json` open: _for khmer it should show from this json file_, then _the list of bible keys show for the selected language only_, _if no language data … then show normal guessing_, _e.g. for Thai should show the guessing language_, and with a French import circled _it should show list from fr lang data_. Step 1 offers the keys of the `bibleKeyMap` of the language the downloaded Bible is IN — Khmer **ពគប**, **គខប**, **គកស១៦**, **អគត**, **GKHB**, **KCB**; French **LSG** — with the edition the file is named after first, each key's full name on hover, and a key a Bible is already installed under left out; a language with no data (Thai) keeps the file's own suggested names. Seen live 2026-10-19 on the dev chatbot in Khmer with `ពគប` installed: **GKHB (ណែនាំ)** / **គខប** / **គកស១៦** / **អគត**, `ពគប` absent, hovering reading **ព្រះគម្ពីរខ្មែរសាកល**, **ព្រះគម្ពីរភាសាខ្មែរបច្ចុប្បន្ន ២០០៥**, **ព្រះគម្ពីរបរិសុទ្ធកែសម្រួល ២០១៦**, **អាល់គីតាប**; the French and Thai lists are unit tested.)
 Previous: **workflowsVersion: 2026-10-19f** (**W-34 — a finished import offers another Bible in the same conversation.** Asked for by the user with a picture of the answer after installing `JC` and the space under its button circled: _after complete bible importing then it should have an option to add another bible. So user still can more bible in the same session._ The _Done — … is installed_ answer now carries **Add another Bible** beside **Undo** (the provided-KJV answer too); it starts a fresh import at the language question, carrying nothing of the one just installed. Seen live 2026-10-19 on the dev chatbot in Khmer: an English ASV import, the two buttons, **បន្ថែមព្រះគម្ពីរមួយទៀត** pressed to the language question, then **Undo** returning the test Bible to the trash.)
 Previous: **workflowsVersion: 2026-10-19e** (**W-34 — a missing KJV is offered before the card's other ways.** Asked for by the user with a picture of the Reader on _Bible key "KJV" is not available!_: _if KJV not exist then open confirm to tell user that KJV need to be created. When user agree then create._ The card for a missing KJV now opens its own question, **Create the KJV Bible?** — the app provides it, and creating it needs no internet and no separate download — with **Create the provided KJV** and **Cancel**; agreeing writes the app's own copy behind a progress bar and the card goes away in every window. The same **Create the provided KJV** button sits on the card for a window that cannot draw a question, or for somebody who cancelled. Seen live 2026-10-19 on a scratch dev instance with no Bible installed: the question in English and in Khmer, the card's button below it, nothing thrown. Not pressed live: the question's **Create** is a person's press; the creation is unit tested and is the Settings button's own function.)
 Previous: **workflowsVersion: 2026-10-19d** (**W-29 — a person's card researches for you: the family line, the exact count, and a Bible search.** **Family line to Jesus** reads Matthew 1:1-17 (Luke 3:23-38 when Matthew does not name the person); _how many children did he have?_ is counted from the record with every name; and a theme or half-remembered verse is searched in your Bible. The record's own lists are named in the answer instead of being left behind a button, and an answer in your language names a control in your language. Seen live 2026-10-19 on the dev Reader in Khmer with gemma4:cloud: David answered with Matthew 1:1-17 from `ពគប`, Adam with Luke 3:23-38, _តើលោកមានកូនប៉ុន្មាន?_ with 19 names (the model had said 20), and a label that read `"Its verses"` read `"ខគម្ពីររបស់វា"`.)
@@ -240,7 +268,7 @@ Previous: **workflowsVersion: 2026-10-11e** (**W-07 step 7 and step 10 — Bible
 
 Previous: **workflowsVersion: 2026-10-11d** (**Every recipe read against the code — 108 statements corrected, 431 control names made templates.** Asked for by the user after the help window answered from a stale page: _make all document up-to-date with code base_. All 53 recipes and the shortcut appendix were read step by step against the SOURCE, not against the running app, and every change carries the line of code that proves it. The largest: a slide, a song verse and a background tile go up on ONE click, and a second click on a tile takes it off — the recipes said double-click (W-03, W-05, W-08); the Bible Reader puts nothing on the audience screen (W-11 step 7); with no API key the **Free** assistant answers and the questions DO leave the computer, where W-42 said the opposite; a CC element of a presenting flow points at a line, so removing the line removes it (W-22); **Ctrl+Shift+P** closes the Presenting Control as well as opening it (W-19); there is no Notes tab — the panel is **[en:tran:Bible Notes]** (W-14); a link download needs the Extra Binaries pack first (W-21); a viewer of a virtual display from the internet waits for **[en:tran:Allow connection]** (W-51); the Web tab is **[en:tran:Webs]** and its editor is a code editor (W-15). 63 statements only the running app can settle — timing, a drag, what a picture shows — were left as written and are listed for the next `/owa-robot-test` run in `test-results/owa-enhance-agent-docs/report-20261011-2330.md`. Each recipe is now stamped in the agent-docs skill's `manual-reviewed.json`: it is listed for a read again the moment its words or the code its Verify rows cite change. Coverage matrix `2026-10-11d` in the same change.)
 
-Previous: **workflowsVersion: 2026-10-11c** (**W-07 rewritten — Bible Properties is one floating panel: a sample verse, looks drawn as themselves, saved presets, and a row per value.** Two things were wrong. The recipe still sent people to a _settings split_ in the Bibles tab with **Appearance** and **Text Shadow** cards; the panel has been a floating one since August, and the help window answered _change text color_ with those cards and a verse-number colour the app does not have (the user's report, with a picture). And the panel itself was redesigned the same day, asked for with a picture of its `G3:Outline1` buttons: _add the customizable input for bible text style, and add more options, redesign the panel to make switchable between dark/light_, then _make any change can be saved to a new preset_. Now: a verse on a dark or a light background with **[en:tran:Dark]** / **[en:tran:Light]** to say which the words go over (the old Reset White / Reset Black, except that the look is carried across), twelve looks as tiles, **[en:tran:Save as Preset]** for a look of your own, and rows for **[en:tran:Font Size]**, **[en:tran:Text Color]**, **[en:tran:Text Style]**, **[en:tran:Text Align]**, **[en:tran:Line Height]**, **[en:tran:Letter Spacing]**, **[en:tran:Outline]**, the shadow, **[en:tran:Glow]** and a typed `text-shadow`. Seen live on the dev presenter 2026-10-11, English and dark: **[en:tran:Reveal Hidden Controls]** — the **⋯** under the Mini Screen — bringing its buttons up (the user's second picture, the dots circled: _it should tell user to click the 3 dots first_; the help window had ringed a button nobody could see), the panel opened from **[en:tran:Bible Properties]** there, **[en:tran:Dark]** turned the words white, **[en:tran:Lifted]** applied and was ringed, an outline typed to 0.06, navy picked for an outline that was off switching it on, a typed `text-shadow` taken, **[en:tran:Reset]** clearing the look and keeping the size. Seen on a second dev app with its own data folder, Khmer and the light theme: every label translated, bold, centred, line height and letter spacing set, two saved looks drawn as tiles, one pressed and the whole style replaced, its right-click menu opened and **[en:tran:Replace with Current Look]** saved, and **[en:tran:Save as Preset]** opening its name box on _Preset 1_. Not pressed live, because a name box and a confirm are the person's to answer: confirming a new name, renaming and removing — those three are held by the panel's own tests. How a screen draws the result was read off the app's own browser engine drawing the rule the panel writes (bold, centred over a right-to-left column too, a clean edge at 101 px), not off a projector. PM-13 and PM-14 rewritten, new PM-159, PM-160, PM-161.)
+Previous: **workflowsVersion: 2026-10-11c** (**W-07 rewritten — Bible Properties is one floating panel: a sample verse, looks drawn as themselves, saved presets, and a row per value.** Two things were wrong. The recipe still sent people to a _settings split_ in the Bibles tab with **Appearance** and **Text Shadow** cards; the panel has been a floating one since August, and the help window answered _change text color_ with those cards and a verse-number colour the app does not have (the user's report, with a picture). And the panel itself was redesigned the same day, asked for with a picture of its `G3:Outline1` buttons: _add the customizable input for bible text style, and add more options, redesign the panel to make switchable between dark/light_, then _make any change can be saved to a new preset_. Now: a verse on a dark or a light background with **[en:tran:Dark]** / **[en:tran:Light]** to say which the words go over (the old Reset White / Reset Black, except that the look is carried across), twelve looks as tiles, **[en:tran:Save as Preset]** for a look of your own, and rows for **[en:tran:Font Size]**, **[en:tran:Text Color]**, **[en:tran:Text Style]**, **[en:tran:Text Align]**, **[en:tran:Line Height]**, **[en:tran:Letter Spacing]**, **[en:tran:Outline]**, the shadow, **[en:tran:Glow]** and a typed `text-shadow`. Seen live on the dev presenter 2026-10-11, English and dark: **[en:tran:Reveal Hidden Controls]** — the **⋯** under the Mini Screen — bringing its buttons up (the user's second picture, the dots circled: _it should tell user to click the 3 dots first_; the help window had ringed a button nobody could see), the panel opened from **Bible Properties** (its name then) there, **[en:tran:Dark]** turned the words white, **[en:tran:Lifted]** applied and was ringed, an outline typed to 0.06, navy picked for an outline that was off switching it on, a typed `text-shadow` taken, **[en:tran:Reset]** clearing the look and keeping the size. Seen on a second dev app with its own data folder, Khmer and the light theme: every label translated, bold, centred, line height and letter spacing set, two saved looks drawn as tiles, one pressed and the whole style replaced, its right-click menu opened and **[en:tran:Replace with Current Look]** saved, and **[en:tran:Save as Preset]** opening its name box on _Preset 1_. Not pressed live, because a name box and a confirm are the person's to answer: confirming a new name, renaming and removing — those three are held by the panel's own tests. How a screen draws the result was read off the app's own browser engine drawing the rule the panel writes (bold, centred over a right-to-left column too, a clean edge at 101 px), not off a projector. PM-13 and PM-14 rewritten, new PM-159, PM-160, PM-161.)
 
 Previous: **workflowsVersion: 2026-10-11b** (W-10, W-03 step 5 and W-05 step 8 — **a screen moved to any stage above 0 has its Slide: transition set to none.** Asked for with a picture of a Mini Screen's footer, **Slide:** and **St: 5** circled: _"when change stage to any non-zero should change transition to non"_, then _"change to `none`"_. Only the **Slide:** transition and only on a change of stage: an effect picked afterwards stays until the stage moves again, and back on stage 0 nothing is written. Seen live on the dev presenter 2026-10-11, screen 0 not showing: **St: 0 → 1** turned **Slide:** from fade to none with the Background button untouched; fade picked again on stage 1, **St: 1 → 2** turned it to none again. Stage 0 leaving the transition alone is held by a unit test, not seen live. SP-07 expanded.)
 
@@ -2015,14 +2043,16 @@ _Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, SC-03, SP-33,
 ### W-07 — Style the on-screen Bible text
 
 **Goal:** change how verses look on the screen — their size, their colour, and
-the edge or shadow that keeps them readable over a picture.
+the edge or shadow that keeps them readable over a picture. A
+**[en:tran:Long Text Show]** is drawn in the same look.
 
 1. In the **[en:tran:Mini Screen]** panel, press **[en:tran:Reveal Hidden Controls]** —
    the three dots **⋯** at its bottom edge. The buttons under the Mini Screen
    are hidden until you do, and they stay up while the mouse is on them. The
    passage in the middle **[en:tran:Bibles]** tab has the same **⋯** under it,
-   with the same button behind it.
-2. In the row of buttons that came up, press **[en:tran:Bible Properties]** —
+   with the same button behind it, and **[en:tran:Long Text Show]** has it
+   beside **[en:tran:Add Language]**, always in view.
+2. In the row of buttons that came up, press **[en:tran:Bible/LongText Properties]** —
    the one with a book and a gear. A floating panel opens; there is no card to
    open inside it, and no separate colour for verse numbers. 📸
 3. **Say what is behind the words.** The top of the panel shows a verse on a
@@ -2043,7 +2073,14 @@ the edge or shadow that keeps them readable over a picture.
 6. **Change the colour.** Press the small square at the end of the
    **[en:tran:Text Color]** row; a colour picker opens under it. Pick a colour
    and the words on the screen change at once. Press the square again to close
-   the picker.
+   the picker. **[en:tran:Highlight Color]**, a section of its own under these
+   rows, is the faint band under a selected verse or section:
+   **[en:tran:Highlight on Dark]** (the moon; pink until you choose) is the band
+   while the words are on **[en:tran:Dark]**, and **[en:tran:Highlight on Light]**
+   (the sun; blue) while they are on **[en:tran:Light]** — the one in use has
+   its icon lit. Press a square to choose a colour, keeping the picker's
+   opacity low (the band lies under every line of what is selected); the arrow
+   beside it puts that side back to its default.
 7. **Change how the words are set.** **[en:tran:Font Family]** is a list of
    the fonts on this computer: pick one and every verse is drawn in it; pick
    the first line of the list, `--`, to go back to each Bible's own font. Letters
@@ -2065,9 +2102,10 @@ the edge or shadow that keeps them readable over a picture.
    Right-click a saved tile for **[en:tran:Rename Preset]**,
    **[en:tran:Replace with Current Look]** and **[en:tran:Remove Preset]**.
 10. **[en:tran:Reset]**, at the bottom, goes back to plain words and keeps the
-   size. The font goes back to each Bible's own.
+   size. The font goes back to each Bible's own, and both highlight colours
+   to their own.
 
-_Verify: PM-13..14, PM-57, PM-159..162, SP-21._
+_Verify: PM-13..14, PM-57, PM-159..162, PM-167, SP-21._
 
 ### W-08 — Set the background (color / image / video / web)
 
@@ -2362,6 +2400,33 @@ menu.
    row, **[en:tran:View as Text Cards]**, turns them into small buttons
    with only the part's name, and back; the card remembers which.
 
+   A row is never thrown into view: it glides there, quickly at first and
+   then slowing into place, so a room reading along is not lost — a Bible
+   passage's selected verse moves the same way.
+
+   **Every line on a row of its own.** Press **[en:tran:Atom Mode]**, beside
+   the book and gear at the top of the panel, and each LINE of a part
+   becomes a card, a button and a screen row of its own, numbered on
+   through the whole song: a verse of four lines is `1 Verse 1` to
+   `4 Verse 1`, and the chorus after it starts at `5 Chorus`. A blank line
+   in typed text is kept as an empty row. The buttons, the light and the
+   keys then go line by line. Every language must break each part into the
+   same number of lines, or the panel says which part differs and
+   **[en:tran:Show Long Text]** stays off. Pressed while the text is up, it
+   goes up again on the same screens at once, at the same place. The
+   session remembers it; press it again to go back to a row per part.
+
+   **Every language in the same row.** Press **[en:tran:Stack]** and the
+   languages stop standing side by side: each row holds every language, one
+   under the other in the order of the cards, the way the Bible Reader shows
+   versions together. The row's number sits on a line of its own above them,
+   in each language's digits (`4, ៤`), and the one header reads `EN | KM`
+   with the titles `Still | Still`. Each language keeps its own font and
+   size. Press **[en:tran:Hide Number]** to put the rows up without their
+   numbers, side by side or stacked — the cards in the panel keep theirs.
+   Both go up again at once on a screen showing the text, with the same row
+   marked.
+
    **Step with the keys.** Once you have pressed a part, its button has the
    keys, the way the slides do: **Space**, **→**, **↓** or **Page Down**
    presses the next part's button, and **Shift+Space**, **←**, **↑** or
@@ -2370,12 +2435,15 @@ menu.
    presenter remote. It stops at the last part, and at the first: it never
    goes round to the beginning. A part that is not lit keeps its own keys —
    **Space** presses that one.
-8. **Give a language its own look.** Open **[en:tran:Properties]** on its card:
-   **[en:tran:Font]**, **[en:tran:Text Color]**,
+8. **Give a language its own font and size.** The whole text is drawn in
+   **[en:tran:Bible/LongText Properties]**, the book and gear beside
+   **[en:tran:Add Language]** (W-07): its colour, boldness, alignment, shadow
+   and highlight are every language's. Open **[en:tran:Properties]** on a card
+   for the two things a language may need of its own: **[en:tran:Font]**, and
    **[en:tran:Text Size (%)]** (its size beside the other languages — 80 makes
-   it a little smaller) and **[en:tran:Text Align]**. A change reaches a
-   showing text about half a second after you stop. Whatever you leave alone
-   follows the screen's own Bible text style.
+   it a little smaller; two fonts at the same size can look different sizes).
+   Both are unset until you choose them, and unset they follow the panel. A
+   change reaches a showing text about half a second after you stop.
 9. **Change the words.** Edit a card and press **[en:tran:Show Long Text]**
    again: what is on the screen is the text as it was when you last pressed it.
 10. **Take it down.** **[en:tran:Hide Long Text]** beside the show button, or
@@ -2384,7 +2452,7 @@ menu.
 11. The tabs at the top of the panel keep several texts — a song a tab — each
     with its own languages and looks.
 
-_Verify: PM-163, PM-164, PM-165, PM-166._
+_Verify: PM-163, PM-164, PM-165, PM-166, PM-167._
 
 ### W-10 — Control what the audience sees (mini screen + clears)
 
@@ -2847,6 +2915,51 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
 
 ---
 
+### W-56 — Change a song with the assistant (translate it, add a part, chords, its key)
+
+**Goal:** have the help window change one of your songs for you — put it into another
+language, add a verse or a note for the band, change its words, add chords or move it to
+another key — without writing the song's own notation.
+
+1. In **[en:tran:Documents]**, right-click a song (a row with the 🎵 note), or click the
+   faint **⋮** at its right-hand end (W-01b), and choose **[en:tran:Open in Chatbot]**. 📸
+   In the **Lyric Editor**, the robot button left of **Reset** and **Save** does the same
+   for the song it shows.
+2. The help window opens a chat of its own with the song attached under the box, and a
+   card that says what it can change: add a verse or another part, change its words,
+   translate it, add chords, change its key, or reorder or remove its parts. 📸
+3. Press a button under the card, or type what you want:
+   - **Replace the words with …** puts the song into that language in place of its words,
+     its title and subtitle too. Do this on a copy (**[en:tran:Duplicate]** in the row's
+     menu) when you want both languages: the copy keeps the same parts in the same order,
+     which is what **[en:tran:Long Text Show]** needs to show them side by side (W-53).
+   - **Add … under each line** keeps the words and writes the translation under each line:
+     one song in two languages.
+   - The language offered is the one the song's name says (`Still khmer`), else the one
+     the app is shown in. With neither, the buttons say _another language_ and the
+     assistant asks which; asked to translate without saying which way, it asks that first.
+   - **[en:tran:Add a section]**, **[en:tran:Add chords]**, **[en:tran:Change the key]**:
+     the assistant asks for the words or the key when it needs them. A note for the band is
+     a part of its own, never put on the screen.
+   - Typed, in your own words: _translate it into Khmer_, _add a verse after verse 2: …_,
+     _move it to G_, _take out the bridge_.
+4. The answer says what changed. The change is **not saved yet**: the song shows a red
+   **\*** beside its name in **[en:tran:Documents]**. **[en:tran:Undo this change]** under
+   the answer puts it back; **[en:tran:Show it in the list]** finds its row.
+5. To keep it, open the song with **[en:tran:Edit]** in its menu and press **Save**. A
+   Lyric Editor already open on the song shows the change by itself; if you were typing in
+   it at that moment, your typing is kept and the line
+   **[en:tran:The assistant changed this song.]** offers **[en:tran:Load the change]**.
+
+**Not there?** **[en:tran:Open in Chatbot]** is in a song's menu only while AI is on
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
+assistant can answer, the chat says so and offers **Open AI settings**: changing a song
+needs one.
+
+_Verify: PL-107, CB-166._
+
+---
+
 ## Configuration
 
 ### W-16 — Settings: language, theme, fonts, folders
@@ -2858,16 +2971,8 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
    **[en:tran:App Assistant]** above
    **[en:tran:Apply Settings]** at the bottom-left opens the help window, to ask about
    any setting. 📸
-2. **[en:tran:General]** tab:
-   - **[en:tran:Language]:** click **English**, **ខ្មែរ** or **Français**. Each language is listed under its
-     OWN name, whatever locale you are currently in — so if a mis-click leaves you in
-     a script you cannot read, the way back is still legible. (Hover a button and its
-     `title` gives the English name.) Some
-     labels change straight away, but the switch is only complete once you click
-     **[en:tran:Apply Settings]** at the bottom-left — that reloads every open
-     window. Unsaved edits in the Slide Editor are kept. The language belongs to this
-     computer, not to the data folder: switch to another data folder and the app stays
-     in the language you chose.
+2. **[en:tran:General]** tab (the language is chosen on the **[en:tran:Languages]**
+   tab, step 4a):
    - **[en:tran:Theme]:** system / light / dark.
    - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
      configured but not installed on this computer. When the chosen font comes in more
@@ -2875,6 +2980,15 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      **[en:tran:Default]** keeps the font's own weight.
    - **Reset button** (`Clear All Settings`):
      **this erases configuration; use with care.** It asks for confirmation first.
+   - **Help → Factory Reset** in the menu bar is the way back when a setting has
+     broken the app so badly that Settings cannot be opened at all: it works with
+     every page blank. It asks first, naming the data folder in use, then closes
+     the app and opens it again with every setting as on a new install — the
+     language, the chosen data folder, window positions, screens, AI keys and
+     sign-ins included — and it cannot be undone. Documents, songs, Bibles and
+     installed languages are not deleted: the app opens on
+     **[en:tran:No Parent Directory Selected]**, and choosing the same folder
+     again under **[en:tran:Path Settings]** brings them back.
    - **[en:tran:Show Tips of the Day automatically]:** controls whether each app window shows
      its own automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
@@ -2886,7 +3000,8 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
      found again. Until one is chosen, every window but Settings shows only
      **[en:tran:No Parent Directory Selected]**, **[en:tran:Go to Settings]** and
      **[en:tran:App Assistant]**, and Settings opens on this tab by itself, with only
-     **[en:tran:General]** (language and theme) and **[en:tran:AI Providers]** beside it.
+     **[en:tran:General]** (the theme), **[en:tran:Languages]** (the language) and
+     **[en:tran:AI Providers]** beside it.
      Under **[en:tran:Parent Directory:]**, **[en:tran:Suggested]** offers
      `.owa\open-worship-data` in your user folder: **[en:tran:Use This Folder]** makes
      it if it is not there and uses it. **[en:tran:Found Data Folders]** lists the data
@@ -2942,9 +3057,109 @@ _Verify: CM-06, EX-05, PL-03, PL-20, PM-35._
    **[en:tran:Delete Permanently]** box follows, and that cannot be undone.)
 4. **[en:tran:AI Providers]** tab: the AI master switch, the provider keys and the
    custom servers — see **W-42**.
+4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
+    this computer, turned on or off, and the ones to install (those two — see **W-55**).
+   - **[en:tran:Language]** (at the top): click **English**, **ខ្មែរ**, **Français** or
+     another language you installed — the list holds the languages turned on under
+     **[en:tran:Installed Languages]** just below it. Each language is listed under its
+     OWN name, whatever locale you are currently in — so if a mis-click leaves you in
+     a script you cannot read, the way back is still legible. (Hover a button and its
+     `title` gives the English name.) The switch is applied at once: every open
+     window reloads in the language you clicked, with nothing more to press —
+     **[en:tran:Apply Settings]** is not needed for it. Clicking the language already
+     in use does nothing. Unsaved edits in the Slide Editor are kept. The language belongs to this
+     computer, not to the data folder: switch to another data folder and the app stays
+     in the language you chose. A language written right to left (Hebrew) keeps the
+     windows laid out as they are in English: each label reads right to left, and a
+     Bible, a file name or a word in English keeps its own direction. 📸
 5. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
+   A change on the **[en:tran:Languages]** tab applies itself (step 4a, W-55).
 
-_Verify: ST-01..ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83..ST-86, CB-163, LT-02..04._
+_Verify: ST-01..ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83..ST-86, ST-87, ST-92, CB-163, LT-02..04._
+
+### W-55 — Find and install a language (Settings → Languages)
+
+**Goal:** show the app in your own language, or stop offering one you never use.
+
+English is part of the app. Every other language — Khmer and French included — is a
+separate package, installed from the list Open Worship publishes online. An installed
+language is kept in your data folder, under `lang`.
+
+1. Open Settings (the **gear**, W-16) and choose the **[en:tran:Languages]** tab. Its
+   first section, **[en:tran:Language]**, holds the buttons that choose the language the
+   app is shown in (W-16 step 4a). 📸
+2. **[en:tran:Installed Languages]** lists every language on this computer, each under
+   its own name with its English name beside it, its version, and
+   **[en:tran:Installed]** (you installed it). English is first, reads
+   **[en:tran:Built in]**, and is always on. To see where a language is kept, press
+   the folder icon (**[en:tran:Reveal Folder]**) on its row: your file manager opens
+   on its folder, and nothing in the app changes.
+3. **To stop offering a language**, turn its switch off. It is no longer offered under
+   **[en:tran:Language]** at the top of this tab (or anywhere else a language is
+   chosen) and its row reads
+   **[en:tran:Turned off]**. If the app was shown in it, the app goes back to English.
+   Turn the switch on to offer it again. Either way every open window reloads at once
+   to follow; there is nothing more to press. Every change on this tab — turning a
+   language on or off, installing, updating, deleting, importing, choosing one — is
+   applied that way, without **[en:tran:Apply Settings]**.
+4. **To install a language**, type its name into **[en:tran:Search languages]** under
+   **[en:tran:Find a Language]** — in English (`hebrew`) or in its own words — and press
+   **[en:tran:Install]** on its row. Once it is installed every open window reloads, and
+   it is listed under **[en:tran:Installed Languages]**. The list needs the
+   internet; with none it says it could not be reached, and **[en:tran:Refresh]** (the
+   round arrow) tries again.
+5. **To show the app in it**, press the language's button under **[en:tran:Language]**
+   at the top of this tab: every window reloads in it (W-16 step 4a).
+6. **When a newer version is out**, its row shows **[en:tran:Update to]** with the new
+   number, and the section reads **[en:tran:Update Available]**. Press it: the new
+   version replaces the old one, and every window reloads with it.
+   You do not have to come looking: a few seconds after the app starts, it checks the
+   languages you installed against the list once, and when one has a newer version a
+   small amber dot appears on the **gear** at the top right of the window. Follow the
+   dots — in Settings one stands after **[en:tran:Languages]**, another after
+   **[en:tran:Installed Languages]**, and one on the language's own row. They go away
+   once it is updated. With no internet nothing is checked and no dot appears.
+7. **To delete a language you installed**, press the trash icon on its row and confirm
+   with **[en:tran:Delete]** in **[en:tran:Delete Language]**. Every window reloads; if
+   the app was shown in the deleted language, it is in English again. When some of the
+   language's files are still in use, nothing reloads: a message says to close the app
+   and press it again to finish, and **[en:tran:Apply Settings]** turns amber for what
+   did change.
+8. **To pass a language on to a computer with no internet**, press the download arrow
+   (**[en:tran:Download]**) on its row under **[en:tran:Find a Language]**. The language
+   is saved as a file into your Downloads folder, which opens on it — named like
+   `es-0.0.1.tar.gz`. Copy it to the other computer (a USB stick, a shared folder).
+   There, press **[en:tran:Import]** at the top right of **[en:tran:Installed Languages]**
+   and choose the file: it installs as if from the list, every window reloads, and it
+   is listed under **[en:tran:Installed Languages]**.
+   The app first checks the file against the list Open Worship publishes. When it
+   cannot — the file was changed, or there is no internet to check with — it asks
+   before installing: a language carries code the app runs, so press
+   **[en:tran:Import]** only for a file from someone you trust, otherwise
+   **[en:tran:Cancel]**. A file that is not a language this app can install is refused
+   with a message saying so.
+
+Steps 1–7 were observed live on 2026-11-04 in the development app, with Hebrew from the
+development list: found by `hebr` and by its own name, installed, shown right to left,
+updated, deleted while in use (back to English), and French turned off and on. Step 8
+was observed live the same day: Spanish saved to Downloads by its download arrow,
+imported from that file (installed again, nothing left behind), and a changed copy of
+it asked about first. The dots of step 6 were observed live on 2026-11-05 on a fresh
+development profile holding an older Khmer: on the gear, after **[en:tran:Languages]**,
+**[en:tran:Installed Languages]** and Khmer's row, all gone after its
+**[en:tran:Update to]**. The reload at once was observed live on 2026-11-05 in the
+development app for steps 3, 5 and 6: French to English and back reloaded the Presenter
+and Settings in the new language, Settings back on this tab; Khmer turned off and on
+again reloaded them too; and **[en:tran:Update to]** on Khmer, then on French (the
+language in use), reloaded them once each update was in — **[en:tran:Apply Settings]**
+never lit. Install, delete and import call the same reload once they succeed (unit
+tested; not driven live, to keep the installed languages as they were). The folder
+icon of step 2 was observed live on 2026-11-06 in the development app: on every one
+of the forty installed rows, beside the trash icon; Khmer's opened the file manager
+on the data folder's `lang` folder with Khmer's own folder chosen, and nothing
+reloaded.
+
+_Verify: ST-87, ST-88, ST-89, ST-90._
 
 ### W-17 — Find text anywhere (Find bar) & About
 
@@ -3152,7 +3367,25 @@ app: the first time, a **[en:tran:Media Tools Required]** box offers to open
 > closed in the middle of a download can a file named `temp-…` be left in that temporary
 > folder: nothing in the app uses it, and it is safe to delete once no download is running.
 
-_Verify: MD-01..03, CM-24, PM-102._
+> **A computer with no internet** can get the download tools from one that has them.
+> There, open **[en:tran:Extra Binaries]** and press **[en:tran:Export]** (it is there
+> once the tools are installed): they are saved as one file into your Downloads folder,
+> which opens on it, named for the kind of computer they run on — `bin-0.0.4-win.tar.gz`
+> (`win`, `mac`, `linux` …). Copy it across, then on the other computer press
+> **[en:tran:Import]** in the same place and choose it. A file for another kind of
+> computer is refused. The app checks the file against what Open Worship publishes, and
+> when it cannot — the file was changed, or there is no internet to check with — it asks
+> first: the tools are programs the app runs, so press **[en:tran:Import]** only for a
+> file from someone you trust.
+
+> **When newer tools are out**, the app says so by itself: a few seconds after it
+> starts, it compares the installed tools with what Open Worship publishes, and a small
+> amber dot appears on the **gear** at the top right of the window, again after
+> **[en:tran:Others]** in Settings and after **[en:tran:Extra Binaries]**, which reads
+> **[en:tran:Update Available]** with an **[en:tran:Update to]** button. Press it and
+> the dots go away. Tools never installed are never checked.
+
+_Verify: MD-01..03, MD-07, CM-24, PM-102, ST-90._
 
 ---
 
@@ -5010,6 +5243,21 @@ names one to a line — press **[en:tran:Guessing Names]** to fill them from the
 has for that language, or type your own, and press **[en:tran:Ok]**. Those editor actions use
 the locale currently in the editor buffer; save after editing.
 
+**A Bible whose language is not installed**
+
+English is part of the app; every other language is a package you install (W-55), and a
+Bible in that language takes its book names, numbers, letters and search words from it.
+So a row of **[en:tran:Bibles XML]** whose language is not on this computer asks for it,
+under the Bible's title: _This Bible is in Français (French). Install that language to give
+the Bible its full language data._ Press **[en:tran:Install]** at the end of that line: the
+language installs as it does from **[en:tran:Find a Language]**, and every open window
+reloads at once to use it, the line gone. 📸 A language you turned off says _…which is
+turned off…_ instead, with **[en:tran:Enable]** to turn it on again, which reloads every
+window the same way. With no internet the button reads
+**[en:tran:Languages]** and opens that tab, where **[en:tran:Import]** installs a language
+from a file (W-55 step 8). A Bible in English, or in a language Open Worship has no package
+for, has no such line.
+
 **[en:tran:Key is already taken]**
 
 If it says the Bible key is already taken, choose a different unused key in the review.
@@ -5042,7 +5290,7 @@ existing Bible, then use its pencil instead.
 > it again the way it came in — **[en:tran:Let the assistant import a Bible for me]**, or
 > **[en:tran:Import XML File]** with its link or file.
 
-_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, RD-11, RD-123, CB-80..CB-82, CB-107..CB-109, CB-145, LT-01._
+_Verify: ST-41..ST-50, ST-24..ST-26, ST-29, ST-31, ST-32, ST-51, ST-60, ST-79, ST-91, RD-11, RD-123, CB-80..CB-82, CB-107..CB-109, CB-145, LT-01._
 
 ### W-35 — Bring a song in from CCLI SongSelect
 
@@ -5873,8 +6121,8 @@ it is describing.
    straight away with an assistant and offers the screen's own show button, and
    without one the guide offers one button that starts it; the five
    **/screen-clear-** commands clear a layer the screen HOLDS even while it is
-   off. **The commands that work on the Presenter alone** — the screen's show,
-   hide and clears, **/selected**, **/next**, **/previous**, **/slide**, **/run**,
+   off. **The commands that work on the Presenter alone** — **/screen** and the
+   screen's show, hide and clears, **/selected**, **/next**, **/previous**, **/slide**, **/run**,
    **/verse**, **/countdown**, **/marquee** — are offered in the list only while
    **[en:tran:Asking about]** is **[en:tran:Presenter]**, and typed under another page they answer
    _works on the Presenter page_ with **[en:tran:Go to the Presenter]** under it
@@ -6461,7 +6709,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     It follows you: switch the app to the other page and the next answer follows,
     unless you have chosen a half yourself in the first list. **Answers are in your
     language**: the one you write in, and the one the app is shown in whenever that
-    cannot be told — a "yes", a number, a suggestion you pressed. With the app in
+    cannot be told — a "yes", a number, a suggestion you pressed. That is any
+    language, not only the ones the app can be shown in: a question written in
+    Spanish, Thai or Swahili is answered in it, the suggestions under the answer
+    too, with every button named the way your screen shows it. With the app in
     Khmer the window's own buttons and labels are in Khmer too, drawn in the app's
     Khmer letters, and so is the AI Chat (✨) window. Behind the scenes, an assistant
     that is not a Gemma 4 model works in English: a Gemma 4 model running on this
@@ -6581,7 +6832,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     and the debugging endpoint they use are then never started. Tick it and restart to
     turn it back on.
 
-_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
+_Verify: CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78._
 
 ### W-47 — Put messages on the screen
 

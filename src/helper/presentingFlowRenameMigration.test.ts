@@ -147,4 +147,45 @@ describe('presenting flow rename migration', () => {
             'keep',
         );
     });
+
+    // Found by UT-75b (2026-11-03): the old word was replaced across the
+    // WHOLE key, so a folder of the user's own whose name holds it -- and a
+    // file name holding it -- were rewritten into paths that do not exist,
+    // and the settings kept for them were lost.
+    it('rewrites only the old word in the prefix, never a folder or file name of the user', async () => {
+        const customDir = '/custom/set-list-show';
+        const customDirKey = '_custom_set-list-show';
+        state.settings.set('select-dir-set-list', customDir);
+        state.settings.set(
+            `row-set-list-${customDirKey}_opening_owp`,
+            'expanded',
+        );
+        state.settings.set(
+            `row-set-list-${customDirKey}_my-set-list_owp`,
+            'collapsed',
+        );
+        state.existing.add(customDir);
+        addEntry(customDir, 'opening.owp', true);
+        addEntry(customDir, 'my-set-list.owp', true);
+
+        await migratePresentingFlowRename();
+
+        expect(state.moves).toEqual([
+            [`${customDir}/opening.owp`, `${customDir}/opening.owpf`],
+            [`${customDir}/my-set-list.owp`, `${customDir}/my-set-list.owpf`],
+        ]);
+        expect([...state.settings.entries()].sort()).toEqual(
+            [
+                [
+                    `row-presenting-flow-${customDirKey}_opening_owpf`,
+                    'expanded',
+                ],
+                [
+                    `row-presenting-flow-${customDirKey}_my-set-list_owpf`,
+                    'collapsed',
+                ],
+                ['select-dir-presenting-flow', customDir],
+            ].sort(),
+        );
+    });
 });

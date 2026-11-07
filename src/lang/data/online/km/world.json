@@ -1,0 +1,78 @@
+{
+    "nativeLanguageNames": {
+        "ខ្មែរ": "khmer",
+        "ថៃ": "thai",
+        "អង់គ្លេស": "english",
+        "បារាំង": "french",
+        "អេស្ប៉ាញ": "spanish",
+        "អេស្បាញ": "spanish",
+        "ចិន": "chinese",
+        "ជប៉ុន": "japanese",
+        "កូរ៉េ": "korean",
+        "វៀតណាម": "vietnamese",
+        "ឡាវ": "lao",
+        "ភូមា": "burmese",
+        "ឥណ្ឌូណេស៊ី": "indonesian",
+        "ម៉ាឡេ": "malay",
+        "តាហ្គាឡុក": "tagalog",
+        "ហិណ្ឌី": "hindi",
+        "បេងហ្គាលី": "bengali",
+        "តាមីល": "tamil",
+        "តេលូហ្គូ": "telugu",
+        "ម៉ារ៉ាធី": "marathi",
+        "គុជរាតី": "gujarati",
+        "កាណាដា": "kannada",
+        "ម៉ាឡាយ៉ាឡាម": "malayalam",
+        "ពុនចាប៊ី": "punjabi",
+        "នេប៉ាល់": "nepali",
+        "អ៊ូរឌូ": "urdu",
+        "ពែរ្ស": "persian",
+        "អារ៉ាប់": "arabic",
+        "ហេប្រឺ": "hebrew",
+        "ក្រិក": "greek",
+        "រុស្ស៊ី": "russian",
+        "អ៊ុយក្រែន": "ukrainian",
+        "អាល្លឺម៉ង់": "german",
+        "អ៊ីតាលី": "italian",
+        "ព័រទុយហ្គាល់": "portuguese",
+        "ហូឡង់": "dutch",
+        "ប៉ូឡូញ": "polish",
+        "ឆេក": "czech",
+        "ស្លូវ៉ាគី": "slovak",
+        "ហុងគ្រី": "hungarian",
+        "រូម៉ានី": "romanian",
+        "ប៊ុលហ្គារី": "bulgarian",
+        "ក្រូអាត": "croatian",
+        "ស៊ុយអែត": "swedish",
+        "ន័រវេស": "norwegian",
+        "ដាណឺម៉ាក": "danish",
+        "ហ្វាំងឡង់": "finnish",
+        "ទួរគី": "turkish",
+        "អាមេនី": "armenian",
+        "ហ្សកហ្ស៊ី": "georgian",
+        "ស្វាហ៊ីលី": "swahili",
+        "អាំហារិក": "amharic",
+        "អាហ្វ្រិកាន": "afrikaans"
+    },
+    "languageWordPrefixes": ["ភាសា"],
+    "bookNumberWords": ["ទី"],
+    "colonMarks": "៖ៈ",
+    "scriptLocales": [
+        {
+            "script": "Khmer",
+            "locales": ["km-KH"],
+            "order": 0
+        }
+    ],
+    "ownScriptLanguages": {
+        "km": "Khmer"
+    },
+    "localeNameAliases": {
+        "km": ["cambodian"]
+    },
+    "languageAliases": {
+        "cambodia": "khmer",
+        "cambodian": "khmer",
+        "kampuchea": "khmer"
+    }
+}

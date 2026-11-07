@@ -184,6 +184,104 @@ describe('BibleTextControlsComp', () => {
         expect(container.querySelector('[aria-label="Text Color"]')).toBeNull();
     });
 
+    test('the highlight is a section of its own, a row per backdrop', async () => {
+        await renderPanel();
+        const section = container.querySelector(
+            'section[aria-label="Highlight Color"]',
+        )!;
+        expect(section).not.toBeNull();
+        expect(
+            section.querySelector('.bible-style-section-title')?.textContent,
+        ).toBe('Highlight Color');
+        expect(
+            [...section.querySelectorAll('[data-row]')].map((row) => {
+                return row.getAttribute('data-row');
+            }),
+        ).toEqual(['Highlight on Dark', 'Highlight on Light']);
+        // Not among the text rows any more.
+        expect(
+            container.querySelector('[data-row="Highlight Color"]'),
+        ).toBeNull();
+        // The side the words are on now is marked.
+        expect(
+            section
+                .querySelector('[aria-current="true"]')
+                ?.querySelector('[data-row]')
+                ?.getAttribute('data-row'),
+        ).toBe('Highlight on Dark');
+    });
+
+    test('a side at its default has nothing to put back; a chosen one goes back to pink or blue', async () => {
+        await renderPanel();
+        const getReset = (label: string) => {
+            return container.querySelector<HTMLButtonElement>(
+                `button[aria-label="Default: ${label}"]`,
+            )!;
+        };
+        expect(getReset('Highlight on Dark').disabled).toBe(true);
+        expect(getReset('Highlight on Light').disabled).toBe(true);
+        await renderPanel({
+            highlightColorDark: '#00ff0040',
+            highlightColorLight: '#ff000040',
+        });
+        expect(getReset('Highlight on Dark').disabled).toBe(false);
+        await act(async () => getReset('Highlight on Dark').click());
+        // Only that side, cleared to its default (the key named, undefined).
+        expect(applyStyle).toHaveBeenLastCalledWith({
+            highlightColorDark: undefined,
+        });
+        await act(async () => getReset('Highlight on Light').click());
+        expect(applyStyle).toHaveBeenLastCalledWith({
+            highlightColorLight: undefined,
+        });
+    });
+
+    test('the highlight has a colour for each backdrop, each set on its own', async () => {
+        await renderPanel();
+        await click('Highlight on Dark picker');
+        expect(
+            container.querySelector('[aria-label="Highlight on Dark"]'),
+        ).not.toBeNull();
+        await click('Choose black');
+        // Only the dark side's band: the light one and the words stay.
+        expect(applyStyle).toHaveBeenLastCalledWith({
+            highlightColorDark: '#000000',
+        });
+        await click('Highlight on Light picker');
+        // One picker at a time.
+        expect(
+            container.querySelector('[aria-label="Highlight on Dark"]'),
+        ).toBeNull();
+        await click('Choose black');
+        expect(applyStyle).toHaveBeenLastCalledWith({
+            highlightColorLight: '#000000',
+        });
+        // The side the words are on now is the one drawn at full strength.
+        const sides = container.querySelectorAll('.bible-style-highlight-side');
+        expect(sides).toHaveLength(2);
+        expect(
+            sides[0].classList.contains('bible-style-highlight-side-on'),
+        ).toBe(true);
+        expect(
+            sides[1].classList.contains('bible-style-highlight-side-on'),
+        ).toBe(false);
+    });
+
+    test('Reset takes both highlight colours back to their defaults', async () => {
+        await renderPanel({ highlightColorDark: '#00ff0040' });
+        await click('Reset');
+        expect(applyStyle.mock.lastCall?.[0]).toMatchObject({
+            highlightColorDark: undefined,
+            highlightColorLight: undefined,
+        });
+        expect(applyStyle.mock.lastCall?.[0]).toHaveProperty(
+            'highlightColorDark',
+        );
+        expect(applyStyle.mock.lastCall?.[0]).toHaveProperty(
+            'highlightColorLight',
+        );
+    });
+
     test('effect sliders and new colors emit a complete screen effect', async () => {
         await renderPanel();
         await click('Outline:');
@@ -270,5 +368,52 @@ describe('BibleTextControlsComp', () => {
         expect(applyStyle.mock.lastCall?.[0]).toMatchObject({
             textShadow: 'none',
         });
+    });
+
+    test('Enter applies the typed shadow, Escape puts back the one on the screen', async () => {
+        await renderPanel({ textShadow: '0 0 2px #FF0000' });
+        const input = container.querySelector<HTMLInputElement>(
+            'input[aria-label="Text Shadow"]',
+        )!;
+        expect(input.value).toBe('0 0 2px #FF0000');
+        const nativeSetter = Object.getOwnPropertyDescriptor(
+            HTMLInputElement.prototype,
+            'value',
+        )!.set!;
+        async function typeText(value: string) {
+            await act(async () => {
+                nativeSetter.call(input, value);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        }
+        async function pressKey(key: string) {
+            const event = new KeyboardEvent('keydown', {
+                key,
+                bubbles: true,
+                cancelable: true,
+            });
+            await act(async () => {
+                input.dispatchEvent(event);
+            });
+            return event;
+        }
+
+        await typeText('  1px 1px 3px #000000  ');
+        // Any other key is only typing.
+        expect((await pressKey('a')).defaultPrevented).toBe(false);
+        expect(applyStyle).not.toHaveBeenCalled();
+        expect((await pressKey('Enter')).defaultPrevented).toBe(true);
+        expect(applyStyle).toHaveBeenCalledTimes(1);
+        expect(applyStyle).toHaveBeenLastCalledWith({
+            textShadow: '1px 1px 3px #000000',
+            effect: undefined,
+        });
+        expect(input.value).toBe('1px 1px 3px #000000');
+
+        await typeText('0 0 9px #00FF00');
+        expect((await pressKey('Escape')).defaultPrevented).toBe(true);
+        // Nothing is written, and the box shows what the screen draws again.
+        expect(applyStyle).toHaveBeenCalledTimes(1);
+        expect(input.value).toBe('0 0 2px #FF0000');
     });
 });

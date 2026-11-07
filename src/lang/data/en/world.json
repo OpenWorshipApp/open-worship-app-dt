@@ -1,0 +1,18 @@
+{
+    "about": "What the Bible import, the book-name and lyric tools know of ENGLISH: its stop words, the English names that mean English, and that Latin letters name no one locale. Every other language's facts -- its scripts and locales, the names it goes by in English and in its own words, its little words, letters and marks -- are in its own folder (`online/<code>/world.json`) and come with that language installed (`tools/owa-devtools-mcp/worldLanguages.mjs`).",
+    "scriptLocales": [
+        {
+            "script": "Latin",
+            "locales": [],
+            "order": 2500
+        }
+    ],
+    "languageAliases": {
+        "england": "english",
+        "america": "english",
+        "american": "english"
+    },
+    "latinStopWords": {
+        "en-US": "the and of to that in he shall unto for his they be is him not them it with all thou lord"
+    }
+}

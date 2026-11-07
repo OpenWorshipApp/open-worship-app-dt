@@ -230,7 +230,7 @@ export const xmlFormatExample = `<?xml version="1.0" encoding="UTF-8"?>
     // [abbr] optional alternative to key
     abbr="EBTV"
     version="1"
-    // e.g: for Khmer(km) locale="km"
+    // the code of the Bible's language, e.g. "en" for English
     locale="en"
     legalNote="Example of legal note"
     // [status] optional alternative to legalNote
@@ -238,7 +238,7 @@ export const xmlFormatExample = `<?xml version="1.0" encoding="UTF-8"?>
     publisher="Example of publisher"
     copyRights="Example copy rights">
     <map>
-        // e.g: for Khmer(km) value="លោកុ‌ប្បត្តិ" for value="GEN"
+        // each book's name as the Bible writes it, in its own language
         <book-map key="GEN" value="GENESIS"/>
         <book-map key="EXO" value="EXODUS"/>
         <book-map key="LEV" value="LEVITICUS"/>
@@ -305,9 +305,9 @@ export const xmlFormatExample = `<?xml version="1.0" encoding="UTF-8"?>
         <book-map key="3JN" value="3 JOHN"/>
         <book-map key="JUD" value="JUDE"/>
         <book-map key="REV" value="REVELATION"/>
-        // e.g: for Khmer(km) value="១" for value="1"
+        // each digit as the Bible writes it, in its own digits
         <number-map key="0" value="0"/>
-        <number-map value="0" value="1"/>
+        <number-map key="1" value="1"/>
         <number-map key="2" value="2"/>
         <number-map key="3" value="3"/>
         <number-map key="4" value="4"/>

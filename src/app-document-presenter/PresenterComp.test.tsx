@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, createElement, type ReactNode } from 'react';
+import { act, createElement, Suspense, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -185,8 +185,12 @@ vi.mock('../presenter-foreground/ForegroundTransitionControlsComp', () => ({
     ForegroundComponentTransitionButtonComp: () =>
         createElement('span', {}, 'Transition'),
 }));
-vi.mock('./items/AppDocumentPreviewerComp', () => ({ default: () => null }));
-vi.mock('./PresenterBiblePreviewerRenderComp', () => ({ default: () => null }));
+vi.mock('./items/AppDocumentPreviewerComp', () => ({
+    default: () => createElement('span', {}, 'Documents previewer'),
+}));
+vi.mock('./PresenterBiblePreviewerRenderComp', () => ({
+    default: () => createElement('span', {}, 'Bible previewer'),
+}));
 
 import PresenterComp from './PresenterComp';
 
@@ -332,5 +336,57 @@ describe('Presenter tabs and foreground panels', () => {
             'd',
             'b',
         ]);
+    });
+
+    it('asks the screen checker whether the foreground is up, for the open Bible view', async () => {
+        h.checkScreen.mockResolvedValue(true);
+        await renderPresenter();
+        const foregroundTabs = h.tabProps.find((props) =>
+            props.tabs.some(({ key }: { key: string }) => key === 'f'),
+        ).tabs;
+        expect(await foregroundTabs[0].checkIsOnScreen()).toBe(true);
+        expect(h.checkScreen).toHaveBeenCalledExactlyOnceWith('f', {
+            id: 'view',
+        });
+    });
+
+    it('the Documents and Bible panels each draw their own previewer', async () => {
+        h.settings['present-tabs'] = 'db';
+        await renderPresenter();
+        const panels = h.resizeProps.dataInput.map(
+            ({ key, children }: { key: string; children: any }) => ({
+                key,
+                children,
+            }),
+        );
+        expect(panels.map(({ key }: { key: string }) => key)).toEqual([
+            'h1',
+            'h3',
+        ]);
+        const panelContainer = document.createElement('div');
+        const panelRoot = createRoot(panelContainer);
+        const drawn: string[] = [];
+        try {
+            for (const { children } of panels) {
+                await act(async () =>
+                    panelRoot.render(
+                        createElement(
+                            Suspense,
+                            { fallback: 'Loading' },
+                            createElement(children),
+                        ),
+                    ),
+                );
+                // Each previewer is a lazy chunk; let its import land.
+                await act(async () => {
+                    await import('./items/AppDocumentPreviewerComp');
+                    await import('./PresenterBiblePreviewerRenderComp');
+                });
+                drawn.push(panelContainer.textContent ?? '');
+            }
+        } finally {
+            await act(async () => panelRoot.unmount());
+        }
+        expect(drawn).toEqual(['Documents previewer', 'Bible previewer']);
     });
 });

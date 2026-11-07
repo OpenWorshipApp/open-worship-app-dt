@@ -1,12 +1,12 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { readSourceDictionary } from './langPacks.mjs';
 import {
     extractDictionary,
-    extractLangMeta,
     listTranLanguages,
     listTranTemplateKeys,
     loadTranBundle,
@@ -16,30 +16,30 @@ import {
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(HERE, '..', '..');
+// The language packages on disk: English's folder, and every installable
+// language's (`src/lang/data/online/<code>/`), a folder with its
+// `dictionary.json`.
+const ONLINE_DATA_DIR = path.join(REPO_ROOT, 'src', 'lang', 'data', 'online');
+const ONLINE_CODE_LIST = existsSync(ONLINE_DATA_DIR)
+    ? readdirSync(ONLINE_DATA_DIR).filter((code) => {
+          return existsSync(
+              path.join(ONLINE_DATA_DIR, code, 'dictionary.json'),
+          );
+      })
+    : [];
+// The ones read with no app to ask: those the assistant is written for (an
+// `assistant.json`, `langPacks.mjs`).
+const ASSISTANT_CODE_LIST = ONLINE_CODE_LIST.filter((code) => {
+    return existsSync(path.join(ONLINE_DATA_DIR, code, 'assistant.json'));
+});
 
 describe('resolveTranTemplates', () => {
-    it('fills a label in with what the button says in that language', () => {
-        const source = 'Press **F9** ([en:tran:Clear Long Text]) to clear it.';
-        expect(resolveTranTemplates(source, 'en')).toBe(
-            'Press **F9** (Clear Long Text) to clear it.',
-        );
-        expect(resolveTranTemplates(source, 'km')).toBe(
-            'Press **F9** (លុបអត្ថបទវែង) to clear it.',
-        );
-    });
-
-    it('takes a locale as readily as a language code', () => {
-        expect(resolveTranTemplates('[en:tran:All Books]', 'km-KH')).toBe(
-            'សៀវភៅទាំងអស់',
-        );
-    });
-
     it('leaves the English in place when nothing can translate it', () => {
         // A language the app does not have, no language at all, and a key the
         // dictionary does not carry. The app's own `tran` throws on the last
         // of these in dev; a document must not, or one mistyped label costs
         // the reader the whole answer.
-        expect(resolveTranTemplates('[en:tran:Clear Long Text]', 'de')).toBe(
+        expect(resolveTranTemplates('[en:tran:Clear Long Text]', 'zz')).toBe(
             'Clear Long Text',
         );
         expect(resolveTranTemplates('[en:tran:Clear Long Text]', null)).toBe(
@@ -48,15 +48,6 @@ describe('resolveTranTemplates', () => {
         expect(resolveTranTemplates('[en:tran:Not A Real Label]', 'km')).toBe(
             'Not A Real Label',
         );
-    });
-
-    it('resolves every token in a line, not just the first', () => {
-        expect(
-            resolveTranTemplates(
-                '[en:tran:Colors] / [en:tran:Images] / [en:tran:Videos]',
-                'km',
-            ),
-        ).toBe('ពណ៌ / រូបភាព / វីដេអូ');
     });
 
     it('leaves text alone when there is nothing to fill in', () => {
@@ -72,43 +63,43 @@ describe('resolveTranTemplates', () => {
 
 describe('tranText', () => {
     it('answers what one label reads as on screen', () => {
-        expect(tranText('Bible Lookup', 'km')).toBe('ស្វែងរកព្រះគម្ពីរ');
         // Matched the way `tran()` matches: trimmed and case-insensitive.
-        expect(tranText('  clear long text ', 'km')).toBe('លុបអត្ថបទវែង');
         expect(tranText('Bible Lookup', 'en')).toBe('Bible Lookup');
     });
 });
 
 describe('the language packs', () => {
     it('lifts the dictionary out of a pack without loading it', () => {
-        const dictionary = extractDictionary(
-            readFileSync(
-                path.join(REPO_ROOT, 'src', 'lang', 'data', 'km', 'index.ts'),
-                'utf-8',
+        // English writes the keys and translates none.
+        expect(
+            extractDictionary(
+                readFileSync(
+                    path.join(REPO_ROOT, 'src', 'lang', 'data', 'en', 'index.ts'),
+                    'utf-8',
+                ),
             ),
-        );
-        expect(Object.keys(dictionary).length).toBeGreaterThan(1000);
-        // Sanitized to `tran()`'s own key shape.
-        expect(dictionary['clear long text']).toBe('លុបអត្ថបទវែង');
-        expect(dictionary['Clear Long Text']).toBeUndefined();
-    });
-
-    it('reads each language its own name', () => {
-        const meta = extractLangMeta(
-            readFileSync(
-                path.join(REPO_ROOT, 'src', 'lang', 'data', 'km', 'index.ts'),
-                'utf-8',
-            ),
-        );
-        expect(meta).toEqual({ name: 'Khmer', nativeName: 'ខ្មែរ' });
+        ).toEqual({});
+        // Every other language keeps the app's whole dictionary in its
+        // `dictionary.json`.
+        for (const code of ONLINE_CODE_LIST) {
+            const dictionary = readSourceDictionary(path.join(ONLINE_DATA_DIR, code));
+            expect(Object.keys(dictionary).length, code).toBeGreaterThan(1000);
+            // Sanitized to `tran()`'s own key shape.
+            expect(dictionary['Clear Long Text'], code).toBeUndefined();
+        }
     });
 
     it('lists what the interface can be shown in', () => {
+        // In a checkout with no app to ask, English and every package the
+        // assistant is written for (an `assistant.json`, `langPacks.mjs`).
         expect(
-            listTranLanguages().map((language) => {
-                return language.code;
-            }),
-        ).toEqual(expect.arrayContaining(['en', 'km']));
+            listTranLanguages()
+                .map((language) => {
+                    return language.code;
+                })
+                .sort(),
+        ).toEqual(['en', ...ASSISTANT_CODE_LIST].sort());
+        expect(listTranLanguages()[0].code).toBe('en');
     });
 });
 
@@ -155,11 +146,12 @@ describe('the knowledge corpus', () => {
         // every key to itself by construction and can prove nothing here.
         const translatable = (bundle.languages ?? []).filter((language) => {
             return (
-                language.code !== 'en' &&
+                ASSISTANT_CODE_LIST.includes(language.code) &&
                 bundle.dictionaries?.[language.code] !== undefined
             );
         });
-        expect(translatable.length).toBeGreaterThan(0);
+        // Every package read, none in an English-only tree.
+        expect(translatable.length).toBe(ASSISTANT_CODE_LIST.length);
         const broken = [];
         let total = 0;
         for (const filePath of filePaths) {
@@ -198,35 +190,5 @@ describe('the knowledge corpus', () => {
         // The templates exist at all: a corpus that lost them would pass the
         // check above by having nothing to check.
         expect(total).toBeGreaterThan(100);
-    });
-
-    it('names app labels through a template, not a hand-copied twin', () => {
-        // What the templates replaced: `**Bible Lookup** (ស្វែងរកព្រះគម្ពីរ)`,
-        // written out by hand in both languages. Those copies went stale --
-        // the manual still said `គ្រប់កណ្ឌគម្ពីរ` for **All Books** long after
-        // the app had moved to `សៀវភៅទាំងអស់` -- and the English-only help
-        // window had to strip them back out with a stack of regexes.
-        //
-        // Only a twin the DICTIONARY recognises counts. Khmer that is content
-        // rather than a label is fine and expected -- `**Jacob** (យ៉ាកុប)` is a
-        // name to type into the lookup, not a button -- and a rule that could
-        // not tell the two apart would either fail forever or be switched off.
-        const bundle = loadTranBundle();
-        const labels = new Set(Object.values(bundle.dictionaries?.km ?? {}));
-        const twinPattern =
-            /\*\*[^*\n]+\*\*[\s\n]*(?:\(|\/\s*)([ក-៿][^)\n]*)/gu;
-        const offenders = [];
-        for (const filePath of filePaths) {
-            for (const match of readFileSync(filePath, 'utf-8').matchAll(
-                twinPattern,
-            )) {
-                if (labels.has(match[1].trim())) {
-                    offenders.push(
-                        `${path.basename(filePath)}: ${match[0].slice(0, 60)}`,
-                    );
-                }
-            }
-        }
-        expect(offenders).toEqual([]);
     });
 });

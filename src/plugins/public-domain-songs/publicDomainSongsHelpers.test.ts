@@ -176,6 +176,19 @@ describe('publicDomainSongToMarkdown', () => {
         expect(checkMarkdown(markdown as string)).toBe(true);
     });
 
+    test('a line that would read as a comment keeps its words, not its slashes', () => {
+        const markdown = publicDomainSongToMarkdown(
+            genSong({
+                verses: ['  // spoken: all stand\nPraise God from whom'],
+            }),
+        );
+        expect(markdown).toContain(
+            '```ol:Verse\nspoken: all stand\nPraise God from whom\n```',
+        );
+        expect(markdown).not.toContain('// spoken');
+        expect(checkMarkdown(markdown as string)).toBe(true);
+    });
+
     test('returns null when every verse is blank', () => {
         expect(
             publicDomainSongToMarkdown(genSong({ verses: ['   ', ''] })),

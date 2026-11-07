@@ -830,4 +830,73 @@ describe('EditingHistoryManager', () => {
             'version 1',
         );
     });
+
+    test('checkCanDiscard: nothing without a folder, a step or a changed head is discardable', async () => {
+        const filePath = '/docs/discard.owa';
+        mocks.dirs.add('/docs');
+        const saved = JSON.stringify({ metadata: { lastEditDate: 'a' } });
+        mocks.files.set(filePath, saved);
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const manager = EditingHistoryManager.getInstance(filePath);
+
+        // no history folder: nothing to throw away, and nothing is created
+        expect(await manager.checkCanDiscard()).toBe(false);
+        expect(mocks.dirs.has(`${filePath}.histories`)).toBe(false);
+
+        // a head cloned from the file: still nothing
+        await manager.fileLineHandler.ensureHistoriesDir();
+        expect(await manager.checkCanDiscard()).toBe(false);
+
+        // the file moved on under the head (only the stamp is ignored)
+        mocks.files.set(
+            filePath,
+            JSON.stringify({ metadata: { lastEditDate: 'b' } }),
+        );
+        expect(await manager.checkCanDiscard()).toBe(false);
+        mocks.files.set(
+            filePath,
+            JSON.stringify({ metadata: { lastEditDate: 'b' }, title: 'x' }),
+        );
+        expect(await manager.checkCanDiscard()).toBe(true);
+        mocks.files.set(filePath, saved);
+
+        // an edit recorded: one step back is something to discard
+        await manager.addHistory(
+            JSON.stringify({ metadata: { lastEditDate: 'c' }, title: 'y' }),
+        );
+        expect(await manager.checkCanUndo()).toBe(true);
+        expect(await manager.checkCanDiscard()).toBe(true);
+        // ... and so is the step forward after undoing it
+        expect(await manager.undo()).toBe(true);
+        expect(await manager.checkCanUndo()).toBe(false);
+        expect(await manager.checkCanRedo()).toBe(true);
+        expect(await manager.checkCanDiscard()).toBe(true);
+    });
+
+    test('checkCanDiscard counts a head that cannot be read as discardable', async () => {
+        const filePath = '/docs/unreadable.owa';
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, '{"title":"on disk"}');
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const { FileSource } = await loadMockedModules();
+        const manager = EditingHistoryManager.getInstance(filePath);
+        await manager.fileLineHandler.ensureHistoriesDir();
+        expect(await manager.checkCanDiscard()).toBe(false);
+
+        FileSource.readFileData.mockImplementation(async () => null);
+        vi.useFakeTimers();
+        try {
+            const pending = manager.checkCanDiscard();
+            // the head read is retried every 10 ms for 3 s before giving up
+            await vi.advanceTimersByTimeAsync(3100);
+            expect(await pending).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
+        expect(FileSource.readFileData).toHaveBeenCalledWith(
+            `${filePath}.histories/0-head`,
+        );
+    });
 });

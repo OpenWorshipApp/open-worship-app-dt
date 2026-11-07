@@ -39,8 +39,8 @@ const DISAMBIGUATOR_PATTERN =
     /^(.*?)(?:\s*\(|,\s|\s+(?:son|daughter|father|mother|wife|husband|brother|sister|the)\s+of\s+)/i;
 
 // The same job for a TRANSLATED label. A translated package leaves the
-// disambiguator in English around a translated name — `ម៉ារា of បេថានី`,
-// `អាន់ទីយ៉ូក in ពីស៊ីឌា` — so it carries a BARE connective, which the English
+// disambiguator in English around a translated name — `<name> of <place>`,
+// `<city> in <region>` — so it carries a BARE connective, which the English
 // pattern above (it expects `<relation> of`) never sees. A genuine two-word
 // name has no connective and is left whole.
 const TRANSLATED_DISAMBIGUATOR_PATTERN =
@@ -274,7 +274,7 @@ async function applyTranslatedLabels(
         }
         if (typeof record.name === 'string' && record.name.trim() !== '') {
             // The English label is worth keeping beside the translated one, the
-            // way a bible book reads `លោកុប្បត្តិ (Genesis)` — but only when the
+            // way a bible book reads `<its own name> (Genesis)` — but only when the
             // two actually differ, so a record the translation spells
             // identically does not gain a row saying its own name twice.
             display.kjvName =

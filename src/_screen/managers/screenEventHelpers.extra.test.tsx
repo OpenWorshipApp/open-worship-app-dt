@@ -327,6 +327,51 @@ describe('screenEventHelpers', () => {
         root = createRoot(container);
     });
 
+    test('the focus wrapper subscribes to the focus class and hands its events on', async () => {
+        const { useScreenFocusManagerEvents } =
+            await import('./screenEventHelpers');
+        const { default: ScreenFocusManager } =
+            (await import('./ScreenFocusManager')) as any;
+        ScreenFocusManager.registerEventListener.mockReturnValue([
+            'focus-listener',
+        ]);
+        const heard: any[] = [];
+
+        function Host() {
+            useScreenFocusManagerEvents(
+                ['update'] as any,
+                undefined,
+                (data) => {
+                    heard.push(data);
+                },
+            );
+            return null;
+        }
+
+        await act(async () => {
+            root.render(<Host />);
+        });
+
+        expect(ScreenFocusManager.registerEventListener).toHaveBeenCalledWith(
+            ['update'],
+            expect.any(Function),
+        );
+        const listener = ScreenFocusManager.registerEventListener.mock
+            .calls[0][1] as (data: any, time: number) => void;
+        await act(async () => {
+            listener('spotlight', 7);
+        });
+        expect(heard).toEqual(['spotlight']);
+
+        await act(async () => {
+            root.unmount();
+        });
+        expect(ScreenFocusManager.unregisterEventListener).toHaveBeenCalledWith(
+            ['focus-listener'],
+        );
+        root = createRoot(container);
+    });
+
     test('never cancels a wheel and says which scrolls followed one', async () => {
         const { registerScrollingSyncEvent } =
             await import('./screenEventHelpers');

@@ -58,6 +58,19 @@ describe('ElectronScreenController', () => {
         expect(guardBrowsing).toHaveBeenCalledTimes(1);
     });
 
+    test('a screen page that crashed is loaded again, from where it came', () => {
+        applyRendererRecovery.mockClear();
+        const controller = ElectronScreenController.createInstance(9);
+        const [win, recover] = applyRendererRecovery.mock
+            .calls[0] as unknown as [unknown, () => void];
+        expect(win).toBe(controller.win);
+        loadURL.mockClear();
+
+        recover();
+
+        expect(loadURL.mock.calls).toEqual([[controller.win, '?screenId=9']]);
+    });
+
     test('updates display bounds and forwards screen messages', () => {
         const controller = ElectronScreenController.createInstance(8);
 

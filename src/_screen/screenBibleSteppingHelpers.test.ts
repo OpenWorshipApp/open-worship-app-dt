@@ -291,4 +291,40 @@ describe('screenBibleSteppingHelpers', () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
         expect(applyNewBibleItemJson).toHaveBeenCalledTimes(1);
     });
+
+    test('an empty chapter to roll into is no step, and the screen keeps its passage', async () => {
+        mockVerseCount(36);
+        const lastVerse = {
+            bookKey: 'JHN',
+            chapter: 3,
+            verseStart: 36,
+            verseEnd: 36,
+        };
+        // A Bible missing the next chapter's verses.
+        getJumpingChapterMock.mockResolvedValue({
+            bookKey: 'JHN',
+            chapter: 4,
+            verseStart: 1,
+            verseEnd: 0,
+        });
+        await expect(
+            toSteppedBibleTarget('KJV', lastVerse, true),
+        ).resolves.toBeNull();
+        expect(getJumpingChapterMock).toHaveBeenLastCalledWith(
+            'KJV',
+            lastVerse,
+            true,
+        );
+
+        const applyNewBibleItemJson = vi.fn();
+        getInstanceMock.mockReturnValue({
+            screenViewData: {
+                bibleItemData: { bibleItem: genBibleItemJson(lastVerse) },
+            },
+            applyNewBibleItemJson,
+        });
+        await stepScreenBibleItem(2, true);
+        expect(getJumpingChapterMock).toHaveBeenCalledTimes(2);
+        expect(applyNewBibleItemJson).not.toHaveBeenCalled();
+    });
 });

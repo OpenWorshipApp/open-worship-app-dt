@@ -150,7 +150,8 @@ export default class KeyboardEventListener extends EventHandler<string> {
     }
 
     // Force key to en-US layout by using the physical key code, to avoid
-    // different key names in different layouts, e.g. 'ü' in German keyboard.
+    // different key names in different layouts, e.g. a German keyboard's
+    // u-with-umlaut key.
     static toEnUsKey(event: KeyboardEvent | ReactKeyboardEvent<any>) {
         const { key, code } = event;
         if (key.length !== 1 || !code) {

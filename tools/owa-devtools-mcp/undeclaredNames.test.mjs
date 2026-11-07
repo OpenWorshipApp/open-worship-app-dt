@@ -65,5 +65,8 @@ describe('the MCP modules', () => {
         });
     });
     expect(undeclaredList).toEqual([]);
-  }, 30000);
+    // ESLint over every module takes 1-4 s alone, but past 30 s once under the
+    // whole-surface coverage run on a loaded machine, and a timed-out test
+    // means vitest writes no coverage report at all (2026-11-03).
+  }, 120000);
 });

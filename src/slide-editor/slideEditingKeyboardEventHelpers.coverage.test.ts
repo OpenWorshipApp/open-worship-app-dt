@@ -20,6 +20,8 @@ vi.mock('../app-document-list/AppDocument', () => ({
 // Enough of the matcher for the keys used here: the key itself plus whether
 // Ctrl and Shift are held (same shape as the sibling suite's).
 vi.mock('../event/KeyboardEventListener', () => ({
+    // Nothing holds the keyboard above the slide list and the canvas.
+    default: { getLastLayer: () => 'root' },
     PlatformEnum: { Windows: 'windows', MacOS: 'mac', Linux: 'linux' },
     checkIsControlKeys: () => h.isControlKey,
     checkIsKeyboardEventMatch: (matchers: any[], event: any) => {

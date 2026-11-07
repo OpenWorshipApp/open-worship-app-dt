@@ -177,6 +177,19 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
     nameList: ['owa_bible_suggest'],
   },
   {
+    // The language plugins (2026-11-05): the help window checks the
+    // language a conversation turns to by itself and offers its install as
+    // a button the person presses. An install is code the app runs,
+    // downloaded into the data folder: the press is the consent, and no
+    // model stands in for it -- nor pays a schema for it every round.
+    reason:
+      'Installing a language is the person\'s to agree to: the help ' +
+      'window offers it by itself, with a button, whenever the ' +
+      'conversation is about a language that is not installed. Say that ' +
+      'Settings > Languages installs one, and let them press.',
+    nameList: ['owa_language'],
+  },
+  {
     // The page-level readers. Each answers in uids, page numbers and log
     // lines that mean nothing to a volunteer, and `take_snapshot` costs
     // ~8 000 tokens a call for a tree the model can no longer act on
@@ -259,6 +272,12 @@ export const MODEL_ON_ASK_TOOL_MAP = {
   // A conversation about a Resources file (2026-10-17): that file's
   // folders, every other chapter's PDF and note in them.
   owa_resource_file: 'resources',
+  // A conversation about an ATTACHED song (2026-11-06, the Documents row's
+  // and the Lyric Editor's **Open in Chatbot**): a part added, its words
+  // changed or translated, chords, another key -- from words, the app
+  // writing the notation. The window names the attached file in `file`
+  // itself (`src/chatbot/lyricChatHelpers.ts`).
+  owa_lyric_edit: 'lyric',
 };
 
 /**

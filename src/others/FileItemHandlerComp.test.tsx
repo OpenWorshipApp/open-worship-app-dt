@@ -130,6 +130,7 @@ vi.mock('./FileReadErrorComp', () => ({
 
 import FileItemHandlerComp, {
     genCommonMenu,
+    genRevealOriginal,
     genShowOnScreensContextMenu,
     genTrashContextMenu,
 } from './FileItemHandlerComp';
@@ -398,5 +399,66 @@ describe('FileItemHandlerComp', () => {
 
         expect(container?.textContent).toContain('loading');
         expect(container?.textContent).toContain('file-error');
+    });
+
+    test('Reveal Original runs the reveal it was given', () => {
+        const reveal = vi.fn();
+        const item = genRevealOriginal(reveal);
+        expect(item.menuElement).toBe('Reveal Original');
+        expect(reveal).not.toHaveBeenCalled();
+        item.onSelect?.(new MouseEvent('click'));
+        expect(reveal).toHaveBeenCalledOnce();
+    });
+
+    test('asks whether it is on a screen only when told how, about its own path', async () => {
+        const checkIsOnScreen = vi.fn(
+            async (filePath: string) => filePath === '/docs/live.txt',
+        );
+        // Untyped in the bundle (no parameters); the paths are its first.
+        useFileSourceIsOnScreenMock.mockImplementation(
+            (...args: any[]) => (args[0] as string[])[0] === '/docs/live.txt',
+        );
+        await render(
+            <ul>
+                <FileItemHandlerComp
+                    fileData={{ preDelete: vi.fn() } as any}
+                    reload={vi.fn()}
+                    index={0}
+                    filePath="/docs/live.txt"
+                    renderChild={() => <div className="live">live</div>}
+                    isSelected={false}
+                    checkIsOnScreen={checkIsOnScreen}
+                />
+                <FileItemHandlerComp
+                    fileData={{ preDelete: vi.fn() } as any}
+                    reload={vi.fn()}
+                    index={1}
+                    filePath="/docs/plain.txt"
+                    renderChild={() => <div className="plain">plain</div>}
+                    isSelected={false}
+                />
+            </ul>,
+        );
+        expect(
+            container?.querySelector('.live')?.parentElement?.className,
+        ).toBe('d-flex app-on-screen');
+        expect(
+            container?.querySelector('.plain')?.parentElement?.className,
+        ).toBe('d-flex ');
+
+        const calls = useFileSourceIsOnScreenMock.mock.calls as unknown as [
+            string[],
+            (filePaths: string[]) => Promise<boolean>,
+        ][];
+        const liveCall = calls.find(([paths]) => paths[0] === '/docs/live.txt');
+        const plainCall = calls.find(
+            ([paths]) => paths[0] === '/docs/plain.txt',
+        );
+        expect(await plainCall![1](['/docs/plain.txt'])).toBe(false);
+        expect(checkIsOnScreen).not.toHaveBeenCalled();
+        expect(await liveCall![1](['/docs/live.txt'])).toBe(true);
+        expect(checkIsOnScreen).toHaveBeenCalledExactlyOnceWith(
+            '/docs/live.txt',
+        );
     });
 });

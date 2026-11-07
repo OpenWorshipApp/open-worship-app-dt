@@ -181,23 +181,6 @@ afterEach(() => {
 });
 
 describe('labels in the window language', () => {
-  it('offers each label with the words on the button beside it', async () => {
-    state.lang = 'km';
-    state.answer = () => ({ value: { clicked: true, didChange: true } });
-    const khmer = tranText('Bible Lookup', 'km');
-    expect(khmer).not.toBe('Bible Lookup');
-    answer(
-      await call('owa_click', {
-        find: ['Bible Lookup', 'Zz Unknown', 'Zz One > Zz Two'],
-        page: 'km-click.html',
-      }),
-    );
-    const [expression, options] = appCalls()[0];
-    expect(options).toEqual({ match: 'km-click.html' });
-    expect(expression).toContain(
-      JSON.stringify(['Bible Lookup', khmer, 'Zz Unknown', 'Zz One > Zz Two']),
-    );
-  });
 
   it('keeps English labels when no window can be asked its language', async () => {
     state.isLanguageDown = true;
@@ -210,33 +193,6 @@ describe('labels in the window language', () => {
 });
 
 describe('owa_find_ui', () => {
-  it('tries the words on their screen when the English label finds nothing', async () => {
-    state.lang = 'km';
-    const khmer = tranText('Zoom In', 'km');
-    state.answer = (expression) => {
-      return readFindText(expression) === khmer
-        ? { value: { matches: [{ text: khmer }] } }
-        : { value: { matches: [], nearMisses: [] } };
-    };
-    const found = JSON.parse(
-      answer(await call('owa_find_ui', { text: 'Zoom In', page: 'km-a.html' })),
-    );
-    expect(found.matches).toEqual([{ text: khmer }]);
-    expect(found.foundAs).toBe(khmer);
-    expect(found.note).toBe(
-      `On their screen this control reads "${khmer}" -- call it that.`,
-    );
-  });
-
-  it('answers the first miss when the translation misses too', async () => {
-    state.lang = 'km';
-    state.answer = () => ({ value: { matches: [], nearMisses: ['Zoom'] } });
-    const found = JSON.parse(
-      answer(await call('owa_find_ui', { text: 'Zoom In', page: 'km-b.html' })),
-    );
-    expect(found).toEqual({ matches: [], nearMisses: ['Zoom'] });
-    expect(appCalls()).toHaveLength(2);
-  });
 
   it('does not search twice in an English window', async () => {
     state.answer = () => ({ value: { matches: [] } });
@@ -836,30 +792,6 @@ describe('owa_pick_element', () => {
     expect(sent[3]).toBe(genPickerStopExpression());
   });
 
-  it('says nothing was pointed at when the person pressed Escape', async () => {
-    state.lang = 'km';
-    state.answer = (expression) => {
-      if (expression === genPickerStopExpression()) {
-        throw new Error('The window went away.');
-      }
-      return expression === genPickerReadExpression()
-        ? { value: { phase: 'cancelled' } }
-        : { value: true };
-    };
-    expect(
-      JSON.parse(
-        answer(await call('owa_pick_element', { page: 'km-pick.html' })),
-      ),
-    ).toEqual({ picked: false, reason: 'Nothing was pointed at.' });
-    // Its line is in the window's language.
-    const khmerHint = tranText(PICKER_HINT_TEMPLATE, 'km');
-    expect(khmerHint).not.toBe(PICKER_HINT_TEMPLATE);
-    expect(appCalls()[0]).toEqual([
-      genPickerStartExpression(khmerHint),
-      { match: 'km-pick.html' },
-    ]);
-  });
-
   it('gives up when nothing was picked in time', async () => {
     useClock(['Date', 'setTimeout']);
     state.answer = (expression) => {
@@ -1139,16 +1071,9 @@ const PAGES = {
     ].join('\n'),
   },
 };
-const TRANSLATED_PAGES = {
-  'W-79@km': {
-    lang: 'km',
-    title: 'រកវគ្គបទគម្ពីរ',
-    body: [
-      '1. ចុច **[en:tran:Bible Lookup]** ដើម្បីបើក។',
-      '2. វាយវគ្គបទគម្ពីរ។',
-    ].join('\n'),
-  },
-};
+// A page in another language: the language's own tests hand one over
+// (`src/lang/data/online/<code>/tests/tools/owa-devtools-mcp/`).
+const TRANSLATED_PAGES = {};
 
 function fakeHelpPages() {
   app.readHelpPage.mockImplementation((id, langCode, _part, options = {}) => {
@@ -1266,62 +1191,6 @@ describe('owa_guide_start from a recipe', () => {
     ]);
   });
 
-  it('reads a Khmer window its own translation of the steps and the title', async () => {
-    state.lang = 'km';
-    fakeGuideWindow();
-    answer(
-      await call('owa_guide_start', { manualId: 'W-79', page: 'km-g1.html' }),
-    );
-    const [only] = startCalls();
-    const khmer = tranText('Bible Lookup', 'km');
-    expect(only.payload.title).toBe('រកវគ្គបទគម្ពីរ');
-    expect(only.payload.steps[0].text).toBe(`ចុច ${khmer} ដើម្បីបើក។`);
-    expect(only.payload.steps[0].finds).toEqual([khmer, 'Bible Lookup']);
-    expect(only.payload.steps[1].text).toBe('វាយវគ្គបទគម្ពីរ។');
-    // The card's own words, in the window's language.
-    const labels = {};
-    for (const [slot, key] of Object.entries(GUIDE_CARD_LABEL_KEY_MAP)) {
-      if (tranText(key, 'km') !== key) {
-        labels[slot] = tranText(key, 'km');
-      }
-    }
-    expect(labels.next).toBeDefined();
-    expect(only.payload.labels).toEqual(labels);
-    const template = GUIDE_CARD_HINT_TEMPLATE_LIST[0];
-    expect(only.payload.words[template]).toBe(tranText(template, 'km'));
-  });
-
-  it('puts the button names of an untranslated page into the window language', async () => {
-    state.lang = 'km';
-    fakeGuideWindow();
-    answer(
-      await call('owa_guide_start', { manualId: 'W-78', page: 'km-g2.html' }),
-    );
-    const [only] = startCalls();
-    const background = tranText('Background', 'km');
-    const zoom = tranText('Zoom In', 'km');
-    // Not a dictionary key as a whole, so each half is translated.
-    expect(tranText('Background > Zoom In', 'km')).toBe('Background > Zoom In');
-    expect(only.payload.title).toBe('Play a background video');
-    expect(only.payload.steps.map((step) => step.text)).toEqual([
-      `Open the ${background} panel and press ${zoom}.`,
-      'Double-click a clip to play it.',
-    ]);
-    // The window's words first; the panel keeps its English name beside the
-    // translated control; each English label comes after its translation.
-    expect(only.payload.steps[0].finds).toEqual([
-      `${background} > ${zoom}`,
-      `Background > ${zoom}`,
-      'Background > Zoom In',
-      tranText('Background panel', 'km'),
-      'Background panel',
-      background,
-      'Background',
-      zoom,
-      'Zoom In',
-    ]);
-  });
-
   it('refuses what it cannot walk', async () => {
     fakeGuideWindow();
     expect(refusal(await call('owa_guide_start', { manualId: 'W-00' }))).toBe(
@@ -1396,38 +1265,6 @@ describe('owa_guide_start with a built-in lesson', () => {
     expect(only.payload.steps).toHaveLength(3);
     expect(only.payload.steps[0].finds).toEqual(['Bible Lookup']);
     expect(only.payload.steps[0]).not.toHaveProperty('skipIfVisible');
-  });
-
-  it('looks for the panel under its Khmer name too', async () => {
-    state.lang = 'km';
-    const khmerReference = tranText('Bible Reference', 'km');
-    expect(khmerReference).not.toBe('Bible Reference');
-    const looked = [];
-    state.answer = (expression) => {
-      if (expression === 'location.pathname') {
-        return { value: '/presenter.html' };
-      }
-      const asked = readFindText(expression);
-      if (asked !== null) {
-        looked.push(asked);
-        return {
-          value: { matches: [{ isVisible: asked === khmerReference }] },
-        };
-      }
-      return { value: { currentStep: 1 } };
-    };
-    answer(
-      await call('owa_guide_start', {
-        demoId: 'presenter-lookup-reference',
-        page: 'presenter.html',
-      }),
-    );
-    expect(looked).toEqual(['Bible Reference', khmerReference]);
-    const [only] = startCalls();
-    expect(only.payload.steps).toHaveLength(2);
-    expect(only.payload.title).toBe(
-      tranText('Type a complete reference in Bible Lookup', 'km'),
-    );
   });
 });
 

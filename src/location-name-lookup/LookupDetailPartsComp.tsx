@@ -386,9 +386,9 @@ export function OptionalLinkRowComp({
 }
 
 /**
- * The English name after a list entry — `យូដាស (Jude)` — the way the panel's
- * title bar reads, so a reader who knows the people and places by their
- * English names can still tell the entries apart. Nothing under an English
+ * The English name after a list entry — a translated name, then `(Jude)` —
+ * the way the panel's title bar reads, so a reader who knows the people and
+ * places by their English names can still tell the entries apart. Nothing under an English
  * lookup: `getRecordKjvName` is empty when the name already IS the English one.
  *
  * Beside the button rather than inside it, so it is not underlined as part of

@@ -109,8 +109,8 @@ describe('AboutComp', () => {
         );
         expect(getModuleVersions()).toEqual([
             'Electron (38.0.0)',
-            'Pptx2Html (0.9.1)',
-            'Docx2Html (1.2.0)',
+            'Pptx to Html Converter (0.9.1)',
+            'Docx to Html Converter (1.2.0)',
             'Bible Note (3.1.4)',
         ]);
     });
@@ -124,10 +124,10 @@ describe('AboutComp', () => {
         );
         await act(async () => root.render(<AboutComp />));
         await flush();
-        expect(getModuleVersions()[2]).toBe('Docx2Html (Loading...)');
+        expect(getModuleVersions()[2]).toBe('Docx to Html Converter (Loading...)');
         await act(async () => resolveDocx('2.0.0'));
         await flush();
-        expect(getModuleVersions()[2]).toBe('Docx2Html (2.0.0)');
+        expect(getModuleVersions()[2]).toBe('Docx to Html Converter (2.0.0)');
     });
 
     test('says N/A for whatever a build cannot tell', async () => {
@@ -141,8 +141,8 @@ describe('AboutComp', () => {
         expect(commitLink.textContent).toBe('N/A');
         expect(getModuleVersions()).toEqual([
             'Electron (N/A)',
-            'Pptx2Html (N/A)',
-            'Docx2Html (1.2.0)',
+            'Pptx to Html Converter (N/A)',
+            'Docx to Html Converter (1.2.0)',
             // undefined from the module reads as still loading.
             'Bible Note (Loading...)',
         ]);

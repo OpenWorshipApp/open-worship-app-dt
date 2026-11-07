@@ -33,10 +33,13 @@ import {
     checkIsLanguageWord,
     checkIsRemovalReply,
     checkIsWalkthroughEchoWord,
+    COLON_MARKS,
     findYesNoReplies,
     listFrameAliases,
+    SENTENCE_END_MARKS,
+    toCharClassSource,
 } from './chatLangHelpers';
-import { tran } from './chatTranHelpers';
+import { tran, tranLabel } from './chatTranHelpers';
 
 // Three buttons is a row in a 460px window; two is the cap when the answer is
 // already carrying walkthrough buttons of its own, because a wall of buttons
@@ -71,16 +74,17 @@ export const MAX_REPLY_LENGTH = 40;
 // a person writes.
 //
 // The prompt tells a model to keep the marker in English whatever language it
-// answers in, and a small model translates it anyway (`ជម្រើស:`), so the
-// words a language's `assistant.json` lists for it are read too, with that
-// script's colon -- and its full stop may come before it.
+// answers in, and a small model translates it anyway (the language's own word
+// for "options"), so the words a language's `assistant.json` lists for it are
+// read too, with that script's colon -- and its full stop may come before it
+// (`sentenceEndMarks`, `colonMarks`).
 function escapeRegExp(text: string) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 function genFrameMarker(word: string) {
     const nameList = [word, ...listFrameAliases(word).map(escapeRegExp)];
     return new RegExp(
-        `(^|[\\s>*_(.!?\\u17D4-])(?:${nameList.join('|')})[:\\uFF1A\\u17D6][ \\t]*`,
+        `(^|[\\s>*_(.!?${toCharClassSource(SENTENCE_END_MARKS)}-])(?:${nameList.join('|')})[:\\uFF1A${toCharClassSource(COLON_MARKS)}][ \\t]*`,
         'iu',
     );
 }
@@ -124,10 +128,11 @@ function toCleanReply(raw: string) {
  * keeps to the answer's language in the prose and then writes the options
  * line in whatever language it was thinking in. Measured live against the
  * free tier (2026-09-01): a correct English answer about the Bible Lookup
- * button came with a button under it reading `请确认显示这个按钮`.
+ * button came with a button under it reading, in Chinese, "please confirm
+ * this button is shown".
  *
  * So an option is kept when it has a Latin letter (a button name in another
- * language inside an English option, "Show me លុបព្រះគម្ពីរ", is still
+ * language inside an English option, "Show me" and a Khmer button's name, is still
  * English) or when it is written in a language somebody CHOSE: the answer's
  * own, or the one the app is shown in (`checkIsChosenScript`) -- a Khmer
  * answer's Khmer options. A script neither of them uses is the model changing
@@ -567,8 +572,10 @@ export function genQuickReplies(text: string): string[] {
         head.lastIndexOf('!'),
         head.lastIndexOf('?'),
         head.lastIndexOf('\n'),
-        // Khmer's full stop.
-        head.lastIndexOf('។'),
+        // A script's own full stop.
+        ...[...SENTENCE_END_MARKS].map((mark) => {
+            return head.lastIndexOf(mark);
+        }),
     );
     const question = toCleanReply(head.slice(startIndex + 1));
     if (question.length === 0 || question.length > MAX_QUESTION_LENGTH) {
@@ -640,8 +647,17 @@ export function checkIsDraftEcho(reply: string) {
     return DRAFT_ECHO_PATTERN.test(String(reply ?? '').trim());
 }
 
+// An action's label is stored in English and translated where it is drawn
+// (`tranLabel`), while a model answering in the window's language writes its
+// options in it -- so both shapes of the label are taken. Seen live in a
+// Khmer window: the import offer's button and the model's chip with the same
+// words, side by side under one answer.
 function dropDuplicates(replies: string[], actionLabels: string[]) {
-    const taken = new Set(actionLabels.map(toMatchKey));
+    const taken = new Set(
+        actionLabels.flatMap((label) => {
+            return [toMatchKey(label), toMatchKey(tranLabel(label))];
+        }),
+    );
     const hasWalkthrough = actionLabels.some((label) => {
         return WALKTHROUGH_ACTION_PATTERN.test(label);
     });

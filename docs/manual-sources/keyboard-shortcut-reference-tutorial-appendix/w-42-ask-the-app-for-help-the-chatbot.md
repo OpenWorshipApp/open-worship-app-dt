@@ -2,10 +2,10 @@
 id: W-42
 title: "Ask the app for help (the chatbot)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
+verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
 screenshots: 50
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-02"
+workflowsVersion: "2026-11-06"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -271,8 +271,8 @@ it is describing.
    straight away with an assistant and offers the screen's own show button, and
    without one the guide offers one button that starts it; the five
    **/screen-clear-** commands clear a layer the screen HOLDS even while it is
-   off. **The commands that work on the Presenter alone** — the screen's show,
-   hide and clears, **/selected**, **/next**, **/previous**, **/slide**, **/run**,
+   off. **The commands that work on the Presenter alone** — **/screen** and the
+   screen's show, hide and clears, **/selected**, **/next**, **/previous**, **/slide**, **/run**,
    **/verse**, **/countdown**, **/marquee** — are offered in the list only while
    **[en:tran:Asking about]** is **[en:tran:Presenter]**, and typed under another page they answer
    _works on the Presenter page_ with **[en:tran:Go to the Presenter]** under it
@@ -859,7 +859,10 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     It follows you: switch the app to the other page and the next answer follows,
     unless you have chosen a half yourself in the first list. **Answers are in your
     language**: the one you write in, and the one the app is shown in whenever that
-    cannot be told — a "yes", a number, a suggestion you pressed. With the app in
+    cannot be told — a "yes", a number, a suggestion you pressed. That is any
+    language, not only the ones the app can be shown in: a question written in
+    Spanish, Thai or Swahili is answered in it, the suggestions under the answer
+    too, with every button named the way your screen shows it. With the app in
     Khmer the window's own buttons and labels are in Khmer too, drawn in the app's
     Khmer letters, and so is the AI Chat (✨) window. Behind the scenes, an assistant
     that is not a Gemma 4 model works in English: a Gemma 4 model running on this
@@ -982,7 +985,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
+`CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `CB-165` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-02).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-06).
 :::

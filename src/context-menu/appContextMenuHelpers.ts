@@ -75,7 +75,8 @@ export function markOverflowingMenuLabels(menu: HTMLElement) {
             ':scope > .app-context-menu-item-text',
         );
         // Any overflow at all: the browser draws the "…" for a fraction of a
-        // pixel, and a label cut by one pixel ("Korean (한국어) <ko-K…") had
+        // pixel, and a label cut by one pixel (a language's English name, its
+        // own name in brackets and its locale, cut inside the locale) had
         // its ellipsis with no line to read the rest on.
         if (
             textElement === null ||

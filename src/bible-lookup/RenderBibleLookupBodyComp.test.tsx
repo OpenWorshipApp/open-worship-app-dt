@@ -345,3 +345,32 @@ describe('RenderBibleLookupBodyComp Enter in the reference box', () => {
         expect(h.typedTexts).toEqual(['Luke 1:']);
     });
 });
+
+describe('RenderBibleLookupBodyComp option presses', () => {
+    test('a press on a book option writes that book into the box', async () => {
+        await renderBody(genEditingResult('Gen', { guessingBook: 'Gen' }), '');
+        const option = host.querySelector<HTMLButtonElement>(
+            '.bible-lookup-book-option',
+        )!;
+        expect(option.textContent).toContain('Genesis');
+
+        await act(async () => option.click());
+        await flush();
+
+        expect(h.typedTexts).toEqual(['Genesis ']);
+        expect(h.getEditingResultMock).not.toHaveBeenCalled();
+    });
+
+    test('a press on a chapter option writes the book and chapter', async () => {
+        await renderBody(LUKE_PICKING_CHAPTER, '');
+        const options = host.querySelectorAll<HTMLButtonElement>(
+            '.bible-lookup-chapter-option',
+        );
+        expect(options).toHaveLength(24);
+
+        await act(async () => options[2].click());
+        await flush();
+
+        expect(h.typedTexts).toEqual(['Luke 3:']);
+    });
+});

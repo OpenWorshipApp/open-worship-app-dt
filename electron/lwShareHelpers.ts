@@ -12,12 +12,23 @@ export type StartServerParamsType = {
     targetDir: string;
     onStatus: (status: StatusDataType) => void;
 };
+
+// lw-share holds ONE express app and ONE http server for the whole process,
+// and its `init` registers every route and another socket.io server each time
+// it runs. So it runs once, and the folder it was given is the one served for
+// as long as this window lives. A new port only re-points the server, and
+// takes the last set-up's listeners off -- left on, they went on answering
+// with the OLD port's addresses and QR codes (2026-11-03).
+let servedTargetDir: string | null = null;
+let removeListeners: (() => void) | null = null;
+
 export async function initServer({
     port,
     targetDir,
     onStatus,
 }: StartServerParamsType) {
     const {
+        app,
         init: initApp,
         httpServer,
         getRandomPort,
@@ -32,22 +43,37 @@ export async function initServer({
             return null;
         }
     }
-    initApp(targetDir, port);
-    httpServer.on('listening', async () => {
+    if (servedTargetDir === null) {
+        initApp(targetDir, port);
+        servedTargetDir = targetDir;
+    } else {
+        // What lw-share's own /addresses page reads.
+        app.set('port', port);
+    }
+    removeListeners?.();
+    const handleListening = async () => {
         const addressesWithQRList = await getAddressesWithQR(port);
         onStatus({ status: 'running', data: { addressesWithQRList } });
-    });
-    httpServer.on('error', (err) => {
+    };
+    const handleError = (err: Error) => {
         console.error('Server error:', err);
         onStatus({ status: 'error', message: err.message });
-    });
-    httpServer.on('close', () => {
+    };
+    const handleClose = () => {
         console.log('Server closed');
         onStatus({ status: 'stopped' });
-    });
+    };
+    httpServer.on('listening', handleListening);
+    httpServer.on('error', handleError);
+    httpServer.on('close', handleClose);
+    removeListeners = () => {
+        httpServer.off('listening', handleListening);
+        httpServer.off('error', handleError);
+        httpServer.off('close', handleClose);
+    };
     return {
         port,
-        targetDir,
+        targetDir: servedTargetDir,
         stop: () => {
             httpServer.close();
         },

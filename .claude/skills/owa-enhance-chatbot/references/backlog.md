@@ -1305,7 +1305,7 @@ with that version's own book name.
 q02 of this run's corpus answered nothing: the third model round never
 completed and the chatbot window came back idle with the question posted
 and no answer, at the exact second another session saved
-`src/others/commonButtons.tsx` and `src/lang/data/km/index.ts`. Vite
+`src/others/commonButtons.tsx` and `src/lang/data/online/km/index.ts`. Vite
 broadcasts a full reload to every connected window when a changed module
 has no HMR boundary, the chatbot window included, and an ask in flight is
 gone with it. Nothing a user hits (production has no dev server), but a
@@ -7815,7 +7815,7 @@ with no button to open it; one invented the book's Khmer name (_ទំនុក�
 for ទំនុកដំកើង); one told the person to type `/btw`; the typed Khmer starter
 _ជួយខ្ញុំស្វែងរកខគម្ពីរមួយ_ got steps with **Enter** and _(Projector)_.
 Fixed as language DATA: `verseFindAsks` / `verseAsks` /
-`verseAskExcludeWords` in `src/lang/data/km/assistant.json`, read by
+`verseAskExcludeWords` in `src/lang/data/online/km/assistant.json`, read by
 `src/chatbot/verseAskLanguageHelpers.ts` (zero-width spaces taken out first);
 a Khmer line naming the screen, a song or a slide ends a verse search
 (`checkIsAppWorkAsk`). Two defects found on the way, both languages: the
@@ -8708,7 +8708,7 @@ Khmer ref read from ពគប, and the KJV ref quoted KJV Genesis 4:1.
 
 ### EC-347 — French has no verse-ask data (DONE 2026-10-29, `EC-441`)
 
-`src/lang/data/fr/assistant.json` has no `verseAsks`, `verseFindAsks` or
+`src/lang/data/online/fr/assistant.json` has no `verseAsks`, `verseFindAsks` or
 `verseAskExcludeWords`, so a French verse asked by what it says goes to the
 English-only readers and back to the ordinary assistant (the failure EC-288/
 EC-289 fixed for Khmer). This run added `bibleReaderWords` (chapter/resources/
@@ -9395,7 +9395,7 @@ buttons, the fresh language step, the KJV answer's button.
 Asked for by the user with the key row of Step 1 circled: _during choosing
 bible key, use `getBibleKeyNameMap()` then show the keys are options. mouse
 hover to name of bible key in dom title_, _exclude if the key already exist_,
-with `src/lang/data/km/bibleKeyMap.json` open: _for khmer it should show from
+with `src/lang/data/online/km/bibleKeyMap.json` open: _for khmer it should show from
 this json file_, then _the list of bible keys show for the selected language
 only_, _if no language data … then show normal guessing_ and _e.g. for Thai
 should show the guessing language_. A downloaded file's own short names
@@ -9889,7 +9889,7 @@ alone: _which other verses relate to this?_ was sent to **Previous chapter** /
 is 22:9), _where else does God remember someone?_ two Psalms by a wrong book
 name, and under Matthew 18 the assistant asked for key words to search. The
 app holds the answer: the Reader's Cross References data, one bundle per
-language (`src/lang/data/<code>/bb-cr.gz.bundle`, ~8 themes a verse, each a
+language (`src/lang/data/online/<code>/bb-cr.gz.bundle`, ~8 themes a verse, each a
 sentence in that language and the verses it leads to). **Fix:**
 `owa_lookup_record` `related` (`agentCrossRefHelpers.ts`, pure, 9 tests):
 what most of the passage's verses point to, the other Testament's (the
@@ -10010,7 +10010,7 @@ answer names both with what Jesus said. The record is 9.0k characters
 Genesis 8:10 and 8:12's theme _Noah's patient waiting_ read
 _អ្នកជំងឺរបស់ណូអេ_ — "Noah's sick person" (patient as a noun) — and verse
 10's _The Dove as Messenger_ read _សត្វព្រាបជាកម្មវិធីផ្ញើសារ_, a messaging
-app. The words are the bundle's (`src/lang/data/km/bb-cr.gz.bundle`), shown
+app. The words are the bundle's (`src/lang/data/online/km/bb-cr.gz.bundle`), shown
 in **Related verses** and the Reader's Cross References, and given to the
 model. Measured over its 231 890 themes: 7 241 titles kept English words
 (_Ravens ជាឧបករណ៍_), 7 291 held a letter that is not Khmer (Latin, Chinese,
@@ -10554,3 +10554,226 @@ a word, a curly apostrophe read as a straight one. After: 0 lines in the
 wrong language. Seen live: the same line answered in English, Romans 12:1
 from the KJV, 1.4k tokens. The window's own words stay in the app's
 language, as `chatbot-window.md` decides.
+
+### EC-447 — a question in a language the app is not shown in was read as another (DONE 2026-11-03)
+
+The user: _make chatbot generic for language, it flexible to
+internationalization. no matter what language I type it work seamlessly_.
+Only English, Khmer and French were known. Measured with no model on the
+same how-to in 20 more languages: Spanish, Italian, Tagalog and Romanian
+read as FRENCH (the little words they share: `la`, `de`, `un`), German as
+English, Portuguese, Dutch, Vietnamese, Indonesian, Swahili and Polish as
+nothing -- so the app's language, Khmer in a Khmer window -- and nine
+other scripts as `other`, with no name. Live on Auto (gemma4:cloud), the
+Spanish one was answered in French because the window said _They wrote in
+French_. **Fix:** `src/lang/data/typed-languages.json` names 84 more
+languages (name, own name, Unicode script, little words, letters, a family,
+yes/no) and `detectTypedLanguage` reads them all: script first (a Han,
+kana or Hangul letter weighs three Latin ones, Japanese is the Han WITH
+kana), then words and letters each weighed by how few languages share
+them, a packaged language believed on half the evidence (French lines of
+shared words had read as nothing), a tie inside a family to the first,
+any other tie still to the app. `getAssistantLanguage` returns one as
+`isPackaged: false` with every list empty. After: 99 of 102 lines in 84
+languages (the three left go to a sibling: Slovenian→Croatian,
+Danish→Norwegian, Macedonian→Serbian), and all 469 supported questions in
+English, Khmer and French keep their language (`anyLanguage.test.ts`, the
+ratchet). Live, the same twelve: 11 → 12 of 12 answered in the language
+asked on Auto, 5 → 6 of 6 on Free.
+
+### EC-448 — chips in a script no package has were dropped (DONE 2026-11-03)
+
+`checkIsChosenScript` knew a script only through a language package, so a
+chip in Thai under a Thai answer was "a script nobody chose": live on
+Auto, every answer in Chinese, Thai, Korean, Russian and Arabic (5 of 5)
+came with no chips at all. Now judged by SCRIPT (`SCRIPT_NAME_LIST`, one
+table for detection, chips and the cleaner): a chip's letters must be in
+the answer's script or the app's. After: 12 of 12 answers with chips in
+the language asked.
+
+### EC-449 — the reply line named the wrong language and let buttons be renamed (DONE 2026-11-03)
+
+Told _They wrote in French_ of a Spanish line, a model renamed the Font
+Size slider _Taille de police_, a name nothing on that English screen
+carries; told only to keep `OPTIONS:` in English, the free tier wrote its
+options in English under Chinese, Thai and Russian answers.
+`genReplyLanguageLine` now names any typed language, says to name every
+button exactly as the tools and the guide give it (how the screen shows
+it), and to write what follows the markers in that language.
+
+### EC-450 — the cleaner read the screen as the reader's language (DONE 2026-11-03)
+
+`toAnswerShownInLanguage` assumed the screen is in the language of the
+answer. On an English screen a Chinese or Khmer reader lost the English
+gloss that names the button they must find (_设置 (Settings)_); in a Khmer
+window a Thai answer lost the Khmer button names as a "third script"; and
+a German answer in a French window would have had _Text_, a capitalised
+noun, rewritten as a label. It takes `screenLangCode` now (the app's,
+passed by both call sites): a gloss goes only off an English screen, the
+screen's script is never a third script, and a language only typed in
+Latin letters gets no capitalised-run label pass (bold and quoted names
+still). An English chip under an answer in any other Latin language is
+dropped (`detectTypedLanguage`).
+
+### EC-451 — a translated answer's options were the model's English (DONE 2026-11-03)
+
+Behind the scenes (any model but a Gemma 4 is asked in English), the
+options rode the answer to the translator as an `OPTIONS:` line, which
+came back with no such line under 6 of 6 answers on Free; the window then
+showed the model's English chips -- _It's still too small_, _No thanks_
+under Spanish, Portuguese and Vietnamese answers -- or, under Chinese,
+Thai and Russian ones, none. The options are now put into the language on
+their own, one numbered line each, beside the answer's translation
+(`translateReplies`, `toRepliesTranslationAsk`, `readRepliesTranslation`;
+no added wait, the waiting line says it once), and a failed one shows no
+chips, never English. This held Khmer and French too. Live: the Spanish
+answer's chips came back as _Todavía se ve pequeño_ / _Hazlos más pequeños
+de nuevo_; the other five were not asked again (the spend guard's 150
+calls an hour paused the assistant).
+
+### EC-452 — a language only typed never gets its known question's page — `open`
+
+`findKnownQuestion` matches what was TYPED against the corpus and its
+Khmer and French overlays. _Las letras son muy pequeñas_ is the Reader's
+own starter in Spanish and matched nothing, so every model searched and
+opened the page itself (2-3 tool calls, where the English row rides its
+page and the walkthrough buttons). On the translation path the English
+(`plan.english`) is known before the model is asked and could be matched
+against the corpus there (hint, page, `knownFind`). Cost and actionability.
+
+### EC-453 — a verse asked for in a language only typed does not reach the verse finder — `open`
+
+The verse readers are English in code and per package in `assistant.json`
+(`verseAsks`, `verseFindAsks`). _¿Qué versículo dice que no me preocupe
+por el mañana?_ goes to the ordinary assistant, which has no
+`owa_find_verse`. On the translation path its English could be read by
+the English readers before the ask is routed. Capability.
+
+### EC-454 — the offline guide reads a typed language as English words — `idea`
+
+With no assistant, a Spanish or Thai question is searched against the
+English guide as written, and comes back with whatever page shares a
+cognate. It could say plainly, in the app's language, that without an
+assistant only the app's languages and English can be read.
+
+### EC-455 — sibling languages that share every little word go to the first — `idea`
+
+Slovenian/Croatian, Danish/Norwegian and Macedonian/Serbian lines made of
+shared function words are answered in the first of the family. Letter
+trigram profiles per language would tell them apart, at a larger table
+than the few kilobytes of words.
+
+### EC-456 — a yes in any language only counts as a whole reply — `idea`
+
+`typed-languages.json` carries each language's yes and no, so _sí_, _はい_
+and _да_ now answer the offline follow-up and the Bible import's question
+as _yes_ does. Its yes/no CHIPS (`findYesNoReplies`) are still only a
+package's: a Spanish answer ending in a yes-or-no question gets the model's
+options, not two buttons of the window's own.
+
+### EC-457 — a translated page named its buttons in ITS language, not the window's — `done`
+
+Found 2026-11-04 by the chatbot i18n robot run
+(`test-results/robot-test/chatbot-i18n-20261104-0745/`). A question in a
+language with a manual of its own, asked in a window shown in another,
+rides with that language's page (`findPageLanguage`), and
+`readHelpPage('W-11@km', 'en')` filled the page's `[en:tran:…]` templates
+in KHMER: a Khmer question in an English window, and a French one, were
+answered with the slider called ទំហំតួអក្សរ or _Taille de police_ on a
+screen that reads **Font Size** (a Spanish one, which has no page, was
+right). The `@` part now picks which translation is read and the caller's
+window language names the buttons; with no window named the page's own
+does (`help.mjs`, `help.test.mjs` with a made-up `xx` page). Re-asked
+live: both said **Font Size**; in a Khmer window a French question named
+it as the Khmer screen does.
+
+### EC-458 — a French answer in another language's window lost its own words to labels — `done`
+
+Same run. `toAnswerShownInLanguage` read every capitalised run of a
+PACKAGED Latin-script answer as English labels, so _de la Bible_ in a
+French answer shown in a Khmer window became _de la_ and the Khmer for the
+Bible tab. A language only typed was already exempt for exactly this
+reason (_Text_, _Position_, every German noun). The run is now read only
+for a non-Latin script or an answer in the screen's own language; a label
+in bold or in quotes is still the window's (test in
+`src/lang/data/online/fr/tests/chatbot/answerLanguageHelpers.test.ts`). Re-asked
+live: _de la Bible_ twice, the button as the Khmer screen names it.
+
+### EC-459 — a capitalised word of a third language survives in a Khmer chip — `done`
+
+Same run, 2 of 3 Khmer text-size answers on gemma4:cloud: the chip
+_តើខ្ញុំត្រូវធ្វើដូចម្តេចដើម្បីឱ្យវា Kecil វិញ?_ -- _Kecil_ is Malay for
+small. `dropStrayLatinWords` takes lowercase Latin words only, because a
+capitalised one may be an English label or a product the person sees
+(Google, Windows, KJV). A chip could drop a capitalised Latin word that is
+no word of any dictionary key, menu name or installed Bible's key, and
+keep the rest; measure the false drops on the whole Khmer corpus first.
+
+Done 2026-11-04. Measured first: of the 7 578 Khmer texts in the saved
+runs under `test-results/`, eight capitalised Latin words stood alone
+between Khmer letters -- _Kecil_ the only foreign one; the rest a key
+(Enter), names (Noah, Urartu), products (Google, Ollama, Markdown) and a
+button (Widgets). So the rule is the CHIP only, read against the answer
+above it: `toRepliesShownInLanguage` takes the answer's text
+(`answerText`; the translated path passes both the shown and the
+model's own) and drops a chip holding such a word that the answer never
+says, that is no key, no menu-bar name and no dictionary label
+(`checkHasUnsaidLatinWord`). Not in a word study (`isLatinKept`), and a
+word of the kept passage counts as said. The answer's own text is left
+alone: a capitalised word there may be a name the person sees. Test:
+`src/lang/data/online/km/tests/chatbot/answerLanguageHelpers.test.ts` and, end
+to end through `askLlmBot`, `src/lang/data/online/km/tests/chatbot/llmBotHelpers.test.ts`.
+At 09:02 the scratch window could not load the Khmer package (EC-460
+above), so a Khmer answer there was no Khmer language to the chatbot
+and the chip still drew -- by that, not by this rule. **Seen live at
+09:23** once the plugin build had landed, in a Khmer scratch window
+(`lang="km"`, the ask carrying _(Answer in Khmer.)_): the stand-in
+answered with both chips and the window drew only the one with no
+_Kecil_. The same window took the original EC-460 case too: a Thai
+question answered in Khmer, sent back once, the Thai answer shown.
+
+### EC-460 — a Thai question in a Khmer window answered in Khmer — `done`
+
+Same run: 1 of 2 asks of the same Thai question came back wholly in
+Khmer, although `pickReplyLanguage` read Thai and the ask carried _They
+wrote in Thai: answer in Thai_ (the second asking was Thai). The Khmer
+system prompt's language rule outweighed the line once. A reply whose
+script is neither the asked language's nor the screen's buttons could go
+back once, as `findAnswerShapeNudge` does for a reply in an unusable
+shape. **Done the same day**: an answer that must be in a language with a
+script of its own (`toAnswerScript`, never Latin) and holds not one letter
+of it in 30 or more goes back once (`checkIsWrongScriptAnswer`,
+`genWrongLanguageNudge`, both loops through `findAnswerShapeNudge`); a
+button named in English inside the language's own words is never caught.
+Held end to end in `src/lang/data/online/km/tests/chatbot/llmBotHelpers.test.ts`
+(a Khmer reply to a Thai question asked again, the Thai one shown).
+
+**Seen live 2026-11-04, 09:02**, in a scratch dev instance whose shared
+registry (`OWA_LLM_REGISTRY_URL`) named one stand-in OpenAI-compatible
+server (`gemma4:cloud`, so Auto picked it and asked in the language
+typed) that answered a Thai question in Khmer and the nudge in Thai:
+the first request carried _answer in Thai_, the second the nudge
+(_Not yet: they wrote in Thai_), and the window drew the Thai answer
+and its Thai chips -- two rounds, 2.1k tokens. A live model drifts too
+seldom to show it on demand (two re-asks of gemma4:cloud came back in
+Thai unhelped). That window was English: on the tree of that hour a
+peer session was making every language a plugin loaded from
+`electron-build/lang`, not yet built, so a Khmer window could not load;
+Thai, a typed language, does not need a package.
+
+### EC-461 — a bare book and chapter in another Bible's language is not a Bible-Reader ask — `done`
+
+Same run: in a French window with the Reader on the KJV, _Résume Matthieu
+18_ went to the ordinary assistant, which answered _type /btw_ --
+`readBibleReaderAskWithBook` confirms the book only in the Bible being
+read, and the KJV has no _Matthieu_. _Résume le chapitre 18 de Matthieu_
+(the chapter word) is routed, and so was the Khmer _សូមសង្ខេប ម៉ាថាយ ១៨_
+through the verse readers. The book could be confirmed against the
+language packages' own `bibleBooks.json` too (`loadLangBibleBooks`), for
+the app's language and the one typed. Not a regression: the confirmation
+was the same before the language move. **Done the same day**: when the open
+Bible names no such book, `readBibleReaderAskWithBook` confirms it against
+every language package's names (`listLangBibleBookNames` in
+`src/lang/langPackageFileHelpers.ts`, one small lazy file per package).
+Re-asked live in the French window with the KJV open: Matthew 18 summarized
+in French from the Bible, 4.8k tokens, no `/btw`.

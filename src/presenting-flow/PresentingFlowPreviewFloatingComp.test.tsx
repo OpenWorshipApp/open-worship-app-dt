@@ -22,6 +22,8 @@ const { state, mocks } = vi.hoisted(() => ({
         collapsedCount: 0,
         autoNext: null as any,
         shortcuts: [] as string[],
+        // Lines the windowed list has not drawn (scrolled out of view).
+        hiddenIndexes: new Set<number>(),
         fileEvent: null as null | ((path: unknown) => void),
         keyboard: [] as Array<{
             eventMappers: unknown[];
@@ -32,10 +34,22 @@ const { state, mocks } = vi.hoisted(() => ({
         close: vi.fn(),
         select: vi.fn(),
         expand: vi.fn(),
-        childStep: vi.fn(() => false),
+        childStep: vi.fn(
+            (
+                _presentingFlowFilePath: string,
+                _index: number,
+                _event: MouseEvent,
+                _isEntering: boolean,
+            ): boolean => false,
+        ),
         requestChild: vi.fn(),
         bringToView: vi.fn(),
-        reveal: vi.fn(async () => null),
+        reveal: vi.fn(
+            async (
+                _key: string,
+                _getElement: () => Element | null,
+            ): Promise<Element | null> => null,
+        ),
         send: vi.fn(async () => {}),
         refresh: vi.fn(),
         registerRun: vi.fn(() => vi.fn()),
@@ -136,7 +150,8 @@ vi.mock('../scrolling/ScrollingHandlerComp', () => ({
     default: () => <span data-testid="scroll-top">Top</span>,
 }));
 vi.mock('./presentingFlowActionKeyHelpers', () => ({
-    toPresentingFlowActionKeyEventMapper: (key: string) => `shortcut:${key}`,
+    toPresentingFlowActionKeyEventMapper: (key: string) =>
+        key === 'Unmappable' ? null : `shortcut:${key}`,
 }));
 vi.mock('./presentingFlowAutoNextHelpers', () => ({
     registerPresentingFlowRunController: mocks.registerRun,
@@ -203,11 +218,20 @@ vi.mock('../others/themeHelpers', () => ({
     useThemeSource: () => ({ theme: 'dark' }),
 }));
 vi.mock('../virtual-list/VirtualListComp', () => ({
-    default: ({ items, renderItem }: any) => (
-        <div data-testid="virtual-list">
-            {items.map((value: any, index: number) => (
-                <Fragment key={value.uuid}>{renderItem(value, index)}</Fragment>
-            ))}
+    default: ({ items, renderItem, getItemKey }: any) => (
+        <div
+            data-testid="virtual-list"
+            data-reveal-keys={items
+                .map((value: any, index: number) => getItemKey(value, index))
+                .join(',')}
+        >
+            {items.map((value: any, index: number) =>
+                state.hiddenIndexes.has(index) ? null : (
+                    <Fragment key={value.uuid}>
+                        {renderItem(value, index)}
+                    </Fragment>
+                ),
+            )}
         </div>
     ),
 }));
@@ -256,6 +280,7 @@ beforeEach(() => {
     state.collapsedCount = 0;
     state.autoNext = null;
     state.shortcuts = [];
+    state.hiddenIndexes.clear();
     state.fileEvent = null;
     state.keyboard = [];
     container = document.createElement('div');
@@ -438,5 +463,147 @@ describe('presenting flow floating preview', () => {
                 .click(),
         );
         expect(mocks.stopAutoNext).toHaveBeenCalledWith('/one');
+    });
+
+    it('fires a run shortcut only while the widget holds focus, and only when a line answers', async () => {
+        state.shortcuts = ['Reading', 'Ghost', 'Unmappable'];
+        await render();
+        const shortcut = (key: string) =>
+            state.keyboard.findLast(
+                (registration) => registration.eventMappers[0] === key,
+            )!;
+        // A key the mapper cannot read is registered with no events at all.
+        expect(
+            state.keyboard.some(
+                (registration) => registration.eventMappers.length === 0,
+            ),
+        ).toBe(true);
+
+        const outside = document.createElement('button');
+        document.body.append(outside);
+        outside.focus();
+        await act(async () => shortcut('shortcut:Reading').callback({}));
+        expect(mocks.select).not.toHaveBeenCalled();
+
+        widget()
+            .querySelector<HTMLElement>('.app-presenting-flow-preview')!
+            .focus();
+        // Nothing in the sheet answers to it any more: nothing happens.
+        await act(async () => shortcut('shortcut:Ghost').callback({}));
+        expect(mocks.select).not.toHaveBeenCalled();
+        await act(async () => shortcut('shortcut:Reading').callback({}));
+        expect(mocks.select).toHaveBeenCalledExactlyOnceWith(
+            '/one',
+            'key:b',
+            1,
+        );
+        await vi.waitFor(() =>
+            expect(mocks.send).toHaveBeenCalledWith(
+                state.items['/one'][1],
+                expect.any(MouseEvent),
+            ),
+        );
+        outside.remove();
+    });
+
+    it('reveals a line the window has not drawn before firing it', async () => {
+        state.hiddenIndexes.add(1);
+        const revealed = document.createElement('div');
+        revealed.getBoundingClientRect = () =>
+            ({ left: 100, top: 40 }) as DOMRect;
+        mocks.reveal.mockResolvedValueOnce(revealed);
+        await render();
+        expect(
+            widget()
+                .querySelector('[data-testid="virtual-list"]')
+                ?.getAttribute('data-reveal-keys'),
+        ).toBe('reveal:0,reveal:1');
+        const controller = (mocks.registerRun.mock.calls as any[][])[0][1];
+
+        expect(controller.jumpToUuid('b')).toBe(true);
+        expect(mocks.reveal).toHaveBeenCalledWith(
+            'reveal:1',
+            expect.any(Function),
+        );
+        // The box is still not drawn when it is asked for again.
+        expect((mocks.reveal.mock.calls as any[][])[0][1]()).toBeNull();
+        await vi.waitFor(() => expect(mocks.send).toHaveBeenCalledOnce());
+        expect(mocks.bringToView).toHaveBeenCalledWith(revealed);
+        const sentEvent = (mocks.send.mock.calls as any[][])[0][1];
+        expect([sentEvent.clientX, sentEvent.clientY]).toEqual([108, 48]);
+    });
+
+    it('fires a line that cannot be drawn at all, and reports a failed reveal', async () => {
+        state.hiddenIndexes.add(0);
+        state.hiddenIndexes.add(1);
+        mocks.reveal.mockResolvedValueOnce(null);
+        await render();
+        const controller = (mocks.registerRun.mock.calls as any[][])[0][1];
+        expect(controller.jumpToUuid('a')).toBe(true);
+        await vi.waitFor(() => expect(mocks.send).toHaveBeenCalledOnce());
+        expect(mocks.bringToView).not.toHaveBeenCalled();
+        const sentEvent = (mocks.send.mock.calls as any[][])[0][1];
+        expect([sentEvent.clientX, sentEvent.clientY]).toEqual([8, 8]);
+
+        const failure = new Error('reveal failed');
+        mocks.reveal.mockRejectedValueOnce(failure);
+        expect(controller.jumpToUuid('b')).toBe(true);
+        await vi.waitFor(() =>
+            expect(mocks.handleError).toHaveBeenCalledWith(failure),
+        );
+        expect(mocks.send).toHaveBeenCalledOnce();
+    });
+
+    it('enters a document at its first slide, or asks for its slides when none are loaded yet', async () => {
+        state.items['/one'] = [
+            entry('a', 'Song', { isAppDocument: true }),
+            entry('b', 'Sermon', { isAppDocument: true }),
+        ];
+        await render();
+        const controller = (mocks.registerRun.mock.calls as any[][])[0][1];
+        mocks.childStep.mockImplementation(
+            (_path: string, _index: number, _event: any, isEntering: boolean) =>
+                isEntering,
+        );
+        expect(controller.stepForward()).toBe(true);
+        expect(mocks.childStep).toHaveBeenLastCalledWith(
+            '/one',
+            0,
+            expect.any(MouseEvent),
+            true,
+        );
+        expect(mocks.requestChild).not.toHaveBeenCalled();
+
+        mocks.childStep.mockImplementation(() => false);
+        expect(controller.stepForward()).toBe(true);
+        expect(mocks.requestChild).toHaveBeenCalledExactlyOnceWith(
+            '/one',
+            1,
+            expect.any(MouseEvent),
+        );
+        // A document is walked by its slides, never sent as a whole.
+        expect(mocks.send).not.toHaveBeenCalled();
+    });
+
+    it('answers false to stepping or jumping on an empty sheet', async () => {
+        state.items['/one'] = [];
+        await render();
+        const controller = (mocks.registerRun.mock.calls as any[][])[0][1];
+        expect(controller.stepForward()).toBe(false);
+        expect(controller.jumpToUuid('a')).toBe(false);
+        expect(mocks.select).not.toHaveBeenCalled();
+    });
+
+    it('names its own list to the keying take-over, with a cursor or without', async () => {
+        await render();
+        const keyingArea = (
+            mocks.registerKeyingArea.mock.calls as any[][]
+        )[0][0];
+        expect(keyingArea.getElement()).toBe(
+            widget().querySelector('.app-presenting-flow-preview'),
+        );
+        expect(keyingArea.checkHasSelected()).toBe(false);
+        state.selectedKey = 'key:a';
+        expect(keyingArea.checkHasSelected()).toBe(true);
     });
 });

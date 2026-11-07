@@ -24,7 +24,7 @@ export type ResourceReadingType = {
     verseStart?: number;
     verseEnd?: number;
     // The passage as the Reader titles it, in its Bible's own words and
-    // digits: `ម៉ាថាយ ១៨:១៥-១៧`.
+    // digits: Matthew 18:15-17 in Khmer, digits and all.
     title: string;
     bibleKey?: string;
 };

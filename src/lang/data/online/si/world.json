@@ -1,0 +1,12 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Sinhala",
+            "locales": ["si-LK"],
+            "order": 2300
+        }
+    ],
+    "languageAliases": {
+        "sinhalese": "sinhala"
+    }
+}

@@ -59,6 +59,13 @@ vi.mock('./lyricEditorBoot', () => ({
 vi.mock('./lyric-list/LyricAppDocument', () => ({
     default: { getInstance: state.getDocument },
 }));
+vi.mock('./lyric-list/LyricEditorChatbotButtonComp', () => ({
+    default: () => <i>Chatbot</i>,
+}));
+vi.mock('./lyric-list/lyricEditorChatbotSync', () => ({
+    applyLyricEditorText: () => false,
+    createLyricEditorSync: () => ({ markSaved: () => {} }),
+}));
 
 let consoleError: ReturnType<typeof vi.spyOn>;
 
@@ -83,6 +90,7 @@ beforeEach(() => {
         isEditorOpened: false,
         loadValue: null,
         saveValue: null,
+        getSlot: () => document.createElement('div'),
         mount: vi.fn(async () => {
             if (state.mountError !== null) {
                 throw state.mountError;

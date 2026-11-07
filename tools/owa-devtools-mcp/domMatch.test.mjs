@@ -621,16 +621,6 @@ describe('the packaged expressions', () => {
     expect(clicks).toBe(1);
   });
 
-  it('will not press a Khmer control named for what cannot be undone', async () => {
-    document.body.innerHTML =
-      '<div class="app-context-menu-item" title="ផ្លាស់ទីទៅធុងសំរាម">' +
-      '<div>ផ្លាស់ទីទៅធុងសំរាម</div></div>';
-    const refused = await run(
-      genClickExpression(['ផ្លាស់ទីទៅធុងសំរាម'], 100, 0, { guard: GUARD }),
-    );
-    expect(refused.refused).toBe('destructive');
-  });
-
   // "Delete, then Yes": the Yes belongs to the user.
   it('never answers a question the app is asking', async () => {
     document.body.innerHTML =

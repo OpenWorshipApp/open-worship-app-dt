@@ -1,0 +1,20 @@
+{
+    "nativeLanguageNames": {
+        "ລາວ": "lao"
+    },
+    "languageWordPrefixes": ["ພາສາ"],
+    "scriptLocales": [
+        {
+            "script": "Lao",
+            "locales": ["lo-LA"],
+            "order": 200
+        }
+    ],
+    "ownScriptLanguages": {
+        "lo": "Lao"
+    },
+    "languageAliases": {
+        "laos": "lao",
+        "laotian": "lao"
+    }
+}

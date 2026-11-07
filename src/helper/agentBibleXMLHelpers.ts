@@ -29,6 +29,7 @@ import {
 } from '../../tools/owa-devtools-mcp/bibleXmlAdvice.mjs';
 import { checkAgentFileName } from '../../tools/owa-devtools-mcp/agentFileName.mjs';
 import { allLocalesMap, type LocaleType } from '../lang/langHelpers';
+import { loadLangBibleBooks } from '../lang/langPackageFileHelpers';
 import { fsCheckFileExist, fsReadFile } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import appProvider from '../server/appProvider';
@@ -254,14 +255,9 @@ function genLocaleChoices({
 
 async function readBundledNameLists(locale: string) {
     const language = locale.split('-')[0];
-    const sets =
-        language === 'km'
-            ? (await import('../lang/data/km/bibleBooks.json')).default
-            : language === 'fr'
-              ? (await import('../lang/data/fr/bibleBooks.json')).default
-              : language === 'en'
-                ? (await import('../lang/data/en/bibleBooks.json')).default
-                : [];
+    // The language's own package, found by its code: one that is not
+    // installed has no names to offer.
+    const sets = await loadLangBibleBooks(language);
     return sets
         .filter((set: { books: string[] }) => {
             return set.books.length === BIBLE_BOOK_KEYS.length;

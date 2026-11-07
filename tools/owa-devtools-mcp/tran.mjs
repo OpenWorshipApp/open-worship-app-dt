@@ -2,29 +2,43 @@
 //
 // The knowledge is written in English, but the buttons it names are not: a
 // volunteer running the app in Khmer is told to press **Bible Lookup** and has
-// `ស្វែងរកព្រះគម្ពីរ` on screen. Naming the control in a language they cannot
-// match to their window is the same as not naming it at all.
+// that button's Khmer words on screen. Naming the control in a language they
+// cannot match to their window is the same as not naming it at all.
 //
 // So the docs carry a TEMPLATE instead of a label:
 //
 //     Press **F9** ([en:tran:Clear Long Text]) to take the verse off screen.
 //
 // and this module fills it in with whatever that key reads as in the running
-// app's interface language -- `Clear Long Text` in English, `លុបអត្ថបទវែង` in
-// Khmer. One source text, every language, and the doc can never drift from the
-// app the way a hand-copied twin does (the manual still said `គ្រប់កណ្ឌគម្ពីរ`
-// for **All Books** long after the app started saying `សៀវភៅទាំងអស់`).
+// app's interface language -- `Clear Long Text` in English, the Khmer
+// dictionary's words in Khmer. One source text, every language, and the doc
+// can never drift from the app the way a hand-copied twin does (the manual
+// still gave an old Khmer wording for **All Books** long after the app's own
+// dictionary had changed it).
 //
-// The dictionary is the app's OWN `tran()` dictionary, extracted at build time
-// so nothing here has to load a TypeScript module -- see
-// `extra-work/build-knowledge.mjs`. Keys are matched exactly as `tran()`
+// The dictionary is the app's OWN `tran()` dictionary, lifted out of the
+// language at build time so nothing here has to load a TypeScript module: an
+// installed language plugin's `tran.json` (`extra-work/build-lang-plugins.mjs`),
+// read through `langPacks.mjs` -- a language that is not installed has none. Keys are matched exactly as `tran()`
 // matches them (trimmed, lower-cased) and a key that is missing degrades to the
 // English text: unlike the app's `tran`, a document must never blank a page
 // because somebody wrote a label that is not in the dictionary yet.
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import {
+    extractDictionary,
+    findLangPack,
+    listLangPacks,
+    readLangPackDictionary,
+    readLangPackJson,
+    readLangPackNames,
+    sanitizeTranKey,
+} from './langPacks.mjs';
+
+export { extractDictionary };
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // tools/owa-devtools-mcp -> repo root
@@ -41,103 +55,28 @@ export const DEFAULT_LANG_CODE = 'en';
 // documentation author to get wrong.
 const TRAN_TOKEN_PATTERN = /\[([a-z]{2}):(tran):([^\]]+)\]/g;
 
-/** `tran()`'s own key sanitizer -- `sanitizeTranKey` in every language pack. */
-function sanitizeTranKey(key) {
-    return key.trim().toLowerCase();
-}
+// What a source pack says of itself, kept for the process like its
+// dictionary (`langPacks.mjs`): only ever read outside the app.
+const sourceLanguageCache = new Map();
 
-let sourceDictionariesCache = null;
-
-// A source checkout with no build yet, mirroring `help.mjs`'s manual fallback:
-// pull the dictionary straight out of the language pack. The literal is pure
-// data -- a flat map of string to string -- so it evaluates on its own, without
-// the TypeScript, the font imports or the plugin the module around it needs.
-//
-// Cached for the life of the process because it only ever runs OUTSIDE the
-// app, in a checkout whose files are not changing under it; the packaged app
-// takes the branch above and reads a file per call like everything else here.
-function readSourceDictionaries() {
-    if (sourceDictionariesCache !== null) {
-        return sourceDictionariesCache;
+function toPackLanguage(pack) {
+    const cached = pack.isSource ? sourceLanguageCache.get(pack.dirPath) : null;
+    if (cached) {
+        return cached;
     }
-    sourceDictionariesCache = {};
-    const dataDirPath = path.join(REPO_ROOT, 'src', 'lang', 'data');
-    if (!existsSync(dataDirPath)) {
-        return sourceDictionariesCache;
-    }
-    // Every language package there is, not a list of three: a language is
-    // added by adding its folder.
-    for (const langCode of readdirSync(dataDirPath)) {
-        const filePath = path.join(dataDirPath, langCode, 'index.ts');
-        if (!existsSync(filePath)) {
-            continue;
-        }
-        try {
-            sourceDictionariesCache[langCode] = extractDictionary(
-                readFileSync(filePath, 'utf-8'),
-            );
-        } catch (_error) {
-            sourceDictionariesCache[langCode] = {};
-        }
-    }
-    return sourceDictionariesCache;
-}
-
-/**
- * The `const dictionary = { ... }` literal out of a language pack, sanitized
- * into the map `tran()` actually looks in.
- *
- * Brace-matched rather than regex-terminated: the values are Khmer text with
- * every kind of punctuation in them, and the literal runs to 1 200 entries.
- * Exported because `extra-work/build-knowledge.mjs` bakes the result into the
- * shipped bundle with it.
- */
-export function extractDictionary(source) {
-    const start = source.indexOf('const dictionary = {');
-    if (start === -1) {
-        return {};
-    }
-    const open = source.indexOf('{', start);
-    let depth = 0;
-    let end = -1;
-    for (let index = open; index < source.length; index += 1) {
-        const character = source[index];
-        if (character === '{') {
-            depth += 1;
-        } else if (character === '}') {
-            depth -= 1;
-            if (depth === 0) {
-                end = index;
-                break;
-            }
-        }
-    }
-    if (end === -1) {
-        return {};
-    }
-    // eslint-disable-next-line no-new-func
-    const literal = new Function(`return (${source.slice(open, end + 1)});`)();
-    const sanitized = {};
-    for (const [key, value] of Object.entries(literal)) {
-        if (typeof value === 'string') {
-            sanitized[sanitizeTranKey(key)] = value;
-        }
-    }
-    return sanitized;
-}
-
-/**
- * A language pack's own `name` / `nativeName`.
- *
- * The picker in Settings lists each language under its OWN name, and so should
- * anything that offers a choice of them, so both are carried.
- */
-export function extractLangMeta(source) {
-    const read = (field) => {
-        const match = new RegExp(`\\n[ \\t]*${field}: '([^']+)'`).exec(source);
-        return match === null ? null : match[1];
+    const { name, nativeName } = readLangPackNames(pack);
+    const language = {
+        code: pack.code,
+        name,
+        nativeName,
+        // How a question is asked and answered in it (`assistant.json`): the
+        // help search reads a question in that language through these.
+        assistant: readLangPackJson(pack, 'assistant.json'),
     };
-    return { name: read('name'), nativeName: read('nativeName') };
+    if (pack.isSource) {
+        sourceLanguageCache.set(pack.dirPath, language);
+    }
+    return language;
 }
 
 // Same two candidates as `help.mjs`: whatever the main process passed in, then
@@ -158,48 +97,66 @@ function findTranFilePath() {
     return null;
 }
 
+// English, as the knowledge bundle says it (its assistant facts), or as a
+// checkout with no build says it. The bundle is English alone; an entry for
+// any other language in an older one is not believed -- that language is
+// read from its own folder or not at all.
+function readEnglishLanguage() {
+    const filePath = findTranFilePath();
+    if (filePath !== null) {
+        try {
+            const english = JSON.parse(
+                readFileSync(filePath, 'utf-8'),
+            )?.languages?.find((language) => {
+                return language?.code === DEFAULT_LANG_CODE;
+            });
+            if (english !== undefined) {
+                return english;
+            }
+        } catch (_error) {
+            // Fall through to the source.
+        }
+    }
+    const assistant = readSourceAssistantFacts(DEFAULT_LANG_CODE);
+    return {
+        code: DEFAULT_LANG_CODE,
+        name: assistant?.name ?? 'English',
+        nativeName: assistant?.nativeName ?? 'English',
+        assistant,
+    };
+}
+
 /**
- * `{ languages, dictionaries }` -- the shipped bundle, or the language packs in
- * a source checkout.
+ * `{ languages, dictionaries }` -- English, then every language this server
+ * can read (`langPacks.mjs`: in the app, the installed ones).
  *
  * Read per call, like the knowledge index beside it: this runs inside the app
  * on machines where a resident copy of every translation would be felt, and a
  * question asks for it once, not once per label.
  */
 export function loadTranBundle() {
-    const filePath = findTranFilePath();
-    if (filePath !== null) {
-        try {
-            const bundle = JSON.parse(readFileSync(filePath, 'utf-8'));
-            if (bundle?.dictionaries) {
-                return bundle;
-            }
-        } catch (_error) {
-            // Fall through to the source packs.
+    const languages = [readEnglishLanguage()];
+    const dictionaries = {};
+    for (const pack of listLangPacks()) {
+        languages.push(toPackLanguage(pack));
+        const dictionary = readLangPackDictionary(pack);
+        if (Object.keys(dictionary).length > 0) {
+            dictionaries[pack.code] = dictionary;
         }
     }
-    const dictionaries = readSourceDictionaries();
-    return {
-        languages: Object.keys(dictionaries).map((code) => {
-            const assistant = readSourceAssistantFacts(code);
-            return {
-                code,
-                name: assistant?.name ?? code,
-                nativeName: assistant?.nativeName ?? code,
-                assistant,
-            };
-        }),
-        dictionaries,
-    };
+    return { languages, dictionaries };
 }
 
 /**
- * What a language's `src/lang/data/<code>/assistant.json` says about asking
- * and answering in it (its script, its words for yes and no, a glossary of
- * question words) -- the chatbot's facts, which `build-knowledge.mjs` copies
- * into the bundle beside the dictionary. Null when the language has none.
+ * What a language's own `assistant.json` says about asking and answering in
+ * it (its script, its words for yes and no, a glossary of question words) --
+ * English's from `src/lang/data/en/`, which `build-knowledge.mjs` copies into
+ * the bundle, any other's from its pack. Null when the language has none.
  */
 export function readSourceAssistantFacts(langCode) {
+    if (langCode !== DEFAULT_LANG_CODE) {
+        return readLangPackJson(findLangPack(langCode), 'assistant.json');
+    }
     const filePath = path.join(
         REPO_ROOT,
         'src',

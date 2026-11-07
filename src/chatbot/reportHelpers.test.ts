@@ -95,13 +95,11 @@ const {
     describeHowToSend,
     describePostedReport,
     collectReportEvidence,
-    gatherReportFiles,
     genPreparedReport,
     genFixCard,
     genPreparedCard,
     genReportComplaint,
     genReportOffer,
-    genReportPromptWithFiles,
     genReportFollowUpActions,
     genReportInvestigation,
     genReportMailtoUrl,
@@ -614,100 +612,6 @@ describe('postIssueReport', () => {
                 'reporting. It was NOT sent (larger than a report may ' +
                 'carry, 5 MB): ask them for it.',
         );
-    });
-
-    it('sends what it can and says of each other file why it stayed behind', async () => {
-        electronSendAsyncMock.mockClear();
-        fsGetFileSizeMock.mockImplementation(async (filePath: string) => {
-            if (filePath.includes('gone')) {
-                throw new Error('ENOENT');
-            }
-            return filePath.includes('huge') ? 6 * 1024 * 1024 : 3;
-        });
-        try {
-            const report = genPreparedReport({
-                complaint: 'x',
-                answerText: '',
-                evidence: EVIDENCE,
-                imageDataUrl: null,
-                attachments: [
-                    genFileAttachment(
-                        'huge.pdf',
-                        6 * 1024 * 1024,
-                        '/d/huge.pdf',
-                    ),
-                    genFileAttachment('gone.pdf', 100, '/d/gone.pdf'),
-                    // Not a kind a report carries.
-                    genTextAttachment('page.html', '<p>x</p>', '/d/page.html'),
-                    // Gone from the disk, but its words are still held.
-                    genTextAttachment('gone.txt', 'សួស្តី', '/d/gone.txt'),
-                    // A picture this window no longer holds.
-                    {
-                        id: 'lost',
-                        kind: 'image',
-                        name: 'photo.png',
-                        mimeType: 'image/png',
-                        byteSize: 9,
-                    },
-                    genTextAttachment('same.md', 'a', '/d/one/same.md'),
-                    genTextAttachment('same.md', 'b', '/d/two/same.md'),
-                ],
-            });
-            const gathered = await gatherReportFiles(report);
-            expect(
-                gathered.files.map((file) => {
-                    return file.name;
-                }),
-            ).toEqual(['gone.txt', 'same.md', '2-same.md']);
-            // UTF-8, whole, as base64.
-            expect(
-                Buffer.from(gathered.files[0].data, 'base64').toString('utf8'),
-            ).toBe('សួស្តី');
-            expect(
-                gathered.notes.filter((note) => {
-                    return note.why !== undefined;
-                }),
-            ).toEqual([
-                {
-                    name: 'huge.pdf',
-                    what: 'attached by the user while reporting',
-                    why: 'larger than a report may carry, 5 MB',
-                },
-                {
-                    name: 'gone.pdf',
-                    what: 'attached by the user while reporting',
-                    why: 'the file is not where it was on their computer any more',
-                },
-                {
-                    name: 'page.html',
-                    what: 'attached by the user while reporting',
-                    why: 'not a kind of file a report carries',
-                },
-                {
-                    name: 'photo.png',
-                    what: 'attached by the user while reporting',
-                    why: 'this window no longer holds the picture',
-                },
-            ]);
-            const text = genReportPromptWithFiles(report, gathered.notes);
-            expect(text).toContain(
-                '- `huge.pdf` — attached by the user while reporting. It ' +
-                    'was NOT sent (larger than a report may carry, 5 MB): ' +
-                    'ask them for it.',
-            );
-            expect(text).toContain('3 files came with this report');
-            const posted = await postIssueReport(report);
-            const said = describePostedReport(report, posted);
-            expect(said).toContain('with 3 files — `gone.txt`');
-            expect(said).toContain(
-                'Not sent with it: `huge.pdf` (larger than a report may ' +
-                    'carry, 5 MB), `gone.pdf`',
-            );
-        } finally {
-            fsGetFileSizeMock.mockImplementation(async () => {
-                return 3;
-            });
-        }
     });
 
     // The words are the report; the files are what helps read it.

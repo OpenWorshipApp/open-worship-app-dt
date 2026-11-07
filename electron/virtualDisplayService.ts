@@ -1221,6 +1221,12 @@ export class VirtualDisplayService {
         }
         session.fanout.reset();
         this.endHlsPlayers(session);
+        // A player still waiting for Allow is told too: left waiting, it was
+        // gone from the list with its viewer -- so no Allow could reach it --
+        // and was held five minutes before being refused.
+        for (const id of [...session.waitingPlayers.keys()]) {
+            this.endPlayer(session, id, 503);
+        }
         session.viewers.clear();
         this.stopCompositor(session);
         session.stream = 'idle';

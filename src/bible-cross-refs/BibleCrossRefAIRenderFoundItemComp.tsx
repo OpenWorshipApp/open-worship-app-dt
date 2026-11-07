@@ -79,7 +79,8 @@ export default function BibleCrossRefAIRenderFoundItemComp({
         return <div className="app-xref-status">{tran('Loading')}...</div>;
     }
     // A reference that names no passage (see `breakItem`) gets no row. A
-    // volunteer can do nothing with "Fail to get data for `PSA 119:ющ`" but
+    // volunteer can do nothing with "Fail to get data for `PSA 119:` and
+    // letters of another script" but
     // read past it, and a row there invites a press that leads nowhere.
     if (data === null) {
         return null;

@@ -9,6 +9,11 @@ import {
 
 import type ElectronAppController from './ElectronAppController';
 import { checkIsAiEnabled } from './aiHelpers';
+import { SELECTED_PARENT_DIR_SETTING_NAME } from './dataDirSettingProtocol';
+import {
+    confirmFactoryReset,
+    FACTORY_RESET_LABEL,
+} from './factoryResetHelpers';
 import {
     copyDebugInfoToClipboard,
     goDownload,
@@ -392,6 +397,19 @@ export function initMenu(appController: ElectronAppController) {
                     label: 'Copy Full Debug Info',
                     click: () => {
                         copyDebugInfoToClipboard(true);
+                    },
+                },
+                // Beside the debug info: the last resort when a setting has
+                // broken the app, and the main process's own, so it still
+                // works with every page blank (`factoryResetHelpers.ts`).
+                {
+                    label: FACTORY_RESET_LABEL,
+                    click: () => {
+                        void confirmFactoryReset(
+                            appController.settingManager.getClientSetting(
+                                SELECTED_PARENT_DIR_SETTING_NAME,
+                            ),
+                        );
                     },
                 },
                 { type: 'separator' },

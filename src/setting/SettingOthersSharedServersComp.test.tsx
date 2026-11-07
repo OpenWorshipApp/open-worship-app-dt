@@ -207,12 +207,12 @@ describe('SettingOthersSharedServersComp', () => {
     // the server's over its models, each model's under it, in the window's
     // language when the note has one.
     test('opened, a server shows its note and each model’s, in the window’s language', async () => {
-        h.locale = 'km-KH';
+        h.locale = 'xx-XX';
         h.send.mockResolvedValue(
             genStatus([
                 {
                     ...CHURCH_SERVER,
-                    note: { en: 'Free for us', km: 'ឥតគិតថ្លៃសម្រាប់យើង' },
+                    note: { en: 'Free for us', xx: 'Note in xx' },
                     models: [
                         {
                             ...CHURCH_SERVER.models[0],
@@ -228,7 +228,7 @@ describe('SettingOthersSharedServersComp', () => {
             findFoldButton('Church LM Studio · Models: 2').click();
         });
         const text = container.textContent ?? '';
-        expect(text).toContain('ឥតគិតថ្លៃសម្រាប់យើង');
+        expect(text).toContain('Note in xx');
         expect(text).not.toContain('Free for us');
         expect(text).toContain('Slow, but saves cost');
     });

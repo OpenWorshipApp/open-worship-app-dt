@@ -307,6 +307,11 @@ describe('initOpenLyric wiring', () => {
         const previewer = await initOpenLyric(FILE_PATH);
         expect(khmerPlugins).toHaveBeenCalledExactlyOnceWith({
             openLyric: previewer,
+            // This window's own registry, for a language plugin's Open Lyric
+            // half to register into.
+            openLyricInternal: expect.objectContaining({
+                registerPlugin: expect.any(Function),
+            }),
             genOpenLyricFontFaces,
         });
 

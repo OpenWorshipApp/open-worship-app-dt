@@ -761,5 +761,37 @@ describe('ElectronSettingManager', () => {
             );
             expect(manager.getClientSetting('stay-awake')).toBe('false');
         });
+
+        test('set, take the old copy away; set to no text, are gone', () => {
+            existingDirs.add(DATA_DIR);
+            const manager = genManager({
+                'selected-parent-dir': DATA_DIR,
+                'stay-awake': 'false',
+            });
+            writeFileSync.mockClear();
+
+            manager.setClientSetting('stay-awake', 'true');
+
+            expect(dataFiles.get(toFile(DATA_DIR, 'stay-awake'))).toBe('true');
+            expect('stay-awake' in manager.settingObject.clientSetting).toBe(
+                false,
+            );
+            // setting.json is written again without the old copy.
+            const saved = writeFileSync.mock.calls.filter(([filePath]) => {
+                return !String(filePath).includes('local-storage');
+            });
+            expect(saved).toHaveLength(1);
+            expect(JSON.parse(String(saved[0][1])).clientSetting).toEqual({
+                'selected-parent-dir': DATA_DIR,
+            });
+
+            writeFileSync.mockClear();
+            manager.setClientSetting('stay-awake', null);
+
+            expect(dataFiles.has(toFile(DATA_DIR, 'stay-awake'))).toBe(false);
+            expect(manager.getClientSetting('stay-awake')).toBeNull();
+            // Nothing was left in setting.json to take away.
+            expect(writeFileSync).not.toHaveBeenCalled();
+        });
     });
 });

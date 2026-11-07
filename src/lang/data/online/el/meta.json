@@ -1,0 +1,8 @@
+{
+    "locale": "el-GR",
+    "order": 12,
+    "name": "Greek",
+    "nativeName": "Ελληνικά",
+    "version": "0.0.12",
+    "description": "The app in Greek, Bible book names in English."
+}

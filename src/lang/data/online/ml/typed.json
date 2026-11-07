@@ -1,0 +1,10 @@
+{
+    "ml": {
+        "name": "Malayalam",
+        "nativeName": "മലയാളം",
+        "script": "Malayalam",
+        "yes": ["അതെ", "ശരി"],
+        "no": ["ഇല്ല", "വേണ്ട"],
+        "order": 73
+    }
+}

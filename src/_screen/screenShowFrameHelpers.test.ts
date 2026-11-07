@@ -305,4 +305,299 @@ describe('screenShowFrameHelpers', () => {
         expect(box.querySelector('iframe')!.style.width).toBe('1920px');
         expect(parentContainer.querySelectorAll('iframe')).toHaveLength(1);
     });
+
+    function genAnimData() {
+        return {
+            duration: 0,
+            styleText: '',
+            animIn: vi.fn(async (element: HTMLElement, parent: HTMLElement) => {
+                parent.appendChild(element);
+            }),
+            animOut: vi.fn(async (_element: HTMLElement) => {}),
+        };
+    }
+
+    test('of a drawing only the whole picture is kept; a stroke, or a kind it does not know, is passed on', async () => {
+        const { mountScreenShowFrame, receiveScreenShowPayload } =
+            await import('./screenShowFrameHelpers');
+        mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: document.createElement('div'),
+        });
+        const picture = {
+            screenId: 1,
+            type: 'draw',
+            data: { action: 'sync', strokes: [] },
+        };
+        const stroke = {
+            screenId: 1,
+            type: 'draw',
+            data: { action: 'stroke', points: [1, 2] },
+        };
+        const focus = { screenId: 1, type: 'focus', data: { x: 0.5 } };
+        const unknown = { screenId: 1, type: 'something-new', data: {} };
+        receiveScreenShowPayload(
+            genPayload({ messages: [picture, stroke, focus, unknown] }),
+        );
+        const host = Array.from(getHosts().values())[0];
+        expect(host.getState().messages).toEqual([picture, focus]);
+    });
+
+    test('a fresh snapshot replaces everything kept before it', async () => {
+        const { mountScreenShowFrame, receiveScreenShowPayload } =
+            await import('./screenShowFrameHelpers');
+        mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: document.createElement('div'),
+        });
+        receiveScreenShowPayload(genPayload());
+        const foreground = { screenId: 1, type: 'foreground', data: { a: 1 } };
+        receiveScreenShowPayload(
+            genPayload({ stage: 4, messages: [foreground] }),
+        );
+        const host = Array.from(getHosts().values())[0];
+        expect(host.getState()).toMatchObject({
+            stage: 4,
+            messages: [foreground],
+        });
+    });
+
+    test('a snapshot that arrives with no copy up is kept only a little while', async () => {
+        vi.useFakeTimers();
+        const { mountScreenShowFrame, receiveScreenShowPayload } =
+            await import('./screenShowFrameHelpers');
+        receiveScreenShowPayload(genPayload({ sourceScreenId: 1 }));
+        receiveScreenShowPayload(genPayload({ sourceScreenId: 2 }));
+        await vi.advanceTimersByTimeAsync(2999);
+        // Still there for a copy put up in time...
+        const first = document.createElement('div');
+        mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: first,
+        });
+        expect(first.querySelector('iframe')).not.toBeNull();
+        await vi.advanceTimersByTimeAsync(1);
+        // ...but gone for one that comes after it was let go.
+        const second = document.createElement('div');
+        mountScreenShowFrame({
+            sourceScreenId: 2,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: second,
+        });
+        expect(second.children).toHaveLength(0);
+        // The one a copy draws is kept for as long as it is drawn.
+        await vi.advanceTimersByTimeAsync(10_000);
+        const third = document.createElement('div');
+        mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: third,
+        });
+        expect(third.querySelector('iframe')).not.toBeNull();
+    });
+
+    test('taking down a copy that never drew leaves no timer behind', async () => {
+        vi.useFakeTimers();
+        const { checkHasScreenShowFrame, mountScreenShowFrame } =
+            await import('./screenShowFrameHelpers');
+        const handle = mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: document.createElement('div'),
+        });
+        expect(checkHasScreenShowFrame(1)).toBe(true);
+        await expect(handle.dispose()).resolves.toBeUndefined();
+        expect(checkHasScreenShowFrame(1)).toBe(false);
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    test("with no screen context, the copy gets this window's own font faces, addressed in full", async () => {
+        contextState.context = {};
+        class FontFaceRuleStub {
+            constructor(readonly cssText: string) {}
+        }
+        vi.stubGlobal('CSSFontFaceRule', FontFaceRuleStub);
+        const sheets = [
+            {
+                href: null,
+                cssRules: [
+                    new FontFaceRuleStub(
+                        `@font-face { font-family: "Inline"; src: url('fonts/inline.woff2') format("woff2"); }`,
+                    ),
+                    { cssText: '.title { color: red; }' },
+                ],
+            },
+            {
+                // A cross-origin sheet: its rules cannot be read.
+                get cssRules(): never {
+                    throw new DOMException('Blocked', 'SecurityError');
+                },
+            },
+            {
+                href: 'https://cdn.example.com/css/site.css',
+                cssRules: [
+                    new FontFaceRuleStub(
+                        '@font-face { src: url( "../fonts/linked.ttf" ); }',
+                    ),
+                ],
+            },
+        ];
+        Object.defineProperty(document, 'styleSheets', {
+            configurable: true,
+            get: () => sheets,
+        });
+        try {
+            const { mountScreenShowFrame } =
+                await import('./screenShowFrameHelpers');
+            mountScreenShowFrame({
+                sourceScreenId: 1,
+                ownScreenId: 0,
+                ...readers,
+                parentContainer: document.createElement('div'),
+                getSnapshot: () => genPayload(),
+            });
+            const host = Array.from(getHosts().values())[0];
+            const inlineHref = new URL('fonts/inline.woff2', location.href)
+                .href;
+            expect(host.getState().fontCss).toBe(
+                [
+                    `@font-face { font-family: "Inline"; src: url("${inlineHref}") format("woff2"); }`,
+                    '@font-face { src: url("https://cdn.example.com/fonts/linked.ttf"); }',
+                ].join('\n'),
+            );
+        } finally {
+            delete (document as any).styleSheets;
+            vi.unstubAllGlobals();
+        }
+    });
+
+    test('a resize that comes after the copy is taken down changes nothing', async () => {
+        const { mountScreenShowFrame } =
+            await import('./screenShowFrameHelpers');
+        const parentContainer = document.createElement('div');
+        const handle = mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer,
+            getSnapshot: () => genPayload(),
+        });
+        const box = parentContainer.firstElementChild as HTMLDivElement;
+        const iframe = box.querySelector('iframe')!;
+        const before = iframe.style.transform;
+        const [observer] = ResizeObserverMock.instances;
+        await handle.dispose();
+        expect(observer.disconnect).toHaveBeenCalledTimes(1);
+        Object.defineProperty(box, 'clientWidth', { value: 400 });
+        expect(() => observer.callback()).not.toThrow();
+        expect(iframe.style.transform).toBe(before);
+    });
+
+    test('comes and goes through the transition it is handed, and is removed once that is done', async () => {
+        const animData = genAnimData();
+        const { mountScreenShowFrame } =
+            await import('./screenShowFrameHelpers');
+        const parentContainer = document.createElement('div');
+        const handle = mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer,
+            animData,
+            getSnapshot: () => genPayload(),
+        });
+        const box = parentContainer.firstElementChild as HTMLDivElement;
+        expect(box.querySelector('iframe')).not.toBeNull();
+        expect(animData.animIn).toHaveBeenCalledWith(box, parentContainer);
+
+        let finishOut!: () => void;
+        animData.animOut.mockImplementationOnce(() => {
+            return new Promise<void>((resolve) => {
+                finishOut = resolve;
+            });
+        });
+        const disposing = handle.dispose();
+        expect(animData.animOut).toHaveBeenCalledWith(box);
+        // Still in place while it goes out.
+        expect(box.parentElement).toBe(parentContainer);
+        finishOut();
+        await disposing;
+        expect(box.parentElement).toBeNull();
+    });
+
+    test('a second dispose does nothing, even with a new copy of the same screen up', async () => {
+        const animData = genAnimData();
+        const {
+            checkHasScreenShowFrame,
+            mountScreenShowFrame,
+            receiveScreenShowPayload,
+        } = await import('./screenShowFrameHelpers');
+        const old = mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: document.createElement('div'),
+            animData,
+            getSnapshot: () => genPayload(),
+        });
+        await old.dispose();
+        const parentContainer = document.createElement('div');
+        mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer,
+        });
+        await old.dispose();
+        expect(animData.animOut).toHaveBeenCalledTimes(1);
+        // The new copy still hears the presenter.
+        expect(checkHasScreenShowFrame(1)).toBe(true);
+        receiveScreenShowPayload(genPayload());
+        expect(parentContainer.querySelector('iframe')).not.toBeNull();
+    });
+
+    test("a page that stops listening hears nothing more, and an older page's late stop leaves the newer one alone", async () => {
+        const { mountScreenShowFrame, receiveScreenShowPayload } =
+            await import('./screenShowFrameHelpers');
+        mountScreenShowFrame({
+            sourceScreenId: 1,
+            ownScreenId: 0,
+            ...readers,
+            parentContainer: document.createElement('div'),
+        });
+        receiveScreenShowPayload(genPayload());
+        const host = Array.from(getHosts().values())[0];
+        const older = vi.fn();
+        const stopOlder = host.listen(older);
+        // The page reloaded: its new document listens in the old one's place.
+        const newer = vi.fn();
+        const stopNewer = host.listen(newer);
+        stopOlder();
+        const change = {
+            screenId: 1,
+            type: 'background',
+            data: { src: 'blue' },
+        };
+        receiveScreenShowPayload(
+            genPayload({ isSnapshot: false, messages: [change] }),
+        );
+        expect(newer).toHaveBeenCalledWith([change]);
+        expect(older).not.toHaveBeenCalled();
+
+        stopNewer();
+        receiveScreenShowPayload(
+            genPayload({ isSnapshot: false, messages: [change] }),
+        );
+        host.requestSnapshot();
+        expect(newer).toHaveBeenCalledTimes(1);
+    });
 });

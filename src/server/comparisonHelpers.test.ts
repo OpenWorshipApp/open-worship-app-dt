@@ -75,4 +75,29 @@ describe('comparisonHelpers', () => {
         ).toBe(false);
         expect(checkAreObjectsEqual('x', { value: 'x' })).toBe(false);
     });
+
+    test('a primitive is not found among other values or objects', () => {
+        expect(checkIsItemInArray('a', ['b', { a: 1 }])).toBe(false);
+        expect(checkIsItemInArray({ a: 1 }, ['a', 1])).toBe(false);
+    });
+
+    test('objects differ by the arrays or the dates inside them', () => {
+        expect(checkAreObjectsEqual({ tags: [1] }, { tags: [2] })).toBe(false);
+        expect(checkAreObjectsEqual({ tags: [1] }, { tags: 'x' })).toBe(false);
+        expect(
+            checkAreObjectsEqual(
+                { at: new Date(1_000) },
+                { at: new Date(2_000) },
+            ),
+        ).toBe(false);
+        expect(
+            checkAreObjectsEqual({ at: new Date(1_000) }, { at: 1_000 }),
+        ).toBe(false);
+        expect(
+            checkAreObjectsEqual(
+                { at: new Date(1_000), tags: [1, 2] },
+                { at: new Date(1_000), tags: [2, 1] },
+            ),
+        ).toBe(true);
+    });
 });

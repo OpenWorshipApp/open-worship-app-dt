@@ -21,16 +21,22 @@ const bibleScreenHelper = {
     /**
      * The table of either source, as a detached element. `isLongText` is a
      * long text in several languages; otherwise the columns are Bibles.
+     * `isStacked` is a long text's languages in one row, one under another;
+     * `isNumberHidden` draws its rows without their numbers.
      */
     async genHtmlFromLongTextColumns(
         columns: LongTextColumnType[],
         {
             isLineSync,
             isLongText,
+            isStacked = false,
+            isNumberHidden = false,
             moreChapterLabel,
         }: {
             isLineSync: boolean;
             isLongText: boolean;
+            isStacked?: boolean;
+            isNumberHidden?: boolean;
             moreChapterLabel?: string;
         },
     ) {
@@ -52,6 +58,8 @@ const bibleScreenHelper = {
                 columns={langColumns}
                 isLineSync={isLineSync}
                 isLongText={isLongText}
+                isStacked={isStacked}
+                isNumberHidden={isNumberHidden}
                 moreChapterLabel={moreChapterLabel}
             />,
         );

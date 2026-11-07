@@ -392,15 +392,16 @@ export function checkIsMixedSafe(lines) {
 // ---------------------------------------------------------------------------
 
 /**
- * `[Chorus]`, `Chorus:`, `CHORUS`, `Verse 2`, `2.`, `១.`, `Verse 1:(2x)`,
- * `Repeat Chorus(4x)` -- or not a label at all.
+ * `[Chorus]`, `Chorus:`, `CHORUS`, `Verse 2`, `2.`, a `1.` in another
+ * script's digits, `Verse 1:(2x)`, `Repeat Chorus(4x)` -- or not a label at
+ * all.
  *
  * Three things a lyrics page writes that a person typing does not:
  *
  *   - the number in the script the song is printed in, which is why every
- *     numeral goes through `toAsciiDigits` first. A Khmer hymnal's verses are
- *     `១.` `២.` `៣.`, and unread they are not labels, so the whole song
- *     arrives as one undivided verse.
+ *     numeral goes through `toAsciiDigits` first. A Khmer hymnal numbers its
+ *     verses in Khmer digits, and unread they are not labels, so the whole
+ *     song arrives as one undivided verse.
  *   - how many times to sing it, in a trailing `(2x)`. That is the Structure,
  *     not the name, and it is thrown away by anything that only reads names.
  *   - a line that REFERS to a part rather than opening one. "Repeat Chorus" is
@@ -689,6 +690,26 @@ function readConfigFromText(lines) {
 }
 
 /**
+ * A row of nothing but chords, bare (`G C D Em`, `| E | C#m |`) or in
+ * brackets (`[G]`, `[G] [C]`): a chord sheet's intro, standing alone above a
+ * blank line like a title would, and the song was called `G C D Em`
+ * (2026-11-03). Never a title; the title, if any, is further down.
+ */
+function checkIsChordOnlyLine(line) {
+  if (checkIsChordLine(line)) {
+    return true;
+  }
+  const tokens = line.trim().split(/\s+/).filter(Boolean);
+  return (
+    tokens.length > 0 &&
+    tokens.every((token) => {
+      const bracketed = /^\[([^\]]+)\]$/.exec(token);
+      return bracketed !== null && checkIsOpenLyricChord(bracketed[1]);
+    })
+  );
+}
+
+/**
  * The title, when the text plainly gives one: a markdown heading, or a first
  * line standing alone above a blank one.
  *
@@ -699,7 +720,7 @@ function readConfigFromText(lines) {
 function readTitle(lines) {
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
-    if (line.trim() === '') {
+    if (line.trim() === '' || checkIsChordOnlyLine(line)) {
       continue;
     }
     const heading = /^#{1,6}\s+(.+)$/.exec(line.trim());

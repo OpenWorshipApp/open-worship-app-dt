@@ -776,7 +776,9 @@ describe('non-Bible manager coverage', () => {
             lineHeight: 'normal',
             // The screen window's own stack, not whatever the host page
             // inherits into the mini preview's shadow root.
-            fontFamily: expect.stringMatching(/^system-ui, .*sans-serif/),
+            fontFamily: expect.stringMatching(
+                /^app-Google-Sans, system-ui, .*sans-serif/,
+            ),
         });
 
         const timeA = {

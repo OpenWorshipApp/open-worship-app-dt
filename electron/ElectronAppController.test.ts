@@ -67,6 +67,7 @@ vi.mock('./electronHelpers', () => ({
         openChatbotPage: 'main:app:open-chatbot-page',
         openChatbotReport: 'main:app:open-chatbot-report',
         openChatbotFromTaskbar: 'main:app:open-chatbot-from-taskbar',
+        openChatbotReport: 'main:app:open-chatbot-report',
     },
 }));
 
@@ -108,6 +109,12 @@ describe('ElectronAppController', () => {
         expect(mainController.sendMessage).toHaveBeenCalledWith(
             'main:app:open-aichat-page',
         );
+        // Help > Report a Problem: the assistant, asking what went wrong.
+        mainController.sendMessage.mockClear();
+        controller.openChatbotReportPage();
+        expect(mainController.sendMessage.mock.calls).toEqual([
+            ['main:app:open-chatbot-report'],
+        ]);
     });
 
     test('Help > Report a Problem asks the main window for the report', async () => {

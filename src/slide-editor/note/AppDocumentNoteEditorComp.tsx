@@ -29,6 +29,21 @@ class AppDocumentNoteStore implements SimpleNoteEditorStoreType {
     }
 }
 
+// A store for a note READ from the document, so its save writes back. Only
+// the placeholder shown before the first read keeps the do-nothing save: the
+// store rebuilt for a change on disk had it too, and what was typed after
+// that change was never written (2026-11-03).
+function genReadNoteStore(appDocument: AppDocument, note: string) {
+    const store = new AppDocumentNoteStore(appDocument, note);
+    store.save = async () => {
+        if (store.checkCanSave()) {
+            await appDocument.setNote(store.currentText);
+        }
+        return true;
+    };
+    return store;
+}
+
 export default function AppDocumentNoteEditorComp({
     appDocument,
 }: Readonly<{ appDocument: AppDocument }>) {
@@ -40,14 +55,7 @@ export default function AppDocumentNoteEditorComp({
     useAppEffectAsync(
         async (methodContext) => {
             const note = await appDocument.getNote();
-            const newStore = new AppDocumentNoteStore(appDocument, note);
-            newStore.save = async () => {
-                if (newStore.checkCanSave()) {
-                    await appDocument.setNote(newStore.currentText);
-                }
-                return true;
-            };
-            methodContext.setData(newStore);
+            methodContext.setData(genReadNoteStore(appDocument, note));
         },
         [appDocument],
         { setData: setStore },
@@ -76,7 +84,7 @@ export default function AppDocumentNoteEditorComp({
             if (newNote === store.currentText) {
                 return;
             }
-            setStore(new AppDocumentNoteStore(appDocument, newNote));
+            setStore(genReadNoteStore(appDocument, newNote));
         },
         [appDocument, store],
         appDocument.filePath,

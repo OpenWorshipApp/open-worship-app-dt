@@ -12,6 +12,7 @@ const { state, mocks } = vi.hoisted(() => ({
         destination: null as string | null,
         backupError: null as Error | null,
         saved: true,
+        xmlTextNull: false,
     },
     mocks: {
         save: vi.fn(),
@@ -63,7 +64,8 @@ vi.mock('../setting/bible-setting/bibleXMLJsonDataHelpers', () => ({
     getAllXMLFileKeys: async () => state.installed,
     getBibleHeadInfoFromFile: async (path: string) =>
         state.heads.get(path) ?? null,
-    jsonToXMLText: (data: unknown) => JSON.stringify(data),
+    jsonToXMLText: (data: unknown) =>
+        state.xmlTextNull ? null : JSON.stringify(data),
     xmlTextToJson: async (text: string) => state.parsed.get(text) ?? null,
 }));
 vi.mock('../setting/bible-setting/bibleXMLHelpers', () => ({
@@ -87,11 +89,11 @@ vi.mock('./FileSource', () => ({
 }));
 vi.mock('./errorHelpers', () => ({ handleError: mocks.error }));
 
-import { BIBLE_BOOK_KEYS } from '../../tools/owa-devtools-mcp/bibleBookNames.mjs';
 import {
     handleAgentBibleXMLRequest,
     toAppLocale,
 } from './agentBibleXMLHelpers';
+import { NoBackupError } from './agentBackupHelpers';
 
 const DRAFT = '/tmp/open-worship-app-bible-import/abcdefghijkl.xml';
 const DIGITS = Array.from({ length: 10 }, (_, index) => String(index));
@@ -135,6 +137,7 @@ beforeEach(() => {
     state.destination = null;
     state.backupError = null;
     state.saved = true;
+    state.xmlTextNull = false;
     mocks.save.mockImplementation(async () => state.saved);
     mocks.snapshot.mockImplementation(async (path: string) => ({
         type: 'file',
@@ -204,37 +207,6 @@ describe('Bible XML agent request validation and analysis', () => {
         });
     });
 
-    test('analyzes counts, language, digits, installed keys and file names', async () => {
-        const data = bible('កំណើតដំបូង '.repeat(10));
-        data.info.numbersMap['1'] = '១';
-        addDraft(
-            data,
-            '<bible key="KJV" locale="en-US"><book>កំណើតដំបូង</book></bible>',
-        );
-        addInstalled();
-        state.downloaded = [
-            { key: 'WEB', title: 'World English Bible', locale: 'en-US' },
-        ];
-        const result: any = await handleAgentBibleXMLRequest({
-            action: 'analyze',
-            xmlPath: DRAFT,
-            sourceName: 'KhmerBible.xml',
-        });
-        expect(result).toMatchObject({
-            books: 1,
-            chapters: 1,
-            verses: 2,
-            keyAttribute: 'KJV',
-            script: 'Khmer',
-            recommendedLocale: 'km-KH',
-        });
-        expect(result.missingBooks).toHaveLength(BIBLE_BOOK_KEYS.length - 1);
-        expect(result.takenKeys).toEqual(['KJV', 'WEB']);
-        expect(result.keys).toContain('KJV2');
-        expect(result.fileDigits[1]).toBe('១');
-        expect(result.nameLists.at(-1)).toMatchObject({ source: 'file' });
-    });
-
     test('scores only valid candidate name lists against the downloaded draft', async () => {
         addDraft(bible(), '<bible>Genesis and Exodus are mentioned</bible>');
         const result: any = await handleAgentBibleXMLRequest({
@@ -248,6 +220,212 @@ describe('Bible XML agent request validation and analysis', () => {
         });
         expect(result.matches).toHaveLength(2);
         expect(result.matches[0]).toBeGreaterThan(result.matches[1]);
+    });
+
+    const toLocaleWhy = (result: any) => {
+        return result.locales.map((one: { locale: string; why: string }) => {
+            return [one.locale, one.why];
+        });
+    };
+
+    test('takes the root tag locale when the verses hold too few letters to judge', async () => {
+        const data: any = bible();
+        data.books.GEN['1'] = { '1': 'Amen' };
+        addDraft(data, '<bible locale="pt-BR"><book>x</book></bible>');
+        const result: any = await handleAgentBibleXMLRequest({
+            action: 'analyze',
+            xmlPath: DRAFT,
+            sourceName: 'bible.xml',
+        });
+        expect(result.script).toBeNull();
+        expect(toLocaleWhy(result)).toEqual([['pt-BR', 'the file says so']]);
+        expect(result.recommendedLocale).toBe('pt-BR');
+    });
+
+    test('info keeps a language code no language name exists for', async () => {
+        addInstalled();
+        state.parsed.get('installed-KJV').info.locale = 'not a locale!';
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'info', key: 'KJV' }),
+        ).toMatchObject({
+            key: 'KJV',
+            locale: 'not a locale!',
+            language: 'not a locale!',
+        });
+    });
+});
+
+describe('Bible XML agent refusals and failed writes', () => {
+    test.each([
+        ['', 'A Bible key is needed'],
+        ['KJV 2', 'too long or has a space'],
+        ['ABCDEFGHIJKLMNOPQRSTUVWXY', 'too long or has a space'],
+        ['CON', 'reserves for itself'],
+    ])(
+        'import refuses the key %j before anything is written',
+        async (key, reason) => {
+            addDraft();
+            expect(
+                await handleAgentBibleXMLRequest({
+                    action: 'import',
+                    xmlPath: DRAFT,
+                    key,
+                    locale: 'en-US',
+                    numbers: DIGITS,
+                }),
+            ).toMatchObject({
+                isError: true,
+                problem: 'key',
+                reason: expect.stringContaining(reason),
+            });
+            expect(mocks.backup).not.toHaveBeenCalled();
+            expect(mocks.save).not.toHaveBeenCalled();
+        },
+    );
+
+    test('import refuses a key whose file is already in the Bibles folder', async () => {
+        addDraft();
+        state.texts.set('/bibles/NEW.xml', '<bible key="OLD" />');
+        expect(
+            await handleAgentBibleXMLRequest({
+                action: 'import',
+                xmlPath: DRAFT,
+                key: 'NEW',
+                locale: 'en-US',
+                numbers: DIGITS,
+            }),
+        ).toMatchObject({
+            isError: true,
+            problem: 'key',
+            reason: expect.stringContaining(
+                'A file for "NEW" is already in the Bibles folder',
+            ),
+        });
+        expect(mocks.save).not.toHaveBeenCalled();
+    });
+
+    test('an unreadable draft record is passed over, and a Bible file that was not written is a failure', async () => {
+        addDraft();
+        state.texts.set(DRAFT.replace(/\.xml$/, '.json'), '{ not json');
+        state.saved = false;
+        expect(
+            await handleAgentBibleXMLRequest({
+                action: 'import',
+                xmlPath: DRAFT,
+                sourceName: 'bible.xml',
+                key: 'NEW',
+                locale: 'en-US',
+                numbers: DIGITS,
+            }),
+        ).toEqual({
+            isError: true,
+            reason: 'The Bible file could not be written.',
+        });
+        const note: string = mocks.save.mock.calls[0][0].info.note;
+        expect(note).toContain('From the file: bible.xml');
+        expect(note).not.toContain('Downloaded from');
+    });
+
+    test('update writes new digits, and refuses a Bible that is not installed or book names that are neither list nor changes', async () => {
+        addInstalled();
+        const digits = [...DIGITS];
+        digits[1] = '１';
+        expect(
+            await handleAgentBibleXMLRequest({
+                action: 'update',
+                key: 'KJV',
+                numbers: digits,
+            }),
+        ).toMatchObject({ changed: ['digits'], key: 'KJV', undo: 'undo-1' });
+        expect(
+            JSON.parse(mocks.write.mock.calls[0][1]).info.numbersMap,
+        ).toMatchObject({ '0': '0', '1': '１', '9': '9' });
+
+        expect(
+            await handleAgentBibleXMLRequest({
+                action: 'update',
+                key: 'NOPE',
+                title: 'Renamed',
+            }),
+        ).toEqual({
+            isError: true,
+            reason: expect.stringContaining(
+                'No installed Bible has the key "NOPE". The installed ones are: KJV.',
+            ),
+        });
+        expect(
+            await handleAgentBibleXMLRequest({
+                action: 'update',
+                key: 'KJV',
+                bookNames: 'Genesis',
+            }),
+        ).toEqual({
+            isError: true,
+            reason: expect.stringContaining('Book names are either all 66'),
+        });
+        expect(mocks.write).toHaveBeenCalledTimes(1);
+    });
+
+    test('an update that cannot be written as XML, to its file, or backed up says why and leaves the cache', async () => {
+        addInstalled();
+        state.xmlTextNull = true;
+        expect(
+            await handleAgentBibleXMLRequest({
+                action: 'update',
+                key: 'KJV',
+                title: 'Renamed',
+            }),
+        ).toEqual({
+            isError: true,
+            reason: 'The Bible could not be written as XML.',
+        });
+        expect(mocks.write).not.toHaveBeenCalled();
+
+        state.xmlTextNull = false;
+        mocks.write.mockResolvedValue(false);
+        expect(
+            await handleAgentBibleXMLRequest({
+                action: 'update',
+                key: 'KJV',
+                title: 'Renamed',
+            }),
+        ).toEqual({
+            isError: true,
+            reason: 'The Bible file could not be written.',
+        });
+
+        state.backupError = new NoBackupError('No room for the backup.');
+        expect(
+            await handleAgentBibleXMLRequest({
+                action: 'update',
+                key: 'KJV',
+                title: 'Renamed',
+            }),
+        ).toEqual({ isError: true, reason: 'No room for the backup.' });
+        expect(mocks.clearCache).not.toHaveBeenCalled();
+    });
+
+    test('delete refuses a Bible that is not installed, and a failed backup or trash says why', async () => {
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'delete', key: 'KJV' }),
+        ).toEqual({
+            isError: true,
+            reason: expect.stringContaining('The installed ones are: none.'),
+        });
+
+        addInstalled();
+        state.backupError = new NoBackupError('No room for the backup.');
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'delete', key: 'KJV' }),
+        ).toEqual({ isError: true, reason: 'No room for the backup.' });
+        expect(mocks.trash).not.toHaveBeenCalled();
+
+        state.backupError = null;
+        mocks.trash.mockRejectedValue(new Error('The trash is not reachable.'));
+        expect(
+            await handleAgentBibleXMLRequest({ action: 'delete', key: 'KJV' }),
+        ).toEqual({ isError: true, reason: 'The trash is not reachable.' });
+        expect(mocks.clearCache).not.toHaveBeenCalled();
     });
 });
 
@@ -284,48 +462,6 @@ describe('Bible XML agent installation and lifecycle', () => {
         });
         expect(result).toMatchObject({ isError: true, problem: 'key' });
         expect(mocks.save).not.toHaveBeenCalled();
-    });
-
-    test('imports a chosen title, locale, digits and 66 book names behind a backup', async () => {
-        addDraft();
-        const names = BIBLE_BOOK_KEYS.map((key) => `New ${key}`);
-        const digits = [...DIGITS];
-        digits[1] = '១';
-        const result = await handleAgentBibleXMLRequest({
-            action: 'import',
-            xmlPath: DRAFT,
-            key: 'NEW',
-            locale: 'fr-FR',
-            title: ' Nouvelle Bible ',
-            numbers: digits,
-            bookNames: names,
-        });
-        expect(result).toMatchObject({
-            installed: 'NEW',
-            title: 'Nouvelle Bible',
-            locale: 'fr-FR',
-            undo: 'undo-1',
-        });
-        expect(mocks.backup).toHaveBeenCalledWith(
-            expect.stringContaining('NEW'),
-            [
-                {
-                    type: 'file',
-                    filePath: '/bibles/NEW.xml',
-                    text: null,
-                    bibleKey: 'NEW',
-                },
-            ],
-            expect.any(Function),
-        );
-        expect(mocks.save.mock.calls[0][0].info).toMatchObject({
-            key: 'NEW',
-            title: 'Nouvelle Bible',
-            locale: 'fr-FR',
-            keyBookMap: { GEN: 'New GEN' },
-            numbersMap: { '1': '១' },
-        });
-        expect(mocks.save).toHaveBeenCalledWith(expect.any(Object), 'NEW');
     });
 
     test('writes where the Bible came from into its note, keeping an earlier one', async () => {
@@ -577,7 +713,7 @@ describe('Bible XML agent installation and lifecycle', () => {
             key: 'KJV',
             title: ' Revised ',
             locale: 'fr-FR',
-            bookNames: { GEN: 'Genèse' },
+            bookNames: { GEN: '[xx] Genesis' },
         });
         expect(result).toMatchObject({
             changed: ['title', 'language', 'book names'],
@@ -588,7 +724,7 @@ describe('Bible XML agent installation and lifecycle', () => {
         expect(JSON.parse(mocks.write.mock.calls[0][1]).info).toMatchObject({
             title: 'Revised',
             locale: 'fr-FR',
-            keyBookMap: { GEN: 'Genèse' },
+            keyBookMap: { GEN: '[xx] Genesis' },
         });
         expect(mocks.clearCache).toHaveBeenCalledWith('KJV');
         expect(mocks.snapshot).toHaveBeenCalledWith('/bibles/custom-name.xml');

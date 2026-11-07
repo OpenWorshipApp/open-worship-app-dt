@@ -35,7 +35,9 @@ import {
     toBackgroundSummary,
     toBibleSummary,
     toForegroundSummary,
+    toLongTextSummary,
     toSlideSummary,
+    toSlideText,
     toSungText,
 } from './agentScreenHelpers';
 
@@ -102,6 +104,46 @@ describe('toSungText', () => {
         expect(toSungText('<div>first line</div><div>second</div>')).toBe(
             'first line second',
         );
+    });
+    it('drops the tags by pattern in a window with no DOM parser', () => {
+        vi.stubGlobal('DOMParser', undefined);
+        try {
+            expect(
+                toSungText('<p>first <b>line</b></p><p>second\n line</p>'),
+            ).toBe('first line second line');
+        } finally {
+            vi.unstubAllGlobals();
+        }
+        // The parser is back, and with it the chord boxes come out again.
+        expect(toSungText(CHORDED_LINE_HTML)).toBe(
+            'Verse 2: Amazing grace, how sweet the sound',
+        );
+    });
+});
+
+describe('toSlideText', () => {
+    it('reads the words boxes and steps over anything that is not a box', () => {
+        expect(
+            toSlideText({
+                canvasItems: [
+                    null,
+                    'loose words',
+                    7,
+                    { type: 'text', text: ' Hello \n  there ' },
+                    { type: 'image', src: 'logo.png' },
+                ],
+            } as any),
+        ).toBe('Hello there');
+    });
+    it('is null with no boxes, and empty when no box has words', () => {
+        expect(toSlideText({ canvasItems: [] } as any)).toBeNull();
+        expect(toSlideText({ canvasItems: 'not a list' } as any)).toBeNull();
+        expect(toSlideText({} as any)).toBeNull();
+        expect(
+            toSlideText({
+                canvasItems: [{ type: 'image', src: 'logo.png' }],
+            } as any),
+        ).toBe('');
     });
 });
 
@@ -177,6 +219,24 @@ describe('toBackgroundSummary', () => {
         });
         expect(toBackgroundSummary(null)).toBeNull();
     });
+    it('names a web page by its address and never a camera by its device', () => {
+        expect(
+            toBackgroundSummary({
+                type: 'web',
+                src: 'https://example.org/live',
+            } as any),
+        ).toEqual({ kind: 'web page', name: 'https://example.org/live' });
+        expect(
+            toBackgroundSummary({
+                type: 'camera',
+                src: 'f3a9c0de-device-id',
+            } as any),
+        ).toEqual({ kind: 'camera', name: null });
+        expect(toBackgroundSummary({ type: 'image', src: '' } as any)).toEqual({
+            kind: 'image',
+            name: null,
+        });
+    });
 });
 
 describe('toBibleSummary', () => {
@@ -190,7 +250,11 @@ describe('toBibleSummary', () => {
                 bibleItemData: {
                     renderedList: [
                         { bibleKey: 'KJV', title: 'John 3:16', verses: [] },
-                        { bibleKey: 'KHSV', title: 'យ៉ូហាន 3:16', verses: [] },
+                        {
+                            bibleKey: 'KHSV',
+                            title: '[xx] John 3:16',
+                            verses: [],
+                        },
                     ] as any,
                     bibleItem: {
                         id: 1,
@@ -371,6 +435,33 @@ describe('toForegroundSummary', () => {
                 '(time is up, now counting the time over)',
         ]);
     });
+
+    it('says nothing for a screen with no foreground, and names each camera', () => {
+        expect(toForegroundSummary(null)).toEqual([]);
+        expect(toForegroundSummary(undefined)).toEqual([]);
+        expect(
+            toForegroundSummary({
+                countdownData: null,
+                stopwatchData: null,
+                marqueeTopData: null,
+                marqueeBottomData: null,
+                quickTextData: null,
+                cameraDataList: [{ id: 'front' }, { id: 'back' }],
+            } as any),
+        ).toEqual(['camera', 'camera']);
+    });
+});
+
+describe('toLongTextSummary', () => {
+    it('is nothing for a passage, and the bare words for an untitled long text', () => {
+        expect(toLongTextSummary(null)).toEqual([]);
+        expect(
+            toLongTextSummary({
+                type: 'long-text',
+                longTextData: { sourceId: 'long-text', renderedList: [] },
+            } as any),
+        ).toEqual(['long text']);
+    });
 });
 
 describe('describeScreensForAgent', () => {
@@ -425,7 +516,7 @@ describe('describeScreensForAgent', () => {
                     {
                         locale: 'km-KH',
                         code: 'KM',
-                        title: 'ព្រះគុណ',
+                        title: '[xx] Grace',
                         sections: [],
                     },
                     {
@@ -447,8 +538,21 @@ describe('describeScreensForAgent', () => {
         expect(toBibleSummary(screenViewData)).toBeNull();
         const [screen] = describeScreensForAgent().screens;
         expect(screen.bible).toBeNull();
-        expect(screen.foreground).toEqual(['long text "ព្រះគុណ" in KM, EN']);
+        expect(screen.foreground).toEqual(['long text "[xx] Grace" in KM, EN']);
         expect(screen.isBlank).toBe(false);
+    });
+    it('answers a screen with no display information in this window as displayId null', () => {
+        h.isPagePresenter = true;
+        const screenManager = genManager({ screenId: 0 });
+        Object.defineProperty(screenManager, 'displayId', {
+            get: () => {
+                throw new Error('No display list in this window');
+            },
+        });
+        h.managers = [screenManager];
+        const [screen] = describeScreensForAgent().screens;
+        expect(screen.displayId).toBeNull();
+        expect(screen.isBlank).toBe(true);
     });
     it('says when it is not the presenter answering', () => {
         h.isPagePresenter = false;

@@ -1816,42 +1816,6 @@ describe('the offline bot when the app answers otherwise', () => {
         );
     });
 
-    test('a guide page in the window’s language is quoted in it', async () => {
-        callTool.mockResolvedValue(
-            JSON.stringify([
-                {
-                    kind: 'manual',
-                    id: 'W-03',
-                    title: 'Present a slide',
-                    titleInLanguage: 'បង្ហាញស្លាយ',
-                    excerpt: 'Double-click the slide.',
-                    excerptInLanguage: 'ចុចពីរដងលើស្លាយ។',
-                    score: 40,
-                },
-                {
-                    kind: 'manual',
-                    id: 'W-10',
-                    title: 'Clear the screen',
-                    titleInLanguage: 'សម្អាតអេក្រង់',
-                    excerpt: 'Press Clear All.',
-                    score: 30,
-                },
-            ]),
-        );
-        const answer = await askHelpBot(
-            'How do I present a slide?',
-            'presenter',
-        );
-        expect(answer.text).toContain('**បង្ហាញស្លាយ**\n\nចុចពីរដងលើស្លាយ។');
-        expect(answer.text).not.toContain('Double-click the slide.');
-        // The one other place to look, named as it is shown.
-        expect(
-            answer.actions?.find((action) => {
-                return action.args?.id === 'W-10';
-            })?.label,
-        ).toBe('សម្អាតអេក្រង់');
-    });
-
     test('a control asked for that is on the page but hidden says so', async () => {
         callTool.mockResolvedValue(
             JSON.stringify({

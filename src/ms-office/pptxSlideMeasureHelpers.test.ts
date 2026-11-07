@@ -10,6 +10,7 @@ const fixture = vi.hoisted(() => ({
     fsReadFileBytes: vi.fn(),
     getBibleFontFamily: vi.fn(),
     handleError: vi.fn(),
+    fontResolverInit: vi.fn(),
 }));
 
 vi.mock('../app-document-presenter/items/SlideRendererComp', () => ({
@@ -39,7 +40,9 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('./pptxFontHelpers', async (importOriginal) => ({
     ...(await importOriginal<typeof import('./pptxFontHelpers')>()),
     PptxFontResolver: class {
-        async init() {}
+        async init() {
+            fixture.fontResolverInit();
+        }
         splitByFont(text: string, spec: { familyList: string }) {
             return [{ text, fontFamily: spec.familyList || 'Arial' }];
         }
@@ -58,7 +61,10 @@ import {
 } from './pptxSlideMeasureHelpers';
 import type { PptxMediaType } from './pptxXmlHelpers';
 
-type MeasurerInternals = Pick<PptxSlideMeasurer, 'measureSlide' | 'destroy'> & {
+type MeasurerInternals = Pick<
+    PptxSlideMeasurer,
+    'measureSlide' | 'destroy' | 'init'
+> & {
     measureBackground(slide: Slide): Promise<unknown>;
     measurePicture(
         element: Element,
@@ -68,7 +74,12 @@ type MeasurerInternals = Pick<PptxSlideMeasurer, 'measureSlide' | 'destroy'> & {
     ): Promise<unknown>;
     measureItem(
         wrapper: HTMLElement,
-        itemJson: { id: number; type: string; rotate?: number },
+        itemJson: {
+            id: number;
+            type: string;
+            rotate?: number;
+            backdropFilter?: number;
+        },
         origin: DOMRect,
         index: number,
     ): Promise<unknown>;
@@ -82,8 +93,11 @@ type MeasurerInternals = Pick<PptxSlideMeasurer, 'measureSlide' | 'destroy'> & {
                     text: string;
                     fontSize: number;
                     color: { hex: string; alpha: number };
+                    baselineShift: number;
                 }>;
+                isNewParagraph: boolean;
             }>;
+            lineSpacing: number;
         };
         frame: { x: number; y: number; width: number; height: number };
     }>;
@@ -1067,5 +1081,768 @@ describe('PowerPoint slide measurement', () => {
         expect(context.filter).toBe('blur(4px)');
         expect(context.drawImage).toHaveBeenCalled();
         measurer.destroy();
+    });
+});
+
+describe('PowerPoint slide measurement edge cases', () => {
+    const ORIGIN = new DOMRect(0, 0, 1920, 1080);
+    const PNG_DATA_URL = 'data:image/png;base64,iVBORw0K';
+
+    function failImageLoads() {
+        return vi
+            .spyOn(HTMLImageElement.prototype, 'src', 'set')
+            .mockImplementation(function (this: HTMLImageElement) {
+                queueMicrotask(() => this.onerror?.(new Event('error')));
+            });
+    }
+
+    // Records what every `load` the store is handed produces, and stores a
+    // picture only when one came out.
+    function genRecordingAddMedia(
+        media = { fileName: 'image1.png' } as PptxMediaType,
+    ) {
+        const loaded: unknown[] = [];
+        const addMedia = vi.fn(
+            async (_key: string, load: () => Promise<unknown>) => {
+                const result = await load();
+                loaded.push(result);
+                return result === null ? null : media;
+            },
+        );
+        return { loaded, addMedia, media };
+    }
+
+    function genImage(src: string, width: number, height: number) {
+        const image = document.createElement('img');
+        image.src = src;
+        Object.defineProperties(image, {
+            naturalWidth: { configurable: true, value: width },
+            naturalHeight: { configurable: true, value: height },
+        });
+        return image;
+    }
+
+    function stubWebp() {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                ok: true,
+                headers: { get: () => 'image/webp' },
+                arrayBuffer: async () => new Uint8Array([1]).buffer,
+            })),
+        );
+    }
+
+    it('starts the font resolver when it is initialised', async () => {
+        const measurer = makeMeasurer();
+        await measurer.init();
+        expect(fixture.fontResolverInit).toHaveBeenCalledOnce();
+        measurer.destroy();
+    });
+
+    it('measures only the items the slide markup rendered', async () => {
+        const wrapper = document.createElement('div');
+        wrapper.style.backgroundColor = 'rgb(1, 2, 3)';
+        setRect(wrapper, 0, 0, 100, 50);
+        const slideDiv = document.createElement('div');
+        slideDiv.appendChild(wrapper);
+        fixture.genSlideHtml.mockImplementation(() => slideDiv);
+        const measurer = makeMeasurer();
+        const model = await measurer.measureSlide(
+            makeSlide({
+                canvasItemsJson: [
+                    { id: 1, type: 'text' },
+                    { id: 2, type: 'text' },
+                ],
+            }),
+        );
+        expect(model.elements).toMatchObject([
+            { kind: 'shape', name: 'text 1', fill: { hex: '010203' } },
+        ]);
+        expect(model.elements).toHaveLength(1);
+        measurer.destroy();
+    });
+
+    it('waits for every picture to decode, a broken one too, and leaves out an item with nothing to draw', async () => {
+        const original = Object.getOwnPropertyDescriptor(
+            HTMLImageElement.prototype,
+            'decode',
+        );
+        const decode = vi.fn(() => Promise.reject(new Error('undecodable')));
+        Object.defineProperty(HTMLImageElement.prototype, 'decode', {
+            configurable: true,
+            value: decode,
+        });
+        try {
+            const wrapper = document.createElement('div');
+            setRect(wrapper, 0, 0, 100, 50);
+            // never loaded: no size to draw it at
+            const image = document.createElement('img');
+            setRect(image, 0, 0, 100, 50);
+            wrapper.appendChild(image);
+            const slideDiv = document.createElement('div');
+            slideDiv.appendChild(wrapper);
+            fixture.genSlideHtml.mockImplementation(() => slideDiv);
+            const addMedia = vi.fn(async () => null);
+            const measurer = makeMeasurer(addMedia);
+            const model = await measurer.measureSlide(
+                makeSlide({ canvasItemsJson: [{ id: 1, type: 'image' }] }),
+            );
+            expect(decode).toHaveBeenCalledOnce();
+            expect(model.elements).toEqual([]);
+            expect(addMedia).not.toHaveBeenCalled();
+            expect(fixture.handleError).not.toHaveBeenCalled();
+            measurer.destroy();
+        } finally {
+            if (original === undefined) {
+                delete (HTMLImageElement.prototype as any).decode;
+            } else {
+                Object.defineProperty(
+                    HTMLImageElement.prototype,
+                    'decode',
+                    original,
+                );
+            }
+        }
+    });
+
+    it('exports no background for live, missing or undecodable stills', async () => {
+        const addMedia = vi.fn(async () => null);
+        const measurer = makeMeasurer(addMedia);
+        for (const type of [
+            DragTypeEnum.BACKGROUND_CAMERA,
+            DragTypeEnum.BACKGROUND_WEB,
+        ]) {
+            fixture.getAttachedBackground.mockResolvedValue({
+                type,
+                item: { id: 'live' },
+            });
+            expect(await measurer.measureBackground(makeSlide())).toBeNull();
+        }
+        fixture.getAttachedBackground.mockResolvedValue({
+            type: DragTypeEnum.BACKGROUND_VIDEO,
+            item: { src: 'file:///broken.mp4' },
+        });
+        fixture.captureVideoFrameDataUrl.mockResolvedValue(null);
+        expect(await measurer.measureBackground(makeSlide())).toBeNull();
+        expect(fixture.captureVideoFrameDataUrl).toHaveBeenCalledWith(
+            'file:///broken.mp4',
+        );
+        failImageLoads();
+        fixture.getAttachedBackground.mockResolvedValue({
+            type: DragTypeEnum.BACKGROUND_IMAGE,
+            item: { src: PNG_DATA_URL },
+        });
+        expect(await measurer.measureBackground(makeSlide())).toBeNull();
+        expect(addMedia).not.toHaveBeenCalled();
+        // an attachment that is not what its type says is reported, not thrown
+        fixture.getAttachedBackground.mockResolvedValue({
+            type: DragTypeEnum.BACKGROUND_IMAGE,
+            item: null,
+        });
+        expect(await measurer.measureBackground(makeSlide())).toBeNull();
+        expect(fixture.handleError).toHaveBeenCalledWith(expect.any(TypeError));
+        measurer.destroy();
+    });
+
+    describe('a background picture on disk', () => {
+        let createObjectUrl: ReturnType<typeof vi.fn>;
+        let revokeObjectUrl: ReturnType<typeof vi.fn>;
+        const originalCreate = Object.getOwnPropertyDescriptor(
+            URL,
+            'createObjectURL',
+        );
+        const originalRevoke = Object.getOwnPropertyDescriptor(
+            URL,
+            'revokeObjectURL',
+        );
+
+        beforeEach(() => {
+            createObjectUrl = vi.fn(() => 'blob:background');
+            revokeObjectUrl = vi.fn();
+            Object.defineProperty(URL, 'createObjectURL', {
+                configurable: true,
+                value: createObjectUrl,
+            });
+            Object.defineProperty(URL, 'revokeObjectURL', {
+                configurable: true,
+                value: revokeObjectUrl,
+            });
+            fixture.getAttachedBackground.mockResolvedValue({
+                type: DragTypeEnum.BACKGROUND_IMAGE,
+                item: { src: 'file:///C:/Pictures/cross.png' },
+            });
+        });
+
+        afterEach(() => {
+            for (const [name, original] of [
+                ['createObjectURL', originalCreate],
+                ['revokeObjectURL', originalRevoke],
+            ] as const) {
+                if (original === undefined) {
+                    delete (URL as any)[name];
+                } else {
+                    Object.defineProperty(URL, name, original);
+                }
+            }
+        });
+
+        it('is decoded from its own bytes, and its object URL is released with the measurer', async () => {
+            const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+            fixture.fsReadFileBytes.mockResolvedValue(bytes);
+            const imageSources = mockLoadedImages(1920, 1080);
+            const { loaded, addMedia, media } = genRecordingAddMedia();
+            const measurer = makeMeasurer(addMedia);
+            expect(await measurer.measureBackground(makeSlide())).toEqual({
+                kind: 'picture',
+                media,
+                crop: null,
+            });
+            expect(fixture.fsReadFileBytes).toHaveBeenCalledWith(
+                'C:/Pictures/cross.png',
+            );
+            const [blob] = createObjectUrl.mock.calls[0] as [Blob];
+            expect(blob.type).toBe('image/png');
+            expect(imageSources.mock.calls[0][0]).toBe('blob:background');
+            expect(loaded).toEqual([{ bytes, extension: 'png' }]);
+            expect(revokeObjectUrl).not.toHaveBeenCalled();
+            measurer.destroy();
+            expect(revokeObjectUrl).toHaveBeenCalledExactlyOnceWith(
+                'blob:background',
+            );
+        });
+
+        it('that cannot be read is decoded from its URL, and left out when it cannot be re-encoded', async () => {
+            const failure = new Error('locked');
+            fixture.fsReadFileBytes.mockRejectedValue(failure);
+            const imageSources = mockLoadedImages(800, 600);
+            vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+                null,
+            );
+            const { loaded, addMedia } = genRecordingAddMedia();
+            const measurer = makeMeasurer(addMedia);
+            expect(await measurer.measureBackground(makeSlide())).toBeNull();
+            expect(createObjectUrl).not.toHaveBeenCalled();
+            expect(imageSources.mock.calls[0][0]).toBe(
+                'file:///C:/Pictures/cross.png',
+            );
+            expect(loaded).toEqual([null]);
+            expect(fixture.handleError).toHaveBeenCalledWith(failure);
+            measurer.destroy();
+            expect(revokeObjectUrl).not.toHaveBeenCalled();
+        });
+    });
+
+    it('bakes no blur without a canvas to draw it or a picture out of it', async () => {
+        mockLoadedImages(800, 600);
+        fixture.getAttachedBackground.mockResolvedValue({
+            type: DragTypeEnum.BACKGROUND_IMAGE,
+            item: { src: PNG_DATA_URL },
+        });
+        const { loaded, addMedia } = genRecordingAddMedia();
+        const measurer = makeMeasurer(addMedia);
+        expect(await measurer.measureBackground(makeSlide())).toMatchObject({
+            kind: 'picture',
+        });
+        const box = { x: 20, y: 30, width: 100, height: 60, rotation: 0 };
+        const getContext = vi
+            .spyOn(HTMLCanvasElement.prototype, 'getContext')
+            .mockReturnValue(null);
+        expect(
+            await measurer.genBackdropPicture(box, { kind: 'rect' }, 4, 'x'),
+        ).toBeNull();
+        getContext.mockReturnValue({
+            scale: () => {},
+            translate: () => {},
+            rotate: () => {},
+            drawImage: () => {},
+            filter: '',
+        } as unknown as CanvasRenderingContext2D);
+        vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(
+            (callback) => callback(null),
+        );
+        expect(
+            await measurer.genBackdropPicture(box, { kind: 'rect' }, 4, 'x'),
+        ).toBeNull();
+        // the background's own picture, then the blur that came out empty
+        expect(loaded).toEqual([
+            { bytes: expect.any(Uint8Array), extension: 'png' },
+            null,
+        ]);
+        measurer.destroy();
+    });
+
+    describe('an item', () => {
+        it('with its own background and one block of text is one shape holding both', async () => {
+            const measurer = makeMeasurer();
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText =
+                'background-color: rgb(0, 0, 255); font-size: 20px; line-height: 24px;';
+            wrapper.textContent = 'Amazing grace';
+            setRect(wrapper, 100, 100, 400, 200);
+            mockTextRects(new DOMRect(100, 110, 200, 24));
+            const shape = await measurer.measureItem(
+                wrapper,
+                { id: 1, type: 'text', rotate: 10 },
+                ORIGIN,
+                0,
+            );
+            expect(shape).toMatchObject({
+                kind: 'shape',
+                name: 'text 1',
+                box: { x: 100, y: 100, width: 400, height: 200, rotation: 10 },
+                fill: { hex: '0000FF', alpha: 1 },
+                textBody: {
+                    lines: [{ runs: [{ text: 'Amazing grace' }] }],
+                    insets: { left: 0, top: 8, right: 0, bottom: 0 },
+                },
+            });
+            measurer.destroy();
+        });
+
+        it('whose picture fills its background box paints that background as the picture fill', async () => {
+            const media = { fileName: 'image1.png' } as PptxMediaType;
+            const measurer = makeMeasurer(vi.fn(async () => media));
+            const wrapper = document.createElement('div');
+            wrapper.style.backgroundColor = 'rgb(255, 255, 255)';
+            setRect(wrapper, 0, 0, 300, 200);
+            const image = genImage(PNG_DATA_URL, 300, 200);
+            setRect(image, 0, 0, 300, 200);
+            wrapper.appendChild(image);
+            expect(
+                await measurer.measureItem(
+                    wrapper,
+                    { id: 1, type: 'image', rotate: 30 },
+                    ORIGIN,
+                    0,
+                ),
+            ).toMatchObject({
+                kind: 'picture',
+                media,
+                fill: { hex: 'FFFFFF', alpha: 1 },
+                box: { x: 0, y: 0, width: 300, height: 200, rotation: 30 },
+            });
+            measurer.destroy();
+        });
+
+        it('that clips to rounded corners rounds the pictures inside it too', async () => {
+            const media = { fileName: 'image1.png' } as PptxMediaType;
+            const measurer = makeMeasurer(vi.fn(async () => media));
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText =
+                'overflow: hidden; border-top-left-radius: 20px; ' +
+                'border-top-right-radius: 20px; border-bottom-right-radius: 20px; ' +
+                'border-bottom-left-radius: 20px;';
+            setRect(wrapper, 0, 0, 300, 200);
+            const image = genImage(PNG_DATA_URL, 100, 100);
+            setRect(image, 10, 10, 100, 100);
+            wrapper.appendChild(image);
+            expect(
+                await measurer.measureItem(
+                    wrapper,
+                    { id: 1, type: 'image' },
+                    ORIGIN,
+                    0,
+                ),
+            ).toMatchObject({
+                kind: 'picture',
+                geometry: { kind: 'roundRect', radius: 20 },
+                box: { x: 10, y: 10, width: 100, height: 100 },
+            });
+            measurer.destroy();
+        });
+
+        it('with a backdrop blur gets the baked blur beneath its own shape', async () => {
+            mockLoadedImages(800, 600);
+            fixture.getAttachedBackground.mockResolvedValue({
+                type: DragTypeEnum.BACKGROUND_IMAGE,
+                item: { src: PNG_DATA_URL },
+            });
+            vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+                {
+                    scale: () => {},
+                    translate: () => {},
+                    rotate: () => {},
+                    drawImage: () => {},
+                    filter: '',
+                } as unknown as CanvasRenderingContext2D,
+            );
+            vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(
+                (callback) =>
+                    callback({
+                        arrayBuffer: async () => new Uint8Array([7]).buffer,
+                    } as Blob),
+            );
+            const { addMedia } = genRecordingAddMedia();
+            const measurer = makeMeasurer(addMedia);
+            await measurer.measureBackground(makeSlide());
+            const wrapper = document.createElement('div');
+            wrapper.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            setRect(wrapper, 20, 30, 100, 60);
+            expect(
+                await measurer.measureItem(
+                    wrapper,
+                    { id: 1, type: 'text', backdropFilter: 4 },
+                    ORIGIN,
+                    0,
+                ),
+            ).toMatchObject({
+                kind: 'group',
+                children: [
+                    { kind: 'picture', name: 'text 1 blur' },
+                    {
+                        kind: 'shape',
+                        name: 'text 1',
+                        fill: { hex: '000000', alpha: 0.5 },
+                    },
+                ],
+            });
+            measurer.destroy();
+        });
+
+        it('draws only the pictures a screen shows and survives one that fails', async () => {
+            const media = { fileName: 'image9.png' } as PptxMediaType;
+            const failure = new Error('store full');
+            const addMedia = vi.fn(async (key: string) => {
+                if (key === 'https://example.org/c.png') {
+                    throw failure;
+                }
+                return key.startsWith('svg:') ? null : media;
+            });
+            const measurer = makeMeasurer(addMedia);
+            const wrapper = document.createElement('div');
+            setRect(wrapper, 0, 0, 400, 300);
+            const outerSvg = document.createElementNS(
+                'http://www.w3.org/2000/svg',
+                'svg',
+            );
+            outerSvg.appendChild(
+                document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
+            );
+            setRect(outerSvg, 0, 0, 20, 20);
+            const hidden = genImage('https://example.org/a.png', 10, 10);
+            hidden.style.display = 'none';
+            setRect(hidden, 0, 0, 10, 10);
+            // laid out with no box at all
+            const unsized = genImage('https://example.org/b.png', 10, 10);
+            const failing = genImage('https://example.org/c.png', 10, 10);
+            setRect(failing, 0, 0, 10, 10);
+            const shown = genImage('https://example.org/d.png', 50, 40);
+            setRect(shown, 100, 100, 50, 40);
+            wrapper.append(outerSvg, hidden, unsized, failing, shown);
+            expect(
+                await measurer.measureItem(
+                    wrapper,
+                    { id: 1, type: 'html' },
+                    ORIGIN,
+                    0,
+                ),
+            ).toMatchObject({
+                kind: 'picture',
+                media,
+                box: { x: 100, y: 100, width: 50, height: 40 },
+            });
+            const keys = addMedia.mock.calls.map((call) => call[0]);
+            expect(keys).toHaveLength(3);
+            expect(keys[0]).toMatch(/^svg:/);
+            expect(keys.slice(1)).toEqual([
+                'https://example.org/c.png',
+                'https://example.org/d.png',
+            ]);
+            expect(fixture.handleError).toHaveBeenCalledExactlyOnceWith(
+                failure,
+            );
+            measurer.destroy();
+        });
+
+        it('draws a panel only where it has a box', () => {
+            const measurer = makeMeasurer();
+            const wrapper = document.createElement('div');
+            setRect(wrapper, 0, 0, 400, 300);
+            const panel = document.createElement('div');
+            panel.style.backgroundColor = 'rgb(255, 0, 0)';
+            setRect(panel, 10, 10, 100, 50);
+            const collapsed = document.createElement('div');
+            collapsed.style.backgroundColor = 'rgb(0, 255, 0)';
+            wrapper.append(panel, collapsed);
+            expect(
+                measurer.measureDecorations(wrapper, ORIGIN, 'html 1'),
+            ).toMatchObject([
+                {
+                    kind: 'shape',
+                    name: 'html 1 panel',
+                    fill: { hex: 'FF0000' },
+                    box: { x: 10, y: 10, width: 100, height: 50 },
+                },
+            ]);
+            measurer.destroy();
+        });
+    });
+
+    describe('text', () => {
+        function genTextWrapper(lineHeight: string) {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = `font-size: 20px; line-height: ${lineHeight};`;
+            setRect(wrapper, 0, 0, 400, 200);
+            return wrapper;
+        }
+
+        it('uses a unitless line height as a multiple of the font size, and the font`s own height for normal', () => {
+            const measurer = makeMeasurer();
+            mockTextRects(new DOMRect(0, 0, 50, 20));
+            const lineSpacingOf = (lineHeight: string) => {
+                const wrapper = genTextWrapper(lineHeight);
+                wrapper.textContent = 'Amen';
+                const [block] = measurer.measureTextBlocks(wrapper, ORIGIN);
+                return block.textBody.lineSpacing;
+            };
+            expect(lineSpacingOf('1.5')).toBe(30);
+            // the resolver's font is 0.8 + 0.2 of its size tall
+            expect(lineSpacingOf('normal')).toBe(20);
+            measurer.destroy();
+        });
+
+        it('has no block for text the browser gave no box', () => {
+            const measurer = makeMeasurer();
+            mockTextRects(new DOMRect(0, 0, 0, 0));
+            const wrapper = genTextWrapper('24px');
+            wrapper.textContent = 'collapsed';
+            expect(measurer.measureTextBlocks(wrapper, ORIGIN)).toEqual([]);
+            measurer.destroy();
+        });
+
+        it('keeps empty and blank lines as empty paragraphs and drops a trailing break', () => {
+            const measurer = makeMeasurer();
+            mockTextRects(new DOMRect(0, 48, 50, 20));
+            const wrapper = genTextWrapper('24px');
+            wrapper.append(
+                document.createTextNode(''),
+                document.createElement('br'),
+                '   ',
+                document.createElement('br'),
+                'Amen',
+                document.createElement('br'),
+            );
+            const [block] = measurer.measureTextBlocks(wrapper, ORIGIN);
+            expect(
+                block.textBody.lines.map((line) => {
+                    return line.runs.map((run) => run.text);
+                }),
+            ).toEqual([[], [], ['Amen']]);
+            expect(
+                block.textBody.lines.every((line) => line.isNewParagraph),
+            ).toBe(true);
+            measurer.destroy();
+        });
+
+        it('joins inline runs of one style, skips styles and svg text, and keeps the baseline off superscripts', () => {
+            const measurer = makeMeasurer();
+            mockTextRects(new DOMRect(0, 0, 60, 20));
+            const wrapper = genTextWrapper('24px');
+            // jsdom has no user-agent sheet: inline layout is spelled out
+            wrapper.style.verticalAlign = 'baseline';
+            const first = document.createElement('span');
+            first.style.display = 'inline';
+            first.textContent = 'Amazing';
+            const second = document.createElement('span');
+            second.style.display = 'inline';
+            second.textContent = ' grace';
+            const style = document.createElement('style');
+            style.textContent = 'b { color: red; }';
+            const svg = document.createElementNS(
+                'http://www.w3.org/2000/svg',
+                'svg',
+            );
+            svg.appendChild(
+                document.createElementNS('http://www.w3.org/2000/svg', 'text'),
+            ).textContent = 'icon';
+            const raised = document.createElement('sup');
+            raised.style.cssText = 'display: inline; vertical-align: super;';
+            raised.textContent = '2';
+            const leading = document.createElement('sup');
+            leading.style.cssText = 'display: inline; vertical-align: super;';
+            leading.textContent = '1';
+            wrapper.append(
+                first,
+                second,
+                style,
+                svg,
+                document.createElement('br'),
+                'x',
+                raised,
+                document.createElement('br'),
+                leading,
+                'st',
+            );
+            const [block] = measurer.measureTextBlocks(wrapper, ORIGIN);
+            expect(
+                block.textBody.lines.map((line) => {
+                    return line.runs.map((run) => [
+                        run.text,
+                        run.baselineShift,
+                    ]);
+                }),
+            ).toEqual([
+                [['Amazing grace', 0]],
+                [
+                    ['x', 0],
+                    ['2', 30],
+                ],
+                [
+                    ['1', 30],
+                    ['st', 0],
+                ],
+            ]);
+            measurer.destroy();
+        });
+    });
+
+    describe('a picture', () => {
+        const rect = { x: 0, y: 0, width: 40, height: 20 };
+
+        it('left out when it has no height to be redrawn at or its canvas is tainted', async () => {
+            stubWebp();
+            const { loaded, addMedia } = genRecordingAddMedia();
+            const measurer = makeMeasurer(addMedia);
+            const flat = genImage('https://example.org/flat.webp', 40, 0);
+            expect(
+                await measurer.measurePicture(
+                    flat,
+                    rect,
+                    getComputedStyle(flat),
+                    { type: 'image' },
+                ),
+            ).toBeNull();
+            const tainted = new Error('tainted');
+            vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+                {
+                    drawImage: () => {
+                        throw tainted;
+                    },
+                } as unknown as CanvasRenderingContext2D,
+            );
+            const remote = genImage('https://example.org/remote.webp', 40, 20);
+            expect(
+                await measurer.measurePicture(
+                    remote,
+                    rect,
+                    getComputedStyle(remote),
+                    { type: 'image' },
+                ),
+            ).toBeNull();
+            expect(loaded).toEqual([null, null]);
+            expect(fixture.handleError).toHaveBeenCalledExactlyOnceWith(
+                tainted,
+            );
+            measurer.destroy();
+        });
+
+        it('of a video needs a source, a captured frame and a frame that decodes', async () => {
+            const imageSources = failImageLoads();
+            const { loaded, addMedia, media } = genRecordingAddMedia();
+            const measurer = makeMeasurer(addMedia);
+            const measureVideo = (src: string) => {
+                const video = document.createElement('video');
+                if (src !== '') {
+                    video.src = src;
+                }
+                return measurer.measurePicture(
+                    video,
+                    { x: 0, y: 0, width: 640, height: 360 },
+                    getComputedStyle(video),
+                    { type: 'video' },
+                );
+            };
+            expect(await measureVideo('')).toBeNull();
+            fixture.captureVideoFrameDataUrl.mockResolvedValueOnce(null);
+            expect(await measureVideo('file:///no-frame.mp4')).toBeNull();
+            fixture.captureVideoFrameDataUrl.mockResolvedValue(
+                'data:image/jpeg;base64,/9j/',
+            );
+            expect(await measureVideo('file:///bad-frame.mp4')).toBeNull();
+            expect(addMedia).not.toHaveBeenCalled();
+            imageSources.mockImplementation(function (this: HTMLImageElement) {
+                Object.defineProperties(this, {
+                    naturalWidth: { configurable: true, value: 1280 },
+                    naturalHeight: { configurable: true, value: 720 },
+                });
+                queueMicrotask(() => this.onload?.(new Event('load')));
+            });
+            expect(await measureVideo('file:///good.mp4')).toMatchObject({
+                kind: 'picture',
+                media,
+                name: 'video picture',
+            });
+            expect(addMedia.mock.calls[0][0]).toBe(
+                'video-frame:file:///good.mp4',
+            );
+            expect(loaded).toEqual([
+                {
+                    bytes: new Uint8Array([0xff, 0xd8, 0xff]),
+                    extension: 'jpeg',
+                },
+            ]);
+            expect(fixture.captureVideoFrameDataUrl).toHaveBeenCalledTimes(3);
+            measurer.destroy();
+        });
+
+        it('of a YouTube item is left out, and nothing stored, when its thumbnail cannot be drawn', async () => {
+            // Found by UT-92 (2026-11-03): the thumbnail's bytes were read
+            // and stored BEFORE the failed <img> was checked, so a download
+            // that worked left a media part in the file no slide used.
+            failImageLoads();
+            const fetchMock = vi.fn(async () => ({
+                ok: true,
+                headers: { get: () => 'image/jpeg' },
+                arrayBuffer: async () =>
+                    new Uint8Array([0xff, 0xd8, 0xff]).buffer,
+            }));
+            vi.stubGlobal('fetch', fetchMock);
+            const { loaded, addMedia } = genRecordingAddMedia();
+            const measurer = makeMeasurer(addMedia);
+            const iframe = document.createElement('iframe');
+            expect(
+                await measurer.measurePicture(
+                    iframe,
+                    { x: 0, y: 0, width: 480, height: 270 },
+                    getComputedStyle(iframe),
+                    { type: 'youtube', url: 'https://youtu.be/dQw4w9WgXcQ' },
+                ),
+            ).toBeNull();
+            expect(addMedia).not.toHaveBeenCalled();
+            expect(loaded).toEqual([]);
+            expect(fetchMock).not.toHaveBeenCalled();
+            measurer.destroy();
+        });
+
+        it('of an inline SVG is left out when it does not decode, as is anything else', async () => {
+            failImageLoads();
+            const { loaded, addMedia } = genRecordingAddMedia();
+            const measurer = makeMeasurer(addMedia);
+            const svg = document.createElementNS(
+                'http://www.w3.org/2000/svg',
+                'svg',
+            );
+            expect(
+                await measurer.measurePicture(
+                    svg,
+                    { x: 0, y: 0, width: 100, height: 50 },
+                    getComputedStyle(svg),
+                    { type: 'bible' },
+                ),
+            ).toBeNull();
+            expect(loaded).toEqual([null]);
+            const div = document.createElement('div');
+            expect(
+                await measurer.measurePicture(
+                    div,
+                    { x: 0, y: 0, width: 100, height: 50 },
+                    getComputedStyle(div),
+                    { type: 'html' },
+                ),
+            ).toBeNull();
+            expect(addMedia).toHaveBeenCalledOnce();
+            measurer.destroy();
+        });
     });
 });

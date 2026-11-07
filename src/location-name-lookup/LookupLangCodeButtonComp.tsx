@@ -14,7 +14,7 @@ import {
 /**
  * Which language the names and locations are read in, and the way to change it.
  *
- * The code itself is the label — `en`, `km` — because it sits in a toolbar of
+ * The code itself is the label — `en` and the like — because it sits in a toolbar of
  * icon buttons where a full language name has no room, and because the code is
  * what the user picked from the menu.
  *

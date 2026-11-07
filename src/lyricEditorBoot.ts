@@ -6,6 +6,9 @@ import {
     EditorOpenLyricPlugin,
 } from 'open-lyric';
 import { OpenLyricPluginPlayer } from 'open-lyric-plugin-player';
+// Already in this module's graph (the player plugin imports it); handed to the
+// language plugins so they register into this registry.
+import * as openLyricInternal from 'open-lyric/internal';
 
 import { dirSourceSettingNames } from './helper/constants.ts';
 import DirSource from './helper/DirSource.ts';
@@ -86,6 +89,7 @@ export function getDashboardInstance() {
                 editor: editor,
                 openLyric: openLyric,
                 openLyricMarkdownManager: openLyricMarkdownManager,
+                openLyricInternal,
                 genOpenLyricFontFaces,
             });
             initLangCss(langData);

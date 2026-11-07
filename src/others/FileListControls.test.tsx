@@ -8,6 +8,7 @@ import type { FileListFilterDataType } from './fileListFilterHelpers';
 const h = vi.hoisted(() => ({
     menu: vi.fn(),
     visiblePaths: [] as string[],
+    onScreenCheck: null as null | ((paths: string[]) => Promise<boolean>),
     colorNotes: new Map<string, string>(),
     refresh: vi.fn(),
 }));
@@ -55,8 +56,12 @@ vi.mock('../helper/colorNoteHelpers', () => ({
     genColorBar: (color: string) => createElement('span', {}, color),
 }));
 vi.mock('../_screen/screenHelpers', () => ({
-    useFileSourceIsOnScreen: (paths: string[]) => {
+    useFileSourceIsOnScreen: (
+        paths: string[],
+        check: (paths: string[]) => Promise<boolean>,
+    ) => {
         h.visiblePaths = paths;
+        h.onScreenCheck = check;
     },
 }));
 vi.mock('../context-menu/appContextMenuHelpers', () => ({
@@ -117,7 +122,10 @@ async function renderIcons(paths: string[]) {
 
 async function renderList(
     paths: string[] | null | undefined,
-    options: { disableColorNoteGrouping?: boolean } = {},
+    options: {
+        disableColorNoteGrouping?: boolean;
+        checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
+    } = {},
 ) {
     await act(async () =>
         root.render(
@@ -149,6 +157,7 @@ beforeEach(() => {
     h.refresh.mockClear();
     h.colorNotes.clear();
     h.visiblePaths = [];
+    h.onScreenCheck = null;
     filterData = defaultFilterData();
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -315,5 +324,66 @@ describe('file list controls', () => {
         await act(async () => blue.click());
         expect(container.textContent).not.toContain('/docs/blue.md');
         expect(container.textContent).toContain('/docs/ordinary.md');
+    });
+
+    it('draws a list with no colour notes flat, in the sorted order', async () => {
+        await renderList(['/docs/b.md', '/docs/c.md', '/docs/a.md']);
+        const body = container.querySelector('[data-color]')!;
+        expect(body.getAttribute('data-color')).toBe('');
+        expect(container.textContent).toBe('/docs/a.md,/docs/b.md,/docs/c.md');
+    });
+
+    it('draws no header for a group the filter or the notes left empty', async () => {
+        h.colorNotes.set('/docs/one.md', 'blue');
+        h.colorNotes.set('/docs/two.md', 'blue');
+        await renderList(['/docs/two.md', '/docs/one.md']);
+        // Only the blue group: the always-seeded "unknown" one is empty.
+        const bodies = Array.from(container.querySelectorAll('[data-color]'));
+        expect(bodies.map((body) => body.getAttribute('data-color'))).toEqual([
+            'blue',
+        ]);
+        expect(bodies[0].textContent).toBe('/docs/one.md,/docs/two.md');
+        expect(container.textContent).not.toContain('unknown');
+    });
+
+    it("answers the on-screen check with the list's own checker, else no", async () => {
+        const checkIsOnScreen = vi.fn(async (paths: string[]) => {
+            return paths.includes('/docs/live.md');
+        });
+        await renderList(['/docs/live.md'], { checkIsOnScreen });
+        await expect(h.onScreenCheck!(['/docs/live.md'])).resolves.toBe(true);
+        await expect(h.onScreenCheck!(['/docs/other.md'])).resolves.toBe(false);
+        expect(checkIsOnScreen).toHaveBeenCalledTimes(2);
+        await renderList(['/docs/live.md']);
+        await expect(h.onScreenCheck!(['/docs/live.md'])).resolves.toBe(false);
+    });
+
+    it('puts the type filter back to all types from its menu', async () => {
+        filterData.filterTypeName = 'PDF';
+        await renderIcons(['/docs/a.md', '/docs/b.pdf']);
+        await act(async () =>
+            container
+                .querySelector<HTMLElement>('[title="Filter by Type: PDF"]')!
+                .click(),
+        );
+        const typeItems = h.menu.mock.calls.at(-1)![1];
+        expect(typeItems[0].menuElement).toBe('All Types');
+        await act(async () => typeItems[0].onSelect());
+        expect(filterData.setFilterTypeName).toHaveBeenCalledWith('');
+    });
+
+    it('keeps a click in the name filter from reaching the row behind it', async () => {
+        const rowClick = vi.fn();
+        await act(async () =>
+            root.render(
+                createElement(
+                    'div',
+                    { onClick: rowClick },
+                    createElement(FileListFilterInputComp, { filterData }),
+                ),
+            ),
+        );
+        await act(async () => container.querySelector('input')!.click());
+        expect(rowClick).not.toHaveBeenCalled();
     });
 });

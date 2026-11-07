@@ -14,6 +14,7 @@ import {
     fsCloneFile,
     fsDeleteFile,
     fsListFiles,
+    fsMove,
     fsReadFile,
     getFileChecksum,
     pathBasename,
@@ -27,9 +28,18 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { appError as logError } from '../loggerHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import {
+    confirmUnverifiedPackFile,
+    exportPackFile,
+    pickPackFile,
+    readPackFileJson,
+    toNotInstallablePackMessage,
+} from '../packFileHelpers';
+import {
     EXTRA_BIN_ARCHIVE_REGEX,
+    EXTRA_BIN_INFO_FILE_NAME,
     checkIsExtraBinInstalled,
     getExtraBinDirPath,
+    getExtraBinPlatformName,
     getInstalledExtraBinVersion,
     moveLegacyExtraBinPack,
     notifyExtraBinChanged,
@@ -59,7 +69,9 @@ function getDevReleaseDirPath() {
     return pathJoin(appPath, ...DEV_RELEASE_DIR_PARTS);
 }
 
-async function getDevExtraBinEntry(): Promise<ExtraBinEntryType | null> {
+async function getDevExtraBinEntry(
+    isQuiet = false,
+): Promise<ExtraBinEntryType | null> {
     const dirPath = getDevReleaseDirPath();
     try {
         const binInfo = JSON.parse(
@@ -71,6 +83,9 @@ async function getDevExtraBinEntry(): Promise<ExtraBinEntryType | null> {
             checksum: binInfo.checksum,
         };
     } catch (_error) {
+        if (isQuiet) {
+            return null;
+        }
         showSimpleToast(
             tran(EXTRA_BIN_TOAST_TITLE),
             `${tran('No local pack was built yet')}: ` +
@@ -90,29 +105,17 @@ async function getDevExtraBinEntry(): Promise<ExtraBinEntryType | null> {
  *
  * An app version with no entry of its own (a build made between two releases)
  * falls back to the newest published pack rather than refusing to install.
+ *
+ * `isQuiet` for the launch's look for updates, which nobody asked for and must
+ * never pop up dev's "no local pack" toast.
  */
-export async function getExtraBinEntry(): Promise<ExtraBinEntryType | null> {
+export async function getExtraBinEntry(
+    isQuiet = false,
+): Promise<ExtraBinEntryType | null> {
     if (appProvider.systemUtils.isDev) {
-        return await getDevExtraBinEntry();
+        return await getDevExtraBinEntry(isQuiet);
     }
-    const url = await getDownloadTargetUrl(true);
-    if (url === null) {
-        return null;
-    }
-    const downloadInfo = await fetch(url, { method: 'GET', cache: 'no-cache' })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(
-                    `Failed to fetch extra-bin info: ${response.statusText}`,
-                );
-            }
-            return response.json();
-        })
-        .catch((error) => {
-            logError('Error fetching extra-bin info:', error);
-            return null;
-        });
-    const extraBin = downloadInfo?.extraBin ?? null;
+    const extraBin = await readPublishedExtraBinMap();
     if (extraBin === null) {
         return null;
     }
@@ -133,22 +136,65 @@ export async function getExtraBinEntry(): Promise<ExtraBinEntryType | null> {
 }
 
 /**
+ * True when a pack's checksum is one published for this computer's platform,
+ * under ANY app version: a friend's file may well be an older release. Read
+ * only when a file is imported; offline answers false (the person is asked).
+ */
+export async function checkIsPublishedExtraBinChecksum(checksum: string) {
+    if (appProvider.systemUtils.isDev) {
+        const entry = await getDevExtraBinEntry(true);
+        return entry?.checksum === checksum;
+    }
+    const extraBin = await readPublishedExtraBinMap();
+    return Object.values(extraBin ?? {}).some((entry) => {
+        return entry?.checksum === checksum;
+    });
+}
+
+async function readPublishedExtraBinMap(): Promise<{
+    [appVersion: string]: ExtraBinEntryType | undefined;
+} | null> {
+    const url = await getDownloadTargetUrl(true);
+    if (url === null) {
+        return null;
+    }
+    const downloadInfo = await fetch(url, { method: 'GET', cache: 'no-cache' })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(
+                    `Failed to fetch extra-bin info: ${response.statusText}`,
+                );
+            }
+            return response.json();
+        })
+        .catch((error) => {
+            logError('Error fetching extra-bin info:', error);
+            return null;
+        });
+    const extraBin = downloadInfo?.extraBin ?? null;
+    return extraBin !== null && typeof extraBin === 'object' ? extraBin : null;
+}
+
+async function listLocalExtraBinArchives(dirPath: string) {
+    try {
+        const fileFullNames = await fsListFiles(dirPath);
+        return fileFullNames.filter((fileFullName) => {
+            return EXTRA_BIN_ARCHIVE_REGEX.test(fileFullName);
+        });
+    } catch (_error) {
+        return [];
+    }
+}
+
+/**
  * The archive is deliberately KEPT after extraction, so a pack whose binaries
  * got corrupted can be repaired with no network. Note this is the opposite of
  * `extractDownloadedBible`, which deletes in its `finally` — do not "fix" this
  * one to match it.
  */
 export async function findLocalExtraBinArchive(dirPath: string) {
-    try {
-        const fileFullNames = await fsListFiles(dirPath);
-        return (
-            fileFullNames.find((fileFullName) => {
-                return EXTRA_BIN_ARCHIVE_REGEX.test(fileFullName);
-            }) ?? null
-        );
-    } catch (_error) {
-        return null;
-    }
+    const fileFullNames = await listLocalExtraBinArchives(dirPath);
+    return fileFullNames[0] ?? null;
 }
 
 async function downloadExtraBinArchive(
@@ -198,7 +244,39 @@ export type InstallExtraBinOptionsType = {
     // Delete this archive once the new one is in — an update would otherwise
     // leave one pack per release behind.
     supersededArchiveFileFullName?: string | null;
+    // A pack picked from the disk (Import), already checked by
+    // `importExtraBinFromFile`: copied in as this computer's archive, in
+    // place of every other one.
+    importedArchive?: ImportedExtraBinArchiveType | null;
 };
+
+type ImportedExtraBinArchiveType = { filePath: string; version: string };
+
+/**
+ * The picked file goes in as `bin-<version>.tar.gz`, the name a download
+ * gives it. Through a name of its own, never straight onto the target: the
+ * file picked may BE the target, and deleting that first would lose the only
+ * copy.
+ */
+async function copyImportedExtraBinArchive(
+    { filePath, version }: ImportedExtraBinArchiveType,
+    dirPath: string,
+) {
+    const fileFullName = `bin-${version}.tar.gz`;
+    const targetFilePath = pathJoin(dirPath, fileFullName);
+    const tempFilePath = pathJoin(dirPath, `.import-${fileFullName}`);
+    await fsDeleteFile(tempFilePath).catch(logError);
+    try {
+        await fsCloneFile(filePath, tempFilePath);
+        await fsDeleteFile(targetFilePath);
+        await fsMove(tempFilePath, targetFilePath);
+    } catch (error) {
+        // Tens of MB nothing would ever look at again.
+        await fsDeleteFile(tempFilePath).catch(logError);
+        throw error;
+    }
+    return fileFullName;
+}
 
 /**
  * Install (or repair, or update) the pack. Serialized: two extractions into the
@@ -208,6 +286,7 @@ export async function installExtraBin({
     entry,
     isForceDownload = false,
     supersededArchiveFileFullName = null,
+    importedArchive = null,
 }: InstallExtraBinOptionsType = {}) {
     return unlocking(INSTALL_LOCK_KEY, async () => {
         showProgressBar(PROGRESS_BAR_EVENT_KEY);
@@ -218,7 +297,20 @@ export async function installExtraBin({
             const dirPath = getExtraBinDirPath();
             await ensureDirectory(dirPath);
             let archiveFileFullName = await findLocalExtraBinArchive(dirPath);
-            if (archiveFileFullName === null || isForceDownload) {
+            let supersededArchiveFileFullNames =
+                supersededArchiveFileFullName === null
+                    ? []
+                    : [supersededArchiveFileFullName];
+            if (importedArchive !== null) {
+                // Every archive here goes once this one is in: Re-extract
+                // takes the first it finds, and that must be this one.
+                supersededArchiveFileFullNames =
+                    await listLocalExtraBinArchives(dirPath);
+                archiveFileFullName = await copyImportedExtraBinArchive(
+                    importedArchive,
+                    dirPath,
+                );
+            } else if (archiveFileFullName === null || isForceDownload) {
                 const targetEntry = entry ?? (await getExtraBinEntry());
                 if (targetEntry === null) {
                     showSimpleToast(
@@ -237,13 +329,12 @@ export async function installExtraBin({
             }
             messageCallback('Extracting...');
             await extractExtraBin(archiveFileFullName);
-            if (
-                supersededArchiveFileFullName !== null &&
-                supersededArchiveFileFullName !== archiveFileFullName
-            ) {
-                await fsDeleteFile(
-                    pathJoin(dirPath, supersededArchiveFileFullName),
-                ).catch(logError);
+            for (const fileFullName of supersededArchiveFileFullNames) {
+                if (fileFullName !== archiveFileFullName) {
+                    await fsDeleteFile(pathJoin(dirPath, fileFullName)).catch(
+                        logError,
+                    );
+                }
             }
             const { isInstalled, missingNames } =
                 await checkIsExtraBinInstalled();
@@ -272,4 +363,95 @@ export async function installExtraBin({
             hideProgressBar(PROGRESS_BAR_EVENT_KEY);
         }
     });
+}
+
+// -- sharing the pack as a file ---------------------------------------------
+
+// A version goes into a file name: nothing that could climb out of the folder.
+const EXTRA_BIN_PACK_VERSION_PATTERN = /^[\w.-]+$/;
+
+/** What a pack's own `info.json` says, or null for a file that is no pack. */
+async function readExtraBinPackInfo(archiveFilePath: string) {
+    const info = await readPackFileJson(
+        archiveFilePath,
+        EXTRA_BIN_INFO_FILE_NAME,
+    );
+    if (info === null || typeof info !== 'object') {
+        return null;
+    }
+    const { version, platform } = info as {
+        version?: unknown;
+        platform?: unknown;
+    };
+    if (
+        typeof version !== 'string' ||
+        !EXTRA_BIN_PACK_VERSION_PATTERN.test(version) ||
+        typeof platform !== 'string'
+    ) {
+        return null;
+    }
+    return { version, platform };
+}
+
+/**
+ * Installs the pack from a file a friend passed on (Settings > Others > Extra
+ * Binaries > Import), with no network needed. Refused when it was built for
+ * another kind of computer -- its programs would not start here; asked about
+ * when no published pack has its checksum. `filePath` skips the picker.
+ */
+export async function importExtraBinFromFile(filePath?: string | null) {
+    const archiveFilePath = filePath ?? (await pickPackFile());
+    if (!archiveFilePath) {
+        return false;
+    }
+    const toastTitle = tran(EXTRA_BIN_TOAST_TITLE);
+    const info = await readExtraBinPackInfo(archiveFilePath);
+    if (info === null) {
+        showSimpleToast(
+            toastTitle,
+            toNotInstallablePackMessage(`"${pathBasename(archiveFilePath)}"`),
+        );
+        return false;
+    }
+    const platformName = getExtraBinPlatformName();
+    if (info.platform !== platformName) {
+        showSimpleToast(
+            toastTitle,
+            toNotInstallablePackMessage(
+                `"${info.platform}" (${tran('This computer')}: ` +
+                    `"${platformName}")`,
+            ),
+        );
+        return false;
+    }
+    const checksum = await getFileChecksum(archiveFilePath, 'sha512');
+    const isPublished =
+        checksum !== null && (await checkIsPublishedExtraBinChecksum(checksum));
+    if (!isPublished && !(await confirmUnverifiedPackFile())) {
+        return false;
+    }
+    return await installExtraBin({
+        importedArchive: { filePath: archiveFilePath, version: info.version },
+    });
+}
+
+/**
+ * Copies the kept archive into Downloads to pass on. Named for the computer it
+ * runs on (`bin-0.0.4-win.tar.gz`): the friend's may need another one. Null
+ * when there is no archive to copy.
+ */
+export async function exportExtraBinArchive() {
+    const dirPath = getExtraBinDirPath();
+    const archiveFileFullName = await findLocalExtraBinArchive(dirPath);
+    if (archiveFileFullName === null) {
+        return null;
+    }
+    return await exportPackFile(
+        tran(EXTRA_BIN_TOAST_TITLE),
+        pathJoin(dirPath, archiveFileFullName),
+        archiveFileFullName.replace(
+            /\.tar\.gz$/,
+            `-${getExtraBinPlatformName()}.tar.gz`,
+        ),
+    );
 }

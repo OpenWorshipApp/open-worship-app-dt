@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Armenian",
+            "locales": ["hy-AM"],
+            "order": 2200
+        }
+    ]
+}

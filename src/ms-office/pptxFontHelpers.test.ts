@@ -13,7 +13,6 @@ import {
     calcPptxFirstBaseline,
     checkIsGenericFontFamily,
     parseFontFamilyList,
-    splitGraphemes,
 } from './pptxFontHelpers';
 
 describe('parseFontFamilyList', () => {
@@ -41,14 +40,6 @@ describe('parseFontFamilyList', () => {
         expect(checkIsGenericFontFamily('system-ui')).toBe(true);
         expect(checkIsGenericFontFamily('Sans-Serif')).toBe(true);
         expect(checkIsGenericFontFamily('Battambang')).toBe(false);
-    });
-});
-
-describe('splitGraphemes', () => {
-    test('never breaks a Khmer cluster', () => {
-        // ស្រី: a base, a coeng subscript and a vowel sign, one cluster
-        expect(splitGraphemes('ស្រី')).toHaveLength(1);
-        expect(splitGraphemes('ab ស្រី')).toEqual(['a', 'b', ' ', 'ស្រី']);
     });
 });
 

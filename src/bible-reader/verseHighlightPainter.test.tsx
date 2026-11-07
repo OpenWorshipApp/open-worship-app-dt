@@ -162,4 +162,45 @@ describe('verse highlight painting', () => {
         await act(async () => vi.advanceTimersByTime(200));
         expect(highlight('owa-verse-hl-green')).toBeUndefined();
     });
+
+    it('a view going away leaves the marks of the views still open', async () => {
+        state.annotations = {
+            'verse-1': {
+                highlights: [
+                    {
+                        highlight: {
+                            start: 0,
+                            end: 5,
+                            text: 'Moses',
+                            color: 'yellow',
+                        },
+                    },
+                ],
+                comments: [],
+            },
+        };
+        await act(async () =>
+            root.render(
+                <>
+                    <Harness text="Moses spoke" />
+                    <Harness text="Moses spoke" />
+                </>,
+            ),
+        );
+        await act(async () => vi.advanceTimersByTime(200));
+        const [first, second] = host.querySelectorAll('[data-bible-verse-key]');
+        const getPaintedAnchors = () => {
+            return [...highlight('owa-verse-hl-yellow')!.ranges].map(
+                (range) => {
+                    return range.startContainer.parentElement;
+                },
+            );
+        };
+        expect(getPaintedAnchors()).toEqual([first, second]);
+
+        await act(async () => root.render(<Harness text="Moses spoke" />));
+        await act(async () => vi.advanceTimersByTime(200));
+        // Repainted without the view that went: no range left on its words.
+        expect(getPaintedAnchors()).toEqual([first]);
+    });
 });

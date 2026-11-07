@@ -177,13 +177,11 @@ describe('buildGraphMarkdown', () => {
     test('names a record with an English twin the way the box does', () => {
         const text = buildGraphMarkdown(
             genOptions({
-                nodeList: [
-                    genNode('name:david', 'ដាវីឌ', { kjvName: 'David' }),
-                ],
+                nodeList: [genNode('name:david', '✝♪', { kjvName: 'David' })],
                 edgeList: [],
             }),
         );
-        expect(text).toContain('| **ដាវីឌ (David)** _(centre)_ |');
+        expect(text).toContain('| **✝♪ (David)** _(centre)_ |');
         expect(text).not.toContain('## Connections');
     });
 
@@ -423,5 +421,84 @@ describe('buildGraphDiagram', () => {
             'mermaid-flowchart-lr',
         );
         expect(text).not.toContain('-->');
+    });
+});
+
+describe('text exports with lines the canvas cannot place', () => {
+    const danglingOptions = () => {
+        return genOptions({
+            nodeList: [
+                genNode('name:david', 'David'),
+                genNode('name:solomon', 'Solomon'),
+            ],
+            edgeList: [
+                genEdge('name:david', 'name:solomon', 'child'),
+                genEdge('name:david', 'name:gone', 'child'),
+                genEdge('name:gone', 'name:solomon', 'spouse'),
+            ],
+        });
+    };
+
+    test('two lines of one relation share a heading; an unknown one gets its own', () => {
+        const text = buildGraphMarkdown(
+            genOptions({
+                nodeList: [
+                    genNode('name:david', 'David'),
+                    genNode('name:solomon', 'Solomon'),
+                    genNode('name:absalom', 'Absalom'),
+                    genNode('name:nathan', 'Nathan'),
+                ],
+                edgeList: [
+                    genEdge('name:david', 'name:solomon', 'child'),
+                    genEdge('name:david', 'name:absalom', 'child'),
+                    genEdge('name:nathan', 'name:david', 'mentor'),
+                ],
+                resolveEdge: (edge) => {
+                    return edge.relation === 'child'
+                        ? { label: 'son', isDirected: true }
+                        : { label: '', isDirected: false };
+                },
+                translate: (key: string) => {
+                    return key === 'mentor' ? 'Mentor' : key;
+                },
+            }),
+        );
+        expect(text).toContain(
+            '### Children\n\n' +
+                '- **David** → **Solomon** — son\n' +
+                '- **David** → **Absalom** — son',
+        );
+        // No definition: the raw kind, translated, and no arrow or label.
+        expect(text).toContain('### Mentor\n\n- **Nathan** ↔ **David**\n');
+    });
+
+    test('the mindmap tree ignores a line to a record it does not hold', () => {
+        expect(
+            buildGraphDiagram(danglingOptions(), 'mermaid-mindmap').split('\n'),
+        ).toEqual([
+            '%% David — connection graph',
+            'mindmap',
+            '  n0(("David · Person"))',
+            '    n1("Solomon · Person")',
+            '',
+        ]);
+    });
+
+    test('an empty mindmap is just its header', () => {
+        expect(
+            buildGraphDiagram(
+                genOptions({ nodeList: [], edgeList: [] }),
+                'mermaid-mindmap',
+            ),
+        ).toBe('%% David — connection graph\nmindmap\n');
+    });
+
+    test('DOT and PlantUML draw only the lines between exported records', () => {
+        const dot = buildGraphDiagram(danglingOptions(), 'graphviz-dot');
+        expect(dot.match(/ -> /g)).toHaveLength(1);
+        expect(dot).toContain('    n0 -> n1 [label="son"];');
+        const plantUml = buildGraphDiagram(danglingOptions(), 'plantuml');
+        expect(plantUml.match(/^n\d+ --/gm)).toEqual(['n0 --']);
+        expect(plantUml).toContain('n0 --> n1 : son');
     });
 });

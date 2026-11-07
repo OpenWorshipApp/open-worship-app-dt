@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { genSlideHtmlMock } = vi.hoisted(() => ({
+const { genSlideHtmlMock, genDocxSlideMock } = vi.hoisted(() => ({
+    // A plain page unless a test hands one in.
+    genDocxSlideMock: vi.fn(),
     genSlideHtmlMock: vi.fn((canvasItems: { type: string }[]) => {
         const div = document.createElement('div');
         div.dataset.types = canvasItems.map((item) => item.type).join(',');
@@ -42,7 +44,9 @@ vi.mock('../app-document-presenter/items/PptxSlideRenderComp', () => ({
     },
 }));
 vi.mock('../app-document-presenter/items/DocxSlideRenderComp', () => ({
-    genDocxSlide: () => document.createElement('div'),
+    genDocxSlide: (...args: unknown[]) => {
+        return genDocxSlideMock(...args) ?? document.createElement('div');
+    },
 }));
 vi.mock('../app-document-presenter/items/SlideRendererComp', () => ({
     genSlideHtml: genSlideHtmlMock,
@@ -464,5 +468,233 @@ describe('moveStageLookAhead', () => {
 
         expect(toLabels(root)).toEqual(['2/3']);
         expect(genSlideHtmlMock).not.toHaveBeenCalled();
+    });
+});
+
+describe('stage slides at their edges', () => {
+    beforeEach(() => {
+        genSlideHtmlMock.mockClear();
+        vi.useFakeTimers();
+        document.body.replaceChildren();
+    });
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    // The boxes go before the first mark, the frames and counts after it.
+    function countBoxes(root: HTMLElement) {
+        let count = 0;
+        for (const node of Array.from(root.childNodes)) {
+            if (node.nodeType === Node.COMMENT_NODE) {
+                break;
+            }
+            count++;
+        }
+        return count;
+    }
+
+    // A stage of two coming slides, slide `id` presented.
+    function genWideStage(id: number, sideList: any[]) {
+        return { stage: 3, label: `${id}/4`, sideList };
+    }
+
+    function genWideRoot() {
+        const root = wrapWithStageLookAhead(
+            genContent(),
+            1920,
+            1080,
+            genWideStage(1, [
+                {
+                    offset: 1,
+                    itemJson: genSlideJson(2, ['image']),
+                    label: '2/4',
+                },
+                {
+                    offset: 2,
+                    itemJson: genSlideJson(3, ['html']),
+                    label: '3/4',
+                },
+            ]),
+            1920,
+            1080,
+            genSlideJson(1),
+        )!;
+        document.body.appendChild(root);
+        genSlideHtmlMock.mockClear();
+        return root;
+    }
+
+    test('a Word page beside the slide is drawn at its own size, with the media in its shadow root taken out', () => {
+        genDocxSlideMock.mockImplementation(() => {
+            const page = document.createElement('div');
+            const host = document.createElement('div');
+            host.className = 'docx-host';
+            host.attachShadow({ mode: 'open' }).innerHTML =
+                '<p>word page</p><video></video><audio></audio>';
+            page.appendChild(host);
+            return page;
+        });
+        const root = wrapWithStageLookAhead(genContent(), 1920, 1080, {
+            stage: 2,
+            label: '1/2',
+            sideList: [
+                {
+                    offset: 1,
+                    itemJson: {
+                        id: 2,
+                        type: 'docx-slide',
+                        html: '<p>word page</p>',
+                        htmlFilePath: '/docs/letter.html',
+                        metadata: { width: 816, height: 1056 },
+                    } as any,
+                },
+            ],
+        })!;
+        expect(genDocxSlideMock).toHaveBeenCalledWith(
+            '<p>word page</p>',
+            '/docs/letter.html',
+            816,
+            1056,
+            816,
+        );
+        const shadowRoot = root.querySelector('.docx-host')!.shadowRoot!;
+        expect(shadowRoot.querySelector('p')!.textContent).toBe('word page');
+        expect(shadowRoot.querySelector('video, audio')).toBeNull();
+        expect(countBoxes(root)).toBe(2);
+    });
+
+    test('a coming slide with nothing to draw yet keeps its frame and count, but no box', () => {
+        const nothingToDrawList = [
+            // A PDF page whose picture is not made yet.
+            {
+                id: 2,
+                type: 'pdf-slide',
+                metadata: { width: 800, height: 1100 },
+            },
+            // A slide with no size, and one with no items.
+            { id: 2, type: 'slide', canvasItems: [{ id: 0, type: 'text' }] },
+            { id: 2, type: 'slide', metadata: { width: 1920, height: 1080 } },
+        ];
+        for (const itemJson of nothingToDrawList) {
+            const root = wrapWithStageLookAhead(genContent(), 1920, 1080, {
+                stage: 2,
+                label: '1/2',
+                sideList: [
+                    { offset: 1, itemJson: itemJson as any, label: '2/2' },
+                ],
+            })!;
+            expect(countBoxes(root)).toBe(1);
+            expect(root.querySelector('.current-slide')).not.toBeNull();
+            expect(countFrames(root)).toBe(2);
+            expect(toLabels(root)).toEqual(['1/2', '2/2']);
+        }
+        expect(genSlideHtmlMock).not.toHaveBeenCalled();
+    });
+
+    test('a layout it did not make, or a stage that draws the slide as it is, is not moved', () => {
+        expect(
+            moveStageLookAhead(
+                document.createElement('div'),
+                genContent(),
+                1920,
+                1080,
+                genStage(2, 3),
+                1920,
+                1080,
+                genSlideJson(2),
+            ),
+        ).toBe(false);
+        const root = genWideRoot();
+        const html = root.innerHTML;
+        expect(
+            moveStageLookAhead(
+                root,
+                null,
+                1920,
+                1080,
+                { stage: 0, label: null, sideList: [] },
+                1920,
+                1080,
+                genSlideJson(2, ['image']),
+            ),
+        ).toBe(false);
+        expect(root.innerHTML).toBe(html);
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    test('a coming slide that stays a coming one keeps its box and only moves along', () => {
+        const root = genWideRoot();
+        const thirdBox = findBox(root, 'html')!;
+        const thirdContent = thirdBox.querySelector('[data-types]');
+        const styleBefore = thirdBox.style.cssText;
+
+        expect(
+            moveStageLookAhead(
+                root,
+                null,
+                1920,
+                1080,
+                genWideStage(2, [
+                    {
+                        offset: 1,
+                        itemJson: genSlideJson(3, ['html']),
+                        label: '3/4',
+                    },
+                    {
+                        offset: 2,
+                        itemJson: genSlideJson(4, ['bible']),
+                        label: '4/4',
+                    },
+                ]),
+                1920,
+                1080,
+                genSlideJson(2, ['image']),
+            ),
+        ).toBe(true);
+
+        expect(findBox(root, 'html')).toBe(thirdBox);
+        expect(thirdBox.querySelector('[data-types]')).toBe(thirdContent);
+        expect(thirdBox.style.cssText).not.toBe(styleBefore);
+        expect(genSlideHtmlMock).not.toHaveBeenCalled();
+        expect(toLabels(root)).toEqual(['2/4', '3/4']);
+
+        vi.advanceTimersByTime(STAGE_MOVE_MILLISECOND);
+        expect(toLabels(root)).toEqual(['2/4', '3/4', '4/4']);
+        expect(genSlideHtmlMock).toHaveBeenCalledTimes(1);
+        expect(findBox(root, 'bible')).not.toBeNull();
+    });
+
+    test('a coming slide edited into one with nothing to draw loses its box, but not its frame', () => {
+        const root = genWideRoot();
+        const thirdBox = findBox(root, 'html')!;
+        // Slide 3, edited since: its size is gone.
+        const editedThird = {
+            id: 3,
+            type: 'slide',
+            canvasItems: [{ id: 0, type: 'html' }],
+        };
+
+        expect(
+            moveStageLookAhead(
+                root,
+                null,
+                1920,
+                1080,
+                genWideStage(2, [
+                    { offset: 1, itemJson: editedThird, label: '3/4' },
+                    null,
+                ]),
+                1920,
+                1080,
+                genSlideJson(2, ['image']),
+            ),
+        ).toBe(true);
+
+        expect(thirdBox.isConnected).toBe(false);
+        expect(countBoxes(root)).toBe(1);
+        // Still said to come next.
+        expect(countFrames(root)).toBe(2);
+        expect(toLabels(root)).toEqual(['2/4', '3/4']);
+        expect(vi.getTimerCount()).toBe(0);
     });
 });

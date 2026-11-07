@@ -340,4 +340,85 @@ describe('moveLyricLookAhead', () => {
         expect(findNode(root, 'Verse 2')).toBeNull();
         expect(build).not.toHaveBeenCalled();
     });
+
+    test('a verse not drawn in its box as expected is never kept, only drawn again', () => {
+        const root = build(slides[0]);
+        const coming = findNode(root, 'Chorus')!;
+        // Its box lost: nothing here could resize the verse in it.
+        const bare = document.createElement('p');
+        bare.textContent = 'Chorus';
+        coming.replaceChildren(bare);
+        document.body.appendChild(root);
+        expect(registerLyricLookAhead(root, slides[0], WIDTH, HEIGHT)).toBe(
+            true,
+        );
+        expect(coming.dataset.renderId).toBeUndefined();
+        expect(coming.style.transition).toBe('');
+        build.mockClear();
+
+        expect(move(root, slides[1])).toBe(true);
+
+        // The frames stayed where they were, so nothing waited for them.
+        expect(vi.getTimerCount()).toBe(0);
+        expect(coming.isConnected).toBe(false);
+        const chorus = findNode(root, 'Chorus')!;
+        expect(chorus).not.toBe(coming);
+        expect(chorus.style.top).toBe('0px');
+        expect(build).toHaveBeenCalledTimes(1);
+        expect(build.mock.calls[0][0]).toHaveLength(2);
+    });
+
+    test('a look-ahead slide holding something that plays is not taken in', () => {
+        const withVideo = [...slides[0], genItem('video')];
+        const root = build(withVideo);
+        expect(root.children).toHaveLength(withVideo.length);
+        expect(registerLyricLookAhead(root, withVideo, WIDTH, HEIGHT)).toBe(
+            false,
+        );
+        // Nothing was kept to move from.
+        expect(move(root, slides[1])).toBe(false);
+        expect((root.firstElementChild as HTMLElement).dataset.renderId).toBe(
+            undefined,
+        );
+    });
+
+    test('a slide that shares nothing with the one on screen is left to a cut', () => {
+        const root = genRoot(slides[0]);
+        const html = root.innerHTML;
+        // Its frame drawn another way, and a verse not on screen.
+        const unrelated = [
+            genItem(
+                'html',
+                '<div class="lyric-look-ahead-frame" style="border: 9px dashed red;"></div>',
+            ),
+            genItem('html', '<p>Elsewhere</p>'),
+        ];
+
+        expect(move(root, unrelated)).toBe(false);
+
+        expect(root.innerHTML).toBe(html);
+        expect(build).not.toHaveBeenCalled();
+        expect(vi.getTimerCount()).toBe(0);
+    });
+
+    test('a coming verse the renderer drew nothing for is skipped, and the rest stays in order', () => {
+        const root = genRoot(slides[0]);
+        const frames = toFrames(root);
+        const drawNothing = vi.fn(() => document.createElement('div'));
+
+        expect(
+            moveLyricLookAhead(root, slides[1], WIDTH, HEIGHT, drawNothing),
+        ).toBe(true);
+        vi.advanceTimersByTime(STAGE_MOVE_MILLISECOND);
+
+        expect(drawNothing).toHaveBeenCalledTimes(1);
+        expect(findNode(root, 'Verse 2')).toBeNull();
+        const chorus = findNode(root, 'Chorus')!;
+        expect(Array.from(root.children)).toEqual([chorus, ...frames]);
+
+        // What it holds is still what is on screen: the next move pairs it.
+        expect(move(root, slides[2])).toBe(true);
+        expect(chorus.isConnected).toBe(false);
+        expect(findNode(root, 'Verse 2')!.style.top).toBe('0px');
+    });
 });

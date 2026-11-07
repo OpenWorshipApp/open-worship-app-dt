@@ -1,0 +1,8 @@
+{
+    "latinStopWords": {
+        "ro-RO": "și în de la nu cu să a pe lui"
+    },
+    "languageAliases": {
+        "moldovan": "moldovian"
+    }
+}

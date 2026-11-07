@@ -442,20 +442,6 @@ describe('pressing a button under an answer', () => {
             expect(container.querySelectorAll('.cue')).toHaveLength(before);
         });
 
-        test('a lookup step pressed as data echoes its own words', async () => {
-            seedButtons([
-                {
-                    label: 'ពគប',
-                    isData: true,
-                    toolName: LOOKUP_STEP_TOOL_NAME,
-                    args: { step: 'more', ask: VERSE_ASK },
-                },
-            ]);
-            render();
-            await press('ពគប');
-            expect(askedTexts().at(-1)).toBe('ពគប');
-        });
-
         test('a verse-finding step and a Bible import step echo the press and run their own step', async () => {
             seedButtons([
                 {

@@ -290,3 +290,80 @@ describe('lookup graph source', () => {
         expect(toLocationTypeKey('unknown')).toBe('place');
     });
 });
+
+describe('lookup graph source with legacy and dangling references', () => {
+    function makeLegacyManagers() {
+        const names = [
+            nameRecord('jacob', {
+                name: 'Jacob',
+                // A legacy entry by NAME, never by id.
+                locations: ['Bethel'],
+                children: ['joseph', 'ghost'],
+            }),
+            nameRecord('joseph', {
+                name: 'Joseph',
+                parents: ['jacob', 'nobody'],
+            }),
+        ];
+        const locations = [locationRecord('bethel', { name: 'Bethel' })];
+        return {
+            namesLookupManager: {
+                getAllRecords: () => names,
+                getRecordById: (id: string) => {
+                    return (
+                        names.find((record) => {
+                            return record.id === id;
+                        }) ?? null
+                    );
+                },
+            },
+            locationsLookupManager: {
+                getRecordById: (id: string) => {
+                    return (
+                        locations.find((record) => {
+                            return record.id === id;
+                        }) ?? null
+                    );
+                },
+                getByName: (name: string) => {
+                    return (
+                        locations.find((record) => {
+                            return record.name === name;
+                        }) ?? null
+                    );
+                },
+            },
+        } as unknown as LookupManagersType;
+    }
+
+    it('finds a record that names the location only by its name', () => {
+        const managers = makeLegacyManagers();
+        expect(
+            findNamesMentioningLocation(managers, 'bethel').map((record) => {
+                return record.id;
+            }),
+        ).toEqual(['jacob']);
+        expect(findNamesMentioningLocation(managers, 'shechem')).toEqual([]);
+    });
+
+    it('leaves ids the dataset never defines out of the adjacency', () => {
+        const managers = makeLegacyManagers();
+        const adjacency = buildUndirectedNameAdjacency(
+            managers.namesLookupManager,
+        );
+        expect([...adjacency.keys()].sort()).toEqual(['jacob', 'joseph']);
+        expect(adjacency.get('jacob')).toEqual(new Set(['joseph']));
+        expect(adjacency.get('joseph')).toEqual(new Set(['jacob']));
+    });
+
+    it('the source labels a path with the same hops as the helper', () => {
+        const managers = makeLegacyManagers();
+        const refList = [nameRef('joseph'), nameRef('jacob')];
+        expect(lookupGraphSource.getPathHopList!(managers, refList)).toEqual([
+            { relation: 'child', isReversed: true },
+        ]);
+        expect(lookupGraphSource.getPathHopList!(managers, refList)).toEqual(
+            getPathHopList(managers, refList),
+        );
+    });
+});

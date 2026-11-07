@@ -100,3 +100,35 @@ test("in the menu button's strip it takes the strip, short of the button", async
     expect(banner.classList.contains('pb-2')).toBe(true);
     expect(banner.style.marginTop).toBe('-26px');
 });
+
+// One banner instance serves every document the previewer shows in turn.
+test('opened on one document, it starts closed again on the next', async () => {
+    const renderFonts = async (missingFontFamilyList: string[]) => {
+        await act(async () => {
+            root.render(
+                <MissingFontFamilyBannerComp
+                    missingFontFamilyList={missingFontFamilyList}
+                />,
+            );
+        });
+    };
+    const isOpen = () => {
+        return (
+            container
+                .querySelector('[aria-expanded]')
+                ?.getAttribute('aria-expanded') === 'true'
+        );
+    };
+    await renderFonts(['Calibri']);
+    await pressHeader();
+    expect(isOpen()).toBe(true);
+
+    // The same fonts read again (a re-render, a reload) leave it as it is.
+    await renderFonts(['Calibri']);
+    expect(isOpen()).toBe(true);
+
+    await renderFonts(['Khmer OS Battambang']);
+    expect(isOpen()).toBe(false);
+    expect(getBanner()!.textContent).toContain('Missing fonts (1)');
+    expect(getBanner()!.textContent).not.toContain('Click a font');
+});

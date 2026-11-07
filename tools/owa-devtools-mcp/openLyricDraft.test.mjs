@@ -766,33 +766,6 @@ describe('a song read off a page', () => {
         );
     });
 
-    test('pairs a line in a second language with the line above it', () => {
-        // An indented line under a lyric line IS its translation (schema.md
-        // §2), which is exactly what a bilingual song page draws. The Khmer
-        // below is ordinary vocabulary, not a lyric.
-        const draft = draftOpenLyric(
-            [
-                '--- BEGIN WEBSITE TEXT ---',
-                'Blue Lantern',
-                'The Made Up Singers',
-                'playlist_add',
-                'swap_vert',
-                '|',
-                'D',
-                'ខ្ញុំច្រៀង',
-                'I am singing',
-                '|',
-                'A',
-                'ដោយអំណរ',
-                'and I am glad of it',
-                '--- END WEBSITE TEXT ---',
-            ].join('\n'),
-        );
-        expectValid(draft);
-        expect(draft.markdown).toContain('\n\tI am singing');
-        expect(draft.guessed.join(' ')).toContain('second language');
-    });
-
     test('numbers a hymn whose stanzas are numbered in line', () => {
         const draft = draftOpenLyric(
             [
@@ -827,17 +800,6 @@ describe('a song read off a page', () => {
         expect(draft.markdown).not.toContain('1 a lantern');
         expect(draft.markdown).toContain('a lantern on the water');
         expect(draft.markdown).not.toContain('Log in');
-    });
-
-    test('reads a verse number written in another script', () => {
-        expect(parseSectionLabel('១.')).toMatchObject({
-            header: 'Verse',
-            index: 1,
-        });
-        expect(parseSectionLabel('៤.')).toMatchObject({
-            header: 'Verse',
-            index: 4,
-        });
     });
 
     test('refuses a key the notation has no name for, and says so', () => {

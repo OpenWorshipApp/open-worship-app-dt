@@ -23,12 +23,14 @@ vi.mock('../helper/appHooks', () => ({
 }));
 
 import KeyboardEventListener from '../event/KeyboardEventListener';
+import { useAppEffect } from '../helper/appHooks';
 import {
     KEYING_AREA_PRIORITY,
     findKeyingAreaElementToFocus,
     forgetKeyingAreaPresses,
     handleKeyingAreaKeyDown,
     registerKeyingArea,
+    useKeyingAreaTakeOver,
 } from './keyingAreaHelpers';
 
 const unregisterList: (() => void)[] = [];
@@ -330,5 +332,66 @@ describe('keyingAreaHelpers', () => {
         KeyboardEventListener.removeLayer('popup');
         press(400);
         expect(document.activeElement).toBe(flow.element);
+    });
+
+    test('with nothing able to hold focus at all, the press goes to the area at once', () => {
+        const flow = addArea(KEYING_AREA_PRIORITY.presentingFlow, true);
+        // A document with no element active, not even its body.
+        const activeElementSpy = vi
+            .spyOn(document, 'activeElement', 'get')
+            .mockReturnValue(null);
+        const focusSpy = vi.spyOn(flow.element, 'focus');
+        const { event, isSpent } = press(0, { target: null });
+        activeElementSpy.mockRestore();
+        // Nothing to take the keys FROM, so nothing is spent on it.
+        expect(isSpent).toBe(false);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+    });
+
+    test('the hand-over listens to the whole window, ahead of everything, until unmounted', () => {
+        const flow = addArea(KEYING_AREA_PRIORITY.presentingFlow, true);
+        const outside = addFocusable('button');
+        // Whatever holds focus never sees the spent press.
+        const outsidePresses: string[] = [];
+        outside.addEventListener('keydown', (event) => {
+            outsidePresses.push(event.key);
+        });
+        function sendPageDown() {
+            const event = new KeyboardEvent('keydown', {
+                key: 'PageDown',
+                bubbles: true,
+                cancelable: true,
+            });
+            document.activeElement!.dispatchEvent(event);
+            return event;
+        }
+
+        useKeyingAreaTakeOver();
+        const [effect, deps] = vi.mocked(useAppEffect).mock.calls.at(-1)!;
+        // Mounted once, for the life of the page.
+        expect(deps).toEqual([]);
+        let cleanup = effect() as () => void;
+        outside.focus();
+        sendPageDown();
+        sendPageDown();
+        const thirdPress = sendPageDown();
+        expect(thirdPress.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(flow.element);
+        expect(outsidePresses).toEqual(['PageDown', 'PageDown']);
+
+        // Two presses, then the page goes: they are not carried over to the
+        // next mount.
+        outside.focus();
+        sendPageDown();
+        sendPageDown();
+        cleanup();
+        // Unmounted: the keys are the focused control's own again.
+        sendPageDown();
+        expect(document.activeElement).toBe(outside);
+        cleanup = effect() as () => void;
+        expect(sendPageDown().defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(outside);
+        cleanup();
     });
 });

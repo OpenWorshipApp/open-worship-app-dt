@@ -4,15 +4,21 @@ import {
     applyTextTransform,
     calcCoverRect,
     calcObjectFit,
+    checkIsSameRect,
+    checkIsSameRunStyle,
     compositeOverBlack,
     extractScreenBodyFontFamily,
     fileUrlToPath,
     parseCssColor,
     parseDataUrl,
+    parseObjectPosition,
+    parsePx,
     toAlign,
     toBoxGeometry,
     toCollapsedText,
+    toFileExtension,
 } from './pptxStyleHelpers';
+import type { PptxRunType } from './pptxXmlHelpers';
 
 function genRadiusStyle(value: string) {
     return {
@@ -53,6 +59,16 @@ describe('parseCssColor', () => {
         expect(parseCssColor('')).toBeNull();
         expect(parseCssColor('#12')).toBeNull();
         expect(parseCssColor('hsl(0 0% 0%)')).toBeNull();
+        expect(parseCssColor('#12345')).toBeNull();
+        expect(parseCssColor('rgb(1, 2)')).toBeNull();
+        expect(parseCssColor('rgb(a, b, c)')).toBeNull();
+    });
+
+    test('reads percentage channels', () => {
+        expect(parseCssColor('rgb(100%, 50%, 0%)')).toEqual({
+            hex: 'FF8000',
+            alpha: 1,
+        });
     });
 
     test('a translucent background shows the black of a screen through', () => {
@@ -126,6 +142,40 @@ describe('calcObjectFit / calcCoverRect', () => {
         expect(painted).toEqual({ x: 240, y: 0, width: 1440, height: 1080 });
     });
 
+    test('none paints the picture at its own size, cut only where it overflows', () => {
+        expect(calcObjectFit(box, 800, 600, 'none', center)).toEqual({
+            box: { x: 560, y: 240, width: 800, height: 600 },
+            crop: null,
+        });
+        expect(calcObjectFit(box, 3840, 2160, 'none', center)).toEqual({
+            box,
+            crop: { left: 0.25, top: 0.25, right: 0.25, bottom: 0.25 },
+        });
+    });
+
+    test('scale-down shrinks a big picture to fit but never enlarges a small one', () => {
+        expect(calcObjectFit(box, 800, 600, 'scale-down', center)).toEqual({
+            box: { x: 560, y: 240, width: 800, height: 600 },
+            crop: null,
+        });
+        expect(calcObjectFit(box, 3840, 2160, 'scale-down', center)).toEqual({
+            box,
+            crop: null,
+        });
+    });
+
+    test('object-position keywords and percentages place the picture', () => {
+        expect(parseObjectPosition('left top')).toEqual({ x: 0, y: 0 });
+        expect(parseObjectPosition('right bottom')).toEqual({ x: 1, y: 1 });
+        expect(parseObjectPosition('center center')).toEqual({
+            x: 0.5,
+            y: 0.5,
+        });
+        expect(parseObjectPosition('25% 75%')).toEqual({ x: 0.25, y: 0.75 });
+        // lengths are not read: centered
+        expect(parseObjectPosition('10px 20px')).toEqual({ x: 0.5, y: 0.5 });
+    });
+
     test('a screen covers with whole pixels, centered', () => {
         expect(calcCoverRect(1920, 1080, 1280, 720)).toEqual({
             x: 0,
@@ -182,6 +232,12 @@ describe('text helpers', () => {
         expect(applyTextTransform('amazing grace', 'capitalize')).toBe(
             'Amazing Grace',
         );
+        expect(applyTextTransform('AMAZING Grace', 'lowercase')).toBe(
+            'amazing grace',
+        );
+        expect(applyTextTransform('AMAZING Grace', 'none')).toBe(
+            'AMAZING Grace',
+        );
     });
 
     test('text-align maps onto PowerPoint alignment', () => {
@@ -207,5 +263,74 @@ describe('text helpers', () => {
         expect(extractScreenBodyFontFamily('div{color:red}')).toBe(
             'system-ui, sans-serif',
         );
+    });
+});
+
+describe('toFileExtension', () => {
+    test('reads the extension of a path or URL, without its query', () => {
+        expect(toFileExtension('C:/Pictures/Cross.JPG')).toBe('jpg');
+        expect(toFileExtension('https://x.org/a/b.png?size=2#top')).toBe('png');
+        expect(toFileExtension('/media/background')).toBe('');
+    });
+});
+
+describe('parsePx / checkIsSameRect', () => {
+    test('reads a computed length, and nothing as 0', () => {
+        expect(parsePx('12.5px')).toBe(12.5);
+        expect(parsePx('auto')).toBe(0);
+        expect(parsePx('')).toBe(0);
+    });
+
+    test('two rects within half a pixel on every side are the same', () => {
+        const rect = { x: 10, y: 20, width: 300, height: 40 };
+        expect(
+            checkIsSameRect(rect, {
+                x: 10.4,
+                y: 19.6,
+                width: 300.4,
+                height: 40,
+            }),
+        ).toBe(true);
+        for (const key of ['x', 'y', 'width', 'height'] as const) {
+            expect(
+                checkIsSameRect(rect, { ...rect, [key]: rect[key] + 0.5 }),
+            ).toBe(false);
+        }
+    });
+});
+
+describe('checkIsSameRunStyle', () => {
+    const run: PptxRunType = {
+        text: 'Amazing',
+        fontFamily: 'Arial',
+        fontSize: 40,
+        color: { hex: 'FFFFFF', alpha: 1 },
+        isBold: false,
+        isItalic: false,
+        isUnderline: false,
+        isStrike: false,
+        letterSpacing: 0,
+        baselineShift: 0,
+        lang: 'en-US',
+    };
+
+    test('runs differing only in text share a style', () => {
+        expect(checkIsSameRunStyle(run, { ...run, text: ' grace' })).toBe(true);
+    });
+
+    test.each([
+        ['fontFamily', 'Moul'],
+        ['fontSize', 41],
+        ['color', { hex: 'FFFFFE', alpha: 1 }],
+        ['color', { hex: 'FFFFFF', alpha: 0.5 }],
+        ['isBold', true],
+        ['isItalic', true],
+        ['isUnderline', true],
+        ['isStrike', true],
+        ['letterSpacing', 1],
+        ['baselineShift', 33],
+        ['lang', 'km-KH'],
+    ])('a different %s is a different style', (key, value) => {
+        expect(checkIsSameRunStyle(run, { ...run, [key]: value })).toBe(false);
     });
 });

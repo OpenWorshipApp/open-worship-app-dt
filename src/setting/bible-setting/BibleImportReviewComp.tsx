@@ -5,6 +5,7 @@ import {
 } from '../../../tools/owa-devtools-mcp/bibleBookNames.mjs';
 import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 import { allLocalesMap, tran, type LocaleType } from '../../lang/langHelpers';
+import { loadLangBibleBooks } from '../../lang/langPackageFileHelpers';
 import {
     getAllXMLFileKeys,
     type BibleXMLJsonType,
@@ -69,16 +70,10 @@ function mergeNameResults(
     return combined;
 }
 
+// The name sets the language's own package ships (`bibleBooks.json`), or none
+// for a language with no package.
 async function readBuiltInNames(locale: string): Promise<NamesResultType> {
-    const language = locale.split('-')[0];
-    const sets =
-        language === 'km'
-            ? (await import('../../lang/data/km/bibleBooks.json')).default
-            : language === 'fr'
-              ? (await import('../../lang/data/fr/bibleBooks.json')).default
-              : language === 'en'
-                ? (await import('../../lang/data/en/bibleBooks.json')).default
-                : [];
+    const sets = await loadLangBibleBooks(locale);
     return {
         bookNames: sets.map((set) => set.books),
         sources: sets.map((set) => ({

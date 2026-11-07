@@ -1,8 +1,8 @@
 /**
  * When the chat box's input aid asks, and what it asks for (2026-10-18).
  *
- * Asked for with a picture of a lookup conversation whose box held `១` and
- * offered nothing: _assistant should help the input ... book auto complete ->
+ * Asked for with a picture of a lookup conversation whose box held a Khmer
+ * digit one and offered nothing: _assistant should help the input ... book auto complete ->
  * chapter -> verse_, then _if for location/name then should recommend the
  * auto-complete_. The rows come from `owa_bible_suggest` (the app's own
  * Bibles and names lookup); this decides the questions, and is pure so every
@@ -20,6 +20,8 @@
 import {
     checkIsInLanguageScript,
     listAssistantLanguages,
+    SENTENCE_END_MARKS,
+    toCharClassSource,
 } from './chatLangHelpers';
 import { checkHasWord, toPlainAsk } from './bibleReaderChatHelpers';
 
@@ -32,7 +34,7 @@ export type BibleInputSuggestAskType = {
     /** Kept in front of the chosen name: `Who was ` + `Moses`. */
     fillPrefix?: string;
     /** The words being completed are Latin: fill the KJV name (`Moses`),
-     *  not the lookup language's (`ម៉ូសេ`). */
+     *  not the lookup language's spelling of it. */
     useLatinFill?: boolean;
 };
 
@@ -50,12 +52,19 @@ const MAX_REFERENCE_LENGTH = 40;
 const MIN_NAME_LENGTH = 3;
 // 99% of the lookup's Khmer names are 15 letters or fewer, and a name is
 // completed from its start, so a longer run is a sentence: Khmer writes one
-// with no space, and `តើមានខគម្ពីរណាផ្សេងទៀតដែលទាក់ទងនឹងបទគម្ពីរនេះ?` under a
-// passage card loaded the 34MB names dataset to complete it (2026-10-23).
+// with no space, and a Khmer "are there other verses related to this
+// passage?" under a passage card loaded the 34MB names dataset to complete
+// it (2026-10-23).
 const MAX_BARE_NAME_LENGTH = 16;
-const SENTENCE_MARK_PATTERN = /[?？!！។៕,，]/u;
-// A question's lead word (`តើ`) with more than this after it is the question
-// being typed; the names that start the same way are short (`តើស៊ីស`).
+const SENTENCE_END_CLASS = toCharClassSource(SENTENCE_END_MARKS);
+const SENTENCE_MARK_PATTERN = new RegExp(
+    `[?？!！${SENTENCE_END_CLASS},，]`,
+    'u',
+);
+// A name's end: its question or full stop, in any script here.
+const NAME_END_PATTERN = new RegExp(`[\\s?!.${SENTENCE_END_CLASS}]+$`, 'u');
+// A question's lead word (`nameAskLead`) with more than this after it is the
+// question being typed; the names that start the same way are short.
 const MAX_AFTER_LEAD_LENGTH = 4;
 const ENGLISH_NAME_ASK_PATTERN =
     /^(?:who|where)\s+(?:was|were|is|are)\s+(.+)$/i;
@@ -69,9 +78,9 @@ function checkIsNameCue(text: string) {
     });
 }
 
-// `តើម៉ូសេជានរណា` -- the name is what comes before the language's own
+// A Khmer "who is Moses" -- the name is what comes before the language's own
 // "who is" words, once the sentence's leading function words are taken off
-// (`តើ`). A whole sentence that asks something else gives a phrase no name
+// (`nameAskLead`). A whole sentence that asks something else gives a phrase no name
 // lookup matches, and no suggestion is the honest answer.
 function readLocalizedNameAsk(plain: string): BibleInputSuggestAskType | null {
     for (const language of listAssistantLanguages()) {
@@ -96,7 +105,7 @@ function readLocalizedNameAsk(plain: string): BibleInputSuggestAskType | null {
                     }
                 }
             }
-            const name = candidate.replace(/[\s?!.។៕]+$/u, '').trim();
+            const name = candidate.replace(NAME_END_PATTERN, '').trim();
             if (name.length >= 2 && !/\p{Nd}/u.test(name)) {
                 return {
                     kind: 'name',
@@ -137,10 +146,7 @@ function checkIsQuestionRun(word: string) {
 }
 
 function toTrailingNameFragment(text: string) {
-    const tail = text
-        .replace(/[\s?!.។៕]+$/u, '')
-        .replace(/^\s+/, '')
-        .trim();
+    const tail = text.replace(NAME_END_PATTERN, '').replace(/^\s+/, '').trim();
     return tail.length >= MIN_NAME_LENGTH && !/\p{Nd}/u.test(tail)
         ? tail
         : null;
@@ -241,7 +247,7 @@ export function toBibleInputSuggestRows(
             continue;
         }
         // A Latin question names the person in Latin (`Moses`), not in the
-        // lookup language's script (`ម៉ូសេ`); the KJV name is the one.
+        // lookup language's script; the KJV name is the one.
         const fillText =
             useLatinFill &&
             typeof detail === 'string' &&

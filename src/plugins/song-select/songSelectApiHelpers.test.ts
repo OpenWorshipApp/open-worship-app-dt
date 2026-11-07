@@ -113,6 +113,29 @@ describe('searchSongs', () => {
         expect(result.totalPages).toBe(2);
     });
 
+    test('authors that are not a list read as none; nameless entries drop', async () => {
+        fetchMock.mockResolvedValue(
+            genJsonResponse({
+                pagination: { pageSize: 10, pageNumber: 1, totalItems: 2 },
+                data: {
+                    results: [
+                        { id: 'id-1', title: 'One', authors: 'John Newton' },
+                        {
+                            id: 'id-2',
+                            title: 'Two',
+                            authors: [{ name: 'Isaac Watts' }, {}, null, ''],
+                        },
+                    ],
+                },
+            }),
+        );
+        const result = await searchSongs('x', 1);
+        expect(result.records.map((record) => record.authors)).toEqual([
+            [],
+            ['Isaac Watts'],
+        ]);
+    });
+
     test('retries once with a forced refresh on 401', async () => {
         fetchMock
             .mockResolvedValueOnce(genJsonResponse({}, 401))

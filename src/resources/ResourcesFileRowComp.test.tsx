@@ -14,8 +14,21 @@ const h = vi.hoisted(() => ({
     readResourceNoteItemsMock: vi.fn(),
     showAppContextMenuMock: vi.fn(),
     openChatbotWithFileMock: vi.fn(),
+    copyToClipboardMock: vi.fn(),
+    revealMock: vi.fn(),
     isAiEnabled: false,
 }));
+
+vi.mock('../server/appHelpers', async (importOriginal) => {
+    // Partial: only the clipboard and the file manager, which leave the app.
+    const original =
+        await importOriginal<typeof import('../server/appHelpers')>();
+    return {
+        ...original,
+        copyToClipboard: h.copyToClipboardMock,
+        showFileOrDirExplorer: h.revealMock,
+    };
+});
 
 vi.mock('../helper/ai/aiHelpers', async (importOriginal) => {
     const original =
@@ -444,6 +457,89 @@ describe('ResourcesFileRowComp previews', () => {
         expect(getRowButton().getAttribute('aria-expanded')).toBeNull();
     });
 
+    test('a link read that lands after the row moved to another file is dropped', async () => {
+        const genLinks = (title: string) => ({
+            links: [{ title, url: 'https://example.com/' + title }],
+            droppedCount: 0,
+            isTruncated: false,
+            failureReason: null,
+        });
+        let finishOldRead!: (result: unknown) => void;
+        h.readResourceLinksMock
+            .mockImplementationOnce(() => {
+                return new Promise((resolve) => {
+                    finishOldRead = resolve;
+                });
+            })
+            .mockResolvedValueOnce(genLinks('NewStudy'));
+        await renderRow('/r/YouTube/GEN.1.json', null, true);
+        // The same row, re-used for the next file while the first is read.
+        await act(async () => {
+            root!.render(
+                <ResourcesFileRowComp
+                    filePath="/r/YouTube/GEN.1.more.json"
+                    bookKey="GEN"
+                    canAutoExpandLinks
+                />,
+            );
+        });
+        await flush();
+        await act(async () => {
+            finishOldRead(genLinks('OldStudy'));
+        });
+        await flush();
+        expect(h.readResourceLinksMock).toHaveBeenCalledTimes(2);
+        expect(container!.textContent).toContain('NewStudy');
+        expect(container!.textContent).not.toContain('OldStudy');
+    });
+
+    test("each menu item does what it says, on the row's own file", async () => {
+        async function openMenu(filePath: string) {
+            await renderRow(filePath);
+            await act(async () => {
+                getRowButton().dispatchEvent(
+                    new MouseEvent('contextmenu', { bubbles: true }),
+                );
+            });
+            const menuItems: any[] =
+                h.showAppContextMenuMock.mock.calls.at(-1)![1];
+            return async (label: string) => {
+                const item = menuItems.find((one) => {
+                    return one.menuElement === label;
+                });
+                expect(item, label).toBeDefined();
+                await act(async () => {
+                    item.onSelect();
+                });
+                await flush();
+            };
+        }
+        let select = await openMenu('/r/Document/GEN.1.md');
+        await select('Preview');
+        expect(h.openMarkdownPreviewMock).toHaveBeenCalledWith(
+            '/r/Document/GEN.1.md',
+        );
+        await select('Open');
+        expect(h.openFileMock).toHaveBeenCalledWith('/r/Document/GEN.1.md');
+        await select('Copy Path to Clipboard');
+        expect(h.copyToClipboardMock).toHaveBeenCalledWith(
+            '/r/Document/GEN.1.md',
+        );
+        // isMac in this file's app: the Finder wording.
+        await select('Reveal in Finder');
+        expect(h.revealMock).toHaveBeenCalledWith('/r/Document/GEN.1.md');
+        await act(async () => {
+            root?.unmount();
+        });
+
+        select = await openMenu('/r/Document/GEN.1.pdf');
+        await select('Preview PDF');
+        expect(h.openPdfPreviewMock).toHaveBeenCalledWith(
+            '/r/Document/GEN.1.pdf',
+        );
+        expect(h.openMarkdownPreviewMock).toHaveBeenCalledTimes(1);
+    });
+
     test('verse-matched JSON is read as it appears', async () => {
         h.readResourceLinksMock.mockResolvedValue({
             links: [{ title: 'Study', url: 'https://example.com/study' }],
@@ -513,7 +609,7 @@ describe('ResourcesFileRowComp previews', () => {
                     },
                 },
                 {
-                    bibleKey: 'ពគប',
+                    bibleKey: '✝✝',
                     target: {
                         bookKey: 'GEN',
                         chapter: 4,
@@ -521,7 +617,7 @@ describe('ResourcesFileRowComp previews', () => {
                         verseEnd: 17,
                     },
                     toTitle: async () => {
-                        return 'លោកុប្បត្តិ ៤:១៥-១៧';
+                        return '✝♪ ４:１５-１７';
                     },
                 },
             ];
@@ -534,8 +630,8 @@ describe('ResourcesFileRowComp previews', () => {
                     chapter: 4,
                     verseStart: 15,
                     verseEnd: 17,
-                    title: 'លោកុប្បត្តិ ៤:១៥-១៧',
-                    bibleKey: 'ពគប',
+                    title: '✝♪ ４:１５-１７',
+                    bibleKey: '✝✝',
                 },
             );
             await act(async () => {
@@ -549,8 +645,8 @@ describe('ResourcesFileRowComp previews', () => {
                 {
                     bookKey: 'GEN',
                     chapter: 4,
-                    title: 'លោកុប្បត្តិ ៤:១៥-១៧',
-                    bibleKey: 'ពគប',
+                    title: '✝♪ ４:１５-１７',
+                    bibleKey: '✝✝',
                 },
             );
             await act(async () => {
@@ -576,6 +672,17 @@ describe('ResourcesFileRowComp previews', () => {
             expect(getMenuLabels()[0]).toBe(
                 'Ask the Assistant About This File',
             );
+            // The item asks exactly as the 🤖 does, and opens no file.
+            const askItem = h.showAppContextMenuMock.mock.calls.at(-1)![1][0];
+            await act(async () => {
+                askItem.onSelect();
+            });
+            await flush();
+            expect(h.openChatbotWithFileMock).toHaveBeenCalledWith(
+                '/r/pdf/LUK.6.pdf',
+                null,
+            );
+            expect(h.openPdfPreviewMock).not.toHaveBeenCalled();
         });
 
         test('is not offered on a file the assistant cannot read', async () => {

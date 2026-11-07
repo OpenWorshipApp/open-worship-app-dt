@@ -21,7 +21,11 @@
 import type { LookupAskType } from '../helper/ai/lookupAskHelpers';
 import { toValidLookupAsk } from '../helper/ai/lookupAskHelpers';
 import { fillWords, tran } from './chatTranHelpers';
-import { getAssistantLanguage, toShownDigits } from './chatLangHelpers';
+import {
+    getAssistantLanguage,
+    listAssistantLanguages,
+    toShownDigits,
+} from './chatLangHelpers';
 import type { BotActionType } from './helpBotHelpers';
 import {
     RESOURCE_ASK_LABEL_TEMPLATE,
@@ -61,7 +65,8 @@ export type LookupStepType = {
     // A language the person named when they asked for another Bible
     // ("show this in Khmer"): the list keeps the Bibles in it, when there
     // are any (2026-10-19).
-    preferLanguage?: 'en' | 'km' | 'fr';
+    // A language code of a package here (`listAssistantLanguages`).
+    preferLanguage?: string;
     // A word study's place: the verse by its key (`GEN 8:1`), the word as
     // the verse writes it, the verse's English reference (`Genesis 8:1`,
     // what a web search is written with) and where a long list's page starts.
@@ -71,11 +76,16 @@ export type LookupStepType = {
     from?: number;
 };
 
-const PREFER_LANGUAGE_LIST: LookupStepType['preferLanguage'][] = [
-    'en',
-    'km',
-    'fr',
-];
+// A saved button names a language the app may no longer have: only one
+// with a package here is taken back.
+function checkIsPreferLanguage(code: unknown): code is string {
+    return (
+        typeof code === 'string' &&
+        listAssistantLanguages().some((language) => {
+            return language.code === code;
+        })
+    );
+}
 
 const STEP_NAME_LIST: LookupStepNameType[] = [
     'open',
@@ -169,7 +179,7 @@ export function toValidLookupStep(raw: any): LookupStepType | null {
     if (ask === null) {
         return null;
     }
-    const preferLanguage = PREFER_LANGUAGE_LIST.includes(raw.preferLanguage)
+    const preferLanguage = checkIsPreferLanguage(raw.preferLanguage)
         ? { preferLanguage: raw.preferLanguage }
         : {};
     if (raw.step === 'near') {

@@ -1,0 +1,8 @@
+{
+    "locale": "fr-FR",
+    "order": 2,
+    "name": "French",
+    "nativeName": "Français",
+    "version": "0.0.20",
+    "description": "The app in French, with French Bible book names."
+}

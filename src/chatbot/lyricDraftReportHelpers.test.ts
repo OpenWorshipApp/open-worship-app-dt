@@ -1,9 +1,11 @@
-import { readFileSync } from 'node:fs';
-
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { draftOpenLyricText } from '../../tools/owa-devtools-mcp/openLyricDraft.mjs';
-import { extractDictionary } from '../../tools/owa-devtools-mcp/tran.mjs';
+import { readSourceDictionary } from '../../tools/owa-devtools-mcp/langPacks.mjs';
+import {
+    listLangPackageCodes,
+    toLangPackageDir,
+} from '../test-setup/langPackageDirs';
 import { setChatTranslator } from './chatTranHelpers';
 import { readDraftReport } from './lyricDraftHelpers';
 import {
@@ -19,12 +21,7 @@ afterEach(() =>
 );
 
 function useLanguage(lang: string) {
-    const dictionary = extractDictionary(
-        readFileSync(
-            new URL(`../lang/data/${lang}/index.ts`, import.meta.url),
-            'utf8',
-        ),
-    );
+    const dictionary = readSourceDictionary(toLangPackageDir(lang));
     const translate = (key: string) => {
         const value = dictionary[key.trim().toLowerCase()];
         if (value === undefined) throw new Error(`Missing ${lang} key: ${key}`);
@@ -33,7 +30,20 @@ function useLanguage(lang: string) {
     setChatTranslator(translate, translate);
 }
 
-describe.each(['km', 'fr'])('song draft wording in %s', (lang) => {
+// Every language package but English, found by its folder.
+// Every hand-made package (one the assistant is written for, an
+// `assistant.json`): a machine-translated one may rightly keep a loanword --
+// Filipino's "key" -- that this test reads as English left behind.
+const LANG_LIST = listLangPackageCodes({
+    isEnglishIncluded: false,
+    fileName: 'assistant.json',
+});
+
+test('the wording is held in every language package there is', () => {
+    expect(LANG_LIST).not.toContain('en');
+});
+
+describe.each(LANG_LIST)('song draft wording in %s', (lang) => {
     test('translates summary labels without changing title, author, parts or musical data', () => {
         useLanguage(lang);
         const translated = translateDraftReport({

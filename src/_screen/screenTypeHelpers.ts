@@ -58,6 +58,13 @@ export type LongTextItemDataType = {
         // Who put it up -- the panel session -- so that one, and nothing else,
         // marks it on screen, restyles it and takes it down.
         sourceId: string;
+        // Stack: every language in the same row, one under the other, under
+        // one header. Kept only while on; a build that does not know it
+        // draws the columns side by side, which is still the text.
+        isStacked?: true;
+        // Hide Number: the rows go up without their numbers. Kept only while
+        // on, like Stack.
+        isNumberHidden?: true;
     };
     scroll: number;
     selectedKJVVerseKey: string | null;

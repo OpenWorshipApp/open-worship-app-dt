@@ -105,15 +105,15 @@ describe('building the derived lookup files', () => {
                     namesMap: {
                         'id-abram': {
                             id: 'id-abram',
-                            name: 'អ័ប្រាម',
-                            title: 'ឪពុករបស់ជាតិសាសន៍ជាច្រើន',
+                            name: '✝✝✝✝',
+                            title: '✝✝✝♪',
                             type: 'person',
                         },
                         // Present here, unknown to English: nothing can ever
                         // reference it, so it must not reach the sidecar.
                         'id-only-khmer': {
                             id: 'id-only-khmer',
-                            name: 'តែខ្មែរ',
+                            name: '✝✝✝☀',
                             title: '',
                             type: 'person',
                         },
@@ -123,8 +123,8 @@ describe('building the derived lookup files', () => {
                     locationsMap: [
                         {
                             id: 'id-haran',
-                            name: 'ហារ៉ាន',
-                            title: 'ក្រុងមួយក្នុងស្រុកមេសូប៉ូតាមា',
+                            name: '✝✝✝♥',
+                            title: '✝✝✝★',
                         },
                     ],
                 },
@@ -137,13 +137,13 @@ describe('building the derived lookup files', () => {
             expect(h.readLangCodes).toStrictEqual(['en', 'km']);
             const { ids } = built!.index;
             expect(built!.recordLabels.labels[ids.indexOf('id-abram')]).toBe(
-                'អ័ប្រាម',
+                '✝✝✝✝',
             );
             expect(built!.recordLabels.labels[ids.indexOf('id-haran')]).toBe(
-                'ហារ៉ាន',
+                '✝✝✝♥',
             );
             expect(built!.recordLabels.titles[ids.indexOf('id-abram')]).toBe(
-                'ឪពុករបស់ជាតិសាសន៍ជាច្រើន',
+                '✝✝✝♪',
             );
         });
 
@@ -162,14 +162,14 @@ describe('building the derived lookup files', () => {
             const built = await buildLookupTextIndex('km');
 
             expect(built!.index.ids).not.toContain('id-only-khmer');
-            expect(built!.recordLabels.labels).not.toContain('តែខ្មែរ');
+            expect(built!.recordLabels.labels).not.toContain('✝✝✝☀');
             expect(built!.recordLabels.labels).toHaveLength(
                 built!.index.ids.length,
             );
         });
 
         // Shown beside the translated label the way a bible book reads
-        // `លោកុប្បត្តិ (Genesis)`.
+        // `<its own name> (Genesis)`.
         test('keeps the English name of every relabelled record', async () => {
             const built = await buildLookupTextIndex('km');
 
@@ -218,13 +218,13 @@ describe('building the needles file for a translated bible', () => {
                 namesMap: {
                     'id-abram': {
                         id: 'id-abram',
-                        name: 'អឰប្រាម',
+                        name: '✝✝✝☼',
                         // A second spelling the text may use instead.
-                        oldName: 'អឰប្រហា្ម',
+                        oldName: '✝✝✝☘',
                     },
                     // Unknown to the English pass, so no id was ever minted for
                     // it and nothing could reference it.
-                    'id-only-khmer': { id: 'id-only-khmer', name: 'តែខ្មែរ' },
+                    'id-only-khmer': { id: 'id-only-khmer', name: '✝✝✝☀' },
                 },
             },
             locationsMap: {
@@ -233,7 +233,7 @@ describe('building the needles file for a translated bible', () => {
                         id: 'id-haran',
                         // A translated package leaves the disambiguator in
                         // English around the translated name.
-                        name: 'ហារ៉ាន in មេសូប៉ូតាមា',
+                        name: '✝✝✝♥ in ✝✝✝⚑',
                     },
                 ],
             },
@@ -249,7 +249,7 @@ describe('building the needles file for a translated bible', () => {
         expect(needles!.needles).toHaveLength(ids.length);
         // Covered by the translation.
         expect(needles!.needles[ids.indexOf('id-abram')]).toBe(
-            ['អឰប្រាម', 'អឰប្រហា្ម'].join(NEEDLE_SEPARATOR),
+            ['✝✝✝☼', '✝✝✝☘'].join(NEEDLE_SEPARATOR),
         );
         // Not covered, and still written so the array cannot mis-index.
         expect(needles!.needles[ids.indexOf('id-satan')]).toBe('');
@@ -263,7 +263,7 @@ describe('building the needles file for a translated bible', () => {
 
         expect(
             needles!.needles[ids.indexOf('id-haran')].split(NEEDLE_SEPARATOR),
-        ).toStrictEqual(['ហារ៉ាន in មេសូប៉ូតាមា', 'ហារ៉ាន']);
+        ).toStrictEqual(['✝✝✝♥ in ✝✝✝⚑', '✝✝✝♥']);
     });
 
     test('reads exactly one package and never the English one', async () => {
@@ -277,5 +277,143 @@ describe('building the needles file for a translated bible', () => {
 
     test('gives up when that language ships no dataset', async () => {
         expect(await buildLookupTextNeedles('fr', ['id-abram'])).toBeNull();
+    });
+});
+
+describe('records the builder skips or reshapes', () => {
+    const longTitle = 'word '.repeat(30);
+
+    function genOddEnglishData() {
+        return {
+            namesMap: {
+                namesMap: {
+                    // A label carrying a disambiguator scripture never spells.
+                    'id-elhanan': {
+                        id: 'id-elhanan',
+                        name: 'Elhanan son of Dodo',
+                        title: '   ',
+                        type: 'person',
+                    },
+                    // A blank name still has its old one; neither title nor
+                    // type is a string.
+                    'id-blank': {
+                        id: 'id-blank',
+                        name: '   ',
+                        oldName: 'Joshua',
+                        title: 42,
+                        type: 7,
+                    },
+                    // No id at all: nothing can be interned for it.
+                    'no-id': { name: 'Nameless', title: 'Lost' },
+                    'id-long': {
+                        id: 'id-long',
+                        name: 'Long',
+                        title: longTitle,
+                    },
+                },
+                versePersonsMap: {
+                    'GEN 1:1': [],
+                    'GEN 1:2': 'id-elhanan',
+                    'GEN 1:3': ['id-long'],
+                },
+            },
+            // A dataset version with no verse map for places.
+            locationsMap: { locationsMap: [] },
+        };
+    }
+
+    test('the English pass interns only usable records and trims long titles', async () => {
+        h.lookupDataMap = { en: genOddEnglishData() };
+
+        const built = await buildLookupTextIndex('en');
+
+        expect(built!.index).toMatchObject({
+            ids: ['id-elhanan', 'id-blank', 'id-long'],
+            names: {
+                'elhanan son of dodo': [0],
+                elhanan: [0],
+                joshua: [1],
+                long: [2],
+            },
+            locations: {},
+            // The empty and the malformed verse entries are dropped.
+            verseNames: { 'GEN 1:3': [2] },
+            verseLocations: {},
+        });
+        expect(built!.recordLabels).toMatchObject({
+            labels: ['Elhanan son of Dodo', '   ', 'Long'],
+            types: ['person', '', ''],
+            titles: ['', '', Array(24).fill('word').join(' ') + '...'],
+            kjvNames: ['', '', ''],
+        });
+    });
+
+    test('a selected language with no dataset leaves the English labels', async () => {
+        const built = await buildLookupTextIndex('fr');
+
+        expect(h.readLangCodes).toStrictEqual(['en']);
+        expect(built!.index.ids).toStrictEqual([
+            'id-abram',
+            'id-satan',
+            'id-haran',
+        ]);
+        expect(built!.recordLabels.labels).toStrictEqual([
+            'Abram',
+            'Satan',
+            'Haran',
+        ]);
+        expect(built!.recordLabels.kjvNames).toStrictEqual(['', '', '']);
+    });
+
+    test('a translated record without an id relabels nothing', async () => {
+        h.lookupDataMap.km = {
+            namesMap: {
+                namesMap: {
+                    'no-id': { name: '✝✝✝☁', title: '✝✝✝☁' },
+                    'id-abram': { id: 'id-abram', name: '✝✝✝✝', title: '' },
+                },
+            },
+            locationsMap: { locationsMap: [{ name: '✝✝✝♥' }] },
+        };
+
+        const built = await buildLookupTextIndex('km');
+        const { ids } = built!.index;
+
+        expect(built!.recordLabels.labels[ids.indexOf('id-abram')]).toBe(
+            '✝✝✝✝',
+        );
+        expect(built!.recordLabels.kjvNames[ids.indexOf('id-abram')]).toBe(
+            'Abram',
+        );
+        // The untitled translation keeps the English title.
+        expect(built!.recordLabels.titles[ids.indexOf('id-abram')]).toBe(
+            'Father of many nations',
+        );
+        expect(built!.recordLabels.labels[ids.indexOf('id-haran')]).toBe(
+            'Haran',
+        );
+    });
+
+    test('the needles skip a record without an id and a name of only invisible marks', async () => {
+        h.lookupDataMap.km = {
+            namesMap: {
+                namesMap: {
+                    ghost: { name: '✝✝✝☠' },
+                    'id-abram': {
+                        id: 'id-abram',
+                        name: '​‌',
+                        oldName: '✝✝✝✝',
+                    },
+                },
+            },
+            locationsMap: { locationsMap: [] },
+        };
+
+        const needles = await buildLookupTextNeedles('km', [
+            'id-abram',
+            'id-haran',
+        ]);
+
+        expect(needles!.needles).toStrictEqual(['✝✝✝✝', '']);
     });
 });

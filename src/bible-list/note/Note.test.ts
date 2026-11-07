@@ -502,6 +502,141 @@ describe('bible-list/note Note editing history', () => {
             'agent edit',
         );
     });
+
+    // One damaged item must not take the note file's other items down, and
+    // must not be erased by the next edit either: it is the user's data.
+    test('an unreadable item is told, shown as an error and written back untouched', async () => {
+        const brokenItem = {
+            title: 'Broken',
+            content: 42,
+            metadata: { id: 3 },
+        };
+        const note = genNote([genItem(1, 'fine'), brokenItem]);
+        const [fine, broken] = note.items;
+        expect(fine.content).toBe('fine');
+        expect(fine.isError).toBe(false);
+        expect(broken.isError).toBe(true);
+        expect(broken.id).toBe(-1);
+        expect(h.showSimpleToastMock).toHaveBeenCalledWith(
+            'Instantiating Note Item',
+            'Invalid note item data',
+        );
+
+        note.addNoteItem(genNote([genItem(7, 'added')]).items[0]);
+        await note.save();
+        const writtenItems = JSON.parse(readWrittenFile()).items;
+        expect(writtenItems).toHaveLength(3);
+        expect(writtenItems[1]).toEqual(brokenItem);
+        expect(writtenItems[2].content).toBe('added');
+    });
+
+    test('getEditingItemById answers the head’s unsaved text, else the saved item', async () => {
+        const note = genNote([genItem(1, 'saved text'), genItem(2, 'two')]);
+        h.getCurrentHistoryMock.mockResolvedValue(
+            JSON.stringify(genNoteJson([genItem(1, 'unsaved text')])),
+        );
+        expect((await note.getEditingItemById(1))?.content).toBe(
+            'unsaved text',
+        );
+        // The head does not hold this item: the saved one, not nothing.
+        expect((await note.getEditingItemById(2))?.content).toBe('two');
+        // No head at all.
+        h.getCurrentHistoryMock.mockResolvedValue(null);
+        expect((await note.getEditingItemById(1))?.content).toBe('saved text');
+        expect(await note.getEditingItemById(99)).toBeNull();
+    });
+
+    test('only the file named Default is the default note', () => {
+        expect(genNote([]).isDefault).toBe(true);
+        const other = Note.fromJson('/notes/Sermons.own', genNoteJson([]))!;
+        expect(other.isDefault).toBe(false);
+    });
+
+    test('an item added to the default note is saved there, or reported as not added', async () => {
+        h.getDirPathMock.mockReturnValue('/notes');
+        h.fsListFilesWithMimetypeMock.mockResolvedValue([FILE_PATH]);
+        h.readFileDataMock.mockResolvedValue(
+            JSON.stringify(genNoteJson([genItem(1, 'existing')])),
+        );
+        const noteItem = genNote([genItem(5, 'to the default')]).items[0];
+        expect(await Note.addNoteItemToDefault(noteItem)).toBe(noteItem);
+        expect(h.writeFileDataMock).toHaveBeenCalledOnce();
+        expect(
+            JSON.parse(readWrittenFile()).items.map((item: any) => [
+                item.metadata.id,
+                item.content,
+            ]),
+        ).toEqual([
+            [1, 'existing'],
+            [2, 'to the default'],
+        ]);
+
+        h.writeFileDataMock.mockResolvedValue(false);
+        expect(await Note.addNoteItemToDefault(noteItem)).toBeNull();
+
+        h.getDirPathMock.mockReturnValue(null);
+        h.writeFileDataMock.mockClear();
+        expect(await Note.addNoteItemToDefault(noteItem)).toBeNull();
+        expect(h.writeFileDataMock).not.toHaveBeenCalled();
+    });
+
+    test('a move whose destination write fails tells the user and leaves the source alone', async () => {
+        const sourcePath = '/notes/Source.own';
+        h.readFileDataMock.mockImplementation(async (filePath: string) =>
+            filePath === sourcePath
+                ? JSON.stringify(genNoteJson([genItem(4, 'move me')]))
+                : null,
+        );
+        h.writeFileDataMock.mockRejectedValue(new Error('Disk is full'));
+        const target = genNote([]);
+        await target.moveItemFrom(sourcePath);
+        expect(h.showSimpleToastMock).toHaveBeenLastCalledWith(
+            'Moving Note Item',
+            'Disk is full',
+        );
+        // Only the failed destination write: the source never lost its item.
+        expect(h.writeFileDataMock.mock.calls.map(([path]) => path)).toEqual([
+            FILE_PATH,
+        ]);
+    });
+
+    test('a list save leaves a head it cannot read alone', async () => {
+        h.checkHasHistoriesMock.mockResolvedValue(true);
+        h.getCurrentHistoryMock.mockResolvedValue('{ not a note');
+        const note = genNote([genItem(1, 'a')]);
+        expect(await note.save()).toBe(true);
+        expect(h.handleErrorMock).toHaveBeenCalledOnce();
+        expect(h.addHistoryMock).not.toHaveBeenCalled();
+    });
+
+    test('a new item is flashed in the list by its file and id', () => {
+        const note = genNote([genItem(1, 'one')]);
+        note.addNoteItem(genNote([genItem(9, 'new')]).items[0]);
+        const [findElement] = h.notifyElementHighlightMock.mock.calls[0];
+        const element = { tagName: 'LI' };
+        const querySelector = vi.fn(() => element);
+        vi.stubGlobal('document', { querySelector });
+        try {
+            expect(findElement()).toBe(element);
+        } finally {
+            vi.unstubAllGlobals();
+        }
+        expect(querySelector).toHaveBeenCalledWith(
+            '[data-note-item-id="Default-2"]',
+        );
+    });
+
+    test('a reload that finds no file and no head keeps what it has', async () => {
+        const note = genNote([genItem(1, 'kept')]);
+        h.readFileDataMock.mockResolvedValue(null);
+        h.getCurrentHistoryMock.mockResolvedValue(null);
+        await note.reload();
+        expect(note.items.map((item) => item.content)).toEqual(['kept']);
+        await note.reloadEditing();
+        expect(note.items.map((item) => item.content)).toEqual(['kept']);
+        expect(h.readFileDataMock).toHaveBeenCalledWith(FILE_PATH);
+        expect(h.getCurrentHistoryMock).toHaveBeenCalledTimes(2);
+    });
 });
 
 describe('bible-list/note Note reading, defaults and failures', () => {

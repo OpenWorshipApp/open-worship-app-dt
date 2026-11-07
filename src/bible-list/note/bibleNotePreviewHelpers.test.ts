@@ -35,4 +35,9 @@ describe('bibleNotePreviewHelpers', () => {
     test('refuses a path that is not a note file', () => {
         expect(getBibleNotePreviewFilePath(genUrl('/etc/passwd'))).toBeNull();
     });
+
+    test('a window address that does not parse is not a preview', () => {
+        expect(getBibleNotePreviewFilePath('not a url')).toBeNull();
+        expect(getBibleNotePreviewFilePath('')).toBeNull();
+    });
 });

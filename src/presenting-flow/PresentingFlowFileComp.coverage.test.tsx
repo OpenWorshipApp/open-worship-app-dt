@@ -9,6 +9,7 @@ const { state, mocks } = vi.hoisted(() => ({
         items: [] as any,
         payload: null as any,
         previewOpen: false,
+        whileLoading: null as null | (() => void),
     },
     mocks: {
         addItem: vi.fn(),
@@ -83,12 +84,16 @@ vi.mock('../others/LoadingComp', () => ({
 }));
 vi.mock('./PresentingFlow', () => ({
     default: {
-        getInstance: (path: string) => ({
-            filePath: path,
-            fileSource: { fireUpdateEvent: mocks.fireUpdate },
-            addItem: mocks.addItem,
-            addActionItem: mocks.addAction,
-        }),
+        getInstance: (path: string) => {
+            // What happens while the row is still asking for its model.
+            state.whileLoading?.();
+            return {
+                filePath: path,
+                fileSource: { fireUpdateEvent: mocks.fireUpdate },
+                addItem: mocks.addItem,
+                addActionItem: mocks.addAction,
+            };
+        },
     },
 }));
 vi.mock('./presentingFlowActionHelpers', () => {
@@ -209,6 +214,7 @@ beforeEach(() => {
     state.items = [];
     state.payload = null;
     state.previewOpen = false;
+    state.whileLoading = null;
     presentingFlowDraggingStore.current = null;
     mocks.addItem.mockResolvedValue(true);
     mocks.addAction.mockResolvedValue(true);
@@ -348,6 +354,49 @@ describe('PresentingFlowFileComp', () => {
         mocks.askArming.mockResolvedValueOnce(null);
         await nested[0].onSelect();
         expect(mocks.addAction).not.toHaveBeenCalled();
+        await act(async () => rendered.root.unmount());
+    });
+
+    test('an open sheet spins while its lines are read, and says so when they cannot be', async () => {
+        state.items = undefined;
+        const rendered = await render();
+        expect(rendered.container.textContent).toContain('loading');
+        expect(rendered.container.textContent).not.toContain('Drop items here');
+
+        state.items = null;
+        await act(async () =>
+            rendered.root.render(
+                <PresentingFlowFileComp index={2} filePath="/run.owpf" />,
+            ),
+        );
+        expect(rendered.container.textContent).toContain('read-error');
+        expect(rendered.container.textContent).not.toContain('loading');
+        await act(async () => rendered.root.unmount());
+    });
+
+    test('a drop on a row whose sheet is not loaded yet is let go', async () => {
+        state.payload = {
+            droppedData: { type: 'slide' },
+            dragData: { raw: true },
+        };
+        let earlyDrop: Promise<void> | null = null;
+        state.whileLoading = () => {
+            state.whileLoading = null;
+            earlyDrop = state.handlerProps.onDrop({});
+        };
+        const rendered = await render();
+        expect(earlyDrop).not.toBeNull();
+        await expect(earlyDrop).resolves.toBeUndefined();
+        expect(mocks.addItem).not.toHaveBeenCalled();
+        expect(mocks.toast).not.toHaveBeenCalled();
+        expect(mocks.setOpened).not.toHaveBeenCalled();
+
+        // Once it is, the same drop is taken.
+        await state.handlerProps.onDrop({});
+        expect(mocks.addItem).toHaveBeenCalledExactlyOnceWith(
+            state.payload.droppedData,
+            state.payload.dragData,
+        );
         await act(async () => rendered.root.unmount());
     });
 });

@@ -11,12 +11,16 @@ import {
     getScreenBibleColumns,
     getScreenBibleScrollTop,
     getScreenBibleScroller,
+    markScreenBibleProgrammaticScroll,
     steerScreenBibleAutoScroll,
     toScreenBibleColumnClassName,
     toScreenBibleScrollSelector,
     wireScreenBibleColumns,
 } from './screenBibleColumnHelpers';
-import { applyRemoteScrollPercentage } from './managers/screenScrollSyncHelpers';
+import {
+    applyRemoteScrollPercentage,
+    registerScrollingSyncEvent,
+} from './managers/screenScrollSyncHelpers';
 import {
     checkIsSubPixelScrolling,
     getSubPixelScrollTop,
@@ -341,4 +345,45 @@ test('a screen with no columns steers nothing', () => {
     alignScreenBibleColumns(div);
     followScreenBibleHost(div);
     expect(frames.size).toBe(0);
+});
+
+test("a selection brought into view scrolls every column as the window's own doing: none of it is sent", () => {
+    const { div, columns } = screen();
+    const send = vi.fn();
+    wireScreenBibleColumns(div, columns, send);
+    // The operator wheels the short column: it leads, and what it scrolls
+    // next is sent on to the other windows...
+    wheel(columns[0], 100);
+    settle();
+    columns[0].scrollTop = 150;
+    settle();
+    expect(send).toHaveBeenCalledTimes(2);
+
+    // ...until a selection is brought into view: that scroll is this
+    // window's own, in the leader as much as in the box around it.
+    markScreenBibleProgrammaticScroll(div);
+    columns[0].scrollTop = 250;
+    settle();
+    expect(send).toHaveBeenCalledTimes(2);
+});
+
+test('a screen in one box marks just that box', () => {
+    const div = document.createElement('div');
+    Object.defineProperties(div, {
+        clientHeight: { value: 200 },
+        clientWidth: { value: 300 },
+        scrollWidth: { value: 300 },
+        scrollHeight: { value: 1000 },
+    });
+    document.body.append(div);
+    const callback = vi.fn();
+    registerScrollingSyncEvent(div, callback);
+    div.scrollTop = 100;
+    div.dispatchEvent(new Event('scroll'));
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    markScreenBibleProgrammaticScroll(div);
+    div.scrollTop = 300;
+    div.dispatchEvent(new Event('scroll'));
+    expect(callback).toHaveBeenCalledTimes(1);
 });

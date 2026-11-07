@@ -1,0 +1,12 @@
+{
+    "ig": {
+        "name": "Igbo",
+        "nativeName": "Igbo",
+        "script": "Latin",
+        "words": "na nke ka bụ a m gị ya anyị unu ha kedu gịnị ebee olee mere onye ahụ enweghị ga nwere ike chọrọ kwa biko daalụ",
+        "letters": "ịọụṅ",
+        "yes": ["ee", "ee, biko"],
+        "no": ["mba"],
+        "order": 34
+    }
+}

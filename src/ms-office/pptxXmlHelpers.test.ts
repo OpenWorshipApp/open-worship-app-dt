@@ -190,6 +190,34 @@ describe('genPptxSlideSize / genPptxUnits', () => {
         expect(deck.heightEmu).toBe(28803600);
     });
 
+    test('a slide thinner than PowerPoint`s 1in minimum is scaled up to it', () => {
+        expect(genPptxSlideSize(1920, 50)).toEqual({
+            emuPerPx: 18288,
+            widthEmu: 35112960,
+            heightEmu: 914400,
+        });
+        // too long to scale up whole: the long side stays at 56in and the
+        // short side is held at 1in
+        expect(genPptxSlideSize(6000, 10)).toEqual({
+            emuPerPx: 8534.4,
+            widthEmu: 51206400,
+            heightEmu: 914400,
+        });
+    });
+
+    test('a slide with no size keeps the deck scale', () => {
+        expect(genPptxUnits(DECK, 0, 1080)).toEqual({
+            emuPerPx: 9525,
+            offsetX: 0,
+            offsetY: 0,
+        });
+        expect(genPptxUnits(DECK, 1920, -1)).toEqual({
+            emuPerPx: 9525,
+            offsetX: 0,
+            offsetY: 0,
+        });
+    });
+
     test('a slide of another shape is fitted into the deck, centered', () => {
         const units = genPptxUnits(DECK, 1080, 1080);
         expect(units.emuPerPx).toBe(9525);
@@ -310,6 +338,126 @@ describe('genSlideXml', () => {
         expect(relsXml).toContain(
             'Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide"',
         );
+    });
+
+    test('writes outlines, empty boxes, run decorations and an opaque color background', () => {
+        const model: PptxSlideModelType = {
+            width: 1920,
+            height: 1080,
+            background: {
+                kind: 'color',
+                color: { hex: '112233', alpha: 0.5 },
+            },
+            elements: [
+                {
+                    kind: 'shape',
+                    name: 'outlined box',
+                    box: { x: 10, y: 20, width: 400, height: 100, rotation: 0 },
+                    geometry: {
+                        kind: 'ellipticRoundRect',
+                        radiusX: 40,
+                        radiusY: 10,
+                    },
+                    fill: null,
+                    line: { width: 4, color: { hex: 'FF0000', alpha: 1 } },
+                    textBody: null,
+                },
+                {
+                    kind: 'shape',
+                    name: 'styled text',
+                    box: { x: 0, y: 0, width: 400, height: 100, rotation: 0 },
+                    geometry: {
+                        kind: 'ellipticRoundRect',
+                        radiusX: 0,
+                        radiusY: 10,
+                    },
+                    fill: { hex: '000000', alpha: 0 },
+                    textBody: {
+                        align: 'l',
+                        lineSpacing: 50,
+                        insets: { left: 0, top: 0, right: 0, bottom: 0 },
+                        lines: [
+                            {
+                                runs: [
+                                    genRun('x2', {
+                                        isUnderline: true,
+                                        isStrike: true,
+                                        letterSpacing: 2,
+                                        baselineShift: 33,
+                                    }),
+                                ],
+                                isNewParagraph: true,
+                            },
+                        ],
+                    },
+                },
+                {
+                    kind: 'picture',
+                    name: 'uncropped',
+                    box: { x: 0, y: 0, width: 100, height: 100, rotation: 0 },
+                    geometry: { kind: 'rect' },
+                    fill: null,
+                    media: { fileName: 'image1.png' },
+                    crop: { left: 0, top: 0, right: 0, bottom: 0 },
+                    opacity: 1,
+                },
+            ],
+            note: '',
+            isHidden: false,
+        };
+        const { xml, document } = genSlide(model);
+        expect(xml).toContain(
+            '<p:bg><p:bgPr><a:solidFill><a:srgbClr val="112233"/></a:solidFill>',
+        );
+        const [outlined, styled] = Array.from(
+            document.getElementsByTagName('p:sp'),
+        );
+        // an elliptic corner is a custom outline in the shape's EMU size
+        const path = outlined.getElementsByTagName('a:path')[0];
+        expect(path.getAttribute('w')).toBe('3810000');
+        expect(path.getAttribute('h')).toBe('952500');
+        const arc = outlined.getElementsByTagName('a:arcTo')[0];
+        expect(arc.getAttribute('wR')).toBe('381000');
+        expect(arc.getAttribute('hR')).toBe('95250');
+        const shapeProperties = outlined.getElementsByTagName('p:spPr')[0];
+        expect(
+            Array.from(shapeProperties.children).map((child) => {
+                return child.tagName;
+            }),
+        ).toEqual(['a:xfrm', 'a:custGeom', 'a:noFill', 'a:ln']);
+        const line = outlined.getElementsByTagName('a:ln')[0];
+        expect(line.getAttribute('w')).toBe('38100');
+        expect(
+            line.getElementsByTagName('a:srgbClr')[0].getAttribute('val'),
+        ).toBe('FF0000');
+        // no text: one empty centered paragraph
+        const emptyBody = outlined.getElementsByTagName('p:txBody')[0];
+        expect(
+            emptyBody
+                .getElementsByTagName('a:bodyPr')[0]
+                .getAttribute('anchor'),
+        ).toBe('ctr');
+        expect(emptyBody.getElementsByTagName('a:endParaRPr')).toHaveLength(1);
+        expect(emptyBody.getElementsByTagName('a:r')).toHaveLength(0);
+
+        // a zero corner is a plain rectangle; a fully transparent fill is none
+        expect(
+            styled.getElementsByTagName('a:prstGeom')[0].getAttribute('prst'),
+        ).toBe('rect');
+        expect(
+            styled
+                .getElementsByTagName('p:spPr')[0]
+                .getElementsByTagName('a:noFill'),
+        ).toHaveLength(2);
+        const runProperties = styled.getElementsByTagName('a:rPr')[0];
+        expect(runProperties.getAttribute('u')).toBe('sng');
+        expect(runProperties.getAttribute('strike')).toBe('sngStrike');
+        expect(runProperties.getAttribute('spc')).toBe('150');
+        expect(runProperties.getAttribute('baseline')).toBe('33000');
+
+        // nothing cut from the picture: no source rectangle at all
+        expect(document.getElementsByTagName('p:pic')).toHaveLength(1);
+        expect(document.getElementsByTagName('a:srcRect')).toHaveLength(0);
     });
 
     test('paints a slide with nothing behind it black, as a screen does', () => {

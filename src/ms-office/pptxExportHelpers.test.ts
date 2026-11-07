@@ -8,6 +8,7 @@ const fake = vi.hoisted(() => ({
     mediaResults: [] as unknown[],
     createdPaths: [] as string[],
     failOnStream: 0,
+    onWrite: null as null | ((stream: any, chunk: Uint8Array) => void),
     deleteFile: vi.fn(async () => {}),
     toast: vi.fn(),
     reveal: vi.fn(),
@@ -42,12 +43,13 @@ vi.mock('../server/fileHelpers', () => ({
                 this.handlers.set(name, handler);
                 return this;
             },
-            write(_chunk: Uint8Array, callback: (error?: Error) => void) {
+            write(chunk: Uint8Array, callback: (error?: Error) => void) {
                 callback(
                     fake.failOnStream === fake.streams.length
                         ? new Error('disk full')
                         : undefined,
                 );
+                fake.onWrite?.(this, chunk);
             },
             end(callback: () => void) {
                 callback();
@@ -99,7 +101,16 @@ vi.mock('./pptxSlideMeasureHelpers', () => ({
             ) => Promise<unknown>,
         ) {}
         async init() {}
-        async measureSlide(slide: { note: string; picture?: boolean }) {
+        async measureSlide(slide: {
+            note: string;
+            picture?: boolean;
+            brokenPicture?: boolean;
+        }) {
+            if (slide.brokenPicture) {
+                const load = async () => null as any;
+                fake.mediaResults.push(await this.addMedia('broken', load));
+                fake.mediaResults.push(await this.addMedia('broken', load));
+            }
             if (slide.picture) {
                 const load = async () => ({
                     bytes: Uint8Array.of(4),
@@ -164,6 +175,7 @@ describe('PPTX export coordinator', () => {
         fake.mediaResults = [];
         fake.createdPaths = [];
         fake.failOnStream = 0;
+        fake.onWrite = null;
         for (const mock of [
             fake.deleteFile,
             fake.toast,
@@ -254,4 +266,50 @@ describe('PPTX export coordinator', () => {
         expect(fake.reveal).not.toHaveBeenCalled();
         expect(fake.hideProgress).toHaveBeenCalledOnce();
     });
+
+    test('a picture that cannot be loaded is left out of the package', async () => {
+        const deck = document('Missing', [
+            { width: 100, height: 50, note: '', brokenPicture: true },
+        ]);
+        expect(await exportAppDocumentToPptx(deck)).toBe(
+            '/downloads/Missing.pptx',
+        );
+        expect(fake.mediaResults).toEqual([null, null]);
+        expect(
+            fake.entries.filter((entry) => entry.name.startsWith('ppt/media/')),
+        ).toEqual([]);
+        expect(fake.reveal).toHaveBeenCalledWith('/downloads/Missing.pptx');
+    });
+
+    test.each([
+        ['between two parts', (chunk: Uint8Array) => chunk[0] === 1],
+        [
+            'after the last part, before the file is closed',
+            (chunk: Uint8Array) => chunk[0] === 2,
+        ],
+    ])(
+        'a stream failure %s removes the partial deck',
+        async (_when, checkIsFailingChunk) => {
+            const failure = new Error('disk gone');
+            fake.onWrite = (stream, chunk) => {
+                if (checkIsFailingChunk(chunk)) {
+                    stream.handlers.get('error')(failure);
+                }
+            };
+            const deck = document('Gone', [
+                { width: 100, height: 50, note: '' },
+            ]);
+            expect(await exportAppDocumentToPptx(deck)).toBeNull();
+            expect(fake.streams[0].destroyed).toBe(true);
+            expect(fake.deleteFile).toHaveBeenCalledWith(
+                '/downloads/Gone.pptx',
+            );
+            expect(fake.handleError).toHaveBeenCalledWith(failure);
+            expect(fake.toast).toHaveBeenCalledWith(
+                'Export to PPTX',
+                'Unable to export the document to PPTX',
+            );
+            expect(fake.reveal).not.toHaveBeenCalled();
+        },
+    );
 });

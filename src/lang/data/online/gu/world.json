@@ -1,0 +1,9 @@
+{
+    "scriptLocales": [
+        {
+            "script": "Gujarati",
+            "locales": ["gu-IN"],
+            "order": 1800
+        }
+    ]
+}

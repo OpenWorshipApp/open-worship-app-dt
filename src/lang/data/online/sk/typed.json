@@ -1,0 +1,13 @@
+{
+    "sk": {
+        "name": "Slovak",
+        "nativeName": "Slovenčina",
+        "script": "Latin",
+        "words": "a i v vo z zo na do od po o u za pre bez sa si je sú bol bola to že ako čo kde prečo kedy kto ktorý ktorá ktoré či môj moja tvoj jeho jej náš ja ty on ona my vy oni môžem môže chcem musím tiež už ešte veľmi viac ten tá tento táto tu prosím ďakujem",
+        "letters": "äôľĺŕščžýáíéúďťň",
+        "family": "czech-slovak",
+        "yes": ["áno", "áno, prosím"],
+        "no": ["nie", "nie, ďakujem"],
+        "order": 10
+    }
+}

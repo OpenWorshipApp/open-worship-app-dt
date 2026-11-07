@@ -282,6 +282,38 @@ describe('file list container', () => {
         });
     });
 
+    it('offers Add Local Files alone without caller entries, and the button ignores other keys', async () => {
+        const fileSelectionOption = {
+            windowTitle: 'Choose files',
+            extensions: ['md'],
+            dirPath: '/library/songs',
+        };
+        await renderList({ header: 'Documents', fileSelectionOption });
+        const items = h.menuOptions.genItemsAddingMenuItems();
+        expect(
+            items.map((item: { menuElement: string }) => item.menuElement),
+        ).toEqual(['Add Local Files']);
+
+        const button = menuButton();
+        const otherKey = new KeyboardEvent('keydown', {
+            key: 'a',
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => button.dispatchEvent(otherKey));
+        expect(h.showMenu).not.toHaveBeenCalled();
+        expect(otherKey.defaultPrevented).toBe(false);
+        // Space opens it the way Enter does.
+        const space = new KeyboardEvent('keydown', {
+            key: ' ',
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => button.dispatchEvent(space));
+        expect(h.showMenu).toHaveBeenCalledOnce();
+        expect(space.defaultPrevented).toBe(true);
+    });
+
     it('offers folder selection when no directory is set', async () => {
         dirSource.dirPath = '';
         h.paths = null;

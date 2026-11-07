@@ -468,6 +468,38 @@ describe('bible-list/note bibleNoteHelpers', () => {
             ]);
         });
 
+        test('verseFullTextToListShorts stops at a chapter whose verses cannot be counted', async () => {
+            await setupInit();
+            h.getVersesCountMock.mockImplementation(
+                async (
+                    _bibleKey: string,
+                    _bookKey: string,
+                    chapter: number,
+                ) => {
+                    return chapter === 1 ? 31 : null;
+                },
+            );
+            h.bibleItemFromTitleTextMock.mockResolvedValue({
+                target: {
+                    bookKey: 'GEN',
+                    chapter: 1,
+                    verseStart: 30,
+                    verseEnd: 2,
+                    chapterEnd: 3,
+                },
+            });
+            expect(
+                await capturedConfig.verseFullTextToListShorts(
+                    'Genesis 1:30-3:2\n(30) text',
+                ),
+            ).toEqual(['GEN 1:30', 'GEN 1:31']);
+            // Nothing is guessed past the chapter it could not count.
+            expect(h.getVersesCountMock.mock.calls).toEqual([
+                ['KJV', 'GEN', 1],
+                ['KJV', 'GEN', 2],
+            ]);
+        });
+
         test('changeBibleKey returns null when no key prefix matches', async () => {
             await setupInit();
             expect(
@@ -586,6 +618,45 @@ describe('bible-list/note bibleNoteHelpers', () => {
             await flush();
             expect(note.reloadEditing).toHaveBeenCalled();
             expect(note.reload).not.toHaveBeenCalled();
+        });
+
+        test('file watch leaves the editor alone when the reloaded item reads as it already does', async () => {
+            const { note, bibleNote } = await setupInit();
+            note.getItemById.mockReturnValue({
+                id: 7,
+                content: 'note content',
+            });
+            await capturedWatchCb('change');
+            await flush();
+            expect(note.reloadEditing).toHaveBeenCalledOnce();
+            expect(note.getItemById).toHaveBeenCalledWith(7);
+            // Not pushed back into the editor: that would reset its caret.
+            expect(bibleNote.content).toBe('stored');
+        });
+
+        // The window closed inside the history debounce: the last words must
+        // still reach the editing history, and only once.
+        test('a window closed before the history debounce fires still keeps the last text, once', async () => {
+            const deferredRunList: (() => unknown)[] = [];
+            h.genTimeoutAttemptMock.mockReturnValue((fn: any) => {
+                deferredRunList.push(fn);
+            });
+            const { note, noteItem } = await setupInit();
+            await capturedConfig.saveData('typed just now');
+            expect(noteItem.content).toBe('typed just now');
+            expect(note.addItemEditingHistory).not.toHaveBeenCalled();
+
+            globalThis.dispatchEvent(new Event('pagehide'));
+            await flush();
+            expect(note.addItemEditingHistory).toHaveBeenCalledOnce();
+            expect(note.addItemEditingHistory).toHaveBeenCalledWith(noteItem);
+
+            // The second unload signal, and the debounce firing after all,
+            // find nothing left to write.
+            globalThis.dispatchEvent(new Event('beforeunload'));
+            await Promise.all(deferredRunList.map((run) => run()));
+            expect(deferredRunList).toHaveLength(1);
+            expect(note.addItemEditingHistory).toHaveBeenCalledOnce();
         });
 
         test('file watch skips when the item is unchanged or missing', async () => {

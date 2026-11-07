@@ -14,8 +14,9 @@ import type { AiChatGuestElementType } from './webviewTypes';
 
 describe('toUnicodeRange', () => {
     it("reads the letters a language's script pattern names", () => {
-        expect(toUnicodeRange('[\\u1780-\\u17FF\\u19E0-\\u19FF]')).toBe(
-            'U+1780-17FF, U+19E0-19FF',
+        // Two ranges of symbols, standing in for a script's letters.
+        expect(toUnicodeRange('[\\u2600-\\u26FF\\u2700-\\u27bf]')).toBe(
+            'U+2600-26FF, U+2700-27BF',
         );
         expect(toUnicodeRange('[A-Za-z]')).toBeNull();
     });
@@ -354,6 +355,26 @@ describe('applyGuestLanguageFont', () => {
         await applyGuestLanguageFont(element);
         expect(guest.executeJavaScript).not.toHaveBeenCalled();
         expect(guest.insertCSS).not.toHaveBeenCalled();
+    });
+
+    it('a face file that cannot be read sends nothing, and the next load tries again', async () => {
+        const fetchSpy = useFont().mockImplementation(async () => {
+            return new Response(null, { status: 404 });
+        });
+        const { guest, element } = genGuest(false);
+        await expect(applyGuestLanguageFont(element)).resolves.toBeUndefined();
+        expect(fetchSpy).toHaveBeenCalledWith('/fonts/Battambang-Regular.ttf');
+        // Only the mark was read: no font script, no style rule.
+        expect(guest.executeJavaScript).toHaveBeenCalledTimes(1);
+        expect(guest.insertCSS).not.toHaveBeenCalled();
+        // The guest is let go, so its next load event is not refused.
+        fetchSpy.mockImplementation(async () => {
+            return new Response(new Uint8Array([1, 2, 3]));
+        });
+        await applyGuestLanguageFont(element);
+        expect(guest.insertCSS).toHaveBeenCalledWith(
+            'body { font-family: "app-Battambang", anthropic-sans, system-ui; }',
+        );
     });
 
     it('puts the Settings face in front of the language face', async () => {

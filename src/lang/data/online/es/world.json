@@ -1,0 +1,13 @@
+{
+    "nativeLanguageNames": {
+        "español": "spanish"
+    },
+    "languageAliases": {
+        "espanol": "spanish",
+        "spain": "spanish",
+        "mexico": "spanish"
+    },
+    "latinStopWords": {
+        "es-ES": "y de la el que en los se no las por con su para del lo al"
+    }
+}

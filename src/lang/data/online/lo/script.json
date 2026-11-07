@@ -1,0 +1,4 @@
+{
+    "scriptPattern": "\\p{Script=Lao}",
+    "isUnspaced": true
+}

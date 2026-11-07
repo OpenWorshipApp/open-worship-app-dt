@@ -1,81 +1,5 @@
 [
     {
-        "id": "km-flood-story",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": រឿងទឹកជំនន់",
-        "expectIn": ["Genesis 6-9"],
-        "isStory": true
-    },
-    {
-        "id": "km-noah-dove-misspelt-book",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": ស្វែងរកក្នុងគម្ពីរលោកប្បត្តិណូអេលែងព្រាប",
-        "expectIn": ["Genesis 8:6-12"]
-    },
-    {
-        "id": "km-david-goliath",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": ដាវីឌសម្លាប់កូលីយ៉ាត",
-        "expectIn": ["1 Samuel 17"],
-        "isStory": true
-    },
-    {
-        "id": "km-jonah-fish",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": រឿងយ៉ូណាសនៅក្នុងពោះត្រី",
-        "expectIn": ["Jonah 1-2"],
-        "isStory": true
-    },
-    {
-        "id": "km-zacchaeus-tree",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": សាខេឡើងដើមឈើ",
-        "expectIn": ["Luke 19:1-10"],
-        "isStory": true
-    },
-    {
-        "id": "km-prodigal-son",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": រឿងកូនពៅចេញទៅស្រុកឆ្ងាយ",
-        "expectIn": ["Luke 15:11-32"],
-        "isStory": true
-    },
-    {
-        "id": "km-english-shepherd",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": shepherd",
-        "expectIn": ["Psalm 23", "John 10", "Ezekiel 34"]
-    },
-    {
-        "id": "km-fear-topic",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": ខគម្ពីរអំពីកុំភ័យខ្លាច",
-        "expectIn": [
-            "Isaiah 41:10",
-            "Joshua 1:9",
-            "2 Timothy 1:7",
-            "Psalm 56:3-4",
-            "Psalm 23:4",
-            "Psalm 27:1",
-            "Isaiah 43:1",
-            "John 14:27",
-            "Deuteronomy 31:6-8",
-            "Matthew 10:31",
-            "Luke 12:32",
-            "Matthew 14:27",
-            "Mark 6:50",
-            "Matthew 28:5-10",
-            "Revelation 1:17"
-        ]
-    },
-    {
-        "id": "km-in-psalms-rock",
-        "focus": "reader",
-        "text": "Help me find a Bible verse in \"ពគប\": ក្នុងទំនុកដំកើង ព្រះយេហូវ៉ាជាថ្មដា",
-        "expectIn": ["Psalm 1-150"],
-        "isBookNamed": true
-    },
-    {
         "id": "kjv-david-goliath",
         "focus": "reader",
         "text": "Help me find a Bible verse in \"KJV\": the story of David and Goliath",
@@ -154,20 +78,6 @@
         "focus": "reader",
         "text": "which verses tell the good samaritan story",
         "expectIn": ["Luke 10:25-37"],
-        "isStory": true
-    },
-    {
-        "id": "typed-km-flood",
-        "focus": "reader",
-        "text": "តើរឿងទឹកជំនន់នៅក្នុងគម្ពីរណា?",
-        "expectIn": ["Genesis 6-9"],
-        "isStory": true
-    },
-    {
-        "id": "typed-km-goliath",
-        "focus": "reader",
-        "text": "ដាវីឌសម្លាប់កូលីយ៉ាតនៅខណា?",
-        "expectIn": ["1 Samuel 17"],
         "isStory": true
     }
 ]

@@ -159,3 +159,33 @@ describe('canvas rulers', () => {
         expect(host.querySelector('canvas')!.width).toBe(200);
     });
 });
+
+describe('canvas ruler steps when zoomed far out', () => {
+    it('falls back to the widest step, 5000, once even that is narrower than 40px', async () => {
+        await act(async () =>
+            root.render(
+                <CanvasRulerComp
+                    isHorizontal
+                    logicalLength={20000}
+                    scale={0.004}
+                    isDarkTheme={false}
+                    onCreateGuide={vi.fn()}
+                />,
+            ),
+        );
+        const canvas = host.querySelector('canvas')!;
+        expect(canvas.style.width).toBe('80px');
+        // Major ticks every 5000 units around the center, minor ones every
+        // 1000: 21 ticks, five of them labelled.
+        expect(context.fillText.mock.calls.map((call) => call[0])).toEqual([
+            '-10000',
+            '-5000',
+            '0',
+            '5000',
+            '10000',
+        ]);
+        expect(context.stroke).toHaveBeenCalledTimes(21);
+        expect(context.moveTo.mock.calls[0]).toEqual([0.5, 18 - 18 * 0.65]);
+        expect(context.moveTo.mock.calls[1]).toEqual([4.5, 18 - 18 * 0.3]);
+    });
+});

@@ -144,6 +144,28 @@ describe('bible-reader readBibleHelpers', () => {
         }
     });
 
+    // The view dropped on can be gone from the layout by the time the drop
+    // lands (`seek` throws): reported, never thrown out of the drop handler.
+    test('applyDropped reports a drop the controller cannot place', () => {
+        const error = new Error('Bible item not found in nested structure');
+        const ctl = {
+            addBibleItemLeft: vi.fn(() => {
+                throw error;
+            }),
+        } as any;
+        const event = genEvent(50, 50, ['receiving-data-drop-left']);
+        event.dataTransfer.getData.mockReturnValue(
+            JSON.stringify({
+                type: DragTypeEnum.BIBLE_ITEM,
+                data: { bibleKey: 'ESV' },
+            }),
+        );
+        expect(() => {
+            applyDropped(event, ctl, { bibleKey: 'KJV' } as any);
+        }).not.toThrow();
+        expect(handleErrorMock.mock.calls).toEqual([[error]]);
+    });
+
     test('applyDropped copies bibleKey for target-only drops', () => {
         const ctl = { applyTargetOrBibleKey: vi.fn() } as any;
         const event = genEvent(50, 50, ['receiving-data-drop']);

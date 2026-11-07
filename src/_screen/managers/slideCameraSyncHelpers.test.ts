@@ -135,6 +135,28 @@ describe('slideCameraSyncHelpers', () => {
         expect(video.srcObject).toBeFalsy();
     });
 
+    test('a slide torn down while the device id resolves never opens the device', async () => {
+        let resolveId: (deviceId: string) => void = () => {};
+        resolveCameraDeviceIdMock.mockReturnValue(
+            new Promise<string>((resolve) => {
+                resolveId = resolve;
+            }),
+        );
+        const attachment = new SlideCameraAttachment();
+        const { video, badge } = createCameraVideo();
+
+        attachment.attach(video);
+        attachment.releaseAll();
+        resolveId('device-1');
+        await flushPromises();
+
+        // Nothing to release either: the camera light never came on.
+        expect(acquireCameraStreamMock).not.toHaveBeenCalled();
+        expect(releaseCameraStreamMock).not.toHaveBeenCalled();
+        expect(video.srcObject).toBeFalsy();
+        expect(badge.style.display).toBe('');
+    });
+
     test('leaves the placeholder alone when the camera is not on this machine', async () => {
         resolveCameraDeviceIdMock.mockResolvedValue(null);
         const attachment = new SlideCameraAttachment();

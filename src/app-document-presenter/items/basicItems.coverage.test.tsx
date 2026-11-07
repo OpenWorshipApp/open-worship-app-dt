@@ -356,11 +356,11 @@ describe('presenter item basic coverage', () => {
             {
                 id: 1,
                 type: 'html',
-                html: '<strong>Printable Khmer ក</strong><svg onload="globalThis.__en39Marker=true"></svg><iframe srcdoc="embedded"></iframe><div data-website-item data-website-url="https://example.org"></div>',
+                html: '<strong>Printable ✝ ♪</strong><svg onload="globalThis.__en39Marker=true"></svg><iframe srcdoc="embedded"></iframe><div data-website-item data-website-url="https://example.org"></div>',
             },
         ] as any);
         expect(generated.querySelector('strong')?.textContent).toBe(
-            'Printable Khmer ក',
+            'Printable ✝ ♪',
         );
         expect(
             generated.querySelector('[onload],iframe,[data-website-item]'),

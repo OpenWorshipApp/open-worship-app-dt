@@ -54,7 +54,7 @@ const DASH_VARIANTS = String.raw`[‐-―−﹘﹣－]`;
 
 /**
  * Spells a range the one way the tokenizer reads it. Each pass touches only
- * numbers and the separators BETWEEN numbers, so a book name — `1. Mose`, with
+ * numbers and the separators BETWEEN numbers, so a book name — `1. Xgen`, with
  * a dot followed by a space — is never rewritten.
  */
 export function normalizeBibleReferenceText(
@@ -86,7 +86,8 @@ export function normalizeBibleReferenceText(
         ),
         '$1',
     );
-    // `១៨.៣៣-១៩.១៦`: the dot as the chapter-verse separator, which the older
+    // `18.33-19.16` in a script's own digits: the dot as the chapter-verse
+    // separator, which the older
     // pass converts only once. A dot followed by a space is a book's own.
     text = text.replaceAll(
         new RegExp(String.raw`(?<=${D})\.(?=${D})`, 'gu'),

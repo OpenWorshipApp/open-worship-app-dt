@@ -118,7 +118,7 @@ function genNameRecord(overrides: object = {}) {
 }
 
 describe('detail body facts follow the lookup language', () => {
-    // Pilate under `km` read `មនុស្ស` beside an English `Male`.
+    // Pilate under the Khmer lookup read its word for a human beside an English `Male`.
     test('a name record translates its gender with its type', () => {
         h.nameRecord = genNameRecord();
         const { facts, rowText } = render(
@@ -137,7 +137,7 @@ describe('detail body facts follow the lookup language', () => {
         expect(rowText('Gender')).toBeNull();
     });
 
-    // Abraham under `km` read `175 years` beside `មនុស្ស` and `ប្រុស`.
+    // Abraham under the Khmer lookup read `175 years` beside its words for human and male.
     test('a name record translates its age and its year ranges', () => {
         h.nameRecord = genNameRecord({
             age: '175 years',
@@ -172,5 +172,97 @@ describe('detail body facts follow the lookup language', () => {
         );
         expect(facts).toBe('km:Pool');
         expect(rowText('Type')).toBe('km:Pool');
+    });
+});
+
+describe('detail bodies for a record that is gone or has a place on the map', () => {
+    function renderHost(element: React.ReactElement) {
+        const host = document.createElement('div');
+        host.innerHTML = renderToStaticMarkup(element);
+        return host;
+    }
+
+    test('a record id that no longer resolves says so', () => {
+        h.nameRecord = null;
+        h.locationRecord = null;
+        expect(
+            renderHost(
+                <RenderNameDetailComp
+                    recordId="gone"
+                    onVersesResolved={() => {}}
+                />,
+            ).textContent,
+        ).toBe('Record not found');
+        expect(
+            renderHost(
+                <RenderLocationDetailComp
+                    recordId="gone"
+                    onVersesResolved={() => {}}
+                />,
+            ).textContent,
+        ).toBe('Record not found');
+    });
+
+    test('a place with coordinates gets a sandboxed lazy map and a link out', () => {
+        h.locationRecord = {
+            name: 'Jerusalem',
+            title: '',
+            description: '',
+            type: 'city',
+            oldName: null,
+            modernIdentification: null,
+            relatedLocations: [],
+            verses: [],
+            coordinates: { latitude: 31.77, longitude: 35.23 },
+        };
+        const host = renderHost(
+            <RenderLocationDetailComp
+                recordId="x"
+                onVersesResolved={() => {}}
+            />,
+        );
+        const frame = host.querySelector('iframe')!;
+        expect(frame.getAttribute('title')).toBe('Jerusalem');
+        expect(frame.getAttribute('sandbox')).toBe('allow-scripts');
+        expect(frame.getAttribute('loading')).toBe('lazy');
+        expect(frame.getAttribute('referrerpolicy')).toBe(
+            'strict-origin-when-cross-origin',
+        );
+        expect(frame.getAttribute('src')).toBe(
+            'https://maps.google.com/maps?q=31.77%2C35.23&z=8&output=embed',
+        );
+        expect(frame.hasAttribute('allowfullscreen')).toBe(false);
+        const link = host.querySelector('.location-name-lookup__map a')!;
+        expect(link.getAttribute('href')).toBe(
+            'https://www.google.com/maps/search/?api=1&query=31.77%2C35.23',
+        );
+        expect(link.getAttribute('target')).toBe('_blank');
+        expect(link.getAttribute('rel')).toBe('noreferrer');
+        expect(link.textContent).toBe('Open in Google Maps');
+        expect(
+            host.querySelector('.location-name-lookup__map-note')!.textContent,
+        ).toBe('Approximate location, the marker is an estimated point');
+    });
+
+    test('a place without coordinates draws no map', () => {
+        h.locationRecord = {
+            name: 'Ophir',
+            title: '',
+            description: '',
+            type: 'region',
+            oldName: null,
+            modernIdentification: null,
+            relatedLocations: [],
+            verses: [],
+            coordinates: null,
+        };
+        const host = renderHost(
+            <RenderLocationDetailComp
+                recordId="x"
+                onVersesResolved={() => {}}
+            />,
+        );
+        expect(host.querySelector('iframe')).toBeNull();
+        expect(host.querySelector('.location-name-lookup__map')).toBeNull();
     });
 });

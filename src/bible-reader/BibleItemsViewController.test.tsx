@@ -233,6 +233,14 @@ describe('bible-reader BibleItemsViewController', () => {
             expect(ctl.getIsGroupScrollSynced('magenta')).toBe(true);
         });
 
+        test('no colour, no group: switching its scroll sync writes nothing', () => {
+            const ctl = genController();
+            ctl.setIsGroupScrollSynced('', true);
+            expect(h.setSettingMock).not.toHaveBeenCalled();
+            expect(ctl.addPropEvent).not.toHaveBeenCalled();
+            expect(ctl.getIsGroupScrollSynced('')).toBe(false);
+        });
+
         test('colorNoteMap round-trips and recovers from bad json', () => {
             const ctl = genController();
             expect(ctl.colorNoteMap).toEqual({});
@@ -951,7 +959,10 @@ describe('bible-reader BibleItemsViewController', () => {
             const ctl = genController();
             const { target } = makeVerseDom('GEN.1.2');
             target.parentElement!.parentElement!.classList.add('bible-view');
+            ctl.handleVersesHighlighting('GEN.1.1', true);
+            expect(target.classList.contains('selected')).toBe(false);
             ctl.handleVersesHighlighting('GEN.1.2', true);
+            expect(target.classList.contains('selected')).toBe(true);
             target.remove();
         });
 

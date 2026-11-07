@@ -1,0 +1,11 @@
+{
+    "tl": {
+        "name": "Tagalog",
+        "nativeName": "Tagalog",
+        "script": "Latin",
+        "words": "ang ng mga sa na at ay si ni kay ko mo niya namin natin ninyo nila ako ikaw ka siya kami tayo kayo sila paano ano saan bakit kailan sino alin ito iyan iyon dito doon hindi wala may mayroon puwede pwede gusto kailangan din rin lang po salamat",
+        "yes": ["oo", "opo", "oo, salamat"],
+        "no": ["hindi po", "hindi, salamat"],
+        "order": 27
+    }
+}

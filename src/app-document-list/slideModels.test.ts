@@ -477,4 +477,117 @@ describe('slide models', () => {
             },
         });
     });
+
+    test('lists each Bible the verse boxes read from, once', () => {
+        const slide = new Slide('/docs/verses.ows', {
+            ...createSlideJson(5),
+            canvasItems: [
+                { type: 'bible', bibleKeys: ['KJV', 'KHM'] },
+                // Only a verse box names a Bible.
+                { type: 'text', bibleKeys: ['NIV'] },
+                { type: 'bible', bibleKeys: ['KJV'] },
+                { type: 'bible' },
+            ] as any,
+        });
+        expect([...slide.getBibleKeys()]).toEqual(['KJV', 'KHM']);
+        expect(
+            new Slide('/docs/plain.ows', createSlideJson(6)).getBibleKeys()
+                .size,
+        ).toBe(0);
+    });
+
+    test('when the system fonts cannot be listed, no font is reported missing', async () => {
+        getFontFamiliesMock.mockResolvedValue(null);
+        const slide = new Slide('/docs/main.ows', {
+            ...createSlideJson(1),
+            canvasItems: [{ type: 'text', fontFamily: 'Nowhere Sans' } as any],
+        });
+        expect(await slide.getUnavailableFontFamilies()).toEqual([]);
+    });
+
+    test('clipboard text whose payload is not a slide pastes nothing', () => {
+        for (const data of ['a slide', 42, null, { id: 1 }]) {
+            expect(
+                Slide.clipboardDeserialize(
+                    JSON.stringify({ filePath: '/docs/main.ows', data }),
+                ),
+            ).toBeNull();
+        }
+    });
+
+    test('slides of different kinds are never the same slide, whatever their ids', () => {
+        const filePath = '/docs/deck.pptx';
+        const metadata = { width: 1280, height: 720 };
+        const slide = new Slide(filePath, createSlideJson(4));
+        const pdfSlide = new PdfSlide(filePath, {
+            id: 4,
+            name: 'Page 4',
+            imagePreviewSrc: 'file:///preview/page-4.png',
+            pdfPageNumber: 3,
+            metadata,
+            type: 'pdf-slide',
+        });
+        const pptxSlide = new PptxSlide(filePath, {
+            id: 4,
+            htmlFilePath: '/deck/slide-4.html',
+            html: '<section>Main</section>',
+            metadata,
+            images: [],
+            videos: [],
+            audios: [],
+            type: 'pptx-slide',
+        } as any);
+        const docxSlide = new DocxSlide(filePath, {
+            id: 4,
+            htmlFilePath: '/doc/page-4.html',
+            html: '<article>Page</article>',
+            metadata,
+            type: 'docx-slide',
+        });
+        const varySlides = [slide, pdfSlide, pptxSlide, docxSlide];
+        for (const varySlide of varySlides) {
+            expect(
+                varySlides.map((other) => varySlide.checkIsSame(other as any)),
+            ).toEqual(varySlides.map((other) => other === varySlide));
+        }
+        expect(Slide.checkIsThisType(pdfSlide)).toBe(false);
+        expect(Slide.checkIsThisType({})).toBe(false);
+    });
+
+    test('a PDF page whose canvas gives no drawing context copies nothing', async () => {
+        vi.stubGlobal(
+            'Image',
+            class {
+                width = 640;
+                height = 480;
+                onload?: () => void;
+                onerror?: () => void;
+
+                set src(_value: string) {
+                    queueMicrotask(() => {
+                        this.onload?.();
+                    });
+                }
+            },
+        );
+        const toDataURL = vi.fn(() => 'data:image/png;base64,never');
+        vi.stubGlobal('document', {
+            createElement: vi.fn(() => ({
+                width: 0,
+                height: 0,
+                getContext: () => null,
+                toDataURL,
+            })),
+        });
+        const pdfSlide = new PdfSlide('/docs/guide.pdf', {
+            id: 2,
+            name: 'Page 2',
+            imagePreviewSrc: 'file:///preview/page-2.png',
+            pdfPageNumber: 1,
+            metadata: { width: 640, height: 480 },
+            type: 'pdf-slide',
+        });
+        await expect(pdfSlide.clipboardSerialize()).resolves.toBeNull();
+        expect(toDataURL).not.toHaveBeenCalled();
+    });
 });

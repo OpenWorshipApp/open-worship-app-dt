@@ -62,7 +62,7 @@ vi.mock('./bible-helpers/bibleLogicHelpers2', () => ({
 
 import { handleAgentBibleSuggestRequest } from './agentBibleSuggestHelpers';
 
-const DIGITS = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+const DIGITS = ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'];
 
 function toKhmerDigits(value: number) {
     return String(value).replace(/\d/g, (digit) => DIGITS[Number(digit)]);
@@ -142,50 +142,6 @@ test('book suggestions use the Bible selected in the lookup, then list its match
             { label: 'Job', fill: 'Job ', detail: 'Job' },
         ],
     });
-});
-
-test('chapter choices decode and return the lookup Bible’s digits and honor the limit', async () => {
-    const result = await handleAgentBibleSuggestRequest({
-        prefix: 'John ១',
-        limit: 2,
-    });
-
-    expect(result).toEqual({
-        kind: 'reference',
-        suggestions: [
-            { label: 'John ១', fill: 'John ១:', detail: 'John 1' },
-            { label: 'John ១០', fill: 'John ១០:', detail: 'John 10' },
-        ],
-    });
-    expect(mocks.getModelChapterCount).toHaveBeenCalledWith('JHN');
-});
-
-test('digit-only chapter and verse drafts use the card’s book hint', async () => {
-    const chapterResult = await handleAgentBibleSuggestRequest({
-        prefix: '១',
-        book: 'JHN',
-        limit: 2,
-    });
-    const verseResult = await handleAgentBibleSuggestRequest({
-        prefix: '៣:១',
-        book: 'JHN',
-        limit: 3,
-    });
-
-    expect(chapterResult).toMatchObject({
-        suggestions: [
-            { fill: 'John ១:', detail: 'John 1' },
-            { fill: 'John ១០:', detail: 'John 10' },
-        ],
-    });
-    expect(verseResult).toMatchObject({
-        suggestions: [
-            { fill: 'John ៣:១', detail: 'John 3:1' },
-            { fill: 'John ៣:១០', detail: 'John 3:10' },
-            { fill: 'John ៣:១១', detail: 'John 3:11' },
-        ],
-    });
-    expect(mocks.getVersesCount).toHaveBeenCalledWith('KH2', 'JHN', 3);
 });
 
 test('unavailable Bibles, books, chapters, and verse counts produce no suggestions', async () => {
@@ -280,6 +236,87 @@ test('a held lookup dataset is reused and not released by the suggestion request
         suggestions: [{ label: 'Moses', fill: 'Moses', detail: 'Moses' }],
     });
     expect(mocks.acquire).not.toHaveBeenCalled();
+    expect(mocks.release).not.toHaveBeenCalled();
+});
+
+test('numbers the Bible cannot write in its own digits are offered in plain digits', async () => {
+    mocks.toLocaleNumber.mockRejectedValue(new Error('no digits'));
+
+    await expect(
+        handleAgentBibleSuggestRequest({ prefix: 'John 2', limit: 1 }),
+    ).resolves.toEqual({
+        kind: 'reference',
+        suggestions: [{ label: 'John 2', fill: 'John 2:', detail: 'John 2' }],
+    });
+});
+
+test('a Bible whose book list cannot be read offers no book', async () => {
+    mocks.getBibleInfo.mockRejectedValue(new Error('unreadable Bible'));
+
+    await expect(
+        handleAgentBibleSuggestRequest({ prefix: 'jo' }),
+    ).resolves.toEqual({ kind: 'reference', suggestions: [] });
+});
+
+test('digits the Bible cannot read back narrow nothing, and chapter zero has no verses', async () => {
+    mocks.fromLocaleNumber.mockImplementation(
+        async (_bibleKey: string, value: string) => {
+            if (value === '９' || value === '４') {
+                throw new Error('not a digit of this Bible');
+            }
+            return fromKhmerDigits(value);
+        },
+    );
+
+    // `９` alone would be chapter 9: unread, every chapter is offered.
+    const chapters = await handleAgentBibleSuggestRequest({
+        prefix: 'John ９',
+        limit: 3,
+    });
+    expect(chapters).toMatchObject({
+        suggestions: [
+            { detail: 'John 1' },
+            { detail: 'John 2' },
+            { detail: 'John 3' },
+        ],
+    });
+    // A chapter that cannot be read, or chapter 0, has no verses to offer.
+    await expect(
+        handleAgentBibleSuggestRequest({ prefix: 'John ９:' }),
+    ).resolves.toEqual({ kind: 'reference', suggestions: [] });
+    await expect(
+        handleAgentBibleSuggestRequest({ prefix: 'John ０:' }),
+    ).resolves.toEqual({ kind: 'reference', suggestions: [] });
+    expect(mocks.getVersesCount).not.toHaveBeenCalled();
+
+    // Verse digits that cannot be read leave every verse of the chapter.
+    await expect(
+        handleAgentBibleSuggestRequest({ prefix: 'John ３:４', limit: 2 }),
+    ).resolves.toMatchObject({
+        suggestions: [{ detail: 'John 3:1' }, { detail: 'John 3:2' }],
+    });
+});
+
+test('a chapter whose verses cannot be counted offers no verse', async () => {
+    mocks.getVersesCount.mockRejectedValue(new Error('chapter unreadable'));
+
+    await expect(
+        handleAgentBibleSuggestRequest({ prefix: 'John ３:' }),
+    ).resolves.toEqual({ kind: 'reference', suggestions: [] });
+    expect(mocks.getVersesCount).toHaveBeenCalledWith('KH2', 'JHN', 3);
+});
+
+test('a names dataset that fails to load offers no name and is not released', async () => {
+    mocks.acquire.mockRejectedValue(new Error('dataset unavailable'));
+
+    await expect(
+        handleAgentBibleSuggestRequest({
+            kind: 'name',
+            prefix: 'Mo',
+            allowLoad: true,
+        }),
+    ).resolves.toEqual({ kind: 'name', suggestions: [] });
+    expect(mocks.acquire).toHaveBeenCalledWith('km');
     expect(mocks.release).not.toHaveBeenCalled();
 });
 

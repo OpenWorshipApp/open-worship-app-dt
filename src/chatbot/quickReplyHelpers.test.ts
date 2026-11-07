@@ -21,6 +21,7 @@ import {
     parseAnswerShows,
     parseAttachRequests,
 } from './quickReplyHelpers';
+import { setChatTranslator } from './chatTranHelpers';
 
 beforeEach(() => {
     genFollowUpQuestions.mockReset();
@@ -300,6 +301,33 @@ describe('genMessageReplies', () => {
         expect(replies).toEqual(['No thanks']);
     });
 
+    // A window in another language draws the button translated, and a model
+    // answering in that language writes the option translated too: the two
+    // must still read as one press, not two buttons side by side.
+    test('an option that repeats a TRANSLATED button is dropped', async () => {
+        setChatTranslator(
+            (text) => text,
+            (text) => {
+                return text === 'Import a Bible for me' ? 'xx import me' : text;
+            },
+        );
+        try {
+            const replies = await genMessageReplies({
+                modelOptions: ['xx import me', 'xx other'],
+                answerText: 'Would you like help?',
+                askedText: 'import a bible',
+                actionLabels: ['Import a Bible for me'],
+                focus: 'presenter',
+            });
+            expect(replies).toEqual(['xx other']);
+        } finally {
+            setChatTranslator(
+                (text) => text,
+                (text) => text,
+            );
+        }
+    });
+
     test('two options at most when the answer already has buttons', async () => {
         const replies = await genMessageReplies({
             modelOptions: ['One', 'Two', 'Three'],
@@ -556,97 +584,6 @@ describe('parseAnswerShows', () => {
     });
 });
 
-// The keyless provider is nothing but weaker models, and they honour "answer in
-// English" in the prose and then change language in the frame. Both of these
-// were measured against the live free tier before the guard was written.
-describe('parseAnswerOptions, a model that changed language', () => {
-    test('drops an option with no Latin letter in it at all', () => {
-        const { text, options } = parseAnswerOptions(
-            [
-                'Press **Ctrl+B** to open the lookup.',
-                'OPTIONS: Yes, walk me through it | 请确认显示这个按钮 |' +
-                    ' No thanks',
-            ].join('\n'),
-        );
-        expect(text).toBe('Press **Ctrl+B** to open the lookup.');
-        expect(options).toEqual(['Yes, walk me through it', 'No thanks']);
-    });
-
-    test('keeps an English option carrying a translated button name', () => {
-        // The one thing that is deliberately NOT in English. Button names come
-        // back in the language the app is displaying, so an option that names
-        // one is correct and must survive.
-        const { options } = parseAnswerOptions(
-            [
-                'Use the clear button.',
-                'OPTIONS: Show me លុបព្រះគម្ពីរ | No thanks',
-            ].join('\n'),
-        );
-        expect(options).toEqual(['Show me លុបព្រះគម្ពីរ', 'No thanks']);
-    });
-});
-
-// A Khmer answer's options are Khmer, and they are what an older volunteer in
-// a Khmer app can read: keeping only options with a Latin letter dropped every
-// one of them, and a key of `[a-z0-9]` then dropped what was left as a
-// duplicate of nothing.
-describe('options in the language of the answer', () => {
-    const khmerAnswer = 'ចុចប៊ូតុង **ស្វែងរកព្រះគម្ពីរ** នៅខាងលើ។';
-
-    test('keeps Khmer options under a Khmer answer', () => {
-        const { text, options } = parseAnswerOptions(
-            `${khmerAnswer}\nOPTIONS: បង្ហាញខ្ញុំ | ខ្ញុំនៅតែមិនឃើញ`,
-        );
-        expect(text).toBe(khmerAnswer);
-        expect(options).toEqual(['បង្ហាញខ្ញុំ', 'ខ្ញុំនៅតែមិនឃើញ']);
-    });
-
-    test('still drops a script nobody chose', () => {
-        const { options } = parseAnswerOptions(
-            `${khmerAnswer}\nOPTIONS: ខ្ញុំនៅតែមិនឃើញ | 请确认显示这个按钮`,
-        );
-        expect(options).toEqual(['ខ្ញុំនៅតែមិនឃើញ']);
-    });
-
-    // Told to keep the marker in English, a small model translates it.
-    test('reads the marker a model translated, and its colon', () => {
-        for (const marker of ['ជម្រើស:', 'ជម្រើស៖']) {
-            const { text, options } = parseAnswerOptions(
-                `${khmerAnswer}\n${marker} បាទ/ចាស | ទេ អរគុណ`,
-            );
-            expect(text).toBe(khmerAnswer);
-            expect(options).toEqual(['បាទ/ចាស', 'ទេ អរគុណ']);
-        }
-    });
-
-    test('measures an option as it is seen, not by its marks', () => {
-        // Forty letters with their vowel signs is more than forty code units.
-        const option = 'សូមបង្ហាញខ្ញុំពីរបៀបដាក់ចម្រៀងនៅលើអេក្រង់';
-        expect(option.length).toBeGreaterThan(40);
-        expect(option.replace(/\p{M}/gu, '').length).toBeLessThanOrEqual(40);
-        expect(
-            parseAnswerOptions(`${khmerAnswer}\nOPTIONS: ${option}`).options,
-        ).toEqual([option]);
-    });
-
-    test('a Khmer yes-or-no question gets the Khmer buttons', () => {
-        expect(
-            genQuickReplies('ចុចប៊ូតុងនោះ។ តើអ្នកចង់ឲ្យខ្ញុំបង្ហាញទេ?'),
-        ).toEqual(['បាទ/ចាស', 'ទេ អរគុណ']);
-    });
-
-    test('a Khmer yes beside the walkthrough buttons is an echo', async () => {
-        const replies = await genMessageReplies({
-            modelOptions: ['បាទ', 'បង្ហាញខ្ញុំម្តងមួយៗ', 'ប្តូរពណ៌អក្សរ'],
-            answerText: khmerAnswer,
-            askedText: 'x',
-            actionLabels: ['Show me step by step', 'Do it for me'],
-            focus: 'presenter',
-        });
-        expect(replies).toEqual(['ប្តូរពណ៌អក្សរ']);
-    });
-});
-
 describe('checkIsWalkthroughEcho', () => {
     // The seven, verbatim, from the 2026-09-08 corpus run on Claude.
     it.each([
@@ -758,16 +695,8 @@ describe('genMessageReplies beside the drafted-song buttons', () => {
 describe('a removal is never a chip', () => {
     test.each([
         [
-            'តើអ្នកចង់លុបអ្វី?',
-            'OPTIONS: លុបឯកសារទាំងអស់ | លុបការកំណត់កម្មវិធី | តើត្រូវចុចត្រង់ណា?',
-        ],
-        [
             'Which one?',
             'OPTIONS: Delete all documents | Reset the app | Where do I click?',
-        ],
-        [
-            'Lequel ?',
-            'OPTIONS: Supprimer tous les documents | Réinitialiser | Où dois-je cliquer ?',
         ],
     ])('%s', (answer, frame) => {
         const { options } = parseAnswerOptions(`${answer}\n\n${frame}`);

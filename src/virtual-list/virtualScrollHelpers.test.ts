@@ -3,8 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
     findClippingAncestors,
+    findScrollingAncestors,
     scrollBandIntoView,
     subscribeScrollerList,
+    toVisibleWindow,
 } from './virtualScrollHelpers';
 
 function genElement(style: string, tagName = 'div') {
@@ -108,6 +110,24 @@ describe('subscribeScrollerList', () => {
         stop();
     });
 
+    it('a second stop is harmless once the scroller is let go', () => {
+        const observers = installObserver();
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn(() => 1),
+        );
+        vi.stubGlobal('cancelAnimationFrame', vi.fn());
+        const scroller = document.createElement('div');
+        const stop = subscribeScrollerList([scroller], vi.fn());
+        stop();
+        expect(() => stop()).not.toThrow();
+        expect(observers[0].disconnect).toHaveBeenCalledOnce();
+        // A new subscriber starts a fresh entry rather than reviving the old.
+        const stopAgain = subscribeScrollerList([scroller], vi.fn());
+        expect(observers).toHaveLength(2);
+        stopAgain();
+    });
+
     it('watches each distinct clipping ancestor and stops all on cleanup', () => {
         const observers = installObserver();
         vi.stubGlobal(
@@ -169,6 +189,30 @@ describe('scrollBandIntoView', () => {
         expect(scroller.scrollTop).toBe(100);
     });
 
+    it('is a no when no ancestor has anything to scroll', () => {
+        const short = document.createElement('div');
+        Object.defineProperties(short, {
+            clientHeight: { value: 400 },
+            scrollHeight: { value: 400 },
+        });
+        const toBandTop = vi.fn(() => 800);
+        expect(
+            scrollBandIntoView({
+                clippingAncestorList: [short],
+                toBandTop,
+                height: 200,
+            }),
+        ).toBe(false);
+        expect(
+            scrollBandIntoView({
+                clippingAncestorList: [],
+                toBandTop,
+                height: 200,
+            }),
+        ).toBe(false);
+        expect(toBandTop).not.toHaveBeenCalled();
+    });
+
     it('keeps immediate reveals and already-visible nearest rows unchanged', () => {
         const scroller = genScroller();
         scrollBandIntoView({
@@ -189,7 +233,81 @@ describe('scrollBandIntoView', () => {
     });
 });
 
+describe('findScrollingAncestors', () => {
+    it('keeps the ancestors whose vertical overflow scrolls or clips', () => {
+        const auto = genElement('overflow-y: auto;');
+        const hidden = genElement('overflow-y: hidden;');
+        const sideways = genElement('overflow-x: auto; overflow-y: visible;');
+        genNested([auto, hidden, sideways]);
+        expect(findScrollingAncestors([auto, hidden, sideways])).toEqual([
+            auto,
+            hidden,
+        ]);
+        expect(findScrollingAncestors([])).toEqual([]);
+    });
+});
+
+describe('toVisibleWindow', () => {
+    function withRect(element: HTMLElement, top: number, bottom: number) {
+        vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+            top,
+            bottom,
+        } as DOMRect);
+        return element;
+    }
+
+    it('is the band every clipping ancestor and the window let through', () => {
+        const list = withRect(document.createElement('div'), 100, 5000);
+        const panel = withRect(document.createElement('div'), 50, 300);
+        const body = withRect(document.createElement('div'), 80, 400);
+        // Measured from the top of the list: its first 20px are hidden.
+        expect(toVisibleWindow(list, [panel, body])).toEqual({
+            top: -20,
+            bottom: 200,
+        });
+    });
+
+    it('is the window alone with no clipping ancestor', () => {
+        const list = withRect(document.createElement('div'), 100, 5000);
+        vi.stubGlobal('innerHeight', 700);
+        expect(toVisibleWindow(list, [])).toEqual({ top: -100, bottom: 600 });
+    });
+
+    it("falls back to the document's height when the window reports none", () => {
+        const list = withRect(document.createElement('div'), 10, 5000);
+        vi.stubGlobal('innerHeight', 0);
+        const descriptor = Object.getOwnPropertyDescriptor(
+            document.documentElement,
+            'clientHeight',
+        );
+        Object.defineProperty(document.documentElement, 'clientHeight', {
+            value: 510,
+            configurable: true,
+        });
+        try {
+            expect(toVisibleWindow(list, [])).toEqual({
+                top: -10,
+                bottom: 500,
+            });
+        } finally {
+            if (descriptor === undefined) {
+                delete (document.documentElement as any).clientHeight;
+            } else {
+                Object.defineProperty(
+                    document.documentElement,
+                    'clientHeight',
+                    descriptor,
+                );
+            }
+        }
+    });
+});
+
 describe('findClippingAncestors', () => {
+    it('has nothing to walk from no element', () => {
+        expect(findClippingAncestors(null)).toEqual([]);
+    });
+
     it('takes every scrolling or hiding ancestor of a plain element', () => {
         const outer = genElement('overflow-y: hidden;');
         const scroller = genElement('overflow-y: auto;');

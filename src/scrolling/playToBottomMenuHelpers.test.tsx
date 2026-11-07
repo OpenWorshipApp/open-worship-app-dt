@@ -34,7 +34,22 @@ vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     },
 }));
 
-import { genPlayToBottomContextMenuItems } from './playToBottomMenuHelpers';
+const { showAppContextMenuMock } = vi.hoisted(() => ({
+    showAppContextMenuMock: vi.fn(),
+}));
+// The real menu module, but the menu is not opened for real: only what it is
+// asked to open is under test.
+vi.mock('../context-menu/appContextMenuHelpers', async (importOriginal) => ({
+    ...(await importOriginal<
+        typeof import('../context-menu/appContextMenuHelpers')
+    >()),
+    showAppContextMenu: showAppContextMenuMock,
+}));
+
+import {
+    genPlayToBottomContextMenuItems,
+    showPlayToBottomContextMenu,
+} from './playToBottomMenuHelpers';
 
 function genPlayElement(speed?: string) {
     const element = document.createElement('i');
@@ -88,6 +103,22 @@ describe('the auto-scroll menu', () => {
             { type: 'contextmenu', altKey: true },
         ]);
         playElement.remove();
+    });
+
+    test('opens at the press, built off the button it is for, wide enough for the chips', () => {
+        const playElement = genPlayElement('1.5');
+        const event = { clientX: 12, clientY: 34 };
+        showPlayToBottomContextMenu(event, playElement);
+        expect(showAppContextMenuMock).toHaveBeenCalledTimes(1);
+        const [passedEvent, items, options] =
+            showAppContextMenuMock.mock.calls[0];
+        expect(passedEvent).toBe(event);
+        expect(items).toHaveLength(
+            genPlayToBottomContextMenuItems(playElement).length,
+        );
+        expect(items[0].menuElement).toBe('Auto Scroll Speed');
+        expect(JSON.stringify(items[0].childAfter)).toContain('1.50');
+        expect(options).toEqual({ style: { maxWidth: '260px' } });
     });
 
     test('names the gesture beside every action', () => {

@@ -680,6 +680,13 @@ const AGENT_DATA_WORKER_MAP: Record<
         return (await import('./agentBibleSuggestHelpers'))
             .handleAgentBibleSuggestRequest;
     },
+    // `owa_language`: the installed languages, whether the one a
+    // conversation is about is, and installing it from the catalog
+    // (2026-11-05).
+    language: async () => {
+        return (await import('./agentLanguageHelpers'))
+            .handleAgentLanguageRequest;
+    },
     // `owa_presenting_flow`: the run sheets and their lines (2026-10-10).
     'presenting-flow': async () => {
         return (await import('./agentPresentingFlowHelpers'))

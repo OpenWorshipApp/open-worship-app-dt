@@ -32,8 +32,14 @@ import {
     getRemoteDebuggingPort,
     initAi,
     publishAiEndpoints,
+    republishAiLangDirs,
     startMcpHost,
 } from './aiHelpers';
+import {
+    clearLangPluginsCache,
+    configureLangPlugins,
+} from './langPluginHelpers';
+import { LANG_PLUGIN_API_VERSION } from './langPluginProtocol';
 import { electronMockState } from './testElectronModule';
 
 // `readFileSync`/`unlinkSync` are deliberately NOT mocked: the module reads
@@ -149,6 +155,22 @@ describe('aiHelpers', () => {
         ).toHaveBeenCalledWith('remote-debugging-port', '9223');
     });
 
+    test('a pinned port that is no port leaves the choice to Chromium', () => {
+        writeSetting('true');
+        const { appendSwitch } = electronMockState.app.commandLine;
+        for (const port of ['70000', '12.5', 'abc', '-1']) {
+            process.env.OWA_REMOTE_DEBUGGING_PORT = port;
+            appendSwitch.mockClear();
+
+            enableRemoteDebugging();
+
+            expect(appendSwitch, port).toHaveBeenCalledWith(
+                'remote-debugging-port',
+                '0',
+            );
+        }
+    });
+
     test('the switch off means no endpoint at all', async () => {
         writeSetting('false');
 
@@ -181,6 +203,74 @@ describe('aiHelpers', () => {
             port: 51234,
             url: 'http://127.0.0.1:51234',
         });
+    });
+
+    // Both agent doors read every language but English from its installed
+    // folder; the stdio one reads which those are off this file.
+    test('publishes the installed languages that are on, again when they change', async () => {
+        writeSetting('true');
+        enableRemoteDebugging();
+        writeFileSync(
+            path.join(dirPath, 'DevToolsActivePort'),
+            '51234\n/devtools/browser/abc',
+        );
+        const dataDirPath = path.join(dirPath, 'data');
+        const writeLang = (langCode: string) => {
+            const langDirPath = path.join(
+                dataDirPath,
+                'lang',
+                `${langCode}@1.0.0`,
+            );
+            mkdirSync(langDirPath, { recursive: true });
+            writeFileSync(
+                path.join(langDirPath, 'meta.json'),
+                JSON.stringify({
+                    apiVersion: LANG_PLUGIN_API_VERSION,
+                    langCode,
+                    locale: `${langCode}-XX`,
+                    name: `Name ${langCode}`,
+                    nativeName: `Native ${langCode}`,
+                    version: '1.0.0',
+                    description: '',
+                }),
+            );
+            writeFileSync(
+                path.join(langDirPath, 'index.js'),
+                'module.exports = 1;',
+            );
+            return langDirPath;
+        };
+        const onDirPath = writeLang('xx');
+        writeLang('yy');
+        configureLangPlugins(() => {
+            return {
+                builtInDirPath: path.join(dirPath, 'no-built-in'),
+                dataDirPath,
+                disabledLangCodes: ['yy'],
+                appVersion: '2026.11.04',
+            };
+        });
+
+        await publishAiEndpoints(0);
+
+        const published = JSON.parse(writeFile.mock.calls[0][1] as string);
+        expect(published.langDirs).toEqual([onDirPath]);
+
+        const laterDirPath = writeLang('zz');
+        clearLangPluginsCache();
+        republishAiLangDirs();
+        await vi.waitFor(() => {
+            expect(writeFile).toHaveBeenCalledTimes(2);
+        });
+        const [filePath, content] = writeFile.mock.calls[1];
+        expect(filePath).toBe(writeFile.mock.calls[0][0]);
+        const republished = JSON.parse(content as string);
+        expect(republished.langDirs.sort()).toEqual(
+            [onDirPath, laterDirPath].sort(),
+        );
+        // The rest is the launch's own, kept as first written.
+        expect(republished.startedAt).toBe(published.startedAt);
+        expect(republished.port).toBe(51234);
     });
 
     test('gives up quietly when Chromium never reports one', async () => {
@@ -329,6 +419,25 @@ describe('aiHelpers', () => {
                 '[owa-devtools-mcp]',
                 'ready',
             );
+            // The host drives THIS instance: the port it reads is this one's,
+            // as published.
+            expect(startOwaMcpHost.mock.calls[0][0].getCdpPort()).toBe(51235);
+
+            // Quitting takes this instance's file away; one gone already is
+            // no failure.
+            const infoFilePath = path.join(
+                dirPath,
+                'open-worship-app-cdp',
+                `${process.pid}.json`,
+            );
+            mkdirSync(path.dirname(infoFilePath), { recursive: true });
+            writeFileSync(infoFilePath, '{}');
+            const quit = electronMockState.app.on.mock.calls
+                .filter(([eventName]) => eventName === 'will-quit')
+                .at(-1)?.[1] as () => void;
+            quit();
+            expect(existsSync(infoFilePath)).toBe(false);
+            expect(() => quit()).not.toThrow();
         } finally {
             globalThis.Function = RealFunction;
             kill.mockRestore();

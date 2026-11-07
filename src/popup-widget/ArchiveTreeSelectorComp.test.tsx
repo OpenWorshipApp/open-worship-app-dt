@@ -123,6 +123,25 @@ describe('ArchiveTreeSelectorComp', () => {
         expect(checkboxOf('Secrets').disabled).toBe(true);
     });
 
+    test('an expanded parent folds its leaves away again', () => {
+        render(
+            <ArchiveTreeSelectorComp
+                choices={CHOICES}
+                message="Choose"
+                onChange={() => {}}
+            />,
+        );
+        expand('General');
+        expect(rowOf('language')).toBeDefined();
+        expand('General');
+        expect(rowOf('language')).toBeUndefined();
+        expect(
+            rowOf('General')!
+                .querySelector('button')!
+                .getAttribute('aria-expanded'),
+        ).toBe('false');
+    });
+
     test('a parent is half-ticked, and ticks all its leaves', () => {
         const onChange = vi.fn();
         render(

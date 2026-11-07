@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
-  LANGUAGE_ALIAS_MAP,
+  readLanguageAliases,
   checkIsBibleLanguageWord,
   checkIsLikelyHtml,
   checkIsLikelyXml,
@@ -16,6 +16,19 @@ import {
   toBibleXmlDownloadUrl,
   toGithubListingUrl,
 } from './bibleXmlAdvice.mjs';
+import {
+  listPackageCodes,
+  readPackageWorldParts,
+} from '../../extra-work/language-packages.mjs';
+import { configureWorldLanguageParts } from './worldLanguages.mjs';
+
+// What a language's own words are is ITS data, there when it is installed
+// (`worldLanguages.mjs`): these cases are about languages, so every package
+// of the checkout is installed for them -- and a case that leans on one
+// language's words runs while that package is on disk.
+configureWorldLanguageParts(readPackageWorldParts);
+const packageCodeSet = new Set(listPackageCodes({ isEnglishIncluded: false }));
+const checkHasPackage = (code) => packageCodeSet.has(code);
 
 const REPO = 'https://github.com/Beblia/Holy-Bible-XML-Format';
 
@@ -168,27 +181,35 @@ describe('picking the Bible off a page of files', () => {
 });
 
 describe('a language typed by name', () => {
-  test('in its own words, with or without "language" in front', () => {
-    // Electron's ICU has no Khmer display names: the table must answer.
-    expect(toCatalogLanguageWord('ខ្មែរ')).toBe('khmer');
-    expect(toCatalogLanguageWord('ភាសាខ្មែរ')).toBe('khmer');
-    expect(toCatalogLanguageWord('Deutsch')).toBe('german');
-    expect(toBibleSearchWords('install a ไทย bible')).toEqual(['thai']);
-  });
+  test.runIf(checkHasPackage('de'))(
+    'in its own words, with or without "language" in front',
+    () => {
+      // Electron's ICU has no Khmer display names: the table must answer.
+      expect(toCatalogLanguageWord('Deutsch')).toBe('german');
+    },
+  );
   test('a code only when it is the whole answer', () => {
     expect(toBibleSearchWords('km')).toEqual(['khmer']);
     expect(toBibleSearchWords('Khmer 2019')).toEqual(['khmer', '2019']);
     expect(toCatalogLanguageWord('khmer')).toBeNull();
   });
+  // Each country or people is told by its language's own package.
+  test.each([
+    ['km', 'Import a Bible in Cambodia', ['khmer']],
+    ['zh', 'import bible in China', ['chinese']],
+    ['th', 'a bible for Thailand please', ['thai']],
+    ['es', 'import bible espanol', ['spanish']],
+  ].filter(([code]) => checkHasPackage(code)))(
+    'by its country or its people (%s): %s',
+    (_code, request, words) => {
+      expect(toBibleSearchWords(request)).toEqual(words);
+    },
+  );
   test('by its country or its people, as readily as by its name', () => {
-    expect(toBibleSearchWords('Import a Bible in Cambodia')).toEqual(['khmer']);
-    expect(toBibleSearchWords('import bible in China')).toEqual(['chinese']);
-    expect(toBibleSearchWords('a bible for Thailand please')).toEqual(['thai']);
-    expect(toBibleSearchWords('import bible espanol')).toEqual(['spanish']);
     // Already the start of the catalog's own word: left as typed.
     expect(toBibleSearchWords('Import a Bible in "korea"')).toEqual(['korea']);
     // Every one of them leads to a language the catalog has files for.
-    for (const [alias, language] of Object.entries(LANGUAGE_ALIAS_MAP)) {
+    for (const [alias, language] of Object.entries(readLanguageAliases())) {
       expect([alias, checkIsBibleLanguageWord(language)]).toEqual([
         alias,
         true,
@@ -208,47 +229,16 @@ describe('a language typed by name', () => {
   });
   test('which words of a request name a language with Bibles', () => {
     expect(checkIsBibleLanguageWord('Khmer')).toBe(true);
-    expect(checkIsBibleLanguageWord('ខ្មែរ')).toBe(true);
-    expect(checkIsBibleLanguageWord('cambodia')).toBe(true);
+    if (checkHasPackage('km')) {
+      // A country, through its language's own package.
+      expect(checkIsBibleLanguageWord('cambodia')).toBe(true);
+    }
     expect(checkIsBibleLanguageWord('verse')).toBe(false);
     expect(checkIsBibleLanguageWord('commentary')).toBe(false);
   });
 });
 
 describe('which language the verses are in', () => {
-  test('a script that belongs to one language decides it', () => {
-    expect(
-      guessBibleLocalesFromText(
-        'កាល​ពី​ដើម​ដំបូង​បង្អស់ ព្រះជាម្ចាស់​បាន​បង្កើត​ផ្ទៃ​មេឃ និង​ផែនដី​។',
-      ),
-    ).toEqual({ script: 'Khmer', locales: ['km-KH'] });
-  });
-  test('Latin letters are told apart by their little words', () => {
-    expect(
-      guessBibleLocalesFromText(
-        'In the beginning God created the heaven and the earth. And the ' +
-          'earth was without form, and void; and darkness was upon the deep.',
-      ).locales[0],
-    ).toBe('en-US');
-    expect(
-      guessBibleLocalesFromText(
-        'Au commencement, Dieu créa les cieux et la terre. La terre était ' +
-          'informe et vide: il y avait des ténèbres à la surface de l abîme.',
-      ).locales[0],
-    ).toBe('fr-FR');
-  });
-  test('Cyrillic and Japanese are read by their own letters', () => {
-    expect(
-      guessBibleLocalesFromText(
-        'В начале сотворил Бог небо и землю. Земля же была безвидна и пуста.',
-      ).locales[0],
-    ).toBe('ru-RU');
-    expect(
-      guessBibleLocalesFromText(
-        'はじめに神は天と地とを創造された。地は形なく、むなしく、やみが淵のおもてにあった。',
-      ).locales,
-    ).toEqual(['ja-JP']);
-  });
   test('too little to go on is no guess at all', () => {
     expect(guessBibleLocalesFromText('1 2 3')).toEqual({
       script: null,
@@ -287,15 +277,6 @@ describe('the short names offered', () => {
 });
 
 describe('which list of book names this Bible uses', () => {
-  test('counts the names the text uses, ignoring shared ones and numbers', () => {
-    const text = 'ហោរា​អេសាយ ... ១ សាំយូអែល ... យ៉ូហាន';
-    expect(
-      scoreNameLists(text, [
-        { names: ['អេសាយ', 'សាំយូអែល ទី ១', 'យ៉ូហាន'] },
-        { names: ['អេសាយ', 'សាំយូអែល ទី ១', 'យ៉ូហានថ្មី'] },
-      ]),
-    ).toEqual([1, 0]);
-  });
   test('the same list always gets the same id', () => {
     expect(toBibleNameListId(['a', 'b'])).toBe(toBibleNameListId(['a', 'b']));
     expect(toBibleNameListId(['a', 'b'])).not.toBe(

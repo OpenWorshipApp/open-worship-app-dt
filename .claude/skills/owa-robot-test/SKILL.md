@@ -660,14 +660,26 @@ entire slide-editor tools panel — invisible in English, fatal in Khmer.
 So this block is **not optional and not skippable by focus area**, exactly like §6a. Rows
 `LT-01..02`; recipe: test-plan.md §S15.
 
+**Khmer is a plugin, not built in** (memory `language-plugins-runtime`): a dev app has
+only the languages someone installed, and a window reads the INSTALLED copy, never
+`src/lang/data/online/km/`. If Khmer is not among the Language buttons, or its package
+changed since it was installed (a new `tran` key changes every package), first run
+`npm run lang:pack -- --pack=km`, then Settings → **Languages** → **Install**, or
+**Refresh** → **Update to** (shown only for a higher `meta.json` version than the installed
+one; packed under the same version, delete the installed copy and Install again).
+Otherwise the pass runs against the old dictionary, and a key
+that IS in the source throws as missing: a false Critical.
+
 Minimum pass (≈3 minutes, self-restoring):
 
-1. **Record the starting locale** — open Settings (gear → popup target) → Language and
-   see which of `Khmer` / `English` / `French` is the active button. You MUST restore it at the end.
+1. **Record the starting locale** — open Settings (gear → popup target) → the
+   **Languages** tab, whose first section **Language** holds the buttons, and see which of `Khmer` / `English` / `French` is the active button. You MUST restore it at the end.
    Do **not** read `localStorage['language-locale']`; it is a stale key (KB §1).
-2. **Switch to the other locale** and click `Apply Settings` — this calls
-   `forceReloadAppWindows()`, so **every window reloads**: re-`list_pages`,
-   `select_page`, and re-run the readiness check (step 3). All previous `uid`s are dead.
+2. **Switch to the other locale** — the press itself calls
+   `forceReloadAppWindows()` (since 2026-11-05 no `Apply Settings` is needed, and the
+   press answers "target navigated or closed"), so **every window reloads**:
+   re-`list_pages`, `select_page`, and re-run the readiness check (step 3). All
+   previous `uid`s are dead.
 3. **Re-walk the screens your focus touched**, plus the presenter baseline. For each:
    `take_screenshot` and `list_console_messages`.
 4. **Assert, per screen:**
@@ -678,7 +690,7 @@ Minimum pass (≈3 minutes, self-restoring):
      visible symptom of the throw above).
    - Labels actually translate — no raw English left in a translated screen, no clipped
      or overflowing Khmer text (Khmer glyphs are taller; check buttons and table cells).
-5. **Restore** — switch back to the locale from step 1 and `Apply Settings` again.
+5. **Restore** — switch back to the locale from step 1 (it reloads every window again).
 
 Notes:
 

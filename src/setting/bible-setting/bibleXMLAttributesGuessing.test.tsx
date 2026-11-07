@@ -58,7 +58,7 @@ import {
     xmlFormatExample,
 } from './bibleXMLAttributesGuessing';
 
-const KHMER_DIGITS = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+const OWN_DIGITS = ['０', '１', '２', '３', '４', '５', '６', '７', '８', '９'];
 
 let container: HTMLDivElement;
 let root: Root;
@@ -173,7 +173,7 @@ describe('genBibleKeyXMLInput', () => {
 
 describe('genBibleNumbersMapXMLInput', () => {
     test('offers the language pack digits and applies them all ten', async () => {
-        h.numListMap['km-KH'] = KHMER_DIGITS;
+        h.numListMap['km-KH'] = OWN_DIGITS;
         const onChange = vi.fn();
         await act(async () => {
             root.render(
@@ -190,12 +190,12 @@ describe('genBibleNumbersMapXMLInput', () => {
         expect(link.href).toContain('tl=km&');
         expect(link.textContent).toBe('Translate (km)');
 
-        const useButton = findButton('Use ១ ២ ៣');
+        const useButton = findButton('Use １ ２ ３');
         expect(useButton).not.toBeNull();
         await act(async () => useButton!.click());
 
-        expect(onChange).toHaveBeenCalledWith(KHMER_DIGITS);
-        expect(getInput().value).toBe(KHMER_DIGITS.join(' '));
+        expect(onChange).toHaveBeenCalledWith(OWN_DIGITS);
+        expect(getInput().value).toBe(OWN_DIGITS.join(' '));
         expect(getInput().className).not.toContain('is-invalid');
     });
 
@@ -243,7 +243,7 @@ describe('genBibleNumbersMapXMLInput', () => {
     });
 
     test('leaves the map alone when the pack is gone by the time it is used', async () => {
-        h.numListMap['km-KH'] = KHMER_DIGITS;
+        h.numListMap['km-KH'] = OWN_DIGITS;
         const onChange = vi.fn();
         await act(async () => {
             root.render(
@@ -252,7 +252,7 @@ describe('genBibleNumbersMapXMLInput', () => {
         });
         delete h.numListMap['km-KH'];
 
-        await act(async () => findButton('Use ១ ២ ៣')!.click());
+        await act(async () => findButton('Use １ ２ ３')!.click());
 
         expect(onChange).not.toHaveBeenCalled();
         expect(getInput().value).toBe('x');

@@ -128,6 +128,19 @@ describe('selectedHelpers', () => {
         ).toBeNull();
     });
 
+    test('returns the resolved path when the ensured selection is there', async () => {
+        baseDirResolvedFilePathMap['base-setting|saved-name.txt'] =
+            '/base/saved-name.txt';
+
+        expect(
+            await getSelectedFilePathWithEnsure('setting', 'base-setting'),
+        ).toBe('/base/saved-name.txt');
+        expect(fsCheckFileExistMock).toHaveBeenCalledWith(
+            '/base/saved-name.txt',
+        );
+        expect(setSettingMock).not.toHaveBeenCalled();
+    });
+
     test('stores relative paths and clears settings for null selections', () => {
         baseDirFileFullNameOrPathMap['base-setting|/base/final.txt'] =
             'final.txt';

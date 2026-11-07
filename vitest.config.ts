@@ -1,9 +1,42 @@
+import path from 'node:path';
+
+import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 
 import { gzBundlePlugin } from './vite-plugin-gz-bundle';
 
+// In the app every language but English is a runtime plugin, so
+// `src/lang/langSourceFiles.ts` answers nothing; a test runs against the
+// language packages of the checkout instead (`langSourceFiles.vitest.ts`).
+function langSourceFilesPlugin(): Plugin {
+    const sourceFilePath = path.resolve(
+        __dirname,
+        'src/lang/langSourceFiles.ts',
+    );
+    return {
+        name: 'owa-lang-source-files',
+        enforce: 'pre',
+        async resolveId(source, importer, options) {
+            if (!source.endsWith('langSourceFiles')) {
+                return null;
+            }
+            const resolved = await this.resolve(source, importer, {
+                ...options,
+                skipSelf: true,
+            });
+            if (
+                resolved !== null &&
+                path.resolve(resolved.id) === sourceFilePath
+            ) {
+                return sourceFilePath.replace(/\.ts$/, '.vitest.ts');
+            }
+            return null;
+        },
+    };
+}
+
 export default defineConfig({
-    plugins: [gzBundlePlugin()],
+    plugins: [gzBundlePlugin(), langSourceFilesPlugin()],
     test: {
         environment: 'node',
         testTimeout: 10000,
@@ -21,6 +54,10 @@ export default defineConfig({
             'src/**/*.test.tsx',
             'tools/**/*.test.mjs',
             'extra-work/local-llm/**/*.test.mjs',
+            // A language's own tests travel with its package
+            // (`src/lang/data/online/<code>/tests/`), the MCP server's and
+            // the scripts' among them.
+            'src/lang/data/online/*/tests/**/*.test.mjs',
         ],
         clearMocks: true,
         restoreMocks: true,

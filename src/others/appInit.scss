@@ -646,6 +646,37 @@ $app-context-menu-dots-opacity: 0.1;
   pointer-events: none;
 }
 
+// "An installed package has an update" (`src/helper/packageUpdateHelpers.ts`):
+// on the Setting gear's corner, then inline after a Settings tab's name and
+// after the item that updates. Amber like the Settings row's own "Update
+// Available" and its "Update to" button, so the three read as one trail. It
+// can stay up all session, so it is never animated.
+.app-update-dot-host {
+  position: relative;
+}
+
+.app-update-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--bs-warning);
+  pointer-events: none;
+}
+
+.app-update-dot-inline {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-inline-start: 0.4em;
+  border-radius: 50%;
+  background-color: var(--bs-warning);
+  vertical-align: super;
+}
+
 @keyframes app-notify-on-screen-highlight {
   0% {
     background-color: color-mix(in srgb, var(--app-on-air) 10%, transparent);

@@ -29,6 +29,13 @@
             because nothing here uses them and each is a way to get script into
             a page that has none of its own. Prod only, like every other page:
             the dev server needs its own websocket and inline module graph.
+
+            `font-src` names `owa://local` beside 'self': an installed
+            language's fonts (Khmer's Battambang) are served at
+            `owa://local/@lang/<code>/`. A packaged window is on that origin,
+            where it is 'self' already; the dev window is on the Vite server,
+            and without it every face was refused and Khmer drew in the OS's
+            fallback.
         -->
         <!-- prod<meta
             http-equiv="Content-Security-Policy"
@@ -36,7 +43,7 @@
                 script-src 'self' 'unsafe-inline';
                 style-src 'self' 'unsafe-inline';
                 img-src 'self' data: blob:;
-                font-src 'self' data:;
+                font-src 'self' data: owa://local;
                 worker-src 'self' blob:;
                 connect-src 'self' data: blob:
                     https://api.anthropic.com https://api.openai.com

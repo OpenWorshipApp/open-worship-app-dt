@@ -8,10 +8,10 @@ describe('bibleKeyHelpers', () => {
     });
 
     test('finds installed keys case-insensitively', () => {
-        const takenBibleKeys = new Set(['KJV', 'ពគប']);
+        const takenBibleKeys = new Set(['KJV', '✝✝✝✝']);
         expect(checkIsBibleKeyTaken('kjv', takenBibleKeys)).toBe(true);
         expect(checkIsBibleKeyTaken(' KJV ', takenBibleKeys)).toBe(true);
-        expect(checkIsBibleKeyTaken('ពគប', takenBibleKeys)).toBe(true);
+        expect(checkIsBibleKeyTaken('✝✝✝✝', takenBibleKeys)).toBe(true);
         expect(checkIsBibleKeyTaken('ZZ1234', takenBibleKeys)).toBe(false);
     });
 

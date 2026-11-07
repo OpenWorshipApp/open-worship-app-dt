@@ -84,4 +84,30 @@ describe('a panel with no folder', () => {
         expect(h.openPathSetting).toHaveBeenCalledOnce();
         expect(h.selectDefaultDataDirName).not.toHaveBeenCalled();
     });
+
+    it('makes the default folder on a press', async () => {
+        await render();
+        const button = Array.from(container.querySelectorAll('button')).find(
+            (candidate) => candidate.textContent?.startsWith('Select Default'),
+        )!;
+        await act(async () => button.click());
+        expect(h.selectDefaultDataDirName).toHaveBeenCalledExactlyOnceWith(
+            dirSource,
+            'bibles-read',
+        );
+        expect(h.openPathSetting).not.toHaveBeenCalled();
+    });
+
+    it('leaves out the Settings route for a folder Settings does not list', async () => {
+        await act(async () =>
+            root.render(
+                createElement(NoDirSelectedComp, {
+                    dirSource: dirSource as any,
+                    defaultFolderName: 'session-media',
+                    isDirSettingRouteHidden: true,
+                }),
+            ),
+        );
+        expect(buttonTexts()).toEqual(['Select Default "session-media"']);
+    });
 });

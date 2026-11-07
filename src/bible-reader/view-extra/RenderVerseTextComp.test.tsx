@@ -163,14 +163,14 @@ describe('the verse number', () => {
             extraVerseInfoList: [
                 genVerseInfo({
                     bibleKey: 'KHM',
-                    localeVerse: '៣',
+                    localeVerse: 'iii',
                     kjvBibleVersesKey: 'GEN 2:4',
                 }),
             ],
         });
         const verseNumber = host.querySelector('.verse-number')!;
         expect(verseNumber.classList.contains('extra-verses')).toBe(true);
-        expect(verseNumber.textContent).toBe('3, ៣');
+        expect(verseNumber.textContent).toBe('3, iii');
         const spans = getNumberSpans();
         // The notes are per verse key: only the KJV verse has any.
         expect(spans[0].dataset.bibleId).toBe('/notes/a.own@1,/notes/b.own@4');

@@ -141,7 +141,9 @@ describe('importing a SongSelect song', () => {
         expect(state.progress.at(-1)).toBe('hide:song-select-import-7001');
     });
 
-    test('says the request failed when the document could not be written', async () => {
+    // The download worked; it was writing the file that failed, and the toast
+    // blamed the request (2026-11-03).
+    test('says the document could not be made when it could not be written', async () => {
         state.createResult = 'null';
 
         const isDone = await importSongSelectSongToDirectory(
@@ -153,7 +155,7 @@ describe('importing a SongSelect song', () => {
         expect(state.fireUpdateEvent).not.toHaveBeenCalled();
         expect(state.toast).toHaveBeenCalledWith(
             TITLE,
-            'SongSelect request failed',
+            'Failed to create lyric document',
         );
     });
 

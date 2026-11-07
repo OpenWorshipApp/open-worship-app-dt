@@ -17,6 +17,15 @@
 // An index is written beside them so answering a question is ONE file read
 // (~300 KB) instead of opening 120 markdown files -- this runs on machines
 // where that difference is felt.
+//
+// ENGLISH ONLY (2026-11-04, the user: _everything related to a language have
+// to be loaded from the language data (from language installation catalog),
+// must not ship in the app, except english_). A language's dictionary,
+// assistant facts, question corpus, translated manual and Bible book names
+// travel in its own plugin (`build-lang-plugins.mjs`), and the MCP server
+// reads them from the installed one (`tools/owa-devtools-mcp/langPacks.mjs`).
+// What this writes for them is the English side: each manual page's `hash`,
+// which a translation's `translatedFrom` must equal to be shown.
 
 import {
     copyFileSync,
@@ -30,16 +39,8 @@ import {
 } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
-import {
-    extractDictionary,
-    extractLangMeta,
-    readSourceAssistantFacts,
-} from '../tools/owa-devtools-mcp/tran.mjs';
-import {
-    listEnglishManualPages,
-    listManualLanguages,
-    listManualTranslations,
-} from '../tools/owa-devtools-mcp/manualI18n.mjs';
+import { readSourceAssistantFacts } from '../tools/owa-devtools-mcp/tran.mjs';
+import { hashManualPage } from '../tools/owa-devtools-mcp/manualI18n.mjs';
 
 const REPO_ROOT = resolve('.');
 const OUTPUT_DIR = join(REPO_ROOT, 'electron-build', 'knowledge');
@@ -243,6 +244,10 @@ for (const source of SOURCES) {
                       )
                     : null,
             file: `${source.outputName}/${relativePath.split(sep).join('/')}`,
+            // What a translation of this page must say it was made from.
+            ...(source.kind === 'manual'
+                ? { hash: hashManualPage(content) }
+                : {}),
             headings: genHeadings(body),
             searchText: body.slice(
                 0,
@@ -266,112 +271,44 @@ writeFileSync(
     JSON.stringify({ generatedAt: new Date().toISOString(), entries }),
 );
 
-// The manual in the app's other languages (`docs/manual-i18n/<code>/`), an
-// index of its own per language -- `index.<code>.json` -- so a search run for
-// an English window never reads a word of Khmer. A page whose English has
-// changed since it was translated is marked stale: the help shows the English
-// for it until it is translated again.
-const englishPageMap = listEnglishManualPages();
-const translatedCounts = {};
-for (const langCode of listManualLanguages()) {
-    const translatedEntries = listManualTranslations(langCode, {
-        englishPageMap,
-    }).map((page) => {
-        const outputPath = join(
-            OUTPUT_DIR,
-            `manual-${langCode}`,
-            page.relativePath,
-        );
-        mkdirSync(dirname(outputPath), { recursive: true });
-        copyFileSync(page.absolutePath, outputPath);
-        const body = toBody(page.content);
-        return {
-            id: page.id,
-            lang: langCode,
-            title: page.title,
-            section: page.section,
-            kind: 'manual',
-            isStale: page.isStale,
-            file: `manual-${langCode}/${page.relativePath.split(sep).join('/')}`,
-            headings: genHeadings(body),
-            searchText: body.slice(0, MANUAL_SEARCH_TEXT_LIMIT),
-        };
-    });
-    writeFileSync(
-        join(OUTPUT_DIR, `index.${langCode}.json`),
-        JSON.stringify({
-            generatedAt: new Date().toISOString(),
-            entries: translatedEntries,
-        }),
-    );
-    translatedCounts[langCode] = {
-        pages: translatedEntries.length,
-        stale: translatedEntries.filter((entry) => entry.isStale).length,
-    };
-}
-
 // The app's own label dictionary, beside the documents that name those labels.
 //
 // The knowledge is written in English and the buttons it names are not, so a
 // document says `[en:tran:Clear Long Text]` and the assistant fills that in with
 // whatever the key reads as in the interface language the user is actually
-// looking at. That substitution happens inside the running app, which cannot
-// load a TypeScript language pack (fonts, plugins, a whole module graph) just
-// to read a map of strings -- so the map is lifted out here, at build time,
-// where the packs are plain files on disk.
-//
-// English is the key language, so its dictionary is empty by construction and
-// is not written: `tran()` returns the key itself for the default locale.
-const LANG_DATA_DIR = join(REPO_ROOT, 'src', 'lang', 'data');
-const bibleBookNames = {};
-for (const code of readdirSync(LANG_DATA_DIR)) {
-    const file = join(LANG_DATA_DIR, code, 'bibleBooks.json');
-    if (existsSync(file))
-        bibleBookNames[code] = JSON.parse(readFileSync(file, 'utf8'));
-}
+// looking at -- out of that language's installed plugin (`tran.json`). English
+// is the key language, so its dictionary is empty by construction: what is
+// written here is English itself, with its assistant facts, and its Bible book
+// names for the Bible import.
+const ENGLISH_DIR = join(REPO_ROOT, 'src', 'lang', 'data', 'en');
+const englishBooksFile = join(ENGLISH_DIR, 'bibleBooks.json');
 writeFileSync(
     join(OUTPUT_DIR, 'bible-books.json'),
-    JSON.stringify(bibleBookNames),
+    JSON.stringify(
+        existsSync(englishBooksFile)
+            ? { en: JSON.parse(readFileSync(englishBooksFile, 'utf8')) }
+            : {},
+    ),
 );
-const languages = [];
-const dictionaries = {};
-for (const langCode of readdirSync(LANG_DATA_DIR)) {
-    const packPath = join(LANG_DATA_DIR, langCode, 'index.ts');
-    if (!existsSync(packPath)) {
-        continue;
-    }
-    const packSource = readFileSync(packPath, 'utf-8');
-    const meta = extractLangMeta(packSource);
-    languages.push({
-        code: langCode,
-        name: meta.name ?? langCode,
-        nativeName: meta.nativeName ?? langCode,
-        // How a question is asked and answered in it (`assistant.json`): the
-        // help search reads a Khmer question through these.
-        assistant: readSourceAssistantFacts(langCode),
-    });
-    const dictionary = extractDictionary(packSource);
-    if (Object.keys(dictionary).length > 0) {
-        dictionaries[langCode] = dictionary;
-    }
-}
+const englishMeta = existsSync(join(ENGLISH_DIR, 'meta.json'))
+    ? JSON.parse(readFileSync(join(ENGLISH_DIR, 'meta.json'), 'utf8'))
+    : {};
+const languages = [
+    {
+        code: 'en',
+        name: englishMeta.name ?? 'English',
+        nativeName: englishMeta.nativeName ?? 'English',
+        assistant: readSourceAssistantFacts('en'),
+    },
+];
 writeFileSync(
     join(OUTPUT_DIR, 'tran.json'),
-    JSON.stringify({ languages, dictionaries }),
+    JSON.stringify({ languages, dictionaries: {} }),
 );
 
 const manualCount = entries.filter((entry) => entry.kind === 'manual').length;
-const tranCount = Object.values(dictionaries).reduce((total, dictionary) => {
-    return total + Object.keys(dictionary).length;
-}, 0);
-const translatedText = Object.entries(translatedCounts)
-    .map(([langCode, count]) => {
-        return `${langCode} ${count.pages}${count.stale > 0 ? ` (${count.stale} stale)` : ''}`;
-    })
-    .join(', ');
 console.log(
     `Knowledge bundled: ${entries.length} documents ` +
         `(${manualCount} manual, ${entries.length - manualCount} internal), ` +
-        `${languages.length} languages, ${tranCount} translated labels` +
-        (translatedText === '' ? '' : `, translated manual: ${translatedText}`),
+        'English only (every other language is read from its installed plugin)',
 );

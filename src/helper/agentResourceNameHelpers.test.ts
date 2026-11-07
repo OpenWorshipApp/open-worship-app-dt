@@ -148,21 +148,16 @@ describe('a name a button carries, back to the file', () => {
     });
 });
 
-describe('a book named in the Bible’s own language', () => {
-    const KEY_BOOK_MAP_LIST = [{ GEN: 'លោកុប្បត្តិ', JHN: 'យ៉ូហាន' }];
-
-    test('is its key, after the code and the English name', () => {
-        expect(
-            resolveResourceBookKeyFromMaps('យ៉ូហាន', KEY_BOOK_MAP_LIST),
-        ).toBe('JHN');
-        expect(resolveResourceBookKeyFromMaps('John', KEY_BOOK_MAP_LIST)).toBe(
-            'JHN',
-        );
-        expect(resolveResourceBookKeyFromMaps('JHN', KEY_BOOK_MAP_LIST)).toBe(
-            'JHN',
-        );
-        expect(
-            resolveResourceBookKeyFromMaps('unknown', KEY_BOOK_MAP_LIST),
-        ).toBeNull();
+// A Bible whose list leaves a book's name blank must not answer for nothing
+// typed at all.
+describe('a book a Bible leaves blank', () => {
+    test('is no book for a name that is only spaces and dots', () => {
+        const withBlank: Record<string, string>[] = [
+            { GEN: 'Genesis' },
+            { EST: ' ', JHN: 'John' },
+        ];
+        expect(resolveResourceBookKeyFromMaps(' . ', withBlank)).toBeNull();
+        expect(resolveResourceBookKeyFromMaps(undefined, withBlank)).toBeNull();
+        expect(resolveResourceBookKeyFromMaps('John', withBlank)).toBe('JHN');
     });
 });

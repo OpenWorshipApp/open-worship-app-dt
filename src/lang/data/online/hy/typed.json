@@ -1,0 +1,10 @@
+{
+    "hy": {
+        "name": "Armenian",
+        "nativeName": "Հայերեն",
+        "script": "Armenian",
+        "yes": ["այո"],
+        "no": ["ոչ"],
+        "order": 57
+    }
+}

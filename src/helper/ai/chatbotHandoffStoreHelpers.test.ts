@@ -157,8 +157,8 @@ describe('a file handed to the assistant', () => {
             chapter: 18,
             verseStart: 15,
             verseEnd: 17,
-            title: 'ម៉ាថាយ ១៨:១៥-១៧',
-            bibleKey: 'ពគប',
+            title: '[xx] Matthew 18:15-17',
+            bibleKey: 'KH54',
         };
         requestChatbotFile('/r/pdf/MAT.18.pdf', reading);
         expect(takeChatbotFileRequest()).toEqual({
@@ -192,8 +192,8 @@ describe('a file handed to the assistant', () => {
         expect(takeChatbotFileRequest()?.reading).toEqual({
             bookKey: 'MAT',
             chapter: 18,
-            title: 'ម៉ាថាយ ១៨:១៥-១៧',
-            bibleKey: 'ពគប',
+            title: '[xx] Matthew 18:15-17',
+            bibleKey: 'KH54',
         });
     });
 

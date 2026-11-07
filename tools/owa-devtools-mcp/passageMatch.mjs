@@ -20,16 +20,17 @@ const LIST_LINE_PATTERN = /^\s*(?:\d+[a-z]?[.)]|[-*•])\s+/;
 // blank lines alone, one "passage" of it ran to fourteen thousand characters.
 // A line that merely STARTS with a bold word ("**Alt+↑** puts the question
 // back") is the sentence before it carrying on, and stays where it is.
-// A sentence may end in Khmer's full stop (`។`): a translated page
-// (`manualI18n.mjs`) must fall into the same passages as its English one.
-const BOLD_LEAD_PATTERN = /^\s*\*\*[^*\n]{3,160}[.:?!។]\*\*/;
+// A sentence may end in any script's full stop (`\p{Sentence_Terminal}`,
+// the Khmer one among them): a translated page (`manualI18n.mjs`) must fall
+// into the same passages as its English one.
+const BOLD_LEAD_PATTERN = /^\s*\*\*[^*\n]{3,160}[:\p{Sentence_Terminal}]\*\*/u;
 // The same lead when the manual's ninety-character wrap carried it over a
 // line break: "**Auto, the last row of that list, chooses for you — among
 // the assistants that" / "cost nothing.** Pick …". Five of the help window's
 // leads were wrapped, each stayed inside the step above it, and the step that
 // lists who answers ran to 6 800 characters -- longer than what rides.
 const BOLD_LEAD_OPEN_PATTERN = /^\s*\*\*[^*\n]{3,160}$/;
-const BOLD_LEAD_CLOSE_PATTERN = /^\s*[^*\n]{1,160}[.:?!។]\*\*/;
+const BOLD_LEAD_CLOSE_PATTERN = /^\s*[^*\n]{1,160}[:\p{Sentence_Terminal}]\*\*/u;
 // Past this length a passage is several subjects under one lead, and its
 // words count for less (see `rankPassages`).
 const LONG_PASSAGE_LENGTH = 2500;
@@ -226,7 +227,7 @@ function cutBeforeOpenTemplate(head) {
 }
 
 // The last place inside the text a sentence ends: a full stop of ANY script
-// (`\p{Sentence_Terminal}` -- the Khmer `។` as well as `.`, `!`, `?`)
+// (`\p{Sentence_Terminal}` -- the Khmer one as well as `.`, `!`, `?`)
 // with a space or the end after it.
 function findLastSentenceEnd(head) {
   let last = -1;

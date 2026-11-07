@@ -37,13 +37,21 @@ function emit(channel: string, data: unknown) {
     }
 }
 
-// A decoder that outputs one 640x360 frame per chunk, at once.
+// A decoder that outputs one 640x360 frame per chunk, at once -- and, as
+// WebCodecs does, is closed for good once it reports an error, and throws
+// when closed a second time.
 const decoders: FakeVideoDecoder[] = [];
 class FakeVideoDecoder {
     state = 'unconfigured';
     decodeQueueSize = 0;
     chunks: any[] = [];
-    constructor(private readonly init: { output: (frame: any) => void }) {
+    frames: any[] = [];
+    constructor(
+        private readonly init: {
+            output: (frame: any) => void;
+            error: (error: DOMException) => void;
+        },
+    ) {
         decoders.push(this);
     }
     configure() {
@@ -51,14 +59,23 @@ class FakeVideoDecoder {
     }
     decode(chunk: any) {
         this.chunks.push(chunk);
-        this.init.output({
+        const frame = {
             close: vi.fn(),
             chunk,
             displayWidth: 640,
             displayHeight: 360,
-        });
+        };
+        this.frames.push(frame);
+        this.init.output(frame);
+    }
+    fail() {
+        this.state = 'closed';
+        this.init.error(new DOMException('Decoding failed', 'EncodingError'));
     }
     close() {
+        if (this.state === 'closed') {
+            throw new DOMException('Codec is closed', 'InvalidStateError');
+        }
         this.state = 'closed';
     }
 }
@@ -230,6 +247,93 @@ describe('viewerCameraTransport', () => {
         emit('vd:camera-frame', frame('key'));
         expect(canvases[1].drawn).toHaveLength(2);
         expect(createViewerCameraView(stream)).toBeNull();
+    });
+
+    test('a packet that carries no bytes is not decoded', async () => {
+        const stream = await getViewerCameraStream(CAMERA);
+        emit('vd:camera-frame', { ...frame('key'), data: [1] });
+        emit('vd:camera-frame', null);
+        expect(decoders[0].chunks).toHaveLength(0);
+        emit('vd:camera-frame', frame('key'));
+        expect(decoders[0].chunks).toHaveLength(1);
+        releaseViewerCameraStream(stream);
+    });
+
+    test('a page that cannot keep up drops frames until the next key frame', async () => {
+        const stream = await getViewerCameraStream(CAMERA);
+        emit('vd:camera-frame', frame('key'));
+        const decoder = decoders[0];
+        // Eight waiting is still keeping up.
+        decoder.decodeQueueSize = 8;
+        emit('vd:camera-frame', frame('delta'));
+        expect(decoder.chunks).toHaveLength(2);
+        // More than eight: dropped, a key frame too, then every delta after
+        // it until a key frame, however short the queue has become.
+        decoder.decodeQueueSize = 9;
+        emit('vd:camera-frame', frame('key'));
+        emit('vd:camera-frame', frame('delta'));
+        decoder.decodeQueueSize = 0;
+        emit('vd:camera-frame', frame('delta'));
+        expect(decoder.chunks).toHaveLength(2);
+        emit('vd:camera-frame', frame('key'));
+        emit('vd:camera-frame', frame('delta'));
+        expect(decoder.chunks.map((chunk) => chunk.type)).toEqual([
+            'key',
+            'delta',
+            'key',
+            'delta',
+        ]);
+        releaseViewerCameraStream(stream);
+    });
+
+    test('a decoder that failed is replaced, and the box hides until a key frame decodes again', async () => {
+        const stream = await getViewerCameraStream(CAMERA);
+        const live: boolean[] = [];
+        listenViewerCameraLive(stream, (isLive) => live.push(isLive));
+        emit('vd:camera-frame', frame('key'));
+        expect(live).toEqual([false, true]);
+
+        decoders[0].fail();
+        // Nothing more comes from a decoder that closed itself: no frozen face.
+        expect(live).toEqual([false, true, false]);
+        // A delta has nothing to build on in a fresh decoder; a key frame does.
+        emit('vd:camera-frame', frame('delta'));
+        emit('vd:camera-frame', frame('key'));
+        expect(decoders).toHaveLength(2);
+        expect(decoders[1].chunks.map((chunk) => chunk.type)).toEqual(['key']);
+        expect(live).toEqual([false, true, false, true]);
+
+        releaseViewerCameraStream(stream);
+        expect(decoders[1].state).toBe('closed');
+        // An error after the camera was let go builds nothing new.
+        decoders[1].fail();
+        expect(decoders).toHaveLength(2);
+    });
+
+    test('a decoder that closed itself on an error is not closed again when the camera is let go', async () => {
+        const stream = await getViewerCameraStream(CAMERA);
+        emit('vd:camera-frame', frame('key'));
+        decoders[0].fail();
+        expect(() => releaseViewerCameraStream(stream)).not.toThrow();
+        expect(sendDataMock).toHaveBeenLastCalledWith('vd:camera-watch', {
+            cameraId: CAMERA,
+            isWatching: false,
+        });
+        expect(generators[0].isStopped).toBe(true);
+        expect(listeners.get('vd:camera-frame')?.size).toBe(0);
+    });
+
+    test('with no 2D canvas to draw in, no view is handed out and frames are still closed', async () => {
+        vi.stubGlobal('MediaStreamTrackGenerator', undefined);
+        vi.stubGlobal('document', {
+            createElement: () => ({ getContext: () => null }),
+        });
+        const stream = await getViewerCameraStream(CAMERA);
+        expect(createViewerCameraView(stream)).toBeNull();
+        emit('vd:camera-frame', frame('key'));
+        expect(decoders[0].frames).toHaveLength(1);
+        expect(decoders[0].frames[0].close).toHaveBeenCalledTimes(1);
+        releaseViewerCameraStream(stream);
     });
 
     test('a page with no video decoder cannot show one', async () => {

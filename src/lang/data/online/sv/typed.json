@@ -1,0 +1,12 @@
+{
+    "sv": {
+        "name": "Swedish",
+        "nativeName": "Svenska",
+        "script": "Latin",
+        "words": "och att det den de som en ett är var har hade jag du han hon vi ni mig dig min mitt mina din ditt hans hennes vår hur vad vart varför när vem vilken vilket vilka på i med för till av från om utan kan vill ska måste inte också mycket mer här där detta denna snälla tack",
+        "letters": "åäö",
+        "yes": ["ja", "ja, tack"],
+        "no": ["nej", "nej, tack"],
+        "order": 14
+    }
+}

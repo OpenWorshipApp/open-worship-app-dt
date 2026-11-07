@@ -591,10 +591,10 @@ describe('what a browser viewer is given', () => {
         expect(fixture.client.has(LABELS_KEY)).toBe(false);
         await service['runCommand']({
             action: 'labels',
-            labels: { waiting: 'Prêt' },
+            labels: { waiting: 'Ready ✓' },
         });
         expect(JSON.parse(fixture.client.get(LABELS_KEY)!).waiting).toBe(
-            'Prêt',
+            'Ready ✓',
         );
     });
 

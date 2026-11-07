@@ -210,9 +210,9 @@ describe('the data folder is stored as $DATA_DIR_PATH', () => {
 });
 
 describe('getPortableFileNameProblem', () => {
-    test('accepts an ordinary name, Khmer included', () => {
+    test('accepts an ordinary name, letters past ASCII included', () => {
         expect(getPortableFileNameProblem('Song 74 (new)')).toBeNull();
-        expect(getPortableFileNameProblem('សេចក្តីស្រឡាញ់នៃព្រះ')).toBeNull();
+        expect(getPortableFileNameProblem('✝✝')).toBeNull();
         expect(getPortableFileNameProblem('a.b')).toBeNull();
     });
 
@@ -260,14 +260,14 @@ describe('getAvailableFileName', () => {
         const dir = 'C:\\generated-bible-test';
         h.files.clear();
         expect(
-            await getAvailableFileName(dir, 'Genesis 1 3-5 KJV-ពគប', '.ows'),
-        ).toBe('Genesis 1 3-5 KJV-ពគប');
-        h.files.set(`${dir}\\Genesis 1 3-5 KJV-ពគប.ows`, 'original');
-        h.files.set(`${dir}\\Genesis 1 3-5 KJV-ពគប (2).ows`, 'second');
+            await getAvailableFileName(dir, 'Genesis 1 3-5 KJV-✝♪', '.ows'),
+        ).toBe('Genesis 1 3-5 KJV-✝♪');
+        h.files.set(`${dir}\\Genesis 1 3-5 KJV-✝♪.ows`, 'original');
+        h.files.set(`${dir}\\Genesis 1 3-5 KJV-✝♪ (2).ows`, 'second');
         expect(
-            await getAvailableFileName(dir, 'Genesis 1 3-5 KJV-ពគប', '.ows'),
-        ).toBe('Genesis 1 3-5 KJV-ពគប (3)');
-        expect(h.files.get(`${dir}\\Genesis 1 3-5 KJV-ពគប.ows`)).toBe(
+            await getAvailableFileName(dir, 'Genesis 1 3-5 KJV-✝♪', '.ows'),
+        ).toBe('Genesis 1 3-5 KJV-✝♪ (3)');
+        expect(h.files.get(`${dir}\\Genesis 1 3-5 KJV-✝♪.ows`)).toBe(
             'original',
         );
         expect(h.files.size).toBe(2);

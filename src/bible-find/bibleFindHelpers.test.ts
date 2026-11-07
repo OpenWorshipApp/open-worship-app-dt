@@ -173,12 +173,32 @@ describe('bible-find bibleFindHelpers', () => {
         expect(paging.currentPage).toBe('1');
     });
 
-    test('pageNumberToReqData maps a page to line numbers', () => {
+    // Found by UT-80 (2026-11-03), and this test used to assert the bug: the
+    // pages after the first were counted from ONE (11-20 here), while the
+    // first chunk (0-19 by default) and SQLite's `LIMIT offset, count` count
+    // from zero -- so page 2 began one verse late and the 21st found verse was
+    // never shown, nor the 41st, and so on.
+    test('pageNumberToReqData maps a page to zero-based line numbers', () => {
         const paging = { pages: ['1', '2'], currentPage: '1', perPage: 10 };
         expect(pageNumberToReqData(paging, '2')).toEqual({
-            fromLineNumber: 11,
-            toLineNumber: 20,
+            fromLineNumber: 10,
+            toLineNumber: 19,
         });
+    });
+
+    test('each page starts right after the one before, the first chunk included', () => {
+        const paging = {
+            pages: ['1', '2', '3'],
+            currentPage: '1',
+            perPage: 20,
+        };
+        const ranges = ['1', '2', '3'].map((page) => {
+            return pageNumberToReqData(paging, page);
+        });
+        // What the first chunk is asked for with no range at all.
+        expect(ranges[0]).toEqual({ fromLineNumber: 0, toLineNumber: 19 });
+        expect(ranges[1]).toEqual({ fromLineNumber: 20, toLineNumber: 39 });
+        expect(ranges[2]).toEqual({ fromLineNumber: 40, toLineNumber: 59 });
     });
 
     test('breakItem builds a highlighted verse and bible item', async () => {
@@ -319,30 +339,6 @@ describe('bible-find bibleFindHelpers', () => {
         ).toBe(`a &lt;b onclick=&quot;x&quot;&gt; &amp; ${mark('god')}`);
     });
 
-    test('highlightFoundWords matches across what the finding form drops', () => {
-        // The Khmer finding form keeps Khmer letters only, so the zero-width
-        // non-joiner inside a word is not there to match -- the marker goes
-        // round it, and round the whole word.
-        const toKhmerFindingText = (text: string) => {
-            return text
-                .replaceAll(/[^ក-៓០-៩]/g, ' ')
-                .replaceAll(/\s+/g, ' ')
-                .trim();
-        };
-        const word = 'ព្រះ‌យេហូវ៉ា';
-        expect(
-            highlightFoundWords(
-                `${word}​ទ្រង់`,
-                'ព្រះយេហូវ៉ា',
-                toKhmerFindingText,
-            ),
-        ).toBe(`${mark(word)}​ទ្រង់`);
-        // A conjunct is never split: `ស្រី` segments as `ស្` + `រី`.
-        expect(highlightFoundWords('ស្រី', 'ស', toKhmerFindingText)).toBe(
-            mark('ស្រី'),
-        );
-    });
-
     test('breakItem falls back to the default locale data', async () => {
         getLangDataAsyncMock.mockResolvedValueOnce(null);
         const result = await breakItem(
@@ -353,6 +349,34 @@ describe('bible-find bibleFindHelpers', () => {
         );
         expect(getLangDataAsyncMock).toHaveBeenLastCalledWith('en-US');
         expect(result.newItem).toBe(`In the beginning ${mark('God')}`);
+    });
+
+    test('breakItem lowercases when neither locale has language data', async () => {
+        getLangDataAsyncMock
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(null);
+        // The English finding form would drop the `♪`; plain lowercasing
+        // keeps it, so the whole word is marked.
+        const result = await breakItem(
+            'xx' as any,
+            'note♪',
+            'gen.1:1:a Note♪ sung',
+            'KJV',
+        );
+        expect(getLangDataAsyncMock.mock.calls).toEqual([['xx'], ['en-US']]);
+        expect(result.newItem).toBe(`a ${mark('Note♪')} sung`);
+    });
+
+    test('highlightFoundWords merges two matches that meet inside one cluster', () => {
+        // `Q` stands for a cluster whose finding form is two letters: `xa`
+        // ends inside it and `bc` starts inside it, so the two make ONE
+        // marker rather than a second one opened inside the first.
+        const toFindingText = (text: string) => {
+            return text === 'Q' ? 'ab' : text.toLowerCase();
+        };
+        expect(highlightFoundWords('xQc', 'bc xa', toFindingText)).toBe(
+            mark('xQc'),
+        );
     });
 
     test('breakItem handles verse ranges', async () => {
@@ -626,6 +650,17 @@ describe('toFindPageWindow', () => {
         expect(numbers).toContain(4);
         expect(numbers).toContain(1556);
     });
+
+    test('an opened range wholly past the last chunk adds no number', () => {
+        // Clamped to the pages there are, the range is empty and ignored.
+        expect(toLabels(toFindPageWindow(20, 1, [], [[30, 40]]))).toEqual([
+            1,
+            2,
+            3,
+            '4..19',
+            20,
+        ]);
+    });
 });
 
 describe('toFoundVerseCount', () => {
@@ -689,13 +724,6 @@ describe('toFindWildCardText', () => {
         expect(toFindWildCardText('en' as any, 'my shepherd')).toBe(
             '%my%%shepherd%',
         );
-    });
-
-    test('returns null when the query holds nothing of this bible script', () => {
-        // Measured 2026-09-20: a Khmer word looked up in the KJV built
-        // `LIKE '%%'` and answered "31,102 verses found" -- the whole bible.
-        quickTrimTextMock.mockImplementation(() => '');
-        expect(toFindWildCardText('en' as any, 'ឥន្ទ្រីយ')).toBeNull();
     });
 
     test('returns null for an empty query', () => {

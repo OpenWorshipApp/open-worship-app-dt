@@ -72,13 +72,13 @@ export function RenderNameDetailComp({
     // The datasets keep `type`, `gender`, `age` and each year range's type in
     // English whatever language the record itself is in, so they are keys to
     // translate rather than text to show -- a Khmer record read `Male`, then
-    // `175 years`, beside a translated `មនុស្ស`.
+    // `175 years`, beside a translated word for a human being.
     const nameTypeKey = getNameTypeSingularLabel(record.type);
     // Decided on the ENGLISH key and only THEN translated. Both this guard and
     // `checkHasDetailValue` inside the row below drop an `unknown` type by
     // comparing the string to `'unknown'`, and neither would recognize it once
-    // it reads `មិនស្គាល់` — an untyped record would grow a chip in Khmer that it
-    // does not have in English.
+    // it reads as the Khmer word for it — an untyped record would grow a chip
+    // in Khmer that it does not have in English.
     const isNameTypeShown =
         nameTypeKey !== '' && nameTypeKey.toLowerCase() !== 'unknown';
     const nameTypeLabel = isNameTypeShown ? translate(nameTypeKey) : '';

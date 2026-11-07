@@ -347,6 +347,30 @@ describe('intercom audio', () => {
         expect(audio.encoders[0].close).toHaveBeenCalledOnce();
     });
 
+    it('asks for the microphone once while it is on, and closing a speaker that is not open changes nothing', async () => {
+        const audio = setupAudio();
+        const intercom = createIntercomAudio(() => {});
+        intercom.setSpeaker('guest:a', 0.5);
+        await intercom.setMic(true);
+        await intercom.setMic(true);
+        expect(audio.getUserMedia).toHaveBeenCalledOnce();
+        expect(audio.processors).toHaveLength(1);
+        expect(intercom.isMicOn).toBe(true);
+
+        intercom.setSpeaker('guest:none', null);
+        expect(intercom.speakerKeys()).toEqual(['guest:a']);
+        expect(audio.decoders[0].close).not.toHaveBeenCalled();
+        // Still in use by the speaker and the microphone.
+        expect(audio.contexts[0].close).not.toHaveBeenCalled();
+        // A decoder that fails twice closes its speaker once.
+        audio.decoders[0].error();
+        audio.decoders[0].error();
+        expect(audio.gains[0].disconnect).toHaveBeenCalledOnce();
+        intercom.close();
+        expect(audio.track.stop).toHaveBeenCalledOnce();
+        expect(audio.contexts[0].close).toHaveBeenCalledOnce();
+    });
+
     it('cancels a track processor and closes a late frame after microphone shutdown', async () => {
         const audio = setupAudio();
         const cancel = vi.fn().mockResolvedValue(undefined);

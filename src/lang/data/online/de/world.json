@@ -1,0 +1,11 @@
+{
+    "nativeLanguageNames": {
+        "deutsch": "german"
+    },
+    "latinStopWords": {
+        "de-DE": "und die der das zu er nicht den sie ist ich ein mit dem des"
+    },
+    "languageAliases": {
+        "germany": "german"
+    }
+}

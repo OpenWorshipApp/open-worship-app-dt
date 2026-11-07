@@ -411,6 +411,25 @@ describe('relayoutGraph', () => {
             }),
         ).toHaveLength(0);
     });
+
+    // 2026-11-04: the relation order went on with every relation shown
+    // appended to it, so each was counted twice -- three boxes laid out over
+    // six slots, all three crowded to one side of the root.
+    test('re-laying out an untouched fan draws the same fan', () => {
+        const graph = addTo(genGraph(), 'name:jacob', [
+            genNeighbour('reuben', 'child'),
+            genNeighbour('simeon', 'child'),
+            genNeighbour('levi', 'child'),
+        ]).graph;
+        const toPointList = ({ nodeList }: GraphViewType) => {
+            return nodeList.map((node) => {
+                return [node.key, Math.round(node.x), Math.round(node.y)];
+            });
+        };
+        expect(toPointList(relayoutGraph(graph, RELATION_DEF_LIST))).toEqual(
+            toPointList(graph),
+        );
+    });
 });
 
 describe('setPath', () => {
@@ -642,5 +661,131 @@ describe('getEdgeKey and getEdgeBowIndexMap', () => {
             return edge.toKey === 'name:lot' || edge.fromKey === 'name:lot';
         });
         expect(bowMap.get(lotEdge?.key ?? '')).toBe(0);
+    });
+});
+
+describe('edge cases of the graph model', () => {
+    function genExpanded() {
+        return addTo(genGraph(), 'name:jacob', [
+            genNeighbour('joseph', 'child'),
+        ]).graph;
+    }
+
+    function withNode(
+        graph: GraphViewType,
+        nodeKey: string,
+        patch: Partial<GraphViewType['nodeList'][number]>,
+    ): GraphViewType {
+        return {
+            ...graph,
+            nodeList: graph.nodeList.map((node) => {
+                return node.key === nodeKey ? { ...node, ...patch } : node;
+            }),
+        };
+    }
+
+    function toPointList(graph: GraphViewType) {
+        return graph.nodeList.map((node) => {
+            return [node.key, Math.round(node.x), Math.round(node.y)];
+        });
+    }
+
+    const grandChildList = [
+        genNeighbour('ephraim', 'child'),
+        genNeighbour('manasseh', 'child'),
+        genNeighbour('asenath', 'spouse'),
+    ];
+
+    test('a box whose origin is gone fans over the whole circle', () => {
+        const expanded = genExpanded();
+        const orphaned = withNode(expanded, 'name:joseph', {
+            originKey: 'name:ghost',
+        });
+        const asRoot = withNode(expanded, 'name:joseph', { originKey: null });
+        const fromOrphan = addTo(orphaned, 'name:joseph', grandChildList);
+        const fromRoot = addTo(asRoot, 'name:joseph', grandChildList);
+        expect(fromOrphan.addedCount).toBe(3);
+        expect(toPointList(fromOrphan.graph).slice(2)).toEqual(
+            toPointList(fromRoot.graph).slice(2),
+        );
+        // With its origin still there, the fan turns away from it instead.
+        const fromOrigin = addTo(expanded, 'name:joseph', grandChildList);
+        expect(toPointList(fromOrigin.graph).slice(2)).not.toEqual(
+            toPointList(fromRoot.graph).slice(2),
+        );
+    });
+
+    test('a box dragged onto its own origin has no direction to face away from', () => {
+        const stacked = moveNode(genExpanded(), 'name:joseph', 0, 0);
+        const asRoot = withNode(stacked, 'name:joseph', { originKey: null });
+        expect(
+            toPointList(addTo(stacked, 'name:joseph', grandChildList).graph),
+        ).toEqual(
+            toPointList(addTo(asRoot, 'name:joseph', grandChildList).graph),
+        );
+    });
+
+    test('an already-placed neighbour under an unknown relation gets no edge', () => {
+        const expanded = genExpanded();
+        const { graph, addedCount } = addTo(expanded, 'name:jacob', [
+            genNeighbour('joseph', 'mystery'),
+        ]);
+        expect(addedCount).toBe(0);
+        expect(graph.edgeList).toEqual(expanded.edgeList);
+    });
+
+    test('removing a box that is not on the canvas returns the same graph', () => {
+        const expanded = genExpanded();
+        expect(removeNode(expanded, 'name:ghost')).toBe(expanded);
+    });
+
+    test('an empty path leaves the graph untouched', () => {
+        const expanded = genExpanded();
+        expect(
+            setPath(expanded, {
+                refList: [],
+                hopList: [],
+                availableWidth: 900,
+            }),
+        ).toBe(expanded);
+    });
+
+    test('re-layout leaves a box no shown edge reaches where it was, unpinned', () => {
+        const dragged = moveNode(genExpanded(), 'name:joseph', 500, -300);
+        const hidden = toggleRelationHidden(dragged, 'child');
+        const relaid = relayoutGraph(hidden, RELATION_DEF_LIST);
+        const joseph = relaid.nodeList.find((node) => {
+            return node.key === 'name:joseph';
+        });
+        expect(joseph).toMatchObject({ x: 500, y: -300, isPinned: false });
+        expect(relaid.nodeList[0]).toMatchObject({
+            x: 0,
+            y: 0,
+            isPinned: true,
+        });
+    });
+
+    test('a path stays visible even when its relation is hidden', () => {
+        const pathGraph = setPath(genGraph(), {
+            refList: [
+                { kind: 'name', recordId: 'abraham', name: 'Abraham' },
+                { kind: 'name', recordId: 'isaac', name: 'Isaac' },
+                { kind: 'name', recordId: 'jacob', name: 'Jacob' },
+            ],
+            hopList: [
+                { relation: 'child', isReversed: false },
+                { relation: 'child', isReversed: false },
+            ],
+            availableWidth: 1200,
+        });
+        const visible = getVisibleGraph(
+            toggleRelationHidden(pathGraph, 'child'),
+        );
+        expect(visible.edgeList).toEqual([]);
+        expect(
+            visible.nodeList.map((node) => {
+                return node.key;
+            }),
+        ).toEqual(['name:abraham', 'name:isaac', 'name:jacob']);
     });
 });

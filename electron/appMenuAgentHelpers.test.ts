@@ -7,9 +7,11 @@ vi.mock('electron', async () => {
 
 import {
     clickAgentMenuItem,
+    FACTORY_RESET_DENIED_LABEL,
     findAgentMenuItem,
     listAgentMenuItems,
 } from './appMenuAgentHelpers';
+import { FACTORY_RESET_LABEL } from './factoryResetHelpers';
 
 // A menu the shape Electron builds: items with labels, roles, types and
 // submenus. Hand-made so the rules are tested with no Electron behind them.
@@ -141,6 +143,44 @@ describe('appMenuAgentHelpers', () => {
             expect(clickAgentMenuItem(item, null, menu), item).toMatchObject({
                 isError: true,
                 reason: expect.stringContaining(words),
+            });
+        }
+        expect(click).not.toHaveBeenCalled();
+    });
+
+    test('refuses Help > Factory Reset, whatever its case', () => {
+        const click = vi.fn();
+        const menu = {
+            items: [
+                {
+                    label: 'Help',
+                    type: 'submenu',
+                    submenu: {
+                        items: [
+                            {
+                                label: FACTORY_RESET_LABEL,
+                                type: 'normal',
+                                enabled: true,
+                                click,
+                            },
+                        ],
+                    },
+                },
+            ],
+        } as any;
+        // The two spellings are one item: the menu's label is the one refused.
+        expect(FACTORY_RESET_LABEL.toLowerCase()).toBe(
+            FACTORY_RESET_DENIED_LABEL,
+        );
+        const listed = listAgentMenuItems(menu);
+        expect(listed[1]).toMatchObject({
+            path: 'Help > Factory Reset',
+            refused: expect.stringContaining('cannot be undone'),
+        });
+        for (const item of ['Help > Factory Reset', 'factory reset']) {
+            expect(clickAgentMenuItem(item, null, menu), item).toMatchObject({
+                isError: true,
+                reason: expect.stringContaining('deletes every setting'),
             });
         }
         expect(click).not.toHaveBeenCalled();

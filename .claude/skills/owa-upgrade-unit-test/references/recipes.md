@@ -194,6 +194,20 @@ parameterised test on any module of the same shape.
 | **`%` keeps the sign**, so stepping back off index 0 lands at -1 (rule `chatbot-window.md`, the chat tips) | Step backwards from the first element; assert it wraps to the last |
 | **A regex over repo text on a CRLF checkout** (memory `crlf-checkout-line-regex`) | Feed the function `\r\n` text; assert it still matches |
 
+**A test written to light a branch can pin the bug it should catch**
+(2026-11-03). It records whatever the code returns. Twice in one run an
+existing test asserted the defect itself:
+
+- `bibleFindHelpers.test.ts` expected page 2 to ask for lines 11-20, against
+  a first chunk of 0-19, so one found verse was lost at every page boundary.
+- The lookup's "no passage at the edge" table held `Genesis 1:1` with `next`.
+  Stepping read book codes alone, so every reference written as a name
+  answered "There is no passage after" it.
+
+Before accepting an asserted value, check it against the domain: is Genesis
+1:2 really not after Genesis 1:1? Is the range contiguous with the page
+before?
+
 ## 6. Special imports
 
 - **`open-lyric` (the real one)** — `// @vitest-environment jsdom`, then patch
@@ -255,10 +269,13 @@ script raises **both** `testTimeout` and `hookTimeout` to 60 seconds. The
 ordinary suite keeps its committed timeouts. A screen-manager import exceeded
 the default hook timeout during measurement while its focused suite passed.
 
-`tran.mjs` prefers `electron-build/knowledge/tran.json` over source dictionaries.
-An old local bundle made four translation/interlock tests fail despite both
-source packs having the keys. `node extra-work/build-knowledge.mjs` restored
-those real-data tests without changing their expectations.
+`tran.mjs` takes ENGLISH alone from `electron-build/knowledge/tran.json`
+(since 2026-11-04) and every other language from `langPacks.mjs`: the
+installed plugins a lister names, or -- in a test, with none configured -- the
+source packs in `src/lang/data/online/`. A test that wants "installed"
+languages points `configureLangPacks(() => [dirs])` at temp plugin folders
+and resets it with `configureLangPacks(null)`. (Before, an old local bundle's
+dictionaries had won over the source and failed four real-data tests.)
 
 Use fake timers in **every** test of a debounce-heavy component harness, then
 clear them after unmount before restoring real timers. Instrumentation slowed
@@ -274,3 +291,38 @@ The measurement runner checks child-process failure before reading any summary.
 Finding a summary alone can accept a stale report. The regression tests in
 `src/test-setup/coverageGapRunner.test.ts` simulate failed launches with an
 existing summary and verify that only success writes the worklist.
+
+## 10. A 12 000-line component, by line range (2026-11-03, UT-94..96)
+
+`src/chatbot/ChatbotAppComp.tsx` went from 22% to ~99% of its lines through
+its DOM alone, in eleven `ChatbotAppComp.<part>.test.tsx` files (`ui*`,
+`steps*`, `asking*`, plus the older `coverage`). What made that work:
+
+- **Split by the file's line ranges, not by feature.** Each test file pays
+  8-15 s of transform and import for the component, so one file per ~2 500
+  lines lets the runner spread them over workers; a single file of 340 tests
+  would be the slowest in the suite.
+- **Route the tool host by name and THROW on the rest.** `callTool` reads a
+  `routes` record (`tool name → (args, signal) => result`) cleared in
+  `beforeEach`; a tool nobody routed throws, so an unexpected call fails the
+  test instead of quietly answering `''`.
+- **Wait by the real clock under fake timers.** `waitFor(check, what)` keeps a
+  5 s deadline on `performance.now` and `setTimeout` bound at MODULE load,
+  before any `vi.useFakeTimers()`, and between looks advances the fake clock
+  by 0 and turns the real event loop once (a lazy chunk loads from disk). A
+  deadline on the fake clock never arrives.
+- **A debounce that outlives its component leaks into the next test.** The
+  window's 400 ms session save (`genTimeoutAttempt`) is not cancelled on
+  unmount; on real timers it wrote one test's `chatbot-sessions` into the
+  next. Fake timers in every test, and `vi.clearAllTimers()` after unmount,
+  before `vi.useRealTimers()`.
+- **Press the pseudo tools by their label** (`.cue-act`): the import, verse
+  finder and lookup steps carry their whole state in the button's args, so
+  seeding the message that holds the button IS the setup.
+
+Three bugs this found are in the batch notes (a Bible pressed under its own
+**Search another Bible** list never searched; a pressed import choice the
+interpreter called another task ended the tab on its echo; a selector-less
+control's chip promised to open what a press rings). Loads under the
+whole-surface run broke three other tests that pass alone: memory
+`coverage-run-load-flakes`.

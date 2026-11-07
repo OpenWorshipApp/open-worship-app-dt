@@ -224,6 +224,63 @@ describe('BibleTextPresetTilesComp', () => {
         expect(findTile('Easter').getAttribute('aria-pressed')).toBe('true');
     });
 
+    test('the name box opens with its words selected, so typing replaces them', async () => {
+        await renderTiles({});
+        h.typedName = null;
+        await act(async () => {
+            findTile('Save as Preset').click();
+        });
+        // The dialog's body, mounted the way the dialog mounts it.
+        const dialogContainer = document.createElement('div');
+        document.body.appendChild(dialogContainer);
+        const dialogRoot = createRoot(dialogContainer);
+        await act(async () => {
+            dialogRoot.render(h.showAppInput.mock.lastCall?.[1]);
+        });
+        const input = dialogContainer.querySelector('input')!;
+        expect(document.activeElement).toBe(input);
+        expect(input.value).toBe('Preset 1');
+        expect(input.selectionStart).toBe(0);
+        expect(input.selectionEnd).toBe('Preset 1'.length);
+        await act(async () => {
+            dialogRoot.unmount();
+        });
+        dialogContainer.remove();
+    });
+
+    test('the dots on the lit saved look open its menu, without wearing it again', async () => {
+        await renderTiles(goldStyle);
+        // Only the look that is on carries them.
+        expect(
+            findTile('Plain black').querySelector('.bible-style-look-menu'),
+        ).toBeNull();
+        const dots = findTile('Gold').querySelector('.bible-style-look-menu');
+        expect(dots).not.toBeNull();
+        const event = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => {
+            dots!.dispatchEvent(event);
+        });
+        expect(h.showAppContextMenu).toHaveBeenCalledTimes(1);
+        expect(h.showAppContextMenu.mock.lastCall?.[0]).toBe(event);
+        expect(event.defaultPrevented).toBe(true);
+        expect(
+            (
+                h.showAppContextMenu.mock.lastCall?.[1] as {
+                    menuElement: string;
+                }[]
+            ).map((item) => item.menuElement),
+        ).toEqual([
+            'Rename Preset',
+            'Replace with Current Look',
+            'Remove Preset',
+        ]);
+        // The press stops at the dots: the tile itself is not pressed.
+        expect(applyStyle).not.toHaveBeenCalled();
+    });
+
     test('Cancel, or an empty name, saves nothing', async () => {
         await renderTiles({});
         h.typedName = null;

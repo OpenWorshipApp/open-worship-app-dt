@@ -409,4 +409,149 @@ describe('Screen Mirror QR preview', () => {
             'The QR code image could not be copied',
         );
     });
+
+    // The picture is drawn on a canvas that is let go whatever happens: a
+    // page with no 2D canvas, or a canvas that gives no picture, copies
+    // nothing and says so.
+    test.each([
+        ['no 2D canvas', false],
+        ['no picture from the canvas', true],
+    ])(
+        'reports a copy that fails with %s, and releases the canvas',
+        async (_name, hasContext) => {
+            const canvases: HTMLCanvasElement[] = [];
+            vi.spyOn(
+                HTMLCanvasElement.prototype,
+                'getContext',
+            ).mockImplementation(function (this: HTMLCanvasElement) {
+                canvases.push(this);
+                return hasContext
+                    ? ({
+                          fillRect: vi.fn(),
+                          fillText: vi.fn(),
+                          scale: vi.fn(),
+                          fill: vi.fn(),
+                      } as unknown as CanvasRenderingContext2D)
+                    : null;
+            } as any);
+            const toBlob = vi
+                .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+                .mockImplementation((callback) => {
+                    callback(null);
+                });
+            const write = vi.fn(async () => {});
+            Object.defineProperty(navigator, 'clipboard', {
+                configurable: true,
+                value: { write },
+            });
+            vi.stubGlobal(
+                'Path2D',
+                class {
+                    constructor(public path: string) {}
+                },
+            );
+            await draw(createElement(MirrorQrCodeComp, { text: 'host:39240' }));
+            await click('Copy image');
+            expect(write).not.toHaveBeenCalled();
+            expect(toBlob).toHaveBeenCalledTimes(hasContext ? 1 : 0);
+            expect(h.toast).toHaveBeenCalledExactlyOnceWith(
+                'Copy image',
+                'The QR code image could not be copied',
+            );
+            expect(canvases).toHaveLength(1);
+            expect(canvases[0].width).toBe(0);
+            expect(canvases[0].height).toBe(0);
+        },
+    );
+});
+
+describe('Screen Mirror host addresses, by kind', () => {
+    test('names where each outside address comes from', async () => {
+        const hostState = state({
+            internetEnabled: true,
+            addresses: [
+                { kind: 'lan', host: '192.168.1.8', port: 39240 },
+                { kind: 'router', host: '203.0.113.4', port: 46000 },
+                { kind: 'typed', host: 'church.ddns.net', port: 46000 },
+                { kind: 'public', host: '198.51.100.7', port: 39240 },
+            ],
+        });
+        await draw(
+            createElement(ScreenMirrorAddressesComp, {
+                state: hostState,
+                busy: false,
+                perform,
+            }),
+        );
+        const rows = [...container.querySelectorAll('li')].map((row) => ({
+            text: row.querySelector('.app-data')!.textContent,
+            badge: row.querySelector('.badge')?.textContent ?? null,
+        }));
+        expect(rows).toEqual([
+            // This computer's own network carries no badge.
+            { text: '192.168.1.8:39240', badge: null },
+            { text: '203.0.113.4:46000', badge: 'Router' },
+            { text: 'church.ddns.net:46000', badge: 'Public address' },
+            { text: '198.51.100.7:39240', badge: 'Public IP' },
+        ]);
+        // No IPv6 address listed: no IPv6 advice.
+        expect(container.textContent).not.toContain('An IPv6 address works');
+    });
+});
+
+describe('Screen Mirror router, while it is asked', () => {
+    test('says the router is being asked, and still takes a public port', async () => {
+        await draw(
+            createElement(MirrorRouterStatusComp, {
+                state: {
+                    router: 'working',
+                    port: 39240,
+                    publicPort: 45000,
+                    addresses: [],
+                },
+                busy: false,
+                perform,
+            }),
+        );
+        const status = container.querySelector('[role="status"]')!;
+        expect(status.textContent).toBe('Asking the router to open the port…');
+        expect(status.querySelector('.spinner-border')).not.toBeNull();
+        expect(container.textContent).not.toContain('Ask the router again');
+        const portInput = container.querySelector<HTMLInputElement>(
+            'input[type="number"]',
+        )!;
+        // The public port asked for, or this computer's own when none is.
+        expect(portInput.placeholder).toBe('45000');
+    });
+
+    test('a router behind another network points to a VPN; one that never answered shows the forwarding', async () => {
+        const routerState = {
+            router: 'shared' as const,
+            port: 39240,
+            publicPort: null,
+            addresses: [{ kind: 'lan', host: '192.168.1.8', port: 39240 }],
+        };
+        await draw(
+            createElement(MirrorRouterStatusComp, {
+                state: routerState,
+                busy: false,
+                perform,
+            }),
+        );
+        expect(container.textContent).toContain('A VPN such as Tailscale');
+        expect(container.textContent).not.toContain('Forward the port');
+        await draw(
+            createElement(MirrorRouterStatusComp, {
+                state: { ...routerState, router: 'unavailable' as const },
+                busy: false,
+                perform,
+            }),
+        );
+        expect(container.textContent).toContain('No router answered.');
+        expect(container.textContent).toContain('39240 → 192.168.1.8:39240');
+        expect(
+            container.querySelector<HTMLInputElement>('input[type="number"]')!
+                .placeholder,
+        ).toBe('39240');
+    });
 });

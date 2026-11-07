@@ -84,3 +84,34 @@ test('ticks once a second on the second, never per animation frame, until paused
     expect(timing.divSecond.textContent).toBe('14');
     frameSpy.mockRestore();
 });
+
+test('a running flag cleared from outside stops the clock at its next tick', () => {
+    const timing = new TimingController(createTimeContainer(), 12, true);
+    timing.start();
+    expect(vi.getTimerCount()).toBe(1);
+    // `isRunning` is public: a caller may drop it without `pause()`.
+    timing.isRunning = false;
+    vi.advanceTimersByTime(1_020);
+    expect(timing.divSecond.textContent).toBe('12');
+    expect(vi.getTimerCount()).toBe(0);
+    vi.advanceTimersByTime(5_000);
+    expect(timing.divSecond.textContent).toBe('12');
+});
+
+test('init builds a clock with the given zone, format and period words', () => {
+    const toPeriodText = (period: string) => `[${period}]`;
+    const timing = TimingController.init(
+        createTimeContainer(true),
+        12,
+        false,
+        toPeriodText,
+    );
+
+    expect(timing).toBeInstanceOf(TimingController);
+    expect(timing.timezoneMinuteOffset).toBe(12);
+    expect(timing.is24HourFormat).toBe(false);
+    expect(timing.divHour.textContent).toBe('10');
+    expect(timing.divAmPm?.textContent).toBe('[PM]');
+    // Built stopped-on-the-current-time: nothing ticks until start().
+    expect(vi.getTimerCount()).toBe(0);
+});

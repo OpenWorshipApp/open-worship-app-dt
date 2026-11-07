@@ -2342,7 +2342,7 @@ const ACTION_PATTERN =
 const RIGHT_CLICK_PATTERN = /^\s*(?:\*\*)?right[- ]?click\b/i;
 
 // A bold, plus the word the recipe qualifies it with: "the **Background**
-// (ផ្ទៃខាងក្រោយ) panel". Only the CONTAINER nouns are captured -- they are
+// (its Khmer twin) panel". Only the CONTAINER nouns are captured -- they are
 // the ones that change which control is meant, where "tab" or "button" only
 // repeat what the label already says. The Khmer twin the manual writes
 // between the two is stepped over, not matched: this window is English.

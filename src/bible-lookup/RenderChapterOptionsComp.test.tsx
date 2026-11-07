@@ -57,6 +57,8 @@ vi.mock('../lang/langHelpers', () => ({
 }));
 
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
+import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { processSelection, userEnteringSelected } from './selectionHelpers';
 
 let host: HTMLDivElement;
 let root: Root;
@@ -147,5 +149,80 @@ describe('chapter options introduction toggle', () => {
         expect(
             host.querySelectorAll('.bible-lookup-chapter-option'),
         ).toHaveLength(1);
+    });
+});
+
+describe('chapter options list', () => {
+    it('moves the highlighted chapter with the arrow keys', async () => {
+        await render();
+        const [eventMaps, listener] = vi
+            .mocked(useKeyboardRegistering)
+            .mock.calls.at(-1)!;
+        expect(eventMaps).toEqual([
+            { key: 'ArrowLeft' },
+            { key: 'ArrowRight' },
+        ]);
+        expect(userEnteringSelected).toHaveBeenCalledWith(
+            'bible-lookup-chapter-option',
+            'active',
+        );
+        const event = { key: 'ArrowRight' };
+        listener(event as any);
+        expect(processSelection).toHaveBeenCalledExactlyOnceWith(
+            'bible-lookup-chapter-option',
+            'active',
+            'ArrowRight',
+            event,
+        );
+        // The first real chapter, not the introduction, is the one Enter picks.
+        expect(
+            host.querySelector('.bible-lookup-chapter-option')!.className,
+        ).toContain(' active');
+    });
+
+    // Found by UT-80 (2026-11-03): a chapter written in the Bible's own digits
+    // carries its number as a tooltip, and the word in it skipped `tran` --
+    // English "Chapter 3" whatever language the app was in.
+    it('names a chapter written in other digits in the app language', async () => {
+        h.chapters = [
+            { chapter: 3, chapterLocaleString: '３' },
+            { chapter: 4, chapterLocaleString: '4' },
+        ];
+        await render();
+        const [other, same] = Array.from(
+            host.querySelectorAll<HTMLButtonElement>('.app-chapter-select'),
+        );
+        expect(other.textContent).toContain('３');
+        expect(other.title).toBe('[Chapter] 3');
+        expect(other.parentElement!.title).toBe('[Chapter] 3');
+        expect(same.title).toBe('');
+        expect(same.parentElement!.title).toBe('');
+    });
+
+    it('renders nothing while the chapters are not known', async () => {
+        h.chapters = null;
+        await render();
+        expect(host.innerHTML).toBe('');
+        expect(useKeyboardRegistering).toHaveBeenCalled();
+    });
+
+    it('pads the last row with hidden ghosts as wide as an option', async () => {
+        Object.defineProperty(document.body, 'clientWidth', {
+            configurable: true,
+            value: 150,
+        });
+        try {
+            await render();
+        } finally {
+            delete (document.body as any).clientWidth;
+        }
+        const ghosts = Array.from(
+            host.querySelectorAll<HTMLElement>('div'),
+        ).filter((element) => element.style.visibility === 'hidden');
+        expect(ghosts).toHaveLength(3);
+        expect(ghosts.every((ghost) => ghost.style.width === '70px')).toBe(
+            true,
+        );
+        expect(document.body.clientWidth).toBe(0);
     });
 });

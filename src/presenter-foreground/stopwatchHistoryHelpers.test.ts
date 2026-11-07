@@ -146,4 +146,18 @@ describe('stopwatch history', () => {
             spy.mockRestore();
         }
     });
+
+    // A tag `Intl` refuses outright -- `supportedLocalesOf` THROWS on it --
+    // is a locale it cannot format either, not a crash of the history list.
+    test('falls back to numbers for a locale tag Intl refuses', () => {
+        expect(() => {
+            return Intl.DateTimeFormat.supportedLocalesOf(['en_US']);
+        }).toThrow(RangeError);
+        expect(toStopwatchHistoryWhenText(NOW - 60_000, NOW, 'en_US')).toBe(
+            '10:41',
+        );
+        expect(toStopwatchHistoryWhenText(NOW - 86_400_000, NOW, 'en_US')).toBe(
+            '03/10 10:42',
+        );
+    });
 });

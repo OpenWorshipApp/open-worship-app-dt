@@ -26,7 +26,7 @@ describe('decodeHtmlEntities', () => {
 
     test('reads decimal and hexadecimal references', () => {
         expect(decodeHtmlEntities('It&#39;s &#x2014; ok')).toBe("It's — ok");
-        expect(decodeHtmlEntities('&#6016;')).toBe('ក');
+        expect(decodeHtmlEntities('&#6016;')).toBe(String.fromCodePoint(6016));
     });
 
     test('leaves what it does not know as written', () => {
@@ -68,7 +68,7 @@ describe('document HTML sanitization', () => {
             sanitizeHtml(
                 '<style>.verse { color: red; }</style>' +
                     '<div class="verse" style="font-size:61px; font-family:serif">' +
-                    '<strong>ខ្មែរ</strong><br><em>Français</em>' +
+                    '<strong>✝ Grace</strong><br><em>📖 Word</em>' +
                     '<span data-title-verse-key="GEN 1:1" data-dict-locale="en">Verse</span>' +
                     '<svg viewBox="0 0 16 16"><path d="M0 0L16 16" /></svg></div>',
             ),
@@ -77,8 +77,8 @@ describe('document HTML sanitization', () => {
         expect(clean.querySelector('.verse')?.getAttribute('style')).toContain(
             '61px',
         );
-        expect(clean.querySelector('strong')?.textContent).toBe('ខ្មែរ');
-        expect(clean.querySelector('em')?.textContent).toBe('Français');
+        expect(clean.querySelector('strong')?.textContent).toBe('✝ Grace');
+        expect(clean.querySelector('em')?.textContent).toBe('📖 Word');
         expect(clean.querySelector('br')).not.toBeNull();
         expect(clean.querySelector('[data-title-verse-key]')?.textContent).toBe(
             'Verse',

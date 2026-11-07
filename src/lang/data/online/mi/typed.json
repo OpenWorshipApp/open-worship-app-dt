@@ -1,0 +1,12 @@
+{
+    "mi": {
+        "name": "Maori",
+        "nativeName": "Māori",
+        "script": "Latin",
+        "words": "te ngā he me kia ki ka i o ko au ahau koe ia mātou tātou rātou koutou pēhea aha hea āhea wai tēnei tēnā tērā konei kāore anō hoki rawa koa",
+        "letters": "āēīōū",
+        "yes": ["āe"],
+        "no": ["kāore"],
+        "order": 43
+    }
+}

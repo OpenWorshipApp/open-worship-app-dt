@@ -19,6 +19,7 @@ const {
     DEFAULT_SLIDE_AUTO_PLAY_OPTIONS,
     checkIsSlideAutoPlaying,
     genNextDelaySeconds,
+    genSlideAutoPlaySettingNames,
     getSlideAutoPlayRemainingSeconds,
     readSlideAutoPlayOptions,
     setIsSlideAutoPlaying,
@@ -161,6 +162,36 @@ describe('toNextIndex', () => {
         expect(
             toNextIndex(0, 0, { isNext: true, step: 1, repeatKind: 'all' }),
         ).toBeNull();
+    });
+});
+
+describe('genSlideAutoPlaySettingNames', () => {
+    it('names every setting a show is read from, so forgetting it forgets all of it', () => {
+        const readKeys = new Set<string>();
+        const originalGet = settingMap.get;
+        settingMap.get = (key: string) => {
+            readKeys.add(key);
+            return originalGet.call(settingMap, key);
+        };
+        try {
+            readSlideAutoPlayOptions(PREFIX);
+            checkIsSlideAutoPlaying(PREFIX);
+        } finally {
+            settingMap.get = originalGet;
+        }
+        const names = genSlideAutoPlaySettingNames(PREFIX);
+        expect(names).toEqual([
+            'foreground-video-slide-auto-play-playing',
+            'foreground-video-slide-auto-play-timer-seconds',
+            'foreground-video-slide-auto-play-timer-max-seconds',
+            'foreground-video-slide-auto-play-repeat',
+            'foreground-video-slide-auto-play-step',
+            'foreground-video-slide-auto-play-until-media-end',
+        ]);
+        expect(readKeys.size).toBeGreaterThan(0);
+        for (const key of readKeys) {
+            expect(names).toContain(key);
+        }
     });
 });
 

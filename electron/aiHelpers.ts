@@ -18,6 +18,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { isDev, toUnpackedPath } from './electronHelpers';
+import { getLangPlugins, getLangPluginsDirPath } from './langPluginHelpers';
 import { refreshLlmRegistry } from './llmRegistryHelpers';
 
 const REMOTE_DEBUGGING_PORT_ARG_PREFIX = '--owa-remote-debugging-port=';
@@ -272,6 +273,12 @@ export async function startMcpHost() {
             // A getter, because Chromium reports the port only after `ready`
             // and `publishAiEndpoints` fills it in behind the first session.
             getCdpPort: () => remoteDebuggingPort,
+            // Every language but English is read from its installed plugin
+            // (its dictionary, corpus and manual); the knowledge bundle above
+            // is English alone.
+            listLangDirs: () => {
+                return listEnabledLangDirs() ?? [];
+            },
             logger: (...items: unknown[]) => {
                 console.log('[owa-devtools-mcp]', ...items);
             },
@@ -292,6 +299,55 @@ export async function startMcpHost() {
  * Call AFTER `ready`; the file Chromium writes appears as the DevTools handler
  * starts, so it is polled for rather than read once.
  */
+/**
+ * The folders of the language plugins installed and turned on -- where every
+ * language but English is read from, by both agent doors -- or null before
+ * the main process has been told where to look.
+ */
+function listEnabledLangDirs(): string[] | null {
+    if (getLangPluginsDirPath() === null) {
+        return null;
+    }
+    return getLangPlugins()
+        .filter((plugin) => {
+            return plugin.isEnabled;
+        })
+        .map((plugin) => {
+            return plugin.dirPath;
+        });
+}
+
+// What `publishAiEndpoints` wrote, kept to write again with the languages of
+// the moment (`republishAiLangDirs`): the rest never changes for a launch.
+let publishedAiInfo: Record<string, unknown> | null = null;
+
+async function writeAiInfoFile() {
+    if (publishedAiInfo === null) {
+        return;
+    }
+    await writeFile(
+        getAiInfoFilePath(),
+        JSON.stringify(
+            { ...publishedAiInfo, langDirs: listEnabledLangDirs() },
+            null,
+            2,
+        ),
+        { mode: 0o600 },
+    );
+}
+
+/**
+ * Writes the instance file again with the languages installed now, so the
+ * stdio door -- its own process, reading that file -- reads the same ones as
+ * the in-app door. Called once main knows where the plugins are and whenever
+ * one is installed, updated, deleted or turned on or off.
+ */
+export function republishAiLangDirs() {
+    writeAiInfoFile().catch((error) => {
+        console.log('Failed to publish the installed languages:', error);
+    });
+}
+
 export async function publishAiEndpoints(timeoutMilliseconds = 10 * 1000) {
     if (!isRemoteDebuggingEnabled) {
         return null;
@@ -310,25 +366,18 @@ export async function publishAiEndpoints(timeoutMilliseconds = 10 * 1000) {
         await mkdir(dirPath, { recursive: true, mode: 0o700 });
         await sweepStaleAiInfo(dirPath);
         const filePath = getAiInfoFilePath();
-        await writeFile(
-            filePath,
-            JSON.stringify(
-                {
-                    pid: process.pid,
-                    port,
-                    url: `http://127.0.0.1:${port}`,
-                    mcpUrl: mcpHost?.url ?? null,
-                    mcpToken: mcpHost?.token ?? null,
-                    isDev,
-                    version: app.getVersion(),
-                    userDataPath: app.getPath('userData'),
-                    startedAt: new Date().toISOString(),
-                },
-                null,
-                2,
-            ),
-            { mode: 0o600 },
-        );
+        publishedAiInfo = {
+            pid: process.pid,
+            port,
+            url: `http://127.0.0.1:${port}`,
+            mcpUrl: mcpHost?.url ?? null,
+            mcpToken: mcpHost?.token ?? null,
+            isDev,
+            version: app.getVersion(),
+            userDataPath: app.getPath('userData'),
+            startedAt: new Date().toISOString(),
+        };
+        await writeAiInfoFile();
         app.on('will-quit', () => {
             try {
                 unlinkSync(filePath);

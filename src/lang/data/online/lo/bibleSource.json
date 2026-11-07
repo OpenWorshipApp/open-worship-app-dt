@@ -1,0 +1,9 @@
+{
+    "wordLanguages": [
+        {
+            "pattern": "\\p{Script=Lao}",
+            "name": "Lao",
+            "order": 5
+        }
+    ]
+}

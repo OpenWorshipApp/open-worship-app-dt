@@ -1,0 +1,32 @@
+{
+    "uiFamily": "app-Battambang",
+    "family": "Battambang",
+    "faces": [
+        {
+            "file": "fonts/Battambang/Battambang-Regular.ttf",
+            "weight": "normal"
+        },
+        {
+            "file": "fonts/Battambang/Battambang-Bold.ttf",
+            "weight": "bold"
+        },
+        {
+            "file": "fonts/Battambang/Battambang-Light.ttf",
+            "weight": "300"
+        },
+        {
+            "file": "fonts/Battambang/Battambang-Thin.ttf",
+            "weight": "100"
+        },
+        {
+            "file": "fonts/Battambang/Battambang-Black.ttf",
+            "weight": "900"
+        }
+    ],
+    "lookAlikes": ["Khmer OS Battambang", "Kh Battambang"],
+    "stickyNote": {
+        "family": "km-font-Fasthand",
+        "file": "fonts/Fasthand/Fasthand-Regular.ttf"
+    },
+    "songOrder": 2
+}

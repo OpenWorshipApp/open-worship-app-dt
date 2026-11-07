@@ -245,6 +245,14 @@ describe('assignPaneKeys', () => {
         expect(keysAfter([a, [b, c]], [a, c]).keys).toEqual(['i1', 'g2']);
     });
 
+    test('a split holding no view is keyed by its place', () => {
+        expect(assignPaneKeys([[], a, []], new Map())).toEqual([
+            'g-0',
+            'i1',
+            'g-2',
+        ]);
+    });
+
     test('keys never repeat among siblings', () => {
         const keys = assignPaneKeys([[a], [b]], new Map([['g2', [1]]]));
         expect(keys).toEqual(['g2', 'g2-1']);

@@ -14,6 +14,12 @@ const h = vi.hoisted(() => ({
     readServerInfo: vi.fn(async () => null as any),
     nextId: 0,
     collapsedMap: new Map<string, boolean>(),
+    openURL: vi.fn(),
+}));
+
+// The video buttons open the system browser; nothing else here reaches it.
+vi.mock('../server/appProvider', () => ({
+    default: { browserUtils: { openExternalURL: h.openURL } },
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -661,5 +667,88 @@ describe('SettingOthersCustomServersComp', () => {
 
         expect(h.servers).toEqual([]);
         expect(h.collapsedMap.has('ai-custom-server-server-1')).toBe(false);
+    });
+
+    test('the two video searches open in the browser', async () => {
+        await render();
+        const videoButtons = ['LM Studio videos', 'Ollama videos'].map(
+            (label) => findButton(label),
+        );
+        expect(videoButtons.map((button) => button.title)).toEqual([
+            'Opens YouTube videos about LM Studio in your browser',
+            'Opens YouTube videos about Ollama in your browser',
+        ]);
+        for (const button of videoButtons) {
+            await act(async () => button.click());
+        }
+        expect(h.openURL.mock.calls).toEqual([
+            ['https://www.youtube.com/results?search_query=lm+studio'],
+            ['https://www.youtube.com/results?search_query=ollama'],
+        ]);
+    });
+
+    test('a llama.cpp model that is loaded with no size said gets no note', async () => {
+        h.servers = [
+            {
+                id: 'server-1',
+                name: 'llama.cpp',
+                baseUrl: 'http://localhost:8080/v1',
+                models: [{ id: 'row-1', model: 'qwen3.5-4b.gguf', name: '' }],
+            },
+        ];
+        h.listModels.mockResolvedValue({ ok: true, models: ['qwen3.5-4b'] });
+        const info = {
+            isLoaded: true,
+            loadedContext: null,
+            maxContext: null,
+            canSeeImages: false,
+        };
+        h.readServerInfo.mockResolvedValue({
+            kind: 'llama-cpp',
+            infoMap: new Map(),
+            commonInfo: info,
+        });
+        await render();
+        await act(async () => findButton('Test').click());
+        expect(container.textContent).toContain(
+            'The server answered. Chat models it has: 1',
+        );
+        expect(container.querySelector('.app-setting-others-model-note')).toBe(
+            null,
+        );
+
+        // The same answer from Ollama, which loads on the first question.
+        h.readServerInfo.mockResolvedValue({
+            kind: 'ollama',
+            infoMap: new Map(),
+            commonInfo: info,
+        });
+        await act(async () => findButton('Test').click());
+        expect(
+            container.querySelector('.app-setting-others-model-note')
+                ?.textContent,
+        ).toBe(
+            'Not loaded in Ollama right now. The first question waits for it to load.',
+        );
+    });
+
+    test('Load asks nothing for a server deleted in the meantime', async () => {
+        h.servers = [
+            {
+                id: 'server-1',
+                name: 'LM Studio',
+                baseUrl: 'http://localhost:1234/v1',
+                models: [{ id: 'row-1', model: 'phi', name: 'Phi' }],
+            },
+        ];
+        await render();
+        // Gone from the store (another window), not yet from this list.
+        h.servers = [];
+        await act(async () => findButton('Load models from server').click());
+        expect(h.listModels).not.toHaveBeenCalled();
+        expect(h.servers).toEqual([]);
+        await act(async () => findButton('Test').click());
+        expect(h.listModels).not.toHaveBeenCalled();
+        expect(container.textContent).not.toContain('The server answered');
     });
 });

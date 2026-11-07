@@ -303,9 +303,18 @@ function BibleBooksMapXMLInputComp({
             let innerText = doc.body.innerText;
             innerText = innerText.replaceAll('@newline', '\n');
             innerText = innerText.replaceAll(/ +/g, ' ');
-            innerText = innerText.replaceAll(/\n\s/g, '\n');
-            innerText = innerText.replaceAll(/\n+/g, '\n');
-            innerText = innerText.trim();
+            // One name a line, trimmed at both ends: only the space after a
+            // break went, so `<li>Exodus </li>` was kept as "Exodus "
+            // (2026-11-03).
+            innerText = innerText
+                .split('\n')
+                .map((line) => {
+                    return line.trim();
+                })
+                .filter((line) => {
+                    return line !== '';
+                })
+                .join('\n');
             if (lang !== null) {
                 innerText = lang.sanitizeText(innerText);
             }

@@ -1,0 +1,13 @@
+{
+    "languageAliases": {
+        "pilipino": "tagalog",
+        "philippines": "tagalog",
+        "filipino": "tagalog"
+    },
+    "latinStopWords": {
+        "fil-PH": "ang at ng sa mga si na ay kay kanyang"
+    },
+    "nativeLanguageNames": {
+        "tagalog": "tagalog"
+    }
+}

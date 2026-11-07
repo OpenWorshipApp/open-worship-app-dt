@@ -135,7 +135,8 @@ class BibleRenderHelper {
      * A KJV key as a passage, or null when it names none: for keys that come
      * from DATA rather than from this app, which are not always well formed.
      * `fromKJVBibleVersesKey` reads whatever it is given, and the AI cross
-     * references hold `PSA 56:title` and fragments such as `PSA 119:ющ` —
+     * references hold `PSA 56:title` and fragments such as `PSA 119:` with
+     * letters of another script —
      * read leniently those were `Number('title')`, NaN, a row titled
      * `Psalm 56:` whose press opened "Record not found".
      *

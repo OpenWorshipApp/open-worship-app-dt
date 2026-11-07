@@ -67,7 +67,7 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
-describe('Bible Properties panel', () => {
+describe('Bible/LongText Properties panel', () => {
     test('shows the verse on the background its words are for, with the matching look lit', () => {
         const outline = genBibleTextLookList('dark').find(
             (look) => look.id === 'outline',

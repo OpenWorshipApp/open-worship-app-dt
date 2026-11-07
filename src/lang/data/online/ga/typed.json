@@ -1,0 +1,12 @@
+{
+    "ga": {
+        "name": "Irish",
+        "nativeName": "Gaeilge",
+        "script": "Latin",
+        "words": "agus ní níl tá bhí beidh conas cad cá cén cathain cé fáth mé tú sé sí muid sibh siad mo ár bhur seo sin ansin anseo gach chun faoi ó roimh nuair féidir liom leat dom duit uaim mhaith cabhair cabhraigh thoil raibh agat déan taispeáin athraigh freisin fós anois níos rud aon na ar",
+        "letters": "áéíóú",
+        "yes": ["tá", "sea", "is ea", "cinnte"],
+        "no": ["níl", "ní hea", "níl, go raibh maith agat"],
+        "order": 84
+    }
+}

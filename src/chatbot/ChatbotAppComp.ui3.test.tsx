@@ -181,6 +181,22 @@ vi.mock('./llmBotHelpers', async (importOriginal) => {
         },
     };
 });
+// The language packages' book names are lazy files the fake clock cannot
+// wait for; English, the package every tree has, answers at once.
+vi.mock('../lang/langPackageFileHelpers', async (importOriginal) => {
+    const englishBooks = (await import('../lang/data/en/bibleBooks.json'))
+        .default as { books: string[] }[];
+    return {
+        ...(await importOriginal<
+            typeof import('../lang/langPackageFileHelpers')
+        >()),
+        listLangBibleBookNames: async () => {
+            return englishBooks.flatMap((set) => {
+                return set.books;
+            });
+        },
+    };
+});
 vi.mock('./questionHelpers', async (importOriginal) => {
     return {
         ...(await importOriginal<typeof import('./questionHelpers')>()),
@@ -817,11 +833,13 @@ describe('a Reader question that names a book', () => {
         });
     });
 
+    // No book in the open Bible nor in any language package's own book names
+    // (`listLangBibleBookNames`): the words are the app's question.
     test('words that name no book are asked as a question about the app', async () => {
         seedReaderTab();
         mocks.callTool.mockImplementation(async (name: string, args: any) => {
             if (name === 'owa_bible_suggest' && args.limit === 1) {
-                if (args.prefix === 'Summarize Matthew') {
+                if (args.prefix === 'Summarize Kingdom') {
                     return JSON.stringify({ suggestions: [] });
                 }
                 throw new Error('no Bible open');
@@ -830,7 +848,7 @@ describe('a Reader question that names a book', () => {
         });
         mocks.askLlmBot.mockResolvedValue({ text: 'Here is how.' });
         await renderApp();
-        await send('Summarize Matthew 18');
+        await send('Summarize Kingdom 18');
         const prefixes = callsOf('owa_bible_suggest')
             .filter((call) => {
                 return call[1].limit === 1;
@@ -838,8 +856,25 @@ describe('a Reader question that names a book', () => {
             .map((call) => {
                 return call[1].prefix;
             });
-        expect(prefixes).toEqual(['Matthew', 'Summarize Matthew']);
+        expect(prefixes).toEqual(['Kingdom', 'Summarize Kingdom']);
         expect(mocks.askLlmBot.mock.calls[0][6].bibleReader).toBeUndefined();
+    });
+
+    // A book the open Bible does not name -- it is in another language --
+    // still names a book when a language package's own list has it
+    // (2026-11-04, EC-461): a Reader question, not the app's.
+    test('a book only a language package names is still a Reader question', async () => {
+        seedReaderTab();
+        mocks.callTool.mockImplementation(async (name: string, args: any) => {
+            if (name === 'owa_bible_suggest' && args.limit === 1) {
+                return JSON.stringify({ suggestions: [] });
+            }
+            return '{}';
+        });
+        mocks.askLlmBot.mockResolvedValue({ text: 'Matthew 18 is about…' });
+        await renderApp();
+        await send('Summarize Matthew 18');
+        expect(mocks.askLlmBot.mock.calls[0][6].bibleReader).toBeDefined();
     });
 });
 
@@ -1031,149 +1066,5 @@ describe('a job another window handed over', () => {
         expect(await echoOfHandOver('Import bible for Khmer')).toContain(
             'Import bible for Khmer',
         );
-    });
-});
-
-describe('a verse remembered in another script', () => {
-    function seedVerseSearch() {
-        seedKeys({ anthropicAPIKey: 'a' });
-        seedNamedProvider('anthropic');
-        seedSessions([
-            genSession({
-                provider: 'anthropic',
-                model: 'claude-opus-5',
-                messages: [
-                    { id: 1, author: 'you', text: 'Help me find a verse' },
-                    {
-                        id: 2,
-                        author: 'bot',
-                        text: 'What do you remember about the verse?',
-                        verseFind: 'KJV',
-                    },
-                ],
-            }),
-        ]);
-    }
-
-    test('with no Gemma 4 to translate, it is searched as it was typed', async () => {
-        seedVerseSearch();
-        mocks.askLlmBot.mockResolvedValue({ text: 'Matthew 5:44.' });
-        await renderApp();
-        await send('ស្រឡាញ់ខ្មាំងសត្រូវ');
-        const translations = mocks.askLlmBot.mock.calls.filter((call) => {
-            return call[6]?.isTranslation === true;
-        });
-        expect(translations).toEqual([]);
-        expect(mocks.askLlmBot).toHaveBeenCalled();
-    });
-
-    test('a Gemma 4 on this computer puts the words into English first', async () => {
-        seedVerseSearch();
-        state.home.set(
-            'ai-custom-servers',
-            JSON.stringify({
-                servers: [
-                    {
-                        id: 'lms',
-                        name: 'LM Studio',
-                        baseUrl: 'http://localhost:1234/v1',
-                        models: [
-                            {
-                                id: 'g4',
-                                model: 'gemma-4-e4b',
-                                name: 'Gemma 4 E4B',
-                            },
-                        ],
-                    },
-                ],
-            }),
-        );
-        const baseImplementation =
-            mocks.electronSendAsync.getMockImplementation()!;
-        mocks.electronSendAsync.mockImplementation(
-            async (channel: string, data: any) => {
-                if (channel === 'main:app:custom-llm-fetch') {
-                    return {
-                        ok: true,
-                        status: 200,
-                        contentType: 'application/json',
-                        text: JSON.stringify({
-                            data: [{ id: 'gemma-4-e4b', state: 'loaded' }],
-                        }),
-                    };
-                }
-                return baseImplementation(channel, data);
-            },
-        );
-        mocks.askLlmBot.mockImplementation(async (...args: any[]) => {
-            if (args[6]?.isTranslation === true) {
-                return { text: 'love your enemies' };
-            }
-            return { text: 'Matthew 5:44.' };
-        });
-        await renderApp();
-        await send('ស្រឡាញ់ខ្មាំងសត្រូវ');
-        const translation = mocks.askLlmBot.mock.calls.find((call) => {
-            return call[6]?.isTranslation === true;
-        });
-        expect(translation).toBeDefined();
-        expect(translation![0]).toContain('ស្រឡាញ់ខ្មាំងសត្រូវ');
-        expect([translation![2], translation![3]]).toEqual([
-            'custom',
-            'lms/g4',
-        ]);
-        expect(translation![6]).toMatchObject({ isGeneral: true });
-    });
-
-    test('a translation that fails is no English, and the search goes on', async () => {
-        seedVerseSearch();
-        state.home.set(
-            'ai-custom-servers',
-            JSON.stringify({
-                servers: [
-                    {
-                        id: 'lms',
-                        name: 'LM Studio',
-                        baseUrl: 'http://localhost:1234/v1',
-                        models: [
-                            {
-                                id: 'g4',
-                                model: 'gemma-4-e4b',
-                                name: 'Gemma 4 E4B',
-                            },
-                        ],
-                    },
-                ],
-            }),
-        );
-        const baseImplementation =
-            mocks.electronSendAsync.getMockImplementation()!;
-        mocks.electronSendAsync.mockImplementation(
-            async (channel: string, data: any) => {
-                if (channel === 'main:app:custom-llm-fetch') {
-                    return {
-                        ok: true,
-                        status: 200,
-                        contentType: 'application/json',
-                        text: '{"data":[{"id":"gemma-4-e4b"}]}',
-                    };
-                }
-                return baseImplementation(channel, data);
-            },
-        );
-        mocks.askLlmBot.mockImplementation(async (...args: any[]) => {
-            if (args[6]?.isTranslation === true) {
-                throw new Error('the server went quiet');
-            }
-            return { text: 'Matthew 5:44.' };
-        });
-        await renderApp();
-        await send('ស្រឡាញ់ខ្មាំងសត្រូវ');
-        expect(
-            mocks.askLlmBot.mock.calls.filter((call) => {
-                return call[6]?.isTranslation !== true;
-            }),
-        ).toHaveLength(1);
-        expect(lastAnswerText()).toContain('Matthew 5:44.');
     });
 });

@@ -368,4 +368,213 @@ describe('presenting-flow action dialogs', () => {
             'The stop point must be after the start point',
         );
     });
+
+    function pressKey(input: HTMLInputElement, init: KeyboardEventInit) {
+        const event = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            ...init,
+        });
+        act(() => {
+            input.dispatchEvent(event);
+        });
+        return event;
+    }
+
+    test('a time of day that is not one is refused', async () => {
+        const confirm = prepareDialog();
+        const pending = askForPresentingFlowActionArming(TIMEOUT, {
+            actionTime: '19:30',
+        });
+        // Re-arming opens on its own half of the question.
+        const timeInput = container.querySelector<HTMLInputElement>('input')!;
+        expect(timeInput.type).toBe('time');
+        expect(timeInput.value).toBe('19:30');
+        changeValue(timeInput, '');
+        await confirm(true);
+        expect(await pending).toBeNull();
+        expect(fake.showToast).toHaveBeenCalledWith(
+            'Next: Timeout',
+            'Please enter a valid time',
+        );
+    });
+
+    test('an action armed with neither a number nor a key is not asked about', async () => {
+        const JUMP = {
+            ...INTERVAL,
+            label: 'Jump to',
+            number: null,
+        } as PresentingFlowRunActionType;
+        expect(await askForPresentingFlowActionArming(JUMP)).toBeNull();
+        expect(fake.showInput).not.toHaveBeenCalled();
+    });
+
+    test('a bare modifier on the way to a combination changes nothing', async () => {
+        const confirm = prepareDialog();
+        const pending = askForPresentingFlowActionArming(KEYBOARD, {
+            actionKey: 'Ctrl+K',
+        });
+        const input = container.querySelector<HTMLInputElement>('input')!;
+        expect(input.value).toBe('Ctrl+K');
+        pressKey(input, { key: 'a', code: 'KeyA' });
+        expect(container.textContent).toContain('Hold Ctrl or Shift');
+        // Holding Shift down first: neither stored nor a reason to complain.
+        const modifierPress = pressKey(input, {
+            key: 'Shift',
+            code: 'ShiftLeft',
+            shiftKey: true,
+        });
+        expect(modifierPress.defaultPrevented).toBe(true);
+        expect(input.value).toBe('Ctrl+K');
+        expect(container.textContent).toContain('Hold Ctrl or Shift');
+        await confirm(true);
+        expect(await pending).toEqual({ actionKey: 'Ctrl+K' });
+    });
+
+    test('a shortcut question cancelled, or answered with nothing pressed, arms nothing', async () => {
+        const confirm = prepareDialog();
+        const cancelled = askForPresentingFlowActionArming(KEYBOARD, {
+            actionKey: 'Ctrl+K',
+        });
+        await confirm(false);
+        expect(await cancelled).toBeNull();
+        expect(fake.showToast).not.toHaveBeenCalled();
+
+        // A fresh dialog, as `showAppInput` mounts one per question.
+        act(() => root.unmount());
+        root = createRoot(container);
+        // A stored key that is not one opens on an empty field.
+        const empty = askForPresentingFlowActionArming(KEYBOARD, {
+            actionKey: 'K',
+        });
+        expect(container.querySelector<HTMLInputElement>('input')?.value).toBe(
+            '',
+        );
+        await confirm(true);
+        expect(await empty).toBeNull();
+        expect(fake.showToast).toHaveBeenCalledWith(
+            'Next: Keyboard Event',
+            'Please press a shortcut',
+        );
+    });
+
+    test('with no screen open the checklist says so', () => {
+        fake.screens = [];
+        act(() =>
+            root.render(
+                <ActionScreenIdsInputComp
+                    defaultScreenIds={[]}
+                    onChange={vi.fn()}
+                />,
+            ),
+        );
+        expect(container.textContent).toBe('No screen is open');
+        expect(container.querySelector('input')).toBeNull();
+    });
+
+    test('a screen question cancelled names no screens', async () => {
+        fake.showInput.mockResolvedValue(false);
+        expect(
+            await askForPresentingFlowActionScreenIds(SCREEN, [1]),
+        ).toBeNull();
+        expect(fake.showToast).not.toHaveBeenCalled();
+    });
+
+    test('a media controller cancelled writes nothing', async () => {
+        const confirm = prepareDialog();
+        const pending = askForPresentingFlowMediaControl({ mode: 'play' }, [1]);
+        changeValue(
+            controlInGroup<HTMLInputElement>('Delay Before', 'input'),
+            '4',
+        );
+        await confirm(false);
+        expect(await pending).toBeNull();
+        expect(fake.showToast).not.toHaveBeenCalled();
+    });
+
+    test('a media controller pauses a number of seconds after it starts', async () => {
+        const confirm = prepareDialog();
+        const pending = askForPresentingFlowMediaControl();
+        changeValue(
+            controlInGroup<HTMLSelectElement>('Then Pause', 'select'),
+            'after',
+        );
+        changeValue(
+            controlInGroup<HTMLInputElement>('Pause After', 'input'),
+            '15',
+        );
+        await confirm(true);
+        expect(await pending).toEqual({
+            mediaControl: { mode: 'play', pauseAfterSecond: 15 },
+            screenIds: [],
+        });
+    });
+
+    test.each([
+        [
+            'a negative delay',
+            [['Delay Before', 'input', '-1']],
+            'Please enter a number that is 0 or greater',
+        ],
+        [
+            'an emptied start point',
+            [['Media Start At', 'input', '']],
+            'Please enter a number that is 0 or greater',
+        ],
+        [
+            'a pause after zero seconds',
+            [
+                ['Then Pause', 'select', 'after'],
+                ['Pause After', 'input', '0'],
+            ],
+            'Please enter a number greater than 0',
+        ],
+        [
+            'a volume above 100',
+            [
+                ['Set Volume', 'checkbox', ''],
+                ['Volume', 'input[type="number"]', '150'],
+            ],
+            'Please enter a volume between 0 and 100',
+        ],
+    ] as const)(
+        'a media controller refuses %s',
+        async (_name, steps, message) => {
+            const confirm = prepareDialog();
+            const pending = askForPresentingFlowMediaControl();
+            for (const [label, selector, value] of steps) {
+                if (selector === 'checkbox') {
+                    act(() =>
+                        container
+                            .querySelector<HTMLInputElement>(
+                                `input[title="${label}"]`,
+                            )!
+                            .click(),
+                    );
+                    continue;
+                }
+                changeValue(
+                    controlInGroup<HTMLInputElement>(label, selector),
+                    value,
+                );
+            }
+            await confirm(true);
+            expect(await pending).toBeNull();
+            expect(fake.showToast).toHaveBeenCalledWith(
+                'Slide: Media Control',
+                message,
+            );
+        },
+    );
+
+    test('a stored speed that is not one is refused rather than run', async () => {
+        fake.showInput.mockResolvedValue(true);
+        expect(
+            await askForPresentingFlowMediaControl({ mode: 'play', speed: 0 }),
+        ).toBeNull();
+        expect(fake.showToast).toHaveBeenCalledWith(
+            'Slide: Media Control',
+            'Please enter a number greater than 0',
+        );
+    });
 });

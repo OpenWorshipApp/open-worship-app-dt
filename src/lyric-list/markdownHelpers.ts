@@ -3,15 +3,6 @@ import CacheManager from '../others/CacheManager';
 import appProvider from '../server/appProvider';
 import { unlocking } from '../server/unlockingHelpers';
 
-type RenderMarkdownOptions = {
-    isJustifyCenter?: boolean;
-    isDisablePointerEvents?: boolean;
-    theme?: string;
-    fontFamily?: string;
-    fontWeight?: string;
-    scale?: number;
-};
-
 export type HTMLDataType = {
     id: string;
     html: string;
@@ -19,10 +10,11 @@ export type HTMLDataType = {
 
 const markdownCacheManager = new CacheManager<HTMLDataType>(10); // 10 second
 
-export async function renderMarkdown(
-    text: string,
-    options?: RenderMarkdownOptions,
-) {
+// Takes the text alone, as every caller does: an options bag (theme, font,
+// scale...) was read for `theme` only, through a `setTheme` that markdown-it
+// does not have -- it threw -- and the cache, keyed by the text, would have
+// ignored the rest (2026-11-03).
+export async function renderMarkdown(text: string) {
     if (!text) {
         return {
             id: '',
@@ -37,9 +29,6 @@ export async function renderMarkdown(
         }
         const MarkdownIt = (await import('markdown-it')).default;
         const markdown = new MarkdownIt({ html: true });
-        if (options?.theme) {
-            (markdown as any).setTheme(options.theme);
-        }
         let html: string;
         try {
             html = markdown.render(text);

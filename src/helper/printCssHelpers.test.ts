@@ -72,7 +72,7 @@ describe('collectFontFaceCss', () => {
                 '.verse { font-family: "app-Battambang"; }',
         );
         const css = collectFontFaceCss(
-            '<p style="font-family: app-Battambang">ព្រះ</p>',
+            '<p style="font-family: app-Battambang">✝</p>',
         );
         const rules = css.split('\n');
         expect(rules).toHaveLength(2);

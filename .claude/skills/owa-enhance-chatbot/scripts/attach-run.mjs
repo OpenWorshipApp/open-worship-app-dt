@@ -5,7 +5,7 @@
 // after the other, so the last question can name one by its number.
 //
 //   node attach-run.mjs --server="Ollam super-mac" --model="gemma4:cloud" \
-//        [--lang=km] [--out=<file.jsonl>] [--allow-more]
+//        [--lang=<code>] [--out=<file.jsonl>] [--allow-more]
 //
 // - 📷 is pressed as a person presses it: the window takes the picture.
 // - ◎ is pressed, the run waits for the picker to be up in the main window
@@ -23,6 +23,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { genRunWordPattern, genRunWordSource, readLanguageAsks } from '../../../../extra-work/language-packages.mjs';
 
 const REPO = fileURLToPath(new URL('../../../../', import.meta.url));
 const WORK_DIR = path.join(REPO, 'test-results', 'chatbot-quality', 'run');
@@ -39,6 +40,11 @@ const OUT = path.resolve(
     String(args.out ?? path.join(REPO, 'test-results', 'chatbot-quality', `attach-${new Date().toISOString().slice(0, 10)}.jsonl`)),
 );
 const PROFILE = 'open-worship-app-dev';
+// The file and the questions are the language's own (`--lang`, or the one
+// language with them): `src/lang/data/online/<code>/chatbot-asks/attach-asks.json`.
+const { data: ATTACH_ASKS } = readLanguageAsks('attach-asks.json', args.lang);
+const PAUSED_PATTERN = genRunWordPattern('I have paused the assistant', 'paused');
+const ALLOW_MORE_SOURCE = genRunWordSource('Allow more', 'allowMore');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const log = (...parts) => console.log(new Date().toISOString().slice(11, 19), ...parts);
 
@@ -196,18 +202,10 @@ const CLICK = (selector) => `(() => {
 // ---- the files a person would choose ---------------------------------------
 
 function writeFiles(mainShot) {
-    const text = path.join(FILE_DIR, 'ទំនុក-ព្រះគុណ.txt');
-    fs.writeFileSync(
-        text,
-        [
-            'ព្រះគុណដ៏អស្ចារ្យ',
-            '',
-            'ព្រះគុណដ៏អស្ចារ្យ សំឡេងពីរោះណាស់',
-            'បានសង្គ្រោះមនុស្សមានបាបដូចខ្ញុំ',
-            'ពីមុនខ្ញុំវង្វេង តែឥឡូវរកឃើញ',
-            'ពីមុនខ្ញុំខ្វាក់ តែឥឡូវមើលឃើញ',
-        ].join('\n'),
-    );
+    // A hymn as a text file a person would choose, in the run's language
+    // (`src/lang/data/online/<code>/chatbot-asks/attach-asks.json`).
+    const text = path.join(FILE_DIR, ATTACH_ASKS.textFile.name);
+    fs.writeFileSync(text, ATTACH_ASKS.textFile.lines.join('\n'));
     const picture = path.join(FILE_DIR, 'presenter.png');
     fs.writeFileSync(picture, Buffer.from(mainShot, 'base64'));
     // The smallest PDF a reader opens: one page, one line.
@@ -290,10 +288,10 @@ async function waitAnswer(botsBefore, timeoutMs = 300000) {
 
 async function pressAllowMoreIfPaused(answer) {
     if (args['allow-more'] !== true) return false;
-    if (!/ខ្ញុំបានផ្អាកជំនួយការ|I have paused the assistant/.test(`${answer?.note ?? ''} ${answer?.text ?? ''}`)) return false;
+    if (!PAUSED_PATTERN.test(`${answer?.note ?? ''} ${answer?.text ?? ''}`)) return false;
     const pressed = await chat.evaluate(`(() => {
         const button = [...(document.querySelector('.chat-head')?.querySelectorAll('button') ?? [])]
-            .find((one) => /អនុញ្ញាតបន្ថែម|Allow more/.test(one.textContent));
+            .find((one) => new RegExp(${JSON.stringify(ALLOW_MORE_SOURCE)}).test(one.textContent));
         if (!button) return false;
         button.click();
         return true;
@@ -314,7 +312,7 @@ const steps = [
     {
         id: 'A1-camera',
         attach: async () => chat.evaluate(CLICK('.chat-attach:nth-of-type(2)')),
-        ask: 'តើខ្ញុំកំពុងនៅទំព័រណា? ហើយខ្ញុំដាក់ចម្រៀងមួយបទលើអេក្រង់ធំដោយរបៀបណា?',
+        ask: ATTACH_ASKS.asks['A1-camera'],
     },
     {
         id: 'A2-point',
@@ -342,25 +340,28 @@ const steps = [
             await sleep(1500);
             return { ok: true };
         },
-        ask: 'តើប៊ូតុងដែលខ្ញុំចង្អុលនេះ ប្រើសម្រាប់ធ្វើអ្វី?',
+        ask: ATTACH_ASKS.asks['A2-point'],
     },
     {
         id: 'A3-text-file',
         attach: async () => attachFiles([files.text]),
-        ask: 'ខ្ញុំមានទំនុកចម្រៀងនៅក្នុងឯកសារនេះ។ តើខ្ញុំដាក់វាជាចម្រៀងនៅក្នុងកម្មវិធីនេះ ហើយបង្ហាញលើអេក្រង់ដោយរបៀបណា?',
+        ask: ATTACH_ASKS.asks['A3-text-file'],
     },
     {
         id: 'A4-picture-file-by-number',
         attach: async () => attachFiles([files.picture]),
         askFor: (clips) => {
             const number = clips[clips.length - 1]?.number ?? '';
-            return `នៅក្នុងរូបភាពលេខ ${number} តើប៊ូតុងណាសម្រាប់បើក ឬបិទអេក្រង់ធំ ហើយវានៅត្រង់ណា?`;
+            return ATTACH_ASKS.asks['A4-picture-file-by-number'].replace(
+                '{number}',
+                String(number),
+            );
         },
     },
     {
         id: 'A5-pdf',
         attach: async () => attachFiles([files.pdf]),
-        ask: 'តើឯកសារ PDF នេះនិយាយអំពីអ្វី? តើខ្ញុំបង្ហាញវាលើអេក្រង់បានទេ?',
+        ask: ATTACH_ASKS.asks['A5-pdf'],
     },
 ];
 

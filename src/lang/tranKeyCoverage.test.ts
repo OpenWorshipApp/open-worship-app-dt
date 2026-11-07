@@ -1,18 +1,22 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-// Every `tran()` key the app can name statically must have a Khmer string.
-// `tran()` THROWS on a missing key in dev -- a whole subtree blanks when the
-// call is in a render -- and shows English in a packaged Khmer window, while
+// Every `tran()` key the app can name statically must have a string in EVERY
+// language package there is (`src/lang/data/online/<code>/dictionary.json`,
+// found by its folder -- English is the key language and has none;
+// 2026-11-04, the user: _all keys are translated, fail on dev for non
+// traslated_). `tran()` THROWS on a missing key
+// in dev -- a whole subtree blanks when the call is in a render -- and shows
+// English in a packaged window of that language, while
 // the typecheck, eslint and every other test stay green (memory
 // `tran-missing-key-throws-in-dev`). Before this test, five keys on failure
 // paths had no Khmer string at all (EN-20), and nothing could have noticed.
 //
-// The dictionary is read as SOURCE, never imported: the module pulls in font
-// files, a `.gz.bundle` and the open-lyric Khmer plugin.
+// The dictionary is read as a file, never through the package: a package
+// pulls in font files, a `.gz.bundle` and its own open-lyric plugin.
 
 const REPO_DIR = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
@@ -20,10 +24,6 @@ const REPO_DIR = path.resolve(
     '..',
 );
 const SRC_DIR = path.join(REPO_DIR, 'src');
-
-function toPackSourcePath(langCode: string) {
-    return path.join(SRC_DIR, 'lang', 'data', langCode, 'index.ts');
-}
 
 // A `'…'`, `"…"` or a template literal with no `${}` -- one piece of a key.
 const LITERAL_SOURCE =
@@ -43,40 +43,66 @@ const CONSTANT_PATTERN =
     /\bconst\s+([A-Z_][A-Z0-9_]*)\s*=\s*('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")\s*;/g;
 
 function evaluateLiteral(sourceText: string): unknown {
-    // Only ever handed text these patterns matched: string literals, `+`,
-    // and an object literal of strings. Nothing else reaches it.
+    // Only ever handed text these patterns matched: string literals and `+`.
+    // Nothing else reaches it.
     return new Function(`return (${sourceText});`)();
 }
 
-// Mirrors `sanitizeTranKey` in the km module; the test below holds the two
-// together.
+// Mirrors `sanitizeTranKey` in the factory every language is built by
+// (`online/onlineLangPackage.ts`); the test below holds the two together.
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();
 }
 
+// Every language is `online/<code>/`, a folder of data
+// (`online/README.md`): its labels are its `dictionary.json`, and the one
+// factory sanitizes the keys.
+const LANG_DATA_DIR = path.join(SRC_DIR, 'lang', 'data', 'online');
+const DICTIONARY_FILE_NAME = 'dictionary.json';
+const FACTORY_SOURCE_PATH = path.join(LANG_DATA_DIR, 'onlineLangPackage.ts');
+
 function readPackKeys(langCode: string) {
-    const packSource = readFileSync(toPackSourcePath(langCode), 'utf-8');
-    const start = packSource.indexOf('const dictionary = {');
-    const end = packSource.indexOf('function sanitizeTranKey');
-    if (start === -1 || end === -1) {
-        throw new Error(
-            `The ${langCode} dictionary is no longer shaped as expected`,
-        );
-    }
-    const objectText = packSource
-        .slice(start + 'const dictionary = '.length, end)
-        .trim()
-        .replace(/;$/, '');
-    const dictionary = evaluateLiteral(objectText) as Record<string, string>;
+    const dictionary = JSON.parse(
+        readFileSync(
+            path.join(LANG_DATA_DIR, langCode, DICTIONARY_FILE_NAME),
+            'utf-8',
+        ),
+    ) as Record<string, string>;
     return {
-        packSource,
+        packSource: readFileSync(FACTORY_SOURCE_PATH, 'utf-8'),
         keySet: new Set(Object.keys(dictionary).map(sanitizeTranKey)),
     };
 }
 
-function readKhmerKeys() {
-    const { packSource, keySet } = readPackKeys('km');
-    return { kmSource: packSource, keySet };
+// Every package, by its folder: a language is added -- or taken out -- with
+// it, and this file names none.
+const PACKAGE_LANG_CODE_LIST = existsSync(LANG_DATA_DIR)
+    ? readdirSync(LANG_DATA_DIR, { withFileTypes: true })
+          .filter((entry) => {
+              return (
+                  entry.isDirectory() &&
+                  existsSync(
+                      path.join(
+                          LANG_DATA_DIR,
+                          entry.name,
+                          DICTIONARY_FILE_NAME,
+                      ),
+                  )
+              );
+          })
+          .map((entry) => {
+              return entry.name;
+          })
+          .sort()
+    : [];
+const packKeysCache = new Map<string, ReturnType<typeof readPackKeys>>();
+function readCachedPackKeys(langCode: string) {
+    let packKeys = packKeysCache.get(langCode);
+    if (packKeys === undefined) {
+        packKeys = readPackKeys(langCode);
+        packKeysCache.set(langCode, packKeys);
+    }
+    return packKeys;
 }
 
 function listSourceFiles(dirPath: string): string[] {
@@ -129,7 +155,14 @@ function collectTranCalls(fileTextMap: Map<string, string>): TranCallType[] {
     return calls;
 }
 
+// Read once for every package: it reads every source file.
+let appTranCallsCache: TranCallType[] | null = null;
 function readAppTranCalls() {
+    appTranCallsCache ??= readAppTranCallsUncached();
+    return appTranCallsCache;
+}
+
+function readAppTranCallsUncached() {
     const fileTextMap = new Map<string, string>();
     for (const filePath of listSourceFiles(SRC_DIR)) {
         const relativePath = path
@@ -141,9 +174,27 @@ function readAppTranCalls() {
     return collectTranCalls(fileTextMap);
 }
 
-describe('Khmer translation coverage', () => {
-    test('every key the app names has a Khmer string', () => {
-        const { keySet } = readKhmerKeys();
+describe('every language package carries every key', () => {
+    test('a package with no language left still holds', () => {
+        // With no package at all the per-language checks below are empty,
+        // and that is the app working in English alone.
+        expect(Array.isArray(PACKAGE_LANG_CODE_LIST)).toBe(true);
+    });
+});
+
+describe.each(
+    PACKAGE_LANG_CODE_LIST.length > 0 ? PACKAGE_LANG_CODE_LIST : ['(none)'],
+)('translation coverage of %s', (langCode) => {
+    const isNone = langCode === '(none)';
+    const readLangKeys = () => {
+        const { packSource, keySet } = readCachedPackKeys(langCode);
+        return { langSource: packSource, keySet };
+    };
+    test('every key the app names has a string in it', () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
         const missingMap = new Map<string, string[]>();
         for (const { key, at } of readAppTranCalls()) {
             if (keySet.has(sanitizeTranKey(key))) {
@@ -154,8 +205,10 @@ describe('Khmer translation coverage', () => {
         const missing = [...missingMap].map(([key, sites]) => {
             return `${JSON.stringify(key)} <- ${sites.join(', ')}`;
         });
-        // Add each key to `src/lang/data/km/index.ts`, checking first for a
-        // case or whitespace variant (the module throws on a duplicate).
+        // Add each key to `src/lang/data/online/<code>/dictionary.json` and
+        // raise its `meta.json` version, checking first for a case or
+        // whitespace variant (the factory throws on two keys that sanitize
+        // alike).
         expect(missing).toEqual([]);
         // Reads every source file: past the 10 s default while the full
         // suite holds every core (2026-10-24).
@@ -165,12 +218,15 @@ describe('Khmer translation coverage', () => {
         // A pattern that broke would match nothing and pass; ~1 600 keys were
         // resolved when this test was written.
         expect(readAppTranCalls().length).toBeGreaterThan(1000);
-        const { kmSource, keySet } = readKhmerKeys();
+        if (isNone) {
+            return;
+        }
+        const { langSource, keySet } = readLangKeys();
         expect(keySet.size).toBeGreaterThan(1000);
         expect(keySet.has(sanitizeTranKey('Clear Long Text'))).toBe(true);
         // Unquoted identifier keys are keys too.
         expect(keySet.has(sanitizeTranKey('Sort'))).toBe(true);
-        expect(kmSource).toContain('return key.trim().toLowerCase();');
+        expect(langSource).toContain('return key.trim().toLowerCase();');
     }, 60000);
 
     // `toForegroundDragLabel` translates through a LOOKUP
@@ -178,8 +234,11 @@ describe('Khmer translation coverage', () => {
     // keys at all. They are the labels on every foreground row of a presenting
     // flow, and a missing one throws in a Khmer window while every other check
     // stays green -- exactly the hole this file exists to close.
-    test('every foreground widget label has a Khmer string', () => {
-        const { keySet } = readKhmerKeys();
+    test('every foreground widget label has a string in it', () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
         const source = readFileSync(
             path.join(
                 SRC_DIR,
@@ -214,8 +273,11 @@ describe('Khmer translation coverage', () => {
     // title and the panel's name are `tran(widget.labelKey)` over a list.
     // A component added without its Khmer name passed every check and
     // threw in a Khmer window the moment the Foreground tab was pressed.
-    test('every foreground launcher label has a Khmer string', () => {
-        const { keySet } = readKhmerKeys();
+    test('every foreground launcher label has a string in it', () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
         const source = readFileSync(
             path.join(
                 SRC_DIR,
@@ -255,8 +317,11 @@ describe('Khmer translation coverage', () => {
     // sweep can read. A missing one blanks the Foreground panel -- and now a
     // slide's canvas-item properties -- in a Khmer window the moment somebody
     // opens Properties.
-    test('every blend-mode label has a Khmer string', () => {
-        const { keySet } = readKhmerKeys();
+    test('every blend-mode label has a string in it', () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
         const source = readFileSync(
             path.join(SRC_DIR, 'helper', 'blendModeHelpers.ts'),
             'utf-8',
@@ -291,8 +356,11 @@ describe('Khmer translation coverage', () => {
     // `tran(cell.labelKey)` that no static sweep can read, and it is the
     // control the panel OPENS on -- a missing one blanks Properties in a
     // Khmer window before anything else is touched.
-    test('every position-pad cell has a Khmer string', () => {
-        const { keySet } = readKhmerKeys();
+    test('every position-pad cell has a string in it', () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
         const source = readFileSync(
             path.join(
                 SRC_DIR,
@@ -327,8 +395,11 @@ describe('Khmer translation coverage', () => {
     // `tran(TRANSITION_LABEL_MAP[effect])`, for the same reason the pad does:
     // the screen's own menu shows bare identifiers, and a volunteer's panel
     // must not.
-    test('every transition label has a Khmer string', () => {
-        const { keySet } = readKhmerKeys();
+    test('every transition label has a string in it', () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
         const source = readFileSync(
             path.join(SRC_DIR, 'others', 'TransitionOverrideComp.tsx'),
             'utf-8',
@@ -358,8 +429,11 @@ describe('Khmer translation coverage', () => {
     // `tran(leaf.titleKey)` over the catalog, and its dialogs hand their
     // messages to the tree as props -- all dynamic, all out of the sweep's
     // reach, and all on screen the moment either button is pressed.
-    test('every Export / Import Settings label has a Khmer string', async () => {
-        const { keySet } = readKhmerKeys();
+    test('every Export / Import Settings label has a string in it', async () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
         const { SETTING_SECTION_LIST } =
             await import('../setting/setting-archive/settingArchiveCatalog');
         const labels = [
@@ -394,8 +468,11 @@ describe('Khmer translation coverage', () => {
     // with `tranByLangData`, which falls back to English instead of throwing:
     // a missing key is never an error anywhere, just an English word on a
     // Khmer record (`175 years`, 2026-10-29).
-    test('every lookup record label has a Khmer string', async () => {
-        const { keySet } = readKhmerKeys();
+    test('every lookup record label has a string in it', async () => {
+        if (isNone) {
+            return;
+        }
+        const { keySet } = readLangKeys();
         const {
             AGE_PATTERN_LIST,
             GENDER_LABEL,
@@ -424,22 +501,33 @@ describe('Khmer translation coverage', () => {
             }),
         ).toEqual([]);
     });
+});
 
-    // Every other interface language is held to the Khmer file, which the
-    // tests above hold to the app: that also covers the dynamic
-    // `tran(prop)` keys no sweep can read. A key French lacks throws in a
-    // French window exactly as it does in a Khmer one; a key only French has
-    // is a leftover.
-    test('the French dictionary carries exactly the Khmer keys', () => {
-        const khmerKeySet = readKhmerKeys().keySet;
-        const { packSource, keySet: frenchKeySet } = readPackKeys('fr');
-        expect({
-            missing: [...khmerKeySet].filter((key) => !frenchKeySet.has(key)),
-            extra: [...frenchKeySet].filter((key) => !khmerKeySet.has(key)),
-        }).toEqual({ missing: [], extra: [] });
-        expect(packSource).toContain('return key.trim().toLowerCase();');
+// The packages are held to each other, which also covers the dynamic
+// `tran(prop)` keys no sweep can read: a key one package lacks throws in its
+// window exactly as in another's, and a key only one has is a leftover.
+describe('every language package carries the same keys', () => {
+    test('no package has a key another lacks', () => {
+        const [firstLangCode, ...restLangCodes] = PACKAGE_LANG_CODE_LIST;
+        if (firstLangCode === undefined) {
+            return;
+        }
+        const firstKeySet = readCachedPackKeys(firstLangCode).keySet;
+        for (const langCode of restLangCodes) {
+            const { packSource, keySet } = readCachedPackKeys(langCode);
+            expect(
+                {
+                    missing: [...firstKeySet].filter((key) => !keySet.has(key)),
+                    extra: [...keySet].filter((key) => !firstKeySet.has(key)),
+                },
+                `${langCode} against ${firstLangCode}`,
+            ).toEqual({ missing: [], extra: [] });
+            expect(packSource).toContain('return key.trim().toLowerCase();');
+        }
     });
+});
 
+describe('translation call sweep', () => {
     // These translate their own text, so a caller that translates it first
     // hands `tran()` a Khmer string, which is not a key -- it threw in dev and
     // the Khmer note-item export never opened its password dialog. The key

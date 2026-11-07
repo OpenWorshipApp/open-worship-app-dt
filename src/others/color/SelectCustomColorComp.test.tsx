@@ -106,3 +106,57 @@ describe('Mix Color box', () => {
         expect(onColorSelected).not.toHaveBeenCalled();
     });
 });
+
+describe('Mix Color box, more ways in', () => {
+    async function renderBox(props: {
+        color: `#${string}` | null;
+        isNoImmediate: boolean;
+    }) {
+        await act(async () =>
+            root.render(
+                createElement(SelectCustomColorComp, {
+                    ...props,
+                    onColorSelected,
+                }),
+            ),
+        );
+    }
+
+    it('applies a changed colour on Enter', async () => {
+        await pick('#00ff00');
+        await act(async () => {
+            getInput().dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            );
+        });
+        expect(onColorSelected).toHaveBeenCalledOnce();
+        expect(onColorSelected.mock.calls[0][0]).toBe('#00ff00');
+        expect(onColorSelected.mock.calls[0][1]).toBeInstanceOf(MouseEvent);
+    });
+
+    it('applies on its own after a pause when not waiting for Enter', async () => {
+        vi.useFakeTimers();
+        try {
+            await renderBox({ color: '#008080FF', isNoImmediate: false });
+            await pick('#ff0000');
+            await pick('#0000ff');
+            await act(async () => vi.advanceTimersByTime(499));
+            expect(onColorSelected).not.toHaveBeenCalled();
+            await act(async () => vi.advanceTimersByTime(1));
+            expect(onColorSelected).toHaveBeenCalledOnce();
+            expect(onColorSelected.mock.calls[0][0]).toBe('#0000ff');
+            // Applied already: a blur sends nothing more.
+            await blur();
+            expect(onColorSelected).toHaveBeenCalledOnce();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('shows white while no colour is held', async () => {
+        await renderBox({ color: null, isNoImmediate: true });
+        expect(getInput().value).toBe('#ffffff');
+        await renderBox({ color: '#ABCDEF80', isNoImmediate: true });
+        expect(getInput().value).toBe('#abcdef');
+    });
+});

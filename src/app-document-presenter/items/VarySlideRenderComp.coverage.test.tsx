@@ -203,6 +203,29 @@ vi.mock('../../app-document-list/Slide', () => ({
     },
 }));
 
+const { showSimpleToastMock } = vi.hoisted(() => ({
+    showSimpleToastMock: vi.fn(),
+}));
+
+vi.mock('../../toast/toastHelpers', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../../toast/toastHelpers')>()),
+    showSimpleToast: showSimpleToastMock,
+}));
+
+// Loaded only by a Stage Previewer pane of stage 1 or up; what it is handed is
+// what matters here, its drawing has its own test.
+vi.mock('../stage/StageLookAheadComp', () => ({
+    default: ({ children, view, width, height }: any) => (
+        <div
+            data-testid="stage-look-ahead"
+            data-label={view.label}
+            data-size={`${width}x${height}`}
+        >
+            {children}
+        </div>
+    ),
+}));
+
 async function flushAsyncEvents() {
     await Promise.resolve();
     await Promise.resolve();
@@ -703,5 +726,147 @@ describe('VarySlideRenderComp', () => {
         expect(
             container.querySelector('[data-testid="screen-icon"]'),
         ).toBeNull();
+    });
+
+    test('the size icon toasts the slide size and keeps the click off the card', async () => {
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
+        const onClick = vi.fn();
+        await act(async () => {
+            root.render(
+                <VarySlideRenderComp
+                    varySlide={
+                        {
+                            id: 4,
+                            filePath: '/docs/main.ows',
+                            width: 1920,
+                            height: 1080,
+                            name: 'Welcome',
+                            isSlide: true,
+                        } as any
+                    }
+                    width={320}
+                    index={0}
+                    onClick={onClick}
+                    onContextMenu={vi.fn()}
+                >
+                    <div />
+                </VarySlideRenderComp>,
+            );
+        });
+        await act(async () => {
+            container
+                .querySelector('.bi-aspect-ratio-fill')!
+                .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+        expect(showSimpleToastMock).toHaveBeenCalledExactlyOnceWith(
+            'Dimensions',
+            'Width: 1920, Height: 1080',
+        );
+        // Asking for the size is not picking the slide.
+        expect(onClick).not.toHaveBeenCalled();
+    });
+
+    test('a disabled slide ignores a click, except in the slide editor', async () => {
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
+        const onClick = vi.fn();
+        const varySlide = {
+            id: 6,
+            filePath: '/docs/main.ows',
+            width: 400,
+            height: 200,
+            name: 'Parked',
+            isDisabled: true,
+            isSlide: true,
+        } as any;
+        await act(async () => {
+            root.render(
+                <VarySlideRenderComp
+                    varySlide={varySlide}
+                    width={320}
+                    index={4}
+                    onClick={onClick}
+                    onContextMenu={vi.fn()}
+                >
+                    <div />
+                </VarySlideRenderComp>,
+            );
+        });
+        const item = container.querySelector<HTMLElement>(
+            '.data-vary-app-document-item',
+        )!;
+        // An editable slide keeps its pointer events for the menu that
+        // re-enables it, so the click does arrive and has to be refused.
+        expect(item.style.pointerEvents).toBe('');
+        await act(async () => {
+            item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+        expect(onClick).not.toHaveBeenCalled();
+
+        appProviderMock.isPageAppDocumentEditor = true;
+        await act(async () => {
+            item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+        expect(onClick).toHaveBeenCalledExactlyOnceWith(
+            expect.any(Object),
+            4,
+            varySlide,
+        );
+    });
+
+    test('a stage pane draws the slide once, inside its look-ahead, with its count', async () => {
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
+        const { SlideStageDeckContext } =
+            await import('../stage/documentStageContexts');
+        const { getDocumentStageDefinition, toStageDeck } =
+            await import('../stage/documentStageHelpers');
+        const genSlide = (id: number, name: string) =>
+            ({
+                id,
+                name,
+                filePath: '/docs/main.ows',
+                width: 1920,
+                height: 1080,
+                isDisabled: false,
+                isSlide: true,
+                toJson: () => ({ id }),
+            }) as any;
+        const slides = [genSlide(1, ''), genSlide(2, 'Welcome')];
+        const stageDeck = {
+            definition: getDocumentStageDefinition(1)!,
+            deck: toStageDeck(slides),
+        };
+        await act(async () => {
+            root.render(
+                <SlideStageDeckContext value={stageDeck}>
+                    <VarySlideRenderComp
+                        varySlide={slides[1]}
+                        width={320}
+                        index={1}
+                        onContextMenu={vi.fn()}
+                    >
+                        <i data-testid="slide-children" />
+                    </VarySlideRenderComp>
+                </SlideStageDeckContext>,
+            );
+        });
+        await act(async () => {
+            await import('../stage/StageLookAheadComp');
+            await flushAsyncEvents();
+        });
+        const lookAhead = container.querySelector(
+            '[data-testid="stage-look-ahead"]',
+        );
+        expect(lookAhead?.getAttribute('data-label')).toBe('Welcome · 2/2');
+        // At the slide's own size; the card scales the whole stage.
+        expect(lookAhead?.getAttribute('data-size')).toBe('1920x1080');
+        expect(
+            container.querySelectorAll('[data-testid="slide-children"]'),
+        ).toHaveLength(1);
+        expect(
+            lookAhead?.querySelector('[data-testid="slide-children"]'),
+        ).not.toBeNull();
     });
 });

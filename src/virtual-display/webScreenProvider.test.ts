@@ -389,7 +389,7 @@ describe('connectWebScreen', () => {
 
     test('createHash("md5") matches Node across updates', async () => {
         const { cryptoUtils, systemUtils } = (await connect()).provider;
-        const text = 'ភ្លេង #1.mp4';
+        const text = '♪✝ #1.mp4';
         expect(cryptoUtils.createHash('md5').update(text).digest('hex')).toBe(
             md5(text),
         );
@@ -420,9 +420,9 @@ describe('connectWebScreen', () => {
         expect(() => watcher.close()).not.toThrow();
     });
 
-    test('base64 round-trips Khmer text', async () => {
+    test('base64 round-trips text past ASCII', async () => {
         const { appUtils } = (await connect()).provider;
-        const text = 'ភ្លេង #1';
+        const text = '♪✝ #1';
         const encoded = appUtils.base64Encode(text);
         expect(encoded).toBe(Buffer.from(text, 'utf8').toString('base64'));
         expect(appUtils.base64Decode(encoded)).toBe(text);
@@ -711,7 +711,7 @@ describe('a camera on the screen', () => {
             cameraId: 'vd-camera:viewer-1',
             frameType: 'key',
             timestamp: 40,
-            data: btoa('ÿ'),
+            data: btoa('\u0001\u0002\u00ff'),
         });
         socket.send({
             type: 'vd-camera-frame',

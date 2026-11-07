@@ -1,11 +1,11 @@
 ---
 name: chatbot-follows-app-language
-description: "The 🤖 answers in the app's language (Khmer first); every language is data in src/lang/data/<code>/assistant.json; the prompt is per APP language, the question's language rides in the user turn"
+description: "The 🤖 answers in the app's language (Khmer first) or in ANY language typed; every language is data in src/lang/data/online/<code>/assistant.json, a language only typed in its own src/lang/data/online/<code>/typed.json, read once it is installed; the prompt is per APP language, the question's language rides in the user turn"
 metadata:
   node_type: memory
   type: project
   originSessionId: cceb2542-65df-4852-b7d7-51e364f85d02
-  modified: 2026-10-29T22:39:42.602Z
+  modified: 2026-11-04T00:01:25.900Z
 ---
 
 Since 2026-10-16 the help window speaks the language the app is SHOWN in, at the
@@ -14,7 +14,7 @@ chatbot have to support selected language_, _this is for church elderly user_,
 _chatbot have to be localization friendly_. It reverses the old "the answer
 stays English-only" rule.
 
-- **Every language is data**: `src/lang/data/<code>/assistant.json` beside the
+- **Every language is data**: `src/lang/data/online/<code>/assistant.json` beside the
   package (script pattern, native digits, words for yes/no, the yes/no chip
   words and how a yes-or-no question starts or ends, walkthrough-echo words,
   translated frame markers, a glossary of question words → English). Adding a
@@ -33,6 +33,30 @@ stays English-only" rule.
   suggestion, card rescue: `isPressed` on `handleAsking`) are the app's words.
   The doubt always goes to the app language: the users are often elderly and
   read only it (the user's own words, above).
+- **Any language a person TYPES** (2026-11-03, the user: _make chatbot generic
+  for language … no matter what language I type it work seamlessly_; `EC-447`
+  ..`EC-451`). Each language's own `typed.json`
+  (`src/lang/data/online/<code>/`; 84, 37 of them in data-only folders until
+  they have a package) gives a name, its Unicode script(s), little words and
+  letters, a family, yes/no -- read only for an INSTALLED language since
+  2026-11-04, when nothing but English was to ship -- and
+  `getAssistantLanguage` returns one as a language with `isPackaged: false` and
+  every list empty, so the reply line, the Gemma 4 translation, the cleaner and
+  the chips work for it with no code naming it. Detection is script first
+  (a Hangul or Han letter weighs three Latin ones), then little words and
+  letters each weighed by 1/(languages sharing it); a packaged language needs
+  half the evidence (`PACKAGED_PRIOR` — French lines of shared words read as
+  nothing otherwise), a tie inside a `family` goes to the first listed, any
+  other tie to the app language. Before, Spanish read as FRENCH (`la`, `de`,
+  `un`) and was answered in French; Portuguese in a Khmer app in Khmer.
+  **The ratchet is the corpus**: all 469 questions in en/km/fr must keep
+  their language (`anyLanguage.test.ts`), and a language added to the file
+  needs a sample line there. A page is translated only for a package
+  (`findPageLanguage` checks `isPackaged`): a typed language reads the English
+  page. **The cleaner reads the SCREEN's language** (`screenLangCode`, the
+  app's): an English gloss stays on an English screen, the screen's own script
+  is no third script, and a typed Latin language gets no capitalised-run label
+  pass (every German noun). Chips are judged by SCRIPT, not by package.
 - A line is written only for an ask that carries `askedText` or `replyLang`:
   a question the window composed itself (a verse put into English) is left
   alone.
@@ -55,9 +79,9 @@ stays English-only" rule.
 - **Fonts**: the pack's `fontFamily` rides `--chat-lang-font` after each
   window's own faces (`chatWindowShared.scss`); the walkthrough card, the ◎
   picker line and the action banner take the page body's face.
-- **Corpus and manual**: `tools/owa-devtools-mcp/questions/i18n/<code>.json`
+- **Corpus and manual**: `src/lang/data/online/<code>/questions.json`
   (`{en, text}` overlays, applied in the renderer; a pressed chip asks the
-  row's English, `textEn`) and `docs/manual-i18n/<code>/` pages with a
+  row's English, `textEn`) and `src/lang/data/online/<code>/manual/` pages with a
   `translatedFrom` hash (`extra-work/manual-i18n-status.mjs`).
 - **Behind the scenes in English** (2026-10-17, the user: _translate all
   khmer to english to work with llm or post directly to llm if it is gemma 4

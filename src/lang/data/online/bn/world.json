@@ -1,0 +1,21 @@
+{
+    "nativeLanguageNames": {
+        "বাংলা": "bengali"
+    },
+    "languageAliases": {
+        "bangla": "bengali",
+        "bangladesh": "bengali"
+    },
+    "scriptLocales": [
+        {
+            "script": "Bengali",
+            "locales": ["bn-BD"],
+            "order": 1300
+        },
+        {
+            "script": "Bengali",
+            "locales": ["bn-IN"],
+            "order": 1301
+        }
+    ]
+}

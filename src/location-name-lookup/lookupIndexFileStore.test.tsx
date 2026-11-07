@@ -264,3 +264,89 @@ describe('subscriber-counted lookup file stores', () => {
         expect(again.container.textContent).toBe('recovered');
     });
 });
+
+describe('lookup file stores after a failed or stale load', () => {
+    test('a rejected load is reported and the next reader tries again', async () => {
+        const first = deferred<string | null>();
+        const load = vi
+            .fn()
+            .mockReturnValueOnce(first.promise)
+            .mockResolvedValueOnce('recovered');
+        const useValue = genLookupFileStore<string>(load);
+        const ProbeComp = () =>
+            createElement('span', {}, useValue() ?? 'loading');
+        const view = mount(ProbeComp);
+        await render(view);
+        const error = new Error('index unreadable');
+        await act(async () => {
+            first.reject(error);
+            await first.promise.catch(() => {});
+        });
+        expect(h.error).toHaveBeenCalledWith(error);
+        expect(view.container.textContent).toBe('loading');
+        const second = mount(ProbeComp);
+        await render(second);
+        expect(load).toHaveBeenCalledTimes(2);
+        expect(second.container.textContent).toBe('recovered');
+        expect(view.container.textContent).toBe('recovered');
+    });
+
+    test('a stale rejection after a language change leaves the new load alone', async () => {
+        const oldLoad = deferred<string | null>();
+        const newLoad = deferred<string | null>();
+        const load = vi
+            .fn()
+            .mockReturnValueOnce(oldLoad.promise)
+            .mockReturnValueOnce(newLoad.promise);
+        const useValue = genLookupFileStore<string>(load, true);
+        const ProbeComp = () =>
+            createElement('span', {}, useValue() ?? 'loading');
+        const view = mount(ProbeComp);
+        await render(view);
+        await act(async () => {
+            h.langListeners.forEach((listener) => listener());
+        });
+        expect(load).toHaveBeenCalledTimes(2);
+        const error = new Error('old language file');
+        await act(async () => {
+            oldLoad.reject(error);
+            await oldLoad.promise.catch(() => {});
+        });
+        expect(h.error).toHaveBeenCalledWith(error);
+        // The new load is still in flight: a second reader joins it.
+        const second = mount(ProbeComp);
+        await render(second);
+        expect(load).toHaveBeenCalledTimes(2);
+        await act(async () => {
+            newLoad.resolve('new language');
+            await newLoad.promise;
+        });
+        expect(view.container.textContent).toBe('new language');
+        expect(second.container.textContent).toBe('new language');
+    });
+
+    test('readers of one Bible language share its load and its loaded value', async () => {
+        const km = deferred<string | null>();
+        const load = vi.fn(() => km.promise);
+        const useValue = genLookupLangFileStore<string>(load);
+        const ProbeComp = () =>
+            createElement('span', {}, useValue('km') ?? 'loading');
+        const first = mount(ProbeComp);
+        const second = mount(ProbeComp);
+        await render(first);
+        await render(second);
+        expect(load).toHaveBeenCalledTimes(1);
+        await act(async () => {
+            km.resolve('Khmer needles');
+            await km.promise;
+        });
+        const third = mount(ProbeComp);
+        await render(third);
+        expect(load).toHaveBeenCalledTimes(1);
+        expect(
+            [first, second, third].map((view) => {
+                return view.container.textContent;
+            }),
+        ).toEqual(['Khmer needles', 'Khmer needles', 'Khmer needles']);
+    });
+});

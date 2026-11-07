@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import type {
-    LookupLocationRecordType,
     LookupNameRecordType,
     LookupRecordResolverType,
 } from './agentLookupRecordHelpers';
@@ -19,21 +18,24 @@ import {
     toPlaceDistance,
     toPlainRecordText,
     toQuotedText,
+    toRecordBrief,
 } from './agentLookupRecordHelpers';
 
 const EVE_ID = 'f168f2a8-9db8-4db7-8230-20ba4023dee0';
 const EDEN_ID = '00000000-0000-4000-8000-000000000081';
 
-// Adam as the Khmer dataset stores him, cut to what is read here.
+// Adam as the dataset stores him, cut to what is read here. A record in
+// another language's own words is that language's test
+// (`src/lang/data/online/<code>/tests/helper/agentLookupRecordHelpers.test.ts`).
 const ADAM: LookupNameRecordType = {
     id: '42bd6be4-e60a-4744-9eb8-42a111646073',
-    name: 'អ័ដាម',
+    name: 'Adam',
     kjvName: 'Adam',
     oldName: null,
     title:
-        'ជាមនុស្សប្រុសដំបូងគេក្នុងកណ្ឌ [Genesis](book-key://GEN) និងជាស្វាមីរបស់ ' +
-        `[អេវ៉ា](name-id://${EVE_ID})`,
-    description: 'អ័ដាម ត្រូវបានបង្ហាញក្នុងកណ្ឌ [Genesis](book-key://GEN)។',
+        'the first man in [Genesis](book-key://GEN) and husband of ' +
+        `[Eve](name-id://${EVE_ID})`,
+    description: 'Adam is shown in [Genesis](book-key://GEN).',
     gender: 'male',
     age: '930 years',
     years: [],
@@ -54,77 +56,21 @@ const ADAM: LookupNameRecordType = {
 const resolver: LookupRecordResolverType = {
     findName: (id) => {
         if (id === EVE_ID) {
-            return { id: EVE_ID, name: 'អេវ៉ា', kjvName: 'Eve' };
+            return { id: EVE_ID, name: 'Eve', kjvName: 'Eve' };
         }
         if (id === 'cain') {
-            return { id: 'cain', name: 'កាអ៊ីន', kjvName: 'Cain' };
+            return { id: 'cain', name: 'Cain', kjvName: 'Cain' };
         }
         return null;
     },
     findLocation: (idOrName) => {
         return idOrName === EDEN_ID
-            ? { id: EDEN_ID, name: 'សួនច្បារអេដែន', kjvName: 'Garden of Eden' }
+            ? { id: EDEN_ID, name: 'Garden of Eden', kjvName: 'Garden of Eden' }
             : null;
     },
 };
 
 describe('what owa_lookup_record says of a person', () => {
-    it('names every relation with its id, and its source', () => {
-        const result = toNameRecordResult(ADAM, resolver, [
-            { key: 'GEN 2:23', ref: 'Genesis 2:23', text: '(23): …' },
-        ]);
-        expect(result).toMatchObject({
-            kind: 'name',
-            source: LOOKUP_SOURCE_TEXT,
-            name: 'អ័ដាម',
-            kjvName: 'Adam',
-            type: 'person',
-            gender: 'male',
-            age: '930 years',
-            summary:
-                'ជាមនុស្សប្រុសដំបូងគេក្នុងកណ្ឌ Genesis និងជាស្វាមីរបស់ អេវ៉ា',
-            description: 'អ័ដាម ត្រូវបានបង្ហាញក្នុងកណ្ឌ Genesis។',
-            places: [
-                {
-                    id: EDEN_ID,
-                    name: 'សួនច្បារអេដែន',
-                    kjvName: 'Garden of Eden',
-                },
-            ],
-            spouses: [{ id: EVE_ID, name: 'អេវ៉ា', kjvName: 'Eve' }],
-            // A relation the dataset cannot resolve keeps what it carries.
-            children: [
-                { id: 'cain', name: 'កាអ៊ីន', kjvName: 'Cain' },
-                { name: 'unknown-id' },
-            ],
-            verseCount: 2,
-            verses: ['GEN 2:19-21', 'GEN 2:23'],
-            quoted: [{ key: 'GEN 2:23', ref: 'Genesis 2:23', text: '(23): …' }],
-        });
-        expect(result).toHaveProperty('links', [
-            {
-                type: 'easton',
-                url: 'https://www.biblestudytools.com/adam.html',
-            },
-            { type: 'wikipedia', url: 'https://en.wikipedia.org/wiki/Adam' },
-        ]);
-    });
-
-    // An empty list reads as "has none", which the dataset does not say.
-    it('leaves out what the record does not fill', () => {
-        const result = toNameRecordResult(
-            { ...ADAM, gender: 'unknown', age: '', kjvName: 'អ័ដាម' },
-            resolver,
-            [],
-        );
-        expect(result).not.toHaveProperty('parents');
-        expect(result).not.toHaveProperty('gender');
-        expect(result).not.toHaveProperty('age');
-        expect(result).not.toHaveProperty('quoted');
-        // The KJV's spelling only when it is not the name already.
-        expect(result).not.toHaveProperty('kjvName');
-    });
-
     it('lists the verses up to a ceiling, and counts them all', () => {
         const verses = Array.from(
             { length: MAX_LISTED_VERSES + 20 },
@@ -135,64 +81,6 @@ describe('what owa_lookup_record says of a person', () => {
         const result = toNameRecordResult({ ...ADAM, verses }, resolver, []);
         expect(result.verseCount).toBe(MAX_LISTED_VERSES + 20);
         expect(result.verses).toHaveLength(MAX_LISTED_VERSES);
-    });
-});
-
-describe('what owa_lookup_record says of a place', () => {
-    const EDEN: LookupLocationRecordType = {
-        id: EDEN_ID,
-        name: 'សួនច្បារអេដែន',
-        kjvName: 'Garden of Eden',
-        oldName: null,
-        title: 'ជាសួនច្បារដើមដំបូង',
-        description:
-            'សួនច្បារអេដែន គឺជាសួនច្បារក្នុងកណ្ឌ [Genesis](book-key://GEN)',
-        type: 'place',
-        relatedLocations: [EDEN_ID, 'Nowhere'],
-        modernIdentification: null,
-        coordinates: null,
-        verses: ['GEN 3:23-24'],
-        links: [],
-        wikipedia: null,
-        uncertainty: true,
-    };
-
-    it('says where it is as far as the record knows, and that it is unsure', () => {
-        expect(toLocationRecordResult(EDEN, resolver, [])).toEqual({
-            kind: 'location',
-            source: LOOKUP_SOURCE_TEXT,
-            id: EDEN_ID,
-            name: 'សួនច្បារអេដែន',
-            kjvName: 'Garden of Eden',
-            type: 'place',
-            summary: 'ជាសួនច្បារដើមដំបូង',
-            description: 'សួនច្បារអេដែន គឺជាសួនច្បារក្នុងកណ្ឌ Genesis',
-            isPlaceUncertain: true,
-            relatedPlaces: [
-                {
-                    id: EDEN_ID,
-                    name: 'សួនច្បារអេដែន',
-                    kjvName: 'Garden of Eden',
-                },
-                { name: 'Nowhere' },
-            ],
-            verseCount: 1,
-            verses: ['GEN 3:23-24'],
-        });
-        expect(
-            toLocationRecordResult(
-                {
-                    ...EDEN,
-                    coordinates: { latitude: 31.7, longitude: 35.2 },
-                    modernIdentification: 'Jerusalem',
-                },
-                resolver,
-                [],
-            ),
-        ).toMatchObject({
-            coordinates: { latitude: 31.7, longitude: 35.2 },
-            modernIdentification: 'Jerusalem',
-        });
     });
 });
 
@@ -333,6 +221,43 @@ describe('one person under several names (2026-10-22)', () => {
         ]);
     });
 
+    it('puts what is no verse key and a book it does not know after the rest', () => {
+        expect(
+            mergeVerseKeyLists(
+                [
+                    ['not a key', 'XYZ 1:1', 'GEN 5:32', ''],
+                    [' ', 'GEN 1:1'],
+                ],
+                ['GEN', 'MAT'],
+            ),
+        ).toEqual(['GEN 1:1', 'GEN 5:32', 'not a key', 'XYZ 1:1']);
+    });
+
+    it('names a record briefly, and not at all without an id', () => {
+        expect(
+            toRecordBrief({
+                id: null,
+                name: 'Noah',
+                kjvName: null,
+                title: 'righteous',
+            }),
+        ).toBeNull();
+        expect(
+            // The record's own name, in whatever it is written in.
+            toRecordBrief({
+                id: 'noah',
+                name: '✝',
+                kjvName: 'Noah',
+                title: 'righteous [patriarch](name-id://x)',
+            }),
+        ).toEqual({
+            id: 'noah',
+            name: '✝',
+            kjvName: 'Noah',
+            summary: 'righteous patriarch',
+        });
+    });
+
     it('names the other people of the name, not its own other names', () => {
         const noah = {
             id: 'noah',
@@ -450,6 +375,32 @@ describe('where a place is (2026-10-22)', () => {
             }),
         ).toEqual(['Shem', 'Ruth', 'Boaz']);
         expect(result.peopleCount).toBe(3);
+    });
+
+    it('counts every record as its own person when no alias table is given', () => {
+        const person = (id: string | null, verseCount: number) => {
+            return {
+                id,
+                name: id ?? 'nobody',
+                kjvName: null,
+                title: '',
+                locations: ['bethlehem'],
+                verses: Array.from({ length: verseCount }, () => {
+                    return 'RUT 1:1';
+                }),
+            };
+        };
+        const result = listPlacePeople({ id: 'bethlehem', name: 'Bethlehem' }, [
+            person('Sem', 1),
+            person('Shem', 13),
+            person(null, 40),
+        ]);
+        expect(
+            result.people.map((one) => {
+                return one.name;
+            }),
+        ).toEqual(['Shem', 'Sem']);
+        expect(result.peopleCount).toBe(2);
     });
 
     it('says how far from Jerusalem, what is near and who lived there', () => {

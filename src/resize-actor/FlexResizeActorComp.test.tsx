@@ -516,3 +516,261 @@ describe('keyboard resize steps', () => {
         ).toBe(0);
     });
 });
+
+describe('FlexResizeActorComp pointer, touch and edge cases', () => {
+    function renderPanes({
+        preSize = 300,
+        nextSize = 300,
+        disableQuickResize = false,
+        checkCanClose = () => null as any,
+        withSpacer = false,
+    } = {}) {
+        const checkSize = vi.fn();
+        const disableWidget = vi.fn();
+        const parentClick = vi.fn();
+        const render = () => {
+            root.render(
+                <div className="d-flex" onClick={parentClick}>
+                    <div
+                        data-min-size={50}
+                        data-fs="first"
+                        data-widget-name="Documents"
+                        style={{ flexGrow: 1 }}
+                    />
+                    {withSpacer ? <div className="spacer" /> : null}
+                    <FlexResizeActorComp
+                        type="h"
+                        isDisableQuickResize={disableQuickResize}
+                        checkSize={checkSize}
+                        disableWidget={disableWidget}
+                        checkCanClose={checkCanClose}
+                    />
+                    <div
+                        data-min-size={50}
+                        data-fs="second"
+                        data-widget-name="Bible"
+                        style={{ flexGrow: 1 }}
+                    />
+                </div>,
+            );
+        };
+        act(render);
+        const actor = container.querySelector(
+            '.flex-resize-actor',
+        ) as HTMLElement;
+        const preNode = container.querySelector(
+            '[data-fs="first"]',
+        ) as HTMLElement;
+        const nextNode = actor.nextElementSibling as HTMLElement;
+        for (const [node, size] of [
+            [preNode, preSize],
+            [nextNode, nextSize],
+        ] as const) {
+            Object.defineProperty(node, 'offsetWidth', {
+                value: size,
+                configurable: true,
+            });
+        }
+        return {
+            actor,
+            preNode,
+            nextNode,
+            checkSize,
+            disableWidget,
+            parentClick,
+            rerender: () => act(render),
+        };
+    }
+
+    function touch(target: EventTarget, type: string, pageX?: number) {
+        const event = new Event(type, { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'touches', {
+            value: pageX === undefined ? [] : [{ pageX, pageY: pageX }],
+        });
+        act(() => {
+            target.dispatchEvent(event);
+        });
+        return event;
+    }
+
+    function mouse(target: EventTarget, type: string, init: MouseEventInit) {
+        act(() => {
+            target.dispatchEvent(
+                new MouseEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    ...init,
+                }),
+            );
+        });
+    }
+
+    test('a touch drags the divider like a mouse and lets go on touchend', () => {
+        const { actor, preNode, nextNode, checkSize } = renderPanes();
+        const start = touch(actor, 'touchstart', 100);
+        expect(start.defaultPrevented).toBe(true);
+        expect(actor.classList.contains('active')).toBe(true);
+        const move = touch(document.body, 'touchmove', 250);
+        // The page must not scroll under a finger that is resizing.
+        expect(move.defaultPrevented).toBe(true);
+        expect(preNode.style.flexGrow).toBe('1.5');
+        expect(nextNode.style.flexGrow).toBe('0.5');
+        touch(document.body, 'touchend');
+        expect(checkSize).toHaveBeenCalledOnce();
+        expect(actor.classList.contains('active')).toBe(false);
+        touch(document.body, 'touchmove', 100);
+        expect(preNode.style.flexGrow).toBe('1.5');
+    });
+
+    test('a right button, an arrow or an icon never starts or moves a drag', () => {
+        const { actor, preNode, checkSize } = renderPanes();
+        mouse(actor, 'mousedown', { button: 2, clientX: 100 });
+        expect(actor.classList.contains('active')).toBe(false);
+        const arrow = actor.querySelector('.disabling-arrow') as HTMLElement;
+        mouse(arrow, 'mousedown', { clientX: 100 });
+        expect(actor.classList.contains('active')).toBe(false);
+        mouse(document.body, 'mousemove', { clientX: 250 });
+        expect(preNode.style.flexGrow).toBe('1');
+
+        mouse(actor, 'mousedown', { clientX: 100 });
+        const icon = document.createElement('i');
+        document.body.appendChild(icon);
+        mouse(icon, 'mousemove', { clientX: 250 });
+        expect(preNode.style.flexGrow).toBe('1');
+        mouse(icon, 'mouseup', {});
+        expect(actor.classList.contains('active')).toBe(true);
+        icon.remove();
+        mouse(document.body, 'mouseup', {});
+        expect(actor.classList.contains('active')).toBe(false);
+        expect(checkSize).toHaveBeenCalledOnce();
+    });
+
+    test('a pane playing media resists being dragged closed, silently', () => {
+        const { actor, preNode, nextNode, disableWidget, checkSize } =
+            renderPanes();
+        mocks.checkMediaPlaying.mockReturnValue(true);
+        mouse(actor, 'mousedown', { clientX: 100 });
+        mouse(document.body, 'mousemove', { clientX: 500 });
+        expect(mocks.checkMediaPlaying).toHaveBeenCalledWith({
+            targetElement: nextNode,
+            withMessage: false,
+            includeYouTube: true,
+        });
+        expect(nextNode.classList.contains('app-hidden-widget')).toBe(false);
+        expect(preNode.style.flexGrow).toBe('1');
+        mouse(document.body, 'mouseup', {});
+        expect(disableWidget).not.toHaveBeenCalled();
+        expect(checkSize).toHaveBeenCalledOnce();
+    });
+
+    test('with quick resize off, a pane pushed under its minimum is never marked to close', () => {
+        const { actor, preNode, nextNode } = renderPanes({
+            preSize: 60,
+            nextSize: 60,
+            disableQuickResize: true,
+        });
+        mouse(actor, 'mousedown', { clientX: 100 });
+        mouse(document.body, 'mousemove', { clientX: 80 });
+        expect(preNode.classList.contains('app-hidden-widget')).toBe(false);
+        expect(Number(preNode.style.flexGrow)).toBeCloseTo((2 * 40) / 120);
+        mouse(document.body, 'mouseup', {});
+
+        // Toward the second pane, under its minimum, nothing moves at all.
+        mouse(actor, 'mousedown', { clientX: 100 });
+        const before = nextNode.style.flexGrow;
+        mouse(document.body, 'mousemove', { clientX: 120 });
+        expect(nextNode.classList.contains('app-hidden-widget')).toBe(false);
+        expect(nextNode.style.flexGrow).toBe(before);
+        mouse(document.body, 'mouseup', {});
+    });
+
+    test('an arrow collapses its side without the click reaching the page', () => {
+        const { actor, disableWidget, parentClick, preNode } = renderPanes();
+        const arrows = actor.querySelectorAll<HTMLElement>('.disabling-arrow');
+        act(() => {
+            arrows[1].click();
+        });
+        expect(disableWidget).toHaveBeenCalledWith('second', ['second', 1]);
+        expect(preNode.style.flexGrow).toBe('2');
+        expect(parentClick).not.toHaveBeenCalled();
+    });
+
+    test('a divider that may close at mount closes that side at once', () => {
+        const { disableWidget, nextNode } = renderPanes({
+            checkCanClose: () => 'left',
+        });
+        expect(disableWidget).toHaveBeenCalledWith('first', ['first', 1]);
+        expect(nextNode.style.flexGrow).toBe('2');
+    });
+
+    test('hovering marks it as about to act, leaving clears that at once', () => {
+        const { actor } = renderPanes();
+        mouse(actor, 'mouseover', { relatedTarget: document.body });
+        expect(actor.classList.contains('attempt')).toBe(true);
+        mouse(actor, 'mouseout', { relatedTarget: document.body });
+        expect(actor.classList.contains('attempt')).toBe(false);
+    });
+
+    test('a move over the arrows does not move the arrows', () => {
+        const { actor } = renderPanes();
+        const mover = actor.querySelector('.mover') as HTMLElement;
+        mouse(mover, 'mousemove', { clientX: 10, clientY: 20 });
+        expect(mover.style.top).toBe('');
+    });
+
+    test('a key pressed on one of its arrows is not a resize', () => {
+        const { actor, preNode, checkSize } = renderPanes();
+        const arrow = actor.querySelector('.disabling-arrow') as HTMLElement;
+        const event = new KeyboardEvent('keydown', {
+            key: 'ArrowRight',
+            bubbles: true,
+            cancelable: true,
+        });
+        act(() => {
+            arrow.dispatchEvent(event);
+        });
+        expect(event.defaultPrevented).toBe(false);
+        expect(preNode.style.flexGrow).toBe('1');
+        expect(checkSize).not.toHaveBeenCalled();
+    });
+
+    test('a modifier with the arrow is left to the page', () => {
+        const { actor, preNode } = renderPanes();
+        const event = new KeyboardEvent('keydown', {
+            key: 'ArrowRight',
+            ctrlKey: true,
+            bubbles: true,
+            cancelable: true,
+        });
+        act(() => {
+            actor.dispatchEvent(event);
+        });
+        expect(event.defaultPrevented).toBe(false);
+        expect(preNode.style.flexGrow).toBe('1');
+    });
+
+    test('panes with no size give it no value, and an unnamed neighbour is stepped over', () => {
+        const { actor } = renderPanes({
+            preSize: 0,
+            nextSize: 0,
+            withSpacer: true,
+        });
+        expect(actor.getAttribute('aria-label')).toBe(
+            'Divider between Documents and Bible',
+        );
+        act(() => {
+            actor.focus();
+        });
+        expect(actor.getAttribute('aria-valuenow')).toBeNull();
+    });
+
+    test('a re-render asks for one new value stamp', () => {
+        const { rerender } = renderPanes();
+        flushFrames();
+        expect(pendingFrames.size).toBe(0);
+        rerender();
+        expect(pendingFrames.size).toBe(1);
+        rerender();
+        expect(pendingFrames.size).toBe(1);
+    });
+});

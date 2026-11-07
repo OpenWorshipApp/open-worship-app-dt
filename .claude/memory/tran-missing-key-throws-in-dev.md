@@ -5,13 +5,25 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 65d709fb-f37b-4655-a432-072843474442
-  modified: 2026-09-18T23:47:56.524Z
+  modified: 2026-11-05T22:22:39.124Z
 ---
 
 `tran()` in `src/lang/langHelpers.ts` throws `Translation for text "X" not
 found in locale km-KH` when `appProvider.systemUtils.isDev` — it does NOT fall
 back to English. A single missing key blanks whatever subtree renders it (React
 error, no boundary). Production silently falls back to the English string.
+
+**"Missing" is decided by the APP, not the language plugin** (2026-11-04, the
+user: _non-translated should fail the app (on dev), only prod allow english
+fallback_). Hebrew 0.0.2's plugin wrapped its dictionary in a `Proxy` that
+answered every key it lacked with the key itself, so `dictionary[key]` was
+never `undefined`: its windows showed English and dev never threw.
+`readTranValue` now reads the dictionary's OWN key (`Object.hasOwn`, a string
+value) for `tran()`, `tranByLangData` and the chat windows' translator alike,
+so a plugin's fallback, or a key such as `constructor` that only the prototype
+has, counts as missing. `onlineLanguagesTran.test.ts` holds it through the real
+`tran()`. An installed plugin made before the rule fails in dev until it is
+updated.
 
 **Why:** it makes missing-key bugs invisible in English (the default locale
 returns early before any lookup) and fatal in Khmer. Until 2026-09-18 a
@@ -21,12 +33,13 @@ lint/typecheck/test pass proved nothing about translation coverage.
 `src/lang/tranKeyCoverage.test.ts` (in `test:all`, so in `npm run lint`) fails
 naming any key the `km` dictionary lacks — a literal, a `+` chain (read as ONE
 key), or a string constant. It found 5 keys on failure paths that had no Khmer
-at all. It reads the dictionary as SOURCE and evaluates the object literal, so
-unquoted identifier keys count and it has none of the false positives below.
-A new label in `src/` fails the gate until its Khmer string is added — and its
-French one in `src/lang/data/fr/index.ts`, whose key set the same file holds
-EQUAL to Khmer's (2026-09-21), so a key the Khmer pass covers dynamically is
-covered in French too. Keep new
+at all. It reads each language's `dictionary.json` as a file (never through
+the package, which pulls in fonts and a song plugin), so it has none of the
+false positives below. A new label in `src/` fails the gate until EVERY
+language's `src/lang/data/online/<code>/dictionary.json` has it, and the same
+file holds every package's key set EQUAL (2026-09-21 for Khmer and French,
+every language since 2026-11-04), so a key the Khmer pass covers dynamically
+is covered in every other language too. Keep new
 keys statically readable — a literal per branch (`genCollapseTitle` in
 `FlexResizeActorComp.tsx`), not a key looked up from a table — or the test
 cannot see them.
@@ -58,7 +71,8 @@ per-render `genDataInput()`. Only the dynamic ones — file/slide names in
 `PresenterNoteContainerHandlerComp` / `CanvasNoteContainerHandlerComp` — stay
 raw, which is what `RenderHiddenWidgetTitleComp`'s comment refers to.)
 
-Verify by switching Settings → Language → Khmer → Apply Settings (reloads all windows)
+Verify by switching Settings → Languages → Language → Khmer (the press reloads all
+windows by itself since 2026-11-05; no Apply Settings)
 and walking the changed screens — **an added `tran()` is not verified until the
 page has been seen rendering in Khmer**; typecheck, eslint and the vitest suite
 all stay green through both failure modes above. Unsaved editor state survives the

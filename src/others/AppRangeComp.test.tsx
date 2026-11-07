@@ -298,6 +298,55 @@ describe('others AppRangeComp', () => {
         expect(box.value).toBe('3');
     });
 
+    test('AppRangeComp: Escape drops the typing, and a box left untouched sends nothing', async () => {
+        const setValue = vi.fn();
+        await render(
+            <AppRangeComp
+                value={2}
+                title="Scale"
+                setValue={setValue}
+                defaultSize={{ size: 2, min: 0.1, max: 3, step: 0.1 }}
+                isShowValue
+                isCompact
+            />,
+        );
+        setValue.mockClear();
+        const box = container.querySelector(
+            'input[type="number"]',
+        ) as HTMLInputElement;
+        const leaveBox = async () => {
+            await act(async () => {
+                box.dispatchEvent(
+                    new FocusEvent('focusout', { bubbles: true }),
+                );
+            });
+        };
+        // Into the box and away with nothing typed.
+        await leaveBox();
+        expect(setValue).not.toHaveBeenCalled();
+        expect(box.value).toBe('2');
+
+        // Out of range typed, then Escape: the value in use is shown again
+        // and the leaving that follows applies nothing.
+        Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype,
+            'value',
+        )!.set!.call(box, '9');
+        await act(async () => {
+            box.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        expect(box.value).toBe('9');
+        await act(async () => {
+            box.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+            );
+        });
+        expect(box.value).toBe('2');
+        await leaveBox();
+        expect(setValue).not.toHaveBeenCalled();
+        expect(box.value).toBe('2');
+    });
+
     test('AppRangeComp throws when max is not greater than min', async () => {
         const badRender = render(
             <AppRangeComp

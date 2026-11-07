@@ -18,9 +18,24 @@ const {
     showAppConfirmMock,
     showSimpleToastMock,
     tree,
+    failingDirs,
+    fsListDirectoriesMock,
+    fsCheckFileExistMock,
+    fsReadFileMock,
+    fsWriteFileMock,
+    repairTextMock,
+    forgetCachedDataMock,
 } = vi.hoisted(() => ({
     // dirPath -> [name, size | 'dir'][]
     tree: new Map<string, [string, number | 'dir'][]>(),
+    // Folders that cannot be listed.
+    failingDirs: new Set<string>(),
+    fsListDirectoriesMock: vi.fn(),
+    fsCheckFileExistMock: vi.fn(),
+    fsReadFileMock: vi.fn(),
+    fsWriteFileMock: vi.fn(),
+    repairTextMock: vi.fn(),
+    forgetCachedDataMock: vi.fn(),
     appProviderMock: {
         pathUtils: {
             join: vi.fn((...parts: string[]) => parts.join('/')),
@@ -63,7 +78,15 @@ vi.mock('../../server/fileHelpers', () => ({
     toPathCompareKey: (dirPath: string) => dirPath.toLowerCase(),
     checkIsHiddenName: (name: string) => name.startsWith('.'),
     getFileDotExtension: (name: string) => name.slice(name.lastIndexOf('.')),
+    fsListDirectories: fsListDirectoriesMock,
+    fsCheckFileExist: fsCheckFileExistMock,
+    fsReadFile: fsReadFileMock,
+    fsWriteFile: fsWriteFileMock,
+    repairDataDirLinksInText: repairTextMock,
     fsListDirents: async (dirPath: string) => {
+        if (failingDirs.has(dirPath)) {
+            throw new Error(`cannot list ${dirPath}`);
+        }
         return (tree.get(dirPath) ?? []).map(([name, size]) => {
             return {
                 name,
@@ -135,15 +158,19 @@ vi.mock('./appLocalStorage', () => ({
 vi.mock('../../helper/FileSource', () => ({
     default: {
         getInstance: fileSourceGetInstanceMock,
+        forgetCachedData: forgetCachedDataMock,
     },
 }));
 
 import {
     BaseDirFileSource,
+    checkIsUsedDataDir,
     checkShouldSelectChildDir,
     ensureDataDirectory,
     forEachDataDirTextFile,
     getDefaultDataDir,
+    removePathForChildDir,
+    repairDataDirLinks,
     selectDefaultDataDirName,
     selectPathForChildDir,
     selectPathForChildDirIfNeeded,
@@ -152,6 +179,7 @@ import {
 describe('directoryHelpers', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        failingDirs.clear();
         showAppConfirmMock.mockResolvedValue(true);
         fsCreateDirMock.mockResolvedValue(undefined);
         fsCheckDirExistMock.mockResolvedValue(true);
@@ -423,5 +451,131 @@ describe('directoryHelpers', () => {
             '/parent/documents',
         );
         expect(ensureDirectoryMock).toHaveBeenCalledWith('/parent/documents');
+    });
+
+    test('forgets every standard folder setting, then reloads', async () => {
+        await removePathForChildDir();
+        expect(setSettingMock.mock.calls).toEqual([
+            ['dir-app-document', ''],
+            ['dir-lyric', ''],
+        ]);
+        expect(appProviderMock.reload).toHaveBeenCalledOnce();
+        expect(setSettingMock.mock.invocationCallOrder[1]).toBeLessThan(
+            appProviderMock.reload.mock.invocationCallOrder[0],
+        );
+    });
+
+    test('a folder used before is one holding its own settings folder', async () => {
+        fsCheckDirExistMock.mockResolvedValueOnce(false);
+        await expect(checkIsUsedDataDir('/stick/data')).resolves.toBe(false);
+        expect(fsCheckDirExistMock).toHaveBeenCalledWith(
+            '/stick/data/local-storage',
+        );
+        await expect(checkIsUsedDataDir('/stick/data')).resolves.toBe(true);
+    });
+
+    test('a folder that cannot be listed is reported and the walk goes on', async () => {
+        tree.clear();
+        tree.set('/data', [
+            ['documents', 'dir'],
+            ['lyrics', 'dir'],
+        ]);
+        tree.set('/data/lyrics', [['song.owl', 10]]);
+        failingDirs.add('/data/documents');
+        const seen: string[] = [];
+        await forEachDataDirTextFile('/data', async (filePath) => {
+            seen.push(filePath);
+        });
+        expect(seen).toEqual(['/data/lyrics/song.owl']);
+        expect(handleErrorMock).toHaveBeenCalledExactlyOnceWith(
+            new Error('cannot list /data/documents'),
+        );
+    });
+
+    describe('Repair Links', () => {
+        test('does nothing with no data folder chosen', async () => {
+            getSelectedParentDirectoryMock.mockResolvedValueOnce(null);
+            await expect(repairDataDirLinks()).resolves.toBeNull();
+            expect(fsListDirectoriesMock).not.toHaveBeenCalled();
+            expect(repairTextMock).not.toHaveBeenCalled();
+        });
+
+        test('rewrites only the files with a link to repair, and counts them', async () => {
+            getSelectedParentDirectoryMock.mockResolvedValue('/data');
+            fsListDirectoriesMock.mockResolvedValue(['documents', 'lyrics']);
+            tree.clear();
+            tree.set('/data', [['documents', 'dir']]);
+            tree.set('/data/documents', [
+                ['a.ows', 10],
+                ['b.ows', 10],
+            ]);
+            fsReadFileMock.mockImplementation(async (filePath: string) => {
+                return `text of ${filePath}`;
+            });
+            fsCheckFileExistMock.mockImplementation(
+                async (filePath: string) => {
+                    return filePath === '/data/documents/pic.png';
+                },
+            );
+            fsCheckDirExistMock.mockImplementation(async (filePath: string) => {
+                if (filePath === '/locked/pic.png') {
+                    throw new Error('denied');
+                }
+                return false;
+            });
+            const answers: boolean[] = [];
+            repairTextMock.mockImplementation(
+                async (
+                    text: string,
+                    _dataDirPath: string,
+                    _childNames: string[],
+                    checkIsThere: (filePath: string) => Promise<boolean>,
+                ) => {
+                    if (text !== 'text of /data/documents/a.ows') {
+                        return { text, count: 0 };
+                    }
+                    for (const filePath of [
+                        '/old/pic.png',
+                        '/data/documents/pic.png',
+                        '/locked/pic.png',
+                        '/old/pic.png',
+                    ]) {
+                        answers.push(await checkIsThere(filePath));
+                    }
+                    return { text: 'repaired', count: 2 };
+                },
+            );
+
+            await expect(repairDataDirLinks()).resolves.toEqual({
+                linkCount: 2,
+                fileCount: 1,
+            });
+            expect(
+                repairTextMock.mock.calls.map((call) => call.slice(0, 3)),
+            ).toEqual([
+                [
+                    'text of /data/documents/a.ows',
+                    '/data',
+                    ['documents', 'lyrics'],
+                ],
+                [
+                    'text of /data/documents/b.ows',
+                    '/data',
+                    ['documents', 'lyrics'],
+                ],
+            ]);
+            // Gone, there, unreadable (left alone), and gone again.
+            expect(answers).toEqual([false, true, true, false]);
+            // Each place is looked at once, however many links name it.
+            expect(fsCheckFileExistMock).toHaveBeenCalledTimes(3);
+            expect(fsWriteFileMock).toHaveBeenCalledExactlyOnceWith(
+                '/data/documents/a.ows',
+                'repaired',
+            );
+            expect(forgetCachedDataMock).toHaveBeenCalledExactlyOnceWith(
+                '/data/documents/a.ows',
+            );
+            expect(handleErrorMock).not.toHaveBeenCalled();
+        });
     });
 });

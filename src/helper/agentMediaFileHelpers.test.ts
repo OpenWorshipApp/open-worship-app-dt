@@ -31,6 +31,10 @@ const { state, mocks } = vi.hoisted(() => ({
             '/downloads/Sermon.pptx': 'PPTX',
         } as Record<string, string>,
         sizes: {} as Record<string, number>,
+        // Names the folder join would carry outside the folder.
+        outsideNames: [] as string[],
+        snapshotError: null as Error | null,
+        readError: null as Error | null,
     },
     mocks: {
         handleError: vi.fn(),
@@ -45,6 +49,9 @@ const { state, mocks } = vi.hoisted(() => ({
         stat: vi.fn(),
     },
 }));
+
+// What is on the disk before each test; a test's own writes go with it.
+const INITIAL_DISK = { ...state.disk };
 
 const fileExists = (filePath: string) =>
     Object.values(state.files).some((list) => list.includes(filePath)) ||
@@ -81,7 +88,12 @@ vi.mock('../server/fileHelpers', () => ({
         size: state.sizes[filePath] ?? 10,
         modifiedAt: 0,
     }),
-    fsReadFile: async (filePath: string) => state.disk[filePath] ?? '',
+    fsReadFile: async (filePath: string) => {
+        if (state.readError !== null) {
+            throw state.readError;
+        }
+        return state.disk[filePath] ?? '';
+    },
     fsWriteFile: (...args: any[]) => mocks.fsWriteFile(...args),
     getFileFullName: (filePath: string) => filePath.split('/').at(-1),
     getMimetypeExtensions: (mimetypeName: string) =>
@@ -132,14 +144,20 @@ vi.mock('./agentBackupHelpers', () => ({
                 ?.replace(/\.[^.]+$/, ''),
             fullName: filePath.split('/').at(-1),
         })),
-    toAgentFilePath: (dir: string, name: string) => `${dir}/${name}`,
+    toAgentFilePath: (dir: string, name: string) =>
+        state.outsideNames.includes(name) ? null : `${dir}/${name}`,
     renameAgentFile: (...args: any[]) => mocks.renameAgentFile(...args),
     runWithAgentBackup: (...args: any[]) => mocks.runWithAgentBackup(...args),
-    snapshotAgentFile: async (filePath: string) => ({
-        type: 'file',
-        filePath,
-        text: state.disk[filePath] ?? null,
-    }),
+    snapshotAgentFile: async (filePath: string) => {
+        if (state.snapshotError !== null) {
+            throw state.snapshotError;
+        }
+        return {
+            type: 'file',
+            filePath,
+            text: state.disk[filePath] ?? null,
+        };
+    },
     snapshotAgentSidecars: (...args: any[]) =>
         mocks.snapshotAgentSidecars(...args),
     trashAgentFile: (...args: any[]) => mocks.trashAgentFile(...args),
@@ -148,6 +166,7 @@ vi.mock('./agentBackupPlanHelpers', () => ({
     AGENT_BACKUP_MAX_BLOB_BYTES: 1000,
 }));
 
+import { NoBackupError } from './agentBackupHelpers';
 import { handleAgentMediaFileRequest } from './agentMediaFileHelpers';
 
 beforeEach(() => {
@@ -156,7 +175,11 @@ beforeEach(() => {
     state.files.image = ['/images/sunrise.jpg', '/images/cross.png'];
     state.files.video = ['/videos/bg.mp4'];
     state.files.web = ['/webs/clock.html'];
+    state.disk = { ...INITIAL_DISK };
     state.sizes = {};
+    state.outsideNames = [];
+    state.snapshotError = null;
+    state.readError = null;
     mocks.runWithAgentBackup.mockImplementation(
         async (
             _summary: string,
@@ -451,5 +474,336 @@ describe('owa_media_file worker', () => {
         ).resolves.toMatchObject({
             reason: expect.stringContaining('already there'),
         });
+    });
+});
+
+describe('owa_media_file refusals and failures', () => {
+    const OUTSIDE = 'That name would not stay inside the folder.';
+
+    test('refuses a name it cannot keep inside the folder before touching a file', async () => {
+        state.outsideNames = ['escape.html', 'new.jpg', 'away.mp4'];
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'info',
+                kind: 'web',
+                name: '../clock.html',
+            }),
+        ).resolves.toEqual({ isError: true, reason: 'A name is required.' });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'info',
+                kind: 'web',
+                name: 'escape.html',
+            }),
+        ).resolves.toEqual({ isError: true, reason: OUTSIDE });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'create',
+                kind: 'web',
+                name: '',
+            }),
+        ).resolves.toEqual({ isError: true, reason: 'A name is required.' });
+        // "escape" becomes "escape.html" before the folder is judged.
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'create',
+                kind: 'web',
+                name: 'escape',
+            }),
+        ).resolves.toEqual({ isError: true, reason: OUTSIDE });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'import',
+                kind: 'image',
+                path: '/downloads/new.jpg',
+            }),
+        ).resolves.toEqual({ isError: true, reason: OUTSIDE });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'rename',
+                kind: 'video',
+                name: 'bg.mp4',
+                newName: '../away',
+            }),
+        ).resolves.toEqual({ isError: true, reason: 'A name is required.' });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'rename',
+                kind: 'video',
+                name: 'bg.mp4',
+                newName: 'away',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'That new name would not stay inside the folder.',
+        });
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+        expect(mocks.fsWriteFile).not.toHaveBeenCalled();
+        expect(mocks.fsCloneFile).not.toHaveBeenCalled();
+        expect(mocks.renameAgentFile).not.toHaveBeenCalled();
+    });
+
+    test('describes a picture by its place alone, and writes a page with its own words', async () => {
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'info',
+                kind: 'image',
+                name: 'sunrise.jpg',
+            }),
+        ).resolves.toEqual({
+            kind: 'image',
+            name: 'sunrise.jpg',
+            filePath: '/images/sunrise.jpg',
+        });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'create',
+                kind: 'web',
+                name: 'news.html',
+                content: '<p>News</p>',
+            }),
+        ).resolves.toMatchObject({
+            created: 'news.html',
+            filePath: '/webs/news.html',
+            undoId: 'backup-id',
+        });
+        expect(mocks.fsWriteFile).toHaveBeenCalledExactlyOnceWith(
+            '/webs/news.html',
+            '<p>News</p>',
+        );
+        expect(mocks.fireUpdateEvent).toHaveBeenCalledOnce();
+    });
+
+    test('refuses to write a clip from text, or a page from nothing', async () => {
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'update',
+                kind: 'video',
+                name: 'bg.mp4',
+                content: 'frames',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'A clip is not written from text: import a new one and trash ' +
+                'the old.',
+        });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'update',
+                kind: 'web',
+                name: 'clock.html',
+                content: '   ',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'Content is required to update a web page.',
+        });
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+        expect(mocks.writeFileData).not.toHaveBeenCalled();
+    });
+
+    test('changes nothing when the page it would change cannot be backed up', async () => {
+        state.snapshotError = new Error('disk gone');
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'update',
+                kind: 'web',
+                name: 'clock.html',
+                content: '<html>new</html>',
+            }),
+        ).resolves.toEqual({ isError: true, reason: 'Error: disk gone' });
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+        expect(mocks.writeFileData).not.toHaveBeenCalled();
+    });
+
+    test('a backup that cannot be saved stops the change in its own words', async () => {
+        mocks.runWithAgentBackup.mockRejectedValueOnce(
+            new NoBackupError('Nothing was changed: no room for the backup.'),
+        );
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'create',
+                kind: 'web',
+                name: 'welcome',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'Nothing was changed: no room for the backup.',
+        });
+        expect(mocks.handleError).not.toHaveBeenCalled();
+        expect(mocks.fireUpdateEvent).not.toHaveBeenCalled();
+    });
+
+    test('a write that does not land is reported with the undo route, and announced nowhere', async () => {
+        mocks.fsWriteFile.mockImplementation(async () => {});
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'create',
+                kind: 'web',
+                name: 'welcome',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'Making the web page “welcome.html” could not be finished: ' +
+                'The web page could not be written. Anything it did get to ' +
+                'do can be put back with owa_undo.',
+        });
+        mocks.writeFileData.mockResolvedValue(false);
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'update',
+                kind: 'web',
+                name: 'clock.html',
+                content: '<html>new</html>',
+            }),
+        ).resolves.toMatchObject({
+            reason:
+                'Changing the web page “clock.html” could not be finished: ' +
+                'The web page could not be written. Anything it did get to ' +
+                'do can be put back with owa_undo.',
+        });
+        mocks.fsCloneFile.mockImplementation(async () => {});
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'import',
+                kind: 'image',
+                path: '/downloads/new.jpg',
+            }),
+        ).resolves.toMatchObject({
+            reason:
+                'Importing the picture “new.jpg” could not be finished: The ' +
+                'file could not be copied in. Anything it did get to do can ' +
+                'be put back with owa_undo.',
+        });
+        expect(mocks.handleError).toHaveBeenCalledTimes(3);
+        expect(mocks.fireUpdateEvent).not.toHaveBeenCalled();
+    });
+
+    test('a rename onto a taken name changes nothing, and a failed one says so', async () => {
+        state.files.video = ['/videos/bg.mp4', '/videos/intro.mp4'];
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'rename',
+                kind: 'video',
+                name: 'bg.mp4',
+                newName: 'intro',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'Something called "intro.mp4" is already there, so "bg.mp4" ' +
+                'was not renamed.',
+        });
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+
+        mocks.renameAgentFile.mockRejectedValueOnce(
+            new Error('it is open in another program.'),
+        );
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'rename',
+                kind: 'video',
+                name: 'bg.mp4',
+                newName: 'opening',
+            }),
+        ).resolves.toMatchObject({
+            reason:
+                'Renaming the clip “bg.mp4” could not be finished: it is ' +
+                'open in another program. Anything it did get to do can be ' +
+                'put back with owa_undo.',
+        });
+        // Something thrown that is not an Error is still said in words.
+        mocks.renameAgentFile.mockRejectedValueOnce('busy');
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'rename',
+                kind: 'video',
+                name: 'bg.mp4',
+                newName: 'opening',
+            }),
+        ).resolves.toMatchObject({
+            reason: expect.stringContaining('could not be finished: busy '),
+        });
+    });
+
+    test('a delete whose backup cannot be taken leaves the file, and a refused trash says so', async () => {
+        mocks.snapshotAgentSidecars.mockRejectedValueOnce(
+            new Error('sidecar unreadable'),
+        );
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'delete',
+                kind: 'video',
+                name: 'bg.mp4',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'Error: sidecar unreadable',
+        });
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+        expect(mocks.trashAgentFile).not.toHaveBeenCalled();
+
+        mocks.trashAgentFile.mockRejectedValueOnce(
+            new Error('"bg" could not be moved to the trash.'),
+        );
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'delete',
+                kind: 'video',
+                name: 'bg.mp4',
+            }),
+        ).resolves.toMatchObject({
+            reason:
+                'Moving the clip “bg.mp4” to the trash could not be finished: ' +
+                '"bg" could not be moved to the trash. Anything it did get to ' +
+                'do can be put back with owa_undo.',
+        });
+    });
+
+    test('an import needs the path of a file with a name', async () => {
+        state.disk['/downloads/'] = 'a folder';
+        await expect(
+            handleAgentMediaFileRequest({ action: 'import', kind: 'image' }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'Give the `path` of the file on the disk to import.',
+        });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'import',
+                kind: 'image',
+                path: '/downloads/',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: '"/downloads/" has no file name.',
+        });
+        expect(mocks.fsCloneFile).not.toHaveBeenCalled();
+    });
+
+    test('an unknown action is refused, and a read that throws is answered', async () => {
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'copy',
+                kind: 'image',
+                name: 'sunrise.jpg',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason:
+                'Unknown action. Use list, info, create, update, rename, ' +
+                'delete or import.',
+        });
+        state.readError = new Error('read failed');
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'info',
+                kind: 'web',
+                name: 'clock.html',
+            }),
+        ).resolves.toEqual({ isError: true, reason: 'read failed' });
+        expect(mocks.handleError).toHaveBeenCalledWith(state.readError);
     });
 });

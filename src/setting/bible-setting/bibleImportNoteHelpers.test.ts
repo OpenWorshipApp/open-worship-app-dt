@@ -43,7 +43,18 @@ describe('the note an imported Bible keeps', () => {
                 key: 'KSV',
                 title: 'Khmer Standard Version',
                 locale: 'km-KH',
-                digits: ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'],
+                digits: [
+                    '０',
+                    '１',
+                    '２',
+                    '３',
+                    '４',
+                    '５',
+                    '６',
+                    '７',
+                    '８',
+                    '９',
+                ],
             },
             counts: { books: 66, chapters: 1189, verses: 31102 },
             appVersion: '2026.10.15',
@@ -55,7 +66,7 @@ describe('the note an imported Bible keeps', () => {
             'File: KhmerBible.xml, 4.5 MB',
             'Contents: 66 books, 1189 chapters, 31102 verses.',
             'Title in the file: Khmer Bible',
-            'Chosen: key KSV, language km-KH, digits ០ ១ ២ ៣ ៤ ៥ ៦ ៧ ៨ ៩, book names "Khmer names (KSV)" (https://www.bible.com/versions/1270).',
+            'Chosen: key KSV, language km-KH, digits ０ １ ２ ３ ４ ５ ６ ７ ８ ９, book names "Khmer names (KSV)" (https://www.bible.com/versions/1270).',
         ]);
     });
 
@@ -121,6 +132,10 @@ describe('the note an imported Bible keeps', () => {
         expect(note.match(/^Chosen:/gm)).toHaveLength(1);
         expect(toBibleNoteUrl(`https://example.org/${'a'.repeat(700)}`)).toBe(
             null,
+        );
+        expect(toBibleNoteUrl('not a link')).toBeNull();
+        expect(toBibleNoteUrl(' https://example.org/k.xml ')).toBe(
+            'https://example.org/k.xml',
         );
     });
 

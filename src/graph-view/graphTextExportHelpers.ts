@@ -168,7 +168,7 @@ function toOneLine(value: string) {
     return value.replace(/\s+/g, ' ').trim();
 }
 
-/** `ដាវីឌ (David)`, exactly as the box writes it. */
+/** `<the name> (David)`, exactly as the box writes it. */
 function toNodeLabel(item: GraphExportNodeType) {
     const name = toOneLine(item.view?.name ?? item.node.name);
     const kjvName = toOneLine(item.view?.kjvName ?? '');

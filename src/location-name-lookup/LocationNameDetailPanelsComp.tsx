@@ -274,7 +274,7 @@ function RenderDetailPanelComp({
     // it read the moment the panel was opened — used to be its title for good.
     // It goes stale the moment the bible behind it changes: switching the lookup
     // language re-titles the BODY (`Genesis 10:4`) and left the title bar
-    // showing the previous bible's wording (`លោកុប្បត្តិ ១០:៤`). The body
+    // showing the previous bible's wording (its own book name and digits). The body
     // resolves the reference anyway, so its answer is the title.
     //
     // State rather than a ref, and the WHOLE resolved verse rather than its
@@ -316,7 +316,10 @@ function RenderDetailPanelComp({
               : { langCode: panel.langCode }),
         page: globalThis.location?.href ?? '',
     };
-    const handleCopy = async () => {
+    // Whether anything went to the clipboard: a record the dataset does not
+    // hold copies nothing, and was toasted as copied all the same
+    // (2026-11-04).
+    const handleCopy = async (): Promise<boolean> => {
         if (panel.kind === 'verse') {
             // Not read (yet): the reference is all there is to copy. A read
             // verse opens the copy menu instead (`showVerseCopyingMenu`).
@@ -324,10 +327,10 @@ function RenderDetailPanelComp({
                 panel.target,
                 `<p>${escapeHtml(panel.target)}</p>`,
             );
-            return;
+            return true;
         }
         if (record === null || managers === null) {
-            return;
+            return false;
         }
         // The Verses section resolves its titles only once the user expands it,
         // so before that `resolvedVersesRef` is still empty — and an empty list
@@ -345,7 +348,7 @@ function RenderDetailPanelComp({
                 resolvedVerses,
             );
             await copyRecordToClipboard(summary.plainText, summary.html);
-            return;
+            return true;
         }
         if (locationRecord !== null) {
             const summary = buildLocationSummary(
@@ -354,7 +357,9 @@ function RenderDetailPanelComp({
                 resolvedVerses,
             );
             await copyRecordToClipboard(summary.plainText, summary.html);
+            return true;
         }
+        return false;
     };
     return (
         <FloatingWidgetComp
@@ -485,7 +490,10 @@ function RenderDetailPanelComp({
                             return;
                         }
                         handleCopy()
-                            .then(() => {
+                            .then((isCopied) => {
+                                if (!isCopied) {
+                                    return;
+                                }
                                 showSimpleToast(
                                     tran('Copy'),
                                     tran('Text has been copied to clipboard'),

@@ -4,9 +4,10 @@
 // every Latin-script run its words and buttons show that is NOT a real label
 // a reader of that language meets in the app:
 //
-// - a value of the language's own dictionary (`src/lang/data/<code>/index.ts`
-//   -- "កំណត់ទំហំ Widgets ឡើងវិញ" carries "Widgets" on the button itself),
-// - the language's own manual (`docs/manual-i18n/<code>/`, whose code spans
+// - a value of the language's own dictionary (`src/lang/data/online/<code>/index.ts`
+//   -- the Reset Widgets Size button keeps "Widgets" in English in its
+//   translation),
+// - the language's own manual (`src/lang/data/online/<code>/manual/`, whose code spans
 //   are the English names the View → Widgets list and the native menu bar
 //   show in every language),
 // - the native menu bar (`electron/electronMenu.ts`, English everywhere),
@@ -24,6 +25,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { genRunWordPattern, toScriptPattern } from '../../../../extra-work/language-packages.mjs';
 
 const REPO = fileURLToPath(new URL('../../../../', import.meta.url));
 const args = Object.fromEntries(
@@ -32,22 +34,40 @@ const args = Object.fromEntries(
         return match ? [match[1], match[2] ?? true] : ['file', arg];
     }),
 );
-const LANG = typeof args.lang === 'string' ? args.lang : 'km';
 const FILE = path.resolve(String(args.file));
+// The language the corpus file was asked in, off its first record that
+// names one -- `--lang` overrides it.
+function readFileLang(filePath) {
+    try {
+        for (const line of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+            if (line.trim() === '') continue;
+            const lang = JSON.parse(line).lang;
+            if (typeof lang === 'string' && lang !== '') return lang;
+        }
+    } catch (_error) {
+        // An unreadable file is reported where it is read.
+    }
+    return null;
+}
+const LANG = typeof args.lang === 'string' ? args.lang : readFileLang(FILE);
+if (LANG === null) {
+    console.error('Name the language the corpus was asked in: --lang=<code>.');
+    process.exit(1);
+}
 
 // ---- the labels a reader of the language really meets ----------------------
 
 function collectAllowedText() {
     const parts = [];
-    const dictionary = fs.readFileSync(
-        path.join(REPO, 'src', 'lang', 'data', LANG, 'index.ts'),
-        'utf8',
+    const dictionary = JSON.parse(
+        fs.readFileSync(
+            path.join(REPO, 'src', 'lang', 'data', 'online', LANG, 'dictionary.json'),
+            'utf8',
+        ),
     );
-    // Every string literal right of a colon: the translated values.
-    for (const match of dictionary.matchAll(/:\s*\n?\s*(['"`])((?:\\.|(?!\1).)*)\1/g)) {
-        parts.push(match[2]);
-    }
-    const manualDir = path.join(REPO, 'docs', 'manual-i18n', LANG);
+    // The translated values.
+    parts.push(...Object.values(dictionary));
+    const manualDir = path.join(REPO, 'src', 'lang', 'data', 'online', LANG, 'manual');
     const walk = (dir) => {
         for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
             const full = path.join(dir, entry.name);
@@ -84,7 +104,7 @@ const ALWAYS_ALLOWED = new Set(
         'insert ins up down left right arrow menu ok ' +
         'ai api key url http https www pdf ppt pptx doc docx xml json zip mp3 ' +
         'mp4 webm mkv mov png jpg jpeg gif svg owl ows owpf owadoc owadata ' +
-        'kjv nkjv niv esv asv web ssv khov ពគប usb hdmi tv wi-fi wifi lan ip ' +
+        'kjv nkjv niv esv asv web ssv khov usb hdmi tv wi-fi wifi lan ip ' +
         'youtube google gmail chatgpt claude gemini kimi ollama lm studio ' +
         'bedrock openai anthropic deepseek qwen gemma openlyrics songselect ' +
         'open worship app owa obs ndi vlc ffmpeg yt-dlp github ' +
@@ -148,9 +168,13 @@ function listEnglishRuns(text) {
 
 const LEAK =
     /\bowa_[a-z_]+|\bW-\d{2}\w?\b|\b[\w/-]+\.(?:tsx?|mjs|json|html)\b|\bsrc\/|data-react|\bisShowing\b|\bneedsPage\b|\bundefined\b|\[object |\{"|"[a-zA-Z]+":|<\/?[a-z]+>|\bmanualId\b|\bdemoId\b|\[en:tran:/;
-const ERROR_WORDS =
-    /could not answer|I could not|TypeError|ReferenceError|is not a function|Cannot read|មិនអាចឆ្លើយបានទេ/i;
-const SCRIPT = { km: /[ក-៿᧠-᧿]/g, fr: /[A-Za-zÀ-ÿ]/g }[LANG] ?? /[^\x00-\x7F]/g;
+const ERROR_WORDS = genRunWordPattern(
+    'could not answer|I could not|TypeError|ReferenceError|is not a function|Cannot read',
+    'couldNotAnswer',
+    'i',
+);
+// A letter of the language's own script (its `assistant.json`).
+const SCRIPT = toScriptPattern(LANG, 'gu') ?? /[^\x00-\x7F]/g;
 
 // ---- the answers ------------------------------------------------------------
 

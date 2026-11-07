@@ -419,7 +419,7 @@ describe('bibleLogicHelpers3', () => {
         expect(mocks.openBibleItemDetailPanelMock).not.toHaveBeenCalled();
     });
 
-    // `យ៉ូហាន ១៨.៣៣-១៩.១៦` in a heading: the WHOLE passage, both chapters, as
+    // John 18.33-19.16 in a Khmer Bible's name and digits, in a heading: the WHOLE passage, both chapters, as
     // one item -- where it used to be two halves in a menu.
     test('a cited range across chapters opens whole', async () => {
         const module = await loadModule();
@@ -489,5 +489,100 @@ describe('bibleLogicHelpers3', () => {
             'Genesis 1:1-2:3  Genesis 1:1-31 In the beginning ' +
                 'Genesis 2:1-3 Thus the heavens',
         );
+    });
+
+    test('a heading keeps the bare key of a passage the Bible cannot find', async () => {
+        const module = await loadModule();
+
+        const html = await module.genNewLineTitlesHtmlText('KJV', [
+            {
+                content:
+                    '<span data-title-verse-key="">Empty</span>' +
+                    '<span data-title-verse-key="XYZ 9:9">Unknown</span>',
+            },
+        ]);
+
+        const divElement = document.createElement('div');
+        divElement.innerHTML = html;
+        const [emptySpan, unknownSpan] = Array.from(
+            divElement.querySelectorAll('span[data-title-verse-key]'),
+        );
+        expect(emptySpan.classList.contains('app-caught-hover-pointer')).toBe(
+            false,
+        );
+        expect(emptySpan.getAttribute('title')).toBeNull();
+        expect(unknownSpan.getAttribute('title')).toBe('XYZ 9:9');
+        expect(unknownSpan.getAttribute('data-bible-key')).toBe('KJV');
+        expect(mocks.fromVerseKeyMock).toHaveBeenCalledWith('KJV', 'XYZ 9:9');
+    });
+
+    test('a cited passage the Bible cannot find opens nothing on click, right-click or hover', async () => {
+        const module = await loadModule();
+        const { parent, child } = genTitleSpan('XYZ 9:9');
+
+        await module.reformCustomTitle(
+            { addBibleItemRight: vi.fn() } as any,
+            mocks.buildBibleItem('KJV', 'GEN 1:1', 'Genesis 1:1', '') as any,
+            parent,
+        );
+        child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        const contextMenuEvent = new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+        });
+        child.dispatchEvent(contextMenuEvent);
+        child.dispatchEvent(new MouseEvent('mouseenter'));
+        await flushAsyncWork();
+        await flushAsyncWork();
+
+        expect(mocks.fromVerseKeyMock).toHaveBeenCalledTimes(3);
+        expect(mocks.openBibleItemDetailPanelMock).not.toHaveBeenCalled();
+        expect(mocks.showAppContextMenuMock).not.toHaveBeenCalled();
+        // The app's own menu still replaces the browser's.
+        expect(contextMenuEvent.defaultPrevented).toBe(true);
+        expect(child.title).toBe('');
+        expect(child.dataset.isHintLoaded).toBe('true');
+    });
+
+    test('a cited passage that was never named for a Bible is inert', async () => {
+        const module = await loadModule();
+        const parent = document.createElement('span');
+        parent.innerHTML = '<span data-title-verse-key="GEN 1:1">Verse</span>';
+        // (jsdom answers `querySelector('span')` with null under a span.)
+        const child = parent.firstElementChild as HTMLSpanElement;
+
+        await module.reformCustomTitle(
+            { addBibleItemRight: vi.fn() } as any,
+            mocks.buildBibleItem('KJV', 'GEN 1:1', 'Genesis 1:1', '') as any,
+            parent,
+        );
+        child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        child.dispatchEvent(
+            new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+        );
+        child.dispatchEvent(new MouseEvent('mouseenter'));
+        await flushAsyncWork();
+
+        expect(mocks.fromVerseKeyMock).not.toHaveBeenCalled();
+        expect(mocks.openBibleItemDetailPanelMock).not.toHaveBeenCalled();
+        expect(mocks.showAppContextMenuMock).not.toHaveBeenCalled();
+        expect(child.dataset.isHintLoaded).toBeUndefined();
+    });
+
+    test('a chapter without titles or custom verses has nothing to render', async () => {
+        const module = await loadModule();
+        mocks.getChapterDataMock.mockResolvedValue({});
+
+        expect(
+            await module.getNewLineTitlesHtmlText('KJV', 'GEN', 1, 1),
+        ).toBeNull();
+        expect(await module.getCustomVerseText('KJV', 'GEN', 1, 1)).toBeNull();
+
+        mocks.getChapterDataMock.mockResolvedValue(null);
+        expect(
+            await module.getNewLineTitlesHtmlText('KJV', 'GEN', 1, 1),
+        ).toBeNull();
+        expect(await module.getCustomVerseText('KJV', 'GEN', 1, 1)).toBeNull();
+        expect(mocks.toVerseFullKeyFormatMock).not.toHaveBeenCalled();
     });
 });

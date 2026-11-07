@@ -1,0 +1,74 @@
+[
+    {
+        "id": "es-text-size",
+        "lang": "es",
+        "focus": "reader",
+        "text": "Las letras son muy pequeñas. ¿Cómo las hago más grandes?"
+    },
+    {
+        "id": "pt-text-size",
+        "lang": "pt",
+        "focus": "reader",
+        "text": "As letras estão muito pequenas. Como posso aumentar o tamanho?"
+    },
+    {
+        "id": "vi-text-size",
+        "lang": "vi",
+        "focus": "reader",
+        "text": "Chữ quá nhỏ. Làm sao để phóng to chữ lên?"
+    },
+    {
+        "id": "id-text-size",
+        "lang": "id",
+        "focus": "reader",
+        "text": "Hurufnya terlalu kecil. Bagaimana cara memperbesar tulisan?"
+    },
+    {
+        "id": "de-text-size",
+        "lang": "de",
+        "focus": "reader",
+        "text": "Die Schrift ist zu klein. Wie mache ich sie größer?"
+    },
+    {
+        "id": "tl-text-size",
+        "lang": "tl",
+        "focus": "reader",
+        "text": "Masyadong maliit ang mga letra. Paano ko ito palalakihin?"
+    },
+    {
+        "id": "zh-text-size",
+        "lang": "zh",
+        "focus": "reader",
+        "text": "字太小了，怎么把字放大？"
+    },
+    {
+        "id": "th-text-size",
+        "lang": "th",
+        "focus": "reader",
+        "text": "ตัวหนังสือเล็กเกินไป จะทำให้ใหญ่ขึ้นได้อย่างไร"
+    },
+    {
+        "id": "ko-text-size",
+        "lang": "ko",
+        "focus": "reader",
+        "text": "글자가 너무 작아요. 어떻게 크게 할 수 있나요?"
+    },
+    {
+        "id": "ru-text-size",
+        "lang": "ru",
+        "focus": "reader",
+        "text": "Буквы слишком маленькие. Как их увеличить?"
+    },
+    {
+        "id": "ar-text-size",
+        "lang": "ar",
+        "focus": "reader",
+        "text": "الكلمات صغيرة جدا. كيف أكبرها؟"
+    },
+    {
+        "id": "sw-text-size",
+        "lang": "sw",
+        "focus": "reader",
+        "text": "Herufi ni ndogo sana. Ninawezaje kuzifanya kuwa kubwa zaidi?"
+    }
+]

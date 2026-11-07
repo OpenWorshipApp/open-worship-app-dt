@@ -188,7 +188,7 @@ and a run is not done while one is above 0; the gate holds the first two
   program's label, the English-only help window, a word leaned on). The stamp
   records that the choice was made.
 - **Translated pages missing or behind their English** (`stale-translation`,
-  since 2026-10-29, `AD-24`). A page of `docs/manual-i18n/<code>/` made from an
+  since 2026-10-29, `AD-24`). A page of `src/lang/data/online/<code>/manual/` made from an
   older English (its `translatedFrom` is not the English hash), or none at
   all. *Not a false positive:* the help shows the English for it. *Fix:* carry
   the English change in, block for block (§3), until

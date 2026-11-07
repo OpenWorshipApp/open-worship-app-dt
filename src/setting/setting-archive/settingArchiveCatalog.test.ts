@@ -367,7 +367,7 @@ describe('a key as a file name', () => {
     test('takes the names real settings have', () => {
         for (const key of [
             'widget-size-song 99 new.ows',
-            'widget-size-សេចក្តីស្រឡាញ់.ows',
+            'widget-size-✝♪ song.ows',
             'video-show-13_cv.mp4-setting-show-widget-blend-mode',
             'presenting-flow-opened-@data_presenting-flows_a_owpf',
         ]) {
@@ -399,15 +399,15 @@ describe('a key as a file name', () => {
             'com1',
             'LPT9.log',
             'x'.repeat(256),
-            // 86 Khmer characters are 258 UTF-8 bytes.
-            'ក'.repeat(86),
+            // 86 three-byte characters are 258 UTF-8 bytes.
+            '✝'.repeat(86),
             42,
             null,
         ]) {
             expect(checkIsPortableSettingKey(key)).toBe(false);
         }
         expect(checkIsPortableSettingKey('x'.repeat(255))).toBe(true);
-        expect(checkIsPortableSettingKey('ក'.repeat(85))).toBe(true);
+        expect(checkIsPortableSettingKey('✝'.repeat(85))).toBe(true);
         expect(classifySettingKey('local', '../escape')).toBeNull();
         expect(classifySettingKey('home', 'a/b')).toBeNull();
     });

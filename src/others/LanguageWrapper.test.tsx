@@ -49,14 +49,14 @@ function genElement(html: string) {
 
 describe('applyFontFamily', () => {
     test('an element with its own locale gets that locale font', async () => {
-        const element = genElement('<p data-locale-ff="km-KH">ពាក្យ</p>');
+        const element = genElement('<p data-locale-ff="km-KH">✝✝</p>');
         await applyFontFamily(element, 'attr-modified');
         expect(element.style.fontFamily).toBe('Battambang');
         expect(state.getBibleLocale).not.toHaveBeenCalled();
     });
 
     test('an element naming a bible gets the bible locale font', async () => {
-        const element = genElement('<p data-bible-key-ff="KHSV">ពាក្យ</p>');
+        const element = genElement('<p data-bible-key-ff="KHSV">✝✝</p>');
         await applyFontFamily(element, 'attr-modified');
         expect(state.getBibleLocale).toHaveBeenCalledExactlyOnceWith('KHSV');
         expect(element.style.fontFamily).toBe('Battambang');
@@ -85,7 +85,7 @@ describe('applyFontFamily', () => {
 
     test('an added subtree is walked, a modified element is not', async () => {
         const html =
-            '<div><span data-locale-ff="km-KH">ក</span>' +
+            '<div><span data-locale-ff="km-KH">✝♪</span>' +
             '<em><b data-bible-key-ff="KJV">b</b></em></div>';
         const modified = genElement(html);
         await applyFontFamily(modified, 'attr-modified');

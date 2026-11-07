@@ -1,0 +1,13 @@
+{
+    "cs": {
+        "name": "Czech",
+        "nativeName": "Čeština",
+        "script": "Latin",
+        "words": "a i v ve z ze na do od po o u za pro bez se si je jsou byl byla to že jak co kde proč kdy kdo který která které jestli zda můj moje tvůj jeho její náš já ty on ona my vy oni můžu mohu může chci musím také taky už ještě velmi více ten ta tento tato tady prosím děkuji",
+        "letters": "ěščřžýáíéůúďťň",
+        "family": "czech-slovak",
+        "yes": ["ano", "ano, prosím"],
+        "no": ["ne", "ne, děkuji"],
+        "order": 9
+    }
+}

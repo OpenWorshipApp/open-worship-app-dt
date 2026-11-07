@@ -472,8 +472,11 @@ async function startConvertingOfficeFile(
                 tran('Something wrong during converting, please try again.'),
             );
         }
+    } finally {
+        // On every way out: a failed conversion returns from inside the `try`,
+        // and the bar it left up stayed there for good.
+        hideProgressBar(getWidgetTitle());
     }
-    hideProgressBar(getWidgetTitle());
 }
 
 export async function convertOfficeFile(

@@ -174,6 +174,7 @@ vi.mock('../../helper/helpers', () => ({
 }));
 
 import {
+    checkIsSettingArchiveFileFullName,
     countManifestByLeaf,
     createSettingArchive,
     importSettingSections,
@@ -213,6 +214,24 @@ beforeEach(() => {
     h.readable = { filePath: '/tmp/import/plain', isProtected: false };
     h.extractedManifest = '';
     h.failTar = false;
+});
+
+describe('recognising a settings file by its name', () => {
+    test.each([
+        ['Settings.owasetting.tar.gz', true],
+        ['Settings (1).owasetting.tar.gz', true],
+        // What older builds wrote for a second export.
+        ['Settings.owasetting.tar (2).gz', true],
+        ['SETTINGS.OWASETTING.TAR.GZ', true],
+        ['Settings.owasetting.enc', true],
+        ['Settings.owasetting.tar', false],
+        ['Settings.owasetting.tar.gz.part', false],
+        ['service.owapf.tar.gz', false],
+    ])('%s: %s', (fileFullName, isSettingArchive) => {
+        expect(checkIsSettingArchiveFileFullName(fileFullName)).toBe(
+            isSettingArchive,
+        );
+    });
 });
 
 describe('listing what can be exported', () => {
@@ -360,6 +379,15 @@ describe('exporting', () => {
         ).rejects.toThrow('tar failed');
         expect(h.deletedDirs).toEqual(['/tmp/staging']);
     });
+
+    test('a setting gone from disk since the listing is left out, its section kept', async () => {
+        h.local.set('select-dir-image-bg', '$DATA_DIR_PATH/images');
+        const { refs } = await listExportableSettingKeys();
+        h.local.delete('select-dir-image-bg');
+        await createSettingArchive(refs, ['general.folders']);
+        expect(h.manifests[0].sections).toEqual(['general.folders']);
+        expect(h.manifests[0].settings).toEqual([]);
+    });
 });
 
 function genManifest(
@@ -448,6 +476,30 @@ describe('validating a file', () => {
                 false,
             ),
         ).toThrow('Setting "a" is too large');
+    });
+
+    test('refuses more settings, or more text, than any real profile holds', () => {
+        // Refused on the count alone: no entry is looked at.
+        expect(() =>
+            validateSettingManifest(
+                genManifest([], new Array(50_001).fill(null)),
+                false,
+            ),
+        ).toThrow('This settings archive holds too many settings');
+        // Each value is within its own limit; seven together are not.
+        const value = 'x'.repeat(8 * 1024 * 1024);
+        const settings = Array.from({ length: 7 }, (_, index) => {
+            return { store: 'local', key: `big-${index}`, value };
+        });
+        expect(() =>
+            validateSettingManifest(genManifest([], settings), false),
+        ).toThrow('This settings archive is too large');
+        expect(
+            validateSettingManifest(
+                genManifest([], settings.slice(0, 6)),
+                false,
+            ).settings,
+        ).toEqual([]);
     });
 
     test('drops what this version will not take', () => {
@@ -716,6 +768,69 @@ describe('importing replaces each chosen section', () => {
             removedCount: 1,
             needsRelaunch: true,
         });
+    });
+
+    test('a section the file holds empty puts a home setting back to default', async () => {
+        h.home.set('language-locale', 'km');
+        h.home.set('ai-setting', '{"isAutoPlay":true}');
+        const manifest = validateSettingManifest(
+            genManifest(['general.language'], []),
+            false,
+        );
+        const result = await importSettingSections(
+            manifest,
+            ['general.language'],
+            false,
+        );
+        expect(h.home.has('language-locale')).toBe(false);
+        // Another section, not chosen: left alone.
+        expect(h.home.get('ai-setting')).toBe('{"isAutoPlay":true}');
+        expect(result).toEqual({
+            writtenCount: 0,
+            removedCount: 1,
+            needsRelaunch: false,
+        });
+    });
+
+    test('many settings are removed fifty at a time, the event loop let in between', async () => {
+        const documentKeys = Array.from({ length: 51 }, (_, index) => {
+            return `widget-size-@data_documents_song${index}_ows`;
+        });
+        for (const key of documentKeys) {
+            h.local.set(key, '{"width":300}');
+        }
+        // The panels' own sizes are another section.
+        h.local.set('widget-size-presenter', '{"width":200}');
+        const leftAtEachYield: number[] = [];
+        const realSetTimeout = globalThis.setTimeout;
+        vi.spyOn(globalThis, 'setTimeout').mockImplementation(((
+            callback: () => void,
+            delay?: number,
+        ) => {
+            if (delay === 0) {
+                leftAtEachYield.push(
+                    documentKeys.filter((key) => h.local.has(key)).length,
+                );
+            }
+            return realSetTimeout(callback, delay);
+        }) as any);
+        const manifest = validateSettingManifest(
+            genManifest(['layout.documentPanelSizes'], []),
+            false,
+        );
+        const result = await importSettingSections(
+            manifest,
+            ['layout.documentPanelSizes'],
+            false,
+        );
+        expect(result).toEqual({
+            writtenCount: 0,
+            removedCount: 51,
+            needsRelaunch: false,
+        });
+        expect(Array.from(h.local.keys())).toEqual(['widget-size-presenter']);
+        // One turn of the event loop, after the first fifty.
+        expect(leftAtEachYield).toEqual([1]);
     });
 
     test('counts the file by section', () => {

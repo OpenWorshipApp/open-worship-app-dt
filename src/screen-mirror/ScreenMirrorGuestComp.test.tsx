@@ -13,6 +13,7 @@ const h = vi.hoisted(() => ({
     command: vi.fn(),
     cameraDevices: vi.fn(async () => []),
     readQr: vi.fn(),
+    findImage: vi.fn(),
     goToPath: vi.fn(),
     layout: vi.fn(() => ({
         width: 170,
@@ -62,7 +63,7 @@ vi.mock('./mirrorConnectionHelpers', () => ({
     toMirrorErrorText: (error: string) => `Error: ${error}`,
 }));
 vi.mock('./mirrorQrHelpers', () => ({
-    findImageFile: () => null,
+    findImageFile: (items: unknown) => h.findImage(items),
     readQrTextFromImage: h.readQr,
 }));
 vi.mock('./mirrorMonitorLayout', () => ({ layoutMirrorMonitors: h.layout }));
@@ -195,6 +196,7 @@ beforeEach(() => {
         );
     h.cameraDevices.mockClear();
     h.readQr.mockReset();
+    h.findImage.mockReset().mockReturnValue(null);
     h.goToPath.mockClear();
     h.layout.mockClear();
     container = document.createElement('div');
@@ -380,5 +382,317 @@ describe('Screen Mirror guest page', () => {
         expect(container.textContent).toContain(
             'The host can now show its screens on these monitors.',
         );
+    });
+});
+
+// A promise chain that is not awaited (a picture being read) settles a few
+// turns after the press.
+async function settle() {
+    for (let index = 0; index < 3; index++) {
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+    }
+}
+function alertText() {
+    return container.querySelector('[role="alert"]')?.textContent ?? null;
+}
+async function submit() {
+    await act(async () => {
+        button('Connect').closest('form')!.requestSubmit();
+    });
+}
+// A paste carrying what the clipboard holds, the way React reads it.
+function pasteEvent(clipboardData: {
+    items?: unknown;
+    getData?: (type: string) => string;
+}) {
+    const event = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'clipboardData', {
+        value: { items: [], getData: () => '', ...clipboardData },
+    });
+    return event;
+}
+const otherHost: MirrorDiscovery = {
+    ...host,
+    id: 'host-2',
+    name: 'Youth room',
+    host: '192.168.1.9',
+    port: 39241,
+};
+
+describe('Screen Mirror guest page, the less travelled paths', () => {
+    test('a camera plugged in is offered again once, half a second after the devices settle', async () => {
+        const devices = new EventTarget();
+        Object.defineProperty(navigator, 'mediaDevices', {
+            configurable: true,
+            value: devices,
+        });
+        vi.useFakeTimers();
+        try {
+            await render();
+            expect(h.cameraDevices).not.toHaveBeenCalled();
+            devices.dispatchEvent(new Event('devicechange'));
+            await vi.advanceTimersByTimeAsync(300);
+            devices.dispatchEvent(new Event('devicechange'));
+            await vi.advanceTimersByTimeAsync(499);
+            expect(h.cameraDevices).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(1);
+            expect(h.cameraDevices).toHaveBeenCalledOnce();
+
+            // A refresh that fails is not the page's failure.
+            h.cameraDevices.mockRejectedValueOnce(new Error('no devices'));
+            devices.dispatchEvent(new Event('devicechange'));
+            await vi.advanceTimersByTimeAsync(500);
+            expect(h.cameraDevices).toHaveBeenCalledTimes(2);
+
+            // Gone with the page: a later change asks nothing, and a refresh
+            // still waiting is dropped.
+            devices.dispatchEvent(new Event('devicechange'));
+            await act(async () => {
+                root.unmount();
+            });
+            root = createRoot(container);
+            devices.dispatchEvent(new Event('devicechange'));
+            await vi.advanceTimersByTimeAsync(1000);
+            expect(h.cameraDevices).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+            delete (navigator as any).mediaDevices;
+        }
+    });
+
+    test('only the latest scan may write the host list and the address', async () => {
+        h.found = [host];
+        await render();
+        expect(input('Host address').value).toBe(host.host);
+        const answers: Array<(found: MirrorDiscovery[]) => void> = [];
+        h.command.mockImplementation((action: string) => {
+            if (action !== 'scan') {
+                return Promise.resolve(undefined);
+            }
+            return new Promise<MirrorDiscovery[]>((resolve) => {
+                answers.push(resolve);
+            });
+        });
+        // Two presses before the page has redrawn the button as busy.
+        await act(async () => {
+            const rescan = button('Rescan');
+            rescan.click();
+            rescan.click();
+        });
+        expect(answers).toHaveLength(2);
+        expect(button('Rescan').disabled).toBe(true);
+        await act(async () => {
+            answers[1]([otherHost]);
+        });
+        expect(button('Rescan').disabled).toBe(false);
+        // The older scan answers last, with what it had: it is not listened to.
+        const stale: MirrorDiscovery = {
+            ...host,
+            id: 'host-3',
+            name: 'Old answer',
+            host: '192.168.1.10',
+        };
+        await act(async () => {
+            answers[0]([stale]);
+        });
+        expect(container.textContent).toContain('Youth room');
+        expect(container.textContent).not.toContain('Old answer');
+        expect(container.textContent).not.toContain('Church hall');
+        // What the first scan filled in, the latest one may replace.
+        expect(input('Host address').value).toBe(otherHost.host);
+        expect(input('Port').value).toBe(String(otherHost.port));
+    });
+
+    test('a host picked from the list fills the form, and a rescan keeps the pick', async () => {
+        h.found = [host, otherHost];
+        await render();
+        // The scan filled the first one in by itself.
+        expect(input('Host address').value).toBe(host.host);
+        const pick = `Youth room, ${otherHost.host}:${otherHost.port}`;
+        await click(pick);
+        expect(input('Host address').value).toBe(otherHost.host);
+        expect(input('Port').value).toBe(String(otherHost.port));
+        expect(button(pick).getAttribute('aria-pressed')).toBe('true');
+        expect(
+            button(`Church hall, ${host.host}:${host.port}`).getAttribute(
+                'aria-pressed',
+            ),
+        ).toBe('false');
+        await click('Rescan');
+        expect(input('Host address').value).toBe(otherHost.host);
+        expect(input('Port').value).toBe(String(otherHost.port));
+        await submit();
+        expect(h.command).toHaveBeenCalledWith('connect', {
+            host: otherHost.host,
+            port: otherHost.port,
+            code: '',
+        });
+    });
+
+    test('a refused connection shows the reason; anything thrown that is not an error reads as a plain failure', async () => {
+        await render();
+        await type('Host address', 'example.org');
+        h.command.mockImplementation(async (action: string) => {
+            if (action === 'connect') {
+                throw new Error('Too many hosts');
+            }
+            return [];
+        });
+        await submit();
+        expect(alertText()).toBe('Error: Too many hosts');
+        // No longer busy: it can be tried again.
+        expect(button('Connect').disabled).toBe(false);
+        h.command.mockImplementation(async (action: string) => {
+            if (action === 'connect') {
+                throw 'offline';
+            }
+            return [];
+        });
+        await submit();
+        expect(alertText()).toBe('Connection failed');
+        h.command.mockImplementation(async () => undefined);
+        await submit();
+        // A try that goes through clears the last reason.
+        expect(alertText()).toBeNull();
+    });
+
+    test('a link typed whole is split into the address and the port before connecting', async () => {
+        await render();
+        await type('Host address', 'example.org:40123');
+        await submit();
+        expect(h.command).toHaveBeenCalledWith('connect', {
+            host: 'example.org',
+            port: 40123,
+            code: '',
+        });
+        expect(input('Host address').value).toBe('example.org');
+        expect(input('Port').value).toBe('40123');
+    });
+
+    test('a picture that cannot be read says no address was found in it', async () => {
+        h.readQr.mockRejectedValueOnce(new Error('not a picture'));
+        await render();
+        const fileInput =
+            container.querySelector<HTMLInputElement>('input[type="file"]')!;
+        const file = new File(['?'], 'broken.png', { type: 'image/png' });
+        Object.defineProperty(fileInput, 'files', {
+            configurable: true,
+            value: [file],
+        });
+        await act(async () => {
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        await settle();
+        expect(alertText()).toBe('No host address found in this image.');
+        expect(input('Host address').value).toBe('');
+        expect(button('Read QR code').disabled).toBe(false);
+    });
+
+    test('Read QR code opens the picture picker', async () => {
+        await render();
+        const fileInput =
+            container.querySelector<HTMLInputElement>('input[type="file"]')!;
+        const open = vi.spyOn(fileInput, 'click').mockImplementation(() => {});
+        await click('Read QR code');
+        expect(open).toHaveBeenCalledOnce();
+        expect(fileInput.accept).toBe('image/*');
+    });
+
+    test('a QR code picture on the clipboard is read instead of its text', async () => {
+        const picture = new Blob(['png'], { type: 'image/png' });
+        const textItem = { types: ['text/plain'], getType: vi.fn() };
+        const imageItem = {
+            types: ['text/html', 'image/png'],
+            getType: vi.fn(async () => picture),
+        };
+        const readText = vi.fn(async () => 'other.org:1');
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: {
+                read: vi.fn(async () => [textItem, imageItem]),
+                readText,
+            },
+        });
+        h.readQr.mockResolvedValueOnce('example.org:40500');
+        await render();
+        await click('Paste address');
+        await settle();
+        expect(textItem.getType).not.toHaveBeenCalled();
+        expect(imageItem.getType).toHaveBeenCalledWith('image/png');
+        expect(h.readQr).toHaveBeenCalledWith(picture);
+        expect(readText).not.toHaveBeenCalled();
+        expect(input('Host address').value).toBe('example.org');
+        expect(input('Port').value).toBe('40500');
+        expect(alertText()).toBeNull();
+    });
+
+    test('a clipboard that cannot be read says no address was found', async () => {
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            value: {
+                read: vi.fn(async () => {
+                    throw new Error('denied');
+                }),
+                readText: vi.fn(async () => 'example.org:1'),
+            },
+        });
+        await render();
+        await click('Paste address');
+        expect(alertText()).toBe('No host address found in the clipboard.');
+        expect(input('Host address').value).toBe('');
+    });
+
+    test('a QR code picture pasted onto the form is read into it', async () => {
+        const picture = new File(['png'], 'qr.png', { type: 'image/png' });
+        const items = [{ kind: 'file' }];
+        h.findImage.mockImplementation((given: unknown) => {
+            return given === items ? picture : null;
+        });
+        h.readQr.mockResolvedValueOnce('example.org:40600');
+        await render();
+        const form = button('Connect').closest('form')!;
+        const withPicture = pasteEvent({ items });
+        await act(async () => {
+            form.dispatchEvent(withPicture);
+        });
+        await settle();
+        expect(withPicture.defaultPrevented).toBe(true);
+        expect(h.readQr).toHaveBeenCalledExactlyOnceWith(picture);
+        expect(input('Host address').value).toBe('example.org');
+        expect(input('Port').value).toBe('40600');
+
+        // Text pasted onto the form is left to the box it lands in.
+        const withText = pasteEvent({ items: [{ kind: 'string' }] });
+        await act(async () => {
+            form.dispatchEvent(withText);
+        });
+        expect(withText.defaultPrevented).toBe(false);
+        expect(h.readQr).toHaveBeenCalledOnce();
+    });
+
+    test('pasting host:port into the address box fills both boxes; a bare host pastes as it is', async () => {
+        await render();
+        const address = input('Host address');
+        const withPort = pasteEvent({
+            getData: (type) => (type === 'text' ? 'example.org:40123' : ''),
+        });
+        await act(async () => {
+            address.dispatchEvent(withPort);
+        });
+        expect(withPort.defaultPrevented).toBe(true);
+        expect(address.value).toBe('example.org');
+        expect(input('Port').value).toBe('40123');
+
+        const bare = pasteEvent({ getData: () => 'church.example.org' });
+        await act(async () => {
+            address.dispatchEvent(bare);
+        });
+        // The browser pastes it itself.
+        expect(bare.defaultPrevented).toBe(false);
+        expect(address.value).toBe('example.org');
+        expect(input('Port').value).toBe('40123');
     });
 });

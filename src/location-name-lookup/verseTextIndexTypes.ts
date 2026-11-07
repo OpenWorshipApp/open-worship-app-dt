@@ -30,7 +30,7 @@ export type LookupRecordLabelsType = {
     // The record's display name.
     labels: string[];
     // The record's ENGLISH name, shown beside a translated label the way a
-    // bible book reads `លោកុប្បត្តិ (Genesis)`. Empty for every record when the
+    // bible book reads `<its own name> (Genesis)`. Empty for every record when the
     // sidecar is the English one — its labels already ARE the English names —
     // and for a record the translation does not cover, whose label stayed
     // English. Still written in full so the array can never mis-index.

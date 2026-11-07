@@ -170,9 +170,9 @@ export function resolveResourceFileName(
 
 /**
  * A book's key from a name in ANY installed Bible's own language (JHN for
- * `យ៉ូហាន`), after the code and the English name. The Resources panel's
+ * the Khmer Bible's own name for John), after the code and the English name. The Resources panel's
  * files are named by the KJV's codes, but the person asking is reading a
- * Khmer Bible and says `យ៉ូហាន` (seen live 2026-10-18).
+ * Khmer Bible and says John in it (seen live 2026-10-18).
  */
 export function resolveResourceBookKeyFromMaps(
     book: unknown,

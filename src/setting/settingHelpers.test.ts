@@ -145,7 +145,30 @@ describe('setting settingHelpers', () => {
         getSettingForceMock.mockReturnValueOnce('{broken');
         expect(module.takeSettingTabRequest()).toBeNull();
 
+        // Nothing asked for: nothing to remove either.
+        removeSettingMock.mockClear();
+        expect(module.takeSettingTabRequest()).toBeNull();
+        expect(removeSettingMock).not.toHaveBeenCalled();
+
         nowSpy.mockRestore();
+    });
+
+    test('tells this window at once when it asks itself for a tab, until it stops listening', async () => {
+        const module = await loadSettingHelpers();
+        const listener = vi.fn();
+        const stopListening = module.listenForSettingTabRequest(listener);
+
+        module.openBibleSetting();
+        expect(listener).toHaveBeenCalledWith('b');
+        // Told after the request is stored, so taking it finds it there.
+        expect(setSettingMock.mock.invocationCallOrder[1]).toBeLessThan(
+            listener.mock.invocationCallOrder[0],
+        );
+
+        stopListening();
+        module.openAISetting();
+        expect(listener).toHaveBeenCalledTimes(1);
+        expect(setSettingMock).toHaveBeenCalledWith('setting-tabs', 'a');
     });
 
     test('registers the setting-home listener and reloads app windows on demand', async () => {

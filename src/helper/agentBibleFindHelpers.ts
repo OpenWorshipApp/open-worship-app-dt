@@ -194,8 +194,8 @@ async function toNameMapList(bibleKey: string) {
         info?.keyBookMap ?? {},
         englishBookNameMap,
     ];
-    // A reference written in another installed Bible's language (`លោកុប្បត្តិ
-    // 4:1` with the KJV chosen) names the same book: its key is read here
+    // A reference written in another installed Bible's language (Genesis
+    // 4:1 in the Khmer Bible's book name, with the KJV chosen) names the same book: its key is read here
     // and the verse is quoted from the chosen Bible (2026-10-18).
     try {
         const infoList = (await getAllLocalBibleInfoList()) ?? [];
@@ -248,7 +248,8 @@ const NO_TERMS = { noTerms: true } as const;
 /**
  * Khmer, Thai and their neighbours are typed with no space between words,
  * so a remembered phrase arrives as one run of letters and matches nothing
- * (seen 2026-10-16, the user's own: "ព្រះយេស៊ូសួរពេត្រុសច្រើនដង"). It is cut
+ * (seen 2026-10-16, the user's own Khmer for "Jesus asked Peter many
+ * times", typed as one run). It is cut
  * into the Bible's OWN words -- the vocabulary Bible Find keeps for its
  * suggestions -- read for this one search and let go after it.
  */
@@ -321,7 +322,8 @@ function countVersesHolding(database: SQLiteDatabaseType, word: string) {
 
 /**
  * A book NAMED in what they remember (2026-10-22, the user's own:
- * `ស្វែងរកក្នុងគម្ពីរលោកប្បត្តិណូអេលែងព្រាប` -- search in the book of Genesis,
+ * Khmer typed as one run for "search in the book of Genesis,
+ * Noah released the dove" --
  * misspelt, Noah released the dove -- whose search was "search", "in",
  * "book" and two scraps of the misspelt name, and found Isaiah 34:16's
  * "search in the book of the LORD"). A name is the book to search when a
@@ -706,8 +708,9 @@ async function findVerses(
             : isSpaced
               ? {}
               : {
-                    // Seen live 2026-10-16 in the Khmer Bible: "ឥន្ទ្រី"
-                    // (eagle) found Hebrews 5:14 by "ឥន្ទ្រីយ" (senses).
+                    // Seen live 2026-10-16 in the Khmer Bible: the word for
+                    // eagle found Hebrews 5:14 by the word for senses,
+                    // which starts with the same letters.
                     note:
                         'This script has no spaces, so a word was matched ' +
                         'as letters and may be part of a longer word: check ' +
@@ -1075,7 +1078,7 @@ async function openInLookup(bibleKey: string, key: string) {
 }
 
 // The reference as the Bible itself writes it -- its book's own name and its
-// own digits, `ម៉ាថាយ ៥:៤៤` -- for a Bible not in English (2026-10-17): the
+// own digits, Matthew 5:44 as a Khmer Bible prints it -- for a Bible not in English (2026-10-17): the
 // help window draws a found verse's button and lines with it for a person
 // who reads no English, and the model names the verse by it. `ref` stays
 // English, the one every tool reads. Null for an English Bible (the two
@@ -1093,9 +1096,9 @@ async function toBibleTitle(bibleKey: string, bibleItem: BibleItem) {
     }
 }
 
-// A passage's `Genesis 7-9` as the Bible writes it -- `លោកុប្បត្តិ ៧-៩` --
+// A passage's `Genesis 7-9` as the Bible writes it -- in its own book name and digits --
 // off its book's own name and its digits, with the chapter its key opens
-// (`keyTitle`, `លោកុប្បត្តិ ៨`), and each book a count is of by its name.
+// (`keyTitle`, Genesis 8 the same way), and each book a count is of by its name.
 async function withPassageTitles<
     T extends {
         passages?: { ref: string; key: string }[];

@@ -19,9 +19,11 @@
 //   assistant is asked directly in their language, as before: an answer in
 //   their language from the assistant itself beats none.
 //
-// No language is named here: a language is one with an `assistant.json`
-// (`chatLangHelpers.ts`), and English needs nothing. Pure, so every rule is a
-// test: the window hands in who translates and how a model is asked.
+// No language is named here: a language is one with an `assistant.json`, or
+// one only typed that an installed language's `typed.json` names (`chatLangHelpers.ts`,
+// 2026-11-03 -- a Spanish or a Thai question is worked in English the same
+// way), and English needs nothing. Pure, so every rule is a test: the window
+// hands in who translates and how a model is asked.
 import {
     DEFAULT_CHAT_LANG_CODE,
     detectTypedLanguage,
@@ -66,10 +68,12 @@ export function findTranslatedLanguage(
  * The language the guide's pages are read in for an ask answered in
  * `replyLang` as it stands (no translation behind the scenes), or null for
  * the English page: English, a script no language here claims, a language
- * with no data. A model asked to write Khmer from the English page copied
- * its sentences into the answer as they stood (2026-10-17, gemma4:cloud);
- * the page in Khmer has every button, message and step in the words the
- * Khmer app shows (`W-31@km`, and the English page where none is current).
+ * with no data, and a language only TYPED -- the manual is translated into
+ * the languages the app is shown in alone. A model asked to write Khmer from
+ * the English page copied its sentences into the answer as they stood
+ * (2026-10-17, gemma4:cloud); the page in Khmer has every button, message and
+ * step in the words the Khmer app shows (`W-31@km`, and the English page
+ * where none is current).
  */
 export function findPageLanguage(replyLang: string | null | undefined) {
     if (
@@ -79,7 +83,8 @@ export function findPageLanguage(replyLang: string | null | undefined) {
     ) {
         return null;
     }
-    return getAssistantLanguage(replyLang).code === replyLang
+    const language = getAssistantLanguage(replyLang);
+    return language.code === replyLang && language.isPackaged
         ? replyLang
         : null;
 }
@@ -179,6 +184,70 @@ export function toAnswerTranslationAsk(
         ) +
         ' Answer with the translation alone, nothing else.)'
     );
+}
+
+/**
+ * The options under an answer, one numbered line each, for the translator
+ * to put into their language on their own (2026-11-03): riding the answer as
+ * an `OPTIONS:` line, they came back with no such line under 6 of 6 answers
+ * on the free tier, and what was left were the model's English chips.
+ */
+export function toRepliesTranslationAsk(
+    replies: string[],
+    language: AssistantLanguageType,
+) {
+    const lines = replies.map((reply, index) => {
+        return `${index + 1}. ${reply.trim()}`;
+    });
+    return (
+        `${lines.join('\n')}\n\n(Translate each numbered line above from ` +
+        `English into ${language.name} (${language.nativeName}): short ` +
+        'replies an older church volunteer presses as buttons under an ' +
+        'answer. Keep each number and one line each, in the same order. Keep ' +
+        'every word in ** **, every key name (F5, Ctrl+B) and every Bible ' +
+        'reference as written. Answer with the numbered lines alone, nothing ' +
+        'else.)'
+    );
+}
+
+/**
+ * The options put into the language, in their order, or null for an answer
+ * that is not that: a number missing or empty, all of them the English
+ * handed back, or -- for a language with a script of its own -- a changed
+ * line with none of its letters. One line may stay as it was: _No_ is
+ * Spanish too, _F5_ is a key in every language.
+ */
+export function readRepliesTranslation(
+    answerText: string,
+    replies: string[],
+    language: AssistantLanguageType,
+): string[] | null {
+    const byNumber = new Map<number, string>();
+    for (const line of stripWrapping(answerText).split(/\r?\n/)) {
+        const match = /^\s*(\d{1,2})\s*[.)、．]\s*(.+?)\s*$/u.exec(line);
+        if (match !== null && !byNumber.has(Number(match[1]))) {
+            byNumber.set(Number(match[1]), stripWrapping(match[2]));
+        }
+    }
+    const translated = replies.map((_reply, index) => {
+        return byNumber.get(index + 1) ?? '';
+    });
+    const isUnchanged = (reply: string, index: number) => {
+        return reply === replies[index].trim();
+    };
+    const isUsable =
+        translated.every((reply, index) => {
+            return (
+                reply.length > 0 &&
+                (language.isLatinScript ||
+                    isUnchanged(reply, index) ||
+                    language.scriptPattern.test(reply))
+            );
+        }) &&
+        translated.some((reply, index) => {
+            return !isUnchanged(reply, index);
+        });
+    return isUsable ? translated : null;
 }
 
 // A label a model put in front of its answer, and quote marks or a code
@@ -288,11 +357,12 @@ export function genAskTranslation({
     isWordsEnglish?: boolean;
     findTranslator: () => Promise<TranslatorType | null>;
     // One round of the translator: the ask in, its raw answer out. Throws on
-    // a Stop, which ends the question.
+    // a Stop, which ends the question. `replies` runs beside `answer`, so the
+    // waiting line need not say it twice.
     translate: (
         ask: string,
         translator: TranslatorType,
-        kind: 'question' | 'answer',
+        kind: 'question' | 'answer' | 'replies',
     ) => Promise<string>;
 }) {
     let translatorAsk: Promise<TranslatorType | null> | null = null;
@@ -352,6 +422,30 @@ export function genAskTranslation({
                 'answer',
             );
             return readAnswerTranslation(answered, english, language);
+        },
+        /**
+         * The options under the answer in their language, asked of the
+         * translator on their own and beside the answer; null for none to
+         * show -- never the model's English in their place.
+         */
+        async translateReplies(
+            replies: string[],
+            language: AssistantLanguageType,
+            translator: TranslatorType,
+            translateLabel: (label: string) => string,
+        ): Promise<string[] | null> {
+            if (replies.length === 0) {
+                return null;
+            }
+            const english = replies.map((reply) => {
+                return toBoldLabelsShown(reply, translateLabel);
+            });
+            const answered = await translate(
+                toRepliesTranslationAsk(english, language),
+                translator,
+                'replies',
+            );
+            return readRepliesTranslation(answered, english, language);
         },
     };
 }

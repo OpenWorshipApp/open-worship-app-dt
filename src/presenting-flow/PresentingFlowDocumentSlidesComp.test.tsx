@@ -15,6 +15,16 @@ const fake = vi.hoisted(() => ({
     load: vi.fn(),
     payload: null as any,
     draggingStore: { current: null as any },
+    setSlides: vi.fn(),
+    loader: null as null | (() => unknown),
+    loaderDeps: [] as unknown[],
+    fileEvents: [] as {
+        events: string[];
+        callback: () => void;
+        filePath: string;
+    }[],
+    onScreenIds: new Set<number>(),
+    onScreenKeys: [] as string[],
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -25,20 +35,32 @@ vi.mock('../helper/appHooks', async () => {
             ref.current = value;
             return ref;
         },
-        useAppStateAsync: () => [fake.slides, vi.fn()],
+        // Records what it was asked to read; the value is the test's to set.
+        useAppStateAsync: (loader: () => unknown, deps: unknown[]) => {
+            fake.loader = loader;
+            fake.loaderDeps = deps;
+            return [fake.slides, fake.setSlides];
+        },
     };
 });
 vi.mock('../helper/dirSourceHelpers', () => ({
-    useFileSourceEvents: () => {},
+    useFileSourceEvents: (
+        events: string[],
+        callback: () => void,
+        _deps: unknown[],
+        filePath: string,
+    ) => {
+        fake.fileEvents.push({ events, callback, filePath });
+    },
 }));
-vi.mock('../helper/timeoutHelpers', () => ({
-    genTimeoutAttempt: () => (callback: () => void) => callback(),
-}));
+// `genTimeoutAttempt` is the real one (a leaf module): the refresh's debounce
+// is part of what is under test.
 vi.mock('../_screen/managers/screenDroppedHelpers', () => ({
     showDroppedDataOnScreens: fake.show,
 }));
 vi.mock('../app-document-list/appDocumentHelpers', () => ({
-    checkIsVarySlideOnScreen: () => false,
+    checkIsVarySlideOnScreen: (varySlide: any) =>
+        fake.onScreenIds.has(varySlide.id),
 }));
 vi.mock('../helper/dragHelpers', () => ({ handleDragStart: fake.drag }));
 vi.mock('../context-menu/appContextMenuHelpers', () => ({
@@ -61,7 +83,10 @@ vi.mock('./presentingFlowItemMenuHelpers', () => ({
 }));
 vi.mock('./presentingFlowOnScreenHelpers', () => ({
     refreshOnScreenAfterPresenting: fake.refresh,
-    useIsOnScreenChecking: () => false,
+    useIsOnScreenChecking: (check: () => boolean, depsKey: string) => {
+        fake.onScreenKeys.push(depsKey);
+        return check();
+    },
 }));
 vi.mock('./PresentingFlowRowComp', () => ({
     default: (props: any) => {
@@ -69,6 +94,7 @@ vi.mock('./PresentingFlowRowComp', () => ({
         return (
             <button
                 data-testid="slide-row"
+                className={props.extraClassName}
                 onClick={props.onClick}
                 onContextMenu={props.onContextMenu}
                 draggable
@@ -121,7 +147,13 @@ describe('presenting-flow document slides', () => {
         fake.rowProps = [];
         fake.payload = null;
         fake.draggingStore.current = null;
+        fake.loader = null;
+        fake.loaderDeps = [];
+        fake.fileEvents = [];
+        fake.onScreenIds = new Set();
+        fake.onScreenKeys = [];
         for (const fn of [
+            fake.setSlides,
             fake.show,
             fake.arm,
             fake.refresh,
@@ -139,6 +171,7 @@ describe('presenting-flow document slides', () => {
     afterEach(() => {
         act(() => root.unmount());
         container.remove();
+        vi.useRealTimers();
     });
 
     function render(extra: Record<string, unknown> = {}) {
@@ -266,5 +299,210 @@ describe('presenting-flow document slides', () => {
             { type: 'image' },
             { id: 8 },
         );
+    });
+
+    function genCcHost() {
+        return {
+            presentingFlow: {
+                addItemCcFromItemIndex: vi.fn().mockResolvedValue(undefined),
+                addItemCcFromDroppedData: vi.fn().mockResolvedValue(undefined),
+            },
+            index: 2,
+            presentingFlowItem: {
+                hasSlideCcItems: false,
+                hasCcItems: false,
+                getSlideCcItems: () => [],
+                getEffectiveSlideCcItems: () => [],
+            },
+        };
+    }
+
+    async function flushMicrotasks() {
+        for (let i = 0; i < 5; i++) {
+            await Promise.resolve();
+        }
+    }
+
+    function getRow() {
+        return container.querySelector<HTMLElement>(
+            '[data-testid="slide-row"]',
+        )!;
+    }
+
+    test('reads its slides from the file it is given, and again once re-pointed', async () => {
+        render();
+        expect(fake.loaderDeps).toEqual(['/song']);
+        fake.load.mockResolvedValue([slide]);
+        await expect(fake.loader!()).resolves.toEqual([slide]);
+        expect(fake.load).toHaveBeenLastCalledWith('/song');
+
+        render({ filePath: '/hymn' });
+        expect(fake.loaderDeps).toEqual(['/hymn']);
+        await fake.loader!();
+        expect(fake.load).toHaveBeenLastCalledWith('/hymn');
+    });
+
+    test('follows its document on update, with rapid updates collapsed into one read', async () => {
+        vi.useFakeTimers();
+        fake.slides = [slide];
+        render();
+        const subscription = fake.fileEvents.at(-1)!;
+        expect(subscription.events).toEqual(['update']);
+        expect(subscription.filePath).toBe('/song');
+
+        const edited = { ...slide, name: 'Opening song (edited)' };
+        fake.load.mockResolvedValue([edited]);
+        subscription.callback();
+        subscription.callback();
+        await vi.advanceTimersByTimeAsync(499);
+        expect(fake.load).not.toHaveBeenCalled();
+        await vi.advanceTimersByTimeAsync(1);
+        await flushMicrotasks();
+        expect(fake.load).toHaveBeenCalledExactlyOnceWith('/song');
+        expect(fake.setSlides).toHaveBeenCalledExactlyOnceWith([edited]);
+    });
+
+    test('two lists of the same document each refresh on one update', async () => {
+        vi.useFakeTimers();
+        fake.slides = [slide];
+        act(() =>
+            root.render(
+                <>
+                    <PresentingFlowDocumentSlidesComp
+                        filePath="/song"
+                        depth={2}
+                    />
+                    <PresentingFlowDocumentSlidesComp
+                        filePath="/song"
+                        depth={2}
+                    />
+                </>,
+            ),
+        );
+        const [first, second] = fake.fileEvents.slice(-2);
+        expect(first.callback).not.toBe(second.callback);
+        fake.load.mockResolvedValue([slide]);
+        // One `update` on the file reaches both lists; a shared timer would
+        // let the second cancel the first.
+        first.callback();
+        second.callback();
+        await vi.advanceTimersByTimeAsync(500);
+        await flushMicrotasks();
+        expect(fake.load).toHaveBeenCalledTimes(2);
+        expect(fake.setSlides).toHaveBeenCalledTimes(2);
+    });
+
+    test('re-pointed mid-read, it reads the new file and never applies the old one', async () => {
+        vi.useFakeTimers();
+        fake.slides = [slide];
+        render();
+        const subscription = fake.fileEvents.at(-1)!;
+        let resolveFirstRead: (value: unknown) => void = () => {};
+        const staleSlides = [{ ...slide, name: 'Previous song' }];
+        const newSlides = [{ ...slide, id: 9, filePath: '/hymn' }];
+        fake.load
+            .mockImplementationOnce(() => {
+                return new Promise((resolve) => {
+                    resolveFirstRead = resolve;
+                });
+            })
+            .mockResolvedValueOnce(newSlides);
+
+        subscription.callback();
+        await vi.advanceTimersByTimeAsync(500);
+        expect(fake.load).toHaveBeenNthCalledWith(1, '/song');
+
+        render({ filePath: '/hymn' });
+        resolveFirstRead(staleSlides);
+        await flushMicrotasks();
+        expect(fake.setSlides).not.toHaveBeenCalled();
+
+        await vi.advanceTimersByTimeAsync(500);
+        await flushMicrotasks();
+        expect(fake.load).toHaveBeenNthCalledWith(2, '/hymn');
+        expect(fake.setSlides).toHaveBeenCalledExactlyOnceWith(newSlides);
+    });
+
+    test('a slide row lights while that very slide is on a screen', () => {
+        fake.onScreenIds = new Set([7]);
+        fake.slides = [slide, { ...slide, id: 8, name: 'Second verse' }];
+        render();
+        expect(fake.rowProps.map((props) => props.isOnScreen)).toEqual([
+            true,
+            false,
+        ]);
+        expect(fake.onScreenKeys).toEqual(['/song-7', '/song-8']);
+    });
+
+    test('a slide row is a CC drop target only under a presenting flow entry', () => {
+        const reachedDocument = vi.fn();
+        document.addEventListener('dragover', reachedDocument);
+        try {
+            fake.slides = [slide];
+            render();
+            const looseOver = new Event('dragover', {
+                bubbles: true,
+                cancelable: true,
+            });
+            act(() => getRow().dispatchEvent(looseOver));
+            expect(looseOver.defaultPrevented).toBe(false);
+            expect(reachedDocument).toHaveBeenCalledTimes(1);
+            expect(getRow().className).toBe('');
+
+            render({ slideCcHost: genCcHost() });
+            const over = new Event('dragover', {
+                bubbles: true,
+                cancelable: true,
+            });
+            act(() => getRow().dispatchEvent(over));
+            expect(over.defaultPrevented).toBe(true);
+            // Stopped here: neither the document row nor the card above it
+            // takes it as their own drop.
+            expect(reachedDocument).toHaveBeenCalledTimes(1);
+            expect(getRow().className).toBe(
+                'app-presenting-flow-row-dragging-over-cc',
+            );
+
+            act(() =>
+                getRow().dispatchEvent(
+                    new Event('dragleave', { bubbles: true }),
+                ),
+            );
+            expect(getRow().className).toBe('');
+        } finally {
+            document.removeEventListener('dragover', reachedDocument);
+        }
+    });
+
+    test('a drop the slide row cannot hold is left for the card above it', async () => {
+        fake.slides = [slide];
+        fake.draggingStore.current = { filePath: '/other', index: 5 };
+        render();
+        const looseDrop = new Event('drop', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => {
+            getRow().dispatchEvent(looseDrop);
+        });
+        expect(looseDrop.defaultPrevented).toBe(false);
+
+        fake.draggingStore.current = null;
+        const ccHost = genCcHost();
+        render({ slideCcHost: ccHost });
+        for (const payload of [null, 'unsupported']) {
+            fake.payload = payload;
+            const drop = new Event('drop', { bubbles: true, cancelable: true });
+            await act(async () => {
+                getRow().dispatchEvent(drop);
+            });
+            expect(drop.defaultPrevented).toBe(false);
+        }
+        expect(
+            ccHost.presentingFlow.addItemCcFromDroppedData,
+        ).not.toHaveBeenCalled();
+        expect(
+            ccHost.presentingFlow.addItemCcFromItemIndex,
+        ).not.toHaveBeenCalled();
     });
 });

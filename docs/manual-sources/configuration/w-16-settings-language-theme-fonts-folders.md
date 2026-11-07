@@ -2,10 +2,10 @@
 id: W-16
 title: "Settings: language, theme, fonts, folders"
 section: "Configuration"
-verify: [ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08, ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83, ST-84, ST-85, ST-86, CB-163, LT-02, LT-03, LT-04]
-screenshots: 4
+verify: [ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08, ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83, ST-84, ST-85, ST-86, ST-87, ST-92, CB-163, LT-02, LT-03, LT-04]
+screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-02"
+workflowsVersion: "2026-11-06"
 ---
 # W-16 — Settings: language, theme, fonts, folders
 
@@ -16,16 +16,8 @@ workflowsVersion: "2026-11-02"
    **[en:tran:App Assistant]** above
    **[en:tran:Apply Settings]** at the bottom-left opens the help window, to ask about
    any setting. 📸
-2. **[en:tran:General]** tab:
-   - **[en:tran:Language]:** click **English**, **ខ្មែរ** or **Français**. Each language is listed under its
-     OWN name, whatever locale you are currently in — so if a mis-click leaves you in
-     a script you cannot read, the way back is still legible. (Hover a button and its
-     `title` gives the English name.) Some
-     labels change straight away, but the switch is only complete once you click
-     **[en:tran:Apply Settings]** at the bottom-left — that reloads every open
-     window. Unsaved edits in the Slide Editor are kept. The language belongs to this
-     computer, not to the data folder: switch to another data folder and the app stays
-     in the language you chose.
+2. **[en:tran:General]** tab (the language is chosen on the **[en:tran:Languages]**
+   tab, step 4a):
    - **[en:tran:Theme]:** system / light / dark.
    - **[en:tran:Font Family]:** the font the app's own windows are drawn in — not the text on the audience screen. A font marked `(Missing)` is
      configured but not installed on this computer. When the chosen font comes in more
@@ -33,6 +25,15 @@ workflowsVersion: "2026-11-02"
      **[en:tran:Default]** keeps the font's own weight.
    - **Reset button** (`Clear All Settings`):
      **this erases configuration; use with care.** It asks for confirmation first.
+   - **Help → Factory Reset** in the menu bar is the way back when a setting has
+     broken the app so badly that Settings cannot be opened at all: it works with
+     every page blank. It asks first, naming the data folder in use, then closes
+     the app and opens it again with every setting as on a new install — the
+     language, the chosen data folder, window positions, screens, AI keys and
+     sign-ins included — and it cannot be undone. Documents, songs, Bibles and
+     installed languages are not deleted: the app opens on
+     **[en:tran:No Parent Directory Selected]**, and choosing the same folder
+     again under **[en:tran:Path Settings]** brings them back.
    - **[en:tran:Show Tips of the Day automatically]:** controls whether each app window shows
      its own automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
@@ -44,7 +45,8 @@ workflowsVersion: "2026-11-02"
      found again. Until one is chosen, every window but Settings shows only
      **[en:tran:No Parent Directory Selected]**, **[en:tran:Go to Settings]** and
      **[en:tran:App Assistant]**, and Settings opens on this tab by itself, with only
-     **[en:tran:General]** (language and theme) and **[en:tran:AI Providers]** beside it.
+     **[en:tran:General]** (the theme), **[en:tran:Languages]** (the language) and
+     **[en:tran:AI Providers]** beside it.
      Under **[en:tran:Parent Directory:]**, **[en:tran:Suggested]** offers
      `.owa\open-worship-data` in your user folder: **[en:tran:Use This Folder]** makes
      it if it is not there and uses it. **[en:tran:Found Data Folders]** lists the data
@@ -100,12 +102,28 @@ workflowsVersion: "2026-11-02"
    **[en:tran:Delete Permanently]** box follows, and that cannot be undone.)
 4. **[en:tran:AI Providers]** tab: the AI master switch, the provider keys and the
    custom servers — see **W-42**.
+4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
+    this computer, turned on or off, and the ones to install (those two — see **W-55**).
+   - **[en:tran:Language]** (at the top): click **English**, **ខ្មែរ**, **Français** or
+     another language you installed — the list holds the languages turned on under
+     **[en:tran:Installed Languages]** just below it. Each language is listed under its
+     OWN name, whatever locale you are currently in — so if a mis-click leaves you in
+     a script you cannot read, the way back is still legible. (Hover a button and its
+     `title` gives the English name.) The switch is applied at once: every open
+     window reloads in the language you clicked, with nothing more to press —
+     **[en:tran:Apply Settings]** is not needed for it. Clicking the language already
+     in use does nothing. Unsaved edits in the Slide Editor are kept. The language belongs to this
+     computer, not to the data folder: switch to another data folder and the app stays
+     in the language you chose. A language written right to left (Hebrew) keeps the
+     windows laid out as they are in English: each label reads right to left, and a
+     Bible, a file name or a word in English keeps its own direction. 📸
 5. Click **[en:tran:Apply Settings]** (bottom-left) to apply — the app windows reload.
+   A change on the **[en:tran:Languages]** tab applies itself (step 4a, W-55).
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ST-01` · `ST-02` · `ST-03` · `ST-04` · `ST-05` · `ST-06` · `ST-07` · `ST-08` · `ST-09` · `ST-20` · `ST-22` · `ST-52` · `ST-54` · `ST-55` · `ST-58` · `ST-83` · `ST-84` · `ST-85` · `ST-86` · `CB-163` · `LT-02` · `LT-03` · `LT-04`
+`ST-01` · `ST-02` · `ST-03` · `ST-04` · `ST-05` · `ST-06` · `ST-07` · `ST-08` · `ST-09` · `ST-20` · `ST-22` · `ST-52` · `ST-54` · `ST-55` · `ST-58` · `ST-83` · `ST-84` · `ST-85` · `ST-86` · `ST-87` · `ST-92` · `CB-163` · `LT-02` · `LT-03` · `LT-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-02).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-06).
 :::

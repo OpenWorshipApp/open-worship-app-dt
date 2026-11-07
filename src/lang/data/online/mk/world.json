@@ -1,0 +1,9 @@
+{
+    "cyrillicLetterLocales": [
+        {
+            "letters": "ѓќѕ",
+            "locales": ["mk-MK", "sr-Cyrl-RS"],
+            "order": 2
+        }
+    ]
+}
