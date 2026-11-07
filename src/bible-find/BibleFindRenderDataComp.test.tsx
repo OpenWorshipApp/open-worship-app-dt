@@ -66,7 +66,7 @@ vi.mock('../helper/errorHelpers', () => ({ handleError: vi.fn() }));
 vi.mock('../helper/loggerHelpers', () => ({ appError: vi.fn() }));
 vi.mock('../bible-list/BibleItem', () => ({ default: {} }));
 vi.mock('../bible-list/bibleItemHelpers', () => ({
-    genBibleItemCopyingContextMenu: vi.fn(),
+    genBibleItemCopyContextMenuItem: vi.fn(),
 }));
 vi.mock('../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: vi.fn(),

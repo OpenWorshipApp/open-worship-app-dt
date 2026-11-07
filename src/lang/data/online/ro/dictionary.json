@@ -4093,5 +4093,7 @@
     "Undo this change": "Anulează această modificare",
     "“{name}” is back as it was before that change.": "„{name}” este din nou așa cum era înainte de acea modificare.",
     "The assistant changed this song.": "Asistentul a schimbat această cântare.",
-    "Load the change": "Încarcă modificarea"
+    "Load the change": "Încarcă modificarea",
+    "Create Lyric": "Creare versuri",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Fiecare verset din Biblie devine o strofă a cântecului, cu câte un rând pentru fiecare versiune a Bibliei selectată"
 }

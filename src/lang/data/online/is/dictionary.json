@@ -4093,5 +4093,7 @@
     "Undo this change": "Afturkalla þessa breytingu",
     "“{name}” is back as it was before that change.": "„{name}“ er aftur eins og það var fyrir þá breytingu.",
     "The assistant changed this song.": "Aðstoðarmaðurinn breytti þessu lagi.",
-    "Load the change": "Hlaða breytingunni"
+    "Load the change": "Hlaða breytingunni",
+    "Create Lyric": "Búa til söngtexta",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Hvert biblíuvers verður að erindi í söngtextanum, með einni línu fyrir hverja valda biblíuþýðingu"
 }

@@ -4093,5 +4093,7 @@
     "Undo this change": "Bwezerani kusinthaku",
     "“{name}” is back as it was before that change.": "“{name}” yabwerera momwe inalili kusinthako kusanachitike.",
     "The assistant changed this song.": "Wothandizira wasintha nyimbo iyi.",
-    "Load the change": "Kwezani kusinthako"
+    "Load the change": "Kwezani kusinthako",
+    "Create Lyric": "Pangani Nyimbo",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Vesi iliyonse ya Baibulo imakhala vesi la nyimbo, ndi mzere umodzi pa mtundu uliwonse wa Baibulo umene mwasankha"
 }

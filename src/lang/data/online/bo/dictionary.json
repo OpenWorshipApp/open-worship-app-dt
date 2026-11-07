@@ -4093,5 +4093,7 @@
     "Undo this change": "འགྱུར་བ་འདི་ཕྱིར་ལྡོག",
     "“{name}” is back as it was before that change.": "“{name}” འགྱུར་བ་དེའི་སྔོན་གྱི་ཇི་བཞིན་དུ་ཕྱིར་སླེབས་སོང་།",
     "The assistant changed this song.": "རོགས་པས་གཞས་འདི་བསྒྱུར་སོང་།",
-    "Load the change": "འགྱུར་བ་ནང་འཇུག"
+    "Load the change": "འགྱུར་བ་ནང་འཇུག",
+    "Create Lyric": "གླུ་ཚིག་བཟོ",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "དམ་པའི་གསུང་རབ་ཀྱི་ཚིགས་བཅད་རེ་རེ་གླུ་ཚིག་གི་ཚིགས་བཅད་རེ་རུ་འགྱུར། འདེམས་ཟིན་པའི་དམ་པའི་གསུང་རབ་པར་གཞི་རེ་རེར་ཐིག་ཕྲེང་རེ་ཡོད"
 }

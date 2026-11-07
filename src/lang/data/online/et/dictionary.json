@@ -4093,5 +4093,7 @@
     "Undo this change": "Võta see muudatus tagasi",
     "“{name}” is back as it was before that change.": "„{name}“ on jälle selline, nagu see oli enne seda muudatust.",
     "The assistant changed this song.": "Assistent muutis seda laulu.",
-    "Load the change": "Laadi muudatus"
+    "Load the change": "Laadi muudatus",
+    "Create Lyric": "Loo laul",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Iga piiblisalm muutub laulu salmiks, iga valitud piiblitõlke jaoks üks rida"
 }

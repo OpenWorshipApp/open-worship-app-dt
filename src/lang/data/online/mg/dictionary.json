@@ -4093,5 +4093,7 @@
     "Undo this change": "Foano ity fiovana ity",
     "“{name}” is back as it was before that change.": "Niverina tahaka ny teo alohan'io fiovana io ny “{name}”.",
     "The assistant changed this song.": "Novain'ny mpanampy ity hira ity.",
-    "Load the change": "Ampidiro ny fiovana"
+    "Load the change": "Ampidiro ny fiovana",
+    "Create Lyric": "Mamorona tononkira",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ny andininy tsirairay ao amin'ny Baiboly dia lasa andininy amin'ny tononkira, misy andalana iray ho an'ny dikan-teny Baiboly voafidy tsirairay"
 }

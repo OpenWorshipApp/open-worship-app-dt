@@ -876,6 +876,10 @@
             "en": "How do I generate Bible slides with multiple versions and an upcoming verse preview?",
             "text": "Comment générer des diapositives bibliques avec plusieurs versions et un aperçu du verset suivant ?"
         },
+        "presenter.bible.create-bible-lyric": {
+            "en": "How do I make a song from a Bible passage, one verse a part?",
+            "text": "Comment créer un chant à partir d'un passage biblique, un verset par couplet ?"
+        },
         "presenter.bible.projector-more-chapters": {
             "en": "How do I put the rest of a long passage on the screen?",
             "text": "Comment mettre à l'écran la suite d'un long passage ?"

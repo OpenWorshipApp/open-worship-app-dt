@@ -4093,5 +4093,7 @@
     "Undo this change": "Toe faaleaoga lenei suiga",
     "“{name}” is back as it was before that change.": "Ua toe foi le “{name}” e pei ona sa i ai a o lei faia lena suiga.",
     "The assistant changed this song.": "Ua suia e le fesoasoani lenei pese.",
-    "Load the change": "Uta le suiga"
+    "Load the change": "Uta le suiga",
+    "Create Lyric": "Fausia se Pese",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "O fuaiupu taʻitasi o le Tusi Paia e avea ma fuaiupu o le pese, ma le laina e tasi mo lomiga taʻitasi o le Tusi Paia ua filifilia"
 }

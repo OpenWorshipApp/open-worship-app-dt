@@ -4093,5 +4093,7 @@
     "Undo this change": "Отмени тази промяна",
     "“{name}” is back as it was before that change.": "„{name}“ отново е такава, каквато беше преди тази промяна.",
     "The assistant changed this song.": "Асистентът промени тази песен.",
-    "Load the change": "Зареди промяната"
+    "Load the change": "Зареди промяната",
+    "Create Lyric": "Създай текст на песен",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Всеки библейски стих става куплет на песента, с по един ред за всяка избрана версия на Библията"
 }

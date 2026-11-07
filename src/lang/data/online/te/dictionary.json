@@ -4093,5 +4093,7 @@
     "Undo this change": "ఈ మార్పును రద్దు చేయండి",
     "“{name}” is back as it was before that change.": "“{name}” ఆ మార్పుకు ముందు ఉన్నట్లే తిరిగి వచ్చింది.",
     "The assistant changed this song.": "సహాయకుడు ఈ పాటను మార్చారు.",
-    "Load the change": "మార్పును లోడ్ చేయండి"
+    "Load the change": "మార్పును లోడ్ చేయండి",
+    "Create Lyric": "పాట సాహిత్యం సృష్టించు",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "బైబిల్‌లోని ప్రతి వచనం పాటలో ఒక చరణం అవుతుంది, ఎంచుకున్న ప్రతి బైబిల్ అనువాదానికి ఒక పంక్తి ఉంటుంది"
 }

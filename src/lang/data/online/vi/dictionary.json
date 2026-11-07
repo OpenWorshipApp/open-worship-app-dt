@@ -4093,5 +4093,7 @@
     "Undo this change": "Hoàn tác thay đổi này",
     "“{name}” is back as it was before that change.": "“{name}” đã trở lại như trước thay đổi đó.",
     "The assistant changed this song.": "Trợ lý đã thay đổi bài hát này.",
-    "Load the change": "Tải thay đổi"
+    "Load the change": "Tải thay đổi",
+    "Create Lyric": "Tạo lời bài hát",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Mỗi câu Kinh Thánh trở thành một đoạn của bài hát, với một dòng cho mỗi bản Kinh Thánh đã chọn"
 }

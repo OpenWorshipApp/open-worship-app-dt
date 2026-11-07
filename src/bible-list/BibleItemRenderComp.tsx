@@ -47,6 +47,7 @@ import AppSuspenseComp from '../others/AppSuspenseComp';
 import { genOpenInChatbotContextMenu } from '../helper/ai/bibleItemChatbotMenuHelpers';
 
 const BibleSlidesPopupComp = lazy(() => import('./BibleSlidesPopupComp'));
+const BibleLyricPopupComp = lazy(() => import('./BibleLyricPopupComp'));
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -110,6 +111,8 @@ export default function BibleItemRenderComp({
     const { bibleKey } = bibleItem;
     const [generatingBibleItem, setGeneratingBibleItem] =
         useState<BibleItem | null>(null);
+    const [creatingLyricBibleItem, setCreatingLyricBibleItem] =
+        useState<BibleItem | null>(null);
     const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useBibleItemsViewControllerContext();
     const showBibleLookupPopup = useToggleBibleLookupPopupContext();
@@ -151,6 +154,13 @@ export default function BibleItemRenderComp({
                     menuElement: tran('Generate Slides'),
                     onSelect: () => {
                         setGeneratingBibleItem(bibleItemRef.current.clone());
+                    },
+                });
+                menuItems.push({
+                    childBefore: genContextMenuItemIcon('music-note-list'),
+                    menuElement: tran('Create Lyric'),
+                    onSelect: () => {
+                        setCreatingLyricBibleItem(bibleItemRef.current.clone());
                     },
                 });
             }
@@ -359,6 +369,14 @@ export default function BibleItemRenderComp({
                     <BibleSlidesPopupComp
                         bibleItem={generatingBibleItem}
                         onClose={() => setGeneratingBibleItem(null)}
+                    />
+                </AppSuspenseComp>
+            )}
+            {creatingLyricBibleItem !== null && (
+                <AppSuspenseComp>
+                    <BibleLyricPopupComp
+                        bibleItem={creatingLyricBibleItem}
+                        onClose={() => setCreatingLyricBibleItem(null)}
                     />
                 </AppSuspenseComp>
             )}

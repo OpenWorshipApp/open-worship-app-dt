@@ -1,10 +1,7 @@
 import AppDocument from '../app-document-list/AppDocument';
 import Slide from '../app-document-list/Slide';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
-import {
-    getBibleInfoIsRtl,
-    getVerses,
-} from '../helper/bible-helpers/bibleInfoHelpers';
+import { getBibleInfoIsRtl } from '../helper/bible-helpers/bibleInfoHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import DirSource from '../helper/DirSource';
@@ -27,11 +24,8 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import type BibleItem from './BibleItem';
 import { escapeHtmlText } from '../helper/sanitizeHelpers';
 import { type AppColorType } from '../others/color/colorValueHelpers';
-import {
-    checkIsCrossChapterTarget,
-    toSingleChapterTarget,
-    toTargetChapterSliceList,
-} from '../helper/bible-helpers/bibleTargetHelpers';
+import { toSingleChapterTarget } from '../helper/bible-helpers/bibleTargetHelpers';
+import { readBiblePassageVerses } from './biblePassageVerseHelpers';
 
 const SLIDE_BACKGROUND = '#101b29db' as AppColorType;
 const READING_COLOR = '#f4f3ef' as AppColorType;
@@ -258,65 +252,17 @@ export async function generateBibleItemSlides(
             throw new Error('Documents directory is unavailable');
         }
         const dirPath = dirSource.dirPath;
-        const { bookKey, verseStart, verseEnd } = bibleItem.target;
-        if (
-            bibleItem.isError ||
-            !Number.isInteger(verseStart) ||
-            !Number.isInteger(verseEnd) ||
-            // `John 1:20-2:3` ends on a smaller verse in a later chapter.
-            (!checkIsCrossChapterTarget(bibleItem.target) &&
-                verseStart > verseEnd)
-        ) {
-            throw new Error('Bible passage is unavailable');
+        const { bookKey } = bibleItem.target;
+        // Every verse a slide is made of, in order, across its chapters --
+        // checked in every version before anything is created.
+        const slideVerseList = await readBiblePassageVerses(
+            bibleItem,
+            bibleKeys,
+            tran('Generate Slides'),
+        );
+        if (slideVerseList === null) {
+            return null;
         }
-        // One slice per chapter the passage covers; one, itself, when it
-        // stays in its chapter.
-        const sliceList = toTargetChapterSliceList(bibleItem.target);
-        // A chapter the passage runs on through ends where the first version
-        // read -- the passage's own -- ends it, as the Reader counts it.
-        const sliceVerseEndList = sliceList.map((slice) => slice.verseEnd);
-        // Check the whole range before creating anything: never save a partial
-        // passage or the Bible renderer's "??" missing-verse placeholder. Each
-        // chapter is read once per version.
-        for (const bibleKey of bibleKeys) {
-            for (const [sliceIndex, slice] of sliceList.entries()) {
-                const verses = await getVerses(
-                    bibleKey,
-                    bookKey,
-                    slice.chapter,
-                );
-                const sliceVerseEnd = (sliceVerseEndList[sliceIndex] ??=
-                    Object.keys(verses ?? {}).length);
-                let isAvailable = !!verses && slice.verseStart <= sliceVerseEnd;
-                for (
-                    let verse = slice.verseStart;
-                    isAvailable && verse <= sliceVerseEnd;
-                    verse++
-                ) {
-                    isAvailable = !!verses?.[String(verse)]?.trim();
-                }
-                if (!isAvailable) {
-                    showSimpleToast(
-                        tran('Generate Slides'),
-                        `${tran('Bible passage is unavailable in')}: ${bibleKey}`,
-                    );
-                    return null;
-                }
-            }
-        }
-        // Every verse a slide is made of, in order, across its chapters.
-        const slideVerseList = sliceList.flatMap((slice, sliceIndex) => {
-            const verseList: { chapter: number; verse: number }[] = [];
-            const sliceVerseEnd = sliceVerseEndList[sliceIndex] ?? 0;
-            for (
-                let verse = slice.verseStart;
-                verse <= sliceVerseEnd;
-                verse++
-            ) {
-                verseList.push({ chapter: slice.chapter, verse });
-            }
-            return verseList;
-        });
         const kjvItem = bibleItem.clone();
         kjvItem.bibleKey = BIBLE_KJV_KEY;
         const title = await kjvItem.toTitle();
@@ -361,15 +307,18 @@ export async function generateBibleItemSlides(
             }),
         );
         const fontFamilies: string[] = [];
+        // Each version's own `(KEY) Book c:v`: the title slide's lines, and
+        // the file's name.
+        const keyTitleList: string[] = [];
         for (const [index, bibleKey] of bibleKeys.entries()) {
             const titleBibleItem = bibleItem.clone();
             titleBibleItem.bibleKey = bibleKey;
+            const keyTitle = await titleBibleItem.toTitleWithBibleKey();
+            keyTitleList.push(keyTitle);
             const titleItem = CanvasItemText.genDefaultItem();
             titleItem.applyProps({
                 ...genBox(index),
-                text: escapeHtmlText(
-                    await titleBibleItem.toTitleWithBibleKey(),
-                ),
+                text: escapeHtmlText(keyTitle),
                 fontFamily: (await getBibleFontFamily(bibleKey)) || 'Arial',
                 fontSize: readingFontSize * (112 / 88),
                 textDirection: textDirections[index],
@@ -484,10 +433,12 @@ export async function generateBibleItemSlides(
         const fileSource = await unlocking(
             'generate-bible-slides',
             async () => {
+                // Named as Create Lyric names its song (bibleLyricHelpers):
+                // every version's reference, `(KJV) John 3 16, (NIV) ...`.
                 const name = await getAvailableFileName(
                     dirPath,
                     toPortableFileName(
-                        `${title} ${bibleKeys.join('-')}`,
+                        keyTitleList.join(', '),
                         tran('Bible Item'),
                     ),
                     '.ows',

@@ -53,7 +53,10 @@ vi.mock('./readBibleHelpers', () => ({
     removeDraggingClass: mocks.removeDraggingClass,
 }));
 vi.mock('../bible-list/bibleItemHelpers', () => ({
-    genBibleItemCopyingContextMenu: () => [{ menuElement: 'Copy passage' }],
+    genBibleItemCopyContextMenuItem: (bibleItem: unknown) => ({
+        menuElement: 'Copy',
+        bibleItem,
+    }),
 }));
 vi.mock('../scrolling/ScrollingHandlerComp', () => ({
     default: ({ onAutoScrollFrame, movedCheck }: any) => {
@@ -366,9 +369,10 @@ describe('Bible view', () => {
         expect(mocks.handleError).not.toHaveBeenCalled();
     });
 
-    // Asked for by the user: one `Copy` in place of every way to copy, that
-    // opens the copy button's menu where it was chosen.
-    test('Copy opens the copying menu where it was chosen', async () => {
+    // Asked for by the user: one `Copy` in place of every way to copy, the
+    // shared item every passage menu carries (`bibleItemHelpers.test.ts`
+    // holds what it opens).
+    test('Copy is the shared copy item of the passage', async () => {
         await act(async () =>
             root.render(<BibleViewComp bibleItem={bibleItem} />),
         );
@@ -379,16 +383,7 @@ describe('Bible view', () => {
         );
         const [, items] = mocks.showMenu.mock.calls.at(-1)!;
         const copy = items.find((item: any) => item.menuElement === 'Copy');
-        mocks.showMenu.mockClear();
-        await act(async () =>
-            copy.onSelect(
-                new MouseEvent('click', { clientX: 40, clientY: 70 }),
-            ),
-        );
-        expect(mocks.showMenu).toHaveBeenCalledOnce();
-        const [openedAt, copyItems] = mocks.showMenu.mock.calls[0];
-        expect([openedAt.clientX, openedAt.clientY]).toEqual([40, 70]);
-        expect(copyItems).toEqual([{ menuElement: 'Copy passage' }]);
+        expect(copy.bibleItem).toBe(bibleItem);
     });
 
     test('offers the no-passage menu while editing book selection', async () => {

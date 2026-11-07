@@ -2,8 +2,8 @@
 id: W-06
 title: "Look up and present a Bible verse"
 section: "Presenting content"
-verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101]
-screenshots: 5
+verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102]
+screenshots: 6
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-07"
 ---
@@ -86,17 +86,33 @@ workflowsVersion: "2026-11-07"
    when needed to fit. The upcoming verse appears
    at the bottom right in muted text at 85% of the current verse's font size.
    The last slide has no upcoming verse. 📸
-10. Find the file in **[en:tran:Documents]**. Its name uses the English reference and all
-    selected keys, for example `Genesis 1 3-5 KJV-ពគប.ows` (the colon becomes a
+10. Find the file in **[en:tran:Documents]**. Its name is every selected version's own
+    reference, as a song made with **[en:tran:Create Lyric]** is named, for example
+    `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28.ows` (the colon becomes a
     space for the filename). Generating again adds a numbered suffix to preserve
     the earlier file. **[en:tran:Cancel]** closes the panel without creating a
     file. If a selected version lacks a verse, generation reports it without
     saving a partial passage.
+11. To have the passage as a song instead, open the same **⋮** menu and choose
+    **[en:tran:Create Lyric]**, right under **[en:tran:Generate Slides]**. The
+    floating panel picks versions the same way: the passage's own version stays
+    ticked, and every other version you tick is added. Click
+    **[en:tran:Create Lyric]** in the panel. The new song appears in
+    **[en:tran:Documents]**, already selected and saved. Its title is the
+    passage in its own version, for example `(ពគប) សុភាសិត ១៧:២២-២៨`, and its
+    subtitle the other versions' on one line,
+    `(NIV) Proverbs 17:22-28, (KJV) Proverbs 17:22-28` — both on its Info
+    slide; the file is named after them all. Each Bible verse is a
+    part named after its number (`Verse 22`, `Verse 23` …), and in it one line
+    per version, the verse number first — `22: A cheerful heart is good
+    medicine …` — in that version's own digits. Edit it like any other song
+    (W-05); with **[en:tran:Atom Mode]** on, each version's line is a slide of
+    its own. 📸
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101`
+`NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101` · `CM-102`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-07).
 :::

@@ -4093,5 +4093,7 @@
     "Undo this change": "Toe fakafoki ʻa e liliu ko ʻeni",
     "“{name}” is back as it was before that change.": "Kuo foki ʻa e “{name}” ki hono tuʻunga ki muʻa he liliu ko iá.",
     "The assistant changed this song.": "Kuo liliu ʻe he tokoni ʻa e hiva ko ʻeni.",
-    "Load the change": "Hiki mai ʻa e liliu"
+    "Load the change": "Hiki mai ʻa e liliu",
+    "Create Lyric": "Faʻu ha Hiva",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ʻE hoko ʻa e veesi takitaha ʻo e Tohitapú ko ha veesi ʻo e hiva, mo ha laine ʻe taha ki he liliu takitaha ʻo e Tohitapú kuo fili"
 }

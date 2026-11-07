@@ -1163,6 +1163,24 @@
                     }
                 },
                 {
+                    "id": "create-bible-lyric",
+                    "text": "How do I make a song from a Bible passage, one verse a part?",
+                    "kind": "howto",
+                    "keywords": [
+                        "create lyric",
+                        "lyric from bible",
+                        "song from bible verses",
+                        "bible passage as a song",
+                        "scripture song"
+                    ],
+                    "resources": {
+                        "recipe": "W-06",
+                        "passage": "To have the passage as a song instead",
+                        "find": "Create Lyric",
+                        "guide": true
+                    }
+                },
+                {
                     "id": "projector-more-chapters",
                     "text": "How do I put the rest of a long passage on the screen?",
                     "kind": "howto",

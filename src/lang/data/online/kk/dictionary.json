@@ -4093,5 +4093,7 @@
     "Undo this change": "Бұл өзгерісті болдырмау",
     "“{name}” is back as it was before that change.": "«{name}» сол өзгеріске дейінгі күйіне қайтты.",
     "The assistant changed this song.": "Көмекші бұл әнді өзгертті.",
-    "Load the change": "Өзгерісті жүктеу"
+    "Load the change": "Өзгерісті жүктеу",
+    "Create Lyric": "Ән мәтінін жасау",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Киелі кітаптың әр аяты ән мәтінінің бір шумағына айналады, таңдалған әр Киелі кітап нұсқасы үшін бір жолдан"
 }

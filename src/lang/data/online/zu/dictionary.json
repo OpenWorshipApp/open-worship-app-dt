@@ -4093,5 +4093,7 @@
     "Undo this change": "Hlehlisa lolu shintsho",
     "“{name}” is back as it was before that change.": "I-“{name}” ibuyele njengoba ibinjalo ngaphambi kwalolo shintsho.",
     "The assistant changed this song.": "Umsizi uyishintshile le ngoma.",
-    "Load the change": "Layisha ushintsho"
+    "Load the change": "Layisha ushintsho",
+    "Create Lyric": "Dala Iculo",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ivesi ngalinye leBhayibheli liba yivesi leculo, elinomugqa owodwa enguqulweni ngayinye yeBhayibheli ekhethiwe"
 }

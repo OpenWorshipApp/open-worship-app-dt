@@ -4093,5 +4093,7 @@
     "Undo this change": "I-undo kining kausaban",
     "“{name}” is back as it was before that change.": "Ang “{name}” nibalik na sama kaniadto sa wala pa kadtong kausaban.",
     "The assistant changed this song.": "Giusab sa assistant kining kantaha.",
-    "Load the change": "I-load ang kausaban"
+    "Load the change": "I-load ang kausaban",
+    "Create Lyric": "Himoa ang Liriko",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ang matag bersikulo sa Bibliya mahimong usa ka berso sa liriko, nga may usa ka linya alang sa matag pinili nga bersiyon sa Bibliya"
 }

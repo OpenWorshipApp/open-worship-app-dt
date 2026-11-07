@@ -4093,5 +4093,7 @@
     "Undo this change": "I-undo ang pagbabagong ito",
     "“{name}” is back as it was before that change.": "Bumalik ang “{name}” sa dati bago ang pagbabagong iyon.",
     "The assistant changed this song.": "Binago ng assistant ang kantang ito.",
-    "Load the change": "I-load ang pagbabago"
+    "Load the change": "I-load ang pagbabago",
+    "Create Lyric": "Gumawa ng Liriko",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Bawat talata ng Bibliya ay magiging isang taludtod ng liriko, na may isang linya para sa bawat napiling bersiyon ng Bibliya"
 }

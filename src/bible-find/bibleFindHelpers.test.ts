@@ -24,7 +24,7 @@ const {
         __bibleItem: true,
         ...json,
     })),
-    genCopyingMenuMock: vi.fn(() => [{ menuElement: 'copy' }]),
+    genCopyingMenuMock: vi.fn(() => ({ menuElement: 'copy' })),
     quickTrimTextMock: vi.fn((_locale: string, text: string) => text),
     // The English finding form, as `src/lang/data/en` writes it.
     getLangDataAsyncMock: vi.fn(async (_locale: string): Promise<any> => ({
@@ -57,7 +57,7 @@ vi.mock('../bible-list/BibleItem', () => ({
     default: { fromJson: bibleItemFromJsonMock },
 }));
 vi.mock('../bible-list/bibleItemHelpers', () => ({
-    genBibleItemCopyingContextMenu: genCopyingMenuMock,
+    genBibleItemCopyContextMenuItem: genCopyingMenuMock,
 }));
 vi.mock('../lang/langHelpers', () => ({
     DEFAULT_LOCALE: 'en-US',

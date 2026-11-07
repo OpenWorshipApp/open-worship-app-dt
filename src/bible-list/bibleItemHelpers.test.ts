@@ -11,8 +11,23 @@ vi.mock('./bibleItemCopyFormatHelpers', () => ({
     showBibleItemCopyFormatMenu: showBibleItemCopyFormatMenuMock,
 }));
 vi.mock('../helper/errorHelpers', () => ({ handleError: vi.fn() }));
+const { showAppContextMenuMock } = vi.hoisted(() => ({
+    showAppContextMenuMock: vi.fn(),
+}));
+vi.mock('../context-menu/appContextMenuHelpers', () => ({
+    showAppContextMenu: showAppContextMenuMock,
+}));
+// No `MouseEvent` in this environment: the point the menu opens at.
+vi.mock('../context-menu/contextMenuEventHelpers', async () => ({
+    ...(await vi.importActual<any>('../context-menu/contextMenuEventHelpers')),
+    createMouseEvent: (clientX: number, clientY: number) => ({
+        clientX,
+        clientY,
+    }),
+}));
 
 import {
+    genBibleItemCopyContextMenuItem,
     genBibleItemCopyingContextMenu,
     genDuplicatedMessage,
 } from './bibleItemHelpers';
@@ -59,6 +74,49 @@ describe('bible-list bibleItemHelpers', () => {
                 null,
             );
         });
+    });
+
+    // Asked for by the user: every menu of a passage offers one `Copy`, which
+    // opens the copying menu where it was chosen.
+    test('Copy opens the copying menu where it was chosen', async () => {
+        const bibleItem = { copyTitleToClipboard: vi.fn() } as any;
+        const copy = genBibleItemCopyContextMenuItem(bibleItem);
+        expect(copy.menuElement).toBe('Copy');
+        copy.onSelect!({ clientX: 40, clientY: 70 } as any);
+        await vi.waitFor(() => {
+            expect(showAppContextMenuMock).toHaveBeenCalledOnce();
+        });
+        const [openedAt, copyItems] = showAppContextMenuMock.mock.calls[0];
+        expect(openedAt).toEqual({ clientX: 40, clientY: 70 });
+        expect(copyItems.map((item: any) => item.menuElement)).toEqual([
+            'Copy Title',
+            'Copy Text',
+            'Copy All',
+            'Copy Verse Full Key',
+            'Copy Chapter Full Key',
+            'More…',
+        ]);
+        // The copying menu acts on the passage the `Copy` was offered for.
+        copyItems[0].onSelect();
+        expect(bibleItem.copyTitleToClipboard).toHaveBeenCalledOnce();
+    });
+
+    test('Copy chosen by a key opens the copying menu in the window', async () => {
+        vi.stubGlobal('window', { innerWidth: 800, innerHeight: 400 });
+        try {
+            genBibleItemCopyContextMenuItem({} as any).onSelect!({
+                key: 'Enter',
+            } as any);
+            await vi.waitFor(() => {
+                expect(showAppContextMenuMock).toHaveBeenCalledOnce();
+            });
+            expect(showAppContextMenuMock.mock.calls[0][0]).toEqual({
+                clientX: 400,
+                clientY: 100,
+            });
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 
     test('genDuplicatedMessage flags a duplicate target', () => {

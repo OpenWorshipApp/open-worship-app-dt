@@ -4093,5 +4093,7 @@
     "Undo this change": "Dzosera shanduko iyi",
     "“{name}” is back as it was before that change.": "“{name}” yadzokera sezvayakanga yakaita shanduko iyoyo isati yaitwa.",
     "The assistant changed this song.": "Mubatsiri achinja rwiyo urwu.",
-    "Load the change": "Isa shanduko"
+    "Load the change": "Isa shanduko",
+    "Create Lyric": "Gadzira Rwiyo",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ndima imwe neimwe yeBhaibheri inova ndima yerwiyo, iine mutsara mumwe weshanduro imwe neimwe yeBhaibheri yasarudzwa"
 }

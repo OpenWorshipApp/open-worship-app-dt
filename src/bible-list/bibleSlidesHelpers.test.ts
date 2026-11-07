@@ -84,7 +84,7 @@ vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
 }));
 vi.mock('../server/fileHelpers', () => ({
     getAvailableFileName: h.getAvailableFileName,
-    toPortableFileName: (name: string) => name.replace(':', ' '),
+    toPortableFileName: (name: string) => name.replaceAll(':', ' '),
 }));
 vi.mock('../server/unlockingHelpers', () => ({
     unlocking: async (_key: string, run: () => any) => run(),
@@ -166,6 +166,18 @@ describe('Bible slide generation', () => {
             expect(h.create).not.toHaveBeenCalled();
         },
     );
+
+    test('is named as Create Lyric names a song: every version, its own reference', async () => {
+        await generateBibleItemSlides(passage(), ['NIV']);
+        expect(h.getAvailableFileName).toHaveBeenCalledWith(
+            '/documents',
+            '(KJV) Genesis 1 3-5, (NIV) [xx] Genesis 1 3-5',
+            '.ows',
+        );
+        expect(h.create.mock.calls[0][1]).toBe(
+            '(KJV) Genesis 1 3-5, (NIV) [xx] Genesis 1 3-5',
+        );
+    });
 
     test('uses the available filename without overwriting a prior document', async () => {
         h.getAvailableFileName.mockResolvedValue('Genesis 1 3-5 KJV (2)');

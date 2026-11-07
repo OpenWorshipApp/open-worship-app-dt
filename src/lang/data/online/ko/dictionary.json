@@ -4093,5 +4093,7 @@
     "Undo this change": "이 변경 실행 취소",
     "“{name}” is back as it was before that change.": "“{name}”이(가) 그 변경 전의 상태로 돌아갔습니다.",
     "The assistant changed this song.": "도우미가 이 노래를 바꿨습니다.",
-    "Load the change": "변경 내용 불러오기"
+    "Load the change": "변경 내용 불러오기",
+    "Create Lyric": "가사 만들기",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "성경의 각 구절이 가사의 한 절이 되며, 선택한 성경 역본마다 한 줄씩 들어갑니다"
 }

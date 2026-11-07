@@ -4093,5 +4093,7 @@
     "Undo this change": "Отменить это изменение",
     "“{name}” is back as it was before that change.": "«{name}» снова такая, как до этого изменения.",
     "The assistant changed this song.": "Помощник изменил эту песню.",
-    "Load the change": "Загрузить изменение"
+    "Load the change": "Загрузить изменение",
+    "Create Lyric": "Создать текст песни",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Каждый стих Библии становится куплетом песни, по одной строке для каждого выбранного перевода Библии"
 }

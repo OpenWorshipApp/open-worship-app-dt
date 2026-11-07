@@ -4093,5 +4093,7 @@
     "Undo this change": "Wetekina tēnei panoni",
     "“{name}” is back as it was before that change.": "Kua hoki a “{name}” ki tōna āhua i mua i taua panoni.",
     "The assistant changed this song.": "Kua whakarerekēhia e te kaiāwhina tēnei waiata.",
-    "Load the change": "Utaina te panoni"
+    "Load the change": "Utaina te panoni",
+    "Create Lyric": "Waihanga Waiata",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ka huri ia whiti o te Paipera hei whiti waiata, kotahi te rārangi mō ia putanga Paipera kua tīpakohia"
 }

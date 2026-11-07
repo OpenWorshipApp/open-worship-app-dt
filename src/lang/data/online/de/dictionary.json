@@ -4093,5 +4093,7 @@
     "Undo this change": "Diese Änderung rückgängig machen",
     "“{name}” is back as it was before that change.": "„{name}“ ist wieder so wie vor dieser Änderung.",
     "The assistant changed this song.": "Der Assistent hat dieses Lied geändert.",
-    "Load the change": "Änderung laden"
+    "Load the change": "Änderung laden",
+    "Create Lyric": "Liedtext erstellen",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Jeder Bibelvers wird zu einer Strophe des Liedtexts, mit einer Zeile pro ausgewählter Bibelübersetzung"
 }

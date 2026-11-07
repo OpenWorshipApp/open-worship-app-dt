@@ -36,9 +36,9 @@ const h = vi.hoisted(() => {
         genShowOnScreensContextMenuMock: vi.fn((cb: any) => [
             { menuElement: 'on-screen', onSelect: (e: any) => cb(e) },
         ]),
-        genBibleItemCopyingContextMenuMock: vi.fn(() => [
-            { menuElement: 'copy' },
-        ]),
+        genBibleItemCopyContextMenuItemMock: vi.fn(() => ({
+            menuElement: 'Copy',
+        })),
         getAllScreenManagersMock: vi.fn((): any[] => []),
         bibleRenderToTitleMock: vi.fn(async () => 'rendered-title'),
         // Mirrors the real hook: the effect is handed a method context built
@@ -125,7 +125,7 @@ vi.mock('../others/FileItemHandlerComp', () => ({
     genShowOnScreensContextMenu: h.genShowOnScreensContextMenuMock,
 }));
 vi.mock('./bibleItemHelpers', () => ({
-    genBibleItemCopyingContextMenu: h.genBibleItemCopyingContextMenuMock,
+    genBibleItemCopyContextMenuItem: h.genBibleItemCopyContextMenuItemMock,
 }));
 vi.mock('../_screen/managers/screenManagerHelpers', () => ({
     getAllScreenManagers: h.getAllScreenManagersMock,

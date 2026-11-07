@@ -4093,5 +4093,7 @@
     "Undo this change": "واگرد این تغییر",
     "“{name}” is back as it was before that change.": "«{name}» به همان حالتِ پیش از آن تغییر برگشت.",
     "The assistant changed this song.": "دستیار این سرود را تغییر داد.",
-    "Load the change": "بارگذاری تغییر"
+    "Load the change": "بارگذاری تغییر",
+    "Create Lyric": "ایجاد متن سرود",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "هر آیهٔ کتاب مقدس به یک بند سرود تبدیل می‌شود، با یک خط برای هر نسخهٔ انتخاب‌شدهٔ کتاب مقدس"
 }

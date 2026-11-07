@@ -4093,5 +4093,7 @@
     "Undo this change": "Αναίρεση αυτής της αλλαγής",
     "“{name}” is back as it was before that change.": "Το «{name}» είναι ξανά όπως ήταν πριν από αυτή την αλλαγή.",
     "The assistant changed this song.": "Ο βοηθός άλλαξε αυτό το τραγούδι.",
-    "Load the change": "Φόρτωση της αλλαγής"
+    "Load the change": "Φόρτωση της αλλαγής",
+    "Create Lyric": "Δημιουργία στίχων",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Κάθε εδάφιο της Βίβλου γίνεται μια στροφή των στίχων, με μία γραμμή για κάθε επιλεγμένη έκδοση της Βίβλου"
 }

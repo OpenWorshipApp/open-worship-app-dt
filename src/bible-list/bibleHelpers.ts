@@ -33,7 +33,7 @@ import ScreenLongTextManager from '../_screen/managers/ScreenLongTextManager';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
-import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
+import { genBibleItemCopyContextMenuItem } from './bibleItemHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import { getBibleItemData } from '../_screen/screenLongTextTypeHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
@@ -216,7 +216,7 @@ export async function openBibleItemContextMenu(
         await freshBible.save();
     };
     const menuItem: ContextMenuItemType[] = [
-        ...genBibleItemCopyingContextMenu(bibleItem),
+        genBibleItemCopyContextMenuItem(bibleItem),
         ...(openBibleLookup === null
             ? []
             : [

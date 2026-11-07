@@ -4093,5 +4093,7 @@
     "Undo this change": "Anile chanjman sa a",
     "“{name}” is back as it was before that change.": "“{name}” tounen jan li te ye anvan chanjman sa a.",
     "The assistant changed this song.": "Asistan an chanje chante sa a.",
-    "Load the change": "Chaje chanjman an"
+    "Load the change": "Chaje chanjman an",
+    "Create Lyric": "Kreye yon Chante",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Chak vèsè nan Bib la vin tounen yon kouplè nan chante a, ak yon liy pou chak vèsyon Bib ou chwazi"
 }

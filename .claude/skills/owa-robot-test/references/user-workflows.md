@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-07f** (**W-05 steps 2, 4 and 7 — a song ends on a blank slide, and a verse is never cut.** The user, with the gap after a song's last verse circled: _add a blank slide after last lyric element like after title_; then, with the title card's subtitle cut off at the bottom of a narrow band: _I don't want any cut content_ — and, asked whether the words should shrink or the box grow, chose **grow the box**. After the last verse comes an empty **None** slide, as after the title, before any link slides; and a verse or title card taller than the stage's box makes the box taller, into the **[en:tran:Slide Margin (%)]** around it, from the edge **[en:tran:Position]** puts it against. Seen live 2026-11-07 on the dev app: the song with nine slides and a link listed `(4)-Chorus`, then `None`, then the link; stage 0 with ↕ 80 and **[en:tran:Bottom center]** drew the title card's band 231 px tall instead of 187 px, still flush on the bottom edge, its subtitle whole, while each Atom Mode line kept its 187 px band. Not seen live: a projector screen showing a grown card — a unit test holds that the screen grows it once the slide is on the page. PM-115, PM-117.)
+**workflowsVersion: 2026-11-07h** (**W-06 step 11 — Create Lyric makes a song of a saved passage; step 10 — Generate Slides names its document the same way.** The user, after the song's name: _make AppDocument file name follow lyric file name_ — every selected version's own reference, `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28.ows`, where it had been the KJV reference and the keys, `Proverbs 17 22-28 ពគប-NIV.ows`; seen live the same day beside the song of that name. For step 11: The user, with a Bibles-list row's menu circled: _add `Create Lyric`, to make lyric from the bible item … It should behave like `Generate Slides` for choosing extra bible keys_; the title _follow appdocument slide_, `(<bible key>) <verse title>`; then _make extra bible keys to sub-title_ (one line per version was asked _if possible_ — open-lyric's Subtitle takes one line, a continued one fails its validator — and the user chose one line); one Bible verse a part `Verse <verse number>`; each line `<verse number>: <text>`. Seen live 2026-11-07 on the dev Presenter: the row's menu reads Open · Open in Chatbot · Generate Slides · **Create Lyric** · …; with NIV then KJV ticked under ពគប Proverbs 17:22-28 the song `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28, (KJV) Proverbs 17 22-28.owl` was made, selected and saved, its Info slide `(ពគប) សុភាសិត ១៧:២២-២៨` over `(NIV) Proverbs 17:22-28, (KJV) Proverbs 17:22-28`, parts `Verse 22` … `Verse 28`, lines `២២: ចិត្ត…`, `22: A cheerful heart …`, `22: A merry heart …`. Held by unit tests, not seen live: a passage across chapters (`2:1: …`, parts numbered in order when a verse number would repeat) and a second song of one passage (a numbered name). CM-102.)
+
+Previous: **workflowsVersion: 2026-11-07f** (**W-05 steps 2, 4 and 7 — a song ends on a blank slide, and a verse is never cut.** The user, with the gap after a song's last verse circled: _add a blank slide after last lyric element like after title_; then, with the title card's subtitle cut off at the bottom of a narrow band: _I don't want any cut content_ — and, asked whether the words should shrink or the box grow, chose **grow the box**. After the last verse comes an empty **None** slide, as after the title, before any link slides; and a verse or title card taller than the stage's box makes the box taller, into the **[en:tran:Slide Margin (%)]** around it, from the edge **[en:tran:Position]** puts it against. Seen live 2026-11-07 on the dev app: the song with nine slides and a link listed `(4)-Chorus`, then `None`, then the link; stage 0 with ↕ 80 and **[en:tran:Bottom center]** drew the title card's band 231 px tall instead of 187 px, still flush on the bottom edge, its subtitle whole, while each Atom Mode line kept its 187 px band. Not seen live: a projector screen showing a grown card — a unit test holds that the screen grows it once the slide is on the page. PM-115, PM-117.)
 
 Previous: **workflowsVersion: 2026-11-07e** (**W-05 step 13 — Atom Mode puts every line of a song on a slide of its own.** The user, with Long Text Show's **[en:tran:Atom Mode]** circled and then the empty end of the song's history row under the Stage Previewer header: _check `Atom Mode` on longtext show, I want it in lyric_ … _add `Atom Mode` there_. Chosen with the user: ONE switch for every song, and every line a slide, blank lines kept (an empty slide); a `//` comment or a line of chords alone, which stage 0 does not draw, rides on the slide of the line after it on a stage that draws it. **[en:tran:Atom Mode]** sits at the right end of that row, the history buttons at its left; on, a part is as many slides as it has lines, named `(1)-Verse 1 · 1/4`, the same on every stage, and a song slide a screen holds goes up again as that part's first line (off: as the whole part). Seen live 2026-11-07 on the dev app with `Still (Copy)`: 13 slides became 64; a Stage 0 and a Stage 1 pane agreed card for card, Stage 1 with the part's title and `Chorus · 1/8 · 2/7` in its corner; the `(2)-Chorus` held by screens 0 (St: 2) and 1 (St: 0), neither showing, moved to `(2)-Chorus · 1/8`, and turned off went back to `(2)-Chorus`. Not seen live: a blank line's empty slide and a chord or comment line riding along (that song has neither; both held by a test on the real open-lyric, `lyricAtomModeHelpers.test.ts`), and the label in a Khmer window (read from the installed language). PM-169, PM-168.)
 
@@ -2068,14 +2070,30 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08
    when needed to fit. The upcoming verse appears
    at the bottom right in muted text at 85% of the current verse's font size.
    The last slide has no upcoming verse. 📸
-10. Find the file in **[en:tran:Documents]**. Its name uses the English reference and all
-    selected keys, for example `Genesis 1 3-5 KJV-ពគប.ows` (the colon becomes a
+10. Find the file in **[en:tran:Documents]**. Its name is every selected version's own
+    reference, as a song made with **[en:tran:Create Lyric]** is named, for example
+    `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28.ows` (the colon becomes a
     space for the filename). Generating again adds a numbered suffix to preserve
     the earlier file. **[en:tran:Cancel]** closes the panel without creating a
     file. If a selected version lacks a verse, generation reports it without
     saving a partial passage.
+11. To have the passage as a song instead, open the same **⋮** menu and choose
+    **[en:tran:Create Lyric]**, right under **[en:tran:Generate Slides]**. The
+    floating panel picks versions the same way: the passage's own version stays
+    ticked, and every other version you tick is added. Click
+    **[en:tran:Create Lyric]** in the panel. The new song appears in
+    **[en:tran:Documents]**, already selected and saved. Its title is the
+    passage in its own version, for example `(ពគប) សុភាសិត ១៧:២២-២៨`, and its
+    subtitle the other versions' on one line,
+    `(NIV) Proverbs 17:22-28, (KJV) Proverbs 17:22-28` — both on its Info
+    slide; the file is named after them all. Each Bible verse is a
+    part named after its number (`Verse 22`, `Verse 23` …), and in it one line
+    per version, the verse number first — `22: A cheerful heart is good
+    medicine …` — in that version's own digits. Edit it like any other song
+    (W-05); with **[en:tran:Atom Mode]** on, each version's line is a slide of
+    its own. 📸
 
-_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101._
+_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102._
 
 ### W-07 — Style the on-screen Bible text
 

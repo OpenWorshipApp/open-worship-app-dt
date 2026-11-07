@@ -4093,5 +4093,7 @@
     "Undo this change": "撤销这次更改",
     "“{name}” is back as it was before that change.": "“{name}”已恢复到那次更改之前的样子。",
     "The assistant changed this song.": "助手修改了这首歌。",
-    "Load the change": "载入更改"
+    "Load the change": "载入更改",
+    "Create Lyric": "创建歌词",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "每节经文成为歌词的一段，每个选定的圣经译本各占一行"
 }

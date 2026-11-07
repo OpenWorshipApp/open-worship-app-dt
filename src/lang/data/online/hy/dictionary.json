@@ -4093,5 +4093,7 @@
     "Undo this change": "Հետարկել այս փոփոխությունը",
     "“{name}” is back as it was before that change.": "«{name}»-ը նորից այնպիսին է, ինչպիսին էր այդ փոփոխությունից առաջ։",
     "The assistant changed this song.": "Օգնականը փոխեց այս երգը։",
-    "Load the change": "Բեռնել փոփոխությունը"
+    "Load the change": "Բեռնել փոփոխությունը",
+    "Create Lyric": "Ստեղծել երգի տեքստ",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Աստվածաշնչի յուրաքանչյուր համար դառնում է երգի մեկ տուն՝ յուրաքանչյուր ընտրված Աստվածաշնչի տարբերակի համար մեկ տողով"
 }

@@ -4093,5 +4093,7 @@
     "Undo this change": "Vrátit tuto změnu",
     "“{name}” is back as it was before that change.": "„{name}“ je zpět ve stavu před touto změnou.",
     "The assistant changed this song.": "Asistent tuto píseň změnil.",
-    "Load the change": "Načíst změnu"
+    "Load the change": "Načíst změnu",
+    "Create Lyric": "Vytvořit text písně",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Každý biblický verš se stane slokou písně, s jedním řádkem pro každý vybraný překlad Bible"
 }

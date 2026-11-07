@@ -4093,5 +4093,7 @@
     "Undo this change": "Ontdoen hierdie verandering",
     "“{name}” is back as it was before that change.": "“{name}” is terug soos dit voor daardie verandering was.",
     "The assistant changed this song.": "Die assistent het hierdie lied verander.",
-    "Load the change": "Laai die verandering"
+    "Load the change": "Laai die verandering",
+    "Create Lyric": "Skep liedteks",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Elke Bybelvers word 'n liedvers, met een reël per gekose Bybelweergawe"
 }

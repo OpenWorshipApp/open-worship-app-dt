@@ -4093,5 +4093,7 @@
     "Undo this change": "Cealaigh an t-athrú seo",
     "“{name}” is back as it was before that change.": "Tá “{name}” ar ais mar a bhí sé roimh an athrú sin.",
     "The assistant changed this song.": "D'athraigh an cúntóir an t-amhrán seo.",
-    "Load the change": "Lódáil an t-athrú"
+    "Load the change": "Lódáil an t-athrú",
+    "Create Lyric": "Cruthaigh liric",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Déantar véarsa liricí de gach véarsa den Bhíobla, le líne amháin do gach leagan den Bhíobla a roghnaíodh"
 }

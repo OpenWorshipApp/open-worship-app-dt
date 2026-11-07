@@ -64,9 +64,10 @@ vi.mock('../context-menu/contextMenuIconHelpers', () => ({
 }));
 vi.mock('../helper/dragHelpers', () => ({ handleDragStart: h.drag }));
 vi.mock('../bible-list/bibleItemHelpers', () => ({
-    genBibleItemCopyingContextMenu: () => [
-        { menuElement: 'Copy passage', onSelect: vi.fn() },
-    ],
+    genBibleItemCopyContextMenuItem: () => ({
+        menuElement: 'Copy',
+        onSelect: vi.fn(),
+    }),
 }));
 vi.mock('../bible-list/bibleHelpers', () => ({
     saveBibleItem: h.saveBibleItem,
@@ -246,7 +247,7 @@ describe('Bible lookup input history', () => {
             'Open in Chatbot',
             'Open beside the current verse',
             'Set to current editing',
-            'Copy passage',
+            'Copy',
             'Save bible item',
             'Remove',
         ]);

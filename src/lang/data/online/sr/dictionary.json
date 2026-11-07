@@ -4093,5 +4093,7 @@
     "Undo this change": "Поништи ову промену",
     "“{name}” is back as it was before that change.": "„{name}” је поново онаква каква је била пре те промене.",
     "The assistant changed this song.": "Помоћник је променио ову песму.",
-    "Load the change": "Учитај промену"
+    "Load the change": "Учитај промену",
+    "Create Lyric": "Направи песму",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Сваки библијски стих постаје строфа песме, са по једним редом за сваку изабрану верзију Библије"
 }

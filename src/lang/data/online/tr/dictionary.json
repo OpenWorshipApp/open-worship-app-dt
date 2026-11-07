@@ -4093,5 +4093,7 @@
     "Undo this change": "Bu değişikliği geri al",
     "“{name}” is back as it was before that change.": "“{name}” o değişiklikten önceki hâline döndü.",
     "The assistant changed this song.": "Asistan bu ilahiyi değiştirdi.",
-    "Load the change": "Değişikliği yükle"
+    "Load the change": "Değişikliği yükle",
+    "Create Lyric": "Şarkı Sözü Oluştur",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kutsal Kitap'taki her ayet şarkının bir kıtası olur ve seçilen her Kutsal Kitap çevirisi için bir satır içerir"
 }

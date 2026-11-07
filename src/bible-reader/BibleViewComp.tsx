@@ -16,7 +16,7 @@ import {
     genDraggingClass,
     removeDraggingClass,
 } from './readBibleHelpers';
-import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
+import { genBibleItemCopyContextMenuItem } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import RenderBibleLookupBodyComp from '../bible-lookup/RenderBibleLookupBodyComp';
 import LookupBibleItemController, {
@@ -31,10 +31,6 @@ import {
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
-import {
-    createMouseEvent,
-    getMenuItemAnchor,
-} from '../context-menu/contextMenuEventHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
@@ -164,31 +160,6 @@ function genAskAssistantContextMenu(
 }
 
 /**
- * One `Copy` in place of every way to copy (2026-10-22, the user: _remove all
- * copy buttons, add `Copy` and when click it then just trigger the copy
- * content menu_): it opens the menu the view's copy button opens, where the
- * item was chosen.
- */
-function genCopyContextMenuItem(
-    foundBibleItem: ReadIdOnlyBibleItem,
-): ContextMenuItemType {
-    return {
-        childBefore: genContextMenuItemIcon('copy'),
-        menuElement: tran('Copy'),
-        onSelect: (event) => {
-            const anchor = getMenuItemAnchor(event);
-            showAppContextMenu(
-                createMouseEvent(
-                    anchor?.x ?? window.innerWidth / 2,
-                    anchor?.y ?? window.innerHeight / 4,
-                ),
-                genBibleItemCopyingContextMenu(foundBibleItem),
-            );
-        },
-    };
-}
-
-/**
  * The passage in a floating verse panel, the one a cited passage or a cross
  * reference opens, so it can be read over another pane.
  */
@@ -241,7 +212,7 @@ async function openContextMenu(
     showAppContextMenu(
         event,
         [
-            genCopyContextMenuItem(foundBibleItem),
+            genBibleItemCopyContextMenuItem(foundBibleItem),
             genFloatingContextMenuItem(foundBibleItem),
             ...genAskAssistantContextMenu(event, foundBibleItem),
             ...(await viewController.genContextMenu(

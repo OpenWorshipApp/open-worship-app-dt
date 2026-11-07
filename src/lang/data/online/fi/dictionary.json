@@ -4093,5 +4093,7 @@
     "Undo this change": "Kumoa tämä muutos",
     "“{name}” is back as it was before that change.": "”{name}” on taas sellainen kuin ennen tätä muutosta.",
     "The assistant changed this song.": "Avustaja muutti tätä laulua.",
-    "Load the change": "Lataa muutos"
+    "Load the change": "Lataa muutos",
+    "Create Lyric": "Luo sanoitus",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Jokaisesta Raamatun jakeesta tulee sanoituksen säkeistö, ja jokaiselle valitulle raamatunkäännökselle yksi rivi"
 }

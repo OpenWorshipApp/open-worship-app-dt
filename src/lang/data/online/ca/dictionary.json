@@ -4093,5 +4093,7 @@
     "Undo this change": "Desfés aquest canvi",
     "“{name}” is back as it was before that change.": "«{name}» torna a estar com abans d'aquest canvi.",
     "The assistant changed this song.": "L'assistent ha canviat aquesta cançó.",
-    "Load the change": "Carrega el canvi"
+    "Load the change": "Carrega el canvi",
+    "Create Lyric": "Crea una lletra",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Cada versicle de la Bíblia esdevé una estrofa de la lletra, amb una línia per cada versió de la Bíblia seleccionada"
 }

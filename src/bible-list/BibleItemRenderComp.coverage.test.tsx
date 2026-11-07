@@ -166,6 +166,22 @@ vi.mock('./BibleSlidesPopupComp', () => ({
         </div>
     ),
 }));
+vi.mock('./BibleLyricPopupComp', () => ({
+    default: ({
+        bibleItem,
+        onClose,
+    }: {
+        bibleItem: { id: number };
+        onClose: () => void;
+    }) => (
+        <div className="lyric-popup">
+            {`Lyric for ${bibleItem.id}`}
+            <button type="button" onClick={onClose}>
+                Close lyric
+            </button>
+        </div>
+    ),
+}));
 
 import BibleItemRenderComp from './BibleItemRenderComp';
 
@@ -359,6 +375,7 @@ describe('a saved passage row', () => {
         expect(menuItems.map((menuItem: any) => menuItem.menuElement)).toEqual([
             'Open',
             'Generate Slides',
+            'Create Lyric',
         ]);
         await act(async () => menuItems[1].onSelect());
         await vi.waitFor(() => {
@@ -378,6 +395,29 @@ describe('a saved passage row', () => {
             { shiftKey: false },
             bibleItem,
         );
+    });
+
+    test('in the Presenter its menu creates a lyric from a copy, in a popup that closes', async () => {
+        h.appProvider.isPagePresenter = true;
+        await renderRow();
+        const [, , , , menuItems] = await openMenu();
+        const createLyric = menuItems.find(
+            (menuItem: any) => menuItem.menuElement === 'Create Lyric',
+        );
+        await act(async () => createLyric.onSelect());
+        await vi.waitFor(() => {
+            expect(host.querySelector('.lyric-popup')).not.toBeNull();
+        });
+        // A copy: making the song must not touch the saved row.
+        expect(host.querySelector('.lyric-popup')!.textContent).toContain(
+            'Lyric for 101',
+        );
+        expect(host.querySelector('.slides-popup')).toBeNull();
+        const close = [...host.querySelectorAll('button')].find(
+            (button) => button.textContent === 'Close lyric',
+        )!;
+        await act(async () => close.click());
+        expect(host.querySelector('.lyric-popup')).toBeNull();
     });
 
     test('changing its Bible saves the item into its list', async () => {

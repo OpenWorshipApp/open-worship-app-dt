@@ -4093,5 +4093,7 @@
     "Undo this change": "Soke wannan canjin",
     "“{name}” is back as it was before that change.": "“{name}” ta koma yadda take kafin wannan canjin.",
     "The assistant changed this song.": "Mataimaki ya canza wannan waƙa.",
-    "Load the change": "Loda canjin"
+    "Load the change": "Loda canjin",
+    "Create Lyric": "Ƙirƙiri Waƙa",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kowace ayar Littafi Mai Tsarki za ta zama baiti na waƙa, da layi ɗaya ga kowace fassarar Littafi Mai Tsarki da aka zaɓa"
 }

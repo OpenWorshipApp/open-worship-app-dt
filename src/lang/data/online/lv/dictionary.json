@@ -4093,5 +4093,7 @@
     "Undo this change": "Atsaukt šīs izmaiņas",
     "“{name}” is back as it was before that change.": "“{name}” atkal ir tāda, kāda bija pirms šīm izmaiņām.",
     "The assistant changed this song.": "Palīgs mainīja šo dziesmu.",
-    "Load the change": "Ielādēt izmaiņas"
+    "Load the change": "Ielādēt izmaiņas",
+    "Create Lyric": "Izveidot dziesmu",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Katrs Bībeles pants kļūst par dziesmas pantu, ar vienu rindu katrai izvēlētajai Bībeles versijai"
 }

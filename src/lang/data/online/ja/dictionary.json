@@ -4093,5 +4093,7 @@
     "Undo this change": "この変更を元に戻す",
     "“{name}” is back as it was before that change.": "「{name}」はその変更の前の状態に戻りました。",
     "The assistant changed this song.": "アシスタントがこの曲を変更しました。",
-    "Load the change": "変更を読み込む"
+    "Load the change": "変更を読み込む",
+    "Create Lyric": "歌詞を作成",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "聖書の各節が歌詞の1つのバースになり、選択した聖書の版ごとに1行ずつ入ります"
 }

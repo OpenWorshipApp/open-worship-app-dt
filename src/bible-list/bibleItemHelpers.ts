@@ -6,7 +6,10 @@ import {
     type BibleTargetType,
 } from '../helper/bible-helpers/bibleTargetHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
-import { getMenuItemAnchor } from '../context-menu/contextMenuEventHelpers';
+import {
+    createMouseEvent,
+    getMenuItemAnchor,
+} from '../context-menu/contextMenuEventHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import { handleError } from '../helper/errorHelpers';
 
@@ -86,6 +89,38 @@ export function genBibleItemCopyingContextMenu(
             },
         },
     ];
+}
+
+/**
+ * One `Copy` in place of every way to copy (2026-10-22 in a Bible view's
+ * menu; 2026-11-07 in every other menu of a passage, the user: _replace all
+ * contextmenu that copying bible text to use only `Copy`_): it opens the copy
+ * menu where it was chosen.
+ */
+export function genBibleItemCopyContextMenuItem(
+    bibleItem: BibleItem,
+): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('copy'),
+        menuElement: tran('Copy'),
+        onSelect: (event) => {
+            // Read now: this menu is gone by the time the next one opens.
+            const anchor = getMenuItemAnchor(event);
+            // Loaded at the press: a verse window imports this module and
+            // keeps the menu UI out of its own chunk.
+            import('../context-menu/appContextMenuHelpers')
+                .then(({ showAppContextMenu }) => {
+                    showAppContextMenu(
+                        createMouseEvent(
+                            anchor?.x ?? window.innerWidth / 2,
+                            anchor?.y ?? window.innerHeight / 4,
+                        ),
+                        genBibleItemCopyingContextMenu(bibleItem),
+                    );
+                })
+                .catch(handleError);
+        },
+    };
 }
 
 /**

@@ -4093,5 +4093,7 @@
     "Undo this change": "Buat asal perubahan ini",
     "“{name}” is back as it was before that change.": "“{name}” kembali seperti sebelum perubahan itu.",
     "The assistant changed this song.": "Pembantu telah mengubah lagu ini.",
-    "Load the change": "Muatkan perubahan"
+    "Load the change": "Muatkan perubahan",
+    "Create Lyric": "Cipta Lirik",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Setiap ayat Alkitab menjadi satu rangkap lirik, dengan satu baris bagi setiap versi Alkitab yang dipilih"
 }

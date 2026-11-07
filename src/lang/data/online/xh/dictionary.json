@@ -4093,5 +4093,7 @@
     "Undo this change": "Rhoxisa olu tshintsho",
     "“{name}” is back as it was before that change.": "I-“{name}” ibuyele kwindlela ebiyiyo phambi kolo tshintsho.",
     "The assistant changed this song.": "Umncedisi uyitshintshile le ngoma.",
-    "Load the change": "Layisha utshintsho"
+    "Load the change": "Layisha utshintsho",
+    "Create Lyric": "Yenza Ingoma",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Indinyana nganye yeBhayibhile iba yindinyana yengoma, enomgca omnye kuguqulelo ngalunye lweBhayibhile olukhethiweyo"
 }

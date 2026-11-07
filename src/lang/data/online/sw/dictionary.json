@@ -4093,5 +4093,7 @@
     "Undo this change": "Tendua badiliko hili",
     "“{name}” is back as it was before that change.": "“{name}” imerudi kama ilivyokuwa kabla ya badiliko hilo.",
     "The assistant changed this song.": "Msaidizi amebadilisha wimbo huu.",
-    "Load the change": "Pakia badiliko"
+    "Load the change": "Pakia badiliko",
+    "Create Lyric": "Unda maneno ya wimbo",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kila mstari wa Biblia unakuwa ubeti wa wimbo, ukiwa na mstari mmoja kwa kila toleo la Biblia lililochaguliwa"
 }

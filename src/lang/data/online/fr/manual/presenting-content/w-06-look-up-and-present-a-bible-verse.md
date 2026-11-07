@@ -3,7 +3,7 @@ id: W-06
 title: "Rechercher et présenter un verset biblique"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 9a88b83e940190f0
+translatedFrom: 45c5ea9804e88c2c
 ---
 # W-06 — Rechercher et présenter un verset biblique
 
@@ -83,9 +83,22 @@ translatedFrom: 9a88b83e940190f0
    lorsque c'est nécessaire pour tenir. Le verset suivant apparaît
    en bas à droite, en texte atténué, à 85 % de la taille de police du verset en cours.
    La dernière diapositive n'a pas de verset suivant. 📸
-10. Retrouvez le fichier dans **[en:tran:Documents]**. Son nom reprend la référence en anglais et tous les
-    codes sélectionnés, par exemple `Genesis 1 3-5 KJV-ពគប.ows` (les deux-points deviennent une
+10. Retrouvez le fichier dans **[en:tran:Documents]**. Son nom reprend la référence de chaque version
+    sélectionnée, dans ses propres mots, comme le nom d'un chant créé avec **[en:tran:Create Lyric]**,
+    par exemple `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28.ows` (les deux-points deviennent une
     espace dans le nom de fichier). Générer de nouveau ajoute un numéro à la fin pour conserver
     le fichier précédent. **[en:tran:Cancel]** ferme le panneau sans créer de
     fichier. S'il manque un verset dans une version sélectionnée, la génération le signale sans
     enregistrer un passage incomplet.
+11. Pour obtenir plutôt le passage sous forme de chant, ouvrez le même menu **⋮** et choisissez
+    **[en:tran:Create Lyric]**, juste sous **[en:tran:Generate Slides]**. Le panneau flottant choisit
+    les versions de la même façon : la version du passage reste cochée, et chaque autre version que
+    vous cochez est ajoutée. Cliquez sur **[en:tran:Create Lyric]** dans le panneau. Le nouveau chant
+    apparaît dans **[en:tran:Documents]**, déjà sélectionné et enregistré. Son titre est le passage
+    dans sa propre version, par exemple `(ពគប) សុភាសិត ១៧:២២-២៨`, et son sous-titre celui des autres
+    versions sur une seule ligne, `(NIV) Proverbs 17:22-28, (KJV) Proverbs 17:22-28` — tous deux sur
+    sa diapositive Info ; le fichier porte le nom de toutes les versions. Chaque verset biblique est
+    une partie nommée d'après son numéro (`Verse 22`, `Verse 23` …), avec une ligne par version, le
+    numéro du verset en premier — `22: A cheerful heart is good medicine …` — dans les chiffres de
+    cette version. Modifiez-le comme tout autre chant (W-05) ; avec **[en:tran:Atom Mode]** activé,
+    la ligne de chaque version est une diapositive à elle seule. 📸

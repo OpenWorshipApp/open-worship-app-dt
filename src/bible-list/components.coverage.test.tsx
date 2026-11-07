@@ -753,9 +753,11 @@ describe('BibleItemRenderComp — one saved passage', () => {
             'Open',
             'Open in Chatbot',
             'Generate Slides',
+            'Create Lyric',
             'Remove background',
         ]);
         expect(menuItems[2].childBefore).toBe('icon:file-earmark-slides');
+        expect(menuItems[3].childBefore).toBe('icon:music-note-list');
 
         const openEvent = { shiftKey: false };
         menuItems[0].onSelect(openEvent);

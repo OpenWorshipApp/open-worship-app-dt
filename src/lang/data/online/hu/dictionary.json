@@ -4093,5 +4093,7 @@
     "Undo this change": "Ennek a módosításnak a visszavonása",
     "“{name}” is back as it was before that change.": "A(z) „{name}” ismét olyan, mint a módosítás előtt.",
     "The assistant changed this song.": "A segéd megváltoztatta ezt az éneket.",
-    "Load the change": "A módosítás betöltése"
+    "Load the change": "A módosítás betöltése",
+    "Create Lyric": "Dalszöveg létrehozása",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Minden bibliavers a dalszöveg egy versszaka lesz, minden kiválasztott bibliafordításhoz egy sorral"
 }

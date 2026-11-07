@@ -4093,5 +4093,7 @@
     "Undo this change": "Angre denne endringen",
     "“{name}” is back as it was before that change.": "«{name}» er tilbake slik den var før den endringen.",
     "The assistant changed this song.": "Assistenten endret denne sangen.",
-    "Load the change": "Last inn endringen"
+    "Load the change": "Last inn endringen",
+    "Create Lyric": "Opprett sangtekst",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Hvert bibelvers blir et vers i sangteksten, med én linje for hver valgte bibeloversettelse"
 }

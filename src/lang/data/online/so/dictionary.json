@@ -4093,5 +4093,7 @@
     "Undo this change": "Ka noqo isbeddelkan",
     "“{name}” is back as it was before that change.": "“{name}” wuxuu ku soo noqday sidii uu ahaa isbeddelkaas ka hor.",
     "The assistant changed this song.": "Kaaliyuhu wuu beddelay heestan.",
-    "Load the change": "Soo rar isbeddelka"
+    "Load the change": "Soo rar isbeddelka",
+    "Create Lyric": "Samee Hees",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Aayad kasta oo Kitaabka Quduuska ah waxay noqonaysaa tuduc heesta ka mid ah, iyadoo sadar kasta loo leeyahay nooc kasta oo Kitaabka Quduuska ah oo la doortay"
 }

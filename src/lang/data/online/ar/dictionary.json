@@ -4093,5 +4093,7 @@
     "Undo this change": "التراجع عن هذا التغيير",
     "“{name}” is back as it was before that change.": "عادت “{name}” كما كانت قبل ذلك التغيير.",
     "The assistant changed this song.": "غيّر المساعد هذه الترنيمة.",
-    "Load the change": "تحميل التغيير"
+    "Load the change": "تحميل التغيير",
+    "Create Lyric": "إنشاء ترنيمة",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "تصبح كل آية من الكتاب المقدس مقطعًا في الترنيمة، مع سطر واحد لكل إصدار مختار من الكتاب المقدس"
 }

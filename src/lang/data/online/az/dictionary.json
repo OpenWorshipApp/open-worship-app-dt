@@ -4093,5 +4093,7 @@
     "Undo this change": "Bu dəyişikliyi geri al",
     "“{name}” is back as it was before that change.": "“{name}” həmin dəyişiklikdən əvvəlki vəziyyətinə qaytarıldı.",
     "The assistant changed this song.": "Köməkçi bu mahnını dəyişdi.",
-    "Load the change": "Dəyişikliyi yüklə"
+    "Load the change": "Dəyişikliyi yüklə",
+    "Create Lyric": "Mahnı yarat",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Hər Müqəddəs Kitab ayəsi mahnının bir bəndinə çevrilir, seçilmiş hər Müqəddəs Kitab versiyası üçün bir sətir olur"
 }

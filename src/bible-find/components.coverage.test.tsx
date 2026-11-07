@@ -75,7 +75,7 @@ vi.mock('../bible-list/BibleItem', () => ({
     },
 }));
 vi.mock('../bible-list/bibleItemHelpers', () => ({
-    genBibleItemCopyingContextMenu: () => [{ menuElement: 'Copy verse' }],
+    genBibleItemCopyContextMenuItem: () => ({ menuElement: 'Copy' }),
 }));
 vi.mock('../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: h.showAppContextMenu,
@@ -581,7 +581,7 @@ describe('RenderFoundItemComp', () => {
             'Open',
             'Open in Chatbot',
             'Open beside the current verse',
-            'Copy verse',
+            'Copy',
             'Save bible item',
         ]);
         findMenuItem(items, 'Open beside the current verse').onSelect();

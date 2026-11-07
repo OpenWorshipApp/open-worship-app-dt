@@ -4093,5 +4093,7 @@
     "Undo this change": "ត្រឡប់ការកែប្រែនេះវិញ",
     "“{name}” is back as it was before that change.": "“{name}” បានត្រឡប់ទៅដូចមុនការកែប្រែនោះវិញហើយ។",
     "The assistant changed this song.": "ជំនួយការបានកែបទចម្រៀងនេះ។",
-    "Load the change": "ផ្ទុកការកែប្រែ"
+    "Load the change": "ផ្ទុកការកែប្រែ",
+    "Create Lyric": "បង្កើតចំរៀង",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ខគម្ពីរនីមួយៗក្លាយជាវគ្គចម្រៀងមួយ ដោយមានមួយបន្ទាត់សម្រាប់កំណែព្រះគម្ពីរនីមួយៗដែលបានជ្រើសរើស"
 }

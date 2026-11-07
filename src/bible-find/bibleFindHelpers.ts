@@ -6,7 +6,7 @@ import * as loggerHelpers from '../helper/loggerHelpers';
 import { checkEndsWithInvisibleStacker } from '../helper/scriptClusterHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';
-import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
+import { genBibleItemCopyContextMenuItem } from '../bible-list/bibleItemHelpers';
 import type { LocaleType } from '../lang/langHelpers';
 import {
     DEFAULT_LOCALE,
@@ -629,7 +629,7 @@ export function openContextMenu(
                 openInBibleLookup(event, viewController, bibleItem, true);
             },
         },
-        ...genBibleItemCopyingContextMenu(bibleItem),
+        genBibleItemCopyContextMenuItem(bibleItem),
         {
             childBefore: genContextMenuItemIcon('floppy'),
             menuElement: tran('Save bible item'),

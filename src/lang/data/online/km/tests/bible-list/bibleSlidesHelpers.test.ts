@@ -84,7 +84,7 @@ vi.mock('../../../../../../helper/bible-helpers/bibleStyleHelpers', () => ({
 }));
 vi.mock('../../../../../../server/fileHelpers', () => ({
     getAvailableFileName: h.getAvailableFileName,
-    toPortableFileName: (name: string) => name.replace(':', ' '),
+    toPortableFileName: (name: string) => name.replaceAll(':', ' '),
 }));
 vi.mock('../../../../../../server/unlockingHelpers', () => ({
     unlocking: async (_key: string, run: () => any) => run(),
@@ -215,7 +215,7 @@ describe('Bible slide generation', () => {
         await generateBibleItemSlides(source, ['KJV', 'ពគប', 'ពគប']);
         const [dir, name, slides] = h.create.mock.calls[0];
         expect(dir).toBe('/documents');
-        expect(name).toBe('Genesis 1 3-5 KJV-ពគប');
+        expect(name).toBe('(KJV) Genesis 1 3-5, (ពគប) លោកុប្បត្តិ 1 3-5');
         expect(slides).toHaveLength(4);
         expect(slides.map((slide: any) => slide.id)).toEqual([0, 1, 2, 3]);
         expect(
@@ -358,9 +358,11 @@ describe('Bible slide generation', () => {
         }
     });
 
-    test('uses the KJV reference in the filename even when the source is Khmer', async () => {
+    // 2026-11-07, the user: the document follows the song's file name
+    // convention -- the Bible's own reference, no longer the KJV's.
+    test("names the file in the Khmer source's own words, as Create Lyric does", async () => {
         await generateBibleItemSlides(passage('ពគប', 3, 3));
-        expect(h.create.mock.calls[0][1]).toBe('Genesis 1 3 ពគប');
+        expect(h.create.mock.calls[0][1]).toBe('(ពគប) លោកុប្បត្តិ 1 3');
         expect(h.create.mock.calls[0][2]).toHaveLength(2);
     });
 

@@ -4093,5 +4093,7 @@
     "Undo this change": "ביטול השינוי הזה",
     "“{name}” is back as it was before that change.": "“{name}” חזר להיות כפי שהיה לפני השינוי הזה.",
     "The assistant changed this song.": "העוזר שינה את השיר הזה.",
-    "Load the change": "טעינת השינוי"
+    "Load the change": "טעינת השינוי",
+    "Create Lyric": "יצירת שיר",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "כל פסוק מהמקרא הופך לבית בשיר, עם שורה אחת לכל גרסת מקרא שנבחרה"
 }

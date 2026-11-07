@@ -4093,5 +4093,7 @@
     "Undo this change": "Razveljavi to spremembo",
     "“{name}” is back as it was before that change.": "»{name}« je spet takšna, kot je bila pred to spremembo.",
     "The assistant changed this song.": "Pomočnik je spremenil to pesem.",
-    "Load the change": "Naloži spremembo"
+    "Load the change": "Naloži spremembo",
+    "Create Lyric": "Ustvari pesem",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Vsaka svetopisemska vrstica postane kitica pesmi, z eno vrstico za vsako izbrano različico Svetega pisma"
 }

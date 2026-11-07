@@ -4093,5 +4093,7 @@
     "Undo this change": "यो परिवर्तन अनडु गर्नुहोस्",
     "“{name}” is back as it was before that change.": "“{name}” त्यो परिवर्तनअघि जस्तो थियो त्यस्तै फर्किएको छ।",
     "The assistant changed this song.": "सहायकले यो गीत बदल्यो।",
-    "Load the change": "परिवर्तन लोड गर्नुहोस्"
+    "Load the change": "परिवर्तन लोड गर्नुहोस्",
+    "Create Lyric": "गीतको बोल बनाउनुहोस्",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "बाइबलको हरेक पद गीतको एउटा अन्तरा बन्छ, छानिएको हरेक बाइबल संस्करणका लागि एउटा पङ्क्ति हुन्छ"
 }

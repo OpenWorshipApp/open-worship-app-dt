@@ -4093,5 +4093,7 @@
     "Undo this change": "Annuler cette modification",
     "“{name}” is back as it was before that change.": "« {name} » est revenu tel qu'il était avant cette modification.",
     "The assistant changed this song.": "L'assistant a modifié ce chant.",
-    "Load the change": "Charger la modification"
+    "Load the change": "Charger la modification",
+    "Create Lyric": "Créer un chant",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Chaque verset de la Bible devient un couplet du chant, avec une ligne par version de la Bible sélectionnée"
 }

@@ -4093,5 +4093,7 @@
     "Undo this change": "Zhbëje këtë ndryshim",
     "“{name}” is back as it was before that change.": "“{name}” është sërish siç ishte para atij ndryshimi.",
     "The assistant changed this song.": "Asistenti e ndryshoi këtë këngë.",
-    "Load the change": "Ngarko ndryshimin"
+    "Load the change": "Ngarko ndryshimin",
+    "Create Lyric": "Krijo këngë",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Çdo varg i Biblës bëhet një strofë e këngës, me një rresht për çdo version të zgjedhur të Biblës"
 }

@@ -4093,5 +4093,7 @@
     "Undo this change": "Jijjiirama kana deebisi",
     "“{name}” is back as it was before that change.": "“{name}” akkuma jijjiirama sana dura ture deebi'eera.",
     "The assistant changed this song.": "Gargaaraan faaruu kana jijjiireera.",
-    "Load the change": "Jijjiirama fe'i"
+    "Load the change": "Jijjiirama fe'i",
+    "Create Lyric": "Faarfannaa Uumi",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Lakkoofsi Macaafa Qulqulluu tokkoon tokkoon isaa kutaa faarfannaa tokko ta'a, hiika Macaafa Qulqulluu filatame hundaaf sarara tokko qaba"
 }

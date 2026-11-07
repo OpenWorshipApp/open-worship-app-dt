@@ -18,7 +18,7 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
 import type BibleItem from '../bible-list/BibleItem';
-import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
+import { genBibleItemCopyContextMenuItem } from '../bible-list/bibleItemHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
@@ -137,7 +137,7 @@ function openContextMenu(
                     viewController.setLookupContentFromBibleItem(bibleItem);
                 },
             },
-            ...genBibleItemCopyingContextMenu(bibleItem),
+            genBibleItemCopyContextMenuItem(bibleItem),
             {
                 childBefore: genContextMenuItemIcon('floppy'),
                 menuElement: tran('Save bible item'),

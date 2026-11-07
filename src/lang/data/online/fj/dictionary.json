@@ -4093,5 +4093,7 @@
     "Undo this change": "Vakalesuya na veisau oqo",
     "“{name}” is back as it was before that change.": "Sa lesu tale na “{name}” me vaka a tiko ni bera na veisau ya.",
     "The assistant changed this song.": "Sa veisautaka na sere oqo na dauveivuke.",
-    "Load the change": "Vakacuruma na veisau"
+    "Load the change": "Vakacuruma na veisau",
+    "Create Lyric": "Bulia na Sere",
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Na tikina yadua ni iVolatabu ena yaco me tikina ni sere, ka dua na laini me baleta na iVolatabu yadua e digitaki"
 }
