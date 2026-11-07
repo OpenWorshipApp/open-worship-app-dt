@@ -1007,7 +1007,13 @@ Notes that save time on this subsystem:
   `getBoundingClientRect()` on adjacent `.ol-preview-lyric-segment__text` nodes; they are
   strictly adjacent, never overlapping.
 - **Slide 1 of a lyric is its `First` card, slide 2 the whole-song info card** and slide 3 is
-  deliberately blank (`OPEN_LYRIC_NONE_KEY`). An empty-looking card there is intentional.
+  deliberately blank (`OPEN_LYRIC_NONE_KEY`). An empty-looking card there is intentional, and
+  so is the one right after the song's last part (before any attachment slide): a song with
+  parts ends on a blank too (2026-11-07, `extendExtraSlide`).
+- **A lyric band taller than the stage's Slide Margin allows is intentional** (2026-11-07): a
+  part or Info card that does not fit its box grows the box into the margin, from the edge
+  Position sets it against (`lyricBoxGrowHelpers.ts`). Its tile then carries an inline
+  `height` above the box's and a `translateY`; content cut while room remains IS a bug.
 - Lyric slide markup carries a **full computed-style dump per node** (~464 KB for one
   chorus). It comes from `open-lyric`, not this repo — worth flagging as a performance
   Info finding, not fixable in `src/`.

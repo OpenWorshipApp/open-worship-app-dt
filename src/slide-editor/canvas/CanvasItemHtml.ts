@@ -24,6 +24,9 @@ export function genHtmlDefaultProps(): HtmlPropsType {
 }
 export type HtmlPropsType = TextStylePropsType & {
     html: string;
+    // A song's part only: the px of slide above and below the box it may grow
+    // into when the part is taller than the box (`lyricBoxGrowHelpers`).
+    lyricGrowRoom?: { up: number; down: number };
 };
 export type CanvasItemHtmlPropsType = { type: 'html' } & CanvasItemPropsType &
     HtmlPropsType;

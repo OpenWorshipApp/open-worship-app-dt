@@ -89,9 +89,11 @@ function genFormControlFontCss(fontFamily?: string) {
  * right, so only the left corners stayed round. Unshrunk it keeps the size it
  * was laid out at and sits centred on the item, as large as its box.
  *
- * `border-radius` — the part's own radius (open-lyric's `.85rem`): a part
- * taller than its box is still cut at the tile's bottom, and now that cut is
- * rounded too, rather than two square corners under two round ones.
+ * `border-radius` — the part's own radius (open-lyric's `.85rem`), so the
+ * tile's corners match the part's. A part taller than its box is no longer
+ * cut at the tile's bottom: the page grows the tile into the room around the
+ * box (`lyricBoxGrowHelpers`); only where there is no room left is it cut,
+ * and then the cut is rounded too.
  *
  * Both are resolved and written inline with the markup, so they hold on the
  * screen and in the previewer's shadow root alike.

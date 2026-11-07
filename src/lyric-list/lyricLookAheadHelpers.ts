@@ -331,6 +331,9 @@ function toLookAheadItem<T extends LookAheadItemType>(
         width: Math.round(item.width * scale),
         height: Math.round(item.height * scale),
     };
+    // A box beside other boxes has no room of its own to grow into
+    // (`lyricBoxGrowHelpers`): the slide's room is not this box's.
+    delete (scaledItem as { lyricGrowRoom?: unknown }).lyricGrowRoom;
     if (item.type === 'html' && typeof item.html === 'string') {
         scaledItem.html = genLookAheadBoxHtml(
             item.html,

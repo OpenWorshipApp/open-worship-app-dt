@@ -78,6 +78,8 @@ const mocks = vi.hoisted(() => {
         genPptxSlide: vi.fn(),
         genDocxSlide: vi.fn(),
         genSlideHtml: vi.fn(),
+        // Records whether the slide was on the page when it was grown.
+        growLyricBoxes: vi.fn((_root: ParentNode) => {}),
         getBibleFontFamily: vi.fn(async () => 'TestFont'),
         showSimpleToast: vi.fn(),
         playMediaElement: vi.fn(),
@@ -130,6 +132,10 @@ const mocks = vi.hoisted(() => {
 
 // A slide's own transition is read from a sidecar beside its document on
 // the presenter; none here, so every slide follows the screen's effect.
+vi.mock('../../lyric-list/lyricBoxGrowHelpers', () => ({
+    growLyricBoxes: mocks.growLyricBoxes,
+}));
+
 vi.mock('./screenSlideTransitionHelpers', () => ({
     resolveSlideTransitionEffect: async () => undefined,
 }));
@@ -1485,6 +1491,40 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         );
 
         manager.div = null;
+    });
+
+    test("a song's part on a screen is grown once the slide is on the page", async () => {
+        detachAllManagerDivs();
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(82),
+            createEffectManager(),
+        );
+        const host = document.createElement('div');
+        document.body.append(host);
+        manager.div = host;
+        const content = document.createElement('div');
+        mocks.genSlideHtml.mockReturnValue(content);
+        let isOnPage: boolean | null = null;
+        mocks.growLyricBoxes.mockImplementation((root: ParentNode) => {
+            isOnPage = (root as HTMLElement).isConnected;
+        });
+        manager.varySlideData = {
+            filePath: '/songs/grace.owl',
+            itemJson: {
+                id: 1,
+                canvasItems: [],
+                metadata: { width: 640, height: 360 },
+            },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        mocks.growLyricBoxes.mockClear();
+        await manager.render();
+        // Laid out only once attached: a detached slide measures as zero.
+        expect(mocks.growLyricBoxes).toHaveBeenCalledWith(content);
+        expect(isOnPage).toBe(true);
+        manager.div = null;
+        host.remove();
     });
 
     test('native item transitions use an unanimated slide host and clear through the items', async () => {

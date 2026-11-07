@@ -25,6 +25,7 @@ import {
     type CanvasItemPropsType,
 } from '../slide-editor/canvas/CanvasItem';
 import { getLyricStageStyle } from './lyricStageStyleHelpers';
+import { type LyricGrowRoomType } from './lyricBoxGrowHelpers';
 import { resolveLiveOpenLyric } from './lyricWarmSlidesHelpers';
 import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
@@ -194,10 +195,13 @@ export default class LyricAppDocument extends AppDocument {
 
     // `canvasItemBounds` for the same reason as `genCanvasItemBoundsProps`'s:
     // a whole song builds one of these per verse, and per look-ahead box.
+    // `lyricGrowRoom` only for a part drawn in the stage's own box, never for
+    // a look-ahead box laid beside others.
     genCanvasItemHtmlProps(
         id: number,
         html: string,
         canvasItemBounds = this.canvasItemBounds,
+        lyricGrowRoom?: LyricGrowRoomType,
     ) {
         const canvasItemProps: CanvasItemHtmlPropsType = {
             ...genHtmlDefaultProps(),
@@ -205,7 +209,31 @@ export default class LyricAppDocument extends AppDocument {
             html,
             type: 'html',
         };
+        if (lyricGrowRoom !== undefined) {
+            canvasItemProps.lyricGrowRoom = lyricGrowRoom;
+        }
         return canvasItemProps;
+    }
+
+    /**
+     * The slide left above and below the stage's box: a part taller than the
+     * box grows into it (`lyricBoxGrowHelpers`), so the stage's Position
+     * decides which way -- up from the bottom, down from the top, both ways
+     * from the centre -- and the slide's edge is the limit.
+     */
+    genLyricGrowRoom(
+        displayDim: { height: number },
+        canvasItemBounds: { y: number; height: number },
+    ): LyricGrowRoomType {
+        return {
+            up: Math.max(0, canvasItemBounds.y),
+            down: Math.max(
+                0,
+                displayDim.height -
+                    canvasItemBounds.y -
+                    canvasItemBounds.height,
+            ),
+        };
     }
 
     // Single construction point for every LyricSlide. `displayDim` hits
@@ -267,6 +295,7 @@ export default class LyricAppDocument extends AppDocument {
                   )
                 : '',
             canvasItemBounds,
+            this.genLyricGrowRoom(displayDim, canvasItemBounds),
         );
         return this.genLyricSlide(
             i,
@@ -308,10 +337,21 @@ export default class LyricAppDocument extends AppDocument {
             this.genSlide(OPEN_LYRIC_INFO_KEY, 1, dataMap, displayDim),
             this.genLyricSlide(2, OPEN_LYRIC_NONE_KEY, [], displayDim),
         ];
-        const newSlides = [...extraSlides, ...slides].map((slide, i) => {
-            slide.id = i;
-            return slide;
-        });
+        // A blank after the song's last part too, as after its title: the
+        // words leave the screen when the song ends, before any attachment.
+        // Added here, which both the full deck and the quick list go through,
+        // so an id names the same slide in each. A song with no parts already
+        // ends on the None above.
+        const endSlides: LyricSlide[] =
+            slides.length > 0
+                ? [this.genLyricSlide(-1, OPEN_LYRIC_NONE_KEY, [], displayDim)]
+                : [];
+        const newSlides = [...extraSlides, ...slides, ...endSlides].map(
+            (slide, i) => {
+                slide.id = i;
+                return slide;
+            },
+        );
         return newSlides;
     }
 

@@ -153,7 +153,7 @@ function LyricAtomModeButtonComp({
             type="button"
             className={
                 'btn btn-sm stage-previewer-atom-mode btn-' +
-                (isAtomMode ? 'secondary' : 'outline-secondary')
+                (isAtomMode ? 'info' : 'outline-secondary')
             }
             title={label}
             aria-pressed={isAtomMode}

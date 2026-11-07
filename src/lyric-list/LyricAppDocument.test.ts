@@ -266,6 +266,48 @@ describe('LyricAppDocument', () => {
             html: '<b>Verse</b>',
             type: 'html',
         });
+        // Only a part in the stage's own box is given room to grow.
+        expect(
+            document.genCanvasItemHtmlProps(6, '<b>Verse</b>', BOUNDS as any),
+        ).not.toHaveProperty('lyricGrowRoom');
+        expect(
+            document.genCanvasItemHtmlProps(6, '<b>Verse</b>', BOUNDS as any, {
+                up: 11,
+                down: 0,
+            }),
+        ).toMatchObject({ lyricGrowRoom: { up: 11, down: 0 } });
+    });
+
+    test('a part may grow into the slide left above and below its box', () => {
+        const document = new LyricAppDocument(FILE_PATH);
+        // A box at the bottom: all the room is above it.
+        expect(
+            document.genLyricGrowRoom(DISPLAY_DIM, { y: 864, height: 216 }),
+        ).toEqual({ up: 864, down: 0 });
+        expect(
+            document.genLyricGrowRoom(DISPLAY_DIM, { y: 0, height: 216 }),
+        ).toEqual({ up: 0, down: 864 });
+        expect(document.genLyricGrowRoom(DISPLAY_DIM, BOUNDS)).toEqual({
+            up: 11,
+            down: 11,
+        });
+        // A box taller than the slide has none, never a negative.
+        expect(
+            document.genLyricGrowRoom(DISPLAY_DIM, { y: 0, height: 2000 }),
+        ).toEqual({ up: 0, down: 0 });
+
+        const slide = document.genSlide(
+            'chorus',
+            4,
+            { chorus: '<i>Sing</i>' },
+            DISPLAY_DIM,
+            -1,
+            null,
+            BOUNDS,
+        );
+        expect((slide as any).props.canvasItems[0]).toMatchObject({
+            lyricGrowRoom: { up: 11, down: 11 },
+        });
     });
 
     test('wraps source markup in a lyric slide and uses empty markup for a cache miss', () => {
@@ -304,7 +346,7 @@ describe('LyricAppDocument', () => {
         });
     });
 
-    test('adds first, info, and none slides before the song and renumbers all slides', () => {
+    test('adds first, info, and none slides before the song, a none after it, and renumbers all slides', () => {
         const document = new LyricAppDocument(FILE_PATH);
         const songSlide = document.genLyricSlide(9, 'verse', [], DISPLAY_DIM);
         const firstItem = { id: 10, type: 'html' } as any;
@@ -315,12 +357,13 @@ describe('LyricAppDocument', () => {
             firstItem,
         );
 
-        expect(slides.map((slide) => slide.id)).toEqual([0, 1, 2, 3]);
+        expect(slides.map((slide) => slide.id)).toEqual([0, 1, 2, 3, 4]);
         expect(slides.map((slide) => slide.openLyricKey)).toEqual([
             OPEN_LYRIC_FIRST_KEY,
             OPEN_LYRIC_INFO_KEY,
             OPEN_LYRIC_NONE_KEY,
             'verse',
+            OPEN_LYRIC_NONE_KEY,
         ]);
         // `LyricSlide` is mocked above with a `props` field the real class does
         // not have, so the runtime shape is read through a cast.
@@ -332,6 +375,20 @@ describe('LyricAppDocument', () => {
             'About the song',
         );
         expect(mockedSlides[2].props.canvasItems).toEqual([]);
+        expect(mockedSlides[4].props.canvasItems).toEqual([]);
+        expect(slides[4]).toMatchObject({ openLyricIndex: -1 });
+    });
+
+    test('a song with no parts gets no second none', () => {
+        const document = new LyricAppDocument(FILE_PATH);
+
+        const slides = document.extendExtraSlide([], {});
+
+        expect(slides.map((slide) => slide.openLyricKey)).toEqual([
+            OPEN_LYRIC_FIRST_KEY,
+            OPEN_LYRIC_INFO_KEY,
+            OPEN_LYRIC_NONE_KEY,
+        ]);
     });
 
     test('uses the live preview instance and loads the file only on a cold miss', async () => {
@@ -361,6 +418,7 @@ describe('LyricAppDocument', () => {
             OPEN_LYRIC_INFO_KEY,
             OPEN_LYRIC_NONE_KEY,
             'verse-a',
+            OPEN_LYRIC_NONE_KEY,
         ]);
         expect(slides[3]).toMatchObject({ openLyricIndex: 2 });
         await expect(document.getSlides()).resolves.toEqual(slides);
@@ -387,17 +445,18 @@ describe('LyricAppDocument', () => {
         expect(mocks.expandLyricAtomSteps).toHaveBeenCalledWith(steps, {
             'verse-a': 2,
         });
-        expect(slides.map((slide) => slide.id)).toEqual([0, 1, 2, 3, 4]);
+        expect(slides.map((slide) => slide.id)).toEqual([0, 1, 2, 3, 4, 5]);
         expect(slides.slice(3)).toMatchObject([
             { openLyricIndex: 2, openLyricLine: { index: 0, count: 2 } },
             { openLyricIndex: 2, openLyricLine: { index: 1, count: 2 } },
+            { openLyricKey: OPEN_LYRIC_NONE_KEY, openLyricIndex: -1 },
         ]);
 
         // The toggle lists the deck under the OTHER mode by asking for it.
         mocks.expandLyricAtomSteps.mockClear();
         const wholeSlides = await document.getSlidesQuick(false);
         expect(mocks.expandLyricAtomSteps).not.toHaveBeenCalled();
-        expect(wholeSlides).toHaveLength(4);
+        expect(wholeSlides).toHaveLength(5);
         expect(wholeSlides[3]).toMatchObject({ openLyricLine: null });
         mocks.getIsLyricAtomMode.mockReturnValue(false);
     });

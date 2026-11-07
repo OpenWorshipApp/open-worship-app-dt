@@ -31,8 +31,9 @@ type QuickSlideType = Pick<
  * First, Info and None lead every deck, so they keep their ids. A part's slide
  * goes to the same Structure step and the same play of it: the same line when
  * the new deck has one, else the step's first slide (the whole part, or its
- * first line). The attachment slides follow the song's own and are not in a
- * quick list, so they move by however much the deck grew or shrank.
+ * first line). The blank that closes the song comes after its parts, and the
+ * attachment slides after that (not in a quick list), so both move by however
+ * much the deck grew or shrank.
  */
 export function mapLyricSlideIdAcrossAtomMode(
     oldList: QuickSlideType[],
@@ -40,11 +41,15 @@ export function mapLyricSlideIdAcrossAtomMode(
     id: number,
 ) {
     const oldSlide = oldList.find((slide) => slide.id === id);
+    const shiftedId = id - oldList.length + newList.length;
     if (oldSlide === undefined) {
-        return id >= oldList.length ? id - oldList.length + newList.length : id;
+        return id >= oldList.length ? shiftedId : id;
     }
     if (oldSlide.openLyricIndex < 0) {
-        return id;
+        const isAfterParts = oldList.some((slide) => {
+            return slide.openLyricIndex >= 0 && slide.id < id;
+        });
+        return isAfterParts ? shiftedId : id;
     }
     const repeatIndex = oldSlide.openLyricRepeat?.index ?? -1;
     const stepSlides = newList.filter((slide) => {

@@ -211,6 +211,28 @@ function toContentList<T extends { type: string }>(itemsList: T[][]) {
 }
 
 describe('genLookAheadItemsList', () => {
+    test('a box beside other boxes takes no room to grow from its slide', () => {
+        const part: ReturnType<typeof genItem> & {
+            lyricGrowRoom?: { up: number; down: number };
+        } = {
+            ...genItem('html', '<p>Verse 1</p>'),
+            lyricGrowRoom: { up: 19, down: 19 },
+        };
+        const itemsList = genLookAheadItemsList(
+            [[part], [part]],
+            BOUNDS,
+            genRowArrangement([1]),
+            genFrame,
+        );
+        for (const items of itemsList) {
+            for (const item of items) {
+                expect(item).not.toHaveProperty('lyricGrowRoom');
+            }
+        }
+        // The slide's own item is left as it was.
+        expect(part.lyricGrowRoom).toEqual({ up: 19, down: 19 });
+    });
+
     // The deck as a stage builds it: First (a picture), Info, None (empty),
     // then the sections.
     const deck = [

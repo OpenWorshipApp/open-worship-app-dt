@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: da5728a5-2e42-4a20-8512-65b8dc76a945
-  modified: 2026-11-07T19:53:48.092Z
+  modified: 2026-11-07T20:41:35.336Z
 ---
 
 Lyric documents (`src/lyric-list/`) are **not** ordinary slide documents. A
@@ -187,8 +187,8 @@ Things that bite:
     put up again (`lyricAtomModeScreenHelpers.ts`): where it goes is read
     from both quick lists BEFORE the switch is written, and applied after.
     It goes to the same step and play, line 0 on and the whole part off;
-    First/Info/None keep ids 0-2, and attachment ids shift by the change in
-    length. A locked screen is left alone, as is one whose slide changed
+    First/Info/None keep ids 0-2; the closing None and the attachment ids
+    shift by the change in length. A locked screen is left alone, as is one whose slide changed
     meanwhile. Presenter only. NOT handled: a Presenting Flow row stores a
     lyric slide by id, so after a flip it names whatever is now at that id,
     as after an edit to the Structure.
@@ -197,6 +197,46 @@ Things that bite:
     64, Stage 0 and Stage 1 panes card for card; a single line sits centred
     in stage 0's box and at the top of stage 1's, as each stage lays a part
     out.
+
+- **A song ends on a blank too (2026-11-07).** Asked for with the gap after
+  the last part circled: _add a blank slide after last lyric element like
+  after title_. `extendExtraSlide` appends a `None` (`openLyricIndex -1`)
+  after the parts, before the attachments, only when there is a part. It
+  lives there because the full deck AND the quick list both go through it,
+  so an id still means one slide in each; the look-ahead keeps it among the
+  song's slides (its key is an extra key), so the last part shows an empty
+  box coming next. So a non-part slide is no longer always a LEADING one:
+  `mapLyricSlideIdAcrossAtomMode` moves one that comes after a part by the
+  change in length. A Presenting Flow row holding an attachment by id points
+  one slide earlier than before after this change, as after a Structure edit.
+
+- **A part taller than its box GROWS the box, never cut (2026-11-07).** The
+  user: _I don't want any cut content_; asked shrink-the-words or
+  grow-the-box, chose GROW, done in this app (not an open-lyric option).
+  open-lyric draws a part in a tile of the box's size, `overflow: hidden`,
+  and writes every element's px `width`/`height` inline (its serializer's
+  `bi` set: always written), so the markup cannot re-flow, and no option
+  fits it. `lyricBoxGrowHelpers.ts` (a leaf) grows the tile on the PAGE:
+  `genSlide` stamps `lyricGrowRoom` = the slide above and below the box
+  (Position decides the direction, the slide's edge the limit) and
+  `BoxEditorNormalHtmlRenderComp` writes it as `data-lyric-grow-room`, which
+  DOMPurify keeps. Two callers: that component's layout effect (batched per
+  commit in a microtask) and `ScreenVaryAppDocumentManager` right after it
+  appends a slide, since `genSlideHtml` is a static render with no effects.
+  What the live DOM taught (read over raw CDP):
+  - `scrollHeight` alone is wrong both ways. A part's body centres its lines
+    with plain `justify-content: center`, so the half that overflows ABOVE
+    is never scrollable. In Atom Mode the lines box keeps the WHOLE part's
+    frozen height (388px around one line), so every line card "overflows"
+    while its line fits. So the frozen boxes (the section and two levels
+    under it) are set `height: auto`, the tile re-read, and a part that fits
+    after all gets its frozen heights back exactly.
+  - Khmer marks ink past their boxes (the Info title: box 112px, ink 144px),
+    and the Info card centres (`safe center`), so only half the growth lands
+    under it. The need is natural height + 2 × what still scrolls + 1px.
+    Live: stage 0, ↕ 80, Bottom center, Info 187 → 231px, 0px cut.
+  - Not grown: look-ahead boxes (`toLookAheadItem` drops the room; the tile
+    is wrapped there) and the slide PDF print (static, never on a page).
 
 Every other document kind has stages too, drawn at render time instead of
 rewriting slides; the Stage Previewer header is shared

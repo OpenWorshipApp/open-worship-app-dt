@@ -22,9 +22,9 @@ type StageClassType = abstract new (
     ...args: any[]
 ) => LyricAppDocumentStageAbstract;
 
-// The song's own slides only — First, Info, None and the sections — which
-// lead the deck. The attachment slides after them keep their full size: they
-// are media, not words to sing.
+// The song's own slides only — First, Info, None, the sections and the None
+// that closes the song — which lead the deck. The attachment slides after them
+// keep their full size: they are media, not words to sing.
 function applyLookAhead(
     lyricAppDocument: LyricAppDocumentStageAbstract,
     slides: LyricSlide[],

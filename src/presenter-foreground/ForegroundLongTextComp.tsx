@@ -517,7 +517,7 @@ function LongTextLyricSourceComp({
                         type="button"
                         className={
                             'btn btn-sm btn-' +
-                            (isCardView ? 'secondary' : 'outline-secondary')
+                            (isCardView ? 'info' : 'outline-secondary')
                         }
                         title={viewLabel}
                         aria-label={viewLabel}
@@ -1282,7 +1282,7 @@ function LongTextBodyComp({
                         type="button"
                         className={
                             'btn btn-sm btn-' +
-                            (isAtomMode ? 'secondary' : 'outline-secondary')
+                            (isAtomMode ? 'info' : 'outline-secondary')
                         }
                         title={atomModeLabel}
                         aria-pressed={isAtomMode}
@@ -1298,7 +1298,7 @@ function LongTextBodyComp({
                         type="button"
                         className={
                             'btn btn-sm btn-' +
-                            (isStacked ? 'secondary' : 'outline-secondary')
+                            (isStacked ? 'info' : 'outline-secondary')
                         }
                         title={stackLabel}
                         aria-pressed={isStacked}
@@ -1314,7 +1314,7 @@ function LongTextBodyComp({
                         type="button"
                         className={
                             'btn btn-sm btn-' +
-                            (isNumberHidden ? 'secondary' : 'outline-secondary')
+                            (isNumberHidden ? 'info' : 'outline-secondary')
                         }
                         title={hideNumberLabel}
                         aria-pressed={isNumberHidden}

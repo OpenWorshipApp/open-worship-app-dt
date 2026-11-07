@@ -35,7 +35,8 @@ export default class LyricSlide extends Slide {
     openLyricKey: string;
     // Position in the song's own structure, which is what the lyric previewer
     // counts in. `-1` for a slide that has no verse of its own to point back at
-    // — the three extra slides (First/Info/None) and the attachment slides.
+    // — the extra slides (First/Info/None, and the None after the last part)
+    // and the attachment slides.
     // Every copy of a repeated step (`Cx3`) shares its step's index.
     openLyricIndex: number;
     // Which play of a repeated step (`Cx3`) this slide is; `null` otherwise.

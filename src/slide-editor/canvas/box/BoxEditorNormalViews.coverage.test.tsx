@@ -436,6 +436,81 @@ describe('BoxEditor normal view components', () => {
         expect(container?.querySelector('[onload],strong')).toBeNull();
     });
 
+    test("a song's part is stamped with its room and grown once rendered", async () => {
+        // jsdom lays nothing out: the reads the grow makes answer as a
+        // browser would for a part needing 226px in a 187px box.
+        const descriptors = {
+            offsetHeight: Object.getOwnPropertyDescriptor(
+                HTMLElement.prototype,
+                'offsetHeight',
+            ),
+            clientHeight: Object.getOwnPropertyDescriptor(
+                Element.prototype,
+                'clientHeight',
+            ),
+            scrollHeight: Object.getOwnPropertyDescriptor(
+                Element.prototype,
+                'scrollHeight',
+            ),
+        };
+        Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+            configurable: true,
+            get(this: HTMLElement) {
+                return this.style.height === 'auto'
+                    ? 226
+                    : Number.parseFloat(this.style.height) || 0;
+            },
+        });
+        // The section: 179px drawn, its part reaching 220px; let go, 218px.
+        Object.defineProperty(Element.prototype, 'clientHeight', {
+            configurable: true,
+            get(this: HTMLElement) {
+                return this.style?.height === 'auto'
+                    ? 218
+                    : Number.parseFloat(this.style?.height) || 0;
+            },
+        });
+        Object.defineProperty(Element.prototype, 'scrollHeight', {
+            configurable: true,
+            get(this: HTMLElement) {
+                return this.style?.height === 'auto' ? 218 : 220;
+            },
+        });
+        try {
+            canvasItemPropsState.value = {
+                ...canvasItemPropsState.value,
+                html:
+                    '<div class="ol-song-view__section-tile" style="height: 187px;">' +
+                    '<section style="height: 179px;"><p>Title</p></section></div>',
+                lyricGrowRoom: { up: 747, down: 0 },
+            };
+            await render(<BoxEditorNormalHtmlRenderComp />);
+            const box = container?.querySelector('[data-lyric-grow-room]');
+            expect(box?.getAttribute('data-lyric-grow-room')).toBe('747,0');
+            const tile = box?.firstElementChild as HTMLElement;
+            expect(tile.style.height).toBe('227px');
+            expect(tile.style.transform).toBe('translateY(-20px)');
+        } finally {
+            for (const [name, descriptor] of Object.entries(descriptors)) {
+                const owner =
+                    name === 'offsetHeight'
+                        ? HTMLElement.prototype
+                        : Element.prototype;
+                if (descriptor === undefined) {
+                    delete (owner as any)[name];
+                } else {
+                    Object.defineProperty(owner, name, descriptor);
+                }
+            }
+        }
+    });
+
+    test('any other html is not stamped', async () => {
+        await render(<BoxEditorNormalHtmlRenderComp />);
+        expect(container?.querySelector('strong')?.textContent).toBe('Markup');
+        expect(container?.querySelector('[data-lyric-grow-room]')).toBeNull();
+    });
+
     test('reuses sanitized HTML during layout changes and refreshes it on content edits', async () => {
         const sanitizeSpy = vi.spyOn(sanitizeHelpers, 'sanitizeHtml');
         try {

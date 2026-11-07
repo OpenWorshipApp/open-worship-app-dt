@@ -17,13 +17,15 @@ workflowsVersion: "2026-11-07"
    list is ever highlighted, so picking a song releases whatever was selected before.
    Those two show how the song will look on the screen; nothing reaches the screen
    until you click a verse. 📸
-2. **Click** a verse to send it to the screen.
+2. **Click** a verse to send it to the screen. After the song's last verse comes an empty
+   **None** slide, just like the one after its title: click it when the song ends and the
+   words leave the screen.
 3. Press **F8** / the clear button to take it down.
 4. To attach links to a song — web addresses, or files on this computer written
    `file:///C:/…` — open it in the **Lyric Editor** (right-click the song →
    **[en:tran:Edit]**) and add an **`- Attachments:`** field to its `ol:Config` block, one
    link per line. Each link also becomes its **own slide at the end** of the Stage Previewer,
-   named after the link. A YouTube link becomes a playable video, an image / video /
+   after that closing blank, named after the link. A YouTube link becomes a playable video, an image / video /
    audio link becomes that media, and any other web address becomes the page itself;
    each fills the whole slide. Present one the same way you present a verse. A link to
    a file on this computer works too (written `file:///C:/…`), which is how a chart or
@@ -50,7 +52,9 @@ workflowsVersion: "2026-11-07"
    **[en:tran:Position]** is a pad of nine dots for where that box sits: **[en:tran:Middle center]**, lit to
    start with, shares the margin out evenly; any other dot moves the same box until it touches
    the edges it names — **[en:tran:Bottom center]** with ↕ at 77 puts the lyrics in a band over the
-   bottom quarter of the screen. Then
+   bottom quarter of the screen. A verse — or the song's title card — that needs more room
+   than that box is **never cut**: its box grows into the margin, up from a box at the bottom,
+   down from one at the top, both ways from the middle, as far as the screen's edge. Then
    **[en:tran:Background Opacity (%)]**, **[en:tran:Extra Font Size]**, a **[en:tran:Light]/[en:tran:Dark]** theme, and a
    **[en:tran:Custom CSS]** box for anything else — empty, it shows in grey the CSS the stage already
    uses, and the ✎ beside its name (**[en:tran:Edit a copy of the stage's CSS]**) puts a copy of that in

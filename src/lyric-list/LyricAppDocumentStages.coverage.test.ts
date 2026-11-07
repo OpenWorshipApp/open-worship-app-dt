@@ -251,6 +251,7 @@ function genStageDoc(stage: number, filePath = genSongPath()) {
     return { doc, openLyric, filePath };
 }
 
+// The blank that closes the song follows its last part, before attachments.
 const SONG_SLIDE_NAMES = [
     'First',
     'Info',
@@ -258,6 +259,7 @@ const SONG_SLIDE_NAMES = [
     '(1)-Verse 1',
     '(2)-Chorus (1/2)',
     '(2)-Chorus (2/2)',
+    'None',
 ];
 
 function genLyricSlideJson(stage: number, overrides: object = {}) {
@@ -411,9 +413,10 @@ describe('stage documents', () => {
             'Chord Chart',
         ]);
         expect(slides.map((slide: any) => slide.id)).toEqual([
-            0, 1, 2, 3, 4, 5, 6,
+            0, 1, 2, 3, 4, 5, 6, 7,
         ]);
         expect(slides[0].canvasItemsJson).toEqual([]);
+        expect(slides[6].canvasItemsJson).toEqual([]);
         expect(slides[3].canvasItemsJson[0].html).toBe(
             '<div class="verse">Amazing grace</div>',
         );
@@ -456,7 +459,8 @@ describe('stage documents', () => {
         expect(slides[5].canvasItemsJson[0].html).toContain(
             'Chorus (2/2) · 2/2',
         );
-        expect(slides[6].canvasItemsJson[0]).toMatchObject({
+        expect(slides[6].canvasItemsJson).toEqual([]);
+        expect(slides[7].canvasItemsJson[0]).toMatchObject({
             type: 'image',
             link: 'https://example.com/chart.png',
         });
@@ -520,10 +524,14 @@ describe('stage documents', () => {
         const chorus = await doc.getSlideById(5);
         expect(chorus.id).toBe(5);
         expect(chorus.name).toBe('(2)-Chorus (2/2)');
+        // The closing blank is in the quick list, so found by its key.
+        const closing = await doc.getSlideById(6);
+        expect(closing.name).toBe('None');
+        expect(closing.id).toBe(6);
         // The attachment slide is numbered after the song's own.
-        const chart = await doc.getSlideById(6);
+        const chart = await doc.getSlideById(7);
         expect(chart.name).toBe('Chord Chart');
-        expect(chart.id).toBe(6);
+        expect(chart.id).toBe(7);
         expect(await doc.getSlideById(99)).toBeNull();
     });
 
@@ -534,7 +542,7 @@ describe('stage documents', () => {
         mocks.initOpenLyric.mockResolvedValue(openLyric);
         const slides = await doc.getSlides();
         expect(mocks.initOpenLyric).toHaveBeenCalledWith(filePath, true);
-        expect(slides).toHaveLength(7);
+        expect(slides).toHaveLength(8);
     });
 });
 
@@ -544,15 +552,15 @@ describe('look-ahead stages', () => {
     }
 
     test.each([
-        // Items per slide: First, Info, None, V1, C1, C2, then the chart.
+        // Items per slide: First, Info, None, V1, C1, C2, None, then the chart.
         // A slide's own items + a frame per box that holds a slide + that
         // slide's text and pictures. None has no items; stage 0's First has
         // no title picture; the chart is media and keeps its single item.
-        [2, LyricAppDocumentStage1, [4, 3, 3, 4, 4, 2, 1]],
-        [3, LyricAppDocumentStage1, [5, 5, 5, 6, 4, 2, 1]],
-        [4, LyricAppDocumentStage0, [3, 3, 3, 4, 4, 2, 1]],
+        [2, LyricAppDocumentStage1, [4, 3, 3, 4, 4, 3, 1, 1]],
+        [3, LyricAppDocumentStage1, [5, 5, 5, 6, 5, 3, 1, 1]],
+        [4, LyricAppDocumentStage0, [3, 3, 3, 4, 4, 3, 1, 1]],
         // Previous AND next: Info's previous box shows First's picture.
-        [5, LyricAppDocumentStage1, [4, 5, 5, 5, 6, 4, 1]],
+        [5, LyricAppDocumentStage1, [4, 5, 5, 5, 6, 5, 3, 1]],
     ])(
         'stage %i shows each song slide with its neighbours, media left alone',
         async (stage, BaseClass, expectedCounts) => {
@@ -565,10 +573,10 @@ describe('look-ahead stages', () => {
                 'Chord Chart',
             ]);
             expect(countItems(slides)).toEqual(expectedCounts);
-            for (const slide of slides.slice(0, 6)) {
+            for (const slide of slides.slice(0, 7)) {
                 expect(checkIsLookAheadItems(slide.canvasItemsJson)).toBe(true);
             }
-            expect(checkIsLookAheadItems(slides[6].canvasItemsJson)).toBe(
+            expect(checkIsLookAheadItems(slides[7].canvasItemsJson)).toBe(
                 false,
             );
         },

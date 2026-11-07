@@ -16,6 +16,7 @@ import {
     WEBSITE_ITEM_ATTR,
 } from '../../helper/constants';
 import { hydrateWebsiteFrames } from './screenWebsiteHelpers';
+import { growLyricBoxes } from '../../lyric-list/lyricBoxGrowHelpers';
 import { playMediaElement } from '../../helper/mediaHelpers';
 import {
     checkMediaPlaying,
@@ -1656,6 +1657,9 @@ class ScreenVaryAppDocumentManager
             transform: `scale(${scale},${scale}) translate(50%, 50%)`,
         });
         div.appendChild(divContainer);
+        // Only now is the slide laid out: a song's part taller than its box
+        // grows into the room around it, before the screen is painted.
+        growLyricBoxes(slideContent);
         const sceneRoot =
             stageContent ?? this.genLyricSceneRoot(slideData, target.content);
         this.stageScene =

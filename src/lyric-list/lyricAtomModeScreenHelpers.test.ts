@@ -29,17 +29,20 @@ type QuickType = {
     openLyricLine: { index: number; count: number } | null;
 };
 
+function genExtraSlide(id: number): QuickType {
+    return {
+        id,
+        openLyricIndex: -1,
+        openLyricRepeat: null,
+        openLyricLine: null,
+    };
+}
+
 // First, Info and None, then the song's own slides from `steps`: each step
-// a structure index, a repeat index (or -1) and how many lines it is.
+// a structure index, a repeat index (or -1) and how many lines it is -- then
+// the None that closes a song with any part, as `extendExtraSlide` lists it.
 function genQuickList(steps: [number, number, number][]): QuickType[] {
-    const list: QuickType[] = [0, 1, 2].map((id) => {
-        return {
-            id,
-            openLyricIndex: -1,
-            openLyricRepeat: null,
-            openLyricLine: null,
-        };
-    });
+    const list: QuickType[] = [0, 1, 2].map(genExtraSlide);
     for (const [structureIndex, repeatIndex, lineCount] of steps) {
         for (let index = 0; index < Math.max(1, lineCount); index++) {
             list.push({
@@ -51,6 +54,9 @@ function genQuickList(steps: [number, number, number][]): QuickType[] {
                     lineCount < 2 ? null : { index, count: lineCount },
             });
         }
+    }
+    if (steps.length > 0) {
+        list.push(genExtraSlide(list.length));
     }
     return list;
 }
@@ -89,10 +95,22 @@ describe('mapLyricSlideIdAcrossAtomMode', () => {
         expect(mapLyricSlideIdAcrossAtomMode(ATOM, WHOLE, 9)).toBe(5);
     });
 
-    test('the attachment slides after the song move with its length', () => {
-        // WHOLE has 6 slides, ATOM 10: the first attachment is 6, then 10.
+    test('the None that closes the song stays the last of its slides', () => {
+        // WHOLE ends on 6, ATOM on 10.
         expect(mapLyricSlideIdAcrossAtomMode(WHOLE, ATOM, 6)).toBe(10);
-        expect(mapLyricSlideIdAcrossAtomMode(ATOM, WHOLE, 11)).toBe(7);
+        expect(mapLyricSlideIdAcrossAtomMode(ATOM, WHOLE, 10)).toBe(6);
+    });
+
+    test('a song with no parts has only its leading None', () => {
+        const empty = genQuickList([]);
+        expect(empty).toHaveLength(3);
+        expect(mapLyricSlideIdAcrossAtomMode(empty, empty, 2)).toBe(2);
+    });
+
+    test('the attachment slides after the song move with its length', () => {
+        // WHOLE has 7 slides, ATOM 11: the first attachment is 7, then 11.
+        expect(mapLyricSlideIdAcrossAtomMode(WHOLE, ATOM, 7)).toBe(11);
+        expect(mapLyricSlideIdAcrossAtomMode(ATOM, WHOLE, 12)).toBe(8);
     });
 });
 
@@ -149,6 +167,19 @@ describe('prepareLyricAtomModeScreens', () => {
         );
         // Each screen's slide is read off ITS stage's document.
         expect(h.documents.get(2).getSlideById).toHaveBeenCalledWith(8);
+    });
+
+    test('a screen on the closing None is put on the new closing None', async () => {
+        const manager = genManager({ type: 'lyric-slide', id: 6, stage: 0 });
+        h.managers = [manager];
+        await (
+            await prepareLyricAtomModeScreens(true)
+        )();
+        expect(manager.applyVarySlideData).toHaveBeenCalledWith(
+            expect.objectContaining({
+                itemJson: { type: 'lyric-slide', id: 10, stage: 0 },
+            }),
+        );
     });
 
     test('leaves a locked screen, a slide of no song and First alone', async () => {
