@@ -415,70 +415,14 @@
 // Where the overlay sits, shown rather than described. Two three-button rows
 // and a 330px offset box became one 84px square: a compositing desk asks this
 // question with a nine-cell pad because the answer is a PLACE, and the cell
-// that is lit is where the thing will be.
+// that is lit is where the thing will be. The pad's own styles live with it,
+// in `others/AlignmentPadComp.scss`; the nudge's are here.
 
 .fg-pad {
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
   gap: 4px;
-}
-
-.fg-pad-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  gap: 2px;
-  width: 84px;
-  height: 84px;
-  padding: 3px;
-  background: rgba(var(--bs-info-rgb), 0.05);
-  border: 1px solid var(--app-line);
-  border-radius: 6px;
-}
-
-.fg-pad-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 3px;
-
-  &:hover .fg-pad-dot {
-    opacity: 0.75;
-    transform: scale(1.35);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--bs-info);
-    outline-offset: 1px;
-  }
-}
-
-.fg-pad-dot {
-  width: 5px;
-  height: 5px;
-  background: currentColor;
-  border-radius: 50%;
-  opacity: 0.28;
-  // The only motion here, and it answers a press: the dot the operator is
-  // about to choose grows under the pointer. Nothing moves on its own.
-  transition:
-    transform 0.12s ease,
-    opacity 0.12s ease;
-}
-
-.fg-pad-cell-active {
-  background: rgba(var(--bs-info-rgb), 0.2);
-  border-color: rgba(var(--bs-info-rgb), 0.55);
-
-  .fg-pad-dot {
-    background: var(--bs-info);
-    opacity: 1;
-    transform: scale(1.6);
-  }
 }
 
 // The nudge lives with the pad because an offset IS the position, measured
@@ -518,12 +462,6 @@
       border-color: rgba(var(--bs-info-rgb), 0.55);
       outline: none;
     }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fg-pad-dot {
-    transition: none;
   }
 }
 

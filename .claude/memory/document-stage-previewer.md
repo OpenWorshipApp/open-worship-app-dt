@@ -44,7 +44,7 @@ whole SCREEN (`genDocumentStageLayout` with the screen as the stage area;
 the slide's own box fitted to a screen of another shape left bands above and
 below. A song's slides are already the screen's size, so its look-ahead is laid
 over the whole slide (`displayDim`) instead of inside `canvasItemBounds` -- the
-Slide Padding stays inside each verse's own box.
+Slide Margin (until 2026-11-07 "Slide Padding") stays inside each verse's own box.
 
 Every slide on a counting stage carries its own count -- the coming ones too
 (`StageLookAheadSideType.label`, worked out with the rest on the presenter;

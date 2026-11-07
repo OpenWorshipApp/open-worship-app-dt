@@ -426,7 +426,7 @@ describe('stage documents', () => {
             // The previewer's 20px plus the stage's default +45.
             fontSize: 65,
             width: 1882,
-            height: 1042,
+            height: 1058,
         });
         expect(options.css).toContain('.ol-song-view__section-title');
         const dataMap = await doc.getElementMap(doc.allOpenLyricOptions);
@@ -441,7 +441,7 @@ describe('stage documents', () => {
             type: 'image',
             srcData: TITLE_IMAGE,
             mediaWidth: 1882,
-            mediaHeight: 1042,
+            mediaHeight: 1058,
             locked: false,
         });
         const valueOptions = openLyric.getValue.mock.calls[0][0];

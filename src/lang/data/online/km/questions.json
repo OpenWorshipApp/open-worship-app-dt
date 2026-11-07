@@ -1,6 +1,6 @@
 {
     "lang": "km",
-    "updated": "2026-11-06",
+    "updated": "2026-11-07",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -843,6 +843,10 @@
         "presenter.lyrics.song-add-stage": {
             "en": "How do I add another stage to the Stage Previewer?",
             "text": "តើខ្ញុំបន្ថែមដំណាក់កាលមួយទៀតក្នុងអ្នកមើលជាមុនដំណាក់កាលដោយរបៀបណា?"
+        },
+        "presenter.lyrics.song-atom-mode": {
+            "en": "How do I show a song one line at a time?",
+            "text": "តើខ្ញុំបង្ហាញចម្រៀងម្តងមួយបន្ទាត់ដោយរបៀបណា?"
         },
         "presenter.lyrics.stage-pane-hide": {
             "en": "How do I take a stage away from the Stage Previewer?",

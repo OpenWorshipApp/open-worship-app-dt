@@ -336,6 +336,13 @@ export function genTextStyle(props: TextStylePropsType): CSSProperties {
         // right-to-left slide still inherits its parent.
         direction: props.textDirection,
         padding: `${props.fontSize / 10}px`,
+        // Said here, not left to the page: a slide preview draws inside a
+        // shadow root that Bootstrap's `* { box-sizing: border-box }` never
+        // reaches, so the padding went OUTSIDE the 100% and every box there
+        // came out a padding wider and taller than its frame and shifted right
+        // and down by one — a lyric box's left and top gaps showed bigger than
+        // its right and bottom. `genFittedHtmlBoxLayout` measures this way.
+        boxSizing: 'border-box',
     };
 }
 

@@ -25,11 +25,29 @@ export function genLyricRepeatSuffix(openLyricRepeat: LyricRepeatType | null) {
         : ` (${openLyricRepeat.index + 1}/${openLyricRepeat.count})`;
 }
 
+// Which line of its part an Atom Mode slide is (see `lyricAtomModeHelpers`).
+export type LyricLineType = {
+    // 0-based.
+    index: number;
+    // How many lines the part has -- every stage splits it into this many.
+    count: number;
+};
+
+// The ` · 2/4` an Atom Mode slide carries after its part name and repeat --
+// on the card, and (stage 1 and up) in the slide's own corner badge.
+export function genLyricLineSuffix(openLyricLine?: LyricLineType | null) {
+    return openLyricLine === null || openLyricLine === undefined
+        ? ''
+        : ` · ${openLyricLine.index + 1}/${openLyricLine.count}`;
+}
+
 // Where a single slide sits in the play order — what a slide built from one
 // part needs to be named and badged like its twin in the whole deck.
 export type LyricStepRefType = {
     openLyricIndex: number;
     openLyricRepeat: LyricRepeatType | null;
+    // Atom Mode only: the line of the part this slide is.
+    openLyricLine?: LyricLineType | null;
 };
 
 /**
@@ -42,6 +60,9 @@ export type LyricPlayStepType = {
     // counts in: every copy of a repeated step shares it.
     structureIndex: number;
     repeat: LyricRepeatType | null;
+    // Atom Mode only: which line of the part this slide is. `null` (or
+    // absent) is the whole part.
+    line?: LyricLineType | null;
 };
 
 // open-lyric hands the Structure's `Cx3` back as `repeatText: '3x'` (the same
@@ -89,4 +110,25 @@ export function genLyricPlaySteps(openLyric: {
         }
     });
     return steps;
+}
+
+/**
+ * The play order in Atom Mode: every step is as many slides as its part has
+ * lines (`lineCounts`, from `getLyricAtomLineCounts`), so a `Cx2` of a
+ * four-line Chorus is eight. A part with one line or none -- chords alone, or a
+ * part the song never declares -- stays one slide of the whole part.
+ */
+export function expandLyricAtomSteps(
+    steps: LyricPlayStepType[],
+    lineCounts: Record<string, number>,
+): LyricPlayStepType[] {
+    return steps.flatMap((step): LyricPlayStepType[] => {
+        const count = lineCounts[step.key] ?? 0;
+        if (count < 2) {
+            return [{ ...step, line: null }];
+        }
+        return Array.from({ length: count }, (_, index) => {
+            return { ...step, line: { index, count } };
+        });
+    });
 }

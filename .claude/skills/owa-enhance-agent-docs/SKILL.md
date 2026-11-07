@@ -120,7 +120,7 @@ to `owa-enhance`. This skill files the lead and names where it went.
 | `tools/owa-devtools-mcp/README.md` | humans and agents choosing a tool | — | the tool table |
 | `electron-build/knowledge/` | the in-app 🤖 | built | internal notes indexed to their first 3 000 characters |
 | `.claude/settings.local.json` | this machine's Claude Code | — | personal and untracked: read it, never edit it unasked |
-| `README.md`, `RELEASE.md`, `docs/*.md`, every other tracked `.md` | people | — | read for the same claims since 2026-10-11 (the README named an `npm run` script removed weeks before); not in the knowledge; `TODO.md` / `note.md` are history |
+| `README.md`, `RELEASE.md`, `docs/*.md`, every other tracked `.md` | people | — | read for the same claims since 2026-10-11 (the README named an `npm run` script removed weeks before); not in the knowledge; `TODO.md` is history |
 
 ## Procedure
 

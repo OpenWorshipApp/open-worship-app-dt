@@ -2,8 +2,8 @@
 id: W-05
 title: "Present song lyrics"
 section: "Presenting content"
-verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08]
-screenshots: 5
+verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08]
+screenshots: 6
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-07"
 ---
@@ -41,9 +41,20 @@ workflowsVersion: "2026-11-07"
     the padlocked **[en:tran:Stage] 0** stays. 📸
 7. To change how a stage's slides **look**, click the **⚙** on that stage's chip
    (`Stage 0`, `Stage 3`, …) in the Stage Previewer header. A small **[en:tran:Stage Style]** window
-   opens — drag it anywhere, it remembers where you left it. It sets **[en:tran:Slide Padding (%)]**,
+   opens — drag it anywhere, it remembers where you left it. It sets the
+   **[en:tran:Slide Margin (%)]** — how much of the screen's width (↔) and height (↕) is left around the
+   lyrics' box, from 0 (the box is the whole screen) to 99 — with a ↔ slider for the sides and a ↕
+   one for the top and bottom: while the 🔗 beside them
+   (**[en:tran:Link horizontal and vertical margin]**) is lit, as it is to start with, moving one moves both;
+   press it off to set them apart. The margins decide how big the lyrics' box is; under them,
+   **[en:tran:Position]** is a pad of nine dots for where that box sits: **[en:tran:Middle center]**, lit to
+   start with, shares the margin out evenly; any other dot moves the same box until it touches
+   the edges it names — **[en:tran:Bottom center]** with ↕ at 77 puts the lyrics in a band over the
+   bottom quarter of the screen. Then
    **[en:tran:Background Opacity (%)]**, **[en:tran:Extra Font Size]**, a **[en:tran:Light]/[en:tran:Dark]** theme, and a
-   **[en:tran:Custom CSS]** box for anything else. 📸
+   **[en:tran:Custom CSS]** box for anything else — empty, it shows in grey the CSS the stage already
+   uses, and the ✎ beside its name (**[en:tran:Edit a copy of the stage's CSS]**) puts a copy of that in
+   the box to change. 📸
 8. These settings belong to the **stage**, not to the song — every song you open uses
    them, which is why the panel says _[en:tran:Applies to every song]_. **Every stage number keeps
    its own settings**, so you can leave the projected stage plain, make the chord stage
@@ -55,7 +66,7 @@ workflowsVersion: "2026-11-07"
    under it, 3 the next two, 4 like 2 in the plain look, 5 the previous one top left and
    the next one bottom right. The coming verse is at **full brightness**, not faded, and
    on 2 to 4 the verse sits flush in the screen's top left corner with the next one flush left
-   under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Padding (%)]** says (the padding stays
+   under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Margin (%)]** says (the margin stays
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
 9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
@@ -92,10 +103,20 @@ workflowsVersion: "2026-11-07"
     `[Cm7]`, not `[Cm7b5]`, so write a chord it knows in its place. Put the marked
     line right and the red goes.
 
+13. **One line at a time — [en:tran:Atom Mode].** At the right end of the row under the
+    Stage Previewer header, press **[en:tran:Atom Mode]** and every line of the song becomes a
+    slide of its own: a verse of four lines is four slides, named `(1)-Verse 1 · 1/4` to
+    `(1)-Verse 1 · 4/4`, and a chorus sung twice is its lines twice. A blank line inside a
+    part is an empty slide — a pause. Click a line to send it to the screen. Every stage pane
+    splits the song the same way, so a card is the same line on every stage, and stage 1 and
+    up write the line in the slide's corner too (`Chorus · 1/8 · 2/7`). It is one switch for
+    every song. A song's slide that a screen holds moves to that part's first line when you
+    turn it on, and back to the whole part when you turn it off. 📸
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `XW-08`
+`PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `PM-169` · `XW-08`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-07).
 :::

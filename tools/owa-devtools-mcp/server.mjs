@@ -55,6 +55,38 @@ export function restoreSdkToolCalls(server) {
 }
 
 /**
+ * Closing the SDK server -- what the in-app host does when a session ends,
+ * is swept idle or is pushed out at the cap -- closes chrome-devtools' own
+ * server with it, and so lets go of the session's browser connection.
+ *
+ * Until 1.12 the browser was ONE module-level connection every session
+ * shared; since then each session's `BrowserManager` holds its own, and only
+ * chrome-devtools' `McpServer.close()` disconnects it (never closing the app:
+ * a browser it connected to is disconnected, not closed). The host is handed
+ * the SDK server alone, so each closed session left a CDP connection, with
+ * its page listeners, open in the app's main process -- measured 2026-11-07,
+ * four closed sessions, four connections, growing with every 15-minute idle
+ * sweep of the chatbot's session (`.claude/rules/agent-access.md`).
+ *
+ * chrome-devtools' `close()` closes the SDK half through this very method,
+ * so from the first call on the method is the SDK's own again: the inner call
+ * (and any later one) closes only that, whether it comes synchronously or
+ * after an await.
+ */
+export function closeBrowserWithServer(mcpServer) {
+  const { server } = mcpServer;
+  const closeSdkServer = server.close;
+  let isClosing = false;
+  server.close = async () => {
+    if (isClosing) {
+      return closeSdkServer.call(server);
+    }
+    isClosing = true;
+    await mcpServer.close();
+  };
+}
+
+/**
  * `argv` is chrome-devtools-mcp's own CLI surface (`--headless`, `--viewport`,
  * `--logFile`, ...); anything it does not know is dropped by the caller.
  * `door` is who is on the other end: `app` for the in-app HTTP host (the
@@ -94,7 +126,9 @@ export async function createOwaMcpServer({
   // console has Node. See `devToolsTargets.mjs`.
   skipDevToolsTargets(puppeteer);
   const browserManager = new BrowserManager(config, { logFile });
-  const { server } = await McpServer.from(config, { browserManager, logFile });
+  const mcpServer = await McpServer.from(config, { browserManager, logFile });
+  const { server } = mcpServer;
+  closeBrowserWithServer(mcpServer);
   restoreSdkToolCalls(server);
   registerOwaTools(server, { door });
   // Wrapped here rather than at each transport: the stdio bin and the

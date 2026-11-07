@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+    expandLyricAtomSteps,
+    genLyricLineSuffix,
     genLyricPlaySteps,
     MAX_LYRIC_REPEAT_SLIDES,
     toLyricRepeatCount,
@@ -106,5 +108,58 @@ describe('genLyricPlaySteps', () => {
 
     test('no Config means no slides', () => {
         expect(genLyricPlaySteps(genOpenLyric(null))).toEqual([]);
+    });
+});
+
+describe('expandLyricAtomSteps (Atom Mode)', () => {
+    test('a step is a slide per line of its part, each play of a repeat too', () => {
+        const steps = genLyricPlaySteps(
+            genOpenLyric([
+                ['Verse 1', ''],
+                ['Chorus', '2x'],
+            ]),
+        );
+        const expanded = expandLyricAtomSteps(steps, {
+            'Verse 1': 3,
+            Chorus: 2,
+        });
+        expect(
+            expanded.map(({ key, structureIndex, repeat, line }) => {
+                return [key, structureIndex, repeat?.index ?? null, line];
+            }),
+        ).toEqual([
+            ['Verse 1', 0, null, { index: 0, count: 3 }],
+            ['Verse 1', 0, null, { index: 1, count: 3 }],
+            ['Verse 1', 0, null, { index: 2, count: 3 }],
+            ['Chorus', 1, 0, { index: 0, count: 2 }],
+            ['Chorus', 1, 0, { index: 1, count: 2 }],
+            ['Chorus', 1, 1, { index: 0, count: 2 }],
+            ['Chorus', 1, 1, { index: 1, count: 2 }],
+        ]);
+    });
+
+    test('a part of one line, none, or none known stays the whole part', () => {
+        const steps = genLyricPlaySteps(
+            genOpenLyric([
+                ['Intro', ''],
+                ['Tag', ''],
+                ['Missing', ''],
+            ]),
+        );
+        const expanded = expandLyricAtomSteps(steps, { Intro: 0, Tag: 1 });
+        expect(expanded).toHaveLength(3);
+        expect(
+            expanded.map((step) => {
+                return step.line;
+            }),
+        ).toEqual([null, null, null]);
+    });
+});
+
+describe('genLyricLineSuffix', () => {
+    test('names the line of the part, or nothing for a whole part', () => {
+        expect(genLyricLineSuffix({ index: 1, count: 4 })).toBe(' · 2/4');
+        expect(genLyricLineSuffix(null)).toBe('');
+        expect(genLyricLineSuffix(undefined)).toBe('');
     });
 });

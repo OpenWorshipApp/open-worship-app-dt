@@ -1,9 +1,12 @@
 import type { ChangeEvent, ReactNode } from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useAppCurrentRef } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { tran } from '../lang/langHelpers';
+import AlignmentPadComp, {
+    type AlignmentPadDataType,
+} from '../others/AlignmentPadComp';
 import AppRangeComp from '../others/AppRangeComp';
 import {
     getLyricStageStyle,
@@ -17,9 +20,13 @@ import {
 // Module-level so a fresh literal per render does not re-run `AppRangeComp`'s
 // `[value, defaultSize, fixedSize]` effect on every keystroke elsewhere in the
 // panel. `size` is what the slider starts at; the live value is `value`.
-const PADDING_RANGE = {
-    ...LYRIC_STAGE_STYLE_RANGES.paddingPercentage,
-    size: LYRIC_STAGE_STYLE_DEFAULT.paddingPercentage,
+const MARGIN_HORIZONTAL_RANGE = {
+    ...LYRIC_STAGE_STYLE_RANGES.marginHorizontalPercentage,
+    size: LYRIC_STAGE_STYLE_DEFAULT.marginHorizontalPercentage,
+};
+const MARGIN_VERTICAL_RANGE = {
+    ...LYRIC_STAGE_STYLE_RANGES.marginVerticalPercentage,
+    size: LYRIC_STAGE_STYLE_DEFAULT.marginVerticalPercentage,
 };
 const ALPHA_RANGE = {
     ...LYRIC_STAGE_STYLE_RANGES.backgroundAlphaPercentage,
@@ -37,6 +44,37 @@ const COMMIT_DELAY_MILLISECOND = 500;
 // on stage 1, re-rasterizes the title PNG, so a 500ms timer would fire on every
 // mid-thought pause. Blur commits immediately.
 const COMMIT_CSS_DELAY_MILLISECOND = 1500;
+
+// What the Custom CSS box shows when no stage document is at hand to say what
+// the stage applies.
+const CSS_PLACEHOLDER_EXAMPLE = '.ol-preview-line { letter-spacing: 0.02em; }';
+
+/**
+ * The stage css is written inside template literals, indented for the code
+ * around it: the common indent and the runs of blank lines come off, so the
+ * placeholder — and the copy a press puts in the box — reads like a style
+ * sheet.
+ */
+export function toReadableCss(css: string) {
+    const lines = css.split(/\r?\n/).map((line) => {
+        return line.trimEnd();
+    });
+    const indentList = lines
+        .filter((line) => {
+            return line !== '';
+        })
+        .map((line) => {
+            return line.length - line.trimStart().length;
+        });
+    const indent = indentList.length === 0 ? 0 : Math.min(...indentList);
+    return lines
+        .map((line) => {
+            return line.slice(indent);
+        })
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
 
 function RenderStyleRowComp({
     iconClassName,
@@ -59,6 +97,67 @@ function RenderStyleRowComp({
 }
 
 /**
+ * Slide Margin as two sliders, horizontal over vertical, with the link
+ * toggle beside them — linked by default, so one drag moves both.
+ */
+function RenderMarginRowComp({
+    style,
+    onHorizontalChange,
+    onVerticalChange,
+    onLinkToggle,
+}: Readonly<{
+    style: LyricStageStyleType;
+    onHorizontalChange: (newValue: number) => void;
+    onVerticalChange: (newValue: number) => void;
+    onLinkToggle: () => void;
+}>) {
+    const isLinked = style.isMarginLinked;
+    const linkTitle = tran('Link horizontal and vertical margin');
+    return (
+        <div className="d-flex align-items-center app-border-white-round m-1 px-2 gap-1">
+            <div className="d-flex flex-column">
+                <span className="d-flex align-items-center gap-1 text-nowrap">
+                    <i className="bi bi-arrows-angle-contract" />
+                    <small>{tran('Slide Margin (%)')}</small>
+                </span>
+                <div className="d-flex align-items-center gap-1 ps-1">
+                    <i className="bi bi-arrows" />
+                    <AppRangeComp
+                        value={style.marginHorizontalPercentage}
+                        title={tran('Horizontal Margin (%)')}
+                        setValue={onHorizontalChange}
+                        defaultSize={MARGIN_HORIZONTAL_RANGE}
+                        isShowValue
+                    />
+                </div>
+                <div className="d-flex align-items-center gap-1 ps-1">
+                    <i className="bi bi-arrows-vertical" />
+                    <AppRangeComp
+                        value={style.marginVerticalPercentage}
+                        title={tran('Vertical Margin (%)')}
+                        setValue={onVerticalChange}
+                        defaultSize={MARGIN_VERTICAL_RANGE}
+                        isShowValue
+                    />
+                </div>
+            </div>
+            <button
+                type="button"
+                className={
+                    'btn btn-sm btn' + (isLinked ? '' : '-outline') + '-info'
+                }
+                title={linkTitle}
+                aria-label={linkTitle}
+                aria-pressed={isLinked}
+                onClick={onLinkToggle}
+            >
+                <i className={'bi bi-link' + (isLinked ? '-45deg' : '')} />
+            </button>
+        </div>
+    );
+}
+
+/**
  * The per-stage slide style panel — what the Stage Previewer's gear opens.
  *
  * The controls render from local state, so they stay responsive while the
@@ -67,9 +166,13 @@ function RenderStyleRowComp({
 export default function LyricStageStyleComp({
     stage,
     onChanged,
+    genStageBuiltInCss,
 }: Readonly<{
     stage: number;
     onChanged: () => void;
+    // The css the stage applies before the operator's own, read off its
+    // document. Absent, the box shows a one-line example instead.
+    genStageBuiltInCss?: (stage: number) => string;
 }>) {
     const [style, setStyle] = useState(() => {
         return getLyricStageStyle(stage);
@@ -89,6 +192,14 @@ export default function LyricStageStyleComp({
     const attemptCommitCss = useMemo(() => {
         return genTimeoutAttempt(COMMIT_CSS_DELAY_MILLISECOND);
     }, []);
+    // Once per stage: the panel remounts per stage (`key`), and a drag
+    // re-renders it per pixel, which must not rebuild the stage's options.
+    const builtInCss = useMemo(() => {
+        return toReadableCss(genStageBuiltInCss?.(stage) ?? '');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stage]);
+    const builtInCssRef = useAppCurrentRef(builtInCss);
+    const cssBoxRef = useRef<HTMLTextAreaElement>(null);
 
     const handleChange = useCallback(
         (patch: Partial<LyricStageStyleType>, isImmediate = false) => {
@@ -126,6 +237,24 @@ export default function LyricStageStyleComp({
         [],
     );
 
+    // The placeholder made real: what the stage applies, in the box to be
+    // edited, written at once like a blur — the copy is appended after the
+    // stage's own rules, so it changes nothing until it is edited.
+    const handleEditBuiltInCss = useCallback(() => {
+        const newStyle = {
+            ...styleRef.current,
+            customCss: builtInCssRef.current,
+        };
+        styleRef.current = newStyle;
+        setStyle(newStyle);
+        attemptCommitCss(() => {
+            setLyricStageStyle(stageRef.current, styleRef.current);
+            onChangedRef.current();
+        }, true);
+        cssBoxRef.current?.focus();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const handleCssBlur = useCallback(() => {
         attemptCommitCss(() => {
             setLyricStageStyle(stageRef.current, styleRef.current);
@@ -134,10 +263,68 @@ export default function LyricStageStyleComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const handlePaddingChange = useCallback((newValue: number) => {
-        handleChangeRef.current({ paddingPercentage: newValue });
+    // Linked, one patch moves BOTH sides, so the pair is written in the same
+    // commit and the other slider follows the drag as it happens.
+    const handleMarginHorizontalChange = useCallback((newValue: number) => {
+        handleChangeRef.current(
+            styleRef.current.isMarginLinked
+                ? {
+                      marginHorizontalPercentage: newValue,
+                      marginVerticalPercentage: newValue,
+                  }
+                : { marginHorizontalPercentage: newValue },
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleMarginVerticalChange = useCallback((newValue: number) => {
+        handleChangeRef.current(
+            styleRef.current.isMarginLinked
+                ? {
+                      marginHorizontalPercentage: newValue,
+                      marginVerticalPercentage: newValue,
+                  }
+                : { marginVerticalPercentage: newValue },
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // Linking evens the pair out to the HORIZONTAL value at once, so a linked
+    // pair always reads the same number; unlinking keeps both as they are.
+    const handleMarginLinkToggle = useCallback(() => {
+        const { isMarginLinked, marginHorizontalPercentage } = styleRef.current;
+        handleChangeRef.current(
+            isMarginLinked
+                ? { isMarginLinked: false }
+                : {
+                      isMarginLinked: true,
+                      marginVerticalPercentage: marginHorizontalPercentage,
+                  },
+            true,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // One cell is always lit; Middle center is the default, a margin a side.
+    // Written at once, like the theme: a press is not a drag. The lit cell
+    // pressed again changes nothing, so it writes and re-renders nothing.
+    const handleBoxAlignmentChoose = useCallback(
+        ({ verticalAlignment, horizontalAlignment }: AlignmentPadDataType) => {
+            const current = styleRef.current;
+            if (
+                current.boxVerticalAlignment === verticalAlignment &&
+                current.boxHorizontalAlignment === horizontalAlignment
+            ) {
+                return;
+            }
+            handleChangeRef.current(
+                {
+                    boxVerticalAlignment: verticalAlignment,
+                    boxHorizontalAlignment: horizontalAlignment,
+                },
+                true,
+            );
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const handleAlphaChange = useCallback((newValue: number) => {
         handleChangeRef.current({ backgroundAlphaPercentage: newValue });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -171,16 +358,21 @@ export default function LyricStageStyleComp({
                         {tran('Applies to every song')}
                     </small>
                 </div>
+                <RenderMarginRowComp
+                    style={style}
+                    onHorizontalChange={handleMarginHorizontalChange}
+                    onVerticalChange={handleMarginVerticalChange}
+                    onLinkToggle={handleMarginLinkToggle}
+                />
                 <RenderStyleRowComp
-                    iconClassName="bi bi-arrows-angle-contract"
-                    label={tran('Slide Padding (%)')}
+                    iconClassName="bi bi-grid-3x3"
+                    label={tran('Position')}
                 >
-                    <AppRangeComp
-                        value={style.paddingPercentage}
-                        title={tran('Slide Padding (%)')}
-                        setValue={handlePaddingChange}
-                        defaultSize={PADDING_RANGE}
-                        isShowValue
+                    <AlignmentPadComp
+                        verticalAlignment={style.boxVerticalAlignment}
+                        horizontalAlignment={style.boxHorizontalAlignment}
+                        label={tran('Position')}
+                        onChoose={handleBoxAlignmentChoose}
                     />
                 </RenderStyleRowComp>
                 <RenderStyleRowComp
@@ -242,20 +434,39 @@ export default function LyricStageStyleComp({
                     </div>
                 </RenderStyleRowComp>
                 <div className="m-1 px-1">
-                    <label
-                        className="form-label d-flex align-items-center gap-1 mb-1"
-                        htmlFor="lyric-stage-style-custom-css"
-                    >
-                        <i className="bi bi-code-slash" />
-                        <small>{tran('Custom CSS')}</small>
-                    </label>
+                    <div className="d-flex align-items-center gap-1 mb-1">
+                        <label
+                            className="form-label d-flex align-items-center gap-1 m-0"
+                            htmlFor="lyric-stage-style-custom-css"
+                        >
+                            <i className="bi bi-code-slash" />
+                            <small>{tran('Custom CSS')}</small>
+                        </label>
+                        {/* Only while the box is empty: it is the placeholder
+                            that it makes real, and filled it would overwrite
+                            the operator's own rules. */}
+                        {builtInCss !== '' && style.customCss === '' ? (
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline-info py-0 px-1"
+                                title={tran("Edit a copy of the stage's CSS")}
+                                aria-label={tran(
+                                    "Edit a copy of the stage's CSS",
+                                )}
+                                onClick={handleEditBuiltInCss}
+                            >
+                                <i className="bi bi-pencil-square" />
+                            </button>
+                        ) : null}
+                    </div>
                     <textarea
+                        ref={cssBoxRef}
                         id="lyric-stage-style-custom-css"
                         className="form-control form-control-sm"
                         rows={8}
                         spellCheck={false}
                         style={{ fontFamily: 'monospace' }}
-                        placeholder=".ol-preview-line { letter-spacing: 0.02em; }"
+                        placeholder={builtInCss || CSS_PLACEHOLDER_EXAMPLE}
                         value={style.customCss}
                         onChange={handleCssChange}
                         onBlur={handleCssBlur}

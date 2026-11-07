@@ -1653,10 +1653,14 @@ describe('AboutComp', () => {
         h.mocks.getPptxToHtmlsVersion.mockReturnValue('2.0.1');
         await render(<AboutComp />);
         await vi.waitFor(() => {
-            expect(container.textContent).toContain('Docx to Html Converter (1.4.0)');
+            expect(container.textContent).toContain(
+                'Docx to Html Converter (1.4.0)',
+            );
         });
         await vi.waitFor(() => {
-            expect(container.textContent).toContain('Pptx to Html Converter (2.0.1)');
+            expect(container.textContent).toContain(
+                'Pptx to Html Converter (2.0.1)',
+            );
         });
         expect(container.textContent).toContain('Electron (N/A)');
         expect(container.querySelectorAll('a')[1].textContent).toBe('N/A');

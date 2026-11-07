@@ -30,9 +30,28 @@ import { genLyricReloadContextMenuItem } from './lyricContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import Lyric from './Lyric';
 import {
+    expandLyricAtomSteps,
     genLyricPlaySteps,
+    type LyricLineType,
     type LyricRepeatType,
 } from './lyricStructureHelpers';
+import {
+    getIsLyricAtomMode,
+    getLyricAtomLineCounts,
+} from './lyricAtomModeHelpers';
+
+// Where the box starts along one axis, given the room left beside it (the
+// whole margin of that axis): flush at the start, flush at the end, or
+// centred. Anything unknown is centred, the default.
+function toBoxOffset(alignment: string | undefined, room: number) {
+    if (alignment === 'start' || alignment === 'left') {
+        return 0;
+    }
+    if (alignment === 'end' || alignment === 'right') {
+        return room;
+    }
+    return room / 2;
+}
 
 export const OPEN_LYRIC_NONE_KEY = 'None';
 export const OPEN_LYRIC_FIRST_KEY = 'First';
@@ -45,7 +64,7 @@ export default class LyricAppDocument extends AppDocument {
     public openLyric: OpenLyric | null = null;
 
     /**
-     * How this stage renders its slides — padding, background opacity, font
+     * How this stage renders its slides — margin, background opacity, font
      * boost, theme and the operator's own CSS.
      *
      * These were four hard-coded fields nobody ever assigned, so every song on
@@ -67,6 +86,32 @@ export default class LyricAppDocument extends AppDocument {
 
     stage = 0;
 
+    /**
+     * Every line of a part its own slide (`lyricAtomModeHelpers`). One setting
+     * for every song and stage, read at call time like `stageStyle`.
+     */
+    get isAtomMode() {
+        return getIsLyricAtomMode();
+    }
+
+    /**
+     * The song's play order as this document's slides stand for it: one step
+     * per Structure step (`genLyricPlaySteps`), and in Atom Mode one per LINE
+     * of each step's part. The full deck and the quick list both build from
+     * this, which is what keeps an id meaning the same slide in both.
+     */
+    async genPlaySteps(
+        openLyricPreviewer: OpenLyric,
+        isAtomMode = this.isAtomMode,
+    ) {
+        const playSteps = genLyricPlaySteps(openLyricPreviewer);
+        if (!isAtomMode) {
+            return playSteps;
+        }
+        const lineCounts = await getLyricAtomLineCounts(openLyricPreviewer);
+        return expandLyricAtomSteps(playSteps, lineCounts);
+    }
+
     get displayDim() {
         const display = getDefaultScreenDisplay();
         return { width: display.bounds.width, height: display.bounds.height };
@@ -74,12 +119,34 @@ export default class LyricAppDocument extends AppDocument {
 
     get canvasItemBounds() {
         const { width: displayWidth, height: displayHeight } = this.displayDim;
-        const padding =
-            (displayWidth * this.stageStyle.paddingPercentage) / 100;
-        const x = Math.round(padding);
-        const y = Math.round(padding);
-        const width = Math.round(displayWidth - padding * 2);
-        const height = Math.round(displayHeight - padding * 2);
+        const stageStyle = this.stageStyle;
+        // Each margin is the share of its own axis left outside the box (see
+        // `LyricStageStyleType`), so the box is never bigger than the slide
+        // and never negative, whatever the slider says.
+        const boxWidth =
+            (displayWidth * (100 - stageStyle.marginHorizontalPercentage)) /
+            100;
+        const boxHeight =
+            (displayHeight * (100 - stageStyle.marginVerticalPercentage)) / 100;
+        // The margins give the box its SIZE, which Position never changes;
+        // it only moves it. Middle center (the default) splits the margin
+        // evenly; any other cell slides the same box until it touches the
+        // edge(s) the cell names. Only `x` / `y` move, so the open-lyric
+        // render (sized by `width` / `height`) is never redone.
+        const x = Math.round(
+            toBoxOffset(
+                stageStyle.boxHorizontalAlignment,
+                displayWidth - boxWidth,
+            ),
+        );
+        const y = Math.round(
+            toBoxOffset(
+                stageStyle.boxVerticalAlignment,
+                displayHeight - boxHeight,
+            ),
+        );
+        const width = Math.round(boxWidth);
+        const height = Math.round(boxHeight);
         return {
             x,
             y,
@@ -143,9 +210,10 @@ export default class LyricAppDocument extends AppDocument {
 
     // Single construction point for every LyricSlide. `displayDim` hits
     // `getDefaultScreenDisplay()` on each read, so callers building a whole song
-    // pass it in once instead of paying for it per slide. `openLyricIndex` and
-    // `openLyricRepeat` are last because only the slides that stand for a verse
-    // of the song have them — everything else takes the defaults.
+    // pass it in once instead of paying for it per slide. `openLyricIndex`,
+    // `openLyricRepeat` and `openLyricLine` are last because only the slides
+    // that stand for a verse of the song have them — everything else takes
+    // the defaults.
     genLyricSlide(
         id: number,
         openLyricKey: string,
@@ -153,6 +221,7 @@ export default class LyricAppDocument extends AppDocument {
         displayDim = this.displayDim,
         openLyricIndex = -1,
         openLyricRepeat: LyricRepeatType | null = null,
+        openLyricLine: LyricLineType | null = null,
     ) {
         return new LyricSlide(
             this.filePath,
@@ -169,9 +238,12 @@ export default class LyricAppDocument extends AppDocument {
             openLyricKey,
             openLyricIndex,
             openLyricRepeat,
+            openLyricLine,
         );
     }
 
+    // `srcData` is the part's markup unless the caller hands a piece of it --
+    // one LINE of the part, in Atom Mode.
     genSlide(
         key: string,
         i: number,
@@ -180,8 +252,9 @@ export default class LyricAppDocument extends AppDocument {
         openLyricIndex = -1,
         openLyricRepeat: LyricRepeatType | null = null,
         canvasItemBounds = this.canvasItemBounds,
+        openLyricLine: LyricLineType | null = null,
+        srcData: unknown = dataMap[key],
     ) {
-        const srcData = dataMap[key];
         const canvasItemProps = this.genCanvasItemHtmlProps(
             i,
             typeof srcData === 'string'
@@ -190,6 +263,7 @@ export default class LyricAppDocument extends AppDocument {
                       key,
                       openLyricIndex,
                       openLyricRepeat,
+                      openLyricLine,
                   )
                 : '',
             canvasItemBounds,
@@ -201,6 +275,7 @@ export default class LyricAppDocument extends AppDocument {
             displayDim,
             openLyricIndex,
             openLyricRepeat,
+            openLyricLine,
         );
     }
 
@@ -212,6 +287,7 @@ export default class LyricAppDocument extends AppDocument {
         _openLyricKey: string,
         _openLyricIndex: number,
         _openLyricRepeat: LyricRepeatType | null,
+        _openLyricLine: LyricLineType | null = null,
     ) {
         return html;
     }
@@ -277,10 +353,16 @@ export default class LyricAppDocument extends AppDocument {
     // Must list the same slides, in the same order, as the stage's full
     // `getStageSlides`: ids are positions, and `getSlideById` and the lyric
     // editor's `?id=` both turn an id into a part through this list.
-    async getSlidesQuick() {
+    // `isAtomMode` is a parameter so the Atom Mode toggle can list the deck
+    // as it was and as it will be (`lyricAtomModeScreenHelpers`).
+    async getSlidesQuick(isAtomMode = this.isAtomMode) {
         const openLyricPreviewer = await this.getOpenLyricPreviewer();
+        const playSteps = await this.genPlaySteps(
+            openLyricPreviewer,
+            isAtomMode,
+        );
         const displayDim = this.displayDim;
-        const slides = genLyricPlaySteps(openLyricPreviewer).map((step, i) => {
+        const slides = playSteps.map((step, i) => {
             return this.genLyricSlide(
                 i,
                 step.key,
@@ -288,6 +370,7 @@ export default class LyricAppDocument extends AppDocument {
                 displayDim,
                 step.structureIndex,
                 step.repeat,
+                step.line ?? null,
             );
         });
         return this.extendExtraSlide(slides, {});

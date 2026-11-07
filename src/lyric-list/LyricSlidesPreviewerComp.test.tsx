@@ -25,6 +25,10 @@ const h = vi.hoisted(() => ({
     showAppContextMenu: vi.fn(),
     exportLyricStagesToPptx: vi.fn(),
     genDocumentTransitionMenuItems: vi.fn(),
+    isPagePresenter: true,
+    editingMenuProps: [] as any[],
+    prepareLyricAtomModeScreens: vi.fn(),
+    handleError: vi.fn(),
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -53,8 +57,30 @@ vi.mock('../helper/settingHelpers', async () => {
                 },
             ];
         },
+        useStateSettingBooleanSynced: (key: string, defaultValue: boolean) => {
+            const [value, setValue] = useState(
+                h.settings.has(key)
+                    ? h.settings.get(key) === 'true'
+                    : defaultValue,
+            );
+            return [
+                value,
+                (newValue: boolean) => {
+                    h.calls.push(`set:${newValue}`);
+                    h.settings.set(key, `${newValue}`);
+                    setValue(newValue);
+                },
+            ];
+        },
     };
 });
+vi.mock('./lyricAtomModeHelpers', () => ({
+    LYRIC_ATOM_MODE_SETTING_NAME: 'lyric-slides-atom-mode',
+}));
+vi.mock('./lyricAtomModeScreenHelpers', () => ({
+    prepareLyricAtomModeScreens: h.prepareLyricAtomModeScreens,
+}));
+vi.mock('../helper/errorHelpers', () => ({ handleError: h.handleError }));
 vi.mock('../app-document-list/appDocumentHelpers', async () => {
     const { createContext } = await import('react');
     return { VaryAppDocumentContext: createContext<any>(null) };
@@ -175,6 +201,19 @@ vi.mock('../app-document-presenter/stage/StagePreviewerHeaderComp', () => ({
         );
     },
 }));
+vi.mock('../server/appProvider', () => ({
+    default: {
+        get isPagePresenter() {
+            return h.isPagePresenter;
+        },
+    },
+}));
+vi.mock('../editing-manager/editingHelpers', () => ({
+    FileEditingMenuComp: (props: any) => {
+        h.editingMenuProps.push(props);
+        return createElement('div', { className: 'editing-menu' });
+    },
+}));
 vi.mock('./useLyricWarmSlides', () => ({
     useLyricWarmSlides: (lyricManager: unknown, stages: number[]) => {
         h.warmCalls.push([lyricManager, stages]);
@@ -192,11 +231,14 @@ let root: Root;
 
 function genLyricManager() {
     return {
+        lyric: { filePath: '/songs/grace.owl', name: 'the song itself' },
         filePath: '/songs/grace.owl',
         openLyricPreviewer: { name: 'shared previewer' },
         fileSource: {
             filePath: '/songs/grace.owl',
-            fireUpdateEvent: vi.fn(),
+            fireUpdateEvent: vi.fn(() => {
+                h.calls.push('update');
+            }),
         },
         refreshOpenLyricContent: vi.fn(async () => {
             // Resolves on a later microtask, so an un-awaited call would
@@ -244,6 +286,16 @@ beforeEach(() => {
     h.floatingProps = [];
     h.warmCalls = [];
     h.calls = [];
+    h.isPagePresenter = true;
+    h.editingMenuProps = [];
+    h.handleError.mockReset();
+    h.prepareLyricAtomModeScreens.mockReset();
+    h.prepareLyricAtomModeScreens.mockImplementation(async () => {
+        h.calls.push('prepare');
+        return async () => {
+            h.calls.push('reapply');
+        };
+    });
     h.lyricManager = genLyricManager();
     h.scheduleWarmUp.mockImplementation(() => {
         h.calls.push('warm');
@@ -318,6 +370,105 @@ describe('stage panes', () => {
         });
         expect(h.settings.get(SETTING_NAME)).toBe('1,3');
         expect(getPaneStages()).toEqual([0, 1, 3]);
+    });
+});
+
+describe('history row (Undo / Redo / Discard changed / Save)', () => {
+    test('on the Presenter: ONE row for every stage, driving the song', async () => {
+        h.settings.set(SETTING_NAME, '1,2');
+        await renderPreviewers();
+
+        const rows = container.querySelectorAll(
+            '.stage-previewer-editing-menu > .editing-menu',
+        );
+        expect(rows).toHaveLength(1);
+        // Between the header and the panes, not inside any one stage pane.
+        const row = rows[0].parentElement!;
+        expect(row.previousElementSibling?.tagName).toBe('HEADER');
+        expect(row.nextElementSibling?.className).toContain('card-body');
+        const props = h.editingMenuProps.at(-1);
+        expect(props.editableDocument).toBe(h.lyricManager.lyric);
+        expect(props.isSaveShortcutGlobal).toBe(true);
+    });
+
+    test('off the Presenter the row holds Atom Mode alone', async () => {
+        h.isPagePresenter = false;
+        await renderPreviewers();
+
+        const row = container.querySelector('.stage-previewer-editing-menu')!;
+        expect(row.querySelector('.editing-menu')).toBeNull();
+        expect(h.editingMenuProps).toEqual([]);
+        expect(row.querySelector('.stage-previewer-atom-mode')).not.toBeNull();
+    });
+});
+
+describe('Atom Mode', () => {
+    function getAtomButton(previewerIndex = 0) {
+        const previewer = container.querySelectorAll('.lyric-slides-previewer')[
+            previewerIndex
+        ];
+        return previewer.querySelector<HTMLButtonElement>(
+            '.stage-previewer-editing-menu > .stage-previewer-atom-mode',
+        )!;
+    }
+
+    async function press(button: HTMLButtonElement) {
+        await act(async () => {
+            button.click();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+    }
+
+    test('sits at the END of the history row, off until pressed', async () => {
+        await renderPreviewers();
+        const button = getAtomButton();
+        expect(button.parentElement!.lastElementChild).toBe(button);
+        expect(button.textContent).toContain('Atom Mode');
+        expect(button.title).toBe('Atom Mode');
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        expect(button.className).toContain('btn-outline-secondary');
+    });
+
+    test('reads where the slides that are up go, THEN switches, refreshes and puts them up', async () => {
+        await renderPreviewers();
+        await press(getAtomButton());
+
+        expect(h.prepareLyricAtomModeScreens).toHaveBeenCalledWith(true);
+        expect(h.calls).toEqual(['prepare', 'set:true', 'update', 'reapply']);
+        expect(h.settings.get('lyric-slides-atom-mode')).toBe('true');
+        const button = getAtomButton();
+        expect(button.getAttribute('aria-pressed')).toBe('true');
+        expect(button.className).toContain('btn-secondary');
+
+        h.calls = [];
+        await press(button);
+        expect(h.prepareLyricAtomModeScreens).toHaveBeenLastCalledWith(false);
+        expect(h.calls).toEqual(['prepare', 'set:false', 'update', 'reapply']);
+        expect(getAtomButton().getAttribute('aria-pressed')).toBe('false');
+    });
+
+    test('starts pressed when the setting is on', async () => {
+        h.settings.set('lyric-slides-atom-mode', 'true');
+        await renderPreviewers();
+        expect(getAtomButton().getAttribute('aria-pressed')).toBe('true');
+    });
+
+    test('off the Presenter no screen is touched', async () => {
+        h.isPagePresenter = false;
+        await renderPreviewers();
+        await press(getAtomButton());
+
+        expect(h.prepareLyricAtomModeScreens).not.toHaveBeenCalled();
+        expect(h.calls).toEqual(['set:true', 'update']);
+    });
+
+    test('the switch still flips when the screens cannot be read', async () => {
+        h.prepareLyricAtomModeScreens.mockRejectedValue(new Error('boom'));
+        await renderPreviewers();
+        await press(getAtomButton());
+
+        expect(h.handleError).toHaveBeenCalledTimes(1);
+        expect(h.calls).toEqual(['set:true', 'update']);
     });
 });
 

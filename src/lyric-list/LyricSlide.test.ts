@@ -72,6 +72,21 @@ describe('LyricSlide', () => {
         expect(slide.openLyricRepeat).toEqual({ index: 1, count: 3 });
     });
 
+    test('an Atom Mode slide says which line of the part it is', () => {
+        const slide = new LyricSlide(
+            FILE_PATH,
+            genJson(),
+            'Chorus',
+            2,
+            { index: 1, count: 3 },
+            { index: 0, count: 4 },
+        );
+        expect(slide.name).toBe('(3)-Chorus (2/3) · 1/4');
+        expect(slide.openLyricLine).toEqual({ index: 0, count: 4 });
+        const wholePart = new LyricSlide(FILE_PATH, genJson(), 'Chorus', 2);
+        expect(wholePart.openLyricLine).toBeNull();
+    });
+
     test('an extra slide has no verse to point back at, only its key', () => {
         const slide = new LyricSlide(FILE_PATH, genJson(), 'First');
         expect(slide.openLyricIndex).toBe(-1);

@@ -301,6 +301,26 @@ telemetry is a process-wide singleton that throws on the second
 `createMcpServer` (one per MCP session), and it would phone home from the
 operator's machine.
 
+**Each MCP session holds its OWN browser connection, and closing the session
+must let it go** (2026-11-07, chrome-devtools-mcp 1.12). Up to 1.8 the browser
+was one module-level connection every session shared; since 1.12 each
+session's `BrowserManager` connects for itself, and only chrome-devtools'
+`McpServer.close()` disconnects it (a browser it connected to is disconnected,
+never closed -- the app stays up). The host is handed the SDK server alone, so
+`closeBrowserWithServer` in `server.mjs` makes that server's `close()` close
+the whole thing. Without it, every session the host closed -- a DELETE, the
+15-minute idle sweep of the chatbot's session, the eviction at eight --
+left a CDP connection, with its page listeners, open in the app's main
+process: measured four closed sessions, four connections; with it, none.
+`chromeDevtoolsContract.test.mjs` runs the real package and fails if a later
+version stops closing either half. Also since 1.12, a client that does not
+negotiate MCP roots -- the in-app host never does -- gets chrome-devtools'
+file-writing tools (`filePath` on `take_snapshot`, `take_screenshot`,
+`screencast_start`) confined to the OS temp folder, and every HTTP session
+says so in the log. The model is offered none of them, and the firewall
+reads a snapshot file back on the server's side, so nothing the chatbot does
+changes; the stdio door is not confined.
+
 **Nor do its tools ever see a DevTools window** (2026-11-02,
 `devToolsTargets.mjs`, applied in `createOwaMcpServer` to the puppeteer
 chrome-devtools-mcp imports, which offers no option for it). It connects with

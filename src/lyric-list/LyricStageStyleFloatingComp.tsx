@@ -29,9 +29,11 @@ const LazyLyricStageStyleComp = lazy(() => {
 export default function LyricStageStyleFloatingComp({
     ownerId,
     onChanged,
+    genStageBuiltInCss,
 }: Readonly<{
     ownerId: string;
     onChanged: () => void;
+    genStageBuiltInCss?: (stage: number) => string;
 }>) {
     const stage = useLyricStageStyleFloatingStage(ownerId);
     const { theme } = useThemeSource();
@@ -65,6 +67,7 @@ export default function LyricStageStyleFloatingComp({
                         key={stage}
                         stage={stage}
                         onChanged={onChanged}
+                        genStageBuiltInCss={genStageBuiltInCss}
                     />
                 </AppSuspenseComp>
             </FloatingWidgetComp>

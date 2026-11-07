@@ -945,7 +945,10 @@
                     "kind": "howto",
                     "keywords": [
                         "font size",
+                        "margin",
                         "padding",
+                        "lyrics at the bottom",
+                        "move the lyrics",
                         "stage style",
                         "opacity",
                         "bigger text",
@@ -973,6 +976,24 @@
                     "resources": {
                         "recipe": "W-05",
                         "find": "Add Stage",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "song-atom-mode",
+                    "text": "How do I show a song one line at a time?",
+                    "kind": "howto",
+                    "keywords": [
+                        "atom mode",
+                        "line by line",
+                        "one line per slide",
+                        "each line a slide",
+                        "split the verse into lines"
+                    ],
+                    "resources": {
+                        "recipe": "W-05",
+                        "passage": "One line at a time",
+                        "find": "Slides > Atom Mode",
                         "guide": true
                     }
                 },

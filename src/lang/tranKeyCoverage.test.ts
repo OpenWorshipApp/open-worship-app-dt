@@ -354,19 +354,15 @@ describe.each(
 
     // The position pad names its nine cells through the same dynamic
     // `tran(cell.labelKey)` that no static sweep can read, and it is the
-    // control the panel OPENS on -- a missing one blanks Properties in a
-    // Khmer window before anything else is touched.
+    // control the panel OPENS on -- a missing one blanks Properties (and the
+    // Stage Style panel) in a Khmer window before anything else is touched.
     test('every position-pad cell has a string in it', () => {
         if (isNone) {
             return;
         }
         const { keySet } = readLangKeys();
         const source = readFileSync(
-            path.join(
-                SRC_DIR,
-                'presenter-foreground',
-                'ForegroundPositionPadComp.tsx',
-            ),
+            path.join(SRC_DIR, 'others', 'AlignmentPadComp.tsx'),
             'utf-8',
         );
         const start = source.indexOf('const PAD_ROW_LIST');

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 6301d837-d2bf-49ee-ae70-5b5cdb819c41
-  modified: 2026-11-07T14:23:31.445Z
+  modified: 2026-11-07T19:50:01.573Z
 ---
 
 Asked for on 2026-10-12: _I want to have foreground component call `Long Text
@@ -189,6 +189,11 @@ What is not obvious from the code:
   and Fast Refresh never swaps that function, so after an edit to
   `bibleScreenComps.tsx` the Mini Screen keeps the old markup, even after a
   re-put, until View > Reload.
+
+A song's own slides got an Atom Mode of their own on 2026-11-07: a slide per
+line in the song's Stage Previewer, one switch for every song, its line count
+read from the same text reader this panel uses
+([[lyric-subsystem-architecture]]).
 
 Not built, by decision of the first change: a Presenting Flow row or a drag to
 a screen, the `owa_foreground` tool and a tip lesson for it, a saved-text

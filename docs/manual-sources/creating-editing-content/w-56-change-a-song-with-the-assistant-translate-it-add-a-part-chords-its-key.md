@@ -2,7 +2,7 @@
 id: W-56
 title: "Change a song with the assistant (translate it, add a part, chords, its key)"
 section: "Creating & editing content"
-verify: [PL-107, CB-166]
+verify: [PL-107, CB-166, PM-168]
 screenshots: 2
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-07"
@@ -38,7 +38,9 @@ another key — without writing the song's own notation.
 4. The answer says what changed. The change is **not saved yet**: the song shows a red
    **\*** beside its name in **[en:tran:Documents]**. **[en:tran:Undo this change]** under
    the answer puts it back; **[en:tran:Show it in the list]** finds its row.
-5. To keep it, open the song with **[en:tran:Edit]** in its menu and press **Save**. A
+5. To keep it, press **[en:tran:Save]** in the row under the song's
+   **[en:tran:Stage Previewer]** header in the Presenter (**[en:tran:Undo]** there steps it back
+   too), or open the song with **[en:tran:Edit]** in its menu and press **Save**. A
    Lyric Editor already open on the song shows the change by itself; if you were typing in
    it at that moment, your typing is kept and the line
    **[en:tran:The assistant changed this song.]** offers **[en:tran:Load the change]**.
@@ -51,7 +53,7 @@ needs one.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PL-107` · `CB-166`
+`PL-107` · `CB-166` · `PM-168`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-07).
 :::

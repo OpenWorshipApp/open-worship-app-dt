@@ -124,7 +124,9 @@ describe('AboutComp', () => {
         );
         await act(async () => root.render(<AboutComp />));
         await flush();
-        expect(getModuleVersions()[2]).toBe('Docx to Html Converter (Loading...)');
+        expect(getModuleVersions()[2]).toBe(
+            'Docx to Html Converter (Loading...)',
+        );
         await act(async () => resolveDocx('2.0.0'));
         await flush();
         expect(getModuleVersions()[2]).toBe('Docx to Html Converter (2.0.0)');

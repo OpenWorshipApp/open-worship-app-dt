@@ -359,8 +359,13 @@ describe('bibleLogicHelpers3', () => {
             parent,
         );
         child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        await flushAsyncWork();
-        await flushAsyncWork();
+        // The click loads the detail panel with a dynamic `import()`, which
+        // under vitest 5 settles after a macrotask, past any microtask flush.
+        await vi.waitFor(() => {
+            expect(mocks.openBibleItemDetailPanelMock).toHaveBeenCalled();
+        });
+        // One more real turn, so a second listener's call would be in too.
+        await new Promise((resolve) => setTimeout(resolve, 25));
 
         expect(mocks.openBibleItemDetailPanelMock).toHaveBeenCalledTimes(1);
         expect(mocks.openBibleItemDetailPanelMock).toHaveBeenCalledWith(

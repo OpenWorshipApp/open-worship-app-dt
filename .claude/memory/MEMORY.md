@@ -26,8 +26,9 @@
 - [Languages are runtime plugins](language-plugins-runtime.md) — only English ships; all 50 others (Khmer, French too) in `data/online`, installed into `<data folder>/lang`; the MCP reads them from the installed plugin; dev: `npm run lang:pack -- --pack=km` then Settings > Languages; the 🤖 offers a missing one (`owa_language`, the person presses)
 - [Changed language data raises its version](language-data-change-bumps-version.md) — `meta.json` version up AND `npm run lang:pack` + Update to in the same change, or installed copies (the dev app's too) never update
 - [Update signs are a trail](attention-sign-trail.md) — amber dot on the gear → the Settings tab → the item; looked up once per launch, kept by main
-- Lyrics: [architecture](lyric-subsystem-architecture.md) · [in the Documents list](lyric-in-documents-list.md) · [helpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) · [passes the AppDocument check](lyric-passes-appdocument-typecheck.md)
+- Lyrics: [architecture](lyric-subsystem-architecture.md) — Atom Mode, a slide per line: count from the text, every stage cut alike · [in the Documents list](lyric-in-documents-list.md) · [helpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) · [passes the AppDocument check](lyric-passes-appdocument-typecheck.md)
 - [Document stages](document-stage-previewer.md) — drawn at render time
+- [Shadow previews have no border-box](shadow-preview-no-border-box.md) — a 100% box with padding overflows; say `box-sizing` yourself
 - [On-screen check must not parse](onscreen-check-must-not-parse.md) — runs per row per screen event
 - [QA: intentional, not bugs](qa-intentional-not-bugs.md) — blank slide0; a bible present clears the slide
 - [`app-ellipsis-left` reverses names](app-ellipsis-left-reverses-names.md) — wrap in `<bdi>`

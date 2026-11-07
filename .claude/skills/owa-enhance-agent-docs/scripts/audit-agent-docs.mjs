@@ -175,6 +175,8 @@ const EXTERNAL_NAME_SET = new Set([
     // static render must not parse HTML.
     'scheduleImmediateRootScheduleTask',
     '_initDocument',
+    // git's own config key (`core.fileMode`), proven external 2026-11-07.
+    'fileMode',
     'BM_CLICK',
     'CopyFromScreen',
     'EnumWindows',

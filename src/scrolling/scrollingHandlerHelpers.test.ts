@@ -122,8 +122,12 @@ describe('scrollingHandlerHelpers', () => {
         frameClock = 1000;
         vi.spyOn(performance, 'now').mockImplementation(() => frameClock);
 
+        // Writable: vitest 5's fake timers install and restore their own
+        // `requestAnimationFrame` by assignment, which throws on a read-only
+        // property. Ours is set after them, so it is the one the code calls.
         Object.defineProperty(globalThis, 'requestAnimationFrame', {
             configurable: true,
+            writable: true,
             value: vi.fn((callback: FrameRequestCallback) => {
                 rafCallbacks.push(callback);
                 return rafCallbacks.length;

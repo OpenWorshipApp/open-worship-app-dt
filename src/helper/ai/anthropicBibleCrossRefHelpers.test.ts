@@ -43,7 +43,6 @@ describe('getCrossRefs (Anthropic)', () => {
         expect(request).toMatchObject({
             model: 'claude-sonnet-4-5-20250929',
             max_tokens: 8000,
-            temperature: 0.3,
             messages: [
                 {
                     role: 'user',
@@ -51,6 +50,9 @@ describe('getCrossRefs (Anthropic)', () => {
                 },
             ],
         });
+        // The Messages API version the SDK speaks since 1.0 has no
+        // temperature; a request that sent one is not what the SDK types.
+        expect(request).not.toHaveProperty('temperature');
         expect(request.system).toContain('King James Version (KJV)');
         expect(request.system).toContain('Return ONLY a valid JSON array');
     });

@@ -5,7 +5,10 @@ import { useCallback, useMemo } from 'react';
 import { VaryAppDocumentContext } from '../app-document-list/appDocumentHelpers';
 import VarySlidesPreviewerComp from '../app-document-presenter/items/VarySlidesPreviewerComp';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { useStateSettingString } from '../helper/settingHelpers';
+import {
+    useStateSettingBooleanSynced,
+    useStateSettingString,
+} from '../helper/settingHelpers';
 import { useLyricManagerContext } from './LyricManager';
 import type LyricManager from './LyricManager';
 import { type DataInputType } from '../resize-actor/flexSizeHelpers';
@@ -33,6 +36,10 @@ import StagePreviewerHeaderComp, {
     toStagePaneSetting,
 } from '../app-document-presenter/stage/StagePreviewerHeaderComp';
 import { useLyricWarmSlides } from './useLyricWarmSlides';
+import { FileEditingMenuComp } from '../editing-manager/editingHelpers';
+import appProvider from '../server/appProvider';
+import { LYRIC_ATOM_MODE_SETTING_NAME } from './lyricAtomModeHelpers';
+import { handleError } from '../helper/errorHelpers';
 
 function getLyricAppDocuments(
     stageSetting: string,
@@ -96,6 +103,65 @@ function RenderStageStyleButtonComp({
                     color: 'var(--bs-secondary)',
                 }}
             />
+        </button>
+    );
+}
+
+/**
+ * Atom Mode: every line of a part its own slide, on every stage and for every
+ * song (`lyricAtomModeHelpers`). Long Text Show's toggle, at the end of the
+ * row under the stage chips (asked for 2026-11-07 with both in the pictures).
+ *
+ * Synced across the window's previewers: a floating preview of a song shows
+ * the same deck, so its button must say the same. A press works out where the
+ * slides that are UP go BEFORE it writes the switch, then refreshes every pane
+ * of this song (the same update the style panel fires) and puts those slides
+ * up again as their counterparts.
+ */
+function LyricAtomModeButtonComp({
+    lyricManager,
+}: Readonly<{
+    lyricManager: LyricManager;
+}>) {
+    const [isAtomMode, setIsAtomMode] = useStateSettingBooleanSynced(
+        LYRIC_ATOM_MODE_SETTING_NAME,
+        false,
+    );
+    const isAtomModeRef = useAppCurrentRef(isAtomMode);
+    const lyricManagerRef = useAppCurrentRef(lyricManager);
+    const handleToggling = useCallback(async () => {
+        const newIsAtomMode = !isAtomModeRef.current;
+        // Only the Presenter puts slides on screens.
+        const reapply = appProvider.isPagePresenter
+            ? await import('./lyricAtomModeScreenHelpers')
+                  .then(({ prepareLyricAtomModeScreens }) => {
+                      return prepareLyricAtomModeScreens(newIsAtomMode);
+                  })
+                  .catch((error) => {
+                      handleError(error);
+                      return null;
+                  })
+            : null;
+        setIsAtomMode(newIsAtomMode);
+        lyricManagerRef.current.fileSource.fireUpdateEvent();
+        await reapply?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const label = tran('Atom Mode');
+    return (
+        <button
+            type="button"
+            className={
+                'btn btn-sm stage-previewer-atom-mode btn-' +
+                (isAtomMode ? 'secondary' : 'outline-secondary')
+            }
+            title={label}
+            aria-pressed={isAtomMode}
+            onClick={() => {
+                handleToggling().catch(handleError);
+            }}
+        >
+            <i className="bi bi-list-ol" /> {label}
         </button>
     );
 }
@@ -181,6 +247,16 @@ export default function LyricSlidesPreviewerComp() {
         lyricManagerRef.current.fileSource.fireUpdateEvent();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // What a stage applies before its Custom CSS, for that box's placeholder:
+    // read off the stage's own document, only when the panel asks.
+    const genStageBuiltInCss = useCallback((stage: number) => {
+        const [, stageDocument] = getLyricAppDocumentStageByStage(
+            lyricManagerRef.current.filePath,
+            stage,
+        );
+        return stageDocument.builtInCss;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     // The same `Reload` a stage pane already offers on right-click, but reachable
     // from the header: nothing on a pane says the menu is there, and one
     // `fireUpdateEvent` on the lyric's own file source refreshes EVERY pane at
@@ -248,6 +324,27 @@ export default function LyricSlidesPreviewerComp() {
                     <i className="bi bi-three-dots-vertical" />
                 </button>
             </StagePreviewerHeaderComp>
+            {/*
+                The song's Undo / Redo / Discard changed / Save -- what the
+                slide previewer's stage-0 pane carries for a slide document.
+                Here rather than in `VarySlidesPreviewerComp`: that row is
+                gated on `isEditable` and `SlidesMenuComp` knows only an
+                `AppDocument`, and the slide side must not learn about lyrics
+                (memory `app-document-helpers-lyric-cycle`). One row for the
+                whole previewer, since every stage pane shows the same file.
+                The history buttons are the Presenter's only and render
+                nothing while the song has no history; Atom Mode, at the
+                row's end, is there wherever the previewer is.
+            */}
+            <div className="stage-previewer-editing-menu">
+                {appProvider.isPagePresenter ? (
+                    <FileEditingMenuComp
+                        editableDocument={lyricManager.lyric}
+                        isSaveShortcutGlobal
+                    />
+                ) : null}
+                <LyricAtomModeButtonComp lyricManager={lyricManager} />
+            </div>
             <div className="w-100 card-body app-overflow-hidden">
                 <ResizeActorComp
                     flexSizeName={'flex-size-lyric-slides-previewer'}
@@ -287,6 +384,7 @@ export default function LyricSlidesPreviewerComp() {
             <LyricStageStyleFloatingComp
                 ownerId={ownerId}
                 onChanged={handleStyleChanged}
+                genStageBuiltInCss={genStageBuiltInCss}
             />
         </div>
     );

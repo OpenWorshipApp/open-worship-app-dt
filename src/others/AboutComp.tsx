@@ -104,10 +104,12 @@ export default function AboutComp() {
                             Electron ({electronVersion || 'N/A'})
                         </div>
                         <div className="m-1 module-version">
-                            Pptx to Html Converter ({renderVersion(pptxToHtmlsVersion)})
+                            Pptx to Html Converter (
+                            {renderVersion(pptxToHtmlsVersion)})
                         </div>
                         <div className="m-1 module-version">
-                            Docx to Html Converter ({renderVersion(docxToHtmlsVersion)})
+                            Docx to Html Converter (
+                            {renderVersion(docxToHtmlsVersion)})
                         </div>
                         <div className="m-1 module-version">
                             Bible Note ({renderVersion(bibleNoteVersion)})

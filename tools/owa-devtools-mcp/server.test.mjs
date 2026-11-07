@@ -170,6 +170,28 @@ describe('createOwaMcpServer', () => {
     ).toBe(true);
   });
 
+  it('lets go of its browser when the session is closed', async () => {
+    // chrome-devtools' own close() disconnects the BrowserManager and then
+    // closes the SDK half through the very method the host calls.
+    const sdkClose = vi.fn(async () => {});
+    innerServer.close = sdkClose;
+    const mcpServer = {
+      server: innerServer,
+      close: vi.fn(async () => {
+        await mcpServer.server.close();
+      }),
+    };
+    mocks.mcpServerFrom.mockResolvedValue(mcpServer);
+    const { server } = await createOwaMcpServer();
+    await server.close();
+    expect(mcpServer.close).toHaveBeenCalledTimes(1);
+    expect(sdkClose).toHaveBeenCalledTimes(1);
+    // A second close -- the host's sweep after a DELETE -- disconnects
+    // nothing twice.
+    await server.close();
+    expect(mcpServer.close).toHaveBeenCalledTimes(1);
+  });
+
   it('wraps every transport with the banner, then the firewall outermost', async () => {
     const { server } = await createOwaMcpServer();
     const transport = { onmessage: null };

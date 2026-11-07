@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: c44cd2db-6924-4947-ad2d-fd40347ab3fb
-  modified: 2026-11-07T02:07:58.953Z
+  modified: 2026-11-07T17:47:47.995Z
 ---
 
 Since 2026-11-06 a song is opened in the help window from its Documents row
@@ -17,7 +17,9 @@ Two traps the live run found, neither visible to a unit test:
 
 - **open-lyric's `editor.value = …` is a LOAD, not an edit**: it replaces the
   text AND the dirty baseline, so the editor calls the song clean and greys
-  Save out -- and the Lyric Editor is the only place a song is saved. An
+  Save out -- and the Lyric Editor is where a song is saved (since
+  2026-11-07 also the Undo/Redo/Discard/Save row under the song's Stage
+  Previewer header in the Presenter, `LyricSlidesPreviewerComp`). An
   outside change goes in as Monaco's own edit (`applyLyricEditorText`), and
   the editor opens on the SAVED text with the unsaved head applied on top.
 - **"Add Spanish under each line" read as a language to INSTALL**: the

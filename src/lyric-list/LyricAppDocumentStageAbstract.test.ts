@@ -11,6 +11,15 @@ const mocks = vi.hoisted(() => ({
     audioPropsMock: vi.fn(() => ({ type: 'audio' })),
     youtubePropsMock: vi.fn(() => ({ type: 'youtube' })),
     websitePropsMock: vi.fn(() => ({ type: 'website' })),
+    splitLyricPartHtml: vi.fn((html: string, count: number) => {
+        return Array.from({ length: count }, (_, i) => `${html}#${i}`);
+    }),
+}));
+
+// The real one reaches `settingHelpers` and with it `appProvider`; how a
+// part is cut is `lyricAtomModeHelpers.test.ts`'s to prove.
+vi.mock('./lyricAtomModeHelpers', () => ({
+    splitLyricPartHtml: mocks.splitLyricPartHtml,
 }));
 
 vi.mock('./LyricAppDocument', () => ({
@@ -243,6 +252,31 @@ describe('LyricAppDocumentStageAbstract custom css', () => {
         expect(options.css).not.toContain('undefined');
         expect(options.css).toContain('.a { color: red }');
     });
+
+    test('builtInCss is what the render applies before the custom css', () => {
+        const getBuiltInCss = Object.getOwnPropertyDescriptor(
+            LyricAppDocumentStageAbstract.prototype,
+            'builtInCss',
+        )!.get!;
+        const basicCss = '.basic { color: blue }';
+        const context = {
+            basicOpenLyricOptions: { type: 'html', css: basicCss },
+            stageOpenLyricOptions: { css: STAGE_CSS },
+        };
+
+        // The very string `allOpenLyricOptions` renders with, custom css off.
+        expect(getBuiltInCss.call(context)).toBe(
+            genAllOptions('', basicCss).css,
+        );
+        expect(getBuiltInCss.call(context)).toBe(`${basicCss}\n${STAGE_CSS}`);
+        // And no `undefined` from a side with no rules.
+        expect(
+            getBuiltInCss.call({
+                basicOpenLyricOptions: { type: 'html' },
+                stageOpenLyricOptions: {},
+            }),
+        ).toBe('');
+    });
 });
 
 describe('LyricAppDocumentStage1.genSlideHtml', () => {
@@ -304,6 +338,11 @@ describe('stage slide and rendering options', () => {
             fontFamily: 'Noto Sans Khmer',
         });
         expect(saved.css).toContain('Noto Sans Khmer, sans-serif');
+        // The box's frame keeps its laid-out size and its rounded corners:
+        // squeezed by the item's padding it cut the box off on the right.
+        expect(saved.css).toMatch(
+            /\.ol-song-view__section-tile \{\s*flex-shrink: 0 !important;\s*border-radius: \.85rem;/,
+        );
 
         context.liveOpenLyric = { fontFamily: 'Arial', fontSize: '65px' };
         expect(getOptions.call(context)).toMatchObject({
@@ -356,6 +395,45 @@ describe('stage slide and rendering options', () => {
             undefined,
             2,
             { index: 1, count: 3 },
+            undefined,
+            null,
+            '<p>Chorus</p>',
+        );
+    });
+
+    test('an Atom Mode slide is the one LINE of its part it stands for', async () => {
+        const genSlide = vi.fn((key: string) => ({ openLyricKey: key }));
+        const dataMap = { Chorus: '<p>Chorus</p>' };
+        const getAtomPartHtmlList = vi.fn(async () => ['<p>1</p>', '<p>2</p>']);
+        const context = {
+            genSlide,
+            getElementMap: vi.fn(async () => dataMap),
+            getAtomPartHtmlList,
+            allOpenLyricOptions: { type: 'html' },
+        };
+        const line = { index: 1, count: 2 };
+        await LyricAppDocumentStageAbstract.prototype.getStageSlides.call(
+            context as any,
+            'Chorus',
+            { openLyricIndex: 2, openLyricRepeat: null, openLyricLine: line },
+        );
+        // Cut from the map read for that part, under the same options.
+        expect(getAtomPartHtmlList).toHaveBeenCalledWith(
+            { type: 'html', key: 'Chorus' },
+            dataMap,
+            'Chorus',
+            2,
+        );
+        expect(genSlide).toHaveBeenLastCalledWith(
+            'Chorus',
+            -1,
+            dataMap,
+            undefined,
+            2,
+            null,
+            undefined,
+            line,
+            '<p>2</p>',
         );
     });
 
@@ -376,7 +454,14 @@ describe('stage slide and rendering options', () => {
             openLyricKey: key,
         }));
         const attachments = [{ id: -1, openLyricKey: 'Chart' }];
+        const prototype = LyricAppDocumentStageAbstract.prototype as any;
         const context = {
+            genPlaySteps: vi.fn(async () => [
+                { key: 'Verse', structureIndex: 0, repeat: null },
+                { key: 'Chorus', structureIndex: 1, repeat: null },
+            ]),
+            genAtomPartHtmlMap: prototype.genAtomPartHtmlMap,
+            getAtomPartHtmlList: vi.fn(),
             getOpenLyricPreviewer: vi.fn(async () => previewer),
             getFirstCanvasItemProps: vi.fn(async () => null),
             getElementMap: vi.fn(async () => ({ Verse: 'v', Chorus: 'c' })),
@@ -414,7 +499,97 @@ describe('stage slide and rendering options', () => {
             // Read once for the song and handed to every verse: each read of
             // it is a blocking display lookup in the main process.
             context.canvasItemBounds,
+            null,
+            'v',
         );
+        expect(context.genPlaySteps).toHaveBeenCalledWith(previewer);
+        // Not in Atom Mode: no part is cut.
+        expect(context.getAtomPartHtmlList).not.toHaveBeenCalled();
+    });
+
+    test('in Atom Mode the deck is a slide per line, each part cut once', async () => {
+        const line = (index: number) => ({ index, count: 2 });
+        const playSteps = [
+            { key: 'Chorus', structureIndex: 0, repeat: null, line: line(0) },
+            { key: 'Chorus', structureIndex: 0, repeat: null, line: line(1) },
+            { key: 'Tag', structureIndex: 1, repeat: null, line: null },
+            { key: 'Chorus', structureIndex: 2, repeat: null, line: line(0) },
+            { key: 'Chorus', structureIndex: 2, repeat: null, line: line(1) },
+        ];
+        const dataMap = { Chorus: 'c', Tag: 't' };
+        const genSlide = vi.fn((...args: any[]) => ({ html: args[8] }));
+        const prototype = LyricAppDocumentStageAbstract.prototype as any;
+        const context = {
+            genPlaySteps: vi.fn(async () => playSteps),
+            genAtomPartHtmlMap: prototype.genAtomPartHtmlMap,
+            getAtomPartHtmlList: vi.fn(async () => ['c1', 'c2']),
+            getOpenLyricPreviewer: vi.fn(async () => ({
+                getAttachments: () => [],
+            })),
+            getFirstCanvasItemProps: vi.fn(async () => null),
+            getElementMap: vi.fn(async () => dataMap),
+            allOpenLyricOptions: { type: 'html' },
+            displayDim: { width: 1280, height: 720 },
+            canvasItemBounds: { x: 0, y: 0, width: 1280, height: 720 },
+            genSlide,
+            extendExtraSlide: vi.fn((slides: any[]) => slides),
+            genSlidesFromAttachments: vi.fn(() => []),
+        };
+        const slides = await prototype.getStageSlides.call(context);
+        expect(slides.map((slide: any) => slide.html)).toEqual([
+            'c1',
+            'c2',
+            't',
+            'c1',
+            'c2',
+        ]);
+        // A Chorus sung twice is cut once.
+        expect(context.getAtomPartHtmlList).toHaveBeenCalledTimes(1);
+        expect(context.getAtomPartHtmlList).toHaveBeenCalledWith(
+            { type: 'html' },
+            dataMap,
+            'Chorus',
+            2,
+        );
+        expect(genSlide.mock.calls[1][7]).toEqual(line(1));
+    });
+
+    test('a part is cut through the cache, keyed by its line count', async () => {
+        vi.mocked(unlockingCacher).mockImplementation(
+            async (_key: string, callback: () => unknown) => callback(),
+        );
+        mocks.splitLyricPartHtml.mockClear();
+        const prototype = LyricAppDocumentStageAbstract.prototype;
+        const context = {
+            filePath: '/song.owl',
+            stage: 1,
+            genCacheKey: prototype.genCacheKey,
+        };
+        const options = { type: 'html' } as any;
+        expect(
+            await prototype.getAtomPartHtmlList.call(
+                context as any,
+                options,
+                { Verse: '<p>v</p>' },
+                'Verse',
+                2,
+            ),
+        ).toEqual(['<p>v</p>#0', '<p>v</p>#1']);
+        expect(mocks.splitLyricPartHtml).toHaveBeenCalledWith('<p>v</p>', 2);
+        const cacheKey = vi.mocked(unlockingCacher).mock.calls.at(-1)![0];
+        expect(cacheKey).toBe(
+            'get-atom-part:2:Verse|type:"html"|filePath:/song.owl|stage:1',
+        );
+        // A part the map does not hold has no lines to give.
+        expect(
+            await prototype.getAtomPartHtmlList.call(
+                context as any,
+                options,
+                {},
+                'Gone',
+                3,
+            ),
+        ).toEqual([]);
     });
 
     test('unrenderable attachments still retain their place in the slide list', () => {
@@ -722,6 +897,12 @@ describe('cache keys', () => {
         );
         context.displayDim = { width: 1280, height: 720 };
         expect(genWarmDeckKey.call(context as any)).toContain('dim:1280x720');
+        // Atom Mode numbers the slides otherwise: not the same deck.
+        expect(
+            genWarmDeckKey.call({ ...context, isAtomMode: true } as any),
+        ).toBe(
+            'deck|type:"html"|filePath:/song.owl|stage:0|dim:1280x720|atom:1',
+        );
     });
 
     test("clearing one song never drops another song's slides", () => {

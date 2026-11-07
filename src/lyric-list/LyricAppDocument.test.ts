@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => ({
     openPopupLyricEditorWindow: vi.fn(),
     lyricGetInstance: vi.fn((filePath: string) => ({ filePath })),
     genLyricPlaySteps: vi.fn(),
+    expandLyricAtomSteps: vi.fn(),
+    getIsLyricAtomMode: vi.fn(() => false),
+    getLyricAtomLineCounts: vi.fn(),
     initOpenLyric: vi.fn(),
     genHtmlDefaultProps: vi.fn(() => ({ htmlDefault: true })),
 }));
@@ -94,6 +97,12 @@ vi.mock('./Lyric', () => ({
 
 vi.mock('./lyricStructureHelpers', () => ({
     genLyricPlaySteps: mocks.genLyricPlaySteps,
+    expandLyricAtomSteps: mocks.expandLyricAtomSteps,
+}));
+
+vi.mock('./lyricAtomModeHelpers', () => ({
+    getIsLyricAtomMode: mocks.getIsLyricAtomMode,
+    getLyricAtomLineCounts: mocks.getLyricAtomLineCounts,
 }));
 
 vi.mock('./lyricHelpers', () => ({
@@ -110,6 +119,7 @@ vi.mock('./LyricSlide', () => ({
             public openLyricKey: string,
             public openLyricIndex = -1,
             public openLyricRepeat: unknown = null,
+            public openLyricLine: unknown = null,
         ) {
             this.id = props.id;
         }
@@ -128,7 +138,8 @@ import LyricAppDocument, {
 
 const FILE_PATH = 'C:/songs/song.owl';
 const DISPLAY_DIM = { width: 1920, height: 1080 };
-const BOUNDS = { x: 19, y: 19, width: 1882, height: 1042 };
+// The default margins, 2% of each axis: 38.4 across and 21.6 down.
+const BOUNDS = { x: 19, y: 11, width: 1882, height: 1058 };
 
 describe('LyricAppDocument', () => {
     beforeEach(() => {
@@ -139,7 +150,8 @@ describe('LyricAppDocument', () => {
             bounds: { x: 0, y: 0, ...DISPLAY_DIM },
         });
         mocks.getLyricStageStyle.mockReturnValue({
-            paddingPercentage: 1,
+            marginHorizontalPercentage: 2,
+            marginVerticalPercentage: 2,
             customCss: '',
         });
         mocks.resolveLiveOpenLyric.mockReturnValue(null);
@@ -162,13 +174,59 @@ describe('LyricAppDocument', () => {
         document.stage = 3;
 
         expect(document.stageStyle).toEqual({
-            paddingPercentage: 1,
+            marginHorizontalPercentage: 2,
+            marginVerticalPercentage: 2,
             customCss: '',
         });
         expect(mocks.getLyricStageStyle).toHaveBeenCalledWith(3);
         expect(document.displayDim).toEqual(DISPLAY_DIM);
         expect(document.canvasItemBounds).toEqual(BOUNDS);
     });
+
+    test('each margin is the share of its own axis outside the box', () => {
+        mocks.getLyricStageStyle.mockReturnValue({
+            marginHorizontalPercentage: 2,
+            marginVerticalPercentage: 5,
+            customCss: '',
+        });
+        const document = new LyricAppDocument(FILE_PATH);
+
+        // 2% of 1920 is 38.4 across, 5% of 1080 is 54 down: half each side.
+        expect(document.canvasItemBounds).toEqual({
+            x: 19,
+            y: 27,
+            width: 1882,
+            height: 1026,
+        });
+    });
+
+    test.each([
+        ['start', 'left', { x: 0, y: 0 }],
+        ['end', 'center', { x: 19, y: 54 }],
+        ['center', 'right', { x: 38, y: 27 }],
+        ['center', 'center', { x: 19, y: 27 }],
+    ])(
+        'Position %s/%s moves the box and never resizes it',
+        (boxVerticalAlignment, boxHorizontalAlignment, place) => {
+            mocks.getLyricStageStyle.mockReturnValue({
+                marginHorizontalPercentage: 2,
+                marginVerticalPercentage: 5,
+                boxVerticalAlignment,
+                boxHorizontalAlignment,
+                customCss: '',
+            });
+            const document = new LyricAppDocument(FILE_PATH);
+
+            // The Middle center box's size, flush against the edges named:
+            // bottom puts the whole vertical margin (54) above it, right the
+            // whole horizontal one (38.4) to its left.
+            expect(document.canvasItemBounds).toEqual({
+                ...place,
+                width: 1882,
+                height: 1026,
+            });
+        },
+    );
 
     test('builds transparent boxes, full-size images, and locked HTML items', () => {
         const document = new LyricAppDocument(FILE_PATH);
@@ -177,11 +235,11 @@ describe('LyricAppDocument', () => {
             document.genCanvasItemBoundsProps(4, true, BOUNDS as any),
         ).toEqual({
             id: 4,
-            top: 19,
+            top: 11,
             left: 19,
             rotate: 0,
             width: 1882,
-            height: 1042,
+            height: 1058,
             backgroundColor: '#00000000',
             backdropFilter: 0,
             roundSizePercentage: 0,
@@ -195,8 +253,8 @@ describe('LyricAppDocument', () => {
             type: 'image',
             id: 5,
             srcData: { url: 'chart.png' },
-            mediaWidth: DISPLAY_DIM.width - 2 * 19,
-            mediaHeight: DISPLAY_DIM.height - 2 * 19,
+            mediaWidth: BOUNDS.width,
+            mediaHeight: BOUNDS.height,
         });
 
         expect(
@@ -306,6 +364,60 @@ describe('LyricAppDocument', () => {
         ]);
         expect(slides[3]).toMatchObject({ openLyricIndex: 2 });
         await expect(document.getSlides()).resolves.toEqual(slides);
+    });
+
+    test('in Atom Mode the quick deck is a slide per line of each part', async () => {
+        const document = new LyricAppDocument(FILE_PATH);
+        const preview = { parts: ['a'] };
+        mocks.resolveLiveOpenLyric.mockReturnValue(preview);
+        const steps = [{ key: 'verse-a', structureIndex: 2, repeat: null }];
+        mocks.genLyricPlaySteps.mockReturnValue(steps);
+        mocks.getLyricAtomLineCounts.mockResolvedValue({ 'verse-a': 2 });
+        mocks.expandLyricAtomSteps.mockImplementation((given: any[]) => {
+            return given.flatMap((step) => [
+                { ...step, line: { index: 0, count: 2 } },
+                { ...step, line: { index: 1, count: 2 } },
+            ]);
+        });
+        mocks.getIsLyricAtomMode.mockReturnValue(true);
+
+        expect(document.isAtomMode).toBe(true);
+        const slides = await document.getSlidesQuick();
+        expect(mocks.getLyricAtomLineCounts).toHaveBeenCalledWith(preview);
+        expect(mocks.expandLyricAtomSteps).toHaveBeenCalledWith(steps, {
+            'verse-a': 2,
+        });
+        expect(slides.map((slide) => slide.id)).toEqual([0, 1, 2, 3, 4]);
+        expect(slides.slice(3)).toMatchObject([
+            { openLyricIndex: 2, openLyricLine: { index: 0, count: 2 } },
+            { openLyricIndex: 2, openLyricLine: { index: 1, count: 2 } },
+        ]);
+
+        // The toggle lists the deck under the OTHER mode by asking for it.
+        mocks.expandLyricAtomSteps.mockClear();
+        const wholeSlides = await document.getSlidesQuick(false);
+        expect(mocks.expandLyricAtomSteps).not.toHaveBeenCalled();
+        expect(wholeSlides).toHaveLength(4);
+        expect(wholeSlides[3]).toMatchObject({ openLyricLine: null });
+        mocks.getIsLyricAtomMode.mockReturnValue(false);
+    });
+
+    test('genSlide shows the piece of the part it is handed', () => {
+        const document = new LyricAppDocument(FILE_PATH);
+        const line = { index: 1, count: 2 };
+        const slide = document.genSlide(
+            'chorus',
+            4,
+            { chorus: '<i>Whole</i>' },
+            DISPLAY_DIM,
+            7,
+            null,
+            BOUNDS,
+            line,
+            '<i>Line 2</i>',
+        ) as any;
+        expect(slide.openLyricLine).toEqual(line);
+        expect(slide.props.canvasItems[0].html).toBe('<i>Line 2</i>');
     });
 
     test('opens the reload menu and fires its update callback', async () => {

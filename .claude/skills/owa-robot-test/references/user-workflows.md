@@ -21,7 +21,13 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-07b** (**W-18 step 5 — Line Sync reaches a screen that is already showing.** The user, after a robot run's Mini Screen and projector were compared: _find solution to make sure screen mini and real screen are always sync_. A screen page drew from the copy of the settings it was opened with, so **[en:tran:Set Line Sync]** changed the card and left the projector in columns until it was hidden and shown again — which this step had written down as the way it works. Every setting a screen draws with now goes to each showing screen as it changes (`screen-setting`), and into the copy a reloaded or reconnecting screen opens with. Seen live 2026-11-07 on the dev app with John 3:16-18 in KJV and ASV on a showing screen 0: **[en:tran:Set Line Sync]** turned the projector's KJV 16-18 / ASV 16-18 columns into KJV 16, ASV 16, KJV 17 … rows with no hide and show, **[en:tran:Unset Line Sync]** put the columns back, and the projector page reloaded with Line Sync on came back in rows. SP-17.)
+**workflowsVersion: 2026-11-07e** (**W-05 step 13 — Atom Mode puts every line of a song on a slide of its own.** The user, with Long Text Show's **[en:tran:Atom Mode]** circled and then the empty end of the song's history row under the Stage Previewer header: _check `Atom Mode` on longtext show, I want it in lyric_ … _add `Atom Mode` there_. Chosen with the user: ONE switch for every song, and every line a slide, blank lines kept (an empty slide); a `//` comment or a line of chords alone, which stage 0 does not draw, rides on the slide of the line after it on a stage that draws it. **[en:tran:Atom Mode]** sits at the right end of that row, the history buttons at its left; on, a part is as many slides as it has lines, named `(1)-Verse 1 · 1/4`, the same on every stage, and a song slide a screen holds goes up again as that part's first line (off: as the whole part). Seen live 2026-11-07 on the dev app with `Still (Copy)`: 13 slides became 64; a Stage 0 and a Stage 1 pane agreed card for card, Stage 1 with the part's title and `Chorus · 1/8 · 2/7` in its corner; the `(2)-Chorus` held by screens 0 (St: 2) and 1 (St: 0), neither showing, moved to `(2)-Chorus · 1/8`, and turned off went back to `(2)-Chorus`. Not seen live: a blank line's empty slide and a chord or comment line riding along (that song has neither; both held by a test on the real open-lyric, `lyricAtomModeHelpers.test.ts`), and the label in a Khmer window (read from the installed language). PM-169, PM-168.)
+
+Previous: **workflowsVersion: 2026-11-07d** (**W-05 step 7 — a stage's Slide Margin, two sides and linked, and where its lyric box sits.** The user, with the **[en:tran:Stage Style]** window's one padding slider circled: _split to vertical and horizontal, linked by default_; then, with the Foreground panel's nine-dot pad beside it: _add alignment support (like foreground properties)_, _align the whole box (not text alignment)_, _should rename to `Slide Margin`_, _position center by default and filled by default_ and, with the bottom of a slide circled, _the box size have to be the same with center one_ and _change % 20 to 99 the `Slide Margin`_, and _render current apply css to be the placeholder css and have an icon to click to bring the placeholder to be real editing text_. **[en:tran:Slide Margin (%)]** (until now _Slide Padding_, a side's share of the WIDTH up to 20) is a ↔ and a ↕ slider from 0 to 99 — the share of the screen's width and height left around the lyrics' box — joined by a 🔗 that is lit by default, and they set the size of that box; **[en:tran:Position]** is the Foreground's pad, and it only MOVES that box: **[en:tran:Middle center]** is a margin on every side as it always was, any other dot slides the same box until it touches the edge(s) it names. Seen live 2026-11-07 on the dev app: stage 0 with ↔ 0, ↕ 77 unlinked and **[en:tran:Bottom center]** drew a full-width band over the bottom quarter, flush on the bottom edge, in the previewer and on the screen showing it; an empty **[en:tran:Custom CSS]** box showed stage 0's own rules in grey beside the ✎. PM-117.)
+
+Previous: **workflowsVersion: 2026-11-07c** (**W-15 and W-56 step 5 — a song's Undo / Redo / Discard changed / Save in the Presenter.** The user, with a slide document's history row and a song's Stage Previewer side by side: _need history control for lyric_. A song with unsaved changes now carries the row under its **[en:tran:Stage Previewer]** header, so a change the assistant made can be kept or stepped back without opening the Lyric Editor. Seen live 2026-11-07 on the dev app: **[en:tran:Undo]** and **[en:tran:Redo]** on a song with unsaved words, every pane following. PM-168.)
+
+Previous: **workflowsVersion: 2026-11-07b** (**W-18 step 5 — Line Sync reaches a screen that is already showing.** The user, after a robot run's Mini Screen and projector were compared: _find solution to make sure screen mini and real screen are always sync_. A screen page drew from the copy of the settings it was opened with, so **[en:tran:Set Line Sync]** changed the card and left the projector in columns until it was hidden and shown again — which this step had written down as the way it works. Every setting a screen draws with now goes to each showing screen as it changes (`screen-setting`), and into the copy a reloaded or reconnecting screen opens with. Seen live 2026-11-07 on the dev app with John 3:16-18 in KJV and ASV on a showing screen 0: **[en:tran:Set Line Sync]** turned the projector's KJV 16-18 / ASV 16-18 columns into KJV 16, ASV 16, KJV 17 … rows with no hide and show, **[en:tran:Unset Line Sync]** put the columns back, and the projector page reloaded with Line Sync on came back in rows. SP-17.)
 
 Previous: **workflowsVersion: 2026-11-07a** (**W-53 step 7 — Stack waits for a second language, and Hide Number takes the language codes off too.** The user, with **[en:tran:Stack]** circled on a panel holding one language: _`Stack` should be available when there are 2+ languages_; then, with a Mini Screen's `EN` beside its title circled: _`Hide Number` should hide the language code_. With one card **[en:tran:Stack]** is greyed out and a text put up carries no stack; the choice stays in the session, so a second language brings it back as it was. **[en:tran:Hide Number]** now draws the header without its codes as well as the rows without their numbers, side by side or stacked; the titles stay. Seen live 2026-11-07 on the dev app with `Still`: two cards (KM, EN) left **[en:tran:Stack]** pressable; one card (EN) greyed it out; with **[en:tran:Hide Number]** on, the Mini Screen's header read `Still` alone over unnumbered rows, and off it brought `EN Still` and the numbers `1`, `2`, `3` … back. Not seen live: the stacked header without `EN | KM` (unit tested), and a second language restoring a stack (unit tested). The Khmer and French W-53 pages were already behind the English one before this change and still are. PM-166.)
 
@@ -1903,9 +1909,20 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
     the padlocked **[en:tran:Stage] 0** stays. 📸
 7. To change how a stage's slides **look**, click the **⚙** on that stage's chip
    (`Stage 0`, `Stage 3`, …) in the Stage Previewer header. A small **[en:tran:Stage Style]** window
-   opens — drag it anywhere, it remembers where you left it. It sets **[en:tran:Slide Padding (%)]**,
+   opens — drag it anywhere, it remembers where you left it. It sets the
+   **[en:tran:Slide Margin (%)]** — how much of the screen's width (↔) and height (↕) is left around the
+   lyrics' box, from 0 (the box is the whole screen) to 99 — with a ↔ slider for the sides and a ↕
+   one for the top and bottom: while the 🔗 beside them
+   (**[en:tran:Link horizontal and vertical margin]**) is lit, as it is to start with, moving one moves both;
+   press it off to set them apart. The margins decide how big the lyrics' box is; under them,
+   **[en:tran:Position]** is a pad of nine dots for where that box sits: **[en:tran:Middle center]**, lit to
+   start with, shares the margin out evenly; any other dot moves the same box until it touches
+   the edges it names — **[en:tran:Bottom center]** with ↕ at 77 puts the lyrics in a band over the
+   bottom quarter of the screen. Then
    **[en:tran:Background Opacity (%)]**, **[en:tran:Extra Font Size]**, a **[en:tran:Light]/[en:tran:Dark]** theme, and a
-   **[en:tran:Custom CSS]** box for anything else. 📸
+   **[en:tran:Custom CSS]** box for anything else — empty, it shows in grey the CSS the stage already
+   uses, and the ✎ beside its name (**[en:tran:Edit a copy of the stage's CSS]**) puts a copy of that in
+   the box to change. 📸
 8. These settings belong to the **stage**, not to the song — every song you open uses
    them, which is why the panel says _[en:tran:Applies to every song]_. **Every stage number keeps
    its own settings**, so you can leave the projected stage plain, make the chord stage
@@ -1917,7 +1934,7 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
    under it, 3 the next two, 4 like 2 in the plain look, 5 the previous one top left and
    the next one bottom right. The coming verse is at **full brightness**, not faded, and
    on 2 to 4 the verse sits flush in the screen's top left corner with the next one flush left
-   under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Padding (%)]** says (the padding stays
+   under it, touching it — no margin around them and no gap between them, whatever **[en:tran:Slide Margin (%)]** says (the margin stays
    inside each verse's own box). A screen moved to any stage above 0 has its **[en:tran:Slide]:**
    transition set to **none** (W-10).
 9. In that **[en:tran:Stage Style]** window — the **⚙** on the stage's chip in the Presenter's
@@ -1954,7 +1971,17 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
     `[Cm7]`, not `[Cm7b5]`, so write a chord it knows in its place. Put the marked
     line right and the red goes.
 
-_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, XW-08._
+13. **One line at a time — [en:tran:Atom Mode].** At the right end of the row under the
+    Stage Previewer header, press **[en:tran:Atom Mode]** and every line of the song becomes a
+    slide of its own: a verse of four lines is four slides, named `(1)-Verse 1 · 1/4` to
+    `(1)-Verse 1 · 4/4`, and a chorus sung twice is its lines twice. A blank line inside a
+    part is an empty slide — a pause. Click a line to send it to the screen. Every stage pane
+    splits the song the same way, so a card is the same line on every stage, and stage 1 and
+    up write the line in the slide's corner too (`Chorus · 1/8 · 2/7`). It is one switch for
+    every song. A song's slide that a screen holds moves to that part's first line when you
+    turn it on, and back to the whole part when you turn it off. 📸
+
+_Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, XW-08._
 
 ### W-06 — Look up and present a Bible verse
 
@@ -2878,6 +2905,11 @@ use an HTML box for rich formatting. Existing files are kept as saved.
 
 **Lyrics:** right-click a song in the Documents list → **[en:tran:Edit]** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
+Once a song has been changed, the Presenter also shows **[en:tran:Undo]**, **[en:tran:Redo]**,
+**[en:tran:Discard changed]** and **[en:tran:Save]** in a row under its **[en:tran:Stage Previewer]**
+header — the same row a slide document has above its slides. **[en:tran:Undo]** steps every stage
+back at once; **[en:tran:Save]** is lit while a change is not saved yet (a red **\*** beside the
+song's name), and **Ctrl+S** saves the song from anywhere in the Presenter.
 
 **Web backgrounds:** **[en:tran:Background]** panel → **[en:tran:Webs]** tab, then the
 **⋮ [en:tran:More Options]** button at the right of the folder-path bar (or right-click an
@@ -2887,7 +2919,7 @@ folder; right-click that page → **[en:tran:Edit]** to open the Web Editor in i
 its code beside a preview. The Web Editor saves itself as you type, so there is no Save
 to press.
 
-_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124._
+_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168._
 
 ### W-43 — Remove a song, document or file (Move to Trash)
 
@@ -2953,7 +2985,9 @@ another key — without writing the song's own notation.
 4. The answer says what changed. The change is **not saved yet**: the song shows a red
    **\*** beside its name in **[en:tran:Documents]**. **[en:tran:Undo this change]** under
    the answer puts it back; **[en:tran:Show it in the list]** finds its row.
-5. To keep it, open the song with **[en:tran:Edit]** in its menu and press **Save**. A
+5. To keep it, press **[en:tran:Save]** in the row under the song's
+   **[en:tran:Stage Previewer]** header in the Presenter (**[en:tran:Undo]** there steps it back
+   too), or open the song with **[en:tran:Edit]** in its menu and press **Save**. A
    Lyric Editor already open on the song shows the change by itself; if you were typing in
    it at that moment, your typing is kept and the line
    **[en:tran:The assistant changed this song.]** offers **[en:tran:Load the change]**.
@@ -2963,7 +2997,7 @@ another key — without writing the song's own notation.
 assistant can answer, the chat says so and offers **Open AI settings**: changing a song
 needs one.
 
-_Verify: PL-107, CB-166._
+_Verify: PL-107, CB-166, PM-168._
 
 ---
 

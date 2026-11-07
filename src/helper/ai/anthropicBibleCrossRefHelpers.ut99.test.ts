@@ -45,7 +45,6 @@ describe('the Anthropic cross-reference request', () => {
         expect(request).toMatchObject({
             model: 'claude-sonnet-4-5-20250929',
             max_tokens: 8000,
-            temperature: 0.3,
             messages: [
                 {
                     role: 'user',

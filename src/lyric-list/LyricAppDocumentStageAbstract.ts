@@ -24,9 +24,10 @@ import CanvasItemAudio from '../slide-editor/canvas/CanvasItemAudio';
 import CanvasItemWebsite from '../slide-editor/canvas/CanvasItemWebsite';
 import { checkIsUrlMediaSource } from '../helper/mediaSourceHelpers';
 import {
-    genLyricPlaySteps,
+    type LyricPlayStepType,
     type LyricStepRefType,
 } from './lyricStructureHelpers';
+import { splitLyricPartHtml } from './lyricAtomModeHelpers';
 import {
     dropLyricWarmDecks,
     getLyricWarmDeck,
@@ -78,6 +79,36 @@ function genFormControlFontCss(fontFamily?: string) {
                     font-size: 0.999em !important;
                 }`;
 }
+/**
+ * The tile open-lyric wraps each part in is the lyric box's frame, and two
+ * things were cutting the box's rounded corners off.
+ *
+ * `flex-shrink: 0` — the canvas item that holds the markup pads its content
+ * (`genTextStyle`), and the tile, an `overflow: hidden` flex item, may shrink
+ * to zero: it was squeezed by twice that padding and cut the part off on the
+ * right, so only the left corners stayed round. Unshrunk it keeps the size it
+ * was laid out at and sits centred on the item, as large as its box.
+ *
+ * `border-radius` — the part's own radius (open-lyric's `.85rem`): a part
+ * taller than its box is still cut at the tile's bottom, and now that cut is
+ * rounded too, rather than two square corners under two round ones.
+ *
+ * Both are resolved and written inline with the markup, so they hold on the
+ * screen and in the previewer's shadow root alike.
+ */
+const LYRIC_BOX_TILE_CSS = `.ol-song-view__section-tile {
+                    flex-shrink: 0 !important;
+                    border-radius: .85rem;
+                }`;
+
+// Only a side that HAS rules is joined. An empty one must not leave a stray
+// newline behind: `genCacheKey` hashes this string, so a stage whose css is all
+// on one side would otherwise get a different key — and a cold re-render of
+// every song — for no difference in the output.
+function joinStageCss(basicCss?: string, stageCss?: string) {
+    return [basicCss, stageCss].filter(Boolean).join('\n');
+}
+
 export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocument {
     /**
      * The cached document for ONE stage number, whichever layout renders it.
@@ -150,6 +181,8 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
                     font-size: 1.6em !important;
                 }
 
+                ${LYRIC_BOX_TILE_CSS}
+
                 ${genFormControlFontCss(fontFamily)}
             `,
         };
@@ -201,18 +234,24 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         // and `basicOpenLyricOptions` re-parses the font setting while doing it.
         const basicOptions = this.basicOpenLyricOptions;
         const stageOptions = this.stageOpenLyricOptions;
-        // Only a side that HAS rules is joined. An empty one must not leave a
-        // stray newline behind: `genCacheKey` hashes this string, so a stage
-        // whose css is all on one side would otherwise get a different key —
-        // and a cold re-render of every song — for no difference in the output.
-        const css = [basicOptions.css, stageOptions.css]
-            .filter(Boolean)
-            .join('\n');
         return this.withCustomCss({
             ...basicOptions,
             ...stageOptions,
-            css,
+            css: joinStageCss(basicOptions.css, stageOptions.css),
         });
+    }
+
+    /**
+     * The css this stage applies BEFORE the operator's own: the shared rules
+     * and the stage's, joined exactly as `allOpenLyricOptions` joins them.
+     * The Stage Style panel shows it as the Custom CSS box's placeholder, and
+     * copies it into the box on request. Built on call, never kept.
+     */
+    get builtInCss() {
+        return joinStageCss(
+            this.basicOpenLyricOptions.css,
+            this.stageOpenLyricOptions.css,
+        );
     }
 
     genCacheKey(prefix: string, options: AnyObjectType) {
@@ -243,6 +282,57 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             },
             cacheManager,
         );
+    }
+
+    /**
+     * One part's markup cut into its lines, for Atom Mode: `count` pieces,
+     * whatever this stage draws (see `splitLyricPartHtml`). Cached beside the
+     * element map it is cut from, under the same options, so a whole song is
+     * parsed once per stage while it stays in the cache, and `clearCache`
+     * drops both.
+     */
+    getAtomPartHtmlList(
+        options: OpenLyricElementMapOptions,
+        dataMap: AnyObjectType,
+        key: string,
+        count: number,
+    ) {
+        return unlockingCacher<string[]>(
+            this.genCacheKey(`get-atom-part:${count}:${key}`, options),
+            async () => {
+                const html = dataMap[key];
+                return typeof html === 'string'
+                    ? splitLyricPartHtml(html, count)
+                    : [];
+            },
+            cacheManager,
+        );
+    }
+
+    // Every part the deck shows line by line, cut once however often it is
+    // sung.
+    private async genAtomPartHtmlMap(
+        options: OpenLyricElementMapOptions,
+        dataMap: AnyObjectType,
+        playSteps: LyricPlayStepType[],
+    ) {
+        const partHtmlMap = new Map<string, string[]>();
+        for (const step of playSteps) {
+            const line = step.line ?? null;
+            if (line === null || partHtmlMap.has(step.key)) {
+                continue;
+            }
+            partHtmlMap.set(
+                step.key,
+                await this.getAtomPartHtmlList(
+                    options,
+                    dataMap,
+                    step.key,
+                    line.count,
+                ),
+            );
+        }
+        return partHtmlMap;
     }
 
     getValue(options: OpenLyricValueOptions) {
@@ -348,10 +438,20 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
                 );
                 return [slide];
             }
-            const dataMap = await this.getElementMap({
-                ...this.allOpenLyricOptions,
-                key,
-            });
+            const options = { ...this.allOpenLyricOptions, key };
+            const dataMap = await this.getElementMap(options);
+            const line = step?.openLyricLine ?? null;
+            const srcData =
+                line === null
+                    ? dataMap[key]
+                    : ((
+                          await this.getAtomPartHtmlList(
+                              options,
+                              dataMap,
+                              key,
+                              line.count,
+                          )
+                      )[line.index] ?? '');
             const slide = this.genSlide(
                 key,
                 -1,
@@ -359,24 +459,35 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
                 undefined,
                 step?.openLyricIndex,
                 step?.openLyricRepeat,
+                undefined,
+                line,
+                srcData,
             );
             return [slide];
         }
 
         const openLyricPreviewer = await this.getOpenLyricPreviewer();
-        // A repeated step (`Cx3`) is that many slides in a row — the same list
-        // `getSlidesQuick` builds, which ids are resolved against.
-        const playSteps = genLyricPlaySteps(openLyricPreviewer);
+        // A repeated step (`Cx3`) is that many slides in a row, and in Atom
+        // Mode each of them a slide per line — the same list `getSlidesQuick`
+        // builds, which ids are resolved against.
+        const playSteps = await this.genPlaySteps(openLyricPreviewer);
 
+        const options = this.allOpenLyricOptions;
         const [firstCanvasItemProps, dataMap] = await Promise.all([
             this.getFirstCanvasItemProps(),
-            this.getElementMap(this.allOpenLyricOptions),
+            this.getElementMap(options),
         ]);
+        const atomPartHtmlMap = await this.genAtomPartHtmlMap(
+            options,
+            dataMap,
+            playSteps,
+        );
         // Each read of either is a blocking display lookup in the main
         // process, so once for the whole song rather than once per verse.
         const displayDim = this.displayDim;
         const canvasItemBounds = this.canvasItemBounds;
         const slides = playSteps.map((step, i) => {
+            const line = step.line ?? null;
             return this.genSlide(
                 step.key,
                 i,
@@ -385,6 +496,10 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
                 step.structureIndex,
                 step.repeat,
                 canvasItemBounds,
+                line,
+                line === null
+                    ? dataMap[step.key]
+                    : (atomPartHtmlMap.get(step.key)?.[line.index] ?? ''),
             );
         });
         const newSlides = this.extendExtraSlide(
@@ -411,7 +526,10 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
     genWarmDeckKey() {
         const { width, height } = this.displayDim;
         const optionsKey = this.genCacheKey('deck', this.allOpenLyricOptions);
-        return `${optionsKey}|dim:${width}x${height}`;
+        // Atom Mode changes how many slides there are, and so every id after
+        // the first part's: a deck built under the other mode is not this one.
+        const atomKey = this.isAtomMode ? '|atom:1' : '';
+        return `${optionsKey}|dim:${width}x${height}${atomKey}`;
     }
 
     /**

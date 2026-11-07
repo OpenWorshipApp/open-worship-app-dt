@@ -82,6 +82,22 @@
     }
   }
 
+  // A song's Undo / Redo / Discard changed / Save, under the header. Like the
+  // header, a flex item the card column must not squeeze below its buttons.
+  // A song's Atom Mode sits at the row's end.
+  & > .stage-previewer-editing-menu {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+
+    & > .stage-previewer-atom-mode {
+      margin-left: auto;
+      white-space: nowrap;
+    }
+  }
+
   // `--stage-accent` is set inline per stage and is what ties a chip to its
   // preview pane. Both read the same variable, so they can never drift apart.
   .stage-previewer-chip {

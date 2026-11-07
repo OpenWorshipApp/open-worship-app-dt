@@ -85,10 +85,11 @@ Respond ONLY with the JSON array, no additional text or explanation.
                 };
             }
             const systemPrompt = this.generateSystemPrompt(additionalData);
+            // No `temperature`: the Messages API the SDK speaks since 1.0
+            // (version 2026-10-21) has none, and the SDK's types refuse it.
             const message = await anthropic.messages.create({
                 model: MODEL,
                 max_tokens: 8000,
-                temperature: 0.3,
                 system: systemPrompt,
                 messages: [
                     {

@@ -217,6 +217,8 @@ describe('CanvasItem models', () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 padding: '6px',
+                // The padding stays inside the box in a shadow root too.
+                boxSizing: 'border-box',
             }),
         );
         expect(item.getStyle()).toEqual(

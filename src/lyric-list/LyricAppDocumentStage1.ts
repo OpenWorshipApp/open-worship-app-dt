@@ -3,7 +3,9 @@ import LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
 import { type SrcData } from '../helper/FileSource';
 import { addTitleToSectionIndex } from './lyricSectionIndexHelpers';
 import {
+    genLyricLineSuffix,
     genLyricRepeatSuffix,
+    type LyricLineType,
     type LyricRepeatType,
 } from './lyricStructureHelpers';
 
@@ -51,16 +53,20 @@ export default class LyricAppDocumentStage1 extends LyricAppDocumentStageAbstrac
     }
 
     // A singer reading a back-stage screen wants WHICH part is up, not only how
-    // far into the song it is: `Chorus (2/3) · 7/7` in the corner.
+    // far into the song it is: `Chorus (2/3) · 7/7` in the corner, and in Atom
+    // Mode which line of it too: `Chorus (2/3) · 2/4 · 7/7`.
     genSlideHtml(
         html: string,
         openLyricKey: string,
         openLyricIndex: number,
         openLyricRepeat: LyricRepeatType | null,
+        openLyricLine: LyricLineType | null = null,
     ) {
         return addTitleToSectionIndex(
             html,
-            `${openLyricKey}${genLyricRepeatSuffix(openLyricRepeat)}`,
+            openLyricKey +
+                genLyricRepeatSuffix(openLyricRepeat) +
+                genLyricLineSuffix(openLyricLine),
             openLyricIndex + 1,
         );
     }

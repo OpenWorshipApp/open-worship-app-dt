@@ -5,7 +5,9 @@ import { bringDomToCenterView, cloneJson } from '../helper/helpers';
 import { type AnyObjectType } from '../helper/typeHelpers';
 import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
 import {
+    genLyricLineSuffix,
     genLyricRepeatSuffix,
+    type LyricLineType,
     type LyricRepeatType,
 } from './lyricStructureHelpers';
 
@@ -38,6 +40,9 @@ export default class LyricSlide extends Slide {
     openLyricIndex: number;
     // Which play of a repeated step (`Cx3`) this slide is; `null` otherwise.
     openLyricRepeat: LyricRepeatType | null;
+    // Atom Mode: which line of the part this slide is; `null` for the whole
+    // part (see `lyricAtomModeHelpers`).
+    openLyricLine: LyricLineType | null;
 
     constructor(
         filePath: string,
@@ -45,21 +50,25 @@ export default class LyricSlide extends Slide {
         openLyricKey: string,
         openLyricIndex = -1,
         openLyricRepeat: LyricRepeatType | null = null,
+        openLyricLine: LyricLineType | null = null,
     ) {
         super(filePath, json as any);
         this.openLyricKey = openLyricKey;
         this.openLyricIndex = openLyricIndex;
         this.openLyricRepeat = openLyricRepeat;
+        this.openLyricLine = openLyricLine;
         // Written straight into the json `super()` has just cloned: the `type`
         // and `name` setters would each deep-clone it again, and a whole song
         // builds one of these per verse per stage pane.
         const originalJson = this._originalJson as any;
         originalJson.type = LYRIC_SLIDE_TYPE_KEY;
-        const repeatSuffix = genLyricRepeatSuffix(openLyricRepeat);
+        const suffix =
+            genLyricRepeatSuffix(openLyricRepeat) +
+            genLyricLineSuffix(openLyricLine);
         originalJson.name =
             openLyricIndex < 0
                 ? openLyricKey
-                : `(${openLyricIndex + 1})-${openLyricKey}${repeatSuffix}`;
+                : `(${openLyricIndex + 1})-${openLyricKey}${suffix}`;
     }
 
     get extraClassnames() {

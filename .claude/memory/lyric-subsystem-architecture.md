@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: da5728a5-2e42-4a20-8512-65b8dc76a945
-  modified: 2026-10-15T17:26:05.358Z
+  modified: 2026-11-07T19:53:48.092Z
 ---
 
 Lyric documents (`src/lyric-list/`) are **not** ordinary slide documents. A
@@ -111,6 +111,18 @@ Things that bite:
     hide its chords. It returns the same object when blank so `genCacheKey` is
     unchanged for untouched installs. Cache invalidation is automatic: every knob
     lands in the hashed options.
+  - **Slide Margin and the box Position (2026-11-07).** The one
+    `paddingPercentage` became `marginHorizontalPercentage` /
+    `marginVerticalPercentage` + `isMarginLinked`, each the share of ITS axis
+    left around the box, 0-99 (the user's _change % 20 to 99_: a side measured
+    on the width, as `paddingPercentage` was, left no box past half the
+    height; an old record's side is read as twice itself on both). The
+    margins SIZE the lyric box and Position only MOVES it (`canvasItemBounds`
+    x/y: start 0, center half the margin, end all of it) — the user's rule, _the box size
+    have to be the same with center one_. Only x/y change, so the open-lyric
+    options (sized by width/height) and their cache key never do: no song
+    re-renders when the box moves. A first cut shrank open-lyric's section to
+    its words with grid self-alignment and was dropped for this.
   The key is deliberately **unprefixed** (no `getSettingPrefix()`) so presenter,
   reader and screen resolve one key — same reason as
   `open-lyric-previewer-setting`; a divergent key is the SC-08 bug class.
@@ -138,6 +150,53 @@ Things that bite:
 - The rendered HTML carries a **full computed-style dump per node** (~464 KB for
   one chorus slide). That comes from `open-lyric`, not this repo — see
   [[open-lyric-subtree-branch-dep]] for how to change that dependency.
+
+- **Atom Mode: a slide per LINE (2026-11-07).** Asked for with Long Text
+  Show's toggle circled, then the empty end of the song's history row:
+  _check `Atom Mode` on longtext show, I want it in lyric_. Chosen with the
+  user: ONE switch for every song (`lyric-slides-atom-mode`, unprefixed like
+  `lyric-stage-style-<n>`), and every line a slide, blank lines kept (an empty
+  slide). What is not obvious from the code (`lyricAtomModeHelpers.ts`):
+  - **Every stage must split a song the same way**, because an id is a place
+    in the deck and a screen on another `St:`, a Presenting Flow row and the
+    lyric editor's `?id=` turn ids back into slides. So the switch is never
+    per stage, and the line COUNT comes from the text stage 0 draws
+    (`getElementMap({ type: 'text', isWithKeyNote: false,
+    isShowingCommentText: false })`, cheap, memoised per `OpenLyric` + value
+    in a WeakMap), never from any stage's markup.
+  - **Each stage then cuts its own markup into exactly that many pieces**
+    (`splitLyricPartHtml`). open-lyric renders a part as
+    `.ol-preview-lines > .ol-preview-line[data-editor-line]` and has no
+    line option. Stage 0 drops a line of chords alone (open-lyric leaves it
+    out once key notes are off) and the `//` comments; stage 1 draws both, so such a line (`--comment`,
+    `--progression`, or chords with no words outside
+    `.ol-preview-chord` / `.ol-preview-bar` / `.ol-preview-lyric-segment__chord`)
+    rides with the NEXT line. The text reader trims blank lines around a
+    part and the markup keeps them as `&nbsp;` lines, so the cut drops those
+    too. A count mismatch never moves an id: extra lines join the last
+    piece, missing ones leave empty pieces. Proven against the real library
+    in `lyricAtomModeHelpers.test.ts` (stage 0 and stage 1 options agree line
+    for line).
+  - **Parsed once, never cloned per line**: each line is swapped for a
+    comment marker, the shell serialized once, and each piece is a string
+    join, since a part carries every computed style inline. It runs after an
+    `await`, never inside a static render ([[static-render-must-not-parse-html]]),
+    and is cached beside the element map (`get-atom-part:<count>:<key>`).
+    `genWarmDeckKey` adds `|atom:1`.
+  - **Flipping it renumbers every song**, so a song slide a screen holds is
+    put up again (`lyricAtomModeScreenHelpers.ts`): where it goes is read
+    from both quick lists BEFORE the switch is written, and applied after.
+    It goes to the same step and play, line 0 on and the whole part off;
+    First/Info/None keep ids 0-2, and attachment ids shift by the change in
+    length. A locked screen is left alone, as is one whose slide changed
+    meanwhile. Presenter only. NOT handled: a Presenting Flow row stores a
+    lyric slide by id, so after a flip it names whatever is now at that id,
+    as after an edit to the Structure.
+  - The name and stage 1's corner badge carry ` · 2/4`
+    (`genLyricLineSuffix`). Seen live 2026-11-07: `Still (Copy)` 13 slides →
+    64, Stage 0 and Stage 1 panes card for card; a single line sits centred
+    in stage 0's box and at the top of stage 1's, as each stage lays a part
+    out.
 
 Every other document kind has stages too, drawn at render time instead of
 rewriting slides; the Stage Previewer header is shared

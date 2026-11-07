@@ -3,7 +3,7 @@ id: W-05
 title: "Présenter les paroles d'un chant"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 74d6bff11d380b45
+translatedFrom: 62ddc243312625e8
 ---
 # W-05 — Présenter les paroles d'un chant
 
@@ -39,9 +39,20 @@ translatedFrom: 74d6bff11d380b45
     la **[en:tran:Stage] 0**, munie d'un cadenas, reste. 📸
 7. Pour changer l'**apparence** des diapositives d'une scène, cliquez sur le **⚙** de la pastille de cette
    scène (`Stage 0`, `Stage 3`, …) dans l'en-tête de l'Aperçu des scènes. Une petite fenêtre **[en:tran:Stage Style]**
-   s'ouvre — faites-la glisser où vous voulez, elle retient où vous l'avez laissée. Elle règle **[en:tran:Slide Padding (%)]**,
+   s'ouvre — faites-la glisser où vous voulez, elle retient où vous l'avez laissée. Elle règle la
+   **[en:tran:Slide Margin (%)]** — la part de la largeur (↔) et de la hauteur (↕) de l'écran laissée autour
+   de la boîte des paroles, de 0 (la boîte est tout l'écran) à 99 — avec un curseur ↔
+   pour les côtés et un ↕ pour le haut et le bas : tant que le 🔗 à côté d'eux
+   (**[en:tran:Link horizontal and vertical margin]**) est allumé, comme il l'est au départ, en bouger un bouge
+   les deux ; éteignez-le pour les régler séparément. Les marges décident de la taille de la boîte des
+   paroles ; en dessous, **[en:tran:Position]** est un pavé de neuf points pour l'endroit où se place cette
+   boîte : **[en:tran:Middle center]**, allumé au départ, répartit la marge également ; tout autre point
+   déplace la même boîte jusqu'à ce qu'elle touche les bords qu'il nomme — **[en:tran:Bottom center]** avec
+   ↕ à 77 met les paroles dans une bande sur le quart inférieur de l'écran. Puis
    **[en:tran:Background Opacity (%)]**, **[en:tran:Extra Font Size]**, un thème **[en:tran:Light]/[en:tran:Dark]**, et une
-   zone **[en:tran:Custom CSS]** pour tout le reste. 📸
+   zone **[en:tran:Custom CSS]** pour tout le reste — vide, elle montre en gris le CSS que la scène utilise
+   déjà, et le ✎ à côté de son nom (**[en:tran:Edit a copy of the stage's CSS]**) en met une copie dans la
+   zone, à modifier. 📸
 8. Ces réglages appartiennent à la **scène**, pas au chant — chaque chant que vous ouvrez les utilise,
    c'est pourquoi le panneau indique _[en:tran:Applies to every song]_. **Chaque numéro de scène garde
    ses propres réglages**, si bien que vous pouvez laisser sobre la scène projetée, agrandir la scène des accords,
@@ -55,7 +66,7 @@ translatedFrom: 74d6bff11d380b45
    le précédent en haut à gauche et le suivant en bas à droite. Le couplet à venir est en **pleine luminosité**, pas
    estompé, et sur les scènes 2 à 4 le couplet est collé au coin supérieur gauche de l'écran, avec le
    suivant collé à gauche
-   juste en dessous, le touchant — sans marge autour ni espace entre eux, quoi qu'indique **[en:tran:Slide Padding (%)]** (la marge
+   juste en dessous, le touchant — sans marge autour ni espace entre eux, quoi qu'indique **[en:tran:Slide Margin (%)]** (la marge
    reste à l'intérieur de la boîte de chaque couplet). Un écran passé à une scène au-dessus de 0 voit sa
    transition **[en:tran:Slide]:** réglée sur **none** (W-10).
 9. Dans cette fenêtre **[en:tran:Stage Style]** — le **⚙** de la pastille de la scène, dans l'Aperçu des scènes du Présentateur — **[en:tran:Reset]** remet cette scène aux valeurs par défaut.
@@ -90,3 +101,13 @@ translatedFrom: 74d6bff11d380b45
     `Verse 3`), deux parties portant le même nom, et un accord qu'il ne connaît pas — il connaît
     `[Cm7]`, pas `[Cm7b5]`, alors écrivez à sa place un accord qu'il connaît. Corrigez la ligne
     marquée et le rouge disparaît.
+13. **Une ligne à la fois — [en:tran:Atom Mode].** Au bout droit de la rangée sous l'en-tête de
+    l'Aperçu des scènes, appuyez sur **[en:tran:Atom Mode]** et chaque ligne du chant devient une
+    diapositive à elle seule : un couplet de quatre lignes fait quatre diapositives, nommées
+    `(1)-Verse 1 · 1/4` à `(1)-Verse 1 · 4/4`, et un refrain chanté deux fois donne ses lignes deux
+    fois. Une ligne vide au milieu d'une partie est une diapositive vide — une pause. Cliquez sur une
+    ligne pour l'envoyer à l'écran. Chaque volet de scène découpe le chant de la même façon : une
+    carte est donc la même ligne sur toutes les scènes, et les scènes 1 et au-delà écrivent aussi la
+    ligne dans le coin de la diapositive (`Chorus · 1/8 · 2/7`). C'est un seul interrupteur pour
+    tous les chants. Une diapositive de chant qu'un écran tient passe à la première ligne de sa partie
+    quand vous l'activez, et revient à la partie entière quand vous le désactivez. 📸

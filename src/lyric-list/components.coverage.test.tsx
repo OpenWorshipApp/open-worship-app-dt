@@ -94,6 +94,23 @@ vi.mock('../helper/settingHelpers', async () => {
             );
             return [data, setDataSetting];
         },
+        useStateSettingBooleanSynced: (
+            settingName: string,
+            defaultValue = false,
+        ) => {
+            const [data, setData] = useState(() => {
+                const value = state.settings.get(settingName);
+                return value === undefined ? defaultValue : value === 'true';
+            });
+            const setDataSetting = useCallback(
+                (value: boolean) => {
+                    setData(value);
+                    writeSetting(settingName, `${value}`);
+                },
+                [settingName],
+            );
+            return [data, setDataSetting];
+        },
     };
 });
 vi.mock('../helper/domHelpers', () => ({
@@ -648,7 +665,11 @@ function readStyleWrite(index: number) {
 }
 
 const DEFAULT_STYLE = {
-    paddingPercentage: 1,
+    marginHorizontalPercentage: 2,
+    marginVerticalPercentage: 2,
+    isMarginLinked: true,
+    boxVerticalAlignment: 'center',
+    boxHorizontalAlignment: 'center',
     backgroundAlphaPercentage: 50,
     extraFontSize: 45,
     theme: 'light',
@@ -919,11 +940,16 @@ describe('LyricStageStyleComp', () => {
         expect(host.textContent).toContain(
             'Custom CSS is added after this stage own style',
         );
-        const padding = getRange(host, 'Slide Padding (%)');
-        expect(padding.value).toBe('5');
-        expect([padding.min, padding.max, padding.dataset.defaultSize]).toEqual(
-            ['0', '20', '1'],
-        );
+        // A record from before the margin was split: its one side, doubled.
+        for (const label of ['Horizontal Margin (%)', 'Vertical Margin (%)']) {
+            const margin = getRange(host, label);
+            expect(margin.value).toBe('10');
+            expect([
+                margin.min,
+                margin.max,
+                margin.dataset.defaultSize,
+            ]).toEqual(['0', '99', '2']);
+        }
         const alpha = getRange(host, 'Background Opacity (%)');
         expect(alpha.value).toBe('30');
         expect([alpha.max, alpha.dataset.defaultSize]).toEqual(['100', '50']);
@@ -944,10 +970,10 @@ describe('LyricStageStyleComp', () => {
         const { host } = await mount(
             <LyricStageStyleComp stage={0} onChanged={onChanged} />,
         );
-        await slide(host, 'Slide Padding (%)', 3);
-        await slide(host, 'Slide Padding (%)', 4);
+        await slide(host, 'Horizontal Margin (%)', 3);
+        await slide(host, 'Horizontal Margin (%)', 4);
         // The control follows the hand at once; the write waits.
-        expect(getRange(host, 'Slide Padding (%)').value).toBe('4');
+        expect(getRange(host, 'Horizontal Margin (%)').value).toBe('4');
         expect(state.settingWrites).toEqual([]);
         await advance(499);
         expect(state.settingWrites).toEqual([]);
@@ -956,7 +982,11 @@ describe('LyricStageStyleComp', () => {
         expect(state.settingWrites).toHaveLength(1);
         expect(readStyleWrite(0)).toEqual({
             key: 'lyric-stage-style-0',
-            style: { ...DEFAULT_STYLE, paddingPercentage: 4 },
+            style: {
+                ...DEFAULT_STYLE,
+                marginHorizontalPercentage: 4,
+                marginVerticalPercentage: 4,
+            },
         });
         expect(onChanged).toHaveBeenCalledTimes(1);
     });
@@ -986,12 +1016,13 @@ describe('LyricStageStyleComp', () => {
         const { host } = await mount(
             <LyricStageStyleComp stage={0} onChanged={onChanged} />,
         );
-        await slide(host, 'Slide Padding (%)', 6);
+        await slide(host, 'Horizontal Margin (%)', 6);
         await act(async () => findButton(host, 'Dark').click());
         expect(state.settingWrites).toHaveLength(1);
         expect(readStyleWrite(0).style).toEqual({
             ...DEFAULT_STYLE,
-            paddingPercentage: 6,
+            marginHorizontalPercentage: 6,
+            marginVerticalPercentage: 6,
             theme: 'dark',
         });
         expect(onChanged).toHaveBeenCalledTimes(1);
@@ -1046,7 +1077,7 @@ describe('LyricStageStyleComp', () => {
         const { host } = await mount(
             <LyricStageStyleComp stage={0} onChanged={onChanged} />,
         );
-        await slide(host, 'Slide Padding (%)', 9);
+        await slide(host, 'Horizontal Margin (%)', 9);
         const reset = host.querySelector<HTMLButtonElement>(
             '[title="Reset Stage Style"]',
         )!;
@@ -1055,7 +1086,7 @@ describe('LyricStageStyleComp', () => {
         expect(state.settingRemovals).toEqual(['lyric-stage-style-0']);
         expect(state.settings.has('lyric-stage-style-0')).toBe(false);
         expect(onChanged).toHaveBeenCalledTimes(1);
-        expect(getRange(host, 'Slide Padding (%)').value).toBe('1');
+        expect(getRange(host, 'Horizontal Margin (%)').value).toBe('2');
         expect(findButton(host, 'Light').getAttribute('aria-pressed')).toBe(
             'true',
         );
@@ -1073,12 +1104,12 @@ describe('LyricStageStyleComp', () => {
         const { host: hostB } = await mount(
             <LyricStageStyleComp stage={2} onChanged={onChangedB} />,
         );
-        await slide(hostA, 'Slide Padding (%)', 3);
-        await slide(hostB, 'Slide Padding (%)', 7);
+        await slide(hostA, 'Horizontal Margin (%)', 3);
+        await slide(hostB, 'Horizontal Margin (%)', 7);
         await advance(500);
         const written = Object.fromEntries(
             state.settingWrites.map(([key, raw]) => {
-                return [key, JSON.parse(raw).paddingPercentage];
+                return [key, JSON.parse(raw).marginHorizontalPercentage];
             }),
         );
         expect(written).toEqual({
@@ -1098,7 +1129,7 @@ describe('LyricStageStyleFloatingComp', () => {
     test('portals the open stage panel and retargets it per stage', async () => {
         state.settings.set(
             'lyric-stage-style-2',
-            JSON.stringify({ ...DEFAULT_STYLE, paddingPercentage: 7 }),
+            JSON.stringify({ ...DEFAULT_STYLE, marginHorizontalPercentage: 7 }),
         );
         const ownerId = genLyricStageStyleFloatingOwnerId();
         openedOwnerIds.push(ownerId);
@@ -1123,7 +1154,7 @@ describe('LyricStageStyleFloatingComp', () => {
         expect(dialog.parentElement!.parentElement).toBe(document.body);
         expect(dialog.parentElement!.dataset.bsTheme).toBe('dark');
         expect(
-            getByLabel<HTMLInputElement>(dialog, 'Slide Padding (%)').value,
+            getByLabel<HTMLInputElement>(dialog, 'Horizontal Margin (%)').value,
         ).toBe('7');
 
         // Another stage: the SAME widget, a fresh body with that stage values.
@@ -1134,9 +1165,9 @@ describe('LyricStageStyleFloatingComp', () => {
         );
         expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
         expect(
-            getByLabel<HTMLInputElement>(getDialog()!, 'Slide Padding (%)')
+            getByLabel<HTMLInputElement>(getDialog()!, 'Horizontal Margin (%)')
                 .value,
-        ).toBe('1');
+        ).toBe('2');
 
         await act(async () => findButton(getDialog()!, 'Dark').click());
         expect(onChanged).toHaveBeenCalledTimes(1);

@@ -51,7 +51,11 @@ describe('getLyricStageStyle', () => {
     test('answers the pre-feature hard-coded values when nothing is saved', () => {
         getSettingMock.mockReturnValue(null);
         expect(getLyricStageStyle(0)).toEqual({
-            paddingPercentage: 1,
+            marginHorizontalPercentage: 2,
+            marginVerticalPercentage: 2,
+            isMarginLinked: true,
+            boxVerticalAlignment: 'center',
+            boxHorizontalAlignment: 'center',
             backgroundAlphaPercentage: 50,
             extraFontSize: 45,
             theme: 'light',
@@ -76,7 +80,11 @@ describe('getLyricStageStyle', () => {
     test('clamps and rounds each numeric field into its own range', () => {
         getSettingMock.mockReturnValue(
             JSON.stringify({
-                paddingPercentage: 999,
+                marginHorizontalPercentage: 999,
+                marginVerticalPercentage: -3,
+                isMarginLinked: false,
+                boxVerticalAlignment: 'end',
+                boxHorizontalAlignment: 'right',
                 backgroundAlphaPercentage: -4,
                 extraFontSize: 12.6,
                 theme: 'dark',
@@ -84,7 +92,11 @@ describe('getLyricStageStyle', () => {
             }),
         );
         expect(getLyricStageStyle(0)).toEqual({
-            paddingPercentage: 20,
+            marginHorizontalPercentage: 99,
+            marginVerticalPercentage: 0,
+            isMarginLinked: false,
+            boxVerticalAlignment: 'end',
+            boxHorizontalAlignment: 'right',
             backgroundAlphaPercentage: 0,
             extraFontSize: 13,
             theme: 'dark',
@@ -95,7 +107,11 @@ describe('getLyricStageStyle', () => {
     test('a bad field falls back on its own, keeping its neighbours', () => {
         getSettingMock.mockReturnValue(
             JSON.stringify({
-                paddingPercentage: 'nope',
+                marginHorizontalPercentage: 'nope',
+                marginVerticalPercentage: 7,
+                isMarginLinked: 'no',
+                boxVerticalAlignment: 'bottom',
+                boxHorizontalAlignment: 'left',
                 backgroundAlphaPercentage: Number.NaN,
                 extraFontSize: 90,
                 theme: 'rainbow',
@@ -103,11 +119,53 @@ describe('getLyricStageStyle', () => {
             }),
         );
         expect(getLyricStageStyle(0)).toEqual({
-            paddingPercentage: 1,
+            marginHorizontalPercentage: 2,
+            marginVerticalPercentage: 7,
+            // Only an explicit `false` unlinks.
+            isMarginLinked: true,
+            // Not a cell of the pad, so the PAIR goes: Middle center.
+            boxVerticalAlignment: 'center',
+            boxHorizontalAlignment: 'center',
             backgroundAlphaPercentage: 50,
             extraFontSize: 90,
             theme: 'light',
             customCss: '',
+        });
+    });
+
+    test('a record from before the split: its one side, doubled, on both axes, linked', () => {
+        getSettingMock.mockReturnValue(
+            JSON.stringify({ paddingPercentage: 8, theme: 'dark' }),
+        );
+        expect(getLyricStageStyle(0)).toMatchObject({
+            marginHorizontalPercentage: 16,
+            marginVerticalPercentage: 16,
+            isMarginLinked: true,
+            theme: 'dark',
+        });
+    });
+
+    test('a side of its own wins over the old single value', () => {
+        getSettingMock.mockReturnValue(
+            JSON.stringify({
+                paddingPercentage: 999,
+                marginVerticalPercentage: 3,
+            }),
+        );
+        expect(getLyricStageStyle(0)).toMatchObject({
+            // The old value is clamped like any other.
+            marginHorizontalPercentage: 99,
+            marginVerticalPercentage: 3,
+        });
+    });
+
+    test('half a box position reads back as Middle center', () => {
+        getSettingMock.mockReturnValue(
+            JSON.stringify({ boxVerticalAlignment: 'start' }),
+        );
+        expect(getLyricStageStyle(0)).toMatchObject({
+            boxVerticalAlignment: 'center',
+            boxHorizontalAlignment: 'center',
         });
     });
 
@@ -173,7 +231,11 @@ describe('getLyricStageStyle', () => {
 
 describe('setLyricStageStyle', () => {
     const style: LyricStageStyleType = {
-        paddingPercentage: 4,
+        marginHorizontalPercentage: 4,
+        marginVerticalPercentage: 2,
+        isMarginLinked: false,
+        boxVerticalAlignment: 'center',
+        boxHorizontalAlignment: 'left',
         backgroundAlphaPercentage: 80,
         extraFontSize: 100,
         theme: 'dark',
@@ -190,9 +252,11 @@ describe('setLyricStageStyle', () => {
     });
 
     test('sanitizes on the way in, so a bad value cannot reach the file', () => {
-        setLyricStageStyle(0, { ...style, paddingPercentage: 999 });
+        setLyricStageStyle(0, { ...style, marginVerticalPercentage: 999 });
         const written = JSON.parse(setSettingMock.mock.calls[0][1]);
-        expect(written.paddingPercentage).toBe(20);
+        expect(written.marginVerticalPercentage).toBe(99);
+        // The old single field is never written back.
+        expect('paddingPercentage' in written).toBe(false);
     });
 
     test('stages are independent', () => {

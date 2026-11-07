@@ -12,9 +12,9 @@ import {
   StdioServerTransport,
 } from 'chrome-devtools-mcp/build/src/third_party/index.js';
 import { VERSION } from 'chrome-devtools-mcp/build/src/version.js';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { restoreSdkToolCalls } from './server.mjs';
+import { closeBrowserWithServer, restoreSdkToolCalls } from './server.mjs';
 
 // The REAL chrome-devtools-mcp, nothing mocked. `server.mjs` reaches into
 // its build folder, and every other test of that file mocks those paths --
@@ -160,6 +160,49 @@ describe('chrome-devtools-mcp, as server.mjs uses it', () => {
     expect(chrome.error).toBeUndefined();
     expect(chrome.result.isError).toBe(true);
     expect(JSON.stringify(chrome.result.content)).toMatch(/pageId/);
+  }, 30_000);
+
+  /**
+   * A real server on a real (idle) transport, its BrowserManager watched.
+   * The host closes a session through the SDK server it was handed, never
+   * through chrome-devtools' own -- so that close is the one asked here.
+   */
+  async function closeThroughSdk({ isWired }) {
+    const config = parseConfig({ [NO_CONFIG_DISCOVERY_ENV]: '1' });
+    config.resolved.usageStatistics = false;
+    const browserManager = new BrowserManager(config, {});
+    const closeBrowser = vi.spyOn(browserManager, 'close');
+    const mcpServer = await McpServer.from(config, { browserManager });
+    if (isWired) {
+      closeBrowserWithServer(mcpServer);
+    }
+    const { server } = mcpServer;
+    await server.connect(
+      new StdioServerTransport(new PassThrough(), new PassThrough()),
+    );
+    await server.close();
+    const browserCloseCount = closeBrowser.mock.calls.length;
+    const isConnected = server.isConnected();
+    // Clean-up, whatever the outcome.
+    await mcpServer.close();
+    return { browserCloseCount, isConnected };
+  }
+
+  // Proves the next test can fail: in 1.12 each session holds its own
+  // browser, and the SDK's close does not reach it.
+  test("on its own, the SDK server's close leaves the browser open", async () => {
+    const { browserCloseCount } = await closeThroughSdk({ isWired: false });
+    expect(browserCloseCount).toBe(0);
+  }, 30_000);
+
+  test("closing the SDK server closes the session's browser too", async () => {
+    const { browserCloseCount, isConnected } = await closeThroughSdk({
+      isWired: true,
+    });
+    expect(browserCloseCount).toBe(1);
+    // The SDK half is closed as well, which only happens while
+    // chrome-devtools' own close() still closes it.
+    expect(isConnected).toBe(false);
   }, 30_000);
 
   test('reads a config file from the profile unless discovery is off', () => {

@@ -44,3 +44,6 @@ test-results/
 # VitePress manual build artifacts (see docs/README.md)
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+
+# TypeScript incremental build cache (tsconfig.node.json is composite)
+*.tsbuildinfo

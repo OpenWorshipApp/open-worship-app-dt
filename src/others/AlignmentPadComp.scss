@@ -1,0 +1,67 @@
+// Where a thing sits, shown rather than described: a nine-cell pad, because
+// the answer is a PLACE, and the cell that is lit is where the thing will be.
+// Shared by the foreground's Position pad and the Stage Style panel, so it
+// lives beside its component rather than in `foregroundProperties.scss`.
+
+.fg-pad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
+  width: 84px;
+  height: 84px;
+  padding: 3px;
+  background: rgba(var(--bs-info-rgb), 0.05);
+  border: 1px solid var(--app-line);
+  border-radius: 6px;
+}
+
+.fg-pad-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+
+  &:hover .fg-pad-dot {
+    opacity: 0.75;
+    transform: scale(1.35);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 1px;
+  }
+}
+
+.fg-pad-dot {
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  border-radius: 50%;
+  opacity: 0.28;
+  // The only motion here, and it answers a press: the dot the operator is
+  // about to choose grows under the pointer. Nothing moves on its own.
+  transition:
+    transform 0.12s ease,
+    opacity 0.12s ease;
+}
+
+.fg-pad-cell-active {
+  background: rgba(var(--bs-info-rgb), 0.2);
+  border-color: rgba(var(--bs-info-rgb), 0.55);
+
+  .fg-pad-dot {
+    background: var(--bs-info);
+    opacity: 1;
+    transform: scale(1.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fg-pad-dot {
+    transition: none;
+  }
+}

@@ -52,7 +52,8 @@ let chatbotSync: LyricEditorSyncType | null = null;
 // saved yet (the song's editing head, an assistant's change among them) go
 // in on top of it as an edit, so Reset / Save are there to press. Opened on
 // the head itself, the editor called those edits clean and greyed Save out,
-// and the Lyric Editor is the only place a song is saved.
+// and this is where a song is saved -- this, and the history row under the
+// song's Stage Previewer header in the Presenter (`LyricSlidesPreviewerComp`).
 async function readSavedContent() {
     try {
         const saved = await lyric.getJsonData?.(true);
