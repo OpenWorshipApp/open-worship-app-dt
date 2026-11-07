@@ -25,7 +25,7 @@ install.
 **Why:** these are npm-version defaults, not repo breakage — the errors look
 like a broken dependency list or a corrupt lockfile.
 
-**How to apply:** the manual fix now ships as scripts — run `npm run i:d:a`
+**How to apply:** the manual fix now ships as scripts — run `npm run i:d`
 (= `npm cache clean --force && npm i --allow-git=all && npm run
 electron:install`); `i:d` is the `--allow-git=root` variant, and
 `electron:install` = `node node_modules/electron/install.js`. Then verify the
