@@ -38,6 +38,21 @@ describe('npm run lint', () => {
         );
     });
 
+    test('runs the TypeScript 7 compiler, never whichever `tsc` npm linked', () => {
+        // `typescript` is the TS 6 API package (typescript-eslint throws on 7)
+        // and it depends on plain `typescript@6` as `@typescript/old`, hoisted
+        // with its own `tsc` bin. That bin and `@typescript/native`'s TS 7 one
+        // fight over `node_modules/.bin/tsc`; the last package linked wins, so
+        // a bare `tsc` silently type-checked with TS 6 after an install.
+        const bareTsc = Object.entries(scripts).filter(([, script]) => {
+            return /(^|&&\s*)tsc\b/.test(script);
+        });
+        expect(bareTsc).toEqual([]);
+        expect(scripts['lint:all:error']).toContain(
+            'node node_modules/@typescript/native/bin/tsc --noEmit',
+        );
+    });
+
     test('is safe to run beside a live dev app', () => {
         // `build` deletes `electron-build/`, the running dev app's own main
         // entry, and `prettier --write` rewrites files another session may be

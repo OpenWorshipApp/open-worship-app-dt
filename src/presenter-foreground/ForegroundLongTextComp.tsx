@@ -1107,7 +1107,7 @@ function LongTextBodyComp({
         );
         return {
             itemData: genLongTextItemData(sourceId, columns, {
-                isStacked: isStacked === true,
+                isStacked: isStacked === true && languages.length > 1,
                 isNumberHidden: isNumberHidden === true,
             }),
             outlines,
@@ -1224,7 +1224,11 @@ function LongTextBodyComp({
         };
     });
     const isAtomMode = session.isAtomMode === true;
-    const isStacked = session.isStacked === true;
+    // One language has nothing to stack -- the screen draws it as one column
+    // either way -- so Stack waits for a second. The choice stays in the
+    // session and is back with the second language.
+    const isStackable = session.languages.length > 1;
+    const isStacked = isStackable && session.isStacked === true;
     const isNumberHidden = session.isNumberHidden === true;
     const verifyResult = isChecking
         ? null
@@ -1298,6 +1302,7 @@ function LongTextBodyComp({
                         }
                         title={stackLabel}
                         aria-pressed={isStacked}
+                        disabled={!isStackable}
                         onClick={() => {
                             handleLayoutToggling('isStacked');
                         }}

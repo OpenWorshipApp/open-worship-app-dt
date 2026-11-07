@@ -2436,6 +2436,54 @@ describe('this computer as a guest of a host', () => {
         expect(fixture.controllers).toEqual([]);
     });
 
+    // A setting the host changes reaches its screen here in its own copy, so
+    // the window it reloads into draws with it too.
+    test('a host’s setting change goes into the copy its screen here opens with', async () => {
+        fixture.displays = [display];
+        const host = await startFakeHost();
+        const service = await startService();
+        await linkTo(service, host);
+        host.send('show', {
+            screenId: 0,
+            displayId: 15,
+            context: {
+                screenId: 0,
+                isWindows: false,
+                resources: {},
+                settings: { 'screen-bible--line-sync-0': 'false' },
+            },
+        });
+        await until(() => fixture.controllers.length === 1);
+        const incoming = () => {
+            return [...(service as any).incoming.values()][0];
+        };
+
+        host.send('screen', {
+            message: {
+                screenId: 0,
+                type: 'screen-setting',
+                data: {
+                    settings: {
+                        'screen-bible--line-sync-0': 'true',
+                        'ai-enabled': 'true',
+                    },
+                },
+            },
+            resources: {},
+            stage: 0,
+        });
+
+        await until(() => {
+            return (
+                incoming()?.context.settings['screen-bible--line-sync-0'] ===
+                'true'
+            );
+        });
+        expect(incoming().context.settings).toEqual({
+            'screen-bible--line-sync-0': 'true',
+        });
+    });
+
     test('a host’s screen here finds the files of its pages from what the host published', async () => {
         fixture.displays = [display, display2];
         const host = await startFakeHost();

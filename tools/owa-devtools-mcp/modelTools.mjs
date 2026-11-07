@@ -51,13 +51,21 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
     // The user's answer when these were built: the assistant does not get
     // to reach for a camera, or for their mouse, on its own. The window
     // gives them a button for both. `take_screenshot` is here because it
-    // is the same decision -- a sibling tool that quietly undid it.
+    // is the same decision -- a sibling tool that quietly undid it. The
+    // screencast pair (chrome-devtools-mcp 1.12, 2026-11-07) is a video
+    // of the same window, the same decision again.
     reason:
       'Taking a picture of the window, or pointing the mouse for the ' +
       'user, is not yours to reach for. Ask in one sentence -- "send ' +
       'me a picture of the window" or "point at the control you mean" ' +
       '-- and the window gives them a button that does it.',
-    nameList: ['owa_pick_element', 'owa_screenshot', 'take_screenshot'],
+    nameList: [
+      'owa_pick_element',
+      'owa_screenshot',
+      'take_screenshot',
+      'screencast_start',
+      'screencast_stop',
+    ],
   },
   {
     reason:
@@ -229,6 +237,8 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
       'performance_start_trace',
       'performance_stop_trace',
       'performance_analyze_insight',
+      // chrome-devtools-mcp 1.12 (2026-11-07): ~339 tokens a round.
+      'get_css_styles',
     ],
   },
 ];

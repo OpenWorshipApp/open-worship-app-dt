@@ -168,8 +168,8 @@ function ScreenShowMoreChapterRowComp({
  * under the other, the way the Bible Reader shows versions merged: the row's
  * numbers on a line of their own, each in its language's digits and font,
  * then each language's words. One header says every code and every title,
- * `EN | KM`. `isNumberHidden` (a long text's Hide Number) draws no number,
- * side by side or stacked.
+ * `EN | KM`. `isNumberHidden` (a long text's Hide Number) draws no number and
+ * no language code in the header, side by side or stacked -- the titles stay.
  */
 export function LongTextTableComp({
     columns: rawColumns,
@@ -243,16 +243,18 @@ export function LongTextTableComp({
                         display: 'flex',
                     }}
                 >
-                    <div
-                        className={
-                            isLongText
-                                ? 'bible bible-key'
-                                : 'bible highlight bible-name bible-key'
-                        }
-                        data-index={i}
-                    >
-                        {column.code}
-                    </div>
+                    {isLongText && isNumberHidden ? null : (
+                        <div
+                            className={
+                                isLongText
+                                    ? 'bible bible-key'
+                                    : 'bible highlight bible-name bible-key'
+                            }
+                            data-index={i}
+                        >
+                            {column.code}
+                        </div>
+                    )}
                     <div className="title">
                         <div>{column.title}</div>
                     </div>
@@ -492,13 +494,18 @@ function LongTextStackedTableComp({
                             }}
                         >
                             <div style={{ display: 'flex' }}>
-                                <div className="bible bible-key" data-index={0}>
-                                    {columns
-                                        .map(({ code }) => {
-                                            return code;
-                                        })
-                                        .join(' | ')}
-                                </div>
+                                {isNumberHidden ? null : (
+                                    <div
+                                        className="bible bible-key"
+                                        data-index={0}
+                                    >
+                                        {columns
+                                            .map(({ code }) => {
+                                                return code;
+                                            })
+                                            .join(' | ')}
+                                    </div>
+                                )}
                                 <div className="title">
                                     <div>
                                         {columns.map((column, j) => {

@@ -75,6 +75,28 @@ let isOnOwnFolder = false;
 // its 10-second cache lapses.
 let checkedMarkerDirPath: string | null = null;
 
+type SettingWriteListenerType = (key: string, value: string | null) => void;
+// Told of every setting this window writes (`null`: removed), after the write.
+// A screen page writes only its own copy and tells no one.
+const settingWriteListeners = new Set<SettingWriteListenerType>();
+
+export function addSettingWriteListener(listener: SettingWriteListenerType) {
+    settingWriteListeners.add(listener);
+    return () => {
+        settingWriteListeners.delete(listener);
+    };
+}
+
+function notifySettingWritten(key: string, value: string | null) {
+    for (const listener of settingWriteListeners) {
+        try {
+            listener(key, value);
+        } catch (error) {
+            handleError(error);
+        }
+    }
+}
+
 /**
  * The chosen data folder, or null when there is none to use. A folder that is
  * not where it was is looked for on the other drives first (a stick that came
@@ -351,6 +373,7 @@ class AppLocalStorage {
             appHomeStorage.setItem(key, value);
             cache.setSync(toComputerCacheKey(key), value);
             absentCache.deleteSync(toComputerCacheKey(key));
+            notifySettingWritten(key, value);
             return;
         }
         const fullPath = this.toFullPath(key);
@@ -361,6 +384,7 @@ class AppLocalStorage {
         // The file exists now; a stale "absent" entry would keep `getItem`
         // answering null for up to the cache window.
         absentCache.deleteSync(fullPath);
+        notifySettingWritten(key, value);
     }
 
     removeItem(key: string): void {
@@ -372,6 +396,7 @@ class AppLocalStorage {
         if (checkIsComputerSetting(key)) {
             this.removeItemCache(key);
             appHomeStorage.removeItem(key);
+            notifySettingWritten(key, null);
             return;
         }
         const fullPath = this.toFullPath(key);
@@ -388,6 +413,7 @@ class AppLocalStorage {
                 return;
             }
             fsUnlinkSync(fullPath);
+            notifySettingWritten(key, null);
         } catch (error) {
             handleError(error);
         }

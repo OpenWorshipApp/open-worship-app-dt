@@ -17,30 +17,63 @@ const serverState = vi.hoisted(() => {
 
 vi.mock('chrome-devtools-mcp', () => {
   return {
-    createMcpServer: async (args, options) => {
-      serverState.calls.push(['createMcpServer', args, options]);
-      serverState.mcpServer = {
-        async connect(transport) {
-          serverState.calls.push(['connect', transport]);
-          await serverState.connectGate;
-          serverState.calls.push(['connected', transport]);
-          return 'the SDK connected';
-        },
-      };
-      return { server: serverState.mcpServer };
+    McpServer: {
+      from: async (config, options) => {
+        serverState.calls.push(['McpServer.from', config, options]);
+        serverState.mcpServer = {
+          server: {
+            removeRequestHandler(method) {
+              serverState.calls.push(['removeRequestHandler', method]);
+            },
+          },
+          setToolRequestHandlers() {
+            serverState.calls.push(['setToolRequestHandlers']);
+          },
+          async connect(transport) {
+            serverState.calls.push(['connect', transport]);
+            await serverState.connectGate;
+            serverState.calls.push(['connected', transport]);
+            return 'the SDK connected';
+          },
+        };
+        return { server: serverState.mcpServer };
+      },
     },
   };
 });
-vi.mock('chrome-devtools-mcp/build/src/config/mcp-options.js', () => {
+vi.mock('chrome-devtools-mcp/build/src/BrowserManager.js', () => {
   return {
-    parseArguments: (version, argv) => {
-      serverState.calls.push(['parseArguments', version, argv]);
-      // Telemetry ON, the way a client's own argv could ask for it.
-      serverState.parsed = {
-        usageStatistics: true,
-        headless: argv.includes('--headless'),
-      };
-      return serverState.parsed;
+    BrowserManager: class {
+      constructor(config, options) {
+        serverState.calls.push(['BrowserManager', config, options]);
+      }
+    },
+  };
+});
+vi.mock('chrome-devtools-mcp/build/src/config/ConfigLocator.js', () => {
+  return { NO_CONFIG_DISCOVERY_ENV: 'NO_CONFIG_DISCOVERY' };
+});
+vi.mock('chrome-devtools-mcp/build/src/config/ConfigParser.js', () => {
+  return {
+    ConfigParser: class {
+      constructor(version, argv, env, exitProcess) {
+        this.argv = argv;
+        serverState.calls.push([
+          'ConfigParser',
+          version,
+          argv,
+          env.NO_CONFIG_DISCOVERY,
+          exitProcess,
+        ]);
+      }
+      parseConfig() {
+        // Telemetry ON, the way a client's own argv could ask for it.
+        serverState.parsed = {
+          usageStatistics: true,
+          headless: this.argv.includes('--headless'),
+        };
+        return { resolved: serverState.parsed };
+      }
     },
   };
 });
@@ -96,10 +129,13 @@ beforeEach(() => {
 describe('createOwaMcpServer', () => {
   test("parses the client's argv as chrome-devtools-mcp's own", async () => {
     const { args } = await createOwaMcpServer({ argv: ['--headless'] });
+    // Config-file discovery off; a bad argv throws instead of exiting.
     expect(serverState.calls[0]).toEqual([
-      'parseArguments',
+      'ConfigParser',
       '9.9.9-test',
       ['node', 'owa-devtools-mcp', '--headless'],
+      '1',
+      false,
     ]);
     expect(args).toBe(serverState.parsed);
     expect(args.headless).toBe(true);
@@ -117,10 +153,11 @@ describe('createOwaMcpServer', () => {
   test('reads browserUrl from discovery on every access', async () => {
     const { args } = await createOwaMcpServer();
     const createCall = serverState.calls.find(([name]) => {
-      return name === 'createMcpServer';
+      return name === 'McpServer.from';
     });
-    // chrome-devtools-mcp is handed the very object carrying the getter.
-    expect(createCall[1]).toBe(args);
+    // chrome-devtools-mcp is handed the very object carrying the getter:
+    // its own `createMcpServer` copies it, which reads the port once.
+    expect(createCall[1].resolved).toBe(args);
     expect(callNames()).not.toContain('resolveAppBrowserUrl');
 
     serverState.browserUrl = 'http://127.0.0.1:60401';
@@ -138,9 +175,14 @@ describe('createOwaMcpServer', () => {
   test('passes the log file through to chrome-devtools-mcp', async () => {
     await createOwaMcpServer({ logFile: 'C:/logs/mcp.log' });
     const createCall = serverState.calls.find(([name]) => {
-      return name === 'createMcpServer';
+      return name === 'McpServer.from';
     });
-    expect(createCall[2]).toEqual({ logFile: 'C:/logs/mcp.log' });
+    expect(createCall[2].logFile).toBe('C:/logs/mcp.log');
+    const browserCall = serverState.calls.find(([name]) => {
+      return name === 'BrowserManager';
+    });
+    expect(browserCall[1]).toBe(createCall[1]);
+    expect(browserCall[2]).toEqual({ logFile: 'C:/logs/mcp.log' });
   });
 
   test('registers the owa tools for the door it serves, stdio by default', async () => {

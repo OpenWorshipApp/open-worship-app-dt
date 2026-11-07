@@ -3,7 +3,7 @@ id: W-18
 title: "Utiliser plus d'un écran (multi-écran)"
 section: "Configuration"
 lang: fr
-translatedFrom: d7492b0b06a29ec3
+translatedFrom: e4b56f9fe68a85bc
 ---
 # W-18 — Utiliser plus d'un écran (multi-écran)
 
@@ -28,8 +28,8 @@ translatedFrom: d7492b0b06a29ec3
    les colonnes restent ensemble : faites défiler l'une d'elles sur la carte — avec la molette, sa barre de défilement ou
    le bouton de défilement automatique — et les autres vont au même verset, sur l'écran que la carte montre
    aussi. Pour aligner les versions verset par verset, en rangées, faites un clic droit sur la carte de l'écran qui l'affiche
-   et choisissez **[en:tran:Set Line Sync]** — un seul écran suffit, et un écran déjà affiché ne prend
-   les rangées qu'une fois masqué puis réaffiché — et **[en:tran:Unset Line Sync]**
+   et choisissez **[en:tran:Set Line Sync]** — un seul écran suffit, et un écran déjà affiché change
+   avec sa carte aussitôt — et **[en:tran:Unset Line Sync]**
    revient aux colonnes. Son défilement suit la carte dans les deux cas.
 6. Un clic droit sur une carte → **[en:tran:Delete]** supprime un écran dont vous n'avez plus besoin (un
    écran ne peut pas être supprimé tant qu'il est le seul).

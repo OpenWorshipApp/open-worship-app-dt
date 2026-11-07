@@ -20,8 +20,8 @@
 # Usage (PowerShell):
 #   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 #   .\win-build-yt-dlp.ps1 [version]
-#   .\win-build-yt-dlp.ps1              # defaults to 2026.08.19 (the shipped tag)
-#   .\win-build-yt-dlp.ps1 2026.08.19   # a pinned release tag (reproducible)
+#   .\win-build-yt-dlp.ps1              # defaults to 2026.10.26 (the shipped tag)
+#   .\win-build-yt-dlp.ps1 2026.10.26   # a pinned release tag (reproducible)
 #   .\win-build-yt-dlp.ps1 master       # bleeding edge
 #
 # Environment overrides:
@@ -32,6 +32,11 @@
 #                          the https remote helper — some bundled gits, e.g.
 #                          editors', ship without it and can't clone over https).
 #   $env:YTDLP_BUILD_DIR   override the work dir (default: .\tmp\yt-dlp-build).
+#                          Its venv is reused as it is, so a build for the OTHER
+#                          arch needs a work dir of its own -- e.g. the x64 exe on
+#                          an ARM64 host: $env:PYTHON = an x64 python.exe (such as
+#                          `uv python find cpython-3.13-windows-x86_64-none`) and
+#                          $env:YTDLP_BUILD_DIR = '.\tmp\yt-dlp-build-x64'.
 #
 # NOTE: PyInstaller builds for the SAME CPU arch as the Python used, so this
 # produces a single-arch binary (this host's Python arch). The official
@@ -49,10 +54,8 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 # --- args --------------------------------------------------------------------
-$Version = if ($args.Count -ge 1 -and $args[0]) { $args[0] } else { '2026.08.19' }
+$Version = if ($args.Count -ge 1 -and $args[0]) { $args[0] } else { '2026.10.26' }
 $Version = $Version -replace '^v', ''   # tolerate a stray leading "v"
-
-$arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 # tmp\ is gitignored in this folder, so build junk never lands in the repo.
@@ -60,7 +63,6 @@ $workDir = if ($env:YTDLP_BUILD_DIR) { $env:YTDLP_BUILD_DIR } else { Join-Path $
 $srcDir  = Join-Path $workDir "yt-dlp-src-$Version"
 $venvDir = Join-Path $workDir 'venv'
 $repoUrl = 'https://github.com/yt-dlp/yt-dlp.git'
-$outBinary = Join-Path $workDir "yt-dlp-$Version-$arch.exe"
 
 function Log([string]$msg) {
     Write-Host ''
@@ -72,9 +74,16 @@ function Log([string]$msg) {
 # else fall back to a plain `python`/`python3` on PATH that passes the gate.
 # py_ok returns $true if the given command (a string array = exe + args) runs and
 # reports >=3.10.
+# The interpreter's own arguments: `Select-Object -Skip 1`, never
+# `$cmd[1..($cmd.Count - 1)]` -- for a one-element command (`$env:PYTHON`, a
+# bare `python`) that range is 1..0, out of bounds, which StrictMode makes a
+# throw, so every such candidate read as "no Python found".
+function Get-PyArgs([string[]]$cmd) {
+    return @($cmd | Select-Object -Skip 1)
+}
 function Test-PyOk([string[]]$cmd) {
     try {
-        & $cmd[0] @($cmd[1..($cmd.Count - 1)]) `
+        & $cmd[0] @(Get-PyArgs $cmd) `
             -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' `
             *> $null
         return ($LASTEXITCODE -eq 0)
@@ -141,10 +150,17 @@ if (-not $python) {
     exit 1
 }
 
+# The binary's arch is the INTERPRETER's, not the host's: on an ARM64 host an
+# x64 Python (emulated) builds an x64 exe, which `$env:PROCESSOR_ARCHITECTURE`
+# (ARM64 there) would have named -arm64 and sent to the win-arm64 dir.
+$pyPlatform = (& $python[0] @(Get-PyArgs $python) -c 'import sysconfig; print(sysconfig.get_platform())' 2>$null)
+$arch = if ("$pyPlatform".Trim() -eq 'win-arm64') { 'arm64' } else { 'x64' }
+$outBinary = Join-Path $workDir "yt-dlp-$Version-$arch.exe"
+
 $pythonDisplay = ($python -join ' ')
 Log "Building yt-dlp $Version  (arch=$arch)"
 Write-Host "    work dir : $workDir"
-Write-Host "    python   : $pythonDisplay  ($(& $python[0] @($python[1..($python.Count - 1)]) --version 2>&1))"
+Write-Host "    python   : $pythonDisplay  ($(& $python[0] @(Get-PyArgs $python) --version 2>&1), $pyPlatform)"
 Write-Host "    git      : $gitBin"
 Write-Host "    source   : $repoUrl @ $Version"
 
@@ -168,7 +184,7 @@ try {
     $vpy = Join-Path $venvDir 'Scripts\python.exe'
     if (-not (Test-Path $vpy)) {
         Log "Creating virtualenv at $venvDir"
-        & $python[0] @($python[1..($python.Count - 1)]) -m venv $venvDir
+        & $python[0] @(Get-PyArgs $python) -m venv $venvDir
         if ($LASTEXITCODE -ne 0) { Write-Error "venv creation failed (exit $LASTEXITCODE)" }
     }
     Log 'Upgrading pip tooling'

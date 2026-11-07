@@ -507,6 +507,9 @@ export const screenTypeList = [
     'focus',
     // Another screen's state, carried to a screen that shows it (Screen Show).
     'screen-show',
+    // A presentation setting changed on the presenter, into each showing
+    // screen's own copy (`screenSettingPushHelpers.ts`).
+    'screen-setting',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {

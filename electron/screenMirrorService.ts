@@ -60,6 +60,7 @@ import {
     MIRROR_PROTOCOL,
     MIRROR_REMOTE_DISPLAY_FIRST,
     MIRROR_FEEDBACK_TYPES,
+    applyMirrorSettingPatch,
     isMirrorScreenMessage,
     readMirrorPacket,
     readMirrorDiscovery,
@@ -2312,11 +2313,24 @@ export class ScreenMirrorService {
         if (Number.isInteger(message.stage) && message.stage! >= 0)
             output.context.stage = message.stage!;
         const translated = this.translate(message.screenId, message, '');
+        this.noteSettingPatch(output.context, translated);
         getScreenOutput(message.screenId)?.sendData('mirror:context', {
             stage: output.context.stage,
             resources: output.context.resources,
         });
         return translated;
+    }
+    // A setting changed on the presenter goes into the copy this screen is
+    // opened with, as into the page's own: a window that reloads (a display
+    // change reloads it) or a guest that connects again would otherwise
+    // draw with the copy taken when the screen was shown.
+    private noteSettingPatch(
+        context: MirrorScreenContext,
+        message: MirrorScreenMessage,
+    ) {
+        if (message.type === 'screen-setting') {
+            applyMirrorSettingPatch(context.settings, message.data);
+        }
     }
     sendScreenMessage(message: MirrorScreenMessage) {
         const output = this.outputs.get(message.screenId);
@@ -2330,6 +2344,7 @@ export class ScreenMirrorService {
             message,
             peer.guest.address,
         );
+        this.noteSettingPatch(output.context, translated);
         socketSend(peer.socket, 'screen', {
             message: translated,
             resources: output.context.resources,
@@ -2605,6 +2620,7 @@ export class ScreenMirrorService {
                         context.resources = packet.resources ?? {};
                         if (Number.isInteger(packet.stage) && packet.stage >= 0)
                             context.stage = packet.stage;
+                        this.noteSettingPatch(context, packet.message);
                         controller.sendData('mirror:context', {
                             stage: context.stage,
                             resources: context.resources,

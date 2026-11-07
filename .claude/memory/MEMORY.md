@@ -50,7 +50,7 @@
 - Drag: [kind mime](drag-kind-mime-and-dim-target.md) · [canceled pointerdown kills click](canceled-pointerdown-kills-click.md) · [payload written in dragstart](drag-payload-written-in-dragstart.md) — no await before it
 - [Website items are screenshots](website-screenshot-not-iframe.md) — live only on the screen
 - [Don't taskkill every electron.exe](dont-taskkill-all-electron.md) · [`appFilePath` is a prototype getter](appfilepath-is-a-prototype-getter.md)
-- [Media binaries on demand](extra-bin-on-demand.md) — `<data parent>/extra-bin/<platform>` · [Packs shared as files](pack-file-sharing.md) — Export/Download to Downloads, Import from disk; unverified → the person is asked
+- [Media binaries on demand](extra-bin-on-demand.md) — `<data parent>/extra-bin/<platform>` · [yt-dlp upgrade per host](yt-dlp-upgrade-per-host.md) — an x64 exe on ARM64 says ARM64; read the PE header · [Packs shared as files](pack-file-sharing.md) — Export/Download to Downloads, Import from disk; unverified → the person is asked
 - [SongSelect plugin](song-select-plugin.md) · [Public Domain Songs](public-domain-songs-plugin.md) · [open-lyric fence ground truth](open-lyric-fence-ground-truth.md)
 - [Credentials use safeStorage](secure-storage-safestorage.md) — a separate `-secret` store
 - [Connection graph](graph-view-connection-graph.md) · [No renderer `clipboard`](renderer-has-no-clipboard-module.md) — Copy goes through main
@@ -97,7 +97,7 @@
 - [Looping video crossfades with a twin](video-loop-crossfade-two-elements.md) · [Own font list with weights](own-font-list-with-weights.md)
 - [Data folder path is aliased](portable-data-dir-alias.md) — `$DATA_DIR_PATH` · [Module-scope setting read before init](module-scope-setting-read-before-init.md)
 - [Path handling lives in fileHelpers](path-handling-lives-in-filehelpers.md) — the user's rule
-- Screen pages: [layer needs a z-index](screen-layer-needs-z-index-above-foreground.md) · [settings are page-local](screen-page-settings-are-page-local.md)
+- Screen pages: [layer needs a z-index](screen-layer-needs-z-index-above-foreground.md) · [settings are page-local](screen-page-settings-are-page-local.md) — the presenter pushes each change in (`screen-setting`)
 - [Camera opens per window](foreground-camera-deviceid-rotates.md) — resolve by label · [Screen Show](screen-show-foreground.md) — an iframe, never a capture
 - [Message editors hold local text](message-editor-text-is-local-state.md) · [Mini screen "No rendering"](mini-screen-no-rendering-keeps-slide-layer.md)
 - Screen Mirror: [two machines](screen-mirror-cross-machine-test.md) · [internet & hosts](screen-mirror-internet-multi-host.md) · [Virtual displays](virtual-displays.md) · [Intercom & cameras](connection-intercom-and-viewer-camera.md)

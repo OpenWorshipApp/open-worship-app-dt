@@ -225,6 +225,8 @@ export const MIRROR_SCREEN_TYPES = new Set([
     'sync-scroll-percentage',
     // Another screen's state, for a Screen Show on this one.
     'screen-show',
+    // A presentation setting changed on the presenter (`{ settings }`).
+    'screen-setting',
 ]);
 export const MIRROR_FEEDBACK_TYPES = new Set([
     'init',
@@ -234,6 +236,54 @@ export const MIRROR_FEEDBACK_TYPES = new Set([
     'sync-scroll-percentage',
     'bible-screen-view-selected-index',
 ]);
+
+/**
+ * The settings a screen page draws with. A screen page never reads the disk:
+ * it answers every setting from `MirrorScreenContext.settings`, the copy it
+ * was opened with, filled with these keys alone -- so these and nothing else
+ * are carried to it, at the start and on every change (`screen-setting`).
+ */
+const MIRROR_PRESENTATION_SETTING =
+    /^(?:screen-|pt-effect-|bible-(?:screen|font|text|style)|foreground-|background-|pdf-full-width$|page-base-)/;
+// A value this long is left out of the copy (a big one has no business on
+// every screen); left out, the screen draws that setting's default.
+export const MIRROR_PRESENTATION_SETTING_MAX_LENGTH = 256000;
+
+export function checkIsMirrorPresentationSetting(key: string) {
+    return MIRROR_PRESENTATION_SETTING.test(key);
+}
+
+/**
+ * Applies a `screen-setting` message's `{ settings: { key: value | null } }`
+ * to a screen's copy of the settings: a string sets the key, `null` drops it.
+ * Anything else, and any key that is not a presentation setting, is ignored --
+ * as is a copy that is not there (a context from another computer).
+ */
+export function applyMirrorSettingPatch(
+    settings: Record<string, string> | null | undefined,
+    data: any,
+) {
+    const patch = data?.settings;
+    if (
+        settings === null ||
+        typeof settings !== 'object' ||
+        patch === null ||
+        typeof patch !== 'object' ||
+        Array.isArray(patch)
+    ) {
+        return;
+    }
+    for (const [key, value] of Object.entries(patch)) {
+        if (!checkIsMirrorPresentationSetting(key)) {
+            continue;
+        }
+        if (typeof value === 'string') {
+            settings[key] = value;
+        } else if (value === null) {
+            delete settings[key];
+        }
+    }
+}
 
 export function isMirrorScreenMessage(
     value: any,

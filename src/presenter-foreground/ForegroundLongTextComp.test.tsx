@@ -1791,6 +1791,36 @@ describe('Long Text Show in Atom mode', () => {
         root = createRoot(container);
     });
 
+    test('Stack waits for a second language, and the choice is back with it', async () => {
+        state.settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                languages: [
+                    genLanguage('en', { sections: ['one'] }),
+                    genLanguage('km', { sections: ['1'] }),
+                ],
+                isStacked: true,
+            }),
+        );
+        await render();
+        expect(getButton('Stack').disabled).toBe(false);
+        expect(getButton('Stack').getAttribute('aria-pressed')).toBe('true');
+
+        await click('Remove Language KM');
+        expect(getButton('Stack').disabled).toBe(true);
+        expect(getButton('Stack').getAttribute('aria-pressed')).toBe('false');
+        await click('Show Long Text');
+        await settle();
+        const { longTextData } = mocks.handleLongTextShowing.mock.calls[0][1];
+        expect(longTextData).not.toHaveProperty('isStacked');
+
+        mocks.chooseLongTextLangCode.mockResolvedValueOnce('km');
+        await click('Add Language');
+        await settle();
+        expect(getButton('Stack').disabled).toBe(false);
+        expect(getButton('Stack').getAttribute('aria-pressed')).toBe('true');
+    });
+
     test('Hide Number takes the numbers off the screen, not off the panel', async () => {
         setSession([genLanguage('en', { sections: ['one', 'two'] })]);
         await render();

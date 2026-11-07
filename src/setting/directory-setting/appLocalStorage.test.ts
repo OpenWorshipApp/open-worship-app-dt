@@ -431,6 +431,78 @@ describe('a screen page', () => {
     });
 });
 
+// What a window writes is told to its write listeners -- how a presentation
+// setting changed on the presenter reaches the screens that are up
+// (`screenSettingPushHelpers.ts`). A screen page writes only its own copy and
+// tells no one, or what it was told would be sent straight back.
+describe('a write listener', () => {
+    test('hears every write and removal, after it is done', async () => {
+        const { appLocalStorage, addSettingWriteListener } =
+            await loadAppLocalStorage();
+        const heard: [string, string | null, boolean][] = [];
+        const remove = addSettingWriteListener((key, value) => {
+            const isOnDisk = h.diskFiles.has(`/app-data/local-storage/${key}`);
+            heard.push([key, value, isOnDisk]);
+        });
+
+        appLocalStorage.setItem('screen-bible--line-sync-0', 'true');
+        appLocalStorage.removeItem('screen-bible--line-sync-0');
+        appLocalStorage.setItem('language-locale', 'km-KH');
+        appLocalStorage.removeItem('language-locale');
+        // Nothing there to remove: nothing changed, nothing to tell.
+        appLocalStorage.removeItem('never-written');
+
+        expect(heard).toEqual([
+            ['screen-bible--line-sync-0', 'true', true],
+            ['screen-bible--line-sync-0', null, false],
+            ['language-locale', 'km-KH', false],
+            ['language-locale', null, false],
+        ]);
+
+        remove();
+        appLocalStorage.setItem('screen-bible--line-sync-0', 'false');
+        expect(heard).toHaveLength(4);
+    });
+
+    test('a listener that throws neither stops the write nor the others', async () => {
+        const { appLocalStorage, addSettingWriteListener } =
+            await loadAppLocalStorage();
+        const heard: string[] = [];
+        addSettingWriteListener(() => {
+            throw new Error('listener failed');
+        });
+        addSettingWriteListener((key) => {
+            heard.push(key);
+        });
+
+        appLocalStorage.setItem('screen-x', '1');
+
+        expect(h.diskFiles.get('/app-data/local-storage/screen-x')).toBe('1');
+        expect(heard).toEqual(['screen-x']);
+        expect(h.errors).toHaveLength(1);
+    });
+
+    test('a screen page tells no one', async () => {
+        const { appLocalStorage, addSettingWriteListener } =
+            await loadAppLocalStorage();
+        const { default: appProvider } =
+            await import('../../server/appProvider');
+        const context = { settings: {} as Record<string, string> };
+        (appProvider as any).screenUtils = { getContext: () => context };
+        const heard: string[] = [];
+        addSettingWriteListener((key) => {
+            heard.push(key);
+        });
+        try {
+            appLocalStorage.setItem('screen-bible--line-sync-0', 'true');
+            appLocalStorage.removeItem('screen-bible--line-sync-0');
+            expect(heard).toEqual([]);
+        } finally {
+            delete (appProvider as any).screenUtils;
+        }
+    });
+});
+
 // The interface language is the computer's: kept in the home store, it holds
 // for every data folder (`COMPUTER_SETTING_NAME_LIST`).
 describe('a computer setting', () => {

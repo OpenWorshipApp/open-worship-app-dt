@@ -4,8 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // aimed at the running app, the app's own tools, the banner and the firewall
 // around every transport -- in that order.
 const mocks = vi.hoisted(() => ({
-  parseArguments: vi.fn(),
-  createMcpServer: vi.fn(),
+  parseConfig: vi.fn(),
+  configParserArgs: [],
+  mcpServerFrom: vi.fn(),
+  browserManagerArgs: [],
   resolveAppBrowserUrl: vi.fn(),
   registerOwaTools: vi.fn(),
   watchToolCalls: vi.fn(),
@@ -15,10 +17,27 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('chrome-devtools-mcp', () => ({
-  createMcpServer: mocks.createMcpServer,
+  McpServer: { from: mocks.mcpServerFrom },
 }));
-vi.mock('chrome-devtools-mcp/build/src/config/mcp-options.js', () => ({
-  parseArguments: mocks.parseArguments,
+vi.mock('chrome-devtools-mcp/build/src/BrowserManager.js', () => ({
+  BrowserManager: class {
+    constructor(...args) {
+      mocks.browserManagerArgs.push(args);
+    }
+  },
+}));
+vi.mock('chrome-devtools-mcp/build/src/config/ConfigLocator.js', () => ({
+  NO_CONFIG_DISCOVERY_ENV: 'NO_CONFIG_DISCOVERY',
+}));
+vi.mock('chrome-devtools-mcp/build/src/config/ConfigParser.js', () => ({
+  ConfigParser: class {
+    constructor(...args) {
+      mocks.configParserArgs.push(args);
+    }
+    parseConfig() {
+      return mocks.parseConfig();
+    }
+  },
 }));
 vi.mock('chrome-devtools-mcp/build/src/third_party/index.js', () => ({
   puppeteer: mocks.puppeteer,
@@ -47,11 +66,19 @@ beforeEach(() => {
       mocks.order.push('connect');
       return 'connected';
     }),
+    server: { removeRequestHandler: vi.fn() },
+    _toolHandlersInitialized: true,
+    setToolRequestHandlers: vi.fn(),
   };
-  mocks.parseArguments.mockImplementation((_version, argv) => {
-    return { argv, usageStatistics: true, browserUrl: 'http://launch.me' };
+  mocks.configParserArgs.length = 0;
+  mocks.browserManagerArgs.length = 0;
+  mocks.parseConfig.mockImplementation(() => {
+    return {
+      resolved: { usageStatistics: true, browserUrl: 'http://launch.me' },
+    };
   });
-  mocks.createMcpServer.mockResolvedValue({ server: innerServer });
+  mocks.mcpServerFrom.mockReset();
+  mocks.mcpServerFrom.mockResolvedValue({ server: innerServer });
   mocks.watchToolCalls.mockImplementation(() => {
     mocks.order.push('banner');
   });
@@ -67,15 +94,22 @@ describe('createOwaMcpServer', () => {
       logFile: 'mcp.log',
     });
     expect(server).toBe(innerServer);
-    expect(mocks.parseArguments).toHaveBeenCalledWith('9.9.9', [
-      'node',
-      'owa-devtools-mcp',
-      '--headless',
-    ]);
+    const [[version, argv, env, exitProcess]] = mocks.configParserArgs;
+    expect(version).toBe('9.9.9');
+    expect(argv).toEqual(['node', 'owa-devtools-mcp', '--headless']);
+    // No config file from the user's profile may change the server, and a
+    // bad argv must throw rather than end the app's own process.
+    expect(env.NO_CONFIG_DISCOVERY).toBe('1');
+    expect(exitProcess).toBe(false);
     expect(args.usageStatistics).toBe(false);
-    expect(mocks.createMcpServer).toHaveBeenCalledWith(args, {
-      logFile: 'mcp.log',
-    });
+    const [[config, options]] = mocks.mcpServerFrom.mock.calls;
+    // The config whose `resolved` carries the getter, never a copy of it.
+    expect(config.resolved).toBe(args);
+    expect(options.logFile).toBe('mcp.log');
+    expect(options.browserManager).toBeDefined();
+    expect(mocks.browserManagerArgs).toEqual([
+      [config, { logFile: 'mcp.log' }],
+    ]);
   });
 
   it('finds the app afresh every time chrome-devtools asks where it is', async () => {
@@ -86,6 +120,21 @@ describe('createOwaMcpServer', () => {
     expect(args.browserUrl).toBe('http://127.0.0.1:9333');
     expect(args.browserUrl).toBe('http://127.0.0.1:9444');
     expect(Object.keys(args)).toContain('browserUrl');
+  });
+
+  it("gives tools/call back to the SDK before the app's tools are added", async () => {
+    mocks.registerOwaTools.mockImplementation(() => {
+      // By the time the app's tools are registered, the SDK's handler --
+      // the one that serves tools registered after chrome-devtools' -- is in.
+      expect(innerServer.setToolRequestHandlers).toHaveBeenCalledTimes(1);
+      expect(innerServer._toolHandlersInitialized).toBe(false);
+    });
+    await createOwaMcpServer();
+    expect(innerServer.server.removeRequestHandler.mock.calls).toEqual([
+      ['tools/call'],
+      ['tools/list'],
+    ]);
+    expect(mocks.registerOwaTools).toHaveBeenCalledTimes(1);
   });
 
   it('registers the app tools for the door it serves', async () => {
@@ -103,7 +152,7 @@ describe('createOwaMcpServer', () => {
     const innerConnect = vi.fn((options) => options);
     mocks.puppeteer.connect = innerConnect;
     let connectWhenCreated = null;
-    mocks.createMcpServer.mockImplementation(async () => {
+    mocks.mcpServerFrom.mockImplementation(async () => {
       connectWhenCreated = mocks.puppeteer.connect;
       return { server: innerServer };
     });

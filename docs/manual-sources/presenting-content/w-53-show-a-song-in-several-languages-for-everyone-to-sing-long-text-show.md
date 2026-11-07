@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-163, PM-164, PM-165, PM-166, PM-167]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-06"
+workflowsVersion: "2026-11-07"
 ---
 # W-53 — Show a song in several languages for everyone to sing (Long Text Show)
 
@@ -87,10 +87,13 @@ menu.
    versions together. The row's number sits on a line of its own above them,
    in each language's digits (`4, ៤`), and the one header reads `EN | KM`
    with the titles `Still | Still`. Each language keeps its own font and
-   size. Press **[en:tran:Hide Number]** to put the rows up without their
-   numbers, side by side or stacked — the cards in the panel keep theirs.
-   Both go up again at once on a screen showing the text, with the same row
-   marked.
+   size. **[en:tran:Stack]** waits for a second language: with one card it
+   is greyed out, and it comes back as you left it when you add another.
+   Press **[en:tran:Hide Number]** to put the rows up without their
+   numbers and the header without its language codes (`EN`, `EN | KM`),
+   side by side or stacked; the titles stay, and the cards in the panel
+   keep their numbers. Both go up again at once on a screen showing the
+   text, with the same row marked.
 
    **Step with the keys.** Once you have pressed a part, its button has the
    keys, the way the slides do: **Space**, **→**, **↓** or **Page Down**
@@ -122,5 +125,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-163` · `PM-164` · `PM-165` · `PM-166` · `PM-167`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-06).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-07).
 :::

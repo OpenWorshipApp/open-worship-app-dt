@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 307fb70f-4834-493d-adca-5bd274300247
-  modified: 2026-10-15T21:27:02.435Z
+  modified: 2026-11-07T14:29:07.857Z
 ---
 
 Since 2026-10-15 the interface locale (`language-locale`) is the COMPUTER's: `getCurrentLocale()`
@@ -21,7 +21,8 @@ test files that mock `appLocalStorage` and render `tran()`.
 - Held 10 s in `appLocalStorage`'s own caches (sync IPC; `tran()` reads the locale per label).
   `listKeys()` leaves a folder's copy out, so nothing removes the computer's value by key.
 - Screen pages read it from the bootstrap context: `getMirrorBootstrap` adds it explicitly
-  (it is no longer in `PRESENTATION_SETTING`).
+  (it is no longer a presentation setting, `checkIsMirrorPresentationSetting`, so a
+  language change is never pushed to a showing screen -- every window reloads for it).
 - `.owasetting`: exported from the home store; an old file's `local` entry is read as `home`
   (`toCurrentSettingStore`, `MOVED_TO_HOME_KEY_LIST` in `settingArchiveCatalog.ts`).
 - Theme was already computer-wide (`nativeTheme.themeSource` in main).

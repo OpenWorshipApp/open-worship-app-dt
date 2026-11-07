@@ -1148,6 +1148,55 @@ test('a guest’s output names this host’s cameras as its own', () => {
     ]);
 });
 
+// A screen page draws with the copy of the settings its window opened with. A
+// setting changed on the presenter goes into that copy here too, so a window
+// that reloads (a display change reloads it) or a guest that connects again
+// does not come back with the old one.
+test('a presentation setting goes into the copy a screen opens with', () => {
+    const service = createService();
+    const local = localOutput(service, 1);
+    service.localMessage({
+        screenId: 1,
+        type: 'screen-setting',
+        data: {
+            settings: {
+                'screen-bible--line-sync-1': 'true',
+                'ai-enabled': 'true',
+            },
+        },
+    } as any);
+    expect(local.context.settings).toEqual({
+        'screen-bible--line-sync-1': 'true',
+    });
+    service.localMessage({
+        screenId: 1,
+        type: 'screen-setting',
+        data: { settings: { 'screen-bible--line-sync-1': null } },
+    } as any);
+    expect(local.context.settings).toEqual({});
+    // Any other message leaves the copy alone.
+    service.localMessage({
+        screenId: 1,
+        type: 'background',
+        data: { settings: { 'screen-x': '1' } },
+    } as any);
+    expect(local.context.settings).toEqual({});
+
+    const { socket, id } = approvedGuest(service);
+    const remote = localOutput(service, 2, {
+        displayId: MIRROR_REMOTE_DISPLAY_FIRST,
+        guestId: id,
+    });
+    const message = {
+        screenId: 2,
+        type: 'screen-setting',
+        data: { settings: { 'pdf-full-width': 'true' } },
+    };
+    service.sendScreenMessage(message as any);
+    expect(remote.context.settings).toEqual({ 'pdf-full-width': 'true' });
+    expect(socket.packets.at(-1).message).toEqual(message);
+});
+
 // --- the router -----------------------------------------------------------
 
 function deferred<T>() {

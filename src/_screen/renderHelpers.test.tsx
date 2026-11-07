@@ -1615,6 +1615,11 @@ describe('Bible and long text views at their edges', () => {
         );
         expect(host.querySelector('.verse-number')).toBeNull();
         expect(host.querySelectorAll('span.highlight')).toHaveLength(2);
+        // Nor any language code: the titles alone head it.
+        expect(host.querySelector('.bible-key')).toBeNull();
+        expect(host.querySelector('th .title')?.textContent).toBe(
+            'Still | Psalm',
+        );
         // Side by side too.
         host.innerHTML = renderToStaticMarkup(
             <LongTextTableComp
@@ -1628,6 +1633,12 @@ describe('Bible and long text views at their edges', () => {
             />,
         );
         expect(host.querySelectorAll('th')).toHaveLength(2);
+        expect(host.querySelector('.bible-key')).toBeNull();
+        expect(
+            Array.from(host.querySelectorAll('th .title')).map(
+                (title) => title.textContent,
+            ),
+        ).toEqual(['Still', 'Psalm']);
         expect(host.querySelector('.verse-number')).toBeNull();
         expect(
             Array.from(host.querySelectorAll('span.highlight')).map(
@@ -1647,6 +1658,18 @@ describe('Bible and long text views at their edges', () => {
         expect(host.querySelector('tbody td')?.className).toBe(
             'screen-long-text-column-0',
         );
+        // Its code is shown until Hide Number takes it away.
+        expect(host.querySelector('th .bible-key')?.textContent).toBe('EN');
+        host.innerHTML = renderToStaticMarkup(
+            <LongTextTableComp
+                columns={[genColumn('en-US', 'EN', 'Still', ['a'], ['1'])]}
+                isLineSync
+                isLongText
+                isNumberHidden
+            />,
+        );
+        expect(host.querySelector('.bible-key')).toBeNull();
+        expect(host.querySelector('th .title')?.textContent).toBe('Still');
     });
 
     test('a right-to-left column reads right to left; a language with no font sets none', async () => {

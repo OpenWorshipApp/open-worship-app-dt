@@ -34,6 +34,11 @@ import ScreenDrawManager from './ScreenDrawManager';
 import ScreenFocusManager from './ScreenFocusManager';
 import { initScreenBibleStepping } from '../screenBibleSteppingHelpers';
 import { applyForegroundDragData } from '../../presenter-foreground/foregroundDragHelpers';
+import {
+    applyScreenSettingPatch,
+    initScreenSettingPush,
+    type ScreenSettingPatchType,
+} from './screenSettingPushHelpers';
 
 function setGroupMembershipInf(
     screenManagerBase: ScreenManagerBase,
@@ -70,13 +75,15 @@ function setGroupMembershipInf(
 }
 
 // What a Screen Show of a screen does not follow: what concerns that screen's
-// own window (shown, hidden, moved, its sound) and Screen Show itself.
+// own window (shown, hidden, moved, its sound), Screen Show itself, and a
+// setting (a Screen Show frame reads its host window's, which has it).
 const SCREEN_SHOW_UNRELAYED_TYPES = new Set<ScreenType>([
     'screen-show',
     'init',
     'visible',
     'display-change',
     'background-video-sound',
+    'screen-setting',
 ]);
 
 export default class ScreenManager extends ScreenManagerBase {
@@ -604,6 +611,10 @@ export default class ScreenManager extends ScreenManagerBase {
             if (appProvider.isPageScreen) {
                 receiveScreenShowPayload(data);
             }
+        } else if (type === 'screen-setting') {
+            // A presentation setting changed on the presenter, into this
+            // page's own copy; the layer message after it redraws with it.
+            applyScreenSettingPatch(data);
         } else if (type === 'sync-scroll-percentage') {
             screenManagerBase.syncScrollPercentage(data);
             // Scrolled on the projector itself. Only the presenter knows the
@@ -624,6 +635,9 @@ export default class ScreenManager extends ScreenManagerBase {
         });
         initScreenBibleStepping();
         if (!appProvider.isPageScreen) {
+            initScreenSettingPush((patch) => {
+                this.sendScreenSettingPatch(patch);
+            });
             messageUtils.listenForData(
                 'mirror:bootstrap-request',
                 async (_, { requestId, screenId }) => {
@@ -751,6 +765,22 @@ export default class ScreenManager extends ScreenManagerBase {
             screenManagerBase.isShowing
         ) {
             this.postScreenMessage(message);
+        }
+    }
+
+    // A presentation setting this window wrote, to every screen that is up: a
+    // screen page draws from its own copy, which nothing else updates. A
+    // hidden one has no window; it gets the current copy when it opens.
+    private static sendScreenSettingPatch(patch: ScreenSettingPatchType) {
+        for (const screenManagerBase of getAllScreenManagerBases()) {
+            if (screenManagerBase.isDeleted || !screenManagerBase.isShowing) {
+                continue;
+            }
+            this.postScreenMessage({
+                screenId: screenManagerBase.screenId,
+                type: 'screen-setting',
+                data: patch,
+            });
         }
     }
 

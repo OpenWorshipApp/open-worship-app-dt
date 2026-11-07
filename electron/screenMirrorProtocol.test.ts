@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
+    applyMirrorSettingPatch,
+    checkIsMirrorPresentationSetting,
     isMirrorScreenMessage,
     readMirrorPacket,
     readMirrorDiscovery,
@@ -86,6 +88,56 @@ describe('mirror wire validation', () => {
             }),
         ).toBe(false);
         expect(isMirrorScreenMessage({ screenId: -1, type: 'draw' })).toBe(
+            false,
+        );
+        // A setting changed on the host reaches a guest's screen too.
+        expect(
+            isMirrorScreenMessage({
+                screenId: 1,
+                type: 'screen-setting',
+                data: { settings: {} },
+            }),
+        ).toBe(true);
+    });
+    test('a setting patch reaches only presentation settings in a screen’s copy', () => {
+        const settings: Record<string, string> = {
+            'screen-bible--line-sync-0': 'false',
+            'pt-effect-background': 'fade',
+        };
+        applyMirrorSettingPatch(settings, {
+            settings: {
+                'screen-bible--line-sync-0': 'true',
+                'pt-effect-background': null,
+                'bible-font-family': 'Serif',
+                // Never a presentation setting: secrets and switches stay home.
+                'ai-enabled': 'true',
+                'language-locale': 'km-KH',
+                // Neither a string nor null: ignored.
+                'pdf-full-width': 1,
+            },
+        });
+        expect(settings).toEqual({
+            'screen-bible--line-sync-0': 'true',
+            'bible-font-family': 'Serif',
+        });
+        for (const malformed of [null, undefined, 'x', { settings: null }]) {
+            applyMirrorSettingPatch(settings, malformed);
+        }
+        applyMirrorSettingPatch(settings, { settings: ['screen-x'] });
+        // A context from another computer without a copy: nothing to throw.
+        for (const missing of [undefined, null]) {
+            expect(() => {
+                applyMirrorSettingPatch(missing, {
+                    settings: { 'screen-x': '1' },
+                });
+            }).not.toThrow();
+        }
+        expect(settings).toEqual({
+            'screen-bible--line-sync-0': 'true',
+            'bible-font-family': 'Serif',
+        });
+        expect(checkIsMirrorPresentationSetting('pdf-full-width')).toBe(true);
+        expect(checkIsMirrorPresentationSetting('pdf-full-width-x')).toBe(
             false,
         );
     });

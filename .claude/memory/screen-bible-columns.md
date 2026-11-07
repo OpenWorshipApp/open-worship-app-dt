@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 2b4d5284-62db-497f-a926-53d8c1a58927
-  modified: 2026-10-12T03:53:55.384Z
+  modified: 2026-11-07T14:23:26.456Z
 ---
 
 Asked for on 2026-10-11 with a picture of a card whose Khmer column had ended
@@ -43,9 +43,12 @@ What is not obvious from the code:
   another column while the host slides is GIVEN to the host
   (`steerScreenBibleAutoScroll`), or it would be pulled straight back.
 - **Layouts differ between windows, by design.** Line Sync is a setting of each
-  screen (colour-group members differ) and an open screen page reads it from
-  the snapshot it was shown with, so toggling it changes the card and not the
-  showing screen until hide/show -- that staleness is older than the columns.
+  screen (colour-group members differ). An open screen page reads it from its
+  own copy of the settings, which until 2026-11-07 was the one it was shown
+  with, so toggling it changed the card and not the showing screen until
+  hide/show; the presenter now pushes the change into that copy
+  (`screen-setting`, [[screen-page-settings-are-page-local]]) and the screen
+  switches with its card.
   A scroll message names its scroller, so the host column also answers to
   `.screen-bible-container-scroll` and the one box to every
   `.screen-bible-column-<n>` (`nameScrollers`). Take that away and a scroll

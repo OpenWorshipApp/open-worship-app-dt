@@ -327,6 +327,13 @@ vi.mock('../../screen-mirror/screenBootstrapHelpers', () => ({
 
 const receiveScreenShowPayloadMock = vi.fn();
 const screenShowFrameState = { sourceIds: new Set<number>() };
+const initScreenSettingPushMock = vi.fn();
+const applyScreenSettingPatchMock = vi.fn();
+vi.mock('./screenSettingPushHelpers', () => ({
+    initScreenSettingPush: initScreenSettingPushMock,
+    applyScreenSettingPatch: applyScreenSettingPatchMock,
+}));
+
 vi.mock('../screenShowFrameHelpers', () => ({
     receiveScreenShowPayload: receiveScreenShowPayloadMock,
     checkHasScreenShowFrame: (sourceScreenId: number) => {
@@ -392,6 +399,66 @@ describe('ScreenManager runtime orchestration', () => {
             type: DragTypeEnum.UNKNOWN,
             item: { id: 3 },
         });
+    });
+
+    // A screen page draws from the copy of the settings it opened with: Line
+    // Sync flipped on the Mini Screen never reached the projector.
+    test('a presentation setting written here goes to every screen that is up, and only there', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        ScreenManager.initReceiveScreenMessage();
+        expect(initScreenSettingPushMock).toHaveBeenCalledTimes(1);
+        const send = initScreenSettingPushMock.mock.calls[0][0];
+
+        const shown = new ScreenManager(21);
+        shown.isShowing = true;
+        const hidden = new ScreenManager(22);
+        const deleted = new ScreenManager(23);
+        deleted.isShowing = true;
+        deleted.isDeleted = true;
+        for (const screenManager of [shown, hidden, deleted]) {
+            baseInstances.set(screenManager.screenId, screenManager);
+        }
+        sendDataMock.mockClear();
+
+        const patch = { settings: { 'screen-bible--line-sync-21': 'true' } };
+        send(patch);
+
+        expect(sendDataMock.mock.calls).toEqual([
+            [
+                'screen-message-channel',
+                {
+                    screenId: 21,
+                    type: 'screen-setting',
+                    data: patch,
+                    stage: 0,
+                    isScreen: false,
+                },
+            ],
+        ]);
+        // The window's setting, not the screen's state: no Screen Show of it
+        // is told.
+        expect(
+            MockForegroundManager.getScreenShowTargetIds,
+        ).not.toHaveBeenCalled();
+    });
+
+    test('a screen page sends no settings, and takes one into its own copy', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        appProviderMock.isPageScreen = true;
+        ScreenManager.initReceiveScreenMessage();
+        expect(initScreenSettingPushMock).not.toHaveBeenCalled();
+
+        const screenManager = new ScreenManager(24);
+        baseInstances.set(24, screenManager);
+        const data = { settings: { 'screen-bible--line-sync-24': 'true' } };
+        ScreenManager.applyScreenManagerSyncScreen({
+            screenId: 24,
+            type: 'screen-setting',
+            data,
+        } as any);
+
+        expect(applyScreenSettingPatchMock).toHaveBeenCalledWith(data);
+        expect(appLogMock).not.toHaveBeenCalled();
     });
 
     test('applies incoming screen messages to the right targets', async () => {

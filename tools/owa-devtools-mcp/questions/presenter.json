@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-11-06",
+    "updated": "2026-11-07",
     "sections": [
         {
             "id": "orientation",
@@ -2363,7 +2363,8 @@
                         "same row",
                         "interlinear",
                         "hide number",
-                        "without numbers"
+                        "without numbers",
+                        "hide language code"
                     ],
                     "resources": {
                         "recipe": "W-53",

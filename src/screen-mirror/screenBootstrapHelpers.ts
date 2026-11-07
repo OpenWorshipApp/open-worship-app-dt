@@ -1,25 +1,30 @@
 import type ScreenManager from '../_screen/managers/ScreenManager';
-import type {
-    MirrorScreenContext,
-    MirrorScreenMessage,
+import {
+    checkIsMirrorPresentationSetting,
+    MIRROR_PRESENTATION_SETTING_MAX_LENGTH,
+    type MirrorScreenContext,
+    type MirrorScreenMessage,
 } from '../../electron/screenMirrorProtocol';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import appProvider from '../server/appProvider';
 import { getScreenManagerBase } from '../_screen/managers/screenManagerBaseHelpers';
 import { LOCALE_SETTING_NAME, getCurrentLocale } from '../lang/langHelpers';
 
-// Only screen appearance settings cross the connection, never secrets or documents.
-const PRESENTATION_SETTING =
-    /^(?:screen-|pt-effect-|bible-(?:screen|font|text|style)|foreground-|background-|pdf-full-width$|page-base-)/;
-
 export async function getMirrorBootstrap(
     manager: ScreenManager,
 ): Promise<MirrorScreenContext> {
+    // Only screen appearance settings cross the connection, never secrets or
+    // documents. A change to one later follows as `screen-setting`
+    // (`screenSettingPushHelpers`).
     const settings: Record<string, string> = {};
     for (const key of await appLocalStorage.listKeys()) {
-        if (!PRESENTATION_SETTING.test(key)) continue;
+        if (!checkIsMirrorPresentationSetting(key)) continue;
         const value = appLocalStorage.getItem(key);
-        if (value !== null && value.length < 256000) settings[key] = value;
+        if (
+            value !== null &&
+            value.length < MIRROR_PRESENTATION_SETTING_MAX_LENGTH
+        )
+            settings[key] = value;
     }
     // This computer's, not the data folder's (`COMPUTER_SETTING_NAME_LIST`):
     // a copy left in the folder by an older version is not the one in use.

@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 6301d837-d2bf-49ee-ae70-5b5cdb819c41
-  modified: 2026-11-07T01:55:22.126Z
+  modified: 2026-11-07T14:23:31.445Z
 ---
 
 Asked for on 2026-10-12: _I want to have foreground component call `Long Text
@@ -27,10 +27,12 @@ What is not obvious from the code:
   Clear Foreground (`ScreenManager.clearForeground`, also the run sheet's
   `clear-foreground`) because its panel lives there. The launcher asks it for
   its screens through `getShowingScreenIds` and gives it no transition button.
-- **Row by row by TYPE, never by the Line Sync setting.** A showing screen
-  page reads settings from the snapshot it was shown with
+- **Row by row by TYPE, never by the Line Sync setting.** Decided when a
+  showing screen page read settings only from the copy it was shown with
   ([[screen-page-settings-are-page-local]]), so a setting flipped for a long
-  text would not reach it.
+  text would not have reached it; the presenter pushes setting changes there
+  since 2026-11-07, and the rule stands anyway: the languages of one text are
+  read section for section, whatever a screen's Line Sync says.
 - **The data is a union** (`LongTextDataType`): the Bible's shape exactly as it
   was, or `type: 'long-text'` with `longTextData: { renderedList, sourceId }`.
   A section's key is `lt-<n>` — the ROW's, shared by its languages, so a chorus
@@ -174,6 +176,19 @@ What is not obvious from the code:
   language is never stacked. Neither flag changes the rows, so a re-put
   keeps the very mark (`handleLayoutToggling`, the same door as Atom mode).
   The panel keeps its numbers under Hide Number.
+- **Stack waits for a second language; Hide Number hides the codes too**
+  (2026-11-07: _`Stack` should be available when there are 2+ languages_,
+  _`Hide Number` should hide the language code_). With one card the button
+  is disabled and reads off, and `genShowingData` sends no `isStacked`, but
+  the SESSION keeps the flag so a second card brings it back. Under
+  `isNumberHidden` the header's `.bible-key` chip is not drawn, side by side
+  (`rendTableHeader`, long text only) and stacked; the titles stay. Only a
+  Bible's chip is wired (`div.bible-name`), so dropping a long text's is
+  safe. **Live-checking a screen change needs a reload**: the screens draw a
+  long text with `renderToStaticMarkup` from the module they loaded first,
+  and Fast Refresh never swaps that function, so after an edit to
+  `bibleScreenComps.tsx` the Mini Screen keeps the old markup, even after a
+  re-put, until View > Reload.
 
 Not built, by decision of the first change: a Presenting Flow row or a drag to
 a screen, the `owa_foreground` tool and a tip lesson for it, a saved-text
