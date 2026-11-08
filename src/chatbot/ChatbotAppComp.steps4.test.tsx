@@ -635,6 +635,7 @@ describe('finding a verse, and the jobs other windows hand over', () => {
             await render();
             expect(hoisted.genAttachmentFromPathMock).toHaveBeenCalledWith(
                 '/church/Resources/notes.txt',
+                null,
             );
             expect(lastBot().textContent).toContain(
                 'notes.txt is attached below. Ask me anything about what is in it, or press a question.',

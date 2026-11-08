@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Umsizi uyishintshile le ngoma.",
     "Load the change": "Layisha ushintsho",
     "Create Lyric": "Dala Iculo",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ivesi ngalinye leBhayibheli liba yivesi leculo, elinomugqa owodwa enguqulweni ngayinye yeBhayibheli ekhethiwe"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ivesi ngalinye leBhayibheli liba yivesi leculo, elinomugqa owodwa enguqulweni ngayinye yeBhayibheli ekhethiwe",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "I-“{name}” inamathiselwe ngezansi. Ngingakushintshela lolu hlelo lokwethula: ngengeze ngamagama azo izingoma, amadokhumenti ezilayidi, iziqephu zeBhayibheli, izenzo nokubala ngokwehla; ngisuse, ngihambise, ngikopishe noma ngibeke eceleni imigqa; ngisethe izibali-sikhathi, izinqamuleli, imibala nezikrini; futhi nginamathisele izinto ze-CC. Namathisela uhlelo lwenkonzo yakho noma ungithumelele isithombe salo, ngizokwakha uhlelo kulo. Cindezela okukodwa, noma usho okufunayo.",
+    "Check the running order": "Hlola ukulandelana",
+    "Build it from my order of service": "Lwakhe ngohlelo lwenkonzo yami",
+    "Clear the screen between items": "Sula isikrini phakathi kwezinto",
+    "Move on by itself": "Maluqhubeke lodwa",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” inamathiselwe ngezansi. Ngingakushintshela leli nothi: ukushintsha noma ukuhumusha amagama alo, ukuhlola ukupela, ukulihlela libe yizihloko nezinhlu, noma ukwengeza amavesi eBhayibheli. Ngingakwazi futhi ukulifinyeza, ngiphendule imibuzo ngalo, futhi ngichaze ukuthi ungenza kanjani noma yini kumhleli wamanothi. Cindezela okukodwa, noma usho ukuthi ufunani.",
+    "Summarize this note": "Finyeza leli nothi",
+    "Tidy it into headings and lists": "Lihlele libe yizihloko nezinhlu"
 }

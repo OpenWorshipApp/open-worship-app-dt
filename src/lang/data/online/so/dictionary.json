@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Kaaliyuhu wuu beddelay heestan.",
     "Load the change": "Soo rar isbeddelka",
     "Create Lyric": "Samee Hees",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Aayad kasta oo Kitaabka Quduuska ah waxay noqonaysaa tuduc heesta ka mid ah, iyadoo sadar kasta loo leeyahay nooc kasta oo Kitaabka Quduuska ah oo la doortay"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Aayad kasta oo Kitaabka Quduuska ah waxay noqonaysaa tuduc heesta ka mid ah, iyadoo sadar kasta loo leeyahay nooc kasta oo Kitaabka Quduuska ah oo la doortay",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” waxaa lagu lifaaqay hoos. Waan kuu beddeli karaa socodkan bandhigga: ku darid magac ahaan heeso, dukumentiyo silayd, qaybo Kitaabka Quduuska ah, falal iyo tirinno gadaal; ka saarid, dhaqaajin, koobiyeyn ama damin sadarro; dejin saacado, furayaal gaaban, midabyo iyo shaashado; iyo ku lifaaqid curiyeyaal CC ah. Ku dheji barnaamijka cibaadadaada ama ii soo dir sawirkiisa, waxaanan ka samayn doonaa socodka. Riix mid, ama sheeg waxaad rabto.",
+    "Check the running order": "Hubi kala horreynta",
+    "Build it from my order of service": "Ka samee barnaamijka cibaadadayda",
+    "Clear the screen between items": "Nadiifi shaashadda inta u dhexeysa qaybaha",
+    "Move on by itself": "Ha u gudbo keligiis",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” hoos ayaa lagu lifaaqay. Waan kuu beddeli karaa qoraalkan: beddelidda ama turjumidda erayadiisa, hubinta higgaadda, u habaynta cinwaanno iyo liisas, ama ku darista aayado Kitaabka Quduuska ah. Sidoo kale waan soo koobi karaa, ka jawaabi karaa su'aalaha ku saabsan, oo sharxi karaa sida wax kasta loogu sameeyo tafatiraha qoraallada. Riix mid, ama sheeg waxaad rabto.",
+    "Summarize this note": "Soo koob qoraalkan",
+    "Tidy it into headings and lists": "U habee cinwaanno iyo liisas"
 }

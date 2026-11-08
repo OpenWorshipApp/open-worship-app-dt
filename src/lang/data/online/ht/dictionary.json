@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Asistan an chanje chante sa a.",
     "Load the change": "Chaje chanjman an",
     "Create Lyric": "Kreye yon Chante",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Chak vèsè nan Bib la vin tounen yon kouplè nan chante a, ak yon liy pou chak vèsyon Bib ou chwazi"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Chak vèsè nan Bib la vin tounen yon kouplè nan chante a, ak yon liy pou chak vèsyon Bib ou chwazi",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” tache anba a. Mwen ka chanje pwogram prezantasyon sa a pou ou: ajoute chante, dokiman dyapozitiv, pasaj nan Bib la, aksyon ak dekont pa non yo; retire, deplase, kopye oswa mete liy sou kote; regle kontè tan, rakousi, koulè ak ekran; epi tache eleman CC. Kole pwogram sèvis ou a oswa voye yon foto li ban mwen, m ap bati pwogram nan avè l. Peze youn, oswa di sa ou vle.",
+    "Check the running order": "Verifye lòd pwogram nan",
+    "Build it from my order of service": "Bati l ak pwogram sèvis mwen an",
+    "Clear the screen between items": "Netwaye ekran an ant chak eleman",
+    "Move on by itself": "Kontinye pou kont li",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” tache anba a. Mwen ka chanje nòt sa a pou ou: chanje oswa tradui mo li yo, verifye òtograf la, ranje l an tit ak lis, oswa ajoute vèsè nan Bib la. Mwen ka rezime l tou, reponn kesyon sou li, epi eksplike kijan pou fè nenpòt bagay nan editè nòt la. Peze youn, oswa di sa ou vle.",
+    "Summarize this note": "Rezime nòt sa a",
+    "Tidy it into headings and lists": "Ranje l an tit ak lis"
 }

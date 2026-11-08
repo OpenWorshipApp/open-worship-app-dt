@@ -11,6 +11,7 @@ import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import FileSource from '../helper/FileSource';
 import { pressElementLikeButton } from '../helper/helpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
+import { genDocumentOpenInChatbotContextMenu } from '../helper/ai/lyricChatbotMenuHelpers';
 import { tran } from '../lang/langHelpers';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileReadErrorComp from '../others/FileReadErrorComp';
@@ -217,7 +218,7 @@ export default function PresentingFlowFileComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const setIsOpenedRef = useAppCurrentRef(setIsOpened);
-    const contextMenuItems = useMemo((): ContextMenuItemType[] => {
+    const baseContextMenuItems = useMemo((): ContextMenuItemType[] => {
         const genActionMenuItem = (
             action: PresentingFlowActionType,
         ): ContextMenuItemType => {
@@ -341,6 +342,15 @@ export default function PresentingFlowFileComp({
             },
         ];
     }, [filePath, setIsOpenedRef]);
+    // Open in Chatbot right under Open Preview (2026-11-07, the user, with
+    // a Documents row's menu: _add `Open in Chatbot` … follow what working
+    // for appdocument_). Outside the memo: whether AI is on is read every
+    // time the row draws, as the Documents row reads it.
+    const contextMenuItems = [
+        ...baseContextMenuItems.slice(0, 1),
+        ...genDocumentOpenInChatbotContextMenu(filePath),
+        ...baseContextMenuItems.slice(1),
+    ];
     const handleDropping = useCallback(async (event: any) => {
         // An item dragged out of a presenting flow row is being reordered inside its
         // own list; that is handled by the row it lands on, not here.

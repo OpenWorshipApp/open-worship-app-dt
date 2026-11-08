@@ -66,6 +66,49 @@ with the knowledge) are in `.claude/CLAUDE.md` §Agent access.
   that relaunch can quit at once; touch a watched file to get it back. An
   `electron:dev` started before the change keeps the old watch until it is
   restarted.
+- **The Bible Note editor's own guide is a third corpus, kept apart**
+  (2026-11-07, the user: _build `node_modules/bible-note/knowledge/ui-rag.md`
+  into chatbot knowledge. goal: chatbot is can help modify and answer
+  everything on bible-note_). The `bible-note` package ships a user guide for
+  the editor inside a note's window, 131 chunks under `##` headings, each with
+  a JSON comment. It is a devDependency and NOT in a packaged app, so
+  `build-knowledge.mjs` copies it in through `extra-work/bibleNoteGuideHelpers.mjs`
+  (pure, tested against the real file by `bibleNoteGuide.test.mjs`): one page
+  per chunk in `electron-build/knowledge/bible-note/`, ids
+  `bible-note:ui/<section>/<slug>`, an `index.json` of its own (`kind`
+  `manual`, `surface` `bibleNote`, `source` `bible-note`), front matter,
+  chunk comments and every `bible-note@x.y.z` taken off (nothing of a release
+  may ride), a missing package a `✗` line and the rest of the build. **Ten
+  chunks are left out because they are false here** (`DROPPED_CHUNK_ID_LIST`:
+  the seven settings-panel chunks -- the app mounts no settings panel, so no
+  gear, no Dark Mode switch, no Reset to Defaults -- and Share as Link and
+  Convert From Markdown, hidden by `isOnApp`), **one is REWRITTEN**
+  (`how-your-note-is-saved`: _there is no Save button_ is the opposite of the
+  note window here; its body is W-14's own Save / Undo Saved Change words,
+  because with it simply gone _save my note_ in a note window was answered
+  from the Word copy and back-up pages), and the two undo pages and the clear
+  page get a line on the window's own history; a test fails when a left-out
+  or rewritten id is no longer upstream. **`help.mjs` reads it only when it
+  is wanted** (`checkNeedsBibleNoteGuide`): asked about the note window
+  (focus `bibleNote`, which a note conversation forces), as a supported
+  question whose page is one of the guide's, or -- asked about NO window --
+  in words that name a note. Merged before the words are weighed, so a search
+  that does not want it reads, weighs and ranks exactly what it did before:
+  measured with `rank-measure.mjs` and a per-row top-3 diff, every row of
+  every other window came back identical, and merged into every search it
+  had cost four to eight of them their right page. Its pages weigh
+  `BIBLE_NOTE_GUIDE_WEIGHT` (the manual's 1.5 over the window's 1.3 lift), so
+  in the note window this app's own page wins a tie -- _What is this Bible
+  Note window for?_ had gone to the guide's page on saving above W-14. A
+  guide page has no repository copy (`genFreshPageUrl` null), opens with a
+  line saying it is the editor's own guide, and its id is scrubbed like a
+  recipe id (`scrubRecipeIds`, `scrubAnswerRecipeIds`: the title, else what
+  its last part says). Corpus rows may name one (`schema.json`'s
+  `recipeId`, held to a page the build writes by `questions.test.mjs`):
+  `bible-note.json`'s **editor** section, seven rows. The editor's own
+  buttons are English in every language, so the pages are NOT templated --
+  only the app's own (Save, Undo Saved Change) are. `development.md`, the
+  package's notes for developers, is not shipped.
 - **Labels are i18n templates**: the knowledge is English, the buttons are not.
   A document names a control as `[en:tran:Clear Long Text]`, never as an English
   label with a hand-written Khmer twin beside it, and `tran.mjs` fills it in

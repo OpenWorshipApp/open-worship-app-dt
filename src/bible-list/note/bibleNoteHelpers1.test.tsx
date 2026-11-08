@@ -18,6 +18,17 @@ const h = vi.hoisted(() => ({
     showBibleKeyOption: vi.fn(),
     theme: 'dark',
     initialBibleKey: 'KJV',
+    isAIEnabled: true,
+    calls: [] as string[],
+    flushHistory: vi.fn(),
+    openNoteInChatbot: vi.fn(),
+}));
+
+vi.mock('../../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: () => h.isAIEnabled,
+}));
+vi.mock('../../helper/ai/noteChatbotMenuHelpers', () => ({
+    openNoteInChatbot: h.openNoteInChatbot,
 }));
 
 vi.mock('../../server/appProvider', () => ({
@@ -61,6 +72,7 @@ vi.mock('../../helper/settingHelpers', async () => {
 });
 vi.mock('./bibleNoteHelpers', () => ({
     BIBLE_KEY_SETTING_NAME: 'bible-note-bible-key',
+    flushBibleNoteHistory: h.flushHistory,
 }));
 vi.mock('./BibleNoteEditingMenuComp', () => ({
     default: () => <div className="editing-menu" />,
@@ -119,6 +131,15 @@ beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     h.theme = 'dark';
     h.initialBibleKey = 'KJV';
+    h.isAIEnabled = true;
+    h.calls = [];
+    h.flushHistory.mockReset().mockImplementation(async () => {
+        h.calls.push('flush');
+    });
+    h.openNoteInChatbot.mockReset().mockImplementation(async () => {
+        h.calls.push('open');
+        return true;
+    });
     h.getAllLangsAsync.mockResolvedValue([
         { langCode: 'km', editorLink: 'https://km.example/editor' },
         { langCode: 'en', editorLink: '' },
@@ -153,6 +174,7 @@ describe('the note editor footer', () => {
                 'bible-lookup',
                 'editing-history',
                 'lang-markdown-editor km',
+                'open-in-chatbot',
                 'toggle-on-top',
             ].sort(),
         );
@@ -164,10 +186,31 @@ describe('the note editor footer', () => {
         expect(bibleNote.setColorScheme).toHaveBeenCalledWith('dark');
     });
 
+    // 2026-11-07: the slide editor's 🤖, for a note.
+    test('Open in Chatbot writes the last typing first, then opens THIS note', async () => {
+        await renderProbe();
+        const chatbot = getButton('open-in-chatbot');
+        expect(chatbot.description).toBe('Open in Chatbot');
+        expect(chatbot.children.props['aria-label']).toBe('Open in Chatbot');
+        await act(async () => chatbot.children.props.onClick());
+        expect(h.calls).toEqual(['flush', 'open']);
+        expect(h.openNoteInChatbot).toHaveBeenCalledWith(
+            '/notes/Default.own',
+            3,
+        );
+    });
+
+    test('with AI off there is no Open in Chatbot', async () => {
+        h.isAIEnabled = false;
+        await renderProbe();
+        expect(buttons.has('open-in-chatbot')).toBe(false);
+    });
+
     test('a read-only note gets neither Save nor the lookup', async () => {
         await renderProbe(true);
         expect(buttons.has('editing-history')).toBe(false);
         expect(buttons.has('bible-lookup')).toBe(false);
+        expect(buttons.has('open-in-chatbot')).toBe(false);
         expect(buttons.has('lang-markdown-editor km')).toBe(true);
         expect(buttons.has('toggle-on-top')).toBe(true);
         expect(buttons.has('bible-key')).toBe(true);

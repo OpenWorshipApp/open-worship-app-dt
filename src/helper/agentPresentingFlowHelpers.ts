@@ -115,7 +115,7 @@ type PlaceType = {
     extension: string;
 };
 
-function getPlace(): PlaceType | AgentResultType {
+export function getPlace(): PlaceType | AgentResultType {
     const dirPath = DirSource.getDirPathBySettingName(
         getActiveDirSourceSettingName(dirSourceSettingNames.PRESENTING_FLOW),
     );
@@ -129,14 +129,16 @@ function getPlace(): PlaceType | AgentResultType {
     return { dirPath, extension: getMimetypeExtensions('presentingFlow')[0] };
 }
 
-function checkIsPlace(value: PlaceType | AgentResultType): value is PlaceType {
+export function checkIsPlace(
+    value: PlaceType | AgentResultType,
+): value is PlaceType {
     return (value as AgentResultType).isError !== true;
 }
 
 type NamedFlowType = { name: string; filePath: string };
 
 /** The sheet a request names, or a refusal naming the sheets there are. */
-async function findFlow(
+export async function findFlow(
     place: PlaceType,
     name: unknown,
 ): Promise<NamedFlowType | AgentResultType> {
@@ -167,7 +169,7 @@ async function findFlow(
     );
 }
 
-function checkIsFlowFound(
+export function checkIsFlowFound(
     found: NamedFlowType | AgentResultType,
 ): found is NamedFlowType {
     return (found as AgentResultType).isError !== true;
@@ -353,7 +355,7 @@ async function handleDelete(found: NamedFlowType) {
  * hold; two files sharing a name (a song and a slide document both called
  * "Sunday") are both named back, so the caller can say which.
  */
-async function findDocumentPath(
+export async function findDocumentPath(
     documentName: string,
 ): Promise<string | AgentResultType> {
     const dirPath = DirSource.getDirPathBySettingName(
@@ -394,7 +396,7 @@ async function findDocumentPath(
     );
 }
 
-function checkIsRefusal(value: unknown): value is AgentResultType {
+export function checkIsRefusal(value: unknown): value is AgentResultType {
     return (
         typeof value === 'object' &&
         value !== null &&

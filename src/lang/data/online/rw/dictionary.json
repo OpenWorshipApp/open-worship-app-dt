@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Umufasha yahinduye iyi ndirimbo.",
     "Load the change": "Zana iryo hinduka",
     "Create Lyric": "Kora Indirimbo",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Buri murongo wa Bibiliya uhinduka igitero cy'indirimbo, hamwe n'umurongo umwe kuri buri buhinduzi bwa Bibiliya bwatoranyijwe"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Buri murongo wa Bibiliya uhinduka igitero cy'indirimbo, hamwe n'umurongo umwe kuri buri buhinduzi bwa Bibiliya bwatoranyijwe",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” yometswe hepfo. Nshobora kuguhindurira iyi gahunda yo kwerekana: kongeramo indirimbo, inyandiko z'amasilayidi, ibice bya Bibiliya, ibikorwa n'ibihe bisigaye nkoresheje amazina yabyo; gukuramo, kwimura, gukoporora cyangwa guhagarika imirongo; gushyiraho ibipima-gihe, ubusamo, amabara na mugaragaza; no kwomekaho ibintu bya CC. Shyiramo gahunda y'amateraniro yawe cyangwa unyoherereze ifoto yayo, nanjye nyikoreshe nkore gahunda yo kwerekana. Kanda kimwe, cyangwa uvuge icyo ushaka.",
+    "Check the running order": "Genzura uko bikurikirana",
+    "Build it from my order of service": "Uyikore uhereye kuri gahunda y'amateraniro yanjye",
+    "Clear the screen between items": "Sukura mugaragaza hagati y'ibice",
+    "Move on by itself": "Bikomeze byonyine",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” yometse hepfo. Nshobora kuguhindurira iyi nyandiko: guhindura cyangwa guhindura mu rundi rurimi amagambo yayo, kugenzura imyandikire, kuyitunganya mu mitwe n'urutonde, cyangwa kongeramo imirongo ya Bibiliya. Nshobora kandi kuyikorera incamake, gusubiza ibibazo biyerekeye, no gusobanura uko wakora ikintu cyose muri porogaramu yo gutunganya inyandiko. Kanda kimwe, cyangwa uvuge icyo ushaka.",
+    "Summarize this note": "Kora incamake y'iyi nyandiko",
+    "Tidy it into headings and lists": "Yitunganye mu mitwe n'urutonde"
 }

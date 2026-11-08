@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "ผู้ช่วยได้เปลี่ยนเพลงนี้",
     "Load the change": "โหลดการเปลี่ยนแปลง",
     "Create Lyric": "สร้างเนื้อเพลง",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "พระคัมภีร์แต่ละข้อจะกลายเป็นท่อนหนึ่งของเนื้อเพลง โดยมีหนึ่งบรรทัดสำหรับพระคัมภีร์แต่ละฉบับที่เลือก"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "พระคัมภีร์แต่ละข้อจะกลายเป็นท่อนหนึ่งของเนื้อเพลง โดยมีหนึ่งบรรทัดสำหรับพระคัมภีร์แต่ละฉบับที่เลือก",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "แนบ “{name}” ไว้ด้านล่างแล้ว ฉันเปลี่ยนลำดับการนมัสการนี้ให้คุณได้: เพิ่มเพลง เอกสารสไลด์ ข้อพระคัมภีร์ การกระทำ และการนับถอยหลังด้วยชื่อ ลบ ย้าย คัดลอก หรือพักบรรทัด ตั้งตัวจับเวลา คีย์ลัด สี และหน้าจอ และแนบองค์ประกอบ CC วางกำหนดการนมัสการของคุณหรือส่งรูปของกำหนดการนั้นมา แล้วฉันจะสร้างลำดับการนมัสการจากกำหนดการนั้น กดหนึ่งข้อ หรือบอกสิ่งที่คุณต้องการ",
+    "Check the running order": "ตรวจลำดับการทำงาน",
+    "Build it from my order of service": "สร้างจากกำหนดการนมัสการของฉัน",
+    "Clear the screen between items": "ล้างหน้าจอระหว่างแต่ละรายการ",
+    "Move on by itself": "ให้ไปต่อเอง",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "แนบ “{name}” ไว้ด้านล่างแล้ว ฉันเปลี่ยนบันทึกนี้ให้คุณได้: เปลี่ยนหรือแปลข้อความ ตรวจการสะกดคำ จัดเป็นหัวข้อและรายการ หรือเพิ่มข้อพระคัมภีร์ ฉันยังสรุป ตอบคำถามเกี่ยวกับบันทึกนี้ และอธิบายวิธีทำสิ่งต่าง ๆ ในตัวแก้ไขบันทึกได้ด้วย กดหนึ่งอย่าง หรือบอกสิ่งที่คุณต้องการ",
+    "Summarize this note": "สรุปบันทึกนี้",
+    "Tidy it into headings and lists": "จัดเป็นหัวข้อและรายการ"
 }

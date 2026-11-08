@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Mubatsiri achinja rwiyo urwu.",
     "Load the change": "Isa shanduko",
     "Create Lyric": "Gadzira Rwiyo",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ndima imwe neimwe yeBhaibheri inova ndima yerwiyo, iine mutsara mumwe weshanduro imwe neimwe yeBhaibheri yasarudzwa"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ndima imwe neimwe yeBhaibheri inova ndima yerwiyo, iine mutsara mumwe weshanduro imwe neimwe yeBhaibheri yasarudzwa",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” yakabatanidzwa pazasi. Ndinogona kukuchinjira hurongwa uhu hwekuratidza: kuwedzera nziyo, magwaro emasiraidhi, ndima dzeBhaibheri, zviito nekuverenga kudzika nemazita azvo; kubvisa, kufambisa, kukopa kana kumisa mitsara; kuseta nguva, pfupiso dzekiyi, mavara nemasikirini; uye kubatanidza zvinhu zveCC. Isa hurongwa hwesevhisi yako kana unditumire mufananidzo wahwo, ndigogadzira hurongwa hwekuratidza kubva mahuri. Dzvanya chimwe, kana kuti taura zvaunoda.",
+    "Check the running order": "Tarisa hurongwa hwekutevedzana",
+    "Build it from my order of service": "Hugadzire kubva muhurongwa hwesevhisi yangu",
+    "Clear the screen between items": "Chenesa sikirini pakati pezvikamu",
+    "Move on by itself": "Ngazvienderere mberi zvega",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” yakabatanidzwa pazasi. Ndinogona kukuchinjira chinyorwa ichi: kuchinja kana kushandura mazwi acho, kutarisa zviperengo, kuchironga kuita misoro nemazita, kana kuwedzera mavhesi eBhaibheri. Ndinogonawo kuchipfupisa, kupindura mibvunzo pamusoro pacho, uye kutsanangura mashandisirwo echinhu chipi zvacho mumupepeti wezvinyorwa. Dzvanya chimwe, kana kuti taura zvaunoda.",
+    "Summarize this note": "Pfupisa chinyorwa ichi",
+    "Tidy it into headings and lists": "Chironga kuita misoro nemazita"
 }

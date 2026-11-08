@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Olùrànlọ́wọ́ ti yí orin yìí padà.",
     "Load the change": "Gbé ìyípadà náà wọlé",
     "Create Lyric": "Ṣẹ̀dá Orin",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ẹsẹ Bíbélì kọ̀ọ̀kan yóò di ẹsẹ orin kan, pẹ̀lú ìlà kan fún ẹ̀dà Bíbélì kọ̀ọ̀kan tí a yàn"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ẹsẹ Bíbélì kọ̀ọ̀kan yóò di ẹsẹ orin kan, pẹ̀lú ìlà kan fún ẹ̀dà Bíbélì kọ̀ọ̀kan tí a yàn",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "A ti so “{name}” mọ́ ìsàlẹ̀. Mo lè yí ìtòlẹ́sẹẹsẹ ìgbékalẹ̀ yìí padà fún ọ: fi orin, àkọsílẹ̀ sìláìdì, àyọkà Bíbélì, ìṣe àti ìkàsẹ́yìn kún un nípa orúkọ wọn; yọ ìlà kúrò, gbé ìlà lọ sí ibòmíràn, ṣe ẹ̀dà ìlà tàbí dá ìlà dúró; ṣètò aago, ọ̀nà àbùjá, àwọ̀ àti ìbòjú; àti so àwọn ẹ̀yà CC mọ́ ọn. Lẹ ètò ìsìn rẹ síbí tàbí fi àwòrán rẹ̀ ránṣẹ́ sí mi, èmi yóò sì ṣe ìtòlẹ́sẹẹsẹ náà láti inú rẹ̀. Tẹ ọ̀kan, tàbí sọ ohun tí o fẹ́.",
+    "Check the running order": "Ṣàyẹ̀wò ìtòlẹ́sẹẹsẹ",
+    "Build it from my order of service": "Ṣe é láti inú ètò ìsìn mi",
+    "Clear the screen between items": "Nù ìbòjú láàárín àwọn apá",
+    "Move on by itself": "Jẹ́ kó máa tẹ̀síwájú fúnra rẹ̀",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "A ti so “{name}” mọ́ ìsàlẹ̀. Mo lè yí àkọsílẹ̀ yìí padà fún ọ: yí àwọn ọ̀rọ̀ rẹ̀ padà tàbí túmọ̀ wọn, ṣàyẹ̀wò bí a ṣe kọ ọ̀rọ̀, ṣètò rẹ̀ sí àwọn àkọlé àti àkójọ, tàbí fi àwọn ẹsẹ Bíbélì kún un. Mo tún lè ṣe àkópọ̀ rẹ̀, dáhùn àwọn ìbéèrè nípa rẹ̀, kí n sì ṣàlàyé bí a ṣe ń ṣe ohunkóhun nínú olùṣàtúnṣe àkọsílẹ̀. Tẹ ọ̀kan, tàbí sọ ohun tí o fẹ́.",
+    "Summarize this note": "Ṣe àkópọ̀ àkọsílẹ̀ yìí",
+    "Tidy it into headings and lists": "Ṣètò rẹ̀ sí àwọn àkọlé àti àkójọ"
 }

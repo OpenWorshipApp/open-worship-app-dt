@@ -1,0 +1,1856 @@
+/**
+ * A Bible note as numbered BLOCKS, and changes to them that keep everything
+ * else -- the rules behind `owa_note_edit` (2026-11-07, the user: _add `Open
+ * in Chatbot` for bible-note … goal: chatbot can help modify and answer
+ * everything on bible-note_).
+ *
+ * A note's `content` is the `bible-note` editor's serialized Lexical state:
+ * headings, lists, verse mentions that CARRY their verse words, collapsible
+ * passages, tables, pictures in base64, drawings, sticky notes. The older
+ * `owa_bible_note update` wrote a note back as plain paragraphs and lost all
+ * of that; here a change names the blocks it is about, only those are
+ * rebuilt, and every other node is copied through as it was, byte for byte.
+ *
+ * What a model reads is a line a block: its kind and its words in a light
+ * mark-up -- `**bold**`, `*italic*`, `__underline__`, `~~strike~~`,
+ * `` `code` ``, `[words](https://…)` and a mention as `[^John 3:16]`,
+ * `[@Moses]`, `[#Jerusalem]`. Written back, a mention token it kept is the
+ * ORIGINAL node with its data (a verse mention's words, a person's id), a run
+ * of words it did not change keeps its own colour, font and size, and new
+ * words take the block's own style -- a Khmer note's font included.
+ *
+ * Verse words are never a model's: a NEW verse (`[^Romans 8:28]`, or a
+ * `passage` block) is resolved by the app from an installed Bible
+ * (`agentNoteEditHelpers.ts`) and handed in here as `verseMap`.
+ *
+ * Pure on purpose -- no app, no editor package (heavy, and loaded only in a
+ * note window) -- so every rule is tested against a real note's nodes.
+ */
+
+type NodeType = Record<string, any>;
+
+export const NOTE_TEXT_KIND_LIST = [
+    'paragraph',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'quote',
+    'code',
+] as const;
+export const NOTE_LIST_KIND_LIST = ['bullet', 'number', 'check'] as const;
+/** What a change may make a block, or add: the words kinds, a passage, a rule. */
+export const NOTE_ADD_KIND_LIST = [
+    ...NOTE_TEXT_KIND_LIST,
+    ...NOTE_LIST_KIND_LIST,
+    'passage',
+    'rule',
+] as const;
+
+type NoteTextKindType = (typeof NOTE_TEXT_KIND_LIST)[number];
+type NoteListKindType = (typeof NOTE_LIST_KIND_LIST)[number];
+type NoteEditableKindType = NoteTextKindType | NoteListKindType;
+export type NoteAddKindType = (typeof NOTE_ADD_KIND_LIST)[number];
+
+export type NoteBlockType = {
+    n: number;
+    kind: string;
+    text: string;
+    // A list item inside another list item's list.
+    level?: number;
+    // A check list's tick.
+    checked?: boolean;
+    // Read only: moved or removed, never given words (a table, a picture, a
+    // drawing, a sticky note, a passage, a rule …).
+    isFixed?: boolean;
+    // Its words were too long to show whole: it cannot be given new ones.
+    isTextCut?: boolean;
+};
+
+/** A new verse, as the app resolved it for a `[^…]` token or a passage. */
+export type NoteVerseType = {
+    // "(KJV) John 3:16" -- the version and the reference, as the editor keeps
+    // it on a mention and as a passage's title.
+    mentionName: string;
+    // "John 3:16" -- what the mention shows.
+    shownText: string;
+    // "(16): For God so loved …" -- the verse words, a line a chapter.
+    verseText: string;
+    // "font-family: app-Battambang;" for a Bible written in another script.
+    style: string;
+};
+
+export type NoteEditChangeType = {
+    block?: number;
+    after?: number;
+    kind?: string;
+    text?: string;
+    checked?: boolean;
+    remove?: boolean;
+    ref?: string;
+};
+
+export const NOTE_EDIT_MAX_CHANGES = 200;
+const MAX_TEXT_CHARS = 20000;
+const MAX_TITLE_CHARS = 200;
+// One block's words shown whole up to this; a longer one is read cut, and
+// cannot then be given new words (its end would be lost).
+const MAX_SHOWN_BLOCK_CHARS = 8000;
+// What one read hands over at most: a long note is read on with `from`.
+export const NOTE_READ_MAX_CHARS = 16000;
+
+const INLINE_TEXTISH_TYPE_SET = new Set([
+    'text',
+    'linebreak',
+    'tab',
+    'mention',
+    'link',
+    'autolink',
+    'mark',
+    'hashtag',
+    'keyword',
+    'emoji',
+    'specialText',
+    'code-highlight',
+]);
+const INLINE_WRAPPER_TYPE_SET = new Set(['link', 'autolink', 'mark']);
+const FIXED_KIND_MAP: Record<string, string> = {
+    image: 'picture',
+    excalidraw: 'drawing',
+    youtube: 'video',
+    website: 'website',
+    equation: 'equation',
+    sticky: 'sticky',
+    table: 'table',
+    horizontalrule: 'rule',
+    'page-break': 'page-break',
+    'layout-container': 'layout',
+    'collapsible-container': 'passage',
+};
+
+// Lexical's text format bits.
+const FORMAT_BOLD = 1;
+const FORMAT_ITALIC = 2;
+const FORMAT_STRIKE = 4;
+const FORMAT_UNDERLINE = 8;
+const FORMAT_CODE = 16;
+
+function checkIsNode(value: unknown): value is NodeType {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function childrenOf(node: NodeType): NodeType[] {
+    return Array.isArray(node.children) ? node.children : [];
+}
+
+function cloneNode<T>(node: T): T {
+    return JSON.parse(JSON.stringify(node));
+}
+
+/** A short fingerprint of a note's content: a read and a write must agree. */
+export function genNoteContentHash(content: string) {
+    let hash = 0x811c9dc5;
+    for (let index = 0; index < content.length; index++) {
+        hash ^= content.charCodeAt(index);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return hash.toString(16).padStart(8, '0');
+}
+
+function genEmptyRoot(): NodeType {
+    return {
+        children: [],
+        direction: null,
+        format: '',
+        indent: 0,
+        type: 'root',
+        version: 1,
+    };
+}
+
+/** The editor state's root, or null when it is not one (an older note). */
+function readState(content: string): NodeType | null {
+    if (content.trim() === '') {
+        return { root: genEmptyRoot() };
+    }
+    try {
+        const state = JSON.parse(content);
+        return checkIsNode(state?.root) ? state : null;
+    } catch (_error) {
+        return null;
+    }
+}
+
+// --- reading -----------------------------------------------------------------
+
+type BlockRefType = {
+    kind: string;
+    node: NodeType;
+    level: number;
+    isFixed: boolean;
+};
+
+function listKindOf(list: NodeType): NoteListKindType {
+    return list.listType === 'number' || list.listType === 'check'
+        ? list.listType
+        : 'bullet';
+}
+
+function checkIsWrapperItem(item: NodeType) {
+    const children = childrenOf(item);
+    return (
+        children.length > 0 &&
+        children.every((child) => {
+            return child.type === 'list';
+        })
+    );
+}
+
+/** The kind of a block that is not a list, and whether it is read only. */
+function blockKindOf(node: NodeType): { kind: string; isFixed: boolean } {
+    if (node.type === 'heading') {
+        const tag = /^h[1-6]$/.test(node.tag) ? node.tag : 'h1';
+        return { kind: tag, isFixed: false };
+    }
+    if (node.type === 'paragraph' || node.type === 'quote') {
+        const fixedChild = findFixedInline(node);
+        if (fixedChild !== null) {
+            return {
+                kind: FIXED_KIND_MAP[fixedChild.type] ?? 'other',
+                isFixed: true,
+            };
+        }
+        return { kind: node.type, isFixed: false };
+    }
+    if (node.type === 'code') {
+        return { kind: 'code', isFixed: false };
+    }
+    return { kind: FIXED_KIND_MAP[node.type] ?? 'other', isFixed: true };
+}
+
+/** A picture, drawing or other object sitting among a block's words. */
+function findFixedInline(node: NodeType): NodeType | null {
+    for (const child of childrenOf(node)) {
+        if (child.type === 'paragraph' && node.type === 'quote') {
+            const inner = findFixedInline(child);
+            if (inner !== null) {
+                return inner;
+            }
+            continue;
+        }
+        if (INLINE_WRAPPER_TYPE_SET.has(child.type)) {
+            const inner = findFixedInline(child);
+            if (inner !== null) {
+                return inner;
+            }
+            continue;
+        }
+        if (!INLINE_TEXTISH_TYPE_SET.has(child.type)) {
+            return child;
+        }
+    }
+    return null;
+}
+
+function collectBlockRefs(root: NodeType): BlockRefType[] {
+    const blockRefs: BlockRefType[] = [];
+    const visitList = (list: NodeType, level: number) => {
+        for (const item of childrenOf(list)) {
+            if (item.type !== 'listitem') {
+                continue;
+            }
+            if (checkIsWrapperItem(item)) {
+                for (const nested of childrenOf(item)) {
+                    visitList(nested, level + 1);
+                }
+                continue;
+            }
+            const fixedChild = findFixedInline(item);
+            blockRefs.push({
+                kind:
+                    fixedChild === null
+                        ? listKindOf(list)
+                        : (FIXED_KIND_MAP[fixedChild.type] ?? 'other'),
+                node: item,
+                level,
+                isFixed: fixedChild !== null,
+            });
+        }
+    };
+    for (const node of childrenOf(root)) {
+        if (!checkIsNode(node)) {
+            continue;
+        }
+        if (node.type === 'list') {
+            visitList(node, 0);
+            continue;
+        }
+        const { kind, isFixed } = blockKindOf(node);
+        blockRefs.push({ kind, node, level: 0, isFixed });
+    }
+    return blockRefs;
+}
+
+// Characters the mark-up uses, escaped where the words hold them.
+const MARKUP_CHAR_PATTERN = /[\\*_~`[\]]/g;
+
+function escapeMarkup(text: string) {
+    return text.replace(MARKUP_CHAR_PATTERN, (char) => {
+        return `\\${char}`;
+    });
+}
+
+// Spaces at the edge of a run go OUTSIDE its marks: `**Text: **` reads as no
+// mark-up at all to a model, and comes back wrong.
+function wrapMarks(text: string, format: number) {
+    const match = /^(\s*)([\s\S]*?)(\s*)$/.exec(text)!;
+    let core = match[2];
+    if (core === '') {
+        return text;
+    }
+    if (format & FORMAT_CODE) {
+        core = `\`${core}\``;
+    }
+    if (format & FORMAT_BOLD) {
+        core = `**${core}**`;
+    }
+    if (format & FORMAT_ITALIC) {
+        core = `*${core}*`;
+    }
+    if (format & FORMAT_UNDERLINE) {
+        core = `__${core}__`;
+    }
+    if (format & FORMAT_STRIKE) {
+        core = `~~${core}~~`;
+    }
+    return `${match[1]}${core}${match[3]}`;
+}
+
+const MENTION_SIGN_MAP: Record<string, string> = {
+    'bible-verse': '^',
+    mention: '@',
+    location: '#',
+};
+
+function toInlineMarkup(nodes: NodeType[]): string {
+    return nodes
+        .map((node) => {
+            if (!checkIsNode(node)) {
+                return '';
+            }
+            if (node.type === 'linebreak') {
+                return '\n';
+            }
+            if (node.type === 'tab') {
+                return '\t';
+            }
+            if (node.type === 'mention') {
+                const sign = MENTION_SIGN_MAP[node.mentionKind] ?? '@';
+                return `[${sign}${String(node.text ?? '').replace(/]/g, '')}]`;
+            }
+            if (node.type === 'link' || node.type === 'autolink') {
+                return `[${toInlineMarkup(childrenOf(node))}](${String(node.url ?? '')})`;
+            }
+            if (node.type === 'mark') {
+                return toInlineMarkup(childrenOf(node));
+            }
+            if (typeof node.text === 'string') {
+                const format =
+                    typeof node.format === 'number' ? node.format : 0;
+                return wrapMarks(escapeMarkup(node.text), format);
+            }
+            return '';
+        })
+        .join('');
+}
+
+function toCodeText(node: NodeType): string {
+    return childrenOf(node)
+        .map((child) => {
+            if (child.type === 'linebreak') {
+                return '\n';
+            }
+            if (child.type === 'tab') {
+                return '\t';
+            }
+            return typeof child.text === 'string' ? child.text : '';
+        })
+        .join('');
+}
+
+function checkIsQuoteOfParagraphs(node: NodeType) {
+    const children = childrenOf(node);
+    return (
+        node.type === 'quote' &&
+        children.length > 0 &&
+        children.every((child) => {
+            return child.type === 'paragraph';
+        })
+    );
+}
+
+/** The words of any node, plainly, for a read-only block's line. */
+function toPlainWords(node: NodeType): string {
+    if (node.type === 'linebreak') {
+        return ' ';
+    }
+    if (typeof node.text === 'string') {
+        return node.text;
+    }
+    if (node.type === 'sticky') {
+        return toPlainWords(node.caption?.editorState?.root ?? {});
+    }
+    const children = childrenOf(node);
+    const separator = children.some((child) => {
+        return Array.isArray(child?.children);
+    })
+        ? ' | '
+        : '';
+    return children
+        .map((child) => {
+            return checkIsNode(child) ? toPlainWords(child) : '';
+        })
+        .filter((words) => {
+            return words.trim() !== '';
+        })
+        .join(separator);
+}
+
+function toFixedText(ref: BlockRefType): string {
+    const { node, kind } = ref;
+    if (kind === 'table') {
+        const rows = childrenOf(node);
+        const columnCount = Math.max(
+            0,
+            ...rows.map((row) => {
+                return childrenOf(row).length;
+            }),
+        );
+        const firstRows = rows
+            .slice(0, 3)
+            .map((row) => {
+                return childrenOf(row)
+                    .map((cell) => {
+                        return toPlainWords(cell).trim();
+                    })
+                    .join(' | ');
+            })
+            .join(' / ');
+        return `${rows.length} rows x ${columnCount} columns: ${firstRows}`;
+    }
+    if (kind === 'passage') {
+        const [title, content] = childrenOf(node);
+        return (
+            `${toPlainWords(title ?? {}).trim()} — ` +
+            toPlainWords(content ?? {}).trim()
+        );
+    }
+    return toPlainWords(node).trim();
+}
+
+function toBlockText(ref: BlockRefType): string {
+    if (ref.isFixed) {
+        return toFixedText(ref);
+    }
+    const { node } = ref;
+    if (node.type === 'code') {
+        return toCodeText(node);
+    }
+    if (checkIsQuoteOfParagraphs(node)) {
+        return childrenOf(node)
+            .map((paragraph) => {
+                return toInlineMarkup(childrenOf(paragraph));
+            })
+            .join('\n');
+    }
+    return toInlineMarkup(childrenOf(node));
+}
+
+function toNoteBlock(ref: BlockRefType, index: number): NoteBlockType {
+    const fullText = toBlockText(ref);
+    const isTextCut = fullText.length > MAX_SHOWN_BLOCK_CHARS;
+    return {
+        n: index + 1,
+        kind: ref.kind,
+        text: isTextCut
+            ? `${fullText.slice(0, MAX_SHOWN_BLOCK_CHARS)}…`
+            : fullText,
+        ...(ref.level > 0 ? { level: ref.level } : {}),
+        ...(ref.kind === 'check' ? { checked: ref.node.checked === true } : {}),
+        ...(ref.isFixed ? { isFixed: true } : {}),
+        ...(isTextCut ? { isTextCut: true } : {}),
+    };
+}
+
+export type NoteBlocksReadType = {
+    hash: string;
+    blockCount: number;
+    blocks: NoteBlockType[];
+    // A long note is read in parts: the block to read on from.
+    nextFrom?: number;
+};
+
+/**
+ * The note as numbered blocks, from block `from` (1 = the top) to as many as
+ * fit in one read. Null for a note that is not editor content (an older
+ * note, stored as HTML), which the tool then refuses to change.
+ */
+export function readNoteBlocks(
+    content: string,
+    from = 1,
+): NoteBlocksReadType | null {
+    const state = readState(content);
+    if (state === null) {
+        return null;
+    }
+    const refs = collectBlockRefs(state.root);
+    const blocks: NoteBlockType[] = [];
+    let size = 0;
+    const start = Math.max(1, Math.floor(from));
+    let nextFrom: number | undefined;
+    for (let index = start - 1; index < refs.length; index++) {
+        const block = toNoteBlock(refs[index], index);
+        size += block.text.length + 24;
+        if (blocks.length > 0 && size > NOTE_READ_MAX_CHARS) {
+            nextFrom = index + 1;
+            break;
+        }
+        blocks.push(block);
+    }
+    return {
+        hash: genNoteContentHash(content),
+        blockCount: refs.length,
+        blocks,
+        ...(nextFrom === undefined ? {} : { nextFrom }),
+    };
+}
+
+// --- the mark-up, back into nodes -------------------------------------------
+
+type RunType =
+    | { kind: 'text'; text: string; format: number }
+    | { kind: 'mention'; sign: string; text: string }
+    | { kind: 'link'; url: string; runs: RunType[] }
+    | { kind: 'linebreak' }
+    | { kind: 'tab' };
+
+type MarkerType = '**' | '*' | '__' | '~~' | '`';
+const MARKER_FORMAT_MAP: Record<MarkerType, number> = {
+    '**': FORMAT_BOLD,
+    '*': FORMAT_ITALIC,
+    __: FORMAT_UNDERLINE,
+    '~~': FORMAT_STRIKE,
+    '`': FORMAT_CODE,
+};
+
+function readMarker(text: string, index: number): MarkerType | null {
+    for (const marker of ['**', '__', '~~', '*', '`'] as MarkerType[]) {
+        if (text.startsWith(marker, index)) {
+            return marker;
+        }
+    }
+    return null;
+}
+
+const MENTION_TOKEN_PATTERN = /^\[([\^@#])([^\]\n]+)\]/;
+const LINK_TOKEN_PATTERN =
+    /^\[([^\]\n]*)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)/;
+
+function parseRuns(text: string, literalSet: Set<MarkerType>): RunType[] {
+    const runs: RunType[] = [];
+    let format = 0;
+    let buffer = '';
+    const flush = () => {
+        if (buffer !== '') {
+            runs.push({ kind: 'text', text: buffer, format });
+            buffer = '';
+        }
+    };
+    let index = 0;
+    while (index < text.length) {
+        const char = text[index];
+        if ((format & FORMAT_CODE) !== 0) {
+            // Inside code, only the closing backtick means anything.
+            if (char === '`' && !literalSet.has('`')) {
+                flush();
+                format &= ~FORMAT_CODE;
+                index++;
+                continue;
+            }
+            buffer += char;
+            index++;
+            continue;
+        }
+        if (char === '\\' && index + 1 < text.length) {
+            buffer += text[index + 1];
+            index += 2;
+            continue;
+        }
+        if (char === '\n' || char === '\t') {
+            flush();
+            runs.push({ kind: char === '\n' ? 'linebreak' : 'tab' });
+            index++;
+            continue;
+        }
+        if (char === '[') {
+            const rest = text.slice(index);
+            const mention = MENTION_TOKEN_PATTERN.exec(rest);
+            if (mention !== null) {
+                flush();
+                runs.push({
+                    kind: 'mention',
+                    sign: mention[1],
+                    text: mention[2].trim(),
+                });
+                index += mention[0].length;
+                continue;
+            }
+            const link = LINK_TOKEN_PATTERN.exec(rest);
+            if (link !== null) {
+                flush();
+                runs.push({
+                    kind: 'link',
+                    url: link[2],
+                    runs: parseRuns(link[1], literalSet).map((run) => {
+                        return run.kind === 'text'
+                            ? { ...run, format: run.format | format }
+                            : run;
+                    }),
+                });
+                index += link[0].length;
+                continue;
+            }
+        }
+        const marker = readMarker(text, index);
+        if (marker !== null && !literalSet.has(marker)) {
+            flush();
+            format ^= MARKER_FORMAT_MAP[marker];
+            index += marker.length;
+            continue;
+        }
+        buffer += char;
+        index++;
+    }
+    flush();
+    if (format !== 0) {
+        // A mark opened and never closed is a character somebody meant: read
+        // again with that one as a plain character.
+        for (const marker of Object.keys(MARKER_FORMAT_MAP) as MarkerType[]) {
+            if ((format & MARKER_FORMAT_MAP[marker]) !== 0) {
+                literalSet.add(marker);
+            }
+        }
+        return parseRuns(text, literalSet);
+    }
+    return runs;
+}
+
+/** A model copying the JSON escaping of the words it was shown. */
+export function toRealLineBreaks(text: string) {
+    return text.replace(/\\r\\n|\\n/g, '\n').replace(/\\t/g, '\t');
+}
+
+type BuildContextType = {
+    // Every node of the block being rebuilt, by what it says -- taken once.
+    textPool: NodeType[];
+    mentionPool: NodeType[];
+    linkPool: NodeType[];
+    // A mention anywhere in the note: a verse copied from another block is
+    // that verse, words and all.
+    noteMentions: NodeType[];
+    verseMap: Map<string, NoteVerseType>;
+    defaultStyle: string;
+    // New verses the app could not resolve.
+    missingVerses: string[];
+};
+
+function takeFrom<T>(pool: T[], test: (one: T) => boolean): T | null {
+    const index = pool.findIndex(test);
+    if (index < 0) {
+        return null;
+    }
+    return pool.splice(index, 1)[0];
+}
+
+/**
+ * The block's own text nodes that make up a run: one with its words, or
+ * several side by side whose words add up to it -- the mark-up reads two
+ * nodes of one format (a word in another font, a pasted piece) as one run,
+ * and they come back as the nodes they were. Null when they do not.
+ */
+function takeTextNodes(
+    pool: NodeType[],
+    text: string,
+    format: number,
+): NodeType[] | null {
+    const exact = takeFrom(pool, (one) => {
+        return one.text === text && (one.format ?? 0) === format;
+    });
+    if (exact !== null) {
+        return [exact];
+    }
+    const picked: NodeType[] = [];
+    let rest = text;
+    while (rest.length > 0) {
+        const next = pool.find((one) => {
+            return (
+                !picked.includes(one) &&
+                (one.format ?? 0) === format &&
+                one.text.length > 0 &&
+                rest.startsWith(one.text)
+            );
+        });
+        if (next === undefined) {
+            return null;
+        }
+        picked.push(next);
+        rest = rest.slice(next.text.length);
+    }
+    for (const one of picked) {
+        pool.splice(pool.indexOf(one), 1);
+    }
+    return picked.length > 0 ? picked : null;
+}
+
+function genTextNode(text: string, format: number, style: string): NodeType {
+    return {
+        detail: 0,
+        format,
+        mode: 'normal',
+        style,
+        text,
+        type: 'text',
+        version: 1,
+    };
+}
+
+function genVerseMentionNode(verse: NoteVerseType): NodeType {
+    return {
+        detail: 1,
+        format: 0,
+        mode: 'segmented',
+        style: verse.style,
+        text: verse.shownText,
+        type: 'mention',
+        version: 1,
+        mentionData: verse.verseText,
+        mentionId: null,
+        mentionKind: 'bible-verse',
+        mentionName: verse.mentionName,
+    };
+}
+
+/**
+ * A run's edge spaces were read OUTSIDE its marks (`**Text:** `); where the
+ * note held them as one node ("Text: ", bold), they are one run again, so
+ * words given back unchanged are the node they were.
+ */
+function mergeEdgeSpaces(runs: RunType[], textPool: NodeType[]) {
+    const checkHas = (text: string, format: number) => {
+        return textPool.some((one) => {
+            return one.text === text && (one.format ?? 0) === format;
+        });
+    };
+    const checkIsSpace = (run: RunType | undefined) => {
+        return (
+            run?.kind === 'text' && run.format === 0 && run.text.trim() === ''
+        );
+    };
+    const merged: RunType[] = [];
+    for (let index = 0; index < runs.length; index++) {
+        const run = runs[index];
+        if (run.kind !== 'text' || run.format === 0) {
+            merged.push(run.kind === 'text' ? { ...run } : run);
+            continue;
+        }
+        // A formatted run: its spaces may sit on either side of it.
+        const before = merged.at(-1);
+        const after = runs[index + 1];
+        const beforeText =
+            checkIsSpace(before) && before?.kind === 'text' ? before.text : '';
+        const afterText =
+            checkIsSpace(after) && after?.kind === 'text' ? after.text : '';
+        const tries: [string, boolean, boolean][] = [
+            [
+                beforeText + run.text + afterText,
+                beforeText !== '',
+                afterText !== '',
+            ],
+            [beforeText + run.text, beforeText !== '', false],
+            [run.text + afterText, false, afterText !== ''],
+        ];
+        const found = tries.find(([text, isBefore, isAfter]) => {
+            return (isBefore || isAfter) && checkHas(text, run.format);
+        });
+        if (found === undefined) {
+            merged.push({ ...run });
+            continue;
+        }
+        if (found[1]) {
+            merged.pop();
+        }
+        if (found[2]) {
+            index++;
+        }
+        merged.push({ ...run, text: found[0] });
+    }
+    return merged;
+}
+
+function buildInlineNodes(runs: RunType[], context: BuildContextType) {
+    const nodes: NodeType[] = [];
+    for (const run of mergeEdgeSpaces(runs, context.textPool)) {
+        if (run.kind === 'linebreak') {
+            nodes.push({ type: 'linebreak', version: 1 });
+            continue;
+        }
+        if (run.kind === 'tab') {
+            nodes.push({
+                detail: 2,
+                format: 0,
+                mode: 'normal',
+                style: '',
+                text: '\t',
+                type: 'tab',
+                version: 1,
+            });
+            continue;
+        }
+        if (run.kind === 'text') {
+            const kept = takeTextNodes(context.textPool, run.text, run.format);
+            nodes.push(
+                ...(kept !== null
+                    ? kept.map(cloneNode)
+                    : [
+                          genTextNode(
+                              run.text,
+                              run.format,
+                              context.defaultStyle,
+                          ),
+                      ]),
+            );
+            continue;
+        }
+        if (run.kind === 'link') {
+            const kept = takeFrom(context.linkPool, (one) => {
+                return one.url === run.url;
+            });
+            const { children: _children, ...props } = kept ?? {
+                direction: null,
+                format: '',
+                indent: 0,
+                type: 'link',
+                version: 1,
+                rel: 'noreferrer',
+                target: null,
+                title: null,
+            };
+            nodes.push({
+                ...cloneNode(props),
+                url: run.url,
+                children: buildInlineNodes(run.runs, context),
+            });
+            continue;
+        }
+        // A mention.
+        const mentionKind =
+            run.sign === '^'
+                ? 'bible-verse'
+                : run.sign === '#'
+                  ? 'location'
+                  : 'mention';
+        const isSame = (one: NodeType) => {
+            return (
+                one.mentionKind === mentionKind &&
+                String(one.text ?? '').trim() === run.text
+            );
+        };
+        const kept =
+            takeFrom(context.mentionPool, isSame) ??
+            context.noteMentions.find(isSame) ??
+            null;
+        if (kept !== null) {
+            nodes.push(cloneNode(kept));
+            continue;
+        }
+        if (mentionKind === 'bible-verse') {
+            const verse = context.verseMap.get(run.text);
+            if (verse === undefined) {
+                context.missingVerses.push(run.text);
+                continue;
+            }
+            nodes.push(genVerseMentionNode(verse));
+            continue;
+        }
+        // A NEW person or place is written as the words: the names dataset
+        // (~34MB) is never loaded to make one.
+        nodes.push(genTextNode(run.text, 0, context.defaultStyle));
+    }
+    return nodes;
+}
+
+function collectNodes(
+    node: NodeType,
+    test: (one: NodeType) => boolean,
+    out: NodeType[] = [],
+) {
+    for (const child of childrenOf(node)) {
+        if (!checkIsNode(child)) {
+            continue;
+        }
+        if (test(child)) {
+            out.push(child);
+        }
+        collectNodes(child, test, out);
+    }
+    return out;
+}
+
+function findFirstStyle(node: NodeType): string {
+    const textNode = collectNodes(node, (one) => {
+        return one.type === 'text' && typeof one.style === 'string';
+    })[0];
+    if (textNode !== undefined) {
+        return textNode.style;
+    }
+    return typeof node.textStyle === 'string' ? node.textStyle : '';
+}
+
+function genBuildContext(
+    node: NodeType | null,
+    root: NodeType,
+    verseMap: Map<string, NoteVerseType>,
+    defaultStyle: string,
+): BuildContextType {
+    const pool = node === null ? [] : collectNodes(node, () => true);
+    return {
+        textPool: pool.filter((one) => {
+            return typeof one.text === 'string' && one.type !== 'mention';
+        }),
+        mentionPool: pool.filter((one) => {
+            return one.type === 'mention';
+        }),
+        linkPool: pool.filter((one) => {
+            return one.type === 'link' || one.type === 'autolink';
+        }),
+        noteMentions: collectNodes(root, (one) => {
+            return one.type === 'mention';
+        }),
+        verseMap,
+        defaultStyle,
+        missingVerses: [],
+    };
+}
+
+// --- whole blocks -------------------------------------------------------------
+
+function genElementProps(source: NodeType | null) {
+    return {
+        direction: source?.direction ?? null,
+        format: typeof source?.format === 'string' ? source.format : '',
+        indent: typeof source?.indent === 'number' ? source.indent : 0,
+        version: 1,
+    };
+}
+
+function genTextBlockNode(
+    kind: NoteTextKindType,
+    children: NodeType[],
+    source: NodeType | null,
+    style: string,
+): NodeType {
+    const props = genElementProps(source);
+    if (kind === 'paragraph') {
+        return {
+            children,
+            ...props,
+            type: 'paragraph',
+            textFormat: 0,
+            textStyle: style,
+        };
+    }
+    if (kind === 'quote') {
+        return {
+            children,
+            ...props,
+            type: 'quote',
+            textFormat: 0,
+            textStyle: style,
+        };
+    }
+    if (kind === 'code') {
+        return { children, ...props, type: 'code', language: null };
+    }
+    return { children, ...props, type: 'heading', tag: kind };
+}
+
+function genListItemNode(
+    children: NodeType[],
+    kind: NoteListKindType,
+    checked: boolean | undefined,
+): NodeType {
+    return {
+        children,
+        direction: null,
+        format: '',
+        indent: 0,
+        type: 'listitem',
+        version: 1,
+        value: 1,
+        ...(kind === 'check' ? { checked: checked === true } : {}),
+    };
+}
+
+function genListNode(
+    kind: NoteListKindType,
+    items: NodeType[],
+    source: NodeType | null,
+    style: string,
+): NodeType {
+    return {
+        ...(source === null ? {} : cloneNode(source)),
+        children: items,
+        direction: source?.direction ?? null,
+        format: typeof source?.format === 'string' ? source.format : '',
+        indent: typeof source?.indent === 'number' ? source.indent : 0,
+        type: 'list',
+        version: 1,
+        textFormat: source?.textFormat ?? 0,
+        textStyle: source?.textStyle ?? style,
+        listType: kind,
+        start: 1,
+        tag: kind === 'number' ? 'ol' : 'ul',
+    };
+}
+
+function genParagraphOfText(text: string, style: string): NodeType {
+    return genTextBlockNode(
+        'paragraph',
+        text === '' ? [] : [genTextNode(text, 0, style)],
+        null,
+        style,
+    );
+}
+
+function genPassageNode(verse: NoteVerseType): NodeType {
+    const lines = verse.verseText.split('\n').filter((line) => {
+        return line.trim() !== '';
+    });
+    return {
+        children: [
+            {
+                children: [genParagraphOfText(verse.mentionName, verse.style)],
+                direction: null,
+                format: '',
+                indent: 0,
+                type: 'collapsible-title',
+                version: 1,
+                textStyle: verse.style,
+            },
+            {
+                children: lines.map((line) => {
+                    return genParagraphOfText(line, verse.style);
+                }),
+                direction: null,
+                format: '',
+                indent: 0,
+                type: 'collapsible-content',
+                version: 1,
+            },
+        ],
+        direction: null,
+        format: '',
+        indent: 0,
+        type: 'collapsible-container',
+        version: 1,
+        open: true,
+    };
+}
+
+function checkIsListKind(kind: string): kind is NoteListKindType {
+    return (NOTE_LIST_KIND_LIST as readonly string[]).includes(kind);
+}
+
+function checkIsTextKind(kind: string): kind is NoteTextKindType {
+    return (NOTE_TEXT_KIND_LIST as readonly string[]).includes(kind);
+}
+
+/** Where a node sits now: the array holding it and the node that owns it. */
+function findParent(
+    root: NodeType,
+    target: NodeType,
+): { owner: NodeType; children: NodeType[] } | null {
+    const visit = (
+        owner: NodeType,
+    ): { owner: NodeType; children: NodeType[] } | null => {
+        const children = childrenOf(owner);
+        if (children.includes(target)) {
+            return { owner, children };
+        }
+        for (const child of children) {
+            if (checkIsNode(child)) {
+                const found = visit(child);
+                if (found !== null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    };
+    return visit(root);
+}
+
+/**
+ * Split a top-level list at one of its items: the items before stay, the
+ * items after go to a copy of the list after it. Answers the item's index in
+ * the root, where something may now go in its place.
+ */
+function splitListAround(root: NodeType, item: NodeType) {
+    const parent = findParent(root, item);
+    if (parent === null || parent.owner.type !== 'list') {
+        return null;
+    }
+    const list = parent.owner;
+    const listParent = findParent(root, list);
+    if (listParent === null || listParent.owner !== root) {
+        return null;
+    }
+    const itemIndex = list.children.indexOf(item);
+    const after = list.children.slice(itemIndex + 1);
+    list.children = list.children.slice(0, itemIndex);
+    let listIndex = root.children.indexOf(list);
+    if (after.length > 0) {
+        const { children: _children, ...listProps } = list;
+        root.children.splice(listIndex + 1, 0, {
+            ...cloneNode(listProps),
+            children: after,
+        });
+    }
+    if (list.children.length === 0) {
+        root.children.splice(listIndex, 1);
+        listIndex--;
+    }
+    // The slot right after what stays before it.
+    return listIndex + 1;
+}
+
+/**
+ * Cut a top-level list right after one of its items: the items after it go
+ * to a copy of the list. Answers the root index right after the item's list.
+ */
+function splitListAfter(root: NodeType, item: NodeType) {
+    const list = findParent(root, item)!.owner;
+    const listIndex = root.children.indexOf(list);
+    const itemIndex = list.children.indexOf(item);
+    const after = list.children.slice(itemIndex + 1);
+    list.children = list.children.slice(0, itemIndex + 1);
+    if (after.length > 0) {
+        const { children: _children, ...listProps } = list;
+        root.children.splice(listIndex + 1, 0, {
+            ...cloneNode(listProps),
+            children: after,
+        });
+    }
+    return listIndex + 1;
+}
+
+/** The top-level node a block sits in. */
+function findTopNode(root: NodeType, node: NodeType): NodeType | null {
+    if (root.children.includes(node)) {
+        return node;
+    }
+    for (const top of root.children) {
+        if (
+            checkIsNode(top) &&
+            collectNodes(top, (one) => one === node).length > 0
+        ) {
+            return top;
+        }
+    }
+    return null;
+}
+
+function removeBlockNode(root: NodeType, node: NodeType) {
+    const parent = findParent(root, node);
+    if (parent === null) {
+        return;
+    }
+    parent.owner.children = parent.children.filter((one) => {
+        return one !== node;
+    });
+    // A list left with no items goes too, and a wrapper item with no list.
+    let owner = parent.owner;
+    while (owner !== root && childrenOf(owner).length === 0) {
+        const ownerParent = findParent(root, owner);
+        if (ownerParent === null) {
+            break;
+        }
+        ownerParent.owner.children = ownerParent.children.filter((one) => {
+            return one !== owner;
+        });
+        owner = ownerParent.owner;
+    }
+}
+
+/**
+ * Put `node` (a top-level block, or a list item of `listKind`) after
+ * `anchor` -- a block node, or null for the top of the note.
+ */
+function insertBlockNode(
+    root: NodeType,
+    anchor: NodeType | null,
+    node: NodeType,
+    listKind: NoteListKindType | null,
+    style: string,
+) {
+    if (anchor === null) {
+        const first = root.children[0];
+        if (
+            listKind !== null &&
+            first?.type === 'list' &&
+            listKindOf(first) === listKind
+        ) {
+            first.children.unshift(node);
+            return;
+        }
+        root.children.unshift(
+            listKind === null
+                ? node
+                : genListNode(listKind, [node], null, style),
+        );
+        return;
+    }
+    const parent = findParent(root, anchor);
+    if (parent === null) {
+        root.children.push(
+            listKind === null
+                ? node
+                : genListNode(listKind, [node], null, style),
+        );
+        return;
+    }
+    if (parent.owner.type === 'list') {
+        const list = parent.owner;
+        if (listKind !== null && listKindOf(list) === listKind) {
+            list.children.splice(list.children.indexOf(anchor) + 1, 0, node);
+            return;
+        }
+        if (findParent(root, list)?.owner !== root) {
+            // Inside a nested list: after the whole top-level list.
+            const top = findTopNode(root, list)!;
+            root.children.splice(
+                root.children.indexOf(top) + 1,
+                0,
+                listKind === null
+                    ? node
+                    : genListNode(listKind, [node], null, style),
+            );
+            return;
+        }
+        // After an item of a list of another kind: the list is cut there.
+        const slot = splitListAfter(root, anchor);
+        root.children.splice(
+            slot,
+            0,
+            listKind === null
+                ? node
+                : genListNode(listKind, [node], null, style),
+        );
+        return;
+    }
+    const index = root.children.indexOf(anchor);
+    const next = root.children[index + 1];
+    if (
+        listKind !== null &&
+        next?.type === 'list' &&
+        listKindOf(next) === listKind
+    ) {
+        next.children.unshift(node);
+        return;
+    }
+    root.children.splice(
+        index + 1,
+        0,
+        listKind === null ? node : genListNode(listKind, [node], null, style),
+    );
+}
+
+// --- the edit -----------------------------------------------------------------
+
+export type NoteEditResultType =
+    | {
+          content: string;
+          title: string | null;
+          isChanged: boolean;
+          summary: string;
+      }
+    | { reason: string };
+
+function toReason(reason: string): { reason: string } {
+    return { reason };
+}
+
+/** Every verse a change would add that is not in the note already. */
+export function collectNewNoteVerseRefs(
+    content: string,
+    changes: readonly NoteEditChangeType[],
+) {
+    const state = readState(content);
+    const known = new Set(
+        state === null
+            ? []
+            : collectNodes(state.root, (one) => {
+                  return (
+                      one.type === 'mention' &&
+                      one.mentionKind === 'bible-verse'
+                  );
+              }).map((one) => {
+                  return String(one.text ?? '').trim();
+              }),
+    );
+    const refs = new Set<string>();
+    for (const change of changes) {
+        if (change.kind === 'passage' && typeof change.ref === 'string') {
+            refs.add(change.ref.trim());
+        }
+        if (typeof change.text !== 'string') {
+            continue;
+        }
+        for (const match of change.text.matchAll(/\[\^([^\]\n]+)\]/g)) {
+            const ref = match[1].trim();
+            if (!known.has(ref)) {
+                refs.add(ref);
+            }
+        }
+    }
+    refs.delete('');
+    return [...refs];
+}
+
+function checkIsBlockNumber(value: unknown, count: number) {
+    return (
+        Number.isInteger(value) &&
+        (value as number) >= 1 &&
+        (value as number) <= count
+    );
+}
+
+// The words of a block worth keeping: three letters or more, any script.
+function toWordSet(text: string) {
+    return new Set(
+        text
+            .toLowerCase()
+            .split(/[^\p{L}\p{M}\p{N}]+/u)
+            .filter((word) => {
+                return word.length >= 3;
+            }),
+    );
+}
+
+/**
+ * Whether new words keep fewer than half of a block's own: a block of a
+ * few words, or one whose words are mostly still there, loses nothing.
+ */
+function checkLosesWords(oldText: string, newText: string) {
+    const oldWords = toWordSet(oldText);
+    if (oldWords.size < 4) {
+        return false;
+    }
+    const newWords = toWordSet(newText);
+    let keptCount = 0;
+    for (const word of oldWords) {
+        if (newWords.has(word)) {
+            keptCount++;
+        }
+    }
+    return keptCount * 2 < oldWords.size;
+}
+
+function toComparableWords(text: string) {
+    return text
+        .replace(/[*_~`\\]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * Apply a batch of changes to a note's content, all or nothing. Block
+ * numbers are the note's as READ, whatever the batch does to them on the way.
+ *
+ * - `{block, text?, kind?, checked?}` changes a block;
+ * - `{block, remove: true}` removes it;
+ * - `{block, after}` moves it after block `after` (0 = the top);
+ * - `{after, kind?, text?}` adds a block after block `after` (`passage` takes
+ *   `ref`, a `rule` nothing).
+ */
+export function applyNoteEdit({
+    content,
+    changes,
+    title = null,
+    verseMap = new Map(),
+}: {
+    content: string;
+    changes: readonly NoteEditChangeType[];
+    title?: string | null;
+    verseMap?: Map<string, NoteVerseType>;
+}): NoteEditResultType {
+    const state = readState(content);
+    if (state === null) {
+        return toReason(
+            'This note is kept in an older form that cannot be changed here. ' +
+                'Ask the person to open it in its own window once, which ' +
+                'brings it up to date.',
+        );
+    }
+    if (changes.length > NOTE_EDIT_MAX_CHANGES) {
+        return toReason(
+            `At most ${NOTE_EDIT_MAX_CHANGES} changes in one call; send the ` +
+                'rest in another.',
+        );
+    }
+    let newTitle: string | null = null;
+    if (title !== null) {
+        newTitle = title.replace(/\s+/g, ' ').trim();
+        if (newTitle === '' || newTitle.length > MAX_TITLE_CHARS) {
+            return toReason(
+                `A title is 1 to ${MAX_TITLE_CHARS} characters of words.`,
+            );
+        }
+    }
+    const root = state.root;
+    const refs = collectBlockRefs(root);
+    const count = refs.length;
+    const touched = new Set<number>();
+    const updates: NoteEditChangeType[] = [];
+    const removes: number[] = [];
+    const moves: NoteEditChangeType[] = [];
+    const adds: NoteEditChangeType[] = [];
+    for (const change of changes) {
+        if (!checkIsNode(change)) {
+            return toReason('Each change is an object.');
+        }
+        if (typeof change.text === 'string') {
+            if (change.text.length > MAX_TEXT_CHARS) {
+                return toReason(
+                    `A block's words are ${MAX_TEXT_CHARS} characters at most.`,
+                );
+            }
+        }
+        if (change.block === undefined) {
+            if (change.after === undefined) {
+                return toReason(
+                    'A change needs `block` (the block to change, remove or ' +
+                        'move) or `after` (where a new block goes; 0 is the top).',
+                );
+            }
+            if (!(
+                change.after === 0 || checkIsBlockNumber(change.after, count)
+            )) {
+                return toReason(
+                    `\`after\` is 0 (the top) or a block number from 1 to ${count}.`,
+                );
+            }
+            const kind = change.kind ?? 'paragraph';
+            if (!(NOTE_ADD_KIND_LIST as readonly string[]).includes(kind)) {
+                return toReason(
+                    `A new block's kind is one of ${NOTE_ADD_KIND_LIST.join(', ')}.`,
+                );
+            }
+            if (kind === 'passage') {
+                if (
+                    typeof change.ref !== 'string' ||
+                    change.ref.trim() === ''
+                ) {
+                    return toReason(
+                        'A passage needs `ref`, the Bible reference to put in ' +
+                            '(e.g. "John 3:16-17"). Never write a verse\'s words ' +
+                            'yourself.',
+                    );
+                }
+            } else if (
+                kind !== 'rule' &&
+                toComparableWords(change.text ?? '') === ''
+            ) {
+                return toReason(
+                    'A new block needs its words in `text` -- never an empty ' +
+                        'block.',
+                );
+            }
+            adds.push(change);
+            continue;
+        }
+        if (!checkIsBlockNumber(change.block, count)) {
+            return toReason(
+                count === 0
+                    ? 'This note has no blocks yet: add some with `after: 0`.'
+                    : `\`block\` is a block number from 1 to ${count}.`,
+            );
+        }
+        const blockNumber = change.block as number;
+        if (touched.has(blockNumber)) {
+            return toReason(
+                `Block ${blockNumber} is named twice: give each block one ` +
+                    'change.',
+            );
+        }
+        touched.add(blockNumber);
+        const ref = refs[blockNumber - 1];
+        if (change.remove === true) {
+            removes.push(blockNumber);
+            continue;
+        }
+        if (change.after !== undefined) {
+            if (
+                !(
+                    change.after === 0 ||
+                    checkIsBlockNumber(change.after, count)
+                ) ||
+                change.after === blockNumber
+            ) {
+                return toReason(
+                    '`after` for a move is 0 (the top) or another block number.',
+                );
+            }
+            moves.push(change);
+            continue;
+        }
+        if (ref.isFixed) {
+            return toReason(
+                `Block ${blockNumber} is a ${ref.kind}: it can be moved or ` +
+                    'removed, never given words or another kind.',
+            );
+        }
+        if (
+            change.text !== undefined &&
+            toBlockText(ref).length > MAX_SHOWN_BLOCK_CHARS
+        ) {
+            return toReason(
+                `Block ${blockNumber} was too long to read whole, so its ` +
+                    'words cannot be replaced here.',
+            );
+        }
+        if (
+            change.kind !== undefined &&
+            !checkIsTextKind(change.kind) &&
+            !checkIsListKind(change.kind)
+        ) {
+            return toReason(
+                `A block's kind is one of ${[...NOTE_TEXT_KIND_LIST, ...NOTE_LIST_KIND_LIST].join(', ')}.`,
+            );
+        }
+        if (
+            change.kind !== undefined &&
+            change.kind !== ref.kind &&
+            ref.level > 0
+        ) {
+            return toReason(
+                `Block ${blockNumber} is inside another list item's list: its ` +
+                    'words can change, its kind cannot.',
+            );
+        }
+        // A block made another kind AND given other words is a block whose
+        // words are gone: asked to tidy a note into headings, gemma4:cloud
+        // turned a paragraph into the heading "The nature of grace" and the
+        // paragraph was lost (seen live 2026-11-08). A new heading is a new
+        // block; the paragraph keeps its words.
+        if (
+            change.kind !== undefined &&
+            change.kind !== ref.kind &&
+            change.text !== undefined &&
+            checkLosesWords(toBlockText(ref), change.text)
+        ) {
+            return toReason(
+                `Making block ${blockNumber} a ${change.kind} with other words ` +
+                    'would lose its own words. Add the new words as a NEW ' +
+                    `block ({after: ${blockNumber - 1}, kind: "${change.kind}", ` +
+                    `text}) and leave block ${blockNumber}'s words as they are ` +
+                    `(give \`kind\` alone to change only its kind).`,
+            );
+        }
+        if (
+            change.text === undefined &&
+            change.kind === undefined &&
+            change.checked === undefined
+        ) {
+            return toReason(
+                `The change to block ${blockNumber} says nothing to change: ` +
+                    'give `text`, `kind` or `checked` (or `remove: true`).',
+            );
+        }
+        updates.push(change);
+    }
+
+    // A model "adding" a block that is already there, untouched by this
+    // change: the words were meant as a change to that block.
+    for (const change of adds) {
+        if (change.kind === 'passage' || change.kind === 'rule') {
+            continue;
+        }
+        const words = toComparableWords(change.text ?? '');
+        const twin = refs.findIndex((ref, index) => {
+            return (
+                !ref.isFixed &&
+                !touched.has(index + 1) &&
+                toComparableWords(toBlockText(ref)) === words
+            );
+        });
+        if (twin >= 0) {
+            return toReason(
+                `Those are block ${twin + 1}'s words already. To change ` +
+                    `block ${twin + 1}, give \`block: ${twin + 1}\`; a change ` +
+                    'without `block` adds a new one.',
+            );
+        }
+    }
+
+    const missingVerses: string[] = [];
+    const verseOf = (ref: string) => {
+        const verse = verseMap.get(ref.trim());
+        if (verse === undefined) {
+            missingVerses.push(ref.trim());
+        }
+        return verse;
+    };
+    // What each read block number points at NOW: an update may put another
+    // node in its place, and every later step finds it by this.
+    const nodeOf = new Map<number, NodeType>();
+    refs.forEach((ref, index) => {
+        nodeOf.set(index + 1, ref.node);
+    });
+
+    for (const change of updates) {
+        const blockNumber = change.block as number;
+        const ref = refs[blockNumber - 1];
+        const node = nodeOf.get(blockNumber)!;
+        const kind = (change.kind ?? ref.kind) as NoteEditableKindType;
+        const style = findFirstStyle(node);
+        let children: NodeType[];
+        if (change.text !== undefined) {
+            const text = toRealLineBreaks(change.text);
+            if (kind === 'code') {
+                children = text.split('\n').flatMap((line, index) => {
+                    const lineNodes =
+                        line === '' ? [] : [genTextNode(line, 0, style)];
+                    return index === 0
+                        ? lineNodes
+                        : [{ type: 'linebreak', version: 1 }, ...lineNodes];
+                });
+            } else {
+                const context = genBuildContext(node, root, verseMap, style);
+                children = buildInlineNodes(
+                    parseRuns(text, new Set()),
+                    context,
+                );
+                missingVerses.push(...context.missingVerses);
+            }
+        } else if (checkIsQuoteOfParagraphs(node)) {
+            // A quote of paragraphs made something else: its lines, with a
+            // break between them.
+            children = childrenOf(node).flatMap((paragraph, index) => {
+                const inner = cloneNode(childrenOf(paragraph));
+                return index === 0
+                    ? inner
+                    : [{ type: 'linebreak', version: 1 }, ...inner];
+            });
+        } else {
+            children = childrenOf(node);
+        }
+        if (
+            checkIsQuoteOfParagraphs(node) &&
+            kind === 'quote' &&
+            change.text !== undefined
+        ) {
+            // Written back the way this quote holds its words: a paragraph a
+            // line.
+            const firstParagraph = childrenOf(node)[0];
+            const lines: NodeType[][] = [[]];
+            for (const child of children) {
+                if (child.type === 'linebreak') {
+                    lines.push([]);
+                    continue;
+                }
+                lines[lines.length - 1].push(child);
+            }
+            // Each line in its own paragraph's place, key order and all.
+            const paragraphs = childrenOf(node);
+            node.children = lines.map((lineChildren, index) => {
+                const paragraph = cloneNode(
+                    paragraphs[index] ?? firstParagraph,
+                );
+                paragraph.children = lineChildren;
+                return paragraph;
+            });
+            continue;
+        }
+        if (checkIsListKind(ref.kind)) {
+            if (checkIsListKind(kind)) {
+                node.children = children;
+                if (kind === 'check' && change.checked !== undefined) {
+                    node.checked = change.checked;
+                }
+                if (kind !== ref.kind) {
+                    const parent = findParent(root, node)!;
+                    const list = parent.owner;
+                    if (childrenOf(list).length === 1) {
+                        list.listType = kind;
+                        list.tag = kind === 'number' ? 'ol' : 'ul';
+                        if (kind === 'check' && node.checked === undefined) {
+                            node.checked = change.checked === true;
+                        }
+                    } else {
+                        const slot = splitListAround(root, node)!;
+                        if (kind === 'check' && node.checked === undefined) {
+                            node.checked = change.checked === true;
+                        }
+                        root.children.splice(
+                            slot,
+                            0,
+                            genListNode(kind, [node], list, style),
+                        );
+                    }
+                }
+                continue;
+            }
+            // A list item made a heading or a paragraph: the list is cut
+            // around it.
+            const newNode = genTextBlockNode(kind, children, null, style);
+            const slot = splitListAround(root, node)!;
+            root.children.splice(slot, 0, newNode);
+            nodeOf.set(blockNumber, newNode);
+            continue;
+        }
+        if (checkIsListKind(kind)) {
+            const item = genListItemNode(children, kind, change.checked);
+            const index = root.children.indexOf(node);
+            root.children.splice(
+                index,
+                1,
+                genListNode(kind, [item], null, style),
+            );
+            nodeOf.set(blockNumber, item);
+            continue;
+        }
+        if (kind === ref.kind && change.text !== undefined) {
+            node.children = children;
+            continue;
+        }
+        if (kind !== ref.kind) {
+            const newNode = genTextBlockNode(kind, children, node, style);
+            const parent = findParent(root, node)!;
+            parent.owner.children = parent.children.map((one) => {
+                return one === node ? newNode : one;
+            });
+            nodeOf.set(blockNumber, newNode);
+        }
+    }
+
+    // Anchors are taken before anything moves: "after block 3" is after what
+    // block 3 was, wherever it ends up.
+    const lastPlacedMap = new Map<number, NodeType | null>();
+    const anchorOf = (after: number) => {
+        if (lastPlacedMap.has(after)) {
+            return lastPlacedMap.get(after)!;
+        }
+        return after === 0 ? null : nodeOf.get(after)!;
+    };
+    for (const blockNumber of removes) {
+        removeBlockNode(root, nodeOf.get(blockNumber)!);
+    }
+    for (const change of moves) {
+        const blockNumber = change.block as number;
+        const node = nodeOf.get(blockNumber)!;
+        const after = change.after as number;
+        if (removes.includes(after)) {
+            return toReason(
+                `Block ${after} is removed in this change: move block ` +
+                    `${blockNumber} after another one.`,
+            );
+        }
+        const ref = refs[blockNumber - 1];
+        const listKind =
+            node.type === 'listitem' && checkIsListKind(ref.kind)
+                ? ref.kind
+                : null;
+        const anchor = anchorOf(after);
+        removeBlockNode(root, node);
+        insertBlockNode(root, anchor, node, listKind, findFirstStyle(node));
+        lastPlacedMap.set(after, node);
+    }
+    for (const change of adds) {
+        const after = change.after as number;
+        if (removes.includes(after)) {
+            return toReason(
+                `Block ${after} is removed in this change: put the new block ` +
+                    'after another one.',
+            );
+        }
+        const anchor = anchorOf(after);
+        const kind = (change.kind ?? 'paragraph') as NoteAddKindType;
+        const style =
+            anchor === null ? findFirstStyle(root) : findFirstStyle(anchor);
+        let node: NodeType;
+        let listKind: NoteListKindType | null = null;
+        if (kind === 'passage') {
+            const verse = verseOf(change.ref as string);
+            if (verse === undefined) {
+                continue;
+            }
+            node = genPassageNode(verse);
+        } else if (kind === 'rule') {
+            node = { type: 'horizontalrule', version: 1 };
+        } else {
+            const text = toRealLineBreaks(change.text ?? '');
+            const context = genBuildContext(null, root, verseMap, style);
+            const children =
+                kind === 'code'
+                    ? text.split('\n').flatMap((line, index) => {
+                          const lineNodes =
+                              line === '' ? [] : [genTextNode(line, 0, style)];
+                          return index === 0
+                              ? lineNodes
+                              : [
+                                    { type: 'linebreak', version: 1 },
+                                    ...lineNodes,
+                                ];
+                      })
+                    : buildInlineNodes(parseRuns(text, new Set()), context);
+            missingVerses.push(...context.missingVerses);
+            if (checkIsListKind(kind)) {
+                listKind = kind;
+                node = genListItemNode(children, kind, change.checked);
+            } else {
+                node = genTextBlockNode(kind, children, null, style);
+            }
+        }
+        insertBlockNode(root, anchor, node, listKind, style);
+        lastPlacedMap.set(after, node);
+    }
+    if (missingVerses.length > 0) {
+        return toReason(
+            `No installed Bible could read ${[...new Set(missingVerses)]
+                .map((ref) => {
+                    return `"${ref}"`;
+                })
+                .join(', ')}. Write a reference as "Book chapter:verse" ` +
+                '(e.g. "John 3:16" or "Psalm 23:1-3"); never write a verse\'s ' +
+                'words yourself.',
+        );
+    }
+    const newContent =
+        childrenOf(root).length === 0 ? '' : JSON.stringify(state);
+    const parts = [
+        updates.length > 0 ? `${updates.length} changed` : null,
+        adds.length > 0 ? `${adds.length} added` : null,
+        removes.length > 0 ? `${removes.length} removed` : null,
+        moves.length > 0 ? `${moves.length} moved` : null,
+        newTitle !== null ? 'title changed' : null,
+    ].filter(Boolean);
+    return {
+        content: newContent,
+        title: newTitle,
+        isChanged: newContent !== content || newTitle !== null,
+        summary: parts.length > 0 ? `blocks: ${parts.join(', ')}` : 'nothing',
+    };
+}

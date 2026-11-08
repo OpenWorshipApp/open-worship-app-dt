@@ -1647,6 +1647,7 @@ describe('ChatbotAppComp steps', () => {
             await renderWindow();
             expect(mocks.genAttachmentFromPath).toHaveBeenCalledWith(
                 '/resources/pdf/MAT.18.pdf',
+                null,
             );
             const card = lastCue();
             expect(bodyOf(card)).toContain(

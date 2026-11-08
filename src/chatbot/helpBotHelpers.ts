@@ -171,6 +171,13 @@ export function genGuideActions(
     // first -- a page's header paragraph names eight (EC-215).
     find: string | null = null,
 ): BotActionType[] {
+    // A page of the Bible Note editor's OWN guide (`bible-note:ui/…`,
+    // 2026-11-07) is about the controls of the note window: a walkthrough
+    // card run anywhere else -- a note conversation opened from the Reader's
+    // or the Presenter's list -- has none of them to ring.
+    if (hit.id.startsWith('bible-note:') && focus !== 'bibleNote') {
+        return [];
+    }
     const findArgs = find !== null && find.length > 0 ? { find } : {};
     const isReaderTextTooSmall =
         hit.id === 'W-11' &&

@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "アシスタントがこの曲を変更しました。",
     "Load the change": "変更を読み込む",
     "Create Lyric": "歌詞を作成",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "聖書の各節が歌詞の1つのバースになり、選択した聖書の版ごとに1行ずつ入ります"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "聖書の各節が歌詞の1つのバースになり、選択した聖書の版ごとに1行ずつ入ります",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "「{name}」を下に添付しました。この進行表を変更できます：賛美歌・スライド ドキュメント・聖書の箇所・アクション・カウントダウンの名前での追加、行の削除・移動・コピー・保留、タイマー・ショートカット・色・スクリーンの設定、CC 要素の添付です。礼拝の式次第を貼り付けるか、その画像を送っていただければ、それをもとに進行表を作ります。どれかを押すか、したいことを話してください。",
+    "Check the running order": "進行の順番を確認する",
+    "Build it from my order of service": "式次第から作る",
+    "Clear the screen between items": "項目の間でスクリーンをクリアする",
+    "Move on by itself": "自動で次に進む",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "「{name}」を下に添付しました。このノートを変更できます：言葉の変更や翻訳、スペルの確認、見出しと箇条書きへの整理、聖書の聖句の追加です。要約したり、ノートについての質問に答えたり、ノートエディターでの操作方法を説明したりもできます。どれかを押すか、したいことを言ってください。",
+    "Summarize this note": "このノートを要約する",
+    "Tidy it into headings and lists": "見出しと箇条書きに整理する"
 }

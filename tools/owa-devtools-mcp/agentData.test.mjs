@@ -13,6 +13,7 @@ import {
 } from './agentData.mjs';
 import { AGENT_FILE_ACTIONS, AGENT_SLIDE_ACTIONS } from './agentFile.mjs';
 import { LYRIC_EDIT_ACTIONS } from './openLyricEdit.mjs';
+import { FLOW_EDIT_ACTIONS } from './agentPresentingFlowEdit.mjs';
 
 describe('genAgentDataExpression', () => {
     it('carries the request and its domain over the data event', () => {
@@ -92,6 +93,7 @@ describe('the removal vocabulary', () => {
         ...AGENT_MEDIA_FILE_ACTIONS,
         ...AGENT_UNDO_ACTIONS,
         ...LYRIC_EDIT_ACTIONS,
+        ...FLOW_EDIT_ACTIONS,
     ]);
 
     // The firewall's removal budget reads this list. An action that deletes

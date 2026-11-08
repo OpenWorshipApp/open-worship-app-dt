@@ -10,10 +10,16 @@
 //              Ranked below the manual and labelled, so an answer quoting it
 //              is never mistaken for a user instruction.
 //
-// A query reads ONE index file (~300 KB) rather than opening 120 markdown
-// files, and reads a document in full only when it is actually opened. Nothing
-// is held between questions: this runs inside the app, on machines where a
-// cached corpus would be felt.
+// A query reads ONE index file (1.5 MB, 396 entries on 2026-11-07) rather
+// than opening some 400 markdown files, and reads a document in full only
+// when it is actually opened. Nothing is held between questions: this runs
+// inside the app, on machines where a cached corpus would be felt.
+//
+// A third corpus has an index of its own, `bible-note/index.json`: the Bible
+// Note editor's own guide (`extra-work/bibleNoteGuideHelpers.mjs`), 121
+// pages about the one window. It is read only for a question about a note
+// (`checkNeedsBibleNoteGuide`) -- every other search reads, weighs and ranks
+// exactly what it did before it existed.
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -118,6 +124,13 @@ do not tell the user anything was shortened.]`;
 }
 // The manual answers a user's question; the internal notes answer a builder's.
 const KIND_WEIGHT = { manual: 1.5, internal: 1 };
+// The Bible Note editor's own guide is a manual too, but the package's, not
+// this app's live-verified one, and every page of it is written FOR the note
+// window, so `applyFocus` lifts it by its 1.3 there. Weighted to take that
+// lift back: in the note window this app's own page wins a tie -- measured
+// 2026-11-07, "What is this Bible Note window for?" went to the guide's page
+// on saving above W-14, the page about the window.
+const BIBLE_NOTE_GUIDE_WEIGHT = KIND_WEIGHT.manual / 1.3;
 
 /** The bundled knowledge dir, or null when the app was not built yet. */
 export function findKnowledgeDirPath() {
@@ -199,6 +212,90 @@ export function listKnowledgeEntries() {
   } catch (_error) {
     return listSourceManualEntries();
   }
+}
+
+// The Bible Note editor's own guide, indexed apart by the build
+// (`build-knowledge.mjs`). Asked for 2026-11-07 (the user: _build
+// `node_modules/bible-note/knowledge/ui-rag.md` into chatbot knowledge_);
+// kept apart because, merged into every search, its pages took the right
+// page from questions about other windows (measured that day: four to eight
+// of 476), and because a search about the Presenter has no reason to read
+// 150 KB more.
+const BIBLE_NOTE_GUIDE_DIR_NAME = 'bible-note';
+export const BIBLE_NOTE_GUIDE_ID_PREFIX = 'bible-note:';
+const BIBLE_NOTE_FOCUS = 'bibleNote';
+// A question names a note -- "my note", "a sticky note" -- in the person's
+// words or, for another language, in the English words it was read into.
+const NOTE_QUESTION_PATTERN = /\bnotes?\b|\bsticky\b/i;
+const NOTE_TERM_SET = new Set(['note', 'notes', 'sticky']);
+
+export function checkIsBibleNoteGuideId(id) {
+  return String(id ?? '')
+    .trim()
+    .toLowerCase()
+    .startsWith(BIBLE_NOTE_GUIDE_ID_PREFIX);
+}
+
+/** The guide's pages, read per call like the main index; none unbuilt. */
+export function listBibleNoteGuideEntries() {
+  const knowledgeDirPath = findKnowledgeDirPath();
+  if (knowledgeDirPath === null) {
+    return [];
+  }
+  try {
+    const index = JSON.parse(
+      readFileSync(
+        path.join(knowledgeDirPath, BIBLE_NOTE_GUIDE_DIR_NAME, 'index.json'),
+        'utf-8',
+      ),
+    );
+    return (index.entries ?? [])
+      .filter((entry) => {
+        return (
+          checkIsBibleNoteGuideId(entry?.id) &&
+          typeof entry.file === 'string' &&
+          !entry.file.includes('..')
+        );
+      })
+      .map((entry) => {
+        return {
+          ...entry,
+          absolutePath: path.join(knowledgeDirPath, entry.file),
+        };
+      });
+  } catch (_error) {
+    return [];
+  }
+}
+
+/**
+ * Whether a search reads the editor's guide: asked about the note window
+ * (its own tab, or a conversation about a note), as a supported question
+ * whose page is one of the guide's, or -- asked about no window at all --
+ * about a note in words. Asked about ANOTHER window it never does: its pages
+ * are the note window's, `applyFocus` would put each one out again, and
+ * counted first they would still move every other page's weights.
+ */
+export function checkNeedsBibleNoteGuide(
+  query,
+  terms = [],
+  focus = null,
+  knownId = null,
+) {
+  if (focus === BIBLE_NOTE_FOCUS || checkIsBibleNoteGuideId(knownId)) {
+    return true;
+  }
+  if (getBotFocus(focus) !== null) {
+    return false;
+  }
+  return (
+    NOTE_QUESTION_PATTERN.test(String(query ?? '')) ||
+    terms.some((group) => {
+      return group.some((term) => {
+        return NOTE_TERM_SET.has(term);
+      });
+    })
+  );
 }
 
 // Which English page each translation must have been made from: the hash the
@@ -419,7 +516,11 @@ function scoreCounts(entry, counts, inverseFrequencies) {
   // standing in for, and squaring on top of it put the pages that answer a
   // long question back out of reach.
   const coverage = matchedWeight / totalWeight;
-  return score * coverage * (KIND_WEIGHT[entry.kind] ?? 1);
+  const weight =
+    entry.source === BIBLE_NOTE_GUIDE_DIR_NAME
+      ? BIBLE_NOTE_GUIDE_WEIGHT
+      : (KIND_WEIGHT[entry.kind] ?? 1);
+  return score * coverage * weight;
 }
 
 // The help window is English-only, and the manual writes app labels with their
@@ -483,11 +584,18 @@ export function toEnglishOnly(text) {
 // and must survive. The `id` FIELD of a hit is untouched: it is the handle
 // `owa_help_page` and `owa_guide_start` take, and the window scrubs whatever
 // still reaches the answer (`scrubRecipeIds` in `quickReplyHelpers.ts`).
+const BIBLE_NOTE_GUIDE_ID_TEXT_PATTERN =
+  /\bbible-note:ui\/(?:[a-z0-9-]+\/)*([a-z0-9-]+)/gi;
 export function scrubRecipeIds(text) {
   // The hyphen is any a model types -- a non-breaking one (U+2011) walked
   // "W‑42" past this on 2026-10-10 -- as in the window's own scrub.
   return (
     String(text ?? '')
+      // The editor guide's ids (`bible-note:ui/sticky-notes/add-a-sticky-note`)
+      // read as what their last part says: "add a sticky note".
+      .replace(BIBLE_NOTE_GUIDE_ID_TEXT_PATTERN, (_id, slug) => {
+        return slug.replace(/-+/g, ' ');
+      })
       .replace(
         /[ \t]*[([][^)\]\n]*\b[A-Z]{1,3}[-‐-–−]\d{1,3}[a-z]?\b[^)\]\n]*[)\]]/g,
         '',
@@ -778,7 +886,19 @@ export function searchHelp(
     return [];
   }
   const englishEntries = listKnowledgeEntries();
-  const counted = englishEntries
+  // A supported question's own row, looked up first: its page may be one of
+  // the editor guide's, which is only searched when it is wanted.
+  const knownRow = kind === 'internal' ? null : findKnownQuestionRow(query);
+  const knownId = knownRow?.resources?.recipe ?? null;
+  // The editor guide joins BEFORE the words are weighed, so its pages are
+  // ranked like any other; a search that does not want it weighs the very
+  // corpus it did before the guide existed.
+  const searchedEntries =
+    kind !== 'internal' &&
+    checkNeedsBibleNoteGuide(query, terms, focus, knownId)
+      ? [...englishEntries, ...listBibleNoteGuideEntries()]
+      : englishEntries;
+  const counted = searchedEntries
     .filter((entry) => {
       return kind === 'manual' || kind === 'internal'
         ? entry.kind === kind
@@ -820,8 +940,6 @@ export function searchHelp(
   // A supported question's own recipe goes first, marked, so a caller can
   // tell a label from a guess. Only the manual can be filed under: the
   // internal corpus is never the answer to a question a user picked.
-  const knownRow = kind === 'internal' ? null : findKnownQuestionRow(query);
-  const knownId = knownRow?.resources?.recipe ?? null;
   // What a supported question is about -- its control, its menu item, its
   // key -- says which PASSAGE of its page to quote, whatever the words did.
   const knownAnchors =
@@ -998,9 +1116,13 @@ export function readHelpPage(
       return item.id.toLowerCase() === wantedId;
     });
   }
+  // The editor guide's own pages are in an index of their own.
   const entry =
     translatedEntry ??
-    listKnowledgeEntries().find((item) => {
+    (checkIsBibleNoteGuideId(wantedId)
+      ? listBibleNoteGuideEntries()
+      : listKnowledgeEntries()
+    ).find((item) => {
       return (
         item.id.toLowerCase() === wantedId ||
         item.title.toLowerCase() === wantedId

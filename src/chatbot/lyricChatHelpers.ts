@@ -495,7 +495,18 @@ export type EditedLyricType = {
      * changes, and **Undo this change** puts back both (2026-11-07).
      */
     undoIdList?: string[];
+    /**
+     * The panel the document's row is in, for **Show it in the list**:
+     * `Document List` when left out -- a song, a slide document -- and
+     * `Presenting Flow List` for a presenting flow (2026-11-07).
+     */
+    listName?: string;
 };
+
+/** Where **Show it in the list** rings a changed document's row. */
+export function toEditedDocumentListValue(edited: EditedLyricType) {
+    return `${edited.listName ?? 'Document List'} > ${edited.name}`;
+}
 
 /**
  * A change `owa_lyric_edit` made, off its RESULT -- a refusal is prose and

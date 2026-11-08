@@ -142,7 +142,9 @@ export function findSlideAskFiles(
  * files since (`closedAfterId`). Not `findOpenFileAttachments`, which keeps
  * only the LAST question's files -- the picture of the slides they want,
  * attached from a folder under the document's card, would have closed the
- * document it was attached to change.
+ * document it was attached to change. `checkIsName` says which files count:
+ * a presenting flow's conversation keeps its `.owpf` open the same way
+ * (`flowChatHelpers.ts`).
  */
 export function findOpenSlideAttachments(
     messages: readonly {
@@ -151,6 +153,7 @@ export function findOpenSlideAttachments(
         attachments?: ChatAttachmentType[];
     }[],
     closedAfterId?: number,
+    checkIsName: (name: string) => boolean = checkIsSlideFileName,
 ): ChatAttachmentType[] {
     for (let index = messages.length - 1; index >= 0; index--) {
         const message = messages[index];
@@ -162,8 +165,7 @@ export function findOpenSlideAttachments(
         }
         const slideFiles = (message.attachments ?? []).filter((one) => {
             return (
-                checkIsFileAttachment(one) &&
-                checkIsSlideFileName(one.filePath ?? '')
+                checkIsFileAttachment(one) && checkIsName(one.filePath ?? '')
             );
         });
         if (slideFiles.length > 0) {

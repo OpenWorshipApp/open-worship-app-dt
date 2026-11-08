@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "De assistent heeft dit lied veranderd.",
     "Load the change": "De wijziging laden",
     "Create Lyric": "Liedtekst maken",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Elk bijbelvers wordt een couplet van de liedtekst, met één regel per geselecteerde bijbelvertaling"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Elk bijbelvers wordt een couplet van de liedtekst, met één regel per geselecteerde bijbelvertaling",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” is hieronder bijgevoegd. Ik kan deze orde van dienst voor je veranderen: liederen, diadocumenten, Bijbelgedeelten, acties en aftellingen op naam toevoegen; regels weghalen, verplaatsen, kopiëren of op pauze zetten; timers, sneltoetsen, kleuren en schermen instellen; en CC-elementen koppelen. Plak je liturgie of stuur er een foto van, dan maak ik er de orde van dienst van. Klik op een keuze, of zeg wat je wilt.",
+    "Check the running order": "Volgorde controleren",
+    "Build it from my order of service": "Opbouwen uit mijn liturgie",
+    "Clear the screen between items": "Scherm wissen tussen onderdelen",
+    "Move on by itself": "Vanzelf doorgaan",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” is hieronder bijgevoegd. Ik kan deze notitie voor u aanpassen: de woorden wijzigen of vertalen, de spelling controleren, haar ordenen in kopjes en lijsten, of Bijbelverzen toevoegen. Ik kan haar ook samenvatten, vragen erover beantwoorden en uitleggen hoe u alles in de notitie-editor doet. Druk op een ervan, of zeg wat u wilt.",
+    "Summarize this note": "Vat deze notitie samen",
+    "Tidy it into headings and lists": "Orden haar in kopjes en lijsten"
 }

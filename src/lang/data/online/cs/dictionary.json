@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Asistent tuto píseň změnil.",
     "Load the change": "Načíst změnu",
     "Create Lyric": "Vytvořit text písně",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Každý biblický verš se stane slokou písně, s jedním řádkem pro každý vybraný překlad Bible"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Každý biblický verš se stane slokou písně, s jedním řádkem pro každý vybraný překlad Bible",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}“ je přiložen níže. Mohu za vás tento pořad bohoslužby změnit: přidat podle názvu písně, dokumenty se snímky, biblické pasáže, akce a odpočty; odebrat, přesunout, zkopírovat nebo odložit stranou řádky; nastavit časovače, klávesové zkratky, barvy a obrazovky; a připojit prvky CC. Vložte program své bohoslužby nebo mi pošlete jeho obrázek a já z něj pořad sestavím. Stiskněte jednu z možností nebo řekněte, co chcete.",
+    "Check the running order": "Zkontrolovat pořadí",
+    "Build it from my order of service": "Sestavit ho z programu mé bohoslužby",
+    "Clear the screen between items": "Mezi položkami vyčistit obrazovku",
+    "Move on by itself": "Pokračovat samo",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}“ je přiložena níže. Mohu pro vás tuto poznámku změnit: změnit nebo přeložit její slova, zkontrolovat pravopis, uspořádat ji do nadpisů a seznamů nebo přidat verše z Bible. Mohu ji také shrnout, odpovědět na otázky o ní a vysvětlit, jak v editoru poznámek udělat cokoli. Stiskněte jednu možnost, nebo řekněte, co chcete.",
+    "Summarize this note": "Shrň tuto poznámku",
+    "Tidy it into headings and lists": "Uspořádej ji do nadpisů a seznamů"
 }

@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Assistent muutis seda laulu.",
     "Load the change": "Laadi muudatus",
     "Create Lyric": "Loo laul",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Iga piiblisalm muutub laulu salmiks, iga valitud piiblitõlke jaoks üks rida"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Iga piiblisalm muutub laulu salmiks, iga valitud piiblitõlke jaoks üks rida",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}“ on allpool manusena. Ma saan seda esitusplaani teie jaoks muuta: lisada nime järgi laule, slaididokumente, piiblilõike, toiminguid ja tagasiloendusi; eemaldada, teisaldada, kopeerida või kõrvale panna ridu; seada taimereid, otseteid, värve ja ekraane; ning lisada CC-elemente. Kleepige oma jumalateenistuse kava või saatke mulle sellest pilt, ja ma koostan selle põhjal esitusplaani. Vajutage ühele või öelge, mida soovite.",
+    "Check the running order": "Kontrolli järjekorda",
+    "Build it from my order of service": "Koosta see minu jumalateenistuse kava põhjal",
+    "Clear the screen between items": "Puhasta ekraan punktide vahel",
+    "Move on by itself": "Liigu ise edasi",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}“ on allpool lisatud. Saan seda märkmet teie eest muuta: muuta või tõlkida selle sõnu, kontrollida õigekirja, korrastada see pealkirjadeks ja loenditeks või lisada piiblisalme. Saan selle ka kokku võtta, vastata küsimustele selle kohta ja selgitada, kuidas märkmeredaktoris midagi teha. Vajutage ühte või öelge, mida soovite.",
+    "Summarize this note": "Võta see märge kokku",
+    "Tidy it into headings and lists": "Korrasta see pealkirjadeks ja loenditeks"
 }

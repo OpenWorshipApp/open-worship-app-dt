@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Wothandizira wasintha nyimbo iyi.",
     "Load the change": "Kwezani kusinthako",
     "Create Lyric": "Pangani Nyimbo",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Vesi iliyonse ya Baibulo imakhala vesi la nyimbo, ndi mzere umodzi pa mtundu uliwonse wa Baibulo umene mwasankha"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Vesi iliyonse ya Baibulo imakhala vesi la nyimbo, ndi mzere umodzi pa mtundu uliwonse wa Baibulo umene mwasankha",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” yalumikizidwa pansipa. Nditha kukusinthirani ndondomeko yowonetsera iyi: kuwonjezera nyimbo, zikalata za masilaidi, ndime za Baibulo, zochita ndi zowerengera mobwerera potchula dzina lake; kuchotsa, kusuntha, kukopera kapena kuimitsa kwakanthawi mizere; kukhazikitsa zowerengera nthawi, njira zachidule, mitundu ndi masikirini; ndi kulumikiza zinthu za CC. Ikani pano ndondomeko ya mapemphero anu kapena nditumizireni chithunzi chake, ndipo ndipanga ndondomeko yowonetsera kuchokera pamenepo. Dinani imodzi, kapena nenani zomwe mukufuna.",
+    "Check the running order": "Yang’anani dongosolo",
+    "Build it from my order of service": "Pangani kuchokera ku ndondomeko ya mapemphero anga",
+    "Clear the screen between items": "Yeretsani sikirini pakati pa zinthu",
+    "Move on by itself": "Ipite patsogolo yokha",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” yaphatikizidwa pansipa. Nditha kukusinthirani cholembachi: kusintha kapena kumasulira mawu ake, kuyang'ana kalembedwe, kuchikonza kukhala mitu ndi mindandanda, kapena kuwonjezera mavesi a m'Baibulo. Ndithanso kuchifupikitsa, kuyankha mafunso okhudza icho, ndi kufotokoza momwe mungachitire chilichonse mu chosinthira zolemba. Dinani chimodzi, kapena nenani chomwe mukufuna.",
+    "Summarize this note": "Fupikitsa cholembachi",
+    "Tidy it into headings and lists": "Chikonze kukhala mitu ndi mindandanda"
 }

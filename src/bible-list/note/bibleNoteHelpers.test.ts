@@ -14,6 +14,7 @@ vi.mock('../../media-sessions/folderSessionHelpers', () => ({
 
 const h = vi.hoisted(() => ({
     getDirPathBySettingNameMock: vi.fn(),
+    headChangedListeners: [] as ((filePath: string) => void)[],
     getParamFileFullNameMock: vi.fn(),
     getParamIdNumMock: vi.fn(),
     getBibleNotePreviewFilePathMock: vi.fn(),
@@ -111,6 +112,15 @@ vi.mock('../../server/fileHelpers', () => ({
     pathJoin: h.pathJoinMock,
     pathResolve: h.pathResolveMock,
     fsExistSync: h.fsExistSyncMock,
+    toPathCompareKey: (p: string) => p.toLowerCase(),
+}));
+// A head another window wrote (2026-11-07, the help window's note
+// conversation): the window hears it through this, one listener a window.
+vi.mock('./noteHeadChangeHelpers', () => ({
+    registerNoteHeadChangedListener: (listener: (filePath: string) => void) => {
+        h.headChangedListeners.push(listener);
+        return () => {};
+    },
 }));
 vi.mock('../../helper/localFileHelpers', () => ({
     getAppFilePathFromFile: h.getAppFilePathFromFileMock,
@@ -617,6 +627,33 @@ describe('bible-list/note bibleNoteHelpers', () => {
             expect(h.showFileOrDirExplorerMock).toHaveBeenCalledWith(
                 '/some/file',
             );
+        });
+
+        // 2026-11-07: the help window changed this note's head, the file did
+        // not change -- the window still shows it, and does not write it out
+        // again as a step of its own.
+        test('a head another window wrote is reloaded and shown, as already written', async () => {
+            h.headChangedListeners.length = 0;
+            const { note, bibleNote, noteItem } = await setupInit();
+            expect(h.headChangedListeners).toHaveLength(1);
+            note.getItemById.mockReturnValue({ id: 7, content: 'from chat' });
+            h.headChangedListeners[0]('/notes/OTHER.note');
+            await flush();
+            expect(note.reloadEditing).not.toHaveBeenCalled();
+            h.headChangedListeners[0]('/NOTES/a.note');
+            await flush();
+            expect(note.reloadEditing).toHaveBeenCalledOnce();
+            expect(noteItem.content).toBe('from chat');
+            expect(bibleNote.content).toBe('from chat');
+            // The editor's own save of it finds nothing new to write.
+            await capturedConfig.saveData('from chat');
+            expect(note.updateNoteItem).not.toHaveBeenCalled();
+        });
+
+        test('a read-only preview does not listen for heads', async () => {
+            h.headChangedListeners.length = 0;
+            await setupInit(genNoteItem(), true);
+            expect(h.headChangedListeners).toHaveLength(0);
         });
 
         test('file watch reloads and syncs on change events', async () => {

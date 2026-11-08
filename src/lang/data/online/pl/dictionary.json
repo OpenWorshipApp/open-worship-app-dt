@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Asystent zmienił tę pieśń.",
     "Load the change": "Wczytaj zmianę",
     "Create Lyric": "Utwórz tekst pieśni",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Każdy werset Biblii staje się zwrotką pieśni, z jednym wierszem dla każdego wybranego przekładu Biblii"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Każdy werset Biblii staje się zwrotką pieśni, z jednym wierszem dla każdego wybranego przekładu Biblii",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}” jest załączony poniżej. Mogę zmienić ten plan nabożeństwa za Ciebie: dodać po nazwie pieśni, dokumenty ze slajdami, fragmenty Biblii, akcje i odliczania; usunąć, przenieść, skopiować lub wstrzymać wiersze; ustawić liczniki czasu, skróty klawiszowe, kolory i ekrany; a także dołączyć elementy CC. Wklej swój porządek nabożeństwa albo wyślij jego zdjęcie, a ułożę z niego plan. Naciśnij jedną z opcji albo powiedz, czego chcesz.",
+    "Check the running order": "Sprawdź kolejność",
+    "Build it from my order of service": "Ułóż go z mojego porządku nabożeństwa",
+    "Clear the screen between items": "Czyść ekran między punktami",
+    "Move on by itself": "Niech sam przechodzi dalej",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}” jest załączona poniżej. Mogę zmienić tę notatkę za Ciebie: zmienić lub przetłumaczyć jej słowa, sprawdzić pisownię, uporządkować ją w nagłówki i listy albo dodać wersety z Biblii. Mogę też ją streścić, odpowiedzieć na pytania o nią i wyjaśnić, jak zrobić cokolwiek w edytorze notatek. Naciśnij jedną z opcji albo powiedz, czego chcesz.",
+    "Summarize this note": "Streść tę notatkę",
+    "Tidy it into headings and lists": "Uporządkuj ją w nagłówki i listy"
 }

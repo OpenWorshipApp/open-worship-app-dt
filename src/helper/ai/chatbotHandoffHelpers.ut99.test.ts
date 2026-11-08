@@ -57,7 +57,7 @@ const CASES = [
         name: 'openChatbotWithFile',
         open: () => openChatbotWithFile('/data/MAT.18.pdf', READING),
         request: () => h.requestChatbotFile,
-        args: ['/data/MAT.18.pdf', READING],
+        args: ['/data/MAT.18.pdf', READING, null],
     },
     {
         name: 'openChatbotWithLookup',
@@ -113,6 +113,7 @@ describe('the defaults', () => {
         expect(await openChatbotWithFile('/data/notes.md')).toBe(true);
         expect(h.requestChatbotFile).toHaveBeenCalledWith(
             '/data/notes.md',
+            null,
             null,
         );
     });

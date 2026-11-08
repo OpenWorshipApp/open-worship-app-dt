@@ -59,7 +59,7 @@ const OPENERS: [
         'a file',
         () => openChatbotWithFile('/resources/JHN.3.pdf', READING),
         h.requestChatbotFile,
-        ['/resources/JHN.3.pdf', READING],
+        ['/resources/JHN.3.pdf', READING, null],
     ],
     [
         'a lookup',
@@ -120,6 +120,17 @@ describe('opening the assistant already asked', () => {
         expect(h.requestChatbotFile).toHaveBeenCalledWith(
             '/resources/family-tree.jpeg',
             null,
+            null,
+        );
+    });
+
+    // 2026-11-07: a Bible notes file names the ONE note it is opened on.
+    test('a note file carries the note it is opened on', async () => {
+        await openChatbotWithFile('/notes/Default.own', null, 3);
+        expect(h.requestChatbotFile).toHaveBeenCalledWith(
+            '/notes/Default.own',
+            null,
+            3,
         );
     });
 });

@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Памочнік змяніў гэтую песню.",
     "Load the change": "Загрузіць змену",
     "Create Lyric": "Стварыць тэкст песні",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Кожны верш Бібліі становіцца куплетам песні, па адным радку на кожную выбраную версію Бібліі"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Кожны верш Бібліі становіцца куплетам песні, па адным радку на кожную выбраную версію Бібліі",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "«{name}» далучаны ніжэй. Я магу змяніць гэты план набажэнства для вас: дадаць па назве песні, дакументы са слайдамі, урыўкі з Бібліі, дзеянні і зваротныя адлікі; выдаліць, перамясціць, скапіяваць ці адкласці ўбок радкі; задаць таймеры, спалучэнні клавіш, колеры і экраны; і далучыць элементы CC. Устаўце парадак свайго набажэнства або дашліце мне яго выяву, і я складу з яго план. Націсніце адно або скажыце, што вы хочаце.",
+    "Check the running order": "Праверыць парадак",
+    "Build it from my order of service": "Скласці з парадку майго набажэнства",
+    "Clear the screen between items": "Ачышчаць экран паміж пунктамі",
+    "Move on by itself": "Пераходзіць далей аўтаматычна",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» далучана ніжэй. Я магу змяніць гэтую нататку для вас: змяніць або перакласці яе словы, праверыць правапіс, упарадкаваць яе ў загалоўкі і спісы або дадаць вершы з Бібліі. Я таксама магу коратка пераказаць яе, адказаць на пытанні пра яе і растлумачыць, як зрабіць што-небудзь у рэдактары нататак. Націсніце адно або скажыце, што вы хочаце.",
+    "Summarize this note": "Коратка перакажы гэтую нататку",
+    "Tidy it into headings and lists": "Упарадкуй яе ў загалоўкі і спісы"
 }

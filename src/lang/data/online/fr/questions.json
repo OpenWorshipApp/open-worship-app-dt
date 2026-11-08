@@ -1,10 +1,14 @@
 {
     "lang": "fr",
-    "updated": "2026-11-07",
+    "updated": "2026-11-08",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
             "text": "Écrire une note"
+        },
+        "bible-note.editor": {
+            "en": "Using the note editor",
+            "text": "Utiliser l'éditeur de notes"
         },
         "bible-note.sharing": {
             "en": "Taking notes elsewhere",
@@ -239,6 +243,34 @@
         "bible-note.writing.undo-note-change": {
             "en": "How do I get back what I typed in a note by mistake?",
             "text": "Comment annuler ce que j'ai tapé par erreur dans une note ?"
+        },
+        "bible-note.editor.format-note-text": {
+            "en": "How do I make words in my note bold or change their colour?",
+            "text": "Comment mettre des mots de ma note en gras ou changer leur couleur ?"
+        },
+        "bible-note.editor.note-table": {
+            "en": "How do I put a table in my note?",
+            "text": "Comment insérer un tableau dans ma note ?"
+        },
+        "bible-note.editor.sticky-note": {
+            "en": "How do I add a sticky note to my note?",
+            "text": "Comment ajouter un pense-bête à ma note ?"
+        },
+        "bible-note.editor.note-verse": {
+            "en": "How do I put a Bible verse into my note?",
+            "text": "Comment insérer un verset de la Bible dans ma note ?"
+        },
+        "bible-note.editor.note-comment": {
+            "en": "How do I add a comment to part of my note?",
+            "text": "Comment ajouter un commentaire à une partie de ma note ?"
+        },
+        "bible-note.editor.print-note": {
+            "en": "How do I print my note or keep it as a Word document?",
+            "text": "Comment imprimer ma note ou la garder comme document Word ?"
+        },
+        "bible-note.editor.find-in-note": {
+            "en": "How do I find a word in my note, or make the note bigger on screen?",
+            "text": "Comment trouver un mot dans ma note, ou l'agrandir à l'écran ?"
         },
         "bible-note.sharing.share-notes": {
             "en": "How do I share a page of Bible notes with another machine?",
@@ -1179,6 +1211,10 @@
         "presenting-flow.building.flow-add-for-me": {
             "en": "Can you add a song to my presenting flow for me?",
             "text": "Pouvez-vous ajouter un chant à mon déroulé pour moi ?"
+        },
+        "presenting-flow.building.flow-change-with-assistant": {
+            "en": "Can the assistant change my presenting flow for me?",
+            "text": "L’assistant peut-il modifier mon déroulé pour moi ?"
         },
         "presenting-flow.building.flow-reorder": {
             "en": "How do I move a line up or down in the running order?",
@@ -2139,6 +2175,10 @@
         "common.changes.write-a-note": {
             "en": "Write a Bible note about ...",
             "text": "Écris une note biblique sur ..."
+        },
+        "common.changes.change-note-with-assistant": {
+            "en": "Can the assistant change my Bible note for me?",
+            "text": "L’assistant peut-il modifier ma note biblique pour moi ?"
         },
         "common.status.find-a-control": {
             "en": "Where is the button for ...",

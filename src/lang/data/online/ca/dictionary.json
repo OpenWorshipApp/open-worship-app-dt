@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "L'assistent ha canviat aquesta cançó.",
     "Load the change": "Carrega el canvi",
     "Create Lyric": "Crea una lletra",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Cada versicle de la Bíblia esdevé una estrofa de la lletra, amb una línia per cada versió de la Bíblia seleccionada"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Cada versicle de la Bíblia esdevé una estrofa de la lletra, amb una línia per cada versió de la Bíblia seleccionada",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "«{name}» està adjunt a sota. Puc canviar aquest flux de presentació per tu: afegir cançons, documents de diapositives, passatges de la Bíblia, accions i comptes enrere pel seu nom; treure, moure, copiar o deixar de banda línies; posar temporitzadors, dreceres, colors i pantalles; i adjuntar elements CC. Enganxa l'ordre del culte o envia'm una imatge d'aquest ordre, i en faré el flux. Prem-ne una, o digues què vols.",
+    "Check the running order": "Revisa l'ordre",
+    "Build it from my order of service": "Fes-lo a partir del meu ordre del culte",
+    "Clear the screen between items": "Neteja la pantalla entre elements",
+    "Move on by itself": "Avança tot sol",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» està adjunta a sota. Puc canviar aquesta nota per a vostè: canviar o traduir-ne les paraules, revisar l’ortografia, ordenar-la en títols i llistes, o afegir-hi versets de la Bíblia. També puc resumir-la, respondre preguntes sobre ella i explicar com fer qualsevol cosa a l’editor de notes. Premi’n un, o digui què vol.",
+    "Summarize this note": "Resumeix aquesta nota",
+    "Tidy it into headings and lists": "Ordena-la en títols i llistes"
 }

@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Көмекші бұл әнді өзгертті.",
     "Load the change": "Өзгерісті жүктеу",
     "Create Lyric": "Ән мәтінін жасау",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Киелі кітаптың әр аяты ән мәтінінің бір шумағына айналады, таңдалған әр Киелі кітап нұсқасы үшін бір жолдан"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Киелі кітаптың әр аяты ән мәтінінің бір шумағына айналады, таңдалған әр Киелі кітап нұсқасы үшін бір жолдан",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "«{name}» төменде тіркелген. Бұл көрсету жоспарын сіз үшін өзгерте аламын: әндерді, слайд құжаттарын, Киелі кітап үзінділерін, әрекеттер мен кері санақтарды атауы бойынша қосу; жолдарды жою, жылжыту, көшіру немесе уақытша өшіріп қою; таймерлерді, жылдам пернелерді, түстер мен экрандарды орнату; және CC элементтерін тіркеу. Қызмет бағдарламаңызды кірістіріңіз немесе оның суретін жіберіңіз, мен соның негізінде жоспар құрамын. Біреуін басыңыз немесе не қалайтыныңызды айтыңыз.",
+    "Check the running order": "Реттілікті тексеру",
+    "Build it from my order of service": "Менің қызмет бағдарламамнан құру",
+    "Clear the screen between items": "Элементтер арасында экранды тазалау",
+    "Move on by itself": "Өздігінен келесіге өту",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» төменде тіркелген. Бұл жазбаны сіз үшін өзгерте аламын: сөздерін өзгерту немесе аудару, емлесін тексеру, тақырыптар мен тізімдерге реттеу немесе Киелі кітаптан аяттар қосу. Сондай-ақ оны қорытып беріп, ол туралы сұрақтарға жауап беріп, жазба редакторында кез келген әрекетті қалай жасауды түсіндіре аламын. Біреуін басыңыз немесе не қалайтыныңызды айтыңыз.",
+    "Summarize this note": "Бұл жазбаны қорытып бер",
+    "Tidy it into headings and lists": "Тақырыптар мен тізімдерге ретте"
 }

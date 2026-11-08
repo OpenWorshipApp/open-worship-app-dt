@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "D'athraigh an cúntóir an t-amhrán seo.",
     "Load the change": "Lódáil an t-athrú",
     "Create Lyric": "Cruthaigh liric",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Déantar véarsa liricí de gach véarsa den Bhíobla, le líne amháin do gach leagan den Bhíobla a roghnaíodh"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Déantar véarsa liricí de gach véarsa den Bhíobla, le líne amháin do gach leagan den Bhíobla a roghnaíodh",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "Tá “{name}” ceangailte thíos. Is féidir liom an sreabhadh láithreoireachta seo a athrú duit: amhráin, doiciméid sleamhnán, sleachta as an mBíobla, gníomhartha agus comhairimh síos a chur leis de réir ainm; línte a bhaint, a bhogadh, a chóipeáil nó a chur i leataobh; amadóirí, aicearraí, dathanna agus scáileáin a shocrú; agus eilimintí CC a cheangal. Greamaigh ord do sheirbhíse nó seol pictiúr de chugam, agus tógfaidh mé an sreabhadh uaidh. Brúigh ceann acu, nó abair cad atá uait.",
+    "Check the running order": "Seiceáil an t-ord reatha",
+    "Build it from my order of service": "Tóg é ó ord mo sheirbhíse",
+    "Clear the screen between items": "Glan an scáileán idir míreanna",
+    "Move on by itself": "Bog ar aghaidh leis féin",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "Tá “{name}” ceangailte thíos. Is féidir liom an nóta seo a athrú duit: a fhocail a athrú nó a aistriú, an litriú a sheiceáil, é a eagrú ina cheannteidil agus ina liostaí, nó véarsaí as an mBíobla a chur leis. Is féidir liom achoimre a dhéanamh air freisin, ceisteanna faoi a fhreagairt, agus a mhíniú conas aon rud a dhéanamh san eagarthóir nótaí. Brúigh ceann, nó abair cad atá uait.",
+    "Summarize this note": "Déan achoimre ar an nóta seo",
+    "Tidy it into headings and lists": "Eagraigh é ina cheannteidil agus ina liostaí"
 }

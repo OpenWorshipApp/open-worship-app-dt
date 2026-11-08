@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Asistenti e ndryshoi këtë këngë.",
     "Load the change": "Ngarko ndryshimin",
     "Create Lyric": "Krijo këngë",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Çdo varg i Biblës bëhet një strofë e këngës, me një rresht për çdo version të zgjedhur të Biblës"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Çdo varg i Biblës bëhet një strofë e këngës, me një rresht për çdo version të zgjedhur të Biblës",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” është bashkëngjitur më poshtë. Mund ta ndryshoj këtë rrjedhë të prezantimit për ju: të shtoj sipas emrit këngë, dokumente me diapozitivë, pjesë biblike, veprime dhe numërime mbrapsht; të heq, të zhvendos, të kopjoj ose të çaktivizoj rreshta; të caktoj kohëmatës, shkurtore, ngjyra dhe ekrane; dhe të bashkëngjit elementë CC. Ngjitni rendin e shërbesës suaj ose dërgoni një foto të tij, dhe unë do ta ndërtoj rrjedhën prej tij. Shtypni njërën, ose thoni çfarë dëshironi.",
+    "Check the running order": "Kontrollo rendin e ecurisë",
+    "Build it from my order of service": "Ndërtoje nga rendi i shërbesës sime",
+    "Clear the screen between items": "Pastro ekranin mes pjesëve",
+    "Move on by itself": "Të kalojë vetë më tej",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” është bashkëngjitur më poshtë. Mund ta ndryshoj këtë shënim për ju: t’i ndryshoj ose t’i përkthej fjalët, të kontrolloj drejtshkrimin, ta rregulloj në tituj dhe lista, ose të shtoj vargje nga Bibla. Mund ta përmbledh, t’u përgjigjem pyetjeve për të dhe t’ju shpjegoj si të bëni çdo gjë në redaktuesin e shënimeve. Shtypni njërin, ose thoni çfarë dëshironi.",
+    "Summarize this note": "Përmblidhe këtë shënim",
+    "Tidy it into headings and lists": "Rregulloje në tituj dhe lista"
 }

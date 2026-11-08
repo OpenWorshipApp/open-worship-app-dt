@@ -12,12 +12,14 @@ import type {
     PresentingFlowActionArmingType,
     PresentingFlowActionIdType,
 } from './presentingFlowActionHelpers';
-import { PRESENTING_FLOW_ACTION_TYPE } from './presentingFlowActionHelpers';
 import type { PresentingFlowCcItemType } from './presentingFlowCcHelpers';
+import { genPresentingFlowItemUuid } from './presentingFlowCcHelpers';
 import {
-    checkIsValidPresentingFlowItemUuid,
-    genPresentingFlowItemUuid,
-} from './presentingFlowCcHelpers';
+    checkIsPresentingFlowActionKeyTaken,
+    dropPresentingFlowCcItemsOfUuid,
+    duplicatePresentingFlowItemJson,
+    ensurePresentingFlowItemUuid,
+} from './presentingFlowItemJsonHelpers';
 import type { PresentingFlowMediaControlType } from './presentingFlowMediaControlHelpers';
 import type { PresentingFlowItemType } from './PresentingFlowItem';
 import PresentingFlowItem, {
@@ -61,14 +63,11 @@ function safeStringifyEntry(json: unknown) {
 
 /**
  * Whether a keyboard shortcut is still FREE in this sheet — the one uniqueness
- * rule a presenting flow has.
+ * rule a presenting flow has (`checkIsPresentingFlowActionKeyTaken`).
  *
- * One shortcut names one line: two lines answering to `Shift+A` would mean the
- * operator's press picked whichever came first, which is the very bug UUID
- * references were introduced to end. Checked on every write rather than at the
- * question, so the drag-in and duplicate paths cannot get round it, and refused
- * out loud — a shortcut that silently did not take is worse than one that was
- * never set.
+ * Checked on every write rather than at the question, so the drag-in and
+ * duplicate paths cannot get round it, and refused out loud — a shortcut that
+ * silently did not take is worse than one that was never set.
  *
  * `skipIndex` is the entry being re-armed, which is of course allowed to keep
  * its own shortcut.
@@ -78,17 +77,9 @@ function checkPresentingFlowActionKeyIsFree(
     actionKey: string | undefined,
     skipIndex: number,
 ) {
-    if (actionKey === undefined) {
-        return true;
-    }
-    const isTaken = itemJsonList.some((itemJson, index) => {
-        return (
-            index !== skipIndex &&
-            itemJson.type === PRESENTING_FLOW_ACTION_TYPE &&
-            itemJson.actionKey === actionKey
-        );
-    });
-    if (!isTaken) {
+    if (
+        !checkIsPresentingFlowActionKeyTaken(itemJsonList, actionKey, skipIndex)
+    ) {
         return true;
     }
     showSimpleToast(
@@ -96,78 +87,6 @@ function checkPresentingFlowActionKeyIsFree(
         `${tran('This shortcut is already used in this presenting flow')}: ${actionKey}`,
     );
     return false;
-}
-
-/**
- * The entry's identity, minting one if it has none.
- *
- * A file written before uuids existed has entries with no identity, and one is
- * given the moment something needs to POINT at that entry — never merely to read
- * the sheet. So a run sheet nobody attaches a CC in is left exactly as it is on
- * disk, and the uuid a CC is stored against is the one the file keeps.
- */
-function ensurePresentingFlowItemUuid(itemJson: PresentingFlowItemType) {
-    if (!checkIsValidPresentingFlowItemUuid(itemJson.uuid)) {
-        itemJson.uuid = genPresentingFlowItemUuid();
-    }
-    return itemJson.uuid as string;
-}
-
-/**
- * Drop every CC pointing at a uuid that is no longer listed — what removing an
- * element does to its followers, on every host and every host's slides at once.
- *
- * A CC is a reference, so an element being taken out of the sheet takes its
- * followers with it: leaving them would leave rows naming a line that is not
- * there. Answers whether anything was actually dropped.
- */
-function dropPresentingFlowCcItemsOfUuid(
-    itemJsonList: PresentingFlowItemType[],
-    uuid: string | null,
-) {
-    if (uuid === null) {
-        return false;
-    }
-    let isChanged = false;
-    for (const itemJson of itemJsonList) {
-        const ccItemRefList = PresentingFlowItem.readCcItemRefList(itemJson);
-        if (
-            !ccItemRefList.some((ccItemRef) => {
-                return ccItemRef?.uuid === uuid;
-            })
-        ) {
-            continue;
-        }
-        isChanged = true;
-        const keep = (list: any) => {
-            return (Array.isArray(list) ? list : []).filter((ccItemRef) => {
-                return ccItemRef?.uuid !== uuid;
-            });
-        };
-        if (itemJson.ccItems !== undefined) {
-            const ccItems = keep(itemJson.ccItems);
-            if (ccItems.length === 0) {
-                delete itemJson.ccItems;
-            } else {
-                itemJson.ccItems = ccItems;
-            }
-        }
-        const { slideCcItems } = itemJson;
-        if (slideCcItems !== undefined && slideCcItems !== null) {
-            for (const [slideId, list] of Object.entries(slideCcItems)) {
-                const kept = keep(list);
-                if (kept.length === 0) {
-                    delete slideCcItems[slideId];
-                } else {
-                    slideCcItems[slideId] = kept;
-                }
-            }
-            if (Object.keys(slideCcItems).length === 0) {
-                delete itemJson.slideCcItems;
-            }
-        }
-    }
-    return isChanged;
 }
 
 export default class PresentingFlow extends AppEditableDocumentSourceAbs<PresentingFlowType> {
@@ -267,6 +186,20 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
                 return await this.setItems(itemJsonList);
             },
         );
+    }
+
+    /**
+     * MANY changes to the sheet in ONE locked read-modify-write: one history
+     * entry and one save, however many lines change. The help window's
+     * assistant changes a run sheet this way (`agentFlowEditRules.ts`) -- a
+     * clear after each of twelve songs is one write, not twelve, which on a
+     * church's old laptop is the difference. `handler` gets the sheet as plain
+     * json and answers `false` to write nothing.
+     */
+    async updateItemsJson(
+        handler: (itemJsonList: PresentingFlowItemType[]) => boolean | void,
+    ) {
+        return await this.updateItemJsonList(handler);
     }
 
     private async insertItemJson(
@@ -382,15 +315,16 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
             if (itemJson === undefined) {
                 return false;
             }
-            const newItemJson = cloneJson(itemJson) as PresentingFlowItemType;
-            newItemJson.uuid = genPresentingFlowItemUuid();
             // And its SHORTCUT is left behind, for the same reason: one shortcut
             // names one line, so the copy cannot have the original's. Dropped
             // rather than refusing the duplicate — what is worth copying about a
             // `Keyboard Event` is the elements attached to it, and the copy says
             // plainly that it has no key yet by reading as an unarmed one.
-            delete newItemJson.actionKey;
-            itemJsonList.splice(index + 1, 0, newItemJson);
+            itemJsonList.splice(
+                index + 1,
+                0,
+                duplicatePresentingFlowItemJson(itemJson),
+            );
         });
     }
 

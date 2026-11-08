@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Köməkçi bu mahnını dəyişdi.",
     "Load the change": "Dəyişikliyi yüklə",
     "Create Lyric": "Mahnı yarat",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Hər Müqəddəs Kitab ayəsi mahnının bir bəndinə çevrilir, seçilmiş hər Müqəddəs Kitab versiyası üçün bir sətir olur"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Hər Müqəddəs Kitab ayəsi mahnının bir bəndinə çevrilir, seçilmiş hər Müqəddəs Kitab versiyası üçün bir sətir olur",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” aşağıda əlavə olunub. Bu təqdimat axınını sizin üçün dəyişə bilərəm: mahnıları, slayd sənədlərini, İncil parçalarını, əməliyyatları və geriyə sayımları adı ilə əlavə etmək; sətirləri silmək, köçürmək, kopyalamaq və ya kənara qoymaq; taymerləri, qısayolları, rəngləri və ekranları təyin etmək; və CC elementləri qoşmaq. İbadət proqramınızı yapışdırın və ya şəklini göndərin, mən axını ondan quraram. Birini basın və ya nə istədiyinizi deyin.",
+    "Check the running order": "İcra sırasını yoxla",
+    "Build it from my order of service": "İbadət proqramımdan qur",
+    "Clear the screen between items": "Elementlər arasında ekranı təmizlə",
+    "Move on by itself": "Özü növbətiyə keçsin",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” aşağıda əlavə olunub. Bu qeydi sizin üçün dəyişə bilərəm: sözlərini dəyişmək və ya tərcümə etmək, yazılışı yoxlamaq, onu başlıqlar və siyahılar şəklində səliqəyə salmaq və ya Müqəddəs Kitab ayələri əlavə etmək. Həmçinin onu xülasə edə, onun haqqında suallara cavab verə və qeyd redaktorunda istənilən işi necə görməyi izah edə bilərəm. Birini basın və ya nə istədiyinizi deyin.",
+    "Summarize this note": "Bu qeydi xülasə et",
+    "Tidy it into headings and lists": "Başlıqlar və siyahılar şəklində səliqəyə sal"
 }

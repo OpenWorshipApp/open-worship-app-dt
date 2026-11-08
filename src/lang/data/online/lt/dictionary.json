@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Asistentas pakeitė šią giesmę.",
     "Load the change": "Įkelti pakeitimą",
     "Create Lyric": "Sukurti giesmę",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kiekviena Biblijos eilutė tampa giesmės posmu, su viena eilute kiekvienam pasirinktam Biblijos vertimui"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kiekviena Biblijos eilutė tampa giesmės posmu, su viena eilute kiekvienam pasirinktam Biblijos vertimui",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}“ pridėta žemiau. Galiu jums pakeisti šią pamaldų eigą: pagal pavadinimą pridėti giesmių, skaidrių dokumentų, Biblijos ištraukų, veiksmų ir atgalinių atskaitų; pašalinti, perkelti, kopijuoti ar atidėti eilutes; nustatyti laikmačius, sparčiuosius klavišus, spalvas ir ekranus; ir pridėti CC elementų. Įklijuokite savo pamaldų tvarką arba atsiųskite jos nuotrauką, ir pagal ją sudarysiu eigą. Paspauskite vieną arba pasakykite, ko norite.",
+    "Check the running order": "Patikrinti eigos tvarką",
+    "Build it from my order of service": "Sudaryti pagal mano pamaldų tvarką",
+    "Clear the screen between items": "Išvalyti ekraną tarp punktų",
+    "Move on by itself": "Pereiti toliau savaime",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}“ pridėta žemiau. Galiu jums pakeisti šią pastabą: pakeisti ar išversti jos žodžius, patikrinti rašybą, sutvarkyti ją į antraštes ir sąrašus arba pridėti Biblijos eilučių. Taip pat galiu ją apibendrinti, atsakyti į klausimus apie ją ir paaiškinti, kaip pastabų rengyklėje padaryti bet ką. Paspauskite vieną arba pasakykite, ko norite.",
+    "Summarize this note": "Apibendrink šią pastabą",
+    "Tidy it into headings and lists": "Sutvarkyk ją į antraštes ir sąrašus"
 }

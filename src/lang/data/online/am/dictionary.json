@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "ረዳቱ ይህን መዝሙር ቀይሮታል።",
     "Load the change": "ለውጡን ጫን",
     "Create Lyric": "የመዝሙር ግጥም ፍጠር",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "እያንዳንዱ የመጽሐፍ ቅዱስ ቁጥር የመዝሙሩ አንድ ክፍል ይሆናል፣ ለተመረጠው እያንዳንዱ የመጽሐፍ ቅዱስ ትርጉም አንድ መስመር አለው"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "እያንዳንዱ የመጽሐፍ ቅዱስ ቁጥር የመዝሙሩ አንድ ክፍል ይሆናል፣ ለተመረጠው እያንዳንዱ የመጽሐፍ ቅዱስ ትርጉም አንድ መስመር አለው",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” ከታች ተያይዟል። ይህን የአምልኮ ሥርዓት ቅደም ተከተል ልቀይርልዎ እችላለሁ፦ መዝሙሮችን፣ የስላይድ ሰነዶችን፣ የመጽሐፍ ቅዱስ ክፍሎችን፣ እርምጃዎችንና ቆጠራዎችን በስማቸው መጨመር፤ መስመሮችን ማስወገድ፣ ማንቀሳቀስ፣ መቅዳት ወይም ወደ ጎን ማቆየት፤ የሰዓት ቆጣሪዎችን፣ አቋራጮችን፣ ቀለሞችንና ስክሪኖችን ማዘጋጀት፤ እና CC ኤለመንቶችን ማያያዝ። የአምልኮ ፕሮግራምዎን ይለጥፉ ወይም ፎቶውን ይላኩልኝ፤ ከእሱ ቅደም ተከተሉን እገነባለሁ። አንዱን ይጫኑ፣ ወይም የሚፈልጉትን ይንገሩኝ።",
+    "Check the running order": "ቅደም ተከተሉን አረጋግጥ",
+    "Build it from my order of service": "ከአምልኮ ፕሮግራሜ ገንባው",
+    "Clear the screen between items": "በንጥሎች መካከል ስክሪኑን አጽዳ",
+    "Move on by itself": "በራሱ ወደ ቀጣዩ ይለፍ",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ከታች ተያይዟል። ይህን ማስታወሻ ልቀይርልዎ እችላለሁ፦ ቃላቱን መቀየር ወይም መተርጎም፣ ፊደላቱን መፈተሽ፣ በርዕሶችና በዝርዝሮች ማደራጀት ወይም የመጽሐፍ ቅዱስ ጥቅሶችን መጨመር። እንዲሁም ማጠቃለል፣ ስለ እሱ ጥያቄዎችን መመለስ እና በማስታወሻ አርታዒው ውስጥ ማንኛውንም ነገር እንዴት ማድረግ እንደሚቻል ማብራራት እችላለሁ። አንዱን ይጫኑ፣ ወይም የሚፈልጉትን ይናገሩ።",
+    "Summarize this note": "ይህን ማስታወሻ አጠቃልል",
+    "Tidy it into headings and lists": "በርዕሶችና በዝርዝሮች አደራጀው"
 }

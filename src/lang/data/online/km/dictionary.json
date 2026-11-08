@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "ជំនួយការបានកែបទចម្រៀងនេះ។",
     "Load the change": "ផ្ទុកការកែប្រែ",
     "Create Lyric": "បង្កើតចំរៀង",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ខគម្ពីរនីមួយៗក្លាយជាវគ្គចម្រៀងមួយ ដោយមានមួយបន្ទាត់សម្រាប់កំណែព្រះគម្ពីរនីមួយៗដែលបានជ្រើសរើស"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ខគម្ពីរនីមួយៗក្លាយជាវគ្គចម្រៀងមួយ ដោយមានមួយបន្ទាត់សម្រាប់កំណែព្រះគម្ពីរនីមួយៗដែលបានជ្រើសរើស",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” ត្រូវបានភ្ជាប់នៅខាងក្រោម។ ខ្ញុំអាចកែតារាងកម្មវិធីនេះជូនអ្នកបាន៖ បន្ថែមចម្រៀង ឯកសារស្លាយ បទគម្ពីរ សកម្មភាព និងការរាប់ថយក្រោយតាមឈ្មោះ ដកចេញ ផ្លាស់ទី ចម្លង ឬផ្អាកជួរ កំណត់ការរាប់ម៉ោង ផ្លូវកាត់ ពណ៌ និងអេក្រង់ ហើយភ្ជាប់ធាតុ CC។ បិទភ្ជាប់លំដាប់កម្មវិធីថ្វាយបង្គំរបស់អ្នក ឬផ្ញើរូបភាពរបស់វាមកខ្ញុំ ហើយខ្ញុំនឹងរៀបចំតារាងកម្មវិធីតាមនោះ។ ចុចមួយ ឬប្រាប់ពីអ្វីដែលអ្នកចង់បាន។",
+    "Check the running order": "ពិនិត្យលំដាប់កម្មវិធី",
+    "Build it from my order of service": "រៀបចំពីលំដាប់កម្មវិធីថ្វាយបង្គំរបស់ខ្ញុំ",
+    "Clear the screen between items": "លុបអេក្រង់នៅចន្លោះធាតុនីមួយៗ",
+    "Move on by itself": "ទៅបន្ទាប់ដោយស្វ័យប្រវត្តិ",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ត្រូវបានភ្ជាប់នៅខាងក្រោម។ ខ្ញុំអាចកែកំណត់ត្រានេះជូនអ្នកបាន៖ ប្ដូរ ឬបកប្រែពាក្យរបស់វា ពិនិត្យអក្ខរាវិរុទ្ធ រៀបចំវាជាចំណងជើង និងបញ្ជី ឬបន្ថែមខគម្ពីរ។ ខ្ញុំក៏អាចសង្ខេបវា ឆ្លើយសំណួរអំពីវា និងពន្យល់ពីរបៀបធ្វើអ្វីៗក្នុងកម្មវិធីកែកំណត់ត្រាបានដែរ។ សូមចុចមួយ ឬប្រាប់ពីអ្វីដែលអ្នកចង់បាន។",
+    "Summarize this note": "សង្ខេបកំណត់ត្រានេះ",
+    "Tidy it into headings and lists": "រៀបចំវាជាចំណងជើង និងបញ្ជី"
 }

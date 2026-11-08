@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Sa veisautaka na sere oqo na dauveivuke.",
     "Load the change": "Vakacuruma na veisau",
     "Create Lyric": "Bulia na Sere",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Na tikina yadua ni iVolatabu ena yaco me tikina ni sere, ka dua na laini me baleta na iVolatabu yadua e digitaki"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Na tikina yadua ni iVolatabu ena yaco me tikina ni sere, ka dua na laini me baleta na iVolatabu yadua e digitaki",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "Sa vakaitavi tu e ra na “{name}”. Au rawa ni veisautaka na ituvatuva ni vakaraitaki oqo vei iko: vakuria na sere, ivolavola ni silaidi, veitikina ni iVola Tabu, cakacaka kei na wili sobu ena nodra yaca; kauta laivi, toso, vakatakilakilataka se biuta tu e yasana na laini; tuvana na wiliwili ni gauna, sala lekaleka, roka kei na sikirini; ka vakaitavitaka na iyaya CC. Vakacuruma na ituvatuva ni nomu lotu se vakauta mai e dua na kena iyaloyalo, ka‘u na buli kina na ituvatuva. Taba e dua, se tukuna na ka o vinakata.",
+    "Check the running order": "Vakadikeva na ituvatuva",
+    "Build it from my order of service": "Bulia mai na ituvatuva ni noqu lotu",
+    "Clear the screen between items": "Vakalalataka na sikirini ena maliwa ni veika",
+    "Move on by itself": "Toso vakataki koya",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” e vakabitaki e ra. Au rawa ni veisautaka na ivola qo me baleti iko: veisautaka se vakadewataka na kena vosa, vakadikeva na kena vola, tuvanaka me ulutaga kei na lisi, se vakuria eso na tikina mai na iVolatabu. Au rawa tale ga ni vakalekalekataka, sauma na taro me baleta, ka vakamacalataka na sala me caka kina e dua na ka ena iyaya ni vakavoui ivola. Tabaka e dua, se tukuna na ka o vinakata.",
+    "Summarize this note": "Vakalekalekataka na ivola qo",
+    "Tidy it into headings and lists": "Tuvanaka me ulutaga kei na lisi"
 }

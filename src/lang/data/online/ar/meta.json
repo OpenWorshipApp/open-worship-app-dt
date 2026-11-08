@@ -3,7 +3,7 @@
     "order": 6,
     "name": "Arabic",
     "nativeName": "العربية",
-    "version": "0.0.15",
+    "version": "0.0.16",
     "direction": "rtl",
     "description": "A right-to-left language: the app in Arabic, Bible book names in English."
 }

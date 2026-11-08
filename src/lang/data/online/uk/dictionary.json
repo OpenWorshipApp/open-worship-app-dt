@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Помічник змінив цю пісню.",
     "Load the change": "Завантажити зміну",
     "Create Lyric": "Створити текст пісні",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Кожен вірш Біблії стає куплетом пісні, по одному рядку для кожного вибраного перекладу Біблії"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Кожен вірш Біблії стає куплетом пісні, по одному рядку для кожного вибраного перекладу Біблії",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "«{name}» додано нижче. Я можу змінити цей порядок служіння для вас: додати за назвою пісні, документи зі слайдами, уривки з Біблії, дії та зворотні відліки; вилучити, перемістити, скопіювати чи відкласти рядки; задати таймери, гарячі клавіші, кольори й екрани; а також приєднати елементи CC. Вставте свою програму служіння або надішліть її фото, і я складу з неї порядок. Натисніть один із варіантів або скажіть, чого ви хочете.",
+    "Check the running order": "Перевірити порядок",
+    "Build it from my order of service": "Скласти з моєї програми служіння",
+    "Clear the screen between items": "Очищати екран між пунктами",
+    "Move on by itself": "Переходити далі самостійно",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» прикріплено нижче. Я можу змінити цю нотатку для вас: змінити або перекласти її слова, перевірити правопис, упорядкувати її в заголовки та списки або додати вірші з Біблії. Я також можу коротко переказати її, відповісти на запитання про неї та пояснити, як зробити будь-що в редакторі нотаток. Натисніть один із варіантів або скажіть, що ви хочете.",
+    "Summarize this note": "Коротко перекажи цю нотатку",
+    "Tidy it into headings and lists": "Упорядкуй її в заголовки та списки"
 }

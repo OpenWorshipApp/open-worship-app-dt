@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Avustaja muutti tätä laulua.",
     "Load the change": "Lataa muutos",
     "Create Lyric": "Luo sanoitus",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Jokaisesta Raamatun jakeesta tulee sanoituksen säkeistö, ja jokaiselle valitulle raamatunkäännökselle yksi rivi"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Jokaisesta Raamatun jakeesta tulee sanoituksen säkeistö, ja jokaiselle valitulle raamatunkäännökselle yksi rivi",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "”{name}” on liitteenä alla. Voin muuttaa tätä ohjelmajärjestystä puolestasi: lisätä nimen perusteella lauluja, diaasiakirjoja, Raamatun kohtia, toimintoja ja lähtölaskentoja; poistaa, siirtää, kopioida tai jättää sivuun rivejä; asettaa ajastimia, pikanäppäimiä, värejä ja näyttöjä; sekä liittää CC-elementtejä. Liitä jumalanpalveluksesi käsiohjelma tai lähetä minulle kuva siitä, niin rakennan ohjelmajärjestyksen sen pohjalta. Paina yhtä tai kerro, mitä haluat.",
+    "Check the running order": "Tarkista järjestys",
+    "Build it from my order of service": "Rakenna se jumalanpalvelukseni käsiohjelmasta",
+    "Clear the screen between items": "Tyhjennä näyttö kohtien välissä",
+    "Move on by itself": "Siirry eteenpäin itsestään",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "{name}” on liitetty alle. Voin muuttaa tätä muistiinpanoa puolestasi: muuttaa tai kääntää sen sanoja, tarkistaa oikeinkirjoituksen, järjestää sen otsikoiksi ja luetteloiksi tai lisätä Raamatun jakeita. Voin myös tiivistää sen, vastata siitä esitettyihin kysymyksiin ja selittää, miten muistiinpanoeditorissa tehdään mitä tahansa. Paina yhtä tai kerro, mitä haluat.",
+    "Summarize this note": "Tiivistä tämä muistiinpano",
+    "Tidy it into headings and lists": "Järjestä se otsikoiksi ja luetteloiksi"
 }

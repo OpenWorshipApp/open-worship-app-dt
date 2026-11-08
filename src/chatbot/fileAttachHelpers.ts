@@ -38,9 +38,10 @@ import {
     toImageMediaType,
 } from './attachmentHelpers';
 import { fillWords, tran } from './chatTranHelpers';
-import { toNoteFileText } from './noteFileTextHelpers';
+import { toNoteFileText, toNoteItemFromFileText } from './noteFileTextHelpers';
 import { checkIsLyricFileName, toLyricFileText } from './lyricChatHelpers';
 import { checkIsSlideFileName, toSlideFileText } from './slideChatHelpers';
+import { checkIsFlowFileName, toFlowFileText } from './flowChatHelpers';
 
 // What is read off the disk for one attachment, at most. A picture is cut to
 // 1024px before it is held; a text file to 16 KB of words; a note file is
@@ -201,11 +202,48 @@ export type FileAttachResultType =
     { attachment: ChatAttachmentType } | { failure: string };
 
 /**
+ * ONE note of a Bible notes file (a note row's Open in Chatbot): named by its
+ * title, its words as the note editor's tree walked down to lines. What is
+ * SAVED -- the conversation reads the note again, unsaved typing and all,
+ * before every question (`owa_note_edit read`); this is the chip and the
+ * history's record of it.
+ */
+async function genNoteAttachment(
+    filePath: string,
+    noteId: number,
+    cannotRead: string,
+): Promise<FileAttachResultType> {
+    try {
+        const note = toNoteItemFromFileText(await fsReadFile(filePath), noteId);
+        if (note === null) {
+            return {
+                failure: fillWords(tran('{name} is not there any more.'), {
+                    name: pathBasename(filePath),
+                }),
+            };
+        }
+        return {
+            attachment: {
+                ...genTextAttachment(
+                    note.title,
+                    `Note: ${note.title}\n${note.text}`,
+                    filePath,
+                ),
+                noteId,
+            },
+        };
+    } catch (_error) {
+        return { failure: cannotRead };
+    }
+}
+
+/**
  * A file by its path, as an attachment -- or, in the window's language, why
- * it cannot be one.
+ * it cannot be one. A Bible notes file with a `noteId` is that one note.
  */
 export async function genAttachmentFromPath(
     filePath: string,
+    noteId: number | null = null,
 ): Promise<FileAttachResultType> {
     const name = pathBasename(filePath);
     const cannotRead = fillWords(
@@ -244,6 +282,9 @@ export async function genAttachmentFromPath(
                 : await genImageAttachment(dataUrl, name, filePath);
         return attachment === null ? { failure: cannotRead } : { attachment };
     }
+    if (checkIsBibleNoteFileName(name) && noteId !== null) {
+        return genNoteAttachment(filePath, noteId, cannotRead);
+    }
     if (checkIsBibleNoteFileName(name) || checkIsReadableTextName(name)) {
         try {
             const text = await fsReadFile(filePath);
@@ -253,7 +294,9 @@ export async function genAttachmentFromPath(
                   ? toLyricFileText(text)
                   : checkIsSlideFileName(name)
                     ? toSlideFileText(text)
-                    : null;
+                    : checkIsFlowFileName(name)
+                      ? toFlowFileText(text)
+                      : null;
             return {
                 attachment: genTextAttachment(name, noteText ?? text, filePath),
             };

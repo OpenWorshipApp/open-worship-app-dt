@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Pomoćnik je promijenio ovu pjesmu.",
     "Load the change": "Učitaj promjenu",
     "Create Lyric": "Izradi tekst pjesme",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Svaki biblijski stih postaje kitica pjesme, s jednim retkom za svaku odabranu verziju Biblije"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Svaki biblijski stih postaje kitica pjesme, s jednim retkom za svaku odabranu verziju Biblije",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}” je priložen ispod. Mogu promijeniti ovaj redoslijed bogoslužja za vas: dodati prema nazivu pjesme, dokumente sa slajdovima, biblijske ulomke, radnje i odbrojavanja; ukloniti, premjestiti, kopirati ili ostaviti po strani retke; postaviti mjerače vremena, prečace, boje i zaslone; i priložiti CC elemente. Zalijepite program svog bogoslužja ili mi pošaljite njegovu sliku, i od njega ću složiti redoslijed. Pritisnite jedno ili recite što želite.",
+    "Check the running order": "Provjeri redoslijed",
+    "Build it from my order of service": "Složi ga iz programa mog bogoslužja",
+    "Clear the screen between items": "Očisti zaslon između stavki",
+    "Move on by itself": "Prelazi dalje sam",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}” priložena je ispod. Mogu promijeniti ovu bilješku za vas: promijeniti ili prevesti njezine riječi, provjeriti pravopis, složiti je u naslove i popise ili dodati biblijske retke. Mogu je i sažeti, odgovoriti na pitanja o njoj i objasniti kako bilo što napraviti u uređivaču bilješki. Pritisnite jedno ili recite što želite.",
+    "Summarize this note": "Sažmi ovu bilješku",
+    "Tidy it into headings and lists": "Složi je u naslove i popise"
 }

@@ -1577,3 +1577,119 @@ false` and searches only a dataset a lookup panel already holds
   another slide in that moment, or typing a size right after the words,
   dropped it with nothing said (`EN-53`). Every change the chatbot makes
   is one press of **Undo this change** away.
+
+- **A presenting flow changed by the assistant is `owa_presenting_flow_edit`**
+  (2026-11-07, the user, with a presenting flow's row menu open: _add `Open
+  in Chatbot` … follow what working for appdocument. goal: chatbot can help
+  the presenting flow modification_; asked what it may change, _Lines,
+  Timing & marks, CC elements, Foreground presets_;
+  `tools/owa-devtools-mcp/agentPresentingFlowEdit.mjs`, the app side
+  `src/helper/agentPresentingFlowEditHelpers.ts` on the `owa-agent-data`
+  relay, domain `presenting-flow-edit`). `owa_presenting_flow` stays the
+  ordinary question's tool (a sheet of the active folder by NAME, one line a
+  call); this one is the conversation about ONE sheet, by the window's
+  attached path wherever it lives, offered to a `flow` ask only
+  (`MODEL_ON_ASK_TOOL_MAP`). Three actions. **`lines`** reads every line
+  WHOLE -- kind, what it points at, its arming (`seconds` / `time` / `key`),
+  colour (a name of the colour menu's list when it has one), screens,
+  parked, its CCs (what each follows, by line number, its own pin and
+  arming, a media control's settings), `goesTo` for a Jump to, and
+  `problems` (a missing file, an invalid line, no shortcut yet, a shortcut
+  used twice, a Jump to going nowhere, a CC following a line that is gone)
+  -- plus `actions` (each id, label and what it is armed with), the
+  foreground widgets' fields, `documentChoices` (the Documents names, 60 at
+  most, read on this call only) and `screens`. A document's slides are read
+  only for the line asked about (`line`) or one with slide-level settings:
+  never every document. **`update-lines`** applies MANY changes in ONE
+  write, ONE editing-history entry and ONE backup
+  (`PresentingFlow.updateItemsJson`, the panel's own locked
+  read-modify-write, made public for it); the rules are pure and the
+  panel's own (`src/helper/agentFlowEditRules.ts`, the shared json ones
+  moved into `presentingFlowItemJsonHelpers.ts` so the panel and the batch
+  keep one copy): a line named by its number AS READ however the changes
+  before it moved things, `after` 0 for the top and none for the end, adds
+  after one line kept in the order given; a shortcut names one line; a copy
+  is re-keyed and loses its shortcut; a timeout or interval added with no
+  seconds gets the question's own default; Screen: Show/Hide must name
+  known screens; Slide: Media Control exists only as a CC; a Jump to takes
+  one `target`; a timeout CC REUSES a timeout line armed the same way
+  before it appends one; an interval, a Jump to, a Keyboard Event, a
+  document and audio never follow a line. The batch is tried on a COPY
+  first, so a refusal anywhere costs no backup and writes nothing, and a
+  sheet that changed length between the read and the lock is not written
+  over. **Foreground lines from words** (`agentFlowForegroundRules.ts`,
+  pure): countdown (`seconds` with the row's lead second, or `dateTime`),
+  stopwatch, clock (`utcOffset`, `title`), message (`text`, or `texts`
+  rotating), marquee and quick text -- the payload the panel's drag
+  writes, so a line replays through `applyForegroundDragData` as a dragged
+  one does; a new one borrows the look (style, transition, layer) of the
+  newest line of its widget, a changed one keeps its own. Video, image,
+  camera, screen and web are refused: the person picks those in the panel.
+  **`remove-lines`** takes lines out, whatever followed them going with
+  them -- a removal, in the firewall's budget and the chatbot's one removal
+  an answer; `update-lines` cannot remove a line. Firewall: `lines` reads
+  (`READING_ACTION_MAP`), the rest act; the banner says _changed the run
+  sheet "<name>"_ (key `changed a run sheet`) and a removal the run sheet
+  tool's own sentence. The answer carries `name`, `isChanged`, `undoId`,
+  `changed` (a sentence a change) and _kept at once -- a presenting flow
+  has no Save_. **Three things the first live run needed** (2026-11-08, a
+  scratch profile, Auto on the shared gemma4:cloud): a line names the lines
+  whose CC it is the element of (`ccOf`, said as _the element of the CC on
+  line 4 -- needed, keep it_) -- the timeout line a song's CC pointed at had
+  been called a duplicate to remove; a batch refused says _Nothing was
+  changed -- the whole call was refused_ and to call again without that
+  change (`toBatchRefusal`) -- told only that _Amazing Grace_ was not in
+  Documents, the model reported the rest of the order as added when nothing
+  was; and a second Next: Timeout under a line that already has one is
+  refused with that CC's index to re-arm (`cc {index, seconds}`) -- _Move
+  on by itself_ had given a song two clocks. After them every card button
+  did its job in one change, and _Build it from my order of service_ typed
+  with the order under it carried the button's hint (`readFlowButtonHint`
+  takes a message the button's words LEAD).
+
+- **ONE Bible note changed by the assistant is `owa_note_edit`**
+  (2026-11-07, the user, with a note row's menu open: _add `Open in
+  Chatbot` for bible-note … goal: chatbot can help modify and answer
+  everything on bible-note_; `tools/owa-devtools-mcp/agentNoteEdit.mjs` →
+  the `owa-agent-data` relay, domain `note-edit` →
+  `src/helper/agentNoteEditHelpers.ts`, the rules pure in
+  `src/helper/agentNoteBlockHelpers.ts`). `owa_bible_note update` wrote a
+  note back as plain paragraphs and lost its headings, lists, verse
+  mentions (which CARRY their verse words), passages, tables, pictures in
+  base64, drawings and sticky notes. Here `read` gives the note as numbered
+  BLOCKS -- paragraph, h1-h6, quote, code, bullet / number / check (a level
+  for nested items) and FIXED ones (table, passage, picture, drawing,
+  sticky, rule, video …), which move or go but are never given words -- with
+  the words in a light mark-up (bold, italic, underline, strike, code, a
+  link, mentions `[^John 3:16]` `[@Moses]` `[#Jerusalem]`) and a `hash`;
+  `edit` makes every change in ONE history step, all or nothing:
+  `{block, text?, kind?, checked?}`, `{block, remove}`, `{block, after}`
+  (a move), `{after, kind, text}` (an add; `passage` takes `ref`), and
+  `title`. **Only the blocks named are rebuilt**; a kept mention token is
+  the ORIGINAL node, a run of unchanged words keeps its own style, new words
+  take the block's (a Khmer note's font), and every other node is copied
+  through byte for byte -- proven on all 227 editable blocks of the dev data
+  folder's real notes, each given its own words back. A NEW verse (`[^ref]`
+  or a `passage`) is read by the app from the installed Bible
+  (`owa_present_bible`'s resolvers, the lookup's version unless `bible`
+  names one); a new `[@…]` / `[#…]` is plain words (the 34 MB names dataset
+  is never loaded for it). **It writes the EDITING HISTORY, never the file**
+  (`note.addItemEditingHistory`), like the note window's own typing:
+  unsaved, the window's Save keeps it; a new title is saved to the file at
+  once, as Edit Title does. **An open note window follows** -- it watches
+  only its FILE, so the worker (and an undo of a note's head in
+  `applyRestore`) sends `all:app:note-head-changed`, main relays
+  `main:app:note-head-changed` to every window (`electronEventListener.ts`),
+  and `initBibleNote` reloads its head (`noteHeadChangeHelpers.ts`). Backed
+  up first: the head, or -- for a note no window ever wrote a history for --
+  the FILE's state taken as the head, or the undo would have nothing to put
+  back. Guards: a verse-marks item is refused; a stale `hash` (typed into
+  since the read) is refused; a "new" block repeating a block the call does
+  not touch is refused with that block's number; a block given another kind
+  AND fewer than half its own words is refused (`checkLosesWords`, seen
+  live). Only a `.own` inside a Bible Notes folder of any session
+  (`findSessionIdByFilePath`). Firewall: `read` reads, `edit` acts
+  (`READING_ACTION_MAP`); no removal (a block taken out is an edit with its
+  undo). Banner: _changed the Bible note "<title>"_ (key
+  `changed a Bible note`). Offered to the chatbot's model only in a `note`
+  ask (`chatbot-llm.md`).

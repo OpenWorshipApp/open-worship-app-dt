@@ -15,8 +15,19 @@
 //             an answer from here is never mistaken for a user instruction.
 //
 // An index is written beside them so answering a question is ONE file read
-// (~300 KB) instead of opening 120 markdown files -- this runs on machines
-// where that difference is felt.
+// (1.5 MB and 396 entries on 2026-11-07; it was ~300 KB once the manual was
+// indexed whole) instead of opening some 400 markdown files -- this runs on
+// machines where that difference is felt.
+//
+// A third corpus is kept OUT of that index on purpose:
+//
+//   bible-note/ the Bible Note editor's own user guide, from the `bible-note`
+//             package (`bibleNoteGuideHelpers.mjs`), one page per chunk and an
+//             `index.json` of its own. Its 121 pages are about one window,
+//             the note editor; merged into the main index they cost other
+//             windows' questions their right page (measured 2026-11-07), and
+//             every search would read them. `help.mjs` reads this index only
+//             for a question about a note.
 //
 // ENGLISH ONLY (2026-11-04, the user: _everything related to a language have
 // to be loaded from the language data (from language installation catalog),
@@ -41,6 +52,13 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 
 import { readSourceAssistantFacts } from '../tools/owa-devtools-mcp/tran.mjs';
 import { hashManualPage } from '../tools/owa-devtools-mcp/manualI18n.mjs';
+import {
+    BIBLE_NOTE_GUIDE_DIR_NAME,
+    genBibleNoteGuideFile,
+    resolveBibleNoteGuidePath,
+    toBibleNoteGuideFileName,
+    toBibleNoteGuidePages,
+} from './bibleNoteGuideHelpers.mjs';
 
 const REPO_ROOT = resolve('.');
 const OUTPUT_DIR = join(REPO_ROOT, 'electron-build', 'knowledge');
@@ -271,6 +289,54 @@ writeFileSync(
     JSON.stringify({ generatedAt: new Date().toISOString(), entries }),
 );
 
+// The Bible Note editor's own guide, beside the rest and indexed apart (the
+// header says why). Copied, not read at run time: the package is a
+// devDependency and is not in a packaged app. A checkout without it builds
+// everything else and says so.
+function writeBibleNoteGuide() {
+    const guidePath = resolveBibleNoteGuidePath(REPO_ROOT);
+    if (guidePath === null) {
+        console.warn(
+            '✗ bible-note/knowledge/ui-rag.md was not found: the chatbot ' +
+                'will know nothing of the Bible Note editor. Run npm install.',
+        );
+        return 0;
+    }
+    const pages = toBibleNoteGuidePages(readFileSync(guidePath, 'utf8'));
+    const guideEntries = pages.map((page) => {
+        const fileName = toBibleNoteGuideFileName(page);
+        const content = genBibleNoteGuideFile(page);
+        const outputPath = join(OUTPUT_DIR, ...fileName.split('/'));
+        mkdirSync(dirname(outputPath), { recursive: true });
+        writeFileSync(outputPath, content);
+        return {
+            id: page.id,
+            title: page.title,
+            section: page.section,
+            kind: 'manual',
+            // The note window's, so a question asked about any other window
+            // is never answered with the editor's buttons.
+            surface: 'bibleNote',
+            source: BIBLE_NOTE_GUIDE_DIR_NAME,
+            file: fileName,
+            headings: genHeadings(`# ${page.title}\n${page.body}`),
+            // The page's own words, without the line saying where it is
+            // from: every page carries it, so it would only add the same
+            // words to all of them.
+            searchText: page.body.slice(0, MANUAL_SEARCH_TEXT_LIMIT),
+        };
+    });
+    writeFileSync(
+        join(OUTPUT_DIR, BIBLE_NOTE_GUIDE_DIR_NAME, 'index.json'),
+        JSON.stringify({
+            generatedAt: new Date().toISOString(),
+            entries: guideEntries,
+        }),
+    );
+    return guideEntries.length;
+}
+const bibleNoteGuideCount = writeBibleNoteGuide();
+
 // The app's own label dictionary, beside the documents that name those labels.
 //
 // The knowledge is written in English and the buttons it names are not, so a
@@ -310,5 +376,6 @@ const manualCount = entries.filter((entry) => entry.kind === 'manual').length;
 console.log(
     `Knowledge bundled: ${entries.length} documents ` +
         `(${manualCount} manual, ${entries.length - manualCount} internal), ` +
+        `${bibleNoteGuideCount} Bible Note editor guide pages apart, ` +
         'English only (every other language is read from its installed plugin)',
 );

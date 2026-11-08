@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "O assistente alterou esta música.",
     "Load the change": "Carregar a alteração",
     "Create Lyric": "Criar letra",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Cada versículo da Bíblia torna-se uma estrofe da letra, com uma linha para cada versão da Bíblia selecionada"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Cada versículo da Bíblia torna-se uma estrofe da letra, com uma linha para cada versão da Bíblia selecionada",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” está anexado abaixo. Posso alterar este roteiro do culto para você: adicionar pelo nome músicas, documentos de slides, passagens bíblicas, ações e contagens regressivas; remover, mover, copiar ou suspender linhas; definir temporizadores, atalhos, cores e telas; e anexar elementos CC. Cole a sua ordem do culto ou envie uma foto dela, e eu montarei o roteiro a partir dela. Pressione uma opção, ou diga o que você quer.",
+    "Check the running order": "Verificar a sequência",
+    "Build it from my order of service": "Montar a partir da minha ordem do culto",
+    "Clear the screen between items": "Limpar a tela entre os itens",
+    "Move on by itself": "Avançar sozinho",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” está anexada abaixo. Posso alterar esta nota por você: mudar ou traduzir as suas palavras, verificar a ortografia, organizá-la em títulos e listas, ou acrescentar versículos da Bíblia. Também posso resumi-la, responder a perguntas sobre ela e explicar como fazer qualquer coisa no editor de notas. Toque em um, ou diga o que deseja.",
+    "Summarize this note": "Resumir esta nota",
+    "Tidy it into headings and lists": "Organizar em títulos e listas"
 }

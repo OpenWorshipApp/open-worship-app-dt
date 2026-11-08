@@ -645,6 +645,12 @@ const AGENT_DATA_WORKER_MAP: Record<
     note: async () => {
         return (await import('./agentNoteHelpers')).handleAgentNoteRequest;
     },
+    // `owa_note_edit`: ONE note read as blocks and changed part by part, its
+    // formatting kept -- the help window's note conversation (2026-11-07).
+    'note-edit': async () => {
+        return (await import('./agentNoteEditHelpers'))
+            .handleAgentNoteEditRequest;
+    },
     undo: async () => {
         return (await import('./agentBackupHelpers')).handleAgentUndoRequest;
     },
@@ -691,6 +697,12 @@ const AGENT_DATA_WORKER_MAP: Record<
     'presenting-flow': async () => {
         return (await import('./agentPresentingFlowHelpers'))
             .handleAgentPresentingFlowRequest;
+    },
+    // `owa_presenting_flow_edit`: ONE presenting flow the help window has
+    // open, read whole and changed many lines in one write (2026-11-07).
+    'presenting-flow-edit': async () => {
+        return (await import('./agentPresentingFlowEditHelpers'))
+            .handleAgentPresentingFlowEditRequest;
     },
     // `owa_media_file`: the Background tabs' pictures, clips, tracks and web
     // pages -- listed, renamed, trashed, imported from the disk, and a web

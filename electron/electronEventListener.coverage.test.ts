@@ -1463,6 +1463,18 @@ describe('electronEventListener handlers', () => {
         expect(appController.sendMessageToAll).toHaveBeenCalledWith(
             'main:app:bible-list-changed',
         );
+        // A note's head changed elsewhere: its path, and nothing else, on.
+        findOnHandler('all:app:note-head-changed')(
+            {},
+            { filePath: '/n/Default.own', extra: 'x' },
+        );
+        expect(appController.sendMessageToAll).toHaveBeenCalledWith(
+            'main:app:note-head-changed',
+            { filePath: '/n/Default.own' },
+        );
+        vi.mocked(appController.sendMessageToAll).mockClear();
+        findOnHandler('all:app:note-head-changed')({}, { filePath: 7 });
+        expect(appController.sendMessageToAll).not.toHaveBeenCalled();
 
         await call('main:app:read-web-page', {
             url: 'https://example.com',

@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "ຜູ້ຊ່ວຍໄດ້ປ່ຽນເພງນີ້.",
     "Load the change": "ໂຫຼດການປ່ຽນແປງ",
     "Create Lyric": "ສ້າງເນື້ອເພງ",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ແຕ່ລະຂໍ້ພຣະຄຳພີຈະກາຍເປັນທ່ອນໜຶ່ງຂອງເນື້ອເພງ ໂດຍມີໜຶ່ງແຖວສຳລັບແຕ່ລະສະບັບພຣະຄຳພີທີ່ເລືອກ"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ແຕ່ລະຂໍ້ພຣະຄຳພີຈະກາຍເປັນທ່ອນໜຶ່ງຂອງເນື້ອເພງ ໂດຍມີໜຶ່ງແຖວສຳລັບແຕ່ລະສະບັບພຣະຄຳພີທີ່ເລືອກ",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” ຖືກແນບໄວ້ຂ້າງລຸ່ມ. ຂ້ອຍສາມາດປ່ຽນລຳດັບການນະມັດສະການນີ້ໃຫ້ເຈົ້າໄດ້: ເພີ່ມເພງ, ເອກະສານສະໄລ້, ຂໍ້ພຣະຄຳພີ, ການກະທຳ ແລະ ການນັບຖອຍຫຼັງຕາມຊື່; ລຶບ, ຍ້າຍ, ສຳເນົາ ຫຼື ພັກແຖວໄວ້; ຕັ້ງຕົວຈັບເວລາ, ປຸ່ມລັດ, ສີ ແລະ ໜ້າຈໍ; ແລະ ແນບອົງປະກອບ CC. ວາງກຳນົດການນະມັດສະການຂອງເຈົ້າ ຫຼື ສົ່ງຮູບຂອງມັນມາ ແລ້ວຂ້ອຍຈະສ້າງລຳດັບຈາກມັນ. ກົດອັນໜຶ່ງ, ຫຼື ບອກສິ່ງທີ່ເຈົ້າຕ້ອງການ.",
+    "Check the running order": "ກວດລຳດັບລາຍການ",
+    "Build it from my order of service": "ສ້າງຈາກກຳນົດການນະມັດສະການຂອງຂ້ອຍ",
+    "Clear the screen between items": "ລ້າງໜ້າຈໍລະຫວ່າງແຕ່ລະລາຍການ",
+    "Move on by itself": "ໄປຕໍ່ໂດຍອັດຕະໂນມັດ",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "ແນບ “{name}” ໄວ້ດ້ານລຸ່ມແລ້ວ. ຂ້ອຍສາມາດປ່ຽນບັນທຶກນີ້ໃຫ້ທ່ານໄດ້: ປ່ຽນ ຫຼື ແປຄຳສັບ, ກວດການສະກົດ, ຈັດເປັນຫົວຂໍ້ ແລະ ລາຍການ, ຫຼື ເພີ່ມຂໍ້ພຣະຄຳພີ. ຂ້ອຍຍັງສາມາດສະຫຼຸບ, ຕອບຄຳຖາມກ່ຽວກັບມັນ ແລະ ອະທິບາຍວິທີເຮັດສິ່ງໃດກໍໄດ້ໃນຕົວແກ້ໄຂບັນທຶກ. ກົດອັນໜຶ່ງ ຫຼື ບອກສິ່ງທີ່ທ່ານຕ້ອງການ.",
+    "Summarize this note": "ສະຫຼຸບບັນທຶກນີ້",
+    "Tidy it into headings and lists": "ຈັດເປັນຫົວຂໍ້ ແລະ ລາຍການ"
 }

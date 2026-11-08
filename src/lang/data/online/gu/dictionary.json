@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "સહાયકે આ ગીત બદલ્યું છે.",
     "Load the change": "ફેરફાર લોડ કરો",
     "Create Lyric": "ગીત બનાવો",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "બાઇબલની દરેક કલમ ગીતની એક કડી બને છે, દરેક પસંદ કરેલી બાઇબલ આવૃત્તિ માટે એક લીટી સાથે"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "બાઇબલની દરેક કલમ ગીતની એક કડી બને છે, દરેક પસંદ કરેલી બાઇબલ આવૃત્તિ માટે એક લીટી સાથે",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” નીચે જોડેલું છે. હું તમારા માટે આ કાર્યક્રમ ક્રમ બદલી શકું છું: નામ દ્વારા ગીતો, સ્લાઇડ દસ્તાવેજો, બાઇબલના ભાગો, ક્રિયાઓ અને કાઉન્ટડાઉન ઉમેરવા; લીટીઓ દૂર કરવી, ખસેડવી, નકલ કરવી કે બાજુ પર રાખવી; ટાઇમર, શૉર્ટકટ, રંગો અને સ્ક્રીન ગોઠવવા; અને CC તત્ત્વો જોડવા. તમારો ઉપાસનાનો કાર્યક્રમ પેસ્ટ કરો અથવા તેનું ચિત્ર મને મોકલો, અને હું તેમાંથી ક્રમ બનાવીશ. એક દબાવો, અથવા તમને શું જોઈએ છે તે કહો.",
+    "Check the running order": "ચાલતો ક્રમ તપાસો",
+    "Build it from my order of service": "મારા ઉપાસનાના કાર્યક્રમમાંથી બનાવો",
+    "Clear the screen between items": "દરેક વસ્તુ વચ્ચે સ્ક્રીન સાફ કરો",
+    "Move on by itself": "જાતે આગળ વધવા દો",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” નીચે જોડેલ છે. હું તમારા માટે આ નોંધ બદલી શકું છું: તેના શબ્દો બદલવા કે અનુવાદ કરવા, જોડણી તપાસવી, તેને મથાળાં અને યાદીઓમાં ગોઠવવી, અથવા બાઇબલની કલમો ઉમેરવી. હું તેનો સારાંશ પણ આપી શકું છું, તેના વિશેના પ્રશ્નોના જવાબ આપી શકું છું અને નોંધ સંપાદકમાં કંઈ પણ કેવી રીતે કરવું તે સમજાવી શકું છું. એક દબાવો, અથવા તમે શું ઇચ્છો છો તે કહો.",
+    "Summarize this note": "આ નોંધનો સારાંશ આપો",
+    "Tidy it into headings and lists": "તેને મથાળાં અને યાદીઓમાં ગોઠવો"
 }

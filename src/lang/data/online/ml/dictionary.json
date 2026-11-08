@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "സഹായി ഈ ഗാനം മാറ്റി.",
     "Load the change": "മാറ്റം ലോഡ് ചെയ്യുക",
     "Create Lyric": "ഗാനം സൃഷ്ടിക്കുക",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ബൈബിളിലെ ഓരോ വാക്യവും ഗാനത്തിന്റെ ഒരു ചരണമാകും, തിരഞ്ഞെടുത്ത ഓരോ ബൈബിൾ പതിപ്പിനും ഒരു വരി വീതം"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ബൈബിളിലെ ഓരോ വാക്യവും ഗാനത്തിന്റെ ഒരു ചരണമാകും, തിരഞ്ഞെടുത്ത ഓരോ ബൈബിൾ പതിപ്പിനും ഒരു വരി വീതം",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” താഴെ ചേർത്തിരിക്കുന്നു. എനിക്ക് നിങ്ങൾക്കായി ഈ ആരാധനാക്രമം മാറ്റാം: ഗാനങ്ങൾ, സ്ലൈഡ് ഡോക്യുമെന്റുകൾ, ബൈബിൾ ഭാഗങ്ങൾ, പ്രവൃത്തികൾ, കൗണ്ട്ഡൗണുകൾ എന്നിവ പേരുപറഞ്ഞ് ചേർക്കുക; വരികൾ നീക്കം ചെയ്യുക, നീക്കുക, പകർത്തുക അല്ലെങ്കിൽ മാറ്റിവയ്ക്കുക; ടൈമറുകൾ, കുറുക്കുവഴികൾ, നിറങ്ങൾ, സ്ക്രീനുകൾ എന്നിവ സജ്ജമാക്കുക; CC ഘടകങ്ങൾ ചേർക്കുക. നിങ്ങളുടെ ആരാധനയുടെ കാര്യപരിപാടി ഒട്ടിക്കുക അല്ലെങ്കിൽ അതിന്റെ ഒരു ചിത്രം അയയ്ക്കൂ, അതിൽ നിന്ന് ഞാൻ ക്രമം തയ്യാറാക്കാം. ഒന്ന് അമർത്തുക, അല്ലെങ്കിൽ നിങ്ങൾക്ക് എന്താണ് വേണ്ടതെന്ന് പറയുക.",
+    "Check the running order": "പരിപാടിയുടെ ക്രമം പരിശോധിക്കുക",
+    "Build it from my order of service": "എന്റെ ആരാധനാ കാര്യപരിപാടിയിൽ നിന്ന് തയ്യാറാക്കുക",
+    "Clear the screen between items": "ഇനങ്ങൾക്കിടയിൽ സ്ക്രീൻ മായ്ക്കുക",
+    "Move on by itself": "തനിയെ അടുത്തതിലേക്ക് പോകുക",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” താഴെ ചേർത്തിരിക്കുന്നു. നിങ്ങൾക്കായി ഈ കുറിപ്പ് എനിക്ക് മാറ്റാം: അതിലെ വാക്കുകൾ മാറ്റുകയോ വിവർത്തനം ചെയ്യുകയോ ചെയ്യുക, അക്ഷരത്തെറ്റ് പരിശോധിക്കുക, തലക്കെട്ടുകളും പട്ടികകളുമായി ക്രമീകരിക്കുക, അല്ലെങ്കിൽ ബൈബിൾ വാക്യങ്ങൾ ചേർക്കുക. അതിന്റെ സംഗ്രഹം നൽകാനും അതിനെക്കുറിച്ചുള്ള ചോദ്യങ്ങൾക്ക് മറുപടി നൽകാനും കുറിപ്പ് എഡിറ്ററിൽ എന്തും എങ്ങനെ ചെയ്യാമെന്ന് വിശദീകരിക്കാനും എനിക്ക് കഴിയും. ഒന്ന് അമർത്തുക, അല്ലെങ്കിൽ നിങ്ങൾക്ക് വേണ്ടത് പറയുക.",
+    "Summarize this note": "ഈ കുറിപ്പിന്റെ സംഗ്രഹം നൽകുക",
+    "Tidy it into headings and lists": "തലക്കെട്ടുകളും പട്ടികകളുമായി ക്രമീകരിക്കുക"
 }

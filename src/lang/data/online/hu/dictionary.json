@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "A segéd megváltoztatta ezt az éneket.",
     "Load the change": "A módosítás betöltése",
     "Create Lyric": "Dalszöveg létrehozása",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Minden bibliavers a dalszöveg egy versszaka lesz, minden kiválasztott bibliafordításhoz egy sorral"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Minden bibliavers a dalszöveg egy versszaka lesz, minden kiválasztott bibliafordításhoz egy sorral",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "A(z) „{name}” lent csatolva van. Megváltoztathatom önnek ezt az istentiszteleti sorrendet: név szerint hozzáadhatok énekeket, diadokumentumokat, igehelyeket, műveleteket és visszaszámlálásokat; sorokat eltávolíthatok, áthelyezhetek, lemásolhatok vagy félretehetek; beállíthatok időzítőket, billentyűparancsokat, színeket és képernyőket; és CC-elemeket csatolhatok. Illessze be az istentisztelet programját, vagy küldjön róla egy képet, és abból összeállítom a sorrendet. Nyomjon meg egyet, vagy mondja el, mit szeretne.",
+    "Check the running order": "A sorrend ellenőrzése",
+    "Build it from my order of service": "Összeállítás az istentiszteleti programomból",
+    "Clear the screen between items": "Képernyő kiürítése az elemek között",
+    "Move on by itself": "Automatikus továbblépés",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}” alább csatolva. Megváltoztathatom ezt a jegyzetet ön helyett: megváltoztathatom vagy lefordíthatom a szavait, ellenőrizhetem a helyesírást, címsorokba és listákba rendezhetem, vagy bibliai igeverseket adhatok hozzá. Össze is foglalhatom, válaszolhatok a róla szóló kérdésekre, és elmagyarázhatom, hogyan lehet bármit megtenni a jegyzetszerkesztőben. Nyomjon meg egyet, vagy mondja el, mit szeretne.",
+    "Summarize this note": "Foglald össze ezt a jegyzetet",
+    "Tidy it into headings and lists": "Rendezd címsorokba és listákba"
 }

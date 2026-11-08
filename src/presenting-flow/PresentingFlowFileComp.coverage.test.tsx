@@ -10,6 +10,7 @@ const { state, mocks } = vi.hoisted(() => ({
         payload: null as any,
         previewOpen: false,
         whileLoading: null as null | (() => void),
+        isAiEnabled: false,
     },
     mocks: {
         addItem: vi.fn(),
@@ -24,9 +25,23 @@ const { state, mocks } = vi.hoisted(() => ({
         openPreview: vi.fn(),
         togglePreview: vi.fn(),
         toast: vi.fn(),
+        openInChatbot: vi.fn(),
     },
 }));
 
+// Open in Chatbot (2026-11-07): its own leaf, read for whether AI is on --
+// off unless a test says, so the menu's other rows keep their places.
+vi.mock('../helper/ai/lyricChatbotMenuHelpers', () => ({
+    genDocumentOpenInChatbotContextMenu: (filePath: string) =>
+        state.isAiEnabled
+            ? [
+                  {
+                      menuElement: 'Open in Chatbot',
+                      onSelect: () => mocks.openInChatbot(filePath),
+                  },
+              ]
+            : [],
+}));
 vi.mock('../context-menu/appContextMenuHelpers', () => ({
     createMouseEvent: mocks.createEvent,
     showAppContextMenu: mocks.showMenu,
@@ -215,6 +230,7 @@ beforeEach(() => {
     state.payload = null;
     state.previewOpen = false;
     state.whileLoading = null;
+    state.isAiEnabled = false;
     presentingFlowDraggingStore.current = null;
     mocks.addItem.mockResolvedValue(true);
     mocks.addAction.mockResolvedValue(true);
@@ -328,6 +344,30 @@ describe('PresentingFlowFileComp', () => {
             undefined,
             undefined,
         );
+        await act(async () => rendered.root.unmount());
+    });
+
+    test('Open in Chatbot sits right under Open Preview while AI is on', async () => {
+        state.isAiEnabled = true;
+        const rendered = await render();
+        const menu = state.handlerProps.contextMenuItems;
+        expect(
+            menu.map((item: any) => {
+                return item.menuElement;
+            }),
+        ).toEqual(['Open Preview', 'Open in Chatbot', 'Add Action', 'Export']);
+        menu[1].onSelect();
+        expect(mocks.openInChatbot).toHaveBeenCalledWith('/run.owpf');
+        await act(async () => rendered.root.unmount());
+    });
+
+    test('with AI off the presenting flow offers no Open in Chatbot', async () => {
+        const rendered = await render();
+        expect(
+            state.handlerProps.contextMenuItems.map((item: any) => {
+                return item.menuElement;
+            }),
+        ).toEqual(['Open Preview', 'Add Action', 'Export']);
         await act(async () => rendered.root.unmount());
     });
 

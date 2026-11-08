@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "도우미가 이 노래를 바꿨습니다.",
     "Load the change": "변경 내용 불러오기",
     "Create Lyric": "가사 만들기",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "성경의 각 구절이 가사의 한 절이 되며, 선택한 성경 역본마다 한 줄씩 들어갑니다"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "성경의 각 구절이 가사의 한 절이 되며, 선택한 성경 역본마다 한 줄씩 들어갑니다",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}”이(가) 아래에 첨부되었습니다. 이 예배 순서를 대신 바꿔 드릴 수 있습니다: 찬송·슬라이드 문서·성경 구절·동작·카운트다운을 이름으로 추가, 줄 삭제·이동·복사·보류, 타이머·바로 가기 키·색상·화면 설정, CC 요소 첨부. 예배 순서지를 붙여 넣거나 사진을 보내 주시면 그것으로 예배 순서를 만들어 드립니다. 하나를 누르거나 원하는 것을 말씀해 주세요.",
+    "Check the running order": "진행 순서 확인",
+    "Build it from my order of service": "내 예배 순서지로 만들기",
+    "Clear the screen between items": "항목 사이에 화면 지우기",
+    "Move on by itself": "자동으로 다음으로 넘어가기",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}”이(가) 아래에 첨부되었습니다. 이 노트를 대신 바꿔 드릴 수 있습니다: 글자 변경이나 번역, 맞춤법 검사, 제목과 목록으로 정리, 성경 구절 추가. 노트를 요약하고, 노트에 대한 질문에 답하고, 노트 편집기에서 무엇이든 하는 방법을 설명해 드릴 수도 있습니다. 하나를 누르거나 원하는 것을 말씀해 주세요.",
+    "Summarize this note": "이 노트 요약하기",
+    "Tidy it into headings and lists": "제목과 목록으로 정리하기"
 }

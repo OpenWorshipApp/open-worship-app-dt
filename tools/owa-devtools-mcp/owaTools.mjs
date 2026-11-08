@@ -126,6 +126,8 @@ import { genListScreensExpression } from './agentScreens.mjs';
 import { registerBibleXmlTool } from './agentBibleXml.mjs';
 import { registerLyricEditTool } from './agentLyricEdit.mjs';
 import { registerSlideEditTool } from './agentSlideEdit.mjs';
+import { registerNoteEditTool } from './agentNoteEdit.mjs';
+import { registerPresentingFlowEditTool } from './agentPresentingFlowEdit.mjs';
 import {
   AGENT_BIBLE_ACTIONS,
   formatPresentBibleResult,
@@ -1624,6 +1626,16 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
   // whole (`agentSlideEdit.mjs`). Offered to the chatbot's model only in a
   // conversation about an attached slide document.
   registerSlideEditTool(server);
+
+  // ONE Bible note changed part by part, its formatting kept and verses
+  // added from the Bible (`agentNoteEdit.mjs`). Offered to the chatbot's
+  // model only in a conversation about an attached note.
+  registerNoteEditTool(server);
+
+  // ONE presenting flow read whole and changed many lines in one write
+  // (`agentPresentingFlowEdit.mjs`). Offered to the chatbot's model only in
+  // a conversation about an attached presenting flow.
+  registerPresentingFlowEditTool(server);
 
   // The saved passages and the notes. A list or file name reaches the disk,
   // so it is checked here first with the document tools' own rule -- and

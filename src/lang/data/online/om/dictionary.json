@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Gargaaraan faaruu kana jijjiireera.",
     "Load the change": "Jijjiirama fe'i",
     "Create Lyric": "Faarfannaa Uumi",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Lakkoofsi Macaafa Qulqulluu tokkoon tokkoon isaa kutaa faarfannaa tokko ta'a, hiika Macaafa Qulqulluu filatame hundaaf sarara tokko qaba"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Lakkoofsi Macaafa Qulqulluu tokkoon tokkoon isaa kutaa faarfannaa tokko ta'a, hiika Macaafa Qulqulluu filatame hundaaf sarara tokko qaba",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” armaan gaditti maxxanfameera. Tartiiba dhiyeessaa kana siif jijjiiruu nan danda’a: faarfannaawwan, sanadoota islaayidii, kutaalee Macaafa Qulqulluu, gochaawwanii fi lakkoofsota gara duubaa maqaan dabaluu; sararoota haquu, sochoosuu, garagalchuu ykn yeroof hojii ala gochuu; yeroo lakkoftuu, qaxxaamura, halluu fi iskiriinii qindeessuu; akkasumas elementota CC maxxansuu. Sagantaa waaqeffannaa kee as maxxansi ykn fakkii isaa naaf ergi, anis isa irraa tartiiba siif ijaara. Tokko tuqi, ykn waan barbaaddu himi.",
+    "Check the running order": "Tartiiba sakatta’i",
+    "Build it from my order of service": "Sagantaa waaqeffannaa koo irraa ijaari",
+    "Clear the screen between items": "Wantoota gidduutti iskiriinii qulqulleessi",
+    "Move on by itself": "Ofumaan itti fufi",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” armaan gadiitti maxxanfameera. Yaadannoo kana siif jijjiiruu nan danda'a: jechoota isaa jijjiiruu ykn hiikuu, qubee barreessuu sakatta'uu, mata-dureewwanii fi tarreewwaniin qindeessuu, ykn luqqisiiwwan Macaafa Qulqulluu itti dabaluu. Akkasumas cuunfuu, gaaffilee waa'ee isaa deebisuu fi waan kamiyyuu gulaalaa yaadannoo keessatti akkamitti akka hojjetamu ibsuu nan danda'a. Tokko tuqi, ykn waan barbaaddu himi.",
+    "Summarize this note": "Yaadannoo kana cuunfi",
+    "Tidy it into headings and lists": "Mata-dureewwanii fi tarreewwaniin qindeessi"
 }

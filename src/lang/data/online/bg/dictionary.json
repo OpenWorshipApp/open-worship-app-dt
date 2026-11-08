@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Асистентът промени тази песен.",
     "Load the change": "Зареди промяната",
     "Create Lyric": "Създай текст на песен",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Всеки библейски стих става куплет на песента, с по един ред за всяка избрана версия на Библията"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Всеки библейски стих става куплет на песента, с по един ред за всяка избрана версия на Библията",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}“ е прикачена по-долу. Мога да променя тази програма на службата вместо вас: да добавя по име песни, документи със слайдове, библейски откъси, действия и обратни броения; да премахна, преместя, копирам или оставя настрана редове; да задам таймери, клавишни комбинации, цветове и екрани; и да прикача CC елементи. Поставете реда на богослужението си или ми изпратете снимка на него и ще изградя програмата от него. Натиснете едно или кажете какво искате.",
+    "Check the running order": "Проверете реда на изпълнение",
+    "Build it from my order of service": "Изградете я от моя ред на богослужението",
+    "Clear the screen between items": "Изчиствайте екрана между елементите",
+    "Move on by itself": "Да продължава само",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}“ е прикачена по-долу. Мога да променя тази бележка вместо вас: да променя или преведа думите ѝ, да проверя правописа, да я подредя в заглавия и списъци или да добавя стихове от Библията. Мога също да я обобщя, да отговоря на въпроси за нея и да обясня как се прави всичко в редактора на бележки. Натиснете едно или кажете какво искате.",
+    "Summarize this note": "Обобщи тази бележка",
+    "Tidy it into headings and lists": "Подреди я в заглавия и списъци"
 }

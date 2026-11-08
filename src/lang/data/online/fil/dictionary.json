@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Binago ng assistant ang kantang ito.",
     "Load the change": "I-load ang pagbabago",
     "Create Lyric": "Gumawa ng Liriko",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Bawat talata ng Bibliya ay magiging isang taludtod ng liriko, na may isang linya para sa bawat napiling bersiyon ng Bibliya"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Bawat talata ng Bibliya ay magiging isang taludtod ng liriko, na may isang linya para sa bawat napiling bersiyon ng Bibliya",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "Nakalakip sa ibaba ang “{name}”. Mababago ko ang daloy ng programang ito para sa iyo: magdagdag ng mga awit, dokumento ng slide, sipi ng Bibliya, aksyon at pagbibilang pabalik ayon sa pangalan; mag-alis, maglipat, kumopya o magtabi ng mga linya; magtakda ng mga timer, madaliang daan, kulay at screen; at maglakip ng mga elemento ng CC. I-paste ang iyong ayos ng pagsamba o padalhan mo ako ng larawan nito, at gagawin ko ang daloy mula rito. Pindutin ang isa, o sabihin kung ano ang gusto mo.",
+    "Check the running order": "Suriin ang takbo ng programa",
+    "Build it from my order of service": "Gawin ito mula sa aking ayos ng pagsamba",
+    "Clear the screen between items": "Linisin ang screen sa pagitan ng mga item",
+    "Move on by itself": "Kusang magpatuloy",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ay nakalakip sa ibaba. Mababago ko ang talang ito para sa iyo: palitan o isalin ang mga salita nito, suriin ang baybay, ayusin ito sa mga heading at listahan, o magdagdag ng mga talata ng Bibliya. Maaari ko rin itong buurin, sagutin ang mga tanong tungkol dito, at ipaliwanag kung paano gawin ang anumang bagay sa editor ng tala. Pindutin ang isa, o sabihin ang gusto mo.",
+    "Summarize this note": "Buurin ang talang ito",
+    "Tidy it into headings and lists": "Ayusin ito sa mga heading at listahan"
 }

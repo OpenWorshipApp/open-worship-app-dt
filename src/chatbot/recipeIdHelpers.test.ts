@@ -81,6 +81,27 @@ describe('scrubAnswerRecipeIds', () => {
     });
 });
 
+describe('scrubAnswerRecipeIds on the Bible Note editor guide', () => {
+    const guideId = 'bible-note:ui/sticky-notes/add-a-sticky-note';
+    it('names a guide page by the title a tool result carried', () => {
+        expect(
+            scrubAnswerRecipeIds(`${guideId} says how.`, {
+                [guideId]: 'Add a sticky note',
+            }),
+        ).toBe('The guide page “Add a sticky note” says how.');
+    });
+    it('reads an unknown guide id as what its last part names', () => {
+        expect(scrubAnswerRecipeIds(`See ${guideId} and W-08.`, TITLES)).toBe(
+            'See the guide page “add a sticky note” and the guide page ' +
+                '“Set the background (color / image / video / web)”.',
+        );
+    });
+    it('leaves words that only look like it alone', () => {
+        const text = 'Open the bible-note window, then the ui of it.';
+        expect(scrubAnswerRecipeIds(text, TITLES)).toBe(text);
+    });
+});
+
 describe('learnPageTitles', () => {
     it('reads titles off a search result and a page', () => {
         const titles: Record<string, string> = {};

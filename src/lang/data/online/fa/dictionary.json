@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "دستیار این سرود را تغییر داد.",
     "Load the change": "بارگذاری تغییر",
     "Create Lyric": "ایجاد متن سرود",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "هر آیهٔ کتاب مقدس به یک بند سرود تبدیل می‌شود، با یک خط برای هر نسخهٔ انتخاب‌شدهٔ کتاب مقدس"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "هر آیهٔ کتاب مقدس به یک بند سرود تبدیل می‌شود، با یک خط برای هر نسخهٔ انتخاب‌شدهٔ کتاب مقدس",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "«{name}» در زیر پیوست شده است. می‌توانم این برنامه مراسم را برایتان تغییر دهم: افزودن سرودها، سندهای اسلاید، بخش‌هایی از کتاب مقدس، کنش‌ها و شمارش‌های معکوس با نامشان؛ حذف، جابه‌جا کردن، کپی کردن یا کنار گذاشتن سطرها؛ تنظیم زمان‌سنج‌ها، میان‌برها، رنگ‌ها و صفحه‌نمایش‌ها؛ و پیوست کردن عنصرهای CC. ترتیب مراسم عبادتتان را جای‌گذاری کنید یا تصویری از آن بفرستید تا برنامه را از روی آن بسازم. یکی را بزنید، یا بگویید چه می‌خواهید.",
+    "Check the running order": "بررسی ترتیب اجرا",
+    "Build it from my order of service": "ساختن آن از ترتیب مراسم عبادت من",
+    "Clear the screen between items": "پاک کردن صفحه بین موارد",
+    "Move on by itself": "رفتن خودکار به بعدی",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» در زیر پیوست شده است. می‌توانم این یادداشت را برایتان تغییر دهم: کلماتش را تغییر دهم یا ترجمه کنم، املا را بررسی کنم، آن را در عنوان‌ها و فهرست‌ها مرتب کنم، یا آیه‌هایی از کتاب مقدس اضافه کنم. همچنین می‌توانم آن را خلاصه کنم، به پرسش‌ها درباره‌اش پاسخ دهم و توضیح دهم که هر کاری را در ویرایشگر یادداشت چگونه انجام دهید. یکی را بزنید، یا بگویید چه می‌خواهید.",
+    "Summarize this note": "این یادداشت را خلاصه کن",
+    "Tidy it into headings and lists": "آن را در عنوان‌ها و فهرست‌ها مرتب کن"
 }

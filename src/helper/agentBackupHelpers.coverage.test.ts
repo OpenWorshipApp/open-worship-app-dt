@@ -27,6 +27,7 @@ const { state, mocks } = vi.hoisted(() => ({
         fireUpdateEvent: vi.fn(),
         deleteHistories: vi.fn(),
         addNoteHistory: vi.fn(),
+        notifyNoteHeadChanged: vi.fn(),
         saveFlow: vi.fn(),
         removeFlowSettings: vi.fn(),
     },
@@ -102,6 +103,10 @@ vi.mock('../editing-manager/EditingHistoryManager', () => ({
             deleteHistories: mocks.deleteHistories,
         }),
     },
+}));
+// An open note window is told when an undo puts its head back (2026-11-07).
+vi.mock('../bible-list/note/noteHeadChangeHelpers', () => ({
+    notifyNoteHeadChanged: mocks.notifyNoteHeadChanged,
 }));
 vi.mock('../bible-list/note/Note', () => ({
     default: {
@@ -649,6 +654,7 @@ describe('agent backup public contracts', () => {
         expect(mocks.addNoteHistory).toHaveBeenCalledWith({
             title: 'Old title',
         });
+        expect(mocks.notifyNoteHeadChanged).toHaveBeenCalledWith(filePath);
         expect(mocks.fireUpdateEvent).toHaveBeenCalledOnce();
         const meta = JSON.parse(
             state.texts.get(`/data/agent-backups/${original.id}.meta.json`) ??

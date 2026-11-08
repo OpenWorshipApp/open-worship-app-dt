@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Msaidizi amebadilisha wimbo huu.",
     "Load the change": "Pakia badiliko",
     "Create Lyric": "Unda maneno ya wimbo",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kila mstari wa Biblia unakuwa ubeti wa wimbo, ukiwa na mstari mmoja kwa kila toleo la Biblia lililochaguliwa"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kila mstari wa Biblia unakuwa ubeti wa wimbo, ukiwa na mstari mmoja kwa kila toleo la Biblia lililochaguliwa",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” imeambatishwa hapa chini. Ninaweza kukubadilishia mpangilio huu wa ibada: kuongeza nyimbo, hati za slaidi, vifungu vya Biblia, vitendo na hesabu za kurudi nyuma kwa majina yake; kuondoa, kuhamisha, kunakili au kusimamisha mistari; kuweka vipima muda, njia za mkato, rangi na skrini; na kuambatisha vipengele vya CC. Bandika ratiba ya ibada yako au nitumie picha yake, nami nitaunda mpangilio kutoka kwayo. Bonyeza moja, au sema unachotaka.",
+    "Check the running order": "Kagua mfuatano",
+    "Build it from my order of service": "Uunde kutoka kwa ratiba yangu ya ibada",
+    "Clear the screen between items": "Futa skrini kati ya vipengele",
+    "Move on by itself": "Iendelee yenyewe",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” imeambatishwa hapa chini. Ninaweza kukubadilishia dokezo hili: kubadilisha au kutafsiri maneno yake, kukagua tahajia, kulipanga kuwa vichwa na orodha, au kuongeza mistari ya Biblia. Ninaweza pia kulifupisha, kujibu maswali kulihusu, na kueleza jinsi ya kufanya chochote katika kihariri cha madokezo. Bonyeza moja, au sema unachotaka.",
+    "Summarize this note": "Fupisha dokezo hili",
+    "Tidy it into headings and lists": "Lipange kuwa vichwa na orodha"
 }

@@ -25,6 +25,7 @@ import {
     pathJoin,
     pathResolve,
     fsExistSync,
+    toPathCompareKey,
 } from '../../server/fileHelpers';
 import {
     getAppFilePathFromFile,
@@ -39,6 +40,7 @@ import {
     tran,
 } from '../../lang/langHelpers';
 import { getBibleNotePreviewFilePath } from './bibleNotePreviewHelpers';
+import { registerNoteHeadChangedListener } from './noteHeadChangeHelpers';
 import {
     genPreviewSettingStore,
     lockBibleNoteReadOnly,
@@ -193,6 +195,14 @@ export function checkIsEmptyNoteContent(content: string) {
  * enough that a window closed straight after a sentence still keeps it.
  */
 const EDITING_HISTORY_DEBOUNCE_MILLISECOND = 1_000;
+
+// The window's pending history write, on demand: the footer's 🤖 hands the note
+// to the help window, which reads the editing HEAD -- the last second of
+// typing must be in it first. One editor a window, so one slot.
+let flushPendingHistory: () => Promise<void> = async () => {};
+export function flushBibleNoteHistory() {
+    return flushPendingHistory();
+}
 
 export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
 export function getBibleNoteSelectedBibleKey() {
@@ -422,6 +432,7 @@ export async function initBibleNote({
         pendingHistoryItem = null;
         await note.addItemEditingHistory(itemToWrite);
     };
+    flushPendingHistory = writeEditingHistory;
     // A window closed a moment after the last letter must not lose it. Nothing
     // can be AWAITED here, so this is a best effort on top of the debounce
     // rather than instead of it -- which is why the wait is short.
@@ -485,6 +496,40 @@ export async function initBibleNote({
     // note B changes within the debounce window
     const attemptTimeout = genTimeoutAttempt(1_000);
     const abortController = new AbortController();
+    const reloadNote = async (isHeadChange: boolean) => {
+        // The wait protects typing in progress from being overwritten; a
+        // preview has none, and following the file as it changes is the
+        // point of keeping one open.
+        if (!isReadOnly && (bibleNote.getIsFocusing() || document.hasFocus())) {
+            await new Promise((resolve) => {
+                setTimeout(resolve, 3_000);
+            });
+        }
+        // The EDITING head, not the file: an item added or a verse marked
+        // from the list rebases that head onto the new file, so what comes
+        // back here still carries this window's own unsaved text instead of
+        // wiping it.
+        await (isReadOnly ? note.reload() : note.reloadEditing());
+        const newNoteItem = note.getItemById(noteItem.id);
+        if (newNoteItem === null) {
+            return;
+        }
+        // Same normalisation the file is read through: the editor throws on a
+        // childless root here too.
+        const newContent = toStoredContent(newNoteItem.content);
+        if (newContent === noteItem.content) {
+            return;
+        }
+        if (isReadOnly || isHeadChange) {
+            // Nothing else moves it on in a preview -- `saveData` is what does
+            // that in an editable window -- so a file edited back to what it
+            // was would otherwise never be shown again. And a head another
+            // window wrote is already in the history: written straight out
+            // again as a new entry, it would throw the Redo away.
+            noteItem.content = newContent;
+        }
+        bibleNote.content = toEditorContent(newContent);
+    };
     try {
         appProvider.fileUtils.watch(
             note.filePath,
@@ -495,46 +540,29 @@ export async function initBibleNote({
                 if (eventType !== 'change') {
                     return;
                 }
-                attemptTimeout(async () => {
-                    // The wait protects typing in progress from being
-                    // overwritten; a preview has none, and following the file
-                    // as it changes is the point of keeping one open.
-                    if (
-                        !isReadOnly &&
-                        (bibleNote.getIsFocusing() || document.hasFocus())
-                    ) {
-                        await new Promise((resolve) => {
-                            setTimeout(resolve, 3_000);
-                        });
-                    }
-                    // The EDITING head, not the file: an item added or a verse
-                    // marked from the list rebases that head onto the new file,
-                    // so what comes back here still carries this window's own
-                    // unsaved text instead of wiping it.
-                    await (isReadOnly ? note.reload() : note.reloadEditing());
-                    const newNoteItem = note.getItemById(noteItem.id);
-                    if (newNoteItem === null) {
-                        return;
-                    }
-                    // Same normalisation the file is read through: the editor
-                    // throws on a childless root here too.
-                    const newContent = toStoredContent(newNoteItem.content);
-                    if (newContent === noteItem.content) {
-                        return;
-                    }
-                    if (isReadOnly) {
-                        // Nothing else moves it on in a preview -- `saveData`
-                        // is what does that in an editable window -- so a file
-                        // edited back to what it was would otherwise never be
-                        // shown again.
-                        noteItem.content = newContent;
-                    }
-                    bibleNote.content = toEditorContent(newContent);
+                attemptTimeout(() => {
+                    return reloadNote(false);
                 });
             },
         );
     } catch (error) {
         handleError(error);
+    }
+    // The head written by ANOTHER window -- the help window's note
+    // conversation, or an undo of it: the file did not change, so the watch
+    // above never hears it.
+    if (!isReadOnly) {
+        registerNoteHeadChangedListener((changedFilePath) => {
+            if (
+                toPathCompareKey(changedFilePath) !==
+                toPathCompareKey(note.filePath)
+            ) {
+                return;
+            }
+            attemptTimeout(() => {
+                return reloadNote(true);
+            });
+        });
     }
 
     return bibleNote;

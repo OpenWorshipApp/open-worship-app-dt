@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Ο βοηθός άλλαξε αυτό το τραγούδι.",
     "Load the change": "Φόρτωση της αλλαγής",
     "Create Lyric": "Δημιουργία στίχων",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Κάθε εδάφιο της Βίβλου γίνεται μια στροφή των στίχων, με μία γραμμή για κάθε επιλεγμένη έκδοση της Βίβλου"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Κάθε εδάφιο της Βίβλου γίνεται μια στροφή των στίχων, με μία γραμμή για κάθε επιλεγμένη έκδοση της Βίβλου",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "Το «{name}» είναι συνημμένο παρακάτω. Μπορώ να αλλάξω αυτή τη ροή παρουσίασης για εσάς: να προσθέσω με το όνομά τους ύμνους, έγγραφα διαφανειών, αποσπάσματα της Αγίας Γραφής, ενέργειες και αντίστροφες μετρήσεις· να αφαιρέσω, να μετακινήσω, να αντιγράψω ή να βάλω στην άκρη γραμμές· να ορίσω χρονόμετρα, συντομεύσεις, χρώματα και οθόνες· και να επισυνάψω στοιχεία CC. Επικολλήστε το πρόγραμμα της λειτουργίας σας ή στείλτε μου μια φωτογραφία του, και θα φτιάξω τη ροή από αυτό. Πατήστε μία επιλογή ή πείτε τι θέλετε.",
+    "Check the running order": "Έλεγχος της σειράς",
+    "Build it from my order of service": "Δημιουργία από το πρόγραμμα της λειτουργίας μου",
+    "Clear the screen between items": "Καθαρισμός της οθόνης ανάμεσα στα στοιχεία",
+    "Move on by itself": "Αυτόματη μετάβαση στο επόμενο",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» επισυνάπτεται παρακάτω. Μπορώ να αλλάξω αυτή τη σημείωση για εσάς: να αλλάξω ή να μεταφράσω τις λέξεις της, να ελέγξω την ορθογραφία, να την οργανώσω σε επικεφαλίδες και λίστες ή να προσθέσω εδάφια της Αγίας Γραφής. Μπορώ επίσης να τη συνοψίσω, να απαντήσω σε ερωτήσεις γι’ αυτήν και να εξηγήσω πώς γίνεται οτιδήποτε στον επεξεργαστή σημειώσεων. Πατήστε ένα ή πείτε τι θέλετε.",
+    "Summarize this note": "Σύνοψη αυτής της σημείωσης",
+    "Tidy it into headings and lists": "Οργάνωσέ τη σε επικεφαλίδες και λίστες"
 }

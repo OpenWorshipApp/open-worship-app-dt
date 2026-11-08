@@ -247,6 +247,8 @@ const REMOVING_TOOL_SET = new Set([
     'owa_lyric_edit',
     // `delete-slide` takes a slide out of a slide document.
     'owa_slide_edit',
+    // `remove-lines` takes lines out of a presenting flow.
+    'owa_presenting_flow_edit',
     'owa_bible_item',
     'owa_bible_note',
     'owa_undo',
@@ -286,6 +288,12 @@ const READING_ACTION_MAP = {
     // The same for an attached slide document (`owa_slide_edit`): `slides` is
     // read before every question about it.
     owa_slide_edit: ['slides'],
+    // And for an attached Bible note (`owa_note_edit`): `read` is asked
+    // before every question about it; `edit` writes it (backed up, unsaved).
+    owa_note_edit: ['read'],
+    // And for an attached presenting flow (`owa_presenting_flow_edit`):
+    // `lines` is read before every question about it.
+    owa_presenting_flow_edit: ['lines'],
 };
 
 /** Does THIS call change the app (the tool, or the action it was given)? */

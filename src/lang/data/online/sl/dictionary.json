@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Pomočnik je spremenil to pesem.",
     "Load the change": "Naloži spremembo",
     "Create Lyric": "Ustvari pesem",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Vsaka svetopisemska vrstica postane kitica pesmi, z eno vrstico za vsako izbrano različico Svetega pisma"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Vsaka svetopisemska vrstica postane kitica pesmi, z eno vrstico za vsako izbrano različico Svetega pisma",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "»{name}« je priložen spodaj. Ta potek predstavitve lahko spremenim namesto vas: po imenu dodam pesmi, dokumente z diapozitivi, svetopisemske odlomke, dejanja in odštevanja; odstranim, premaknem, kopiram ali onemogočim vrstice; nastavim časovnike, bližnjice, barve in zaslone; ter priložim elemente CC. Prilepite svoj red bogoslužja ali pošljite njegovo sliko in iz njega bom sestavil potek. Pritisnite eno ali povejte, kaj želite.",
+    "Check the running order": "Preveri vrstni red",
+    "Build it from my order of service": "Sestavi ga iz mojega reda bogoslužja",
+    "Clear the screen between items": "Počisti zaslon med točkami",
+    "Move on by itself": "Naj gre naprej sam",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "{name} je priložena spodaj. Lahko vam spremenim ta zapisek: spremenim ali prevedem njegove besede, preverim črkovanje, ga uredim v naslove in sezname ali dodam svetopisemske vrstice. Lahko ga tudi povzamem, odgovorim na vprašanja o njem in razložim, kako v urejevalniku zapiskov narediti karkoli. Pritisnite eno možnost ali povejte, kaj želite.",
+    "Summarize this note": "Povzemi ta zapisek",
+    "Tidy it into headings and lists": "Uredi ga v naslove in sezname"
 }

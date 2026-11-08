@@ -147,3 +147,44 @@ export function toNoteFileText(text: string): string | null {
         ? '(this note file has no notes in it)'
         : parts.join('\n\n');
 }
+
+/** What a note with no title of its own is called, as the panel calls it. */
+export const UNTITLED_NOTE_NAME = 'Unnamed';
+
+/**
+ * ONE note of a note file, by its id -- what **Open in Chatbot** on a note row
+ * attaches (2026-11-07): its title and its words. Null when the file is not a
+ * note file, holds no such note, or that id is a marked verse (its highlights
+ * are not a note anybody writes in).
+ */
+export function toNoteItemFromFileText(
+    text: string,
+    noteId: number,
+): { title: string; text: string } | null {
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch {
+        return null;
+    }
+    if (!Array.isArray(data?.items)) {
+        return null;
+    }
+    const item = data.items.find((one: any) => {
+        return (
+            typeof one === 'object' &&
+            one !== null &&
+            one.metadata?.id === noteId
+        );
+    });
+    if (item === undefined || typeof item.verseKey === 'string') {
+        return null;
+    }
+    const title =
+        typeof item.title === 'string' && item.title.trim() !== ''
+            ? item.title.trim()
+            : UNTITLED_NOTE_NAME;
+    const body =
+        typeof item.content === 'string' ? toNoteContentText(item.content) : '';
+    return { title, text: body.length > 0 ? body : '(empty)' };
+}

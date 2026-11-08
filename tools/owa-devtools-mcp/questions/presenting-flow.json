@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The running order for a service: what happens, in what order, on which screen. Built in the Presenting Flows panel and run from its own preview.",
-    "updated": "2026-10-18",
+    "updated": "2026-11-08",
     "sections": [
         {
             "id": "building",
@@ -90,6 +90,25 @@
                             "owa_presenting_flow",
                             "owa_undo"
                         ]
+                    }
+                },
+                {
+                    "id": "flow-change-with-assistant",
+                    "text": "Can the assistant change my presenting flow for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "open in chatbot",
+                        "order of service",
+                        "build the running order",
+                        "check the running order",
+                        "clear between items",
+                        "move on by itself",
+                        "running order from a picture"
+                    ],
+                    "resources": {
+                        "recipe": "W-59",
+                        "related": ["W-22", "W-22d"],
+                        "find": "Open in Chatbot"
                     }
                 },
                 {

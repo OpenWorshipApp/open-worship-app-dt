@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "सहायक ने यह गीत बदल दिया है।",
     "Load the change": "बदलाव लोड करें",
     "Create Lyric": "गीत बनाएँ",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "बाइबल का हर पद गीत का एक छंद बन जाता है, हर चुने गए बाइबल संस्करण के लिए एक पंक्ति के साथ"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "बाइबल का हर पद गीत का एक छंद बन जाता है, हर चुने गए बाइबल संस्करण के लिए एक पंक्ति के साथ",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” नीचे जुड़ा हुआ है। मैं आपके लिए यह कार्यक्रम क्रम बदल सकता हूँ: नाम से गीत, स्लाइड दस्तावेज़, बाइबल के अंश, क्रियाएँ और उलटी गिनतियाँ जोड़ना; पंक्तियाँ हटाना, खिसकाना, कॉपी करना या किनारे रखना; टाइमर, शॉर्टकट, रंग और स्क्रीन तय करना; और CC तत्व संलग्न करना। अपनी आराधना की कार्यसूची पेस्ट करें या उसकी एक तस्वीर भेजें, मैं उससे क्रम बना दूँगा। एक दबाएँ, या बताएँ कि आप क्या चाहते हैं।",
+    "Check the running order": "चलने का क्रम जाँचें",
+    "Build it from my order of service": "मेरी आराधना की कार्यसूची से बनाएँ",
+    "Clear the screen between items": "हर आइटम के बीच स्क्रीन साफ़ करें",
+    "Move on by itself": "अपने-आप आगे बढ़ें",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” नीचे संलग्न है। मैं आपके लिए यह नोट बदल सकता हूँ: इसके शब्द बदलना या अनुवाद करना, वर्तनी जाँचना, इसे शीर्षकों और सूचियों में व्यवस्थित करना, या बाइबल के पद जोड़ना। मैं इसका सारांश भी दे सकता हूँ, इसके बारे में सवालों के जवाब दे सकता हूँ, और समझा सकता हूँ कि नोट संपादक में कुछ भी कैसे करें। एक दबाएँ, या बताएँ कि आप क्या चाहते हैं।",
+    "Summarize this note": "इस नोट का सारांश दें",
+    "Tidy it into headings and lists": "इसे शीर्षकों और सूचियों में व्यवस्थित करें"
 }

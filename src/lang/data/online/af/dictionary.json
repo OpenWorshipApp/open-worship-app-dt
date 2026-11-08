@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Die assistent het hierdie lied verander.",
     "Load the change": "Laai die verandering",
     "Create Lyric": "Skep liedteks",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Elke Bybelvers word 'n liedvers, met een reël per gekose Bybelweergawe"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Elke Bybelvers word 'n liedvers, met een reël per gekose Bybelweergawe",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” is hieronder aangeheg. Ek kan hierdie diensorde vir jou verander: liedere, skyfiedokumente, Bybelgedeeltes, aksies en aftellings by naam byvoeg; reëls verwyder, skuif, kopieer of eenkant sit; tydhouers, kortpaaie, kleure en skerms instel; en CC-elemente aanheg. Plak jou diensprogram of stuur vir my 'n prent daarvan, en ek bou die diensorde daaruit. Druk een, of sê wat jy wil hê.",
+    "Check the running order": "Gaan die volgorde na",
+    "Build it from my order of service": "Bou dit uit my diensprogram",
+    "Clear the screen between items": "Maak die skerm skoon tussen items",
+    "Move on by itself": "Gaan vanself aan",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” is hieronder aangeheg. Ek kan hierdie nota vir jou verander: sy woorde verander of vertaal, die spelling nagaan, dit in opskrifte en lyste orden, of Bybelverse byvoeg. Ek kan dit ook opsom, vrae daaroor beantwoord en verduidelik hoe om enigiets in die nota-redigeerder te doen. Druk een, of sê wat jy wil hê.",
+    "Summarize this note": "Som hierdie nota op",
+    "Tidy it into headings and lists": "Orden dit in opskrifte en lyste"
 }

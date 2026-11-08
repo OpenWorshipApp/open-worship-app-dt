@@ -294,6 +294,19 @@ export const MODEL_ON_ASK_TOOL_MAP = {
   // many slides in one call. The window names the attached file in `file`
   // itself (`src/chatbot/slideChatHelpers.ts`).
   owa_slide_edit: 'slide',
+  // A conversation about ONE attached Bible note (2026-11-07, a note row's
+  // and the note window's **Open in Chatbot**): its words changed or
+  // translated, tidied into headings and lists, verses added from the
+  // Bible -- the rest of it kept. The window turns the note's name into its
+  // file and id itself (`src/chatbot/noteChatHelpers.ts`).
+  owa_note_edit: 'note',
+  // A conversation about an ATTACHED presenting flow (2026-11-07, a
+  // Presenting Flows row's **Open in Chatbot**): its running order built
+  // from words or a picture, clears and timeouts put in, lines armed,
+  // coloured, pinned, countdowns and CC elements -- many lines in one call.
+  // The window names the attached file in `file` itself
+  // (`src/chatbot/flowChatHelpers.ts`).
+  owa_presenting_flow_edit: 'flow',
 };
 
 /**
@@ -328,6 +341,10 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
     'owa_find_verse',
     'owa_read_website',
   ],
+  // A note conversation answers how the note EDITOR works from its own
+  // guide (the window aims the search at the Bible Note window, where the
+  // guide's pages are), and finds the verses a note is about.
+  note: ['owa_help_search', 'owa_help_page', 'owa_find_verse'],
 };
 
 /** Whether the tool is offered only for one kind of ask. */

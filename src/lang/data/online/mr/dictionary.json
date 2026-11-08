@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "सहाय्यकाने हे गीत बदलले आहे.",
     "Load the change": "बदल लोड करा",
     "Create Lyric": "गीत तयार करा",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "बायबलमधील प्रत्येक वचन गीताचे एक कडवे बनते, प्रत्येक निवडलेल्या बायबल आवृत्तीसाठी एक ओळ असते"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "बायबलमधील प्रत्येक वचन गीताचे एक कडवे बनते, प्रत्येक निवडलेल्या बायबल आवृत्तीसाठी एक ओळ असते",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” खाली जोडले आहे. मी तुमच्यासाठी हा सेवा क्रम बदलू शकतो: गीते, स्लाइड दस्तऐवज, बायबल उतारे, क्रिया आणि काउंटडाउन नावाने जोडणे; ओळी काढून टाकणे, हलवणे, कॉपी करणे किंवा बाजूला ठेवणे; टायमर, शॉर्टकट, रंग आणि स्क्रीन ठरवणे; आणि CC घटक जोडणे. तुमची उपासनेची कार्यक्रमपत्रिका पेस्ट करा किंवा तिचे चित्र पाठवा, मी त्यावरून क्रम तयार करतो. एक दाबा, किंवा तुम्हाला काय हवे ते सांगा.",
+    "Check the running order": "कार्यक्रमाचा क्रम तपासा",
+    "Build it from my order of service": "माझ्या उपासनेच्या कार्यक्रमपत्रिकेवरून तयार करा",
+    "Clear the screen between items": "भागांच्या दरम्यान स्क्रीन साफ करा",
+    "Move on by itself": "आपोआप पुढे जा",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” खाली जोडलेले आहे. मी तुमच्यासाठी ही टीप बदलू शकतो: तिचे शब्द बदलणे किंवा भाषांतर करणे, शुद्धलेखन तपासणे, तिला शीर्षके आणि याद्यांमध्ये मांडणे, किंवा बायबलची वचने जोडणे. मी तिचा सारांशही देऊ शकतो, तिच्याबद्दलच्या प्रश्नांची उत्तरे देऊ शकतो आणि टीप संपादकात काहीही कसे करायचे ते समजावू शकतो. एक दाबा, किंवा तुम्हाला काय हवे ते सांगा.",
+    "Summarize this note": "या टिपेचा सारांश द्या",
+    "Tidy it into headings and lists": "तिला शीर्षके आणि याद्यांमध्ये मांडा"
 }

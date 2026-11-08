@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Giusab sa assistant kining kantaha.",
     "Load the change": "I-load ang kausaban",
     "Create Lyric": "Himoa ang Liriko",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ang matag bersikulo sa Bibliya mahimong usa ka berso sa liriko, nga may usa ka linya alang sa matag pinili nga bersiyon sa Bibliya"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ang matag bersikulo sa Bibliya mahimong usa ka berso sa liriko, nga may usa ka linya alang sa matag pinili nga bersiyon sa Bibliya",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "Ang “{name}” gilakip sa ubos. Mausab nako kining dagan sa programa para nimo: magdugang og mga awit, mga dokumento sa slide, mga tudling sa Biblia, mga aksiyon ug mga ihap paubos pinaagi sa ngalan; mokuha, mobalhin, mokopya o mobutang sa kilid sa mga linya; mobutang og mga timer, mga shortcut, mga kolor ug mga screen; ug molakip og mga CC nga elemento. I-paste ang imong han-ay sa pagsimba o padad-i ko og hulagway niini, ug himoon nako ang dagan gikan niini. Pindota ang usa, o isulti kung unsay imong gusto.",
+    "Check the running order": "Susiha ang han-ay sa dagan",
+    "Build it from my order of service": "Himoa kini gikan sa akong han-ay sa pagsimba",
+    "Clear the screen between items": "Limpyohi ang screen tali sa matag butang",
+    "Move on by itself": "Mopadayon sa iyang kaugalingon",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” gilakip sa ubos. Mahimo nako usbon kini nga nota alang kanimo: usbon o hubaron ang mga pulong niini, susihon ang spelling, hikayon kini ngadto sa mga ulohan ug mga lista, o idugang ang mga bersikulo sa Bibliya. Mahimo usab nako kini sumarahon, tubagon ang mga pangutana bahin niini, ug ipasabot kon unsaon pagbuhat sa bisan unsa sa editor sa nota. Pinduta ang usa, o isulti kon unsay imong gusto.",
+    "Summarize this note": "Sumarahi kini nga nota",
+    "Tidy it into headings and lists": "Hikaya kini ngadto sa mga ulohan ug mga lista"
 }

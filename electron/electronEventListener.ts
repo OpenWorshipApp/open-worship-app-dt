@@ -1152,6 +1152,19 @@ export function initEventOther(appController: ElectronAppController) {
         appController.sendMessageToAll('main:app:bible-list-changed');
     });
 
+    // A note's editing head was changed from another window (the help
+    // window's note conversation, an undo of it); a note window open on that
+    // file reads its head again (`noteHeadChangeHelpers.ts`). Only a path
+    // goes on, and only a string one.
+    ipcMain.on('all:app:note-head-changed', (_event, data) => {
+        if (typeof data?.filePath !== 'string') {
+            return;
+        }
+        appController.sendMessageToAll('main:app:note-head-changed', {
+            filePath: data.filePath,
+        });
+    });
+
     // The help window working on an answer, for the 🤖 in every other window
     // (`src/helper/ai/chatbotBusyHelpers.ts`). Remembered so a window opened
     // mid-answer can ask, and cleared when the help window closes mid-answer

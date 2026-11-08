@@ -81,8 +81,8 @@
         },
         "recipeId": {
             "type": "string",
-            "pattern": "^W-[0-9]{2}[a-z]?$",
-            "description": "A manual recipe id, the same one `owa_help_search` and `owa_help_page` use."
+            "pattern": "^(W-[0-9]{2}[a-z]?|bible-note:ui(/[a-z0-9-]+)+)$",
+            "description": "A manual recipe id, the same one `owa_help_search` and `owa_help_page` use -- or a page of the Bible Note editor's own guide (`bible-note:ui/...`, built from the `bible-note` package by `extra-work/bibleNoteGuideHelpers.mjs`), for a question about that editor."
         },
         "question": {
             "type": "object",

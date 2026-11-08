@@ -154,6 +154,7 @@ import {
     mergeEditedDocument,
     readEditedLyric,
     resolveLyricEditFile,
+    toEditedDocumentListValue,
     type EditedLyricType,
     type LyricAskFileType,
 } from './lyricChatHelpers';
@@ -165,6 +166,23 @@ import {
     resolveSlideEditFile,
     type SlideAskFileType,
 } from './slideChatHelpers';
+import {
+    FLOW_ASK_KIND,
+    FLOW_EDIT_TOOL_NAME,
+    FLOW_LIST_NAME,
+    FLOW_MAX_TOOL_ROUNDS,
+    FLOW_SYSTEM_PROMPT,
+    resolveFlowEditFile,
+    type FlowAskFileType,
+} from './flowChatHelpers';
+import {
+    NOTE_ASK_KIND,
+    NOTE_EDIT_TOOL_NAME,
+    NOTE_MAX_TOOL_ROUNDS,
+    NOTE_SYSTEM_PROMPT,
+    resolveNoteEditTarget,
+    type NoteAskFileType,
+} from './noteChatHelpers';
 import {
     BIBLE_READER_ASK_KIND,
     BIBLE_READER_MAX_TOOL_ROUNDS,
@@ -2107,6 +2125,20 @@ type ToolWatchType = {
      */
     slideFiles: SlideAskFileType[] | null;
     /**
+     * The presenting flows attached to the tab, when this is a question
+     * about them -- what a `file` the model gives `owa_presenting_flow_edit`
+     * is turned into (`resolveFlowEditFile`). Null outside such a question,
+     * where that tool is not the model's to call at all.
+     */
+    flowFiles: FlowAskFileType[] | null;
+    /**
+     * The Bible notes attached to the tab, when this is a question about
+     * them -- what a `note` the model gives `owa_note_edit` is turned into
+     * (`resolveNoteEditTarget`). Null outside such a question, where
+     * `owa_note_edit` is not the model's to call at all.
+     */
+    noteFiles: NoteAskFileType[] | null;
+    /**
      * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
      * the answer carries the button that undoes it.
      */
@@ -2326,6 +2358,8 @@ export function genToolWatch(): ToolWatchType {
         createdLyric: null,
         lyricFiles: null,
         slideFiles: null,
+        flowFiles: null,
+        noteFiles: null,
         editedLyric: null,
         bibleImportCheck: null,
         pageTitles: {},
@@ -3014,6 +3048,32 @@ export function applyToolWatch(
             watch.isActedOn = true;
         }
     }
+    if (name === NOTE_EDIT_TOOL_NAME && args?.action === 'edit') {
+        // A note: its answer carries `name`, `isChanged` and `undoId` in the
+        // song edit's own shape, and the answer the same two buttons -- Show
+        // it in the list ringing its row in the Bible Notes panel.
+        const edited = readEditedLyric(text);
+        if (edited !== null) {
+            watch.editedLyric = mergeEditedDocument(watch.editedLyric, {
+                ...edited,
+                listName: 'Bible Notes',
+            });
+            watch.isActedOn = true;
+        }
+    }
+    if (name === FLOW_EDIT_TOOL_NAME && args?.action !== 'lines') {
+        // A presenting flow the same way: its answer carries `name`,
+        // `isChanged` and `undoId`, and the answer the same two buttons --
+        // Show it in the list ringing its row in the Presenting Flows panel.
+        const edited = readEditedLyric(text);
+        if (edited !== null) {
+            watch.editedLyric = mergeEditedDocument(watch.editedLyric, {
+                ...edited,
+                listName: FLOW_LIST_NAME,
+            });
+            watch.isActedOn = true;
+        }
+    }
     if (name === SLIDE_EDIT_TOOL_NAME && args?.action !== 'slides') {
         // The same for a slide document: its answer carries `name`,
         // `isChanged` and `undoId` in the song edit's own shape, and the
@@ -3147,6 +3207,27 @@ async function runMcpToolCall(
             file: 'filePath' in resolved ? resolved.filePath : resolved.name,
         };
     }
+    // A presenting flow the same way: changed only in a conversation about
+    // one the person attached, named by its NAME -- the window puts its path
+    // in (`resolveFlowEditFile`), and a path the model writes is refused.
+    if (name === FLOW_EDIT_TOOL_NAME) {
+        if (watch.flowFiles === null) {
+            return (
+                `Tool refused: ${FLOW_EDIT_TOOL_NAME} changes a presenting ` +
+                'flow the person attached to this chat. Ask them to open it ' +
+                'in the chat (Open in Chatbot, in its menu in the Presenting ' +
+                'Flows list), or use owa_presenting_flow.'
+            );
+        }
+        const resolved = resolveFlowEditFile(args?.file, watch.flowFiles);
+        if ('reason' in resolved) {
+            return `Tool refused: ${resolved.reason}`;
+        }
+        lyricEditArgs = {
+            ...(args ?? {}),
+            file: 'filePath' in resolved ? resolved.filePath : resolved.name,
+        };
+    }
     // A slide document the same way: changed only in a conversation about
     // one the person attached, named by its NAME -- the window puts its path
     // in (`resolveSlideEditFile`), and a path the model writes is refused.
@@ -3167,6 +3248,30 @@ async function runMcpToolCall(
             ...(args ?? {}),
             file: 'filePath' in resolved ? resolved.filePath : resolved.name,
         };
+    }
+    // A Bible note the same way: changed only in a conversation about one
+    // the person attached, named by its NAME -- the window puts its file and
+    // id in (`resolveNoteEditTarget`); a file or id the model writes is
+    // refused.
+    if (name === NOTE_EDIT_TOOL_NAME) {
+        if (watch.noteFiles === null) {
+            return (
+                `Tool refused: ${NOTE_EDIT_TOOL_NAME} changes a Bible note ` +
+                'the person attached to this chat. Ask them to open it in the ' +
+                'chat (Open in Chatbot, in the menu of its row in the Bible ' +
+                'Notes panel), or use owa_bible_note.'
+            );
+        }
+        const resolved = resolveNoteEditTarget(args ?? {}, watch.noteFiles);
+        if ('reason' in resolved) {
+            return `Tool refused: ${resolved.reason}`;
+        }
+        lyricEditArgs = { ...(args ?? {}), ...resolved };
+    }
+    // In a note conversation, how the note EDITOR works is its own guide's,
+    // whose pages answer only a search aimed at the Bible Note window.
+    if (name === 'owa_help_search' && watch.noteFiles !== null) {
+        lyricEditArgs = { ...(args ?? {}), focus: 'bibleNote' };
     }
     if (checkIsModelRemoval(args)) {
         if (watch.removalCount >= MAX_MODEL_REMOVALS_PER_ASK) {
@@ -3552,6 +3657,28 @@ export type AskExtraType = {
     slide?: {
         files: SlideAskFileType[];
     };
+    /**
+     * A question about a PRESENTING FLOW attached to the tab
+     * (`flowChatHelpers.ts`): the ask carries each flow as it reads now,
+     * and it goes out under `FLOW_SYSTEM_PROMPT` with
+     * `owa_presenting_flow_edit` -- offered to no other question -- with any
+     * picture they attached. `files`: what a `file` the model names is
+     * turned into (`resolveFlowEditFile`).
+     */
+    flow?: {
+        files: FlowAskFileType[];
+    };
+    /**
+     * A question about a BIBLE NOTE attached to the tab
+     * (`noteChatHelpers.ts`): the ask carries each note as it reads now, as
+     * numbered blocks, and it goes out under `NOTE_SYSTEM_PROMPT` with
+     * `owa_note_edit` -- offered to no other question -- beside the guide's
+     * tools and the verse finder. `files`: what a `note` the model names is
+     * turned into (`resolveNoteEditTarget`).
+     */
+    note?: {
+        files: NoteAskFileType[];
+    };
 };
 
 // The frame a `/btw` question goes to the model in. In the USER turn, never
@@ -3757,6 +3884,12 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     }
     if (extra?.slide !== undefined) {
         return SLIDE_SYSTEM_PROMPT;
+    }
+    if (extra?.flow !== undefined) {
+        return FLOW_SYSTEM_PROMPT;
+    }
+    if (extra?.note !== undefined) {
+        return NOTE_SYSTEM_PROMPT;
     }
     return genSystemPrompt(
         focus,
@@ -4031,9 +4164,13 @@ async function askAnthropicCompatible(
                     ? BIBLE_READER_MAX_TOOL_ROUNDS
                     : extra?.lyric !== undefined
                       ? LYRIC_MAX_TOOL_ROUNDS
-                      : extra?.slide !== undefined
-                        ? SLIDE_MAX_TOOL_ROUNDS
-                        : MAX_TOOL_ROUNDS;
+                      : extra?.flow !== undefined
+                        ? FLOW_MAX_TOOL_ROUNDS
+                        : extra?.slide !== undefined
+                          ? SLIDE_MAX_TOOL_ROUNDS
+                          : extra?.note !== undefined
+                            ? NOTE_MAX_TOOL_ROUNDS
+                            : MAX_TOOL_ROUNDS;
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
@@ -4416,9 +4553,13 @@ async function askOpenAiCompatible(
                             ? BIBLE_READER_MAX_TOOL_ROUNDS
                             : extra?.lyric !== undefined
                               ? LYRIC_MAX_TOOL_ROUNDS
-                              : extra?.slide !== undefined
-                                ? SLIDE_MAX_TOOL_ROUNDS
-                                : MAX_TOOL_ROUNDS,
+                              : extra?.flow !== undefined
+                                ? FLOW_MAX_TOOL_ROUNDS
+                                : extra?.slide !== undefined
+                                  ? SLIDE_MAX_TOOL_ROUNDS
+                                  : extra?.note !== undefined
+                                    ? NOTE_MAX_TOOL_ROUNDS
+                                    : MAX_TOOL_ROUNDS,
               );
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
@@ -5009,6 +5150,10 @@ const LOCAL_TOOL_NAME_LIST = [
     LYRIC_EDIT_TOOL_NAME,
     // ...and about a slide document attached to the tab.
     SLIDE_EDIT_TOOL_NAME,
+    // ...and about a presenting flow attached to the tab.
+    FLOW_EDIT_TOOL_NAME,
+    // ...and about a Bible note attached to the tab.
+    NOTE_EDIT_TOOL_NAME,
 ];
 const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
 
@@ -5849,7 +5994,9 @@ async function askLlmBotAsWritten(
         extra?.resources !== undefined ||
         extra?.bibleReader !== undefined ||
         extra?.lyric !== undefined ||
-        extra?.slide !== undefined
+        extra?.flow !== undefined ||
+        extra?.slide !== undefined ||
+        extra?.note !== undefined
             ? null
             : genReaderButtonReferenceAnswer(extra?.askedText ?? asked, focus);
     if (readerButtonAnswer !== null) {
@@ -5893,7 +6040,9 @@ async function askLlmBotAsWritten(
             extra?.resources === undefined &&
             extra?.bibleReader === undefined &&
             extra?.lyric === undefined &&
-            extra?.slide === undefined;
+            extra?.flow === undefined &&
+            extra?.slide === undefined &&
+            extra?.note === undefined;
         seeded.partControls = extra?.knownPartControls ?? [];
         seeded.isWhatAsk = extra?.isKnownWhatAsk === true;
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
@@ -5904,11 +6053,15 @@ async function askLlmBotAsWritten(
             extra?.resources === undefined &&
             extra?.bibleReader === undefined &&
             extra?.lyric === undefined &&
+            extra?.flow === undefined &&
             extra?.slide === undefined &&
+            extra?.note === undefined &&
             extra?.isGeneral !== true &&
             extra?.isTranslation !== true;
         seeded.lyricFiles = extra?.lyric?.files ?? null;
         seeded.slideFiles = extra?.slide?.files ?? null;
+        seeded.flowFiles = extra?.flow?.files ?? null;
+        seeded.noteFiles = extra?.note?.files ?? null;
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
         seeded.verseFindBible = extra?.verseFind?.bible ?? null;
         seeded.lookupPage = extra?.lookup?.page ?? null;
@@ -5968,9 +6121,13 @@ async function askLlmBotAsWritten(
                   ? pickAskToolList(tools, BIBLE_READER_ASK_KIND)
                   : extra?.lyric !== undefined
                     ? pickAskToolList(tools, LYRIC_ASK_KIND)
-                    : extra?.slide !== undefined
-                      ? pickAskToolList(tools, SLIDE_ASK_KIND)
-                      : filterModelToolList(tools);
+                    : extra?.flow !== undefined
+                      ? pickAskToolList(tools, FLOW_ASK_KIND)
+                      : extra?.slide !== undefined
+                        ? pickAskToolList(tools, SLIDE_ASK_KIND)
+                        : extra?.note !== undefined
+                          ? pickAskToolList(tools, NOTE_ASK_KIND)
+                          : filterModelToolList(tools);
     // Every round's usage goes to the spend guard's ledger BEFORE it goes to
     // whoever asked -- here, once, rather than in each provider loop, so
     // that no caller of this function (the window, the report, a rescue, one
@@ -6218,7 +6375,7 @@ async function askLlmBotAsWritten(
                 ...(answer.shows ?? []),
                 {
                     kind: 'control',
-                    value: `Document List > ${watch.editedLyric.name}`,
+                    value: toEditedDocumentListValue(watch.editedLyric),
                     name: 'Show it in the list',
                 },
             ];

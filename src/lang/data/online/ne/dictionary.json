@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "सहायकले यो गीत बदल्यो।",
     "Load the change": "परिवर्तन लोड गर्नुहोस्",
     "Create Lyric": "गीतको बोल बनाउनुहोस्",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "बाइबलको हरेक पद गीतको एउटा अन्तरा बन्छ, छानिएको हरेक बाइबल संस्करणका लागि एउटा पङ्क्ति हुन्छ"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "बाइबलको हरेक पद गीतको एउटा अन्तरा बन्छ, छानिएको हरेक बाइबल संस्करणका लागि एउटा पङ्क्ति हुन्छ",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” तल संलग्न छ। म तपाईंका लागि यो आराधना क्रम बदल्न सक्छु: गीत, स्लाइड कागजात, बाइबल खण्ड, कार्य र काउन्टडाउन नामबाट थप्न; पङ्क्तिहरू हटाउन, सार्न, प्रतिलिपि गर्न वा किनारा लगाउन; टाइमर, सर्टकट, रङ र स्क्रिन मिलाउन; र CC तत्वहरू संलग्न गर्न। तपाईंको आराधनाको कार्यक्रम-सूची टाँस्नुहोस् वा त्यसको तस्बिर पठाउनुहोस्, म त्यसैबाट क्रम बनाइदिन्छु। एउटा थिच्नुहोस्, वा तपाईं के चाहनुहुन्छ भन्नुहोस्।",
+    "Check the running order": "कार्यक्रमको क्रम जाँच्नुहोस्",
+    "Build it from my order of service": "मेरो आराधनाको कार्यक्रम-सूचीबाट बनाउनुहोस्",
+    "Clear the screen between items": "भागहरूबीच स्क्रिन खाली गर्नुहोस्",
+    "Move on by itself": "आफैँ अघि बढोस्",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” तल संलग्न छ। म तपाईंका लागि यो टिप्पणी बदल्न सक्छु: यसका शब्दहरू बदल्ने वा अनुवाद गर्ने, हिज्जे जाँच्ने, यसलाई शीर्षक र सूचीमा मिलाउने, वा बाइबलका पदहरू थप्ने। म यसको सारांश दिन, यसबारे प्रश्नहरूको जवाफ दिन र टिप्पणी सम्पादकमा जुनसुकै काम कसरी गर्ने भनेर बुझाउन पनि सक्छु। एउटा थिच्नुहोस्, वा तपाईंलाई के चाहिन्छ भन्नुहोस्।",
+    "Summarize this note": "यो टिप्पणीको सारांश देऊ",
+    "Tidy it into headings and lists": "यसलाई शीर्षक र सूचीमा मिलाऊ"
 }

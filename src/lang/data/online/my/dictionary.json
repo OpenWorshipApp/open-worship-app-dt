@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "အကူအညီပေးသူက ဤသီချင်းကို ပြောင်းလိုက်သည်။",
     "Load the change": "ပြောင်းလဲမှုကို တင်ပါ",
     "Create Lyric": "သီချင်းစာသား ဖန်တီးရန်",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "သမ္မာကျမ်းစာ ကျမ်းပိုဒ်တိုင်းသည် သီချင်းအပိုဒ်တစ်ပိုဒ် ဖြစ်လာပြီး ရွေးချယ်ထားသော သမ္မာကျမ်းစာဗားရှင်းတစ်ခုစီအတွက် စာကြောင်းတစ်ကြောင်းစီ ပါဝင်သည်"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "သမ္မာကျမ်းစာ ကျမ်းပိုဒ်တိုင်းသည် သီချင်းအပိုဒ်တစ်ပိုဒ် ဖြစ်လာပြီး ရွေးချယ်ထားသော သမ္မာကျမ်းစာဗားရှင်းတစ်ခုစီအတွက် စာကြောင်းတစ်ကြောင်းစီ ပါဝင်သည်",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” ကို အောက်တွင် ပူးတွဲထားသည်။ ဤတင်ဆက်မှု အစီအစဉ်ကို သင့်အတွက် ပြောင်းပေးနိုင်သည် - သီချင်းများ၊ ဆလိုက် စာရွက်စာတမ်းများ၊ ကျမ်းစာအပိုင်းများ၊ လုပ်ဆောင်ချက်များနှင့် နောက်ပြန်ရေတွက်ချိန်များကို အမည်ဖြင့် ထည့်ခြင်း၊ အတန်းများကို ဖယ်ရှားခြင်း၊ ရွှေ့ခြင်း၊ ကူးခြင်း သို့မဟုတ် ခေတ္တ ဘေးဖယ်ထားခြင်း၊ အချိန်တိုင်းကိရိယာ၊ ဖြတ်လမ်း၊ အရောင်နှင့် မျက်နှာပြင်များ သတ်မှတ်ခြင်းနှင့် CC အစိတ်အပိုင်းများ ပူးတွဲခြင်း။ သင့်ဝတ်ပြုအစီအစဉ်ကို ကူးထည့်ပါ သို့မဟုတ် ၎င်း၏ပုံကို ပို့ပေးပါ၊ ၎င်းမှ အစီအစဉ်ကို တည်ဆောက်ပေးပါမည်။ တစ်ခုကို နှိပ်ပါ သို့မဟုတ် သင်လိုချင်သည်ကို ပြောပါ။",
+    "Check the running order": "အစီအစဉ် အစဉ်လိုက်ကို စစ်ရန်",
+    "Build it from my order of service": "ကျွန်ုပ်၏ ဝတ်ပြုအစီအစဉ်မှ တည်ဆောက်ရန်",
+    "Clear the screen between items": "အကြောင်းအရာများကြားတွင် မျက်နှာပြင် ရှင်းရန်",
+    "Move on by itself": "အလိုအလျောက် ရှေ့ဆက်ရန်",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ကို အောက်တွင် ပူးတွဲထားပါသည်။ ဤမှတ်စုကို သင့်အတွက် ပြောင်းပေးနိုင်ပါသည်- စကားလုံးများကို ပြောင်းခြင်း သို့မဟုတ် ဘာသာပြန်ခြင်း၊ စာလုံးပေါင်း စစ်ဆေးခြင်း၊ ခေါင်းစဉ်များနှင့် စာရင်းများအဖြစ် စီစဉ်ခြင်း သို့မဟုတ် သမ္မာကျမ်းစာ ကျမ်းချက်များ ထည့်ခြင်း။ ၎င်းကို အကျဉ်းချုပ်ပေးခြင်း၊ ၎င်းအကြောင်း မေးခွန်းများကို ဖြေခြင်းနှင့် မှတ်စုတည်းဖြတ်ကိရိယာတွင် မည်သည့်အရာကိုမဆို မည်သို့လုပ်ရမည်ကို ရှင်းပြခြင်းတို့လည်း လုပ်ပေးနိုင်ပါသည်။ တစ်ခုကို နှိပ်ပါ သို့မဟုတ် သင်လိုချင်သည်ကို ပြောပါ။",
+    "Summarize this note": "ဤမှတ်စုကို အကျဉ်းချုပ်ပါ",
+    "Tidy it into headings and lists": "ခေါင်းစဉ်များနှင့် စာရင်းများအဖြစ် စီစဉ်ပါ"
 }

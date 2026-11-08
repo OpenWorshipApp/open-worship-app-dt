@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Asistan bu ilahiyi değiştirdi.",
     "Load the change": "Değişikliği yükle",
     "Create Lyric": "Şarkı Sözü Oluştur",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kutsal Kitap'taki her ayet şarkının bir kıtası olur ve seçilen her Kutsal Kitap çevirisi için bir satır içerir"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kutsal Kitap'taki her ayet şarkının bir kıtası olur ve seçilen her Kutsal Kitap çevirisi için bir satır içerir",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” aşağıda ekli. Bu ayin akışını sizin için değiştirebilirim: ilahileri, slayt belgelerini, Kutsal Kitap bölümlerini, eylemleri ve geri sayımları adıyla eklemek; satırları kaldırmak, taşımak, kopyalamak veya askıya almak; zamanlayıcıları, kısayolları, renkleri ve ekranları ayarlamak; ve CC öğeleri iliştirmek. Ayin programınızı yapıştırın ya da fotoğrafını gönderin, akışı ondan oluşturayım. Birine basın ya da ne istediğinizi söyleyin.",
+    "Check the running order": "Akış sırasını denetle",
+    "Build it from my order of service": "Ayin programımdan oluştur",
+    "Clear the screen between items": "Bölümler arasında ekranı temizle",
+    "Move on by itself": "Kendiliğinden ilerlesin",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” aşağıya eklendi. Bu notu sizin için değiştirebilirim: sözcüklerini değiştirmek ya da çevirmek, yazımı denetlemek, onu başlıklar ve listeler hâlinde düzenlemek veya Kutsal Kitap ayetleri eklemek. Ayrıca onu özetleyebilir, onunla ilgili soruları yanıtlayabilir ve not düzenleyicide her şeyin nasıl yapılacağını açıklayabilirim. Birine basın ya da ne istediğinizi söyleyin.",
+    "Summarize this note": "Bu notu özetle",
+    "Tidy it into headings and lists": "Başlıklar ve listeler hâlinde düzenle"
 }

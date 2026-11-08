@@ -25,6 +25,11 @@ const RECIPE_ID_ASIDE_PATTERN =
     /[ \t]*[([][^)\]\n]*\b[A-Z]{1,3}[-‐-–−]\d{1,3}[a-z]?\b[^)\]\n]*[)\]]/g;
 
 const UNKNOWN_PAGE_TEXT = 'the guide page';
+// A page of the Bible Note editor's own guide, by its id
+// (`bible-note:ui/sticky-notes/add-a-sticky-note`, `help.mjs`): the same
+// handle, and the same rule. Unknown, it reads as what its last part says.
+const BIBLE_NOTE_GUIDE_ID_PATTERN =
+    /\bbible-note:ui\/(?:[a-z0-9-]+\/)*([a-z0-9-]+)/gi;
 // The shape also fits a few real-world tokens an answer may legitimately
 // carry -- "UTF-8", "USB-3", "COM-1" -- which are not ids of anything and
 // must be left alone. The knowledge's own families are all letters that
@@ -53,7 +58,7 @@ export function scrubAnswerRecipeIds(
     text: string,
     pageTitles: Record<string, string> = {},
 ): string {
-    const source = String(text ?? '');
+    const source = scrubGuideIds(String(text ?? ''), pageTitles);
     if (source.search(RECIPE_ID_PATTERN) === -1) {
         return source;
     }
@@ -85,6 +90,25 @@ export function scrubAnswerRecipeIds(
             // aside can leave a space in front of the full stop.
             .replace(/[ \t]+([.,;:])/g, '$1')
             .replace(/(?<=\S)[ \t]{2,}/g, ' ')
+    );
+}
+
+function scrubGuideIds(text: string, pageTitles: Record<string, string>) {
+    if (text.search(BIBLE_NOTE_GUIDE_ID_PATTERN) === -1) {
+        return text;
+    }
+    return text.replace(
+        new RegExp(BIBLE_NOTE_GUIDE_ID_PATTERN.source, 'gi'),
+        (id: string, lastPart: string, offset: number, whole: string) => {
+            const title =
+                pageTitles[id] ??
+                pageTitles[id.toLowerCase()] ??
+                lastPart.replace(/-+/g, ' ');
+            const phrase = `${UNKNOWN_PAGE_TEXT} “${title}”`;
+            return checkIsSentenceStart(whole, offset)
+                ? phrase[0].toUpperCase() + phrase.slice(1)
+                : phrase;
+        },
     );
 }
 

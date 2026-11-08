@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
 
-import { toNoteContentText, toNoteFileText } from './noteFileTextHelpers';
+import {
+    toNoteContentText,
+    toNoteFileText,
+    toNoteItemFromFileText,
+} from './noteFileTextHelpers';
 
 // The editor's own tree, as a note file stores it: a JSON string inside JSON.
 function toContent(children: any[]) {
@@ -93,5 +97,56 @@ describe('a Bible note file as words', () => {
         expect(toNoteFileText('{"items": []}')).toBe(
             '(this note file has no notes in it)',
         );
+    });
+});
+
+// 2026-11-07: Open in Chatbot on a note row attaches THAT note.
+describe('one note of a file, by its id', () => {
+    const file = JSON.stringify({
+        items: [
+            {
+                title: 'Sunday',
+                content: JSON.stringify({
+                    root: {
+                        type: 'root',
+                        children: [
+                            {
+                                type: 'heading',
+                                children: [{ type: 'text', text: 'Grace' }],
+                            },
+                        ],
+                    },
+                }),
+                metadata: { id: 0 },
+            },
+            { title: '  ', content: '', metadata: { id: 2 } },
+            {
+                title: 'John 3:16',
+                verseKey: 'JHN 3:16',
+                content: 'JHN 3:16',
+                metadata: { id: 5 },
+            },
+        ],
+    });
+
+    test('is its title and its words', () => {
+        expect(toNoteItemFromFileText(file, 0)).toEqual({
+            title: 'Sunday',
+            text: '## Grace',
+        });
+    });
+
+    test('a note with no title or words is Unnamed and empty', () => {
+        expect(toNoteItemFromFileText(file, 2)).toEqual({
+            title: 'Unnamed',
+            text: '(empty)',
+        });
+    });
+
+    test('a marked verse, a missing id and a broken file are no note', () => {
+        expect(toNoteItemFromFileText(file, 5)).toBeNull();
+        expect(toNoteItemFromFileText(file, 9)).toBeNull();
+        expect(toNoteItemFromFileText('not json', 0)).toBeNull();
+        expect(toNoteItemFromFileText('{"x":1}', 0)).toBeNull();
     });
 });

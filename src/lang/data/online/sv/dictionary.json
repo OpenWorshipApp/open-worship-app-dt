@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Assistenten har ändrat den här sången.",
     "Load the change": "Läs in ändringen",
     "Create Lyric": "Skapa sångtext",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Varje bibelvers blir en vers i sångtexten, med en rad för varje vald bibelöversättning"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Varje bibelvers blir en vers i sångtexten, med en rad för varje vald bibelöversättning",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "”{name}” är bifogad nedan. Jag kan ändra den här gudstjänstordningen åt dig: lägga till sånger, bilddokument, bibelställen, åtgärder och nedräkningar med namn; ta bort, flytta, kopiera eller parkera rader; ställa in timers, kortkommandon, färger och skärmar; och bifoga CC-element. Klistra in ditt gudstjänstprogram eller skicka en bild av det, så bygger jag ordningen utifrån det. Tryck på ett alternativ, eller säg vad du vill.",
+    "Check the running order": "Kontrollera körordningen",
+    "Build it from my order of service": "Bygg den från mitt gudstjänstprogram",
+    "Clear the screen between items": "Rensa skärmen mellan punkterna",
+    "Move on by itself": "Låt den gå vidare själv",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "{name}” är bifogad nedan. Jag kan ändra den här anteckningen åt dig: ändra eller översätta dess ord, kontrollera stavningen, ordna den i rubriker och listor eller lägga till bibelverser. Jag kan också sammanfatta den, svara på frågor om den och förklara hur man gör vad som helst i anteckningsredigeraren. Tryck på en, eller säg vad du vill.",
+    "Summarize this note": "Sammanfatta den här anteckningen",
+    "Tidy it into headings and lists": "Ordna den i rubriker och listor"
 }

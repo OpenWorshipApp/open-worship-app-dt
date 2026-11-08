@@ -224,13 +224,16 @@ const SESSIONS_SETTING_NAME = 'chatbot-sessions';
 export const MAX_SESSION_COUNT = 12;
 const MAX_MESSAGE_COUNT = 60;
 const MAX_TITLE_LENGTH = 26;
-// Three buttons on one message. Re-applied on READ as well as on write: this
-// file is plain JSON on disk and a hand-edited one must not be able to draw
-// forty buttons into a 460px window. The length is a guard against absurd
-// data, not a layout rule -- a follow-up drawn from the question corpus is a
-// whole question ("A panel has disappeared - how do I get it back?") and
-// cutting one in half would be worse than showing it wrapped.
-const MAX_REPLY_COUNT = 3;
+// Five buttons on one message -- a document's opening card (a song's, a
+// slide document's, a note's) carries five, and at three a reopened window
+// had lost the card's last two (2026-11-07). Re-applied on READ as well as on
+// write: this file is plain JSON on disk and a hand-edited one must not be
+// able to draw forty buttons into a 460px window. The length is a guard
+// against absurd data, not a layout rule -- a follow-up drawn from the
+// question corpus is a whole question ("A panel has disappeared - how do I
+// get it back?") and cutting one in half would be worse than showing it
+// wrapped.
+const MAX_REPLY_COUNT = 5;
 const MAX_REPLY_LENGTH = 120;
 // "LM Studio super-computer · Gemma 4 12B": a server's name and a model's,
 // both of which are capped where they are typed. A guard, like the reply's.
@@ -495,6 +498,12 @@ function toValidAttachments(raw: any) {
                 one.pageCount > 0 &&
                 one.pageCount < 1000000
                     ? { pageCount: one.pageCount }
+                    : {}),
+                // Which note of a Bible notes file it is.
+                ...(one.kind === 'text' &&
+                Number.isSafeInteger(one.noteId) &&
+                one.noteId >= 0
+                    ? { noteId: one.noteId }
                     : {}),
             };
         });

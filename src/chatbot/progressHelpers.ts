@@ -423,6 +423,19 @@ const DATA_STEP_MAP: Record<string, Record<string, () => string>> = {
         park: () => tran('Parking a line of a run sheet'),
         unpark: () => tran('Putting a parked line back in the run'),
     },
+    // ONE presenting flow the help window has open (2026-11-07): the run
+    // sheet's own lines, so no new words.
+    owa_presenting_flow_edit: {
+        lines: () => tran('Reading a run sheet'),
+        'update-lines': () => tran('Working on a run sheet'),
+        'remove-lines': () => tran('Taking a line off a run sheet'),
+    },
+    // ONE Bible note the help window has open (2026-11-07): the note
+    // tool's own words.
+    owa_note_edit: {
+        read: () => tran('Reading a Bible note'),
+        edit: () => tran('Changing a Bible note'),
+    },
 };
 
 const DATA_STEP_FALLBACK_MAP: Record<string, () => string> = {
@@ -704,6 +717,8 @@ export function describeToolStep(name: string, args: any): string {
         case 'owa_bible_note':
         case 'owa_undo':
         case 'owa_presenting_flow':
+        case 'owa_presenting_flow_edit':
+        case 'owa_note_edit':
             return describeDataStep(name, args);
         case 'owa_guide_start':
             return tran('Setting up a walkthrough');

@@ -85,9 +85,22 @@ export function takeChatbotReport(): string | null {
 const FILE_HANDOFF_KEY = 'chatbot-handoff-file';
 const FILE_HANDOFF_MAX_CHARS = 4096;
 
+// WHICH note of a Bible notes file (2026-11-07, the user, with a note row's
+// menu open: _add `Open in Chatbot` for bible-note_): a `.own` holds many
+// notes, and the conversation is about one of them. Its id, checked both
+// ways -- a hand-edited setting cannot name anything but a note number.
+export function toValidNoteId(noteId: unknown) {
+    return typeof noteId === 'number' &&
+        Number.isSafeInteger(noteId) &&
+        noteId >= 0
+        ? noteId
+        : null;
+}
+
 export function requestChatbotFile(
     filePath: string,
     reading: ResourceReadingType | null = null,
+    noteId: number | null = null,
 ) {
     if (filePath.length > FILE_HANDOFF_MAX_CHARS) {
         return;
@@ -95,11 +108,13 @@ export function requestChatbotFile(
     // The passage the Reader was on rides beside the path (2026-10-22,
     // `resourceReadingAskHelpers.ts`), checked on the way in and out.
     const validReading = toValidResourceReading(reading);
+    const validNoteId = toValidNoteId(noteId);
     setSetting(
         FILE_HANDOFF_KEY,
         JSON.stringify({
             filePath,
             ...(validReading === null ? {} : { reading: validReading }),
+            ...(validNoteId === null ? {} : { noteId: validNoteId }),
             at: Date.now(),
         }),
     );
@@ -108,6 +123,7 @@ export function requestChatbotFile(
 export type ChatbotFileRequestType = {
     filePath: string;
     reading: ResourceReadingType | null;
+    noteId: number | null;
 };
 
 /**
@@ -135,6 +151,7 @@ export function takeChatbotFileRequest(): ChatbotFileRequestType | null {
         return {
             filePath: data.filePath,
             reading: toValidResourceReading(data.reading),
+            noteId: toValidNoteId(data.noteId),
         };
     } catch (_error) {
         return null;

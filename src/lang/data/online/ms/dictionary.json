@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Pembantu telah mengubah lagu ini.",
     "Load the change": "Muatkan perubahan",
     "Create Lyric": "Cipta Lirik",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Setiap ayat Alkitab menjadi satu rangkap lirik, dengan satu baris bagi setiap versi Alkitab yang dipilih"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Setiap ayat Alkitab menjadi satu rangkap lirik, dengan satu baris bagi setiap versi Alkitab yang dipilih",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” dilampirkan di bawah. Saya boleh mengubah aturan ibadat ini untuk anda: menambah lagu, dokumen slaid, petikan Alkitab, tindakan dan kira detik mengikut nama; membuang, mengalih, menyalin atau menyimpan baris ke tepi; menetapkan pemasa, pintasan, warna dan skrin; serta melampirkan elemen CC. Tampalkan atur cara ibadat anda atau hantarkan gambarnya, dan saya akan membina aturan daripadanya. Tekan satu, atau beritahu apa yang anda mahu.",
+    "Check the running order": "Semak susunan acara",
+    "Build it from my order of service": "Bina daripada atur cara ibadat saya",
+    "Clear the screen between items": "Kosongkan skrin di antara item",
+    "Move on by itself": "Teruskan secara automatik",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” dilampirkan di bawah. Saya boleh mengubah nota ini untuk anda: mengubah atau menterjemah perkataannya, menyemak ejaan, menyusunnya menjadi tajuk dan senarai, atau menambah ayat Alkitab. Saya juga boleh meringkaskannya, menjawab soalan tentangnya, dan menerangkan cara melakukan apa-apa sahaja dalam editor nota. Tekan salah satu, atau katakan apa yang anda mahu.",
+    "Summarize this note": "Ringkaskan nota ini",
+    "Tidy it into headings and lists": "Susun menjadi tajuk dan senarai"
 }

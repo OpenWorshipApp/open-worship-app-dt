@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Palīgs mainīja šo dziesmu.",
     "Load the change": "Ielādēt izmaiņas",
     "Create Lyric": "Izveidot dziesmu",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Katrs Bībeles pants kļūst par dziesmas pantu, ar vienu rindu katrai izvēlētajai Bībeles versijai"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Katrs Bībeles pants kļūst par dziesmas pantu, ar vienu rindu katrai izvēlētajai Bībeles versijai",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” ir pievienots zemāk. Es varu jums mainīt šo prezentēšanas plūsmu: pēc nosaukuma pievienot dziesmas, slaidu dokumentus, Bībeles fragmentus, darbības un atpakaļskaitīšanas; noņemt, pārvietot, kopēt vai uz laiku atlikt rindas; iestatīt taimerus, saīsnes, krāsas un ekrānus; un pievienot CC elementus. Ielīmējiet savu dievkalpojuma kārtību vai atsūtiet tās attēlu, un es no tās izveidošu plūsmu. Nospiediet vienu vai pasakiet, ko vēlaties.",
+    "Check the running order": "Pārbaudīt secību",
+    "Build it from my order of service": "Izveidot no manas dievkalpojuma kārtības",
+    "Clear the screen between items": "Notīrīt ekrānu starp vienībām",
+    "Move on by itself": "Pāriet tālāk automātiski",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” pievienota zemāk. Es varu jūsu vietā mainīt šo piezīmi: mainīt vai tulkot tās vārdus, pārbaudīt pareizrakstību, sakārtot to virsrakstos un sarakstos vai pievienot Bībeles pantus. Es varu arī to apkopot, atbildēt uz jautājumiem par to un paskaidrot, kā piezīmju redaktorā izdarīt jebko. Nospiediet vienu vai pasakiet, ko vēlaties.",
+    "Summarize this note": "Apkopo šo piezīmi",
+    "Tidy it into headings and lists": "Sakārto to virsrakstos un sarakstos"
 }

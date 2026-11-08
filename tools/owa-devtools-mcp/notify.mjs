@@ -95,6 +95,9 @@ const ACTING_TOOLS = {
     // A slide document changed slide by slide or many at once: the slide
     // tool's own news and keys, the document named below. `slides` is quiet.
     owa_slide_edit: 'changed a slide document',
+    // ONE Bible note changed part by part: the note tool's news and key,
+    // the note named below. `read` is quiet.
+    owa_note_edit: 'changed a Bible note',
     // The verse goes on the congregation's screen, so the banner NAMES it:
     // "put a verse on the screen" says nothing the operator can check
     // against the wall. A `check` reads the passage and touches no screen,
@@ -118,6 +121,9 @@ const ACTING_TOOLS = {
     // The run sheets: each action names the sheet and what went in below;
     // this is the generic news the audit script probes for.
     owa_presenting_flow: 'changed a run sheet',
+    // One run sheet the help window has open, changed many lines at a time:
+    // the same news, the sheet named below. `lines` is quiet.
+    owa_presenting_flow_edit: 'changed a run sheet',
     // The Background tabs' files; each action names the file below.
     owa_media_file: 'changed a media file',
 };
@@ -489,6 +495,32 @@ export function describeToolNotice(name, args) {
     if (name === 'owa_find_ui' && args?.highlight !== true) {
         return null;
     }
+    if (name === 'owa_note_edit') {
+        if (args?.action === undefined) {
+            return toNotice(ACTING_TOOLS[name]);
+        }
+        if (args.action !== 'edit') {
+            return null;
+        }
+        // `note` is its name as the window attached it; from an outside
+        // agent there may be only the file.
+        const where = toQuotedName(
+            typeof args?.note === 'string' && args.note.trim() !== ''
+                ? args.note
+                : typeof args?.file === 'string'
+                  ? (args.file
+                        .split(/[\\/]/)
+                        .pop()
+                        ?.replace(/\.own$/i, '') ?? '')
+                  : '',
+            'a note',
+        );
+        return toNotice(
+            `changed the Bible note ${where}`,
+            ACTING_TOOLS[name],
+            [where],
+        );
+    }
     if (name === 'owa_slide_edit') {
         // No action is a probe asking whether the tool announces itself.
         if (args?.action === undefined) {
@@ -514,6 +546,35 @@ export function describeToolNotice(name, args) {
                           ?.replace(/\.ows$/i, '') ?? '')
                     : undefined,
         });
+    }
+    if (name === 'owa_presenting_flow_edit') {
+        if (args?.action === undefined) {
+            return toNotice(ACTING_TOOLS[name]);
+        }
+        if (args.action === 'lines') {
+            return null;
+        }
+        // `file` is a name, or a whole path of which the banner names the
+        // sheet alone.
+        const sheetName =
+            typeof args?.file === 'string'
+                ? (args.file
+                      .split(/[\\/]/)
+                      .pop()
+                      ?.replace(/\.owpf$/i, '') ?? '')
+                : '';
+        if (args.action === 'remove-lines') {
+            return describeToolNotice('owa_presenting_flow', {
+                action: 'remove',
+                name: sheetName,
+            });
+        }
+        const sheet = toQuotedName(sheetName, '');
+        return toNotice(
+            `changed the run sheet ${sheet}`.trim(),
+            ACTING_TOOLS[name],
+            [sheet],
+        );
     }
     if (name === 'owa_lyric_file' || name === 'owa_slide_file') {
         const phrase = AGENT_FILE_PHRASE_MAP[args?.action];

@@ -30,6 +30,12 @@ const mocks = vi.hoisted(() => ({
     openPopup: vi.fn(),
     exportItem: vi.fn(),
     fromFilePath: vi.fn(),
+    genNoteChatbotMenu: vi.fn(),
+}));
+
+// Open in Chatbot (2026-11-07): its own leaf, read for whether AI is on.
+vi.mock('../../helper/ai/noteChatbotMenuHelpers', () => ({
+    genNoteOpenInChatbotContextMenu: mocks.genNoteChatbotMenu,
 }));
 
 vi.mock('../../context-menu/contextMenuIconHelpers', () => ({
@@ -159,6 +165,8 @@ function renderRow(item = noteItem) {
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     vi.clearAllMocks();
+    // As with AI off; the menu test turns it on.
+    mocks.genNoteChatbotMenu.mockReturnValue([]);
     noteItem = { id: 4, title: 'Mercy', filePath: '/notes/Study.own' };
     note = {
         fileSource: { fullName: 'Study.own' },
@@ -259,22 +267,31 @@ describe('Bible note row', () => {
     test('exports the live editing head and closes title editing without saving', async () => {
         await renderRow();
         mocks.getAttachedBackground.mockResolvedValueOnce({ type: 'image' });
+        mocks.genNoteChatbotMenu.mockReturnValueOnce([
+            { menuElement: 'Open in Chatbot' },
+        ]);
         await act(async () =>
             host.querySelector<HTMLButtonElement>('button')!.click(),
         );
         const menuItems = mocks.openItemMenu.mock.calls.at(-1)?.[3];
         expect(menuItems.map((item: any) => item.menuElement)).toEqual([
             'Open',
+            'Open in Chatbot',
             'Edit Title',
             'Export',
             'Remove background',
         ]);
-        await act(async () => menuItems[2].onSelect());
+        // THIS note of the file, by its path and id.
+        expect(mocks.genNoteChatbotMenu).toHaveBeenCalledWith(
+            '/notes/Study.own',
+            4,
+        );
+        await act(async () => menuItems[3].onSelect());
         expect(note.getEditingItemById).toHaveBeenCalledWith(4);
         expect(mocks.exportItem).toHaveBeenCalledWith(
             expect.objectContaining({ title: 'Live title' }),
         );
-        await act(async () => menuItems[1].onSelect());
+        await act(async () => menuItems[2].onSelect());
         expect(host.querySelector('li')!.draggable).toBe(false);
         expect(host.textContent).toContain('Cancel title');
         await act(async () =>
@@ -317,6 +334,21 @@ describe('Bible note row', () => {
         expect(host.textContent).toContain('Unreadable note');
         expect(host.querySelector('li')).toBeNull();
         expect(mocks.openPopup).not.toHaveBeenCalled();
+        // Nothing to talk about: its menu offers no Open in Chatbot.
+        mocks.genNoteChatbotMenu.mockClear();
+        const errorRow = Array.from(host.querySelectorAll('div')).find(
+            (element) => element.textContent === 'Unreadable note',
+        )!;
+        await act(async () =>
+            errorRow.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        expect(mocks.genNoteChatbotMenu).not.toHaveBeenCalled();
+        const menuItems = mocks.openItemMenu.mock.calls.at(-1)?.[3];
+        expect(menuItems.map((item: any) => item.menuElement)).not.toContain(
+            'Open in Chatbot',
+        );
     });
 
     function getOpener() {

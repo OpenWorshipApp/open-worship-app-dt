@@ -194,8 +194,13 @@ vi.mock('../../helper/dirSourceHelpers', () => ({
 }));
 vi.mock('./bibleNoteHelpers', () => ({
     BIBLE_KEY_SETTING_NAME: 'bible-note-bible-key',
+    flushBibleNoteHistory: async () => undefined,
     toStoredContent: (content: string) => content.trim(),
     toEditorContent: (content: string) => `editor:${content}`,
+}));
+// The footer's Open in Chatbot is `bibleNoteHelpers1.test.tsx`'s: AI off here.
+vi.mock('../../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: () => false,
 }));
 vi.mock('../../server/appProvider', () => ({
     default: { browserUtils: { openExternalURL: h.openExternalURL } },

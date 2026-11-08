@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Mataimaki ya canza wannan waƙa.",
     "Load the change": "Loda canjin",
     "Create Lyric": "Ƙirƙiri Waƙa",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kowace ayar Littafi Mai Tsarki za ta zama baiti na waƙa, da layi ɗaya ga kowace fassarar Littafi Mai Tsarki da aka zaɓa"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Kowace ayar Littafi Mai Tsarki za ta zama baiti na waƙa, da layi ɗaya ga kowace fassarar Littafi Mai Tsarki da aka zaɓa",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "An haɗa “{name}” a ƙasa. Zan iya canza maka wannan tsarin gabatarwa: ƙara waƙoƙi, takardun silaidi, nassoshin Littafi Mai Tsarki, ayyuka da ƙidayar baya da sunansu; cire, matsa, kwafa ko ajiye layuka a gefe; saita agogon lokaci, gajerun hanyoyi, launuka da alluna; da haɗa abubuwan CC. Liƙa tsarin ibadarku ko aiko min da hotonsa, zan gina tsarin daga gare shi. Danna ɗaya, ko faɗi abin da kake so.",
+    "Check the running order": "Duba jerin gudanarwa",
+    "Build it from my order of service": "Gina shi daga tsarin ibadata",
+    "Clear the screen between items": "Share allo tsakanin abubuwa",
+    "Move on by itself": "Ci gaba da kansa",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” an haɗa shi a ƙasa. Zan iya canza wannan bayanin a gare ka: canza kalmominsa ko fassara su, duba rubutun kalmomi, tsara shi zuwa kanun labarai da jeri, ko ƙara ayoyin Littafi Mai Tsarki. Zan iya kuma taƙaita shi, amsa tambayoyi game da shi, da bayyana yadda ake yin kowane abu a cikin editan bayanai. Danna ɗaya, ko faɗi abin da kake so.",
+    "Summarize this note": "Taƙaita wannan bayanin",
+    "Tidy it into headings and lists": "Tsara shi zuwa kanun labarai da jeri"
 }

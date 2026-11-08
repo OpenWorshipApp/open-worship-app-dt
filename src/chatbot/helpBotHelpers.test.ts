@@ -41,6 +41,19 @@ beforeEach(() => {
 });
 
 describe('walkthrough actions', () => {
+    // 2026-11-07: the note editor's own guide walks only in its window.
+    test('a page of the note editor guide walks only in the note window', () => {
+        expect(
+            genGuideActions({ id: 'bible-note:ui/sticky-notes/add' }, 'reader'),
+        ).toEqual([]);
+        expect(
+            genGuideActions(
+                { id: 'bible-note:ui/sticky-notes/add' },
+                'bibleNote',
+            ).length,
+        ).toBeGreaterThan(0);
+    });
+
     test('carry the exact question into a broad manual recipe', () => {
         const actions = genGuideActions(
             { id: 'W-11' },

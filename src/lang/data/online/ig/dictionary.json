@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Onye inyeaka agbanweela abụ a.",
     "Load the change": "Bulite mgbanwe ahụ",
     "Create Lyric": "Mepụta Abụ",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Amaokwu Bible ọ bụla na-aghọ amaokwu abụ, nke nwere otu ahịrị maka nsụgharị Bible ọ bụla a họọrọ"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Amaokwu Bible ọ bụla na-aghọ amaokwu abụ, nke nwere otu ahịrị maka nsụgharị Bible ọ bụla a họọrọ",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "Etinyere “{name}” n’okpuru. Enwere m ike ịgbanwere gị usoro ngosi a: ịgbakwunye abụ, dọkụmentị slaịdị, akụkụ Baịbụl, omume na ngụgụ azụ site n’aha ha; iwepụ, ibugharị, idegharị ma ọ bụ ịkwụsịtụ ahịrị; ịtọ ngụ oge, ụzọ mkpirisi, agba na ihuenyo; na itinye ihe CC. Mado usoro ofufe gị ma ọ bụ zite foto ya, m ga-esite na ya wuo usoro ngosi ahụ. Pịa otu, ma ọ bụ kwuo ihe ị chọrọ.",
+    "Check the running order": "Lelee usoro ihe omume",
+    "Build it from my order of service": "Wuo ya site n’usoro ofufe m",
+    "Clear the screen between items": "Kpochapụ ihuenyo n’etiti ihe ọ bụla",
+    "Move on by itself": "Gaa n’ihu n’onwe ya",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "E jikọtara “{name}” n'okpuru. Enwere m ike ịgbanwere gị ndetu a: ịgbanwe ma ọ bụ ịsụgharị okwu ya, ịlele nsupe, ịhazi ya n'isiokwu na ndepụta, ma ọ bụ ịgbakwunye amaokwu Baịbụl. Enwekwara m ike ịchịkọta ya, ịza ajụjụ gbasara ya, na ịkọwa otu e si eme ihe ọ bụla na nchịkọta ndetu. Pịa otu, ma ọ bụ kwuo ihe ị chọrọ.",
+    "Summarize this note": "Chịkọta ndetu a",
+    "Tidy it into headings and lists": "Hazie ya n'isiokwu na ndepụta"
 }

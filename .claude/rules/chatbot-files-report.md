@@ -400,3 +400,48 @@ window as a whole — tabs, pickers, its language, the caution — is in
   menu. And _list me more options_, _what can you do?_, _help_ (English,
   a few words and nothing more, `checkIsDocumentOptionsAsk`) show the
   document's card again with no model.
+
+- **A presenting flow is attached as its lines and changed in its tab**
+  (2026-11-07). A `.owpf` attachment is a line a line, title and kind
+  (`toFlowFileText` in `src/chatbot/flowChatHelpers.ts`), never the JSON. A
+  presenting flow's row menu carries **[en:tran:Open in Chatbot]** right
+  under **[en:tran:Open Preview]** (`PresentingFlowFileComp`, spliced in
+  outside the menu's memo so the AI switch is read when the row draws) and
+  hands it over through `openDocumentInChatbot`; the window opens it under
+  a card written with no model (`genFlowOpeningAnswer`) with four buttons
+  the user chose: **Check the running order**, **Build it from my order of
+  service**, **Clear the screen between items**, **Move on by itself** --
+  each a question pressed, carrying its own hint (`readFlowButtonHint`).
+  A question while it is open is a `flow` ask (`chatbot-llm.md`), the sheet
+  read again (`owa_presenting_flow_edit lines`) before every question and
+  shown as plain lines (`toFlowSheetText`); a picture of the bulletin
+  attached after it keeps it open (`findOpenFlowAttachments`, the slide
+  finder with a name test), and a flow attached now, or after slides, wins
+  over a slide document still open in the tab (`pickOpenDocumentKind`). A
+  send with no words builds the running order from what was attached
+  (`FLOW_WORDLESS_HINT`). After a change the answer carries
+  **[en:tran:Undo this change]** and **[en:tran:Show it in the list]**, which rings the row
+  in `Presenting Flow List` (`EditedLyricType.listName`,
+  `toEditedDocumentListValue`); there is no Save to press, the change being
+  the file.
+
+- **A Bible note is attached ONE NOTE at a time and changed in its tab**
+  (2026-11-07). A `.own` file holds many notes, so a note row's
+  **[en:tran:Open in Chatbot]** (right under **[en:tran:Open]**, not on a
+  verse's marks nor an unreadable row; `noteChatbotMenuHelpers.ts`) and the
+  Bible Note window's footer robot (`bibleNoteHelpers1.tsx`, after flushing
+  the window's pending history write) hand over the path AND the note's id
+  (`requestChatbotFile(path, null, noteId)`, checked both ways). The window
+  attaches that note alone (`genAttachmentFromPath(path, noteId)`, its title
+  on the chip, `noteId` persisted) under a card written with no model
+  (`genNoteOpeningAnswer`): the two translate buttons,
+  **[en:tran:Check the spelling]**, **[en:tran:Summarize this note]**,
+  **[en:tran:Tidy it into headings and lists]**. A question while it is open
+  is a `note` ask (`chatbot-llm.md`), the note read again from its editing
+  head before every question. A note attached now, or opened after a slide
+  document or a running order, is the one asked about
+  (`checkIsNoteOpenedLast`). After a change the answer carries
+  **[en:tran:Undo this change]** and **[en:tran:Show it in the list]**
+  (`Bible Notes > <title>`). **A saved conversation keeps five buttons on a
+  message now**, not three: a reopened window had dropped the last two of
+  every document card's five.

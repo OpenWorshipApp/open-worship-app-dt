@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Umncedisi uyitshintshile le ngoma.",
     "Load the change": "Layisha utshintsho",
     "Create Lyric": "Yenza Ingoma",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Indinyana nganye yeBhayibhile iba yindinyana yengoma, enomgca omnye kuguqulelo ngalunye lweBhayibhile olukhethiweyo"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Indinyana nganye yeBhayibhile iba yindinyana yengoma, enomgca omnye kuguqulelo ngalunye lweBhayibhile olukhethiweyo",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "I-“{name}” iqhotyoshelwe ngezantsi. Ndingakutshintshela olu landelelwano lomboniso: ndongeze ngamagama azo iingoma, amaxwebhu ezilayidi, izicatshulwa zeBhayibhile, izenzo nokubala ngasemva; ndisuse, ndihambise, ndikope okanye ndikhubaze imigca; ndimisele izibali-xesha, izinqumlisi, imibala nezikrini; kwaye ndiqhoboshele izinto ze-CC. Ncamathisela ucwangciso lwenkonzo yakho okanye undithumelele umfanekiso walo, ndiza kwakha ulandelelwano kulo. Cofa enye, okanye uthethe into oyifunayo.",
+    "Check the running order": "Jonga ulandelelwano",
+    "Build it from my order of service": "Lwakhe ngocwangciso lwenkonzo yam",
+    "Clear the screen between items": "Coca isikrini phakathi kwezinto",
+    "Move on by itself": "Maluqhubeke lodwa",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” iqhotyoshelwe ngezantsi. Ndingakutshintshela eli nqaku: ukutshintsha okanye ukuguqulela amagama alo, ukujonga upelo, ukulilungisa libe zizihloko noluhlu, okanye ukongeza iivesi zeBhayibhile. Ndingakwazi nokulishwankathela, ukuphendula imibuzo ngalo, nokuchaza indlela yokwenza nantoni na kumhleli wamanqaku. Cofa enye, okanye uthethe into oyifunayo.",
+    "Summarize this note": "Shwankathela eli nqaku",
+    "Tidy it into headings and lists": "Lilungise libe zizihloko noluhlu"
 }

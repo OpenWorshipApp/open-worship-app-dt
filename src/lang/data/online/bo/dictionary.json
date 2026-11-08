@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "རོགས་པས་གཞས་འདི་བསྒྱུར་སོང་།",
     "Load the change": "འགྱུར་བ་ནང་འཇུག",
     "Create Lyric": "གླུ་ཚིག་བཟོ",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "དམ་པའི་གསུང་རབ་ཀྱི་ཚིགས་བཅད་རེ་རེ་གླུ་ཚིག་གི་ཚིགས་བཅད་རེ་རུ་འགྱུར། འདེམས་ཟིན་པའི་དམ་པའི་གསུང་རབ་པར་གཞི་རེ་རེར་ཐིག་ཕྲེང་རེ་ཡོད"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "དམ་པའི་གསུང་རབ་ཀྱི་ཚིགས་བཅད་རེ་རེ་གླུ་ཚིག་གི་ཚིགས་བཅད་རེ་རུ་འགྱུར། འདེམས་ཟིན་པའི་དམ་པའི་གསུང་རབ་པར་གཞི་རེ་རེར་ཐིག་ཕྲེང་རེ་ཡོད",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” འོག་ཏུ་མཉམ་སྦྱར་བྱས་ཡོད། ངས་ཁྱེད་ཀྱི་ཆེད་དུ་འགྲེམས་སྟོན་གོ་རིམ་འདི་བསྒྱུར་ཐུབ། མིང་ནས་གླུ་དབྱངས་དང་། བརྙན་ཤོག་ཡིག་ཚགས། གསུང་རབ་ཀྱི་ལུང་ཚན། བྱ་སྤྱོད། རྒྱབ་གྲངས་རྣམས་ཁ་སྣོན་བྱེད་པ། ཐིག་ཕྲེང་སུབ་པ། སྤོ་བ། འདྲ་བཤུས་བྱེད་པ། ཡང་ན་ཟུར་དུ་འཇོག་པ། དུས་ཚོད་རྩིས་ཆས་དང་། མྱུར་མཐེབ། ཚོན་མདོག བརྙན་ཡོལ་རྣམས་སྒྲིག་པ། དེ་བཞིན་དུ་ CC རྣམ་གྲངས་མཉམ་སྦྱར་བྱེད་པ། ཁྱེད་ཀྱི་མཆོད་ཚོགས་ཀྱི་ལས་རིམ་སྦྱར་བའམ་དེའི་པར་ཞིག་ང་ལ་གཏོང་དང་། ངས་དེ་ལས་གོ་རིམ་བཟོ་ཐུབ། གཅིག་མནན་པའམ། ཁྱེད་ཀྱིས་ཅི་འདོད་པ་གསུངས།",
+    "Check the running order": "གོ་རིམ་ཞིབ་བཤེར",
+    "Build it from my order of service": "ངའི་མཆོད་ཚོགས་ལས་རིམ་ནས་བཟོ",
+    "Clear the screen between items": "རྣམ་གྲངས་བར་དུ་བརྙན་ཡོལ་གཙང་སེལ",
+    "Move on by itself": "རང་འགུལ་གྱིས་མདུན་དུ་སྐྱོད",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” འོག་ཏུ་སྦྲེལ་ཡོད། ངས་ཟིན་བྲིས་འདི་ཁྱེད་ཀྱི་ཆེད་དུ་བཟོ་བཅོས་བྱེད་ཐུབ། ཚིག་བརྗེ་བའམ་ཡིག་སྒྱུར་བྱེད་པ། དག་ཆ་ཞིབ་བཤེར་བྱེད་པ། ཁ་བྱང་དང་ཐོ་གཞུང་དུ་སྒྲིག་པ། ཡང་ན་དཀོན་མཆོག་གི་གསུང་རབ་ཀྱི་ལུང་ཚིག་སྣོན་པ་བཅས། དེ་མིན་ངས་དེའི་གནད་བསྡུས་བྱེད་པ། དེའི་སྐོར་གྱི་དྲི་བར་ལན་འདེབས་པ། ཟིན་བྲིས་རྩོམ་སྒྲིག་ཆས་ནང་ལས་ཀ་གང་ཡང་ཇི་ལྟར་བྱེད་དགོས་པ་འགྲེལ་བཤད་བྱེད་ཐུབ། གཅིག་མནན་པའམ། ཁྱེད་ཀྱིས་ཅི་འདོད་པ་གསུངས།",
+    "Summarize this note": "ཟིན་བྲིས་འདིའི་གནད་བསྡུས་བྱོས།",
+    "Tidy it into headings and lists": "ཁ་བྱང་དང་ཐོ་གཞུང་དུ་སྒྲིག"
 }

@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "助手修改了这首歌。",
     "Load the change": "载入更改",
     "Create Lyric": "创建歌词",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "每节经文成为歌词的一段，每个选定的圣经译本各占一行"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "每节经文成为歌词的一段，每个选定的圣经译本各占一行",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}”已附在下方。我可以替你修改这个崇拜流程：按名称添加歌曲、幻灯片文档、经文段落、操作和倒计时；删除、移动、复制或停用某几行；设置计时器、快捷键、颜色和屏幕；以及附加 CC 元素。粘贴你的崇拜程序单，或发一张它的照片，我就照它建好流程。点按一项，或说出你想要的。",
+    "Check the running order": "检查进行顺序",
+    "Build it from my order of service": "照我的崇拜程序单建立",
+    "Clear the screen between items": "在各项之间清除屏幕",
+    "Move on by itself": "自动往下进行",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}”已附在下方。我可以替你修改这条笔记：修改或翻译其中的文字、检查拼写、整理成标题和列表，或添加圣经经文。我也可以概括它、回答关于它的问题，并解释如何在笔记编辑器中完成任何操作。点按一项，或说出你想要的。",
+    "Summarize this note": "概括这条笔记",
+    "Tidy it into headings and lists": "整理成标题和列表"
 }

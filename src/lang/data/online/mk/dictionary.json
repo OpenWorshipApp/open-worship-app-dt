@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Асистентот ја смени оваа песна.",
     "Load the change": "Вчитај ја промената",
     "Create Lyric": "Создај текст на песна",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Секој библиски стих станува строфа од песната, со по еден ред за секоја избрана верзија на Библијата"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Секој библиски стих станува строфа од песната, со по еден ред за секоја избрана верзија на Библијата",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}“ е прикачен подолу. Можам да го сменам овој тек на презентација за вас: да додадам песни, документи со слајдови, библиски одломци, дејства и одбројувања по име; да отстранам, преместам, копирам или паркирам редови; да поставам тајмери, кратенки, бои и екрани; и да прикачам CC елементи. Залепете го вашиот ред на богослужба или испратете ми слика од него, и според него ќе го составам текот. Притиснете едно или кажете што сакате.",
+    "Check the running order": "Провери го редоследот",
+    "Build it from my order of service": "Состави го од мојот ред на богослужба",
+    "Clear the screen between items": "Исчисти го екранот меѓу ставките",
+    "Move on by itself": "Продолжи автоматски",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}“ е прикачена подолу. Можам да ја сменам оваа белешка за вас: да ги сменам или преведам нејзините зборови, да го проверам правописот, да ја подредам во наслови и списоци или да додадам библиски стихови. Можам и да ја сумирам, да одговорам на прашања за неа и да објаснам како се прави било што во уредувачот на белешки. Притиснете едно или кажете што сакате.",
+    "Summarize this note": "Сумирај ја оваа белешка",
+    "Tidy it into headings and lists": "Подреди ја во наслови и списоци"
 }

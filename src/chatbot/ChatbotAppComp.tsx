@@ -121,6 +121,26 @@ import {
     toSlideDocumentText,
 } from './slideChatHelpers';
 import {
+    NOTE_EDIT_TOOL_NAME,
+    checkIsNoteAttachment,
+    checkIsNoteOpenedLast,
+    findNoteAskFiles,
+    findOpenNoteAttachments,
+    genNoteOpeningAnswer,
+    toNoteAsk,
+    toNoteDocumentText,
+} from './noteChatHelpers';
+import {
+    FLOW_EDIT_TOOL_NAME,
+    checkIsFlowFileName,
+    findFlowAskFiles,
+    findOpenFlowAttachments,
+    genFlowOpeningAnswer,
+    pickOpenDocumentKind,
+    toFlowAsk,
+    toFlowSheetText,
+} from './flowChatHelpers';
+import {
     keepBibleReaderAskUnlessKnown,
     readBibleReaderAsk,
     readBibleReaderBookCandidate,
@@ -5974,9 +5994,10 @@ export default function ChatbotAppComp() {
             sessionId: string,
             filePath: string,
             reading: ResourceReadingType | null = null,
+            noteId: number | null = null,
         ) => {
             setAttachError(null);
-            const result = await genAttachmentFromPath(filePath);
+            const result = await genAttachmentFromPath(filePath, noteId);
             if ('failure' in result) {
                 addMessage(sessionId, { author: 'bot', text: result.failure });
                 return;
@@ -6002,6 +6023,23 @@ export default function ChatbotAppComp() {
                     ),
                 };
             });
+            // A Bible note (a note row's or the note window's Open in
+            // Chatbot): the same, for one note of its file -- written with
+            // no model.
+            if (checkIsNoteAttachment(result.attachment)) {
+                const noteOpening = genNoteOpeningAnswer(
+                    result.attachment.name,
+                    getAppLanguage(),
+                    [...listAssistantLanguages(), ...listTypedLanguages()],
+                );
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: noteOpening.text,
+                    replies: noteOpening.replies,
+                });
+                inputRef.current?.focus();
+                return;
+            }
             // A song (a Documents row's or the Lyric Editor's Open in
             // Chatbot): what can be done to it, and the changes asked for
             // most as buttons -- written with no model.
@@ -6015,6 +6053,21 @@ export default function ChatbotAppComp() {
                     author: 'bot',
                     text: lyricOpening.text,
                     replies: lyricOpening.replies,
+                });
+                inputRef.current?.focus();
+                return;
+            }
+            // A presenting flow (a Presenting Flows row's Open in Chatbot):
+            // the jobs asked of a running order most, as buttons -- written
+            // with no model.
+            if (checkIsFlowFileName(filePath)) {
+                const flowOpening = genFlowOpeningAnswer(
+                    result.attachment.name,
+                );
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: flowOpening.text,
+                    replies: flowOpening.replies,
                 });
                 inputRef.current?.focus();
                 return;
@@ -6888,6 +6941,7 @@ export default function ChatbotAppComp() {
                     openHandoffSession(),
                     handedFile.filePath,
                     handedFile.reading,
+                    handedFile.noteId,
                 );
                 return;
             }
@@ -7521,7 +7575,30 @@ export default function ChatbotAppComp() {
             // second document must not leave the first open to changes
             // nobody asked for (seen live 2026-11-07).
             const boxSlideFiles = findSlideAskFiles(attachments);
+            // A PRESENTING FLOW attached now, or opened after the slides,
+            // takes over from them (`flowChatHelpers.ts`).
+            const boxFlowFiles = findFlowAskFiles(attachments);
+            // A BIBLE NOTE attached now, or opened after the others, takes
+            // over from them (`noteChatHelpers.ts`).
+            const boxNoteFiles = findNoteAskFiles(attachments);
+            const isNoteFirst =
+                boxNoteFiles.length > 0 ||
+                (boxSlideFiles.length === 0 &&
+                    boxFlowFiles.length === 0 &&
+                    checkIsNoteOpenedLast(
+                        lookupTab?.messages ?? [],
+                        lookupTab?.fileClosedAt,
+                    ));
+            const isFlowFirst =
+                boxFlowFiles.length > 0 ||
+                (boxSlideFiles.length === 0 &&
+                    pickOpenDocumentKind(
+                        lookupTab?.messages ?? [],
+                        lookupTab?.fileClosedAt,
+                    ) === 'flow');
             const slideAskFiles =
+                !isNoteFirst &&
+                !isFlowFirst &&
                 (options?.shownText === undefined ||
                     options?.keepOpenFiles === true) &&
                 !trimmedAsked.startsWith('/') &&
@@ -7544,8 +7621,64 @@ export default function ChatbotAppComp() {
                     trimmedAsked.length === 0 ||
                     (await findKnownQuestion(trimmedAsked, focus, true)) ===
                         null);
-            // Either one: a question about changing a document of theirs.
-            const isDocumentAsk = isLyricAsk || isSlideAsk;
+            // A PRESENTING FLOW open in this tab, the same way, makes it a
+            // question about changing its running order -- kept open past a
+            // picture of the bulletin attached after it.
+            const flowAskFiles =
+                !isNoteFirst &&
+                isFlowFirst &&
+                (options?.shownText === undefined ||
+                    options?.keepOpenFiles === true) &&
+                !trimmedAsked.startsWith('/') &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                lyricAskFiles.length === 0
+                    ? boxFlowFiles.length > 0
+                        ? boxFlowFiles
+                        : findFlowAskFiles(
+                              findOpenFlowAttachments(
+                                  lookupTab?.messages ?? [],
+                                  lookupTab?.fileClosedAt,
+                              ),
+                          )
+                    : [];
+            const isFlowAsk =
+                flowAskFiles.length > 0 &&
+                (options?.isPressed === true ||
+                    trimmedAsked.length === 0 ||
+                    (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                        null);
+            // A BIBLE NOTE open in this tab (a note row's or the note
+            // window's Open in Chatbot), the same way, makes it a question
+            // about that note -- kept open past a file attached after it.
+            const noteAskFiles =
+                isNoteFirst &&
+                (options?.shownText === undefined ||
+                    options?.keepOpenFiles === true) &&
+                !trimmedAsked.startsWith('/') &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                lyricAskFiles.length === 0
+                    ? boxNoteFiles.length > 0
+                        ? boxNoteFiles
+                        : findNoteAskFiles(
+                              findOpenNoteAttachments(
+                                  lookupTab?.messages ?? [],
+                                  lookupTab?.fileClosedAt,
+                              ),
+                          )
+                    : [];
+            const isNoteAsk =
+                noteAskFiles.length > 0 &&
+                (options?.isPressed === true ||
+                    trimmedAsked.length === 0 ||
+                    (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                        null);
+            // Any one: a question about changing a document of theirs.
+            const isDocumentAsk =
+                isFlowAsk || isLyricAsk || isSlideAsk || isNoteAsk;
             // "List me more options" under a document's card: the card again,
             // its sentence and its buttons, written by the window with no
             // model (2026-11-07, the user, a slide document open: _I just
@@ -7562,17 +7695,25 @@ export default function ChatbotAppComp() {
                     ...listAssistantLanguages(),
                     ...listTypedLanguages(),
                 ];
-                const opening = isSlideAsk
-                    ? genSlideOpeningAnswer(
-                          slideAskFiles[0].filePath,
+                const opening = isNoteAsk
+                    ? genNoteOpeningAnswer(
+                          noteAskFiles[0].name,
                           getAppLanguage(),
                           languages,
                       )
-                    : genLyricOpeningAnswer(
-                          lyricAskFiles[0].filePath,
-                          getAppLanguage(),
-                          languages,
-                      );
+                    : isFlowAsk
+                      ? genFlowOpeningAnswer(flowAskFiles[0].filePath)
+                      : isSlideAsk
+                        ? genSlideOpeningAnswer(
+                              slideAskFiles[0].filePath,
+                              getAppLanguage(),
+                              languages,
+                          )
+                        : genLyricOpeningAnswer(
+                              lyricAskFiles[0].filePath,
+                              getAppLanguage(),
+                              languages,
+                          );
                 addMessage(activeSessionId, { author: 'you', text: echoText });
                 updateSession(activeSessionId, (session) => {
                     return { ...session, draft: '' };
@@ -7907,7 +8048,9 @@ export default function ChatbotAppComp() {
                 attachments.length === 0 &&
                 lookupSubject === null &&
                 lyricAskFiles.length === 0 &&
-                slideAskFiles.length === 0
+                flowAskFiles.length === 0 &&
+                slideAskFiles.length === 0 &&
+                noteAskFiles.length === 0
             ) {
                 const lastLangAnswer = sessionStateRef.current.sessions
                     .find((session) => session.id === activeSessionId)
@@ -8498,6 +8641,72 @@ export default function ChatbotAppComp() {
                           }),
                       )
                     : [];
+                // A presenting flow the same way (`owa_presenting_flow_edit
+                // lines`): its lines as they are NOW.
+                const isFlowDocAsk =
+                    isFlowAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null;
+                const flowDocs = isFlowDocAsk
+                    ? await Promise.all(
+                          flowAskFiles.map(async (file) => {
+                              try {
+                                  return {
+                                      name: file.name,
+                                      text: toFlowSheetText(
+                                          parseToolJson(
+                                              await callTool(
+                                                  FLOW_EDIT_TOOL_NAME,
+                                                  {
+                                                      action: 'lines',
+                                                      file: file.filePath,
+                                                  },
+                                                  signal,
+                                              ),
+                                          ),
+                                      ),
+                                  };
+                              } catch (_error) {
+                                  throwIfCancelled(signal);
+                                  return { name: file.name, text: null };
+                              }
+                          }),
+                      )
+                    : [];
+                // A Bible note the same way (`owa_note_edit read`, from the
+                // note's editing head): its blocks as they are NOW, unsaved
+                // typing included.
+                const isNoteDocAsk =
+                    isNoteAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null;
+                const noteDocs = isNoteDocAsk
+                    ? await Promise.all(
+                          noteAskFiles.map(async (file) => {
+                              try {
+                                  return {
+                                      name: file.name,
+                                      text: toNoteDocumentText(
+                                          parseToolJson(
+                                              await callTool(
+                                                  NOTE_EDIT_TOOL_NAME,
+                                                  {
+                                                      action: 'read',
+                                                      file: file.filePath,
+                                                      id: file.noteId,
+                                                  },
+                                                  signal,
+                                              ),
+                                          ),
+                                      ),
+                                  };
+                              } catch (_error) {
+                                  throwIfCancelled(signal);
+                                  return { name: file.name, text: null };
+                              }
+                          }),
+                      )
+                    : [];
                 throwIfCancelled(signal);
                 // The song's words go to the model as read above, never also
                 // as the attachment's notation -- a model shown notation
@@ -8505,18 +8714,41 @@ export default function ChatbotAppComp() {
                 // slides as read above. A PICTURE stays: it is the slides
                 // they want made.
                 const askAttachments =
-                    (isSongAsk || isSlideDocAsk) && trimmedAsked.length > 0
+                    (isFlowDocAsk ||
+                        isSongAsk ||
+                        isSlideDocAsk ||
+                        isNoteDocAsk) &&
+                    trimmedAsked.length > 0
                         ? modelAttachments.filter((one) => {
                               const fileName = one.filePath ?? one.name;
                               return !(
+                                  (isNoteDocAsk &&
+                                      checkIsNoteAttachment(one)) ||
                                   (isSongAsk &&
                                       checkIsLyricFileName(fileName)) ||
+                                  (isFlowDocAsk &&
+                                      checkIsFlowFileName(fileName)) ||
                                   (isSlideDocAsk &&
                                       checkIsSlideFileName(fileName))
                               );
                           })
                         : modelAttachments;
                 const withLyric = (text: string) => {
+                    if (isNoteDocAsk) {
+                        return toNoteAsk(
+                            text,
+                            noteDocs,
+                            readLyricTranslateMode(trimmedAsked),
+                            trimmedAsked.length === 0,
+                        );
+                    }
+                    if (isFlowDocAsk) {
+                        return toFlowAsk(
+                            text,
+                            flowDocs,
+                            trimmedAsked.length === 0,
+                        );
+                    }
                     if (isSlideDocAsk) {
                         return toSlideAsk(
                             text,
@@ -8983,7 +9215,12 @@ export default function ChatbotAppComp() {
                     // A song to change with no assistant: never the guide,
                     // which would answer "add a verse" with how to type one.
                     // Nor a slide document's.
-                    if (isSongAsk || isSlideDocAsk) {
+                    if (
+                        isFlowDocAsk ||
+                        isSongAsk ||
+                        isSlideDocAsk ||
+                        isNoteDocAsk
+                    ) {
                         return {
                             text: tran(
                                 'A question about this needs an ' +
@@ -9345,6 +9582,12 @@ export default function ChatbotAppComp() {
                                 ...(isSlideDocAsk
                                     ? { slide: { files: slideAskFiles } }
                                     : {}),
+                                ...(isFlowDocAsk
+                                    ? { flow: { files: flowAskFiles } }
+                                    : {}),
+                                ...(isNoteDocAsk
+                                    ? { note: { files: noteAskFiles } }
+                                    : {}),
                                 ...(verseFindBible === null
                                     ? {}
                                     : {
@@ -9501,7 +9744,7 @@ export default function ChatbotAppComp() {
                             // A song or slides put into another language:
                             // Gemma 4 first, the user's word for any
                             // translation.
-                            ...((isSongAsk || isSlideDocAsk) &&
+                            ...((isSongAsk || isSlideDocAsk || isNoteDocAsk) &&
                             checkIsLyricTranslateAsk(trimmedAsked)
                                 ? {
                                       preferModelPattern:

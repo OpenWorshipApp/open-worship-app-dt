@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "ಸಹಾಯಕ ಈ ಹಾಡನ್ನು ಬದಲಾಯಿಸಿದೆ.",
     "Load the change": "ಬದಲಾವಣೆಯನ್ನು ಲೋಡ್ ಮಾಡಿ",
     "Create Lyric": "ಹಾಡಿನ ಸಾಹಿತ್ಯ ರಚಿಸು",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ಬೈಬಲ್‌ನ ಪ್ರತಿಯೊಂದು ವಚನವು ಹಾಡಿನ ಒಂದು ಚರಣವಾಗುತ್ತದೆ, ಆಯ್ಕೆ ಮಾಡಿದ ಪ್ರತಿಯೊಂದು ಬೈಬಲ್ ಆವೃತ್ತಿಗೆ ಒಂದು ಸಾಲು ಇರುತ್ತದೆ"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ಬೈಬಲ್‌ನ ಪ್ರತಿಯೊಂದು ವಚನವು ಹಾಡಿನ ಒಂದು ಚರಣವಾಗುತ್ತದೆ, ಆಯ್ಕೆ ಮಾಡಿದ ಪ್ರತಿಯೊಂದು ಬೈಬಲ್ ಆವೃತ್ತಿಗೆ ಒಂದು ಸಾಲು ಇರುತ್ತದೆ",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” ಕೆಳಗೆ ಲಗತ್ತಿಸಲಾಗಿದೆ. ನಾನು ನಿಮಗಾಗಿ ಈ ಆರಾಧನಾ ಕ್ರಮವನ್ನು ಬದಲಾಯಿಸಬಲ್ಲೆ: ಹಾಡುಗಳು, ಸ್ಲೈಡ್ ದಾಖಲೆಗಳು, ಬೈಬಲ್ ವಚನಭಾಗಗಳು, ಕ್ರಿಯೆಗಳು ಮತ್ತು ಕೌಂಟ್‌ಡೌನ್‌ಗಳನ್ನು ಹೆಸರಿನಿಂದ ಸೇರಿಸುವುದು; ಸಾಲುಗಳನ್ನು ತೆಗೆದುಹಾಕುವುದು, ಸರಿಸುವುದು, ನಕಲಿಸುವುದು ಅಥವಾ ಬದಿಗಿರಿಸುವುದು; ಟೈಮರ್‌ಗಳು, ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು, ಬಣ್ಣಗಳು ಮತ್ತು ಪರದೆಗಳನ್ನು ಹೊಂದಿಸುವುದು; ಮತ್ತು CC ಎಲಿಮೆಂಟ್‌ಗಳನ್ನು ಲಗತ್ತಿಸುವುದು. ನಿಮ್ಮ ಆರಾಧನೆಯ ಕಾರ್ಯಕ್ರಮ ಪಟ್ಟಿಯನ್ನು ಅಂಟಿಸಿ ಅಥವಾ ಅದರ ಚಿತ್ರವನ್ನು ಕಳುಹಿಸಿ, ಅದರಿಂದ ನಾನು ಕ್ರಮವನ್ನು ರಚಿಸುತ್ತೇನೆ. ಒಂದನ್ನು ಒತ್ತಿ, ಅಥವಾ ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ಹೇಳಿ.",
+    "Check the running order": "ಕಾರ್ಯಕ್ರಮದ ಕ್ರಮ ಪರಿಶೀಲಿಸಿ",
+    "Build it from my order of service": "ನನ್ನ ಆರಾಧನೆಯ ಕಾರ್ಯಕ್ರಮ ಪಟ್ಟಿಯಿಂದ ರಚಿಸಿ",
+    "Clear the screen between items": "ಐಟಂಗಳ ನಡುವೆ ಪರದೆ ತೆರವುಗೊಳಿಸಿ",
+    "Move on by itself": "ತಾನಾಗಿಯೇ ಮುಂದಕ್ಕೆ ಸಾಗಲಿ",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ಕೆಳಗೆ ಲಗತ್ತಿಸಲಾಗಿದೆ. ನಾನು ನಿಮಗಾಗಿ ಈ ಟಿಪ್ಪಣಿಯನ್ನು ಬದಲಾಯಿಸಬಲ್ಲೆ: ಅದರ ಪದಗಳನ್ನು ಬದಲಾಯಿಸುವುದು ಅಥವಾ ಅನುವಾದಿಸುವುದು, ಕಾಗುಣಿತ ಪರಿಶೀಲಿಸುವುದು, ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಪಟ್ಟಿಗಳಾಗಿ ಜೋಡಿಸುವುದು, ಅಥವಾ ಬೈಬಲ್ ವಚನಗಳನ್ನು ಸೇರಿಸುವುದು. ನಾನು ಅದರ ಸಾರಾಂಶ ನೀಡಬಹುದು, ಅದರ ಬಗ್ಗೆ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಿಸಬಹುದು ಮತ್ತು ಟಿಪ್ಪಣಿ ಸಂಪಾದಕದಲ್ಲಿ ಏನನ್ನಾದರೂ ಹೇಗೆ ಮಾಡುವುದು ಎಂದು ವಿವರಿಸಬಹುದು. ಒಂದನ್ನು ಒತ್ತಿ, ಅಥವಾ ನಿಮಗೆ ಬೇಕಾದುದನ್ನು ಹೇಳಿ.",
+    "Summarize this note": "ಈ ಟಿಪ್ಪಣಿಯ ಸಾರಾಂಶ ನೀಡಿ",
+    "Tidy it into headings and lists": "ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಪಟ್ಟಿಗಳಾಗಿ ಜೋಡಿಸಿ"
 }

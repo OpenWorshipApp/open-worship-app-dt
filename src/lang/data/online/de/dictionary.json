@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Der Assistent hat dieses Lied geändert.",
     "Load the change": "Änderung laden",
     "Create Lyric": "Liedtext erstellen",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Jeder Bibelvers wird zu einer Strophe des Liedtexts, mit einer Zeile pro ausgewählter Bibelübersetzung"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Jeder Bibelvers wird zu einer Strophe des Liedtexts, mit einer Zeile pro ausgewählter Bibelübersetzung",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}“ ist unten angehängt. Ich kann diesen Ablaufplan für Sie ändern: Lieder, Foliendokumente, Bibelstellen, Aktionen und Countdowns nach Namen hinzufügen; Zeilen entfernen, verschieben, kopieren oder zurückstellen; Timer, Tastenkombinationen, Farben und Bildschirme festlegen; und CC-Elemente anhängen. Fügen Sie Ihre Gottesdienstordnung ein oder schicken Sie mir ein Bild davon, und ich erstelle daraus den Ablaufplan. Drücken Sie eine Option, oder sagen Sie, was Sie möchten.",
+    "Check the running order": "Reihenfolge prüfen",
+    "Build it from my order of service": "Aus meiner Gottesdienstordnung erstellen",
+    "Clear the screen between items": "Bildschirm zwischen den Punkten leeren",
+    "Move on by itself": "Von selbst weitergehen",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}“ ist unten angehängt. Ich kann diese Notiz für Sie ändern: ihre Worte ändern oder übersetzen, die Rechtschreibung prüfen, sie in Überschriften und Listen ordnen oder Bibelverse hinzufügen. Ich kann sie auch zusammenfassen, Fragen dazu beantworten und erklären, wie man im Notizeditor alles macht. Drücken Sie eine Schaltfläche, oder sagen Sie, was Sie möchten.",
+    "Summarize this note": "Diese Notiz zusammenfassen",
+    "Tidy it into headings and lists": "In Überschriften und Listen ordnen"
 }

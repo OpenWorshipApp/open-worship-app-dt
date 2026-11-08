@@ -164,11 +164,13 @@ describe('a file handed to the assistant', () => {
         expect(takeChatbotFileRequest()).toEqual({
             filePath: '/r/pdf/MAT.18.pdf',
             reading,
+            noteId: null,
         });
         requestChatbotFile('/r/pdf/MAT.18.pdf');
         expect(takeChatbotFileRequest()).toEqual({
             filePath: '/r/pdf/MAT.18.pdf',
             reading: null,
+            noteId: null,
         });
         // A hand-edited setting: the file still opens, the reading does not.
         store.set(
@@ -182,6 +184,7 @@ describe('a file handed to the assistant', () => {
         expect(takeChatbotFileRequest()).toEqual({
             filePath: '/r/pdf/MAT.18.pdf',
             reading: null,
+            noteId: null,
         });
         // A backwards range keeps the chapter and loses the verses.
         requestChatbotFile('/r/pdf/MAT.18.pdf', {
@@ -195,6 +198,33 @@ describe('a file handed to the assistant', () => {
             title: '[xx] Matthew 18:15-17',
             bibleKey: 'KH54',
         });
+    });
+
+    // 2026-11-07: a Bible notes file names the note it is opened on.
+    it('carries a note id, and drops one that is not a note number', () => {
+        requestChatbotFile('/n/Default.own', null, 4);
+        expect(takeChatbotFileRequest()).toEqual({
+            filePath: '/n/Default.own',
+            reading: null,
+            noteId: 4,
+        });
+        requestChatbotFile('/n/Default.own', null, -1);
+        expect(takeChatbotFileRequest()?.noteId).toBeNull();
+        store.set(
+            'chatbot-handoff-file',
+            JSON.stringify({
+                filePath: '/n/Default.own',
+                noteId: '4; rm',
+                at: Date.now(),
+            }),
+        );
+        expect(takeChatbotFileRequest()).toEqual({
+            filePath: '/n/Default.own',
+            reading: null,
+            noteId: null,
+        });
+        requestChatbotFile('/n/Default.own', null, 1.5);
+        expect(takeChatbotFileRequest()?.noteId).toBeNull();
     });
 
     it('is nothing after half a minute, or past what a path can be', () => {

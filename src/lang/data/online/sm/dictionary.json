@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Ua suia e le fesoasoani lenei pese.",
     "Load the change": "Uta le suiga",
     "Create Lyric": "Fausia se Pese",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "O fuaiupu taʻitasi o le Tusi Paia e avea ma fuaiupu o le pese, ma le laina e tasi mo lomiga taʻitasi o le Tusi Paia ua filifilia"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "O fuaiupu taʻitasi o le Tusi Paia e avea ma fuaiupu o le pese, ma le laina e tasi mo lomiga taʻitasi o le Tusi Paia ua filifilia",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "Ua faapipii atu i lalo le “{name}”. E mafai ona ou suia lenei faʻasologa faʻaali mo oe: faaopoopo pese, pepa silaiti, mau o le Tusi Paia, gaioiga ma faitauga i lalo e ala i o latou igoa; aveese, sui le nofoaga, kopi pe tuʻu ese laina; seti uati taimi, auala puʻupuʻu, lanu ma lau; ma faapipii vaega CC. Faapipii mai lau polokalame o le sauniga pe auina mai se ata o ia, ma o le a ou fausia le faʻasologa mai ai. Oomi se tasi, pe ta’u mai le mea e te mana’o ai.",
+    "Check the running order": "Siaki le faʻasologa",
+    "Build it from my order of service": "Fausia mai laʻu polokalame o le sauniga",
+    "Clear the screen between items": "Soloi le lau i le va o vaega",
+    "Move on by itself": "Ia agaʻi i luma na o ia",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "Ua faapipii atu “{name}” i lalo. E mafai ona ou suia lenei tusitusiga mo oe: sui pe faaliliu ana upu, siaki le sipelaga, faatulaga i ulutala ma lisi, pe faaopoopo ni fuaiupu o le Tusi Paia. E mafai foi ona ou aoteleina, tali fesili e uiga i ai, ma faamatala le auala e fai ai soo se mea i le faatonu o tusitusiga. Oomi se tasi, pe ta'u mai le mea e te manaʻo ai.",
+    "Summarize this note": "Aoteleina lenei tusitusiga",
+    "Tidy it into headings and lists": "Faatulaga i ulutala ma lisi"
 }

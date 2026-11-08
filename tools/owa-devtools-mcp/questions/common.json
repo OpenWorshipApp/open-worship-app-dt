@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-11-03",
+    "updated": "2026-11-08",
     "sections": [
         {
             "id": "panels",
@@ -401,6 +401,24 @@
                     ],
                     "resources": {
                         "tools": ["owa_bible_note"]
+                    }
+                },
+                {
+                    "id": "change-note-with-assistant",
+                    "text": "Can the assistant change my Bible note for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "change my note",
+                        "translate my note",
+                        "tidy my note",
+                        "summarize my note",
+                        "add a verse to my note",
+                        "open in chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-60",
+                        "related": ["W-14"],
+                        "find": "Open in Chatbot"
                     }
                 }
             ]

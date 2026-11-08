@@ -33,6 +33,7 @@ import { findNonDefaultSessionIdByFilePath } from '../../media-sessions/folderSe
 import { NoteTitleEditorComp } from './NoteEditorComp';
 import { exportBibleNoteItem } from './bibleNoteItemArchiveHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { genNoteOpenInChatbotContextMenu } from '../../helper/ai/noteChatbotMenuHelpers';
 
 export function handleOpening(note: Note, noteItem: NoteItem) {
     const fileFullName = note.fileSource.fullName;
@@ -100,6 +101,14 @@ export default function BibleNoteItemRenderComp({
                         handleOpening(noteRef.current, noteItemRef.current);
                     },
                 },
+                // Right after Open, as a Bible passage's menu has it; never
+                // on a row that could not be read.
+                ...(noteItemRef.current.isError
+                    ? []
+                    : genNoteOpenInChatbotContextMenu(
+                          filePathRef.current,
+                          noteItemRef.current.id,
+                      )),
                 {
                     childBefore: genContextMenuItemIcon('pencil-square'),
                     menuElement: tran('Edit Title'),

@@ -781,3 +781,52 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   _add above the khmer text_ had been answered _I need the English words_
   -- and a request with one sensible reading is done, not asked about,
   because every change is undone by one press.
+
+- **Another tool offered to one kind of ask** (2026-11-07):
+  `owa_presenting_flow_edit` goes to a `flow` ask -- a question while a
+  `.owpf` is open in the tab -- under `FLOW_SYSTEM_PROMPT`
+  (`src/chatbot/flowChatHelpers.ts`), eight rounds, the sheet read fresh
+  into the user turn as plain lines with the Documents names, actions,
+  foreground widgets and screens, any picture riding with it, and on a
+  custom server's lean list. ~1 070 tokens to that ask alone; the ordinary
+  list and its ratchet did not move (~8 343 of 8 350, measured with
+  `audit-mcp-tools.mjs --stdio --ratchet`); `owa_presenting_flow` is still
+  on it for the ordinary question.
+  The WINDOW turns the flow's name into its path (`resolveFlowEditFile`),
+  a path the model writes is refused, and outside a flow ask the tool is
+  refused. The prompt's rules: many changes in ONE `update-lines`, lines
+  named by their number as given and never renumbered, a document only by
+  a name the Documents list has (never a made-up song), a Next: Timeout CC
+  on a song for "move on by itself", a change kept at once with no Save.
+  The card's buttons each carry a hint saying the job (`readFlowButtonHint`,
+  the English or the window's own words).
+
+- **And one for a Bible note** (2026-11-07, the user: _add `Open in
+  Chatbot` for bible-note … goal: chatbot can help modify and answer
+  everything on bible-note_): `owa_note_edit` goes to a `note` ask -- a
+  question while ONE note of a `.own` file is open in the tab
+  (`ChatAttachmentType.noteId`) -- under `NOTE_SYSTEM_PROMPT`
+  (`src/chatbot/noteChatHelpers.ts`), eight rounds, the note read fresh from
+  its editing head into the user turn as numbered blocks in a light mark-up
+  (`toNoteDocumentText`), on a custom server's lean list, and with
+  `owa_help_search`, `owa_help_page` and `owa_find_verse` shared to it
+  (`MODEL_ASK_SHARED_TOOL_MAP.note`): how the note EDITOR works is its own
+  guide's, and `runMcpToolCall` aims every `owa_help_search` of a note ask
+  at `focus: 'bibleNote'`, the one search that sees the guide's pages
+  (`agent-knowledge.md`); a guide page offers no walkthrough outside the
+  note window (`genGuideActions`). ~489 tokens to that ask alone; the
+  ordinary list and its ratchet did not move (~8 343 of 8 350,
+  `--stdio --ratchet`). The WINDOW turns the note's NAME into its file and
+  id (`resolveNoteEditTarget`); a `file` or `id` the model writes is
+  refused, so is a note that is not attached, and outside a note ask the
+  tool is refused. The prompt's rules: every change in ONE `edit`, block
+  numbers as read, mark-up and mention tokens kept, a verse never the
+  model's words (a `passage` block or a new `[^ref]` token, read by the app
+  from the installed Bible), a tidy that keeps every block's words, a verse
+  named plainly in the answer. **One rule a live run needed** (2026-11-08,
+  gemma4:cloud): asked to tidy, it turned a paragraph into a heading of
+  OTHER words and the paragraph was gone; a change that gives a block
+  another kind and fewer than half its own words is refused now
+  (`checkLosesWords` in `agentNoteBlockHelpers.ts`), and asked again it
+  added the heading as a new block. `owa_bible_note` stays on the ordinary
+  list (the `write-a-note` row needs it).

@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "సహాయకుడు ఈ పాటను మార్చారు.",
     "Load the change": "మార్పును లోడ్ చేయండి",
     "Create Lyric": "పాట సాహిత్యం సృష్టించు",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "బైబిల్‌లోని ప్రతి వచనం పాటలో ఒక చరణం అవుతుంది, ఎంచుకున్న ప్రతి బైబిల్ అనువాదానికి ఒక పంక్తి ఉంటుంది"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "బైబిల్‌లోని ప్రతి వచనం పాటలో ఒక చరణం అవుతుంది, ఎంచుకున్న ప్రతి బైబిల్ అనువాదానికి ఒక పంక్తి ఉంటుంది",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” కింద జతచేయబడింది. నేను మీ కోసం ఈ ఆరాధన క్రమాన్ని మార్చగలను: పాటలు, స్లైడ్ పత్రాలు, బైబిల్ భాగాలు, చర్యలు మరియు కౌంట్‌డౌన్‌లను పేరుతో జోడించడం; పంక్తులను తీసివేయడం, తరలించడం, కాపీ చేయడం లేదా నిలిపివేయడం; టైమర్లు, షార్ట్‌కట్‌లు, రంగులు మరియు స్క్రీన్‌లను సెట్ చేయడం; మరియు CC మూలకాలను జతచేయడం. మీ ఆరాధన కార్యక్రమ పట్టికను అతికించండి లేదా దాని చిత్రాన్ని పంపండి, దాని నుండి నేను క్రమాన్ని తయారు చేస్తాను. ఒకదాన్ని నొక్కండి, లేదా మీకు ఏమి కావాలో చెప్పండి.",
+    "Check the running order": "నడిచే క్రమాన్ని తనిఖీ చేయండి",
+    "Build it from my order of service": "నా ఆరాధన కార్యక్రమ పట్టిక నుండి తయారు చేయండి",
+    "Clear the screen between items": "అంశాల మధ్య స్క్రీన్‌ను ఖాళీ చేయండి",
+    "Move on by itself": "దానంతట అదే ముందుకు సాగనివ్వండి",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” క్రింద జతచేయబడింది. మీ కోసం ఈ గమనికను నేను మార్చగలను: దాని పదాలను మార్చడం లేదా అనువదించడం, అక్షరక్రమం తనిఖీ చేయడం, శీర్షికలు మరియు జాబితాలుగా అమర్చడం, లేదా బైబిల్ వచనాలు జోడించడం. దాని సారాంశం ఇవ్వడం, దాని గురించి ప్రశ్నలకు జవాబివ్వడం, గమనిక ఎడిటర్‌లో ఏదైనా ఎలా చేయాలో వివరించడం కూడా నేను చేయగలను. ఒకటి నొక్కండి, లేదా మీకు ఏమి కావాలో చెప్పండి.",
+    "Summarize this note": "ఈ గమనిక సారాంశం ఇవ్వు",
+    "Tidy it into headings and lists": "శీర్షికలు మరియు జాబితాలుగా అమర్చు"
 }

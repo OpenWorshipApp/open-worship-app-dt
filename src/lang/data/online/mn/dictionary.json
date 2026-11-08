@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Туслах энэ дууг өөрчиллөө.",
     "Load the change": "Өөрчлөлтийг ачаалах",
     "Create Lyric": "Дууны үг үүсгэх",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Библийн ишлэл бүр дууны нэг бадаг болж, сонгосон Библийн хувилбар бүрт нэг мөр байна"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Библийн ишлэл бүр дууны нэг бадаг болж, сонгосон Библийн хувилбар бүрт нэг мөр байна",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” доор хавсаргагдсан. Би энэ үзүүлэх дарааллыг танд зориулж өөрчилж чадна: дуу, слайдын баримт бичиг, Библийн хэсэг, үйлдэл, урвуу тооллыг нэрээр нь нэмэх; мөрийг устгах, зөөх, хуулах эсвэл түр идэвхгүй болгох; хугацаа хэмжигч, товчлол, өнгө, дэлгэцийг тохируулах; мөн CC элемент хавсаргах. Мөргөлийн хөтөлбөрөө буулгах эсвэл зургийг нь илгээгээрэй, би түүнээс дараалал бүтээж өгнө. Нэгийг нь дарах эсвэл юу хүсэж байгаагаа хэлнэ үү.",
+    "Check the running order": "Дарааллыг шалгах",
+    "Build it from my order of service": "Мөргөлийн хөтөлбөрөөсөө бүтээх",
+    "Clear the screen between items": "Зүйл хооронд дэлгэц цэвэрлэх",
+    "Move on by itself": "Өөрөө дараагийнх руу шилжих",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” доор хавсаргагдсан. Би энэ тэмдэглэлийг танд өөрчилж өгч чадна: үгийг нь өөрчлөх эсвэл орчуулах, зөв бичгийг шалгах, гарчиг ба жагсаалт болгон цэгцлэх, эсвэл Библийн ишлэл нэмэх. Мөн үүнийг товчлох, түүний талаарх асуултад хариулах, тэмдэглэлийн засварлагчид юуг ч хэрхэн хийхийг тайлбарлаж чадна. Нэгийг дарах эсвэл юу хүсч байгаагаа хэлнэ үү.",
+    "Summarize this note": "Энэ тэмдэглэлийг товчил",
+    "Tidy it into headings and lists": "Гарчиг ба жагсаалт болгон цэгцэл"
 }

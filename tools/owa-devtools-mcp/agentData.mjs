@@ -98,6 +98,9 @@ export const AGENT_REMOVING_ACTIONS = [
     // A part of a song (`owa_lyric_edit`): backed up and unsaved like every
     // song edit, and a loop taking a song apart part by part is still one.
     'remove-section',
+    // Lines of a presenting flow (`owa_presenting_flow_edit`): many in one
+    // call and one undo, but a call that empties a run sheet is still one.
+    'remove-lines',
     'undo',
 ];
 

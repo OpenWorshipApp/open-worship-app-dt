@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "সহকারী এই গানটি বদলেছে।",
     "Load the change": "পরিবর্তনটি লোড করুন",
     "Create Lyric": "গানের কথা তৈরি করুন",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "বাইবেলের প্রতিটি পদ গানের একটি স্তবক হয়, প্রতিটি নির্বাচিত বাইবেল সংস্করণের জন্য একটি করে লাইন"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "বাইবেলের প্রতিটি পদ গানের একটি স্তবক হয়, প্রতিটি নির্বাচিত বাইবেল সংস্করণের জন্য একটি করে লাইন",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” নিচে সংযুক্ত করা হয়েছে। আমি আপনার জন্য এই উপাসনার ক্রম বদলাতে পারি: নাম দিয়ে গান, স্লাইড নথি, বাইবেলের অংশ, অ্যাকশন ও কাউন্টডাউন যোগ করা; লাইন মুছে ফেলা, সরানো, কপি করা বা পাশে সরিয়ে রাখা; টাইমার, শর্টকাট, রং ও পর্দা ঠিক করা; এবং CC উপাদান সংযুক্ত করা। আপনার উপাসনার অনুষ্ঠানসূচি পেস্ট করুন বা এর একটি ছবি পাঠান, আমি সেখান থেকে ক্রমটি তৈরি করে দেব। একটি চাপুন, অথবা আপনি কী চান বলুন।",
+    "Check the running order": "চলার ক্রম পরীক্ষা করুন",
+    "Build it from my order of service": "আমার উপাসনার অনুষ্ঠানসূচি থেকে তৈরি করুন",
+    "Clear the screen between items": "আইটেমগুলোর মাঝে পর্দা পরিষ্কার করুন",
+    "Move on by itself": "নিজে থেকে এগিয়ে যাক",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” নিচে সংযুক্ত করা হয়েছে। আমি আপনার জন্য এই নোটটি বদলে দিতে পারি: এর শব্দ বদলানো বা অনুবাদ করা, বানান পরীক্ষা করা, শিরোনাম ও তালিকায় সাজানো, অথবা বাইবেলের পদ যোগ করা। আমি এটির সারাংশ দিতে, এ নিয়ে প্রশ্নের উত্তর দিতে এবং নোট সম্পাদকে যেকোনো কিছু কীভাবে করতে হয় তা বুঝিয়ে বলতেও পারি। একটি চাপুন, অথবা আপনি কী চান তা বলুন।",
+    "Summarize this note": "এই নোটের সারাংশ দাও",
+    "Tidy it into headings and lists": "এটিকে শিরোনাম ও তালিকায় সাজাও"
 }

@@ -679,7 +679,8 @@ describe('quick-reply options on a message', () => {
         const state = loadChatSessions('presenter', null, '');
 
         const [message] = state.sessions[0].messages;
-        expect(message.replies).toHaveLength(3);
+        // A document's card carries five; never forty.
+        expect(message.replies).toHaveLength(5);
         expect(message.replies?.[0]).toHaveLength(120);
     });
 
@@ -867,6 +868,32 @@ describe('attachments on a message', () => {
             ['image', undefined],
             ['image', undefined],
         ]);
+    });
+
+    // 2026-11-07: WHICH note of a notes file the tab is about.
+    test('the note a note attachment is survives, and only a note number', () => {
+        const message = loadOneMessage({
+            id: 1,
+            author: 'you',
+            text: 'fix the spelling',
+            attachments: [
+                {
+                    id: 'a1',
+                    kind: 'text',
+                    name: 'Mercy',
+                    filePath: '/n/Default.own',
+                    noteId: 3,
+                },
+                { id: 'a2', kind: 'text', name: 'x', noteId: '3' },
+                { id: 'a3', kind: 'text', name: 'y', noteId: -2 },
+                { id: 'a4', kind: 'image', name: 'z', noteId: 1 },
+            ],
+        });
+        expect(
+            message.attachments?.map((one) => {
+                return one.noteId;
+            }),
+        ).toEqual([3, undefined, undefined, undefined]);
     });
 
     test('only the three real attach requests come back', () => {

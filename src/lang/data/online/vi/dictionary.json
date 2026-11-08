@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Trợ lý đã thay đổi bài hát này.",
     "Load the change": "Tải thay đổi",
     "Create Lyric": "Tạo lời bài hát",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Mỗi câu Kinh Thánh trở thành một đoạn của bài hát, với một dòng cho mỗi bản Kinh Thánh đã chọn"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Mỗi câu Kinh Thánh trở thành một đoạn của bài hát, với một dòng cho mỗi bản Kinh Thánh đã chọn",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "“{name}” được đính kèm bên dưới. Tôi có thể thay đổi trình tự buổi lễ này cho bạn: thêm bài hát, tài liệu trang chiếu, đoạn Kinh Thánh, hành động và đếm ngược theo tên; bỏ, di chuyển, sao chép hoặc tạm hoãn các dòng; đặt bộ hẹn giờ, phím tắt, màu và màn hình chiếu; và đính kèm phần tử CC. Hãy dán chương trình buổi lễ của bạn hoặc gửi một hình ảnh của nó, tôi sẽ dựng trình tự từ đó. Hãy nhấn một lựa chọn, hoặc nói điều bạn muốn.",
+    "Check the running order": "Kiểm tra thứ tự diễn ra",
+    "Build it from my order of service": "Dựng từ chương trình buổi lễ của tôi",
+    "Clear the screen between items": "Xóa màn hình chiếu giữa các mục",
+    "Move on by itself": "Tự chuyển tiếp",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” được đính kèm bên dưới. Tôi có thể thay đổi ghi chú này cho bạn: thay đổi hoặc dịch lời của nó, kiểm tra chính tả, sắp xếp nó thành các tiêu đề và danh sách, hoặc thêm các câu Kinh Thánh. Tôi cũng có thể tóm tắt nó, trả lời các câu hỏi về nó và giải thích cách làm bất cứ điều gì trong trình soạn ghi chú. Hãy nhấn một mục, hoặc nói điều bạn muốn.",
+    "Summarize this note": "Tóm tắt ghi chú này",
+    "Tidy it into headings and lists": "Sắp xếp thành tiêu đề và danh sách"
 }

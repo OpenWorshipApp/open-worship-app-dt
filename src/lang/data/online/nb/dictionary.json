@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Assistenten endret denne sangen.",
     "Load the change": "Last inn endringen",
     "Create Lyric": "Opprett sangtekst",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Hvert bibelvers blir et vers i sangteksten, med én linje for hver valgte bibeloversettelse"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Hvert bibelvers blir et vers i sangteksten, med én linje for hver valgte bibeloversettelse",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "«{name}» er vedlagt nedenfor. Jeg kan endre dette gudstjenesteforløpet for deg: legge til sanger, lysbildedokumenter, bibelavsnitt, handlinger og nedtellinger etter navn; fjerne, flytte, kopiere eller parkere linjer; stille inn tidtakere, hurtigtaster, farger og skjermer; og knytte til CC-elementer. Lim inn gudstjenesteprogrammet ditt eller send et bilde av det, så bygger jeg forløpet ut fra det. Trykk på én, eller si hva du vil.",
+    "Check the running order": "Sjekk rekkefølgen",
+    "Build it from my order of service": "Bygg det fra gudstjenesteprogrammet mitt",
+    "Clear the screen between items": "Tøm skjermen mellom punktene",
+    "Move on by itself": "Gå videre automatisk",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» er vedlagt nedenfor. Jeg kan endre dette notatet for deg: endre eller oversette ordene, kontrollere stavingen, ordne det i overskrifter og lister, eller legge til bibelvers. Jeg kan også oppsummere det, svare på spørsmål om det og forklare hvordan du gjør alt i notatredigeringsprogrammet. Trykk på ett, eller si hva du vil.",
+    "Summarize this note": "Oppsummer dette notatet",
+    "Tidy it into headings and lists": "Ordne det i overskrifter og lister"
 }

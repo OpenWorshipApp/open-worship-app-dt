@@ -3,6 +3,10 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  resolveBibleNoteGuidePath,
+  toBibleNoteGuidePages,
+} from '../../extra-work/bibleNoteGuideHelpers.mjs';
 import { BOT_FOCUS_KEYS } from './botFocus.mjs';
 import { toManualPageBody } from './manualPage.mjs';
 import { toPassageKey } from './passageMatch.mjs';
@@ -177,7 +181,11 @@ describe('the question corpus', () => {
         ...(row.resources.related ?? []),
       ].filter(Boolean);
       for (const id of ids) {
-        expect(id, `${row.id} -> ${id}`).toMatch(/^W-\d{2}[a-z]?$/);
+        // Or a page of the Bible Note editor's own guide, for a question
+        // about that editor; the test below holds it to a real page.
+        expect(id, `${row.id} -> ${id}`).toMatch(
+          /^(?:W-\d{2}[a-z]?|bible-note:ui(?:\/[a-z0-9-]+)+)$/,
+        );
       }
     }
   });
@@ -242,7 +250,18 @@ describe('the question corpus', () => {
   // written. `owa_help_page` could not open it and a walkthrough started on
   // it could not run -- the corpus promised an answer that did not exist.
   it('points every recipe at a manual page that IS on disk', () => {
-    const onDisk = new Set(listManualIds());
+    // The editor guide's pages as the build writes them: out of the
+    // package's own guide, less the chunks left out as untrue here.
+    const guidePath = resolveBibleNoteGuidePath(
+      join(import.meta.dirname, '..', '..'),
+    );
+    const guideIds =
+      guidePath === null
+        ? []
+        : toBibleNoteGuidePages(readFileSync(guidePath, 'utf8')).map((page) => {
+            return page.id;
+          });
+    const onDisk = new Set([...listManualIds(), ...guideIds]);
     expect(onDisk.size, 'no manual pages found').toBeGreaterThan(0);
     for (const row of ROWS) {
       const ids = [

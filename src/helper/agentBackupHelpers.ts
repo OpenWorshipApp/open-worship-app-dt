@@ -795,6 +795,18 @@ async function applyRestore(restore: AgentRestoreType) {
     }
     await document.setJsonData(wanted);
     FileSourceClass.getInstance(restore.filePath).fireUpdateEvent();
+    if (restore.kind === 'note') {
+        // A note window watches its FILE, and an undo of the help window's
+        // change puts back only the head: told, it shows the note as it was.
+        // Only a notice: one that cannot be sent leaves the undo done.
+        try {
+            const { notifyNoteHeadChanged } =
+                await import('../bible-list/note/noteHeadChangeHelpers');
+            notifyNoteHeadChanged(restore.filePath);
+        } catch (error) {
+            handleError(error);
+        }
+    }
 }
 
 async function snapshotBeforeRestore(restore: AgentRestoreType) {

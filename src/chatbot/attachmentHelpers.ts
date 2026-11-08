@@ -70,6 +70,10 @@ export type ChatAttachmentType = {
     // them. Its first pages, as pictures, are held in this window only
     // (`getAttachmentPages`); this is what says how many were left out.
     pageCount?: number;
+    // `text` from a Bible notes file (`.own`) -- WHICH note of it
+    // (2026-11-07, a note row's Open in Chatbot): a file holds many, and the
+    // conversation is about one. Its `name` is then the note's title.
+    noteId?: number;
 };
 
 /**

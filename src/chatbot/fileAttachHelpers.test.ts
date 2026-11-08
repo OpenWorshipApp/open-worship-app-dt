@@ -327,6 +327,39 @@ describe('genAttachmentFromPath', () => {
         expect(odd.summary).toContain('not json');
     });
 
+    // 2026-11-07: a note row's Open in Chatbot attaches THAT note.
+    test('a note id makes the attachment that one note, named by its title', async () => {
+        diskState.sizeMap.set('C:/notes/Default.own', 200);
+        diskState.textMap.set(
+            'C:/notes/Default.own',
+            JSON.stringify({
+                items: [
+                    { title: 'Grace', content: '', metadata: { id: 0 } },
+                    { title: 'Mercy', content: '', metadata: { id: 3 } },
+                ],
+            }),
+        );
+        const attachment = expectAttachment(
+            await genAttachmentFromPath('C:/notes/Default.own', 3),
+        );
+        expect(attachment).toMatchObject({
+            kind: 'text',
+            name: 'Mercy',
+            noteId: 3,
+            filePath: 'C:/notes/Default.own',
+        });
+        expect(attachment.summary).toBe(
+            'The user attached a file called "Mercy":\nNote: Mercy\n(empty)',
+        );
+        expect(attachment.summary).not.toContain('Grace');
+        // A note that is no longer there says so, never the whole file.
+        expect(
+            expectFailure(
+                await genAttachmentFromPath('C:/notes/Default.own', 9),
+            ),
+        ).toBe('Default.own is not there any more.');
+    });
+
     test('a text file that cannot be read, or a kind it cannot read, is refused', async () => {
         diskState.sizeMap.set('C:/docs/locked.md', 20);
         expect(

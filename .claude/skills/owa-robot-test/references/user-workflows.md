@@ -21,7 +21,11 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-07l** (**New W-58 — folder sessions on Documents, Presenting Flows, Bibles and Bible Notes.** The user, with the Background tab's `Default · Session 2 · +` row circled and then the line under the **[en:tran:Documents]** title: _I want the extra sessions for extra folder for all other components … it should apply to `Documents` `Presenting Flow List` `Bibles` …_, _I want it here_. The four lists carry the row under their titles; a session is a folder of its own, **[en:tran:Default]** the one Path Settings names and never removable (W-08 corrected: it could be removed, which forgot the tab's own folder); what is made from outside the list lands in the session in front, verse marks stay in the Default session's notes, and an editor opened from a session's file reads that session's folder. Seen live 2026-11-07 on the dev Presenter: the row on all four lists, a Documents session on a typed folder, its song and slide document opened from it by **[en:tran:Edit]**, and Default's menu with no Remove. W-03, W-14 and W-22 point to it. PM-170, PM-171.)
+**workflowsVersion: 2026-11-07n** (**New W-60 — change a Bible note with the assistant.** The user, with a note row's menu open (Open, Edit Title, Export, Duplicate, Move To): _add `Open in Chatbot` for bible-note, to do what `Open in Chatbot` of appdocument … goal: chatbot can help modify and answer everything on bible-note_. A note row's menu carries **[en:tran:Open in Chatbot]** right under **[en:tran:Open]**, and the Bible Note window's footer a robot; both open the help window with that ONE note attached under a card of five buttons. The assistant changes the note part by part — the rest of it (headings, lists, verse mentions, pictures, drawings) kept exactly — writes Bible verses from the installed Bible, never its own words, and answers how to do anything in the note editor from the editor's own guide. Changes are unsaved, like a slide document's, and a note window that is open shows them at once. Seen live 2026-11-08 on a scratch development profile (the user allowed the caution's **Open** to be pressed there), Auto answering on the shared gemma4:cloud: the row's menu read Open · **Open in Chatbot** · Edit Title · Export · Duplicate · Move To · Delete; the card showed the five buttons with the note attached; **[en:tran:Check the spelling]** fixed _recieve_ in one paragraph, every other part of the note byte for byte as it was, and **[en:tran:Undo this change]** put it back; with the note open in its window, _Fix the spelling, and put John 3:16 in as a passage right under the heading_ added the KJV passage block and the fix, and the open window showed both without being reopened; _How do I add a sticky note to this note?_ was answered from the editor's guide (**Insert** › **Sticky Note**); the window's robot opened a chat on the note it shows. **[en:tran:Summarize this note]** summed it up in the chat and changed nothing; **[en:tran:Tidy it into headings and lists]** first turned a paragraph into a heading of other words, the paragraph lost (Undo put it back) -- such a change is refused now -- and asked again it added a heading and made the paragraph a bullet, every word kept. A reopened help window had kept only three of a card's five buttons; the saved conversation keeps five now. Then, with the freshly packed Khmer 0.0.38 installed and the app switched to Khmer, the card read in Khmer with its five buttons, the translate pair offering Khmer. PL-110, CB-169.)
+
+Previous: **workflowsVersion: 2026-11-07m** (**New W-59 — change a presenting flow with the assistant.** The user, with a presenting flow's row menu open (Open Preview, Add Action, Export, …): _add `Open in Chatbot`, follow what working for appdocument. goal: chatbot can help the presenting flow modification_; then, asked what the assistant may change, _Lines, Timing & marks, CC elements, Foreground presets_, and for the card's buttons _Check the running order, Build from my order, Clear between items, Move on by itself_. **[en:tran:Open in Chatbot]** sits right under **[en:tran:Open Preview]** in a presenting flow's menu while AI is on; the help window opens a chat with the flow attached and a card with those four buttons, and the assistant changes many lines in one change — kept at once, a presenting flow having no Save — with **[en:tran:Undo this change]** and **[en:tran:Show it in the list]** under the answer. Seen live 2026-11-08 on a scratch development profile (the user allowed the caution's **Open** to be pressed there), Auto answering on the shared gemma4:cloud: the row's menu read Open Preview · **Open in Chatbot** · Add Action · Export · …; the card showed the four buttons with the flow attached; **Check the running order** named a line whose document had been moved to the trash; **Clear the screen between items** put one **[en:tran:Clear All]** after the one document that had none; **Move on by itself** asked the seconds, then shared one 8-second timeout between two songs and changed the third's own timeout to 8 rather than add a second; an order of service typed under **Build it from my order of service** added Welcome, Sermon and the coffee notice in order and said _Amazing Grace_ was not in Documents; **[en:tran:Show it in the list]** rang the flow's row and **[en:tran:Undo this change]** put each change back. Not seen live: the Khmer card (its words are in every dictionary, the language not installed on the scratch profile). PL-109, CB-168.)
+
+Previous: **workflowsVersion: 2026-11-07l** (**New W-58 — folder sessions on Documents, Presenting Flows, Bibles and Bible Notes.** The user, with the Background tab's `Default · Session 2 · +` row circled and then the line under the **[en:tran:Documents]** title: _I want the extra sessions for extra folder for all other components … it should apply to `Documents` `Presenting Flow List` `Bibles` …_, _I want it here_. The four lists carry the row under their titles; a session is a folder of its own, **[en:tran:Default]** the one Path Settings names and never removable (W-08 corrected: it could be removed, which forgot the tab's own folder); what is made from outside the list lands in the session in front, verse marks stay in the Default session's notes, and an editor opened from a session's file reads that session's folder. Seen live 2026-11-07 on the dev Presenter: the row on all four lists, a Documents session on a typed folder, its song and slide document opened from it by **[en:tran:Edit]**, and Default's menu with no Remove. W-03, W-14 and W-22 point to it. PM-170, PM-171.)
 
 Previous: **workflowsVersion: 2026-11-07k** (**W-57 step 3 — sizes with no assistant.** **Make the words larger**, _make the words smaller_ and _make every box 110 px_ are done by the help window itself, instantly, one change with **[en:tran:Undo this change]** under it, every box keeping its size against the others — the Slide Editor's Bulk Font sets one size on all. Seen live 2026-11-07 on the dev app: right-click a 90/70 document, **Open in Chatbot**, **Make the words larger** — 113/88 written, no assistant asked, no credit; _Make every box 110 px_ — all 110; **Undo this change** — back. PL-108, CB-167.)
 
@@ -2848,6 +2852,10 @@ the ones at the bottom are the note FILE's.
 Notes for a sermon series can live in a folder of their own: the row under the
 **[en:tran:Bible Notes]** title switches between them (W-58).
 
+The help window can change a note for you, or answer how to do something in the
+note editor: **[en:tran:Open in Chatbot]** in a note row's menu, or the robot at
+the bottom of the Bible Note window (W-60).
+
 _Verify: PR-03, PU-03, KB-11, PM-170._
 
 ---
@@ -3096,6 +3104,102 @@ PDF, PowerPoint or Word file has no slides here to change — and only while AI 
 assistant can answer, the chat says so and offers **Open AI settings**.
 
 _Verify: PL-108, CB-167._
+
+---
+
+### W-59 — Change a presenting flow with the assistant (build it from your order of service, a clear between items, move on by itself)
+
+**Goal:** have the help window change one of your presenting flows (the running order of a
+service, W-22) for you — build it from your order of service, typed or photographed, check
+it, put a clear between items, make the songs move on by themselves, and add, move, copy,
+park, colour, pin or arm its lines, countdowns and CC elements.
+
+1. In **[en:tran:Presenting Flows]**, right-click a presenting flow's NAME row (its own row
+   with its name on it, not one of its lines), or click the faint **⋮** at its right-hand
+   end, and choose **[en:tran:Open in Chatbot]**, right under **[en:tran:Open Preview]**. 📸
+2. The help window opens a chat of its own with the presenting flow attached under the box,
+   and a card that says what it can change, with four buttons. 📸
+3. Press a button under the card, or type what you want:
+   - **Check the running order** reads every line and says what is wrong or missing — a song
+     whose file was renamed or deleted, a **[en:tran:Jump to]** with nowhere to go, a
+     **[en:tran:Keyboard Event]** with no shortcut — and offers the fixes. It changes
+     nothing until you say.
+   - **Build it from my order of service**: paste your order of service into the box, or
+     attach a picture of the printed bulletin (the paperclip), or both, and the assistant
+     adds every item in order — songs and slide documents by their names in
+     **[en:tran:Documents]**, Bible passages, a countdown or a notice where the order says
+     one. It says which items had no document to match; it never makes up a song.
+   - **Clear the screen between items** puts a **[en:tran:Clear All]** after every song,
+     slide document and passage that has none after it.
+   - **Move on by itself** asks how many seconds a slide stays, then gives every song and
+     slide document a **[en:tran:Next: Timeout]** that rides along with it (a CC element,
+     W-22d), so its slides go on by themselves — one timeout line shared by all of them; a
+     song that already moves on by itself has its time changed rather than a second one
+     added.
+   - Or type it: _Add a 5 minute countdown at the top_, _Make line 2's timeout 10 seconds_,
+     _Pin line 3 to screen 1_, _Colour the songs blue_, _Park the sermon_, _Move the
+     offering after the second song_, _Add Psalm 23 after line 4_, _Remove the last line_.
+   - _list me more options_ shows the card and its buttons again.
+4. The answer says what changed. A presenting flow has no Save: the change is **kept at
+   once**, and the panel shows it. **[en:tran:Undo this change]** under the answer puts the
+   whole change back, and **[en:tran:Show it in the list]** finds its row in
+   **[en:tran:Presenting Flows]**.
+
+**Not there?** **[en:tran:Open in Chatbot]** is in a presenting flow's menu only while AI is
+on (**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
+assistant can answer, the chat says so and offers **Open AI settings**. A video, a picture,
+a camera, another screen or a web page on the **[en:tran:Foreground]** is picked in its
+panel and dragged in (W-22) — the assistant does not add those from words.
+
+_Verify: PL-109, CB-168._
+
+---
+
+### W-60 — Change a Bible note with the assistant (translate it, tidy it, add verses, ask about the note editor)
+
+**Goal:** have the help window change one of your Bible notes for you — put its words into
+another language or add a language under them, check the spelling, tidy it into headings and
+lists, add Bible verses — sum it up, or explain how to do something in the note editor.
+
+1. In **[en:tran:Bible Notes]** (W-14), open a notes file, then right-click a note's row, or
+   click the faint **⋮** at its right-hand end, and choose **[en:tran:Open in Chatbot]**, right
+   under **[en:tran:Open]**. 📸 In the **Bible Note** window, the robot button among the buttons
+   at the bottom (beside **[en:tran:Save]**) does the same for the note it shows, after
+   keeping what was just typed.
+2. The help window opens a chat of its own with that one note attached under the box, and a
+   card that says what it can do, with five buttons. 📸
+3. Press a button under the card, or type what you want:
+   - **Replace the words with …** puts the note's words into that language in place of
+     theirs; **Add … under each line** keeps the words and writes the translation under them.
+     The language offered is the one the note's title says, else the one the app is shown in;
+     with neither, the buttons say _another language_ and the assistant asks which.
+   - **[en:tran:Check the spelling]** fixes only what is misspelt and says what it fixed.
+   - **[en:tran:Summarize this note]** sums the note up in the chat; nothing in the note
+     changes.
+   - **[en:tran:Tidy it into headings and lists]** makes its points headings and the lines
+     under them list items, its words kept.
+   - Bible verses: _Put John 3:16 in as a passage under the heading_ adds the passage, its
+     words read from the Bible installed on this computer — the assistant never types a
+     verse itself. A verse can also go in the middle of a line as a verse mention.
+   - Questions about the note itself (_what verses does it use?_) or about the note editor
+     (_How do I add a sticky note?_, _How do I print this note?_) are answered from the note
+     and from the editor's own guide.
+   - _list me more options_ shows the card and its buttons again.
+4. The answer says what changed. Only the parts asked about are rewritten: the rest of the
+   note — its headings, lists, verse mentions, tables, pictures, drawings and sticky notes —
+   stays exactly as it was. A table, picture, drawing, sticky note or passage can be moved or
+   taken out, never rewritten. The change is **not saved yet**; a Bible Note window that is
+   open on the note shows it at once. **[en:tran:Undo this change]** under the answer puts it
+   back, and **[en:tran:Show it in the list]** finds its row.
+5. To keep it, open the note (W-14) and press **[en:tran:Save]** (**Ctrl+S**); a new title
+   asked for in the chat is kept at once, as **[en:tran:Edit Title]** does.
+
+**Not there?** **[en:tran:Open in Chatbot]** is on a note only — not on a verse's highlights
+and comments, nor on a note that could not be read — and only while AI is on
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
+assistant can answer, the chat says so and offers **Open AI settings**.
+
+_Verify: PL-110, CB-169._
 
 ---
 

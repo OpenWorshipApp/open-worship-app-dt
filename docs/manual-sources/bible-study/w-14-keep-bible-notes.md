@@ -34,6 +34,10 @@ the ones at the bottom are the note FILE's.
 Notes for a sermon series can live in a folder of their own: the row under the
 **[en:tran:Bible Notes]** title switches between them (W-58).
 
+The help window can change a note for you, or answer how to do something in the
+note editor: **[en:tran:Open in Chatbot]** in a note row's menu, or the robot at
+the bottom of the Bible Note window (W-60).
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 

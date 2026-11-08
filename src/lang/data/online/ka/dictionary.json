@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "ასისტენტმა ეს სიმღერა შეცვალა.",
     "Load the change": "ცვლილების ჩატვირთვა",
     "Create Lyric": "სიმღერის ტექსტის შექმნა",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ბიბლიის თითოეული მუხლი სიმღერის ერთ სტროფად იქცევა, თითო ხაზით ბიბლიის თითოეული არჩეული ვერსიისთვის"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "ბიბლიის თითოეული მუხლი სიმღერის ერთ სტროფად იქცევა, თითო ხაზით ბიბლიის თითოეული არჩეული ვერსიისთვის",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}“ მიმაგრებულია ქვემოთ. შემიძლია თქვენთვის შევცვალო ეს მსახურების თანმიმდევრობა: სახელით დავამატო სიმღერები, სლაიდების დოკუმენტები, ბიბლიის მონაკვეთები, მოქმედებები და უკუთვლები; წავშალო, გადავიტანო, დავაკოპირო ან დროებით გამოვრთო სტრიქონები; დავაყენო ტაიმერები, მალსახმობები, ფერები და ეკრანები; და მივამაგრო CC ელემენტები. ჩასვით თქვენი მსახურების განრიგი ან გამომიგზავნეთ მისი სურათი და მისგან შევადგენ თანმიმდევრობას. დააჭირეთ ერთ-ერთს ან თქვით, რა გსურთ.",
+    "Check the running order": "თანმიმდევრობის შემოწმება",
+    "Build it from my order of service": "შედგენა ჩემი მსახურების განრიგიდან",
+    "Clear the screen between items": "ეკრანის გასუფთავება ელემენტებს შორის",
+    "Move on by itself": "ავტომატური გადასვლა შემდეგზე",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}“ ქვემოთაა მიმაგრებული. შემიძლია თქვენთვის შევცვალო ეს ჩანაწერი: შევცვალო ან ვთარგმნო მისი სიტყვები, შევამოწმო მართლწერა, დავალაგო სათაურებად და სიებად, ან დავამატო ბიბლიის მუხლები. ასევე შემიძლია შევაჯამო, ვუპასუხო კითხვებს მასზე და აგიხსნათ, როგორ გააკეთოთ ნებისმიერი რამ ჩანაწერების რედაქტორში. დააჭირეთ ერთ-ერთს ან თქვით, რა გსურთ.",
+    "Summarize this note": "შეაჯამე ეს ჩანაწერი",
+    "Tidy it into headings and lists": "დაალაგე სათაურებად და სიებად"
 }

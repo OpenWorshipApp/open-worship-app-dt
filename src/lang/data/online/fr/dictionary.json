@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "L'assistant a modifié ce chant.",
     "Load the change": "Charger la modification",
     "Create Lyric": "Créer un chant",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Chaque verset de la Bible devient un couplet du chant, avec une ligne par version de la Bible sélectionnée"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Chaque verset de la Bible devient un couplet du chant, avec une ligne par version de la Bible sélectionnée",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "« {name} » est joint ci-dessous. Je peux modifier ce déroulé pour vous : ajouter des chants, des documents de diapositives, des passages de la Bible, des actions et des comptes à rebours par leur nom ; retirer, déplacer, copier ou mettre de côté des lignes ; régler les minuteries, les raccourcis, les couleurs et les écrans ; et joindre des éléments CC. Collez votre ordre du culte ou envoyez-m’en une image, et j’en ferai le déroulé. Appuyez sur un choix, ou dites ce que vous voulez.",
+    "Check the running order": "Vérifier l’ordre du déroulé",
+    "Build it from my order of service": "Le créer à partir de mon ordre du culte",
+    "Clear the screen between items": "Vider l’écran entre les éléments",
+    "Move on by itself": "Avancer tout seul",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "« {name} » est jointe ci-dessous. Je peux modifier cette note pour vous : changer ou traduire ses mots, vérifier l’orthographe, la ranger en titres et en listes, ou ajouter des versets de la Bible. Je peux aussi la résumer, répondre à des questions à son sujet et expliquer comment faire n’importe quoi dans l’éditeur de notes. Appuyez sur l’un d’eux, ou dites ce que vous voulez.",
+    "Summarize this note": "Résumer cette note",
+    "Tidy it into headings and lists": "La ranger en titres et en listes"
 }

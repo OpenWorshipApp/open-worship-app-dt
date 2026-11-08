@@ -1,0 +1,427 @@
+/**
+ * A conversation about ONE of the user's BIBLE NOTES, attached to the tab --
+ * from a note row's **Open in Chatbot** or the 🤖 in the note window's
+ * footer.
+ *
+ * Asked for 2026-11-07 (the user, with a note row's menu open on Open / Edit
+ * Title / Export / Duplicate / Move To: _add `Open in Chatbot` for bible-note,
+ * to do what `Open in Chatbot` of appdocument … goal: chatbot can help modify
+ * and answer everything on bible-note_).
+ *
+ * The slide document's conversation (`slideChatHelpers.ts`) is the shape: a
+ * question asked while a note is open in the tab is a `note` ask. The window
+ * reads the note as it stands NOW through `owa_note_edit read` (unsaved
+ * typing included) and puts it under the question as numbered blocks in a
+ * light mark-up (`toNoteAsk`) -- never the editor's JSON, whose pictures are
+ * megabytes of base64. The ask goes out under its own prompt with
+ * `owa_note_edit`, offered to no other question, beside the guide's two
+ * tools -- how the note EDITOR works is the editor's own guide's, aimed at
+ * the Bible Note window by the window -- and the verse finder. The model
+ * names a note; the window turns the name into the note's file and id
+ * (`resolveNoteEditTarget`), so no path ever reaches it or comes from it.
+ *
+ * Pure, every rule a test: no store, no tool call, no model.
+ */
+import type { ChatAttachmentType } from './attachmentHelpers';
+import { checkIsFileAttachment } from './attachmentHelpers';
+import {
+    DEFAULT_CHAT_LANG_CODE,
+    type AssistantLanguageType,
+} from './chatLangHelpers';
+import { fillWords, tran } from './chatTranHelpers';
+import {
+    type LyricTranslateModeType,
+    genLyricTranslateReplies,
+    pickTranslateLanguage,
+} from './lyricChatHelpers';
+import { readTranslateLanguageName } from './slideChatHelpers';
+
+export const NOTE_ASK_KIND = 'note';
+export const NOTE_EDIT_TOOL_NAME = 'owa_note_edit';
+// A read on, a change (every block in one call), a retry after a refusal, a
+// guide search and its page, and the answer.
+export const NOTE_MAX_TOOL_ROUNDS = 8;
+/** The most notes one question reads and may change. */
+export const MAX_NOTE_ASK_FILES = 2;
+// What one note may cost the question it rides on: a sermon's notes of
+// sixty blocks are ~8 000 characters.
+const MAX_NOTE_DOC_TEXT_CHARS = 16000;
+
+const NOTE_FILE_PATTERN = /\.own$/i;
+
+/** Whether an attachment is ONE note of a notes file. */
+export function checkIsNoteAttachment(attachment: ChatAttachmentType) {
+    return (
+        checkIsFileAttachment(attachment) &&
+        NOTE_FILE_PATTERN.test(attachment.filePath ?? '') &&
+        Number.isSafeInteger(attachment.noteId)
+    );
+}
+
+export type NoteAskFileType = {
+    name: string;
+    filePath: string;
+    noteId: number;
+};
+
+function toNoteAskFile(attachment: ChatAttachmentType): NoteAskFileType {
+    return {
+        name: attachment.name,
+        filePath: attachment.filePath as string,
+        noteId: attachment.noteId as number,
+    };
+}
+
+/**
+ * The notes among a tab's open files -- each once, the first
+ * `MAX_NOTE_ASK_FILES`.
+ */
+export function findNoteAskFiles(
+    attachments: readonly ChatAttachmentType[],
+): NoteAskFileType[] {
+    const out: NoteAskFileType[] = [];
+    for (const attachment of attachments) {
+        if (
+            !checkIsNoteAttachment(attachment) ||
+            out.some((one) => {
+                return (
+                    one.filePath === attachment.filePath &&
+                    one.noteId === attachment.noteId
+                );
+            })
+        ) {
+            continue;
+        }
+        out.push(toNoteAskFile(attachment));
+    }
+    return out.slice(0, MAX_NOTE_ASK_FILES);
+}
+
+/**
+ * The notes a tab is still about, however many files came after: those of
+ * the last question that attached one, unless the tab closed its files since
+ * (`closedAfterId`) -- a picture attached later, a verse asked about, must
+ * not close the note the conversation is changing.
+ */
+export function findOpenNoteAttachments(
+    messages: readonly {
+        id: number;
+        author: string;
+        attachments?: ChatAttachmentType[];
+    }[],
+    closedAfterId?: number,
+): ChatAttachmentType[] {
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
+        if (closedAfterId !== undefined && message.id <= closedAfterId) {
+            return [];
+        }
+        if (message.author !== 'you') {
+            continue;
+        }
+        const notes = (message.attachments ?? []).filter(checkIsNoteAttachment);
+        if (notes.length > 0) {
+            return notes;
+        }
+    }
+    return [];
+}
+
+function toComparableName(text: string) {
+    return text.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * What a model's call turns into: the attached note's file and id, or a
+ * `reason` to refuse with. A model names a note; it never hands over a file
+ * or an id -- words planted in a note could ask for any file -- and only an
+ * ATTACHED note is changed here.
+ */
+export function resolveNoteEditTarget(
+    args: Record<string, unknown>,
+    files: readonly NoteAskFileType[],
+): { file: string; id: number; note: string } | { reason: string } {
+    if (args.file !== undefined || args.id !== undefined) {
+        return {
+            reason:
+                'Name the note (`note`) as it is attached, by its name -- ' +
+                'never a file or an id.',
+        };
+    }
+    const text = typeof args.note === 'string' ? args.note.trim() : '';
+    if (/[\\/]/.test(text)) {
+        return {
+            reason: 'Name the note as it is attached, by its name -- never a path.',
+        };
+    }
+    const names = files
+        .map((one) => {
+            return `"${one.name}"`;
+        })
+        .join(', ');
+    if (text === '') {
+        return files.length === 1
+            ? {
+                  file: files[0].filePath,
+                  id: files[0].noteId,
+                  note: files[0].name,
+              }
+            : { reason: `Say which note (\`note\`): ${names}.` };
+    }
+    const attached = files.find((one) => {
+        return toComparableName(one.name) === toComparableName(text);
+    });
+    if (attached === undefined) {
+        return {
+            reason:
+                `Only the note attached here can be changed: ${names}. ` +
+                'Another note is opened with Open in Chatbot on its row.',
+        };
+    }
+    return {
+        file: attached.filePath,
+        id: attached.noteId,
+        note: attached.name,
+    };
+}
+
+function toBlockLine(block: any) {
+    const number = Number.isInteger(block?.n) ? block.n : '?';
+    const kind = String(block?.kind ?? 'paragraph');
+    const indent = Number.isInteger(block?.level)
+        ? '  '.repeat(block.level)
+        : '';
+    const tick =
+        kind === 'check' ? (block?.checked === true ? ' [x]' : ' [ ]') : '';
+    const fixed = block?.isFixed === true ? ' (fixed)' : '';
+    const cut =
+        block?.isTextCut === true
+            ? ' (too long to show whole -- its words cannot be replaced)'
+            : '';
+    const words = String(block?.text ?? '');
+    return `${indent}${number}. ${kind}${tick}${fixed}${cut}${words === '' ? '' : `: ${JSON.stringify(words)}`}`;
+}
+
+/**
+ * One note as the model reads it: its name and file, how many blocks, the
+ * hash a change gives back, then a line a block -- its number, kind and
+ * words as a JSON string (a line break shows as `\n` and a translation
+ * keeps it). Plain lines, never the editor's JSON: a model shown JSON writes
+ * JSON back.
+ */
+export function toNoteDocumentText(read: any) {
+    if (read === null || typeof read !== 'object') {
+        return null;
+    }
+    const blocks: any[] = Array.isArray(read.blocks) ? read.blocks : [];
+    const lines = [
+        `Blocks: ${Number.isInteger(read.blockCount) ? read.blockCount : blocks.length}` +
+            (typeof read.file === 'string'
+                ? ` · in the notes file "${read.file}"`
+                : '') +
+            (typeof read.hash === 'string' ? ` · hash "${read.hash}"` : ''),
+    ];
+    if (blocks.length === 0) {
+        lines.push('(the note is empty: add blocks with `after: 0`)');
+    }
+    for (const block of blocks) {
+        lines.push(toBlockLine(block));
+    }
+    if (Number.isInteger(read.nextFrom)) {
+        lines.push(
+            `[... blocks from ${read.nextFrom} on were not included; ` +
+                `${NOTE_EDIT_TOOL_NAME} "read" with \`from\` ${read.nextFrom} reads on]`,
+        );
+    }
+    const text = lines.join('\n');
+    return text.length > MAX_NOTE_DOC_TEXT_CHARS
+        ? `${text.slice(0, MAX_NOTE_DOC_TEXT_CHARS)}\n[... the rest was not included; ${NOTE_EDIT_TOOL_NAME} "read" with \`from\` reads on]`
+        : text;
+}
+
+// Said to the model under a pressed translate button, so which way is never
+// its guess -- the song's two ways, said for a note.
+const NOTE_TRANSLATE_HINT_MAP: Record<LyricTranslateModeType, string> = {
+    replace:
+        '(They chose to REPLACE the words with the translation: ONE edit ' +
+        'call giving every block with words its translated words, its ' +
+        'mark-up and every [^…] [@…] [#…] token kept as they are. When no ' +
+        'language is named, ask which first, with OPTIONS naming two or ' +
+        'three languages -- never the two ways again.)',
+    under:
+        '(They chose to KEEP the words and add the translation under them: ' +
+        'ONE edit call where each block with words is its own words, a line ' +
+        'break, then the translation of them; the tokens stay in the first ' +
+        'line only. When no language is named, ask which first, with ' +
+        'OPTIONS naming two or three languages -- never the two ways again.)',
+};
+
+// Sent with nothing typed under the card.
+export const NOTE_WORDLESS_HINT =
+    '(They sent this with no words of their own: say in a sentence what you ' +
+    'can do with this note and end with OPTIONS.)';
+
+/**
+ * The question as the model is asked it: what they typed, then each attached
+ * note as it reads now, named as `note` takes it.
+ */
+export function toNoteAsk(
+    asked: string,
+    notes: readonly { name: string; text: string | null }[],
+    translateMode: LyricTranslateModeType | null = null,
+    isWordless = false,
+) {
+    const language =
+        translateMode === null ? null : readTranslateLanguageName(asked);
+    const shown = notes.map((note) => {
+        return (
+            `(The Bible note "${note.name}" is attached. Change it with ` +
+            `${NOTE_EDIT_TOOL_NAME} action "edit", note "${note.name}", the ` +
+            'hash below. It reads now:\n' +
+            `${note.text ?? `(it could not be read just now; call ${NOTE_EDIT_TOOL_NAME} with action "read")`})`
+        );
+    });
+    return [
+        ...(isWordless ? [NOTE_WORDLESS_HINT] : []),
+        asked,
+        ...(translateMode === null
+            ? []
+            : [NOTE_TRANSLATE_HINT_MAP[translateMode]]),
+        ...(language === null
+            ? []
+            : [
+                  `(The language is ${language}: translate into it now, in ` +
+                      'one call -- do not ask which language.)',
+              ]),
+        ...shown,
+    ].join('\n\n');
+}
+
+/**
+ * The system prompt of such a conversation: what a block is, what the tool
+ * takes, that verse words are the Bible's, and where the editor's own help
+ * is.
+ */
+export const NOTE_SYSTEM_PROMPT =
+    'You are the help assistant inside Open Worship app, a church ' +
+    'presentation program, helping a volunteer with a Bible note they ' +
+    "attached -- sermon or study notes written in the app's Bible Note " +
+    'editor. The note is given under their message as it reads now: every ' +
+    'block numbered, its kind, and its words as a JSON string (\\n between ' +
+    'lines). Kinds: paragraph, h1 to h6 (headings), quote, code, and list ' +
+    'items bullet, number and check ([x] is ticked). A block marked fixed ' +
+    '(table, passage -- a Bible passage --, picture, drawing, sticky, rule, ' +
+    'video) can be moved or removed, never given words. WORDS carry a light ' +
+    'mark-up: **bold**, *italic*, __underline__, ~~strike~~, `code`, ' +
+    '[words](https://…), and mentions: [^John 3:16] a Bible verse, [@Moses] ' +
+    'a person, [#Jerusalem] a place. CHANGE the note with ' +
+    `${NOTE_EDIT_TOOL_NAME} action "edit", \`note\` its name as given and ` +
+    '`hash` as given, EVERY change in ONE call: {block, text} gives a block ' +
+    'new words (keep its mark-up and every mention token exactly as it is, ' +
+    'unless asked to take one out), {block, kind} changes its kind, {block, ' +
+    'remove: true} removes it, {block, after} moves it after block `after`, ' +
+    '{after, kind, text} adds a block after block `after` (0 is the top; ' +
+    'several after one block keep their order). Block numbers are the note ' +
+    'as you read it, whatever the call does. Change only the blocks the ' +
+    'request is about. A BIBLE VERSE is never your words: put one in with a ' +
+    'NEW token [^Book chapter:verse] in the words, or a block {after, kind: ' +
+    '"passage", ref: "John 3:16-17"} for its whole text -- the app reads it ' +
+    'from the installed Bible. Never type a verse out. A new person or ' +
+    'place is plain words. When a request has one sensible reading, do it ' +
+    'rather than ask: every change can be undone. TRANSLATING has two ways ' +
+    'and the person chooses: REPLACE the words with the translation, or ADD ' +
+    'the translation on the line under the words, keeping them. Unless ' +
+    'their words already say which, ask which way first and end with ' +
+    'OPTIONS: Replace the words | Add it under each line. Once the way is ' +
+    'known and the language is not, ask which language, with OPTIONS naming ' +
+    "two or three languages. Write natural words in the language's own " +
+    'script, Bible names the way that language says them. TIDYING a note ' +
+    'into headings and lists: every block keeps its own words -- a heading ' +
+    'that names a point is a NEW block ({after, kind: "h2", text}) put ' +
+    'above the lines it covers, and a line that is a point becomes a ' +
+    'bullet with {block, kind: "bullet"} and no `text`. Never give a ' +
+    "block a heading's words in place of its own. Questions ABOUT the note " +
+    '(sum it up, what verses it uses, what a point means) are answered from ' +
+    'its words; a verse it names is quoted with owa_find_verse `refs`, never ' +
+    'from memory. How to do something in the note EDITOR itself (sticky ' +
+    'notes, tables, comments, drawings, Word copies, printing, read-only, ' +
+    'zoom) is in its guide: search it with owa_help_search, open the page ' +
+    'with owa_help_page, and answer in its words. When the tool refuses, ' +
+    'read its reason, fix the call and try once more; then say plainly what ' +
+    'went wrong. After a change, say in a sentence or two what changed, that ' +
+    "it is NOT saved yet (the note window's Save, Ctrl+S, keeps it; a note " +
+    'window that is open shows the change now) -- a new title is kept at ' +
+    'once -- and that Undo this change puts it back. Never write the blocks, ' +
+    'the mark-up or any JSON out in your answer: a verse is named plainly ' +
+    '(John 3:16), never as [^John 3:16]. End with OPTIONS: two or three next ' +
+    'changes they might want.';
+
+/**
+ * The card a note opens its tab with, written by the window with no model:
+ * that it is attached, what can be done with it, and the changes asked for
+ * most as buttons -- the song card's two translate buttons among them. Every
+ * button is a question pressed, answered by the assistant.
+ */
+export function genNoteOpeningAnswer(
+    name: string,
+    appLanguage: AssistantLanguageType,
+    languages: readonly AssistantLanguageType[],
+) {
+    const target = pickTranslateLanguage(name, appLanguage, languages);
+    // Named as the reader of THIS window says it: its own word in a window
+    // shown in English, the language's own name in any other.
+    const targetName =
+        target === null
+            ? null
+            : appLanguage.code === DEFAULT_CHAT_LANG_CODE
+              ? target.name
+              : target.nativeName;
+    return {
+        text: fillWords(
+            tran(
+                '“{name}” is attached below. I can change this note for you: ' +
+                    'change or translate its words, check the spelling, tidy ' +
+                    'it into headings and lists, or add Bible verses. I can ' +
+                    'also sum it up, answer questions about it, and explain ' +
+                    'how to do anything in the note editor. Press one, or say ' +
+                    'what you want.',
+            ),
+            { name },
+        ),
+        replies: [
+            ...genLyricTranslateReplies(targetName),
+            tran('Check the spelling'),
+            tran('Summarize this note'),
+            tran('Tidy it into headings and lists'),
+        ],
+        translateLanguage: target,
+    };
+}
+
+/**
+ * Whether the document the tab opened LAST is a note -- of the files of the
+ * last question that attached any, unless the tab closed its files since --
+ * so a note opened after a slide document or a running order is the one a
+ * question is about, and one opened before them is not.
+ */
+export function checkIsNoteOpenedLast(
+    messages: Parameters<typeof findOpenNoteAttachments>[0],
+    closedAfterId?: number,
+) {
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
+        if (closedAfterId !== undefined && message.id <= closedAfterId) {
+            return false;
+        }
+        if (message.author !== 'you') {
+            continue;
+        }
+        const files = (message.attachments ?? []).filter((one) => {
+            return typeof one.filePath === 'string';
+        });
+        if (files.length > 0) {
+            return files.some(checkIsNoteAttachment);
+        }
+    }
+    return false;
+}

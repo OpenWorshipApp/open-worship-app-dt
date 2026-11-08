@@ -4,7 +4,7 @@
     "window": "bibleNote.html",
     "focus": "bibleNote",
     "description": "The window a Bible note is written in. It opens on its own from the Notes list and belongs to one note file.",
-    "updated": "2026-09-26",
+    "updated": "2026-11-07",
     "sections": [
         {
             "id": "writing",
@@ -55,6 +55,125 @@
                     "resources": {
                         "recipe": "W-14",
                         "find": "Undo Saved Change"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "editor",
+            "label": "Using the note editor",
+            "recipes": [
+                "bible-note:ui/formatting-text/make-text-bold-italic-or-underlined",
+                "bible-note:ui/inserting-content/insert-a-table",
+                "bible-note:ui/sticky-notes/add-a-sticky-note",
+                "bible-note:ui/bible-verses/insert-a-bible-verse-mention-with-and-paste",
+                "bible-note:ui/comments/add-a-comment-to-selected-text",
+                "bible-note:ui/import-export-and-print/print-the-note",
+                "bible-note:ui/find-zoom-and-view/search-the-note-with-the-find-bar"
+            ],
+            "questions": [
+                {
+                    "id": "format-note-text",
+                    "text": "How do I make words in my note bold or change their colour?",
+                    "kind": "howto",
+                    "keywords": [
+                        "bold",
+                        "italic",
+                        "underline",
+                        "colour",
+                        "color",
+                        "highlight",
+                        "format"
+                    ],
+                    "resources": {
+                        "recipe": "bible-note:ui/formatting-text/make-text-bold-italic-or-underlined",
+                        "related": [
+                            "bible-note:ui/formatting-text/change-the-text-colour-or-background-colour"
+                        ]
+                    }
+                },
+                {
+                    "id": "note-table",
+                    "text": "How do I put a table in my note?",
+                    "kind": "howto",
+                    "keywords": ["table", "rows", "columns", "grid", "insert"],
+                    "resources": {
+                        "recipe": "bible-note:ui/inserting-content/insert-a-table"
+                    }
+                },
+                {
+                    "id": "sticky-note",
+                    "text": "How do I add a sticky note to my note?",
+                    "kind": "howto",
+                    "keywords": ["sticky", "post-it", "reminder", "floating"],
+                    "resources": {
+                        "recipe": "bible-note:ui/sticky-notes/add-a-sticky-note"
+                    }
+                },
+                {
+                    "id": "note-verse",
+                    "text": "How do I put a Bible verse into my note?",
+                    "kind": "howto",
+                    "keywords": [
+                        "verse",
+                        "mention",
+                        "caret",
+                        "paste",
+                        "passage",
+                        "scripture"
+                    ],
+                    "resources": {
+                        "recipe": "bible-note:ui/bible-verses/insert-a-bible-verse-mention-with-and-paste",
+                        "related": [
+                            "bible-note:ui/bible-verses/paste-a-bible-passage-as-a-collapsible-block"
+                        ]
+                    }
+                },
+                {
+                    "id": "note-comment",
+                    "text": "How do I add a comment to part of my note?",
+                    "kind": "howto",
+                    "keywords": ["comment", "remark", "annotate", "reply"],
+                    "resources": {
+                        "recipe": "bible-note:ui/comments/add-a-comment-to-selected-text"
+                    }
+                },
+                {
+                    "id": "print-note",
+                    "text": "How do I print my note or keep it as a Word document?",
+                    "kind": "howto",
+                    "keywords": [
+                        "print",
+                        "word",
+                        "docx",
+                        "paper",
+                        "document",
+                        "download"
+                    ],
+                    "resources": {
+                        "recipe": "bible-note:ui/import-export-and-print/print-the-note",
+                        "related": [
+                            "bible-note:ui/import-export-and-print/save-the-note-as-a-word-document"
+                        ]
+                    }
+                },
+                {
+                    "id": "find-in-note",
+                    "text": "How do I find a word in my note, or make the note bigger on screen?",
+                    "kind": "howto",
+                    "keywords": [
+                        "find",
+                        "search",
+                        "zoom",
+                        "bigger",
+                        "smaller",
+                        "magnify"
+                    ],
+                    "resources": {
+                        "recipe": "bible-note:ui/find-zoom-and-view/search-the-note-with-the-find-bar",
+                        "related": [
+                            "bible-note:ui/find-zoom-and-view/zoom-the-note-in-and-out"
+                        ]
                     }
                 }
             ]

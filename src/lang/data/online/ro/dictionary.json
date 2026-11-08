@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Asistentul a schimbat această cântare.",
     "Load the change": "Încarcă modificarea",
     "Create Lyric": "Creare versuri",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Fiecare verset din Biblie devine o strofă a cântecului, cu câte un rând pentru fiecare versiune a Bibliei selectată"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Fiecare verset din Biblie devine o strofă a cântecului, cu câte un rând pentru fiecare versiune a Bibliei selectată",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "„{name}” este atașată mai jos. Pot schimba această ordine a serviciului pentru dumneavoastră: să adaug după nume cântări, documente cu diapozitive, pasaje din Biblie, acțiuni și numărători inverse; să elimin, să mut, să copiez sau să dezactivez rânduri; să setez cronometre, comenzi rapide, culori și ecrane; și să atașez elemente CC. Lipiți programul serviciului sau trimiteți o fotografie a lui și voi alcătui ordinea din el. Apăsați una sau spuneți ce doriți.",
+    "Check the running order": "Verificați ordinea de desfășurare",
+    "Build it from my order of service": "Alcătuiți-o din programul serviciului meu",
+    "Clear the screen between items": "Goliți ecranul între puncte",
+    "Move on by itself": "Să avanseze singură",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}” este atașată mai jos. Pot schimba această notiță pentru dvs.: să-i schimb sau să-i traduc cuvintele, să verific ortografia, să o organizez în titluri și liste sau să adaug versete din Biblie. De asemenea, pot s-o rezum, să răspund la întrebări despre ea și să explic cum se face orice în editorul de notițe. Apăsați pe una sau spuneți ce doriți.",
+    "Summarize this note": "Rezumă această notiță",
+    "Tidy it into headings and lists": "Organizeaz-o în titluri și liste"
 }

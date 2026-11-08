@@ -7,12 +7,26 @@ import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { useThemeSource } from '../../others/themeHelpers';
 import { useAppEffect, useAppEffectAsync } from '../../helper/appHooks';
 import { useWatchStateSettingString } from '../../helper/settingHelpers';
-import { BIBLE_KEY_SETTING_NAME } from './bibleNoteHelpers';
+import {
+    BIBLE_KEY_SETTING_NAME,
+    flushBibleNoteHistory,
+} from './bibleNoteHelpers';
 import BibleNoteEditingMenuComp from './BibleNoteEditingMenuComp';
 import type Note from './Note';
 import type NoteItem from './NoteItem';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { getIsAIEnabled } from '../../helper/ai/aiHelpers';
+import { openNoteInChatbot } from '../../helper/ai/noteChatbotMenuHelpers';
+
+/**
+ * The help window on this note: the last second of typing written into the
+ * editing history first, because the help window reads the note from there.
+ */
+export async function openThisNoteInChatbot(note: Note, noteItem: NoteItem) {
+    await flushBibleNoteHistory();
+    return openNoteInChatbot(note.filePath, noteItem.id);
+}
 
 export function useBibleNoteControl({
     bibleNote,
@@ -45,6 +59,32 @@ export function useBibleNoteControl({
                     noteItem={noteItem}
                     bibleNote={bibleNote}
                 />
+            ),
+        });
+    }, [bibleNote, note, noteItem, isReadOnly]);
+    // Open in Chatbot (2026-11-07, the user: as a slide document's editor has
+    // its 🤖): this note, attached in the help window, which can change it.
+    // Not on a preview, which is a file outside the notes folder.
+    useAppEffect(() => {
+        if (isReadOnly || !getIsAIEnabled()) {
+            return;
+        }
+        const label = tran('Open in Chatbot');
+        bibleNote.prependFooterActionButton({
+            id: 'open-in-chatbot',
+            description: label,
+            children: (
+                <button
+                    className="action-button"
+                    onClick={() => {
+                        void openThisNoteInChatbot(note, noteItem);
+                    }}
+                    title={label}
+                    aria-label={label}
+                    aria-pressed={false}
+                >
+                    <i className="bi bi-robot" />
+                </button>
             ),
         });
     }, [bibleNote, note, noteItem, isReadOnly]);

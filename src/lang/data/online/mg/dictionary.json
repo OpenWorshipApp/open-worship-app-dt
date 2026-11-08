@@ -4099,5 +4099,13 @@
     "The assistant changed this song.": "Novain'ny mpanampy ity hira ity.",
     "Load the change": "Ampidiro ny fiovana",
     "Create Lyric": "Mamorona tononkira",
-    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ny andininy tsirairay ao amin'ny Baiboly dia lasa andininy amin'ny tononkira, misy andalana iray ho an'ny dikan-teny Baiboly voafidy tsirairay"
+    "Each Bible verse becomes a lyric verse, with one line per selected Bible version": "Ny andininy tsirairay ao amin'ny Baiboly dia lasa andininy amin'ny tononkira, misy andalana iray ho an'ny dikan-teny Baiboly voafidy tsirairay",
+    "“{name}” is attached below. I can change this presenting flow for you: add songs, slide documents, Bible passages, actions and countdowns by name; remove, move, copy or park lines; set timers, shortcuts, colors and screens; and attach CC elements. Paste your order of service or send a picture of it, and I will build the flow from it. Press one, or say what you want.": "Mipetaka eto ambany ny “{name}”. Afaka manova ity fandaharana ity ho anao aho: manampy hira, antontan-taratasy silaida, andinin-teny Baiboly, hetsika ary fanisana mihemotra amin’ny anarany; manala, mamindra, mandika na mametraka an-tsisiny andalana; mametraka fanisam-potoana, hitsin-dalana, loko ary efijery; ary mampiaraka singa CC. Apetaho eto ny fandaharam-pivavahanao na alefaso amiko ny sariny, dia hamorona ny fandaharana avy amin’izany aho. Tsindrio ny iray, na lazao izay tianao.",
+    "Check the running order": "Hamarino ny filaharana",
+    "Build it from my order of service": "Amboary avy amin’ny fandaharam-pivavahako",
+    "Clear the screen between items": "Diovy ny efijery eo anelanelan’ny singa tsirairay",
+    "Move on by itself": "Mandrosoa ho azy",
+    "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” dia mipetaka eto ambany. Afaka manova ity naoty ity ho anao aho: manova na mandika ny teniny, manamarina ny tsipelina, mandamina azy ho lohateny sy lisitra, na manampy andininy ao amin'ny Baiboly. Afaka mamintina azy koa aho, mamaly fanontaniana momba azy, ary manazava ny fomba hanaovana na inona na inona ao amin'ny fanovana naoty. Tsindrio ny iray, na lazao izay tianao.",
+    "Summarize this note": "Fintino ity naoty ity",
+    "Tidy it into headings and lists": "Alamino ho lohateny sy lisitra"
 }
