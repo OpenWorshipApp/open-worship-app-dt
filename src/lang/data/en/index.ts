@@ -27,9 +27,14 @@ import googleSansBoldItalicUrl from './Google_Sans/static/GoogleSans-BoldItalic.
 // should embed and set app-Google-Sans_), made the way every language's is
 // (`fonts.json`, `../online/langFontFaces.ts`); a language with a face of its
 // own goes in front of it (`appFontFamilyHelpers.ts`). Each face is fetched
-// only when text uses it. No `globalFontFamily` / `getFontFamilyFiles`: those
-// make the Word export of a Bible offer to copy the font files, which an
-// English Bible has never needed.
+// only when text uses it, and `"display": "swap"` draws the text in the
+// system face meanwhile: with the browser's default, a newly opened window's
+// labels stayed INVISIBLE until their 2 MB face had loaded -- up to 3 s on a
+// slow machine (robot run 20261107-1607: Settings with its icons and no
+// words). Layout is the same either way, a loading face being laid out in the
+// fallback font in both, so no lyric slide is measured differently. No
+// `globalFontFamily` / `getFontFamilyFiles`: those make the Word export of a
+// Bible offer to copy the font files, which an English Bible has never needed.
 const fonts = fontsFile as LangFontsFileType;
 const fontsData = genFontsData(fonts, {
     'Google_Sans/static/GoogleSans-Regular.ttf': googleSansRegularUrl,

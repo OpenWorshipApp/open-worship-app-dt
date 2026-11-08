@@ -1,6 +1,7 @@
 {
     "uiFamily": "app-Google-Sans",
     "family": "Google Sans",
+    "display": "swap",
     "faces": [
         {
             "file": "Google_Sans/static/GoogleSans-Regular.ttf",

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import englishFonts from '../en/fonts.json';
 import { genFontsData, type LangFontsFileType } from './langFontFaces';
 
 const FONT_URLS = {
@@ -23,6 +24,7 @@ describe('a language font sheet', () => {
         const { css, fileUrls } = genFontsData(fonts, FONT_URLS);
 
         expect(css).not.toContain('font-style');
+        expect(css).not.toContain('font-display');
         expect(css).toContain(`@font-face {
     font-family: app-Face;
     src: url(/assets/Face-Regular.ttf) format("truetype");
@@ -80,6 +82,52 @@ describe('a language font sheet', () => {
             '/assets/Face-Regular.ttf',
             '/assets/Note.ttf',
         ]);
+    });
+
+    test('a display is written into every face of the sheet', () => {
+        const fonts: LangFontsFileType = {
+            uiFamily: 'app-Face',
+            family: 'Face',
+            display: 'swap',
+            faces: [
+                { file: 'fonts/Face-Regular.ttf', weight: 'normal' },
+                {
+                    file: 'fonts/Face-Italic.ttf',
+                    weight: 'normal',
+                    style: 'italic',
+                },
+            ],
+            lookAlikes: ['Face Old'],
+            stickyNote: { family: 'app-Note', file: 'fonts/Note.ttf' },
+        };
+
+        const { css } = genFontsData(fonts, FONT_URLS);
+
+        // Two faces under two names, the sticky note and the look-alike.
+        expect(css.match(/@font-face \{/g)).toHaveLength(6);
+        expect(css.match(/font-display: swap;/g)).toHaveLength(6);
+        expect(css).toContain(`    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}`);
+    });
+
+    // A newly opened window drew none of its labels until Google Sans had
+    // loaded (robot run 20261107-1607): English, every page's default face,
+    // must draw its text in the system face while it loads.
+    test("English's faces draw their text while they load", () => {
+        const fonts = englishFonts as LangFontsFileType;
+        const fontUrls = Object.fromEntries(
+            fonts.faces.map((face) => {
+                return [face.file, `/assets/${face.file}`];
+            }),
+        );
+
+        const { css } = genFontsData(fonts, fontUrls);
+
+        const faceCount = css.match(/@font-face \{/g)?.length ?? 0;
+        expect(faceCount).toBe(fonts.faces.length * 2);
+        expect(css.match(/font-display: swap;/g)).toHaveLength(faceCount);
     });
 
     test('refuses a face whose file was not found', () => {

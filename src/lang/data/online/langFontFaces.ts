@@ -14,6 +14,11 @@ export type LangFontsFileType = {
     family: string;
     // `style` absent means upright.
     faces: { file: string; weight: string; style?: 'italic' }[];
+    // How text waits for one of these faces while it loads (`font-display`).
+    // Absent is the browser's own `block`: every label in the face is drawn
+    // INVISIBLE until its file arrives, for up to 3 s, in every new window --
+    // each window is a renderer of its own and loads its own copy.
+    display?: 'auto' | 'block' | 'swap' | 'fallback' | 'optional';
     // Other designs a document may ask for: one installed on the computer
     // wins, else the shipped regular face draws it.
     lookAlikes?: string[];
@@ -26,15 +31,18 @@ function genFontFaceCss(
     family: string,
     src: string,
     weight: string,
-    style?: string,
+    style: string | undefined,
+    display: string | undefined,
 ) {
-    // Written only for an italic face, so an upright one reads as it always
-    // has (every installed plugin was built before it existed).
+    // Each written only when set, so a sheet without them reads as it always
+    // has (every installed plugin was built before they existed).
     const styleLine = style === undefined ? '' : `\n    font-style: ${style};`;
+    const displayLine =
+        display === undefined ? '' : `\n    font-display: ${display};`;
     return `@font-face {
     font-family: ${family};
     src: ${src};
-    font-weight: ${weight};${styleLine}
+    font-weight: ${weight};${styleLine}${displayLine}
 }`;
 }
 
@@ -53,7 +61,7 @@ export function genFontsData(
         return `url(${toUrl(file)}) format("truetype")`;
     };
     const regularFace = fonts.faces[0];
-    const { stickyNote } = fonts;
+    const { stickyNote, display } = fonts;
     // A face is fetched only when text uses it.
     const css = [
         ...fonts.faces.map((face) => {
@@ -62,6 +70,7 @@ export function genFontsData(
                 toSrc(face.file),
                 face.weight,
                 face.style,
+                display,
             );
         }),
         ...(stickyNote === undefined
@@ -71,6 +80,8 @@ export function genFontsData(
                       stickyNote.family,
                       toSrc(stickyNote.file),
                       'normal',
+                      undefined,
+                      display,
                   ),
               ]),
         // A font installed on the presenting computer never reaches a phone
@@ -82,6 +93,7 @@ export function genFontsData(
                 toSrc(face.file),
                 face.weight,
                 face.style,
+                display,
             );
         }),
         ...(fonts.lookAlikes ?? []).map((family) => {
@@ -89,6 +101,8 @@ export function genFontsData(
                 `"${family}"`,
                 `local("${family}"), ${toSrc(regularFace.file)}`,
                 'normal',
+                undefined,
+                display,
             );
         }),
     ].join('\n');
