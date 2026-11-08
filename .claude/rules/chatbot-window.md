@@ -163,9 +163,41 @@ the record's chat, family line, related verses, word study).
     in the Reader: _open from setting should select setting_;
     `findOpenerWindowId`): its opener's address on the first open, its path
     when main says a later press came from it; the main window, and a path
-    two windows share, stay no aim. **And a tab ASKING ABOUT a popup kind
-    works in it** (the same day, the user: _chatbot's do it for me appear in
-    wrong page, I ask for setting page and appear in main windows_;
+    two windows share, stay no aim. **A tab opened on ONE Bible note works
+    in that note's own window** (2026-11-08, the user, the head of a note
+    chat reading _Bible Reader_: _chatbot should demand select a bible-note
+    window (open one if not opened)_; `toNoteWindowAim`,
+    `noteWindowBySession`): the row's menu opens the note's window first
+    when it is not open, the tab asks about Bible Note, and the window that
+    note's address names wins over the opener's -- until a window or a kind
+    is picked by hand -- and holds across a reload and a relaunch (the note
+    the tab keeps, `findSessionNoteTarget`; the launch focus leaves it).
+    **That note window is held over the MAIN window while the tab in front
+    works in it, under the help and AI Chat windows** (2026-11-08, the user,
+    **Working in** on a note window with an arrow to its **Toggle Always On
+    Top**: _a bible note window that attached to chatbot should toggled for
+    stay on top_, and within the hour, the OS-wide always-on-top tried first:
+    _change the bible note stay on top to be top of the main app window
+    instead and still make chatbot and ai chat be the highest stack_ -- a
+    press in the help or the main window had buried it behind the main
+    window; `toHeldNoteWindowUrl` → `main:app:hold-note-window-on-top` →
+    `electron/noteWindowOnTopHelpers.ts`). Held, the note window is made a
+    CHILD of the main window (`setParentWindow`): above it, over no other
+    program (and, as an owned window, expected to hide while the main window
+    is minimised, like the help window -- not checked live). The help and
+    AI Chat windows are children of the main window too, and the one activated last goes over its siblings, so
+    every visible one is `moveTop()`ped when the note window takes the focus
+    -- seen live on Windows, the order read from the system stayed Chatbot,
+    Bible Note, Reader with the note window in front. The help window says
+    the address only when it CHANGES, so a refreshed window list repeats
+    nothing; main lets go when another window or tab is aimed, the note
+    window closes or the help window is destroyed, giving the window back
+    the parent it had (none). Its own **Toggle Always On Top** is never
+    touched. Note windows only, by the page in the address: a Settings or
+    editor window aimed at is not held.
+    **And a tab ASKING ABOUT a popup kind works in it** (the same day, the
+    user: _chatbot's do it for me appear in wrong page, I ask for setting
+    page and appear in main windows_;
     `toFocusWindowAim`): with no window chosen, Settings, a Bible Note or an
     editor is aimed at when exactly one is open -- a model's card names no
     window, and came up in the Reader for a button in Settings. With one chosen, the prompt

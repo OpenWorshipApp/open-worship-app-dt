@@ -19,6 +19,10 @@ import {
     getBotFocus,
 } from '../../tools/owa-devtools-mcp/botFocus.mjs';
 import { fillWords, tran, tranLabel } from './chatTranHelpers';
+import {
+    findNoteWindow,
+    type NoteWindowTargetType,
+} from '../helper/ai/noteWindowMatchHelpers';
 
 // As the main process lists them (`electron/appWindowListHelpers.ts`).
 export type AppWindowEntryType = {
@@ -241,6 +245,49 @@ export function toFocusWindowAim(
         focus,
         isSeparateWindow: false,
     };
+}
+
+/**
+ * The window of the ONE Bible note a tab is about (2026-11-08, the user,
+ * the head of a note conversation reading _Bible Reader_: _chatbot should
+ * demand select a bible-note window (open one if not opened)_). A note row's
+ * **Open in Chatbot** opens that note's window first, and the tab works in
+ * it whatever window the help was opened from; two note windows open are no
+ * longer a reason for no aim, since the address names the note. Null while
+ * the window is not in the list (it is still loading) or after it closed.
+ */
+export function toNoteWindowAim(
+    target: NoteWindowTargetType | undefined,
+    windowList: readonly AppWindowType[],
+): WindowAimType | null {
+    if (target === undefined) {
+        return null;
+    }
+    const found = findNoteWindow(windowList, target);
+    if (found === null || found.isMain) {
+        return null;
+    }
+    return { windowId: found.id, focus: found.focus, isSeparateWindow: false };
+}
+
+/**
+ * The address of the Bible Note window the tab in front works in, which
+ * main holds on top for as long as it does (2026-11-08, the user, **Working
+ * in** a note window with an arrow to its **Toggle Always On Top**: _a bible
+ * note window that attached to chatbot should toggled for stay on top_;
+ * `electron/noteWindowOnTopHelpers.ts`). `null` for any other aim, or none.
+ */
+export function toHeldNoteWindowUrl(
+    aim: WindowAimType | null,
+    windowList: readonly AppWindowType[],
+): string | null {
+    if (aim === null || aim.focus !== 'bibleNote') {
+        return null;
+    }
+    const found = windowList.find((item) => {
+        return item.id === aim.windowId;
+    });
+    return found === undefined || found.isMain ? null : found.url;
 }
 
 /**

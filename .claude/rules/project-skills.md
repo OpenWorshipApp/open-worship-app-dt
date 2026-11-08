@@ -287,6 +287,41 @@ calibration run, 2026-10-08: the skill listing cuts a description at ~1 530
 characters, so `owa-robot-test`'s 3 932-character description loses most of
 its triggers. CLAUDE.md + MEMORY.md cost ≈ 11.5k tokens in every session.
 
+## owa-enhance-bible-note-chatbot skill
+
+`.claude/skills/owa-enhance-bible-note-chatbot` owns what the in-app chatbot
+can do with ONE Bible note (asked for on 2026-11-08 as _add skill
+`owa-enhance-bible-note-chatbot` to improve the chatbot abilities on
+bible-note_): the conversation a note row's or the note window's **Open in
+Chatbot** opens (W-60), `owa_note_edit` and its pure rules
+(`agentNoteBlockHelpers.ts`, `agentNoteStyleHelpers.ts`,
+`agentNoteInsertHelpers.ts`), the worker, `NOTE_SYSTEM_PROMPT`, and the note
+editor's own guide as a corpus. `owa-enhance-chatbot` keeps the assistant as a
+whole and `owa-enhance-mcp` the server; this one is the note.
+
+**Parity is a measured figure.** `scripts/toolbar-coverage.mjs` holds the
+inventory `references/toolbar-inventory.json` -- every control of the editor's
+toolbar, block type menu, ••• menu, Insert menu and alignment menu, each with
+the change that does it or, where the chatbot cannot, an exclusion with its
+reason -- against tests named
+`toolbar: <id>` (`src/helper/agentNoteToolbarParity.test.ts`, undo and redo in
+`agentNoteEditHelpers.test.ts`), and reads the INSTALLED package's toolbar for
+labels the inventory lacks, so a package upgrade's new control is a lead before
+anybody asks. Measured on the day it was made: 54 of 54 (4 excluded), no lead;
+the same day the four became the chatbot's too (a drawing from words, Link
+block text, the ¶, the editor's own Default Example) with the code block's
+language and theme: 60 of 60, none excluded. `scripts/run-note-asks.mjs`
+asks the standing set and undoes each.
+**A change is byte for byte where not asked**: `scripts/note-roundtrip.mjs`
+gives every editable block of real notes its own words back and colours each
+block, both checked against the file (227 and 257, no failure). **And the
+model is measured, not only the tool**: `scripts/ask-note-chat.mjs` asks the
+real help window on a scratch profile (it refuses the person's own) and
+prints the model's tool calls -- on the first run gemma4:cloud put HTML into
+`words`, never sent the colour, and said it had (`BN-01`..`BN-03`). Ledger
+`references/backlog.md` (`BN-xx`), one row per run in
+`references/scoreboard.md`, the standing asks in `references/note-asks.md`.
+
 ## review-stagged-change skill
 
 `.claude/skills/review-stagged-change` reviews ONLY what is staged — the index,

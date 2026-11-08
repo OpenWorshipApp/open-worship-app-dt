@@ -25,6 +25,10 @@ import {
 import { getRecentConsoleLines } from './consoleLogHelpers';
 import { listAppWindows } from './appWindowListHelpers';
 import {
+    HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
+    holdNoteWindowOnTop,
+} from './noteWindowOnTopHelpers';
+import {
     AI_CHAT_MICROPHONE_ANSWER_CHANNEL,
     answerAiChatMicrophoneAsk,
     clearAiChatGuestData,
@@ -1331,6 +1335,20 @@ export function initEventOther(appController: ElectronAppController) {
                 return false;
             }
             win.setAlwaysOnTop(data.isOnTop);
+        },
+    );
+    // The help window's tab works in this note window (or in none), held
+    // over the main window: `noteWindowOnTopHelpers.ts`.
+    ipcMain.on(
+        HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
+        (event, data: { url?: unknown } | undefined) => {
+            holdNoteWindowOnTop(
+                event.sender,
+                typeof data?.url === 'string' ? data.url : null,
+                () => {
+                    return appController.mainWin;
+                },
+            );
         },
     );
 

@@ -67,16 +67,20 @@ export async function openChatbotReporting(problem = '') {
  * a tab of its own with the file attached and ready to be asked about, and
  * the passage the Reader is on for that file, when it is on one
  * (`resourceReadingAskHelpers.ts`). A Bible notes file names the ONE note
- * the conversation is about (`noteId`). The same two questions first.
+ * the conversation is about (`noteId`). The same two questions first, and
+ * only once they are answered `beforeOpening` -- a Bible note's row opens
+ * the note's own window there, for the conversation to work in.
  */
 export async function openChatbotWithFile(
     filePath: string,
     reading: ResourceReadingType | null = null,
     noteId: number | null = null,
+    beforeOpening: (() => Promise<void>) | null = null,
 ) {
     if (!(await askToOpenChatbot())) {
         return false;
     }
+    await beforeOpening?.();
     requestChatbotFile(filePath, reading, noteId);
     openChatbotPage();
     return true;

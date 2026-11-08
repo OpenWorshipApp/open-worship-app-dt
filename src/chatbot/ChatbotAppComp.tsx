@@ -28,6 +28,8 @@ import {
     findOpenerWindowId,
     toFocusWindowAim,
     toAttachmentWindowPage,
+    toHeldNoteWindowUrl,
+    toNoteWindowAim,
     toWindowAim,
     toWindowAimLabel,
     type AppWindowEntryType,
@@ -35,6 +37,21 @@ import {
     type AttachmentWindowType,
 } from './windowAimHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import {
+    HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
+    toNoteWindowTarget,
+    type NoteWindowTargetType,
+} from '../helper/ai/noteWindowMatchHelpers';
+
+/** A tab about ONE Bible note keeps its own window whoever launched help. */
+function checkIsNoteSession(session: {
+    messages: Parameters<typeof findSessionNoteTarget>[0];
+    fileClosedAt?: number;
+}) {
+    return (
+        findSessionNoteTarget(session.messages, session.fileClosedAt) !== null
+    );
+}
 import { useThemeSource } from '../others/themeHelpers';
 import appProvider from '../server/appProvider';
 import {
@@ -126,11 +143,16 @@ import {
     checkIsNoteOpenedLast,
     findNoteAskFiles,
     findOpenNoteAttachments,
+    findSessionNoteTarget,
     genNoteOpeningAnswer,
     genNoteSizeChanges,
     genNoteSizeDoneText,
+    genNoteStyleChanges,
+    genNoteStyleDoneText,
+    readNoteStyleAsk,
     toNoteAsk,
     toNoteDocumentText,
+    type CreatedNoteType,
 } from './noteChatHelpers';
 import {
     FLOW_EDIT_TOOL_NAME,
@@ -3452,6 +3474,7 @@ function genInitialSessionState(): ChatSessionStateType {
     const loaded = applyChatLaunchFocus(
         loadChatSessions(focus, provider, model, isAuto),
         openerFocus,
+        checkIsNoteSession,
     );
     const availableProviders = getAvailableLlmProviders();
     return {
@@ -3611,7 +3634,11 @@ export default function ChatbotAppComp() {
         const handleLaunchFocus = (_event: any, pathname: string) => {
             const openerFocus = detectOpenerFocus(pathname);
             setSessionState((oldState) => {
-                return applyChatLaunchFocus(oldState, openerFocus);
+                return applyChatLaunchFocus(
+                    oldState,
+                    openerFocus,
+                    checkIsNoteSession,
+                );
             });
         };
         appProvider.messageUtils.listenForData(
@@ -3895,25 +3922,81 @@ export default function ChatbotAppComp() {
     const [windowIdBySession, setWindowIdBySession] = useState<
         Record<string, string>
     >({});
-    // A window chosen for the tab, else the one window of the kind it asks
-    // about when that is a popup (`toFocusWindowAim`): a tab asking about
-    // Settings works in Settings.
+    // The ONE Bible note a tab was opened on, whose own window it works in
+    // (`toNoteWindowAim`): a note row's Open in Chatbot opens that window
+    // first, and the help may have been opened from the Reader. Set as the
+    // note is attached; otherwise read off the note the tab keeps
+    // (`findSessionNoteTarget`), so a reload or a relaunch still works in
+    // it. `null` once the person picks a window or a kind by hand.
+    const [noteWindowBySession, setNoteWindowBySession] = useState<
+        Record<string, NoteWindowTargetType | null>
+    >({});
+    // The note's own window, else a window chosen for the tab, else the one
+    // window of the kind it asks about when that is a popup
+    // (`toFocusWindowAim`): a tab asking about Settings works in Settings.
     const windowAim = useMemo(() => {
+        const noteTarget =
+            activeSession.id in noteWindowBySession
+                ? noteWindowBySession[activeSession.id]
+                : findSessionNoteTarget(
+                      activeSession.messages,
+                      activeSession.fileClosedAt,
+                  );
         return (
+            toNoteWindowAim(noteTarget ?? undefined, appWindowList) ??
             toWindowAim(windowIdBySession[activeSession.id], appWindowList) ??
             toFocusWindowAim(activeSession.focus, appWindowList)
         );
     }, [
+        noteWindowBySession,
         windowIdBySession,
         activeSession.id,
         activeSession.focus,
+        activeSession.messages,
+        activeSession.fileClosedAt,
         appWindowList,
+    ]);
+    // A tab about a note asks about the Bible Note window, a tab saved
+    // before it was told so included -- until the person picks a window or
+    // a kind by hand (`null` in `noteWindowBySession`).
+    useAppEffect(() => {
+        if (
+            activeSession.focus === 'bibleNote' ||
+            activeSession.id in noteWindowBySession ||
+            findSessionNoteTarget(
+                activeSession.messages,
+                activeSession.fileClosedAt,
+            ) === null
+        ) {
+            return;
+        }
+        updateActiveSession((session) => {
+            return { ...session, focus: 'bibleNote', isFocusChosen: true };
+        });
+    }, [
+        activeSession.id,
+        activeSession.focus,
+        activeSession.messages,
+        activeSession.fileClosedAt,
+        noteWindowBySession,
     ]);
     // What a `/` command, the offline guide and a button pressed in the tab
     // in front work with; a model's answer is handed its own at the ask.
     useAppEffect(() => {
         setCurrentWindowAim(windowAim);
     }, [windowAim]);
+    // The Bible note window the tab in front works in stays on top while it
+    // does, so a press here or in the main window does not bury the note
+    // being changed (`toHeldNoteWindowUrl`). Said only when the address
+    // changes: a refreshed list re-pins nothing the person took down.
+    const heldNoteWindowUrl = useMemo(() => {
+        return toHeldNoteWindowUrl(windowAim, appWindowList);
+    }, [windowAim, appWindowList]);
+    useAppEffect(() => {
+        appProvider.messageUtils.sendData(HOLD_NOTE_WINDOW_ON_TOP_CHANNEL, {
+            url: heldNoteWindowUrl,
+        });
+    }, [heldNoteWindowUrl]);
     const handleWindowChanging = useCallback(
         (windowId: string) => {
             const found = appWindowList.find((item) => {
@@ -3931,6 +4014,10 @@ export default function ChatbotAppComp() {
                     newMap[sessionId] = found.id;
                 }
                 return newMap;
+            });
+            // A window picked by hand is the person's word over the note's.
+            setNoteWindowBySession((oldMap) => {
+                return { ...oldMap, [sessionId]: null };
             });
             updateActiveSession((session) => {
                 return { ...session, focus: found.focus, isFocusChosen: true };
@@ -4374,12 +4461,20 @@ export default function ChatbotAppComp() {
         (newFocus: BotFocusType) => {
             // Another kind of window than the one chosen is no longer that
             // window: back to the main window's way of working.
+            const sessionId = activeSession.id;
             if (windowAim !== null && windowAim.focus !== newFocus) {
-                const sessionId = activeSession.id;
                 setWindowIdBySession((oldMap) => {
                     const newMap = { ...oldMap };
                     delete newMap[sessionId];
                     return newMap;
+                });
+            }
+            // Another kind than the note's: the note's own window no longer
+            // wins, its window open or not, or the tab would be taken back
+            // to Bible Note.
+            if (newFocus !== 'bibleNote') {
+                setNoteWindowBySession((oldMap) => {
+                    return { ...oldMap, [sessionId]: null };
                 });
             }
             updateActiveSession((session) => {
@@ -6029,6 +6124,21 @@ export default function ChatbotAppComp() {
             // Chatbot): the same, for one note of its file -- written with
             // no model.
             if (checkIsNoteAttachment(result.attachment)) {
+                // The tab asks about the Bible Note editor and works in this
+                // note's own window, which the row opened first.
+                const noteWindowTarget = toNoteWindowTarget(filePath, noteId);
+                if (noteWindowTarget !== null) {
+                    setNoteWindowBySession((oldMap) => {
+                        return { ...oldMap, [sessionId]: noteWindowTarget };
+                    });
+                }
+                updateSession(sessionId, (oldSession) => {
+                    return {
+                        ...oldSession,
+                        focus: 'bibleNote',
+                        isFocusChosen: true,
+                    };
+                });
                 const noteOpening = genNoteOpeningAnswer(
                     result.attachment.name,
                     getAppLanguage(),
@@ -6103,6 +6213,40 @@ export default function ChatbotAppComp() {
                     : { resourceReading: opening.reading }),
             });
             inputRef.current?.focus();
+        },
+    );
+    // A Bible note the assistant MADE in an answer (2026-11-08, the user:
+    // _chatbot should be able to create new bible note … after create should
+    // open the note and attach to the chatbot session_): opened in its own
+    // window and attached to the tab it was asked in, exactly as a note
+    // row's Open in Chatbot does -- the tab then asks about Bible Note and
+    // works in that window, under the note's own card. The opener is
+    // imported now, never with the window.
+    const openCreatedNoteRef = useAppCurrentRef(
+        async (sessionId: string, created: CreatedNoteType) => {
+            const target = toNoteWindowTarget(created.filePath, created.noteId);
+            if (target === null) {
+                return;
+            }
+            try {
+                const { openNoteWindow } =
+                    await import('../bible-list/note/noteWindowOpenHelpers');
+                openNoteWindow(
+                    target.fileFullName,
+                    created.filePath,
+                    created.noteId,
+                );
+            } catch (error) {
+                // The note is made and attached all the same: Open on its
+                // row opens it.
+                handleError(error);
+            }
+            await attachHandedFileRef.current(
+                sessionId,
+                created.filePath,
+                null,
+                created.noteId,
+            );
         },
     );
     // A Lookup Detail panel's 🤖 (2026-10-18): the person, place or passage
@@ -7809,15 +7953,23 @@ export default function ChatbotAppComp() {
             // can't help increase text size_): every block's words larger,
             // smaller or one size, done by the window with no model, one
             // change with Undo under it.
-            const noteSizeAsk =
+            const isNoteWholeAskable =
                 isNoteAsk &&
                 !withoutEcho &&
                 options?.shownText === undefined &&
                 attachments.every(checkIsNoteAttachment) &&
-                noteAskFiles.length === 1
-                    ? readSlideSizeAsk(trimmedAsked)
+                noteAskFiles.length === 1;
+            const noteSizeAsk = isNoteWholeAskable
+                ? readSlideSizeAsk(trimmedAsked)
+                : null;
+            // And a style for the whole note -- _make all the text bold_,
+            // _centre everything_, _use Georgia for the whole note_ -- the
+            // same way (BN-08).
+            const noteStyleAsk =
+                isNoteWholeAskable && noteSizeAsk === null
+                    ? readNoteStyleAsk(trimmedAsked)
                     : null;
-            if (noteSizeAsk !== null) {
+            if (noteSizeAsk !== null || noteStyleAsk !== null) {
                 const noteFile = noteAskFiles[0];
                 try {
                     const read = parseToolJson(
@@ -7827,7 +7979,10 @@ export default function ChatbotAppComp() {
                             id: noteFile.noteId,
                         }),
                     );
-                    const sizeChanges = genNoteSizeChanges(read, noteSizeAsk);
+                    const sizeChanges =
+                        noteSizeAsk !== null
+                            ? genNoteSizeChanges(read, noteSizeAsk)
+                            : genNoteStyleChanges(read, noteStyleAsk!);
                     const written =
                         sizeChanges === null
                             ? null
@@ -7858,7 +8013,9 @@ export default function ChatbotAppComp() {
                         });
                         addMessage(activeSessionId, {
                             author: 'bot',
-                            text: genNoteSizeDoneText(
+                            text: (noteSizeAsk !== null
+                                ? genNoteSizeDoneText
+                                : genNoteStyleDoneText)(
                                 noteFile.name,
                                 sizeChanges.length,
                             ),
@@ -10557,6 +10714,14 @@ export default function ChatbotAppComp() {
                         ? { shows: answer.shows }
                         : {}),
                 });
+                // A note the answer made: opened, and attached to this tab
+                // under its own card, which follows the answer.
+                if (answer.createdNote !== undefined) {
+                    void openCreatedNoteRef.current(
+                        askedSessionId,
+                        answer.createdNote,
+                    );
+                }
                 options?.onAnswered?.(shownAnswer);
             } catch (error: any) {
                 // Already said, and already answered to the card, by

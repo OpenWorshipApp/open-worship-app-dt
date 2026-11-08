@@ -285,6 +285,11 @@ export function genNewChatSession(
 export function applyChatLaunchFocus(
     state: ChatSessionStateType,
     openerFocus: BotFocusType | null,
+    // A tab that keeps its own window whoever launched the help: a
+    // conversation about ONE Bible note works in that note's window
+    // (2026-11-08, the user: _chatbot should demand select a bible-note
+    // window_).
+    checkIsKept: (session: ChatSessionType) => boolean = () => false,
 ): ChatSessionStateType {
     if (openerFocus === null) {
         return state;
@@ -294,7 +299,8 @@ export function applyChatLaunchFocus(
     });
     if (
         activeSession === undefined ||
-        (activeSession.focus === openerFocus && !activeSession.isFocusChosen)
+        (activeSession.focus === openerFocus && !activeSession.isFocusChosen) ||
+        checkIsKept(activeSession)
     ) {
         return state;
     }

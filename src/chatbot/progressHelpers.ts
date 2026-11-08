@@ -435,6 +435,10 @@ const DATA_STEP_MAP: Record<string, Record<string, () => string>> = {
     owa_note_edit: {
         read: () => tran('Reading a Bible note'),
         edit: () => tran('Changing a Bible note'),
+        // The toolbar's Undo / Redo over the note's kept history.
+        undo: () => tran('Changing a Bible note'),
+        redo: () => tran('Changing a Bible note'),
+        view: () => tran('Changing a Bible note'),
     },
 };
 

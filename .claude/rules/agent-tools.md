@@ -742,7 +742,25 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   `delete*` and `owa_undo` — at 10 per 5 minutes, a counter apart from the 25
   presses a minute, because what it protects is the user's files; and
   `owa_bible_note` refuses a write while that file is open in a
-  `bibleNote.html` window, which saves its stale copy back over it. Cost:
+  `bibleNote.html` window, which saves its stale copy back over it --
+  **except `add`** (2026-11-08): a new note is the panel's own +, pressed with
+  note windows open all the time; the file's save rebases the editing head
+  onto the new structure, and a note window writes its typing onto the head
+  as it is NOW (`Note.addItemEditingHistory`) and saves the head, so the new
+  note stays (seen live: a second note made under the first one's open
+  window, both kept). **`add` reads mark-up** the same day
+  (`agentNoteMarkupHelpers.ts`): words with a `# heading`, `- / * / 1.` list
+  line, `- [ ]` tick, `>` quote, `---` rule, `**bold**`-style marks or a
+  `[^ref]` / `[@…]` / `[#…]` token are built as `owa_note_edit`'s own adds by
+  `applyNoteEdit` (`genNewNoteContent` in `agentNoteEditHelpers.ts`, loaded
+  only then): a verse read from the installed Bible, one no Bible has left as
+  its words, a first line that only repeats the title left out; plain words
+  are written as before, and more than 200 blocks fall back to them. It
+  answers with the note's `filePath`, as `owa_lyric_file create` does, which
+  is how the help window opens and attaches a note its model made
+  (`chatbot-llm.md`). The chatbot's model is refused `delete` and
+  `delete-file` of it (`NOTE_REMOVAL_MODEL_REFUSAL`, the user: _not allow
+  delete_); the developer's door keeps them. Cost:
   +1 089 tokens a round to the model (24 tools, ~7 990); `owa_bible_note` is
   the first to withhold if that matters. Verified live through fresh servers:
   36 checks across the four kinds. **That run found a bug in the app, not the
@@ -1665,12 +1683,73 @@ false` and searches only a dataset a lookup panel already holds
   `edit` makes every change in ONE history step, all or nothing:
   `{block, text?, kind?, checked?, size?}`, `{block, remove}`,
   `{block, after}` (a move), `{after, kind, text}` (an add; `passage` takes
-  `ref`), and `title`. **`size`** (2026-11-08) is the editor's own size box
+  `ref`; **`section`** adds many -- a block a line of mark-up, `# heading`,
+  `- item`, `1. item`, `> quote`, `---`, all after the same block, a written-out
+  `
+` read as a line break -- and so does a paragraph add whose words ARE such
+  lines, which is what a model writes anyway: `expandSectionAdds`, 2026-11-08,
+  for a lesson put into the note after a page break), and `title`. **`size`** (2026-11-08) is the editor's own size box
   in words: "larger" / "smaller" (x1.25 / x0.8) or px 8-72, written on
   every run of the block as `font-size: Npx;` and on its `textStyle`; a
   run with no size of its own starts from the size its block is drawn at
   -- the editor's stylesheet: 15 px, a h1 24, a h3 12, code 13 -- so a
-  heading stays above its lines. **Only the blocks named are rebuilt**; a kept mention token is
+  heading stays above its lines. **The whole TOOLBAR** (2026-11-08, the
+  user, with a picture of it: _make chatbot able to use all toolbar
+  operations_; `agentNoteStyleHelpers.ts`, `agentNoteInsertHelpers.ts`,
+  pure): a change takes `font` (one of the font box's -- its six and
+  each installed language's face, read as `fonts`), `color` and
+  `background` (a CSS colour, a name with spaces taken, or `none`),
+  `styles` / `stylesOff` (the format bits, subscript/superscript and the
+  three cases one at a time), `clear` (Clear Formatting: a heading or
+  quote made a paragraph), `align` and `indent` (a list item NESTED under
+  the one before, as the editor does it, or taken back out) -- for the
+  block, or with `words` for those words only, runs split where they
+  start and end, WHOLE words first (`fas` had matched inside
+  `tasdfasd`), and HTML a model writes round the words read as the
+  words and their style (`readWordsMarkup`: gemma4:cloud sent a
+  `<span style="color:red">` and no `color`). A fixed block takes them
+  too (a passage in Georgia), never words. Adds take the Insert menu's
+  objects as kinds, each the node the editor's own item writes (a
+  table's first row the headings, a poll's choices with no votes, a
+  sticky above the others, a date at this computer's midnight, media by
+  a link or a whole path; an equation's KaTeX kept as written -- `\t`
+  of `\times` had become a tab). A NEW `[@…]` / `[#…]` is looked up in
+  the names lookup for that call only and is a real mention when found.
+  `undo` / `redo` step the file's kept history, taken back and refused
+  when the step changed another note of the file and not this one. The
+  answer's `summary` says what each change DID (`block 5 "fas": color
+  red`), and the prompt says to report only that. Parity is measured by
+  `owa-enhance-bible-note-chatbot`: 60 of 60, none excluded, since the
+  four once left to the person became fields too -- `kind: "drawing"`
+  (boxes and arrows laid out from lines, an inline `excalidraw` node IN
+  a paragraph, as the editor keeps it), `kind: "example"` (the editor's
+  own Default Example, captured from the running editor into
+  `agentNoteDefaultExample.json`, read only when asked for), `linkTo`
+  (Link block text: the editor's own entry of node PATHS in its storage
+  key `lexical-playground-block-text-links`, an end with no words
+  refused -- one to an empty line was stored and never drawn) and
+  `action: "view"` (the ¶: `showInvisibleCharacters` in the editor's
+  `lexical-playground-settings`) -- with a code block's `language` and
+  `theme`. Those two keys are the app's home storage, read by the editor
+  as it mounts: they are backed up as a `home-setting` restore (one key,
+  put back by an undo), and an open note window that sees one changed
+  by another window saves what was typed and reloads
+  (`NOTE_EDITOR_OUTSIDE_KEY_LIST` in `bibleNoteHelpers.ts`). **An open
+  note window must not write a change back** (2026-11-08, BN-12): it
+  loads what a change wrote, and where the editor would write a node
+  another way it writes ITS version as a history step of its own -- an
+  echo an "undo" then took back instead of the change. Every kind was
+  written with the window open and the history steps counted: six
+  echoed, so changed blocks are written as Lexical writes them
+  (`agentNoteNormalizeHelpers.ts`: key order, a paragraph's
+  `textFormat`/`textStyle` from its first text, empty ones dropped on
+  other elements), and the one echo nothing can avoid -- a code block's
+  highlighting -- is stepped over by `undo`/`redo`
+  (`toNoteCanonicalText`). Two more rules came with new notes (BN-18,
+  2026-11-08): a list's items are numbered from its `start` (a new item had
+  been `value: 1`), `checked` on a check list's alone, and an element with
+  no text of its own (a list, a wrapping item) writes the next-words style
+  of its FIRST text -- measured on five lists opened in their window. **Only the blocks named are rebuilt**; a kept mention token is
   the ORIGINAL node, a run of unchanged words keeps its own style, new words
   take the block's (a Khmer note's font), and every other node is copied
   through byte for byte -- proven on all 227 editable blocks of the dev data

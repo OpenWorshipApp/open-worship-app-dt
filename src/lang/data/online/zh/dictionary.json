@@ -4108,5 +4108,6 @@
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}”已附在下方。我可以替你修改这条笔记：修改或翻译其中的文字、检查拼写、整理成标题和列表，或添加圣经经文。我也可以概括它、回答关于它的问题，并解释如何在笔记编辑器中完成任何操作。点按一项，或说出你想要的。",
     "Summarize this note": "概括这条笔记",
     "Tidy it into headings and lists": "整理成标题和列表",
-    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "已一次改好：“{name}”中{count}个段落的文字已换成新的大小。尚未保存：在笔记窗口按保存即可保留，按“撤销此更改”可以复原。"
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "已一次改好：“{name}”中{count}个段落的文字已换成新的大小。尚未保存：在笔记窗口按保存即可保留，按“撤销此更改”可以复原。",
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "已一次改好：“{name}”中{count}个段落的文字已换成新的样式。尚未保存：在笔记窗口按保存即可保留，按“撤销此更改”可以复原。"
 }

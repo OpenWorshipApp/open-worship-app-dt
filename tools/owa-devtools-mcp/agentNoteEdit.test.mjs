@@ -193,10 +193,12 @@ describe('around the call', () => {
         expect(
             filterModelToolList(tools).map((tool) => tool.name),
         ).not.toContain(NOTE_EDIT_TOOL_NAME);
-        // Its own tool, the guide (how the editor works) and the verse finder.
+        // Its own tool, the guide (how the editor works), the verse finder
+        // and -- for a NEW note only (2026-11-08) -- owa_bible_note.
         expect(pickAskToolList(tools, 'note').map((tool) => tool.name)).toEqual(
             [
                 NOTE_EDIT_TOOL_NAME,
+                'owa_bible_note',
                 'owa_help_search',
                 'owa_help_page',
                 'owa_find_verse',
@@ -211,6 +213,13 @@ describe('around the call', () => {
         expect(name).toBe(NOTE_EDIT_TOOL_NAME);
         expect(spec.description).toBe(NOTE_EDIT_DESCRIPTION);
         expect(Object.keys(spec.inputSchema)).toContain('changes');
-        expect(NOTE_EDIT_ACTIONS).toEqual(['read', 'edit']);
+        // The toolbar's Undo / Redo too (2026-11-08).
+        expect(NOTE_EDIT_ACTIONS).toEqual([
+            'read',
+            'edit',
+            'undo',
+            'redo',
+            'view',
+        ]);
     });
 });

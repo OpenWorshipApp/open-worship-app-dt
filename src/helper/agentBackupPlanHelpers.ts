@@ -65,6 +65,17 @@ export type AgentRestoreType =
           filePath: string;
           sourcePath?: string;
           blobName?: string;
+      }
+    | {
+          // One key of the app's home storage: what the Bible Note editor
+          // keeps for itself -- its settings (the invisible-characters view)
+          // and its block links (2026-11-08, the note toolbar through the
+          // help window). `null` when the key was not there. `filePath` is
+          // the note whose open window is told to show it.
+          type: 'home-setting';
+          key: string;
+          text: string | null;
+          filePath: string;
       };
 
 /** The small half of a backup: what a list of changes reads. */
@@ -149,6 +160,7 @@ const RESTORE_PRIORITY_MAP: Record<AgentRestoreType['type'], number> = {
     file: 1,
     blob: 1,
     editing: 2,
+    'home-setting': 3,
 };
 
 /**

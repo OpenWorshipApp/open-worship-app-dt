@@ -1049,6 +1049,157 @@ describe('the Anthropic loop', () => {
         ]);
     });
 
+    // 2026-11-08, the user: _chatbot should be able to create new bible note
+    // (not allow delete), after create should open the note and attach to
+    // the chatbot session_.
+    test('a Bible note the model makes rides the answer; it may delete none', async () => {
+        fake.toolList = [{ name: 'owa_bible_note' }];
+        fake.toolResultMap.owa_bible_note = JSON.stringify({
+            file: 'Default',
+            added: 'Creation',
+            id: 8,
+            filePath: 'C:\\notes\\Default.own',
+            undoId: 'u-8',
+        });
+        const { sentList } = useAnthropic(
+            [
+                anthropicToolUse(
+                    {
+                        name: 'owa_bible_note',
+                        input: { action: 'delete', id: 2 },
+                    },
+                    {
+                        name: 'owa_bible_note',
+                        input: { action: 'delete-file', file: 'Old' },
+                    },
+                    {
+                        name: 'owa_bible_note',
+                        input: {
+                            action: 'add',
+                            title: 'Creation',
+                            text: '## Key verses',
+                        },
+                    },
+                ),
+                anthropicText('I made the note "Creation".'),
+            ],
+            'anthropic',
+        );
+
+        const answer = await askLlmBot(
+            'Make a Bible note about creation, and delete my old ones',
+            'reader',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        const results = readToolResults(sentList[1]);
+        expect(results[0].content).toMatch(
+            /^Tool refused: Removing a Bible note or a notes file/,
+        );
+        expect(results[1].content).toMatch(/^Tool refused: /);
+        // Only the add reached the tool host.
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_bible_note',
+                args: {
+                    action: 'add',
+                    title: 'Creation',
+                    text: '## Key verses',
+                },
+            },
+        ]);
+        expect(answer.createdNote).toEqual({
+            name: 'Creation',
+            filePath: 'C:\\notes\\Default.own',
+            noteId: 8,
+            undoId: 'u-8',
+        });
+        expect(answer.actions).toEqual([
+            {
+                label: 'Undo this change',
+                toolName: 'lyric-undo',
+                args: { id: 'u-8', name: 'Creation' },
+            },
+        ]);
+        expect(answer.shows).toContainEqual({
+            kind: 'control',
+            value: 'Bible Notes > Creation',
+            name: 'Show it in the list',
+        });
+    });
+
+    // A note the assistant made is attached, which makes the tab a NOTE
+    // conversation: "make another one" is asked there next.
+    test('a note conversation makes a new note, and changes its own only with owa_note_edit', async () => {
+        fake.toolList = [
+            { name: 'owa_note_edit' },
+            { name: 'owa_bible_note' },
+            { name: 'owa_click' },
+        ];
+        fake.toolResultMap.owa_bible_note = JSON.stringify({
+            file: 'Default',
+            added: 'Genesis 3',
+            id: 9,
+            filePath: 'C:\\notes\\Default.own',
+        });
+        const { sentList } = useAnthropic(
+            [
+                anthropicToolUse(
+                    {
+                        name: 'owa_bible_note',
+                        input: { action: 'update', id: 8, text: 'x' },
+                    },
+                    {
+                        name: 'owa_bible_note',
+                        input: { action: 'add', title: 'Genesis 3' },
+                    },
+                ),
+                anthropicText('Made "Genesis 3".'),
+            ],
+            'anthropic',
+        );
+
+        const answer = await askLlmBot(
+            'Make another note about Genesis 3',
+            'bibleNote',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                note: {
+                    files: [
+                        {
+                            name: 'Creation',
+                            filePath: 'C:\\notes\\Default.own',
+                            noteId: 8,
+                        },
+                    ],
+                },
+            },
+        );
+
+        expect(sentList[0].tools.map((tool: any) => tool.name).sort()).toEqual([
+            'owa_bible_note',
+            'owa_note_edit',
+        ]);
+        const results = readToolResults(sentList[1]);
+        expect(results[0].content).toMatch(
+            /^Tool refused: Here owa_bible_note only makes a NEW note/,
+        );
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_bible_note',
+                args: { action: 'add', title: 'Genesis 3' },
+            },
+        ]);
+        expect(answer.createdNote).toMatchObject({
+            name: 'Genesis 3',
+            noteId: 9,
+        });
+    });
+
     test('a failed tool is handed back to the model as words', async () => {
         fake.toolList = [
             { name: 'owa_help_search' },

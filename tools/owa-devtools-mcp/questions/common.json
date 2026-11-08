@@ -397,9 +397,15 @@
                         "sermon notes",
                         "take a note",
                         "jot down",
-                        "notes file"
+                        "notes file",
+                        "make a note",
+                        "new note",
+                        "lesson into a note",
+                        "save this as a note",
+                        "new page"
                     ],
                     "resources": {
+                        "recipe": "W-60",
                         "tools": ["owa_bible_note"]
                     }
                 },

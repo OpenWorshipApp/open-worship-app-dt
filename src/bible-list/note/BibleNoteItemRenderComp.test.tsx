@@ -285,7 +285,14 @@ describe('Bible note row', () => {
         expect(mocks.genNoteChatbotMenu).toHaveBeenCalledWith(
             '/notes/Study.own',
             4,
+            expect.any(Function),
         );
+        // ...and how to open its own window, for the conversation to work
+        // in: the row's own Open.
+        mocks.openPopup.mockClear();
+        mocks.genNoteChatbotMenu.mock.calls.at(-1)?.[2]();
+        expect(mocks.openPopup).toHaveBeenCalledOnce();
+        expect(mocks.openPopup.mock.calls[0][0]).toContain('id=4');
         await act(async () => menuItems[3].onSelect());
         expect(note.getEditingItemById).toHaveBeenCalledWith(4);
         expect(mocks.exportItem).toHaveBeenCalledWith(

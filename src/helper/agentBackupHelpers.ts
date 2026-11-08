@@ -706,6 +706,24 @@ export async function listAgentBackups(limit = 20) {
 }
 
 async function applyRestore(restore: AgentRestoreType) {
+    if (restore.type === 'home-setting') {
+        const { appHomeStorage } = await import('../server/appHomeStorage');
+        if (restore.text === null) {
+            appHomeStorage.removeItem(restore.key);
+        } else {
+            appHomeStorage.setItem(restore.key, restore.text);
+        }
+        // An open note window reads the editor's own keys as it mounts:
+        // told, it mounts again with them.
+        try {
+            const { notifyNoteHeadChanged } =
+                await import('../bible-list/note/noteHeadChangeHelpers');
+            notifyNoteHeadChanged(restore.filePath);
+        } catch (error) {
+            handleError(error);
+        }
+        return;
+    }
     const FileSourceClass = await getFileSourceClass();
     if (restore.type === 'rename') {
         if (!(await fsCheckFileExist(restore.to))) {
@@ -810,6 +828,10 @@ async function applyRestore(restore: AgentRestoreType) {
 }
 
 async function snapshotBeforeRestore(restore: AgentRestoreType) {
+    if (restore.type === 'home-setting') {
+        const { appHomeStorage } = await import('../server/appHomeStorage');
+        return [{ ...restore, text: appHomeStorage.getItem(restore.key) }];
+    }
     if (restore.type === 'rename') {
         return [
             restore.kind === undefined

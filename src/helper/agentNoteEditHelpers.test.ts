@@ -16,6 +16,10 @@ const h = vi.hoisted(() => {
         resolveVersionOrder: vi.fn(),
         resolveBibleItem: vi.fn(),
         handleError: vi.fn(),
+        langList: [] as any[],
+        lookupRecords: [] as any[],
+        lookupReleased: 0,
+        homeStorage: new Map<string, string>(),
     };
 });
 
@@ -70,9 +74,35 @@ vi.mock('./agentBibleHelpers', () => ({
 vi.mock('./bible-helpers/bibleStyleHelpers', () => ({
     getBibleFontFamily: async () => 'serif',
 }));
+vi.mock('../server/appHomeStorage', () => ({
+    appHomeStorage: {
+        getItem: (key: string) => h.homeStorage.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+            h.homeStorage.set(key, value);
+        },
+        removeItem: (key: string) => {
+            h.homeStorage.delete(key);
+        },
+    },
+}));
+vi.mock('../lang/langHelpers', () => ({
+    initAllLangCss: async () => h.langList,
+}));
+vi.mock('../location-name-lookup/lookupDataHelpers', () => ({
+    acquireLookupData: async () => ({
+        namesLookupManager: { searchNames: () => h.lookupRecords },
+        locationsLookupManager: { searchLocations: () => h.lookupRecords },
+    }),
+    releaseLookupData: () => {
+        h.lookupReleased++;
+    },
+}));
 
-import { handleAgentNoteEditRequest } from './agentNoteEditHelpers';
-import { genNoteContentHash } from './agentNoteBlockHelpers';
+import {
+    genNewNoteContent,
+    handleAgentNoteEditRequest,
+} from './agentNoteEditHelpers';
+import { genNoteContentHash, readNoteBlocks } from './agentNoteBlockHelpers';
 
 const FILE_PATH = 'C:/data/bible-notes/Default.own';
 
@@ -112,6 +142,9 @@ function genContent(words: string[]) {
 
 function genNote(item: any) {
     return {
+        items: [item],
+        historyUndo: vi.fn(async () => true),
+        historyRedo: vi.fn(async () => true),
         getItemById: vi.fn((id: number) => (id === item.id ? item : null)),
         addItemEditingHistory: vi.fn(async () => {}),
         updateNoteItem: vi.fn(),
@@ -144,6 +177,10 @@ beforeEach(() => {
     });
     h.resolveBibleItem.mockReset();
     h.handleError.mockReset();
+    h.langList = [];
+    h.lookupRecords = [];
+    h.lookupReleased = 0;
+    h.homeStorage = new Map();
 });
 
 function ask(request: Record<string, unknown>) {
@@ -200,7 +237,7 @@ describe('reading one note', () => {
 
     test('an unknown action is said so', async () => {
         expect((await ask({ action: 'delete' })).reason).toMatch(
-            /read or edit/,
+            /read, edit, undo, redo or view/,
         );
     });
 });
@@ -336,5 +373,278 @@ describe('changing one note', () => {
         expect((await ask({ action: 'edit', changes: 'x' })).reason).toMatch(
             /list of changes/,
         );
+    });
+});
+
+// 2026-11-08, the user: _make chatbot able to use all toolbar operations_.
+// The parts of the toolbar the worker does: Undo, Redo, the font box's list
+// and a new person or place mention (named after the inventory,
+// `agentNoteToolbarParity.test.ts`).
+describe("the note editor's toolbar, in the worker", () => {
+    // The head after one step of the history: what the next read finds.
+    function stepTo(words: string[], others: any[] = []) {
+        const stepped = { ...noteItem, content: genContent(words) };
+        const after = genNote(stepped);
+        after.items = [stepped, ...others];
+        return after;
+    }
+
+    test('toolbar: undo', async () => {
+        const before = h.headNote;
+        const after = stepTo(['Grace']);
+        before.historyUndo.mockImplementation(async () => {
+            h.headNote = after;
+            return true;
+        });
+        const answer = await ask({ action: 'undo' });
+        expect(before.historyUndo).toHaveBeenCalledTimes(1);
+        expect(answer).toMatchObject({
+            name: 'Sunday',
+            isChanged: true,
+            hash: genNoteContentHash(genContent(['Grace'])),
+            isSaved: false,
+        });
+        // An open note window shows it.
+        expect(h.notified).toEqual([FILE_PATH]);
+        // Nothing left to go back to is said so.
+        h.headNote = genNote(noteItem);
+        h.headNote.historyUndo.mockResolvedValue(false);
+        expect((await ask({ action: 'undo' })).reason).toMatch(
+            /nothing kept to go back to/,
+        );
+    });
+
+    // Seen live 2026-11-08: an open note window wrote a change back its own
+    // way as a step of its own, and "undo that" took back only that step.
+    test('a step that only re-wrote the note is stepped over', async () => {
+        const before = h.headNote;
+        // The same note as it reads, its keys in another order.
+        const echo = JSON.stringify(JSON.parse(CONTENT), (_key, value) => {
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+                return Object.fromEntries(Object.entries(value).reverse());
+            }
+            return value;
+        });
+        const echoNote = genNote({ ...noteItem, content: echo });
+        let count = 0;
+        before.historyUndo.mockImplementation(async () => {
+            count++;
+            h.headNote = count === 1 ? echoNote : stepTo(['Grace']);
+            return true;
+        });
+        const answer = await ask({ action: 'undo' });
+        expect(count).toBe(2);
+        expect(answer.hash).toBe(genNoteContentHash(genContent(['Grace'])));
+    });
+
+    test('toolbar: redo', async () => {
+        const before = h.headNote;
+        before.historyRedo.mockImplementation(async () => {
+            h.headNote = stepTo(['Grace', 'Mercy', 'Peace']);
+            return true;
+        });
+        const answer = await ask({ action: 'redo' });
+        expect(before.historyRedo).toHaveBeenCalledTimes(1);
+        expect(answer.isChanged).toBe(true);
+        h.headNote = genNote(noteItem);
+        h.headNote.historyRedo.mockResolvedValue(false);
+        expect((await ask({ action: 'redo' })).reason).toMatch(
+            /nothing undone/,
+        );
+    });
+
+    test("a step that was another note's of the file is taken back and refused", async () => {
+        const other = {
+            id: 4,
+            title: 'Other',
+            content: 'a',
+            isVerseItem: false,
+        };
+        const before = genNote(noteItem);
+        before.items = [noteItem, other];
+        h.headNote = before;
+        before.historyUndo.mockImplementation(async () => {
+            const after = genNote({ ...noteItem });
+            after.items = [{ ...noteItem }, { ...other, content: 'b' }];
+            h.headNote = after;
+            return true;
+        });
+        const answer = await ask({ action: 'undo' });
+        expect(answer.reason).toMatch(/another of its notes/);
+        // ...and put forward again, so the other note keeps its change.
+        expect(before.historyRedo).toHaveBeenCalledTimes(1);
+        expect(h.notified).toEqual([]);
+    });
+
+    test("a read lists the font box's fonts, an installed language's face too", async () => {
+        h.langList = [{ fontFamily: 'app-Battambang' }, { langCode: 'en' }];
+        const answer = await ask({ action: 'read' });
+        expect(answer.fonts).toContain('Georgia');
+        expect(answer.fonts).toContain('app-Battambang');
+        // A font change is checked against that same list.
+        const changed = await ask({
+            action: 'edit',
+            changes: [{ block: 1, font: 'app-battambang' }],
+        });
+        expect(changed.isChanged).toBe(true);
+        const written = h.headNote.addItemEditingHistory.mock.calls[0][0];
+        expect(written.content).toContain('font-family: app-Battambang;');
+    });
+
+    test('a new person is a mention from the names lookup, read only for it', async () => {
+        h.lookupRecords = [
+            { id: 'n-1', name: 'Moses', kjvName: 'Moses' },
+            { id: 'n-2', name: 'Mosera' },
+        ];
+        const answer = await ask({
+            action: 'edit',
+            changes: [{ block: 1, text: 'Grace to [@moses]' }],
+        });
+        expect(answer.isChanged).toBe(true);
+        const written = JSON.parse(
+            h.headNote.addItemEditingHistory.mock.calls[0][0].content,
+        );
+        expect(written.root.children[0].children[1]).toMatchObject({
+            type: 'mention',
+            mentionKind: 'mention',
+            mentionId: 'n-1',
+            mentionName: 'Moses',
+            text: 'moses',
+        });
+        // Given back at once.
+        expect(h.lookupReleased).toBe(1);
+        // A change with no new name never reads the lookup.
+        await ask({ action: 'edit', changes: [{ block: 2, text: 'Peace' }] });
+        expect(h.lookupReleased).toBe(1);
+    });
+});
+
+// The two toolbar controls that keep nothing in the note: the ¶ view and
+// Link block text are the editor's own keys of the app's home storage.
+describe("the note editor's own keys", () => {
+    const SETTINGS_KEY = 'lexical-playground-settings';
+    const LINKS_KEY = 'lexical-playground-block-text-links';
+
+    test('toolbar: show-invisible-characters', async () => {
+        h.homeStorage.set(SETTINGS_KEY, '{"isCodeShiki":true}');
+        const shown = await ask({ action: 'view', invisibleCharacters: true });
+        expect(shown).toMatchObject({ isChanged: true, undoId: 'u1' });
+        // Kept as the editor keeps it: only what differs from its defaults.
+        expect(JSON.parse(h.homeStorage.get(SETTINGS_KEY)!)).toEqual({
+            isCodeShiki: true,
+            showInvisibleCharacters: true,
+        });
+        // Backed up as it was, and the note window told.
+        expect(h.backups[0].restores).toEqual([
+            {
+                type: 'home-setting',
+                key: SETTINGS_KEY,
+                text: '{"isCodeShiki":true}',
+                filePath: FILE_PATH,
+            },
+        ]);
+        expect(h.notified).toEqual([FILE_PATH]);
+        // Asked again, nothing to do.
+        expect(
+            (await ask({ action: 'view', invisibleCharacters: true }))
+                .isChanged,
+        ).toBe(false);
+        await ask({ action: 'view', invisibleCharacters: false });
+        expect(JSON.parse(h.homeStorage.get(SETTINGS_KEY)!)).toEqual({
+            isCodeShiki: true,
+        });
+        expect((await ask({ action: 'view' })).reason).toMatch(
+            /invisibleCharacters/,
+        );
+    });
+
+    test("toolbar: link-block-text -- added to the editor's own list", async () => {
+        h.homeStorage.set(LINKS_KEY, '[{"id":"older"}]');
+        const answer = await ask({
+            action: 'edit',
+            changes: [{ block: 2, linkTo: 1 }],
+        });
+        expect(answer).toMatchObject({ isChanged: true, undoId: 'u1' });
+        const links = JSON.parse(h.homeStorage.get(LINKS_KEY)!);
+        expect(links).toHaveLength(2);
+        expect(links[0]).toEqual({ id: 'older' });
+        expect(links[1]).toMatchObject({
+            kind: 'direction-to',
+            from: { blockPaths: [[1]] },
+            to: { blockPaths: [[0]] },
+        });
+        // The note itself is not written: only the list, backed up first.
+        expect(h.headNote.addItemEditingHistory).not.toHaveBeenCalled();
+        expect(h.backups[0].restores).toEqual([
+            {
+                type: 'home-setting',
+                key: LINKS_KEY,
+                text: '[{"id":"older"}]',
+                filePath: FILE_PATH,
+            },
+        ]);
+        expect(h.notified).toEqual([FILE_PATH]);
+    });
+});
+
+// `owa_bible_note add` with mark-up (2026-11-08): a new note built by the
+// rules a change is, a verse read from the installed Bible.
+describe('genNewNoteContent', () => {
+    test('headings, lists and a verse from the installed Bible', async () => {
+        h.resolveBibleItem.mockImplementation(async (ref: string) => {
+            return ref === 'Genesis 2:7'
+                ? {
+                      bibleKey: 'KJV',
+                      toTitleWithBibleKey: async () => '(KJV) Genesis 2:7',
+                      toTitle: async () => 'Genesis 2:7',
+                      toText: async () => '(7): And the LORD God formed man',
+                  }
+                : null;
+        });
+        const content = await genNewNoteContent(
+            '# Creation\n## Key verses\n- [^Genesis 2:7] man formed\n' +
+                '- [^Hezekiah 9:9] no such book',
+            'Creation',
+        );
+        expect(content).not.toBeNull();
+        const blocks = readNoteBlocks(content!)!.blocks;
+        expect(
+            blocks.map((block) => {
+                return [block.kind, block.text];
+            }),
+        ).toEqual([
+            ['h2', 'Key verses'],
+            ['bullet', '[^Genesis 2:7] man formed'],
+            // No Bible has it: the note is made, the reference its words.
+            ['bullet', 'Hezekiah 9:9 no such book'],
+        ]);
+        const mention = JSON.parse(content!).root.children[1].children[0]
+            .children[0];
+        expect(mention).toMatchObject({
+            type: 'mention',
+            mentionKind: 'bible-verse',
+            mentionName: '(KJV) Genesis 2:7',
+        });
+        // Nothing written, nothing backed up: the caller writes the file.
+        expect(h.backups).toHaveLength(0);
+    });
+
+    test('no Bible at all leaves every verse as its words', async () => {
+        h.resolveVersionOrder.mockResolvedValue({ reason: 'No Bible.' });
+        const content = await genNewNoteContent('- read [^John 3:16]');
+        expect(
+            readNoteBlocks(content!)!.blocks.map((block) => block.text),
+        ).toEqual(['read John 3:16']);
+    });
+
+    test('words that are only the title make an empty note; too many blocks, none', async () => {
+        await expect(genNewNoteContent('# Sunday', 'Sunday')).resolves.toBe('');
+        await expect(
+            genNewNoteContent(
+                Array.from({ length: 201 }, (_, index) => {
+                    return `- point ${index}`;
+                }).join('\n'),
+            ),
+        ).resolves.toBeNull();
     });
 });

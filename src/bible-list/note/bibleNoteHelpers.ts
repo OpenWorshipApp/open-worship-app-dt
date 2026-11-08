@@ -221,6 +221,56 @@ const storageManager = {
     },
 };
 
+/**
+ * The editor's own keys a change from OUTSIDE the window can set: its
+ * settings (the ¶ view) and its block links -- the help window's note
+ * conversation writes them (2026-11-08, the note toolbar through the
+ * chatbot). The editor reads them as it mounts, so a window that sees them
+ * differ from what it last knew mounts again.
+ */
+export const NOTE_EDITOR_OUTSIDE_KEY_LIST = [
+    'lexical-playground-settings',
+    'lexical-playground-block-text-links',
+];
+
+/**
+ * The window's store for the editor, remembering the last value of each
+ * outside key it read or wrote -- its own writes are never "a change from
+ * outside".
+ */
+export function genTrackedEditorStorage(
+    store: typeof storageManager,
+    seenMap: Map<string, string | null>,
+) {
+    return {
+        deleteSetting(key: string) {
+            if (seenMap.has(key)) {
+                seenMap.set(key, null);
+            }
+            store.deleteSetting(key);
+        },
+        getSetting(key: string) {
+            return store.getSetting(key);
+        },
+        setSetting(key: string, value: any) {
+            if (seenMap.has(key)) {
+                seenMap.set(
+                    key,
+                    typeof value === 'string' ? value : JSON.stringify(value),
+                );
+            }
+            store.setSetting(key, value);
+        },
+    };
+}
+
+/** Whether a key the editor keeps was changed by another window. */
+export function checkIsEditorKeyChanged(seenMap: Map<string, string | null>) {
+    return [...seenMap].some(([key, value]) => {
+        return appHomeStorage.getItem(key) !== value;
+    });
+}
+
 async function resolveLocalFilePath(file: LocalFile | null | undefined) {
     const filePath = getAppFilePathFromFile(file);
     if (filePath === null) {
@@ -441,6 +491,15 @@ export async function initBibleNote({
     };
     globalThis.addEventListener('beforeunload', handleUnloading);
     globalThis.addEventListener('pagehide', handleUnloading);
+    const editorKeySeenMap = new Map(
+        NOTE_EDITOR_OUTSIDE_KEY_LIST.map((key) => {
+            return [key, appHomeStorage.getItem(key)] as const;
+        }),
+    );
+    const trackedStorageManager = genTrackedEditorStorage(
+        storageManager,
+        editorKeySeenMap,
+    );
     const bibleNoteProps: BibleNoteProps = {
         namesLookupManager,
         locationsLookupManager,
@@ -470,8 +529,8 @@ export async function initBibleNote({
         },
         // A preview's lock is the host's, never the user's preference.
         storageManager: (isReadOnly
-            ? genPreviewSettingStore(storageManager)
-            : storageManager) as any,
+            ? genPreviewSettingStore(trackedStorageManager)
+            : trackedStorageManager) as any,
         stickyNoteExtraFontFamilies,
         resolveFilePath: resolveLocalFilePath as FilePathResolver,
         revealFile,
@@ -557,6 +616,15 @@ export async function initBibleNote({
                 toPathCompareKey(changedFilePath) !==
                 toPathCompareKey(note.filePath)
             ) {
+                return;
+            }
+            // The ¶ view or a block link set from the help window: the
+            // editor reads its own keys as it mounts, so it mounts again --
+            // with what was just typed kept first.
+            if (checkIsEditorKeyChanged(editorKeySeenMap)) {
+                void flushPendingHistory().finally(() => {
+                    globalThis.location.reload();
+                });
                 return;
             }
             attemptTimeout(() => {

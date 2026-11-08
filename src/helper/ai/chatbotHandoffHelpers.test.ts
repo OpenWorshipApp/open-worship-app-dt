@@ -133,4 +133,22 @@ describe('opening the assistant already asked', () => {
             3,
         );
     });
+
+    // 2026-11-08: a note row opens the note's own window -- only once the
+    // person said yes, and before the help window takes the note.
+    test("the note's window is opened after the caution, never before", async () => {
+        const order: string[] = [];
+        const beforeOpening = vi.fn(async () => {
+            order.push('note window');
+        });
+        h.requestChatbotFile.mockImplementation(() => {
+            order.push('request');
+        });
+        await openChatbotWithFile('/notes/Default.own', null, 3, beforeOpening);
+        expect(order).toEqual(['note window', 'request']);
+        beforeOpening.mockClear();
+        h.askAiCaution.mockResolvedValue(false);
+        await openChatbotWithFile('/notes/Default.own', null, 3, beforeOpening);
+        expect(beforeOpening).not.toHaveBeenCalled();
+    });
 });

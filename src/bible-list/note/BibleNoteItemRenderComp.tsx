@@ -20,50 +20,15 @@ import ItemReadErrorComp from '../../others/ItemReadErrorComp';
 import Note from './Note';
 import { openNoteItemContextMenu } from './noteHelpers';
 import { tran } from '../../lang/langHelpers';
-import appProvider from '../../server/appProvider';
-import {
-    openPopupWindow,
-    setParamFileFullName,
-    setParamIdNum,
-    setParamKeyValue,
-} from '../../helper/domHelpers';
-import { dirSourceSettingNames } from '../../helper/constants';
-import { SESSION_URL_PARAM_NAME } from '../../media-sessions/folderSessionHelpers';
-import { findNonDefaultSessionIdByFilePath } from '../../media-sessions/folderSessionPathHelpers';
+import { openNoteWindow } from './noteWindowOpenHelpers';
 import { NoteTitleEditorComp } from './NoteEditorComp';
 import { exportBibleNoteItem } from './bibleNoteItemArchiveHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { genNoteOpenInChatbotContextMenu } from '../../helper/ai/noteChatbotMenuHelpers';
 
 export function handleOpening(note: Note, noteItem: NoteItem) {
-    const fileFullName = note.fileSource.fullName;
-    let pathname = setParamFileFullName(
-        appProvider.bibleNoteHomePage,
-        fileFullName,
-    );
-    const noteId = noteItem.id;
-    pathname = setParamIdNum(pathname, noteId);
-    // A note of another Bible Notes session says which one: the editor finds
-    // it by name in that session's folder.
-    const sessionId = findNonDefaultSessionIdByFilePath(
-        dirSourceSettingNames.BIBLE_NOTES,
-        note.filePath,
-    );
-    if (sessionId !== null) {
-        pathname = setParamKeyValue(
-            pathname,
-            SESSION_URL_PARAM_NAME,
-            sessionId,
-        );
-    }
-    return openPopupWindow(
-        pathname,
-        `${fileFullName}-${noteId}_${Date.now()}`,
-        crypto.randomUUID(),
-        {
-            width: 870,
-        },
-    );
+    // The help window opens a note the assistant made the same way.
+    return openNoteWindow(note.fileSource.fullName, note.filePath, noteItem.id);
 }
 
 export default function BibleNoteItemRenderComp({
@@ -108,6 +73,14 @@ export default function BibleNoteItemRenderComp({
                     : genNoteOpenInChatbotContextMenu(
                           filePathRef.current,
                           noteItemRef.current.id,
+                          // The conversation works in the note's own
+                          // window, opened first when it is not open.
+                          () => {
+                              handleOpening(
+                                  noteRef.current,
+                                  noteItemRef.current,
+                              );
+                          },
                       )),
                 {
                     childBefore: genContextMenuItemIcon('pencil-square'),

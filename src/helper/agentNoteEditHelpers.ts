@@ -25,6 +25,23 @@
  * taken AS the head, so an undo puts that back rather than leaving the
  * change -- and the file too when a title changes. No backup, no change.
  *
+ * ## The toolbar
+ *
+ * Everything the note editor's toolbar does to a note is a change here
+ * (`agentNoteStyleHelpers.ts`, `agentNoteInsertHelpers.ts`): the font box
+ * lists the editor's six fonts and each installed language's own face, which
+ * a read hands over as `fonts`; a NEW person or place mention (`[@Moses]`,
+ * `[#Jerusalem]`) is looked up in the names lookup -- only for a name a
+ * change adds, the data given back at once -- and written as the words when
+ * the lookup does not have it; and `undo` / `redo` step the note's editing
+ * history, the toolbar's Undo and Redo for what has been kept there, refused
+ * when the step would be another note's of the same file. Two controls keep
+ * nothing in the note: Link block text and the ¶ view are the editor's own
+ * keys of the app's home storage, which `edit` (`linkTo`) and `view`
+ * write -- backed up as `home-setting` restores, the open note window told
+ * to mount its editor again. The Default Example's nodes are read from
+ * `agentNoteDefaultExample.json` only when one is asked for.
+ *
  * ## Which notes
  *
  * A `.own` file in a Bible Notes folder (any folder session) and a note in it
@@ -53,15 +70,55 @@ import {
 } from './agentBackupHelpers';
 import {
     type NoteEditChangeType,
+    type NoteNameType,
     type NoteVerseType,
+    NOTE_EDIT_MAX_CHANGES,
     applyNoteEdit,
+    collectNewNoteNameRefs,
     collectNewNoteVerseRefs,
     genNoteContentHash,
     readNoteBlocks,
+    toNameKey,
 } from './agentNoteBlockHelpers';
+import {
+    toNoteAddChanges,
+    toUnfoundVersesAsWords,
+} from './agentNoteMarkupHelpers';
+import { NOTE_STANDARD_FONT_LIST } from './agentNoteStyleHelpers';
+import { toNoteCanonicalText } from './agentNoteNormalizeHelpers';
+import {
+    NOTE_BLOCK_LINK_STORAGE_KEY,
+    readNoteBlockLinks,
+} from './agentNoteBlockLinkHelpers';
+
+// The editor's own settings, kept as the ones that differ from its defaults.
+const NOTE_EDITOR_SETTINGS_KEY = 'lexical-playground-settings';
+
+async function getHomeStorage() {
+    return (await import('../server/appHomeStorage')).appHomeStorage;
+}
+
+/** A key of the app's home storage as it is now, for the undo. */
+async function snapshotHomeSetting(
+    key: string,
+    filePath: string,
+): Promise<AgentRestoreType> {
+    return {
+        type: 'home-setting',
+        key,
+        text: (await getHomeStorage()).getItem(key),
+        filePath,
+    };
+}
+
+async function loadExampleNodes() {
+    const data = (await import('./agentNoteDefaultExample.json')).default;
+    return Array.isArray(data?.nodes) ? data.nodes : [];
+}
 
 export type AgentNoteEditRequestType = {
     action?: unknown;
+    invisibleCharacters?: unknown;
     filePath?: unknown;
     noteId?: unknown;
     from?: unknown;
@@ -74,6 +131,32 @@ export type AgentNoteEditRequestType = {
 const NOTE_EDITABLE_KIND = 'note' as const;
 const UNTITLED_NOTE_NAME = 'Unnamed';
 const MAX_NEW_VERSES = 20;
+const MAX_NEW_NAMES = 20;
+const NAME_SEARCH_LIMIT = 8;
+// How many echo steps an undo or redo steps over at most.
+const MAX_ECHO_STEPS = 3;
+
+/**
+ * What the editor's font box lists: its six fonts and each installed
+ * language's own face (`editorExtraFontFamilies` in `bibleNoteHelpers.ts`),
+ * in the box's order. The languages are the ones this window already loaded.
+ */
+async function loadNoteFontList() {
+    const fontSet = new Set(NOTE_STANDARD_FONT_LIST);
+    try {
+        const { initAllLangCss } = await import('../lang/langHelpers');
+        for (const langData of (await initAllLangCss()) ?? []) {
+            if (typeof langData?.fontFamily === 'string') {
+                fontSet.add(langData.fontFamily);
+            }
+        }
+    } catch (error) {
+        handleError(error);
+    }
+    return [...fontSet].sort((one, other) => {
+        return one.localeCompare(other);
+    });
+}
 
 function fail(reason: string): AgentResultType {
     return { isError: true, reason };
@@ -155,7 +238,58 @@ async function handleRead(request: AgentNoteEditRequestType) {
         name: toNoteName(noteItem.title),
         file: pathBasename(filePath).replace(/\.own$/i, ''),
         ...read,
+        fonts: await loadNoteFontList(),
     };
+}
+
+/**
+ * New people and places, as the names lookup has them -- the name itself or
+ * its KJV spelling, in any case; one it does not have stays words. Read only
+ * when a change adds one, and given back at once.
+ */
+async function resolveNames(
+    refs: { mentionKind: 'mention' | 'location'; text: string }[],
+) {
+    const nameMap = new Map<string, NoteNameType>();
+    if (refs.length === 0) {
+        return nameMap;
+    }
+    const { acquireLookupData, releaseLookupData } =
+        await import('../location-name-lookup/lookupDataHelpers');
+    const managers = await acquireLookupData();
+    try {
+        for (const ref of refs.slice(0, MAX_NEW_NAMES)) {
+            const wanted = ref.text.trim().toLowerCase();
+            const records =
+                ref.mentionKind === 'location'
+                    ? managers.locationsLookupManager.searchLocations(
+                          ref.text,
+                          {
+                              limit: NAME_SEARCH_LIMIT,
+                          },
+                      )
+                    : managers.namesLookupManager.searchNames(ref.text, {
+                          limit: NAME_SEARCH_LIMIT,
+                      });
+            const found = records.find((record: any) => {
+                return [record.name, record.kjvName].some((one) => {
+                    return (
+                        typeof one === 'string' &&
+                        one.trim().toLowerCase() === wanted
+                    );
+                });
+            });
+            if (found !== undefined) {
+                nameMap.set(toNameKey(ref.mentionKind, ref.text), {
+                    mentionId: String(found.id),
+                    mentionName: String(found.name),
+                });
+            }
+        }
+    } finally {
+        releaseLookupData();
+    }
+    return nameMap;
 }
 
 /**
@@ -190,6 +324,54 @@ async function resolveVerses(refs: string[], bible: string | null) {
         });
     }
     return verseMap;
+}
+
+/**
+ * The editor content of a NEW note whose words carry mark-up
+ * (`agentNoteMarkupHelpers.ts`, `owa_bible_note add`): its blocks built by
+ * the rules a change is built by, a new verse read from the installed Bible
+ * and a new name looked up exactly as a change's are -- a verse no Bible
+ * here has stays its words, so the note is still made. Null when the words
+ * cannot be built that way (more blocks than one change takes, or a rule
+ * refused them): the caller writes them plain, a line a paragraph.
+ */
+export async function genNewNoteContent(text: string, title = '') {
+    const changes = toNoteAddChanges(text, title);
+    if (changes.length === 0) {
+        return '';
+    }
+    if (changes.length > NOTE_EDIT_MAX_CHANGES) {
+        return null;
+    }
+    let verseMap = new Map<string, NoteVerseType>();
+    try {
+        verseMap = await resolveVerses(
+            collectNewNoteVerseRefs('', changes),
+            null,
+        );
+    } catch (_error) {
+        // No Bible to read them from: every verse stays its words.
+    }
+    const resolvedChanges = toUnfoundVersesAsWords(
+        changes,
+        new Set(verseMap.keys()),
+    );
+    let nameMap = new Map<string, NoteNameType>();
+    try {
+        nameMap = await resolveNames(
+            collectNewNoteNameRefs('', resolvedChanges),
+        );
+    } catch (error) {
+        // A name the lookup could not be asked for stays its words.
+        handleError(error);
+    }
+    const result = applyNoteEdit({
+        content: '',
+        changes: resolvedChanges,
+        verseMap,
+        nameMap,
+    });
+    return 'reason' in result ? null : result.content;
 }
 
 /**
@@ -248,19 +430,32 @@ async function handleEdit(request: AgentNoteEditRequestType) {
             ? request.bible.trim()
             : null;
     let verseMap: Map<string, NoteVerseType>;
+    let nameMap: Map<string, NoteNameType>;
     try {
         verseMap = await resolveVerses(
             collectNewNoteVerseRefs(noteItem.content, changes),
             bible,
         );
+        nameMap = await resolveNames(
+            collectNewNoteNameRefs(noteItem.content, changes),
+        );
     } catch (error: any) {
         return fail(String(error?.message ?? error));
     }
+    const isFontAsked = changes.some((change) => {
+        return change?.font !== undefined;
+    });
+    const isExampleAsked = changes.some((change) => {
+        return change?.kind === 'example';
+    });
     const result = applyNoteEdit({
         content: noteItem.content,
         changes,
         title,
         verseMap,
+        nameMap,
+        ...(isFontAsked ? { fontList: await loadNoteFontList() } : {}),
+        ...(isExampleAsked ? { exampleNodes: await loadExampleNodes() } : {}),
     });
     if ('reason' in result) {
         return fail(result.reason);
@@ -282,6 +477,12 @@ async function handleEdit(request: AgentNoteEditRequestType) {
     if (result.title !== null) {
         restores.push(await snapshotAgentFile(filePath, NOTE_EDITABLE_KIND));
     }
+    const blockLinks = result.blockLinks ?? [];
+    if (blockLinks.length > 0) {
+        restores.push(
+            await snapshotHomeSetting(NOTE_BLOCK_LINK_STORAGE_KEY, filePath),
+        );
+    }
     try {
         const { meta } = await runWithAgentBackup(
             `Changed the Bible note "${name}" (${result.summary})`,
@@ -291,6 +492,22 @@ async function handleEdit(request: AgentNoteEditRequestType) {
                     noteItem.content = result.content;
                     // Onto the head as it is NOW, as the note window writes.
                     await note.addItemEditingHistory(noteItem);
+                }
+                if (blockLinks.length > 0) {
+                    // The editor's own list, added to: the note window
+                    // draws them once it mounts again (told below).
+                    const homeStorage = await getHomeStorage();
+                    homeStorage.setItem(
+                        NOTE_BLOCK_LINK_STORAGE_KEY,
+                        JSON.stringify([
+                            ...readNoteBlockLinks(
+                                homeStorage.getItem(
+                                    NOTE_BLOCK_LINK_STORAGE_KEY,
+                                ),
+                            ),
+                            ...blockLinks,
+                        ]),
+                    );
                 }
                 if (result.title !== null) {
                     // The list's own way: the saved file, at once.
@@ -331,6 +548,176 @@ async function handleEdit(request: AgentNoteEditRequestType) {
 }
 
 /**
+ * The toolbar's Undo / Redo, for what the note's editing history kept: one
+ * step back or forward. The history is the FILE's, every note of it, so a
+ * step that changed another note and not this one is taken back again and
+ * refused -- this conversation is about one note.
+ */
+async function handleHistoryStep(
+    request: AgentNoteEditRequestType,
+    isUndo: boolean,
+) {
+    const lookedUp = await findNote(request);
+    if ('failure' in lookedUp) {
+        return lookedUp.failure;
+    }
+    const { Note, note, noteItem, filePath, noteId } = lookedUp.found;
+    const beforeMap = new Map(
+        note.items.map((item) => {
+            return [item.id, `${item.title}\n${item.content}`];
+        }),
+    );
+    const step = () => {
+        return isUndo ? note.historyUndo() : note.historyRedo();
+    };
+    if (!(await step())) {
+        return fail(
+            isUndo
+                ? 'There is nothing kept to go back to: the note is as its ' +
+                      'history starts. A change made a moment ago may still ' +
+                      'be in the note window, whose own Undo takes it back.'
+                : 'There is nothing undone to do again.',
+        );
+    }
+    let after = await Note.fromFilePathEditing(filePath);
+    let afterItem = after?.getItemById(noteId) ?? null;
+    // A step that only RE-WROTE this note -- an open note window writing back
+    // what it was handed its own way (a code block's highlighting) -- is no
+    // step a person made: one more is taken, so "undo that" takes back the
+    // change itself (seen live 2026-11-08).
+    for (let extra = 0; extra < MAX_ECHO_STEPS; extra++) {
+        if (
+            afterItem === null ||
+            afterItem.content === noteItem.content ||
+            afterItem.title !== noteItem.title ||
+            toNoteCanonicalText(afterItem.content) !==
+                toNoteCanonicalText(noteItem.content)
+        ) {
+            break;
+        }
+        if (!(await step())) {
+            break;
+        }
+        after = await Note.fromFilePathEditing(filePath);
+        afterItem = after?.getItemById(noteId) ?? null;
+    }
+    const isThisChanged =
+        afterItem === null ||
+        `${afterItem.title}\n${afterItem.content}` !== beforeMap.get(noteId);
+    const isOtherChanged =
+        after === null ||
+        after.items.length !== beforeMap.size ||
+        after.items.some((item) => {
+            return (
+                item.id !== noteId &&
+                beforeMap.get(item.id) !== `${item.title}\n${item.content}`
+            );
+        });
+    if (!isThisChanged && isOtherChanged) {
+        await (isUndo ? note.historyRedo() : note.historyUndo());
+        return fail(
+            'The last change kept for this notes file was to another of its ' +
+                'notes, so nothing was undone here. Change this note back ' +
+                'with a change of its own.',
+        );
+    }
+    notifyNoteHeadChanged(filePath);
+    return {
+        name: toNoteName(afterItem?.title ?? noteItem.title),
+        isChanged: isThisChanged,
+        hash: genNoteContentHash(afterItem?.content ?? noteItem.content),
+        summary: isUndo
+            ? "one step back in the note's history"
+            : "one step forward in the note's history",
+        isSaved: false,
+    };
+}
+
+/**
+ * The toolbar's ¶: how the note window draws the note -- its spaces and line
+ * ends shown, or not. The editor's own setting, so it is the same for every
+ * note window, as the ¶ is; the window asked from mounts again with it.
+ */
+async function handleView(request: AgentNoteEditRequestType) {
+    const lookedUp = await findNote(request);
+    if ('failure' in lookedUp) {
+        return lookedUp.failure;
+    }
+    const { noteItem, filePath } = lookedUp.found;
+    if (typeof request.invisibleCharacters !== 'boolean') {
+        return fail(
+            '`view` takes `invisibleCharacters`: true shows the spaces and ' +
+                "line ends (the toolbar's ¶), false hides them.",
+        );
+    }
+    const isShown = request.invisibleCharacters;
+    const homeStorage = await getHomeStorage();
+    const oldText = homeStorage.getItem(NOTE_EDITOR_SETTINGS_KEY);
+    let settings: Record<string, unknown> = {};
+    try {
+        const parsed = oldText === null ? {} : JSON.parse(oldText);
+        if (
+            parsed !== null &&
+            typeof parsed === 'object' &&
+            !Array.isArray(parsed)
+        ) {
+            settings = parsed;
+        }
+    } catch (_error) {
+        settings = {};
+    }
+    const name = toNoteName(noteItem.title);
+    if ((settings.showInvisibleCharacters === true) === isShown) {
+        return {
+            name,
+            isChanged: false,
+            summary: isShown
+                ? 'The spaces and line ends are shown already.'
+                : 'The spaces and line ends are hidden already.',
+        };
+    }
+    // Kept as the editor keeps it: only what differs from its defaults.
+    const newSettings = { ...settings };
+    if (isShown) {
+        newSettings.showInvisibleCharacters = true;
+    } else {
+        delete newSettings.showInvisibleCharacters;
+    }
+    try {
+        const { meta } = await runWithAgentBackup(
+            `${isShown ? 'Showed' : 'Hid'} the spaces and line ends of the Bible ` +
+                `note window ("${name}")`,
+            [await snapshotHomeSetting(NOTE_EDITOR_SETTINGS_KEY, filePath)],
+            async () => {
+                if (Object.keys(newSettings).length === 0) {
+                    homeStorage.removeItem(NOTE_EDITOR_SETTINGS_KEY);
+                } else {
+                    homeStorage.setItem(
+                        NOTE_EDITOR_SETTINGS_KEY,
+                        JSON.stringify(newSettings),
+                    );
+                }
+            },
+        );
+        notifyNoteHeadChanged(filePath);
+        return {
+            name,
+            isChanged: true,
+            summary: isShown
+                ? 'spaces and line ends shown (the ¶ on)'
+                : 'spaces and line ends hidden (the ¶ off)',
+            ...genUndoField(meta),
+        };
+    } catch (error: any) {
+        if (error instanceof NoBackupError) {
+            return fail(error.message);
+        }
+        handleError(error);
+        return fail(String(error?.message ?? error));
+    }
+}
+
+/**
  * One request from `owa_note_edit`. Always answers with a plain object and
  * never throws: the caller is a page expression whose only channel back is a
  * DOM event.
@@ -346,7 +733,13 @@ export async function handleAgentNoteEditRequest(
         if (action === 'edit') {
             return await handleEdit(request);
         }
-        return fail('Unknown action. Use read or edit.');
+        if (action === 'undo' || action === 'redo') {
+            return await handleHistoryStep(request, action === 'undo');
+        }
+        if (action === 'view') {
+            return await handleView(request);
+        }
+        return fail('Unknown action. Use read, edit, undo, redo or view.');
     } catch (error: any) {
         handleError(error);
         return fail(String(error?.message ?? error));

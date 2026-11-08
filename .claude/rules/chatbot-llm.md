@@ -829,7 +829,8 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   another kind and fewer than half its own words is refused now
   (`checkLosesWords` in `agentNoteBlockHelpers.ts`), and asked again it
   added the heading as a new block. `owa_bible_note` stays on the ordinary
-  list (the `write-a-note` row needs it). **Text size** (2026-11-08, the
+  list (the `write-a-note` row needs it), and is shared to a note ask for a
+  NEW note only (the bullet below). **Text size** (2026-11-08, the
   user: _check why chatbot can't help increase text size_ -- _make text
   bigger_ had been answered with the toolbar's steps, and the two
   walkthrough buttons under that guide page both failed): a change takes
@@ -839,4 +840,64 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   (`genNoteSizeChanges` → one `size` change a block, `genNoteSizeDoneText`),
   like the slides'. Measured live: no assistant asked, the h1 24 → 30 px,
   the lines 15 → 19; _make only the heading bigger_ went to gemma4:cloud,
-  which sized the heading alone.
+  which sized the heading alone. **The whole toolbar** (2026-11-08, the
+  user: _make chatbot able to use all toolbar operations_): the prompt
+  says the toolbar is the model's to USE, never to explain, lists its
+  fields and the Insert kinds, and shows ONE change as an example --
+  without it gemma4:cloud, asked to make one word red, sent bold and
+  alignment for the whole line, no colour, and said it had; with it,
+  one right call. The note read carries a `Fonts:` line. The tool is
+  ~1 021 tokens to a note ask (was ~489; ~878 before the drawing, the
+  example, block links, the ¶ and a code block's language joined); the
+  ordinary list and its ratchet did not move (8 343 of 8 350). A style
+  for the WHOLE note in a short English line is the window's, like the
+  size (`readNoteStyleAsk`, `genNoteStyleChanges`,
+  `genNoteStyleDoneText`), and the ¶'s answer (`view`) carries **Undo
+  this change** as an edit's does.
+
+- **A NEW note, from any conversation that teaches** (2026-11-08, the
+  user, with a Bible Reader chat that answered _make a bible note for me_
+  with words to copy and paste: _chatbot should be able to create new bible
+  note (not allow delete), after create should open the note and attach to
+  the chatbot session_, then the goal _chatbot can put a lesson to a new
+  bible note for user_). The line under a Reader answer was a
+  `bible-reader` ask, offered four reading tools and nothing that writes.
+  `owa_bible_note` is now shared to the `bible-reader`, `lookup`,
+  `resources` and `note` asks (`MODEL_ASK_SHARED_TOOL_MAP`, ~304 tokens a
+  round to those asks alone; the ordinary list already carried it and its
+  ratchet did not move, 8 343 of 8 350), and the first three prompts carry
+  `NOTE_CREATE_PROMPT` (`src/chatbot/noteCreatePromptHelpers.ts`, a leaf):
+  make it at once, the `title` and `text` the model's own, a lesson given
+  whole, `#` / `-` / `**` and `[^Genesis 2:7]` for a verse; never ask what to
+  write -- told only that it could, gemma4:cloud answered "what would you
+  like the title and the text to be?"; `NOTE_SYSTEM_PROMPT` says the same
+  for a new note beside the attached one. The window reads the note an `add`
+  made off its RESULT (`readCreatedNote`: `added`, `id`, the `filePath` the
+  app answered with -- never a path the model wrote), the answer carries it
+  (`LlmBotAnswerType.createdNote`) with **Undo this change** and **Show it
+  in the list** (`genCreatedNoteUnder`, after a Reader's or a lookup's own
+  buttons, `withCreatedNoteUnder`), and `ChatbotAppComp`'s
+  `openCreatedNoteRef` opens the note's window (`noteWindowOpenHelpers.ts`,
+  the row's own **Open**) and attaches it to the tab it was asked in through
+  the very path a row's Open in Chatbot takes (`attachHandedFileRef`: the
+  chip, Bible Note, the note's window, its card). **Never a removal**: a
+  model's `delete` / `delete-file` of `owa_bible_note` is refused in every
+  ask (`NOTE_REMOVAL_MODEL_REFUSAL` names the row's own Delete), and in a
+  note ask everything but `add`, `list` and `read`
+  (`NOTE_ASK_BIBLE_NOTE_REFUSAL`) -- `update` writes a note back as plain
+  paragraphs, and the attached note is `owa_note_edit`'s. **And an answer
+  goes INTO the attached note** (the same day, the user's picture of a note
+  chat answering _new page_ under a lesson with "replace the words or add the
+  translation under?": _chatbot should understand and can append the lesson
+  content to new section_): `NOTE_SYSTEM_PROMPT` says a short line right after
+  an answer (_add it_, _put it in_, _new section_, _new page_) puts THAT answer
+  at the end in one edit -- a `page-break` first for "page", then a `section`
+  of mark-up lines -- and that only words asking to translate, or naming a
+  language, are a translation. Its example names the lines in words, not as
+  `
+`: shown `
+`, gemma4:cloud wrote it out as two characters. Live: one
+  edit, the lesson after a page break, no step from the open window. Seen live on a
+  scratch profile, gemma4:cloud: a Reader summary, a second note from that
+  note's chat, a Reader word lesson and a passage chat's explanation, each
+  one call, each opened and attached.

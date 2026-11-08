@@ -53,6 +53,7 @@ import {
     toFirstWords,
     toLexicalContent,
 } from './agentNoteTextHelpers';
+import { checkHasNoteMarkup } from './agentNoteMarkupHelpers';
 
 export type AgentNoteRequestType = {
     action?: unknown;
@@ -373,9 +374,16 @@ async function handleAdd(place: NotePlaceType, request: AgentNoteRequestType) {
     } catch (error) {
         return fail(genNoBackupReason(error));
     }
-    const content = toLexicalContent(
-        typeof request.text === 'string' ? request.text : '',
-    );
+    const text = typeof request.text === 'string' ? request.text : '';
+    let content = toLexicalContent(text);
+    // Words a model wrote with mark-up -- `## Key verses`, `- a point`,
+    // `**bold**`, `[^John 3:16]` -- are read as the editor's own blocks, the
+    // rules `owa_note_edit` builds a change by (`agentNoteMarkupHelpers.ts`);
+    // words with none are written as they always were.
+    if (checkHasNoteMarkup(text)) {
+        const { genNewNoteContent } = await import('./agentNoteEditHelpers');
+        content = (await genNewNoteContent(text, title)) ?? content;
+    }
     try {
         const { meta, value: id } = await runWithAgentBackup(
             `Wrote the note “${title}” in “${found.name}”`,
@@ -400,7 +408,16 @@ async function handleAdd(place: NotePlaceType, request: AgentNoteRequestType) {
                 return newId;
             },
         );
-        return { file: found.name, added: title, id, ...genUndoField(meta) };
+        // The path too, as `owa_lyric_file create` answers: the help window
+        // opens the note it was asked to make and attaches it to the tab
+        // (`readCreatedNote`) -- it never takes a path from the model.
+        return {
+            file: found.name,
+            added: title,
+            id,
+            filePath: found.filePath,
+            ...genUndoField(meta),
+        };
     } catch (error) {
         return toChangeFailure(error, `Writing the note “${title}”`);
     }

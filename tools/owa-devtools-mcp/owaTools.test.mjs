@@ -407,14 +407,29 @@ describe('registered app tools', () => {
       },
     ]);
     const refused = await call('owa_bible_note', {
-      action: 'add',
+      action: 'update',
       file: 'Sunday',
-      title: 'Prayer',
+      id: 1,
       text: 'Remember',
     });
     expect(refused.isError).toBe(true);
     expect(refused.content[0].text).toContain('open in a note window');
     expect(app.evaluateInApp).not.toHaveBeenCalled();
+
+    // A NEW note is the panel's own + (2026-11-08): the window keeps it.
+    app.evaluateInApp.mockResolvedValueOnce({ value: { added: 'Prayer' } });
+    expect(
+      JSON.parse(
+        answer(
+          await call('owa_bible_note', {
+            action: 'add',
+            file: 'Sunday',
+            title: 'Prayer',
+            text: 'Remember',
+          }),
+        ),
+      ),
+    ).toEqual({ added: 'Prayer' });
 
     app.evaluateInApp.mockResolvedValueOnce({ value: { notes: [] } });
     expect(

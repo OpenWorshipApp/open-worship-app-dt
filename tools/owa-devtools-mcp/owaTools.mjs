@@ -1959,6 +1959,13 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
   // the next time it saves, seconds later, and the answer that said "done"
   // was a lie. The windows are on the debugging endpoint, named by the file
   // they show, so the change is refused while one is open instead.
+  //
+  // Except `add` (2026-11-08): a NEW note is the Bible Notes panel's own +,
+  // which a person presses with note windows open all the time. The file's
+  // save rebases the editing head onto the new structure, and a note window
+  // writes its typing onto that head as it is NOW (`addItemEditingHistory`)
+  // and saves the head -- so the new note stays. Refusing it had made "make
+  // another note" fail right after the assistant opened the first one.
   const findOpenNoteWindow = async (file) => {
     try {
       const targets = await listTargets(await requireLivePort());
@@ -2014,6 +2021,7 @@ export function registerOwaTools(server, { door = 'stdio' } = {}) {
         if (
           action !== 'list' &&
           action !== 'read' &&
+          action !== 'add' &&
           (await findOpenNoteWindow(file)) !== null
         ) {
           return toErrorResult(

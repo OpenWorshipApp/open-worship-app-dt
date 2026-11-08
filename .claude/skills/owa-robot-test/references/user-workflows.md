@@ -21,7 +21,17 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-08a** (**W-60 step 3 — the note's text size.** The user, with a note conversation answering _make text bigger_ with the editor's toolbar steps and its two walkthrough buttons both answering _I could not do that just now_: _check why chatbot can't help increase text size_. The assistant could not change a size at all, so it explained the toolbar, and a walkthrough cannot be run on a page of the editor's guide. Now _Make the words larger_, _make text bigger_, _make the words smaller_ and _make the words 20 px_ are done by the help window itself, at once, one change with **[en:tran:Undo this change]** under it, each part keeping its size against the others; a request about one part (_make only the heading bigger_) the assistant does; and the editor's guide pages carry no walkthrough buttons. Seen live 2026-11-08 on a scratch development profile: _make text bigger_ — the heading 24 → 30 px, the lines 15 → 19, a 12 px aside 15, no assistant asked — and _Make only the heading bigger_ answered by gemma4:cloud, 30 → 38 px, the rest left alone. CB-169.)
+**workflowsVersion: 2026-11-08f** (**W-60 — a new note made by the assistant.** The user, with a Bible Reader chat that answered _make a bible note for me_ with a note to copy and paste: _chatbot should be able to create new bible note (not allow delete), after create should open the note and attach to the chatbot session_, then the goal _chatbot can put a lesson to a new bible note for user_. In a Bible Reader chat, a passage's or a person's chat, a Resources file's chat or a note's own, _make a bible note for me_ or _put this lesson in a new note_ makes the note -- headings, lists, bold and the verses it names, read from the Bible on this computer -- opens it in its own window and attaches it to the chat under its card; the assistant never deletes a note. Seen live 2026-11-08 on a scratch development profile, Auto answering on the shared gemma4:cloud, each in one call: after _Summarize Genesis 2_, _make a bible note for me_ made _Summary of Genesis 2_ (a list, Genesis 2:7 as a verse mention with its KJV words), its window opened and the chat read _Asking about: Bible Note_; in that note's chat, _make another note about Genesis 3_ made a second while the first one's window stayed open; after _Teach me the key words of Genesis 2:7_, _put this lesson in a new bible note_ kept all four points; and in the chat of Genesis 1:1 opened from the Bible view's robot, the explanation went into _Lesson on Genesis 1:1_ with **[en:tran:Undo this change]** and **[en:tran:Show it in the list]** beside the passage's own buttons. A new note's window wrote nothing back of its own. And in a note's chat, right after a lesson, _new page_ (the user's picture: it had been answered with which way to translate) put that lesson at the end of the note after a page break, its heading, points and verse as the editor's own, in one change -- _add it_ and _new section_ do the same with no page break. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08e** (**W-60 step 2 — the note's window stays over the main window while the chat works in it.** The user, with **Working in** reading the note's window and an arrow to that window's **[en:tran:Toggle Always On Top]**: _a bible note window that attached to chatbot should toggled for stay on top_, then: _change the bible note stay on top to be top of the main app window instead and still make chatbot and ai chat be the highest stack_. A press in the help window or the main window had buried the note being changed behind the main window. Now, for as long as the chat in front works in it, the note's window stays above the main window -- but over no other program -- and the help window and every AI Chat window stay above the note's window, even when the note's window is the one in front; it goes back to normal when the chat works in another window, another tab is in front or the help window closes. **[en:tran:Toggle Always On Top]** is left as the person set it. Seen live 2026-11-08 on the dev app (Windows), reading the windows' order from the system: the row's **[en:tran:Open in Chatbot]** put them Chatbot, Bible Note, Reader, the note window owned by the Reader and not on top of other programs; with the note window brought to the front, and then the Reader, the order stayed the same; **Working in** on the main window gave the note window back its own place. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08d** (**W-60 step 3 — every control of the note editor's toolbar.** The four that had been left to the person are the assistant's too: a drawing made from boxes and arrows described in words, a link between the words of two parts (the editor's Link block text), the **¶** view, and the editor's own Default Example -- with a code block's language and colour theme. And a style for the WHOLE note asked in a short English line (_make all the text bold_, _centre everything_, _use Georgia for the whole note_) is done by the help window itself, like the size. Seen live 2026-11-08 on a scratch development profile, Auto answering on the shared gemma4:cloud, each in one change with the note window open: _Show the invisible characters_ (the ¶ came on in the note window, and **[en:tran:Undo this change]** put it back), _Link the first heading to the last line_ (drawn once both ends had words), _Insert the editor's default example at the end of the note_, _At the end, add a drawing: Sin -> Cross, Cross -> Life_ (three boxes and two arrows drawn), _Add a python code block at the end with print('grace')_ (highlighted as Python); _Make all the text bold_ done by the help window with no assistant in 2 s; and in a Khmer window, the word made red asked in Khmer, answered in Khmer. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08c** (**W-60 step 3 — everything the note editor's toolbar does.** The user, with a picture of the toolbar: _make chatbot able to use all toolbar operations_. The assistant now does what each control does, asked in words, on a whole part or on some words of it: the block type, the font and its size, bold, italic, underline, code and links, the text and background colours, the ••• styles (strikethrough, subscript, superscript, highlight, the three cases, Clear Formatting), alignment and indent (a list item nests under the one before), every object of the **+** Insert menu but a drawing (table, columns, collapsible, page break, rule, equation, sticky note, date, poll, YouTube video, website, media, a person, a place or a verse) and Undo / Redo; a drawing, Link block text, the editor's sample content and the ¶ view stay the person's own. Seen live 2026-11-08 on a scratch development profile, Auto answering on the shared gemma4:cloud: _Make the word fas red_ -- that word alone red, one change; _At the end of the note, add a table with the headings Book and Chapter and the rows John 3 and Romans 8, then a pink sticky note saying Pray for Tom_ -- both in the note window at once; _Undo that_ -- both gone; _Put today's date at the top, show the KJV passage in Georgia, indent the last line, and add a poll …_ -- all four in one change. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08b** (**W-60 steps 1-2 — the note's own window.** The user, with a note conversation whose head read _Bible Reader · Auto_: _chatbot should demand select a bible-note window (open one if not opened) … `Open in Chatbot` should check for opening window first then attach with window selected in chatbot_. A note row's **[en:tran:Open in Chatbot]** now opens the note in its own Bible Note window first when it is not open (never a second one when it is), and the chat works IN that window: its head reads **Bible Note** and **Working in** names the note's window, whichever window the menu was pressed in, and with two note windows open too. Seen live 2026-11-08 on a scratch development profile: from the Bible Reader, the note's window opened beside the help window and the chat read _Asking about: Bible Note_, _Working in: Bible Note … sunday jul 19 2026_; a second note opened its own window and its chat worked in it; the first note asked again opened no third window; the note window's own robot worked in that window. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-08a** (**W-60 step 3 — the note's text size.** The user, with a note conversation answering _make text bigger_ with the editor's toolbar steps and its two walkthrough buttons both answering _I could not do that just now_: _check why chatbot can't help increase text size_. The assistant could not change a size at all, so it explained the toolbar, and a walkthrough cannot be run on a page of the editor's guide. Now _Make the words larger_, _make text bigger_, _make the words smaller_ and _make the words 20 px_ are done by the help window itself, at once, one change with **[en:tran:Undo this change]** under it, each part keeping its size against the others; a request about one part (_make only the heading bigger_) the assistant does; and the editor's guide pages carry no walkthrough buttons. Seen live 2026-11-08 on a scratch development profile: _make text bigger_ — the heading 24 → 30 px, the lines 15 → 19, a 12 px aside 15, no assistant asked — and _Make only the heading bigger_ answered by gemma4:cloud, 30 → 38 px, the rest left alone. CB-169.)
 
 Previous: **workflowsVersion: 2026-11-07n** (**New W-60 — change a Bible note with the assistant.** The user, with a note row's menu open (Open, Edit Title, Export, Duplicate, Move To): _add `Open in Chatbot` for bible-note, to do what `Open in Chatbot` of appdocument … goal: chatbot can help modify and answer everything on bible-note_. A note row's menu carries **[en:tran:Open in Chatbot]** right under **[en:tran:Open]**, and the Bible Note window's footer a robot; both open the help window with that ONE note attached under a card of five buttons. The assistant changes the note part by part — the rest of it (headings, lists, verse mentions, pictures, drawings) kept exactly — writes Bible verses from the installed Bible, never its own words, and answers how to do anything in the note editor from the editor's own guide. Changes are unsaved, like a slide document's, and a note window that is open shows them at once. Seen live 2026-11-08 on a scratch development profile (the user allowed the caution's **Open** to be pressed there), Auto answering on the shared gemma4:cloud: the row's menu read Open · **Open in Chatbot** · Edit Title · Export · Duplicate · Move To · Delete; the card showed the five buttons with the note attached; **[en:tran:Check the spelling]** fixed _recieve_ in one paragraph, every other part of the note byte for byte as it was, and **[en:tran:Undo this change]** put it back; with the note open in its window, _Fix the spelling, and put John 3:16 in as a passage right under the heading_ added the KJV passage block and the fix, and the open window showed both without being reopened; _How do I add a sticky note to this note?_ was answered from the editor's guide (**Insert** › **Sticky Note**); the window's robot opened a chat on the note it shows. **[en:tran:Summarize this note]** summed it up in the chat and changed nothing; **[en:tran:Tidy it into headings and lists]** first turned a paragraph into a heading of other words, the paragraph lost (Undo put it back) -- such a change is refused now -- and asked again it added a heading and made the paragraph a bullet, every word kept. A reopened help window had kept only three of a card's five buttons; the saved conversation keeps five now. Then, with the freshly packed Khmer 0.0.38 installed and the app switched to Khmer, the card read in Khmer with its five buttons, the translate pair offering Khmer. PL-110, CB-169.)
 
@@ -3161,15 +3171,35 @@ _Verify: PL-109, CB-168._
 
 **Goal:** have the help window change one of your Bible notes for you — put its words into
 another language or add a language under them, check the spelling, tidy it into headings and
-lists, add Bible verses — sum it up, or explain how to do something in the note editor.
+lists, add Bible verses — sum it up, or explain how to do something in the note editor; or
+have it make a new note for you, about what you are reading or from what it just taught you.
+
+**A new note:** in any chat — a Bible Reader conversation, the chat of a passage, a person or
+a place (a Bible view's or a lookup panel's robot), a Resources file's chat, or a note's own —
+ask _make a bible note for me_, or, under something the assistant has just taught you, _put
+this lesson in a new note_. The assistant writes the note itself — headings, lists, bold, and
+the verses it names with their words read from the Bible on this computer — into your
+**Default** notes file, even while one of its notes is open in a window. 📸 The note opens in
+its own **Bible Note** window and is attached to the chat under the card of step 2, so
+everything from step 2 on works on it. **[en:tran:Undo this change]** under the answer takes
+the new note away again. The assistant never deletes a note or a notes file: that stays the
+row's own **[en:tran:Delete]**.
 
 1. In **[en:tran:Bible Notes]** (W-14), open a notes file, then right-click a note's row, or
    click the faint **⋮** at its right-hand end, and choose **[en:tran:Open in Chatbot]**, right
-   under **[en:tran:Open]**. 📸 In the **Bible Note** window, the robot button among the buttons
+   under **[en:tran:Open]**. 📸 The note opens in its own **Bible Note** window first, when it
+   is not open already. In the **Bible Note** window, the robot button among the buttons
    at the bottom (beside **[en:tran:Save]**) does the same for the note it shows, after
    keeping what was just typed.
 2. The help window opens a chat of its own with that one note attached under the box, and a
-   card that says what it can do, with five buttons. 📸
+   card that says what it can do, with five buttons. 📸 The chat works in the note's own
+   window: at the top it is asking about **Bible Note**, and **Working in** above the box
+   names that note's window, so a walkthrough points at the note editor and every change
+   shows there as it is made. While the chat works in it, the note's window stays above the
+   app's main window, so pressing in the main window or the help window does not hide it;
+   the help window and any AI Chat window stay above the note's window. It goes back to
+   normal when the chat works in another window or the help window is closed. Other
+   programs can still cover it; for that, use its own **[en:tran:Toggle Always On Top]**.
 3. Press a button under the card, or type what you want:
    - **Replace the words with …** puts the note's words into that language in place of
      theirs; **Add … under each line** keeps the words and writes the translation under them.
@@ -3185,9 +3215,32 @@ lists, add Bible verses — sum it up, or explain how to do something in the not
      keeping its size against the others (a heading stays larger than its lines). The
      help window does these by itself, so they work with no AI key and no internet.
      _Make only the heading bigger_ and other sizes for one part, the assistant does.
+   - Anything the note editor's toolbar does, asked in words: _make the word grace red
+     and bold_, _use Georgia for the whole note_, _highlight the verse references_,
+     _put the second point in capitals_, _clear the formatting of the first line_,
+     _centre the title_, _indent the second bullet under the first_. Name some words
+     and only those words change, as a selection in the editor would. The **+** Insert
+     menu too: _add a table of the readings with book and chapter_, _add a pink sticky
+     note saying call Tom_, _put today's date at the top_, _add a poll_, an equation,
+     two columns, a collapsible part, a page break, a YouTube video or a website by
+     its link, a picture or a file by its link or its place on this computer, and a
+     person or place from the names lookup (_mention Moses in the first line_). _Undo
+     that_ and _redo it_ step back and forward through what the note has kept. A
+     drawing is described in words, a box a line and an arrow as _A -> B_ (_add a drawing:
+     God -> Man, Man -> Sin_); _link the heading to the prayer_ joins the words of two
+     parts as the editor's Link block text does; _show the invisible characters_ turns
+     on the **¶**; _put the editor's example in_ adds its sample study note; a code block
+     takes a language (_make it Python_) and a colour theme. A style for the whole note
+     in a short English line -- _make all the text bold_, _centre everything_, _use
+     Georgia for the whole note_, _clear the formatting_ -- the help window does by
+     itself, with no AI key and no internet, as it does the size.
    - Bible verses: _Put John 3:16 in as a passage under the heading_ adds the passage, its
      words read from the Bible installed on this computer — the assistant never types a
      verse itself. A verse can also go in the middle of a line as a verse mention.
+   - Put an answer into the note: right after the assistant has answered or taught you
+     something in this chat, _add it_, _put it in_ or _new section_ adds that answer at the
+     end of the note — its headings, points and verses as the editor's own — and _new page_
+     puts a page break before it.
    - Questions about the note itself (_what verses does it use?_) or about the note editor
      (_How do I add a sticky note?_, _How do I print this note?_) are answered from the note
      and from the editor's own guide.

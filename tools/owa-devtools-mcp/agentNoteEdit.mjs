@@ -16,6 +16,16 @@
 // the note window's Save keeps it -- and an open note window shows it at
 // once.
 //
+// Everything the note editor's TOOLBAR does is a field of a change (2026-11-08,
+// the user, with a picture of the toolbar: _make chatbot able to use all
+// toolbar operations_): font, size, colours, the styles of its ••• menu,
+// Clear Formatting, alignment and indent -- for a block, or with `words` for
+// those words in it -- every object of its Insert menu as a kind to add, and
+// its Undo / Redo as `undo` / `redo` over the note's kept history, a
+// drawing from words and the editor's Default Example as kinds, a code
+// block's language and theme, Link block text (`linkTo`) and the ¶ view
+// (`view`) -- the last two the editor's own keys, not the note's.
+//
 // Offered to the chatbot's model only in a conversation about an attached
 // note (`MODEL_ON_ASK_TOOL_MAP`, kind `note`), where the WINDOW turns the
 // note's name into its file and id (`src/chatbot/noteChatHelpers.ts`): a
@@ -29,7 +39,7 @@ import { genAgentDataExpression } from './agentData.mjs';
 
 export const NOTE_EDIT_TOOL_NAME = 'owa_note_edit';
 
-export const NOTE_EDIT_ACTIONS = ['read', 'edit'];
+export const NOTE_EDIT_ACTIONS = ['read', 'edit', 'undo', 'redo', 'view'];
 
 // What a change may make a block or add (`NOTE_ADD_KIND_LIST` in
 // `agentNoteBlockHelpers.ts`; a test holds the two together).
@@ -48,6 +58,20 @@ export const NOTE_EDIT_KINDS = [
     'check',
     'passage',
     'rule',
+    'section',
+    'table',
+    'columns',
+    'collapsible',
+    'page-break',
+    'equation',
+    'sticky',
+    'date',
+    'poll',
+    'video',
+    'website',
+    'media',
+    'drawing',
+    'example',
 ];
 
 // A whole path: a drive (`C:\` / `C:/`), a share (`\\server`) or a root.
@@ -108,19 +132,36 @@ function toErrorResult(error) {
 
 export const NOTE_EDIT_DESCRIPTION =
     "Change the user's Bible note attached here. `note`: its name as " +
-    'attached. `read` gives its numbered blocks (n, kind, text) and `hash`; ' +
-    '`from` reads on. `edit` makes every change in ONE call (give `hash`): ' +
-    '`changes` [{block, text?, kind?, checked?, size?}] changes block n ' +
-    '(`size`: "larger", "smaller" or px 8-72, its text size); {block, ' +
-    'remove: true} removes it; {block, after} moves it after block `after` ' +
-    '(0 = top); {after, kind?, text} adds a block (`passage` takes `ref`, a ' +
-    'Bible reference). `title` renames the note. Words: **bold**, *italic*, ' +
-    '__underline__, ~~strike~~, `code`, [words](url), a line break as a real ' +
-    'one; keep [^…] [@…] [#…] tokens as they are; a new [^John 3:16] is a ' +
-    "verse the app looks up (in `bible`, else the lookup's) -- never write " +
-    'verse words yourself. A fixed block (table, picture, drawing, sticky, ' +
-    'passage, rule) can only move or go. Changes stay UNSAVED for the user ' +
-    'to Save in the note window; owa_undo puts each back.';
+    'attached. `read` gives its numbered blocks (n, kind, text), `hash` and ' +
+    "`fonts` (the font box's); `from` reads on. `edit` makes every change " +
+    'in ONE call (give `hash`), `changes`: {block, text?, kind?, checked?} ' +
+    'changes block n; {block, remove: true} removes it; {block, after} moves ' +
+    'it (0 = top); {after, kind, text} adds one; kind section adds many, ' +
+    'a block a line of mark-up (# heading, - item, 1. item, > quote, ' +
+    '---). Added kinds include the ' +
+    "editor's Insert menu: table (a line a row, cells between |, first row " +
+    'the headings), columns (between |), collapsible (a title line, then its ' +
+    'lines), page-break, equation (KaTeX), sticky (`color` yellow, pink, ' +
+    'blue, mint, lavender, peach or sage), date (today or YYYY-MM-DD), poll ' +
+    '(the question, then a line a choice), video (YouTube link), website, ' +
+    'media (a link or a path), drawing (a line a box, "A -> B" an arrow), ' +
+    "example (the editor's sample note), passage (`ref`). The toolbar, on a " +
+    'block or, with `words`, only those words in it: size ("larger", ' +
+    '"smaller", px 8-72), font, color and background (a colour, or "none"), ' +
+    'styles / stylesOff (bold, italic, underline, strikethrough, code, ' +
+    'subscript, superscript, highlight, lowercase, uppercase, capitalize), ' +
+    'clear: true (Clear Formatting), align (left, center, right, justify, ' +
+    'start, end, none), indent ("more", "less" or 0-10; a list item nests), ' +
+    "a code block's language and theme, linkTo: n (Link block text, to " +
+    'block n or its `linkToWords`; `linkKind` direction-to …). `undo` / ' +
+    "`redo` step the note's kept history; `view` with invisibleCharacters " +
+    'true/false is the ¶. `title` renames. Words: **bold**, *italic*, ' +
+    '__underline__, ~~strike~~, `code`, [words](url); keep [^…] [@…] [#…] ' +
+    'tokens; a new [^John 3:16] is a verse the app reads (in `bible`), a new ' +
+    '[@Name] / [#Place] a mention from the names lookup -- never write verse ' +
+    'words yourself. A fixed block (table, picture, passage, sticky …) is ' +
+    'never given words. Changes stay UNSAVED for Save in the note window; ' +
+    'owa_undo puts each back.';
 
 /**
  * One call: the app reads, changes and writes. Exported for the tests, which
@@ -142,7 +183,14 @@ export async function runNoteEdit(args, runWorker = runNoteWorker) {
         filePath: target.filePath,
         noteId: target.noteId,
     };
-    for (const key of ['from', 'hash', 'title', 'bible', 'changes']) {
+    for (const key of [
+        'from',
+        'hash',
+        'title',
+        'bible',
+        'changes',
+        'invisibleCharacters',
+    ]) {
         if (args?.[key] !== undefined) {
             request[key] = args[key];
         }
@@ -169,6 +217,24 @@ const NOTE_CHANGE_SCHEMA = z.object({
     size: z
         .union([z.number().min(8).max(72), z.enum(['larger', 'smaller'])])
         .optional(),
+    // The toolbar: names and colours are checked by the app, which says
+    // what it takes -- a schema enum would be paid for on every round.
+    words: z.string().max(500).optional(),
+    font: z.string().max(80).optional(),
+    color: z.string().max(40).optional(),
+    background: z.string().max(40).optional(),
+    styles: z.array(z.string().max(20)).max(11).optional(),
+    stylesOff: z.array(z.string().max(20)).max(11).optional(),
+    clear: z.boolean().optional(),
+    align: z.string().max(10).optional(),
+    indent: z
+        .union([z.number().int().min(0).max(10), z.enum(['more', 'less'])])
+        .optional(),
+    language: z.string().max(20).optional(),
+    theme: z.string().max(30).optional(),
+    linkTo: z.number().int().min(1).optional(),
+    linkToWords: z.string().max(500).optional(),
+    linkKind: z.string().max(30).optional(),
 });
 
 export function registerNoteEditTool(server) {
@@ -186,6 +252,7 @@ export function registerNoteEditTool(server) {
                 title: z.string().max(200).optional(),
                 bible: z.string().max(40).optional(),
                 changes: z.array(NOTE_CHANGE_SCHEMA).max(200).optional(),
+                invisibleCharacters: z.boolean().optional(),
                 page: z.string().optional(),
             },
         },

@@ -27,6 +27,54 @@
  * note window) -- so every rule is tested against a real note's nodes.
  */
 
+import {
+    NOTE_ALIGN_LIST,
+    NOTE_STANDARD_FONT_LIST,
+    NOTE_STYLE_NAME_LIST,
+    NOTE_TEXT_SIZE_MAX,
+    NOTE_TEXT_SIZE_MIN,
+    applyBlockAlign,
+    applyBlockTypingStyle,
+    applyRunStyle,
+    checkCanAlign,
+    checkCanIndent,
+    checkIsNoteTextSize,
+    checkIsStyleRemoval,
+    collectBlockRuns,
+    findNoteFont,
+    nestListItem,
+    readTextSize,
+    readWordsMarkup,
+    splitRunsForWords,
+    toCssColor,
+    toNewIndent,
+    toNewTextSize,
+    unnestListItem,
+    withTextSize,
+    type NoteRunStyleType,
+    type NoteStyleNameType,
+} from './agentNoteStyleHelpers';
+import { normalizeNoteNode } from './agentNoteNormalizeHelpers';
+import { expandSectionAdds } from './agentNoteMarkupHelpers';
+import {
+    genNoteBlockLink,
+    type NoteBlockLinkType,
+} from './agentNoteBlockLinkHelpers';
+import {
+    NOTE_INSERT_KIND_LIST,
+    genNoteInsertNode,
+    toNoteInsertText,
+    type NoteInsertKindType,
+} from './agentNoteInsertHelpers';
+
+export {
+    NOTE_TEXT_SIZE_LARGER,
+    NOTE_TEXT_SIZE_MAX,
+    NOTE_TEXT_SIZE_MIN,
+    NOTE_TEXT_SIZE_SMALLER,
+    checkIsNoteTextSize,
+} from './agentNoteStyleHelpers';
+
 type NodeType = Record<string, any>;
 
 export const NOTE_TEXT_KIND_LIST = [
@@ -41,12 +89,19 @@ export const NOTE_TEXT_KIND_LIST = [
     'code',
 ] as const;
 export const NOTE_LIST_KIND_LIST = ['bullet', 'number', 'check'] as const;
-/** What a change may make a block, or add: the words kinds, a passage, a rule. */
+/**
+ * What a change may make a block, or add: the words kinds, a passage, a
+ * rule, and every object of the editor's Insert menu.
+ */
 export const NOTE_ADD_KIND_LIST = [
     ...NOTE_TEXT_KIND_LIST,
     ...NOTE_LIST_KIND_LIST,
     'passage',
     'rule',
+    // Many blocks from mark-up lines at once (`expandSectionAdds`): an add
+    // only, expanded before any rule reads it.
+    'section',
+    ...NOTE_INSERT_KIND_LIST,
 ] as const;
 
 type NoteTextKindType = (typeof NOTE_TEXT_KIND_LIST)[number];
@@ -93,6 +148,76 @@ export type NoteEditChangeType = {
     // The block's text size: px, or "larger" / "smaller" -- each run of
     // words scaled from its own size, so a heading stays above its lines.
     size?: number | string;
+    // The toolbar on a block (`agentNoteStyleHelpers.ts`), for the whole
+    // block or, with `words`, those words in it -- the selection.
+    words?: string;
+    font?: string;
+    color?: string;
+    background?: string;
+    styles?: string[];
+    stylesOff?: string[];
+    clear?: boolean;
+    align?: string;
+    indent?: number | string;
+    // A code block's language and colour theme, its own pickers.
+    language?: string;
+    theme?: string;
+    // Link block text: from this block (its `words`, or all of it) to
+    // block `linkTo` (its `linkToWords`, or all of it), the arrow
+    // running `linkKind`.
+    linkTo?: number;
+    linkToWords?: string;
+    linkKind?: string;
+};
+
+/**
+ * A code block's languages -- what its picker lists, the Prism list and the
+ * shiki one together -- and shiki's colour themes.
+ */
+export const NOTE_CODE_LANGUAGE_LIST = [
+    'c',
+    'clike',
+    'cpp',
+    'css',
+    'html',
+    'java',
+    'js',
+    'javascript',
+    'markdown',
+    'objc',
+    'objective-c',
+    'plain',
+    'powershell',
+    'py',
+    'python',
+    'rust',
+    'sql',
+    'swift',
+    'typescript',
+    'xml',
+];
+export const NOTE_CODE_THEME_LIST = [
+    'catppuccin-latte',
+    'everforest-light',
+    'github-light',
+    'gruvbox-light-medium',
+    'kanagawa-lotus',
+    'dark-plus',
+    'light-plus',
+    'material-theme-lighter',
+    'min-light',
+    'one-light',
+    'rose-pine-dawn',
+    'slack-ochin',
+    'snazzy-light',
+    'solarized-light',
+    'vitesse-light',
+];
+
+/** A new person or place mention, as the app found it in its names lookup. */
+export type NoteNameType = {
+    mentionId: string;
+    mentionName: string;
 };
 
 export const NOTE_EDIT_MAX_CHANGES = 200;
@@ -105,57 +230,6 @@ export const NOTE_EDIT_MAX_CHANGES = 200;
 // toolbar's steps: _check why chatbot can't help increase text size_). A run
 // with no size of its own is the size its block is drawn at: the editor's
 // stylesheet gives a body 15px, a h1 24px, a h3 12px and code 13px.
-
-export const NOTE_TEXT_SIZE_MIN = 8;
-export const NOTE_TEXT_SIZE_MAX = 72;
-export const NOTE_TEXT_SIZE_LARGER = 1.25;
-export const NOTE_TEXT_SIZE_SMALLER = 0.8;
-const NOTE_DEFAULT_TEXT_SIZE = 15;
-const KIND_TEXT_SIZE_MAP: Record<string, number> = {
-    h1: 24,
-    h3: 12,
-    code: 13,
-};
-const FONT_SIZE_STYLE_PATTERN = /font-size:\s*([\d.]+)px;?\s*/;
-
-export function checkIsNoteTextSize(value: unknown) {
-    return (
-        value === 'larger' ||
-        value === 'smaller' ||
-        (typeof value === 'number' &&
-            Number.isFinite(value) &&
-            value >= NOTE_TEXT_SIZE_MIN &&
-            value <= NOTE_TEXT_SIZE_MAX)
-    );
-}
-
-function toNewTextSize(current: number, size: number | string) {
-    const wanted =
-        size === 'larger'
-            ? current * NOTE_TEXT_SIZE_LARGER
-            : size === 'smaller'
-              ? current * NOTE_TEXT_SIZE_SMALLER
-              : Number(size);
-    return Math.min(
-        NOTE_TEXT_SIZE_MAX,
-        Math.max(NOTE_TEXT_SIZE_MIN, Math.round(wanted)),
-    );
-}
-
-function readTextSize(style: unknown, kind: string) {
-    const match =
-        typeof style === 'string' ? FONT_SIZE_STYLE_PATTERN.exec(style) : null;
-    return match !== null
-        ? Number(match[1])
-        : (KIND_TEXT_SIZE_MAP[kind] ?? NOTE_DEFAULT_TEXT_SIZE);
-}
-
-function withTextSize(style: unknown, px: number) {
-    const rest = (typeof style === 'string' ? style : '')
-        .replace(FONT_SIZE_STYLE_PATTERN, '')
-        .trim();
-    return `${rest}${rest === '' || rest.endsWith(';') ? '' : ';'}font-size: ${px}px;`;
-}
 
 /**
  * Every run of words in a block at its new size, and the size the block
@@ -211,13 +285,29 @@ const FIXED_KIND_MAP: Record<string, string> = {
     youtube: 'video',
     website: 'website',
     equation: 'equation',
+    datetime: 'date',
+    poll: 'poll',
     sticky: 'sticky',
     table: 'table',
     horizontalrule: 'rule',
     'page-break': 'page-break',
-    'layout-container': 'layout',
+    'layout-container': 'columns',
     'collapsible-container': 'passage',
 };
+// A collapsible block whose title is not a verse reference "(KJV) John 3:16".
+const PASSAGE_TITLE_PATTERN = /^\([^)]+\)\s+\S/;
+
+/** The kind an object of the editor reads as. */
+function toFixedKind(node: NodeType) {
+    if (node.type === 'collapsible-container') {
+        const title = toPlainWords(childrenOf(node)[0] ?? {}).trim();
+        return PASSAGE_TITLE_PATTERN.test(title) ? 'passage' : 'collapsible';
+    }
+    if (node.type === 'image' && node.mediaType && node.mediaType !== 'image') {
+        return 'media';
+    }
+    return FIXED_KIND_MAP[node.type] ?? 'other';
+}
 
 // Lexical's text format bits.
 const FORMAT_BOLD = 1;
@@ -307,7 +397,7 @@ function blockKindOf(node: NodeType): { kind: string; isFixed: boolean } {
         const fixedChild = findFixedInline(node);
         if (fixedChild !== null) {
             return {
-                kind: FIXED_KIND_MAP[fixedChild.type] ?? 'other',
+                kind: toFixedKind(fixedChild),
                 isFixed: true,
             };
         }
@@ -316,7 +406,7 @@ function blockKindOf(node: NodeType): { kind: string; isFixed: boolean } {
     if (node.type === 'code') {
         return { kind: 'code', isFixed: false };
     }
-    return { kind: FIXED_KIND_MAP[node.type] ?? 'other', isFixed: true };
+    return { kind: toFixedKind(node), isFixed: true };
 }
 
 /** A picture, drawing or other object sitting among a block's words. */
@@ -361,7 +451,7 @@ function collectBlockRefs(root: NodeType): BlockRefType[] {
                 kind:
                     fixedChild === null
                         ? listKindOf(list)
-                        : (FIXED_KIND_MAP[fixedChild.type] ?? 'other'),
+                        : toFixedKind(fixedChild),
                 node: item,
                 level,
                 isFixed: fixedChild !== null,
@@ -529,12 +619,21 @@ function toFixedText(ref: BlockRefType): string {
             .join(' / ');
         return `${rows.length} rows x ${columnCount} columns: ${firstRows}`;
     }
-    if (kind === 'passage') {
+    if (kind === 'passage' || kind === 'collapsible') {
         const [title, content] = childrenOf(node);
         return (
             `${toPlainWords(title ?? {}).trim()} — ` +
             toPlainWords(content ?? {}).trim()
         );
+    }
+    if (kind === 'sticky') {
+        return `(${String(node.color ?? 'yellow')}) ${toPlainWords(node).trim()}`;
+    }
+    const object =
+        toNoteInsertText(node) === null ? findFixedInline(node) : node;
+    const objectText = object === null ? null : toNoteInsertText(object);
+    if (objectText !== null) {
+        return objectText;
     }
     return toPlainWords(node).trim();
 }
@@ -750,10 +849,18 @@ type BuildContextType = {
     // that verse, words and all.
     noteMentions: NodeType[];
     verseMap: Map<string, NoteVerseType>;
+    // New people and places the app found in its names lookup, by
+    // `toNameKey`.
+    nameMap: Map<string, NoteNameType>;
     defaultStyle: string;
     // New verses the app could not resolve.
     missingVerses: string[];
 };
+
+/** "mention:Moses" / "location:Jerusalem": a new name's key. */
+export function toNameKey(mentionKind: string, text: string) {
+    return `${mentionKind}:${text.trim()}`;
+}
 
 function takeFrom<T>(pool: T[], test: (one: T) => boolean): T | null {
     const index = pool.findIndex(test);
@@ -973,8 +1080,26 @@ function buildInlineNodes(runs: RunType[], context: BuildContextType) {
             nodes.push(genVerseMentionNode(verse));
             continue;
         }
-        // A NEW person or place is written as the words: the names dataset
-        // (~34MB) is never loaded to make one.
+        // A NEW person or place, as the app found it in its names lookup
+        // -- looked up only for a name a change adds; one it does not know
+        // is written as the words.
+        const name = context.nameMap.get(toNameKey(mentionKind, run.text));
+        if (name !== undefined) {
+            nodes.push({
+                detail: 1,
+                format: 0,
+                mode: 'segmented',
+                style: context.defaultStyle,
+                text: run.text,
+                type: 'mention',
+                version: 1,
+                mentionData: null,
+                mentionId: name.mentionId,
+                mentionKind,
+                mentionName: name.mentionName,
+            });
+            continue;
+        }
         nodes.push(genTextNode(run.text, 0, context.defaultStyle));
     }
     return nodes;
@@ -1012,6 +1137,7 @@ function genBuildContext(
     root: NodeType,
     verseMap: Map<string, NoteVerseType>,
     defaultStyle: string,
+    nameMap: Map<string, NoteNameType> = new Map(),
 ): BuildContextType {
     const pool = node === null ? [] : collectNodes(node, () => true);
     return {
@@ -1028,6 +1154,7 @@ function genBuildContext(
             return one.type === 'mention';
         }),
         verseMap,
+        nameMap,
         defaultStyle,
         missingVerses: [],
     };
@@ -1374,6 +1501,9 @@ export type NoteEditResultType =
           title: string | null;
           isChanged: boolean;
           summary: string;
+          // Link block text entries, for the app to add to the editor's own
+          // storage (they are no part of the note's content).
+          blockLinks?: NoteBlockLinkType[];
       }
     | { reason: string };
 
@@ -1416,6 +1546,48 @@ export function collectNewNoteVerseRefs(
     }
     refs.delete('');
     return [...refs];
+}
+
+/**
+ * Every person (`[@…]`) and place (`[#…]`) a change would add that the
+ * note does not mention already -- what the app looks up in its names
+ * lookup, and only then.
+ */
+export function collectNewNoteNameRefs(
+    content: string,
+    changes: readonly NoteEditChangeType[],
+) {
+    const state = readState(content);
+    const known = new Set(
+        state === null
+            ? []
+            : collectNodes(state.root, (one) => {
+                  return one.type === 'mention';
+              }).map((one) => {
+                  return toNameKey(
+                      String(one.mentionKind ?? 'mention'),
+                      String(one.text ?? ''),
+                  );
+              }),
+    );
+    const refMap = new Map<
+        string,
+        { mentionKind: 'mention' | 'location'; text: string }
+    >();
+    for (const change of changes) {
+        if (typeof change.text !== 'string') {
+            continue;
+        }
+        for (const match of change.text.matchAll(/\[([@#])([^\]\n]+)\]/g)) {
+            const mentionKind = match[1] === '#' ? 'location' : 'mention';
+            const text = match[2].trim();
+            const key = toNameKey(mentionKind, text);
+            if (text !== '' && !known.has(key)) {
+                refMap.set(key, { mentionKind, text });
+            }
+        }
+    }
+    return [...refMap.values()];
 }
 
 function checkIsBlockNumber(value: unknown, count: number) {
@@ -1464,6 +1636,399 @@ function toComparableWords(text: string) {
         .trim();
 }
 
+type ChangeStyleType = {
+    run: NoteRunStyleType;
+    hasRunStyle: boolean;
+    align: string | null;
+    indent: number | string | null;
+};
+
+const STYLE_FIELD_LIST = [
+    'words',
+    'font',
+    'color',
+    'background',
+    'styles',
+    'stylesOff',
+    'clear',
+    'align',
+    'indent',
+] as const;
+
+function checkHasToolbarField(change: NoteEditChangeType) {
+    return STYLE_FIELD_LIST.some((field) => {
+        return change[field] !== undefined;
+    });
+}
+
+function readStyleNames(
+    value: unknown,
+    field: string,
+): { names: NoteStyleNameType[] } | { reason: string } {
+    if (!Array.isArray(value)) {
+        return { reason: `\`${field}\` is a list of style names.` };
+    }
+    const names: NoteStyleNameType[] = [];
+    for (const one of value) {
+        const name = String(one).trim().toLowerCase();
+        const found = NOTE_STYLE_NAME_LIST.find((style) => {
+            return (
+                style === name ||
+                (name === 'strike' && style === 'strikethrough')
+            );
+        });
+        if (found === undefined) {
+            return {
+                reason:
+                    `\`${field}\` names styles of ` +
+                    `${NOTE_STYLE_NAME_LIST.join(', ')}.`,
+            };
+        }
+        names.push(found);
+    }
+    return { names };
+}
+
+/**
+ * The toolbar fields of a change, checked: what its runs of words get, its
+ * alignment and its indent. A sticky note's `color` is its own colour, not
+ * the words'.
+ */
+function readChangeStyle(
+    change: NoteEditChangeType,
+    fontList: readonly string[],
+    isStickyColor: boolean,
+): ChangeStyleType | { reason: string } {
+    const run: NoteRunStyleType = {};
+    if (change.font !== undefined) {
+        if (checkIsStyleRemoval(change.font)) {
+            run.font = null;
+        } else {
+            const font = findNoteFont(change.font, fontList);
+            if (font === null) {
+                return {
+                    reason:
+                        `\`font\` is one the font box lists: ` +
+                        `${fontList.join(', ')} -- or "default" to take a ` +
+                        'font off.',
+                };
+            }
+            run.font = font;
+        }
+    }
+    const colorFields: ('color' | 'background')[] = isStickyColor
+        ? ['background']
+        : ['color', 'background'];
+    for (const field of colorFields) {
+        const value = change[field];
+        if (value === undefined) {
+            continue;
+        }
+        if (checkIsStyleRemoval(value)) {
+            run[field] = null;
+            continue;
+        }
+        const color = toCssColor(value);
+        if (color === null) {
+            return {
+                reason:
+                    `\`${field}\` is a colour ("red", "dark blue", ` +
+                    '"#1e88e5") or "none" to take it off.',
+            };
+        }
+        run[field] = color;
+    }
+    for (const field of ['styles', 'stylesOff'] as const) {
+        if (change[field] === undefined) {
+            continue;
+        }
+        const read = readStyleNames(change[field], field);
+        if ('reason' in read) {
+            return read;
+        }
+        if (field === 'styles') {
+            run.on = read.names;
+        } else {
+            run.off = read.names;
+        }
+    }
+    if (
+        (run.on ?? []).some((name) => {
+            return (run.off ?? []).includes(name);
+        })
+    ) {
+        return {
+            reason: 'A style cannot be both in `styles` and `stylesOff`.',
+        };
+    }
+    if (change.clear !== undefined) {
+        if (change.clear !== true) {
+            return { reason: '`clear` is true: Clear Formatting.' };
+        }
+        run.clear = true;
+    }
+    let align: string | null = null;
+    if (change.align !== undefined) {
+        const wanted = String(change.align).trim().toLowerCase();
+        align = wanted === 'centre' || wanted === 'middle' ? 'center' : wanted;
+        if (!(NOTE_ALIGN_LIST as readonly string[]).includes(align)) {
+            return {
+                reason: `\`align\` is one of ${NOTE_ALIGN_LIST.join(', ')}.`,
+            };
+        }
+    }
+    let indent: number | string | null = null;
+    if (change.indent !== undefined) {
+        indent = change.indent;
+        if (!(
+            indent === 'more' ||
+            indent === 'less' ||
+            (Number.isInteger(indent) &&
+                (indent as number) >= 0 &&
+                (indent as number) <= 10)
+        )) {
+            return {
+                reason:
+                    '`indent` is "more", "less" or a level from 0 to 10 (for ' +
+                    'a list item, how deep it is nested).',
+            };
+        }
+    }
+    const hasRunStyle = Object.keys(run).length > 0;
+    if (change.words !== undefined) {
+        if (typeof change.words !== 'string' || change.words.trim() === '') {
+            return { reason: '`words` are words of the block, as it reads.' };
+        }
+        if (
+            !hasRunStyle &&
+            change.size === undefined &&
+            change.linkTo === undefined
+        ) {
+            return {
+                reason:
+                    '`words` pick the words a font, colour, size or style is ' +
+                    'for: give one of those with them.',
+            };
+        }
+    }
+    return { run, hasRunStyle, align, indent };
+}
+
+/** Why a code block's language or theme cannot be what a change asks. */
+function readCodeReason(
+    change: NoteEditChangeType,
+    kind: string,
+    blockNumber: number | null,
+): string | null {
+    if (change.language === undefined && change.theme === undefined) {
+        return null;
+    }
+    if (kind !== 'code') {
+        return (
+            `${blockNumber === null ? 'A new block' : `Block ${blockNumber}`} ` +
+            'is not a code block: only a code block has a language and a theme.'
+        );
+    }
+    if (
+        change.language !== undefined &&
+        !NOTE_CODE_LANGUAGE_LIST.includes(String(change.language).toLowerCase())
+    ) {
+        return `\`language\` is one of ${NOTE_CODE_LANGUAGE_LIST.join(', ')}.`;
+    }
+    if (
+        change.theme !== undefined &&
+        !NOTE_CODE_THEME_LIST.includes(String(change.theme).toLowerCase())
+    ) {
+        return `\`theme\` is one of ${NOTE_CODE_THEME_LIST.join(', ')}.`;
+    }
+    return null;
+}
+
+function applyCodeFields(node: NodeType, change: NoteEditChangeType) {
+    if (node.type !== 'code') {
+        return;
+    }
+    if (change.language !== undefined) {
+        node.language = String(change.language).toLowerCase();
+    }
+    if (change.theme !== undefined) {
+        node.theme = String(change.theme).toLowerCase();
+    }
+}
+
+/**
+ * A change whose `words` came with HTML round them: the words alone, and
+ * what the HTML asked for in the fields (a field the change gives wins).
+ */
+function toPlainWordsChange(change: NoteEditChangeType): NoteEditChangeType {
+    if (typeof change.words !== 'string') {
+        return change;
+    }
+    const read = readWordsMarkup(change.words);
+    if (read === null) {
+        return change;
+    }
+    const styles = [...(change.styles ?? []), ...read.on];
+    return {
+        ...change,
+        words: read.words,
+        ...(change.color === undefined && read.color !== undefined
+            ? { color: read.color }
+            : {}),
+        ...(change.background === undefined && read.background !== undefined
+            ? { background: read.background }
+            : {}),
+        ...(change.font === undefined && read.font !== undefined
+            ? { font: read.font }
+            : {}),
+        ...(change.size === undefined && read.size !== undefined
+            ? { size: read.size }
+            : {}),
+        ...(styles.length > 0 ? { styles: [...new Set(styles)] } : {}),
+    };
+}
+
+const MAX_DONE_TEXT_CHARS = 600;
+
+/** One change's effect in a few words: "block 5 "fas": color red, bold on". */
+function describeDoneChange(
+    change: NoteEditChangeType,
+    style: ChangeStyleType,
+) {
+    const done: string[] = [];
+    if (change.block === undefined) {
+        done.push(`added ${change.kind ?? 'paragraph'}`);
+    } else {
+        if (change.text !== undefined) {
+            done.push('new words');
+        }
+        if (change.kind !== undefined) {
+            done.push(`made ${change.kind}`);
+        }
+        if (change.checked !== undefined) {
+            done.push(change.checked ? 'ticked' : 'unticked');
+        }
+    }
+    const { run } = style;
+    if (run.clear === true) {
+        done.push('formatting cleared');
+    }
+    if (change.size !== undefined) {
+        done.push(`size ${change.size}`);
+    }
+    if (run.font !== undefined) {
+        done.push(`font ${run.font ?? 'default'}`);
+    }
+    if (run.color !== undefined) {
+        done.push(`color ${run.color ?? 'none'}`);
+    }
+    if (run.background !== undefined) {
+        done.push(`background ${run.background ?? 'none'}`);
+    }
+    for (const name of run.on ?? []) {
+        done.push(`${name} on`);
+    }
+    for (const name of run.off ?? []) {
+        done.push(`${name} off`);
+    }
+    if (style.align !== null) {
+        done.push(`aligned ${style.align}`);
+    }
+    if (style.indent !== null) {
+        done.push(`indent ${style.indent}`);
+    }
+    if (change.language !== undefined) {
+        done.push(`language ${change.language}`);
+    }
+    if (change.theme !== undefined) {
+        done.push(`theme ${change.theme}`);
+    }
+    if (change.linkTo !== undefined) {
+        done.push(`linked to block ${change.linkTo}`);
+    }
+    const where =
+        change.block === undefined
+            ? `after block ${change.after}`
+            : `block ${change.block}`;
+    const words =
+        typeof change.words === 'string' ? ` "${change.words.trim()}"` : '';
+    return `${where}${words}: ${done.join(', ')}`;
+}
+
+/**
+ * The toolbar on one block, as the change left it: its runs of words (or
+ * only the `words` asked for), its alignment and its indent. A list item's
+ * indent is how deep it is nested. Null when done, else why not.
+ */
+function applyChangeStyle(
+    root: NodeType,
+    node: NodeType,
+    kind: string,
+    level: number,
+    change: NoteEditChangeType,
+    style: ChangeStyleType,
+    blockName: string,
+): string | null {
+    const isWordsSized =
+        change.words !== undefined && change.size !== undefined;
+    if (style.hasRunStyle || isWordsSized) {
+        const runStyle: NoteRunStyleType = {
+            ...style.run,
+            ...(isWordsSized ? { size: change.size } : {}),
+        };
+        let runs: NodeType[];
+        if (change.words !== undefined) {
+            const found = splitRunsForWords(node, change.words);
+            if (found === null) {
+                return (
+                    `${blockName} does not have the words "${change.words}". ` +
+                    'Give `words` exactly as the block reads, without its ' +
+                    'mark-up.'
+                );
+            }
+            runs = found;
+        } else {
+            runs = collectBlockRuns(node);
+            applyBlockTypingStyle(node, kind, runStyle);
+        }
+        for (const run of runs) {
+            applyRunStyle(run, kind, runStyle);
+        }
+    }
+    if (style.run.clear === true && change.words === undefined) {
+        if (typeof node.format === 'string') {
+            node.format = '';
+        }
+        if (typeof node.indent === 'number' && node.type !== 'listitem') {
+            node.indent = 0;
+        }
+    }
+    if (style.align !== null) {
+        if (!checkCanAlign(node)) {
+            return `${blockName} cannot be aligned.`;
+        }
+        applyBlockAlign(node, style.align);
+    }
+    if (style.indent !== null) {
+        if (node.type === 'listitem') {
+            let current = level;
+            const wanted = toNewIndent(current, style.indent);
+            while (current < wanted && nestListItem(root, node)) {
+                current++;
+            }
+            while (current > wanted && unnestListItem(root, node)) {
+                current--;
+            }
+            return null;
+        }
+        if (!checkCanIndent(node)) {
+            return `${blockName} cannot be indented.`;
+        }
+        node.indent = toNewIndent(node.indent, style.indent);
+    }
+    return null;
+}
+
 /**
  * Apply a batch of changes to a note's content, all or nothing. Block
  * numbers are the note's as READ, whatever the batch does to them on the way.
@@ -1479,11 +2044,24 @@ export function applyNoteEdit({
     changes,
     title = null,
     verseMap = new Map(),
+    nameMap = new Map(),
+    fontList = NOTE_STANDARD_FONT_LIST,
+    now,
+    genId,
+    exampleNodes,
 }: {
     content: string;
     changes: readonly NoteEditChangeType[];
     title?: string | null;
     verseMap?: Map<string, NoteVerseType>;
+    // New people and places the app found, by `toNameKey`.
+    nameMap?: Map<string, NoteNameType>;
+    // What the font box lists: its six and each installed language's face.
+    fontList?: readonly string[];
+    now?: Date;
+    genId?: () => string;
+    // The editor's Default Example, read by the app only when asked for.
+    exampleNodes?: NodeType[];
 }): NoteEditResultType {
     const state = readState(content);
     if (state === null) {
@@ -1493,6 +2071,8 @@ export function applyNoteEdit({
                 'brings it up to date.',
         );
     }
+    // A section is the blocks its lines spell (`expandSectionAdds`).
+    changes = expandSectionAdds(changes);
     if (changes.length > NOTE_EDIT_MAX_CHANGES) {
         return toReason(
             `At most ${NOTE_EDIT_MAX_CHANGES} changes in one call; send the ` +
@@ -1509,6 +2089,13 @@ export function applyNoteEdit({
         }
     }
     const root = state.root;
+    // The blocks as they came: one this change leaves as it was is never
+    // rewritten, byte for byte.
+    const originalBlockTextSet = new Set(
+        childrenOf(root).map((child) => {
+            return JSON.stringify(child);
+        }),
+    );
     const refs = collectBlockRefs(root);
     const count = refs.length;
     const touched = new Set<number>();
@@ -1516,10 +2103,36 @@ export function applyNoteEdit({
     const removes: number[] = [];
     const moves: NoteEditChangeType[] = [];
     const adds: NoteEditChangeType[] = [];
-    for (const change of changes) {
-        if (!checkIsNode(change)) {
+    const styleMap = new Map<NoteEditChangeType, ChangeStyleType>();
+    for (const askedChange of changes) {
+        if (!checkIsNode(askedChange)) {
             return toReason('Each change is an object.');
         }
+        let change = toPlainWordsChange(askedChange);
+        // A block this call adds, named by the number it would have: after
+        // that new block, in the order given. Seen live 2026-11-08: asked
+        // for a table and a sticky note at the end of an 8-block note,
+        // gemma4:cloud put the sticky "after: 9" twice running.
+        if (
+            change.block === undefined &&
+            Number.isInteger(change.after) &&
+            (change.after as number) > count &&
+            (change.after as number) <= count + adds.length
+        ) {
+            change = {
+                ...change,
+                after: adds[(change.after as number) - count - 1].after,
+            };
+        }
+        const style = readChangeStyle(
+            change,
+            fontList,
+            change.block === undefined && change.kind === 'sticky',
+        );
+        if ('reason' in style) {
+            return toReason(style.reason);
+        }
+        styleMap.set(change, style);
         if (change.size !== undefined && !checkIsNoteTextSize(change.size)) {
             return toReason(
                 `\`size\` is "larger", "smaller" or a size in px from ` +
@@ -1543,8 +2156,14 @@ export function applyNoteEdit({
             if (!(
                 change.after === 0 || checkIsBlockNumber(change.after, count)
             )) {
+                // Seen live 2026-11-08: gemma4:cloud put a sticky note
+                // "after: 7" -- the table it was adding in the same call --
+                // in a note of six blocks, twice.
                 return toReason(
-                    `\`after\` is 0 (the top) or a block number from 1 to ${count}.`,
+                    `\`after\` is 0 (the top) or a block number from 1 to ${count}, ` +
+                        'the note as read: a block this call adds has no ' +
+                        'number. Several new blocks after one block go in ' +
+                        'the order given -- give them all that same `after`.',
                 );
             }
             const kind = change.kind ?? 'paragraph';
@@ -1566,11 +2185,24 @@ export function applyNoteEdit({
                 }
             } else if (
                 kind !== 'rule' &&
+                kind !== 'page-break' &&
+                kind !== 'date' &&
+                kind !== 'example' &&
                 toComparableWords(change.text ?? '') === ''
             ) {
                 return toReason(
                     'A new block needs its words in `text` -- never an empty ' +
                         'block.',
+                );
+            }
+            const addCodeReason = readCodeReason(change, kind, null);
+            if (addCodeReason !== null) {
+                return toReason(addCodeReason);
+            }
+            if (change.linkTo !== undefined) {
+                return toReason(
+                    'A link starts at a block that is there: link from it ' +
+                        'in a second call, once the new block is read.',
                 );
             }
             adds.push(change);
@@ -1611,10 +2243,16 @@ export function applyNoteEdit({
             moves.push(change);
             continue;
         }
-        if (ref.isFixed) {
+        if (
+            ref.isFixed &&
+            (change.text !== undefined ||
+                change.kind !== undefined ||
+                change.checked !== undefined)
+        ) {
             return toReason(
-                `Block ${blockNumber} is a ${ref.kind}: it can be moved or ` +
-                    'removed, never given words, a size or another kind.',
+                `Block ${blockNumber} is a ${ref.kind}: it can be moved, ` +
+                    'removed, styled, sized or aligned, never given words or ' +
+                    'another kind.',
             );
         }
         if (
@@ -1664,15 +2302,36 @@ export function applyNoteEdit({
                     `(give \`kind\` alone to change only its kind).`,
             );
         }
+        const codeReason = readCodeReason(
+            change,
+            change.kind ?? ref.kind,
+            blockNumber,
+        );
+        if (codeReason !== null) {
+            return toReason(codeReason);
+        }
+        if (
+            change.linkTo !== undefined &&
+            (!checkIsBlockNumber(change.linkTo, count) ||
+                change.linkTo === blockNumber)
+        ) {
+            return toReason(
+                `\`linkTo\` is another block's number, 1 to ${count}.`,
+            );
+        }
         if (
             change.text === undefined &&
             change.kind === undefined &&
             change.checked === undefined &&
-            change.size === undefined
+            change.size === undefined &&
+            change.language === undefined &&
+            change.theme === undefined &&
+            change.linkTo === undefined &&
+            !checkHasToolbarField(change)
         ) {
             return toReason(
                 `The change to block ${blockNumber} says nothing to change: ` +
-                    'give `text`, `kind`, `size` or `checked` (or ' +
+                    'give `text`, `kind`, `size`, `checked` or a style (or ' +
                     '`remove: true`).',
             );
         }
@@ -1682,7 +2341,13 @@ export function applyNoteEdit({
     // A model "adding" a block that is already there, untouched by this
     // change: the words were meant as a change to that block.
     for (const change of adds) {
-        if (change.kind === 'passage' || change.kind === 'rule') {
+        if (
+            change.kind === 'passage' ||
+            change.kind === 'rule' ||
+            (NOTE_INSERT_KIND_LIST as readonly string[]).includes(
+                change.kind ?? '',
+            )
+        ) {
             continue;
         }
         const words = toComparableWords(change.text ?? '');
@@ -1717,11 +2382,30 @@ export function applyNoteEdit({
         nodeOf.set(index + 1, ref.node);
     });
 
+    // The kind each change leaves its block: Clear Formatting makes a
+    // heading or a quote a paragraph, as the editor's own does.
+    const kindOfChange = (change: NoteEditChangeType) => {
+        const ref = refs[(change.block as number) - 1];
+        if (change.kind !== undefined) {
+            return change.kind;
+        }
+        const isCleared =
+            styleMap.get(change)?.run.clear === true &&
+            change.words === undefined &&
+            !ref.isFixed;
+        return isCleared && (/^h[1-6]$/.test(ref.kind) || ref.kind === 'quote')
+            ? 'paragraph'
+            : ref.kind;
+    };
     for (const change of updates) {
         const blockNumber = change.block as number;
         const ref = refs[blockNumber - 1];
+        if (ref.isFixed) {
+            // Styled, sized or aligned below; never given words.
+            continue;
+        }
         const node = nodeOf.get(blockNumber)!;
-        const kind = (change.kind ?? ref.kind) as NoteEditableKindType;
+        const kind = kindOfChange(change) as NoteEditableKindType;
         const style = findFirstStyle(node);
         let children: NodeType[];
         if (change.text !== undefined) {
@@ -1735,7 +2419,13 @@ export function applyNoteEdit({
                         : [{ type: 'linebreak', version: 1 }, ...lineNodes];
                 });
             } else {
-                const context = genBuildContext(node, root, verseMap, style);
+                const context = genBuildContext(
+                    node,
+                    root,
+                    verseMap,
+                    style,
+                    nameMap,
+                );
                 children = buildInlineNodes(
                     parseRuns(text, new Set()),
                     context,
@@ -1846,15 +2536,45 @@ export function applyNoteEdit({
     // Sizes last, on the block as the change left it: a heading made of a
     // paragraph is sized as a heading.
     for (const change of updates) {
-        if (change.size === undefined) {
+        if (change.size === undefined || change.words !== undefined) {
             continue;
         }
         const blockNumber = change.block as number;
         resizeBlockNode(
             nodeOf.get(blockNumber)!,
-            change.kind ?? refs[blockNumber - 1].kind,
+            kindOfChange(change),
             change.size,
         );
+    }
+    // Then the rest of the toolbar: font, colours, styles, alignment, indent.
+    for (const change of updates) {
+        const style = styleMap.get(change)!;
+        if (
+            !style.hasRunStyle &&
+            style.align === null &&
+            style.indent === null &&
+            !(change.words !== undefined && change.size !== undefined)
+        ) {
+            continue;
+        }
+        const blockNumber = change.block as number;
+        const failure = applyChangeStyle(
+            root,
+            nodeOf.get(blockNumber)!,
+            kindOfChange(change),
+            refs[blockNumber - 1].level,
+            change,
+            style,
+            `Block ${blockNumber}`,
+        );
+        if (failure !== null) {
+            return toReason(failure);
+        }
+    }
+
+    // A code block's language and theme, on the block as the change left it.
+    for (const change of updates) {
+        applyCodeFields(nodeOf.get(change.block as number)!, change);
     }
 
     // Anchors are taken before anything moves: "after block 3" is after what
@@ -1911,9 +2631,68 @@ export function applyNoteEdit({
             node = genPassageNode(verse);
         } else if (kind === 'rule') {
             node = { type: 'horizontalrule', version: 1 };
+        } else if (
+            (NOTE_INSERT_KIND_LIST as readonly string[]).includes(kind)
+        ) {
+            // An object of the editor's Insert menu.
+            const context = genBuildContext(
+                null,
+                root,
+                verseMap,
+                style,
+                nameMap,
+            );
+            const result = genNoteInsertNode(
+                kind as NoteInsertKindType,
+                // KaTeX is written with backslashes: \times, \neq.
+                kind === 'equation'
+                    ? (change.text ?? '')
+                    : toRealLineBreaks(change.text ?? ''),
+                change.color,
+                {
+                    genInline: (line) => {
+                        return buildInlineNodes(
+                            parseRuns(line, new Set()),
+                            context,
+                        );
+                    },
+                    style,
+                    root,
+                    now,
+                    genId,
+                    exampleNodes,
+                },
+            );
+            missingVerses.push(...context.missingVerses);
+            if ('reason' in result) {
+                return toReason(result.reason);
+            }
+            if ('nodes' in result) {
+                // The editor's Default Example: its blocks, in order.
+                let exampleAnchor = anchor;
+                for (const exampleNode of result.nodes) {
+                    insertBlockNode(
+                        root,
+                        exampleAnchor,
+                        exampleNode,
+                        null,
+                        style,
+                    );
+                    exampleAnchor = exampleNode;
+                }
+                lastPlacedMap.set(after, exampleAnchor);
+                continue;
+            }
+            node = result.node;
         } else {
             const text = toRealLineBreaks(change.text ?? '');
-            const context = genBuildContext(null, root, verseMap, style);
+            const context = genBuildContext(
+                null,
+                root,
+                verseMap,
+                style,
+                nameMap,
+            );
             const children =
                 kind === 'code'
                     ? text.split('\n').flatMap((line, index) => {
@@ -1932,14 +2711,46 @@ export function applyNoteEdit({
                 listKind = kind;
                 node = genListItemNode(children, kind, change.checked);
             } else {
-                node = genTextBlockNode(kind, children, null, style);
+                node = genTextBlockNode(
+                    kind as NoteTextKindType,
+                    children,
+                    null,
+                    style,
+                );
             }
         }
-        if (change.size !== undefined && kind !== 'rule') {
+        if (
+            change.size !== undefined &&
+            change.words === undefined &&
+            kind !== 'rule'
+        ) {
             resizeBlockNode(node, kind, change.size);
         }
+        applyCodeFields(node, change);
         insertBlockNode(root, anchor, node, listKind, style);
         lastPlacedMap.set(after, node);
+        // The toolbar on the new block, where it now sits (a list item
+        // nests under the one before it).
+        const addStyle = styleMap.get(change)!;
+        if (
+            addStyle.hasRunStyle ||
+            addStyle.align !== null ||
+            addStyle.indent !== null ||
+            (change.words !== undefined && change.size !== undefined)
+        ) {
+            const failure = applyChangeStyle(
+                root,
+                node,
+                kind,
+                0,
+                change,
+                addStyle,
+                `The new ${kind}`,
+            );
+            if (failure !== null) {
+                return toReason(failure);
+            }
+        }
     }
     if (missingVerses.length > 0) {
         return toReason(
@@ -1952,6 +2763,40 @@ export function applyNoteEdit({
                 'words yourself.',
         );
     }
+    // Every block the change altered, written as the editor writes it --
+    // or an open note window writes it back as a step of its own.
+    for (const child of childrenOf(root)) {
+        if (!originalBlockTextSet.has(JSON.stringify(child))) {
+            normalizeNoteNode(child);
+        }
+    }
+    // Link block text, from the note as the change leaves it: positions.
+    const blockLinks: NoteBlockLinkType[] = [];
+    for (const change of updates) {
+        if (change.linkTo === undefined) {
+            continue;
+        }
+        if (
+            removes.includes(change.linkTo) ||
+            removes.includes(change.block!)
+        ) {
+            return toReason('A block this call removes cannot be linked.');
+        }
+        const made = genNoteBlockLink({
+            root,
+            fromBlock: nodeOf.get(change.block as number)!,
+            fromWords: change.words,
+            toBlock: nodeOf.get(change.linkTo)!,
+            toWords: change.linkToWords,
+            kind: change.linkKind,
+            now,
+            genId,
+        });
+        if ('reason' in made) {
+            return toReason(made.reason);
+        }
+        blockLinks.push(made.link);
+    }
     const newContent =
         childrenOf(root).length === 0 ? '' : JSON.stringify(state);
     const parts = [
@@ -1961,10 +2806,28 @@ export function applyNoteEdit({
         moves.length > 0 ? `${moves.length} moved` : null,
         newTitle !== null ? 'title changed' : null,
     ].filter(Boolean);
+    // What was DONE, change by change: a model says what changed from this,
+    // never more (a model had said a word was made red with no colour sent).
+    const doneText = [...updates, ...adds]
+        .map((change) => {
+            return describeDoneChange(change, styleMap.get(change)!);
+        })
+        .join('; ');
+    const summary =
+        parts.length > 0
+            ? `blocks: ${parts.join(', ')}` +
+              (doneText === ''
+                  ? ''
+                  : ` -- ${doneText.length > MAX_DONE_TEXT_CHARS ? `${doneText.slice(0, MAX_DONE_TEXT_CHARS)}…` : doneText}`)
+            : 'nothing';
     return {
         content: newContent,
         title: newTitle,
-        isChanged: newContent !== content || newTitle !== null,
-        summary: parts.length > 0 ? `blocks: ${parts.join(', ')}` : 'nothing',
+        isChanged:
+            newContent !== content ||
+            newTitle !== null ||
+            blockLinks.length > 0,
+        summary,
+        ...(blockLinks.length > 0 ? { blockLinks } : {}),
     };
 }

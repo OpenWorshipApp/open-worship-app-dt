@@ -404,6 +404,7 @@ describe('add', () => {
             file: 'Sunday',
             added: 'Sermon',
             id: 5,
+            filePath: SUNDAY_PATH,
             undoId: 'undo-1',
         });
         expect(mocks.snapshotAgentFile).toHaveBeenCalledWith(

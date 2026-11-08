@@ -12,6 +12,8 @@ import {
     toAimedToolArgs,
     toAppWindowList,
     toFocusOfUrl,
+    toHeldNoteWindowUrl,
+    toNoteWindowAim,
     toWindowAim,
     toWindowAimLabel,
 } from './windowAimHelpers';
@@ -181,6 +183,82 @@ describe('toWindowAim', () => {
 
 // Asking about Settings, a tab works in the Settings window: a model's
 // walkthrough card names no window, and came up in the Reader.
+// 2026-11-08, the user, a note conversation's head on the Reader: _chatbot
+// should demand select a bible-note window_.
+describe('toNoteWindowAim', () => {
+    const noteWindowList = toAppWindowList([
+        {
+            id: 'MAIN',
+            title: 'Open Worship app - Reader',
+            url: `${HOST}/reader.html`,
+        },
+        {
+            id: 'NOTE-A',
+            title: 'Open Worship app - Bible Note',
+            url: `${HOST}/bibleNote.html?file=Sermons.own&id=1&uuid=a`,
+        },
+        {
+            id: 'NOTE-B',
+            title: 'Open Worship app - Bible Note',
+            url: `${HOST}/bibleNote.html?file=Sermons.own&id=3&uuid=b`,
+        },
+    ]);
+
+    it("aims at the note's own window, two note windows open or not", () => {
+        expect(
+            toNoteWindowAim(
+                { fileFullName: 'Sermons.own', noteId: 3 },
+                noteWindowList,
+            ),
+        ).toEqual({
+            windowId: 'NOTE-B',
+            focus: 'bibleNote',
+            isSeparateWindow: false,
+        });
+        // Two note windows are no aim for the KIND alone.
+        expect(toFocusWindowAim('bibleNote', noteWindowList)).toBeNull();
+    });
+
+    it('is no aim before the window is listed, or with no note', () => {
+        expect(
+            toNoteWindowAim(
+                { fileFullName: 'Sermons.own', noteId: 9 },
+                noteWindowList,
+            ),
+        ).toBeNull();
+        expect(toNoteWindowAim(undefined, noteWindowList)).toBeNull();
+    });
+
+    it('holds on top only the note window the tab works in', () => {
+        const aim = toNoteWindowAim(
+            { fileFullName: 'Sermons.own', noteId: 3 },
+            noteWindowList,
+        );
+        expect(toHeldNoteWindowUrl(aim, noteWindowList)).toBe(
+            `${HOST}/bibleNote.html?file=Sermons.own&id=3&uuid=b`,
+        );
+        expect(toHeldNoteWindowUrl(null, noteWindowList)).toBeNull();
+        // A window that went is held no more.
+        expect(toHeldNoteWindowUrl(aim, noteWindowList.slice(0, 2))).toBeNull();
+        // Another kind of window is never held.
+        const readerList = toAppWindowList([
+            {
+                id: 'MAIN',
+                title: 'Open Worship app - Presenter',
+                url: `${HOST}/presenter.html`,
+            },
+            {
+                id: 'READER',
+                title: 'Open Worship app - Reader',
+                url: `${HOST}/reader.html?uuid=reader`,
+            },
+        ]);
+        expect(
+            toHeldNoteWindowUrl(toWindowAim('READER', readerList), readerList),
+        ).toBeNull();
+    });
+});
+
 describe('toFocusWindowAim', () => {
     const settingEntry = {
         id: 'SETTING',

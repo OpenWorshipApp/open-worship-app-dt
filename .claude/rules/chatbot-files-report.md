@@ -444,4 +444,9 @@ window as a whole — tabs, pickers, its language, the caution — is in
   **[en:tran:Undo this change]** and **[en:tran:Show it in the list]**
   (`Bible Notes > <title>`). **A saved conversation keeps five buttons on a
   message now**, not three: a reopened window had dropped the last two of
-  every document card's five.
+  every document card's five. **A note the assistant MADE is attached the
+  same way** (2026-11-08, `openCreatedNoteRef`): its window opened, then
+  `attachHandedFileRef` with its path and id -- the chip, Bible Note, its
+  window, its card -- in the tab it was asked in (`chatbot-llm.md`, a NEW
+  note). Like a row's, the chip waits in the box until a question carries
+  it, and a reload of the help window drops it (BN-19).

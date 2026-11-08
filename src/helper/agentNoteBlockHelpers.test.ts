@@ -217,7 +217,8 @@ describe('a note read as blocks', () => {
             [3, 'bullet', 'first point'],
             [4, 'bullet', 'second point'],
             [5, 'quote', 'Love is patient'],
-            [6, 'picture', ''],
+            // A picture kept inside the note is not quoted.
+            [6, 'picture', '(kept inside the note)'],
             [7, 'rule', ''],
             [8, 'passage', '(KJV) John 1:1 — (1): In the beginning'],
             [9, 'check', 'call Tom'],
@@ -419,7 +420,7 @@ describe('a change to a note', () => {
             ['bullet', 'first point'],
             ['paragraph', 'second point'],
             ['bullet', 'Love is patient'],
-            ['picture', ''],
+            ['picture', '(kept inside the note)'],
             ['rule', ''],
             ['passage', '(KJV) John 1:1 — (1): In the beginning'],
             ['check', 'call Tom'],
@@ -458,7 +459,7 @@ describe('a change to a note', () => {
             'first point',
             'second point',
             'Love is patient',
-            '',
+            '(kept inside the note)',
             '(KJV) John 1:1 — (1): In the beginning',
             'print notes',
         ]);
@@ -567,9 +568,12 @@ describe('what a change is refused for', () => {
         expect(reasonOf([{ block: 99, text: 'a' }])).toContain('1 to 10');
         expect(reasonOf([{ block: 1 }])).toContain('says nothing');
         expect(reasonOf([{ after: 3 }])).toContain('needs its words');
-        expect(reasonOf([{ after: 3, kind: 'table', text: 'x' }])).toContain(
+        expect(reasonOf([{ after: 3, kind: 'bogus', text: 'x' }])).toContain(
             'kind is one of',
         );
+        expect(
+            reasonOf([{ after: 3, kind: 'video', text: 'not a link' }]),
+        ).toContain('YouTube link');
         expect(reasonOf([{ after: 3, kind: 'passage' }])).toContain('`ref`');
         expect(reasonOf([{ text: 'x' }])).toContain('`block`');
     });
@@ -671,7 +675,15 @@ describe('a block at another text size', () => {
         expect(list.children[1].children[0].style).toBe(STYLE);
         expect(reasonOf([{ block: 3, size: 100 }])).toContain('8 to 72');
         expect(reasonOf([{ block: 3, size: 'huge' }])).toContain('"larger"');
-        expect(reasonOf([{ block: 6, size: 'larger' }])).toContain('a size');
+        // A passage is never given words, but its words take a size.
+        const passage = rootOf(edit([{ block: 8, size: 20 }]).content)
+            .children[6];
+        expect(passage.children[1].children[0].children[0].style).toContain(
+            'font-size: 20px;',
+        );
+        expect(reasonOf([{ block: 8, size: 20, text: 'x' }])).toContain(
+            'is a passage',
+        );
         // Repeated, it stops at the largest the editor allows.
         let content = CONTENT;
         for (let index = 0; index < 12; index++) {

@@ -180,9 +180,12 @@ import {
     NOTE_EDIT_TOOL_NAME,
     NOTE_MAX_TOOL_ROUNDS,
     NOTE_SYSTEM_PROMPT,
+    readCreatedNote,
     resolveNoteEditTarget,
+    type CreatedNoteType,
     type NoteAskFileType,
 } from './noteChatHelpers';
+import { NOTE_CREATE_PROMPT } from './noteCreatePromptHelpers';
 import {
     BIBLE_READER_ASK_KIND,
     BIBLE_READER_MAX_TOOL_ROUNDS,
@@ -1193,6 +1196,12 @@ export function getStandInLlmProvider(
  * who actually answered, so the window can say so and switch the tab.
  */
 export type LlmBotAnswerType = BotAnswerType & {
+    /**
+     * A Bible note the answer MADE (`owa_bible_note add`, off the result):
+     * the window opens its own window and attaches it to the tab, as a
+     * row's Open in Chatbot does (`ChatbotAppComp.tsx`).
+     */
+    createdNote?: CreatedNoteType;
     standIn?: {
         provider: LlmProviderType;
         model: string;
@@ -2113,6 +2122,13 @@ type ToolWatchType = {
      */
     createdLyric: { name: string; filePath: string } | null;
     /**
+     * The last Bible note the model MADE in this ask, off the
+     * `owa_bible_note add` result (`readCreatedNote`): the answer carries it,
+     * its undo and its row, and the window opens it and attaches it to the
+     * tab -- the conversation is then about that note.
+     */
+    createdNote: CreatedNoteType | null;
+    /**
      * The songs this ask may change (`AskExtraType.lyric`), or null: then
      * `owa_lyric_edit` is not the model's to call at all.
      */
@@ -2356,6 +2372,7 @@ export function genToolWatch(): ToolWatchType {
         isActedOn: false,
         draftedLyric: null,
         createdLyric: null,
+        createdNote: null,
         lyricFiles: null,
         slideFiles: null,
         flowFiles: null,
@@ -2902,6 +2919,50 @@ function readCreatedFile(text: string) {
 }
 
 /**
+ * What goes under an answer that MADE a Bible note: **Undo this change**
+ * (the add's own backup -- the person's press, never the model's) and
+ * **Show it in the list**, ringing its row in the Bible Notes panel. The
+ * note itself is opened and attached by the window.
+ */
+export function genCreatedNoteUnder(created: CreatedNoteType) {
+    const undoAction = genLyricUndoAction({
+        name: created.name,
+        undoId: created.undoId,
+    });
+    return {
+        actions: undoAction === null ? [] : [undoAction],
+        shows: [
+            {
+                kind: 'control' as const,
+                value: toEditedDocumentListValue({
+                    name: created.name,
+                    undoId: created.undoId,
+                    listName: 'Bible Notes',
+                }),
+                name: 'Show it in the list',
+            },
+        ],
+    };
+}
+
+/**
+ * The answer of a conversation that teaches (the Bible Reader's, a lookup's,
+ * a Resources file's) with what goes under a note it made added after its
+ * own buttons -- they are no reason to drop either.
+ */
+function withCreatedNoteUnder<T extends BotAnswerType>(
+    answer: T,
+    created: CreatedNoteType | null,
+) {
+    if (created !== null) {
+        const under = genCreatedNoteUnder(created);
+        answer.actions = [...(answer.actions ?? []), ...under.actions];
+        answer.shows = [...(answer.shows ?? []), ...under.shows];
+    }
+    return answer;
+}
+
+/**
  * Fold one finished tool call into the watch. Kept apart from the calling so
  * the rule can be read -- and tested -- without a live MCP host.
  */
@@ -3039,6 +3100,15 @@ export function applyToolWatch(
         // name, a song that did not parse) is prose, and nothing was written.
         watch.createdLyric = readCreatedFile(text) ?? watch.createdLyric;
     }
+    if (name === 'owa_bible_note' && args?.action === 'add') {
+        // Off the RESULT, like the song: a refused add wrote nothing. A note
+        // made is the ask DONE -- no walkthrough is offered under it.
+        const created = readCreatedNote(text);
+        if (created !== null) {
+            watch.createdNote = created;
+            watch.isActedOn = true;
+        }
+    }
     if (name === LYRIC_EDIT_TOOL_NAME && args?.action !== 'read') {
         // Off the RESULT: a refusal is prose and changed nothing. A song
         // changed is the ask DONE -- no walkthrough is offered under it.
@@ -3048,10 +3118,14 @@ export function applyToolWatch(
             watch.isActedOn = true;
         }
     }
-    if (name === NOTE_EDIT_TOOL_NAME && args?.action === 'edit') {
+    if (
+        name === NOTE_EDIT_TOOL_NAME &&
+        (args?.action === 'edit' || args?.action === 'view')
+    ) {
         // A note: its answer carries `name`, `isChanged` and `undoId` in the
         // song edit's own shape, and the answer the same two buttons -- Show
-        // it in the list ringing its row in the Bible Notes panel.
+        // it in the list ringing its row in the Bible Notes panel. The ¶
+        // (`view`) is backed up the same way, so it is put back the same way.
         const edited = readEditedLyric(text);
         if (edited !== null) {
             watch.editedLyric = mergeEditedDocument(watch.editedLyric, {
@@ -3156,6 +3230,19 @@ export function checkIsModelRemoval(args: any) {
     return /^(?:delete|remove|trash)/i.test(action);
 }
 
+// A Bible note, or a whole notes file, is never the model's to remove
+// (2026-11-08, the user: _chatbot should be able to create new bible note
+// (not allow delete)_). It may make one; the person deletes one from its
+// row's menu. The developer's door keeps `delete` and `delete-file`.
+export const NOTE_REMOVAL_MODEL_REFUSAL =
+    "Removing a Bible note or a notes file is the person's to do, never " +
+    "yours. Remove nothing: tell them to open the note's menu (its three " +
+    'dots) in the Bible Notes panel and choose Delete there.';
+export const NOTE_ASK_BIBLE_NOTE_REFUSAL =
+    'Here owa_bible_note only makes a NEW note (action "add"). Change the ' +
+    'attached note with owa_note_edit action "edit", which keeps its ' +
+    'headings, lists and verses.';
+
 async function runMcpToolCall(
     name: string,
     args: any,
@@ -3183,6 +3270,19 @@ async function runMcpToolCall(
     // own button is that consent.
     if (name === 'owa_bible_xml' && args?.action === 'create-kjv') {
         return `Tool refused: ${BIBLE_KJV_MODEL_REFUSAL}`;
+    }
+    if (name === 'owa_bible_note' && checkIsModelRemoval(args)) {
+        return `Tool refused: ${NOTE_REMOVAL_MODEL_REFUSAL}`;
+    }
+    // In a conversation about an attached note, owa_bible_note only MAKES a
+    // new one: its `update` writes a note back as plain paragraphs, losing
+    // headings, lists and verse mentions, which owa_note_edit keeps.
+    if (
+        name === 'owa_bible_note' &&
+        watch.noteFiles !== null &&
+        !['add', 'list', 'read'].includes(String(args?.action ?? ''))
+    ) {
+        return `Tool refused: ${NOTE_ASK_BIBLE_NOTE_REFUSAL}`;
     }
     // A song is changed only in a conversation about one the person
     // attached, and named by its NAME: the window puts the attached file's
@@ -3837,8 +3937,9 @@ const LOOKUP_SYSTEM_PROMPT =
     'only as the record or a tool read returned it: never translate one ' +
     'yourself, and never write one from memory. When they ask what they can ' +
     'do with the record, name the button under it that does it and say ' +
-    'pressing it is theirs. Answer in the language they write in; do not ' +
-    'describe any other part of the app or offer a walkthrough.';
+    `pressing it is theirs. ${NOTE_CREATE_PROMPT} Answer in the language ` +
+    'they write in; do not describe any other part of the app or offer a ' +
+    'walkthrough.';
 
 // A translator's whole job, said once: the frame after the words says
 // which way and what to keep (`toQuestionTranslationAsk`,
@@ -6265,6 +6366,11 @@ async function askLlmBotAsWritten(
         // and which arrived twice in two asks the day the symptom rule asked
         // the model to say which fault it found.
         answer.text = scrubAnswerToolFields(answer.text);
+        // A note the model made: the window opens it and attaches it to the
+        // tab once the answer is in (`ChatbotAppComp.tsx`).
+        if (watch.createdNote !== null) {
+            answer.createdNote = watch.createdNote;
+        }
         // A verse search: a button for each found verse the answer names,
         // and the change of Bible -- no walkthrough, no page to go to.
         if (extra?.verseFind !== undefined) {
@@ -6323,10 +6429,10 @@ async function askLlmBotAsWritten(
                     ...resourceActions,
                 ];
             }
-            return answer;
+            return withCreatedNoteUnder(answer, watch.createdNote);
         }
         if (extra?.lookup !== undefined) {
-            return answer;
+            return withCreatedNoteUnder(answer, watch.createdNote);
         }
         if (extra?.bibleReader !== undefined) {
             // A verse the tool returned and the answer names is one press
@@ -6342,7 +6448,8 @@ async function askLlmBotAsWritten(
                     answer.actions = named.map(genVerseOpenAction);
                 }
             }
-            return answer;
+            // ...and a note it made, the press that takes it back and its row.
+            return withCreatedNoteUnder(answer, watch.createdNote);
         }
         // A song the model just wrote is a thing to DO something with, and it
         // is offered before the walkthrough fallback below on purpose: "show
@@ -6366,6 +6473,12 @@ async function askLlmBotAsWritten(
                 },
                 { kind: 'file', value: filePath, name },
             ];
+        } else if (answer.actions === undefined && watch.createdNote !== null) {
+            // A note the model made: the same two, and no walkthrough -- the
+            // window opens the note and attaches it to the tab.
+            const under = genCreatedNoteUnder(watch.createdNote);
+            answer.actions = under.actions;
+            answer.shows = [...(answer.shows ?? []), ...under.shows];
         } else if (answer.actions === undefined && watch.editedLyric !== null) {
             // A song the model changed: the press that puts it back, and the
             // row it is on -- no walkthrough, the ask has been done.

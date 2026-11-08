@@ -489,5 +489,11 @@ all of them are in `.claude/rules/project-skills.md`.
   coverage of the window's control inventory from `scripts/tip-coverage.mjs`
   (a tip counts when the search finds it by the button's own words), every
   tip run live in English and Khmer; `TP-xx`.
+- **`owa-enhance-bible-note-chatbot`** — the chatbot on ONE Bible note (W-60):
+  `owa_note_edit`, the note conversation, the editor's own guide. Toolbar
+  parity is a figure from `scripts/toolbar-coverage.mjs` against an inventory
+  of every control; a change is byte for byte where not asked
+  (`scripts/note-roundtrip.mjs`) and verified live on a scratch profile;
+  `BN-xx`.
 - **`review-stagged-change`** / **`review-unstagged-change`** — review only the
   staged diff (the index), or only what is not staged yet; performance first.

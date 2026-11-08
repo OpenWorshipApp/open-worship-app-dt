@@ -41,7 +41,13 @@ const { state, mocks } = vi.hoisted(() => ({
         snapshotAgentFileForDelete: vi.fn(),
         snapshotAgentSidecars: vi.fn(),
         trashAgentFile: vi.fn(),
+        genNewNoteContent: vi.fn(),
     },
+}));
+
+// The mark-up reader's app side, loaded by `add` only for words with mark-up.
+vi.mock('./agentNoteEditHelpers', () => ({
+    genNewNoteContent: mocks.genNewNoteContent,
 }));
 
 vi.mock('../server/fileHelpers', () => ({
@@ -181,6 +187,7 @@ beforeEach(() => {
     );
     mocks.createNote.mockResolvedValue({});
     mocks.renameAgentFile.mockResolvedValue('/notes/Renamed.own');
+    mocks.genNewNoteContent.mockReset();
 });
 
 function request(fields: Record<string, unknown>) {
@@ -370,6 +377,8 @@ describe('add', () => {
             file: 'Default',
             added: 'Sunday',
             id: 4,
+            // The help window opens and attaches the note it made by this.
+            filePath: '/notes/Default.own',
             undoId: 'undo-1',
         });
         expect(mocks.snapshotAgentFile).toHaveBeenCalledWith(
@@ -397,6 +406,34 @@ describe('add', () => {
         expect(added.content).toBe(toLexicalContent('Line one\nTwo'));
         expect(readLexicalText(added.content)).toBe('Line one\nTwo');
         expect(note.save).toHaveBeenCalledOnce();
+        // Plain words never reach the mark-up reader.
+        expect(mocks.genNewNoteContent).not.toHaveBeenCalled();
+    });
+
+    test("words with mark-up are read as the editor's blocks (owa_note_edit's rules)", async () => {
+        const note = genNoteFile([]);
+        state.files = { '/notes/Default.own': note };
+        mocks.genNewNoteContent.mockResolvedValueOnce('{"built":true}');
+        await expect(
+            request({
+                action: 'add',
+                title: 'Sunday',
+                text: '## Grace\n- one',
+            }),
+        ).resolves.toMatchObject({ added: 'Sunday', id: 1 });
+        expect(mocks.genNewNoteContent).toHaveBeenCalledWith(
+            '## Grace\n- one',
+            'Sunday',
+        );
+        expect(note.addNoteItem.mock.calls[0][0].content).toBe(
+            '{"built":true}',
+        );
+        // Not buildable that way: written plain, a line a paragraph.
+        mocks.genNewNoteContent.mockResolvedValueOnce(null);
+        await request({ action: 'add', title: 'Two', text: '- a\n- b' });
+        expect(note.addNoteItem.mock.calls[1][0].content).toBe(
+            toLexicalContent('- a\n- b'),
+        );
     });
 
     test('into a Default not there yet: made on the way, its undo is "there was none"', async () => {

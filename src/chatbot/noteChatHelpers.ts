@@ -38,6 +38,10 @@ import {
     type SlideSizeAskType,
     readTranslateLanguageName,
 } from './slideChatHelpers';
+import {
+    toNoteWindowTarget,
+    type NoteWindowTargetType,
+} from '../helper/ai/noteWindowMatchHelpers';
 
 export const NOTE_ASK_KIND = 'note';
 export const NOTE_EDIT_TOOL_NAME = 'owa_note_edit';
@@ -132,6 +136,48 @@ export function findOpenNoteAttachments(
 
 function toComparableName(text: string) {
     return text.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/** A Bible note the assistant MADE in an answer (`owa_bible_note add`). */
+export type CreatedNoteType = {
+    name: string;
+    filePath: string;
+    noteId: number;
+    undoId: string | null;
+};
+
+/**
+ * The note an `owa_bible_note add` made, off its RESULT -- a refusal is a
+ * sentence and made nothing (2026-11-08, the user: _chatbot should be able
+ * to create new bible note (not allow delete), after create should open the
+ * note and attach to the chatbot session_). The window opens that note's
+ * own window and attaches it to the tab, as a row's Open in Chatbot does;
+ * the path is the app's answer, never anything the model wrote.
+ */
+export function readCreatedNote(text: string): CreatedNoteType | null {
+    try {
+        const result = JSON.parse(text);
+        if (
+            typeof result?.added !== 'string' ||
+            typeof result.filePath !== 'string' ||
+            !NOTE_FILE_PATTERN.test(result.filePath) ||
+            !Number.isSafeInteger(result.id) ||
+            result.id < 0
+        ) {
+            return null;
+        }
+        return {
+            name: result.added,
+            filePath: result.filePath,
+            noteId: result.id,
+            undoId:
+                typeof result.undoId === 'string' && result.undoId !== ''
+                    ? result.undoId
+                    : null,
+        };
+    } catch (_error) {
+        return null;
+    }
 }
 
 /**
@@ -236,6 +282,10 @@ export function toNoteDocumentText(read: any) {
                 `${NOTE_EDIT_TOOL_NAME} "read" with \`from\` ${read.nextFrom} reads on]`,
         );
     }
+    // What the font box lists, for a `font` change.
+    if (Array.isArray(read.fonts) && read.fonts.length > 0) {
+        lines.push(`Fonts: ${read.fonts.join(', ')}`);
+    }
     const text = lines.join('\n');
     return text.length > MAX_NOTE_DOC_TEXT_CHARS
         ? `${text.slice(0, MAX_NOTE_DOC_TEXT_CHARS)}\n[... the rest was not included; ${NOTE_EDIT_TOOL_NAME} "read" with \`from\` reads on]`
@@ -314,7 +364,8 @@ export const NOTE_SYSTEM_PROMPT =
     'lines). Kinds: paragraph, h1 to h6 (headings), quote, code, and list ' +
     'items bullet, number and check ([x] is ticked). A block marked fixed ' +
     '(table, passage -- a Bible passage --, picture, drawing, sticky, rule, ' +
-    'video) can be moved or removed, never given words. WORDS carry a light ' +
+    'video, columns, collapsible, date, poll, equation …) can be moved, ' +
+    'removed, styled or aligned, never given words. WORDS carry a light ' +
     'mark-up: **bold**, *italic*, __underline__, ~~strike~~, `code`, ' +
     '[words](https://…), and mentions: [^John 3:16] a Bible verse, [@Moses] ' +
     'a person, [#Jerusalem] a place. CHANGE the note with ' +
@@ -329,21 +380,47 @@ export const NOTE_SYSTEM_PROMPT =
     'request is about. A BIBLE VERSE is never your words: put one in with a ' +
     'NEW token [^Book chapter:verse] in the words, or a block {after, kind: ' +
     '"passage", ref: "John 3:16-17"} for its whole text -- the app reads it ' +
-    'from the installed Bible. Never type a verse out. A new person or ' +
-    'place is plain words. When a request has one sensible reading, do it ' +
-    'rather than ask: every change can be undone. TRANSLATING has two ways ' +
+    'from the installed Bible. Never type a verse out. A new [@Name] or ' +
+    '[#Place] is looked up in the names lookup and becomes a mention when ' +
+    'it is there. When a request has one sensible reading, do it ' +
+    'rather than ask: every change can be undone. PUTTING AN ANSWER IN: ' +
+    'right after you answered or taught something, a short line -- "add ' +
+    'it", "put it in", "save this", "new section", "new page" -- means that ' +
+    'answer goes at the END of the note, its words whole, in ONE edit: ' +
+    '{after: the last block, kind: "page-break"} first when they say page, ' +
+    'then {after: the last block, kind: "section", text} -- text its lines, ' +
+    'a block a line: "## Its heading", then a "- " line a point, verses as ' +
+    '[^John 3:16]. TRANSLATING has two ways ' +
     'and the person chooses: REPLACE the words with the translation, or ADD ' +
-    'the translation on the line under the words, keeping them. Unless ' +
+    'the translation on the line under the words, keeping them. Only words ' +
+    'that ask to translate, or name a language, are a translation. Unless ' +
     'their words already say which, ask which way first and end with ' +
     'OPTIONS: Replace the words | Add it under each line. Once the way is ' +
     'known and the language is not, ask which language, with OPTIONS naming ' +
     "two or three languages. Write natural words in the language's own " +
-    'script, Bible names the way that language says them. SIZE: a ' +
-    'block\'s text size is {block, size}: "larger", "smaller" or px from ' +
-    '8 to 72 -- for "make the text bigger" give every block with words ' +
-    'size "larger" in ONE call; each part keeps its size against the ' +
-    "others. Never answer a size request with the editor's steps: make " +
-    'it. TIDYING a note ' +
+    "script, Bible names the way that language says them. THE EDITOR'S " +
+    'TOOLBAR is yours to use, never to explain -- every control of it is a ' +
+    'field of a change, on a whole block or, with `words`, only those words ' +
+    'of it (its selection): size ("larger", "smaller" or px 8-72; for "make ' +
+    'the text bigger" give every block with words size "larger" in ONE ' +
+    'call, each part keeping its size against the others), font (one of ' +
+    'the Fonts line, or "default"), color and background (a colour, or ' +
+    '"none"), styles / stylesOff (bold, italic, underline, strikethrough, ' +
+    'code, subscript, superscript, highlight, lowercase, uppercase, ' +
+    'capitalize), clear: true (Clear Formatting), align (left, center, ' +
+    'right, justify) and indent ("more", "less"; a list item nests under ' +
+    'the one before). For "make the word grace red and bold" the change ' +
+    'is {block: 5, words: "grace", color: "red", styles: ["bold"]}. Its ' +
+    'Insert menu is kinds to add: table, columns, ' +
+    'collapsible, page-break, rule, equation, sticky, date, poll, video ' +
+    '(YouTube), website, media (a link or a path), drawing (a line a box, ' +
+    '"A -> B" an arrow from box A to box B) and example (the editor\'s own ' +
+    'sample note). A code block takes `language` and `theme`. Link block ' +
+    'text is {block, words?, linkTo: n} (an arrow to block n, `linkToWords` ' +
+    'for words there). Its Undo and Redo of what the note kept are ' +
+    'actions "undo" and "redo", its ¶ is action "view" with ' +
+    'invisibleCharacters true or false. Never answer one of these with the ' +
+    "editor's steps: make it. TIDYING a note " +
     'into headings and lists: every block keeps its own words -- a heading ' +
     'that names a point is a NEW block ({after, kind: "h2", text}) put ' +
     'above the lines it covers, and a line that is a point becomes a ' +
@@ -354,12 +431,20 @@ export const NOTE_SYSTEM_PROMPT =
     'from memory. How to do something in the note EDITOR itself (sticky ' +
     'notes, tables, comments, drawings, Word copies, printing, read-only, ' +
     'zoom) is in its guide: search it with owa_help_search, open the page ' +
-    'with owa_help_page, and answer in its words. When the tool refuses, ' +
+    'with owa_help_page, and answer in its words. A NEW note -- asked to ' +
+    'make, write or start another one, or to put an answer into one -- is ' +
+    'owa_bible_note action "add", ' +
+    'its `title` and `text` written by you (# headings, - lists, **bold**, ' +
+    'a verse as [^John 3:16]), never blocks added to this one; the app ' +
+    'opens it and the conversation moves to it. When the tool refuses, ' +
     'read its reason, fix the call and try once more; then say plainly what ' +
-    'went wrong. After a change, say in a sentence or two what changed, that ' +
+    "went wrong. After a change, say in a sentence or two what the tool's " +
+    'answer lists as done (its summary) -- never a change it does not list ' +
+    '-- that ' +
     "it is NOT saved yet (the note window's Save, Ctrl+S, keeps it; a note " +
     'window that is open shows the change now) -- a new title is kept at ' +
-    'once -- and that Undo this change puts it back. Never write the blocks, ' +
+    'once -- and that Undo this change puts it back (after an "undo", that ' +
+    'a "redo" does). Never write the blocks, ' +
     'the mark-up or any JSON out in your answer: a verse is named plainly ' +
     '(John 3:16), never as [^John 3:16]. End with OPTIONS: two or three next ' +
     'changes they might want.';
@@ -412,6 +497,22 @@ export function genNoteOpeningAnswer(
  * so a note opened after a slide document or a running order is the one a
  * question is about, and one opened before them is not.
  */
+/**
+ * The note a tab is a conversation about, as its own window names it -- read
+ * off what the tab keeps, so it holds across a reload and a relaunch of the
+ * help window (2026-11-08, the user: _chatbot should demand select a
+ * bible-note window_). Null for a tab about no note.
+ */
+export function findSessionNoteTarget(
+    messages: Parameters<typeof findOpenNoteAttachments>[0],
+    closedAfterId?: number,
+): NoteWindowTargetType | null {
+    const note = findOpenNoteAttachments(messages, closedAfterId).at(-1);
+    return note === undefined || typeof note.filePath !== 'string'
+        ? null
+        : toNoteWindowTarget(note.filePath, note.noteId);
+}
+
 export function checkIsNoteOpenedLast(
     messages: Parameters<typeof findOpenNoteAttachments>[0],
     closedAfterId?: number,
@@ -475,6 +576,145 @@ export function genNoteSizeChanges(read: any, ask: SlideSizeAskType) {
             return { block: block.n as number, size };
         });
     return changes.length === 0 ? null : changes;
+}
+
+// --- whole-note styles the window makes by itself ---------------------------
+//
+// _make all the text bold_, _centre everything_, _use Georgia for the whole
+// note_, _clear the formatting of the whole note_ (BN-08, 2026-11-08): like
+// the size, a short English line about the WHOLE note is done by the window
+// with no model -- with no key and no internet too. A line about one part
+// (_make the heading bold_) is the assistant's.
+
+export type NoteStyleAskType = {
+    styles?: string[];
+    color?: string;
+    font?: string;
+    align?: string;
+    clear?: true;
+};
+
+const WHOLE_NOTE_PATTERN =
+    '(?:all(?: of)?(?: the)?(?: text| words| note)?|everything|the whole note|' +
+    'the whole text|the (?:text|words|note)(?: all)?|it all)';
+const STYLE_WORD_MAP: Record<string, string> = {
+    bold: 'bold',
+    italic: 'italic',
+    italics: 'italic',
+    underline: 'underline',
+    underlined: 'underline',
+    highlighted: 'highlight',
+    uppercase: 'uppercase',
+    capitals: 'uppercase',
+    'capital letters': 'uppercase',
+    lowercase: 'lowercase',
+    'crossed out': 'strikethrough',
+    strikethrough: 'strikethrough',
+};
+const ALIGN_WORD_MAP: Record<string, string> = {
+    centre: 'center',
+    center: 'center',
+    'left-align': 'left',
+    'left align': 'left',
+    'right-align': 'right',
+    'right align': 'right',
+    justify: 'justify',
+};
+
+/** A whole-note style asked in a short English line, or null. */
+export function readNoteStyleAsk(text: string): NoteStyleAskType | null {
+    const words = text
+        .trim()
+        .toLowerCase()
+        .replace(/[.!]+$/, '')
+        .replace(/^please\s+/, '');
+    if (words.length > 80) {
+        return null;
+    }
+    const make = new RegExp(
+        `^(?:make|turn|put|set)\\s+${WHOLE_NOTE_PATTERN}\\s+(?:in\\s+|to\\s+)?(.+)$`,
+    ).exec(words);
+    if (make !== null) {
+        const wanted = make[1].trim();
+        if (STYLE_WORD_MAP[wanted] !== undefined) {
+            return { styles: [STYLE_WORD_MAP[wanted]] };
+        }
+        if (/^[a-z]+(?: [a-z]+)?$/.test(wanted)) {
+            return { color: wanted };
+        }
+        return null;
+    }
+    const align = new RegExp(
+        `^(centre|center|left-align|left align|right-align|right align|justify)\\s+${WHOLE_NOTE_PATTERN}$`,
+    ).exec(words);
+    if (align !== null) {
+        return { align: ALIGN_WORD_MAP[align[1]] };
+    }
+    const font = new RegExp(
+        `^(?:use|put)\\s+(.+?)(?:\\s+font)?\\s+(?:for|on|in)\\s+${WHOLE_NOTE_PATTERN}$`,
+    ).exec(words);
+    if (font !== null) {
+        return { font: font[1].trim() };
+    }
+    if (
+        new RegExp(
+            `^(?:clear|remove)\\s+(?:all\\s+)?(?:the\\s+)?formatting(?:\\s+(?:of|from)\\s+${WHOLE_NOTE_PATTERN})?$`,
+        ).test(words)
+    ) {
+        return { clear: true };
+    }
+    return null;
+}
+
+/**
+ * The change a whole-note style is: the same on every block with words, a
+ * font only when the font box lists it (`read.fonts`). Null when it cannot
+ * be done that way -- the assistant is asked instead.
+ */
+export function genNoteStyleChanges(read: any, ask: NoteStyleAskType) {
+    if (
+        read === null ||
+        typeof read !== 'object' ||
+        Number.isInteger(read.nextFrom) ||
+        !Array.isArray(read.blocks)
+    ) {
+        return null;
+    }
+    let style: Record<string, unknown> = { ...ask };
+    if (ask.font !== undefined) {
+        const fontList: string[] = Array.isArray(read.fonts) ? read.fonts : [];
+        const font = fontList.find((one) => {
+            return one.toLowerCase() === ask.font!.toLowerCase();
+        });
+        if (font === undefined) {
+            return null;
+        }
+        style = { font };
+    }
+    const changes = read.blocks
+        .filter((block: any) => {
+            return (
+                Number.isInteger(block?.n) &&
+                block.isFixed !== true &&
+                String(block.text ?? '').trim() !== ''
+            );
+        })
+        .map((block: any) => {
+            return { block: block.n as number, ...style };
+        });
+    return changes.length === 0 ? null : changes;
+}
+
+/** The sentence under a style change the window made. */
+export function genNoteStyleDoneText(name: string, blockCount: number) {
+    return fillWords(
+        tran(
+            'Done in one change: the words of {count} blocks of “{name}” ' +
+                'have a new style. It is not saved yet: Save in the note ' +
+                'window keeps it, and Undo this change puts it back.',
+        ),
+        { count: String(blockCount), name },
+    );
 }
 
 // The sizes the note editor's own size box takes.

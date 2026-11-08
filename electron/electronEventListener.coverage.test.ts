@@ -232,7 +232,11 @@ import {
 } from './electronEventListener';
 import { LANG_PLUGINS_CHANGED_BROADCAST_CHANNEL } from './langPluginProtocol';
 import { electronMockState } from './testElectronModule';
-import { createMockBrowserWindow, flushPromises } from './testUtils';
+import {
+    createMockBrowserWindow,
+    createMockWebContents,
+    flushPromises,
+} from './testUtils';
 import {
     removeVirtualScreenOutput,
     setVirtualScreenOutput,
@@ -1227,6 +1231,19 @@ describe('electronEventListener handlers', () => {
             { isOnTop: true },
         );
         expect(win.setAlwaysOnTop).toHaveBeenCalledWith(true);
+
+        // the help window's hold: an address that is no note window holds
+        // nothing, and no address lets go of nothing
+        const holdSender = createMockWebContents();
+        findOnHandler('main:app:hold-note-window-on-top')(
+            { sender: holdSender },
+            { url: 'https://localhost:3000/reader.html?uuid=reader' },
+        );
+        findOnHandler('main:app:hold-note-window-on-top')(
+            { sender: holdSender },
+            undefined,
+        );
+        expect(win.setAlwaysOnTop).toHaveBeenCalledTimes(1);
 
         // an unknown sender resolves to no window at all
         const unknownEvent: any = { sender: { id: 'gone' } };

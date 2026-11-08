@@ -191,7 +191,7 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
     // downloaded into the data folder: the press is the consent, and no
     // model stands in for it -- nor pays a schema for it every round.
     reason:
-      'Installing a language is the person\'s to agree to: the help ' +
+      "Installing a language is the person's to agree to: the help " +
       'window offers it by itself, with a button, whenever the ' +
       'conversation is about a language that is not installed. Say that ' +
       'Settings > Languages installs one, and let them press.',
@@ -324,27 +324,44 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
   // own verse list is a curated few, and "which verses mention this person"
   // or a half-remembered verse is the Bible searched by words -- the
   // research the user asked for, in the one conversation that is about a
-  // person, place or passage.
-  lookup: ['owa_read_website', 'owa_find_verse'],
+  // person, place or passage. And the notes (2026-11-08, the user's goal:
+  // _chatbot can put a lesson to a new bible note for user_): what a record
+  // or a word study taught is put into a new note, opened and attached.
+  lookup: ['owa_read_website', 'owa_find_verse', 'owa_bible_note'],
   // A study file names its sources and links; one past the files is
   // read there, rationed and announced like any web read. A passage the
   // file cites is read whole from the installed Bible rather than completed
-  // from the model's memory.
-  resources: ['owa_lookup_record', 'owa_read_website'],
+  // from the model's memory. A lesson read from a file goes into a new note
+  // the same way (2026-11-08).
+  resources: ['owa_lookup_record', 'owa_read_website', 'owa_bible_note'],
   // A typed question about the Bible Reader's own material (2026-10-18):
   // the names lookup, the Resources files and the verse reader are all
   // useful to it, whichever one the words turn out to want, and the web
-  // for a verse the Bibles here cannot place.
+  // for a verse the Bibles here cannot place. And the notes (2026-11-08,
+  // the user, a Reader chat that answered "make a bible note for me" with a
+  // note to copy and paste: _chatbot should be able to create new bible
+  // note_): a note about what they are reading is made here, and the
+  // window opens it and attaches it to the tab (`readCreatedNote`).
   'bible-reader': [
     'owa_lookup_record',
     'owa_resource_file',
     'owa_find_verse',
     'owa_read_website',
+    'owa_bible_note',
   ],
   // A note conversation answers how the note EDITOR works from its own
   // guide (the window aims the search at the Bible Note window, where the
-  // guide's pages are), and finds the verses a note is about.
-  note: ['owa_help_search', 'owa_help_page', 'owa_find_verse'],
+  // guide's pages are), and finds the verses a note is about. It makes a
+  // NEW note too (2026-11-08): a note the assistant made is attached to the
+  // tab, which makes the tab a note conversation -- "make another one" came
+  // next. The attached note itself is changed only by owa_note_edit; the
+  // window refuses the rest of owa_bible_note there.
+  note: [
+    'owa_help_search',
+    'owa_help_page',
+    'owa_find_verse',
+    'owa_bible_note',
+  ],
 };
 
 /** Whether the tool is offered only for one kind of ask. */

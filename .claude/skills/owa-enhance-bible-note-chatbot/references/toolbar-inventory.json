@@ -1,0 +1,369 @@
+{
+    "about": "Every control of the Bible Note editor's toolbar (the bible-note package, as mounted in this app's note window), and what the chatbot does for it through owa_note_edit. An item with `change` is COVERED when src/helper/agentNoteToolbarParity.test.ts has a passing test named `toolbar: <id>`; an item with `excluded` carries its reason (none left). `label` is the editor's own words (aria-label or menu text), `aliases` its other words -- scripts/toolbar-coverage.mjs reads the package for labels this list does not have yet (leads).",
+    "updated": "2026-11-08",
+    "items": [
+        {
+            "id": "undo",
+            "group": "history",
+            "label": "Undo",
+            "change": "{action: \"undo\"} -- one step back in the note's kept history"
+        },
+        {
+            "id": "redo",
+            "group": "history",
+            "label": "Redo",
+            "change": "{action: \"redo\"}"
+        },
+        {
+            "id": "block-normal",
+            "group": "block type",
+            "label": "Normal",
+            "change": "{block, kind: \"paragraph\"}"
+        },
+        {
+            "id": "block-heading-1",
+            "group": "block type",
+            "label": "Heading 1",
+            "change": "{block, kind: \"h1\"}"
+        },
+        {
+            "id": "block-heading-2",
+            "group": "block type",
+            "label": "Heading 2",
+            "change": "{block, kind: \"h2\"}"
+        },
+        {
+            "id": "block-heading-3",
+            "group": "block type",
+            "label": "Heading 3",
+            "change": "{block, kind: \"h3\"}"
+        },
+        {
+            "id": "block-numbered-list",
+            "group": "block type",
+            "label": "Numbered List",
+            "change": "{block, kind: \"number\"}"
+        },
+        {
+            "id": "block-bullet-list",
+            "group": "block type",
+            "label": "Bullet List",
+            "change": "{block, kind: \"bullet\"}"
+        },
+        {
+            "id": "block-check-list",
+            "group": "block type",
+            "label": "Check List",
+            "change": "{block, kind: \"check\", checked}"
+        },
+        {
+            "id": "block-quote",
+            "group": "block type",
+            "label": "Quote",
+            "change": "{block, kind: \"quote\"}"
+        },
+        {
+            "id": "block-code",
+            "group": "block type",
+            "label": "Code Block",
+            "change": "{block, kind: \"code\"}"
+        },
+        {
+            "id": "code-language",
+            "group": "block type",
+            "label": "Select language",
+            "change": "{block, language} on a code block"
+        },
+        {
+            "id": "code-theme",
+            "group": "block type",
+            "label": "Select theme",
+            "change": "{block, theme} on a code block (its shiki colours)"
+        },
+        {
+            "id": "font-family",
+            "group": "font",
+            "label": "Formatting options for font family",
+            "change": "{block, font} -- one of read's `fonts`, or \"default\""
+        },
+        {
+            "id": "font-size-decrease",
+            "group": "font",
+            "label": "Decrease font size",
+            "change": "{block, size: \"smaller\"}"
+        },
+        {
+            "id": "font-size-input",
+            "group": "font",
+            "label": "Font size",
+            "change": "{block, size: 8-72}"
+        },
+        {
+            "id": "font-size-increase",
+            "group": "font",
+            "label": "Increase font size",
+            "change": "{block, size: \"larger\"}"
+        },
+        {
+            "id": "bold",
+            "group": "text style",
+            "label": "Format text as bold",
+            "change": "**words** or {block, words, styles: [\"bold\"]}"
+        },
+        {
+            "id": "italic",
+            "group": "text style",
+            "label": "Format text as italics",
+            "change": "*words* or styles [\"italic\"]"
+        },
+        {
+            "id": "underline",
+            "group": "text style",
+            "label": "Format text to underlined",
+            "change": "__words__ or styles [\"underline\"]"
+        },
+        {
+            "id": "inline-code",
+            "group": "text style",
+            "label": "Insert code block",
+            "change": "`words` or styles [\"code\"]"
+        },
+        {
+            "id": "link",
+            "group": "text style",
+            "label": "Insert link",
+            "change": "[words](https://…)"
+        },
+        {
+            "id": "text-color",
+            "group": "colour",
+            "label": "Formatting text color",
+            "change": "{block, words?, color} -- a colour, or \"none\""
+        },
+        {
+            "id": "background-color",
+            "group": "colour",
+            "label": "Formatting background color",
+            "change": "{block, words?, background}"
+        },
+        {
+            "id": "lowercase",
+            "group": "more styles",
+            "label": "Format text to lowercase",
+            "change": "styles [\"lowercase\"]"
+        },
+        {
+            "id": "uppercase",
+            "group": "more styles",
+            "label": "Format text to uppercase",
+            "change": "styles [\"uppercase\"]"
+        },
+        {
+            "id": "capitalize",
+            "group": "more styles",
+            "label": "Format text to capitalize",
+            "change": "styles [\"capitalize\"]"
+        },
+        {
+            "id": "strikethrough",
+            "group": "more styles",
+            "label": "Format text with a strikethrough",
+            "change": "~~words~~ or styles [\"strikethrough\"]"
+        },
+        {
+            "id": "subscript",
+            "group": "more styles",
+            "label": "Format text with a subscript",
+            "change": "styles [\"subscript\"]"
+        },
+        {
+            "id": "superscript",
+            "group": "more styles",
+            "label": "Format text with a superscript",
+            "change": "styles [\"superscript\"]"
+        },
+        {
+            "id": "highlight",
+            "group": "more styles",
+            "label": "Format text with a highlight",
+            "change": "styles [\"highlight\"]"
+        },
+        {
+            "id": "clear-formatting",
+            "group": "more styles",
+            "label": "Clear all text formatting",
+            "aliases": [
+                "Clear Formatting"
+            ],
+            "change": "{block, clear: true}"
+        },
+        {
+            "id": "link-block-text",
+            "group": "more styles",
+            "label": "Link block text",
+            "change": "{block, words?, linkTo: n, linkToWords?, linkKind?} -- the editor's own link entry, in its storage; the open note window mounts again"
+        },
+        {
+            "id": "insert-horizontal-rule",
+            "group": "insert",
+            "label": "Horizontal Rule",
+            "change": "{after, kind: \"rule\"}"
+        },
+        {
+            "id": "insert-default-example",
+            "group": "insert",
+            "label": "Default Example",
+            "change": "{after, kind: \"example\"} -- the editor's own sample note, its nodes as the editor writes them"
+        },
+        {
+            "id": "insert-page-break",
+            "group": "insert",
+            "label": "Page Break",
+            "change": "{after, kind: \"page-break\"}"
+        },
+        {
+            "id": "insert-media",
+            "group": "insert",
+            "label": "Media",
+            "change": "{after, kind: \"media\", text: link or path}"
+        },
+        {
+            "id": "insert-excalidraw",
+            "group": "insert",
+            "label": "Excalidraw",
+            "change": "{after, kind: \"drawing\", text: a line a box, \"A -> B\" an arrow} -- an excalidraw node the board draws"
+        },
+        {
+            "id": "insert-mention-name",
+            "group": "insert",
+            "label": "Mention Name",
+            "change": "[@Name] in text -- a mention from the names lookup"
+        },
+        {
+            "id": "insert-pin-location",
+            "group": "insert",
+            "label": "Pin Location",
+            "change": "[#Place] in text"
+        },
+        {
+            "id": "insert-bible-verse",
+            "group": "insert",
+            "label": "Bible Verse",
+            "change": "[^John 3:16] in text, or {after, kind: \"passage\", ref}"
+        },
+        {
+            "id": "insert-emoji",
+            "group": "insert",
+            "label": "Emoji & HTML Character",
+            "change": "the character itself in text"
+        },
+        {
+            "id": "insert-table",
+            "group": "insert",
+            "label": "Table",
+            "change": "{after, kind: \"table\", text: rows, cells between |}"
+        },
+        {
+            "id": "insert-poll",
+            "group": "insert",
+            "label": "Poll",
+            "change": "{after, kind: \"poll\", text: question then choices}"
+        },
+        {
+            "id": "insert-columns-layout",
+            "group": "insert",
+            "label": "Columns Layout",
+            "change": "{after, kind: \"columns\", text: columns between |}"
+        },
+        {
+            "id": "insert-equation",
+            "group": "insert",
+            "label": "Equation",
+            "change": "{after, kind: \"equation\", text: KaTeX}"
+        },
+        {
+            "id": "insert-sticky-note",
+            "group": "insert",
+            "label": "Sticky Note",
+            "change": "{after, kind: \"sticky\", text, color}"
+        },
+        {
+            "id": "insert-collapsible",
+            "group": "insert",
+            "label": "Collapsible container",
+            "change": "{after, kind: \"collapsible\", text: title then lines}"
+        },
+        {
+            "id": "insert-date",
+            "group": "insert",
+            "label": "Date",
+            "change": "{after, kind: \"date\", text: today or YYYY-MM-DD}"
+        },
+        {
+            "id": "insert-youtube",
+            "group": "insert",
+            "label": "Youtube Video",
+            "change": "{after, kind: \"video\", text: YouTube link}"
+        },
+        {
+            "id": "insert-website",
+            "group": "insert",
+            "label": "Embed Website",
+            "change": "{after, kind: \"website\", text: link}"
+        },
+        {
+            "id": "show-invisible-characters",
+            "group": "view",
+            "label": "Show invisible characters",
+            "change": "{action: \"view\", invisibleCharacters: true|false} -- the editor's own setting; the open note window mounts again"
+        },
+        {
+            "id": "align-left",
+            "group": "alignment",
+            "label": "Left Align",
+            "change": "{block, align: \"left\"}"
+        },
+        {
+            "id": "align-center",
+            "group": "alignment",
+            "label": "Center Align",
+            "change": "{block, align: \"center\"}"
+        },
+        {
+            "id": "align-right",
+            "group": "alignment",
+            "label": "Right Align",
+            "change": "{block, align: \"right\"}"
+        },
+        {
+            "id": "align-justify",
+            "group": "alignment",
+            "label": "Justify Align",
+            "change": "{block, align: \"justify\"}"
+        },
+        {
+            "id": "align-start",
+            "group": "alignment",
+            "label": "Start Align",
+            "change": "{block, align: \"start\"}"
+        },
+        {
+            "id": "align-end",
+            "group": "alignment",
+            "label": "End Align",
+            "change": "{block, align: \"end\"}"
+        },
+        {
+            "id": "outdent",
+            "group": "alignment",
+            "label": "Outdent",
+            "change": "{block, indent: \"less\"}"
+        },
+        {
+            "id": "indent",
+            "group": "alignment",
+            "label": "Indent",
+            "change": "{block, indent: \"more\"} -- a list item nests under the one before"
+        }
+    ]
+}

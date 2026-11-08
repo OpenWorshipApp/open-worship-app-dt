@@ -989,7 +989,9 @@ describe('the Anthropic loop', () => {
             genAnthropicTools(
                 ['t1', 'owa_bible_xml', { action: 'create-kjv' }],
                 ['t2', 'owa_bible_item', { action: 'delete', name: 'Sunday' }],
-                ['t3', 'owa_bible_note', { action: 'trash', name: 'Notes' }],
+                // A Bible note is no removal the model may make at all
+                // (2026-11-08): a song is the second removal here.
+                ['t3', 'owa_lyric_file', { action: 'trash', name: 'Old Song' }],
             ),
             genAnthropicText('I removed the Sunday list.'),
         );

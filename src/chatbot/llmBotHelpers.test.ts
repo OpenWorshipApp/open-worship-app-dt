@@ -201,6 +201,7 @@ import {
     genGuideRescueSummary,
     genReplyLanguageLine,
     findUnreadVerseNudge,
+    genCreatedNoteUnder,
     genToolWatch,
     checkIsWrongScriptAnswer,
     findAnswerShapeNudge,
@@ -854,6 +855,61 @@ describe('the watch catches a drafted song', () => {
         });
         // The draft is still held: Copy song text is still honest.
         expect(watch.draftedLyric).toContain('Lantern On The Water');
+    });
+
+    test('a Bible note the model MADE is kept off the result, and ends the ask', () => {
+        const watch = genToolWatch();
+        applyToolWatch(
+            watch,
+            'owa_bible_note',
+            { action: 'add', title: 'Creation' },
+            JSON.stringify({
+                file: 'Default',
+                added: 'Creation',
+                id: 8,
+                filePath: 'C:\\notes\\Default.own',
+                undoId: 'u-8',
+            }),
+        );
+        expect(watch.createdNote).toEqual({
+            name: 'Creation',
+            filePath: 'C:\\notes\\Default.own',
+            noteId: 8,
+            undoId: 'u-8',
+        });
+        expect(watch.isActedOn).toBe(true);
+        // Under it: the press that takes it back, and its row.
+        expect(genCreatedNoteUnder(watch.createdNote!)).toEqual({
+            actions: [
+                {
+                    label: 'Undo this change',
+                    toolName: 'lyric-undo',
+                    args: { id: 'u-8', name: 'Creation' },
+                },
+            ],
+            shows: [
+                {
+                    kind: 'control',
+                    value: 'Bible Notes > Creation',
+                    name: 'Show it in the list',
+                },
+            ],
+        });
+        // A refusal, or a read, makes none.
+        const other = genToolWatch();
+        applyToolWatch(
+            other,
+            'owa_bible_note',
+            { action: 'add', title: 'X' },
+            'A new note needs a `title`.',
+        );
+        applyToolWatch(
+            other,
+            'owa_bible_note',
+            { action: 'read', id: 8 },
+            JSON.stringify({ added: 'X', id: 8, filePath: 'C:\\n\\D.own' }),
+        );
+        expect(other.createdNote).toBeNull();
     });
 
     test('a refused create, or any other file action, creates nothing', () => {

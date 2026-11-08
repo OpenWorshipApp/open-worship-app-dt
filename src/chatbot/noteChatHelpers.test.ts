@@ -9,6 +9,11 @@ import {
     checkIsNoteOpenedLast,
     findNoteAskFiles,
     findOpenNoteAttachments,
+    findSessionNoteTarget,
+    genNoteStyleChanges,
+    genNoteStyleDoneText,
+    readCreatedNote,
+    readNoteStyleAsk,
     genNoteOpeningAnswer,
     genNoteSizeChanges,
     genNoteSizeDoneText,
@@ -83,6 +88,12 @@ describe('which attachment is a note', () => {
         ];
         expect(findOpenNoteAttachments(messages)).toEqual([SUNDAY]);
         expect(findOpenNoteAttachments(messages, 2)).toEqual([]);
+        // The window the tab works in, read off the note it keeps.
+        expect(findSessionNoteTarget(messages)).toEqual({
+            fileFullName: 'Default.own',
+            noteId: 3,
+        });
+        expect(findSessionNoteTarget(messages, 2)).toBeNull();
         expect(checkIsNoteOpenedLast(messages)).toBe(true);
         // A slide document opened after it is the one asked about.
         const later = [
@@ -285,5 +296,98 @@ describe('a note made larger by the window', () => {
         const text = genNoteSizeDoneText('Sunday', 2);
         expect(text).toContain('2 blocks of “Sunday”');
         expect(text).toContain('not saved yet');
+    });
+});
+
+// BN-08, 2026-11-08: a style for the whole note, done by the window.
+describe('a whole-note style in a short English line', () => {
+    it('reads the styles, a colour, an alignment, a font and a clear', () => {
+        expect(readNoteStyleAsk('Make all the text bold')).toEqual({
+            styles: ['bold'],
+        });
+        expect(readNoteStyleAsk('make the words italic.')).toEqual({
+            styles: ['italic'],
+        });
+        expect(readNoteStyleAsk('Make everything dark blue')).toEqual({
+            color: 'dark blue',
+        });
+        expect(readNoteStyleAsk('Centre everything')).toEqual({
+            align: 'center',
+        });
+        expect(readNoteStyleAsk('Use Georgia for the whole note')).toEqual({
+            font: 'georgia',
+        });
+        expect(readNoteStyleAsk('Clear the formatting')).toEqual({
+            clear: true,
+        });
+        // One part, or anything longer, is the assistant's.
+        expect(readNoteStyleAsk('Make the heading bold')).toBeNull();
+        expect(readNoteStyleAsk('What is this note about?')).toBeNull();
+    });
+
+    it('is one change a block with words, a font only as the box lists it', () => {
+        const read = {
+            fonts: ['Arial', 'Georgia'],
+            blocks: [
+                { n: 1, kind: 'h1', text: 'Grace' },
+                { n: 2, kind: 'picture', text: '', isFixed: true },
+                { n: 3, kind: 'paragraph', text: 'Love is patient' },
+                { n: 4, kind: 'paragraph', text: '' },
+            ],
+        };
+        expect(genNoteStyleChanges(read, { styles: ['bold'] })).toEqual([
+            { block: 1, styles: ['bold'] },
+            { block: 3, styles: ['bold'] },
+        ]);
+        expect(genNoteStyleChanges(read, { font: 'georgia' })).toEqual([
+            { block: 1, font: 'Georgia' },
+            { block: 3, font: 'Georgia' },
+        ]);
+        expect(genNoteStyleChanges(read, { font: 'Comic Sans' })).toBeNull();
+        expect(
+            genNoteStyleChanges({ ...read, nextFrom: 5 }, { clear: true }),
+        ).toBeNull();
+        expect(genNoteStyleDoneText('Sunday', 2)).toContain('2 blocks');
+    });
+});
+
+// A note the assistant MADE (`owa_bible_note add`, 2026-11-08): the window
+// opens and attaches it by what the APP answered, never the model's words.
+describe('readCreatedNote', () => {
+    it('reads the note an add made, off its result', () => {
+        expect(
+            readCreatedNote(
+                JSON.stringify({
+                    file: 'Default',
+                    added: 'Creation',
+                    id: 8,
+                    filePath: NOTE_PATH,
+                    undoId: 'u-8',
+                }),
+            ),
+        ).toEqual({
+            name: 'Creation',
+            filePath: NOTE_PATH,
+            noteId: 8,
+            undoId: 'u-8',
+        });
+        expect(
+            readCreatedNote(
+                JSON.stringify({ added: 'A', id: 0, filePath: NOTE_PATH }),
+            ),
+        ).toMatchObject({ noteId: 0, undoId: null });
+    });
+
+    it('a refusal, another file kind or a broken id made no note', () => {
+        for (const text of [
+            'A new note needs a `title`.',
+            JSON.stringify({ added: 'A', id: 2 }),
+            JSON.stringify({ added: 'A', id: 2, filePath: 'C:\\x\\Song.owl' }),
+            JSON.stringify({ added: 'A', id: -1, filePath: NOTE_PATH }),
+            JSON.stringify({ added: 'A', id: 1.5, filePath: NOTE_PATH }),
+            JSON.stringify({ id: 2, filePath: NOTE_PATH }),
+        ]) {
+            expect(readCreatedNote(text), text).toBeNull();
+        }
     });
 });

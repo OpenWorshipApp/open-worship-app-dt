@@ -81,7 +81,9 @@ window as a whole — tabs, pickers, its language, the caution — is in
   open had gone to the ordinary assistant), or a
   Resources file by name (`MAT.18.pdf`) -- and not a how-to or the app's own
   work, is a `bible-reader` ask: the names lookup, the Resources reader and the verse
-  reader are offered together (`AskExtraType.bibleReader`), the installed
+  reader are offered together (`AskExtraType.bibleReader`) -- and, since
+  2026-11-08, `owa_bible_note` to MAKE a note of what they read
+  (`chatbot-llm.md`, a NEW note) -- the installed
   Bibles are read once so a Khmer ask is quoted from the Khmer Bible, and
   the answer is marked `isBibleReaderAnswer` so the next plain line ("and
   chapter 5?") stays in the conversation. The cue words are DATA

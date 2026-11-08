@@ -181,7 +181,9 @@ vi.mock('../../helper/bible-helpers/bibleStyleHelpers', () => ({
 
 import {
     BIBLE_KEY_SETTING_NAME,
+    checkIsEditorKeyChanged,
     checkIsEmptyNoteContent,
+    genTrackedEditorStorage,
     getBibleNoteData,
     getBibleNoteSelectedBibleKey,
     initBibleNote,
@@ -981,5 +983,39 @@ describe('checkIsEmptyNoteContent', () => {
             root: { children: [], padding: 'x'.repeat(600) },
         });
         expect(checkIsEmptyNoteContent(longChildless)).toBe(false);
+    });
+});
+
+// 2026-11-08: the ¶ view and a block link set from the help window are the
+// editor's own keys, read as it mounts -- a note window mounts again when
+// ANOTHER window changed one, never for its own writes.
+describe('the editor keys a note window watches', () => {
+    test("its own writes are known; another window's are a change", () => {
+        const store = {
+            deleteSetting: vi.fn(),
+            getSetting: vi.fn(() => 'value'),
+            setSetting: vi.fn(),
+        };
+        const seenMap = new Map<string, string | null>([
+            ['lexical-playground-settings', null],
+        ]);
+        const tracked = genTrackedEditorStorage(store, seenMap);
+        tracked.setSetting('lexical-playground-settings', '{"a":true}');
+        expect(store.setSetting).toHaveBeenCalledWith(
+            'lexical-playground-settings',
+            '{"a":true}',
+        );
+        expect(tracked.getSetting('x')).toBe('value');
+        h.homeGetItemMock.mockReturnValue('{"a":true}');
+        expect(checkIsEditorKeyChanged(seenMap)).toBe(false);
+        h.homeGetItemMock.mockReturnValue('{"showInvisibleCharacters":true}');
+        expect(checkIsEditorKeyChanged(seenMap)).toBe(true);
+        tracked.deleteSetting('lexical-playground-settings');
+        expect(seenMap.get('lexical-playground-settings')).toBeNull();
+        // A key it does not watch is passed on and not remembered.
+        tracked.setSetting('lexical-playground-editor-zoom-percent', '90');
+        expect(seenMap.has('lexical-playground-editor-zoom-percent')).toBe(
+            false,
+        );
     });
 });

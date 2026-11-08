@@ -395,6 +395,21 @@ describe('applyChatLaunchFocus', () => {
         });
     });
 
+    // 2026-11-08, the user: _chatbot should demand select a bible-note window_.
+    test('a tab the window keeps on its own window is left alone', () => {
+        const active = genSession({
+            id: 'active',
+            focus: 'bibleNote',
+            isFocusChosen: true,
+        });
+        const state = applyChatLaunchFocus(
+            { sessions: [active], activeId: active.id },
+            'reader',
+            (session) => session.id === 'active',
+        );
+        expect(state.sessions[0]).toBe(active);
+    });
+
     test('a missing opener leaves the restored tab alone', () => {
         const active = genSession({ id: 'active', focus: 'reader' });
         const state = { sessions: [active], activeId: active.id };

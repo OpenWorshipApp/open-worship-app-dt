@@ -4108,5 +4108,6 @@
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "「{name}」を下に添付しました。このノートを変更できます：言葉の変更や翻訳、スペルの確認、見出しと箇条書きへの整理、聖書の聖句の追加です。要約したり、ノートについての質問に答えたり、ノートエディターでの操作方法を説明したりもできます。どれかを押すか、したいことを言ってください。",
     "Summarize this note": "このノートを要約する",
     "Tidy it into headings and lists": "見出しと箇条書きに整理する",
-    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "1回の変更で完了しました：「{name}」 の{count}個のブロックの文字の大きさを変えました。まだ保存されていません：ノートのウィンドウの保存で残せます。「この変更を元に戻す」で元に戻せます。"
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "1回の変更で完了しました：「{name}」 の{count}個のブロックの文字の大きさを変えました。まだ保存されていません：ノートのウィンドウの保存で残せます。「この変更を元に戻す」で元に戻せます。",
+    "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "1回の変更で完了しました：「{name}」 の{count}個のブロックの文字のスタイルを変えました。まだ保存されていません：ノートのウィンドウの保存で残せます。「この変更を元に戻す」で元に戻せます。"
 }
