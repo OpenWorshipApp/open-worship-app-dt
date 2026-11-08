@@ -2,7 +2,7 @@
 id: W-14
 title: "Keep Bible notes"
 section: "Bible study"
-verify: [PR-03, PU-03, KB-11]
+verify: [PR-03, PU-03, KB-11, PM-170]
 screenshots: 1
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-07"
@@ -31,10 +31,13 @@ The arrows at the TOP of the window are the text editor's own undo and redo;
 the ones at the bottom are the note FILE's.
 :::
 
+Notes for a sermon series can live in a folder of their own: the row under the
+**[en:tran:Bible Notes]** title switches between them (W-58).
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PR-03` · `PU-03` · `KB-11`
+`PR-03` · `PU-03` · `KB-11` · `PM-170`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-07).
 :::

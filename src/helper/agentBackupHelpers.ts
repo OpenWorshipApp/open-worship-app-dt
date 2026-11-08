@@ -92,6 +92,9 @@ export function genNoBackupReason(error: unknown) {
 // preview of it and its slides' own transitions. Trashed with it, renamed with
 // it, and backed up with it. (Literal rather than imported: this module is
 // reached from the agent relay and keeps its imports lazy.)
+// The attached-background sidecar (`AttachBackgroundManager`).
+export const ATTACHED_BACKGROUND_EXTENSION = '.bg.json';
+
 export const AGENT_SIDECAR_EXTENSIONS = [
     '.bg.json',
     '.preview.bg.json',
@@ -756,6 +759,19 @@ async function applyRestore(restore: AgentRestoreType) {
             const { clearBibleXMLCache } =
                 await import('../setting/bible-setting/bibleXMLHelpers');
             await clearBibleXMLCache(restore.bibleKey);
+        }
+        // A document's attached backgrounds: the manager keeps the map for a
+        // few seconds, and the slide cards would draw the background just
+        // undone until it let go.
+        if (restore.filePath.endsWith(ATTACHED_BACKGROUND_EXTENSION)) {
+            const { attachBackgroundManager } =
+                await import('../others/AttachBackgroundManager');
+            await attachBackgroundManager.forgetCachedData(
+                restore.filePath.slice(
+                    0,
+                    -ATTACHED_BACKGROUND_EXTENSION.length,
+                ),
+            );
         }
         return;
     }

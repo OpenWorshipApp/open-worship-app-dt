@@ -46,6 +46,10 @@ because `scripts/triage.mjs` reads it from there:
 
 **Evidence.** Memory `foreground-camera-deviceid-rotates`: the module loads in the screen window and must stay a leaf. It took `electronSendAsync` from `server/appHelpers`, which imports `showSimpleToast`, `tran` and so `SettingManager`. **Shipped.** The import is the leaf `server/electronSendHelpers`, which holds the same function. **Proof.** Typecheck; `cameraHelpers.test.tsx` (its mock moved with the import).
 
+## EN-53 · The Slide Editor drops a typed size or position when the next action comes too soon — `open` · S3 · reliability
+
+**Evidence.** Driven 2026-11-07 on the dev app while measuring the chatbot against the editor (`.claude/rules/agent-tools.md`, the head-to-head): a box's Font Size, Left, Top, Width or Height commits a moment after it is typed, Enter included, and two actions lost the value with nothing said -- **Slide 2** pressed about two seconds after the subtitle's 88 (the subtitle stayed 70, twice), and a Font Size of 120 typed a few seconds after the box's words were typed (it stayed 60, twice, with 2.5 s and 5 s pauses; the position typed after it stuck). A volunteer who types a size and moves on reads the field as changed and the slide as not. **Not yet looked into**: where the pending write is dropped (a debounce cancelled on unmount, or the words' own write replacing the box). Found outside an `owa-enhance` run; research before a fix.
+
 ## EN-40 · Refused virtual-display sockets need error handling — `done` · S2 · security
 
 **Shipped (2026-10-07).** The blocked-viewer upgrade installs an error handler

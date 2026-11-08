@@ -151,11 +151,20 @@ import {
     LYRIC_MAX_TOOL_ROUNDS,
     LYRIC_SYSTEM_PROMPT,
     genLyricUndoAction,
+    mergeEditedDocument,
     readEditedLyric,
     resolveLyricEditFile,
     type EditedLyricType,
     type LyricAskFileType,
 } from './lyricChatHelpers';
+import {
+    SLIDE_ASK_KIND,
+    SLIDE_EDIT_TOOL_NAME,
+    SLIDE_MAX_TOOL_ROUNDS,
+    SLIDE_SYSTEM_PROMPT,
+    resolveSlideEditFile,
+    type SlideAskFileType,
+} from './slideChatHelpers';
 import {
     BIBLE_READER_ASK_KIND,
     BIBLE_READER_MAX_TOOL_ROUNDS,
@@ -2091,6 +2100,13 @@ type ToolWatchType = {
      */
     lyricFiles: LyricAskFileType[] | null;
     /**
+     * The slide documents attached to the tab, when this is a question about
+     * them -- what a `file` the model gives `owa_slide_edit` is turned into
+     * (`resolveSlideEditFile`). Null outside such a question, where
+     * `owa_slide_edit` is not the model's to call at all.
+     */
+    slideFiles: SlideAskFileType[] | null;
+    /**
      * The last song `owa_lyric_edit` CHANGED in this ask, off the result --
      * the answer carries the button that undoes it.
      */
@@ -2309,6 +2325,7 @@ export function genToolWatch(): ToolWatchType {
         draftedLyric: null,
         createdLyric: null,
         lyricFiles: null,
+        slideFiles: null,
         editedLyric: null,
         bibleImportCheck: null,
         pageTitles: {},
@@ -2993,7 +3010,19 @@ export function applyToolWatch(
         // changed is the ask DONE -- no walkthrough is offered under it.
         const edited = readEditedLyric(text);
         if (edited !== null) {
-            watch.editedLyric = edited;
+            watch.editedLyric = mergeEditedDocument(watch.editedLyric, edited);
+            watch.isActedOn = true;
+        }
+    }
+    if (name === SLIDE_EDIT_TOOL_NAME && args?.action !== 'slides') {
+        // The same for a slide document: its answer carries `name`,
+        // `isChanged` and `undoId` in the song edit's own shape, and the
+        // answer the same two buttons -- Undo this change, Show it in the
+        // list. Slides made and then a background put behind them are two
+        // changes of one answer, and the button puts back both.
+        const edited = readEditedLyric(text);
+        if (edited !== null) {
+            watch.editedLyric = mergeEditedDocument(watch.editedLyric, edited);
             watch.isActedOn = true;
         }
     }
@@ -3110,6 +3139,27 @@ async function runMcpToolCall(
             );
         }
         const resolved = resolveLyricEditFile(args?.file, watch.lyricFiles);
+        if ('reason' in resolved) {
+            return `Tool refused: ${resolved.reason}`;
+        }
+        lyricEditArgs = {
+            ...(args ?? {}),
+            file: 'filePath' in resolved ? resolved.filePath : resolved.name,
+        };
+    }
+    // A slide document the same way: changed only in a conversation about
+    // one the person attached, named by its NAME -- the window puts its path
+    // in (`resolveSlideEditFile`), and a path the model writes is refused.
+    if (name === SLIDE_EDIT_TOOL_NAME) {
+        if (watch.slideFiles === null) {
+            return (
+                `Tool refused: ${SLIDE_EDIT_TOOL_NAME} changes a slide ` +
+                'document the person attached to this chat. Ask them to open ' +
+                'it in the chat (Open in Chatbot, in its menu in the ' +
+                'Documents list), or use owa_slide_file.'
+            );
+        }
+        const resolved = resolveSlideEditFile(args?.file, watch.slideFiles);
         if ('reason' in resolved) {
             return `Tool refused: ${resolved.reason}`;
         }
@@ -3491,6 +3541,17 @@ export type AskExtraType = {
     lyric?: {
         files: LyricAskFileType[];
     };
+    /**
+     * A question about a SLIDE DOCUMENT attached to the tab
+     * (`slideChatHelpers.ts`): the ask carries each document as it reads
+     * now, and it goes out under `SLIDE_SYSTEM_PROMPT` with
+     * `owa_slide_edit` -- offered to no other question -- for a few rounds,
+     * with any picture they attached. `files`: what a `file` the model names
+     * is turned into (`resolveSlideEditFile`).
+     */
+    slide?: {
+        files: SlideAskFileType[];
+    };
 };
 
 // The frame a `/btw` question goes to the model in. In the USER turn, never
@@ -3693,6 +3754,9 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     }
     if (extra?.lyric !== undefined) {
         return LYRIC_SYSTEM_PROMPT;
+    }
+    if (extra?.slide !== undefined) {
+        return SLIDE_SYSTEM_PROMPT;
     }
     return genSystemPrompt(
         focus,
@@ -3967,7 +4031,9 @@ async function askAnthropicCompatible(
                     ? BIBLE_READER_MAX_TOOL_ROUNDS
                     : extra?.lyric !== undefined
                       ? LYRIC_MAX_TOOL_ROUNDS
-                      : MAX_TOOL_ROUNDS;
+                      : extra?.slide !== undefined
+                        ? SLIDE_MAX_TOOL_ROUNDS
+                        : MAX_TOOL_ROUNDS;
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
@@ -4263,6 +4329,20 @@ export function resetReasoningOffMemoryForTests() {
     reasoningOffUntilMap.clear();
 }
 
+/**
+ * A model that answered with nothing. Marked `isNothingDone` when it called
+ * no tool in the whole ask: it pressed nothing, so Auto may put the question
+ * to the next assistant even though a round came back
+ * (`checkIsNothingDoneError`). Seen live 2026-11-07: a shared gemma4:cloud
+ * answered a slide question with nothing, three times of four, while the
+ * same model on the user's own Ollama made the slides.
+ */
+function genNoAnswerError(message: string, watch: ToolWatchType) {
+    const error = new Error(message) as Error & { isNothingDone?: boolean };
+    error.isNothingDone = watch.toolCallCount === 0;
+    return error;
+}
+
 async function askOpenAiCompatible(
     provider: OpenAiCompatProviderType,
     question: string,
@@ -4336,7 +4416,9 @@ async function askOpenAiCompatible(
                             ? BIBLE_READER_MAX_TOOL_ROUNDS
                             : extra?.lyric !== undefined
                               ? LYRIC_MAX_TOOL_ROUNDS
-                              : MAX_TOOL_ROUNDS,
+                              : extra?.slide !== undefined
+                                ? SLIDE_MAX_TOOL_ROUNDS
+                                : MAX_TOOL_ROUNDS,
               );
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
@@ -4352,6 +4434,8 @@ async function askOpenAiCompatible(
     let isReasoningOff =
         provider.canTurnReasoningOff === true &&
         checkIsReasoningOffRemembered(provider.label, model);
+    // A reply the server dropped is asked for once more (below).
+    let isDroppedReplyRetried = false;
     const reportStep = genProgressReporter(extra?.onProgress);
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back -- and the
@@ -4459,9 +4543,10 @@ async function askOpenAiCompatible(
             const written = parseTextToolCalls(choice?.content, providerTools);
             if (written !== null) {
                 if (isLastRound) {
-                    throw new Error(
+                    throw genNoAnswerError(
                         `${provider.label} returned no answer ` +
                             '(it wrote a tool call as words on its last step)',
+                        watch,
                     );
                 }
                 toolCalls = written.calls;
@@ -4503,12 +4588,32 @@ async function askOpenAiCompatible(
                     round -= 1;
                     continue;
                 }
+                // Or it WROTE something and the server handed back nothing:
+                // a tool call the server could not parse is dropped whole.
+                // Measured 2026-11-07 on gemma4:cloud with the slide ask,
+                // straight to two Ollama servers: about one reply in six,
+                // ~170 tokens generated and no text, no call, `stop` --
+                // with the tab's history in front, at temperature 0 too,
+                // and on the user's own server as on the shared one. The
+                // same round asked again answers. Once an ask, only while
+                // tools are on offer: a second empty reply is the model's.
+                if (
+                    !isDroppedReplyRetried &&
+                    !isLastRound &&
+                    providerTools.length > 0 &&
+                    Number(completion.usage?.completion_tokens ?? 0) > 0
+                ) {
+                    isDroppedReplyRetried = true;
+                    round -= 1;
+                    continue;
+                }
                 // Or the model simply said nothing. Thrown rather than
                 // shown, so the caller falls back to the manual instead of
                 // printing a shrug.
-                throw new Error(
+                throw genNoAnswerError(
                     `${provider.label} returned no answer ` +
                         `(${completion.choices[0]?.finish_reason ?? 'unknown'})`,
+                    watch,
                 );
             }
             // The reply to the completeness check: the first answer, or the
@@ -4902,6 +5007,8 @@ const LOCAL_TOOL_NAME_LIST = [
     RESOURCES_TOOL_NAME,
     // ...and about a song attached to the tab.
     LYRIC_EDIT_TOOL_NAME,
+    // ...and about a slide document attached to the tab.
+    SLIDE_EDIT_TOOL_NAME,
 ];
 const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
 
@@ -5741,7 +5848,8 @@ async function askLlmBotAsWritten(
         extra?.lookup !== undefined ||
         extra?.resources !== undefined ||
         extra?.bibleReader !== undefined ||
-        extra?.lyric !== undefined
+        extra?.lyric !== undefined ||
+        extra?.slide !== undefined
             ? null
             : genReaderButtonReferenceAnswer(extra?.askedText ?? asked, focus);
     if (readerButtonAnswer !== null) {
@@ -5784,7 +5892,8 @@ async function askLlmBotAsWritten(
             extra?.lookup === undefined &&
             extra?.resources === undefined &&
             extra?.bibleReader === undefined &&
-            extra?.lyric === undefined;
+            extra?.lyric === undefined &&
+            extra?.slide === undefined;
         seeded.partControls = extra?.knownPartControls ?? [];
         seeded.isWhatAsk = extra?.isKnownWhatAsk === true;
         seeded.pageLang = findPageLanguage(toShownAnswerLanguage(extra));
@@ -5795,9 +5904,11 @@ async function askLlmBotAsWritten(
             extra?.resources === undefined &&
             extra?.bibleReader === undefined &&
             extra?.lyric === undefined &&
+            extra?.slide === undefined &&
             extra?.isGeneral !== true &&
             extra?.isTranslation !== true;
         seeded.lyricFiles = extra?.lyric?.files ?? null;
+        seeded.slideFiles = extra?.slide?.files ?? null;
         seeded.foundVerses = [...(extra?.verseFind?.found ?? [])];
         seeded.verseFindBible = extra?.verseFind?.bible ?? null;
         seeded.lookupPage = extra?.lookup?.page ?? null;
@@ -5857,7 +5968,9 @@ async function askLlmBotAsWritten(
                   ? pickAskToolList(tools, BIBLE_READER_ASK_KIND)
                   : extra?.lyric !== undefined
                     ? pickAskToolList(tools, LYRIC_ASK_KIND)
-                    : filterModelToolList(tools);
+                    : extra?.slide !== undefined
+                      ? pickAskToolList(tools, SLIDE_ASK_KIND)
+                      : filterModelToolList(tools);
     // Every round's usage goes to the spend guard's ledger BEFORE it goes to
     // whoever asked -- here, once, rather than in each provider loop, so
     // that no caller of this function (the window, the report, a rescue, one

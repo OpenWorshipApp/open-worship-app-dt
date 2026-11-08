@@ -13,6 +13,7 @@ import PptxAppDocument from '../app-document-list/PptxAppDocument';
 import { dirSourceSettingNames } from '../helper/constants';
 import type DirSource from '../helper/DirSource';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
+import { useActiveDirSourceSettingName } from '../media-sessions/useActiveDirSourceSettingName';
 import FileSource from '../helper/FileSource';
 import { fsCheckDirExist } from '../server/fileHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
@@ -203,7 +204,11 @@ async function getAudioDataList(dirSource: DirSource) {
 export function useAppDocumentAudioData() {
     const [audioData, setAudioData] =
         useState<VaryAppDocumentAudioDataType | null>(null);
-    const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
+    // The Documents session in front: the songs listed here are the ones the
+    // Documents list is showing.
+    const dirSource = useGenDirSourceReload(
+        useActiveDirSourceSettingName(dirSourceSettingNames.APP_DOCUMENT),
+    );
 
     useAppEffect(() => {
         if (dirSource === null) {

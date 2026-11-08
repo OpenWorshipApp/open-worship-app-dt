@@ -29,6 +29,7 @@ const h = vi.hoisted(() => ({
     removeDocx: vi.fn(),
     openFile: vi.fn(),
     getInstance: vi.fn(),
+    openChatbot: vi.fn(),
 }));
 
 vi.mock('../others/FileItemHandlerComp', () => ({
@@ -90,6 +91,15 @@ vi.mock('../editing-manager/editingHelpers', () => ({
     useEditingHistoryStatus: () => ({ canSave: h.canSave }),
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
+// Open in Chatbot (2026-11-07): its own leaf, read for whether AI is on.
+vi.mock('../helper/ai/lyricChatbotMenuHelpers', () => ({
+    genDocumentOpenInChatbotContextMenu: (filePath: string) => [
+        {
+            menuElement: 'Open in Chatbot',
+            onSelect: () => h.openChatbot(filePath),
+        },
+    ],
+}));
 vi.mock('../helper/pdfPreviewHelpers', () => ({ openPdfPreview: h.openPdf }));
 vi.mock('../server/pptxHelpers', () => ({
     removePptxHtmlsPreview: h.removePptx,
@@ -264,6 +274,8 @@ describe('Documents list file row', () => {
         item('Print').onSelect();
         item('Export').onSelect();
         item('Export to PPTX').onSelect();
+        item('Open in Chatbot').onSelect();
+        expect(h.openChatbot).toHaveBeenCalledWith(h.doc.filePath);
         expect(h.openEditor).toHaveBeenCalledWith(h.doc);
         expect(h.print).toHaveBeenCalledWith(h.doc);
         expect(h.exportArchive).toHaveBeenCalledWith(h.doc.filePath);
@@ -284,6 +296,12 @@ describe('Documents list file row', () => {
             expect(
                 container.querySelector(`[title="${label}"]`),
             ).not.toBeNull();
+            // Its own file, with no slides here for the assistant to change.
+            expect(
+                h.props.contextMenuItems.map(
+                    ({ menuElement }: MenuItem) => menuElement,
+                ),
+            ).not.toContain('Open in Chatbot');
             item(openTitle).onSelect();
             await item(refreshTitle).onSelect();
             const open = kind === 'pdf' ? h.openPdf : h.openFile;

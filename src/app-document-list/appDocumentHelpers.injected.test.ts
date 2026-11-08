@@ -2,6 +2,16 @@
 
 import { describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 // The app-document EDITOR window, opened on one document through `?file=`
 // (`openAppDocumentEditorExternal`). Whether a window hosts an injected
 // document is decided when `appDocumentHelpers` is evaluated, so the URL and
@@ -66,6 +76,8 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('../helper/domHelpers', () => ({
     getParamFileFullName: (url: string) =>
         new URL(url).searchParams.get('file'),
+    getParamKeyValue: (url: string, key: string) =>
+        new URL(url).searchParams.get(key),
     getParamIdNum: (url: string) => {
         const idNum = Number.parseInt(
             new URL(url).searchParams.get('id') ?? '',

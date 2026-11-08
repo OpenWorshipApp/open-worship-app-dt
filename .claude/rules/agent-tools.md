@@ -1396,3 +1396,184 @@ false` and searches only a dataset a lookup panel already holds
   The worker's `owa-agent-file` request takes `filePath` (songs only:
   `read`, `info`, `update`) and `update` an `expectedHash` and a
   `summary` for the backup's line.
+
+- **A slide document changed by the assistant is `owa_slide_edit`**
+  (2026-11-07, the user: _like lyric, add `Open in Chatbot` for AppDocument
+  to let chatbot help modify slides_, then _chatbot be the best choice to
+  help modify appdocument slides_ and _when user attach a screenshot of
+  example slides … chatbot should be able to make slides for them_;
+  `tools/owa-devtools-mcp/agentSlideEdit.mjs`). `owa_slide_file`'s slide
+  actions plus what a whole-document job needs, the rules the app's own
+  (`agentSlideHelpers.ts`, pure): `slides` reads every box's words WHOLE
+  (`isFullText`, to 5 000 characters -- a verse cut at 300 cannot be
+  translated); **`update-slides`** changes many slides and **`add-slides`**
+  adds many (`changes: [{slide, items}]`) in ONE call and ONE history
+  entry, by `update-slide`'s / `add-slide`'s own rules, any refusal
+  refusing the lot -- a translation had been one `update-slide` a slide,
+  past every round cap; a picture's slides are one call, a full-slide box
+  with a `backgroundColor` and no text their background. `file` is a
+  Documents name or a whole `.ows` path: the worker's `filePath` now takes a
+  slide document for `info` and the slide actions (`handleByPath`,
+  `resolveDocumentPath`). The batch actions are not in
+  `AGENT_SLIDE_ACTION_LIST`, so `owa_slide_file`'s schema did not change.
+  Firewall: `slides` reads, every other action acts (`READING_ACTION_MAP`),
+  `delete-slide` is a removal; the banner is the slide tool's own, named by
+  the document, a batch said as _changed the slide document "<name>"_.
+  **Five guards a real model needed** (measured 2026-11-07 by asking the
+  user's gemma4:cloud each card button with every call executed on a
+  scratch copy; every one is in `agentSlideHelpers.ts`, so `owa_slide_file`
+  has them too): a line break written out as `\n` in `text` is the line
+  break it meant (`toRealLineBreaks` -- it copies the JSON escaping of the
+  words it was shown); a "new" box carrying an existing box's whole words
+  is refused with that box's id (the English and the Khmer were sent with
+  no `id`); new words repeating ANOTHER box of the slide are refused, the
+  slide to be left out (a slide whose English was already its own box got
+  it twice), unless that box is removed in the same change; a new box with
+  a font and no `text` is refused (an empty 80px box over the background,
+  the words then written into the background); and adding slides answers
+  each new slide's box ids and words (`boxes`, `slides`). An empty document
+  reads the size a new slide gets. Asked again after them, each button did
+  the job in one call: English above slide 3's Khmer with slide 2 left
+  alone, every box ×1.25, two slides drawn after a picture in 3 s.
+  **Against the route the chatbot had before** (the same model and
+  six-slide document, every call executed on scratch copies,
+  `owa_slide_file` a slide at a time with the words cut at 300): _Make the
+  words larger_ 15 tool calls, 6 undo steps, 4.0 s against 1, 1, 1.3 s;
+  _Add Spanish under each line_ 17, 8, 3.6 s against 1, 1, 1.8 s; _Check
+  the spelling_ 2, 1, 4.5 s against 2, 1, 2.0 s -- all done either way on
+  gemma4:cloud, but the old route spends most of the firewall's 25 acting
+  calls a minute on one request and leaves eight Ctrl+Z presses to put a
+  translation back, where the window's **Undo this change** took back only
+  the last of them. The Free tier's `nemotron-3.5-super-vl` the same:
+  larger 7 calls / 6 undo steps / 7.6 s against 1 / 1 / 5.8 s; Spanish
+  under each line 7 / 6 / 22.0 s against 1 / 1 / 8.9 s; spelling 2 / 1 /
+  4.4-7.1 s against 1 / 1 / 5.7-8.6 s over three runs (the slide answer is
+  the longer one: what changed, unsaved, Undo, three next changes); one
+  size for every box 7 / 6 / 12.3 s against 1 / 1 / 9.0 s.
+  `nemotron-3-ultra` one size 7 / 6 / 12.2 s against 1 / 1 / 8.2 s, larger
+  7 / 6 / 20.6 s against 2 / 1 / 16.1 s, Spanish under each line NOT
+  done the old way against done in one change. On gemma4:cloud the old
+  route did not finish one size for every box; the slide conversation did,
+  in one call. **And the Slide Editor by hand**, driven on
+  the same document: its **Bulk Font** is 3 presses but sets ONE size on
+  every box (a 90 title over a 70 subtitle both became 110); the job the
+  chatbot did -- each box ×1.25, the hierarchy kept -- is a slide card, a
+  box and a typed size per box, 22 actions and a sum per box for six
+  slides of eight boxes; a translation by hand is every box retyped by
+  somebody who knows the language. So the chatbot is the quicker way for a
+  change across many boxes that needs the words read (a translation, a
+  spelling check, sizes that keep their proportion, slides drawn after a
+  picture); one size for every box is Bulk Font's. **A picture's rounded
+  band came out square** until boxes took `round` (`roundSizePixel`) and
+  the prompt said to look at the corners: then a clean picture of a slide,
+  dropped in the window, became two slides with the same wide rounded band
+  centred on a dark blue slide -- only a photo background could not be
+  made, the tool setting colours, not pictures. **So a slide's BACKGROUND
+  is the tool's too** (the same day, `set-background`;
+  `agentSlideBackgroundRules.ts` pure, `agentSlideBackgroundHelpers.ts` the
+  app side): what the little background mark on a slide card is and what
+  the screen puts behind the words -- `AttachBackgroundManager`'s
+  `<file>.bg.json`, keyed by slide id. `background` is a colour, `none`, or
+  a picture or video of the Background panel by name: the full name, the
+  name without its extension, else the ONE file whose name holds every word
+  asked (3 letters or more) -- a folder of 58 pictures is listed beside the
+  document only to 30 a kind (`backgroundChoices`, `isTruncated`), so
+  _mountain_ is how `wp_mountain_reflection.jpg` is reached, and several
+  files that fit are named back to pick from. `slides` lists slide numbers;
+  left out it is EVERY slide, each by its own id -- a slide card draws its
+  own background only, never the document's `self` one, which reaches the
+  screen and no card (`none` for every slide takes `self` off too). ONE
+  read and ONE write of the sidecar for the whole change
+  (`setAttachedBackgrounds`), the sidecar backed up first
+  (`snapshotAgentFile`). It is not part of the editing history: kept at
+  once, no Save, and the answer says so. An undo that writes a `.bg.json`
+  back drops the manager's cached map and fires the sidecar's update
+  (`forgetCachedData` in `applyRestore`), or the cards would draw the undone
+  background for the cache's five seconds. A `slides` read for this tool
+  carries each slide's `background`, the document's own and the choices;
+  `owa_slide_file`'s does not. **Live through the window, Auto, a picture of
+  a mountain-lake slide with no word typed** (2026-11-07): the shared
+  gemma4:cloud answered nothing (three of four askings), Auto handed the
+  question on (below), and the user's own Ollama gemma4:cloud made the slide
+  -- a dark band, bold _Welcome_ -- in one `add-slides` and put
+  `wp_mountain_reflection.jpg` behind it by the word _mountain_; one press of
+  **Undo this change** took both back. Three window changes it needed: a
+  send with NO words under a slide document gets `SLIDE_WORDLESS_HINT`
+  (with a picture, make slides like it -- the model had been handed only the
+  attachment list and wrote nothing); **Undo this change puts back EVERY
+  change one answer made to the document**, newest first
+  (`mergeEditedDocument`, the action's `ids`) -- slides then a background
+  are two backups, and the button had taken back the background alone; and
+  an answer of nothing with no tool called is handed on by Auto
+  (`chatbot-llm.md`). **Sizes are the WINDOW's, with no model** (the same
+  night, `readSlideSizeAsk` / `genSlideSizeChanges` in
+  `src/chatbot/slideChatHelpers.ts`, run in `ChatbotAppComp` right after the
+  options card): the card's **Make the words larger** (a pressed button asks
+  its own English, so in any language), _make the words smaller_ and
+  _make every box 110 px_ -- a short English line and nothing else in it;
+  a slide named, a box chosen or a look asked for stays the model's. The
+  window reads the document (`slides`), scales every unlocked text box
+  (×1.25 / ×0.8, so a 90 title over a 70 subtitle stays above it --
+  **Bulk Font** sets one size on all) or sets one size, and writes it as
+  ONE `update-slides` with **Undo this change** and **Show it in the list**
+  under its own sentence (`genSlideSizeDoneText`, the sizes said as `70 → 88,
+  90 → 113`). A document read in parts, or a refusal, goes on to the model.
+  Measured live: right-click the row, **Open in Chatbot**, **Make the words
+  larger** -- three presses from the Presenter, the change written before
+  the next read (28 ms later it was there), no assistant asked (Auto still
+  _chosen at each question_), no credit; typed _Make every box 110 px_ the
+  same. It works with no key, no internet and no Free quota, which a model
+  never can. **Head to head, from the Presenter, every route DRIVEN** (2026-11-07
+  night, `h2h-run.mjs` in that session's scratchpad: twin documents of 2
+  slides and 3 boxes -- a 90 title over a 70 subtitle, a 90 title, two
+  misspellings -- every action a person makes counted, the clock from the
+  first press to the change read back off the disk; typing a value and its
+  Enter count as one, in the editor's favour):
+  - every box larger, sizes kept apart (113 / 88 / 113) -- by hand 10
+    actions and 21.3 s, plus 90 × 1.25 and 70 × 1.25 worked out; Bulk Font
+    cannot. The chatbot 3, 4.9 s;
+  - one size on every box (110) -- Bulk Font 6 actions, 9.2 s, the
+    Presenter's controls out of sight meanwhile; the chatbot 4, 5.6 s;
+  - the two misspellings -- by hand 8 actions, 16.8 s, for somebody who
+    found them; the card's **Check the spelling** 3, 9.1 s through a model;
+  - a navy background behind both slides -- by hand 4-5 actions (the
+    Background panel opened, Colors, one drag a slide) and 11.3 s; the
+    chatbot 4, 5.5 s, the same 4 for any number of slides;
+  - a slide like the mountain-lake picture on an empty document -- by hand
+    13 actions over 61 s (More Options, New Slide, New, the box, its words,
+    size, left, width, top, height) and it still was not that slide: the
+    120 px typed after the words was lost twice, there is no bold control,
+    and the photo is three more (panel, Images, a drag); the chatbot 4
+    (right-click, **Open in Chatbot**, the picture dropped, **Send**) and
+    13.2 s for the band, a bold 120 px _Welcome_ and
+    `wp_mountain_reflection.jpg` behind it.
+  - ONE box changed (slide 1's title made yellow) -- by hand 6 actions
+    (the document, **Slide Editor**, the box, **Choose Color**, **yellow**,
+    back), 4.8 s; the chatbot 4, 4.1 s;
+  - on a copy of the user's own sermon document (Khmer and English, a
+    video background): every box larger -- by hand 11 actions, 27.1 s; the
+    chatbot 3, 2.5 s; and the English put under a Khmer line, which no
+    hand route offers somebody who does not read Khmer -- the chatbot 2
+    (typed, **Send**) in the chat already open, ~2-6 s;
+  - and the model route held: **Check the spelling** ten times on ten
+    fresh copies, ten done (5.6 s once, 1.9 s each after);
+  - on a copy of the user's Bible document (_Proverbs 17 22-28 ពគប-NIV_,
+    8 slides, 12 left-aligned note boxes, Khmer and English) every note
+    centred -- the chatbot 4 actions, 8.8 s, all twelve; by hand 33 by the
+    document's own shape (the document, **Slide Editor**, then a slide, a
+    box and **Text align center** for each box), and the driver, paced
+    under the firewall's 25 a minute, centred six in 130 s before its
+    clicks went astray (these slides are named _Slide 2: Proverbs 17:22_,
+    and a box clicked by its words hit the slide's thumbnail first).
+  Every row fewer actions and less time through the chatbot, the closest
+  being one box (4 against 6) and the background on two slides (4 against
+  4-5), which grows by a drag a slide by hand. **A typed translation now
+  says where its lines go** (`readSlidePlacement`, the same night): _Add the
+  English under the Khmer line on slide 3_ had been put ABOVE the Khmer
+  once; with `SLIDE_PLACEMENT_HINT_MAP`'s sentence beside a typed ask that
+  names a language and under/below or above (never beside a card button,
+  which has its own), it went under 4 times of 4. **And the editor lost typed values twice**: a
+  size or a position commits a moment after it is typed, and moving to
+  another slide in that moment, or typing a size right after the words,
+  dropped it with nothing said (`EN-53`). Every change the chatbot makes
+  is one press of **Undo this change** away.

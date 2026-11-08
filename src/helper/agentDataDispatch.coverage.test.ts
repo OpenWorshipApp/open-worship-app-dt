@@ -1,5 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 const { state, mocks } = vi.hoisted(() => ({
     state: {
         dir: null as string | null,
@@ -121,6 +131,12 @@ vi.mock('./agentBackupHelpers', () => ({
     trashAgentFile: (...args: any[]) => mocks.trashAgentFile(...args),
 }));
 vi.mock('./agentSlideHelpers', () => ({
+    // `update-slides` / `add-slides` (`owa_slide_edit`) and the whole-words
+    // read: not what these tests drive.
+    AGENT_SLIDE_LIMITS: { shownTextChars: 300, fullTextChars: 5000 },
+    applyAgentSlideBatch: vi.fn(),
+    checkIsAgentSlideBatchAction: () => false,
+    readAgentSlideBatchRequest: vi.fn(),
     applyAgentSlideAction: vi.fn(),
     checkIsAgentSlideAction: () => false,
     readAgentSlideDocument: vi.fn(),

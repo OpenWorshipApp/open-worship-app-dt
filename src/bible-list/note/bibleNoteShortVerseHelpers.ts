@@ -12,6 +12,7 @@ import FileSource, {
     type FileSourcePathEventDataType,
 } from '../../helper/FileSource';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
+import { subscribeMediaSessionStrips } from '../../media-sessions/mediaSessionData';
 import { pathSeparator } from '../../server/fileHelpers';
 import Note from './Note';
 import {
@@ -138,13 +139,33 @@ async function readNoteFileScan(filePath: string): Promise<NoteFileScanType> {
     return { shortVersesList, verseItems };
 }
 
+/**
+ * The note folders the reader's indexes cover: the Default session's, where
+ * every verse mark is kept whatever session is in front, and the session in
+ * front, whose notes the operator is looking at. One folder while Default is
+ * in front, as before sessions existed.
+ */
+function getIndexedNoteSettingNames() {
+    const activeSettingName = Note.getDirSourceSettingName();
+    return activeSettingName === dirSourceSettingNames.BIBLE_NOTES
+        ? [activeSettingName]
+        : [dirSourceSettingNames.BIBLE_NOTES, activeSettingName];
+}
+
 /** One raw pass over every note file, keyed by note file path. */
 async function scanNoteFiles() {
-    const dirSource = await DirSource.getInstance(
-        dirSourceSettingNames.BIBLE_NOTES,
-    );
-    const bibleNoteFilePaths =
-        (await dirSource.getFilePaths(Note.mimetypeName)) ?? [];
+    const bibleNoteFilePaths: string[] = [];
+    for (const settingName of getIndexedNoteSettingNames()) {
+        const dirSource = await DirSource.getInstance(settingName);
+        for (const filePath of (await dirSource.getFilePaths(
+            Note.mimetypeName,
+        )) ?? []) {
+            // Two sessions may name one folder: scanned once.
+            if (!bibleNoteFilePaths.includes(filePath)) {
+                bibleNoteFilePaths.push(filePath);
+            }
+        }
+    }
     const noteEntries = await Promise.all(
         bibleNoteFilePaths.map(async (filePath) => {
             return [filePath, await readNoteFileScan(filePath)] as const;
@@ -284,16 +305,20 @@ async function refreshNoteIndexes() {
 async function handleFileUpdating({
     filePath,
 }: FileSourcePathEventDataType<unknown>) {
-    const dirSource = await DirSource.getInstance(
-        dirSourceSettingNames.BIBLE_NOTES,
-    );
-    const { dirPath } = dirSource;
-    // `dirPath` is '' when the directory is not set, never null
-    if (
-        !dirPath ||
-        typeof filePath !== 'string' ||
-        !filePath.startsWith(dirPath + pathSeparator)
-    ) {
+    if (typeof filePath !== 'string') {
+        return;
+    }
+    let isIndexed = false;
+    for (const settingName of getIndexedNoteSettingNames()) {
+        const dirSource = await DirSource.getInstance(settingName);
+        const { dirPath } = dirSource;
+        // `dirPath` is '' when the directory is not set, never null
+        if (dirPath && filePath.startsWith(dirPath + pathSeparator)) {
+            isIndexed = true;
+            break;
+        }
+    }
+    if (!isIndexed) {
         return;
     }
     attemptTimeout(() => {
@@ -308,8 +333,19 @@ function subscribe(listener: () => void) {
             ['update'],
             handleFileUpdating,
         );
+        // A switch of the Bible Notes session changes which folder is in
+        // front, and no file changed to say so.
+        const unsubscribeSessions = subscribeMediaSessionStrips(
+            dirSourceSettingNames.BIBLE_NOTES,
+            () => {
+                attemptTimeout(() => {
+                    refreshNoteIndexes();
+                });
+            },
+        );
         unregisterFileUpdates = () => {
             FileSource.unregisterEventListener(registeredEvents);
+            unsubscribeSessions();
         };
         refreshNoteIndexes();
     }

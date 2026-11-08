@@ -13,6 +13,7 @@ import {
     genLyricOpeningAnswer,
     genLyricTranslateReplies,
     genLyricUndoAction,
+    mergeEditedDocument,
     readEditedLyric,
     readLyricTranslateMode,
     resolveLyricEditFile,
@@ -265,5 +266,35 @@ describe('after a change', () => {
             args: { id: 'u1', name: 'Still' },
         });
         expect(genLyricUndoAction({ name: 'Still', undoId: null })).toBeNull();
+    });
+
+    test('puts back every change one answer made to the document', () => {
+        const slides = { name: 'Talk', undoId: 'u1' };
+        const background = { name: 'Talk', undoId: 'u2' };
+        const merged = mergeEditedDocument(
+            mergeEditedDocument(null, slides),
+            background,
+        );
+        expect(merged).toEqual({
+            name: 'Talk',
+            undoId: 'u2',
+            undoIdList: ['u1', 'u2'],
+        });
+        expect(genLyricUndoAction(merged)?.args).toEqual({
+            id: 'u2',
+            name: 'Talk',
+            ids: ['u1', 'u2'],
+        });
+        expect(
+            mergeEditedDocument(merged, { name: 'Talk', undoId: 'u3' })
+                .undoIdList,
+        ).toEqual(['u1', 'u2', 'u3']);
+        // Another document starts over; a change with no id keeps the last.
+        expect(
+            mergeEditedDocument(merged, { name: 'Other', undoId: 'u9' }),
+        ).toEqual({ name: 'Other', undoId: 'u9' });
+        expect(
+            mergeEditedDocument(slides, { name: 'Talk', undoId: null }),
+        ).toEqual({ name: 'Talk', undoId: 'u1' });
     });
 });

@@ -42,6 +42,8 @@ vi.mock('../app-document-presenter/items/SlidesMenuComp', async () => {
         },
     };
 });
+// The footer's Open in Chatbot reads whether AI is on; not what this drives.
+vi.mock('./SlideEditorChatbotButtonComp', () => ({ default: () => null }));
 vi.mock('../others/AppErrorBoundaryComp', () => ({
     default: function AppErrorBoundaryMockComp({
         children,

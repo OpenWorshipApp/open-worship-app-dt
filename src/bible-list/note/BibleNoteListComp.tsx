@@ -1,6 +1,6 @@
 import '../cueList.scss';
 
-import { useCallback } from 'react';
+import { type ReactNode, useCallback } from 'react';
 
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
@@ -14,6 +14,7 @@ import type { DroppedFileType } from '../../others/droppingFileHelpers';
 import { toIconedLabel } from '../../others/labelIconHelpers';
 import FileListHandlerComp from '../../others/FileListHandlerComp';
 import { getFileFullName } from '../../server/fileHelpers';
+import { useFileListSessions } from '../../media-sessions/useFileListSessions';
 import Note from './Note';
 import NoteFileComp from './NoteFileComp';
 import {
@@ -63,8 +64,34 @@ function handleDroppedFileTaking(file: DroppedFileType) {
     return true;
 }
 
+/**
+ * The Bible Notes list: the folder-session strip under its title, and the
+ * list of the session in front, keyed by session so a switch drops the list
+ * it leaves. Verse marks stay in the Default session's notes whichever is in
+ * front (`Note.getDefault`).
+ */
 export default function BibleNoteListComp() {
-    const dirSource = useGenDirSourceReload(dirSourceSettingNames.BIBLE_NOTES);
+    const session = useFileListSessions(dirSourceSettingNames.BIBLE_NOTES);
+    return (
+        <BibleNoteListBodyComp
+            key={session.activeId}
+            dirSourceSettingName={session.dirSourceSettingName}
+            sessionsElement={session.element}
+            isDirSettingRouteHidden={!session.isDefaultSession}
+        />
+    );
+}
+
+function BibleNoteListBodyComp({
+    dirSourceSettingName,
+    sessionsElement,
+    isDirSettingRouteHidden,
+}: Readonly<{
+    dirSourceSettingName: string;
+    sessionsElement: ReactNode;
+    isDirSettingRouteHidden: boolean;
+}>) {
+    const dirSource = useGenDirSourceReload(dirSourceSettingName);
     const handleBodyRendering = useCallback((filePaths: string[]) => {
         return filePaths.map((filePath, i) => {
             return (
@@ -87,6 +114,8 @@ export default function BibleNoteListComp() {
                 return !(await Note.create(dirPath, name));
             }}
             header={<span>{toIconedLabel('Bible Notes')}</span>}
+            sessionsElement={sessionsElement}
+            isDirSettingRouteHidden={isDirSettingRouteHidden}
             bodyHandler={handleBodyRendering}
             userClassName="p-0"
             sortFilePaths={sortNoteFilePaths}

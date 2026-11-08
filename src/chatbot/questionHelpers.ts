@@ -427,6 +427,13 @@ export async function genFollowUpQuestions(
 export async function findKnownQuestion(
     asked: string,
     focus: BotFocusType,
+    // Only a row asked as it stands (`checkIsRowAsked`), never one found by a
+    // keyword phrase or a filled gap: for a tab with a document of theirs
+    // open, where "list me more options" is about that document, not the
+    // row that happens to carry "more options" (2026-11-07, the user, with
+    // a slide document open: _I just want the help options again … chatbot
+    // confused_).
+    isExactOnly = false,
 ): Promise<QuestionRowType | null> {
     const key = toFollowUpKey(asked);
     if (key.length === 0) {
@@ -458,7 +465,7 @@ export async function findKnownQuestion(
             .find((row) => {
                 return checkIsRowAsked(row, key);
             }) ?? null;
-    if (elsewhere !== null) {
+    if (elsewhere !== null || isExactOnly) {
         return elsewhere;
     }
     // Typed in the person's own words, but carrying a row's own PHRASE whole

@@ -416,6 +416,22 @@ export type AutoAttemptType = {
     hasRound: boolean;
 };
 
+/**
+ * A failure after which nothing can have been pressed: the model answered
+ * with nothing and called no tool (`genNoAnswerError`). Handed on like a
+ * failure before any round. Read on the error or its `cause`: `askLlmBot`
+ * rewraps a failure in a sentence for the person, the first one its cause.
+ */
+export function checkIsNothingDoneError(error: unknown) {
+    const value = error as {
+        isNothingDone?: unknown;
+        cause?: { isNothingDone?: unknown } | null;
+    } | null;
+    return (
+        value?.isNothingDone === true || value?.cause?.isNothingDone === true
+    );
+}
+
 export type AutoSkipType = {
     pick: AutoCandidateType;
     reason: string;
@@ -463,7 +479,11 @@ export async function askWithAutoAssistant<T>(options: {
                 throw error;
             }
             markAutoSetback(key, now());
-            if (attempt.hasRound && options.canHandOnAfterRound !== true) {
+            if (
+                attempt.hasRound &&
+                options.canHandOnAfterRound !== true &&
+                !checkIsNothingDoneError(error)
+            ) {
                 throw error;
             }
             skipped.push({

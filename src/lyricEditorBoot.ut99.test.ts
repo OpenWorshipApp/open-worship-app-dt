@@ -2,6 +2,16 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('./media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 import { getDashboardInstance, getLyric } from './lyricEditorBoot';
 
 // The Open Lyric dashboard window is wired by hand, not by `boot`/`run`. Every
@@ -135,6 +145,7 @@ vi.mock('./helper/DirSource.ts', () => ({
 vi.mock('./helper/domHelpers.ts', () => ({
     getParamFileFullName: h.getParamFileFullName,
     getParamIdNum: h.getParamIdNum,
+    getParamKeyValue: () => null,
 }));
 vi.mock('./lyric-list/Lyric.ts', () => ({
     default: { getInstance: h.getInstance },

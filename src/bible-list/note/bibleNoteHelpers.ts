@@ -8,7 +8,15 @@ import type { MouseEvent as ReactMouseEvent } from 'react';
 
 import { dirSourceSettingNames } from '../../helper/constants';
 import DirSource from '../../helper/DirSource';
-import { getParamFileFullName, getParamIdNum } from '../../helper/domHelpers';
+import {
+    getParamFileFullName,
+    getParamIdNum,
+    getParamKeyValue,
+} from '../../helper/domHelpers';
+import {
+    SESSION_URL_PARAM_NAME,
+    toSessionDirSourceSettingNameFromParam,
+} from '../../media-sessions/folderSessionHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import appProvider from '../../server/appProvider';
 import { appHomeStorage } from '../../server/appHomeStorage';
@@ -537,8 +545,13 @@ function getNoteFilePathInNotesDir(url: string) {
     if (fileFullName === null) {
         throw new Error('Note file not specified');
     }
+    // The Bible Notes session its opener named (`handleOpening`), else the
+    // Default one's folder.
     const dirPath = DirSource.getDirPathBySettingName(
-        dirSourceSettingNames.BIBLE_NOTES,
+        toSessionDirSourceSettingNameFromParam(
+            dirSourceSettingNames.BIBLE_NOTES,
+            getParamKeyValue(url, SESSION_URL_PARAM_NAME),
+        ),
     );
     if (dirPath === null) {
         throw new Error('Note directory not set');

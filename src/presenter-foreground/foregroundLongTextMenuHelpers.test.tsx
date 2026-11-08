@@ -1,6 +1,16 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
 import { readLangPackageDictionaries } from '../test-setup/langPackageDirs';
 
 // The two pickers a Long Text Show card is made of: a menu at the cursor that

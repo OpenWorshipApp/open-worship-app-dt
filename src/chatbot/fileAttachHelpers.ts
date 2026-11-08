@@ -40,6 +40,7 @@ import {
 import { fillWords, tran } from './chatTranHelpers';
 import { toNoteFileText } from './noteFileTextHelpers';
 import { checkIsLyricFileName, toLyricFileText } from './lyricChatHelpers';
+import { checkIsSlideFileName, toSlideFileText } from './slideChatHelpers';
 
 // What is read off the disk for one attachment, at most. A picture is cut to
 // 1024px before it is held; a text file to 16 KB of words; a note file is
@@ -250,7 +251,9 @@ export async function genAttachmentFromPath(
                 ? toNoteFileText(text)
                 : checkIsLyricFileName(name)
                   ? toLyricFileText(text)
-                  : null;
+                  : checkIsSlideFileName(name)
+                    ? toSlideFileText(text)
+                    : null;
             return {
                 attachment: genTextAttachment(name, noteText ?? text, filePath),
             };

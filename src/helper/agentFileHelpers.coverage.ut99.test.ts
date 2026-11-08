@@ -3,6 +3,16 @@
 import path from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 const h = vi.hoisted(() => ({
     dir: vi.fn(),
     exists: vi.fn(),
@@ -106,6 +116,12 @@ vi.mock('./agentBackupHelpers', () => ({
 
 // The lifecycle is under test; slide-edit algorithms have their own suite.
 vi.mock('./agentSlideHelpers', () => ({
+    // `update-slides` / `add-slides` (`owa_slide_edit`) and the whole-words
+    // read: not what these tests drive.
+    AGENT_SLIDE_LIMITS: { shownTextChars: 300, fullTextChars: 5000 },
+    applyAgentSlideBatch: vi.fn(),
+    checkIsAgentSlideBatchAction: () => false,
+    readAgentSlideBatchRequest: vi.fn(),
     checkIsAgentSlideAction: () => h.isSlideAction,
     applyAgentSlideAction: (...args: unknown[]) => h.applySlideAction(...args),
     readAgentSlideDocument: (...args: unknown[]) =>
@@ -497,6 +513,8 @@ describe('slide action request routing', () => {
             { metadata: { ...metadata }, items: oldItems },
             'Example',
             { action: 'slides' },
+            // The usual cut: only `owa_slide_edit` asks for whole words.
+            300,
         );
         expect(h.snapshotEditing).not.toHaveBeenCalled();
         expect(h.setJsonData).not.toHaveBeenCalled();

@@ -12,6 +12,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import type { BibleItemType } from './bibleItemHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import appProvider from '../server/appProvider';
 import type DocumentInf from '../others/DocumentInf';
 import { handleError } from '../helper/errorHelpers';
@@ -36,11 +37,28 @@ export default class Bible
         this.originalJson = cloneJson(json);
     }
 
-    static getDirSourceSettingName() {
+    /**
+     * The page's own Bibles folder setting -- the Reader keeps its lists apart
+     * from the Presenter's -- with no folder session applied: the key Path
+     * Settings names and the Bibles list's session target.
+     */
+    static getBaseDirSourceSettingName() {
         const dirSourceSettingName = appProvider.isPageReader
             ? dirSourceSettingNames.BIBLE_READ
             : dirSourceSettingNames.BIBLE_PRESENT;
         return dirSourceSettingName;
+    }
+
+    /**
+     * The folder setting of the Bibles session the operator is on. Everything
+     * that reaches for "the bibles folder" -- the Default list a verse saved
+     * from Lookup goes into, an imported list, the assistant -- goes through
+     * here, so it lands in the list being looked at.
+     */
+    static getDirSourceSettingName() {
+        return getActiveDirSourceSettingName(
+            Bible.getBaseDirSourceSettingName(),
+        );
     }
 
     static fromJson(filePath: string, json: any) {

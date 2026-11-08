@@ -2,6 +2,7 @@ import Bible from '../bible-list/Bible';
 import BibleItem from '../bible-list/BibleItem';
 import { dirSourceSettingNames } from '../helper/constants';
 import DirSource from '../helper/DirSource';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { handleError } from '../helper/errorHelpers';
 import FileSource from '../helper/FileSource';
@@ -458,7 +459,9 @@ export async function importPresentingFlowArchive(archiveFilePath: string) {
         // folder included — so a missing one fails before anything has been
         // written rather than after half the bundle has landed.
         const presentingFlowDirPath = DirSource.getDirPathBySettingName(
-            dirSourceSettingNames.PRESENTING_FLOW,
+            getActiveDirSourceSettingName(
+                dirSourceSettingNames.PRESENTING_FLOW,
+            ),
         );
         if (!presentingFlowDirPath) {
             throw new Error('No presenting flows folder is selected yet');

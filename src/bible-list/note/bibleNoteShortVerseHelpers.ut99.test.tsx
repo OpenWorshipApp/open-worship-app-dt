@@ -3,6 +3,10 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
+vi.mock('../../media-sessions/mediaSessionData', () => ({
+    subscribeMediaSessionStrips: () => () => {},
+}));
+
 const h = vi.hoisted(() => ({
     paths: [] as string[],
     files: new Map<string, any>(),
@@ -43,6 +47,8 @@ vi.mock('./Note', () => ({
     default: {
         mimetypeName: 'note',
         fromFilePath: async (filePath: string) => h.notes.get(filePath) ?? null,
+        // The Default session in front: one folder indexed, as before.
+        getDirSourceSettingName: () => 'select-dir-bible-notes',
     },
 }));
 vi.mock('../../helper/domHelpers', () => ({

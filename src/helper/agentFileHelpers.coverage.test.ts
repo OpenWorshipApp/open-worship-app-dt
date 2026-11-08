@@ -3,6 +3,16 @@
 import path from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 const h = vi.hoisted(() => ({
     dir: vi.fn(),
     exists: vi.fn(),
@@ -28,6 +38,8 @@ const h = vi.hoisted(() => ({
     applySlideAction: vi.fn(),
     readSlideDocument: vi.fn(),
     readSlideRequest: vi.fn(),
+    setBackground: vi.fn(),
+    readBackgroundLines: vi.fn(),
 }));
 
 vi.mock('./DirSource', () => ({ default: { getDirPathBySettingName: h.dir } }));
@@ -85,11 +97,25 @@ vi.mock('./agentBackupHelpers', () => ({
 
 // The lifecycle is under test; slide-edit algorithms have their own suite.
 vi.mock('./agentSlideHelpers', () => ({
+    // `update-slides` / `add-slides` (`owa_slide_edit`) and the whole-words
+    // read: not what these tests drive.
+    AGENT_SLIDE_LIMITS: { shownTextChars: 300, fullTextChars: 5000 },
+    applyAgentSlideBatch: vi.fn(),
+    checkIsAgentSlideBatchAction: () => false,
+    readAgentSlideBatchRequest: vi.fn(),
     checkIsAgentSlideAction: () => h.isSlideAction,
     applyAgentSlideAction: (...args: unknown[]) => h.applySlideAction(...args),
     readAgentSlideDocument: (...args: unknown[]) =>
         h.readSlideDocument(...args),
     readAgentSlideRequest: (...args: unknown[]) => h.readSlideRequest(...args),
+}));
+
+// `set-background` and a full read's background lines: their own suite
+// (`agentSlideBackgroundHelpers.test.ts`); here, only that they are reached.
+vi.mock('./agentSlideBackgroundHelpers', () => ({
+    handleSlideBackgroundAt: (...args: unknown[]) => h.setBackground(...args),
+    readSlideBackgroundLines: (...args: unknown[]) =>
+        h.readBackgroundLines(...args),
 }));
 
 // The canvas classes a slide action's boxes are checked with, loaded only on
@@ -508,9 +534,146 @@ describe('slide action request routing', () => {
             { metadata: { ...metadata }, items: oldItems },
             'Example',
             { action: 'slides' },
+            // The usual cut: only `owa_slide_edit` asks for whole words.
+            300,
         );
         expect(h.snapshotEditing).not.toHaveBeenCalled();
         expect(h.setJsonData).not.toHaveBeenCalled();
+    });
+
+    test('a document with no slides says the size a new slide gets', async () => {
+        h.isSlideAction = true;
+        h.readSlideRequest.mockReturnValueOnce({ action: 'slides' });
+        h.readSlideDocument.mockReturnValueOnce({
+            slideDocument: {
+                name: 'Example',
+                slideCount: 0,
+                width: null,
+                height: null,
+                slides: [],
+            },
+        });
+        // A picture's slides are placed in pixels: an unknown size had them
+        // guessed onto a slide they did not fit (seen live 2026-11-07).
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'slides' as any,
+                name: 'Example',
+            }),
+        ).resolves.toEqual({
+            name: 'Example',
+            slideCount: 0,
+            width: 1280,
+            height: 720,
+            slides: [],
+            note: 'It has no slides yet: a new slide is this width and height.',
+        });
+    });
+
+    test('a whole read carries each slide’s background and the choices', async () => {
+        h.isSlideAction = true;
+        h.readSlideRequest.mockReturnValueOnce({ action: 'slides' });
+        h.readSlideDocument.mockReturnValueOnce({
+            slideDocument: {
+                name: 'Example',
+                slideCount: 2,
+                width: 1920,
+                height: 1080,
+                slides: [
+                    { number: 1, id: 1, items: [] },
+                    { number: 2, id: 2, items: [] },
+                ],
+            },
+        });
+        h.readBackgroundLines.mockResolvedValueOnce({
+            bySlide: [null, 'picture sunrise.jpg'],
+            documentBackground: null,
+            backgroundChoices: { pictures: ['sunrise.jpg'], videos: [] },
+        });
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'slides' as any,
+                filePath: '/elsewhere/Example.ows',
+                isFullText: true,
+            }),
+        ).resolves.toEqual({
+            name: 'Example',
+            slideCount: 2,
+            width: 1920,
+            height: 1080,
+            slides: [
+                { number: 1, id: 1, items: [] },
+                {
+                    number: 2,
+                    id: 2,
+                    items: [],
+                    background: 'picture sunrise.jpg',
+                },
+            ],
+            backgroundChoices: { pictures: ['sunrise.jpg'], videos: [] },
+        });
+        expect(h.readBackgroundLines).toHaveBeenCalledWith(
+            '/elsewhere/Example.ows',
+            expect.any(Array),
+        );
+        // A background that cannot be read leaves the read as it was.
+        h.readSlideRequest.mockReturnValueOnce({ action: 'slides' });
+        const plain = {
+            name: 'Example',
+            slideCount: 1,
+            width: 1920,
+            height: 1080,
+            slides: [{ number: 1, id: 1, items: [] }],
+        };
+        h.readSlideDocument.mockReturnValueOnce({ slideDocument: plain });
+        h.readBackgroundLines.mockRejectedValueOnce(new Error('no folder'));
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'slides' as any,
+                filePath: '/elsewhere/Example.ows',
+                isFullText: true,
+            }),
+        ).resolves.toEqual(plain);
+        expect(h.error).toHaveBeenCalled();
+    });
+
+    test('set-background is checked first, then handed the head', async () => {
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'set-background' as any,
+                name: 'Example',
+                background: '#12',
+            }),
+        ).resolves.toMatchObject({
+            isError: true,
+            reason: expect.stringMatching(/not a colour/),
+        });
+        expect(h.getJsonData).not.toHaveBeenCalled();
+        h.setBackground.mockResolvedValueOnce({
+            background: 'colour #000000',
+            undoId: 'undo-2',
+        });
+        await expect(
+            handleAgentFileRequest({
+                kind: 'slide',
+                action: 'set-background' as any,
+                name: 'Example',
+                background: '#000000',
+                slides: [1],
+            }),
+        ).resolves.toEqual({ background: 'colour #000000', undoId: 'undo-2' });
+        expect(h.setBackground).toHaveBeenCalledWith(
+            expect.stringMatching(/Example\.ows$/),
+            'Example',
+            { metadata: { ...metadata }, items: oldItems },
+            { wanted: { kind: 'color', color: '#000000' }, slides: [1] },
+        );
+        // It is no editing-history change: no history snapshot is taken.
+        expect(h.snapshotEditing).not.toHaveBeenCalled();
     });
 
     test('does not change a slide document that cannot be read', async () => {

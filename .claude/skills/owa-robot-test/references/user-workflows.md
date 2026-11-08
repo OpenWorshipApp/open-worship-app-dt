@@ -21,7 +21,15 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-07h** (**W-06 step 11 — Create Lyric makes a song of a saved passage; step 10 — Generate Slides names its document the same way.** The user, after the song's name: _make AppDocument file name follow lyric file name_ — every selected version's own reference, `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28.ows`, where it had been the KJV reference and the keys, `Proverbs 17 22-28 ពគប-NIV.ows`; seen live the same day beside the song of that name. For step 11: The user, with a Bibles-list row's menu circled: _add `Create Lyric`, to make lyric from the bible item … It should behave like `Generate Slides` for choosing extra bible keys_; the title _follow appdocument slide_, `(<bible key>) <verse title>`; then _make extra bible keys to sub-title_ (one line per version was asked _if possible_ — open-lyric's Subtitle takes one line, a continued one fails its validator — and the user chose one line); one Bible verse a part `Verse <verse number>`; each line `<verse number>: <text>`. Seen live 2026-11-07 on the dev Presenter: the row's menu reads Open · Open in Chatbot · Generate Slides · **Create Lyric** · …; with NIV then KJV ticked under ពគប Proverbs 17:22-28 the song `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28, (KJV) Proverbs 17 22-28.owl` was made, selected and saved, its Info slide `(ពគប) សុភាសិត ១៧:២២-២៨` over `(NIV) Proverbs 17:22-28, (KJV) Proverbs 17:22-28`, parts `Verse 22` … `Verse 28`, lines `២២: ចិត្ត…`, `22: A cheerful heart …`, `22: A merry heart …`. Held by unit tests, not seen live: a passage across chapters (`2:1: …`, parts numbered in order when a verse number would repeat) and a second song of one passage (a numbered name). CM-102.)
+**workflowsVersion: 2026-11-07l** (**New W-58 — folder sessions on Documents, Presenting Flows, Bibles and Bible Notes.** The user, with the Background tab's `Default · Session 2 · +` row circled and then the line under the **[en:tran:Documents]** title: _I want the extra sessions for extra folder for all other components … it should apply to `Documents` `Presenting Flow List` `Bibles` …_, _I want it here_. The four lists carry the row under their titles; a session is a folder of its own, **[en:tran:Default]** the one Path Settings names and never removable (W-08 corrected: it could be removed, which forgot the tab's own folder); what is made from outside the list lands in the session in front, verse marks stay in the Default session's notes, and an editor opened from a session's file reads that session's folder. Seen live 2026-11-07 on the dev Presenter: the row on all four lists, a Documents session on a typed folder, its song and slide document opened from it by **[en:tran:Edit]**, and Default's menu with no Remove. W-03, W-14 and W-22 point to it. PM-170, PM-171.)
+
+Previous: **workflowsVersion: 2026-11-07k** (**W-57 step 3 — sizes with no assistant.** **Make the words larger**, _make the words smaller_ and _make every box 110 px_ are done by the help window itself, instantly, one change with **[en:tran:Undo this change]** under it, every box keeping its size against the others — the Slide Editor's Bulk Font sets one size on all. Seen live 2026-11-07 on the dev app: right-click a 90/70 document, **Open in Chatbot**, **Make the words larger** — 113/88 written, no assistant asked, no credit; _Make every box 110 px_ — all 110; **Undo this change** — back. PL-108, CB-167.)
+
+Previous: **workflowsVersion: 2026-11-07j** (**W-57 step 3 — the slides' backgrounds.** A picture of slides the user liked has a photo behind its words, and the assistant could only say to pick a picture in the Background panel; it now puts one of the panel's own pictures or videos behind the slides by its name or a word of it, a colour, or none (`owa_slide_edit` `set-background`, kept at once, no Save), a picture sent with no words is a picture of the slides wanted, and **[en:tran:Undo this change]** puts back everything one answer did. Seen live 2026-11-07 on the dev app: a picture of a mountain-lake slide dropped on the box, _Make slides like this picture_, Auto — the shared gemma4:cloud answered nothing and the question went on to the user's own Ollama gemma4:cloud, which made the slide and put `wp_mountain_reflection.jpg` behind it by the word _mountain_; the slide card showed it; one press of **Undo this change** took both back. PL-108, CB-167.)
+
+Previous: **workflowsVersion: 2026-11-07i** (**New W-57 — change slides with the assistant.** The user, with a slide document's row menu open: _like lyric, add `Open in Chatbot` for AppDocument to let chatbot help modify slides_, then _chatbot be the best choice to help modify appdocument slides_ and _when user attach a screenshot of example slides they want … chatbot should be able to make slides for them_. A slide document's menu carries **[en:tran:Open in Chatbot]** under **[en:tran:Open Slides Preview]**, and the Slide Editor's footer a robot; both open the help window with the document attached under a card of five buttons, and the assistant changes the slides itself, many in one change, unsaved, with **[en:tran:Undo this change]** under the answer. Seen live 2026-11-07 on the dev app in the help window with a scratch document: the menu item, the card, **Make the words larger** (every box ×1.25, one change), **Undo this change** (all back), _list me more options_ (the card again, no model), the 📷 picture with _Add 2 slides that look like slide 2 in this picture …_ (two slides added in one change), _Add Spanish under each line_ (every line followed by its Spanish line), and the Slide Editor's robot opening a chat on the document it shows. PL-108, CB-167.)
+
+Previous: **workflowsVersion: 2026-11-07h** (**W-06 step 11 — Create Lyric makes a song of a saved passage; step 10 — Generate Slides names its document the same way.** The user, after the song's name: _make AppDocument file name follow lyric file name_ — every selected version's own reference, `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28.ows`, where it had been the KJV reference and the keys, `Proverbs 17 22-28 ពគប-NIV.ows`; seen live the same day beside the song of that name. For step 11: The user, with a Bibles-list row's menu circled: _add `Create Lyric`, to make lyric from the bible item … It should behave like `Generate Slides` for choosing extra bible keys_; the title _follow appdocument slide_, `(<bible key>) <verse title>`; then _make extra bible keys to sub-title_ (one line per version was asked _if possible_ — open-lyric's Subtitle takes one line, a continued one fails its validator — and the user chose one line); one Bible verse a part `Verse <verse number>`; each line `<verse number>: <text>`. Seen live 2026-11-07 on the dev Presenter: the row's menu reads Open · Open in Chatbot · Generate Slides · **Create Lyric** · …; with NIV then KJV ticked under ពគប Proverbs 17:22-28 the song `(ពគប) សុភាសិត ១៧ ២២-២៨, (NIV) Proverbs 17 22-28, (KJV) Proverbs 17 22-28.owl` was made, selected and saved, its Info slide `(ពគប) សុភាសិត ១៧:២២-២៨` over `(NIV) Proverbs 17:22-28, (KJV) Proverbs 17:22-28`, parts `Verse 22` … `Verse 28`, lines `២២: ចិត្ត…`, `22: A cheerful heart …`, `22: A merry heart …`. Held by unit tests, not seen live: a passage across chapters (`2:1: …`, parts numbered in order when a verse number would repeat) and a second song of one passage (a numbered name). CM-102.)
 
 Previous: **workflowsVersion: 2026-11-07f** (**W-05 steps 2, 4 and 7 — a song ends on a blank slide, and a verse is never cut.** The user, with the gap after a song's last verse circled: _add a blank slide after last lyric element like after title_; then, with the title card's subtitle cut off at the bottom of a narrow band: _I don't want any cut content_ — and, asked whether the words should shrink or the box grow, chose **grow the box**. After the last verse comes an empty **None** slide, as after the title, before any link slides; and a verse or title card taller than the stage's box makes the box taller, into the **[en:tran:Slide Margin (%)]** around it, from the edge **[en:tran:Position]** puts it against. Seen live 2026-11-07 on the dev app: the song with nine slides and a link listed `(4)-Chorus`, then `None`, then the link; stage 0 with ↕ 80 and **[en:tran:Bottom center]** drew the title card's band 231 px tall instead of 187 px, still flush on the bottom edge, its subtitle whole, while each Atom Mode line kept its 187 px band. Not seen live: a projector screen showing a grown card — a unit test holds that the screen grows it once the slide is on the page. PM-115, PM-117.)
 
@@ -1840,7 +1848,11 @@ Tips:
   and the button goes away. One slide at a time is the Slide Editor's **[en:tran:Width]** and
   **[en:tran:Height]** boxes, with **[en:tran:Apply All Slides]** for the whole document.
 
-_Verify: PL-01, PM-05..09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08._
+- **More than one folder of songs and slides.** The row of buttons under the
+  **[en:tran:Documents]** title — **[en:tran:Default]** and **＋** — keeps other folders
+  one press away (W-58).
+
+_Verify: PL-01, PM-05..09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08, PM-170._
 
 ### W-04 — Auto-play slides on a timer
 
@@ -2206,8 +2218,10 @@ no folder and offers to use the default one. To point a session at a folder of y
 press the folder line above the list (the path it is reading): a box opens under it — type
 the folder's path and press Enter, or press **[en:tran:Choose a folder]** (the folder icon)
 and pick it. The **⋮** on the session you are on (or a
-right-click on any of them) renames or removes it. Removing forgets that session's
-folder and slide show — never the files themselves. On the Images, Videos and Webs tabs
+right-click on any of them) renames or removes it — **[en:tran:Default]** can be renamed,
+never removed. Removing forgets that session's folder and slide show — never the files
+themselves. **[en:tran:Documents]**, **[en:tran:Presenting Flows]**, **[en:tran:Bibles]**
+and **[en:tran:Bible Notes]** carry the same row under their titles (W-58). On the Images, Videos and Webs tabs
 the slide show sits on the same row, and a blue ▶ on a button means that session's show
 is still running while you look at another one.
 
@@ -2831,7 +2845,10 @@ The arrows at the TOP of the window are the text editor's own undo and redo;
 the ones at the bottom are the note FILE's.
 :::
 
-_Verify: PR-03, PU-03, KB-11._
+Notes for a sermon series can live in a folder of their own: the row under the
+**[en:tran:Bible Notes]** title switches between them (W-58).
+
+_Verify: PR-03, PU-03, KB-11, PM-170._
 
 ---
 
@@ -3023,6 +3040,63 @@ needs one.
 
 _Verify: PL-107, CB-166, PM-168._
 
+### W-57 — Change slides with the assistant (translate them, restyle them, make slides like a picture)
+
+**Goal:** have the help window change one of your slide documents for you — put its words
+into another language or add a language under them, check the spelling, make the words
+larger, change colours and layout, add, copy, move or remove slides, or make slides that look
+like a picture of slides you like.
+
+1. In **[en:tran:Documents]**, right-click a slide document (a row with the slides icon), or
+   click the faint **⋮** at its right-hand end (W-01b), and choose
+   **[en:tran:Open in Chatbot]**, right under **[en:tran:Open Slides Preview]**. 📸 In the
+   **Slide Editor**, the robot button right of **[en:tran:Undo]**, **[en:tran:Redo]**,
+   **[en:tran:Discard changed]** and **[en:tran:Save]** at the bottom of the canvas does the
+   same for the document being edited.
+2. The help window opens a chat of its own with the document attached under the box, and a
+   card that says what it can change, with five buttons. 📸
+3. Press a button under the card, or type what you want:
+   - **Replace the words with …** puts the slides' words into that language in place of
+     theirs; **Add … under each line** keeps the words and writes the translation on the line
+     under each line, the words made a little smaller so the box still holds them. The
+     language offered is the one the document's name says, else the one the app is shown in;
+     with neither, the buttons say _another language_ and the assistant asks which. Typed,
+     say the language: _Add Spanish under each line_.
+   - **[en:tran:Check the spelling]** fixes only what is misspelt and says what it fixed.
+   - **[en:tran:Make the words larger]** makes every box's words larger in one change, each
+     box keeping its size against the others (a title stays larger than the line under it).
+     Typed, _Make the words smaller_ or _Make every box 110 px_ do the same. These three the
+     help window does by itself, at once — no assistant is needed for them, so they work
+     with no AI key and no internet.
+   - **[en:tran:Make slides like a picture]**: attach a picture of the slides you want — the
+     📷 under the box attaches a picture of the app, the paperclip a picture file — and say
+     what the slides should say, e.g. _Add 2 slides that look like slide 2 in this picture:
+     one says Welcome, one says Let us pray_ — or send the picture with no words at all.
+     Without a picture it asks for one. A photo or video behind the words is the slide's
+     **background**, not a box: the assistant puts one of the **[en:tran:Background]** panel's
+     own pictures or videos behind the slides, the one whose name fits (_mountain_ finds
+     `wp_mountain_reflection.jpg`), and says which. When none fits, drop that picture into the
+     **[en:tran:Background]** panel's pictures first and ask again.
+   - **Backgrounds** by words: _Put the sunrise picture behind every slide_, _Make slide 3's
+     background dark blue_, _Take the background off slide 2_. A background is **kept at
+     once** — it is not one of the unsaved changes, and needs no Save — and the slide card
+     shows it.
+   - _list me more options_ shows the card and its buttons again.
+4. The answer says what changed. The change is **not saved yet**: the document shows a red
+   **\*** beside its name in **[en:tran:Documents]**. **[en:tran:Undo this change]** under the
+   answer puts the whole change back — every slide it touched, and a background it put
+   behind them — and
+   **[en:tran:Show it in the list]** finds its row.
+5. To keep it, press **[en:tran:Save]** in the slides' history row in the Presenter
+   (**[en:tran:Undo]** there steps it back too), or in the Slide Editor.
+
+**Not there?** **[en:tran:Open in Chatbot]** is on an Open Worship slide document only — a
+PDF, PowerPoint or Word file has no slides here to change — and only while AI is on
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → _Enable AI features_). When no
+assistant can answer, the chat says so and offers **Open AI settings**.
+
+_Verify: PL-108, CB-167._
+
 ---
 
 ## Configuration
@@ -3141,6 +3215,60 @@ _Verify: PL-107, CB-166, PM-168._
    A change on the **[en:tran:Languages]** tab applies itself (step 4a, W-55).
 
 _Verify: ST-01..ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83..ST-86, ST-87, ST-92, CB-163, LT-02..04._
+
+### W-58 — Keep songs, running orders, Bible lists and notes in more than one folder (folder sessions)
+
+**Goal:** keep this Sunday's songs, last Easter's set or a sermon series' notes in folders
+of their own, and switch between them from the list itself — without re-pointing the
+folder the app was set up with.
+
+1. Under the title of **[en:tran:Documents]**, **[en:tran:Presenting Flows]**,
+   **[en:tran:Bibles]** and **[en:tran:Bible Notes]** is a row of small buttons:
+   **[en:tran:Default]** and a **＋** (**[en:tran:Add Session]**). 📸 **[en:tran:Default]**
+   is the folder the list has always shown — the one **[en:tran:Path Settings]** names
+   (W-16) — and nothing on this row ever changes it.
+2. Press **＋**. A **Session 2** button appears and is the one you are on; its list is
+   empty and says **[en:tran:No directory selected]**.
+3. Give it a folder: press **[en:tran:Choose a folder]** and pick one, or press the folder
+   line above the list, type the folder's path and press Enter.
+   **[en:tran:Select Default]** points it at the list's usual folder instead. The list now
+   shows that folder's files, with a sort and filter of its own. 📸
+4. Press **[en:tran:Default]** to go back and **Session 2** to come again — the app
+   remembers the one you were on.
+5. The **⋮** on the session you are on (or a right-click on any of them) has
+   **[en:tran:Rename Session]**, and on every session but **[en:tran:Default]**
+   **[en:tran:Remove Session]**, which asks first. Removing forgets the session and its
+   folder setting — the files in that folder are never touched. **[en:tran:Default]** can
+   be renamed, never removed.
+
+What follows the session you are on:
+
+- a song or a slide document opened with **[en:tran:Edit]**, and a Bible note opened from
+  the list, opens from that session's folder;
+- what you make from somewhere else lands in it — a song or slides made from a Bible
+  passage (W-06), a verse saved from **[en:tran:Bible Lookup]** into the **Default** list
+  of **[en:tran:Bibles]**, a song or slides the assistant writes (W-42, W-56, W-57), and a
+  file you import (W-23, W-22j, W-24, W-41);
+- a session's folder outside the data folder is watched like the data folder, so a file
+  copied into it shows up in the list.
+
+What does NOT follow it: your highlights and comments on Bible verses (W-40) are always
+kept in the **Default** session's notes, so switching **[en:tran:Bible Notes]** never hides
+them, and the Reader marks a verse that has notes from both the **Default** session and the
+one you are on. The Presenter and the Bible Reader keep their **[en:tran:Bibles]** sessions
+apart, as they keep their folders apart.
+
+Steps 1–5 were observed live 2026-11-07 on the dev Presenter: the row under all four
+titles; **＋** on **[en:tran:Documents]** making **Session 2** with
+**[en:tran:Choose a folder]** in its empty list; a typed folder listing its song and slide
+document; **[en:tran:Edit]** on each opening it from that folder (the Lyric Editor and the
+Document Editor); **[en:tran:Default]** bringing the usual list back; and
+**[en:tran:Default]**'s menu offering **[en:tran:Rename Session]** alone. Unit-tested, not
+seen live: a verse saved from Lookup into a session's list, a song made from a passage into
+a session, verse marks staying in the **Default** session's notes, and the Lookup popup's
+**[en:tran:Bibles]** row following the right column's.
+
+_Verify: PM-170, PM-171._
 
 ### W-55 — Find and install a language (Settings → Languages)
 
@@ -3522,9 +3650,11 @@ foreground presets — into one running order you can work down live.
   (W-22e), answer to a key of your own (W-22f);
 - make one line bring others up with it (W-22g), or play the video inside a slide (W-22h);
 - send a line to one particular screen every time, or park a line (W-22i);
-- be handed to another machine as one file (W-22j).
+- be handed to another machine as one file (W-22j);
+- live in a folder of its own, one press away under the **[en:tran:Presenting Flows]**
+  title (W-58).
 
-_Verify: PL-10, PL-29, PL-32..PL-76, PL-81..PL-96, PL-101._
+_Verify: PL-10, PL-29, PL-32..PL-76, PL-81..PL-96, PL-101, PM-170._
 
 ---
 

@@ -1,5 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+const session = vi.hoisted(() => ({ suffix: '' }));
+vi.mock('../../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => {
+        return `${settingName}${session.suffix}`;
+    },
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 const h = vi.hoisted(() => ({
     readFileDataMock: vi.fn(async (_filePath: string) => {
         return null as string | null;
@@ -472,6 +485,31 @@ describe('bible-list/note Note editing history', () => {
             'note',
         );
         expect(h.writeFileDataMock).toHaveBeenCalledTimes(2);
+    });
+
+    test("default note is the session in front's, or Default's for verse marks", async () => {
+        h.getDirPathMock.mockReturnValue('/notes');
+        h.fsListFilesWithMimetypeMock.mockResolvedValue([FILE_PATH]);
+        h.readFileDataMock.mockResolvedValue(
+            JSON.stringify(genNoteJson([genItem(1, 'existing')])),
+        );
+        session.suffix = '-s1';
+        try {
+            expect(Note.getDirSourceSettingName()).toBe(
+                'select-dir-bible-notes-s1',
+            );
+            await Note.getDefault();
+            expect(h.getDirPathMock).toHaveBeenLastCalledWith(
+                'select-dir-bible-notes-s1',
+            );
+            // A verse mark never follows the switch.
+            await Note.getDefault({ isBaseSession: true });
+            expect(h.getDirPathMock).toHaveBeenLastCalledWith(
+                'select-dir-bible-notes',
+            );
+        } finally {
+            session.suffix = '';
+        }
     });
 
     test('default note handles absent directory and failed creation', async () => {

@@ -1,6 +1,7 @@
 import { AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
 import EditingHistoryManager from '../../editing-manager/EditingHistoryManager';
 import { dirSourceSettingNames } from '../../helper/constants';
+import { getActiveDirSourceSettingName } from '../../media-sessions/folderSessionHelpers';
 import { notifyElementHighlight } from '../../helper/domHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
@@ -290,10 +291,28 @@ export default class Note
         }
     }
 
-    static async getDefault() {
+    /**
+     * The folder setting of the Bible Notes session the operator is on: a new
+     * note, a note the assistant writes and the list's own `Default` file go
+     * here.
+     */
+    static getDirSourceSettingName() {
+        return getActiveDirSourceSettingName(dirSourceSettingNames.BIBLE_NOTES);
+    }
+
+    /**
+     * The `Default` note of the session in front -- or, with `isBaseSession`,
+     * of the Default session whatever is in front. Verse highlights and
+     * comments are kept in THAT one: a mark is part of reading the Bible, not
+     * of a sermon's set of notes, and switching sessions must never make the
+     * marks on the page disappear.
+     */
+    static async getDefault({ isBaseSession = false } = {}) {
         const dir =
             DirSource.getDirPathBySettingName(
-                dirSourceSettingNames.BIBLE_NOTES,
+                isBaseSession
+                    ? dirSourceSettingNames.BIBLE_NOTES
+                    : Note.getDirSourceSettingName(),
             ) ?? '';
         if (!dir) {
             return null;

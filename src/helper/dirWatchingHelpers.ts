@@ -16,6 +16,10 @@ import { handleError } from './errorHelpers';
 import { HISTORY_DIR_NAME_SUFFIX } from '../editing-manager/editingHistoryPathHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { genTimeoutAttempt } from './timeoutHelpers';
+import {
+    FOLDER_SESSION_BASE_NAMES,
+    getActiveDirSourceSettingName,
+} from '../media-sessions/folderSessionHelpers';
 
 // `FileSource` starts the watch, so this module must stay free of React and of
 // `domHelpers` (which installs a `MutationObserver` and an IPC listener at
@@ -258,6 +262,20 @@ async function resolveWatchingDirPaths() {
     }
     for (const { settingName } of selectableDataDirectories) {
         // Synchronous: a setting read, not a filesystem one.
+        const dirPath = DirSource.getDirPathBySettingName(settingName);
+        if (dirPath) {
+            dirPaths.push(dirPath);
+        }
+    }
+    // The folder a list's ACTIVE session is on, which may be anywhere -- a
+    // stick, a shared drive. Only the one in front: a session switched away
+    // from is not listed, so it need not be heard. One inside a folder
+    // already watched adds nothing (`toMinimalDirPaths`).
+    for (const baseSettingName of FOLDER_SESSION_BASE_NAMES) {
+        const settingName = getActiveDirSourceSettingName(baseSettingName);
+        if (settingName === baseSettingName) {
+            continue;
+        }
         const dirPath = DirSource.getDirPathBySettingName(settingName);
         if (dirPath) {
             dirPaths.push(dirPath);

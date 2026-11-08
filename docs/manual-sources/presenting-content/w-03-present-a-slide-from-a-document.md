@@ -2,7 +2,7 @@
 id: W-03
 title: "Present a slide from a document"
 section: "Presenting content"
-verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08]
+verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08, PM-170]
 screenshots: 3
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-07"
@@ -86,10 +86,14 @@ Tips:
   and the button goes away. One slide at a time is the Slide Editor's **[en:tran:Width]** and
   **[en:tran:Height]** boxes, with **[en:tran:Apply All Slides]** for the whole document.
 
+- **More than one folder of songs and slides.** The row of buttons under the
+  **[en:tran:Documents]** title — **[en:tran:Default]** and **＋** — keeps other folders
+  one press away (W-58).
+
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08`
+`PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08` · `PM-170`
 
 Regenerated from `user-workflows.md` (workflowsVersion 2026-11-07).
 :::

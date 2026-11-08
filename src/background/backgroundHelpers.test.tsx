@@ -4,6 +4,10 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('../media-sessions/useActiveDirSourceSettingName', () => ({
+    useActiveDirSourceSettingName: (settingName: string) => settingName,
+}));
+
 const h = vi.hoisted(() => ({
     getBackgroundSrcListByType: vi.fn(),
     getSelectBackgroundSrcList: vi.fn(),

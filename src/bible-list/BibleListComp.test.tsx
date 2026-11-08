@@ -4,6 +4,15 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/useFileListSessions', () => ({
+    useFileListSessions: (settingName: string) => ({
+        activeId: '',
+        isDefaultSession: true,
+        dirSourceSettingName: settingName,
+        element: null,
+    }),
+}));
+
 const h = vi.hoisted(() => ({
     appProvider: { isPageReader: true },
     listProps: null as any,
@@ -31,6 +40,7 @@ vi.mock('../others/FileListHandlerComp', () => ({
 vi.mock('./Bible', () => ({
     default: {
         getDirSourceSettingName: h.getDirSourceSettingName,
+        getBaseDirSourceSettingName: h.getDirSourceSettingName,
         fromFilePath: h.fromFilePath,
         getDefault: h.getDefault,
         create: h.create,

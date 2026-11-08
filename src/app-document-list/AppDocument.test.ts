@@ -1,5 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+vi.mock('../media-sessions/folderSessionPathHelpers', () => ({
+    findSessionIdByFilePath: () => null,
+    findNonDefaultSessionIdByFilePath: () => null,
+}));
+
 const mocks = vi.hoisted(() => ({
     baseGetJsonDataMock: vi.fn(),
     fsCheckFileExistMock: vi.fn(),

@@ -1,5 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 // The notes worker behind `owa_bible_note`. A notes file is written straight
 // to disk on every change, so the backup taken first is the only undo: no
 // backup, no change; a refused name stays refused; a verse's marks are never

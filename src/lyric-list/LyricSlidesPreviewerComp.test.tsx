@@ -438,7 +438,8 @@ describe('Atom Mode', () => {
         expect(h.settings.get('lyric-slides-atom-mode')).toBe('true');
         const button = getAtomButton();
         expect(button.getAttribute('aria-pressed')).toBe('true');
-        expect(button.className).toContain('btn-secondary');
+        // Pressed reads as the info colour since 27554bd2 ("enhanced lyric").
+        expect(button.className).toContain('btn-info');
 
         h.calls = [];
         await press(button);

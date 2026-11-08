@@ -1,6 +1,6 @@
 import './cueList.scss';
 
-import { useCallback } from 'react';
+import { type ReactNode, useCallback } from 'react';
 
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import Bible from './Bible';
@@ -17,6 +17,7 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { tran } from '../lang/langHelpers';
 import type { DroppedFileType } from '../others/droppingFileHelpers';
 import { getFileFullName } from '../server/fileHelpers';
+import { useFileListSessions } from '../media-sessions/useFileListSessions';
 import {
     askAndImportBibleArchiveFromUrl,
     checkIsBibleArchiveFileFullName,
@@ -74,8 +75,33 @@ function handleDroppedFileTaking(file: DroppedFileType) {
     return true;
 }
 
+/**
+ * The Bibles list: the folder-session strip under its title, and the list of
+ * the session in front, keyed by session so a switch drops the list it
+ * leaves. The Presenter and the Reader keep separate sessions, as they keep
+ * separate folders.
+ */
 export default function BibleListComp() {
-    const dirSourceSettingName = Bible.getDirSourceSettingName();
+    const session = useFileListSessions(Bible.getBaseDirSourceSettingName());
+    return (
+        <BibleListBodyComp
+            key={session.activeId}
+            dirSourceSettingName={session.dirSourceSettingName}
+            sessionsElement={session.element}
+            isDirSettingRouteHidden={!session.isDefaultSession}
+        />
+    );
+}
+
+function BibleListBodyComp({
+    dirSourceSettingName,
+    sessionsElement,
+    isDirSettingRouteHidden,
+}: Readonly<{
+    dirSourceSettingName: string;
+    sessionsElement: ReactNode;
+    isDirSettingRouteHidden: boolean;
+}>) {
     const dirSource = useGenDirSourceReload(dirSourceSettingName);
     const handleBodyRendering = useCallback((filePaths: string[]) => {
         return filePaths.map((filePath, i) => {
@@ -103,6 +129,8 @@ export default function BibleListComp() {
                 return !(await Bible.create(dirPath, name));
             }}
             header={<span>{toIconedLabel('Bibles')}</span>}
+            sessionsElement={sessionsElement}
+            isDirSettingRouteHidden={isDirSettingRouteHidden}
             bodyHandler={handleBodyRendering}
             userClassName="p-0"
             checkIsOnScreen={checkIsOnScreen}

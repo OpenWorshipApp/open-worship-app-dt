@@ -4,6 +4,15 @@ import { act, createElement, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('../media-sessions/useFileListSessions', () => ({
+    useFileListSessions: (settingName: string) => ({
+        activeId: '',
+        isDefaultSession: true,
+        dirSourceSettingName: settingName,
+        element: null,
+    }),
+}));
+
 const h = vi.hoisted(() => ({
     dirSource: { dirPath: 'C:/documents', checkExtraFile: undefined as any },
     props: null as any,

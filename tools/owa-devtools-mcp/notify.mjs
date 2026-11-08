@@ -92,6 +92,9 @@ const ACTING_TOOLS = {
     // A song changed part by part: the same news and the same key, the
     // song named below. Its `read` stays quiet.
     owa_lyric_edit: 'changed a song',
+    // A slide document changed slide by slide or many at once: the slide
+    // tool's own news and keys, the document named below. `slides` is quiet.
+    owa_slide_edit: 'changed a slide document',
     // The verse goes on the congregation's screen, so the banner NAMES it:
     // "put a verse on the screen" says nothing the operator can check
     // against the wall. A `check` reads the passage and touches no screen,
@@ -485,6 +488,32 @@ function toNotice(text, key = text, detail = []) {
 export function describeToolNotice(name, args) {
     if (name === 'owa_find_ui' && args?.highlight !== true) {
         return null;
+    }
+    if (name === 'owa_slide_edit') {
+        // No action is a probe asking whether the tool announces itself.
+        if (args?.action === undefined) {
+            return toNotice(ACTING_TOOLS[name]);
+        }
+        // `file` is a name, or -- from an outside agent -- a whole path, of
+        // which the banner names the document alone. Many slides at once is
+        // the document changed.
+        return describeToolNotice('owa_slide_file', {
+            ...args,
+            action:
+                args?.action === 'update-slides' ||
+                args?.action === 'set-background'
+                    ? 'update'
+                    : args?.action === 'add-slides'
+                      ? 'add-slide'
+                      : args?.action,
+            name:
+                typeof args?.file === 'string'
+                    ? (args.file
+                          .split(/[\\/]/)
+                          .pop()
+                          ?.replace(/\.ows$/i, '') ?? '')
+                    : undefined,
+        });
     }
     if (name === 'owa_lyric_file' || name === 'owa_slide_file') {
         const phrase = AGENT_FILE_PHRASE_MAP[args?.action];

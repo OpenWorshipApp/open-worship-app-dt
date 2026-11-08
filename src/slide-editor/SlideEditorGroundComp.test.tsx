@@ -58,6 +58,13 @@ vi.mock('../app-document-presenter/items/SlidesMenuComp', () => ({
     },
 }));
 
+// Open in Chatbot beside the row (2026-11-07): it says which document it opens.
+vi.mock('./SlideEditorChatbotButtonComp', () => ({
+    default: ({ filePath }: { filePath: string }) => (
+        <div data-chatbot-button="">{filePath}</div>
+    ),
+}));
+
 vi.mock('./SlideEditorComp', () => ({
     default: () => {
         if (h.editorShouldThrow) {
@@ -130,6 +137,11 @@ describe('SlideEditorGroundComp', () => {
         expect(container.textContent).toContain('No slide selected');
         expect(
             container.querySelector('.card-footer [data-slides-menu]')
+                ?.textContent,
+        ).toBe('/docs/service.ows');
+        // The assistant can add the first slide back.
+        expect(
+            container.querySelector('.card-footer [data-chatbot-button]')
                 ?.textContent,
         ).toBe('/docs/service.ows');
     });

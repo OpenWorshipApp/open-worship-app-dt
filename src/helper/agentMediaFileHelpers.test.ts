@@ -1,5 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 // The worker behind `owa_media_file`, driven against folders that live in
 // memory: what each action asks for, what it refuses, and that a clip is
 // copied beside its backup (a `blob` restore) before it goes to the trash.

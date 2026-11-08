@@ -1,5 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 // The worker behind `owa_presenting_flow`, driven against a run sheet that
 // lives in memory: what each action asks the sheet to do, what it refuses, and
 // that every change takes its backup first. The disk, the trash and the real

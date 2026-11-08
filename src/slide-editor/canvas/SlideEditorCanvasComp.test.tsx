@@ -61,6 +61,14 @@ vi.mock('../../app-document-presenter/items/SlidesMenuComp', () => ({
     },
 }));
 
+// The footer's 🤖 (2026-11-07): its own component, which reads whether AI is
+// on; here it says only which document it would open.
+vi.mock('../SlideEditorChatbotButtonComp', () => ({
+    default: ({ filePath }: { filePath: string }) => (
+        <div data-chatbot-button="">{filePath}</div>
+    ),
+}));
+
 vi.mock('./tools/SlideEditorCanvasScalingComp', () => ({
     default: () => {
         const value = use(h.probeContext) as string | null;
@@ -200,6 +208,10 @@ describe('SlideEditorCanvasComp', () => {
         expect(container.querySelector('[data-slides-menu]')?.textContent).toBe(
             '/docs/service.slides',
         );
+        // Open in Chatbot on the document being edited.
+        expect(
+            container.querySelector('[data-chatbot-button]')?.textContent,
+        ).toBe('/docs/service.slides');
         expect(container.querySelector('[data-scaling]')?.textContent).toBe(
             'probe-value',
         );

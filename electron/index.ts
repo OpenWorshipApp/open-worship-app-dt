@@ -35,6 +35,7 @@ import { initDevtools } from './devtools';
 import { initDisplayMediaHandler } from './displayMediaHelpers';
 import { getScreenMirror, initScreenMirror } from './screenMirrorService';
 import { initVirtualDisplays } from './virtualDisplayService';
+import { guardBrokenPipes } from './stdioGuardHelpers';
 import {
     findUserDataPathArg,
     initAppUserModelId,
@@ -61,6 +62,9 @@ function applyLaunchOverrides() {
 }
 
 async function main() {
+    // First: a log line written after the launcher went away must not stop
+    // the app (`stdioGuardHelpers.ts`).
+    guardBrokenPipes([process.stdout, process.stderr]);
     applyLaunchOverrides();
     if (isDev) {
         app.commandLine.appendSwitch('ignore-certificate-errors');

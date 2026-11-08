@@ -1,6 +1,6 @@
 import './AppDocumentListComp.scss';
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import VaryAppDocumentFileComp from './VaryAppDocumentFileComp';
@@ -52,6 +52,7 @@ import {
 import { handleError } from '../helper/errorHelpers';
 import { initHttpRequest } from '../helper/bible-helpers/downloadHelpers';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
+import { useFileListSessions } from '../media-sessions/useFileListSessions';
 import {
     askAndImportAppDocumentArchiveFromUrl,
     checkIsAppDocumentArchiveFileFullName,
@@ -290,8 +291,33 @@ async function genItemsAddingMenuItems(
     return [...defaultContextMenuItems, ...contextMenuItems];
 }
 
+/**
+ * The Documents list: the folder-session strip under its title, and the list
+ * of the session in front. Keyed by session, so a switch drops the list it
+ * leaves rather than keeping two folders' rows in memory.
+ */
 export default function VaryAppDocumentListComp() {
-    const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
+    const session = useFileListSessions(dirSourceSettingNames.APP_DOCUMENT);
+    return (
+        <VaryAppDocumentListBodyComp
+            key={session.activeId}
+            dirSourceSettingName={session.dirSourceSettingName}
+            sessionsElement={session.element}
+            isDirSettingRouteHidden={!session.isDefaultSession}
+        />
+    );
+}
+
+function VaryAppDocumentListBodyComp({
+    dirSourceSettingName,
+    sessionsElement,
+    isDirSettingRouteHidden,
+}: Readonly<{
+    dirSourceSettingName: string;
+    sessionsElement: ReactNode;
+    isDirSettingRouteHidden: boolean;
+}>) {
+    const dirSource = useGenDirSourceReload(dirSourceSettingName);
     const [isShowingSongSelect, setIsShowingSongSelect] = useState(false);
     const [isShowingPublicDomainSongs, setIsShowingPublicDomainSongs] =
         useState(false);
@@ -356,6 +382,8 @@ export default function VaryAppDocumentListComp() {
                 onNewFile={newFileHandling}
                 newFileKinds={newFileKinds}
                 header={<span>{toIconedLabel('Documents')}</span>}
+                sessionsElement={sessionsElement}
+                isDirSettingRouteHidden={isDirSettingRouteHidden}
                 bodyHandler={handleBodyRendering}
                 checkIsOnScreen={checkIsOnScreen}
                 fileSelectionOption={fileSelectionOption}

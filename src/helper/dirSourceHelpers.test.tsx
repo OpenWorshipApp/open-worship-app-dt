@@ -298,6 +298,7 @@ describe('dirSourceHelpers', () => {
         const reloadCallbacks: Array<() => void> = [];
         const observedValues: unknown[] = [];
         const firstDirSource = {
+            settingName: 'selected-dir',
             registerEventListener: vi.fn(
                 (_events: string[], callback: () => void) => {
                     reloadCallbacks.push(callback);
@@ -307,6 +308,7 @@ describe('dirSourceHelpers', () => {
             unregisterEventListener: vi.fn(),
         };
         const secondDirSource = {
+            settingName: 'selected-dir',
             registerEventListener: vi.fn(() => ['reload-listener-2']),
             unregisterEventListener: vi.fn(),
         };
@@ -343,6 +345,52 @@ describe('dirSourceHelpers', () => {
         });
 
         expect(observedValues).toContain(secondDirSource);
+    });
+
+    test('reads the new folder when asked for another folder setting', async () => {
+        // A view following a list's folder session is handed a different
+        // setting name on a switch, and must not keep the folder it had.
+        const genDirSource = (settingName: string) => ({
+            settingName,
+            registerEventListener: vi.fn(() => ['listener']),
+            unregisterEventListener: vi.fn(),
+        });
+        dirSourceGetInstanceMock.mockImplementation(
+            async (settingName: string) => genDirSource(settingName),
+        );
+        const observedNames: unknown[] = [];
+        function Probe({ settingName }: { settingName: string }) {
+            const value = useGenDirSourceReload(settingName);
+            useEffect(() => {
+                observedNames.push(value?.settingName ?? null);
+            }, [value]);
+            return null;
+        }
+        const flush = async () => {
+            await act(async () => {
+                for (let i = 0; i < 4; i++) {
+                    await Promise.resolve();
+                }
+            });
+        };
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe settingName="select-dir-app-document" />);
+        });
+        await flush();
+        expect(observedNames.at(-1)).toBe('select-dir-app-document');
+        await act(async () => {
+            root!.render(<Probe settingName="select-dir-app-document-s1" />);
+        });
+        await flush();
+        expect(observedNames.at(-1)).toBe('select-dir-app-document-s1');
+        expect(dirSourceGetInstanceMock).toHaveBeenCalledWith(
+            'select-dir-app-document-s1',
+        );
+        dirSourceGetInstanceMock.mockReset();
     });
 
     /**

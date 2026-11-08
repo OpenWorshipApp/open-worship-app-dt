@@ -375,3 +375,28 @@ window as a whole — tabs, pickers, its language, the caution — is in
   Save is there to press, and writes an outside change through Monaco's own
   edit -- never open-lyric's `value` setter, which resets the dirty baseline
   and greyed Save out (seen live).
+
+- **A slide document is attached as its words and changed in its tab**
+  (2026-11-07). A `.ows` attachment is a line a slide of its text boxes
+  (`toSlideFileText`), never the JSON whose pictures are base64. A
+  slide document row's **[en:tran:Open in Chatbot]** in the Documents list
+  (not a PDF, PPTX or DOCX row) and the Slide Editor footer's robot
+  (`SlideEditorChatbotButtonComp`) hand it over through
+  `openDocumentInChatbot` (`lyricChatbotMenuHelpers.ts`, the song's names
+  kept as aliases), and the window opens it under a card written with no
+  model (`genSlideOpeningAnswer`): the song card's two translate buttons,
+  **[en:tran:Check the spelling]**, **[en:tran:Make the words larger]** and
+  **[en:tran:Make slides like a picture]**. A question while it is open is a
+  `slide` ask (`chatbot-llm.md`), the document read again before every
+  question. **It stays open past a picture attached after it**
+  (`findOpenSlideAttachments`): `findOpenFileAttachments` keeps only the
+  last question's files, and the picture of the slides wanted, attached from
+  a folder, would have closed the document it was attached to change. After
+  a change the answer carries **[en:tran:Undo this change]** and
+  **[en:tran:Show it in the list]**, the song's own two. **In a tab with a
+  song or slides open, only a supported question asked AS IT STANDS goes to
+  the guide** (`findKnownQuestion(…, true)`): _list me more options_ carried
+  a row's keyword phrase and was answered with how to open a slide card's
+  menu. And _list me more options_, _what can you do?_, _help_ (English,
+  a few words and nothing more, `checkIsDocumentOptionsAsk`) show the
+  document's card again with no model.

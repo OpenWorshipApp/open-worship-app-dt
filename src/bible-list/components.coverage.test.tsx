@@ -4,6 +4,24 @@ import { act, Suspense, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+vi.mock('../media-sessions/useFileListSessions', () => ({
+    useFileListSessions: (settingName: string) => ({
+        activeId: '',
+        isDefaultSession: true,
+        dirSourceSettingName: settingName,
+        element: null,
+    }),
+}));
+
 // ONE mock surface for the Bibles panel: the list of list files, the reading
 // column that holds it beside the notes, a list's rows, one row, and the
 // Generate Slides popup a row opens. The components themselves are real, so a
@@ -55,6 +73,7 @@ vi.mock('./Bible', () => ({
         getDefault: h.bibleGetDefault,
         create: h.bibleCreate,
         getDirSourceSettingName: () => 'select-dir-bible-read',
+        getBaseDirSourceSettingName: () => 'select-dir-bible-read',
     },
 }));
 vi.mock('../others/ItemReadErrorComp', () => ({

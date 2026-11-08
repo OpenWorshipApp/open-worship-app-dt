@@ -39,6 +39,11 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { convertToPdf, showFileOrDirExplorer } from '../server/appHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
+import {
+    SESSION_URL_PARAM_NAME,
+    getActiveDirSourceSettingName,
+    toSessionDirSourceSettingNameFromParam,
+} from '../media-sessions/folderSessionHelpers';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import PdfAppDocument from './PdfAppDocument';
@@ -77,6 +82,7 @@ import { type ItemBaseFilePath } from '../helper/ItemBase';
 import {
     getParamFileFullName,
     getParamIdNum,
+    getParamKeyValue,
     setParamIdNum,
 } from '../helper/domHelpers';
 
@@ -492,7 +498,7 @@ export async function convertOfficeFile(
 
 export async function selectSlide(event: any, currentFilePath: string) {
     const dirSource = await DirSource.getInstance(
-        dirSourceSettingNames.APP_DOCUMENT,
+        getActiveDirSourceSettingName(dirSourceSettingNames.APP_DOCUMENT),
     );
     const newFilePaths = await dirSource.getFilePaths('appDocument');
     if (!newFilePaths?.length) {
@@ -698,8 +704,16 @@ function getInjectedAppDocumentFilePath(): string | null {
         if (fileFullName === null) {
             return null;
         }
+        // The session its opener named (`openAppDocumentEditorExternal`),
+        // else the Default one's folder.
         const dirPath = DirSource.getDirPathBySettingName(
-            dirSourceSettingNames.APP_DOCUMENT,
+            toSessionDirSourceSettingNameFromParam(
+                dirSourceSettingNames.APP_DOCUMENT,
+                getParamKeyValue(
+                    globalThis.location.href,
+                    SESSION_URL_PARAM_NAME,
+                ),
+            ),
         );
         if (dirPath === null) {
             throw new Error('App document directory not set');

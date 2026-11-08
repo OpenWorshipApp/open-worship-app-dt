@@ -1,4 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
 import type BibleItem from './BibleItem';
 
 const h = vi.hoisted(() => ({

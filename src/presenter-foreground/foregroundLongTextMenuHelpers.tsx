@@ -3,6 +3,7 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import DirSource from '../helper/DirSource';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
 import { getFileName, pathBasename } from '../server/fileHelpers';
@@ -62,7 +63,7 @@ export function chooseLongTextLangCode(event: any, usedLangCodes: string[]) {
 async function listLyricFilePaths() {
     try {
         const dirSource = await DirSource.getInstance(
-            dirSourceSettingNames.APP_DOCUMENT,
+            getActiveDirSourceSettingName(dirSourceSettingNames.APP_DOCUMENT),
         );
         if (!dirSource.dirPath) {
             return [];

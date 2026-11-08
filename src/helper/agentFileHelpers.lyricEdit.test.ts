@@ -3,6 +3,16 @@
 import path from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 // The app's half of `owa_lyric_edit`: a song READ whole (its editing head,
 // unsaved edits included) with a hash, a song named by its whole PATH (the
 // help window's attached song lives in any folder), and an update refused
@@ -78,6 +88,12 @@ vi.mock('./agentBackupHelpers', () => ({
     trashAgentFile: vi.fn(),
 }));
 vi.mock('./agentSlideHelpers', () => ({
+    // `update-slides` / `add-slides` (`owa_slide_edit`) and the whole-words
+    // read: not what these tests drive.
+    AGENT_SLIDE_LIMITS: { shownTextChars: 300, fullTextChars: 5000 },
+    applyAgentSlideBatch: vi.fn(),
+    checkIsAgentSlideBatchAction: () => false,
+    readAgentSlideBatchRequest: vi.fn(),
     checkIsAgentSlideAction: () => false,
     applyAgentSlideAction: vi.fn(),
     readAgentSlideDocument: vi.fn(),
@@ -189,7 +205,7 @@ describe('a song named by its path', () => {
         expect(await reasonOf(SONG_PATH)).toMatch(/not a song/);
     });
 
-    test('takes read, info and update only, and for songs only', async () => {
+    test('takes read, info and update for a song, slide actions for slides', async () => {
         expect(
             await handleAgentFileRequest({
                 kind: 'lyric',
@@ -197,16 +213,19 @@ describe('a song named by its path', () => {
                 filePath: SONG_PATH,
             }),
         ).toMatchObject({ isError: true });
-        expect(
-            await handleAgentFileRequest({
-                kind: 'slide',
-                action: 'read',
-                filePath: SONG_PATH,
-            }),
-        ).toEqual({
-            isError: true,
-            reason: 'Only a song can be named by its path.',
+        // A slide document by its path (`owa_slide_edit`) is read and
+        // changed slide by slide -- a song's whole-text read is no action
+        // of its, and nothing is read off the disk to say so.
+        const refused = await handleAgentFileRequest({
+            kind: 'slide',
+            action: 'read',
+            filePath: SONG_PATH,
         });
+        expect(refused).toMatchObject({ isError: true });
+        expect((refused as { reason: string }).reason).toMatch(
+            /slide by slide/,
+        );
+        expect(h.exists).not.toHaveBeenCalled();
     });
 });
 

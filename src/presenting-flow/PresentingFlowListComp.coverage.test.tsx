@@ -3,6 +3,15 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/useFileListSessions', () => ({
+    useFileListSessions: (settingName: string) => ({
+        activeId: '',
+        isDefaultSession: true,
+        dirSourceSettingName: settingName,
+        element: null,
+    }),
+}));
+
 const { state, mocks } = vi.hoisted(() => ({
     state: { dir: null as any, props: null as any, deleteEvent: null as any },
     mocks: {
@@ -84,7 +93,10 @@ describe('PresentingFlowListComp', () => {
         const container = document.createElement('div');
         const root = createRoot(container);
         await act(async () => root.render(<PresentingFlowListComp />));
-        expect(container.innerHTML).toBe('');
+        // No list yet; the floating preview host stays, outside the list
+        // that is keyed by folder session.
+        expect(container.textContent).not.toContain('Presenting Flows');
+        expect(container.innerHTML).toBe('<aside>floating</aside>');
         state.dir = { path: '/runs' };
         await act(async () => root.render(<PresentingFlowListComp />));
         expect(container.textContent).toContain('Presenting Flows');

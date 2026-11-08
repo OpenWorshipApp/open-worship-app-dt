@@ -245,6 +245,8 @@ const REMOVING_TOOL_SET = new Set([
     'owa_slide_file',
     // `remove-section` takes a part out of a song.
     'owa_lyric_edit',
+    // `delete-slide` takes a slide out of a slide document.
+    'owa_slide_edit',
     'owa_bible_item',
     'owa_bible_note',
     'owa_undo',
@@ -281,6 +283,9 @@ const ACTING_ACTION_MAP = {
 // `owa_lyric_file`.
 const READING_ACTION_MAP = {
     owa_lyric_edit: ['read'],
+    // The same for an attached slide document (`owa_slide_edit`): `slides` is
+    // read before every question about it.
+    owa_slide_edit: ['slides'],
 };
 
 /** Does THIS call change the app (the tool, or the action it was given)? */

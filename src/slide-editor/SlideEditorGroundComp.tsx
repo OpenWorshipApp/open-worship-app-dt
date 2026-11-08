@@ -16,6 +16,7 @@ import type Slide from '../app-document-list/Slide';
 import FileSource from '../helper/FileSource';
 import { getMimetypeExtensions } from '../server/fileHelpers';
 import { tran } from '../lang/langHelpers';
+import SlideEditorChatbotButtonComp from './SlideEditorChatbotButtonComp';
 
 // The very test `AppDocument.getInstance` makes, asked BEFORE it is made. A
 // slide of a document this editor cannot open -- a song's, left behind as the
@@ -54,6 +55,10 @@ function RenderNoSlideComp() {
                         <VaryAppDocumentContext value={editableDocument}>
                             <SlidesMenuComp />
                         </VaryAppDocumentContext>
+                        {/* The assistant can add the first slide too. */}
+                        <SlideEditorChatbotButtonComp
+                            filePath={editableDocument.filePath}
+                        />
                     </div>
                 </div>
             )}

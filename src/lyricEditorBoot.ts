@@ -12,7 +12,15 @@ import * as openLyricInternal from 'open-lyric/internal';
 
 import { dirSourceSettingNames } from './helper/constants.ts';
 import DirSource from './helper/DirSource.ts';
-import { getParamFileFullName, getParamIdNum } from './helper/domHelpers.ts';
+import {
+    getParamFileFullName,
+    getParamIdNum,
+    getParamKeyValue,
+} from './helper/domHelpers.ts';
+import {
+    SESSION_URL_PARAM_NAME,
+    toSessionDirSourceSettingNameFromParam,
+} from './media-sessions/folderSessionHelpers.ts';
 import Lyric from './lyric-list/Lyric.ts';
 import { pathJoin, fsExistSync } from './server/fileHelpers.ts';
 import appProvider from './server/appProvider.ts';
@@ -112,8 +120,13 @@ export async function getLyric() {
     if (fileFullName === null) {
         throw new Error('Lyric file not specified');
     }
+    // The Documents session its opener named (`openPopupLyricEditorWindow`),
+    // else the Default one's folder.
     const dirPath = DirSource.getDirPathBySettingName(
-        dirSourceSettingNames.APP_DOCUMENT,
+        toSessionDirSourceSettingNameFromParam(
+            dirSourceSettingNames.APP_DOCUMENT,
+            getParamKeyValue(url, SESSION_URL_PARAM_NAME),
+        ),
     );
     if (dirPath === null) {
         throw new Error('Documents directory not set');

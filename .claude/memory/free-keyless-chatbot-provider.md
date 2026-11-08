@@ -85,3 +85,14 @@ and title, and `tran()` THROWS on a missing key in dev, so a brand name or a URL
 through it blanks the panel in Khmer ([[tran-missing-key-throws-in-dev]]).
 Related: [[agent-access-mcp-chatbot]], [[kimi-third-llm-provider]],
 [[chatbot-answer-options]].
+
+**The anonymous quota is per computer and a benchmark spends it**
+(2026-11-07): about forty slide-job runs against the Free models from one
+machine in an evening -- several streams at once -- and every Free model
+answered the gateway's rate limit, code PROMOTION_MODEL_LIMIT_REACHED (_Sign up for free to continue …
+Or come back later_), which leaves the user's own Free assistant, and Auto
+when it falls back to Free, refusing on that computer until it resets.
+Measure on the user's own servers (a shared registry server, Ollama) first;
+when a Free model must be measured, one stream, few runs, and tell the user
+the quota was used. The same evening `nemotron-3-super-120b-a12b:free` had
+been withdrawn (`model_not_found`; `EC-462`).

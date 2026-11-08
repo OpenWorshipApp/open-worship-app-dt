@@ -3,6 +3,10 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
+vi.mock('../../media-sessions/mediaSessionData', () => ({
+    subscribeMediaSessionStrips: () => () => {},
+}));
+
 const h = vi.hoisted(() => ({
     paths: [] as string[],
     files: new Map<string, any>(),
@@ -15,14 +19,26 @@ const h = vi.hoisted(() => ({
         [...text.matchAll(/GEN \d+:\d+/g)].map(([verse]) => verse),
     ),
     update: null as null | ((data: { filePath: string }) => Promise<void>),
+    // The Bible Notes session in front, and the folders of other sessions.
+    activeNoteSetting: 'select-dir-bible-notes',
+    sessionDirs: new Map<string, { dirPath: string; paths: string[] }>(),
 }));
 
 vi.mock('../../helper/DirSource', () => ({
     default: {
-        getInstance: async () => ({
-            dirPath: '/notes',
-            getFilePaths: async () => h.paths,
-        }),
+        getInstance: async (settingName: string) => {
+            const sessionDir = h.sessionDirs.get(settingName);
+            if (sessionDir !== undefined) {
+                return {
+                    dirPath: sessionDir.dirPath,
+                    getFilePaths: async () => sessionDir.paths,
+                };
+            }
+            return {
+                dirPath: '/notes',
+                getFilePaths: async () => h.paths,
+            };
+        },
     },
 }));
 vi.mock('../../helper/FileSource', () => ({
@@ -43,6 +59,8 @@ vi.mock('./Note', () => ({
     default: {
         mimetypeName: 'note',
         fromFilePath: async (filePath: string) => h.notes.get(filePath) ?? null,
+        // The Default session in front: one folder indexed, as before.
+        getDirSourceSettingName: () => h.activeNoteSetting,
     },
 }));
 vi.mock('../../helper/domHelpers', () => ({
@@ -105,6 +123,8 @@ beforeEach(() => {
     h.highlight.mockClear();
     h.parseText.mockClear();
     h.update = null;
+    h.activeNoteSetting = 'select-dir-bible-notes';
+    h.sessionDirs.clear();
     host = document.createElement('div');
     document.body.appendChild(host);
     root = createRoot(host);
@@ -170,6 +190,40 @@ test('one scan indexes plain notes and translation-scoped verse marks', async ()
     expect(h.reads).toHaveBeenCalledTimes(2);
     expect(h.parseText).toHaveBeenCalledTimes(2);
     expect(h.register).toHaveBeenCalledTimes(1);
+});
+
+test("indexes the Default session's notes and the session in front's", async () => {
+    // Verse marks are always filed in Default's notes, so they stay on the
+    // page; the notes of the session the list is on are indexed beside them.
+    h.activeNoteSetting = 'select-dir-bible-notes-s1';
+    h.sessionDirs.set('select-dir-bible-notes-s1', {
+        dirPath: '/easter',
+        paths: ['/easter/sermon.own'],
+    });
+    h.paths = ['/notes/one.own'];
+    h.files.set('/notes/one.own', {
+        items: [{ metadata: { id: 1 }, verseKey: '(KJV) GEN 1:1' }],
+    });
+    h.files.set('/easter/sermon.own', {
+        items: [{ metadata: { id: 7 }, verseKey: '(KJV) GEN 1:1' }],
+    });
+    await act(async () => root.render(<IndexProbe />));
+    await vi.waitFor(() =>
+        expect(snapshot().refs['GEN 1:1']).toEqual([
+            '/notes/one.own@1',
+            '/easter/sermon.own@7',
+        ]),
+    );
+    // A save in the session's folder refreshes too.
+    const reads = h.reads.mock.calls.length;
+    h.files.set('/easter/sermon.own', {
+        items: [{ metadata: { id: 8 }, verseKey: '(KJV) GEN 2:3' }],
+    });
+    await act(async () => h.update?.({ filePath: '/easter/sermon.own' }));
+    await vi.waitFor(() =>
+        expect(snapshot().refs['GEN 2:3']).toEqual(['/easter/sermon.own@8']),
+    );
+    expect(h.reads.mock.calls.length).toBeGreaterThan(reads);
 });
 
 test('only a save inside the notes folder refreshes both indexes', async () => {

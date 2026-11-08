@@ -2,6 +2,7 @@ import { toLocaleNumBible } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { checkIsCrossChapterTarget } from '../helper/bible-helpers/bibleTargetHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import DirSource from '../helper/DirSource';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
 import {
@@ -47,7 +48,7 @@ export async function createBibleItemLyric(
     const bibleKeys = [...new Set([bibleItem.bibleKey, ...selectedBibleKeys])];
     try {
         const dirSource = await DirSource.getInstance(
-            dirSourceSettingNames.APP_DOCUMENT,
+            getActiveDirSourceSettingName(dirSourceSettingNames.APP_DOCUMENT),
         );
         if (!dirSource.isDirPathValid) {
             throw new Error('Documents directory is unavailable');

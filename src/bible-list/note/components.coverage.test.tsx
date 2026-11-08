@@ -4,6 +4,28 @@ import { act, type ReactElement, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+vi.mock('../../media-sessions/folderSessionPathHelpers', () => ({
+    findSessionIdByFilePath: () => null,
+    findNonDefaultSessionIdByFilePath: () => null,
+}));
+vi.mock('../../media-sessions/useFileListSessions', () => ({
+    useFileListSessions: (settingName: string) => ({
+        activeId: '',
+        isDefaultSession: true,
+        dirSourceSettingName: settingName,
+        element: null,
+    }),
+}));
+
 // ONE mock surface for the small Bible Notes components: the verse-mark row,
 // the note window's history menu, its footer controls and lookup popup, the
 // notes list and the row switch. Each is rendered for real against it.

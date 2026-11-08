@@ -551,7 +551,23 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   the same day on Auto: _Explain it in simple words_ under `MAT.18.pdf`, Free
   · Nemotron Super VL _wrote no answer_ after 34.7k tokens and the guide
   answered; a model that wrote nothing pressed nothing either. Every other
-  ask keeps the old rule. **And the relay's failures are said
+  ask keeps the old rule -- **except an answer of NOTHING with no tool
+  called in the whole ask** (2026-11-07, `genNoAnswerError` marks it
+  `isNothingDone`, `checkIsNothingDoneError` reads it on the error or its
+  `cause`, because `askLlmBot` rewraps every failure in a sentence): it
+  pressed nothing, so it is handed on like a failure before any round, on
+  Auto and from a named server alike. Seen live on a slide ask with a
+  picture: the shared gemma4:cloud answered nothing three times of four,
+  each time the end of the question; the same model on the user's own
+  Ollama made the slides. **And the cause, measured the same night:** a
+  tool call the server could not parse is DROPPED -- the reply comes back
+  with ~170 tokens generated, no text, no call, `stop`. Replayed straight to
+  both Ollama servers with the slide ask and the tab's history in front, it
+  happened about one reply in six, at temperature 0 too and on the user's
+  own server as well. So the OpenAI-shaped loop asks the SAME round once
+  more when a reply came back empty with tokens generated while tools were
+  on offer (`isDroppedReplyRetried`, once an ask, never on the last round);
+  a second empty reply is the model's, thrown as before. **And the relay's failures are said
   in the window's language** (`describeRelayFailure` in
   `customServerClientHelpers.ts`, EC-385): _its server is not answering …_,
   _it went quiet …_ and _took too long_, whole sentences through the
@@ -749,3 +765,19 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   refused, and outside a lyric ask the tool is refused. On Auto a
   translation prefers a Gemma 4 model (`checkIsLyricTranslateAsk` →
   `preferModelPattern`).
+
+- **A sixth tool offered to one kind of ask** (2026-11-07): `owa_slide_edit`
+  goes to a `slide` ask -- a question while a `.ows` is open in the tab --
+  under `SLIDE_SYSTEM_PROMPT` (`src/chatbot/slideChatHelpers.ts`), eight
+  rounds, the document read fresh into the user turn as plain lines
+  (`toSlideDocumentText`, every box's words whole), any picture attached
+  riding with it, and on a custom server's lean list. ~758 tokens to that
+  ask alone; the ordinary list and its ratchet did not move (~8 343 of
+  8 350). The WINDOW turns the document's name into its path
+  (`resolveSlideEditFile`, the song's `resolveAttachedDocumentFile`), a
+  path the model writes is refused, and outside a slide ask the tool is
+  refused. The prompt's two rules that a first live run needed: words the
+  slides already hold (a translation, a fix, a title) are not new words --
+  _add above the khmer text_ had been answered _I need the English words_
+  -- and a request with one sensible reading is done, not asked about,
+  because every change is undone by one press.

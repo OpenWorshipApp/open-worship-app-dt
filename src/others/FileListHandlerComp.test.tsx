@@ -134,6 +134,7 @@ async function renderList(
         defaultFolderName?: string;
         fileSelectionOption?: FileSelectionOptionType;
         genItemsAddingMenuItems?: (items: any[]) => any[];
+        sessionsElement?: ReactNode;
     } = {},
 ) {
     await act(async () =>
@@ -334,5 +335,40 @@ describe('file list container', () => {
         // A folder picked here would have no data folder to be kept in.
         expect(container.querySelector('.path-selector')).toBeNull();
         expect(container.textContent).toContain('Choose Songs');
+    });
+
+    it('draws the session strip under the title, outside the scrolling body', async () => {
+        await renderList({
+            header: 'Documents',
+            sessionsElement: createElement('span', {}, 'Default · Easter'),
+        });
+        const frame = container.querySelector<HTMLElement>('.songs-list')!;
+        const children = Array.from(frame.children);
+        expect(children.map((child) => child.className)).toEqual([
+            'card-header',
+            'file-list-sessions-bar d-flex align-items-center',
+            'card-body d-flex flex-column pb-5 app-inner-shadow',
+        ]);
+        expect(children[1].textContent).toBe('Default · Easter');
+    });
+
+    it('keeps the strip when the session has no folder yet', async () => {
+        // The strip is the way back out of an empty session.
+        dirSource.dirPath = '';
+        h.paths = null;
+        await renderList({
+            header: 'Documents',
+            defaultFolderName: 'documents',
+            sessionsElement: createElement('span', {}, 'Default · Easter'),
+        });
+        expect(
+            container.querySelector('.file-list-sessions-bar')?.textContent,
+        ).toBe('Default · Easter');
+        expect(container.textContent).toContain('Choose documents');
+    });
+
+    it('adds no strip row to a list without sessions', async () => {
+        await renderList({ header: 'Documents' });
+        expect(container.querySelector('.file-list-sessions-bar')).toBeNull();
     });
 });

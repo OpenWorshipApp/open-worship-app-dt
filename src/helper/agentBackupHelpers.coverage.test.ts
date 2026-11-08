@@ -20,6 +20,7 @@ const { state, mocks } = vi.hoisted(() => ({
         trashAllMaterialFiles: vi.fn(),
         renameAllMaterialFiles: vi.fn(),
         deleteMetaDataFile: vi.fn(),
+        forgetCachedData: vi.fn(),
         deleteTransitionMetaDataFile: vi.fn(),
         moveFilePath: vi.fn(),
         preDelete: vi.fn(),
@@ -88,7 +89,10 @@ vi.mock('../others/SlideTransitionManager', () => ({
     },
 }));
 vi.mock('../others/AttachBackgroundManager', () => ({
-    attachBackgroundManager: { deleteMetaDataFile: mocks.deleteMetaDataFile },
+    attachBackgroundManager: {
+        deleteMetaDataFile: mocks.deleteMetaDataFile,
+        forgetCachedData: mocks.forgetCachedData,
+    },
 }));
 vi.mock('../editing-manager/EditingHistoryManager', () => ({
     default: {
@@ -986,6 +990,25 @@ describe('undo, when what it would put back is not there', () => {
         });
         expect(mocks.saveFlow).not.toHaveBeenCalled();
         expect(mocks.fireUpdateEvent).not.toHaveBeenCalled();
+    });
+
+    test('attached backgrounds put back are read again by the slide cards', async () => {
+        state.existing.add('/documents/Talk.ows.bg.json');
+        state.texts.set('/documents/Talk.ows.bg.json', '{"1":{}}');
+        const original = await saveListed('Put a picture behind slide 1', [
+            {
+                type: 'file',
+                filePath: '/documents/Talk.ows.bg.json',
+                text: '{}',
+            },
+        ]);
+        await expect(undoAgentBackup(original.id)).resolves.toMatchObject({
+            undone: 'Put a picture behind slide 1',
+        });
+        expect(state.texts.get('/documents/Talk.ows.bg.json')).toBe('{}');
+        expect(mocks.forgetCachedData).toHaveBeenCalledWith(
+            '/documents/Talk.ows',
+        );
     });
 
     test('a Bible file put back drops that Bible’s parsed caches, and its undo remembers whose it is', async () => {

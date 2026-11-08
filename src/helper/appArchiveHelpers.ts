@@ -1,5 +1,6 @@
 import { dirSourceSettingNames } from './constants';
 import DirSource from './DirSource';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import { DragTypeEnum } from './DragInf';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
@@ -591,8 +592,11 @@ export function toExtractedArchivePath(
 }
 
 function getKindDirPath(kind: ArchiveFileKindType) {
+    // Into the folder session the list is on, so an imported song shows up in
+    // the list being looked at. A key with no session list -- the media
+    // folders -- resolves to itself.
     const dirPath = DirSource.getDirPathBySettingName(
-        kindDirSettingNameMap[kind],
+        getActiveDirSourceSettingName(kindDirSettingNameMap[kind]),
     );
     if (!dirPath) {
         throw new Error(

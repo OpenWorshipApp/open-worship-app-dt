@@ -854,6 +854,25 @@
                         "find": "Documents",
                         "guide": true
                     }
+                },
+                {
+                    "id": "change-slides-with-assistant",
+                    "text": "Can the assistant change my slides for me?",
+                    "kind": "howto",
+                    "keywords": [
+                        "translate slides",
+                        "slides in another language",
+                        "make slides like a picture",
+                        "check the spelling",
+                        "make the words larger",
+                        "picture behind every slide",
+                        "open in chatbot"
+                    ],
+                    "resources": {
+                        "recipe": "W-57",
+                        "related": ["W-15"],
+                        "find": "Open in Chatbot"
+                    }
                 }
             ]
         },
@@ -1696,7 +1715,7 @@
                     "resources": {
                         "recipe": "W-08",
                         "passage": "Folder sessions (Images / Videos / Webs / Audios)",
-                        "related": ["W-16"],
+                        "related": ["W-16", "W-58"],
                         "find": "Background > Images",
                         "guide": true
                     }

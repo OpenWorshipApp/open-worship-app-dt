@@ -21,6 +21,7 @@ import {
 import CanvasContainerComp from './canvas-container/CanvasContainerComp';
 import { toWidgetLabel } from '../../others/labelIconHelpers';
 import SlideEditorInsertToolbarComp from './tools/SlideEditorInsertToolbarComp';
+import SlideEditorChatbotButtonComp from '../SlideEditorChatbotButtonComp';
 
 function EditorComp({
     contextData,
@@ -158,6 +159,9 @@ export default function SlideEditorCanvasComp({
                     >
                         <SlidesMenuComp />
                     </VaryAppDocumentContext>
+                    <SlideEditorChatbotButtonComp
+                        filePath={canvasController.appDocument.filePath}
+                    />
                     <MultiContextRenderComp contexts={allCanvasContextValue}>
                         <SlideEditorCanvasScalingComp />
                     </MultiContextRenderComp>

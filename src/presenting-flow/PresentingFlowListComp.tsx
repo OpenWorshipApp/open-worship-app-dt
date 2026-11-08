@@ -1,6 +1,6 @@
 import './PresentingFlowListComp.scss';
 
-import { useCallback } from 'react';
+import { type ReactNode, useCallback } from 'react';
 
 import PresentingFlowFileComp from './PresentingFlowFileComp';
 import FileListHandlerComp from '../others/FileListHandlerComp';
@@ -28,6 +28,7 @@ import {
 import { getOpenSharedLinkMenuItem } from '../background/downloadHelper';
 import { removePresentingFlowSettings } from './presentingFlowHelpers';
 import { checkIsAnyPresentingFlowOnScreen } from './presentingFlowOnScreenHelpers';
+import { useFileListSessions } from '../media-sessions/useFileListSessions';
 import PresentingFlowPreviewFloatingComp from './PresentingFlowPreviewFloatingComp';
 
 // Built per call rather than at module scope: `tran` reads the loaded language,
@@ -70,10 +71,38 @@ function handleDroppedFileTaking(file: DroppedFileType) {
     return true;
 }
 
+/**
+ * The Presenting Flows list: the folder-session strip under its title, and
+ * the list of the session in front, keyed by session so a switch drops the
+ * list it leaves.
+ */
 export default function PresentingFlowListComp() {
-    const dirSource = useGenDirSourceReload(
-        dirSourceSettingNames.PRESENTING_FLOW,
+    const session = useFileListSessions(dirSourceSettingNames.PRESENTING_FLOW);
+    return (
+        <>
+            <PresentingFlowListBodyComp
+                key={session.activeId}
+                dirSourceSettingName={session.dirSourceSettingName}
+                sessionsElement={session.element}
+                isDirSettingRouteHidden={!session.isDefaultSession}
+            />
+            {/* Outside the keyed body: a flow's preview being played must
+                not stop because the operator looked at another session. */}
+            <PresentingFlowPreviewFloatingComp />
+        </>
     );
+}
+
+function PresentingFlowListBodyComp({
+    dirSourceSettingName,
+    sessionsElement,
+    isDirSettingRouteHidden,
+}: Readonly<{
+    dirSourceSettingName: string;
+    sessionsElement: ReactNode;
+    isDirSettingRouteHidden: boolean;
+}>) {
+    const dirSource = useGenDirSourceReload(dirSourceSettingName);
     // Subscribed once for the whole panel rather than per row: the row that owns
     // the deleted file is unmounting at exactly the moment the event fires, so a
     // per-row listener is the one listener that cannot be relied on to run.
@@ -103,22 +132,21 @@ export default function PresentingFlowListComp() {
         return null;
     }
     return (
-        <>
-            <FileListHandlerComp
-                className="presenting-flow-list"
-                mimetypeName="presentingFlow"
-                defaultFolderName={defaultDataDirNames.PRESENTING_FLOW}
-                dirSource={dirSource}
-                takeDroppedFile={handleDroppedFileTaking}
-                onNewFile={async (dirPath: string, name: string) => {
-                    return !(await PresentingFlow.create(dirPath, name));
-                }}
-                header={<span>{toIconedLabel('Presenting Flows')}</span>}
-                bodyHandler={handleBodyRendering}
-                genContextMenuItems={genContextMenuItems}
-                checkIsOnScreen={checkIsAnyPresentingFlowOnScreen}
-            />
-            <PresentingFlowPreviewFloatingComp />
-        </>
+        <FileListHandlerComp
+            className="presenting-flow-list"
+            mimetypeName="presentingFlow"
+            defaultFolderName={defaultDataDirNames.PRESENTING_FLOW}
+            dirSource={dirSource}
+            takeDroppedFile={handleDroppedFileTaking}
+            onNewFile={async (dirPath: string, name: string) => {
+                return !(await PresentingFlow.create(dirPath, name));
+            }}
+            header={<span>{toIconedLabel('Presenting Flows')}</span>}
+            sessionsElement={sessionsElement}
+            isDirSettingRouteHidden={isDirSettingRouteHidden}
+            bodyHandler={handleBodyRendering}
+            genContextMenuItems={genContextMenuItems}
+            checkIsOnScreen={checkIsAnyPresentingFlowOnScreen}
+        />
     );
 }

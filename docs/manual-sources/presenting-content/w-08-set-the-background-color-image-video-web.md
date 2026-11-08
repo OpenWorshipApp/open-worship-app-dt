@@ -51,8 +51,10 @@ no folder and offers to use the default one. To point a session at a folder of y
 press the folder line above the list (the path it is reading): a box opens under it — type
 the folder's path and press Enter, or press **[en:tran:Choose a folder]** (the folder icon)
 and pick it. The **⋮** on the session you are on (or a
-right-click on any of them) renames or removes it. Removing forgets that session's
-folder and slide show — never the files themselves. On the Images, Videos and Webs tabs
+right-click on any of them) renames or removes it — **[en:tran:Default]** can be renamed,
+never removed. Removing forgets that session's folder and slide show — never the files
+themselves. **[en:tran:Documents]**, **[en:tran:Presenting Flows]**, **[en:tran:Bibles]**
+and **[en:tran:Bible Notes]** carry the same row under their titles (W-58). On the Images, Videos and Webs tabs
 the slide show sits on the same row, and a blue ▶ on a button means that session's show
 is still running while you look at another one.
 

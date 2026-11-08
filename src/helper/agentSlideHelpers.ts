@@ -48,6 +48,36 @@ export function checkIsAgentSlideAction(
 }
 
 /**
+ * Many slides changed in ONE call and ONE history entry (2026-11-07, the
+ * user's ask: _Open in Chatbot for AppDocument to let chatbot help modify
+ * slides_, then _chatbot be the best choice to help modify appdocument
+ * slides_). A document translated, or every box made larger, was one
+ * `update-slide` a slide: twelve rounds of a model for a twelve-slide
+ * sermon, past every round cap, and twelve presses of Ctrl+Z to put back.
+ * Not one of `AGENT_SLIDE_ACTION_LIST`, whose actions `owa_slide_file`
+ * names: it is `owa_slide_edit`'s. `add-slides` is its twin for NEW slides
+ * (the same day, the user: _when user attach a screenshot of example slides
+ * they want … chatbot should be able to make slides for them_) -- five
+ * slides drawn after a picture are one call and one Ctrl+Z.
+ */
+export const AGENT_SLIDE_BATCH_ACTION = 'update-slides';
+export const AGENT_SLIDE_ADD_BATCH_ACTION = 'add-slides';
+export const AGENT_SLIDE_BATCH_ACTION_LIST = [
+    AGENT_SLIDE_BATCH_ACTION,
+    AGENT_SLIDE_ADD_BATCH_ACTION,
+] as const;
+export type AgentSlideBatchActionType =
+    (typeof AGENT_SLIDE_BATCH_ACTION_LIST)[number];
+
+export function checkIsAgentSlideBatchAction(
+    action: unknown,
+): action is AgentSlideBatchActionType {
+    return AGENT_SLIDE_BATCH_ACTION_LIST.includes(
+        action as AgentSlideBatchActionType,
+    );
+}
+
+/**
  * Every bound in one place. Each is either what the app can hold (a font
  * size, a box's size) or what a model's context can: the answer to `slides`
  * rides every later round of the conversation, so a hymn book's worth of
@@ -58,6 +88,12 @@ export const AGENT_SLIDE_LIMITS = {
     listedSlides: 100,
     listedItems: 30,
     shownTextChars: 300,
+    // A box's words read WHOLE, for a caller that is about to rewrite them
+    // (`owa_slide_edit`, a translation): 300 characters of a long verse are
+    // not enough to translate it. The most a box may be written with.
+    fullTextChars: 5000,
+    // `update-slides`: how many slides one call may change.
+    slidesPerBatch: 100,
     shownUrlChars: 200,
     // Pretty-printed characters of listed slides before the list pages.
     listedChars: 40000,
@@ -87,6 +123,8 @@ export type AgentSlideItemSpecType = {
     width?: number;
     height?: number;
     rotate?: number;
+    /** Corner rounding in pixels, the editor's own `roundSizePixel`. */
+    round?: number;
 };
 
 export type AgentSlideRequestType = {
@@ -168,6 +206,9 @@ const SPEC_KEY_LIST: readonly string[] = [
     'id',
     'remove',
     ...BOX_FIELD_LIST,
+    // Rounded corners, the box a slide of a picture so often has
+    // (2026-11-07: a picture's rounded band came out square).
+    'round',
     ...TEXT_FIELD_LIST,
 ];
 const ALIGN_LIST: readonly string[] = ['left', 'center', 'right'];
@@ -281,6 +322,12 @@ function checkSpecField(key: string, value: unknown): string | null {
                 value <= limits.boxMax
                 ? null
                 : `\`${key}\` is pixels, at least 1`;
+        case 'round':
+            return checkIsFiniteNumber(value) &&
+                value >= 0 &&
+                value <= limits.boxMax
+                ? null
+                : '`round` is the corner rounding in pixels, 0 for square';
         case 'rotate':
             return checkIsFiniteNumber(value) &&
                 Math.abs(value) <= limits.rotateMax
@@ -293,6 +340,18 @@ function checkSpecField(key: string, value: unknown): string | null {
                 `fields are ${SPEC_KEY_LIST.join(', ')}`
             );
     }
+}
+
+/**
+ * A line break a model wrote OUT -- a backslash and an `n` -- as the line
+ * break it meant. A box's words are shown to a model as a JSON string, line
+ * breaks as `\n`, and it copies that inside its own JSON: measured
+ * 2026-11-07 on gemma4:cloud, "Worship in Spirit and Truth\\n<the Khmer>",
+ * which would have put a backslash and an n on the projector between the
+ * two lines. Nobody's slide means those two characters.
+ */
+export function toRealLineBreaks(text: string) {
+    return text.replace(/\\r\\n|\\n/g, '\n');
 }
 
 function readItemSpecs(
@@ -349,6 +408,9 @@ function readItemSpecs(
         }
         // A copy: the caller's object is not held on to or changed.
         const spec = { ...entry } as AgentSlideItemSpecType;
+        if (typeof spec.text === 'string') {
+            spec.text = toRealLineBreaks(spec.text);
+        }
         const changeCount = keyList.filter((key) => {
             return key !== 'id' && key !== 'remove';
         }).length;
@@ -363,6 +425,21 @@ function readItemSpecs(
                 return refuse(
                     `${label} is empty -- a new text box needs at least ` +
                         'one field, such as its `text`.',
+                );
+            }
+            // Styled as words and given none: measured 2026-11-07 on
+            // gemma4:cloud, slides drawn after a picture came as an empty
+            // 80px bold box over the background, the words then written
+            // into the background box. A background box carries no font.
+            if (
+                spec.text === undefined &&
+                (spec.fontSize !== undefined ||
+                    spec.fontWeight !== undefined ||
+                    spec.fontFamily !== undefined)
+            ) {
+                return refuse(
+                    `${label} is styled as words (a font) but has no ` +
+                        '`text`: give its words in the same call.',
                 );
             }
         } else if (action === 'add-slide') {
@@ -555,7 +632,10 @@ function toShownSource(item: JsonObjectType): { url?: string; file?: string } {
     return { file: toFileName(source) };
 }
 
-function summarizeItem(item: JsonObjectType) {
+function summarizeItem(
+    item: JsonObjectType,
+    textChars: number = AGENT_SLIDE_LIMITS.shownTextChars,
+) {
     const lockField = item.locked === true ? { locked: true } : {};
     const boxFields = {
         left: toShownNumber(item.left),
@@ -574,7 +654,7 @@ function summarizeItem(item: JsonObjectType) {
     }
     const shown = cutText(
         typeof item.text === 'string' ? item.text : '',
-        AGENT_SLIDE_LIMITS.shownTextChars,
+        textChars,
     );
     return {
         id: item.id,
@@ -597,15 +677,18 @@ function summarizeItem(item: JsonObjectType) {
         align: toShownAlign(item.textHorizontalAlignment),
         valign: toShownValign(item.textVerticalAlignment),
         rotate: toShownNumber(item.rotate ?? 0),
+        ...(checkIsFiniteNumber(item.roundSizePixel) && item.roundSizePixel > 0
+            ? { round: toShownNumber(item.roundSizePixel) }
+            : {}),
         ...lockField,
     };
 }
 
-function summarizeItems(items: unknown) {
+function summarizeItems(items: unknown, textChars?: number) {
     const list = Array.isArray(items) ? items.filter(checkIsPlainObject) : [];
     return {
         items: list.slice(0, AGENT_SLIDE_LIMITS.listedItems).map((item) => {
-            return summarizeItem(item);
+            return summarizeItem(item, textChars);
         }),
         ...(list.length > AGENT_SLIDE_LIMITS.listedItems
             ? { itemCount: list.length }
@@ -617,6 +700,7 @@ function summarizeSlide(
     slide: JsonObjectType,
     slideNumber: number,
     documentDim: DimType | null,
+    textChars?: number,
 ) {
     const dim = readSlideDim(slide);
     // Only a slide that differs from the first says its size: positions are
@@ -636,7 +720,7 @@ function summarizeSlide(
         ...(dim !== null && isOwnSize
             ? { width: dim.width, height: dim.height }
             : {}),
-        ...summarizeItems(slide.canvasItems),
+        ...summarizeItems(slide.canvasItems, textChars),
     };
 }
 
@@ -668,6 +752,9 @@ export function readAgentSlideDocument(
     json: unknown,
     name: string,
     request: AgentCheckedSlideRequestType,
+    // `fullTextChars` for a caller about to rewrite the words; the shown cut
+    // otherwise -- the answer rides every later round.
+    textChars: number = AGENT_SLIDE_LIMITS.shownTextChars,
 ):
     | AgentSlideRefusalType
     | { isError?: false; slideDocument: AgentSlideDocumentType } {
@@ -687,7 +774,7 @@ export function readAgentSlideDocument(
     ) {
         const slide = slides[index];
         const summary = checkIsPlainObject(slide)
-            ? summarizeSlide(slide, index + 1, documentDim)
+            ? summarizeSlide(slide, index + 1, documentDim, textChars)
             : { number: index + 1, items: [] };
         listedChars += JSON.stringify(summary, null, 2).length;
         if (listed.length > 0 && listedChars > AGENT_SLIDE_LIMITS.listedChars) {
@@ -756,22 +843,30 @@ function toBoxKindPhrase(type: unknown) {
  * asked to make to something else, so this is the case to catch.
  */
 function checkIsShortenedTextEcho(currentText: unknown, text: string) {
-    const limit = AGENT_SLIDE_LIMITS.shownTextChars;
-    if (typeof currentText !== 'string' || currentText.length <= limit) {
-        return false;
-    }
-    const bareText = text.endsWith('…') ? text.slice(0, -1) : text;
-    return (
-        bareText.length >= limit - 1 &&
-        bareText.length <= limit &&
-        currentText.startsWith(bareText)
-    );
+    // Either cut a read can show: the usual one, or the whole-words read's.
+    return [
+        AGENT_SLIDE_LIMITS.shownTextChars,
+        AGENT_SLIDE_LIMITS.fullTextChars,
+    ].some((limit) => {
+        if (typeof currentText !== 'string' || currentText.length <= limit) {
+            return false;
+        }
+        const bareText = text.endsWith('…') ? text.slice(0, -1) : text;
+        return (
+            bareText.length >= limit - 1 &&
+            bareText.length <= limit &&
+            currentText.startsWith(bareText)
+        );
+    });
 }
 
 // The request's words for a field, and the field the editor reads it from.
 function toAppFieldName(key: string) {
     if (key === 'align') {
         return 'textHorizontalAlignment';
+    }
+    if (key === 'round') {
+        return 'roundSizePixel';
     }
     return key === 'valign' ? 'textVerticalAlignment' : key;
 }
@@ -785,6 +880,11 @@ function writeSpecFields(item: JsonObjectType, spec: AgentSlideItemSpecType) {
     }
     if (spec.text !== undefined) {
         item.text = spec.text;
+    }
+    // In pixels, so a percentage rounding the box had stops winning.
+    if (spec.round !== undefined) {
+        item.roundSizePixel = spec.round;
+        item.roundSizePercentage = 0;
     }
     if (spec.fontSize !== undefined) {
         item.fontSize = spec.fontSize;
@@ -890,8 +990,56 @@ function applyAddSlide(
         checkItems: canvasItems.map((item) => {
             return { item };
         }),
-        result: { added: position, id, slideCount: newSlides.length },
+        result: {
+            added: position,
+            id,
+            slideCount: newSlides.length,
+            boxes: toBoxIdWords(canvasItems),
+        },
     };
+}
+
+/**
+ * A new slide's boxes as a change answers them: each one's id and words, a
+ * background as `(no words)` -- so a call after it changes the box it means.
+ * Without them gemma4:cloud wrote a slide's words into its background box,
+ * box 1, on a guess (2026-11-07).
+ */
+function toBoxIdWords(items: JsonObjectType[]) {
+    return items.map((item) => {
+        const text = typeof item.text === 'string' ? item.text : '';
+        return {
+            id: item.id,
+            text: text === '' ? '(no words)' : cutText(text, 60).text,
+        };
+    });
+}
+
+/**
+ * The text box on the slide whose whole words a new box's `text` holds, or
+ * null. Words of two letters or fewer are no evidence of anything.
+ */
+function findEchoedTextBox(items: JsonObjectType[], text: unknown) {
+    if (typeof text !== 'string') {
+        return null;
+    }
+    const toCompared = (one: string) => {
+        return one.replace(/\s+/g, ' ').trim();
+    };
+    const newWords = toCompared(text);
+    return (
+        items.find((item) => {
+            if (
+                !checkIsPlainObject(item) ||
+                item.type !== 'text' ||
+                typeof item.text !== 'string'
+            ) {
+                return false;
+            }
+            const words = toCompared(item.text);
+            return words.length > 2 && newWords.includes(words);
+        }) ?? null
+    );
 }
 
 function applyUpdateSlide(
@@ -915,6 +1063,19 @@ function applyUpdateSlide(
     for (const [index, spec] of request.specs.entries()) {
         const label = `Box ${index + 1} of \`items\``;
         if (spec.id === undefined) {
+            // A "new" box carrying a box's whole words is that box changed
+            // with its `id` left out: measured 2026-11-07 on gemma4:cloud,
+            // "add English above the Khmer" sent the English and the Khmer
+            // with no id, which would have put the Khmer on the slide twice.
+            const echoed = findEchoedTextBox(items, spec.text);
+            if (echoed !== null) {
+                return refuse(
+                    `${label} has no \`id\`, so it would be a NEW box, but ` +
+                        `it carries the words of box ${echoed.id}. To ` +
+                        `change box ${echoed.id}, send it again with "id": ` +
+                        `${echoed.id}.`,
+                );
+            }
             defaults ??= context.genTextDefaults();
             const dim =
                 readSlideDim(slide) ??
@@ -977,6 +1138,35 @@ function applyUpdateSlide(
                     `not box ${spec.id}'s whole text -- leave \`text\` out to ` +
                     'keep its words as they are.',
             );
+        } else if (spec.text !== undefined) {
+            // New words that repeat ANOTHER box of the slide -- one this
+            // change does not take off, and that the box did not already
+            // carry: measured 2026-11-07 on gemma4:cloud, "add above the
+            // khmer text" put "What is Faith" over a slide's Khmer when
+            // the box under it already said "What is Faith".
+            const repeated = findEchoedTextBox(
+                items.filter((item) => {
+                    return (
+                        item !== current &&
+                        !request.specs.some((one) => {
+                            return one.id === item.id && one.remove === true;
+                        })
+                    );
+                }),
+                spec.text,
+            );
+            if (
+                repeated !== null &&
+                findEchoedTextBox([repeated], current.text) === null
+            ) {
+                return refuse(
+                    `${label}: box ${spec.id}'s new words repeat box ` +
+                        `${repeated.id}'s ("${cutText(String(repeated.text), 60).text}"), ` +
+                        `so slide ${slideNumber} already shows them: leave ` +
+                        `slide ${slideNumber} out of this change and keep ` +
+                        'its boxes as they are.',
+                );
+            }
         }
         const merged = writeSpecFields({ ...current }, spec);
         if (checkIsSpecChanging(current, merged, spec)) {
@@ -1143,4 +1333,234 @@ export function applyAgentSlideAction(
         return applyMoveSlide(json, slides, slideNumber, request, context);
     }
     return applyDuplicateSlide(json, slides, slideNumber, context);
+}
+
+// --- many slides in one call (`update-slides`) ----------------------------
+
+/**
+ * One slide's change in an `update-slides` or `add-slides` request, once
+ * checked. For `add-slides`, `slide` is where the new slide goes (none: at
+ * the end).
+ */
+export type AgentCheckedSlideBatchType = {
+    changes: { slide?: number; specs: AgentSlideItemSpecType[] }[];
+};
+
+/**
+ * Everything about an `update-slides` / `add-slides` request that can be
+ * judged without the document: `changes` is a list of `{slide, items}`, each
+ * `items` read by `update-slide`'s (or `add-slide`'s) own rules; a slide to
+ * change is named once.
+ */
+export function readAgentSlideBatchRequest(
+    changes: unknown,
+    action: AgentSlideBatchActionType = AGENT_SLIDE_BATCH_ACTION,
+): AgentSlideRefusalType | ({ isError?: false } & AgentCheckedSlideBatchType) {
+    if (!Array.isArray(changes) || changes.length === 0) {
+        return refuse(
+            action === AGENT_SLIDE_ADD_BATCH_ACTION
+                ? 'add-slides needs `changes`: a list of {items}, one entry ' +
+                      'for each new slide (its text boxes, back to front; ' +
+                      '`slide` is where it goes, else at the end).'
+                : 'update-slides needs `changes`: a list of {slide, items}, ' +
+                      'one entry for each slide to change.',
+        );
+    }
+    if (changes.length > AGENT_SLIDE_LIMITS.slidesPerBatch) {
+        return refuse(
+            `At most ${AGENT_SLIDE_LIMITS.slidesPerBatch} slides go in one ` +
+                'call -- send the rest in another.',
+        );
+    }
+    const checked: AgentCheckedSlideBatchType['changes'] = [];
+    const seenSlideSet = new Set<number>();
+    for (const [index, entry] of changes.entries()) {
+        const label = `Change ${index + 1} of \`changes\``;
+        if (!checkIsPlainObject(entry)) {
+            return refuse(
+                `${label} is not a change: each one is an object like ` +
+                    (action === AGENT_SLIDE_ADD_BATCH_ACTION
+                        ? '{"items": [{"text": "Welcome"}]}.'
+                        : '{"slide": 2, "items": [{"id": 1, "text": ' +
+                          '"Welcome"}]}.'),
+            );
+        }
+        if (action === AGENT_SLIDE_ADD_BATCH_ACTION) {
+            if (
+                entry.slide !== undefined &&
+                !checkIsCountingNumber(entry.slide)
+            ) {
+                return refuse(
+                    `${label}: \`slide\` is where the new slide goes, ` +
+                        'counting from 1 -- or leave it out for the end.',
+                );
+            }
+            const specsRead = readItemSpecs('add-slide', entry.items);
+            if (specsRead.isError === true) {
+                return refuse(`${label}: ${specsRead.reason}`);
+            }
+            checked.push({
+                ...(entry.slide === undefined ? {} : { slide: entry.slide }),
+                specs: specsRead.specs,
+            });
+            continue;
+        }
+        if (!checkIsCountingNumber(entry.slide)) {
+            return refuse(
+                `${label}: \`slide\` is the number of a slide, counting ` +
+                    'from 1 -- like 3.',
+            );
+        }
+        if (seenSlideSet.has(entry.slide)) {
+            return refuse(
+                `${label} names slide ${entry.slide} a second time -- put ` +
+                    "all of a slide's boxes in one entry.",
+            );
+        }
+        seenSlideSet.add(entry.slide);
+        const specsRead = readItemSpecs('update-slide', entry.items);
+        if (specsRead.isError === true) {
+            return refuse(
+                `${label} (slide ${entry.slide}): ${specsRead.reason}`,
+            );
+        }
+        checked.push({ slide: entry.slide, specs: specsRead.specs });
+    }
+    return { changes: checked };
+}
+
+/**
+ * Every change of an `update-slides` request, as ONE new document: each slide
+ * by `update-slide`'s own rules, in order, and any refusal refuses the lot --
+ * half a translation is worse than none, and nothing is written either way.
+ */
+export function applyAgentSlideBatch(
+    json: JsonObjectType,
+    request: AgentCheckedSlideBatchType,
+    context: AgentSlideContextType,
+    action: AgentSlideBatchActionType = AGENT_SLIDE_BATCH_ACTION,
+): AgentSlideRefusalType | AgentSlideChangeType {
+    if (action === AGENT_SLIDE_ADD_BATCH_ACTION) {
+        return applyAgentSlideAddBatch(json, request, context);
+    }
+    let current = json;
+    const checkItems: AgentCheckedItemType[] = [];
+    const updated: number[] = [];
+    for (const change of request.changes) {
+        const slides = readSlideList(current);
+        if (change.slide === undefined) {
+            return refuse(
+                'Each change of update-slides needs `slide`. Nothing was ' +
+                    'changed.',
+            );
+        }
+        if (change.slide > slides.length) {
+            return refuse(
+                genNoSuchSlideReason(
+                    context.name,
+                    change.slide,
+                    slides.length,
+                ) + ' Nothing was changed.',
+            );
+        }
+        if (!checkIsPlainObject(slides[change.slide - 1])) {
+            return refuse(
+                `Slide ${change.slide} of "${context.name}" could not be ` +
+                    'read, so nothing was changed.',
+            );
+        }
+        const one = applyUpdateSlide(
+            current,
+            slides,
+            change.slide,
+            { slide: change.slide, specs: change.specs },
+            context,
+        );
+        if (one.isError === true) {
+            return refuse(
+                `Slide ${change.slide}: ${one.reason} Nothing was changed.`,
+            );
+        }
+        if (one.didChange) {
+            current = one.json;
+            checkItems.push(...one.checkItems);
+            updated.push(change.slide);
+        }
+    }
+    const slideCount = readSlideList(current).length;
+    const summary =
+        updated.length === 1
+            ? `Changed slide ${updated[0]} of “${context.name}”`
+            : `Changed ${updated.length} slides of “${context.name}”`;
+    if (updated.length === 0) {
+        return {
+            didChange: false,
+            json,
+            summary,
+            checkItems: [],
+            result: { updated, slideCount },
+            note: 'Those were already their values, so nothing was changed.',
+        };
+    }
+    return {
+        didChange: true,
+        json: current,
+        summary,
+        checkItems,
+        result: { updated, slideCount },
+    };
+}
+
+/**
+ * Every new slide of an `add-slides` request, as ONE new document: each by
+ * `add-slide`'s own rules (the document's slide size, the app's default box),
+ * in order -- a `slide` counts in the document as it stands after the ones
+ * before it went in.
+ */
+function applyAgentSlideAddBatch(
+    json: JsonObjectType,
+    request: AgentCheckedSlideBatchType,
+    context: AgentSlideContextType,
+): AgentSlideChangeType {
+    let current = json;
+    const checkItems: AgentCheckedItemType[] = [];
+    const added: number[] = [];
+    const newIdList: unknown[] = [];
+    for (const change of request.changes) {
+        const one = applyAddSlide(
+            current,
+            readSlideList(current),
+            {
+                ...(change.slide === undefined ? {} : { slide: change.slide }),
+                specs: change.specs,
+            },
+            context,
+        );
+        current = one.json;
+        checkItems.push(...one.checkItems);
+        added.push(one.result.added as number);
+        newIdList.push(one.result.id);
+    }
+    const finalSlides = readSlideList(current);
+    // Where each new slide ended up once all of them were in, with its
+    // boxes: a later one put in front of it moved it on.
+    const slides = newIdList.map((id) => {
+        const index = finalSlides.findIndex((one) => {
+            return one.id === id;
+        });
+        return {
+            slide: index + 1,
+            boxes: toBoxIdWords(finalSlides[index]?.canvasItems ?? []),
+        };
+    });
+    return {
+        didChange: true,
+        json: current,
+        summary:
+            added.length === 1
+                ? `Added a slide to “${context.name}”`
+                : `Added ${added.length} slides to “${context.name}”`,
+        checkItems,
+        result: { added, slideCount: finalSlides.length, slides },
+    };
 }

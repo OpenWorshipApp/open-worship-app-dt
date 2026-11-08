@@ -17,12 +17,13 @@ const {
     toUnpackedPath: vi.fn(() => '/unpacked-root'),
 }));
 
-vi.mock('pptx-to-html', () => ({
+// The converters' package names since 86e75ddb ("upgraded modules").
+vi.mock('pptx-to-html-conv', () => ({
     exportPptx,
     getSlidesCount,
     getVersion: getPptxVersion,
 }));
-vi.mock('docx-to-html', () => ({
+vi.mock('docx-to-html-conv', () => ({
     exportDocx,
     getVersion: getDocxVersion,
 }));

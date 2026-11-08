@@ -8,6 +8,7 @@ const h = vi.hoisted(() => ({
     isOnOwnFolder: false,
     openPathSetting: vi.fn(),
     selectDefaultDataDirName: vi.fn(),
+    selectDirs: vi.fn(),
 }));
 
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
@@ -24,12 +25,13 @@ vi.mock('../setting/settingHelpers', () => ({
     openPathSetting: h.openPathSetting,
 }));
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
+vi.mock('../server/fileHelpers', () => ({ selectDirs: h.selectDirs }));
 
 import NoDirSelectedComp from './NoDirSelectedComp';
 
 let root: Root;
 let container: HTMLDivElement;
-const dirSource = { dirPath: '', settingName: 'select-dir-bible-read' };
+let dirSource = { dirPath: '', settingName: 'select-dir-bible-read' };
 
 async function render() {
     await act(async () =>
@@ -53,6 +55,8 @@ beforeEach(() => {
     h.isOnOwnFolder = false;
     h.openPathSetting.mockClear();
     h.selectDefaultDataDirName.mockClear();
+    h.selectDirs.mockReset();
+    dirSource = { dirPath: '', settingName: 'select-dir-bible-read' };
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -98,7 +102,7 @@ describe('a panel with no folder', () => {
         expect(h.openPathSetting).not.toHaveBeenCalled();
     });
 
-    it('leaves out the Settings route for a folder Settings does not list', async () => {
+    async function renderSession() {
         await act(async () =>
             root.render(
                 createElement(NoDirSelectedComp, {
@@ -108,6 +112,36 @@ describe('a panel with no folder', () => {
                 }),
             ),
         );
-        expect(buttonTexts()).toEqual(['Select Default "session-media"']);
+    }
+
+    function findChooseButton() {
+        return Array.from(container.querySelectorAll('button')).find(
+            (candidate) => candidate.textContent === 'Choose a folder',
+        )!;
+    }
+
+    it('offers Choose a folder in place of the Settings route Settings cannot serve', async () => {
+        await renderSession();
+        expect(buttonTexts()).toEqual([
+            'Select Default "session-media"',
+            'Choose a folder',
+        ]);
+        expect(container.textContent).not.toContain('Go to Settings');
+    });
+
+    it('points the list at the folder picked', async () => {
+        h.selectDirs.mockResolvedValue(['/stick/easter', '/ignored']);
+        await renderSession();
+        await act(async () => findChooseButton().click());
+        expect(h.selectDirs).toHaveBeenCalledOnce();
+        expect(dirSource.dirPath).toBe('/stick/easter');
+        expect(h.openPathSetting).not.toHaveBeenCalled();
+    });
+
+    it('leaves the folder alone when the picker is cancelled', async () => {
+        h.selectDirs.mockResolvedValue([]);
+        await renderSession();
+        await act(async () => findChooseButton().click());
+        expect(dirSource.dirPath).toBe('');
     });
 });

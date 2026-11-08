@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { useCallback, useId, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -149,6 +149,13 @@ type PropsType = {
     extraMimetypeNames?: MimetypeNameType[];
     dirSource: DirSource;
     header?: any;
+    /**
+     * The list's folder-session strip (`useFileListSessions`), drawn right
+     * under the title and outside the scrolling body: a session with no
+     * folder yet renders no list at all, and the strip is the way back out of
+     * it.
+     */
+    sessionsElement?: ReactNode;
     bodyHandler: (filePaths: string[], colorNote?: string) => any;
     onNewFile?: NewFileHandlerType;
     newFileKinds?: NewFileKindType[];
@@ -183,6 +190,7 @@ export default function FileListHandlerComp({
     extraMimetypeNames = [],
     dirSource,
     header,
+    sessionsElement,
     bodyHandler,
     contextMenuItems,
     genContextMenuItems,
@@ -321,6 +329,11 @@ export default function FileListHandlerComp({
                         headerId={headerId}
                         onShowMenu={handleMenuShowing}
                     />
+                ) : null}
+                {sessionsElement ? (
+                    <div className="file-list-sessions-bar d-flex align-items-center">
+                        {sessionsElement}
+                    </div>
                 ) : null}
                 <div
                     className="card-body d-flex flex-column pb-5 app-inner-shadow"

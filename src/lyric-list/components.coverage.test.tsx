@@ -5,6 +5,20 @@ import { createRoot, type Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+vi.mock('../media-sessions/folderSessionPathHelpers', () => ({
+    findSessionIdByFilePath: () => null,
+    findNonDefaultSessionIdByFilePath: () => null,
+}));
+
 // One mock surface for the lyric folder's components and hooks. What is REAL
 // here: the components under test, `LyricManager`, the stage-style store and
 // helpers, the warm-slides store, the Stage Previewer header, `EventHandler`,

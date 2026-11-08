@@ -2,6 +2,16 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+vi.mock('./media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 const state = vi.hoisted(() => {
     const installed: string[] = [];
     const instances: Record<string, any[]> = {};
@@ -121,6 +131,7 @@ vi.mock('./helper/DirSource.ts', () => ({
 vi.mock('./helper/domHelpers.ts', () => ({
     getParamFileFullName: () => state.fileParam,
     getParamIdNum: () => state.idParam,
+    getParamKeyValue: () => null,
 }));
 vi.mock('./lyric-list/Lyric.ts', () => ({
     default: { getInstance: state.getLyricInstance },

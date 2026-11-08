@@ -204,6 +204,43 @@ export default class AttachBackgroundManager {
         });
     }
 
+    /**
+     * Many backgrounds of one file put on (or, with `null`, taken off) in ONE
+     * read and ONE write: the help window's assistant sets a background
+     * behind every slide of a document in a single change.
+     */
+    public async setAttachedBackgrounds(
+        filePath: string,
+        idList: (string | number | undefined)[],
+        droppedData: DroppedDataType | null,
+    ) {
+        await unlocking(this.toLockingKey(filePath), async () => {
+            const data = await this.readData(filePath);
+            for (const id of idList) {
+                if (droppedData === null) {
+                    delete data[this.toKey(id)];
+                } else {
+                    data[this.toKey(id)] = droppedData;
+                }
+            }
+            await cached.set(filePath, data);
+            await this.saveData(filePath, data);
+        });
+    }
+
+    /**
+     * The `.bg.json` was written by someone else -- an undo putting an older
+     * copy back: the cached map is dropped and the rows read it again.
+     */
+    public async forgetCachedData(filePath: string) {
+        await unlocking(this.toLockingKey(filePath), async () => {
+            await cached.delete(filePath);
+        });
+        FileSource.getInstance(
+            AttachBackgroundManager.genMetaDataFilePath(filePath),
+        ).fireUpdateEvent();
+    }
+
     public async detachBackground(filePath: string, id?: string | number) {
         await unlocking(this.toLockingKey(filePath), async () => {
             const data = await this.readData(filePath);

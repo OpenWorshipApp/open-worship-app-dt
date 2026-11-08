@@ -102,10 +102,24 @@ import {
     checkIsLyricTranslateAsk,
     findLyricAskFiles,
     genLyricOpeningAnswer,
+    genLyricUndoAction,
     readLyricTranslateMode,
     toLyricAsk,
     toLyricSongText,
 } from './lyricChatHelpers';
+import {
+    SLIDE_EDIT_TOOL_NAME,
+    checkIsDocumentOptionsAsk,
+    checkIsSlideFileName,
+    findOpenSlideAttachments,
+    findSlideAskFiles,
+    genSlideOpeningAnswer,
+    genSlideSizeChanges,
+    genSlideSizeDoneText,
+    readSlideSizeAsk,
+    toSlideAsk,
+    toSlideDocumentText,
+} from './slideChatHelpers';
 import {
     keepBibleReaderAskUnlessKnown,
     readBibleReaderAsk,
@@ -170,6 +184,7 @@ import {
     readAssistantSwitch,
     toAutoBusyKey,
     type AutoAttemptType,
+    checkIsNothingDoneError,
     type AutoRankOptionsType,
     type AutoSkipType,
 } from './autoAssistantHelpers';
@@ -6004,6 +6019,22 @@ export default function ChatbotAppComp() {
                 inputRef.current?.focus();
                 return;
             }
+            // A slide document (a Documents row's Open in Chatbot): the same,
+            // and the way to slides drawn after a picture of the ones wanted.
+            if (checkIsSlideFileName(filePath)) {
+                const slideOpening = genSlideOpeningAnswer(
+                    result.attachment.name,
+                    getAppLanguage(),
+                    [...listAssistantLanguages(), ...listTypedLanguages()],
+                );
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: slideOpening.text,
+                    replies: slideOpening.replies,
+                });
+                inputRef.current?.focus();
+                return;
+            }
             const opening = genResourceOpeningAnswer(
                 result.attachment.name,
                 reading,
@@ -7471,11 +7502,165 @@ export default function ChatbotAppComp() {
                           ),
                       ])
                     : [];
+            // Only a supported question asked AS IT STANDS goes to the guide
+            // from here: "list me more options" carried the slide card
+            // menu's row's phrase, and a tab opened on a slide document was
+            // answered with how to open a slide card's menu (2026-11-07).
             const isLyricAsk =
                 lyricAskFiles.length > 0 &&
                 (options?.isPressed === true ||
                     trimmedAsked.length === 0 ||
-                    (await findKnownQuestion(trimmedAsked, focus)) === null);
+                    (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                        null);
+            // A SLIDE DOCUMENT open in this tab, the same way, makes it a
+            // question about changing its slides (`slideChatHelpers.ts`) --
+            // kept open past a picture attached after it, which is the
+            // picture of the slides they want made.
+            // One attached NOW takes over from the one opened earlier: with
+            // the strip full a hand-off lands in the tab in front, and a
+            // second document must not leave the first open to changes
+            // nobody asked for (seen live 2026-11-07).
+            const boxSlideFiles = findSlideAskFiles(attachments);
+            const slideAskFiles =
+                (options?.shownText === undefined ||
+                    options?.keepOpenFiles === true) &&
+                !trimmedAsked.startsWith('/') &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                lyricAskFiles.length === 0
+                    ? boxSlideFiles.length > 0
+                        ? boxSlideFiles
+                        : findSlideAskFiles(
+                              findOpenSlideAttachments(
+                                  lookupTab?.messages ?? [],
+                                  lookupTab?.fileClosedAt,
+                              ),
+                          )
+                    : [];
+            const isSlideAsk =
+                slideAskFiles.length > 0 &&
+                (options?.isPressed === true ||
+                    trimmedAsked.length === 0 ||
+                    (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                        null);
+            // Either one: a question about changing a document of theirs.
+            const isDocumentAsk = isLyricAsk || isSlideAsk;
+            // "List me more options" under a document's card: the card again,
+            // its sentence and its buttons, written by the window with no
+            // model (2026-11-07, the user, a slide document open: _I just
+            // want the help options again_).
+            if (
+                isDocumentAsk &&
+                !withoutEcho &&
+                options?.shownText === undefined &&
+                options?.isPressed !== true &&
+                attachments.length === 0 &&
+                checkIsDocumentOptionsAsk(trimmedAsked)
+            ) {
+                const languages = [
+                    ...listAssistantLanguages(),
+                    ...listTypedLanguages(),
+                ];
+                const opening = isSlideAsk
+                    ? genSlideOpeningAnswer(
+                          slideAskFiles[0].filePath,
+                          getAppLanguage(),
+                          languages,
+                      )
+                    : genLyricOpeningAnswer(
+                          lyricAskFiles[0].filePath,
+                          getAppLanguage(),
+                          languages,
+                      );
+                addMessage(activeSessionId, { author: 'you', text: echoText });
+                updateSession(activeSessionId, (session) => {
+                    return { ...session, draft: '' };
+                });
+                addMessage(activeSessionId, {
+                    author: 'bot',
+                    text: opening.text,
+                    replies: opening.replies,
+                });
+                return;
+            }
+            // Every box's words larger, smaller or one size, under a slide
+            // document: done by the WINDOW, no model (`readSlideSizeAsk`) --
+            // instant, with no assistant needed, each box keeping its size
+            // against the others, one change with Undo under it. Anything
+            // it cannot do whole (a document read in parts, a refusal) goes
+            // on to the assistant as before.
+            const slideSizeAsk =
+                isSlideAsk &&
+                !withoutEcho &&
+                options?.shownText === undefined &&
+                attachments.every((one) => {
+                    return checkIsSlideFileName(one.filePath ?? one.name);
+                }) &&
+                slideAskFiles.length === 1
+                    ? readSlideSizeAsk(trimmedAsked)
+                    : null;
+            if (slideSizeAsk !== null) {
+                const slideFile = slideAskFiles[0];
+                try {
+                    const described = parseToolJson(
+                        await callTool(SLIDE_EDIT_TOOL_NAME, {
+                            action: 'slides',
+                            file: slideFile.filePath,
+                        }),
+                    );
+                    const sizeChange = genSlideSizeChanges(
+                        described,
+                        slideSizeAsk,
+                    );
+                    const written =
+                        sizeChange === null
+                            ? null
+                            : parseToolJson(
+                                  await callTool(SLIDE_EDIT_TOOL_NAME, {
+                                      action: 'update-slides',
+                                      file: slideFile.filePath,
+                                      changes: sizeChange.changes,
+                                  }),
+                              );
+                    if (sizeChange !== null && written?.isChanged === true) {
+                        addMessage(activeSessionId, {
+                            author: 'you',
+                            text: echoText,
+                        });
+                        updateSession(activeSessionId, (session) => {
+                            return { ...session, draft: '' };
+                        });
+                        const undoAction = genLyricUndoAction({
+                            name: slideFile.name,
+                            undoId:
+                                typeof written.undoId === 'string'
+                                    ? written.undoId
+                                    : null,
+                        });
+                        addMessage(activeSessionId, {
+                            author: 'bot',
+                            text: genSlideSizeDoneText(
+                                slideFile.name,
+                                sizeChange,
+                            ),
+                            actions: undoAction === null ? [] : [undoAction],
+                            shows: [
+                                {
+                                    kind: 'control',
+                                    value: `Document List > ${slideFile.name}`,
+                                    name: 'Show it in the list',
+                                },
+                            ],
+                        });
+                        return;
+                    }
+                } catch (error) {
+                    // Refused or not reachable: the assistant is asked, and
+                    // says what went wrong in its own words.
+                    handleError(error);
+                }
+            }
             // What they remember of a verse, under a verse-finding answer:
             // more of the same search, asked of the assistant under its own
             // prompt with the verse finder as its only tool (`AskExtraType.
@@ -7571,7 +7756,7 @@ export default function ChatbotAppComp() {
                 generalQuestion === null &&
                 lookupSubject === null &&
                 resourceFileNames.length === 0 &&
-                !isLyricAsk &&
+                !isDocumentAsk &&
                 verseFindBible === null &&
                 trimmedAsked.length > 0
                     ? (readBibleReaderAsk(trimmedAsked) ??
@@ -7603,7 +7788,7 @@ export default function ChatbotAppComp() {
                 (lookupSubject === null || isLookupAppAsk) &&
                 resourceFileNames.length === 0 &&
                 bibleReaderAsk === null &&
-                !isLyricAsk;
+                !isDocumentAsk;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
             // to a provider, no history goes with it, and nothing attached
@@ -7714,13 +7899,15 @@ export default function ChatbotAppComp() {
             // Never while a SONG is open in the tab: "Add Spanish under each
             // line" is a translation of that song, and was read as a
             // language to install (seen live, 2026-11-06, the song card's
-            // own button).
+            // own button). Nor while a slide document is: the slide card
+            // carries the same two buttons.
             if (
                 !withoutEcho &&
                 options?.shownText === undefined &&
                 attachments.length === 0 &&
                 lookupSubject === null &&
-                lyricAskFiles.length === 0
+                lyricAskFiles.length === 0 &&
+                slideAskFiles.length === 0
             ) {
                 const lastLangAnswer = sessionStateRef.current.sessions
                     .find((session) => session.id === activeSessionId)
@@ -8279,19 +8466,65 @@ export default function ChatbotAppComp() {
                           }),
                       )
                     : [];
+                // A slide document the same way (`owa_slide_edit slides`,
+                // every box's words whole): its slides as they are NOW.
+                const isSlideDocAsk =
+                    isSlideAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null;
+                const slideDocs = isSlideDocAsk
+                    ? await Promise.all(
+                          slideAskFiles.map(async (file) => {
+                              try {
+                                  return {
+                                      name: file.name,
+                                      text: toSlideDocumentText(
+                                          parseToolJson(
+                                              await callTool(
+                                                  SLIDE_EDIT_TOOL_NAME,
+                                                  {
+                                                      action: 'slides',
+                                                      file: file.filePath,
+                                                  },
+                                                  signal,
+                                              ),
+                                          ),
+                                      ),
+                                  };
+                              } catch (_error) {
+                                  throwIfCancelled(signal);
+                                  return { name: file.name, text: null };
+                              }
+                          }),
+                      )
+                    : [];
                 throwIfCancelled(signal);
                 // The song's words go to the model as read above, never also
                 // as the attachment's notation -- a model shown notation
-                // writes notation back.
+                // writes notation back. A slide document's likewise: its
+                // slides as read above. A PICTURE stays: it is the slides
+                // they want made.
                 const askAttachments =
-                    isSongAsk && trimmedAsked.length > 0
+                    (isSongAsk || isSlideDocAsk) && trimmedAsked.length > 0
                         ? modelAttachments.filter((one) => {
-                              return !checkIsLyricFileName(
-                                  one.filePath ?? one.name,
+                              const fileName = one.filePath ?? one.name;
+                              return !(
+                                  (isSongAsk &&
+                                      checkIsLyricFileName(fileName)) ||
+                                  (isSlideDocAsk &&
+                                      checkIsSlideFileName(fileName))
                               );
                           })
                         : modelAttachments;
                 const withLyric = (text: string) => {
+                    if (isSlideDocAsk) {
+                        return toSlideAsk(
+                            text,
+                            slideDocs,
+                            readLyricTranslateMode(trimmedAsked),
+                            trimmedAsked.length === 0,
+                        );
+                    }
                     return isSongAsk
                         ? toLyricAsk(
                               text,
@@ -8749,7 +8982,8 @@ export default function ChatbotAppComp() {
                     // it needs an assistant, with the door to one.
                     // A song to change with no assistant: never the guide,
                     // which would answer "add a verse" with how to type one.
-                    if (isSongAsk) {
+                    // Nor a slide document's.
+                    if (isSongAsk || isSlideDocAsk) {
                         return {
                             text: tran(
                                 'A question about this needs an ' +
@@ -9108,6 +9342,9 @@ export default function ChatbotAppComp() {
                                 ...(isSongAsk
                                     ? { lyric: { files: lyricAskFiles } }
                                     : {}),
+                                ...(isSlideDocAsk
+                                    ? { slide: { files: slideAskFiles } }
+                                    : {}),
                                 ...(verseFindBible === null
                                     ? {}
                                     : {
@@ -9261,9 +9498,10 @@ export default function ChatbotAppComp() {
                                           VERSE_TRANSLATION_MODEL_PATTERN,
                                   }
                                 : {}),
-                            // A song put into another language: Gemma 4
-                            // first, the user's word for any translation.
-                            ...(isSongAsk &&
+                            // A song or slides put into another language:
+                            // Gemma 4 first, the user's word for any
+                            // translation.
+                            ...((isSongAsk || isSlideDocAsk) &&
                             checkIsLyricTranslateAsk(trimmedAsked)
                                 ? {
                                       preferModelPattern:
@@ -9416,7 +9654,8 @@ export default function ChatbotAppComp() {
                             } catch (error: any) {
                                 if (
                                     (ownAttempt.hasRound &&
-                                        !canHandOnAfterRound) ||
+                                        !canHandOnAfterRound &&
+                                        !checkIsNothingDoneError(error)) ||
                                     checkIsFinalAskError(error)
                                 ) {
                                     throw error;
@@ -11436,8 +11675,38 @@ export default function ChatbotAppComp() {
             if (action.toolName === LYRIC_UNDO_TOOL_NAME) {
                 const undoId = String(action.args?.id ?? '');
                 const songName = String(action.args?.name ?? '');
+                // Every change the answer made, newest first: each puts its
+                // document back to before itself, so the oldest goes last.
+                const undoIdList = Array.isArray(action.args?.ids)
+                    ? (action.args.ids as unknown[])
+                          .filter((one): one is string => {
+                              return typeof one === 'string' && one !== '';
+                          })
+                          .reverse()
+                    : [undoId];
                 try {
-                    await callTool('owa_undo', { action: 'undo', id: undoId });
+                    let undoneCount = 0;
+                    let lastError: unknown = null;
+                    for (const id of undoIdList) {
+                        try {
+                            await callTool('owa_undo', { action: 'undo', id });
+                            undoneCount += 1;
+                        } catch (error: any) {
+                            // One of them undone by hand already: the rest
+                            // still go back.
+                            if (
+                                !/already undone/i.test(
+                                    String(error?.message ?? ''),
+                                )
+                            ) {
+                                throw error;
+                            }
+                            lastError = error;
+                        }
+                    }
+                    if (undoneCount === 0 && lastError !== null) {
+                        throw lastError;
+                    }
                     addMessage(actedSessionId, {
                         author: 'bot',
                         isFollowUp: true,

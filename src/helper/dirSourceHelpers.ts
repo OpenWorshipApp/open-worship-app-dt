@@ -149,6 +149,13 @@ export function useGenDirSourceReload(settingName: string) {
                 methodContext.setDirSource(newDirSource);
                 return;
             }
+            // Asked for another folder setting -- a view following a list's
+            // folder session -- so the one held is dropped and the new one
+            // read on the next pass.
+            if (dirSource.settingName !== settingName) {
+                methodContext.setDirSource(null);
+                return;
+            }
             const registeredEvent = dirSource.registerEventListener(
                 ['reload'],
                 () => {
@@ -159,7 +166,7 @@ export function useGenDirSourceReload(settingName: string) {
                 dirSource.unregisterEventListener(registeredEvent);
             };
         },
-        [dirSource],
+        [dirSource, settingName],
         { setDirSource },
     );
     return dirSource;

@@ -816,6 +816,10 @@
             "en": "How do I save a slide document as a PowerPoint file?",
             "text": "តើខ្ញុំរក្សាទុកឯកសារស្លាយជាឯកសារ PowerPoint ដោយរបៀបណា?"
         },
+        "presenter.documents.change-slides-with-assistant": {
+            "en": "Can the assistant change my slides for me?",
+            "text": "តើជំនួយការអាចកែស្លាយរបស់ខ្ញុំជូនខ្ញុំបានទេ?"
+        },
         "presenter.lyrics.present-lyrics": {
             "en": "How do I put a song's lyrics on the screen?",
             "text": "តើខ្ញុំដាក់ទំនុកចម្រៀងលើអេក្រង់ដោយរបៀបណា?"

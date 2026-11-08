@@ -32,7 +32,11 @@ import {
     openPopupWindow,
     setParamFileFullName,
     setParamIdNum,
+    setParamKeyValue,
 } from '../helper/domHelpers';
+import { dirSourceSettingNames } from '../helper/constants';
+import { SESSION_URL_PARAM_NAME } from '../media-sessions/folderSessionHelpers';
+import { findNonDefaultSessionIdByFilePath } from '../media-sessions/folderSessionPathHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { type VaryAppDocumentType } from './appDocumentTypeHelpers';
 import appProvider from '../server/appProvider';
@@ -719,6 +723,21 @@ export async function openAppDocumentEditorExternal(
     );
     if (quickEditItemId !== null) {
         pathname = setParamIdNum(pathname, quickEditItemId);
+    }
+    // The URL names the file only by its name, so a document of another
+    // Documents session says which one -- the editor reads it from that
+    // session's folder, not from the folder the list is on by the time it
+    // loads.
+    const sessionId = findNonDefaultSessionIdByFilePath(
+        dirSourceSettingNames.APP_DOCUMENT,
+        varyAppDocument!.filePath,
+    );
+    if (sessionId !== null) {
+        pathname = setParamKeyValue(
+            pathname,
+            SESSION_URL_PARAM_NAME,
+            sessionId,
+        );
     }
     openPopupWindow(
         pathname,

@@ -27,6 +27,7 @@
  */
 import { dirSourceSettingNames } from './constants';
 import DirSource from './DirSource';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import { handleError } from './errorHelpers';
 import { checkAgentFileName } from '../../tools/owa-devtools-mcp/agentFileName.mjs';
 import {
@@ -116,7 +117,7 @@ type PlaceType = {
 
 function getPlace(): PlaceType | AgentResultType {
     const dirPath = DirSource.getDirPathBySettingName(
-        dirSourceSettingNames.PRESENTING_FLOW,
+        getActiveDirSourceSettingName(dirSourceSettingNames.PRESENTING_FLOW),
     );
     if (dirPath === null) {
         return fail(
@@ -356,7 +357,7 @@ async function findDocumentPath(
     documentName: string,
 ): Promise<string | AgentResultType> {
     const dirPath = DirSource.getDirPathBySettingName(
-        dirSourceSettingNames.APP_DOCUMENT,
+        getActiveDirSourceSettingName(dirSourceSettingNames.APP_DOCUMENT),
     );
     if (dirPath === null) {
         return fail('No Documents folder is set up yet.');

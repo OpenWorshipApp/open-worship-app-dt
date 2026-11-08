@@ -25,7 +25,11 @@ import {
     openPopupWindow,
     setParamFileFullName,
     setParamIdNum,
+    setParamKeyValue,
 } from '../../helper/domHelpers';
+import { dirSourceSettingNames } from '../../helper/constants';
+import { SESSION_URL_PARAM_NAME } from '../../media-sessions/folderSessionHelpers';
+import { findNonDefaultSessionIdByFilePath } from '../../media-sessions/folderSessionPathHelpers';
 import { NoteTitleEditorComp } from './NoteEditorComp';
 import { exportBibleNoteItem } from './bibleNoteItemArchiveHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
@@ -38,6 +42,19 @@ export function handleOpening(note: Note, noteItem: NoteItem) {
     );
     const noteId = noteItem.id;
     pathname = setParamIdNum(pathname, noteId);
+    // A note of another Bible Notes session says which one: the editor finds
+    // it by name in that session's folder.
+    const sessionId = findNonDefaultSessionIdByFilePath(
+        dirSourceSettingNames.BIBLE_NOTES,
+        note.filePath,
+    );
+    if (sessionId !== null) {
+        pathname = setParamKeyValue(
+            pathname,
+            SESSION_URL_PARAM_NAME,
+            sessionId,
+        );
+    }
     return openPopupWindow(
         pathname,
         `${fileFullName}-${noteId}_${Date.now()}`,

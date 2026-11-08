@@ -5,6 +5,7 @@ import {
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { dirSourceSettingNames } from '../../helper/constants';
 import DirSource from '../../helper/DirSource';
+import { getActiveDirSourceSettingName } from '../../media-sessions/folderSessionHelpers';
 import FileSource from '../../helper/FileSource';
 import { tran } from '../../lang/langHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
@@ -23,8 +24,9 @@ export async function moveNoteItemTo(
     // `defaultDataDirNames.BIBLE_NOTES` read a setting that has never existed:
     // every "Move To" and "Move All Items To" answered `No other notes found`
     // however many note files were sitting right there in the list.
+    // The session the list is on: the note being moved is one of its rows.
     const dirSource = await DirSource.getInstance(
-        dirSourceSettingNames.BIBLE_NOTES,
+        getActiveDirSourceSettingName(dirSourceSettingNames.BIBLE_NOTES),
     );
     const filePaths = await dirSource.getFilePaths('note');
     const targetNames = (filePaths ?? [])

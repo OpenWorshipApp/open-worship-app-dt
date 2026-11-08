@@ -10777,3 +10777,60 @@ every language package's names (`listLangBibleBookNames` in
 `src/lang/langPackageFileHelpers.ts`, one small lazy file per package).
 Re-asked live in the French window with the KJV open: Matthew 18 summarized
 in French from the Bible, 4.8k tokens, no `/btw`.
+
+### EC-462 — a Free model the gateway withdrew is still offered — `open`
+
+Found 2026-11-07 while measuring the slide conversation (`owa_slide_edit`)
+on every Free model: `nvidia/nemotron-3-super-120b-a12b:free`, one of the
+three rows of the Free assistant (`llmBotHelpers.ts`), now answers every
+request with `model_not_found` -- _The requested model … does not exist_.
+A person who picks it in the model list gets a failure on every question,
+the way Nex Pro and Step Flash did before `EC-267`. The gateway's
+`/api/gateway/models` lists seven `:free` ids that day:
+`nemotron-3.5-super-vl`, `nemotron-3.5-lightning` (both still answer),
+`nemotron-3-ultra-550b-a55b` (the likely successor), `lfm-3-1.7b`,
+`dots-3-note-preview`, `north-mini-code`,
+`nemotron-3-nano-omni-30b-a3b-reasoning`. Not replaced here: a Free row
+is qualified through the window on the corpus first (`EC-267`'s rule),
+and the slide benchmark alone is no such qualification.
+
+### EC-463 — an answer of nothing ended a question Auto could have handed on — `done`
+
+Found 2026-11-07 asking for slides like a picture (`owa_slide_edit`) in the
+dev help window on Auto: the shared registry's gemma4:cloud ("OWA Shared")
+answered a slide question with a picture attached with NOTHING -- no text,
+no tool call, about 3k tokens -- three times of four, and the window showed
+_could not answer — it wrote no answer this time_ over the guide's reply,
+while the same model on the user's own Ollama made the slides. Auto hands a
+question on only before a round comes back (a model may have pressed
+something by then), so the empty round ended it. Now an answer of nothing
+with no tool called in the whole ask is marked (`genNoAnswerError`,
+`isNothingDone`) and handed on like a failure before any round
+(`checkIsNothingDoneError`, read on the error or its `cause`, because
+`askLlmBot` rewraps every failure). Re-asked live: _OWA Shared ·
+gemma4:cloud could not answer … Auto asked Local Ollama · gemma4:cloud
+instead_, and the slide was made. **Measured the same evening, straight to
+both servers** (`probe-shared-*.mjs` in that session's scratchpad; the
+shared server's address and key were never printed): NOT a context limit --
+the shared server read a 12 040-token prompt whole and answered it, like
+the local one; NOT the picture -- a 686 KB and a 188 KB PNG were read and
+answered, with and without a tool, on both; NOT the tool list -- the slide
+ask carries the one tool. The exact slide request (`SLIDE_SYSTEM_PROMPT`,
+the document read, the picture, the real schema, `max_tokens` 2 000) came
+back EMPTY from the shared server 2 times of 3 with no temperature sent
+(about 170 tokens generated, no text and no call: a call the server could
+not parse, dropped) and 0 of 3 at temperature 0; the local Ollama 0 of 6
+either way. It is another machine's Ollama (26 models against the
+user's 7) running the same cloud model. The window reads it as Ollama
+(`/api/tags` answers in ~0.1 s through the tunnel, `/api/ps` is refused),
+so its questions should carry temperature 0 -- yet three of four came back
+empty in the window, where the tab's history rides too. That last
+difference is not measured; the hand-on above makes it a retry the person
+does not see. **Measured later that night, and closed**: with the tab's
+history in front, the same replay came back empty on BOTH servers -- once
+of three on the user's own Ollama at temperature 0 -- each time ~170 tokens
+generated and nothing returned: gemma4:cloud wrote a tool call Ollama could
+not parse, and Ollama dropped it. Not the shared server at all. The loop
+now asks the same round once more on such a reply (`isDroppedReplyRetried`
+in `askOpenAiCompatible`); two in a row (about one ask in thirty-six) is
+the model's, and Auto hands it on as above.

@@ -52,7 +52,9 @@ const h = vi.hoisted(() => {
                 return item;
             });
         }
-        static async getDefault() {
+        static readonly getDefaultOptionsList: unknown[] = [];
+        static async getDefault(options?: unknown) {
+            FakeNote.getDefaultOptionsList.push(options);
             return defaultPath === null ? null : new FakeNote(defaultPath);
         }
         static async fromFilePath(path: string) {
@@ -182,6 +184,16 @@ describe('verse annotation persistence', () => {
         expect(h.saves.mock.calls).toEqual([
             ['add', 1],
             ['update', 1, true],
+        ]);
+    });
+
+    test("files every mark in the Default session's notes, whatever session is in front", async () => {
+        h.FakeNote.getDefaultOptionsList.length = 0;
+        await addVerseHighlight(anchor, selection, 'yellow');
+        await addVerseComment(anchor, selection, 'Kept');
+        expect(h.FakeNote.getDefaultOptionsList).toEqual([
+            { isBaseSession: true },
+            { isBaseSession: true },
         ]);
     });
 

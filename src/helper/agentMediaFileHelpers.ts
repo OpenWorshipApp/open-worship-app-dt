@@ -29,6 +29,7 @@
  */
 import { dirSourceSettingNames } from './constants';
 import DirSource from './DirSource';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import { handleError } from './errorHelpers';
 import { checkAgentFileName } from '../../tools/owa-devtools-mcp/agentFileName.mjs';
 import {
@@ -200,7 +201,11 @@ function getPlace(kindValue: unknown): PlaceType | AgentResultType {
             'Unknown kind. Use "image", "video", "audio", "web" or "document".',
         );
     }
-    const dirPath = DirSource.getDirPathBySettingName(kind.settingName);
+    // A list with folder sessions answers the one in front; any other key
+    // has no session list and resolves to itself.
+    const dirPath = DirSource.getDirPathBySettingName(
+        getActiveDirSourceSettingName(kind.settingName),
+    );
     if (dirPath === null) {
         return fail(
             `No ${kind.folderLabel} folder is set up yet. The user chooses ` +

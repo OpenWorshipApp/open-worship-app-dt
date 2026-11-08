@@ -29,6 +29,7 @@ import { checkAgentFileName } from '../../tools/owa-devtools-mcp/agentFileName.m
 import { dirSourceSettingNames } from './constants';
 import { handleError } from './errorHelpers';
 import DirSource from './DirSource';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import {
     type AgentResultType,
     NoBackupError,
@@ -719,7 +720,7 @@ export async function handleAgentNoteRequest(
             );
         }
         const dirPath = DirSource.getDirPathBySettingName(
-            dirSourceSettingNames.BIBLE_NOTES,
+            getActiveDirSourceSettingName(dirSourceSettingNames.BIBLE_NOTES),
         );
         if (dirPath === null) {
             return fail(

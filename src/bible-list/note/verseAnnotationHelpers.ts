@@ -88,7 +88,9 @@ async function addToDefaultVerseItem(
     anchor: VerseAnchorType,
     mutate: (noteItem: NoteItem) => void,
 ) {
-    const note = await Note.getDefault();
+    // The Default SESSION's Default note, whatever session the Bible Notes
+    // list is on: a mark must never vanish because the list was switched.
+    const note = await Note.getDefault({ isBaseSession: true });
     if (note === null) {
         showSimpleToast(
             tran('Saving Verse Mark'),

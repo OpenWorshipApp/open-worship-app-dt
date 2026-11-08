@@ -5,6 +5,7 @@ import { getBibleInfoIsRtl } from '../helper/bible-helpers/bibleInfoHelpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import DirSource from '../helper/DirSource';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
 import {
@@ -246,7 +247,7 @@ export async function generateBibleItemSlides(
             ? '#18233066'
             : PREVIEW_COLOR;
         const dirSource = await DirSource.getInstance(
-            dirSourceSettingNames.APP_DOCUMENT,
+            getActiveDirSourceSettingName(dirSourceSettingNames.APP_DOCUMENT),
         );
         if (!dirSource.isDirPathValid) {
             throw new Error('Documents directory is unavailable');

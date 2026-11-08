@@ -96,37 +96,40 @@ export function findLyricAskFiles(
     return out.slice(0, MAX_LYRIC_ASK_FILES);
 }
 
-function toComparableName(text: string) {
-    return toSongName(text).toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
 /**
- * What a model's `file` turns into: the attached song's own path, a song of
- * the Documents folder by its name, or a `reason` to refuse with.
+ * What a model's `file` turns into, for any document kind the window attaches
+ * (a song, a slide document): the attached file's own path, one of the
+ * Documents folder by its name, or a `reason` to refuse with. `toName` takes
+ * the kind's folder and extension off; `noun` says it in a refusal.
  *
- * A model names a song; it never hands over a path. One written as one --
- * a prompt injected into a song's words could ask for any file -- is
- * refused, and with one song attached no name at all means that song.
+ * A model names a document; it never hands over a path. One written as one
+ * -- a prompt injected into a document's words could ask for any file -- is
+ * refused, and with one attached no name at all means that one.
  */
-export function resolveLyricEditFile(
+export function resolveAttachedDocumentFile(
     file: unknown,
-    songs: readonly LyricAskFileType[],
+    files: readonly LyricAskFileType[],
+    toName: (text: string) => string,
+    noun: string,
 ): { filePath: string } | { name: string } | { reason: string } {
+    const toComparable = (text: string) => {
+        return toName(text).toLowerCase().replace(/\s+/g, ' ').trim();
+    };
     const text = typeof file === 'string' ? file.trim() : '';
     if (ABSOLUTE_PATH_PATTERN.test(text) || /[\\/]/.test(text)) {
         return {
             reason:
-                'Name the song as it is attached, by its name -- never a ' +
+                `Name the ${noun} as it is attached, by its name -- never a ` +
                 'path.',
         };
     }
     if (text === '') {
-        return songs.length === 1
-            ? { filePath: songs[0].filePath }
+        return files.length === 1
+            ? { filePath: files[0].filePath }
             : {
                   reason:
-                      'Say which song (`file`): ' +
-                      songs
+                      `Say which ${noun} (\`file\`): ` +
+                      files
                           .map((one) => {
                               return `"${one.name}"`;
                           })
@@ -134,16 +137,27 @@ export function resolveLyricEditFile(
                       '.',
               };
     }
-    const asked = toComparableName(text);
-    const attached = songs.find((one) => {
-        return toComparableName(one.name) === asked;
+    const asked = toComparable(text);
+    const attached = files.find((one) => {
+        return toComparable(one.name) === asked;
     });
     if (attached !== undefined) {
         return { filePath: attached.filePath };
     }
-    // Another of their songs, by its Documents name: the app checks it is
-    // there, and every change is backed up like any other.
-    return { name: toSongName(text) };
+    // Another of theirs, by its Documents name: the app checks it is there,
+    // and every change is backed up like any other.
+    return { name: toName(text) };
+}
+
+/**
+ * What a model's `file` turns into for a SONG: the attached song's own path,
+ * a song of the Documents folder by its name, or a `reason` to refuse with.
+ */
+export function resolveLyricEditFile(
+    file: unknown,
+    songs: readonly LyricAskFileType[],
+): { filePath: string } | { name: string } | { reason: string } {
+    return resolveAttachedDocumentFile(file, songs, toSongName, 'song');
 }
 
 type DescribedPartType = {
@@ -472,7 +486,16 @@ export function checkIsLyricTranslateAsk(asked: string) {
 }
 
 /** What the window keeps of a change the model made: the button that undoes it. */
-export type EditedLyricType = { name: string; undoId: string | null };
+export type EditedLyricType = {
+    name: string;
+    undoId: string | null;
+    /**
+     * Every change ONE answer made to this document, oldest first: slides
+     * made from a picture and then a background put behind them are two
+     * changes, and **Undo this change** puts back both (2026-11-07).
+     */
+    undoIdList?: string[];
+};
 
 /**
  * A change `owa_lyric_edit` made, off its RESULT -- a refusal is prose and
@@ -506,6 +529,29 @@ export function readEditedLyric(text: string): EditedLyricType | null {
 export const LYRIC_UNDO_TOOL_NAME = 'lyric-undo';
 export const LYRIC_UNDO_LABEL = 'Undo this change';
 
+/**
+ * `next` remembered on top of what the same answer changed before: the same
+ * document keeps every undo id, oldest first; another document starts over.
+ */
+export function mergeEditedDocument(
+    previous: EditedLyricType | null,
+    next: EditedLyricType,
+): EditedLyricType {
+    if (previous === null || previous.name !== next.name) {
+        return next;
+    }
+    const undoIdList = [
+        ...(previous.undoIdList ??
+            (previous.undoId === null ? [] : [previous.undoId])),
+        ...(next.undoId === null ? [] : [next.undoId]),
+    ];
+    return {
+        ...next,
+        undoId: next.undoId ?? previous.undoId,
+        ...(undoIdList.length > 1 ? { undoIdList } : {}),
+    };
+}
+
 /** The button that undoes `edited`, or null when the change left no id. */
 export function genLyricUndoAction(edited: EditedLyricType) {
     return edited.undoId === null
@@ -513,6 +559,12 @@ export function genLyricUndoAction(edited: EditedLyricType) {
         : {
               label: LYRIC_UNDO_LABEL,
               toolName: LYRIC_UNDO_TOOL_NAME,
-              args: { id: edited.undoId, name: edited.name },
+              args: {
+                  id: edited.undoId,
+                  name: edited.name,
+                  ...(edited.undoIdList === undefined
+                      ? {}
+                      : { ids: edited.undoIdList }),
+              },
           };
 }

@@ -303,10 +303,19 @@ export async function describeRunSheetForAgent(
 
 async function listAvailableSheetNames(): Promise<string[]> {
     try {
-        const [{ dirSourceSettingNames }, { default: DirSource }] =
-            await Promise.all([import('./constants'), import('./DirSource')]);
+        const [
+            { dirSourceSettingNames },
+            { default: DirSource },
+            { getActiveDirSourceSettingName },
+        ] = await Promise.all([
+            import('./constants'),
+            import('./DirSource'),
+            import('../media-sessions/folderSessionHelpers'),
+        ]);
         const dirSource = await DirSource.getInstance(
-            dirSourceSettingNames.PRESENTING_FLOW,
+            getActiveDirSourceSettingName(
+                dirSourceSettingNames.PRESENTING_FLOW,
+            ),
         );
         const filePaths = await dirSource.getFilePaths('presentingFlow');
         return (filePaths ?? []).map(toSheetName);

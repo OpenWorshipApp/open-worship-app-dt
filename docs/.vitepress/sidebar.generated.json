@@ -96,6 +96,10 @@
       {
         "text": "W-56 — Change a song with the assistant (translate it, add a part, chords, its key)",
         "link": "/creating-editing-content/w-56-change-a-song-with-the-assistant-translate-it-add-a-part-chords-its-key"
+      },
+      {
+        "text": "W-57 — Change slides with the assistant (translate them, restyle them, make slides like a picture)",
+        "link": "/creating-editing-content/w-57-change-slides-with-the-assistant-translate-them-restyle-them-make-slides-like-a-picture"
       }
     ]
   },
@@ -106,6 +110,10 @@
       {
         "text": "W-16 — Settings: language, theme, fonts, folders",
         "link": "/configuration/w-16-settings-language-theme-fonts-folders"
+      },
+      {
+        "text": "W-58 — Keep songs, running orders, Bible lists and notes in more than one folder (folder sessions)",
+        "link": "/configuration/w-58-keep-songs-running-orders-bible-lists-and-notes-in-more-than-one-folder-folder-sessions"
       },
       {
         "text": "W-55 — Find and install a language (Settings → Languages)",

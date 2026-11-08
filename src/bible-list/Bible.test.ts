@@ -1,5 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+const session = vi.hoisted(() => ({ suffix: '' }));
+vi.mock('../media-sessions/folderSessionHelpers', () => ({
+    FOLDER_SESSION_BASE_NAMES: [],
+    SESSION_URL_PARAM_NAME: 'session',
+    getActiveDirSourceSettingName: (settingName: string) => {
+        return `${settingName}${session.suffix}`;
+    },
+    toSessionDirSourceSettingName: (settingName: string) => settingName,
+    toSessionDirSourceSettingNameFromParam: (settingName: string) => {
+        return settingName;
+    },
+}));
+
 const mocks = vi.hoisted(() => {
     const files = new Map<string, string>();
     const fileSources = new Map<string, any>();
@@ -321,6 +334,12 @@ describe('Bible', () => {
         expect(Bible.getDirSourceSettingName()).toBe('bible-read-dir');
         mocks.appProviderMock.isPageReader = false;
         expect(Bible.getDirSourceSettingName()).toBe('bible-present-dir');
+        // The Bibles session in front: a verse saved from Lookup lands in
+        // the list being looked at, while the page's own key stays the base.
+        session.suffix = '-s1';
+        expect(Bible.getDirSourceSettingName()).toBe('bible-present-dir-s1');
+        expect(Bible.getBaseDirSourceSettingName()).toBe('bible-present-dir');
+        session.suffix = '';
 
         mocks.files.set(
             '/bibles/Default.bible',

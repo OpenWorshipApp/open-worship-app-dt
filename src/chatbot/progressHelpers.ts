@@ -677,6 +677,29 @@ export function describeToolStep(name: string, args: any): string {
             );
         case 'owa_slide_file':
             return describeFileStep(args, false);
+        // An attached slide document, named by its `file`: the slide tool's
+        // own lines, many slides at once said as the document changed.
+        case 'owa_slide_edit':
+            return describeFileStep(
+                {
+                    ...args,
+                    action:
+                        args?.action === 'update-slides' ||
+                        args?.action === 'set-background'
+                            ? 'update'
+                            : args?.action === 'add-slides'
+                              ? 'add-slide'
+                              : args?.action,
+                    name:
+                        typeof args?.file === 'string'
+                            ? (args.file.split(/[\\/]/).pop() ?? '').replace(
+                                  /\.ows$/i,
+                                  '',
+                              )
+                            : null,
+                },
+                false,
+            );
         case 'owa_bible_item':
         case 'owa_bible_note':
         case 'owa_undo':

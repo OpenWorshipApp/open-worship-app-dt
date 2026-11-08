@@ -816,6 +816,10 @@
             "en": "How do I save a slide document as a PowerPoint file?",
             "text": "Comment enregistrer un document de diapositives en fichier PowerPoint ?"
         },
+        "presenter.documents.change-slides-with-assistant": {
+            "en": "Can the assistant change my slides for me?",
+            "text": "L’assistant peut-il modifier mes diapositives pour moi ?"
+        },
         "presenter.lyrics.present-lyrics": {
             "en": "How do I put a song's lyrics on the screen?",
             "text": "Comment mettre les paroles d'un chant à l'écran ?"

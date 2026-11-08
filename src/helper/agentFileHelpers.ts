@@ -62,6 +62,7 @@ import type { AnyObjectType } from './typeHelpers';
 import { handleError } from './errorHelpers';
 import DirSource from './DirSource';
 import { dirSourceSettingNames } from './constants';
+import { getActiveDirSourceSettingName } from '../media-sessions/folderSessionHelpers';
 import { checkAgentFileName } from '../../tools/owa-devtools-mcp/agentFileName.mjs';
 import { toEditingHistoryFolderPath } from '../editing-manager/editingHistoryPathHelpers';
 import {
@@ -82,14 +83,27 @@ import {
     trashAgentFile,
 } from './agentBackupHelpers';
 import {
+    AGENT_SLIDE_LIMITS,
+    type AgentCheckedSlideBatchType,
+    type AgentCheckedSlideRequestType,
     type AgentSlideActionType,
+    type AgentSlideBatchActionType,
     type AgentSlideChangeType,
     applyAgentSlideAction,
+    applyAgentSlideBatch,
     checkIsAgentSlideAction,
+    checkIsAgentSlideBatchAction,
     genAgentTextItem,
+    readAgentSlideBatchRequest,
     readAgentSlideDocument,
     readAgentSlideRequest,
 } from './agentSlideHelpers';
+import {
+    type AgentCheckedSlideBackgroundType,
+    type AgentSlideBackgroundActionType,
+    checkIsAgentSlideBackgroundAction,
+    readAgentSlideBackgroundRequest,
+} from './agentSlideBackgroundRules';
 
 export type AgentFileActionType =
     | 'list'
@@ -101,7 +115,9 @@ export type AgentFileActionType =
     | 'revert'
     | 'find'
     | 'read'
-    | AgentSlideActionType;
+    | AgentSlideActionType
+    | AgentSlideBatchActionType
+    | AgentSlideBackgroundActionType;
 
 /**
  * The two kinds of DOCUMENT `owa_lyric_file` / `owa_slide_file` write. It used
@@ -124,9 +140,27 @@ export type AgentFileRequestType = {
     to?: unknown;
     items?: unknown;
     /**
-     * A song by its whole path instead of its Documents name (`read`,
-     * `info`, `update`; songs only). `owa_lyric_edit` reads a song the help
-     * window had ATTACHED, which may live in any folder.
+     * `update-slides` / `add-slides` only: `[{slide, items}]`, one entry a
+     * slide (for `add-slides`, `slide` is where it goes).
+     */
+    changes?: unknown;
+    /**
+     * `set-background` only: a colour, a picture or video of the Background
+     * panel by name, or `none`; `slides` the slide numbers (every slide when
+     * left out).
+     */
+    background?: unknown;
+    slides?: unknown;
+    /**
+     * `slides` only: every box's words WHOLE (to 5 000 characters), not cut
+     * at 300 -- for `owa_slide_edit`, which is about to rewrite them.
+     */
+    isFullText?: boolean;
+    /**
+     * A document by its whole path instead of its Documents name: a song
+     * (`read`, `info`, `update` -- `owa_lyric_edit`) or a slide document
+     * (`info` and the slide actions -- `owa_slide_edit`) the help window had
+     * ATTACHED, which may live in any folder.
      */
     filePath?: string;
     /**
@@ -602,9 +636,11 @@ export const AGENT_FILE_KIND_MAP: Record<
 
 function getDirPath() {
     // Songs and slide documents share the Documents folder — the lyric list
-    // was merged into it (memory: `lyric-in-documents-list`).
+    // was merged into it (memory: `lyric-in-documents-list`). The folder of
+    // the session the operator is on, so a song written here shows up in the
+    // list they are looking at.
     return DirSource.getDirPathBySettingName(
-        dirSourceSettingNames.APP_DOCUMENT,
+        getActiveDirSourceSettingName(dirSourceSettingNames.APP_DOCUMENT),
     );
 }
 
@@ -1137,10 +1173,39 @@ async function findInvalidSlideReason(change: AgentSlideChangeType) {
     return null;
 }
 
+type AgentAnySlideActionType =
+    | AgentSlideActionType
+    | AgentSlideBatchActionType
+    | AgentSlideBackgroundActionType;
+
+function checkIsAnySlideAction(
+    action: unknown,
+): action is AgentAnySlideActionType {
+    return (
+        checkIsAgentSlideAction(action) ||
+        checkIsAgentSlideBatchAction(action) ||
+        checkIsAgentSlideBackgroundAction(action)
+    );
+}
+
+/** Everything about a slide request that can be judged with no document. */
+function readAnySlideRequest(
+    action: AgentAnySlideActionType,
+    request: AgentFileRequestType,
+) {
+    if (checkIsAgentSlideBackgroundAction(action)) {
+        return readAgentSlideBackgroundRequest(request);
+    }
+    return checkIsAgentSlideBatchAction(action)
+        ? readAgentSlideBatchRequest(request.changes, action)
+        : readAgentSlideRequest(action, request);
+}
+
+/** A slide action on the slide document named in the Documents folder. */
 async function handleSlideAction(
     dirPath: string,
     name: string,
-    action: AgentSlideActionType,
+    action: AgentAnySlideActionType,
     request: AgentFileRequestType,
     kind: AgentFileKindType,
     kindName: AgentFileKindNameType,
@@ -1153,7 +1218,7 @@ async function handleSlideAction(
     }
     // Everything about the request that needs no document, so a malformed
     // one is refused before anything is read off the disk.
-    const checked = readAgentSlideRequest(action, request);
+    const checked = readAnySlideRequest(action, request);
     if (checked.isError === true) {
         return fail(checked.reason);
     }
@@ -1161,6 +1226,54 @@ async function handleSlideAction(
     if (filePath === null || !(await fsCheckFileExist(filePath))) {
         return fail(genNoSuchFileReason(kind, name));
     }
+    return await handleSlideActionAt(filePath, name, action, request, checked);
+}
+
+/**
+ * A `slides` read for `owa_slide_edit`, with each listed slide's own
+ * background and the Background panel's pictures and videos beside it --
+ * what `set-background` can put behind a slide. A background that cannot be
+ * read leaves the read as it was.
+ */
+async function withSlideBackgrounds(
+    filePath: string,
+    slideDocument: { slides: AnyObjectType[] },
+) {
+    try {
+        const { readSlideBackgroundLines } =
+            await import('./agentSlideBackgroundHelpers');
+        const lines = await readSlideBackgroundLines(
+            filePath,
+            slideDocument.slides,
+        );
+        return {
+            ...slideDocument,
+            slides: slideDocument.slides.map((slide, index) => {
+                const background = lines.bySlide[index];
+                return background === null ? slide : { ...slide, background };
+            }),
+            ...(lines.documentBackground === null
+                ? {}
+                : { documentBackground: lines.documentBackground }),
+            backgroundChoices: lines.backgroundChoices,
+        };
+    } catch (error) {
+        handleError(error);
+        return slideDocument;
+    }
+}
+
+/** A slide action on the slide document at `filePath`, its request checked. */
+async function handleSlideActionAt(
+    filePath: string,
+    name: string,
+    action: AgentAnySlideActionType,
+    request: AgentFileRequestType,
+    checked:
+        | AgentCheckedSlideRequestType
+        | AgentCheckedSlideBatchType
+        | AgentCheckedSlideBackgroundType,
+) {
     const AppDocument = await getAppDocumentClass();
     const appDocument = AppDocument.getInstance(filePath);
     // The HEAD, unsaved edits and all: that is the document the user sees,
@@ -1169,14 +1282,57 @@ async function handleSlideAction(
     if (json === null) {
         return fail(`"${name}" could not be read, so it was not changed.`);
     }
+    if (checkIsAgentSlideBackgroundAction(action)) {
+        const { handleSlideBackgroundAt } =
+            await import('./agentSlideBackgroundHelpers');
+        return await handleSlideBackgroundAt(
+            filePath,
+            name,
+            json,
+            checked as AgentCheckedSlideBackgroundType,
+        );
+    }
     if (action === 'slides') {
-        const read = readAgentSlideDocument(json, name, checked);
-        return read.isError === true ? fail(read.reason) : read.slideDocument;
+        const read = readAgentSlideDocument(
+            json,
+            name,
+            checked as AgentCheckedSlideRequestType,
+            request.isFullText === true
+                ? AGENT_SLIDE_LIMITS.fullTextChars
+                : AGENT_SLIDE_LIMITS.shownTextChars,
+        );
+        if (read.isError === true) {
+            return fail(read.reason);
+        }
+        // A document with no slides yet has no size to read, and a slide
+        // drawn after a picture is placed in pixels: say the size a new
+        // slide gets, or the boxes are guessed onto a 1920 x 1080 that the
+        // slide is not (seen live 2026-11-07, a new document at 1494 x 934).
+        if (
+            read.slideDocument.slideCount === 0 &&
+            read.slideDocument.width === null
+        ) {
+            const { default: Slide } =
+                await import('../app-document-list/Slide');
+            const dim = Slide.getDefaultDim();
+            return {
+                ...read.slideDocument,
+                width: dim.width,
+                height: dim.height,
+                note:
+                    'It has no slides yet: a new slide is this width and ' +
+                    'height.',
+            };
+        }
+        if (request.isFullText === true) {
+            return await withSlideBackgrounds(filePath, read.slideDocument);
+        }
+        return read.slideDocument;
     }
     const { default: CanvasItemText } =
         await import('../slide-editor/canvas/CanvasItemText');
     const { default: Slide } = await import('../app-document-list/Slide');
-    const change = applyAgentSlideAction(action, json, checked, {
+    const context = {
         name,
         genTextDefaults: () => {
             return CanvasItemText.genDefaultItem().toJson();
@@ -1184,7 +1340,20 @@ async function handleSlideAction(
         getDefaultDim: () => {
             return Slide.getDefaultDim();
         },
-    });
+    };
+    const change = checkIsAgentSlideBatchAction(action)
+        ? applyAgentSlideBatch(
+              json,
+              checked as AgentCheckedSlideBatchType,
+              context,
+              action,
+          )
+        : applyAgentSlideAction(
+              action,
+              json,
+              checked as AgentCheckedSlideRequestType,
+              context,
+          );
     if (change.isError === true) {
         return fail(change.reason);
     }
@@ -1227,38 +1396,56 @@ async function handleSlideAction(
 // A whole path: a drive (`C:\` / `C:/`), a share (`\\server`) or a root.
 const ABSOLUTE_PATH_PATTERN = /^(?:[A-Za-z]:[\\/]|\\\\|\/)/;
 
+/** Whether the document at `filePath` reads as its kind: a song, slides. */
+async function checkIsReadableDocument(
+    filePath: string,
+    kindName: AgentFileKindNameType,
+) {
+    if (kindName === 'lyric') {
+        return (await readFreshLyricContent(filePath)) !== null;
+    }
+    const AppDocument = await getAppDocumentClass();
+    return (await AppDocument.getInstance(filePath).getJsonData()) !== null;
+}
+
 /**
- * A song by its whole path -- the help window's ATTACHED song, which may live
- * in any folder. The same promises a name gets from the Documents folder,
- * made on the path itself: a whole path, no `..`, a song's own extension, a
- * file that is there, and one this app reads as a song.
+ * A document by its whole path -- the help window's ATTACHED song or slide
+ * document, which may live in any folder. The same promises a name gets from
+ * the Documents folder, made on the path itself: a whole path, no `..`, the
+ * kind's own extension, a file that is there, and one this app reads as that
+ * kind.
  */
-async function resolveLyricPath(
+async function resolveDocumentPath(
     rawPath: unknown,
     kind: AgentFileKindType,
+    kindName: AgentFileKindNameType,
 ): Promise<AgentFileResultType | { filePath: string; name: string }> {
+    const label = kindName === 'lyric' ? 'song' : 'slide document';
     const filePath = typeof rawPath === 'string' ? rawPath.trim() : '';
     if (filePath === '' || !ABSOLUTE_PATH_PATTERN.test(filePath)) {
-        return fail('A song path must be the whole path to the file.');
+        return fail(`A ${label} path must be the whole path to the file.`);
     }
     if (
         filePath.split(/[\\/]/).some((part) => {
             return part === '..';
         })
     ) {
-        return fail('A song path may not step out of its folder with "..".');
+        return fail(
+            `A ${label} path may not step out of its folder with "..".`,
+        );
     }
     const extension = getExtension(kind);
     if (!filePath.toLowerCase().endsWith(`.${extension.toLowerCase()}`)) {
         return fail(
-            `Only a song file (.${extension}) can be read or changed this way.`,
+            `Only a ${label} file (.${extension}) can be read or changed ` +
+                'this way.',
         );
     }
     if (!(await fsCheckFileExist(filePath))) {
-        return fail('There is no song file at that path.');
+        return fail(`There is no ${label} file at that path.`);
     }
-    if ((await readFreshLyricContent(filePath)) === null) {
-        return fail('That file is not a song this app can read.');
+    if (!(await checkIsReadableDocument(filePath, kindName))) {
+        return fail(`That file is not a ${label} this app can read.`);
     }
     const FileSourceClass = await getFileSourceClass();
     return { filePath, name: FileSourceClass.getInstance(filePath).name };
@@ -1287,27 +1474,57 @@ async function handleRead(
     };
 }
 
-/** `read`, `info` and `update` on a song named by its whole path. */
+/**
+ * A document named by its whole path: `read`, `info` and `update` on a song,
+ * `info` and the slide actions on a slide document.
+ */
 async function handleByPath(
     request: AgentFileRequestType,
     kind: AgentFileKindType,
     kindName: AgentFileKindNameType,
 ) {
     const { action, content, expectedHash, summary } = request;
-    if (kindName !== 'lyric') {
-        return fail('Only a song can be named by its path.');
-    }
-    if (action !== 'read' && action !== 'info' && action !== 'update') {
+    if (kindName === 'slide') {
+        if (action !== 'info' && !checkIsAnySlideAction(action)) {
+            return fail(
+                'A slide document named by its path can be read and changed ' +
+                    'slide by slide (info, slides, update-slides, ' +
+                    'add-slides, update-slide, add-slide, delete-slide, ' +
+                    'move-slide, duplicate-slide); anything else takes its ' +
+                    'Documents name.',
+            );
+        }
+    } else if (action !== 'read' && action !== 'info' && action !== 'update') {
         return fail(
             'A song named by its path can be read or changed (read, info, ' +
                 'update); anything else takes its Documents name.',
         );
     }
-    const resolved = await resolveLyricPath(request.filePath, kind);
+    // A malformed slide request is refused before anything is read.
+    const checked = checkIsAnySlideAction(action)
+        ? readAnySlideRequest(action, request)
+        : null;
+    if (checked?.isError === true) {
+        return fail(checked.reason);
+    }
+    const resolved = await resolveDocumentPath(
+        request.filePath,
+        kind,
+        kindName,
+    );
     if (!('filePath' in resolved) || typeof resolved.filePath !== 'string') {
         return resolved as AgentFileResultType;
     }
     const { filePath, name } = resolved as { filePath: string; name: string };
+    if (checkIsAnySlideAction(action) && checked !== null) {
+        return await handleSlideActionAt(
+            filePath,
+            name,
+            action,
+            request,
+            checked,
+        );
+    }
     if (action === 'read') {
         return await handleRead(filePath, name, kindName);
     }
@@ -1402,7 +1619,7 @@ export async function handleAgentFileRequest(
         if (action === 'revert') {
             return await handleRevert(dirPath, safeName, kind, kindName);
         }
-        if (checkIsAgentSlideAction(action)) {
+        if (checkIsAnySlideAction(action)) {
             return await handleSlideAction(
                 dirPath,
                 safeName,

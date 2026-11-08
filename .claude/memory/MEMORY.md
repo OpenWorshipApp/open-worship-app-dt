@@ -11,7 +11,7 @@
 - [Long Text Show](long-text-show.md) — a song in several languages in the Bible’s layer; a language keeps only its font and size; Atom Mode = a row per line; Stack / Hide Number ride on the screen data
 - [Screen selection glides into view](screen-selection-glides-into-view.md) — ease-out, timed in screen heights, re-marked every frame
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — fixed 2026-07-22
-- [Dev HMR stale state](dev-hmr-stale-state-qa.md) — a write can blank a page; View > Reload · [Main-process change needs a relaunch](main-process-change-needs-relaunch.md)
+- [Dev HMR stale state](dev-hmr-stale-state-qa.md) — a write can blank a page; View > Reload · [Main-process change needs a relaunch](main-process-change-needs-relaunch.md) · [EPIPE dialog = launcher died](main-process-epipe-when-launcher-dies.md) — guarded; press OK, restart `npm run dev`
 - [`build` kills the dev app](build-kills-running-dev-app.md) · [Scratch dev instance](scratch-dev-instance-beside-user-app.md) — 2nd `electron .` on `OWA_USER_DATA_PATH`, no-throttling switches, `stay-awake` false, stop it · [Pack from a snapshot](pack-release-from-snapshot.md)
 - [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in a page script
 - Bible notes: [popup CDP](bible-note-floating-toolbar-width.md) · [editor writes a history](bible-note-editing-history.md) · [verse marks are note items](verse-marks-note-items.md)
@@ -32,6 +32,7 @@
 - [On-screen check must not parse](onscreen-check-must-not-parse.md) — runs per row per screen event
 - [QA: intentional, not bugs](qa-intentional-not-bugs.md) — blank slide0; a bible present clears the slide
 - [`app-ellipsis-left` reverses names](app-ellipsis-left-reverses-names.md) — wrap in `<bdi>`
+- [File-list folder sessions](file-list-folder-sessions.md) — Documents/Flows/Bibles/Notes; target = base folder key; Default never removable; outside writers follow the active one; verse marks stay in Default
 - Panes: [closed pane stays closed](full-view-toggle-collapses-widget.md) · [Note pane ships closed](previewer-note-pane-ships-closed.md) · [close persists the grow](widget-close-must-persist-absorbed-grow.md) · [View menu toggles](view-menu-widget-toggles.md)
 - [Presenting Flow: references vs presets](presenting-flow-references-vs-presets.md) · [rename](presenting-flow-rename.md) · [Reveal Original is a context item](reveal-original-context-menu.md)
 - [Presenting Flows not dev-only](presenting-flow-panel-no-longer-dev-only.md) · [on-screen marking](presenting-flow-onscreen-marking-design.md) · [run player](presenting-flow-preview-run-player.md)
@@ -72,7 +73,7 @@
 - [Local models at temperature 0](local-model-temperature-zero.md) · [Thumbs under an answer](chatbot-answer-thumbs.md)
 - [Answer options](chatbot-answer-options.md) · [Stop aborts on the wire](chatbot-stop-answer.md) · [Additions in flight](chatbot-mid-flight-additions.md) · [Recipe ids scrubbed](chatbot-recipe-id-scrub.md)
 - [Chatbot follows the app language](chatbot-follows-app-language.md) — each language is `assistant.json` data; any TYPED one its installed `typed.json`
-- LLM: [Kimi](kimi-third-llm-provider.md) · [Kimi free tier](kimi-free-tier-round-budget.md) · [Free keyless](free-keyless-chatbot-provider.md) · [Bedrock](bedrock-llm-provider.md) · [Custom servers](custom-llm-servers.md) — main-process relay · [LLM registry](llm-registry.md) — `openworship.app/llm/info.json`
+- LLM: [Kimi](kimi-third-llm-provider.md) · [Kimi free tier](kimi-free-tier-round-budget.md) · [Free keyless](free-keyless-chatbot-provider.md) — a benchmark spends the per-computer quota · [Bedrock](bedrock-llm-provider.md) · [Custom servers](custom-llm-servers.md) — main-process relay · [LLM registry](llm-registry.md) — `openworship.app/llm/info.json`
 - [Chatbot attachments](chatbot-attachments.md) · [Report button](chatbot-report-button.md) · [Tabs work independently](chatbot-tabs-work-independently.md)
 - [Progress log](chatbot-progress-log.md) · [Ask history & tips](chatbot-ask-history-and-tips.md) · [Built-in commands](chatbot-builtin-commands.md) — no model but `/btw`
 - [Cost on the wire](chatbot-cost-measured-on-the-wire.md) · [Spend guard](chatbot-spend-guard.md) · [Provider failure door](chatbot-provider-issue-door.md)

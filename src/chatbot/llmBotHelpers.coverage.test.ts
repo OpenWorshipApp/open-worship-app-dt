@@ -1526,6 +1526,48 @@ describe('the OpenAI-shaped loop', () => {
         expect(raised.cause.message).toBe('ChatGPT returned no answer (stop)');
     });
 
+    test('a reply the server dropped is asked for once more', async () => {
+        // A tool call the server could not parse comes back as nothing,
+        // tokens and all: the same round asked again answers.
+        fake.toolList = [{ name: 'owa_find_ui' }];
+        const { sentList } = useOpenAiShaped(
+            [openAiText('', 'stop'), openAiText('Here it is.')],
+            'openai',
+        );
+
+        const answer = await askLlmBot(
+            'Where is it?',
+            'presenter',
+            'openai',
+            'gpt-5',
+        );
+
+        expect(answer.text).toBe('Here it is.');
+        expect(sentList).toHaveLength(2);
+    });
+
+    test('a second empty reply is the model’s, and pressed nothing', async () => {
+        fake.toolList = [{ name: 'owa_find_ui' }];
+        const { sentList } = useOpenAiShaped(
+            [openAiText('', 'stop'), openAiText('', 'stop')],
+            'openai',
+        );
+
+        const raised = await askLlmBot(
+            'Where is it?',
+            'presenter',
+            'openai',
+            'gpt-5',
+        ).catch((error: any) => {
+            return error;
+        });
+
+        expect(sentList).toHaveLength(2);
+        expect(raised.message).toContain('it wrote no answer this time');
+        // No tool was called, so Auto may hand the question on.
+        expect(raised.cause.isNothingDone).toBe(true);
+    });
+
     test('said done without the tool goes back once here too', async () => {
         fake.toolList = [{ name: 'owa_foreground' }];
         fake.toolResultMap.owa_foreground = '{"did":"started"}';

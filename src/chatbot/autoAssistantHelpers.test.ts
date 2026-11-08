@@ -6,6 +6,7 @@ import {
     FREE_MODEL_SIZE,
     askWithAutoAssistant,
     checkHasAutoSetback,
+    checkIsNothingDoneError,
     checkIsCloudModel,
     clearAutoSetbacks,
     describeSkippedAssistants,
@@ -613,6 +614,56 @@ describe('askWithAutoAssistant', () => {
         expect(result.skipped).toEqual([
             { pick: BIG, reason: 'it wrote no answer this time' },
         ]);
+    });
+
+    test('hands on an answer of nothing that called no tool, whatever the ask', async () => {
+        // It pressed nothing: an empty reply with no tool called. One that
+        // DID call a tool before saying nothing stays final.
+        const ask = vi.fn(
+            async (pick: AutoCandidateType, attempt: AutoAttemptType) => {
+                attempt.hasRound = true;
+                if (pick === BIG) {
+                    throw Object.assign(new Error('it wrote no answer'), {
+                        isNothingDone: true,
+                    });
+                }
+                return 'made two slides';
+            },
+        );
+        const result = await askWithAutoAssistant({
+            picks: [BIG, FREE],
+            ask,
+            checkIsFinal: neverFinal,
+        });
+        expect(result.pick).toBe(FREE);
+        expect(checkIsNothingDoneError({ isNothingDone: true })).toBe(true);
+        expect(checkIsNothingDoneError({ isNothingDone: false })).toBe(false);
+        expect(checkIsNothingDoneError(null)).toBe(false);
+        // As `askLlmBot` throws it: a sentence for the person, the first
+        // failure its cause.
+        expect(
+            checkIsNothingDoneError(
+                new Error('it wrote no answer this time', {
+                    cause: { isNothingDone: true },
+                }),
+            ),
+        ).toBe(true);
+        const acted = vi.fn(
+            async (_pick: AutoCandidateType, attempt: AutoAttemptType) => {
+                attempt.hasRound = true;
+                throw Object.assign(new Error('it wrote no answer'), {
+                    isNothingDone: false,
+                });
+            },
+        );
+        await expect(
+            askWithAutoAssistant({
+                picks: [BIG, FREE],
+                ask: acted,
+                checkIsFinal: neverFinal,
+            }),
+        ).rejects.toThrow('it wrote no answer');
+        expect(acted).toHaveBeenCalledTimes(1);
     });
 
     test('stops at a failure nobody else would change, and holds nothing against the pick', async () => {

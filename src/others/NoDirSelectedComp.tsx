@@ -3,6 +3,7 @@ import type DirSource from '../helper/DirSource';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
 import { openPathSetting } from '../setting/settingHelpers';
+import { selectDirs } from '../server/fileHelpers';
 
 export function SelectDefaultDirButtonComp({
     dirSource,
@@ -21,6 +22,34 @@ export function SelectDefaultDirButtonComp({
             }}
         >
             {tran('Select Default')} "{defaultFolderName}"
+        </button>
+    );
+}
+
+/**
+ * Points the list at a folder of the person's own choosing, straight from the
+ * empty state. Offered where **Go to Settings** is not an answer -- a folder
+ * session's key is one the Path Settings page never lists -- so a new session
+ * is one press from a folder rather than a hunt for the path row above.
+ */
+export function ChooseDirButtonComp({
+    dirSource,
+}: Readonly<{
+    dirSource: DirSource;
+}>) {
+    return (
+        <button
+            className="btn btn-sm btn-outline-info text-wrap text-break mw-100"
+            onClick={async () => {
+                const dirs = await selectDirs();
+                if (dirs.length === 0) {
+                    return;
+                }
+                dirSource.dirPath = dirs[0];
+            }}
+        >
+            <i className="bi bi-folder2-open me-1" />
+            <span>{tran('Choose a folder')}</span>
         </button>
     );
 }
@@ -52,11 +81,13 @@ export default function NoDirSelectedComp({
      * Drop the **Go to Settings** route.
      *
      * It is only an answer where the folder is one the Path Settings page
-     * actually lists. A foreground media SESSION keeps its own folder under a
-     * key of its own, which that page knows nothing about -- so the button
+     * actually lists. A folder SESSION -- a foreground widget's, a file
+     * list's -- keeps its own folder under a key of its own, which that page
+     * knows nothing about -- so the button
      * sent a volunteer out of the panel, into another window, to a list their
      * folder is not on. The folder picker beside this empty state is the way
-     * in, and it is already here.
+     * in, and it is already here -- and so is a **Choose a folder** button in
+     * the Settings route's place.
      */
     isDirSettingRouteHidden?: boolean;
 }>) {
@@ -93,7 +124,11 @@ export default function NoDirSelectedComp({
                             defaultFolderName={defaultFolderName}
                         />
                     </div>
-                    {isDirSettingRouteHidden ? null : (
+                    {isDirSettingRouteHidden ? (
+                        <div className="m-2 mw-100">
+                            <ChooseDirButtonComp dirSource={dirSource} />
+                        </div>
+                    ) : (
                         <div className="mw-100">
                             <GotoSettingDirectoryPathComp />
                         </div>

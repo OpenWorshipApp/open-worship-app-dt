@@ -288,6 +288,12 @@ export const MODEL_ON_ASK_TOOL_MAP = {
   // writing the notation. The window names the attached file in `file`
   // itself (`src/chatbot/lyricChatHelpers.ts`).
   owa_lyric_edit: 'lyric',
+  // A conversation about an ATTACHED slide document (2026-11-07, the
+  // Documents row's **Open in Chatbot**): its words changed or translated,
+  // its boxes restyled, slides added after a picture of the ones wanted --
+  // many slides in one call. The window names the attached file in `file`
+  // itself (`src/chatbot/slideChatHelpers.ts`).
+  owa_slide_edit: 'slide',
 };
 
 /**

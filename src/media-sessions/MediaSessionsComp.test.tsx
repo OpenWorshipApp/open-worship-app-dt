@@ -345,4 +345,82 @@ describe('media sessions', () => {
         // The press stops at the dots: the chip under them is not pressed.
         expect(onChoose).not.toHaveBeenCalled();
     });
+
+    it('never offers Default for removal, however many sessions there are', async () => {
+        // Default's id is the empty string, so its settings are the panel's
+        // own base keys: removing it deleted the folder Path Settings names.
+        await act(async () =>
+            root.render(
+                <MediaSessionsComp
+                    target="select-dir-app-document"
+                    sessions={[
+                        { id: '', name: 'Default' },
+                        { id: 's1', name: 'Easter' },
+                        { id: 's2', name: 'Youth' },
+                    ]}
+                    activeId=""
+                    onChoose={vi.fn()}
+                    onAdd={vi.fn()}
+                    onRename={vi.fn()}
+                    onRemove={vi.fn()}
+                    genRemovedSettingNames={() => ['select-dir-app-document']}
+                    genSessionState={() => ({
+                        isOnScreen: false,
+                        isAutoPlaying: false,
+                    })}
+                />,
+            ),
+        );
+        const chips = container.querySelectorAll<HTMLButtonElement>(
+            'button.media-session',
+        );
+        await act(async () =>
+            chips[0].dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        expect(
+            mocks.showAppContextMenu.mock.lastCall?.[1].map(
+                (item: any) => item.menuElement,
+            ),
+        ).toEqual(['Rename Session']);
+        // Any other session still can be removed.
+        await act(async () =>
+            chips[1].dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            ),
+        );
+        expect(
+            mocks.showAppContextMenu.mock.lastCall?.[1].map(
+                (item: any) => item.menuElement,
+            ),
+        ).toEqual(['Rename Session', 'Remove Session']);
+    });
+
+    it("a choice, rename or removal in one strip is drawn by its target's other strips", async () => {
+        // The Bibles list is up twice in one Presenter window -- the right
+        // column and the Lookup popup -- on one target.
+        state.settings.set(
+            'select-dir-bible-presenter-sessions',
+            JSON.stringify([
+                { id: '', name: 'Default' },
+                { id: 's1', name: 'Sermon' },
+            ]),
+        );
+        let first!: ReturnType<typeof useMediaSessions>;
+        let second!: ReturnType<typeof useMediaSessions>;
+        function HarnessComp() {
+            first = useMediaSessions('select-dir-bible-presenter');
+            second = useMediaSessions('select-dir-bible-presenter');
+            return null;
+        }
+        await act(async () => root.render(<HarnessComp />));
+        await act(async () => first.setActiveId('s1'));
+        expect(second.activeId).toBe('s1');
+        await act(async () => first.renameSession('s1', 'Easter'));
+        expect(second.activeSession.name).toBe('Easter');
+        await act(async () => second.removeSession('s1'));
+        expect(first.activeId).toBe('');
+        expect(first.sessions).toEqual([{ id: '', name: 'Default' }]);
+    });
 });

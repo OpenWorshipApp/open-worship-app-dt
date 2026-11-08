@@ -84,3 +84,25 @@
     opacity: 1;
   }
 }
+
+// ------------------------------------------- under a file list's title
+//
+// Documents, Presenting Flows, Bibles and Bible Notes draw the rail between
+// their title and the folder row, outside the scrolling body: it never
+// scrolls away, and a session with no folder yet still shows the way out.
+// One short row and nothing else -- these lists live in ~230px sidebars that
+// are often dragged shorter still.
+.file-list-sessions-bar {
+  flex: 0 0 auto;
+  min-height: 24px;
+  padding: 2px 4px;
+  border-bottom: 1px solid var(--app-line);
+}
+
+// A flex item will not shrink below its content unless told it may, so
+// without this the card grew taller than its pane by this row and the last
+// rows of the list were cut off at the window's edge. The list already
+// scrolls inside the body, so giving up the room costs it nothing.
+.file-list-sessions-bar + .card-body {
+  min-height: 0;
+}

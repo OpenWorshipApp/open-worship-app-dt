@@ -30,6 +30,7 @@ import { printAppDocument } from './appDocumentPrintHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { handleAppDocumentDragStart } from '../helper/dragHelpers';
 import { exportAppDocument } from './appDocumentArchiveHelpers';
+import { genDocumentOpenInChatbotContextMenu } from '../helper/ai/lyricChatbotMenuHelpers';
 import {
     checkHandleOpenSlidesPreviewClicking,
     closeAppDocumentPreviewFloating,
@@ -138,6 +139,13 @@ function genContextMenuItems(
     }
     menuItems.unshift(
         genOpenSlidesPreviewContextMenu(varyAppDocument.filePath, isSelected),
+        // An Open Worship slide document only: the help window with it
+        // attached, ready to change its slides -- words, a translation,
+        // sizes and colors, slides drawn after a picture. A PDF, a PPTX and
+        // a DOCX are their own files, with no slides here to change.
+        ...(AppDocument.checkIsThisType(varyAppDocument)
+            ? genDocumentOpenInChatbotContextMenu(varyAppDocument.filePath)
+            : []),
     );
     // Every kind can be exported: the bundle copies the document verbatim and
     // only walks the JSON kinds, so a PDF travels with its attached backgrounds
