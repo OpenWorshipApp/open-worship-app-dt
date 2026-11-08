@@ -4107,5 +4107,6 @@
     "Move on by itself": "ਆਪਣੇ ਆਪ ਅੱਗੇ ਵਧੇ",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ਹੇਠਾਂ ਨੱਥੀ ਕੀਤਾ ਗਿਆ ਹੈ। ਮੈਂ ਤੁਹਾਡੇ ਲਈ ਇਹ ਨੋਟ ਬਦਲ ਸਕਦਾ ਹਾਂ: ਇਸਦੇ ਸ਼ਬਦ ਬਦਲਣਾ ਜਾਂ ਅਨੁਵਾਦ ਕਰਨਾ, ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚਣਾ, ਇਸਨੂੰ ਸਿਰਲੇਖਾਂ ਅਤੇ ਸੂਚੀਆਂ ਵਿੱਚ ਸਜਾਉਣਾ, ਜਾਂ ਬਾਈਬਲ ਦੀਆਂ ਆਇਤਾਂ ਜੋੜਨਾ। ਮੈਂ ਇਸਦਾ ਸਾਰ ਵੀ ਦੇ ਸਕਦਾ ਹਾਂ, ਇਸ ਬਾਰੇ ਸਵਾਲਾਂ ਦੇ ਜਵਾਬ ਦੇ ਸਕਦਾ ਹਾਂ ਅਤੇ ਸਮਝਾ ਸਕਦਾ ਹਾਂ ਕਿ ਨੋਟ ਸੰਪਾਦਕ ਵਿੱਚ ਕੁਝ ਵੀ ਕਿਵੇਂ ਕਰਨਾ ਹੈ। ਇੱਕ ਦਬਾਓ, ਜਾਂ ਦੱਸੋ ਕਿ ਤੁਸੀਂ ਕੀ ਚਾਹੁੰਦੇ ਹੋ।",
     "Summarize this note": "ਇਸ ਨੋਟ ਦਾ ਸਾਰ ਦਿਓ",
-    "Tidy it into headings and lists": "ਇਸਨੂੰ ਸਿਰਲੇਖਾਂ ਅਤੇ ਸੂਚੀਆਂ ਵਿੱਚ ਸਜਾਓ"
+    "Tidy it into headings and lists": "ਇਸਨੂੰ ਸਿਰਲੇਖਾਂ ਅਤੇ ਸੂਚੀਆਂ ਵਿੱਚ ਸਜਾਓ",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ਇੱਕੋ ਬਦਲਾਅ ਵਿੱਚ ਹੋ ਗਿਆ: “{name}” ਦੇ {count} ਹਿੱਸਿਆਂ ਦੇ ਸ਼ਬਦਾਂ ਦਾ ਨਵਾਂ ਆਕਾਰ ਹੈ। ਇਹ ਅਜੇ ਸੰਭਾਲਿਆ ਨਹੀਂ ਗਿਆ: ਨੋਟ ਵਿੰਡੋ ਵਿੱਚ ਸੰਭਾਲੋ ਇਸਨੂੰ ਰੱਖਦਾ ਹੈ, ਅਤੇ ਇਹ ਬਦਲਾਅ ਵਾਪਸ ਲਓ ਇਸਨੂੰ ਮੋੜ ਦਿੰਦਾ ਹੈ।"
 }

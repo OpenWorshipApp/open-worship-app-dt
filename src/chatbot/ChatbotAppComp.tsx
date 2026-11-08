@@ -127,6 +127,8 @@ import {
     findNoteAskFiles,
     findOpenNoteAttachments,
     genNoteOpeningAnswer,
+    genNoteSizeChanges,
+    genNoteSizeDoneText,
     toNoteAsk,
     toNoteDocumentText,
 } from './noteChatHelpers';
@@ -7799,6 +7801,80 @@ export default function ChatbotAppComp() {
                 } catch (error) {
                     // Refused or not reachable: the assistant is asked, and
                     // says what went wrong in its own words.
+                    handleError(error);
+                }
+            }
+            // The same for a Bible note (2026-11-08, the user, with "make text
+            // bigger" answered with the toolbar's steps: _check why chatbot
+            // can't help increase text size_): every block's words larger,
+            // smaller or one size, done by the window with no model, one
+            // change with Undo under it.
+            const noteSizeAsk =
+                isNoteAsk &&
+                !withoutEcho &&
+                options?.shownText === undefined &&
+                attachments.every(checkIsNoteAttachment) &&
+                noteAskFiles.length === 1
+                    ? readSlideSizeAsk(trimmedAsked)
+                    : null;
+            if (noteSizeAsk !== null) {
+                const noteFile = noteAskFiles[0];
+                try {
+                    const read = parseToolJson(
+                        await callTool(NOTE_EDIT_TOOL_NAME, {
+                            action: 'read',
+                            file: noteFile.filePath,
+                            id: noteFile.noteId,
+                        }),
+                    );
+                    const sizeChanges = genNoteSizeChanges(read, noteSizeAsk);
+                    const written =
+                        sizeChanges === null
+                            ? null
+                            : parseToolJson(
+                                  await callTool(NOTE_EDIT_TOOL_NAME, {
+                                      action: 'edit',
+                                      note: noteFile.name,
+                                      file: noteFile.filePath,
+                                      id: noteFile.noteId,
+                                      hash: read?.hash,
+                                      changes: sizeChanges,
+                                  }),
+                              );
+                    if (sizeChanges !== null && written?.isChanged === true) {
+                        addMessage(activeSessionId, {
+                            author: 'you',
+                            text: echoText,
+                        });
+                        updateSession(activeSessionId, (session) => {
+                            return { ...session, draft: '' };
+                        });
+                        const undoAction = genLyricUndoAction({
+                            name: noteFile.name,
+                            undoId:
+                                typeof written.undoId === 'string'
+                                    ? written.undoId
+                                    : null,
+                        });
+                        addMessage(activeSessionId, {
+                            author: 'bot',
+                            text: genNoteSizeDoneText(
+                                noteFile.name,
+                                sizeChanges.length,
+                            ),
+                            actions: undoAction === null ? [] : [undoAction],
+                            shows: [
+                                {
+                                    kind: 'control',
+                                    value: `Bible Notes > ${noteFile.name}`,
+                                    name: 'Show it in the list',
+                                },
+                            ],
+                        });
+                        return;
+                    }
+                } catch (error) {
+                    // Refused or not reachable: the assistant is asked.
                     handleError(error);
                 }
             }

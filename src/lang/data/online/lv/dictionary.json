@@ -4107,5 +4107,6 @@
     "Move on by itself": "Pāriet tālāk automātiski",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” pievienota zemāk. Es varu jūsu vietā mainīt šo piezīmi: mainīt vai tulkot tās vārdus, pārbaudīt pareizrakstību, sakārtot to virsrakstos un sarakstos vai pievienot Bībeles pantus. Es varu arī to apkopot, atbildēt uz jautājumiem par to un paskaidrot, kā piezīmju redaktorā izdarīt jebko. Nospiediet vienu vai pasakiet, ko vēlaties.",
     "Summarize this note": "Apkopo šo piezīmi",
-    "Tidy it into headings and lists": "Sakārto to virsrakstos un sarakstos"
+    "Tidy it into headings and lists": "Sakārto to virsrakstos un sarakstos",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Izdarīts ar vienu izmaiņu: “{name}” {count} bloku vārdiem ir jauns izmērs. Tas vēl nav saglabāts: piezīmes loga Saglabāt to paturēs, bet Atsaukt šo izmaiņu to atgriezīs."
 }

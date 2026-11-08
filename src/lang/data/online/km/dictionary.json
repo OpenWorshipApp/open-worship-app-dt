@@ -4107,5 +4107,6 @@
     "Move on by itself": "ទៅបន្ទាប់ដោយស្វ័យប្រវត្តិ",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ត្រូវបានភ្ជាប់នៅខាងក្រោម។ ខ្ញុំអាចកែកំណត់ត្រានេះជូនអ្នកបាន៖ ប្ដូរ ឬបកប្រែពាក្យរបស់វា ពិនិត្យអក្ខរាវិរុទ្ធ រៀបចំវាជាចំណងជើង និងបញ្ជី ឬបន្ថែមខគម្ពីរ។ ខ្ញុំក៏អាចសង្ខេបវា ឆ្លើយសំណួរអំពីវា និងពន្យល់ពីរបៀបធ្វើអ្វីៗក្នុងកម្មវិធីកែកំណត់ត្រាបានដែរ។ សូមចុចមួយ ឬប្រាប់ពីអ្វីដែលអ្នកចង់បាន។",
     "Summarize this note": "សង្ខេបកំណត់ត្រានេះ",
-    "Tidy it into headings and lists": "រៀបចំវាជាចំណងជើង និងបញ្ជី"
+    "Tidy it into headings and lists": "រៀបចំវាជាចំណងជើង និងបញ្ជី",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "បានធ្វើក្នុងការផ្លាស់ប្ដូរតែមួយ៖ ពាក្យនៃប្លុកចំនួន {count} របស់ “{name}” មានទំហំថ្មី។ វាមិនទាន់បានរក្សាទុកនៅឡើយទេ៖ រក្សាទុកក្នុងបង្អួចកំណត់ត្រានឹងរក្សាវាទុក ហើយ មិនធ្វើការផ្លាស់ប្ដូរនេះវិញ នឹងដាក់វាត្រឡប់មកវិញ។"
 }

@@ -4107,5 +4107,6 @@
     "Move on by itself": "Mopadayon sa iyang kaugalingon",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” gilakip sa ubos. Mahimo nako usbon kini nga nota alang kanimo: usbon o hubaron ang mga pulong niini, susihon ang spelling, hikayon kini ngadto sa mga ulohan ug mga lista, o idugang ang mga bersikulo sa Bibliya. Mahimo usab nako kini sumarahon, tubagon ang mga pangutana bahin niini, ug ipasabot kon unsaon pagbuhat sa bisan unsa sa editor sa nota. Pinduta ang usa, o isulti kon unsay imong gusto.",
     "Summarize this note": "Sumarahi kini nga nota",
-    "Tidy it into headings and lists": "Hikaya kini ngadto sa mga ulohan ug mga lista"
+    "Tidy it into headings and lists": "Hikaya kini ngadto sa mga ulohan ug mga lista",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Nahuman sa usa ka kausaban: ang mga pulong sa {count} ka bahin sa “{name}” adunay bag-ong gidak-on. Wala pa kini ma-save: ang Save sa bintana sa nota maoy magtipig niini, ug ang Undo this change mobalik niini."
 }

@@ -4107,5 +4107,6 @@
     "Move on by itself": "Avanzar só",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» está anexada abaixo. Podo cambiar esta nota por vostede: cambiar ou traducir as súas palabras, revisar a ortografía, ordenala en títulos e listas, ou engadir versículos da Biblia. Tamén podo resumila, responder preguntas sobre ela e explicar como facer calquera cousa no editor de notas. Prema nun, ou diga o que quere.",
     "Summarize this note": "Resume esta nota",
-    "Tidy it into headings and lists": "Ordénaa en títulos e listas"
+    "Tidy it into headings and lists": "Ordénaa en títulos e listas",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Feito nun só cambio: as palabras de {count} bloques de «{name}» teñen un tamaño novo. Aínda non está gardado: Gardar na xanela da nota consérvao, e Desfacer este cambio devólveo."
 }

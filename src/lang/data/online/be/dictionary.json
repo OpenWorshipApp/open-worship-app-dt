@@ -4107,5 +4107,6 @@
     "Move on by itself": "Пераходзіць далей аўтаматычна",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» далучана ніжэй. Я магу змяніць гэтую нататку для вас: змяніць або перакласці яе словы, праверыць правапіс, упарадкаваць яе ў загалоўкі і спісы або дадаць вершы з Бібліі. Я таксама магу коратка пераказаць яе, адказаць на пытанні пра яе і растлумачыць, як зрабіць што-небудзь у рэдактары нататак. Націсніце адно або скажыце, што вы хочаце.",
     "Summarize this note": "Коратка перакажы гэтую нататку",
-    "Tidy it into headings and lists": "Упарадкуй яе ў загалоўкі і спісы"
+    "Tidy it into headings and lists": "Упарадкуй яе ў загалоўкі і спісы",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Зроблена адной зменай: словы {count} блокаў «{name}» маюць новы памер. Гэта яшчэ не захавана: «Захаваць» у акне нататкі захоўвае, а «Адмяніць гэтую змену» вяртае назад."
 }

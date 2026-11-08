@@ -4107,5 +4107,6 @@
     "Move on by itself": "خود بخود آگے بڑھے",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” نیچے منسلک ہے۔ میں آپ کے لیے یہ نوٹ بدل سکتا ہوں: اس کے الفاظ بدلنا یا ترجمہ کرنا، املا جانچنا، اسے سرخیوں اور فہرستوں میں ترتیب دینا، یا بائبل کی آیات شامل کرنا۔ میں اس کا خلاصہ بھی کر سکتا ہوں، اس کے بارے میں سوالوں کے جواب دے سکتا ہوں، اور سمجھا سکتا ہوں کہ نوٹ ایڈیٹر میں کچھ بھی کیسے کرنا ہے۔ ایک دبائیں، یا بتائیں کہ آپ کیا چاہتے ہیں۔",
     "Summarize this note": "اس نوٹ کا خلاصہ کرو",
-    "Tidy it into headings and lists": "اسے سرخیوں اور فہرستوں میں ترتیب دو"
+    "Tidy it into headings and lists": "اسے سرخیوں اور فہرستوں میں ترتیب دو",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ایک تبدیلی میں ہو گیا: “{name}” کے {count} حصوں کے الفاظ کا نیا سائز ہے۔ یہ ابھی محفوظ نہیں ہوا: نوٹ ونڈو میں محفوظ کریں اسے رکھتا ہے، اور یہ تبدیلی کالعدم کریں اسے واپس لاتا ہے۔"
 }

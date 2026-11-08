@@ -4107,5 +4107,6 @@
     "Move on by itself": "आपोआप पुढे जा",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” खाली जोडलेले आहे. मी तुमच्यासाठी ही टीप बदलू शकतो: तिचे शब्द बदलणे किंवा भाषांतर करणे, शुद्धलेखन तपासणे, तिला शीर्षके आणि याद्यांमध्ये मांडणे, किंवा बायबलची वचने जोडणे. मी तिचा सारांशही देऊ शकतो, तिच्याबद्दलच्या प्रश्नांची उत्तरे देऊ शकतो आणि टीप संपादकात काहीही कसे करायचे ते समजावू शकतो. एक दाबा, किंवा तुम्हाला काय हवे ते सांगा.",
     "Summarize this note": "या टिपेचा सारांश द्या",
-    "Tidy it into headings and lists": "तिला शीर्षके आणि याद्यांमध्ये मांडा"
+    "Tidy it into headings and lists": "तिला शीर्षके आणि याद्यांमध्ये मांडा",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "एका बदलात झाले: “{name}” च्या {count} भागांच्या शब्दांचा नवा आकार आहे. हे अजून जतन झालेले नाही: टीप विंडोतील जतन करा ते ठेवते, आणि हा बदल पूर्ववत करा ते परत आणते."
 }

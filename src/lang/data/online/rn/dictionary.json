@@ -4107,5 +4107,6 @@
     "Move on by itself": "Bikomeze vyonyene",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” yometswe hepfo. Nshobora kuguhindurira iyi nyandiko: guhindura canke guhindura mu rundi rurimi amajambo yayo, gusuzuma uko yanditswe, kuyitunganya mu mitwe n'urutonde, canke kwongerako imirongo ya Bibiliya. Nshobora kandi kuyikorera incamake, kwishura ibibazo biyerekeye, no gusigura ingene wokora ikintu cose mu gikoresho co gutunganya inyandiko. Fyonda kimwe, canke uvuge ico ushaka.",
     "Summarize this note": "Ikorere incamake iyi nyandiko",
-    "Tidy it into headings and lists": "Yitunganye mu mitwe n'urutonde"
+    "Tidy it into headings and lists": "Yitunganye mu mitwe n'urutonde",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vyakozwe mu ihinduka rimwe: amajambo y'ibice {count} vya “{name}” afise ubunini bushasha. Ntibirabikwa: Bika mu dirisha ry'inyandiko biragumya, Kuraho iri hinduka bikabisubiza."
 }

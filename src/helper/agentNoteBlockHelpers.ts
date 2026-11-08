@@ -90,9 +90,98 @@ export type NoteEditChangeType = {
     checked?: boolean;
     remove?: boolean;
     ref?: string;
+    // The block's text size: px, or "larger" / "smaller" -- each run of
+    // words scaled from its own size, so a heading stays above its lines.
+    size?: number | string;
 };
 
 export const NOTE_EDIT_MAX_CHANGES = 200;
+
+// --- text size ----------------------------------------------------------------
+//
+// What the editor's own font-size box does (8 to 72, the size written on each
+// run of words as `font-size: Npx;`), asked for in words (2026-11-08, the
+// user, with a note conversation answering "make text bigger" with the
+// toolbar's steps: _check why chatbot can't help increase text size_). A run
+// with no size of its own is the size its block is drawn at: the editor's
+// stylesheet gives a body 15px, a h1 24px, a h3 12px and code 13px.
+
+export const NOTE_TEXT_SIZE_MIN = 8;
+export const NOTE_TEXT_SIZE_MAX = 72;
+export const NOTE_TEXT_SIZE_LARGER = 1.25;
+export const NOTE_TEXT_SIZE_SMALLER = 0.8;
+const NOTE_DEFAULT_TEXT_SIZE = 15;
+const KIND_TEXT_SIZE_MAP: Record<string, number> = {
+    h1: 24,
+    h3: 12,
+    code: 13,
+};
+const FONT_SIZE_STYLE_PATTERN = /font-size:\s*([\d.]+)px;?\s*/;
+
+export function checkIsNoteTextSize(value: unknown) {
+    return (
+        value === 'larger' ||
+        value === 'smaller' ||
+        (typeof value === 'number' &&
+            Number.isFinite(value) &&
+            value >= NOTE_TEXT_SIZE_MIN &&
+            value <= NOTE_TEXT_SIZE_MAX)
+    );
+}
+
+function toNewTextSize(current: number, size: number | string) {
+    const wanted =
+        size === 'larger'
+            ? current * NOTE_TEXT_SIZE_LARGER
+            : size === 'smaller'
+              ? current * NOTE_TEXT_SIZE_SMALLER
+              : Number(size);
+    return Math.min(
+        NOTE_TEXT_SIZE_MAX,
+        Math.max(NOTE_TEXT_SIZE_MIN, Math.round(wanted)),
+    );
+}
+
+function readTextSize(style: unknown, kind: string) {
+    const match =
+        typeof style === 'string' ? FONT_SIZE_STYLE_PATTERN.exec(style) : null;
+    return match !== null
+        ? Number(match[1])
+        : (KIND_TEXT_SIZE_MAP[kind] ?? NOTE_DEFAULT_TEXT_SIZE);
+}
+
+function withTextSize(style: unknown, px: number) {
+    const rest = (typeof style === 'string' ? style : '')
+        .replace(FONT_SIZE_STYLE_PATTERN, '')
+        .trim();
+    return `${rest}${rest === '' || rest.endsWith(';') ? '' : ';'}font-size: ${px}px;`;
+}
+
+/**
+ * Every run of words in a block at its new size, and the size the block
+ * gives words typed into it next. A nested list belongs to its own items.
+ */
+function resizeBlockNode(node: NodeType, kind: string, size: number | string) {
+    if (typeof node.textStyle === 'string') {
+        node.textStyle = withTextSize(
+            node.textStyle,
+            toNewTextSize(readTextSize(node.textStyle, kind), size),
+        );
+    }
+    for (const child of childrenOf(node)) {
+        if (!checkIsNode(child) || child.type === 'list') {
+            continue;
+        }
+        if (typeof child.text === 'string' && child.type !== 'linebreak') {
+            child.style = withTextSize(
+                child.style,
+                toNewTextSize(readTextSize(child.style, kind), size),
+            );
+            continue;
+        }
+        resizeBlockNode(child, kind, size);
+    }
+}
 const MAX_TEXT_CHARS = 20000;
 const MAX_TITLE_CHARS = 200;
 // One block's words shown whole up to this; a longer one is read cut, and
@@ -1431,6 +1520,12 @@ export function applyNoteEdit({
         if (!checkIsNode(change)) {
             return toReason('Each change is an object.');
         }
+        if (change.size !== undefined && !checkIsNoteTextSize(change.size)) {
+            return toReason(
+                `\`size\` is "larger", "smaller" or a size in px from ` +
+                    `${NOTE_TEXT_SIZE_MIN} to ${NOTE_TEXT_SIZE_MAX}.`,
+            );
+        }
         if (typeof change.text === 'string') {
             if (change.text.length > MAX_TEXT_CHARS) {
                 return toReason(
@@ -1519,7 +1614,7 @@ export function applyNoteEdit({
         if (ref.isFixed) {
             return toReason(
                 `Block ${blockNumber} is a ${ref.kind}: it can be moved or ` +
-                    'removed, never given words or another kind.',
+                    'removed, never given words, a size or another kind.',
             );
         }
         if (
@@ -1572,11 +1667,13 @@ export function applyNoteEdit({
         if (
             change.text === undefined &&
             change.kind === undefined &&
-            change.checked === undefined
+            change.checked === undefined &&
+            change.size === undefined
         ) {
             return toReason(
                 `The change to block ${blockNumber} says nothing to change: ` +
-                    'give `text`, `kind` or `checked` (or `remove: true`).',
+                    'give `text`, `kind`, `size` or `checked` (or ' +
+                    '`remove: true`).',
             );
         }
         updates.push(change);
@@ -1746,6 +1843,20 @@ export function applyNoteEdit({
         }
     }
 
+    // Sizes last, on the block as the change left it: a heading made of a
+    // paragraph is sized as a heading.
+    for (const change of updates) {
+        if (change.size === undefined) {
+            continue;
+        }
+        const blockNumber = change.block as number;
+        resizeBlockNode(
+            nodeOf.get(blockNumber)!,
+            change.kind ?? refs[blockNumber - 1].kind,
+            change.size,
+        );
+    }
+
     // Anchors are taken before anything moves: "after block 3" is after what
     // block 3 was, wherever it ends up.
     const lastPlacedMap = new Map<number, NodeType | null>();
@@ -1823,6 +1934,9 @@ export function applyNoteEdit({
             } else {
                 node = genTextBlockNode(kind, children, null, style);
             }
+        }
+        if (change.size !== undefined && kind !== 'rule') {
+            resizeBlockNode(node, kind, change.size);
         }
         insertBlockNode(root, anchor, node, listKind, style);
         lastPlacedMap.set(after, node);

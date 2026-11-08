@@ -4107,5 +4107,6 @@
     "Move on by itself": "Iendelee yenyewe",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” imeambatishwa hapa chini. Ninaweza kukubadilishia dokezo hili: kubadilisha au kutafsiri maneno yake, kukagua tahajia, kulipanga kuwa vichwa na orodha, au kuongeza mistari ya Biblia. Ninaweza pia kulifupisha, kujibu maswali kulihusu, na kueleza jinsi ya kufanya chochote katika kihariri cha madokezo. Bonyeza moja, au sema unachotaka.",
     "Summarize this note": "Fupisha dokezo hili",
-    "Tidy it into headings and lists": "Lipange kuwa vichwa na orodha"
+    "Tidy it into headings and lists": "Lipange kuwa vichwa na orodha",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Imefanyika kwa badiliko moja: maneno ya vipande {count} vya “{name}” yana ukubwa mpya. Bado haijahifadhiwa: Hifadhi katika dirisha la dokezo inaiweka, na Tendua badiliko hili inairudisha."
 }

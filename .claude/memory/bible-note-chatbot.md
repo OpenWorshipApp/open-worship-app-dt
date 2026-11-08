@@ -36,8 +36,14 @@ What is not obvious from the code:
 - **A saved conversation had kept only three buttons per message**; every
   document card has five. `MAX_REPLY_COUNT` in `chatSessionHelpers.ts` is 5.
 - The editor's own guide (`bible-note:ui/…`) answers only a search aimed at
-  `focus: 'bibleNote'`; a note ask forces that focus, and a guide page offers
-  no walkthrough outside the note window.
+  `focus: 'bibleNote'`; a note ask forces that focus. **A guide page offers
+  no walkthrough at all**: `owa_guide_start` refuses demo mode for a page,
+  and under _make text bigger_ both buttons answered "I could not do that
+  just now" (2026-11-08).
+- **Text size is the tool's job, not the guide's**: a change takes `size`,
+  and _make text bigger_ / _make the words smaller_ / _make the words 20 px_
+  are done by the window with no model. A run with no size of its own starts
+  from its block's CSS size (15, h1 24, h3 12, code 13), not from 15.
 
 Verified live on a scratch dev profile ([[scratch-dev-instance-beside-user-app]]),
 the AI caution's Open pressed over the scratch instance's own CDP after the

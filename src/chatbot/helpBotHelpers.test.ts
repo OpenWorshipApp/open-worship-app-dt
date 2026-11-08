@@ -41,17 +41,16 @@ beforeEach(() => {
 });
 
 describe('walkthrough actions', () => {
-    // 2026-11-07: the note editor's own guide walks only in its window.
-    test('a page of the note editor guide walks only in the note window', () => {
-        expect(
-            genGuideActions({ id: 'bible-note:ui/sticky-notes/add' }, 'reader'),
-        ).toEqual([]);
-        expect(
-            genGuideActions(
-                { id: 'bible-note:ui/sticky-notes/add' },
-                'bibleNote',
-            ).length,
-        ).toBeGreaterThan(0);
+    // 2026-11-08: both buttons failed under a guide page in the note window.
+    test('a page of the note editor guide offers no walkthrough anywhere', () => {
+        for (const focus of ['reader', 'bibleNote'] as const) {
+            expect(
+                genGuideActions(
+                    { id: 'bible-note:ui/sticky-notes/add' },
+                    focus,
+                ),
+            ).toEqual([]);
+        }
     });
 
     test('carry the exact question into a broad manual recipe', () => {

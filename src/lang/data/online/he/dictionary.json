@@ -4107,5 +4107,6 @@
     "Move on by itself": "מעבר אוטומטי לבא",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” מצורף למטה. אני יכול לשנות עבורך את ההערה הזו: לשנות או לתרגם את מילותיה, לבדוק את האיות, לסדר אותה בכותרות וברשימות, או להוסיף פסוקים מהמקרא. אני יכול גם לסכם אותה, לענות על שאלות עליה ולהסביר איך לעשות כל דבר בעורך ההערות. לחץ על אחד, או אמור מה אתה רוצה.",
     "Summarize this note": "סכם את ההערה הזו",
-    "Tidy it into headings and lists": "סדר אותה בכותרות וברשימות"
+    "Tidy it into headings and lists": "סדר אותה בכותרות וברשימות",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "בוצע בשינוי אחד: למילים של {count} קטעים ב־“{name}” יש גודל חדש. זה עדיין לא נשמר: שמירה בחלון ההערה שומרת אותו, ו״בטל את השינוי הזה״ מחזיר אותו."
 }

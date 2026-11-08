@@ -4107,5 +4107,6 @@
     "Move on by itself": "Automatikus továbblépés",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}” alább csatolva. Megváltoztathatom ezt a jegyzetet ön helyett: megváltoztathatom vagy lefordíthatom a szavait, ellenőrizhetem a helyesírást, címsorokba és listákba rendezhetem, vagy bibliai igeverseket adhatok hozzá. Össze is foglalhatom, válaszolhatok a róla szóló kérdésekre, és elmagyarázhatom, hogyan lehet bármit megtenni a jegyzetszerkesztőben. Nyomjon meg egyet, vagy mondja el, mit szeretne.",
     "Summarize this note": "Foglald össze ezt a jegyzetet",
-    "Tidy it into headings and lists": "Rendezd címsorokba és listákba"
+    "Tidy it into headings and lists": "Rendezd címsorokba és listákba",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Egy változtatással kész: „{name}” {count} blokkjának szavai új méretet kaptak. Még nincs mentve: a jegyzetablak Mentés gombja megtartja, a Változtatás visszavonása pedig visszaállítja."
 }

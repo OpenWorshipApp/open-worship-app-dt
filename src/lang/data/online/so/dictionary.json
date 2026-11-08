@@ -4107,5 +4107,6 @@
     "Move on by itself": "Ha u gudbo keligiis",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” hoos ayaa lagu lifaaqay. Waan kuu beddeli karaa qoraalkan: beddelidda ama turjumidda erayadiisa, hubinta higgaadda, u habaynta cinwaanno iyo liisas, ama ku darista aayado Kitaabka Quduuska ah. Sidoo kale waan soo koobi karaa, ka jawaabi karaa su'aalaha ku saabsan, oo sharxi karaa sida wax kasta loogu sameeyo tafatiraha qoraallada. Riix mid, ama sheeg waxaad rabto.",
     "Summarize this note": "Soo koob qoraalkan",
-    "Tidy it into headings and lists": "U habee cinwaanno iyo liisas"
+    "Tidy it into headings and lists": "U habee cinwaanno iyo liisas",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Waxaa lagu sameeyay hal beddel: erayada {count} qaybood ee “{name}” waxay leeyihiin cabbir cusub. Weli lama kaydin: Kaydi ee daaqadda qoraalka ayaa haya, Ka noqo beddelkan ayaana dib u celiya."
 }

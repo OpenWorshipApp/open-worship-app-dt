@@ -4107,5 +4107,6 @@
     "Move on by itself": "Teruskan secara automatik",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” dilampirkan di bawah. Saya boleh mengubah nota ini untuk anda: mengubah atau menterjemah perkataannya, menyemak ejaan, menyusunnya menjadi tajuk dan senarai, atau menambah ayat Alkitab. Saya juga boleh meringkaskannya, menjawab soalan tentangnya, dan menerangkan cara melakukan apa-apa sahaja dalam editor nota. Tekan salah satu, atau katakan apa yang anda mahu.",
     "Summarize this note": "Ringkaskan nota ini",
-    "Tidy it into headings and lists": "Susun menjadi tajuk dan senarai"
+    "Tidy it into headings and lists": "Susun menjadi tajuk dan senarai",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Selesai dalam satu perubahan: perkataan dalam {count} blok “{name}” mempunyai saiz baharu. Ia belum disimpan: Simpan dalam tetingkap nota menyimpannya, dan Buat asal perubahan ini mengembalikannya."
 }

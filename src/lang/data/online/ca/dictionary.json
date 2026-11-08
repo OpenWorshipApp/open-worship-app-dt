@@ -4107,5 +4107,6 @@
     "Move on by itself": "Avança tot sol",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» està adjunta a sota. Puc canviar aquesta nota per a vostè: canviar o traduir-ne les paraules, revisar l’ortografia, ordenar-la en títols i llistes, o afegir-hi versets de la Bíblia. També puc resumir-la, respondre preguntes sobre ella i explicar com fer qualsevol cosa a l’editor de notes. Premi’n un, o digui què vol.",
     "Summarize this note": "Resumeix aquesta nota",
-    "Tidy it into headings and lists": "Ordena-la en títols i llistes"
+    "Tidy it into headings and lists": "Ordena-la en títols i llistes",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Fet en un sol canvi: les paraules de {count} blocs de «{name}» tenen una mida nova. Encara no està desat: Desa a la finestra de la nota ho conserva, i Desfés aquest canvi ho torna enrere."
 }

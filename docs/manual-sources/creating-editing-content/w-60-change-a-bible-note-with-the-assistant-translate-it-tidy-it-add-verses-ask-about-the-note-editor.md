@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-110, CB-169]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-07"
+workflowsVersion: "2026-11-08"
 ---
 # W-60 — Change a Bible note with the assistant (translate it, tidy it, add verses, ask about the note editor)
 
@@ -30,6 +30,11 @@ lists, add Bible verses — sum it up, or explain how to do something in the not
      changes.
    - **[en:tran:Tidy it into headings and lists]** makes its points headings and the lines
      under them list items, its words kept.
+   - Text size: _Make the words larger_ (or _make text bigger_), _make the words smaller_
+     and _make the words 20 px_ change every part of the note at once, each part
+     keeping its size against the others (a heading stays larger than its lines). The
+     help window does these by itself, so they work with no AI key and no internet.
+     _Make only the heading bigger_ and other sizes for one part, the assistant does.
    - Bible verses: _Put John 3:16 in as a passage under the heading_ adds the passage, its
      words read from the Bible installed on this computer — the assistant never types a
      verse itself. A verse can also go in the middle of a line as a verse mention.
@@ -56,5 +61,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-110` · `CB-169`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-07).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-08).
 :::

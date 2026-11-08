@@ -4107,5 +4107,6 @@
     "Move on by itself": "Pokračovat samo",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}“ je přiložena níže. Mohu pro vás tuto poznámku změnit: změnit nebo přeložit její slova, zkontrolovat pravopis, uspořádat ji do nadpisů a seznamů nebo přidat verše z Bible. Mohu ji také shrnout, odpovědět na otázky o ní a vysvětlit, jak v editoru poznámek udělat cokoli. Stiskněte jednu možnost, nebo řekněte, co chcete.",
     "Summarize this note": "Shrň tuto poznámku",
-    "Tidy it into headings and lists": "Uspořádej ji do nadpisů a seznamů"
+    "Tidy it into headings and lists": "Uspořádej ji do nadpisů a seznamů",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Hotovo jednou změnou: slova {count} bloků poznámky „{name}“ mají novou velikost. Zatím to není uloženo: Uložit v okně poznámky to zachová a Vrátit tuto změnu to vrátí zpět."
 }

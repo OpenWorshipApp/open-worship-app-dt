@@ -4107,5 +4107,6 @@
     "Move on by itself": "Jẹ́ kó máa tẹ̀síwájú fúnra rẹ̀",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "A ti so “{name}” mọ́ ìsàlẹ̀. Mo lè yí àkọsílẹ̀ yìí padà fún ọ: yí àwọn ọ̀rọ̀ rẹ̀ padà tàbí túmọ̀ wọn, ṣàyẹ̀wò bí a ṣe kọ ọ̀rọ̀, ṣètò rẹ̀ sí àwọn àkọlé àti àkójọ, tàbí fi àwọn ẹsẹ Bíbélì kún un. Mo tún lè ṣe àkópọ̀ rẹ̀, dáhùn àwọn ìbéèrè nípa rẹ̀, kí n sì ṣàlàyé bí a ṣe ń ṣe ohunkóhun nínú olùṣàtúnṣe àkọsílẹ̀. Tẹ ọ̀kan, tàbí sọ ohun tí o fẹ́.",
     "Summarize this note": "Ṣe àkópọ̀ àkọsílẹ̀ yìí",
-    "Tidy it into headings and lists": "Ṣètò rẹ̀ sí àwọn àkọlé àti àkójọ"
+    "Tidy it into headings and lists": "Ṣètò rẹ̀ sí àwọn àkọlé àti àkójọ",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Ó ti parí ní ìyípadà kan: àwọn ọ̀rọ̀ inú abala {count} ti “{name}” ní ìwọ̀n tuntun. A kò tíì fi pamọ́: Fi pamọ́ nínú fèrèsé àkọsílẹ̀ yóò pa á mọ́, Mú ìyípadà yìí kúrò yóò dá a padà."
 }

@@ -4107,5 +4107,6 @@
     "Move on by itself": "आफैँ अघि बढोस्",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” तल संलग्न छ। म तपाईंका लागि यो टिप्पणी बदल्न सक्छु: यसका शब्दहरू बदल्ने वा अनुवाद गर्ने, हिज्जे जाँच्ने, यसलाई शीर्षक र सूचीमा मिलाउने, वा बाइबलका पदहरू थप्ने। म यसको सारांश दिन, यसबारे प्रश्नहरूको जवाफ दिन र टिप्पणी सम्पादकमा जुनसुकै काम कसरी गर्ने भनेर बुझाउन पनि सक्छु। एउटा थिच्नुहोस्, वा तपाईंलाई के चाहिन्छ भन्नुहोस्।",
     "Summarize this note": "यो टिप्पणीको सारांश देऊ",
-    "Tidy it into headings and lists": "यसलाई शीर्षक र सूचीमा मिलाऊ"
+    "Tidy it into headings and lists": "यसलाई शीर्षक र सूचीमा मिलाऊ",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "एउटै परिवर्तनमा भयो: “{name}” का {count} भागका शब्दहरूको नयाँ आकार छ। यो अझै सुरक्षित गरिएको छैन: टिप्पणी विन्डोको सुरक्षित गर्नुहोस् ले यसलाई राख्छ, र यो परिवर्तन अनडु गर्नुहोस् ले फर्काउँछ।"
 }

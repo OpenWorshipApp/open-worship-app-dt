@@ -4107,5 +4107,6 @@
     "Move on by itself": "በራሱ ወደ ቀጣዩ ይለፍ",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ከታች ተያይዟል። ይህን ማስታወሻ ልቀይርልዎ እችላለሁ፦ ቃላቱን መቀየር ወይም መተርጎም፣ ፊደላቱን መፈተሽ፣ በርዕሶችና በዝርዝሮች ማደራጀት ወይም የመጽሐፍ ቅዱስ ጥቅሶችን መጨመር። እንዲሁም ማጠቃለል፣ ስለ እሱ ጥያቄዎችን መመለስ እና በማስታወሻ አርታዒው ውስጥ ማንኛውንም ነገር እንዴት ማድረግ እንደሚቻል ማብራራት እችላለሁ። አንዱን ይጫኑ፣ ወይም የሚፈልጉትን ይናገሩ።",
     "Summarize this note": "ይህን ማስታወሻ አጠቃልል",
-    "Tidy it into headings and lists": "በርዕሶችና በዝርዝሮች አደራጀው"
+    "Tidy it into headings and lists": "በርዕሶችና በዝርዝሮች አደራጀው",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "በአንድ ለውጥ ተጠናቋል፦ የ“{name}” {count} ክፍሎች ቃላት አዲስ መጠን አላቸው። ገና አልተቀመጠም፦ በማስታወሻ መስኮቱ ውስጥ ያለው አስቀምጥ ያቆየዋል፣ ይህን ለውጥ ቀልብስ ደግሞ ይመልሰዋል።"
 }

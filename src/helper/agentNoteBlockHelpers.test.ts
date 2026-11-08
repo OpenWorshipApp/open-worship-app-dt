@@ -622,3 +622,71 @@ describe('a change that would lose a block of words', () => {
         }
     });
 });
+
+// 2026-11-08, the user: "check why chatbot can't help increase text size" --
+// a note's text size, the way the editor's own size box writes it.
+describe('a block at another text size', () => {
+    function sizesOf(content: string, index: number) {
+        const block = rootOf(content).children[index];
+        const sizes: string[] = [];
+        const visit = (node: any) => {
+            if (typeof node.text === 'string') {
+                sizes.push(node.style);
+                return;
+            }
+            (node.children ?? []).forEach(visit);
+        };
+        visit(block);
+        return sizes;
+    }
+
+    test('larger scales each run from its own size, the block from its kind', () => {
+        const result = edit([
+            { block: 1, size: 'larger' },
+            { block: 2, size: 'larger' },
+        ]);
+        // The h1 had no size of its own: 24px, the editor's, made larger.
+        // The fixture's runs carry 20px; the mentions carry none (15px).
+        expect(sizesOf(result.content, 0)).toEqual(['font-size: 25px;']);
+        expect(sizesOf(result.content, 1)).toEqual([
+            'font-size: 25px;',
+            'font-size: 19px;',
+            'font-size: 25px;',
+            'font-size: 19px;',
+        ]);
+        expect(rootOf(result.content).children[1].textStyle).toBe(
+            'font-size: 25px;',
+        );
+        // Every other block untouched.
+        expect(JSON.stringify(rootOf(result.content).children[2])).toBe(
+            JSON.stringify(rootOf(CONTENT).children[2]),
+        );
+    });
+
+    test('a size in px sets every run, kept within the editor’s 8 to 72', () => {
+        const result = edit([{ block: 3, size: 30 }]);
+        const list = rootOf(result.content).children[2];
+        expect(list.children[0].children[0].style).toBe('font-size: 30px;');
+        // The other item of the list is another block.
+        expect(list.children[1].children[0].style).toBe(STYLE);
+        expect(reasonOf([{ block: 3, size: 100 }])).toContain('8 to 72');
+        expect(reasonOf([{ block: 3, size: 'huge' }])).toContain('"larger"');
+        expect(reasonOf([{ block: 6, size: 'larger' }])).toContain('a size');
+        // Repeated, it stops at the largest the editor allows.
+        let content = CONTENT;
+        for (let index = 0; index < 12; index++) {
+            const step = applyNoteEdit({
+                content,
+                changes: [{ block: 1, size: 'larger' }],
+            });
+            content = 'content' in step ? step.content : content;
+        }
+        expect(sizesOf(content, 0)).toEqual(['font-size: 72px;']);
+    });
+
+    test('a new block can come at a size too', () => {
+        const result = edit([{ after: 0, kind: 'h2', text: 'Big', size: 40 }]);
+        // Its words took the note's own style (20px), then the size asked.
+        expect(sizesOf(result.content, 0)).toEqual(['font-size: 40px;']);
+    });
+});

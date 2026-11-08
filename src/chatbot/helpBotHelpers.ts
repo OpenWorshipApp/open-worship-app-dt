@@ -172,10 +172,13 @@ export function genGuideActions(
     find: string | null = null,
 ): BotActionType[] {
     // A page of the Bible Note editor's OWN guide (`bible-note:ui/…`,
-    // 2026-11-07) is about the controls of the note window: a walkthrough
-    // card run anywhere else -- a note conversation opened from the Reader's
-    // or the Presenter's list -- has none of them to ring.
-    if (hit.id.startsWith('bible-note:') && focus !== 'bibleNote') {
+    // 2026-11-07) is no walkthrough recipe: Do it for me refuses a page with
+    // no steps it can press (`owa_guide_start` demo mode), and Show me step
+    // by step had never been walked on one -- under "make text bigger" in
+    // the note window both buttons answered "I could not do that just now"
+    // (2026-11-08, the user's picture). In a note conversation the assistant
+    // makes the change itself (`owa_note_edit`).
+    if (hit.id.startsWith('bible-note:')) {
         return [];
     }
     const findArgs = find !== null && find.length > 0 ? { find } : {};

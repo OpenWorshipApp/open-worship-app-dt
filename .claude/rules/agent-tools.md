@@ -1663,9 +1663,14 @@ false` and searches only a dataset a lookup panel already holds
   the words in a light mark-up (bold, italic, underline, strike, code, a
   link, mentions `[^John 3:16]` `[@Moses]` `[#Jerusalem]`) and a `hash`;
   `edit` makes every change in ONE history step, all or nothing:
-  `{block, text?, kind?, checked?}`, `{block, remove}`, `{block, after}`
-  (a move), `{after, kind, text}` (an add; `passage` takes `ref`), and
-  `title`. **Only the blocks named are rebuilt**; a kept mention token is
+  `{block, text?, kind?, checked?, size?}`, `{block, remove}`,
+  `{block, after}` (a move), `{after, kind, text}` (an add; `passage` takes
+  `ref`), and `title`. **`size`** (2026-11-08) is the editor's own size box
+  in words: "larger" / "smaller" (x1.25 / x0.8) or px 8-72, written on
+  every run of the block as `font-size: Npx;` and on its `textStyle`; a
+  run with no size of its own starts from the size its block is drawn at
+  -- the editor's stylesheet: 15 px, a h1 24, a h3 12, code 13 -- so a
+  heading stays above its lines. **Only the blocks named are rebuilt**; a kept mention token is
   the ORIGINAL node, a run of unchanged words keeps its own style, new words
   take the block's (a Khmer note's font), and every other node is copied
   through byte for byte -- proven on all 227 editable blocks of the dev data

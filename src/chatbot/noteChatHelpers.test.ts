@@ -10,10 +10,13 @@ import {
     findNoteAskFiles,
     findOpenNoteAttachments,
     genNoteOpeningAnswer,
+    genNoteSizeChanges,
+    genNoteSizeDoneText,
     resolveNoteEditTarget,
     toNoteAsk,
     toNoteDocumentText,
 } from './noteChatHelpers';
+import { readSlideSizeAsk } from './slideChatHelpers';
 
 const NOTE_PATH = 'C:\\data\\bible-notes\\Default.own';
 
@@ -218,5 +221,69 @@ describe('the card a note opens with', () => {
         ]);
         expect(opening.replies[0]).toBe('Replace the words with Testish');
         expect(opening.translateLanguage).toBe(SECOND);
+    });
+});
+
+// 2026-11-08, the user: "check why chatbot can't help increase text size".
+
+describe('a note made larger by the window', () => {
+    const read = {
+        hash: 'ab12',
+        blockCount: 4,
+        blocks: [
+            { n: 1, kind: 'h1', text: 'Grace' },
+            { n: 2, kind: 'picture', text: '', isFixed: true },
+            { n: 3, kind: 'paragraph', text: '' },
+            { n: 4, kind: 'bullet', text: 'free' },
+        ],
+    };
+
+    it('the words they typed are a size ask', () => {
+        expect(readSlideSizeAsk('make text bigger')).toEqual({
+            kind: 'scale',
+            factor: 1.25,
+        });
+    });
+
+    it('every block with words, one size change each', () => {
+        expect(
+            genNoteSizeChanges(read, { kind: 'scale', factor: 1.25 }),
+        ).toEqual([
+            { block: 1, size: 'larger' },
+            { block: 4, size: 'larger' },
+        ]);
+        expect(
+            genNoteSizeChanges(read, { kind: 'scale', factor: 0.8 }),
+        ).toEqual([
+            { block: 1, size: 'smaller' },
+            { block: 4, size: 'smaller' },
+        ]);
+        expect(genNoteSizeChanges(read, { kind: 'set', size: 30 })).toEqual([
+            { block: 1, size: 30 },
+            { block: 4, size: 30 },
+        ]);
+    });
+
+    it('a note read in parts, a size the editor lacks: the assistant', () => {
+        expect(
+            genNoteSizeChanges(
+                { ...read, nextFrom: 5 },
+                { kind: 'scale', factor: 1.25 },
+            ),
+        ).toBeNull();
+        expect(genNoteSizeChanges(read, { kind: 'set', size: 110 })).toBeNull();
+        expect(
+            genNoteSizeChanges(
+                { blocks: [{ n: 1, kind: 'rule', text: '', isFixed: true }] },
+                { kind: 'scale', factor: 1.25 },
+            ),
+        ).toBeNull();
+        expect(genNoteSizeChanges(null, { kind: 'set', size: 20 })).toBeNull();
+    });
+
+    it('says what it did and that it is not saved', () => {
+        const text = genNoteSizeDoneText('Sunday', 2);
+        expect(text).toContain('2 blocks of “Sunday”');
+        expect(text).toContain('not saved yet');
     });
 });

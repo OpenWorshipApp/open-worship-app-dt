@@ -34,7 +34,10 @@ import {
     genLyricTranslateReplies,
     pickTranslateLanguage,
 } from './lyricChatHelpers';
-import { readTranslateLanguageName } from './slideChatHelpers';
+import {
+    type SlideSizeAskType,
+    readTranslateLanguageName,
+} from './slideChatHelpers';
 
 export const NOTE_ASK_KIND = 'note';
 export const NOTE_EDIT_TOOL_NAME = 'owa_note_edit';
@@ -335,7 +338,12 @@ export const NOTE_SYSTEM_PROMPT =
     'OPTIONS: Replace the words | Add it under each line. Once the way is ' +
     'known and the language is not, ask which language, with OPTIONS naming ' +
     "two or three languages. Write natural words in the language's own " +
-    'script, Bible names the way that language says them. TIDYING a note ' +
+    'script, Bible names the way that language says them. SIZE: a ' +
+    'block\'s text size is {block, size}: "larger", "smaller" or px from ' +
+    '8 to 72 -- for "make the text bigger" give every block with words ' +
+    'size "larger" in ONE call; each part keeps its size against the ' +
+    "others. Never answer a size request with the editor's steps: make " +
+    'it. TIDYING a note ' +
     'into headings and lists: every block keeps its own words -- a heading ' +
     'that names a point is a NEW block ({after, kind: "h2", text}) put ' +
     'above the lines it covers, and a line that is a point becomes a ' +
@@ -424,4 +432,63 @@ export function checkIsNoteOpenedLast(
         }
     }
     return false;
+}
+
+// --- sizes the window changes by itself -------------------------------------
+
+/**
+ * Every block's words larger, smaller or one size: work with one right
+ * answer, done by the WINDOW with no model (2026-11-08, the user, with a note
+ * conversation answering "make text bigger" with the toolbar's steps: _check
+ * why chatbot can't help increase text size_) -- the slide card's
+ * **Make the words larger** for a note, instant, with no assistant needed.
+ * One `size` change a block, each run scaled from its own size by the app
+ * (`agentNoteBlockHelpers.ts`). Null for a note read in parts or a size the
+ * editor does not have: the assistant takes those.
+ */
+export function genNoteSizeChanges(read: any, ask: SlideSizeAskType) {
+    if (
+        read === null ||
+        typeof read !== 'object' ||
+        Number.isInteger(read.nextFrom) ||
+        !Array.isArray(read.blocks)
+    ) {
+        return null;
+    }
+    if (
+        ask.kind === 'set' &&
+        (ask.size < NOTE_SIZE_MIN || ask.size > NOTE_SIZE_MAX)
+    ) {
+        return null;
+    }
+    const size =
+        ask.kind === 'set' ? ask.size : ask.factor > 1 ? 'larger' : 'smaller';
+    const changes = read.blocks
+        .filter((block: any) => {
+            return (
+                Number.isInteger(block?.n) &&
+                block.isFixed !== true &&
+                String(block.text ?? '').trim() !== ''
+            );
+        })
+        .map((block: any) => {
+            return { block: block.n as number, size };
+        });
+    return changes.length === 0 ? null : changes;
+}
+
+// The sizes the note editor's own size box takes.
+const NOTE_SIZE_MIN = 8;
+const NOTE_SIZE_MAX = 72;
+
+/** The sentence under a size change the window made. */
+export function genNoteSizeDoneText(name: string, blockCount: number) {
+    return fillWords(
+        tran(
+            'Done in one change: the words of {count} blocks of “{name}” ' +
+                'have a new size. It is not saved yet: Save in the note ' +
+                'window keeps it, and Undo this change puts it back.',
+        ),
+        { count: String(blockCount), name },
+    );
 }

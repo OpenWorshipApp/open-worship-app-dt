@@ -4107,5 +4107,6 @@
     "Move on by itself": "Нека сам иде даље",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "„{name}” је приложена испод. Могу да променим ову белешку за вас: да променим или преведем њене речи, проверим правопис, сложим је у наслове и спискове или додам библијске стихове. Могу и да је сажмем, одговорим на питања о њој и објасним како било шта урадити у уређивачу белешки. Притисните једно или реците шта желите.",
     "Summarize this note": "Сажми ову белешку",
-    "Tidy it into headings and lists": "Сложи је у наслове и спискове"
+    "Tidy it into headings and lists": "Сложи је у наслове и спискове",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Урађено једном изменом: речи {count} блокова белешке „{name}” имају нову величину. Још није сачувано: Сачувај у прозору белешке то задржава, а Поништи ову измену то враћа."
 }

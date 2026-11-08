@@ -4107,5 +4107,6 @@
     "Move on by itself": "Tự chuyển tiếp",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” được đính kèm bên dưới. Tôi có thể thay đổi ghi chú này cho bạn: thay đổi hoặc dịch lời của nó, kiểm tra chính tả, sắp xếp nó thành các tiêu đề và danh sách, hoặc thêm các câu Kinh Thánh. Tôi cũng có thể tóm tắt nó, trả lời các câu hỏi về nó và giải thích cách làm bất cứ điều gì trong trình soạn ghi chú. Hãy nhấn một mục, hoặc nói điều bạn muốn.",
     "Summarize this note": "Tóm tắt ghi chú này",
-    "Tidy it into headings and lists": "Sắp xếp thành tiêu đề và danh sách"
+    "Tidy it into headings and lists": "Sắp xếp thành tiêu đề và danh sách",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Đã xong trong một thay đổi: chữ trong {count} khối của “{name}” đã có cỡ mới. Chưa được lưu: Lưu trong cửa sổ ghi chú sẽ giữ lại, và Hoàn tác thay đổi này sẽ trả lại như cũ."
 }

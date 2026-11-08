@@ -4107,5 +4107,6 @@
     "Move on by itself": "Toso vakataki koya",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” e vakabitaki e ra. Au rawa ni veisautaka na ivola qo me baleti iko: veisautaka se vakadewataka na kena vosa, vakadikeva na kena vola, tuvanaka me ulutaga kei na lisi, se vakuria eso na tikina mai na iVolatabu. Au rawa tale ga ni vakalekalekataka, sauma na taro me baleta, ka vakamacalataka na sala me caka kina e dua na ka ena iyaya ni vakavoui ivola. Tabaka e dua, se tukuna na ka o vinakata.",
     "Summarize this note": "Vakalekalekataka na ivola qo",
-    "Tidy it into headings and lists": "Tuvanaka me ulutaga kei na lisi"
+    "Tidy it into headings and lists": "Tuvanaka me ulutaga kei na lisi",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vakacavari ena dua na veisau: e vou na kena levu na vosa ni {count} na tikina ni “{name}”. E se bera ni maroroi: na Save ena katubaleka ni ivola e maroroya, ka na Undo this change e vakalesuya."
 }

@@ -4107,5 +4107,6 @@
     "Move on by itself": "ತಾನಾಗಿಯೇ ಮುಂದಕ್ಕೆ ಸಾಗಲಿ",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ಕೆಳಗೆ ಲಗತ್ತಿಸಲಾಗಿದೆ. ನಾನು ನಿಮಗಾಗಿ ಈ ಟಿಪ್ಪಣಿಯನ್ನು ಬದಲಾಯಿಸಬಲ್ಲೆ: ಅದರ ಪದಗಳನ್ನು ಬದಲಾಯಿಸುವುದು ಅಥವಾ ಅನುವಾದಿಸುವುದು, ಕಾಗುಣಿತ ಪರಿಶೀಲಿಸುವುದು, ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಪಟ್ಟಿಗಳಾಗಿ ಜೋಡಿಸುವುದು, ಅಥವಾ ಬೈಬಲ್ ವಚನಗಳನ್ನು ಸೇರಿಸುವುದು. ನಾನು ಅದರ ಸಾರಾಂಶ ನೀಡಬಹುದು, ಅದರ ಬಗ್ಗೆ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಿಸಬಹುದು ಮತ್ತು ಟಿಪ್ಪಣಿ ಸಂಪಾದಕದಲ್ಲಿ ಏನನ್ನಾದರೂ ಹೇಗೆ ಮಾಡುವುದು ಎಂದು ವಿವರಿಸಬಹುದು. ಒಂದನ್ನು ಒತ್ತಿ, ಅಥವಾ ನಿಮಗೆ ಬೇಕಾದುದನ್ನು ಹೇಳಿ.",
     "Summarize this note": "ಈ ಟಿಪ್ಪಣಿಯ ಸಾರಾಂಶ ನೀಡಿ",
-    "Tidy it into headings and lists": "ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಪಟ್ಟಿಗಳಾಗಿ ಜೋಡಿಸಿ"
+    "Tidy it into headings and lists": "ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಪಟ್ಟಿಗಳಾಗಿ ಜೋಡಿಸಿ",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ಒಂದೇ ಬದಲಾವಣೆಯಲ್ಲಿ ಆಯಿತು: “{name}” ನ {count} ಭಾಗಗಳ ಪದಗಳಿಗೆ ಹೊಸ ಗಾತ್ರ ಬಂದಿದೆ. ಇದು ಇನ್ನೂ ಉಳಿಸಲಾಗಿಲ್ಲ: ಟಿಪ್ಪಣಿ ಕಿಟಕಿಯಲ್ಲಿನ ಉಳಿಸು ಇದನ್ನು ಇರಿಸುತ್ತದೆ, ಈ ಬದಲಾವಣೆ ರದ್ದುಮಾಡು ಇದನ್ನು ಹಿಂದಿರುಗಿಸುತ್ತದೆ."
 }

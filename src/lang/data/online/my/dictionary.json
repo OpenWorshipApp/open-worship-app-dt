@@ -4107,5 +4107,6 @@
     "Move on by itself": "အလိုအလျောက် ရှေ့ဆက်ရန်",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” ကို အောက်တွင် ပူးတွဲထားပါသည်။ ဤမှတ်စုကို သင့်အတွက် ပြောင်းပေးနိုင်ပါသည်- စကားလုံးများကို ပြောင်းခြင်း သို့မဟုတ် ဘာသာပြန်ခြင်း၊ စာလုံးပေါင်း စစ်ဆေးခြင်း၊ ခေါင်းစဉ်များနှင့် စာရင်းများအဖြစ် စီစဉ်ခြင်း သို့မဟုတ် သမ္မာကျမ်းစာ ကျမ်းချက်များ ထည့်ခြင်း။ ၎င်းကို အကျဉ်းချုပ်ပေးခြင်း၊ ၎င်းအကြောင်း မေးခွန်းများကို ဖြေခြင်းနှင့် မှတ်စုတည်းဖြတ်ကိရိယာတွင် မည်သည့်အရာကိုမဆို မည်သို့လုပ်ရမည်ကို ရှင်းပြခြင်းတို့လည်း လုပ်ပေးနိုင်ပါသည်။ တစ်ခုကို နှိပ်ပါ သို့မဟုတ် သင်လိုချင်သည်ကို ပြောပါ။",
     "Summarize this note": "ဤမှတ်စုကို အကျဉ်းချုပ်ပါ",
-    "Tidy it into headings and lists": "ခေါင်းစဉ်များနှင့် စာရင်းများအဖြစ် စီစဉ်ပါ"
+    "Tidy it into headings and lists": "ခေါင်းစဉ်များနှင့် စာရင်းများအဖြစ် စီစဉ်ပါ",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ပြောင်းလဲမှုတစ်ခုတည်းဖြင့် ပြီးပါပြီ- “{name}” ၏ အပိုင်း {count} ခုရှိ စကားလုံးများ အရွယ်အစားအသစ် ရရှိပါပြီ။ မသိမ်းရသေးပါ- မှတ်စုဝင်းဒိုးရှိ သိမ်းရန်က ထိန်းထားပေးပြီး ဤပြောင်းလဲမှုကို ပြန်ဖျက်ရန်က ပြန်ထားပေးပါသည်။"
 }

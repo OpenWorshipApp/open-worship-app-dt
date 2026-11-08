@@ -4107,5 +4107,6 @@
     "Move on by itself": "Vanzelf doorgaan",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” is hieronder bijgevoegd. Ik kan deze notitie voor u aanpassen: de woorden wijzigen of vertalen, de spelling controleren, haar ordenen in kopjes en lijsten, of Bijbelverzen toevoegen. Ik kan haar ook samenvatten, vragen erover beantwoorden en uitleggen hoe u alles in de notitie-editor doet. Druk op een ervan, of zeg wat u wilt.",
     "Summarize this note": "Vat deze notitie samen",
-    "Tidy it into headings and lists": "Orden haar in kopjes en lijsten"
+    "Tidy it into headings and lists": "Orden haar in kopjes en lijsten",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gedaan in één wijziging: de woorden van {count} blokken van “{name}” hebben een nieuwe grootte. Het is nog niet opgeslagen: Opslaan in het notitievenster bewaart het, en Deze wijziging ongedaan maken zet het terug."
 }

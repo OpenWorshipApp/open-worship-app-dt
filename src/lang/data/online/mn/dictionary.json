@@ -4107,5 +4107,6 @@
     "Move on by itself": "Өөрөө дараагийнх руу шилжих",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}” доор хавсаргагдсан. Би энэ тэмдэглэлийг танд өөрчилж өгч чадна: үгийг нь өөрчлөх эсвэл орчуулах, зөв бичгийг шалгах, гарчиг ба жагсаалт болгон цэгцлэх, эсвэл Библийн ишлэл нэмэх. Мөн үүнийг товчлох, түүний талаарх асуултад хариулах, тэмдэглэлийн засварлагчид юуг ч хэрхэн хийхийг тайлбарлаж чадна. Нэгийг дарах эсвэл юу хүсч байгаагаа хэлнэ үү.",
     "Summarize this note": "Энэ тэмдэглэлийг товчил",
-    "Tidy it into headings and lists": "Гарчиг ба жагсаалт болгон цэгцэл"
+    "Tidy it into headings and lists": "Гарчиг ба жагсаалт болгон цэгцэл",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Нэг өөрчлөлтөөр хийгдлээ: “{name}” тэмдэглэлийн {count} блокийн үгс шинэ хэмжээтэй боллоо. Хараахан хадгалагдаагүй: тэмдэглэлийн цонхны Хадгалах үүнийг хадгална, Энэ өөрчлөлтийг буцаах нь буцаана."
 }

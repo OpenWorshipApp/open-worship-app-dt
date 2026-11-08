@@ -110,7 +110,8 @@ export const NOTE_EDIT_DESCRIPTION =
     "Change the user's Bible note attached here. `note`: its name as " +
     'attached. `read` gives its numbered blocks (n, kind, text) and `hash`; ' +
     '`from` reads on. `edit` makes every change in ONE call (give `hash`): ' +
-    '`changes` [{block, text?, kind?, checked?}] changes block n; {block, ' +
+    '`changes` [{block, text?, kind?, checked?, size?}] changes block n ' +
+    '(`size`: "larger", "smaller" or px 8-72, its text size); {block, ' +
     'remove: true} removes it; {block, after} moves it after block `after` ' +
     '(0 = top); {after, kind?, text} adds a block (`passage` takes `ref`, a ' +
     'Bible reference). `title` renames the note. Words: **bold**, *italic*, ' +
@@ -165,6 +166,9 @@ const NOTE_CHANGE_SCHEMA = z.object({
     checked: z.boolean().optional(),
     remove: z.boolean().optional(),
     ref: z.string().max(200).optional(),
+    size: z
+        .union([z.number().min(8).max(72), z.enum(['larger', 'smaller'])])
+        .optional(),
 });
 
 export function registerNoteEditTool(server) {

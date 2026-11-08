@@ -4107,5 +4107,6 @@
     "Move on by itself": "Переходити далі самостійно",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» прикріплено нижче. Я можу змінити цю нотатку для вас: змінити або перекласти її слова, перевірити правопис, упорядкувати її в заголовки та списки або додати вірші з Біблії. Я також можу коротко переказати її, відповісти на запитання про неї та пояснити, як зробити будь-що в редакторі нотаток. Натисніть один із варіантів або скажіть, що ви хочете.",
     "Summarize this note": "Коротко перекажи цю нотатку",
-    "Tidy it into headings and lists": "Упорядкуй її в заголовки та списки"
+    "Tidy it into headings and lists": "Упорядкуй її в заголовки та списки",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Зроблено однією зміною: слова {count} блоків нотатки «{name}» тепер нового розміру. Це ще не збережено: «Зберегти» у вікні нотатки збереже це, а «Скасувати цю зміну» поверне як було."
 }

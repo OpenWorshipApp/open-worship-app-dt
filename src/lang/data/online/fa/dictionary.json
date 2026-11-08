@@ -4107,5 +4107,6 @@
     "Move on by itself": "رفتن خودکار به بعدی",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "«{name}» در زیر پیوست شده است. می‌توانم این یادداشت را برایتان تغییر دهم: کلماتش را تغییر دهم یا ترجمه کنم، املا را بررسی کنم، آن را در عنوان‌ها و فهرست‌ها مرتب کنم، یا آیه‌هایی از کتاب مقدس اضافه کنم. همچنین می‌توانم آن را خلاصه کنم، به پرسش‌ها درباره‌اش پاسخ دهم و توضیح دهم که هر کاری را در ویرایشگر یادداشت چگونه انجام دهید. یکی را بزنید، یا بگویید چه می‌خواهید.",
     "Summarize this note": "این یادداشت را خلاصه کن",
-    "Tidy it into headings and lists": "آن را در عنوان‌ها و فهرست‌ها مرتب کن"
+    "Tidy it into headings and lists": "آن را در عنوان‌ها و فهرست‌ها مرتب کن",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "در یک تغییر انجام شد: کلمات {count} بخش از «{name}» اندازهٔ تازه‌ای دارند. هنوز ذخیره نشده است: «ذخیره» در پنجرهٔ یادداشت آن را نگه می‌دارد و «لغو این تغییر» آن را برمی‌گرداند."
 }

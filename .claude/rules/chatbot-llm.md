@@ -829,4 +829,14 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   another kind and fewer than half its own words is refused now
   (`checkLosesWords` in `agentNoteBlockHelpers.ts`), and asked again it
   added the heading as a new block. `owa_bible_note` stays on the ordinary
-  list (the `write-a-note` row needs it).
+  list (the `write-a-note` row needs it). **Text size** (2026-11-08, the
+  user: _check why chatbot can't help increase text size_ -- _make text
+  bigger_ had been answered with the toolbar's steps, and the two
+  walkthrough buttons under that guide page both failed): a change takes
+  `size` ("larger" / "smaller" / px 8-72), and the short English asks the
+  slide card reads (`readSlideSizeAsk`: _make the words larger_, _make text
+  bigger_, _make the words 20 px_) are done by the WINDOW with no model
+  (`genNoteSizeChanges` → one `size` change a block, `genNoteSizeDoneText`),
+  like the slides'. Measured live: no assistant asked, the h1 24 → 30 px,
+  the lines 15 → 19; _make only the heading bigger_ went to gemma4:cloud,
+  which sized the heading alone.

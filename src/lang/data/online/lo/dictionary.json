@@ -4107,5 +4107,6 @@
     "Move on by itself": "ໄປຕໍ່ໂດຍອັດຕະໂນມັດ",
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "ແນບ “{name}” ໄວ້ດ້ານລຸ່ມແລ້ວ. ຂ້ອຍສາມາດປ່ຽນບັນທຶກນີ້ໃຫ້ທ່ານໄດ້: ປ່ຽນ ຫຼື ແປຄຳສັບ, ກວດການສະກົດ, ຈັດເປັນຫົວຂໍ້ ແລະ ລາຍການ, ຫຼື ເພີ່ມຂໍ້ພຣະຄຳພີ. ຂ້ອຍຍັງສາມາດສະຫຼຸບ, ຕອບຄຳຖາມກ່ຽວກັບມັນ ແລະ ອະທິບາຍວິທີເຮັດສິ່ງໃດກໍໄດ້ໃນຕົວແກ້ໄຂບັນທຶກ. ກົດອັນໜຶ່ງ ຫຼື ບອກສິ່ງທີ່ທ່ານຕ້ອງການ.",
     "Summarize this note": "ສະຫຼຸບບັນທຶກນີ້",
-    "Tidy it into headings and lists": "ຈັດເປັນຫົວຂໍ້ ແລະ ລາຍການ"
+    "Tidy it into headings and lists": "ຈັດເປັນຫົວຂໍ້ ແລະ ລາຍການ",
+    "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ສຳເລັດໃນການປ່ຽນແປງດຽວ: ຄຳຂອງ {count} ບລັອກຂອງ “{name}” ມີຂະໜາດໃໝ່. ຍັງບໍ່ໄດ້ບັນທຶກ: ບັນທຶກໃນໜ້າຕ່າງບັນທຶກຈະເກັບມັນໄວ້, ແລະ ຍົກເລີກການປ່ຽນແປງນີ້ຈະເອົາມັນຄືນ."
 }
