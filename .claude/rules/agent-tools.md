@@ -347,12 +347,19 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   steps the MCP runs cannot drift. A demo changes one visible thing per **Do
   it** press; the search lesson names the Bible Online Lookup picker, selects
   **Find** even when it remembered Resources, and leaves the search box for the
-  person's own word. The Presenter catalog has 91 lessons across documents,
+  person's own word. The Presenter catalog has 114 lessons across documents,
   audience screens, FOREGROUND OVERLAYS, backgrounds and media, service
-  planning, app help and the View menu. Eighty-one lessons now begin with a
-  safe deterministic **Do it**
+  planning, app help and the View menu (2026-11-09: 23 added, among them the
+  Long Text Show, the Virtual Screens Manager's guests and display cards, run
+  sheet timing and the PowerPoint / PDF / Word rows; six of them reuse a
+  Reader lesson's own title and detail, so they cost no string). Eighty-three
+  lessons begin with a safe deterministic **Do it**
   action, then turn any explanation-only follow-up into **Next**; ten native-menu
-  or disruptive lessons remain fully self-guided.
+  or disruptive lessons remain fully self-guided, and 21 teach in words a menu
+  that needs a row, a passage or a display chosen first, a control that
+  removes something, or a panel whose opener the card cannot aim at (the
+  **Documents** tab twins with its own region, the Mini Screen find lands on a
+  screen card: `TP-13`, `TP-14`).
   No lesson can present, reload, relaunch, reset layout, or open Developer Tools
   for the person. **A shortcut no button shows is taught by a tip that presses
   it** (2026-10-04): Ctrl+Shift+Arrow (⌘+Shift on a Mac) moves between split

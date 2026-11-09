@@ -178,6 +178,11 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-more-options',
         'presenter-songselect',
         'presenter-public-domain',
+        'presenter-document-row-menu',
+        'presenter-slide-menu',
+        'presenter-stage-style',
+        'presenter-take-back',
+        'presenter-office-files',
     ]);
     const screenIds = new Set([
         'presenter-mini-screen',
@@ -187,6 +192,11 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-multi-screen',
         'presenter-draw-spotlight',
         'presenter-keyboard-screencast',
+        'presenter-virtual-screens',
+        'presenter-screen-drawing',
+        'presenter-bible-text-look',
+        'presenter-virtual-guests',
+        'presenter-virtual-display-card',
     ]);
     // The overlay layer has a heading of its own rather than sitting under
     // "Background and media": ten components, each with a lesson, would have
@@ -214,6 +224,7 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-foreground-message-spacing',
         'presenter-foreground-effects',
         'presenter-foreground-slideshow',
+        'presenter-foreground-long-text',
     ]);
     const backgroundIds = new Set([
         'presenter-colors-tab',
@@ -232,6 +243,7 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-background-filter',
         'presenter-background-sort',
         'presenter-background-folder',
+        'presenter-remove-saved',
     ]);
     const serviceIds = new Set([
         'presenter-flow-list',
@@ -239,6 +251,8 @@ function getPresenterTips(): DailyTipType[] {
         'presenter-share-flow',
         'presenter-flow-filter',
         'presenter-flow-sort',
+        'presenter-flow-line-timing',
+        'presenter-flow-take-out',
     ]);
     const viewMenuIds = new Set([
         'presenter-view-reload',

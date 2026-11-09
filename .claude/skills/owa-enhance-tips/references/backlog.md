@@ -1,5 +1,105 @@
 # Tips backlog — `TP-xx`
 
+## TP-18 · In Khmer an agent cannot press an All tips row by its title — `open` · S3 · every window
+
+**Evidence (2026-11-09, live, the Presenter in Khmer).** Each row is a
+`<button aria-label={title}>` (`DailyTipComp.tsx`), and `domMatch.mjs` names a
+control by its aria-label AND its text run together — the number, the title,
+the category and the whole detail. A Khmer row runs past the 120-character cap
+`owa_list_ui` keeps and past the length ratio a title may match against, so
+`owa_click` / `owa_find_ui` on _ស្វែងរកបទគម្ពីរ_ found nothing (no near miss
+either), while the accessibility tree names the row by its title alone and
+pressing it there opened the tip. English titles fit by luck of length. The
+chatbot reaches a tip by id, so this is the stdio door's QA path. **Change.**
+Let an `aria-label` stand as the control's whole name, the way the
+accessibility tree does — `owa-enhance-mcp`'s. **Proof on apply.** `owa_click`
+on a Khmer tip title opens it from All tips. Found in run `2026-11-09`.
+
+## TP-17 · Tips translate a menu name the native menu draws in English — `open` · S3 · every window
+
+**Evidence (2026-11-09, read from code and the dictionaries).** The native
+menu's top-level names are plain English in `electron/electronMenu.ts`
+(`File`, `Edit`, `View`, `Tools`, `Window`; `Help` by role), and so are its
+role rows (Reload, Toggle Full Screen, Toggle Developer Tools); only the
+renderer-contributed rows are `tran()`'d (`Widgets`,
+`widgetAppMenuHelpers.ts`). Older tips in most languages translate the path
+anyway: Khmer has 11 strings saying មើល > …, one of them
+`មើល > Widgets` where the window shows `View > ផ្ទាំង`. The Presenter's new
+_Use View > Widgets …_ detail was corrected in all 87 packages to `View >`
+plus the language's own `Widgets` word. **Change.** Decide first — translate
+the native menu's own names in the app (`owa-enhance`), or rewrite those tip
+strings to the English names — because either makes the other wrong. **Proof
+on apply.** A Khmer volunteer reading a tip's path finds those exact words in
+the menu bar. Found in run `2026-11-09`.
+
+## TP-16 · Two Presenter items still untaught, and ACTED is a fifth — `open` · S3 · presenter
+
+**Evidence (2026-11-09).** After the run, `tip-coverage.mjs presenter
+--uncovered` lists `slides-more` (**Slides > More Options**: what its menu
+holds was not read this run) and `text-reset` (the Bible/LongText Properties
+reset, titled _Plain words again; the size stays_: `presenter-bible-text-look`
+says "Reset for plain words" in its step, which is not the title, and its
+detail has no word a volunteer would type for it). ACTED is 41/221: 31 of
+the 114 lessons are words only, most because they teach a row menu (a
+document, a slide, a run sheet line), a removal, or a panel behind `TP-13` /
+`TP-14`. **Next.** Read the Slides panel's menu and teach it in the lesson that
+already names the panel; name the reset's title in `presenter-bible-text-look`
+when its detail is next reworded; after `TP-13` / `TP-14` are fixed, give the
+words-only lessons their openers back. **Also found by the translation
+pass:** Latvian gives **Move up** and **Move to Top** the same words
+(_Pārvietot uz augšu_), so the slide menu shows two identical rows there;
+**Lookup** and **Bible Lookup** share their words in `fa`, `ur`, `sw` and
+`id`, **Setting** and **Settings** in `he`, `so`, `rw`, `rn` and `vi`, and
+**Remove** and **Delete** in `id` and `ms`. Dictionary fixes, each with its
+package's version raised. Found in run `2026-11-09`.
+
+## TP-15 · Seven floating panels on the Presenter have no panel name — `open` · S2 · presenter
+
+**Evidence (2026-11-09, read from code).** `FloatingWidgetComp` stamps
+`data-widget-name` only when it is given `widgetName`, and the Presenting Flow
+preview (`PresentingFlowPreviewFloatingComp`), the Slides preview
+(`AppDocumentPreviewFloatingItemComp`), Presenting Control
+(`ControllerToolbarComp`), Stage Style (`LyricStageStyleFloatingComp`), Import
+From SongSelect, Import From Public Domain Songs and the note editor popup pass
+none. Everything inside them reports the pane BEHIND as its `inPanel`, so a
+scoped find (`Presenting Flow > Collapse All`) cannot land and a name they
+share with the window twins (the 2026-09-24 note in CLAUDE.md, _Mapping DOM
+elements_). **Change.** Pass each its English label key as `widgetName` — an
+app change, `owa-enhance`'s to apply. **Proof on apply.** `owa_find_ui` inside
+each reports its own panel; a run-sheet tip can press **Collapse All** by a
+scoped find. Found in run `2026-11-09`.
+
+## TP-14 · The Presenter's `Mini Screen` find presses a screen card — `open` · S2 · presenter
+
+**Evidence (2026-11-09).** A lesson step `find: 'Mini Screen'` with
+`skipIfVisible: 'Mini Screen Options'` was pressed live with the panel already
+open: it did not skip, and **Do it** clicked the first screen card (its label
+starts `BGSLLTFG0(0)`), with no visible change. The step was taken out of
+`presenter-screen-drawing` and `presenter-bible-text-look`, which are words
+now; `presenter-mini-screen`, `presenter-style-bible`,
+`presenter-screen-controls`, `presenter-multi-screen` and
+`presenter-foreground-clear` still use it. **Change.** Find out why
+`skipIfVisible` did not hold (the walkthrough engine is `owa-enhance-mcp`'s),
+and aim the opener at the panel's own toggle by a word only it carries.
+**Proof on apply.** Show it → Do it on `presenter-screen-controls` with the
+panel open goes straight to the next step; closed, it opens the panel and
+nothing else. Found in run `2026-11-09`.
+
+## TP-13 · The Presenter's `Documents` tab twins with its own region — `open` · S2 · presenter
+
+**Evidence (2026-11-09).** A step `find: 'Documents'` was refused live as two
+controls of that name in one panel: the tab and the `data-widget-name`
+region it opens (a panel region counts as a control). The step was removed from
+the three new row-menu lessons (`presenter-document-row-menu`,
+`presenter-slide-menu`, `presenter-stage-style`), which are words now; the
+older `presenter-present-slide`, `presenter-auto-play`,
+`presenter-present-lyrics`, `presenter-songselect` and
+`presenter-public-domain` still open with it. **Change.** Let the twin rule
+skip a region whose name is the tab that owns it, or scope the step to the
+tab strip — `owa-enhance-mcp`'s. **Proof on apply.** Those five lessons' first
+Do it opens the Documents tab in English and Khmer. Found in run
+`2026-11-09`.
+
 ## TP-12 · A list panel's header More Options shares its name with every list file's — `open` · S2 · reader, presenter
 
 **Evidence (2026-11-09).** `reader-bibles-new-list`, `reader-bibles-share`,
@@ -95,6 +195,11 @@ dropped `translateFind` (the title is English in every language anyway), so
 `reader-bibles-folder` ran Show it → Do it in a Khmer window, and
 `readerDemos.test.mjs` holds them to it; `presenter-path-editor` still carries
 it. The app key is still owed, and with it `translateFind` comes back.
+**2026-11-09, the Presenter run:** `presenter-path-editor` and the third step
+of `presenter-background-folder` (`Background > Show path editor`, whose whole
+scoped label WAS a key, so a Khmer window looked only for a translated name
+the control never draws) dropped `translateFind` too, and that key left all 87
+packages. No tip translates the path editor's name now.
 
 ## TP-02 · A Khmer detail names the control in other words, so Khmer search misses it — `done` · S2 · reader
 
@@ -193,4 +298,9 @@ title, as the Mini Screen's **Mini Screen Options** got — an app change, so
 row's own words; a person can press it, and the chatbot starts lessons by id.
 _Remove an extra Bible version_ reads the same. **Change.** Titles that say
 what the volunteer gets (_Correct the last part of a reference_) instead of a
-verb the firewall must refuse. Found in run `2026-10-16`.
+verb the firewall must refuse. Found in run `2026-10-16`. **2026-11-09, the
+Presenter run:** only the row's TITLE is read that way — `owa_click` on
+_Remove what you no longer use_ was refused, while _Take a line out of a run
+sheet_, whose detail opens with "Remove from Presenting Flow", opened and ran
+**Show it**. That title is still owed the rewording above; its detail carries
+the four `Remove …` controls, so search finds it either way.

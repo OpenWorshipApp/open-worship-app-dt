@@ -3,7 +3,7 @@
     "order": 48,
     "name": "Urdu",
     "nativeName": "اردو",
-    "version": "0.0.25",
+    "version": "0.0.26",
     "direction": "rtl",
     "description": "A right-to-left language: the app in Urdu, Bible book names in English."
 }

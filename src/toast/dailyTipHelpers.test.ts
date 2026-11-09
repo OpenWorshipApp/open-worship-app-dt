@@ -112,7 +112,7 @@ describe('daily tip helpers', () => {
         expect(getDailyTips('presenter').map(({ demoId }) => demoId)).toEqual(
             PRESENTER_DEMO_IDS,
         );
-        expect(getDailyTips('presenter')).toHaveLength(91);
+        expect(getDailyTips('presenter')).toHaveLength(114);
         expect(getDailyTips('reader').map(({ demoId }) => demoId)).toEqual(
             READER_DEMO_IDS,
         );
@@ -240,7 +240,7 @@ describe('daily tip helpers', () => {
         const foreground = getDailyTips('presenter').filter(({ demoId }) => {
             return demoId.startsWith('presenter-foreground-');
         });
-        expect(foreground).toHaveLength(21);
+        expect(foreground).toHaveLength(22);
         expect(
             foreground.every(({ category }) => {
                 return category === 'Foreground overlays';

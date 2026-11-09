@@ -7,7 +7,7 @@ import {
 } from './presenterDemos.mjs';
 
 describe('Presenter demos', () => {
-  it('offers 91 Presenter lessons with stable unique ids', () => {
+  it('offers 114 Presenter lessons with stable unique ids', () => {
     expect(PRESENTER_DEMO_IDS).toEqual([
       'presenter-bible-lookup',
       'presenter-document-list',
@@ -93,6 +93,29 @@ describe('Presenter demos', () => {
       'presenter-foreground-message-spacing',
       'presenter-foreground-effects',
       'presenter-foreground-slideshow',
+      'presenter-document-row-menu',
+      'presenter-slide-menu',
+      'presenter-stage-style',
+      'presenter-foreground-long-text',
+      'presenter-virtual-screens',
+      'presenter-screen-drawing',
+      'presenter-bible-text-look',
+      'presenter-take-back',
+      'presenter-remove-saved',
+      'presenter-flow-line-timing',
+      'presenter-flow-take-out',
+      'presenter-virtual-guests',
+      'presenter-virtual-display-card',
+      'presenter-bible-passage',
+      'presenter-saved-passages',
+      'presenter-office-files',
+      'presenter-practice-tips',
+      'presenter-split-translation',
+      'presenter-ask-about-reading',
+      'presenter-edit-passages',
+      'presenter-version-info',
+      'presenter-bibles-file-actions',
+      'presenter-notes-file-actions',
       'presenter-view-reload',
       'presenter-view-relaunch',
       'presenter-view-devtools',
@@ -102,7 +125,7 @@ describe('Presenter demos', () => {
       'presenter-view-reset-widgets',
     ]);
     expect(new Set(PRESENTER_DEMO_IDS).size).toBe(PRESENTER_DEMO_LIST.length);
-    expect(PRESENTER_DEMO_LIST).toHaveLength(91);
+    expect(PRESENTER_DEMO_LIST).toHaveLength(114);
     expect(PRESENTER_DEMO_LIST.every((demo) => demo.steps.length > 0)).toBe(
       true,
     );
@@ -138,6 +161,11 @@ describe('Presenter demos', () => {
         expect(step.finds.every((find) => find.startsWith(`${panel} > `))).toBe(
           true,
         );
+        if (step.find.endsWith(' > Show path editor')) {
+          // TP-01: the path editor's title is English in every language.
+          expect(step.finds).toEqual([step.find]);
+          continue;
+        }
         expect(step.finds.some((find) => find.includes('translated:'))).toBe(
           true,
         );
@@ -205,6 +233,27 @@ describe('Presenter demos', () => {
       'presenter-menu-tools',
       'presenter-menu-window',
       'presenter-menu-help',
+      'presenter-document-row-menu',
+      'presenter-slide-menu',
+      'presenter-stage-style',
+      'presenter-screen-drawing',
+      'presenter-bible-text-look',
+      'presenter-take-back',
+      'presenter-remove-saved',
+      'presenter-flow-line-timing',
+      'presenter-flow-take-out',
+      'presenter-virtual-guests',
+      'presenter-virtual-display-card',
+      'presenter-bible-passage',
+      'presenter-saved-passages',
+      'presenter-office-files',
+      'presenter-practice-tips',
+      'presenter-split-translation',
+      'presenter-ask-about-reading',
+      'presenter-edit-passages',
+      'presenter-version-info',
+      'presenter-bibles-file-actions',
+      'presenter-notes-file-actions',
       'presenter-view-reload',
       'presenter-view-relaunch',
       'presenter-view-devtools',

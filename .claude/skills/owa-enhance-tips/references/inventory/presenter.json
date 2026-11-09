@@ -1,0 +1,2412 @@
+{
+    "page": "presenter",
+    "window": "presenter.html",
+    "updated": "2026-11-09",
+    "scope": "html/presenter.html -> src/presenter.tsx: the header, the Document List (documents and lyrics), the Presenting Flow List and its preview, the previewer (slides, stages, stage style, slide notes, the editing toolbar), the Presenter's Bible pane, the Bible Lookup popup's presenting jobs, the Bibles and Bible Notes lists, Background (colours, images, videos, cameras, webs, audios), every Foreground component's floating panel, the Mini Screen (screen cards, drawing and focusing, the Virtual Screens Manager, Bible/LongText Properties), Presenting Control, the tips card and the native menus as the Presenter shows them. The lookup popup's study tools are the Reader's inventory; Settings, the editors, the note window and the AI windows are other windows'. A row or menu shared by several lists (Rename, Duplicate, Move up...) is one item: the app draws it from one component and it does the same job in each list. Destructive rows are items, counted and never acted.",
+    "sourceDirs": [
+        "src/presenter",
+        "src/router",
+        "src/app-document-list",
+        "src/app-document-presenter",
+        "src/lyric-list",
+        "src/presenting-flow",
+        "src/background",
+        "src/presenter-foreground",
+        "src/_screen",
+        "src/slide-auto-play",
+        "src/presenting-control",
+        "src/screen-setting",
+        "src/virtual-display",
+        "src/media-sessions"
+    ],
+    "sourceFiles": [],
+    "ignore": [
+        {
+            "pattern": "^\\([^)]+\\)\\s?\\S",
+            "reason": "a passage reference such as (KJV) John 3:16: the person's own history, saved lists and views, not a control's name"
+        },
+        {
+            "pattern": "^Open \\([^)]+\\)",
+            "reason": "a saved passage row named by its reference: the person's own data"
+        },
+        {
+            "pattern": "^⚠️ Duplicated with item number \\d+$",
+            "reason": "a warning badge on a saved row, not a control"
+        },
+        {
+            "pattern": "^\\p{Nd}+$",
+            "reason": "a chapter button's number or a count: the chapter buttons are one item (pick-chapter)"
+        },
+        {
+            "pattern": "[A-Za-z]:\\\\",
+            "reason": "a folder row showing its path: the person's own folders"
+        },
+        {
+            "pattern": "^(?:[^\\p{Script=Latin}\\p{Script=Common}\\p{Script=Inherited}]|[\\u200b\\s])+$",
+            "reason": "words of a passage in a script that is not Latin (a name link in the text): data"
+        },
+        {
+            "pattern": "^[^\\p{Script=Latin}\\p{Script=Common}\\p{Script=Inherited}]+ Khmer BFBS",
+            "reason": "the Khmer Bible installed here, on its version chip: data"
+        },
+        {
+            "pattern": "\\(\\p{Nd}+\\):",
+            "reason": "a cross-reference row: a verse reference and its text, data (the rows are one item, open-verse-link)"
+        },
+        {
+            "pattern": "^\\d+px$",
+            "reason": "the Font Size value beside its slider"
+        },
+        {
+            "pattern": "^Generated using AI technology\\.",
+            "reason": "a caution sentence under AI cross references"
+        },
+        {
+            "pattern": "\\.(pdf|txt|docx?|pptx?|png|jpe?g|gif|webp|svg|mp3|mp4|webm|mov|mkv|wav|ogg|m4a|own|owb|ows|owl|owpf|md|xml|html?)\\b",
+            "reason": "a file name in a list, a tile or a row: the person's own files"
+        },
+        {
+            "pattern": "^\\p{Ll}",
+            "reason": "a name that starts in lower case: the person's own document, folder, note and file names, and the colour and transition values a picker lists (each picker is its own item; no control's name starts in lower case)"
+        },
+        {
+            "pattern": "^:\\d+$",
+            "reason": "a slider's value beside it"
+        },
+        {
+            "pattern": "^\\d+\\p{Lu}\\p{Ll}",
+            "reason": "a row of the All tips list (its number, title, category and detail) or a slide card's number and name: data, not a control"
+        },
+        {
+            "pattern": "^\\d*\\S*\\bSlide \\d+(: |$)",
+            "reason": "a slide card's number and name: the person's own slides (presenting one is slides-present)"
+        },
+        {
+            "pattern": "^\\d+ Index: \\d+$",
+            "reason": "a slide card's index badge"
+        },
+        {
+            "pattern": "^Width: \\d+, Height: \\d+$",
+            "reason": "a slide's size, shown on its card"
+        },
+        {
+            "pattern": "^\\d*(MC|⏱)?(Slide|Next|Countdown|Bible|Lyric|Background|Foreground|Media|Wait)\\b[^:]*: ",
+            "reason": "a presenting flow's step row: its kind and the person's own content (the rows are run from flow-preview)"
+        },
+        {
+            "pattern": "^(\\d+ )?Screen: \\d+$",
+            "reason": "a screen's number on its card or tile (the screens are the Mini Screen's and Screen Show's items)"
+        },
+        {
+            "pattern": "^BGSLLTFG",
+            "reason": "a screen card read whole: its clear chips, display chip and footer, each its own item"
+        },
+        {
+            "pattern": "^\\(\\d+\\):\\d+",
+            "reason": "a screen's display chip, read with its display id (screen-display)"
+        },
+        {
+            "pattern": "display\\(\\d+\\): \\d+x\\d+",
+            "reason": "a display of this computer, listed in the display chooser: data"
+        },
+        {
+            "pattern": "(Webcam|Camera)( \\(|$)",
+            "reason": "a camera this computer has, listed by its device name: data (the tiles are fg-camera and bg-cameras)"
+        },
+        {
+            "pattern": "Double click to open note$",
+            "reason": "a note row: its title (the person's own) and the hint (notes-open)"
+        },
+        {
+            "pattern": "^Open BibleNote: ",
+            "reason": "a note row's open title: the person's own note name (notes-open)"
+        },
+        {
+            "pattern": "Drag to the Bible list$",
+            "reason": "a note's verse row: its reference and text, data (notes-verse-drag)"
+        },
+        {
+            "pattern": "^\\d+ (Intro|Verse|Pre-Chorus|Chorus|Bridge|Tag|Interlude|Ending|Outro)\\b",
+            "reason": "a section of the chosen lyric: its number, name and words, the person's own song"
+        },
+        {
+            "pattern": "^#[0-9A-Fa-f]{6}",
+            "reason": "a colour's value beside its swatch"
+        },
+        {
+            "pattern": "^Color: #",
+            "reason": "a colour's value on a swatch"
+        },
+        {
+            "pattern": "^Slide Note: \\d+",
+            "reason": "a slide's note heading, by slide number (slide-note)"
+        },
+        {
+            "label": "App Presenter Left",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "App Presenter Middle",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "App Presenter Right",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Document List",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Presenting Flow List",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Presenter",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Background",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Background Audio",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Bible and Notes",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Mini Screen",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Bibles",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Bible Notes",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Bible",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Bible View",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Bible and Notes (Lookup)",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Bibles (Lookup)",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Bible Notes (Lookup)",
+            "reason": "a panel's name, read as a region; collapsing it is the divider menu and View > Widgets"
+        },
+        {
+            "label": "Browser does not support audio.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Shift Click to Add",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No App Document Selected",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Missing fonts",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Exporting PDF Images",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Unable to preview right now",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Download",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "will be converted to PDF into",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Loading",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Generated using Google Translate.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No cross references for this verse",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No title",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No verses found for this Bible item",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "The assistant changed this song.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Applies to every song",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Custom CSS is added after this stage own style",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Failed to load the font list",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No matching files",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Folder not found",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No lyric file chosen",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No language yet",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No message yet",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No other elements",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Fail to read file data",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No slides",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Drop items here",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Not Supported Item Type",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No items in this presenting flow",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No screen is open",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Internet",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "This network",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Screen mirror server is unavailable",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No connected guests",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Connection request",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Turn this on to use other computers on this network as extra screens.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Stopped",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Starting…",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Idle",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Changing the resolution restarts the stream for everyone watching.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "File not found",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "This computer cannot encode AAC audio, so the video has no sound.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Watching now",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No one is watching",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Disconnected",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Several screens show on this display, stacked: the one shown last is on top.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Screens on this display",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Looking for TVs…",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Turn on “Let other devices watch” to cast to a TV.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No TV found. Make sure the TV is on and on the same network as this computer.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Browsers on other devices open the display by an https address, so a phone can keep its screen on and share its microphone and camera. This computer signs its own certificate, so each browser warns once: continue past the warning (Advanced, then Proceed). Media players keep the http address.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Turn this on to watch virtual displays from phones, TVs and other computers on this network.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "A virtual display is a screen that exists only in this app. Show screens on it like on a real monitor, and watch it from any device as a video.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "The text color was changed so it stays visible on the new background color.",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "No tips found",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Double click to jump to top",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Christ",
+            "reason": "a status or empty-list sentence, not a control"
+        },
+        {
+            "label": "Default",
+            "reason": "a default name or value: the default list file or session, the default font weight"
+        },
+        {
+            "label": "Slide Document",
+            "reason": "a type badge on a Document List row, not a control"
+        },
+        {
+            "label": "PDF Document",
+            "reason": "a type badge on a Document List row, not a control"
+        },
+        {
+            "label": "PowerPoint Document",
+            "reason": "a type badge on a Document List row, not a control"
+        },
+        {
+            "label": "Word Document",
+            "reason": "a type badge on a Document List row, not a control"
+        },
+        {
+            "label": "Lyric",
+            "reason": "a type badge on a Document List row, not a control"
+        },
+        {
+            "label": "Go Back to Presenter",
+            "reason": "drawn only in the Reader window's lookup header"
+        },
+        {
+            "label": "Lookup Detail",
+            "reason": "a floating panel's name, read as a region"
+        },
+        {
+            "label": "Fix slide dimension: ⚠️",
+            "reason": "the warning prefix of Fix slide dimension"
+        },
+        {
+            "label": "Random Up Tos",
+            "reason": "the Random Up To row read with its seconds unit (fg-slideshow-options)"
+        },
+        {
+            "label": "DarkLight Background",
+            "reason": "the Dark and Light chips read as one group (text-background)"
+        },
+        {
+            "pattern": "^Let other computers connectTurn",
+            "reason": "the Let other computers connect switch read with its explanation (vsm-mirror)"
+        },
+        {
+            "file": "src/background/web/",
+            "reason": "the web editor window (webEditor.html), another window’s inventory"
+        }
+    ],
+    "items": [
+        {
+            "id": "header-slide-editor",
+            "surface": "Presenter header",
+            "labels": ["Slide Editor", "Open Slide Editor in a new window"]
+        },
+        {
+            "id": "header-bible-reader",
+            "surface": "Presenter header",
+            "labels": ["Bible Reader", "Open Bible Reader in a new window"]
+        },
+        {
+            "id": "header-screen-mirror",
+            "surface": "Presenter header",
+            "labels": ["Screen Mirror"]
+        },
+        {
+            "id": "header-experiment",
+            "surface": "Presenter header",
+            "labels": ["(dev)Experiment"],
+            "exclude": "a development page, drawn only in a dev build; no volunteer sees it"
+        },
+        {
+            "id": "header-bible-lookup",
+            "surface": "Presenter header",
+            "labels": ["Bible Lookup", "Open bible lookup popup"],
+            "press": ["Ctrl+B"]
+        },
+        {
+            "id": "header-stay-awake",
+            "surface": "Presenter header",
+            "labels": ["Stay Awake"]
+        },
+        {
+            "id": "header-settings",
+            "surface": "Presenter header",
+            "labels": ["Setting"],
+            "strict": true,
+            "search": ["settings"]
+        },
+        {
+            "id": "header-app-assistant",
+            "surface": "Presenter header",
+            "labels": ["App Assistant", "Open Chatbot", "App Help (Chatbot)"],
+            "personOnly": "asks the AI caution first, which only the person answers"
+        },
+        {
+            "id": "header-ai-chat",
+            "surface": "Presenter header",
+            "labels": ["AI Chat"],
+            "personOnly": "asks the AI caution first, which only the person answers"
+        },
+        {
+            "id": "header-help",
+            "surface": "Presenter header",
+            "labels": ["Help"],
+            "strict": true
+        },
+        {
+            "id": "header-help-online",
+            "surface": "Presenter header",
+            "labels": ["Open Online Help"],
+            "personOnly": "opens a website in the system browser"
+        },
+        {
+            "id": "header-report-problem",
+            "surface": "Presenter header",
+            "labels": ["Report a Problem"]
+        },
+        {
+            "id": "divider-menu",
+            "surface": "Presenter layout",
+            "labels": [
+                "Reset Size",
+                "Close First Widget",
+                "Close Second Widget"
+            ],
+            "aliases": ["Divider"],
+            "search": ["divider", "resize"]
+        },
+        {
+            "id": "panel-strip",
+            "surface": "Presenter layout",
+            "labels": ["Enable Note", "Enable Previewer"],
+            "aliases": ["Previewer"]
+        },
+        {
+            "id": "tab-documents",
+            "surface": "Presenter layout",
+            "labels": ["Documents"]
+        },
+        {
+            "id": "tab-bibles",
+            "surface": "Presenter layout",
+            "labels": ["Presenter > Bibles"]
+        },
+        {
+            "id": "tab-foreground",
+            "surface": "Presenter layout",
+            "labels": ["Foreground"]
+        },
+        {
+            "id": "pin-document",
+            "surface": "Presenter layout",
+            "labels": ["Pin document"]
+        },
+        {
+            "id": "full-view",
+            "surface": "Presenter layout",
+            "labels": ["Full view"]
+        },
+        {
+            "id": "floating-panel",
+            "surface": "Presenter layout",
+            "labels": [
+                "Close floating widget",
+                "Collapse floating widget",
+                "Drag to resize"
+            ]
+        },
+        {
+            "id": "list-more",
+            "surface": "File lists",
+            "labels": [
+                "Document List > More Options",
+                "Presenting Flow List > More Options",
+                "Background > More Options",
+                "Bibles > More Options",
+                "Bible Notes > More Options"
+            ]
+        },
+        {
+            "id": "list-path-editor",
+            "surface": "File lists",
+            "labels": ["Show path editor"],
+            "aliases": ["Hide path editor"],
+            "untranslated": "PathSelectorComp draws the title in English in every language (TP-01)"
+        },
+        {
+            "id": "path-menu",
+            "surface": "File lists",
+            "labels": [
+                "Copy to Clipboard",
+                "Edit Parent Path",
+                "Unset Directory Path"
+            ]
+        },
+        {
+            "id": "path-choose-folder",
+            "surface": "File lists",
+            "labels": ["Choose a folder"],
+            "personOnly": "chooses a folder"
+        },
+        {
+            "id": "no-folder",
+            "surface": "File lists",
+            "labels": ["Select Default", "Go to Settings"],
+            "aliases": [
+                "No directory selected",
+                "No Parent Directory Selected",
+                "Invalid Path"
+            ]
+        },
+        {
+            "id": "list-filter",
+            "surface": "File lists",
+            "labels": ["Filter by name"]
+        },
+        {
+            "id": "list-sort",
+            "surface": "File lists",
+            "labels": ["Sort"],
+            "strict": true,
+            "search": ["sort"]
+        },
+        {
+            "id": "list-filter-type",
+            "surface": "File lists",
+            "labels": ["Filter by Type", "All Types"]
+        },
+        {
+            "id": "list-sessions",
+            "surface": "File lists",
+            "labels": ["Add Session", "Rename Session"],
+            "aliases": ["Session", "Default Session"],
+            "search": ["session"],
+            "personOnly": "adds or names a folder session that only Remove Session takes back"
+        },
+        {
+            "id": "list-session-remove",
+            "surface": "File lists",
+            "labels": ["Remove Session"]
+        },
+        {
+            "id": "color-note",
+            "surface": "File lists",
+            "labels": ["Color Note", "Clear Color Note"],
+            "aliases": ["No Color"]
+        },
+        {
+            "id": "scroll-top",
+            "surface": "File lists",
+            "labels": ["Scroll to the top"],
+            "aliases": ["Click or Double Click to scroll to the top"]
+        },
+        {
+            "id": "auto-scroll",
+            "surface": "File lists",
+            "labels": ["Play to bottom", "Auto Scroll Options"]
+        },
+        {
+            "id": "range-zoom",
+            "surface": "File lists",
+            "labels": ["Zoom In", "Zoom Out"],
+            "search": ["zoom"]
+        },
+        {
+            "id": "list-reload",
+            "surface": "File lists",
+            "labels": ["Reload"],
+            "strict": true,
+            "search": ["reload"],
+            "tips": ["presenter-present-slide"]
+        },
+        {
+            "id": "list-refresh",
+            "surface": "File lists",
+            "labels": ["Refresh"],
+            "strict": true,
+            "tips": ["presenter-document-list"]
+        },
+        {
+            "id": "list-new-file",
+            "surface": "File lists",
+            "labels": ["New File"]
+        },
+        {
+            "id": "list-add-files",
+            "surface": "File lists",
+            "labels": ["Add Local Files"],
+            "personOnly": "chooses a file"
+        },
+        {
+            "id": "list-import",
+            "surface": "File lists",
+            "labels": ["Import"],
+            "strict": true,
+            "personOnly": "chooses a file",
+            "tips": ["presenter-document-list"]
+        },
+        {
+            "id": "list-import-url",
+            "surface": "File lists",
+            "labels": ["Import From URL"]
+        },
+        {
+            "id": "list-download-url",
+            "surface": "File lists",
+            "labels": ["Download From URL"]
+        },
+        {
+            "id": "list-shared-link",
+            "surface": "File lists",
+            "labels": ["Open Shared Link"],
+            "personOnly": "opens a website in the system browser"
+        },
+        {
+            "id": "list-export",
+            "surface": "File lists",
+            "labels": ["Export"],
+            "strict": true,
+            "personOnly": "chooses where to save a file",
+            "tips": ["presenter-document-list"]
+        },
+        {
+            "id": "file-rename",
+            "surface": "File lists",
+            "labels": ["Rename"]
+        },
+        {
+            "id": "file-duplicate",
+            "surface": "File lists",
+            "labels": ["Duplicate"]
+        },
+        {
+            "id": "file-trash",
+            "surface": "File lists",
+            "labels": ["Move to Trash"]
+        },
+        {
+            "id": "file-copy-path",
+            "surface": "File lists",
+            "labels": ["Copy Path to Clipboard"]
+        },
+        {
+            "id": "file-reveal",
+            "surface": "File lists",
+            "labels": ["Reveal in File Explorer", "Reveal Original"]
+        },
+        {
+            "id": "file-open-chatbot",
+            "surface": "File lists",
+            "labels": ["Open in Chatbot"],
+            "personOnly": "asks the AI caution first, which only the person answers"
+        },
+        {
+            "id": "file-edit",
+            "surface": "File lists",
+            "labels": ["Edit"],
+            "strict": true,
+            "tips": ["presenter-document-row-menu"]
+        },
+        {
+            "id": "row-order",
+            "surface": "File lists",
+            "labels": ["Move up", "Move down", "Move to Top", "Move to Bottom"]
+        },
+        {
+            "id": "row-color",
+            "surface": "File lists",
+            "labels": ["Choose Color"]
+        },
+        {
+            "id": "row-disable",
+            "surface": "File lists",
+            "labels": ["Disable"],
+            "strict": true,
+            "tips": ["presenter-slide-menu"]
+        },
+        {
+            "id": "row-delete",
+            "surface": "File lists",
+            "labels": ["Delete"],
+            "strict": true,
+            "tips": ["presenter-take-back"]
+        },
+        {
+            "id": "doc-new",
+            "surface": "Document List",
+            "labels": ["New App Document"]
+        },
+        {
+            "id": "doc-new-lyric",
+            "surface": "Document List",
+            "labels": ["New Lyric"]
+        },
+        {
+            "id": "doc-public-domain",
+            "surface": "Document List",
+            "labels": ["Import From Public Domain Songs"]
+        },
+        {
+            "id": "doc-songselect",
+            "surface": "Document List",
+            "labels": ["Import From SongSelect"]
+        },
+        {
+            "id": "doc-slides-preview",
+            "surface": "Document List",
+            "labels": ["Open Slides Preview"],
+            "aliases": ["Open Slides Preview (Ctrl + Click)"]
+        },
+        {
+            "id": "doc-print",
+            "surface": "Document List",
+            "labels": ["Print"],
+            "strict": true,
+            "tips": ["presenter-document-row-menu"]
+        },
+        {
+            "id": "doc-export-pptx",
+            "surface": "Document List",
+            "labels": ["Export to PPTX"],
+            "personOnly": "chooses where to save a file"
+        },
+        {
+            "id": "doc-pptx",
+            "surface": "Document List",
+            "labels": ["Open PPTX", "Refresh PPTX Slides"]
+        },
+        {
+            "id": "doc-pdf",
+            "surface": "Document List",
+            "labels": ["Preview PDF", "Refresh PDF Images"]
+        },
+        {
+            "id": "doc-docx",
+            "surface": "Document List",
+            "labels": ["Open DOCX", "Refresh DOCX Pages"]
+        },
+        {
+            "id": "lyric-load-change",
+            "surface": "Document List",
+            "labels": ["Load the change"],
+            "personOnly": "takes the assistant's change into the song; the person decides"
+        },
+        {
+            "id": "slides-present",
+            "surface": "Slides",
+            "labels": ["Slides"],
+            "personOnly": "a slide card presents the slide to the screens"
+        },
+        {
+            "id": "slides-thumbnail-size",
+            "surface": "Slides",
+            "labels": ["Slide Thumbnail Size Scale"],
+            "search": ["thumbnail"]
+        },
+        {
+            "id": "slides-more",
+            "surface": "Slides",
+            "labels": ["Slides > More Options"]
+        },
+        {
+            "id": "slides-add",
+            "surface": "Slides",
+            "labels": ["New Slide", "Paste Image"],
+            "aliases": ["Paste"]
+        },
+        {
+            "id": "slide-order",
+            "surface": "Slides",
+            "labels": ["Move forward", "Move backward"]
+        },
+        {
+            "id": "slide-copy",
+            "surface": "Slides",
+            "labels": ["Copy"],
+            "strict": true,
+            "search": ["copy"],
+            "tips": ["presenter-slide-menu"]
+        },
+        {
+            "id": "slide-remove-background",
+            "surface": "Slides",
+            "labels": ["Remove background"]
+        },
+        {
+            "id": "slide-remove-from-screen",
+            "surface": "Slides",
+            "labels": ["Remove from screen"],
+            "personOnly": "puts content on the screens or takes it off; the person presents"
+        },
+        {
+            "id": "slide-fix-dimension",
+            "surface": "Slides",
+            "labels": ["Fix slide dimension"]
+        },
+        {
+            "id": "atom-mode",
+            "surface": "Slides",
+            "labels": ["Atom Mode"]
+        },
+        {
+            "id": "stage-add",
+            "surface": "Slides",
+            "labels": ["Add Stage"],
+            "aliases": ["Stage", "Base Stage"]
+        },
+        {
+            "id": "stage-style",
+            "surface": "Slides",
+            "labels": [
+                "Stage Style",
+                "Slide Margin (%)",
+                "Horizontal Margin (%)",
+                "Vertical Margin (%)",
+                "Link horizontal and vertical margin",
+                "Background Opacity (%)",
+                "Extra Font Size",
+                "Theme"
+            ]
+        },
+        {
+            "id": "stage-css",
+            "surface": "Slides",
+            "labels": ["Custom CSS", "Edit a copy of the stage's CSS"]
+        },
+        {
+            "id": "stage-reset",
+            "surface": "Slides",
+            "labels": ["Reset Stage Style"],
+            "aliases": ["Reset"],
+            "search": ["stage style"]
+        },
+        {
+            "id": "edit-undo",
+            "surface": "Slides",
+            "labels": ["Undo", "Redo"],
+            "search": ["undo"]
+        },
+        {
+            "id": "edit-save",
+            "surface": "Slides",
+            "labels": ["Save"],
+            "strict": true,
+            "tips": ["presenter-slide-editor-window"]
+        },
+        {
+            "id": "edit-discard",
+            "surface": "Slides",
+            "labels": ["Discard changed"],
+            "personOnly": "throws away the unsaved changes; the person decides"
+        },
+        {
+            "id": "slide-note",
+            "surface": "Slides",
+            "labels": ["Document Note", "Slide Notes", "Enter your note here"],
+            "aliases": ["Slide Note", "Note"]
+        },
+        {
+            "id": "preview-width",
+            "surface": "Slides",
+            "labels": ["Full Width", "Not Full Width"],
+            "aliases": ["On Screen Width:"]
+        },
+        {
+            "id": "docx-background",
+            "surface": "Slides",
+            "labels": ["Choose DOCX Preview Background (right click to clear)"],
+            "aliases": ["Preview BG:"],
+            "tips": ["presenter-office-files"],
+            "search": ["DOCX"]
+        },
+        {
+            "id": "bible-add-extra",
+            "surface": "Bible pane",
+            "labels": ["Add Extra Bible"]
+        },
+        {
+            "id": "bible-change-key",
+            "surface": "Bible pane",
+            "labels": ["Change Bible Key"]
+        },
+        {
+            "id": "bible-header-reference",
+            "surface": "Bible pane",
+            "labels": ["Verse Start", "Verse End"],
+            "aliases": ["Book", "Chapter"]
+        },
+        {
+            "id": "bible-verse-number",
+            "surface": "Bible pane",
+            "labels": [
+                "Click to reveal the bible notes of this verse, double click to select verse"
+            ],
+            "aliases": ["Click on verse to highlight"],
+            "tips": ["presenter-bible-passage"],
+            "search": ["verse number"]
+        },
+        {
+            "id": "bible-rest-verses",
+            "surface": "Bible pane",
+            "labels": ["Double click to select verses"]
+        },
+        {
+            "id": "bible-split-to",
+            "surface": "Bible pane",
+            "labels": ["Split Horizontal to", "Split Vertical to"]
+        },
+        {
+            "id": "bible-split",
+            "surface": "Bible pane",
+            "labels": ["Split Horizontal", "Split Vertical"],
+            "press": ["Ctrl+Shift+S", "Ctrl+Shift+V"]
+        },
+        {
+            "id": "bible-save",
+            "surface": "Bible pane",
+            "labels": ["Save bible item"],
+            "press": ["Ctrl+Enter"]
+        },
+        {
+            "id": "bible-save-show",
+            "surface": "Bible pane",
+            "labels": ["Save bible item and show on screen"],
+            "personOnly": "puts content on the screens or takes it off; the person presents"
+        },
+        {
+            "id": "bible-export-word",
+            "surface": "Bible pane",
+            "labels": ["Export to MS Word"],
+            "search": ["Word"],
+            "personOnly": "chooses where to save a file"
+        },
+        {
+            "id": "bible-ask-passage",
+            "surface": "Bible pane",
+            "labels": [
+                "Ask the Assistant About This Passage",
+                "Ask the Assistant About This Verse"
+            ],
+            "personOnly": "asks the AI caution first, which only the person answers"
+        },
+        {
+            "id": "bible-close",
+            "surface": "Bible pane",
+            "labels": ["Bible > Close"],
+            "strict": true,
+            "aliases": ["Close"],
+            "tips": ["presenter-edit-passages"]
+        },
+        {
+            "id": "bible-font-size",
+            "surface": "Bible pane",
+            "labels": ["Bible > Font Size"],
+            "search": ["font"]
+        },
+        {
+            "id": "bible-line-breaks",
+            "surface": "Bible pane",
+            "labels": [
+                "Should New Lines",
+                "Break lines following model formatting"
+            ],
+            "aliases": ["Break lines following bible info"]
+        },
+        {
+            "id": "bible-model-info",
+            "surface": "Bible pane",
+            "labels": ["Change Bible Model Info"]
+        },
+        {
+            "id": "bible-full",
+            "surface": "Bible pane",
+            "labels": ["Full", "Toggle Widget Full View"],
+            "strict": true,
+            "tips": ["presenter-bible-passage"]
+        },
+        {
+            "id": "bible-floating",
+            "surface": "Bible pane",
+            "labels": ["Floating"]
+        },
+        {
+            "id": "bible-more",
+            "surface": "Bible pane",
+            "labels": ["Bible > More Options"]
+        },
+        {
+            "id": "footer-reveal",
+            "surface": "Bible pane",
+            "labels": ["Reveal Hidden Controls"]
+        },
+        {
+            "id": "bible-edit-title",
+            "surface": "Bible pane",
+            "labels": ["Click to edit this section"],
+            "aliases": ["Hit \"Escape\" to jump back to editing input"]
+        },
+        {
+            "id": "lookup-reference",
+            "surface": "Bible Lookup",
+            "labels": ["Bible Reference"],
+            "search": ["reference"]
+        },
+        {
+            "id": "lookup-clear",
+            "surface": "Bible Lookup",
+            "labels": ["Clear input"],
+            "press": ["Shift+Escape"]
+        },
+        {
+            "id": "lookup-clear-chunk",
+            "surface": "Bible Lookup",
+            "labels": ["Clear input chunk"],
+            "press": ["Escape"]
+        },
+        {
+            "id": "lookup-tab",
+            "surface": "Bible Lookup",
+            "labels": ["Tab to complete"],
+            "press": ["Tab"]
+        },
+        {
+            "id": "lookup-version",
+            "surface": "Bible Lookup",
+            "labels": ["KJV"],
+            "aliases": ["English KJV"],
+            "search": ["version"]
+        },
+        {
+            "id": "lookup-add-bible",
+            "surface": "Bible Lookup",
+            "labels": ["Add New Bible"]
+        },
+        {
+            "id": "lookup-verses",
+            "surface": "Bible Lookup",
+            "labels": ["Show all verses"],
+            "aliases": ["Verse"]
+        },
+        {
+            "id": "lookup-previous",
+            "surface": "Bible Lookup",
+            "labels": ["Previous"],
+            "strict": true,
+            "tips": ["presenter-bible-lookup"]
+        },
+        {
+            "id": "lookup-next",
+            "surface": "Bible Lookup",
+            "labels": ["Next"],
+            "strict": true,
+            "tips": ["presenter-bible-lookup"]
+        },
+        {
+            "id": "lookup-keep-open",
+            "surface": "Bible Lookup",
+            "labels": ["Keep Open"]
+        },
+        {
+            "id": "lookup-full-preview",
+            "surface": "Bible Lookup",
+            "labels": ["Full size preview"]
+        },
+        {
+            "id": "lookup-insert-slide",
+            "surface": "Bible Lookup",
+            "labels": ["Insert bible item into selected slide"]
+        },
+        {
+            "id": "lookup-history-open",
+            "surface": "Bible Lookup",
+            "labels": ["Click to open the verse"]
+        },
+        {
+            "id": "lookup-history-menu",
+            "surface": "Bible Lookup",
+            "labels": [
+                "Open beside the current verse",
+                "Set to current editing"
+            ]
+        },
+        {
+            "id": "lookup-history-remove",
+            "surface": "Bible Lookup",
+            "labels": ["Remove"],
+            "strict": true,
+            "tips": ["presenter-remove-saved"]
+        },
+        {
+            "id": "lookup-close",
+            "surface": "Bible Lookup",
+            "labels": ["Bible Lookup > Close"],
+            "strict": true,
+            "press": ["Ctrl+Q"],
+            "tips": ["presenter-bible-lookup"]
+        },
+        {
+            "id": "lookup-reader-tools",
+            "surface": "Bible Lookup",
+            "labels": [
+                "Names and locations lookup",
+                "Names and locations language",
+                "Wiki Dictionary",
+                "Open Wiki Dictionary",
+                "English",
+                "Advance Bible Lookup",
+                "Advance Lookup",
+                "Bible Online Lookup",
+                "Cross Reference",
+                "AI Cross References",
+                "Custom OpenAI",
+                "Custom Anthropic",
+                "Toggle Bible Audio",
+                "Sync group scrolling",
+                "Search in Bible Search"
+            ],
+            "aliases": [
+                "Disable group sync scrolling",
+                "Enable group sync scrolling"
+            ],
+            "exclude": "the lookup popup's study tools are the Reader's own RenderBibleLookupComp, measured and taught in the Reader inventory (TP-11); the Presenter keeps the jobs the popup is opened for"
+        },
+        {
+            "id": "bibles-add-item",
+            "surface": "Bible lists",
+            "labels": ["Add Bible Item"]
+        },
+        {
+            "id": "bibles-open",
+            "surface": "Bible lists",
+            "labels": ["Lookup", "Open"],
+            "strict": true,
+            "tips": ["presenter-saved-passages"]
+        },
+        {
+            "id": "bibles-generate-slides",
+            "surface": "Bible lists",
+            "labels": ["Generate Slides"]
+        },
+        {
+            "id": "bibles-create-lyric",
+            "surface": "Bible lists",
+            "labels": ["Create Lyric"]
+        },
+        {
+            "id": "bibles-move-to",
+            "surface": "Bible lists",
+            "labels": ["Move To"]
+        },
+        {
+            "id": "bibles-list-items",
+            "surface": "Bible lists",
+            "labels": ["Copy All Items", "Move All Items To"]
+        },
+        {
+            "id": "bibles-empty",
+            "surface": "Bible lists",
+            "labels": ["Empty"],
+            "strict": true,
+            "personOnly": "removes every passage from the list",
+            "tips": ["presenter-bibles-file-actions"]
+        },
+        {
+            "id": "notes-new-item",
+            "surface": "Bible lists",
+            "labels": ["New Note Item"]
+        },
+        {
+            "id": "notes-open",
+            "surface": "Bible lists",
+            "labels": ["Double click to open note"],
+            "aliases": ["Open BibleNote"]
+        },
+        {
+            "id": "notes-edit-title",
+            "surface": "Bible lists",
+            "labels": ["Edit Title"]
+        },
+        {
+            "id": "notes-verse-drag",
+            "surface": "Bible lists",
+            "labels": ["Drag to the Bible list, or to another note file"],
+            "tips": ["presenter-saved-passages"],
+            "search": ["drag"]
+        },
+        {
+            "id": "notes-add-to-bibles",
+            "surface": "Bible lists",
+            "labels": ["Add to Bible List"]
+        },
+        {
+            "id": "notes-edit-comment",
+            "surface": "Bible lists",
+            "labels": ["Edit Comment"]
+        },
+        {
+            "id": "bg-colors",
+            "surface": "Background",
+            "labels": ["Colors"]
+        },
+        {
+            "id": "bg-images",
+            "surface": "Background",
+            "labels": ["Images"]
+        },
+        {
+            "id": "bg-videos",
+            "surface": "Background",
+            "labels": ["Videos"]
+        },
+        {
+            "id": "bg-cameras",
+            "surface": "Background",
+            "labels": ["Cameras"],
+            "search": ["camera"]
+        },
+        {
+            "id": "bg-webs",
+            "surface": "Background",
+            "labels": ["Webs"]
+        },
+        {
+            "id": "bg-audios",
+            "surface": "Background",
+            "labels": ["Audios"],
+            "search": ["audio"]
+        },
+        {
+            "id": "bg-custom-color",
+            "surface": "Background",
+            "labels": ["Select custom color", "Copy Color"],
+            "aliases": ["Mix Color:", "Collapse"]
+        },
+        {
+            "id": "bg-thumbnails",
+            "surface": "Background",
+            "labels": ["Thumbnail Size", "Thumbnail View", "List View"],
+            "search": ["thumbnail"]
+        },
+        {
+            "id": "bg-video-fade",
+            "surface": "Background",
+            "labels": ["Toggle Fading at End"],
+            "aliases": [
+                "Whether this video fades out as it ends",
+                "Fading at the End",
+                "Video will fade at the end while screen rendering."
+            ]
+        },
+        {
+            "id": "bg-web-add",
+            "surface": "Background",
+            "labels": ["Add URL", "Edit this web file", "Copy URL to Clipboard"]
+        },
+        {
+            "id": "bg-web-remove",
+            "surface": "Background",
+            "labels": ["Remove URL"]
+        },
+        {
+            "id": "bg-audio-document",
+            "surface": "Background",
+            "labels": ["Document Audios"]
+        },
+        {
+            "id": "bg-audio-repeat",
+            "surface": "Background",
+            "labels": ["Repeat this audio"]
+        },
+        {
+            "id": "fg-messages",
+            "surface": "Foreground",
+            "labels": ["Messages"]
+        },
+        {
+            "id": "fg-marquee-top",
+            "surface": "Foreground",
+            "labels": ["Marquee Top"]
+        },
+        {
+            "id": "fg-marquee-bottom",
+            "surface": "Foreground",
+            "labels": ["Marquee Bottom"]
+        },
+        {
+            "id": "fg-quick-text",
+            "surface": "Foreground",
+            "labels": ["Quick Text"]
+        },
+        {
+            "id": "fg-long-text",
+            "surface": "Foreground",
+            "labels": ["Long Text Show"]
+        },
+        {
+            "id": "fg-countdown",
+            "surface": "Foreground",
+            "labels": ["Countdown"]
+        },
+        {
+            "id": "fg-stopwatch",
+            "surface": "Foreground",
+            "labels": ["Stopwatch"]
+        },
+        {
+            "id": "fg-time",
+            "surface": "Foreground",
+            "labels": ["Time"],
+            "strict": true
+        },
+        {
+            "id": "fg-video",
+            "surface": "Foreground",
+            "labels": ["Video Show"]
+        },
+        {
+            "id": "fg-image",
+            "surface": "Foreground",
+            "labels": ["Image Show"]
+        },
+        {
+            "id": "fg-camera",
+            "surface": "Foreground",
+            "labels": ["Camera Show"]
+        },
+        {
+            "id": "fg-screen",
+            "surface": "Foreground",
+            "labels": ["Screen Show"]
+        },
+        {
+            "id": "fg-web",
+            "surface": "Foreground",
+            "labels": ["Web Show"]
+        },
+        {
+            "id": "fg-show",
+            "surface": "Foreground",
+            "labels": [
+                "Show on Screens",
+                "Show Countdown",
+                "Show Stopwatch",
+                "Show Time",
+                "Show Marquee Top",
+                "Show Marquee Bottom",
+                "Show Quick Text",
+                "Show Message",
+                "Show All Messages",
+                "Show Long Text"
+            ],
+            "personOnly": "puts content on the screens or takes it off; the person presents"
+        },
+        {
+            "id": "fg-transition",
+            "surface": "Foreground",
+            "labels": ["Own transition", "Follows"],
+            "aliases": [
+                "Transition for all sessions",
+                "No Transition",
+                "Fade",
+                "Slide In",
+                "Zoom"
+            ]
+        },
+        {
+            "id": "fg-properties",
+            "surface": "Foreground",
+            "labels": ["Properties"]
+        },
+        {
+            "id": "fg-position",
+            "surface": "Foreground",
+            "labels": ["Position", "Position offset in pixels"],
+            "aliases": [
+                "Top left",
+                "Top center",
+                "Top right",
+                "Middle left",
+                "Middle center",
+                "Middle right",
+                "Bottom left",
+                "Bottom center",
+                "Bottom right",
+                "X",
+                "Y"
+            ]
+        },
+        {
+            "id": "fg-width",
+            "surface": "Foreground",
+            "labels": ["Width (%)"]
+        },
+        {
+            "id": "fg-scale",
+            "surface": "Foreground",
+            "labels": ["Scale"]
+        },
+        {
+            "id": "fg-opacity",
+            "surface": "Foreground",
+            "labels": ["Opacity (%)"]
+        },
+        {
+            "id": "fg-layer",
+            "surface": "Foreground",
+            "labels": ["Behind Slide", "Always on Top", "Z-Index"],
+            "aliases": [
+                "Show behind the slide and the Bible text, over the background"
+            ]
+        },
+        {
+            "id": "fg-font",
+            "surface": "Foreground",
+            "labels": ["Font size in pixels", "Font Family", "Font Weight"],
+            "aliases": ["Font", "Font Size"]
+        },
+        {
+            "id": "fg-backdrop",
+            "surface": "Foreground",
+            "labels": ["Backdrop Filter"],
+            "aliases": ["Blur"]
+        },
+        {
+            "id": "fg-colors",
+            "surface": "Foreground",
+            "labels": ["Text Color", "Background Color"]
+        },
+        {
+            "id": "fg-effects-box",
+            "surface": "Foreground",
+            "labels": [
+                "Effects",
+                "Round",
+                "Border",
+                "Border Width",
+                "Border Color",
+                "Shadow",
+                "Shadow Color",
+                "Padding"
+            ],
+            "aliases": [
+                "Space inside the box, in text sizes",
+                "None",
+                "Solid",
+                "Dashed",
+                "Dotted",
+                "Double",
+                "Soft",
+                "Medium",
+                "Strong"
+            ]
+        },
+        {
+            "id": "fg-effects-text",
+            "surface": "Foreground",
+            "labels": [
+                "Line Height",
+                "Letter Spacing",
+                "Text Shadow",
+                "Text Shadow Color",
+                "Underline",
+                "Uppercase"
+            ],
+            "aliases": [
+                "0 keeps the screen line spacing",
+                "Makes words readable over a picture or a video"
+            ]
+        },
+        {
+            "id": "text-align",
+            "surface": "Foreground",
+            "labels": [
+                "Text Align",
+                "Align left",
+                "Align center",
+                "Align right",
+                "Justify"
+            ]
+        },
+        {
+            "id": "text-style",
+            "surface": "Foreground",
+            "labels": ["Text Style", "Bold", "Italic"]
+        },
+        {
+            "id": "fg-countdown-datetime",
+            "surface": "Foreground",
+            "labels": [
+                "Countdown Date",
+                "Countdown Time",
+                "Reset Date and Time to Now",
+                "Start Countdown to DateTime"
+            ],
+            "aliases": ["Count down to a specific date & time"]
+        },
+        {
+            "id": "fg-countdown-duration",
+            "surface": "Foreground",
+            "labels": ["Hours", "Minutes", "Seconds"],
+            "aliases": ["Count down for a duration"]
+        },
+        {
+            "id": "fg-timer-controls",
+            "surface": "Foreground",
+            "labels": ["Auto-start", "Pause"],
+            "aliases": [
+                "Start counting as soon as it is shown",
+                "Pause counting"
+            ]
+        },
+        {
+            "id": "fg-stopwatch-history",
+            "surface": "Foreground",
+            "labels": ["History", "Clear stopwatch history"],
+            "aliases": ["Clear", "Count up from zero"]
+        },
+        {
+            "id": "fg-time-zone",
+            "surface": "Foreground",
+            "labels": [
+                "Use Current Timezone",
+                "Choose City",
+                "Timezone Hour Offset"
+            ],
+            "aliases": [
+                "UTC Offset",
+                "Use this device’s timezone",
+                "Pick a city to set its timezone"
+            ]
+        },
+        {
+            "id": "fg-time-label",
+            "surface": "Foreground",
+            "labels": ["Label shown above the time"],
+            "aliases": ["City"]
+        },
+        {
+            "id": "fg-time-ampm",
+            "surface": "Foreground",
+            "labels": ["AM/PM"]
+        },
+        {
+            "id": "fg-time-add",
+            "surface": "Foreground",
+            "labels": ["Add Time"]
+        },
+        {
+            "id": "fg-marquee-size",
+            "surface": "Foreground",
+            "labels": ["Quick font size"]
+        },
+        {
+            "id": "fg-marquee-speed",
+            "surface": "Foreground",
+            "labels": ["Quick scroll speed"],
+            "aliases": ["Speed"]
+        },
+        {
+            "id": "fg-marquee-date",
+            "surface": "Foreground",
+            "labels": ["Today's Date"]
+        },
+        {
+            "id": "fg-saved-sessions",
+            "surface": "Foreground",
+            "labels": [
+                "Save the current text as a session",
+                "Pick a previously saved session",
+                "Saved"
+            ],
+            "search": ["saved"]
+        },
+        {
+            "id": "fg-saved-delete",
+            "surface": "Foreground",
+            "labels": ["Delete this saved session"]
+        },
+        {
+            "id": "fg-quick-timing",
+            "surface": "Foreground",
+            "labels": ["Delay", "Live"],
+            "aliases": [
+                "Seconds to wait before showing the text",
+                "Seconds the text stays on screen"
+            ]
+        },
+        {
+            "id": "fg-quick-markdown",
+            "surface": "Foreground",
+            "labels": ["Markdown"],
+            "aliases": ["Leave a markdown text here"]
+        },
+        {
+            "id": "fg-message-add",
+            "surface": "Foreground",
+            "labels": ["Add Message", "Type a message"]
+        },
+        {
+            "id": "fg-message-rotate",
+            "surface": "Foreground",
+            "labels": ["Rotate"],
+            "aliases": [
+                "Show each message in turn",
+                "Seconds each message stays before the next"
+            ]
+        },
+        {
+            "id": "fg-message-remove",
+            "surface": "Foreground",
+            "labels": ["Remove Message"]
+        },
+        {
+            "id": "fg-longtext-language",
+            "surface": "Foreground",
+            "labels": ["Add Language", "Choose Language"]
+        },
+        {
+            "id": "fg-longtext-remove-language",
+            "surface": "Foreground",
+            "labels": ["Remove Language"]
+        },
+        {
+            "id": "fg-longtext-source",
+            "surface": "Foreground",
+            "labels": ["Raw Text", "Lyric File", "Choose Lyric"],
+            "aliases": ["Source"]
+        },
+        {
+            "id": "fg-longtext-layout",
+            "surface": "Foreground",
+            "labels": ["Stack", "Hide Number", "View as Text Cards"]
+        },
+        {
+            "id": "fg-longtext-sections",
+            "surface": "Foreground",
+            "labels": ["Add Section", "Type a section", "Bring to Middle"],
+            "aliases": ["Title"]
+        },
+        {
+            "id": "fg-video-sound",
+            "surface": "Foreground",
+            "labels": ["Play With Sound", "Volume"]
+        },
+        {
+            "id": "fg-blend",
+            "surface": "Foreground",
+            "labels": ["Blend Mode"],
+            "aliases": ["Normal", "Screen Blend"]
+        },
+        {
+            "id": "fg-slideshow",
+            "surface": "Foreground",
+            "labels": ["Slide Show", "Start Slide Show", "Stop Slide Show"],
+            "aliases": ["Next In"]
+        },
+        {
+            "id": "fg-slideshow-options",
+            "surface": "Foreground",
+            "labels": [
+                "Slide Show Options",
+                "Repeat All",
+                "Step",
+                "Jumping Step",
+                "Random Up To",
+                "Wait Until The Video Ends"
+            ],
+            "aliases": [
+                "Close Slide Show Options",
+                "A New Wait Is Drawn For Each Slide",
+                "Random Up To Seconds"
+            ]
+        },
+        {
+            "id": "screen-toggle",
+            "surface": "Mini Screen",
+            "labels": ["Toggle showing screen"],
+            "press": ["F5"],
+            "personOnly": "puts content on the screens or takes it off; the person presents"
+        },
+        {
+            "id": "screen-clear",
+            "surface": "Mini Screen",
+            "labels": [
+                "Clear All",
+                "Clear Background",
+                "Clear Slide",
+                "Clear Long Text",
+                "Clear Foreground"
+            ],
+            "press": ["F6", "F7", "F8", "F9", "F10"],
+            "personOnly": "puts content on the screens or takes it off; the person presents"
+        },
+        {
+            "id": "screen-preview-stop",
+            "surface": "Mini Screen",
+            "labels": ["Stop rendering preview"],
+            "aliases": ["No rendering"]
+        },
+        {
+            "id": "screen-lock",
+            "surface": "Mini Screen",
+            "labels": ["Lock", "Unlock"],
+            "aliases": ["Unlock the screen to change what it shows"]
+        },
+        {
+            "id": "screen-display",
+            "surface": "Mini Screen",
+            "labels": ["Manage Virtual Displays"],
+            "aliases": ["Display"]
+        },
+        {
+            "id": "screen-transition",
+            "surface": "Mini Screen",
+            "labels": [
+                "Transition",
+                "Slide transition",
+                "Background transition",
+                "Foreground transition"
+            ],
+            "aliases": ["Slide"]
+        },
+        {
+            "id": "screen-stage",
+            "surface": "Mini Screen",
+            "labels": ["Click to change Stage Number", "Increment", "Decrement"]
+        },
+        {
+            "id": "screen-card-more",
+            "surface": "Mini Screen",
+            "labels": ["Mini Screen > More Options", "Solo", "Deselect"]
+        },
+        {
+            "id": "screen-refresh",
+            "surface": "Mini Screen",
+            "labels": ["Refresh Preview"]
+        },
+        {
+            "id": "mini-options",
+            "surface": "Mini Screen",
+            "labels": ["Mini Screen Options"]
+        },
+        {
+            "id": "mini-add-screen",
+            "surface": "Mini Screen",
+            "labels": ["Add New Screen"]
+        },
+        {
+            "id": "mini-wallpaper",
+            "surface": "Mini Screen",
+            "labels": ["Show Monitor Wallpaper"]
+        },
+        {
+            "id": "mini-preview-size",
+            "surface": "Mini Screen",
+            "labels": ["Preview Size Scale"]
+        },
+        {
+            "id": "mini-guests",
+            "surface": "Mini Screen",
+            "labels": ["Connected guests"]
+        },
+        {
+            "id": "mini-audio-handlers",
+            "surface": "Mini Screen",
+            "labels": ["Enable Background Audio Handlers"]
+        },
+        {
+            "id": "draw-switch",
+            "surface": "Mini Screen",
+            "labels": [
+                "Enable Drawing",
+                "Disable Drawing",
+                "Choose Drawing or Focusing"
+            ],
+            "aliases": [
+                "Drawing",
+                "Focusing",
+                "Enable Focusing",
+                "Disable Focusing"
+            ]
+        },
+        {
+            "id": "draw-pen",
+            "surface": "Mini Screen",
+            "labels": ["Stroke style", "Size", "Color", "Opacity"],
+            "aliases": ["Straight", "3D", "Dots"]
+        },
+        {
+            "id": "draw-quality",
+            "surface": "Mini Screen",
+            "labels": ["Toggle drawing quality", "Reset settings"],
+            "search": ["drawing"]
+        },
+        {
+            "id": "draw-eraser",
+            "surface": "Mini Screen",
+            "labels": ["Manual eraser"]
+        },
+        {
+            "id": "draw-clear",
+            "surface": "Mini Screen",
+            "labels": ["Clear drawing"]
+        },
+        {
+            "id": "focus-tools",
+            "surface": "Mini Screen",
+            "labels": [
+                "Spotlight size",
+                "Dim color",
+                "Dim the rest of the screen",
+                "Spotlight edge blur (0 = hard edge)",
+                "Contrast"
+            ]
+        },
+        {
+            "id": "bible-props-open",
+            "surface": "Mini Screen",
+            "labels": ["Bible/LongText Properties"]
+        },
+        {
+            "id": "vsm-open",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Virtual Screens Manager"]
+        },
+        {
+            "id": "vsm-tabs",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Screen Mirror Connection", "Virtual Displays"]
+        },
+        {
+            "id": "vsm-mirror",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Let other computers connect", "Open to the internet"],
+            "personOnly": "opens this computer to other computers; the person decides"
+        },
+        {
+            "id": "vsm-guests",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Allow connection", "Reject connection", "Disconnect"],
+            "personOnly": "answers another computer; the person decides"
+        },
+        {
+            "id": "vsm-watch",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Let other devices watch", "Use HTTPS"],
+            "personOnly": "opens the displays to other devices on the network; the person decides"
+        },
+        {
+            "id": "vsm-add-display",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Add Virtual Display"],
+            "personOnly": "adds a display that only Delete Virtual Display takes back"
+        },
+        {
+            "id": "vd-resolution",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Resolution", "Apply"],
+            "aliases": ["Name", "Custom", "Width", "Height"]
+        },
+        {
+            "id": "vd-wallpaper",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Wallpaper"],
+            "aliases": ["None (black)", "Image", "Video"]
+        },
+        {
+            "id": "vd-choose-file",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Choose File"],
+            "personOnly": "chooses a file"
+        },
+        {
+            "id": "vd-address",
+            "surface": "Virtual Screens Manager",
+            "labels": [
+                "Copy address",
+                "QR code",
+                "Watch in a browser",
+                "More addresses",
+                "Video for media players (MP4)"
+            ],
+            "aliases": ["Where to watch"]
+        },
+        {
+            "id": "vd-interaction",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Allow interaction", "Allow again"],
+            "aliases": ["Lets this viewer scroll and pick verses in the app"]
+        },
+        {
+            "id": "vd-preview",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Preview"],
+            "strict": true,
+            "tips": ["presenter-virtual-display-card"]
+        },
+        {
+            "id": "vd-settings",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Settings"],
+            "strict": true,
+            "tips": ["presenter-virtual-display-card"]
+        },
+        {
+            "id": "vd-delete",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Delete Virtual Display"]
+        },
+        {
+            "id": "vd-cast",
+            "surface": "Virtual Screens Manager",
+            "labels": ["Cast to a TV", "Search again", "Cast", "Stop"],
+            "personOnly": "sends a display to a TV; the person decides"
+        },
+        {
+            "id": "text-background",
+            "surface": "Bible/LongText Properties",
+            "labels": [
+                "Light words for a dark background",
+                "Dark words for a light background"
+            ],
+            "aliases": ["Dark", "Light"]
+        },
+        {
+            "id": "text-presets",
+            "surface": "Bible/LongText Properties",
+            "labels": ["Presets", "Save as Preset"],
+            "aliases": [
+                "Thin Outline",
+                "Heavy Outline",
+                "Soft Shadow",
+                "Deep Shadow",
+                "Hard Shadow",
+                "Lifted",
+                "Haze",
+                "Halo",
+                "Blue Edge"
+            ]
+        },
+        {
+            "id": "text-preset-menu",
+            "surface": "Bible/LongText Properties",
+            "labels": ["Rename Preset", "Replace with Current Look"],
+            "search": ["preset"]
+        },
+        {
+            "id": "text-preset-remove",
+            "surface": "Bible/LongText Properties",
+            "labels": ["Remove Preset"]
+        },
+        {
+            "id": "text-highlight",
+            "surface": "Bible/LongText Properties",
+            "labels": [
+                "Highlight Color",
+                "Highlight on Dark",
+                "Highlight on Light"
+            ]
+        },
+        {
+            "id": "text-outline",
+            "surface": "Bible/LongText Properties",
+            "labels": ["Outline", "Outline Color"]
+        },
+        {
+            "id": "text-shadow",
+            "surface": "Bible/LongText Properties",
+            "labels": [
+                "Shadow Blur",
+                "Shadow Offset X",
+                "Shadow Offset Y",
+                "A CSS text-shadow of your own"
+            ]
+        },
+        {
+            "id": "text-glow",
+            "surface": "Bible/LongText Properties",
+            "labels": ["Glow", "Glow Color"]
+        },
+        {
+            "id": "text-reset",
+            "surface": "Bible/LongText Properties",
+            "labels": ["Plain words again; the size stays"]
+        },
+        {
+            "id": "flow-preview",
+            "surface": "Presenting flows",
+            "labels": ["Preview Presenting Flow", "Open Preview"]
+        },
+        {
+            "id": "flow-add-action",
+            "surface": "Presenting flows",
+            "labels": ["Add Action"]
+        },
+        {
+            "id": "flow-screen-pin",
+            "surface": "Presenting flows",
+            "labels": ["Set Specific Screen", "No Specific Screen"]
+        },
+        {
+            "id": "flow-cc",
+            "surface": "Presenting flows",
+            "labels": [
+                "Add CC Elements",
+                "Add Media Control",
+                "Media Control Settings",
+                "Use Element Timing"
+            ]
+        },
+        {
+            "id": "flow-cc-remove",
+            "surface": "Presenting flows",
+            "labels": ["Remove CC Element"]
+        },
+        {
+            "id": "flow-remove",
+            "surface": "Presenting flows",
+            "labels": ["Remove from Presenting Flow"]
+        },
+        {
+            "id": "flow-preview-tools",
+            "surface": "Presenting flows",
+            "labels": ["Collapse All", "Expand All", "Stop Auto Next"]
+        },
+        {
+            "id": "flow-arming",
+            "surface": "Presenting flows",
+            "labels": ["At Time", "Shortcut", "Press a shortcut"]
+        },
+        {
+            "id": "flow-media-dialog",
+            "surface": "Presenting flows",
+            "labels": [
+                "Set Volume",
+                "Set Speed",
+                "At Media Time",
+                "Then Pause"
+            ],
+            "aliases": ["Action", "Never", "After"]
+        },
+        {
+            "id": "pc-start",
+            "surface": "Presenting Control",
+            "labels": ["Start Controlling"],
+            "press": ["Ctrl+Shift+P"],
+            "aliases": ["Presenting Control", "Presenting tool"]
+        },
+        {
+            "id": "pc-modes",
+            "surface": "Presenting Control",
+            "labels": [
+                "Use the app (drawing stays on top)",
+                "Draw on the app",
+                "Erase parts of the drawing",
+                "Spotlight part of the app"
+            ]
+        },
+        {
+            "id": "pc-screencast",
+            "surface": "Presenting Control",
+            "labels": ["Keyboard screencast"],
+            "aliases": ["Show the keys being pressed"]
+        },
+        {
+            "id": "pc-history",
+            "surface": "Presenting Control",
+            "labels": ["Drawing history"]
+        },
+        {
+            "id": "pc-picture",
+            "surface": "Presenting Control",
+            "labels": ["Take a picture of the app", "Save into your images"]
+        },
+        {
+            "id": "pc-picture-ask",
+            "surface": "Presenting Control",
+            "labels": ["Ask the assistant about this"],
+            "personOnly": "asks the AI caution first, which only the person answers"
+        },
+        {
+            "id": "pc-focus",
+            "surface": "Presenting Control",
+            "labels": ["Dim the rest of the app", "Hold to spotlight"]
+        },
+        {
+            "id": "tips-card",
+            "surface": "Tips card",
+            "labels": ["Search tips", "Show it", "Next tip", "Back to tip"],
+            "aliases": ["This tip closes by itself"],
+            "search": ["tips"]
+        },
+        {
+            "id": "tips-hide",
+            "surface": "Tips card",
+            "labels": ["Hide for 30 days"],
+            "personOnly": "puts the automatic tips away for 30 days; the person decides"
+        },
+        {
+            "id": "menu-print",
+            "surface": "Native menus",
+            "labels": ["File > Print", "File > Print Without Preview"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-export-data",
+            "surface": "Native menus",
+            "labels": ["File > Export Data"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-import-data",
+            "surface": "Native menus",
+            "labels": ["File > Import Data"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-exit",
+            "surface": "Native menus",
+            "labels": ["File > Exit"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-undo",
+            "surface": "Native menus",
+            "labels": ["Edit > Undo", "Edit > Redo"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-clipboard",
+            "surface": "Native menus",
+            "labels": [
+                "Edit > Cut",
+                "Edit > Copy",
+                "Edit > Paste",
+                "Edit > Select All"
+            ],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-find",
+            "surface": "Native menus",
+            "labels": ["Edit > Find"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-settings",
+            "surface": "Native menus",
+            "labels": ["Edit > Settings"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-reload",
+            "surface": "Native menus",
+            "labels": ["View > Reload", "View > Force Reload"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-relaunch",
+            "surface": "Native menus",
+            "labels": ["View > Relaunch"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-devtools",
+            "surface": "Native menus",
+            "labels": ["View > Toggle Developer Tools"],
+            "exclude": "a developer tool, not a volunteer task; the main process refuses it to every agent"
+        },
+        {
+            "id": "menu-zoom",
+            "surface": "Native menus",
+            "labels": [
+                "View > Actual Size",
+                "View > Zoom In",
+                "View > Zoom Out"
+            ],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-fullscreen",
+            "surface": "Native menus",
+            "labels": ["View > Toggle Full Screen"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-widgets",
+            "surface": "Native menus",
+            "labels": ["View > Widgets"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-reset-widgets",
+            "surface": "Native menus",
+            "labels": ["View > Reset Widgets Size"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-web-share",
+            "surface": "Native menus",
+            "labels": ["Tools > Local Web Share"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-google-fonts",
+            "surface": "Native menus",
+            "labels": ["Tools > Google Fonts"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-khmer-tools",
+            "surface": "Native menus",
+            "labels": ["Tools > Khmer Tools"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-start-controlling",
+            "surface": "Native menus",
+            "labels": ["Tools > Start Controlling"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-window",
+            "surface": "Native menus",
+            "labels": [
+                "Window > Minimize",
+                "Window > Zoom",
+                "Window > Reset Position and Size"
+            ],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-tips",
+            "surface": "Native menus",
+            "labels": ["Help > Tips of the Day", "Help > All tips"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-shortcuts",
+            "surface": "Native menus",
+            "labels": ["Help > Keyboard Shortcuts"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-debug-info",
+            "surface": "Native menus",
+            "labels": ["Help > Copy Debug Info", "Help > Copy Full Debug Info"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-learn-more",
+            "surface": "Native menus",
+            "labels": ["Help > Learn More"],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-updates",
+            "surface": "Native menus",
+            "labels": [
+                "Help > Check for Updates",
+                "Help > Check for Updates Online"
+            ],
+            "personOnly": "native menu"
+        },
+        {
+            "id": "menu-about",
+            "surface": "Native menus",
+            "labels": ["Help > About Open Worship app"],
+            "personOnly": "native menu"
+        }
+    ]
+}
