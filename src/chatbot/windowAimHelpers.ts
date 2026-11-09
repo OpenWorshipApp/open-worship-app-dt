@@ -271,6 +271,46 @@ export function toNoteWindowAim(
 }
 
 /**
+ * The window a TAB works in, as **Working in** says: the window of the note
+ * it is on, else the window chosen for it, else the one window of the kind
+ * it asks about when that is a popup (`null` for no kind: a tab only
+ * FOLLOWING the window it was opened from). `null` for the main window.
+ */
+export function toTabWindowAim(
+    noteTarget: NoteWindowTargetType | null | undefined,
+    chosenWindowId: string | null | undefined,
+    focus: BotFocusType | null,
+    windowList: readonly AppWindowType[],
+): WindowAimType | null {
+    return (
+        toNoteWindowAim(noteTarget ?? undefined, windowList) ??
+        toWindowAim(chosenWindowId, windowList) ??
+        (focus === null ? null : toFocusWindowAim(focus, windowList))
+    );
+}
+
+/**
+ * The open window an address is, by the whole address, else by its page
+ * and popup `uuid` when one window alone has them; null when none is.
+ */
+export function findWindowIdByUrl(
+    url: string,
+    windowList: readonly AppWindowType[],
+): string | null {
+    const exact = windowList.find((item) => {
+        return item.url === url;
+    });
+    if (exact !== undefined) {
+        return exact.id;
+    }
+    const page = toWindowPage(url);
+    const samePageList = windowList.filter((item) => {
+        return toWindowPage(item.url) === page;
+    });
+    return samePageList.length === 1 ? samePageList[0].id : null;
+}
+
+/**
  * The address of the Bible Note window the tab in front works in, which
  * main holds on top for as long as it does (2026-11-08, the user, **Working
  * in** a note window with an arrow to its **Toggle Always On Top**: _a bible

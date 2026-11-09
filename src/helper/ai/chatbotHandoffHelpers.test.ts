@@ -59,13 +59,13 @@ const OPENERS: [
         'a file',
         () => openChatbotWithFile('/resources/JHN.3.pdf', READING),
         h.requestChatbotFile,
-        ['/resources/JHN.3.pdf', READING, null],
+        ['/resources/JHN.3.pdf', READING, null, null],
     ],
     [
         'a lookup',
         () => openChatbotWithLookup(LOOKUP_ASK),
         h.requestChatbotLookup,
-        [LOOKUP_ASK],
+        [LOOKUP_ASK, null],
     ],
 ];
 
@@ -121,6 +121,7 @@ describe('opening the assistant already asked', () => {
             '/resources/family-tree.jpeg',
             null,
             null,
+            null,
         );
     });
 
@@ -131,6 +132,30 @@ describe('opening the assistant already asked', () => {
             '/notes/Default.own',
             null,
             3,
+            null,
+        );
+    });
+
+    // 2026-11-08: words selected in that note ride with it.
+    test('a note file carries the words selected in it', async () => {
+        const mention = {
+            text: 'so loved',
+            before: 'For God ',
+            after: '',
+            start: 9,
+            end: 16,
+        };
+        await openChatbotWithFile('/notes/Default.own', null, 3, null, mention);
+        expect(h.requestChatbotFile).toHaveBeenCalledWith(
+            '/notes/Default.own',
+            null,
+            3,
+            mention,
+        );
+        await openChatbotWithLookup(LOOKUP_ASK, 'grace');
+        expect(h.requestChatbotLookup).toHaveBeenCalledWith(
+            LOOKUP_ASK,
+            'grace',
         );
     });
 

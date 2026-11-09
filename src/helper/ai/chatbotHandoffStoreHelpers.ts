@@ -97,10 +97,119 @@ export function toValidNoteId(noteId: unknown) {
         : null;
 }
 
+// WORDS SELECTED where they are read (2026-11-08, the user: _as a user I
+// want to select bible note text then click the agent button then writing a
+// qustion about the selected text_, then _add the agent button for bible
+// selected text as well_ and _should provide selection range in the input
+// text for enough context, for bible should include selection range among
+// bible verse_): a note window's selection toolbar hands them over beside
+// the note, a Bible view's beside the verse -- with the words around them
+// in their line or verse and where they sit in it -- and the help window
+// quotes them in the box for the question to follow. The whole note or
+// verse rides with the question anyway, so a long selection keeps its
+// beginning and its end -- enough to find it there -- and never fills the
+// box, and the words around it are a line's worth at most.
+const SELECTION_MENTION_MAX_CHARS = 1200;
+const SELECTION_MENTION_HEAD_CHARS = 900;
+const SELECTION_AROUND_MAX_CHARS = 240;
+export const SELECTION_MENTION_GAP = ' … ';
+const SELECTION_AROUND_CUT = '…';
+
+/**
+ * Words selected, and where: the words before and after them in their verse
+ * or line ('' at its edge), and their first and last character in it,
+ * counted from 1 -- null when the selection runs over several lines.
+ */
+export type SelectionMentionType = {
+    text: string;
+    before: string;
+    after: string;
+    start: number | null;
+    end: number | null;
+};
+
+function toSelectedWords(text: unknown) {
+    if (typeof text !== 'string') {
+        return null;
+    }
+    const words = text
+        .replace(/\r\n?/g, '\n')
+        .replace(/[ \t]+$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    if (words.length === 0) {
+        return null;
+    }
+    if (words.length <= SELECTION_MENTION_MAX_CHARS) {
+        return words;
+    }
+    const tailChars =
+        SELECTION_MENTION_MAX_CHARS -
+        SELECTION_MENTION_HEAD_CHARS -
+        SELECTION_MENTION_GAP.length;
+    return (
+        words.slice(0, SELECTION_MENTION_HEAD_CHARS).trimEnd() +
+        SELECTION_MENTION_GAP +
+        words.slice(-tailChars).trimStart()
+    );
+}
+
+// The words on the selection's own line only, its spacing kept where it
+// meets the selection, cut away from it when long.
+function toAroundWords(text: unknown, side: 'before' | 'after') {
+    if (typeof text !== 'string') {
+        return '';
+    }
+    const lineList = text.split(/\r?\n|\r/);
+    const line = (
+        side === 'before' ? lineList[lineList.length - 1] : lineList[0]
+    ).replace(/[ \t]+/g, ' ');
+    if (line.length <= SELECTION_AROUND_MAX_CHARS) {
+        return line;
+    }
+    return side === 'before'
+        ? SELECTION_AROUND_CUT + line.slice(-SELECTION_AROUND_MAX_CHARS)
+        : line.slice(0, SELECTION_AROUND_MAX_CHARS) + SELECTION_AROUND_CUT;
+}
+
+/**
+ * Selected words as the box quotes them -- given as words alone or with
+ * where they are -- or null for none. Every field checked and copied by
+ * name: a hand-edited setting cannot carry anything else along.
+ */
+export function toValidSelectionMention(
+    raw: unknown,
+): SelectionMentionType | null {
+    const source: any =
+        typeof raw === 'string' ? { text: raw } : (raw ?? undefined);
+    if (typeof source !== 'object' || source === null) {
+        return null;
+    }
+    const text = toSelectedWords(source.text);
+    if (text === null) {
+        return null;
+    }
+    const { start, end } = source;
+    const hasRange =
+        !text.includes('\n') &&
+        Number.isSafeInteger(start) &&
+        Number.isSafeInteger(end) &&
+        start >= 1 &&
+        end >= start;
+    return {
+        text,
+        before: toAroundWords(source.before, 'before'),
+        after: toAroundWords(source.after, 'after'),
+        start: hasRange ? start : null,
+        end: hasRange ? end : null,
+    };
+}
+
 export function requestChatbotFile(
     filePath: string,
     reading: ResourceReadingType | null = null,
     noteId: number | null = null,
+    mention: SelectionMentionType | string | null = null,
 ) {
     if (filePath.length > FILE_HANDOFF_MAX_CHARS) {
         return;
@@ -109,12 +218,16 @@ export function requestChatbotFile(
     // `resourceReadingAskHelpers.ts`), checked on the way in and out.
     const validReading = toValidResourceReading(reading);
     const validNoteId = toValidNoteId(noteId);
+    // Words selected in a note, only beside the note they were selected in.
+    const validMention =
+        validNoteId === null ? null : toValidSelectionMention(mention);
     setSetting(
         FILE_HANDOFF_KEY,
         JSON.stringify({
             filePath,
             ...(validReading === null ? {} : { reading: validReading }),
             ...(validNoteId === null ? {} : { noteId: validNoteId }),
+            ...(validMention === null ? {} : { mention: validMention }),
             at: Date.now(),
         }),
     );
@@ -124,6 +237,7 @@ export type ChatbotFileRequestType = {
     filePath: string;
     reading: ResourceReadingType | null;
     noteId: number | null;
+    mention: SelectionMentionType | null;
 };
 
 /**
@@ -148,10 +262,13 @@ export function takeChatbotFileRequest(): ChatbotFileRequestType | null {
         ) {
             return null;
         }
+        const noteId = toValidNoteId(data.noteId);
         return {
             filePath: data.filePath,
             reading: toValidResourceReading(data.reading),
-            noteId: toValidNoteId(data.noteId),
+            noteId,
+            mention:
+                noteId === null ? null : toValidSelectionMention(data.mention),
         };
     } catch (_error) {
         return null;
@@ -170,19 +287,37 @@ export function takeChatbotFile(): string | null {
 // `owa_lookup_record` (`lookupAskHelpers.ts`).
 const LOOKUP_HANDOFF_KEY = 'chatbot-handoff-lookup';
 
-export function requestChatbotLookup(ask: LookupAskType) {
+// Words selected in the passage (a Bible view's selection toolbar) ride
+// beside it, quoted in the box like a note's.
+export function requestChatbotLookup(
+    ask: LookupAskType,
+    mention: SelectionMentionType | string | null = null,
+) {
     const valid = toValidLookupAsk(ask);
     if (valid === null) {
         return;
     }
+    const validMention = toValidSelectionMention(mention);
     setSetting(
         LOOKUP_HANDOFF_KEY,
-        JSON.stringify({ ...valid, at: Date.now() }),
+        JSON.stringify({
+            ...valid,
+            ...(validMention === null ? {} : { mention: validMention }),
+            at: Date.now(),
+        }),
     );
 }
 
-/** The waiting record to ask about, once; null when none waits or it is stale. */
-export function takeChatbotLookup(): LookupAskType | null {
+export type ChatbotLookupRequestType = {
+    ask: LookupAskType;
+    mention: SelectionMentionType | null;
+};
+
+/**
+ * The waiting record to ask about and the words selected in it, once; null
+ * when none waits or it is stale.
+ */
+export function takeChatbotLookupRequest(): ChatbotLookupRequestType | null {
     const raw = getSettingForce(LOOKUP_HANDOFF_KEY);
     if (!raw) {
         return null;
@@ -196,10 +331,18 @@ export function takeChatbotLookup(): LookupAskType | null {
         ) {
             return null;
         }
-        return toValidLookupAsk(data);
+        const ask = toValidLookupAsk(data);
+        return ask === null
+            ? null
+            : { ask, mention: toValidSelectionMention(data.mention) };
     } catch (_error) {
         return null;
     }
+}
+
+/** The waiting record to ask about, once; null when none waits or it is stale. */
+export function takeChatbotLookup(): LookupAskType | null {
+    return takeChatbotLookupRequest()?.ask ?? null;
 }
 
 /**

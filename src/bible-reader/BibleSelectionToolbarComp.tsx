@@ -9,6 +9,8 @@ import { tran } from '../lang/langHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import { useIsInModalLayer } from '../app-modal/modalLayerContext';
 import { showSimpleToast } from '../toast/toastHelpers';
+import { getIsAIEnabled } from '../helper/ai/aiHelpers';
+import { handleError } from '../helper/errorHelpers';
 import {
     VERSE_HIGHLIGHT_COLOR_KEYS,
     type VerseHighlightColorKeyType,
@@ -20,6 +22,7 @@ import {
 } from '../bible-list/note/verseAnnotationHelpers';
 import {
     readVerseSelection,
+    readVerseSelectionMention,
     removeAnnotationRefs,
     toOverlappingAnnotationRefs,
     toVerseAnchor,
@@ -167,6 +170,27 @@ export default function BibleSelectionToolbarComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // The assistant on the words selected (2026-11-08, the user, with this
+    // bar in a picture: _add the agent button for bible selected text as
+    // well_): the verse's conversation, the words quoted in its box with
+    // where they sit in the verse. Opened at the press, never with the bar.
+    const handleAskingAssistant = useCallback(() => {
+        const read = readVerseSelectionMention();
+        if (read === null) {
+            return;
+        }
+        clearSelection();
+        import('../helper/ai/bibleItemAskHelpers')
+            .then(({ openChatbotWithVerseKey }) => {
+                return openChatbotWithVerseKey(read.verseKey, read.mention);
+            })
+            .catch(handleError);
+    }, []);
+
+    // Read once for the host: each read is a round trip to the main
+    // process, and the toolbar draws again with every selection.
+    const [isAIEnabled] = useState(getIsAIEnabled);
+
     const handleCommentEditorClosing = useCallback(() => {
         setCommentTarget(null);
     }, []);
@@ -179,6 +203,7 @@ export default function BibleSelectionToolbarComp() {
                     onHighlight={handleHighlighting}
                     onErase={handleErasing}
                     onComment={handleCommenting}
+                    onAsk={isAIEnabled ? handleAskingAssistant : null}
                 />
             )}
             <VerseCommentHoverToolComp onEdit={setCommentTarget} />
@@ -198,11 +223,14 @@ function RenderSelectionToolbarComp({
     onHighlight,
     onErase,
     onComment,
+    onAsk,
 }: Readonly<{
     selection: VerseSelectionType;
     onHighlight: (color: VerseHighlightColorKeyType) => void;
     onErase: () => void;
     onComment: () => void;
+    // Null while AI is off, like every other way into the assistant.
+    onAsk: (() => void) | null;
 }>) {
     // Portalled to `document.body`, which is OUTSIDE the element the app puts
     // `data-bs-theme` on — so every `--bs-*` token here resolved to the LIGHT
@@ -272,6 +300,17 @@ function RenderSelectionToolbarComp({
             >
                 <i className="bi bi-eraser" aria-hidden="true" />
             </button>
+            {onAsk === null ? null : (
+                <button
+                    type="button"
+                    className="app-verse-selection-toolbar__button"
+                    title={tran('Ask the assistant about this')}
+                    aria-label={tran('Ask the assistant about this')}
+                    onClick={onAsk}
+                >
+                    <i className="bi bi-robot" aria-hidden="true" />
+                </button>
+            )}
         </div>,
         document.body,
     );

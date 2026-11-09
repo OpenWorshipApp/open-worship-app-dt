@@ -26,11 +26,11 @@ import {
     toAppWindowList,
     findAttachmentWindow,
     findOpenerWindowId,
-    toFocusWindowAim,
+    findWindowIdByUrl,
     toAttachmentWindowPage,
+    toWindowPage,
     toHeldNoteWindowUrl,
-    toNoteWindowAim,
-    toWindowAim,
+    toTabWindowAim,
     toWindowAimLabel,
     type AppWindowEntryType,
     type AppWindowType,
@@ -39,6 +39,7 @@ import {
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import {
     HOLD_NOTE_WINDOW_ON_TOP_CHANNEL,
+    findNoteWindow,
     toNoteWindowTarget,
     type NoteWindowTargetType,
 } from '../helper/ai/noteWindowMatchHelpers';
@@ -143,6 +144,7 @@ import {
     checkIsNoteOpenedLast,
     findNoteAskFiles,
     findOpenNoteAttachments,
+    findSessionHoldingNote,
     findSessionNoteTarget,
     genNoteOpeningAnswer,
     genNoteSizeChanges,
@@ -154,6 +156,18 @@ import {
     toNoteDocumentText,
     type CreatedNoteType,
 } from './noteChatHelpers';
+import {
+    SELECTION_STEP_TOOL_NAME,
+    appendSelectionMention,
+    checkHasSelectionQuote,
+    genSelectionOffer,
+    pickSelectionSession,
+    toSelectionMentionText,
+    toSelectionSearchUrl,
+    toSelectionStepAsk,
+    toValidSelectionStep,
+} from './selectionMentionHelpers';
+import type { SelectionMentionType } from '../helper/ai/chatbotHandoffStoreHelpers';
 import {
     FLOW_EDIT_TOOL_NAME,
     checkIsFlowFileName,
@@ -378,7 +392,7 @@ import {
 import {
     takeChatbotAsk,
     takeChatbotFileRequest,
-    takeChatbotLookup,
+    takeChatbotLookupRequest,
     takeChatbotReport,
 } from '../helper/ai/chatbotHandoffStoreHelpers';
 import type { ResourceReadingType } from '../helper/ai/resourceReadingAskHelpers';
@@ -3931,6 +3945,9 @@ export default function ChatbotAppComp() {
     const [noteWindowBySession, setNoteWindowBySession] = useState<
         Record<string, NoteWindowTargetType | null>
     >({});
+    // Read by the hand-overs, which run outside a render.
+    const noteWindowBySessionRef = useAppCurrentRef(noteWindowBySession);
+    const windowIdBySessionRef = useAppCurrentRef(windowIdBySession);
     // The note's own window, else a window chosen for the tab, else the one
     // window of the kind it asks about when that is a popup
     // (`toFocusWindowAim`): a tab asking about Settings works in Settings.
@@ -3942,10 +3959,11 @@ export default function ChatbotAppComp() {
                       activeSession.messages,
                       activeSession.fileClosedAt,
                   );
-        return (
-            toNoteWindowAim(noteTarget ?? undefined, appWindowList) ??
-            toWindowAim(windowIdBySession[activeSession.id], appWindowList) ??
-            toFocusWindowAim(activeSession.focus, appWindowList)
+        return toTabWindowAim(
+            noteTarget,
+            windowIdBySession[activeSession.id],
+            activeSession.focus,
+            appWindowList,
         );
     }, [
         noteWindowBySession,
@@ -4622,7 +4640,13 @@ export default function ChatbotAppComp() {
     const [reportAsk, setReportAsk] = useState<string | null>(null);
     const [suggestIndex, setSuggestIndex] = useState(-1);
     const starters = useStarterQuestions(focus);
-    const matchedQuestions = useQuestionSuggestions(question, focus);
+    // Words selected in a note or a verse, quoted in the box: what is typed
+    // under them is about THEM, so nothing is matched against the box.
+    const isSelectionQuote = checkHasSelectionQuote(question);
+    const matchedQuestions = useQuestionSuggestions(
+        isSelectionQuote ? '' : question,
+        focus,
+    );
     // A box starting with `/` lists COMMANDS (`builtinActionHelpers`) and
     // nothing else: a question row under "/scr" would be offering to spend a
     // model call on something the person is about to do without one.
@@ -4630,13 +4654,13 @@ export default function ChatbotAppComp() {
     // The input aid: a passage being completed (book, chapter, verse) or a
     // name/place being typed (`bibleInputSuggestHelpers.ts`).
     const bibleInputRows = useBibleInputSuggestions(
-        question,
+        isSelectionQuote ? '' : question,
         focus,
         messages,
         isVerseFindThread,
     );
     const suggestions = useMemo((): SuggestRowType[] => {
-        if (isSuggestDismissed || isBusy) {
+        if (isSuggestDismissed || isBusy || isSelectionQuote) {
             return [];
         }
         if (checkIsBuiltinCommand(question)) {
@@ -4691,6 +4715,7 @@ export default function ChatbotAppComp() {
     }, [
         isSuggestDismissed,
         isBusy,
+        isSelectionQuote,
         question,
         matchedQuestions,
         focus,
@@ -6086,18 +6111,19 @@ export default function ChatbotAppComp() {
     // this file (`genResourceOpeningAnswer`): an elderly volunteer who opened
     // a file to ask about it should not then have to think of how to ask,
     // nor be offered verse 1 of a chapter they are reading verse 15 of.
+    // The attachment put in the box, or null when the file could not be.
     const attachHandedFileRef = useAppCurrentRef(
         async (
             sessionId: string,
             filePath: string,
             reading: ResourceReadingType | null = null,
             noteId: number | null = null,
-        ) => {
+        ): Promise<ChatAttachmentType | null> => {
             setAttachError(null);
             const result = await genAttachmentFromPath(filePath, noteId);
             if ('failure' in result) {
                 addMessage(sessionId, { author: 'bot', text: result.failure });
-                return;
+                return null;
             }
             const session = sessionStateRef.current.sessions.find((one) => {
                 return one.id === sessionId;
@@ -6150,7 +6176,7 @@ export default function ChatbotAppComp() {
                     replies: noteOpening.replies,
                 });
                 inputRef.current?.focus();
-                return;
+                return result.attachment;
             }
             // A song (a Documents row's or the Lyric Editor's Open in
             // Chatbot): what can be done to it, and the changes asked for
@@ -6167,7 +6193,7 @@ export default function ChatbotAppComp() {
                     replies: lyricOpening.replies,
                 });
                 inputRef.current?.focus();
-                return;
+                return result.attachment;
             }
             // A presenting flow (a Presenting Flows row's Open in Chatbot):
             // the jobs asked of a running order most, as buttons -- written
@@ -6182,7 +6208,7 @@ export default function ChatbotAppComp() {
                     replies: flowOpening.replies,
                 });
                 inputRef.current?.focus();
-                return;
+                return result.attachment;
             }
             // A slide document (a Documents row's Open in Chatbot): the same,
             // and the way to slides drawn after a picture of the ones wanted.
@@ -6198,7 +6224,7 @@ export default function ChatbotAppComp() {
                     replies: slideOpening.replies,
                 });
                 inputRef.current?.focus();
-                return;
+                return result.attachment;
             }
             const opening = genResourceOpeningAnswer(
                 result.attachment.name,
@@ -6213,6 +6239,7 @@ export default function ChatbotAppComp() {
                     : { resourceReading: opening.reading }),
             });
             inputRef.current?.focus();
+            return result.attachment;
         },
     );
     // A Bible note the assistant MADE in an answer (2026-11-08, the user:
@@ -6249,13 +6276,155 @@ export default function ChatbotAppComp() {
             );
         },
     );
+    // WORDS SELECTED where they are read (2026-11-08, the user: _select
+    // bible note text then click the agent button then writing a qustion
+    // about the selected text_, _add the agent button for bible selected
+    // text as well_, _should provide selection range in the input text for
+    // enough context_ and _should reuse existing (attached window) chatbot
+    // tab_): quoted in the box -- with the words around them and where they
+    // sit -- of the tab on that note or verse, else of the tab working in
+    // the window they were selected in, else of a tab of its own; the caret
+    // on the line under the quote for the question.
+    const bringSessionToFront = (sessionId: string) => {
+        setSessionState((oldState) => {
+            return oldState.activeId === sessionId
+                ? oldState
+                : { ...oldState, activeId: sessionId };
+        });
+    };
+    // The window a tab is ATTACHED to: its note's, the one chosen for it,
+    // or the one of a kind it chose to ask about. Not a tab merely following
+    // the window the help was last opened from -- a press in the note
+    // window turns every such tab to Bible Note, and the first of them was
+    // taken (seen live: an older chat got the words instead of the tab the
+    // first press had opened).
+    const toSessionWindowId = (session: ChatSessionType) => {
+        const noteTarget =
+            session.id in noteWindowBySessionRef.current
+                ? noteWindowBySessionRef.current[session.id]
+                : findSessionNoteTarget(session.messages, session.fileClosedAt);
+        return (
+            toTabWindowAim(
+                noteTarget,
+                windowIdBySessionRef.current[session.id],
+                session.isFocusChosen ? session.focus : null,
+                appWindowListRef.current,
+            )?.windowId ?? null
+        );
+    };
+    // The quote, put in the box; returns it, or null when there were no
+    // words or the box already holds it -- the same words pressed twice.
+    const putSelectionInBox = (
+        sessionId: string,
+        sourceName: string,
+        mention: SelectionMentionType,
+    ) => {
+        inputRef.current?.focus();
+        const quote = toSelectionMentionText(sourceName, mention);
+        if (quote === null) {
+            return null;
+        }
+        const draft =
+            sessionStateRef.current.sessions.find((session) => {
+                return session.id === sessionId;
+            })?.draft ?? '';
+        if (appendSelectionMention(draft, quote) === draft) {
+            return null;
+        }
+        // The effect that sizes the box puts the caret at the end.
+        isCaretToEndRef.current = true;
+        updateSession(sessionId, (session) => {
+            return {
+                ...session,
+                draft: appendSelectionMention(session.draft, quote),
+            };
+        });
+        // A quote is not a question to complete.
+        setIsSuggestDismissed(true);
+        return quote;
+    };
+    // In a note: and under the quote, what to do with the words, should
+    // they not want to write anything (the user, the same day: _if user did
+    // not ask anything then try to provide options for user_).
+    const mentionHandedNoteRef = useAppCurrentRef(
+        async (
+            filePath: string,
+            noteId: number,
+            mention: SelectionMentionType,
+            openSession: () => string,
+        ) => {
+            const sessions = sessionStateRef.current.sessions;
+            const activeId = sessionStateRef.current.activeId;
+            const held = findSessionHoldingNote(
+                sessions,
+                draftAttachmentMapRef.current,
+                activeId,
+                filePath,
+                noteId,
+            );
+            const noteTarget = toNoteWindowTarget(filePath, noteId);
+            const noteWindowId =
+                noteTarget === null
+                    ? null
+                    : (findNoteWindow(appWindowListRef.current, noteTarget)
+                          ?.id ?? null);
+            const picked =
+                held === null && noteWindowId !== null
+                    ? pickSelectionSession(
+                          sessions,
+                          activeId,
+                          () => {
+                              return false;
+                          },
+                          (session) => {
+                              return (
+                                  !checkIsSessionPending(session.id) &&
+                                  toSessionWindowId(session) === noteWindowId
+                              );
+                          },
+                      )
+                    : null;
+            let sessionId: string;
+            let sourceName: string;
+            if (held !== null) {
+                sessionId = held.sessionId;
+                sourceName = held.attachment.name;
+                bringSessionToFront(sessionId);
+            } else {
+                sessionId = picked?.sessionId ?? openSession();
+                if (picked !== null) {
+                    bringSessionToFront(sessionId);
+                }
+                const attachment = await attachHandedFileRef.current(
+                    sessionId,
+                    filePath,
+                    null,
+                    noteId,
+                );
+                if (attachment === null) {
+                    return;
+                }
+                sourceName = attachment.name;
+            }
+            const quote = putSelectionInBox(sessionId, sourceName, mention);
+            if (quote === null) {
+                return;
+            }
+            const offer = genSelectionOffer(quote, mention.text);
+            addMessage(sessionId, {
+                author: 'bot',
+                text: offer.text,
+                actions: offer.actions,
+            });
+        },
+    );
     // A Lookup Detail panel's 🤖 (2026-10-18): the person, place or passage
     // it shows, read whole through `owa_lookup_record` in the panel's own
     // window -- where the names dataset is already held -- and kept on the
     // card, which is what every question typed under it is asked with. No
     // model: a card that says it is ready, and three questions to press.
     const openHandedLookupRef = useAppCurrentRef(
-        async (sessionId: string, ask: LookupAskType) => {
+        async (sessionId: string, ask: LookupAskType): Promise<boolean> => {
             const pending = genPendingAsk(sessionId, undefined, false);
             clearProgressSteps(sessionId);
             syncBusy();
@@ -6278,7 +6447,7 @@ export default function ChatbotAppComp() {
                 } catch (_error) {
                     // The panel's window may have gone: any window reads it.
                     if (pending.controller.signal.aborted) {
-                        return;
+                        return false;
                     }
                     const { page: _page, ...anyWindowArgs } = args;
                     facts = await callTool(
@@ -6290,7 +6459,7 @@ export default function ChatbotAppComp() {
                     });
                 }
                 if (pending.controller.signal.aborted) {
-                    return;
+                    return false;
                 }
                 facts = await withCardBibleSearch(
                     facts,
@@ -6303,7 +6472,7 @@ export default function ChatbotAppComp() {
                     pending.controller.signal,
                 );
                 if (pending.controller.signal.aborted) {
-                    return;
+                    return false;
                 }
                 const subject = toLookupSubject(ask, facts);
                 const opening = genLookupOpeningAnswer(subject);
@@ -6318,10 +6487,80 @@ export default function ChatbotAppComp() {
                     lookup: subject,
                 });
                 inputRef.current?.focus();
+                return true;
             } finally {
                 finishReading();
                 endPendingAsk(pending);
                 settleSession(sessionId);
+            }
+        },
+    );
+    // In a passage (a Bible view's selection bar): the tab already on that
+    // passage, else the tab working in that window -- or asking about a
+    // passage opened from it, which is how a tab is on the MAIN window --
+    // where the passage's card is read first, else a tab of its own.
+    const mentionHandedLookupRef = useAppCurrentRef(
+        async (
+            ask: LookupAskType,
+            mention: SelectionMentionType,
+            openSession: () => string,
+        ) => {
+            const toPage = (url: string | undefined) => {
+                return url === undefined ? null : toWindowPage(url);
+            };
+            const pressWindowId =
+                ask.page === undefined
+                    ? null
+                    : findWindowIdByUrl(ask.page, appWindowListRef.current);
+            const picked = pickSelectionSession(
+                sessionStateRef.current.sessions,
+                sessionStateRef.current.activeId,
+                (session) => {
+                    const subject = findOpenLookupSubject(
+                        session.messages,
+                        session.lookupClosedAt,
+                    );
+                    return (
+                        subject !== null &&
+                        subject.kind === ask.kind &&
+                        subject.target === ask.target &&
+                        subject.bibleKey === ask.bibleKey
+                    );
+                },
+                (session) => {
+                    // Not a tab still answering: its answer would land
+                    // under the new card.
+                    if (checkIsSessionPending(session.id)) {
+                        return false;
+                    }
+                    if (
+                        pressWindowId !== null &&
+                        toSessionWindowId(session) === pressWindowId
+                    ) {
+                        return true;
+                    }
+                    const subject = findOpenLookupSubject(
+                        session.messages,
+                        session.lookupClosedAt,
+                    );
+                    return (
+                        subject !== null &&
+                        toPage(subject.page) !== null &&
+                        toPage(subject.page) === toPage(ask.page)
+                    );
+                },
+            );
+            if (picked?.isOnIt === true) {
+                bringSessionToFront(picked.sessionId);
+                putSelectionInBox(picked.sessionId, ask.title, mention);
+                return;
+            }
+            const sessionId = picked?.sessionId ?? openSession();
+            if (picked !== null) {
+                bringSessionToFront(sessionId);
+            }
+            if (await openHandedLookupRef.current(sessionId, ask)) {
+                putSelectionInBox(sessionId, ask.title, mention);
             }
         },
     );
@@ -7071,17 +7310,40 @@ export default function ChatbotAppComp() {
                 return;
             }
             // A Lookup Detail panel's 🤖: a person, a place or a passage.
-            const handedLookup = takeChatbotLookup();
+            const handedLookup = takeChatbotLookupRequest();
+            // Words selected in a passage: into the tab on it, or a new one.
+            if (handedLookup?.mention != null) {
+                void mentionHandedLookupRef.current(
+                    handedLookup.ask,
+                    handedLookup.mention,
+                    openHandoffSession,
+                );
+                return;
+            }
             if (handedLookup !== null) {
                 void openHandedLookupRef.current(
                     openHandoffSession(),
-                    handedLookup,
+                    handedLookup.ask,
                 );
                 return;
             }
             // The Resources panel's 🤖: a file to ask about, and the passage
             // the Reader is on for it.
             const handedFile = takeChatbotFileRequest();
+            // Words selected in a note: into the tab on it, or a new one.
+            if (
+                handedFile !== null &&
+                handedFile.noteId !== null &&
+                handedFile.mention !== null
+            ) {
+                void mentionHandedNoteRef.current(
+                    handedFile.filePath,
+                    handedFile.noteId,
+                    handedFile.mention,
+                    openHandoffSession,
+                );
+                return;
+            }
             if (handedFile !== null) {
                 void attachHandedFileRef.current(
                     openHandoffSession(),
@@ -12266,6 +12528,57 @@ export default function ChatbotAppComp() {
             // **Ask it as a general question**, under an answer that said to
             // type `/btw`: the command written for them, asked as pressed so
             // it is answered in the app's language.
+            // What to do with words selected in a note (the card under the
+            // quote, `selectionMentionHelpers.ts`): a search and a copy by
+            // the window, from the words alone; every other job asked of the
+            // assistant with the quote above it, as pressed.
+            if (action.toolName === SELECTION_STEP_TOOL_NAME) {
+                const step = toValidSelectionStep(action.args);
+                if (step === null) {
+                    return;
+                }
+                if (step.job === 'google') {
+                    appProvider.browserUtils.openExternalURL(
+                        toSelectionSearchUrl(step.words),
+                    );
+                    return;
+                }
+                if (step.job === 'copy') {
+                    let said: string;
+                    try {
+                        await navigator.clipboard.writeText(step.words);
+                        said = fillWords(tran('Copied {name}.'), {
+                            name: `“${step.words.replace(/\s+/g, ' ').trim().slice(0, 60)}”`,
+                        });
+                    } catch (_error) {
+                        said = tran('I could not copy it just now.');
+                    }
+                    addMessage(actedSessionId, {
+                        author: 'bot',
+                        isFollowUp: true,
+                        text: said,
+                    });
+                    return;
+                }
+                if (
+                    step.ask === null ||
+                    checkIsSessionPending(actedSessionId)
+                ) {
+                    return;
+                }
+                handleAskingRef.current(
+                    toSelectionStepAsk(step.quote, step.ask),
+                    true,
+                    {
+                        isPressed: true,
+                        echoText: toSelectionStepAsk(
+                            step.quote,
+                            toShownLabel(step.label),
+                        ),
+                    },
+                );
+                return;
+            }
             if (action.toolName === GENERAL_ASK_TOOL_NAME) {
                 const question = String(action.args?.question ?? '').trim();
                 if (

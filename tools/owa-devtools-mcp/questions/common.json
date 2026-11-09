@@ -419,7 +419,10 @@
                         "tidy my note",
                         "summarize my note",
                         "add a verse to my note",
-                        "open in chatbot"
+                        "open in chatbot",
+                        "selected text",
+                        "selected words",
+                        "ask about the words I selected"
                     ],
                     "resources": {
                         "recipe": "W-60",

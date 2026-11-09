@@ -4,10 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // often, and in which words -- against a fake app and a small dictionary.
 const mocks = vi.hoisted(() => ({
   evaluateInApp: vi.fn(),
+  listTargets: vi.fn(),
+  requireLivePort: vi.fn(),
   loadTranBundle: vi.fn(),
 }));
 
-vi.mock('./cdp.mjs', () => ({ evaluateInApp: mocks.evaluateInApp }));
+vi.mock('./cdp.mjs', () => ({
+  evaluateInApp: mocks.evaluateInApp,
+  listTargets: mocks.listTargets,
+  requireLivePort: mocks.requireLivePort,
+}));
 vi.mock('./tran.mjs', async (importOriginal) => ({
   ...(await importOriginal()),
   loadTranBundle: mocks.loadTranBundle,
@@ -16,8 +22,10 @@ vi.mock('./tran.mjs', async (importOriginal) => ({
 import {
   describeToolCall,
   describeToolNotice,
+  findNoteWindowTarget,
   genNoticeExpression,
   notifyToolCall,
+  toNoteNoticeTarget,
   watchToolCalls,
 } from './notify.mjs';
 
@@ -62,6 +70,66 @@ afterEach(() => {
   } else {
     process.env.OWA_MCP_NOTICE = previousNotice;
   }
+});
+
+// 2026-11-08, the user, with the banner in the main window behind the
+// note being changed: _the assistance notation showing in main page instead
+// of bible note page_.
+describe('a Bible note changed from the help window', () => {
+  const NOTE_WINDOW = {
+    id: 'NOTE-10',
+    url: 'https://localhost:3000/bibleNote.html?file=Default.own&id=10&uuid=x',
+  };
+  const TARGETS = [
+    { id: 'MAIN', url: 'https://localhost:3000/reader.html' },
+    {
+      id: 'NOTE-9',
+      url: 'https://localhost:3000/bibleNote.html?file=Default.own&id=9&uuid=y',
+    },
+    NOTE_WINDOW,
+  ];
+  const EDIT_ARGS = {
+    action: 'edit',
+    file: 'C:\\data\\bible-notes\\Default.own',
+    id: 10,
+    note: 'Lesson on John 3:16',
+  };
+
+  it('is named by the file and id the help window fills in', () => {
+    expect(toNoteNoticeTarget('owa_note_edit', EDIT_ARGS)).toEqual({
+      fileFullName: 'Default.own',
+      noteId: 10,
+    });
+    expect(toNoteNoticeTarget('owa_note_edit', { note: 'Sunday' })).toBeNull();
+    expect(
+      toNoteNoticeTarget('owa_click', { file: '/n/Default.own', id: 1 }),
+    ).toBeNull();
+    expect(
+      findNoteWindowTarget(TARGETS, { fileFullName: 'Default.own', noteId: 10 }),
+    ).toBe(NOTE_WINDOW);
+    expect(
+      findNoteWindowTarget(TARGETS, { fileFullName: 'Other.own', noteId: 10 }),
+    ).toBeNull();
+  });
+
+  it("raises its banner in the note's own window, else the main one", async () => {
+    mocks.requireLivePort.mockResolvedValue(9222);
+    mocks.listTargets.mockResolvedValue(TARGETS);
+    notifyToolCall('owa_note_edit', EDIT_ARGS);
+    await vi.waitFor(() => {
+      expect(mocks.evaluateInApp).toHaveBeenCalledTimes(1);
+    });
+    expect(mocks.evaluateInApp.mock.calls[0][1]).toEqual({ match: 'NOTE-10' });
+
+    // The note's window closed: the main window, as before.
+    vi.setSystemTime(clock + 1300);
+    mocks.listTargets.mockResolvedValue(TARGETS.slice(0, 1));
+    notifyToolCall('owa_note_edit', EDIT_ARGS);
+    await vi.waitFor(() => {
+      expect(mocks.evaluateInApp).toHaveBeenCalledTimes(2);
+    });
+    expect(mocks.evaluateInApp.mock.calls[1][1]).toEqual({ match: undefined });
+  });
 });
 
 describe('notifyToolCall', () => {

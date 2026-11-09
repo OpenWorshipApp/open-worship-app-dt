@@ -3,7 +3,7 @@ id: W-60
 title: "Change a Bible note with the assistant (translate it, tidy it, add verses, ask about the note editor)"
 section: "Creating & editing content"
 verify: [PL-110, CB-169]
-screenshots: 3
+screenshots: 4
 generatedFrom: user-workflows.md
 workflowsVersion: "2026-11-08"
 ---
@@ -31,6 +31,23 @@ row's own **[en:tran:Delete]**.
    is not open already. In the **Bible Note** window, the robot button among the buttons
    at the bottom (beside **[en:tran:Save]**) does the same for the note it shows, after
    keeping what was just typed.
+
+   **About some words of it:** in the **Bible Note** window, select the words — the bar
+   that comes up over them ends with a robot, **[en:tran:Ask the assistant about this]**.
+   📸 The help window opens on this note — in the chat already on it when there is one,
+   else in a chat working in this note's window, else in a new chat with the note
+   attached as in step 2 — and puts the words in the box: _Selected text_, the note's
+   name and, when they are on one line, where they sit in it (their first and last
+   character, like _43-47_), then that line with the selected words between two
+   asterisks. The cursor waits on the line under it: write your question there and
+   press **Send**. If you would rather press than write, the card under it asks _What
+   would you like to do with “…”?_: **[en:tran:Explain it in simple words]**,
+   **[en:tran:Check the spelling]**, **[en:tran:Replace the words with another language]**,
+   **[en:tran:Add another language under each line]** and **[en:tran:Uppercase]** ask the
+   assistant about those words; **[en:tran:Search Selected Text on Google]** opens a search
+   in your browser and **[en:tran:Copy Selected Text]** copies them, with no assistant.
+   Select other words and press the robot again: they go under the first ones, in the
+   same chat.
 2. The help window opens a chat of its own with that one note attached under the box, and a
    card that says what it can do, with five buttons. 📸 The chat works in the note's own
    window: at the top it is asking about **Bible Note**, and **Working in** above the box

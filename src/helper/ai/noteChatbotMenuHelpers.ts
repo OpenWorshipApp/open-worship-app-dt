@@ -18,6 +18,7 @@ import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelper
 import { tran } from '../../lang/langHelpers';
 import { handleError } from '../errorHelpers';
 import { getIsAIEnabled } from './aiHelpers';
+import type { SelectionMentionType } from './chatbotHandoffStoreHelpers';
 import { findNoteWindow, toNoteWindowTarget } from './noteWindowMatchHelpers';
 
 /**
@@ -54,12 +55,16 @@ async function checkIsNoteWindowOpen(filePath: string, noteId: number) {
  * (open one if not opened)_): the conversation works IN that window -- its
  * head reads Bible Note, a walkthrough rings the note editor's controls, and
  * the changes show there as they are made. Asked only once the person said
- * yes to the assistant, never before its caution.
+ * yes to the assistant, never before its caution. From the note window's
+ * selection toolbar, the words selected ride with it (`mention`) and are
+ * quoted in the box: in the tab already on this note when there is one,
+ * else in a new tab with the note attached.
  */
 export async function openNoteInChatbot(
     filePath: string,
     noteId: number,
     openNoteWindow: (() => unknown) | null = null,
+    mention: SelectionMentionType | string | null = null,
 ) {
     try {
         const { openChatbotWithFile } = await import('./chatbotHandoffHelpers');
@@ -74,7 +79,13 @@ export async function openNoteInChatbot(
                           openNoteWindow();
                       }
                   };
-        return await openChatbotWithFile(filePath, null, noteId, beforeOpening);
+        return await openChatbotWithFile(
+            filePath,
+            null,
+            noteId,
+            beforeOpening,
+            mention,
+        );
     } catch (error) {
         handleError(error);
         return false;

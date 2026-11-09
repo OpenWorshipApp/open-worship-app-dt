@@ -76,6 +76,24 @@ describe('openChatbotWithVerseKey', () => {
         });
     });
 
+    // 2026-11-08: a Bible view's selection bar hands its words over too.
+    test('carries the words selected in the verse beside it', async () => {
+        const mention = {
+            text: 'and bare Cain',
+            before: 'And Adam knew Eve his wife; and she conceived, ',
+            after: ', and said',
+            start: 48,
+            end: 60,
+        };
+        expect(await openChatbotWithVerseKey('(KJV) GEN 4:1', mention)).toBe(
+            true,
+        );
+        expect(h.openChatbotWithLookup).toHaveBeenCalledWith(
+            expect.objectContaining({ kind: 'verse', target: 'GEN 4:1' }),
+            mention,
+        );
+    });
+
     test('a key that reads as no verse opens nothing', async () => {
         expect(await openChatbotWithVerseKey('GEN 4:1')).toBe(false);
         expect(h.fromVerseKey).not.toHaveBeenCalled();

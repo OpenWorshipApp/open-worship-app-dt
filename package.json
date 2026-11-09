@@ -178,7 +178,7 @@
         "@vitejs/plugin-basic-ssl": "^2.3.0",
         "@vitejs/plugin-react-swc": "^4.3.3",
         "@vitest/coverage-v8": "^5.1.0",
-        "bible-note": "^0.5.0",
+        "bible-note": "^0.6.0",
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.13.1",
         "concurrently": "^10.0.7",

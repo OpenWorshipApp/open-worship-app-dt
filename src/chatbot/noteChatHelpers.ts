@@ -134,6 +134,72 @@ export function findOpenNoteAttachments(
     return [];
 }
 
+// --- words selected in the note window -----------------------------------
+//
+// 2026-11-08, the user: _as a user I want to select bible note text then
+// click the agent button then writing a qustion about the selected text_.
+// The 🤖 on the note window's selection bar hands the words over beside the
+// note, and the box is given them as a quote the question goes under.
+
+function toComparablePath(filePath: string) {
+    return filePath.replace(/\\/g, '/');
+}
+
+function checkIsSameNote(
+    attachment: ChatAttachmentType,
+    filePath: string,
+    noteId: number,
+) {
+    return (
+        checkIsNoteAttachment(attachment) &&
+        attachment.noteId === noteId &&
+        toComparablePath(attachment.filePath ?? '') ===
+            toComparablePath(filePath)
+    );
+}
+
+/**
+ * The tab already on that note -- in its box, or open in what it asked --
+ * and the note's attachment there; the tab in front first, then the newest.
+ * Null when no tab holds it, and the note is attached in a tab of its own.
+ */
+export function findSessionHoldingNote(
+    sessions: readonly {
+        id: string;
+        messages: Parameters<typeof findOpenNoteAttachments>[0];
+        fileClosedAt?: number;
+    }[],
+    draftAttachmentMap: Readonly<
+        Record<string, readonly ChatAttachmentType[] | undefined>
+    >,
+    activeId: string,
+    filePath: string,
+    noteId: number,
+): { sessionId: string; attachment: ChatAttachmentType } | null {
+    const ordered = [
+        ...sessions.filter((session) => {
+            return session.id === activeId;
+        }),
+        ...sessions
+            .filter((session) => {
+                return session.id !== activeId;
+            })
+            .reverse(),
+    ];
+    for (const session of ordered) {
+        const attachment = [
+            ...(draftAttachmentMap[session.id] ?? []),
+            ...findOpenNoteAttachments(session.messages, session.fileClosedAt),
+        ].find((one) => {
+            return checkIsSameNote(one, filePath, noteId);
+        });
+        if (attachment !== undefined) {
+            return { sessionId: session.id, attachment };
+        }
+    }
+    return null;
+}
+
 function toComparableName(text: string) {
     return text.toLowerCase().replace(/\s+/g, ' ').trim();
 }
@@ -377,7 +443,14 @@ export const NOTE_SYSTEM_PROMPT =
     '{after, kind, text} adds a block after block `after` (0 is the top; ' +
     'several after one block keep their order). Block numbers are the note ' +
     'as you read it, whatever the call does. Change only the blocks the ' +
-    'request is about. A BIBLE VERSE is never your words: put one in with a ' +
+    'request is about. WORDS THEY SELECTED: "> " lines under a line ending ' +
+    'in a colon quote what they selected in this note -- the words between ' +
+    '** and ** (a selection mark, not bold), the rest of each line around ' +
+    "them, … for words left out; in the brackets the note's name and, for " +
+    "one line, the selection's first and last character in it. What they " +
+    'wrote after the quote is about THOSE words: answer about them, and ' +
+    'make a change it asks for to the blocks holding them, with `words` ' +
+    'when it is part of a block. A BIBLE VERSE is never your words: put one in with a ' +
     'NEW token [^Book chapter:verse] in the words, or a block {after, kind: ' +
     '"passage", ref: "John 3:16-17"} for its whole text -- the app reads it ' +
     'from the installed Bible. Never type a verse out. A new [@Name] or ' +

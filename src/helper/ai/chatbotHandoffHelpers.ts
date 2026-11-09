@@ -25,6 +25,7 @@ import {
     requestChatbotFile,
     requestChatbotLookup,
     requestChatbotReport,
+    type SelectionMentionType,
 } from './chatbotHandoffStoreHelpers';
 import type { LookupAskType } from './lookupAskHelpers';
 import type { ResourceReadingType } from './resourceReadingAskHelpers';
@@ -69,19 +70,22 @@ export async function openChatbotReporting(problem = '') {
  * (`resourceReadingAskHelpers.ts`). A Bible notes file names the ONE note
  * the conversation is about (`noteId`). The same two questions first, and
  * only once they are answered `beforeOpening` -- a Bible note's row opens
- * the note's own window there, for the conversation to work in.
+ * the note's own window there, for the conversation to work in. Words
+ * selected in that note (`mention`) are quoted in the box, ready for the
+ * question about them.
  */
 export async function openChatbotWithFile(
     filePath: string,
     reading: ResourceReadingType | null = null,
     noteId: number | null = null,
     beforeOpening: (() => Promise<void>) | null = null,
+    mention: SelectionMentionType | string | null = null,
 ) {
     if (!(await askToOpenChatbot())) {
         return false;
     }
     await beforeOpening?.();
-    requestChatbotFile(filePath, reading, noteId);
+    requestChatbotFile(filePath, reading, noteId, mention);
     openChatbotPage();
     return true;
 }
@@ -89,13 +93,18 @@ export async function openChatbotWithFile(
 /**
  * Opens the assistant on what a Lookup Detail panel shows -- a person, a
  * place or a passage: a tab of its own that reads the record and is ready
- * to be asked about it. The same two questions first.
+ * to be asked about it. The same two questions first. Words selected in a
+ * passage (`mention`) are quoted in the box, ready for the question about
+ * them.
  */
-export async function openChatbotWithLookup(ask: LookupAskType) {
+export async function openChatbotWithLookup(
+    ask: LookupAskType,
+    mention: SelectionMentionType | string | null = null,
+) {
     if (!(await askToOpenChatbot())) {
         return false;
     }
-    requestChatbotLookup(ask);
+    requestChatbotLookup(ask, mention);
     openChatbotPage();
     return true;
 }

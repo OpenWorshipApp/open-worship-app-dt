@@ -19,6 +19,7 @@ vi.mock('../settingHelpers', () => {
 });
 
 import {
+    SELECTION_MENTION_GAP,
     requestChatbotAsk,
     requestChatbotFile,
     requestChatbotLookup,
@@ -27,8 +28,10 @@ import {
     takeChatbotFile,
     takeChatbotFileRequest,
     takeChatbotLookup,
+    takeChatbotLookupRequest,
     takeChatbotReport,
     toProblemText,
+    toValidSelectionMention,
 } from './chatbotHandoffStoreHelpers';
 
 describe('a job handed to the assistant by another window', () => {
@@ -165,12 +168,14 @@ describe('a file handed to the assistant', () => {
             filePath: '/r/pdf/MAT.18.pdf',
             reading,
             noteId: null,
+            mention: null,
         });
         requestChatbotFile('/r/pdf/MAT.18.pdf');
         expect(takeChatbotFileRequest()).toEqual({
             filePath: '/r/pdf/MAT.18.pdf',
             reading: null,
             noteId: null,
+            mention: null,
         });
         // A hand-edited setting: the file still opens, the reading does not.
         store.set(
@@ -185,6 +190,7 @@ describe('a file handed to the assistant', () => {
             filePath: '/r/pdf/MAT.18.pdf',
             reading: null,
             noteId: null,
+            mention: null,
         });
         // A backwards range keeps the chapter and loses the verses.
         requestChatbotFile('/r/pdf/MAT.18.pdf', {
@@ -207,6 +213,7 @@ describe('a file handed to the assistant', () => {
             filePath: '/n/Default.own',
             reading: null,
             noteId: 4,
+            mention: null,
         });
         requestChatbotFile('/n/Default.own', null, -1);
         expect(takeChatbotFileRequest()?.noteId).toBeNull();
@@ -222,9 +229,131 @@ describe('a file handed to the assistant', () => {
             filePath: '/n/Default.own',
             reading: null,
             noteId: null,
+            mention: null,
         });
         requestChatbotFile('/n/Default.own', null, 1.5);
         expect(takeChatbotFileRequest()?.noteId).toBeNull();
+    });
+
+    // 2026-11-08: words selected in the note window ride beside the note.
+    it('carries the words selected in a note, and only beside a note', () => {
+        requestChatbotFile(
+            '/n/Default.own',
+            null,
+            4,
+            '  Grace alone \r\n\r\n\r\n\r\nFaith alone  ',
+        );
+        expect(takeChatbotFileRequest()).toEqual({
+            filePath: '/n/Default.own',
+            reading: null,
+            noteId: 4,
+            mention: {
+                text: 'Grace alone\n\nFaith alone',
+                before: '',
+                after: '',
+                start: null,
+                end: null,
+            },
+        });
+        // No note, no words: a file is not a note.
+        requestChatbotFile('/r/LUK.6.pdf', null, null, 'Grace');
+        expect(takeChatbotFileRequest()?.mention).toBeNull();
+        requestChatbotFile('/n/Default.own', null, 4, '   \n ');
+        expect(takeChatbotFileRequest()?.mention).toBeNull();
+        // A hand-edited setting cannot make it anything but words.
+        store.set(
+            'chatbot-handoff-file',
+            JSON.stringify({
+                filePath: '/n/Default.own',
+                noteId: 4,
+                mention: { evil: true },
+                at: Date.now(),
+            }),
+        );
+        expect(takeChatbotFileRequest()?.mention).toBeNull();
+    });
+
+    // 2026-11-08: _should provide selection range in the input text_.
+    it('carries where the words are: their line around them and their range', () => {
+        requestChatbotFile('/n/Default.own', null, 4, {
+            text: 'so loved',
+            before: 'Earlier line\nFor God ',
+            after: ' the world\nnext line',
+            start: 9,
+            end: 16,
+        });
+        expect(takeChatbotFileRequest()?.mention).toEqual({
+            text: 'so loved',
+            // The selection's own line only.
+            before: 'For God ',
+            after: ' the world',
+            start: 9,
+            end: 16,
+        });
+        // A range that does not check out, or over several lines, is none.
+        expect(
+            toValidSelectionMention({ text: 'a', start: 0, end: 1 })?.start,
+        ).toBeNull();
+        expect(
+            toValidSelectionMention({ text: 'a', start: 5, end: 2 })?.end,
+        ).toBeNull();
+        expect(
+            toValidSelectionMention({ text: 'a\nb', start: 1, end: 3 })?.start,
+        ).toBeNull();
+        expect(
+            toValidSelectionMention({ text: 'a', start: '1', end: 2 })?.start,
+        ).toBeNull();
+    });
+
+    it('keeps the start and the end of a long selection, and a line around it', () => {
+        const long = `START ${'word '.repeat(600)}END`;
+        const text = toValidSelectionMention(long)?.text ?? '';
+        expect(text.length).toBeLessThanOrEqual(1200);
+        expect(text.startsWith('START ')).toBe(true);
+        expect(text.endsWith(' END')).toBe(true);
+        expect(text).toContain(SELECTION_MENTION_GAP);
+        expect(toValidSelectionMention('Short words')?.text).toBe(
+            'Short words',
+        );
+        expect(toValidSelectionMention(7)).toBeNull();
+        expect(toValidSelectionMention(null)).toBeNull();
+        const around = toValidSelectionMention({
+            text: 'x',
+            before: 'b'.repeat(500),
+            after: 'a'.repeat(500),
+        });
+        expect(around?.before).toBe(`…${'b'.repeat(240)}`);
+        expect(around?.after).toBe(`${'a'.repeat(240)}…`);
+    });
+
+    // A Bible view's selection rides beside the passage it is in.
+    it('carries the words selected in a passage beside it', () => {
+        const ask = {
+            kind: 'verse' as const,
+            target: 'JHN 3:16',
+            title: 'John 3:16',
+            bibleKey: 'KJV',
+        };
+        requestChatbotLookup(ask, {
+            text: 'so loved the world',
+            before: 'For God ',
+            after: ', that he gave',
+            start: 9,
+            end: 26,
+        });
+        expect(takeChatbotLookupRequest()).toEqual({
+            ask,
+            mention: {
+                text: 'so loved the world',
+                before: 'For God ',
+                after: ', that he gave',
+                start: 9,
+                end: 26,
+            },
+        });
+        // Without words, the old request; the old reader still reads it.
+        requestChatbotLookup(ask);
+        expect(takeChatbotLookup()).toEqual(ask);
     });
 
     it('is nothing after half a minute, or past what a path can be', () => {

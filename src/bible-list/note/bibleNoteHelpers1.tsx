@@ -18,15 +18,24 @@ import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 import { getIsAIEnabled } from '../../helper/ai/aiHelpers';
 import { openNoteInChatbot } from '../../helper/ai/noteChatbotMenuHelpers';
+import type { SelectionMentionType } from '../../helper/ai/chatbotHandoffStoreHelpers';
+import { toNoteSelectionMention } from './noteSelectionMentionHelpers';
 
 /**
  * The help window on this note: the last second of typing written into the
  * editing history first, because the help window reads the note from there.
  */
-export async function openThisNoteInChatbot(note: Note, noteItem: NoteItem) {
+export async function openThisNoteInChatbot(
+    note: Note,
+    noteItem: NoteItem,
+    mention: SelectionMentionType | string | null = null,
+) {
     await flushBibleNoteHistory();
-    return openNoteInChatbot(note.filePath, noteItem.id);
+    return openNoteInChatbot(note.filePath, noteItem.id, null, mention);
 }
+
+// The id of the 🤖 on the bar over selected text.
+export const ASK_CHATBOT_FLOATING_BUTTON_ID = 'ask-chatbot-about-selection';
 
 export function useBibleNoteControl({
     bibleNote,
@@ -86,6 +95,26 @@ export function useBibleNoteControl({
                     <i className="bi bi-robot" />
                 </button>
             ),
+        });
+        // And on the bar over selected text (2026-11-08, the user: _as a
+        // user I want to select bible note text then click the agent button
+        // then writing a qustion about the selected text_): the same help
+        // window on this note, the words selected quoted in its box with
+        // the caret under them. It only reads, so it shows in read-only
+        // mode too.
+        bibleNote.appendFloatingActionButton({
+            id: ASK_CHATBOT_FLOATING_BUTTON_ID,
+            description: tran('Ask the assistant about this'),
+            children: <i className="bi bi-robot format" />,
+            onClick: ({ selection }) => {
+                // Where the words are is read now, while the range still
+                // matches the note.
+                void openThisNoteInChatbot(
+                    note,
+                    noteItem,
+                    toNoteSelectionMention(selection),
+                );
+            },
         });
     }, [bibleNote, note, noteItem, isReadOnly]);
     useAppEffect(() => {

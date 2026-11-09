@@ -14,8 +14,10 @@ import {
     toFocusOfUrl,
     toHeldNoteWindowUrl,
     toNoteWindowAim,
+    toTabWindowAim,
     toWindowAim,
     toWindowAimLabel,
+    findWindowIdByUrl,
 } from './windowAimHelpers';
 
 const HOST = 'https://localhost:3000';
@@ -410,5 +412,63 @@ describe('toAimedToolArgs', () => {
         expect(getCurrentWindowAim()).toBeNull();
         setCurrentWindowAim(aim);
         expect(getCurrentWindowAim()).toBe(aim);
+    });
+});
+
+// 2026-11-08, the user: _should reuse existing (attached window) chatbot
+// tab_ -- the tab a selection's words go to is the one working in the
+// window they were selected in.
+describe('the window a tab works in, and the window an address is', () => {
+    const windowList = toAppWindowList([
+        ...ENTRY_LIST,
+        {
+            id: 'NOTE-A',
+            title: 'Open Worship app - Bible Note',
+            url: `${HOST}/bibleNote.html?file=Sermons.own&id=1&uuid=a`,
+        },
+    ]);
+
+    it("is the note's window, else the chosen one, else the kind's own", () => {
+        expect(
+            toTabWindowAim(
+                { fileFullName: 'Sermons.own', noteId: 1 },
+                'READER-1',
+                'reader',
+                windowList,
+            )?.windowId,
+        ).toBe('NOTE-A');
+        expect(
+            toTabWindowAim(null, 'READER-1', 'reader', windowList)?.windowId,
+        ).toBe('READER-1');
+        expect(
+            toTabWindowAim(null, undefined, 'bibleNote', windowList)?.windowId,
+        ).toBe('NOTE-A');
+        // The main window is no aim, nor is a tab with no kind of its own.
+        expect(
+            toTabWindowAim(null, 'MAIN', 'presenter', windowList),
+        ).toBeNull();
+        expect(toTabWindowAim(null, undefined, null, windowList)).toBeNull();
+    });
+
+    it('finds a window by its whole address, else its page alone', () => {
+        expect(findWindowIdByUrl(`${HOST}/presenter.html`, windowList)).toBe(
+            'MAIN',
+        );
+        expect(
+            findWindowIdByUrl(
+                `${HOST}/bibleNote.html?file=Sermons.own&id=1&uuid=a&x=1`,
+                windowList,
+            ),
+        ).toBe('NOTE-A');
+        // Two Reader windows share their page: no guess.
+        expect(
+            findWindowIdByUrl(
+                `${HOST}/reader.html?uuid=reader&x=1`,
+                windowList,
+            ),
+        ).toBeNull();
+        expect(
+            findWindowIdByUrl(`${HOST}/setting.html`, windowList),
+        ).toBeNull();
     });
 });

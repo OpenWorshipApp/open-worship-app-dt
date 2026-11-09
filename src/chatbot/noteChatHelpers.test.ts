@@ -9,6 +9,7 @@ import {
     checkIsNoteOpenedLast,
     findNoteAskFiles,
     findOpenNoteAttachments,
+    findSessionHoldingNote,
     findSessionNoteTarget,
     genNoteStyleChanges,
     genNoteStyleDoneText,
@@ -389,5 +390,49 @@ describe('readCreatedNote', () => {
         ]) {
             expect(readCreatedNote(text), text).toBeNull();
         }
+    });
+});
+
+// 2026-11-08: words selected in a note go to the tab already on it.
+describe('the tab already on a note', () => {
+    const asked = (attachments: ChatAttachmentType[]) => {
+        return [{ id: 1, author: 'you', attachments }];
+    };
+    const sessions = [
+        { id: 'box', messages: [] },
+        { id: 'asked', messages: asked([SUNDAY]) },
+        { id: 'closed', messages: asked([MERCY]), fileClosedAt: 1 },
+        { id: 'other', messages: asked([MERCY]) },
+    ];
+
+    it('holds it in its box or in what it asked, the one in front first', () => {
+        const draftMap = { box: [SUNDAY] };
+        expect(
+            findSessionHoldingNote(sessions, draftMap, 'box', NOTE_PATH, 3)
+                ?.sessionId,
+        ).toBe('box');
+        // Else the newest; either kind of slash is the same file.
+        expect(
+            findSessionHoldingNote(
+                sessions,
+                {},
+                'box',
+                NOTE_PATH.replace(/\\/g, '/'),
+                3,
+            ),
+        ).toEqual({ sessionId: 'asked', attachment: SUNDAY });
+    });
+
+    it('is not a tab that closed it, another note or another file', () => {
+        expect(
+            findSessionHoldingNote(sessions, {}, 'closed', NOTE_PATH, 4)
+                ?.sessionId,
+        ).toBe('other');
+        expect(
+            findSessionHoldingNote(sessions, {}, 'box', NOTE_PATH, 9),
+        ).toBeNull();
+        expect(
+            findSessionHoldingNote(sessions, {}, 'box', 'C:\\other.own', 3),
+        ).toBeNull();
     });
 });

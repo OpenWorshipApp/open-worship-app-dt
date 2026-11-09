@@ -1775,5 +1775,11 @@ false` and searches only a dataset a lookup panel already holds
   (`findSessionIdByFilePath`). Firewall: `read` reads, `edit` acts
   (`READING_ACTION_MAP`); no removal (a block taken out is an edit with its
   undo). Banner: _changed the Bible note "<title>"_ (key
-  `changed a Bible note`). Offered to the chatbot's model only in a `note`
-  ask (`chatbot-llm.md`).
+  `changed a Bible note`), raised in the NOTE'S OWN window when it is open
+  -- found by the `file` and `id` the help window fills in
+  (`toNoteNoticeTarget` / `findNoteWindowTarget` in `notify.mjs`), else the
+  main window (2026-11-08, the user's picture of it in the main window
+  behind the note being changed; the call names no `page`, its worker runs
+  in the main window). An `owa_undo` of it still bannered in the main
+  window: its call carries only the undo id. Offered to the chatbot's model
+  only in a `note` ask (`chatbot-llm.md`).

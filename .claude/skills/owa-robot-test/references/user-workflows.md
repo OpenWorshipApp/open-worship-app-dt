@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-08f** (**W-60 — a new note made by the assistant.** The user, with a Bible Reader chat that answered _make a bible note for me_ with a note to copy and paste: _chatbot should be able to create new bible note (not allow delete), after create should open the note and attach to the chatbot session_, then the goal _chatbot can put a lesson to a new bible note for user_. In a Bible Reader chat, a passage's or a person's chat, a Resources file's chat or a note's own, _make a bible note for me_ or _put this lesson in a new note_ makes the note -- headings, lists, bold and the verses it names, read from the Bible on this computer -- opens it in its own window and attaches it to the chat under its card; the assistant never deletes a note. Seen live 2026-11-08 on a scratch development profile, Auto answering on the shared gemma4:cloud, each in one call: after _Summarize Genesis 2_, _make a bible note for me_ made _Summary of Genesis 2_ (a list, Genesis 2:7 as a verse mention with its KJV words), its window opened and the chat read _Asking about: Bible Note_; in that note's chat, _make another note about Genesis 3_ made a second while the first one's window stayed open; after _Teach me the key words of Genesis 2:7_, _put this lesson in a new bible note_ kept all four points; and in the chat of Genesis 1:1 opened from the Bible view's robot, the explanation went into _Lesson on Genesis 1:1_ with **[en:tran:Undo this change]** and **[en:tran:Show it in the list]** beside the passage's own buttons. A new note's window wrote nothing back of its own. And in a note's chat, right after a lesson, _new page_ (the user's picture: it had been answered with which way to translate) put that lesson at the end of the note after a page break, its heading, points and verse as the editor's own, in one change -- _add it_ and _new section_ do the same with no page break. CB-169.)
+**workflowsVersion: 2026-11-08g** (**W-60, W-29, W-40 — ask the assistant about words you selected.** The user: _as a user I want to select bible note text then click the agent button then writing a qustion about the selected text_, then _add the agent button for bible selected text as well_, _should provide selection range in the input text for enough context, for bible should include selection range among bible verse_, _should reuse existing (attached window) chatbot tab_ and _for bible note selected text: if user did not ask anything then try to provide options for user, like spell check translation change case do google search_. The bar over selected words — in a Bible Note window, and over a verse in a Bible view — ends with a robot, **[en:tran:Ask the assistant about this]**, shown while AI is on. It opens the chat on that note or verse with the words quoted in the box: _Selected text_, where they are from and, for one line, their first and last character in it, then their line or verse with the selected words between two asterisks each side; the cursor waits on the line under it for the question. The words go into the chat already on that note or verse, else into one working in that window, else into a new one with the note attached or the passage's card read. Under a note's words a card asks _What would you like to do with “…”?_ with seven buttons. Seen live 2026-11-08 on the dev app (the user allowed the caution's **Open** to be pressed there; on that profile it was put away and did not come up): in _Lesson on John 3:16_, _force_ quoted as `Selected text (Lesson on John 3:16, 43-47):` over its line, the note attached, **Working in** the note's window and the card with its seven buttons; a second word of the same note went under the first quote in the same chat, the note attached once and a card of its own; in the Reader, _Son_ in John 3:16 opened a _John 3:16_ chat with the passage's card and `Selected text (John 3:16, 60-62):` over the whole verse; pressed again with another chat in front, the John 3:16 chat came back to the front and nothing was added twice. No question was sent: the card's five asking buttons, its Google search and its copy were not pressed live. CB-170, RD-108.)
+
+Previous: **workflowsVersion: 2026-11-08f** (**W-60 — a new note made by the assistant.** The user, with a Bible Reader chat that answered _make a bible note for me_ with a note to copy and paste: _chatbot should be able to create new bible note (not allow delete), after create should open the note and attach to the chatbot session_, then the goal _chatbot can put a lesson to a new bible note for user_. In a Bible Reader chat, a passage's or a person's chat, a Resources file's chat or a note's own, _make a bible note for me_ or _put this lesson in a new note_ makes the note -- headings, lists, bold and the verses it names, read from the Bible on this computer -- opens it in its own window and attaches it to the chat under its card; the assistant never deletes a note. Seen live 2026-11-08 on a scratch development profile, Auto answering on the shared gemma4:cloud, each in one call: after _Summarize Genesis 2_, _make a bible note for me_ made _Summary of Genesis 2_ (a list, Genesis 2:7 as a verse mention with its KJV words), its window opened and the chat read _Asking about: Bible Note_; in that note's chat, _make another note about Genesis 3_ made a second while the first one's window stayed open; after _Teach me the key words of Genesis 2:7_, _put this lesson in a new bible note_ kept all four points; and in the chat of Genesis 1:1 opened from the Bible view's robot, the explanation went into _Lesson on Genesis 1:1_ with **[en:tran:Undo this change]** and **[en:tran:Show it in the list]** beside the passage's own buttons. A new note's window wrote nothing back of its own. And in a note's chat, right after a lesson, _new page_ (the user's picture: it had been answered with which way to translate) put that lesson at the end of the note after a page break, its heading, points and verse as the editor's own, in one change -- _add it_ and _new section_ do the same with no page break. CB-169.)
 
 Previous: **workflowsVersion: 2026-11-08e** (**W-60 step 2 — the note's window stays over the main window while the chat works in it.** The user, with **Working in** reading the note's window and an arrow to that window's **[en:tran:Toggle Always On Top]**: _a bible note window that attached to chatbot should toggled for stay on top_, then: _change the bible note stay on top to be top of the main app window instead and still make chatbot and ai chat be the highest stack_. A press in the help window or the main window had buried the note being changed behind the main window. Now, for as long as the chat in front works in it, the note's window stays above the main window -- but over no other program -- and the help window and every AI Chat window stay above the note's window, even when the note's window is the one in front; it goes back to normal when the chat works in another window, another tab is in front or the help window closes. **[en:tran:Toggle Always On Top]** is left as the person set it. Seen live 2026-11-08 on the dev app (Windows), reading the windows' order from the system: the row's **[en:tran:Open in Chatbot]** put them Chatbot, Bible Note, Reader, the note window owned by the Reader and not on top of other programs; with the note window brought to the front, and then the Reader, the order stayed the same; **Working in** on the main window gave the note window back its own place. CB-169.)
 
@@ -3191,6 +3193,23 @@ row's own **[en:tran:Delete]**.
    is not open already. In the **Bible Note** window, the robot button among the buttons
    at the bottom (beside **[en:tran:Save]**) does the same for the note it shows, after
    keeping what was just typed.
+
+   **About some words of it:** in the **Bible Note** window, select the words — the bar
+   that comes up over them ends with a robot, **[en:tran:Ask the assistant about this]**.
+   📸 The help window opens on this note — in the chat already on it when there is one,
+   else in a chat working in this note's window, else in a new chat with the note
+   attached as in step 2 — and puts the words in the box: _Selected text_, the note's
+   name and, when they are on one line, where they sit in it (their first and last
+   character, like _43-47_), then that line with the selected words between two
+   asterisks. The cursor waits on the line under it: write your question there and
+   press **Send**. If you would rather press than write, the card under it asks _What
+   would you like to do with “…”?_: **[en:tran:Explain it in simple words]**,
+   **[en:tran:Check the spelling]**, **[en:tran:Replace the words with another language]**,
+   **[en:tran:Add another language under each line]** and **[en:tran:Uppercase]** ask the
+   assistant about those words; **[en:tran:Search Selected Text on Google]** opens a search
+   in your browser and **[en:tran:Copy Selected Text]** copies them, with no assistant.
+   Select other words and press the robot again: they go under the first ones, in the
+   same chat.
 2. The help window opens a chat of its own with that one note attached under the box, and a
    card that says what it can do, with five buttons. 📸 The chat works in the note's own
    window: at the top it is asking about **Bible Note**, and **Working in** above the box
@@ -4808,7 +4827,12 @@ your Bible reading.
     view's toolbar (the row that shows when the mouse is over its title), or
     right-click the text and choose **[en:tran:Ask the Assistant About This Verse]** for
     the verse under the mouse or **[en:tran:Ask the Assistant About This Passage]** for
-    the whole passage.
+    the whole passage. Or select some words of a verse: the bar that comes up over them
+    (W-40) ends with a robot, **[en:tran:Ask the assistant about this]**, which opens that
+    verse's chat — the one already on it, when there is one — and puts the words in the
+    box: _Selected text_, the verse and their first and last character in it, then the
+    whole verse with the selected words between two asterisks. The cursor waits on the
+    line under it for your question.
     **Or open it from the menu of a passage.** Anywhere a passage has
     **[en:tran:Open]** in its menu — a row of your Bibles list, an entry of the
     lookup's history strip at the top, a Bible Find result, a cross reference, or a
@@ -6122,7 +6146,8 @@ are still there the next time you open the app.
 1. Open the **Reader** (📖) and bring up a passage — say `Genesis 22:1-24`.
 2. Drag across a few words inside a verse, the way you would to copy them. A small
    toolbar appears just above what you selected. 📸
-   It has six coloured dots, then a **speech bubble** and an **eraser**.
+   It has six coloured dots, then a **speech bubble** and an **eraser** — and, while AI
+   is on, a **robot** that asks the assistant about those words (W-29).
 3. Click the **yellow** dot. The words you selected — and only those — take on a soft
    yellow wash, and the toolbar goes away.
    > The colours are a fixed set of six. They are meant to read like a highlighter pen

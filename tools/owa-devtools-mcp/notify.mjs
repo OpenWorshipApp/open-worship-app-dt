@@ -15,7 +15,7 @@
 // every shortcut), and confined to its own shadow root so no app style can
 // reach it and it can touch no app state.
 
-import { evaluateInApp } from './cdp.mjs';
+import { evaluateInApp, listTargets, requireLivePort } from './cdp.mjs';
 import { DEFAULT_LANG_CODE, loadTranBundle } from './tran.mjs';
 
 // A banner is said in the language the app is DISPLAYING, which is not always
@@ -1139,6 +1139,62 @@ export function genNoticeExpression(wordsByLang) {
 let lastKey = null;
 let lastAt = 0;
 
+// A Bible note changed from the help window has its banner in the note's
+// OWN window (2026-11-08, the user, with a picture of _changed the Bible
+// note "Lesson on John 3:16"_ in the main window behind the note being
+// changed: _the assistance notation showing in main page instead of bible
+// note page_). The call names no window -- its worker runs in the main one
+// -- but the help window fills in the note's file and id, and the note
+// window's address names both (`bibleNote.html?file=<file name>&id=<id>`,
+// `src/helper/ai/noteWindowMatchHelpers.ts`). With that window not open,
+// the main window, as before.
+const NOTE_WINDOW_PAGE_NAME = 'bibleNote.html';
+const NOTE_NOTICE_TOOL_SET = new Set(['owa_note_edit']);
+
+/** The note a call changes, as its window names it, or null. */
+export function toNoteNoticeTarget(name, args) {
+    if (!NOTE_NOTICE_TOOL_SET.has(name)) {
+        return null;
+    }
+    const file = typeof args?.file === 'string' ? args.file : '';
+    const fileFullName = file.split(/[\\/]/).pop() ?? '';
+    const noteId = args?.id;
+    if (fileFullName === '' || !Number.isInteger(noteId) || noteId < 0) {
+        return null;
+    }
+    return { fileFullName, noteId };
+}
+
+/** That note's own window among the app's pages, or null. */
+export function findNoteWindowTarget(targets, note) {
+    return (
+        targets.find((target) => {
+            let url;
+            try {
+                url = new URL(target.url);
+            } catch (_error) {
+                return false;
+            }
+            return (
+                url.pathname.split('/').pop() === NOTE_WINDOW_PAGE_NAME &&
+                url.searchParams.get('file') === note.fileFullName &&
+                url.searchParams.get('id') === String(note.noteId)
+            );
+        }) ?? null
+    );
+}
+
+async function showNoticeInNoteWindow(expression, note) {
+    let match;
+    try {
+        const targets = await listTargets(await requireLivePort());
+        match = findNoteWindowTarget(targets, note)?.id;
+    } catch (_error) {
+        match = undefined;
+    }
+    await evaluateInApp(expression, { match });
+}
+
 /**
  * Fire and forget on purpose: a tool call must not wait for its own banner,
  * and an app that has closed since must not turn one into a failed tool.
@@ -1152,8 +1208,11 @@ export function notifyToolCall(name, args) {
         return;
     }
     const match = typeof args?.page === 'string' ? args.page : undefined;
+    const note = match === undefined ? toNoteNoticeTarget(name, args) : null;
     const now = Date.now();
-    const key = `${match ?? ''}|${notice.text}`;
+    const key =
+        `${match ?? (note === null ? '' : `${note.fileFullName}#${note.noteId}`)}` +
+        `|${notice.text}`;
     if (key === lastKey && now - lastAt < 1200) {
         return;
     }
@@ -1167,7 +1226,12 @@ export function notifyToolCall(name, args) {
         // never the banner.
         words = { en: { who: NOTICE_WHO_TEXT, what: notice.text } };
     }
-    evaluateInApp(genNoticeExpression(words), { match }).catch(() => {});
+    const expression = genNoticeExpression(words);
+    if (note !== null) {
+        showNoticeInNoteWindow(expression, note).catch(() => {});
+        return;
+    }
+    evaluateInApp(expression, { match }).catch(() => {});
 }
 
 /**

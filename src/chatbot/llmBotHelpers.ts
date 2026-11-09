@@ -3867,6 +3867,12 @@ const LOOKUP_SYSTEM_PROMPT =
     'a passage of the Bible that the user opened in the app. The record the ' +
     'app holds on it is in their message; answer from it and from what the ' +
     'Bible says, plainly and in a few short paragraphs, for older readers. ' +
+    'WORDS THEY SELECTED: "> " lines under a line ending in a colon quote ' +
+    'words they selected in the verse -- the words between ** and ** (a ' +
+    'selection mark), the rest of the verse around them, … for words left ' +
+    'out; in the brackets the passage and the selection’s first and last ' +
+    'character in the verse. What they wrote after the quote is about THOSE ' +
+    'words, in that verse. ' +
     'The names lookup is drawn from the King James Version (KJV): say so ' +
     'when asked where it comes from, and a kjvName is the name as the KJV ' +
     'spells it. otherForms are this same person under another name the ' +

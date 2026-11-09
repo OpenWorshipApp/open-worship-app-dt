@@ -62,6 +62,7 @@ describe('Open in Chatbot on a Bible note', () => {
             null,
             3,
             null,
+            null,
         );
     });
 

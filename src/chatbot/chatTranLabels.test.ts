@@ -26,6 +26,7 @@ import {
 import { LOOKUP_ACTION_LABEL_LIST } from './lookupStepHelpers';
 import { READER_ROUTE_LABEL } from './readerRouteHelpers';
 import { RESOURCE_ASK_LABEL_TEMPLATE } from './resourcesChatHelpers';
+import { SELECTION_ACTION_LABEL_LIST } from './selectionMentionHelpers';
 import { SPEND_ALLOW_LABEL } from './spendGuardHelpers';
 import { CHAT_TIP_LIST } from './tipHelpers';
 
@@ -76,6 +77,8 @@ describe('words translated through a variable', () => {
             RESOURCE_ASK_LABEL_TEMPLATE,
             USE_AUTO_LABEL,
             USE_ASSISTANT_LABEL_TEMPLATE,
+            // The card under words selected in a note.
+            ...SELECTION_ACTION_LABEL_LIST,
         ];
         for (const langCode of LANG_CODE_LIST) {
             expect(listMissing(langCode, labelList), langCode).toEqual([]);

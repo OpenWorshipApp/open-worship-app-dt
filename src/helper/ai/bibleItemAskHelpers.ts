@@ -13,6 +13,7 @@
  * first and the window opener are nothing a pane of verses needs until then.
  */
 import BibleItem from '../../bible-list/BibleItem';
+import type { SelectionMentionType } from './chatbotHandoffStoreHelpers';
 import type { LookupAskType } from './lookupAskHelpers';
 import { readBibleVersesKey } from './lookupAskHelpers';
 
@@ -26,9 +27,16 @@ async function toPassageAsk(bibleItem: BibleItem): Promise<LookupAskType> {
     };
 }
 
-async function openWithAsk(ask: LookupAskType) {
+async function openWithAsk(
+    ask: LookupAskType,
+    mention: SelectionMentionType | string | null = null,
+) {
     const { openChatbotWithLookup } = await import('./chatbotHandoffHelpers');
-    return await openChatbotWithLookup(ask);
+    // The words selected ride only when there are some: a passage asked
+    // about whole is the request it always was.
+    return mention === null
+        ? await openChatbotWithLookup(ask)
+        : await openChatbotWithLookup(ask, mention);
 }
 
 /** The whole passage a view shows. */
@@ -38,9 +46,14 @@ export async function openChatbotWithBibleItem(bibleItem: BibleItem) {
 
 /**
  * One verse, by the key its element carries (`(KJV) GEN 4:1`); false when the
- * key reads as no verse.
+ * key reads as no verse. From a Bible view's selection toolbar (2026-11-08,
+ * the user: _add the agent button for bible selected text as well_), the
+ * words selected in it ride along (`mention`) and are quoted in the box.
  */
-export async function openChatbotWithVerseKey(bibleVersesKey: string) {
+export async function openChatbotWithVerseKey(
+    bibleVersesKey: string,
+    mention: SelectionMentionType | string | null = null,
+) {
     const parts = readBibleVersesKey(bibleVersesKey);
     if (parts === null) {
         return false;
@@ -52,5 +65,5 @@ export async function openChatbotWithVerseKey(bibleVersesKey: string) {
     if (bibleItem === null) {
         return false;
     }
-    return await openWithAsk(await toPassageAsk(bibleItem));
+    return await openWithAsk(await toPassageAsk(bibleItem), mention);
 }

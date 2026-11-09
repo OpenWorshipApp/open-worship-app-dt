@@ -13,6 +13,7 @@ import {
     getOffsetsFromRange,
     type VerseOffsetsType,
 } from './bibleVerseAnnotationHelpers';
+import type { SelectionMentionType } from '../helper/ai/chatbotHandoffStoreHelpers';
 
 /** Everything the comment editor needs to open on one comment. */
 export type VerseCommentTargetType = {
@@ -71,6 +72,52 @@ export function readVerseSelection(): VerseSelectionType | null {
         return null;
     }
     return { verseKey, offsets, rect: range.getBoundingClientRect() };
+}
+
+/**
+ * The selection for the assistant (2026-11-08, the user, with a Bible
+ * view's selection bar in a picture: _add the agent button for bible
+ * selected text as well_ and _for bible should include selection range
+ * among bible verse_): its verse's key, the words, the verse's words before
+ * and after them, and their first and last character in the verse, counted
+ * from 1 the way the marks count them. Null for no selection in one verse.
+ */
+export function readVerseSelectionMention(): {
+    verseKey: string;
+    mention: SelectionMentionType;
+} | null {
+    const selection = globalThis.getSelection();
+    if (
+        selection === null ||
+        selection.isCollapsed ||
+        selection.rangeCount === 0
+    ) {
+        return null;
+    }
+    const range = selection.getRangeAt(0);
+    const anchorElement = toAnchorElement(range.commonAncestorContainer);
+    const verseKey =
+        anchorElement?.getAttribute(VERSE_ANNOTATION_ANCHOR_ATTR) ?? null;
+    if (anchorElement === null || verseKey === null) {
+        return null;
+    }
+    const offsets = getOffsetsFromRange(anchorElement, range);
+    if (offsets === null) {
+        return null;
+    }
+    const verseRange = document.createRange();
+    verseRange.selectNodeContents(anchorElement);
+    const verseText = verseRange.toString();
+    return {
+        verseKey,
+        mention: {
+            text: offsets.text,
+            before: verseText.slice(0, offsets.start),
+            after: verseText.slice(offsets.end),
+            start: offsets.start + 1,
+            end: offsets.end,
+        },
+    };
 }
 
 /**

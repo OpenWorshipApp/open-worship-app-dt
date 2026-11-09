@@ -337,3 +337,31 @@ window as a whole — tabs, pickers, its language, the caution — is in
   it (`repairStudiedWords`), and the cleaner drops a third script's sign on
   the language's own letter. The Google search spells a Hebrew word as a
   lexicon does, without its accents.
+
+- **Words SELECTED in a verse are asked about from the selection bar**
+  (2026-11-08, the user, with a Bible view's colours / comment / eraser bar
+  over _so loved the world_ in a picture: _add the agent button for bible
+  selected text as well_, then _should provide selection range in the input
+  text for enough context, for bible should include selection range among
+  bible verse_ and _should reuse existing (attached window) chatbot tab_).
+  `BibleSelectionToolbarComp` ends with
+  **[en:tran:Ask the assistant about this]** while AI is on -- read ONCE
+  for the host (`useState`), because
+  `getIsAIEnabled` is a synchronous round trip to main and the bar draws
+  again with every selection. The press reads the verse around the words
+  (`readVerseSelectionMention`: the anchor's own text, the marks' offsets,
+  1-based) and opens the verse's conversation through
+  `openChatbotWithVerseKey(key, mention)` -- the lookup hand-off carries
+  `mention` beside the ask (`requestChatbotLookup`,
+  `takeChatbotLookupRequest`). The window quotes it in the box
+  (`toSelectionMentionText`, `src/chatbot/selectionMentionHelpers.ts`):
+  `Selected text (John 3:16, 60-62):` then `> ` the whole verse with the
+  words between `**`, the caret on the line under it, no type-ahead over a
+  quote (`checkHasSelectionQuote`). The tab: the one whose open subject IS
+  that passage, else one ATTACHED to the window it came from -- its note's,
+  a window chosen for it, a kind it CHOSE, or an open subject read from
+  that window's page -- else a new one whose card is read first
+  (`pickSelectionSession`, `mentionHandedLookupRef`). `LOOKUP_SYSTEM_PROMPT`
+  says what the quote, its marks and its numbers are. Seen live on the dev
+  app: _Son_ quoted at 60-62, pressed again from another tab the same chat
+  came back with nothing added twice.

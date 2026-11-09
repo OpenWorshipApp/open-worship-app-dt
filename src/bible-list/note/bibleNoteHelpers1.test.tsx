@@ -98,6 +98,7 @@ let host: HTMLDivElement;
 let root: Root;
 let buttons: Map<string, FooterButtonType>;
 let bibleNote: any;
+let floatingButtons: Map<string, any>;
 let note: any;
 let noteItem: any;
 let setIsShowingBibleLookup: Mock<(isShowing: boolean) => void>;
@@ -145,9 +146,13 @@ beforeEach(() => {
         { langCode: 'en', editorLink: '' },
     ]);
     buttons = new Map();
+    floatingButtons = new Map();
     bibleNote = {
         prependFooterActionButton: vi.fn((button: FooterButtonType) => {
             buttons.set(button.id, button);
+        }),
+        appendFloatingActionButton: vi.fn((button: any) => {
+            floatingButtons.set(button.id, button);
         }),
         setColorScheme: vi.fn(),
     };
@@ -197,6 +202,30 @@ describe('the note editor footer', () => {
         expect(h.openNoteInChatbot).toHaveBeenCalledWith(
             '/notes/Default.own',
             3,
+            null,
+            null,
+        );
+    });
+
+    // 2026-11-08, the user: _select bible note text then click the agent
+    // button then writing a qustion about the selected text_.
+    test('the bar over selected text asks about those words in THIS note', async () => {
+        await renderProbe();
+        const ask = floatingButtons.get('ask-chatbot-about-selection');
+        expect(ask.description).toBe('Ask the assistant about this');
+        // It only reads, so it is there in read-only mode too.
+        expect(ask.isHiddenWhenReadOnly).toBeUndefined();
+        await act(async () => {
+            ask.onClick({
+                selection: { text: 'so loved', domRange: null },
+            });
+        });
+        expect(h.calls).toEqual(['flush', 'open']);
+        expect(h.openNoteInChatbot).toHaveBeenCalledWith(
+            '/notes/Default.own',
+            3,
+            null,
+            'so loved',
         );
     });
 
@@ -204,6 +233,7 @@ describe('the note editor footer', () => {
         h.isAIEnabled = false;
         await renderProbe();
         expect(buttons.has('open-in-chatbot')).toBe(false);
+        expect(floatingButtons.size).toBe(0);
     });
 
     test('a read-only note gets neither Save nor the lookup', async () => {
@@ -211,6 +241,7 @@ describe('the note editor footer', () => {
         expect(buttons.has('editing-history')).toBe(false);
         expect(buttons.has('bible-lookup')).toBe(false);
         expect(buttons.has('open-in-chatbot')).toBe(false);
+        expect(floatingButtons.size).toBe(0);
         expect(buttons.has('lang-markdown-editor km')).toBe(true);
         expect(buttons.has('toggle-on-top')).toBe(true);
         expect(buttons.has('bible-key')).toBe(true);

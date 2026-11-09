@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => {
             offsets: { start: 0, end: 2 },
             rect: { left: 100, top: 200, width: 40, height: 16, bottom: 216 },
         },
+        isAIEnabled: false,
+        openChatbotWithVerseKey: vi.fn(async () => true),
     };
 });
 
@@ -34,6 +36,12 @@ vi.mock('../app-modal/modalLayerContext', () => ({
     useIsInModalLayer: () => false,
 }));
 vi.mock('../toast/toastHelpers', () => ({ showSimpleToast: () => {} }));
+vi.mock('../helper/ai/aiHelpers', () => ({
+    getIsAIEnabled: () => mocks.isAIEnabled,
+}));
+vi.mock('../helper/ai/bibleItemAskHelpers', () => ({
+    openChatbotWithVerseKey: mocks.openChatbotWithVerseKey,
+}));
 vi.mock('../bible-list/note/noteItemHelpers', () => ({
     VERSE_HIGHLIGHT_COLOR_KEYS: ['yellow', 'green'],
     toVerseBibleKey: () => 'KJV',
@@ -48,6 +56,16 @@ vi.mock('../bible-list/note/verseAnnotationHelpers', () => ({
 }));
 vi.mock('./verseAnnotationActionHelpers', () => ({
     readVerseSelection: () => mocks.selection,
+    readVerseSelectionMention: () => ({
+        verseKey: '(KJV) JHN 3:16',
+        mention: {
+            text: 'so loved',
+            before: 'For God ',
+            after: ' the world',
+            start: 9,
+            end: 16,
+        },
+    }),
     removeAnnotationRefs: async () => {},
     toOverlappingAnnotationRefs: () => [],
     toVerseAnchor: async () => null,
@@ -72,6 +90,8 @@ let root: Root;
 
 beforeEach(() => {
     mocks.hoveredComment = null;
+    mocks.isAIEnabled = false;
+    mocks.openChatbotWithVerseKey.mockClear();
     host = document.createElement('div');
     document.body.appendChild(host);
     root = createRoot(host);
@@ -118,6 +138,49 @@ describe('verse mark buttons are named', () => {
             { name: 'Add Comment', isIconHidden: true },
             { name: 'Remove Marks', isIconHidden: true },
         ]);
+    });
+
+    // 2026-11-08, the user: _add the agent button for bible selected text as
+    // well_ -- and only while AI is on, like every way into the assistant.
+    test('with AI on, the toolbar asks the assistant about the words', async () => {
+        mocks.isAIEnabled = true;
+        act(() => {
+            root.render(<BibleSelectionToolbarComp />);
+        });
+        const words = document.createElement('span');
+        words.textContent = 'For God so loved the world';
+        host.appendChild(words);
+        act(() => {
+            globalThis.getSelection()!.selectAllChildren(words);
+            document.dispatchEvent(new Event('selectionchange'));
+        });
+
+        expect(readNames('.app-verse-selection-toolbar__button')).toEqual([
+            { name: 'Add Comment', isIconHidden: true },
+            { name: 'Remove Marks', isIconHidden: true },
+            { name: 'Ask the assistant about this', isIconHidden: true },
+        ]);
+        const askButton = document.body.querySelector<HTMLButtonElement>(
+            '[aria-label="Ask the assistant about this"]',
+        )!;
+        await act(async () => {
+            askButton.click();
+            await new Promise((resolve) => {
+                setTimeout(resolve, 25);
+            });
+        });
+        expect(mocks.openChatbotWithVerseKey).toHaveBeenCalledWith(
+            '(KJV) JHN 3:16',
+            {
+                text: 'so loved',
+                before: 'For God ',
+                after: ' the world',
+                start: 9,
+                end: 16,
+            },
+        );
+        // The selection it asked about is let go of.
+        expect(globalThis.getSelection()?.rangeCount).toBe(0);
     });
 
     test('the comment hover tool names Close, Edit and Delete', () => {

@@ -1,11 +1,11 @@
 ---
 name: bible-note-chatbot
-description: "Open in Chatbot on ONE Bible note: the note id rides the handoff, owa_note_edit edits Lexical blocks keeping the rest byte for byte, writes the editing head and tells an open note window over a main-process relay; the assistant also MAKES a note (owa_bible_note add, opened and attached), never deletes one"
+description: "Open in Chatbot on ONE Bible note: the note id rides the handoff, owa_note_edit edits Lexical blocks keeping the rest byte for byte, writes the editing head and tells an open note window over a main-process relay; the assistant also MAKES a note (owa_bible_note add, opened and attached), never deletes one; words selected in the note window are quoted in the chat box with their line and range, in the tab ATTACHED to that note or window"
 metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-08T21:50:05.969Z
+  modified: 2026-11-08T23:39:23.838Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -116,6 +116,28 @@ What is not obvious from the code:
 - **A source edit reloads the scratch help window through the shared
   Vite**, dropping an attachment still waiting in the box (BN-19) -- a
   line asked next is not the note's. Ask again after the reload settles.
+
+- **Words selected in the note ride to the chat as a quote** (2026-11-08,
+  the user: _select bible note text then click the agent button then
+  writing a qustion about the selected text_; `bible-note` 0.6.0's
+  `appendFloatingActionButton`). The bar over a selection ends with **Ask the
+  assistant about this**; `toNoteSelectionMention` reads the LINE around the
+  words off the editor's DOM range (`p, h1..h6, li, blockquote, code, td,
+  th`) and their 1-based range when one line, and the file hand-off carries
+  it beside `noteId`. The box gets `Selected text (<note>, 43-47):` and the
+  line with the words between `**` (the prompt says they are a selection
+  mark, NOT bold -- the note read itself uses `**bold**`), plus a card of
+  seven jobs under it (`genSelectionOffer`, a pseudo tool the model cannot
+  press; Google and Copy need no model). Which tab: the one holding the note
+  (box or open in what it asked), else one ATTACHED to the note's window --
+  never a tab merely FOLLOWING the opener: a press in the note window turns
+  every unchosen tab to Bible Note, and `toFocusWindowAim` then made an
+  older unrelated chat "work in" the note window and take the words (seen
+  live; `toTabWindowAim` takes `null` for a tab that chose no kind).
+  **Testing it live**: a source edit hot-reloads the help window and drops
+  what waits in the box and `noteWindowBySession` ([[dev-hmr-stale-state-qa]]),
+  so test reuse with no edit between the presses; and the editor redraws its
+  text on a double-click, so a `take_snapshot` uid is good for ONE select.
 
 Verified live on a scratch dev profile ([[scratch-dev-instance-beside-user-app]]),
 the AI caution's Open pressed over the scratch instance's own CDP after the

@@ -131,7 +131,12 @@ your Bible reading.
     view's toolbar (the row that shows when the mouse is over its title), or
     right-click the text and choose **[en:tran:Ask the Assistant About This Verse]** for
     the verse under the mouse or **[en:tran:Ask the Assistant About This Passage]** for
-    the whole passage.
+    the whole passage. Or select some words of a verse: the bar that comes up over them
+    (W-40) ends with a robot, **[en:tran:Ask the assistant about this]**, which opens that
+    verse's chat — the one already on it, when there is one — and puts the words in the
+    box: _Selected text_, the verse and their first and last character in it, then the
+    whole verse with the selected words between two asterisks. The cursor waits on the
+    line under it for your question.
     **Or open it from the menu of a passage.** Anywhere a passage has
     **[en:tran:Open]** in its menu — a row of your Bibles list, an entry of the
     lookup's history strip at the top, a Bible Find result, a cross reference, or a

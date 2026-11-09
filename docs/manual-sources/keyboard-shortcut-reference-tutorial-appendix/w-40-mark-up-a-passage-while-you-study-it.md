@@ -15,7 +15,8 @@ are still there the next time you open the app.
 1. Open the **Reader** (📖) and bring up a passage — say `Genesis 22:1-24`.
 2. Drag across a few words inside a verse, the way you would to copy them. A small
    toolbar appears just above what you selected. 📸
-   It has six coloured dots, then a **speech bubble** and an **eraser**.
+   It has six coloured dots, then a **speech bubble** and an **eraser** — and, while AI
+   is on, a **robot** that asks the assistant about those words (W-29).
 3. Click the **yellow** dot. The words you selected — and only those — take on a soft
    yellow wash, and the toolbar goes away.
    > The colours are a fixed set of six. They are meant to read like a highlighter pen

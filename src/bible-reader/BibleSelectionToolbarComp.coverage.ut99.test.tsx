@@ -33,6 +33,8 @@ vi.mock('../helper/appHooks', async () => {
     };
 });
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
+// The assistant's button is tested beside its naming (`BibleSelectionToolbarComp.test.tsx`).
+vi.mock('../helper/ai/aiHelpers', () => ({ getIsAIEnabled: () => false }));
 vi.mock('../others/themeHelpers', () => ({
     useThemeSource: () => ({ theme: 'dark' }),
 }));
