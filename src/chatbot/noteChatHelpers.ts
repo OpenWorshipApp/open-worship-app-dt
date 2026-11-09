@@ -79,9 +79,45 @@ function toNoteAskFile(attachment: ChatAttachmentType): NoteAskFileType {
     };
 }
 
+/** `Default` out of `C:\…\Default.own`. */
+function toNoteFileLabel(filePath: string) {
+    return (filePath.split(/[\\/]/).pop() ?? '').replace(NOTE_FILE_PATTERN, '');
+}
+
+/**
+ * Names two attached notes can be told apart by: a note keeps its own name
+ * unless another attached note has it too -- notes are often titled by the
+ * day, and two files may each hold a "Sun Sept 27 2026" -- then its file's
+ * name is put after it, and its number in the file when even that is shared
+ * (2026-11-08: the model names a note, and the first of two of a name had
+ * been the one changed).
+ */
+function toDistinctNoteNames(files: NoteAskFileType[]): NoteAskFileType[] {
+    const countOf = (list: string[], name: string) => {
+        return list.filter((one) => {
+            return toComparableName(one) === toComparableName(name);
+        }).length;
+    };
+    const titleList = files.map((one) => {
+        return one.name;
+    });
+    const withFile = files.map((one) => {
+        return countOf(titleList, one.name) > 1
+            ? `${one.name} (${toNoteFileLabel(one.filePath)})`
+            : one.name;
+    });
+    return files.map((one, index) => {
+        const name =
+            countOf(withFile, withFile[index]) > 1
+                ? `${withFile[index]} #${one.noteId}`
+                : withFile[index];
+        return { ...one, name };
+    });
+}
+
 /**
  * The notes among a tab's open files -- each once, the first
- * `MAX_NOTE_ASK_FILES`.
+ * `MAX_NOTE_ASK_FILES`, each by a name no other of them has.
  */
 export function findNoteAskFiles(
     attachments: readonly ChatAttachmentType[],
@@ -101,7 +137,7 @@ export function findNoteAskFiles(
         }
         out.push(toNoteAskFile(attachment));
     }
-    return out.slice(0, MAX_NOTE_ASK_FILES);
+    return toDistinctNoteNames(out.slice(0, MAX_NOTE_ASK_FILES));
 }
 
 /**
@@ -283,9 +319,16 @@ export function resolveNoteEditTarget(
               }
             : { reason: `Say which note (\`note\`): ${names}.` };
     }
-    const attached = files.find((one) => {
+    const matched = files.filter((one) => {
         return toComparableName(one.name) === toComparableName(text);
     });
+    // Never a guess between two: the wrong note would be changed.
+    if (matched.length > 1) {
+        return {
+            reason: `More than one attached note is called "${text}": ${names}. Name one of them exactly.`,
+        };
+    }
+    const attached = matched[0];
     if (attached === undefined) {
         return {
             reason:
@@ -453,7 +496,15 @@ export const NOTE_SYSTEM_PROMPT =
     'when it is part of a block. A BIBLE VERSE is never your words: put one in with a ' +
     'NEW token [^Book chapter:verse] in the words, or a block {after, kind: ' +
     '"passage", ref: "John 3:16-17"} for its whole text -- the app reads it ' +
-    'from the installed Bible. Never type a verse out. A new [@Name] or ' +
+    'from the installed Bible. Never type a verse out. A verse token names ' +
+    'the Bible it is read from in brackets, [^(KJV) John 3:16] -- keep a ' +
+    'token as read to keep that verse. To have a verse from ANOTHER Bible ' +
+    '("make the English lines KJV"), write that Bible\'s short name in its ' +
+    'token in place of the old one, [^(KJV) Hebrews 11:1] where ' +
+    "[^(NIV) Hebrews 11:1] was -- written in the words that Bible's own " +
+    "book names use -- and leave the other lines' tokens as " +
+    'read; the summary names the Bible each new verse came from -- tell ' +
+    'them only that. A new [@Name] or ' +
     '[#Place] is looked up in the names lookup and becomes a mention when ' +
     'it is there. When a request has one sensible reading, do it ' +
     'rather than ask: every change can be undone. PUTTING AN ANSWER IN: ' +

@@ -5,10 +5,17 @@ import {
     NOTE_EDIT_DESCRIPTION,
     NOTE_EDIT_KINDS,
     NOTE_EDIT_TOOL_NAME,
+    NOTE_WINDOW_OTHER_CODE,
+    NOTE_WINDOW_READY_GLOBAL_NAME,
+    checkIsNoteWindowUrl,
     registerNoteEditTool,
     runNoteEdit,
     toNoteEditTarget,
 } from './agentNoteEdit.mjs';
+import {
+    NOTE_WINDOW_OTHER_CODE as APP_NOTE_WINDOW_OTHER_CODE,
+    NOTE_WINDOW_READY_GLOBAL_NAME as APP_NOTE_WINDOW_READY_GLOBAL_NAME,
+} from '../../src/bible-list/note/noteWindowControllerHelpers';
 import { checkIsActingCall, checkIsRemovingCall } from './firewall.mjs';
 import { describeToolNotice } from './notify.mjs';
 import {
@@ -57,7 +64,57 @@ describe('which note', () => {
 });
 
 describe('one call', () => {
-    it('reads the note by its file and id', async () => {
+    // 2026-11-08: a note is read and changed in its own window only.
+    it("finds the note's own window by its address", () => {
+        const base = 'https://localhost:3000/bibleNote.html';
+        expect(
+            checkIsNoteWindowUrl(
+                `${base}?file=Default.own&id=3&uuid=x`,
+                'Default.own',
+                3,
+            ),
+        ).toBe(true);
+        // Another note of the file, another file, another page.
+        expect(
+            checkIsNoteWindowUrl(
+                `${base}?file=Default.own&id=4`,
+                'Default.own',
+                3,
+            ),
+        ).toBe(false);
+        expect(
+            checkIsNoteWindowUrl(
+                `${base}?file=sunday.own&id=3`,
+                'Default.own',
+                3,
+            ),
+        ).toBe(false);
+        expect(
+            checkIsNoteWindowUrl(
+                'https://localhost:3000/reader.html?file=Default.own&id=3',
+                'Default.own',
+                3,
+            ),
+        ).toBe(false);
+        // A name with spaces, as the address carries it.
+        expect(
+            checkIsNoteWindowUrl(
+                `${base}?file=My%20Notes.own&id=0`,
+                'My Notes.own',
+                0,
+            ),
+        ).toBe(true);
+        expect(checkIsNoteWindowUrl('not a url', 'Default.own', 3)).toBe(false);
+    });
+
+    it('speaks the note window\'s own words for "ready" and "another note"', () => {
+        expect(NOTE_WINDOW_READY_GLOBAL_NAME).toBe(
+            APP_NOTE_WINDOW_READY_GLOBAL_NAME,
+        );
+        expect(NOTE_WINDOW_OTHER_CODE).toBe(APP_NOTE_WINDOW_OTHER_CODE);
+    });
+
+    it('reads the note by its file and id, in its own window whatever page is named', async () => {
         const answer = { name: 'Sunday', hash: 'ab12', blocks: [] };
         const { worker, calls } = genWorker(answer);
         const result = await runNoteEdit(
@@ -72,7 +129,6 @@ describe('one call', () => {
                     noteId: 3,
                     from: 20,
                 },
-                page: 'x',
             },
         ]);
         expect(JSON.parse(readText(result))).toEqual(answer);

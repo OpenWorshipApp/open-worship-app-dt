@@ -152,6 +152,41 @@ describe('the note a call names', () => {
             ).reason,
         ).toContain('"Sunday", "Mercy"');
     });
+
+    // 2026-11-08: notes are titled by the day, and the model names a note --
+    // two attached of one name, the first had been the one changed.
+    it('two attached notes of one name are told apart, never guessed between', () => {
+        const otherFile = noteAttachment(
+            'Sunday',
+            3,
+            'C:\\data\\bible-notes\\Youth.own',
+        );
+        const sameFile = noteAttachment('Sunday', 7);
+        const files = findNoteAskFiles([SUNDAY, otherFile]);
+        expect(files.map((one) => one.name)).toEqual([
+            'Sunday (Default)',
+            'Sunday (Youth)',
+        ]);
+        expect(
+            resolveNoteEditTarget({ note: 'Sunday (Youth)' }, files),
+        ).toEqual({
+            file: 'C:\\data\\bible-notes\\Youth.own',
+            id: 3,
+            note: 'Sunday (Youth)',
+        });
+        // The bare title names neither.
+        expect(
+            (resolveNoteEditTarget({ note: 'Sunday' }, files) as any).reason,
+        ).toContain('"Sunday (Default)", "Sunday (Youth)"');
+        // Two of one file: their numbers in it.
+        expect(
+            findNoteAskFiles([SUNDAY, sameFile]).map((one) => one.name),
+        ).toEqual(['Sunday (Default) #3', 'Sunday (Default) #7']);
+        // One alone keeps its own name.
+        expect(
+            findNoteAskFiles([SUNDAY, MERCY]).map((one) => one.name),
+        ).toEqual(['Sunday', 'Mercy']);
+    });
 });
 
 describe('the note as the model reads it', () => {

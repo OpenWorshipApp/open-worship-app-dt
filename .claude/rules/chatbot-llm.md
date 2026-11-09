@@ -819,7 +819,15 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `--stdio --ratchet`). The WINDOW turns the note's NAME into its file and
   id (`resolveNoteEditTarget`); a `file` or `id` the model writes is
   refused, so is a note that is not attached, and outside a note ask the
-  tool is refused. The prompt's rules: every change in ONE `edit`, block
+  tool is refused. **Two attached notes never share a name** (2026-11-08:
+  notes are titled by the day, and the first of two of a name had been the
+  one changed): `findNoteAskFiles` puts the file's name after a shared
+  title (`Sunday (Youth)`), and its number in the file when that is shared
+  too (`#7`); a name that still fits two is refused, never guessed. The
+  prompt also says a verse token names its Bible (`[^(KJV) John 3:16]`),
+  that another Bible's verse is written that way in place of the old
+  token, and to report only the Bible the summary names
+  (`agent-tools.md`). The prompt's rules: every change in ONE `edit`, block
   numbers as read, mark-up and mention tokens kept, a verse never the
   model's words (a `passage` block or a new `[^ref]` token, read by the app
   from the installed Bible), a tidy that keeps every block's words, a verse

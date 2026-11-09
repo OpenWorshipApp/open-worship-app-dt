@@ -48,6 +48,21 @@
  * that is not a verse's marks. The help window resolves the note the
  * conversation is about to its path and id; a path from anywhere else is
  * refused.
+ *
+ * ## In the note's OWN window, through its editor
+ *
+ * (2026-11-08, the user: _chatbot should work directly on UI, e.g. bible-note
+ * chatbot should depend on bible-note UI controller_; the goal _chatbot
+ * modifying files should work on the fresh latest user seen content_.) This
+ * worker runs in the note's window only (`owa_note_edit` aims there, opening
+ * it first) and refuses anywhere else, and refuses a window showing another
+ * note -- the same file name in another Bible Notes folder included -- by the
+ * WHOLE path. The note is read off the editor as it is that moment
+ * (`noteWindowControllerHelpers.ts`), and a change goes INTO the editor: the
+ * window's own save writes it into the editing history, the one writer the
+ * note has, and the editor's Undo takes it back. Before it ever reads, what
+ * was typed and not yet kept is kept, so the backup is of what the person
+ * saw.
  */
 import { dirSourceSettingNames } from './constants';
 import { handleError } from './errorHelpers';
@@ -55,7 +70,14 @@ import {
     fsCheckFileExist,
     fsReadFile,
     pathBasename,
+    pathResolve,
+    toPathCompareKey,
 } from '../server/fileHelpers';
+import {
+    NOTE_WINDOW_MISSING_CODE,
+    NOTE_WINDOW_OTHER_CODE,
+    getNoteWindowController,
+} from '../bible-list/note/noteWindowControllerHelpers';
 import { findSessionIdByFilePath } from '../media-sessions/folderSessionPathHelpers';
 import { checkIsBibleNoteFileName } from '../bible-list/note/bibleNotePreviewHelpers';
 import { notifyNoteHeadChanged } from '../bible-list/note/noteHeadChangeHelpers';
@@ -78,6 +100,7 @@ import {
     collectNewNoteVerseRefs,
     genNoteContentHash,
     readNoteBlocks,
+    splitNoteVerseRef,
     toNameKey,
 } from './agentNoteBlockHelpers';
 import {
@@ -162,6 +185,17 @@ function fail(reason: string): AgentResultType {
     return { isError: true, reason };
 }
 
+function failWithCode(reason: string, code: string): AgentResultType {
+    return { isError: true, reason, code };
+}
+
+function checkIsSamePath(one: string, other: string) {
+    return (
+        toPathCompareKey(pathResolve(one)) ===
+        toPathCompareKey(pathResolve(other))
+    );
+}
+
 function toNoteName(title: unknown) {
     return typeof title === 'string' && title.trim() !== ''
         ? title.trim()
@@ -193,8 +227,30 @@ async function findNote(request: AgentNoteEditRequestType) {
     if (!Number.isSafeInteger(noteId) || (noteId as number) < 0) {
         return toFailure('Which note of the file: `noteId` is a note number.');
     }
+    // Only the note's own window, and only the note it shows: the person's
+    // eyes are on that editor, and the file behind it may be a moment old.
+    const controller = getNoteWindowController();
+    if (controller === null) {
+        return toFailure(
+            'A note is read and changed in its own window only: open it ' +
+                'with Open on its row in the Bible Notes panel.',
+            NOTE_WINDOW_MISSING_CODE,
+        );
+    }
+    if (
+        controller.noteId !== noteId ||
+        !checkIsSamePath(controller.filePath, filePath)
+    ) {
+        return toFailure(
+            'This note window shows another note, so nothing was read ' +
+                'or changed in it.',
+            NOTE_WINDOW_OTHER_CODE,
+        );
+    }
+    // What was typed a moment ago goes into the history first: the backup,
+    // the undo and the read are all of what the person sees.
+    await controller.flush();
     const Note = await getNoteClass();
-    // The note as its window has it: unsaved typing included.
     const note = await Note.fromFilePathEditing(filePath);
     const noteItem = note?.getItemById(noteId as number) ?? null;
     if (note === null || noteItem === null) {
@@ -209,13 +265,24 @@ async function findNote(request: AgentNoteEditRequestType) {
                 'those in the Bible Reader.',
         );
     }
+    // The editor's own state is the note: the head can trail it.
+    noteItem.content = controller.readContent();
     return {
-        found: { Note, note, noteItem, filePath, noteId: noteId as number },
+        found: {
+            Note,
+            note,
+            noteItem,
+            filePath,
+            noteId: noteId as number,
+            controller,
+        },
     };
 }
 
-function toFailure(reason: string) {
-    return { failure: fail(reason) };
+function toFailure(reason: string, code?: string) {
+    return {
+        failure: code === undefined ? fail(reason) : failWithCode(reason, code),
+    };
 }
 
 async function handleRead(request: AgentNoteEditRequestType) {
@@ -304,19 +371,34 @@ async function resolveVerses(refs: string[], bible: string | null) {
     }
     const { resolveVersionOrder, resolveBibleItem } =
         await import('./agentBibleHelpers');
-    const resolved = await resolveVersionOrder(bible);
-    if (!('order' in resolved)) {
-        throw new Error(String(resolved.reason ?? 'No Bible to read.'));
-    }
+    // A token that names its Bible -- `[^(KJV) Hebrews 11:1]` -- is read from
+    // that one; any other from the call's `bible`, else the lookup's first.
+    const orderMap = new Map<string, string[]>();
+    const getOrder = async (bibleKey: string | null) => {
+        const known = orderMap.get(bibleKey ?? '');
+        if (known !== undefined) {
+            return known;
+        }
+        const resolved = await resolveVersionOrder(bibleKey);
+        if (!('order' in resolved)) {
+            throw new Error(String(resolved.reason ?? 'No Bible to read.'));
+        }
+        orderMap.set(bibleKey ?? '', resolved.order);
+        return resolved.order;
+    };
     const { getBibleFontFamily } =
         await import('./bible-helpers/bibleStyleHelpers');
-    for (const ref of refs.slice(0, MAX_NEW_VERSES)) {
-        const bibleItem = await resolveBibleItem(ref, resolved.order);
+    for (const token of refs.slice(0, MAX_NEW_VERSES)) {
+        const { bibleKey, ref } = splitNoteVerseRef(token);
+        const bibleItem = await resolveBibleItem(
+            ref,
+            await getOrder(bibleKey ?? bible),
+        );
         if (bibleItem === null) {
             continue;
         }
         const fontFamily = await getBibleFontFamily(bibleItem.bibleKey);
-        verseMap.set(ref, {
+        verseMap.set(token, {
             mentionName: await bibleItem.toTitleWithBibleKey(),
             shownText: await bibleItem.toTitle(),
             verseText: await bibleItem.toText(),
@@ -392,6 +474,23 @@ async function snapshotNoteHead(filePath: string): Promise<AgentRestoreType> {
     };
 }
 
+/**
+ * What a change did, with every new verse named as it was read -- its Bible
+ * and its reference as that Bible writes it, `(KJV) Hebrews 11:1` -- so an
+ * answer says which Bible each verse came from, never which one was asked.
+ */
+function withVerseSources(
+    summary: string,
+    verseMap: Map<string, NoteVerseType>,
+) {
+    const names = [...verseMap.values()].map((verse) => {
+        return verse.mentionName;
+    });
+    return names.length === 0
+        ? summary
+        : `${summary}; new verses read from the Bible: ${names.join(', ')}`;
+}
+
 function toChanges(value: unknown): NoteEditChangeType[] | null {
     if (value === undefined) {
         return [];
@@ -404,7 +503,13 @@ async function handleEdit(request: AgentNoteEditRequestType) {
     if ('failure' in lookedUp) {
         return lookedUp.failure;
     }
-    const { Note, note, noteItem, filePath, noteId } = lookedUp.found;
+    const { Note, noteItem, filePath, noteId, controller } = lookedUp.found;
+    if (controller.isReadOnly) {
+        return fail(
+            'This note is open read-only (a preview of a file outside the ' +
+                'Bible Notes folders): nothing in it can be changed.',
+        );
+    }
     const changes = toChanges(request.changes);
     if (changes === null) {
         return fail('`changes` is a list of changes.');
@@ -485,13 +590,16 @@ async function handleEdit(request: AgentNoteEditRequestType) {
     }
     try {
         const { meta } = await runWithAgentBackup(
-            `Changed the Bible note "${name}" (${result.summary})`,
+            `Changed the Bible note "${name}" (${withVerseSources(result.summary, verseMap)})`,
             restores,
             async () => {
-                if (isContentChanged) {
-                    noteItem.content = result.content;
-                    // Onto the head as it is NOW, as the note window writes.
-                    await note.addItemEditingHistory(noteItem);
+                // Into the editor the person is looking at: its own save
+                // keeps it in the editing history, as typing is kept.
+                if (
+                    isContentChanged &&
+                    !(await controller.writeContent(result.content))
+                ) {
+                    throw new Error('The note window did not take the change.');
                 }
                 if (blockLinks.length > 0) {
                     // The editor's own list, added to: the note window
@@ -526,12 +634,16 @@ async function handleEdit(request: AgentNoteEditRequestType) {
                 }
             },
         );
+        // Any OTHER window of this note follows; this one shows it already
+        // and finds nothing new in the head.
         notifyNoteHeadChanged(filePath);
         return {
             name,
             isChanged: true,
-            hash: genNoteContentHash(result.content),
-            summary: result.summary,
+            // As the editor holds it now -- its own writing of the change --
+            // so the next change's `hash` matches what it reads.
+            hash: genNoteContentHash(controller.readContent()),
+            summary: withVerseSources(result.summary, verseMap),
             isSaved: false,
             ...genUndoField(meta),
         };

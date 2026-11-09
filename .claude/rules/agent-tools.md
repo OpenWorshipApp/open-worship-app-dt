@@ -1757,14 +1757,52 @@ false` and searches only a dataset a lookup panel already holds
   or a `passage`) is read by the app from the installed Bible
   (`owa_present_bible`'s resolvers, the lookup's version unless `bible`
   names one); a new `[@…]` / `[#…]` is plain words (the 34 MB names dataset
-  is never loaded for it). **It writes the EDITING HISTORY, never the file**
-  (`note.addItemEditingHistory`), like the note window's own typing:
-  unsaved, the window's Save keeps it; a new title is saved to the file at
-  once, as Edit Title does. **An open note window follows** -- it watches
-  only its FILE, so the worker (and an undo of a note's head in
-  `applyRestore`) sends `all:app:note-head-changed`, main relays
-  `main:app:note-head-changed` to every window (`electronEventListener.ts`),
-  and `initBibleNote` reloads its head (`noteHeadChangeHelpers.ts`). Backed
+  is never loaded for it). **A verse token names its Bible**
+  (2026-11-08, the user's picture of a note chat claiming the English
+  lines' verses were now KJV while every chip still read the Khmer Bible,
+  `ពគប`): read as `[^(KJV) John 3:16]` (the key off the chip's
+  `mentionName`), kept as the ORIGINAL chip when given back so; a token
+  naming ANOTHER Bible is a new verse read from that Bible
+  (`splitNoteVerseRef`, `checkIsVerseToken`), a token naming none matches
+  a chip by its words as before. The model had seen `[^ref]` only, a kept
+  token matched the old chip by its words, and `[^Hebrews 11:1]` with no
+  `bible` was read from the lookup's Bible -- the same Khmer chip again,
+  added to the English line. The summary now names every new verse as it
+  was read (`new verses read from the Bible: (KJV) Hebrews 11:1`), so an
+  answer can only say the Bible it got. **It runs in the note's OWN window,
+  through its editor** (the same day, the user: _it's dangerous to read and
+  modify wrong file … bible-note chatbot should depend on bible-note UI
+  controller_, the goal _chatbot modifying files should work on the fresh
+  latest user seen content_, and _only bible-note is an edge case_).
+  `agentNoteEdit.mjs` finds the window among the app's windows by its
+  address (`checkIsNoteWindowUrl`: `bibleNote.html`, `file`, `id`), opens it
+  from the main window when none is open (domain `note-window`,
+  `agentNoteWindowHelpers.ts`, the row's own Open after checking the note),
+  waits for its editor (`__owaIsNoteWindowReady`), and sends the request
+  there; `page` is ignored. The window registers its editor in
+  `noteWindowControllerHelpers.ts` (`initBibleNote`) and the worker refuses
+  anywhere else (`not-note-window`) and a window showing another note by
+  the WHOLE path (`other-note-window`: another Bible Notes folder's
+  `Default.own` has the same address, so the tool tries the next window,
+  then opens the right one). Every action first keeps what was typed and
+  not yet kept (`flush`), and the note is read off the EDITOR
+  (`bibleNote.content`), not the head, which trails typing by a second. A
+  change goes INTO the editor (`bibleNote.content =`, one step of the
+  editor's own Undo); the window's `saveData` writes it into the editing
+  history as it writes typing -- unsaved, the window's Save keeps it -- and
+  the answer's `hash` is the editor's own writing of it. A read-only
+  preview window is read, never changed. A new title is saved to the file at
+  once, as Edit Title does. **Any other window of the note follows** --
+  the worker (and an undo of a note's head in `applyRestore`) sends
+  `all:app:note-head-changed`, main relays `main:app:note-head-changed` to
+  every window (`electronEventListener.ts`), and `initBibleNote` reloads its
+  head (`noteHeadChangeHelpers.ts`); the window the change was made in
+  finds nothing new. Seen live on a scratch profile with a copy of the
+  user's note: no window open, a read opened it and read in 1.9 s; the six
+  English chips moved to KJV in one edit (0.5 s), the Khmer ones kept;
+  words typed a moment before a read were in it; the toolbar's Undo took
+  back the typing, then the change, and Redo both; `owa_undo` put it back
+  and the window followed. Backed
   up first: the head, or -- for a note no window ever wrote a history for --
   the FILE's state taken as the head, or the undo would have nothing to put
   back. Guards: a verse-marks item is refused; a stale `hash` (typed into

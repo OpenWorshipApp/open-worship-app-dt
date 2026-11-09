@@ -8304,11 +8304,15 @@ export default function ChatbotAppComp() {
             // Or the whole of it in one line -- `Help me find a Bible verse
             // in "KJV": love your enemies` -- which goes straight to the
             // search with no step in front of it.
+            // Not in a conversation about one Bible note: a verse asked for
+            // there is for THAT note, and its assistant has the verse search
+            // and the note's editor (2026-11-08).
             const isVerseAskable =
                 options?.shownText === undefined &&
                 generalQuestion === null &&
                 lookupSubject === null &&
-                attachments.length === 0;
+                attachments.length === 0 &&
+                !isNoteAsk;
             // In English or in the person's own language
             // (`verseAskLanguageHelpers.ts`).
             const oneLineVerse = isVerseAskable
@@ -8601,7 +8605,11 @@ export default function ChatbotAppComp() {
                     });
                     return;
                 }
-                const verseAsk = readTypedVerseFindAsk(trimmedAsked);
+                // A note conversation's own assistant searches verses for
+                // the note: no finder steps start there.
+                const verseAsk = isNoteAsk
+                    ? null
+                    : readTypedVerseFindAsk(trimmedAsked);
                 // One line with the words (and the Bible, or the lookup's)
                 // is asked below.
                 const verseState: VerseFindStateType | null =
@@ -8688,6 +8696,7 @@ export default function ChatbotAppComp() {
                               return session.id === activeSessionId;
                           })?.messages ?? [],
                           trimmedAsked,
+                          { isNoteAsk },
                       );
                 if (importState !== null) {
                     updateSession(activeSessionId, (session) => {

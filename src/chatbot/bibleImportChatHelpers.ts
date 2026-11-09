@@ -584,8 +584,12 @@ const AVAILABILITY_PATTERN =
 // 2026-10-10: "add bible verse John 3:16 to my bible list" searched the
 // collection for "verse john 16 list" and offered the Chewa, Polish and
 // Turkmen Bibles of 2016.
+// And 2026-11-08, in a Bible note's conversation: "I want to change bible of
+// english lines to be kjv" was taken for a Bible to fetch and answered "You
+// already have the KJV", offering the internet copy -- a sentence about
+// CHANGING something the person has is no download.
 const OTHER_TOPIC_PATTERN =
-    /\b(?:verses?|passages?|chapters?|slides?|screens?|projector|notes?|audio|lookup|reader|items?|lists?|songs?|lyrics?|backgrounds?|fonts?|flows?|read|search|study|present|show|display)\b|\d\s*:\s*\d/i;
+    /\b(?:verses?|passages?|chapters?|slides?|screens?|projector|notes?|audio|lookup|reader|items?|lists?|songs?|lyrics?|backgrounds?|fonts?|flows?|read|search|study|present|show|display|lines?|sentences?|paragraphs?|headings?|change|switch|swap|convert|replace|rewrite|edit|modify)\b|\d\s*:\s*\d/i;
 
 /**
  * A message asking for a Bible from ONE address: "Import bible from xml url
@@ -2681,16 +2685,26 @@ export function tranBibleImportLabel(label: string): string {
 export function findBibleImportState(
     messages: { author: string; actions?: BotActionType[] }[],
     text: string,
+    options?: {
+        // A conversation about ONE Bible note starts no import from what is
+        // typed in it: a line there is about that note (2026-11-08, "change
+        // bible of english lines to be kjv" offered the internet KJV). Only
+        // an answer to an import question in front of them goes on; a new
+        // import is the person's own press.
+        isNoteAsk?: boolean;
+    },
 ): BibleImportStateType | null {
     // A NEW request first: "import bible for khmer" typed while step 1 waits
     // for a short name is not a short name.
-    const linkAsk = readBibleImportLinkAsk(text);
-    if (linkAsk !== null) {
-        return { step: 'check', url: linkAsk.url, find: linkAsk.find };
-    }
-    const languageAsk = readBibleImportLanguageAsk(text);
-    if (languageAsk !== null) {
-        return languageAsk;
+    if (options?.isNoteAsk !== true) {
+        const linkAsk = readBibleImportLinkAsk(text);
+        if (linkAsk !== null) {
+            return { step: 'check', url: linkAsk.url, find: linkAsk.find };
+        }
+        const languageAsk = readBibleImportLanguageAsk(text);
+        if (languageAsk !== null) {
+            return languageAsk;
+        }
     }
     const lastMessage = messages[messages.length - 1];
     return lastMessage?.author === 'bot'

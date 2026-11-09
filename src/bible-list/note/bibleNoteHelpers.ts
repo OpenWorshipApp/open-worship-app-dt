@@ -41,6 +41,7 @@ import {
 } from '../../lang/langHelpers';
 import { getBibleNotePreviewFilePath } from './bibleNotePreviewHelpers';
 import { registerNoteHeadChangedListener } from './noteHeadChangeHelpers';
+import { setNoteWindowController } from './noteWindowControllerHelpers';
 import {
     genPreviewSettingStore,
     lockBibleNoteReadOnly,
@@ -195,6 +196,13 @@ export function checkIsEmptyNoteContent(content: string) {
  * enough that a window closed straight after a sentence still keeps it.
  */
 const EDITING_HISTORY_DEBOUNCE_MILLISECOND = 1_000;
+
+/**
+ * How long a change the help window put into the editor waits for the editor
+ * to hand it back through `saveData` -- it does at once; this is only for an
+ * editor that never answers.
+ */
+const OUTSIDE_WRITE_WAIT_MILLISECOND = 3_000;
 
 // The window's pending history write, on demand: the footer's 🤖 hands the note
 // to the help window, which reads the editing HEAD -- the last second of
@@ -500,6 +508,9 @@ export async function initBibleNote({
         storageManager,
         editorKeySeenMap,
     );
+    // A change the help window's note conversation put into the editor
+    // (`writeContent` below) waits here for the editor to hand it back.
+    let handleOutsideWriteSaved: ((isChanged: boolean) => void) | null = null;
     const bibleNoteProps: BibleNoteProps = {
         namesLookupManager,
         locationsLookupManager,
@@ -516,6 +527,7 @@ export async function initBibleNote({
             // hold the one value the editor refuses to load back.
             const newContent = toStoredContent(data);
             if (newContent === noteItem.content) {
+                handleOutsideWriteSaved?.(false);
                 return;
             }
             noteItem.content = newContent;
@@ -526,6 +538,7 @@ export async function initBibleNote({
             note.updateNoteItem(noteItem, true);
             pendingHistoryItem = noteItem;
             historyAttemptTimeout(writeEditingHistory);
+            handleOutsideWriteSaved?.(true);
         },
         // A preview's lock is the host's, never the user's preference.
         storageManager: (isReadOnly
@@ -550,6 +563,50 @@ export async function initBibleNote({
         // toggle cannot be flipped back from inside the window.
         lockBibleNoteReadOnly(bibleNote);
     }
+    // The help window's note conversation reads and changes THIS note
+    // through this editor -- what the person sees, unsaved typing and all --
+    // never the file behind their back (`noteWindowControllerHelpers.ts`).
+    setNoteWindowController({
+        filePath: note.filePath,
+        noteId: noteItem.id,
+        isReadOnly,
+        // Until the editor has mounted it reads '', and what it was handed
+        // is what it shows.
+        isMounted: () => {
+            return bibleNote.content !== '';
+        },
+        readContent: () => {
+            const shownContent = bibleNote.content;
+            return shownContent === ''
+                ? noteItem.content
+                : toStoredContent(shownContent);
+        },
+        writeContent: async (content: string) => {
+            if (isReadOnly) {
+                return false;
+            }
+            const contentBefore = noteItem.content;
+            const isSaved = await new Promise<boolean>((resolve) => {
+                const timeoutId = setTimeout(() => {
+                    handleOutsideWriteSaved = null;
+                    resolve(false);
+                }, OUTSIDE_WRITE_WAIT_MILLISECOND);
+                handleOutsideWriteSaved = (isChanged) => {
+                    clearTimeout(timeoutId);
+                    handleOutsideWriteSaved = null;
+                    resolve(isChanged);
+                };
+                // The editor's own way in: one step of its Undo, then its
+                // `saveData` above, as for typing.
+                bibleNote.content = toEditorContent(content);
+            });
+            // Kept now, not a second from now: the answer's undo and the
+            // next read go by the editing history.
+            await writeEditingHistory();
+            return isSaved || noteItem.content !== contentBefore;
+        },
+        flush: writeEditingHistory,
+    });
 
     // per-note: a module-level shared timer would drop note A's reload when
     // note B changes within the debounce window

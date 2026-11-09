@@ -20,6 +20,8 @@ const h = vi.hoisted(() => {
         lookupRecords: [] as any[],
         lookupReleased: 0,
         homeStorage: new Map<string, string>(),
+        // The note window the worker runs in (`noteWindowControllerHelpers`).
+        controller: null as any,
     };
 });
 
@@ -28,7 +30,16 @@ vi.mock('../server/fileHelpers', () => ({
     fsCheckFileExist: async () => h.isThere,
     fsReadFile: async () => h.fileText,
     pathBasename: (path: string) => path.split(/[\\/]/).pop(),
+    pathResolve: (path: string) => path.replace(/\\/g, '/'),
+    toPathCompareKey: (path: string) => path.toLowerCase(),
 }));
+vi.mock(
+    '../bible-list/note/noteWindowControllerHelpers',
+    async (importOriginal) => ({
+        ...(await importOriginal<object>()),
+        getNoteWindowController: () => h.controller,
+    }),
+);
 vi.mock('../media-sessions/folderSessionPathHelpers', () => ({
     findSessionIdByFilePath: () => h.sessionId,
 }));
@@ -155,6 +166,27 @@ function genNote(item: any) {
 const CONTENT = genContent(['Grace', 'Mercy']);
 let noteItem: any;
 
+/**
+ * The note's own window as the worker meets it: it shows `noteItem`, and a
+ * change put into its editor is kept the way its own save keeps typing.
+ */
+function genController(overrides: Record<string, unknown> = {}) {
+    return {
+        filePath: FILE_PATH,
+        noteId: 3,
+        isReadOnly: false,
+        isMounted: () => true,
+        readContent: () => noteItem.content,
+        writeContent: vi.fn(async (content: string) => {
+            noteItem.content = content;
+            await h.headNote.addItemEditingHistory(noteItem);
+            return true;
+        }),
+        flush: vi.fn(async () => {}),
+        ...overrides,
+    };
+}
+
 beforeEach(() => {
     h.sessionId = 'default';
     h.isThere = true;
@@ -171,6 +203,7 @@ beforeEach(() => {
     };
     h.headNote = genNote(noteItem);
     h.savedNote = genNote({ ...noteItem });
+    h.controller = genController();
     h.resolveVersionOrder.mockReset().mockResolvedValue({
         order: ['KJV'],
         installed: ['KJV'],
@@ -223,9 +256,12 @@ describe('reading one note', () => {
     });
 
     test('a missing note, a bad id and a verse mark are refused', async () => {
+        // A window still open on a note taken out of its file.
+        h.controller = genController({ noteId: 9 });
         expect((await ask({ action: 'read', noteId: 9 })).reason).toMatch(
             /not in the file/,
         );
+        h.controller = genController();
         expect((await ask({ action: 'read', noteId: -1 })).reason).toMatch(
             /note number/,
         );
@@ -233,6 +269,51 @@ describe('reading one note', () => {
         expect((await ask({ action: 'read' })).reason).toMatch(
             /highlights and comments/,
         );
+    });
+
+    // 2026-11-08, the user: _it's dangerous to read and modify wrong file …
+    // bible-note chatbot should depend on bible-note UI controller_.
+    test('only in the note window that shows THAT note: no window, or another note, is refused', async () => {
+        h.controller = null;
+        expect(await ask({ action: 'read' })).toMatchObject({
+            isError: true,
+            code: 'not-note-window',
+        });
+        // The same file name and note number in ANOTHER Bible Notes folder.
+        h.controller = genController({
+            filePath: 'C:/other-session/bible-notes/Default.own',
+        });
+        const refused = await ask({
+            action: 'edit',
+            changes: [{ block: 1, text: 'Hope' }],
+        });
+        expect(refused).toMatchObject({
+            isError: true,
+            code: 'other-note-window',
+        });
+        expect(h.controller.writeContent).not.toHaveBeenCalled();
+        expect(h.backups).toHaveLength(0);
+        // Another note of the same file.
+        h.controller = genController({ noteId: 4 });
+        expect((await ask({ action: 'read' })).code).toBe('other-note-window');
+        // The same path written another way is the same file.
+        h.controller = genController({
+            filePath: 'C:\\data\\bible-notes\\DEFAULT.own',
+        });
+        expect((await ask({ action: 'read' })).name).toBe('Sunday');
+    });
+
+    test('reads what the editor SHOWS, after keeping what was just typed', async () => {
+        const shown = genContent(['Grace', 'Mercy', 'typed a moment ago']);
+        h.controller = genController({ readContent: () => shown });
+        const answer = await ask({ action: 'read' });
+        expect(h.controller.flush).toHaveBeenCalled();
+        expect(answer.hash).toBe(genNoteContentHash(shown));
+        expect(answer.blocks.map((block: any) => block.text)).toEqual([
+            'Grace',
+            'Mercy',
+            'typed a moment ago',
+        ]);
     });
 
     test('an unknown action is said so', async () => {
@@ -320,7 +401,7 @@ describe('changing one note', () => {
             toTitle: async () => 'Romans 8:28',
             toText: async () => '(28): And we know',
         });
-        await ask({
+        const answer = await ask({
             action: 'edit',
             changes: [{ block: 1, text: 'See [^Romans 8:28]' }],
         });
@@ -334,6 +415,73 @@ describe('changing one note', () => {
             mentionData: '(28): And we know',
             style: 'font-family: serif;',
         });
+        // Which Bible it came from is said, whichever was asked.
+        expect(answer.summary).toContain(
+            'new verses read from the Bible: (KJV) Romans 8:28',
+        );
+    });
+
+    test('a verse token naming a Bible is read from THAT Bible, whatever the lookup is on', async () => {
+        h.resolveVersionOrder.mockImplementation(async (key: string | null) => {
+            return key === null
+                ? { order: ['KHB', 'KJV'], installed: ['KHB', 'KJV'] }
+                : { order: [key], installed: ['KHB', 'KJV'] };
+        });
+        h.resolveBibleItem.mockImplementation(
+            async (ref: string, order: string[]) => {
+                return {
+                    bibleKey: order[0],
+                    toTitleWithBibleKey: async () => `(${order[0]}) ${ref}`,
+                    toTitle: async () => ref,
+                    toText: async () => '(1): Now faith',
+                };
+            },
+        );
+        const answer = await ask({
+            action: 'edit',
+            changes: [{ block: 1, text: 'Faith [^(KJV) Hebrews 11:1]' }],
+        });
+        expect(h.resolveBibleItem).toHaveBeenCalledWith('Hebrews 11:1', [
+            'KJV',
+        ]);
+        expect(answer.summary).toContain('(KJV) Hebrews 11:1');
+        // A Bible not installed refuses the change, in a sentence.
+        h.resolveVersionOrder.mockResolvedValue({
+            reason: 'No Bible version called "XYZ" is installed.',
+        });
+        const refused = await ask({
+            action: 'edit',
+            changes: [{ block: 2, text: 'Mercy [^(XYZ) John 3:16]' }],
+        });
+        expect(refused.reason).toMatch(/XYZ/);
+    });
+
+    test('a change goes INTO the editor; one it does not take changes nothing it says', async () => {
+        await ask({ action: 'edit', changes: [{ block: 1, text: 'Hope' }] });
+        expect(h.controller.writeContent).toHaveBeenCalledOnce();
+        expect(JSON.parse(h.controller.writeContent.mock.calls[0][0])).toEqual(
+            JSON.parse(noteItem.content),
+        );
+        h.controller = genController({
+            writeContent: vi.fn(async () => false),
+        });
+        const answer = await ask({
+            action: 'edit',
+            changes: [{ block: 1, text: 'Love' }],
+        });
+        expect(answer.reason).toMatch(/did not take the change/);
+    });
+
+    test('a read-only preview window is read, never changed', async () => {
+        h.controller = genController({ isReadOnly: true });
+        expect((await ask({ action: 'read' })).name).toBe('Sunday');
+        const answer = await ask({
+            action: 'edit',
+            changes: [{ block: 1, text: 'Hope' }],
+        });
+        expect(answer.reason).toMatch(/read-only/);
+        expect(h.controller.writeContent).not.toHaveBeenCalled();
+        expect(h.backups).toHaveLength(0);
     });
 
     test('a verse no Bible can read refuses the whole change', async () => {
@@ -614,7 +762,7 @@ describe('genNewNoteContent', () => {
             }),
         ).toEqual([
             ['h2', 'Key verses'],
-            ['bullet', '[^Genesis 2:7] man formed'],
+            ['bullet', '[^(KJV) Genesis 2:7] man formed'],
             // No Bible has it: the note is made, the reference its words.
             ['bullet', 'Hezekiah 9:9 no such book'],
         ]);

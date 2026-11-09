@@ -651,6 +651,12 @@ const AGENT_DATA_WORKER_MAP: Record<
         return (await import('./agentNoteEditHelpers'))
             .handleAgentNoteEditRequest;
     },
+    // ...which runs in the note's OWN window only, opened here from the main
+    // window when it is not open (2026-11-08).
+    'note-window': async () => {
+        return (await import('./agentNoteWindowHelpers'))
+            .handleAgentNoteWindowRequest;
+    },
     undo: async () => {
         return (await import('./agentBackupHelpers')).handleAgentUndoRequest;
     },

@@ -5,6 +5,7 @@ import {
     collectNewNoteVerseRefs,
     genNoteContentHash,
     readNoteBlocks,
+    splitNoteVerseRef,
     toRealLineBreaks,
     type NoteVerseType,
 } from './agentNoteBlockHelpers';
@@ -213,7 +214,7 @@ describe('a note read as blocks', () => {
             }),
         ).toEqual([
             [1, 'h1', 'Grace Alone'],
-            [2, 'paragraph', '**Text:** [^Isaiah 53:5] and [@Mary]'],
+            [2, 'paragraph', '**Text:** [^(KJV) Isaiah 53:5] and [@Mary]'],
             [3, 'bullet', 'first point'],
             [4, 'bullet', 'second point'],
             [5, 'quote', 'Love is patient'],
@@ -329,6 +330,69 @@ describe('a change to a note', () => {
         );
     });
 
+    // 2026-11-08: asked to make the English lines' verses KJV, the model
+    // could not see which Bible a chip was in, and every verse it wrote
+    // came back as the old chip's Bible.
+    test('a verse token names its Bible: as read it is the chip, another Bible is a new verse', () => {
+        // Given back as read, Bible and all: the note does not move.
+        expect(
+            edit([
+                {
+                    block: 2,
+                    text: '**Text:** [^(KJV) Isaiah 53:5] and [@Mary]',
+                },
+            ]).isChanged,
+        ).toBe(false);
+        // The Bible named in any case is the same chip.
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                { block: 2, text: '[^(kjv) Isaiah 53:5]' },
+            ]),
+        ).toEqual([]);
+        // Another Bible is a NEW verse, read from that Bible.
+        expect(
+            collectNewNoteVerseRefs(CONTENT, [
+                {
+                    block: 2,
+                    text: '**Text:** [^(NIV) Isaiah 53:5] and [@Mary]',
+                },
+            ]),
+        ).toEqual(['(NIV) Isaiah 53:5']);
+        const niv: NoteVerseType = {
+            mentionName: '(NIV) Isaiah 53:5',
+            shownText: 'Isaiah 53:5',
+            verseText: '(5): But he was pierced for our transgressions',
+            style: '',
+        };
+        const result = edit(
+            [{ block: 2, text: '**Text:** [^(NIV) Isaiah 53:5] and [@Mary]' }],
+            { verseMap: new Map([['(NIV) Isaiah 53:5', niv]]) },
+        );
+        const mention = rootOf(result.content).children[1].children[1];
+        expect(mention).toMatchObject({
+            type: 'mention',
+            mentionKind: 'bible-verse',
+            mentionName: '(NIV) Isaiah 53:5',
+            mentionData: niv.verseText,
+        });
+        expect(readNoteBlocks(result.content)!.blocks[1].text).toBe(
+            '**Text:** [^(NIV) Isaiah 53:5] and [@Mary]',
+        );
+    });
+
+    test("a verse token's Bible is read off its front, and only there", () => {
+        expect(splitNoteVerseRef('(KJV) Hebrews 11:1')).toEqual({
+            bibleKey: 'KJV',
+            ref: 'Hebrews 11:1',
+        });
+        expect(splitNoteVerseRef(' Hebrews 11:1 ')).toEqual({
+            bibleKey: null,
+            ref: 'Hebrews 11:1',
+        });
+        // Brackets with a space in them are no Bible's short name.
+        expect(splitNoteVerseRef('(see this) John 3:16').bibleKey).toBeNull();
+    });
+
     test('a new person or place is written as words', () => {
         const result = edit([{ block: 1, text: 'With [@Peter] in [#Rome]' }]);
         expect(
@@ -416,7 +480,7 @@ describe('a change to a note', () => {
             }),
         ).toEqual([
             ['h2', 'Grace Alone'],
-            ['paragraph', '**Text:** [^Isaiah 53:5] and [@Mary]'],
+            ['paragraph', '**Text:** [^(KJV) Isaiah 53:5] and [@Mary]'],
             ['bullet', 'first point'],
             ['paragraph', 'second point'],
             ['bullet', 'Love is patient'],
@@ -454,7 +518,7 @@ describe('a change to a note', () => {
             readNoteBlocks(result.content)!.blocks.map((block) => block.text),
         ).toEqual([
             'call Tom',
-            '**Text:** [^Isaiah 53:5] and [@Mary]',
+            '**Text:** [^(KJV) Isaiah 53:5] and [@Mary]',
             'Grace Alone',
             'first point',
             'second point',

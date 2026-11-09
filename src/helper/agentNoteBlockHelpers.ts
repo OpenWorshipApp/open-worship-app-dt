@@ -23,6 +23,14 @@
  * `passage` block) is resolved by the app from an installed Bible
  * (`agentNoteEditHelpers.ts`) and handed in here as `verseMap`.
  *
+ * A verse mention says which Bible it is read from, as the editor names it:
+ * `[^(KJV) John 3:16]` (2026-11-08, the user, asking a note conversation to
+ * make the English lines' verses KJV: every verse it wrote came back in the
+ * Bible the lookup was on, the token having said no Bible and a kept token
+ * matching the old chip by its words alone). A token
+ * kept as read is the ORIGINAL chip; one naming another Bible is a NEW verse
+ * read from that Bible; one naming none matches a chip by its words.
+ *
  * Pure on purpose -- no app, no editor package (heavy, and loaded only in a
  * note window) -- so every rule is tested against a real note's nodes.
  */
@@ -513,6 +521,55 @@ const MENTION_SIGN_MAP: Record<string, string> = {
     location: '#',
 };
 
+// "(KJV) John 3:16": the Bible a verse is read from, in front of it -- how
+// the editor names a verse mention (`mentionName`) and how a token may.
+const VERSE_BIBLE_PREFIX_PATTERN = /^\(([^()\s]{1,40})\)\s+(\S.*)$/u;
+
+/** A verse token's Bible, when it names one, and its reference. */
+export function splitNoteVerseRef(text: string): {
+    bibleKey: string | null;
+    ref: string;
+} {
+    const trimmed = text.trim();
+    const match = VERSE_BIBLE_PREFIX_PATTERN.exec(trimmed);
+    return match === null
+        ? { bibleKey: null, ref: trimmed }
+        : { bibleKey: match[1], ref: match[2].trim() };
+}
+
+/** The Bible a verse mention was read from, off its `mentionName`. */
+function readVerseMentionBibleKey(node: NodeType): string | null {
+    return typeof node.mentionName === 'string'
+        ? splitNoteVerseRef(node.mentionName).bibleKey
+        : null;
+}
+
+/** A verse mention as a token's words: its Bible in front when it has one. */
+function toVerseTokenText(node: NodeType) {
+    const text = String(node.text ?? '').replace(/]/g, '');
+    const bibleKey = readVerseMentionBibleKey(node);
+    return bibleKey === null ? text : `(${bibleKey}) ${text}`;
+}
+
+/**
+ * Whether a token's words name this verse mention: the same reference, and
+ * -- when the token names a Bible -- the same Bible.
+ */
+function checkIsVerseToken(node: NodeType, tokenText: string) {
+    const { bibleKey, ref } = splitNoteVerseRef(tokenText);
+    if (String(node.text ?? '').trim() !== ref) {
+        return false;
+    }
+    if (bibleKey === null) {
+        return true;
+    }
+    const nodeBibleKey = readVerseMentionBibleKey(node);
+    return (
+        nodeBibleKey !== null &&
+        nodeBibleKey.toLowerCase() === bibleKey.toLowerCase()
+    );
+}
+
 function toInlineMarkup(nodes: NodeType[]): string {
     return nodes
         .map((node) => {
@@ -526,6 +583,9 @@ function toInlineMarkup(nodes: NodeType[]): string {
                 return '\t';
             }
             if (node.type === 'mention') {
+                if (node.mentionKind === 'bible-verse') {
+                    return `[^${toVerseTokenText(node)}]`;
+                }
                 const sign = MENTION_SIGN_MAP[node.mentionKind] ?? '@';
                 return `[${sign}${String(node.text ?? '').replace(/]/g, '')}]`;
             }
@@ -1058,10 +1118,13 @@ function buildInlineNodes(runs: RunType[], context: BuildContextType) {
                   ? 'location'
                   : 'mention';
         const isSame = (one: NodeType) => {
-            return (
-                one.mentionKind === mentionKind &&
-                String(one.text ?? '').trim() === run.text
-            );
+            if (one.mentionKind !== mentionKind) {
+                return false;
+            }
+            // A verse by its words and, when the token names one, its Bible.
+            return mentionKind === 'bible-verse'
+                ? checkIsVerseToken(one, run.text)
+                : String(one.text ?? '').trim() === run.text;
         };
         const kept =
             takeFrom(context.mentionPool, isSame) ??
@@ -1517,7 +1580,7 @@ export function collectNewNoteVerseRefs(
     changes: readonly NoteEditChangeType[],
 ) {
     const state = readState(content);
-    const known = new Set(
+    const knownVerses =
         state === null
             ? []
             : collectNodes(state.root, (one) => {
@@ -1525,10 +1588,7 @@ export function collectNewNoteVerseRefs(
                       one.type === 'mention' &&
                       one.mentionKind === 'bible-verse'
                   );
-              }).map((one) => {
-                  return String(one.text ?? '').trim();
-              }),
-    );
+              });
     const refs = new Set<string>();
     for (const change of changes) {
         if (change.kind === 'passage' && typeof change.ref === 'string') {
@@ -1539,7 +1599,12 @@ export function collectNewNoteVerseRefs(
         }
         for (const match of change.text.matchAll(/\[\^([^\]\n]+)\]/g)) {
             const ref = match[1].trim();
-            if (!known.has(ref)) {
+            // A chip the note has -- in the Bible the token names, if it
+            // names one -- is kept, never read again.
+            const isKnown = knownVerses.some((one) => {
+                return checkIsVerseToken(one, ref);
+            });
+            if (!isKnown) {
                 refs.add(ref);
             }
         }

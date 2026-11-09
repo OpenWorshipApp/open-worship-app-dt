@@ -261,6 +261,11 @@ describe('what is, and is not, somebody asking for a Bible', () => {
             // "add" and "want" beside no language: about something else.
             'get bible commentary',
             'I need a bible for sunday',
+            // A note's conversation, 2026-11-08: answered "You already have
+            // the KJV" with the internet copy offered.
+            'I want to change bible of english lines to be kjv',
+            'switch the english bible lines to kjv',
+            'I want to convert the bible verses to kjv',
         ]) {
             expect([text, readBibleImportLanguageAsk(text)]).toEqual([
                 text,
@@ -352,6 +357,16 @@ describe('a Bible asked for by the name the app is looking for', () => {
         });
         // The way the window starts it: with no conversation yet.
         expect(findBibleImportState([], ASK)?.wantedKey).toBe('KJV');
+        // In a conversation about one Bible note a typed line starts no
+        // import, link or not: it is about the note.
+        expect(findBibleImportState([], ASK, { isNoteAsk: true })).toBeNull();
+        expect(
+            findBibleImportState(
+                [],
+                'import bible from https://example.com/kjv.xml',
+                { isNoteAsk: true },
+            ),
+        ).toBeNull();
         // A name the collection files nothing under is searched as it is.
         expect(
             readBibleImportLanguageAsk('Import the Bible called "NIV"'),

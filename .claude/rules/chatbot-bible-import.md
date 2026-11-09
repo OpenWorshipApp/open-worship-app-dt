@@ -188,6 +188,20 @@ window as a whole — tabs, pickers, its language, the caution — is in
   `genGuideActions` puts **Import a Bible for me** first on any answer whose
   page is `BIBLE_IMPORT_MANUAL_ID` (W-34) — the how-to is still TOLD from the
   guide, and the button is the guide's own "easy way".
+  **Nor is a sentence about CHANGING something, nor anything typed in a
+  Bible note's conversation** (2026-11-08, the user's picture of a note
+  chat where _I want to change bible of english lines to be kjv_ had been
+  answered _You already have the KJV Open Worship provides_ with **Use the
+  internet copy anyway** under it -- no model ever saw the line).
+  `OTHER_TOPIC_PATTERN` takes `change`, `switch`, `swap`, `convert`,
+  `replace`, `rewrite`, `edit`, `modify` and `lines` / `sentences` /
+  `paragraphs` / `headings`; and `findBibleImportState(…, {isNoteAsk})`
+  starts no import, link or not, while the tab is a note ask -- only an
+  answer to an import question in front of them goes on -- so the line
+  reaches the note's own assistant. The verse finder's typed starts are
+  left alone there for the same reason (`isVerseAskable`, the one-line
+  ask): a note ask has `owa_find_verse` and the note to put the verse in.
+  Note asks only, by the user's word (_only bible-note is an edge case_).
   **A Bible that is MISSING offers a Bible in the WINDOW'S language** (the
   user's ask of 2026-10-13 with a picture of the Reader on _Bible key "KJV"
   is not available!_: _should have instruction for user to import in

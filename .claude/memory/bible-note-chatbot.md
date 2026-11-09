@@ -1,11 +1,11 @@
 ---
 name: bible-note-chatbot
-description: "Open in Chatbot on ONE Bible note: the note id rides the handoff, owa_note_edit edits Lexical blocks keeping the rest byte for byte, writes the editing head and tells an open note window over a main-process relay; the assistant also MAKES a note (owa_bible_note add, opened and attached), never deletes one; words selected in the note window are quoted in the chat box with their line and range, in the tab ATTACHED to that note or window"
+description: "Open in Chatbot on ONE Bible note: the note id rides the handoff, owa_note_edit runs ONLY in the note's own window (opened if closed), reads the live editor and writes through it, refusing another note by its whole path; verse tokens name their Bible [^(KJV) John 3:16]; edits Lexical blocks keeping the rest byte for byte; the assistant also MAKES a note (owa_bible_note add, opened and attached), never deletes one; words selected in the note window are quoted in the chat box with their line and range, in the tab ATTACHED to that note or window"
 metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-08T23:39:23.838Z
+  modified: 2026-11-09T01:09:20.714Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -16,14 +16,33 @@ attachment carries it (`ChatAttachmentType.noteId`), and `owa_note_edit` takes
 
 What is not obvious from the code:
 
-- **Changes go to the editing HEAD, and an open note window would never see
-  them on its own.** It watches only its file, and its next keystroke would
-  write its stale copy back. The worker and an undo of a note head send
-  `all:app:note-head-changed`, relayed by main to every window. That is a
-  MAIN-process change, so test it in a relaunched (or scratch) instance whose
-  `electron-build/` was compiled with `tsc -p electron.tsconfig.json`, never
-  with `electron:build`, which deletes the folder a running app uses
-  ([[build-kills-running-dev-app]]).
+- **A note is read and changed ONLY in its own window, through its editor**
+  (2026-11-08, the user: _it's dangerous to read and modify wrong file …
+  bible-note chatbot should depend on bible-note UI controller_; goal _chatbot
+  modifying files should work on the fresh latest user seen content_; _only
+  bible-note is an edge case_ -- songs, slides and flows stay as they were).
+  `owa_note_edit` finds the window by address, opens it from the main window
+  when none is open, and the window's worker refuses any other note by its
+  WHOLE path (a window's address names only the file NAME and id, so another
+  Bible Notes folder's `Default.own` looks the same). The read is the
+  editor's live state after a flush -- the history head trails typing by the
+  1 s debounce -- and a change is put INTO the editor, whose `saveData`
+  writes the history: one writer, one step of the editor's own Undo. Verify
+  with a FRESH stdio server pinned to a scratch instance (the session's own
+  MCP server cached the old tool code, [[mcp-tool-edit-two-processes]]); a
+  scratch note window with an unsaved change does not exit on `taskkill`
+  without `/F` (its close asks).
+- **A verse token names its Bible**, `[^(KJV) John 3:16]`; before, the model
+  could not see a chip's Bible, a kept token matched by words only, and an
+  unnamed new one was read from the lookup's Bible -- so _make the English
+  lines KJV_ added a second Khmer chip to each English line and the answer
+  said KJV. The summary now names each new verse's Bible.
+- **Other windows of the note follow the editing HEAD** through
+  `all:app:note-head-changed`, relayed by main to every window (an undo of a
+  note head sends it too). That relay is a MAIN-process change, so test it in
+  a relaunched (or scratch) instance whose `electron-build/` was compiled with
+  `tsc -p electron.tsconfig.json`, never with `electron:build`, which deletes
+  the folder a running app uses ([[build-kills-running-dev-app]]).
 - **A note with no history has no editing snapshot.** It is backed up as the
   file's state taken as the head, or "Undo this change" undoes nothing.
 - **Byte-identical round trip is the bar**: every editable block of the dev

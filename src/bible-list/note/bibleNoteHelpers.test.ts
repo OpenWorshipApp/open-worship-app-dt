@@ -190,6 +190,10 @@ import {
     toEditorContent,
     toStoredContent,
 } from './bibleNoteHelpers';
+import {
+    NOTE_WINDOW_READY_GLOBAL_NAME,
+    getNoteWindowController,
+} from './noteWindowControllerHelpers';
 
 const EMPTY_ROOT_CONTENT = JSON.stringify({
     root: {
@@ -326,6 +330,51 @@ describe('bible-list/note bibleNoteHelpers', () => {
             expect((bibleNote as any).isReadOnly).toBe(true);
             await capturedConfig.saveData('new data');
             expect(noteItem.content).toBe('note content');
+            expect(note.addItemEditingHistory).not.toHaveBeenCalled();
+            // The help window may read it, never change it.
+            const controller = getNoteWindowController()!;
+            expect(controller.isReadOnly).toBe(true);
+            expect(await controller.writeContent('from the chat')).toBe(false);
+            expect(noteItem.content).toBe('note content');
+        });
+
+        // 2026-11-08, the user: _bible-note chatbot should depend on
+        // bible-note UI controller_ -- the note is read and changed through
+        // this window's editor, never the file behind it.
+        test('the help window reads and changes the note through THIS editor', async () => {
+            const { note, noteItem, bibleNote } = await setupInit();
+            const controller = getNoteWindowController()!;
+            expect(controller).toMatchObject({
+                filePath: '/notes/a.note',
+                noteId: 7,
+                isReadOnly: false,
+            });
+            // What the editor shows, not what the history last kept.
+            expect(controller.readContent()).toBe('stored');
+            const checkIsReady = (globalThis as any)[
+                NOTE_WINDOW_READY_GLOBAL_NAME
+            ];
+            expect(checkIsReady()).toBe(true);
+            // Not drawn yet: what it was handed, and not ready.
+            (bibleNote as any)._content = '';
+            expect(controller.isMounted()).toBe(false);
+            expect(checkIsReady()).toBe(false);
+            expect(controller.readContent()).toBe('note content');
+            // A change goes INTO the editor, and its own save keeps it --
+            // in the editing history, at once.
+            Object.defineProperty(bibleNote, 'content', {
+                configurable: true,
+                get: () => noteItem.content,
+                set: (value: string) => {
+                    void capturedConfig.saveData(value);
+                },
+            });
+            expect(await controller.writeContent('from the chat')).toBe(true);
+            expect(noteItem.content).toBe('from the chat');
+            expect(note.addItemEditingHistory).toHaveBeenCalledWith(noteItem);
+            // The same words again keep nothing.
+            note.addItemEditingHistory.mockClear();
+            expect(await controller.writeContent('from the chat')).toBe(false);
             expect(note.addItemEditingHistory).not.toHaveBeenCalled();
         });
 
