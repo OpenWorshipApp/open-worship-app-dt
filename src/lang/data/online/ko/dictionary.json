@@ -4108,6 +4108,7 @@
     "“{name}” is attached below. I can change this note for you: change or translate its words, check the spelling, tidy it into headings and lists, or add Bible verses. I can also sum it up, answer questions about it, and explain how to do anything in the note editor. Press one, or say what you want.": "“{name}”이(가) 아래에 첨부되었습니다. 이 노트를 대신 바꿔 드릴 수 있습니다: 글자 변경이나 번역, 맞춤법 검사, 제목과 목록으로 정리, 성경 구절 추가. 노트를 요약하고, 노트에 대한 질문에 답하고, 노트 편집기에서 무엇이든 하는 방법을 설명해 드릴 수도 있습니다. 하나를 누르거나 원하는 것을 말씀해 주세요.",
     "Summarize this note": "이 노트 요약하기",
     "Tidy it into headings and lists": "제목과 목록으로 정리하기",
+    "Format it so it is neat and easy to read": "깔끔하고 읽기 쉽게 정리하기",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "한 번의 변경으로 끝났습니다: “{name}”의 블록 {count}개의 글자 크기가 바뀌었습니다. 아직 저장되지 않았습니다: 노트 창의 저장을 누르면 남고, 이 변경 취소를 누르면 되돌아갑니다.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "한 번의 변경으로 끝났습니다: “{name}”의 블록 {count}개의 글자 모양이 바뀌었습니다. 아직 저장되지 않았습니다: 노트 창의 저장을 누르면 남고, 이 변경 취소를 누르면 되돌아갑니다.",
     "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}”이(가) 바뀌었지만, 도우미가 무엇을 했는지 말하기 전에 멈췄습니다. 이 변경 실행 취소로 되돌릴 수 있습니다."

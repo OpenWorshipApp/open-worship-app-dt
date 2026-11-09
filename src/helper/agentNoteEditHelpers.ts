@@ -571,7 +571,12 @@ async function handleEdit(request: AgentNoteEditRequestType) {
             name,
             isChanged: false,
             hash: genNoteContentHash(noteItem.content),
-            summary: 'Nothing was different from what the note says.',
+            // Said so a model cannot read it as done (BN-53: asked to lay a
+            // drawing out across that already was, the model answered "I've
+            // updated the drawing").
+            summary:
+                'Nothing was changed: the note already reads that way. Tell ' +
+                'them so -- never that you changed it.',
         };
     }
     const isContentChanged = result.content !== noteItem.content;

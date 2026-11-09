@@ -75,3 +75,23 @@ language typed, the button names as the window shows them.
 32. On Free: _add a line at the end saying …_ typed in Khmer, Arabic, Thai,
     Chinese, Russian and Spanish, twice each -- the words go in exactly as
     typed, the answer in the language (BN-23, BN-30)
+
+## Messy notes and drawings (2026-11-09, BN-51, BN-58)
+
+On notes written the way a person types -- parts as plain lines
+(_points_, _prayer_), three questions on one line, a reference in words
+(_luke 15 verse 4 to 7_), a note all in capitals, and one run-on paragraph
+-- press the card's **Format it so it is neat and easy to read**: one edit,
+the title h1, each part h2 in normal case, items split one a line, the
+reference a verse mention, every word kept but the joining ones
+(`scratchpad note-words` compare: lost and added words).
+
+33. _Format it so it is neat and easy to read_ on each messy note -- one call
+34. _my note is messy can you tidy it up_ -- the same
+35. _make a drawing of my three points_, then _make the drawing bigger_,
+    _colour the boxes green_, _draw it going across_, _add one more box
+    saying …_ -- each one edit of the drawing block
+36. _draw me a sheep_ -- no change, said it cannot draw a picture
+
+The whole elder corpus (600 asks) is `elder-asks.json`, run by
+`run-elder-asks.mjs` (SKILL.md §2).

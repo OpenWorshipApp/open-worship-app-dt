@@ -121,6 +121,157 @@ export function expandSectionAdds(
     });
 }
 
+const SPLIT_LIST_KIND_SET = new Set(['bullet', 'number', 'check']);
+// A list mark a model writes in front of an item it already names the kind of.
+const ITEM_MARK_PATTERN = /^\s*(?:[-*+•]|\d{1,3}[.)])\s+/;
+
+/**
+ * A block made SEVERAL (BN-58, 2026-11-09, the user: _imagine user made a
+ * messy content then ask chatbot to do reformating_). Asked to tidy a note
+ * whose three questions were one line, gemma4:cloud tried five calls: a
+ * block cannot take fewer of its own words with another kind, and a new
+ * block cannot go after one the call removes, so it kept the line whole as
+ * one bullet and added two of its questions again beside it. A change to a
+ * block whose words are LINES -- with a list kind (`bullet`, `number`,
+ * `check`), one item a line; with `section`, a block a line, each its kind
+ * off the line (`## Questions`, `- Who is lost today?`) -- gives the block
+ * its first line and adds the rest right after it, in order, each taking
+ * the change's look. `splitText` carries every line, so the block is held
+ * to keeping its own words across all of them. `ownText` is the block's
+ * words as read: given back so, a block is never split.
+ */
+export function expandBlockSplits(
+    changes: readonly NoteEditChangeType[],
+    toOwnText: (block: number) => string | null,
+): NoteEditChangeType[] {
+    return changes.flatMap((change) => {
+        if (
+            typeof change !== 'object' ||
+            change === null ||
+            typeof change.block !== 'number' ||
+            typeof change.text !== 'string' ||
+            change.remove === true ||
+            change.after !== undefined
+        ) {
+            return [change];
+        }
+        const isList = SPLIT_LIST_KIND_SET.has(change.kind ?? '');
+        if (!isList && change.kind !== 'section') {
+            return [change];
+        }
+        const text = toSectionLines(change.text).replace(/\r\n?/g, '\n');
+        const lines = text.split('\n').filter((line) => {
+            return line.trim() !== '';
+        });
+        if (lines.length < 2 || text.trim() === toOwnText(change.block)) {
+            if (change.kind !== 'section') {
+                return [change];
+            }
+            // One line of a section is that line's kind and words.
+            const single = lines.length === 1 ? toLineChange(lines[0]) : null;
+            const { kind: _kind, ...rest } = change;
+            return [
+                single === null || single.text === undefined
+                    ? rest
+                    : { ...rest, kind: single.kind, text: single.text },
+            ];
+        }
+        const lineChanges: NoteEditChangeType[] = isList
+            ? lines.map((line) => {
+                  return {
+                      kind: change.kind,
+                      text: line.replace(ITEM_MARK_PATTERN, '').trim(),
+                      ...(change.checked === undefined
+                          ? {}
+                          : { checked: change.checked }),
+                  };
+              })
+            : toNoteAddChanges(text);
+        if (lineChanges.length === 0) {
+            return [change];
+        }
+        const style: NoteEditChangeType = {};
+        for (const key of SECTION_STYLE_KEY_LIST) {
+            if (change[key] !== undefined) {
+                (style as any)[key] = change[key];
+            }
+        }
+        const [first, ...rest] = lineChanges;
+        return [
+            {
+                ...change,
+                kind: first.kind,
+                text: first.text,
+                ...(first.checked === undefined
+                    ? {}
+                    : { checked: first.checked }),
+                splitText: lines.join('\n'),
+            },
+            ...rest.map((lineChange) => {
+                const { block: _block, ...add } = lineChange;
+                return { ...style, ...add, after: change.block };
+            }),
+        ];
+    });
+}
+
+/**
+ * A note rewritten as new blocks NUMBERED AS THEY WILL STAND (BN-58). Asked
+ * to format a note that was one run-on paragraph, gemma4:cloud removed it
+ * and added the formatted blocks `after: 0`, `after: 1`, `after: 2` … --
+ * the title, then each part after the one before -- seven calls, each
+ * refused (a block it removes, a number past the note's end), and no
+ * answer. A run of new blocks whose `after` goes up one a group -- a group
+ * being the adds one `section` spells -- onto a block the call removes or
+ * past the note's end, is that: each group after the one before it
+ * (`chain`, set here and never by a model).
+ */
+export function chainRewriteAdds(
+    changes: readonly NoteEditChangeType[],
+    count: number,
+): NoteEditChangeType[] {
+    const removedSet = new Set(
+        changes
+            .filter((change) => {
+                return change?.block !== undefined && change.remove === true;
+            })
+            .map((change) => change.block),
+    );
+    const groups: { after: number; indexes: number[] }[] = [];
+    changes.forEach((change, index) => {
+        if (change?.block !== undefined || !Number.isInteger(change?.after)) {
+            return;
+        }
+        const last = groups.at(-1);
+        if (
+            last !== undefined &&
+            last.after === change.after &&
+            last.indexes.at(-1) === index - 1
+        ) {
+            last.indexes.push(index);
+            return;
+        }
+        groups.push({ after: change.after as number, indexes: [index] });
+    });
+    if (groups.length < 2) {
+        return [...changes];
+    }
+    const base = groups[0].after;
+    const chainedSet = new Set<number>();
+    groups.forEach((group, order) => {
+        if (
+            order > 0 &&
+            group.after === base + order &&
+            (removedSet.has(group.after) || group.after > count)
+        ) {
+            group.indexes.forEach((index) => chainedSet.add(index));
+        }
+    });
+    return changes.map((change, index) => {
+        return chainedSet.has(index) ? { ...change, chain: true } : change;
+    });
+}
+
 // What a line says once its marks are put aside: for the title check.
 function toLooseWords(text: string) {
     return text

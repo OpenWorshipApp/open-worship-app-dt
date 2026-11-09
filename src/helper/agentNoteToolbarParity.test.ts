@@ -682,9 +682,11 @@ const PROBE_MAP: Record<string, () => void> = {
         const { result } = edit([
             { after: 2, kind: 'drawing', text: 'God -> Man' },
         ]);
+        // Read back as the lines that draw it, so it can be drawn again
+        // (BN-51); a drawing made by hand still reads as its shapes.
         expect(readNoteBlocks(result.content)!.blocks[2]).toMatchObject({
             kind: 'drawing',
-            text: '3 shapes: God | Man',
+            text: 'God -> Man',
         });
     },
     'insert-default-example': () => {

@@ -116,6 +116,27 @@ each: tool calls (one is the bar), fields right, the note right on a
 screenshot of the note window, the answer true. A new failure is a BN item
 with what was asked, what the model sent and what the note became.
 
+**The elder corpus** (`references/elder-asks.json`, 600 things an elderly,
+non-technical church member types while preparing a lesson -- written by a
+reader told only the person and the note, never what the tool can do --
+each with a machine-checkable `expect`) is asked whole by
+`scripts/run-elder-asks.mjs` against the lesson note it was written for
+(The Good Shepherd: a title, the lesson line, a Psalm 23:1 chip, prayer,
+three points, John 10:11, two questions, the hymn, a misspelt reminder),
+which puts the note back after every ask and re-attaches it after a new
+note; `scripts/elder-asks-report.mjs <results> --fails` reads what it
+found. A pass is the change asked for in one call (two is `pass-multi`), an
+honest answer, a new note, an undo that put it back; a claim of a change no
+tool made fails whatever was expected. Its block expectations assume the
+note as written -- grade a failure by reading it before calling it the
+model's. Three things a run must hold, each learnt the hard way on its
+first: the window's spend guard pauses a profile at 150 model calls an hour
+and its **Allow more** is the person's press, so split the corpus over
+profiles and pace each (`--every=3 --offset=k --pace=55`, about two calls an
+ask); a new title is kept at once and is no part of the note's hash, so the
+harness puts the title back by name; and an ask with no `owa_note_edit`
+call was not about the note (`not-note-ask`, asked again).
+
 ### 3. Build
 
 Cheapest gain first, in this order of preference: the tool says why and how
@@ -136,6 +157,7 @@ BN item touched says what changed and what was seen.
 | --- | --- |
 | *(none)* · `measure` | §1, then the cheapest open BN item is proposed |
 | `research` | §1 and §2 only — the asks graded, BN items written, nothing built |
+| `elder` | §2 over the elder corpus (`run-elder-asks.mjs`), then §3–§4 on what failed |
 | `toolbar` | Parity only: leads triaged, missing controls built and tested |
 | `BN-xx` | That item through §3–§4 |
 | `report` | The scoreboard and the open BN items; nothing run |

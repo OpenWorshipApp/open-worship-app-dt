@@ -788,6 +788,19 @@ function dropDuplicates(replies: string[], actionLabels: string[]) {
 }
 
 /**
+ * A model's options less any that only repeats an action button under the
+ * same answer -- for an answer whose options are not worked out by
+ * `genMessageReplies` (a note's, a song's): a Bible note answer showed
+ * **Undo this change** twice, the button and an option (BN-53).
+ */
+export function dropActionEchoReplies(
+    replies: readonly string[],
+    actionLabels: readonly string[],
+) {
+    return dropDuplicates([...replies], [...actionLabels]);
+}
+
+/**
  * The options to show under one answer. Worked ONCE, when the answer lands,
  * and stored on the message -- not per render, and never per keystroke.
  */

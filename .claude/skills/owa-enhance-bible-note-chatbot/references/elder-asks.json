@@ -1,0 +1,8283 @@
+[
+  {
+    "id": "1-1",
+    "category": 1,
+    "text": "hello",
+    "expect": {
+      "do": "answer",
+      "why": "a greeting"
+    }
+  },
+  {
+    "id": "1-2",
+    "category": 1,
+    "text": "Hello is anybody there",
+    "expect": {
+      "do": "answer",
+      "why": "a greeting"
+    }
+  },
+  {
+    "id": "1-3",
+    "category": 1,
+    "text": "good morning. my name is Margaret and i teach the ladies class at our church. my grandson put this program on the computer for me but he went back to college on monday. what do i do now",
+    "expect": {
+      "do": "answer",
+      "why": "orientation: what to do first"
+    }
+  },
+  {
+    "id": "1-4",
+    "category": 1,
+    "text": "what can you do",
+    "expect": {
+      "do": "answer",
+      "why": "asks what the assistant can do"
+    }
+  },
+  {
+    "id": "1-5",
+    "category": 1,
+    "text": "how does this work",
+    "expect": {
+      "do": "answer",
+      "why": "asks how it works"
+    }
+  },
+  {
+    "id": "1-6",
+    "category": 1,
+    "text": "i dont understand any of this",
+    "expect": {
+      "do": "answer",
+      "why": "confused; explain simply"
+    }
+  },
+  {
+    "id": "1-7",
+    "category": 1,
+    "text": "I need chatbot help me prepare lesson for sunday",
+    "expect": {
+      "do": "answer",
+      "why": "wants help but names nothing to change yet; ask what to do"
+    }
+  },
+  {
+    "id": "1-8",
+    "category": 1,
+    "text": "are you a real person or a computer",
+    "expect": {
+      "do": "answer",
+      "why": "asks whether it is a person"
+    }
+  },
+  {
+    "id": "1-9",
+    "category": 1,
+    "text": "HELLO CAN YOU HELP ME",
+    "expect": {
+      "do": "answer",
+      "why": "a greeting asking for help"
+    }
+  },
+  {
+    "id": "1-10",
+    "category": 1,
+    "text": "where am i suposed to type",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "type",
+        "box"
+      ],
+      "why": "where to type"
+    }
+  },
+  {
+    "id": "1-11",
+    "category": 1,
+    "text": "im not good with computers so please be patient with me",
+    "expect": {
+      "do": "answer",
+      "why": "asks for patience"
+    }
+  },
+  {
+    "id": "1-12",
+    "category": 1,
+    "text": "can you help me with my sunday school lesson or is that not what you are for",
+    "expect": {
+      "do": "answer",
+      "why": "asks if lesson help is its job"
+    }
+  },
+  {
+    "id": "1-13",
+    "category": 1,
+    "text": "Good evening dear, Pastor Dan said this machine can help me write my lesson. Is that true?",
+    "expect": {
+      "do": "answer",
+      "why": "asks if it can help write the lesson"
+    }
+  },
+  {
+    "id": "1-14",
+    "category": 1,
+    "text": "what is this box beside my lesson, i never see it before",
+    "expect": {
+      "do": "answer",
+      "why": "asks what the chat box is"
+    }
+  },
+  {
+    "id": "1-15",
+    "category": 1,
+    "text": "i pressed the little robot face and this came up. what is it for",
+    "expect": {
+      "do": "answer",
+      "why": "asks what the robot window is for"
+    }
+  },
+  {
+    "id": "1-16",
+    "category": 1,
+    "text": "How I start? I am new for this program",
+    "expect": {
+      "do": "answer",
+      "why": "asks how to start"
+    }
+  },
+  {
+    "id": "1-17",
+    "category": 1,
+    "text": "can you see what i wrote in my lesson",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Good Shepherd"
+      ],
+      "why": "it can read the note; name what it sees"
+    }
+  },
+  {
+    "id": "1-18",
+    "category": 1,
+    "text": "do i talk to you or type to you",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "type"
+      ],
+      "why": "talk or type"
+    }
+  },
+  {
+    "id": "1-19",
+    "category": 1,
+    "text": "you write too much at once and i get confused. can you tell me one thing at a time",
+    "expect": {
+      "do": "answer",
+      "why": "asks for shorter answers"
+    }
+  },
+  {
+    "id": "1-20",
+    "category": 1,
+    "text": "Hi there, I am 78 years old and not very good with these things, my late husband did all the computer things in our house and my grandson usually helps me but he is away this month. So please go slow with me. What should I do first?",
+    "expect": {
+      "do": "answer",
+      "why": "asks what to do first, slowly"
+    }
+  },
+  {
+    "id": "1-21",
+    "category": 1,
+    "text": "what are you",
+    "expect": {
+      "do": "answer",
+      "why": "asks what it is"
+    }
+  },
+  {
+    "id": "1-22",
+    "category": 1,
+    "text": "test",
+    "expect": {
+      "do": "answer",
+      "why": "a test message"
+    }
+  },
+  {
+    "id": "1-23",
+    "category": 1,
+    "text": "Please tell me what kind of things you can help me with. I teach the adult class and sometimes the little ones on wednesday nights",
+    "expect": {
+      "do": "answer",
+      "why": "asks what it can help with"
+    }
+  },
+  {
+    "id": "1-24",
+    "category": 1,
+    "text": "is this going to cost me money",
+    "expect": {
+      "do": "answer",
+      "why": "asks about cost"
+    }
+  },
+  {
+    "id": "1-25",
+    "category": 1,
+    "text": "what is the different between you and google? my neighbour use google for everything",
+    "expect": {
+      "do": "answer",
+      "why": "asks how it differs from Google"
+    }
+  },
+  {
+    "id": "2-1",
+    "category": 2,
+    "text": "can you write a little introduction for my lesson about the good shepherd",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "write an introduction for this lesson"
+    }
+  },
+  {
+    "id": "2-2",
+    "category": 2,
+    "text": "I need a opening for the class, something warm to start with, maybe 3 or 4 sentences",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "write an opening for this lesson"
+    }
+  },
+  {
+    "id": "2-3",
+    "category": 2,
+    "text": "please write a closing prayer and put it near the end before the hymn",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a closing prayer before the hymn"
+    }
+  },
+  {
+    "id": "2-4",
+    "category": 2,
+    "text": "my opening prayer is to short, can you write a longer one, maybe 5 or 6 lines",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "lengthen the opening prayer"
+    }
+  },
+  {
+    "id": "2-5",
+    "category": 2,
+    "text": "write another point about the shepard please. maybe how he goes looking for the lost one",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "bullet"
+        },
+        {
+          "add": true,
+          "kind": "section"
+        }
+      ],
+      "why": "add a point about the lost sheep"
+    }
+  },
+  {
+    "id": "2-6",
+    "category": 2,
+    "text": "I want a fourth point, about the shepherd protecting the sheep from the wolves",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "bullet"
+        },
+        {
+          "add": true,
+          "kind": "section"
+        }
+      ],
+      "why": "add a fourth point"
+    }
+  },
+  {
+    "id": "2-7",
+    "category": 2,
+    "text": "can you give me a short story to tell the class about a shepherd. something true if you know one",
+    "expect": {
+      "do": "either",
+      "why": "a story to tell: told in the chat or added both fine"
+    }
+  },
+  {
+    "id": "2-8",
+    "category": 2,
+    "text": "tell me a illustration for the lesson, my class are old people like me so nothing to modern please",
+    "expect": {
+      "do": "either",
+      "why": "an illustration: told in the chat or added both fine"
+    }
+  },
+  {
+    "id": "2-9",
+    "category": 2,
+    "text": "How we can use this lesson in the daily life? Please write some sentence for that",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "write an application part for this lesson"
+    }
+  },
+  {
+    "id": "2-10",
+    "category": 2,
+    "text": "please add 3 more questions for the class discusion",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "number"
+        },
+        {
+          "add": true,
+          "kind": "section"
+        }
+      ],
+      "why": "add three more questions"
+    }
+  },
+  {
+    "id": "2-11",
+    "category": 2,
+    "text": "the questions i have are to easy. these are grown ups who have been in church 50 years, can you write some harder ones",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "blocks": [
+        12,
+        13
+      ],
+      "why": "harder questions: replace or add"
+    }
+  },
+  {
+    "id": "2-12",
+    "category": 2,
+    "text": "make a version of this lesson for children 5 to 8 years old",
+    "expect": {
+      "do": "new-note",
+      "why": "a children version is a separate lesson"
+    }
+  },
+  {
+    "id": "2-13",
+    "category": 2,
+    "text": "write a very short version of this for the teenagers, they get bored fast",
+    "expect": {
+      "do": "new-note",
+      "why": "a teen version is a separate lesson"
+    }
+  },
+  {
+    "id": "2-14",
+    "category": 2,
+    "text": "give me a memory verse for the kids to learn this week",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add a memory verse"
+    }
+  },
+  {
+    "id": "2-15",
+    "category": 2,
+    "text": "can you write summary in the end, just few line so i can remember what to say",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a summary at the end"
+    }
+  },
+  {
+    "id": "2-16",
+    "category": 2,
+    "text": "write me a few words to say at the end, before we sing",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add closing words before the hymn"
+    }
+  },
+  {
+    "id": "2-17",
+    "category": 2,
+    "text": "i need an outline for next week, Luke 15 the lost sheep",
+    "expect": {
+      "do": "new-note",
+      "why": "an outline for next week on Luke 15"
+    }
+  },
+  {
+    "id": "2-18",
+    "category": 2,
+    "text": "Can you make me a whole lesson about forgiveness. Same like this one, with title, prayer, points and questions",
+    "expect": {
+      "do": "new-note",
+      "why": "a whole lesson on forgiveness"
+    }
+  },
+  {
+    "id": "2-19",
+    "category": 2,
+    "text": "next month I have to teach about Ruth and Naomi and honestly I dont know where to begin. could you help me make the outline",
+    "expect": {
+      "do": "new-note",
+      "why": "a Ruth and Naomi outline for next month"
+    }
+  },
+  {
+    "id": "2-20",
+    "category": 2,
+    "text": "write something about how the sheep know the shepherds voice",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "write a part about the shepherd's voice"
+    }
+  },
+  {
+    "id": "2-21",
+    "category": 2,
+    "text": "Please write me a short devotion for the ladies breakfast, 5 minutes, about trusting God when things are hard",
+    "expect": {
+      "do": "new-note",
+      "why": "a devotion for another event and topic"
+    }
+  },
+  {
+    "id": "2-22",
+    "category": 2,
+    "text": "my point number 2 is only one line, can you write few sentences under it to explain more",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        8
+      ],
+      "why": "expand point 2"
+    }
+  },
+  {
+    "id": "2-23",
+    "category": 2,
+    "text": "what i should say under first point?",
+    "expect": {
+      "do": "either",
+      "why": "asks what to say: suggest in chat or add under point 1"
+    }
+  },
+  {
+    "id": "2-24",
+    "category": 2,
+    "text": "explain the third point more for me, about he gives his life. write it so i can read it out loud",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        9
+      ],
+      "why": "expand point 3 to read aloud"
+    }
+  },
+  {
+    "id": "2-25",
+    "category": 2,
+    "text": "I want something to say after we read psalm 23 together",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add words after the reading"
+    }
+  },
+  {
+    "id": "2-26",
+    "category": 2,
+    "text": "write a prayer for the sick people in our church, I want to pray it at the end of class. we have 3 people in the hospital right now",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a prayer for the sick"
+    }
+  },
+  {
+    "id": "2-27",
+    "category": 2,
+    "text": "can you write the welcome for new people who come to class first time",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a welcome for newcomers"
+    }
+  },
+  {
+    "id": "2-28",
+    "category": 2,
+    "text": "give me a little poem about the lord being my shepherd, it dont have to rhyme",
+    "expect": {
+      "do": "either",
+      "why": "a little poem: answer or add both fine"
+    }
+  },
+  {
+    "id": "2-29",
+    "category": 2,
+    "text": "we have a dear man in our class, Brother Tom, who lost his wife in august after 52 years married. he still comes every sunday but he is very quiet now. can you write a gentle part about the shepherd being with us in the valley of the shadow, without making him cry in front of everybody",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a gentle part about the valley"
+    }
+  },
+  {
+    "id": "2-30",
+    "category": 2,
+    "text": "please write a short introduction to the hymn so I can say why we sing it",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add an introduction to the hymn"
+    }
+  },
+  {
+    "id": "2-31",
+    "category": 2,
+    "text": "write a story about a little lamb that got lost, for the children",
+    "expect": {
+      "do": "either",
+      "why": "a children story beside an adult lesson: answer or add"
+    }
+  },
+  {
+    "id": "2-32",
+    "category": 2,
+    "text": "Need more main point. 3 is not enough for 30 minute",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "bullet"
+        },
+        {
+          "add": true,
+          "kind": "section"
+        }
+      ],
+      "why": "add more main points"
+    }
+  },
+  {
+    "id": "2-33",
+    "category": 2,
+    "text": "can you write me a lesson on the prodigal son for the adult class",
+    "expect": {
+      "do": "new-note",
+      "why": "a lesson on another topic"
+    }
+  },
+  {
+    "id": "2-34",
+    "category": 2,
+    "text": "i have to give a devotion at the nursing home on thursday, can you write one about heaven. short please, they are very old and some can not hear well",
+    "expect": {
+      "do": "new-note",
+      "why": "a devotion for another event and topic"
+    }
+  },
+  {
+    "id": "2-35",
+    "category": 2,
+    "text": "please you add some question for children also, easy one",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add questions for children"
+    }
+  },
+  {
+    "id": "2-36",
+    "category": 2,
+    "text": "write a activity for the end where everybody shares something",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a sharing activity at the end"
+    }
+  },
+  {
+    "id": "2-37",
+    "category": 2,
+    "text": "Could you please write a nice prayer for the middle of the lesson, after the main points, asking the Lord to help us follow Him. Thank you very much.",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a prayer after the main points"
+    }
+  },
+  {
+    "id": "2-38",
+    "category": 2,
+    "text": "the lesson is suppose to be 30 minutes but i think i dont have enough to say. what else can i put in",
+    "expect": {
+      "do": "either",
+      "why": "asks what else to put in: ideas or additions"
+    }
+  },
+  {
+    "id": "2-39",
+    "category": 2,
+    "text": "write something about the rod and the staff",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "write about the rod and the staff"
+    }
+  },
+  {
+    "id": "2-40",
+    "category": 2,
+    "text": "what can i write about green pastures and still waters",
+    "expect": {
+      "do": "either",
+      "why": "asks what to write: ideas or additions"
+    }
+  },
+  {
+    "id": "2-41",
+    "category": 2,
+    "text": "make outline for John 3:16 lesson please",
+    "expect": {
+      "do": "new-note",
+      "why": "an outline for another lesson"
+    }
+  },
+  {
+    "id": "2-42",
+    "category": 2,
+    "text": "I would like a lesson for Mothers Day about the woman in Proverbs 31",
+    "expect": {
+      "do": "new-note",
+      "why": "a Mother's Day lesson"
+    }
+  },
+  {
+    "id": "2-43",
+    "category": 2,
+    "text": "write me a lesson about prayer for the youth group. my granddaughter is in that class and she says it is boring so make it good",
+    "expect": {
+      "do": "new-note",
+      "why": "a youth lesson on prayer"
+    }
+  },
+  {
+    "id": "2-44",
+    "category": 2,
+    "text": "Write a Easter lesson for the adults, about 30 minutes like this one",
+    "expect": {
+      "do": "new-note",
+      "why": "an Easter lesson"
+    }
+  },
+  {
+    "id": "2-45",
+    "category": 2,
+    "text": "christmas is coming soon, could you make a lesson about the shepherds in the field who saw the angels. that goes good with the sheep",
+    "expect": {
+      "do": "new-note",
+      "why": "a Christmas lesson"
+    }
+  },
+  {
+    "id": "2-46",
+    "category": 2,
+    "text": "write a funny little opening, something to make them smile. the pastor says i am too serious",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a funny opening"
+    }
+  },
+  {
+    "id": "2-47",
+    "category": 2,
+    "text": "give me example from real life about follow a good leader",
+    "expect": {
+      "do": "either",
+      "why": "a real-life example: answer or add"
+    }
+  },
+  {
+    "id": "2-48",
+    "category": 2,
+    "text": "can you write what I should say between the points, so it flows from one to the next",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add transitions between the points"
+    }
+  },
+  {
+    "id": "2-49",
+    "category": 2,
+    "text": "write a few words about why jesus called himself the GOOD shepherd and not just a shepherd",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "write about why GOOD shepherd"
+    }
+  },
+  {
+    "id": "2-50",
+    "category": 2,
+    "text": "please make a lesson for thanksgiving about being thankful",
+    "expect": {
+      "do": "new-note",
+      "why": "a Thanksgiving lesson"
+    }
+  },
+  {
+    "id": "2-51",
+    "category": 2,
+    "text": "write a benediction for the end, like the pastor says",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a benediction at the end"
+    }
+  },
+  {
+    "id": "2-52",
+    "category": 2,
+    "text": "I need lesson about David and Goliath for the kids, they like the story with fighting",
+    "expect": {
+      "do": "new-note",
+      "why": "a David and Goliath lesson"
+    }
+  },
+  {
+    "id": "2-53",
+    "category": 2,
+    "text": "Make lesson for me about love one another. My english not so good, please simple",
+    "expect": {
+      "do": "new-note",
+      "why": "a lesson on love one another"
+    }
+  },
+  {
+    "id": "2-54",
+    "category": 2,
+    "text": "can you write me a short example of how God guided someone, I will tell them it is only an example",
+    "expect": {
+      "do": "either",
+      "why": "an example story: answer or add"
+    }
+  },
+  {
+    "id": "2-55",
+    "category": 2,
+    "text": "write something about sabbath rest that goes with the green pastures",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a part about sabbath rest"
+    }
+  },
+  {
+    "id": "2-56",
+    "category": 2,
+    "text": "write the meaning of each verse of psalm 23 for my lesson, one line each",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add one line per verse of Psalm 23"
+    }
+  },
+  {
+    "id": "2-57",
+    "category": 2,
+    "text": "make list what thing I need bring on sunday",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a list of things to bring"
+    }
+  },
+  {
+    "id": "2-58",
+    "category": 2,
+    "text": "write the instructions for the helper who will teach if I am sick that day",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add instructions for a substitute teacher"
+    }
+  },
+  {
+    "id": "2-59",
+    "category": 2,
+    "text": "i want to end with everyone holding hands for prayer. write that prayer please, short",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a short closing prayer"
+    }
+  },
+  {
+    "id": "2-60",
+    "category": 2,
+    "text": "Can you write a opening prayer in the old fashion words like the King James, thee and thou",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "opening prayer in King James words"
+    }
+  },
+  {
+    "id": "2-61",
+    "category": 2,
+    "text": "write something for the people who feel lost, like a lost sheep, so they know God is looking for them",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a part for those who feel lost"
+    }
+  },
+  {
+    "id": "2-62",
+    "category": 2,
+    "text": "help me to write the part about the hired man who runs away when the wolf comes",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a part about the hired man"
+    }
+  },
+  {
+    "id": "2-63",
+    "category": 2,
+    "text": "write some questions I can give on paper for them to take home and think about",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add take-home questions"
+    }
+  },
+  {
+    "id": "2-64",
+    "category": 2,
+    "text": "write a short play the children can act out with a shepherd and the sheep",
+    "expect": {
+      "do": "either",
+      "why": "a children play beside an adult lesson: answer or add"
+    }
+  },
+  {
+    "id": "2-65",
+    "category": 2,
+    "text": "Write me lesson on the fruit of the spirit. i will teach it in 4 weeks, or maybe 9 weeks one fruit each week? i dont know you decide",
+    "expect": {
+      "do": "new-note",
+      "why": "a fruit of the Spirit series"
+    }
+  },
+  {
+    "id": "2-66",
+    "category": 2,
+    "text": "what should I say to close the class if we run out of time",
+    "expect": {
+      "do": "either",
+      "why": "asks what to say if time runs out"
+    }
+  },
+  {
+    "id": "2-67",
+    "category": 2,
+    "text": "write a little challenge for the class to do during the week",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a weekly challenge"
+    }
+  },
+  {
+    "id": "2-68",
+    "category": 2,
+    "text": "I need a ice breaker question for the start, something easy that everybody can answer",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add an ice breaker question"
+    }
+  },
+  {
+    "id": "2-69",
+    "category": 2,
+    "text": "Pastor asked me to do the lesson on Sunday about the Ten Commandments. Could you write the main things I should say",
+    "expect": {
+      "do": "new-note",
+      "why": "a Ten Commandments lesson"
+    }
+  },
+  {
+    "id": "2-70",
+    "category": 2,
+    "text": "I want a lesson about the good samaritan, for adults, with questions",
+    "expect": {
+      "do": "new-note",
+      "why": "a Good Samaritan lesson"
+    }
+  },
+  {
+    "id": "2-71",
+    "category": 2,
+    "text": "write a part about how we can be shepherds to other people",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a part about being shepherds"
+    }
+  },
+  {
+    "id": "2-72",
+    "category": 2,
+    "text": "can you write a prayer for the childrens class, short, so they can repeat after me",
+    "expect": {
+      "do": "either",
+      "why": "a prayer for the children class: answer or add"
+    }
+  },
+  {
+    "id": "2-73",
+    "category": 2,
+    "text": "a short devotion about Psalm 121 please, I will read it at the start of choir practise",
+    "expect": {
+      "do": "new-note",
+      "why": "a devotion on Psalm 121 for choir"
+    }
+  },
+  {
+    "id": "2-74",
+    "category": 2,
+    "text": "My lesson need one more question about the green pasture",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "number"
+        },
+        {
+          "add": true,
+          "kind": "section"
+        }
+      ],
+      "why": "add a question about green pastures"
+    }
+  },
+  {
+    "id": "2-75",
+    "category": 2,
+    "text": "write a lesson about Joseph forgiving his brothers",
+    "expect": {
+      "do": "new-note",
+      "why": "a lesson on Joseph"
+    }
+  },
+  {
+    "id": "2-76",
+    "category": 2,
+    "text": "I have no more idea what to put in the lesson, you give me some",
+    "expect": {
+      "do": "either",
+      "why": "asks for ideas: suggest or add"
+    }
+  },
+  {
+    "id": "2-77",
+    "category": 2,
+    "text": "write the lesson about worry, from matthew 6, the birds and the flowers",
+    "expect": {
+      "do": "new-note",
+      "why": "a lesson on worry, Matthew 6"
+    }
+  },
+  {
+    "id": "2-78",
+    "category": 2,
+    "text": "we are doing a series on the I AM sayings of Jesus. this one is the good shepherd. next week is I am the bread of life and after that I am the vine. can you make the next one ready for me the same way so they all match",
+    "expect": {
+      "do": "new-note",
+      "why": "the next lesson in the series"
+    }
+  },
+  {
+    "id": "2-79",
+    "category": 2,
+    "text": "add a part for me, what to say when nobody answers the question",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add what to say when nobody answers"
+    }
+  },
+  {
+    "id": "2-80",
+    "category": 2,
+    "text": "Can you write a lesson plan with times? like 5 minutes prayer, 10 minutes reading and like that",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a timed lesson plan"
+    }
+  },
+  {
+    "id": "2-81",
+    "category": 2,
+    "text": "please write an ending that tells them to come back next week and bring a friend",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add an ending inviting them back"
+    }
+  },
+  {
+    "id": "2-82",
+    "category": 2,
+    "text": "write the prayer again but more from the heart",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "rewrite the prayer from the heart"
+    }
+  },
+  {
+    "id": "2-83",
+    "category": 2,
+    "text": "write me 2 or 3 sentences about who the sheep are in this story",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add sentences about who the sheep are"
+    }
+  },
+  {
+    "id": "2-84",
+    "category": 2,
+    "text": "I am visiting a family at the funeral home on Friday. Not a lesson really, just some comfort words from psalm 23 I can say to them",
+    "expect": {
+      "do": "either",
+      "why": "comfort words for a funeral visit, not this lesson"
+    }
+  },
+  {
+    "id": "2-85",
+    "category": 2,
+    "text": "write a lesson about noahs ark for small kids with a coloring page idea",
+    "expect": {
+      "do": "new-note",
+      "why": "a Noah's ark lesson"
+    }
+  },
+  {
+    "id": "2-86",
+    "category": 2,
+    "text": "i need something to say about the shepherd in israel long time ago, write it simple",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a part about shepherds in ancient Israel"
+    }
+  },
+  {
+    "id": "2-87",
+    "category": 2,
+    "text": "please write a few sentences for the start that connect to last week. last week we talked about Jesus the light of the world",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add an opening linking to last week"
+    }
+  },
+  {
+    "id": "2-88",
+    "category": 2,
+    "text": "can you do a word study on the word shepherd for the adults they like that kind of thing",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add a word study on shepherd"
+    }
+  },
+  {
+    "id": "2-89",
+    "category": 2,
+    "text": "Lesson for Fathers Day please. About Joseph the husband of Mary, he was a good father too",
+    "expect": {
+      "do": "new-note",
+      "why": "a Father's Day lesson"
+    }
+  },
+  {
+    "id": "2-90",
+    "category": 2,
+    "text": "write a short paragraf to explain the Lords Prayer, one line at a time, i want to teach it to the new believers",
+    "expect": {
+      "do": "new-note",
+      "why": "a lesson on the Lord's Prayer"
+    }
+  },
+  {
+    "id": "3-1",
+    "category": 3,
+    "text": "put john 3 16 in my lesson",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add John 3:16"
+    }
+  },
+  {
+    "id": "3-2",
+    "category": 3,
+    "text": "can you add psalms twenty three the whole thing",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add the whole of Psalm 23"
+    }
+  },
+  {
+    "id": "3-3",
+    "category": 3,
+    "text": "what verse says the lord is my shepherd i shall not want",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "23:1",
+        "Psalm 23",
+        "Psalms 23"
+      ],
+      "why": "names the verse"
+    }
+  },
+  {
+    "id": "3-4",
+    "category": 3,
+    "text": "there is a verse something like I will never leave you nor forsake you, where is that one",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Hebrews 13:5",
+        "13:5",
+        "Deuteronomy 31",
+        "Joshua 1:5"
+      ],
+      "tool": "owa_find_verse",
+      "why": "names a half-remembered verse"
+    }
+  },
+  {
+    "id": "3-5",
+    "category": 3,
+    "text": "Jhon 3:16 please put in",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add John 3:16 (misspelled)"
+    }
+  },
+  {
+    "id": "3-6",
+    "category": 3,
+    "text": "find me a verse about sheep",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "find a verse about sheep: name it or add it"
+    }
+  },
+  {
+    "id": "3-7",
+    "category": 3,
+    "text": "I need verse about God take care of us",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a verse about God's care: name it or add it"
+    }
+  },
+  {
+    "id": "3-8",
+    "category": 3,
+    "text": "show me the whole pslam 23 so I can read it",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "show Psalm 23 to read: in the chat or added as a passage"
+    }
+  },
+  {
+    "id": "3-9",
+    "category": 3,
+    "text": "what is next verse after psalm 23:1?",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "23:2",
+        "green pastures"
+      ],
+      "tool": "owa_find_verse",
+      "why": "the next verse is Psalm 23:2"
+    }
+  },
+  {
+    "id": "3-10",
+    "category": 3,
+    "text": "put 1st corinthians 13, the love chapter",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add 1 Corinthians 13"
+    }
+  },
+  {
+    "id": "3-11",
+    "category": 3,
+    "text": "can you put Psalm 23 verse 4 under the first point",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "blocks": [
+        7
+      ],
+      "why": "add Psalm 23:4 under the first point"
+    }
+  },
+  {
+    "id": "3-12",
+    "category": 3,
+    "text": "is there a verse where jesus says my sheep hear my voice",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "10:27"
+      ],
+      "why": "names John 10:27"
+    }
+  },
+  {
+    "id": "3-13",
+    "category": 3,
+    "text": "Ezekiel 34 has something about the shepherd looking for the lost, can you find it for me",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "34:11",
+        "34:12",
+        "34:16"
+      ],
+      "tool": "owa_find_verse",
+      "why": "finds the verse in Ezekiel 34"
+    }
+  },
+  {
+    "id": "3-14",
+    "category": 3,
+    "text": "i want the verse in the King James please, the one i learned as a girl",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "why": "the verse in the KJV: move the chip or explain"
+    }
+  },
+  {
+    "id": "3-15",
+    "category": 3,
+    "text": "can you show me psalm 23 in the NIV, my class all have different bibles",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "Psalm 23 in the NIV, if installed"
+    }
+  },
+  {
+    "id": "3-16",
+    "category": 3,
+    "text": "what does the bible say about lost sheep",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Luke 15",
+        "Matthew 18"
+      ],
+      "why": "what the Bible says about lost sheep"
+    }
+  },
+  {
+    "id": "3-17",
+    "category": 3,
+    "text": "the verse about the 99 sheep where is it",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Luke 15",
+        "Matthew 18"
+      ],
+      "why": "the 99 sheep"
+    }
+  },
+  {
+    "id": "3-18",
+    "category": 3,
+    "text": "put isaiah 40 11 he shall feed his flock like a shepherd",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add Isaiah 40:11"
+    }
+  },
+  {
+    "id": "3-19",
+    "category": 3,
+    "text": "Romans eight twenty eight please",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a bare reference: show or add"
+    }
+  },
+  {
+    "id": "3-20",
+    "category": 3,
+    "text": "what is a good verse to finish the lesson with",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a verse to finish with: suggest or add"
+    }
+  },
+  {
+    "id": "3-21",
+    "category": 3,
+    "text": "there is one that says all we like sheep have gone astray, is that isaiah?",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "53:6"
+      ],
+      "why": "Isaiah 53:6"
+    }
+  },
+  {
+    "id": "3-22",
+    "category": 3,
+    "text": "add verse 1 peter 5 4 about the chief shepherd",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add 1 Peter 5:4"
+    }
+  },
+  {
+    "id": "3-23",
+    "category": 3,
+    "text": "hebrews 13:20 add it after the john 10 line",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add Hebrews 13:20 after the John 10 line"
+    }
+  },
+  {
+    "id": "3-24",
+    "category": 3,
+    "text": "please put the verse word in my lesson, not only number. people need read it",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "kind": "passage"
+        },
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        3,
+        10
+      ],
+      "why": "show the verse words, not only the reference"
+    }
+  },
+  {
+    "id": "3-25",
+    "category": 3,
+    "text": "i put psalm 23:1 but i want verses 1 to 6",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        3
+      ],
+      "why": "Psalm 23:1 becomes verses 1 to 6"
+    }
+  },
+  {
+    "id": "3-26",
+    "category": 3,
+    "text": "i think the verse is wrong, i wanted psalm 23 not psalm 32",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Psalm 23",
+        "23:1"
+      ],
+      "why": "the note already says Psalm 23"
+    }
+  },
+  {
+    "id": "3-27",
+    "category": 3,
+    "text": "give me verses about God guiding us, for the second question",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add verses about guidance by the second question"
+    }
+  },
+  {
+    "id": "3-28",
+    "category": 3,
+    "text": "Philipians 4:13",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a bare reference: show or add"
+    }
+  },
+  {
+    "id": "3-29",
+    "category": 3,
+    "text": "proverbs 3 5 and 6 trust in the lord with all your heart",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a bare reference: show or add"
+    }
+  },
+  {
+    "id": "3-30",
+    "category": 3,
+    "text": "find the verse that says be still and know that i am God",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "46:10"
+      ],
+      "why": "Psalm 46:10"
+    }
+  },
+  {
+    "id": "3-31",
+    "category": 3,
+    "text": "a verse for children, easy for remember, about Jesus love them",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "an easy verse for children: suggest or add"
+    }
+  },
+  {
+    "id": "3-32",
+    "category": 3,
+    "text": "where in the bible is the good shepherd story, not psalm the other one",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "John 10"
+      ],
+      "why": "John 10"
+    }
+  },
+  {
+    "id": "3-33",
+    "category": 3,
+    "text": "Can you open John chapter 10 so I read all of it before Sunday",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "read John 10: in the chat or added"
+    }
+  },
+  {
+    "id": "3-34",
+    "category": 3,
+    "text": "verse for when somebody is sad or greiving",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a verse for grief: suggest or add"
+    }
+  },
+  {
+    "id": "3-35",
+    "category": 3,
+    "text": "I remember a verse, the lord is close to the broken hearted or something like that. which one is it",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "34:18"
+      ],
+      "tool": "owa_find_verse",
+      "why": "Psalm 34:18"
+    }
+  },
+  {
+    "id": "3-36",
+    "category": 3,
+    "text": "put Matt 18:12 in the main points",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "add Matthew 18:12 in the main points"
+    }
+  },
+  {
+    "id": "3-37",
+    "category": 3,
+    "text": "luke fifteen four",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a bare reference: show or add"
+    }
+  },
+  {
+    "id": "3-38",
+    "category": 3,
+    "text": "the parable of the lost sheep is in two gospels i think, which ones",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Matthew 18",
+        "Luke 15"
+      ],
+      "why": "Matthew 18 and Luke 15"
+    }
+  },
+  {
+    "id": "3-39",
+    "category": 3,
+    "text": "Is there a psalm about the sheep of his pasture? we sing a song like that",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Psalm 100",
+        "100:3",
+        "Psalm 95",
+        "95:7"
+      ],
+      "why": "Psalm 100:3 or 95:7"
+    }
+  },
+  {
+    "id": "3-40",
+    "category": 3,
+    "text": "genisis 1 1",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a bare reference: show or add"
+    }
+  },
+  {
+    "id": "3-41",
+    "category": 3,
+    "text": "when i press the little psalm 23 thing what happens. i want to see the words of the verse",
+    "expect": {
+      "do": "answer",
+      "why": "what the verse chip does"
+    }
+  },
+  {
+    "id": "3-42",
+    "category": 3,
+    "text": "find verse about green pasture in another place, not in psalm 23",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "pasture"
+      ],
+      "tool": "owa_find_verse",
+      "why": "a verse about pasture outside Psalm 23, found by the verse finder"
+    }
+  },
+  {
+    "id": "3-43",
+    "category": 3,
+    "text": "2 timothy 3 16 all scripture is given by inspiration",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a bare reference: show or add"
+    }
+  },
+  {
+    "id": "3-44",
+    "category": 3,
+    "text": "the verse in revelations where the lamb is the shepard, where is it",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "7:17"
+      ],
+      "why": "Revelation 7:17"
+    }
+  },
+  {
+    "id": "3-45",
+    "category": 3,
+    "text": "please put the verse John 10:14 under the first point because it says he knows his sheep",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "blocks": [
+        7
+      ],
+      "why": "add John 10:14 under the first point"
+    }
+  },
+  {
+    "id": "3-46",
+    "category": 3,
+    "text": "do you have the reina valera bible, one lady in my class reads spanish",
+    "expect": {
+      "do": "answer",
+      "why": "which Bibles are installed"
+    }
+  },
+  {
+    "id": "3-47",
+    "category": 3,
+    "text": "this bible is what version?",
+    "expect": {
+      "do": "answer",
+      "why": "which Bible version"
+    }
+  },
+  {
+    "id": "3-48",
+    "category": 3,
+    "text": "can you change the verse to the new king james",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "why": "the verse in the NKJV, if installed"
+    }
+  },
+  {
+    "id": "3-49",
+    "category": 3,
+    "text": "verse about God forgive",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a verse about forgiveness: suggest or add"
+    }
+  },
+  {
+    "id": "3-50",
+    "category": 3,
+    "text": "put a verse after each main point please, one for each",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "a verse after each main point"
+    }
+  },
+  {
+    "id": "3-51",
+    "category": 3,
+    "text": "Jer 29 11",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a bare reference: show or add"
+    }
+  },
+  {
+    "id": "3-52",
+    "category": 3,
+    "text": "Which verse say do not be afraid. Many verse? Give me the best one",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "the best do-not-fear verse: suggest or add"
+    }
+  },
+  {
+    "id": "3-53",
+    "category": 3,
+    "text": "is the lord's my shepherd song from the bible? which verse",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Psalm 23"
+      ],
+      "why": "the hymn is Psalm 23"
+    }
+  },
+  {
+    "id": "3-54",
+    "category": 3,
+    "text": "is the part where jesus says i am the door in the same chapter",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "10:7",
+        "10:9"
+      ],
+      "why": "yes, John 10:7 and 10:9"
+    }
+  },
+  {
+    "id": "3-55",
+    "category": 3,
+    "text": "psalm 100 3 we are his people the sheep of his pasture. put it with the second question",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "blocks": [
+        13
+      ],
+      "why": "add Psalm 100:3 with the second question"
+    }
+  },
+  {
+    "id": "3-56",
+    "category": 3,
+    "text": "the 23 psalm, the one everybody know by heart, is it different in the new bibles?",
+    "expect": {
+      "do": "answer",
+      "why": "translations of Psalm 23 differ"
+    }
+  },
+  {
+    "id": "3-57",
+    "category": 3,
+    "text": "does john 10:11 say the same in every bible",
+    "expect": {
+      "do": "answer",
+      "why": "John 10:11 across translations"
+    }
+  },
+  {
+    "id": "3-58",
+    "category": 3,
+    "text": "i want verse about walk with God everyday",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a verse about walking with God: suggest or add"
+    }
+  },
+  {
+    "id": "3-59",
+    "category": 3,
+    "text": "find me where it says thy word is a lamp unto my feet",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "119:105"
+      ],
+      "why": "Psalm 119:105"
+    }
+  },
+  {
+    "id": "3-60",
+    "category": 3,
+    "text": "what is the shortest verse in bible? the children like that kind of thing",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "11:35",
+        "Jesus wept"
+      ],
+      "why": "John 11:35"
+    }
+  },
+  {
+    "id": "3-61",
+    "category": 3,
+    "text": "1 corinthans 13 4 to 7",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a bare reference: show or add"
+    }
+  },
+  {
+    "id": "3-62",
+    "category": 3,
+    "text": "In my bible it say the Lord is my shepherd I lack nothing. Why yours say different?",
+    "expect": {
+      "do": "answer",
+      "why": "why translations word it differently"
+    }
+  },
+  {
+    "id": "3-63",
+    "category": 3,
+    "text": "give me three verses about the shepherd from old testament",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "three Old Testament shepherd verses: suggest or add"
+    }
+  },
+  {
+    "id": "3-64",
+    "category": 3,
+    "text": "john 10 27 28 add please",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add John 10:27-28"
+    }
+  },
+  {
+    "id": "3-65",
+    "category": 3,
+    "text": "psalm 23 in the good news bible, easy words for my class",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "Psalm 23 in the Good News Bible, if installed"
+    }
+  },
+  {
+    "id": "3-66",
+    "category": 3,
+    "text": "put Ps 23:6 at the end with the closing",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "add Psalm 23:6 at the end"
+    }
+  },
+  {
+    "id": "3-67",
+    "category": 3,
+    "text": "the verse about the lord is my light and my salvation whom shall i fear",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "27:1"
+      ],
+      "why": "Psalm 27:1"
+    }
+  },
+  {
+    "id": "3-68",
+    "category": 3,
+    "text": "find the verse where david was a shepherd boy watching his fathers sheep",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "1 Samuel 16",
+        "1 Samuel 17",
+        "16:11",
+        "17:15",
+        "17:34"
+      ],
+      "why": "David the shepherd boy"
+    }
+  },
+  {
+    "id": "3-69",
+    "category": 3,
+    "text": "i cant find where it says god will wipe away every tear",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Revelation",
+        "Isaiah 25"
+      ],
+      "tool": "owa_find_verse",
+      "why": "God will wipe away every tear"
+    }
+  },
+  {
+    "id": "3-70",
+    "category": 3,
+    "text": "Matthew 25 the sheep and the goats, does that go with this lesson? put it in if it does",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "a judgement call whether it fits; add if it does"
+    }
+  },
+  {
+    "id": "4-1",
+    "category": 4,
+    "text": "make the leters bigger please i cant see them good",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "make the letters bigger"
+    }
+  },
+  {
+    "id": "4-2",
+    "category": 4,
+    "text": "the writing is very light, I cannot see. Can make more dark?",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        },
+        {
+          "styles": "bold"
+        }
+      ],
+      "why": "make the writing darker"
+    }
+  },
+  {
+    "id": "4-3",
+    "category": 4,
+    "text": "can you put the title in the middle",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "align": "center"
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "center the title"
+    }
+  },
+  {
+    "id": "4-4",
+    "category": 4,
+    "text": "make it look nice",
+    "expect": {
+      "do": "either",
+      "why": "vague: ask what or make a modest style change"
+    }
+  },
+  {
+    "id": "4-5",
+    "category": 4,
+    "text": "please make the questions stand out so i see them quick when i am teaching",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "bold"
+        },
+        {
+          "color": true
+        },
+        {
+          "background": true
+        },
+        {
+          "size": "larger"
+        },
+        {
+          "styles": "highlight"
+        }
+      ],
+      "blocks": [
+        11,
+        12,
+        13
+      ],
+      "why": "make the questions stand out"
+    }
+  },
+  {
+    "id": "4-6",
+    "category": 4,
+    "text": "put the important part in thick letters",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "styles": "bold"
+        }
+      ],
+      "why": "which part is important is unclear"
+    }
+  },
+  {
+    "id": "4-7",
+    "category": 4,
+    "text": "underline the line about the good shepherd giving his life",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "underline"
+        }
+      ],
+      "blocks": [
+        9
+      ],
+      "why": "underline point 3"
+    }
+  },
+  {
+    "id": "4-8",
+    "category": 4,
+    "text": "can the title be red",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "make the title red"
+    }
+  },
+  {
+    "id": "4-9",
+    "category": 4,
+    "text": "MAKE EVERYTHING BIGGER",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "make everything bigger"
+    }
+  },
+  {
+    "id": "4-10",
+    "category": 4,
+    "text": "more space between the lines please, they are all squashed together",
+    "expect": {
+      "do": "either",
+      "why": "line spacing is not a tool field"
+    }
+  },
+  {
+    "id": "4-11",
+    "category": 4,
+    "text": "how to make the word more big",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "how to make it bigger: explain or do it"
+    }
+  },
+  {
+    "id": "4-12",
+    "category": 4,
+    "text": "the main points heading should be bigger then the other ones",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        },
+        {
+          "kind": "h1"
+        }
+      ],
+      "blocks": [
+        6
+      ],
+      "why": "Main points heading bigger"
+    }
+  },
+  {
+    "id": "4-13",
+    "category": 4,
+    "text": "I want the prayer in a different colour so I know it is the prayer, maybe blue",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        4,
+        5
+      ],
+      "why": "make the prayer blue"
+    }
+  },
+  {
+    "id": "4-14",
+    "category": 4,
+    "text": "change the letters to the old fashioned kind like in a hymn book",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "font": true
+        }
+      ],
+      "why": "a hymn-book font"
+    }
+  },
+  {
+    "id": "4-15",
+    "category": 4,
+    "text": "can you make all the writing the same size, some is big and some is small and it looks funny to me",
+    "expect": {
+      "do": "either",
+      "why": "headings are bigger by design: explain or even sizes"
+    }
+  },
+  {
+    "id": "4-16",
+    "category": 4,
+    "text": "the title is too big, make it a little smaller",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "smaller"
+        },
+        {
+          "kind": "h2"
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "make the title smaller"
+    }
+  },
+  {
+    "id": "4-17",
+    "category": 4,
+    "text": "make the hymn line bold",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "bold"
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "bold the hymn line"
+    }
+  },
+  {
+    "id": "4-18",
+    "category": 4,
+    "text": "i would like the questions in a box or something so they are seperate",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "background": true
+        },
+        {
+          "kind": "quote"
+        },
+        {
+          "kind": "table"
+        },
+        {
+          "kind": "sticky"
+        },
+        {
+          "kind": "columns"
+        },
+        {
+          "kind": "collapsible"
+        }
+      ],
+      "blocks": [
+        11,
+        12,
+        13
+      ],
+      "why": "set the questions apart in a box"
+    }
+  },
+  {
+    "id": "4-19",
+    "category": 4,
+    "text": "can you make it look like a church bulletin",
+    "expect": {
+      "do": "either",
+      "why": "a church-bulletin look cannot be done exactly"
+    }
+  },
+  {
+    "id": "4-20",
+    "category": 4,
+    "text": "can you make the last line orange so i remember the pictures, orange stands out",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "make the last line orange"
+    }
+  },
+  {
+    "id": "4-21",
+    "category": 4,
+    "text": "Too small. Bigger.",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "bigger"
+    }
+  },
+  {
+    "id": "4-22",
+    "category": 4,
+    "text": "my eyes is not good please make all letter big for me",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "make all letters bigger"
+    }
+  },
+  {
+    "id": "4-23",
+    "category": 4,
+    "text": "put a line across between each part",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "rule"
+        }
+      ],
+      "why": "add a line between the parts"
+    }
+  },
+  {
+    "id": "4-24",
+    "category": 4,
+    "text": "the words of Jesus in the John 10 line make them red like in my bible",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        10
+      ],
+      "why": "red letters for Jesus' words"
+    }
+  },
+  {
+    "id": "4-25",
+    "category": 4,
+    "text": "The letter is too thin can you make it fat",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "bold"
+        }
+      ],
+      "why": "make the letters bold"
+    }
+  },
+  {
+    "id": "4-26",
+    "category": 4,
+    "text": "can i have yellow behind the Psalm 23 line like a highlighter pen",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "background": true
+        },
+        {
+          "styles": "highlight"
+        }
+      ],
+      "blocks": [
+        3
+      ],
+      "why": "yellow behind the Psalm 23 line"
+    }
+  },
+  {
+    "id": "4-27",
+    "category": 4,
+    "text": "make the lesson for sunday school line smaller, it is not important",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "smaller"
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "make line 2 smaller"
+    }
+  },
+  {
+    "id": "4-28",
+    "category": 4,
+    "text": "put the opening prayer in the slanted letters, like handwriting",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "italic"
+        }
+      ],
+      "blocks": [
+        4,
+        5
+      ],
+      "why": "italic opening prayer"
+    }
+  },
+  {
+    "id": "4-29",
+    "category": 4,
+    "text": "everything is crowded at the top, give it some room to breathe",
+    "expect": {
+      "do": "either",
+      "why": "spacing is not a tool field"
+    }
+  },
+  {
+    "id": "4-30",
+    "category": 4,
+    "text": "can you put the questions in the middle of the page",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "align": "center"
+        }
+      ],
+      "blocks": [
+        11,
+        12,
+        13
+      ],
+      "why": "center the questions"
+    }
+  },
+  {
+    "id": "4-31",
+    "category": 4,
+    "text": "the dots in front of the points are too small i cant see them",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "bullet size is not a tool field"
+    }
+  },
+  {
+    "id": "4-32",
+    "category": 4,
+    "text": "make the main points heading purple, purple is the colour for advent",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        6
+      ],
+      "why": "purple Main points heading"
+    }
+  },
+  {
+    "id": "4-33",
+    "category": 4,
+    "text": "make it pretty for the ladies, maybe some pink",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        },
+        {
+          "background": true
+        }
+      ],
+      "why": "some pink"
+    }
+  },
+  {
+    "id": "4-34",
+    "category": 4,
+    "text": "is there a way to make the whole thing bigger on the screen, not on the paper",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Ctrl",
+        "zoom"
+      ],
+      "why": "screen zoom, not the document"
+    }
+  },
+  {
+    "id": "4-35",
+    "category": 4,
+    "text": "bible verse please put more big than other",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "blocks": [
+        3,
+        10
+      ],
+      "why": "the verse bigger"
+    }
+  },
+  {
+    "id": "4-36",
+    "category": 4,
+    "text": "Bold the 3 pionts",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "bold"
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "bold the three points"
+    }
+  },
+  {
+    "id": "4-37",
+    "category": 4,
+    "text": "the title should be underline",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "underline"
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "underline the title"
+    }
+  },
+  {
+    "id": "4-38",
+    "category": 4,
+    "text": "i dont like this style of letters it is hard to read, something plainer",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "font": true
+        }
+      ],
+      "why": "a plainer font"
+    }
+  },
+  {
+    "id": "4-39",
+    "category": 4,
+    "text": "can the background be cream colour not white, the white hurts my eyes",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "background": true
+        }
+      ],
+      "why": "a page colour is the app theme; a block background is close"
+    }
+  },
+  {
+    "id": "4-40",
+    "category": 4,
+    "text": "make all the headings the same color",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "why": "headings already share one colour; ask or set one"
+    }
+  },
+  {
+    "id": "4-41",
+    "category": 4,
+    "text": "the question numbers are hard to see, make them bigger",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "blocks": [
+        12,
+        13
+      ],
+      "why": "bigger question numbers"
+    }
+  },
+  {
+    "id": "4-42",
+    "category": 4,
+    "text": "make the line about the pictures not so loud, it is just a note for me",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "smaller"
+        },
+        {
+          "color": true
+        },
+        {
+          "styles": "italic"
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "tone down the reminder line"
+    }
+  },
+  {
+    "id": "4-43",
+    "category": 4,
+    "text": "the verse can stay alone in one line in the middle?",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "align": "center"
+        }
+      ],
+      "blocks": [
+        3
+      ],
+      "why": "center the verse line"
+    }
+  },
+  {
+    "id": "4-44",
+    "category": 4,
+    "text": "please make the words black, very black",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "why": "black writing"
+    }
+  },
+  {
+    "id": "4-45",
+    "category": 4,
+    "text": "i have cataracts and the screen is too bright for me, can it be dark with light letters",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "dark",
+        "theme"
+      ],
+      "why": "dark theme is an app setting"
+    }
+  },
+  {
+    "id": "4-46",
+    "category": 4,
+    "text": "can you make the points go in a little from the edge",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "indent": "more"
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "indent the points"
+    }
+  },
+  {
+    "id": "4-47",
+    "category": 4,
+    "text": "I want the closing hymn to look the same as the headings",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "kind": "h2"
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "hymn line as a heading"
+    }
+  },
+  {
+    "id": "4-48",
+    "category": 4,
+    "text": "I want the title big and green like the grass, it is about green pastures",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "big green title"
+    }
+  },
+  {
+    "id": "4-49",
+    "category": 4,
+    "text": "make the prayer look like a prayer, in the middle with space around it",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "align": "center"
+        }
+      ],
+      "blocks": [
+        4,
+        5
+      ],
+      "why": "center the prayer"
+    }
+  },
+  {
+    "id": "4-50",
+    "category": 4,
+    "text": "please make it so it is easy for me to read at the podium, I have to hold my glasses with one hand and the bible with the other",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "easy to read at the podium"
+    }
+  },
+  {
+    "id": "4-51",
+    "category": 4,
+    "text": "underline Psalm 23:1",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "underline"
+        }
+      ],
+      "blocks": [
+        3
+      ],
+      "why": "underline Psalm 23:1"
+    }
+  },
+  {
+    "id": "4-52",
+    "category": 4,
+    "text": "make the important words stand out, you choose which are important",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "bold"
+        },
+        {
+          "color": true
+        },
+        {
+          "background": true
+        },
+        {
+          "styles": "highlight"
+        }
+      ],
+      "why": "make important words stand out"
+    }
+  },
+  {
+    "id": "4-53",
+    "category": 4,
+    "text": "all the writing is on the left side, can some go in the center",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "align": "center"
+        }
+      ],
+      "why": "center some of it"
+    }
+  },
+  {
+    "id": "4-54",
+    "category": 4,
+    "text": "can you make the word shepherd bold every time it comes",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "bold"
+        }
+      ],
+      "why": "bold every \"shepherd\""
+    }
+  },
+  {
+    "id": "4-55",
+    "category": 4,
+    "text": "I made something blue by accident and now I like it, can you make the other headings blue too",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        1,
+        4,
+        6,
+        11
+      ],
+      "why": "make the headings blue"
+    }
+  },
+  {
+    "id": "4-56",
+    "category": 4,
+    "text": "no bold on the questions please, too heavy",
+    "expect": {
+      "do": "either",
+      "why": "the questions are not bold: say so or clear"
+    }
+  },
+  {
+    "id": "4-57",
+    "category": 4,
+    "text": "make it look less busy",
+    "expect": {
+      "do": "either",
+      "why": "vague: ask or simplify the look"
+    }
+  },
+  {
+    "id": "4-58",
+    "category": 4,
+    "text": "the prayer make it bigger from the rest, because I read it loud",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "make the prayer bigger"
+    }
+  },
+  {
+    "id": "4-59",
+    "category": 4,
+    "text": "the top part with the name of the lesson make it bigger and darker",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        },
+        {
+          "styles": "bold"
+        },
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "title bigger and darker"
+    }
+  },
+  {
+    "id": "4-60",
+    "category": 4,
+    "text": "can I have the letters like a typewriter",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "font": true
+        }
+      ],
+      "why": "a typewriter font"
+    }
+  },
+  {
+    "id": "4-61",
+    "category": 4,
+    "text": "between main point and question make more space",
+    "expect": {
+      "do": "either",
+      "why": "spacing is not a tool field"
+    }
+  },
+  {
+    "id": "4-62",
+    "category": 4,
+    "text": "put the main points in colour, each one different",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "a colour per point"
+    }
+  },
+  {
+    "id": "4-63",
+    "category": 4,
+    "text": "the grey writing is hard to see, change it",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "why": "no grey writing in the note; ask or recolour"
+    }
+  },
+  {
+    "id": "4-64",
+    "category": 4,
+    "text": "make it two columns like a newspaper",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "kind": "columns"
+        }
+      ],
+      "why": "a newspaper layout is not exact; columns block close"
+    }
+  },
+  {
+    "id": "4-65",
+    "category": 4,
+    "text": "Can you make the numbers 1 and 2 bold",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "bold"
+        }
+      ],
+      "blocks": [
+        12,
+        13
+      ],
+      "why": "bold the questions 1 and 2"
+    }
+  },
+  {
+    "id": "4-66",
+    "category": 4,
+    "text": "put some colour in it, its all black and boring",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        },
+        {
+          "background": true
+        }
+      ],
+      "why": "add some colour"
+    }
+  },
+  {
+    "id": "4-67",
+    "category": 4,
+    "text": "still too small",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "still too small: bigger"
+    }
+  },
+  {
+    "id": "4-68",
+    "category": 4,
+    "text": "make a bigger gap after the title",
+    "expect": {
+      "do": "either",
+      "why": "spacing is not a tool field"
+    }
+  },
+  {
+    "id": "4-69",
+    "category": 4,
+    "text": "i want the opening prayer and the main points to look the same, now one looks different",
+    "expect": {
+      "do": "either",
+      "why": "unclear what differs; ask or match styles"
+    }
+  },
+  {
+    "id": "4-70",
+    "category": 4,
+    "text": "How I make color on the word Jesus?",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "why": "how to colour the word Jesus: explain or do it"
+    }
+  },
+  {
+    "id": "4-71",
+    "category": 4,
+    "text": "can you put a star or something next to the questions so my eye goes there",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "color": true
+        },
+        {
+          "background": true
+        },
+        {
+          "styles": "bold"
+        }
+      ],
+      "blocks": [
+        11,
+        12,
+        13
+      ],
+      "why": "mark the questions with a star"
+    }
+  },
+  {
+    "id": "4-72",
+    "category": 4,
+    "text": "i want the verses look different from my writing, so i know which is God word and which is mine",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "italic"
+        },
+        {
+          "color": true
+        },
+        {
+          "background": true
+        },
+        {
+          "kind": "quote"
+        },
+        {
+          "font": true
+        }
+      ],
+      "blocks": [
+        3,
+        10
+      ],
+      "why": "set the verses apart from her words"
+    }
+  },
+  {
+    "id": "4-73",
+    "category": 4,
+    "text": "EVERYTHING IN CAPITAL LETTERS PLEASE SO I CAN SEE IT",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "uppercase"
+        },
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "capital letters"
+    }
+  },
+  {
+    "id": "4-74",
+    "category": 4,
+    "text": "the lines are too far apart now, put them closer",
+    "expect": {
+      "do": "either",
+      "why": "spacing is not a tool field"
+    }
+  },
+  {
+    "id": "4-75",
+    "category": 4,
+    "text": "center everything",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "align": "center"
+        }
+      ],
+      "why": "center everything"
+    }
+  },
+  {
+    "id": "4-76",
+    "category": 4,
+    "text": "take the title out of the middle, put it back on the left side",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "align": "left"
+        }
+      ],
+      "why": "the title is not centered as read; say so or align left"
+    }
+  },
+  {
+    "id": "4-77",
+    "category": 4,
+    "text": "is there a bigger size than this",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "is there a bigger size: explain or do it"
+    }
+  },
+  {
+    "id": "4-78",
+    "category": 4,
+    "text": "the hymn name should be slanty because it is the name of a song",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "italic"
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "italic hymn name"
+    }
+  },
+  {
+    "id": "4-79",
+    "category": 4,
+    "text": "can the heading questions for the class be bigger and underlined",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        },
+        {
+          "styles": "underline"
+        }
+      ],
+      "blocks": [
+        11
+      ],
+      "why": "questions heading bigger and underlined"
+    }
+  },
+  {
+    "id": "4-80",
+    "category": 4,
+    "text": "Please make it so my weak eyes can read from far away, I put the computer on the table and I stand behind it when I teach",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "readable from far away"
+    }
+  },
+  {
+    "id": "4-81",
+    "category": 4,
+    "text": "I want this to look like the lesson book from the church office, with the titles in dark blue",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        1,
+        4,
+        6,
+        11
+      ],
+      "why": "dark blue headings"
+    }
+  },
+  {
+    "id": "4-82",
+    "category": 4,
+    "text": "can you make the reminder at the bottom stand out in a box so I dont forget",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "background": true
+        },
+        {
+          "kind": "sticky"
+        },
+        {
+          "kind": "quote"
+        },
+        {
+          "kind": "table"
+        },
+        {
+          "styles": "highlight"
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "reminder in a box"
+    }
+  },
+  {
+    "id": "4-83",
+    "category": 4,
+    "text": "my grandson said to change the font but i don't know what that is. i just want it easy to read",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "font": true
+        },
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "an easy-to-read font"
+    }
+  },
+  {
+    "id": "4-84",
+    "category": 4,
+    "text": "Make the writing less bold, it look like shouting",
+    "expect": {
+      "do": "either",
+      "why": "nothing is bold; say so or clear"
+    }
+  },
+  {
+    "id": "4-85",
+    "category": 4,
+    "text": "put more space between the two questions so i can write answers on the paper",
+    "expect": {
+      "do": "either",
+      "why": "spacing is not a tool field"
+    }
+  },
+  {
+    "id": "4-86",
+    "category": 4,
+    "text": "I can choose the colour by myself?",
+    "expect": {
+      "do": "answer",
+      "why": "she can pick colours herself"
+    }
+  },
+  {
+    "id": "4-87",
+    "category": 4,
+    "text": "make the shepherd words a soft green",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "why": "soft green \"shepherd\" words"
+    }
+  },
+  {
+    "id": "4-88",
+    "category": 4,
+    "text": "put the point about giving his life in red, it is the most important one",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        9
+      ],
+      "why": "make point 3 red"
+    }
+  },
+  {
+    "id": "4-89",
+    "category": 4,
+    "text": "make the letters smaller so it all fits on one page",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "smaller"
+        }
+      ],
+      "why": "smaller letters to fit a page"
+    }
+  },
+  {
+    "id": "4-90",
+    "category": 4,
+    "text": "please make the title look special, like a real title",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        },
+        {
+          "color": true
+        },
+        {
+          "font": true
+        },
+        {
+          "styles": "bold"
+        },
+        {
+          "align": "center"
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "a special-looking title"
+    }
+  },
+  {
+    "id": "5-1",
+    "category": 5,
+    "text": "fix the spelling at the bottom, rember and childen are wrong",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "fix rember and childen"
+    }
+  },
+  {
+    "id": "5-2",
+    "category": 5,
+    "text": "please correct all my spelling mistakes",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "only block 15 has spelling mistakes"
+    }
+  },
+  {
+    "id": "5-3",
+    "category": 5,
+    "text": "change word adult to senior, our class all senior people",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "adult to senior"
+    }
+  },
+  {
+    "id": "5-4",
+    "category": 5,
+    "text": "take away the last line, I already brought the pictures",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "remove the last line"
+    }
+  },
+  {
+    "id": "5-5",
+    "category": 5,
+    "text": "remove the opening prayer, the pastor will pray at the start",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        4,
+        5
+      ],
+      "why": "remove the opening prayer"
+    }
+  },
+  {
+    "id": "5-6",
+    "category": 5,
+    "text": "move the third point to the top, it is the most important",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "move point 3 to the top"
+    }
+  },
+  {
+    "id": "5-7",
+    "category": 5,
+    "text": "swap the two questions",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        12,
+        13
+      ],
+      "why": "swap the questions"
+    }
+  },
+  {
+    "id": "5-8",
+    "category": 5,
+    "text": "put a new point between the first and second one: The shepherd calls each sheep by name",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "bullet"
+        }
+      ],
+      "why": "add a point between 1 and 2"
+    }
+  },
+  {
+    "id": "5-9",
+    "category": 5,
+    "text": "make the prayer shorter",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "shorten the prayer"
+    }
+  },
+  {
+    "id": "5-10",
+    "category": 5,
+    "text": "use simpler words, my class has some people who don't read very well",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "why": "simpler words"
+    }
+  },
+  {
+    "id": "5-11",
+    "category": 5,
+    "text": "can you make the main points numbered like the questions",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "kind": "number"
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "number the points"
+    }
+  },
+  {
+    "id": "5-12",
+    "category": 5,
+    "text": "change the title to The Lord is My Shepherd",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "title": true
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "new title"
+    }
+  },
+  {
+    "id": "5-13",
+    "category": 5,
+    "text": "i finished the opening prayer, can i tick it off",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "checked": true
+        },
+        {
+          "kind": "check"
+        }
+      ],
+      "blocks": [
+        4,
+        5
+      ],
+      "why": "tick off the opening prayer"
+    }
+  },
+  {
+    "id": "5-14",
+    "category": 5,
+    "text": "change 30 minute to 45 minute, pastor give me more time this week",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "30 to 45 minutes"
+    }
+  },
+  {
+    "id": "5-15",
+    "category": 5,
+    "text": "the hymn is wrong, we are singing Amazing Grace not the Lord's my shepherd",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "hymn to Amazing Grace"
+    }
+  },
+  {
+    "id": "5-16",
+    "category": 5,
+    "text": "change Sunday school to Bible study, it is on Wednesday now",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "Sunday school to Bible study"
+    }
+  },
+  {
+    "id": "5-17",
+    "category": 5,
+    "text": "put the line about Jesus said in John 10 under the third point becuase they go together",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "move": true
+        },
+        {
+          "indent": "more"
+        },
+        {
+          "kind": "bullet"
+        }
+      ],
+      "why": "the John 10 line is already under point 3; say so or nest it"
+    }
+  },
+  {
+    "id": "5-18",
+    "category": 5,
+    "text": "remove the question about how God guided you, some people are shy",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        13
+      ],
+      "why": "remove the second question"
+    }
+  },
+  {
+    "id": "5-19",
+    "category": 5,
+    "text": "Take out the first question, it is too simple for them",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        12
+      ],
+      "why": "remove the first question"
+    }
+  },
+  {
+    "id": "5-20",
+    "category": 5,
+    "text": "in the first point change the word knows to loves",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        7
+      ],
+      "why": "knows to loves"
+    }
+  },
+  {
+    "id": "5-21",
+    "category": 5,
+    "text": "make the whole lesson shorter, I only have 15 minutes this time because of the potluck after",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "remove": true
+        }
+      ],
+      "why": "make the lesson shorter"
+    }
+  },
+  {
+    "id": "5-22",
+    "category": 5,
+    "text": "please change the second question to: How has God helped you this week",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        13
+      ],
+      "why": "reword the second question"
+    }
+  },
+  {
+    "id": "5-23",
+    "category": 5,
+    "text": "put the closing hymn before the questions",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "move the hymn before the questions"
+    }
+  },
+  {
+    "id": "5-24",
+    "category": 5,
+    "text": "the prayer move to very top, under title",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        4,
+        5
+      ],
+      "why": "move the prayer under the title"
+    }
+  },
+  {
+    "id": "5-25",
+    "category": 5,
+    "text": "the questions should be under the points they belong to, not at the end",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "why": "which question goes with which point is unclear"
+    }
+  },
+  {
+    "id": "5-26",
+    "category": 5,
+    "text": "make the questions dots not numbers",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "kind": "bullet"
+        }
+      ],
+      "blocks": [
+        12,
+        13
+      ],
+      "why": "questions as bullets"
+    }
+  },
+  {
+    "id": "5-27",
+    "category": 5,
+    "text": "turn the opening prayer into seperate lines, one line for each thing we pray for",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        },
+        {
+          "text": true
+        },
+        {
+          "kind": "bullet"
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "split the prayer into lines"
+    }
+  },
+  {
+    "id": "5-28",
+    "category": 5,
+    "text": "add the word Amen at the end of the prayer",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "add Amen"
+    }
+  },
+  {
+    "id": "5-29",
+    "category": 5,
+    "text": "The title should say The Good Shepherd - Psalm 23",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "title": true
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "new title"
+    }
+  },
+  {
+    "id": "5-30",
+    "category": 5,
+    "text": "i want to put my name under the title. Teacher: Sister Ruth",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add her name under the title"
+    }
+  },
+  {
+    "id": "5-31",
+    "category": 5,
+    "text": "write today's date at the top",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add today's date at the top"
+    }
+  },
+  {
+    "id": "5-32",
+    "category": 5,
+    "text": "change lord to Lord with a big L in the prayer",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "the prayer already says Lord with a capital: saying so, or rewriting it the same, both pass"
+    }
+  },
+  {
+    "id": "5-33",
+    "category": 5,
+    "text": "the first point say the shepherd knows his sheep, change it to the shepherd knows each one of his sheep by name",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        7
+      ],
+      "why": "reword the first point"
+    }
+  },
+  {
+    "id": "5-34",
+    "category": 5,
+    "text": "delete everything after the hymn",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "only block 15 is after the hymn"
+    }
+  },
+  {
+    "id": "5-35",
+    "category": 5,
+    "text": "take away the heading Main points but keep the points",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        6
+      ],
+      "why": "remove the Main points heading"
+    }
+  },
+  {
+    "id": "5-36",
+    "category": 5,
+    "text": "can you put little boxes so I can tick when I finish each part",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "kind": "check"
+        }
+      ],
+      "why": "tick boxes for the parts"
+    }
+  },
+  {
+    "id": "5-37",
+    "category": 5,
+    "text": "tick the first question I already asked it last week",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "checked": true
+        },
+        {
+          "kind": "check"
+        }
+      ],
+      "blocks": [
+        12
+      ],
+      "why": "tick the first question"
+    }
+  },
+  {
+    "id": "5-38",
+    "category": 5,
+    "text": "I want cross out second point, we not have time for it",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "styles": "strikethrough"
+        }
+      ],
+      "blocks": [
+        8
+      ],
+      "why": "cross out point 2"
+    }
+  },
+  {
+    "id": "5-39",
+    "category": 5,
+    "text": "the read psalm 23 together line, change together to out loud",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        3
+      ],
+      "why": "together to out loud"
+    }
+  },
+  {
+    "id": "5-40",
+    "category": 5,
+    "text": "the word gives sounds strange, make it lays down his life like in the bible",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        9
+      ],
+      "why": "gives to lays down"
+    }
+  },
+  {
+    "id": "5-41",
+    "category": 5,
+    "text": "put the 30 minutes part in brackets",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "30 minutes in brackets"
+    }
+  },
+  {
+    "id": "5-42",
+    "category": 5,
+    "text": "can you join two question become one question",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        12,
+        13
+      ],
+      "why": "join the two questions"
+    }
+  },
+  {
+    "id": "5-43",
+    "category": 5,
+    "text": "split the prayer into two, one part for thank you and one part for asking",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "split the prayer in two"
+    }
+  },
+  {
+    "id": "5-44",
+    "category": 5,
+    "text": "put the hymn right after the prayer",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "hymn after the prayer"
+    }
+  },
+  {
+    "id": "5-45",
+    "category": 5,
+    "text": "add to the prayer something for our pastor and his family",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "add the pastor to the prayer"
+    }
+  },
+  {
+    "id": "5-46",
+    "category": 5,
+    "text": "the last line should be at the top so I see it first",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "last line to the top"
+    }
+  },
+  {
+    "id": "5-47",
+    "category": 5,
+    "text": "Make it more short. Too many word.",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "remove": true
+        }
+      ],
+      "why": "make it shorter"
+    }
+  },
+  {
+    "id": "5-48",
+    "category": 5,
+    "text": "can you make word easy for children understand",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "why": "words children understand"
+    }
+  },
+  {
+    "id": "5-49",
+    "category": 5,
+    "text": "everywhere in the lesson change you to we, I don't want to sound like I am preaching at them",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        13
+      ],
+      "why": "only the question addresses the class; the prayer's you is God"
+    }
+  },
+  {
+    "id": "5-50",
+    "category": 5,
+    "text": "I wrote green pastures but I think it is pasture, which one is right? fix it",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "pastures"
+      ],
+      "why": "\"green pastures\" is already right"
+    }
+  },
+  {
+    "id": "5-51",
+    "category": 5,
+    "text": "remove the dots and just make them normal lines",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "kind": "paragraph"
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "points as plain lines"
+    }
+  },
+  {
+    "id": "5-52",
+    "category": 5,
+    "text": "the title is plain, give it a better name, something that makes people want to come",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "title": true
+        }
+      ],
+      "blocks": [
+        1
+      ],
+      "why": "a better title"
+    }
+  },
+  {
+    "id": "5-53",
+    "category": 5,
+    "text": "there is a mistake in my prayer i think, open our hearts to your word, should it be open our hearts for your word",
+    "expect": {
+      "do": "answer",
+      "why": "\"open our hearts to your word\" is fine"
+    }
+  },
+  {
+    "id": "5-54",
+    "category": 5,
+    "text": "the questions number 1 and 2, add number 3: What does it mean that Jesus knows your name",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "number"
+        }
+      ],
+      "why": "add question 3"
+    }
+  },
+  {
+    "id": "5-55",
+    "category": 5,
+    "text": "get rid of the empty space at the bottom",
+    "expect": {
+      "do": "either",
+      "why": "no empty block at the bottom; say so"
+    }
+  },
+  {
+    "id": "5-56",
+    "category": 5,
+    "text": "I made a mistake in the middle somewhere but I can't find it, can you look",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "why": "the mistakes are rember/childen: point out or fix"
+    }
+  },
+  {
+    "id": "5-57",
+    "category": 5,
+    "text": "delete the heading that says opening prayer, just leave the prayer",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        4
+      ],
+      "why": "remove the Opening prayer heading"
+    }
+  },
+  {
+    "id": "5-58",
+    "category": 5,
+    "text": "change the order: questions first, then the points",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "why": "questions before the points"
+    }
+  },
+  {
+    "id": "5-59",
+    "category": 5,
+    "text": "the line jesus said in john 10:11 that he is the good shepherd, make it shorter",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        10
+      ],
+      "why": "shorten the John 10:11 line"
+    }
+  },
+  {
+    "id": "5-60",
+    "category": 5,
+    "text": "put Read Psalm 23:1 together after the prayer, not before",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        3
+      ],
+      "why": "move the reading after the prayer"
+    }
+  },
+  {
+    "id": "5-61",
+    "category": 5,
+    "text": "lesson for sunday school adult class, change it to Lesson for the Golden Years class",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "rename the class line"
+    }
+  },
+  {
+    "id": "5-62",
+    "category": 5,
+    "text": "My grandson typed this and he forgot the hymn number, can you put number 79 next to the hymn",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "add hymn number 79"
+    }
+  },
+  {
+    "id": "5-63",
+    "category": 5,
+    "text": "please remove the word about in about 30 minutes",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "remove the word about"
+    }
+  },
+  {
+    "id": "5-64",
+    "category": 5,
+    "text": "make the closing hymn line say The Lord's my shepherd, I'll not want. that is the full name",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "full hymn name"
+    }
+  },
+  {
+    "id": "5-65",
+    "category": 5,
+    "text": "Change point 2. Shepherd lead us to the still water",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        8
+      ],
+      "why": "reword point 2"
+    }
+  },
+  {
+    "id": "5-66",
+    "category": 5,
+    "text": "I want point three first, point one second, point two last",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "reorder the points 3, 1, 2"
+    }
+  },
+  {
+    "id": "5-67",
+    "category": 5,
+    "text": "Could you please put the three points into one paragraph instead, it reads better for me",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        },
+        {
+          "text": true
+        },
+        {
+          "kind": "paragraph"
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "points into one paragraph"
+    }
+  },
+  {
+    "id": "5-68",
+    "category": 5,
+    "text": "mark done on the pictures line, I put them in my bag already",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "checked": true
+        },
+        {
+          "kind": "check"
+        },
+        {
+          "styles": "strikethrough"
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "mark the reminder done"
+    }
+  },
+  {
+    "id": "5-69",
+    "category": 5,
+    "text": "the word Lord in the prayer, make it Heavenly Father",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "Lord to Heavenly Father"
+    }
+  },
+  {
+    "id": "5-70",
+    "category": 5,
+    "text": "take away the 2. in front of the second question",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "kind": "paragraph"
+        },
+        {
+          "kind": "bullet"
+        }
+      ],
+      "blocks": [
+        13
+      ],
+      "why": "drop the number on question 2"
+    }
+  },
+  {
+    "id": "5-71",
+    "category": 5,
+    "text": "rewrite the whole thing so it sounds more like me, not so stiff",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "why": "rewrite in her voice"
+    }
+  },
+  {
+    "id": "5-72",
+    "category": 5,
+    "text": "Take out the hymn I will choose it later",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        14
+      ],
+      "why": "remove the hymn"
+    }
+  },
+  {
+    "id": "5-73",
+    "category": 5,
+    "text": "the opening prayer heading change to Prayer",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        4
+      ],
+      "why": "heading to Prayer"
+    }
+  },
+  {
+    "id": "5-74",
+    "category": 5,
+    "text": "make the questions into yes and no questions, my class don't like to talk much",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        12,
+        13
+      ],
+      "why": "yes/no questions"
+    }
+  },
+  {
+    "id": "5-75",
+    "category": 5,
+    "text": "in the last line change pictures of sheep to sheep stickers",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "pictures to stickers"
+    }
+  },
+  {
+    "id": "5-76",
+    "category": 5,
+    "text": "The first line under title is too long, make short",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "shorten line 2"
+    }
+  },
+  {
+    "id": "5-77",
+    "category": 5,
+    "text": "Can you make John 10:11 a link like the Psalm one",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "blocks": [
+        10
+      ],
+      "why": "John 10:11 as a verse token"
+    }
+  },
+  {
+    "id": "5-78",
+    "category": 5,
+    "text": "add good morning everyone at the very beginning",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add good morning at the top"
+    }
+  },
+  {
+    "id": "5-79",
+    "category": 5,
+    "text": "copy the first point and put it at the end too, I want to repeat it",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "copy point 1 to the end"
+    }
+  },
+  {
+    "id": "5-80",
+    "category": 5,
+    "text": "i dont want the words Questions for the class, change to Let's talk",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        11
+      ],
+      "why": "rename the questions heading"
+    }
+  },
+  {
+    "id": "5-81",
+    "category": 5,
+    "text": "each point make it one sentence more, but short",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        7,
+        8,
+        9
+      ],
+      "why": "one more sentence per point"
+    }
+  },
+  {
+    "id": "5-82",
+    "category": 5,
+    "text": "please put the points in the order of psalm 23",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "move": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "why": "only one point comes from Psalm 23; explain or reorder"
+    }
+  },
+  {
+    "id": "5-83",
+    "category": 5,
+    "text": "the little round dots, can they be little crosses instead",
+    "expect": {
+      "do": "either",
+      "why": "bullet shape is not a tool field"
+    }
+  },
+  {
+    "id": "5-84",
+    "category": 5,
+    "text": "change the second heading to Three Things About the Shepherd",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        6
+      ],
+      "why": "rename the Main points heading"
+    }
+  },
+  {
+    "id": "5-85",
+    "category": 5,
+    "text": "the prayer has too many words at the start, just begin with Dear Lord",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        5
+      ],
+      "why": "start the prayer with Dear Lord"
+    }
+  },
+  {
+    "id": "5-86",
+    "category": 5,
+    "text": "there is an extra empty line under the prayer, take it out",
+    "expect": {
+      "do": "either",
+      "why": "no empty line under the prayer; say so"
+    }
+  },
+  {
+    "id": "5-87",
+    "category": 5,
+    "text": "add a third question about the green pastures and a fourth one about the valley",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "number"
+        },
+        {
+          "add": true,
+          "kind": "section"
+        }
+      ],
+      "why": "add questions 3 and 4"
+    }
+  },
+  {
+    "id": "5-88",
+    "category": 5,
+    "text": "make the reminder line say: bring pictures of sheep AND crayons for the children",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "reword the reminder"
+    }
+  },
+  {
+    "id": "5-89",
+    "category": 5,
+    "text": "put the sentence about John 10:11 inside the points as number 4",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "kind": "bullet"
+        },
+        {
+          "move": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "blocks": [
+        10
+      ],
+      "why": "the John 10:11 line as point 4"
+    }
+  },
+  {
+    "id": "5-90",
+    "category": 5,
+    "text": "Can you check all lesson for grammar mistake? my english not perfect",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "why": "grammar check: block 15 at least"
+    }
+  },
+  {
+    "id": "6-1",
+    "category": 6,
+    "text": "put it back how it was",
+    "after": "make all the letters bigger",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "put it back: undo the last change"
+    }
+  },
+  {
+    "id": "6-2",
+    "category": 6,
+    "text": "I pressed something wrong and now the points are gone",
+    "after": "put the three points into one paragraph, it reads better",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "the points were merged; undo"
+    }
+  },
+  {
+    "id": "6-3",
+    "category": 6,
+    "text": "did I lose everything?",
+    "expect": {
+      "do": "answer",
+      "why": "reassure: the lesson is still there"
+    }
+  },
+  {
+    "id": "6-4",
+    "category": 6,
+    "text": "EVERYTHING IS GONE help",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "panic; the note is intact as read: reassure or undo"
+    }
+  },
+  {
+    "id": "6-5",
+    "category": 6,
+    "text": "where did my lesson go",
+    "expect": {
+      "do": "answer",
+      "why": "the lesson is in the note window"
+    }
+  },
+  {
+    "id": "6-6",
+    "category": 6,
+    "text": "it change by itself, I not touch anything",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "says it changed by itself: explain or undo"
+    }
+  },
+  {
+    "id": "6-7",
+    "category": 6,
+    "text": "is it saved? I am scared to close it",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Save",
+        "Ctrl+S"
+      ],
+      "why": "changes stay unsaved until Save"
+    }
+  },
+  {
+    "id": "6-8",
+    "category": 6,
+    "text": "did i break it",
+    "expect": {
+      "do": "answer",
+      "why": "reassure"
+    }
+  },
+  {
+    "id": "6-9",
+    "category": 6,
+    "text": "OH NO i deleted the prayer by mistake",
+    "after": "take out the opening prayer, the pastor will pray at the start",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "bring back the prayer"
+    }
+  },
+  {
+    "id": "6-10",
+    "category": 6,
+    "text": "the letters went all big suddenly i dont know what i did",
+    "after": "can you make the writing bigger please",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "size": "smaller"
+        }
+      ],
+      "why": "letters went big; undo"
+    }
+  },
+  {
+    "id": "6-11",
+    "category": 6,
+    "text": "i dont like the change you made to the prayer, the old words were better",
+    "after": "my opening prayer is to short, make it longer, 5 or 6 lines",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "text": true
+        }
+      ],
+      "why": "old prayer words were better"
+    }
+  },
+  {
+    "id": "6-12",
+    "category": 6,
+    "text": "Why my title is disappear?",
+    "after": "remove the title, i will think of a new one later",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "kind": "h1"
+        },
+        {
+          "title": true
+        }
+      ],
+      "why": "they asked to remove it themselves: explaining that and offering it back, or putting it back, both pass"
+    }
+  },
+  {
+    "id": "6-13",
+    "category": 6,
+    "text": "the screen went all white and now I can't see my note",
+    "expect": {
+      "do": "answer",
+      "why": "a white screen: reassure, View > Reload or reopen"
+    }
+  },
+  {
+    "id": "6-14",
+    "category": 6,
+    "text": "I think the cat walked on the keyboard, there is a lot of strange letters in my lesson now",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "text": true
+        }
+      ],
+      "why": "no strange letters in the note as read: check or undo"
+    }
+  },
+  {
+    "id": "6-15",
+    "category": 6,
+    "text": "you changed the wrong line, I asked for the second point not the first",
+    "after": "make the second point red",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "color": true
+        }
+      ],
+      "why": "the earlier change already went to the second point: saying so honestly, or recolouring, both pass"
+    }
+  },
+  {
+    "id": "6-16",
+    "category": 6,
+    "text": "can you go back two steps",
+    "after": "make the title red and the questions bold",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "go back two steps"
+    }
+  },
+  {
+    "id": "6-17",
+    "category": 6,
+    "text": "I had a line about bringing pictures and now it's not there, where is it",
+    "after": "remove the last line",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "they asked to remove it themselves: explaining that and offering it back, or putting it back, both pass"
+    }
+  },
+  {
+    "id": "6-18",
+    "category": 6,
+    "text": "everything is blue now how do i make it normal again",
+    "after": "put some blue colour in it",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "clear": true
+        },
+        {
+          "color": true
+        }
+      ],
+      "why": "blue everywhere; undo or clear"
+    }
+  },
+  {
+    "id": "6-19",
+    "category": 6,
+    "text": "I press delete too much times",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "she pressed delete; check or undo"
+    }
+  },
+  {
+    "id": "6-20",
+    "category": 6,
+    "text": "help the whole page is in the middle now and I don't want that",
+    "after": "put it in the middle please",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "align": "left"
+        }
+      ],
+      "why": "everything centered; undo or align left"
+    }
+  },
+  {
+    "id": "6-21",
+    "category": 6,
+    "text": "if I turn off computer, tomorrow my lesson still there?",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Save",
+        "Ctrl+S"
+      ],
+      "why": "save before turning off"
+    }
+  },
+  {
+    "id": "6-22",
+    "category": 6,
+    "text": "my grandson said I must save, how do I know it is saved",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Save",
+        "Ctrl+S"
+      ],
+      "why": "how to know it is saved"
+    }
+  },
+  {
+    "id": "6-23",
+    "category": 6,
+    "text": "I think I wrote over my old lesson from last week, can I get it back",
+    "expect": {
+      "do": "answer",
+      "why": "another note is beyond this note's history"
+    }
+  },
+  {
+    "id": "6-24",
+    "category": 6,
+    "text": "The power went out last night during the storm and the computer turned off by itself while my lesson was open on it. I did not press save or anything. This morning I turned it on again but I am afraid to look. Is my lesson still there?",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Save",
+        "Ctrl+S"
+      ],
+      "why": "unsaved changes after a power cut"
+    }
+  },
+  {
+    "id": "6-25",
+    "category": 6,
+    "text": "the questions are mixed up now, number 2 is first",
+    "after": "put the questions in a better order",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "move": true
+        }
+      ],
+      "why": "questions out of order; undo"
+    }
+  },
+  {
+    "id": "6-26",
+    "category": 6,
+    "text": "something popped up and I pressed yes, I don't know what it said",
+    "expect": {
+      "do": "answer",
+      "why": "ask what the pop-up said"
+    }
+  },
+  {
+    "id": "6-27",
+    "category": 6,
+    "text": "I am so sorry I think I made a mess of it",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "apology; reassure or undo"
+    }
+  },
+  {
+    "id": "6-28",
+    "category": 6,
+    "text": "go back please",
+    "after": "make the prayer in the slanted letters",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "go back"
+    }
+  },
+  {
+    "id": "6-29",
+    "category": 6,
+    "text": "It is asking me something about discard, what do I do I dont want to lose anything",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Save",
+        "Ctrl+S"
+      ],
+      "why": "do not discard: Save first"
+    }
+  },
+  {
+    "id": "6-30",
+    "category": 6,
+    "text": "I only wanted you to change the prayer but you changed everything",
+    "after": "use simpler words in the prayer",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "changed too much; undo"
+    }
+  },
+  {
+    "id": "6-31",
+    "category": 6,
+    "text": "the little psalm 23 button is gone, now it is just plain writing",
+    "after": "in the read psalm 23 together line change together to out loud",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "verse": true
+        }
+      ],
+      "why": "the verse chip was lost; undo"
+    }
+  },
+  {
+    "id": "6-32",
+    "category": 6,
+    "text": "can you check if anything is missing from my lesson",
+    "expect": {
+      "do": "answer",
+      "why": "check the lesson: all parts are there"
+    }
+  },
+  {
+    "id": "6-33",
+    "category": 6,
+    "text": "is there a way to see what it looked like yesterday",
+    "expect": {
+      "do": "answer",
+      "why": "yesterday's version: history, not the chat"
+    }
+  },
+  {
+    "id": "6-34",
+    "category": 6,
+    "text": "i copied something from an email and now there is funny writing in my lesson",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "clear": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "why": "pasted text: check, clear or undo"
+    }
+  },
+  {
+    "id": "6-35",
+    "category": 6,
+    "text": "My note window closed by itself!",
+    "expect": {
+      "do": "answer",
+      "why": "the note window closed: how to reopen"
+    }
+  },
+  {
+    "id": "6-36",
+    "category": 6,
+    "text": "the words are all on one line now and it looks terrible",
+    "after": "put the two questions together in one line",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "lines merged into one; undo"
+    }
+  },
+  {
+    "id": "6-37",
+    "category": 6,
+    "text": "did you change something? it looks different",
+    "expect": {
+      "do": "answer",
+      "why": "nothing was changed by the assistant"
+    }
+  },
+  {
+    "id": "6-38",
+    "category": 6,
+    "text": "i typed in the wrong place, i typed in the lesson not in this box",
+    "expect": {
+      "do": "answer",
+      "why": "typed in the lesson instead of the chat"
+    }
+  },
+  {
+    "id": "6-39",
+    "category": 6,
+    "text": "please dont change anything without asking me first",
+    "expect": {
+      "do": "answer",
+      "why": "promise to ask first"
+    }
+  },
+  {
+    "id": "6-40",
+    "category": 6,
+    "text": "put back the hymn line, I need it",
+    "after": "Take out the hymn I will choose it later",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "bring back the hymn line"
+    }
+  },
+  {
+    "id": "6-41",
+    "category": 6,
+    "text": "What happen? All my point is lost. Please help me quick, class is in one hour",
+    "after": "delete the second point, we dont have time",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "bring back the point"
+    }
+  },
+  {
+    "id": "6-42",
+    "category": 6,
+    "text": "Put it back the way you had it before, the second time not the first time",
+    "after": "write the prayer again but more from the heart",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "back one step"
+    }
+  },
+  {
+    "id": "6-43",
+    "category": 6,
+    "text": "half of my writing is gone and the other half is big",
+    "after": "make the lesson shorter and the letters bigger",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        }
+      ],
+      "why": "shortened and enlarged; undo"
+    }
+  },
+  {
+    "id": "6-44",
+    "category": 6,
+    "text": "I type but nothing come out",
+    "expect": {
+      "do": "answer",
+      "why": "typing does nothing: click into the note"
+    }
+  },
+  {
+    "id": "6-45",
+    "category": 6,
+    "text": "is there two copies of my lesson now? I see it two times",
+    "expect": {
+      "do": "answer",
+      "why": "two copies of the lesson"
+    }
+  },
+  {
+    "id": "7-1",
+    "category": 7,
+    "text": "how do i save this",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Save",
+        "Ctrl+S"
+      ],
+      "why": "how to save"
+    }
+  },
+  {
+    "id": "7-2",
+    "category": 7,
+    "text": "how to print my lesson",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Print"
+      ],
+      "why": "how to print"
+    }
+  },
+  {
+    "id": "7-3",
+    "category": 7,
+    "text": "can I print it with big letters",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "print large: explain printing or enlarge the letters"
+    }
+  },
+  {
+    "id": "7-4",
+    "category": 7,
+    "text": "how do I find this again next sunday",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Notes"
+      ],
+      "why": "find the note again"
+    }
+  },
+  {
+    "id": "7-5",
+    "category": 7,
+    "text": "Can I show this on the big screen at church",
+    "expect": {
+      "do": "answer",
+      "why": "the note is not projected by the assistant"
+    }
+  },
+  {
+    "id": "7-6",
+    "category": 7,
+    "text": "I want the verse to come up on the projector when we read it together",
+    "expect": {
+      "do": "answer",
+      "why": "presenting a verse is done from the Bible view"
+    }
+  },
+  {
+    "id": "7-7",
+    "category": 7,
+    "text": "can you send this to Pastor Mike",
+    "expect": {
+      "do": "answer",
+      "why": "cannot send"
+    }
+  },
+  {
+    "id": "7-8",
+    "category": 7,
+    "text": "How do I email this to my co-teacher Linda",
+    "expect": {
+      "do": "answer",
+      "why": "cannot email"
+    }
+  },
+  {
+    "id": "7-9",
+    "category": 7,
+    "text": "make a copy so I can change it for the children's class",
+    "expect": {
+      "do": "new-note",
+      "why": "a copy to change for the children"
+    }
+  },
+  {
+    "id": "7-10",
+    "category": 7,
+    "text": "where is my lesson from last month about Moses",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Notes"
+      ],
+      "why": "another note: the Notes list"
+    }
+  },
+  {
+    "id": "7-11",
+    "category": 7,
+    "text": "I need new page for lesson next week",
+    "expect": {
+      "do": "new-note",
+      "why": "a new page for next week"
+    }
+  },
+  {
+    "id": "7-12",
+    "category": 7,
+    "text": "when I am finished, which button closes it",
+    "expect": {
+      "do": "answer",
+      "why": "how to close the window"
+    }
+  },
+  {
+    "id": "7-13",
+    "category": 7,
+    "text": "can i put it in the usb to bring church?",
+    "expect": {
+      "do": "answer",
+      "why": "USB"
+    }
+  },
+  {
+    "id": "7-14",
+    "category": 7,
+    "text": "I want to print 10 copies for my class",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Print"
+      ],
+      "why": "print copies"
+    }
+  },
+  {
+    "id": "7-15",
+    "category": 7,
+    "text": "Is there a way to print only the questions",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Print"
+      ],
+      "why": "print only the questions"
+    }
+  },
+  {
+    "id": "7-16",
+    "category": 7,
+    "text": "last week i made a lesson and then i couldnt find it for 2 days, my son found it in some other place. how do i stop that happening",
+    "expect": {
+      "do": "answer",
+      "why": "where notes are kept"
+    }
+  },
+  {
+    "id": "7-17",
+    "category": 7,
+    "text": "my grandson can see this in his phone?",
+    "expect": {
+      "do": "answer",
+      "why": "phone access"
+    }
+  },
+  {
+    "id": "7-18",
+    "category": 7,
+    "text": "what is the name of my lesson so I can find it later",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Good Shepherd"
+      ],
+      "why": "the lesson name"
+    }
+  },
+  {
+    "id": "7-19",
+    "category": 7,
+    "text": "I want to keep all my lessons together in one place, how",
+    "expect": {
+      "do": "answer",
+      "why": "keeping lessons together"
+    }
+  },
+  {
+    "id": "7-20",
+    "category": 7,
+    "text": "how to make new note",
+    "expect": {
+      "do": "answer",
+      "why": "how to make a new note"
+    }
+  },
+  {
+    "id": "7-21",
+    "category": 7,
+    "text": "please start a new lesson called The Lost Sheep",
+    "expect": {
+      "do": "new-note",
+      "why": "start a new lesson called The Lost Sheep"
+    }
+  },
+  {
+    "id": "7-22",
+    "category": 7,
+    "text": "can I give my lesson a different name in the list",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "title": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "why": "rename in the list: explain or rename"
+    }
+  },
+  {
+    "id": "7-23",
+    "category": 7,
+    "text": "Where do I find all the notes I wrote before",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Notes"
+      ],
+      "why": "all notes: the Notes list"
+    }
+  },
+  {
+    "id": "7-24",
+    "category": 7,
+    "text": "the printer is not working, is that you or the printer",
+    "expect": {
+      "do": "answer",
+      "why": "printer trouble"
+    }
+  },
+  {
+    "id": "7-25",
+    "category": 7,
+    "text": "can i make it so i see my lesson on my laptop but the class sees only the bible verse on the screen",
+    "expect": {
+      "do": "answer",
+      "why": "lesson on the laptop, verse on the screen"
+    }
+  },
+  {
+    "id": "7-26",
+    "category": 7,
+    "text": "how do i make the screen go black between the parts so they look at me",
+    "expect": {
+      "do": "answer",
+      "why": "black screen between parts"
+    }
+  },
+  {
+    "id": "7-27",
+    "category": 7,
+    "text": "can you put my lesson on facebook for the church group",
+    "expect": {
+      "do": "answer",
+      "why": "cannot post to Facebook"
+    }
+  },
+  {
+    "id": "7-28",
+    "category": 7,
+    "text": "can I share it with the other Sunday school teachers",
+    "expect": {
+      "do": "answer",
+      "why": "sharing with teachers"
+    }
+  },
+  {
+    "id": "7-29",
+    "category": 7,
+    "text": "how to make it a pdf, the pastor asked for a pdf",
+    "expect": {
+      "do": "answer",
+      "why": "making a PDF"
+    }
+  },
+  {
+    "id": "7-30",
+    "category": 7,
+    "text": "is there a way to lock it so nobody changes it",
+    "expect": {
+      "do": "answer",
+      "why": "locking a note"
+    }
+  },
+  {
+    "id": "7-31",
+    "category": 7,
+    "text": "I want to delete the old lesson about the tower of babel, I don't need it anymore",
+    "expect": {
+      "do": "answer",
+      "why": "deleting another note is the person's action"
+    }
+  },
+  {
+    "id": "7-32",
+    "category": 7,
+    "text": "can I open two lessons at the same time to compare",
+    "expect": {
+      "do": "answer",
+      "why": "two notes at once"
+    }
+  },
+  {
+    "id": "7-33",
+    "category": 7,
+    "text": "how do I get back to the bible from here",
+    "expect": {
+      "do": "answer",
+      "why": "back to the Bible"
+    }
+  },
+  {
+    "id": "7-34",
+    "category": 7,
+    "text": "where are the bible notes kept on my computer",
+    "expect": {
+      "do": "answer",
+      "why": "where notes are stored"
+    }
+  },
+  {
+    "id": "7-35",
+    "category": 7,
+    "text": "can I write my lesson on my tablet and see it on the computer too",
+    "expect": {
+      "do": "answer",
+      "why": "tablet and computer"
+    }
+  },
+  {
+    "id": "7-36",
+    "category": 7,
+    "text": "PUT THE LESSON ON THE PROJECTOR PLEASE CLASS IS STARTING",
+    "expect": {
+      "do": "answer",
+      "why": "cannot project the note"
+    }
+  },
+  {
+    "id": "7-37",
+    "category": 7,
+    "text": "how do I take it off the big screen",
+    "expect": {
+      "do": "answer",
+      "why": "take it off the screen"
+    }
+  },
+  {
+    "id": "7-38",
+    "category": 7,
+    "text": "I want to show the questions one by one on the screen not all together",
+    "expect": {
+      "do": "answer",
+      "why": "questions one by one on the screen"
+    }
+  },
+  {
+    "id": "7-39",
+    "category": 7,
+    "text": "how do I make this chat box go away so I can see my lesson bigger",
+    "expect": {
+      "do": "answer",
+      "why": "hide the chat"
+    }
+  },
+  {
+    "id": "7-40",
+    "category": 7,
+    "text": "how make the window more bigger",
+    "expect": {
+      "do": "answer",
+      "why": "make the window bigger"
+    }
+  },
+  {
+    "id": "7-41",
+    "category": 7,
+    "text": "i want to print it but without the little reminder at the bottom",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        15
+      ],
+      "why": "to print without the reminder: taking the reminder out (undoable) or saying how, both pass"
+    }
+  },
+  {
+    "id": "7-42",
+    "category": 7,
+    "text": "how to find the lesson I wrote about the good shepherd, I think I wrote one last year too",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Notes"
+      ],
+      "why": "find last year's lesson"
+    }
+  },
+  {
+    "id": "7-43",
+    "category": 7,
+    "text": "copy the whole lesson so I can put it in the church newsletter",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Ctrl+C",
+        "Copy"
+      ],
+      "why": "copy the lesson"
+    }
+  },
+  {
+    "id": "7-44",
+    "category": 7,
+    "text": "how do i get out of this",
+    "expect": {
+      "do": "answer",
+      "why": "how to leave"
+    }
+  },
+  {
+    "id": "7-45",
+    "category": 7,
+    "text": "the computer at church is a different one, it is in the office and the secretary uses it. can I open my lesson there on sunday morning or do I have to bring my own computer with me, it is very heavy and my back is not good",
+    "expect": {
+      "do": "answer",
+      "why": "another computer"
+    }
+  },
+  {
+    "id": "7-46",
+    "category": 7,
+    "text": "can you remind me on saturday to look at my lesson",
+    "expect": {
+      "do": "answer",
+      "why": "cannot set reminders"
+    }
+  },
+  {
+    "id": "7-47",
+    "category": 7,
+    "text": "Can I write in the lesson while it is on the big screen or will everybody see",
+    "expect": {
+      "do": "answer",
+      "why": "writing while on the screen"
+    }
+  },
+  {
+    "id": "7-48",
+    "category": 7,
+    "text": "i want to keep this lesson for next year, how do i keep it safe",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Save",
+        "Ctrl+S"
+      ],
+      "why": "keep it safe: Save"
+    }
+  },
+  {
+    "id": "7-49",
+    "category": 7,
+    "text": "how I can send to my friend in whatsapp",
+    "expect": {
+      "do": "answer",
+      "why": "cannot send to WhatsApp"
+    }
+  },
+  {
+    "id": "7-50",
+    "category": 7,
+    "text": "does it save by itself or I need press something",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Save",
+        "Ctrl+S"
+      ],
+      "why": "it does not save by itself"
+    }
+  },
+  {
+    "id": "7-51",
+    "category": 7,
+    "text": "can I make a folder for children lessons and one for adult lessons",
+    "expect": {
+      "do": "answer",
+      "why": "folders for lessons"
+    }
+  },
+  {
+    "id": "7-52",
+    "category": 7,
+    "text": "How do I go back to my list of notes",
+    "expect": {
+      "do": "answer",
+      "why": "back to the notes list"
+    }
+  },
+  {
+    "id": "7-53",
+    "category": 7,
+    "text": "open my note about psalm 91",
+    "expect": {
+      "do": "answer",
+      "why": "cannot open another note"
+    }
+  },
+  {
+    "id": "7-54",
+    "category": 7,
+    "text": "can you print the children version separate",
+    "expect": {
+      "do": "answer",
+      "why": "there is no children version to print"
+    }
+  },
+  {
+    "id": "7-55",
+    "category": 7,
+    "text": "is there a way to hear it read out loud, my eyes are tired tonight",
+    "expect": {
+      "do": "either",
+      "why": "cannot read aloud; explain honestly"
+    }
+  },
+  {
+    "id": "7-56",
+    "category": 7,
+    "text": "I want to put a picture of a shepherd in my lesson, I have one on my computer from the internet",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "kind": "media"
+        }
+      ],
+      "why": "a picture from the computer: a media block needs its path"
+    }
+  },
+  {
+    "id": "7-57",
+    "category": 7,
+    "text": "if I put it on the screen can the class see my reminder at the bottom? I don't want them to see it",
+    "expect": {
+      "do": "answer",
+      "why": "what the class sees on the screen"
+    }
+  },
+  {
+    "id": "7-58",
+    "category": 7,
+    "text": "put this lesson in the list for Sunday so it is ready to show",
+    "expect": {
+      "do": "answer",
+      "why": "putting it in a list for Sunday"
+    }
+  },
+  {
+    "id": "7-59",
+    "category": 7,
+    "text": "how to make the chat bigger, I can't read you",
+    "expect": {
+      "do": "answer",
+      "why": "make the chat bigger"
+    }
+  },
+  {
+    "id": "7-60",
+    "category": 7,
+    "text": "I want to back up all my lessons in case the computer dies",
+    "expect": {
+      "do": "answer",
+      "why": "backing up lessons"
+    }
+  },
+  {
+    "id": "8-1",
+    "category": 8,
+    "text": "what mean i shall not want?",
+    "expect": {
+      "do": "answer",
+      "why": "meaning of I shall not want"
+    }
+  },
+  {
+    "id": "8-2",
+    "category": 8,
+    "text": "who wrote psalm 23",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "David"
+      ],
+      "why": "David"
+    }
+  },
+  {
+    "id": "8-3",
+    "category": 8,
+    "text": "what did shepherds do in bible times",
+    "expect": {
+      "do": "answer",
+      "why": "shepherds in Bible times"
+    }
+  },
+  {
+    "id": "8-4",
+    "category": 8,
+    "text": "how long will this lesson take me",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "30"
+      ],
+      "why": "about 30 minutes, as the note says"
+    }
+  },
+  {
+    "id": "8-5",
+    "category": 8,
+    "text": "how do I explain to children that Jesus is the shepherd and we are the sheep, they will think we are animals",
+    "expect": {
+      "do": "answer",
+      "why": "explaining the metaphor to children"
+    }
+  },
+  {
+    "id": "8-6",
+    "category": 8,
+    "text": "a game for the children about sheep please",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "a children game: suggest or add"
+    }
+  },
+  {
+    "id": "8-7",
+    "category": 8,
+    "text": "How should I start the class? they are always chatting when I come in",
+    "expect": {
+      "do": "answer",
+      "why": "how to start the class"
+    }
+  },
+  {
+    "id": "8-8",
+    "category": 8,
+    "text": "what is a good hymn to go with this lesson",
+    "expect": {
+      "do": "answer",
+      "why": "a hymn suggestion"
+    }
+  },
+  {
+    "id": "8-9",
+    "category": 8,
+    "text": "what is a rod and staff, my class will ask me",
+    "expect": {
+      "do": "answer",
+      "why": "rod and staff"
+    }
+  },
+  {
+    "id": "8-10",
+    "category": 8,
+    "text": "why sheep and not some other animal",
+    "expect": {
+      "do": "answer",
+      "why": "why sheep"
+    }
+  },
+  {
+    "id": "8-11",
+    "category": 8,
+    "text": "is the valley of the shadow of death about dying or about hard times",
+    "expect": {
+      "do": "answer",
+      "why": "the valley of the shadow"
+    }
+  },
+  {
+    "id": "8-12",
+    "category": 8,
+    "text": "anoint my head with oil, what it mean?",
+    "expect": {
+      "do": "answer",
+      "why": "anointing with oil"
+    }
+  },
+  {
+    "id": "8-13",
+    "category": 8,
+    "text": "was David really a shepherd",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "1 Samuel",
+        "yes"
+      ],
+      "why": "David was a shepherd"
+    }
+  },
+  {
+    "id": "8-14",
+    "category": 8,
+    "text": "How old was David when he write this psalm?",
+    "expect": {
+      "do": "answer",
+      "why": "David's age"
+    }
+  },
+  {
+    "id": "8-15",
+    "category": 8,
+    "text": "what is the difference between a shepherd and a hireling",
+    "expect": {
+      "do": "answer",
+      "why": "shepherd and hireling"
+    }
+  },
+  {
+    "id": "8-16",
+    "category": 8,
+    "text": "what if somebody in class asks me a question I cant answer",
+    "expect": {
+      "do": "answer",
+      "why": "a question she cannot answer"
+    }
+  },
+  {
+    "id": "8-17",
+    "category": 8,
+    "text": "some people in my class are not believers yet, how do I teach this so they feel welcome",
+    "expect": {
+      "do": "answer",
+      "why": "welcoming non-believers"
+    }
+  },
+  {
+    "id": "8-18",
+    "category": 8,
+    "text": "are sheep really dumb, I heard that in a sermon once",
+    "expect": {
+      "do": "answer",
+      "why": "are sheep dumb"
+    }
+  },
+  {
+    "id": "8-19",
+    "category": 8,
+    "text": "a craft for the kids with cotton balls",
+    "expect": {
+      "do": "either",
+      "why": "a children craft: suggest or add"
+    }
+  },
+  {
+    "id": "8-20",
+    "category": 8,
+    "text": "what is green pastures, there is no grass where we live it is all desert",
+    "expect": {
+      "do": "answer",
+      "why": "green pastures in a desert land"
+    }
+  },
+  {
+    "id": "8-21",
+    "category": 8,
+    "text": "30 minutes is too long for old people or ok?",
+    "expect": {
+      "do": "answer",
+      "why": "is 30 minutes too long"
+    }
+  },
+  {
+    "id": "8-22",
+    "category": 8,
+    "text": "how many question I should ask in 30 minute",
+    "expect": {
+      "do": "answer",
+      "why": "how many questions"
+    }
+  },
+  {
+    "id": "8-23",
+    "category": 8,
+    "text": "What I should do if nobody talk in my class?",
+    "expect": {
+      "do": "answer",
+      "why": "when nobody talks"
+    }
+  },
+  {
+    "id": "8-24",
+    "category": 8,
+    "text": "what does my cup runneth over mean",
+    "expect": {
+      "do": "answer",
+      "why": "my cup runneth over"
+    }
+  },
+  {
+    "id": "8-25",
+    "category": 8,
+    "text": "what is the main message of this lesson in one sentence",
+    "expect": {
+      "do": "answer",
+      "why": "main message in one sentence"
+    }
+  },
+  {
+    "id": "8-26",
+    "category": 8,
+    "text": "Is my lesson good enough? be honest",
+    "expect": {
+      "do": "answer",
+      "why": "honest review of the lesson"
+    }
+  },
+  {
+    "id": "8-27",
+    "category": 8,
+    "text": "what song can the children sing with this",
+    "expect": {
+      "do": "answer",
+      "why": "a children song"
+    }
+  },
+  {
+    "id": "8-28",
+    "category": 8,
+    "text": "is there a connection between psalm 23 and john 10",
+    "expect": {
+      "do": "answer",
+      "why": "Psalm 23 and John 10"
+    }
+  },
+  {
+    "id": "8-29",
+    "category": 8,
+    "text": "How do I explain dwell in the house of the Lord forever",
+    "expect": {
+      "do": "answer",
+      "why": "dwell in the house of the Lord"
+    }
+  },
+  {
+    "id": "8-30",
+    "category": 8,
+    "text": "why does the shepherd give his life, I don't understand the third point well myself",
+    "expect": {
+      "do": "answer",
+      "why": "why the shepherd gives his life"
+    }
+  },
+  {
+    "id": "8-31",
+    "category": 8,
+    "text": "what does the shepherd do with the sheep at night",
+    "expect": {
+      "do": "answer",
+      "why": "sheep at night"
+    }
+  },
+  {
+    "id": "8-32",
+    "category": 8,
+    "text": "is it ok to tell a story that is not in the bible in sunday school",
+    "expect": {
+      "do": "answer",
+      "why": "extra-biblical stories"
+    }
+  },
+  {
+    "id": "8-33",
+    "category": 8,
+    "text": "how to explain to a man who lost his job that the lord is his shepherd",
+    "expect": {
+      "do": "answer",
+      "why": "comfort for a man out of work"
+    }
+  },
+  {
+    "id": "8-34",
+    "category": 8,
+    "text": "what are some common mistakes teachers make with psalm 23",
+    "expect": {
+      "do": "answer",
+      "why": "common teaching mistakes"
+    }
+  },
+  {
+    "id": "8-35",
+    "category": 8,
+    "text": "what did jesus mean by other sheep not of this fold",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Gentile",
+        "nations",
+        "not Jewish"
+      ],
+      "why": "other sheep: the Gentiles"
+    }
+  },
+  {
+    "id": "8-36",
+    "category": 8,
+    "text": "how to keep the kids quiet while I read",
+    "expect": {
+      "do": "answer",
+      "why": "keeping kids quiet"
+    }
+  },
+  {
+    "id": "8-37",
+    "category": 8,
+    "text": "a quiz for the end of the lesson",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "a quiz for the end: suggest or add"
+    }
+  },
+  {
+    "id": "8-38",
+    "category": 8,
+    "text": "Help me understand the context of John 10, what happened before",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "John 9",
+        "blind"
+      ],
+      "why": "context of John 10"
+    }
+  },
+  {
+    "id": "8-39",
+    "category": 8,
+    "text": "what is the meaning of shepherd in hebrew",
+    "expect": {
+      "do": "answer",
+      "why": "shepherd in Hebrew"
+    }
+  },
+  {
+    "id": "8-40",
+    "category": 8,
+    "text": "is the 23rd psalm only for funerals? everyone thinks of funerals when they hear it",
+    "expect": {
+      "do": "answer",
+      "why": "Psalm 23 beyond funerals"
+    }
+  },
+  {
+    "id": "8-41",
+    "category": 8,
+    "text": "should I read the verse or let somebody from the class read",
+    "expect": {
+      "do": "answer",
+      "why": "who reads the verse"
+    }
+  },
+  {
+    "id": "8-42",
+    "category": 8,
+    "text": "my class is mostly widows over 70, a few of them have been in this church longer than me. what part of this lesson will touch them the most, I want them to feel the Lord has not forgotten them",
+    "expect": {
+      "do": "answer",
+      "why": "what will touch widows most"
+    }
+  },
+  {
+    "id": "8-43",
+    "category": 8,
+    "text": "I am nervous for pray in front of class, how to do?",
+    "expect": {
+      "do": "answer",
+      "why": "nervous to pray aloud"
+    }
+  },
+  {
+    "id": "8-44",
+    "category": 8,
+    "text": "what is the table prepared in the presence of my enemies",
+    "expect": {
+      "do": "answer",
+      "why": "a table before my enemies"
+    }
+  },
+  {
+    "id": "8-45",
+    "category": 8,
+    "text": "who are the sheep and who are the goats? the class asked last week and I didn't know",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Matthew 25"
+      ],
+      "why": "sheep and goats"
+    }
+  },
+  {
+    "id": "8-46",
+    "category": 8,
+    "text": "give me some ideas to make the lesson more interesting, people fall asleep",
+    "expect": {
+      "do": "answer",
+      "why": "ideas to keep them awake"
+    }
+  },
+  {
+    "id": "8-47",
+    "category": 8,
+    "text": "In my country we have no sheep only goats and buffalo. How I explain shepherd to my people?",
+    "expect": {
+      "do": "answer",
+      "why": "explaining shepherd without sheep"
+    }
+  },
+  {
+    "id": "8-48",
+    "category": 8,
+    "text": "what should the children take home after the lesson",
+    "expect": {
+      "do": "answer",
+      "why": "a take-home for children"
+    }
+  },
+  {
+    "id": "8-49",
+    "category": 8,
+    "text": "what is the difference between the lord's my shepherd hymn and psalm 23",
+    "expect": {
+      "do": "answer",
+      "why": "the hymn and the psalm"
+    }
+  },
+  {
+    "id": "8-50",
+    "category": 8,
+    "text": "can you think of a object lesson I can show with things from my kitchen",
+    "expect": {
+      "do": "answer",
+      "why": "a kitchen object lesson"
+    }
+  },
+  {
+    "id": "9-1",
+    "category": 9,
+    "text": "can you put my lesson in spanish for the hispanic class",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "translate: replace or add under"
+    }
+  },
+  {
+    "id": "9-2",
+    "category": 9,
+    "text": "translate the prayer into Khmer please, it is for my friend Sophea",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "translate the prayer: replace or add under"
+    }
+  },
+  {
+    "id": "9-3",
+    "category": 9,
+    "text": "i want this in french",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "translate: replace or add under"
+    }
+  },
+  {
+    "id": "9-4",
+    "category": 9,
+    "text": "Please translate whole lesson to Korean, our church have Korean service also",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "translate: replace or add under"
+    }
+  },
+  {
+    "id": "9-5",
+    "category": 9,
+    "text": "can you make the questions in chinese, some grandparents in class only read chinese",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "translate the questions: replace or add under"
+    }
+  },
+  {
+    "id": "9-6",
+    "category": 9,
+    "text": "tagalog please for the main points",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "translate the points: replace or add under"
+    }
+  },
+  {
+    "id": "9-7",
+    "category": 9,
+    "text": "How to say the Lord is my shepherd in Vietnamese",
+    "expect": {
+      "do": "answer",
+      "why": "how to say a phrase in another language"
+    }
+  },
+  {
+    "id": "9-8",
+    "category": 9,
+    "text": "I speak Khmer better than english, you can talk to me in Khmer?",
+    "expect": {
+      "do": "answer",
+      "why": "asks to be spoken to in another language"
+    }
+  },
+  {
+    "id": "9-9",
+    "category": 9,
+    "text": "the words like pastures and anoint are hard for our african brothers, can you say it in easier english",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "easier English"
+    }
+  },
+  {
+    "id": "9-10",
+    "category": 9,
+    "text": "translate only the title into spanish and keep the english too, both",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "title in both languages"
+    }
+  },
+  {
+    "id": "9-11",
+    "category": 9,
+    "text": "can you make the lesson in spanish under the english, one line english one line spanish",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "a line in each language"
+    }
+  },
+  {
+    "id": "9-12",
+    "category": 9,
+    "text": "My daughter-in-law is from Brazil, can you write the closing prayer in Portuguese for her",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "a closing prayer in Portuguese"
+    }
+  },
+  {
+    "id": "9-13",
+    "category": 9,
+    "text": "put psalm 23 from the Khmer bible",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "Psalm 23 from a Bible that may not be installed"
+    }
+  },
+  {
+    "id": "9-14",
+    "category": 9,
+    "text": "can the whole note be in french but the bible verse stay english",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "translate all but the verse"
+    }
+  },
+  {
+    "id": "9-15",
+    "category": 9,
+    "text": "Please make my lesson in very easy English, my class many refugee people",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "very easy English"
+    }
+  },
+  {
+    "id": "9-16",
+    "category": 9,
+    "text": "I write in Korean and English mix, can you fix my english part only",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        }
+      ],
+      "why": "the note is all English; fix the English mistakes"
+    }
+  },
+  {
+    "id": "9-17",
+    "category": 9,
+    "text": "translate the last line into spanish for the helper who brings the children",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "translate the last line"
+    }
+  },
+  {
+    "id": "9-18",
+    "category": 9,
+    "text": "how to say good shepherd in hmong",
+    "expect": {
+      "do": "answer",
+      "why": "how to say good shepherd in Hmong"
+    }
+  },
+  {
+    "id": "9-19",
+    "category": 9,
+    "text": "change everything back to english please",
+    "after": "can you put my lesson in spanish for the hispanic class",
+    "expect": {
+      "do": "undo",
+      "any": [
+        {
+          "action": "undo"
+        },
+        {
+          "text": true
+        },
+        {
+          "remove": true
+        }
+      ],
+      "why": "take the translation back to English"
+    }
+  },
+  {
+    "id": "9-20",
+    "category": 9,
+    "text": "is this right in khmer? I want check my translation of first point",
+    "expect": {
+      "do": "answer",
+      "why": "the first point is in English in the note"
+    }
+  },
+  {
+    "id": "10-1",
+    "category": 10,
+    "text": "yes please",
+    "after": "can you write a closing prayer for me",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "yes to the closing prayer: add it"
+    }
+  },
+  {
+    "id": "10-2",
+    "category": 10,
+    "text": "put that in my note",
+    "after": "tell me a short story about a shepherd i can use",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "put the story in the note"
+    }
+  },
+  {
+    "id": "10-3",
+    "category": 10,
+    "text": "the first one",
+    "after": "what hymn can we sing with this lesson",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "picks the first hymn: note it in the hymn line or acknowledge"
+    }
+  },
+  {
+    "id": "10-4",
+    "category": 10,
+    "text": "add it at the bottom",
+    "after": "write a little summary for me",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add the summary at the bottom"
+    }
+  },
+  {
+    "id": "10-5",
+    "category": 10,
+    "text": "no thank you",
+    "after": "what is a staff, is it the same as a rod",
+    "expect": {
+      "do": "answer",
+      "why": "declines more help"
+    }
+  },
+  {
+    "id": "10-6",
+    "category": 10,
+    "text": "thank you dear",
+    "after": "make the title bigger please",
+    "expect": {
+      "do": "answer",
+      "why": "thanks"
+    }
+  },
+  {
+    "id": "10-7",
+    "category": 10,
+    "text": "do it again",
+    "after": "write me an opening prayer, short",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "write the opening prayer again"
+    }
+  },
+  {
+    "id": "10-8",
+    "category": 10,
+    "text": "that is too long",
+    "after": "write an introduction for the lesson",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "shorten the introduction"
+    }
+  },
+  {
+    "id": "10-9",
+    "category": 10,
+    "text": "make it shorter",
+    "after": "write me a devotion for the nursing home visit",
+    "expect": {
+      "do": "either",
+      "why": "a devotion for another event: shorten it in the chat or its note"
+    }
+  },
+  {
+    "id": "10-10",
+    "category": 10,
+    "text": "not that one",
+    "after": "find me a verse about sheep for the children",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "another sheep verse: suggest or add"
+    }
+  },
+  {
+    "id": "10-11",
+    "category": 10,
+    "text": "the second one is better, put that",
+    "after": "give me two ideas for how to start the class",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        }
+      ],
+      "why": "add the second idea"
+    }
+  },
+  {
+    "id": "10-12",
+    "category": 10,
+    "text": "yes",
+    "after": "put john 3 16 in the lesson too",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "yes: add John 3:16"
+    }
+  },
+  {
+    "id": "10-13",
+    "category": 10,
+    "text": "where you put it? I cannot see",
+    "after": "add a memory verse for the kids please",
+    "expect": {
+      "do": "answer",
+      "why": "where the memory verse was put"
+    }
+  },
+  {
+    "id": "10-14",
+    "category": 10,
+    "text": "ok good God bless you",
+    "after": "fix my spelling at the bottom",
+    "expect": {
+      "do": "answer",
+      "why": "thanks"
+    }
+  },
+  {
+    "id": "10-15",
+    "category": 10,
+    "text": "can make more simple?",
+    "after": "what does anoint my head with oil mean",
+    "expect": {
+      "do": "answer",
+      "why": "a simpler explanation"
+    }
+  },
+  {
+    "id": "10-16",
+    "category": 10,
+    "text": "put it under the prayer",
+    "after": "write a welcome for the new people",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true
+        },
+        {
+          "move": true
+        }
+      ],
+      "why": "the welcome under the prayer"
+    }
+  },
+  {
+    "id": "10-17",
+    "category": 10,
+    "text": "more",
+    "after": "make the letters bigger",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "why": "bigger still"
+    }
+  },
+  {
+    "id": "10-18",
+    "category": 10,
+    "text": "no I meant the other psalm, 121",
+    "after": "show me the whole psalm please",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "verse": true
+        }
+      ],
+      "why": "Psalm 121 instead: show or add"
+    }
+  },
+  {
+    "id": "10-19",
+    "category": 10,
+    "text": "That is nice but say it more like a grandmother would say it",
+    "after": "write a story about a lamb that got lost, for my grandchildren class",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "add": true
+        }
+      ],
+      "why": "retell the story like a grandmother"
+    }
+  },
+  {
+    "id": "10-20",
+    "category": 10,
+    "text": "Okay yes do that one, number 3",
+    "after": "give me some ideas to make the lesson more interesting",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true
+        },
+        {
+          "text": true
+        }
+      ],
+      "why": "idea 3 may or may not be a note change"
+    }
+  },
+  {
+    "id": "11-1",
+    "category": 11,
+    "text": "can you make a drawing of my three points, with arrows going from one to the next",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a diagram of the three points"
+    }
+  },
+  {
+    "id": "11-2",
+    "category": 11,
+    "text": "i want a little chart with boxes that show how the shepherd knows us, then leads us, then gives his life for us",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a chart of the points"
+    }
+  },
+  {
+    "id": "11-3",
+    "category": 11,
+    "text": "draw me a timeline from the creation to Jesus. not to many boxes please my class get lost easy",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a timeline, creation to Jesus"
+    }
+  },
+  {
+    "id": "11-4",
+    "category": 11,
+    "text": "Can you draw family tree of Abraham, Isaac and Jacob and the twelve sons? My class always mix up who is father of who",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a family tree"
+    }
+  },
+  {
+    "id": "11-5",
+    "category": 11,
+    "text": "put the 23rd psalm in boxes, one box for each verse, so the children can follow along with their finger",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "Psalm 23 as boxes"
+    }
+  },
+  {
+    "id": "11-6",
+    "category": 11,
+    "text": "a circle drawing please. the sheep wanders off, the shepherd goes looking, the sheep is found, the sheep is home safe, and then round again",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a cycle diagram"
+    }
+  },
+  {
+    "id": "11-7",
+    "category": 11,
+    "text": "draw me a sheep",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a picture of a sheep: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-8",
+    "category": 11,
+    "text": "my granddaughter drew a lovely shepherd with a staff on paper for me. can you draw one like that in my lesson for the class",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a picture of a shepherd with a staff: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-9",
+    "category": 11,
+    "text": "Please draw a cross at the top of my lesson, a nice one",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a picture of a cross: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-10",
+    "category": 11,
+    "text": "draw a heart beside the prayer because the prayer is about love",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a picture of a heart: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-11",
+    "category": 11,
+    "text": "make a flow from one idea to the next idea so i dont forget what comes after what when i am standing up there teaching",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a flow of the lesson"
+    }
+  },
+  {
+    "id": "11-12",
+    "category": 11,
+    "text": "i need chart for the children with big boxes: Shepherd, Sheep, Green grass, Water",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a chart for the children"
+    }
+  },
+  {
+    "id": "11-13",
+    "category": 11,
+    "text": "draw it going across not down please, my screen is wide",
+    "after": "make a drawing of the three points at the bottom of my lesson",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "kind": "drawing"
+        }
+      ],
+      "why": "a drawing's direction is not a tool field; redraw or explain (drawn again from new lines)"
+    }
+  },
+  {
+    "id": "11-14",
+    "category": 11,
+    "text": "make the drawing bigger i cant read the little boxes",
+    "after": "draw the main points with arrows at the end of my lesson",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "enlarge the drawing"
+    }
+  },
+  {
+    "id": "11-15",
+    "category": 11,
+    "text": "the drawing is too big now, it takes the whole screen. make it smaller",
+    "after": "put a big drawing of psalm 23 at the very bottom",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "smaller"
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "shrink the drawing"
+    }
+  },
+  {
+    "id": "11-16",
+    "category": 11,
+    "text": "colour the boxes green please, like the green pastures",
+    "after": "make a drawing of the three points at the bottom",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "background": true
+        },
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "colour the drawing"
+    }
+  },
+  {
+    "id": "11-17",
+    "category": 11,
+    "text": "put the drawing in the middle",
+    "after": "add a drawing at the end: Shepherd -> Sheep -> Green pastures",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "align": "center"
+        },
+        {
+          "move": true
+        }
+      ],
+      "why": "centred on the page or moved to the middle of the note: both readings"
+    }
+  },
+  {
+    "id": "11-18",
+    "category": 11,
+    "text": "add one more box to my drawing saying The shepherd finds the lost one",
+    "after": "draw my three points as boxes with arrows at the bottom",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "kind": "drawing"
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "redraw with one more box (drawn again from new lines)"
+    }
+  },
+  {
+    "id": "11-19",
+    "category": 11,
+    "text": "in the drawing change Green Pastures to Still Waters",
+    "after": "draw a chart at the end: Shepherd -> Green Pastures -> Home",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "kind": "drawing"
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "change a box's words (drawn again from new lines)"
+    }
+  },
+  {
+    "id": "11-20",
+    "category": 11,
+    "text": "take the drawing away, it is too much for old eyes",
+    "after": "make a timeline drawing at the bottom of my lesson from Adam to Jesus",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "remove": true
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "remove the drawing"
+    }
+  },
+  {
+    "id": "11-21",
+    "category": 11,
+    "text": "move the drawing under the questions",
+    "after": "put a drawing of the three points at the very top, under the title",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        2
+      ],
+      "why": "move the drawing"
+    }
+  },
+  {
+    "id": "11-22",
+    "category": 11,
+    "text": "how do i make a drawing by myself, with the mouse",
+    "expect": {
+      "do": "answer",
+      "tool": "owa_help_search",
+      "why": "how the editor's drawing works"
+    }
+  },
+  {
+    "id": "11-23",
+    "category": 11,
+    "text": "Can you show the shepherd and the sheep and the wolf and the hired man, who goes where, with arrows",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a diagram of John 10"
+    }
+  },
+  {
+    "id": "11-24",
+    "category": 11,
+    "text": "draw the shepherd leading the sheep to the water, like a picture for the wall",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a picture of a scene: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-25",
+    "category": 11,
+    "text": "make the boxes say Lost then Found then Home. three boxes only",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a three-box flow"
+    }
+  },
+  {
+    "id": "11-26",
+    "category": 11,
+    "text": "I want draw God then Jesus then us, the shepherd chain, like pastor did on white board last sunday",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a chain diagram"
+    }
+  },
+  {
+    "id": "11-27",
+    "category": 11,
+    "text": "if i put a drawing in my lesson will it come out on the paper when i print",
+    "expect": {
+      "do": "answer",
+      "mention": [
+        "Print"
+      ],
+      "why": "printing a drawing"
+    }
+  },
+  {
+    "id": "11-28",
+    "category": 11,
+    "text": "draw the twelve tribes, all the sons of jacob, like a family tree",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a family tree"
+    }
+  },
+  {
+    "id": "11-29",
+    "category": 11,
+    "text": "the boxes are all grey, make them a happy colour for the kids",
+    "after": "make a chart for the children at the bottom: Jesus -> loves -> me",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "background": true
+        },
+        {
+          "color": true
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "colour the drawing"
+    }
+  },
+  {
+    "id": "11-30",
+    "category": 11,
+    "text": "can you draw a picture of a sheep with her little lamb, for the children to colour in",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a colouring picture: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-31",
+    "category": 11,
+    "text": "Draw for me the way to heaven, like a road with steps going up",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a road picture: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-32",
+    "category": 11,
+    "text": "the drawing should be under the main points, not at the bottom",
+    "after": "make a drawing of my three points at the end of the lesson",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "move": true
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "move the drawing up"
+    }
+  },
+  {
+    "id": "11-33",
+    "category": 11,
+    "text": "draw the house of the Lord at the end of the psalm part, with a door and windows",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a picture of a house: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-34",
+    "category": 11,
+    "text": "make a diagram for the second question, how God guide us: prayer, the Bible, other people, then we decide",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a diagram for the second question"
+    }
+  },
+  {
+    "id": "11-35",
+    "category": 11,
+    "text": "draw a big star next to the important bits",
+    "expect": {
+      "do": "either",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "a picture of a star: it draws boxes with words and arrows only; an honest answer or a word diagram passes, a claim of a drawn picture fails"
+    }
+  },
+  {
+    "id": "11-36",
+    "category": 11,
+    "text": "make drawing of the days of creation, one box for each day, 7 boxes",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "seven boxes for creation"
+    }
+  },
+  {
+    "id": "11-37",
+    "category": 11,
+    "text": "Please you draw for me arrow from first point to second point to third point",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "add": true,
+          "kind": "drawing"
+        }
+      ],
+      "why": "arrows between the points"
+    }
+  },
+  {
+    "id": "11-38",
+    "category": 11,
+    "text": "the drawing has the arrows the wrong way. the sheep follow the shepherd, not the shepherd follow the sheep",
+    "after": "make a drawing at the bottom of the shepherd and the sheep with arrows",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "kind": "drawing"
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "redraw with arrows reversed (drawn again from new lines)"
+    }
+  },
+  {
+    "id": "11-39",
+    "category": 11,
+    "text": "Make the words in the drawing bigger, the boxes can stay how they are",
+    "after": "draw the three points as boxes at the end",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "size": "larger"
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "enlarge the drawing"
+    }
+  },
+  {
+    "id": "11-40",
+    "category": 11,
+    "text": "can you draw it again but only two boxes, it is too busy for me",
+    "after": "draw the whole lesson as boxes with arrows at the end",
+    "expect": {
+      "do": "change",
+      "any": [
+        {
+          "text": true
+        },
+        {
+          "kind": "drawing"
+        }
+      ],
+      "blocks": [
+        16
+      ],
+      "why": "redraw simpler (drawn again from new lines)"
+    }
+  }
+]

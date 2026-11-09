@@ -719,7 +719,34 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   question in a Khmer window, told _answer in Thai_, came back wholly in
   Khmer once of twice. An answer that must be in a language with a script
   of its own (`toAnswerScript`, never Latin) and holds none of its letters
-  in 30 or more goes back once (`checkIsWrongScriptAnswer`).
+  in 30 or more goes back once (`checkIsWrongScriptAnswer`). **And a note
+  change claimed and never made** (2026-11-09, BN-53, the elder run: _draw a
+  big star next to the important bits_ -- Free's Nemotron called no tool and
+  answered that it had added a gold star, centred and larger): an answer in
+  a note ask that says it changed the note (_I've added_, _not saved yet_,
+  _Undo this change puts it back_ -- a bare _I put_ is also an offer, so not
+  that) while no `owa_note_edit` edit changed it, no note was made and no
+  undo or redo stepped (`isNoteStepped`) goes back once with
+  `NOTE_CLAIM_NUDGE`: make it now, or say plainly it was not done
+  (`checkClaimsUnmadeNoteChange`). And an edit that changed nothing answers
+  _Nothing was changed: the note already reads that way. Tell them so --
+  never that you changed it_: asked to lay a drawing out across that
+  already was, gemma4:cloud had answered "I've updated the drawing".
+  **And a lesson of its own goes into a NEW note** (BN-55, the same run):
+  _make me a whole lesson about forgiveness_ in the conversation about a
+  Good Shepherd lesson had been written over it. `NOTE_SYSTEM_PROMPT` says
+  the note changes only when the words ask for something in it (a greeting
+  had a misspelt line corrected), that words written for this lesson go into
+  it, and that a lesson on another subject or for another group is a new
+  note; and a typed ask for one carries `NOTE_NEW_LESSON_HINT`
+  (`checkIsNewLessonAsk` in `noteChatHelpers.ts`, added by `toNoteAsk`),
+  a line that only greets or asks -- no word for anything done to the
+  note -- `NOTE_QUESTION_HINT` (`checkIsNoteQuestionOnly`): _HELLO CAN YOU
+  HELP ME_ had the note's misspelt line corrected, unasked. And a worry
+  right after a change (_the letters went all big suddenly_, _everything is
+  blue now_) is put back with `undo`, never a new change that only looks
+  like it -- it had been Clear Formatting on every block, the headings made
+  plain lines (BN-57).
 - **Steps written with NOTHING looked up go back once too** (2026-10-17,
   `EC-311`, `checkIsStepsWithoutPage` with `ToolWatchType.toolCallCount` /
   `canSearchGuide`): the Khmer stress run on gemma4:cloud wrote every list

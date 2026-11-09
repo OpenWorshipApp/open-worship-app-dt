@@ -2175,6 +2175,8 @@ type ToolWatchType = {
      * the answer carries the button that undoes it.
      */
     editedLyric: EditedLyricType | null;
+    // A note's undo or redo that changed it, in this ask (BN-53).
+    isNoteStepped?: boolean;
     /**
      * The last `owa_bible_xml` check that found Bibles: a download or a page
      * of files. Off the RESULT, like the song draft above -- the answer then
@@ -2690,7 +2692,44 @@ export function findAnswerShapeNudge(
             kept: text,
         };
     }
+    if (checkClaimsUnmadeNoteChange(words, watch)) {
+        return { nudge: NOTE_CLAIM_NUDGE, kept: text };
+    }
     return null;
+}
+
+// What an answer says after a change to a note: the prompt has it say the
+// change is not saved yet and that Undo this change puts it back.
+// "I put" alone is also an offer ("shall I put it at the end?"): only
+// "I've put" claims it.
+const NOTE_CLAIM_PATTERN =
+    /\bI(?:'ve| have) (?:added|made|changed|moved|removed|put|drawn|updated|centred|centered|coloured|colored|enlarged|replaced|inserted|fixed|corrected|translated|ticked|underlined|bolded|highlighted|created|written|rewritten)\b|\bI (?:added|made|changed|moved|removed|drew|updated|centred|centered|coloured|colored|enlarged|replaced|inserted|fixed|corrected|translated|ticked|underlined|bolded|highlighted|created|wrote|rewrote)\b|\bnot saved yet\b|\bUndo this change puts it back\b/i;
+
+/** What the model is told when it said the note changed and nothing did. */
+export const NOTE_CLAIM_NUDGE =
+    'Not yet: nothing in the note changed -- no owa_note_edit call made that ' +
+    'change. Make it now with owa_note_edit (every change in one call), or, ' +
+    'when it cannot be done, say so plainly. Never say the note was changed ' +
+    'when the tool did not list the change.';
+
+/**
+ * Whether an answer about an attached note says it changed the note while
+ * no tool changed anything in this ask (BN-53, 2026-11-09, the elder run:
+ * asked to _draw a big star next to the important bits_, Free's Nemotron
+ * called no tool and answered that it had added a gold star drawing,
+ * centred and larger). Handed back once, as a broken answer shape is.
+ */
+export function checkClaimsUnmadeNoteChange(
+    words: string,
+    watch: ToolWatchType,
+) {
+    return (
+        watch.noteFiles !== null &&
+        watch.editedLyric === null &&
+        watch.createdNote === null &&
+        watch.isNoteStepped !== true &&
+        NOTE_CLAIM_PATTERN.test(words)
+    );
 }
 
 // Enough letters to be an answer and not a name or a key cap.
@@ -3171,6 +3210,20 @@ export function applyToolWatch(
         if (edited !== null) {
             watch.editedLyric = mergeEditedDocument(watch.editedLyric, edited);
             watch.isActedOn = true;
+        }
+    }
+    if (
+        name === NOTE_EDIT_TOOL_NAME &&
+        (args?.action === 'undo' || args?.action === 'redo')
+    ) {
+        // A step of the note's own history taken: "I've put it back" is
+        // then no claim of a change nothing made (BN-53).
+        try {
+            if (JSON.parse(text)?.isChanged === true) {
+                watch.isNoteStepped = true;
+            }
+        } catch (_error) {
+            // a refusal, in words
         }
     }
     if (

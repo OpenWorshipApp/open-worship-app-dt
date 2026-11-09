@@ -603,6 +603,91 @@ export function toNoteOwnWordsHint({ language, text }: NoteOwnWordsType) {
     );
 }
 
+// --- a lesson of its own ------------------------------------------------------
+//
+// BN-55 (2026-11-09, the elder run): asked _Can you make me a whole lesson
+// about forgiveness_, _write a lesson about Joseph_, _a short devotion about
+// Psalm 121 please_ in the conversation about their Good Shepherd lesson,
+// gemma4:cloud rewrote that lesson into the new one (fifteen blocks given
+// other words) or put the new lesson at its end -- 14 asks of 90, and still
+// 6 after the prompt said a lesson on another subject is a NEW note. Such an
+// ask now carries one sentence saying so. Read off what they asked for, a
+// writing word before a lesson, devotion or outline that is "a" or "new":
+// "help me with my lesson", "make the lesson bigger" and "is this a good
+// lesson?" are not it. English; another language's ask is read in English
+// by the window first, else left to the prompt.
+
+const LESSON_NOUN =
+    '(?:lesson|devotion(?:al)?|outline|sermon|homily|bible study)(?!\\s+plan)\\b';
+// One to three describing words between "a" and the noun, never a word
+// that ties it to something else ("a picture of a shepherd in my lesson").
+const LESSON_WORDS =
+    "(?:(?!(?:in|my|of|for|to|the|this|on|about|with)\\b)[\\w'-]+\\s+){0,3}?";
+const NEW_LESSON_ASK_PATTERN = new RegExp(
+    [
+        `\\b(?:write|make|create|prepare|plan|draft|give|need|want|like|start)\\b[^.?!]{0,40}?\\b(?:a|an|another|new|one more)\\s+${LESSON_WORDS}(?:${LESSON_NOUN}|version of this)`,
+        `\\b(?:make|write|create|need|want|start)\\s+(?:me\\s+)?(?:a\\s+)?${LESSON_NOUN}`,
+        `\\bwrite\\s+the\\s+${LESSON_NOUN}\\s+(?:about|on)\\b`,
+        `^\\s*(?:please\\s+)?(?:(?:a|an)\\s+)?${LESSON_WORDS}${LESSON_NOUN}\\s+(?:(?:about|on)\\b|for\\b[^.?!]{0,40}\\bplease\\b)`,
+    ].join('|'),
+    'i',
+);
+
+export const NOTE_NEW_LESSON_HINT =
+    '(This asks for a lesson of its own: make it a NEW note -- ' +
+    'owa_bible_note action "add", its title and text yours -- and leave the ' +
+    'attached note as it is, unless their words say to put it in this note.)';
+
+/** Whether they asked for a lesson, devotion or outline of its own. */
+export function checkIsNewLessonAsk(text: string) {
+    return NEW_LESSON_ASK_PATTERN.test(text);
+}
+
+// --- a greeting or a question, nothing to change ------------------------------
+//
+// BN-55 too: _HELLO CAN YOU HELP ME_, _are you a real person or a computer_
+// and _How I start? I am new for this program_ each had the note's misspelt
+// last line corrected, unasked, and said so -- the note an elderly person is
+// writing changed under a hello. A line that greets or asks and has no word
+// that asks for something done to the note (any part of it named, a style,
+// a size, a verse, saving or showing it) carries one sentence: answer, and
+// change nothing. Measured on the elder corpus: on 64 of its 189 answers and
+// on none of its 248 changes.
+const NOTE_QUESTION_START_PATTERN =
+    /^\s*(?:hello|hi|hey|good (?:morning|afternoon|evening)|thank|thanks|god bless|bless you|ok|okay|what|who|whom|whose|why|how|where|when|which|is|are|was|were|do|does|did|can|could|will|would|should|am i|tell me|explain)\b/i;
+const NOTE_CHANGE_WORD_PATTERN =
+    /\b(?:add|put|insert|writ|make|making|made|chang|turn|set|draw|remov|delet|take|fix|correct|check|grammar|mistake|spell|mov|swap|replac|translat|bold|underlin|colou?r|highlight|cent(?:er|re)|middle|indent|number|tick|renam|shorten|simpl|expand|enlarg|bigger|smaller|larger|big|small|italic|capital|font|letter|space|tidy|organi[sz]|clean|includ|attach|giv|creat|need|want|like|undo|redo|back|again|instead|prayer|verse|psalm|question|point|title|heading|line|word|paragraph|table|list|bullet|sticky|copy|print|save|open|close|find|search|show|share|send|read)\w*/i;
+
+export const NOTE_QUESTION_HINT =
+    '(This greets you or asks a question: answer it and change nothing in ' +
+    'the note -- offer a change as an OPTION instead.)';
+
+// --- formatting a messy note -------------------------------------------------
+//
+// BN-58: the card's Format button and the words a person uses for the same
+// job (_my note is messy_, _make it neat_, _tidy it up_). Not "a mess",
+// which is a worry (_I think I made a mess of it_), nor "easy to read",
+// which an older reader says of bigger letters.
+const NOTE_FORMAT_ASK_PATTERN =
+    /\b(?:re)?format|\btid(?:y|ied)\b|\bneat\b|\bmessy\b|\bclean(?:\s+it)?\s+up\b|\borgani[sz]e\b|\bwell[- ]formed?\b|\blook nice\b|\bin order\b/i;
+
+export const NOTE_FORMAT_HINT =
+    '(This asks to format the note: do it in ONE edit as FORMATTING says -- ' +
+    'every word kept and none added, a run-together block split with its ' +
+    'kind and its lines.)';
+
+/** Whether they asked for the note formatted, tidied or made neat. */
+export function checkIsNoteFormatAsk(text: string) {
+    return NOTE_FORMAT_ASK_PATTERN.test(text);
+}
+
+/** Whether a line only greets or asks, asking nothing done to the note. */
+export function checkIsNoteQuestionOnly(text: string) {
+    const isQuestion =
+        /\?\s*$/.test(text) || NOTE_QUESTION_START_PATTERN.test(text);
+    return isQuestion && !NOTE_CHANGE_WORD_PATTERN.test(text);
+}
+
 /**
  * The question as the model is asked it: what they typed, then each attached
  * note as it reads now, named as `note` takes it. `ownWords` when `asked` is
@@ -635,6 +720,9 @@ export function toNoteAsk(
     return [
         ...(isWordless ? [NOTE_WORDLESS_HINT] : []),
         asked,
+        ...(checkIsNewLessonAsk(asked) ? [NOTE_NEW_LESSON_HINT] : []),
+        ...(checkIsNoteQuestionOnly(asked) ? [NOTE_QUESTION_HINT] : []),
+        ...(checkIsNoteFormatAsk(asked) ? [NOTE_FORMAT_HINT] : []),
         ...(ownWords === null ? [] : [toNoteOwnWordsHint(ownWords)]),
         ...(translateMode === null
             ? []
@@ -676,7 +764,8 @@ export const NOTE_SYSTEM_PROMPT =
     '{after, kind, text} adds a block after block `after` (0 is the top; ' +
     'several after one block keep their order). Block numbers are the note ' +
     'as you read it, whatever the call does. Change only the blocks the ' +
-    'request is about. WORDS THEY SELECTED: "> " lines under a line ending ' +
+    'request is about, and never remove a block they did not ask to ' +
+    'remove. WORDS THEY SELECTED: "> " lines under a line ending ' +
     'in a colon quote what they selected in this note -- the words between ' +
     '** and ** (a selection mark, not bold), the rest of each line around ' +
     "them, … for words left out; in the brackets the note's name and, for " +
@@ -697,7 +786,24 @@ export const NOTE_SYSTEM_PROMPT =
     'them only that. A new [@Name] or ' +
     '[#Place] is looked up in the names lookup and becomes a mention when ' +
     'it is there. When a request has one sensible reading, do it ' +
-    'rather than ask: every change can be undone. PUTTING AN ANSWER IN: ' +
+    'rather than ask: every change can be undone. CHANGE THE NOTE ONLY ' +
+    'WHEN THEIR WORDS ASK for something in it: a greeting, a question ' +
+    'about you or the app, thanks, a worry or "how do I start" changes ' +
+    'nothing -- answer it and offer changes as OPTIONS; a mistake you ' +
+    'notice is an option, never a change they did not ask for. Words they ' +
+    'ask you to write FOR THIS LESSON -- a prayer, an introduction, words ' +
+    'to say, a memory verse, more questions, a story for it -- go into the ' +
+    'note in one edit, after the block they belong under. A lesson, ' +
+    'devotion or outline on ANOTHER subject or passage, or a version of ' +
+    'this one for another group (children, youth), is a NEW note ' +
+    '(owa_bible_note "add") -- never this note rewritten into it or added ' +
+    'to: this note is their lesson. WHEN SOMETHING WENT WRONG -- they say ' +
+    'a change of yours was wrong, something is gone, looks strange or ' +
+    'changed by itself -- put it back with action "undo" (one step for each ' +
+    'change you made), never a new change on top that only looks like it ' +
+    '(Clear Formatting turns headings into plain lines), and say it is ' +
+    'back; when you made no change in this conversation, change nothing: ' +
+    'ask what looks different. PUTTING AN ANSWER IN: ' +
     'right after you answered or taught something, a short line -- "add ' +
     'it", "put it in", "save this", "new section", "new page" -- means that ' +
     'answer goes at the END of the note, its words whole, in ONE edit: ' +
@@ -728,17 +834,32 @@ export const NOTE_SYSTEM_PROMPT =
     'Insert menu is kinds to add: table, columns, ' +
     'collapsible, page-break, rule, equation, sticky, date, poll, video ' +
     '(YouTube), website, media (a link or a path), drawing (a line a box, ' +
-    '"A -> B" an arrow from box A to box B) and example (the editor\'s own ' +
+    '"A -> B" an arrow from box A to box B, drawn top to bottom; only for ' +
+    'a timeline, a cycle or a shape they ask for, a first line "layout: ' +
+    'across", "circle" or "center"; background fills its boxes, ' +
+    'color its lines; one in the note takes new lines, background, color, ' +
+    'size "larger"/"smaller" and align. It draws boxes, words and arrows, ' +
+    'never a picture of a thing -- a sheep, a cross: say so plainly and ' +
+    "offer one of words) and example (the editor's own " +
     'sample note). A code block takes `language` and `theme`. Link block ' +
     'text is {block, words?, linkTo: n} (an arrow to block n, `linkToWords` ' +
     'for words there). Its Undo and Redo of what the note kept are ' +
     'actions "undo" and "redo", its ¶ is action "view" with ' +
     'invisibleCharacters true or false. Never answer one of these with the ' +
-    "editor's steps: make it. TIDYING a note " +
-    'into headings and lists: every block keeps its own words -- a heading ' +
-    'that names a point is a NEW block ({after, kind: "h2", text}) put ' +
-    'above the lines it covers, and a line that is a point becomes a ' +
-    'bullet with {block, kind: "bullet"} and no `text`. Never give a ' +
+    "editor's steps: make it. FORMATTING a messy note (format it, tidy " +
+    'it, make it neat or easy to read), in ONE edit, every word kept and ' +
+    'none added: a title line becomes "h1"; a line that only names a part ' +
+    '(points, prayer, questions) becomes "h2" -- Points, Prayer, Questions, ' +
+    'never in capitals; every line and item starts with a capital letter ' +
+    '(god looks -> God looks); a heading for a part that has none is a NEW block above ' +
+    'it; points, questions or steps run together in one block are SPLIT -- ' +
+    '{block: 7, kind: "bullet" (or "number"), text: "Who is lost ' +
+    'today?\\nHow can we help?"} makes one item a line -- and a run-on ' +
+    'paragraph of parts is {block, kind: "section", text} with "## A ' +
+    'heading" and "- " lines of its own words; a reference written in words ' +
+    '(luke 15 verse 4 to 7) becomes a token [^Luke 15:4-7] in its place; ' +
+    'a line in capitals gets normal case, a line that starts in small ' +
+    'letters a capital; a reminder or warning is made bold. Never give a ' +
     "block a heading's words in place of its own. Questions ABOUT the note " +
     '(sum it up, what verses it uses, what a point means) are answered from ' +
     'its words; a verse it names is quoted with owa_find_verse `refs`, never ' +
@@ -750,7 +871,10 @@ export const NOTE_SYSTEM_PROMPT =
     'owa_bible_note action "add", ' +
     'its `title` and `text` written by you (# headings, - lists, **bold**, ' +
     'a verse as [^John 3:16]), never blocks added to this one; the app ' +
-    'opens it and the conversation moves to it. When the tool refuses, ' +
+    'opens it and the conversation moves to it. Opening, finding or ' +
+    'printing ANOTHER note is never making one: list the notes ' +
+    '(owa_bible_note "list") and say where it is in the Bible Notes list, ' +
+    'or say none is called that. When the tool refuses, ' +
     'read its reason, fix the call and try once more; then say plainly what ' +
     "went wrong. After a change, say in a sentence or two what the tool's " +
     'answer lists as done (its summary) -- never a change it does not list ' +
@@ -761,7 +885,7 @@ export const NOTE_SYSTEM_PROMPT =
     'a "redo" does). Never write the blocks, ' +
     'the mark-up or any JSON out in your answer: a verse is named plainly ' +
     '(John 3:16), never as [^John 3:16]. End with OPTIONS: two or three next ' +
-    'changes they might want.';
+    'changes they might want that the tool can make.';
 
 /**
  * The card a note opens its tab with, written by the window with no model:
@@ -799,7 +923,11 @@ export function genNoteOpeningAnswer(
             ...genLyricTranslateReplies(targetName),
             tran('Check the spelling'),
             tran('Summarize this note'),
-            tran('Tidy it into headings and lists'),
+            // Formatting a messy note is the job asked for most (2026-11-09,
+            // the user: _when bible-note attached to the chatbot it should
+            // provide the option to format content_, BN-58); it does what
+            // the old "Tidy it into headings and lists" did and more.
+            tran('Format it so it is neat and easy to read'),
         ],
         translateLanguage: target,
     };

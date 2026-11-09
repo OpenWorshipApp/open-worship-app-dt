@@ -436,7 +436,9 @@ window as a whole — tabs, pickers, its language, the caution — is in
   on the chip, `noteId` persisted) under a card written with no model
   (`genNoteOpeningAnswer`): the two translate buttons,
   **[en:tran:Check the spelling]**, **[en:tran:Summarize this note]**,
-  **[en:tran:Tidy it into headings and lists]**. A question while it is open
+  **[en:tran:Format it so it is neat and easy to read]** (since 2026-11-09,
+  BN-58: formatting a messy note is the job asked for most; it had been
+  **Tidy it into headings and lists**). A question while it is open
   is a `note` ask (`chatbot-llm.md`), the note read again from its editing
   head before every question. A note attached now, or opened after a slide
   document or a running order, is the one asked about

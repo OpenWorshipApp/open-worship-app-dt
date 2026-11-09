@@ -1734,7 +1734,20 @@ false` and searches only a dataset a lookup panel already holds
   `owa-enhance-bible-note-chatbot`: 60 of 60, none excluded, since the
   four once left to the person became fields too -- `kind: "drawing"`
   (boxes and arrows laid out from lines, an inline `excalidraw` node IN
-  a paragraph, as the editor keeps it), `kind: "example"` (the editor's
+  a paragraph, as the editor keeps it; **a drawing takes what changes IT**
+  since 2026-11-09, BN-51, the user: _make sure chatbot can help drawing_ --
+  a `size` on its block had reached no words and the answer said it was
+  larger: `size` larger / smaller scales the node's `width` and `height`,
+  which is how large the board draws it; `background` fills its boxes and
+  `color` its lines, white words on a dark fill; new lines in `text` draw
+  it again keeping its colours, layout and scale; a first line `layout:
+  across` / `circle` / `center` lays it out left to right, round a ring or
+  round its first box, kept as `layout` in the scene; it reads back as the
+  lines that draw it; anything drawn by hand in it (a pen stroke, a shape
+  of its own) makes it colourable and sizeable, never drawn again; font,
+  styles, a px size and `words` on a drawing are refused with what it
+  takes; `applyDrawingChange` in `agentNoteBlockHelpers.ts`,
+  `changeNoteDrawingNode` in `agentNoteDrawingHelpers.ts`), `kind: "example"` (the editor's
   own Default Example, captured from the running editor into
   `agentNoteDefaultExample.json`, read only when asked for), `linkTo`
   (Link block text: the editor's own entry of node PATHS in its storage
@@ -1774,7 +1787,10 @@ false` and searches only a dataset a lookup panel already holds
   model sends a block's words back with a style or a kind all the time;
   its summary says no "new words" (round trip 254 / 292, 0 failures). A NEW verse (`[^ref]`
   or a `passage`) is read by the app from the installed Bible
-  (`owa_present_bible`'s resolvers, the lookup's version unless `bible`
+  (`owa_present_bible`'s resolvers -- which since 2026-11-09, BN-50, fall
+  back to the verse finder's reading when the Lookup's parser refuses a
+  reference: `[^Psalms 23:1]` had been "no installed Bible could read" it,
+  the KJV calling the book "Psalm" (`parseLooseReference`) -- the lookup's version unless `bible`
   names one -- and in the chatbot a note ask typed in another language
   than English fills `bible` with an installed Bible of that language when
   the Lookup's is not one, BN-26, `findNoteVerseBible` in

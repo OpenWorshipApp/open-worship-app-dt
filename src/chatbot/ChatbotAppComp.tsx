@@ -583,6 +583,7 @@ import {
     takeDraftedLyric,
 } from './lyricDraftHelpers';
 import {
+    dropActionEchoReplies,
     genMessageReplies,
     type AttachRequestType,
     type ShowRefType,
@@ -10915,7 +10916,12 @@ export default function ChatbotAppComp() {
                           : options?.shownText !== undefined
                             ? []
                             : !isAppQuestion
-                              ? (answer.replies ?? []).slice(0, 5)
+                              ? dropActionEchoReplies(
+                                    answer.replies ?? [],
+                                    (answer.actions ?? []).map((action) => {
+                                        return action.label;
+                                    }),
+                                ).slice(0, 5)
                               : await genMessageReplies({
                                     modelOptions: answer.replies,
                                     answerText: shownAnswer,

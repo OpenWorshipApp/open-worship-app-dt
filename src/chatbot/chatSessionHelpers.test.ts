@@ -24,6 +24,7 @@ import {
     loadChatSessions,
     saveChatSessions,
     toChatSessionTitle,
+    trimSessionMessages,
     MAX_SESSION_COUNT,
     type ChatMessageType,
     type ChatSessionType,
@@ -1170,5 +1171,74 @@ describe('a tab on Auto', () => {
         expect(state.sessions[1].autoPick?.length).toBeLessThanOrEqual(160);
         expect(state.sessions[2].isAuto).toBeUndefined();
         expect(state.sessions[2].autoPick).toBeUndefined();
+    });
+});
+
+// BN-54 (2026-11-09, the elder run): thirty-odd questions about one Bible
+// note in a tab, then a reload -- the tab came back asking about the Bible
+// Reader, because the question that attached the note had been cut.
+describe('trimSessionMessages', () => {
+    // A note is attached as its words: kind `text`, its id beside the path.
+    const NOTE = {
+        id: 'a1',
+        kind: 'text',
+        name: 'The Good Shepherd',
+        filePath: 'C:/notes/Default.own',
+        noteId: 2,
+    } as any;
+    const genMessages = (count: number, attachedAt: number) => {
+        return Array.from({ length: count }, (_value, index) => {
+            const id = index + 1;
+            return {
+                id,
+                author: index % 2 === 0 ? 'you' : 'bot',
+                text: `message ${id}`,
+                ...(id === attachedAt ? { attachments: [NOTE] } : {}),
+            };
+        });
+    };
+
+    test('keeps the question that attached the open file in place of the oldest', () => {
+        const trimmed = trimSessionMessages(genMessages(70, 1));
+        expect(trimmed).toHaveLength(60);
+        expect(trimmed[0].id).toBe(1);
+        expect(trimmed[0].attachments).toEqual([NOTE]);
+        expect(trimmed[1].id).toBe(12);
+        expect(trimmed.at(-1)!.id).toBe(70);
+    });
+
+    test('cuts as before when the file is closed, kept anyway, or none', () => {
+        expect(trimSessionMessages(genMessages(70, 1), 5)[0].id).toBe(11);
+        expect(trimSessionMessages(genMessages(70, 21))[0].id).toBe(11);
+        expect(trimSessionMessages(genMessages(70, 0))[0].id).toBe(11);
+        expect(trimSessionMessages(genMessages(40, 1))).toHaveLength(40);
+    });
+
+    test('a pointed-at control or a window picture is no open file', () => {
+        const messages = genMessages(70, 0);
+        messages[0] = {
+            ...messages[0],
+            attachments: [
+                { id: 1, kind: 'element', filePath: 'x' },
+                { id: 2, kind: 'screenshot', filePath: 'y', window: {} },
+            ] as any,
+        };
+        expect(trimSessionMessages(messages)[0].id).toBe(11);
+    });
+
+    test('a saved tab keeps its note across a reload', () => {
+        settingMap.clear();
+        const session = genSession({
+            messages: genMessages(70, 1) as unknown as ChatMessageType[],
+        });
+        saveChatSessions({ sessions: [session], activeId: session.id });
+        const stored = JSON.parse(settingMap.get(SETTING_NAME)!);
+        expect(stored.sessions[0].messages).toHaveLength(60);
+        const reloaded = loadChatSessions('presenter', 'anthropic', 'm')
+            .sessions[0];
+        expect(reloaded.messages[0].attachments?.[0]).toMatchObject({
+            name: 'The Good Shepherd',
+            noteId: 2,
+        });
     });
 });

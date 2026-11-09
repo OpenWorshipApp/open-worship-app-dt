@@ -3,9 +3,15 @@ import { describe, expect, it } from 'vitest';
 import type { ChatAttachmentType } from './attachmentHelpers';
 import {
     NOTE_EDIT_TOOL_NAME,
+    NOTE_FORMAT_HINT,
+    NOTE_NEW_LESSON_HINT,
+    NOTE_QUESTION_HINT,
     NOTE_SYSTEM_PROMPT,
     NOTE_WORDLESS_HINT,
     checkAddsNoteVerse,
+    checkIsNewLessonAsk,
+    checkIsNoteFormatAsk,
+    checkIsNoteQuestionOnly,
     checkIsNoteAttachment,
     checkIsNoteOpenedLast,
     findNoteAskFiles,
@@ -373,7 +379,8 @@ describe('the card a note opens with', () => {
             'Add another language under each line',
             'Check the spelling',
             'Summarize this note',
-            'Tidy it into headings and lists',
+            // BN-58: formatting a messy note, the job asked for most.
+            'Format it so it is neat and easy to read',
         ]);
     });
 
@@ -640,5 +647,121 @@ describe('words a model wrote, put back to the typed ones', () => {
             title: 'A11 is well',
         });
         expect(restoreNoteTypedWords(args, '', PAIRS)).toBe(args);
+    });
+});
+
+// BN-55 (2026-11-09, the elder run): a lesson on another subject asked for
+// in the conversation about one lesson had been written over that lesson.
+describe('a lesson of its own', () => {
+    it('is read off what they asked for, in the words an older person types', () => {
+        for (const text of [
+            'Can you make me a whole lesson about forgiveness. Same like this one',
+            'write a lesson about Joseph forgiving his brothers',
+            'a short devotion about Psalm 121 please, I will read it at choir',
+            'I need lesson about David and Goliath for the kids',
+            'Make lesson for me about love one another. My english not so good',
+            'i need an outline for next week, Luke 15 the lost sheep',
+            'make a version of this lesson for children 5 to 8 years old',
+            'Lesson for Fathers Day please. About Joseph the husband of Mary',
+            'please start a new lesson called The Lost Sheep',
+        ]) {
+            expect(checkIsNewLessonAsk(text)).toBe(true);
+        }
+    });
+
+    it('is no new lesson when the words are about this one', () => {
+        for (const text of [
+            'Is this a good lesson?',
+            'can you help me with my sunday school lesson',
+            'I need chatbot help me prepare lesson',
+            'write a short prayer for my lesson about the shepherd',
+            'make the lesson for sunday school line smaller, it is not important',
+            'make the outline of my lesson clearer',
+            'can I make a folder for children lessons and one for adult lessons',
+            'I want to put a picture of a shepherd in my lesson',
+            'Can you write a lesson plan with times?',
+            'lesson for sunday school adult class, change it to Lesson for the Golden Years class',
+        ]) {
+            expect(checkIsNewLessonAsk(text)).toBe(false);
+        }
+    });
+
+    it('rides on the ask, under their words', () => {
+        const asked = toNoteAsk('write a lesson about Joseph', [
+            { name: 'The Good Shepherd', text: '1 h1: The Good Shepherd' },
+        ]);
+        expect(asked.split('\n\n')[1]).toBe(NOTE_NEW_LESSON_HINT);
+        expect(
+            toNoteAsk('make the title red', [
+                { name: 'The Good Shepherd', text: '1 h1: The Good Shepherd' },
+            ]),
+        ).not.toContain(NOTE_NEW_LESSON_HINT);
+    });
+});
+
+// BN-55: a hello had the note's misspelt line corrected, unasked.
+describe('a greeting or a question, nothing to change', () => {
+    it('is a line that greets or asks with no word asking for a change', () => {
+        for (const text of [
+            'HELLO CAN YOU HELP ME',
+            'are you a real person or a computer',
+            'How I start? I am new for this program',
+            'can you see what i wrote in my lesson',
+            'is this going to cost me money',
+            'thank you dear, God bless',
+        ]) {
+            expect(checkIsNoteQuestionOnly(text)).toBe(true);
+        }
+    });
+
+    it('is no such line when it asks for something done to the note', () => {
+        for (const text of [
+            'can you make the title bigger?',
+            'Can you check all lesson for grammar mistake? my english not perfect',
+            'could you put the hymn at the top?',
+            'what about adding a prayer at the end?',
+            'the letters are too small',
+            'make the leters bigger please i cant see them good',
+            'how do I save this',
+        ]) {
+            expect(checkIsNoteQuestionOnly(text)).toBe(false);
+        }
+    });
+
+    it('rides on the ask', () => {
+        expect(
+            toNoteAsk('are you a real person or a computer', [
+                { name: 'The Good Shepherd', text: '1 h1: The Good Shepherd' },
+            ]).split('\n\n')[1],
+        ).toBe(NOTE_QUESTION_HINT);
+    });
+});
+
+// BN-58: a messy note formatted, the card's Format button first.
+describe('a format ask', () => {
+    it('is the button and the words a person uses for the job', () => {
+        for (const text of [
+            'Format it so it is neat and easy to read',
+            'my note is messy can you tidy it up',
+            'please make it look nice',
+            'can you clean it up and organise it',
+        ]) {
+            expect(checkIsNoteFormatAsk(text)).toBe(true);
+        }
+        for (const text of [
+            'I am so sorry I think I made a mess of it',
+            'i just want it easy to read, the letters are small',
+            'make the title red',
+        ]) {
+            expect(checkIsNoteFormatAsk(text)).toBe(false);
+        }
+    });
+
+    it('rides on the ask', () => {
+        expect(
+            toNoteAsk('my note is messy can you tidy it up', [
+                { name: 'lost sheep', text: '1 paragraph: points' },
+            ]),
+        ).toContain(NOTE_FORMAT_HINT);
     });
 });

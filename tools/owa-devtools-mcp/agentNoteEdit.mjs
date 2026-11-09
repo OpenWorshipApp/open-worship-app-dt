@@ -316,7 +316,9 @@ export const NOTE_EDIT_DESCRIPTION =
     'attached. `read` gives its numbered blocks (n, kind, text), `hash` and ' +
     "`fonts` (the font box's); `from` reads on. `edit` makes every change " +
     'in ONE call (give `hash`), `changes`: {block, text?, kind?, checked?} ' +
-    'changes block n; {block, remove: true} removes it; {block, after} moves ' +
+    'changes block n -- with a list kind or kind section and its words as ' +
+    'lines it becomes a block a line; {block, remove: true} removes it; ' +
+    '{block, after} moves ' +
     'it (0 = top); {after, kind, text} adds one; kind section adds many, ' +
     'a block a line of mark-up (# heading, - item, 1. item, > quote, ' +
     '---). Added kinds include the ' +
@@ -325,7 +327,10 @@ export const NOTE_EDIT_DESCRIPTION =
     'lines), page-break, equation (KaTeX), sticky (`color` yellow, pink, ' +
     'blue, mint, lavender, peach or sage), date (today or YYYY-MM-DD), poll ' +
     '(the question, then a line a choice), video (YouTube link), website, ' +
-    'media (a link or a path), drawing (a line a box, "A -> B" an arrow), ' +
+    'media (a link or a path), drawing (a line a box, "A -> B" an arrow, a ' +
+    'first line "layout: across" / "circle" / "center"; background fills ' +
+    'its boxes, color its lines; one in the note takes new lines, size ' +
+    'larger/smaller, align), ' +
     "example (the editor's sample note), passage (`ref`). The toolbar, on a " +
     'block or, with `words`, only those words in it: size ("larger", ' +
     '"smaller", px 8-72), font, color and background (a colour, or "none"), ' +
@@ -344,7 +349,8 @@ export const NOTE_EDIT_DESCRIPTION =
     'to the KJV; the summary says which Bible each new verse came from. A new ' +
     '[@Name] / [#Place] a mention from the names lookup -- never write verse ' +
     'words yourself. A fixed block (table, picture, passage, sticky …) is ' +
-    'never given words. Changes stay UNSAVED for Save in the note window; ' +
+    "never given words, a drawing's lines aside. Changes stay UNSAVED for " +
+    'Save in the note window; ' +
     'owa_undo puts each back.';
 
 /**

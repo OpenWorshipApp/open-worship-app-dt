@@ -206,6 +206,8 @@ import {
     checkIsWrongScriptAnswer,
     findAnswerShapeNudge,
     genWrongLanguageNudge,
+    checkClaimsUnmadeNoteChange,
+    NOTE_CLAIM_NUDGE,
     toAnswerScript,
     toGuideRescueAnswer,
     checkIsToolLeftOut,
@@ -4762,6 +4764,93 @@ describe('genGeneralAskAction', () => {
         expect(
             genGeneralAskAction(answer('Press F5.'), { askedText: 'how?' }),
         ).toBeNull();
+    });
+});
+
+// BN-53 (2026-11-09, the elder run): asked to "draw a big star next to the
+// important bits", Free's Nemotron called no tool and answered that it had
+// added a gold star drawing. A note answer that says the note changed while
+// nothing did goes back once.
+describe('a note change claimed and never made', () => {
+    const CLAIM =
+        'I have added a big star drawing after the Main points heading. ' +
+        'It is not saved yet: Save in the note window keeps it, and Undo ' +
+        'this change puts it back.';
+    const noteWatch = () => {
+        const watch = genToolWatch();
+        watch.noteFiles = [{ name: 'The Good Shepherd' } as any];
+        return watch;
+    };
+
+    test('is handed back once, saying to make it or say it was not done', () => {
+        const watch = noteWatch();
+        expect(checkClaimsUnmadeNoteChange(CLAIM, watch)).toBe(true);
+        // The elder run's 2-19: a new note said to be made, none made.
+        expect(
+            checkClaimsUnmadeNoteChange(
+                'I\'ve created a new note for you called "Ruth and Naomi Outline".',
+                noteWatch(),
+            ),
+        ).toBe(true);
+        expect(findAnswerShapeNudge(CLAIM, watch)?.nudge).toBe(
+            NOTE_CLAIM_NUDGE,
+        );
+        watch.isShapeNudged = true;
+        expect(findAnswerShapeNudge(CLAIM, watch)).toBeNull();
+    });
+
+    test('is no claim when a change, a new note or an undo was made', () => {
+        const changed = noteWatch();
+        applyToolWatch(
+            changed,
+            'owa_note_edit',
+            { action: 'edit' },
+            JSON.stringify({
+                name: 'The Good Shepherd',
+                isChanged: true,
+                undoId: '20261109-1',
+                summary: 'blocks: 1 added',
+            }),
+        );
+        expect(checkClaimsUnmadeNoteChange(CLAIM, changed)).toBe(false);
+        const stepped = noteWatch();
+        applyToolWatch(
+            stepped,
+            'owa_note_edit',
+            { action: 'undo' },
+            JSON.stringify({ isChanged: true, summary: 'one step back' }),
+        );
+        expect(
+            checkClaimsUnmadeNoteChange("I've put it back as it was.", stepped),
+        ).toBe(false);
+        // An undo that was refused stepped nothing.
+        const refused = noteWatch();
+        applyToolWatch(
+            refused,
+            'owa_note_edit',
+            { action: 'undo' },
+            'Nothing to undo.',
+        );
+        expect(
+            checkClaimsUnmadeNoteChange("I've put it back as it was.", refused),
+        ).toBe(true);
+    });
+
+    test('is no claim in an answer that only offers, or outside a note', () => {
+        expect(
+            checkClaimsUnmadeNoteChange(
+                'I cannot draw a picture of a sheep: the board draws boxes, ' +
+                    'words and arrows. Would you like a drawing of words?',
+                noteWatch(),
+            ),
+        ).toBe(false);
+        expect(checkClaimsUnmadeNoteChange(CLAIM, genToolWatch())).toBe(false);
+        expect(
+            checkClaimsUnmadeNoteChange(
+                'Shall I put the prayer at the end of the note?',
+                noteWatch(),
+            ),
+        ).toBe(false);
     });
 });
 

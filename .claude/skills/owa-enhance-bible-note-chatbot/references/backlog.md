@@ -508,12 +508,149 @@ was seen and what was done.
   Polish, Serbian and Xhosa all answered in their language, the first line
   bold and every undo kept (the late translation was not needed that time:
   held by tests).
+- **BN-50 — "Psalms 23:1" was no verse to a note** (2026-11-09, found
+  making the elder run's test note). `owa_bible_note add` with
+  `[^Psalms 23:1]` kept it as words, and `owa_note_edit` refused it as "no
+  installed Bible could read" it, while `owa_find_verse` read it: the note's
+  resolver was the Lookup's parser alone, which wants the Bible's own book
+  name (the KJV says "Psalm"). `resolveBibleItem` (`agentBibleHelpers.ts`,
+  shared with `owa_present_bible` and the Bibles list) now falls back to
+  the verse finder's reading (`parseLooseReference`: `resolveBookKey`,
+  Psalm/Psalms, a start only one book has, the English names under any
+  Bible, a bare chapter widened to its verses), loaded only when the parser
+  said no. Live: `[^Psalms 23:1]`, `[^1 Cor 13:4]` and `[^Psalms 23]` read
+  from the KJV in one edit, undone.
+- **BN-51 — the chatbot draws, and says only what it drew** (2026-11-09,
+  the user, with the Insert menu's **Excalidraw** circled: _make sure
+  chatbot can help drawing_). Asked for a drawing of the three points, the
+  window made one in one call (3 s); its own option **Make the drawing
+  larger** then sent `size` on the drawing's block -- a paragraph holding
+  the board's node, so the size reached no words and nothing changed --
+  and the answer said "I've made the drawing larger". It also offered
+  **Add a picture of a sheep**, which no tool can. Now a drawing takes what
+  changes IT (`agentNoteDrawingHelpers.ts`, `applyDrawingChange` in
+  `agentNoteBlockHelpers.ts`): `size` larger / smaller scales how large the
+  board draws it (the node's width and height), `background` fills its
+  boxes and `color` its lines (white words on a dark fill), new lines in
+  `text` draw it again keeping its colours, layout and scale, a first line
+  `layout: across` / `circle` / `center` lays it out left to right, round a
+  ring or round its first box (BN-15), and a drawing reads back as the
+  lines that draw it so a model can change one box. A drawing with
+  anything drawn by hand is coloured or sized, never drawn again (its pen
+  strokes would go), and font, styles, a px size or `words` on a drawing are
+  refused with what it takes. The summary says it the drawing's way
+  (`boxes green, drawing made larger`). The prompt says the board draws
+  boxes, words and arrows, never a picture of a thing -- say so and offer
+  one of words -- and options are only changes the tool can make.
+- **BN-53 — a change claimed that nothing made** (2026-11-09, the elder
+  run's drawing set). Four ways, one cause: the answer says what the person
+  hoped, not what the tool did. (1) _Draw a big star next to the important
+  bits_: Free's Nemotron called no tool and answered that it had added a
+  gold star, centred and larger -- an answer in a note ask that claims a
+  change while no edit changed the note, no note was made and no undo
+  stepped now goes back once (`checkClaimsUnmadeNoteChange`,
+  `NOTE_CLAIM_NUDGE`, beside the answer-shape nudges). (2) _Draw it going
+  across not down_: the drawing already was across (the model had laid
+  every drawing across), the edit changed nothing and answered "Nothing
+  was different", and the model said "I've updated the drawing" -- the
+  no-change answer now says _Tell them so -- never that you changed it_,
+  and the prompt draws top to bottom unless a timeline, a cycle or a
+  shape is asked for. (3) Options under a note answer repeated **Undo this
+  change** beside its own button: a note answer's options skipped the
+  de-duplication (`dropActionEchoReplies`). (4) _Put the 23rd psalm in
+  boxes_ removed the "Read Psalm 23:1 together" line nobody asked about,
+  and the boxes read `[Psalm 23:1]`: the prompt says never to remove a
+  block they did not ask to remove, and a verse token in a drawing's box
+  is its reference in words.
+- **BN-54 — a long conversation lost its note** (2026-11-09, the elder run).
+  A tab keeps its last 60 messages when it is saved and loaded; the
+  question that attached the note is how the tab knows it is about the
+  note, and after thirty-odd questions it was the one cut. Any reload
+  (here a source edit through the shared Vite; for a person, closing the
+  help window or the app) brought the tab back asking about the Bible
+  Reader: _can you see what i wrote in my lesson_ was answered "I cannot
+  see the text you have written". `trimSessionMessages`
+  (`chatSessionHelpers.ts`, on save and on load) keeps that question in
+  place of the oldest message while its files are still open -- the same
+  test as `findOpenFileAttachments`, a `fileClosedAt` after it letting it
+  go -- so a song's, a slide document's or a Resources file's long
+  conversation keeps its file too.
+- **BN-55 — a new lesson written over theirs** (2026-11-09, the elder run).
+  In the conversation about their Good Shepherd lesson, _Can you make me a
+  whole lesson about forgiveness_, _Write a Easter lesson for the adults_,
+  _write me a lesson about prayer for the youth group_ had the lesson's
+  fifteen blocks given the new lesson's words; _a short devotion about
+  Psalm 121_ and _I would like a lesson for Mothers Day_ were put at its
+  end -- 14 asks of the first 90 of category 2 -- and a greeting had a
+  misspelt line corrected unasked. The prompt now says to change the note
+  only when the words ask for something in it (a mistake noticed is an
+  option), that words written FOR this lesson go into it, and that a
+  lesson on another subject or for another group is a NEW note; asked
+  after that, six still went into the note, so a typed ask for a lesson
+  of its own also carries `NOTE_NEW_LESSON_HINT` (`checkIsNewLessonAsk`, a
+  writing word before "a" / "new" lesson, devotion or outline: 23 of the
+  corpus's 29 new-lesson asks, none of its other 571 lines). And the
+  greetings that changed the note: a line that greets or asks, with no word
+  asking for anything done to the note, carries `NOTE_QUESTION_HINT` --
+  answer and change nothing, offer a change as an option
+  (`checkIsNoteQuestionOnly`: on 64 of the corpus's 189 answers, none of its
+  248 changes).
+- **BN-56 — a tick on an item that has none** (2026-11-09, the elder run).
+  _Tick the first question I already asked it last week_ on the lesson's
+  numbered questions sent `{block: 12, checked: true}` twice; only a check
+  item has a tick, so nothing changed, the tool said so, and the answer told
+  the person it was already ticked. A `checked` on a numbered or bulleted
+  item or a line now makes it a check item, ticked (`made check, ticked`).
+- **BN-57 — a worry answered with another change** (2026-11-09, the elder
+  run, category 6). Right after a change, _the letters went all big
+  suddenly i dont know what i did_ and _everything is blue now how do i
+  make it normal again_ were answered with Clear Formatting on all fifteen
+  blocks -- the headings made plain lines; _help the whole page is in the
+  middle now_ with every block aligned left; _I had a line about bringing
+  pictures and now it's not there_ and _Why my title is disappear?_ with an
+  explanation and an offer; and _it change by itself, I not touch
+  anything_, with nothing changed, with lines "put back" that had never
+  been there. 7 of the first 37. The prompt now says: when they say a
+  change was wrong, something is gone, looks strange or changed by itself,
+  put it back with `undo`, one step a change, never a new change that only
+  looks like it, and say it is back; with no change made in the
+  conversation, change nothing and ask what looks different.
+- **BN-58 — a messy note formatted** (2026-11-09, the user: _formatting
+  document is the most needed, imagine user made a messy content then ask
+  chatbot to do reformating … when bible-note attached to the chatbot it
+  should provide the option to format content_). Three messy lessons on a
+  scratch profile -- labels as lines, references in words, three
+  questions on one line, all capitals, one run-on paragraph. Before:
+  **Tidy it into headings and lists** took five calls on gemma4:cloud and
+  left the questions line whole as one bullet with two of its questions
+  added again beside it; the run-on paragraph took seven, every one
+  refused, and no answer. Two things the tool could not take that a model
+  writes: one block made several (a block cannot take fewer of its own
+  words with another kind), and a rewrite -- the old block removed, the new
+  ones added `after: 0, 1, 2 …` as they will stand (a new block cannot go
+  after a removed one, nor after a number past the end). Now
+  (`agentNoteMarkupHelpers.ts`, `applyNoteEdit`): a block given a list
+  kind or `section` and its words as lines becomes a block a line
+  (`expandBlockSplits`); new blocks after a removed block take its place
+  (removes run last); a run numbered as it will stand follows the new
+  block before it (`chainRewriteAdds`, `chain` an app mark a model cannot
+  set); a block made a heading with its parts after it is judged keeping
+  its words across them; and a new block whose words are part of a block
+  the call keeps is refused with the split shown. The prompt's FORMATTING
+  recipe (title h1, parts h2 in normal case, items split, a reference in
+  words a verse token, capitals to normal case, a reminder bold, every
+  word kept) and `NOTE_FORMAT_HINT` on a format ask; the card's fifth
+  button is **Format it so it is neat and easy to read** (every language,
+  87 dictionaries, versions raised, packed). After, each of the three in
+  ONE call, 3-5 s, on gemma4:cloud: the lessons headed and listed, the
+  questions split, Luke 15:4-7 and Matthew 6:6 verse chips, only
+  connecting words ("first", "then") and a reference's "verse" dropped.
 
 ## Open
 
-- **BN-15 — a drawing in another layout.** Boxes are laid out in rows from
-  the arrows; a person may want a left-to-right flow or a cycle drawn round.
-  A `layout` word in the drawing's text could say so.
+- ~~**BN-15 — a drawing in another layout.**~~ Done 2026-11-09 with BN-51:
+  a first line `layout: across`, `circle` or `center` in the drawing's
+  text, kept in its scene so it holds when drawn again.
 - **BN-32 — a native speaker's read of the shortcut words and little
   words.** BN-31's phrases and BN-33's additions were written without native
   speakers, like the dictionaries. The harm to look for -- a word that is
@@ -532,6 +669,20 @@ was seen and what was done.
   language) or Fijian (it bolded a word in two lines). The window cannot
   know which meaning was meant; a native ear on these languages' samples
   (BN-32) and a model that knows them are what is left.
+- **BN-59 — what the elder corpus still fails** (2026-11-09, 6 of 599 after
+  the re-ask). The projector from a note conversation: _I want the verse to
+  come up on the projector when we read it together_ and _show the
+  questions one by one on the screen_ put a passage and collapsible blocks
+  into the note -- a note conversation has no tool that presents, and the
+  answer should say how (the Bible Reader's or the Presenter's own way);
+  _can you print the children version separate_ made a new note (printing
+  is the note window's Print); _write a short paragraf to explain the Lords
+  Prayer … to teach it to the new believers_ went into this note where a
+  new note was expected (no lesson word for `checkIsNewLessonAsk` to read);
+  and two bare follow-ups -- _yes please_ under an offer to write a closing
+  prayer, _yes_ under another -- did not do what the answer above offered.
+  Not yet: a note ask that names the projector or the screen carrying a
+  hint, and a bare yes under an offer asked as that offer.
 - **BN-19 — a note attached but not yet asked about is lost on a reload.**
   The attachment waits in the box (a row's Open in Chatbot's too); a reload
   of the help window -- or closing it -- drops it, and the tab goes back to

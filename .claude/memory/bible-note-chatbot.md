@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 8967596b-2584-4afe-ba62-f2d3bcebd2f7
-  modified: 2026-11-09T03:14:47.323Z
+  modified: 2026-11-09T16:48:56.525Z
 ---
 
 A Bible note conversation (2026-11-07, W-60, PL-110 / CB-169) is about ONE note
@@ -213,6 +213,39 @@ What is not obvious from the code:
 words is refused (meant as a change to it) unless it says `again: true` --
 refused twice with no way out, a model told the person the line was added.
 And **Undo this change** had been inside the firewall's removal ration (10 per 5 minutes): a harness pressing it every 15-20 s had 27 of 75 refused while counting them done. Fixed the same day (BN-46): an undo of the session's own non-removing change is no removal (`genOwnChangeMemory`), and 176 undos of the next run all held. Grade an undo by the note or the backups' `Undid` entries, never by a new line in the chat.
+
+2026-11-09, the elder corpus (the user's story: _as an elderly church
+member, I don't know technical work much but I need chatbot help me prepare
+lesson_, goal ~500 questions; BN-50..BN-54). Six hundred things such a person
+types, written by a reader told only the person and the note
+(`references/elder-asks.json`, `run-elder-asks.mjs`). What a long run of it
+taught: (1) **a tab cut to 60 messages lost its note** on the next reload --
+the question that attached it went first -- so every later ask was a Reader
+ask ("I cannot see what you wrote"); the harness now marks an ask with no
+`owa_note_edit` call `not-note-ask` and re-attaches, and `trimSessionMessages`
+keeps that question (BN-54). (2) **The spend guard paces a run**: 150 model
+calls an hour per profile, and its **Allow more** is the person's press,
+never a script's (not even with the caution allowed) -- split the corpus over
+profiles (`--every=3 --offset=k`) and pace each (`--pace=55` asks an hour).
+(3) **The drawing** (the user, with Insert → Excalidraw circled: _make sure
+chatbot can help drawing_): a `size` on a drawing's block had changed
+nothing while the answer said larger -- a drawing now takes size, colours,
+new lines and a layout of its own (BN-51); and a model told about `layout:
+across` laid every drawing across until the prompt said top to bottom unless
+asked. (4) The elder answers that fail are mostly CLAIMS -- a picture said to
+be drawn, an unchanged drawing said to be updated -- held back by
+`NOTE_CLAIM_NUDGE` (BN-53). (5) `[^Psalms 23:1]` was no verse to a note while
+`owa_find_verse` read it (BN-50). (6) **Formatting a messy note** (the user:
+_formatting document is the most needed_, BN-58): a model reformats the way
+a person rewrites -- the old block removed and the new ones added `after: 0,
+1, 2 …` numbered as they WILL stand, or a paragraph made the title with its
+parts added after it. The tool had refused both (an add after a removed
+block, a number past the end, a block losing words to a heading) and the
+model went round seven times to no answer; it now reads them
+(`chainRewriteAdds`, removes last, the words judged across the blocks after
+it) and splits a block given lines with a list kind or `section`. Read what
+a model WRITES before teaching it a new field -- each of three messy notes
+then went in one call.
 
 Verified live on a scratch dev profile ([[scratch-dev-instance-beside-user-app]]),
 the AI caution's Open pressed over the scratch instance's own CDP after the

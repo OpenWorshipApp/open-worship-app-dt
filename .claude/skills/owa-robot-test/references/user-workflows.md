@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-09c** (**W-60 — Undo always there, options in any language.** **Undo this change** puts a change back however many were undone just before -- it had been refused after ten in five minutes. The buttons under an answer are buttons in any language, also when the assistant names them in the person's own word for options; and an answer that came back in English when another language was asked for is put into it, or says it could not be. Seen live 2026-11-09 on three scratch development profiles: _make the text bigger_ done by the window in 82 languages, _make the first line bold_ in all 87 -- 81 with the first line bold, nothing else touched and the answer in the language -- and 176 presses of **Undo this change**, every one putting the note back. CB-169.)
+**workflowsVersion: 2026-11-09d** (**W-60 — formatting a messy note, drawing, and a lesson prepared by asking.** The card a note opens with offers **[en:tran:Format it so it is neat and easy to read]**: a messy note -- parts written as plain lines, questions run together on one line, a reference written in words, lines in capitals, one long paragraph -- is made a tidy one in one change, its words kept. A drawing (Insert → **Excalidraw**) is described in words and can be laid out across, round a circle or round one box, made bigger, its boxes coloured and drawn again with a box added; asked for a picture of a thing, the assistant says it cannot draw one. A lesson on another subject goes into a new note, never over this one; a hello or a question changes nothing; a worry right after a change is put back with Undo. Seen live 2026-11-09 on scratch development profiles: 600 things an elderly, non-technical church member types while preparing a lesson, 593 of 599 graded done as asked; three messy lessons each formatted in one change. CB-169.)
+
+Previous: **workflowsVersion: 2026-11-09c** (**W-60 — Undo always there, options in any language.** **Undo this change** puts a change back however many were undone just before -- it had been refused after ten in five minutes. The buttons under an answer are buttons in any language, also when the assistant names them in the person's own word for options; and an answer that came back in English when another language was asked for is put into it, or says it could not be. Seen live 2026-11-09 on three scratch development profiles: _make the text bigger_ done by the window in 82 languages, _make the first line bold_ in all 87 -- 81 with the first line bold, nothing else touched and the answer in the language -- and 176 presses of **Undo this change**, every one putting the note back. CB-169.)
 
 Previous: **workflowsVersion: 2026-11-09b** (**W-60 — every language checked live, a line said twice, a language installed mid-conversation.** The same ask -- a line added at the end, in words of the language -- was put in all 87 installed languages on scratch development profiles (the free tier, and the shared gemma4:cloud it handed on to while the free tier's credit was out): every one added the line exactly as typed in one change, and answered in the language once its package knew its own words for _add_, _at the end_ and _make_ (22 languages had lacked them). A line the note already has is added again when asked -- it had been refused, and the assistant had then said it was added. A language installed while the help window is open is taken by it: the window loads again as soon as nothing is on its way, keeping the conversation, so its own shortcuts work at once (Thai _ขยายตัวอักษร_ done by the window right after Thai was installed). Khmer's _ដាក់អ្វីៗទាំងអស់នៅកណ្ដាល_ and _ប្រើ Georgia សម្រាប់កំណត់ត្រាទាំងមូល_ are done by the window, as the page says; and the whole manual is in Khmer and French, every page current. CB-169.)
 
@@ -3242,8 +3244,12 @@ row's own **[en:tran:Delete]**.
    - **[en:tran:Check the spelling]** fixes only what is misspelt and says what it fixed.
    - **[en:tran:Summarize this note]** sums the note up in the chat; nothing in the note
      changes.
-   - **[en:tran:Tidy it into headings and lists]** makes its points headings and the lines
-     under them list items, its words kept.
+   - **[en:tran:Format it so it is neat and easy to read]** turns a messy note into a
+     tidy one in one change, its words kept: the title a heading, the parts (points,
+     prayer, questions) headings of their own, points or questions run together on
+     one line one item each, a reference written in words (_luke 15 verse 4 to 7_) a
+     verse, lines in capitals in normal case and a reminder in bold. _My note is
+     messy, can you tidy it up?_ does the same.
    - Text size: _Make the words larger_ (or _make text bigger_), _make the words smaller_
      and _make the words 20 px_ change every part of the note at once, each part
      keeping its size against the others (a heading stays larger than its lines). The
@@ -3265,8 +3271,16 @@ row's own **[en:tran:Delete]**.
      its link, a picture or a file by its link or its place on this computer, and a
      person or place from the names lookup (_mention Moses in the first line_). _Undo
      that_ and _redo it_ step back and forward through what the note has kept. A
-     drawing is described in words, a box a line and an arrow as _A -> B_ (_add a drawing:
-     God -> Man, Man -> Sin_); _link the heading to the prayer_ joins the words of two
+     drawing (the Insert menu's **Excalidraw**) is described in words, a box a line and an
+     arrow as _A -> B_ (_make a drawing of my three points with arrows_, _draw a timeline
+     from creation to Jesus_, _a circle drawing: the sheep wanders off, the shepherd goes
+     looking, the sheep is found_); it is drawn top to bottom, or across, round a circle or
+     round one box in the middle when asked. A drawing already in the note can be made
+     bigger or smaller, its boxes coloured (_colour the boxes green_), centred, moved or
+     taken out, and drawn again with a box added or its words changed (_add one more box
+     saying The shepherd finds the lost one_). The board draws boxes, words and arrows --
+     asked for a picture of a thing (a sheep, a cross), the assistant says it cannot draw
+     one and offers a drawing of words. _link the heading to the prayer_ joins the words of two
      parts as the editor's Link block text does; _show the invisible characters_ turns
      on the **¶**; _put the editor's example in_ adds its sample study note; a code block
      takes a language (_make it Python_) and a colour theme. A style for the whole note
@@ -3292,8 +3306,9 @@ row's own **[en:tran:Delete]**.
    - _list me more options_ shows the card and its buttons again.
 4. The answer says what changed. Only the parts asked about are rewritten: the rest of the
    note — its headings, lists, verse mentions, tables, pictures, drawings and sticky notes —
-   stays exactly as it was. A table, picture, drawing, sticky note or passage can be moved or
-   taken out, never rewritten. The change is **not saved yet**; a Bible Note window that is
+   stays exactly as it was. A table, picture, sticky note or passage can be moved or taken
+   out, never rewritten; a drawing the assistant made can also be drawn again, and one you
+   drew by hand only coloured, sized or moved. The change is **not saved yet**; a Bible Note window that is
    open on the note shows it at once. **[en:tran:Undo this change]** under the answer puts it
    back, and **[en:tran:Show it in the list]** finds its row. Words you typed to go into the
    note go in letter for letter as you typed them. If the assistant changes the note and

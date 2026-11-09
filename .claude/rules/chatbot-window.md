@@ -415,7 +415,10 @@ the record's chat, family line, related verses, word study).
     (`findWindowDoneCardAsk`, BN-16); an options line under a marker word of the person's OWN language (_Opcje:_) is read by its shape -- the last line, one to three words and a colon, two to five items between `|`, never another frame or a list (2026-11-09, BN-47);
     failing that, the answer's trailing yes/no or either-or question, then the
     nearest corpus questions (`genFollowUpQuestions`). LAST message only,
-    never duplicating an action button, both rows capped at 5. An option
+    never duplicating an action button -- an answer that is not an app
+    question (a note's, a song's) too, through `dropActionEchoReplies`
+    (2026-11-09, BN-53: a note answer drew **Undo this change** as its
+    button and again as an option) -- both rows capped at 5. An option
     loses the quote marks a model put round it, and two things are not
     options at all (`toReplyList`, 2026-10-12, a local model's chips): one
     that says there is none (_No options available_, drawn as a button

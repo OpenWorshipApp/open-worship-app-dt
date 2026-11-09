@@ -682,6 +682,49 @@ function toValidMessage(raw: any): ChatMessageType | null {
     };
 }
 
+/**
+ * A tab's last `MAX_MESSAGE_COUNT` messages -- and, in place of the oldest
+ * of them, the question that attached the files the tab is still about when
+ * it would be cut (BN-54, 2026-11-09, the elder run: a lesson asked about
+ * thirty-odd times in one tab came back from a reload asking about the
+ * Bible Reader, the note gone from it -- the question that carried the
+ * note was the 61st from the end). The same test as
+ * `findOpenFileAttachments`: the last question with a file, unless the
+ * tab closed its files after it (`fileClosedAt`).
+ */
+export function trimSessionMessages<
+    T extends {
+        id: number;
+        author: string;
+        attachments?: ChatAttachmentType[];
+    },
+>(messages: readonly T[], closedAfterId?: number): T[] {
+    const kept = messages.slice(-MAX_MESSAGE_COUNT);
+    if (kept.length === messages.length) {
+        return kept;
+    }
+    for (let index = messages.length - 1; index >= 0; index--) {
+        const message = messages[index];
+        const hasFile =
+            message.author === 'you' &&
+            (message.attachments ?? []).some((attachment) => {
+                return (
+                    attachment.kind !== 'element' &&
+                    attachment.filePath !== undefined &&
+                    attachment.window === undefined
+                );
+            });
+        if (!hasFile) {
+            continue;
+        }
+        const isKept = index >= messages.length - MAX_MESSAGE_COUNT;
+        const isClosed =
+            closedAfterId !== undefined && message.id <= closedAfterId;
+        return isKept || isClosed ? kept : [message, ...kept.slice(1)];
+    }
+    return kept;
+}
+
 function toValidSession(raw: any): ChatSessionType | null {
     if (typeof raw?.id !== 'string' || !Array.isArray(raw.messages)) {
         return null;
@@ -690,12 +733,14 @@ function toValidSession(raw: any): ChatSessionType | null {
         id: raw.id,
         title:
             typeof raw.title === 'string' ? toChatSessionTitle(raw.title) : '',
-        messages: raw.messages
-            .map(toValidMessage)
-            .filter((message: ChatMessageType | null) => {
-                return message !== null;
-            })
-            .slice(-MAX_MESSAGE_COUNT),
+        messages: trimSessionMessages(
+            raw.messages
+                .map(toValidMessage)
+                .filter((message: ChatMessageType | null) => {
+                    return message !== null;
+                }),
+            Number.isInteger(raw.fileClosedAt) ? raw.fileClosedAt : undefined,
+        ),
         draft: typeof raw.draft === 'string' ? raw.draft : '',
         focus: toBotFocus(raw.focus),
         isFocusChosen: raw.isFocusChosen === true,
@@ -781,7 +826,10 @@ export function saveChatSessions(state: ChatSessionStateType) {
     const sessions = state.sessions.slice(-MAX_SESSION_COUNT).map((session) => {
         return {
             ...session,
-            messages: session.messages.slice(-MAX_MESSAGE_COUNT),
+            messages: trimSessionMessages(
+                session.messages,
+                session.fileClosedAt,
+            ),
         };
     });
     setSetting(

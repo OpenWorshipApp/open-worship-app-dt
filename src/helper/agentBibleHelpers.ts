@@ -199,14 +199,14 @@ async function parseReference(bibleKey: string, reference: string) {
     }
     const chapterOnly = CHAPTER_ONLY_PATTERN.exec(reference);
     if (chapterOnly === null) {
-        return null;
+        return parseLooseReference(bibleKey, reference);
     }
     const first = await BibleItem.fromTitleText(
         bibleKey,
         `${chapterOnly[1]} ${chapterOnly[2]}:1`,
     );
     if (first === null) {
-        return null;
+        return parseLooseReference(bibleKey, reference);
     }
     const { bookKey, chapter } = first.target;
     const verseCount = await getVersesCount(bibleKey, bookKey, chapter);
@@ -218,6 +218,58 @@ async function parseReference(bibleKey: string, reference: string) {
             bibleKey,
             `${chapterOnly[1]} ${chapterOnly[2]}:1-${verseCount}`,
         )) ?? first
+    );
+}
+
+/**
+ * A reference the app's parser refuses, read the way `owa_find_verse` reads
+ * one (`resolveBookKey`): "Psalms 23:1" -- the KJV calls the book "Psalm"
+ * --, a book named in the English way under another Bible, a start of a
+ * name only one book has ("1 Cor 13"). 2026-11-09, BN-50: a note's
+ * `[^Psalms 23:1]` was refused as "no installed Bible could read" it, and a
+ * new note kept it as words, while the verse finder read it. Loaded only
+ * here, when the parser has already said no.
+ */
+async function parseLooseReference(bibleKey: string, reference: string) {
+    const [
+        { checkVerseFitsChapter, parseRefParts, resolveBookKey, toVerseKey },
+        { getBibleInfo },
+        { kjvBibleModelInfo },
+    ] = await Promise.all([
+        import('./bibleVerseFindHelpers'),
+        import('./bible-helpers/bibleInfoHelpers'),
+        import('./bible-helpers/bibleModelHelpers'),
+    ]);
+    const parts = parseRefParts(reference);
+    if (parts === null) {
+        return null;
+    }
+    const info = await getBibleInfo(bibleKey).catch(() => {
+        return null;
+    });
+    const bookKey = resolveBookKey(parts.book, [
+        info?.keyBookMap ?? {},
+        kjvBibleModelInfo.keyBookMap,
+    ]);
+    if (bookKey === null) {
+        return null;
+    }
+    const verseCount = await getVersesCount(bibleKey, bookKey, parts.chapter);
+    if (verseCount === null) {
+        return null;
+    }
+    if (parts.verseStart === null) {
+        return BibleItem.fromVerseKey(
+            bibleKey,
+            toVerseKey(bookKey, parts.chapter, 1, verseCount),
+        );
+    }
+    if (!checkVerseFitsChapter(verseCount, parts.verseStart, parts.verseEnd)) {
+        return null;
+    }
+    return BibleItem.fromVerseKey(
+        bibleKey,
+        toVerseKey(bookKey, parts.chapter, parts.verseStart, parts.verseEnd),
     );
 }
 

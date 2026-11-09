@@ -14,6 +14,7 @@ vi.mock('./questionHelpers', () => ({
 import {
     checkIsDraftEcho,
     checkIsWalkthroughEcho,
+    dropActionEchoReplies,
     genMessageReplies,
     genQuickReplies,
     parseAnswerFrames,
@@ -792,5 +793,26 @@ describe('a removal is never a chip', () => {
             'Done.\n\nOPTIONS: Clear the search box | Show me',
         );
         expect(options).toEqual(['Clear the search box', 'Show me']);
+    });
+});
+
+// BN-53 (2026-11-09, the elder run): a Bible note answer drew **Undo this
+// change** twice -- its button, and the model's option of the same words --
+// because a note answer's options skip `genMessageReplies`.
+describe('dropActionEchoReplies', () => {
+    test('drops an option that repeats an action button, whatever its case', () => {
+        expect(
+            dropActionEchoReplies(
+                [
+                    'Undo this change',
+                    'Make the drawing larger',
+                    'undo this change.',
+                ],
+                ['Undo this change', 'Show it in the list'],
+            ),
+        ).toEqual(['Make the drawing larger']);
+        expect(dropActionEchoReplies(['Add a verse'], [])).toEqual([
+            'Add a verse',
+        ]);
     });
 });

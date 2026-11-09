@@ -4,7 +4,7 @@
     "window": "bibleNote.html",
     "focus": "bibleNote",
     "description": "The window a Bible note is written in. It opens on its own from the Notes list and belongs to one note file.",
-    "updated": "2026-11-07",
+    "updated": "2026-11-09",
     "sections": [
         {
             "id": "writing",

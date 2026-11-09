@@ -118,6 +118,8 @@ export type NoteInsertContextType = {
     genId?: () => string;
     // The editor's Default Example, read by the app only when asked for.
     exampleNodes?: NodeType[];
+    // A new drawing's box fill and line colour (BN-51).
+    drawing?: { fill?: string; stroke?: string };
 };
 
 export type NoteInsertResultType =
@@ -657,6 +659,8 @@ export function genNoteInsertNode(
             const drawing = genNoteDrawingNode(text, {
                 now: context.now,
                 genId: context.genId,
+                fill: context.drawing?.fill,
+                stroke: context.drawing?.stroke,
             });
             // The board's drawing is an INLINE object: the editor keeps it in
             // a paragraph, and one left at the top was wrapped by an open
