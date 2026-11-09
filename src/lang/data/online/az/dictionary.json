@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Səliqəli və oxunması asan olsun deyə formatla",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Bir dəyişikliklə edildi: “{name}” qeydinin {count} blokunun sözlərinin yeni ölçüsü var. Hələ saxlanmayıb: qeyd pəncərəsindəki Saxla onu saxlayır, Bu dəyişikliyi geri al isə geri qaytarır.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Bir dəyişikliklə edildi: “{name}” qeydinin {count} blokunun sözlərinin yeni üslubu var. Hələ saxlanmayıb: qeyd pəncərəsindəki Saxla onu saxlayır, Bu dəyişikliyi geri al isə geri qaytarır.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” dəyişdirildi, amma köməkçi nə etdiyini deməmiş dayandı. Bu dəyişikliyi geri al onu geri qaytarır."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” dəyişdirildi, amma köməkçi nə etdiyini deməmiş dayandı. Bu dəyişikliyi geri al onu geri qaytarır.",
+    "Reply": "Cavab ver",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Bu cavaba cavab verin. Yalnız bəzi sözlərinə cavab vermək üçün əvvəlcə onları seçin.",
+    "Replying to your answer": "Cavabınızla bağlı",
+    "Replying to this part of your answer": "Cavabınızın bu hissəsi ilə bağlı"
 }

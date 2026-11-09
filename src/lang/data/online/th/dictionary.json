@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "จัดรูปแบบให้เรียบร้อยและอ่านง่าย",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "เสร็จในการเปลี่ยนครั้งเดียว: คำใน {count} ส่วนของ “{name}” มีขนาดใหม่แล้ว ยังไม่ได้บันทึก: บันทึกในหน้าต่างบันทึกจะเก็บไว้ และ เลิกทำการเปลี่ยนนี้ จะคืนค่าเดิม",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "เสร็จในการเปลี่ยนครั้งเดียว: คำใน {count} ส่วนของ “{name}” มีรูปแบบใหม่แล้ว ยังไม่ได้บันทึก: บันทึกในหน้าต่างบันทึกจะเก็บไว้ และ เลิกทำการเปลี่ยนนี้ จะคืนค่าเดิม",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ถูกเปลี่ยนแล้ว แต่ผู้ช่วยหยุดไปก่อนที่จะบอกว่าทำอะไร เลิกทำการเปลี่ยนแปลงนี้ จะนำกลับคืนมา"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ถูกเปลี่ยนแล้ว แต่ผู้ช่วยหยุดไปก่อนที่จะบอกว่าทำอะไร เลิกทำการเปลี่ยนแปลงนี้ จะนำกลับคืนมา",
+    "Reply": "ตอบกลับ",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ตอบกลับคำตอบนี้ หากต้องการตอบกลับเฉพาะบางคำ ให้เลือกคำเหล่านั้นก่อน",
+    "Replying to your answer": "ตอบกลับคำตอบของคุณ",
+    "Replying to this part of your answer": "ตอบกลับส่วนนี้ของคำตอบของคุณ"
 }

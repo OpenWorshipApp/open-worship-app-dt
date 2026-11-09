@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Ձևավորիր այն կոկիկ և հեշտ ընթեռնելի",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Արված է մեկ փոփոխությամբ՝ «{name}»-ի {count} հատվածի բառերն ունեն նոր չափ։ Այն դեռ պահված չէ՝ նշման պատուհանի Պահել կոճակը կպահի այն, իսկ Չեղարկել այս փոփոխությունը կվերադարձնի այն։",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Արված է մեկ փոփոխությամբ՝ «{name}»-ի {count} հատվածի բառերն ունեն նոր ոճ։ Այն դեռ պահված չէ՝ նշման պատուհանի Պահել կոճակը կպահի այն, իսկ Չեղարկել այս փոփոխությունը կվերադարձնի այն։",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}»-ը փոխվեց, բայց օգնականը կանգ առավ՝ մինչ կասեր, թե ինչ արեց։ Հետարկել այս փոփոխությունը այն վերադարձնում է։"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}»-ը փոխվեց, բայց օգնականը կանգ առավ՝ մինչ կասեր, թե ինչ արեց։ Հետարկել այս փոփոխությունը այն վերադարձնում է։",
+    "Reply": "Պատասխանել",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Պատասխանել այս պատասխանին։ Միայն դրա որոշ բառերին պատասխանելու համար նախ ընտրեք դրանք։",
+    "Replying to your answer": "Ձեր պատասխանի վերաբերյալ",
+    "Replying to this part of your answer": "Ձեր պատասխանի այս մասի վերաբերյալ"
 }

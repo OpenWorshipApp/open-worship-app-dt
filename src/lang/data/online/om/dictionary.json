@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Akka qulqulluu fi dubbisuuf salphaa ta’uuf qindeessi",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Jijjiirama tokkoon raawwatame: jechoonni kutaalee {count} “{name}” hammeenya haaraa qabu. Ammaaf hin olkaa'amne: Olkaa'i foddaa yaadannoo keessaa ni olkaa'a, Jijjiirama kana haqi immoo deebisa.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Jijjiirama tokkoon raawwatame: jechoonni kutaalee {count} “{name}” akkaataa haaraa qabu. Ammaaf hin olkaa'amne: Olkaa'i foddaa yaadannoo keessaa ni olkaa'a, Jijjiirama kana haqi immoo deebisa.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” jijjiirameera, garuu gargaaraan waan godhe osoo hin dubbatin dhaabbate. Jijjiirama kana deebisi deebisa."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” jijjiirameera, garuu gargaaraan waan godhe osoo hin dubbatin dhaabbate. Jijjiirama kana deebisi deebisa.",
+    "Reply": "Deebii kenni",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Deebii kana irratti deebii kennaa. Jechoota isaa muraasa qofaaf deebii kennuuf, dura isaan filadhaa.",
+    "Replying to your answer": "Waa'ee deebii keessanii",
+    "Replying to this part of your answer": "Waa'ee kutaa deebii keessanii kanaa"
 }

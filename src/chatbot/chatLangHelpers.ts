@@ -145,9 +145,14 @@ type AssistantLanguageFileType = {
     // copy, another Bible, the Bible Lookup, the previous / next chapter,
     // and the verbs that ask to SEE the passage (2026-10-19). `lineage` and
     // `jesus` are how a question asks for a family line to Jesus, answered
-    // from the Bible's own genealogies (2026-10-19, EC-369).
+    // from the Bible's own genealogies (2026-10-19, EC-369). `notCard`
+    // names what a line is about when it is NOT the passage or the card's
+    // Bibles list -- a Bible note (a `.own` document), a file, the lesson,
+    // the answer: such a line is the conversation's, never a card button
+    // (2026-11-09).
     lookupWords?: {
         save?: string[];
+        notCard?: string[];
         copy?: string[];
         anotherBible?: string[];
         openLookup?: string[];
@@ -309,6 +314,7 @@ export type AssistantLanguageType = {
     // language that does not say.
     lookupWords: {
         save: string[];
+        notCard: string[];
         copy: string[];
         anotherBible: string[];
         openLookup: string[];
@@ -457,6 +463,7 @@ function toLanguage(
         },
         lookupWords: {
             save: file.lookupWords?.save ?? [],
+            notCard: file.lookupWords?.notCard ?? [],
             copy: file.lookupWords?.copy ?? [],
             anotherBible: file.lookupWords?.anotherBible ?? [],
             openLookup: file.lookupWords?.openLookup ?? [],

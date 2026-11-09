@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "اسے صاف ستھرا اور پڑھنے میں آسان بناؤ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ایک تبدیلی میں ہو گیا: “{name}” کے {count} حصوں کے الفاظ کا نیا سائز ہے۔ یہ ابھی محفوظ نہیں ہوا: نوٹ ونڈو میں محفوظ کریں اسے رکھتا ہے، اور یہ تبدیلی کالعدم کریں اسے واپس لاتا ہے۔",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ایک تبدیلی میں ہو گیا: “{name}” کے {count} حصوں کے الفاظ کا نیا انداز ہے۔ یہ ابھی محفوظ نہیں ہوا: نوٹ ونڈو میں محفوظ کریں اسے رکھتا ہے، اور یہ تبدیلی کالعدم کریں اسے واپس لاتا ہے۔",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” بدل دیا گیا، لیکن معاون یہ بتانے سے پہلے رک گیا کہ اس نے کیا کیا۔ یہ تبدیلی واپس لیں اسے پہلے جیسا کر دیتا ہے۔"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” بدل دیا گیا، لیکن معاون یہ بتانے سے پہلے رک گیا کہ اس نے کیا کیا۔ یہ تبدیلی واپس لیں اسے پہلے جیسا کر دیتا ہے۔",
+    "Reply": "جواب دیں",
+    "Reply to this answer. Select some of its words first to reply to just them.": "اس جواب کا جواب دیں۔ صرف اس کے کچھ الفاظ کا جواب دینے کے لیے پہلے وہ الفاظ منتخب کریں۔",
+    "Replying to your answer": "آپ کے جواب کے بارے میں",
+    "Replying to this part of your answer": "آپ کے جواب کے اس حصے کے بارے میں"
 }

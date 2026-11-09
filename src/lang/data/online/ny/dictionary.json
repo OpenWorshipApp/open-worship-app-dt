@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Chikonze kuti chikhale chaudongo komanso chosavuta kuwerenga",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Zachitika mu kusintha kumodzi: mawu a zigawo {count} za “{name}” ali ndi kukula kwatsopano. Sizinasungidwe pano: Sungani pa zenera la cholembacho zimasunga, ndipo Bwezerani kusinthaku zimabweza.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Zachitika mu kusintha kumodzi: mawu a zigawo {count} za “{name}” ali ndi kalembedwe katsopano. Sizinasungidwe pano: Sungani pa zenera la cholembacho zimasunga, ndipo Bwezerani kusinthaku zimabweza.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” yasinthidwa, koma wothandizira anaima asananene zimene anachita. Bwezerani kusinthaku kumabwezeretsa."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” yasinthidwa, koma wothandizira anaima asananene zimene anachita. Bwezerani kusinthaku kumabwezeretsa.",
+    "Reply": "Yankhani",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Yankhani yankho ili. Sankhani kaye mawu ena a yankholi kuti muyankhe mawuwo okha.",
+    "Replying to your answer": "Pa yankho lanu",
+    "Replying to this part of your answer": "Pa gawo ili la yankho lanu"
 }

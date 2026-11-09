@@ -169,6 +169,7 @@ import {
     toSelectionStepAsk,
     toValidSelectionStep,
 } from './selectionMentionHelpers';
+import { toAnswerQuoteText } from './answerQuoteHelpers';
 import type { SelectionMentionType } from '../helper/ai/chatbotHandoffStoreHelpers';
 import {
     FLOW_EDIT_TOOL_NAME,
@@ -2954,6 +2955,7 @@ function RenderMessageComp({
     onReply,
     onReuse,
     onRate,
+    onQuote,
     onAttachRequest,
     onShowAttachment,
 }: Readonly<{
@@ -2978,6 +2980,9 @@ function RenderMessageComp({
     onReuse: (text: string, attachments?: ChatAttachmentType[]) => void;
     // A thumb under an answer (`answerRatingHelpers`).
     onRate: (answerId: number, rating: AnswerRatingType) => void;
+    // The reply arrow: the answer, or the part of it selected, quoted in the
+    // box (`answerQuoteHelpers`).
+    onQuote: (quote: string) => void;
     onAttachRequest: (request: AttachRequestType) => void;
     onShowAttachment: (attachment: ChatAttachmentType) => void;
 }>) {
@@ -3016,6 +3021,49 @@ function RenderMessageComp({
         }
         onReuse(message.text, message.attachments);
     };
+    // The words selected in this answer, if any: read as the reply arrow is
+    // PRESSED (mouse down), before the press can move the selection, and
+    // only when it starts and ends in the answer's own words -- never in one
+    // of its buttons, never in another card.
+    const bodyRef = useRef<HTMLDivElement>(null);
+    const quotedSelectionRef = useRef<string | null>(null);
+    const readSelectedWords = () => {
+        const body = bodyRef.current;
+        const selection = window.getSelection();
+        if (
+            body === null ||
+            selection === null ||
+            selection.isCollapsed ||
+            selection.rangeCount === 0
+        ) {
+            return null;
+        }
+        const range = selection.getRangeAt(0);
+        const checkIsInWords = (node: Node) => {
+            const element = node instanceof Element ? node : node.parentElement;
+            return (
+                element !== null &&
+                body.contains(element) &&
+                element.closest('button') === null
+            );
+        };
+        if (
+            !checkIsInWords(range.startContainer) ||
+            !checkIsInWords(range.endContainer)
+        ) {
+            return null;
+        }
+        const words = selection.toString().trim();
+        return words.length > 0 ? words : null;
+    };
+    const handleQuoting = () => {
+        const selected = quotedSelectionRef.current ?? readSelectedWords();
+        quotedSelectionRef.current = null;
+        const quote = toAnswerQuoteText(message.text, selected);
+        if (quote !== null) {
+            onQuote(quote);
+        }
+    };
     return (
         // Focusable, so the card that was clicked stays marked (and the
         // button pressed in it): see `.cue` in the stylesheet.
@@ -3031,7 +3079,7 @@ function RenderMessageComp({
             >
                 {message.author === 'you' ? tran('You') : tran('Assistant')}
             </p>
-            <div className="cue-body">
+            <div className="cue-body" ref={bodyRef}>
                 {message.note === undefined ? null : (
                     // A note may be a marker code reads (`REPORT_NOTE`),
                     // stored English and put into words only here.
@@ -3205,7 +3253,29 @@ function RenderMessageComp({
                             {tran('Ask again')}
                         </button>
                     ) : (
-                        <RenderCopyButtonComp text={message.text} />
+                        <>
+                            <RenderCopyButtonComp text={message.text} />
+                            {/* Reply: the answer quoted in the box for a
+                                follow-up -- or, with words of it selected
+                                first, those words alone (a section). */}
+                            <button
+                                type="button"
+                                className="cue-tool cue-quote"
+                                title={tran(
+                                    'Reply to this answer. Select some of ' +
+                                        'its words first to reply to just ' +
+                                        'them.',
+                                )}
+                                aria-label={tran('Reply')}
+                                onMouseDown={() => {
+                                    quotedSelectionRef.current =
+                                        readSelectedWords();
+                                }}
+                                onClick={handleQuoting}
+                            >
+                                <i className="bi bi-reply" aria-hidden="true" />
+                            </button>
+                        </>
                     )}
                     {isAsked || message.isFollowUp === true ? null : (
                         // Two thumbs under every ANSWER, and under nothing
@@ -5482,6 +5552,38 @@ export default function ChatbotAppComp() {
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [activeSessionId, updateSession, addMessage],
+    );
+    // The reply arrow under an answer (2026-11-09, the user: _right next to
+    // the copy icon add reply icon, click reply to mention it in input
+    // text_; _as a user I want to be able to follow up a section_). The quote
+    // goes into the box of the tab in front, under whatever is already typed
+    // there, with the caret on the line under it -- nothing is asked: the
+    // follow-up is theirs to write. The same quote pressed twice is put in
+    // once (`appendSelectionMention`, the selection's own rule).
+    const handleQuotingAnswer = useCallback(
+        (quote: string) => {
+            const quotedSessionId = activeSessionId;
+            inputRef.current?.focus();
+            const draft =
+                sessionStateRef.current.sessions.find((session) => {
+                    return session.id === quotedSessionId;
+                })?.draft ?? '';
+            if (appendSelectionMention(draft, quote) === draft) {
+                return;
+            }
+            // The effect that sizes the box puts the caret at the end.
+            isCaretToEndRef.current = true;
+            updateSession(quotedSessionId, (session) => {
+                return {
+                    ...session,
+                    draft: appendSelectionMention(session.draft, quote),
+                };
+            });
+            // A quote is not a question to complete.
+            setIsSuggestDismissed(true);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [activeSessionId, updateSession],
     );
 
     // What one ask spends, folded into its tab round by round. Two totals
@@ -13395,6 +13497,7 @@ export default function ChatbotAppComp() {
                                     onReply={handleReplying}
                                     onReuse={handleReusing}
                                     onRate={handleRating}
+                                    onQuote={handleQuotingAnswer}
                                     onAttachRequest={handleAttachRequest}
                                     onShowAttachment={handleShowingAttachment}
                                 />

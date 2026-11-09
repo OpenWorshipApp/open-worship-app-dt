@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "U qaabee si ay u nadiif noqoto oo ay u fududaato akhriskeedu",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Waxaa lagu sameeyay hal beddel: erayada {count} qaybood ee “{name}” waxay leeyihiin cabbir cusub. Weli lama kaydin: Kaydi ee daaqadda qoraalka ayaa haya, Ka noqo beddelkan ayaana dib u celiya.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Waxaa lagu sameeyay hal beddel: erayada {count} qaybood ee “{name}” waxay leeyihiin qaab cusub. Weli lama kaydin: Kaydi ee daaqadda qoraalka ayaa haya, Ka noqo beddelkan ayaana dib u celiya.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” waa la beddelay, laakiin kaaliyuhu wuu joogsaday intuusan sheegin wixii uu sameeyay. Ka noqo isbeddelkan ayaa dib u celinaya."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” waa la beddelay, laakiin kaaliyuhu wuu joogsaday intuusan sheegin wixii uu sameeyay. Ka noqo isbeddelkan ayaa dib u celinaya.",
+    "Reply": "Ka jawaab",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Ka jawaab jawaabtan. Marka hore dooro qaar ka mid ah ereyadeeda si aad iyaga oo keliya uga jawaabto.",
+    "Replying to your answer": "Ku saabsan jawaabtaada",
+    "Replying to this part of your answer": "Ku saabsan qaybtan jawaabtaada"
 }

@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "এটিকে গোছানো ও পড়তে সহজ করে সাজাও",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "এক পরিবর্তনে হয়ে গেছে: “{name}”-এর {count}টি অংশের শব্দের নতুন আকার হয়েছে। এটি এখনো সংরক্ষিত হয়নি: নোট উইন্ডোর সংরক্ষণ এটি রাখবে, আর এই পরিবর্তন পূর্বাবস্থায় ফেরান এটি ফিরিয়ে দেবে।",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "এক পরিবর্তনে হয়ে গেছে: “{name}”-এর {count}টি অংশের শব্দের নতুন ধরন হয়েছে। এটি এখনো সংরক্ষিত হয়নি: নোট উইন্ডোর সংরক্ষণ এটি রাখবে, আর এই পরিবর্তন পূর্বাবস্থায় ফেরান এটি ফিরিয়ে দেবে।",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” বদলানো হয়েছে, কিন্তু সহকারী কী করেছে তা বলার আগেই থেমে গেছে। এই পরিবর্তনটি পূর্বাবস্থায় ফেরান এটি আগের মতো করে দেয়।"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” বদলানো হয়েছে, কিন্তু সহকারী কী করেছে তা বলার আগেই থেমে গেছে। এই পরিবর্তনটি পূর্বাবস্থায় ফেরান এটি আগের মতো করে দেয়।",
+    "Reply": "জবাব দিন",
+    "Reply to this answer. Select some of its words first to reply to just them.": "এই উত্তরের জবাব দিন। শুধু কয়েকটি শব্দের জবাব দিতে আগে সেগুলো নির্বাচন করুন।",
+    "Replying to your answer": "আপনার উত্তরের জবাবে",
+    "Replying to this part of your answer": "আপনার উত্তরের এই অংশের জবাবে"
 }

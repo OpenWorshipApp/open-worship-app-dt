@@ -449,6 +449,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **✓ Copied**. Under every question of yours is **[en:tran:Ask again]** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
+   **And every answer has a reply arrow beside Copy, to follow up on it.** Press the
+   arrow (**[en:tran:Reply]**) and the answer is written into the box under a line
+   _Replying to your answer:_, each of its lines starting with `>`; type your question
+   under it and send, and the assistant knows which answer you mean, however far up the
+   chat it is. To follow up on one part of it — a section, a sentence, a word — select
+   those words in the answer first, then press the arrow: only they are written in,
+   under _Replying to this part of your answer:_. Nothing is sent until you press
+   **[en:tran:Send]**, a long answer is written in up to about 800 characters, and
+   pressing the arrow twice writes it in once.
    **Asked about reading the Bible from the wrong page?** A stray press is enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the

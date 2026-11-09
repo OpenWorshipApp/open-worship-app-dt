@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "整理格式，使其整洁易读",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "已一次改好：“{name}”中{count}个段落的文字已换成新的大小。尚未保存：在笔记窗口按保存即可保留，按“撤销此更改”可以复原。",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "已一次改好：“{name}”中{count}个段落的文字已换成新的样式。尚未保存：在笔记窗口按保存即可保留，按“撤销此更改”可以复原。",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}”已更改，但助手在说明它做了什么之前就停下了。撤销这次更改可以恢复原样。"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}”已更改，但助手在说明它做了什么之前就停下了。撤销这次更改可以恢复原样。",
+    "Reply": "回复",
+    "Reply to this answer. Select some of its words first to reply to just them.": "回复这个回答。如果只想回复其中几个词，请先选中它们。",
+    "Replying to your answer": "关于这个回答",
+    "Replying to this part of your answer": "关于回答中的这一部分"
 }

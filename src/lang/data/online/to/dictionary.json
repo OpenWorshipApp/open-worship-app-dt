@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Fokotuʻutuʻu ke maau mo faingofua ke lau",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Kuo ʻosi ʻi ha liliu ʻe taha: ʻoku ʻi ai ha lahi foʻou ʻo e ngaahi lea ʻo e konga ʻe {count} ʻo e “{name}”. ʻOku teʻeki ai ke tauhi: ko e Tauhi ʻi he matapā sioʻata ʻo e fakamatala ʻoku ne tauhi ia, pea ko e Toe foki mei he liliu ko ʻeni ʻoku ne fakafoki ia.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Kuo ʻosi ʻi ha liliu ʻe taha: ʻoku ʻi ai ha fōtunga foʻou ʻo e ngaahi lea ʻo e konga ʻe {count} ʻo e “{name}”. ʻOku teʻeki ai ke tauhi: ko e Tauhi ʻi he matapā sioʻata ʻo e fakamatala ʻoku ne tauhi ia, pea ko e Toe foki mei he liliu ko ʻeni ʻoku ne fakafoki ia.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Kuo liliu ʻa e “{name}”, ka naʻe tuʻu ʻa e tokoni kimuʻa pea ne talaange ʻa e meʻa naʻa ne fai. ʻOku toe fakafoki ia ʻe he Toe fakafoki ʻa e liliu ko ʻeni."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Kuo liliu ʻa e “{name}”, ka naʻe tuʻu ʻa e tokoni kimuʻa pea ne talaange ʻa e meʻa naʻa ne fai. ʻOku toe fakafoki ia ʻe he Toe fakafoki ʻa e liliu ko ʻeni.",
+    "Reply": "Tali ki ai",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Tali ki he tali ko ʻeni. Fili ʻuluaki ha ngaahi foʻi lea ʻe niʻihi ʻo e tali ke tali pē ki ai.",
+    "Replying to your answer": "Fekauʻaki mo hoʻo tali",
+    "Replying to this part of your answer": "Fekauʻaki mo e konga ko ʻeni ʻo hoʻo tali"
 }

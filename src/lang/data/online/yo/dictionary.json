@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Ṣe é ní ètò kí ó mọ́ tónítóní, kí ó sì rọrùn láti kà",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Ó ti parí ní ìyípadà kan: àwọn ọ̀rọ̀ inú abala {count} ti “{name}” ní ìwọ̀n tuntun. A kò tíì fi pamọ́: Fi pamọ́ nínú fèrèsé àkọsílẹ̀ yóò pa á mọ́, Mú ìyípadà yìí kúrò yóò dá a padà.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Ó ti parí ní ìyípadà kan: àwọn ọ̀rọ̀ inú abala {count} ti “{name}” ní àṣà tuntun. A kò tíì fi pamọ́: Fi pamọ́ nínú fèrèsé àkọsílẹ̀ yóò pa á mọ́, Mú ìyípadà yìí kúrò yóò dá a padà.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "A ti yí “{name}” padà, ṣùgbọ́n olùrànlọ́wọ́ dúró kí ó tó sọ ohun tí ó ṣe. Mú ìyípadà yìí kúrò yóò dá a padà."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "A ti yí “{name}” padà, ṣùgbọ́n olùrànlọ́wọ́ dúró kí ó tó sọ ohun tí ó ṣe. Mú ìyípadà yìí kúrò yóò dá a padà.",
+    "Reply": "Fèsì",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Fèsì sí ìdáhùn yìí. Ẹ kọ́kọ́ yan díẹ̀ lára àwọn ọ̀rọ̀ rẹ̀ láti fèsì sí wọn nìkan.",
+    "Replying to your answer": "Nípa ìdáhùn rẹ",
+    "Replying to this part of your answer": "Nípa apá yìí nínú ìdáhùn rẹ"
 }

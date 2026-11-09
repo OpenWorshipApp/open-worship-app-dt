@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Lipange liwe nadhifu na rahisi kusoma",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Imefanyika kwa badiliko moja: maneno ya vipande {count} vya “{name}” yana ukubwa mpya. Bado haijahifadhiwa: Hifadhi katika dirisha la dokezo inaiweka, na Tendua badiliko hili inairudisha.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Imefanyika kwa badiliko moja: maneno ya vipande {count} vya “{name}” yana mtindo mpya. Bado haijahifadhiwa: Hifadhi katika dirisha la dokezo inaiweka, na Tendua badiliko hili inairudisha.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” imebadilishwa, lakini msaidizi alisimama kabla ya kusema alichofanya. Tendua badiliko hili inairudisha."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” imebadilishwa, lakini msaidizi alisimama kabla ya kusema alichofanya. Tendua badiliko hili inairudisha.",
+    "Reply": "Jibu",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Jibu jibu hili. Chagua kwanza baadhi ya maneno yake ili ujibu hayo tu.",
+    "Replying to your answer": "Kuhusu jibu lako",
+    "Replying to this part of your answer": "Kuhusu sehemu hii ya jibu lako"
 }

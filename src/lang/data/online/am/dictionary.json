@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "ሥርዓታማና ለማንበብ ቀላል እንዲሆን አስተካክለው",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "በአንድ ለውጥ ተጠናቋል፦ የ“{name}” {count} ክፍሎች ቃላት አዲስ መጠን አላቸው። ገና አልተቀመጠም፦ በማስታወሻ መስኮቱ ውስጥ ያለው አስቀምጥ ያቆየዋል፣ ይህን ለውጥ ቀልብስ ደግሞ ይመልሰዋል።",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "በአንድ ለውጥ ተጠናቋል፦ የ“{name}” {count} ክፍሎች ቃላት አዲስ ቅርጸት አላቸው። ገና አልተቀመጠም፦ በማስታወሻ መስኮቱ ውስጥ ያለው አስቀምጥ ያቆየዋል፣ ይህን ለውጥ ቀልብስ ደግሞ ይመልሰዋል።",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ተቀይሯል፣ ነገር ግን ረዳቱ ያደረገውን ከመናገሩ በፊት ቆሟል። ይህን ለውጥ ቀልብስ ይመልሰዋል።"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ተቀይሯል፣ ነገር ግን ረዳቱ ያደረገውን ከመናገሩ በፊት ቆሟል። ይህን ለውጥ ቀልብስ ይመልሰዋል።",
+    "Reply": "ምላሽ ስጥ",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ለዚህ መልስ ምላሽ ይስጡ። ለአንዳንድ ቃላቱ ብቻ ምላሽ ለመስጠት መጀመሪያ እነሱን ይምረጡ።",
+    "Replying to your answer": "ለመልስዎ ምላሽ",
+    "Replying to this part of your answer": "ለዚህ የመልስዎ ክፍል ምላሽ"
 }

@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Uprav ji úhledně a snadno čitelně",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Hotovo jednou změnou: slova {count} bloků poznámky „{name}“ mají novou velikost. Zatím to není uloženo: Uložit v okně poznámky to zachová a Vrátit tuto změnu to vrátí zpět.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Hotovo jednou změnou: slova {count} bloků poznámky „{name}“ mají nový styl. Zatím to není uloženo: Uložit v okně poznámky to zachová a Vrátit tuto změnu to vrátí zpět.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ bylo změněno, ale asistent se zastavil dřív, než řekl, co udělal. Vrátit tuto změnu to vrátí zpět."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ bylo změněno, ale asistent se zastavil dřív, než řekl, co udělal. Vrátit tuto změnu to vrátí zpět.",
+    "Reply": "Odpovědět",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Odpovědět na tuto odpověď. Chcete-li odpovědět jen na některá její slova, nejprve je vyberte.",
+    "Replying to your answer": "K vaší odpovědi",
+    "Replying to this part of your answer": "K této části vaší odpovědi"
 }

@@ -21,7 +21,9 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-09d** (**W-60 — formatting a messy note, drawing, and a lesson prepared by asking.** The card a note opens with offers **[en:tran:Format it so it is neat and easy to read]**: a messy note -- parts written as plain lines, questions run together on one line, a reference written in words, lines in capitals, one long paragraph -- is made a tidy one in one change, its words kept. A drawing (Insert → **Excalidraw**) is described in words and can be laid out across, round a circle or round one box, made bigger, its boxes coloured and drawn again with a box added; asked for a picture of a thing, the assistant says it cannot draw one. A lesson on another subject goes into a new note, never over this one; a hello or a question changes nothing; a worry right after a change is put back with Undo. Seen live 2026-11-09 on scratch development profiles: 600 things an elderly, non-technical church member types while preparing a lesson, 593 of 599 graded done as asked; three messy lessons each formatted in one change. CB-169.)
+**workflowsVersion: 2026-11-09e** (**W-42 — reply to an answer; W-29 — a note asked for under a passage.** The user, with **Copy** circled under three answers: _right next to the copy icon add reply icon, click reply to mention it in input text_, _as a user I want to be able to follow up a section_. Step 8: a reply arrow right of **[en:tran:Copy]** writes the answer into the box under _Replying to your answer:_, or, with words of it selected first, only those words under _Replying to this part of your answer:_, for a question typed under it; nothing is sent until **[en:tran:Send]**. And the user, _save to a bible note_ answered with **[en:tran:Save to my Bibles list]**: _bible note referring to bible-note document_. W-29: asked to keep something that is not the passage -- a note, a file, the lesson -- the passage chat names no button and makes a new Bible note. Seen live 2026-11-09 on the dev app's help window, English app, a Khmer chat on ម៉ាថាយ ៣:១-១៧: the arrow under every answer; the lesson quoted; one double-clicked word quoted alone; _save to a bible note_ made the note _មេរៀនពី ម៉ាថាយ ៣:១-១៧_, opened in its own window. A question typed under a quote was not sent live. CB-171, CB-154.)
+
+Previous: **workflowsVersion: 2026-11-09d** (**W-60 — formatting a messy note, drawing, and a lesson prepared by asking.** The card a note opens with offers **[en:tran:Format it so it is neat and easy to read]**: a messy note -- parts written as plain lines, questions run together on one line, a reference written in words, lines in capitals, one long paragraph -- is made a tidy one in one change, its words kept. A drawing (Insert → **Excalidraw**) is described in words and can be laid out across, round a circle or round one box, made bigger, its boxes coloured and drawn again with a box added; asked for a picture of a thing, the assistant says it cannot draw one. A lesson on another subject goes into a new note, never over this one; a hello or a question changes nothing; a worry right after a change is put back with Undo. Seen live 2026-11-09 on scratch development profiles: 600 things an elderly, non-technical church member types while preparing a lesson, 593 of 599 graded done as asked; three messy lessons each formatted in one change. CB-169.)
 
 Previous: **workflowsVersion: 2026-11-09c** (**W-60 — Undo always there, options in any language.** **Undo this change** puts a change back however many were undone just before -- it had been refused after ten in five minutes. The buttons under an answer are buttons in any language, also when the assistant names them in the person's own word for options; and an answer that came back in English when another language was asked for is put into it, or says it could not be. Seen live 2026-11-09 on three scratch development profiles: _make the text bigger_ done by the window in 82 languages, _make the first line bold_ in all 87 -- 81 with the first line bold, nothing else touched and the answer in the language -- and 176 presses of **Undo this change**, every one putting the note back. CB-169.)
 
@@ -4900,7 +4902,10 @@ your Bible reading.
     passage again when it is already in that language — and on an English passage _show this passage in English_
     repeats the record's own words. _How do I save this?_ and _copy this passage_ name
     **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]** and put the
-    button beside the answer. A question about using the app — _how do I put this passage
+    button beside the answer. Ask to keep something that is not the passage itself —
+    _save to a bible note_, _save the preaching lesson to a file_ — and no button is named:
+    the assistant writes it into a new Bible note, which opens in its own window (W-60). A
+    question about using the app — _how do I put this passage
     on the screen?_ — is answered by the app's own help, with the Presenter's Bible Lookup.
     **Everything related to it.** As a passage's card opens it also gathers what the
     app's own cross references — the same ones the Reader's
@@ -6727,6 +6732,15 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    **✓ Copied**. Under every question of yours is **[en:tran:Ask again]** — or just click the
    question itself — and the same words go back in the box, ready to be changed a
    little and asked again. 📸
+   **And every answer has a reply arrow beside Copy, to follow up on it.** Press the
+   arrow (**[en:tran:Reply]**) and the answer is written into the box under a line
+   _Replying to your answer:_, each of its lines starting with `>`; type your question
+   under it and send, and the assistant knows which answer you mean, however far up the
+   chat it is. To follow up on one part of it — a section, a sentence, a word — select
+   those words in the answer first, then press the arrow: only they are written in,
+   under _Replying to this part of your answer:_. Nothing is sent until you press
+   **[en:tran:Send]**, a long answer is written in up to about 800 characters, and
+   pressing the arrow twice writes it in once.
    **Asked about reading the Bible from the wrong page?** A stray press is enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the

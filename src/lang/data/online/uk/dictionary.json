@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Оформи її охайно й зручно для читання",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Зроблено однією зміною: слова {count} блоків нотатки «{name}» тепер нового розміру. Це ще не збережено: «Зберегти» у вікні нотатки збереже це, а «Скасувати цю зміну» поверне як було.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Зроблено однією зміною: слова {count} блоків нотатки «{name}» тепер нового стилю. Це ще не збережено: «Зберегти» у вікні нотатки збереже це, а «Скасувати цю зміну» поверне як було.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» змінено, але помічник зупинився, не сказавши, що зробив. Скасувати цю зміну повертає все назад."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» змінено, але помічник зупинився, не сказавши, що зробив. Скасувати цю зміну повертає все назад.",
+    "Reply": "Відповісти",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Відповісти на цю відповідь. Щоб відповісти лише на деякі її слова, спершу виділіть їх.",
+    "Replying to your answer": "Щодо вашої відповіді",
+    "Replying to this part of your answer": "Щодо цієї частини вашої відповіді"
 }

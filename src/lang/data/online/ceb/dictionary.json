@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Hapsaya kini aron limpyo ug sayon basahon",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Nahuman sa usa ka kausaban: ang mga pulong sa {count} ka bahin sa “{name}” adunay bag-ong gidak-on. Wala pa kini ma-save: ang Save sa bintana sa nota maoy magtipig niini, ug ang Undo this change mobalik niini.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Nahuman sa usa ka kausaban: ang mga pulong sa {count} ka bahin sa “{name}” adunay bag-ong estilo. Wala pa kini ma-save: ang Save sa bintana sa nota maoy magtipig niini, ug ang Undo this change mobalik niini.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Giusab ang “{name}”, apan mihunong ang assistant sa wala pa niya isulti kon unsa ang iyang gibuhat. Ang I-undo kining kausaban mobalik niini."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Giusab ang “{name}”, apan mihunong ang assistant sa wala pa niya isulti kon unsa ang iyang gibuhat. Ang I-undo kining kausaban mobalik niini.",
+    "Reply": "Tubaga",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Tubaga kini nga tubag. Pilia una ang pipila ka pulong niini aron kana lang ang imong tubagon.",
+    "Replying to your answer": "Mahitungod sa imong tubag",
+    "Replying to this part of your answer": "Mahitungod niini nga bahin sa imong tubag"
 }

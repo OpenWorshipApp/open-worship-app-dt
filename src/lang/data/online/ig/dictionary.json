@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Hazie ya ka ọ dị ọcha ma dị mfe ịgụ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "E mere ya n'otu mgbanwe: okwu nke akụkụ {count} nke “{name}” nwere nha ọhụrụ. Echekwabeghị ya: Chekwaa na windo ndetu na-edobe ya, Wepu mgbanwe a na-eweghachi ya.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "E mere ya n'otu mgbanwe: okwu nke akụkụ {count} nke “{name}” nwere ụdị ọhụrụ. Echekwabeghị ya: Chekwaa na windo ndetu na-edobe ya, Wepu mgbanwe a na-eweghachi ya.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Agbanweela “{name}”, mana onye inyeaka kwụsịrị tupu o kwuo ihe o mere. Wepụ mgbanwe a na-eweghachi ya."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Agbanweela “{name}”, mana onye inyeaka kwụsịrị tupu o kwuo ihe o mere. Wepụ mgbanwe a na-eweghachi ya.",
+    "Reply": "Zaghachi",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Zaghachi azịza a. Buru ụzọ họrọ ụfọdụ okwu ya ka ị zaghachi naanị ha.",
+    "Replying to your answer": "Banyere azịza gị",
+    "Replying to this part of your answer": "Banyere akụkụ a nke azịza gị"
 }

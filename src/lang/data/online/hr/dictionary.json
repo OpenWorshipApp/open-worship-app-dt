@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Oblikuj je uredno i lako čitljivo",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gotovo u jednoj promjeni: riječi {count} blokova bilješke „{name}” imaju novu veličinu. Još nije spremljeno: Spremi u prozoru bilješke to zadržava, a Poništi ovu promjenu to vraća.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gotovo u jednoj promjeni: riječi {count} blokova bilješke „{name}” imaju novi stil. Još nije spremljeno: Spremi u prozoru bilješke to zadržava, a Poništi ovu promjenu to vraća.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}” je promijenjen, ali pomoćnik je stao prije nego što je rekao što je učinio. Poništi ovu promjenu vraća ga natrag."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}” je promijenjen, ali pomoćnik je stao prije nego što je rekao što je učinio. Poništi ovu promjenu vraća ga natrag.",
+    "Reply": "Odgovori",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Odgovorite na ovaj odgovor. Da biste odgovorili samo na neke njegove riječi, najprije ih odaberite.",
+    "Replying to your answer": "U vezi s vašim odgovorom",
+    "Replying to this part of your answer": "U vezi s ovim dijelom vašeg odgovora"
 }

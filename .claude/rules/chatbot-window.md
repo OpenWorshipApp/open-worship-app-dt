@@ -944,6 +944,27 @@ name> | file:<path>` -- is stripped by `parseAnswerShows` exactly like the
   ARRIVES or the tab changes (`lastMessageId`), no longer on every rewrite of
   `messages`: a thumb on an answer further up took the card just pressed out
   of sight.
+- **A reply arrow beside Copy quotes the answer in the box** (2026-11-09,
+  the user, **Copy** circled under three answers: _right next to the copy
+  icon add reply icon, click reply to mention it in input text_; the story
+  _as a user I want to be able to follow up a section_). `.cue-quote`,
+  `aria-label` **Reply**, between **Copy** and the thumbs under every answer
+  (a question has **Ask again** instead). The press writes
+  `toAnswerQuoteText` (`answerQuoteHelpers.ts`, pure): _Replying to your
+  answer:_ and the answer as `> ` lines -- the box's existing quote frame
+  (`checkHasSelectionQuote`: no type-ahead over it; every prompt reads `> `
+  as words pointed at), its words without `#` / `**` mark-up, blank lines
+  left out, cut at `MAX_ANSWER_QUOTE_CHARS` 800 on a whole letter cluster
+  and back to a space, `…` where it stops: the quote rides every round of
+  the ask and the history after it, where the answer already is. Words
+  SELECTED in the answer first are the section: read on the arrow's MOUSE
+  DOWN, before the press can move the selection, and only when both ends
+  are in the answer's own body and in none of its buttons -- then _Replying
+  to this part of your answer:_ and those words alone. It goes under what
+  the box holds, in the tab in front (`handleQuotingAnswer`,
+  `appendSelectionMention`'s rule: the same quote twice is put in once), the
+  caret on the line under it; nothing is asked. Seen live 2026-11-09 on the
+  dev app: a Khmer lesson quoted whole, one double-clicked word quoted alone.
 - **A page a PERSON asked to read is shown whole, and without what the page
   tool says to a model** (2026-10-12, `EC-242`). **Read the whole thing**
   under a guide answer presses `owa_help_page`, and what came back was

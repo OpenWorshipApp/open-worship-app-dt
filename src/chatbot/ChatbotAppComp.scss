@@ -941,10 +941,11 @@ button.chat-engine {
   }
 }
 
-// The two thumbs beside Copy: icons, a little larger than the lettering they
-// stand next to so the hand reads at a glance. The one pressed stays filled
-// and at full strength -- the only colour change in the row, and a steady
-// one (nothing here animates).
+// The reply arrow and the two thumbs beside Copy: icons, a little larger than
+// the lettering they stand next to so the hand reads at a glance. The thumb
+// pressed stays filled and at full strength -- the only colour change in the
+// row, and a steady one (nothing here animates).
+.cue-quote,
 .cue-rate {
   font-size: 12.5px;
   letter-spacing: 0;

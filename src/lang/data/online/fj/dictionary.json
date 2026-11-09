@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Vakarautaka me savasava ka rawarawa me wiliki",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vakacavari ena dua na veisau: e vou na kena levu na vosa ni {count} na tikina ni “{name}”. E se bera ni maroroi: na Save ena katubaleka ni ivola e maroroya, ka na Undo this change e vakalesuya.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vakacavari ena dua na veisau: e vou na kena irairai na vosa ni {count} na tikina ni “{name}”. E se bera ni maroroi: na Save ena katubaleka ni ivola e maroroya, ka na Undo this change e vakalesuya.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Sa veisau na “{name}”, ia a cegu na dauveivuke ni bera ni tukuna na ka a cakava. Na Vakalesuya na veisau oqo e vakalesuya tale."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Sa veisau na “{name}”, ia a cegu na dauveivuke ni bera ni tukuna na ka a cakava. Na Vakalesuya na veisau oqo e vakalesuya tale.",
+    "Reply": "Sauma",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Sauma na isau oqo. Mo ni digitaka e liu eso na kena vosa mo ni sauma ga na vosa oya.",
+    "Replying to your answer": "Me baleta na nomu isau",
+    "Replying to this part of your answer": "Me baleta na tikina oqo ni nomu isau"
 }

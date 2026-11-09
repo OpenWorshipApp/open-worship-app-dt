@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Yitunganye neza kugira ngo isomeke bitagoye",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vyakozwe mu ihinduka rimwe: amajambo y'ibice {count} vya “{name}” afise ubunini bushasha. Ntibirabikwa: Bika mu dirisha ry'inyandiko biragumya, Kuraho iri hinduka bikabisubiza.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Vyakozwe mu ihinduka rimwe: amajambo y'ibice {count} vya “{name}” afise uburyo bushasha. Ntibirabikwa: Bika mu dirisha ry'inyandiko biragumya, Kuraho iri hinduka bikabisubiza.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” yahinduwe, ariko umufasha yahagaze imbere yo kuvuga ivyo yakoze. Kuraho iri hinduka birabisubiza uko vyari biri."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” yahinduwe, ariko umufasha yahagaze imbere yo kuvuga ivyo yakoze. Kuraho iri hinduka birabisubiza uko vyari biri.",
+    "Reply": "Ishura",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Ishura iyi nyishu. Banza muhitemwo amajambo amwe yayo kugira mwishure ayo gusa.",
+    "Replying to your answer": "Ku bijanye n'inyishu yawe",
+    "Replying to this part of your answer": "Ku bijanye n'iki gihimba c'inyishu yawe"
 }

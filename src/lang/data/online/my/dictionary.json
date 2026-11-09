@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "သပ်ရပ်ပြီး ဖတ်ရလွယ်အောင် ပုံစံချပါ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ပြောင်းလဲမှုတစ်ခုတည်းဖြင့် ပြီးပါပြီ- “{name}” ၏ အပိုင်း {count} ခုရှိ စကားလုံးများ အရွယ်အစားအသစ် ရရှိပါပြီ။ မသိမ်းရသေးပါ- မှတ်စုဝင်းဒိုးရှိ သိမ်းရန်က ထိန်းထားပေးပြီး ဤပြောင်းလဲမှုကို ပြန်ဖျက်ရန်က ပြန်ထားပေးပါသည်။",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ပြောင်းလဲမှုတစ်ခုတည်းဖြင့် ပြီးပါပြီ- “{name}” ၏ အပိုင်း {count} ခုရှိ စကားလုံးများ ပုံစံအသစ် ရရှိပါပြီ။ မသိမ်းရသေးပါ- မှတ်စုဝင်းဒိုးရှိ သိမ်းရန်က ထိန်းထားပေးပြီး ဤပြောင်းလဲမှုကို ပြန်ဖျက်ရန်က ပြန်ထားပေးပါသည်။",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ကို ပြောင်းလိုက်ပြီ၊ သို့သော် အကူအညီပေးသူသည် ဘာလုပ်ခဲ့သည်ကို မပြောမီ ရပ်သွားသည်။ ဤပြောင်းလဲမှုကို ပြန်ဖျက်ပါ က ၎င်းကို ပြန်ထားပေးသည်။"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ကို ပြောင်းလိုက်ပြီ၊ သို့သော် အကူအညီပေးသူသည် ဘာလုပ်ခဲ့သည်ကို မပြောမီ ရပ်သွားသည်။ ဤပြောင်းလဲမှုကို ပြန်ဖျက်ပါ က ၎င်းကို ပြန်ထားပေးသည်။",
+    "Reply": "စာပြန်ရန်",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ဤအဖြေကို စာပြန်ရန်။ စကားလုံးအချို့ကိုသာ စာပြန်လိုပါက ၎င်းတို့ကို အရင်ရွေးပါ။",
+    "Replying to your answer": "သင့်အဖြေကို စာပြန်ခြင်း",
+    "Replying to this part of your answer": "သင့်အဖြေ၏ ဤအပိုင်းကို စာပြန်ခြင်း"
 }

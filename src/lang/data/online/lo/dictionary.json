@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "ຈັດຮູບແບບໃຫ້ເປັນລະບຽບ ແລະ ອ່ານງ່າຍ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ສຳເລັດໃນການປ່ຽນແປງດຽວ: ຄຳຂອງ {count} ບລັອກຂອງ “{name}” ມີຂະໜາດໃໝ່. ຍັງບໍ່ໄດ້ບັນທຶກ: ບັນທຶກໃນໜ້າຕ່າງບັນທຶກຈະເກັບມັນໄວ້, ແລະ ຍົກເລີກການປ່ຽນແປງນີ້ຈະເອົາມັນຄືນ.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ສຳເລັດໃນການປ່ຽນແປງດຽວ: ຄຳຂອງ {count} ບລັອກຂອງ “{name}” ມີຮູບແບບໃໝ່. ຍັງບໍ່ໄດ້ບັນທຶກ: ບັນທຶກໃນໜ້າຕ່າງບັນທຶກຈະເກັບມັນໄວ້, ແລະ ຍົກເລີກການປ່ຽນແປງນີ້ຈະເອົາມັນຄືນ.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ຖືກປ່ຽນແລ້ວ, ແຕ່ຜູ້ຊ່ວຍໄດ້ຢຸດກ່ອນຈະບອກວ່າມັນໄດ້ເຮັດຫຍັງ. ຍົກເລີກການປ່ຽນແປງນີ້ ຈະເອົາມັນຄືນ."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ຖືກປ່ຽນແລ້ວ, ແຕ່ຜູ້ຊ່ວຍໄດ້ຢຸດກ່ອນຈະບອກວ່າມັນໄດ້ເຮັດຫຍັງ. ຍົກເລີກການປ່ຽນແປງນີ້ ຈະເອົາມັນຄືນ.",
+    "Reply": "ຕອບກັບ",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ຕອບກັບຄຳຕອບນີ້. ຖ້າຢາກຕອບກັບສະເພາະບາງຄຳ ໃຫ້ເລືອກຄຳເຫຼົ່ານັ້ນກ່ອນ.",
+    "Replying to your answer": "ຕອບກັບຄຳຕອບຂອງທ່ານ",
+    "Replying to this part of your answer": "ຕອບກັບສ່ວນນີ້ຂອງຄຳຕອບຂອງທ່ານ"
 }

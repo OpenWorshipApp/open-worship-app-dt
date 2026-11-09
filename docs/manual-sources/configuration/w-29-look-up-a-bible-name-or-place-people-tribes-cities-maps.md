@@ -160,7 +160,10 @@ your Bible reading.
     passage again when it is already in that language — and on an English passage _show this passage in English_
     repeats the record's own words. _How do I save this?_ and _copy this passage_ name
     **[en:tran:Save to my Bibles list]** and **[en:tran:Copy the passage]** and put the
-    button beside the answer. A question about using the app — _how do I put this passage
+    button beside the answer. Ask to keep something that is not the passage itself —
+    _save to a bible note_, _save the preaching lesson to a file_ — and no button is named:
+    the assistant writes it into a new Bible note, which opens in its own window (W-60). A
+    question about using the app — _how do I put this passage
     on the screen?_ — is answered by the app's own help, with the Presenter's Bible Lookup.
     **Everything related to it.** As a passage's card opens it also gathers what the
     app's own cross references — the same ones the Reader's

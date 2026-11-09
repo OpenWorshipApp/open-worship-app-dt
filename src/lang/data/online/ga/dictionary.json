@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Formáidigh é ionas go mbeidh sé néata agus éasca le léamh",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Déanta in aon athrú amháin: tá méid nua ar fhocail {count} bloc de “{name}”. Níl sé sábháilte fós: coinníonn Sábháil i bhfuinneog an nóta é, agus cuireann Cealaigh an t-athrú seo ar ais é.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Déanta in aon athrú amháin: tá stíl nua ar fhocail {count} bloc de “{name}”. Níl sé sábháilte fós: coinníonn Sábháil i bhfuinneog an nóta é, agus cuireann Cealaigh an t-athrú seo ar ais é.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Athraíodh “{name}”, ach stop an cúntóir sular dúirt sé cad a rinne sé. Cuireann Cealaigh an t-athrú seo ar ais é."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Athraíodh “{name}”, ach stop an cúntóir sular dúirt sé cad a rinne sé. Cuireann Cealaigh an t-athrú seo ar ais é.",
+    "Reply": "Freagair",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Freagair an freagra seo. Roghnaigh cuid dá fhocail ar dtús chun freagra a thabhairt orthu sin amháin.",
+    "Replying to your answer": "Maidir le d'fhreagra",
+    "Replying to this part of your answer": "Maidir leis an gcuid seo de d'fhreagra"
 }

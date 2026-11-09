@@ -417,6 +417,20 @@
     "menuWords": ["menu"],
     "lookupWords": {
         "save": ["enregistrer", "sauvegarder", "ma liste", "liste de bibles"],
+        "notCard": [
+            "note",
+            "notes",
+            "fichier",
+            "fichiers",
+            "document",
+            "leçon",
+            "leçons",
+            "sermon",
+            "prédication",
+            "réponse",
+            "explication",
+            "résumé"
+        ],
         "copy": ["copier"],
         "anotherBible": [
             "autre bible",

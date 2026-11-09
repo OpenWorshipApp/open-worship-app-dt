@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Sníddu hana svo hún verði snyrtileg og auðlesin",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gert í einni breytingu: orðin í {count} hlutum af „{name}“ hafa nýja stærð. Þetta er ekki vistað enn: Vista í glugga athugasemdarinnar heldur því og Afturkalla þessa breytingu setur það til baka.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gert í einni breytingu: orðin í {count} hlutum af „{name}“ hafa nýjan stíl. Þetta er ekki vistað enn: Vista í glugga athugasemdarinnar heldur því og Afturkalla þessa breytingu setur það til baka.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ var breytt, en aðstoðarmaðurinn hætti áður en hann sagði hvað hann gerði. Afturkalla þessa breytingu setur það aftur eins og það var."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ var breytt, en aðstoðarmaðurinn hætti áður en hann sagði hvað hann gerði. Afturkalla þessa breytingu setur það aftur eins og það var.",
+    "Reply": "Svara",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Svara þessu svari. Veldu fyrst nokkur orð úr því til að svara aðeins þeim.",
+    "Replying to your answer": "Varðandi svarið þitt",
+    "Replying to this part of your answer": "Varðandi þennan hluta svarsins þíns"
 }

@@ -117,7 +117,18 @@ window as a whole — tabs, pickers, its language, the caution — is in
   screen_ is answered by the guide with the Presenter's route. The answer
   still marks `isLookupAnswer`, so the next plain line is about the passage.
   `lookupWords` is per language in `assistant.json`; the ordinary tool list
-  and its 8 350-token ratchet did not move.
+  and its 8 350-token ratchet did not move. **A line about something that
+  is NOT the passage is never a card button** (2026-11-09, the user, _save
+  to a bible note_ and _save the preaching lesson to a file_ each answered
+  _Press Save to my Bibles list under the passage above_: _bible note
+  referring to bible-note document_): `lookupWords.notCard` -- a note, a
+  file, a document, the lesson or sermon, the answer, a summary (en, km,
+  fr) -- makes `readLookupVerseAsk` answer null before any card word is
+  read, so the line goes on to the passage's conversation, whose assistant
+  writes a NEW Bible note (`owa_bible_note add`, `NOTE_CREATE_PROMPT`) that
+  the window opens and attaches. A bare _save_ had taken every save, of
+  anything. Seen live on the dev app the same day: _save to a bible note_
+  under ម៉ាថាយ ៣:១-១៧ made _មេរៀនពី ម៉ាថាយ ៣:១-១៧_ from the lesson above it.
 
 - **The same line goes the same way in every language** (2026-10-29,
   `EC-440`; the user's three pictures of Noah's card, _what is the size of

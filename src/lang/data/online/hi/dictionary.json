@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "इसे साफ़-सुथरा और पढ़ने में आसान बनाएँ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "एक बदलाव में हो गया: “{name}” के {count} हिस्सों के शब्दों का नया आकार है। यह अभी सहेजा नहीं गया है: नोट विंडो में सहेजें इसे रखता है, और यह बदलाव पूर्ववत करें इसे वापस लाता है।",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "एक बदलाव में हो गया: “{name}” के {count} हिस्सों के शब्दों का नई शैली है। यह अभी सहेजा नहीं गया है: नोट विंडो में सहेजें इसे रखता है, और यह बदलाव पूर्ववत करें इसे वापस लाता है।",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” बदल दिया गया, लेकिन सहायक यह बताने से पहले रुक गया कि उसने क्या किया। यह बदलाव वापस लें इसे पहले जैसा कर देता है।"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” बदल दिया गया, लेकिन सहायक यह बताने से पहले रुक गया कि उसने क्या किया। यह बदलाव वापस लें इसे पहले जैसा कर देता है।",
+    "Reply": "जवाब दें",
+    "Reply to this answer. Select some of its words first to reply to just them.": "इस उत्तर का जवाब दें। सिर्फ़ इसके कुछ शब्दों का जवाब देने के लिए पहले उन्हें चुनें।",
+    "Replying to your answer": "आपके उत्तर के जवाब में",
+    "Replying to this part of your answer": "आपके उत्तर के इस हिस्से के जवाब में"
 }

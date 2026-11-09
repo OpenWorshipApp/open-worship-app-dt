@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Formatér den, så den er pæn og nem at læse",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gjort i én ændring: ordene i {count} blokke af “{name}” har en ny størrelse. Det er ikke gemt endnu: Gem i notevinduet beholder det, og Fortryd denne ændring sætter det tilbage.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gjort i én ændring: ordene i {count} blokke af “{name}” har en ny stil. Det er ikke gemt endnu: Gem i notevinduet beholder det, og Fortryd denne ændring sætter det tilbage.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” blev ændret, men assistenten stoppede, før den sagde, hvad den gjorde. Fortryd denne ændring sætter det tilbage."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” blev ændret, men assistenten stoppede, før den sagde, hvad den gjorde. Fortryd denne ændring sætter det tilbage.",
+    "Reply": "Svar",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Svar på dette svar. Markér først nogle af dets ord for kun at svare på dem.",
+    "Replying to your answer": "Svar på dit svar",
+    "Replying to this part of your answer": "Svar på denne del af dit svar"
 }

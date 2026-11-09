@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Аформі яе акуратна і зручна для чытання",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Зроблена адной зменай: словы {count} блокаў «{name}» маюць новы памер. Гэта яшчэ не захавана: «Захаваць» у акне нататкі захоўвае, а «Адмяніць гэтую змену» вяртае назад.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Зроблена адной зменай: словы {count} блокаў «{name}» маюць новы стыль. Гэта яшчэ не захавана: «Захаваць» у акне нататкі захоўвае, а «Адмяніць гэтую змену» вяртае назад.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» зменена, але памочнік спыніўся, не сказаўшы, што зрабіў. Адмяніць гэтую змену вяртае ўсё назад."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» зменена, але памочнік спыніўся, не сказаўшы, што зрабіў. Адмяніць гэтую змену вяртае ўсё назад.",
+    "Reply": "Адказаць",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Адказаць на гэты адказ. Каб адказаць толькі на некаторыя яго словы, спачатку вылучыце іх.",
+    "Replying to your answer": "Наконт вашага адказу",
+    "Replying to this part of your answer": "Наконт гэтай часткі вашага адказу"
 }

@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "நேர்த்தியாகவும் படிக்க எளிதாகவும் வடிவமை",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ஒரே மாற்றத்தில் முடிந்தது: “{name}” இன் {count} பகுதிகளின் சொற்களுக்குப் புதிய அளவு. இது இன்னும் சேமிக்கப்படவில்லை: குறிப்புச் சாளரத்தில் உள்ள சேமி இதை வைத்திருக்கும், இந்த மாற்றத்தைச் செயல்தவிர் இதைத் திரும்பக் கொண்டுவரும்.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ஒரே மாற்றத்தில் முடிந்தது: “{name}” இன் {count} பகுதிகளின் சொற்களுக்குப் புதிய பாணி. இது இன்னும் சேமிக்கப்படவில்லை: குறிப்புச் சாளரத்தில் உள்ள சேமி இதை வைத்திருக்கும், இந்த மாற்றத்தைச் செயல்தவிர் இதைத் திரும்பக் கொண்டுவரும்.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” மாற்றப்பட்டது, ஆனால் உதவியாளர் என்ன செய்தது என்று சொல்வதற்கு முன் நின்றுவிட்டது. இந்த மாற்றத்தைச் செயல்தவிர் அதைப் பழையபடி ஆக்கும்."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” மாற்றப்பட்டது, ஆனால் உதவியாளர் என்ன செய்தது என்று சொல்வதற்கு முன் நின்றுவிட்டது. இந்த மாற்றத்தைச் செயல்தவிர் அதைப் பழையபடி ஆக்கும்.",
+    "Reply": "பதிலளி",
+    "Reply to this answer. Select some of its words first to reply to just them.": "இந்தப் பதிலுக்குப் பதிலளி. அதன் சில சொற்களுக்கு மட்டும் பதிலளிக்க, முதலில் அவற்றைத் தேர்ந்தெடு.",
+    "Replying to your answer": "உங்கள் பதிலுக்கான மறுமொழி",
+    "Replying to this part of your answer": "உங்கள் பதிலின் இந்தப் பகுதிக்கான மறுமொழி"
 }

@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Chironge kuti chive chakarongeka uye chiri nyore kuverenga",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Zvaitwa mushanduko imwe: mazwi ezvikamu {count} zve“{name}” ane saizi itsva. Hazvisati zvachengetwa: Chengeta muhwindo rechinyorwa inozvichengeta, uye Dzosera shanduko iyi inozvidzosa.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Zvaitwa mushanduko imwe: mazwi ezvikamu {count} zve“{name}” ane chimiro chitsva. Hazvisati zvachengetwa: Chengeta muhwindo rechinyorwa inozvichengeta, uye Dzosera shanduko iyi inozvidzosa.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” yachinjwa, asi mubatsiri amira asati ataura zvaakaita. Dzosera shanduko iyi inozvidzosera."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” yachinjwa, asi mubatsiri amira asati ataura zvaakaita. Dzosera shanduko iyi inozvidzosera.",
+    "Reply": "Pindura",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Pindurai mhinduro iyi. Tangai masarudza mamwe mashoko ayo kuti mupindure iwayo chete.",
+    "Replying to your answer": "Maererano nemhinduro yako",
+    "Replying to this part of your answer": "Maererano nechikamu ichi chemhinduro yako"
 }

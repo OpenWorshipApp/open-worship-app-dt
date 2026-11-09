@@ -4148,5 +4148,9 @@
     "Put a Bible passage into the note": "Vendosni një pasazh të Biblës në shënim",
     "Open Bible Lookup (Ctrl+Shift+B), type the passage, then Insert Bible Text or Insert Collapse Bible Text. Change Bible Key picks the version.": "Hap Kërkimin në Bibël (Ctrl+Shift+B), shkruani pasazhin, pastaj Fut tekstin e Biblës ose Fut tekstin e palosur të Biblës. Ndrysho çelësin e Biblës zgjedh versionin.",
     "Ask the assistant about your note": "Pyetni asistentin për shënimin tuaj",
-    "Open in Chatbot talks about this note; select words for Ask the assistant about this. Open in Markdown Editor opens the language editor.": "Hap në chatbot flet për këtë shënim; përzgjidhni fjalë për Pyet asistentin për këtë. Hap në redaktorin Markdown hap redaktorin e gjuhës Markdown."
+    "Open in Chatbot talks about this note; select words for Ask the assistant about this. Open in Markdown Editor opens the language editor.": "Hap në chatbot flet për këtë shënim; përzgjidhni fjalë për Pyet asistentin për këtë. Hap në redaktorin Markdown hap redaktorin e gjuhës Markdown.",
+    "Reply": "Përgjigju",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Përgjigjuni kësaj përgjigjeje. Zgjidhni fillimisht disa nga fjalët e saj për t'iu përgjigjur vetëm atyre.",
+    "Replying to your answer": "Lidhur me përgjigjen tuaj",
+    "Replying to this part of your answer": "Lidhur me këtë pjesë të përgjigjes suaj"
 }

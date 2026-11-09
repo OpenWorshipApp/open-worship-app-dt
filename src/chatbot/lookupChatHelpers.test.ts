@@ -66,6 +66,34 @@ describe('what the card itself can do', () => {
             ).toEqual({ kind: 'anotherBible', language: code });
         }
     });
+
+    // 2026-11-09, the user: _save to a bible note_ and _save the preaching
+    // lesson to a file_ under Matthew 3:1-17 were both answered "Press Save
+    // to my Bibles list under the passage above", and _bible note referring
+    // to bible-note document_.
+    it('leaves a line about a note, a file or the lesson to the conversation', () => {
+        for (const line of [
+            'save to a bible note',
+            'save the preaching lesson to a file',
+            'Save this as a note',
+            'copy the passage into my notes',
+            'put the next chapter in a note',
+            'save your answer',
+            'show the explanation in French',
+        ]) {
+            expect(readLookupVerseAsk(line, VERSE_EN)).toBeNull();
+        }
+        // The card's own Save is still the card's.
+        expect(readLookupVerseAsk('save to my list', VERSE_EN)).toEqual({
+            kind: 'action',
+            step: 'save',
+        });
+        // "notes" inside another word is no note.
+        expect(readLookupVerseAsk('save it, notably', VERSE_EN)).toEqual({
+            kind: 'action',
+            step: 'save',
+        });
+    });
 });
 
 describe('a record within what a card keeps', () => {

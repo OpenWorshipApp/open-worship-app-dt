@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Formatera den så att den blir prydlig och lätt att läsa",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gjort i en ändring: orden i {count} block av {name}” har en ny storlek. Det är inte sparat ännu: Spara i anteckningsfönstret behåller det, och Ångra den här ändringen sätter tillbaka det.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gjort i en ändring: orden i {count} block av {name}” har en ny stil. Det är inte sparat ännu: Spara i anteckningsfönstret behåller det, och Ångra den här ändringen sätter tillbaka det.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "”{name}” ändrades, men assistenten stannade innan den sa vad den gjorde. Ångra den här ändringen sätter tillbaka det."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "”{name}” ändrades, men assistenten stannade innan den sa vad den gjorde. Ångra den här ändringen sätter tillbaka det.",
+    "Reply": "Svara",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Svara på det här svaret. Markera först några av dess ord för att bara svara på dem.",
+    "Replying to your answer": "Angående ditt svar",
+    "Replying to this part of your answer": "Angående den här delen av ditt svar"
 }

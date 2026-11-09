@@ -3,7 +3,7 @@ id: W-29
 title: "Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)"
 section: "Configuration"
 lang: fr
-translatedFrom: 76f5161c7821a8bf
+translatedFrom: 11a5cd2aebfd613b
 ---
 # W-29 — Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)
 
@@ -156,7 +156,9 @@ votre lecture de la Bible.
     de nouveau le passage lorsqu’il est déjà dans cette langue — et, sur un passage en anglais, _montre ce passage en anglais_
     reprend les mots du relevé. _Comment l’enregistrer ?_ et _copie ce passage_ nomment
     **[en:tran:Save to my Bibles list]** et **[en:tran:Copy the passage]** et placent le
-    bouton près de la réponse. Une question sur l’utilisation de l’application — _comment mettre
+    bouton près de la réponse. Demandez à garder autre chose que le passage lui-même —
+    _enregistre dans une note biblique_, _enregistre la leçon de prédication dans un fichier_ — et aucun bouton n’est nommé :
+    l’assistant l’écrit dans une nouvelle note biblique, qui s’ouvre dans sa propre fenêtre (W-60). Une question sur l’utilisation de l’application — _comment mettre
     ce passage à l’écran ?_ — est traitée par l’aide de l’application, avec la recherche biblique
     de la page Présentation.
     **Tout ce qui s’y rattache.** En s’ouvrant, la carte d’un passage rassemble aussi ce vers

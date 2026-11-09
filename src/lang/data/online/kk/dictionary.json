@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Ұқыпты әрі оқуға оңай етіп пішімде",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Бір өзгеріспен орындалды: «{name}» жазбасының {count} блогындағы сөздердің жаңа өлшемі бар. Әлі сақталған жоқ: жазба терезесіндегі Сақтау оны сақтайды, ал Бұл өзгерісті болдырмау оны қайтарады.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Бір өзгеріспен орындалды: «{name}» жазбасының {count} блогындағы сөздердің жаңа стилі бар. Әлі сақталған жоқ: жазба терезесіндегі Сақтау оны сақтайды, ал Бұл өзгерісті болдырмау оны қайтарады.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» өзгертілді, бірақ көмекші не істегенін айтпай тоқтап қалды. Бұл өзгерісті болдырмау оны қайтарады."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» өзгертілді, бірақ көмекші не істегенін айтпай тоқтап қалды. Бұл өзгерісті болдырмау оны қайтарады.",
+    "Reply": "Жауап беру",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Осы жауапқа жауап беру. Оның кейбір сөздеріне ғана жауап беру үшін алдымен соларды таңдаңыз.",
+    "Replying to your answer": "Сіздің жауабыңыз туралы",
+    "Replying to this part of your answer": "Сіздің жауабыңыздың осы бөлігі туралы"
 }

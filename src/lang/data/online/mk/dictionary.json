@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Обликувај ја уредно и лесно за читање",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Направено со една промена: зборовите на {count} блокови од „{name}“ имаат нова големина. Сè уште не е зачувано: Зачувај во прозорецот на белешката го задржува, а Врати ја оваа промена го враќа.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Направено со една промена: зборовите на {count} блокови од „{name}“ имаат нов стил. Сè уште не е зачувано: Зачувај во прозорецот на белешката го задржува, а Врати ја оваа промена го враќа.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ е сменето, но асистентот застана пред да каже што направил. Поништи ја оваа промена го враќа назад."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ е сменето, но асистентот застана пред да каже што направил. Поништи ја оваа промена го враќа назад.",
+    "Reply": "Одговори",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Одговорете на овој одговор. За да одговорите само на некои од неговите зборови, најпрвин изберете ги.",
+    "Replying to your answer": "Во врска со вашиот одговор",
+    "Replying to this part of your answer": "Во врска со овој дел од вашиот одговор"
 }

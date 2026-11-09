@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Faatulaga ia mamā ma faigofie ona faitau",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Ua uma i se suiga e tasi: ua i ai se lapoa fou o upu o vaega e {count} o “{name}”. E le'i teuina: o le Teu i le faamalama o le tusitusiga e taofi ai, ae o le Toe faaleaogā lenei suiga e toe faafo'i ai.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Ua uma i se suiga e tasi: ua i ai se foliga fou o upu o vaega e {count} o “{name}”. E le'i teuina: o le Teu i le faamalama o le tusitusiga e taofi ai, ae o le Toe faaleaogā lenei suiga e toe faafo'i ai.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Ua suia “{name}”, ae na taofi le fesoasoani ae lei taʻua le mea na ia faia. O le Toe faaleaoga lenei suiga e toe faafoi ai."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Ua suia “{name}”, ae na taofi le fesoasoani ae lei taʻua le mea na ia faia. O le Toe faaleaoga lenei suiga e toe faafoi ai.",
+    "Reply": "Tali atu",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Tali atu i lenei tali. Filifili muamua nisi o ana upu e te tali atu ai na o na upu.",
+    "Replying to your answer": "E uiga i lau tali",
+    "Replying to this part of your answer": "E uiga i lenei vaega o lau tali"
 }

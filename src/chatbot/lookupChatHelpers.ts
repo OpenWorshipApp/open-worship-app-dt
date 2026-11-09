@@ -505,6 +505,17 @@ export function readLookupVerseAsk(
     if (words.length === 0 || words.startsWith('/')) {
         return null;
     }
+    // A line about something that is NOT the passage -- a Bible note (a
+    // document of its own), a file, the lesson, the answer -- is never one of
+    // the card's buttons (2026-11-09, the user, with _save to a bible note_
+    // and _save the preaching lesson to a file_ both answered "Press Save to
+    // my Bibles list under the passage above": _bible note referring to
+    // bible-note document_). It goes on to the passage's conversation, whose
+    // assistant makes the note and the window opens and attaches it
+    // (`NOTE_CREATE_PROMPT`, `readCreatedNote`).
+    if (checkHasLookupWord(words, 'notCard')) {
+        return null;
+    }
     const namedLanguage = readNamedLanguage(words);
     if (namedLanguage !== null && checkHasLookupWord(words, 'showPassage')) {
         const recordLanguage = readPassageLanguageCode(ask);

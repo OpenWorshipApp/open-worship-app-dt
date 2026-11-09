@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "نسّقها لتكون مرتّبة وسهلة القراءة",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "تم في تغيير واحد: كلمات {count} من كتل “{name}” أصبح لها حجم جديد. لم يُحفظ بعد: زر الحفظ في نافذة الملاحظة يحفظه، و«تراجع عن هذا التغيير» يعيده كما كان.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "تم في تغيير واحد: كلمات {count} من كتل “{name}” أصبح لها تنسيق جديد. لم يُحفظ بعد: زر الحفظ في نافذة الملاحظة يحفظه، و«تراجع عن هذا التغيير» يعيده كما كان.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "تم تغيير “{name}”، لكن المساعد توقف قبل أن يقول ما فعله. التراجع عن هذا التغيير يعيده كما كان."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "تم تغيير “{name}”، لكن المساعد توقف قبل أن يقول ما فعله. التراجع عن هذا التغيير يعيده كما كان.",
+    "Reply": "رد",
+    "Reply to this answer. Select some of its words first to reply to just them.": "الرد على هذه الإجابة. حدد بعض كلماتها أولًا للرد عليها وحدها.",
+    "Replying to your answer": "ردًا على إجابتك",
+    "Replying to this part of your answer": "ردًا على هذا الجزء من إجابتك"
 }

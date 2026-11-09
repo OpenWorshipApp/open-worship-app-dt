@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Оформи её аккуратно и удобно для чтения",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Сделано одним изменением: слова {count} блоков заметки «{name}» теперь нового размера. Это ещё не сохранено: «Сохранить» в окне заметки сохранит это, а «Отменить это изменение» вернёт как было.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Сделано одним изменением: слова {count} блоков заметки «{name}» теперь нового стиля. Это ещё не сохранено: «Сохранить» в окне заметки сохранит это, а «Отменить это изменение» вернёт как было.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» изменён, но помощник остановился, не сказав, что сделал. Отменить это изменение возвращает всё как было."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» изменён, но помощник остановился, не сказав, что сделал. Отменить это изменение возвращает всё как было.",
+    "Reply": "Ответить",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Ответить на этот ответ. Чтобы ответить только на некоторые его слова, сначала выделите их.",
+    "Replying to your answer": "По поводу вашего ответа",
+    "Replying to this part of your answer": "По поводу этой части вашего ответа"
 }

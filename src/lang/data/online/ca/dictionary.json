@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Dona-li format perquè sigui endreçada i fàcil de llegir",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Fet en un sol canvi: les paraules de {count} blocs de «{name}» tenen una mida nova. Encara no està desat: Desa a la finestra de la nota ho conserva, i Desfés aquest canvi ho torna enrere.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Fet en un sol canvi: les paraules de {count} blocs de «{name}» tenen un estil nou. Encara no està desat: Desa a la finestra de la nota ho conserva, i Desfés aquest canvi ho torna enrere.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "S'ha canviat «{name}», però l'assistent s'ha aturat abans de dir què ha fet. Desfés aquest canvi ho torna enrere."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "S'ha canviat «{name}», però l'assistent s'ha aturat abans de dir què ha fet. Desfés aquest canvi ho torna enrere.",
+    "Reply": "Respon",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Responeu a aquesta resposta. Seleccioneu primer algunes de les seves paraules per respondre només a aquestes.",
+    "Replying to your answer": "Sobre la vostra resposta",
+    "Replying to this part of your answer": "Sobre aquesta part de la vostra resposta"
 }

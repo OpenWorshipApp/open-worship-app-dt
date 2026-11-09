@@ -244,6 +244,18 @@ describe('what the card itself can do', () => {
                     VERSE,
                 ),
             ).toEqual({ kind: 'action', step: 'save' });
+            // A Bible NOTE, a file or the lesson is not the passage: never
+            // the Bibles list (2026-11-09: "save to a bible note" and "save
+            // the preaching lesson to a file" had been sent to Save to my
+            // Bibles list).
+            for (const line of [
+                'រក្សាទុកក្នុងកំណត់ត្រាព្រះគម្ពីរ',
+                'រក្សាទុកជាកំណត់ចំណាំ',
+                'រក្សាទុកមេរៀនអធិប្បាយទៅក្នុងឯកសារ',
+                'រក្សាទុកចម្លើយនេះ',
+            ]) {
+                expect(readLookupVerseAsk(line, VERSE)).toBeNull();
+            }
         } finally {
             setChatTranslator(
                 (text) => {

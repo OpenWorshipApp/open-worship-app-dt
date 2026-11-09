@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Formateaz-o ca să fie ordonată și ușor de citit",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gata într-o singură schimbare: cuvintele a {count} blocuri din „{name}” au o mărime nouă. Încă nu este salvat: Salvare în fereastra notiței îl păstrează, iar Anulează această schimbare îl readuce.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Gata într-o singură schimbare: cuvintele a {count} blocuri din „{name}” au un stil nou. Încă nu este salvat: Salvare în fereastra notiței îl păstrează, iar Anulează această schimbare îl readuce.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}” a fost schimbat, dar asistentul s-a oprit înainte să spună ce a făcut. Anulează această modificare îl readuce cum era."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}” a fost schimbat, dar asistentul s-a oprit înainte să spună ce a făcut. Anulează această modificare îl readuce cum era.",
+    "Reply": "Răspundeți",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Răspundeți la acest răspuns. Selectați mai întâi câteva dintre cuvintele lui pentru a răspunde doar la ele.",
+    "Replying to your answer": "Referitor la răspunsul dumneavoastră",
+    "Replying to this part of your answer": "Referitor la această parte a răspunsului dumneavoastră"
 }

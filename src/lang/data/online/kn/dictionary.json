@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "ಅಚ್ಚುಕಟ್ಟಾಗಿ ಮತ್ತು ಓದಲು ಸುಲಭವಾಗುವಂತೆ ರೂಪಿಸಿ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ಒಂದೇ ಬದಲಾವಣೆಯಲ್ಲಿ ಆಯಿತು: “{name}” ನ {count} ಭಾಗಗಳ ಪದಗಳಿಗೆ ಹೊಸ ಗಾತ್ರ ಬಂದಿದೆ. ಇದು ಇನ್ನೂ ಉಳಿಸಲಾಗಿಲ್ಲ: ಟಿಪ್ಪಣಿ ಕಿಟಕಿಯಲ್ಲಿನ ಉಳಿಸು ಇದನ್ನು ಇರಿಸುತ್ತದೆ, ಈ ಬದಲಾವಣೆ ರದ್ದುಮಾಡು ಇದನ್ನು ಹಿಂದಿರುಗಿಸುತ್ತದೆ.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ಒಂದೇ ಬದಲಾವಣೆಯಲ್ಲಿ ಆಯಿತು: “{name}” ನ {count} ಭಾಗಗಳ ಪದಗಳಿಗೆ ಹೊಸ ಶೈಲಿ ಬಂದಿದೆ. ಇದು ಇನ್ನೂ ಉಳಿಸಲಾಗಿಲ್ಲ: ಟಿಪ್ಪಣಿ ಕಿಟಕಿಯಲ್ಲಿನ ಉಳಿಸು ಇದನ್ನು ಇರಿಸುತ್ತದೆ, ಈ ಬದಲಾವಣೆ ರದ್ದುಮಾಡು ಇದನ್ನು ಹಿಂದಿರುಗಿಸುತ್ತದೆ.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ಬದಲಾಗಿದೆ, ಆದರೆ ಸಹಾಯಕ ತಾನು ಏನು ಮಾಡಿದೆ ಎಂದು ಹೇಳುವ ಮೊದಲೇ ನಿಂತುಹೋಯಿತು. ಈ ಬದಲಾವಣೆಯನ್ನು ರದ್ದುಗೊಳಿಸಿ ಅದನ್ನು ಹಿಂದಿನಂತೆ ಮಾಡುತ್ತದೆ."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ಬದಲಾಗಿದೆ, ಆದರೆ ಸಹಾಯಕ ತಾನು ಏನು ಮಾಡಿದೆ ಎಂದು ಹೇಳುವ ಮೊದಲೇ ನಿಂತುಹೋಯಿತು. ಈ ಬದಲಾವಣೆಯನ್ನು ರದ್ದುಗೊಳಿಸಿ ಅದನ್ನು ಹಿಂದಿನಂತೆ ಮಾಡುತ್ತದೆ.",
+    "Reply": "ಪ್ರತ್ಯುತ್ತರಿಸಿ",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ಈ ಉತ್ತರಕ್ಕೆ ಪ್ರತ್ಯುತ್ತರಿಸಿ. ಅದರ ಕೆಲವು ಪದಗಳಿಗೆ ಮಾತ್ರ ಪ್ರತ್ಯುತ್ತರಿಸಲು, ಮೊದಲು ಆ ಪದಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+    "Replying to your answer": "ನಿಮ್ಮ ಉತ್ತರಕ್ಕೆ ಪ್ರತ್ಯುತ್ತರ",
+    "Replying to this part of your answer": "ನಿಮ್ಮ ಉತ್ತರದ ಈ ಭಾಗಕ್ಕೆ ಪ್ರತ್ಯುತ್ತರ"
 }

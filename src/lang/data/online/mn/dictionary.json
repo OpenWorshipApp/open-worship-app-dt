@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Цэвэрхэн, уншихад хялбар болгон хэлбэржүүл",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Нэг өөрчлөлтөөр хийгдлээ: “{name}” тэмдэглэлийн {count} блокийн үгс шинэ хэмжээтэй боллоо. Хараахан хадгалагдаагүй: тэмдэглэлийн цонхны Хадгалах үүнийг хадгална, Энэ өөрчлөлтийг буцаах нь буцаана.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Нэг өөрчлөлтөөр хийгдлээ: “{name}” тэмдэглэлийн {count} блокийн үгс шинэ хэв маягтай боллоо. Хараахан хадгалагдаагүй: тэмдэглэлийн цонхны Хадгалах үүнийг хадгална, Энэ өөрчлөлтийг буцаах нь буцаана.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” өөрчлөгдсөн боловч туслах юу хийснээ хэлэхээсээ өмнө зогссон. Энэ өөрчлөлтийг буцаах нь үүнийг буцааж тавина."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” өөрчлөгдсөн боловч туслах юу хийснээ хэлэхээсээ өмнө зогссон. Энэ өөрчлөлтийг буцаах нь үүнийг буцааж тавина.",
+    "Reply": "Хариу бичих",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Энэ хариултад хариу бичих. Зөвхөн зарим үгэнд нь хариу бичихийн тулд эхлээд тэдгээрийг сонгоно уу.",
+    "Replying to your answer": "Таны хариултын талаар",
+    "Replying to this part of your answer": "Таны хариултын энэ хэсгийн талаар"
 }

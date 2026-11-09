@@ -4,7 +4,7 @@
     "window": null,
     "focus": null,
     "description": "Questions that have the same answer whichever window the user is standing in: panels, the find bar, sharing and backup, and the help window itself.",
-    "updated": "2026-11-08",
+    "updated": "2026-11-09",
     "sections": [
         {
             "id": "panels",
@@ -874,6 +874,24 @@
                     "resources": {
                         "recipe": "W-42",
                         "passage": "Under every answer is Copy"
+                    }
+                },
+                {
+                    "id": "reply-to-answer",
+                    "text": "How do I ask a follow-up about one answer?",
+                    "kind": "howto",
+                    "keywords": [
+                        "reply",
+                        "follow up on an answer",
+                        "follow-up question",
+                        "quote the answer",
+                        "one part of the answer",
+                        "ask about this answer"
+                    ],
+                    "resources": {
+                        "recipe": "W-42",
+                        "passage": "And every answer has a reply arrow beside Copy",
+                        "find": "Reply"
                     }
                 },
                 {

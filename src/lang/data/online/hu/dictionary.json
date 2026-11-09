@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Formázd rendezettre és könnyen olvashatóra",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Egy változtatással kész: „{name}” {count} blokkjának szavai új méretet kaptak. Még nincs mentve: a jegyzetablak Mentés gombja megtartja, a Változtatás visszavonása pedig visszaállítja.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Egy változtatással kész: „{name}” {count} blokkjának szavai új stílust kaptak. Még nincs mentve: a jegyzetablak Mentés gombja megtartja, a Változtatás visszavonása pedig visszaállítja.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "A(z) „{name}” megváltozott, de a segéd leállt, mielőtt elmondta volna, mit tett. Ennek a módosításnak a visszavonása visszaállítja."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "A(z) „{name}” megváltozott, de a segéd leállt, mielőtt elmondta volna, mit tett. Ennek a módosításnak a visszavonása visszaállítja.",
+    "Reply": "Válasz",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Válasz erre a válaszra. Ha csak néhány szavára szeretne válaszolni, előbb jelölje ki azokat.",
+    "Replying to your answer": "Az Ön válaszával kapcsolatban",
+    "Replying to this part of your answer": "Az Ön válaszának ezzel a részével kapcsolatban"
 }

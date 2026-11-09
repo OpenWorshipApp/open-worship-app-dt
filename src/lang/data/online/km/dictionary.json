@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "រៀបចំទម្រង់វាឱ្យស្អាត និងងាយអាន",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "បានធ្វើក្នុងការផ្លាស់ប្ដូរតែមួយ៖ ពាក្យនៃប្លុកចំនួន {count} របស់ “{name}” មានទំហំថ្មី។ វាមិនទាន់បានរក្សាទុកនៅឡើយទេ៖ រក្សាទុកក្នុងបង្អួចកំណត់ត្រានឹងរក្សាវាទុក ហើយ មិនធ្វើការផ្លាស់ប្ដូរនេះវិញ នឹងដាក់វាត្រឡប់មកវិញ។",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "បានធ្វើក្នុងការផ្លាស់ប្ដូរតែមួយ៖ ពាក្យនៃប្លុកចំនួន {count} របស់ “{name}” មានរចនាប័ទ្មថ្មី។ វាមិនទាន់បានរក្សាទុកនៅឡើយទេ៖ រក្សាទុកក្នុងបង្អួចកំណត់ត្រានឹងរក្សាវាទុក ហើយ មិនធ្វើការផ្លាស់ប្ដូរនេះវិញ នឹងដាក់វាត្រឡប់មកវិញ។",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ត្រូវបានកែប្រែ ប៉ុន្តែជំនួយការបានឈប់មុនពេលប្រាប់ថាវាបានធ្វើអ្វី។ ត្រឡប់ការកែប្រែនេះវិញ ដាក់វាត្រឡប់ដូចដើមវិញ។"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ត្រូវបានកែប្រែ ប៉ុន្តែជំនួយការបានឈប់មុនពេលប្រាប់ថាវាបានធ្វើអ្វី។ ត្រឡប់ការកែប្រែនេះវិញ ដាក់វាត្រឡប់ដូចដើមវិញ។",
+    "Reply": "ឆ្លើយតប",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ឆ្លើយតបនឹងចម្លើយនេះ។ សូមជ្រើសរើសពាក្យខ្លះរបស់វាជាមុនសិន ដើម្បីឆ្លើយតបតែពាក្យទាំងនោះ។",
+    "Replying to your answer": "ឆ្លើយតបនឹងចម្លើយរបស់អ្នក",
+    "Replying to this part of your answer": "ឆ្លើយតបនឹងផ្នែកនេះនៃចម្លើយរបស់អ្នក"
 }

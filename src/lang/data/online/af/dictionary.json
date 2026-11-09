@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Formateer dit sodat dit netjies en maklik leesbaar is",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Klaar in een verandering: die woorde van {count} blokke van “{name}” het 'n nuwe grootte. Dit is nog nie gestoor nie: Stoor in die nota-venster hou dit, en Ontdoen hierdie verandering sit dit terug.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Klaar in een verandering: die woorde van {count} blokke van “{name}” het 'n nuwe styl. Dit is nog nie gestoor nie: Stoor in die nota-venster hou dit, en Ontdoen hierdie verandering sit dit terug.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” is verander, maar die assistent het gestop voordat dit gesê het wat dit gedoen het. Ontdoen hierdie verandering sit dit terug."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” is verander, maar die assistent het gestop voordat dit gesê het wat dit gedoen het. Ontdoen hierdie verandering sit dit terug.",
+    "Reply": "Reageer",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Reageer op hierdie antwoord. Kies eers sommige van sy woorde om net op hulle te reageer.",
+    "Replying to your answer": "Reaksie op jou antwoord",
+    "Replying to this part of your answer": "Reaksie op hierdie deel van jou antwoord"
 }

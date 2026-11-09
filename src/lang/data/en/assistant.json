@@ -69,6 +69,20 @@
             "bibles list",
             "bible list"
         ],
+        "notCard": [
+            "note",
+            "notes",
+            "file",
+            "files",
+            "document",
+            "lesson",
+            "lessons",
+            "sermon",
+            "preaching",
+            "answer",
+            "explanation",
+            "summary"
+        ],
         "copy": ["copy", "duplicate"],
         "anotherBible": [
             "another bible",

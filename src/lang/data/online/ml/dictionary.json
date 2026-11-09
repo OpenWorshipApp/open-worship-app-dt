@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "വൃത്തിയായും വായിക്കാൻ എളുപ്പമായും ക്രമീകരിക്കുക",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ഒറ്റ മാറ്റത്തിൽ ചെയ്തു: “{name}” ലെ {count} ഭാഗങ്ങളിലെ വാക്കുകൾക്ക് പുതിയ വലിപ്പം. ഇത് ഇതുവരെ സേവ് ചെയ്തിട്ടില്ല: കുറിപ്പ് ജാലകത്തിലെ സേവ് ഇത് സൂക്ഷിക്കും, ഈ മാറ്റം പഴയപടിയാക്കുക ഇത് തിരികെ വെക്കും.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ഒറ്റ മാറ്റത്തിൽ ചെയ്തു: “{name}” ലെ {count} ഭാഗങ്ങളിലെ വാക്കുകൾക്ക് പുതിയ ശൈലി. ഇത് ഇതുവരെ സേവ് ചെയ്തിട്ടില്ല: കുറിപ്പ് ജാലകത്തിലെ സേവ് ഇത് സൂക്ഷിക്കും, ഈ മാറ്റം പഴയപടിയാക്കുക ഇത് തിരികെ വെക്കും.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” മാറ്റിയിട്ടുണ്ട്, പക്ഷേ എന്താണ് ചെയ്തതെന്ന് പറയുന്നതിന് മുമ്പ് സഹായി നിന്നുപോയി. ഈ മാറ്റം പഴയപടിയാക്കുക അത് തിരികെ കൊണ്ടുവരുന്നു."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” മാറ്റിയിട്ടുണ്ട്, പക്ഷേ എന്താണ് ചെയ്തതെന്ന് പറയുന്നതിന് മുമ്പ് സഹായി നിന്നുപോയി. ഈ മാറ്റം പഴയപടിയാക്കുക അത് തിരികെ കൊണ്ടുവരുന്നു.",
+    "Reply": "മറുപടി നൽകുക",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ഈ ഉത്തരത്തിന് മറുപടി നൽകുക. അതിലെ ചില വാക്കുകൾക്ക് മാത്രം മറുപടി നൽകാൻ ആദ്യം അവ തിരഞ്ഞെടുക്കുക.",
+    "Replying to your answer": "നിങ്ങളുടെ ഉത്തരത്തിനുള്ള മറുപടി",
+    "Replying to this part of your answer": "നിങ്ങളുടെ ഉത്തരത്തിലെ ഈ ഭാഗത്തിനുള്ള മറുപടി"
 }

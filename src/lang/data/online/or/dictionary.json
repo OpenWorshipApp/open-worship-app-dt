@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "ସଫା ଓ ପଢ଼ିବାକୁ ସହଜ ହେବା ପରି ସଜାଅ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ଗୋଟିଏ ପରିବର୍ତ୍ତନରେ ହୋଇଗଲା: “{name}”ର {count}ଟି ଭାଗର ଶବ୍ଦର ନୂଆ ଆକାର ହୋଇଛି। ଏହା ଏପର୍ଯ୍ୟନ୍ତ ସଞ୍ଚିତ ହୋଇନାହିଁ: ଟିପ୍ପଣୀ ୱିଣ୍ଡୋର ସଞ୍ଚୟ କରନ୍ତୁ ଏହାକୁ ରଖେ, ଏବଂ ଏହି ପରିବର୍ତ୍ତନ ପୂର୍ବବତ୍ କରନ୍ତୁ ଏହାକୁ ଫେରାଇ ଆଣେ।",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ଗୋଟିଏ ପରିବର୍ତ୍ତନରେ ହୋଇଗଲା: “{name}”ର {count}ଟି ଭାଗର ଶବ୍ଦର ନୂଆ ଶୈଳୀ ହୋଇଛି। ଏହା ଏପର୍ଯ୍ୟନ୍ତ ସଞ୍ଚିତ ହୋଇନାହିଁ: ଟିପ୍ପଣୀ ୱିଣ୍ଡୋର ସଞ୍ଚୟ କରନ୍ତୁ ଏହାକୁ ରଖେ, ଏବଂ ଏହି ପରିବର୍ତ୍ତନ ପୂର୍ବବତ୍ କରନ୍ତୁ ଏହାକୁ ଫେରାଇ ଆଣେ।",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ବଦଳାଯାଇଛି, କିନ୍ତୁ ସହାୟକ କ’ଣ କଲା କହିବା ପୂର୍ବରୁ ଅଟକିଗଲା। ଏହି ପରିବର୍ତ୍ତନ ପୂର୍ବବତ୍ କରନ୍ତୁ ଏହାକୁ ପୂର୍ବପରି କରିଦିଏ।"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ବଦଳାଯାଇଛି, କିନ୍ତୁ ସହାୟକ କ’ଣ କଲା କହିବା ପୂର୍ବରୁ ଅଟକିଗଲା। ଏହି ପରିବର୍ତ୍ତନ ପୂର୍ବବତ୍ କରନ୍ତୁ ଏହାକୁ ପୂର୍ବପରି କରିଦିଏ।",
+    "Reply": "ପ୍ରତ୍ୟୁତ୍ତର ଦିଅନ୍ତୁ",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ଏହି ଉତ୍ତରର ପ୍ରତ୍ୟୁତ୍ତର ଦିଅନ୍ତୁ। କେବଳ କିଛି ଶବ୍ଦର ପ୍ରତ୍ୟୁତ୍ତର ଦେବା ପାଇଁ ପ୍ରଥମେ ସେହି ଶବ୍ଦଗୁଡ଼ିକୁ ଚୟନ କରନ୍ତୁ।",
+    "Replying to your answer": "ଆପଣଙ୍କ ଉତ୍ତରର ପ୍ରତ୍ୟୁତ୍ତର",
+    "Replying to this part of your answer": "ଆପଣଙ୍କ ଉତ୍ତରର ଏହି ଅଂଶର ପ୍ରତ୍ୟୁତ୍ତର"
 }

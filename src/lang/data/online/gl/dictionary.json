@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Dálle formato para que quede ordenada e fácil de ler",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Feito nun só cambio: as palabras de {count} bloques de «{name}» teñen un tamaño novo. Aínda non está gardado: Gardar na xanela da nota consérvao, e Desfacer este cambio devólveo.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Feito nun só cambio: as palabras de {count} bloques de «{name}» teñen un estilo novo. Aínda non está gardado: Gardar na xanela da nota consérvao, e Desfacer este cambio devólveo.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Cambiouse «{name}», pero o asistente detívose antes de dicir que fixo. Desfacer este cambio vólveo como estaba."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "Cambiouse «{name}», pero o asistente detívose antes de dicir que fixo. Desfacer este cambio vólveo como estaba.",
+    "Reply": "Responder",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Responder a esta resposta. Selecciona primeiro algunhas das súas palabras para responder só a elas.",
+    "Replying to your answer": "Sobre a túa resposta",
+    "Replying to this part of your answer": "Sobre esta parte da túa resposta"
 }

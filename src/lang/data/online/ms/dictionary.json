@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Formatkan supaya kemas dan mudah dibaca",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Selesai dalam satu perubahan: perkataan dalam {count} blok “{name}” mempunyai saiz baharu. Ia belum disimpan: Simpan dalam tetingkap nota menyimpannya, dan Buat asal perubahan ini mengembalikannya.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Selesai dalam satu perubahan: perkataan dalam {count} blok “{name}” mempunyai gaya baharu. Ia belum disimpan: Simpan dalam tetingkap nota menyimpannya, dan Buat asal perubahan ini mengembalikannya.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” telah diubah, tetapi pembantu berhenti sebelum memberitahu apa yang dilakukannya. Buat asal perubahan ini mengembalikannya."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” telah diubah, tetapi pembantu berhenti sebelum memberitahu apa yang dilakukannya. Buat asal perubahan ini mengembalikannya.",
+    "Reply": "Balas",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Balas jawapan ini. Pilih beberapa perkataannya dahulu untuk membalas perkataan itu sahaja.",
+    "Replying to your answer": "Membalas jawapan anda",
+    "Replying to this part of your answer": "Membalas bahagian ini daripada jawapan anda"
 }

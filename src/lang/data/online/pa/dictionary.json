@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "ਇਸਨੂੰ ਸਾਫ਼-ਸੁਥਰਾ ਅਤੇ ਪੜ੍ਹਨ ਵਿੱਚ ਆਸਾਨ ਬਣਾਓ",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ਇੱਕੋ ਬਦਲਾਅ ਵਿੱਚ ਹੋ ਗਿਆ: “{name}” ਦੇ {count} ਹਿੱਸਿਆਂ ਦੇ ਸ਼ਬਦਾਂ ਦਾ ਨਵਾਂ ਆਕਾਰ ਹੈ। ਇਹ ਅਜੇ ਸੰਭਾਲਿਆ ਨਹੀਂ ਗਿਆ: ਨੋਟ ਵਿੰਡੋ ਵਿੱਚ ਸੰਭਾਲੋ ਇਸਨੂੰ ਰੱਖਦਾ ਹੈ, ਅਤੇ ਇਹ ਬਦਲਾਅ ਵਾਪਸ ਲਓ ਇਸਨੂੰ ਮੋੜ ਦਿੰਦਾ ਹੈ।",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "ਇੱਕੋ ਬਦਲਾਅ ਵਿੱਚ ਹੋ ਗਿਆ: “{name}” ਦੇ {count} ਹਿੱਸਿਆਂ ਦੇ ਸ਼ਬਦਾਂ ਦਾ ਨਵੀਂ ਸ਼ੈਲੀ ਹੈ। ਇਹ ਅਜੇ ਸੰਭਾਲਿਆ ਨਹੀਂ ਗਿਆ: ਨੋਟ ਵਿੰਡੋ ਵਿੱਚ ਸੰਭਾਲੋ ਇਸਨੂੰ ਰੱਖਦਾ ਹੈ, ਅਤੇ ਇਹ ਬਦਲਾਅ ਵਾਪਸ ਲਓ ਇਸਨੂੰ ਮੋੜ ਦਿੰਦਾ ਹੈ।",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ਬਦਲਿਆ ਗਿਆ, ਪਰ ਸਹਾਇਕ ਇਹ ਦੱਸਣ ਤੋਂ ਪਹਿਲਾਂ ਰੁਕ ਗਿਆ ਕਿ ਉਸਨੇ ਕੀ ਕੀਤਾ। ਇਹ ਬਦਲਾਅ ਵਾਪਸ ਲਓ ਇਸਨੂੰ ਪਹਿਲਾਂ ਵਰਗਾ ਕਰ ਦਿੰਦਾ ਹੈ।"
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” ਬਦਲਿਆ ਗਿਆ, ਪਰ ਸਹਾਇਕ ਇਹ ਦੱਸਣ ਤੋਂ ਪਹਿਲਾਂ ਰੁਕ ਗਿਆ ਕਿ ਉਸਨੇ ਕੀ ਕੀਤਾ। ਇਹ ਬਦਲਾਅ ਵਾਪਸ ਲਓ ਇਸਨੂੰ ਪਹਿਲਾਂ ਵਰਗਾ ਕਰ ਦਿੰਦਾ ਹੈ।",
+    "Reply": "ਜਵਾਬ ਦਿਓ",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ਇਸ ਜਵਾਬ ਦਾ ਜਵਾਬ ਦਿਓ। ਸਿਰਫ਼ ਕੁਝ ਸ਼ਬਦਾਂ ਦਾ ਜਵਾਬ ਦੇਣ ਲਈ ਪਹਿਲਾਂ ਉਹ ਸ਼ਬਦ ਚੁਣੋ।",
+    "Replying to your answer": "ਤੁਹਾਡੇ ਜਵਾਬ ਬਾਰੇ",
+    "Replying to this part of your answer": "ਤੁਹਾਡੇ ਜਵਾਬ ਦੇ ਇਸ ਹਿੱਸੇ ਬਾਰੇ"
 }

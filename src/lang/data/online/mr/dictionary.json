@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "ती नीटनेटकी आणि वाचायला सोपी करा",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "एका बदलात झाले: “{name}” च्या {count} भागांच्या शब्दांचा नवा आकार आहे. हे अजून जतन झालेले नाही: टीप विंडोतील जतन करा ते ठेवते, आणि हा बदल पूर्ववत करा ते परत आणते.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "एका बदलात झाले: “{name}” च्या {count} भागांच्या शब्दांचा नवी शैली आहे. हे अजून जतन झालेले नाही: टीप विंडोतील जतन करा ते ठेवते, आणि हा बदल पूर्ववत करा ते परत आणते.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” बदलले गेले, पण सहाय्यकाने काय केले ते सांगण्याआधीच तो थांबला. हा बदल पूर्ववत करा ते परत पूर्वीसारखे करते."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” बदलले गेले, पण सहाय्यकाने काय केले ते सांगण्याआधीच तो थांबला. हा बदल पूर्ववत करा ते परत पूर्वीसारखे करते.",
+    "Reply": "प्रत्युत्तर द्या",
+    "Reply to this answer. Select some of its words first to reply to just them.": "या उत्तराला प्रत्युत्तर द्या. फक्त काही शब्दांना प्रत्युत्तर देण्यासाठी आधी ते शब्द निवडा.",
+    "Replying to your answer": "तुमच्या उत्तराला प्रत्युत्तर",
+    "Replying to this part of your answer": "तुमच्या उत्तराच्या या भागाला प्रत्युत्तर"
 }

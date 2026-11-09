@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "დააფორმატე მოწესრიგებულად და ადვილად წასაკითხად",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "შესრულდა ერთი ცვლილებით: „{name}“-ის {count} ბლოკის სიტყვებს ახალი ზომა აქვს. ჯერ არ არის შენახული: ჩანაწერის ფანჯრის შენახვა შეინახავს, ხოლო ამ ცვლილების გაუქმება დააბრუნებს.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "შესრულდა ერთი ცვლილებით: „{name}“-ის {count} ბლოკის სიტყვებს ახალი სტილი აქვს. ჯერ არ არის შენახული: ჩანაწერის ფანჯრის შენახვა შეინახავს, ხოლო ამ ცვლილების გაუქმება დააბრუნებს.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ შეიცვალა, მაგრამ ასისტენტი გაჩერდა, სანამ იტყოდა, რა გააკეთა. ამ ცვლილების გაუქმება მას უკან აბრუნებს."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ შეიცვალა, მაგრამ ასისტენტი გაჩერდა, სანამ იტყოდა, რა გააკეთა. ამ ცვლილების გაუქმება მას უკან აბრუნებს.",
+    "Reply": "პასუხის გაცემა",
+    "Reply to this answer. Select some of its words first to reply to just them.": "ამ პასუხზე პასუხის გაცემა. მხოლოდ მისი ზოგიერთი სიტყვისთვის საპასუხოდ ჯერ ისინი მონიშნეთ.",
+    "Replying to your answer": "თქვენი პასუხის შესახებ",
+    "Replying to this part of your answer": "თქვენი პასუხის ამ ნაწილის შესახებ"
 }

@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "آن را مرتب و خوانا قالب‌بندی کن",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "در یک تغییر انجام شد: کلمات {count} بخش از «{name}» اندازهٔ تازه‌ای دارند. هنوز ذخیره نشده است: «ذخیره» در پنجرهٔ یادداشت آن را نگه می‌دارد و «لغو این تغییر» آن را برمی‌گرداند.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "در یک تغییر انجام شد: کلمات {count} بخش از «{name}» قالب تازه‌ای دارند. هنوز ذخیره نشده است: «ذخیره» در پنجرهٔ یادداشت آن را نگه می‌دارد و «لغو این تغییر» آن را برمی‌گرداند.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» تغییر کرد، اما دستیار پیش از گفتن آنچه انجام داده بود متوقف شد. واگرد این تغییر آن را برمی‌گرداند."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "«{name}» تغییر کرد، اما دستیار پیش از گفتن آنچه انجام داده بود متوقف شد. واگرد این تغییر آن را برمی‌گرداند.",
+    "Reply": "پاسخ دادن",
+    "Reply to this answer. Select some of its words first to reply to just them.": "پاسخ به این پاسخ. برای پاسخ دادن فقط به چند کلمه از آن، اول آن کلمه‌ها را انتخاب کنید.",
+    "Replying to your answer": "درباره پاسخ شما",
+    "Replying to this part of your answer": "درباره این بخش از پاسخ شما"
 }

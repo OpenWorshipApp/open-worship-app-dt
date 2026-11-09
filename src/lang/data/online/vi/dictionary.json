@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "Định dạng cho gọn gàng và dễ đọc",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Đã xong trong một thay đổi: chữ trong {count} khối của “{name}” đã có cỡ mới. Chưa được lưu: Lưu trong cửa sổ ghi chú sẽ giữ lại, và Hoàn tác thay đổi này sẽ trả lại như cũ.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "Đã xong trong một thay đổi: chữ trong {count} khối của “{name}” đã có kiểu mới. Chưa được lưu: Lưu trong cửa sổ ghi chú sẽ giữ lại, và Hoàn tác thay đổi này sẽ trả lại như cũ.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” đã được thay đổi, nhưng trợ lý đã dừng trước khi nói nó đã làm gì. Hoàn tác thay đổi này sẽ đưa nó trở lại như cũ."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "“{name}” đã được thay đổi, nhưng trợ lý đã dừng trước khi nói nó đã làm gì. Hoàn tác thay đổi này sẽ đưa nó trở lại như cũ.",
+    "Reply": "Trả lời",
+    "Reply to this answer. Select some of its words first to reply to just them.": "Trả lời câu trả lời này. Hãy chọn trước một vài từ trong đó để chỉ trả lời những từ ấy.",
+    "Replying to your answer": "Về câu trả lời của bạn",
+    "Replying to this part of your answer": "Về phần này trong câu trả lời của bạn"
 }

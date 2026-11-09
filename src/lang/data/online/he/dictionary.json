@@ -4148,5 +4148,9 @@
     "Format it so it is neat and easy to read": "עצב אותה כך שתהיה מסודרת וקלה לקריאה",
     "Done in one change: the words of {count} blocks of “{name}” have a new size. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "בוצע בשינוי אחד: למילים של {count} קטעים ב־“{name}” יש גודל חדש. זה עדיין לא נשמר: שמירה בחלון ההערה שומרת אותו, ו״בטל את השינוי הזה״ מחזיר אותו.",
     "Done in one change: the words of {count} blocks of “{name}” have a new style. It is not saved yet: Save in the note window keeps it, and Undo this change puts it back.": "בוצע בשינוי אחד: למילים של {count} קטעים ב־“{name}” יש סגנון חדש. זה עדיין לא נשמר: שמירה בחלון ההערה שומרת אותו, ו״בטל את השינוי הזה״ מחזיר אותו.",
-    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ שונה, אבל העוזר נעצר לפני שאמר מה עשה. ביטול השינוי הזה מחזיר אותו."
+    "“{name}” was changed, but the assistant stopped before saying what it did. Undo this change puts it back.": "„{name}“ שונה, אבל העוזר נעצר לפני שאמר מה עשה. ביטול השינוי הזה מחזיר אותו.",
+    "Reply": "תגובה",
+    "Reply to this answer. Select some of its words first to reply to just them.": "תגובה לתשובה זו. כדי להגיב רק לחלק מהמילים שלה, בחרו אותן קודם.",
+    "Replying to your answer": "בתגובה לתשובה שלך",
+    "Replying to this part of your answer": "בתגובה לחלק הזה בתשובה שלך"
 }

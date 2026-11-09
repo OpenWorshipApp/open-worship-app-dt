@@ -634,6 +634,79 @@ describe('an answer as it is drawn', () => {
         expect(copy().textContent).toBe('✓ Copied');
     });
 
+    // 2026-11-09, the user: _right next to the copy icon add reply icon,
+    // click reply to mention it in input text_; _as a user I want to be able
+    // to follow up a section_.
+    test('Reply quotes the answer in the box, or only the words selected in it', async () => {
+        seedMessages([
+            genAskedMessage(),
+            genAnswer({ text: 'Press F6.\n\nThen press F7.' }),
+        ]);
+        await renderApp();
+        const reply = () => {
+            return query<HTMLButtonElement>('.cue-bot [aria-label="Reply"]')!;
+        };
+        const box = () => {
+            return query<HTMLTextAreaElement>('.chat-input')!;
+        };
+        // Right after Copy, before the thumbs; a question carries none.
+        const tools = queryAll('.cue-bot .cue-tools > button');
+        expect(tools[1]).toBe(reply());
+        expect(tools[2].getAttribute('aria-label')).toBe('Good answer');
+        expect(query('.cue-you [aria-label="Reply"]')).toBeNull();
+        await typeQuestion('About F6');
+        await click(reply());
+        const whole =
+            'About F6\n\nReplying to your answer:\n' +
+            '> Press F6.\n> Then press F7.\n';
+        expect(box().value).toBe(whole);
+        expect(document.activeElement).toBe(box());
+        // Nothing is asked: the follow-up is theirs to write.
+        expect(queryAll('.cue-you')).toHaveLength(1);
+        // The same quote twice is put in once.
+        await click(reply());
+        expect(box().value).toBe(whole);
+        // Words selected in the answer: those alone, said as a part.
+        const walker = document.createTreeWalker(
+            query('.cue-bot .cue-body')!,
+            NodeFilter.SHOW_TEXT,
+        );
+        let textNode: Node | null = walker.nextNode();
+        while (
+            textNode !== null &&
+            !(textNode.nodeValue ?? '').includes('Then press F7.')
+        ) {
+            textNode = walker.nextNode();
+        }
+        expect(textNode).not.toBeNull();
+        const range = document.createRange();
+        range.selectNodeContents(textNode!);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        await act(async () => {
+            reply().dispatchEvent(
+                new MouseEvent('mousedown', { bubbles: true }),
+            );
+        });
+        await click(reply());
+        expect(box().value).toBe(
+            whole +
+                '\nReplying to this part of your answer:\n> Then press F7.\n',
+        );
+        // A selection in one of the answer's buttons is not words of it.
+        await typeQuestion('');
+        range.selectNodeContents(
+            queryAll('.cue-bot .cue-tool').find((button) => {
+                return button.getAttribute('title') === 'Copy this answer';
+            })!,
+        );
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        await click(reply());
+        expect(box().value).toBe(whole.replace('About F6\n\n', ''));
+        window.getSelection()!.removeAllRanges();
+    });
+
     test('the buttons under an answer wear what they do', async () => {
         seedMessages([
             genAskedMessage(),
