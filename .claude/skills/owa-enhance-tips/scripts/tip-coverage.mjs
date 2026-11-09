@@ -248,7 +248,10 @@ function loadCatalog(pageKey) {
                                     : {
                                           find: demo.find,
                                           action: 'click',
-                                          translateFind: true,
+                                          // English in every window when the
+                                          // control is (`isFindTranslated`).
+                                          translateFind:
+                                              demo.isFindTranslated !== false,
                                       }),
                             },
                         ],
@@ -493,7 +496,7 @@ function translateIn(pack, text) {
 // that window shows them, against the tip's title, detail and category as
 // that window shows them. A Khmer detail that leaves the button's Khmer name
 // out is a tip no Khmer volunteer finds by the button.
-function checkIsSearchHitIn(pack, tip, wordList) {
+function checkIsSearchHitIn(pack, tip, wordList, keptWordSet = new Set()) {
     const translatedTip = {
         title: translateIn(pack, tip.label),
         detail: translateIn(pack, tip.detail),
@@ -501,7 +504,12 @@ function checkIsSearchHitIn(pack, tip, wordList) {
             tip.category === null ? '' : translateIn(pack, tip.category),
     };
     return wordList.some((word) => {
-        return checkIsSearchHit(translatedTip, translateIn(pack, word));
+        // A control the window draws in English in every language (an
+        // item's `untranslated`) is typed as it reads: English.
+        const shownWord = keptWordSet.has(word)
+            ? word
+            : translateIn(pack, word);
+        return checkIsSearchHit(translatedTip, shownWord);
     });
 }
 
@@ -562,6 +570,13 @@ function measureItem(item, tipList, packMap) {
             searchWordList.some((word) => checkIsSearchHit(tip, word))
         );
     });
+    // `search` words are the volunteer's own and are typed in their
+    // language; the label words of an `untranslated` item are not.
+    const keptWordSet = new Set(
+        typeof item.untranslated === 'string'
+            ? labelList.map((label) => label.control)
+            : [],
+    );
     const findableInMap = {};
     for (const [langCode, pack] of Object.entries(packMap)) {
         findableInMap[langCode] =
@@ -571,6 +586,7 @@ function measureItem(item, tipList, packMap) {
                     pack,
                     tipMap.get(tipId),
                     searchWordList,
+                    keptWordSet,
                 );
             });
     }
@@ -774,7 +790,32 @@ async function readLiveWindow(pageInfo, port) {
             }
         };
         visit(document);
-        return { url: location.href, controls, files: [...fileSet] };
+        // The person's own words: a control drawn INSIDE an editable region
+        // (a note's body, a sticky note, a slide's text) that carries no name
+        // of its own (aria-label, title, placeholder) is labelled by its
+        // text, which is what they wrote -- a verse chip, a sticky's words.
+        // Read as data, never as a lead, and never quoted into an inventory.
+        const contentLabels = new Set();
+        for (const element of dm.collect()) {
+            if (dm.visibilityOf(element) === 'gone') {
+                continue;
+            }
+            if (element.closest('[contenteditable="true"]') === null) {
+                continue;
+            }
+            if (['aria-label', 'title', 'placeholder'].some((name) => {
+                return (element.getAttribute(name) ?? '').trim() !== '';
+            })) {
+                continue;
+            }
+            contentLabels.add(dm.labelOf(element));
+        }
+        return {
+            url: location.href,
+            controls,
+            files: [...fileSet],
+            contentLabels: [...contentLabels],
+        };
     })()`;
     const { value } = await evaluateInApp(expression, {
         port,
@@ -796,6 +837,9 @@ function mergeHarvest(pageKey, previous, live) {
         return !fileSet.has(file);
     });
     const newLabelList = [];
+    const contentLabelSet = new Set(
+        (live.contentLabels ?? []).map((label) => normalizeLabel(label)),
+    );
     for (const row of live.controls ?? []) {
         const label = normalizeLabel(row.label);
         if (label.length === 0) {
@@ -808,9 +852,15 @@ function mergeHarvest(pageKey, previous, live) {
                 panelList: row.inPanel ? [row.inPanel] : [],
                 showsOnHover: row.showsOnHover === true,
                 revealBy: row.revealBy ?? null,
+                ...(contentLabelSet.has(label) ? { isContent: true } : {}),
             };
-        } else if (row.inPanel && !entry.panelList.includes(row.inPanel)) {
-            entry.panelList.push(row.inPanel);
+        } else {
+            if (row.inPanel && !entry.panelList.includes(row.inPanel)) {
+                entry.panelList.push(row.inPanel);
+            }
+            if (contentLabelSet.has(label)) {
+                entry.isContent = true;
+            }
         }
     }
     harvest.fileList = [...fileSet, ...newFileList].sort();
@@ -1016,6 +1066,9 @@ async function measurePage(pageInfo, { isHarvesting, port }) {
         featuredCount: tipList.filter((tip) => tip.isFeatured).length,
         sourceChars: JSON.stringify(tipList).length,
         translatedChars,
+        // A window loads ONE language's dictionary, so the figure that costs
+        // memory is a language's share, not the sum over every package.
+        packCount: Object.keys(packMap).length,
     };
     if (inventory === null) {
         return {
@@ -1070,7 +1123,13 @@ async function measurePage(pageInfo, { isHarvesting, port }) {
             );
         },
     );
-    const liveLeadList = Object.entries(harvest?.labelMap ?? {})
+    const liveEntryList = Object.entries(harvest?.labelMap ?? {});
+    // Read off the person's own editable content: data, counted apart.
+    const contentLabelCount = liveEntryList.filter(([, entry]) => {
+        return entry.isContent === true;
+    }).length;
+    const liveLeadList = liveEntryList
+        .filter(([, entry]) => entry.isContent !== true)
         .filter(([label]) => !accountant.checkIsLiveAccounted(label))
         .map(([label, entry]) => ({ label, ...entry }));
     const usedTipIdSet = new Set(
@@ -1128,6 +1187,7 @@ async function measurePage(pageInfo, { isHarvesting, port }) {
             sourceFileCount: sourceFileList.length,
             sourceList: sourceLeadList,
             liveList: liveLeadList,
+            contentLabelCount,
             harvestPassCount: harvest?.passCount ?? 0,
             harvestUpdatedAt: harvest?.updatedAt ?? null,
         },
@@ -1190,7 +1250,8 @@ function printReport(report) {
         `catalog: ${catalog.tipCount} tips · ${catalog.actionableCount} with a Do it step · ` +
             `${catalog.featuredCount} featured · ` +
             `${Math.round(catalog.sourceChars / 1024)} KB of lessons + ` +
-            `${Math.round(catalog.translatedChars / 1024)} KB of km/fr strings`,
+            `~${Math.round(catalog.translatedChars / Math.max(1, catalog.packCount) / 1024)} KB of strings a language ` +
+            `(${Math.round(catalog.translatedChars / 1024)} KB over ${catalog.packCount} packages)`,
     );
     printPass(report.pass);
     if (report.inventory === null) {
@@ -1270,7 +1331,10 @@ function printReport(report) {
             `${leads.liveList.length} from ${leads.harvestPassCount} live harvest pass(es)` +
             (leads.harvestUpdatedAt === null
                 ? ' -- none yet, run with --harvest'
-                : `, last ${leads.harvestUpdatedAt.slice(0, 16)}`),
+                : `, last ${leads.harvestUpdatedAt.slice(0, 16)}`) +
+            (leads.contentLabelCount > 0
+                ? ` · ${leads.contentLabelCount} read off the person's own editable content (data, not leads)`
+                : ''),
     );
     if (flagMap.has('leads')) {
         const byFileMap = new Map();

@@ -266,7 +266,7 @@ In the same change:
 Tips — Bible Reader (reader.html) · run <date>
 COVERED   61.0% → 74.5%  (provisional → final: leads 0 / 0)   target 99%
 ACTED     48.2% → 55.0%   search in km 40% → 66% · fr 52% → 71%
-catalog   100 → 109 tips · 74 → 79 KB lessons · 24 → 27 KB km/fr strings
+catalog   100 → 109 tips · 74 → 79 KB lessons · 12 → 14 KB strings a language
 changed   9 new tips, 14 details reworded, 3 Do it steps added
 verified  live: 26 tips (English) · 6 (Khmer) — screenshots …
 excluded  4 items, each with its reason …
@@ -302,5 +302,9 @@ findings still open.
 - **The firewall allows 25 presses a minute**, and a run that searches,
   opens, shows and presses four times a tip reaches it in six tips. Pace the
   presses; a `find_ui` on the tip's title after each search is not a press.
+- **A popup window behind another hands `owa_screenshot` a stale frame**
+  (2026-11-09, the note window): the press reported `did: clicked` and the
+  picture still showed the state before it. `select_page` with
+  `bringToFront: true` on that window first, then every picture was live.
 - **The live harvest cuts a label at 80 characters**, so an ignore pattern
   for data that repeats itself (a names record) must match the cut form.

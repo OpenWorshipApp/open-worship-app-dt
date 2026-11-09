@@ -52,8 +52,14 @@ describe('built-in demo destinations', () => {
         expect(getBuiltInDemoPage(lesson.id)).toBe(`${key}.html`);
         const demo = getBuiltInDemo(lesson.id, (text) => `translated:${text}`);
         expect(demo.steps[0].text).toBe(`translated:${lesson.detail}`);
+        // A control a package draws in English in every language is found
+        // by its English words (the Bible Note window's toolbar).
         if (lesson.find)
-          expect(demo.steps[0].find).toBe(`translated:${lesson.find}`);
+          expect(demo.steps[0].find).toBe(
+            lesson.isFindTranslated === false
+              ? lesson.find
+              : `translated:${lesson.find}`,
+          );
         else expect(demo.steps[0].kind).toBe('look');
       }
     }

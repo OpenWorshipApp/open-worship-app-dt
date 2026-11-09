@@ -40,6 +40,13 @@ What cost time, so the next run does not pay it again:
 - Agents searching `extra-work/` recursively ran for minutes past their own
   timeout (multi-hundred-MB binaries); confine searches to `src`, `electron`,
   `tools`.
+- **The language-confinement gate fails only in the WHOLE suite** (UT-100,
+  2026-11-09): an agent's fixture carried a real language's native name with
+  an accented letter, its focused runs were green, and the full measurement
+  wrote no report at all (6.5 minutes lost). Put
+  `node extra-work/language-confinement.mjs <their new files>` in the brief,
+  and a made-up language (`xx`, an invented name) in any fixture that needs
+  one -- never an ASCII spelling of a real one.
 
 Related: [[coverage-number-is-loaded-files-only]],
 [[vitest-env-leak-flakes]], [[appprovider-mock-node-env]].

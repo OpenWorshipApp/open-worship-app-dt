@@ -7,6 +7,76 @@ file size: a folder whose files share one domain needs one mock surface, so
 Status is `open` · `in progress` · `done (before → after)`. A batch is done
 when `coverage-gap.mjs` says so, not when the tests are written.
 
+## Back to 99% — 2026-11-09 (UT-100)
+
+`done` · **98.32% → 99.58% (92,108 / 92,496)**, +1,163 lines, 0 files at
+0%, measured 2026-11-09 at `7c2ec127` (`references/baseline.md`). Each
+batch's figure below is its own focused run; the whole-surface result is the
+baseline entry. The user set **99% of the whole source surface** again. Five
+days of feature work (the note, slide, presenting-flow and lyric
+conversations, the language plugins: ~38,600 source lines in 469 files) had
+taken the honest figure from 99.63% to **98.32% (90,945 / 92,496)**, 1,379
+files, 4 at 0%, measured at `7c2ec127`. 99% is **91,572** covered lines:
+627 short. The first measurement could not run at all: `node_modules` was
+behind the lockfile (vitest 4 against 5, bible-note 0.4.4-dev against 0.6.0,
+electron 44 against 45, ~20 more), so `questions.test.mjs` failed on the
+note editor's guide pages and no report was written; the reinstall then
+left five package folders EMPTY (`vitest/node_modules/picomatch` among them)
+and npm called the tree up to date until its `node_modules/.package-lock.json`
+was removed. Five disjoint batches, one agent each, one shared brief:
+
+| Batch | Files | Uncovered before | Covered (focused run) | New tests |
+| --- | --- | --- | --- | --- |
+| UT-100a | `src/chatbot/ChatbotAppComp.tsx` | 250 | 227 | `ChatbotAppComp.ut100a/b.test.tsx`, 53 |
+| UT-100b | `agentFlowEditRules`, `agentPresentingFlowEditHelpers`, `agentFlowForegroundRules`, `flowChatHelpers`, `agentPresentingFlowEdit.mjs`, `presentingFlowItemJsonHelpers` | ~245 | 244 | 5 files, 168 |
+| UT-100c | `agentNoteBlockHelpers`, `agentNoteStyleHelpers`, `agentNoteInsertHelpers`, `agentNoteEditHelpers`, `agentNoteBlockLinkHelpers`, `agentNoteDrawingHelpers`, `agentNoteNormalizeHelpers`, `noteChatHelpers` | ~215 | 204 | 8 files, 113 |
+| UT-100d | `openLyricEdit.mjs`, `agentNoteEdit.mjs`, `agentLyricEdit.mjs`, `agentSlideEdit.mjs`, `discovery.mjs`, `owaTools.mjs`, `firewall.mjs` | ~189 | 189 | 7 files, 82 |
+| UT-100e | `llmBotHelpers`, `webLangUtils`, `langPluginInstallHelpers`, `noteSelectionMentionHelpers`, `verseAnnotationActionHelpers`, `LyricEditorChatbotButtonComp` and ten smaller | ~237 | 226 | 16 files, 80 |
+| lead | `langSourceFiles`, `fsServe`, `electronEventListener`, `client/langUtils`, `screenMirrorService` (the language plugin routes), `progressHelpers`, `agentBackupHelpers`, `agentLookupHelpers`, `agentFileHelpers`, `dirWatchingHelpers`, `AiChatAppComp` | ~95 | ~73 (the measured +1,163 less the batches' 1,090) | 11 files |
+
+**Bugs found, reported and NOT fixed** (no test asserts the wrong
+behaviour; each wants a regression test with its fix):
+
+1. `agentNoteBlockHelpers.ts` `blockKindOf` -- a HEADING is never checked
+   for an object among its words, as a paragraph or quote is: a heading
+   holding a picture reads as its words alone, and changing its words
+   rebuilds it without the picture (UT-100c, seen in a probe).
+2. `agentNoteBlockHelpers.ts` `toPlainWords` -- a line break becomes `' '`
+   and the `trim() !== ''` filter then drops it: a passage, table cell or
+   sticky reads `shepherd;I shall not want.`
+3. `agentNoteStyleHelpers.ts:634` `readWordsMarkup` -- `style="…"` is read
+   with `[^"']*`, which stops at a quoted font name:
+   `style="font-family: 'Georgia', serif; font-size: 18px"` loses the
+   font, the size and everything after it.
+4. `agentNoteInsertHelpers.ts` `toNoteInsertText` -- a date chip stored at
+   LOCAL midnight is read back with `toISOString().slice(0, 10)`, the UTC
+   day: east of UTC (Cambodia, UTC+7) a date reads one day early.
+5. `langPluginInstallHelpers.ts` `runLangPackInstall` -- the progress bar is
+   shown before `getLangPluginsDirPath()`, which throws in a window that
+   cannot install languages, outside the `try` whose `finally` hides it:
+   the bar stays up.
+
+Smaller findings, also reported: `firewall.mjs` scrubs a reply's `result`
+and never an `error` (a hardening item); `openLyricEdit.mjs:867-871` and
+`938-942` refuse a translation or chords on an Intro with a sentence that
+says it holds words; `agentFlowForegroundRules.ts` takes a NaN marquee
+`speed` (JSON cannot carry one); `agentFlowEditRules.ts`'s `removedSet` is
+dead.
+
+**What no test can reach**, left uncovered on purpose and named so the next
+run does not chase it: `agentFlowEditRules.ts:980` (`removedSet` is never
+added to: `update-lines` cannot remove) and `:1247` (only Next: Timeout
+can be CC-armed); `agentNoteBlockHelpers.ts:1395-1514` and
+`agentNoteStyleHelpers.ts:718` (guards whose callers already hold the
+case); `agentLookupHelpers.ts` 637, 672, 1002, 1149, 1338, 1576 (a key the
+app writes always parses; the record and search guards repeat their
+caller's); `BibleItemsViewController.ts:184-195` (`checkIsIdentical` is only
+ever handed one item, never a list); `bibleLogicHelpers2.tsx`'s
+`matches.length` guards (a pattern's group count is fixed); `xmlHelpers.ts`
+176, 307-310, 551 (depth never rises above 0; the entity pattern admits
+digits only); and 23 lines of `ChatbotAppComp.tsx` listed in UT-100a's
+report (UI guards whose callers check first).
+
 ## Achieved target — 99%, 2026-11-04 (UT-71 → UT-97; UT-70 is the 95% run)
 
 `done` · **81.75% → 99.63% (83,472 / 83,781)**, 0 files at 0%, measured

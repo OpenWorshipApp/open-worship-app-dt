@@ -83,6 +83,7 @@ knowledge bundle, which takes `.md` only). `--init` writes the skeleton.
 | `tips` | tip ids credited by hand; a credit to a missing tip is an error |
 | `personOnly` | why only the person may press it (file choice, projector, native menu, a choice of their record) — leaves the ACTED denominator |
 | `exclude` | a real control deliberately not taught, with why — leaves every denominator and is listed in every report |
+| `untranslated` | why the window draws this control in English in every language (the bible-note package has no translator): the Khmer and French search then types its `labels` as they read, English, and only its `search` words are translated |
 
 **Ignore is "not a control"; exclude is "a control we will not teach".**
 Data (references, file names, Bible keys the person installed), statuses and
@@ -142,6 +143,14 @@ lyrics, flows, Background tabs, Foreground launcher and every component's
 floating panel, Mini Screen, screen controls, Messages); each panel's More
 Options and a row's menu; a document open in the previewer; Bible Lookup open.
 Never show a screen to harvest it.
+
+**Bible Note (`bibleNote.html`)** — one note open from a Bible Notes row's
+open icon (19 passes, 2026-11-09): the toolbar; each of its menus (text
+style, font, both colour pickers, •••, Insert, alignment); words selected
+(the floating bar); a sticky note and a table in the page (their buttons
+paint on hover); the find bar; the footer's lookup, comments, View options,
+Page size and More actions; Open Bible Lookup's panel and its Resources.
+Never Clear, Import, Export, Print or a Word button to get there.
 
 **Settings and the editors** — every tab of the window; each editor with a
 document open. Their catalog is one step a lesson (`pageDemos.mjs`); see §7.
@@ -209,7 +218,19 @@ every find; the Presenter translates the whole string, so a scoped label must
 be a key as a whole) and its id in the right set in `getPresenterTips`.
 
 **Settings, editors, Bible Note, Local Web Share** — `pageDemos.mjs`: one
-step, `find` optional.
+step, `find` optional. A `find` is translated unless the lesson says
+`isFindTranslated: false` — the Bible Note window's toolbar, menus and most
+of its footer are the bible-note package's, English in every language, and
+`tran()` throws on their labels in a dev window of another language. One
+step a lesson, so a tip there opens the menu or panel it is about and its
+detail names every control inside it, plus the opener's own tooltip words
+(`Formatting options for text style`), which is what a search by the hover
+text finds (2026-11-09).
+
+**Text the person wrote is data** — `--harvest` drops a label read inside a
+`contenteditable` with no `aria-label`, `title` or `placeholder` of its own
+(the note's own chips and words) and counts it apart: the report's leads line
+says how many.
 
 **Strings** — every new `label`, `detail` and `category`, and every
 `translateFind` / `translateValue` key, in every

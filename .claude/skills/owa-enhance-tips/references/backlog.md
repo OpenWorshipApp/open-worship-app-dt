@@ -1,5 +1,21 @@
 # Tips backlog — `TP-xx`
 
+## TP-11 · The note window's Bible Lookup panel is taught only in the Reader — `idea` · S3 · bibleNote
+
+**Evidence (2026-11-09).** The Bible Note inventory keeps the jobs the panel
+is opened for there (Open Bible Lookup, Insert Bible Text, Insert Collapse
+Bible Text, Change Bible Key — taught by `bibleNote-bible-lookup`) and lists
+the rest as one exclusion, `bible-lookup-reader-tools`: the panel is the
+Reader's own `RenderBibleLookupComp` (study sidebar, Resources, verse picking,
+split, copy, the floating frame), measured in the Reader inventory. A
+volunteer in the note window cannot find those lessons from its All tips.
+**Change.** Let `getDailyTips('bibleNote')` also list the Reader lessons whose
+controls sit in that panel, by id — no new strings, and the guide already
+aims at the window it starts in; the user decides whether the note window's
+list should grow by ~20 entries (`TP-03` weighs every catalog in every
+window). **Proof on apply.** The exclusion becomes items, and `--leads` stays
+0 · 0. Found in run `2026-11-09`.
+
 ## TP-10 · Fresh Reader harvest and localized search gaps remain — `open` · S2 · reader
 
 **Evidence (2026-10-22).** Four new controls are inventoried and taught: the
@@ -91,7 +107,11 @@ each; `getPageDemo` builds a single step, so none can open a tab and then
 teach what is in it. **Change.** Give `PAGE_DEMO_LIST` the Reader's lesson
 shape (several steps, `translateFind`), then inventory those windows.
 **Proof on apply.** `--all` shows each window with an inventory and a COVERED
-figure. Found in run `2026-10-16`.
+figure. Found in run `2026-10-16`. **Bible Note, 2026-11-09:** inventoried
+(106 items) and covered 106/106 with 19 one-step lessons, each opening the
+menu or panel it names and listing the controls inside it — but ACTED is
+8/93, because one step can press only the opener; a second step (the menu's
+own row) is what several steps would buy.
 
 ## TP-05 · A scoped find never landed in a translated Reader window — `done` · S1 · reader
 

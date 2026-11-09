@@ -266,8 +266,14 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   walkthrough at **[en:tran:Path Settings]** for the same reason.
 - **Tips belong to the operator page** (2026-09-28). In addition to Presenter
   and Reader, `pageDemos.mjs` supplies local lessons for Settings, Slide Editor,
-  Bible Note, Web Editor, Lyric Editor and Local Web Share. `DailyTipComp`
-  listens for the Help menu in every supported window; only the main window
+  Bible Note, Web Editor, Lyric Editor and Local Web Share. **A page lesson's
+  `find` that the window draws in English stays English** (2026-11-09,
+  `isFindTranslated: false`): the Bible Note editor is the bible-note
+  package, which has no translator, so its toolbar reads _Formatting options
+  for font family_ in every language -- a translated find would match nothing
+  in a Khmer window, and `tran()` throws on a key no dictionary has. Its 19
+  lessons each open one menu or panel and name what is inside it, since a
+  page lesson is one step. `DailyTipComp` listens for the Help menu in every supported window; only the main window
   owns the shared menu registration. **One press opens every open page's
   card** (2026-10-23, the user: _open `Help` menubar, when click show in all
   pages_): the items are registered `isSentToAllWindows`, main sends the click

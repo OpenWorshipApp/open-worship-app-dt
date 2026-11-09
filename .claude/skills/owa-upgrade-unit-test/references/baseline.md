@@ -1,5 +1,51 @@
 # Baseline — the honest starting point
 
+## Back to 99% — 2026-11-09 (UT-100)
+
+The user set **99% of the whole source surface** again after five days of
+feature work had taken the figure from 99.63% to 98.32%. Measured with
+`coverage-gap.mjs --goal=99` at `7c2ec127` (HEAD the same before and after
+the run): **98.32% (90,945 / 92,496) → 99.58% (92,108 / 92,496)**, **+1,163
+covered lines** over the same 1,379 files. 99% is 91,572 covered lines,
+cleared by 536. Files at 0%: **4 → 0**; at 100%: **1,183**. No exclusions
+or thresholds changed.
+
+| Surface        | Lines after              | Branches after           |
+| -------------- | ------------------------ | ------------------------ |
+| Renderer + MCP | 99.56% (82,964 / 83,323) | 94.06% (52,416 / 55,726) |
+| Electron       | 99.68% (9,144 / 9,173)   | 94.73% (5,866 / 6,192)   |
+
+By kind, lines: helper 99.6% (575 files), module 99.7% (303), component
+99.4% (477), entry 99.2% (24).
+
+| Instrumented suite | After                                   |
+| ------------------ | --------------------------------------- |
+| Renderer + MCP     | 1,608 files / 20,514 tests, 386-515 s   |
+| Electron           | 122 files / 1,753 tests, 17-19 s        |
+
+**How.** Five disjoint batches, one agent each on one brief (`plan.md`,
+UT-100a-e), gave 1,090 of the lines; the lead's own tests (the language
+plugin routes in `fsServe`, `electronEventListener`, `client/langUtils`
+and `screenMirrorService`, then reserve gaps) the rest. 49 new test files,
+all `*.ut100.test.*`; a scan found no test without an assertion, and none
+renders for its line count alone (smoke share 0).
+
+**Bugs.** Five found and REPORTED, not fixed (the live check the app's own
+rules ask for was not available: the `owa-devtools` server was down), each
+left unasserted so no test locks the wrong behaviour in -- listed under
+UT-100 in `plan.md`.
+
+**What the measuring cost.** The first measurement could not run: a stale
+`node_modules`, then five EMPTY package folders after the reinstall (memory
+`stale-node-modules-blocks-coverage`). The first full run after the batches
+failed on `languageConfinement.test.ts` -- a fixture with a real language's
+native name -- and wrote no report (memory
+`parallel-test-agent-coverage-run`).
+
+Evidence: `ut100-after.log`, `ut100-after-worklist.json`,
+`ut100-after-src-summary.json` and `ut100-after-electron-summary.json` under
+`test-results/unit-coverage/`.
+
 ## Achieved 99% target — 2026-11-04 (UT-71 → UT-97)
 
 The user set the goal at **99% of the whole source surface**. Measured with
